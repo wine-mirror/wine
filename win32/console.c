@@ -50,9 +50,6 @@
 /* The CONSOLE kernel32 Object */
 typedef struct _CONSOLE {
 	K32OBJ  		header;
-
-	INPUT_RECORD		*irs;	/* buffered input records */
-	int			nrofirs;/* nr of buffered input records */
 } CONSOLE;
 
 static void CONSOLE_Destroy( K32OBJ *obj );
@@ -99,18 +96,6 @@ static BOOL32 CONSOLE_GetInfo( HANDLE32 handle, struct get_console_info_reply *r
     return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
 }
 
-
-/****************************************************************************
- *		CONSOLE_add_input_record			[internal]
- *
- * Adds an INPUT_RECORD to the CONSOLEs input queue.
- */
-static void
-CONSOLE_add_input_record(CONSOLE *console,INPUT_RECORD *inp) {
-	console->irs = HeapReAlloc(GetProcessHeap(),0,console->irs,sizeof(INPUT_RECORD)*(console->nrofirs+1));
-	console->irs[console->nrofirs++]=*inp;
-}
-
 /****************************************************************************
  *		XTERM_string_to_IR			[internal]
  *
@@ -121,7 +106,7 @@ static void
 CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
     int			j,k;
     INPUT_RECORD	ir;
-    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
+    DWORD		junk;
 
     for (j=0;j<len;j++) {
     	unsigned char inchar = buf[j];
@@ -148,22 +133,29 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 	    	ir.Event.KeyEvent.wVirtualKeyCode & 0x00ff,
 		0 /* VirtualKeyCodes to ScanCode */
 	    );
-	    if (inchar=='\n') {
-		ir.Event.KeyEvent.uChar.AsciiChar	= '\r';
-	    	ir.Event.KeyEvent.wVirtualKeyCode	= 0x0d;
-	    	ir.Event.KeyEvent.wVirtualScanCode	= 0x1c;
+	    ir.Event.KeyEvent.uChar.AsciiChar = inchar;
+
+	    if (inchar==127) { /* backspace */
+	    	ir.Event.KeyEvent.uChar.AsciiChar = '\b'; /* FIXME: hmm */
+		ir.Event.KeyEvent.wVirtualScanCode = 0x0e;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK;
 	    } else {
-		ir.Event.KeyEvent.uChar.AsciiChar = inchar;
-		if (inchar<' ') {
-		    /* FIXME: find good values for ^X */
-		    ir.Event.KeyEvent.wVirtualKeyCode = 0xdead;
-		    ir.Event.KeyEvent.wVirtualScanCode = 0xbeef;
-		} 
+		if (inchar=='\n') {
+		    ir.Event.KeyEvent.uChar.AsciiChar	= '\r';
+		    ir.Event.KeyEvent.wVirtualKeyCode	= VK_RETURN;
+		    ir.Event.KeyEvent.wVirtualScanCode	= 0x1c;
+		} else {
+		    if (inchar<' ') {
+			/* FIXME: find good values for ^X */
+			ir.Event.KeyEvent.wVirtualKeyCode = 0xdead;
+			ir.Event.KeyEvent.wVirtualScanCode = 0xbeef;
+		    } 
+		}
 	    }
 
-	    CONSOLE_add_input_record(console,&ir);
+	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 	    ir.Event.KeyEvent.bKeyDown = 0;
-	    CONSOLE_add_input_record(console,&ir);
+	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 	    continue;
 	}
 	/* inchar is ESC */
@@ -178,9 +170,9 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 	    );
 	    ir.Event.KeyEvent.dwControlKeyState = 0;
 	    ir.Event.KeyEvent.uChar.AsciiChar	= 27;
-	    CONSOLE_add_input_record(console,&ir);
+	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 	    ir.Event.KeyEvent.bKeyDown = 0;
-	    CONSOLE_add_input_record(console,&ir);
+	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 	    continue;
 	}
 	for (k=j;k<len;k++) {
@@ -247,7 +239,7 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 		    else
 			ir.Event.MouseEvent.dwButtonState = 1<<(buf[k+1]-' ');
 		    ir.Event.MouseEvent.dwEventFlags	  = 0; /* FIXME */
-		    CONSOLE_add_input_record(console,&ir);
+		    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk));
 		    j=k+3;
 		}
 	    	break;
@@ -256,15 +248,14 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 	    if (scancode) {
 		ir.Event.KeyEvent.wVirtualScanCode = scancode;
 		ir.Event.KeyEvent.wVirtualKeyCode = MapVirtualKey16(scancode,1);
-		CONSOLE_add_input_record(console,&ir);
+		assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 		ir.Event.KeyEvent.bKeyDown		= 0;
-		CONSOLE_add_input_record(console,&ir);
+		assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
 		j=k;
 		continue;
 	    }
 	}
     }
-    K32OBJ_DecCount(&console->header);
 }
 
 /****************************************************************************
@@ -274,7 +265,7 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
  * in an internal queue.
  */
 static void
-CONSOLE_get_input( HANDLE32 handle )
+CONSOLE_get_input( HANDLE32 handle, BOOL32 blockwait )
 {
     char	*buf = HeapAlloc(GetProcessHeap(),0,1);
     int		len = 0;
@@ -293,30 +284,6 @@ CONSOLE_get_input( HANDLE32 handle )
     CONSOLE_string_to_IR(handle,buf,len);
     HeapFree(GetProcessHeap(),0,buf);
 }
-
-/****************************************************************************
- * 		CONSOLE_drain_input		(internal)
- *
- * Drains 'n' console input events from the queue.
- */
-static void
-CONSOLE_drain_input(CONSOLE *console,int n) {
-    assert(n<=console->nrofirs);
-    if (n) {
-	console->nrofirs-=n;
-    	memcpy(	&console->irs[0],
-		&console->irs[n],
-		console->nrofirs*sizeof(INPUT_RECORD)
-	);
-	console->irs = HeapReAlloc(
-		GetProcessHeap(),
-		0,
-		console->irs,
-		console->nrofirs*sizeof(INPUT_RECORD)
-	);
-    }
-}
-
 
 /******************************************************************************
  * SetConsoleCtrlHandler [KERNEL32.459]  Adds function to calling process list
@@ -544,8 +511,6 @@ HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES 
     }
     console->header.type     = K32OBJ_CONSOLE;
     console->header.refcount = 1;
-    console->nrofirs         = 0;
-    console->irs             = HeapAlloc(GetProcessHeap(),0,1);;
     handle = HANDLE_Alloc( PROCESS_Current(), &console->header, req.access,
                            req.inherit, reply.handle );
     SYSTEM_UNLOCK();
@@ -672,8 +637,6 @@ BOOL32 WINAPI AllocConsole(VOID)
 
         console->header.type     = K32OBJ_CONSOLE;
         console->header.refcount = 1;
-	console->nrofirs	 = 0;
-	console->irs	 	 = HeapAlloc(GetProcessHeap(),0,1);;
 
         CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 0 );
         if (CLIENT_WaitReply( NULL, NULL, 0 ) != ERROR_SUCCESS)
@@ -968,35 +931,43 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
-    int		i,charsread = 0;
+    int		charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
+    struct read_console_input_request req;
+    INPUT_RECORD	ir;
 
-    if (!console) {
-    	SetLastError(ERROR_INVALID_HANDLE);
-	FIXME(console,"(%d,...), no console handle!\n",hConsoleInput);
-    	return FALSE;
-    }
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hConsoleInput,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
     TRACE(console,"(%d,%p,%ld,%p,%p)\n",
 	    hConsoleInput,lpBuffer,nNumberOfCharsToRead,
 	    lpNumberOfCharsRead,lpReserved
     );
-    CONSOLE_get_input(hConsoleInput);
+
+    CONSOLE_get_input(hConsoleInput,FALSE);
+
+    req.count = 1;
+    req.flush = 1;
 
     /* FIXME: should we read at least 1 char? The SDK does not say */
-    for (i=0;(i<console->nrofirs)&&(charsread<nNumberOfCharsToRead);i++) {
-    	if (console->irs[i].EventType != KEY_EVENT)
+    while (charsread<nNumberOfCharsToRead)
+    {
+    	int len;
+
+        CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
+        if (CLIENT_WaitReply( &len, NULL, 1, &ir, sizeof(ir) ))
+            return FALSE;
+        assert( !(len % sizeof(ir)) );
+        if (!len) break;
+    	if (!ir.Event.KeyEvent.bKeyDown)
 		continue;
-    	if (!console->irs[i].Event.KeyEvent.bKeyDown)
+    	if (ir.EventType != KEY_EVENT)
 		continue;
-	*xbuf++ = console->irs[i].Event.KeyEvent.uChar.AsciiChar; 
+	*xbuf++ = ir.Event.KeyEvent.uChar.AsciiChar; 
 	charsread++;
     }
-    /* SDK says: Drains all other input events from queue. */
-    CONSOLE_drain_input(console,i);
     if (lpNumberOfCharsRead)
     	*lpNumberOfCharsRead = charsread;
-    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -1060,7 +1031,8 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
             return FALSE;
         assert( !(len % sizeof(INPUT_RECORD)) );
         if (len) break;
-        WaitForSingleObject( hConsoleInput, INFINITE32 );
+	CONSOLE_get_input(hConsoleInput,TRUE);
+        /*WaitForSingleObject( hConsoleInput, INFINITE32 );*/
     }
     if (lpNumberOfEventsRead) *lpNumberOfEventsRead = len / sizeof(INPUT_RECORD);
     return TRUE;
@@ -1112,6 +1084,8 @@ BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
     if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
                                               K32OBJ_CONSOLE, GENERIC_READ )) == -1)
         return FALSE;
+
+    CONSOLE_get_input(handle,FALSE);
     req.count = count;
     req.flush = 0;
 
@@ -1306,8 +1280,8 @@ BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
     	FIXME(console,"(%d,%p), no console handle!\n",hcon,nrofevents);
     	return FALSE;
     }
-    CONSOLE_get_input(hcon);
-    *nrofevents = console->nrofirs;
+    CONSOLE_get_input(hcon,FALSE);
+    *nrofevents = 1; /* UMM */
     K32OBJ_DecCount(&console->header);
     return TRUE;
 }
