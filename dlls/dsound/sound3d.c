@@ -63,7 +63,7 @@
 #include "dsdriver.h"
 #include "dsound_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dsound);
+WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
 
 /*******************************************************************************
  *              Auxiliary functions
@@ -132,28 +132,77 @@ static inline LONG AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 	/* we now have angle in radians */
 	angle = DegToRad(cos);
 	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %ld degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
-	b->u2.y, b->u3.z, angle);
+	      b->u2.y, b->u3.z, angle);
 	return angle;	
+}
+
+/* calculates vector between two points */
+static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
+{
+	D3DVECTOR c;
+	c.u1.x = b->u1.x - a->u1.x;
+	c.u2.y = b->u2.y - a->u2.y;
+	c.u3.z = b->u3.z - a->u3.z;
+	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
+	      b->u3.z, c.u1.x, c.u2.y, c.u3.z);
+	return c;
 }
 
 /*******************************************************************************
  *              3D Buffer and Listener mixing
  */
- 
+
 static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 {
-	FIXME("Procedure not ready yet\n");
+	IDirectSound3DListenerImpl *dsl;
+	D3DVECTOR vDistance;
+	D3DVALUE fDistance;
+	
+	if (ds3db->dsb->dsound->listener == NULL)
+		return;
+	
+	dsl = ds3db->dsb->dsound->listener;
+	
+	switch (ds3db->ds3db.dwMode)
+	{
+		case DS3DMODE_NORMAL:
+		{
+			vDistance = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &dsl->ds3dl.vPosition);
+			fDistance = VectorMagnitude (&vDistance);
+			if (fDistance > ds3db->ds3db.flMaxDistance)
+			{
+				/* some apps don't want you too hear too distant sounds... */
+				if (ds3db->dsb->dsbd.dwFlags & DSBCAPS_MUTE3DATMAXDISTANCE)
+				{
+					ds3db->dsb->volpan.lVolume = DSBVOLUME_MIN;
+					DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
+					DSOUND_ForceRemix (ds3db->dsb);
+					return;
+				}				
+			}
+			ds3db->dsb->volpan.lVolume = DSBVOLUME_MAX;		
+		}
+		case DS3DMODE_HEADRELATIVE:
+		case DS3DMODE_DISABLE:
+			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
+			DSOUND_ForceRemix (ds3db->dsb);	
+	}
 }
 
 static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 {
-	IDirectSoundImpl *dsound = ds3dl->dsb->dsound;
 	int i;
-	
-	/* if listener changes, we need to recalculate all 3d buffers */ 
-	for(i = 0; i > dsound->nrofbuffers; i++)
+	for (i = 0; i < ds3dl->dsb->dsound->nrofbuffers; i++)
 	{
-		DSOUND_Mix3DBuffer(dsound->buffers[i]->ds3db);
+		/* some buffers don't have 3d buffer (Ultima IX seems to
+		crash without the following line) */
+		if (ds3dl->dsb->dsound->buffers[i]->ds3db == NULL)
+			continue;
+		if (ds3dl->dsb->dsound->buffers[i]->ds3db->need_recalc == TRUE)
+		{
+			DSOUND_Mix3DBuffer(ds3dl->dsb->dsound->buffers[i]->ds3db);
+		}
+			
 	}
 }
 
@@ -830,6 +879,7 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	dsl->ds3dl.vOrientTop.u3.z = 0.0;
 	dsl->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
 	dsl->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
+	dsl->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
 
 	InitializeCriticalSection(&dsl->lock);
 
