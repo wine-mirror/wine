@@ -955,8 +955,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             ShowCaret(winpos->hwnd);
     }
 
-    if (!(winpos->flags & SWP_NOACTIVATE))
-        WINPOS_ChangeActiveWindow( winpos->hwnd, FALSE );
+    if (!(winpos->flags & SWP_NOACTIVATE)) SetActiveWindow( winpos->hwnd );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 

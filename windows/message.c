@@ -517,6 +517,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
                 eatMsg = TRUE;
                 /* fall through */
             case MA_ACTIVATE:
+            case 0:
                 if (hwndTop != GetForegroundWindow() )
                 {
                     if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))

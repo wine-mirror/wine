@@ -734,7 +734,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     prev = PERQDATA_GetActiveWnd( pMsgQ->pQData );
     QUEUE_Unlock( pMsgQ );
     WIN_ReleaseWndPtr(wndPtr);
-    WINPOS_SetActiveWindow( hwnd, 0, 0 );
+    WINPOS_SetActiveWindow( hwnd, FALSE, TRUE );
     return prev;
 
  error:
@@ -768,7 +768,16 @@ HWND WINAPI GetForegroundWindow(void)
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
-    return WINPOS_ChangeActiveWindow( hwnd, FALSE );
+    if (!hwnd) return WINPOS_SetActiveWindow( 0, FALSE, TRUE );
+
+    /* child windows get WM_CHILDACTIVATE message */
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
+        return SendMessageA( hwnd, WM_CHILDACTIVATE, 0, 0 );
+
+    hwnd = WIN_GetFullHandle( hwnd );
+    if( hwnd == GetForegroundWindow() ) return FALSE;
+
+    return WINPOS_SetActiveWindow( hwnd, FALSE, TRUE );
 }
 
 
@@ -1422,9 +1431,8 @@ CLEANUP_END:
  *
  *  Activates window other than pWnd.
  */
-BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
+void WINPOS_ActivateOtherWindow(HWND hwnd)
 {
-    BOOL bRet = 0;
     HWND hwndActive = 0;
     HWND hwndTo = 0;
     HWND owner;
@@ -1440,13 +1448,13 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
         }
     }
 
-    if (!(hwnd = WIN_IsCurrentThread( hwnd ))) return 0;
+    if (!(hwnd = WIN_IsCurrentThread( hwnd ))) return;
 
     if( hwnd == hwndPrevActive )
         hwndPrevActive = 0;
 
     if( hwndActive != hwnd && (hwndActive || USER_IsExitingThread( GetCurrentThreadId() )))
-        return 0;
+        return;
 
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) ||
         !(owner = GetWindow( hwnd, GW_OWNER )) ||
@@ -1463,49 +1471,8 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
         }
     }
 
-    bRet = WINPOS_SetActiveWindow( hwndTo, FALSE, TRUE );
-
+    SetActiveWindow( hwndTo );
     hwndPrevActive = 0;
-    return bRet;
-}
-
-/*******************************************************************
- *	   WINPOS_ChangeActiveWindow
- *
- */
-BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
-{
-    WND *wndPtr;
-    HWND hwndActive = 0;
-
-    /* Get current active window from the active queue */
-    if ( hActiveQueue )
-    {
-        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
-        if ( pActiveQueue )
-        {
-            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
-            QUEUE_Unlock( pActiveQueue );
-        }
-    }
-
-    if (!hWnd)
-        return WINPOS_SetActiveWindow( 0, mouseMsg, TRUE );
-
-    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
-    hWnd = wndPtr->hwndSelf;
-
-    /* child windows get WM_CHILDACTIVATE message */
-    if( (wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD )
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return SendMessageA(hWnd, WM_CHILDACTIVATE, 0, 0L);
-    }
-    WIN_ReleaseWndPtr(wndPtr);
-
-    if( hWnd == hwndActive ) return FALSE;
-
-    return WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE);
 }
 
 
