@@ -414,10 +414,17 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
 	char	*retString;
 	int	found,i;
-	int	lang;
+	int	lang=0;
 
-	TRACE(ole,"(0x%lx,0x%lx,%p,%x)\n",
+	TRACE(ole,"(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",
 			lcid,LCType,buf,len);
+
+	if (lcid == LOCALE_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) ) 
+	{ lcid = GetSystemDefaultLCID();
+	} 
+	else if (lcid == LOCALE_USER_DEFAULT) 
+	{ lcid = GetUserDefaultLCID();
+	}	
 
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
 
@@ -441,100 +448,71 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	}
 
 #define LOCVAL(type,value) case type:retString=value;found=1;break;
+#define LANG_BEGIN(l,s) case MAKELANGID(l,s): switch (LCType) {
+#define LANG_END 	default: found=0; break; } break;
 
     /* Now, the language specific definitions. They don't have to be
        complete */
-    found=0; i=0;
 
-    do {
-	if (i==0) lang=Languages[Options.language].langid;
-	if (i==1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
-	i++;
+    found=0; i=0; lang=lcid;
 
-	switch(lang) {
-    case LANG_De:
-    	switch (LCType) {
+    if (lang ==0x400) /*LANG_NEUTRAL ==> US English*/
+    {	lang = 0x409;
+        WARN(ole,"no language set, assume LANG_ENGLISH_US \n");
+    }
+    
+
+    do 
+    {	switch(lang) 
+    	{
+
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN)	/*0x407*/
 #include "nls/deu.nls"
-	default: found=0; break;
-	}
-    break;  /* LANG(De) */
+LANG_END
 
-    case LANG_Da:
-    	switch (LCType) {
+LANG_BEGIN (LANG_DANISH, SUBLANG_DEFAULT)	/*0x406*/
 #include "nls/dan.nls"
-	default: found=0;break;
-	}
-    break; /* LANG(Da) */
+LANG_END
 
-    case LANG_En:
-    	switch (LCType) {
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_US)	/*0x409*/
 #include "nls/enu.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(En) */
+LANG_END
 
-    case LANG_Eo:
-    	switch (LCType) {
+LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x48f*/
 #include "nls/esperanto.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(Eo) */
+LANG_END
 
-    case LANG_Fi:
-    	switch (LCType) {
+LANG_BEGIN (LANG_FINNISH, SUBLANG_DEFAULT)	/*0x040B*/
 #include "nls/fin.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(Fi) */
+LANG_END
 
-    case LANG_It:
-    	switch (LCType) {
+LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN)	/*0x410*/
 #include "nls/ita.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(It) */
+LANG_END
 
-    case 0x0809:
-    	switch (LCType) {
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_UK)	/*0x809*/
 #include "nls/eng.nls"
-	default: found=0;break;
-	}
-    break; /* LANG(0x0809) (U.K. English) */
+LANG_END
 
-    case LANG_Ko: /* string using codepage 949 */
-        switch (LCType) {
+LANG_BEGIN (LANG_KOREAN, SUBLANG_KOREAN)	/*0x412*/
 #include "nls/kor.nls"
-        default: found=0;break;
-        }
-    break;  /* LANG(Ko) */
+LANG_END
 
-    case LANG_Hu:
-    	switch (LCType) {
+LANG_BEGIN (LANG_HUNGARIAN, SUBLANG_DEFAULT)	/*0x40e*/
 #include "nls/hun.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(En) */
+LANG_END
 
-    case LANG_Pl:
-    	switch (LCType) {
+LANG_BEGIN (LANG_POLISH, SUBLANG_DEFAULT)	/*0x415*/
 #include "nls/plk.nls"
-	default: found=0;break;
-	}
-    break;  /* LANG(Pl) */
+LANG_END
 
-    case LANG_Pt:
-    	switch (LCType) {
+LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE_BRAZILIAN)	/*0x416*/
 #include "nls/ptb.nls"
-	default: found=0;break;
-	}
-    break; /* LANG(Pt) */
+LANG_END
 
-    case LANG_Sv:
-    	switch (LCType) {
+LANG_BEGIN (LANG_SWEDISH, SUBLANG_DEFAULT)	/*0x41d*/
 #include "nls/sve.nls"
-	default: found=0;break;
-	}
-    break; /* LANG(Sv) */
+LANG_END
 
 /*Insert other languages here*/
 
@@ -542,13 +520,16 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	    found=0;
 	    break;
 	}  /* switch */
+
+	/* language not found, try without a sublanguage*/
+	lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+	i++;
     } while (!found && i<2);
 
 	if(!found) {
 		ERR(ole,"'%s' not supported for your language.\n",
 			retString);
 		retString = "<WINE-NLS-unknown>";
-		/*return 0;*/
 	}
 	if (buf)
 		lstrcpyn32A(buf,retString,len);
