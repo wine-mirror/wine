@@ -2039,6 +2039,8 @@ TREEVIEW_GetNextItem(TREEVIEW_INFO *infoPtr, UINT which, HTREEITEM wineItem)
 	return (LRESULT)retval;
     }
 
+    if (wineItem == TVI_ROOT) wineItem = infoPtr->root;
+
     if (!TREEVIEW_ValidItem(infoPtr, wineItem))
 	return FALSE;
 
