@@ -449,7 +449,7 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     /* do not increase the value as it would upset the user's icon layout */
-    curr_val = old_spacing-1;
+    curr_val = (old_spacing > 32 ? old_spacing-1 : 32);
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
