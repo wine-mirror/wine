@@ -1009,7 +1009,16 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                                   physDevSrc->org.x + visRectSrc->left,
                                   physDevSrc->org.y + visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
+            if (!imageSrc)
+            {
+                return exposures;
+            }
             imageDst = X11DRV_DIB_CreateXImage( width, height, dcDst->bitsPerPixel );
+            if (!imageDst) 
+            {
+                XDestroyImage(imageSrc);
+                return exposures;
+            }
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
