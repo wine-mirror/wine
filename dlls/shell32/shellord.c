@@ -218,9 +218,11 @@ int WINAPIV ShellMessageBoxW(
 	UINT uType,
 	...)
 {
-	WCHAR	szText[100],szTitle[100],szTemp[256];
-	LPCWSTR   pszText = szText, pszTitle = szTitle;
+	WCHAR	szText[100],szTitle[100];
+	LPCWSTR pszText = szText, pszTitle = szTitle, pszTemp;
 	va_list args;
+	int	ret;
+
 	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
 
@@ -228,21 +230,23 @@ int WINAPIV ShellMessageBoxW(
 	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
 
 	if (!HIWORD(lpCaption))
-	  LoadStringW(hInstance, (DWORD)lpCaption, szTitle, 100);
+	  LoadStringW(hInstance, (DWORD)lpCaption, szTitle, sizeof(szTitle)/sizeof(szTitle[0]));
 	else
 	  pszTitle = lpCaption;
 
 	if (!HIWORD(lpText))
-	  LoadStringW(hInstance, (DWORD)lpText, szText, 100);
+	  LoadStringW(hInstance, (DWORD)lpText, szText, sizeof(szText)/sizeof(szText[0]));
 	else
 	  pszText = lpText;
 
-	FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-		       szText, 0, 0, szTemp, 256, (LPDWORD) args);
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING, 
+		       pszText, 0, 0, (LPWSTR)&pszTemp, 0, &args);
 
 	va_end(args);
 
-	return MessageBoxW(hWnd,szTemp,szTitle,uType);
+	ret = MessageBoxW(hWnd,pszTemp,pszTitle,uType);
+	LocalFree((HLOCAL)pszTemp);
+	return ret;
 }
 
 /*************************************************************************
@@ -256,9 +260,11 @@ int WINAPIV ShellMessageBoxA(
 	UINT uType,
 	...)
 {
-	char	szText[100],szTitle[100],szTemp[256];
-	LPCSTR   pszText = szText, pszTitle = szTitle;
+	char	szText[100],szTitle[100];
+	LPCSTR  pszText = szText, pszTitle = szTitle, pszTemp;
 	va_list args;
+	int	ret;
+
 	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
 
@@ -266,21 +272,23 @@ int WINAPIV ShellMessageBoxA(
 	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
 
 	if (!HIWORD(lpCaption))
-	  LoadStringA(hInstance, (DWORD)lpCaption, szTitle, 100);
+	  LoadStringA(hInstance, (DWORD)lpCaption, szTitle, sizeof(szTitle));
 	else
 	  pszTitle = lpCaption;
 
 	if (!HIWORD(lpText))
-	  LoadStringA(hInstance, (DWORD)lpText, szText, 100);
+	  LoadStringA(hInstance, (DWORD)lpText, szText, sizeof(szText));
 	else
 	  pszText = lpText;
 
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-		       szText, 0, 0, szTemp, 256, (LPDWORD) args);
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING, 
+		       pszText, 0, 0, (LPSTR)&pszTemp, 0, &args);
 
 	va_end(args);
 
-	return MessageBoxA(hWnd,szTemp,szTitle,uType);
+	ret = MessageBoxA(hWnd,pszTemp,pszTitle,uType);
+	LocalFree((HLOCAL)pszTemp);
+	return ret;
 }
 
 /*************************************************************************
