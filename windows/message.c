@@ -2187,7 +2187,7 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
                                       WPARAM wParam, LPARAM lParam )
 {
     static int dead_char;
-    BYTE wp[2];
+    WCHAR wp[2];
     
     if (message != WM_MOUSEMOVE && message != WM_TIMER)
         TRACE("(%s, %04X, %08lX)\n",
@@ -2201,9 +2201,8 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
     TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
                  SPY_GetVKeyName(wParam), wParam, LOBYTE(HIWORD(lParam)));
 
-    /* FIXME : should handle ToAscii yielding 2 */
-    switch (ToAscii(wParam, HIWORD(lParam),
-                      QueueKeyStateTable,(LPWORD)wp, 0)) 
+    /* FIXME : should handle ToUnicode yielding 2 */
+    switch (ToUnicode(wParam, HIWORD(lParam), QueueKeyStateTable, wp, 2, 0)) 
     {
     case 1 :
         message = (message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
@@ -2230,15 +2229,14 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
             dead_char = 0;
         }
         TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
-        PostMessage16( hwnd, message, wp[0], lParam );
+        PostMessageW( hwnd, message, wp[0], lParam );
         return TRUE;
 
     case -1 :
         message = (message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         dead_char = wp[0];
-        TRACE_(key)("-1 -> PostMessage(%s)\n",
-                     SPY_GetMsgName(message));
-        PostMessage16( hwnd, message, wp[0], lParam );
+        TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+        PostMessageW( hwnd, message, wp[0], lParam );
         return TRUE;
     }
     return FALSE;
