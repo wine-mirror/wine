@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
-int vs_mode;
+int vs_mode = VS_HW; /* Hardware by default */
 
 HRESULT WINAPI D3D8GetSWInfo(void)
 {
@@ -81,8 +81,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
        }
-       if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\d3d", &hkey) &&
-            !RegQueryValueExA( hkey, "vs_mode", 0, NULL, buffer, &size) )
+       if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Direct3D", &hkey) &&
+            !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
        {
            if (!strcmp(buffer,"none"))
            {
@@ -94,11 +94,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                TRACE("Force SW vertex shader\n");
                vs_mode = VS_SW;
            }
-	   else {
-               TRACE("Allow HW vertex shader\n");
-               vs_mode = VS_HW;
-	   }
        }
+       if (vs_mode == VS_HW)
+           FIXME("Allow HW vertex shader\n");
     }
     return TRUE;
 }

@@ -500,7 +500,7 @@ inline static void vshader_program_add_param(const DWORD param, int input, char 
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_CONST:
-    sprintf(tmpReg, "program.env[%lu]", reg);
+    sprintf(tmpReg, "C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
@@ -693,6 +693,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
         /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
         int version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
         int numTemps;
+        int numConstants;
 
 	TRACE_(d3d_hw_shader)("vs.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
 
@@ -700,21 +701,25 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
         switch (version) {
         case 10:
         case 11: numTemps=12; 
+                 numConstants=96;
                  strcpy(tmpLine, "!!ARBvp1.0\n");
                  TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
         case 20: numTemps=12;
+                 numConstants=256;
                  strcpy(tmpLine, "!!ARBvp2.0\n");
                  FIXME_(d3d_hw_shader)("No work done yet to support vs2.0 in hw\n");
                  TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
-        case 30:  numTemps=32; 
+        case 30: numTemps=32; 
+                 numConstants=256;
                  strcpy(tmpLine, "!!ARBvp3.0\n");
                  FIXME_(d3d_hw_shader)("No work done yet to support vs3.0 in hw\n");
                  TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
         default:
                  numTemps=12;
+                 numConstants=96;
                  strcpy(tmpLine, "!!ARBvp1.0\n");
                  FIXME_(d3d_hw_shader)("Unrecognized vertex shader version!\n");
         }
@@ -733,6 +738,13 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
             TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
             strcat(pgmStr,tmpLine);
 	}
+	/* Due to the dynamic constants binding mechanism, we need to declare
+	 * all the constants for relative addressing. */
+	/* Mesa supports only 95 constants for VS1.X although we should have at least 96.
+	 * Let's declare max constants minus one for now. */
+	sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants-1, numConstants-2);
+	TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+	strcat(pgmStr, tmpLine);
 
 	++pToken;
 	continue;
@@ -753,25 +765,18 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	  ++pToken;
 	}
       } else {
-	/*TRACE("%s ", curOpcode->name);*/
-
         /* Build opcode for GL vertex_program */
         switch (curOpcode->opcode) {
         case D3DSIO_MOV:
-	  {
-	    if (0 < nUseAddressRegister) {
-	      regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) << D3DSP_REGTYPE_SHIFT);
-	      if (D3DSPR_ADDR == regtype) {
-		/**
-		 * Raphael:
-		 *  NVidia drivers complains about MOV A0, T5.x;
-		 *  because we need to use ARL for address registers
-		 */
-		strcpy(tmpLine, "ARL"); 
-		break;
-	      }
+	    /* Address registers must be loaded with the ARL instruction */
+	    if (((*pToken) & D3DSP_REGTYPE_MASK) == D3DSPR_ADDR) {
+		if (0 < nUseAddressRegister) {
+		    strcpy(tmpLine, "ARL");
+		    break;
+		} else
+		   FIXME_(d3d_hw_shader)("Try to load an undeclared address register!\n");
 	    }
-	  }
+	    /* fall through */
         case D3DSIO_ADD: 
         case D3DSIO_SUB: 
         case D3DSIO_MAD: 
@@ -825,13 +830,11 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
           
 	  ++pToken;
 	  for (i = 1; i < curOpcode->num_params; ++i) {
-	    /*TRACE(", ");*/
             strcat(tmpLine, ",");
 	    vshader_program_add_param(*pToken, 1, tmpLine);
 	    ++pToken;
 	  }
 	}
-	/*TRACE("\n");*/
         strcat(tmpLine,";\n");
 	++lineNum;
         TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
