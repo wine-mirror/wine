@@ -106,8 +106,8 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
 	FIXME("PS_USERSTYLE not handled\n");
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
-	if (brush->lbHatch)
-	    FIXME("Hatches not implemented\n");
+	if (brush->lbHatch && ((brush->lbStyle == BS_SOLID) || (brush->lbStyle == BS_HOLLOW)))
+	    FIXME("Hatches not implemented\n");	
 
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
 				    &pen_funcs ))) return 0;
