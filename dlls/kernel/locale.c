@@ -46,6 +46,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|LOCALE_RETURN_NUMBER)
 
+static const WCHAR kernel32W[] = { 'K','E','R','N','E','L','3','2','\0' };
+
 extern void CODEPAGE_Init( UINT ansi_cp, UINT oem_cp, UINT mac_cp, UINT unix_cp, LCID lcid );
 
 /* Charset to codepage map, sorted by name. */
@@ -163,11 +165,35 @@ inline static HKEY create_registry_key(void)
  */
 inline static void update_registry( LCID lcid )
 {
+    static const USHORT updateValues[] = {
+      LOCALE_SLANGUAGE,
+      LOCALE_SCOUNTRY, LOCALE_ICOUNTRY,
+      LOCALE_S1159, LOCALE_S2359,
+      LOCALE_STIME, LOCALE_ITIME,
+      LOCALE_ITLZERO,
+      LOCALE_SSHORTDATE,
+      LOCALE_IDATE,
+      LOCALE_SLONGDATE,
+      LOCALE_SDATE,
+      LOCALE_SCURRENCY, LOCALE_ICURRENCY,
+      LOCALE_INEGCURR,
+      LOCALE_ICURRDIGITS,
+      LOCALE_SDECIMAL,
+      LOCALE_SLIST,
+      LOCALE_STHOUSAND,
+      LOCALE_IDIGITS,
+      LOCALE_IDIGITSUBSTITUTION,
+      LOCALE_SNATIVEDIGITS,
+      LOCALE_ITIMEMARKPOSN,
+      LOCALE_ICALENDARTYPE,
+      LOCALE_ILZERO,
+      LOCALE_IMEASURE
+    };
     static const WCHAR LocaleW[] = {'L','o','c','a','l','e',0};
     UNICODE_STRING nameW;
     char buffer[20];
     WCHAR bufferW[80];
-    DWORD count = sizeof(buffer);
+    DWORD count, i;
     HKEY hkey;
 
     if (!(hkey = create_registry_key()))
@@ -177,51 +203,30 @@ inline static void update_registry( LCID lcid )
     count = sizeof(bufferW);
     if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, (LPBYTE)bufferW, count, &count))
     {
-        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
-        RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &count,
-                                (WCHAR *)info->Data, info->DataLength );
-        buffer[count] = 0;
-        if (strtol( buffer, NULL, 16 ) == lcid)  /* already set correctly */
+        const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
+        LPCWSTR szValueText = (LPCWSTR)info->Data;
+
+        if (strtoulW( szValueText, NULL, 16 ) == lcid)  /* already set correctly */
         {
             NtClose( hkey );
             return;
         }
-        TRACE( "updating registry, locale changed %s -> %08lx\n", buffer, lcid );
+        TRACE( "updating registry, locale changed %s -> %08lx\n", debugstr_w(szValueText), lcid );
     }
     else TRACE( "updating registry, locale changed none -> %08lx\n", lcid );
 
     sprintf( buffer, "%08lx", lcid );
-    RtlMultiByteToUnicodeN( bufferW, sizeof(bufferW), NULL, buffer, strlen(buffer)+1 );
-    NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, (strlenW(bufferW)+1) * sizeof(WCHAR) );
+    /* Note: '9' constant below is strlen(buffer) + 1 */
+    RtlMultiByteToUnicodeN( bufferW, sizeof(bufferW), NULL, buffer, 9 );
+    NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, 9 * sizeof(WCHAR) );
     NtClose( hkey );
 
-#define UPDATE_VALUE(lctype) do { \
-    GetLocaleInfoW( lcid, (lctype)|LOCALE_NOUSEROVERRIDE, bufferW, sizeof(bufferW)/sizeof(WCHAR) ); \
-    SetLocaleInfoW( lcid, (lctype), bufferW ); } while (0)
-
-    UPDATE_VALUE(LOCALE_SLANGUAGE);
-    UPDATE_VALUE(LOCALE_SCOUNTRY);
-    UPDATE_VALUE(LOCALE_ICOUNTRY);
-    UPDATE_VALUE(LOCALE_S1159);
-    UPDATE_VALUE(LOCALE_S2359);
-    UPDATE_VALUE(LOCALE_STIME);
-    UPDATE_VALUE(LOCALE_ITIME);
-    UPDATE_VALUE(LOCALE_ITLZERO);
-    UPDATE_VALUE(LOCALE_SSHORTDATE);
-    UPDATE_VALUE(LOCALE_IDATE);
-    UPDATE_VALUE(LOCALE_SLONGDATE);
-    UPDATE_VALUE(LOCALE_SDATE);
-    UPDATE_VALUE(LOCALE_SCURRENCY);
-    UPDATE_VALUE(LOCALE_ICURRENCY);
-    UPDATE_VALUE(LOCALE_INEGCURR);
-    UPDATE_VALUE(LOCALE_ICURRDIGITS);
-    UPDATE_VALUE(LOCALE_SDECIMAL);
-    UPDATE_VALUE(LOCALE_SLIST);
-    UPDATE_VALUE(LOCALE_STHOUSAND);
-    UPDATE_VALUE(LOCALE_IDIGITS);
-    UPDATE_VALUE(LOCALE_ILZERO);
-    UPDATE_VALUE(LOCALE_IMEASURE);
-#undef UPDATE_VALUE
+    for (i = 0; i < sizeof(updateValues)/sizeof(updateValues[0]); i++)
+    {
+        GetLocaleInfoW( lcid, updateValues[i] | LOCALE_NOUSEROVERRIDE, bufferW,
+                        sizeof(bufferW)/sizeof(WCHAR) );
+        SetLocaleInfoW( lcid, updateValues[i], bufferW );
+    }
 }
 
 
@@ -252,9 +257,9 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCSTR type,
                    buf_country, sizeof(buf_country));
     TRACE("LOCALE_SISO3166CTRYNAME: %s\n", buf_country);
 
-    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_language))
+    if(l_data->lang[0] && !strcasecmp(l_data->lang, buf_language))
     {
-        if(l_data->country && strlen(l_data->country) > 0)
+        if(l_data->country[0])
         {
             if(!strcasecmp(l_data->country, buf_country))
             {
@@ -286,7 +291,7 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCSTR type,
                    buf_en_language, sizeof(buf_en_language));
     TRACE("LOCALE_SENGLANGUAGE: %s\n", buf_en_language);
 
-    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_en_language))
+    if(l_data->lang[0] && !strcasecmp(l_data->lang, buf_en_language))
     {
         l_data->found_lang_id[l_data->n_found] = LangID;
         strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
@@ -320,6 +325,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
 {
     LANG_FIND_DATA l_data;
     char lang_string[256];
+    HMODULE hKernel32;
 
     if(!Lang)
     {
@@ -330,14 +336,16 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
     memset(&l_data, 0, sizeof(LANG_FIND_DATA));
     strncpy(l_data.lang, Lang, sizeof(l_data.lang));
 
-    if(Country && strlen(Country) > 0)
+    if(Country && Country[0])
         strncpy(l_data.country, Country, sizeof(l_data.country));
 
-    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
+    hKernel32 = GetModuleHandleW(kernel32W);
+
+    EnumResourceLanguagesA(hKernel32, (LPSTR)RT_STRING,
                            (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LPARAM)&l_data);
 
     strcpy(lang_string, l_data.lang);
-    if(l_data.country && strlen(l_data.country) > 0)
+    if(l_data.country[0])
     {
         strcat(lang_string, "_");
         strcat(lang_string, l_data.country);
@@ -345,18 +353,18 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
 
     if(!l_data.n_found)
     {
-        if(l_data.country && strlen(l_data.country) > 0)
+        if(l_data.country[0])
         {
             MESSAGE("Warning: Language '%s' was not found, retrying without country name...\n", lang_string);
             l_data.country[0] = 0;
-            EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
+            EnumResourceLanguagesA(hKernel32, (LPSTR)RT_STRING,
                                    (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LONG)&l_data);
         }
     }
 
     /* Re-evaluate lang_string */
     strcpy(lang_string, l_data.lang);
-    if(l_data.country && strlen(l_data.country) > 0)
+    if(l_data.country[0])
     {
         strcat(lang_string, "_");
         strcat(lang_string, l_data.country);
@@ -428,7 +436,7 @@ static LCID init_default_lcid( UINT *unix_cp )
             {
                 const struct charset_entry *entry;
                 char charset_name[16];
-                int i, j;
+                size_t i, j;
 
                 /* remove punctuation characters from charset name */
                 for (i = j = 0; charset[i] && j < sizeof(charset_name)-1; i++)
@@ -481,6 +489,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     static const WCHAR iNegNumberW[] = {'i','N','e','g','N','u','m','b','e','r',0};
     static const WCHAR iPaperSizeW[] = {'i','P','a','p','e','r','S','i','z','e',0};
     static const WCHAR iTLZeroW[] = {'i','T','L','Z','e','r','o',0};
+    static const WCHAR iTimePrefixW[] = {'i','T','i','m','e','P','r','e','f','i','x',0};
     static const WCHAR iTimeW[] = {'i','T','i','m','e',0};
     static const WCHAR s1159W[] = {'s','1','1','5','9',0};
     static const WCHAR s2359W[] = {'s','2','3','5','9',0};
@@ -495,6 +504,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     static const WCHAR sMonDecimalSepW[] = {'s','M','o','n','D','e','c','i','m','a','l','S','e','p',0};
     static const WCHAR sMonGroupingW[] = {'s','M','o','n','G','r','o','u','p','i','n','g',0};
     static const WCHAR sMonThousandSepW[] = {'s','M','o','n','T','h','o','u','s','a','n','d','S','e','p',0};
+    static const WCHAR sNativeDigitsW[] = {'s','N','a','t','i','v','e','D','i','g','i','t','s',0};
     static const WCHAR sNegativeSignW[] = {'s','N','e','g','a','t','i','v','e','S','i','g','n',0};
     static const WCHAR sPositiveSignW[] = {'s','P','o','s','i','t','i','v','e','S','i','g','n',0};
     static const WCHAR sShortDateW[] = {'s','S','h','o','r','t','D','a','t','e',0};
@@ -502,6 +512,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     static const WCHAR sTimeFormatW[] = {'s','T','i','m','e','F','o','r','m','a','t',0};
     static const WCHAR sTimeW[] = {'s','T','i','m','e',0};
     static const WCHAR sYearMonthW[] = {'s','Y','e','a','r','M','o','n','t','h',0};
+    static const WCHAR NumShapeW[] = {'N','u','m','s','h','a','p','e',0};
 
     switch (lctype & ~LOCALE_LOCALEINFOFLAGSMASK)
     {
@@ -548,6 +559,11 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     case LOCALE_ITLZERO:          return iTLZeroW;
     case LOCALE_SCOUNTRY:         return sCountryW;
     case LOCALE_SLANGUAGE:        return sLanguageW;
+
+    /* The following are used in XP and later */
+    case LOCALE_IDIGITSUBSTITUTION: return NumShapeW;
+    case LOCALE_SNATIVEDIGITS:      return sNativeDigitsW;
+    case LOCALE_ITIMEMARKPOSN:      return iTimePrefixW;
     }
     return NULL;
 }
@@ -621,12 +637,23 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
 /******************************************************************************
  *		GetLocaleInfoA (KERNEL32.@)
  *
- * NOTES
- *  LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
+ * Get information about an aspect of a locale.
  *
- *  MS online documentation states that the string returned is NULL terminated
- *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
- *  terminated string".
+ * PARAMS
+ *  lcid   [I] LCID of the locale
+ *  lctype [I] LCTYPE_ flags from "winnls.h"
+ *  buffer [O] Destination for the information
+ *  len    [I] Length of buffer in characters
+ *
+ * RETURNS
+ *  Success: The size of the data requested. If buffer is non-NULL, it is filled
+ *           with the information.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  - LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
+ *  - The string returned is NUL terminated, except for LOCALE_FONTSIGNATURE,
+ *    which is a bit string.
  */
 INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
 {
@@ -679,12 +706,7 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
 /******************************************************************************
  *		GetLocaleInfoW (KERNEL32.@)
  *
- * NOTES
- *  LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
- *
- *  MS online documentation states that the string returned is NULL terminated
- *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
- *  terminated string".
+ * See GetLocaleInfoA.
  */
 INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 {
@@ -695,7 +717,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     INT ret;
     UINT lcflags;
     const WCHAR *p;
-    int i;
+    unsigned int i;
 
     if (len < 0 || (len && !buffer))
     {
@@ -704,8 +726,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     }
     if (!len) buffer = NULL;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    lcid = ConvertDefaultLocale(lcid);
 
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= ~LOCALE_LOCALEINFOFLAGSMASK;
@@ -727,7 +748,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
         lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
 
-    hModule = GetModuleHandleA( "kernel32.dll" );
+    hModule = GetModuleHandleW( kernel32W );
     if (!(hrsrc = FindResourceExW( hModule, (LPWSTR)RT_STRING, (LPCWSTR)((lctype >> 4) + 1), lang_id )))
     {
         SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
@@ -784,6 +805,27 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
 /******************************************************************************
  *		SetLocaleInfoA	[KERNEL32.@]
+ *
+ * Set information about an aspect of a locale.
+ *
+ * PARAMS
+ *  lcid   [I] LCID of the locale
+ *  lctype [I] LCTYPE_ flags from "winnls.h"
+ *  data   [I] Information to set
+ *
+ * RETURNS
+ *  Success: TRUE. The information given will be returned by GetLocaleInfoA()
+ *           whenever it is called without LOCALE_NOUSEROVERRIDE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  - Values are only be set for the current user locale; the system locale
+ *  settings cannot be changed.
+ *  - Any settings changed by this call are lost when the locale is changed by
+ *  the control panel (in Wine, this happens every time you change LANG).
+ *  - The native implementation of this function does not check that lcid matches
+ *  the current user locale, and simply sets the new values. Wine warns you in
+ *  this case, but behaves the same.
  */
 BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
 {
@@ -792,8 +834,7 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
     DWORD len;
     BOOL ret;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    lcid = ConvertDefaultLocale(lcid);
 
     if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
     len = MultiByteToWideChar( codepage, 0, data, -1, NULL, 0 );
@@ -811,6 +852,8 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
 
 /******************************************************************************
  *		SetLocaleInfoW	(KERNEL32.@)
+ *
+ * See SetLocaleInfoA.
  */
 BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 {
@@ -820,15 +863,29 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     NTSTATUS status;
     HKEY hkey;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    lcid = ConvertDefaultLocale(lcid);
 
-    if (!(value = get_locale_value_name( lctype )))
+    lctype &= ~LOCALE_LOCALEINFOFLAGSMASK;
+    value = get_locale_value_name( lctype );
+
+    if (!data || !value)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (lcid != GetUserDefaultLCID()) return TRUE;  /* fake success */
+
+    if (lctype == LOCALE_IDATE || lctype == LOCALE_ILDATE)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+
+    if (lcid != GetUserDefaultLCID())
+    {
+        /* Windows does not check that the lcid matches the current lcid */
+        WARN("locale 0x%08lx isn't the current locale (0x%08lx), setting anyway!\n",
+             lcid, GetUserDefaultLCID());
+    }
 
     TRACE("setting %lx to %s\n", lctype, debugstr_w(data) );
 
@@ -840,16 +897,61 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     if (!(hkey = create_registry_key())) return FALSE;
     RtlInitUnicodeString( &valueW, value );
     status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, data, (strlenW(data)+1)*sizeof(WCHAR) );
+
+    if (lctype == LOCALE_SDATE || lctype == LOCALE_SLONGDATE)
+    {
+      /* Set I-value from S value */
+      WCHAR *lpD, *lpM, *lpY;
+      WCHAR szBuff[2];
+
+      lpD = strchrW(data, 'd');
+      lpM = strchrW(data, 'M');
+      lpY = strchrW(data, 'y');
+
+      if (lpD <= lpM)
+      {
+        szBuff[0] = '1'; /* D-M-Y */
+      }
+      else
+      {
+        if (lpY <= lpM)
+          szBuff[0] = '2'; /* Y-M-D */
+        else
+          szBuff[0] = '0'; /* M-D-Y */
+      }
+
+      szBuff[1] = '\0';
+
+      if (lctype == LOCALE_SDATE)
+        lctype = LOCALE_IDATE;
+      else
+        lctype = LOCALE_ILDATE;
+
+      value = get_locale_value_name( lctype );
+
+      WriteProfileStringW( intlW, value, szBuff );
+
+      RtlInitUnicodeString( &valueW, value );
+      status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, szBuff, sizeof(szBuff) );
+    }
+
     NtClose( hkey );
 
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
-    return TRUE;
 }
 
 
 /***********************************************************************
  *           GetThreadLocale    (KERNEL32.@)
+ *
+ * Get the current threads locale.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The LCID currently assocated with the calling thread.
  */
 LCID WINAPI GetThreadLocale(void)
 {
@@ -858,49 +960,100 @@ LCID WINAPI GetThreadLocale(void)
     return ret;
 }
 
-
 /**********************************************************************
  *           SetThreadLocale    (KERNEL32.@)
  *
- * FIXME
- *  check if lcid is a valid cp
+ * Set the current threads locale.
+ *
+ * PARAMS
+ *  lcid [I] LCID of the locale to set
+ *
+ * RETURNS
+ *  Success: TRUE. The threads locale is set to lcid.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
-BOOL WINAPI SetThreadLocale( LCID lcid ) /* [in] Locale identifier */
+BOOL WINAPI SetThreadLocale( LCID lcid )
 {
-    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    TRACE("(0x%04lX)\n", lcid);
 
-    NtCurrentTeb()->CurrentLocale = lcid;
-    NtCurrentTeb()->code_page = get_lcid_codepage( lcid );
+    lcid = ConvertDefaultLocale(lcid);
+
+    if (lcid != GetThreadLocale())
+    {
+        if (!IsValidLocale(lcid, LCID_SUPPORTED))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        NtCurrentTeb()->CurrentLocale = lcid;
+        NtCurrentTeb()->code_page = get_lcid_codepage( lcid );
+    }
     return TRUE;
 }
 
-
 /******************************************************************************
  *		ConvertDefaultLocale (KERNEL32.@)
+ *
+ * Convert a default locale identifier into a real identifier.
+ *
+ * PARAMS
+ *  lcid [I] LCID identifier of the locale to convert
+ *
+ * RETURNS
+ *  lcid unchanged, if not a default locale or is its sublanguage is
+ *   not SUBLANG_NEUTRAL.
+ *  GetSystemDefaultLCID(), if lcid == LOCALE_SYSTEM_DEFAULT.
+ *  GetUserDefaultLCID(), if lcid == LOCALE_USER_DEFAULT or LOCALE_NEUTRAL.
+ *  Otherwise, lcid with sublanguage cheanged to SUBLANG_DEFAULT.
  */
 LCID WINAPI ConvertDefaultLocale( LCID lcid )
 {
+    LANGID langid;
+
     switch (lcid)
     {
     case LOCALE_SYSTEM_DEFAULT:
-        return GetSystemDefaultLCID();
+        lcid = GetSystemDefaultLCID();
+        break;
     case LOCALE_USER_DEFAULT:
-        return GetUserDefaultLCID();
     case LOCALE_NEUTRAL:
-        return MAKELCID (LANG_NEUTRAL, SUBLANG_NEUTRAL);
+        lcid = GetUserDefaultLCID();
+        break;
+    default:
+        /* Replace SUBLANG_NEUTRAL with SUBLANG_DEFAULT */
+        langid = LANGIDFROMLCID(lcid);
+        if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
+        {
+          langid = MAKELANGID(PRIMARYLANGID(langid), SUBLANG_DEFAULT);
+          lcid = MAKELCID(langid, SORTIDFROMLCID(lcid));
+        }
     }
-    return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
+    return lcid;
 }
 
 
 /******************************************************************************
  *           IsValidLocale   (KERNEL32.@)
+ *
+ * Determine if a locale is valid.
+ *
+ * PARAMS
+ *  lcid  [I] LCID of the locale to check
+ *  flags [I] LCID_SUPPORTED = Valid, LCID_INSTALLED = Valid and installed on the system
+ *
+ * RETURN
+ *  TRUE,  if lcid is valid,
+ *  FALSE, otherwise.
+ *
+ * NOTES
+ *  Wine does not currently make the distinction between supported and installed. All
+ *  languages supported are installed by default.
  */
 BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
 {
     /* check if language is registered in the kernel32 resources */
-    return FindResourceExW( GetModuleHandleA("KERNEL32"), (LPWSTR)RT_STRING,
+    return FindResourceExW( GetModuleHandleW(kernel32W), (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, LANGIDFROMLCID(lcid)) != 0;
 }
 
@@ -927,12 +1080,21 @@ static BOOL CALLBACK enum_lang_proc_w( HMODULE hModule, LPCWSTR type,
 
 /******************************************************************************
  *           EnumSystemLocalesA  (KERNEL32.@)
+ *
+ * Call a users function for each locale available on the system.
+ *
+ * PARAMS
+ *  lpfnLocaleEnum [I] Callback function to call for each locale
+ *  dwFlags        [I] LOCALE_SUPPORTED=All supported, LOCALE_INSTALLED=Installed only
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
-BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
-                                   DWORD flags)
+BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
 {
-    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
-    EnumResourceLanguagesA( GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
+    EnumResourceLanguagesA( GetModuleHandleW(kernel32W), (LPSTR)RT_STRING,
                             (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
                             (LONG)lpfnLocaleEnum);
     return TRUE;
@@ -941,11 +1103,13 @@ BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
 
 /******************************************************************************
  *           EnumSystemLocalesW  (KERNEL32.@)
+ *
+ * See EnumSystemLocalesA.
  */
-BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD flags )
+BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD dwFlags )
 {
-    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
-    EnumResourceLanguagesW( GetModuleHandleA("KERNEL32"), (LPWSTR)RT_STRING,
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
+    EnumResourceLanguagesW( GetModuleHandleW(kernel32W), (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
                             (LONG)lpfnLocaleEnum);
     return TRUE;
@@ -954,6 +1118,18 @@ BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD flags )
 
 /***********************************************************************
  *           VerLanguageNameA  (KERNEL32.@)
+ *
+ * Get the name of a language.
+ *
+ * PARAMS
+ *  wLang  [I] LANGID of the language
+ *  szLang [O] Destination for the language name
+ *
+ * RETURNS
+ *  Success: The size of the language name. If szLang is non-NULL, it is filled
+ *           with the name.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ *
  */
 DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 {
@@ -963,6 +1139,8 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 
 /***********************************************************************
  *           VerLanguageNameW  (KERNEL32.@)
+ *
+ * See VerLanguageNameA.
  */
 DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 {
@@ -1107,8 +1285,7 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 
     if (!dstlen) dst = NULL;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    lcid = ConvertDefaultLocale(lcid);
 
     if (flags & LCMAP_SORTKEY)
     {
@@ -1215,8 +1392,7 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
         return 0;
     }
 
-    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                   (WCHAR *)&locale_cp, (sizeof(locale_cp)/sizeof(WCHAR)));
+    locale_cp = get_lcid_codepage(lcid);
 
     srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, bufW, 128);
     if (srclenW)
@@ -1316,8 +1492,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
     if (len1 < 0) len1 = strlen(str1);
     if (len2 < 0) len2 = strlen(str2);
 
-    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                   (WCHAR *)&locale_cp, (sizeof(locale_cp)/sizeof(WCHAR)));
+    locale_cp = get_lcid_codepage(lcid);
 
     len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 128);
     if (len1W)
@@ -1403,19 +1578,18 @@ int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
  */
 void LOCALE_Init(void)
 {
-    UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = -1;
+    UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = ~0U;
     LCID lcid = init_default_lcid( &unix_cp );
 
     NtSetDefaultLocale( FALSE, lcid );
     NtSetDefaultLocale( TRUE, lcid );
 
-    GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                    (LPWSTR)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR) );
+    ansi_cp = get_lcid_codepage(lcid);
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
-    if (unix_cp == -1)
+    if (unix_cp == ~0U)
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTUNIXCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&unix_cp, sizeof(unix_cp)/sizeof(WCHAR) );
 
@@ -1423,39 +1597,590 @@ void LOCALE_Init(void)
     update_registry( lcid );
 }
 
+static HKEY NLS_RegOpenKey(HKEY hRootKey, LPCWSTR szKeyName)
+{
+    UNICODE_STRING keyName;
+    OBJECT_ATTRIBUTES attr;
+    HKEY hkey;
+
+    RtlInitUnicodeString( &keyName, szKeyName );
+    InitializeObjectAttributes(&attr, &keyName, 0, hRootKey, NULL);
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS)
+        hkey = 0;
+
+    return hkey;
+}
+
+static HKEY NLS_RegOpenSubKey(HKEY hRootKey, LPCWSTR szKeyName)
+{
+    HKEY hKey = NLS_RegOpenKey(hRootKey, szKeyName);
+
+    if (hRootKey)
+        NtClose( hRootKey );
+
+    return hKey;
+}
+
+static BOOL NLS_RegEnumSubKey(HKEY hKey, UINT ulIndex, LPWSTR szKeyName,
+                              ULONG keyNameSize)
+{
+    BYTE buffer[80];
+    KEY_BASIC_INFORMATION *info = (KEY_BASIC_INFORMATION *)buffer;
+    DWORD dwLen;
+
+    if (NtEnumerateKey( hKey, ulIndex, KeyBasicInformation, buffer,
+                        sizeof(buffer), &dwLen) != STATUS_SUCCESS ||
+        info->NameLength > keyNameSize)
+    {
+        return FALSE;
+    }
+
+    TRACE("info->Name %s info->NameLength %ld\n", debugstr_w(info->Name), info->NameLength);
+
+    memcpy( szKeyName, info->Name, info->NameLength);
+    szKeyName[info->NameLength / sizeof(WCHAR)] = '\0';
+
+    TRACE("returning %s\n", debugstr_w(szKeyName));
+    return TRUE;
+}
+
+static BOOL NLS_RegEnumValue(HKEY hKey, UINT ulIndex,
+                             LPWSTR szValueName, ULONG valueNameSize,
+                             LPWSTR szValueData, ULONG valueDataSize)
+{
+    BYTE buffer[80];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    DWORD dwLen;
+
+    if (NtEnumerateValueKey( hKey, ulIndex, KeyValueFullInformation,
+        buffer, sizeof(buffer), &dwLen ) != STATUS_SUCCESS ||
+        info->NameLength > valueNameSize ||
+        info->DataLength > valueDataSize)
+    {
+        return FALSE;
+    }
+
+    TRACE("info->Name %s info->DataLength %ld\n", debugstr_w(info->Name), info->DataLength);
+
+    memcpy( szValueName, info->Name, info->NameLength);
+    szValueName[info->NameLength / sizeof(WCHAR)] = '\0';
+    memcpy( szValueData, buffer + info->DataOffset, info->DataLength );
+    szValueData[info->DataLength / sizeof(WCHAR)] = '\0';
+
+    TRACE("returning %s %s\n", debugstr_w(szValueName), debugstr_w(szValueData));
+    return TRUE;
+}
+
+static BOOL NLS_RegGetDword(HKEY hKey, LPCWSTR szValueName, DWORD *lpVal)
+{
+    BYTE buffer[128];
+    const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    DWORD dwSize = sizeof(buffer);
+    UNICODE_STRING valueName;
+
+    RtlInitUnicodeString( &valueName, szValueName );
+
+    TRACE("%p, %s\n", hKey, debugstr_w(szValueName));
+    if (NtQueryValueKey( hKey, &valueName, KeyValuePartialInformation,
+                         buffer, dwSize, &dwSize ) == STATUS_SUCCESS &&
+        info->DataLength == sizeof(DWORD))
+    {
+        memcpy(lpVal, info->Data, sizeof(DWORD));
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSize)
+{
+    HMODULE hModule = GetModuleHandleW(kernel32W);
+    LANGID  langId;
+    LPCWSTR szResourceName = (LPCWSTR)(((lgrpid + 0x2000) >> 4) + 1);
+    HRSRC   hResource;
+    BOOL    bRet = FALSE;
+
+    /* FIXME: Is it correct to use the system default langid? */
+    langId = GetSystemDefaultLangID();
+
+    if (SUBLANGID(langId) == SUBLANG_NEUTRAL)
+        langId = MAKELANGID( PRIMARYLANGID(langId), SUBLANG_DEFAULT );
+
+    hResource = FindResourceExW( hModule, (LPWSTR)RT_STRING, szResourceName, langId );
+
+    if (hResource)
+    {
+        HGLOBAL hResDir = LoadResource( hModule, hResource );
+
+        if (hResDir)
+        {
+            ULONG   iResourceIndex = lgrpid & 0xf;
+            LPCWSTR lpResEntry = LockResource( hResDir );
+            ULONG   i;
+
+            for (i = 0; i < iResourceIndex; i++)
+                lpResEntry += *lpResEntry + 1;
+
+            if (*lpResEntry < nameSize)
+            {
+                memcpy( szName, lpResEntry + 1, *lpResEntry * sizeof(WCHAR) );
+                szName[*lpResEntry] = '\0';
+                bRet = TRUE;
+            }
+
+        }
+        FreeResource( hResource );
+    }
+    return bRet;
+}
+
+/* Registry keys for NLS related information */
+static const WCHAR szNlsKeyName[] = {
+    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+    'C','o','n','t','r','o','l','\\','N','l','s','\0'
+};
+
+static const WCHAR szLangGroupsKeyName[] = {
+    'L','a','n','g','u','a','g','e',' ','G','r','o','u','p','s','\0'
+};
+
+static const WCHAR szCountryListName[] = {
+    'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'T','e','l','e','p','h','o','n','y','\\',
+    'C','o','u','n','t','r','y',' ','L','i','s','t','\0'
+};
+
+
+/* Callback function ptrs for EnumSystemLanguageGroupsA/W */
+typedef struct
+{
+  LANGUAGEGROUP_ENUMPROCA procA;
+  LANGUAGEGROUP_ENUMPROCW procW;
+  DWORD    dwFlags;
+  LONG_PTR lParam;
+} ENUMLANGUAGEGROUP_CALLBACKS;
+
+/* Internal implementation of EnumSystemLanguageGroupsA/W */
+static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
+{
+    WCHAR szNumber[10], szValue[4];
+    HKEY hKey;
+    BOOL bContinue = TRUE;
+    ULONG ulIndex = 0;
+
+    if (!lpProcs)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (lpProcs->dwFlags)
+    {
+    case 0:
+        /* Default to LGRPID_INSTALLED */
+        lpProcs->dwFlags = LGRPID_INSTALLED;
+        /* Fall through... */
+    case LGRPID_INSTALLED:
+    case LGRPID_SUPPORTED:
+        break;
+    default:
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    hKey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), szLangGroupsKeyName );
+
+    if (!hKey)
+      WARN("NLS registry key not found. Please apply the default registry file 'winedefault.reg'\n");
+
+    while (bContinue)
+    {
+        if (NLS_RegEnumValue( hKey, ulIndex, szNumber, sizeof(szNumber),
+                              szValue, sizeof(szValue) ))
+        {
+            BOOL bInstalled = szValue[0] == '1' ? TRUE : FALSE;
+            LGRPID lgrpid = strtoulW( szNumber, NULL, 16 );
+
+            TRACE("grpid %s (%sinstalled)\n", debugstr_w(szNumber),
+                   bInstalled ? "" : "not ");
+
+            if (lpProcs->dwFlags == LGRPID_SUPPORTED || bInstalled)
+            {
+                WCHAR szGrpName[48];
+
+                if (!NLS_GetLanguageGroupName( lgrpid, szGrpName, sizeof(szGrpName) / sizeof(WCHAR) ))
+                    szGrpName[0] = '\0';
+
+                if (lpProcs->procW)
+                    bContinue = lpProcs->procW( lgrpid, szNumber, szGrpName, lpProcs->dwFlags,
+                                                lpProcs->lParam );
+                else
+                {
+                    char szNumberA[sizeof(szNumber)/sizeof(WCHAR)];
+                    char szGrpNameA[48];
+
+                    /* FIXME: MSDN doesn't say which code page the W->A translation uses,
+                     *        or whether the language names are ever localised. Assume CP_ACP.
+                     */
+
+                    WideCharToMultiByte(CP_ACP, 0, szNumber, -1, szNumberA, sizeof(szNumberA), 0, 0);
+                    WideCharToMultiByte(CP_ACP, 0, szGrpName, -1, szGrpNameA, sizeof(szGrpNameA), 0, 0);
+
+                    bContinue = lpProcs->procA( lgrpid, szNumberA, szGrpNameA, lpProcs->dwFlags,
+                                                lpProcs->lParam );
+                }
+            }
+
+            ulIndex++;
+        }
+        else
+            bContinue = FALSE;
+
+        if (!bContinue)
+            break;
+    }
+
+    if (hKey)
+        NtClose( hKey );
+
+    return TRUE;
+}
+
 /******************************************************************************
  *           EnumSystemLanguageGroupsA    (KERNEL32.@)
+ *
+ * Call a users function for each language group available on the system.
+ *
+ * PARAMS
+ *  pLangGrpEnumProc [I] Callback function to call for each language group
+ *  dwFlags          [I] LGRPID_SUPPORTED=All Supported, LGRPID_INSTALLED=Installed only
+ *  lParam           [I] User parameter to pass to pLangGrpEnumProc
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
-BOOL WINAPI EnumSystemLanguageGroupsA(
-  LANGUAGEGROUP_ENUMPROCA pLangGroupEnumProc, /* [in] callback function */
-  DWORD dwFlags,                              /* [in] language groups */
-  LONG_PTR  lParam                            /* [in] callback parameter */
-)
+BOOL WINAPI EnumSystemLanguageGroupsA(LANGUAGEGROUP_ENUMPROCA pLangGrpEnumProc,
+                                      DWORD dwFlags, LONG_PTR lParam)
 {
-  FIXME("stub\n");
-  SetLastError( ERROR_INVALID_PARAMETER );
-  return FALSE;
+    ENUMLANGUAGEGROUP_CALLBACKS procs;
+
+    TRACE("(%p,0x%08lX,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
+
+    procs.procA = pLangGrpEnumProc;
+    procs.procW = NULL;
+    procs.dwFlags = dwFlags;
+    procs.lParam = lParam;
+
+    return NLS_EnumSystemLanguageGroups( pLangGrpEnumProc ? &procs : NULL);
 }
 
 /******************************************************************************
  *           EnumSystemLanguageGroupsW    (KERNEL32.@)
+ *
+ * See EnumSystemLanguageGroupsA.
  */
-BOOL WINAPI EnumSystemLanguageGroupsW(
-  LANGUAGEGROUP_ENUMPROCW pLangGroupEnumProc, /* [in] callback function */
-  DWORD dwFlags,                              /* [in] language groups */
-  LONG_PTR  lParam                            /* [in] callback parameter */
-)
+BOOL WINAPI EnumSystemLanguageGroupsW(LANGUAGEGROUP_ENUMPROCW pLangGrpEnumProc,
+                                      DWORD dwFlags, LONG_PTR lParam)
 {
-  FIXME("stub\n");
-  SetLastError( ERROR_INVALID_PARAMETER );
-  return FALSE;
+    ENUMLANGUAGEGROUP_CALLBACKS procs;
+
+    TRACE("(%p,0x%08lX,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
+
+    procs.procA = NULL;
+    procs.procW = pLangGrpEnumProc;
+    procs.dwFlags = dwFlags;
+    procs.lParam = lParam;
+
+    return NLS_EnumSystemLanguageGroups( pLangGrpEnumProc ? &procs : NULL);
+}
+
+/******************************************************************************
+ *           IsValidLanguageGroup    (KERNEL32.@)
+ *
+ * Determine if a language group is supported and/or installed.
+ *
+ * PARAMS
+ *  lgrpid  [I] Language Group Id (LGRPID_ values from "winnls.h")
+ *  dwFlags [I] LGRPID_SUPPORTED=Supported, LGRPID_INSTALLED=Installed
+ *
+ * RETURNS
+ *  TRUE, if lgrpid is supported and/or installed, according to dwFlags.
+ *  FALSE otherwise.
+ */
+BOOL WINAPI IsValidLanguageGroup(LGRPID lgrpid, DWORD dwFlags)
+{
+    static const WCHAR szFormat[] = { '%','x','\0' };
+    WCHAR szValueName[16], szValue[2];
+    BOOL bSupported = FALSE, bInstalled = FALSE;
+    HKEY hKey;
+
+
+    switch (dwFlags)
+    {
+    case LGRPID_INSTALLED:
+    case LGRPID_SUPPORTED:
+
+        hKey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), szLangGroupsKeyName );
+
+        sprintfW( szValueName, szFormat, lgrpid );
+
+        if (NLS_RegGetDword( hKey, szValueName, (LPDWORD)&szValue ))
+        {
+            bSupported = TRUE;
+
+            if (szValue[0] == '1')
+                bInstalled = TRUE;
+        }
+
+        if (hKey)
+            NtClose( hKey );
+
+        break;
+    }
+
+    if ((dwFlags == LGRPID_SUPPORTED && bSupported) ||
+        (dwFlags == LGRPID_INSTALLED && bInstalled))
+        return TRUE;
+
+    return FALSE;
+}
+
+/* Callback function ptrs for EnumLanguageGrouplocalesA/W */
+typedef struct
+{
+  LANGGROUPLOCALE_ENUMPROCA procA;
+  LANGGROUPLOCALE_ENUMPROCW procW;
+  DWORD    dwFlags;
+  LGRPID   lgrpid;
+  LONG_PTR lParam;
+} ENUMLANGUAGEGROUPLOCALE_CALLBACKS;
+
+/* Internal implementation of EnumLanguageGrouplocalesA/W */
+static BOOL NLS_EnumLanguageGroupLocales(ENUMLANGUAGEGROUPLOCALE_CALLBACKS *lpProcs)
+{
+    static const WCHAR szLocaleKeyName[] = {
+      'L','o','c','a','l','e','\0'
+    };
+    static const WCHAR szAlternateSortsKeyName[] = {
+      'A','l','t','e','r','n','a','t','e',' ','S','o','r','t','s','\0'
+    };
+    WCHAR szNumber[10], szValue[4];
+    HKEY hKey;
+    BOOL bContinue = TRUE, bAlternate = FALSE;
+    LGRPID lgrpid;
+    ULONG ulIndex = 1;  /* Ignore default entry of 1st key */
+
+    if (!lpProcs || !lpProcs->lgrpid || lpProcs->lgrpid > LGRPID_ARMENIAN)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (lpProcs->dwFlags)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    hKey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), szLocaleKeyName );
+
+    if (!hKey)
+      WARN("NLS registry key not found. Please apply the default registry file 'winedefault.reg'\n");
+
+    while (bContinue)
+    {
+        if (NLS_RegEnumValue( hKey, ulIndex, szNumber, sizeof(szNumber),
+                              szValue, sizeof(szValue) ))
+        {
+            lgrpid = strtoulW( szValue, NULL, 16 );
+
+            TRACE("lcid %s, grpid %ld (%smatched)\n", debugstr_w(szNumber),
+                   lgrpid, lgrpid == lpProcs->lgrpid ? "" : "not ");
+
+            if (lgrpid == lpProcs->lgrpid)
+            {
+                LCID lcid;
+
+                lcid = strtoulW( szNumber, NULL, 16 );
+
+                /* FIXME: native returns extra text for a few (17/150) locales, e.g:
+                 * '00000437          ;Georgian'
+                 * At present we only pass the LCID string.
+                 */
+
+                if (lpProcs->procW)
+                    bContinue = lpProcs->procW( lgrpid, lcid, szNumber, lpProcs->lParam );
+                else
+                {
+                    char szNumberA[sizeof(szNumber)/sizeof(WCHAR)];
+
+                    WideCharToMultiByte(CP_ACP, 0, szNumber, -1, szNumberA, sizeof(szNumberA), 0, 0);
+
+                    bContinue = lpProcs->procA( lgrpid, lcid, szNumberA, lpProcs->lParam );
+                }
+            }
+
+            ulIndex++;
+        }
+        else
+        {
+            /* Finished enumerating this key */
+            if (!bAlternate)
+            {
+                /* Enumerate alternate sorts also */
+                hKey = NLS_RegOpenKey( hKey, szAlternateSortsKeyName );
+                bAlternate = TRUE;
+                ulIndex = 0;
+            }
+            else
+                bContinue = FALSE; /* Finished both keys */
+        }
+
+        if (!bContinue)
+            break;
+    }
+
+    if (hKey)
+        NtClose( hKey );
+
+    return TRUE;
+}
+
+/******************************************************************************
+ *           EnumLanguageGroupLocalesA    (KERNEL32.@)
+ *
+ * Call a users function for every locale in a language group available on the system.
+ *
+ * PARAMS
+ *  pLangGrpLcEnumProc [I] Callback function to call for each locale
+ *  lgrpid             [I] Language group (LGRPID_ values from "winnls.h")
+ *  dwFlags            [I] Reserved, set to 0
+ *  lParam             [I] User parameter to pass to pLangGrpLcEnumProc
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
+ */
+BOOL WINAPI EnumLanguageGroupLocalesA(LANGGROUPLOCALE_ENUMPROCA pLangGrpLcEnumProc,
+                                      LGRPID lgrpid, DWORD dwFlags, LONG_PTR lParam)
+{
+    ENUMLANGUAGEGROUPLOCALE_CALLBACKS callbacks;
+
+    TRACE("(%p,0x%08lX,0x%08lX,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
+
+    callbacks.procA   = pLangGrpLcEnumProc;
+    callbacks.procW   = NULL;
+    callbacks.dwFlags = dwFlags;
+    callbacks.lgrpid  = lgrpid;
+    callbacks.lParam  = lParam;
+
+    return NLS_EnumLanguageGroupLocales( pLangGrpLcEnumProc ? &callbacks : NULL );
+}
+
+/******************************************************************************
+ *           EnumLanguageGroupLocalesW    (KERNEL32.@)
+ *
+ * See EnumLanguageGroupLocalesA.
+ */
+BOOL WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW pLangGrpLcEnumProc,
+                                      LGRPID lgrpid, DWORD dwFlags, LONG_PTR lParam)
+{
+    ENUMLANGUAGEGROUPLOCALE_CALLBACKS callbacks;
+
+    TRACE("(%p,0x%08lX,0x%08lX,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
+
+    callbacks.procA   = NULL;
+    callbacks.procW   = pLangGrpLcEnumProc;
+    callbacks.dwFlags = dwFlags;
+    callbacks.lgrpid  = lgrpid;
+    callbacks.lParam  = lParam;
+
+    return NLS_EnumLanguageGroupLocales( pLangGrpLcEnumProc ? &callbacks : NULL );
+}
+
+/******************************************************************************
+ *           EnumSystemGeoID    (KERNEL32.@)
+ *
+ * Call a users function for every location available on the system.
+ *
+ * PARAMS
+ *  geoclass     [I] Type of information desired (SYSGEOTYPE enum from "winnls.h")
+ *  reserved     [I] Reserved, set to 0
+ *  pGeoEnumProc [I] Callback function to call for each location
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
+ */
+BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeoEnumProc)
+{
+    static const WCHAR szCountryCodeValueName[] = {
+      'C','o','u','n','t','r','y','C','o','d','e','\0'
+    };
+    WCHAR szNumber[10];
+    HKEY hKey;
+    ULONG ulIndex = 0;
+
+    TRACE("(0x%08lX,0x%08lX,%p)\n", geoclass, reserved, pGeoEnumProc);
+
+    if (geoclass != GEOCLASS_NATION || reserved || !pGeoEnumProc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    hKey = NLS_RegOpenKey( 0, szCountryListName );
+
+    while (NLS_RegEnumSubKey( hKey, ulIndex, szNumber, sizeof(szNumber) ))
+    {
+        BOOL bContinue = TRUE;
+        DWORD dwGeoId;
+        HKEY hSubKey = NLS_RegOpenKey( hKey, szNumber );
+
+        if (hSubKey)
+        {
+            if (NLS_RegGetDword( hSubKey, szCountryCodeValueName, &dwGeoId ))
+            {
+                TRACE("Got geoid %ld\n", dwGeoId);
+
+                if (!pGeoEnumProc( dwGeoId ))
+                    bContinue = FALSE;
+            }
+
+            NtClose( hSubKey );
+        }
+
+        if (!bContinue)
+            break;
+
+        ulIndex++;
+    }
+
+    if (hKey)
+        NtClose( hKey );
+
+    return TRUE;
 }
 
 /******************************************************************************
  *           InvalidateNLSCache           (KERNEL32.@)
+ *
+ * Invalidate the cache of NLS values.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI InvalidateNLSCache(void)
 {
-  FIXME("stub\n");
+  FIXME("() stub\n");
   return FALSE;
 }

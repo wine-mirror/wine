@@ -242,8 +242,8 @@
 @ stdcall EnumDateFormatsW(ptr long long)
 @ stub EnumDateFormatsExA
 @ stub EnumDateFormatsExW
-@ stub EnumLanguageGroupLocalesA
-@ stub EnumLanguageGroupLocalesW
+@ stdcall EnumLanguageGroupLocalesA(ptr long long ptr)
+@ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
 @ stdcall EnumResourceLanguagesA(long str str ptr long)
 @ stdcall EnumResourceLanguagesW(long wstr wstr ptr long)
 @ stdcall EnumResourceNamesA(long str ptr long)
@@ -252,7 +252,7 @@
 @ stdcall EnumResourceTypesW(long ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall EnumSystemCodePagesW(ptr long)
-@ stub EnumSystemGeoID
+@ stdcall EnumSystemGeoID(long long ptr)
 @ stdcall EnumSystemLanguageGroupsA(ptr long ptr)
 @ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
 @ stdcall EnumSystemLocalesA(ptr long)
@@ -575,7 +575,7 @@
 @ stub IsSLCallback
 @ stdcall IsSystemResumeAutomatic()
 @ stdcall IsValidCodePage(long)
-@ stub IsValidLanguageGroup
+@ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
 @ stdcall -register -i386 K32Thk1632Epilog()
 @ stdcall -register -i386 K32Thk1632Prolog()
