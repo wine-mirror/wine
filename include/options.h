@@ -73,7 +73,6 @@ struct options
     int    perfectGraphics; /* Favor correctness over speed for graphics */
     int    noDGA;           /* Disable XFree86 DGA extensions */
     char * configFileName;  /* Command line config file */
-    char * consoleDrivers;  /* Console driver list */
     int screenDepth;
 };
 

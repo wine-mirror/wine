@@ -1,4 +1,5 @@
 /* tty.c */
+/* Copyright 1999 - Joseph Pranevich */
 
 /* This is the console driver for TTY-based consoles, i.e. consoles
    without cursor placement, etc. It's also a pretty decent starting

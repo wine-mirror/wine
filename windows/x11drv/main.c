@@ -245,9 +245,9 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
   if (X11DRV_MAIN_GetResource( db, ".nodga", &value))
     Options.noDGA = TRUE;
   if (X11DRV_MAIN_GetResource( db, ".console", &value))
-    Options.consoleDrivers = xstrdup((char *)value.addr);
+      driver.driver_list = xstrdup((char *)value.addr);
   else
-    Options.consoleDrivers = CONSOLE_DEFAULT_DRIVER;
+      driver.driver_list = CONSOLE_DEFAULT_DRIVER;
 }
 
 /***********************************************************************

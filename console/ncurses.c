@@ -1,4 +1,5 @@
 /* ncurses.c */
+/* Copyright 1999 - Joseph Pranevich */
 
 #include "config.h"
 #include "console.h"
@@ -146,11 +147,16 @@ void NCURSES_GetCursorPosition(char *row, char *col)
 void NCURSES_GetCharacterAtCursor(char *ch, int *fg_color, int
    *bg_color, int *attribute)
 {
+   /* If any of the pointers are NULL, ignore them */
    /* We will eventually have to convert the color data */
-   *ch = (char) winch(stdscr);
-   *fg_color = 0;
-   *bg_color = 0;
-   *attribute = 0;
+   if (ch)
+      *ch = (char) winch(stdscr);
+   if (fg_color)
+      *fg_color = WINE_WHITE;
+   if (bg_color)
+      *bg_color = WINE_BLACK;
+   if (attribute)
+      *attribute = 0;
 };
 
 void NCURSES_Refresh()

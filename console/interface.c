@@ -16,17 +16,9 @@
 
 static int pop_driver(char **, char **, int *);
 
-void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
-{
-   if (driver.write)
-   {
-      driver.write(out, fg_color, bg_color, attribute);
-      if (!driver.norefresh)
-         CONSOLE_Refresh();
-   }
-}
+static int console_initialized = FALSE;
 
-void CONSOLE_Init(char *drivers)
+int CONSOLE_Init(char *drivers)
 {
       /* When this function is called drivers should be a string
          that consists of driver names followed by plus (+) signs
@@ -62,6 +54,22 @@ void CONSOLE_Init(char *drivers)
 
    if (driver.init)
       driver.init();
+
+   /* For now, always return TRUE */
+   return TRUE;
+}
+
+void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   if (driver.write)
+   {
+      driver.write(out, fg_color, bg_color, attribute);
+      if (!driver.norefresh)
+         CONSOLE_Refresh();
+   }
 }
 
 void CONSOLE_Close()
@@ -72,6 +80,9 @@ void CONSOLE_Close()
 
 void CONSOLE_MoveCursor(char row, char col)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.moveCursor)
    {
       driver.moveCursor(row, col);
@@ -83,6 +94,9 @@ void CONSOLE_MoveCursor(char row, char col)
 void CONSOLE_ClearWindow(char row1, char col1, char row2, char col2, 
    int bg_color, int attribute)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.clearWindow)
    {
       driver.clearWindow(row1, col1, row2, col2, bg_color, attribute);
@@ -94,6 +108,9 @@ void CONSOLE_ClearWindow(char row1, char col1, char row2, char col2,
 void CONSOLE_ScrollUpWindow(char row1, char col1, char row2, char col2, 
    char lines, int bg_color, int attribute)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.scrollUpWindow)
    {
       driver.scrollUpWindow(row1, col1, row2, col2, lines, bg_color, 
@@ -106,6 +123,9 @@ void CONSOLE_ScrollUpWindow(char row1, char col1, char row2, char col2,
 void CONSOLE_ScrollDownWindow(char row1, char col1, char row2, char col2, 
    char lines, int bg_color, int attribute)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.scrollDownWindow)
    {
       driver.scrollDownWindow(row1, col1, row2, col2, lines, bg_color, 
@@ -120,6 +140,9 @@ int CONSOLE_CheckForKeystroke(char *scan, char *ascii)
    should *not* be determined by the driver, rather they should have
    a conv_* function in int16.c. Yuck. */
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.checkForKeystroke)
       return driver.checkForKeystroke(scan, ascii);
    else
@@ -128,34 +151,117 @@ int CONSOLE_CheckForKeystroke(char *scan, char *ascii)
 
 void CONSOLE_GetKeystroke(char *scan, char *ascii)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.getKeystroke)
       driver.getKeystroke(scan, ascii);
 }
 
 void CONSOLE_GetCursorPosition(char *row, char *col)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.getCursorPosition)
       driver.getCursorPosition(row, col);
 }
 
 void CONSOLE_GetCharacterAtCursor(char *ch, int *fg, int *bg, int *a)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.getCharacterAtCursor)
       driver.getCharacterAtCursor(ch, fg, bg, a);
 }
 
 void CONSOLE_Refresh()
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.refresh)
       driver.refresh();
 }
 
 int CONSOLE_AllocColor(int color)
 {
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
    if (driver.allocColor)
       return driver.allocColor(color);
    else 
       return 0;
+}
+
+void CONSOLE_ClearScreen()
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   if (driver.clearScreen)
+   {
+      driver.clearScreen();
+      if (!driver.norefresh)
+         CONSOLE_Refresh();
+   }
+}
+
+char CONSOLE_GetCharacter()
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   /* I'm not sure if we need this really. This is a function that can be
+      accelerated that returns the next *non extended* keystroke */
+   if (driver.getCharacter)
+      return driver.getCharacter();
+   else
+      return (char) 0; /* Sure, this will probably break programs... */
+}
+
+void CONSOLE_ResizeScreen(int x, int y)
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   if (driver.resizeScreen)
+      driver.resizeScreen(x, y);
+}
+
+void CONSOLE_NotifyResizeScreen(int x, int y)
+{
+   if (driver.notifyResizeScreen)
+      driver.notifyResizeScreen(x, y);
+}
+
+void CONSOLE_SetBackgroundColor(int fg, int bg)
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   if (driver.setBackgroundColor)
+      driver.setBackgroundColor(fg, bg);
+}
+
+void CONSOLE_WriteRawString(char *str)
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   /* This is a special function that is only for internal use and 
+      does not actually call any of the console drivers. It's 
+      primary purpose is to provide a way for higher-level drivers
+      to write directly to the underlying terminal without worry that
+      there will be any retranslation done by the assorted drivers. Care
+      should be taken to ensure that this only gets called when the thing
+      written does not actually produce any output or a CONSOLE_Redraw()
+      is called immediately afterwards.
+      CONSOLE_Redraw() is not yet implemented.
+   */
+   fprintf(driver.console_out, "%s", str);
 }
 
 /* This function is only at the CONSOLE level. */
@@ -177,58 +283,6 @@ int CONSOLE_GetRefresh()
       return TRUE;
 }
 
-void CONSOLE_ClearScreen()
-{
-   if (driver.clearScreen)
-   {
-      driver.clearScreen();
-      if (!driver.norefresh)
-         CONSOLE_Refresh();
-   }
-}
-
-char CONSOLE_GetCharacter()
-{
-   /* I'm not sure if we need this really. This is a function that can be
-      accelerated that returns the next *non extended* keystroke */
-   if (driver.getCharacter)
-      return driver.getCharacter();
-   else
-      return (char) 0; /* Sure, this will probably break programs... */
-}
-
-void CONSOLE_ResizeScreen(int x, int y)
-{
-   if (driver.resizeScreen)
-      driver.resizeScreen(x, y);
-}
-
-void CONSOLE_NotifyResizeScreen(int x, int y)
-{
-   if (driver.notifyResizeScreen)
-      driver.notifyResizeScreen(x, y);
-}
-
-void CONSOLE_SetBackgroundColor(int fg, int bg)
-{
-   if (driver.setBackgroundColor)
-      driver.setBackgroundColor(fg, bg);
-}
-
-void CONSOLE_WriteRawString(char *str)
-{
-   /* This is a special function that is only for internal use and 
-      does not actually call any of the console drivers. It's 
-      primary purpose is to provide a way for higher-level drivers
-      to write directly to the underlying terminal without worry that
-      there will be any retranslation done by the assorted drivers. Care
-      should be taken to ensure that this only gets called when the thing
-      written does not actually produce any output or a CONSOLE_Redraw()
-      is called immediately afterwards.
-      CONSOLE_Redraw() is not yet implemented.
-   */
-   fprintf(driver.console_out, "%s", str);
-}
 
 /* Utility functions... */
 

@@ -93,7 +93,6 @@ struct options Options =
     FALSE,          /* Perfect graphics */
     FALSE,          /* No DGA */
     NULL,           /* Alternate config file name */
-    NULL,	    /* Console driver list */
     0               /* screenDepth */
 };
 
@@ -742,8 +741,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 #else /* X_DISPLAY_MISSING */
     TTYDRV_MAIN_ParseOptions(argc,argv);
 #endif /* X_DISPLAY_MISSING */
-
-    CONSOLE_Init(Options.consoleDrivers);
 }
 
 /***********************************************************************

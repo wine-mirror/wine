@@ -1,4 +1,5 @@
 /* generic.c */
+/* Copyright 1999 - Joseph Pranevich */
 
 /* This is a driver to implement, when possible, "high-level"
    routines using only low level calls. This is to make it possible
