@@ -429,7 +429,7 @@ file	krnl386.exe
 515 pascal GetProcAddress32W(long str) GetProcAddress32W16      # Both NT/95
 516 pascal GetVDMPointer32W(segptr word) GetVDMPointer32W16     # Both NT/95
 517 pascal CallProc32W() CallProc32W16                          # Both NT/95
-518 pascal CallProcEx32W() CallProcEx32W16                      # Both NT/95
+518 pascal _CallProcEx32W() CallProcEx32W16                     # Both NT/95
 519 stub EXITKERNELTHUNK
 # the __MOD_ variables are WORD datareferences, the current values are invented.
 520 equate __MOD_KERNEL 4200
