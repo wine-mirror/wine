@@ -1594,7 +1594,7 @@ static void TAB_DrawItem(
     HPEN hbPen  = GetSysColorPen (COLOR_3DDKSHADOW);
     HPEN hShade = GetSysColorPen (COLOR_BTNSHADOW);
 
-    HPEN   hfocusPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_BTNTEXT));
+    HPEN   hfocusPen = CreatePen(PS_ALTERNATE, 1, GetSysColor(COLOR_BTNTEXT));
 
     HPEN   holdPen;
     INT    oldBkMode;
@@ -1834,16 +1834,14 @@ static void TAB_DrawItem(
 	 (GetFocus() == hwnd) &&
 	 (iItem == infoPtr->uFocus) )
     {
+      HBRUSH hOldBrush;
       r = itemRect;
       InflateRect(&r, -1, -1);
 
+      hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
       SelectObject(hdc, hfocusPen);
-
-      MoveToEx (hdc, r.left,    r.top, NULL);
-      LineTo   (hdc, r.right - 1, r.top);
-      LineTo   (hdc, r.right - 1, r.bottom - 1);
-      LineTo   (hdc, r.left,    r.bottom - 1);
-      LineTo   (hdc, r.left,    r.top);
+      Rectangle(hdc, r.left, r.top, r.right, r.bottom);
+      SelectObject(hdc, hOldBrush);
     }
 
     /* Cleanup */

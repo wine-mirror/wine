@@ -3650,7 +3650,7 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   hOldFont = SelectObject(hdc, infoPtr->hFont);
 
   /* select the dotted pen (for drawing the focus box) */
-  hPen = CreatePen(PS_DOT, 1, 0);
+  hPen = CreatePen(PS_ALTERNATE, 1, 0);
   hOldPen = SelectObject(hdc, hPen);
 
   /* select transparent brush (for drawing the focus box) */

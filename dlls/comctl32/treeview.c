@@ -2117,7 +2117,7 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	/* 
 	 * Get a dotted grey pen
 	 */
-	hNewPen = CreatePen(PS_DOT, 0, infoPtr->clrLine);
+	hNewPen = CreatePen(PS_ALTERNATE, 0, infoPtr->clrLine);
 	hOldPen = SelectObject(hdc, hNewPen);
 
 	MoveToEx(hdc, item->stateOffset, centery, NULL);
@@ -2343,29 +2343,10 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 		DeleteObject(hbrBk);
 	    }
 
-	    /* Draw the box arround the selected item */
+	    /* Draw the box around the selected item */
 	    if ((wineItem == infoPtr->selectedItem) && inFocus)
 	    {
-		HPEN hNewPen = CreatePen(PS_DOT, 0,
-					 GetSysColor(COLOR_WINDOWTEXT));
-		HPEN hOldPen = SelectObject(hdc, hNewPen);
-		INT rop = SetROP2(hdc, R2_XORPEN);
-		POINT points[5];
-
-		points[4].x = points[0].x = rcText.left;
-		points[4].y = points[0].y = rcText.top;
-		points[1].x = rcText.right - 1;
-		points[1].y = rcText.top;
-		points[2].x = rcText.right - 1;
-		points[2].y = rcText.bottom - 1;
-		points[3].x = rcText.left;
-		points[3].y = rcText.bottom - 1;
-
-		Polyline(hdc, points, 5);
-
-		SetROP2(hdc, rop);
-		SelectObject(hdc, hOldPen);
-		DeleteObject(hNewPen);
+		DrawFocusRect(hdc,&rcText);
 	    }
 
 	    InflateRect(&rcText, -2, -1); /* allow for the focus rect */

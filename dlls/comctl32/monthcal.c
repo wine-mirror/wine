@@ -366,7 +366,7 @@ static void MONTHCAL_DrawDay(HDC hdc, MONTHCAL_INFO *infoPtr, int day, int month
 
   /* draw a rectangle around the currently selected days text */
   if((day==infoPtr->curSelDay) && (month==infoPtr->currentMonth)) {
-    hNewPen = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
+    hNewPen = CreatePen(PS_ALTERNATE, 0, GetSysColor(COLOR_WINDOWTEXT) );
     hbr = GetSysColorBrush(COLOR_WINDOWTEXT);
     FrameRect(hdc, &r, hbr);
     SelectObject(hdc, hOldPen);
