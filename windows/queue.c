@@ -161,6 +161,10 @@ BOOL WINAPI GetInputState(void)
 {
     DWORD ret = 0;
 
+    /* check for pending X events */
+    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
+
     SERVER_START_REQ( get_queue_status )
     {
         req->clear = 0;
