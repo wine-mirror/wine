@@ -1571,6 +1571,13 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 		      ss->styleOld, ss->styleNew); 
 	    }
 	    break;
+	case WM_NCCALCSIZE:
+	    {
+		RECT *rc = (RECT *)structure;
+		TRACE("Rect (%d,%d)-(%d,%d)\n",
+		      rc->left, rc->top, rc->right, rc->bottom);
+	    }
+	    break;
 	case WM_NOTIFY:
 	    if (!enter) break;
 	    {   
