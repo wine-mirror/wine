@@ -27,6 +27,7 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
     req.initial_state = initial_state;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_CREATE_EVENT, -1, 2, &req, sizeof(req), name, len );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
     return reply.handle;

@@ -15,8 +15,7 @@
 /***********************************************************************
  *           CreateMutex32A   (KERNEL32.166)
  */
-HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner,
-                                LPCSTR name )
+HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
     struct create_mutex_request req;
     struct create_mutex_reply reply;
@@ -25,6 +24,7 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner,
     req.owned   = owner;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
     return reply.handle;

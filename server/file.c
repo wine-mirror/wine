@@ -140,6 +140,7 @@ struct object *create_file( int fd, const char *name, unsigned int access,
         case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
         }
 
+        /* FIXME: should set error to ERROR_ALREADY_EXISTS if file existed before */
         if ((fd = open( name, flags | O_NONBLOCK,
                         (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
         {

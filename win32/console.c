@@ -444,6 +444,7 @@ HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
     req.access  = access;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.handle;
 }

@@ -210,7 +210,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
         remaining -= addlen;
     }
 
-    SetLastError( head.type );
+    if (head.type) SetLastError( head.type );
     return head.type;  /* error code */
 }
 

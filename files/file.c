@@ -344,6 +344,7 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
                         &req, sizeof(req),
                         filename, strlen(filename) + 1 );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
 
     /* If write access failed, retry without GENERIC_WRITE */
@@ -359,6 +360,7 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 	    CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
 				&req, sizeof(req),
 				filename, strlen(filename) + 1 );
+            SetLastError(0);
 	    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
 	}
     }
@@ -380,6 +382,7 @@ HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     req.id      = client_id;
     CLIENT_SendRequest( REQ_CREATE_DEVICE, -1, 1, &req, sizeof(req) );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.handle;
 }
