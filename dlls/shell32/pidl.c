@@ -1224,7 +1224,7 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  *
  * NOTES
  *	NULL returns FALSE
- *	desktop pidl gives path to desktopdirectory back
+ *	desktop pidl gives path to desktop directory back
  *	special pidls returning FALSE
  */
 BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
@@ -1236,15 +1236,22 @@ BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
 	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
 	pdump(pidl);
 
-	if (!pidl) return FALSE;
+	if (!pidl)
+		return FALSE;
 
 	hr = SHGetDesktopFolder(&shellfolder);
 	if (SUCCEEDED (hr)) {
-	    hr = IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str);
+	    hr = IShellFolder_GetDisplayNameOf(shellfolder, pidl, SHGDN_FORPARSING, &str);
 	    if(SUCCEEDED(hr)) {
 	        StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
 	    }
 	    IShellFolder_Release(shellfolder);
+	}
+
+	/* don't allow to return displaynames of the form "::{guid}" */
+	if (pszPath[0]==':' && pszPath[1]==':') {
+		*pszPath = '\0';
+		return FALSE;
 	}
 
 	TRACE_(shell)("-- %s, 0x%08lx\n",pszPath, hr);
@@ -1271,6 +1278,12 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 	        StrRetToStrNW(pszPath, MAX_PATH, &str, pidl);
 	    }
 	    IShellFolder_Release(shellfolder);
+	}
+
+	/* don't allow to return displaynames of the form "::{guid}" */
+	if (pszPath[0]==':' && pszPath[1]==':') {
+		*pszPath = '\0';
+		return FALSE;
 	}
 
 	TRACE_(shell)("-- %s, 0x%08lx\n",debugstr_w(pszPath), hr);

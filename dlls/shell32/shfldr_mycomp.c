@@ -199,7 +199,8 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
     CHAR szTempA[MAX_PATH];
-    LPITEMIDLIST pidlTemp;
+    LPITEMIDLIST pidlTemp = NULL;
+    CLSID clsid;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
 	   This, hwndOwner, pbc, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
@@ -208,22 +209,30 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
     if (pchEaten)
 	*pchEaten = 0;		/* strange but like the original */
 
+    /* handle CLSID paths */
+    if (lpszDisplayName[0] == ':' && lpszDisplayName[1] == ':') {
+	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
+	TRACE ("-- element: %s\n", debugstr_w (szElement));
+	SHCLSIDFromStringW (szElement + 2, &clsid);
+	pidlTemp = _ILCreate (PT_MYCOMP, &clsid, sizeof (clsid));
+    }
     /* do we have an absolute path name ? */
-    if (PathGetDriveNumberW (lpszDisplayName) >= 0 && lpszDisplayName[2] == (WCHAR) '\\') {
+    else if (PathGetDriveNumberW (lpszDisplayName) >= 0 && lpszDisplayName[2] == (WCHAR) '\\') {
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
 	WideCharToMultiByte (CP_ACP, 0, szElement, -1, szTempA, MAX_PATH, NULL, NULL);
 	pidlTemp = _ILCreateDrive (szTempA);
-
-	if (szNext && *szNext) {
-	    hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
-	} else {
-	    if (pdwAttributes && *pdwAttributes) {
-		SHELL32_GetItemAttributes (_IShellFolder_ (This), pidlTemp, pdwAttributes);
-	    }
-	    hr = S_OK;
-	}
-	*ppidl = pidlTemp;
     }
+
+    if (szNext && *szNext) {
+	hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
+    } else {
+	if (pdwAttributes && *pdwAttributes) {
+	    SHELL32_GetItemAttributes (_IShellFolder_ (This), pidlTemp, pdwAttributes);
+	}
+	hr = S_OK;
+    }
+
+    *ppidl = pidlTemp;
 
     TRACE ("(%p)->(-- ret=0x%08lx)\n", This, hr);
 
@@ -440,7 +449,11 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 * iface, 
 
     bSimplePidl = _ILIsPidlSimple (pidl);
 
-    if (_ILIsSpecialFolder (pidl)) {
+    if (!pidl->mkid.cb) {
+	/* parsing name like ::{...} */
+	lstrcpyA (szPath, "::");
+	SHELL32_GUIDToStringA(&CLSID_MyComputer, &szPath[2]);
+    } else if (_ILIsSpecialFolder (pidl)) {
 	/* take names of special folders only if its only this folder */
 	if (bSimplePidl) {
 	    _ILSimpleGetText (pidl, szPath, MAX_PATH);	/* append my own path */

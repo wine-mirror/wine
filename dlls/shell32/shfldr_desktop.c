@@ -235,7 +235,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 	len = lstrlenA(szPath);
 	WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1, szPath + len, MAX_PATH - len, NULL, NULL);
 	pidlTemp = _ILCreateFromPathA(szPath);
-	szNext = lpszDisplayName;
+	szNext = NULL;
     }
 
     if (pidlTemp) {
@@ -449,17 +449,6 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
 * NOTES
 *	special case: pidl = null gives desktop-name back
 */
-DWORD WINAPI __SHGUIDToStringA (REFGUID guid, LPSTR str)
-{
-    CHAR sFormat[52] = "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}";
-
-    return wsprintfA (str, sFormat,
-		      guid->Data1, guid->Data2, guid->Data3,
-		      guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-		      guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-
-}
-
 static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 						      LPCITEMIDLIST pidl, DWORD dwFlags, LPSTRRET strRet)
 {
@@ -499,7 +488,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 		    char szRegPath[100];
 
 		    lstrcpyA (szRegPath, "CLSID\\");
-		    __SHGUIDToStringA (clsid, &szRegPath[6]);
+		    SHELL32_GUIDToStringA (clsid, &szRegPath[6]);
 		    lstrcatA (szRegPath, "\\shellfolder");
 		    bWantsForParsing =
 			(ERROR_SUCCESS ==
@@ -512,7 +501,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 		} else {
 		    /* parsing name like ::{...} */
 		    lstrcpyA (szPath, "::");
-		    __SHGUIDToStringA (clsid, &szPath[2]);
+		    SHELL32_GUIDToStringA (clsid, &szPath[2]);
 		}
 	    } else {
 		/* user friendly name */
