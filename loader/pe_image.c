@@ -964,9 +964,9 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
         req->handle     = hFile;
         req->base       = (void *)hModule32;
-        req->dbg_offset = 0;
-        req->dbg_size   = 0;
-        req->name       = &wm->modname;
+        req->dbg_offset = PE_HEADER(hModule32)->FileHeader.PointerToSymbolTable;
+        req->dbg_size   = PE_HEADER(hModule32)->FileHeader.NumberOfSymbols;
+        req->name       = &wm->filename;
         server_call_noerr( REQ_LOAD_DLL );
         CloseHandle( hFile );
 	return wm;
