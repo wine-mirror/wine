@@ -230,6 +230,8 @@ extern MSIHANDLE alloc_msihandle( MSIOBJECTHDR * );
 extern void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy );
 extern void msiobj_addref(MSIOBJECTHDR *);
 extern int msiobj_release(MSIOBJECTHDR *);
+extern void msiobj_lock(MSIOBJECTHDR *);
+extern void msiobj_unlock(MSIOBJECTHDR *);
 extern MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr );
 
 /* add this table to the list of cached tables in the database */

@@ -116,7 +116,9 @@ unsigned int WINAPI MsiRecordGetFieldCount( MSIHANDLE handle )
         return 0;
     }
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordGetFieldCount( rec );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
 
     return ret;
@@ -180,7 +182,9 @@ int WINAPI MsiRecordGetInteger( MSIHANDLE handle, unsigned int iField)
     if( !rec )
         return MSI_NULL_INTEGER;
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordGetInteger( rec, iField );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
 
     return ret;
@@ -197,12 +201,14 @@ UINT WINAPI MsiRecordClearData( MSIHANDLE handle )
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
+    msiobj_lock( &rec->hdr );
     for( i=0; i<=rec->count; i++)
     {
         MSI_FreeField( &rec->fields[i] );
         rec->fields[i].type = MSIFIELD_NULL;
         rec->fields[i].u.iVal = 0;
     }
+    msiobj_unlock( &rec->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -232,7 +238,9 @@ UINT WINAPI MsiRecordSetInteger( MSIHANDLE handle, unsigned int iField, int iVal
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordSetInteger( rec, iField, iVal );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }
@@ -259,7 +267,9 @@ BOOL WINAPI MsiRecordIsNull( MSIHANDLE handle, unsigned int iField )
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
         return ERROR_INVALID_HANDLE;
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordIsNull( rec, iField );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 
@@ -318,7 +328,9 @@ UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField,
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
         return ERROR_INVALID_HANDLE;
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordGetStringA( rec, iField, szValue, pcchValue);
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }
@@ -385,7 +397,9 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordGetStringW( rec, iField, szValue, pcchValue );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }
@@ -426,7 +440,9 @@ UINT WINAPI MsiRecordSetStringA( MSIHANDLE handle, unsigned int iField, LPCSTR s
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
         return ERROR_INVALID_HANDLE;
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordSetStringA( rec, iField, szValue );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }
@@ -463,7 +479,9 @@ UINT WINAPI MsiRecordSetStringW( MSIHANDLE handle, unsigned int iField, LPCWSTR 
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordSetStringW( rec, iField, szValue );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }
@@ -554,7 +572,9 @@ UINT WINAPI MsiRecordReadStream(MSIHANDLE handle, unsigned int iField, char *buf
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
         return ERROR_INVALID_HANDLE;
+    msiobj_lock( &rec->hdr );
     ret = MSI_RecordReadStream( rec, iField, buf, sz );
+    msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
 }

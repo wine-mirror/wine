@@ -41,6 +41,16 @@ static CRITICAL_SECTION_DEBUG MSI_handle_cs_debug =
 };
 static CRITICAL_SECTION MSI_handle_cs = { &MSI_handle_cs_debug, -1, 0, 0, 0, 0 };
 
+static CRITICAL_SECTION MSI_object_cs;
+static CRITICAL_SECTION_DEBUG MSI_object_cs_debug =
+{
+    0, 0, &MSI_object_cs,
+    { &MSI_object_cs_debug.ProcessLocksList, 
+      &MSI_object_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": MSI_object_cs") }
+};
+static CRITICAL_SECTION MSI_object_cs = { &MSI_object_cs_debug, -1, 0, 0, 0, 0 };
+
 MSIOBJECTHDR *msihandletable[MSIMAXHANDLES];
 
 MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
@@ -141,6 +151,16 @@ void msiobj_addref( MSIOBJECTHDR *info )
     }
 
     info->refcount++;
+}
+
+void msiobj_lock( MSIOBJECTHDR *info )
+{
+    EnterCriticalSection( &MSI_object_cs );
+}
+
+void msiobj_unlock( MSIOBJECTHDR *info )
+{
+    LeaveCriticalSection( &MSI_object_cs );
 }
 
 int msiobj_release( MSIOBJECTHDR *info )
