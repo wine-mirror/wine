@@ -20,15 +20,19 @@ BEGIN {
     }
     @INC = ($winapi_check_dir);
 
-    require "winapi.pm";
     require "nativeapi.pm";
+    require "output.pm";
+    require "preprocessor.pm";
+    require "winapi.pm";
     require "winapi_local.pm";
     require "winapi_global.pm";
     require "winapi_options.pm";
     require "winapi_parser.pm";
 
-    import winapi;
     import nativeapi;
+    import output;
+    import preprocessor;
+    import winapi;
     import winapi_local;
     import winapi_global;
     import winapi_options;
@@ -41,11 +45,13 @@ if($options->help) {
     exit;
 }
 
-my $win16api = 'winapi'->new("win16", "$winapi_check_dir/win16api.dat");
-my $win32api = 'winapi'->new("win32", "$winapi_check_dir/win32api.dat");
+my $output = 'output'->new;
+
+my $win16api = 'winapi'->new($output, "win16", "$winapi_check_dir/win16api.dat", "$winapi_check_dir/win16");
+my $win32api = 'winapi'->new($output, "win32", "$winapi_check_dir/win32api.dat", "$winapi_check_dir/win32");
 'winapi'->read_spec_files($wine_dir, $win16api, $win32api);
 
-my $nativeapi = 'nativeapi'->new("$winapi_check_dir/nativeapi.dat");
+my $nativeapi = 'nativeapi'->new("$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
 for my $name ($win32api->all_functions) {
     my $module16 = $win16api->function_module($name);
@@ -61,13 +67,57 @@ for my $name ($win32api->all_functions) {
     }
 }
 
+my %includes;
+{   
+    my @files = map {
+	s/^.\/(.*)$/$1/;
+	$_; 
+    } split(/\n/, `find . -name \\*.h`);
+    
+    foreach my $file (@files) {
+	$includes{$file} = { name => $file };
+	open(IN, "< $file");
+	while(<IN>) {
+	    if(/^\s*\#\s*include\s*\"(.*?)\"/) {
+		$includes{$file}{includes}{"include/$1"}++;
+	    }
+	}
+	close(IN);
+    }
+}
+
+my %functions;
+
+my $progress_output;
+my $progress_current=0;
+my $progress_max=scalar($options->files);
 foreach my $file ($options->files) {
+    $progress_current++;
+    if($options->progress) {
+	$output->progress("$file: file $progress_current of $progress_max");
+    }
+
+    my $file_dir = $file;
+    $file_dir =~ s/(.*?)\/[^\/]*$/$1/;
+
+    my $file_type;
+    if($file_dir =~ /^(libtest|program|rc)/) {
+	$file_type = "application";
+    } elsif($file_dir =~ /^(debug|miscemu)/) {
+	$file_type = "emulator";
+    } elsif($file_dir =~ /^(tools)/) {
+	$file_type = "tool";
+    } else {
+	$file_type = "library";
+    }
+    
     my $found_function = sub {
 	my $return_type = shift;
 	my $calling_convention = shift;
 	my $name = shift;
 	my $refarguments = shift;
 	my @arguments = @$refarguments;
+	my $statements = shift;
 
 	if($options->global) {
 	    $win16api->found_type($return_type) if $options->win16;
@@ -84,16 +134,38 @@ foreach my $file ($options->files) {
 	if($options->local) {
 	    my $module16 = $win16api->function_module($name);
 	    my $module32 = $win32api->function_module($name);
-	    my $output = sub { 
+
+	    my $module;
+	    if(defined($module16) && defined($module32)) {
+		$module = "$module16 & $module32";
+	    } elsif(defined($module16)) {
+		$module = $module16;
+	    } elsif(defined($module32)) {
+		$module = $module32;
+	    } else {
+		$module = "";
+	    }
+	    my $output_module = sub { 
 		my $module = shift;
 		return sub {
 		    my $msg = shift;
-		    print "$file: $module: $return_type $calling_convention $name(" . join(",", @arguments) . "): $msg\n";
+		    $output->write("$file: $module: $return_type ");
+		    $output->write("$calling_convention ") if $calling_convention;
+		    $output->write("$name(" . join(",", @arguments) . "): $msg\n");
 		}
 	    };
-	    my $output16 = &$output($module16);
-	    my $output32 = &$output($module32);
+	    my $output16 = &$output_module($module16);
+	    my $output32 = &$output_module($module32);
 	    
+	    my $function = $functions{$name};
+	    $$function{file} = $file;
+	    $$function{return_type} = $return_type;
+	    $$function{calling_convention} = $calling_convention;
+	    $$function{arguments} = [@arguments];
+	    $$function{module} = $module;
+	    $$function{module16} = $module16;
+	    $$function{module32} = $module32;
+
 	    if($options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_arguments $options, $output16,
@@ -122,12 +194,145 @@ foreach my $file ($options->files) {
 		    }
 		}		
 	    }
+	    if($options->cross_call) {
+		local $_ = $statements;	
+		my $called_function_names = {};
+		while(defined($_)) {
+		    if(/(\w+)\((.*?)\)/) {
+			$_ = $';
+			my $called_name = $1;
+			if($called_name !~ /^if|for|while|switch|sizeof$/) {
+			    $functions{$name}{called_function_names}{$called_name}++;
+			    $functions{$called_name}{called_by_function_names}{$name}++;
+			}
+		    } else {
+		       undef $_
+		    }
+		}
+	    }
 	}
-    };   
-  winapi_parser::parse_c_file $options, $file, $found_function;
+    };
+
+    my $config = 0;
+    my $conditional = 0;
+    my $found_include = sub {
+	local $_ = shift;
+	if(/^\"config.h\"/) {
+	    $config++;
+	}
+    };
+    my $found_conditional = sub {
+	local $_ = shift;
+	if(!$nativeapi->is_conditional($_)) {
+	    if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
+	    {
+		$output->write("$file: $_ is not a declared as a conditional\n");
+	    }
+	} else {
+	    $conditional++;
+	    if(!$config) {
+		$output->write("$file: conditional $_ used but config.h is not included\n");
+	    }
+	}
+    };
+    my $preprocessor = 'preprocessor'->new($found_include, $found_conditional);
+    my $found_preprocessor = sub {
+	my $directive = shift;
+	my $argument = shift;
+
+	$preprocessor->directive($directive, $argument);
+
+	if($options->config) {
+	    if($directive eq "include") {
+		if($argument =~ /^<(.*?)>$/) {
+		    my $header = $1;
+
+		    if((-e "$wine_dir/include/$header" || -e "$file_dir/$header") && $file_type ne "application") {
+			$output->write("$file: #include \<$header\> is a local include\n");
+		    }
+
+		    my $macro = uc($header);
+		    $macro =~ y/\.\//__/;
+		    $macro = "HAVE_" . $macro;
+		    
+		    if($nativeapi->is_conditional_header($header)) { 
+			if(!$preprocessor->is_def($macro)) {
+			    if($macro =~ /^HAVE_X11/) {
+				if(!$preprocessor->is_undef("X_DISPLAY_MISSING")) {
+				    $output->write("$file: #$directive $argument: is a conditional include, but is not protected\n");
+				}
+			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
+				if($header ne "alloca.h" && !$preprocessor->is_def("STATFS_DEFINED_BY_$1")) {
+				    $output->write("$file: #$directive $argument: is a conditional include, but is not protected\n");
+				}
+			    }
+			}
+		    } elsif($preprocessor->is_def($macro)) {
+			$output->write("$file: #$directive $argument: is protected, but is not a conditional include\n");
+		    }
+		} elsif($argument =~ /^"(.*?)"$/) {
+		    my $header = $1;
+
+		    if(-e "$file_dir/$header") {
+			$includes{"$file_dir/$header"}{used}++;
+			foreach my $name (keys(%{$includes{"$file_dir/$header"}{includes}})) {
+			    $includes{$name}{used}++;
+			}
+		    } elsif(-e "include/$header") {
+			$includes{"include/$header"}{used}++;
+			foreach my $name (keys(%{$includes{"include/$header"}{includes}})) {
+			    $includes{$name}{used}++;
+			}
+		    } else {
+			$output->write("$file: #include \"$header\" is not a local include\n");
+		    }
+		}
+	    }
+	}
+    };
+  
+    winapi_parser::parse_c_file $options, $file, $found_function, $found_preprocessor;
+    
+    if($options->config_unnessary) {
+	if($config && $conditional == 0) {
+	    $output->write("$file: includes config.h but do not use any conditionals\n");
+	}
+    }
+
+    if($options->cross_call) {
+	my @names = sort(keys(%functions));
+	for my $name (@names) {
+	    my @called_names = sort(keys(%{$functions{$name}{called_function_names}}));
+	    my @called_by_names = sort(keys(%{$functions{$name}{called_by_function_names}}));
+	    my $module = $functions{$name}{module};
+	    my $module16 = $functions{$name}{module16};
+	    my $module32 = $functions{$name}{module32};
+
+	    if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {
+		$output->write("$file: $module: $name: \\\n");
+		for my $called_name (@called_names) {
+		    my $function;
+		    if($function = $functions{$called_name}) {		    
+			$output->write("  $called_name\n");
+		    }
+		}
+	    }
+	}
+    }
 }
 
+$output->hide_progress;
+
 if($options->global) {
+    foreach my $name (sort(keys(%includes))) {
+	if(!$includes{$name}{used}) {
+	    if($options->include) {
+		print "$name: include file is never used\n";
+	    }
+	}
+    }
+
     winapi_global::check $options, $win16api, $nativeapi if $options->win16;
     winapi_global::check $options, $win32api, $nativeapi if $options->win32;
 }
+

@@ -6,6 +6,27 @@ sub parse_c_file {
     my $options = shift;
     my $file = shift;
     my $function_found_callback = shift;
+    my $preprocessor_found_callback = shift;
+
+    my $return_type;
+    my $calling_convention;
+    my $function = "";
+    my $arguments;
+    my $statements;
+
+    my $function_begin = sub {
+	$return_type= shift;
+	$calling_convention = shift;
+	$function = shift;
+	$arguments = shift;
+
+	$statements = "";
+    };
+    my $function_end = sub {
+	&$function_found_callback($return_type,$calling_convention,$function,$arguments,$statements);
+
+	$function = "";
+    };
 
     my $level = 0;
     my $again = 0;
@@ -44,34 +65,61 @@ sub parse_c_file {
 	if(/^\s*$/) { next; }
 
 	# remove preprocessor directives
-	if(s/^\s*\#.*$//m) { $again = 1; next; }
+	if(s/^\s*\#/\#/m) {
+	    if(/^\\#.*?\\$/m) {
+		$lookahead = 1;
+		next;
+	    } elsif(s/^\#\s*(.*?)(\s+(.*?))?\s*$//m) {
+		if(defined($3)) {
+		    &$preprocessor_found_callback($1, $3);
+		} else {
+		    &$preprocessor_found_callback($1, "");
+		}
+		$again = 1;
+		next;
+	    }
+	}
 
 	if($level > 0)
 	{
-	    s/^[^\{\}]*//s;
-	    if(/^\{/) {
+	    my $line;
+	    s/^([^\{\}]*)//s;
+	    $line = $1;
+	    if(/^(\{)/) {
 		$_ = $'; $again = 1;
+		$line .= $1;
 		print "+1: $_\n" if $options->debug >= 2;
 		$level++;
-	    } elsif(/^\}/) {
+	    } elsif(/^(\})/) {
 		$_ = $'; $again = 1;
+		$line .= $1 if $level > 1;
 		print "-1: $_\n" if $options->debug >= 2; 
 		$level--;
 	    }
+	    if($line !~ /^\s*$/) {
+		$statements .= "$line\n";
+	    }	    
+	    if($function && $level == 0) {
+		&$function_end;
+	    }
 	    next;
-	} elsif(/((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))(__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI)\s+(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
+	} elsif(/((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))((__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI)\s+)?(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
 	    $_ = $'; $again = 1;
 
-	    if($9 eq ";") {
+	    if($10 eq ";") {
 		next;
-	    } elsif($9 eq "{")  {		
+	    } elsif($10 eq "{")  {	
 		$level++;
 	    }
 
 	    my $return_type = $1;
-	    my $calling_convention = $5;
-	    my $name = $6;
-	    my $arguments = $8;
+	    my $calling_convention = $6;
+	    my $name = $7;
+	    my $arguments = $9;
+
+	    if(!defined($calling_convention)) {
+		$calling_convention = "";
+	    }
 
 	    $return_type =~ s/\s*$//;
 	    $return_type =~ s/\s*\*\s*/*/g;
@@ -88,7 +136,8 @@ sub parse_c_file {
 		my $argument = $arguments[$n];
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		#print "  " . ($n + 1) . ": '$argument'\n";
-		$argument =~ s/^(const(?=\s)|IN(?=\s)|OUT(?=\s)|(\s*))\s*//;
+		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
+		$argument =~ s/^(const(?=\s)|\s*)\s*//;
 		if($argument =~ /^...$/) {
 		    $argument = "...";
 		} elsif($argument =~ /^((struct\s+|union\s+|enum\s+)?\w+)\s*((\*\s*?)*)\s*/) {
@@ -107,52 +156,66 @@ sub parse_c_file {
 	    if($options->debug) {
 		print "$file: $return_type $calling_convention $name(" . join(",", @arguments) . ")\n";
 	    }
-	    &$function_found_callback($return_type,$calling_convention,$name,\@arguments);
+	    &$function_begin($return_type,$calling_convention,$name,\@arguments);
 
 	} elsif(/DC_(GET_X_Y|GET_VAL_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments = ("HDC16");
-	    &$function_found_callback($2, "WINAPI", $3, \@arguments);
+	    &$function_begin($2, "WINAPI", $3, \@arguments);
+	    &$function_end;
 	} elsif(/DC_(GET_VAL_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments = ("HDC");
-	    &$function_found_callback($2, "WINAPI", $3, \@arguments);
+	    &$function_begin($2, "WINAPI", $3, \@arguments);
+	    &$function_end;
 	} elsif(/DC_(GET_VAL_EX)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments16 = ("HDC16", "LP" . $5 . "16");
 	    my @arguments32 = ("HDC", "LP" . $5);
-	    &$function_found_callback("BOOL16", "WINAPI", $2 . "16", \@arguments16);
-	    &$function_found_callback("BOOL", "WINAPI", $2, \@arguments32);
+	    &$function_begin("BOOL16", "WINAPI", $2 . "16", \@arguments16);
+	    &$function_end;
+	    &$function_begin("BOOL", "WINAPI", $2, \@arguments32);
+	    &$function_end;
 	} elsif(/DC_(SET_MODE)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments16 = ("HDC16", "INT16");
 	    my @arguments32 = ("HDC", "INT");
-	    &$function_found_callback("INT16", "WINAPI", $2 . "16", \@arguments16);
-	    &$function_found_callback("INT", "WINAPI", $2, \@arguments32);
+	    &$function_begin("INT16", "WINAPI", $2 . "16", \@arguments16);
+	    &$function_end;
+	    &$function_begin("INT", "WINAPI", $2, \@arguments32);
+	    &$function_end;
 	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments16 = ("HWAVEIN16");
 	    my @arguments32 = ("HWAVEIN");
-	    &$function_found_callback("UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
-	    &$function_found_callback("UINT", "WINAPI", "waveIn" . $1, \@arguments32);	    
+	    &$function_begin("UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
+	    &$function_end;
+	    &$function_begin("UINT", "WINAPI", "waveIn" . $1, \@arguments32);
+	    &$function_end;	    
 	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    my @arguments16 = ("HWAVEOUT16");
 	    my @arguments32 = ("HWAVEOUT");
-	    &$function_found_callback("UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
-	    &$function_found_callback("UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
+	    &$function_begin("UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
+	    &$function_end;
+	    &$function_begin("UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
+	    &$function_end;
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
 	    if($1 eq "1") {
 		my @arguments16 = ("HWAVEOUT16", $4);
 		my @arguments32 = ("HWAVEOUT", $4);
-		&$function_found_callback("UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
-		&$function_found_callback("UINT", "WINAPI", "waveOut" . $2, \@arguments32);
+		&$function_begin("UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
+		&$function_end;
+		&$function_begin("UINT", "WINAPI", "waveOut" . $2, \@arguments32);
+		&$function_end;
 	    } elsif($1 eq 2) {
 		my @arguments16 = ("UINT16", $4);
 		my @arguments32 = ("UINT", $4);
-		&$function_found_callback("UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
-		&$function_found_callback("UINT", "WINAPI", "waveOut" . $2, \@arguments32)
+		&$function_begin("UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
+		&$function_end;
+		&$function_begin("UINT", "WINAPI", "waveOut" . $2, \@arguments32);
+		&$function_end;
 	    }
 	} elsif(/;/s) {
 	    $_ = $'; $again = 1;

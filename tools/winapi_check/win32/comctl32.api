@@ -1,0 +1,7 @@
+%long
+
+COLORREF
+HBITMAP
+HDC
+HICON
+HWND

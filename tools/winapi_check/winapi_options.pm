@@ -23,11 +23,16 @@ my %options = (
     "help" => { default => 0, description => "help mode" },
     "verbose" => { default => 0, description => "verbose mode" },
 
+    "progress" => { default => 1, description => "show progress" },
+
     "win16" => { default => 1, description => "Win16 checking" },
     "win32" => { default => 1, description => "Win32 checking" },
 
     "shared" =>  { default => 0, description => "show shared functions between Win16 and Win32" },
     "shared-segmented" =>  { default => 0, description => "segmented shared functions between Win16 and Win32 checking" },
+
+    "config" => { default => 1, description => "check configuration include consistancy" },
+    "config-unnessary" => { default => 0, parent => "config", description => "check for unnessary #include \"config.h\"" },
 
     "local" =>  { default => 1, description => "local checking" },
     "module" => { 
@@ -40,7 +45,7 @@ my %options = (
     "argument" => { default => 1, parent => "local", description => "argument checking" },
     "argument-count" => { default => 1, parent => "argument", description => "argument count checking" },
     "argument-forbidden" => {
-	default => { active => 0, filter => 0, hash => {} },
+	default => { active => 1, filter => 0, hash => {} },
 	parent => "argument",
 	parser => \&parser_comma_list,
 	description => "argument forbidden checking"
@@ -52,12 +57,14 @@ my %options = (
 	description => "argument kind checking"
     },
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
-    "misplaced" => { default => 0, parent => "local", description => "checking for misplaced functions" },
+    "misplaced" => { default => 0, parent => "local", description => "check for misplaced functions" },
+    "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
              
     "global" => { default => 1, description => "global checking" }, 
     "declared" => { default => 1, parent => "global", description => "declared checking" }, 
-    "implemented" => { default => 0, parent => "global", description => "implemented checking" }
-
+    "implemented" => { default => 1, parent => "global", description => "implemented checking" },
+    "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
+    "include" => { default => 0, parent => "global", description => "include checking" }
 );
 
 my %short_options = (

@@ -1,0 +1,10 @@
+%long
+
+CLIPFORMAT
+HACCEL
+HMENU
+HWND
+
+%ptr
+CLIPFORMAT *
+

@@ -14,8 +14,30 @@ sub check_arguments {
 
     my $module = $winapi->function_module($name);
 
+    if($winapi->name eq "win16") {
+	my $name16 = $name;
+	$name16 =~ s/16$//;   
+	if($name16 ne $name && $winapi->function_stub($name16)) {
+	    if($options->implemented) {
+		&$output("function implemented but declared as stub in .spec file");
+	    }
+	    return;
+	} elsif($winapi->function_stub($name)) {
+	    if($options->implemented_win32) {
+		&$output("32-bit variant of function implemented but declared as stub in .spec file");
+	    }
+	    return;
+	}
+    } elsif($winapi->function_stub($name)) {
+	if($options->implemented) {
+	    &$output("function implemented but declared as stub in .spec file");
+	}
+	return;
+    }
+
     my $forbidden_return_type = 0;
     my $implemented_return_kind;
+    $winapi->type_used_in_module($return_type,$module);
     if(!defined($implemented_return_kind = $winapi->translate_argument($return_type))) {
 	if($return_type ne "") {
 	    &$output("no translation defined: " . $return_type);
@@ -48,8 +70,10 @@ sub check_arguments {
 	    $implemented_calling_convention = "cdecl";
 	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention = ~ /^__stdcall|VFWAPI|WINAPI$/) {
+	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI$/) {
 	    $implemented_calling_convention = "stdcall";
+	} else {
+	    $implemented_calling_convention = "<default>";
 	}
     }
 
@@ -85,15 +109,12 @@ sub check_arguments {
 	
     if($name =~ /^CRTDLL__ftol|CRTDLL__CIpow$/) {
 	# ignore
-    } elsif($#argument_types != $#declared_argument_kinds) {
-	if($options->argument_count) {
-	    &$output("argument count differs: " . ($#argument_types + 1) . " != " . ($#declared_argument_kinds + 1));
-	}
     } else {
 	my $n = 0;
 	my @argument_kinds = map {
 	    my $type = $_;
 	    my $kind = "unknown";
+	    $winapi->type_used_in_module($type,$module);
 	    if(!defined($kind = $winapi->translate_argument($type))) {
 		&$output("no translation defined: " . $type);
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
@@ -102,8 +123,13 @@ sub check_arguments {
 		    &$output("forbidden argument " . ($n + 1) . " type (" . $type . ")");
 		}
 	    }
-	    $n++;
-	    $kind;
+	    if(defined($kind) && $kind eq "longlong") {
+		$n+=2;
+		("long", "long");
+	    } else {
+		$n++;
+		$kind;
+	    }
 	} @argument_types;
 
 	for my $n (0..$#argument_kinds) {
@@ -123,8 +149,13 @@ sub check_arguments {
 			     $argument_types[$n] . " ($argument_kinds[$n]) != " . $declared_argument_kinds[$n]);
 		}
 	    }
-
 	}
+        if($#argument_kinds != $#declared_argument_kinds) {
+	    if($options->argument_count) {
+		&$output("argument count differs: " . ($#argument_types + 1) . " != " . ($#declared_argument_kinds + 1));
+	    }
+	}
+
     }
 
     if($segmented && $options->shared_segmented && $winapi->is_shared_function($name)) {
