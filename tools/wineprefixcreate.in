@@ -21,30 +21,83 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-dlldir=@dlldir@
-datadir=@datadir@
+usage()
+{
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "Options:"
+    echo "  --help                 Display this message"
+    echo "  --prefix <dir>         Prefix directory to create (defaults to \$WINEPREFIX or ~/.wine)"
+    echo "  --update               Update the prefix directory if it already exists"
+    echo "  --use-wine-tree <dir>  Run from the Wine source tree <dir>"
+    echo ""
+}
 
-WINEPREFIX="${1:-$WINEPREFIX}"
+set -e
+
+dlldir="@dlldir@"
+datadir="@datadir@/wine"
+
+do_update=0
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        --help)
+            usage
+            exit 0
+            ;;
+        --prefix)
+            WINEPREFIX="$2"
+            shift 2
+            ;;
+        --update)
+            do_update=1
+            shift
+            ;;
+        --use-wine-tree)
+            topdir=`cd "$2" && pwd`
+            if [ -x "$topdir/server/wineserver" ]
+            then
+                WINELOADER="$topdir/wine"
+                dlldir="$topdir/programs"
+                datadir="$topdir/tools"
+            else
+                echo "$2 is not a valid Wine source tree"
+                exit 1
+            fi
+            shift 2
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+  esac
+done
+
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 
 if [ -d "$WINEPREFIX" ]
 then
-  echo "The $WINEPREFIX directory already exists, aborting"
-  exit 1
-fi
-
-if mkdir "$WINEPREFIX"; then :
+    if [ $do_update = 0 ]
+    then
+        echo "The $WINEPREFIX directory already exists, aborting"
+        exit 1
+    fi
 else
-  echo "Could not create $WINEPREFIX, aborting"
-  exit 1
+    if mkdir "$WINEPREFIX"; then :
+    else
+        echo "Could not create $WINEPREFIX, aborting"
+        exit 1
+    fi
 fi
 
+WINEPREFIX=`cd "$WINEPREFIX" && pwd`
 CROOT="$WINEPREFIX/drive_c"
 
 # Create the directory tree
 
 for i in \
-    "$WINEPREFIX/dosdevices" \
     "$CROOT" \
     "$CROOT/windows" \
     "$CROOT/windows/command" \
@@ -60,19 +113,23 @@ for i in \
     "$CROOT/windows/system" \
     "$CROOT/windows/temp"
 do
-  mkdir "$i"
+    [ -d "$i" ] || mkdir "$i"
 done
 
 # Create the drive symlinks
 
-ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
-ln -s "/" "$WINEPREFIX/dosdevices/z:"
+if [ ! -d "$WINEPREFIX/dosdevices" ]
+then
+    mkdir "$WINEPREFIX/dosdevices"
+    ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
+    ln -s "/" "$WINEPREFIX/dosdevices/z:"
+fi
 
 # Create the application symlinks
 
 link_app()
 {
-   ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
+   rm -f "$2" && ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
 }
 
 link_app start        "$CROOT/windows/command/start.exe"
@@ -94,12 +151,16 @@ link_app winebrowser  "$CROOT/windows/winebrowser.exe"
 
 # Copy the .inf script and run it
 
-cp "$datadir/wine/wine.inf" "$CROOT/windows/inf/wine.inf"
+cp "$datadir/wine.inf" "$CROOT/windows/inf/wine.inf"
 export WINEPREFIX
 ${WINELOADER:-wine} rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
 
 # Wait for the wineserver to finish
 
-${WINESERVER:-wineserver} -w
-
-echo "$WINEPREFIX created successfully."
+if [ $do_update = 0 ]
+then
+    ${WINESERVER:-wineserver} -w
+    echo "$WINEPREFIX created successfully."
+else
+    echo "$WINEPREFIX updated successfully."
+fi
