@@ -146,7 +146,7 @@ static int buffer_refill(play_state_t* state, DWORD size)
 
     rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
 			       &ptr1,&len1,&ptr2,&len2,0);
-    ok(rc==DS_OK,"Lock: 0x%lx",rc);
+    ok(rc==DS_OK,"Lock: 0x%lx\n",rc);
     if (rc!=DS_OK)
 	return -1;
 
@@ -158,7 +158,7 @@ static int buffer_refill(play_state_t* state, DWORD size)
     }
     state->offset=state->written % state->buffer_size;
     rc=IDirectSoundBuffer_Unlock(state->dsbo,ptr1,len1,ptr2,len2);
-    ok(rc==DS_OK,"Unlock: 0x%lx",rc);
+    ok(rc==DS_OK,"Unlock: 0x%lx\n",rc);
     if (rc!=DS_OK)
 	return -1;
     return size;
@@ -173,7 +173,7 @@ static int buffer_silence(play_state_t* state, DWORD size)
 
     rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
 			       &ptr1,&len1,&ptr2,&len2,0);
-    ok(rc==DS_OK,"Lock: 0x%lx",rc);
+    ok(rc==DS_OK,"Lock: 0x%lx\n",rc);
     if (rc!=DS_OK)
 	return -1;
 
@@ -184,7 +184,7 @@ static int buffer_silence(play_state_t* state, DWORD size)
     }
     state->offset=(state->offset+size) % state->buffer_size;
     rc=IDirectSoundBuffer_Unlock(state->dsbo,ptr1,len1,ptr2,len2);
-    ok(rc==DS_OK,"Unlock: 0x%lx",rc);
+    ok(rc==DS_OK,"Unlock: 0x%lx\n",rc);
     if (rc!=DS_OK)
 	return -1;
     return size;
@@ -196,7 +196,7 @@ static int buffer_service(play_state_t* state)
     HRESULT rc;
 
     rc=IDirectSoundBuffer_GetCurrentPosition(state->dsbo,&play_pos,&write_pos);
-    ok(rc==DS_OK,"GetCurrentPosition: %lx",rc);
+    ok(rc==DS_OK,"GetCurrentPosition: %lx\n",rc);
     if (rc!=DS_OK) {
 	goto STOP;
     }
@@ -249,7 +249,7 @@ STOP:
     if (winetest_debug > 1)
 	trace("stopping playback\n");
     rc=IDirectSoundBuffer_Stop(state->dsbo);
-    ok(rc==DS_OK,"Stop failed: rc=%ld",rc);
+    ok(rc==DS_OK,"Stop failed: rc=%ld\n",rc);
     return 0;
 }
 
@@ -478,7 +478,7 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 	rc=IDirectSoundBuffer_GetStatus(dsbo,&status);
 	ok(rc==DS_OK,"GetStatus failed: 0x%lx\n",rc);
 	ok(status==(DSBSTATUS_PLAYING|DSBSTATUS_LOOPING),
-	   "GetStatus: bad status: %lx",status);
+	   "GetStatus: bad status: %lx\n",status);
 
 	if (listener) {
 	    ZeroMemory(&listener_param,sizeof(listener_param));

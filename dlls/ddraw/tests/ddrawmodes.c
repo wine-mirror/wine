@@ -65,7 +65,7 @@ static void createdirectdraw()
     SetFocus(hwnd);
     
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK,"DirectDrawCreate returned: %lx",rc);
+    ok(rc==DD_OK,"DirectDrawCreate returned: %lx\n",rc);
 }
 
 static void add_mode(LPDDSURFACEDESC lpddsd)
@@ -107,7 +107,7 @@ void enumdisplaymodes()
 
     rc = IDirectDraw_EnumDisplayModes(lpDD,
         DDEDM_STANDARDVGAMODES, &ddsd, 0, enummodes_callback);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %lx",rc);
+    ok(rc==DD_OK,"EnumDisplayModes returned: %lx\n",rc);
 }
 
 static void setdisplaymode_tests()
@@ -121,7 +121,7 @@ static void setdisplaymode_tests()
     {
         rc = IDirectDraw_SetCooperativeLevel(lpDD,
             hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-        ok(rc==DD_OK,"SetCooperativeLevel returned: %lx",rc);
+        ok(rc==DD_OK,"SetCooperativeLevel returned: %lx\n",rc);
         if (modes[i].dwFlags & DDSD_PIXELFORMAT)
         {
             if (modes[i].ddpfPixelFormat.dwFlags & DDPF_RGB)
@@ -129,9 +129,9 @@ static void setdisplaymode_tests()
                 rc = IDirectDraw_SetDisplayMode(lpDD,
                     modes[i].dwWidth, modes[i].dwHeight,
                     modes[i].ddpfPixelFormat.UNION_MEMBER(1, dwRGBBitCount));
-                ok(rc==DD_OK,"SetDisplayMode returned: %lx",rc);
+                ok(rc==DD_OK,"SetDisplayMode returned: %lx\n",rc);
                 rc = IDirectDraw_RestoreDisplayMode(lpDD);
-                ok(rc==DD_OK,"RestoreDisplayMode returned: %lx",rc);
+                ok(rc==DD_OK,"RestoreDisplayMode returned: %lx\n",rc);
             }
         }
     }
