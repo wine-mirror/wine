@@ -38,6 +38,7 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "widl.h"
 #include "utils.h"
