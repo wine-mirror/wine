@@ -8,6 +8,7 @@ IMPORTS   = ntdll
 CTESTS = \
 	error.c \
 	generated.c \
+	large_int.c \
 	rtlbitmap.c \
 	rtlstr.c
 
