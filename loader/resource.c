@@ -43,6 +43,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "excpt.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
@@ -206,11 +207,19 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
         LPWSTR typeStr, nameStr;
 
         if ( HIWORD( type ) && !bUnicode )
-            typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
+        {
+            UNICODE_STRING usBuffer;
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,type);
+            typeStr = usBuffer.Buffer;
+        }
         else
             typeStr = (LPWSTR)type;
         if ( HIWORD( name ) && !bUnicode )
-            nameStr = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+        {
+            UNICODE_STRING usBuffer;
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,name);
+            nameStr = usBuffer.Buffer;
+        }
         else
             nameStr = (LPWSTR)name;
 

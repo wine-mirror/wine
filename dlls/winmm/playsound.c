@@ -30,6 +30,7 @@
 #include "heap.h"
 #include "winreg.h"
 #include "winemm.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 
@@ -218,7 +219,9 @@ static WINE_PLAYSOUND*  PlaySound_Alloc(const void* pszSound, HMODULE hmod,
         }
         else
         {
-            wps->pszSound = HEAP_strdupAtoW(GetProcessHeap(), 0, pszSound);
+            UNICODE_STRING usBuffer;
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer, pszSound);
+            wps->pszSound = usBuffer.Buffer;
             if (!wps->pszSound) goto oom_error;
             wps->bAlloc = TRUE;
         }

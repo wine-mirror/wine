@@ -810,6 +810,7 @@ VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
  */
 VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
 {
+    UNICODE_STRING      usBuffer;
     info->cb              = sizeof(STARTUPINFOW);
     info->dwX             = current_startupinfo.dwX;
     info->dwY             = current_startupinfo.dwY;
@@ -824,7 +825,10 @@ VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
     info->hStdInput       = current_startupinfo.hStdInput;
     info->hStdOutput      = current_startupinfo.hStdOutput;
     info->hStdError       = current_startupinfo.hStdError;
-    info->lpReserved = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpReserved );
-    info->lpDesktop  = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpDesktop );
-    info->lpTitle    = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpTitle );
+    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpReserved);
+    info->lpReserved = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpDesktop);
+    info->lpDesktop  = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpTitle);
+    info->lpTitle    = usBuffer.Buffer;
 }

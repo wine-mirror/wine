@@ -36,6 +36,7 @@
 #define NONAMELESSSTRUCT
 #include "mmsystem.h"
 #include "winbase.h"
+#include "winternl.h"
 
 #include "wine/winuser16.h"
 #include "winemm.h"
@@ -2553,9 +2554,11 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
  */
 UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16 type)
 {
-    LPCWSTR     ptr = HEAP_strdupAtoW(GetProcessHeap(), 0, resname);
-    UINT        ret = mciLoadCommandResource(HINSTANCE_32(hInst), ptr, type);
-    HeapFree(GetProcessHeap(), 0, (LPWSTR)ptr);
+    UNICODE_STRING ptr;
+    UINT          ret;
+    RtlCreateUnicodeStringFromAsciiz(&ptr, resname);
+    ret = mciLoadCommandResource(HINSTANCE_32(hInst), ptr.Buffer, type);
+    RtlFreeUnicodeString(&ptr);
     return ret;
 }
 

@@ -55,6 +55,7 @@
 #include "winerror.h"
 #include "parsedt.h"
 #include "typelib.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -667,9 +668,13 @@ static BSTR StringDupAtoBstr( char* strIn )
 {
 	BSTR bstr = NULL;
 	OLECHAR* pNewString = NULL;
-	pNewString = HEAP_strdupAtoW( GetProcessHeap(), 0, strIn );
+	UNICODE_STRING usBuffer;
+	
+	RtlCreateUnicodeStringFromAsciiz( &usBuffer, strIn );
+	pNewString = usBuffer.Buffer;
+	
 	bstr = SysAllocString( pNewString );
-	HeapFree( GetProcessHeap(), 0, pNewString );
+	RtlFreeUnicodeString( &usBuffer );
 	return bstr;
 }
 

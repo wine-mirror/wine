@@ -881,7 +881,7 @@ LsaQueryInformationPolicy(
 	      SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
 
 	      struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
-	      RtlInitUnicodeString(&(xdi->ppdi.Name), HEAP_strdupAtoW(GetProcessHeap(),0,"DOMAIN"));
+	      RtlCreateUnicodeStringFromAsciiz(&(xdi->ppdi.Name), "DOMAIN");
 	      xdi->ppdi.Sid = &(xdi->sid);
 	      xdi->sid.Revision = SID_REVISION;
 	      xdi->sid.SubAuthorityCount = 1;

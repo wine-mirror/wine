@@ -548,21 +548,35 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 static LPPRINTER_INFO_2W PRINTER_INFO_2AtoW(HANDLE heap, LPPRINTER_INFO_2A piA)
 {
     LPPRINTER_INFO_2W piW;
+    UNICODE_STRING usBuffer;
+
     if(!piA) return NULL;
     piW = HeapAlloc(heap, 0, sizeof(*piW));
     memcpy(piW, piA, sizeof(*piW)); /* copy everything first */
-    piW->pServerName = HEAP_strdupAtoW(heap, 0, piA->pServerName);
-    piW->pPrinterName = HEAP_strdupAtoW(heap, 0, piA->pPrinterName);
-    piW->pShareName = HEAP_strdupAtoW(heap, 0, piA->pShareName);
-    piW->pPortName = HEAP_strdupAtoW(heap, 0, piA->pPortName);
-    piW->pDriverName = HEAP_strdupAtoW(heap, 0, piA->pDriverName);
-    piW->pComment = HEAP_strdupAtoW(heap, 0, piA->pComment);
-    piW->pLocation = HEAP_strdupAtoW(heap, 0, piA->pLocation);
+    
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pServerName);
+    piW->pServerName = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPrinterName);
+    piW->pPrinterName = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pShareName);
+    piW->pShareName = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPortName);
+    piW->pPortName = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pDriverName);
+    piW->pDriverName = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pComment);
+    piW->pComment = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pLocation);
+    piW->pLocation = usBuffer.Buffer;
     piW->pDevMode = DEVMODEdupAtoW(heap, piA->pDevMode);
-    piW->pSepFile = HEAP_strdupAtoW(heap, 0, piA->pSepFile);
-    piW->pPrintProcessor = HEAP_strdupAtoW(heap, 0, piA->pPrintProcessor);
-    piW->pDatatype = HEAP_strdupAtoW(heap, 0, piA->pDatatype);
-    piW->pParameters = HEAP_strdupAtoW(heap, 0, piA->pParameters);
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pSepFile);
+    piW->pSepFile = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPrintProcessor);
+    piW->pPrintProcessor = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pDatatype);
+    piW->pDatatype = usBuffer.Buffer;
+    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pParameters);
+    piW->pParameters = usBuffer.Buffer;
     return piW;
 }
 
@@ -760,24 +774,27 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 			 LPPRINTER_DEFAULTSA pDefault)
 {
-    LPWSTR lpPrinterNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpPrinterName);
+    UNICODE_STRING lpPrinterNameW;
+    UNICODE_STRING usBuffer;
     PRINTER_DEFAULTSW DefaultW, *pDefaultW = NULL;
     BOOL ret;
 
+    RtlCreateUnicodeStringFromAsciiz(&lpPrinterNameW,lpPrinterName);
+
     if(pDefault) {
-        DefaultW.pDatatype = HEAP_strdupAtoW(GetProcessHeap(), 0,
-					     pDefault->pDatatype);
+        RtlCreateUnicodeStringFromAsciiz(&usBuffer,pDefault->pDatatype);
+        DefaultW.pDatatype = usBuffer.Buffer;
 	DefaultW.pDevMode = DEVMODEdupAtoW(GetProcessHeap(),
 					   pDefault->pDevMode);
 	DefaultW.DesiredAccess = pDefault->DesiredAccess;
 	pDefaultW = &DefaultW;
     }
-    ret = OpenPrinterW(lpPrinterNameW, phPrinter, pDefaultW);
+    ret = OpenPrinterW(lpPrinterNameW.Buffer, phPrinter, pDefaultW);
     if(pDefault) {
-        HeapFree(GetProcessHeap(), 0, DefaultW.pDatatype);
+        RtlFreeUnicodeString(&usBuffer);
 	HeapFree(GetProcessHeap(), 0, DefaultW.pDevMode);
     }
-    HeapFree(GetProcessHeap(), 0, lpPrinterNameW);
+    RtlFreeUnicodeString(&lpPrinterNameW);
     return ret;
 }
 
@@ -1165,7 +1182,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
  */
 HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
-    WCHAR *pNameW;
+    UNICODE_STRING pNameW;
     PRINTER_INFO_2W *piW;
     PRINTER_INFO_2A *piA = (PRINTER_INFO_2A*)pPrinter;
     HANDLE ret;
@@ -1176,13 +1193,13 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
-    pNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, pName);
+    RtlCreateUnicodeStringFromAsciiz(&pNameW,pName);
     piW = PRINTER_INFO_2AtoW(GetProcessHeap(), piA);
 
-    ret = AddPrinterW(pNameW, Level, (LPBYTE)piW);
+    ret = AddPrinterW(pNameW.Buffer, Level, (LPBYTE)piW);
 
     FREE_PRINTER_INFO_2W(GetProcessHeap(), piW);
-    HeapFree(GetProcessHeap(),0,pNameW);
+    RtlFreeUnicodeString(&pNameW);
     return ret;
 }
 
@@ -2148,11 +2165,11 @@ BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 			  LPDWORD lpdwReturned)
 {
     BOOL ret;
-    LPWSTR lpszNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpszName);
-
-    ret = WINSPOOL_EnumPrinters(dwType, lpszNameW, dwLevel, lpbPrinters, cbBuf,
+    UNICODE_STRING lpszNameW;
+    RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
+    ret = WINSPOOL_EnumPrinters(dwType, lpszNameW.Buffer, dwLevel, lpbPrinters, cbBuf,
 				lpdwNeeded, lpdwReturned, FALSE);
-    HeapFree(GetProcessHeap(),0,lpszNameW);
+    RtlFreeUnicodeString(&lpszNameW);
     return ret;
 }
 
@@ -2422,10 +2439,11 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 			      DWORD cbBuf, LPDWORD pcbNeeded)
 {
     BOOL ret;
-    LPWSTR pEnvW = HEAP_strdupAtoW(GetProcessHeap(),0,pEnvironment);
-    ret = WINSPOOL_GetPrinterDriver(hPrinter, pEnvW, Level, pDriverInfo,
+    UNICODE_STRING pEnvW;
+    RtlCreateUnicodeStringFromAsciiz(&pEnvW, pEnvironment);
+    ret = WINSPOOL_GetPrinterDriver(hPrinter, pEnvW.Buffer, Level, pDriverInfo,
 				    cbBuf, pcbNeeded, FALSE);
-    HeapFree(GetProcessHeap(),0,pEnvW);
+    RtlFreeUnicodeString(&pEnvW);
     return ret;
 }
 /*****************************************************************************
@@ -2797,19 +2815,20 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
                                 LPBYTE pDriverInfo, DWORD cbBuf,
                                 LPDWORD pcbNeeded, LPDWORD pcReturned)
 {   BOOL ret;
-    WCHAR *pNameW = NULL, *pEnvironmentW = NULL;
+    UNICODE_STRING pNameW, pEnvironmentW;
 
     if(pName)
-        pNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, pName);
+        RtlCreateUnicodeStringFromAsciiz(&pNameW, pName);
     if(pEnvironment)
-        pEnvironmentW = HEAP_strdupAtoW(GetProcessHeap(), 0, pEnvironment);
+        RtlCreateUnicodeStringFromAsciiz(&pEnvironmentW, pEnvironment);
 
-    ret = WINSPOOL_EnumPrinterDrivers(pNameW, pEnvironmentW, Level, pDriverInfo,
-                                      cbBuf, pcbNeeded, pcReturned, FALSE);
-    if(pNameW)
-        HeapFree(GetProcessHeap(), 0, pNameW);
-    if(pEnvironmentW)
-        HeapFree(GetProcessHeap(), 0, pEnvironmentW);
+    ret = WINSPOOL_EnumPrinterDrivers(pNameW.Buffer, pEnvironmentW.Buffer,
+                                      Level, pDriverInfo, cbBuf, pcbNeeded,
+                                      pcReturned, FALSE);
+    if(pName)
+        RtlFreeUnicodeString(&pNameW);
+    if(pEnvironment)
+        RtlFreeUnicodeString(&pEnvironmentW);
 
     return ret;
 }

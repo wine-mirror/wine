@@ -543,6 +543,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCSTR *lpServiceArgVectors )
 {
     LPWSTR *lpwstr=NULL;
+    UNICODE_STRING usBuffer;
     int i;
 
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
@@ -554,7 +555,10 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
         lpwstr = NULL;
 
     for(i=0; i<dwNumServiceArgs; i++)
-        lpwstr[i]=HEAP_strdupAtoW(GetProcessHeap(), 0, lpServiceArgVectors[i]);
+    {
+        RtlCreateUnicodeStringFromAsciiz (&usBuffer,lpServiceArgVectors[i]);
+        lpwstr[i]=usBuffer.Buffer;
+    }
 
     StartServiceW(hService, dwNumServiceArgs, (LPCWSTR *)lpwstr);
 

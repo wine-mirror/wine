@@ -33,6 +33,7 @@
 #include "commdlg.h"
 #include "wine/debug.h"
 #include "cderr.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -1100,6 +1101,7 @@ LPWSTR FILEDLG_DupToW(LPCSTR str, DWORD size)
 void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open)
 {
     LPCSTR str;
+    UNICODE_STRING usBuffer;
 
     ofnW->lStructSize = sizeof(OPENFILENAMEW);
     ofnW->hwndOwner = ofnA->hwndOwner;
@@ -1116,13 +1118,17 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
     ofnW->nMaxFileTitle = ofnA->nMaxFileTitle;
     ofnW->lpstrFileTitle = FILEDLG_DupToW(ofnA->lpstrFileTitle, ofnW->nMaxFileTitle);
     if (ofnA->lpstrInitialDir)
-        ofnW->lpstrInitialDir = HEAP_strdupAtoW(GetProcessHeap(),0,ofnA->lpstrInitialDir);
+    {
+        RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpstrInitialDir);
+        ofnW->lpstrInitialDir = usBuffer.Buffer;
+    }
     if (ofnA->lpstrTitle)
         str = ofnA->lpstrTitle;
     else
         /* Allocates default title (FIXME : get it from resource) */
         str = open ? defaultopen:defaultsave;
-    ofnW->lpstrTitle = HEAP_strdupAtoW(GetProcessHeap(),0, str);
+    RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpstrTitle);
+    ofnW->lpstrTitle = usBuffer.Buffer;
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
     ofnW->nFileExtension = ofnA->nFileExtension;
@@ -1130,7 +1136,10 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
     if ((ofnA->Flags & OFN_ENABLETEMPLATE) && (ofnA->lpTemplateName))
     {
         if (HIWORD(ofnA->lpTemplateName))
-            ofnW->lpTemplateName = HEAP_strdupAtoW(GetProcessHeap(), 0, ofnA->lpTemplateName);
+        {
+            RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpTemplateName);
+            ofnW->lpTemplateName = usBuffer.Buffer;
+        }
         else /* numbered resource */
             ofnW->lpTemplateName = (LPWSTR) ofnA->lpTemplateName;
     }

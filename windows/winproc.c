@@ -41,6 +41,7 @@
 #include "message.h"
 #include "thread.h"
 #include "dde.h"
+#include "winternl.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -593,9 +594,13 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
+    {
+        UNICODE_STRING usBuffer;
         if(!*plparam) return 0;
-        *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
+        RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
+        *plparam = (LPARAM)usBuffer.Buffer;
         return (*plparam ? 1 : -1);
+    }
     case WM_GETTEXTLENGTH:
     case CB_GETLBTEXTLEN:
     case LB_GETTEXTLEN:
@@ -603,6 +608,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_NCCREATE:
     case WM_CREATE:
         {
+            UNICODE_STRING usBuffer;
 	    struct s
 	    { CREATESTRUCTW cs;		/* new structure */
 	      LPCWSTR lpszName;		/* allocated Name */
@@ -613,11 +619,15 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             if (!xs) return -1;
             xs->cs = *(CREATESTRUCTW *)*plparam;
             if (HIWORD(xs->cs.lpszName))
-                xs->lpszName = xs->cs.lpszName = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                                  (LPCSTR)xs->cs.lpszName );
+            {
+                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)xs->cs.lpszName);
+                xs->lpszName = xs->cs.lpszName = usBuffer.Buffer;
+            }
             if (HIWORD(xs->cs.lpszClass))
-                xs->lpszClass = xs->cs.lpszClass = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                                    (LPCSTR)xs->cs.lpszClass );
+            {
+                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)xs->cs.lpszClass);
+                xs->lpszClass = xs->cs.lpszClass = usBuffer.Buffer;
+            }
             *plparam = (LPARAM)xs;
         }
         return 1;
@@ -628,11 +638,17 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             if (!cs) return -1;
             *cs = *(MDICREATESTRUCTW *)*plparam;
             if (HIWORD(cs->szClass))
-                cs->szClass = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                               (LPCSTR)cs->szClass );
+            {
+                UNICODE_STRING usBuffer;
+                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)cs->szClass);
+                cs->szClass = usBuffer.Buffer;
+            }
             if (HIWORD(cs->szTitle))
-                cs->szTitle = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                               (LPCSTR)cs->szTitle );
+            {
+                UNICODE_STRING usBuffer;
+                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)cs->szTitle);
+                cs->szTitle = usBuffer.Buffer;
+            }
             *plparam = (LPARAM)cs;
         }
         return 1;
@@ -645,7 +661,11 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_SELECTSTRING:
         if(!*plparam) return 0;
 	if ( WINPROC_TestLBForStr( hwnd ))
-          *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
+        {
+            UNICODE_STRING usBuffer;
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
+            *plparam = (LPARAM)usBuffer.Buffer;
+        }
         return (*plparam ? 1 : -1);
 
     case LB_GETTEXT:		    /* FIXME: fixed sized buffer */
@@ -666,7 +686,11 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case CB_SELECTSTRING:
         if(!*plparam) return 0;
 	if ( WINPROC_TestCBForStr( hwnd ))
-          *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
+        {
+            UNICODE_STRING usBuffer;
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
+            *plparam = (LPARAM)usBuffer.Buffer;
+        }
         return (*plparam ? 1 : -1);
 
     case CB_GETLBTEXT:    /* FIXME: fixed sized buffer */

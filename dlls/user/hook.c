@@ -71,6 +71,7 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -156,7 +157,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
 static LRESULT call_hook_AtoW( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM lparam )
 {
     LRESULT ret;
-
+    UNICODE_STRING usBuffer;
     if (id != WH_CBT || code != HCBT_CREATEWND) ret = proc( code, wparam, lparam );
     else
     {
@@ -169,9 +170,15 @@ static LRESULT call_hook_AtoW( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
         csW = *(CREATESTRUCTW *)cbtcwA->lpcs;
 
         if (HIWORD(cbtcwA->lpcs->lpszName))
-            csW.lpszName = HEAP_strdupAtoW( GetProcessHeap(), 0, cbtcwA->lpcs->lpszName );
+        {
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,cbtcwA->lpcs->lpszName);
+            csW.lpszName = usBuffer.Buffer;
+        }
         if (HIWORD(cbtcwA->lpcs->lpszClass))
-            csW.lpszClass = HEAP_strdupAtoW( GetProcessHeap(), 0, cbtcwA->lpcs->lpszClass );
+        {
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,cbtcwA->lpcs->lpszName);
+            csW.lpszClass = usBuffer.Buffer;
+        }
         ret = proc( code, wparam, (LPARAM)&cbtcwW );
         cbtcwA->hwndInsertAfter = cbtcwW.hwndInsertAfter;
         if (HIWORD(csW.lpszName)) HeapFree( GetProcessHeap(), 0, (LPWSTR)csW.lpszName );
