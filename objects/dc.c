@@ -1284,6 +1284,13 @@ INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
     return 0;
 }
 
+/***********************************************************************
+ *           GetDeviceGammaRamp    (GDI32.*)
+ */
+BOOL WINAPI GetDeviceGammaRamp(HDC hdc,LPVOID ptr) {
+    FIXME("(%x,%p), empty stub!\n",hdc,ptr);
+    return FALSE;
+}
 
 /***********************************************************************
  *           GetColorSpace    (GDI32.165)

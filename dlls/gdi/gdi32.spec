@@ -205,7 +205,7 @@ import	kernel32.dll
 @ stdcall GetDIBColorTable(long long long ptr) GetDIBColorTable
 @ stdcall GetDIBits(long long long long ptr ptr long) GetDIBits
 @ stdcall GetDeviceCaps(long long) GetDeviceCaps
-@ stub GetDeviceGammaRamp
+@ stdcall GetDeviceGammaRamp(long ptr) GetDeviceGammaRamp
 @ stub GetETM
 @ stdcall GetEnhMetaFileA(str) GetEnhMetaFileA
 @ stdcall GetEnhMetaFileBits(long long ptr) GetEnhMetaFileBits
