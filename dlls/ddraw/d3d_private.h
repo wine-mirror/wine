@@ -205,6 +205,7 @@ struct IDirect3DDeviceImpl
     D3DMATRIX *view_mat;
     D3DMATRIX *proj_mat;
     D3DMATRIX *tex_mat[MAX_TEXTURES];
+    BOOLEAN tex_mat_is_identity[MAX_TEXTURES];
     
     /* Current material used in D3D7 mode */
     D3DMATERIAL7 current_material;

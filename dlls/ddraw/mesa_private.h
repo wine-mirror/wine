@@ -136,6 +136,13 @@ typedef struct IDirect3DDeviceGLImpl
     RECT lock_rect[2];
     /* This is just here to print-out a nice warning if we have two successive locks */
     BOOLEAN lock_rect_valid[2];
+
+    /* This is used to optimize some stuff */
+    DWORD prev_clear_color;
+    DWORD prev_clear_stencil;
+    D3DVALUE prev_clear_Z;
+    BOOLEAN depth_mask, depth_test, alpha_test, stencil_test, cull_face, lighting, blending, fogging;
+    GLenum current_tex_env;
 } IDirect3DDeviceGLImpl;
 
 /* This is for the OpenGL additions... */
@@ -179,6 +186,9 @@ extern HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surface
 						 BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height);
 extern HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, void **temp_buffer);
 extern HRESULT upload_surface_to_tex_memory_release(void);
+
+/* Some utilities functions needed to be shared.. */
+extern GLenum convert_D3D_compare_to_GL(D3DCMPFUNC dwRenderState) ;
 
 #endif /* HAVE_OPENGL */
 

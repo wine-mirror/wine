@@ -147,12 +147,15 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		   updated either.. No idea about what happens in D3D.
 		   
 		   Maybe replacing the Z function by ALWAYS would be a better idea. */
-	        if (dwRenderState == D3DZB_TRUE)
+	        if ((dwRenderState == D3DZB_TRUE) && (glThis->depth_test == FALSE)) {
 		    glEnable(GL_DEPTH_TEST);
-		else if (dwRenderState == D3DZB_FALSE)
+		    glThis->depth_test = TRUE;
+		} else if ((dwRenderState == D3DZB_FALSE) && (glThis->depth_test == TRUE)) {
 		    glDisable(GL_DEPTH_TEST);
-		else {
+		    glThis->depth_test = FALSE;
+		} else if (glThis->depth_test == FALSE) {
 		    glEnable(GL_DEPTH_TEST);
+		    glThis->depth_test = TRUE;
 		    WARN(" w-buffering not supported.\n");
 		}
 	        break;
@@ -187,17 +190,19 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_ZWRITEENABLE:     /* 14 */
-	        if (dwRenderState)
+	        if ((dwRenderState != FALSE) && (glThis->depth_mask == FALSE))
 		    glDepthMask(GL_TRUE);
-		else
+		else if ((dwRenderState == FALSE) && (glThis->depth_mask != FALSE))
 		    glDepthMask(GL_FALSE);
+	        glThis->depth_mask = dwRenderState;
 	        break;
 	      
 	    case D3DRENDERSTATE_ALPHATESTENABLE:  /* 15 */
-	        if (dwRenderState)
+	        if ((dwRenderState != 0) && (glThis->alpha_test == FALSE))
 		    glEnable(GL_ALPHA_TEST);
-	        else
+	        else if ((dwRenderState == 0) && (glThis->alpha_test != FALSE))
 		    glDisable(GL_ALPHA_TEST);
+		glThis->alpha_test = dwRenderState;
 	        break;
 
 	    case D3DRENDERSTATE_TEXTUREMAG: {     /* 17 */
@@ -249,13 +254,22 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		
 	        switch ((D3DTEXTUREBLEND) dwRenderState) {
 		    case D3DTBLEND_DECAL:
-		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		        if (glThis->current_tex_env != GL_REPLACE) {
+			    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			    glThis->current_tex_env = GL_REPLACE;
+			}
 			break;
 		    case D3DTBLEND_DECALALPHA:
-		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			if (glThis->current_tex_env != GL_REPLACE) {
+			    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			    glThis->current_tex_env = GL_DECAL;
+			}
 			break;
 		    case D3DTBLEND_MODULATE:
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			if (glThis->current_tex_env != GL_MODULATE) {
+			    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			    glThis->current_tex_env = GL_MODULATE;
+			}
 			break;
 		    case D3DTBLEND_MODULATEALPHA:
 			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -273,15 +287,24 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	    case D3DRENDERSTATE_CULLMODE:           /* 22 */
 	        switch ((D3DCULL) dwRenderState) {
 		    case D3DCULL_NONE:
-		         glDisable(GL_CULL_FACE);
+		         if (glThis->cull_face != 0) {
+			     glDisable(GL_CULL_FACE);
+			     glThis->cull_face = 0;
+			 }
 			 break;
 		    case D3DCULL_CW:
-			 glEnable(GL_CULL_FACE);
+			 if (glThis->cull_face == 0) {
+			     glEnable(GL_CULL_FACE);
+			     glThis->cull_face = 1;
+			 }
 			 glFrontFace(GL_CCW);
 			 glCullFace(GL_BACK);
 			 break;
 		    case D3DCULL_CCW:
-			 glEnable(GL_CULL_FACE);
+			 if (glThis->cull_face == 0) {
+			     glEnable(GL_CULL_FACE);
+			     glThis->cull_face = 1;
+			 }
 			 glFrontFace(GL_CW);
 			 glCullFace(GL_BACK);
 			 break;
@@ -308,11 +331,12 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_ALPHABLENDENABLE:   /* 27 */
-	        if (dwRenderState) {
+	        if ((dwRenderState != 0) && (glThis->blending == 0)) {
 		    glEnable(GL_BLEND);
-		} else {
+		} else if ((dwRenderState == 0) && (glThis->blending != 0)) {
 		    glDisable(GL_BLEND);
 		}
+	        glThis->blending = dwRenderState;
 	        break;
 	      
 	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
@@ -357,10 +381,12 @@ void set_render_state(IDirect3DDeviceImpl* This,
 
 	    case D3DRENDERSTATE_COLORKEYENABLE:     /* 41 */
 	        /* This needs to be fixed. */
-	        if (dwRenderState)
+	        if ((dwRenderState != 0) && (glThis->blending == 0)) {
 		    glEnable(GL_BLEND);
-		else
+		} else if ((dwRenderState == 0) && (glThis->blending != 0)) {
 		    glDisable(GL_BLEND);
+		}
+	        glThis->blending = dwRenderState;
 	        break;
 
 	    case D3DRENDERSTATE_ZBIAS: /* 47 */
@@ -381,10 +407,11 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_STENCILENABLE:    /* 52 */
-	        if (dwRenderState)
+	        if ((dwRenderState != 0) && (glThis->stencil_test == 0))
 		    glEnable(GL_STENCIL_TEST);
-		else
+		else if ((dwRenderState == 0) && (glThis->stencil_test != 0))
 		    glDisable(GL_STENCIL_TEST);
+	        glThis->stencil_test = dwRenderState;
 		break;
 	    
 	    case D3DRENDERSTATE_STENCILFAIL:      /* 53 */
@@ -441,10 +468,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_LIGHTING:    /* 137 */
-	        if (dwRenderState)
-		    glEnable(GL_LIGHTING);
-		else
-		    glDisable(GL_LIGHTING);
+	        /* Nothing to do, only storage matters... */
 	        break;
 		
 	    case D3DRENDERSTATE_AMBIENT: {            /* 139 */

@@ -368,7 +368,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     }
 
     /* Check also for the MIPMAP / MIPMAPCOUNT flags.
-       TODO: check if Windows 'auto-builds' somehow the mip-map levels */
+       As checked on Windows, this is the right behaviour. No mipmaps seem to be generated. */
     if (((ddsd.dwFlags & DDSD_MIPMAPCOUNT) == 0) &&
 	((ddsd.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != 0)) {
         ddsd.dwFlags |= DDSD_MIPMAPCOUNT;
