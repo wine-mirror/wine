@@ -64,6 +64,7 @@ typedef struct
     INT         nb_tabs;        /* Number of tabs in array */
     INT        *tabs;           /* Array of tabs */
     BOOL        caret_on;       /* Is caret on? */
+    BOOL        captured;       /* Is mouse captured? */
     HFONT       font;           /* Current font */
     LCID          locale;         /* Current locale for string comparisons */
     LPHEADCOMBO   lphc;		  /* ComboLBox */
@@ -1752,6 +1753,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
     else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
                                              : descr->lphc->self->hwndSelf ) ;
 
+    descr->captured = TRUE;
     SetCapture( wnd->hwndSelf );
     if (index != -1 && !descr->lphc)
     {
@@ -1777,9 +1779,10 @@ static LRESULT LISTBOX_HandleLButtonUp( WND *wnd, LB_DESCR *descr )
     if (LISTBOX_Timer != LB_TIMER_NONE)
         KillSystemTimer( wnd->hwndSelf, LB_TIMER_ID );
     LISTBOX_Timer = LB_TIMER_NONE;
-    if (GetCapture() == wnd->hwndSelf)
+    if (descr->captured)
     {
-        ReleaseCapture();
+        descr->captured = FALSE;
+        if (GetCapture() == wnd->hwndSelf) ReleaseCapture();
         if (descr->style & LBS_NOTIFY)
             SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     }
@@ -1849,6 +1852,8 @@ static void LISTBOX_HandleMouseMove( WND *wnd, LB_DESCR *descr,
 {
     INT index;
     TIMER_DIRECTION dir;
+
+    if (!descr->captured) return;
 
     if (descr->style & LBS_MULTICOLUMN)
     {
@@ -2052,6 +2057,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
     descr->caret_on      = TRUE;
+    descr->captured      = FALSE;
     descr->font          = 0;
     descr->locale        = 0;  /* FIXME */
     descr->lphc		 = lphc;
