@@ -318,6 +318,7 @@ typedef struct
 #define OCR_SIZEALL         32646
 #define OCR_ICOCUR          32647
 #define OCR_NO              32648
+#define OCR_HAND            32649
 #define OCR_APPSTARTING     32650
 #define OCR_HELP            32651  /* only defined in wine */
 
@@ -2139,6 +2140,9 @@ typedef struct
 #define IDC_NOA          MAKEINTRESOURCEA(32648)
 #define IDC_NOW          MAKEINTRESOURCEW(32648)
 #define IDC_NO             WINELIB_NAME_AW(IDC_NO)
+#define IDC_HANDA        MAKEINTRESOURCEA(32649)
+#define IDC_HANDW        MAKEINTRESOURCEW(32649)
+#define IDC_HAND         WINELIB_NAME_AW(IDC_HAND)
 #define IDC_APPSTARTINGA MAKEINTRESOURCEA(32650)
 #define IDC_APPSTARTINGW MAKEINTRESOURCEW(32650)
 #define IDC_APPSTARTING    WINELIB_NAME_AW(IDC_APPSTARTING)

@@ -186,6 +186,7 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #include "bitmaps/ocr_sizens"
 #include "bitmaps/ocr_bummer"
 #include "bitmaps/ocr_dragobject"
+#include "bitmaps/ocr_hand"
 /*#include "bitmaps/ocr_sizeall"*/
 /*#include "bitmaps/ocr_icocur"*/
 #include "bitmaps/ocr_no"
@@ -206,18 +207,14 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #define OCR_BASE2	(OCR_BASE1 + OCR_LAST1 - OCR_FIRST1 + 1)
 
 #define OCR_FIRST3 OCR_NO
-#define OCR_LAST3  OCR_NO
+#define OCR_LAST3  OCR_APPSTARTING
 #define OCR_BASE3       (OCR_BASE2 + OCR_LAST2 - OCR_FIRST2 + 1)
 
-#define OCR_FIRST4 OCR_APPSTARTING
-#define OCR_LAST4  OCR_APPSTARTING
+#define OCR_FIRST4 OCR_HELP
+#define OCR_LAST4  OCR_HELP
 #define OCR_BASE4       (OCR_BASE3 + OCR_LAST3 - OCR_FIRST3 + 1)
 
-#define OCR_FIRST5 OCR_HELP
-#define OCR_LAST5  OCR_HELP
-#define OCR_BASE5       (OCR_BASE4 + OCR_LAST4 - OCR_FIRST4 + 1)
-
-#define NB_CURSORS (OCR_BASE5 + OCR_LAST5 - OCR_FIRST5 + 1)
+#define NB_CURSORS (OCR_BASE4 + OCR_LAST4 - OCR_FIRST4 + 1)
 static char **OBM_Cursors_Data[NB_CURSORS] = 
 {
     ocr_bummer,	     /* OCR_BUMMER */
@@ -238,6 +235,7 @@ static char **OBM_Cursors_Data[NB_CURSORS] =
     ocr_icocur       /* OCR_ICOCUR */
 #endif
     ocr_no,          /* OCR_NO */
+    ocr_hand,        /* OCR_HAND */
     ocr_appstarting, /* OCR_APPSTARTING */
     ocr_help         /* OCR_HELP */
 };
@@ -475,8 +473,6 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 			    id = OCR_BASE3 + id - OCR_FIRST3;
 		       else if ((id >= OCR_FIRST4) && (id <= OCR_LAST4))
 				 id = OCR_BASE4 + id - OCR_FIRST4;
-			    else if ((id >= OCR_FIRST5) && (id <= OCR_LAST5))
-				      id = OCR_BASE5 + id - OCR_FIRST5;
         else return 0;
         if (OBM_Cursors[id]) return OBM_Cursors[id];
     }
