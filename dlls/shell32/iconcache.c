@@ -288,10 +288,15 @@ void SIC_Destroy(void)
 	if (sic_hdpa) DPA_DestroyCallback(sic_hdpa, sic_free, NULL );
 
 	sic_hdpa = NULL;
+	ImageList_Destroy(ShellSmallIconList);
+	ShellSmallIconList = 0;
+	ImageList_Destroy(ShellBigIconList);
+	ShellBigIconList = 0;
 
 	LeaveCriticalSection(&SHELL32_SicCS);
 	DeleteCriticalSection(&SHELL32_SicCS);
 }
+
 /*************************************************************************
  * Shell_GetImageList			[SHELL32.71]
  *
@@ -424,7 +429,7 @@ UINT WINAPI ExtractIconExAW(LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarg
 
 /*************************************************************************
  * ExtractIconExW			[SHELL32.@]
- * RETURNS: 
+ * RETURNS
  *  0 no icon found
  *  -1 file is not valid
  *  or number of icons extracted
