@@ -3709,9 +3709,9 @@ static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode
     else
     {
 	LPSTR textA = (LPSTR)lParam;
-	INT ret = WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL);
 	textA[count - 1] = 0; /* ensure 0 termination */
-	return ret;
+	return strlen(textA);
     }
 }
 
