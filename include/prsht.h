@@ -324,7 +324,7 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
  */
 
 #define PropSheet_SetCurSel(hDlg, hpage, index) \
-	SeandMessage32A(hDlg, PSM_SETCURSEL, (WPARAM)index, (LPARAM)hpage)
+	SendMessageA(hDlg, PSM_SETCURSEL, (WPARAM)index, (LPARAM)hpage)
 	 
 #define PropSheet_RemovePage(hDlg, index, hpage) \
 	SNDMSG(hDlg, PSM_REMOVEPAGE, index, (LPARAM)hpage)
