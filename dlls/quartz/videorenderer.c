@@ -222,8 +222,21 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
                         *(ptr + i*psz + 3 + j * sdesc.u1.lPitch) = 0xFF;
                 }
         }
+	else if (format->bmiHeader.biBitCount == 32)
+	{
+            int psz = sdesc.ddpfPixelFormat.u1.dwRGBBitCount == 32 ? 4 : 3;
+            for (j = 0; j < height; j++)
+                for (i = 0; i < width; i++)
+                {
+                    *(ptr + i*psz + 0 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 0);
+                    *(ptr + i*psz + 1 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 1);
+                    *(ptr + i*psz + 2 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 2);
+		    if (psz == 4)
+                        *(ptr + i*psz + 3 + j * sdesc.u1.lPitch) = 0xFF;
+                }
+	}
 	else
-            FIXME("Source size with a depths other than paletted 8 bits are not yet supported\n");
+            FIXME("Source size with a depths other than paletted 8 or 32 bits are not yet supported\n");
     }
     else
         FIXME("Destination depths with a depth other than 24 or 32 bits are not yet supported\n");     
@@ -293,9 +306,6 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
     VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
 
-    /* We have finished with the incoming sample, we must release it now */
-    IMediaSample_Release(pSample);
-    
     return S_OK;
 }
 

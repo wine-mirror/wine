@@ -124,10 +124,7 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
 	goto error;
     }
 
-    return S_OK;
-
 error:
-    /* If we have a sample that has not been delivered, release it */
     if (pSample)
         IMediaSample_Release(pSample);
 
@@ -174,9 +171,6 @@ static HRESULT AVIDec_Sample(LPVOID iface, IMediaSample * pSample)
     
     AVIDec_SendSampleData(This, pbSrcStream, cbSrcStream);
 
-    /* We have finished with the incoming sample, we must release it now */
-    IMediaSample_Release(pSample);
-        
     return S_OK;
 }
 

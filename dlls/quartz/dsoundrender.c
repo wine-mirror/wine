@@ -184,7 +184,7 @@ static DWORD DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DW
 	  ERR("Unable to lock sound buffer !\n");
           break;
         }
-	TRACE("write_pos=%ld, size=%ld, sz1=%ld, sz2=%ld\n", This->write_pos, size2, dwsize1, dwsize2); 
+        /* TRACE("write_pos=%ld, size=%ld, sz1=%ld, sz2=%ld\n", This->write_pos, size2, dwsize1, dwsize2); */
 
         memcpy(lpbuf1, data, dwsize1);
         if (dwsize2) {
@@ -260,9 +260,6 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 	}
     }
     DSoundRender_SendSampleData(This, pbSrcStream, cbSrcStream);
-  
-    /* We have finished with the incoming sample, we must release it now */
-    IMediaSample_Release(pSample);
     
     return S_OK;
 }

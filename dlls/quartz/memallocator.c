@@ -140,7 +140,7 @@ static ULONG WINAPI BaseMemAllocator_AddRef(IMemAllocator * iface)
 {
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->() AddRef from %ld\n", iface, This->ref);
 
     return InterlockedIncrement(&This->ref);
 }
@@ -149,7 +149,7 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
 {
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %ld\n", iface, This->ref);
 
     if (!InterlockedDecrement(&This->ref))
     {
@@ -634,8 +634,12 @@ static HRESULT WINAPI StdMediaSample2_GetMediaType(IMediaSample2 * iface, AM_MED
 
     TRACE("(%p)\n", ppMediaType);
 
-    if (!This->props.pMediaType)
+    if (!This->props.pMediaType) {
+        /* Make sure we return a NULL pointer (required by native Quartz dll) */
+        if (ppMediaType)
+            *ppMediaType = NULL;
         return S_FALSE;
+    }
 
     if (!(*ppMediaType = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;

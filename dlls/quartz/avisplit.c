@@ -680,8 +680,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
                     ERR("Error sending sample (%lx)\n", hr);
             }
 
-            /* If we have a sample that has not been delivered, release it */
-            if (FAILED(hr) && This->pCurrentSample)
+            if (This->pCurrentSample)
                 IMediaSample_Release(This->pCurrentSample);
             
             This->pCurrentSample = NULL;
