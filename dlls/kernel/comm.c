@@ -411,27 +411,71 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
 		COMM16_WriteComplete);
 }
 
+/*****************************************************************************
+ *	COMM16_DCBtoDCB16	(Internal)
+ */
+INT16 COMM16_DCBtoDCB16(LPDCB lpdcb, LPDCB16 lpdcb16)
+{
+	if(lpdcb->BaudRate<0x10000)
+		lpdcb16->BaudRate = lpdcb->BaudRate;
+	else if(lpdcb->BaudRate==115200)
+			lpdcb16->BaudRate = 57601;
+	else {
+		WARN("Baud rate can't be converted\n");
+		lpdcb16->BaudRate = 57601;
+	}
+	lpdcb16->ByteSize = lpdcb->ByteSize;
+	lpdcb16->fParity = lpdcb->fParity;
+	lpdcb16->Parity = lpdcb->Parity;
+	lpdcb16->StopBits = lpdcb->StopBits;
+
+	lpdcb16->RlsTimeout = 50;
+	lpdcb16->CtsTimeout = 50; 
+	lpdcb16->DsrTimeout = 50;
+	lpdcb16->fNull = 0;
+	lpdcb16->fChEvt = 0;
+	lpdcb16->fBinary = 1;
+	lpdcb16->fDtrDisable = 0;
+
+	lpdcb16->fDtrflow = (lpdcb->fDtrControl==DTR_CONTROL_ENABLE);
+	lpdcb16->fRtsflow = (lpdcb->fRtsControl==RTS_CONTROL_ENABLE);
+	lpdcb16->fOutxCtsFlow = lpdcb->fOutxCtsFlow;
+	lpdcb16->fOutxDsrFlow = lpdcb->fOutxDsrFlow;
+	lpdcb16->fDtrDisable = (lpdcb->fDtrControl==DTR_CONTROL_DISABLE);
+
+	lpdcb16->fInX = lpdcb->fInX;
+
+	lpdcb16->fOutX = lpdcb->fOutX;
+/*
+	lpdcb16->XonChar = 
+	lpdcb16->XoffChar = 
+ */
+	lpdcb16->XonLim = 10;
+	lpdcb16->XoffLim = 10;
+
+	return 0;
+}
+
+
 /**************************************************************************
  *         BuildCommDCB		(USER.213)
  *
  * According to the ECMA-234 (368.3) the function will return FALSE on 
  * success, otherwise it will return -1. 
- * IF THIS IS NOT CORRECT THE RETURNVALUE CHECK IN BuildCommDCBAndTimeoutsA
- * NEEDS TO BE FIXED
  */
 INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 {
 	/* "COM1:96,n,8,1"	*/
 	/*  012345		*/
 	int port;
-	char *ptr, temp[256];
+	DCB dcb;
 
 	TRACE("(%s), ptr %p\n", device, lpdcb);
 
-	if (!strncasecmp(device,"COM",3)) {
+	if (strncasecmp(device,"COM",3))
+		return -1;
 		port = device[3] - '0';
 	
-
 		if (port-- == 0) {
 			ERR("BUG ! COM0 can't exist!\n");
 			return -1;
@@ -445,102 +489,16 @@ INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 		memset(lpdcb, 0, sizeof(DCB16)); /* initialize */
 
 		lpdcb->Id = port;
-		
-		if (!*(device+4))
-			return 0;
+	dcb.DCBlength = sizeof(DCB);
 
-		if (*(device+4) != ':')
+	if (strchr(device,'=')) /* block new style */
 			return -1;
-		
-		strcpy(temp,device+5);
-		ptr = strtok(temp, ", "); 
 
-		if (COM[port].baudrate > 0)
-			lpdcb->BaudRate = COM[port].baudrate;
-		else
-		{
-			int rate;
-		        /* DOS/Windows only compares the first two numbers
-			 * and assigns an appropriate baud rate.
-			 * You can supply 961324245, it still returns 9600 ! */
-			if (strlen(ptr) < 2)
-			{
-			    WARN("Unknown baudrate string '%s' !\n", ptr);
-			    return -1; /* error: less than 2 chars */
-			}
-			ptr[2] = '\0';
-			rate = atoi(ptr);
-
-			switch (rate) {
-				case 11:
-				case 30:
-				case 60:
-					rate *= 10;
-					break;
-				case 12:
-				case 24:
-				case 48:
-				case 96:
-					rate *= 100;
-					break;
-				case 19:
-					rate = 19200;
-					break;
-				default:
-					WARN("Unknown baudrate indicator %d !\n", rate);
+	if(!BuildCommDCBA(device,&dcb))
 					return -1;
-			}
 			
-		        lpdcb->BaudRate = rate;
+	return COMM16_DCBtoDCB16(&dcb, lpdcb);
 		}
-        	TRACE("baudrate (%d)\n", lpdcb->BaudRate);
-
-		ptr = strtok(NULL, ", ");
-		if (islower(*ptr))
-			*ptr = toupper(*ptr);
-
-        	TRACE("parity (%c)\n", *ptr);
-		lpdcb->fParity = TRUE;
-		switch (*ptr) {
-			case 'N':
-				lpdcb->Parity = NOPARITY;
-				lpdcb->fParity = FALSE;
-				break;			
-			case 'E':
-				lpdcb->Parity = EVENPARITY;
-				break;			
-			case 'M':
-				lpdcb->Parity = MARKPARITY;
-				break;			
-			case 'O':
-				lpdcb->Parity = ODDPARITY;
-				break;			
-			default:
-				WARN("Unknown parity `%c'!\n", *ptr);
-				return -1;
-		}
-
-		ptr = strtok(NULL, ", "); 
-         	TRACE("charsize (%c)\n", *ptr);
-		lpdcb->ByteSize = *ptr - '0';
-
-		ptr = strtok(NULL, ", ");
-        	TRACE("stopbits (%c)\n", *ptr);
-		switch (*ptr) {
-			case '1':
-				lpdcb->StopBits = ONESTOPBIT;
-				break;			
-			case '2':
-				lpdcb->StopBits = TWOSTOPBITS;
-				break;			
-			default:
-				WARN("Unknown # of stopbits `%c'!\n", *ptr);
-				return -1;
-		}
-	}	
-
-	return 0;
-}
 
 /*****************************************************************************
  *	OpenComm		(USER.200)
@@ -993,42 +951,8 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	}
 
 	lpdcb->Id = cid;
-	if(dcb.BaudRate<0x10000)
-		lpdcb->BaudRate = dcb.BaudRate;
-	else if(dcb.BaudRate==115200)
-			lpdcb->BaudRate = 57601;
-	else {
-		WARN("Baud rate can't be converted\n");
-		lpdcb->BaudRate = 57601;
-	}
-	lpdcb->ByteSize = dcb.ByteSize;
-	lpdcb->fParity = dcb.fParity;
-	lpdcb->Parity = dcb.Parity;
-	lpdcb->StopBits = dcb.StopBits;
 
-	lpdcb->RlsTimeout = 50;
-	lpdcb->CtsTimeout = 50; 
-	lpdcb->DsrTimeout = 50;
-	lpdcb->fNull = 0;
-	lpdcb->fChEvt = 0;
-	lpdcb->fBinary = 1;
-	lpdcb->fDtrDisable = 0;
-
-	lpdcb->fDtrflow = (dcb.fDtrControl==DTR_CONTROL_ENABLE);
-	lpdcb->fRtsflow = (dcb.fRtsControl==RTS_CONTROL_ENABLE);
-	lpdcb->fOutxCtsFlow = dcb.fOutxCtsFlow;
-	lpdcb->fOutxDsrFlow = dcb.fOutxDsrFlow;
-	lpdcb->fDtrDisable = (dcb.fDtrControl==DTR_CONTROL_DISABLE);
-
-	lpdcb->fInX = dcb.fInX;
-
-	lpdcb->fOutX = dcb.fOutX;
-/*
-	lpdcb->XonChar = 
-	lpdcb->XoffChar = 
- */
-	lpdcb->XonLim = 10;
-	lpdcb->XoffLim = 10;
+	COMM16_DCBtoDCB16(&dcb,lpdcb);
 
 	lpdcb->EvtChar = ptr->evtchar;
 
@@ -1233,6 +1157,137 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 }
 
 
+/***********************************************************************
+ *           COMM_BuildOldCommDCB   (Internal)
+ *
+ *  Build a DCB using the old style settings string eg: "COMx:96,n,8,1"
+ *  We ignore the COM port index, since we can support more than 4 ports.
+ */
+BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
+{
+	/* "COM1:96,n,8,1"	*/
+	/*  012345		*/
+	char *ptr, temp[256], last;
+	int rate;
+
+	TRACE("(%s), ptr %p\n", device, lpdcb);
+
+	if (strncasecmp(device,"COM",3))
+		return FALSE;
+
+	if (!*(device+4))
+		return FALSE;
+
+	if (*(device+4) != ':')
+		return FALSE;
+	
+	strcpy(temp,device+5);
+	last=temp[strlen(temp)-1];
+	ptr = strtok(temp, ", "); 
+
+        /* DOS/Windows only compares the first two numbers
+	 * and assigns an appropriate baud rate.
+	 * You can supply 961324245, it still returns 9600 ! */
+	if (strlen(ptr) < 2)
+	{
+		WARN("Unknown baudrate string '%s' !\n", ptr);
+		return FALSE; /* error: less than 2 chars */
+	}
+	ptr[2] = '\0';
+	rate = atoi(ptr);
+
+	switch (rate) {
+	case 11:
+	case 30:
+	case 60:
+		rate *= 10;
+		break;
+	case 12:
+	case 24:
+	case 48:
+	case 96:
+		rate *= 100;
+		break;
+	case 19:
+		rate = 19200;
+		break;
+	default:
+		WARN("Unknown baudrate indicator %d !\n", rate);
+		return FALSE;
+	}
+			
+        lpdcb->BaudRate = rate;
+	TRACE("baudrate (%ld)\n", lpdcb->BaudRate);
+
+	ptr = strtok(NULL, ", ");
+	if (islower(*ptr))
+		*ptr = toupper(*ptr);
+
+       	TRACE("parity (%c)\n", *ptr);
+	lpdcb->fParity = TRUE;
+	switch (*ptr) {
+	case 'N':
+		lpdcb->Parity = NOPARITY;
+		lpdcb->fParity = FALSE;
+		break;			
+	case 'E':
+		lpdcb->Parity = EVENPARITY;
+		break;			
+	case 'M':
+		lpdcb->Parity = MARKPARITY;
+		break;			
+	case 'O':
+		lpdcb->Parity = ODDPARITY;
+		break;			
+	default:
+		WARN("Unknown parity `%c'!\n", *ptr);
+		return FALSE;
+	}
+
+	ptr = strtok(NULL, ", "); 
+       	TRACE("charsize (%c)\n", *ptr);
+	lpdcb->ByteSize = *ptr - '0';
+
+	ptr = strtok(NULL, ", ");
+       	TRACE("stopbits (%c)\n", *ptr);
+	switch (*ptr) {
+	case '1':
+		lpdcb->StopBits = ONESTOPBIT;
+		break;			
+	case '2':
+		lpdcb->StopBits = TWOSTOPBITS;
+		break;			
+	default:
+		WARN("Unknown # of stopbits `%c'!\n", *ptr);
+		return FALSE;
+	}	
+
+	if (last == 'x') {
+		lpdcb->fInX		= TRUE;
+		lpdcb->fOutX		= TRUE;
+		lpdcb->fOutxCtsFlow	= FALSE;
+		lpdcb->fOutxDsrFlow	= FALSE;
+		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
+		lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
+	} else if (last=='p') {
+		lpdcb->fInX		= FALSE;
+		lpdcb->fOutX		= FALSE;
+		lpdcb->fOutxCtsFlow	= TRUE;
+		lpdcb->fOutxDsrFlow	= TRUE;
+		lpdcb->fDtrControl	= DTR_CONTROL_HANDSHAKE;
+		lpdcb->fRtsControl	= RTS_CONTROL_HANDSHAKE;
+	} else {
+		lpdcb->fInX		= FALSE;
+		lpdcb->fOutX		= FALSE;
+		lpdcb->fOutxCtsFlow	= FALSE;
+		lpdcb->fOutxDsrFlow	= FALSE;
+		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
+		lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
+	}
+
+	return 0;
+}
+
 /**************************************************************************
  *         BuildCommDCBA		(KERNEL32.@)
  *
@@ -1286,53 +1341,11 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 	} else
 		temp=(LPSTR)device;
 
+	memset(lpdcb,0,sizeof (DCB));
 	lpdcb->DCBlength	= sizeof(DCB);
 	if (strchr(temp,',')) {	/* old style */
-		DCB16	dcb16;
-		BOOL16	ret;
-		char	last=temp[strlen(temp)-1];
 
-		ret=BuildCommDCB16(device,&dcb16);
-		if (ret)
-			return FALSE;
-		lpdcb->BaudRate		= dcb16.BaudRate;
-		lpdcb->ByteSize		= dcb16.ByteSize;
-		lpdcb->fBinary		= dcb16.fBinary;
-		lpdcb->Parity		= dcb16.Parity;
-		lpdcb->fParity		= dcb16.fParity;
-		lpdcb->fNull		= dcb16.fNull;
-		lpdcb->StopBits		= dcb16.StopBits;
-		if (last == 'x') {
-			lpdcb->fInX		= TRUE;
-			lpdcb->fOutX		= TRUE;
-			lpdcb->fOutxCtsFlow	= FALSE;
-			lpdcb->fOutxDsrFlow	= FALSE;
-			lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
-			lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
-		} else if (last=='p') {
-			lpdcb->fInX		= FALSE;
-			lpdcb->fOutX		= FALSE;
-			lpdcb->fOutxCtsFlow	= TRUE;
-			lpdcb->fOutxDsrFlow	= TRUE;
-			lpdcb->fDtrControl	= DTR_CONTROL_HANDSHAKE;
-			lpdcb->fRtsControl	= RTS_CONTROL_HANDSHAKE;
-		} else {
-			lpdcb->fInX		= FALSE;
-			lpdcb->fOutX		= FALSE;
-			lpdcb->fOutxCtsFlow	= FALSE;
-			lpdcb->fOutxDsrFlow	= FALSE;
-			lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
-			lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
-		}
-		lpdcb->XonChar	= dcb16.XonChar;
-		lpdcb->XoffChar	= dcb16.XoffChar;
-		lpdcb->ErrorChar= dcb16.PeChar;
-		lpdcb->fErrorChar= dcb16.fPeChar;
-		lpdcb->EofChar	= dcb16.EofChar;
-		lpdcb->EvtChar	= dcb16.EvtChar;
-		lpdcb->XonLim	= dcb16.XonLim;
-		lpdcb->XoffLim	= dcb16.XoffLim;
-		return TRUE;
+		return COMM_BuildOldCommDCB(device,lpdcb);
 	}
 	ptr=strtok(temp," "); 
 	while (ptr) {
