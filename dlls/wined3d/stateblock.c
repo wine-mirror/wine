@@ -262,20 +262,23 @@ HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,R
 
 ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    return refCount;
 }
 
 ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IWineD3DDevice_Release((IWineD3DDevice *)This->wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+    return refCount;
 }
 
 /**********************************************************

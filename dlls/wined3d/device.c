@@ -2998,21 +2998,24 @@ HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID ri
 
 ULONG WINAPI IWineD3DDeviceImpl_AddRef(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    return refCount;
 }
 
 ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
         IWineD3D_Release(This->wineD3D);
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+    return refCount;
 }
 
 /**********************************************************

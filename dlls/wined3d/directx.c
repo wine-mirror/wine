@@ -1613,17 +1613,20 @@ HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *p
 
 ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    return refCount;
 }
 
 ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) HeapFree(GetProcessHeap(), 0, This);
-    return ref;
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
+
+    if (!refCount) HeapFree(GetProcessHeap(), 0, This);
+    return refCount;
 }
 
 /**********************************************************
