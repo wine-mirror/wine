@@ -2016,8 +2016,12 @@ TREEVIEW_GetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
     if (tvItem->mask & TVIF_SELECTEDIMAGE)
 	tvItem->iSelectedImage = wineItem->iSelectedImage;
 
-    if (tvItem->mask & TVIF_STATE)
-	tvItem->state = wineItem->state & tvItem->stateMask;
+    if (tvItem->mask & TVIF_STATE) {
+        /* Careful here - Windows ignores the stateMask when you get the state
+ 	    That contradicts the documentation, but makes more common sense, masking
+	    retrieval in this way seems overkill */
+        tvItem->state = wineItem->state;
+    }
 
     if (tvItem->mask & TVIF_TEXT)
 	lstrcpynA(tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
