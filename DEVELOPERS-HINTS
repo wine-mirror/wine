@@ -148,10 +148,8 @@ Support programs, libraries, etc:
 	include/		- Windows standard includes
 	library/		- the Wine portability library
 	miscemu/		- the main Wine program
-	ole/			- global UUIDs static library
 	server/			- the Wine server
-	tools/			- relay code builder, new rc, bugreport
-				  generator, wineconfigurator, etc.
+	tools/			- relay code builder, resource compiler, etc.
 	unicode/		- Unicode support shared
 
 
