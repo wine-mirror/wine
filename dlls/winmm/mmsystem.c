@@ -3794,19 +3794,31 @@ static	UINT WINAPI MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     wod.dwInstance = dwInstance;
     wod.dnDevNode = 0L;
 
-    if (dwFlags & WAVE_MAPPED) {
-	wod.uMappedDeviceID = uDeviceID;
-	uDeviceID = WAVE_MAPPER;
-    } else {
-	wod.uMappedDeviceID = -1;
-    }
-    wmld->uDeviceID = uDeviceID;
+    for (;;) {
+        if (dwFlags & WAVE_MAPPED) {
+            wod.uMappedDeviceID = uDeviceID;
+            uDeviceID = WAVE_MAPPER;
+        } else {
+            wod.uMappedDeviceID = -1;
+        }
+        wmld->uDeviceID = uDeviceID;
+    
+        dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN, 
+                           (DWORD)&wod, dwFlags);
 
-    dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN, (DWORD)&wod, dwFlags);
+        if (dwRet != WAVERR_BADFORMAT ||
+            (dwFlags & (WAVE_MAPPED|WAVE_FORMAT_DIRECT)) != 0) break;
+        /* if we ask for a format which isn't supported by the physical driver, 
+         * let's try to map it through the wave mapper (except, if we already tried
+         * or user didn't allow us to use acm codecs)
+         */
+        dwFlags |= WAVE_MAPPED;
+        /* we shall loop only one */
+    }
 
     if ((dwFlags & WAVE_FORMAT_QUERY) || dwRet != MMSYSERR_NOERROR) {
-	MMDRV_Free(handle, wmld);
-	handle = 0;
+        MMDRV_Free(handle, wmld);
+        handle = 0;
     }
 
     if (lphndl != NULL) *lphndl = handle;
@@ -3965,7 +3977,7 @@ UINT WINAPI waveOutOpen(HWAVEOUT* lphWaveOut, UINT uDeviceID,
 			DWORD dwInstance, DWORD dwFlags)
 {
     return MMSYSTEM_waveOpen(lphWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat,
-			     dwCallback, dwInstance, dwFlags, TRUE);
+                             dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************
@@ -3984,7 +3996,7 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
     ret = MMSYSTEM_waveOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-			    MMDRV_WAVEOUT, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
+                            MMDRV_WAVEOUT, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphWaveOut != NULL) *lphWaveOut = HWAVEOUT_16(hWaveOut);
     return ret;
@@ -4608,7 +4620,7 @@ UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
 		       DWORD dwInstance, DWORD dwFlags)
 {
     return MMSYSTEM_waveOpen(lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
-			     dwCallback, dwInstance, dwFlags, TRUE);
+                             dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************
