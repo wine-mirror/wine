@@ -202,6 +202,7 @@
  249 stdcall PathParseIconLocation (ptr) PathParseIconLocationAW
  250 stdcall PathRemoveExtension (ptr) PathRemoveExtensionAW
  251 stdcall PathRemoveArgs (ptr) PathRemoveArgsAW
+ 256 stdcall @(ptr ptr) SHELL32_256
  271 stub SheChangeDirA
  272 stub SheChangeDirExA
  273 stub SheChangeDirExW

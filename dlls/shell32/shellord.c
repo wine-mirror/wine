@@ -1422,3 +1422,30 @@ HRESULT WINAPI SHCreateStdEnumFmtEtc(
 
 	return hRes;
 }
+
+
+/*************************************************************************
+ *                              SHELL32_256
+ */
+HRESULT WINAPI SHELL32_256(LPDWORD lpdw0, LPDWORD lpdw1)
+{
+    HRESULT ret = S_OK;
+
+    FIXME("stub %p 0x%08lx %p\n", lpdw0, lpdw0 ? *lpdw0 : 0, lpdw1);
+
+    if (!lpdw0 || *lpdw0 != 0x10)
+        ret = E_INVALIDARG;
+    else
+    {
+        LPVOID lpdata = 0;/*LocalAlloc(GMEM_ZEROINIT, 0x4E4);*/
+
+	if (!lpdata)
+            ret = E_OUTOFMEMORY;
+	else
+	{
+            /* Initialize and return unknown lpdata structure */
+	}
+    }
+
+    return ret;
+}
