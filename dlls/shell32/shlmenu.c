@@ -106,7 +106,7 @@ static LPFMINFO FM_SetMenuParameter(
  */
 static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 {	IShellFolder	*lpsf, *lpsf2;
-	ULONG		ulItemAttr;
+	ULONG		ulItemAttr = SFGAO_FOLDER;
 	UINT		uID, uFlags, uEnumFlags;
 	LPFNFMCALLBACK	lpfnCallback;
 	LPITEMIDLIST	pidl;

@@ -29,6 +29,14 @@ BOOL WINAPI PathIsURLA(LPCSTR pszPath);
 BOOL WINAPI PathIsURLW(LPCWSTR pszPath);
 #define PathIsURL WINELIB_NAME_AW(PathIsURL)
 
+BOOL WINAPI PathAddExtensionA(LPSTR pszPath, LPCSTR pszExt);
+BOOL WINAPI PathAddExtensionW(LPWSTR pszPath, LPCWSTR pszExt);
+#define PathAddExtension WINELIB_NAME_AW(PathAddExtension)
+
+BOOL WINAPI PathStripToRootA(LPSTR pszPath);
+BOOL WINAPI PathStripToRootW(LPWSTR pszPath);
+#define PathStripToRoot WINELIB_NAME_AW(PathStripToRoot)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

@@ -1819,12 +1819,12 @@ static HRESULT WINAPI ISF_Desktop_fnCreateViewObject( IShellFolder2 * iface,
 
 	  if(IsEqualIID(riid, &IID_IDropTarget))
 	  {
-	    FIXME("IDropTarget not implemented\n");
+	    WARN("IDropTarget not implemented\n");
 	    hr = E_NOTIMPL;
 	  }
 	  else if(IsEqualIID(riid, &IID_IContextMenu))
 	  {
-	    FIXME("IContextMenu not implemented\n");
+	    WARN("IContextMenu not implemented\n");
 	    hr = E_NOTIMPL;
 	  }
 	  else if(IsEqualIID(riid, &IID_IShellView))
@@ -2242,12 +2242,12 @@ static HRESULT WINAPI ISF_MyComputer_fnCreateViewObject( IShellFolder2 * iface,
 
 	  if(IsEqualIID(riid, &IID_IDropTarget))
 	  {
-	    FIXME("IDropTarget not implemented\n");
+	    WARN("IDropTarget not implemented\n");
 	    hr = E_NOTIMPL;
 	  }
 	  else if(IsEqualIID(riid, &IID_IContextMenu))
 	  {
-	    FIXME("IContextMenu not implemented\n");
+	    WARN("IContextMenu not implemented\n");
 	    hr = E_NOTIMPL;
 	  }
 	  else if(IsEqualIID(riid, &IID_IShellView))

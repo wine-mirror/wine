@@ -75,8 +75,6 @@ LPVOID WINAPI PathAppendAW(
  *
  * FIXME
  *  the resulting path is also canonicalized
- *  If lpszSrcPath2 starts with a backslash it is appended 
- *  to the root of lpszSrcPath1.
  */
 LPSTR WINAPI PathCombineA(
 	LPSTR szDest,
@@ -94,9 +92,16 @@ LPSTR WINAPI PathCombineA(
 	}
 
 	/*  if lpszFile is a complete path don't care about lpszDir */
-	if (PathIsRootA(lpszFile))
+	if (PathGetDriveNumberA(lpszFile) != -1)
 	{
 	  strcpy(szDest,lpszFile);
+	}
+	else if (lpszFile[0] == '\\' )
+	{
+	  strcpy(sTemp,lpszDir);
+	  PathStripToRootA(sTemp);
+	  strcat(sTemp,lpszFile);
+	  strcpy(szDest,sTemp);
 	}
 	else
 	{
@@ -128,9 +133,16 @@ LPWSTR WINAPI PathCombineW(
 	}
 
 	/*  if lpszFile is a complete path don't care about lpszDir */
-	if (PathIsRootW(lpszFile))
+	if (PathGetDriveNumberW(lpszFile) != -1)
 	{
 	  CRTDLL_wcscpy(szDest,lpszFile);
+	}
+	else if (lpszFile[0] == (WCHAR)'\\' )
+	{
+	  CRTDLL_wcscpy(sTemp,lpszDir);
+	  PathStripToRootW(sTemp);
+	  CRTDLL_wcscat(sTemp,lpszFile);
+	  CRTDLL_wcscpy(szDest,sTemp);
 	}
 	else
 	{
@@ -769,7 +781,7 @@ LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpszPath )
 {
 	LPWSTR p = lpszPath;
 	
-	while (*lpszPath); p = lpszPath++;
+	while (*lpszPath) p = lpszPath++;
 	if ( *p == (WCHAR)'\\') *p = (WCHAR)'\0';
 	return p;
 }
@@ -2187,4 +2199,135 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 	    return (LPWSTR)((*pszPath)? pszPath : NULL);
 	}
 	return NULL;
+}
+
+/*************************************************************************
+ * PathAddExtensionA
+ */
+ 
+static void _PathAddDotA(LPSTR lpszPath)
+{
+	int len = strlen(lpszPath);
+	if (len && lpszPath[len-1]!='.')
+	{
+	  lpszPath[len]  = '.';
+	  lpszPath[len+1]= '\0';
+	}
+}
+
+BOOL WINAPI PathAddExtensionA(
+	LPSTR  pszPath,
+	LPCSTR pszExtension)
+{
+	if (*pszPath)
+	{
+	  LPSTR pszExt = PathFindFileNameA(pszPath);	/* last path component */
+	  pszExt = PathFindExtensionA(pszExt);	    
+	  if (*pszExt != '\0') return FALSE;		/* already with extension */
+	  _PathAddDotA(pszPath);
+	}
+
+	if (!pszExtension || *pszExtension=='\0')
+	  strcat(pszPath, "exe");
+	else
+	  strcat(pszPath, pszExtension);
+	return TRUE;
+}
+
+/*************************************************************************
+ *	PathAddExtensionW
+ */
+static void _PathAddDotW(LPWSTR lpszPath)
+{
+	int len = lstrlenW(lpszPath);
+	if (len && lpszPath[len-1]!='.')
+	{
+	  lpszPath[len]  = '.';
+	  lpszPath[len+1]= '\0';
+	}
+}
+
+/*************************************************************************
+ *	PathAddExtensionW
+ */
+BOOL WINAPI PathAddExtensionW(
+	LPWSTR  pszPath,
+	LPCWSTR pszExtension)
+{
+	static const WCHAR ext[] = { 'e','x','e',0 };
+
+	if (*pszPath)
+	{
+	  LPWSTR pszExt = PathFindFileNameW(pszPath);	/* last path component */
+	  pszExt = PathFindExtensionW(pszExt);	    
+	  if (*pszExt != '\0') return FALSE;		/* already with extension */
+	  _PathAddDotW(pszPath);
+	}
+
+	if (!pszExtension || *pszExtension=='\0')
+	  lstrcatW(pszPath, ext);
+	else
+	  lstrcatW(pszPath, pszExtension);
+	return TRUE;
+
+}
+
+/*************************************************************************
+ *	PathIsUNCServerA
+ */
+BOOL WINAPI PathIsUNCServerA(
+	LPCSTR pszPath)
+{
+	FIXME("%s\n", pszPath);
+	return FALSE;
+}
+
+/*************************************************************************
+ *	PathIsUNCServerW
+ */
+BOOL WINAPI PathIsUNCServerW(
+	LPCWSTR pszPath)
+{
+	FIXME("%s\n", debugstr_w(pszPath));
+	return FALSE;
+}
+
+/*************************************************************************
+ *	PathIsUNCServerShareA
+ */
+BOOL WINAPI PathIsUNCServerShareA(
+	LPCSTR pszPath)
+{
+	FIXME("%s\n", pszPath);
+	return FALSE;
+}
+
+/*************************************************************************
+ *	PathIsUNCServerShareW
+ */
+BOOL WINAPI PathIsUNCServerShareW(
+	LPCWSTR pszPath)
+{
+	FIXME("%s\n", debugstr_w(pszPath));
+	return FALSE;
+}
+
+/*************************************************************************
+ *	PathMakePrettyA
+ */
+BOOL WINAPI PathMakePrettyA(
+	LPSTR lpPath)
+{
+	FIXME("%s\n", lpPath);
+	return TRUE;
+}
+
+/*************************************************************************
+ *	PathMakePrettyW
+ */
+BOOL WINAPI PathMakePrettyW(
+	LPWSTR lpPath)
+{
+	FIXME("%s\n", debugstr_w(lpPath));
+	return TRUE;
 }

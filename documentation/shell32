@@ -64,3 +64,39 @@ BUGS:
 - many examples from MSDN
 
 Feb-21-2000 <juergen.schmied@debitel.net>
+
+4. native shell32
+-----------------
+
+4.1 win95/98
+
+IShellFolder_GetAttributesOf sometimes returns more bits set 
+than the mask asked for
+
+
+
+4.2 NT4
+
+4.3 NT5
+----------
+
+SHGetSpecialFolderLocation needs the <winntdir>/Recent directory.
+If the directory is missing it returns a x80070002.
+
+needed Registry keys:
+----------------------------
+[MACHINE\\Software\\Classes\\CLSID\\{00021400-0000-0000-c000-000000000046}] 957887196
+@="Desktop"
+
+[MACHINE\\Software\\Classes\\CLSID\\{00021400-0000-0000-c000-000000000046}\\InProcServer32] 957887196
+@="shell32.dll"
+"ThreadingModel"="Apartment"
+
+[MACHINE\\Software\\Classes\\CLSID\\{000214e6-0000-0000-c000-000000000046}] 957887196
+@="Shellfolder"
+
+[MACHINE\\Software\\Classes\\CLSID\\{000214e6-0000-0000-c000-000000000046}\\InProcServer32] 957887196
+@="shell32.dll"
+"ThreadingModel"="Apartment"
+----------------------------
+

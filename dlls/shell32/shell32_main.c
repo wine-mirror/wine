@@ -98,6 +98,7 @@ void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 
 /*************************************************************************
  * SHGetFileInfoA			[SHELL32.@]
+ *
  */
 
 DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
@@ -117,6 +118,11 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	if ((flags & SHGFI_USEFILEATTRIBUTES) && (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
 	  return FALSE;
+	
+	/* windows initializes this values regardless of the flags */
+	psfi->szDisplayName[0] = '\0';
+	psfi->szTypeName[0] = '\0';
+	psfi->iIcon = 0;
 	
 	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES in not specified 
 	   the pidl functions fail on not existing file names */
@@ -298,6 +304,9 @@ DWORD WINAPI SHGetFileInfoAW(
 
 /*************************************************************************
  * ExtractIconA				[SHELL32.133]
+ *
+ * fixme
+ *  is the filename is not a file return 1
  */
 HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	UINT nIconIndex )
@@ -316,6 +325,9 @@ HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 
 /*************************************************************************
  * ExtractIconW				[SHELL32.180]
+ *
+ * fixme
+ *  is the filename is not a file return 1
  */
 HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 	UINT nIconIndex )
@@ -703,7 +715,7 @@ void WINAPI FreeIconList( DWORD dw )
 }
 
 /***********************************************************************
- * DllGetVersion [COMCTL32.25]
+ * DllGetVersion [SHELL32]
  *
  * Retrieves version information of the 'SHELL32.DLL'
  *
@@ -721,7 +733,8 @@ void WINAPI FreeIconList( DWORD dw )
 HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
 	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
-	{ WARN("wrong DLLVERSIONINFO size from app");
+	{
+	  WARN("wrong DLLVERSIONINFO size from app");
 	  return E_INVALIDARG;
 	}
 
@@ -736,6 +749,42 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 
 	return S_OK;
 }
+/***********************************************************************
+ * DllGetVersion [SHLWAPI]
+ *
+ * Retrieves version information of the 'SHLWAPI.DLL'
+ *
+ * PARAMS
+ *     pdvi [O] pointer to version information structure.
+ *
+ * RETURNS
+ *     Success: S_OK
+ *     Failure: E_INVALIDARG
+ *
+ * NOTES
+ *     Returns version of a SHLWAPI.dll from IE5.01.
+ */
+
+HRESULT WINAPI SHLWAPI_DllGetVersion (DLLVERSIONINFO *pdvi)
+{
+	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
+	{
+	  WARN("wrong DLLVERSIONINFO size from app");
+	  return E_INVALIDARG;
+	}
+
+	pdvi->dwMajorVersion = 5;
+	pdvi->dwMinorVersion = 0;
+	pdvi->dwBuildNumber = 2314;
+	pdvi->dwPlatformID = 1000;
+
+	TRACE("%lu.%lu.%lu.%lu\n",
+	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
+	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
+
+	return S_OK;
+}
+
 /*************************************************************************
  * global variables of the shell32.dll
  * all are once per process

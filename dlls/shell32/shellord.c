@@ -184,59 +184,6 @@ int WINAPI SHShellFolderView_Message(
 }
 
 /*************************************************************************
- * OleStrToStrN					[SHELL32.78]
- */
-BOOL WINAPI OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle) 
-{
-	TRACE("(%p, %x, %s, %x)\n", lpStr, nStr, debugstr_wn(lpOle,nOle), nOle);
-	return WideCharToMultiByte (0, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
-}
-
-BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle) 
-{
-	TRACE("(%p, %x, %s, %x)\n", lpwStr, nwStr, debugstr_wn(lpOle,nOle), nOle);
-
-	if (lstrcpynW ( lpwStr, lpOle, nwStr))
-	{ return lstrlenW (lpwStr);
-	}
-	return 0;
-}
-
-BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn) 
-{
-	if (VERSION_OsIsUnicode())
-	  return OleStrToStrNW (lpOut, nOut, lpIn, nIn);
-	return OleStrToStrNA (lpOut, nOut, lpIn, nIn);
-}
-
-/*************************************************************************
- * StrToOleStrN					[SHELL32.79]
- *  lpMulti, nMulti, nWide [IN]
- *  lpWide [OUT]
- */
-BOOL WINAPI StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr) 
-{
-	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_an(lpStrA,nStr), nStr);
-	return MultiByteToWideChar (0, 0, lpStrA, nStr, lpWide, nWide);
-}
-BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr) 
-{
-	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_wn(lpStrW, nStr), nStr);
-
-	if (lstrcpynW (lpWide, lpStrW, nWide))
-	{ return lstrlenW (lpWide);
-	}
-	return 0;
-}
-
-BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr) 
-{
-	if (VERSION_OsIsUnicode())
-	  return StrToOleStrNW (lpWide, nWide, lpStr, nStr);
-	return StrToOleStrNA (lpWide, nWide, lpStr, nStr);
-}
-
-/*************************************************************************
  * RegisterShellHook				[SHELL32.181]
  *
  * PARAMS
@@ -344,7 +291,7 @@ int WINAPIV ShellMessageBoxA(
  *     free_ptr() - frees memory using IMalloc
  *     exported by ordinal
  */
-#define MEM_DEBUG 1
+#define MEM_DEBUG 0
 void WINAPI SHFree(LPVOID x) 
 {
 #if MEM_DEBUG
@@ -755,175 +702,6 @@ BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
 	return 0;
 }
 /*************************************************************************
- * SHRegCloseKey			[NT4.0:SHELL32.505]
- *
- */
-HRESULT WINAPI SHRegCloseKey (HKEY hkey)
-{	TRACE("0x%04x\n",hkey);
-	return RegCloseKey( hkey );
-}
-/*************************************************************************
- * SHRegOpenKeyA				[SHELL32.506]
- *
- */
-HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
-{
-	TRACE("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey), phkResult);
-	return RegOpenKeyA(hKey, lpSubKey, phkResult);
-}
-
-/*************************************************************************
- * SHRegOpenKeyW				[NT4.0:SHELL32.507]
- *
- */
-HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
-{	WARN("0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
-	return RegOpenKeyW( hkey, lpszSubKey, retkey );
-}
-/*************************************************************************
- * SHRegQueryValueExA				[SHELL32.509]
- *
- */
-HRESULT WINAPI SHRegQueryValueExA(
-	HKEY hkey,
-	LPSTR lpValueName,
-	LPDWORD lpReserved,
-	LPDWORD lpType,
-	LPBYTE lpData,
-	LPDWORD lpcbData)
-{
-	TRACE("0x%04x %s %p %p %p %p\n", hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
-	return RegQueryValueExA (hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
-}
-/*************************************************************************
- * SHRegQueryValueW				[NT4.0:SHELL32.510]
- *
- */
-HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
-				 LPWSTR lpszData, LPDWORD lpcbData )
-{	WARN("0x%04x %s %p %p semi-stub\n",
-		hkey, debugstr_w(lpszSubKey), lpszData, lpcbData);
-	return RegQueryValueW( hkey, lpszSubKey, lpszData, lpcbData );
-}
-
-/*************************************************************************
- * SHRegQueryValueExW				[NT4.0:SHELL32.511]
- *
- * FIXME 
- *  if the datatype REG_EXPAND_SZ then expand the string and change
- *  *pdwType to REG_SZ. 
- */
-HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved,
-		 LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData)
-{	DWORD ret;
-	WARN("0x%04x %s %p %p %p %p semi-stub\n",
-		hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
-	ret = RegQueryValueExW ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
-	return ret;
-}
-
- /* SHGetValue: Gets a value from the registry */
-
-/*************************************************************************
- * SHGetValueA
- *
- * Gets a value from the registry
- */
-DWORD WINAPI SHGetValueA(
-    HKEY     hkey,
-    LPCSTR   pSubKey,
-    LPCSTR   pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData
-    )
-{
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
-}
-
-/*************************************************************************
- * SHGetValueW
- *
- * Gets a value from the registry
- */
-DWORD WINAPI SHGetValueW(
-    HKEY     hkey,
-    LPCWSTR  pSubKey,
-    LPCWSTR  pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData
-    )
-{
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
-}
-
-/* gets a user-specific registry value. */
-
-/*************************************************************************
- * SHRegGetUSValueA
- *
- * Gets a user-specific registry value
- */
-LONG WINAPI SHRegGetUSValueA(
-    LPCSTR   pSubKey,
-    LPCSTR   pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData,
-    BOOL     fIgnoreHKCU,
-    LPVOID   pDefaultData,
-    DWORD    wDefaultDataSize
-    )
-{
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
-}
-
-/*************************************************************************
- * SHRegGetUSValueW
- *
- * Gets a user-specific registry value
- */
-LONG WINAPI SHRegGetUSValueW(
-    LPCWSTR  pSubKey,
-    LPCWSTR  pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData,
-    BOOL     flagIgnoreHKCU,
-    LPVOID   pDefaultData,
-    DWORD    wDefaultDataSize
-    )
-{
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
-}
-  
-/*************************************************************************
- * SHRegDeleteKeyA and SHDeleteKeyA
- */
-HRESULT WINAPI SHRegDeleteKeyA(HKEY hkey, LPCSTR pszSubKey)
-{
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_a(pszSubKey));
-	return 0;
-}
-
-/*************************************************************************
- * SHRegDeleteKeyW and SHDeleteKeyA
- */
-HRESULT WINAPI SHRegDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey)
-{
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
-	return 0;
-}
-/*************************************************************************
  * ReadCabinetState				[NT 4.0:SHELL32.651]
  *
  */
@@ -954,128 +732,6 @@ BOOL WINAPI FileIconInit(BOOL bFullInit)
 HRESULT WINAPI IsUserAdmin(void)
 {	FIXME("stub\n");
 	return TRUE;
-}
-
-/*************************************************************************
- * StrRetToBufA					[SHLWAPI.@]
- * 
- * converts a STRRET to a normal string
- *
- * NOTES
- *  the pidl is for STRRET OFFSET
- */
-HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD len)
-{
-	return StrRetToStrNA(dest, len, src, pidl);
-}
-
-/*************************************************************************
- * StrRetToBufW					[SHLWAPI.@]
- * 
- * converts a STRRET to a normal string
- *
- * NOTES
- *  the pidl is for STRRET OFFSET
- */
-HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len)
-{
-	return StrRetToStrNW(dest, len, src, pidl);
-}
-
-/*************************************************************************
- * StrRetToStrN					[SHELL32.96]
- * 
- * converts a STRRET to a normal string
- *
- * NOTES
- *  the pidl is for STRRET OFFSET
- */
-HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
-
-	switch (src->uType)
-	{
-	  case STRRET_WSTR:
-	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
-	    SHFree(src->u.pOleStr);
-	    break;
-
-	  case STRRET_CSTRA:
-	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
-	    break;
-
-	  case STRRET_OFFSETA:
-	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
-	    break;
-
-	  default:
-	    FIXME("unknown type!\n");
-	    if (len)
-	    {
-	      *(LPSTR)dest = '\0';
-	    }
-	    return(FALSE);
-	}
-	return S_OK;
-}
-
-HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
-
-	switch (src->uType)
-	{
-	  case STRRET_WSTR:
-	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
-	    SHFree(src->u.pOleStr);
-	    break;
-
-	  case STRRET_CSTRA:
-	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
-	    break;
-
-	  case STRRET_OFFSETA:
-	    if (pidl)
-	    {
-	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
-	    }
-	    break;
-
-	  default:
-	    FIXME("unknown type!\n");
-	    if (len)
-	    { *(LPSTR)dest = '\0';
-	    }
-	    return(FALSE);
-	}
-	return S_OK;
-}
-HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{
-	if(VERSION_OsIsUnicode())
-	  return StrRetToStrNW (dest, len, src, pidl);
-	return StrRetToStrNA (dest, len, src, pidl);
-}
-
-/*************************************************************************
- * StrChrW					[NT 4.0:SHELL32.651]
- *
- */
-LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
-{
-	TRACE("%s 0x%04x\n",debugstr_w(str),x);
-	return CRTDLL_wcschr(str, x);
-}
-
-/*************************************************************************
- * StrCmpNIW					[NT 4.0:SHELL32.*]
- *
- */
-INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
-{
-	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return CRTDLL__wcsnicmp(wstr1, wstr2, len);
 }
 
 /*************************************************************************
@@ -1200,49 +856,6 @@ HRESULT WINAPI SHFlushClipboard(void)
 }
 
 /*************************************************************************
- * StrFormatByteSizeA				[SHLWAPI]
- */
-LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
-{	char buf[64];
-	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
-	if ( dw<1024L )
-	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
-	}
-	else if ( dw<1048576L)
-	{ sprintf (buf,"%3.1f KB", (FLOAT)dw/1024);
-	}
-	else if ( dw < 1073741824L)
-	{ sprintf (buf,"%3.1f MB", (FLOAT)dw/1048576L);
-	}
-	else
-	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
-	}
-	lstrcpynA (pszBuf, buf, cchBuf);
-	return pszBuf;	
-}
-
-/*************************************************************************
- * StrFormatByteSizeW				[SHLWAPI]
- */
-LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
-{	char buf[64];
-	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
-	if ( dw<1024L )
-	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
-	}
-	else if ( dw<1048576L)
-	{ sprintf (buf,"%3.1f KB", (FLOAT)dw/1024);
-	}
-	else if ( dw < 1073741824L)
-	{ sprintf (buf,"%3.1f MB", (FLOAT)dw/1048576L);
-	}
-	else
-	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
-	}
-	lstrcpynAtoW (pszBuf, buf, cchBuf);
-	return pszBuf;	
-}
-/*************************************************************************
  * SHWaitForFileToOpen				[SHELL32.97]
  *
  */
@@ -1295,36 +908,6 @@ DWORD WINAPI RLBuildListOfPaths (void)
 	return 0;
 }
 /************************************************************************
- *	StrToOleStr			[SHELL32.163]
- *
- */
-int WINAPI StrToOleStrA (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
-{
-	TRACE("(%p, %p %s)\n",
-	lpWideCharStr, lpMultiByteString, debugstr_a(lpMultiByteString));
-
-	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
-
-}
-int WINAPI StrToOleStrW (LPWSTR lpWideCharStr, LPCWSTR lpWString)
-{
-	TRACE("(%p, %p %s)\n",
-	lpWideCharStr, lpWString, debugstr_w(lpWString));
-
-	if (lstrcpyW (lpWideCharStr, lpWString ))
-	{ return lstrlenW (lpWideCharStr);
-	}
-	return 0;
-}
-
-BOOL WINAPI StrToOleStrAW (LPWSTR lpWideCharStr, LPCVOID lpString)
-{
-	if (VERSION_OsIsUnicode())
-	  return StrToOleStrW (lpWideCharStr, lpString);
-	return StrToOleStrA (lpWideCharStr, lpString);
-}
-
-/************************************************************************
  *	SHValidateUNC				[SHELL32.173]
  *
  */
@@ -1376,5 +959,362 @@ HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 BOOL WINAPI shell32_243(DWORD a, DWORD b) 
 { 
   return FALSE; 
+}
+
+/*************************************************************************
+ *      SHCreateShellPalette
+ */
+HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
+{
+	FIXME("stub\n");
+	return CreateHalftonePalette(hdc);
+}
+
+/*
+ NOTES: The most functions exported by ordinal seem to be superflous.
+ The reason for these functions to be there is to provide a wraper
+ for unicode functions to providing these functions on systems without
+ unicode functions eg. win95/win98. Since we have such functions we just
+ call these.
+*/
+
+/*************************************************************************
+ *      SHLWAPI_1	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_1 (
+	LPSTR lpStr,
+	LPVOID x)
+{
+	FIXME("(%p %s %p %s)\n",lpStr, debugstr_a(lpStr),x, debugstr_a(x));
+	return 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_23	[SHLWAPI.23]
+ *
+ * NOTES
+ *	converts a guid to a string
+ *	returns strlen(str)
+ */
+DWORD WINAPI SHLWAPI_23 (
+	REFGUID guid,	/* [in]  clsid */
+	LPSTR str,	/* [out] buffer */
+	INT cmax)	/* [in]  size of buffer */
+{
+	char xguid[80];
+	TRACE("(%s %p 0x%08x)stub\n", debugstr_guid(guid), str, cmax);
+
+	if (WINE_StringFromCLSID(guid,xguid)) return 0;
+	if (strlen(xguid)>=cmax) return 0;
+	strcpy(str,xguid);
+	return strlen(xguid) + 1;
+}
+
+/*************************************************************************
+ *      SHLWAPI_24	[SHLWAPI.24]
+ *
+ * NOTES
+ *	converts a guid to a string
+ *	returns strlen(str)
+ */
+DWORD WINAPI SHLWAPI_24 (
+	REFGUID guid,	/* [in]  clsid */
+	LPWSTR str,	/* [out] buffer */
+	INT cmax)	/* [in]  size of buffer */
+{
+	TRACE("(%s %p 0x%08x)stub\n", debugstr_guid(guid), str, cmax);
+	return StringFromGUID2(guid, str, cmax);
+}
+
+/*************************************************************************
+ *      SHLWAPI_156	[SHLWAPI]
+ *
+ * FIXME: function guessed
+ */
+DWORD WINAPI SHLWAPI_156 (
+	LPWSTR str1,	/* "shell32.dll" */
+	LPWSTR str2)	/* "shell32.dll" */
+{
+	FIXME("(%s %s)stub\n",debugstr_w(str1),debugstr_w(str2));
+	return lstrcmpW(str1,str2);
+}
+
+/*************************************************************************
+ *      SHLWAPI_169	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_169 (IUnknown * lpUnknown)
+{
+	TRACE("(%p)\n",lpUnknown);
+#if 0
+	if(!lpUnknown || !*((LPDWORD)lpUnknown)) return 0;
+	return IUnknown_Release(lpUnknown);
+#endif
+	return 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_193	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_193 ()
+{
+	HDC hdc;
+	DWORD ret;
+
+	TRACE("()\n");
+
+	hdc = GetDC(0);
+	ret = GetDeviceCaps(hdc, BITSPIXEL) * GetDeviceCaps(hdc, PLANES);
+	ReleaseDC(0, hdc);
+	return ret;
+}
+
+/*************************************************************************
+ *      SHLWAPI_219	[SHLWAPI]
+ */
+HRESULT WINAPI SHLWAPI_219 (
+	LPVOID w, /* returned by LocalAlloc */
+	LPVOID x,
+	LPVOID y,
+	LPWSTR z) /* OUT: path */
+{
+	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	return 0xabba1252;
+}
+
+/*************************************************************************
+ *      SHLWAPI_222	[SHLWAPI]
+ *
+ * NOTES
+ *  securityattributes missing
+ */
+HANDLE WINAPI SHLWAPI_222 (LPCLSID guid)
+{
+	char lpstrName[80];
+	strcpy( lpstrName,"shell.");
+	WINE_StringFromCLSID(guid, lpstrName + strlen(lpstrName));
+
+	FIXME("(%s) stub\n", lpstrName);
+	return CreateSemaphoreA(NULL,0, 0x7fffffff, lpstrName);
+}
+
+/*************************************************************************
+ *      SHLWAPI_223	[SHLWAPI]
+ *
+ * NOTES
+ *  function guessed 
+*/
+DWORD WINAPI SHLWAPI_223 (HANDLE handle)
+{
+	DWORD oldCount;
+	
+	FIXME("(0x%08x) stub\n",handle);
+
+	ReleaseSemaphore( handle, 1, &oldCount);
+	WaitForSingleObject( handle, 0 );
+	return 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_237	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_237 (LPVOID x)
+{
+	FIXME("(ptr=%p str=%s wstr=%s)\n",x,debugstr_a(x),debugstr_w(x));
+	return 0xabba1234;
+}
+
+/*************************************************************************
+ *      SHLWAPI_241	[SHLWAPI]
+ *
+ */
+DWORD WINAPI SHLWAPI_241 ()
+{
+	FIXME("()stub\n");
+	return 0xabba1243;
+}
+
+/*************************************************************************
+ *      SHLWAPI_266	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_266 (
+	LPVOID w,
+	LPVOID x,
+	LPVOID y,
+	LPVOID z)
+{
+	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	return 0xabba1248;
+}
+
+/*************************************************************************
+ *      SHLWAPI_267	[SHLWAPI]
+ */
+HRESULT WINAPI SHLWAPI_267 (
+	LPVOID w, /* same as 1th parameter of SHLWAPI_219 */
+	LPVOID x, /* same as 2nd parameter of SHLWAPI_219 */
+	LPVOID y,
+	LPVOID z)
+{
+	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	*((LPDWORD)z) = 0xabba1200;
+	return 0xabba1254;
+}
+
+/*************************************************************************
+ *      SHLWAPI_268	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_268 (
+	LPVOID w,
+	LPVOID x)
+{
+	FIXME("(%p %p)\n",w,x);
+	return 0xabba1251; /* 0 = failure */
+}
+
+/*************************************************************************
+ *      SHLWAPI_276	[SHLWAPI]
+ *
+ */
+DWORD WINAPI SHLWAPI_276 ()
+{
+	FIXME("()stub\n");
+	return 0xabba1244;
+}
+
+/*************************************************************************
+ *      SHLWAPI_309	[SHLWAPI]
+ *
+ */
+DWORD WINAPI SHLWAPI_309 (LPVOID x)
+{
+	FIXME("(%p)stub\n",x);
+	return 0xabba1245;
+}
+
+/*************************************************************************
+ *      SHLWAPI_342	[SHLWAPI]
+ *
+ */
+DWORD WINAPI SHLWAPI_342 (
+	LPVOID w,
+	LPVOID x,
+	LPVOID y,
+	LPVOID z)
+{
+	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	return 0xabba1249;
+}
+
+/*************************************************************************
+ *      SHLWAPI_346	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_346 (
+	LPCWSTR src,
+	LPWSTR dest,
+	int len)
+{
+	FIXME("(%s %p 0x%08x)stub\n",debugstr_w(src),dest,len);
+	lstrcpynW(dest, src, len);
+	return lstrlenW(dest)+1;
+}
+
+
+/*************************************************************************
+ *      SHLWAPI_377	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_377 (LPVOID x, LPVOID y, LPVOID z)
+{
+	FIXME("(%p %p %p)stub\n", x,y,z);
+	return 0xabba1246;
+}
+
+/*************************************************************************
+ *      SHLWAPI_437	[SHLWAPI]
+ *
+ * NOTES
+ *  has to do something with switching the api between ascii and unicode
+ *  observed values: 0 and 5
+ *
+ * accesses
+ * HKLM\System\CurrentControlSet\Control\ProductOptions
+ *
+ */
+DWORD WINAPI SHLWAPI_437 (DWORD x)
+{
+	FIXME("(0x%08lx)stub\n", x);
+	return 0xabba1247;
+}
+
+/*************************************************************************
+ *      wnsprintfA	[SHLWAPI]
+ */
+int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
+{
+    va_list valist;
+    INT res;
+
+    va_start( valist, lpFmt );
+    res = wvsnprintfA( lpOut, cchLimitIn, lpFmt, valist );
+    va_end( valist );
+    return res;
+}
+
+/*************************************************************************
+ *      wnsprintfW	[SHLWAPI]
+ */
+int WINAPIV wnsprintfW(LPWSTR lpOut, int cchLimitIn, LPCWSTR lpFmt, ...)
+{
+    va_list valist;
+    INT res;
+
+    va_start( valist, lpFmt );
+    res = wvsnprintfW( lpOut, cchLimitIn, lpFmt, valist );
+    va_end( valist );
+    return res;
+}
+/*************************************************************************
+ *      UrlEscapeA	[SHLWAPI]
+ */
+HRESULT WINAPI UrlEscapeA(
+	LPCSTR pszUrl,
+	LPSTR pszEscaped,
+	LPDWORD pcchEscaped,
+	DWORD dwFlags)
+{
+	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_a(pszUrl),
+	  pszEscaped, pcchEscaped, dwFlags);
+	return 0;
+}	
+
+/*************************************************************************
+ *      UrlEscapeW	[SHLWAPI]
+ */
+HRESULT WINAPI UrlEscapeW(
+	LPCWSTR pszUrl,
+	LPWSTR pszEscaped,
+	LPDWORD pcchEscaped,
+	DWORD dwFlags)
+{
+	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_w(pszUrl),
+	  pszEscaped, pcchEscaped, dwFlags);
+	return 0;
+}	
+
+/*************************************************************************
+ *      SHELL32_714	[SHELL32]
+ */
+DWORD WINAPI SHELL32_714(LPVOID x)
+{
+ 	FIXME("(%s)stub\n", debugstr_w(x));
+	return 0;
+}
+
+/*************************************************************************
+ *      SHIsLowMemoryMachine	[SHLWAPI.@]
+ */
+DWORD WINAPI SHIsLowMemoryMachine (DWORD x)
+{
+	FIXME("0x%08lx\n", x);
+	return 0;
 }
 

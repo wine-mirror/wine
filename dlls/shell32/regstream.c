@@ -18,8 +18,6 @@ typedef struct
 {	ICOM_VFIELD(IStream);
 	DWORD		ref;
 	HKEY		hKey;
-	LPSTR		pszSubKey;
-	LPSTR		pszValue;
 	LPBYTE		pbBuffer;
 	DWORD		dwLength;
 	DWORD		dwPos;
@@ -28,28 +26,31 @@ typedef struct
 static struct ICOM_VTABLE(IStream) rstvt;
 
 /**************************************************************************
-*   IStream_Constructor()
+*   IStream_ConstructorA	[internal]
 */
-IStream *IStream_Constructor(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD grfMode)
-{	ISHRegStream*	rstr;
+IStream *IStream_ConstructorA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD grfMode)
+{
+	ISHRegStream*	rstr;
 	DWORD		dwType;
 	
 	rstr = (ISHRegStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHRegStream));
+
 	ICOM_VTBL(rstr)=&rstvt;
 	rstr->ref = 1;
 
-	if ( ERROR_SUCCESS == RegOpenKeyExA (hKey, pszSubKey, 0, KEY_READ, &(rstr->hKey)))
-	{ if ( ERROR_SUCCESS == RegQueryValueExA(rstr->hKey, (LPSTR)pszValue,0,0,0,&(rstr->dwLength)))
+	if (!(RegOpenKeyExA (hKey, pszSubKey, 0, KEY_READ, &(rstr->hKey))))
+	{
+	  if (!(RegQueryValueExA(rstr->hKey, pszValue,0,0,0,&(rstr->dwLength))))
 	  { 
 	    /* read the binary data into the buffer */
-	    rstr->pbBuffer = HeapAlloc(GetProcessHeap(),0,rstr->dwLength);
-	    if (rstr->pbBuffer)
-	    { if ( ERROR_SUCCESS == RegQueryValueExA(rstr->hKey, (LPSTR)pszValue,0,&dwType,rstr->pbBuffer,&(rstr->dwLength)))
-	      { if (dwType == REG_BINARY )
-	        { rstr->pszSubKey = HEAP_strdupA (GetProcessHeap(),0, pszSubKey);
-	          rstr->pszValue = HEAP_strdupA (GetProcessHeap(),0, pszValue);		
-	          TRACE("(%p)->0x%08x,%s,%s,0x%08lx\n", rstr, hKey, pszSubKey, pszValue, grfMode);
+	    if((rstr->pbBuffer = HeapAlloc(GetProcessHeap(),0,rstr->dwLength)))
+	    {
+	      if (!(RegQueryValueExA(rstr->hKey, pszValue,0,&dwType,rstr->pbBuffer,&(rstr->dwLength))))
+	      {
+	        if (dwType == REG_BINARY )
+	        {
 	          shell32_ObjCount++;
+	          TRACE ("%p\n", rstr);
 	          return (IStream*)rstr;
 	        }
 	      }
@@ -57,7 +58,44 @@ IStream *IStream_Constructor(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD
 	    }
 	  }
 	  RegCloseKey(rstr->hKey);
+	}
+	HeapFree (GetProcessHeap(),0,rstr);
+	return NULL;
+}
 
+/**************************************************************************
+*   IStream_ConstructorW	[internal]
+*/
+IStream *IStream_ConstructorW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue, DWORD grfMode)
+{
+	ISHRegStream*	rstr;
+	DWORD		dwType;
+	
+	rstr = (ISHRegStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHRegStream));
+
+	ICOM_VTBL(rstr)=&rstvt;
+	rstr->ref = 1;
+
+	if (!(RegOpenKeyExW (hKey, pszSubKey, 0, KEY_READ, &(rstr->hKey))))
+	{
+	  if (!(RegQueryValueExW(rstr->hKey, pszValue,0,0,0,&(rstr->dwLength))))
+	  { 
+	    /* read the binary data into the buffer */
+	    if((rstr->pbBuffer = HeapAlloc(GetProcessHeap(),0,rstr->dwLength)))
+	    {
+	      if (!(RegQueryValueExW(rstr->hKey, pszValue,0,&dwType,rstr->pbBuffer,&(rstr->dwLength))))
+	      {
+	        if (dwType == REG_BINARY )
+	        {
+	          shell32_ObjCount++;
+	          TRACE ("%p\n", rstr);
+	          return (IStream*)rstr;
+	        }
+	      }
+	      HeapFree (GetProcessHeap(),0,rstr->pbBuffer);
+	    }
+	  }
+	  RegCloseKey(rstr->hKey);
 	}
 	HeapFree (GetProcessHeap(),0,rstr);
 	return NULL;
@@ -117,12 +155,6 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 
 	if (!--(This->ref)) 
 	{ TRACE(" destroying SHReg IStream (%p)\n",This);
-
-	  if (This->pszSubKey)
-	    HeapFree(GetProcessHeap(),0,This->pszSubKey);
-
-	  if (This->pszValue)
-	    HeapFree(GetProcessHeap(),0,This->pszValue);
 
 	  if (This->pbBuffer)
 	    HeapFree(GetProcessHeap(),0,This->pbBuffer);
@@ -265,13 +297,31 @@ static struct ICOM_VTABLE(IStream) rstvt =
 };
 
 /*************************************************************************
- * OpenRegStream				[SHELL32.85]
- *
- * NOTES
- *     exported by ordinal
+ * SHOpenRegStreamA				[SHLWAPI.@][SHELL32.85]
  */
-IStream * WINAPI OpenRegStream(HKEY hkey, LPCSTR pszSubkey, LPCSTR pszValue, DWORD grfMode)
+IStream * WINAPI SHOpenRegStreamA(
+	HKEY hkey,
+	LPCSTR pszSubkey,
+	LPCSTR pszValue,
+	DWORD grfMode)
 {
-	TRACE("(0x%08x,%s,%s,0x%08lx)\n",hkey, pszSubkey, pszValue, grfMode);
-	return IStream_Constructor(hkey, pszSubkey, pszValue, grfMode);
+	TRACE("(0x%08x,%s,%s,0x%08lx)\n",
+	hkey, pszSubkey, pszValue, grfMode);
+
+	return IStream_ConstructorA(hkey, pszSubkey, pszValue, grfMode);
+}
+
+/*************************************************************************
+ * SHOpenRegStreamW				[SHLWAPI.@]
+ */
+IStream * WINAPI SHOpenRegStreamW(
+	HKEY hkey,
+	LPCWSTR pszSubkey,
+	LPCWSTR pszValue,
+	DWORD grfMode)
+{
+	TRACE("(0x%08x,%s,%s,0x%08lx)\n",
+	hkey, debugstr_w(pszSubkey), debugstr_w(pszValue), grfMode);
+
+	return IStream_ConstructorW(hkey, pszSubkey, pszValue, grfMode);
 }

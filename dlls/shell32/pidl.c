@@ -850,6 +850,25 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 }
 
 /*************************************************************************
+ * SHGetFolderLocation [SHELL32]
+ *
+ * NOTES
+ *  the pidl can be a simple one. since we cant get the path out of the pidl
+ *  we have to take all data from the pidl
+ */
+HRESULT WINAPI SHGetFolderLocation(
+	HWND hwnd,
+	int csidl,
+	HANDLE hToken,
+	DWORD dwFlags,
+	LPITEMIDLIST *ppidl)
+{
+	FIXME("0x%04x 0x%08x 0x%08x 0x%08lx %p\n",
+	 hwnd, csidl, hToken, dwFlags, ppidl);
+	return SHGetSpecialFolderLocation(hwnd, csidl, ppidl);
+}
+
+/*************************************************************************
  * SHGetDataFromIDListA [SHELL32.247]
  *
  * NOTES
