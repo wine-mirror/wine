@@ -2,7 +2,7 @@
  * File handling functions
  *
  * Copyright 1993 Erik Bos
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 2004 Alexandre Julliard
  * Copyright 2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@
 #include "winternl.h"
 
 #include "kernel_private.h"
-#include "file.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -670,6 +669,91 @@ UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
 
 
 /***********************************************************************
+ *           GetTempFileNameA   (KERNEL32.@)
+ */
+UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique, LPSTR buffer)
+{
+    UNICODE_STRING pathW, prefixW;
+    WCHAR bufferW[MAX_PATH];
+    UINT ret;
+
+    if ( !path || !prefix || !buffer )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&pathW, path);
+    RtlCreateUnicodeStringFromAsciiz(&prefixW, prefix);
+
+    ret = GetTempFileNameW(pathW.Buffer, prefixW.Buffer, unique, bufferW);
+    if (ret)
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
+
+    RtlFreeUnicodeString(&pathW);
+    RtlFreeUnicodeString(&prefixW);
+    return ret;
+}
+
+/***********************************************************************
+ *           GetTempFileNameW   (KERNEL32.@)
+ */
+UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer )
+{
+    static const WCHAR formatW[] = {'%','x','.','t','m','p',0};
+
+    int i;
+    LPWSTR p;
+
+    if ( !path || !prefix || !buffer )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    strcpyW( buffer, path );
+    p = buffer + strlenW(buffer);
+
+    /* add a \, if there isn't one  */
+    if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
+
+    for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
+
+    unique &= 0xffff;
+
+    if (unique) sprintfW( p, formatW, unique );
+    else
+    {
+        /* get a "random" unique number and try to create the file */
+        HANDLE handle;
+        UINT num = GetTickCount() & 0xffff;
+
+        if (!num) num = 1;
+        unique = num;
+        do
+        {
+            sprintfW( p, formatW, unique );
+            handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+            if (handle != INVALID_HANDLE_VALUE)
+            {  /* We created it */
+                TRACE("created %s\n", debugstr_w(buffer) );
+                CloseHandle( handle );
+                break;
+            }
+            if (GetLastError() != ERROR_FILE_EXISTS &&
+                GetLastError() != ERROR_SHARING_VIOLATION)
+                break;  /* No need to go on */
+            if (!(++unique & 0xffff)) unique = 1;
+        } while (unique != num);
+    }
+
+    TRACE("returning %s\n", debugstr_w(buffer) );
+    return unique;
+}
+
+
+/***********************************************************************
  *           contains_pathW
  *
  * Check if the file name contains a path; helper for SearchPathW.
@@ -818,6 +902,138 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
     RtlFreeUnicodeString(&pathW);
     RtlFreeUnicodeString(&nameW);
     RtlFreeUnicodeString(&extW);
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFileW   (KERNEL32.@)
+ */
+BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
+{
+    HANDLE h1, h2;
+    BY_HANDLE_FILE_INFORMATION info;
+    DWORD count;
+    BOOL ret = FALSE;
+    char buffer[2048];
+
+    if (!source || !dest)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    TRACE("%s -> %s\n", debugstr_w(source), debugstr_w(dest));
+
+    if ((h1 = CreateFileW(source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                     NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
+    {
+        WARN("Unable to open source %s\n", debugstr_w(source));
+        return FALSE;
+    }
+
+    if (!GetFileInformationByHandle( h1, &info ))
+    {
+        WARN("GetFileInformationByHandle returned error for %s\n", debugstr_w(source));
+        CloseHandle( h1 );
+        return FALSE;
+    }
+
+    if ((h2 = CreateFileW( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                             fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
+                             info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
+    {
+        WARN("Unable to open dest %s\n", debugstr_w(dest));
+        CloseHandle( h1 );
+        return FALSE;
+    }
+
+    while (ReadFile( h1, buffer, sizeof(buffer), &count, NULL ) && count)
+    {
+        char *p = buffer;
+        while (count != 0)
+        {
+            DWORD res;
+            if (!WriteFile( h2, p, count, &res, NULL ) || !res) goto done;
+            p += res;
+            count -= res;
+        }
+    }
+    ret =  TRUE;
+done:
+    CloseHandle( h1 );
+    CloseHandle( h2 );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFileA   (KERNEL32.@)
+ */
+BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists)
+{
+    UNICODE_STRING sourceW, destW;
+    BOOL ret;
+
+    if (!source || !dest)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&sourceW, source);
+    RtlCreateUnicodeStringFromAsciiz(&destW, dest);
+
+    ret = CopyFileW(sourceW.Buffer, destW.Buffer, fail_if_exists);
+
+    RtlFreeUnicodeString(&sourceW);
+    RtlFreeUnicodeString(&destW);
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFileExW   (KERNEL32.@)
+ *
+ * This implementation ignores most of the extra parameters passed-in into
+ * the "ex" version of the method and calls the CopyFile method.
+ * It will have to be fixed eventually.
+ */
+BOOL WINAPI CopyFileExW(LPCWSTR sourceFilename, LPCWSTR destFilename,
+                        LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
+                        LPBOOL cancelFlagPointer, DWORD copyFlags)
+{
+    /*
+     * Interpret the only flag that CopyFile can interpret.
+     */
+    return CopyFileW(sourceFilename, destFilename, (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0);
+}
+
+
+/**************************************************************************
+ *           CopyFileExA   (KERNEL32.@)
+ */
+BOOL WINAPI CopyFileExA(LPCSTR sourceFilename, LPCSTR destFilename,
+                        LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
+                        LPBOOL cancelFlagPointer, DWORD copyFlags)
+{
+    UNICODE_STRING sourceW, destW;
+    BOOL ret;
+
+    if (!sourceFilename || !destFilename)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&sourceW, sourceFilename);
+    RtlCreateUnicodeStringFromAsciiz(&destW, destFilename);
+
+    ret = CopyFileExW(sourceW.Buffer, destW.Buffer, progressRoutine, appData,
+                      cancelFlagPointer, copyFlags);
+
+    RtlFreeUnicodeString(&sourceW);
+    RtlFreeUnicodeString(&destW);
     return ret;
 }
 

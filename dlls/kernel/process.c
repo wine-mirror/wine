@@ -37,7 +37,6 @@
 #include "wine/winuser16.h"
 #include "ntstatus.h"
 #include "thread.h"
-#include "file.h"
 #include "module.h"
 #include "options.h"
 #include "kernel_private.h"
@@ -82,6 +81,7 @@ static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
+extern int DIR_Init(void);
 extern void SHELL_LoadRegistry(void);
 extern void VOLUME_CreateDevices(void);
 extern void VERSION_Init( const WCHAR *appname );

@@ -147,40 +147,30 @@ HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
           ((mode & OF_REOPEN )==OF_REOPEN)?"OF_REOPEN ":""
         );
 
-    ofs->cBytes = sizeof(OFSTRUCT);
-    ofs->nErrCode = 0;
-    if (mode & OF_REOPEN) name = ofs->szPathName;
-
-    if (!name) return HFILE_ERROR;
-
-    /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
-       Are there any cases where getting the path here is wrong?
-       Uwe Bonnes 1997 Apr 2 */
-    if (!GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL )) goto error;
-
-    /* OF_PARSE simply fills the structure */
-
     if (mode & OF_PARSE)
     {
-        ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' ) != DRIVE_REMOVABLE);
-        TRACE("(%s): OF_PARSE, res = '%s'\n", name, ofs->szPathName );
+        OpenFile( name, ofs, mode );
         return 0;
     }
 
-    /* OF_CREATE is completely different from all other options, so
-       handle it first */
-
     if (mode & OF_CREATE)
     {
-        DWORD access, sharing;
-        FILE_ConvertOFMode( mode, &access, &sharing );
-        if ((handle = CreateFileA( ofs->szPathName, GENERIC_READ | GENERIC_WRITE,
-                                   sharing, NULL, CREATE_ALWAYS,
-                                   FILE_ATTRIBUTE_NORMAL, 0 ))== INVALID_HANDLE_VALUE)
-            goto error;
+        handle = (HANDLE)OpenFile( name, ofs, mode );
+        if (handle == (HANDLE)HFILE_ERROR) goto error;
     }
     else
     {
+        ofs->cBytes = sizeof(OFSTRUCT);
+        ofs->nErrCode = 0;
+        if (mode & OF_REOPEN) name = ofs->szPathName;
+
+        if (!name) return HFILE_ERROR;
+
+        /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
+           Are there any cases where getting the path here is wrong?
+           Uwe Bonnes 1997 Apr 2 */
+        if (!GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL )) goto error;
+
         /* If OF_SEARCH is set, ignore the given path */
 
         filename = name;

@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <errno.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -67,6 +68,103 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+
+/***********************************************************************
+ *              create_file_OF
+ *
+ * Wrapper for CreateFile that takes OF_* mode flags.
+ */
+static HANDLE create_file_OF( LPCSTR path, INT mode, DWORD creation )
+{
+    DWORD access, sharing;
+
+    switch(mode & 0x03)
+    {
+    case OF_READ:      access = GENERIC_READ; break;
+    case OF_WRITE:     access = GENERIC_WRITE; break;
+    case OF_READWRITE: access = GENERIC_READ | GENERIC_WRITE; break;
+    default:           access = 0; break;
+    }
+    switch(mode & 0x70)
+    {
+    case OF_SHARE_EXCLUSIVE:  sharing = 0; break;
+    case OF_SHARE_DENY_WRITE: sharing = FILE_SHARE_READ; break;
+    case OF_SHARE_DENY_READ:  sharing = FILE_SHARE_WRITE; break;
+    case OF_SHARE_DENY_NONE:
+    case OF_SHARE_COMPAT:
+    default:                  sharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break;
+    }
+    return CreateFileA( path, access, sharing, NULL, creation, FILE_ATTRIBUTE_NORMAL, 0 );
+}
+
+
+/***********************************************************************
+ *           FILE_SetDosError
+ *
+ * Set the DOS error code from errno.
+ */
+void FILE_SetDosError(void)
+{
+    int save_errno = errno; /* errno gets overwritten by printf */
+
+    TRACE("errno = %d %s\n", errno, strerror(errno));
+    switch (save_errno)
+    {
+    case EAGAIN:
+        SetLastError( ERROR_SHARING_VIOLATION );
+        break;
+    case EBADF:
+        SetLastError( ERROR_INVALID_HANDLE );
+        break;
+    case ENOSPC:
+        SetLastError( ERROR_HANDLE_DISK_FULL );
+        break;
+    case EACCES:
+    case EPERM:
+    case EROFS:
+        SetLastError( ERROR_ACCESS_DENIED );
+        break;
+    case EBUSY:
+        SetLastError( ERROR_LOCK_VIOLATION );
+        break;
+    case ENOENT:
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        break;
+    case EISDIR:
+        SetLastError( ERROR_CANNOT_MAKE );
+        break;
+    case ENFILE:
+    case EMFILE:
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+        break;
+    case EEXIST:
+        SetLastError( ERROR_FILE_EXISTS );
+        break;
+    case EINVAL:
+    case ESPIPE:
+        SetLastError( ERROR_SEEK );
+        break;
+    case ENOTEMPTY:
+        SetLastError( ERROR_DIR_NOT_EMPTY );
+        break;
+    case ENOEXEC:
+        SetLastError( ERROR_BAD_FORMAT );
+        break;
+    case ENOTDIR:
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        break;
+    case EXDEV:
+        SetLastError( ERROR_NOT_SAME_DEVICE );
+        break;
+    default:
+        WARN("unknown file error: %s\n", strerror(save_errno) );
+        SetLastError( ERROR_GEN_FAILURE );
+        break;
+    }
+    errno = save_errno;
+}
+
+
 /**************************************************************************
  *                      Operations on file handles                        *
  **************************************************************************/
@@ -94,6 +192,183 @@ static void FILE_InitProcessDosHandles( void )
                     0, TRUE, DUPLICATE_SAME_ACCESS);
     DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[4],
                     0, TRUE, DUPLICATE_SAME_ACCESS);
+}
+
+
+/******************************************************************
+ *		FILE_ReadWriteApc (internal)
+ */
+static void WINAPI FILE_ReadWriteApc(void* apc_user, PIO_STATUS_BLOCK io_status, ULONG len)
+{
+    LPOVERLAPPED_COMPLETION_ROUTINE  cr = (LPOVERLAPPED_COMPLETION_ROUTINE)apc_user;
+
+    cr(RtlNtStatusToDosError(io_status->u.Status), len, (LPOVERLAPPED)io_status);
+}
+
+
+/***********************************************************************
+ *              ReadFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
+                       LPOVERLAPPED overlapped,
+                       LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    PIO_STATUS_BLOCK    io_status;
+
+    if (!overlapped)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    offset.u.LowPart = overlapped->Offset;
+    offset.u.HighPart = overlapped->OffsetHigh;
+    io_status = (PIO_STATUS_BLOCK)overlapped;
+    io_status->u.Status = STATUS_PENDING;
+
+    status = NtReadFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
+                        io_status, buffer, bytesToRead, &offset, NULL);
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              ReadFile                (KERNEL32.@)
+ */
+BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
+                      LPDWORD bytesRead, LPOVERLAPPED overlapped )
+{
+    LARGE_INTEGER       offset;
+    PLARGE_INTEGER      poffset = NULL;
+    IO_STATUS_BLOCK     iosb;
+    PIO_STATUS_BLOCK    io_status = &iosb;
+    HANDLE              hEvent = 0;
+    NTSTATUS            status;
+
+    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToRead,
+          bytesRead, overlapped );
+
+    if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
+    if (!bytesToRead) return TRUE;
+
+    if (IsBadReadPtr(buffer, bytesToRead))
+    {
+        SetLastError(ERROR_WRITE_FAULT); /* FIXME */
+        return FALSE;
+    }
+    if (is_console_handle(hFile))
+        return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
+
+    if (overlapped != NULL)
+    {
+        offset.u.LowPart = overlapped->Offset;
+        offset.u.HighPart = overlapped->OffsetHigh;
+        poffset = &offset;
+        hEvent = overlapped->hEvent;
+        io_status = (PIO_STATUS_BLOCK)overlapped;
+    }
+    io_status->u.Status = STATUS_PENDING;
+    io_status->Information = 0;
+
+    status = NtReadFile(hFile, hEvent, NULL, NULL, io_status, buffer, bytesToRead, poffset, NULL);
+
+    if (status != STATUS_PENDING && bytesRead)
+        *bytesRead = io_status->Information;
+
+    if (status && status != STATUS_END_OF_FILE)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              WriteFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+                        LPOVERLAPPED overlapped,
+                        LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    PIO_STATUS_BLOCK    io_status;
+
+    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
+
+    if (overlapped == NULL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    offset.u.LowPart = overlapped->Offset;
+    offset.u.HighPart = overlapped->OffsetHigh;
+
+    io_status = (PIO_STATUS_BLOCK)overlapped;
+    io_status->u.Status = STATUS_PENDING;
+
+    status = NtWriteFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
+                         io_status, buffer, bytesToWrite, &offset, NULL);
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
+/***********************************************************************
+ *             WriteFile               (KERNEL32.@)
+ */
+BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+                       LPDWORD bytesWritten, LPOVERLAPPED overlapped )
+{
+    HANDLE hEvent = NULL;
+    LARGE_INTEGER offset;
+    PLARGE_INTEGER poffset = NULL;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    PIO_STATUS_BLOCK piosb = &iosb;
+
+    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite, bytesWritten, overlapped );
+
+    if (is_console_handle(hFile))
+        return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
+
+    if (IsBadReadPtr(buffer, bytesToWrite))
+    {
+        SetLastError(ERROR_READ_FAULT); /* FIXME */
+        return FALSE;
+    }
+
+    if (overlapped)
+    {
+        offset.u.LowPart = overlapped->Offset;
+        offset.u.HighPart = overlapped->OffsetHigh;
+        poffset = &offset;
+        hEvent = overlapped->hEvent;
+        piosb = (PIO_STATUS_BLOCK)overlapped;
+    }
+    piosb->u.Status = STATUS_PENDING;
+    piosb->Information = 0;
+
+    status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
+                         buffer, bytesToWrite, poffset, NULL);
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    if (bytesWritten) *bytesWritten = piosb->Information;
+
+    return TRUE;
 }
 
 
@@ -263,11 +538,8 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
  */
 HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
-    DWORD access, sharing;
-
-    TRACE("('%s',%04x)\n", path, mode );
-    FILE_ConvertOFMode( mode, &access, &sharing );
-    return (HFILE)CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, 0 );
+    TRACE("(%s,%04x)\n", debugstr_a(path), mode );
+    return (HFILE)create_file_OF( path, mode, OPEN_EXISTING );
 }
 
 
@@ -444,6 +716,54 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
     if (status == STATUS_SUCCESS) return TRUE;
     SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           SetFilePointer   (KERNEL32.@)
+ */
+DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
+                             DWORD method )
+{
+    static const int whence[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
+    DWORD ret = INVALID_SET_FILE_POINTER;
+    NTSTATUS status;
+    int fd;
+
+    TRACE("handle %p offset %ld high %ld origin %ld\n",
+          hFile, distance, highword?*highword:0, method );
+
+    if (method > FILE_END)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ret;
+    }
+
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+    {
+        off_t pos, res;
+
+        if (highword) pos = ((off_t)*highword << 32) | (ULONG)distance;
+        else pos = (off_t)distance;
+        if ((res = lseek( fd, pos, whence[method] )) == (off_t)-1)
+        {
+            /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
+            if (((errno == EINVAL) || (errno == EPERM)) && (method != FILE_BEGIN) && (pos < 0))
+                SetLastError( ERROR_NEGATIVE_SEEK );
+            else
+                FILE_SetDosError();
+        }
+        else
+        {
+            ret = (DWORD)res;
+            if (highword) *highword = (res >> 32);
+            if (ret == INVALID_SET_FILE_POINTER) SetLastError( 0 );
+        }
+        wine_server_release_fd( hFile, fd );
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
+    return ret;
 }
 
 
@@ -674,6 +994,15 @@ HANDLE WINAPI DosFileHandleToWin32Handle( HFILE handle )
 }
 
 
+/*************************************************************************
+ *           SetHandleCount   (KERNEL32.@)
+ */
+UINT WINAPI SetHandleCount( UINT count )
+{
+    return min( 256, count );
+}
+
+
 /***********************************************************************
  *           DisposeLZ32Handle   (KERNEL32.22)
  *
@@ -700,6 +1029,221 @@ void WINAPI DisposeLZ32Handle( HANDLE handle )
 /**************************************************************************
  *                      Operations on file names                          *
  **************************************************************************/
+
+
+/*************************************************************************
+ * CreateFileW [KERNEL32.@]  Creates or opens a file or other object
+ *
+ * Creates or opens an object, and returns a handle that can be used to
+ * access that object.
+ *
+ * PARAMS
+ *
+ * filename     [in] pointer to filename to be accessed
+ * access       [in] access mode requested
+ * sharing      [in] share mode
+ * sa           [in] pointer to security attributes
+ * creation     [in] how to create the file
+ * attributes   [in] attributes for newly created file
+ * template     [in] handle to file with extended attributes to copy
+ *
+ * RETURNS
+ *   Success: Open handle to specified file
+ *   Failure: INVALID_HANDLE_VALUE
+ */
+HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
+                              LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                              DWORD attributes, HANDLE template )
+{
+    NTSTATUS status;
+    UINT options;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    HANDLE ret;
+    DWORD dosdev;
+    static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
+    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
+    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
+
+    static const char * const creation_name[5] =
+        { "CREATE_NEW", "CREATE_ALWAYS", "OPEN_EXISTING", "OPEN_ALWAYS", "TRUNCATE_EXISTING" };
+
+    static const UINT nt_disposition[5] =
+    {
+        FILE_CREATE,        /* CREATE_NEW */
+        FILE_OVERWRITE_IF,  /* CREATE_ALWAYS */
+        FILE_OPEN,          /* OPEN_EXISTING */
+        FILE_OPEN_IF,       /* OPEN_ALWAYS */
+        FILE_OVERWRITE      /* TRUNCATE_EXISTING */
+    };
+
+
+    /* sanity checks */
+
+    if (!filename || !filename[0])
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    TRACE("%s %s%s%s%s%s%s%s attributes 0x%lx\n", debugstr_w(filename),
+          (access & GENERIC_READ)?"GENERIC_READ ":"",
+          (access & GENERIC_WRITE)?"GENERIC_WRITE ":"",
+          (!access)?"QUERY_ACCESS ":"",
+          (sharing & FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
+          (sharing & FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
+          (sharing & FILE_SHARE_DELETE)?"FILE_SHARE_DELETE ":"",
+          creation_name[creation - CREATE_NEW], attributes);
+
+    /* Open a console for CONIN$ or CONOUT$ */
+
+    if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
+    {
+        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
+        goto done;
+    }
+
+    if (!strncmpW(filename, bkslashes_with_dotW, 4))
+    {
+        static const WCHAR pipeW[] = {'P','I','P','E','\\',0};
+
+        if ((isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0') ||
+            !strncmpiW( filename + 4, pipeW, 5 ))
+        {
+            dosdev = 0;
+        }
+        else if ((dosdev = RtlIsDosDeviceName_U( filename + 4 )))
+        {
+            dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
+        }
+        else if (filename[4])
+        {
+            ret = VXD_Open( filename+4, access, sa );
+            goto done;
+        }
+        else
+        {
+            SetLastError( ERROR_INVALID_NAME );
+            return INVALID_HANDLE_VALUE;
+        }
+    }
+    else dosdev = RtlIsDosDeviceName_U( filename );
+
+    if (dosdev)
+    {
+        static const WCHAR conW[] = {'C','O','N'};
+
+        if (LOWORD(dosdev) == sizeof(conW) &&
+            !memicmpW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, sizeof(conW)))
+        {
+            switch (access & (GENERIC_READ|GENERIC_WRITE))
+            {
+            case GENERIC_READ:
+                ret = OpenConsoleW(coninW, access, (sa && sa->bInheritHandle), creation);
+                goto done;
+            case GENERIC_WRITE:
+                ret = OpenConsoleW(conoutW, access, (sa && sa->bInheritHandle), creation);
+                goto done;
+            default:
+                SetLastError( ERROR_FILE_NOT_FOUND );
+                return INVALID_HANDLE_VALUE;
+            }
+        }
+    }
+
+    if (!RtlDosPathNameToNtPathName_U( filename, &nameW, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    /* now call NtCreateFile */
+
+    options = 0;
+    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+        options |= FILE_OPEN_FOR_BACKUP_INTENT;
+    else
+        options |= FILE_NON_DIRECTORY_FILE;
+    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
+        options |= FILE_DELETE_ON_CLOSE;
+    if (!(attributes & FILE_FLAG_OVERLAPPED))
+        options |= FILE_SYNCHRONOUS_IO_ALERT;
+    if (attributes & FILE_FLAG_RANDOM_ACCESS)
+        options |= FILE_RANDOM_ACCESS;
+    attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+
+    status = NtCreateFile( &ret, access, &attr, &io, NULL, attributes,
+                           sharing, nt_disposition[creation - CREATE_NEW],
+                           options, NULL, 0 );
+    if (status)
+    {
+        WARN("Unable to create file %s (status %lx)\n", debugstr_w(filename), status);
+        ret = INVALID_HANDLE_VALUE;
+
+        /* In the case file creation was rejected due to CREATE_NEW flag
+         * was specified and file with that name already exists, correct
+         * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
+         * Note: RtlNtStatusToDosError is not the subject to blame here.
+         */
+        if (status == STATUS_OBJECT_NAME_COLLISION)
+            SetLastError( ERROR_FILE_EXISTS );
+        else
+            SetLastError( RtlNtStatusToDosError(status) );
+    }
+    else SetLastError(0);
+    RtlFreeUnicodeString( &nameW );
+
+ done:
+    if (!ret) ret = INVALID_HANDLE_VALUE;
+    TRACE("returning %p\n", ret);
+    return ret;
+}
+
+
+
+/*************************************************************************
+ *              CreateFileA              (KERNEL32.@)
+ */
+HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
+                              LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                              DWORD attributes, HANDLE template)
+{
+    UNICODE_STRING filenameW;
+    HANDLE ret = INVALID_HANDLE_VALUE;
+
+    if (!filename)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, filename))
+    {
+        ret = CreateFileW(filenameW.Buffer, access, sharing, sa, creation,
+                          attributes, template);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
+}
+
 
 /***********************************************************************
  *           DeleteFileW   (KERNEL32.@)
@@ -1400,11 +1944,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     if (mode & OF_CREATE)
     {
-        DWORD access, sharing;
-        FILE_ConvertOFMode( mode, &access, &sharing );
-        if ((handle = CreateFileA( name, GENERIC_READ | GENERIC_WRITE,
-                                   sharing, NULL, CREATE_ALWAYS,
-                                   FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
+        if ((handle = create_file_OF( name, mode, CREATE_ALWAYS )) == INVALID_HANDLE_VALUE)
             goto error;
     }
     else

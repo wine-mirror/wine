@@ -111,7 +111,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "lmerr.h"
-#include "file.h"
 #include "smb.h"
 
 #include "wine/server.h"

@@ -70,7 +70,6 @@
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
-#include "file.h"
 
 #include "wine/debug.h"
 
@@ -83,6 +82,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define SAVE_LOCAL_REGBRANCH_CURRENT_USER  "user.reg"
 #define SAVE_LOCAL_REGBRANCH_USER_DEFAULT  "userdef.reg"
 #define SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE "system.reg"
+
+#define MAX_PATHNAME_LEN   1024
 
 static const WCHAR ClassesRootW[] = {'M','a','c','h','i','n','e','\\',
                                      'S','o','f','t','w','a','r','e','\\',

@@ -46,11 +46,12 @@
 #include "winternl.h"
 #include "thread.h"
 #include "wine/unicode.h"
-#include "file.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);
 WINE_DECLARE_DEBUG_CHANNEL(file);
+
+#define MAX_PATHNAME_LEN   1024
 
 static WCHAR *DIR_Windows;
 static WCHAR *DIR_System;

@@ -39,7 +39,6 @@
 #include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "kernel_private.h"
-#include "file.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

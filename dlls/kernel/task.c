@@ -37,7 +37,6 @@
 #include "winuser.h"
 
 #include "wine/winbase16.h"
-#include "file.h"
 #include "module.h"
 #include "winternl.h"
 #include "wine/server.h"

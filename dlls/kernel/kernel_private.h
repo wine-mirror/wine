@@ -49,12 +49,13 @@ extern HMODULE kernel32_handle;
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
-void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing );
 
 extern void PTHREAD_Init(void);
 extern BOOL WOWTHUNK_Init(void);
 
 extern VOID SYSLEVEL_CheckNotLevel( INT level );
+
+extern void FILE_SetDosError(void);
 
 extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );
@@ -68,6 +69,8 @@ extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
 #define IS_SELECTOR_32BIT(sel) \
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
+
+extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 /* this structure is always located at offset 0 of the DGROUP segment */
 #include "pshpack1.h"
