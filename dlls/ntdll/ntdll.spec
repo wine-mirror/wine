@@ -348,9 +348,9 @@
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
 @ stdcall RtlDetermineDosPathNameType_U(wstr)
-@ stub RtlDoesFileExists_U #(wstr)
+@ stdcall RtlDoesFileExists_U(wstr)
 @ stdcall RtlDosPathNameToNtPathName_U(wstr ptr ptr ptr)
-@ stub RtlDosSearchPath_U #(wstr wstr wstr long ptr ptr)
+@ stdcall RtlDosSearchPath_U(wstr wstr wstr long ptr ptr)
 @ stdcall RtlDowncaseUnicodeChar(long)
 @ stdcall RtlDowncaseUnicodeString(ptr ptr long)
 @ stdcall RtlDumpResource(ptr)

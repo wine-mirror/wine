@@ -55,6 +55,18 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
     }
 }
 
+/******************************************************************
+ *		RtlDoesFileExists_U
+ *
+ *
+ */
+BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
+{       
+    FIXME("(%s): stub\n", debugstr_w(file_name));
+    
+    return TRUE;
+}
+
 /***********************************************************************
  *             RtlIsDosDeviceName_U   (NTDLL.@)
  *
@@ -220,6 +232,68 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PWSTR dos_path,
 
     if (ptr != local) RtlFreeHeap(ntdll_get_process_heap(), 0, ptr);
     return TRUE;
+}
+
+/******************************************************************
+ *		RtlDosSearchPath_U
+ *
+ * Searchs a file of name 'name' into a ';' separated list of paths
+ * (stored in paths)
+ * Doesn't seem to search elsewhere than the paths list
+ * Stores the result in buffer (file_part will point to the position
+ * of the file name in the buffer)
+ * FIXME:
+ * - how long shall the paths be ??? (MAX_PATH or larger with \\?\ constructs ???)
+ */
+ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext, 
+                                ULONG buffer_size, LPWSTR buffer, 
+                                LPWSTR* file_part)
+{
+    DOS_PATHNAME_TYPE type = RtlDetermineDosPathNameType_U(search);
+    ULONG len = 0;
+
+    if (type == RELATIVE_PATH)
+    {
+        ULONG allocated = 0, needed, filelen;
+        WCHAR*  name = NULL;
+
+        filelen = 1 /* for \ */ + strlenW(search) + 1 /* \0 */;
+
+        if (strchrW(search, '.') != NULL) ext = NULL;
+        if (ext != NULL) filelen += strlenW(ext);
+
+        while (*paths)
+        {
+            LPCWSTR ptr;
+
+            for (needed = 0, ptr = paths; *ptr != 0 && *ptr++ != ';'; needed++);
+            if (needed + filelen > allocated)
+            {
+                name = (WCHAR*)RtlReAllocateHeap(ntdll_get_process_heap(), 0,
+                                                 name, (needed + filelen) * sizeof(WCHAR));
+                if (!name) return 0;
+                allocated = needed + filelen;
+            }
+            memmove(name, paths, needed * sizeof(WCHAR));
+            /* append '\\' if none is present */
+            if (needed > 0 && name[needed - 1] != '\\') name[needed++] = '\\';
+            strcpyW(&name[needed], search);
+            if (ext) strcatW(&name[needed], ext);
+            if (RtlDoesFileExists_U(name))
+            {
+                len = RtlGetFullPathName_U(name, buffer_size, buffer, file_part);
+                break;
+            }
+            paths = ptr;
+        }
+        RtlFreeHeap(ntdll_get_process_heap(), 0, name);
+    }
+    else if (RtlDoesFileExists_U(search))
+    {
+        len = RtlGetFullPathName_U(search, buffer_size, buffer, file_part);
+    }
+
+    return len;
 }
 
 /******************************************************************
