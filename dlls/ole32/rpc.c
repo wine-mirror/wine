@@ -33,6 +33,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winsvc.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "rpc.h"
@@ -571,6 +572,116 @@ create_server(REFCLSID rclsid) {
 
   return S_OK;
 }
+
+/*
+ * start_local_service()  - start a service given its name and parameters
+ */
+static DWORD
+start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
+{
+    SC_HANDLE handle, hsvc;
+    DWORD r = ERROR_FUNCTION_FAILED;
+
+    TRACE("Starting service %s %ld params\n", debugstr_w(name), num);
+
+    handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!handle)
+        return r;
+    hsvc = OpenServiceW(handle, name, SC_MANAGER_ALL_ACCESS);
+    if (hsvc)
+    {
+        if(StartServiceW(hsvc, num, (LPCWSTR*)params))
+            r = ERROR_SUCCESS;
+        else
+            r = GetLastError();
+        if (r==ERROR_SERVICE_ALREADY_RUNNING)
+            r = ERROR_SUCCESS;
+        CloseServiceHandle(hsvc);
+    }
+    CloseServiceHandle(handle);
+
+    TRACE("StartService returned error %ld (%s)\n", r, r?"ok":"failed");
+
+    return r;
+}
+
+/*
+ * create_local_service()  - start a COM server in a service
+ *
+ *   To start a Local Service, we read the AppID value under
+ * the class's CLSID key, then open the HKCR\\AppId key specified
+ * there and check for a LocalService value.
+ *
+ * Note:  Local Services are not supported under Windows 9x
+ */
+static HRESULT
+create_local_service(REFCLSID rclsid)
+{
+    HRESULT hres = REGDB_E_READREGDB;
+    WCHAR buf[40], keyname[50];
+    static const WCHAR szClsId[] = { 'C','L','S','I','D','\\',0 };
+    static const WCHAR szAppId[] = { 'A','p','p','I','d',0 };
+    static const WCHAR szAppIdKey[] = { 'A','p','p','I','d','\\',0 };
+    static const WCHAR szLocalService[] = { 
+                 'L','o','c','a','l','S','e','r','v','i','c','e',0 };
+    static const WCHAR szServiceParams[] = {
+                 'S','e','r','v','i','c','e','P','a','r','a','m','s',0};
+    HKEY hkey;
+    LONG r;
+    DWORD type, sz;
+
+    TRACE("Attempting to start Local service for %s\n", debugstr_guid(rclsid));
+
+    /* read the AppID value under the class's key */
+    strcpyW(keyname,szClsId);
+    StringFromGUID2(rclsid,&keyname[6],39);
+    r = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &hkey);
+    if (r!=ERROR_SUCCESS)
+        return hres;
+    sz = sizeof buf;
+    r = RegQueryValueExW(hkey, szAppId, NULL, &type, (LPBYTE)buf, &sz);
+    RegCloseKey(hkey);
+    if (r!=ERROR_SUCCESS || type!=REG_SZ)
+        return hres;
+
+    /* read the LocalService and ServiceParameters values from the AppID key */
+    strcpyW(keyname, szAppIdKey);
+    strcatW(keyname, buf);
+    r = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &hkey);
+    if (r!=ERROR_SUCCESS)
+        return hres;
+    sz = sizeof buf;
+    r = RegQueryValueExW(hkey, szLocalService, NULL, &type, (LPBYTE)buf, &sz);
+    if (r==ERROR_SUCCESS && type==REG_SZ)
+    {
+        DWORD num_args = 0;
+        LPWSTR args[1] = { NULL };
+
+        /*
+         * FIXME: I'm not really sure how to deal with the service parameters.
+         *        I suspect that the string returned from RegQueryValueExW
+         *        should be split into a number of arguments by spaces.
+         *        It would make more sense if ServiceParams contained a
+         *        REG_MULTI_SZ here, but it's a REG_SZ for the services
+         *        that I'm interested in for the moment.
+         */
+        r = RegQueryValueExW(hkey, szServiceParams, NULL, &type, NULL, &sz);
+        if (r == ERROR_SUCCESS && type == REG_SZ && sz)
+        {
+            args[0] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sz);
+            num_args++;
+            RegQueryValueExW(hkey, szServiceParams, NULL, &type, (LPBYTE)args[0], &sz);
+        }
+        r = start_local_service(buf, num_args, args);
+        if (r==ERROR_SUCCESS)
+            hres = S_OK;
+        HeapFree(GetProcessHeap(),0,args[0]);
+    }
+    RegCloseKey(hkey);
+        
+    return hres;
+}
+
 /* http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp, Figure 4 */
 HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
   HRESULT	hres;
@@ -604,7 +715,8 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
       );
       if (hPipe == INVALID_HANDLE_VALUE) {
 	  if (tries == 1) {
-	      if ((hres = create_server(rclsid)))
+	      if ( (hres = create_server(rclsid)) &&
+                   (hres = create_local_service(rclsid)) )
 		  return hres;
 	      Sleep(1000);
 	  } else {
