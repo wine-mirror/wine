@@ -79,8 +79,6 @@ typedef const void *key_data;
 #define FIRST_KEY 0
 #define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
 
-static CRITICAL_SECTION init_sect = CRITICAL_SECTION_INIT;
-
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
 
 void __pthread_initialize(void)
@@ -90,13 +88,10 @@ void __pthread_initialize(void)
 int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
   static pthread_once_t the_once = PTHREAD_ONCE_INIT;
+  LONG once_now = *(LONG *)&the_once;
 
-  EnterCriticalSection(&init_sect);
-  if (!memcmp(once_control,&the_once,sizeof(the_once))) {
+  if (InterlockedCompareExchange((PVOID*)once_control, (PVOID)(once_now+1), (PVOID)once_now) == (PVOID)once_now)
     (*init_routine)();
-    (*(int *)once_control)++;
-  }
-  LeaveCriticalSection(&init_sect);
   return 0;
 }
 strong_alias(__pthread_once, pthread_once);
@@ -151,14 +146,14 @@ strong_alias(__pthread_mutex_init, pthread_mutex_init);
 
 static void mutex_real_init( pthread_mutex_t *mutex )
 {
-  EnterCriticalSection(&init_sect);
+  CRITICAL_SECTION *critsect = HeapAlloc(SystemHeap, 0, sizeof(CRITICAL_SECTION));
+  InitializeCriticalSection(critsect);
 
-  if (!((wine_mutex)mutex)->critsect) {
-    ((wine_mutex)mutex)->critsect = HeapAlloc(SystemHeap, 0, sizeof(CRITICAL_SECTION));
-    InitializeCriticalSection(((wine_mutex)mutex)->critsect);
+  if (InterlockedCompareExchange((PVOID*)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
+    /* too late, some other thread already did it */
+    DeleteCriticalSection(critsect);
+    HeapFree(SystemHeap, 0, critsect);
   }
-
-  LeaveCriticalSection(&init_sect);
 }
 
 int __pthread_mutex_lock(pthread_mutex_t *mutex)
@@ -258,10 +253,8 @@ strong_alias(__pthread_mutexattr_gettype, pthread_mutexattr_gettype);
 
 int __pthread_key_create(pthread_key_t *key, void (*destr_function)(void *))
 {
-  static pthread_key_t keycnt = FIRST_KEY;
-  EnterCriticalSection(&init_sect);
-  *key = keycnt++;
-  LeaveCriticalSection(&init_sect);
+  static LONG keycnt = FIRST_KEY;
+  *key = InterlockedExchangeAdd(&keycnt, 1);
   return 0;
 }
 strong_alias(__pthread_key_create, pthread_key_create);
