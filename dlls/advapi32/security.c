@@ -903,3 +903,20 @@ BOOL WINAPI AddAccessAllowedAce(
 {
         return RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid);
 }
+
+/******************************************************************************
+ * LookupAccountNameA [ADVAPI32.@]
+ */
+BOOL WINAPI
+LookupAccountNameA(
+	IN LPCSTR system,
+	IN LPCSTR account,
+	OUT PSID sid,
+	OUT LPDWORD cbSid,
+	LPSTR ReferencedDomainName,
+	IN OUT LPDWORD cbReferencedDomainName,
+	OUT PSID_NAME_USE name_use )
+{
+    FIXME("(%s,%s,%p,%p,%p,%p,%p), stub.\n",system,account,sid,cbSid,ReferencedDomainName,cbReferencedDomainName,name_use);
+    return FALSE;
+}

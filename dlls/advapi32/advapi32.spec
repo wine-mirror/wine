@@ -127,7 +127,7 @@ import	ntdll.dll
 @ stub LockServiceDatabase
 @ stub LogonUserA
 @ stub LogonUserW
-@ stub LookupAccountNameA
+@ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr) LookupAccountNameA
 @ stub LookupAccountNameW
 @ stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSidA
 @ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSidW
