@@ -741,8 +741,6 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
         return FALSE;
     }
 
-    if (!hInstance) hInstance = GetModuleHandleW( NULL );
-
     SERVER_START_REQ( destroy_class )
     {
         req->atom = atom;

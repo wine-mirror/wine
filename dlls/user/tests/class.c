@@ -49,7 +49,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     static const WCHAR winName[]   = {'W','i','n','C','l','a','s','s','T','e','s','t',0};
     ATOM test_atom;
     HWND hTestWnd;
-    DWORD i;
+    LONG i;
     WCHAR str[20];
     ATOM classatom;
 
@@ -254,7 +254,41 @@ static void check_instance( const char *name, HINSTANCE inst, HINSTANCE info_ins
     ok( (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ) == inst,
         "Wrong GWL instance %p/%p for window %s\n",
         (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), inst, name );
+    ok(!UnregisterClassA(name, inst), "UnregisterClassA should fail while exists a class window\n");
+    ok(GetLastError() == ERROR_CLASS_HAS_WINDOWS, "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %ld\n", GetLastError());
     DestroyWindow(hwnd);
+}
+
+struct class_info
+{
+    const char *name;
+    HINSTANCE inst, info_inst, gcl_inst;
+};
+
+static DWORD WINAPI thread_proc(void *param)
+{
+    struct class_info *class_info = (struct class_info *)param;
+
+    check_instance(class_info->name, class_info->inst, class_info->info_inst, class_info->gcl_inst);
+
+    return 0;
+}
+
+static void check_thread_instance( const char *name, HINSTANCE inst, HINSTANCE info_inst, HINSTANCE gcl_inst )
+{
+    HANDLE hThread;
+    DWORD tid;
+    struct class_info class_info;
+
+    class_info.name = name;
+    class_info.inst = inst;
+    class_info.info_inst = info_inst;
+    class_info.gcl_inst = gcl_inst;
+
+    hThread = CreateThread(NULL, 0, thread_proc, &class_info, 0, &tid);
+    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hThread);
 }
 
 /* test various instance parameters */
@@ -279,6 +313,7 @@ static void test_instances(void)
     ok( RegisterClassA( &cls ), "Failed to register local class for main module\n" );
     check_class( main_module, name, "main_module" );
     check_instance( name, main_module, main_module, main_module );
+    check_thread_instance( name, main_module, main_module, main_module );
 
     cls.lpszMenuName  = "kernel32";
     cls.hInstance = kernel32;
@@ -286,6 +321,7 @@ static void test_instances(void)
     check_class( kernel32, name, "kernel32" );
     check_class( main_module, name, "main_module" );
     check_instance( name, kernel32, kernel32, kernel32 );
+    check_thread_instance( name, kernel32, kernel32, kernel32 );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 
     /* setting global flag doesn't change status of class */
@@ -298,6 +334,8 @@ static void test_instances(void)
     check_class( main_module, name, "main_module" );
     check_instance( name, kernel32, kernel32, kernel32 );
     check_instance( name, main_module, main_module, main_module );
+    check_thread_instance( name, kernel32, kernel32, kernel32 );
+    check_thread_instance( name, main_module, main_module, main_module );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 
     /* changing the instance doesn't make it global */
@@ -305,6 +343,7 @@ static void test_instances(void)
     ok( RegisterClassA( &cls ), "Failed to register local class for kernel32\n" );
     check_class( kernel32, name, "kernel32" );
     check_instance( name, kernel32, kernel32, kernel32 );
+    check_thread_instance( name, kernel32, kernel32, kernel32 );
     ok( !GetClassInfo( 0, name, &wc ), "Class found with null instance\n" );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 
@@ -317,6 +356,9 @@ static void test_instances(void)
     check_instance( name, kernel32, kernel32, kernel32 );
     check_instance( name, user32, 0, user32 );
     check_instance( name, 0, 0, kernel32 );
+    check_thread_instance( name, kernel32, kernel32, kernel32 );
+    check_thread_instance( name, user32, 0, user32 );
+    check_thread_instance( name, 0, 0, kernel32 );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 
     SetClassLongA( hwnd, GCL_HMODULE, 0x12345678 );
@@ -325,6 +367,8 @@ static void test_instances(void)
     check_class( (HINSTANCE)0x12345678, name, "main_module" );
     check_instance( name, kernel32, kernel32, kernel32 );
     check_instance( name, (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0x12345678 );
+    check_thread_instance( name, kernel32, kernel32, kernel32 );
+    check_thread_instance( name, (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0x12345678 );
     ok( !GetClassInfo( 0, name, &wc ), "Class found with null instance\n" );
 
     /* creating a window with instance 0 uses the first class found */
@@ -364,6 +408,7 @@ static void test_instances(void)
     /* must be found with main module handle */
     check_class( main_module, name, "null" );
     check_instance( name, main_module, main_module, main_module );
+    check_thread_instance( name, main_module, main_module, main_module );
     ok( !GetClassInfo( 0, name, &wc ), "Class found with null instance\n" );
     ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
     ok( UnregisterClassA( name, 0 ), "Unregister failed for null instance\n" );
@@ -403,11 +448,15 @@ static void test_instances(void)
     check_class( (HINSTANCE)0x12345678, name, "main_module" );
     check_instance( name, main_module, main_module, main_module );
     check_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, main_module );
+    check_thread_instance( name, main_module, main_module, main_module );
+    check_thread_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, main_module );
 
     /* changing the instance for global class doesn't make much difference */
     SetClassLongA( hwnd, GCL_HMODULE, 0xdeadbeef );
     check_instance( name, main_module, main_module, (HINSTANCE)0xdeadbeef );
     check_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef );
+    check_thread_instance( name, main_module, main_module, (HINSTANCE)0xdeadbeef );
+    check_thread_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef );
 
     DestroyWindow( hwnd );
     ok( UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister failed for main module global\n" );
@@ -418,6 +467,8 @@ static void test_instances(void)
     ok( RegisterClassA( &cls ), "Failed to register global class for dummy instance\n" );
     check_instance( name, main_module, main_module, (HINSTANCE)0x12345678 );
     check_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, (HINSTANCE)0x12345678 );
+    check_thread_instance( name, main_module, main_module, (HINSTANCE)0x12345678 );
+    check_thread_instance( name, (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, (HINSTANCE)0x12345678 );
     ok( UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister failed for main module global\n" );
 
     /* check system classes */
@@ -450,6 +501,9 @@ static void test_instances(void)
     check_instance( "BUTTON", 0, 0, user32 );
     check_instance( "BUTTON", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );
     check_instance( "BUTTON", user32, 0, user32 );
+    check_thread_instance( "BUTTON", 0, 0, user32 );
+    check_thread_instance( "BUTTON", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );
+    check_thread_instance( "BUTTON", user32, 0, user32 );
 
     /* we can unregister system classes */
     ok( GetClassInfo( 0, "BUTTON", &wc ), "Button class not found with null instance\n" );
@@ -462,14 +516,22 @@ static void test_instances(void)
 
     /* we can change the instance of a system class */
     check_instance( "EDIT", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );
+    check_thread_instance( "EDIT", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );
     hwnd = CreateWindowExA( 0, "EDIT", "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
     SetClassLongA( hwnd, GCL_HMODULE, 0xdeadbeef );
     check_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
+    check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
 }
 
 START_TEST(class)
 {
     HANDLE hInstance = GetModuleHandleA( NULL );
+
+    if (!GetModuleHandleW(0))
+    {
+        trace("Class test is incompatible with Win9x implementation, skipping\n");
+        return;
+    }
 
     ClassTest(hInstance,FALSE);
     ClassTest(hInstance,TRUE);
