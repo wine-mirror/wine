@@ -119,6 +119,8 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
         return FALSE;
     }
 
+    if (!lpszHeader) 
+      return TRUE;
     buffer = HTTP_strdup(lpszHeader);
     lpszStart = buffer;
 

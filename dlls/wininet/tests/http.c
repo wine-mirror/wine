@@ -202,9 +202,75 @@ abort:
     }
 }
 
+void InternetOpenUrlA_test(void)
+{
+  HINTERNET myhinternet, myhttp;
+  char buffer[0x400];
+  URL_COMPONENTSA urlComponents;
+  char protocol[32], hostName[1024], userName[1024];
+  char password[1024], extra[1024], path[1024];
+  DWORD size, readbytes, totalbytes=0;
+  
+  myhinternet = InternetOpen("Winetest",0,NULL,NULL,INTERNET_FLAG_NO_CACHE_WRITE);
+  ok((myhinternet != 0), "InternetOpen failed, error %lx\n",GetLastError());
+  size = 0x400;
+  ok (InternetCanonicalizeUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz",buffer, &size,ICU_BROWSER_MODE),
+      "InternetCanonicalizeUrl failed, error %lx\n",GetLastError());
+  
+  urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+  urlComponents.lpszScheme = protocol;
+  urlComponents.dwSchemeLength = 32;
+  urlComponents.lpszHostName = hostName;
+  urlComponents.dwHostNameLength = 1024;
+  urlComponents.lpszUserName = userName;
+  urlComponents.dwUserNameLength = 1024;
+  urlComponents.lpszPassword = password;
+  urlComponents.dwPasswordLength = 1024;
+  urlComponents.lpszUrlPath = path;
+  urlComponents.dwUrlPathLength = 2048;
+  urlComponents.lpszExtraInfo = extra;
+  urlComponents.dwExtraInfoLength = 1024;
+  ok((InternetCrackUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0,0,&urlComponents)),
+     "InternetCrackUrl failed, error %lx\n",GetLastError());
+  myhttp = InternetOpenUrl(myhinternet, "http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0, 0,
+			   INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_TRANSFER_BINARY,0);
+  ok((myhttp != 0),"InternetOpenUrl failed, error %lx\n",GetLastError());
+  ok(InternetReadFile(myhttp, buffer,0x400,&readbytes), "InternetReadFile failed, error %lx\n",GetLastError());
+  totalbytes += readbytes;
+  while (readbytes && InternetReadFile(myhttp, buffer,0x400,&readbytes))
+    totalbytes += readbytes;
+  printf("read 0x%08lx bytes\n",totalbytes);
+}
+  
+void InternetCrackUrl_test(void)
+{
+  URL_COMPONENTSA urlComponents;
+  char protocol[32], hostName[1024], userName[1024];
+  char password[1024], extra[1024], path[1024];
+
+  urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+  urlComponents.lpszScheme = protocol;
+  urlComponents.dwSchemeLength = 32;
+  urlComponents.lpszHostName = hostName;
+  urlComponents.dwHostNameLength = 1024;
+  urlComponents.lpszUserName = userName;
+  urlComponents.dwUserNameLength = 1024;
+  urlComponents.lpszPassword = password;
+  urlComponents.dwPasswordLength = 1024;
+  urlComponents.lpszUrlPath = path;
+  urlComponents.dwUrlPathLength = 2048;
+  urlComponents.lpszExtraInfo = extra;
+  urlComponents.dwExtraInfoLength = 1024;
+  ok((InternetCrackUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0,0,&urlComponents)),
+     "InternetCrackUrl failed, error %lx\n",GetLastError());
+  ok((strcmp("/fieldsync2/release.log.gz",path) == 0),"path cracked wrong");
+}
 
 START_TEST(http)
 {
     winapi_test(0x10000000);
     winapi_test(0x00000000);
+    InternetCrackUrl_test();
+    InternetOpenUrlA_test();
+    
 }

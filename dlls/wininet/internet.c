@@ -1736,13 +1736,12 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
         password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
     if(client == NULL)
       return NULL;
-    client1 = HttpOpenRequestA(hInternet, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+    client1 = HttpOpenRequestA(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
     if(client1 == NULL) {
       InternetCloseHandle(client);
       return NULL;
     }
     HttpAddRequestHeadersA(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
-    HttpAddRequestHeadersA(client1, hostreq, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     if(!HttpSendRequestA(client1, NULL, 0, NULL, 0)) {
       InternetCloseHandle(client1);
       InternetCloseHandle(client);
