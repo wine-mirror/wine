@@ -77,6 +77,71 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
 
 /****************************************************************************
+ *              FromLExxx
+ *
+ * Takes p_iVal (which is in little endian) and returns it
+ *   in the host machine's byte order.
+ */
+#ifdef WORDS_BIGENDIAN
+static WORD FromLEWord(WORD p_iVal)
+{
+  return (((p_iVal & 0x00FF) << 8) |
+	  ((p_iVal & 0xFF00) >> 8));
+}
+
+
+static DWORD FromLEDWord(DWORD p_iVal)
+{
+  return (((p_iVal & 0x000000FF) << 24) |
+	  ((p_iVal & 0x0000FF00) <<  8) |
+	  ((p_iVal & 0x00FF0000) >>  8) |
+	  ((p_iVal & 0xFF000000) >> 24));
+}
+#else
+#define FromLEWord(X)  (X)
+#define FromLEDWord(X) (X)
+#endif
+
+
+/****************************************************************************
+ *              FromLExxx
+ *
+ * Fix byte order in any structure if necessary
+ */
+#ifdef WORDS_BIGENDIAN
+static void FromLEWords(void *p_Val, int p_iSize)
+{
+  WORD *Val = p_Val;
+
+  p_iSize /= sizeof(WORD);
+
+  while (p_iSize) {
+    *Val = FromLEWord(*Val);
+    Val++;
+    p_iSize--;
+  }
+}
+
+
+static void FromLEDWords(void *p_Val, int p_iSize)
+{
+  DWORD *Val = p_Val;
+
+  p_iSize /= sizeof(DWORD);
+
+  while (p_iSize) {
+    *Val = FromLEDWord(*Val);
+    Val++;
+    p_iSize--;
+  }
+}
+#else
+#define FromLEWords(X,Y) /*nothing*/
+#define FromLEDWords(X,Y) /*nothing*/
+#endif
+
+
+/****************************************************************************
  *		QueryPathOfRegTypeLib	[TYPELIB.14]
  *
  * the path is "Classes\Typelib\<guid>\<major>.<minor>\<lcid>\win16\"
@@ -1106,7 +1171,7 @@ void dump_Variant(VARIANT * pvar)
                 TRACE("invalid date? (?)%ld %f\n", *(long*)ref, *(double *)ref);
             } else {
                 TRACE("(yyyymmdd) %4.4d-%2.2d-%2.2d (time) %2.2d:%2.2d:%2.2d [%f]\n",
-                       TM.tm_year, TM.tm_mon+1, TM.tm_mday, 
+                       TM.tm_year, TM.tm_mon+1, TM.tm_mday,
                       TM.tm_hour, TM.tm_min, TM.tm_sec, *(double *)ref);
             }
             break;
@@ -1220,15 +1285,39 @@ DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
     return count;
 }
 
+static DWORD MSFT_ReadLEDWords(void *buffer,  DWORD count, TLBContext *pcx,
+			       long where )
+{
+  DWORD ret;
+
+  ret = MSFT_Read(buffer, count, pcx, where);
+  FromLEDWords(buffer, ret);
+
+  return ret;
+}
+
+static DWORD MSFT_ReadLEWords(void *buffer,  DWORD count, TLBContext *pcx,
+			      long where )
+{
+  DWORD ret;
+
+  ret = MSFT_Read(buffer, count, pcx, where);
+  FromLEWords(buffer, ret);
+
+  return ret;
+}
+
 static void MSFT_ReadGuid( GUID *pGuid, int offset, TLBContext *pcx)
 {
-    TRACE_(typelib)("%s\n", debugstr_guid(pGuid));
-
     if(offset<0 || pcx->pTblDir->pGuidTab.offset <0){
         memset(pGuid,0, sizeof(GUID));
         return;
     }
     MSFT_Read(pGuid, sizeof(GUID), pcx, pcx->pTblDir->pGuidTab.offset+offset );
+    pGuid->Data1 = FromLEDWord(pGuid->Data1);
+    pGuid->Data2 = FromLEWord(pGuid->Data2);
+    pGuid->Data3 = FromLEWord(pGuid->Data3);
+    TRACE_(typelib)("%s\n", debugstr_guid(pGuid));
 }
 
 BSTR MSFT_ReadName( TLBContext *pcx, int offset)
@@ -1239,8 +1328,8 @@ BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     WCHAR* pwstring = NULL;
     BSTR bstrName = NULL;
 
-    MSFT_Read(&niName, sizeof(niName), pcx,
-				pcx->pTblDir->pNametab.offset+offset);
+    MSFT_ReadLEDWords(&niName, sizeof(niName), pcx,
+		      pcx->pTblDir->pNametab.offset+offset);
     niName.namelen &= 0xFF; /* FIXME: correct ? */
     name=TLB_Alloc((niName.namelen & 0xff) +1);
     MSFT_Read(name, (niName.namelen & 0xff), pcx, DO_NOT_SEEK);
@@ -1274,7 +1363,7 @@ BSTR MSFT_ReadString( TLBContext *pcx, int offset)
     BSTR bstr = NULL;
 
     if(offset<0) return NULL;
-    MSFT_Read(&length, sizeof(INT16), pcx, pcx->pTblDir->pStringtab.offset+offset);
+    MSFT_ReadLEWords(&length, sizeof(INT16), pcx, pcx->pTblDir->pStringtab.offset+offset);
     if(length <= 0) return 0;
     string=TLB_Alloc(length +1);
     MSFT_Read(string, length, pcx, DO_NOT_SEEK);
@@ -1313,8 +1402,8 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
         V_UNION(pVar, iVal) = offset & 0xffff;
         return;
     }
-    MSFT_Read(&(V_VT(pVar)), sizeof(VARTYPE), pcx,
-        pcx->pTblDir->pCustData.offset + offset );
+    MSFT_ReadLEWords(&(V_VT(pVar)), sizeof(VARTYPE), pcx,
+                     pcx->pTblDir->pCustData.offset + offset );
     TRACE_(typelib)("Vartype = %x\n", V_VT(pVar));
     switch (V_VT(pVar)){
         case VT_EMPTY:  /* FIXME: is this right? */
@@ -1344,7 +1433,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
             /* pointer types with known behaviour */
         case VT_BSTR    :{
             char * ptr;
-            MSFT_Read(&size, sizeof(INT), pcx, DO_NOT_SEEK );
+            MSFT_ReadLEDWords(&size, sizeof(INT), pcx, DO_NOT_SEEK );
 	    if(size <= 0) {
 	        FIXME("BSTR length = %d?\n", size);
 	    } else {
@@ -1400,8 +1489,7 @@ static int MSFT_CustData( TLBContext *pcx, int offset, TLBCustData** ppCustData 
     while(offset >=0){
         count++;
         pNew=TLB_Alloc(sizeof(TLBCustData));
-        MSFT_Read(&entry, sizeof(entry), pcx,
-            pcx->pTblDir->pCDGuids.offset+offset);
+        MSFT_ReadLEDWords(&entry, sizeof(entry), pcx, pcx->pTblDir->pCDGuids.offset+offset);
         MSFT_ReadGuid(&(pNew->guid), entry.GuidOffset , pcx);
         MSFT_ReadValue(&(pNew->data), entry.DataOffset, pcx);
         /* add new custom data at head of the list */
@@ -1467,26 +1555,24 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
     TRACE_(typelib)("\n");
 
-    MSFT_Read(&infolen, sizeof(INT), pcx, offset);
+    MSFT_ReadLEDWords(&infolen, sizeof(INT), pcx, offset);
 
     for ( i = 0; i < cFuncs ; i++ )
     {
         *pptfd = TLB_Alloc(sizeof(TLBFuncDesc));
 
         /* name, eventually add to a hash table */
-        MSFT_Read(&nameoffset,
-                 sizeof(INT),
-                 pcx,
-                 offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
+        MSFT_ReadLEDWords(&nameoffset, sizeof(INT), pcx,
+                          offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
 
         (*pptfd)->Name = MSFT_ReadName(pcx, nameoffset);
 
         /* read the function information record */
-        MSFT_Read(&reclength, sizeof(INT), pcx, recoffset);
+        MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
 
         reclength &= 0x1ff;
 
-        MSFT_Read(pFuncRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK) ;
+        MSFT_ReadLEDWords(pFuncRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK);
 
         /* do the attributes */
         nrattributes = (reclength - pFuncRec->nrargs * 3 * sizeof(int) - 0x18)
@@ -1528,9 +1614,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
         }
 
         /* fill the FuncDesc Structure */
-        MSFT_Read( & (*pptfd)->funcdesc.memid,
-                  sizeof(INT), pcx,
-                  offset + infolen + ( i + 1) * sizeof(INT));
+        MSFT_ReadLEDWords( & (*pptfd)->funcdesc.memid, sizeof(INT), pcx,
+                           offset + infolen + ( i + 1) * sizeof(INT));
 
         (*pptfd)->funcdesc.funckind   =  (pFuncRec->FKCCIC)      & 0x7;
         (*pptfd)->funcdesc.invkind    =  (pFuncRec->FKCCIC) >> 3 & 0xF;
@@ -1557,11 +1642,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
             (*pptfd)->pParamDesc =
                 TLB_Alloc(pFuncRec->nrargs * sizeof(TLBParDesc));
 
-            MSFT_Read(&paraminfo,
-		      sizeof(paraminfo),
-		      pcx,
-		      recoffset + reclength -
-		      pFuncRec->nrargs * sizeof(MSFT_ParameterInfo));
+            MSFT_ReadLEDWords(&paraminfo, sizeof(paraminfo), pcx,
+                              recoffset + reclength - pFuncRec->nrargs * sizeof(MSFT_ParameterInfo));
 
             for ( j = 0 ; j < pFuncRec->nrargs ; j++ )
             {
@@ -1580,7 +1662,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                  * from there jump to the end of record,
                  * go back by (j-1) arguments
                  */
-                MSFT_Read( &paraminfo ,
+                MSFT_ReadLEDWords( &paraminfo ,
 			   sizeof(MSFT_ParameterInfo), pcx,
 			   recoffset + reclength - ((pFuncRec->nrargs - j - 1)
 					       * sizeof(MSFT_ParameterInfo)));
@@ -1703,20 +1785,20 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
 
     TRACE_(typelib)("\n");
 
-    MSFT_Read(&infolen,sizeof(INT), pcx, offset);
-    MSFT_Read(&recoffset,sizeof(INT), pcx, offset + infolen +
-        ((cFuncs+cVars)*2+cFuncs + 1)*sizeof(INT));
+    MSFT_ReadLEDWords(&infolen,sizeof(INT), pcx, offset);
+    MSFT_ReadLEDWords(&recoffset,sizeof(INT), pcx, offset + infolen +
+                      ((cFuncs+cVars)*2+cFuncs + 1)*sizeof(INT));
     recoffset += offset+sizeof(INT);
     for(i=0;i<cVars;i++){
         *pptvd=TLB_Alloc(sizeof(TLBVarDesc));
     /* name, eventually add to a hash table */
-        MSFT_Read(&nameoffset, sizeof(INT), pcx,
-            offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
+        MSFT_ReadLEDWords(&nameoffset, sizeof(INT), pcx,
+                          offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
         (*pptvd)->Name=MSFT_ReadName(pcx, nameoffset);
     /* read the variable information record */
-        MSFT_Read(&reclength, sizeof(INT), pcx, recoffset);
+        MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
         reclength &=0xff;
-        MSFT_Read(pVarRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK) ;
+        MSFT_ReadLEDWords(pVarRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK);
     /* Optional data */
         if(reclength >(6*sizeof(INT)) )
             (*pptvd)->HelpContext=pVarRec->HelpContext;
@@ -1726,8 +1808,8 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
         if(reclength >(9*sizeof(INT)) )
             (*pptvd)->HelpStringContext=pVarRec->HelpStringContext;
     /* fill the VarDesc Structure */
-        MSFT_Read(&(*pptvd)->vardesc.memid, sizeof(INT), pcx,
-            offset + infolen + ( i + 1) * sizeof(INT));
+        MSFT_ReadLEDWords(&(*pptvd)->vardesc.memid, sizeof(INT), pcx,
+                          offset + infolen + ( i + 1) * sizeof(INT));
         (*pptvd)->vardesc.varkind = pVarRec->VarKind;
         (*pptvd)->vardesc.wVarFlags = pVarRec->Flags;
         MSFT_GetTdesc(pcx, pVarRec->DataType,
@@ -1771,8 +1853,8 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI,
 
         TRACE_(typelib)("offset %x, masked offset %x\n", offset, offset + (offset & 0xfffffffc));
 
-        MSFT_Read(&impinfo, sizeof(impinfo), pcx,
-            pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
+        MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx,
+                          pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
         for(j=0;pImpLib;j++){   /* search the known offsets of all import libraries */
             if(pImpLib->offset==impinfo.oImpFile) break;
             pImpLib=pImpLib->next;
@@ -1808,7 +1890,7 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
     for(i=0;i<count;i++){
         if(offset<0) break; /* paranoia */
         *ppImpl=TLB_Alloc(sizeof(**ppImpl));
-        MSFT_Read(&refrec,sizeof(refrec),pcx,offset+pcx->pTblDir->pRefTab.offset);
+        MSFT_ReadLEDWords(&refrec,sizeof(refrec),pcx,offset+pcx->pTblDir->pRefTab.offset);
         MSFT_DoRefType(pcx, pTI, refrec.reftype);
 	(*ppImpl)->hRef = refrec.reftype;
 	(*ppImpl)->implflags=refrec.flags;
@@ -1832,8 +1914,8 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
     TRACE_(typelib)("count=%u\n", count);
 
     ptiRet = (ITypeInfoImpl*) ITypeInfo_Constructor();
-    MSFT_Read(&tiBase, sizeof(tiBase) ,pcx ,
-        pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
+    MSFT_ReadLEDWords(&tiBase, sizeof(tiBase) ,pcx ,
+                      pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
 /* this is where we are coming from */
     ptiRet->pTypeLib = pLibInfo;
     ITypeLib2_AddRef((ITypeLib2 *)pLibInfo);
@@ -1982,7 +2064,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 	  DWORD dwTLBLength = GetFileSize(hFile, NULL);
 
           /* first try to load as *.tlb */
-          dwSignature = *((DWORD*) pBase);
+          dwSignature = FromLEDWord(*((DWORD*) pBase));
           if ( dwSignature == MSFT_SIGNATURE)
           {
             *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
@@ -2018,7 +2100,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
             if (pBase)
             {
               /* try to load as incore resource */
-              dwSignature = *((DWORD*) pBase);
+              dwSignature = FromLEDWord(*((DWORD*) pBase));
               if ( dwSignature == MSFT_SIGNATURE)
               {
                   *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
@@ -2079,10 +2161,10 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     cx.length = dwTLBLength;
 
     /* read header */
-    MSFT_Read((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
+    MSFT_ReadLEDWords((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
     TRACE("header:\n");
     TRACE("\tmagic1=0x%08x ,magic2=0x%08x\n",tlbHeader.magic1,tlbHeader.magic2 );
-    if (memcmp(&tlbHeader.magic1,TLBMAGIC2,4)) {
+    if (tlbHeader.magic1 != MSFT_SIGNATURE) {
 	FIXME("Header type magic 0x%08x not supported.\n",tlbHeader.magic1);
 	return NULL;
     }
@@ -2093,7 +2175,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
     /* now read the segment directory */
     TRACE("read segment directory (at %ld)\n",lPSegDir);
-    MSFT_Read((void*)&tlbSegDir, sizeof(tlbSegDir), &cx, lPSegDir);
+    MSFT_ReadLEDWords(&tlbSegDir, sizeof(tlbSegDir), &cx, lPSegDir);
     cx.pTblDir = &tlbSegDir;
 
     /* just check two entries */
@@ -2130,7 +2212,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     if( tlbHeader.varflags & HELPDLLFLAG)
     {
             int offset;
-            MSFT_Read(&offset, sizeof(offset), &cx, sizeof(tlbHeader));
+            MSFT_ReadLEDWords(&offset, sizeof(offset), &cx, sizeof(tlbHeader));
             pTypeLibImpl->HelpStringDll = MSFT_ReadString(&cx, offset);
     }
 
@@ -2148,7 +2230,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         int i, j, cTD = tlbSegDir.pTypdescTab.length / (2*sizeof(INT));
         INT16 td[4];
         pTypeLibImpl->pTypeDesc = TLB_Alloc( cTD * sizeof(TYPEDESC));
-        MSFT_Read(td, sizeof(td), &cx, tlbSegDir.pTypdescTab.offset);
+        MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pTypdescTab.offset);
         for(i=0; i<cTD; )
 	{
             /* FIXME: add several sanity checks here */
@@ -2170,7 +2252,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	    {
                 pTypeLibImpl->pTypeDesc[i].u.hreftype = MAKELONG(td[2],td[3]);
             }
-	    if(++i<cTD) MSFT_Read(td, sizeof(td), &cx, DO_NOT_SEEK);
+	    if(++i<cTD) MSFT_ReadLEWords(td, sizeof(td), &cx, DO_NOT_SEEK);
         }
 
         /* second time around to fill the array subscript info */
@@ -2179,7 +2261,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             if(pTypeLibImpl->pTypeDesc[i].vt != VT_CARRAY) continue;
             if(tlbSegDir.pArrayDescriptions.offset>0)
 	    {
-                MSFT_Read(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (int) pTypeLibImpl->pTypeDesc[i].u.lpadesc);
+                MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (int) pTypeLibImpl->pTypeDesc[i].u.lpadesc);
                 pTypeLibImpl->pTypeDesc[i].u.lpadesc = TLB_Alloc(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
 
                 if(td[1]<0)
@@ -2191,10 +2273,10 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
                 for(j = 0; j<td[2]; j++)
 		{
-                    MSFT_Read(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].cElements,
-                        sizeof(INT), &cx, DO_NOT_SEEK);
-                    MSFT_Read(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].lLbound,
-                        sizeof(INT), &cx, DO_NOT_SEEK);
+                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].cElements,
+                                      sizeof(INT), &cx, DO_NOT_SEEK);
+                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].lLbound,
+                                      sizeof(INT), &cx, DO_NOT_SEEK);
                 }
             }
 	    else
@@ -2216,12 +2298,12 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	{
             *ppImpLib = TLB_Alloc(sizeof(TLBImpLib));
             (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
-            MSFT_Read(&oGuid, sizeof(INT), &cx, offset);
+            MSFT_ReadLEDWords(&oGuid, sizeof(INT), &cx, offset);
 
-	    MSFT_Read(&(*ppImpLib)->lcid,          sizeof(LCID),   &cx, DO_NOT_SEEK);
-            MSFT_Read(&(*ppImpLib)->wVersionMajor, sizeof(WORD),   &cx, DO_NOT_SEEK);
-            MSFT_Read(&(*ppImpLib)->wVersionMinor, sizeof(WORD),   &cx, DO_NOT_SEEK);
-            MSFT_Read(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
+            MSFT_ReadLEDWords(&(*ppImpLib)->lcid,         sizeof(LCID),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEWords(&(*ppImpLib)->wVersionMajor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEWords(&(*ppImpLib)->wVersionMinor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEWords(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
 
             size >>= 2;
             (*ppImpLib)->name = TLB_Alloc(size+1);
@@ -2838,7 +2920,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     TRACE("header:\n");
     TRACE("\tmagic=0x%08lx, file blocks = %d\n", pHeader->SLTG_magic,
 	  pHeader->nrOfFileBlks );
-    if (memcmp(&pHeader->SLTG_magic, TLBMAGIC1, 4)) {
+    if (pHeader->SLTG_magic != SLTG_SIGNATURE) {
 	FIXME("Header type magic 0x%08lx not supported.\n",
 	      pHeader->SLTG_magic);
 	return NULL;
@@ -2945,7 +3027,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
        possibly add 0x20, then add 0x216, sprinkle a bit a magic
        dust and we should be pointing at the beginning of the name
        table */
- 
+
     pNameTable = (char*)pLibBlk + len;
 
    switch(*(WORD*)pNameTable) {
