@@ -2084,6 +2084,8 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
   INT nItem;
   INT nColumnCount;
   INT nCountPerColumn;
+  INT nItemWidth = LISTVIEW_GetItemWidth(hwnd);
+  INT nItemHeight = LISTVIEW_GetItemHeight(hwnd);
   
   /* get number of fully visible columns */
   nColumnCount = LISTVIEW_GetColumnCount(hwnd);
@@ -2097,10 +2099,10 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
       if (nItem >= GETITEMCOUNT(infoPtr))
         return;
 
-      rcItem.top = j * infoPtr->nItemHeight;
-      rcItem.left = i * infoPtr->nItemWidth;
-      rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-      rcItem.right = rcItem.left + infoPtr->nItemWidth;
+      rcItem.top = j * nItemHeight;
+      rcItem.left = i * nItemWidth;
+      rcItem.bottom = rcItem.top + nItemHeight;
+      rcItem.right = rcItem.left + nItemWidth;
       LISTVIEW_DrawItem(hwnd, hdc, nItem, rcItem);
     }
   }
