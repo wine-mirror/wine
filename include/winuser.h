@@ -1728,6 +1728,8 @@ DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
 typedef BOOL  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
+/* FIXME: use this instead of LPCVOID for CreateDialogIndirectParam
+   and DialogBoxIndirectParam */
 typedef struct tagDLGTEMPLATE
 {
     DWORD style;
@@ -1746,12 +1748,10 @@ typedef const DLGTEMPLATE *LPCDLGTEMPLATEA;
 typedef const DLGTEMPLATE *LPCDLGTEMPLATEW;
 #define LPCDLGTEMPLATE WINELIB_NAME_AW(LPCDLGTEMPLATE)
 
-/* Fixme: use this instaed of LPCVOID for CreateDialogIndirectParam and DialogBoxIndirectParam*/
 typedef struct tagDLGITEMTEMPLATE
 {
     DWORD style;
     DWORD dwExtendedStyle;
-    WORD cdit;
     short x;
     short y;
     short cx;
