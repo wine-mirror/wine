@@ -255,13 +255,13 @@ foreach my $file ($options->files) {
 		    }
 
 		    $name2 = $name1;
-		    $name2 =~ s/([AW])$/16$1/;
+		    # $name2 =~ s/([AW])$/16$1/;
 
 		    $name3 = $name1;
 		    $name3 =~ s/16(([AW])?)$/$1/;
 
 		    $name4 = $name1;
-		    $name4 =~ s/^(.*?)(?:16)?$/\U$1\E/;
+		    # $name4 =~ s/^(.*?)(?:16)?$/\U$1\E/;
 
 		    $name5 = $name1;
 		    $name5 = s/^(.*?)16_fn(.*?)$/$116_$2/;
@@ -274,10 +274,10 @@ foreach my $file ($options->files) {
 		    }
 
 		    $name2 = $name1;
-		    $name2 =~ s/([AW])$/32$1/;
+		    # $name2 =~ s/([AW])$/32$1/;
 
 		    $name3 = $name1;
-		    $name3 =~ s/32(([AW])?)$/$1/;
+		    # $name3 =~ s/32(([AW])?)$/$1/;
 
 		    $name4 = $name1;
 		    $name4 =~ s/AW$//;
@@ -301,7 +301,7 @@ foreach my $file ($options->files) {
 		    $name5 = $name1;
 		}
 
-		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /($name|$name1|$name2|$name3|$name4|$name5)/) {
+		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /\b($name|$name1|$name2|$name3|$name4|$name5)\b/) {
 		    $output->write("$file: $name: \\\n");
 		    $output->write("$documentation\n");
 		}	       
