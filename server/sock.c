@@ -338,8 +338,12 @@ static struct object *accept_socket( int handle )
         return NULL;
     }
 
+    /* newly created socket gets the same properties of the listening socket */
+    fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     acceptsock->obj.fd = acceptfd;
     acceptsock->state  = WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE;
+    if (sock->state & WS_FD_NONBLOCKING)
+        acceptsock->state |= WS_FD_NONBLOCKING; 
     acceptsock->mask   = sock->mask;
     acceptsock->hmask  = 0;
     acceptsock->pmask  = 0;
