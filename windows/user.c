@@ -173,7 +173,6 @@ void USER_QueueCleanup( HQUEUE16 hQueue )
 
         TIMER_RemoveQueueTimers( hQueue );
 
-        QUEUE_FlushMessages( hQueue );
         HOOK_FreeQueueHooks( hQueue );
 
         QUEUE_SetExitingQueue( hQueue );

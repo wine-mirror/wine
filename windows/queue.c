@@ -19,6 +19,7 @@
 #include "process.h"
 #include <assert.h>
 #include "debug.h"
+#include "spy.h"
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
@@ -359,23 +360,21 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
 
     DUMP(    "next: %12.4x  Intertask SendMessage:\n"
              "thread: %10p  ----------------------\n"
-             "hWnd: %12.8x\n"
-             "firstMsg: %8p   msg:     %11.8x\n"
-             "lastMsg:  %8p   wParam:   %10.8x\n"
-             "msgCount: %8.4x   lParam:   %10.8x\n"
-             "lockCount: %7.4x   lRet:   %12.8x\n"
-             "wWinVer: %9.4x  ISMH: %10.4x\n"
-             "paints: %10.4x  hSendTask: %5.4x\n"
-             "timers: %10.4x  hPrevSend: %5.4x\n"
+             "firstMsg: %8p   smWaiting:     %10p\n"
+             "lastMsg:  %8p   smPending:     %10p\n"
+             "msgCount: %8.4x   smProcessing:  %10p\n"
+             "lockCount: %7.4x\n"
+             "wWinVer: %9.4x\n"
+             "paints: %10.4x\n"
+             "timers: %10.4x\n"
              "wakeBits: %8.4x\n"
              "wakeMask: %8.4x\n"
              "hCurHook: %8.4x\n",
-             pq->next, pq->thdb, pq->hWnd32, pq->firstMsg, pq->msg32,
-             pq->lastMsg, pq->wParam32, pq->msgCount, (unsigned)pq->lParam,
-             (unsigned)pq->lockCount, (unsigned)pq->SendMessageReturn,
-             pq->wWinVersion, pq->InSendMessageHandle,
-             pq->wPaintCount, pq->hSendingTask, pq->wTimerCount,
-             pq->hPrevSendingTask, pq->wakeBits, pq->wakeMask, pq->hCurHook);
+             pq->next, pq->thdb, pq->firstMsg, pq->smWaiting, pq->lastMsg,
+             pq->smPending, pq->msgCount, pq->smProcessing,
+             (unsigned)pq->lockCount, pq->wWinVersion,
+             pq->wPaintCount, pq->wTimerCount,
+             pq->wakeBits, pq->wakeMask, pq->hCurHook);
 
     QUEUE_Unlock( pq );
 }
@@ -449,7 +448,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
         return 0;
 
     msgQueue->self        = hQueue;
-    msgQueue->wakeBits    = msgQueue->changeBits = QS_SMPARAMSFREE;
+    msgQueue->wakeBits    = msgQueue->changeBits = 0;
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
     
     InitializeCriticalSection( &msgQueue->cSection );
@@ -482,6 +481,44 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
 
 /***********************************************************************
+ *           QUEUE_FlushMessage
+ * 
+ * Try to reply to all pending sent messages on exit.
+ */
+void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
+{
+    SMSG *smsg;
+    MESSAGEQUEUE *senderQ = 0;
+
+    if( queue )
+    {
+        EnterCriticalSection( &queue->cSection );
+
+        /* empty the list of pending SendMessage waiting to be received */
+        while (queue->smPending)
+        {
+            smsg = QUEUE_RemoveSMSG( queue, SM_PENDING_LIST, 0);
+
+            senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
+            if ( !senderQ )
+                continue;
+
+            /* return 0, to unblock other thread */
+            smsg->lResult = 0;
+            smsg->flags |= SMSG_HAVE_RESULT;
+            QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
+            
+            QUEUE_Unlock( senderQ );
+        }
+
+        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
+        
+        LeaveCriticalSection( &queue->cSection );
+    }
+}
+
+
+/***********************************************************************
  *	     QUEUE_DeleteMsgQueue
  *
  * Unlinks and deletes a message queue.
@@ -492,7 +529,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)QUEUE_Lock(hQueue);
-    HQUEUE16  senderQ;
     HQUEUE16 *pPrev;
 
     TRACE(msg,"(): Deleting message queue %04x\n", hQueue);
@@ -509,16 +545,7 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     if( hActiveQueue == hQueue ) hActiveQueue = 0;
 
     /* flush sent messages */
-    senderQ = msgQueue->hSendingTask;
-    while( senderQ )
-    {
-      MESSAGEQUEUE* sq = (MESSAGEQUEUE*)QUEUE_Lock(senderQ);
-      if( !sq ) break;
-      sq->SendMessageReturn = 0L;
-      QUEUE_SetWakeBit( sq, QS_SMRESULT );
-      senderQ = sq->hPrevSendingTask;
-      QUEUE_Unlock(sq);
-    }
+    QUEUE_FlushMessages( msgQueue );
 
     SYSTEM_LOCK();
 
@@ -687,129 +714,264 @@ void QUEUE_WaitBits( WORD bits )
 
 
 /***********************************************************************
- *           QUEUE_ReceiveMessage
+ *           QUEUE_AddSMSG
  *
+ * This routine is called when a SMSG need to be added to one of the three
+ * SM list.  (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST)
+ */
+BOOL32 QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
+{
+    TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+          smsg, SPY_GetMsgName(smsg->msg));
+    
+    switch (list)
+    {
+        case SM_PROCESSING_LIST:
+            /* don't need to be thread safe, only accessed by the
+             thread associated with the sender queue */
+            smsg->nextProcessing = queue->smProcessing;
+            queue->smProcessing = smsg;
+            break;
+            
+        case SM_WAITING_LIST:
+            /* don't need to be thread safe, only accessed by the
+             thread associated with the receiver queue */
+            smsg->nextWaiting = queue->smWaiting;
+            queue->smWaiting = smsg;
+            break;
+            
+        case SM_PENDING_LIST:
+            /* make it thread safe, could be accessed by the sender and
+             receiver thread */
+
+            EnterCriticalSection( &queue->cSection );
+            smsg->nextPending = queue->smPending;
+            queue->smPending = smsg;
+            QUEUE_SetWakeBit( queue, QS_SENDMESSAGE );
+            LeaveCriticalSection( &queue->cSection );
+            break;
+
+        default:
+            WARN(sendmsg, "Invalid list: %d", list);
+            break;
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           QUEUE_RemoveSMSG
+ *
+ * This routine is called when a SMSG need to be remove from one of the three
+ * SM list.  (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST)
+ * If smsg == 0, remove the first smsg from the specified list
+ */
+SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
+{
+
+    switch (list)
+    {
+        case SM_PROCESSING_LIST:
+            /* don't need to be thread safe, only accessed by the
+             thread associated with the sender queue */
+
+            /* if smsg is equal to null, it means the first in the list */
+            if (!smsg)
+                smsg = queue->smProcessing;
+
+            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+                  smsg, SPY_GetMsgName(smsg->msg));
+            /* In fact SM_PROCESSING_LIST is a stack, and smsg
+             should be always at the top of the list */
+            if ( (smsg != queue->smProcessing) || !queue->smProcessing )
+        {
+                ERR( sendmsg, "smsg not at the top of Processing list, smsg=0x%p queue=0x%p", smsg, queue);
+                return 0;
+            }
+            else
+            {
+                queue->smProcessing = smsg->nextProcessing;
+                smsg->nextProcessing = 0;
+        }
+            return smsg;
+
+        case SM_WAITING_LIST:
+            /* don't need to be thread safe, only accessed by the
+             thread associated with the receiver queue */
+
+            /* if smsg is equal to null, it means the first in the list */
+            if (!smsg)
+                smsg = queue->smWaiting;
+            
+            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+                  smsg, SPY_GetMsgName(smsg->msg));
+            /* In fact SM_WAITING_LIST is a stack, and smsg
+             should be always at the top of the list */
+            if ( (smsg != queue->smWaiting) || !queue->smWaiting )
+            {
+                ERR( sendmsg, "smsg not at the top of Waiting list, smsg=0x%p queue=0x%p", smsg, queue);
+                return 0;
+            }
+            else
+            {
+                queue->smWaiting = smsg->nextWaiting;
+                smsg->nextWaiting = 0;
+    }
+            return smsg;
+
+        case SM_PENDING_LIST:
+            /* make it thread safe, could be accessed by the sender and
+             receiver thread */
+            EnterCriticalSection( &queue->cSection );
+    
+            if (!smsg || !queue->smPending)
+                smsg = queue->smPending;
+            else
+            {
+                ERR( sendmsg, "should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
+                return 0;
+            }
+            
+            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+                  smsg, SPY_GetMsgName(smsg->msg));
+
+            queue->smPending = smsg->nextPending;
+            smsg->nextPending = 0;
+
+            /* if no more SMSG in Pending list, clear QS_SENDMESSAGE flag */
+            if (!queue->smPending)
+                QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
+            
+            LeaveCriticalSection( &queue->cSection );
+            return smsg;
+
+        default:
+            WARN(sendmsg, "Invalid list: %d", list);
+            break;
+    }
+
+    return 0;
+}
+
+
+/***********************************************************************
+ *           QUEUE_ReceiveMessage
+ * 
  * This routine is called when a sent message is waiting for the queue.
  */
 void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 {
-    MESSAGEQUEUE *senderQ = NULL;
-    HQUEUE16      prevSender = 0;
-    QSMCTRL*      prevCtrlPtr = NULL;
     LRESULT       result = 0;
+    SMSG          *smsg;
+    MESSAGEQUEUE  *senderQ;
 
-    TRACE(msg, "ReceiveMessage, queue %04x\n", queue->self );
-    if (!(queue->wakeBits & QS_SENDMESSAGE) ||
-        !(senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask)))
-	{ TRACE(msg,"\trcm: nothing to do\n"); return; }
+    TRACE(sendmsg, "queue %04x\n", queue->self );
 
-    if( !senderQ->hPrevSendingTask )
-        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );   /* no more sent messages */
-
-    /* Save current state on stack */
-    prevSender                 = queue->InSendMessageHandle;
-    prevCtrlPtr		       = queue->smResultCurrent;
-
-    /* Remove sending queue from the list */
-    queue->InSendMessageHandle = queue->hSendingTask;
-    queue->smResultCurrent     = senderQ->smResultInit;
-    queue->hSendingTask	       = senderQ->hPrevSendingTask;
-
-    TRACE(msg, "\trcm: smResultCurrent = %08x, prevCtrl = %08x\n", 
-				(unsigned)queue->smResultCurrent, (unsigned)prevCtrlPtr );
-    QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
-
-    TRACE(msg, "\trcm: calling wndproc - %08x %08x %08x %08x\n",
-                senderQ->hWnd32, senderQ->msg32,
-                senderQ->wParam32, (unsigned)senderQ->lParam );
-
-    if (IsWindow32( senderQ->hWnd32 ))
+    if ( !(queue->wakeBits & QS_SENDMESSAGE) && queue->smPending )
     {
-        WND *wndPtr = WIN_FindWndPtr( senderQ->hWnd32 );
-        DWORD extraInfo = queue->GetMessageExtraInfoVal;
-        queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
+        TRACE(sendmsg,"\trcm: nothing to do\n");
+        return;
+    }
 
-        if (senderQ->flags & QUEUE_SM_WIN32)
+    /* remove smsg on the top of the pending list and put it in the processing list */
+    smsg = QUEUE_RemoveSMSG(queue, SM_PENDING_LIST, 0);
+    QUEUE_AddSMSG(queue, SM_WAITING_LIST, smsg);
+
+    TRACE(sendmsg,"RM: %s [%04x] (%04x -> %04x)\n",
+       	    SPY_GetMsgName(smsg->msg), smsg->msg, smsg->hSrcQueue, smsg->hDstQueue );
+
+    if (IsWindow32( smsg->hWnd ))
+    {
+        WND *wndPtr = WIN_FindWndPtr( smsg->hWnd );
+        DWORD extraInfo = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
+
+        /* use sender queue extra info value while calling the window proc */
+        senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
+        if (senderQ)
+  {
+            queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
+            QUEUE_Unlock( senderQ );
+        }
+
+        /* call the right version of CallWindowProcXX */
+        if (smsg->flags & SMSG_WIN32)
         {
-            TRACE(msg, "\trcm: msg is Win32\n" );
-            if (senderQ->flags & QUEUE_SM_UNICODE)
+            TRACE(sendmsg, "\trcm: msg is Win32\n" );
+            if (smsg->flags & SMSG_UNICODE)
                 result = CallWindowProc32W( wndPtr->winproc,
-                                            senderQ->hWnd32, senderQ->msg32,
-                                            senderQ->wParam32, senderQ->lParam );
+                                            smsg->hWnd, smsg->msg,
+                                            smsg->wParam, smsg->lParam );
             else
                 result = CallWindowProc32A( wndPtr->winproc,
-                                            senderQ->hWnd32, senderQ->msg32,
-                                            senderQ->wParam32, senderQ->lParam );
+                                            smsg->hWnd, smsg->msg,
+                                            smsg->wParam, smsg->lParam );
         }
         else  /* Win16 message */
             result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
-                                       (HWND16) senderQ->hWnd32,
-                                       (UINT16) senderQ->msg32,
-                                       LOWORD (senderQ->wParam32),
-                                       senderQ->lParam );
+                                       (HWND16) smsg->hWnd,
+                                       (UINT16) smsg->msg,
+                                       LOWORD (smsg->wParam),
+                                       smsg->lParam );
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
-	TRACE(msg,"\trcm: result =  %08x\n", (unsigned)result );
+	TRACE(sendmsg,"result =  %08x\n", (unsigned)result );
     }
-    else WARN(msg, "\trcm: bad hWnd\n");
+    else WARN(sendmsg, "\trcm: bad hWnd\n");
 
-    QUEUE_Unlock( senderQ );
-    
-    /* Return the result to the sender task */
-    ReplyMessage16( result );
-
-    queue->InSendMessageHandle = prevSender;
-    queue->smResultCurrent     = prevCtrlPtr;
-
-    TRACE(msg,"done!\n");
-}
-
-/***********************************************************************
- *           QUEUE_FlushMessage
- * 
- * Try to reply to all pending sent messages on exit.
- */
-void QUEUE_FlushMessages( HQUEUE16 hQueue )
-{
-  MESSAGEQUEUE *queue = (MESSAGEQUEUE*)QUEUE_Lock( hQueue );
-
-  if( queue )
-  {
-    MESSAGEQUEUE *senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask );
-    QSMCTRL*      CtrlPtr = queue->smResultCurrent;
-
-    TRACE(msg,"Flushing queue %04x:\n", hQueue );
-
-    while( senderQ )
+    /* sometimes when we got early reply, the receiver is in charge of
+     freeing up memory associated with smsg */
+    /* when there is an early reply the sender will not release smsg
+     before SMSG_RECEIVED is set */
+    if ( smsg->flags & SMSG_EARLY_REPLY )
     {
-      if( !CtrlPtr )
-	   CtrlPtr = senderQ->smResultInit;
+        /* remove smsg from the waiting list */
+        QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
 
-      TRACE(msg,"\tfrom queue %04x, smResult %08x\n", queue->hSendingTask, (unsigned)CtrlPtr );
+        /* make thread safe when accessing SMSG_SENT_REPLY and
+         SMSG_RECEIVER_CLEANS_UP. Those fleags are used by both thread,
+         the sender and receiver, to find out which thread should released
+         smsg structure. The critical section of the sender queue is used. */
 
-      if( !(queue->hSendingTask = senderQ->hPrevSendingTask) )
-        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
+        senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
 
-      QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
+        /* synchronize with the sender */
+        if (senderQ)
+            EnterCriticalSection( &senderQ->cSection );
       
-      queue->smResultCurrent = CtrlPtr;
-      while( senderQ->wakeBits & QS_SMRESULT ) OldYield();
+        /* tell the sender we're all done with smsg structure */
+        smsg->flags |= SMSG_RECEIVED;
 
-      senderQ->SendMessageReturn = 0;
-      senderQ->smResult = queue->smResultCurrent;
-      QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
+        /* sender will set SMSG_RECEIVER_CLEANS_UP if it wants the
+         receiver to clean up smsg, it could only happens when there is
+         an early reply */
+        if ( smsg->flags & SMSG_RECEIVER_CLEANS )
+        {
+            TRACE( sendmsg,"Receiver cleans up!\n" );
+            HeapFree( SystemHeap, 0, smsg );
+        }
 
+        /* release lock */
+        if (senderQ)
+        {
+            LeaveCriticalSection( &senderQ->cSection );
       QUEUE_Unlock( senderQ );
-
-      senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask );
-      CtrlPtr = NULL;
+        }
     }
-    queue->InSendMessageHandle = 0;
+    else
+    {
+        /* no early reply, so do it now */
     
-    QUEUE_Unlock( queue );
+        /* set SMSG_SENDING_REPLY flag to tell ReplyMessage16, it's not
+         an early reply */
+        smsg->flags |= SMSG_SENDING_REPLY;
+        ReplyMessage32( result );
   }  
 
+    TRACE( sendmsg,"done! \n" );
 }
+
+
 
 /***********************************************************************
  *           QUEUE_AddMsg

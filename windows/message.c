@@ -43,7 +43,7 @@ extern HQUEUE16 hCursorQueue;			 /* queue.c */
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
 static UINT32 doubleClickSpeed = 452;
-static INT32 debugSMRL = 0;       /* intertask SendMessage() recursion level */
+
 
 /***********************************************************************
  *           MSG_CheckFilter
@@ -621,16 +621,20 @@ UINT32 WINAPI GetDoubleClickTime32(void)
  *
  * Implementation of an inter-task SendMessage.
  */
-static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
+static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND32 hwnd, UINT32 msg,
                                 WPARAM32 wParam, LPARAM lParam, WORD flags )
 {
-    INT32	  prevSMRL = debugSMRL;
-    QSMCTRL 	  qCtrl = { 0, 1};
     MESSAGEQUEUE *queue, *destQ;
+    SMSG         *smsg;
+    LRESULT      lResult = 0;
 
     if (IsTaskLocked() || !IsWindow32(hwnd))
         return 0;
 
+    /* create a SMSG structure to hold SendMessage() parameters */
+    if (! (smsg = (SMSG *) HeapAlloc( SystemHeap, 0, sizeof(SMSG) )) )
+        return 0;
+          
     if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue() ))) return 0;
 
     if (!(destQ = (MESSAGEQUEUE*)QUEUE_Lock( hDestQueue )))
@@ -639,66 +643,84 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
         return 0;
     }
 
-    debugSMRL+=4;
-    TRACE(sendmsg,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
-		    prevSMRL, "", SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
+    TRACE(sendmsg,"SM: %s [%04x] (%04x -> %04x)\n",
+		    SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
 
-    if( !(queue->wakeBits & QS_SMPARAMSFREE) )
-    {
-      TRACE(sendmsg,"\tIntertask SendMessage: sleeping since unreplied SendMessage pending\n");
-      QUEUE_WaitBits( QS_SMPARAMSFREE );
-    }
+    /* fill up SMSG structure */
+    smsg->hWnd = hwnd;
+    smsg->msg = msg;
+    smsg->wParam = wParam;
+    smsg->lParam = lParam;
+    
+    smsg->lResult = 0;
+    smsg->hSrcQueue = GetFastQueue();
+    smsg->hDstQueue = hDestQueue;
+    smsg->flags = flags;
 
-    /* resume sending */ 
-    queue->hWnd32     = hwnd;
-    queue->msg32      = msg;
-    queue->wParam32   = wParam;
-    queue->lParam     = lParam;
-    queue->hPrevSendingTask = destQ->hSendingTask;
-    destQ->hSendingTask = GetFastQueue();
+    /* add smsg struct in the processing SM list of the source queue */
+    QUEUE_AddSMSG(queue, SM_PROCESSING_LIST, smsg);
 
-    QUEUE_ClearWakeBit( queue, QS_SMPARAMSFREE );
-    queue->flags = (queue->flags & ~(QUEUE_SM_WIN32|QUEUE_SM_UNICODE)) | flags;
-
-    TRACE(sendmsg,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
-
-    queue->smResultInit = &qCtrl;
-
-    QUEUE_SetWakeBit( destQ, QS_SENDMESSAGE );
+    /* add smsg struct in the pending list of the destination queue */
+    if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
+        return 0;
 
     /* perform task switch and wait for the result */
-
-    while( qCtrl.bPending )
+    while( (smsg->flags & SMSG_HAVE_RESULT) == 0 )
     {
-      if (!(queue->wakeBits & QS_SMRESULT))
-      {
-        if (THREAD_IsWin16( THREAD_Current() ))
+        /* force destination task to run next, if 16 bit threads */
+        if (THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
             DirectedYield( destQ->thdb->teb.htask16 );
+
         QUEUE_WaitBits( QS_SMRESULT );
-	TRACE(sendmsg,"\tsm: have result!\n");
-      }
-      /* got something */
 
-      TRACE(sendmsg,"%*ssm: smResult = %08x\n", prevSMRL, "", (unsigned)queue->smResult );
-
-      if (queue->smResult) { /* FIXME, smResult should always be set */
-        queue->smResult->lResult = queue->SendMessageReturn;
-        queue->smResult->bPending = FALSE;
+        if (! (smsg->flags & SMSG_HAVE_RESULT) )
+        {
+            /* not supposed to happen */
+            ERR(sendmsg, "SMSG_HAVE_RESULT not set smsg->flags=%x\n", smsg->flags);
       }
+        else
+        {
+            lResult = smsg->lResult;
+            TRACE(sendmsg,"smResult = %08x\n", (unsigned)lResult );
+        }
+
       QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-
-      if( queue->smResult != &qCtrl )
-	  ERR(sendmsg, "%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
     }
-    queue->smResultInit = NULL;
+
+    /* remove the smsg from the processingg list of the source queue */
+    QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
+
+    /* Note: the destination thread is in charge of removing the smsg from
+       the pending list */
+
+    /* sender thread is in charge of releasing smsg if it's not an
+     early reply */
+    if ( !(smsg->flags & SMSG_EARLY_REPLY) )
+    {
+        HeapFree(SystemHeap, 0, smsg);
+    }
+    else
+    {
+        /* In the case of an early reply, sender thread will released the
+         smsg structure if the receiver thread is done (SMSG_RECEIVED set).
+         If the receiver thread isn't done, SMSG_RECEIVER_CLEANS_UP flag
+         is set, and it will be the receiver responsability to released
+         smsg */
+        EnterCriticalSection( &queue->cSection );
     
-    TRACE(sendmsg,"%*sSM: [%04x] returning %08lx\n", prevSMRL, "", msg, qCtrl.lResult);
-    debugSMRL-=4;
+        if (smsg->flags & SMSG_RECEIVED)
+            HeapFree(SystemHeap, 0, smsg);
+        else
+            smsg->flags |= SMSG_RECEIVER_CLEANS;
+        
+        LeaveCriticalSection( &queue->cSection );
+    }
 
     QUEUE_Unlock( queue );
     QUEUE_Unlock( destQ );
     
-    return qCtrl.lResult;
+    TRACE(sendmsg,"done!\n");
+    return lResult;
 }
 
 
@@ -707,52 +729,81 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
  */
 void WINAPI ReplyMessage16( LRESULT result )
 {
-    MESSAGEQUEUE *senderQ;
-    MESSAGEQUEUE *queue;
+    ReplyMessage32( result );
+}
 
-    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue() ))) return;
+/***********************************************************************
+ *           ReplyMessage   (USER.115)
+ */
+BOOL32 WINAPI ReplyMessage32( LRESULT result )
+{
+    MESSAGEQUEUE *senderQ = 0;
+    MESSAGEQUEUE *queue = 0;
+    SMSG         *smsg;
+    BOOL32       ret = FALSE;
 
-    TRACE(msg,"ReplyMessage, queue %04x\n", queue->self);
+    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue() ))) return FALSE;
 
-    while( (senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->InSendMessageHandle)))
+    TRACE(sendmsg,"ReplyMessage, queue %04x\n", queue->self);
+
+    while ((smsg = queue->smWaiting) != 0)
     {
-      TRACE(msg,"\trpm: replying to %08x (%04x -> %04x)\n",
-            queue->msg32, queue->self, senderQ->self);
+        /* if message has already been reply, continue the loop of receving
+         message */
+        if ( smsg->flags & SMSG_ALREADY_REPLIED )
+            goto ReplyMessageDone;
 
+        senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
+        if ( !senderQ )
+            goto ReplyMessageDone;
+
+        /* if send message pending, processed it */
       if( queue->wakeBits & QS_SENDMESSAGE )
       {
+            /* Note: QUEUE_ReceiveMessage() and ReplyMessage call each other */
 	QUEUE_ReceiveMessage( queue );
         QUEUE_Unlock( senderQ );
 	continue; /* ReceiveMessage() already called us */
       }
-
-      if(!(senderQ->wakeBits & QS_SMRESULT) ) break;
-      if (THREAD_IsWin16(THREAD_Current())) OldYield();
-      
-      QUEUE_Unlock( senderQ );
-    } 
-    if( !senderQ )
-    {
-      TRACE(msg,"\trpm: done\n");
-      QUEUE_Unlock( queue );
-      return;
+        break;   /* message to reply is in smsg */
     }
 
-    senderQ->SendMessageReturn = result;
-    TRACE(msg,"\trpm: smResult = %08x, result = %08lx\n", 
-			(unsigned)queue->smResultCurrent, result );
+    if ( !smsg )
+        goto ReplyMessageDone;
+      
+    smsg->lResult = result;
+    smsg->flags |= SMSG_ALREADY_REPLIED | SMSG_HAVE_RESULT;
 
-    senderQ->smResult = queue->smResultCurrent;
-    queue->InSendMessageHandle = 0;
+    /* check if it's an early reply (called by the application) or
+       a regular reply (called by ReceiveMessage) */
+    if ( !(smsg->flags & SMSG_SENDING_REPLY) )
+        smsg->flags |= SMSG_EARLY_REPLY;
 
+    TRACE( sendmsg,"\trpm: smResult = %08lx\n", (long) result );
+
+    /* remove smsg from the waiting list, if it's not an early reply */
+    /* it is important to leave it in the waiting list if it's an early
+     reply, to be protected aginst multiple call to ReplyMessage() */
+    if ( !(smsg->flags & SMSG_EARLY_REPLY) )
+        QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
+
+    /* tell the sending task that its reply is ready */
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
+
+    /* switch directly to sending task (16 bit thread only) */
     if (THREAD_IsWin16( THREAD_Current() ))
         DirectedYield( senderQ->thdb->teb.htask16 );
 
+    ret = TRUE;
+    
+ReplyMessageDone:
+    if ( senderQ )
     QUEUE_Unlock( senderQ );
+    if ( queue )
     QUEUE_Unlock( queue );
-}
 
+    return ret;
+}
 
 /***********************************************************************
  *           MSG_PeekMessage
@@ -1454,7 +1505,7 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     if (wndPtr->hmemTaskQ != GetFastQueue())
         ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
-                               QUEUE_SM_WIN32 );
+                               SMSG_WIN32 );
     else
         ret = CallWindowProc32A( (WNDPROC32)wndPtr->winproc,
                                  hwnd, msg, wParam, lParam );
@@ -1525,7 +1576,7 @@ LRESULT WINAPI SendMessage32W(
 
     if (wndPtr->hmemTaskQ != GetFastQueue())
         ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
-                                QUEUE_SM_WIN32 | QUEUE_SM_UNICODE );
+                                SMSG_WIN32 | SMSG_UNICODE );
     else
         ret = CallWindowProc32W( (WNDPROC32)wndPtr->winproc,
                                  hwnd, msg, wParam, lParam );
@@ -2115,7 +2166,7 @@ BOOL32 WINAPI InSendMessage32(void)
 
     if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
         return 0;
-    ret = (BOOL32)queue->InSendMessageHandle;
+    ret = (BOOL32)queue->smProcessing;
 
     QUEUE_Unlock( queue );
     return ret;

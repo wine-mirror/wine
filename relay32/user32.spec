@@ -445,7 +445,7 @@ init	MAIN_UserInit
 441 stdcall RemoveMenu(long long long) RemoveMenu32
 442 stdcall RemovePropA(long str) RemoveProp32A
 443 stdcall RemovePropW(long wstr) RemoveProp32W
-444 stub ReplyMessage
+444 stdcall ReplyMessage(long) ReplyMessage32
 445 stub ResetDisplay
 446 stdcall ReuseDDElParam(long long long long long) ReuseDDElParam
 447 stdcall ScreenToClient(long ptr) ScreenToClient32
