@@ -601,7 +601,7 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x);
 DWORD WINAPI RtlNtStatusToDosError(DWORD error);
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type);
 INT WINAPI RtlExtendedLargeIntegerDivide(LARGE_INTEGER dividend, DWORD divisor, LPDWORD rest);
-long long WINAPI RtlExtendedIntegerMultiply(LARGE_INTEGER factor1,INT factor2);
+LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(LARGE_INTEGER factor1,INT factor2);
 DWORD WINAPI RtlFormatCurrentUserKeyPath(PUNICODE_STRING String);
 DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2);
 BOOLEAN WINAPI RtlDosPathNameToNtPathName_U( LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3);

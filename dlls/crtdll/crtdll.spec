@@ -375,7 +375,7 @@ init    CRTDLL_Init
 370 cdecl floor(double) floor
 371 cdecl fmod(double double) fmod
 372 cdecl fopen(str str) CRTDLL_fopen
-373 varargs fprintf() CRTDLL_fprintf
+373 varargs fprintf(ptr str) CRTDLL_fprintf
 374 cdecl fputc(long ptr) CRTDLL_fputc
 375 cdecl fputs(str ptr) CRTDLL_fputs
 376 stub fputwc
@@ -383,7 +383,7 @@ init    CRTDLL_Init
 378 cdecl free(ptr) CRTDLL_free
 379 cdecl freopen(str str ptr) CRTDLL_freopen
 380 cdecl frexp(double ptr) frexp
-381 varargs fscanf() CRTDLL_fscanf
+381 varargs fscanf(ptr str) CRTDLL_fscanf
 382 cdecl fseek(ptr long long) CRTDLL_fseek
 383 cdecl fsetpos(ptr ptr) CRTDLL_fsetpos
 384 cdecl ftell(ptr) CRTDLL_ftell

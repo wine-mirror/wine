@@ -102,7 +102,7 @@ import  ntdll.dll
  85 stub K32RtlConvertUlongToLargeInteger
  86 stdcall _KERNEL32_86(ptr) _KERNEL32_86
  87 stdcall SSOnBigStack() SSOnBigStack
- 88 varargs SSCall() SSCall
+ 88 varargs SSCall(long long ptr) SSCall
  89 register FT_PrologPrime() FT_PrologPrime
  90 register QT_ThunkPrime() QT_ThunkPrime
  91 stdcall PK16FNF(ptr) PK16FNF

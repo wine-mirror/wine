@@ -120,11 +120,6 @@ typedef struct
 typedef struct
 {
     char link_name[80];
-} ORD_VARARGS;
-
-typedef struct
-{
-    char link_name[80];
 } ORD_EXTERN;
 
 typedef struct
@@ -144,7 +139,6 @@ typedef struct
         ORD_FUNCTION   func;
         ORD_RETURN     ret;
         ORD_ABS        abs;
-        ORD_VARARGS    vargs;
         ORD_EXTERN     ext;
         ORD_FORWARD    fwd;
     } u;
@@ -395,6 +389,12 @@ static int ParseExportFunction( ORDDEF *odp )
                      SpecName, Line );
             return -1;
         }
+        else if (odp->type == TYPE_VARARGS)
+        {
+	    fprintf( stderr, "%s:%d: 'varargs' not supported for Win16\n",
+		     SpecName, Line );
+	    return -1;
+	}
         break;
     case SPEC_WIN32:
         if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
@@ -516,41 +516,6 @@ static int ParseStub( ORDDEF *odp )
     return 0;
 }
 
-
-/*******************************************************************
- *         ParseVarargs
- *
- * Parse an 'varargs' definition.
- */
-static int ParseVarargs( ORDDEF *odp )
-{
-    char *token;
-
-    if (SpecType == SPEC_WIN16)
-    {
-        fprintf( stderr, "%s:%d: 'varargs' not supported for Win16\n",
-                 SpecName, Line );
-        return -1;
-    }
-
-    token = GetToken();
-    if (*token != '(')
-    {
-	fprintf(stderr, "%s:%d: Expected '(' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
-    token = GetToken();
-    if (*token != ')')
-    {
-	fprintf(stderr, "%s:%d: Expected ')' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
-
-    strcpy( odp->u.vargs.link_name, GetToken() );
-    return 0;
-}
 
 /*******************************************************************
  *         ParseInterrupt
@@ -680,6 +645,7 @@ static int ParseOrdinal(int ordinal)
     case TYPE_PASCAL:
     case TYPE_REGISTER:
     case TYPE_STDCALL:
+    case TYPE_VARARGS:
     case TYPE_CDECL:
 	return ParseExportFunction( odp );
     case TYPE_INTERRUPT:
@@ -688,8 +654,6 @@ static int ParseOrdinal(int ordinal)
 	return ParseEquate( odp );
     case TYPE_STUB:
 	return ParseStub( odp );
-    case TYPE_VARARGS:
-	return ParseVarargs( odp );
     case TYPE_EXTERN:
 	return ParseExtern( odp );
     case TYPE_FORWARD:
@@ -1108,14 +1072,12 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     {
         switch(odp->type)
         {
-        case TYPE_VARARGS:
-            fprintf( outfile, "extern void %s();\n", odp->u.vargs.link_name );
-            break;
         case TYPE_EXTERN:
             fprintf( outfile, "extern void %s();\n", odp->u.ext.link_name );
             break;
         case TYPE_REGISTER:
         case TYPE_STDCALL:
+        case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "extern void %s();\n", odp->u.func.link_name );
             break;
@@ -1147,14 +1109,12 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_INVALID:
             fprintf( outfile, "    0" );
             break;
-        case TYPE_VARARGS:
-            fprintf( outfile, "    %s", odp->u.vargs.link_name );
-            break;
         case TYPE_EXTERN:
             fprintf( outfile, "    %s", odp->u.ext.link_name );
             break;
         case TYPE_REGISTER:
         case TYPE_STDCALL:
+        case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "    %s", odp->u.func.link_name);
             break;

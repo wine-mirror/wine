@@ -416,12 +416,13 @@ INT WINAPI RtlExtendedLargeIntegerDivide(
  * Note: This even works, since gcc returns 64bit values in eax/edx just like
  * the caller expects. However... The relay code won't grok this I think.
  */
-long long WINAPI RtlExtendedIntegerMultiply(
+LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(
 	LARGE_INTEGER factor1,
 	INT factor2) 
 {
 #if SIZEOF_LONG_LONG==8
-	return (*(long long*)&factor1) * factor2;
+        long long result = (*(long long*)&factor1) * factor2;
+	return (*(LARGE_INTEGER*)&result);
 #else
 	FIXME("((%ld<<32)+%ld,%d), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
 	return 0;

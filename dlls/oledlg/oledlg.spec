@@ -10,10 +10,10 @@ type	win32
   7 stdcall OleUIConvertA(ptr) OleUIConvertA
   8 stdcall OleUIBusyA(ptr) OleUIBusyA
   9 stdcall OleUIUpdateLinksA(ptr long str long) OleUIUpdateLinksA
- 10 varargs OleUIPromptUserA() OleUIPromptUserA
+ 10 varargs OleUIPromptUserA(long long) OleUIPromptUserA
  11 stdcall OleUIObjectPropertiesA(ptr) OleUIObjectPropertiesA
  12 stdcall OleUIChangeSourceA(ptr) OleUIChangeSourceA
- 13 varargs OleUIPromptUserW() OleUIPromptUserW
+ 13 varargs OleUIPromptUserW(long long) OleUIPromptUserW
  14 stdcall OleUIAddVerbMenuW(ptr wstr long long long long long long ptr) OleUIAddVerbMenuW
  15 stdcall OleUIBusyW(ptr) OleUIBusyW
  16 stdcall OleUIChangeIconW(ptr) OleUIChangeIconW

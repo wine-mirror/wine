@@ -586,8 +586,8 @@ init	MAIN_UserInit
 582 stdcall WindowFromPoint(long long) WindowFromPoint
 583 stdcall keybd_event(long long long long) keybd_event
 584 stdcall mouse_event(long long long long long) mouse_event
-585 varargs wsprintfA() wsprintfA
-586 varargs wsprintfW() wsprintfW
+585 varargs wsprintfA(str str) wsprintfA
+586 varargs wsprintfW(wstr wstr) wsprintfW
 587 stdcall wvsprintfA(ptr str ptr) wvsprintfA
 588 stdcall wvsprintfW(ptr wstr ptr) wvsprintfW
 #late additions
