@@ -300,7 +300,15 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
   PRINTERINFO *pi;
   DEVMODEA *lpdm;
   pi = PSDRV_FindPrinterInfo(lpszDevice);
+
   TRACE("Cap=%d. Got PrinterInfo = %p\n", fwCapability, pi);
+
+
+  if (!pi) {
+	  ERR("no printerinfo for %s, return 0!\n",lpszDevice);
+	  return 0;
+  }
+
 
   lpdm = lpDevMode ? lpDevMode : (DEVMODEA *)pi->Devmode;
 
