@@ -829,6 +829,8 @@ typedef struct tagNMHDDISPINFOW
 #define TBSTYLE_GROUP           0x04 
 #define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK) 
 #define TBSTYLE_DROPDOWN        0x08 
+#define TBSTYLE_AUTOSIZE        0x10
+#define TBSTYLE_NOPREFIX        0x20
  
 #define TBSTYLE_TOOLTIPS        0x0100 
 #define TBSTYLE_WRAPABLE        0x0200 
@@ -836,6 +838,9 @@ typedef struct tagNMHDDISPINFOW
 #define TBSTYLE_FLAT            0x0800 
 #define TBSTYLE_LIST            0x1000 
 #define TBSTYLE_CUSTOMERASE     0x2000 
+#define TBSTYLE_REGISTERDROP    0x4000
+#define TBSTYLE_TRANSPARENT     0x8000
+#define TBSTYLE_EX_DRAWDDARROWS 0x00000001
 
 #define TBIF_IMAGE              0x00000001
 #define TBIF_TEXT               0x00000002
