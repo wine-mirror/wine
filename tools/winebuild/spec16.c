@@ -623,6 +623,7 @@ void BuildSpec16File( FILE *outfile )
     int i, nFuncs, nTypes;
     int code_offset, data_offset, module_size, res_size;
     unsigned char *data;
+    char constructor[100], destructor[100];
 #ifdef __i386__
     unsigned short code_selector = wine_get_cs();
 #endif
@@ -877,40 +878,22 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-
-#if defined(__i386__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#elif defined(__sparc__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#elif defined(__PPC__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#else
-#error You need to define the DLL constructor for your architecture
-#endif
-
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLName) );
+    sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(DLLName) );
+    output_dll_init( outfile, constructor, destructor );
 
     fprintf( outfile,
-             "void __wine_spec_%s_init(void)\n"
+             "void %s(void)\n"
              "{\n"
              "    extern void __wine_register_dll_16( const struct dll_descriptor *descr );\n"
              "    __wine_register_dll_16( &descriptor );\n"
-             "}\n", make_c_identifier(DLLName) );
+             "}\n", constructor );
+    fprintf( outfile,
+             "void %s(void)\n"
+             "{\n"
+             "    extern void __wine_unregister_dll_16( const struct dll_descriptor *descr );\n"
+             "    __wine_unregister_dll_16( &descriptor );\n"
+             "}\n", destructor );
 }
 
 

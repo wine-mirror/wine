@@ -51,7 +51,6 @@ typedef struct
 #define MAX_DLLS 50
 
 static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
-static int nb_dlls;
 
 
 /* patch all the flat cs references of the code segment if necessary */
@@ -134,20 +133,22 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
 {
     int i;
-    for (i = 0; i < nb_dlls; i++)
+    for (i = 0; i < MAX_DLLS; i++)
     {
         const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
-        NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
-        OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-        BYTE *name_table = (BYTE *)pModule + pModule->name_table;
+        if (descr)
+        {
+            NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
+            OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+            BYTE *name_table = (BYTE *)pModule + pModule->name_table;
 
-        /* check the dll file name */
-        if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
-            return descr;
-        /* check the dll module name (without extension) */
-        if (!FILE_strncasecmp( dllname, name_table+1, *name_table ) &&
-            !strcmp( dllname + *name_table, ".dll" ))
-            return descr;
+            /* check the dll file name */
+            if (!FILE_strcasecmp( pOfs->szPathName, dllname )) return descr;
+            /* check the dll module name (without extension) */
+            if (!FILE_strncasecmp( dllname, name_table+1, *name_table ) &&
+                !strcmp( dllname + *name_table, ".dll" ))
+                return descr;
+        }
     }
     return NULL;
 }
@@ -199,6 +200,31 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
  */
 void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr )
 {
-    assert( nb_dlls < MAX_DLLS );
-    builtin_dlls[nb_dlls++] = descr;
+    int i;
+
+    for (i = 0; i < MAX_DLLS; i++)
+    {
+        if (builtin_dlls[i]) continue;
+        builtin_dlls[i] = descr;
+        break;
+    }
+    assert( i < MAX_DLLS );
+}
+
+
+/***********************************************************************
+ *           __wine_unregister_dll_16 (KERNEL32.@)
+ *
+ * Unregister a built-in DLL descriptor.
+ */
+void __wine_unregister_dll_16( const BUILTIN16_DESCRIPTOR *descr )
+{
+    int i;
+
+    for (i = 0; i < MAX_DLLS; i++)
+    {
+        if (builtin_dlls[i] != descr) continue;
+        builtin_dlls[i] = NULL;
+        break;
+    }
 }

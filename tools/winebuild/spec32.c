@@ -426,6 +426,68 @@ static void output_register_funcs( FILE *outfile )
 
 
 /*******************************************************************
+ *         output_dll_init
+ *
+ * Output code for calling a dll constructor and destructor.
+ */
+void output_dll_init( FILE *outfile, const char *constructor, const char *destructor )
+{
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "#endif\n" );
+
+#if defined(__i386__)
+    if (constructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+    if (destructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+#elif defined(__sparc__)
+    if (constructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\tnop\\n\"\n" );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+    if (destructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\tnop\\n\"\n" );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+#elif defined(__PPC__)
+    if (constructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+    if (destructor)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", destructor );
+                 DLLName );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+#else
+#error You need to define the DLL constructor for your architecture
+#endif
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif\n" );
+}
+
+
+/*******************************************************************
  *         BuildSpec32File
  *
  * Build a Win32 C file from a spec file.
@@ -436,6 +498,7 @@ void BuildSpec32File( FILE *outfile )
     int nr_exports, nr_imports, nr_resources;
     int characteristics, subsystem;
     DWORD page_size;
+    char constructor[100];
 
 #ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
@@ -712,42 +775,17 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-
-#if defined(__i386__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#elif defined(__sparc__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#elif defined(__PPC__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n",
-             make_c_identifier(DLLName) );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-#else
-#error You need to define the DLL constructor for your architecture
-#endif
-
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLName) );
+    output_dll_init( outfile, constructor, NULL );
 
     fprintf( outfile,
-             "void __wine_spec_%s_init(void)\n"
+             "void %s(void)\n"
              "{\n"
              "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n"
              "    extern void *__wine_dbg_register( char * const *, int );\n"
-             "    __wine_dll_register( &nt_header, \"%s\" );\n",
-             make_c_identifier(DLLName), DLLFileName );
-    fprintf( outfile, "}\n" );
+             "    __wine_dll_register( &nt_header, \"%s\" );\n"
+             "}\n",
+             constructor, DLLFileName );
 }
 
 

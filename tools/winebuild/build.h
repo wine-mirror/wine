@@ -157,6 +157,7 @@ extern int output_resources( FILE *outfile );
 extern void load_res16_file( const char *name );
 extern int output_res16_data( FILE *outfile );
 extern int output_res16_directory( unsigned char *buffer );
+extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 extern void parse_debug_channels( const char *srcdir, const char *filename );
 
 extern void BuildGlue( FILE *outfile, FILE *infile );
