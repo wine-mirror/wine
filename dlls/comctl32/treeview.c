@@ -81,8 +81,15 @@ static TREEVIEW_ITEM *TREEVIEW_GetPrevListItem (TREEVIEW_INFO *infoPtr,
 {
  TREEVIEW_ITEM *wineItem;
 
- if (tvItem->upsibling) 
-		return (& infoPtr->items[tvItem->upsibling]);
+ if (tvItem->upsibling) {
+		wineItem=& infoPtr->items[tvItem->upsibling];
+		if ((wineItem->firstChild) && (wineItem->state & TVIS_EXPANDED)) {
+			wineItem=& infoPtr->items[wineItem->firstChild];
+			while (wineItem->sibling)
+				 wineItem= & infoPtr->items[wineItem->sibling];
+		}
+		return wineItem;
+ }
 
  wineItem=tvItem;
  while (wineItem->parent) {
@@ -94,11 +101,15 @@ static TREEVIEW_ITEM *TREEVIEW_GetPrevListItem (TREEVIEW_INFO *infoPtr,
  return NULL;
 }
 
+
 static TREEVIEW_ITEM *TREEVIEW_GetNextListItem (TREEVIEW_INFO *infoPtr, 
 					TREEVIEW_ITEM *tvItem)
 
 {
  TREEVIEW_ITEM *wineItem;
+
+ if ((tvItem->firstChild) && (tvItem->state & TVIS_EXPANDED)) 
+		return (& infoPtr->items[tvItem->firstChild]);
 
  if (tvItem->sibling) 
 		return (& infoPtr->items[tvItem->sibling]);
@@ -522,7 +533,7 @@ TREEVIEW_SetItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
   }
 
   if (tvItem->mask & TVIF_TEXT) {
-        len=tvItem->cchTextMax;
+        len=lstrlen32A (tvItem->pszText);
         if (len>wineItem->cchTextMax) {
 		HeapFree (GetProcessHeap (), 0, wineItem->pszText);
                 wineItem->pszText= HeapAlloc (GetProcessHeap (), 
@@ -698,7 +709,7 @@ TREEVIEW_GetItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
   LPTVITEM      tvItem;
   TREEVIEW_ITEM *wineItem;
-  INT32         iItem,len;
+  INT32         iItem;
 
   TRACE (treeview,"\n");
   tvItem=(LPTVITEM) lParam;
@@ -737,10 +748,12 @@ TREEVIEW_GetItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
    }
 
    if (tvItem->mask & TVIF_TEXT) {
-	len=wineItem->cchTextMax;
-	if (wineItem->cchTextMax>tvItem->cchTextMax) 
-		len=tvItem->cchTextMax-1;
-        lstrcpyn32A (tvItem->pszText, tvItem->pszText,len);
+	if (wineItem->pszText == LPSTR_TEXTCALLBACK32A) {
+	    tvItem->pszText = LPSTR_TEXTCALLBACK32A;
+	}
+	else if (wineItem->pszText) {
+	    lstrcpyn32A (tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
+	}
    }
 
   return TRUE;
@@ -973,6 +986,10 @@ TREEVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 			HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
 		lstrcpy32A (wineItem->pszText, tvItem->pszText);
 		wineItem->cchTextMax=len;
+	}
+	else {
+	    wineItem->pszText = LPSTR_TEXTCALLBACK32A;
+	    wineItem->cchTextMax = 0;
 	}
    }
 
