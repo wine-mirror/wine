@@ -92,7 +92,7 @@ static HRESULT WINAPI IDirectInputA_CreateDevice(
 		return 0;
 	}
 	if (!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) {
-		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectInputDevice32A));
+		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouse32A));
 		(*pdev)->ref = 1;
 		(*pdev)->lpvtbl = &SysMouseAvt;
 		memcpy(&((*pdev)->guid),rguid,sizeof(*rguid));
@@ -353,6 +353,103 @@ static HRESULT WINAPI IDirectInputDeviceA_QueryInterface(
 	return E_FAIL;
 }
 
+/******************************************************************************
+ *	SysMouseA (DInput Mouse support)
+ */
+static HRESULT WINAPI SysMouseA_SetDataFormat(
+	LPDIRECTINPUTDEVICE32A this,LPCDIDATAFORMAT df
+) {
+  int i;
+  LPSYSMOUSE32A mthis = (LPSYSMOUSE32A) this;
+  
+  TRACE(dinput,"(this=%p,%p)\n",this,df);
+
+  TRACE(dinput,"(df.dwSize=%ld)\n",df->dwSize);
+  TRACE(dinput,"(df.dwObjsize=%ld)\n",df->dwObjSize);
+  TRACE(dinput,"(df.dwFlags=0x%08lx)\n",df->dwFlags);
+  TRACE(dinput,"(df.dwDataSize=%ld)\n",df->dwDataSize);
+  TRACE(dinput,"(df.dwNumObjs=%ld)\n",df->dwNumObjs);
+
+  for (i=0;i<df->dwNumObjs;i++) {
+    char	xbuf[50];
+    
+    if (df->rgodf[i].pguid)
+      WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
+    else
+      strcpy(xbuf,"<no guid>");
+    TRACE(dinput,"df.rgodf[%d].guid %s\n",i,xbuf);
+    TRACE(dinput,"df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
+    TRACE(dinput,"dwType 0x%02lx,dwInstance %ld\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
+    TRACE(dinput,"df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
+  }
+
+  /* For the moment, ignore these fields and return always as if
+     c_dfDIMouse was passed as format... */
+  if (df->dwFlags == DIDF_ABSAXIS)
+    mthis->absolute = 1;
+  else {
+    Window rw, cr;
+    int rx, ry, cx, cy;
+    unsigned int mask;
+    
+    /* We need to get the initial "previous" position to be able
+       to return deltas */
+    mthis->absolute = 0;
+  
+    /* Get the mouse position */
+    TSXQueryPointer(display, rootWindow, &rw, &cr,
+		    &rx, &ry, &cx, &cy, &mask);
+    /* Fill the initial mouse state structure */
+    mthis->prevpos.lX = rx;
+    mthis->prevpos.lY = ry;
+    mthis->prevpos.lZ = 0;
+    mthis->prevpos.rgbButtons[0] = (mask & Button1Mask ? 0xFF : 0x00);
+    mthis->prevpos.rgbButtons[1] = (mask & Button2Mask ? 0xFF : 0x00);
+    mthis->prevpos.rgbButtons[2] = (mask & Button3Mask ? 0xFF : 0x00);
+    mthis->prevpos.rgbButtons[3] = (mask & Button4Mask ? 0xFF : 0x00);
+  }
+  
+  return 0;
+}
+
+static HRESULT WINAPI SysMouseA_GetDeviceState(
+	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
+) {
+  Window rw, cr;
+  int rx, ry, cx, cy;
+  unsigned int mask;
+  struct DIMOUSESTATE *mstate = (struct DIMOUSESTATE *) ptr;
+  LPSYSMOUSE32A mthis = (LPSYSMOUSE32A) this;
+  
+  TRACE(dinput,"(this=%p,0x%08lx,%p): \n",this,len,ptr);
+  
+  /* Get the mouse position */
+  TSXQueryPointer(display, rootWindow, &rw, &cr,
+		  &rx, &ry, &cx, &cy, &mask);
+  TRACE(dinput,"(X:%d - Y:%d)\n", rx, ry);
+
+  /* Fill the mouse state structure */
+  if (mthis->absolute) {
+    mstate->lX = rx;
+    mstate->lY = ry;
+  } else {
+    mstate->lX = rx - mthis->prevpos.lX;
+    mstate->lY = ry - mthis->prevpos.lY;
+    /* Fill the previous position structure */
+    mthis->prevpos.lX = rx;
+    mthis->prevpos.lY = ry;
+  }
+  mstate->lZ = 0;
+  mstate->rgbButtons[0] = (mask & Button1Mask ? 0xFF : 0x00);
+  mstate->rgbButtons[1] = (mask & Button2Mask ? 0xFF : 0x00);
+  mstate->rgbButtons[2] = (mask & Button3Mask ? 0xFF : 0x00);
+  mstate->rgbButtons[3] = (mask & Button4Mask ? 0xFF : 0x00);
+  
+  return 0;
+}
+
+
+
 static IDirectInputDeviceA_VTable SysKeyboardAvt={
 	IDirectInputDeviceA_QueryInterface,
 	(void*)2,
@@ -384,9 +481,9 @@ static IDirectInputDeviceA_VTable SysMouseAvt={
 	IDirectInputDeviceA_SetProperty,
 	IDirectInputDeviceA_Acquire,
 	IDirectInputDeviceA_Unacquire,
-	IDirectInputDeviceA_GetDeviceState,
+	SysMouseA_GetDeviceState,
 	IDirectInputDeviceA_GetDeviceData,
-	IDirectInputDeviceA_SetDataFormat,
+	SysMouseA_SetDataFormat,
 	IDirectInputDeviceA_SetEventNotification,
 	IDirectInputDeviceA_SetCooperativeLevel,
 	(void*)15,

@@ -59,6 +59,7 @@ DEFINE_GUID(GUID_CustomForce,	0x13541C2B,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,
 typedef struct IDirectInput32A IDirectInput32A,*LPDIRECTINPUT32A;
 typedef struct IDirectInputDevice32A IDirectInputDevice32A,*LPDIRECTINPUTDEVICE32A;
 typedef struct SysKeyboard32A SysKeyboard32A,*LPSYSKEYBOARD32A;
+typedef struct SysMouse32A SysMouse32A,*LPSYSMOUSE32A;
 
 #define DI_OK                           S_OK
 #define DI_NOTATTACHED                  S_FALSE
@@ -520,6 +521,21 @@ struct IDirectInputDevice32A {
 	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
 	DWORD				ref;
 	GUID				guid;
+};
+
+/* "Standard" Mouse report... */
+struct DIMOUSESTATE {
+  LONG lX;
+  LONG lY;
+  LONG lZ;
+  BYTE rgbButtons[4];
+};
+struct SysMouse32A {
+	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
+	DWORD				ref;
+	GUID				guid;
+	BYTE                            absolute;
+	struct DIMOUSESTATE             prevpos;
 };
 
 struct SysKeyboard32A {
