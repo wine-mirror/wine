@@ -1227,6 +1227,7 @@ enum request
 extern unsigned int server_call_noerr( enum request req );
 extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
+extern const char *get_config_dir(void);
 
 /* get a pointer to the request buffer */
 static inline void * WINE_UNUSED get_req_buffer(void)

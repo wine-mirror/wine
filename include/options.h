@@ -75,7 +75,6 @@ extern void OPTIONS_ParseOptions( int argc, char *argv[] );
 
 /* Profile functions */
 
-extern const char *PROFILE_GetConfigDir(void);
 extern int PROFILE_LoadWineIni(void);
 extern void PROFILE_UsageWineIni(void);
 extern int PROFILE_GetWineIniString( const char *section, const char *key_name,

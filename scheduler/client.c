@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -36,6 +37,7 @@
 #define SCM_RIGHTS 1
 #endif
 
+#define CONFDIR    "/.wine"        /* directory for Wine config relative to $HOME */
 #define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
 
@@ -286,6 +288,43 @@ unsigned int server_call_fd( enum request req, int fd_out, int *fd_in )
 
 
 /***********************************************************************
+ *           get_config_dir
+ *
+ * Return the configuration directory ($WINEPREFIX or $HOME/.wine)
+ */
+const char *get_config_dir(void)
+{
+    static char *confdir;
+    if (!confdir)
+    {
+        const char *prefix = getenv( "WINEPREFIX" );
+        if (prefix)
+        {
+            int len = strlen(prefix);
+            if (!(confdir = strdup( prefix ))) fatal_error( "out of memory\n" );
+            if (len > 1 && confdir[len-1] == '/') confdir[len-1] = 0;
+        }
+        else
+        {
+            const char *home = getenv( "HOME" );
+            if (!home)
+            {
+                struct passwd *pwd = getpwuid( getuid() );
+                if (!pwd) fatal_error( "could not find your home directory\n" );
+                home = pwd->pw_dir;
+            }
+            if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
+                fatal_error( "out of memory\n" );
+            strcpy( confdir, home );
+            strcat( confdir, CONFDIR );
+        }
+        mkdir( confdir, 0755 );  /* just in case */
+    }
+    return confdir;
+}
+
+
+/***********************************************************************
  *           start_server
  *
  * Start a new wine server.
@@ -406,7 +445,7 @@ int CLIENT_InitServer(void)
 
     /* get the server directory name */
     if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
-    configdir = PROFILE_GetConfigDir();
+    configdir = get_config_dir();
     serverdir = malloc( strlen(configdir) + strlen(SERVERDIR) + strlen(hostname) + 1 );
     if (!serverdir) fatal_error( "out of memory\n" );
     strcpy( serverdir, configdir );

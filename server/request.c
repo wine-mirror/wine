@@ -302,23 +302,33 @@ static void master_socket_destroy( struct object *obj )
     socket_cleanup();
 }
 
-/* return the configuration directory ($HOME/.wine) */
+/* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
 static const char *get_config_dir(void)
 {
     static char *confdir;
     if (!confdir)
     {
-        const char *home = getenv( "HOME" );
-        if (!home)
+        const char *prefix = getenv( "WINEPREFIX" );
+        if (prefix)
         {
-            struct passwd *pwd = getpwuid( getuid() );
-            if (!pwd) fatal_error( "could not find your home directory\n" );
-            home = pwd->pw_dir;
+            int len = strlen(prefix);
+            if (!(confdir = strdup( prefix ))) fatal_error( "out of memory\n" );
+            if (len > 1 && confdir[len-1] == '/') confdir[len-1] = 0;
         }
-        if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
-            fatal_error( "out of memory\n" );
-        strcpy( confdir, home );
-        strcat( confdir, CONFDIR );
+        else
+        {
+            const char *home = getenv( "HOME" );
+            if (!home)
+            {
+                struct passwd *pwd = getpwuid( getuid() );
+                if (!pwd) fatal_error( "could not find your home directory\n" );
+                home = pwd->pw_dir;
+            }
+            if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
+                fatal_error( "out of memory\n" );
+            strcpy( confdir, home );
+            strcat( confdir, CONFDIR );
+        }
         mkdir( confdir, 0755 );  /* just in case */
     }
     return confdir;

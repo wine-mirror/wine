@@ -25,7 +25,6 @@
 #include "file.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 #include "options.h"
 #include "server.h"
 
@@ -79,43 +78,12 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
 #define WINE_INI_GLOBAL ETCDIR "/wine.conf"
-#define WINE_CONFIG_DIR "/.wine"   /* config dir inside $HOME */
 
 static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
 static CRITICAL_SECTION PROFILE_CritSect;
 
 static const char hex[16] = "0123456789ABCDEF";
-
-/***********************************************************************
- *           PROFILE_GetConfigDir
- *
- * Return the name of the configuration directory ($HOME/.wine)
- */
-const char *PROFILE_GetConfigDir(void)
-{
-    static char *confdir;
-    if (!confdir)
-    {
-        const char *home = getenv( "HOME" );
-        if (!home)
-        {
-            struct passwd *pwd = getpwuid( getuid() );
-            if (!pwd)
-            {
-                fprintf( stderr, "wine: could not find your home directory\n" );
-                exit(1);
-            }
-            home = pwd->pw_dir;
-        }
-        confdir = xmalloc( strlen(home) + strlen(WINE_CONFIG_DIR) + 1 );
-        strcpy( confdir, home );
-        strcat( confdir, WINE_CONFIG_DIR );
-        mkdir( confdir, 0755 );  /* create it just in case */
-    }
-    return confdir;
-}
-
 
 /***********************************************************************
  *           PROFILE_CopyEntry
@@ -501,7 +469,7 @@ static BOOL PROFILE_FlushFile(void)
     {
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
-        strcpy( buffer, PROFILE_GetConfigDir() );
+        strcpy( buffer, get_config_dir() );
         p = buffer + strlen(buffer);
         *p++ = '/';
         strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
@@ -635,7 +603,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
     /* Try to open the profile file, first in $HOME/.wine */
 
     /* FIXME: this will need a more general solution */
-    strcpy( buffer, PROFILE_GetConfigDir() );
+    strcpy( buffer, get_config_dir() );
     p = buffer + strlen(buffer);
     *p++ = '/';
     strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
