@@ -12,7 +12,6 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "heap.h"
-#include "builtin32.h"
 #include "snoop.h"
 #include "neexe.h"
 #include "selectors.h"

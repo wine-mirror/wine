@@ -288,7 +288,7 @@ void BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
-    fprintf( outfile, "#include \"builtin32.h\"\n\n" );
+    fprintf( outfile, "extern void BUILTIN32_Unimplemented( const char *dllname, const char *funcname );\n\n" );
 
     /* Reserve some space for the PE header */
 
@@ -439,7 +439,18 @@ void BuildSpec32File( FILE *outfile )
 
     if (rsrc_name[0]) fprintf( outfile, "extern char %s[];\n\n", rsrc_name );
 
-    fprintf( outfile, "static const BUILTIN32_DESCRIPTOR descriptor =\n{\n" );
+    /* Warning: this must match the definition in builtin32.h */
+    fprintf( outfile, "static const struct dll_descriptor\n{\n" );
+    fprintf( outfile, "    const char*           filename;\n" );
+    fprintf( outfile, "    int                   nb_imports;\n" );
+    fprintf( outfile, "    void                 *pe_header;\n" );
+    fprintf( outfile, "    void                 *exports;\n" );
+    fprintf( outfile, "    unsigned int          exports_size;\n" );
+    fprintf( outfile, "    const char * const   *imports;\n" );
+    fprintf( outfile, "    void                (*dllentrypoint)();\n" );
+    fprintf( outfile, "    int                   characteristics;\n" );
+    fprintf( outfile, "    void                 *rsrc;\n" );
+    fprintf( outfile, "} descriptor = {\n" );
     fprintf( outfile, "    \"%s\",\n", DLLFileName );
     fprintf( outfile, "    %d,\n", nb_imports );
     fprintf( outfile, "    pe_header,\n" );
@@ -462,6 +473,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void %s_init(void) { BUILTIN32_RegisterDLL( &descriptor ); }\n",
-             DLLName );
+    fprintf( outfile, "static void %s_init(void)\n{\n", DLLName );
+    fprintf( outfile, "    extern void BUILTIN32_RegisterDLL( const struct dll_descriptor * );\n" );
+    fprintf( outfile, "    BUILTIN32_RegisterDLL( &descriptor );\n}\n" );
 }

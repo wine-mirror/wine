@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "winnt.h"
-#include "builtin32.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "syslevel.h"

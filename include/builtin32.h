@@ -7,6 +7,7 @@
 #ifndef __WINE_BUILTIN32_H
 #define __WINE_BUILTIN32_H
 
+/* Warning: this must match the definition in tools/winebuild/spec32.c */
 typedef struct
 {
     const char*           filename;     /* DLL file name */
@@ -21,7 +22,6 @@ typedef struct
 } BUILTIN32_DESCRIPTOR;
 
 extern void BUILTIN32_RegisterDLL( const BUILTIN32_DESCRIPTOR *descr );
-extern void BUILTIN32_Unimplemented( const char *dllname, const char *funcname );
 extern void RELAY_SetupDLL( const char *module );
 
 #endif /* __WINE_BUILTIN32_H */
