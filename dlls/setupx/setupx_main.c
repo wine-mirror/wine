@@ -32,3 +32,20 @@ DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
     return RegQueryValueExA( hkey, lpszValueName, lpdwReserved, lpdwType,
                                lpbData, lpcbData );
 }
+
+/*
+ * hwnd = parent window
+ * hinst = instance of SETUPX.DLL
+ * lpszCmdLine = e.g. "DefaultInstall 132 C:\MYINSTALL\MYDEV.INF"
+ * Here "DefaultInstall" is the .inf file section to be installed (optional).
+ * 132 is the standard parameter, it seems.
+ * 133 means don't prompt user for reboot.
+ * 
+ * nCmdShow = nCmdShow of CreateProcess
+ * FIXME: is the return type correct ?
+ */
+DWORD WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lpszCmdLine, INT16 nCmdShow)
+{
+	FIXME("(%04x, %04x, %s, %d), stub.\n", hwnd, hinst, lpszCmdLine, nCmdShow);
+	return 0;
+}

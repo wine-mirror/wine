@@ -211,7 +211,7 @@ type    win16
 523  stub     DICONVERTDRIVERINFOTODRIVERNODE
 525  stub     FIRSTBOOTMOVETODOSSTART
 526  stub     DOSOPTENABLECURCFG
-527  stub     INSTALLHINFSECTION
+527  pascal   InstallHinfSection(word word str word) InstallHinfSection16
 528  stub     SXMAKEUNCPATH
 529  stub     SXISSBSSERVERFILE
 530  stub     SXFINDBATCHFILES
