@@ -257,14 +257,16 @@ LPMMIOPROC                      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC 
                                                    DWORD dwFlags, enum mmioProcType type);
 LRESULT                         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
                                                  LPARAM lParam2, enum mmioProcType type);
-LPWINE_MMIO	                MMIO_Get(LPWINE_MM_IDATA iData, HMMIO h);
+LPWINE_MMIO	                MMIO_Get(HMMIO h);
 
 BOOL				MULTIMEDIA_MciInit(void);
-LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
 BOOL                            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
-LPWINE_MM_IDATA			TIME_MMTimeStart(void);
+void    			TIME_MMTimeStart(void);
 void				TIME_MMTimeStop(void);
+
+/* Global variables */
+extern LPWINE_MM_IDATA		WINMM_IData;
 
 /* HANDLE16 -> HANDLE conversions */
 #define HDRVR_32(h16)		((HDRVR)(ULONG_PTR)(h16))

@@ -352,12 +352,9 @@ static LRESULT	send_message(struct IOProcList* ioProc, LPMMIOINFO mmioinfo,
 
     switch (ioProc->type) {
     case MMIO_PROC_16:
-        {
-            LPWINE_MM_IDATA iData = MULTIMEDIA_GetIData();
-            if (iData && iData->pFnMmioCallback16)
-                result = iData->pFnMmioCallback16((SEGPTR)ioProc->pIOProc,
-                                                  mmioinfo, wMsg, lp1, lp2);
-        }
+        if (WINMM_IData && WINMM_IData->pFnMmioCallback16)
+            result = WINMM_IData->pFnMmioCallback16((SEGPTR)ioProc->pIOProc,
+                                                    mmioinfo, wMsg, lp1, lp2);
         break;
     case MMIO_PROC_32A:
     case MMIO_PROC_32W:
@@ -434,18 +431,16 @@ static FOURCC MMIO_ParseExtA(LPCSTR szFileName)
  *
  * Retrieves the mmio object from current process
  */
-LPWINE_MMIO	MMIO_Get(LPWINE_MM_IDATA iData, HMMIO h)
+LPWINE_MMIO	MMIO_Get(HMMIO h)
 {
     LPWINE_MMIO		wm = NULL;
 
-    if (!iData) iData = MULTIMEDIA_GetIData();
-
-    EnterCriticalSection(&iData->cs);
-    for (wm = iData->lpMMIO; wm; wm = wm->lpNext) {
+    EnterCriticalSection(&WINMM_IData->cs);
+    for (wm = WINMM_IData->lpMMIO; wm; wm = wm->lpNext) {
 	if (wm->info.hmmio == h)
 	    break;
     }
-    LeaveCriticalSection(&iData->cs);
+    LeaveCriticalSection(&WINMM_IData->cs);
     return wm;
 }
 
@@ -458,17 +453,16 @@ static	LPWINE_MMIO		MMIO_Create(void)
 {
     static	WORD	MMIO_counter = 0;
     LPWINE_MMIO		wm;
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
 
     wm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MMIO));
     if (wm) {
-	EnterCriticalSection(&iData->cs);
+	EnterCriticalSection(&WINMM_IData->cs);
         /* lookup next unallocated WORD handle, with a non NULL value */
-	while (++MMIO_counter == 0 || MMIO_Get(iData, HMMIO_32(MMIO_counter)));
+	while (++MMIO_counter == 0 || MMIO_Get(HMMIO_32(MMIO_counter)));
 	wm->info.hmmio = HMMIO_32(MMIO_counter);
-	wm->lpNext = iData->lpMMIO;
-	iData->lpMMIO = wm;
-	LeaveCriticalSection(&iData->cs);
+	wm->lpNext = WINMM_IData->lpMMIO;
+	WINMM_IData->lpMMIO = wm;
+	LeaveCriticalSection(&WINMM_IData->cs);
     }
     return wm;
 }
@@ -480,12 +474,11 @@ static	LPWINE_MMIO		MMIO_Create(void)
  */
 static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
 {
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     LPWINE_MMIO*	m;
 
-    EnterCriticalSection(&iData->cs);
+    EnterCriticalSection(&WINMM_IData->cs);
     /* search for the matching one... */
-    m = &(iData->lpMMIO);
+    m = &(WINMM_IData->lpMMIO);
     while (*m && *m != wm) m = &(*m)->lpNext;
     /* ...and destroy */
     if (*m) {
@@ -493,7 +486,7 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
 	HeapFree(GetProcessHeap(), 0, wm);
 	wm = NULL;
     }
-    LeaveCriticalSection(&iData->cs);
+    LeaveCriticalSection(&WINMM_IData->cs);
     return wm ? FALSE : TRUE;
 }
 
@@ -726,7 +719,7 @@ MMRESULT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
 
     TRACE("(%04X, %04X);\n", hmmio, uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     if ((result = MMIO_Flush(wm, 0)) != MMSYSERR_NOERROR)
@@ -758,7 +751,7 @@ LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 
     TRACE("(%04X, %p, %ld);\n", hmmio, pch, cch);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return -1;
 
     /* unbuffered case first */
@@ -808,7 +801,7 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 
     TRACE("(%04X, %p, %ld);\n", hmmio, pch, cch);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return -1;
 
     if (wm->info.cchBuffer) {
@@ -863,7 +856,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 
     TRACE("(%04X, %08lX, %d);\n", hmmio, lOffset, iOrigin);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     /* not buffered, direct seek on file */
@@ -928,7 +921,7 @@ MMRESULT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 
     TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     memcpy(lpmmioinfo, &wm->info, sizeof(MMIOINFO));
@@ -948,7 +941,7 @@ MMRESULT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO* lpmmioinfo, UINT uFlags
 
     TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     /* check pointers coherence */
@@ -976,7 +969,7 @@ MMRESULT WINAPI mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer, LONG cchBuffer, UINT
     TRACE("(hmmio=%04x, pchBuf=%p, cchBuf=%ld, uFlags=%#08x)\n",
 	  hmmio, pchBuffer, cchBuffer, uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return MMIO_SetBuffer(wm, pchBuffer, cchBuffer, uFlags);
@@ -991,7 +984,7 @@ MMRESULT WINAPI mmioFlush(HMMIO hmmio, UINT uFlags)
 
     TRACE("(%04X, %04X)\n", hmmio, uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return MMIO_Flush(wm, uFlags);
@@ -1009,7 +1002,7 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     /* NOTE: mmioAdvance16 heavily relies on parameters from lpmmioinfo we're using
      * here. be sure if you change something here to check mmioAdvance16 as well
      */
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     if (!wm->info.cchBuffer)
@@ -1116,7 +1109,7 @@ LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1,
     if (uMessage < MMIOM_USER)
 	return MMSYSERR_INVALPARAM;
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return send_message(wm->ioProc, &wm->info, uMessage, lParam1, lParam2, type);

@@ -68,7 +68,6 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
     HANDLE			hndl;
-    LPWINE_MM_IDATA		iData;
 
     TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
 
@@ -84,14 +83,12 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	    ERR("Could not load sibling WinMM.dll\n");
 	    return FALSE;
 	}
-	iData = MULTIMEDIA_GetIData();
-	iData->hWinMM16Instance = hinstDLL;
-	iData->h16Module32 = hndl;
-        iData->pFnMmioCallback16 = mmioCallback16;
+	WINMM_IData->hWinMM16Instance = hinstDLL;
+	WINMM_IData->h16Module32 = hndl;
+        WINMM_IData->pFnMmioCallback16 = mmioCallback16;
 	break;
     case DLL_PROCESS_DETACH:
-	iData = MULTIMEDIA_GetIData();
-	FreeLibrary(iData->h16Module32);
+	FreeLibrary(WINMM_IData->h16Module32);
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -2243,7 +2240,8 @@ MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 
     if (wSize >= sizeof(*lpTime)) {
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
+	TIME_MMTimeStart();
+	lpTime->u.ms = WINMM_IData->mmSysTimeMS;
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
@@ -2447,7 +2445,7 @@ static LRESULT     MMIO_SetSegmentedBuffer(HMMIO hmmio, SEGPTR ptr)
 {
     LPWINE_MMIO		wm;
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     wm->segBuffer16 = ptr;
     return MMSYSERR_NOERROR;
@@ -2530,7 +2528,7 @@ MMRESULT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uF
 
     TRACE("(0x%04x,%p,0x%08x)\n", hmmio, lpmmioinfo, uFlags);
 
-    if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
+    if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     ret = mmioGetInfo(HMMIO_32(hmmio), &mmioinfo, uFlags);

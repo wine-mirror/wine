@@ -176,25 +176,22 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 /**************************************************************************
  * 				TIME_MMTimeStart
  */
-LPWINE_MM_IDATA	TIME_MMTimeStart(void)
+void	TIME_MMTimeStart(void)
 {
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
-
-    if (IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
+    if (IsBadWritePtr(WINMM_IData, sizeof(WINE_MM_IDATA))) {
 	ERR("iData is not correctly set, please report. Expect failure.\n");
-	return 0;
+	return;
     }
     /* one could think it's possible to stop the service thread activity when no more
      * mm timers are active, but this would require to keep mmSysTimeMS up-to-date
      * without being incremented within the service thread callback.
      */
-    if (!iData->hMMTimer) {
-	iData->mmSysTimeMS = GetTickCount();
-	iData->lpTimerList = NULL;
-	iData->hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, iData, 0, NULL);
+    if (!WINMM_IData->hMMTimer) {
+	WINMM_IData->mmSysTimeMS = GetTickCount();
+	WINMM_IData->lpTimerList = NULL;
+	WINMM_IData->hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, WINMM_IData, 0, NULL);
     }
 
-    return iData;
 }
 
 /**************************************************************************
@@ -202,15 +199,13 @@ LPWINE_MM_IDATA	TIME_MMTimeStart(void)
  */
 void	TIME_MMTimeStop(void)
 {
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
-
-    if (IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
-	ERR("iData is not correctly set, please report. Expect failure.\n");
+    if (IsBadWritePtr(WINMM_IData, sizeof(WINE_MM_IDATA))) {
+	ERR("WINMM_IData is not correctly set, please report. Expect failure.\n");
 	return;
     }
-    if (iData->hMMTimer) {
-	HANDLE hMMTimer = iData->hMMTimer;
-	iData->hMMTimer = 0;
+    if (WINMM_IData->hMMTimer) {
+	HANDLE hMMTimer = WINMM_IData->hMMTimer;
+	WINMM_IData->hMMTimer = 0;
 	WaitForSingleObject(hMMTimer, INFINITE);
 	CloseHandle(hMMTimer);
     }
@@ -224,8 +219,9 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
     TRACE("(%p, %u);\n", lpTime, wSize);
 
     if (wSize >= sizeof(*lpTime)) {
+	TIME_MMTimeStart();
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
+	lpTime->u.ms = WINMM_IData->mmSysTimeMS;
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
@@ -242,7 +238,6 @@ WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
     LPWINE_TIMERENTRY	lpTimer;
-    LPWINE_MM_IDATA	iData;
 
     TRACE("(%u, %u, %p, %08lX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
@@ -253,7 +248,7 @@ WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     if (wDelay < MMSYSTIME_MININTERVAL || wDelay > MMSYSTIME_MAXINTERVAL)
 	return 0;
 
-    iData = TIME_MMTimeStart();
+    TIME_MMTimeStart();
 
     lpNewTimer->uCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
@@ -262,17 +257,17 @@ WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
 
-    EnterCriticalSection(&iData->cs);
+    EnterCriticalSection(&WINMM_IData->cs);
 
-    for (lpTimer = iData->lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
+    for (lpTimer = WINMM_IData->lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
 	wNewID = max(wNewID, lpTimer->wTimerID);
     }
 
-    lpNewTimer->lpNext = iData->lpTimerList;
-    iData->lpTimerList = lpNewTimer;
+    lpNewTimer->lpNext = WINMM_IData->lpTimerList;
+    WINMM_IData->lpTimerList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
 
-    LeaveCriticalSection(&iData->cs);
+    LeaveCriticalSection(&WINMM_IData->cs);
 
     TRACE("=> %u\n", wNewID + 1);
 
@@ -298,18 +293,17 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
 MMRESULT WINAPI timeKillEvent(UINT wID)
 {
     LPWINE_TIMERENTRY*	lpTimer;
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     MMRESULT		ret = MMSYSERR_INVALPARAM;
 
     TRACE("(%u)\n", wID);
-    EnterCriticalSection(&iData->cs);
+    EnterCriticalSection(&WINMM_IData->cs);
     /* remove WINE_TIMERENTRY from list */
-    for (lpTimer = &iData->lpTimerList; *lpTimer; lpTimer = &(*lpTimer)->lpNext) {
+    for (lpTimer = &WINMM_IData->lpTimerList; *lpTimer; lpTimer = &(*lpTimer)->lpNext) {
 	if (wID == (*lpTimer)->wTimerID) {
 	    break;
 	}
     }
-    LeaveCriticalSection(&iData->cs);
+    LeaveCriticalSection(&WINMM_IData->cs);
 
     if (*lpTimer) {
 	LPWINE_TIMERENTRY	lpTemp = *lpTimer;
@@ -373,5 +367,6 @@ DWORD WINAPI timeGetTime(void)
     DWORD count;
     ReleaseThunkLock(&count);
     RestoreThunkLock(count);
-    return TIME_MMTimeStart()->mmSysTimeMS;
+    TIME_MMTimeStart();
+    return WINMM_IData->mmSysTimeMS;
 }
