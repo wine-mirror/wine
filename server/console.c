@@ -477,24 +477,36 @@ DECL_HANDLER(get_console_info)
 /* set a console fd */
 DECL_HANDLER(set_console_fd)
 {
-    struct object *obj;
+    struct object *obj_in, *obj_out;
     int fd_in, fd_out;
 
-    if (!(obj = get_handle_obj( current->process, req->file_handle,
-                                GENERIC_READ | GENERIC_WRITE, NULL ))) return;
-    if ((fd_in = dup(obj->ops->get_fd( obj ))) == -1)
+    if (!(obj_in = get_handle_obj( current->process, req->handle_in, GENERIC_READ, NULL )))
+        return;
+    if ((fd_in = dup(obj_in->ops->get_fd( obj_in ))) == -1)
     {
-        release_object( obj );
+        release_object( obj_in );
         return;
     }
-    fd_out = dup( fd_in );
-    release_object( obj );
-    if (fd_out != -1)
+    release_object( obj_in );
+
+    if (!(obj_out = get_handle_obj( current->process, req->handle_out, GENERIC_WRITE, NULL )))
     {
-        if (set_console_fd( req->handle, fd_in, fd_out, req->pid )) return;
-        close( fd_out );
+        close( fd_in );
+        return;
     }
-    close( fd_in );
+    if ((fd_out = dup(obj_out->ops->get_fd( obj_out ))) == -1)
+    {
+        release_object( obj_out );
+        close( fd_in );
+        return;
+    }
+    release_object( obj_out );
+
+    if (!set_console_fd( req->handle, fd_in, fd_out, req->pid ))
+    {
+        close( fd_out );
+        close( fd_in );
+    }
 }
 
 /* get a console mode (input or output) */

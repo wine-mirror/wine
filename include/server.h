@@ -176,6 +176,7 @@ struct init_process_request
     REQUEST_HEADER;                /* request header */
     IN  void*        ldt_copy;     /* addr of LDT copy */
     IN  int          ppid;         /* parent Unix pid */
+    OUT int          create_flags; /* creation flags */
     OUT int          start_flags;  /* flags from startup info */
     OUT unsigned int server_start; /* server start time (GetTickCount) */
     OUT handle_t     exe_file;     /* file handle for main exe */
@@ -738,7 +739,8 @@ struct set_console_fd_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  handle_t     handle;        /* handle to the console */
-    IN  handle_t     file_handle;   /* handle of file to use as file descriptor */
+    IN  handle_t     handle_in;     /* handle of file to use as input */
+    IN  handle_t     handle_out;    /* handle of file to use as output */
     IN  int          pid;           /* pid of xterm (hack) */
 };
 
@@ -1592,7 +1594,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 36
+#define SERVER_PROTOCOL_VERSION 37
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

@@ -321,6 +321,7 @@ static void dump_init_process_request( const struct init_process_request *req )
 
 static void dump_init_process_reply( const struct init_process_request *req )
 {
+    fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " start_flags=%d,", req->start_flags );
     fprintf( stderr, " server_start=%08x,", req->server_start );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
@@ -861,7 +862,8 @@ static void dump_open_console_reply( const struct open_console_request *req )
 static void dump_set_console_fd_request( const struct set_console_fd_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " file_handle=%d,", req->file_handle );
+    fprintf( stderr, " handle_in=%d,", req->handle_in );
+    fprintf( stderr, " handle_out=%d,", req->handle_out );
     fprintf( stderr, " pid=%d", req->pid );
 }
 

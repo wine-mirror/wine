@@ -222,9 +222,7 @@ static void init_process( int ppid, struct init_process_request *req )
     process->create_flags = info ? info->create_flags : CREATE_NEW_CONSOLE;
 
     /* create the handle table */
-    if (parent && info->inherit_all == 2)  /* HACK! */
-        process->handles = grab_object( parent->handles );
-    else if (parent && info->inherit_all)
+    if (parent && info->inherit_all)
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
@@ -272,6 +270,7 @@ static void init_process( int ppid, struct init_process_request *req )
         req->cmd_show     = 0;
         set_req_data_size( req, 0 );
     }
+    req->create_flags = process->create_flags;
     req->server_start = server_start_ticks;
  error:
 }

@@ -221,6 +221,31 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 
 
 /***********************************************************************
+ *           set_console_handles
+ *
+ * Set the console handles to use stdin/stdout.
+ */
+static void set_console_handles( HANDLE console )
+{
+    HANDLE in = FILE_DupUnixHandle( 0, GENERIC_READ );
+    HANDLE out = FILE_DupUnixHandle( 1, GENERIC_WRITE );
+
+    SERVER_START_REQ
+    {
+        struct set_console_fd_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle     = console;
+        req->handle_in  = in;
+        req->handle_out = out;
+        req->pid = 0;
+        server_call( REQ_SET_CONSOLE_FD );
+    }
+    SERVER_END_REQ;
+    NtClose( in );
+    NtClose( out );
+}
+
+
+/***********************************************************************
  *           process_init
  *
  * Main process initialisation code
@@ -228,6 +253,7 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 static BOOL process_init( char *argv[] )
 {
     BOOL ret;
+    int create_flags = 0;
 
     /* store the program name */
     argv0 = argv[0];
@@ -259,19 +285,23 @@ static BOOL process_init( char *argv[] )
             memcpy( main_exe_name, server_data_ptr(req), len );
             main_exe_name[len] = 0;
             main_exe_file = req->exe_file;
+            create_flags  = req->create_flags;
             current_startupinfo.dwFlags     = req->start_flags;
             server_startticks               = req->server_start;
             current_startupinfo.wShowWindow = req->cmd_show;
             current_startupinfo.hStdInput   = req->hstdin;
             current_startupinfo.hStdOutput  = req->hstdout;
             current_startupinfo.hStdError   = req->hstderr;
-            SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput );
-            SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
-            SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError );
         }
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
+
+    SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput );
+    SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
+    SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError );
+    if (create_flags & CREATE_NEW_CONSOLE)
+        set_console_handles( current_startupinfo.hStdOutput );
 
     /* Create the system and process heaps */
     if (!HEAP_CreateSystemHeap()) return FALSE;

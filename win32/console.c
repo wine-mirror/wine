@@ -632,8 +632,9 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
         SERVER_START_REQ
         {
             struct set_console_fd_request *req = server_alloc_req( sizeof(*req), 0 );
-            req->handle = handle;
-            req->file_handle = pty_handle;
+            req->handle     = handle;
+            req->handle_in  = pty_handle;
+            req->handle_out = pty_handle;
             req->pid = xpid;
             server_call( REQ_SET_CONSOLE_FD );
         }
