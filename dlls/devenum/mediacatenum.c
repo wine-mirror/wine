@@ -277,6 +277,7 @@ static HRESULT DEVENUM_IPropertyBag_Construct(HANDLE hkey, IPropertyBag **ppBag)
         return E_OUTOFMEMORY;
     rpb->lpVtbl = &IPropertyBag_Vtbl;
     rpb->ref = 1;
+    rpb->hkey = hkey;
     *ppBag = (IPropertyBag*)rpb;
     DEVENUM_LockModule();
     return S_OK;
