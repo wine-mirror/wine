@@ -438,6 +438,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
     INT16 retvalue;
     POINT16 xy = pt;
 
+    TRACE("scope %04x %d,%d\n", wndScope->hwndSelf, pt.x, pt.y);
    *ppWnd = NULL;
     wndPtr = WIN_LockWndPtr(wndScope->child);
 
@@ -466,14 +467,18 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
             /* is enabled (or it's a top-level window), then explore */
             /* its children. Otherwise, go to the next window.       */
 
-            if ((wndPtr->dwStyle & WS_VISIBLE) &&
+	     if ((wndPtr->dwStyle & WS_VISIBLE) &&
                 (!(wndPtr->dwStyle & WS_DISABLED) ||
                  ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
-                (xy.x >= wndPtr->rectWindow.left) &&
-                (xy.x < wndPtr->rectWindow.right) &&
-                (xy.y >= wndPtr->rectWindow.top) &&
-                (xy.y < wndPtr->rectWindow.bottom))
+		(wndPtr->hrgnWnd ?
+		PtInRegion(wndPtr->hrgnWnd, xy.x - wndPtr->rectWindow.left,
+			   xy.y - wndPtr->rectWindow.top) :
+                ((xy.x >= wndPtr->rectWindow.left) &&
+		 (xy.x < wndPtr->rectWindow.right) &&
+		 (xy.y >= wndPtr->rectWindow.top) &&
+		 (xy.y < wndPtr->rectWindow.bottom))))
             {
+	        TRACE("%d,%d is inside %04x\n", xy.x, xy.y, wndPtr->hwndSelf);
                 *ppWnd = wndPtr;  /* Got a suitable window */
 
                 /* If window is minimized or disabled, return at once */
@@ -517,7 +522,7 @@ hittest:
             {
                 retvalue = hittest;  /* Found the window */
                 goto end;
-	}
+	    }
 	}
         else
         {
