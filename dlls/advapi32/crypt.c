@@ -31,5 +31,11 @@ CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
     return FALSE;
 }
 
-
+BOOL WINAPI
+CryptSetKeyParam( HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
+{
+    FIXME_(advapi)("(%x, %lx, %p, %lx): stub!\n",
+	hKey, dwParam, pbData, dwFlags);
+    return FALSE;
+}
 
