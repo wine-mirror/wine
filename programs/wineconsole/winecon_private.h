@@ -20,6 +20,7 @@ struct config_data {
     DWORD       font_weight;
     DWORD       history_size;
     DWORD       menu_mask;      /* MK_CONTROL MK_SHIFT mask to drive submenu opening */
+    DWORD       quick_edit;     /* whether mouse ops are sent to app (false) or used for content selection (true) */
     unsigned	sb_width;	/* active screen buffer width */
     unsigned	sb_height;	/* active screen buffer height */
     unsigned	win_width;	/* size (in cells) of visible part of window (width & height) */

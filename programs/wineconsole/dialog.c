@@ -9,14 +9,11 @@
 #include "prsht.h"
 #include "winecon_user.h"
 
-/* FIXME: so far, part of the code is made in ASCII because the Uncode property sheet functions
- * are not implemented yet
- */
-
 enum WCUSER_ApplyTo {
     /* Prop sheet CFG */
     WCUSER_ApplyToCursorSize, 
     WCUSER_ApplyToHistorySize, WCUSER_ApplyToHistoryMode, WCUSER_ApplyToMenuMask,
+    WCUSER_ApplyToEditMode,
     /* Prop sheet FNT */
     WCUSER_ApplyToFont, WCUSER_ApplyToAttribute,
     /* Prop sheep CNF */
@@ -56,6 +53,9 @@ static void WCUSER_ApplyDefault(struct dialog_info* di, HWND hDlg, enum WCUSER_A
     case WCUSER_ApplyToMenuMask:
         di->config->menu_mask = val;
         break;
+    case WCUSER_ApplyToEditMode:
+        di->config->quick_edit = val;
+        break;
     case WCUSER_ApplyToFont:
         WCUSER_CopyFont(di->config, &di->font[val].lf);
         break;
@@ -94,6 +94,9 @@ static void WCUSER_ApplyCurrent(struct dialog_info* di, HWND hDlg, enum WCUSER_A
     case WCUSER_ApplyToMenuMask:
         di->config->menu_mask = val;
         break;
+    case WCUSER_ApplyToEditMode:
+        di->config->quick_edit = val;
+        break;
     case WCUSER_ApplyToFont:
         WCUSER_SetFont(di->data, &di->font[val].lf);
         break;
@@ -127,7 +130,8 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
-	SetWindowLongA(hDlg, DWL_USER, (DWORD)di);
+	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
+
 	if (di->config->cursor_size <= 25)	idc = IDC_OPT_CURSOR_SMALL;
 	else if (di->config->cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
 	else				        idc = IDC_OPT_CURSOR_LARGE;
@@ -139,6 +143,8 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
                            (di->config->menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0L);
         SendDlgItemMessage(hDlg, IDC_OPT_CONF_SHIFT, BM_SETCHECK, 
                            (di->config->menu_mask & MK_SHIFT) ? BST_CHECKED : BST_UNCHECKED, 0L);
+        SendDlgItemMessage(hDlg, IDC_OPT_QUICK_EDIT, BM_SETCHECK, 
+                           (di->config->quick_edit) ? BST_CHECKED : BST_UNCHECKED, 0L);
 	return FALSE; /* because we set the focus */
     case WM_COMMAND:
 	break;
@@ -148,7 +154,8 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
         DWORD   val;
         BOOL	done;
 
-	di = (struct dialog_info*)GetWindowLongA(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+
 	switch (nmhdr->code) 
 	{
 	case PSN_SETACTIVE:
@@ -181,6 +188,10 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             if (IsDlgButtonChecked(hDlg, IDC_OPT_CONF_CTRL) & BST_CHECKED)  val |= MK_CONTROL;
             if (IsDlgButtonChecked(hDlg, IDC_OPT_CONF_SHIFT) & BST_CHECKED) val |= MK_SHIFT;
             (di->apply)(di, hDlg, WCUSER_ApplyToMenuMask, val);
+
+            val = (IsDlgButtonChecked(hDlg, IDC_OPT_QUICK_EDIT) & BST_CHECKED) ? TRUE : FALSE;
+            (di->apply)(di, hDlg, WCUSER_ApplyToEditMode, val);
+
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:
@@ -652,13 +663,13 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
 {
     HPROPSHEETPAGE	psPage[3];
-    PROPSHEETPAGEA	psp;
-    PROPSHEETHEADERA	psHead;
+    PROPSHEETPAGE	psp;
+    PROPSHEETHEADER	psHead;
+    WCHAR		buff[256];
     WNDCLASS		wndclass;
     static const WCHAR szFntPreview[] = {'W','i','n','e','C','o','n','F','o','n','t','P','r','e','v','i','e','w',0};
     static const WCHAR szColorPreview[] = {'W','i','n','e','C','o','n','C','o','l','o','r','P','r','e','v','i','e','w',0};
     struct dialog_info	di;
-    CHAR		buff[256];
 
     InitCommonControls();
 
@@ -706,31 +717,39 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     psp.hInstance = wndclass.hInstance;
     psp.lParam = (LPARAM)&di;
 
-    psp.u.pszTemplate = MAKEINTRESOURCEA(IDD_OPTION);
+    psp.u.pszTemplate = MAKEINTRESOURCE(IDD_OPTION);
     psp.pfnDlgProc = WCUSER_OptionDlgProc;
-    psPage[0] = CreatePropertySheetPageA(&psp);
+    psPage[0] = CreatePropertySheetPage(&psp);
 
-    psp.u.pszTemplate = MAKEINTRESOURCEA(IDD_FONT);
+    psp.u.pszTemplate = MAKEINTRESOURCE(IDD_FONT);
     psp.pfnDlgProc = WCUSER_FontDlgProc;
-    psPage[1] = CreatePropertySheetPageA(&psp);
+    psPage[1] = CreatePropertySheetPage(&psp);
 
-    psp.u.pszTemplate = MAKEINTRESOURCEA(IDD_CONFIG);
+    psp.u.pszTemplate = MAKEINTRESOURCE(IDD_CONFIG);
     psp.pfnDlgProc = WCUSER_ConfigDlgProc;
-    psPage[2] = CreatePropertySheetPageA(&psp);
+    psPage[2] = CreatePropertySheetPage(&psp);
 
     memset(&psHead, 0, sizeof(psHead));
     psHead.dwSize = sizeof(psHead);
 
-    if (!LoadStringA(GetModuleHandle(NULL), 
-                     (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT, 
-                     buff, sizeof(buff)))
-        strcpy(buff, "Setup");
+    if (!LoadString(GetModuleHandle(NULL), 
+                    (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT, 
+                    buff, sizeof(buff) / sizeof(buff[0])))
+    {
+        buff[0] = 'S';
+        buff[1] = 'e';
+        buff[2] = 't';
+        buff[3] = 'u';
+        buff[4] = 'p';
+        buff[5] = '\0';
+    }
+
     psHead.pszCaption = buff;
     psHead.nPages = 3;
     psHead.hwndParent = PRIVATE(data)->hWnd;
     psHead.u3.phpage = psPage;
  
-    PropertySheetA(&psHead);
+    PropertySheet(&psHead);
 
     return TRUE;
 }

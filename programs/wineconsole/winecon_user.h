@@ -19,7 +19,7 @@ struct inner_data_user {
     HMENU               hPopMenu;       /* popup menu triggered by right mouse click */
 
     HBITMAP		cursor_bitmap;  /* bitmap used for the caret */
-    BOOL		hasSelection;	/* a rectangular mouse selection has taken place */
+    BOOL                has_selection;  /* an area is being selected (selectPt[12] are edges of the rect) */
     COORD		selectPt1;	/* start (and end) point of a mouse selection */
     COORD		selectPt2;
 };

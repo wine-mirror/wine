@@ -17,6 +17,7 @@ static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
 static const WCHAR wszFontWeight[]        = {'F','o','n','t','W','e','i','g','h','t',0};
 static const WCHAR wszHistoryBufferSize[] = {'H','i','s','t','o','r','y','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszMenuMask[]          = {'M','e','n','u','M','a','s','k',0};
+static const WCHAR wszQuickEdit[]         = {'Q','u','i','c','k','E','d','i','t',0};
 static const WCHAR wszScreenBufferSize[]  = {'S','c','r','e','e','n','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszScreenColors[]      = {'S','c','r','e','e','n','C','o','l','o','r','s',0};
 static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z','e',0};
@@ -69,6 +70,11 @@ BOOL WINECON_RegLoad(struct config_data* cfg)
     if (!hConKey || RegQueryValueEx(hConKey, wszMenuMask, 0, &type, (char*)&val, &count)) 
         val = 0;
     cfg->menu_mask = val;
+
+    count = sizeof(val);
+    if (!hConKey || RegQueryValueEx(hConKey, wszQuickEdit, 0, &type, (char*)&val, &count)) 
+        val = 0;
+    cfg->quick_edit = val;
 
     count = sizeof(val);
     if (!hConKey || RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count)) 
@@ -128,6 +134,9 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
 
     val = cfg->menu_mask;
     RegSetValueEx(hConKey, wszMenuMask, 0, REG_DWORD, (char*)&val, sizeof(val));
+
+    val = cfg->quick_edit;
+    RegSetValueEx(hConKey, wszQuickEdit, 0, REG_DWORD, (char*)&val, sizeof(val));
 
     val = MAKELONG(cfg->sb_width, cfg->sb_height);
     RegSetValueEx(hConKey, wszScreenBufferSize, 0, REG_DWORD, (char*)&val, sizeof(val));

@@ -375,7 +375,7 @@ static void	WCUSER_SetSelection(const struct inner_data* data, HDC hRefDC)
  *
  *
  */
-static void	WCUSER_MoveSelection(struct inner_data* data, COORD dst, BOOL final)
+static void	WCUSER_MoveSelection(struct inner_data* data, COORD c1, COORD c2, BOOL final)
 {
     RECT	r;
     HDC		hDC;
@@ -388,7 +388,8 @@ static void	WCUSER_MoveSelection(struct inner_data* data, COORD dst, BOOL final)
 	    HideCaret(PRIVATE(data)->hWnd);
 	InvertRect(hDC, &r);
     }
-    PRIVATE(data)->selectPt2 = dst;
+    PRIVATE(data)->selectPt1 = c1;
+    PRIVATE(data)->selectPt2 = c2;
     if (hDC)
     {
 	WCUSER_GetSelectionRect(data, &r);
@@ -400,7 +401,7 @@ static void	WCUSER_MoveSelection(struct inner_data* data, COORD dst, BOOL final)
     if (final)
     {
 	ReleaseCapture();
-	PRIVATE(data)->hasSelection = TRUE;
+	PRIVATE(data)->has_selection = TRUE;
     }
 }
 
@@ -522,7 +523,7 @@ static void	WCUSER_Paint(const struct inner_data* data)
            data->curcfg.win_pos.X * data->curcfg.cell_width, 
            data->curcfg.win_pos.Y * data->curcfg.cell_height,
 	   SRCCOPY);
-    if (PRIVATE(data)->hasSelection)
+    if (PRIVATE(data)->has_selection)
 	WCUSER_SetSelection(data, ps.hdc);
     EndPaint(PRIVATE(data)->hWnd, &ps);
 }
@@ -678,6 +679,7 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
     PRIVATE(data)->hMemDC = CreateCompatibleDC(0);
     if (!PRIVATE(data)->hMemDC) {Trace(0, "no mem dc\n");return 0;}
 
+    data->curcfg.quick_edit = FALSE;
     return 0;
 }
 
@@ -686,23 +688,146 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
  *
  * Grays / ungrays the menu items according to their state
  */
-static void	WCUSER_SetMenuDetails(const struct inner_data* data)
+static void	WCUSER_SetMenuDetails(const struct inner_data* data, HMENU hMenu)
 {
-    HMENU		hMenu = GetSystemMenu(PRIVATE(data)->hWnd, FALSE);
-
     if (!hMenu) {Trace(0, "Issue in getting menu bits\n");return;}
 
-    /* FIXME: set the various menu items to their state (if known) */
-    EnableMenuItem(hMenu, IDS_DEFAULT, MF_BYCOMMAND|MF_GRAYED);
-
-    EnableMenuItem(hMenu, IDS_MARK, MF_BYCOMMAND|MF_GRAYED);
-    EnableMenuItem(hMenu, IDS_COPY, MF_BYCOMMAND|(PRIVATE(data)->hasSelection ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(hMenu, IDS_COPY, 
+                   MF_BYCOMMAND|(PRIVATE(data)->has_selection ? MF_ENABLED : MF_GRAYED));
     EnableMenuItem(hMenu, IDS_PASTE, 
 		   MF_BYCOMMAND|(IsClipboardFormatAvailable(CF_UNICODETEXT) 
 				 ? MF_ENABLED : MF_GRAYED));
-    /* Select all: always active */
     EnableMenuItem(hMenu, IDS_SCROLL, MF_BYCOMMAND|MF_GRAYED);
     EnableMenuItem(hMenu, IDS_SEARCH, MF_BYCOMMAND|MF_GRAYED);
+}
+
+/******************************************************************
+ *		CUSER_GetCtrlKeyState
+ *
+ * Get the console bit mask equivalent to the VK_ status in keyState
+ */
+static DWORD    WCUSER_GetCtrlKeyState(BYTE* keyState)
+{
+    DWORD               ret = 0;
+
+    GetKeyboardState(keyState);
+    if (keyState[VK_SHIFT]    & 0x80)	ret |= SHIFT_PRESSED;
+    if (keyState[VK_CONTROL]  & 0x80)	ret |= LEFT_CTRL_PRESSED; /* FIXME: gotta choose one */
+    if (keyState[VK_LCONTROL] & 0x80)	ret |= LEFT_CTRL_PRESSED;
+    if (keyState[VK_RCONTROL] & 0x80)	ret |= RIGHT_CTRL_PRESSED;
+    if (keyState[VK_LMENU]    & 0x80)	ret |= LEFT_ALT_PRESSED;
+    if (keyState[VK_RMENU]    & 0x80)	ret |= RIGHT_ALT_PRESSED;
+    if (keyState[VK_CAPITAL]  & 0x01)	ret |= CAPSLOCK_ON;	    
+    if (keyState[VK_NUMLOCK]  & 0x01)	ret |= NUMLOCK_ON;
+    if (keyState[VK_SCROLL]   & 0x01)	ret |= SCROLLLOCK_ON;
+    
+    return ret;
+}
+
+/******************************************************************
+ *		WCUSER_HandleSelectionKey
+ *
+ * Handles keys while selecting an area
+ */
+static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down, 
+                                      WPARAM wParam, LPARAM lParam)
+{
+    BYTE	keyState[256];
+    DWORD       state = WCUSER_GetCtrlKeyState(keyState) & ~(CAPSLOCK_ON|NUMLOCK_ON|SCROLLLOCK_ON);
+    COORD       c1, c2;
+
+    if (down) return;
+
+    switch (state)
+    {
+    case 0:
+        switch (wParam)
+        {
+        case VK_RETURN:
+            PRIVATE(data)->has_selection = FALSE;
+            WCUSER_SetSelection(data, 0);
+            WCUSER_CopySelectionToClipboard(data);
+            break;
+        case VK_RIGHT:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c1.X++; c2.X++;
+            if (c1.X < data->curcfg.sb_width && c2.X < data->curcfg.sb_width)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_LEFT:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c1.X--; c2.X--;
+            if (c1.X >= 0 && c2.X >= 0)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_UP:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c1.Y--; c2.Y--;
+            if (c1.Y >= 0 && c2.Y >= 0)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_DOWN:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c1.Y++; c2.Y++;
+            if (c1.X < data->curcfg.sb_height && c2.X < data->curcfg.sb_height)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        }
+        break;
+    case SHIFT_PRESSED:
+        switch (wParam)
+        {
+        case VK_RIGHT:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c2.X++;
+            if (c2.X < data->curcfg.sb_width)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_LEFT:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c2.X--;
+            if (c2.X >= c1.X)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_UP:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c2.Y--;
+            if (c2.Y >= c1.Y)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        case VK_DOWN:
+            c1 = PRIVATE(data)->selectPt1;
+            c2 = PRIVATE(data)->selectPt2;
+            c2.Y++;
+            if (c2.X < data->curcfg.sb_height)
+            {
+                WCUSER_MoveSelection(data, c1, c2, FALSE);
+            }
+            break;
+        }
+        break;
+    }
 }
 
 /******************************************************************
@@ -716,8 +841,8 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
     INPUT_RECORD	ir;
     DWORD		n;
     WCHAR		buf[2];
-    BYTE		keyState[256];
     static	WCHAR	last; /* keep last char seen as feed for key up message */
+    BYTE		keyState[256];
 
     ir.EventType = KEY_EVENT;
     ir.Event.KeyEvent.bKeyDown = down;
@@ -725,31 +850,12 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
     ir.Event.KeyEvent.wVirtualKeyCode = wParam;
     
     ir.Event.KeyEvent.wVirtualScanCode = HIWORD(lParam) & 0xFF;
-    GetKeyboardState(keyState);
     
     ir.Event.KeyEvent.uChar.UnicodeChar = 0;
-    ir.Event.KeyEvent.dwControlKeyState = 0;
+    ir.Event.KeyEvent.dwControlKeyState = WCUSER_GetCtrlKeyState(keyState);
     if (lParam & (1L << 24))		ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
-    if (keyState[VK_SHIFT]    & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-    if (keyState[VK_CONTROL]  & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED; /* FIXME: gotta choose one */
-    if (keyState[VK_LCONTROL] & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-    if (keyState[VK_RCONTROL] & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
     if (sys)				ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; /* FIXME: gotta choose one */
-    if (keyState[VK_LMENU]    & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-    if (keyState[VK_RMENU]    & 0x80)	ir.Event.KeyEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-    if (keyState[VK_CAPITAL]  & 0x01)	ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON;	    
-    if (keyState[VK_NUMLOCK]  & 0x01)	ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON;
-    if (keyState[VK_SCROLL]   & 0x01)	ir.Event.KeyEvent.dwControlKeyState |= SCROLLLOCK_ON;
 
-    if (PRIVATE(data)->hasSelection && ir.Event.KeyEvent.dwControlKeyState == 0 && 
-	ir.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-    {
-	PRIVATE(data)->hasSelection = FALSE;
-	WCUSER_SetSelection(data, 0);
-	WCUSER_CopySelectionToClipboard(data);
-	return;
-    }
-    
     if (!(ir.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
     {
 	if (down)
@@ -770,6 +876,34 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
 	ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME HACKY... and buggy 'coz it should be a stack, not a single value */
 	if (!down) last = 0;
     }
+
+    WriteConsoleInput(data->hConIn, &ir, 1, &n);
+}
+
+/******************************************************************
+ *		WCUSER_GenerateMouseInputRecord
+ *
+ *
+ */
+static void    WCUSER_GenerateMouseInputRecord(struct inner_data* data, COORD c, 
+                                               WPARAM wParam, DWORD event)
+{
+    INPUT_RECORD	ir;
+    BYTE		keyState[256];
+    DWORD               mode, n;
+
+    /* MOUSE_EVENTs shouldn't be sent unless ENABLE_MOUSE_INPUT is active */
+    if (!GetConsoleMode(data->hConIn, &mode) || !(mode & ENABLE_MOUSE_INPUT))
+        return;
+
+    ir.EventType = MOUSE_EVENT;
+    ir.Event.MouseEvent.dwMousePosition = c;
+    ir.Event.MouseEvent.dwButtonState = 0;
+    if (wParam & MK_LBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+    if (wParam & MK_MBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+    if (wParam & MK_RBUTTON) ir.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+    ir.Event.MouseEvent.dwControlKeyState = WCUSER_GetCtrlKeyState(keyState);
+    ir.Event.MouseEvent.dwEventFlags = event;
 
     WriteConsoleInput(data->hConIn, &ir, 1, &n);
 }
@@ -796,39 +930,88 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	break;
     case WM_KEYDOWN:
     case WM_KEYUP:
-	WCUSER_GenerateKeyInputRecord(data, uMsg == WM_KEYDOWN, wParam, lParam, FALSE);
+        if (PRIVATE(data)->has_selection)
+            WCUSER_HandleSelectionKey(data, uMsg == WM_KEYDOWN, wParam, lParam);
+        else
+            WCUSER_GenerateKeyInputRecord(data, uMsg == WM_KEYDOWN, wParam, lParam, FALSE);
 	break;
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
 	WCUSER_GenerateKeyInputRecord(data, uMsg == WM_SYSKEYDOWN, wParam, lParam, TRUE);
 	break;
     case WM_LBUTTONDOWN:
-	/* EPP if (wParam != MK_LBUTTON) */
-	if (PRIVATE(data)->hasSelection)
-	{
-	    PRIVATE(data)->hasSelection = FALSE;
-	}
-	else
-	{
-	    PRIVATE(data)->selectPt1 = PRIVATE(data)->selectPt2 = WCUSER_GetCell(data, lParam);
-	    SetCapture(PRIVATE(data)->hWnd);
-	}
-	WCUSER_SetSelection(data, 0);
+        if (data->curcfg.quick_edit)
+        {
+            if (PRIVATE(data)->has_selection)
+            {
+                PRIVATE(data)->has_selection = FALSE;
+                WCUSER_SetSelection(data, 0);
+            }
+            else
+            {
+                PRIVATE(data)->selectPt1 = PRIVATE(data)->selectPt2 = WCUSER_GetCell(data, lParam);
+                SetCapture(PRIVATE(data)->hWnd);
+                WCUSER_SetSelection(data, 0);
+                PRIVATE(data)->has_selection = TRUE;
+            }
+        }
+        else 
+        {
+            WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, 0);
+        }
 	break;
     case WM_MOUSEMOVE:
-	/* EPP if (wParam != MK_LBUTTON) */
-        if (GetCapture() == PRIVATE(data)->hWnd)
-	{
-	    WCUSER_MoveSelection(data, WCUSER_GetCell(data, lParam), FALSE);
-	}
+        if (data->curcfg.quick_edit)
+        {
+            if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection &&
+                (wParam & MK_LBUTTON))
+            {
+                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam), FALSE);
+            }
+        }
+        else
+        {
+            WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, MOUSE_MOVED);
+        }
 	break;
     case WM_LBUTTONUP:
-	/* EPP if (wParam != MK_LBUTTON) */
-        if (GetCapture() == PRIVATE(data)->hWnd)
-	{
-	    WCUSER_MoveSelection(data, WCUSER_GetCell(data, lParam), TRUE);
-	}
+        if (data->curcfg.quick_edit)
+        {
+            if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection && 
+                (wParam& MK_LBUTTON))
+            {
+                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam), TRUE);
+            }
+        }
+        else
+        {
+            WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, 0);
+        }
 	break;
+    case WM_RBUTTONDOWN:
+        if ((wParam & (MK_CONTROL|MK_SHIFT)) == data->curcfg.menu_mask)
+        {
+            RECT        r;
+
+            GetWindowRect(hWnd, &r);
+            WCUSER_SetMenuDetails(data, PRIVATE(data)->hPopMenu);
+            TrackPopupMenu(PRIVATE(data)->hPopMenu, TPM_LEFTALIGN|TPM_TOPALIGN, 
+                           r.left + LOWORD(lParam), r.top + HIWORD(lParam), 0, hWnd, NULL);
+        }
+        else
+        {
+            WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, 0);
+        }
+	break;    
+    case WM_RBUTTONUP:
+        /* no need to track for rbutton up when opening the popup... the event will be
+         * swallowed by TrackPopupMenu */
+        WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, 0);
+	break;    
+    case WM_MOUSEWHEEL:
+        /* FIXME: should we scroll too ? */
+        WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, MOUSE_WHEELED);
+	break;    
     case WM_SETFOCUS:
 	if (data->curcfg.cursor_visible)
 	{
@@ -843,31 +1026,31 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	break;
     case WM_HSCROLL: 
         {
-	    int	pos = data->curcfg.win_pos.X;
+            int	pos = data->curcfg.win_pos.X;
 
-	    switch (LOWORD(wParam)) 
-	    { 
+            switch (LOWORD(wParam)) 
+            { 
             case SB_PAGEUP: 	pos -= 8; 		break; 
             case SB_PAGEDOWN: 	pos += 8; 		break; 
             case SB_LINEUP: 	pos--;			break;
-	    case SB_LINEDOWN: 	pos++;	 		break;
+            case SB_LINEDOWN: 	pos++;	 		break;
             case SB_THUMBTRACK: pos = HIWORD(wParam);	break;
             default: 					break;
-	    } 
-	    if (pos < 0) pos = 0;
-	    if (pos > data->curcfg.sb_width - data->curcfg.win_width) 
+            } 
+            if (pos < 0) pos = 0;
+            if (pos > data->curcfg.sb_width - data->curcfg.win_width) 
                 pos = data->curcfg.sb_width - data->curcfg.win_width;
-	    if (pos != data->curcfg.win_pos.X)
-	    {
-		ScrollWindow(hWnd, (data->curcfg.win_pos.X - pos) * data->curcfg.cell_width, 0, 
+            if (pos != data->curcfg.win_pos.X)
+            {
+                ScrollWindow(hWnd, (data->curcfg.win_pos.X - pos) * data->curcfg.cell_width, 0, 
                              NULL, NULL);
-		data->curcfg.win_pos.X = pos;
-		SetScrollPos(hWnd, SB_HORZ, pos, TRUE); 
-		UpdateWindow(hWnd); 
-		WCUSER_PosCursor(data);
-		WINECON_NotifyWindowChange(data);
-	    }
-        } 
+                data->curcfg.win_pos.X = pos;
+                SetScrollPos(hWnd, SB_HORZ, pos, TRUE); 
+                UpdateWindow(hWnd); 
+                WCUSER_PosCursor(data);
+                WINECON_NotifyWindowChange(data);
+            }
+        }
 	break;
     case WM_VSCROLL: 
         {
@@ -895,8 +1078,8 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		WCUSER_PosCursor(data);
 		WINECON_NotifyWindowChange(data);
 	    }
+
         } 
-	break;
     case WM_SYSCOMMAND:
 	switch (wParam)
 	{
@@ -910,16 +1093,6 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 	break;
-    case WM_RBUTTONDOWN:
-        if ((wParam & (MK_CONTROL|MK_SHIFT)) == data->curcfg.menu_mask)
-        {
-            RECT        r;
-
-            GetWindowRect(hWnd, &r);
-            TrackPopupMenu(PRIVATE(data)->hPopMenu, TPM_LEFTALIGN|TPM_TOPALIGN, 
-                           r.left + LOWORD(lParam), r.top + HIWORD(lParam), 0, hWnd, NULL);
-        }
-	break;    
     case WM_COMMAND:
 	switch (wParam)
 	{
@@ -930,25 +1103,31 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    WCUSER_GetProperties(data, TRUE);
 	    break;
 	case IDS_MARK:
-	    goto niy;
+            PRIVATE(data)->selectPt1.X = PRIVATE(data)->selectPt1.Y = 0;
+            PRIVATE(data)->selectPt2.X = PRIVATE(data)->selectPt2.Y = 0;
+            WCUSER_SetSelection(data, 0);
+            PRIVATE(data)->has_selection = TRUE;
+	    break;
 	case IDS_COPY:
-	    PRIVATE(data)->hasSelection = FALSE;
-	    WCUSER_SetSelection(data, 0);
-	    WCUSER_CopySelectionToClipboard(data);
+            if (PRIVATE(data)->has_selection)
+            {
+                PRIVATE(data)->has_selection = FALSE;
+                WCUSER_SetSelection(data, 0);
+                WCUSER_CopySelectionToClipboard(data);
+            }
 	    break;
 	case IDS_PASTE:
 	    WCUSER_PasteFromClipboard(data);
 	    break;
 	case IDS_SELECTALL:
-	    PRIVATE(data)->selectPt1.X = PRIVATE(data)->selectPt1.Y = 0;
-	    PRIVATE(data)->selectPt2.X = (data->curcfg.sb_width - 1) * data->curcfg.cell_width;
-	    PRIVATE(data)->selectPt2.Y = (data->curcfg.sb_height - 1) * data->curcfg.cell_height;
-	    WCUSER_SetSelection(data, 0);
-	    PRIVATE(data)->hasSelection = TRUE;
+            PRIVATE(data)->selectPt1.X = PRIVATE(data)->selectPt1.Y = 0;
+            PRIVATE(data)->selectPt2.X = (data->curcfg.sb_width - 1) * data->curcfg.cell_width;
+            PRIVATE(data)->selectPt2.Y = (data->curcfg.sb_height - 1) * data->curcfg.cell_height;
+            WCUSER_SetSelection(data, 0);
+            PRIVATE(data)->has_selection = TRUE;
 	    break;
 	case IDS_SCROLL:
 	case IDS_SEARCH:
-	niy:
 	    Trace(0, "unhandled yet command: %x\n", wParam);
 	    break;
 	default: 
@@ -957,7 +1136,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	break;
     case WM_INITMENUPOPUP:
 	if (!HIWORD(lParam))	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	WCUSER_SetMenuDetails(data);
+	WCUSER_SetMenuDetails(data, GetSystemMenu(PRIVATE(data)->hWnd, FALSE));
 	break;
     default:
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -1062,7 +1241,7 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
     if (!PRIVATE(data)->hWnd) return FALSE;
 
     /* force update of current data */
-    WINECON_GrabChanges(data);
+    if (!WINECON_GrabChanges(data)) return FALSE;
 
     if (!WCUSER_InitFont(data))
     {
