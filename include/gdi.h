@@ -120,22 +120,21 @@ typedef struct
     short         breakExtra;        /* breakTotalExtra / breakCount */
     short         breakRem;          /* breakTotalExtra % breakCount */
 
-    RECT        totalExtent;
+    RECT          totalExtent;
     BYTE          bitsPerPixel;
 
-    INT         MapMode;
-    INT         GraphicsMode;      /* Graphics mode */
-    INT         DCOrgX;            /* DC origin */
-    INT         DCOrgY;
-    FARPROC16     spfnPrint;         /* 16bit AbortProc for Printing */
-    ABORTPROC     lpfnPrint;         /* 32bit AbortProc for Printing */
-    INT         CursPosX;          /* Current position */
-    INT         CursPosY;
-    INT         ArcDirection;
+    INT           MapMode;
+    INT           GraphicsMode;      /* Graphics mode */
+    INT           DCOrgX;            /* DC origin */
+    INT           DCOrgY;
+    ABORTPROC     pAbortProc;        /* AbortProc for Printing */
+    INT           CursPosX;          /* Current position */
+    INT           CursPosY;
+    INT           ArcDirection;
     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
-    BOOL        vport2WorldValid;  /* Is xformVport2World valid? */
+    BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
 } WIN_DC_INFO;
 
 typedef struct tagDC

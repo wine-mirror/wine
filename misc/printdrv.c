@@ -208,28 +208,20 @@ INT WINAPI AbortDoc(HDC hdc)
 BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 {
     DC *dc = DC_GetDCPtr( hdc );
-    BOOL16 ret;
 
     if(!dc) {
         ERR("Invalid hdc %04x\n", hdc);
 	return FALSE;
     }
 
-    if(!dc->w.lpfnPrint && !dc->w.spfnPrint)
+    if(!dc->w.pAbortProc)
         return TRUE;
-
-    if(dc->w.lpfnPrint && dc->w.spfnPrint)
-        FIXME("16 and 32 bit AbortProcs set?\n");
-
-    if(dc->w.spfnPrint) {
-        TRACE("Calling 16bit AbortProc\n");
-	ret = Callbacks->CallDrvAbortProc(dc->w.spfnPrint, hdc, 0);
-    } else {
-        TRACE("Calling 32bit AbortProc\n");
-	ret = dc->w.lpfnPrint(hdc,0);
-    }
-    return ret;
+    return dc->w.pAbortProc(hdc, 0);
 }
+
+/* ### start build ### */
+extern WORD CALLBACK PRTDRV_CallTo16_word_ww(FARPROC16,WORD,WORD);
+/* ### stop build ### */
 
 /**********************************************************************
  *           SetAbortProc16   (GDI.381)
@@ -237,7 +229,9 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
  */
 INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
 {
-    return Escape16(hdc, SETABORTPROC, 0, abrtprc, (SEGPTR)0);
+    ABORTPROC proc32 = (ABORTPROC)THUNK_Alloc((FARPROC16)abrtprc,
+					      (RELAY)PRTDRV_CallTo16_word_ww);
+    return SetAbortProc(hdc, proc32);
 }
 
 /**********************************************************************
@@ -248,7 +242,8 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
     DC *dc = DC_GetDCPtr( hdc );
 
-    dc->w.lpfnPrint = abrtprc;
+    if(dc->w.pAbortProc) THUNK_Free((FARPROC)dc->w.pAbortProc);
+    dc->w.pAbortProc = abrtprc;
     return TRUE;
 }
 

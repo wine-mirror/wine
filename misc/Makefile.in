@@ -30,6 +30,8 @@ C_SRCS = \
 	wsprintf.c \
 	xmalloc.c
 
+GLUE = printdrv.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

@@ -45,38 +45,19 @@ extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
 extern LONG CALLBACK THUNK_CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
 extern LONG CALLBACK THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG CALLBACK THUNK_CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_llwwlll(FARPROC16,LONG,LONG,WORD,WORD,LONG,LONG,LONG);
-extern LONG CALLBACK THUNK_CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
-                                                  LONG,LONG,LONG);
-extern LONG CALLBACK THUNK_CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
-                                                      LONG,WORD,LONG,LONG,LONG,LONG,
-                                                      LONG,WORD);
-extern LONG CALLBACK THUNK_CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
-                                                        WORD,WORD,LONG,WORD,WORD,
-                                                        WORD,WORD,LONG,LONG,LONG,
-                                                        LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_wwlllllw(FARPROC16,WORD,WORD,LONG,
-						  LONG,LONG,LONG,LONG,WORD);
-extern LONG CALLBACK THUNK_CallTo16_long_llwll(FARPROC16,LONG,LONG,WORD,LONG,
-					       LONG);
 /* ### stop build ### */
 
 
-typedef void (*RELAY)();
 
 #include "pshpack1.h"
 
@@ -84,12 +65,15 @@ typedef struct tagTHUNK
 {
     BYTE             popl_eax;           /* 0x58  popl  %eax (return address)*/
     BYTE             pushl_func;         /* 0x68  pushl $proc */
-    FARPROC        proc WINE_PACKED;
+    FARPROC16        proc WINE_PACKED;
     BYTE             pushl_eax;          /* 0x50  pushl %eax */
     BYTE             jmp;                /* 0xe9  jmp   relay (relative jump)*/
     RELAY            relay WINE_PACKED;
     struct tagTHUNK *next WINE_PACKED;
+    DWORD            magic;
 } THUNK;
+
+#define CALLTO16_THUNK_MAGIC 0x54484e4b   /* "THNK" */
 
 #include "poppack.h"
 
@@ -101,7 +85,8 @@ typedef struct tagTHUNK
     aname.pushl_eax = 0x50; \
     aname.jmp = 0xe9; \
     aname.relay = (RELAY)((char *)(arelay) - (char *)(&(aname).next)); \
-    aname.next = NULL;
+    aname.next = NULL; \
+    aname.magic = CALLTO16_THUNK_MAGIC;
 
 static THUNK *firstThunk = NULL;
 
@@ -122,20 +107,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)THUNK_CallTo16_word_www,             /* CallLocalNotifyFunc */
     (void *)THUNK_CallTo16_word_www,             /* CallResourceHandlerProc */
     (void *)THUNK_CallTo16_long_ll,              /* CallUTProc */
-    (void *)THUNK_CallTo16_long_l,               /* CallASPIPostProc */
-    (void *)THUNK_CallTo16_word_lwll,            /* CallDrvControlProc */
-    (void *)THUNK_CallTo16_word_lwlll,           /* CallDrvEnableProc */
-    (void *)THUNK_CallTo16_word_llll,            /* CallDrvEnumDFontsProc */
-    (void *)THUNK_CallTo16_word_lwll,            /* CallDrvEnumObjProc */
-    (void *)THUNK_CallTo16_word_lwwlllll,        /* CallDrvOutputProc */
-    (void *)THUNK_CallTo16_long_lwlll,           /* CallDrvRealizeProc */
-    (void *)THUNK_CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
-    (void *)THUNK_CallTo16_long_lwwllwlllllw,    /* CallDrvExtTextOutProc */
-    (void *)THUNK_CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */
-    (void *)THUNK_CallTo16_word_ww,              /* CallDrvAbortProc */
-    (void *)THUNK_CallTo16_word_wwlllllw,        /* CallDrvExtDeviceModeProc */
-    (void *)THUNK_CallTo16_long_llwll            /* CallDrvDeviceCapabilitesProc */
-    
+    (void *)THUNK_CallTo16_long_l                /* CallASPIPostProc */
 };
 
 const CALLBACKS_TABLE *Callbacks = &CALLBACK_EmulatorTable;
@@ -155,7 +127,7 @@ BOOL THUNK_Init(void)
 /***********************************************************************
  *           THUNK_Alloc
  */
-static THUNK *THUNK_Alloc( FARPROC func, RELAY relay )
+FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
 {
     THUNK *thunk = HeapAlloc( GetProcessHeap(), 0, sizeof(*thunk) );
     if (thunk)
@@ -166,43 +138,58 @@ static THUNK *THUNK_Alloc( FARPROC func, RELAY relay )
         thunk->pushl_eax  = 0x50;
         thunk->jmp        = 0xe9;
         thunk->relay      = (RELAY)((char *)relay - (char *)(&thunk->next));
+        thunk->magic      = CALLTO16_THUNK_MAGIC;
         thunk->next       = firstThunk;
         firstThunk = thunk;
     }
-    return thunk;
+    return (FARPROC)thunk;
 }
 
 
 /***********************************************************************
  *           THUNK_Find
  */
-static THUNK *THUNK_Find( FARPROC func )
+FARPROC THUNK_Find( FARPROC16 func )
 {
     THUNK *thunk = firstThunk;
     while (thunk && (thunk->proc != func)) thunk = thunk->next;
-    return thunk;
+    return (FARPROC)thunk;
 }
 
 
 /***********************************************************************
  *           THUNK_Free
  */
-static void THUNK_Free( THUNK *thunk )
+void THUNK_Free( FARPROC thunk )
 {
-    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, thunk ))
+    THUNK *t = (THUNK*)thunk;
+    if(IsBadReadPtr(&(t->magic), sizeof(t->magic)) ||
+       t->magic != CALLTO16_THUNK_MAGIC)
+         return;
+
+    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, t ))
     {
         THUNK **prev = &firstThunk;
-        while (*prev && (*prev != thunk)) prev = &(*prev)->next;
+        while (*prev && (*prev != t)) prev = &(*prev)->next;
         if (*prev)
         {
-            *prev = thunk->next;
-            HeapFree( GetProcessHeap(), 0, thunk );
+            *prev = t->next;
+            HeapFree( GetProcessHeap(), 0, t );
             return;
         }
     }
     ERR_(thunk)("invalid thunk addr %p\n", thunk );
+    return;
 }
 
+
+/***********************************************************************
+ *           THUNK_GetProc
+ */
+FARPROC16 THUNK_GetProc( FARPROC thunk )
+{
+    return ((THUNK *)thunk)->proc;
+}
 
 /***********************************************************************
  *           THUNK_EnumObjects16   (GDI.71)
@@ -337,7 +324,7 @@ FARPROC16 WINAPI THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HINSTANCE16 hInst = FarGetOwner16( HIWORD(proc) );
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
+    FARPROC thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
     if (!thunk) return 0;
     return (FARPROC16)SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask);
 }
@@ -349,7 +336,7 @@ FARPROC16 WINAPI THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 BOOL16 WINAPI THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     BOOL16 ret;
-    THUNK *thunk = THUNK_Find( (FARPROC16)proc );
+    FARPROC thunk = THUNK_Find( (FARPROC16)proc );
     if (!thunk) return FALSE;
     ret = UnhookWindowsHook16( id, (HOOKPROC16)thunk );
     THUNK_Free( thunk );
@@ -363,7 +350,7 @@ BOOL16 WINAPI THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 HHOOK WINAPI THUNK_SetWindowsHookEx16( INT16 id, HOOKPROC16 proc,
                                        HINSTANCE16 hInst, HTASK16 hTask )
 {
-    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
+    FARPROC thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
     if (!thunk) return 0;
     return SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask );
 }
@@ -374,7 +361,7 @@ HHOOK WINAPI THUNK_SetWindowsHookEx16( INT16 id, HOOKPROC16 proc,
  */
 BOOL16 WINAPI THUNK_UnhookWindowsHookEx16( HHOOK hhook )
 {
-    THUNK *thunk = (THUNK *)HOOK_GetProc16( hhook );
+    FARPROC thunk = (FARPROC)HOOK_GetProc16( hhook );
     BOOL16 ret = UnhookWindowsHookEx16( hhook );
     if (thunk) THUNK_Free( thunk );
     return ret;
@@ -389,7 +376,7 @@ static FARPROC16 defDCHookProc = NULL;
  */
 BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
 {
-    THUNK *thunk, *oldThunk;
+    FARPROC thunk, oldThunk;
 
     if (!defDCHookProc)  /* Get DCHook Win16 entry point */
     {
@@ -409,13 +396,13 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
         thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwll );
         if (!thunk) return FALSE;
     }
-    else thunk = (THUNK *)DCHook16;
+    else thunk = (FARPROC)DCHook16;
 
     /* Free the previous thunk */
     GetDCHook( hdc, (FARPROC16 *)&oldThunk );
-    if (oldThunk && (oldThunk != (THUNK *)DCHook16)) THUNK_Free( oldThunk );
+    if (oldThunk && (oldThunk != (FARPROC)DCHook16)) THUNK_Free( oldThunk );
 
-    return SetDCHook( hdc, (FARPROC16)thunk, dwHookData );
+    return SetDCHook( hdc, thunk, dwHookData );
 }
 
 
@@ -424,11 +411,11 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
  */
 DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 {
-    THUNK *thunk = NULL;
-    DWORD ret = GetDCHook( hdc, (FARPROC16 *)&thunk );
+    FARPROC thunk = NULL;
+    DWORD ret = GetDCHook( hdc, &thunk );
     if (thunk)
     {
-        if (thunk == (THUNK *)DCHook16)
+        if (thunk == (FARPROC)DCHook16)
         {
 	    /* Note: we can only get here when running built-in USER */
 
@@ -437,7 +424,7 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 
             *phookProc = defDCHookProc;
         }
-        else *phookProc = thunk->proc;
+        else *phookProc = THUNK_GetProc(thunk);
     }
     return ret;
 }
@@ -448,13 +435,13 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
  */
 FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
-    THUNK *thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwwww );
+    FARPROC thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwwww );
     if ( !thunk ) return NULL;
 
-    thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)thunk );
+    thunk = (FARPROC)SetTaskSignalProc( hTask, (FARPROC16)thunk );
     if ( !thunk ) return NULL;
 
-    proc = thunk->proc;
+    proc = THUNK_GetProc(thunk);
     THUNK_Free( thunk );
     return proc;
 }
@@ -505,7 +492,7 @@ static VOID WINAPI THUNK_CallMouseEventProc( FARPROC16 proc,
 }
 VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
 {
-    static THUNK *lastThunk = NULL;
+    static FARPROC lastThunk = NULL;
     static FARPROC16 lastProc = NULL;
 
     if ( lastProc != proc )
@@ -567,7 +554,7 @@ static VOID WINAPI THUNK_CallKeybdEventProc( FARPROC16 proc,
 }
 VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 {
-    static THUNK *lastThunk = NULL;
+    static FARPROC lastThunk = NULL;
     static FARPROC16 lastProc = NULL;
 
     if ( lastProc != proc )
@@ -631,7 +618,7 @@ static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 }
 WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
 {
-    THUNK *thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallSystemTimerProc );
+    FARPROC thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallSystemTimerProc );
     WORD timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
     if (!timer) THUNK_Free( thunk );
     return timer;

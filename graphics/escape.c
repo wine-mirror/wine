@@ -22,6 +22,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pEscape) return 0;
+    if(nEscape == SETABORTPROC) SetAbortProc16(hdc, lpszInData);
     return dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
 }
 
@@ -33,15 +34,15 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 {
     SEGPTR	segin,segout;
     INT	ret;
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc || !dc->funcs->pEscape) return 0;
 
     segin	= (SEGPTR)lpszInData;
     segout	= (SEGPTR)lpvOutData;
     switch (nEscape) {
     	/* Escape(hdc,QUERYESCSUPPORT,LPINT,NULL) */
-        /* Escape(hdc,EXT_DEVICE_CAPS,LPINT,NULL) */
         /* Escape(hdc,SETLINECAP,LPINT,NULL) */
     case QUERYESCSUPPORT:
-    case EXT_DEVICE_CAPS:
     case SETLINECAP:
     case SETLINEJOIN:
       {
@@ -63,8 +64,20 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 	cbInput = sizeof(POINT16);
 	break;
 
-      /* Escape(hdc,GETTECHNOLOGY,NULL,LPSTR); */
+        /* Escape(hdc,EXT_DEVICE_CAPS,LPINT,LPDWORD) */
+    case EXT_DEVICE_CAPS:
+      {
+    	LPINT16 lpIndex = (LPINT16)SEGPTR_NEW(INT16);
+	LPDWORD lpCaps = (LPDWORD)SEGPTR_NEW(DWORD);
+	*lpIndex = *(INT*)lpszInData;
+	
+	segin = SEGPTR_GET(lpIndex);
+	segout = SEGPTR_GET(lpCaps);
+ 	cbInput = sizeof(INT16);
+	break;
+      }
 
+      /* Escape(hdc,GETTECHNOLOGY,NULL,LPSTR); */
     case GETTECHNOLOGY: {
         segout = SEGPTR_GET(SEGPTR_ALLOC(200)); /* enough I hope */
         break;
@@ -100,12 +113,16 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 	    segin = 0;
 	break;
 
+    case SETABORTPROC:
+        SetAbortProc(hdc, (ABORTPROC)lpszInData);
+	break;
+
     default:
         break;
 
     }
 
-    ret = Escape16( hdc, nEscape, cbInput, segin, segout );
+    ret = dc->funcs->pEscape( dc, nEscape, cbInput, segin, segout );
 
     switch(nEscape) {
     case QUERYESCSUPPORT:
@@ -113,7 +130,6 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 		TRACE("target DC implements Escape %d\n",nEscape);
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
-    case EXT_DEVICE_CAPS:
     case SETLINECAP:
     case SETLINEJOIN:
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
@@ -126,6 +142,12 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 	SEGPTR_FREE(x);
 	break;
     }
+    case EXT_DEVICE_CAPS:
+        *(LPDWORD)lpvOutData = *(LPDWORD)PTR_SEG_TO_LIN(segout);
+        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+        SEGPTR_FREE(PTR_SEG_TO_LIN(segout));
+	break;
+
     case GETTECHNOLOGY: {
         LPSTR x=PTR_SEG_TO_LIN(segout);
         lstrcpyA(lpvOutData,x);

@@ -19,6 +19,7 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "font.h"
+#include "callback.h"
 #include "winerror.h"
 #include "wine/winuser16.h"
 
@@ -63,8 +64,7 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->GraphicsMode        = GM_COMPATIBLE;
     win_dc_info->DCOrgX              = 0;
     win_dc_info->DCOrgY              = 0;
-    win_dc_info->spfnPrint           = 0;
-    win_dc_info->lpfnPrint           = NULL;
+    win_dc_info->pAbortProc          = NULL;
     win_dc_info->CursPosX            = 0;
     win_dc_info->CursPosY            = 0;
     win_dc_info->ArcDirection        = AD_COUNTERCLOCKWISE;
@@ -285,6 +285,8 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 
     PATH_InitGdiPath( &newdc->w.path );
     
+    newdc->w.pAbortProc = NULL;
+
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
     newdc->w.hGCClipRgn = newdc->w.hVisRgn = 0;
@@ -525,7 +527,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
                debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
+        !dc->funcs->pCreateDC( dc, buf, device, output, initData ))
     {
         WARN("creation aborted by device\n" );
         GDI_HEAP_FREE( dc->hSelf );
@@ -707,7 +709,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
-    
+    if (dc->w.pAbortProc) THUNK_Free( (FARPROC)dc->w.pAbortProc );
     PATH_DestroyGdiPath(&dc->w.path);
     
     return GDI_FreeObject( hdc );

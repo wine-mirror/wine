@@ -21,6 +21,33 @@
 
 DEFAULT_DEBUG_CHANNEL(win16drv)
 
+/* ### start build ### */
+extern WORD CALLBACK PRTDRV_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
+extern WORD CALLBACK PRTDRV_CallTo16_word_lwlll (FARPROC16,LONG,WORD,LONG,LONG,
+						 LONG);
+extern WORD CALLBACK PRTDRV_CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern WORD CALLBACK PRTDRV_CallTo16_word_lwwlllll (FARPROC16,LONG,WORD,WORD,
+						    LONG,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK PRTDRV_CallTo16_long_lwlll (FARPROC16,LONG,WORD,LONG,LONG,
+						 LONG);
+extern WORD CALLBACK PRTDRV_CallTo16_word_lwwwwlwwwwllll (FARPROC16,LONG,WORD,
+							  WORD,WORD,WORD,LONG,
+							  WORD,WORD,WORD,WORD,
+							  LONG,LONG,LONG,LONG);
+extern LONG CALLBACK PRTDRV_CallTo16_long_lwwllwlllllw (FARPROC16,LONG,WORD,
+							WORD,LONG,LONG,WORD,
+							LONG,LONG,LONG,LONG,
+							LONG,WORD);
+extern WORD CALLBACK PRTDRV_CallTo16_word_llwwlll (FARPROC16,LONG,LONG,WORD,
+						   WORD,LONG,LONG,LONG);
+extern WORD CALLBACK PRTDRV_CallTo16_word_wwlllllw (FARPROC16,WORD,WORD,LONG,
+						    LONG,LONG,LONG,LONG,WORD);
+extern LONG CALLBACK PRTDRV_CallTo16_long_llwll (FARPROC16,LONG,LONG,WORD,LONG,
+						 LONG);
+
+/* ### stop build ### */
+
+
 #define MAX_PRINTER_DRIVERS 	16
 static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];
 
@@ -199,9 +226,9 @@ INT16 PRTDRV_Control(LPPDEVICE lpDestDev, WORD wfunction, SEGPTR lpInData, SEGPT
 	    WARN("Not supported by driver\n");
 	    return 0;
 	}
-	wRet = Callbacks->CallDrvControlProc( pLPD->fn[FUNC_CONTROL], 
-                                              (SEGPTR)lpDestDev, wfunction,
-                                              lpInData, lpOutData );
+	wRet = PRTDRV_CallTo16_word_lwll( pLPD->fn[FUNC_CONTROL], 
+					  (SEGPTR)lpDestDev, wfunction,
+					  lpInData, lpOutData );
     }
     TRACE("return %x\n", wRet);
     return wRet;
@@ -246,7 +273,7 @@ WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType,
 	lP4 = SEGPTR_STRDUP(lpOutputFile);
 	lP5 = (LONG)lpData;
         
-	wRet = Callbacks->CallDrvEnableProc(pLPD->fn[FUNC_ENABLE], 
+	wRet = PRTDRV_CallTo16_word_lwlll(pLPD->fn[FUNC_ENABLE], 
 			     (wStyle==INITPDEVICE)?(SEGPTR)lP1:SEGPTR_GET(lP1),
 			     wP2,
 			     SEGPTR_GET(lP3),
@@ -294,8 +321,9 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
 	else
 	    lP2 = NULL;
 	lP4 = (LONG)lpClientData;
-        wRet = Callbacks->CallDrvEnumDFontsProc( pLPD->fn[FUNC_ENUMDFONTS], 
-                                lP1, SEGPTR_GET(lP2), lpCallbackFunc, lP4);
+        wRet = PRTDRV_CallTo16_word_llll( pLPD->fn[FUNC_ENUMDFONTS], 
+					  lP1, SEGPTR_GET(lP2),
+					  (LONG)lpCallbackFunc,lP4);
 	if(lpFaceName)
 	    SEGPTR_FREE(lP2);
     } else 
@@ -317,8 +345,7 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
 
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
-	LONG lP1, lP4;
-        FARPROC16 lP3;
+	LONG lP1, lP3, lP4;
 	WORD wP2;
 
 	if (pLPD->fn[FUNC_ENUMOBJ] == NULL)
@@ -334,12 +361,12 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
 	/* 
 	 * Need to pass addres of function conversion function that will switch back to 32 bit code if necessary
 	 */
-	lP3 = (FARPROC16)lpCallbackFunc; 
+	lP3 = (LONG)lpCallbackFunc; 
 
 	lP4 = (LONG)lpClientData;
         
-        wRet = Callbacks->CallDrvEnumObjProc( pLPD->fn[FUNC_ENUMOBJ], 
-                                              lP1, wP2, lP3, lP4 );
+        wRet = PRTDRV_CallTo16_word_lwll( pLPD->fn[FUNC_ENUMOBJ], 
+					  lP1, wP2, lP3, lP4 );
     }
     else 
         WARN("Failed to find device\n");
@@ -403,9 +430,11 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    GetRegionData( hClipRgn, size, clip );
 	    if( clip->rdh.nCount == 0 )
 	    {
-		wRet = Callbacks->CallDrvOutputProc(pLPD->fn[FUNC_OUTPUT], 
-                                            lP1, wP2, wP3, SEGPTR_GET(lP4),
-                                            lP5, lP6, lP7, (SEGPTR) NULL);
+		wRet = PRTDRV_CallTo16_word_lwwlllll(pLPD->fn[FUNC_OUTPUT], 
+						     lP1, wP2, wP3,
+						     SEGPTR_GET(lP4),
+						     lP5, lP6, lP7,
+						     (SEGPTR) NULL);
 	    }
 	    else
 	    {
@@ -419,9 +448,11 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 
 		    TRACE("rect = %d,%d - %d,%d\n",
 			    lP8->left, lP8->top, lP8->right, lP8->bottom );
-		    wRet = Callbacks->CallDrvOutputProc(pLPD->fn[FUNC_OUTPUT], 
-                                            lP1, wP2, wP3, SEGPTR_GET(lP4),
-                                            lP5, lP6, lP7, SEGPTR_GET(lP8));
+		    wRet = PRTDRV_CallTo16_word_lwwlllll(pLPD->fn[FUNC_OUTPUT],
+							 lP1, wP2, wP3,
+							 SEGPTR_GET(lP4),
+							 lP5, lP6, lP7,
+							 SEGPTR_GET(lP8));
 		}
 		SEGPTR_FREE(lP8);
 	    }
@@ -429,9 +460,10 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	}
 	else
 	{
-	    wRet = Callbacks->CallDrvOutputProc(pLPD->fn[FUNC_OUTPUT], 
-                                            lP1, wP2, wP3, SEGPTR_GET(lP4),
-                                            lP5, lP6, lP7, (SEGPTR) NULL);
+	    wRet = PRTDRV_CallTo16_word_lwwlllll(pLPD->fn[FUNC_OUTPUT], 
+						 lP1, wP2, wP3,
+						 SEGPTR_GET(lP4),
+						 lP5, lP6, lP7, (SEGPTR) NULL);
 	}
         SEGPTR_FREE(lP4);
     }
@@ -507,8 +539,8 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
         lP5 = lpTextXForm;
 	TRACE("Calling Realize %08lx %04x %08lx %08lx %08lx\n",
 		     lP1, wP2, lP3, lP4, lP5);
-	dwRet = Callbacks->CallDrvRealizeProc(pLPD->fn[FUNC_REALIZEOBJECT], 
-                                              lP1, wP2, lP3, lP4, lP5);
+	dwRet = PRTDRV_CallTo16_long_lwlll(pLPD->fn[FUNC_REALIZEOBJECT], 
+					   lP1, wP2, lP3, lP4, lP5);
 	if(lpBuf)
 	    SEGPTR_FREE(lpBuf);
 
@@ -568,11 +600,11 @@ DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
 	}
 	else
 	  lP14 = 0L;
-	wRet = Callbacks->CallDrvStretchBltProc(pLPD->fn[FUNC_STRETCHBLT], 
-                                                lP1, wP2, wP3, wP4, wP5,
-                                                lP6, wP7, wP8, wP9, wP10, 
-                                                lP11, lP12, lP13,
-                                                SEGPTR_GET(lP14));
+	wRet = PRTDRV_CallTo16_word_lwwwwlwwwwllll(pLPD->fn[FUNC_STRETCHBLT], 
+						   lP1, wP2, wP3, wP4, wP5,
+						   lP6, wP7, wP8, wP9, wP10, 
+						   lP11, lP12, lP13,
+						   SEGPTR_GET(lP14));
         SEGPTR_FREE(lP14);
         TRACE("Called StretchBlt ret %d\n",wRet);
     }
@@ -652,12 +684,12 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 		     nSize,lP5, iP6, lP7, lP8);
         TRACE("0x%lx 0x%lx %p 0x%x\n",
 		     lP9, lP10, lP11, wP12);
-	dwRet = Callbacks->CallDrvExtTextOutProc(pLPD->fn[FUNC_EXTTEXTOUT], 
-                                                 lP1, wP2, wP3,
-                                                 SEGPTR_GET(lP4),
-                                                 SEGPTR_GET(lP5), iP6, lP7,
-                                                 lP8, lP9, lP10,
-                                                 SEGPTR_GET(lP11), wP12);
+	dwRet = PRTDRV_CallTo16_long_lwwllwlllllw(pLPD->fn[FUNC_EXTTEXTOUT], 
+						  lP1, wP2, wP3,
+						  SEGPTR_GET(lP4),
+						  SEGPTR_GET(lP5), iP6, lP7,
+						  lP8, lP9, lP10,
+						  SEGPTR_GET(lP11), wP12);
     }
     TRACE("return %lx\n", dwRet);
     return dwRet;
@@ -779,9 +811,9 @@ WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT lpBuffer,
         lP6 = lpDrawMode;
         lP7 = lpTextXForm;
 	
-	wRet = Callbacks->CallDrvGetCharWidthProc(pLPD->fn[FUNC_GETCHARWIDTH], 
-                                                 lP1, SEGPTR_GET(lP2), wP3,
-                                                 wP4, lP5, lP6, lP7 );
+	wRet = PRTDRV_CallTo16_word_llwwlll(pLPD->fn[FUNC_GETCHARWIDTH], 
+					    lP1, SEGPTR_GET(lP2), wP3,
+					    wP4, lP5, lP6, lP7 );
 
 	for(i = 0; i <= wLastChar - wFirstChar; i++)
 	    lpBuffer[i] = (INT) lP2[i];
@@ -819,7 +851,7 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
       /* We don't know how big this will be so we call the driver's
 	 ExtDeviceMode to find out */
 
-	wOutSize = Callbacks->CallDrvExtDeviceModeProc(
+	wOutSize = PRTDRV_CallTo16_word_wwlllllw(
 	    pLPD->fn[FUNC_EXTDEVICEMODE], hwnd, pLPD->hInst, 0,
 	    SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort), 0,
 	    SEGPTR_GET(lpSegProfile), 0 );
@@ -832,14 +864,14 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 	memcpy(lpSegIn, lpdmInput, lpdmInput->dmSize +
 	       lpdmInput->dmDriverExtra);
     }
-    wRet = Callbacks->CallDrvExtDeviceModeProc( pLPD->fn[FUNC_EXTDEVICEMODE],
-						hwnd, pLPD->hInst,
-						SEGPTR_GET(lpSegOut),
-						SEGPTR_GET(lpSegDevice),
-						SEGPTR_GET(lpSegPort),
-						SEGPTR_GET(lpSegIn),
-						SEGPTR_GET(lpSegProfile),
-						dwMode );
+    wRet = PRTDRV_CallTo16_word_wwlllllw( pLPD->fn[FUNC_EXTDEVICEMODE],
+					  hwnd, pLPD->hInst,
+					  SEGPTR_GET(lpSegOut),
+					  SEGPTR_GET(lpSegDevice),
+					  SEGPTR_GET(lpSegPort),
+					  SEGPTR_GET(lpSegIn),
+					  SEGPTR_GET(lpSegProfile),
+					  dwMode );
     if(lpSegOut) {
         memcpy(lpdmOutput, lpSegOut, wOutSize);
 	SEGPTR_FREE(lpSegOut);
@@ -890,7 +922,7 @@ DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 	       lpDevMode->dmDriverExtra);
     }
 
-    dwRet = Callbacks->CallDrvDeviceCapabilitiesProc(
+    dwRet = PRTDRV_CallTo16_long_llwll(
 	    pLPD->fn[FUNC_DEVICECAPABILITIES],
 	    SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort),
 	    fwCapability, 0, SEGPTR_GET(lpSegdm) );
@@ -963,7 +995,7 @@ DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 
     if(OutputSize && lpszOutput) {
         lpSegOut = SEGPTR_ALLOC(OutputSize);
-	dwRet = Callbacks->CallDrvDeviceCapabilitiesProc(
+	dwRet = PRTDRV_CallTo16_long_llwll(
 					pLPD->fn[FUNC_DEVICECAPABILITIES],
 					SEGPTR_GET(lpSegDevice),
 					SEGPTR_GET(lpSegPort),

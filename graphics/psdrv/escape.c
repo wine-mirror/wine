@@ -81,7 +81,6 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case SETABORTPROC:
         TRACE("SETABORTPROC\n");
-	dc->w.spfnPrint = (FARPROC16)lpInData;
 	return 1;
 
     case STARTDOC:
