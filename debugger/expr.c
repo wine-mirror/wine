@@ -333,17 +333,7 @@ DEBUG_EvalExpr(struct expr * exp)
     case EXPR_TYPE_SYMBOL:
       if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
 	{    
-#if 1
 	   RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
-#else
-	   static        char    ret[128];
-
-	   /* FIXME: this is an ugly hack... but at least we know
-	    * the symbol is not defined
-	    */
-	   sprintf(ret, "\"Symbol %s is not defined.\"", exp->un.symbol.name);
-	   rtn = DEBUG_EvalExpr(DEBUG_StringExpr(ret));
-#endif
 	}
       break;
     case EXPR_TYPE_PSTRUCT:
