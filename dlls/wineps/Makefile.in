@@ -57,8 +57,10 @@ C_SRCS = \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
+	builtin.c \
 	clipping.c \
 	color.c \
+	download.c \
 	driver.c \
 	escape.c \
 	font.c \
@@ -71,7 +73,9 @@ C_SRCS = \
 	ps.c \
 	text.c \
 	truetype.c \
+	type1.c \
 	type1afm.c \
+	type42.c \
 	$(DATA_C_SRCS)
 
 RC_SRCS= rsrc.rc

@@ -246,6 +246,7 @@ INT PSDRV_EndPage( PSDRV_PDEVICE *physDev )
     }
     if(!PSDRV_WriteEndPage( physDev ))
         return 0;
+    PSDRV_EmptyDownloadList(physDev);
     physDev->job.OutOfPage = TRUE;
     return 1;
 }

@@ -25,7 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT count,
+static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
+		       LPCWSTR str, UINT count,
 		       BOOL bDrawBackground, const INT *lpDx);
 
 /***********************************************************************
@@ -70,12 +71,12 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	    PSDRV_WriteClip(physDev);
 	}
 
-	bResult = PSDRV_Text(physDev, x, y, str, count, !(bClipped && bOpaque), lpDx);
+	bResult = PSDRV_Text(physDev, x, y, flags, str, count, !(bClipped && bOpaque), lpDx);
 	PSDRV_WriteGRestore(physDev);
     }
     else
     {
-	bResult = PSDRV_Text(physDev, x, y, str, count, TRUE, lpDx);
+	bResult = PSDRV_Text(physDev, x, y, flags, str, count, TRUE, lpDx);
     }
 
     return bResult;
@@ -84,21 +85,28 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 /***********************************************************************
  *           PSDRV_Text
  */
-static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT count,
-		       BOOL bDrawBackground, const INT *lpDx)
+static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR str,
+		       UINT count, BOOL bDrawBackground, const INT *lpDx)
 {
-    LPWSTR strbuf;
     SIZE sz;
+    TEXTMETRICW tm;
+    POINT pt;
+    INT ascent, descent;
+    WORD *glyphs = NULL;
     DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
 
     if (!count)
 	return TRUE;
 
-    strbuf = HeapAlloc( PSDRV_Heap, 0, (count + 1) * sizeof(WCHAR));
-    if(!strbuf) {
-        WARN("HeapAlloc failed\n");
-        return FALSE;
+
+    if(physDev->font.fontloc == Download) {
+        if(flags & ETO_GLYPH_INDEX)
+	    glyphs = (LPWORD)str;
+	else {
+	    glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
+	    GetGlyphIndicesW(physDev->hdc, str, count, glyphs, 0);
+	}
     }
 
     if(align & TA_UPDATECP) {
@@ -106,15 +114,25 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 	y = dc->CursPosY;
     }
 
-    x = INTERNAL_XWPTODP(dc, x, y);
-    y = INTERNAL_YWPTODP(dc, x, y);
+    pt.x = x;
+    pt.y = y;
+    LPtoDP(physDev->hdc, &pt, 1);
+    x = pt.x;
+    y = pt.y;
 
-    GetTextExtentPoint32W(physDev->hdc, str, count, &sz);
+    if(physDev->font.fontloc == Download)
+        GetTextExtentPointI(physDev->hdc, glyphs, count, &sz);
+    else
+        GetTextExtentPoint32W(physDev->hdc, str, count, &sz);
+
     if(lpDx) {
         SIZE tmpsz;
 	INT i;
 	/* Get the width of the last char and add on all the offsets */
-	GetTextExtentPoint32W(physDev->hdc, str + count - 1, 1, &tmpsz);
+	if(physDev->font.fontloc == Download)
+	    GetTextExtentPointI(physDev->hdc, glyphs + count - 1, 1, &tmpsz);
+	else
+	    GetTextExtentPoint32W(physDev->hdc, str + count - 1, 1, &tmpsz);
 	for(i = 0; i < count-1; i++)
 	    tmpsz.cx += lpDx[i];
 	sz.cx = tmpsz.cx; /* sz.cy remains untouched */
@@ -122,6 +140,11 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 
     sz.cx = INTERNAL_XWSTODS(dc, sz.cx);
     sz.cy = INTERNAL_YWSTODS(dc, sz.cy);
+
+    GetTextMetricsW(physDev->hdc, &tm);
+    ascent = INTERNAL_YWSTODS(dc, tm.tmAscent);
+    descent = INTERNAL_YWSTODS(dc, tm.tmDescent);
+
     TRACE("textAlign = %x\n", align);
     switch(align & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
     case TA_LEFT:
@@ -144,27 +167,23 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 
     switch(align & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
     case TA_TOP:
-        y += physDev->font.tm.tmAscent;
+        y += ascent;
 	break;
 
     case TA_BASELINE:
 	break;
 
     case TA_BOTTOM:
-        y -= physDev->font.tm.tmDescent;
+        y -= descent;
 	break;
     }
-
-    memcpy(strbuf, str, count * sizeof(WCHAR));
-    *(strbuf + count) = '\0';
 
     if ((GetBkMode( physDev->hdc ) != TRANSPARENT) && bDrawBackground)
     {
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteNewPath(physDev);
-	PSDRV_WriteRectangle(physDev, x, y - physDev->font.tm.tmAscent, sz.cx,
-			     physDev->font.tm.tmAscent +
-			     physDev->font.tm.tmDescent);
+	PSDRV_WriteRectangle(physDev, x, y - ascent, sz.cx,
+			     ascent + descent);
 	PSDRV_WriteSetColor(physDev, &physDev->bkColor);
 	PSDRV_WriteFill(physDev);
 	PSDRV_WriteGRestore(physDev);
@@ -172,8 +191,12 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 
     PSDRV_WriteMoveTo(physDev, x, y);
 
-    if(!lpDx)
-        PSDRV_WriteGlyphShow(physDev, strbuf, lstrlenW(strbuf));
+    if(!lpDx) {
+        if(physDev->font.fontloc == Download)
+	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs, count);
+	else
+	    PSDRV_WriteBuiltinGlyphShow(physDev, str, count);
+    }
     else {
         INT i;
 	float dx = 0.0, dy = 0.0;
@@ -181,39 +204,34 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);
         for(i = 0; i < count-1; i++) {
 	    TRACE("lpDx[%d] = %d\n", i, lpDx[i]);
-	    PSDRV_WriteGlyphShow(physDev, &strbuf[i], 1);
+	    if(physDev->font.fontloc == Download)
+	        PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
+	    else
+	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
 	    dx += lpDx[i] * cos_theta;
 	    dy -= lpDx[i] * sin_theta;
 	    PSDRV_WriteMoveTo(physDev, x + INTERNAL_XWSTODS(dc, dx),
 			      y + INTERNAL_YWSTODS(dc, dy));
 	}
-	PSDRV_WriteGlyphShow(physDev, &strbuf[i], 1);
+	if(physDev->font.fontloc == Download)
+	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
+	else
+	    PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
     }
 
     /*
      * Underline and strikeout attributes.
      */
-    if ((physDev->font.tm.tmUnderlined) || (physDev->font.tm.tmStruckOut)) {
+    if ((tm.tmUnderlined) || (tm.tmStruckOut)) {
 
         /* Get the thickness and the position for the underline attribute */
         /* We'll use the same thickness for the strikeout attribute       */
 
-        float thick = physDev->font.afm->UnderlineThickness * physDev->font.scale;
-        float pos   = -physDev->font.afm->UnderlinePosition * physDev->font.scale;
-        SIZE size;
         INT escapement =  physDev->font.escapement;
-
-        TRACE("Position = %f Thickness %f Escapement %d\n",
-              pos, thick, escapement);
-
-        /* Get the width of the text */
-
-        PSDRV_GetTextExtentPoint(physDev, strbuf, lstrlenW(strbuf), &size);
-        size.cx = INTERNAL_XWSTODS(dc, size.cx);
 
         /* Do the underline */
 
-        if (physDev->font.tm.tmUnderlined) {
+        if (tm.tmUnderlined) {
             PSDRV_WriteNewPath(physDev); /* will be closed by WriteRectangle */
             if (escapement != 0)  /* rotated text */
             {
@@ -224,10 +242,12 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
                 PSDRV_WriteRotate(physDev, -escapement/10);
 
                 /* draw the underline relative to the starting point */
-                PSDRV_WriteRRectangle(physDev, 0, (INT)pos, size.cx, (INT)thick);
+                PSDRV_WriteRRectangle(physDev, 0, -physDev->font.underlinePosition,
+				      sz.cx, physDev->font.underlineThickness);
             }
             else
-                PSDRV_WriteRectangle(physDev, x, y + (INT)pos, size.cx, (INT)thick);
+                PSDRV_WriteRectangle(physDev, x, y - physDev->font.underlinePosition,
+				     sz.cx, physDev->font.underlineThickness);
 
             PSDRV_WriteFill(physDev);
 
@@ -237,8 +257,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 
         /* Do the strikeout */
 
-        if (physDev->font.tm.tmStruckOut) {
-            pos = -physDev->font.tm.tmAscent / 2;
+        if (tm.tmStruckOut) {
             PSDRV_WriteNewPath(physDev); /* will be closed by WriteRectangle */
             if (escapement != 0)  /* rotated text */
             {
@@ -248,11 +267,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
                 /* temporarily rotate the coord system */
                 PSDRV_WriteRotate(physDev, -escapement/10);
 
-                /* draw the underline relative to the starting point */
-                PSDRV_WriteRRectangle(physDev, 0, (INT)pos, size.cx, (INT)thick);
+                /* draw the line relative to the starting point */
+                PSDRV_WriteRRectangle(physDev, 0, -physDev->font.strikeoutPosition,
+				      sz.cx, physDev->font.strikeoutThickness);
             }
             else
-                PSDRV_WriteRectangle(physDev, x, y + (INT)pos, size.cx, (INT)thick);
+                PSDRV_WriteRectangle(physDev, x, y - physDev->font.strikeoutPosition,
+				     sz.cx, physDev->font.strikeoutThickness);
 
             PSDRV_WriteFill(physDev);
 
@@ -261,6 +282,6 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
         }
     }
 
-    HeapFree(PSDRV_Heap, 0, strbuf);
+    if(glyphs && glyphs != str) HeapFree(GetProcessHeap(), 0, glyphs);
     return TRUE;
 }

@@ -1,0 +1,299 @@
+/*
+ *	PostScript driver Type1 font functions
+ *
+ *	Copyright 2002  Huw D M Davies for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include "winspool.h"
+#include "psdrv.h"
+#include "wine/debug.h"
+#include "winerror.h"
+#include "config.h"
+#include "wine/port.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
+
+struct tagTYPE1 {
+    DWORD glyph_sent_size;
+    BOOL *glyph_sent;
+    DWORD emsize;
+    HFONT unscaled_font;
+};
+
+#define GLYPH_SENT_INC 128
+
+/* Type 1 font commands */
+enum t1_cmds {
+    rlineto = 5,
+    rrcurveto = 8,
+    closepath = 9,
+    hsbw = 13,
+    endchar = 14,
+    rmoveto = 21
+};
+
+
+TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
+			  char *ps_name)
+{
+    char *buf;
+    TYPE1 *t1;
+    LOGFONTW lf;
+
+    char dict[] = /* name, emsquare, fontbbox */
+      "25 dict begin\n"
+      " /FontName /%s def\n"
+      " /Encoding 256 array 0 1 255{1 index exch /.notdef put} for def\n"
+      " /PaintType 0 def\n"
+      " /FontMatrix [1 %d div 0 0 1 %d div 0 0] def\n"
+      " /FontBBox [%d %d %d %d] def\n"
+      " /FontType 1 def\n"
+      " /Private 7 dict begin\n"
+      "  /RD {string currentfile exch readhexstring pop} def\n"
+      "  /ND {def} def\n"
+      "  /NP {put} def\n"
+      "  /MinFeature {16 16} def\n"
+      "  /BlueValues [] def\n"
+      "  /password 5839 def\n"
+      "  /lenIV -1 def\n"
+      " currentdict end def\n"
+      " currentdict dup /Private get begin\n"
+      "  /CharStrings 256 dict begin\n"
+      "   /.notdef 4 RD 8b8b0d0e ND\n"
+      "  currentdict end put\n"
+      " end\n"
+      "currentdict end dup /FontName get exch definefont pop\n";
+
+    t1 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t1));
+    t1->emsize = potm->otmEMSquare;
+
+    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
+    lf.lfHeight = -t1->emsize;
+    t1->unscaled_font = CreateFontIndirectW(&lf);
+    t1->glyph_sent_size = GLYPH_SENT_INC;
+    t1->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+			       t1->glyph_sent_size *
+			       sizeof(*(t1->glyph_sent)));
+
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(dict) + strlen(ps_name) +
+		    100);
+
+    sprintf(buf, dict, ps_name, t1->emsize, t1->emsize,
+	    potm->otmrcFontBox.left, potm->otmrcFontBox.bottom,
+	    potm->otmrcFontBox.right, potm->otmrcFontBox.top);
+
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+
+    HeapFree(GetProcessHeap(), 0, buf);
+    return t1;
+}
+
+
+typedef struct {
+  BYTE *str;
+  int len, max_len;
+} STR;
+
+static STR *str_init(int sz)
+{
+  STR *str = HeapAlloc(GetProcessHeap(), 0, sizeof(*str));
+  str->max_len = sz;
+  str->str = HeapAlloc(GetProcessHeap(), 0, str->max_len);
+  str->len = 0;
+  return str;
+}
+
+static void str_free(STR *str)
+{
+  HeapFree(GetProcessHeap(), 0, str->str);
+  HeapFree(GetProcessHeap(), 0, str);
+}
+
+static void str_add_byte(STR *str, BYTE b)
+{
+    if(str->len == str->max_len) {
+        str->max_len *= 2;
+	str->str = HeapReAlloc(GetProcessHeap(), 0, str->str, str->max_len);
+    }
+    str->str[str->len++] = b;
+}
+
+static void str_add_num(STR *str, int num)
+{
+    if(num <= 107 && num >= -107)
+        str_add_byte(str, num + 139);
+    else if(num >= 108 && num <= 1131) {
+        str_add_byte(str, ((num - 108) >> 8) + 247);
+	str_add_byte(str, (num - 108) & 0xff);
+    } else if(num <= -108 && num >= -1131) {
+        num = -num;
+	str_add_byte(str, ((num - 108) >> 8) + 251);
+	str_add_byte(str, (num - 108) & 0xff);
+    } else {
+        str_add_byte(str, 0xff);
+	str_add_byte(str, (num >> 24) & 0xff);
+	str_add_byte(str, (num >> 16) & 0xff);
+	str_add_byte(str, (num >> 8) & 0xff);
+	str_add_byte(str, (num & 0xff));
+    }
+}
+
+static void str_add_point(STR *str, POINTFX *pt, POINT *curpos)
+{
+    POINT newpos;
+    newpos.x = pt->x.value + ((pt->x.fract >> 15) & 0x1);
+    newpos.y = pt->y.value + ((pt->y.fract >> 15) & 0x1);
+
+    str_add_num(str, newpos.x - curpos->x);
+    str_add_num(str, newpos.y - curpos->y);
+    *curpos = newpos;
+}
+
+static void str_add_cmd(STR *str, enum t1_cmds cmd)
+{
+    str_add_byte(str, (BYTE)cmd);
+}
+
+static int str_get_bytes(STR *str, BYTE **b)
+{
+  *b = str->str;
+  return str->len;
+}
+
+BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
+		       char *glyph_name)
+{
+    DWORD len, i;
+    char *buf;
+    TYPE1 *t1;
+    STR *charstring;
+    BYTE *bytes;
+    HFONT old_font;
+    GLYPHMETRICS gm;
+    char *glyph_buf;
+    POINT curpos;
+    TTPOLYGONHEADER *pph;
+    TTPOLYCURVE *ppc;
+    char glyph_def_begin[] = 
+      "/%s findfont dup\n"
+      "/Private get begin\n"
+      "/CharStrings get begin\n"
+      "/%s %d RD\n";
+    char glyph_def_end[] =
+      "ND\n"
+      "end end\n";
+
+    TRACE("%ld %s\n", index, glyph_name);
+    assert(pdl->type == Type1);
+    t1 = pdl->typeinfo.Type1;
+
+    if(index < t1->glyph_sent_size) {
+        if(t1->glyph_sent[index])
+	    return TRUE;
+    } else {
+        t1->glyph_sent_size = (index / GLYPH_SENT_INC + 1) * GLYPH_SENT_INC;
+	t1->glyph_sent = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				      t1->glyph_sent,
+				      t1->glyph_sent_size * sizeof(*(t1->glyph_sent)));
+    }
+
+    old_font = SelectObject(physDev->hdc, t1->unscaled_font);
+    len = GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
+			   &gm, 0, NULL, NULL);
+    if(len == GDI_ERROR) return FALSE;
+    glyph_buf = HeapAlloc(GetProcessHeap(), 0, len);
+    GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
+		     &gm, len, glyph_buf, NULL);
+
+    SelectObject(physDev->hdc, old_font);
+
+    charstring = str_init(100);
+
+    curpos.x = gm.gmptGlyphOrigin.x;
+    curpos.y = 0;
+
+    str_add_num(charstring, curpos.x);
+    str_add_num(charstring, gm.gmCellIncX);
+    str_add_cmd(charstring, hsbw);
+
+    pph = (TTPOLYGONHEADER*)glyph_buf;
+    while((char*)pph < glyph_buf + len) {
+        TRACE("contour len %ld\n", pph->cb);
+	ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
+
+	str_add_point(charstring, &pph->pfxStart, &curpos);
+	str_add_cmd(charstring, rmoveto);
+
+	while((char*)ppc < (char*)pph + pph->cb) {
+	    TRACE("line type %d cpfx = %d\n", ppc->wType, ppc->cpfx);
+	    switch(ppc->wType) {
+	    case TT_PRIM_LINE:
+	        for(i = 0; i < ppc->cpfx; i++) {
+		    str_add_point(charstring, ppc->apfx + i, &curpos);
+		    str_add_cmd(charstring, rlineto);
+		}
+		break;
+	    case TT_PRIM_CSPLINE:
+	        for(i = 0; i < ppc->cpfx/3; i++) {
+		    str_add_point(charstring, ppc->apfx + 3 * i, &curpos);
+		    str_add_point(charstring, ppc->apfx + 3 * i + 1, &curpos);
+		    str_add_point(charstring, ppc->apfx + 3 * i + 2, &curpos);
+		    str_add_cmd(charstring, rrcurveto);
+		}
+		break;
+	    default:
+	        ERR("curve type = %d\n", ppc->wType);
+		return FALSE;
+	    }
+	    ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
+				 (ppc->cpfx - 1) * sizeof(POINTFX));
+	}
+	str_add_cmd(charstring, closepath);
+	pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
+    }
+    str_add_cmd(charstring, endchar);
+
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def_begin) +
+		    strlen(pdl->ps_name) + strlen(glyph_name) + 100);
+
+    sprintf(buf, "%%%%glyph %04lx\n", index);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+
+    len = str_get_bytes(charstring, &bytes);
+    sprintf(buf, glyph_def_begin, pdl->ps_name, glyph_name, len);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteBytes(physDev, bytes, len);
+    sprintf(buf, glyph_def_end);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    str_free(charstring);
+
+    t1->glyph_sent[index] = TRUE;
+    HeapFree(GetProcessHeap(), 0, glyph_buf);
+    HeapFree(GetProcessHeap(), 0, buf);
+    return TRUE;
+}
+
+void T1_free(TYPE1 *t1)
+{
+    HeapFree(GetProcessHeap(), 0, t1->glyph_sent);
+    DeleteObject(t1->unscaled_font);
+    HeapFree(GetProcessHeap(), 0, t1);
+    return;
+}

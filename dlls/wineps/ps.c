@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include "gdi.h"
 #include "psdrv.h"
 #include "winspool.h"
 #include "wine/debug.h"
@@ -428,21 +429,20 @@ BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h, double a
     return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev)
+
+BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size, INT escapement)
 {
     char *buf;
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0,
-	     sizeof(pssetfont) + strlen(physDev->font.afm->FontName) + 40);
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(pssetfont) +
+			     strlen(name) + 40);
 
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return FALSE;
     }
 
-    sprintf(buf, pssetfont, physDev->font.afm->FontName,
-		physDev->font.size, -physDev->font.size,
-	        -physDev->font.escapement);
+    sprintf(buf, pssetfont, name, size, -size, -escapement);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
     HeapFree(PSDRV_Heap, 0, buf);
@@ -487,28 +487,19 @@ BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev)
     return TRUE;
 }
 
-BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count)
+BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCSTR g_name)
 {
     char    buf[128];
-    int     i;
+    int     l;
 
-    for (i = 0; i < count; ++i)
-    {
-    	LPCSTR	name;
-	int 	l;
+    l = snprintf(buf, sizeof(buf), psglyphshow, g_name);
 
-	name = PSDRV_UVMetrics(str[i], physDev->font.afm)->N->sz;
-	l = snprintf(buf, sizeof(buf), psglyphshow, name);
-
-	if (l < sizeof(psglyphshow) - 2 || l > sizeof(buf) - 1)
-	{
-	    WARN("Unusable glyph name '%s' - ignoring\n", name);
-	    continue;
-	}
-
-	PSDRV_WriteSpool(physDev, buf, l);
+    if (l < sizeof(psglyphshow) - 2 || l > sizeof(buf) - 1) {
+	WARN("Unusable glyph name '%s' - ignoring\n", g_name);
+	return FALSE;
     }
 
+    PSDRV_WriteSpool(physDev, buf, l);
     return TRUE;
 }
 
@@ -807,6 +798,54 @@ BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
     for(y = h-1; y >= 0; y--) {
         for(x = 0; x < w/8; x++) {
 	    sprintf(ptr, "%02x", *(bits + x/8 + y * bm->bmWidthBytes));
+	    ptr += 2;
+	}
+    }
+    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf);
+    PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage)
+{
+    char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
+
+    char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    char *buf, *ptr;
+    BYTE *bits;
+    INT w, h, x, y, colours;
+    COLORREF map[2];
+
+    if(bmi->bmiHeader.biBitCount != 1) {
+        FIXME("dib depth %d not supported\n", bmi->bmiHeader.biBitCount);
+	return FALSE;
+    }
+
+    bits = (char*)bmi + bmi->bmiHeader.biSize;
+    colours = bmi->bmiHeader.biClrUsed;
+    if(!colours && bmi->bmiHeader.biBitCount <= 8)
+        colours = 1 << bmi->bmiHeader.biBitCount;
+    bits += colours * ((usage == DIB_RGB_COLORS) ?
+		       sizeof(RGBQUAD) : sizeof(WORD));
+
+    w = bmi->bmiHeader.biWidth & ~0x7;
+    h = bmi->bmiHeader.biHeight & ~0x7;
+
+    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(start) + 100);
+    sprintf(buf, start, w, h, w, h);
+    PSDRV_WriteSpool(physDev,  buf, strlen(buf));
+    PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
+    map[0] = physDev->dc->textColor;
+    map[1] = physDev->dc->backgroundColor;
+    PSDRV_WriteRGB(physDev, map, 2);
+    PSDRV_WriteIndexColorSpaceEnd(physDev);
+    ptr = buf;
+    for(y = h-1; y >= 0; y--) {
+        for(x = 0; x < w/8; x++) {
+	    sprintf(ptr, "%02x", *(bits + x/8 + y *
+				   (bmi->bmiHeader.biWidth + 31) / 32 * 4));
 	    ptr += 2;
 	}
     }

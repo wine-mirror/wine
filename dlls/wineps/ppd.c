@@ -778,6 +778,22 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    tuple.value = NULL;
 	}
 
+	else if(!strcmp("*TTRasterizer", tuple.key)) {
+	    if(!strcasecmp("None", tuple.value))
+	        ppd->TTRasterizer = RO_None;
+	    else if(!strcasecmp("Accept68K", tuple.value))
+	        ppd->TTRasterizer = RO_Accept68K;
+	    else if(!strcasecmp("Type42", tuple.value))
+	        ppd->TTRasterizer = RO_Type42;
+	    else if(!strcasecmp("TrueImage", tuple.value))
+	        ppd->TTRasterizer = RO_TrueImage;
+	    else {
+	        FIXME("Unknown option %s for *TTRasterizer\n",
+		      tuple.value);
+		ppd->TTRasterizer = RO_None;
+	    }
+	}
+
 	if(tuple.key) HeapFree(PSDRV_Heap, 0, tuple.key);
 	if(tuple.option) HeapFree(PSDRV_Heap, 0, tuple.option);
 	if(tuple.value) HeapFree(PSDRV_Heap, 0, tuple.value);

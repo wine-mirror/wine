@@ -335,7 +335,10 @@ fwMode);
     FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
 
   if((fwMode & DM_COPY) || (fwMode & DM_UPDATE)) {
-    memcpy(lpdmOutput, pi->Devmode, sizeof(DEVMODEA));
+    if (lpdmOutput)
+        memcpy(lpdmOutput, pi->Devmode, sizeof(DEVMODEA));
+    else
+        FIXME("lpdmOutput is NULL what should we do??\n");
   }
   return IDOK;
 }

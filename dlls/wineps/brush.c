@@ -49,7 +49,7 @@ HBRUSH PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
         break;
 
     case BS_PATTERN:
-        FIXME("Unsupported brush style %d\n", logbrush.lbStyle);
+    case BS_DIBPATTERN:
 	break;
 
     default:
@@ -226,13 +226,28 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 	}
 	break;
 
+    case BS_DIBPATTERN:
+        {
+	    BITMAPINFO *bmi = GlobalLock16(logbrush.lbHatch);
+	    UINT usage = logbrush.lbColor;
+	    TRACE("size %ldx%ldx%d\n", bmi->bmiHeader.biWidth,
+		  bmi->bmiHeader.biHeight, bmi->bmiHeader.biBitCount);
+	    if(physDev->pi->ppd->LanguageLevel > 1) {
+	        PSDRV_WriteGSave(physDev);
+		ret = PSDRV_WriteDIBPatternDict(physDev, bmi, usage);
+		PSDRV_Fill(physDev, EO);
+		PSDRV_WriteGRestore(physDev);
+	    } else {
+	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
+		ret = FALSE;
+	    }
+	    GlobalUnlock16(logbrush.lbHatch);
+	}
+	break;
+
     default:
         ret = FALSE;
 	break;
     }
     return ret;
 }
-
-
-
-

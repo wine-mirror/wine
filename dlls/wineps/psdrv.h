@@ -169,6 +169,9 @@ typedef struct _tagINPUTSLOT {
     struct _tagINPUTSLOT	*next;
 } INPUTSLOT;
 
+typedef enum _RASTERIZEROPTION
+  {RO_None, RO_Accept68K, RO_Type42, RO_TrueImage} RASTERIZEROPTION;
+
 typedef struct {
     char		*NickName;
     int			LanguageLevel;
@@ -184,6 +187,7 @@ typedef struct {
     OPTION		*InstalledOptions;
     CONSTRAINT		*Constraints;
     INPUTSLOT		*InputSlots;
+    RASTERIZEROPTION    TTRasterizer;
 } PPD;
 
 typedef struct {
@@ -236,12 +240,50 @@ typedef struct {
 
 typedef struct {
     const AFM           *afm;
-    TEXTMETRICW         tm;
-    INT                 size;
     float               scale;
-    INT                 escapement;
+    TEXTMETRICW         tm;
+} BUILTIN;
+
+typedef struct tagTYPE42 TYPE42;
+
+typedef struct tagTYPE1 TYPE1;
+
+enum downloadtype {
+  Type1, Type42
+};
+
+typedef struct _tagDOWNLOAD {
+  enum downloadtype type;
+  union {
+    TYPE1  *Type1;
+    TYPE42 *Type42;
+  } typeinfo;
+  char *ps_name;
+  struct _tagDOWNLOAD *next;
+} DOWNLOAD;
+
+enum fontloc {
+  Builtin, Download
+};
+
+typedef struct {
+    enum fontloc        fontloc;
+    union {
+        BUILTIN  Builtin;
+        DOWNLOAD *Download;
+    }                   fontinfo;
+
+    int                 size;
     PSCOLOR             color;
     BOOL                set;		/* Have we done a setfont yet */
+
+  /* These are needed by PSDRV_ExtTextOut */
+    int                 escapement;
+    int                 underlineThickness;
+    int                 underlinePosition;
+    int                 strikeoutThickness;
+    int                 strikeoutPosition;
+
 } PSFONT;
 
 typedef struct {
@@ -269,6 +311,7 @@ typedef struct {
     HDC                 hdc;
     struct tagDC       *dc;
     PSFONT		font;		/* Current PS font */
+    DOWNLOAD            *downloaded_fonts;
     PSPEN		pen;
     PSBRUSH		brush;
     PSCOLOR		bkColor;
@@ -355,8 +398,9 @@ extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width
 			INT height);
 extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
 			INT height);
-extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev);
-extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count);
+extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size,
+                               INT escapement);
+extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCSTR g_name);
 extern BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2);
@@ -387,6 +431,7 @@ extern BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int nu
 extern BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
 extern int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch);
 extern BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits);
+extern BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage);
 extern BOOL PSDRV_WriteArrayPut(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex, LONG lCoord);
 extern BOOL PSDRV_WriteArrayDef(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nSize);
 
@@ -453,6 +498,31 @@ BOOL PSDRV_GetType1Metrics(void);
 const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm);
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm);
 
+extern BOOL PSDRV_SelectBuiltinFont(PSDRV_PDEVICE *physDev, HFONT hfont,
+				    LOGFONTW *plf, LPSTR FaceName);
+extern BOOL PSDRV_WriteSetBuiltinFont(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteBuiltinGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count);
+
+extern BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glpyhs,
+					 UINT count);
+extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev);
+
+#define MAX_G_NAME 31 /* max length of PS glyph name */
+extern void get_glyph_name(HDC hdc, WORD index, char *name);
+
+extern TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev,
+				 LPOUTLINETEXTMETRICA potm,
+				 char *ps_name);
+extern BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
+			      DWORD index, char *glyph_name);
+extern void T1_free(TYPE1 *t1);
+
+extern TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev,
+				   LPOUTLINETEXTMETRICA ptom,
+				   char *ps_name);
+extern BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
+			       DWORD index, char *glyph_name);
+extern void T42_free(TYPE42 *t42);
 #endif
-
-
