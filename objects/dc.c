@@ -242,7 +242,7 @@ static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
  */
 void DC_UpdateXforms( DC *dc )
 {
-    XFORM xformWnd2Vport;
+    XFORM xformWnd2Vport, oldworld2vport;
     FLOAT scaleX, scaleY;
 
     /* Construct a transformation to do the window-to-viewport conversion */
@@ -257,6 +257,7 @@ void DC_UpdateXforms( DC *dc )
     xformWnd2Vport.eDy  = (FLOAT)dc->vportOrgY -
         scaleY * (FLOAT)dc->wndOrgY;
 
+    oldworld2vport = dc->xformWorld2Vport;
     /* Combine with the world transformation */
     CombineTransform( &dc->xformWorld2Vport, &dc->xformWorld2Wnd,
         &xformWnd2Vport );
@@ -267,7 +268,8 @@ void DC_UpdateXforms( DC *dc )
 
     /* Reselect the font back into the dc so that the font size
        gets updated. */
-    SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
+    if(memcmp(&oldworld2vport, &dc->xformWorld2Vport, sizeof(oldworld2vport)))
+        SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
 }
 
 
