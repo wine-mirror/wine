@@ -2937,7 +2937,10 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       
     case WM_LBUTTONUP:
       return TAB_LButtonUp (hwnd, wParam, lParam);
-      
+     
+    case WM_NOTIFY:
+      return SendMessageA(GetParent(hwnd), WM_NOTIFY, wParam, lParam);
+ 
     case WM_RBUTTONDOWN:
       return TAB_RButtonDown (hwnd, wParam, lParam);
       
@@ -2977,7 +2980,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (uMsg >= WM_USER)
 	WARN("unknown msg %04x wp=%08x lp=%08lx\n",
 	     uMsg, wParam, lParam);
-      return SendMessageA(GetParent(hwnd), uMsg, wParam, lParam);
+      return DefWindowProcA(hwnd, uMsg, wParam, lParam);
     }
 
     return 0;
