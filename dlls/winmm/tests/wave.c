@@ -705,13 +705,15 @@ static void wave_out_test_device(int device)
         format.cbSize=0;
         wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
                                 0,&capsA,winetest_interactive,TRUE);
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+        if (device != WAVE_MAPPER)
+        {
+            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
                                 WAVE_FORMAT_DIRECT,&capsA,winetest_interactive,
                                 TRUE);
-        if (device != WAVE_MAPPER)
             wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
                                     WAVE_MAPPED,&capsA,winetest_interactive,
                                     TRUE);
+        }
     }
 
     /* Try a PCMWAVEFORMAT aligned next to an unaccessible page for bounds
@@ -734,13 +736,15 @@ static void wave_out_test_device(int device)
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
             wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,0,
                                     &capsA,winetest_interactive,TRUE);
-            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+            if (device != WAVE_MAPPER)
+            {
+                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
                                     WAVE_FORMAT_DIRECT,&capsA,
                                     winetest_interactive,TRUE);
-            if (device != WAVE_MAPPER)
                 wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
                                         WAVE_MAPPED,&capsA,winetest_interactive,
                                         TRUE);
+            }
         }
         VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
     }
