@@ -117,8 +117,11 @@
 
 3.4 Drag List Box Control
 -------------------------
+  Author:
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+
   Status:
-      Nothing done at all.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
@@ -126,8 +129,11 @@
 
 3.5 Flat Scroll Bar Control
 ---------------------------
+  Author:
+      Dummy written by Alex Priem. <alexp@sci.kun.nl>
+
   Status:
-      Nothing done at all.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
@@ -174,16 +180,14 @@
   Status:
       Under construction.
 
-  Notes:
-      Author needed!! Any volunteers??
-
 
 3.10 List View Control
 ----------------------
   Author:
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
-      Ben Williams <biwillia@shrug.isdn.uiuc.edu>
       Luc Tourangeau <luc@macadamian.com>
+      Koen Deforche <jozef@kotnet.org>
+      Francis Beaudet <francis@macadamian.com> and the "Corel-Team"
 
   Status:
       Under construction.
@@ -237,23 +241,17 @@
       Fixes and improvements by Eric Kohl.
 
   Status:
-      Almost finished (should behave like the original).
-
-  Notes:
-      WM_GETFONT and WM_SETFONT are not implemented yet. They seem to be
-      useless because progress bars usually don't display any textual
-      information. But if M$ implemented an undocumented flag to display
-      textual information (e.g. percentage) these messages would make sense.
+      Finished!
 
 
 3.15 Property Sheet
 -------------------
   Author:
       Anders Carlsson <anders.carlsson@linux.nu>
+      Francis Beaudet <francis@macadamian.com>
 
   Status:
-      - Development in progress.
-      - Not yet published.
+      Development in progress.
 
   Notes:
       Tab control must be implemented first.
@@ -282,7 +280,7 @@
       Almost finished.
 
   Notes:
-      - Tooltip integration is almost complete.
+      Tooltip integration is almost complete.
 
 
 3.18 Tab Control
@@ -291,7 +289,7 @@
       Anders Carlsson <anders.carlsson@linux.nu>
 
   Status:
-      - Development in progress.
+      Development in progress.
 
 
 3.19 Toolbar Control
@@ -300,11 +298,11 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Development in progress.
-      - Basic functionality is almost done. (dll version 4.0)
+      Development in progress.
+      Basic functionality is almost done. (dll version 4.0)
 
   Notes:
-      - Bitmaps are not correctly displayed.
+      Bitmaps are not correctly displayed.
 
 
 3.20 Tooltip Control
@@ -313,10 +311,10 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Almost finished.
+      Almost finished.
 
   Notes:
-      - Unicode support is still missing.
+      Unicode support is incomplete (WM_NOTIFYFORMAT).
 
 
 3.21 Trackbar Control
@@ -346,15 +344,15 @@
       Some minor changes by Eric Kohl <ekohl@abo.rhein-zeitung.de>.
 
   Status:
-      - Unknown.
+      Unknown.
 
   Notes:
-      - Have a look at controls/updown.c for a list of bugs and missing
-        features.
+      Have a look at controls/updown.c for a list of bugs and missing
+      features.
 
-      - The status is unknown, because I did not have a close look at this
-        control. One test-program looked quite good, but in Win95's
-        cdplayer.exe the control does not show at all.
+      The status is unknown, because I did not have a close look at this
+      control. One test-program looked quite good, but in Win95's
+      cdplayer.exe the control does not show at all.
       
       Any volunteers??
 
@@ -369,8 +367,8 @@
 ------------------------
 
   There are quite a lot of undocumented functions like:
-     - DSA (Dynnamic Storage Array) functions.
-     - DPA (Dymnamic Pointer Array) functions.
+     - DSA (Dynamic Storage Array) functions.
+     - DPA (Dynamic Pointer Array) functions.
      - MRU ("Most Recently Used" List) functions.
      - other unknown functions.
 
@@ -398,7 +396,6 @@
 
 5.3 "Most Recently Used" - List (MRU)
 -------------------------------------
-  The function 'COMCTL32_157()' could be called 'CreateMRUListEx32A()'.
   Only stubs are implemented to keep Explorer from bailing out.
 
   No more information available at this time!
@@ -429,8 +426,8 @@
 --------------------------------
   Several other undocumented functions are used by IE4.
 
-  COMCTL32_11, COMCTL_385, COMCTL32_386 and COMCTL32_388.
-  Their stubs are implemented to keep IE4 from bailing out.
+  String functions:
+  (will be written...)
 
 
 6. Epilogue
