@@ -744,10 +744,12 @@ void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data
 static void create_desktop( Display *display, WND *wndPtr )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
+    VisualID visualid;
 
     wine_tsx11_lock();
     winContext = XUniqueContext();
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
+    visualid = XVisualIDFromVisual(visual);
     wine_tsx11_unlock();
 
     whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
@@ -759,7 +761,7 @@ static void create_desktop( Display *display, WND *wndPtr )
 
     SetPropA( wndPtr->hwndSelf, whole_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, client_window_atom, (HANDLE)root_window );
-    SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
+    SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)visualid );
 
     X11DRV_InitClipboard();
 
