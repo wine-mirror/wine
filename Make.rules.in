@@ -52,7 +52,7 @@ C2MAN     = @C2MAN@
 MANSPECS  = -w $(TOPSRCDIR)/dlls/gdi/gdi32.spec \
 	    -w $(TOPSRCDIR)/dlls/user/user32.spec \
 	    -w $(TOPSRCDIR)/dlls/comctl32/comctl32.spec \
-	    -w $(TOPSRCDIR)/dlls/comdlg32/comdlg32.spec \
+	    -w $(TOPSRCDIR)/dlls/commdlg/comdlg32.spec \
 	    -w $(TOPSRCDIR)/dlls/kernel/kernel32.spec 
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
