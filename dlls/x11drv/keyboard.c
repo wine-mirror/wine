@@ -1866,6 +1866,9 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     CHAR cChar;
     SHORT ret;
 
+    /* FIXME: what happens if wChar is not a Latin1 character and CP_UNIXCP
+     * is UTF-8 (multibyte encoding)?
+     */
     if (!WideCharToMultiByte(CP_UNIXCP, 0, &wChar, 1, &cChar, 1, NULL, NULL))
     {
         WARN("no translation from unicode to CP_UNIXCP for 0x%02x\n", wChar);
@@ -1881,7 +1884,15 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     wine_tsx11_lock();
     keycode = XKeysymToKeycode(display, keysym);  /* keysym -> keycode */
     if (!keycode)
-    { /* It didn't work ... let's try with deadchar code. */
+    {
+        if (keysym >= 0xFF00) /* Windows returns 0x0240 + cChar in this case */
+        {
+            ret = 0x0240 + cChar; /* 0x0200 indicates a control character */
+            TRACE(" ... returning ctrl char %#.2x\n", ret);
+            wine_tsx11_unlock();
+            return ret;
+        }
+        /* It didn't work ... let's try with deadchar code. */
         TRACE("retrying with | 0xFE00\n");
         keycode = XKeysymToKeycode(display, keysym | 0xFE00);
     }
