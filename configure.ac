@@ -1327,6 +1327,9 @@ AC_CHECK_MEMBERS([struct option.name],,,
 #include <getopt.h>
 #endif])
 
+dnl Check for stat.st_blocks
+AC_CHECK_MEMBERS([struct stat.st_blocks])
+
 dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in
