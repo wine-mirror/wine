@@ -311,9 +311,9 @@
 @ stdcall CheckEscapesA(str long)
 @ stdcall CheckEscapesW(wstr long)
 @ stdcall CommandLineToArgvW(wstr ptr)
-@ stdcall Control_FillCache_RunDLL(long long long long)
-@ stub Control_FillCache_RunDLLA
-@ stub Control_FillCache_RunDLLW
+@ stdcall Control_FillCache_RunDLL(long long long long) Control_FillCache_RunDLLA
+@ stdcall Control_FillCache_RunDLLA(long long long long)
+@ stdcall Control_FillCache_RunDLLW(long long long long)
 @ stdcall Control_RunDLL(ptr ptr str long) Control_RunDLLA
 @ stdcall Control_RunDLLA(ptr ptr str long)
 @ stdcall Control_RunDLLW(ptr ptr wstr long)

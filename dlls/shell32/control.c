@@ -439,14 +439,24 @@ void WINAPI Control_RunDLLA(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSh
 }
 
 /*************************************************************************
- * Control_FillCache_RunDLL			[SHELL32.@]
+ * Control_FillCache_RunDLLA			[SHELL32.@]
  *
  */
-HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
+HRESULT WINAPI Control_FillCache_RunDLLA(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
 {
     FIXME("%p %p 0x%04lx 0x%04lx stub\n", hWnd, hModule, w, x);
     return 0;
 }
+
+/*************************************************************************
+ * Control_FillCache_RunDLLW			[SHELL32.@]
+ *
+ */
+HRESULT WINAPI Control_FillCache_RunDLLW(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
+{
+    return Control_FillCache_RunDLLA(hWnd, hModule, w, x);
+}
+
 
 /*************************************************************************
  * RunDLL_CallEntry16				[SHELL32.122]
