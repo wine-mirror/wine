@@ -1007,15 +1007,6 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
 }
 
 /***********************************************************************
- *           GetThreadLocale    (KERNEL32.295)
- */
-LCID WINAPI GetThreadLocale(void)
-{
-    return PROCESS_Current()->locale;
-}
-
-
-/***********************************************************************
  *           SetPriorityClass   (KERNEL32.503)
  */
 BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )

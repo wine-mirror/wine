@@ -30,6 +30,7 @@
 #include "debugtools.h"
 #include "queue.h"
 #include "hook.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(thread);
 
@@ -296,6 +297,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
+    teb->CurrentLocale = GetUserDefaultLCID(); /* for threads in user context */
     if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
@@ -810,6 +812,16 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
     FIXME("(0x%08lx,%d): stub\n", threadId, boost);
 }
 
+
+/***********************************************************************
+ *           GetThreadLocale    (KERNEL32.295)
+ */
+LCID WINAPI GetThreadLocale(void)
+{
+    return NtCurrentTeb()->CurrentLocale;
+}
+
+
 /**********************************************************************
  * SetThreadLocale [KERNEL32.671]  Sets the calling threads current locale.
  *
@@ -817,14 +829,24 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
  *    Success: TRUE
  *    Failure: FALSE
  *
- * NOTES
- *  Implemented in NT only (3.1 and above according to MS
+ * FIXME
+ *  check if lcid is a valid cp
  */
 BOOL WINAPI SetThreadLocale(
     LCID lcid)     /* [in] Locale identifier */
 {
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    switch (lcid)
+    {
+      case LOCALE_SYSTEM_DEFAULT:
+        lcid = GetSystemDefaultLCID();
+	break;
+      case LOCALE_USER_DEFAULT:
+      case LOCALE_NEUTRAL:
+        lcid = GetUserDefaultLCID();
+	break;
+    }
+    NtCurrentTeb()->CurrentLocale = lcid;
+    return TRUE;
 }
 
 

@@ -75,7 +75,7 @@ typedef struct _TEB
     WORD         thunk_ss;       /* --n  84 Yet another 16-bit stack selector */
     WORD         pad3;           /* --n  86 */
     DWORD        pad4[15];       /* --n  88 */
-    ULONG        CurrentLocale;  /* -2n  C4 */
+    ULONG        CurrentLocale;  /* -2-  C4 */
     DWORD        pad5[48];       /* --n  C8 */
     DWORD        delta_priority; /* 1-n 188 Priority delta */
     DWORD        unknown4[7];    /* d-n 18c Unknown */
@@ -107,7 +107,7 @@ typedef struct _TEB
     DWORD        pad8[3];                    /* --n f10 */
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
     DWORD        pad9[24];                   /* --n f20 */
-    PVOID        ReservedForOle;             /* -2- f80 used by ole32 */
+    PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
 } TEB;
 
 /* Thread exception flags */

@@ -3,6 +3,9 @@
  *
  * Copyright 2000 Patrik Stridvall
  *
+ *
+ * The errorinfo is a per-thread object. The reference is stored in the 
+ * TEB at offset 0xf80
  */
 
 #include "debugtools.h"
