@@ -1461,7 +1461,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
 
             /* Find where to start */
             from = copyfrom + (r->top * pitchFrom) + (r->left * bytesPerPixel);
-            to   = copyto   + (p->y * pitchFrom) + (p->x * bytesPerPixel);
+            to   = copyto   + (p->y * pitchTo) + (p->x * bytesPerPixel);
 
             /* Copy line by line */
             for (j=0; j<(r->bottom - r->top); j++) {
