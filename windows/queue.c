@@ -24,7 +24,6 @@
 DEFAULT_DEBUG_CHANNEL(msg);
 
 
-static HQUEUE16 hExitingQueue = 0;
 static PERQUEUEDATA *pQDataWin16 = NULL;  /* Global perQData for Win16 tasks */
 
 HQUEUE16 hActiveQueue = 0;
@@ -325,24 +324,6 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
 
 
 /***********************************************************************
- *	     QUEUE_IsExitingQueue
- */
-BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue )
-{
-    return (hExitingQueue && (hQueue == hExitingQueue));
-}
-
-
-/***********************************************************************
- *	     QUEUE_SetExitingQueue
- */
-void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
-{
-    hExitingQueue = hQueue;
-}
-
-
-/***********************************************************************
  *           QUEUE_CreateMsgQueue
  *
  * Creates a message queue. Doesn't link it into queue list!
@@ -417,7 +398,6 @@ void QUEUE_DeleteMsgQueue(void)
     msgQueue->magic = 0;
 
     if( hActiveQueue == hQueue ) hActiveQueue = 0;
-    if (hExitingQueue == hQueue) hExitingQueue = 0;
 
     HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
 

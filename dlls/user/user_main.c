@@ -34,8 +34,10 @@ WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
 WORD USER_HeapSel = 0;  /* USER heap selector */
 
 static HMODULE graphics_driver;
+static DWORD exiting_thread_id;
 
 extern void COMM_Init(void);
+extern void WDML_NotifyThreadDetach(void);
 
 #define GET_USER_FUNC(name) USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name )
 
@@ -257,20 +259,29 @@ static BOOL process_attach(void)
 
 
 /**********************************************************************
- *           thread
+ *           USER_IsExitingThread
+ */
+BOOL USER_IsExitingThread( DWORD tid )
+{
+    return (tid == exiting_thread_id);
+}
+
+
+/**********************************************************************
+ *           thread_detach
  */
 static void thread_detach(void)
 {
     HQUEUE16 hQueue = GetThreadQueue16( 0 );
 
-    extern void WDML_NotifyThreadDetach(void);
+    exiting_thread_id = GetCurrentThreadId();
+
     WDML_NotifyThreadDetach();
 
     if (hQueue)
     {
         TIMER_RemoveQueueTimers( hQueue );
         HOOK_FreeQueueHooks();
-        QUEUE_SetExitingQueue( hQueue );
         WIN_DestroyThreadWindows( GetDesktopWindow() );
         QUEUE_DeleteMsgQueue();
     }
@@ -290,6 +301,7 @@ static void thread_detach(void)
             CURSORICON_FreeModuleIcons( hModule );
         }
     }
+    exiting_thread_id = 0;
 }
 
 

@@ -144,11 +144,9 @@ DCE* DCE_FreeDCE( DCE *dce )
 void DCE_FreeWindowDCE( HWND hwnd )
 {
     DCE *pDCE;
-    WND *pWnd = WIN_FindWndPtr( hwnd );
+    WND *pWnd = WIN_GetPtr( hwnd );
 
     pDCE = firstDCE;
-    hwnd = pWnd->hwndSelf;  /* make it a full handle */
-
     while( pDCE )
     {
 	if( pDCE->hwndCurrent == hwnd )
@@ -189,8 +187,7 @@ void DCE_FreeWindowDCE( HWND hwnd )
 	}
 	pDCE = pDCE->next;
     }
-    
-    WIN_ReleaseWndPtr( pWnd );
+    WIN_ReleasePtr( pWnd );
 }
 
 
@@ -359,14 +356,19 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     DWORD 	dcxFlags = 0;
     BOOL	bUpdateVisRgn = TRUE;
     BOOL	bUpdateClipOrigin = FALSE;
-    HWND parent;
+    HWND parent, full;
 
     TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n", 
           hwnd, hrgnClip, (unsigned)flags);
 
     if (!hwnd) hwnd = GetDesktopWindow();
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
+    if (!(full = WIN_IsCurrentProcess( hwnd )) && full != GetDesktopWindow())
+    {
+        FIXME( "not supported yet on other process window %x\n", full );
+        return 0;
+    }
+    hwnd = full;
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
 
     /* fixup flags */
 
@@ -494,7 +496,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     TRACE("(%04x,%04x,0x%lx): returning %04x\n", hwnd, hrgnClip, flags, hdc);
 END:
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr(wndPtr);
     return hdc;
 }
 

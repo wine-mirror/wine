@@ -566,9 +566,36 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (winpos->flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
     {
-         WINPOS_SendNCCalcSize( winpos->hwnd, TRUE, &newWindowRect,
-                                &wndPtr->rectWindow, &wndPtr->rectClient,
-                                winpos, &newClientRect );
+        NCCALCSIZE_PARAMS params;
+        WINDOWPOS winposCopy;
+
+        params.rgrc[0] = newWindowRect;
+        params.rgrc[1] = wndPtr->rectWindow;
+        params.rgrc[2] = wndPtr->rectClient;
+        params.lppos = &winposCopy;
+        winposCopy = *winpos;
+
+        SendMessageW( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
+
+        TRACE( "%d,%d-%d,%d\n", params.rgrc[0].left, params.rgrc[0].top,
+               params.rgrc[0].right, params.rgrc[0].bottom );
+
+        /* If the application send back garbage, ignore it */
+        if (params.rgrc[0].left <= params.rgrc[0].right &&
+            params.rgrc[0].top <= params.rgrc[0].bottom)
+            newClientRect = params.rgrc[0];
+
+         /* FIXME: WVR_ALIGNxxx */
+
+        if( newClientRect.left != wndPtr->rectClient.left ||
+            newClientRect.top != wndPtr->rectClient.top )
+            winpos->flags &= ~SWP_NOCLIENTMOVE;
+
+        if( (newClientRect.right - newClientRect.left !=
+             wndPtr->rectClient.right - wndPtr->rectClient.left) ||
+            (newClientRect.bottom - newClientRect.top !=
+             wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
+            winpos->flags &= ~SWP_NOCLIENTSIZE;
     }
 
     if(!(winpos->flags & SWP_NOZORDER) && winpos->hwnd != winpos->hwndInsertAfter)
@@ -579,8 +606,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
-    wndPtr->rectWindow = newWindowRect;
-    wndPtr->rectClient = newClientRect;
+    WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
     if( winpos->flags & SWP_SHOWWINDOW )
     {

@@ -533,6 +533,10 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         if (lparam) return sizeof(BOOL);
         return 0;
 
+    case WM_WINE_SETWINDOWPOS:
+        push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
+        return 0;
+
     /* these contain an HFONT */
     case WM_SETFONT:
     case WM_GETFONT:
@@ -644,6 +648,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
+    case WM_WINE_SETWINDOWPOS:
         minsize = sizeof(WINDOWPOS);
         break;
     case WM_COPYDATA:
@@ -1073,6 +1078,30 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
 
 
 /***********************************************************************
+ *           handle_internal_message
+ *
+ * Handle an internal Wine message instead of calling the window proc.
+ */
+static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch(msg)
+    {
+    case WM_WINE_SETWINDOWPOS:
+        return USER_Driver.pSetWindowPos( (WINDOWPOS *)lparam );
+    case WM_WINE_SHOWWINDOW:
+        return USER_Driver.pShowWindow( hwnd, wparam );
+    case WM_WINE_DESTROYWINDOW:
+        return WIN_DestroyWindow( hwnd );
+    case WM_WINE_SETPARENT:
+        return (LRESULT)WIN_SetParent( hwnd, (HWND)wparam );
+    default:
+        FIXME( "unknown internal message %x\n", msg );
+        return 0;
+    }
+}
+
+
+/***********************************************************************
  *           call_window_proc
  *
  * Call a window procedure and the corresponding hooks.
@@ -1082,7 +1111,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     LRESULT result;
     WNDPROC winproc;
 
-    /* FIXME: should check for exiting queue */
+    if (msg & 0x80000000) return handle_internal_message( hwnd, msg, wparam, lparam );
 
     /* first the WH_CALLWNDPROC hook */
     if (HOOK_IsHooked( WH_CALLWNDPROC ))
@@ -1308,8 +1337,6 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
     unsigned int res;
     int timeout = -1;
 
-    /* FIXME: should check for exiting queue */
-
     if (info->type != MSG_NOTIFY &&
         info->type != MSG_CALLBACK &&
         info->type != MSG_POSTED &&
@@ -1489,7 +1516,9 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
-    dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid );
+    if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
+
+    if (USER_IsExitingThread( dest_tid )) return 0;
 
     if (dest_tid == GetCurrentThreadId())
     {
@@ -1535,7 +1564,9 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
-    dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid );
+    if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
+
+    if (USER_IsExitingThread( dest_tid )) return 0;
 
     if (dest_tid == GetCurrentThreadId())
     {
@@ -1624,7 +1655,9 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return TRUE;
     }
 
-    dest_tid = GetWindowThreadProcessId( hwnd, NULL );
+    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+
+    if (USER_IsExitingThread( dest_tid )) return TRUE;
 
     if (dest_tid == GetCurrentThreadId())
     {
@@ -1676,7 +1709,9 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         return TRUE;
     }
 
-    dest_tid = GetWindowThreadProcessId( hwnd, NULL );
+    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+
+    if (USER_IsExitingThread( dest_tid )) return TRUE;
 
     if (dest_tid == GetCurrentThreadId())
     {
@@ -1740,6 +1775,7 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     struct send_message_info info;
+    DWORD dest_tid;
 
     if (is_pointer_message( msg ))
     {
@@ -1758,7 +1794,11 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         EnumWindows( broadcast_message_callback, (LPARAM)&info );
         return TRUE;
     }
-    return put_message_in_queue( GetWindowThreadProcessId( hwnd, NULL ), &info, NULL );
+    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+
+    if (USER_IsExitingThread( dest_tid )) return TRUE;
+
+    return put_message_in_queue( dest_tid, &info, NULL );
 }
 
 
@@ -1783,6 +1823,7 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+    if (USER_IsExitingThread( thread )) return TRUE;
 
     info.type   = MSG_POSTED;
     info.hwnd   = 0;

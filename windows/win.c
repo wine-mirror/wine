@@ -175,6 +175,18 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
 }
 
 
+/*******************************************************************
+ *           send_parent_notify
+ */
+static void send_parent_notify( HWND hwnd, UINT msg )
+{
+    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) return;
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) return;
+    SendMessageW( GetParent(hwnd), WM_PARENTNOTIFY,
+                  MAKEWPARAM( msg, GetWindowLongW( hwnd, GWL_ID )), (LPARAM)hwnd );
+}
+
+
 /***********************************************************************
  *           WIN_GetPtr
  *
@@ -351,6 +363,14 @@ void WIN_UnlinkWindow( HWND hwnd )
 void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
 {
     BOOL ret;
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow(hwnd)) ERR(" cannot link other process window %x\n", hwnd );
+        return;
+    }
 
     SERVER_START_REQ( link_window )
     {
@@ -360,15 +380,67 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
-    if (ret && parent)
+    if (ret && parent) wndPtr->parent = WIN_GetFullHandle(parent);
+    WIN_ReleasePtr( wndPtr );
+}
+
+
+/***********************************************************************
+ *           WIN_SetOwner
+ *
+ * Change the owner of a window.
+ */
+void WIN_SetOwner( HWND hwnd, HWND owner )
+{
+    WND *win = WIN_FindWndPtr( hwnd );
+    if (win)
     {
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-        if (wndPtr)
-        {
-            wndPtr->parent = WIN_GetFullHandle(parent);
-            WIN_ReleaseWndPtr( wndPtr );
-        }
+        win->owner = owner;
+        WIN_ReleaseWndPtr( win );
     }
+}
+
+
+/***********************************************************************
+ *           WIN_SetRectangles
+ *
+ * Set the window and client rectangles.
+ */
+void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
+{
+    WND *win = WIN_GetPtr( hwnd );
+    BOOL ret;
+
+    if (!win) return;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %x\n", hwnd );
+        return;
+    }
+    SERVER_START_REQ( set_window_rectangles )
+    {
+        req->handle        = hwnd;
+        req->window.left   = rectWindow->left;
+        req->window.top    = rectWindow->top;
+        req->window.right  = rectWindow->right;
+        req->window.bottom = rectWindow->bottom;
+        req->client.left   = rectClient->left;
+        req->client.top    = rectClient->top;
+        req->client.right  = rectClient->right;
+        req->client.bottom = rectClient->bottom;
+        ret = !SERVER_CALL();
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        win->rectWindow = *rectWindow;
+        win->rectClient = *rectClient;
+
+        TRACE( "win %x window (%d,%d)-(%d,%d) client (%d,%d)-(%d,%d)\n", hwnd,
+               rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
+               rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
+    }
+    WIN_ReleasePtr( win );
 }
 
 
@@ -481,18 +553,28 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  *
  * Destroy storage associated to a window. "Internals" p.358
  */
-static void WIN_DestroyWindow( HWND hwnd )
+LRESULT WIN_DestroyWindow( HWND hwnd )
 {
     WND *wndPtr;
     HWND *list;
 
     TRACE("%04x\n", hwnd );
 
+    if (!(hwnd = WIN_IsCurrentThread( hwnd )))
+    {
+        ERR( "window doesn't belong to current thread\n" );
+        return 0;
+    }
+
     /* free child windows */
     if ((list = WIN_ListChildren( hwnd )))
     {
         int i;
-        for (i = 0; list[i]; i++) WIN_DestroyWindow( list[i] );
+        for (i = 0; list[i]; i++)
+        {
+            if (WIN_IsCurrentThread( list[i] )) WIN_DestroyWindow( list[i] );
+            else SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
+        }
         HeapFree( GetProcessHeap(), 0, list );
     }
 
@@ -517,7 +599,7 @@ static void WIN_DestroyWindow( HWND hwnd )
 
     TIMER_RemoveWindowTimers( hwnd );
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     wndPtr->hmemTaskQ = 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))
@@ -538,6 +620,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     wndPtr->class = NULL;
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     WIN_ReleaseWndPtr( wndPtr );
+    return 0;
 }
 
 /***********************************************************************
@@ -576,9 +659,9 @@ BOOL WIN_CreateDesktopWindow(void)
     WNDPROC winproc;
     DCE *dce;
     CREATESTRUCTA cs;
+    RECT rect;
 
     TRACE("Creating desktop window\n");
-
 
     if (!WINPOS_CreateInternalPosAtom() ||
         !(class = CLASS_AddWindow( (ATOM)LOWORD(DESKTOP_CLASS_ATOM), 0, WIN_PROC_32W,
@@ -595,11 +678,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
     pWndDesktop->hInstance         = 0;
-    pWndDesktop->rectWindow.left   = 0;
-    pWndDesktop->rectWindow.top    = 0;
-    pWndDesktop->rectWindow.right  = GetSystemMetrics(SM_CXSCREEN);
-    pWndDesktop->rectWindow.bottom = GetSystemMetrics(SM_CYSCREEN);
-    pWndDesktop->rectClient        = pWndDesktop->rectWindow;
     pWndDesktop->text              = NULL;
     pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
@@ -625,12 +703,15 @@ BOOL WIN_CreateDesktopWindow(void)
     cs.hwndParent     = 0;
     cs.x              = 0;
     cs.y              = 0;
-    cs.cx             = pWndDesktop->rectWindow.right;
-    cs.cy             = pWndDesktop->rectWindow.bottom;
+    cs.cx             = GetSystemMetrics( SM_CXSCREEN );
+    cs.cy             = GetSystemMetrics( SM_CYSCREEN );
     cs.style          = pWndDesktop->dwStyle;
     cs.dwExStyle      = pWndDesktop->dwExStyle;
     cs.lpszName       = NULL;
     cs.lpszClass      = DESKTOP_CLASS_ATOM;
+
+    SetRect( &rect, 0, 0, cs.cx, cs.cy );
+    WIN_SetRectangles( hwndDesktop, &rect, &rect );
 
     if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE )) return FALSE;
 
@@ -721,6 +802,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     INT wndExtra;
     DWORD clsStyle;
     WNDPROC winproc;
+    RECT rect;
     DCE *dce;
     BOOL unicode = (type == WIN_PROC_32W);
 
@@ -867,11 +949,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Initialize the dimensions before sending WM_GETMINMAXINFO */
 
-    wndPtr->rectWindow.left   = cs->x;
-    wndPtr->rectWindow.top    = cs->y;
-    wndPtr->rectWindow.right  = cs->x + cs->cx;
-    wndPtr->rectWindow.bottom = cs->y + cs->cy;
-    wndPtr->rectClient        = wndPtr->rectWindow;
+    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+    WIN_SetRectangles( hwnd, &rect, &rect );
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
@@ -887,11 +966,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (cs->cx < 0) cs->cx = 0;
     if (cs->cy < 0) cs->cy = 0;
 
-    wndPtr->rectWindow.left   = cs->x;
-    wndPtr->rectWindow.top    = cs->y;
-    wndPtr->rectWindow.right  = cs->x + cs->cx;
-    wndPtr->rectWindow.bottom = cs->y + cs->cy;
-    wndPtr->rectClient        = wndPtr->rectWindow;
+    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+    WIN_SetRectangles( hwnd, &rect, &rect );
 
     /* Set the window menu */
 
@@ -923,17 +999,13 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         return 0;
     }
 
-    if( (wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
-    {
-        /* Notify the parent window only */
+    /* Notify the parent window only */
 
-        SendMessageA( wndPtr->parent, WM_PARENTNOTIFY,
-                      MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
-        if( !IsWindow(hwnd) )
-        {
-            hwnd = 0;
-            goto end;
-        }
+    send_parent_notify( hwnd, WM_CREATE );
+    if( !IsWindow(hwnd) )
+    {
+        hwnd = 0;
+        goto end;
     }
 
     if (cs->style & WS_VISIBLE)
@@ -1188,16 +1260,16 @@ static void WIN_SendDestroyMsg( HWND hwnd )
  */
 BOOL WINAPI DestroyWindow( HWND hwnd )
 {
-    WND * wndPtr;
-    BOOL retvalue;
+    BOOL is_child;
     HWND h;
 
-    hwnd = WIN_GetFullHandle( hwnd );
+    if (!(hwnd = WIN_IsCurrentThread( hwnd )) || (hwnd == GetDesktopWindow()))
+    {
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+
     TRACE("(%04x)\n", hwnd);
-
-    /* Initialization */
-
-    if (hwnd == GetDesktopWindow()) return FALSE;   /* Can't destroy desktop */
 
     /* Look whether the focus is within the tree of windows we will
      * be destroying.
@@ -1214,25 +1286,20 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0L) ) return FALSE;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!(wndPtr->dwStyle & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
+    is_child = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
+
+    if (is_child)
+    {
+        if (!USER_IsExitingThread( GetCurrentThreadId() ))
+            send_parent_notify( hwnd, WM_DESTROY );
+    }
+    else if (!GetWindow( hwnd, GW_OWNER ))
     {
         HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
-    if( !QUEUE_IsExitingQueue(wndPtr->hmemTaskQ) )
-	if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
-	{
-	    /* Notify the parent window only */
-            SendMessageA( wndPtr->parent, WM_PARENTNOTIFY,
-                          MAKEWPARAM(WM_DESTROY, wndPtr->wIDmenu), (LPARAM)hwnd );
-            if( !IsWindow(hwnd) )
-            {
-                retvalue = TRUE;
-                goto end;
-            }
-	}
+    if (!IsWindow(hwnd)) return TRUE;
 
     if (USER_Driver.pResetSelectionOwner)
         USER_Driver.pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
@@ -1240,77 +1307,62 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
       /* Hide the window */
 
     ShowWindow( hwnd, SW_HIDE );
-    if (!IsWindow(hwnd))
-    {
-        retvalue = TRUE;
-        goto end;
-    }
+    if (!IsWindow(hwnd)) return TRUE;
 
       /* Recursively destroy owned windows */
 
-    if( !(wndPtr->dwStyle & WS_CHILD) )
+    if (!is_child)
     {
         HWND owner;
 
-      for (;;)
-      {
-          int i, got_one = 0;
-          HWND *list = WIN_ListChildren( wndPtr->parent );
-          if (list)
-          {
-              for (i = 0; list[i]; i++)
-              {
-                  WND *siblingPtr;
-                  if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
-                  if (!(siblingPtr = WIN_FindWndPtr( list[i] ))) continue;
-                  if (siblingPtr->hmemTaskQ == wndPtr->hmemTaskQ)
-                  {
-                      WIN_ReleaseWndPtr( siblingPtr );
-                      DestroyWindow( list[i] );
-                      got_one = 1;
-                      continue;
-                  }
-                  else siblingPtr->owner = 0;
-                  WIN_ReleaseWndPtr( siblingPtr );
-              }
-              HeapFree( GetProcessHeap(), 0, list );
-          }
-          if (!got_one) break;
-      }
+        for (;;)
+        {
+            int i, got_one = 0;
+            HWND *list = WIN_ListChildren( GetDesktopWindow() );
+            if (list)
+            {
+                for (i = 0; list[i]; i++)
+                {
+                    if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
+                    if (WIN_IsCurrentThread( list[i] ))
+                    {
+                        DestroyWindow( list[i] );
+                        got_one = 1;
+                        continue;
+                    }
+                    WIN_SetOwner( list[i], 0 );
+                }
+                HeapFree( GetProcessHeap(), 0, list );
+            }
+            if (!got_one) break;
+        }
 
-      WINPOS_ActivateOtherWindow( hwnd );
+        WINPOS_ActivateOtherWindow( hwnd );
 
-      if ((owner = GetWindow( hwnd, GW_OWNER )))
-      {
-          WND *ptr = WIN_FindWndPtr( owner );
-          if (ptr)
-          {
-              if (ptr->hwndLastActive == hwnd) ptr->hwndLastActive = owner;
-              WIN_ReleaseWndPtr( ptr );
-          }
-      }
+        if ((owner = GetWindow( hwnd, GW_OWNER )))
+        {
+            WND *ptr = WIN_FindWndPtr( owner );
+            if (ptr)
+            {
+                if (ptr->hwndLastActive == hwnd) ptr->hwndLastActive = owner;
+                WIN_ReleaseWndPtr( ptr );
+            }
+        }
     }
 
       /* Send destroy messages */
 
     WIN_SendDestroyMsg( hwnd );
-    if (!IsWindow(hwnd))
-    {
-        retvalue = TRUE;
-        goto end;
-    }
+    if (!IsWindow( hwnd )) return TRUE;
 
       /* Unlink now so we won't bother with the children later on */
 
-    if( wndPtr->parent ) WIN_UnlinkWindow(hwnd);
+    WIN_UnlinkWindow( hwnd );
 
       /* Destroy the window storage */
 
     WIN_DestroyWindow( hwnd );
-    retvalue = TRUE;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return TRUE;
 }
 
 
@@ -1319,20 +1371,9 @@ end:
  */
 BOOL WINAPI CloseWindow( HWND hwnd )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL retvalue;
-
-    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD))
-    {
-        retvalue = FALSE;
-        goto end;
-    }
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) return FALSE;
     ShowWindow( hwnd, SW_MINIMIZE );
-    retvalue = TRUE;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
-
+    return TRUE;
 }
 
 
@@ -1523,14 +1564,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
  */
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
-    WND * wndPtr;
-    BOOL retvalue;
-
-    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
-    retvalue = !(wndPtr->dwStyle & WS_DISABLED);
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
-
+    return !(GetWindowLongW( hWnd, GWL_STYLE ) & WS_DISABLED);
 }
 
 
@@ -2114,34 +2148,25 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 
 
 /*****************************************************************
- *		SetParent (USER32.@)
+ *		WIN_SetParent
+ *
+ * Implementation of SetParent, runs in the thread owning the window.
  */
-HWND WINAPI SetParent( HWND hwnd, HWND parent )
+HWND WIN_SetParent( HWND hwnd, HWND parent )
 {
     WND *wndPtr;
-    DWORD dwStyle;
     HWND retvalue;
-
-    if (!parent) parent = GetDesktopWindow();
-    else parent = WIN_GetFullHandle( parent );
-
-    /* sanity checks */
-    if (WIN_GetFullHandle(hwnd) == GetDesktopWindow() || !IsWindow( parent ))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
+    BOOL was_visible;
 
     if (USER_Driver.pSetParent)
         return USER_Driver.pSetParent( hwnd, parent );
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-
-    dwStyle = wndPtr->dwStyle;
-
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
-    if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
+    was_visible = ShowWindow( hwnd, SW_HIDE );
+
+    if (!IsWindow( parent )) return 0;
+    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return 0;
 
     retvalue = wndPtr->parent;  /* old parent */
     if (parent != retvalue)
@@ -2150,25 +2175,52 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if (!(dwStyle & WS_CHILD))
+            if (!(wndPtr->dwStyle & WS_CHILD))
             {
                 HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
                 if (menu) DestroyMenu( menu );
             }
         }
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     /* SetParent additionally needs to make hwnd the topmost window
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
        WM_WINDOWPOSCHANGED notification messages.
     */
     SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                  SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|
-                  ((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
     return retvalue;
+}
+
+
+/*****************************************************************
+ *		SetParent (USER32.@)
+ */
+HWND WINAPI SetParent( HWND hwnd, HWND parent )
+{
+    HWND full_handle;
+
+    if (!parent) parent = GetDesktopWindow();
+    else parent = WIN_GetFullHandle( parent );
+
+    if (!IsWindow( parent ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if ((full_handle = WIN_IsCurrentThread( hwnd )))
+        return WIN_SetParent( full_handle, parent );
+
+    if ((full_handle = WIN_GetFullHandle(hwnd)) == GetDesktopWindow())
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    return SendMessageW( full_handle, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 }
 
 

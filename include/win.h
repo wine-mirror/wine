@@ -88,12 +88,16 @@ extern HWND WIN_IsCurrentProcess( HWND hwnd );
 extern HWND WIN_IsCurrentThread( HWND hwnd );
 extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
 extern void WIN_UnlinkWindow( HWND hwnd );
+extern void WIN_SetOwner( HWND hwnd, HWND owner );
+extern void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
+extern LRESULT WIN_DestroyWindow( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
 extern HWND *WIN_ListParents( HWND hwnd );
 extern HWND *WIN_ListChildren( HWND hwnd );
+extern HWND WIN_SetParent( HWND hwnd, HWND parent );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 
 inline static HWND WIN_GetFullHandle( HWND hwnd )

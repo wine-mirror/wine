@@ -1200,7 +1200,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   LPDRAGINFO16          lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
   SEGPTR		spDragInfo = K32WOWGlobalLock16(hDragInfo);
   Window		w_aux_root, w_aux_child;
-  WND*			pDropWnd;
   WND*                  pWnd;
   
   if( !lpDragInfo || !spDragInfo ) return;
@@ -1224,76 +1223,73 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
       bAccept = DRAG_QueryUpdate( hWnd, spDragInfo, TRUE );
       x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
     }
-  pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
   WIN_ReleaseWndPtr(pWnd);
   
   GlobalFree16( hDragInfo );
-  
-  if( bAccept )
-    {
-      TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
-			    dndSelection, 0, 65535, FALSE,
-			    AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
-			    &data_length, &aux_long, &p_data);
-      
-      if( !aux_long && p_data)	/* don't bother if > 64K */
-	{
-	  signed char *p = (signed char*) p_data;
-	  char *p_drop;
-	  
-	  aux_long = 0; 
-	  while( *p )	/* calculate buffer size */
-	    {
-	      p_drop = p;
-	      if((u.i = *p) != -1 ) 
-		{
-		  INT len = GetShortPathNameA( p, NULL, 0 );
-		  if (len) aux_long += len + 1;
-		  else *p = -1;
-		}
-	      p += strlen(p) + 1;
-	    }
-	  if( aux_long && aux_long < 65535 )
-	    {
-	      HDROP                 hDrop;
-	      DROPFILES *lpDrop;
-	      
-	      aux_long += sizeof(DROPFILES) + 1;
-	      hDrop = GlobalAlloc( GMEM_SHARE, aux_long );
-	      lpDrop = (DROPFILES*)GlobalLock( hDrop );
-	      
-	      if( lpDrop )
-		{
-		  lpDrop->pFiles = sizeof(DROPFILES);
-		  lpDrop->pt.x = x;
-		  lpDrop->pt.y = y;
-		  lpDrop->fNC =
-		    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
-		      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
-		      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
-		      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
-                  lpDrop->fWide = FALSE;
-		  p_drop = (char *)(lpDrop + 1);
-		  p = p_data;
-		  while(*p)
-		    {
-		      if( *p != -1 )	/* use only "good" entries */
-			{
-                          GetShortPathNameA( p, p_drop, 65535 );
-                          p_drop += strlen( p_drop ) + 1;
-			}
-		      p += strlen(p) + 1;
-		    }
-		  *p_drop = '\0';
-		  PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
-		}
-	    }
-	}
-      if( p_data ) TSXFree(p_data);  
-      
-    } /* WS_EX_ACCEPTFILES */
 
-  WIN_ReleaseWndPtr(pDropWnd);
+    if (!bAccept) return;
+
+    TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
+                          dndSelection, 0, 65535, FALSE,
+                          AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
+                          &data_length, &aux_long, &p_data);
+
+    if( !aux_long && p_data)  /* don't bother if > 64K */
+    {
+        signed char *p = (signed char*) p_data;
+        char *p_drop;
+
+        aux_long = 0;
+        while( *p )  /* calculate buffer size */
+        {
+            p_drop = p;
+            if((u.i = *p) != -1 )
+            {
+                INT len = GetShortPathNameA( p, NULL, 0 );
+                if (len) aux_long += len + 1;
+                else *p = -1;
+            }
+            p += strlen(p) + 1;
+        }
+        if( aux_long && aux_long < 65535 )
+        {
+            HDROP                 hDrop;
+            DROPFILES *lpDrop;
+
+            aux_long += sizeof(DROPFILES) + 1;
+            hDrop = GlobalAlloc( GMEM_SHARE, aux_long );
+            lpDrop = (DROPFILES*)GlobalLock( hDrop );
+
+            if( lpDrop )
+            {
+                WND *pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
+                lpDrop->pFiles = sizeof(DROPFILES);
+                lpDrop->pt.x = x;
+                lpDrop->pt.y = y;
+                lpDrop->fNC =
+                    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
+                      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
+                      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
+                      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+                lpDrop->fWide = FALSE;
+                WIN_ReleaseWndPtr(pDropWnd);
+                p_drop = (char *)(lpDrop + 1);
+                p = p_data;
+                while(*p)
+                {
+                    if( *p != -1 ) /* use only "good" entries */
+                    {
+                        GetShortPathNameA( p, p_drop, 65535 );
+                        p_drop += strlen( p_drop ) + 1;
+                    }
+                    p += strlen(p) + 1;
+                }
+                *p_drop = '\0';
+                PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
+            }
+        }
+    }
+    if( p_data ) TSXFree(p_data);
 }
 
 /**********************************************************************
@@ -1306,8 +1302,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
  */
 static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 {
-  WND           *pDropWnd;
-  WND           *pWnd;
   unsigned long	data_length;
   unsigned long	aux_long, drop_len = 0;
   unsigned char	*p_data = NULL; /* property data */
@@ -1322,14 +1316,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     Window      w_aux;
   }		u; /* unused */
 
-  pWnd = WIN_FindWndPtr(hWnd);
-
-  if (!(pWnd->dwExStyle & WS_EX_ACCEPTFILES))
-  {
-    WIN_ReleaseWndPtr(pWnd);
-    return;
-  }
-  WIN_ReleaseWndPtr(pWnd);
+  if (!(GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
 
   TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
 			dndSelection, 0, 65535, FALSE,
@@ -1362,13 +1349,12 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       TSXQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
 		       &x, &y, &u.i, &u.i, &u.i);
 
-      pDropWnd = WIN_FindWndPtr( hWnd );
-      
       drop_len += sizeof(DROPFILES) + 1;
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
       lpDrop = (DROPFILES *) GlobalLock( hDrop );
 
       if( lpDrop ) {
+          WND *pDropWnd = WIN_FindWndPtr( hWnd );
 	  lpDrop->pFiles = sizeof(DROPFILES);
 	  lpDrop->pt.x = (INT)x;
 	  lpDrop->pt.y = (INT)y;
@@ -1379,6 +1365,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
 	  lpDrop->fWide = FALSE;
 	  p_drop = (char*)(lpDrop + 1);
+          WIN_ReleaseWndPtr(pDropWnd);
       }
 
       /* create message content */
@@ -1411,7 +1398,6 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
         GlobalUnlock(hDrop);
         PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
       }
-      WIN_ReleaseWndPtr(pDropWnd);
     }
     if( p_data ) TSXFree(p_data);  
   }

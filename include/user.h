@@ -35,7 +35,14 @@ struct DIDEVICEOBJECTDATA;
 
 typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 
-struct tagWND;
+/* internal messages codes */
+enum wine_internal_message
+{
+    WM_WINE_DESTROYWINDOW = 0x80000000,
+    WM_WINE_SETWINDOWPOS,
+    WM_WINE_SHOWWINDOW,
+    WM_WINE_SETPARENT
+};
 
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
@@ -98,6 +105,8 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 extern void USER_Lock(void);
 extern void USER_Unlock(void);
 extern void USER_CheckNotLock(void);
+
+extern BOOL USER_IsExitingThread( DWORD tid );
 
 VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
 VOID WINAPI MOUSE_Disable(VOID);

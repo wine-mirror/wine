@@ -306,11 +306,20 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     BOOL bIcon;
     HRGN hrgnUpdate;
     RECT clipRect, clientRect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
+    HWND full_handle;
+    WND *wndPtr;
 
-    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && GetClassLongA(hwnd, GCL_HICON));
+    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
+    {
+        if (IsWindow(hwnd))
+            FIXME( "window %x belongs to other thread\n", hwnd );
+        return 0;
+    }
+    hwnd = full_handle;
 
+    bIcon = (IsIconic(hwnd) && GetClassLongA(hwnd, GCL_HICON));
+
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
     /* send WM_NCPAINT and make sure hrgnUpdate is a valid rgn handle */
@@ -320,7 +329,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
      * Make sure the window is still a window. All window locks are suspended
      * when the WM_NCPAINT is sent.
      */
-    if (!IsWindow(wndPtr->hwndSelf))
+    if (!IsWindow( hwnd ))
     {
         WIN_ReleaseWndPtr(wndPtr);
         return 0;
@@ -336,7 +345,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 
     TRACE("hrgnUpdate = %04x, \n", hrgnUpdate);
 
-    if (GetClassLongA(wndPtr->hwndSelf, GCL_STYLE) & CS_PARENTDC)
+    if (GetClassLongA( hwnd, GCL_STYLE ) & CS_PARENTDC)
     {
         /* Don't clip the output to the update region for CS_PARENTDC window */
 	if( hrgnUpdate ) 

@@ -872,7 +872,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     rect = wndPtr->rectWindow;
     SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
     if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
-    wndPtr->rectClient = rect;
+    WIN_SetRectangles( hwnd, &wndPtr->rectWindow, &rect );
     X11DRV_sync_client_window_position( display, wndPtr );
     X11DRV_register_window( display, hwnd, data );
 
@@ -1005,18 +1005,14 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 {
     Display *display = thread_display();
     WND *wndPtr;
-    DWORD dwStyle;
     HWND retvalue;
-
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-
-    dwStyle = wndPtr->dwStyle;
-
-    if (!parent) parent = GetDesktopWindow();
 
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
-    if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
+    BOOL was_visible = ShowWindow( hwnd, SW_HIDE );
+
+    if (!IsWindow( parent )) return 0;
+    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return 0;
 
     retvalue = wndPtr->parent;  /* old parent */
     if (parent != retvalue)
@@ -1027,7 +1023,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if (!(dwStyle & WS_CHILD))
+            if (!(wndPtr->dwStyle & WS_CHILD))
             {
                 HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
                 if (menu) DestroyMenu( menu );
@@ -1041,15 +1037,14 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     /* SetParent additionally needs to make hwnd the topmost window
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
        WM_WINDOWPOSCHANGED notification messages. 
     */
     SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                  SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|
-                  ((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 

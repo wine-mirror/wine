@@ -28,10 +28,6 @@ extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos, POIN
 extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse,
                                       BOOL fChangeFocus );
 extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
-extern LONG WINPOS_SendNCCalcSize(HWND hwnd, BOOL calcValidRect,
-                                  RECT *newWindowRect, RECT *oldWindowRect,
-                                  RECT *oldClientRect, WINDOWPOS *winpos,
-                                  RECT *newClientRect );
 extern LONG WINPOS_HandleWindowPosChanging16(HWND hwnd, struct tagWINDOWPOS16 *winpos);
 extern LONG WINPOS_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos);
 extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest );

@@ -43,7 +43,6 @@ const struct builtin_class_descr ICONTITLE_builtin_class =
  */
 HWND ICONTITLE_Create( HWND owner )
 {
-    WND* wndPtr;
     HWND hWnd;
     HINSTANCE instance = GetWindowLongA( owner, GWL_HINSTANCE );
     LONG style = WS_CLIPSIBLINGS;
@@ -57,10 +56,9 @@ HWND ICONTITLE_Create( HWND owner )
 	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
                                 style, 0, 0, 1, 1,
                                 owner, 0, instance, NULL );
-    if (!(wndPtr = WIN_GetPtr( hWnd ))) return 0;
-    wndPtr->owner = owner; /* MDI depends on this */
-    wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
-    WIN_ReleasePtr(wndPtr);
+    WIN_SetOwner( hWnd, owner );  /* MDI depends on this */
+    SetWindowLongW( hWnd, GWL_STYLE,
+                    GetWindowLongW( hWnd, GWL_STYLE ) & ~(WS_CAPTION | WS_BORDER) );
     return hWnd;
 }
 

@@ -69,8 +69,6 @@ HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest );
 extern MESSAGEQUEUE *QUEUE_Current(void);
 extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
-extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
-extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_DeleteMsgQueue(void);
 
 #endif  /* __WINE_QUEUE_H */

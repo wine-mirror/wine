@@ -523,7 +523,7 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
     if (!(pWinpos->flags & SWP_NOSENDCHANGING))
         SendMessageA( pWinpos->hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)pWinpos );
 
-    if (!(wndPtr = WIN_FindWndPtr( pWinpos->hwnd ))) return FALSE;
+    if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) || wndPtr == WND_OTHER_PROCESS) return FALSE;
 
     /* Calculate new position and size */
 
@@ -547,42 +547,68 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
                                     pWinpos->y - wndPtr->rectWindow.top );
     }
     pWinpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
     return TRUE;
 }
 
 /***********************************************************************
  *           SWP_DoNCCalcSize
  */
-static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
-                              RECT* pNewWindowRect, RECT* pNewClientRect )
+static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT* pNewClientRect )
 {
     UINT wvrFlags = 0;
+    WND *wndPtr;
+
+    if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
 
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (pWinpos->flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
     {
-         wvrFlags = WINPOS_SendNCCalcSize( pWinpos->hwnd, TRUE, pNewWindowRect,
-                                    &wndPtr->rectWindow, &wndPtr->rectClient,
-                                    pWinpos, pNewClientRect );
+        NCCALCSIZE_PARAMS params;
+        WINDOWPOS winposCopy;
+
+        params.rgrc[0] = *pNewWindowRect;
+        params.rgrc[1] = wndPtr->rectWindow;
+        params.rgrc[2] = wndPtr->rectClient;
+        params.lppos = &winposCopy;
+        winposCopy = *pWinpos;
+        WIN_ReleasePtr( wndPtr );
+
+        wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
+
+        TRACE( "%d,%d-%d,%d\n", params.rgrc[0].left, params.rgrc[0].top,
+               params.rgrc[0].right, params.rgrc[0].bottom );
+
+        /* If the application send back garbage, ignore it */
+        if (params.rgrc[0].left <= params.rgrc[0].right &&
+            params.rgrc[0].top <= params.rgrc[0].bottom)
+            *pNewClientRect = params.rgrc[0];
+
          /* FIXME: WVR_ALIGNxxx */
 
-         if( pNewClientRect->left != wndPtr->rectClient.left ||
-             pNewClientRect->top != wndPtr->rectClient.top )
-             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
+        if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
 
-         if( (pNewClientRect->right - pNewClientRect->left !=
-              wndPtr->rectClient.right - wndPtr->rectClient.left) ||
-             (pNewClientRect->bottom - pNewClientRect->top !=
-              wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
-             pWinpos->flags &= ~SWP_NOCLIENTSIZE;
+        if( pNewClientRect->left != wndPtr->rectClient.left ||
+            pNewClientRect->top != wndPtr->rectClient.top )
+            pWinpos->flags &= ~SWP_NOCLIENTMOVE;
+
+        if( (pNewClientRect->right - pNewClientRect->left !=
+             wndPtr->rectClient.right - wndPtr->rectClient.left) ||
+            (pNewClientRect->bottom - pNewClientRect->top !=
+             wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
+            pWinpos->flags &= ~SWP_NOCLIENTSIZE;
     }
     else
-      if( !(pWinpos->flags & SWP_NOMOVE) && (pNewClientRect->left != wndPtr->rectClient.left ||
-                                             pNewClientRect->top != wndPtr->rectClient.top) )
+    {
+        if (!(pWinpos->flags & SWP_NOMOVE) &&
+            (pNewClientRect->left != wndPtr->rectClient.left ||
+             pNewClientRect->top != wndPtr->rectClient.top))
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
+    }
+    WIN_ReleasePtr( wndPtr );
     return wvrFlags;
 }
+
 
 /***********************************************************************
  *           SWP_DoOwnedPopups
@@ -783,7 +809,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* Common operations */
 
-    wvrFlags = SWP_DoNCCalcSize( wndPtr, winpos, &newWindowRect, &newClientRect );
+    wvrFlags = SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect );
 
     if(!(winpos->flags & SWP_NOZORDER) && winpos->hwnd != winpos->hwndInsertAfter)
     {
@@ -816,8 +842,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
-    wndPtr->rectWindow = newWindowRect;
-    wndPtr->rectClient = newClientRect;
+    WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
     if (winpos->flags & SWP_SHOWWINDOW) wndPtr->dwStyle |= WS_VISIBLE;
     else if (winpos->flags & SWP_HIDEWINDOW)
@@ -993,7 +1018,7 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
 
 UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr;
     UINT swpFlags = 0;
     POINT size;
     WINDOWPLACEMENT wpl;
@@ -1003,90 +1028,87 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     wpl.length = sizeof(wpl);
     GetWindowPlacement( hwnd, &wpl );
 
+    if (HOOK_CallHooksA( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd ))
+        return SWP_NOSIZE | SWP_NOMOVE;
+
+    if (IsIconic( hwnd ))
+    {
+        if (cmd == SW_MINIMIZE) return SWP_NOSIZE | SWP_NOMOVE;
+        if (!SendMessageA( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
+        swpFlags |= SWP_NOCOPYBITS;
+    }
+
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+
     size.x = wndPtr->rectWindow.left;
     size.y = wndPtr->rectWindow.top;
 
-    if (!HOOK_CallHooksA(WH_CBT, HCBT_MINMAX, (WPARAM)wndPtr->hwndSelf, cmd))
+    switch( cmd )
     {
+    case SW_MINIMIZE:
+        if( wndPtr->dwStyle & WS_MAXIMIZE)
+        {
+            wndPtr->flags |= WIN_RESTORE_MAX;
+            wndPtr->dwStyle &= ~WS_MAXIMIZE;
+        }
+        else
+            wndPtr->flags &= ~WIN_RESTORE_MAX;
+        wndPtr->dwStyle |= WS_MINIMIZE;
+
+        X11DRV_set_iconic_state( wndPtr );
+
+        wpl.ptMinPosition = WINPOS_FindIconPos( wndPtr, wpl.ptMinPosition );
+
+        SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                 GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
+        swpFlags |= SWP_NOCOPYBITS;
+        break;
+
+    case SW_MAXIMIZE:
+        WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
+
         if( wndPtr->dwStyle & WS_MINIMIZE )
         {
-            if( !SendMessageA( wndPtr->hwndSelf, WM_QUERYOPEN, 0, 0L ) )
-            {
-                swpFlags = SWP_NOSIZE | SWP_NOMOVE;
-                goto done;
-            }
-            swpFlags |= SWP_NOCOPYBITS;
+            wndPtr->dwStyle &= ~WS_MINIMIZE;
+            WINPOS_ShowIconTitle( hwnd, FALSE );
+            X11DRV_set_iconic_state( wndPtr );
         }
-        switch( cmd )
-        {
-        case SW_MINIMIZE:
-            if( wndPtr->dwStyle & WS_MAXIMIZE)
-            {
-                wndPtr->flags |= WIN_RESTORE_MAX;
-                wndPtr->dwStyle &= ~WS_MAXIMIZE;
-            }
-            else
-                wndPtr->flags &= ~WIN_RESTORE_MAX;
-            wndPtr->dwStyle |= WS_MINIMIZE;
+        wndPtr->dwStyle |= WS_MAXIMIZE;
 
+        SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+        break;
+
+    case SW_RESTORE:
+        if( wndPtr->dwStyle & WS_MINIMIZE )
+        {
+            wndPtr->dwStyle &= ~WS_MINIMIZE;
+            WINPOS_ShowIconTitle( hwnd, FALSE );
             X11DRV_set_iconic_state( wndPtr );
 
-            wpl.ptMinPosition = WINPOS_FindIconPos( wndPtr, wpl.ptMinPosition );
-
-            SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                     GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
-            swpFlags |= SWP_NOCOPYBITS;
-            break;
-
-        case SW_MAXIMIZE:
-            WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
-
-            if( wndPtr->dwStyle & WS_MINIMIZE )
+            if( wndPtr->flags & WIN_RESTORE_MAX)
             {
-                wndPtr->dwStyle &= ~WS_MINIMIZE;
-                WINPOS_ShowIconTitle( hwnd, FALSE );
-                X11DRV_set_iconic_state( wndPtr );
+                /* Restore to maximized position */
+                WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
+                wndPtr->dwStyle |= WS_MAXIMIZE;
+                SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+                break;
             }
-            wndPtr->dwStyle |= WS_MAXIMIZE;
-
-            SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
-            break;
-
-        case SW_RESTORE:
-            if( wndPtr->dwStyle & WS_MINIMIZE )
-            {
-                wndPtr->dwStyle &= ~WS_MINIMIZE;
-                WINPOS_ShowIconTitle( hwnd, FALSE );
-                X11DRV_set_iconic_state( wndPtr );
-
-                if( wndPtr->flags & WIN_RESTORE_MAX)
-                {
-                    /* Restore to maximized position */
-                    WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
-                    wndPtr->dwStyle |= WS_MAXIMIZE;
-                    SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
-                    break;
-                }
-            }
-            else
-                if( !(wndPtr->dwStyle & WS_MAXIMIZE) )
-                {
-                    swpFlags = (UINT16)(-1);
-                    goto done;
-                }
-                else wndPtr->dwStyle &= ~WS_MAXIMIZE;
-
-            /* Restore to normal position */
-
-            *rect = wpl.rcNormalPosition;
-            rect->right -= rect->left;
-            rect->bottom -= rect->top;
-
-            break;
         }
-    } else swpFlags |= SWP_NOSIZE | SWP_NOMOVE;
+        else
+        {
+            if (!(wndPtr->dwStyle & WS_MAXIMIZE)) break;
+            wndPtr->dwStyle &= ~WS_MAXIMIZE;
+        }
 
- done:
+        /* Restore to normal position */
+
+        *rect = wpl.rcNormalPosition;
+        rect->right -= rect->left;
+        rect->bottom -= rect->top;
+
+        break;
+    }
+
     WIN_ReleaseWndPtr( wndPtr );
     return swpFlags;
 }
