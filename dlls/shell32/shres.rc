@@ -1345,6 +1345,7 @@ END
 #include "shell32_Pl.rc"
 #include "shell32_Pt.rc"
 #include "shell32_Ru.rc"
+#include "shell32_Si.rc"
 #include "shell32_Sk.rc"
 #include "shell32_Sv.rc"
 #include "shell32_Wa.rc"

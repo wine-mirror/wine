@@ -1,0 +1,133 @@
+/*
+ * Program Manager (Slovenian Resources)
+ *
+ * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#define LANGUAGE_ID                  Si
+#define LANGUAGE_NUMBER              1c
+#define LANGUAGE_MENU_ITEM           "Slove&nšèina"
+
+/* Menu */
+
+#define MENU_FILE                    "&Datoteka"
+#define MENU_FILE_NEW                "&Nova ..."
+#define MENU_FILE_OPEN               "&Odpri\tEnter"
+#define MENU_FILE_MOVE               "Pre&makni\tF7"
+#define MENU_FILE_COPY               "&Kopiraj\tF8"
+#define MENU_FILE_DELETE             "Izbri&ši\tDel"
+#define MENU_FILE_ATTRIBUTES         "&Lastnosti ...\tAlt+Enter"
+#define MENU_FILE_EXECUTE            "&Zaženi ..."
+#define MENU_FILE_EXIT               "Iz&hod iz programa Windows ..."
+
+#define MENU_OPTIONS                 "&Možnosti"
+#define MENU_OPTIONS_AUTO_ARRANGE    "&Samodejno razporedi"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Ob rabi minimiraj"
+#define MENU_OPTIONS_SAVE_SETTINGS   "Shrani &nastavitve ob izhodu"
+
+#define MENU_WINDOWS                 "&Okno"
+#define MENU_WINDOWS_OVERLAP         "&V kaskado\tShift+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Razpostavi\tShift+F4"
+#define MENU_WINDOWS_ARRANGE         "Razporedi &ikone"
+
+#define MENU_LANGUAGE                "&Jezik"
+
+#define MENU_HELP                    "&Pomoè"
+#define MENU_HELP_CONTENTS           "&Teme pomoèi"
+#define MENU_HELP_SEARCH             "&Najdi ..."
+#define MENU_HELP_HELP_ON_HELP       "&O pomoèi"
+#define MENU_HELP_TUTORIAL           "&Vadnica"
+
+#define MENU_INFO                    "Inf&ormacije ..."
+#define MENU_INFO_LICENSE            "&Licenèna pogodba"
+#define MENU_INFO_NO_WARRANTY        "&BREZ GARANCIJE"
+#define MENU_INFO_ABOUT_WINE         "&O WINE"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "V redu"
+#define DIALOG_CANCEL                "Preklièi"
+#define DIALOG_BROWSE                "Pre&brskaj ..."
+#define DIALOG_HELP                  "&Pomoè"
+
+#define DIALOG_NEW_CAPTION           "Nov programski predmet"
+#define DIALOG_NEW_NEW               "Nov(a)"
+#define DIALOG_NEW_GROUP             "Programska &skupina"
+#define DIALOG_NEW_PROGRAM           "P&rogram"
+
+#define DIALOG_MOVE_CAPTION          "Premik programa"
+#define DIALOG_MOVE_PROGRAM          "Premakni program:"
+#define DIALOG_MOVE_FROM_GROUP       "Iz programske skupine:"
+#define DIALOG_MOVE_TO_GROUP         "&V skupino:"
+
+#define DIALOG_COPY_CAPTION          "Kopiranje programa"
+#define DIALOG_COPY_PROGRAM          "Kopiraj program:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "Lastnosti programske skupine"
+#define DIALOG_GROUP_DESCRIPTION     "&Opis:"
+#define DIALOG_GROUP_FILE            "&Datoteka skupine:"
+
+#define DIALOG_PROGRAM_CAPTION       "Lastnosti programa"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "&Ukazna vrstica:"
+#define DIALOG_PROGRAM_DIRECTORY     "&Delovna mapa:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Tipke za bližnjico:"
+#define DIALOG_PROGRAM_SYMBOL        "&Minimiran zagon"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "Zamenjaj &ikono ..."
+
+#define DIALOG_SYMBOL_CAPTION        "Zamenjava ikone"
+#define DIALOG_SYMBOL_FILE           "Ime &datoteke:"
+#define DIALOG_SYMBOL_CURRENT        "&Trenutna ikona:"
+
+#define DIALOG_EXECUTE_CAPTION       "Zagon programa"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Upravitelj programov"
+#define STRING_ERROR                      "NAPAKA"
+#define STRING_WARNING                    "OPOZORILO"
+#define STRING_INFO                       "Informaticija"
+#define STRING_DELETE                     "Brisanje"
+#define STRING_DELETE_GROUP_s             "Ali ste preprièani, da želite izbrisati skupino »%s«?"
+#define STRING_DELETE_PROGRAM_s           "Ali ste preprièani, da želite izbrisati element »%s«?"
+#define STRING_NOT_IMPLEMENTED            "Ni (še) na voljo"
+#define STRING_FILE_READ_ERROR_s          "Napaka pri branju iz »%s«"
+#define STRING_FILE_WRITE_ERROR_s         "Napaka pri pisanju v »%s«"
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+Datoteke programske skupine »%s« ni mogoèe odpreti.\n\
+Ali želite, da jo upravitelj programov poskuša naložiti tudi v prihodnje?"
+
+#define STRING_OUT_OF_MEMORY              "Zmanjkalo je pomnilnika"
+#define STRING_WINHELP_ERROR              "Pomoè ni na voljo"
+#define STRING_UNKNOWN_FEATURE_s          "Neznana možnost v %s"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "Datoteka `%s' že obstaja in ni bila prepisana."
+#define STRING_SAVE_GROUP_AS_s            "Shranjujem datoteko skupine kot `%s', da bi prepreèil prepisanje originalne datoteke"
+
+#define STRING_NO_HOT_KEY                 "Noben"
+
+#define STRING_ALL_FILES                  "Vse datoteke (*.*)"
+#define STRING_PROGRAMS                   "Programi"
+#define STRING_LIBRARIES_DLL              "Knjižnice (*.dll)"
+#define STRING_SYMBOL_FILES               "Ikonske datoteke"
+#define STRING_SYMBOLS_ICO                "Ikone (*.ico)"
+
+#include "Xx.rc"
