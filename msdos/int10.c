@@ -7,6 +7,18 @@
 #include "vga.h"
 /* #define DEBUG_INT */
 #include "debug.h"
+#include "console.h"
+
+static int conv_text_mode_attribute_attribute(char attribute);
+static int conv_text_mode_attribute_fg_color(char attribute);
+static int conv_text_mode_attribute_bg_color(char attribute);
+static void write_char_attribute_at_cursor(char output, char page_num, 
+       char attribute, short times);
+static void scroll_window(int direction, char lines, char row1, 
+   char col1, char row2, char col2, char attribute);
+
+#define SCROLL_UP 1
+#define SCROLL_DOWN 2
 
 /**********************************************************************
  *	    INT_Int10Handler
@@ -40,6 +52,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 
     case 0x00: /* SET VIDEO MODE */
         /* Text Modes: (can xterm or similar change text rows/cols?) */
+        /*    Answer: Yes. We can add that later. */
+        /*      Er, maybe. I thought resizeterm() did it, I was wrong. */
         /* (mode) (text rows/cols)
             0x00 - 40x25 
             0x01 - 40x25
@@ -57,6 +71,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
                 VGA_Exit();
                 TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
+                CONSOLE_ClearScreen();
                 break;
             case 0x13:
                 TRACE(int10, "Setting VGA 320x200 256-color mode\n");
@@ -73,7 +88,20 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
 
     case 0x02: /* SET CURSOR POSITION */
-        FIXME(int10, "Set Cursor Position - Not Supported\n");
+        /* BH = Page Number */ /* Not supported */
+        /* DH = Row */ /* 0 is left */
+        /* DL = Column */ /* 0 is top */
+        if (BH_reg(context))
+        {
+           FIXME(int10, "Set Cursor Position: Cannot set to page %d\n",
+              BH_reg(context));
+        }
+        else
+        {
+           CONSOLE_MoveCursor(DH_reg(context), DL_reg(context));
+           TRACE(int10, "Set Cursor Position: %d %d\n", DH_reg(context), 
+              DL_reg(context));
+        }
         break;
 
     case 0x03: /* GET CURSOR POSITION AND SIZE */
@@ -92,11 +120,25 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
 
     case 0x06: /* SCROLL UP WINDOW */
-        FIXME(int10, "Scroll Up Window - Not Supported\n");
+        /* AL = Lines to scroll */
+        /* BH = Attribute */
+        /* CH,CL = row, col upper-left */
+        /* DH,DL = row, col lower-right */
+        scroll_window(SCROLL_UP, AL_reg(context), CH_reg(context), 
+           CL_reg(context), DH_reg(context), DL_reg(context), 
+           BH_reg(context));
+        TRACE(int10, "Scroll Up Window %d\n", AL_reg(context));
         break;
 
     case 0x07: /* SCROLL DOWN WINDOW */
-        FIXME(int10, "Scroll Down Window - Not Supported\n");
+        /* AL = Lines to scroll */
+        /* BH = Attribute */
+        /* CH,CL = row, col upper-left */
+        /* DH,DL = row, col lower-right */
+        scroll_window(SCROLL_DOWN, AL_reg(context), CH_reg(context), 
+           CL_reg(context), DH_reg(context), DL_reg(context), 
+           BH_reg(context));
+        TRACE(int10, "Scroll Down Window %d\n", AL_reg(context));
         break;
 
     case 0x08: /* READ CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
@@ -105,12 +147,29 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
 
     case 0x09: /* WRITE CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
+       /* AL = Character to display. */
+       /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
+       /* BL = Attribute / Color */
+       /* CX = Times to Write Char */
+       /* !NOTE!: It appears as if the cursor is not advanced if CX > 1 */
+       write_char_attribute_at_cursor(AL_reg(context), BH_reg(context), 
+          BL_reg(context), CX_reg(context));
+       if (CX_reg(context) > 1)
+          TRACE(int10, "Write Character and Attribute at Cursor Position "
+             "(Rep. %d) %c\n", CX_reg(context), AL_reg(context));
+       else
+          TRACE(int10, "Write Character and Attribute at Cursor"
+             "Position: %c\n", AL_reg(context));
+       break;
+
     case 0x0a: /* WRITE CHARACTER ONLY AT CURSOR POSITION */ 
-       while (CX_reg(context)) {
-           _lwrite16(1, &AL_reg(context), 1);
-           (CX_reg(context))--;
-        }
-        break;
+       /* AL = Character to display. */
+       /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
+       /* CX = Times to Write Char */
+       TRACE(int10, "Write Character at Cursor\n");
+       write_char_attribute_at_cursor(AL_reg(context), BH_reg(context), 
+          0, CX_reg(context));
+       break;
 
     case 0x0b: 
         switch BH_reg(context) {
@@ -139,12 +198,15 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
               
     case 0x0e: /* TELETYPE OUTPUT */
         TRACE(int10, "Teletype Output\n");
-        _lwrite16(1, &AL_reg(context), 1);
+        CONSOLE_Write(AL_reg(context), 0, 0, 0);
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
-        TRACE(int10, "Get Current Video Mode\n");
-        AL_reg(context) = 0x5b; /* WHY ARE WE RETURNING THIS? */
+        TRACE(int10, "Get Current Video Mode (0x0%x)\n", AL_reg(context));
+        /* Note: This should not be a constant value. */
+        AL_reg(context) = 0x07; /* 80x25 text mode */
+        AH_reg(context) = 80; /* 80 columns */
+        BH_reg(context) = 0; /* Display page 0 */
         break;
 
     case 0x10: 
@@ -218,7 +280,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             break;
         case 0x01: /* LOAD ROM MONOCHROME PATTERNS */
         case 0x11:
-            FIXME(int10, "Load ROM Monochrome Patterns - Not Suppoted\n");
+            FIXME(int10, "Load ROM Monochrome Patterns - Not Supported\n");
             break;
         case 0x02: /* LOAD ROM 8x8 DOUBLE-DOT PATTERNS */
         case 0x12:
@@ -329,3 +391,117 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         INT_BARF( context, 0x10 );
     }
 }
+
+static void write_char_attribute_at_cursor(char output, char page_num, 
+       char attribute, short times)
+{
+    /* !NOTE!: */
+    /* It appears that the cursor should not be advanced if times > 1 */
+    /* I will triple check this later but bzork.exe definately points this */
+    /* way */
+    int wattribute, fg_color, bg_color;
+    char x, y;
+    int must_reset = 0;
+
+    if (page_num) /* Only support one text page right now */
+    {
+       FIXME(int10, "Cannot write to alternate page %d", page_num);
+       return;
+    }  
+
+    wattribute = conv_text_mode_attribute_attribute(attribute);
+    fg_color = conv_text_mode_attribute_fg_color(attribute);
+    bg_color = conv_text_mode_attribute_bg_color(attribute);
+
+    if (times > 1)
+    {
+       must_reset = 1;
+       CONSOLE_GetCursorPosition(&x, &y);
+    }
+
+    while (times)
+    {
+       CONSOLE_Write(output, fg_color, bg_color, attribute);           
+       times--;
+    }
+  
+    if (must_reset)
+       CONSOLE_MoveCursor(x, y);
+}
+
+static int conv_text_mode_attribute_fg_color(char attribute)
+{
+    /* This is a local function to convert the color values 
+       in text-mode attributes to Wine's scheme */
+    
+    /* Foreground Color is stored in bits 3 through 0 */
+
+    /* Colors:
+          0000b   black          1000b   dark gray
+          0001b   blue           1001b   light blue
+          0010b   green          1010b   light green
+          0011b   cyan           1011b   light cyan
+          0100b   red            1100b   light red
+          0101b   magenta        1101b   light magenta
+          0110b   brown          1110b   yellow
+          0111b   light gray     1111b   white
+    */
+
+    /* FIXME - We need color values for those and some generic constants */
+
+    return 0; /* Bogus, temporary data. */
+}
+
+static int conv_text_mode_attribute_bg_color(char attribute)
+{
+    /* This is a local function to convert the color values 
+       in text-mode attributes to Wine's scheme */
+    
+    /* Background Color is stored in bits 6 through 4 */
+    
+    /* Colors same as above, but only the left column */
+
+    /* FIXME - We need color values for those and some generic constants */
+
+    return 0; /* Bogus, temporary data. */
+}
+
+static int conv_text_mode_attribute_attribute(char attribute)
+{
+    /* This is a local function to convert the attribute values 
+       in text-mode attributes to Wine's scheme */
+    
+    /* If this has bit 7 set, then we need to blink */
+
+    if (255 && attribute)
+    {
+        /* return TEXT_ATTRIBUTE_BLINK; */
+    }
+    
+    return 0; /* Bogus data */
+}
+
+static void scroll_window(int direction, char lines, char row1, 
+   char col1, char row2, char col2, char attribute)
+{
+   int wattribute, bg_color;
+
+   wattribute = conv_text_mode_attribute_attribute(attribute);
+   bg_color = conv_text_mode_attribute_bg_color(attribute);
+
+   if (!lines) /* Actually, clear the window */
+   {
+      CONSOLE_ClearWindow(row1, col1, row2, col2, bg_color, wattribute);
+   }
+   else if (direction == SCROLL_UP)
+   {
+      CONSOLE_ScrollUpWindow(row1, col1, row2, col2, lines, bg_color,
+         wattribute);
+   }
+   else
+   {
+      CONSOLE_ScrollDownWindow(row1, col1, row2, col2, lines, bg_color,
+         wattribute);
+   }
+}
+   

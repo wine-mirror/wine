@@ -24,6 +24,7 @@
 #include "options.h"
 #include "miscemu.h"
 #include "debug.h"
+#include "console.h"
 #if defined(__svr4__) || defined(_SCO_DS)
 /* SVR4 DOESNT do locking the same way must implement properly */
 #define LOCK_EX 0
@@ -1043,14 +1044,14 @@ void WINAPI DOS3Call( CONTEXT *context )
 {
     BOOL32	bSetDOSExtendedError = FALSE;
 
-#if 0
+
     TRACE(int21, "AX=%04x BX=%04x CX=%04x DX=%04x "
 	  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
 	  AX_reg(context), BX_reg(context), CX_reg(context), DX_reg(context),
 	  SI_reg(context), DI_reg(context),
 	  (WORD)DS_reg(context), (WORD)ES_reg(context),
 	  EFL_reg(context) );
-#endif
+
 
     if (AH_reg(context) == 0x59)  /* Get extended error info */
     {
@@ -1102,18 +1103,23 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
+        TRACE(int21, "Write Character to Standard Output\n");
+    	CONSOLE_Write(DL_reg(context), 0, 0, 0);
+        break;
+
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-    	_lwrite16( 1, &DL_reg(context), 1);
+        TRACE(int21, "Direct Console Input/Output\n");
+    	CONSOLE_Write(DL_reg(context), 0, 0, 0);
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
         TRACE(int21,"DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-	_lread16( 0, &AL_reg(context), 1);
+	AL_reg(context) = CONSOLE_GetCharacter();
         break;
 
     case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
         TRACE(int21,"CHARACTER INPUT WITHOUT ECHO\n");
-	_lread16( 0, &AL_reg(context), 1);
+	AL_reg(context) = CONSOLE_GetCharacter();
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */

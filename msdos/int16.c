@@ -14,6 +14,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
+#include "console.h"
 
 /**********************************************************************
  *	    INT_Int16Handler
@@ -31,11 +32,25 @@ void WINAPI INT_Int16Handler( CONTEXT *context )
    switch AH_reg(context) {
 
    case 0x00: /* Get Keystroke */
-      FIXME(int16, "Get Keystroke - Not Supported\n");
+      /* Returns: AH = Scan code
+                  AL = ASCII character */   
+      TRACE(int16, "Get Keystroke\n");
+      CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
       break;
 
    case 0x01: /* Check for Keystroke */
-      FIXME(int16, "Check for Keystroke - Not Supported\n");
+      /* Returns: ZF set if no keystroke */
+      /*          AH = Scan code */
+      /*          AL = ASCII character */
+      TRACE(int16, "Check for Keystroke\n");
+      if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
+      {
+          SET_ZFLAG(context);
+      }
+      else
+      {
+          RESET_ZFLAG(context);
+      }
       break;
 
    case 0x02: /* Get Shift Flags */      

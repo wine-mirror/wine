@@ -2,15 +2,10 @@
  * DOS interrupt 29h handler
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "ldt.h"
-#include "drive.h"
-#include "msdos.h"
-#include "miscemu.h"
-#include "module.h"
+#include "config.h"
+#include "wintypes.h"
+#include "winnt.h"
+#include "console.h"
 
 /**********************************************************************
  *	    INT_Int29Handler
@@ -20,6 +15,6 @@
 void WINAPI INT_Int29Handler( CONTEXT *context )
 {
    /* Yes, it seems that this is really all this interrupt does. */
-   _lwrite16( 1, &AL_reg(context), 1);
+   CONSOLE_Write(AL_reg(context), 0, 0, 0);
 }
 
