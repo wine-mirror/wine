@@ -2,6 +2,10 @@
  * VARIANT
  *
  * Copyright 1998 Jean-Claude Cote
+ * Copyright 2003 Jon Griffiths
+ * The alorithm for conversion from Julian days to day/month/year is based on
+ * that devised by Henry Fliegel, as implemented in PostgreSQL, which is
+ * Copyright 1994-7 Regents of the University of California
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -4206,27 +4210,427 @@ error:
     return DISP_E_TYPEMISMATCH;
 }
 
+/* Date Conversions */
+
+#define IsLeapYear(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
+
+/* Convert a VT_DATE value to a Julian Date */
+static inline int VARIANT_JulianFromDate(int dateIn)
+{
+  int julianDays = dateIn;
+
+  julianDays -= DATE_MIN; /* Convert to + days from 1 Jan 100 AD */
+  julianDays += 1757585;  /* Convert to + days from 23 Nov 4713 BC (Julian) */
+  return julianDays;
+}
+
+/* Convert a Julian Date to a VT_DATE value */
+static inline int VARIANT_DateFromJulian(int dateIn)
+{
+  int julianDays = dateIn;
+
+  julianDays -= 1757585;  /* Convert to + days from 1 Jan 100 AD */
+  julianDays += DATE_MIN; /* Convert to +/- days from 1 Jan 1899 AD */
+  return julianDays;
+}
+
+/* Convert a Julian date to Day/Month/Year - from PostgreSQL */
+static inline void VARIANT_DMYFromJulian(int jd, USHORT *year, USHORT *month, USHORT *day)
+{
+  int j, i, l, n;
+
+  l = jd + 68569;
+  n = l * 4 / 146097;
+  l -= (n * 146097 + 3) / 4;
+  i = (4000 * (l + 1)) / 1461001;
+  l += 31 - (i * 1461) / 4;
+  j = (l * 80) / 2447;
+  *day = l - (j * 2447) / 80;
+  l = j / 11;
+  *month = (j + 2) - (12 * l);
+  *year = 100 * (n - 49) + i + l;
+}
+
+/* Convert Day/Month/Year to a Julian date - from PostgreSQL */
+static inline double VARIANT_JulianFromDMY(USHORT year, USHORT month, USHORT day)
+{
+  int m12 = (month - 14) / 12;
+
+  return ((1461 * (year + 4800 + m12)) / 4 + (367 * (month - 2 - 12 * m12)) / 12 -
+           (3 * ((year + 4900 + m12) / 100)) / 4 + day - 32075);
+}
+
+/* Macros for accessing DOS format date/time fields */
+#define DOS_YEAR(x)   (1980 + (x >> 9))
+#define DOS_MONTH(x)  ((x >> 5) & 0xf)
+#define DOS_DAY(x)    (x & 0x1f)
+#define DOS_HOUR(x)   (x >> 11)
+#define DOS_MINUTE(x) ((x >> 5) & 0x3f)
+#define DOS_SECOND(x) ((x & 0x1f) << 1)
+/* Create a DOS format date/time */
+#define DOS_DATE(d,m,y) (d | (m << 5) | ((y-1980) << 9))
+#define DOS_TIME(h,m,s) ((s >> 1) | (m << 5) | (h << 11))
+
+/* Roll a date forwards or backwards to correct it */
+static HRESULT VARIANT_RollUdate(UDATE *lpUd)
+{
+  static const BYTE days[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+  TRACE("Raw date: %d/%d/%d %d:%d:%d\n", lpUd->st.wDay, lpUd->st.wMonth,
+        lpUd->st.wYear, lpUd->st.wHour, lpUd->st.wMinute, lpUd->st.wSecond);
+
+  /* Years < 100 are treated as 1900 + year */
+  if (lpUd->st.wYear < 100)
+    lpUd->st.wYear += 1900;
+
+  if (!lpUd->st.wMonth)
+  {
+    /* Roll back to December of the previous year */
+    lpUd->st.wMonth = 12;
+    lpUd->st.wYear--;
+  }
+  else while (lpUd->st.wMonth > 12)
+  {
+    /* Roll forward the correct number of months */
+    lpUd->st.wYear++;
+    lpUd->st.wMonth -= 12;
+  }
+
+  if (lpUd->st.wYear > 9999 || lpUd->st.wHour > 23 ||
+      lpUd->st.wMinute > 59 || lpUd->st.wSecond > 59)
+    return E_INVALIDARG; /* Invalid values */
+
+  if (!lpUd->st.wDay)
+  {
+    /* Roll back the date one day */
+    if (lpUd->st.wMonth == 1)
+    {
+      /* Roll back to December 31 of the previous year */
+      lpUd->st.wDay   = 31;
+      lpUd->st.wMonth = 12;
+      lpUd->st.wYear--;
+    }
+    else
+    {
+      lpUd->st.wMonth--; /* Previous month */
+      if (lpUd->st.wMonth == 2 && IsLeapYear(lpUd->st.wYear))
+        lpUd->st.wDay = 29; /* Februaury has 29 days on leap years */
+      else
+        lpUd->st.wDay = days[lpUd->st.wMonth]; /* Last day of the month */
+    }
+  }
+  else if (lpUd->st.wDay > 28)
+  {
+    int rollForward = 0;
+
+    /* Possibly need to roll the date forward */
+    if (lpUd->st.wMonth == 2 && IsLeapYear(lpUd->st.wYear))
+      rollForward = lpUd->st.wDay - 29; /* Februaury has 29 days on leap years */
+    else
+      rollForward = lpUd->st.wDay - days[lpUd->st.wMonth];
+
+    if (rollForward > 0)
+    {
+      lpUd->st.wDay = rollForward;
+      lpUd->st.wMonth++;
+      if (lpUd->st.wMonth > 12)
+      {
+        lpUd->st.wMonth = 1; /* Roll forward into January of the next year */
+        lpUd->st.wYear++;
+      }
+    }
+  }
+  TRACE("Rolled date: %d/%d/%d %d:%d:%d\n", lpUd->st.wDay, lpUd->st.wMonth,
+        lpUd->st.wYear, lpUd->st.wHour, lpUd->st.wMinute, lpUd->st.wSecond);
+  return S_OK;
+}
+
 /**********************************************************************
  *              DosDateTimeToVariantTime [OLEAUT32.14]
- * Convert dos representation of time to the date and time representation
- * stored in a variant.
+ *
+ * Convert a Dos format date and time into variant VT_DATE format.
+ *
+ * PARAMS
+ *  wDosDate [I] Dos format date
+ *  wDosTime [I] Dos format time
+ *  pDateOut [O] Destination for VT_DATE format
+ *
+ * RETURNS
+ *  Success: TRUE. pDateOut contains the converted time.
+ *  Failure: FALSE, if wDosDate or wDosTime are invalid (see notes).
+ *
+ * NOTES
+ * - Dos format dates can only hold dates from 1-Jan-1980 to 31-Dec-2099.
+ * - Dos format times are accurate to only 2 second precision.
+ * - The format of a Dos Date is:
+ *| Bits   Values  Meaning
+ *| ----   ------  -------
+ *| 0-4    1-31    Day of the week. 0 rolls back one day. A value greater than
+ *|                the days in the month rolls forward the extra days.
+ *| 5-8    1-12    Month of the year. 0 rolls back to December of the previous
+ *|                year. 13-15 are invalid.
+ *| 9-15   0-119   Year based from 1980 (Max 2099). 120-127 are invalid.
+ * - The format of a Dos Time is:
+ *| Bits   Values  Meaning
+ *| ----   ------  -------
+ *| 0-4    0-29    Seconds/2. 30 and 31 are invalid.
+ *| 5-10   0-59    Minutes. 60-63 are invalid.
+ *| 11-15  0-23    Hours (24 hour clock). 24-32 are invalid.
  */
 INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
-                                    DATE *pvtime)
+                                    double *pDateOut)
 {
-    struct tm t;
+  UDATE ud;
 
-    TRACE("( 0x%x, 0x%x, %p ), stub\n", wDosDate, wDosTime, pvtime );
+  TRACE("(0x%x(%d/%d/%d),0x%x(%d:%d:%d),%p)\n",
+        wDosDate, DOS_YEAR(wDosDate), DOS_MONTH(wDosDate), DOS_DAY(wDosDate),
+        wDosTime, DOS_HOUR(wDosTime), DOS_MINUTE(wDosTime), DOS_SECOND(wDosTime),
+        pDateOut);
 
-    t.tm_sec = (wDosTime & 0x001f) * 2;
-    t.tm_min = (wDosTime & 0x07e0) >> 5;
-    t.tm_hour = (wDosTime & 0xf800) >> 11;
+  ud.st.wYear = DOS_YEAR(wDosDate);
+  ud.st.wMonth = DOS_MONTH(wDosDate);
+  if (ud.st.wYear > 2099 || ud.st.wMonth > 12)
+    return FALSE;
+  ud.st.wDay = DOS_DAY(wDosDate);
+  ud.st.wHour = DOS_HOUR(wDosTime);
+  ud.st.wMinute = DOS_MINUTE(wDosTime);
+  ud.st.wSecond = DOS_SECOND(wDosTime);
+  ud.st.wDayOfWeek = ud.st.wMilliseconds = 0;
 
-    t.tm_mday = (wDosDate & 0x001f);
-    t.tm_mon = (wDosDate & 0x01e0) >> 5;
-    t.tm_year = ((wDosDate & 0xfe00) >> 9) + 1980;
+  return !VarDateFromUdate(&ud, 0, pDateOut);
+}
 
-    return TmToDATE( &t, pvtime );
+/**********************************************************************
+ *              VariantTimeToDosDateTime [OLEAUT32.13]
+ *
+ * Convert a variant format date into a Dos format date and time.
+ *
+ *  dateIn    [I] VT_DATE time format
+ *  pwDosDate [O] Destination for Dos format date
+ *  pwDosTime [O] Destination for Dos format time
+ *
+ * RETURNS
+ *  Success: TRUE. pwDosDate and pwDosTime contains the converted values.
+ *  Failure: FALSE, if dateIn cannot be represented in Dos format.
+ *
+ * NOTES
+ *   See DosDateTimeToVariantTime() for Dos format details and bugs.
+ */
+INT WINAPI VariantTimeToDosDateTime(double dateIn, USHORT *pwDosDate, USHORT *pwDosTime)
+{
+  UDATE ud;
+
+  TRACE("(%g,%p,%p)\n", dateIn, pwDosDate, pwDosTime);
+
+  if (FAILED(VarUdateFromDate(dateIn, 0, &ud)))
+    return FALSE;
+
+  if (ud.st.wYear < 1980 || ud.st.wYear > 2099)
+    return FALSE;
+
+  *pwDosDate = DOS_DATE(ud.st.wDay, ud.st.wMonth, ud.st.wYear);
+  *pwDosTime = DOS_TIME(ud.st.wHour, ud.st.wMinute, ud.st.wSecond);
+
+  TRACE("Returning 0x%x(%d/%d/%d), 0x%x(%d:%d:%d)\n",
+        *pwDosDate, DOS_YEAR(*pwDosDate), DOS_MONTH(*pwDosDate), DOS_DAY(*pwDosDate),
+        *pwDosTime, DOS_HOUR(*pwDosTime), DOS_MINUTE(*pwDosTime), DOS_SECOND(*pwDosTime));
+  return TRUE;
+}
+
+/***********************************************************************
+ *              SystemTimeToVariantTime [OLEAUT32.184]
+ *
+ * Convert a System format date and time into variant VT_DATE format.
+ *
+ * PARAMS
+ *  lpSt     [I] System format date and time
+ *  pDateOut [O] Destination for VT_DATE format date
+ *
+ * RETURNS
+ *  Success: TRUE. *pDateOut contains the converted value.
+ *  Failure: FALSE, if lpSt cannot be represented in VT_DATE format.
+ */
+INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, double *pDateOut)
+{
+  UDATE ud;
+
+  TRACE("(%p->%d/%d/%d %d:%d:%d,%p)\n", lpSt, lpSt->wDay, lpSt->wMonth,
+        lpSt->wYear, lpSt->wHour, lpSt->wMinute, lpSt->wSecond, pDateOut);
+
+  if (lpSt->wMonth > 12)
+    return FALSE;
+
+  memcpy(&ud.st, lpSt, sizeof(ud.st));
+  return !VarDateFromUdate(&ud, 0, pDateOut);
+}
+
+/***********************************************************************
+ *              VariantTimeToSystemTime [OLEAUT32.185]
+ *
+ * Convert a variant VT_DATE into a System format date and time.
+ *
+ * PARAMS
+ *  datein [I] Variant VT_DATE format date
+ *  lpSt   [O] Destination for System format date and time
+ *
+ * RETURNS
+ *  Success: TRUE. *lpSt contains the converted value.
+ *  Failure: FALSE, if dateIn is too large or small.
+ */
+INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
+{
+  UDATE ud;
+
+  TRACE("(%g,%p)\n", dateIn, lpSt);
+
+  if (FAILED(VarUdateFromDate(dateIn, 0, &ud)))
+    return FALSE;
+
+  memcpy(lpSt, &ud.st, sizeof(ud.st));
+  return TRUE;
+}
+
+/***********************************************************************
+ *              VarDateFromUdate [OLEAUT32.330]
+ *
+ * Convert an unpacked format date and time to a variant VT_DATE.
+ *
+ * PARAMS
+ *  pUdateIn [I] Unpacked format date and time to convert
+ *  dwFlags  [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
+ *  pDateOut [O] Destination for variant VT_DATE.
+ *
+ * RETURNS
+ *  Success: S_OK. *pDateOut contains the converted value.
+ *  Failure: E_INVALIDARG, if pUdateIn cannot be represented in VT_DATE format.
+ */
+HRESULT WINAPI VarDateFromUdate(UDATE *pUdateIn, ULONG dwFlags, DATE *pDateOut)
+{
+  UDATE ud;
+  double dateVal;
+
+  TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08lx,%p)\n", pUdateIn,
+        pUdateIn->st.wMonth, pUdateIn->st.wDay, pUdateIn->st.wYear,
+        pUdateIn->st.wHour, pUdateIn->st.wMinute, pUdateIn->st.wSecond,
+        pUdateIn->st.wMilliseconds, pUdateIn->st.wDayOfWeek,
+        pUdateIn->wDayOfYear, dwFlags, pDateOut);
+
+  memcpy(&ud, pUdateIn, sizeof(ud));
+
+  if (dwFlags & VAR_VALIDDATE)
+    WARN("Ignoring VAR_VALIDDATE\n");
+
+  if (FAILED(VARIANT_RollUdate(&ud)))
+    return E_INVALIDARG;
+
+  /* Date */
+  dateVal = VARIANT_DateFromJulian(VARIANT_JulianFromDMY(ud.st.wYear, ud.st.wMonth, ud.st.wDay));
+
+  /* Time */
+  dateVal += ud.st.wHour / 24.0;
+  dateVal += ud.st.wMinute / 1440.0;
+  dateVal += ud.st.wSecond / 86400.0;
+  dateVal += ud.st.wMilliseconds / 86400000.0;
+
+  TRACE("Returning %g\n", dateVal);
+  *pDateOut = dateVal;
+  return S_OK;
+}
+
+/***********************************************************************
+ *              VarUdateFromDate [OLEAUT32.331]
+ *
+ * Convert a variant VT_DATE into an unpacked format date and time.
+ *
+ * PARAMS
+ *  datein    [I] Variant VT_DATE format date
+ *  dwFlags   [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
+ *  lpUdate [O] Destination for unpacked format date and time
+ *
+ * RETURNS
+ *  Success: S_OK. *lpUdate contains the converted value.
+ *  Failure: E_INVALIDARG, if dateIn is too large or small.
+ */
+HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
+{
+  /* Cumulative totals of days per month */
+  static const USHORT cumulativeDays[] =
+  {
+    0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+  };
+  double datePart, timePart;
+  int julianDays;
+
+  TRACE("(%g,0x%08lx,%p)\n", dateIn, dwFlags, lpUdate);
+
+  if (dateIn <= (DATE_MIN - 1.0) || dateIn >= (DATE_MAX + 1.0))
+    return E_INVALIDARG;
+
+  datePart = dateIn < 0.0 ? ceil(dateIn) : floor(dateIn);
+  /* Compensate for int truncation (always downwards) */
+  timePart = dateIn - datePart + 0.00000000001;
+  if (timePart >= 1.0)
+    timePart -= 0.00000000001;
+
+  /* Date */
+  julianDays = VARIANT_JulianFromDate(dateIn);
+  VARIANT_DMYFromJulian(julianDays, &lpUdate->st.wYear, &lpUdate->st.wMonth,
+                        &lpUdate->st.wDay);
+
+  datePart = (datePart + 1.5) / 7.0;
+  lpUdate->st.wDayOfWeek = (datePart - floor(datePart)) * 7;
+  if (lpUdate->st.wDayOfWeek == 0)
+    lpUdate->st.wDayOfWeek = 5;
+  else if (lpUdate->st.wDayOfWeek == 1)
+    lpUdate->st.wDayOfWeek = 6;
+  else
+    lpUdate->st.wDayOfWeek -= 2;
+
+  if (lpUdate->st.wMonth > 2 && IsLeapYear(lpUdate->st.wYear))
+    lpUdate->wDayOfYear = 1; /* After February, in a leap year */
+  else
+    lpUdate->wDayOfYear = 0;
+
+  lpUdate->wDayOfYear += cumulativeDays[lpUdate->st.wMonth];
+  lpUdate->wDayOfYear += lpUdate->st.wDay;
+
+  /* Time */
+  timePart *= 24.0;
+  lpUdate->st.wHour = timePart;
+  timePart -= lpUdate->st.wHour;
+  timePart *= 60.0;
+  lpUdate->st.wMinute = timePart;
+  timePart -= lpUdate->st.wMinute;
+  timePart *= 60.0;
+  lpUdate->st.wSecond = timePart;
+  timePart -= lpUdate->st.wSecond;
+  lpUdate->st.wMilliseconds = 0;
+  if (timePart > 0.0005)
+  {
+    /* Round the milliseconds, adjusting the time/date forward if needed */
+    if (lpUdate->st.wSecond < 59)
+      lpUdate->st.wSecond++;
+    else
+    {
+      lpUdate->st.wSecond = 0;
+      if (lpUdate->st.wMinute < 59)
+        lpUdate->st.wMinute++;
+      else
+      {
+        lpUdate->st.wMinute = 0;
+        if (lpUdate->st.wHour < 23)
+          lpUdate->st.wHour++;
+        else
+        {
+          lpUdate->st.wHour = 0;
+          /* Roll over a whole day */
+          if (++lpUdate->st.wDay > 28)
+            VARIANT_RollUdate(lpUdate);
+        }
+      }
+    }
+  }
+  return S_OK;
 }
 
 #define GET_NUMBER_TEXT(fld,name) \
@@ -5002,288 +5406,6 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT var, INT digits, INT lead, INT paren,
     FIXME("%p %d %d %d %d %lx %p\n", var, digits, lead, paren, group, dwFlags, out);
     return E_NOTIMPL;
 }
-
-/**********************************************************************
- *              VariantTimeToDosDateTime [OLEAUT32.13]
- * Convert variant representation of time to the date and time representation
- * stored in dos.
- */
-INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosTime)
-{
-    struct tm t;
-    *wDosTime = 0;
-    *wDosDate = 0;
-
-    TRACE("( 0x%x, 0x%x, %p ), stub\n", *wDosDate, *wDosTime, &pvtime );
-
-    if (DateToTm(pvtime, 0, &t) < 0) return 0;
-
-    *wDosTime = *wDosTime | (t.tm_sec / 2);
-    *wDosTime = *wDosTime | (t.tm_min << 5);
-    *wDosTime = *wDosTime | (t.tm_hour << 11);
-
-    *wDosDate = *wDosDate | t.tm_mday ;
-    *wDosDate = *wDosDate | t.tm_mon << 5;
-    *wDosDate = *wDosDate | ((t.tm_year - 1980) << 9) ;
-
-    return 1;
-}
-
-
-/***********************************************************************
- *              SystemTimeToVariantTime [OLEAUT32.184]
- */
-HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvtime )
-{
-    struct tm t;
-
-    TRACE(" %d/%d/%d %d:%d:%d\n",
-          lpSystemTime->wMonth, lpSystemTime->wDay,
-          lpSystemTime->wYear, lpSystemTime->wHour,
-          lpSystemTime->wMinute, lpSystemTime->wSecond);
-
-    if (lpSystemTime->wYear >= 1900)
-    {
-        t.tm_sec = lpSystemTime->wSecond;
-        t.tm_min = lpSystemTime->wMinute;
-        t.tm_hour = lpSystemTime->wHour;
-
-        t.tm_mday = lpSystemTime->wDay;
-        t.tm_mon = lpSystemTime->wMonth - 1; /* tm_mon is 0..11, wMonth is 1..12 */
-        t.tm_year = lpSystemTime->wYear;
-
-        return TmToDATE( &t, pvtime );
-    }
-    else
-    {
-        double tmpDate;
-        long firstDayOfNextYear;
-        long thisDay;
-        long leftInYear;
-        long result;
-
-        double decimalPart = 0.0;
-
-        t.tm_sec = lpSystemTime->wSecond;
-        t.tm_min = lpSystemTime->wMinute;
-        t.tm_hour = lpSystemTime->wHour;
-
-        /* Step year forward the same number of years before 1900 */
-        t.tm_year = 1900 + 1899 - lpSystemTime->wYear;
-        t.tm_mon = lpSystemTime->wMonth - 1;
-        t.tm_mday = lpSystemTime->wDay;
-
-        /* Calculate date */
-        TmToDATE( &t, pvtime );
-
-        thisDay = (double) floor( *pvtime );
-        decimalPart = fmod( *pvtime, thisDay );
-
-        /* Now, calculate the same time for the first of Jan that year */
-        t.tm_mon = 0;
-        t.tm_mday = 1;
-        t.tm_sec = 0;
-        t.tm_min = 0;
-        t.tm_hour = 0;
-        t.tm_year = t.tm_year+1;
-        TmToDATE( &t, &tmpDate );
-        firstDayOfNextYear = (long) floor(tmpDate);
-
-        /* Finally since we know the size of the year, subtract the two to get
-           remaining time in the year                                          */
-        leftInYear = firstDayOfNextYear - thisDay;
-
-        /* Now we want full years up to the year in question, and remainder of year
-           of the year in question */
-        if (isleap(lpSystemTime->wYear) ) {
-           TRACE("Extra day due to leap year\n");
-           result = 2.0 - ((firstDayOfNextYear - 366) + leftInYear - 2.0);
-        } else {
-           result = 2.0 - ((firstDayOfNextYear - 365) + leftInYear - 2.0);
-        }
-        *pvtime = (double) result + decimalPart;
-        TRACE("<1899 support: returned %f, 1st day %ld, thisday %ld, left %ld\n", *pvtime, firstDayOfNextYear, thisDay, leftInYear);
-
-        return 1;
-    }
-
-    return 0;
-}
-
-/***********************************************************************
- *              VariantTimeToSystemTime [OLEAUT32.185]
- */
-HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime )
-{
-    double t = 0, timeofday = 0;
-
-    static const BYTE Days_Per_Month[] =    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    /* The Month_Code is used to find the Day of the Week (LY = LeapYear)*/
-    static const BYTE Month_Code[] =    {0, 1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6};
-    static const BYTE Month_Code_LY[] = {0, 0, 3, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6};
-
-    /* The Century_Code is used to find the Day of the Week */
-    static const BYTE Century_Code[]  = {0, 6, 4, 2};
-
-    struct tm r;
-
-    TRACE(" Variant = %f SYSTEMTIME ptr %p\n", vtime, lpSystemTime);
-
-    if (vtime >= 0)
-    {
-
-        if (DateToTm(vtime, 0, &r ) <= 0) return 0;
-
-        lpSystemTime->wSecond = r.tm_sec;
-        lpSystemTime->wMinute = r.tm_min;
-        lpSystemTime->wHour = r.tm_hour;
-        lpSystemTime->wDay = r.tm_mday;
-        lpSystemTime->wMonth = r.tm_mon;
-
-        if (lpSystemTime->wMonth == 12)
-            lpSystemTime->wMonth = 1;
-        else
-            lpSystemTime->wMonth++;
-
-        lpSystemTime->wYear = r.tm_year;
-    }
-    else
-    {
-        vtime = -1*vtime;
-
-        if (DateToTm(vtime, 0, &r ) <= 0) return 0;
-
-        lpSystemTime->wSecond = r.tm_sec;
-        lpSystemTime->wMinute = r.tm_min;
-        lpSystemTime->wHour = r.tm_hour;
-
-        lpSystemTime->wMonth = 13 - r.tm_mon;
-
-        if (lpSystemTime->wMonth == 1)
-            lpSystemTime->wMonth = 12;
-        else
-            lpSystemTime->wMonth--;
-
-        lpSystemTime->wYear = 1899 - (r.tm_year - 1900);
-
-        if (!isleap(lpSystemTime->wYear) )
-            lpSystemTime->wDay = Days_Per_Month[13 - lpSystemTime->wMonth] - r.tm_mday;
-        else
-            lpSystemTime->wDay = Days_Per_Month_LY[13 - lpSystemTime->wMonth] - r.tm_mday;
-
-
-    }
-
-    if (!isleap(lpSystemTime->wYear))
-    {
-        /*
-          (Century_Code+Month_Code+Year_Code+Day) % 7
-
-          The century code repeats every 400 years , so the array
-          works out like this,
-
-          Century_Code[0] is for 16th/20th Centry
-          Century_Code[1] is for 17th/21th Centry
-          Century_Code[2] is for 18th/22th Centry
-          Century_Code[3] is for 19th/23th Centry
-
-          The year code is found with the formula (year + (year / 4))
-          the "year" must be between 0 and 99 .
-
-          The Month Code (Month_Code[1]) starts with January and
-          ends with December.
-        */
-
-        lpSystemTime->wDayOfWeek = (
-            Century_Code[(( (lpSystemTime->wYear+100) - lpSystemTime->wYear%100) /100) %4]+
-            ((lpSystemTime->wYear%100)+(lpSystemTime->wYear%100)/4)+
-            Month_Code[lpSystemTime->wMonth]+
-            lpSystemTime->wDay) % 7;
-
-        if (lpSystemTime->wDayOfWeek == 0) lpSystemTime->wDayOfWeek = 7;
-        else lpSystemTime->wDayOfWeek -= 1;
-    }
-    else
-    {
-        lpSystemTime->wDayOfWeek = (
-            Century_Code[(((lpSystemTime->wYear+100) - lpSystemTime->wYear%100)/100)%4]+
-            ((lpSystemTime->wYear%100)+(lpSystemTime->wYear%100)/4)+
-            Month_Code_LY[lpSystemTime->wMonth]+
-            lpSystemTime->wDay) % 7;
-
-        if (lpSystemTime->wDayOfWeek == 0) lpSystemTime->wDayOfWeek = 7;
-        else lpSystemTime->wDayOfWeek -= 1;
-    }
-
-    t = floor(vtime);
-    timeofday = vtime - t;
-
-    lpSystemTime->wMilliseconds = (timeofday
-                                   - lpSystemTime->wHour*(1/24)
-                                   - lpSystemTime->wMinute*(1/1440)
-                                   - lpSystemTime->wSecond*(1/86400) )*(1/5184000);
-
-    return 1;
-}
-
-/***********************************************************************
- *              VarUdateFromDate [OLEAUT32.331]
- */
-HRESULT WINAPI VarUdateFromDate( DATE datein, ULONG dwFlags, UDATE *pudateout)
-{
-    HRESULT i = 0;
-    static const BYTE Days_Per_Month[] =    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    TRACE("DATE = %f\n", (double)datein);
-    i = VariantTimeToSystemTime(datein, &(pudateout->st) );
-
-    if (i)
-    {
-        pudateout->wDayOfYear = 0;
-
-        if (isleap(pudateout->st.wYear))
-        {
-            for (i =1; i<pudateout->st.wMonth; i++)
-                pudateout->wDayOfYear += Days_Per_Month[i];
-        }
-        else
-        {
-            for (i =1; i<pudateout->st.wMonth; i++)
-                pudateout->wDayOfYear += Days_Per_Month_LY[i];
-        }
-
-        pudateout->wDayOfYear += pudateout->st.wDay;
-        dwFlags = 0; /*VAR_VALIDDATE*/
-    }
-    else dwFlags = 0;
-
-    return i;
-}
-
-/***********************************************************************
- *              VarDateFromUdate [OLEAUT32.330]
- */
-HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
-                                ULONG dwFlags, DATE *datein)
-{
-    HRESULT i;
-    double t = 0;
-    TRACE(" %d/%d/%d %d:%d:%d\n",
-          pudateout->st.wMonth, pudateout->st.wDay,
-          pudateout->st.wYear, pudateout->st.wHour,
-          pudateout->st.wMinute, pudateout->st.wSecond);
-
-
-    i = SystemTimeToVariantTime(&(pudateout->st), &t);
-    *datein = t;
-
-    if (i) return S_OK;
-    else return E_INVALIDARG;
-}
-
 
 /**********************************************************************
  *              VarBstrCmp [OLEAUT32.314]
