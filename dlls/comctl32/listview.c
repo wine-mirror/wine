@@ -1155,40 +1155,51 @@ static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
-/* The Invalidate* are macros, so we preserve the caller location */
-#define LISTVIEW_InvalidateRect(infoPtr, rect) while(infoPtr->bRedraw) { \
-    TRACE(" invalidating rect=%s\n", debugrect(rect)); \
-    InvalidateRect(infoPtr->hwndSelf, rect, TRUE); \
-    break;\
+/* Listview invlaidation functions: use _only_ these function to invalidate */
+
+static inline void LISTVIEW_InvalidateRect(LISTVIEW_INFO *infoPtr, const RECT*rect)
+{
+    if(!infoPtr->bRedraw) return; 
+    TRACE(" invalidating rect=%s\n", debugrect(rect));
+    InvalidateRect(infoPtr->hwndSelf, rect, TRUE);
 }
 
-#define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
-    RECT rcBox; \
-    LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox); \
-    LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
-} while (0)
+static inline void LISTVIEW_InvalidateItem(LISTVIEW_INFO *infoPtr, INT nItem)
+{
+    RECT rcBox;
 
-#define LISTVIEW_InvalidateSubItem(infoPtr, nItem, nSubItem) do { \
-    POINT Origin, Position; \
-    RECT rcBox; \
-    assert ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT); \
-    LISTVIEW_GetOrigin(infoPtr, &Origin); \
-    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position); \
-    LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox); \
-    rcBox.top = 0; \
-    rcBox.bottom = infoPtr->nItemHeight; \
-    OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y); \
-    LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
-} while (0)
+    if(!infoPtr->bRedraw) return; 
+    LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
+    LISTVIEW_InvalidateRect(infoPtr, &rcBox);
+}
 
-#define LISTVIEW_InvalidateList(infoPtr)\
-    LISTVIEW_InvalidateRect(infoPtr, NULL)
+static inline void LISTVIEW_InvalidateSubItem(LISTVIEW_INFO *infoPtr, INT nItem, INT nSubItem)
+{
+    POINT Origin, Position;
+    RECT rcBox;
+    
+    if(!infoPtr->bRedraw) return; 
+    assert ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT);
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
+    LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox);
+    rcBox.top = 0;
+    rcBox.bottom = infoPtr->nItemHeight;
+    OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y);
+    LISTVIEW_InvalidateRect(infoPtr, &rcBox);
+}
+
+static inline void LISTVIEW_InvalidateList(LISTVIEW_INFO *infoPtr)
+{
+    LISTVIEW_InvalidateRect(infoPtr, NULL);
+}
 
 	
 static inline void LISTVIEW_InvalidateColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
     RECT rcCol;
     
+    if(!infoPtr->bRedraw) return; 
     LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     rcCol.top = infoPtr->rcList.top;
     rcCol.bottom = infoPtr->rcList.bottom;
