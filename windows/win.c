@@ -1797,7 +1797,7 @@ INT32 WINAPI GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
  */
 INT32 WINAPI InternalGetWindowText(HWND32 hwnd,LPWSTR lpString,INT32 nMaxCount )
 {
-    FIXME(win,"(0x%08x,%s,0x%x),stub!\n",hwnd,debugstr_w(lpString),nMaxCount);
+    FIXME(win,"(0x%08x,%p,0x%x),stub!\n",hwnd,lpString,nMaxCount);
     return GetWindowText32W(hwnd,lpString,nMaxCount);
 }
 
