@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvidc32.dll
+IMPORTS   = kernel32
+
+C_SRCS = \
+	msvideo1.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

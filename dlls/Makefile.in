@@ -72,6 +72,7 @@ BASEDIRS = \
 	msvcrt20 \
 	msvcrt40 \
 	msvcrtd \
+	msvidc32 \
 	msvideo \
 	msvideo/msrle32 \
 	mswsock \
@@ -275,6 +276,7 @@ SYMLINKS = \
 	msvcrt40.dll$(DLLEXT) \
 	msvcrtd.dll$(DLLEXT) \
 	msvfw32.dll$(DLLEXT) \
+	msvidc32.dll$(DLLEXT) \
 	mswsock.dll$(DLLEXT) \
 	netapi32.dll$(DLLEXT) \
 	newdev.dll$(DLLEXT) \
@@ -579,6 +581,9 @@ msvfw32.dll$(DLLEXT): msvideo/msvfw32.dll$(DLLEXT)
 msvideo.dll$(DLLEXT) : msvfw32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvfw32.dll$(DLLEXT) $@
 
+msvidc32.dll$(DLLEXT): msvidc32/msvidc32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msvidc32/msvidc32.dll$(DLLEXT) $@
+
 mswsock.dll$(DLLEXT): mswsock/mswsock.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) mswsock/mswsock.dll$(DLLEXT) $@
 
@@ -870,6 +875,7 @@ IMPORT_LIBS = \
 	libmsvcrt40 \
 	libmsvcrtd \
 	libmsvfw32 \
+	libmsvidc32 \
 	libmswsock \
 	libnetapi32 \
 	libnewdev \
@@ -1217,6 +1223,11 @@ libmsvfw32.def: msvideo/msvfw32.spec.def
 libmsvfw32.a: msvideo/msvfw32.spec.def
 	$(DLLTOOL) -k -l $@ -d msvideo/msvfw32.spec.def
 
+libmsvidc32.def: msvidc32/msvidc32.spec.def
+	$(RM) $@ && $(LN_S) msvidc32/msvidc32.spec.def $@
+libmsvidc32.a: msvidc32/msvidc32.spec.def
+	$(DLLTOOL) -k -l $@ -d msvidc32/msvidc32.spec.def
+
 libmswsock.def: mswsock/mswsock.spec.def
 	$(RM) $@ && $(LN_S) mswsock/mswsock.spec.def $@
 libmswsock.a: mswsock/mswsock.spec.def
@@ -1531,6 +1542,7 @@ msvcrt20/msvcrt20.spec.def: $(WINEBUILD)
 msvcrt40/msvcrt40.spec.def: $(WINEBUILD)
 msvcrtd/msvcrtd.spec.def: $(WINEBUILD)
 msvideo/msvfw32.spec.def: $(WINEBUILD)
+msvidc32/msvidc32.spec.def: $(WINEBUILD)
 mswsock/mswsock.spec.def: $(WINEBUILD)
 netapi32/netapi32.spec.def: $(WINEBUILD)
 newdev/newdev.spec.def: $(WINEBUILD)
@@ -1660,6 +1672,7 @@ msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
 msvcrt40/msvcrt40.dll$(DLLEXT): msvcrt40
 msvcrtd/msvcrtd.dll$(DLLEXT): msvcrtd
 msvideo/msvfw32.dll$(DLLEXT): msvideo
+msvidc32/msvidc32.dll$(DLLEXT): msvidc32
 mswsock/mswsock.dll$(DLLEXT): mswsock
 netapi32/netapi32.dll$(DLLEXT): netapi32
 newdev/newdev.dll$(DLLEXT): newdev
