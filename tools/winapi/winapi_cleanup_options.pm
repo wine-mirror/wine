@@ -37,7 +37,8 @@ my %options_long = (
 
     "progress" => { default => 1, description => "show progress" },
 
-    "cpp-comments" => { default => 1, description => "converts C++ comments to C comments" },
+    "cpp-comments" => { default => 1, description => "convert C++ comments to C comments" },
+    "include-quotes" => { default => 0, description => "convert #include \"\" to <> or the reverse where appropriate" },
     "trailing-whitespace" => { default => 0, description => "remove trailing whitespace" },
 );
 

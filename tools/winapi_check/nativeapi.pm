@@ -144,7 +144,7 @@ sub is_function {
 
     my $name = shift;
 
-    return $$functions{$name};
+    return ($$functions{$name} || 0);
 }
 
 sub is_conditional {
@@ -153,7 +153,7 @@ sub is_conditional {
 
     my $name = shift;
 
-    return $$conditionals{$name};
+    return ($$conditionals{$name} || 0);
 }
 
 sub found_conditional {
@@ -171,7 +171,7 @@ sub is_conditional_header {
 
     my $name = shift;
 
-    return $$conditional_headers{$name};
+    return ($$conditional_headers{$name} || 0);
 }
 
 sub is_conditional_function {
@@ -180,7 +180,7 @@ sub is_conditional_function {
 
     my $name = shift;
 
-    return $$conditional_functions{$name};
+    return ($$conditional_functions{$name} || 0);
 }
 
 sub global_report {

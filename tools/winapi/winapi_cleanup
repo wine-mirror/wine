@@ -24,10 +24,11 @@ BEGIN {
     require "$1/winapi/setup.pm";
 }
 
-use config qw($current_dir $wine_dir);
+use config qw($current_dir $wine_dir file_absolutize file_directory);
 use output qw($output);
 use winapi_cleanup_options qw($options);
 
+use nativeapi qw($nativeapi);
 use util qw(edit_file);
 
 if($options->progress) {
@@ -42,6 +43,13 @@ if($options->progress) {
 sub cleanup_file {
     local *IN = shift;
     local *OUT = shift;
+
+    my $file = shift;
+    my $dir = do {
+	my $file2 = file_absolutize($file);
+	my $dir = file_directory($file2);
+	"$wine_dir/$dir";
+    };
 
     my $indent;
     my @comments = ();
@@ -117,6 +125,75 @@ sub cleanup_file {
 	    }
 	}
 
+	if ($options->include_quotes) {
+	    my $module = "";
+	    if ($dir =~ m%^$wine_dir/(?:controls|windows)$%) {
+		$module = "user";
+	    } elsif ($dir =~ m%^$wine_dir/(?:graphics)$%) {
+		$module = "gdi";
+	    } elsif ($dir =~ m%^$wine_dir/(?:graphics|windows)/x11drv$%) {
+		$module = "x11drv";
+	    } elsif ($dir =~ m%^$wine_dir/dlls/(.*?)/.*?$%) {
+		$module = $1;
+	    }
+
+	    if (/^(\s*\#\s*include\s+)(?:<(.*?)>|\"(.*?)\")(.*?)\s*$/) {
+		my $prefix = $1;
+		my $header = $2 || $3;
+		my $local = !defined($2) && defined($3);
+		my $suffix = $4;
+
+		my $exists_system = 0; {
+		    my @system_paths = qw(/usr/include /usr/local/include /usr/X11R6/include);
+		    foreach my $path (@system_paths) {
+			$exists_system ||= (-e "$path/$header" || 0);
+		    }
+		    $exists_system ||= $nativeapi->is_conditional_header($header);
+		}
+
+		my $exists_windows = 0; {
+		    if ($header !~ m%^wine/% && $header ne "config.h") {
+			$exists_windows ||= (-e "$wine_dir/include/$header" || 0);
+		    }
+		}
+
+		my $exists_wine = 0; {
+		    $exists_wine ||= ($header eq "config.h");
+
+		    if ($header =~ m%^wine/%) {
+			$exists_wine ||= (-e "$wine_dir/include/$header" || 0);
+		    }
+		}
+
+		my $exists_local = 0; {
+		    $exists_local ||= ($header eq "y.tab.h");
+
+		    my @local_paths = ();
+		    push @local_paths, "$dir" if $dir !~ m%^$wine_dir/include%;
+		    push @local_paths, "$wine_dir/dlls/$module" if $module;
+		    foreach my $path (@local_paths) {
+			$exists_local ||= (-e "$path/$header" || 0);
+		    }
+		}
+
+		if (!$exists_system && !$exists_windows && !$exists_wine && !$exists_local) {
+		    $output->write("warning: header '$header': doesn't exist\n");
+		} elsif (($exists_system + $exists_windows + $exists_wine + $exists_local) > 1) {
+		    if ($header !~ /^(?:async\.h|comcat\.h|sql(?:ext|types)?\.h|thread\.h|user\.h)$/) {
+			$output->write("warning: header '$header': more than one possibillity\n");
+		    }
+		}
+
+		if (!$local && $exists_local) {
+		    $_ = "$prefix\"$header\"$suffix";
+		    $modified = 1;
+		} elsif ($local && !$exists_local && ($exists_system || $exists_windows || $exists_wine)) {
+		    $_ = "$prefix<$header>$suffix";
+		    $modified = 1;
+		}
+	    }
+	}
+
 	print OUT "$_\n";
     }
 
@@ -142,8 +219,9 @@ my $progress_max = scalar(@h_files) + scalar(@c_files);
 foreach my $file (@h_files) {
     $progress_current++;
     $output->progress("$file (file $progress_current of $progress_max)");
+    $output->prefix("$file: ");
 
-    if (edit_file($file, \&cleanup_file, @_)) {
+    if (edit_file($file, \&cleanup_file, @_, $file)) {
 	$output->write("$file: modified\n");
     }
 }
@@ -151,8 +229,9 @@ foreach my $file (@h_files) {
 foreach my $file (@c_files) {
     $progress_current++;
     $output->progress("$file (file $progress_current of $progress_max)");
+    $output->prefix("$file: ");
 
-    if (edit_file($file, \&cleanup_file, @_)) {
+    if (edit_file($file, \&cleanup_file, $file)) {
 	$output->write("$file: modified\n");
     }
 }
