@@ -709,6 +709,25 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
 
+    /* Correct the window style - stage 1
+     *
+     * These are patches that appear to affect both the style loaded into the
+     * WIN structure and passed in the CreateStruct to the WM_CREATE etc.
+     *
+     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so 
+     * why does the user get to set it?
+     */
+
+    /* This has been tested for WS_CHILD | WS_VISIBLE.  It has not been
+     * tested for WS_POPUP
+     */
+    if ((cs->dwExStyle & WS_EX_DLGMODALFRAME) ||
+        ((!(cs->dwExStyle & WS_EX_STATICEDGE)) &&
+          (cs->style & (WS_DLGFRAME | WS_THICKFRAME))))
+        cs->dwExStyle |= WS_EX_WINDOWEDGE;
+    else
+        cs->dwExStyle &= ~WS_EX_WINDOWEDGE;
+
     /* Create the window structure */
 
     if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
@@ -795,7 +814,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	}
     }
 
-    /* Correct the window style */
+    /* Correct the window style - stage 2 */
 
     if (!(cs->style & WS_CHILD))
     {
