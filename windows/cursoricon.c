@@ -2171,7 +2171,7 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 /**********************************************************************
  *		LoadImageA (USER32.@)
  * 
- * FIXME: implementation lacks some features, see LR_ defines in windows.h
+ * FIXME: implementation lacks some features, see LR_ defines in winuser.h
  */
 
 HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
@@ -2203,7 +2203,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
  *    Success: Handle to newly loaded image
  *    Failure: NULL
  *
- * FIXME: Implementation lacks some features, see LR_ defines in windows.h
+ * FIXME: Implementation lacks some features, see LR_ defines in winuser.h
  */
 HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
                 INT desiredx, INT desiredy, UINT loadflags )
@@ -2274,7 +2274,7 @@ HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
  *    Failure: NULL
  *
  * FIXME: implementation still lacks nearly all features, see LR_*
- * defines in windows.h
+ * defines in winuser.h
  */
 HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                              INT desiredy, UINT flags )
