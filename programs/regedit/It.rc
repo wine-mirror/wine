@@ -95,10 +95,10 @@ BEGIN
     END
     POPUP "&Aiuto"
     BEGIN
-/*
- *        MENUITEM "&Sommario della Guida",                ID_HELP_HELPTOPICS
- *        MENUITEM SEPARATOR
- */
+
+        MENUITEM "&Contenuti della Guida",                ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+
         MENUITEM "&Informazioni sull'editor del Registro",      ID_HELP_ABOUT
     END
 END
