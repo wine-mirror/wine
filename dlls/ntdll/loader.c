@@ -305,15 +305,15 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
         ((const char *)proc < (const char *)exports + exp_size))
         return find_forwarded_export( module, (const char *)proc );
 
-    if (TRACE_ON(snoop) && current_modref)
+    if (TRACE_ON(snoop))
     {
-        proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal,
-                                    current_modref->ldr.BaseDllName.Buffer );
+        const WCHAR *user = current_modref ? current_modref->ldr.BaseDllName.Buffer : NULL;
+        proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal, user );
     }
-    if (TRACE_ON(relay) && current_modref)
+    if (TRACE_ON(relay))
     {
-        proc = RELAY_GetProcAddress( module, exports, exp_size, proc,
-                                     current_modref->ldr.BaseDllName.Buffer );
+        const WCHAR *user = current_modref ? current_modref->ldr.BaseDllName.Buffer : NULL;
+        proc = RELAY_GetProcAddress( module, exports, exp_size, proc, user );
     }
     return proc;
 }

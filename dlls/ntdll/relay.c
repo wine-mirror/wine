@@ -332,6 +332,7 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
     const WCHAR **listitem;
     BOOL show;
 
+    if (!module) return TRUE;
     if (!includelist && !excludelist) return TRUE;
     if (excludelist)
     {
