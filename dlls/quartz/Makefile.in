@@ -3,11 +3,14 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
+IMPORTS   = kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	filtergraph.c \
 	main.c
 
 @MAKE_DLL_RULES@

@@ -20,6 +20,7 @@ WINDOWS_INCLUDES = \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
+	control.h \
 	cpl.h \
 	custcntl.h \
 	d3d.h \
@@ -140,6 +141,7 @@ WINDOWS_INCLUDES = \
 	sqlext.h \
 	sqltypes.h \
 	storage.h \
+	strmif.h \
 	tapi.h \
 	tchar.h \
 	tlhelp32.h \

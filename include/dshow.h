@@ -21,9 +21,9 @@
 
 #define AM_NOVTABLE
 
-#include "windows.h"
-#include "windowsx.h"
-#include "olectl.h"
+#include "windef.h"
+#include "wingdi.h"
+#include "objbase.h"
 #include "ddraw.h"
 #include "mmsystem.h"
 
@@ -31,10 +31,10 @@
 #define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
 #endif
 
-/*#include "strmif.h"*/
+#include "strmif.h"
 /*#include "amvideo.h"*/
 /*#include "amaudio.h"*/
-/*#include "control.h"*/
+#include "control.h"
 /*#include "evcode.h"*/
 #include "uuids.h"
 /*#include "errors.h"*/
