@@ -956,6 +956,13 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 
   /* Sometimes we have a header, sometimes we don't. Apply some guesses to find
    * out whether we do.
+   *
+   * UPDATE: the IStream can be mapped to a plain file instead of a stream in a
+   * compound file. This may explain most, if not all, of the cases of "no header",
+   * and the header validation should take this into account. At least in Visual Basic 6,
+   * resource streams, valid headers are
+   *    header[0] == "lt\0\0",
+   *    header[1] == length_of_stream.
    */
   hr=IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
   if (hr)
@@ -965,7 +972,10 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       FIXME("Failure while reading picture header (hr is %lx, nread is %ld).\n",hr,xread);
       return hr;
   }
-  if (header[1] > statstg.cbSize.QuadPart || (header[1]==0)) {/* Incorrect header, assume none. */
+  if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
+      !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
+      !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
+      header[1] > statstg.cbSize.QuadPart || (header[1]==0)) {/* Incorrect header, assume none. */
     xread = 8;
     xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,statstg.cbSize.QuadPart);
     memcpy(xbuf,&header,8);
