@@ -27,13 +27,9 @@
 #define NONAMELESSSTRUCT
 #include "x11drv.h"
 #include "x11ddraw.h"
-#include "xvidmode.h"
-#include "xrandr.h"
 #include "dga2.h"
 
 #include "windef.h"
-#include "wingdi.h"
-#include "ddrawi.h"
 #include "gdi.h"
 #include "wine/debug.h"
 

@@ -41,7 +41,6 @@
 #include "win.h"
 #include "winpos.h"
 #include "dce.h"
-#include "cursoricon.h"
 #include "nonclient.h"
 
 #include "wine/server.h"

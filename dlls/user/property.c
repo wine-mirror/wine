@@ -30,7 +30,6 @@
 #include "wownt32.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
-#include "win.h"
 
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256

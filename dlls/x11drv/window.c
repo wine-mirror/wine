@@ -41,8 +41,6 @@
 
 #include "wine/debug.h"
 #include "x11drv.h"
-#include "wine/server.h"
-#include "win.h"
 #include "winpos.h"
 #include "mwm.h"
 

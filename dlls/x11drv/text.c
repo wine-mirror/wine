@@ -27,7 +27,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "wownt32.h"
 #include "x11font.h"
 #include "wine/debug.h"
 

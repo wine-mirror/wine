@@ -31,7 +31,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winnet16.h"
-#include "winnetwk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wnet);
@@ -463,4 +462,3 @@ WORD WINAPI WNetErrorText16( WORD nError, LPSTR lpszText, WORD cbText )
     FIXME("(%x, %p, %x): stub\n", nError, lpszText, cbText );
     return FALSE;
 }
-

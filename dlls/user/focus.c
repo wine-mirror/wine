@@ -30,7 +30,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "win.h"
-#include "message.h"
 #include "user_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
