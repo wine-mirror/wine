@@ -1,5 +1,6 @@
 name	winspool
 type	win32
+file	winspool.drv
 init	WINSPOOL_EntryPoint
 
 101 stub ADVANCEDSETUPDIALOG
