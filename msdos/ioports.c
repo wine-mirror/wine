@@ -272,6 +272,10 @@ DWORD IO_inport( int port, int size )
 
     switch (port)
     {
+    case 0x3ba:
+    case 0x3da:
+        res = (DWORD)VGA_ioport_in( port );
+        break;
     case 0x40:
     case 0x41:
     case 0x42:
@@ -335,10 +339,6 @@ DWORD IO_inport( int port, int size )
     case 0x201:
         res = 0xffffffff; /* no joystick */
         break;
-    case 0x3ba:
-    case 0x3da:
-        res = (DWORD)VGA_ioport_in( port );
-        break;
     default:
         WARN( int, "Direct I/O read attempted from port %x\n", port);
         res = 0xffffffff;
@@ -378,6 +378,10 @@ void IO_outport( int port, int size, DWORD value )
 
     switch (port)
     {
+    case 0x3c8:
+    case 0x3c9:
+        VGA_ioport_out( port, (BYTE)value );
+        break;
     case 0x40:
     case 0x41:
     case 0x42:
@@ -458,10 +462,6 @@ void IO_outport( int port, int size, DWORD value )
         break;
     case 0x71:
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
-        break;
-    case 0x3c8:
-    case 0x3c9:
-        VGA_ioport_out( port, (BYTE)value );
         break;
     default:
         WARN(int, "Direct I/O write attempted to port %x\n", port );
