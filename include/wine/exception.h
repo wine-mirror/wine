@@ -183,11 +183,12 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *f
 /* Wine-specific exceptions codes */
 
 #define EXCEPTION_WINE_STUB       0x80000100  /* stub entry point called */
+#define EXCEPTION_WINE_ASSERTION  0x80000101  /* assertion failed */
 
 /* unhandled return status from vm86 mode */
-#define EXCEPTION_VM86_INTx       0x80000101
-#define EXCEPTION_VM86_STI        0x80000102
-#define EXCEPTION_VM86_PICRETURN  0x80000103
+#define EXCEPTION_VM86_INTx       0x80000110
+#define EXCEPTION_VM86_STI        0x80000111
+#define EXCEPTION_VM86_PICRETURN  0x80000112
 
 extern void __wine_enter_vm86( CONTEXT *context );
 

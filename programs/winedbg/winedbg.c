@@ -556,6 +556,9 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
                 DEBUG_Printf(DBG_CHN_MESG, "unimplemented function %s.%s called", dll, name );
             }
             break;
+        case EXCEPTION_WINE_ASSERTION:
+            DEBUG_Printf(DBG_CHN_MESG, "assertion failed");
+            break;
         case EXCEPTION_VM86_INTx:
             DEBUG_Printf(DBG_CHN_MESG, "interrupt %02lx in vm86 mode",
                          rec->ExceptionInformation[0]);

@@ -135,6 +135,9 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
         len = snprintf( buffer, size, "Unimplemented function %s.%s called",
                  (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
         break;
+    case EXCEPTION_WINE_ASSERTION:
+        len = snprintf( buffer, size, "Assertion failed" );
+        break;
     case EXCEPTION_VM86_INTx:
         len = snprintf( buffer, size, "Unhandled interrupt %02lx in vm86 mode",
                  rec->ExceptionInformation[0]);

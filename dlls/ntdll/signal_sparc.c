@@ -343,6 +343,25 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     }
 }
 
+/**********************************************************************
+ *		abrt_handler
+ *
+ * Handler for SIGABRT.
+ */
+static HANDLER_DEF(abrt_handler)
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
+    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Eip;
+    rec.NumberParameters = 0;
+    EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    restore_context( &context, HANDLER_CONTEXT );
+}
 
 /***********************************************************************
  *           set_handler
@@ -398,7 +417,8 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGILL,  (void (*)())ill_handler  ) == -1) goto error;
     if (set_handler( SIGBUS,  (void (*)())bus_handler  ) == -1) goto error;
     if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
-    return TRUE;
+    if (set_handler( SIGABRT, (void (*)())abrt_handler ) == -1) goto error;
+   return TRUE;
 
  error:
     perror("sigaction");

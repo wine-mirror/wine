@@ -381,6 +381,26 @@ static HANDLER_DEF(int_handler)
     }
 }
 
+/**********************************************************************
+ *		abrt_handler
+ *
+ * Handler for SIGABRT.
+ */
+static HANDLER_DEF(abrt_handler)
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
+    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Eip;
+    rec.NumberParameters = 0;
+    EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    restore_context( &context, HANDLER_CONTEXT );
+}
+
 
 /***********************************************************************
  *           set_handler
@@ -440,6 +460,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGFPE,  have_sigaltstack, (void (*)())fpe_handler ) == -1) goto error;
     if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGABRT, have_sigaltstack, (void (*)())abrt_handler ) == -1) goto error;
 #ifdef SIGBUS
     if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
 #endif
