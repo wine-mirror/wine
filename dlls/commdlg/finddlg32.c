@@ -207,13 +207,14 @@ static BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM
 			SendDlgItemMessageA(hDlgWnd, chx1, BM_SETCHECK, pdata->fr.Flags & FR_WHOLEWORD ? BST_CHECKED : 0, 0);
 
 		/* We did the init here, now call the hook if requested */
-        	if((pdata->fr.Flags & FR_ENABLEHOOK)
-        	     && pdata->fr.lpfnHook(hDlgWnd, iMsg, wParam, pdata->fr.lCustData))
-	        {
-	        	ShowWindow(hDlgWnd, SW_SHOWNORMAL);
-			UpdateWindow(hDlgWnd);
-        	}
-		/* else the caller is responsible for showing */
+
+		/* We do not do ShowWindow if hook exists and is FALSE  */
+		/*   per MSDN Article Q96135                            */
+              	if((pdata->fr.Flags & FR_ENABLEHOOK)
+	             && ! pdata->fr.lpfnHook(hDlgWnd, iMsg, wParam, pdata->fr.lCustData))
+		        return TRUE;
+		ShowWindow(hDlgWnd, SW_SHOWNORMAL);
+		UpdateWindow(hDlgWnd);
                 return TRUE;
         }
 
@@ -296,8 +297,8 @@ static BOOL COMDLG32_FR_CheckPartial(
         	return FALSE;
         }
 
-	if((pfr->wFindWhatLen < 80 || !pfr->lpstrFindWhat)
-        ||(Replace && (pfr->wReplaceWithLen < 80 || !pfr->lpstrReplaceWith)))
+	if((pfr->wFindWhatLen < 1 || !pfr->lpstrFindWhat)
+        ||(Replace && (pfr->wReplaceWithLen < 1 || !pfr->lpstrReplaceWith)))
         {
         	COMDLG32_SetCommDlgExtendedError(FRERR_BUFFERLENGTHZERO);
                 return FALSE;
