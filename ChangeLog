@@ -1,4 +1,1055 @@
 ----------------------------------------------------------------
+2001-10-04  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/x11drv/dib.c:
+	Ignore RLE data that goes past the line end (found by Uwe Bonnes).
+	General cleanup of the RLE routines.
+
+	* dlls/wininet/http.c, dlls/wininet/utility.c:
+	Nikolas Zimmermann <wildfox@kde.org>
+	Skip port number before calling gethostbyname.
+	Fix non-absolute urls.
+
+	* dlls/oleaut32/typelib.c:
+	Ove Kaaven <ovek@transgaming.com>
+	The DISPPARAMS parameter array is a reverse-order array.
+
+	* files/file.c, include/wine/server_protocol.h, server/console.c,
+	  server/device.c, server/file.c, server/mapping.c, server/object.c,
+	  server/pipe.c, server/protocol.def, server/serial.c, server/trace.c:
+	Mike McCormack <mike_mccormack@start.com.au>
+	Fetch a handle type in FILE_GetUnixHandle.
+
+	* debugger/winedbg.c:
+	Don't ignore first chance debug exceptions since it may be a
+	breakpoint that we set ourselves.
+
+	* documentation/fonts.sgml:
+	Bill Medland <medbi01@accpac.com>
+	A couple of minor points about converting Windows fonts.
+
+	* dlls/oleaut32/variant.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Implement coercion to VT_UNKNOWN from VT_DISPATCH.
+
+	* dlls/oleaut32/typelib.c:
+	Ove Kaaven <ovek@transgaming.com>
+	ITypeInfo::Invoke should also search inherited interfaces for the
+	method to invoke.
+	ITypeInfo::GetIDsOfNames needs to do case-insensitive string
+	compares.
+
+2001-10-03  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/x11drv/bitblt.c:
+	Skip BitBlt DIB optimization if source and dest DCs have different
+	depths.
+
+	* windows/win.c, dlls/user/user_main.c, dlls/x11drv/winpos.c,
+	  dlls/x11drv/x11drv.spec, include/user.h, windows/defwnd.c:
+	Gerard Patel <gerard.patel@nerim.net>
+	Map a window if it is shown by a direct style change.
+
+	* dlls/oleaut32/typelib.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Don't ignore DISPATCH_METHOD in ITypeInfo::Invoke.
+
+	* dlls/shell32/shell32_main.c, dlls/shell32/shellord.c:
+	Guy Albertelli <galberte@neo.lrun.com>
+	Fix SHAddToRecentDocs code to properly handle native Comctl32 and
+	missing policies location.
+
+	* dlls/oleaut32/typelib.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Looks like the SLTG_ImplInfo struct isn't a fixed size.
+
+	* include/wine/obj_oleaut.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Corrected INVOKEKIND enumeration values.
+
+	* scheduler/process.c:
+	Aric Stewart <aric@codeweavers.com>
+	Make sure that newly allocated TLS indexes are cleared.
+
+	* scheduler/thread.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Better fake implementation of SetThreadExecutionState.
+
+2001-10-02  Alexandre Julliard  <julliard@winehq.com>
+
+	* objects/dc.c, windows/dce.c:
+	Free cache DCEs if the DC gets deleted.
+
+	* windows/input.c: Fixed typo in previous change.
+
+	* tools/winebuild/spec32.c:
+	Avoid including winbase.h in generated .spec.c files.
+
+	* dlls/odbc32/proxyodbc.c, dlls/odbc32/proxyodbc.h:
+	Bill Medland <medbi01@accpac.com>
+	Allow two connections by not releasing the wrapped library too early.
+	Also heavily protected and added additional trace information.
+	Make the Load functions static to reduce visiblity (enhance
+	simplicity).
+
+	* windows/input.c, windows/message.c, dlls/user/message.c,
+	  include/input.h:
+	Merged mouse buttons states into the key state array.
+	Fixed confusion between queue state and async state.
+
+	* dlls/dinput/keyboard/main.c, dlls/dinput/mouse/main.c:
+	Removed unnecessary includes/definitions.
+
+	* dlls/x11drv/window.c:
+	Ilya Konstantinov <wine-patches@future.shiny.co.il>
+	Added a _NET_WM_NAME(UTF8_STRING) property to every window.
+
+	* include/sysmetrics.h, windows/sysmetrics.c, windows/sysparams.c:
+	Andriy Palamarchuk <apa3a@yahoo.com>
+	Added SYSMETRICS_Set.
+	Implemented SPI_SETSHOWSOUNDS action.
+
+	* dlls/oleaut32/oleaut.c, dlls/oleaut32/variant.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Make OaBuildVersion() return the highest version value possible.
+	Some cleanups.
+
+	* tools/winelauncher.in, win32/device.c, configure, configure.in,
+	  files/drive.c, files/profile.c, loader/module.c, loader/pe_image.c,
+	  memory/environ.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Yet another documentation/message text patch.
+
+	* documentation/documentation.sgml,
+	  documentation/winelib-bindlls.sgml,
+	  documentation/winelib-intro.sgml:
+	Bill Medland <medbi01@accpac.com>
+	Additions to how to use Docbook under RedHat (to help beginners like
+	me).
+	Added content to the bindlls section of Winelib (based on
+	experience).
+
+	* documentation/winemaker.man:
+	Bill Medland <medbi01@accpac.com>
+	Upgrade winemaker man page for the two options added at version
+	0.5.8.
+
+	* dlls/winsock/socket.c, dlls/winsock/ws2_32.spec, include/winsock2.h:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added WSC*InstallProvider stubs.
+
+	* documentation/winelib-mfc.sgml:
+	Gracjan Polak <gracjan@acchsh.com>
+	Added some MFC documentation (with the help of Francois Gouget).
+
+	* files/file.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Check for NULL path argument in DeleteFile.
+
+	* dlls/oleaut32/typelib.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Long nameless args in SLTG apparently get denoted by 0xfffe.
+
+	* dlls/shell32/changenotify.c, dlls/shell32/shell32.spec,
+	  dlls/shell32/shellord.c:
+	Guy Albertelli <galberte@neo.lrun.com>
+	Implemented dummy stub for SHChangeNotifyUpdateEntryList and
+	functional CIDLData_CreateFromIDArray.
+
+	* library/port.c:
+	Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Fix implicit type declarations. Add required cast.
+
+	* windows/input.c, windows/x11drv/keyboard.c, include/winuser.h:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Remove a hack for keyboard group switching.
+	Always save/restore correct keyboard group index.
+	Explicitly ignore the keyboard group switching events.
+
+2001-10-01  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/quartz/Makefile.in, dlls/quartz/audren.c, dlls/quartz/audren.h,
+	  dlls/quartz/basefilt.c, dlls/quartz/basefilt.h,
+	  dlls/quartz/basepin.c, dlls/quartz/fgevent.c, dlls/quartz/fgraph.h,
+	  dlls/quartz/ifgraph.c, dlls/quartz/imfilter.c, dlls/quartz/main.c,
+	  dlls/quartz/memalloc.c, dlls/quartz/quartz.spec,
+	  dlls/quartz/sample.c, include/strmif.h, winedefault.reg:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Implemented CLSID_AudioRender.
+
+	* dlls/oleaut32/dispatch.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Implemented DispGetParam.
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/shlwapi.spec:
+	Andreas Mohr <a.mohr@mailto.de>
+	Fix/document SHLWAPI ordinals 217 and 218.
+
+	* misc/version.c: Andreas Mohr <a.mohr@mailto.de>
+	Speed optimization.
+
+	* dlls/winsock/async.c, dlls/winsock/ws2_32.spec:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added stub for WSApSetPostRoutine.
+
+	* files/file.c: Ove Kaaven <ovek@transgaming.com>
+	Make MoveFileEx fail with ERROR_INVALID_PARAMETER (better than
+	crashing) when the source file operand is NULL.
+
+	* dlls/shell32/shellole.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Should initialize COM before calling it.
+
+2001-09-26  Alexandre Julliard  <julliard@winehq.com>
+
+	* memory/heap.c:
+	Fixed size check in HEAP_FindFreeBlock to make sure we also find
+	blocks that have the exact size needed.
+
+	* documentation/winelib-intro.sgml:
+	Andriy Palamarchuk <apa3a@yahoo.com>
+	winemaker documentation fix.
+
+	* dlls/ntdll/wcstring.c, dlls/oleaut32/typelib.c, include/ntddk.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Better handling of typelibs loaded with a trailing resource number.
+	The logic for determining whether an SLTG typelib has a function param
+	as a 'short' or 'long' type has been 'refined'.
+
+	* scheduler/pthread.c:
+	Bill Medland <medbi01@accpac.com>
+	Prevent calling null functions.
+
+	* dlls/msvcrt/file.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Renamed W_OK to MSVCRT_W_OK.
+
+	* documentation/Makefile.in, documentation/configuring.sgml,
+	  documentation/fonts.sgml, documentation/getting.sgml,
+	  documentation/installing.sgml, documentation/introduction.sgml,
+	  documentation/make_winehq, documentation/print.dsl,
+	  documentation/running.sgml, documentation/winehq.dsl:
+	Susan Farley <susan@codeweavers.com>
+	Better formatting for PDF output.
+
+2001-09-25  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/wine/obj_channel.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Fixed a couple of typos.
+
+	* include/wine/obj_base.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Added ICOM_[C]THIS_MULTI macros to make it easier to implement objects
+	that expose multiple interfaces. Added prototypes for CoGetPSClsid and
+	IUnknown_*_Proxy.
+
+	* include/winbase.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Added some named pipe definitions.
+
+	* include/ole2.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Added prototype for GetHGlobalFromStream.
+
+	* files/file.c: Ove Kaaven <ovek@transgaming.com>
+	A failure to open a pipe should return INVALID_HANDLE_VALUE.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/README, dlls/quartz/amerror.c,
+	  dlls/quartz/basefilt.c, dlls/quartz/basefilt.h,
+	  dlls/quartz/basepin.c, dlls/quartz/devenum.c, dlls/quartz/devmon.c,
+	  dlls/quartz/devmon.h, dlls/quartz/enumunk.c, dlls/quartz/fgclsid.c,
+	  dlls/quartz/fgevent.c, dlls/quartz/fgpass.c, dlls/quartz/fgraph.c,
+	  dlls/quartz/fgraph.h, dlls/quartz/fmap.c, dlls/quartz/fmap2.c,
+	  dlls/quartz/ibasaud.c, dlls/quartz/ibasvid.c,
+	  dlls/quartz/idevenum.c, dlls/quartz/ifgraph.c, dlls/quartz/ifmap.c,
+	  dlls/quartz/ifmap3.c, dlls/quartz/igconfig.c, dlls/quartz/imem.c,
+	  dlls/quartz/imesink.c, dlls/quartz/imevent.c,
+	  dlls/quartz/imfilter.c, dlls/quartz/imseek.c, dlls/quartz/irclock.c,
+	  dlls/quartz/iunk.c, dlls/quartz/ividwin.c, dlls/quartz/main.c,
+	  dlls/quartz/memalloc.c, dlls/quartz/monprop.c,
+	  dlls/quartz/monprop.h, dlls/quartz/mtype.c, dlls/quartz/mtype.h,
+	  dlls/quartz/ptimpl.c, dlls/quartz/ptimpl.h, dlls/quartz/ptmpos.c,
+	  dlls/quartz/ptmseek.c, dlls/quartz/quartz_private.h,
+	  dlls/quartz/sample.c, dlls/quartz/seekpass.c,
+	  dlls/quartz/seekpass.h, dlls/quartz/sysclock.c:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Merged some C sources.
+	Fixed some bugs.
+	Started implementing some pass-through interfaces.
+
+2001-09-24  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/user.c, windows/message.c, windows/timer.c, windows/win.c,
+	  windows/winpos.c, dlls/user/msg16.c, include/win.h,
+	  include/wine/server_protocol.h, server/protocol.def, server/trace.c:
+	A couple of optimizations to avoid some server calls in WIN_FindWndPtr
+	and related functions.
+
+	* server/window.c:
+	Avoid list corruption when linking window with HWND_BOTTOM (thanks to
+	Gerard Patel).
+
+	* objects/font.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	GetTextExtentExPointW: dump the string before modifying the pointer.
+
+	* tools/winemaker:
+	Bill Medland <medbi01@accpac.com>
+	Add support for making a build environment without editing the source
+	and spec files.
+
+2001-09-21  Alexandre Julliard  <julliard@winehq.com>
+
+	* controls/scroll.c:
+	Guy Albertelli <galberte@neo.lrun.com>
+	- Implement message loop on the client side of the scroll control.
+	- Move the mouse capture to after the SetFocus so that it stays
+	  captured.
+
+	* dlls/winsock/socket.c:
+	David Hammerton <crazney@crazney.net>
+	Fixed typos.
+
+	* dlls/shell32/shellord.c:
+	Guy Albertelli <galberte@neo.lrun.com>
+	Implement initial version of SHAddToRecentDocs.
+
+	* include/wine/server_protocol.h, include/winuser.h,
+	  server/protocol.def, server/queue.c, server/request.h,
+	  server/trace.c, server/user.c, server/user.h, server/window.c,
+	  windows/win.c:
+	Added proper support for storing window parents in the server.
+	Added a few requests to query the window hierarchy.
+
+	* dlls/x11drv/winpos.c:
+	Ignore ConfigueNotify size changes while the window is iconic.
+
+	* tools/winedump/debug.c, tools/winedump/main.c,
+	  tools/winedump/msmangle.c, tools/winedump/pe.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Some dumb fixes.
+
+	* include/winbase.h:
+	Mike McCormack <mike_mccormack@start.com.au>
+	Declare DeviceIoControl.
+
+	* windows/sysparams.c:
+	Andriy Palamarchuk <apa3a@yahoo.com>
+	Implemented SPI_GETSHOWSOUNDS.
+
+	* dlls/oleaut32/safearray.c, dlls/oleaut32/variant.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Variants and safe arrays is now able to copy BSTR swith embedded null
+	characters. Safe arrays now handle BSTRs and variants.
+
+	* dlls/oleaut32/oleaut32.spec, dlls/oleaut32/typelib.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Register typelib marshaling for OLE Automation-compatible interfaces.
+
+2001-09-20  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msvcrt/except.c:
+	Fixed a couple of bugs in _except_handler3.
+
+	* dlls/gdi/gdi.spec, objects/gdiobj.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added stub for GdiInit2().
+
+	* dlls/shell32/shell32_main.c, dlls/shell32/shell32_main.h:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Get more entry points from Comctl32 and save the addresses.
+
+	* include/shlwapi.h:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Define the SHQueryValueEx{A|W} entry points.
+
+	* dlls/user/wsprintf.c:
+	Aric Stewart <aric@codeweavers.com>
+	The behavior for wsprintfA is different that for wsprintf16 in how it
+	handles NULLs being passed as character parameters.
+
+	* memory/environ.c, scheduler/process.c, dlls/shell32/shell32_main.c:
+	Francois Gouget <fgouget@free.fr>
+	Fix the conversions of a command line to/from an argv array.
+
+	* dlls/comctl32/comctl32undoc.c:
+	Guy Albertelli <galberte@neo.lrun.com>
+	Implement most of the MRU related functions.
+
+	* tools/examine-relay:
+	Guy Albertelli <galberte@neo.lrun.com>
+	Add support for the +snoop style output.
+
+	* objects/text.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Fix mapping of DEFAULT_CHARSET.
+
+2001-09-19  Alexandre Julliard  <julliard@winehq.com>
+
+	* windows/input.c, windows/x11drv/event.c, windows/x11drv/mouse.c:
+	Brad Campbell <brad@seme.com.au>
+	Fixed mouse position processing for use with a touchscreen.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/ptimpl.c, dlls/quartz/ptimpl.h,
+	  dlls/quartz/ptmpos.c, dlls/quartz/ptmseek.c, dlls/quartz/seekpass.c,
+	  dlls/quartz/seekpass.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Implemented ISeekingPassThru.
+
+	* tools/winecheck, DEVELOPERS-HINTS, README,
+	  documentation/architecture.sgml, documentation/configuring.sgml,
+	  documentation/installation-und-konfiguration.german,
+	  documentation/wine.conf.man.in, files/dos_fs.c, libtest/volinfo.c,
+	  msdos/int25.c, msdos/int26.c, winedefault.reg:
+	Andreas Mohr <a.mohr@mailto.de>
+	Updates and error message improvements.
+
+	* windows/mdi.c:
+	Joshua Thielen <thielen@netprince.net>
+	Changed MDICreateChild to support CW_USEDEFAULT for 16-bit MDI
+	windows.
+
+	* windows/win.c:
+	Fixed a couple of bugs in WIN_SetWindowLong caused by previous
+	change.
+
+	* dlls/imm32/imekl.c, include/winbase.h, include/winnls.h,
+	  ole/ole2nls.c:
+	Francois Gouget <fgouget@free.fr>
+	Fix the definition of structs NUMBERFMT* and CURRENCYFMT*.
+	Add, fix and move prototypes from winbase.h to winnls.h.
+
+	* dlls/shell32/shlfolder.c:
+	Guy Albertelli <guy@codeweavers.com>
+	Fix problem comparing pidls and return correct code.
+
+	* windows/x11drv/keyboard.c:
+	Andriy Palamarchuk <apa3a@yahoo.com>
+	Added russian layout with phantom key.
+
+	* include/winuser.h, windows/spy.c:
+	Francois Gouget <fgouget@free.fr>
+	Remove macros that should not be there (cause conflicts in WineLib).
+	Add corresponding comments in spy.c.
+
+	* include/tchar.h:
+	Francois Gouget <fgouget@free.fr>
+	Remove duplicate definition of _tmain.
+	Add definitions for __targv and _tenviron.
+
+	* controls/scroll.c, dlls/user/Makefile.in, dlls/user/controls.h,
+	  dlls/user/msg16.c, dlls/user/thunk.c, dlls/user/user.spec,
+	  dlls/user/wnd16.c, dlls/x11drv/winpos.c, include/win.h,
+	  include/winproc.h, include/winuser.h, windows/caret.c,
+	  windows/class.c, windows/clipboard.c, windows/dce.c,
+	  windows/defdlg.c, windows/defwnd.c, windows/dialog.c,
+	  windows/focus.c, windows/hook.c, windows/input.c, windows/mdi.c,
+	  windows/msgbox.c, windows/nonclient.c, windows/painting.c,
+	  windows/property.c, windows/queue.c, windows/scroll.c,
+	  windows/spy.c, windows/struct32.c, windows/timer.c, windows/win.c,
+	  windows/winhelp.c, windows/winpos.c, windows/winproc.c,
+	  controls/button.c, controls/combo.c, controls/icontitle.c,
+	  controls/menu.c:
+	Made all 16<->32 HWND conversions use explicit functions instead of
+	implicit type casts.
+	Moved a lot of 16-bit functions to the new wnd16.c file.
+	Changed DIALOGINFO structure handling to support 32-bit handles.
+
+	* windows/x11drv/clipboard.c, windows/x11drv/event.c,
+	  dlls/setupapi/setupx_main.c, dlls/shell32/shell32_main.c,
+	  dlls/shlwapi/ordinal.c:
+	Fixed a couple of HWND type mismatches.
+
+	* include/font.h, objects/font.c, objects/text.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Use the font charset to obtain a codepage for A->W conversion in the
+	text functions.
+
+	* dlls/wininet/utility.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Rename "SystemTime" to "t" (this is *not* SYSTEMTIME - avoid
+	confusion).
+
+	* configure, configure.in:
+	Bernhard Rosenkraenzer <bero@redhat.de>
+	Fixes for autoconf 2.52 or higher.
+
+	* dlls/msvcrt/locale.c, dlls/msvcrt/main.c, include/Makefile.in,
+	  include/msvcrt/locale.h, include/msvcrt/sys/stat.h,
+	  include/msvcrt/wchar.h:
+	Francois Gouget <fgouget@free.fr>
+	Add msvcrt/locale.h.
+	Add missing include directives in msvcrt/wchar.h.
+	Fix prototype of _wstati64 in msvcrt/sys/stat.h.
+
+2001-09-17  Alexandre Julliard  <julliard@winehq.com>
+
+	* files/drive.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Make relative paths of [Drive] sections relative to WINEPREFIX.
+
+	* dlls/rpcrt4/rpcrt4.spec:
+	Ove Kaaven <ovek@transgaming.com>
+	Lots of rpcrt4.dll stubs.
+
+	* tools/winedump/main.c, tools/winedump/msmangle.c,
+	  tools/winedump/pe.c, tools/winedump/symbol.c,
+	  tools/winedump/winedump.h:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Fixed demangling invocation.
+	Be a bit more verbose on implemented features.
+
+	* dlls/comctl32/header.c:
+	Mike McCormack <mike_mccormack@start.com.au>
+	Ignore negative widths in HEADER_SetItemBounds.
+
+	* documentation/samples/config:
+	Francois Gouget <fgouget@free.fr>
+	Cosmetic changes.
+
+	* Make.rules.in, Makefile.in, configure, configure.in,
+	  dlls/Makedll.rules.in, dlls/Makefile.in, dlls/make_dlls:
+	Improved make_dlls script. Moved dll list out of
+	Make.rules.in. Removed a few no longer used rules.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/complist.c,
+	  dlls/quartz/devenum.c, dlls/quartz/enumunk.c, dlls/quartz/fgclsid.c,
+	  dlls/quartz/fgidisp.c, dlls/quartz/fgraph.c, dlls/quartz/fmap.c,
+	  dlls/quartz/fmap2.c, dlls/quartz/ibasaud.c, dlls/quartz/ibasvid.c,
+	  dlls/quartz/ifgraph.c, dlls/quartz/ifmap.c, dlls/quartz/ifmap3.c,
+	  dlls/quartz/igrver.c, dlls/quartz/imcntl.c, dlls/quartz/imem.c,
+	  dlls/quartz/imesink.c, dlls/quartz/imevent.c,
+	  dlls/quartz/imfilter.c, dlls/quartz/impos.c, dlls/quartz/imseek.c,
+	  dlls/quartz/irclock.c, dlls/quartz/ividwin.c, dlls/quartz/main.c,
+	  dlls/quartz/memalloc.c, dlls/quartz/memalloc.h,
+	  dlls/quartz/sample.c, dlls/quartz/sample.h, dlls/quartz/seekpass.c,
+	  dlls/quartz/sysclock.c, include/Makefile.in, include/dsound.h,
+	  include/strmif.h, include/wine/obj_ksproperty.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Implemented IMemAllocator.
+
+	* documentation/status/internationalisation,
+	  windows/x11drv/keyboard.c:
+	Andriy Palamarchuk <apa3a@yahoo.com>
+	Fixed references to old documentation location.
+
+	* dlls/msvcrt/mbcs.c, dlls/msvcrt/msvcrt.spec:
+	Francois Gouget <fgouget@codeweavers.com>
+	Implemented _mbsupr.
+
+	* controls/scroll.c:
+	Bobby Bingham <uhmmmm@ameritech.net>
+	When you hold the left mouse button inside the scrollbar, then move
+	the mouse off so it stops scrolling, and return the mouse, it should
+	continue scrolling.
+
+2001-09-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/quartz/quartz.spec, dlls/sti/.cvsignore, dlls/sti/Makefile.in,
+	  dlls/sti/sti.spec, dlls/sti/sti_main.c, dlls/url/.cvsignore,
+	  dlls/url/Makefile.in, dlls/url/url.spec, dlls/url/url_main.c,
+	  Make.rules.in, configure, configure.in, dlls/Makefile.in,
+	  dlls/mapi32/.cvsignore, dlls/mapi32/Makefile.in,
+	  dlls/mapi32/mapi32.spec, dlls/mapi32/mapi32_main.c,
+	  dlls/msimg32/.cvsignore, dlls/msimg32/Makefile.in,
+	  dlls/msimg32/msimg32.spec, dlls/msimg32/msimg32_main.c:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added stubs for mapi32, msimg32, sti and url.
+
+	* windows/nonclient.c:
+	Fixed HWND compare in NC_HandleSetCursor.
+
+	* graphics/path.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Avoid calling RestoreDC with gdi lock.
+
+	* tsx11/Makefile.in, tsx11/X11_calls, tsx11/ts_xrender.c, configure,
+	  configure.in, include/config.h.in, include/ts_xrender.h,
+	  tools/make_X11wrappers:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Add config check and thread safe wrappers for the XRender library.
+
+	* dlls/gdi/driver.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Do not hold the GDI lock while 16-bit ExtDeviceMode is called.
+
+	* tools/winebuild/spec16.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add missing CALLBACK modifier.
+
+	* dlls/wsock32/socket.c:
+	Francois Gouget <fgouget@free.fr>
+	Fix recv prototype for WSARecvEx.
+
+	* files/dos_fs.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Fix the error returned by GetLongPathNameA.
+
+	* dlls/user/comm16.c, dlls/user/dde/client.c, dlls/user/dde/misc.c,
+	  dlls/user/dde/server.c, dlls/user/message.c, dlls/x11drv/scroll.c,
+	  dlls/x11drv/window.c, dlls/x11drv/winpos.c, windows/caret.c,
+	  windows/clipboard.c, windows/defwnd.c, windows/dialog.c,
+	  windows/mdi.c, windows/timer.c, windows/win.c, windows/winpos.c,
+	  controls/combo.c, controls/menu.c, controls/scroll.c:
+	Make sure that HWND comparisons are always done with full 32-bit
+	handles.
+
+	* dlls/winsock/socket.c, include/winsock.h:
+	Francois Gouget <fgouget@free.fr>
+	Fix the WSAStartup prototype.
+	Fix handling of timeout parameter in select.
+
+	* tools/winedump/pe.c:
+	Fixed dumping of dll export table.
+
+	* dlls/ddraw/ddraw/hal.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Return the FOURCC codes set by the HAL driver.
+
+	* graphics/enhmetafiledrv/init.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Release gdi lock before calling DeleteDC.
+
+	* tools/winelauncher.in:
+	Francois Gouget <fgouget@free.fr>
+	Place the log in $TMP if set and /tmp otherwise.
+
+	* include/wincon.h, win32/console.c:
+	Francois Gouget <fgouget@free.fr>
+	HANDLER_ROUTINE is in fact PHANDLER_ROUTINE.
+
+	* dlls/x11drv/xvidmode.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Check for htotal=vtotal=0 (for xfree 4 vesa driver).
+
+2001-09-12  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/gdi/Makefile.in, dlls/gdi/freetype.c, dlls/ttydrv/objects.c,
+	  dlls/wineps/font.c, graphics/enhmetafiledrv/objects.c,
+	  graphics/metafiledrv/objects.c, graphics/win16drv/font.c,
+	  graphics/x11drv/xfont.c, include/config.h.in, include/font.h,
+	  include/gdi.h, objects/dc.c, objects/font.c, objects/gdiobj.c,
+	  configure, configure.in:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Lay down the infrastructure for gdi font rendering.
+	Partial implementation of GetGylphOutline and GetOutlineTextMetrics
+	for gdi fonts.
+
+	* windows/winpos.c, dlls/user/message.c, include/win.h,
+	  windows/clipboard.c, windows/dce.c, windows/dialog.c,
+	  windows/focus.c, windows/input.c, windows/win.c:
+	Make sure that functions returning an HWND always return a full 32-bit
+	handle.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt.c:
+	Travis Michielsen <tjmichielsen@yahoo.com>
+	Created stubs for all cryptographic functions.
+
+	* server/queue.c, server/user.c, server/user.h:
+	Convert user handles received from client to full handles.
+
+2001-09-11  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/Makefile.in, include/process.h:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Remove not used include/process.h.
+
+	* objects/clipping.c, dlls/shell32/shpolicy.c,
+	  dlls/winaspi/winaspi32.c, dlls/wininet/ftp.c, dlls/wininet/http.c,
+	  dlls/wininet/internet.c, dlls/x11drv/dga2.c, dlls/x11drv/xvidmode.c,
+	  graphics/painting.c, graphics/x11drv/bitblt.c,
+	  graphics/x11drv/oembitmap.c, msdos/int10.c, dlls/comctl32/tab.c,
+	  dlls/ddraw/ddraw/hal.c, dlls/imagehlp/modify.c,
+	  dlls/msvcrt/locale.c, dlls/ntdll/exception.c, dlls/ole32/bindctx.c,
+	  dlls/ole32/filemoniker.c, dlls/ole32/itemmoniker.c,
+	  dlls/ole32/moniker.c, dlls/ole32/ole2.c, dlls/quartz/amerror.c,
+	  dlls/setupapi/setupx_main.c:
+	Patrik Stridvall <ps@leissner.se>
+	Cleanup code that is strange or difficult to parse.
+
+	* scheduler/client.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Better separate some system specific code.
+
+	* include/dshow.h, include/strmif.h, dlls/quartz/Makefile.in,
+	  dlls/quartz/amundoc.c, dlls/quartz/fgraph.c, dlls/quartz/fgraph.h,
+	  dlls/quartz/ifmap.c, dlls/quartz/ifmap3.c, dlls/quartz/imcntl.c,
+	  dlls/quartz/imem.c, dlls/quartz/imfilter.c, dlls/quartz/irclock.c,
+	  dlls/quartz/iunk.c, dlls/quartz/iunk.h, dlls/quartz/main.c,
+	  dlls/quartz/memalloc.h, dlls/quartz/seekpass.c,
+	  dlls/quartz/seekpass.h, dlls/quartz/sysclock.h, winedefault.reg:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Fixed some broken macros.
+	Added some stubs.
+	Implemeted undocumented APIs.
+	Implemented many methods in IMediaFilter, IMediaControl and
+	IReferenceClock.
+	Started Implementing IMemoryAllocator.
+
+	* win32/newfns.c:
+	Guy Albertelli <galberte@codeweavers.com>
+	Quiet FlushInstructionCache for non-NT systems where it does nothing
+	per MSDN.
+
+	* dlls/ole32/compobj.c, dlls/ole32/ole32_main.c,
+	  dlls/ole32/ole32_main.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Synchronize access to the s_COMLockCount, firstRegisteredClass,
+	openDllList in compobj.
+
+2001-09-10  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/x11drv/winpos.c:
+	Ignore size change on ConfigureNotify if window rect is empty and new
+	size is 1x1.
+
+	* windows/win.c:
+	Make sure that returned window belongs to correct thread when checking
+	siblings of transparent windows in WIN_FindWinToRepaint.
+
+	* documentation/printing.sgml:
+	Huw D M Davies <hdavies@codeweavers.com>
+	The [windows] section is in win.ini not in ~/.wine/config.
+
+	* dlls/msvideo/mciwnd.c, dlls/oleaut32/variant.c,
+	  dlls/shell32/shellstring.c:
+	Patrik Stridvall <ps@leissner.se>
+	Documentation fixes.
+
+	* tools/winapi/c_parser.pm, tools/winapi/make_parser.pm,
+	  tools/winapi/options.pm, tools/winapi/output.pm,
+	  tools/winapi/winapi_fixup, tools/winapi/winapi_fixup_statements.pm,
+	  tools/winapi/winapi_module_user.pm,
+	  tools/winapi_check/win16/winsock.api,
+	  tools/winapi_check/win32/quartz.api,
+	  tools/winapi_check/win32/rpcrt4.api,
+	  tools/winapi_check/winapi_check:
+	Patrik Stridvall <ps@leissner.se>
+	- FreeBSD now supported.
+	- Much more work on the new C parser.
+	- API files update.
+
+	* windows/x11drv/keyboard.c:
+	Andy Rysin <arysin@yahoo.com>
+	Added Ukrainian keyboard layout.
+
+	* dlls/ole32/stg_stream.c:
+	Bill Medland <Bill.Medland@accpac.com>
+	Basic implementation of IStream:Clone.
+
+	* dlls/commdlg/printdlg.c:
+	Bill Medland <Bill.Medland@accpac.com>
+	More graceful exit on failure.
+
+	* libtest/vartest.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Use V_* macros.
+
+	* include/wine/obj_oleaut.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Fix typo.
+
+	* dlls/oleaut32/typelib.c, dlls/oleaut32/typelib.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Load some useful TYPEATTR elements from v1 typelibs.
+
+	* dlls/wininet/internet.c, dlls/wininet/wininet.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	More debug output for InternetGetCookie, added stub for InternetSetCookie.
+
+	* dlls/ddraw/ddraw_private.h, dlls/ddraw/dsurface/dib.c,
+	  dlls/ddraw/dsurface/hal.c, dlls/ddraw/dsurface/hal.h,
+	  dlls/ddraw/dsurface/main.c, dlls/ddraw/dsurface/main.h,
+	  dlls/ddraw/dsurface/thunks.c, dlls/ddraw/dsurface/user.c,
+	  dlls/ddraw/dsurface/user.h, include/ddrawi.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added dwFlags to lock_update private functions so we can pass
+	WRITEONLY/READONLY.
+	Added those flags to the internal Lock() calls.
+	Only copy the surface from screen to surface if not writeonly.
+	Restrict blitting between display window and surface to the
+	locked/unlocked rectangle and the clipwindow section.
+	Added defines for DDHAL_UNLOCKDATA/DDHAL_LOCKDATA, added calls to HAL
+	implementation.
+
+	* windows/win.c: Patrik Stridvall <ps@leissner.se>
+	The message handler of WM_STYLECHANGING is supposed to be able to
+	modify the proposed style if it wishes.
+
+	* dlls/comctl32/imagelist.c, dlls/comctl32/status.c:
+	Patrik Stridvall <ps@leissner.se>
+	Use the min/max in windef.h instead.
+
+	* dlls/kernel/time.c, include/winnls.h:
+	Marcus Meissner <marcus@wine.lst.de>
+	Enhanced GetCalendarInfo stub, added known CAL_* defines.
+
+	* dlls/dsound/dsound_main.c, include/dsound.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Fix buffering problems in HEL mode.
+
+	* dlls/wininet/ftp.c, dlls/wininet/internet.h:
+	Francois Gouget <fgouget@free.fr>
+	Fix compilation errors on FreeBSD.
+
+	* dlls/msvcrt/process.c:
+	Francois Gouget <fgouget@free.fr>
+	Rewrite msvcrt_{argvtos,valisttos} to be more efficient.
+	Warn about the ' ' and '"' handling of the exec and spawn functions.
+	Copy the command line in MSVCRT_system to make it writable.
+
+	* tsx11/Makefile.in:
+	Francois Gouget <fgouget@codeweavers.com>
+	Link tsx11 with the X/GL libraries.
+
+	* dlls/x11drv/x11drv_main.c, dlls/x11drv/xvidmode.c,
+	  documentation/samples/config:
+	Francois Gouget <fgouget@codeweavers.com>
+	Added an option to disable XVidMode support.
+
+	* tools/winelauncher.in:
+	Eric Lammerts <eric@lammerts.org>
+	Preserve wine return status.
+
+2001-09-07  Alexandre Julliard  <julliard@winehq.com>
+
+	* tools/wmc/write.c:
+	Justin Santa Barbara <justinsb@hotmail.com>
+	Fixed problem with check for special characters.
+
+	* dlls/ntdll/string.c:
+	Johann Messner <johann.messner@zid.uni-linz.ac.at>
+	Fixed bug in _ultoa.
+
+	* dlls/msvcrt/data.c:
+	Francois Gouget <fgouget@free.fr>
+	Initialize argc/argv/wargv by calling ntdll.__wine_get_{w}main_args.
+
+	* graphics/x11drv/dib.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Changing DIB color table now updates the DIB visible state.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/complist.c,
+	  dlls/quartz/complist.h, dlls/quartz/devenum.c,
+	  dlls/quartz/devenum.h, dlls/quartz/devmon.c, dlls/quartz/devmon.h,
+	  dlls/quartz/enumunk.c, dlls/quartz/enumunk.h, dlls/quartz/fgclsid.c,
+	  dlls/quartz/fgidisp.c, dlls/quartz/fgraph.c, dlls/quartz/fgraph.h,
+	  dlls/quartz/fmap.c, dlls/quartz/fmap.h, dlls/quartz/fmap2.c,
+	  dlls/quartz/fmap2.h, dlls/quartz/ibasaud.c, dlls/quartz/ibasvid.c,
+	  dlls/quartz/idevenum.c, dlls/quartz/ifgraph.c, dlls/quartz/ifmap.c,
+	  dlls/quartz/ifmap3.c, dlls/quartz/igrver.c, dlls/quartz/imcntl.c,
+	  dlls/quartz/imem.c, dlls/quartz/imesink.c, dlls/quartz/imevent.c,
+	  dlls/quartz/imfilter.c, dlls/quartz/impos.c, dlls/quartz/imseek.c,
+	  dlls/quartz/irclock.c, dlls/quartz/iunk.h, dlls/quartz/ividwin.c,
+	  dlls/quartz/main.c, dlls/quartz/memalloc.c, dlls/quartz/memalloc.h,
+	  dlls/quartz/monprop.c, dlls/quartz/monprop.h,
+	  dlls/quartz/quartz.spec, dlls/quartz/regsvr.c, dlls/quartz/regsvr.h,
+	  dlls/quartz/sysclock.c, dlls/quartz/sysclock.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added some stubs.
+	Started implementing some interfaces in FilterGraph.
+
+	* library/port.c:
+	Ulrich Weigand <weigand@immd1.informatik.uni-erlangen.de>
+	Emulate the behaviour of Linux mmap() on Solaris. Based on ideas and
+	sample code due to Erik Boasson <eboasson@signaal.nl> and John Wehle
+	<john@feith.com>.
+
+	* windows/spy.c, windows/winproc.c, controls/combo.c,
+	  controls/listbox.c, dlls/user/message.c, include/spy.h,
+	  windows/message.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Enhance SPY_GetMsgName to translate common control messages.
+
+	* dlls/shell32/shell32.spec:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Add SHGetSpecialFolderPathW to spec file.
+
+	* dlls/shlwapi/path.c:
+	Guy L. Albertelli <guy@codeweavers.com>
+	- Finish PathParseIconLocation{A|W}.
+	- Implement PathIsUNCServer{A|W|ShareA|ShareW}.
+
+	* dlls/shlwapi/reg.c, dlls/shlwapi/shlwapi.spec:
+	Guy L. Albertelli <guy@codeweavers.com>
+	Implemented stubs for SHRegEnumUSKey{A|W} and return end-of-list error
+	as result.
+
+	* dlls/winspool/info.c:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Use a default DevMode if no DevMode information is available in
+	registry.
+
+	* dlls/msvcrt/mbcs.c, dlls/msvcrt/msvcrt.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Implemented mbsnbcnt, added stubs for _Gettnames and __lc_collate_cp.
+
+	* dlls/comctl32/rebar.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	- Handle CCS_NODIVIDER both when present and when not.
+	- Handle some cases of CCS_TOP, CCS_BOTTOM, and CCS_NOPARENTALIGN.
+	- Handle values returned from the RBN_CHILDSIZE notification.
+	- Implement RBBS_CHILDEDGE.
+	- Fix some logic errors in REBAR_AdjustBands, and problems with CCS_VERT.
+
+	* configure.in, tools/Makefile.in, tools/winedump/.cvsignore,
+	  tools/winedump/Makefile.in, tools/winedump/README,
+	  tools/winedump/cvinclude.h, tools/winedump/debug.c,
+	  tools/winedump/function_grep.pl, tools/winedump/main.c,
+	  tools/winedump/misc.c, tools/winedump/msmangle.c,
+	  tools/winedump/output.c, tools/winedump/pe.c, tools/winedump/pe.h,
+	  tools/winedump/search.c, tools/winedump/symbol.c,
+	  tools/winedump/winedump.h, configure:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Added PE dump capabilities to specmaker and renamed specmaker into
+	winedump.
+
+	* dlls/comctl32/toolbar.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	- Fix positioning of text in buttons.
+	- Fix nButtonHeight so that it is not zero in some cases
+	- Support TBSTYLE_TRANSPARENT.
+	- Fix handling in WM_ERASEBKGND so that the default erase occurs
+	  between notifies.
+	- Fix WM_NCCREATE processing to issue proper WM_STYLECHANGING (via
+	  SetWindowLong) and document the issues.
+
+	* objects/font.c:
+	Travis Michielsen <tjmichielsen@yahoo.com>
+	Fixed behavior of GetTextExtentExPointW.  It must always return the
+	extents of the entire string in size.
+
+	* graphics/x11drv/bitmap.c:
+	Guy L. Albertelli <guy@codeweavers.com>
+	Prevent bomb when GDI_ObjPtr returns null object.
+
+	* include/winerror.h, include/wingdi.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Move GDI_ERROR definition to wingdi.h.
+	Add HGDI_ERROR.
+
+	* dlls/oleaut32/typelib.c, dlls/oleaut32/typelib.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Add reader for v1 (SLTG) typelibs.
+	Fix a few problems with v2 (MSFT) typelibs.
+	LoadTypeLibEx should do a SearchPath to locate typelib.
+
+	* dlls/winspool/info.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	OpenPrinter should fail if pPrinterName is "".
+
+	* include/wine/obj_oleaut.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Add FUNCFLAGS and change TYPEFLAGS_* to an enum.
+
+	* dlls/winsock/socket.c:
+	Francois Gouget <fgouget@free.fr>
+	Convert the socket type (necessary on Solaris).
+
+	* dlls/rpcrt4/rpcrt4.spec, dlls/rpcrt4/rpcrt4_main.c,
+	  include/rpcdce.h:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Stub implementation for UuidHash().
+
+	* dlls/ntdll/ntdll.spec, dlls/msvcrt/msvcrt.spec:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Correct .spec file parameters for msvcrt._fullpath and ntdll._splitpath.
+
+	* winedefault.reg:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added DirectShow filter categories.
+
+	* include/uuids.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added some missing GUIDs.
+
+	* dlls/shell32/shellstring.c:
+	Guy Albertelli <guy@codeweavers.com>
+	Replace calls to StrRetToBuf{A|W} with duplicate code to eliminate
+	problems between native and built-in DLLs.
+
+2001-08-29  Alexandre Julliard  <julliard@winehq.com>
+
+	* windows/winproc.c, include/win.h, windows/win.c:
+	Make window handles 32-bit before calling window procedure.
+	Don't clear window parent field when unlinking it.
+
+2001-08-28  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/win.h, include/wine/server_protocol.h, server/Makefile.in,
+	  server/protocol.def, server/queue.c, server/request.h,
+	  server/thread.c, server/trace.c, server/user.c, server/user.h,
+	  server/window.c, tools/make_requests, windows/queue.c,
+	  windows/win.c, dlls/ttydrv/wnd.c, dlls/x11drv/desktop.c,
+	  dlls/x11drv/window.c, dlls/x11drv/winpos.c:
+	Added global management of user handles in the server.
+	Very preliminary support for shared window handles.
+
+	* ANNOUNCE:
+	James Juran <jamesjuran@alumni.psu.edu>
+	Use the new development page URL in the announcement.
+
+	* files/profile.c:
+	Francois Gouget <fgouget@free.fr>
+	Reimplement PROFILE_GetSectionNames to match the NT & MSDN behavior.
+	The 32A version is now the reference implementation (instead of the
+	16bit version).
+
+	* loader/task.c, dlls/icmp/icmp_main.c, dlls/wsock32/protocol.c:
+	Francois Gouget <fgouget@free.fr>
+	Only use winsock2.h in Wine.
+
+	* windows/spy.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Added WM_MOUSEHOVER and WM_MOUSELEAVE to formatting.
+
+	* tools/winebuild/relay.c:
+	Output correct assembly function headers for all functions.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/devenum.c,
+	  dlls/quartz/devenum.h, dlls/quartz/fgraph.c, dlls/quartz/fgraph.h,
+	  dlls/quartz/fmap.c, dlls/quartz/fmap.h, dlls/quartz/fmap2.c,
+	  dlls/quartz/fmap2.h, dlls/quartz/ibasaud.c, dlls/quartz/ibasvid.c,
+	  dlls/quartz/idevenum.c, dlls/quartz/ifgraph.c, dlls/quartz/ifmap.c,
+	  dlls/quartz/ifmap3.c, dlls/quartz/imcntl.c, dlls/quartz/imevent.c,
+	  dlls/quartz/impos.c, dlls/quartz/imseek.c, dlls/quartz/iunk.c,
+	  dlls/quartz/iunk.h, dlls/quartz/ividwin.c, dlls/quartz/main.c,
+	  dlls/quartz/quartz.spec, dlls/quartz/regsvr.c, dlls/quartz/regsvr.h,
+	  winedefault.reg:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added some stubs.
+
+2001-08-27  Alexandre Julliard  <julliard@winehq.com>
+
+	* objects/gdiobj.c:
+	Check for valid object in GDI_GetObjPtr even for MAGIC_DONTCARE.
+
+	* dlls/x11drv/x11ddraw.c:
+	Jukka Heinonen <jhei@iki.fi>
+	GrabPointer uses now SetWindowLong to change window procedure instead
+	of accessing directly WND structure.
+
+	* dlls/kernel/sync.c, include/wine/server_protocol.h,
+	  server/named_pipe.c, server/protocol.def, server/request.h,
+	  server/trace.c:
+	Mike McCormack <mike_mccormack@start.com.au>
+	Implemented GetNamedPipeInfo.
+
+	* include/strmif.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added some missing interfaces.
+
+	* include/wine/obj_base.h:
+	Hidenori Takeshima <hidenori@a2.ctktv.ne.jp>
+	Added ICOM_METHOD12-26, ICOM_VMETHOD12-26, ICOM_CALL12-26.
+
+2001-08-24  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/version.h, ANNOUNCE, ChangeLog:
+	Release 20010824.
+
+----------------------------------------------------------------
 2001-08-24  Alexandre Julliard  <julliard@winehq.com>
 
 	* dlls/winsock/socket.c, include/wine/winsock16.h:
