@@ -349,22 +349,33 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
         }
     }
 
-    if (start == 0) {
-      /* Check if the segment is the DGROUP of a module */
+    if (start == 0) 
+    {
+        /* start == 0 means: put the local heap at the end of the segment */
 
-	if ((pModule = NE_GetPtr( selector )))
+        DWORD size = GlobalSize16( GlobalHandle16( selector ) );
+	start = (WORD)(size > 0xffff ? 0xffff : size) - 1;
+        start -= end;
+        end += start;
+
+        /* Paranoid check */
+
+	if ((pModule = NE_GetPtr( GlobalHandle16( selector ) )))
 	{
-	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-	    if (pModule->dgroup && (GlobalHandleToSel16(pSeg->hSeg) == selector))
-	    {
-		/* We can't just use the simple method of using the value
-                 * of minsize + stacksize, since there are programs that
-                 * resize the data segment before calling InitTask(). So,
-                 * we must put it at the end of the segment */
-		start = GlobalSize16( GlobalHandle16( selector ) );
-		start -= end;
-		end += start;
-		TRACE_(local)(" new start %04x, minstart: %04x\n", start, pSeg->minsize + pModule->stack_size);
+	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
+            int segNr;
+
+            for ( segNr = 0; segNr < pModule->seg_count; segNr++, pSeg++ )
+                if ( GlobalHandleToSel16(pSeg->hSeg) == selector )
+                    break;
+
+            if ( segNr < pModule->seg_count )
+            {
+                WORD minsize = pSeg->minsize;
+                if ( pModule->ss == segNr+1 )
+                    minsize += pModule->stack_size;
+
+		TRACE_(local)(" new start %04x, minstart: %04x\n", start, minsize);
 	    }
 	}
     }
