@@ -166,9 +166,6 @@ typedef struct tagWINE_PLAYSOUND {
 } WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
 
 typedef struct tagWINE_MM_IDATA {
-    /* iData reference */
-    DWORD			dwThisProcess;
-    struct tagWINE_MM_IDATA*	lpNextIData;
     /* winmm part */
     HANDLE			hWinMM32Instance;
     HANDLE			hWinMM16Instance;

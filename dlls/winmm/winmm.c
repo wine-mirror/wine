@@ -72,33 +72,19 @@ void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
  *                   G L O B A L   S E T T I N G S
  * ========================================================================*/
 
-static LPWINE_MM_IDATA		lpFirstIData = NULL;
-
-static	LPWINE_MM_IDATA	MULTIMEDIA_GetIDataNoCheck(void)
-{
-    DWORD		pid = GetCurrentProcessId();
-    LPWINE_MM_IDATA	iData;
-
-    for (iData = lpFirstIData; iData; iData = iData->lpNextIData) {
-	if (iData->dwThisProcess == pid)
-	    break;
-    }
-    return iData;
-}
+static LPWINE_MM_IDATA		S_IData = NULL;
 
 /**************************************************************************
  * 			MULTIMEDIA_GetIData			[internal]
  */
 LPWINE_MM_IDATA	MULTIMEDIA_GetIData(void)
 {
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIDataNoCheck();
-
-    if (!iData) {
+    if (!S_IData) {
 	ERR("IData not found for pid=%08lx. Suicide !!!\n", GetCurrentProcessId());
 	DbgBreakPoint();
 	ExitProcess(0);
     }
-    return iData;
+    return S_IData;
 }
 
 /**************************************************************************
@@ -106,21 +92,16 @@ LPWINE_MM_IDATA	MULTIMEDIA_GetIData(void)
  */
 static	BOOL	MULTIMEDIA_CreateIData(HINSTANCE hInstDLL)
 {
-    LPWINE_MM_IDATA	iData;
+    S_IData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MM_IDATA));
 
-    iData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MM_IDATA));
-
-    if (!iData)
+    if (!S_IData)
 	return FALSE;
-    iData->hWinMM32Instance = hInstDLL;
-    iData->dwThisProcess = GetCurrentProcessId();
-    iData->lpNextIData = lpFirstIData;
-    lpFirstIData = iData;
-    InitializeCriticalSection(&iData->cs);
-    iData->cs.DebugInfo = (void*)__FILE__ ": WinMM";
-    iData->psStopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-    iData->psLastEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-    TRACE("Created IData (%p) for pid %08lx\n", iData, iData->dwThisProcess);
+    S_IData->hWinMM32Instance = hInstDLL;
+    InitializeCriticalSection(&S_IData->cs);
+    S_IData->cs.DebugInfo = (void*)__FILE__ ": WinMM";
+    S_IData->psStopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+    S_IData->psLastEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+    TRACE("Created IData (%p)\n", S_IData);
     return TRUE;
 }
 
@@ -129,24 +110,16 @@ static	BOOL	MULTIMEDIA_CreateIData(HINSTANCE hInstDLL)
  */
 static	void MULTIMEDIA_DeleteIData(void)
 {
-    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIDataNoCheck();
-    LPWINE_MM_IDATA*	ppid;
-
-    if (iData) {
+    if (S_IData) {
 	TIME_MMTimeStop();
 
-	for (ppid = &lpFirstIData; *ppid; ppid = &(*ppid)->lpNextIData) {
-	    if (*ppid == iData) {
-		*ppid = iData->lpNextIData;
-		break;
-	    }
-	}
 	/* FIXME: should also free content and resources allocated
-	 * inside iData */
-        CloseHandle(iData->psStopEvent);
-        CloseHandle(iData->psLastEvent);
-        DeleteCriticalSection(&iData->cs);
-	HeapFree(GetProcessHeap(), 0, iData);
+	 * inside S_IData */
+        CloseHandle(S_IData->psStopEvent);
+        CloseHandle(S_IData->psLastEvent);
+        DeleteCriticalSection(&S_IData->cs);
+	HeapFree(GetProcessHeap(), 0, S_IData);
+        S_IData = NULL;
     }
 }
 
@@ -2876,4 +2849,3 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }
-
