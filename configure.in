@@ -773,44 +773,6 @@ then
   AC_DEFINE(NO_REENTRANT_X11)
 fi
 
-dnl **** Check for endianness ****
-
-AC_C_BIGENDIAN
-
-AC_CACHE_CHECK( "whether bitfields are bigendian", wine_cv_bitfields_bigendian,
-  [AC_TRY_RUN([
-union
-{
-  int word;
-  struct
-  {
-      int bit0 : 1;
-      int rest : sizeof(int)*8 - 1;
-  } bitfield;
-} u;
-main() { u.word = 0; u.bitfield.bit0 = 1; exit( u.word == 1 ); } ], 
-    wine_cv_bitfields_bigendian=yes, wine_cv_bitfields_bigendian=no,
-    wine_cv_bitfields_bigendian=no ) ])
-if test "$wine_cv_bitfields_bigendian" = "yes"
-then
-  AC_DEFINE(BITFIELDS_BIGENDIAN)
-fi
-
-AC_CACHE_CHECK( "whether unaligned memory access is allowed", wine_cv_allow_unaligned_access,
-  [AC_TRY_RUN([
-long volatile test[2];
-main()
-{
-    long volatile *ua = (long volatile *)((char *)test + 1);
-    *ua = 0;
-    exit(0);
-} ], wine_cv_allow_unaligned_access=yes, wine_cv_allow_unaligned_access=no,
-     wine_cv_allow_unaligned_access=no ) ])
-if test "$wine_cv_allow_unaligned_access" = "yes"
-then
-  AC_DEFINE(ALLOW_UNALIGNED_ACCESS)
-fi
-
 
 dnl **** Check for functions ****
 

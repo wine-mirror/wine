@@ -3,12 +3,6 @@
  * defined in the 'configure' script.
  */
 
-/* Define if bitfields are bigendian */
-#undef BITFIELDS_BIGENDIAN
-
-/* Define if unaligned memory access is allowed */
-#undef ALLOW_UNALIGNED_ACCESS
-
 /* Define if .type asm directive must be inside a .def directive */
 #undef NEED_TYPE_IN_DEF
 
