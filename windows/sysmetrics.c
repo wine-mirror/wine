@@ -93,7 +93,7 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
-    sysMetrics[SM_CXFRAME] = GetProfileIntA("Windows", "BorderWidth", 4);
+    sysMetrics[SM_CXFRAME] = GetProfileIntA("Windows", "BorderWidth", 4) + 1;
     sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
