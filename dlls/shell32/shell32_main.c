@@ -1007,11 +1007,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
 	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
 	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
-	    pCreateMRUListA=(void*)GetProcAddress(hComctl32, "CreateMRUListA");
-	    pFreeMRUListA=(void*)GetProcAddress(hComctl32, "FreeMRUList");
-	    pAddMRUData=(void*)GetProcAddress(hComctl32, "AddMRUData");
-	    pFindMRUData=(void*)GetProcAddress(hComctl32, "FindMRUData");
-	    pEnumMRUListA=(void*)GetProcAddress(hComctl32, "EnumMRUListA");
+	    pCreateMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)151L /*"CreateMRUListA"*/);
+	    pFreeMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)152L /*"FreeMRUList"*/);
+	    pAddMRUData=(void*)GetProcAddress(hComctl32, (LPCSTR)167L /*"AddMRUData"*/);
+	    pFindMRUData=(void*)GetProcAddress(hComctl32, (LPCSTR)169L /*"FindMRUData"*/);
+	    pEnumMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)154L /*"EnumMRUListA"*/);
 
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)

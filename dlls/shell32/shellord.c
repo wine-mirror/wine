@@ -463,7 +463,8 @@ static INT SHADD_get_policy(LPSTR policy, LPDWORD type, LPVOID buffer, LPDWORD l
 	if (RegOpenKeyExA(HKEY_CURRENT_USER,
 			  "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
 			  0, KEY_READ, &Policy_basekey)) {
-	    ERR("No Explorer Policies location\n");
+	    TRACE("No Explorer Policies location exists. Policy wanted=%s\n",
+		  policy);
 	    *len = 0;
 	    return ERROR_FILE_NOT_FOUND;
 	}
@@ -636,11 +637,12 @@ typedef struct tagCREATEMRULIST
      *        and the close should be done during the _DETACH. The resulting
      *        key is stored in the DLL global data.
      */
-    RegOpenKeyExA(HKEY_CURRENT_USER,
-		  "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
-		  0,
-		  KEY_READ,
-		  &HCUbasekey);
+    if (RegCreateKeyExA(HKEY_CURRENT_USER,
+			"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+			0, 0, 0, KEY_READ, 0, &HCUbasekey, 0)) {
+	ERR("Failed to create 'Software\\Microsoft\\Windows\\CurrentVersion\\Explorer'\n");
+	return 0;
+    }
 
     /* Get path to user's "Recent" directory
      */
@@ -650,12 +652,17 @@ typedef struct tagCREATEMRULIST
 	    SHGetPathFromIDListA(pidl, link_dir);
 	    IMalloc_Free(ppM, pidl);
 	}
+	else {
+	    /* serious issues */
+	    link_dir[0] = 0;
+	    ERR("serious issues 1\n");
+	}
 	IMalloc_Release(ppM);
     }
     else {
 	/* serious issues */
 	link_dir[0] = 0;
-	ERR("serious issues\n");
+	ERR("serious issues 2\n");
     }
     TRACE("Users Recent dir %s\n", link_dir);
 
