@@ -295,6 +295,11 @@ void apply_drive_changes()
         /* get a drive */
         if(QueryDosDevice(devicename, targetpath, sizeof(targetpath)))
         {
+            char *cursor;
+            
+            /* correct the slashes in the path to be UNIX style */
+            while ((cursor = strchr(targetpath, '\\'))) *cursor = '/';
+
             foundDrive = TRUE;
         }
 
@@ -395,7 +400,7 @@ void apply_drive_changes()
                 snprintf(devicename, sizeof(devicename), "%c:\\", 'A' + i);
                 if(!SetVolumeLabel(devicename, drives[i].label))
                 {
-                    WINE_ERR("unable to set volume label for devicename of '%s', label of '%s'\n",
+                    WINE_WARN("unable to set volume label for devicename of '%s', label of '%s'\n",
                         devicename, drives[i].label);
                     PRINTERROR();
                 }
