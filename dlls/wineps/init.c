@@ -312,6 +312,8 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
 
     PSDRV_UpdateDevCaps(physDev);
     dc->hFont = PSDRV_DefaultFont;
+    if (GetObjectType(dc->hSelf) != OBJ_MEMDC)
+        dc->bitsPerPixel = physDev->pi->ppd->ColorDevice ? 8 : 1;
     return TRUE;
 }
 
@@ -367,7 +369,7 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
     case VERTRES:
         return physDev->vertRes;
     case BITSPIXEL:
-        return (physDev->pi->ppd->ColorDevice ? 8 : 1);
+        return physDev->pi->ppd->ColorDevice ? 8 : 1;
     case PLANES:
         return 1;
     case NUMBRUSHES:
