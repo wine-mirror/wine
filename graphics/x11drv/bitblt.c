@@ -1504,9 +1504,10 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         case OP_ARGS(SRC,DST):
         case OP_ARGS(TMP,SRC):
         case OP_ARGS(TMP,DST):
-            XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)],
-                       pixmaps[OP_DST(*opcode)], tmpGC,
-                       0, 0, width, height, 0, 0 );
+	    if (useSrc)
+		XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)],
+			   pixmaps[OP_DST(*opcode)], tmpGC,
+			   0, 0, width, height, 0, 0 );
             break;
 
         case OP_ARGS(PAT,TMP):
