@@ -8,6 +8,7 @@
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "debugtools.h"
+#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics)
 
@@ -445,6 +446,16 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     {
         LTInnerI = RBInnerI = LTRBInnerFlat[uType & (BDR_INNER|BDR_OUTER)];
         LTOuterI = RBOuterI = LTRBOuterFlat[uType & (BDR_INNER|BDR_OUTER)];
+
+        /* Bertho Stultiens states above that this function exactly matches win95
+         * In win98 BF_FLAT rectangels have an inner border same color as the
+	 * middle (COLOR_BTNFACE). I believe it's the same for win95 but since
+	 * I don't know I go with Bertho and just sets it for win98 until proven
+	 * otherwise.
+	 *                                          Dennis Björklund, 10 June, 99
+	 */
+	if( TWEAK_WineLook == WIN98_LOOK && LTInnerI != -1 )	  
+            LTInnerI = RBInnerI = COLOR_BTNFACE;
     }
     else if(uFlags & BF_SOFT)
     {
@@ -470,12 +481,6 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     if(LTOuterI != -1) LTOuterPen = GetSysColorPen(LTOuterI);
     if(RBInnerI != -1) RBInnerPen = GetSysColorPen(RBInnerI);
     if(RBOuterI != -1) RBOuterPen = GetSysColorPen(RBOuterI);
-
-    if((uFlags & BF_MIDDLE) && retval)
-    {
-        FillRect(hdc, &InnerRect, GetSysColorBrush(uFlags & BF_MONO ? 
-					    COLOR_WINDOW : COLOR_BTNFACE));
-    }
 
     MoveToEx(hdc, 0, 0, &SavePoint);
 
@@ -527,15 +532,24 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
         LineTo(hdc, InnerRect.right-2, InnerRect.top-1+RTpenplus);
     }
 
-    /* Adjust rectangle if asked */
-    if(uFlags & BF_ADJUST)
+    if( ((uFlags & BF_MIDDLE) && retval) || (uFlags & BF_ADJUST) )
     {
         int add = (LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0)
                 + (LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0);
-        if(uFlags & BF_LEFT)   rc->left   += add;
-        if(uFlags & BF_RIGHT)  rc->right  -= add;
-        if(uFlags & BF_TOP)    rc->top    += add;
-        if(uFlags & BF_BOTTOM) rc->bottom -= add;
+
+        if(uFlags & BF_LEFT)   InnerRect.left   += add;
+        if(uFlags & BF_RIGHT)  InnerRect.right  -= add;
+        if(uFlags & BF_TOP)    InnerRect.top    += add;
+        if(uFlags & BF_BOTTOM) InnerRect.bottom -= add;
+
+        if((uFlags & BF_MIDDLE) && retval)
+	{ 
+            FillRect(hdc, &InnerRect, GetSysColorBrush(uFlags & BF_MONO ? 
+						       COLOR_WINDOW : COLOR_BTNFACE));
+	}
+
+	if(uFlags & BF_ADJUST)
+	    *rc = InnerRect;
     }
 
     /* Cleanup */
@@ -1123,7 +1137,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
     int i;
     HBRUSH hbsave, hb, hb2;
     HPEN hpsave, hp, hp2;
-    int tri = 310*SmallDiam/1000;
+    int tri = 290*SmallDiam/1000 - 1;
     int d46, d93;
 
     switch(uFlags & 0xff)
@@ -1139,14 +1153,14 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
 
     case DFCS_SCROLLUP:
         Line[2].x = myr.left + 470*SmallDiam/1000 + 2;
-        Line[2].y = myr.top  + 313*SmallDiam/1000 + 1;
+        Line[2].y = myr.bottom - (687*SmallDiam/1000 + 1);
         Line[0].x = Line[2].x - tri;
         Line[1].x = Line[2].x + tri;
         Line[0].y = Line[1].y = Line[2].y + tri;
         break;
 
     case DFCS_SCROLLLEFT:
-        Line[2].x = myr.left + 313*SmallDiam/1000 + 1;
+        Line[2].x = myr.right - (687*SmallDiam/1000 + 1);
         Line[2].y = myr.top  + 470*SmallDiam/1000 + 2;
         Line[0].y = Line[2].y - tri;
         Line[1].y = Line[2].y + tri;
@@ -1241,7 +1255,12 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
     }
 
     /* Here do the real scroll-bar controls end up */
-    UITOOLS95_DFC_ButtonPush(dc, r, uFlags & 0xff00);
+    if( ! (uFlags & (0xff00 & ~DFCS_ADJUSTRECT)) )
+      /* UITOOLS95_DFC_ButtonPush always uses BF_SOFT which we don't */
+      /* want for the normal scroll-arrow button. */
+      UITOOLS95_DrawRectEdge( dc, r, EDGE_RAISED, (uFlags&DFCS_ADJUSTRECT) | BF_MIDDLE | BF_RECT);
+    else
+      UITOOLS95_DFC_ButtonPush(dc, r, (uFlags & 0xff00) );
 
     if(uFlags & DFCS_INACTIVE)
     {
@@ -1252,11 +1271,12 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
         SelectObject(dc, hbsave);
     }
 
-    for(i = 0; i < 3; i++)
-    {
+    if( (uFlags & DFCS_INACTIVE) || !(uFlags & DFCS_PUSHED) )
+      for(i = 0; i < 3; i++)
+      {
         Line[i].x--;
         Line[i].y--;
-    }
+      }
 
     i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
     hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
