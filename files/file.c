@@ -341,7 +341,7 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 
     if ((req->handle == -1) && !fail_read_only && (access & GENERIC_WRITE)) 
     {
-	if ((err == ERROR_ACCESS_DENIED) || (err == ERROR_WRITE_PROTECT))
+	if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
         {
 	    TRACE("Write access failed for file '%s', trying without "
 		  "write access", filename);
