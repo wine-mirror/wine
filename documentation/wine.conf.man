@@ -199,10 +199,12 @@ can be any valid DLL module name. If no extension is specified .dll is
 assumed. The specified value is a comma separated list of module-types
 to try to load in that specific order. Case is not important and only
 the first letter of each type is enough to identify the type n[ative]
-or b[uiltin]. Also whitespace is ignored. See also commandline
-option
-.I --dll
-for details about the allowable types.
+or b[uiltin]. Also whitespace is ignored. See also the description of
+the
+.I WINEDLLOVERRIDES
+environment variable in
+.BR wine (1)
+for details about the allowed types.
 .br
 The wildcard entry
 .I """*"""
@@ -213,8 +215,6 @@ mentioned. If the wildcard entry is not found, then the order
 Examples:
 .br
 .I """kernel32""=""builtin"""
-.br
-.I """kernel""=""builtin"""
 .br
 .I """comdlg32""=""native,builtin"""
 .br

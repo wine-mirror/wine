@@ -87,9 +87,7 @@ WINE REGISTRY Version 2
 ; some dlls you may want to change
 "oleaut32"     = "builtin, native"
 "ole32"        = "builtin, native"
-"commdlg"      = "builtin, native"
 "comdlg32"     = "builtin, native"
-"shell"        = "builtin, native"
 "shell32"      = "builtin, native"
 "shfolder"     = "builtin, native"
 "shlwapi"      = "builtin, native"

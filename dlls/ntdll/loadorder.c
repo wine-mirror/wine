@@ -57,26 +57,19 @@ struct loadorder_list
 
 /* dll to load as builtins if not explicitly specified otherwise */
 /* the list must remain sorted by dll name */
-static const WCHAR default_builtins[][16] =
+static const WCHAR default_builtins[][10] =
 {
     { 'g','d','i','3','2',0 },
     { 'i','c','m','p',0 },
     { 'k','e','r','n','e','l','3','2',0 },
-    { 'm','m','s','y','s','t','e','m',0 },
     { 'n','t','d','l','l',0 },
     { 'o','d','b','c','3','2',0 },
-    { 's','o','u','n','d',0 },
     { 't','t','y','d','r','v',0 },
     { 'u','s','e','r','3','2',0 },
     { 'w','3','2','s','k','r','n','l',0 },
-    { 'w','3','2','s','y','s',0 },
-    { 'w','i','n','3','2','s','1','6',0 },
-    { 'w','i','n','a','s','p','i',0 },
     { 'w','i','n','e','d','o','s',0 },
-    { 'w','i','n','e','p','s','1','6','.','d','r','v',0 },
     { 'w','i','n','e','p','s',0 },
     { 'w','i','n','m','m',0 },
-    { 'w','i','n','s','o','c','k',0 },
     { 'w','n','a','s','p','i','3','2',0 },
     { 'w','o','w','3','2',0 },
     { 'w','s','2','_','3','2',0 },
@@ -324,7 +317,7 @@ static void init_load_order(void)
                  "    Only the first letter of the override (native or builtin)\n"
                  "    is significant.\n\n"
                  "Example:\n"
-                 "  WINEDLLOVERRIDES=\"comdlg32,commdlg=n,b;shell,shell32=b\"\n" );
+                 "  WINEDLLOVERRIDES=\"comdlg32=n,b;shell32,shlwapi=b\"\n" );
         exit(0);
     }
 

@@ -217,28 +217,31 @@ on. Multiple libraries with the same load order can be separated with
 commas. It is also possible to use specify different loadorders for
 different libraries by separating the entries by ";".
 .br
+The load order for a 16-bit dll is always defined by the load order of
+the 32-bit dll that contains it (which can be identified by looking at
+the symbolic link of the 16-bit .dll.so file). For instance if
+ole32.dll is configured as builtin, storage.dll will be loaded as
+builtin too, since the 32-bit ole32.dll contains the 16-bit
+storage.dll.
+.br
 Examples:
 .RS
 .TP
-WINEDLLOVERRIDES="comdlg32,commdlg=n,b"
+WINEDLLOVERRIDES="comdlg32,shell32=n,b"
 .br
-Try to load comdlg32 and commdlg as native windows dll first and try
+Try to load comdlg32 and shell32 as native windows dll first and try
 the builtin version if the native load fails.
 .TP
-WINEDLLOVERRIDES="shell,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
+WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
 .br
-Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
+Try to load the libraries comdlg32 and shell32 as native windows dlls. Furthermore, if 
 an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
 .TP
-WINEDLLOVERRIDES="comdlg32,commdlg=b,n;shell,shell32=b;comctl32,commctrl=n"
+WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n"
 .br
-Try to load comdlg32 and commdlg as builtin first and try the native version
-if the builtin load fails; load shell32/shell always as builtin and
-comctl32/commctrl always as native.
-.br
-Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
-having exactly the same load order. This will prevent mismatches at runtime.
-See also configuration file format below.
+Try to load comdlg32 as builtin first and try the native version if
+the builtin load fails; load shell32 always as builtin and comctl32
+always as native.
 .RE
 .TP
 .I DISPLAY
