@@ -1303,7 +1303,7 @@ WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
 
     if ( hActiveCursor == handle )
     {
-        ERR_(cursor)("Destroying active cursor!\n" );
+        WARN_(cursor)("Destroying active cursor!\n" );
         SetCursor( 0 );
     }
 
