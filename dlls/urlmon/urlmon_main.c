@@ -101,7 +101,8 @@ struct object_creation_info
  
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_InternetSecurityManager, &SecManagerImpl_Construct }
+    { &CLSID_InternetSecurityManager, &SecManagerImpl_Construct },
+    { &CLSID_InternetZoneManager, ZoneMgrImpl_Construct }
 };
 
 static HRESULT WINAPI
@@ -240,10 +241,21 @@ HRESULT WINAPI URLMON_DllRegisterServerEx(void)
 /**************************************************************************
  *                 UrlMkSetSessionOption (URLMON.@)
  */
- HRESULT WINAPI UrlMkSetSessionOption(long lost, LPVOID *splat, long time,
- 					long nosee)
+HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBufferLength,
+ 					DWORD Reserved)
 {
-    FIXME("(%#lx, %p, %#lx, %#lx): stub\n", lost, splat, time, nosee);
+    FIXME("(%#lx, %p, %#lx): stub\n", dwOption, pBuffer, dwBufferLength);
+
+    return S_OK;
+}
+
+/**************************************************************************
+ *                 UrlMkGetSessionOption (URLMON.@)
+ */
+HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBufferLength,
+                                        DWORD* pdwBufferLength, DWORD dwReserved)
+{
+    FIXME("(%#lx, %p, %#lx, %p): stub\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
 
     return S_OK;
 }

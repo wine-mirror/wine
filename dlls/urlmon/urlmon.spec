@@ -8,7 +8,7 @@
 @ stdcall CoInternetCombineUrl(wstr wstr long wstr long ptr long)
 @ stdcall CoInternetCompareUrl(wstr wstr long)
 @ stdcall CoInternetCreateSecurityManager(ptr ptr long)
-@ stub CoInternetCreateZoneManager
+@ stdcall CoInternetCreateZoneManager(ptr ptr long)
 @ stub CoInternetGetProtocolFlags
 @ stub CoInternetGetSecurityUrl
 @ stdcall CoInternetGetSession(long ptr long)
@@ -71,7 +71,7 @@
 @ stub URLOpenStreamA
 @ stub URLOpenStreamW
 @ stub UrlMkBuildVersion
-@ stub UrlMkGetSessionOption
+@ stdcall UrlMkGetSessionOption(long ptr long ptr long)
 @ stdcall UrlMkSetSessionOption(long ptr long long)
 @ stub WriteHitLogging
 @ stub ZonesReInit
