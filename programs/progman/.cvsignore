@@ -17,11 +17,13 @@ It.s
 Ko.h
 Ko.s
 Makefile
+Pt.h
 Pt.s
 Sw.h
 Sw.s
 Va.h
 Va.s
+Wa.h
 Wa.s
 accel.h
 accel.s

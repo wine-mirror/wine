@@ -1,12 +1,11 @@
 /*
  *  Notepad (English resources)
  *
- *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
- *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
+ *  Copyright 1999 Marcel Baur <alves@correionet.com.br>
  */
 
-#define LANGUAGE_ID                     Pt_br
-#define LANGUAGE_NUMBER                 0
+#define LANGUAGE_ID                     Pt
+#define LANGUAGE_NUMBER                 16
 #define LANGUAGE_MENU_ITEM              "&Português"
 
 
@@ -101,4 +100,3 @@ tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória \
 livre."
 
 #include "notepad.rc"
-

@@ -93,7 +93,7 @@ Veuillez utiliser un autre éditeur."
 
 /* FIXME */
 
-#define STRING_NOTSAVED         "Le fichier '%s'\n\n a change\n
+#define STRING_NOTSAVED         "Le fichier '%s'\n\n a change\n \
 Would you like to save your changes ?"
 
 #define STRING_NOTFOUND         "'%s' introuvable."

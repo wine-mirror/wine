@@ -1,11 +1,11 @@
 /*
  * Program Manager
  *
- * Copyright 1996 Ulrich Schmid
+ * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
  */
 
-#define LANGUAGE_ID                  Pt_br
-#define LANGUAGE_NUMBER              0
+#define LANGUAGE_ID                  Pt
+#define LANGUAGE_NUMBER              16
 #define LANGUAGE_MENU_ITEM           "&Português"
 
 /* Menu */
@@ -117,4 +117,3 @@ Deverá ser tentado outras vezes?"
 #define STRING_SYMBOLS_ICO                "Simbolos (*.ico)"
 
 #include "Xx.rc"
-

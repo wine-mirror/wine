@@ -1,13 +1,13 @@
 /*
  * Clock (English resources)
  *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
  * FIXME: Weak translation !
  */
 
-#define LANGUAGE_ID                  Pt_br
-#define LANGUAGE_NUMBER              0
-
+#define LANGUAGE_ID                  Pt
+#define LANGUAGE_NUMBER              16
+#define LANGUAGE_MENU_ITEM           "&Português"
 
 /* System Menu */
 
@@ -25,7 +25,6 @@
 #define MENU_DATE                    "&Data"
 
 #define MENU_LANGUAGE                "&Linguagem"
-#define LANGUAGE_MENU_ITEM           "&Português"
 
 #define MENU_INFO                    "Inf&ormações..."
 #define MENU_INFO_LICENSE            "&Licença"
@@ -37,4 +36,3 @@
 
 
 #include "clock.rc"
-

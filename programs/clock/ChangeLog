@@ -1,3 +1,7 @@
+Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
+	* [Pt.rc] [Makefile.in]
+	Added Portuguese language support.
+
 Thu Jan 28 17:17:28 1999  Jukka Iivonen  <iivonen@iki.fi>
 
 	* [Fi.rc] [main.c] [Makefile.in]
