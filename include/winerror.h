@@ -1897,8 +1897,5 @@ extern int WIN32_LastError;
 #define MEM_E_INVALID_LINK                                 0x80080010L
 #define MEM_E_INVALID_SIZE                                 0x80080011L
 
-/* Obtained from lcc-win32 include files */
-#define GDI_ERROR                                          0xFFFFFFFFL
-
 
 #endif  /* __WINE_WINERROR_H */

@@ -2981,6 +2981,9 @@ DECL_WINELIB_TYPE_AW(LPDISPLAY_DEVICE)
 #define	DISPLAY_DEVICE_MIRRORING_DRIVER		0x00000008
 #define	DISPLAY_DEVICE_VGA_COMPATIBLE		0x00000010
 
+#define GDI_ERROR                               (0xFFFFFFFFL)
+#define HGDI_ERROR                              ((HANDLE)0xFFFFFFFFL)
+
 #include "poppack.h"
 
 INT       WINAPI AbortDoc(HDC);
