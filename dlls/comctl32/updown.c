@@ -15,16 +15,12 @@
  *     - listbox as buddy window
  *     - acceleration
  *     - base 16
- *     - UDS_ALIGNLEFT, ~UDS_WRAP
- *       (tested - they work)
  *     - integers with thousand separators.
  *       (fixed bugs. <noel@macadamian.com>)
  *
  *   Even though the above list seems rather large, the control seems to
  *   behave very well so I am confident it does work in most (all) of the
  *   untested cases.
- * Problems:
- *   I do not like the arrows yet, I'll work more on them later on.
  */
 
 #include <stdlib.h>
@@ -83,7 +79,7 @@ typedef struct
 static int accelIndex = -1;
 
 #define UNKNOWN_PARAM(msg, wParam, lParam) WARN(\
-        "UpDown Ctrl: Unknown parameter(s) for message " #msg     \
+        "Unknown parameter(s) for message " #msg \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
 
 #define UPDOWN_GetInfoPtr(hwnd) ((UPDOWN_INFO *)GetWindowLongA (hwnd,0))
