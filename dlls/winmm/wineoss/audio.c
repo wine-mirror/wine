@@ -1322,8 +1322,32 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	}
 	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
 
-	/* for some reason, es1371 and sblive! sometimes have junk in here. */
-	memset(wwo->mapping,0,wwo->maplen); /* clear it, or we get junk noise */
+	/* for some reason, es1371 and sblive! sometimes have junk in here.
+	 * clear it, or we get junk noise */
+	/* some libc implementations are buggy: their memset reads from the buffer...
+	 * to work around it, we have the 0 the block by hand and do not call:
+	 * memset(wwo->mapping,0,wwo->maplen); 
+	 */
+	{
+	    char*	p1 = wwo->mapping;
+	    unsigned	len = wwo->maplen;
+
+	    if (len >= 16) /* so we can have at least a 4 longs to store... */
+	    {
+		/* the mmap:ed value is (at least) dword aligned
+		 * so, start filling the complete unsigned long:s 
+		 */
+		int		b = len >> 2;
+		unsigned long*	p4 = (unsigned long*)p1;
+
+		while (b--) *p4++ = 0;
+		/* prepare for filling the rest */
+		len &= 3;
+		p1 = (unsigned char*)p4;
+	    }
+	    /* in all cases, fill the remaining bytes */
+	    while (len-- != 0) *p1++ = 0;
+	}
     }
     return DS_OK;
 }
