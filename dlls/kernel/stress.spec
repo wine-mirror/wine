@@ -2,6 +2,7 @@
 #
 name	stress
 type	win16
+owner	kernel32
 
 2   pascal allocmem(long)		AllocMem
 3   pascal freeallmem()			FreeAllMem

@@ -707,6 +707,7 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    sizeof(Module),\n" );
     fprintf( outfile, "    (BYTE *)&Code_Segment,\n" );
     fprintf( outfile, "    (BYTE *)Data_Segment,\n" );
+    fprintf( outfile, "    \"%s\",\n", owner_name );
     fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
     

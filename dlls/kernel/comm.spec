@@ -1,5 +1,6 @@
 name	comm
 type	win16
+owner	kernel32
 
   1 stub INICOM
   2 stub SETCOM

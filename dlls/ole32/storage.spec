@@ -3,6 +3,7 @@
 #  result in dataloss. Do it at your own risk.)
 name	storage
 type	win16
+owner	ole32
  
 1 pascal StgCreateDocFileA(str long long ptr) StgCreateDocFile16
 2 stub StgCreateDocFileOnILockBytes

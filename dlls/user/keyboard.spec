@@ -1,5 +1,6 @@
 name	keyboard
 type	win16
+owner	user32
 
 1   pascal16 Inquire(ptr) KEYBOARD_Inquire
 2   pascal16 Enable(segptr ptr) WIN16_KEYBOARD_Enable

@@ -1,5 +1,6 @@
 name	ole2conv
 type	win16
+owner	ole32
 
 1 stub GETFILTERINFO
 2 stub IMPORTGR

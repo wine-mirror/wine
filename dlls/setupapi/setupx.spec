@@ -1,5 +1,6 @@
 name    setupx
 type    win16
+owner	setupapi
 
 1    stub     WEP
 2    stub     IPOPEN

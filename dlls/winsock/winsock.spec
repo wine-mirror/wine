@@ -5,6 +5,7 @@
 #  
 name	winsock
 type	win16
+owner	ws2_32
 
 1   pascal16 accept(word ptr ptr) WINSOCK_accept16
 2   pascal16 bind(word ptr word) WINSOCK_bind16

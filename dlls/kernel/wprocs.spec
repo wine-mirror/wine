@@ -1,5 +1,6 @@
 name	wprocs
 type	win16
+owner	kernel32
 
 23 pascal UTGlue16(ptr long ptr long) UTGlue16
 27 pascal EntryAddrProc(word word) WIN16_NE_GetEntryPoint

@@ -1,5 +1,6 @@
 name    wineps16
 type    win16
+owner	wineps
 
 13 pascal16 DeviceMode(word word str str) PSDRV_DeviceMode16
 90 pascal16 ExtDeviceMode(word word ptr str str ptr str word) PSDRV_ExtDeviceMode16

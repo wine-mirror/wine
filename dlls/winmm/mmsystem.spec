@@ -1,5 +1,6 @@
 name	mmsystem
 type	win16
+owner	winmm
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  sndPlaySound(ptr word) sndPlaySound16

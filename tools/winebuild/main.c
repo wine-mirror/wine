@@ -46,6 +46,7 @@ char DLLFileName[80];
 char DLLInitFunc[80];
 char *DLLImports[MAX_IMPORTS];
 char rsrc_name[80];
+char owner_name[80];
 
 const char *input_file_name;
 const char *output_file_name;

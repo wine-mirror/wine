@@ -162,6 +162,7 @@ extern char DLLName[80];
 extern char DLLFileName[80];
 extern char DLLInitFunc[80];
 extern char rsrc_name[80];
+extern char owner_name[80];
 extern char *DLLImports[MAX_IMPORTS];
 extern const char *input_file_name;
 extern const char *output_file_name;

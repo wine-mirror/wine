@@ -1,5 +1,6 @@
 name	toolhelp
 type	win16
+owner	kernel32
 
 50 pascal16 GlobalHandleToSel(word) GlobalHandleToSel16
 51 pascal16 GlobalFirst(ptr word) GlobalFirst16

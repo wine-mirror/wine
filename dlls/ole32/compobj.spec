@@ -1,5 +1,6 @@
 name	compobj
 type	win16
+owner	ole32
 
 1 pascal CoBuildVersion() CoBuildVersion
 2 pascal CoInitialize(long) CoInitialize16

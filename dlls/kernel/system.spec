@@ -1,5 +1,6 @@
 name	system
 type	win16
+owner	kernel32
 
 1 pascal   InquireSystem(word word) InquireSystem16
 2 pascal16 CreateSystemTimer(word segptr) WIN16_CreateSystemTimer

@@ -467,6 +467,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             strcpy( rsrc_name, GetToken() );
             strcat( rsrc_name, "_ResourceDescriptor" );
         }
+        else if (strcmp(token, "owner") == 0)
+        {
+            if (SpecType != SPEC_WIN16)
+                fatal_error( "Owner only supported for Win16 spec files\n" );
+            strcpy( owner_name, GetToken() );
+        }
         else if (strcmp(token, "@") == 0)
 	{
             if (SpecType != SPEC_WIN32)
@@ -490,6 +496,9 @@ SPEC_TYPE ParseTopLevel( FILE *file )
     }
 
     if (SpecType == SPEC_INVALID) fatal_error( "Missing 'type' declaration\n" );
+    if (SpecType == SPEC_WIN16 && !owner_name[0])
+        fatal_error( "'owner' not specified for Win16 dll\n" );
+
     current_line = 0;  /* no longer parsing the input file */
     return SpecType;
 }

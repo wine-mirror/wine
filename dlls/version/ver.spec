@@ -1,5 +1,6 @@
 name	ver
 type	win16
+owner	version
 
 #1 DLLENTRYPOINT
 

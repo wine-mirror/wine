@@ -1,5 +1,6 @@
 name	ole2disp
 type	win16
+owner	oleaut32
 
 1 stub DLLGETCLASSOBJECT
 2 pascal SysAllocString(str)		SysAllocString16

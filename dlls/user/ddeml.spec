@@ -1,5 +1,6 @@
 name	ddeml
 type	win16
+owner	user32
 
 2 pascal16 DdeInitialize(ptr segptr long long) DdeInitialize16
 3 pascal16 DdeUninitialize(long) DdeUninitialize16

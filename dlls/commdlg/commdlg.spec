@@ -1,5 +1,6 @@
 name	commdlg
 type	win16
+owner	comdlg32
 
 1   pascal16 GetOpenFileName(segptr) GetOpenFileName16
 2   pascal16 GetSaveFileName(segptr) GetSaveFileName16

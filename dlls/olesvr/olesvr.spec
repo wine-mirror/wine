@@ -1,5 +1,6 @@
 name	olesvr
 type	win16
+owner	olesvr32
 
 #1 WEP
 2  pascal OleRegisterServer(str ptr ptr word word) OleRegisterServer16

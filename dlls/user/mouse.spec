@@ -1,5 +1,6 @@
 name	mouse
 type	win16
+owner	user32
 rsrc	mouserc
 
 1 pascal16 Inquire(ptr) MOUSE_Inquire

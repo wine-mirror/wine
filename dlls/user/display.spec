@@ -1,5 +1,6 @@
 name	display
 type	win16
+owner	user32
 rsrc	disp
 
 1   stub BitBlt

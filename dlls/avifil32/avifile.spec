@@ -1,5 +1,6 @@
 name	avifile
 type	win16
+owner	avifil32
 
 1   stub     WEP
 2   stub     DLLGETCLASSOBJECT

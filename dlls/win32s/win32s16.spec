@@ -1,5 +1,6 @@
 name	win32s16
 type	win16
+owner	w32skrnl
 
 1 stub WEP
 2 pascal16 BootTask() BootTask16

@@ -1,5 +1,6 @@
 name	sound
 type	win16
+owner	winmm
 
 1  pascal16 OpenSound() OpenSound16
 2  pascal16 CloseSound() CloseSound16

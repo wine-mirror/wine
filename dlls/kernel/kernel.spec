@@ -1,6 +1,7 @@
 name	kernel
 type	win16
 file	krnl386.exe
+owner	kernel32
 
 # 1-207 are the basic functions, those are (with minor variations)
 # present in win31, win95 and nt351

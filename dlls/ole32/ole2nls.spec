@@ -1,5 +1,6 @@
 name	ole2nls
 type	win16
+owner	ole32
 
 1 pascal GetUserDefaultLCID()      GetUserDefaultLCID
 2 pascal GetSystemDefaultLCID()    GetSystemDefaultLCID

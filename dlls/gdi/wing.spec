@@ -1,5 +1,6 @@
 name    wing
 type    win16
+owner	gdi32
 
 1001 pascal16 WINGCREATEDC() WinGCreateDC16
 1002 pascal16 WINGRECOMMENDDIBFORMAT(ptr) WinGRecommendDIBFormat16
