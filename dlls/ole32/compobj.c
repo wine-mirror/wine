@@ -188,11 +188,11 @@ static void COM_RevokeAllClasses();
  *           CoBuildVersion [COMPOBJ.1]
  *
  * RETURNS
- *	Current built version, hiword is majornumber, loword is minornumber
+ *	Current build version, hiword is majornumber, loword is minornumber
  */
 DWORD WINAPI CoBuildVersion(void)
 {
-    TRACE("(void)\n");
+    TRACE("Returning version %d, build %d.\n", rmm, rup);
     return (rmm<<16)+rup;
 }
 
@@ -1213,7 +1213,7 @@ HRESULT WINAPI CoRegisterClassObject(
   *lpdwRegister = newClass->dwCookie;
     
   /*
-   * We're successfyl Yippee!
+   * We're successful Yippee!
    */
   return S_OK;
 }

@@ -554,30 +554,6 @@ void WINAPI DiagOutput16(LPCSTR str)
 }
 
 /***********************************************************************
- *           OaBuildVersion           [OLEAUT32.170]
- */
-UINT WINAPI OaBuildVersion()
-{
-    WINDOWS_VERSION ver = VERSION_GetVersion();
-
-    FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
-    switch(VersionData[ver].getVersion32)
-    {
-        case 0x80000a03: /* Win 3.1 */
-		return 0x140fd1; /* from Win32s 1.1e */
-        case 0xc0000004: /* Win 95 */
-	 case 0xc0000a04: /* Win 98: verified same as Win95 */
-		return 0x1e10a9; /* some older version: 0x0a0bd3 */
-        case 0x04213303: /* NT 3.51 */
-		FIXME("NT 3.51 version value unknown !\n");
-		return 0x1e10a9; /* value borrowed from Win95 */
-        case 0x05650004: /* NT 4.0 */
-		return 0x141016;
-	default:
-		return 0x0;
-    }
-}
-/***********************************************************************
  *        VERSION_OsIsUnicode	[internal]
  *
  * NOTES

@@ -3,20 +3,20 @@
  *
  *	Copyright 1997	Marcus Meissner
  *		      1999  Rein Klazes
- * there is much left to do here before it can be usefull for real world
+ * there is much left to do here before it can be useful for real world
  * programs
  * know problems:
  * -. Only one format of typelibs is supported
- * -. All testing until sofar is done using special written windows programs
+ * -. All testing so far is done using special written windows programs
  * -. Data structures are straightforward, but slow for look-ups.
  * -. (related) nothing is hashed
- * -. a typelib is always read in its entirely into memory and never released.
+ * -. a typelib is always read in its entirety into memory and never released.
  * -. there are a number of stubs in ITypeLib and ITypeInfo interfaces. Most
  *      of them I don't know yet how to implement them.
  * -. Most error return values are just guessed not checked with windows
  *      behaviour.
- * -. all locale stuf ignored
- * -. move stuf to wine/dlls
+ * -. all locale stuff ignored
+ * -. move stuff to wine/dlls
  * -. didn't bother with a c++ interface
  * -. lousy fatal error handling
  * -. some methods just return pointers to internal data structures, this is
@@ -267,22 +267,32 @@ HRESULT WINAPI UnRegisterTypeLib(
 }
 
 /****************************************************************************
- *	OABuildVersion				(TYPELIB.15)
- * RETURNS
- *	path of typelib
+ *	OaBuildVersion				(TYPELIB.15)
+ *
+ * known TYPELIB.DLL versions:
+ *
+ * OLE 2.01 no OaBuildVersion() avail	1993	--	---
+ * OLE 2.02				1993-94	02     3002
+ * OLE 2.03					23	730
+ * OLE 2.03					03     3025
+ * OLE 2.03 W98 SE orig. file !!	1993-95	10     3024
+ * OLE 2.1   NT				1993-95	??	???
+ * OLE 2.3.1 W95				23	700
  */
-DWORD WINAPI OABuildVersion16(void)
+DWORD WINAPI OaBuildVersion16(void)
 {
-WINDOWS_VERSION ver = VERSION_GetVersion();
-
-    switch (ver) {
-      case WIN95:
-	return MAKELONG(0xbd0, 0xa); /* Win95A */
+    FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
+    switch(VERSION_GetVersion())
+    {
       case WIN31:
-	return MAKELONG(0xbd3, 0x3); /* WfW 3.11 */
+		return MAKELONG(3027, 3); /* WfW 3.11 */
+	case WIN95:
+		return MAKELONG(700, 23); /* Win95A */
+	case WIN98:
+		return MAKELONG(3024, 10); /* W98 SE */
       default:
 	FIXME_(ole)("Version value not known yet. Please investigate it !");
-	return MAKELONG(0xbd0, 0xa); /* return Win95A for now */
+		return 0;
     }
 }
 

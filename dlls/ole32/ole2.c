@@ -143,7 +143,7 @@ static DWORD OLEDD_GetButtonState();
  */
 DWORD WINAPI OleBuildVersion(void)
 {
-    TRACE("(void)\n");
+    TRACE("Returning version %d, build %d.\n", rmm, rup);
     return (rmm<<16)+rup;
 }
 
