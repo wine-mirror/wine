@@ -85,6 +85,7 @@ WINDOWS_INCLUDES = \
 	dsound.h \
 	dxerr8.h \
 	dxerr9.h \
+	evcode.h \
 	excpt.h \
 	fci.h \
 	fdi.h \
