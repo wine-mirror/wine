@@ -755,16 +755,24 @@ BOOL WCCURSES_InitBackend(struct inner_data* data)
     intrflush(stdscr, FALSE);
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
-    mousemask(BUTTON1_PRESSED|BUTTON1_RELEASED|
-              BUTTON2_PRESSED|BUTTON2_RELEASED|
-              BUTTON3_PRESSED|BUTTON3_RELEASED|
-              BUTTON_SHIFT|BUTTON_CTRL|BUTTON_ALT|REPORT_MOUSE_POSITION,
-              &PRIVATE(data)->initial_mouse_mask);
-    /* no click event generation... we just need button up/down events
-     * it doesn't seem that mouseinterval(-1) behaves as documented... 
-     * 0 seems to be better value to disable click event generation
-     */
-    mouseinterval(0);
+    if (data->curcfg.quick_edit)
+    {
+        mousemask(BUTTON1_PRESSED|BUTTON1_RELEASED|
+                  BUTTON2_PRESSED|BUTTON2_RELEASED|
+                  BUTTON3_PRESSED|BUTTON3_RELEASED|
+                  BUTTON_SHIFT|BUTTON_CTRL|BUTTON_ALT|REPORT_MOUSE_POSITION,
+                  &PRIVATE(data)->initial_mouse_mask);
+        /* no click event generation... we just need button up/down events
+         * it doesn't seem that mouseinterval(-1) behaves as documented... 
+         * 0 seems to be better value to disable click event generation
+         */
+        mouseinterval(0);
+    }
+    else
+    {
+        mousemask(0, &PRIVATE(data)->initial_mouse_mask);
+    }
+
     return TRUE;
 }
 
