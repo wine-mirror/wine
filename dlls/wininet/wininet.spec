@@ -28,6 +28,8 @@
 @ stub FindNextUrlCacheEntryW
 @ stub FreeUrlCacheSpaceA
 @ stub FreeUrlCacheSpaceW
+@ stub FtpCommandA
+@ stub FtpCommandW
 @ stdcall FtpCreateDirectoryA(ptr str) FtpCreateDirectoryA
 @ stdcall FtpCreateDirectoryW(ptr wstr) FtpCreateDirectoryW
 @ stdcall FtpDeleteFileA(ptr str) FtpDeleteFileA
