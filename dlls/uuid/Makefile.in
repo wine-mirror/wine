@@ -1,0 +1,21 @@
+DEFS      = -D__WINESRC__
+DLLFLAGS  = @DLLFLAGS@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = libuuid.a
+
+C_SRCS = \
+	uuid.c
+
+all: $(MODULE)
+
+@MAKE_RULES@
+
+$(MODULE): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+### Dependencies:

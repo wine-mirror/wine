@@ -144,9 +144,11 @@ SUBDIRS = \
 	d3d9 \
 	d3dx8 \
 	ddraw \
+	dxguid \
 	glu32 \
 	glut32 \
 	opengl32 \
+	uuid \
 	wined3d \
 	x11drv
 
@@ -251,6 +253,8 @@ SYMLINKS = \
 	iphlpapi.dll$(DLLEXT) \
 	joystick.drv$(DLLEXT) \
 	kernel32.dll$(DLLEXT) \
+	libdxguid.a \
+	libuuid.a \
 	lz32.dll$(DLLEXT) \
 	mapi32.dll$(DLLEXT) \
 	mcianim.drv$(DLLEXT) \
@@ -812,6 +816,12 @@ wsock32.dll$(DLLEXT): wsock32/wsock32.dll$(DLLEXT)
 x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) x11drv/x11drv.dll$(DLLEXT) $@
 
+libdxguid.a: dxguid/libdxguid.a
+	$(RM) $@ && $(LN_S) dxguid/libdxguid.a $@
+
+libuuid.a: uuid/libuuid.a
+	$(RM) $@ && $(LN_S) uuid/libuuid.a $@
+
 
 # Import libraries
 
@@ -927,6 +937,11 @@ IMPORT_LIBS = \
 	libws2_32 \
 	libwsock32 \
 	libx11drv
+
+ALL_IMPORT_LIBS = \
+	$(IMPORT_LIBS:%=%.$(IMPLIBEXT)) \
+	libdxguid.a \
+	libuuid.a
 
 libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
@@ -1595,9 +1610,8 @@ winsock/ws2_32.spec.def: $(WINEBUILD)
 wsock32/wsock32.spec.def: $(WINEBUILD)
 x11drv/x11drv.spec.def: $(WINEBUILD)
 
-$(SUBDIRS): $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
-$(SUBDIRS:%=%/__install__): $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
-$(SUBDIRS:%=%/__crosstest__): $(IMPORT_LIBS:%=%.a)
+$(BUILDSUBDIRS): $(ALL_IMPORT_LIBS)
+$(INSTALLSUBDIRS:%=%/__install__): $(ALL_IMPORT_LIBS)
 
 # Map library name to the corresponding directory
 
@@ -1731,6 +1745,9 @@ wow32/wow32.dll$(DLLEXT): wow32
 winsock/ws2_32.dll$(DLLEXT): winsock
 wsock32/wsock32.dll$(DLLEXT): wsock32
 x11drv/x11drv.dll$(DLLEXT): x11drv
+dxguid/libdxguid.a: dxguid
+uuid/libuuid.a: uuid
+
 # Rules for auto documentation
 
 $(SUBDIRS:%=%/__man__): dummy
@@ -1752,20 +1769,20 @@ doc-sgml: $(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
-install install-dev:: $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
+install install-dev:: $(ALL_IMPORT_LIBS)
 	$(MKINSTALLDIRS) $(dlldir)
-	for f in $(IMPORT_LIBS:%=%.$(IMPLIBEXT)); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
+	for f in $(ALL_IMPORT_LIBS); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
 
 install install-lib:: $(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	$(RM) $(IMPORT_LIBS:%=$(dlldir)/%.$(IMPLIBEXT))
+	$(RM) $(ALL_IMPORT_LIBS:%=$(dlldir)/%)
 	-rmdir $(dlldir)
 
-implib: $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
+implib: $(ALL_IMPORT_LIBS)
 
 clean::
-	$(RM) $(IMPORT_LIBS:%=%.a) $(IMPORT_LIBS:%=%.def) $(SYMLINKS)
+	$(RM) $(ALL_IMPORT_LIBS) $(SYMLINKS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

@@ -1473,7 +1473,6 @@ dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
 dlls/ctl3d/Makefile
-dlls/wined3d/Makefile
 dlls/d3d8/Makefile
 dlls/d3d9/Makefile
 dlls/d3dim/Makefile
@@ -1499,6 +1498,7 @@ dlls/dpnhpast/Makefile
 dlls/dsound/Makefile
 dlls/dsound/tests/Makefile
 dlls/dswave/Makefile
+dlls/dxguid/Makefile
 dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
@@ -1575,10 +1575,12 @@ dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
 dlls/user/Makefile
 dlls/user/tests/Makefile
+dlls/uuid/Makefile
 dlls/uxtheme/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
+dlls/wined3d/Makefile
 dlls/winedos/Makefile
 dlls/wineps/Makefile
 dlls/wininet/Makefile
@@ -1596,8 +1598,8 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineaudioio/Makefile
-dlls/winmm/winenas/Makefile
 dlls/winmm/winejack/Makefile
+dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile
@@ -1614,7 +1616,6 @@ include/Makefile
 libs/Makefile
 libs/port/Makefile
 libs/unicode/Makefile
-libs/uuid/Makefile
 libs/wine/Makefile
 libs/wpp/Makefile
 loader/Makefile

@@ -24,8 +24,8 @@ use strict;
 
 my $makefiles = `find . -name Makefile.in -print`;
 
-my %imports = ();
 my %directories = ();
+my %implib_dirs = ();
 my %altnames = ();
 
 # list of special dlls that can be switched on or off by configure
@@ -61,8 +61,14 @@ foreach my $i (split(/\s/,$makefiles))
         if (/^MODULE\s*=\s*([a-zA-Z0-9_.]+)/)
         {
             $module = $1;
-            $imports{$module} = [ ];
-            ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+            if ($module =~ /^lib.*\.a$/)
+            {
+                ($implib_dirs{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+            }
+            else
+            {
+                ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+            }
             next;
         }
         if (/^ALTNAMES\s*=\s*(.*)/)
@@ -71,15 +77,8 @@ foreach my $i (split(/\s/,$makefiles))
             $altnames{$module} = \@list;
             next;
         }
-        if (/^(DELAYIMPORTS|IMPORTS)\s*=\s*(.*)/)
-        {
-            my @list = map { /\./ ? $_ : $_ . ".dll"; } split(/\s/,$2);
-            push @{$imports{$module}}, @list;
-            next;
-        }
     }
     close MAKE;
-    push @{$imports{$module}}, "kernel32.dll" unless !defined($module) || @{$imports{$module}} || $module eq "ntdll.dll";
 }
 
 open NEWMAKE,">Makefile.in.new" or die "cannot create Makefile.in.new";
@@ -126,7 +125,7 @@ foreach my $dir (sort values %directories)
 }
 
 printf NEWMAKE "\n\nSUBDIRS = \\\n\t\$(BASEDIRS)";
-foreach my $dir (sort keys %special_dlls)
+foreach my $dir (sort (keys %special_dlls, values %implib_dirs))
 {
     printf NEWMAKE " \\\n\t%s", $dir;
 }
@@ -146,13 +145,15 @@ my %targets16 = ();
 foreach my $mod (sort keys %directories)
 {
     next if defined($special_dlls{$directories{$mod}});  # skip special dlls
-    $targets{sprintf("%s\$(DLLEXT)",$mod)} = 1;
+    $targets{$mod . "\$(DLLEXT)"} = 1;
     next unless defined $altnames{$mod};
     foreach my $i (sort @{$altnames{$mod}})
     {
         $targets16{sprintf("%s\$(DLLEXT)",$i)} = 1;
     }
 }
+foreach my $mod (sort keys %implib_dirs) { $targets{$mod} = 1; }
+
 print NEWMAKE <<EOF;
 
 \@MAKE_RULES\@
@@ -204,7 +205,11 @@ foreach my $mod (sort keys %directories)
         printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s\$(DLLEXT) \$@\n\n", $mod;
     }
 }
-
+foreach my $mod (sort keys %implib_dirs)
+{
+    printf NEWMAKE "%s: %s/%s\n", $mod, $implib_dirs{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $implib_dirs{$mod}, $mod;
+}
 
 ################################################################
 # output the import libraries rules
@@ -218,6 +223,11 @@ foreach my $mod (sort @implibs)
     my $def = $mod;
     $def =~ s/\.(dll|drv)$//;
     printf NEWMAKE " \\\n\tlib%s", $def;
+}
+print NEWMAKE "\n\nALL_IMPORT_LIBS = \\\n\t\$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))";
+foreach my $mod (sort keys %implib_dirs)
+{
+    printf NEWMAKE " \\\n\t%s", $mod;
 }
 print NEWMAKE "\n\n";
 
@@ -244,9 +254,8 @@ foreach my $mod (sort @implibs)
 
 print NEWMAKE <<EOF;
 
-\$(SUBDIRS): \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
-\$(SUBDIRS:%=%/__install__): \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
-\$(SUBDIRS:%=%/__crosstest__): \$(IMPORT_LIBS:%=%.a)
+\$(BUILDSUBDIRS): \$(ALL_IMPORT_LIBS)
+\$(INSTALLSUBDIRS:%=%/__install__): \$(ALL_IMPORT_LIBS)
 
 EOF
 
@@ -259,11 +268,16 @@ foreach my $mod (sort keys %directories)
 {
     printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
+foreach my $mod (sort keys %implib_dirs)
+{
+    printf NEWMAKE "%s/%s: %s\n", $implib_dirs{$mod}, $mod, $implib_dirs{$mod};
+}
 
 ################################################################
 # makefile trailer
 
 print NEWMAKE <<EOF;
+
 # Rules for auto documentation
 
 \$(SUBDIRS:%=%/__man__): dummy
@@ -285,20 +299,20 @@ doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
-install install-dev:: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
+install install-dev:: \$(ALL_IMPORT_LIBS)
 	\$(MKINSTALLDIRS) \$(dlldir)
-	for f in \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT)); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+	for f in \$(ALL_IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
 
 install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%.\$(IMPLIBEXT))
+	\$(RM) \$(ALL_IMPORT_LIBS:%=\$(dlldir)/%)
 	-rmdir \$(dlldir)
 
-implib: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
+implib: \$(ALL_IMPORT_LIBS)
 
 clean::
-	\$(RM) \$(IMPORT_LIBS:%=%.a) \$(IMPORT_LIBS:%=%.def) \$(SYMLINKS)
+	\$(RM) \$(ALL_IMPORT_LIBS) \$(SYMLINKS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 

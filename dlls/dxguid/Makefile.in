@@ -4,13 +4,12 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = libwine_uuid.a
+MODULE    = libdxguid.a
 
 C_SRCS = \
 	dx8guid.c \
 	dx9guid.c \
-	dxguid.c \
-	uuid.c
+	dxguid.c
 
 all: $(MODULE)
 
@@ -20,12 +19,5 @@ $(MODULE): $(OBJS) Makefile.in
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
-
-install install-dev:: libwine_uuid.a
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) libwine_uuid.a $(libdir)/libwine_uuid.a
-
-uninstall::
-	$(RM) $(libdir)/libwine_uuid.a
 
 ### Dependencies:

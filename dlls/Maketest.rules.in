@@ -41,12 +41,12 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
 # Rules for .so main module
 
 $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
-	$(LDDLL) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS) -lc
+	$(LDDLL) $(MODULE).spec.o $(OBJS) -o $@ -L$(DLLDIR) $(ALL_LIBS) -lc
 
 # Rules for .exe main module
 
-$(MODULE): $(OBJS) $(RCOBJS) $(IMPORTLIBS) Makefile.in
-	$(CC) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(OBJS) $(RCOBJS) Makefile.in
+	$(CC) $(OBJS) $(RCOBJS) -o $@ $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 # Rules for building test list
 
@@ -74,7 +74,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSCC) $(CROSSOBJS) -o $@ $(IMPORTS:%=-l%) $(LIBS)
+	$(CROSSCC) $(CROSSOBJS) -o $@ $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 # Rules for cleaning
 
