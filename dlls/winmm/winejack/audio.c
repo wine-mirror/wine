@@ -1241,7 +1241,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
       lpDesc->lpFormat->nChannels == 0 ||
-      lpDesc->lpFormat->nSamplesPerSec == 0)
+      lpDesc->lpFormat->nSamplesPerSec == 0 ||
+      (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16))
     {
       WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
@@ -1319,8 +1320,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* check for an invalid number of bits per sample */
     if (wwo->format.wBitsPerSample == 0)
     {
-      WARN("Resetting zeroed wBitsPerSample to 16\n");
-      wwo->format.wBitsPerSample = 16 *
+      WARN("Resetting zeroed wBitsPerSample\n");
+      wwo->format.wBitsPerSample = 8 *
       (wwo->format.wf.nAvgBytesPerSec /
        wwo->format.wf.nSamplesPerSec) /
        wwo->format.wf.nChannels;
@@ -2113,7 +2114,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
       lpDesc->lpFormat->nChannels == 0 ||
-      lpDesc->lpFormat->nSamplesPerSec == 0)
+      lpDesc->lpFormat->nSamplesPerSec == 0 ||
+      (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16))
     {
       WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
@@ -2183,8 +2185,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* check for an invalid number of bits per sample */
     if (wwi->format.wBitsPerSample == 0)
     {
-      WARN("Resetting zeroed wBitsPerSample to 16\n");
-      wwi->format.wBitsPerSample = 16 *
+      WARN("Resetting zeroed wBitsPerSample\n");
+      wwi->format.wBitsPerSample = 8 *
       (wwi->format.wf.nAvgBytesPerSec /
        wwi->format.wf.nSamplesPerSec) /
        wwi->format.wf.nChannels;
