@@ -861,8 +861,8 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	    {
                 TRACE("%s level=%ld lpFileOp->fFlags=0x%x not fully implemented, stub\n", 
                       debug_shfileops_action(FuncSwitch), level, OFl);
-	    } /* endif */
-        } /* endif */
+	    } 
+        } 
 
         if ((pNextFrom) && (!(b_MultiTo) || (pNextTo)))
         {
@@ -912,7 +912,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	    {
                 b_MultiPaired =
                     SHELL_FileNamesMatch(lpFileOp->pFrom, lpFileOp->pTo, (!b_Multi || b_MultiFrom));
-	    } /* endif */
+	    }
 	    if (!(b_MultiPaired) || !(pFromFile) || !(pFromFile[1]) || ((pTo) && !(pToFile)))
 	    {
                 retCode = 0x402;      /* 1026 */
@@ -963,12 +963,12 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                     {
                         /* FO_DELETE with mask and without found is valid */
                         goto shfileop_normal;
-                    } /* endif */
-                } /* endif */
+                    }
+                }
                 /* root (without mask) is also not allowed as source, tested in W98 */
                 retCode = 0x402;   /* 1026 */
                 goto shfileop_error;
-	    } /* endif */
+	    }
 
 /* for all */
 #define HIGH_ADR (LPWSTR)0xffffffff
@@ -1040,7 +1040,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                 {
                     retCode = (b_ToTailSlash) ? 0xb7 : 0x7b;
                     goto shfileop_error;
-                } /* endif */
+                }
                 /* we use SHNotifyMoveFile() instead MoveFileW */
                 if (!SHNotifyMoveFileW(pTempFrom, pTempTo))
                 {
@@ -1144,7 +1144,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                     /* error, is this tested ? */
                     retCode = 0x777402;
                     goto shfileop_error;
-                } /* endif */
+                }
 	    }
 
 	    /* singlesource + no mask */
@@ -1190,7 +1190,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                     /* we still need the value for the returncode, we assume 0x71 */
                     retCode = 0x71;
                     goto shfileop_error;
-                } /* endif */
+                }
                 if (IsAttribDir((ToAttr & wfd.dwFileAttributes)))
                 {
                     if (IsAttribDir(ToAttr) || !SHCreateDirectoryExW(NULL,pTempTo, NULL))
@@ -1220,8 +1220,8 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                         goto shfileop_error;
                     }
                 }
-	    } /* end-switch */
-        } /* end-while */
+	    }
+        }
 
 shfileop_normal:
 	if (!(nFileOp.fAnyOperationsAborted))
