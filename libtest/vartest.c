@@ -56,49 +56,27 @@
 
 #include <windef.h>
 
-#ifdef __unix__
-#include <debugtools.h>
-extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
-#endif
 
+#define MAX_BUFFER  1024
 
-static const int MAX_BUFFER = 1024;
-
-
-#ifndef __unix__
 char* WtoA( OLECHAR* p )
 {
-	int i = 0;
-	char* pc = (char *)malloc( MAX_BUFFER*sizeof(char) );
-	pc[0] = '\"';
-	pc++;
-	i = wcstombs( pc, p, MAX_BUFFER );
-	if( i < MAX_BUFFER-1 )
-	{
-		pc[i] = '\"';
-		pc[i+1] = '\0';
-	}
-	pc--;
-	return pc;
+    static char buffer[MAX_BUFFER];
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, p, -1, buffer+1, sizeof(buffer)-3, NULL, NULL );
+    buffer[0] = '\"';
+    buffer[len] = '\"';
+    buffer[len+1] = 0;
+    return buffer;
 }
 
 OLECHAR* AtoW( char* p )
 {
-	int i = 0;
-	OLECHAR* pwc = (OLECHAR *)malloc( MAX_BUFFER*sizeof(OLECHAR) );
-	i = mbstowcs( pwc, p, MAX_BUFFER );
-	return pwc;
+    OLECHAR *buffer;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
+    buffer = malloc( len * sizeof(OLECHAR) );
+    MultiByteToWideChar( CP_ACP, 0, p, -1, buffer, len );
+    return buffer;
 }
-#else 
-char* WtoA( OLECHAR* p )
-{
-	return debugstr_wn( p, MAX_BUFFER );
-}
-OLECHAR* AtoW( char* p )
-{
-	return HEAP_strdupAtoW( GetProcessHeap(), 0, p );
-}
-#endif
 
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)

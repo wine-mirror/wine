@@ -1,4 +1,6 @@
 name	volinfo
 mode	guiexe
 type	win32
-init	WinMain
+
+import	kernel32.dll
+import	ntdll.dll

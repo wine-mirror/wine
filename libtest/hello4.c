@@ -4,7 +4,7 @@
 /* even in MS Visual C++ */
 #include "windef.h"
 #include "wingdi.h"
-#include <wine/winuser16.h>
+/*#include <wine/winuser16.h>*/
 
 void Write (HDC dc, int x, int y, char *s)
 {
@@ -86,7 +86,7 @@ LRESULT CALLBACK WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
     case WM_MOVE:
     case WM_SIZE:
 	InvalidateRect( wnd, &rectInfo, TRUE );
-	CalcChildScroll16( (UINT16)GetParent(wnd), SB_BOTH );
+	/*CalcChildScroll16( (UINT16)GetParent(wnd), SB_BOTH );*/
 	break;
 
     case WM_DESTROY:

@@ -1,10 +1,24 @@
-DEFS      = -DWINELIB -DSTRICT
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
+DEFS       = @DLLFLAGS@ -DSTRICT
+LDDLLFLAGS = @LDDLLFLAGS@
+TOPSRCDIR  = @top_srcdir@
+TOPOBJDIR  = ..
+SRCDIR     = @srcdir@
+VPATH      = @srcdir@
+MODULE     = none
+PROGRAMS   = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
+ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(LIBS)
+
+C_SRCS = \
+	expand.c \
+	hello.c \
+	hello2.c \
+	hello3.c \
+	hello4.c \
+	hello5.c \
+	new.c \
+	rolex.c \
+	vartest.c \
+	volinfo.c
 
 SPEC_SRCS = \
 	expand.spec \
@@ -21,40 +35,66 @@ SPEC_SRCS = \
 RC_SRCS = \
 	hello3res.rc
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) $(PROGRAMS:%=%.so)
 
 @MAKE_RULES@
 
-expand: expand.o expand.spec.o
-	$(CC) -o expand $+ -L$(DLLDIR) -llz32 -lntdll $(DLL_LINK) $(LIBS)
+expand.spec.c: expand.spec expand.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym expand.o -o expand.spec.c -spec expand.spec
+expand.so: expand.o expand.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o expand.so $+ $(ALL_LIBS)
 
-hello: hello.o hello.spec.o
-	$(CC) -o hello $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
+hello.spec.c: hello.spec hello.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym hello.o -o hello.spec.c -spec hello.spec
+hello.so: hello.o hello.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o hello.so $+ $(ALL_LIBS)
 
-hello2: hello2.o hello2.spec.o
-	$(CC) -o hello2 $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
+hello2.spec.c: hello2.spec hello2.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym hello2.o -o hello2.spec.c -spec hello2.spec
+hello2.so: hello2.o hello2.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o hello2.so $+ $(ALL_LIBS)
 
-hello3: hello3.o hello3.spec.o
-	$(CC) -o hello3 $+  -L$(DLLDIR) -ladvapi32 -lcomctl32 -lcomdlg32 -lgdi32 -lkernel32 -lole32 -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinspool.drv -lntdll $(DLL_LINK) $(LIBS)
+hello3.spec.c: hello3.spec hello3.o hello3res.res $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym hello3.o -o hello3.spec.c -spec hello3.spec
+hello3.so: hello3.o hello3.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o hello3.so $+ $(ALL_LIBS)
 
-hello3.spec.c: hello3res.res
+hello4.spec.c: hello4.spec hello4.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym hello4.o -o hello4.spec.c -spec hello4.spec
+hello4.so: hello4.o hello4.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o hello4.so $+ $(ALL_LIBS)
 
-hello4: hello4.o hello4.spec.o
-	$(CC) -o hello4 $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
+hello5.spec.c: hello5.spec hello5.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym hello5.o -o hello5.spec.c -spec hello5.spec
+hello5.so: hello5.o hello5.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o hello5.so $+ $(ALL_LIBS)
 
-hello5: hello5.o hello5.spec.o
-	$(CC) -o hello5 $+ -L$(DLLDIR) -lntdll $(DLL_LINK) $(LIBS)
+new.spec.c: new.spec new.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym new.o -o new.spec.c -spec new.spec
+new.so: new.o new.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o new.so $+ $(ALL_LIBS)
 
-new: new.o new.spec.o
-	$(CC) -o new $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
+rolex.spec.c: rolex.spec rolex.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym rolex.o -o rolex.spec.c -spec rolex.spec
+rolex.so: rolex.o rolex.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o rolex.so $+ $(ALL_LIBS)
 
-rolex: rolex.o rolex.spec.o
-	$(CC) -o rolex $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
+vartest.spec.c: vartest.spec vartest.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym vartest.o -o vartest.spec.c -spec vartest.spec
+vartest.so: vartest.o vartest.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o vartest.so $+ $(ALL_LIBS)
 
-vartest: vartest.o vartest.spec.o
-	$(CC) -o vartest $+ -L$(DLLDIR) -ladvapi32 -lcomctl32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lrpcrt4 -luser32 -lntdll $(DLL_LINK) $(LIBS)
+volinfo.spec.c: volinfo.spec volinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym volinfo.o -o volinfo.spec.c -spec volinfo.spec
+volinfo.so: volinfo.o volinfo.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o volinfo.so $+ $(ALL_LIBS)
 
-volinfo: volinfo.o volinfo.spec.o
-	$(CC) -o volinfo $+ -L$(DLLDIR) -lntdll $(DLL_LINK) $(LIBS)
+$(PROGRAMS):
+	$(LN_S) $(TOPOBJDIR)/wine $@
+
+$(PROGRAMS:%=%.so/_checklink_): $(PROGRAMS:%=%.so)
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c `dirname $@` $(ALL_LIBS) && $(RM) checklink
+
+checklink:: $(PROGRAMS:%=%.so/_checklink_)
 
 ### Dependencies:
