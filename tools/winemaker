@@ -1,0 +1,2851 @@
+#!/usr/bin/perl -w
+
+# Copyright 2000 Francois Gouget for CodeWeavers
+# fgouget@codeweavers.com
+#
+my $version="0.5.1";
+
+use Cwd;
+use File::Basename;
+use File::Copy;
+
+
+
+#####
+#
+# Options
+#
+#####
+
+# The following constants define what we do with the case of filenames
+
+##
+# Never rename a file to lowercase
+my $OPT_LOWER_NONE=0;
+
+##
+# Rename all files to lowercase
+my $OPT_LOWER_ALL=1;
+
+##
+# Rename only files that are all uppercase to lowercase
+my $OPT_LOWER_UPPERCASE=2;
+
+
+# The following constants define whether to ask questions or not
+
+##
+# No (synonym of never)
+my $OPT_ASK_NO=0;
+
+##
+# Yes (always)
+my $OPT_ASK_YES=1;
+
+##
+# Skip the questions till the end of this scope
+my $OPT_ASK_SKIP=-1;
+
+
+# General options
+
+##
+# Make a backup of the files
+my $opt_backup;
+
+##
+# Defines which files to rename
+my $opt_lower;
+
+
+# Options for the 'Source' method
+
+##
+# Specifies that we have only one target so that all sources relate 
+# to this target. By default this variable is left undefined which 
+# means winemaker should try to find out by itself what the targets 
+# are. If not undefined then this contains the name of the default 
+# target (without the extension).
+my $opt_single_target;
+
+##
+# If '$opt_single_target' has been specified then this is the type of 
+# that target. Otherwise it specifies whether the default target type 
+# is guiexe or cuiexe.
+my $opt_target_type;
+
+##
+# Contains the default set of flags to be used when creating a new target.
+my $opt_flags;
+
+##
+# If true then winemaker should ask questions to the user as it goes 
+# along.
+my $opt_is_interactive;
+my $opt_ask_project_options;
+my $opt_ask_target_options;
+
+##
+# If true then winemaker should not generate any file (mostly 
+# makefiles, thus the name, but also .spec files, configure.in, etc.)
+my $opt_no_makefile;
+
+##
+# Specifies not to print the banner if set.
+my $opt_no_banner;
+
+
+
+#####
+#
+# Target modelization
+#
+#####
+
+# The description of a target is stored in an array. The constants 
+# below identify what is stored at each index of the array.
+
+##
+# This is the name of the target.
+my $T_NAME=0;
+
+##
+# Defines the type of target we want to build. See the TT_xxx
+# constants below
+my $T_TYPE=1;
+
+##
+# Defines the target's enty point, i.e. the function that is called
+# on startup.
+my $T_INIT=2;
+
+##
+# This is a bitfield containing flags refining the way the target 
+# should be handled. See the TF_xxx constants below
+my $T_FLAGS=12;
+
+##
+# This is a reference to an array containing the list of the 
+# resp. C, C++, RC, other (.h, .hxx, etc.) source files.
+my $T_SOURCES_C=3;
+my $T_SOURCES_CXX=4;
+my $T_SOURCES_RC=5;
+my $T_SOURCES_MISC=6;
+
+##
+# This is a reference to an array containing the list of macro 
+# definitions
+my $T_DEFINES=7;
+
+##
+# This is a reference to an array containing the list of directory 
+# names that constitute the include path
+my $T_INCLUDE_PATH=8;
+
+##
+# Same as T_INCLUDE_PATH but for the library search path
+my $T_LIBRARY_PATH=9;
+
+##
+# The list of libraries to link with
+my $T_IMPORTS=10;
+
+##
+# The list of dependencies between targets
+my $T_DEPENDS=11;
+
+
+# The following constants define the recognized types of target
+
+##
+# This is not a real target. This type of target is used to collect 
+# the sources that don't seem to belong to any other target. Thus no
+# real target is generated for them, we just put the sources of the 
+# fake target in the global source list.
+my $TT_SETTINGS=0;
+
+##
+# For executables in the windows subsystem
+my $TT_GUIEXE=1;
+
+##
+# For executables in the console subsystem
+my $TT_CUIEXE=2;
+
+##
+# For dynamically linked libraries
+my $TT_DLL=3;
+
+
+# The following constants further refine how the target should be handled
+
+##
+# This target needs a wrapper
+my $TF_WRAP=1;
+
+##
+# This target is a wrapper
+my $TF_WRAPPER=2;
+
+##
+# This target is an MFC-based target
+my $TF_MFC=4;
+
+##
+# Initialize a target:
+# - set the target type to TT_SETTINGS, i.e. no real target will 
+#   be generated. 
+sub target_init
+{
+  my $target=$_[0];
+
+  @$target[$T_TYPE]=$TT_SETTINGS;
+  # leaving $T_INIT undefined
+  @$target[$T_FLAGS]=$opt_flags;
+  @$target[$T_SOURCES_C]=[];
+  @$target[$T_SOURCES_CXX]=[];
+  @$target[$T_SOURCES_RC]=[];
+  @$target[$T_SOURCES_MISC]=[];
+  @$target[$T_DEFINES]=[];
+  @$target[$T_INCLUDE_PATH]=[];
+  @$target[$T_LIBRARY_PATH]=[];
+  @$target[$T_IMPORTS]=[];
+  @$target[$T_DEPENDS]=[];
+}
+
+sub get_default_init
+{
+  my $type=$_[0];
+  if ($type == $TT_GUIEXE) {
+    return "WinMain";
+  } elsif ($type == $TT_CUIEXE) {
+    return "main";
+  } elsif ($type == $TT_DLL) {
+    return "DllMain";
+  }
+}
+
+
+
+#####
+#
+# Project modelization
+#
+#####
+
+# First we have the notion of project. A project is described by an 
+# array (since we don't have structs in perl). The constants below 
+# identify what is stored at each index of the array.
+
+##
+# This is the path in which this project is located. In other 
+# words, this is the path to  the Makefile.
+my $P_PATH=0;
+
+##
+# This index contains a reference to an array containing the project-wide 
+# settings. The structure of that arrray is actually identical to that of 
+# a regular target since it can also contain extra sources.
+my $P_SETTINGS=1;
+
+##
+# This index contains a reference to an array of targets for this 
+# project. Each target describes how an executable or library is to 
+# be built. For each target this description takes the same form as 
+# that of the project: an array. So this entry is an array of arrays.
+my $P_TARGETS=2;
+
+##
+# Initialize a project:
+# - set the project's path
+# - initialize the target list
+# - create a default target (will be removed later if unnecessary)
+sub project_init
+{
+  my $project=$_[0];
+  my $path=$_[1];
+
+  my $project_settings=[];
+  target_init($project_settings);
+
+  @$project[$P_PATH]=$path;
+  @$project[$P_SETTINGS]=$project_settings;
+  @$project[$P_TARGETS]=[];
+}
+
+
+
+#####
+#
+# Global variables
+#
+#####
+
+my $usage;
+my %warnings;
+
+my %templates;
+
+##
+# Contains the list of all projects. This list tells us what are 
+# the subprojects of the main Makefile and where we have to generate 
+# Makefiles.
+my @projects=();
+
+##
+# This is the main project, i.e. the one in the "." directory. 
+# It may well be empty in which case the main Makefile will only 
+# call out subprojects.
+my @main_project;
+
+##
+# Contains the defaults for the include path, etc.
+# We store the defaults as if this were a target except that we only 
+# exploit the defines, include path, library path, library list and misc
+# sources fields.
+my @global_settings;
+
+##
+# If one of the projects requires the MFc then we set this global variable 
+# to true so that configure asks the user to provide a path tothe MFC
+my $needs_mfc=0;
+
+
+
+#####
+#
+# Utility functions
+#
+#####
+
+##
+# Cleans up a name to make it an acceptable Makefile 
+# variable name.
+sub canonize
+{
+  my $name=$_[0];
+
+  $name =~ tr/a-zA-Z0-9_/_/c;
+  return $name;
+}
+
+##
+# Returns true is the specified pathname is absolute.
+# Note: pathnames that start with a variable '$' or 
+# '~' are considered absolute.
+sub is_absolute
+{
+  my $path=$_[0];
+
+  return ($path =~ /^[\/~\$]/);
+}
+
+##
+# Performs a binary search looking for the specified item
+sub bsearch
+{
+  my $array=$_[0];
+  my $item=$_[1];
+  my $last=@{$array}-1;
+  my $first=0;
+
+  while ($first<=$last) {
+    my $index=int(($first+$last)/2);
+    my $cmp=@$array[$index] cmp $item;
+    if ($cmp<0) {
+      $first=$index+1;
+    } elsif ($cmp>0) {
+      $last=$index-1;
+    } else {
+      return $index;
+    }
+  }
+}
+
+
+
+#####
+#
+# 'Source'-based Project analysis
+#
+#####
+
+##
+# Allows the user to specify makefile and target specific options
+# - target: the structure in which to store the results
+# - options: the string containing the options
+sub source_set_options
+{
+  my $target=$_[0];
+  my $options=$_[1];
+
+  #FIXME: we must deal with escaping of stuff and all
+  foreach $option (split / /,$options) {
+    if (@$target[$T_TYPE] == $TT_SETTINGS and $option =~ /^-D/) {
+      push @{@$target[$T_DEFINES]},$option;
+    } elsif (@$target[$T_TYPE] == $TT_SETTINGS and $option =~ /^-I/) {
+      push @{@$target[$T_INCLUDE_PATH]},$option;
+    } elsif ($option =~ /^-L/) {
+      push @{@$target[$T_LIBRARY_PATH]},$option;
+    } elsif ($option =~ /^-l/) {
+      push @{@$target[$T_IMPORTS]},$';
+    } elsif (@$target[$T_TYPE] != $TT_SETTINGS and 
+             @$target[$T_TYPE] != $TT_DLL and 
+             $option =~ /^--wrap/) {
+      @$target[$T_FLAGS]|=$TF_WRAP;
+    } elsif (@$target[$T_TYPE] != $TT_SETTINGS and $option =~ /^--mfc/) {
+      @$target[$T_FLAGS]|=$TF_MFC;
+      if (@$target[$T_TYPE] != $TT_DLL) {
+	@$target[$T_FLAGS]|=$TF_WRAP;
+      }
+    } else {
+      print STDERR "warning: unknown option \"$option\", ignoring it\n";
+    }
+  }
+}
+
+##
+# Scans the specified directory to:
+# - see if we should create a Makefile in this directory. We normally do 
+#   so if we find a project file and sources
+# - get a list of targets for this directory
+# - get the list of source files
+sub source_scan_directory
+{
+  # a reference to the parent's project
+  my $parent_project=$_[0];
+  # the full relative path to the current directory, including a 
+  # trailing '/', or an empty string if this is the top level directory
+  my $path=$_[1];
+  # the name of this directory, including a trailing '/', or an empty
+  # string if this is the top level directory
+  my $dirname=$_[2];
+
+  # reference to the project for this directory. May not be used
+  my $project;
+  # list of targets found in the 'current' directory
+  my %targets;
+  # list of sources found in the current directory
+  my @sources_c=();
+  my @sources_cxx=();
+  my @sources_rc=();
+  my @sources_misc=();
+  # true if this directory contains a Windows project
+  my $has_win_project=0;
+  # If we don't find any executable/library then we might make up targets 
+  # from the list of .dsp/.mak files we find since they usually have the 
+  # same name as their target.
+  my @dsp_files=();
+  my @mak_files=();
+
+  if (defined $opt_single_target or $dirname eq "") {
+    # Either there is a single target and thus a single project, 
+    # or we are in the top level directory for which a project 
+    # already exists
+    $project=$parent_project;
+  } else {
+    $project=[];
+    project_init($project,$path);
+  }
+
+  # First find out what this directory contains:
+  # collect all sources, targets and subdirectories
+  my $directory=get_directory_contents($path);
+  foreach $dentry (@$directory) {
+    if ($dentry =~ /^\./) {
+      next;
+    }
+    my $fullentry="$path$dentry";
+    if (-d "$fullentry") {
+      if ($dentry =~ /^(Release|Debug)/i) {
+	# These directories are often used to store the object files and the 
+	# resulting executable/library. They should not contain anything else.
+	my @candidates=grep /\.(exe|dll)$/i, @{get_directory_contents("$fullentry")};
+	foreach $candidate (@candidates) {
+	  if ($candidate =~ s/\.exe$//i) {
+	    $targets{$candidate}=1;
+	  } elsif ($candidate =~ s/^(.*)\.dll$/lib$1.so/i) {
+	    $targets{$candidate}=1;
+	  }
+	}
+      } else {
+	# Recursively scan this directory. Any source file that cannot be 
+	# attributed to a project in one of the subdirectories will be attributed 
+	# to this project.
+	source_scan_directory($project,"$fullentry/","$dentry/");
+      }
+    } elsif (-f "$fullentry") {
+      if ($dentry =~ s/\.exe$//i) {
+	$targets{$dentry}=1;
+      } elsif ($dentry =~ s/^(.*)\.dll$/lib$1.so/i) {
+	$targets{$dentry}=1;
+      } elsif ($dentry =~ /\.c$/i and $dentry !~ /\.spec\.c$/) {
+	push @sources_c,"$dentry";
+      } elsif ($dentry =~ /\.(cpp|cxx)$/i) {
+	push @sources_cxx,"$dentry";
+      } elsif ($dentry =~ /\.rc$/i) {
+	push @sources_rc,"$dentry";
+      } elsif ($dentry =~ /\.(h|hxx|inl|rc2|dlg)$/i) {
+	push @sources_misc,"$dentry";
+      } elsif ($dentry =~ /\.dsp$/i) {
+	push @dsp_files,"$dentry";
+	$has_win_project=1;
+      } elsif ($dentry =~ /\.mak$/i) {
+	push @mak_files,"$dentry";
+	$has_win_project=1;
+      } elsif ($dentry =~ /^makefile/i) {
+	$has_win_project=1;
+      }
+    }
+  }
+  closedir(DIRECTORY);
+
+  # If we have a single target then all we have to do is assign 
+  # all the sources to it and we're done
+  # FIXME: does this play well with the --interactive mode?
+  if ($opt_single_target) {
+    my $target=@{@$project[$P_TARGETS]}[0];
+    push @{@$target[$T_SOURCES_C]},map "$path$_",@sources_c;
+    push @{@$target[$T_SOURCES_CXX]},map "$path$_",@sources_cxx;
+    push @{@$target[$T_SOURCES_RC]},map "$path$_",@sources_rc;
+    push @{@$target[$T_SOURCES_MISC]},map "$path$_",@sources_misc;
+    return;
+  }
+
+  my $project_settings=@$project[$P_SETTINGS];
+  my $source_count=@sources_c+@sources_cxx+@sources_rc+
+                   @{@$project_settings[$T_SOURCES_C]}+
+                   @{@$project_settings[$T_SOURCES_CXX]}+
+                   @{@$project_settings[$T_SOURCES_RC]};
+  if ($source_count == 0) {
+    # A project without real sources is not a project, get out!
+    if ($project!=$parent_project) {
+      $parent_settings=@$parent_project[$P_SETTINGS];
+      push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_misc;
+      push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@{@$project_settings[$T_SOURCES_MISC]};
+    }
+    return;
+  }
+  #print "targets=",%targets,"\n";
+  #print "target_count=$target_count\n";
+  #print "has_win_project=$has_win_project\n";
+  #print "dirname=$dirname\n";
+
+  my $target_count;
+  if (($has_win_project != 0) or ($dirname eq "")) {
+    # Deal with cases where we could not find any executable/library, and 
+    # thus have no target, although we did find some sort of windows project.
+    $target_count=keys %targets;
+    if ($target_count == 0) {
+      # Try to come up with a target list based on .dsp/.mak files
+      my $prj_list;
+      if (@dsp_files > 0) {
+	$prj_list=\@dsp_files;
+      } else {
+	$prj_list=\@mak_files;
+      }
+      foreach $filename (@$prj_list) {
+	$filename =~ s/\.(dsp|mak)$//i;
+	if ($opt_target_type == $TT_DLL) {
+	  $filename = "lib$filename.so";
+	}
+	$targets{$filename}=1;
+      }
+      $target_count=keys %targets;
+      if ($target_count == 0) {
+	# Still nothing, try the name of the directory
+	my $name;
+	if ($dirname eq "") {
+	  # Bad luck, this is the top level directory!
+	  $name=(split /\//, cwd)[-1];
+	} else {
+	  $name=$dirname;
+	  # Remove the trailing '/'. Also eliminate whatever is after the last 
+	  # '.' as it is likely to be meaningless (.orig, .new, ...)
+	  $name =~ s+(/|\.[^.]*)$++;
+	  if ($name eq "src") {
+	    # 'src' is probably a subdirectory of the real project directory.
+	    # Try again with the parent (if any).
+	    my $parent=$path;
+	    if ($parent =~ s+([^/]*)/[^/]*/$+$1+) {
+	      $name=$parent;
+	    } else {
+	      $name=(split /\//, cwd)[-1];
+	    }
+	  }
+	}
+	$name =~ s+(/|\.[^.]*)$++;
+	if ($opt_target_type == $TT_DLL) {
+	  $name = "lib$name.so";
+	}
+	$targets{$name}=1;
+      }
+    }
+
+    # Ask confirmation to the user if he wishes so
+    if ($opt_is_interactive == $OPT_ASK_YES) {
+      my $target_list=join " ",keys %targets;
+      print "\n*** In $path\n";
+      print "winemaker found the following list of (potential) targets\n";
+      print "$target_list\n";
+      print "Type enter to use it as is, your own comma-separated list of\n";
+      print "targets, 'none' to assign the source files to a parent directory,\n";
+      print "or 'ignore' to ignore everything in this directory tree.\n";
+      print "Target list:\n";
+      $target_list=<STDIN>;
+      chomp $target_list;
+      if ($target_list eq "") {
+	# Keep the target list as is, i.e. do nothing
+      } elsif ($target_list eq "none") {
+	# Empty the target list
+	undef %targets;
+      } elsif ($target_list eq "ignore") {
+	# Ignore this subtree altogether
+	return;
+      } else {
+	undef %targets;
+	foreach $target (split /,/,$target_list) {
+	  $target =~ s+^\s*++;
+	  $target =~ s+\s*$++;
+	  # Also accept .exe and .dll as a courtesy
+	  $target =~ s+(.*)\.dll$+lib$1.so+;
+	  $target =~ s+\.exe$++;
+	  $targets{$target}=1;
+	}
+      }
+    }
+  }
+
+  # If we have no project at this level, then transfer all 
+  # the sources to the parent project
+  $target_count=keys %targets;
+  if ($target_count == 0) {
+    if ($project!=$parent_project) {
+      my $parent_settings=@$parent_project[$P_SETTINGS];
+      push @{@$parent_settings[$T_SOURCES_C]},map "$dirname$_",@sources_c;
+      push @{@$parent_settings[$T_SOURCES_CXX]},map "$dirname$_",@sources_cxx;
+      push @{@$parent_settings[$T_SOURCES_RC]},map "$dirname$_",@sources_rc;
+      push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_misc;
+      push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@{@$project_settings[$T_SOURCES_MISC]};
+    }
+    return;
+  }
+
+  # Otherwise add this project to the project list, except for 
+  # the main project which is already in the list.
+  if ($dirname ne "") {
+    push @projects,$project;
+  }
+
+  # Ask for project-wide options
+  if ($opt_ask_project_options == $OPT_ASK_YES) {
+    print "Type any project-wide options (-D/-I/-L/-l),\n";
+    print "or 'skip' to skip the target specific options, or 'never' to not be\n";
+    print "asked this question again:\n";
+    my $options=<STDIN>;
+    chomp $options;
+    if ($options eq "skip") {
+      $opt_ask_target_options=$OPT_ASK_SKIP;
+    } elsif ($options eq "never") {
+      $opt_ask_project_options="never";
+    } else {
+      source_set_options($project_settings,$options);
+      print "project_settings: defines=@{@$project_settings[$T_DEFINES]}\n";
+      print "project_settings: includes=@{@$project_settings[$T_INCLUDE_PATH]}\n";
+    }
+  }
+
+  # - Create the targets
+  # - Check if we have both libraries and programs
+  # - Match each target with source files (sort in reverse 
+  #   alphabetical order to get the longest matches first)
+  my @local_imports=();
+  my @local_depends=();
+  my @program_list=();
+  foreach $target_name (sort { $b cmp $a } keys %targets) {
+    # Create the target...
+    my $basename;
+    my $target=[];
+    target_init($target);
+    @$target[$T_NAME]=$target_name;
+    if ($target_name =~ /^lib(.*)\.so$/) {
+      @$target[$T_TYPE]=$TT_DLL;
+      @$target[$T_INIT]=get_default_init($TT_DLL);
+      @$target[$T_FLAGS]&=~$TF_WRAP;
+      $basename=$1;
+      push @local_depends,$target_name;
+      push @local_imports,$basename;
+    } else {
+      @$target[$T_TYPE]=$opt_target_type;
+      @$target[$T_INIT]=get_default_init($opt_target_type);
+      $basename=$target_name;
+      push @program_list,$target;
+    }
+    push @{@$project[$P_TARGETS]},$target;
+
+    # Ask for target-specific options
+    if ($opt_ask_target_options == $OPT_ASK_YES) {
+      print "Specify any link option (-L/-l) specific to the target \"$target_name\"\n";
+      print " or 'never' to not be asked this question again:\n";
+      my $options=<STDIN>;
+      chomp $options;
+      if ($options eq "never") {
+	$opt_ask_target_options=$OPT_ASK_NO;
+      } else {
+	source_set_options($target,$options);
+      }
+    }
+    if (@$target[$T_FLAGS] & $TF_MFC) {
+      @$project_settings[$T_FLAGS]|=$TF_MFC;
+      push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
+      push @{@$target[$T_IMPORTS]},"mfc";
+    }
+
+    # Match sources...
+    if ($target_count == 1) {
+      push @{@$target[$T_SOURCES_C]},@sources_c;
+      push @{@$target[$T_SOURCES_CXX]},@sources_cxx;
+      push @{@$target[$T_SOURCES_RC]},@sources_rc;
+      push @{@$target[$T_SOURCES_MISC]},@sources_misc;
+      @sources_c=();
+      @sources_cxx=();
+      @sources_rc=();
+      @sources_misc=();
+    } else {
+      foreach $source (@sources_c) {
+	if ($source =~ /^$basename/i) {
+	  push @{@$target[$T_SOURCES_C]},$source;
+	  $source="";
+	}
+      }
+      foreach $source (@sources_cxx) {
+	if ($source =~ /^$basename/i) {
+	  push @{@$target[$T_SOURCES_CXX]},$source;
+	  $source="";
+	}
+      }
+      foreach $source (@sources_rc) {
+	if ($source =~ /^$basename/i) {
+	  push @{@$target[$T_SOURCES_RC]},$source;
+	  $source="";
+	}
+      }
+      foreach $source (@sources_misc) {
+	if ($source =~ /^$basename/i) {
+	  push @{@$target[$T_SOURCES_MISC]},$source;
+	  $source="";
+	}
+      }
+    }
+    @$target[$T_SOURCES_C]=[sort @{@$target[$T_SOURCES_C]}];
+    @$target[$T_SOURCES_CXX]=[sort @{@$target[$T_SOURCES_CXX]}];
+    @$target[$T_SOURCES_RC]=[sort @{@$target[$T_SOURCES_RC]}];
+    @$target[$T_SOURCES_MISC]=[sort @{@$target[$T_SOURCES_MISC]}];
+  }
+  if ($opt_ask_target_options == $OPT_ASK_SKIP) {
+    $opt_ask_target_options=$OPT_ASK_YES;
+  }
+
+  if (@$project_settings[$T_FLAGS] & $TF_MFC) {
+    push @{@$project_settings[$T_INCLUDE_PATH]},"\$(MFC_INCLUDE_PATH)";
+  }
+  # The sources that did not match, if any, go to the extra 
+  # source list of the project settings
+  foreach $source (@sources_c) {
+    if ($source ne "") {
+      push @{@$project_settings[$T_SOURCES_C]},$source;
+    }
+  }
+  @$project_settings[$T_SOURCES_C]=[sort @{@$project_settings[$T_SOURCES_C]}];
+  foreach $source (@sources_cxx) {
+    if ($source ne "") {
+      push @{@$project_settings[$T_SOURCES_CXX]},$source;
+    }
+  }
+  @$project_settings[$T_SOURCES_CXX]=[sort @{@$project_settings[$T_SOURCES_CXX]}];
+  foreach $source (@sources_rc) {
+    if ($source ne "") {
+      push @{@$project_settings[$T_SOURCES_RC]},$source;
+    }
+  }
+  @$project_settings[$T_SOURCES_RC]=[sort @{@$project_settings[$T_SOURCES_RC]}];
+  foreach $source (@sources_misc) {
+    if ($source ne "") {
+      push @{@$project_settings[$T_SOURCES_MISC]},$source;
+    }
+  }
+  @$project_settings[$T_SOURCES_MISC]=[sort @{@$project_settings[$T_SOURCES_MISC]}];
+
+  # Finally if we are building both libraries and programs in 
+  # this directory, then the programs should be linked with all 
+  # the libraries
+  if (@local_imports > 0 and @program_list > 0) {
+    foreach $target (@program_list) {
+      push @{@$target[$T_LIBRARY_PATH]},".";
+      push @{@$target[$T_IMPORTS]},@local_imports;
+      push @{@$target[$T_DEPENDS]},@local_depends;
+    }
+  }
+}
+
+##
+# Scan the source directories in search of things to build
+sub source_scan
+{
+  my $main_target=@{$main_project[$P_TARGETS]}[0];
+
+  # If there's a single target then this is going to be the default target
+  if (defined $opt_single_target) {
+    if ($opt_target_type == $TT_DLL) {
+      @$main_target[$T_NAME]="lib$opt_single_target.so";
+    } else {
+      @$main_target[$T_NAME]="$opt_single_target";
+    }
+    @$main_target[$T_TYPE]=$opt_target_type;
+  }
+
+  # The main directory is always going to be there
+  push @projects,\@main_project;
+
+  # Now scan the directory tree looking for source files and, maybe, targets
+  print "Scanning the source directories...\n";
+  source_scan_directory(\@main_project,"","");
+
+  @projects=sort { @$a[$P_PATH] cmp @$b[$P_PATH] } @projects;
+}
+
+
+
+#####
+#
+# 'vc.dsp'-based Project analysis
+#
+#####
+
+#sub analyze_vc_dsp
+#{
+#  
+#}
+
+
+
+#####
+#
+# Creating the wrapper targets
+#
+#####
+
+sub create_wrappers
+{
+  foreach $project (@projects) {
+    foreach $target (@{@$project[$P_TARGETS]}) {
+      if ((@$target[$T_FLAGS] & $TF_WRAP) != 0) {
+	my $wrapper=[];
+	target_init($wrapper);
+	@$wrapper[$T_NAME]=@$target[$T_NAME];
+	@$wrapper[$T_TYPE]=@$target[$T_TYPE];
+	@$wrapper[$T_INIT]=get_default_init(@$target[$T_TYPE]);
+	@$wrapper[$T_FLAGS]=$TF_WRAPPER | (@$target[$T_FLAGS] & $TF_MFC);
+	push @{@$wrapper[$T_SOURCES_C]},"@$wrapper[$T_NAME]_wrapper.c";
+
+	my $index=bsearch(@$target[$T_SOURCES_C],"@$wrapper[$T_NAME]_wrapper.c");
+	if (defined $index) {
+	  splice(@{@$target[$T_SOURCES_C]},$index,1);
+	}
+	@$target[$T_NAME]="lib@$target[$T_NAME].so";
+	@$target[$T_TYPE]=$TT_DLL;
+
+	push @{@$project[$P_TARGETS]},$wrapper;
+      }
+    }
+  }
+}
+
+
+
+#####
+#
+# Source search
+#
+#####
+
+##
+# Performs a directory traversal and renames the files so that:
+# - they have the case desired by the user
+# - their extension is of the appropriate case
+# - they don't contain annoying characters like ' ', '$', '#', ...
+sub fix_file_and_directory_names
+{
+  my $dirname=$_[0];
+
+  if (opendir(DIRECTORY, "$dirname")) {
+    foreach $dentry (readdir DIRECTORY) {
+      if ($dentry =~ /^\./ or $dentry eq "CVS") {
+	next;
+      }
+      # Set $warn to 1 if the user should be warned of the renaming
+      my $warn=0;
+
+      # autoconf and make don't support these characters well
+      my $new_name=$dentry;
+      $new_name =~ s/[ \$]/_/g;
+
+      # Our Make.rules supports all-uppercase and all-lowercase extensions.
+      # The others must be fixed.
+      if (-f "$dirname/$new_name") {
+	if ($new_name =~ /\.cpp/i and $new_name !~ /\.(cpp|CPP)/) {
+	  $new_name =~ s/\.cpp$/.cpp/i;
+	}
+	if ($new_name =~ s/\.cxx$/.cpp/i) {
+	  $warn=1;
+	}
+	if ($new_name =~ /\.rc/i and $new_name !~ /\.(rc|RC)/) {
+	  $new_name =~ s/\.rc$/.rc/i;
+	}
+	# And this last one is to avoid confusion then running make
+	if ($new_name =~ s/^makefile$/makefile.win/) {
+	  $warn=1;
+	}
+      }
+
+      # Adjust the case to the user's preferences
+      if (($opt_lower == $OPT_LOWER_ALL and $dentry =~ /[A-Z]/) or 
+          ($opt_lower == $OPT_LOWER_UPPERCASE and $dentry !~ /[a-z]/)
+         ) {
+	$new_name=lc $new_name;
+      }
+
+      # And finally, perform the renaming
+      if ($new_name ne $dentry) {
+	if ($warn) {
+	  print STDERR "warning: in \"$dirname\", renaming \"$dentry\" to \"$new_name\"\n";
+	}
+	if (!rename("$dirname/$dentry","$dirname/$new_name")) {
+	  print STDERR "error: in \"$dirname\", unable to rename \"$dentry\" to \"$new_name\"\n";
+	  print STDERR "       $!\n";
+	  $new_name=$dentry;
+	}
+      }
+      if (-d "$dirname/$new_name") {
+	fix_file_and_directory_names("$dirname/$new_name");
+      }
+    }
+    closedir(DIRECTORY);
+  }
+}
+
+
+
+#####
+#
+# Source fixup
+#
+#####
+
+##
+# This maps a directory name to a reference to an array listing 
+# its contents (files and directories)
+my %directories;
+
+##
+# Retrieves the contents of the specified directory.
+# We either get it from the directories hashtable which acts as a 
+# cache, or use opendir, readdir, closedir and store the result 
+# in the hashtable.
+sub get_directory_contents
+{
+  my $dirname=$_[0];
+  my $directory;
+
+  #print "getting the contents of $dirname\n";
+
+  # check for a cached version
+  $dirname =~ s+/$++;
+  if ($dirname eq "") {
+    $dirname=cwd;
+  }
+  $directory=$directories{$dirname};
+  if (defined $directory) {
+    #print "->@$directory\n";
+    return $directory;
+  }
+  
+  # Read this directory
+  if (opendir(DIRECTORY, "$dirname")) {
+    my @files=readdir DIRECTORY;
+    closedir(DIRECTORY);
+    $directory=\@files;
+  } else {
+    # Return an empty list
+    #print "error: cannot open $dirname\n";
+    my @files;
+    $directory=\@files;
+  }
+  #print "->@$directory\n";
+  $directories{$dirname}=$directory;
+  return $directory;
+}
+
+##
+# Try to find a file for the specified filename. The attempt is 
+# case-insensitive which is why it's not trivial. If a match is 
+# found then we return the pathname with the correct case.
+sub search_from
+{
+  my $dirname=$_[0];
+  my $path=$_[1];
+  my $real_path="";
+
+  if ($dirname eq "" or $dirname eq ".") {
+    $dirname=cwd;
+  } elsif ($dirname =~ m+^[^/]+) {
+    $dirname=cwd . "/" . $dirname;
+  }
+  if ($dirname !~ m+/$+) {
+    $dirname.="/";
+  }
+
+  foreach $component (@$path) {
+    #print "  looking for $component in \"$dirname\"\n";
+    if ($component eq ".") {
+      # Pass it as is
+      $real_path.="./";
+    } elsif ($component eq "..") {
+      # Go up one level
+      $dirname=dirname($dirname) . "/";
+      $real_path.="../";
+    } else {
+      my $directory=get_directory_contents $dirname;
+      my $found;
+      foreach $dentry (@$directory) {
+	if ($dentry =~ /^$component$/i) {
+	  $dirname.="$dentry/";
+	  $real_path.="$dentry/";
+	  $found=1;
+	  last;
+	}
+      }
+      if (!defined $found) {
+	# Give up
+	#print "  could not find $component in $dirname\n";
+	return;
+      }
+    }
+  }
+  $real_path=~ s+/$++;
+  #print "  ->found $real_path\n";
+  return $real_path;
+}
+
+##
+# Performs a case-insensitive search for the specified file in the 
+# include path.
+# $line is the line number that should be referenced when an error occurs
+# $filename is the file we are looking for
+# $dirname is the directory of the file containing the '#include' directive
+#    if '"' was used, it is an empty string otherwise
+# $project and $target specify part of the include path
+sub get_real_include_name
+{
+  my $line=$_[0];
+  my $filename=$_[1];
+  my $dirname=$_[2];
+  my $project=$_[3];
+  my $target=$_[4];
+
+  if ($filename =~ /^([a-zA-Z]:)?[\/]/ or $filename =~ /^[a-zA-Z]:[\/]?/) {
+    # This is not a relative path, we cannot make any check
+    my $warning="path:$filename";
+    if (!defined $warnings{$warning}) {
+      $warnings{$warning}="1";
+      print STDERR "warning: cannot check the case of absolute pathnames:\n";
+      print STDERR "$line:   $filename\n";
+    }
+  } else {
+    # Here's how we proceed:
+    # - split the filename we look for into its components
+    # - then for each directory in the include path
+    #   - trace the directory components starting from that directory
+    #   - if we fail to find a match at any point then continue with 
+    #     the next directory in the include path
+    #   - otherwise, rejoice, our quest is over.
+    my @file_components=split /[\/\\]+/, $filename;
+    #print "Searching for $filename from @$project[$P_PATH]\n";
+
+    my $real_filename;
+    if ($dirname ne "") {
+      #print "  in $dirname (include \"\")\n";
+      $real_filename=search_from($dirname,\@file_components);
+      if (defined $real_filename) {
+	return $real_filename;
+      }
+    }
+    my $project_settings=@$project[$P_SETTINGS];
+    foreach $dirname (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
+      #print "  in $dirname\n";
+      $real_filename=search_from("$dirname",\@file_components);
+      if (defined $real_filename) {
+	return $real_filename;
+      }
+    }
+    my $dotdotpath=@$project[$P_PATH];
+    $dotdotpath =~ s/[^\/]+/../g;
+    foreach $dirname (@{$global_settings[$T_INCLUDE_PATH]}) {
+      my $ipath;
+      if (!is_absolute($dirname)) {
+	$ipath="$dotdotpath$dirname";
+      } else {
+	$ipath=$dirname;
+      }
+      #print "  in $ipath  (global setting)\n";
+      $real_filename=search_from("$dirname",\@file_components);
+      if (defined $real_filename) {
+	return $real_filename;
+      }
+    }
+  }
+  $filename =~ s+\\\\+/+g; # in include ""
+  $filename =~ s+\\+/+g; # in include <> !
+  if ($filename =~ /^[A-Z_.\/\\]*$/) {
+    #FIXME: should this depend on --lower-uppercase & co???
+    return lc "$filename";
+  }
+  return $filename;
+}
+
+##
+# 'Parses' a source file and fixes constructs that would not work with 
+# Winelib. The parsing is rather simple and not all non-portable features 
+# are corrected. The most important feature that is corrected is the case 
+# and path separator of '#include' directives. This requires that each 
+# source file be associated to a project & target so that the proper 
+# include path is used.
+sub fix_file
+{
+  my $filename=$_[0];
+  my $project=$_[1];
+  my $target=$_[2];
+  $filename="@$project[$P_PATH]$filename";
+  if (! -e $filename) {
+    return;
+  }
+
+  my $is_rc=($filename =~ /\.(rc2?|dlg)$/i);
+  my $dirname=dirname($filename);
+  my $is_mfc=0;
+  if (defined $target and (@$target[$T_FLAGS] & $TF_MFC)) {
+    $is_mfc=1;
+  }
+
+  print "  $filename\n";
+  #FIXME:assuming that because there is a .bak file, this is what we want is 
+  #probably flawed. Or is it???
+  if (! -e "$filename.bak") {
+    if (!copy("$filename","$filename.bak")) {
+      print STDERR "error: unable to make a backup of $filename:\n";
+      print STDERR "       $!\n";
+      return;
+    }
+  }
+  if (!open(FILEI,"$filename.bak")) {
+    print STDERR "error: unable to open $filename.bak for reading:\n";
+    print STDERR "       $!\n";
+    return;
+  }
+  if (!open(FILEO,">$filename")) {
+    print STDERR "error: unable to open $filename for writing:\n";
+    print STDERR "       $!\n";
+    return;
+  }
+  my $line=0;
+  my $modified=0;
+  my $rc_block_depth=0;
+  my $rc_textinclude_state=0;
+  while (<FILEI>) {
+    $line++;
+    $_ =~ s/\r\n$/\n/;
+    if ($is_rc and !$is_mfc and /^(\s*\#\s*include\s*)\"afxres\.h\"/) {
+      # VC6 automatically includes 'afxres.h', an MFC specific header, in 
+      # the RC files it generates (even in non-MFC projects). So we replace 
+      # it with 'winres.h' its very close standard cousin so that non MFC 
+      # projects can compile in Wine without the MFC sources. This does not 
+      # harm VC but it will put 'afxres.h' back the next time the file is 
+      # edited.
+      my $warning="mfc:afxres.h";
+      if (!defined $warnings{$warning}) {
+	$warnings{$warning}="1";
+	print STDERR "warning: In non-MFC projects, winemaker replaces the MFC specific header 'afxres.h' with 'winres.h'\n";
+	print STDERR "warning: the above warning is issued only once\n";
+      }
+      print FILEO "/* winemaker: $1\"afxres.h\" */\n";
+      print FILEO "$1\"winres.h\"$'";
+      $modified=1;
+    } elsif (/^(\s*\#\s*include\s*)([\"<])([^\"]+)([\">])/) {
+      my $from_file=($2 eq "<"?"":$dirname);
+      my $real_include_name=get_real_include_name($line,$3,$from_file,$project,$target);
+      print FILEO "$1$2$real_include_name$4$'";
+      $modified|=($real_include_name ne $3);
+    } elsif (/^(\s*\#\s*pragma\s*pack\s*\((\s*push\s*,?)?\s*)(\w*)(\s*\))/) {
+      my $pragma_header=$1;
+      my $size=$3;
+      my $pragma_trailer=$4;
+      #print "$pragma_header$size$pragma_trailer$'";
+      #print "pragma push: size=$size\n";
+      print FILEO "/* winemaker: $pragma_header$size$pragma_trailer */\n";
+      $line++;
+      if ($size eq "pop") {
+	print FILEO "#include <poppack.h>$'";
+      } elsif ($size eq "1") {
+	print FILEO "#include <pshpack1.h>$'";
+      } elsif ($size eq "2") {
+	print FILEO "#include <pshpack2.h>$'";
+      } elsif ($size eq "8") {
+	print FILEO "#include <pshpack8.h>$'";
+      } elsif ($size eq "4" or $size eq "") {
+	print FILEO "#include <pshpack4.h>$'";
+      } else {
+	my $warning="pack:$size";
+	if (!defined $warnings{$warning}) {
+	  $warnings{$warning}="1";
+	  print STDERR "warning: assuming that the value of $size is 4 in\n";
+	  print STDERR "$line:   $pragma_header$size$pragma_trailer\n"; 
+	  print STDERR "warning: the above warning is issued only once\n";
+	}
+	print FILEO "#include <pshpack4.h>$'";
+	$modified=1;
+      }
+    } elsif ($is_rc) {
+      if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
+	my $from_file=($5 eq "<"?"":$dirname);
+	my $real_include_name=get_real_include_name($line,$6,$from_file,$project,$target);
+	print FILEO "$1$5$real_include_name$7$'";
+	$modified|=($real_include_name ne $6);
+      } elsif (/^(\s*RCINCLUDE\s*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
+	my $from_file=($2 eq "<"?"":$dirname);
+	my $real_include_name=get_real_include_name($line,$3,$from_file,$project,$target);
+	print FILEO "$1$2$real_include_name$4$'";
+	$modified|=($real_include_name ne $3);
+      } elsif ($is_rc and !$is_mfc and $rc_block_depth == 0 and /^\s*\d+\s+TEXTINCLUDE\s*/) {
+	$rc_textinclude_state=1;
+	print FILEO;
+      } elsif ($rc_textinclude_state == 3 and /^(\s*\"\#\s*include\s*\"\")afxres\.h(\"\"\\r\\n\")/) {
+	print FILEO "$1winres.h$2$'";
+	$modified=1;
+      } elsif (/^\s*BEGIN(\W.*)?$/) {
+	$rc_textinclude_state|=2;
+	$rc_block_depth++;
+	print FILEO;
+      } elsif (/^\s*END(\W.*)?$/) {
+	$rc_textinclude_state=0;
+	if ($rc_block_depth>0) {
+	  $rc_block_depth--;
+	}
+	print FILEO;
+      } else {
+	print FILEO;
+      }
+    } else {
+      print FILEO;
+    }
+  }
+  close(FILEI);
+  close(FILEO);
+  if ($opt_backup == 0 or $modified == 0) {
+    if (!unlink("$filename.bak")) {
+      print STDERR "error: unable to delete $filename.bak:\n";
+      print STDERR "       $!\n";
+    }
+  }
+}
+
+##
+# Analyzes each source file in turn to find and correct issues 
+# that would cause it not to compile.
+sub fix_source
+{
+  print "Fixing the source files...\n";
+  foreach $project (@projects) {
+    foreach $target (@$project[$P_SETTINGS],@{@$project[$P_TARGETS]}) {
+      if (@$target[$T_FLAGS] & $TF_WRAPPER) {
+	next;
+      }
+      foreach $source (@{@$target[$T_SOURCES_C]}, @{@$target[$T_SOURCES_CXX]}, @{@$target[$T_SOURCES_RC]}, @{@$target[$T_SOURCES_MISC]}) {
+	fix_file($source,$project,$target);
+      }
+    }
+  }
+}
+
+
+
+#####
+#
+# File generation
+#
+#####
+
+##
+# Generates a target's .spec file
+sub generate_spec_file
+{
+  my $path=$_[0];
+  my $target=$_[1];
+  my $project_settings=$_[2];
+
+  my $basename=@$target[$T_NAME];
+  $basename =~ s+\.so$++;
+  if (@$target[$T_FLAGS] & $TF_WRAP) {
+    $basename =~ s+^lib++;
+  } elsif (@$target[$T_FLAGS] & $TF_WRAPPER) {
+    $basename.="_wrapper";
+  }
+
+  if (!open(FILEO,">$path$basename.spec")) {
+    print STDERR "error: could not open \"$path$basename.spec\" for writing\n";
+    print STDERR "       $!\n";
+    return;
+  }
+
+  my $canon=canonize($basename);
+  print FILEO "name    $canon\n";
+  print FILEO "type    win32\n";
+  if (@$target[$T_TYPE] == $TT_GUIEXE) {
+    print FILEO "mode    guiexe\n";
+  } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
+    print FILEO "mode    cuiexe\n";
+  } else {
+    print FILEO "mode    dll\n";
+  }
+  if (defined @$target[$T_INIT] and ((@$target[$T_FLAGS] & $TF_WRAP) == 0)) {
+    print FILEO "init    @$target[$T_INIT]\n";
+  }
+  if (@{@$target[$T_SOURCES_RC]} > 0) {
+    if (@{@$target[$T_SOURCES_RC]} > 1) {
+      print STDERR "warning: the target $basename has more than one RC file. Modify the Makefile.in to remove redundant RC files, and fix the spec file\n";
+    }
+    my $rcname=@{@$target[$T_SOURCES_RC]}[0];
+    $rcname =~ s+\.rc$++i;
+    print FILEO "rsrc    $rcname.res\n";
+  }
+  print FILEO "\n";
+  # FIXME: we should try to remove duplicates in the import list
+  foreach $library (@{$global_settings[$T_IMPORTS]}) {
+    print FILEO "import $library\n";
+  }
+  if (defined $project_settings) {
+    foreach $library (@{@$project_settings[$T_IMPORTS]}) {
+      print FILEO "import $library\n";
+    }
+  }
+  foreach $library (@{@$target[$T_IMPORTS]}) {
+    print FILEO "import $library\n";
+  }
+
+  # Don't forget to export the 'Main' function for wrapped executables, 
+  # except for MFC ones!
+  if (@$target[$T_FLAGS] == $TF_WRAP) {
+    if (@$target[$T_TYPE] == $TT_GUIEXE) {
+      print FILEO "\n@ stdcall @$target[$T_INIT](long long ptr long) @$target[$T_INIT]\n";
+    } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
+      print FILEO "\n@ stdcall @$target[$T_INIT](long ptr ptr) @$target[$T_INIT]\n";
+    } else {
+      print FILEO "\n@ stdcall @$target[$T_INIT](ptr long ptr) @$target[$T_INIT]\n";
+    }
+  }
+
+  close(FILEO);
+}
+
+##
+# Generates a target's wrapper file
+sub generate_wrapper_file
+{
+  my $path=$_[0];
+  my $target=$_[1];
+
+  if (!defined $templates{"wrapper.c"}) {
+    print STDERR "winemaker: internal error: No template called 'wrapper.c'\n";
+    return;
+  }
+
+  if (!open(FILEO,">$path@$target[$T_NAME]_wrapper.c")) {
+    print STDERR "error: unable to open \"$path$basename.c\" for writing:\n";
+    print STDERR "       $!\n";
+    return;
+  }
+  my $app_name="\"@$target[$T_NAME]\"";
+  my $app_type=(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE");
+  my $app_init=(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"");
+  my $app_mfc=(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":NULL);
+  foreach $line (@{$templates{"wrapper.c"}}) {
+    $line =~ s/\#\#WINEMAKER_APP_NAME\#\#/$app_name/;
+    $line =~ s/\#\#WINEMAKER_APP_TYPE\#\#/$app_type/;
+    $line =~ s/\#\#WINEMAKER_APP_INIT\#\#/$app_init/;
+    $line =~ s/\#\#WINEMAKER_APP_MFC\#\#/$app_mfc/;
+    print FILEO $line;
+  }
+  close(FILEO);
+}
+
+##
+# A convenience function to generate all the lists (defines, 
+# C sources, C++ source, etc.) in the Makefile
+sub generate_list
+{
+  my $name=$_[0];
+  my $last=$_[1];
+  my $list=$_[2];
+  my $data=$_[3];
+
+  if ($name) {
+    printf FILEO "%-9s =",$name;
+  }
+  if (defined $list and @$list > 0) {
+    foreach $item (@$list) {
+      my $value;
+      if (defined $data) {
+	$value=&$data($item);
+      } else {
+	$value=$item;
+      }
+      if ($value ne "") {
+	print FILEO " \\\n\t$value";
+      }
+    }
+  }
+  if ($last) {
+    print FILEO "\n\n";
+  }
+}
+
+##
+# Generates a project's Makefile.in and all the target files
+sub generate_project_files
+{
+  my $project=$_[0];
+  my $project_settings=@$project[$P_SETTINGS];
+  my @library_list=();
+  my @program_list=();
+
+  # Then sort the targets and separate the libraries from the programs
+  foreach $target (sort { @$a[$T_NAME] cmp @$b[$T_NAME] } @{@$project[$P_TARGETS]}) {
+    if (@$target[$T_TYPE] == $TT_DLL) {
+      push @library_list,$target;
+    } else {
+      push @program_list,$target;
+    }
+  }
+  @$project[$P_TARGETS]=[];
+  push @{@$project[$P_TARGETS]}, @library_list;
+  push @{@$project[$P_TARGETS]}, @program_list;
+
+  if (!open(FILEO,">@$project[$P_PATH]Makefile.in")) {
+    print STDERR "error: could not open \"@$project[$P_PATH]/Makefile.in\" for writing\n";
+    print STDERR "       $!\n";
+    return;
+  }
+
+  print FILEO "### Generic autoconf variables\n\n";
+  print FILEO "TOPSRCDIR = \@top_srcdir\@\n";
+  print FILEO "TOPOBJDIR = .\n";
+  print FILEO "SRCDIR    = \@srcdir\@\n";
+  print FILEO "VPATH     = \@srcdir\@\n";
+  print FILEO "\n";
+  if (@$project[$P_PATH] eq "") {
+    # This is the main project. It is also responsible for recursively 
+    # calling the other projects
+    generate_list("SUBDIRS",1,\@projects,sub 
+		  {
+		    if ($_[0] != \@main_project) {
+		      my $subdir=@{$_[0]}[$P_PATH];
+		      $subdir =~ s+/$++;
+		      return $subdir;
+		    }
+		    # Eliminating the main project by returning undefined!
+		  });
+  }
+  if (@{@$project[$P_TARGETS]} > 0) {
+    generate_list("LIBRARIES",1,\@library_list,sub 
+		  {
+		    return @{$_[0]}[$T_NAME];
+		  });
+    generate_list("PROGRAMS",1,\@program_list,sub 
+		  {
+		    return @{$_[0]}[$T_NAME];
+		  });
+    print FILEO "\n\n";
+
+    print FILEO "### Global settings\n\n";
+    # Make it so that the project-wide settings override the global settings
+    generate_list("DEFINES",0,@$project_settings[$T_DEFINES],sub 
+		  {
+		    return "$_[0]";
+		  });
+    generate_list("",1,$global_settings[$T_DEFINES],sub 
+		  {
+		    return "$_[0]";
+		  });
+    generate_list("INCLUDE_PATH",$no_extra,@$project_settings[$T_INCLUDE_PATH],sub 
+		  {
+		    return "$_[0]";
+		  });
+    generate_list("",1,$global_settings[$T_INCLUDE_PATH],sub 
+		  {
+		    if ($_[0] !~ /^-I/) {
+		      return "$_[0]";
+		    }
+		    if (is_absolute($')) {
+		      return "$_[0]";
+		    }
+		    return "\$(TOPSRCDIR)/$_[0]";
+		  });
+    generate_list("LIBRARY_PATH",$no_extra,@$project_settings[$T_LIBRARY_PATH],sub 
+		  {
+		    return "$_[0]";
+		  });
+    generate_list("",1,$global_settings[$T_LIBRARY_PATH],sub 
+		  {
+		    if ($_[0] !~ /^-L/) {
+		      return "$_[0]";
+		    }
+		    if (is_absolute($')) {
+		      return "$_[0]";
+		    }
+		    return "\$(TOPSRCDIR)/$_[0]";
+		  });
+    generate_list("IMPORTS",$no_extra,@$project_settings[$T_IMPORTS],sub 
+		  {
+		    return "$_[0]";
+		  });
+    generate_list("",1,$global_settings[$T_IMPORTS],sub 
+		  {
+		    return "$_[0]";
+		  });
+    print FILEO "\n\n";
+
+    my $extra_source_count=@{@$project_settings[$T_SOURCES_C]}+
+                           @{@$project_settings[$T_SOURCES_CXX]}+
+                           @{@$project_settings[$T_SOURCES_RC]};
+    my $no_extra=($extra_source_count == 0);
+    if (!$no_extra) {
+      print FILEO "### Extra source lists\n\n";
+      generate_list("EXTRA_C_SRCS",1,@$project_settings[$T_SOURCES_C]);
+      generate_list("EXTRA_CXX_SRCS",1,@$project_settings[$T_SOURCES_CXX]);
+      generate_list("EXTRA_RC_SRCS",1,@$project_settings[$T_SOURCES_RC]);
+      print FILEO "EXTRA_OBJS = \$(EXTRA_C_SRCS:.c=.o) \$(EXTRA_CXX_SRCS:.cpp=.o)\n";
+      print FILEO "\n\n";
+    }
+    
+    # Iterate over all the targets...
+    foreach $target (@{@$project[$P_TARGETS]}) {
+      print FILEO "\n### @$target[$T_NAME] sources and settings\n\n";
+      my $canon=canonize("@$target[$T_NAME]");
+      $canon =~ s+_so$++;
+      generate_list("${canon}_C_SRCS",1,@$target[$T_SOURCES_C]);
+      generate_list("${canon}_CXX_SRCS",1,@$target[$T_SOURCES_CXX]);
+      generate_list("${canon}_RC_SRCS",1,@$target[$T_SOURCES_RC]);
+      my $basename=@$target[$T_NAME];
+      $basename =~ s+\.so$++;
+      if (@$target[$T_FLAGS] & $TF_WRAP) {
+	$basename =~ s+^lib++;
+      } elsif (@$target[$T_FLAGS] & $TF_WRAPPER) {
+	$basename.="_wrapper";
+      }
+      generate_list("${canon}_SPEC_SRCS",1,[ "$basename.spec"]);
+      generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH],sub 
+		    {
+		      return "$_[0]";
+		    });
+      generate_list("${canon}_IMPORTS",1,@$target[$T_IMPORTS],sub 
+		    {
+		      return "$_[0]";
+		    });
+      generate_list("${canon}_DEPENDS",1,@$target[$T_DEPENDS],sub 
+		    {
+		      return "$_[0]";
+		    });
+      print FILEO "${canon}_OBJS = \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_C_SRCS:.c=.o) \$(${canon}_CXX_SRCS:.cpp=.o) \$(EXTRA_OBJS)\n";
+      print FILEO "\n\n";
+    }
+    print FILEO "### Global source lists\n\n";
+    generate_list("C_SRCS",$no_extra,@$project[$P_TARGETS],sub 
+		  {
+		    my $canon=canonize(@{$_[0]}[$T_NAME]);
+		    $canon =~ s+_so$++;
+		    return "\$(${canon}_C_SRCS)";
+		  });
+    if (!$no_extra) {
+      generate_list("",1,[ "\$(EXTRA_C_SRCS)" ]);
+    }
+    generate_list("CXX_SRCS",$no_extra,@$project[$P_TARGETS],sub 
+		  {
+		    my $canon=canonize(@{$_[0]}[$T_NAME]);
+		    $canon =~ s+_so$++;
+		    return "\$(${canon}_CXX_SRCS)";
+		  });
+    if (!$no_extra) {
+      generate_list("",1,[ "\$(EXTRA_CXX_SRCS)" ]);
+    }
+    generate_list("RC_SRCS",$no_extra,@$project[$P_TARGETS],sub 
+		  {
+		    my $canon=canonize(@{$_[0]}[$T_NAME]);
+		    $canon =~ s+_so$++;
+		    return "\$(${canon}_RC_SRCS)";
+		  });
+    if (!$no_extra) {
+      generate_list("",1,@$project_settings[$T_SOURCES_RC]);
+    }
+    generate_list("SPEC_SRCS",1,@$project[$P_TARGETS],sub 
+		  {
+		    my $canon=canonize(@{$_[0]}[$T_NAME]);
+		    $canon =~ s+_so$++;
+		    return "\$(${canon}_SPEC_SRCS)";
+		  });
+    print FILEO "\n\n";
+  }
+
+  print FILEO "### Generic autoconf targets\n\n";
+  if (@$project[$P_PATH] eq "") {
+    print FILEO "all: \$(SUBDIRS) \$(LIBRARIES) \$(PROGRAMS)\n";
+  } else {
+    print FILEO "all: \$(LIBRARIES) \$(PROGRAMS)\n";
+  }
+  print FILEO "\n";
+  print FILEO "\@MAKE_RULES\@\n";
+  print FILEO "\n";
+  print FILEO "install::\n";
+  if (@$project[$P_PATH] eq "") {
+    # This is the main project. It is also responsible for recursively 
+    # calling the other projects
+    print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
+  }
+  if (@{@$project[$P_TARGETS]} > 0) {
+    print FILEO "\tfor i in \$(PROGRAMS); do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\tfor i in \$(LIBRARIES); do \$(INSTALL_LIBRARY) \$\$i \$(libdir); done\n";
+  }
+  print FILEO "\n";
+  print FILEO "uninstall::\n";
+  if (@$project[$P_PATH] eq "") {
+    # This is the main project. It is also responsible for recursively 
+    # calling the other projects
+    print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
+  }
+  if (@{@$project[$P_TARGETS]} > 0) {
+    print FILEO "\tfor i in \$(PROGRAMS); do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\tfor i in \$(LIBRARIES); do \$(RM) \$(libdir)/\$\$i;done\n";
+  }
+  print FILEO "\n\n\n";
+    
+  if (@{@$project[$P_TARGETS]} > 0) {
+    print FILEO "### Target specific build rules\n\n";
+    foreach $target (@{@$project[$P_TARGETS]}) {
+      my $canon=canonize("@$target[$T_NAME]");
+      $canon =~ s/_so$//;
+      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_RC_SRCS:.rc=.res)\n";
+      print FILEO "\n";
+      print FILEO "@$target[$T_NAME]: \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
+      if (@$target[$T_TYPE] eq $TT_DLL) {
+	print FILEO "\t\$(LDSHARED) -shared -Wl,-soname,\$\@ -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(${canon}_IMPORTS:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      } else {
+	print FILEO "\t\$(CC) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(${canon}_IMPORTS:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      }
+      print FILEO "\n";
+    }
+  }
+  close(FILEO);
+ 
+  foreach $target (@{@$project[$P_TARGETS]}) {
+    generate_spec_file(@$project[$P_PATH],$target,$project_settings);
+    if (@$target[$T_FLAGS] & $TF_WRAPPER) {
+      generate_wrapper_file(@$project[$P_PATH],$target);
+    }
+  }
+}
+
+##
+# Perform the replacements in the template configure files
+# Return 1 for success, 0 for failure
+sub generate_configure
+{
+  my $filename=$_[0];
+  my $a_source_file=$_[1];
+
+  if (!defined $templates{$filename}) {
+    if ($filename ne "configure") {
+      print STDERR "winemaker: internal error: No template called '$filename'\n";
+    }
+    return 0;
+  }
+
+  if (!open(FILEO,">$filename")) {
+    print STDERR "error: unable to open \"$filename\" for writing:\n";
+    print STDERR "       $!\n";
+    return 0;
+  }
+  foreach $line (@{$templates{$filename}}) {
+    if ($line =~ /^\#\#WINEMAKER_PROJECTS\#\#$/) {
+      foreach $project (@projects) {
+	print FILEO "@$project[$P_PATH]Makefile\n";
+      }
+    } else {
+      $line =~ s+\#\#WINEMAKER_SOURCE\#\#+$a_source_file+;
+      $line =~ s+\#\#WINEMAKER_NEEDS_MFC\#\#+$needs_mfc+;
+      print FILEO $line;
+    }
+  }
+  close(FILEO);
+  return 1;
+}
+
+sub generate_generic
+{
+  my $filename=$_[0];
+
+  if (!defined $templates{$filename}) {
+    print STDERR "winemaker: internal error: No template called '$filename'\n";
+    return;
+  }
+  if (!open(FILEO,">$filename")) {
+    print STDERR "error: unable to open \"$filename\" for writing:\n";
+    print STDERR "       $!\n";
+    return;
+  }
+  foreach $line (@{$templates{$filename}}) {
+    print FILEO $line;
+  }
+  close(FILEO);
+}
+
+##
+# Generates the global files:
+# configure
+# configure.in
+# Make.rules.in
+sub generate_global_files
+{
+  generate_generic("Make.rules.in");
+
+  # Get the name of a source file for configure.in
+  my $a_source_file;
+  search_a_file: foreach $project (@projects) {
+    foreach $target (@{@$project[$P_TARGETS]}) {
+      $a_source_file=@{@$target[$T_SOURCES_C]}[0];
+      if (!defined $a_source_file) {
+	$a_source_file=@{@$target[$T_SOURCES_CXX]}[0];
+      }
+      if (!defined $a_source_file) {
+	$a_source_file=@{@$target[$T_SOURCES_RC]}[0];
+      }
+      if (defined $a_source_file) {
+	$a_source_file="@$project[$P_PATH]$a_source_file";
+	last search_a_file;
+      }
+    }
+  }
+
+  generate_configure("configure.in",$a_source_file);
+  unlink("configure");
+  if (generate_configure("configure",$a_source_file) == 0) {
+    system("autoconf");
+  }
+  # Add execute permission to configure for whoever has the right to read it
+  my @st=stat("configure");
+  if (defined @st) {
+    my $mode=$st[2];
+    $mode|=($mode & 0444) >>2;
+    chmod($mode,"configure");
+  } else {
+    print "warning: could not generate the configure script. You need to run autoconf\n";
+  }
+}
+
+##
+# 
+sub generate_read_templates
+{
+  my $file;
+
+  while (<DATA>) {
+    if (/^--- ((\w\.?)+) ---$/) {
+      my $filename=$1;
+      if (defined $templates{$filename}) {
+        print STDERR "winemaker: internal error: There is more than one template for $filename\n";
+        undef $file;
+      } else {
+        $file=[];
+        $templates{$filename}=$file;
+      }
+    } elsif (defined $file) {
+      push @$file, $_;
+    }
+  }
+}
+
+##
+# This is where we finally generate files. In fact this method does not 
+# do anything itself but calls the methods that do the actual work.
+sub generate
+{
+  print "Generating project files...\n";
+  generate_read_templates();
+  generate_global_files();
+
+  foreach $project (@projects) {
+    my $path=@$project[$P_PATH];
+    if ($path eq "") {
+      $path=".";
+    } else {
+      $path =~ s+/$++;
+    }
+    print "  $path\n";
+    generate_project_files($project);
+  }
+}
+
+
+
+#####
+#
+# Option defaults
+#
+#####
+
+$opt_backup=1;
+$opt_lower=$OPT_LOWER_UPPERCASE;
+
+# $opt_single_target=<undefined>
+$opt_target_type=$TT_GUIEXE;
+$opt_flags=0;
+$opt_is_interactive=$OPT_ASK_NO;
+$opt_ask_project_options=$OPT_ASK_NO;
+$opt_ask_target_options=$OPT_ASK_NO;
+$opt_no_makefile=0;
+$opt_no_banner=0;
+
+
+
+#####
+#
+# Main
+#
+#####
+
+project_init(\@main_project,"");
+
+while (@ARGV>0) {
+  my $arg=shift @ARGV;
+  # General options
+  if ($arg eq "--nobanner") {
+    $opt_no_banner=1;
+  } elsif ($arg eq "--backup") {
+    $opt_backup=1;
+  } elsif ($arg eq "--nobackup") {
+    $opt_backup=0;
+  } elsif ($arg eq "--single-target") {
+    $opt_single_target=shift @ARGV;
+  } elsif ($arg eq "--lower-none") {
+    $opt_lower=$OPT_LOWER_NONE;
+  } elsif ($arg eq "--lower-all") {
+    $opt_lower=$OPT_LOWER_ALL;
+  } elsif ($arg eq "--lower-uppercase") {
+    $opt_lower=$OPT_LOWER_UPPERCASE;
+  } elsif ($arg eq "--no-makefile") {
+    $opt_no_makefile=1;
+
+  } elsif ($arg =~ /^-D/) {
+    push @{$global_settings[$T_DEFINES]},$arg;
+  } elsif ($arg =~ /^-I/) {
+    push @{$global_settings[$T_INCLUDE_PATH]},$arg;
+  } elsif ($arg =~ /^-L/) {
+    push @{$global_settings[$T_LIBRARY_PATH]},$arg;
+  } elsif ($arg =~ /^-l/) {
+    push @{$global_settings[$T_IMPORTS]},$';
+
+  # 'Source'-based method options
+  } elsif ($arg eq "--dll") {
+    $opt_target_type=$TT_DLL;
+  } elsif ($arg eq "--guiexe" or $arg eq "--windows") {
+    $opt_target_type=$TT_GUIEXE;
+  } elsif ($arg eq "--cuiexe" or $arg eq "--console") {
+    $opt_target_type=$TT_CUIEXE;
+  } elsif ($arg eq "--interactive") {
+    $opt_is_interactive=$OPT_ASK_YES;
+    $opt_ask_project_options=$OPT_ASK_YES;
+    $opt_ask_target_options=$OPT_ASK_YES;
+  } elsif ($arg eq "--wrap") {
+    $opt_flags|=$TF_WRAP;
+  } elsif ($arg eq "--nowrap") {
+    $opt_flags&=~$TF_WRAP;
+  } elsif ($arg eq "--mfc") {
+    $opt_flags|=$TF_MFC|$TF_WRAP;
+    $needs_mfc=1;
+  } elsif ($arg eq "--nomfc") {
+    $opt_flags&=~($TF_MFC|$TF_WRAP);
+    $needs_mfc=0;
+
+  # Catch errors
+  } else {
+    if ($arg ne "--help" and $arg ne "-h" and $arg ne "-?") {
+      print STDERR "Unknown option: $arg\n";
+    }
+    $usage=1;
+    last;
+  }
+}
+
+if ($opt_no_banner == 0 or defined $usage) {
+   print "Winemaker $version\n";
+   print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
+}
+
+if (defined $usage) {
+  print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup]\n";
+  print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
+  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
+  print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
+  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-llibrary]\n";
+  print STDERR "                 [--interactive] [--single-target name]\n";
+  exit (2);
+}
+
+# Fix the file and directory names
+fix_file_and_directory_names(".");
+
+# Scan the sources to identify the projects and targets
+source_scan();
+
+# Create targets for wrappers
+create_wrappers();
+
+# Fix the source files
+fix_source();
+
+# Generate the Makefile and the spec file
+if (! $opt_no_makefile) {
+  generate();
+}
+
+
+__DATA__
+--- configure.in ---
+dnl Process this file with autoconf to produce a configure script.
+dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
+dnl                         <patra@itp1.physik.tu-berlin.de>
+dnl         Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
+
+AC_REVISION([configure.in 1.00])
+AC_INIT(##WINEMAKER_SOURCE##)
+
+NEEDS_MFC=##WINEMAKER_NEEDS_MFC##
+
+dnl **** Command-line arguments ****
+
+AC_SUBST(OPTIONS)
+
+dnl **** Check for some programs ****
+
+AC_PROG_MAKE_SET
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_CPP
+AC_PATH_XTRA
+AC_PROG_RANLIB
+AC_PROG_LN_S
+AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
+
+dnl **** Check for some libraries ****
+
+dnl Check for -lm for BeOS
+AC_CHECK_LIB(m,sqrt)
+dnl Check for -li386 for NetBSD and OpenBSD
+AC_CHECK_LIB(i386,i386_set_ldt)
+dnl Check for -lossaudio for NetBSD
+AC_CHECK_LIB(ossaudio,_oss_ioctl)
+dnl Check for -lw for Solaris
+AC_CHECK_LIB(w,iswalnum)
+dnl Check for -lnsl for Solaris
+AC_CHECK_FUNCS(gethostbyname,, AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", , -lnsl), -lsocket))
+dnl Check for -lsocket for Solaris
+AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
+dnl Check for -lxpg4 for FreeBSD
+AC_CHECK_LIB(xpg4,setrunelocale)
+dnl Check for -lmmap for OS/2
+AC_CHECK_LIB(mmap,mmap)
+dnl Check for openpty
+AC_CHECK_FUNCS(openpty,,
+	AC_CHECK_LIB(util,openpty,
+		AC_DEFINE(HAVE_OPENPTY)
+		LIBS="$LIBS -lutil"
+	))
+
+AC_CHECK_HEADERS(dlfcn.h,
+	AC_CHECK_FUNCS(dlopen,
+		AC_DEFINE(HAVE_DL_API),
+    		AC_CHECK_LIB(dl,dlopen,
+			AC_DEFINE(HAVE_DL_API)
+			LIBS="$LIBS -ldl",
+		)
+	),
+)
+AC_SUBST(XLIB)
+AC_SUBST(X_DLLS)
+X_DLLS=""
+AC_SUBST(XFILES)
+XFILES=""
+
+dnl **** Check which curses lib to use ***
+if test "$CURSES" = "yes"
+then
+    AC_CHECK_HEADERS(ncurses.h)
+    if test "$ac_cv_header_ncurses_h" = "yes"
+    then 
+        AC_CHECK_LIB(ncurses,waddch)
+    fi
+    if test "$ac_cv_lib_ncurses_waddch" = "yes"
+    then
+        AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+        AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
+    else
+        AC_CHECK_HEADERS(curses.h)
+        if test "$ac_cv_header_curses_h" = "yes"
+        then    
+            AC_CHECK_LIB(curses,waddch)
+            if test "$ac_cv_lib_curses_waddch" = "yes"
+            then
+                AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+                AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
+            fi
+        fi
+    fi
+fi
+
+dnl **** If ln -s doesn't work, use cp instead ****
+if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
+
+dnl **** Check for gcc strength-reduce bug ****
+
+if test "x${GCC}" = "xyes"
+then
+  AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
+                  AC_TRY_RUN([
+int main(void) {
+  static int Array[[3]];
+  unsigned int B = 3;
+  int i;
+  for(i=0; i<B; i++) Array[[i]] = i - 3;
+  exit( Array[[1]] != -2 );
+}],
+    ac_cv_c_gcc_strength_bug="no",
+    ac_cv_c_gcc_strength_bug="yes",
+    ac_cv_c_gcc_strength_bug="yes") )
+  if test "$ac_cv_c_gcc_strength_bug" = "yes"
+  then
+    CFLAGS="$CFLAGS -fno-strength-reduce"
+  fi
+fi
+
+dnl **** Check for underscore on external symbols ****
+
+AC_CACHE_CHECK("whether external symbols need an underscore prefix",
+               ac_cv_c_extern_prefix,
+[saved_libs=$LIBS
+LIBS="conftest_asm.s $LIBS"
+cat > conftest_asm.s <<EOF
+	.globl _ac_test
+_ac_test:
+	.long 0
+EOF
+AC_TRY_LINK([extern int ac_test;],[if (ac_test) return 1],
+            ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no")
+LIBS=$saved_libs])
+if test "$ac_cv_c_extern_prefix" = "yes"
+then
+  AC_DEFINE(NEED_UNDERSCORE_PREFIX)
+fi
+
+dnl **** Check for working dll ****
+
+LDSHARED=""
+AC_CACHE_CHECK("whether we can build a Linux dll",
+               ac_cv_c_dll_linux,
+[saved_cflags=$CFLAGS
+CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0"
+AC_TRY_LINK(,[return 1],ac_cv_c_dll_linux="yes",ac_cv_c_dll_linux="no")
+CFLAGS=$saved_cflags
+])
+if test "$ac_cv_c_dll_linux" = "yes"
+then
+  LDSHARED="\$(CC) -shared -Wl,-soname,\$(SONAME),-rpath,\$(libdir)"
+else
+  AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
+                ac_cv_c_dll_unixware,
+  [saved_cflags=$CFLAGS
+  CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0"
+  AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
+  CFLAGS=$saved_cflags
+  ])
+  if test "$ac_cv_c_dll_unixware" = "yes"
+  then
+    LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/\$(SONAME)"
+  else
+    AC_CACHE_CHECK("whether we can build a NetBSD dll",
+                   ac_cv_c_dll_netbsd,
+    [saved_cflags=$CFLAGS
+    CFLAGS="$CFLAGS -fPIC -Bshareable -Bforcearchive"
+    AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
+    CFLAGS=$saved_cflags
+    ])
+    if test "$ac_cv_c_dll_netbsd" = "yes"
+    then
+      LDSHARED="ld -Bshareable -Bforcearchive"
+    fi
+  fi
+fi
+if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
+then
+  AC_MSG_ERROR([Could not find how to build a dynamically linked library])
+fi
+
+DLLFLAGS="-fPIC"
+DLL_LINK="\$(WINELIB_LIBRARY_PATH) \$(DLLS:%=-l%) \$(IMPORTS:%=-l%) -lwine -lwine_unicode"
+
+AC_SUBST(DLL_LINK)
+AC_SUBST(DLLFLAGS)
+AC_SUBST(LDSHARED)
+
+dnl *** check for the need to define __i386__
+
+AC_CACHE_CHECK("whether we need to define __i386__",ac_cv_cpp_def_i386,
+ AC_EGREP_CPP(yes,[#if (defined(i386) || defined(__i386)) && !defined(__i386__)
+yes
+#endif],
+ ac_cv_cpp_def_i386="yes", ac_cv_cpp_def_i386="no"))
+if test "$ac_cv_cpp_def_i386" = "yes"
+then
+    CFLAGS="$CFLAGS -D__i386__"
+fi
+
+dnl $GCC is set by autoconf
+GCC_NO_BUILTIN=""
+if test "$GCC" = "yes"
+then
+    GCC_NO_BUILTIN="-fno-builtin"
+fi
+AC_SUBST(GCC_NO_BUILTIN)
+
+dnl **** Test Winelib-related features of the C++ compiler
+AC_LANG_CPLUSPLUS()
+if test "x${GCC}" = "xyes"
+then
+  OLDCXXFLAGS="$CXXFLAGS";
+  CXXFLAGS="-fpermissive";
+  AC_CACHE_CHECK("for g++ -fpermissive option", has_gxx_permissive,
+    AC_TRY_COMPILE(,[
+        for (int i=0;i<2;i++);
+        i=0;
+      ],
+      [has_gxx_permissive="yes"],
+      [has_gxx_permissive="no"])
+   )
+  CXXFLAGS="-fno-for-scope";
+  AC_CACHE_CHECK("for g++ -fno-for-scope option", has_gxx_no_for_scope,
+    AC_TRY_COMPILE(,[
+        for (int i=0;i<2;i++);
+        i=0;
+      ],
+      [has_gxx_no_for_scope="yes"],
+      [has_gxx_no_for_scope="no"])
+   )
+  CXXFLAGS="$OLDCXXFLAGS";
+  if test "$has_gxx_permissive" = "yes"
+  then
+    CXXFLAGS="$CXXFLAGS -fpermissive"
+  fi
+  if test "$has_gxx_no_for_scope" = "yes"
+  then
+    CXXFLAGS="$CXXFLAGS -fno-for-scope"
+  fi
+fi
+
+dnl **** Test Winelib-related features of the C compiler
+dnl none for now
+
+dnl **** Try to find where winelib is located ****
+
+dnl This section is implemented using custom code since autoconf does not 
+dnl provide a standard method. Here is how other people have tried to 
+dnl solve the same (or similar) problem.
+dnl See: http://www.geocrawler.com/archives/3/402/1999/4/50/2131449/
+dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131443/
+dnl      ftp://ftp.slac.stanford.edu/users/langston/autoconf/smr_macros-0.09.tar.gz
+dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131452/
+dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131446/
+
+WINELIB_INCLUDE_ROOT="";
+WINELIB_INCLUDE_PATH="";
+WINELIB_LIBRARY_ROOT="";
+WINELIB_LIBRARY_PATH="";
+WINELIB_TOOL_PATH="";
+WINEBUILD="";
+WRC="";
+
+AC_ARG_WITH(winelib-root,
+[  --with-winelib-root=DIR       take the Winelib includes, libraries and tools from this directory],
+[if test "$withval" != "no"; then
+  WINELIB_ROOT="$withval";
+  WINELIB_INCLUDES="";
+  WINELIB_LIBRARIES="";
+  WINELIB_TOOLS="";
+else
+  WINELIB_ROOT="";
+fi])
+if test -n "$WINELIB_ROOT"
+then
+  WINELIB_INCLUDE_ROOT="$WINELIB_ROOT/include";
+  WINELIB_LIBRARY_ROOT="$WINELIB_ROOT";
+  WINELIB_TOOL_PATH="$WINELIB_ROOT:$WINELIB_ROOT/bin:$WINELIB_ROOT/tools/wrc:$WINELIB_ROOT/tools/winebuild:$PATH";
+fi
+
+AC_ARG_WITH(winelib-includes,
+[  --with-winelib-includes=DIR   take the Winelib includes from this directory],
+[if test "$withval" != "no"; then
+  WINELIB_INCLUDES="$withval";
+else
+  WINELIB_INCLUDES="";
+fi])
+if test -n "$WINELIB_INCLUDES"
+then
+  WINELIB_INCLUDE_ROOT="$WINELIB_INCLUDES";
+fi
+
+AC_ARG_WITH(winelib-libraries,
+[  --with-winelib-libraries=DIR  take the Winelib libraries from this directory],
+[if test "$withval" != "no"; then
+  WINELIB_LIBRARIES="$withval";
+else
+  WINELIB_LIBRARIES="";
+fi])
+if test -n "$WINELIB_LIBRARIES"
+then
+  WINELIB_LIBRARY_ROOT="$WINELIB_LIBRARIES";
+fi
+
+AC_ARG_WITH(winelib-tools,
+[  --with-winelib-tools=DIR      take the Winelib tools from this directory],
+[if test "$withval" != "no"; then
+  WINELIB_TOOLS="$withval";
+else
+  WINELIB_TOOLS="";
+fi])
+if test -n "$WINELIB_TOOLS"
+then
+  WINELIB_TOOL_PATH="$WINELIB_TOOLS:$WINELIB_TOOLS/wrc:$WINELIB_TOOLS/winebuild";
+fi
+
+if test -z "$WINELIB_INCLUDE_ROOT"
+then
+  WINELIB_INCLUDE_ROOT="/usr/include/wine";
+fi
+if test ! -f "$WINELIB_INCLUDE_ROOT/windows.h"
+then
+  AC_MSG_ERROR([Could not find the Winelib includes])
+fi
+WINELIB_INCLUDE_PATH="-I$WINELIB_INCLUDE_ROOT"
+
+if test -z "$WINELIB_LIBRARY_ROOT"
+then
+  WINELIB_LIBRARY_ROOT="/usr/lib/wine";
+fi
+if test ! -f "$WINELIB_LIBRARY_ROOT/libwine.so"
+then
+  if test -f "$WINELIB_LIBRARY_ROOT/lib/libwine.so"
+  then
+    WINELIB_LIBRARY_ROOT="$WINELIB_LIBRARY_ROOT/lib";
+  else
+    AC_MSG_ERROR([Could not find the Winelib libraries (libwine)])
+  fi
+fi
+if test -f "$WINELIB_LIBRARY_ROOT/libkernel32.so"
+then
+  WINELIB_LIBRARY_PATH="-L$WINELIB_LIBRARY_ROOT";
+else
+  if test -f "$WINELIB_LIBRARY_ROOT/dlls/libkernel32.so"
+  then
+    WINELIB_LIBRARY_PATH="-L$WINELIB_LIBRARY_ROOT -L$WINELIB_LIBRARY_ROOT/dlls";
+  else
+    AC_MSG_ERROR([Could not find the Winelib libraries (libkernel32)])
+  fi
+fi
+
+AC_PATH_PROG(WINEBUILD,winebuild,,$WINELIB_TOOL_PATH)
+if test -z "$WINEBUILD"
+then
+  AC_MSG_ERROR([Could not find Winelib's winebuild tool])
+fi
+AC_PATH_PROG(WRC,wrc,,$WINELIB_TOOL_PATH)
+if test -z "$WRC"
+then
+  AC_MSG_ERROR([Could not find Winelib's wrc tool])
+fi
+
+AC_SUBST(WINELIB_INCLUDE_ROOT)
+AC_SUBST(WINELIB_INCLUDE_PATH)
+AC_SUBST(WINELIB_LIBRARY_ROOT)
+AC_SUBST(WINELIB_LIBRARY_PATH)
+
+dnl **** Try to find where the MFC are located ****
+
+if test "x$NEEDS_MFC" = "x1"
+then
+  ATL_INCLUDE_ROOT="";
+  ATL_INCLUDE_PATH="";
+  MFC_INCLUDE_ROOT="";
+  MFC_INCLUDE_PATH="";
+  MFC_LIBRARY_ROOT="";
+  MFC_LIBRARY_PATH="";
+
+  AC_ARG_WITH(mfc-root,
+  [  --with-mfc-root=DIR           take the MFC includes and libraries from this directory],
+  [if test "$withval" != "no"; then
+    MFC_ROOT="$withval";
+    ATL_INCLUDES="";
+    MFC_INCLUDES="";
+    MFC_LIBRARIES="";
+  else
+    MFC_ROOT="";
+  fi])
+  if test -n "$MFC_ROOT"
+  then
+    ATL_INCLUDE_ROOT="$MFC_ROOT";
+    MFC_INCLUDE_ROOT="$MFC_ROOT";
+    MFC_LIBRARY_ROOT="$MFC_ROOT";
+  fi
+
+  AC_ARG_WITH(atl-includes,
+  [  --with-atl-includes=DIR       take the ATL includes from this directory],
+  [if test "$withval" != "no"; then
+    ATL_INCLUDES="$withval";
+  else
+    ATL_INCLUDES="";
+  fi])
+  if test -n "$ATL_INCLUDES"
+  then
+    ATL_INCLUDE_ROOT="$ATL_INCLUDES";
+  fi
+
+  AC_ARG_WITH(mfc-includes,
+  [  --with-mfc-includes=DIR       take the MFC includes from this directory],
+  [if test "$withval" != "no"; then
+    MFC_INCLUDES="$withval";
+  else
+    MFC_INCLUDES="";
+  fi])
+  if test -n "$MFC_INCLUDES"
+  then
+    MFC_INCLUDE_ROOT="$MFC_INCLUDES";
+  fi
+
+  AC_ARG_WITH(mfc-libraries,
+  [  --with-mfc-libraries=DIR      take the MFC libraries from this directory],
+  [if test "$withval" != "no"; then
+    MFC_LIBRARIES="$withval";
+  else
+    MFC_LIBRARIES="";
+  fi])
+  if test -n "$MFC_LIBRARIES"
+  then
+    MFC_LIBRARY_ROOT="$MFC_LIBRARIES";
+  fi
+
+  dnl FIXME: We should have an include path and just iterate through it.
+  dnl These tests become ugly.
+  if test -z "$ATL_INCLUDE_ROOT"
+  then
+    ATL_INCLUDE_ROOT="/usr/include";
+  fi
+  if test ! -f "$ATL_INCLUDE_ROOT/atlbase.h"
+  then
+    if test -f "$ATL_INCLUDE_ROOT/atl/atlbase.h"
+    then
+      ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/mfc"
+    else
+      if test -f "$ATL_INCLUDE_ROOT/atl/include/atlbase.h"
+      then
+        ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/mfc/include"
+      else
+        AC_MSG_ERROR([Could not find the ATL includes])
+      fi
+    fi
+  fi
+  ATL_INCLUDE_PATH="-I$ATL_INCLUDE_ROOT"
+
+  if test -z "$MFC_INCLUDE_ROOT"
+  then
+    MFC_INCLUDE_ROOT="/usr/include";
+  fi
+  if test ! -f "$MFC_INCLUDE_ROOT/afx.h"
+  then
+    if test -f "$MFC_INCLUDE_ROOT/mfc/afx.h"
+    then
+      MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT/mfc"
+    else
+      if test -f "$MFC_INCLUDE_ROOT/mfc/include/afx.h"
+      then
+        MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT/mfc/include"
+      else
+        AC_MSG_ERROR([Could not find the MFC includes])
+      fi
+    fi
+  fi
+  MFC_INCLUDE_PATH="-D_DLL -D_MT -I$MFC_INCLUDE_ROOT -I\$(WINELIB_INCLUDE_ROOT)/mixedcrt"
+
+  if test -z "$MFC_LIBRARY_ROOT"
+  then
+    MFC_LIBRARY_ROOT="/usr/lib/mfc";
+  fi
+  if test -f "$MFC_LIBRARY_ROOT/libmfc.so"
+  then
+    MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT";
+  else
+    if test -f "$MFC_LIBRARY_ROOT/lib/libmfc.so"
+    then
+      MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT/lib";
+    else
+      if test -f "$MFC_LIBRARY_ROOT/mfc/src/libmfc.so"
+      then
+        MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT/mfc/src";
+      else
+        AC_MSG_ERROR([Could not find the MFC library (libmfc)])
+      fi
+    fi
+  fi
+  MFC_LIBRARY_PATH="-L$MFC_LIBRARY_ROOT"
+
+  AC_SUBST(ATL_INCLUDE_ROOT)
+  AC_SUBST(ATL_INCLUDE_PATH)
+  AC_SUBST(MFC_INCLUDE_ROOT)
+  AC_SUBST(MFC_INCLUDE_PATH)
+  AC_SUBST(MFC_LIBRARY_ROOT)
+  AC_SUBST(MFC_LIBRARY_PATH)
+fi
+
+dnl **** Generate output files ****
+
+MAKE_RULES=Make.rules
+AC_SUBST_FILE(MAKE_RULES)
+
+AC_OUTPUT([
+Make.rules
+##WINEMAKER_PROJECTS##
+ ])
+
+echo
+echo "Configure finished.  Do 'make' to build the project."
+echo
+
+dnl Local Variables:
+dnl comment-start: "dnl "
+dnl comment-end: ""
+dnl comment-start-skip: "\\bdnl\\b\\s *"
+dnl compile-command: "autoconf"
+dnl End:
+--- Make.rules.in ---
+# Copyright 2000 Francois Gouget for CodeWeavers
+# fgouget@codeweavers.com
+#
+# Global rules shared by all makefiles     -*-Makefile-*-
+#
+# Each individual makefile must define the following variables:
+# WINELIB_INCLUDE_ROOT: Winelib includes location
+# WINELIB_LIBRARY_ROOT: Winelib libraries location
+# TOPOBJDIR    : top-level object directory
+# SRCDIR       : source directory for this module
+#
+# Each individual makefile may define the following additional variables:
+#
+# SUBDIRS      : subdirectories that contain a Makefile
+# LIBRARIES    : libraries to be built
+# PROGRAMS     : programs to be built
+#
+# CEXTRA       : extra c flags (e.g. '-Wall')
+# CXXEXTRA     : extra c++ flags (e.g. '-Wall')
+# WRCEXTRA     : extra wrc flags (e.g. '-p _SysRes')
+# DEFINES      : defines (e.g. -DSTRICT)
+# INCLUDE_PATH : additional include path
+# LIBRARY_PATH : additional library path
+# IMPORTS      : additional libraries to link with
+#
+# C_SRCS       : C sources for the module
+# CXX_SRCS     : C++ sources for the module
+# RC_SRCS      : resource source files
+# SPEC_SRCS    : interface definition files
+
+
+# Where is Winelib
+
+WINELIB_INCLUDE_ROOT = @WINELIB_INCLUDE_ROOT@
+WINELIB_INCLUDE_PATH = @WINELIB_INCLUDE_PATH@
+WINELIB_LIBRARY_ROOT = @WINELIB_LIBRARY_ROOT@
+WINELIB_LIBRARY_PATH = @WINELIB_LIBRARY_PATH@
+
+# Where are the MFC
+
+ATL_INCLUDE_ROOT = @ATL_INCLUDE_ROOT@
+ATL_INCLUDE_PATH = @ATL_INCLUDE_PATH@
+MFC_INCLUDE_ROOT = @MFC_INCLUDE_ROOT@
+MFC_INCLUDE_PATH = @MFC_INCLUDE_PATH@
+MFC_LIBRARY_ROOT = @MFC_LIBRARY_ROOT@
+MFC_LIBRARY_PATH = @MFC_LIBRARY_PATH@
+
+# First some useful definitions
+
+SHELL     = /bin/sh
+CC        = @CC@
+CPP       = @CPP@
+CFLAGS    = @CFLAGS@
+CXXFLAGS  = @CXXFLAGS@
+OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB
+X_CFLAGS  = @X_CFLAGS@
+X_LIBS    = @X_LIBS@
+XLIB      = @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
+DLL_LINK  = @DLL_LINK@
+LIBS      = @LIBS@ $(LIBRARY_PATH)
+YACC      = @YACC@
+LEX       = @LEX@
+LEXLIB    = @LEXLIB@
+LN_S      = @LN_S@
+DIVINCL   = -I$(SRCDIR) $(WINELIB_INCLUDE_PATH) $(INCLUDE_PATH)
+ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
+ALLCXXFLAGS = $(DIVINCL) $(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
+LDCOMBINE = ld -r
+LDSHARED  = @LDSHARED@
+RM        = rm -f
+MV        = mv
+MKDIR     = mkdir -p
+WINEBUILD = @WINEBUILD@
+WRC       = @WRC@
+WRCFLAGS  = -r -L
+@SET_MAKE@
+
+# Installation infos
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+bindir          = @bindir@
+libdir          = @libdir@
+infodir         = @infodir@
+mandir          = @mandir@
+prog_manext     = 1
+conf_manext     = 5
+CLEAN_FILES     = *.o *.a *.so \\\#*\\\# *~ *% .\\\#* *.orig *.rej \
+                  *.spec.c y.tab.c y.tab.h lex.yy.c core
+
+OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o)
+
+# DLL list
+
+X_DLLS = \
+	ddraw \
+	x11drv
+
+DLLS = \
+	@X_DLLS@ \
+	advapi32 \
+	avifil32 \
+	comctl32 \
+	comdlg32 \
+	crtdll \
+	dciman32 \
+	dinput \
+	dplay \
+	dplayx \
+	dsound \
+	gdi32 \
+	imagehlp \
+	imm32 \
+	joystick.drv \
+	kernel32 \
+	lz32 \
+	mcianim.drv \
+	mciavi.drv \
+	mcicda.drv \
+	mciseq.drv \
+	mciwave.drv \
+	midimap.drv \
+	mpr \
+	msacm.drv \
+	msacm32 \
+	msnet32 \
+	msvfw32 \
+	odbc32 \
+	ole32 \
+	oleaut32 \
+	olecli32 \
+	oledlg \
+	olepro32 \
+	olesvr32 \
+	psapi \
+	rasapi32 \
+	riched32 \
+	rpcrt4 \
+	serialui \
+	shell32 \
+	shfolder \
+	shlwapi \
+	tapi32 \
+	ttydrv \
+	urlmon \
+	user32 \
+	version \
+	w32skrnl \
+	wineoss.drv \
+	wineps \
+	wininet \
+	winmm \
+	winspool.drv \
+	wnaspi32 \
+	wow32 \
+	ws2_32 \
+	wsock32
+
+# Implicit rules
+
+.SUFFIXES: .C .cpp .CPP .cxx .CXX .rc .RC .res .spec .spec.c .spec.o
+
+.c.o:
+	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.C.o:
+	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.cpp.o:
+	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
+
+.CPP.o:
+	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
+
+.cxx.o:
+	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
+
+.CXX.o:
+	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
+
+.spec.spec.c:
+	$(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
+
+.spec.c.spec.o:
+	$(CC) -c $(ALLCFLAGS) @GCC_NO_BUILTIN@ -o $@ $<
+
+.rc.res:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -o $@ $<
+
+.RC.res:
+	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -o $@ $<
+
+.PHONY: all install uninstall clean distclean depend dummy
+
+# 'all' target first in case the enclosing Makefile didn't define any target
+
+all: Makefile
+
+# Rules for makefile
+
+Makefile: Makefile.in $(TOPSRCDIR)/configure
+	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
+	@exit 1
+
+# Rules for cleaning
+
+$(SUBDIRS:%=%/__clean__): dummy
+	cd `dirname $@` && $(MAKE) clean
+
+$(EXTRASUBDIRS:%=%/__clean__): dummy
+	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
+
+clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(LIBRARIES) $(PROGRAMS)
+
+# Rules for installing
+
+$(SUBDIRS:%=%/__install__): dummy
+	cd `dirname $@` && $(MAKE) install
+
+$(SUBDIRS:%=%/__uninstall__): dummy
+	cd `dirname $@` && $(MAKE) uninstall
+
+# Misc. rules
+
+$(SUBDIRS): dummy
+	@cd $@ && $(MAKE)
+
+dummy:
+
+# End of global rules
+--- wrapper.c ---
+/*
+ * Copyright 2000 Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
+ */
+
+#include <dlfcn.h>
+#include <windows.h>
+
+
+
+/*
+ * Describe the wrapped application
+ */
+
+/**
+ * This is either CUIEXE for a console based application or
+ * GUIEXE for a regular windows application.
+ */
+#define      APP_TYPE      ##WINEMAKER_APP_TYPE##
+
+/**
+ * This is the application library's base name, i.e. 'hello' if the 
+ * library is called 'libhello.so'.
+ */
+static char* appName     = ##WINEMAKER_APP_NAME##;
+
+/**
+ * This is the name of the application's Windows module. If left NULL 
+ * then appName is used.
+ */
+static char* appModule   = NULL;
+
+/**
+ * This is the application's entry point. This is usually "WinMain" for a 
+ * GUIEXE and 'main' for a CUIEXE application.
+ */
+static char* appInit     = ##WINEMAKER_APP_INIT##;
+
+/**
+ * This is either non-NULL for MFC-based applications and is the name of the 
+ * MFC's module. This is the module in which we will take the 'WinMain' 
+ * function.
+ */
+static char* mfcModule   = ##WINEMAKER_APP_MFC##;
+
+
+
+/*
+ * Implement the main.
+ */
+
+#if APP_TYPE == GUIEXE
+typedef int WINAPI (*WinMainFunc)(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+				  PSTR szCmdLine, int iCmdShow);
+#else
+typedef int WINAPI (*MainFunc)(int argc, char** argv, char** envp);
+#endif
+
+#if APP_TYPE == GUIEXE
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   PSTR szCmdLine, int iCmdShow)
+#else
+int WINAPI Main(int argc, char** argv, char** envp)
+#endif
+{
+    void* appLibrary;
+    HINSTANCE hApp,hMFC,hMain;
+    void* appMain;
+    char* libName;
+    int retcode;
+
+    /* Load the application's library */
+    libName=(char*)malloc(strlen(appName)+5+3+1);
+    /* FIXME: we should get the wrapper's path and use that as the base for 
+     * the library 
+     */
+    sprintf(libName,"./lib%s.so",appName);
+    appLibrary=dlopen(libName,RTLD_NOW);
+    if (appLibrary==NULL) {
+        sprintf(libName,"lib%s.so",appName);
+        appLibrary=dlopen(libName,RTLD_NOW);
+    }
+    if (appLibrary==NULL) {
+        char format[]="Could not load the %s library:\r\n%s";
+        char* error;
+        char* msg;
+
+        error=dlerror();
+        msg=(char*)malloc(strlen(format)+strlen(libName)+strlen(error));
+        sprintf(msg,format,libName,error);
+        MessageBox(NULL,msg,"dlopen error",MB_OK);
+        free(msg);
+        return 1;
+    }
+
+    /* Then if this application is MFC based, load the MFC module */
+    /* FIXME: I'm not sure this is really necessary */
+    if (mfcModule!=NULL) {
+        hMFC=LoadLibrary(mfcModule);
+        if (hMFC==NULL) {
+            char format[]="Could not load the MFC module %s (%d)";
+            char* msg;
+
+            msg=(char*)malloc(strlen(format)+strlen(mfcModule)+11);
+            sprintf(msg,format,mfcModule,GetLastError());
+            MessageBox(NULL,msg,"LoadLibrary error",MB_OK);
+            free(msg);
+            return 1;
+        }
+        /* MFC is a special case: the WinMain is in the MFC library, 
+         * instead of the application's library.
+         */
+        hMain=hMFC;
+    } else {
+        hMFC=NULL;
+    }
+
+    /* Load the application's module */
+    if (appModule==NULL) {
+        appModule=appName;
+    }
+    hApp=LoadLibrary(appModule);
+    if (hApp==NULL) {
+        char format[]="Could not load the application's module %s (%d)";
+        char* msg;
+
+        msg=(char*)malloc(strlen(format)+strlen(appModule)+11);
+        sprintf(msg,format,appModule,GetLastError());
+        MessageBox(NULL,msg,"LoadLibrary error",MB_OK);
+        free(msg);
+        return 1;
+    } else if (hMain==NULL) {
+        hMain=hApp;
+    }
+
+    /* Get the address of the application's entry point */
+    appMain=(WinMainFunc*)GetProcAddress(hMain, appInit);
+    if (appMain==NULL) {
+        char format[]="Could not get the address of %s (%d)";
+        char* msg;
+
+        msg=(char*)malloc(strlen(format)+strlen(appInit)+11);
+        sprintf(msg,format,appInit,GetLastError());
+        MessageBox(NULL,msg,"GetProcAddress error",MB_OK);
+        free(msg);
+        return 1;
+    }
+
+    /* And finally invoke the application's entry point */
+#if APP_TYPE == GUIEXE
+    retcode=(*((WinMainFunc)appMain))(hApp,hPrevInstance,szCmdLine,iCmdShow);
+#else
+    retcode=(*((MainFunc)appMain))(argc,argv,envp);
+#endif
+
+    /* Cleanup and done */
+    FreeLibrary(hApp);
+    if (hMFC!=NULL) {
+        FreeLibrary(hMFC);
+    }
+    dlclose(appLibrary);
+    free(libName);
+
+    return retcode;
+}
