@@ -394,7 +394,7 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
 }
 
 /***********************************************************************
- *           InternetOpenA   (WININET.@)
+ *           InternetOpenW   (WININET.@)
  *
  * Per-application initialization of wininet
  *
@@ -506,7 +506,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 
 
 /***********************************************************************
- *           InternetOpenW   (WININET.@)
+ *           InternetOpenA   (WININET.@)
  *
  * Per-application initialization of wininet
  *
@@ -638,7 +638,7 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
 }
 
 /***********************************************************************
- *           InternetConnectA (WININET.@)
+ *           InternetConnectW (WININET.@)
  *
  * Open a ftp, gopher or http session
  *

@@ -1156,7 +1156,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 }
 
 /***********************************************************************
- *           HttpSendRequestA (WININET.@)
+ *           HttpSendRequestW (WININET.@)
  *
  * Sends the specified request to the HTTP server
  *
@@ -1227,7 +1227,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 }
 
 /***********************************************************************
- *           HttpSendRequestW (WININET.@)
+ *           HttpSendRequestA (WININET.@)
  *
  * Sends the specified request to the HTTP server
  *
