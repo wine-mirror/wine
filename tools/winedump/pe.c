@@ -553,6 +553,28 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
+static void dump_dir_tls(void)
+{
+    const IMAGE_TLS_DIRECTORY *dir = get_dir(IMAGE_FILE_THREAD_LOCAL_STORAGE);
+    const DWORD *callbacks;
+
+    if (!dir) return;
+    printf( "Thread Local Storage\n" );
+    printf( "  Raw data        %08lx-%08lx (data size %lx zero fill size %lx)\n",
+            dir->StartAddressOfRawData, dir->EndAddressOfRawData,
+            dir->EndAddressOfRawData - dir->StartAddressOfRawData,
+            dir->SizeOfZeroFill );
+    printf( "  Index address   %08lx\n", (DWORD)dir->AddressOfIndex );
+    printf( "  Characteristics %08lx\n", dir->Characteristics );
+    printf( "  Callbacks       %08lx -> {", (DWORD)dir->AddressOfCallBacks );
+    if (dir->AddressOfCallBacks)
+    {
+        callbacks = RVA((DWORD)dir->AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase,0);
+        while (*callbacks) printf( " %08lx", *callbacks++ );
+    }
+    printf(" }\n\n");
+}
+
 static void	dump_separate_dbg(void)
 {
     IMAGE_SEPARATE_DEBUG_HEADER*separateDebugHead = PRD(0, sizeof(separateDebugHead));
@@ -844,6 +866,8 @@ static	void	do_dump( enum FileSig sig )
 	    dump_dir_debug();
 	if (all || !strcmp(globals.dumpsect, "resource"))
 	    dump_dir_resource();
+	if (all || !strcmp(globals.dumpsect, "tls"))
+	    dump_dir_tls();
 #if 0
 	/* FIXME: not implemented yet */
 	if (all || !strcmp(globals.dumpsect, "reloc"))
