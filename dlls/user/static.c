@@ -67,7 +67,7 @@ static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style );
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
-static COLORREF color_windowframe, color_background, color_window;
+static COLORREF color_3dshadow, color_3ddkshadow, color_3dhighlight;
 
 /* offsets for GetWindowLong for static private information */
 #define HFONT_GWL_OFFSET    0
@@ -239,6 +239,13 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
     }
 }
 
+static VOID STATIC_InitColours()
+{
+    color_3ddkshadow  = GetSysColor(COLOR_3DDKSHADOW);
+    color_3dshadow    = GetSysColor(COLOR_3DSHADOW);
+    color_3dhighlight = GetSysColor(COLOR_3DHIGHLIGHT);
+}
+
 /***********************************************************************
  *           StaticWndProc_common
  */
@@ -257,10 +264,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
             ERR("Unknown style 0x%02lx\n", style );
             return -1;
         }
-        /* initialise colours */
-        color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-        color_background   = GetSysColor(COLOR_BACKGROUND);
-        color_window       = GetSysColor(COLOR_WINDOW);
+        STATIC_InitColours();
         break;
 
     case WM_NCDESTROY:
@@ -293,9 +297,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_SYSCOLORCHANGE:
-        color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-        color_background   = GetSysColor(COLOR_BACKGROUND);
-        color_window       = GetSysColor(COLOR_WINDOW);
+        STATIC_InitColours();
         InvalidateRect(hwnd, NULL, TRUE);
         break;
 
@@ -543,27 +545,27 @@ static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
     switch (style & SS_TYPEMASK)
     {
     case SS_BLACKRECT:
-	hBrush = CreateSolidBrush(color_windowframe);
+	hBrush = CreateSolidBrush(color_3ddkshadow);
         FillRect( hdc, &rc, hBrush );
 	break;
     case SS_GRAYRECT:
-	hBrush = CreateSolidBrush(color_background);
+	hBrush = CreateSolidBrush(color_3dshadow);
         FillRect( hdc, &rc, hBrush );
 	break;
     case SS_WHITERECT:
-	hBrush = CreateSolidBrush(color_window);
+	hBrush = CreateSolidBrush(color_3dhighlight);
         FillRect( hdc, &rc, hBrush );
 	break;
     case SS_BLACKFRAME:
-	hBrush = CreateSolidBrush(color_windowframe);
+	hBrush = CreateSolidBrush(color_3ddkshadow);
         FrameRect( hdc, &rc, hBrush );
 	break;
     case SS_GRAYFRAME:
-	hBrush = CreateSolidBrush(color_background);
+	hBrush = CreateSolidBrush(color_3dshadow);
         FrameRect( hdc, &rc, hBrush );
 	break;
     case SS_WHITEFRAME:
-	hBrush = CreateSolidBrush(color_window);
+	hBrush = CreateSolidBrush(color_3dhighlight);
         FrameRect( hdc, &rc, hBrush );
 	break;
     default:
