@@ -1,0 +1,124 @@
+/*
+ * Copyright 2002 Hidenori Takeshima
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+STRINGTABLE LANGUAGE LANG_JAPANESE, SUBLANG_NEUTRAL
+BEGIN
+
+MMSYSERR_NOERROR, 		"MMSYSERR_NOERROR: 指定されたコマンドは正常に実行されました."
+MMSYSERR_ERROR, 		"MMSYSERR_ERROR: 不明な外部エラーです."
+MMSYSERR_BADDEVICEID, 		"MMSYSERR_BADDEVICEID: 不正なデバイスIDです."
+MMSYSERR_NOTENABLED, 		"MMSYSERR_NOTENABLED: ドライバが enabled 状態ではありません."
+MMSYSERR_ALLOCATED, 		"MMSYSERR_ALLOCATED: ドライバがすでに使用中です. 解放されるまで待ってください."
+MMSYSERR_INVALHANDLE, 		"MMSYSERR_INVALHANDLE: 指定されたデバイスハンドルは不正です."
+MMSYSERR_NODRIVER, 		"MMSYSERR_NODRIVER: 指定されたドライバが見つかりません."
+MMSYSERR_NOMEM, 		"MMSYSERR_NOMEM: メモリが不足しています. いくつかのアプリケーションを終了してください."
+MMSYSERR_NOTSUPPORTED, 		"MMSYSERR_NOTSUPPORTED: 要求された機能は実装されていません. ドライバが対応している機能を確認してみてください."
+MMSYSERR_BADERRNUM, 		"MMSYSERR_BADERRNUM: 未定義のエラー番号が返されました."
+MMSYSERR_INVALFLAG, 		"MMSYSERR_INVALFLAG: 不正なフラグが指定されました."
+MMSYSERR_INVALPARAM, 		"MMSYSERR_INVALPARAM: 不正なパラメータが指定されました."
+
+WAVERR_BADFORMAT, 		"WAVERR_BADFORMAT: 指定された WAVE フォーマットには対応できません."
+WAVERR_STILLPLAYING, 		"WAVERR_STILLPLAYING: 再生中に実行することができない機能が呼び出されました."
+WAVERR_UNPREPARED, 		"WAVERR_UNPREPARED: WAVE ヘッダは Prepare されていません."
+WAVERR_SYNC, 			"WAVERR_SYNC: WAVE_ALLOWSYNC 指定のない状態で同期操作が実行されようとしました."
+
+/* MIDI errors */
+MIDIERR_UNPREPARED, 		"MIDIERR_UNPREPARED: MIDI ヘッダは Prepare されていません."
+MIDIERR_STILLPLAYING, 		"MIDIERR_STILLPLAYING: 再生中に実行することができない機能が呼び出されました."
+MIDIERR_NOMAP, 			"MIDIERR_NOMAP: MIDIマッパーが動作しません. ドライバのエラーか、MIDIMAP.CFGが壊れています."
+MIDIERR_NOTREADY, 		"MIDIERR_NOTREADY: データ転送中です. データ転送が終了してから、操作を行ってください."
+MIDIERR_NODEVICE, 		"MIDIERR_NODEVICE: MIDIマッパーが参照しているデバイスが見つかりません."
+MIDIERR_INVALIDSETUP, 		"MIDIERR_INVALIDSETUP: MIDIドライバの設定ファイルが壊れています. MIDIMAP.CFGファイルを SYSTEM ディレクトリにコピーしたうえで、やりなおしてください."
+
+/* MCI errors */
+MCIERR_INVALID_DEVICE_ID, 	"MCIERR_INVALID_DEVICE_ID: 不正な MCI デバイス ID が指定されました."
+MCIERR_UNRECOGNIZED_KEYWORD, 	"MCIERR_UNRECOGNIZED_KEYWORD: 認識できない MCI コマンドキーワードです."
+MCIERR_UNRECOGNIZED_COMMAND,	"MCIERR_UNRECOGNIZED_COMMAND: 認識できない MCI コマンドです."
+MCIERR_HARDWARE, 		"MCIERR_HARDWARE: メディアデバイスに何らかのハードウェア障害が発生したか、ハードウェアドライバのエラーです. 正しく動作しているか確認してみてください."
+MCIERR_INVALID_DEVICE_NAME, 	"MCIERR_INVALID_DEVICE_NAME: 指定されたデバイスは open されていないか、MCI が認識できないデバイスです."
+MCIERR_OUT_OF_MEMORY, 		"MCIERR_OUT_OF_MEMORY: メモリが不足しています. いくつかのアプリケーションを終了してください."
+MCIERR_DEVICE_OPEN, 		"MCIERR_DEVICE_OPEN: 指定されたデバイス名はすでに使用されています. MCI を使用するプログラムは一意のエイリアス名を指定してください."
+MCIERR_CANNOT_LOAD_DRIVER, 	"MCIERR_CANNOT_LOAD_DRIVER: ドライバの読み込み中にエラーが発生しました."
+MCIERR_MISSING_COMMAND_STRING, 	"MCIERR_MISSING_COMMAND_STRING: MCI コマンドが指定されていません."
+MCIERR_PARAM_OVERFLOW, 		"MCIERR_PARAM_OVERFLOW: 返される文字列のサイズがバッファサイズを超えました. MCI を使用するプログラムはより多くのバッファを与えてください."
+MCIERR_MISSING_STRING_ARGUMENT, "MCIERR_MISSING_STRING_ARGUMENT: 指定されたコマンドはパラメータ文字列を指定する必要があります. MCI を使用するプログラムはパラメータ文字列を与えてください."
+MCIERR_BAD_INTEGER, 		"MCIERR_BAD_INTEGER: 指定された整数値は要求されたコマンドに対しては不正です."
+MCIERR_PARSER_INTERNAL, 	"MCIERR_PARSER_INTERNAL: デバイスドライバは不正なリターンタイプを返しました. ドライバを更新してください."
+MCIERR_DRIVER_INTERNAL, 	"MCIERR_DRIVER_INTERNAL: デバイスドライバの内部エラーです. ドライバを更新してください."
+MCIERR_MISSING_PARAMETER, 	"MCIERR_MISSING_PARAMETER: 指定されたコマンドはパラメータを必要とします. MCI を使用するプログラムはパラメータを指定してください."
+MCIERR_UNSUPPORTED_FUNCTION, 	"MCIERR_UNSUPPORTED_FUNCTION: 使用中の MCI デバイスは指定された MCI コマンドに対応していません."
+MCIERR_FILE_NOT_FOUND, 		"MCIERR_FILE_NOT_FOUND: 指定されたファイルが見つかりません. パス、ファイル名が正しいか確認してください."
+MCIERR_DEVICE_NOT_READY, 	"MCIERR_DEVICE_NOT_READY: デバイスドライバは ready 状態ではありません."
+MCIERR_INTERNAL, 		"MCIERR_INTERNAL: MCIデバイスの初期化に失敗しました. 再起動してみてください."
+MCIERR_DRIVER, 			"MCIERR_DRIVER: デバイスドライバのエラーが発生しました. ドライバは close されました. アクセスできません."
+MCIERR_CANNOT_USE_ALL, 		"MCIERR_CANNOT_USE_ALL: 'all' を MCI デバイス名として使用することはできません."
+MCIERR_MULTIPLE, 		"MCIERR_MULTIPLE: 複数のデバイスでエラーが発生しました. 各コマンド、デバイスを別々に指定し, エラーの原因を調べてください."
+MCIERR_EXTENSION_NOT_FOUND, 	"MCIERR_EXTENSION_NOT_FOUND: 拡張子からデバイスタイプを推測することができませんでした."
+MCIERR_OUTOFRANGE, 		"MCIERR_OUTOFRANGE: 指定されたコマンドの許容範囲外のパラメータが与えられました."
+MCIERR_FLAGS_NOT_COMPATIBLE, 	"MCIERR_FLAGS_NOT_COMPATIBLE: 同時に使用できないフラグ・パラメータが指定されました."
+MCIERR_FILE_NOT_SAVED, 		"MCIERR_FILE_NOT_SAVED: 指定ファイルを保存することができませんでした. ディスクの空き容量、ネットワーク接続などを確認してみてください."
+MCIERR_DEVICE_TYPE_REQUIRED, 	"MCIERR_DEVICE_TYPE_REQUIRED: 指定されたデバイスを見つけられませんでした. デバイスがインストールされているか、デバイス名が正しいか確認してみてください."
+MCIERR_DEVICE_LOCKED, 		"MCIERR_DEVICE_LOCKED: 指定されたデバイスは close 処理中です. しばらく待って、やり直してください."
+MCIERR_DUPLICATE_ALIAS, 	"MCIERR_DUPLICATE_ALIAS: 指定されたエイリアス名はすでにこのアプリケーションによって使用されています. 一意のエイリアス名を指定してください."
+MCIERR_BAD_CONSTANT, 		"MCIERR_BAD_CONSTANT: 指定されたパラメータはこのコマンドに対しては不正です."
+MCIERR_MUST_USE_SHAREABLE, 	"MCIERR_MUST_USE_SHAREABLE: デバイスドライバが使用中です. 各 'open' MCI コマンドに対し 'shareable' パラメータを与えることでデバイスドライバの共有が可能となります."
+MCIERR_MISSING_DEVICE_NAME, 	"MCIERR_MISSING_DEVICE_NAME: 指定されたコマンドはエイリアス名、ファイル名、ドライバ名、デバイス名のいずれかが必要です. 必要なパラメータを与えてください."
+MCIERR_BAD_TIME_FORMAT, 	"MCIERR_BAD_TIME_FORMAT: 指定された time format 値は不正です. MCI ドキュメントを参照し、正しい format を指定してください."
+MCIERR_NO_CLOSING_QUOTE, 	"MCIERR_NO_CLOSING_QUOTE: コマンドを閉じるダブルクォーテーションが指定されていません."
+MCIERR_DUPLICATE_FLAGS, 	"MCIERR_DUPLICATE_FLAGS: パラメータ/値が２度以上指定されています."
+MCIERR_INVALID_FILE, 		"MCIERR_INVALID_FILE: 指定された MCI デバイスでは指定ファイルを再生することができません. ファイルが壊れているかもしれません."
+MCIERR_NULL_PARAMETER_BLOCK, 	"MCIERR_NULL_PARAMETER_BLOCK: パラメータブロックとして NULL が MCI に渡されました."
+MCIERR_UNNAMED_RESOURCE, 	"MCIERR_UNNAMED_RESOURCE: ファイル名が指定されていません."
+MCIERR_NEW_REQUIRES_ALIAS, 	"MCIERR_NEW_REQUIRES_ALIAS: 'new' に対してはエイリアス名が必要です."
+MCIERR_NOTIFY_ON_AUTO_OPEN, 	"MCIERR_NOTIFY_ON_AUTO_OPEN: 自動的に open されたデバイスに対して 'notify' フラグを指定することはできません."
+MCIERR_NO_ELEMENT_ALLOWED, 	"MCIERR_NO_ELEMENT_ALLOWED: 指定されたデバイスにファイル名を指定することはできません."
+MCIERR_NONAPPLICABLE_FUNCTION, 	"MCIERR_NONAPPLICABLE_FUNCTION: 指定された順序ではコマンドを実行することができません."
+MCIERR_ILLEGAL_FOR_AUTO_OPEN, 	"MCIERR_ILLEGAL_FOR_AUTO_OPEN: 自動的に open されたデバイスに対して指定されたコマンドを実行することはできません."
+MCIERR_FILENAME_REQUIRED, 	"MCIERR_FILENAME_REQUIRED: ファイル名は不正です. 8.3ファイル形式であるか確認してみてください."
+MCIERR_EXTRA_CHARACTERS, 	"MCIERR_EXTRA_CHARACTERS: クウォーテーションマークで囲まれた文字列のあとにキャラクタがあります."
+MCIERR_DEVICE_NOT_INSTALLED, 	"MCIERR_DEVICE_NOT_INSTALLED: デバイスがインストールされていません. コントロールパネルを使ってインストールしてください."
+MCIERR_GET_CD, 			"MCIERR_GET_CD: 指定されたファイル or MCIデバイスにアクセスできません. カレントディレクトリを変更する、再起動するなどしてみてください."
+MCIERR_SET_CD, 			"MCIERR_SET_CD: ディレクトリを変更することができませんでした. 指定されたファイル or MCIデバイスにアクセスできません."
+MCIERR_SET_DRIVE, 		"MCIERR_SET_DRIVE: カレントドライブを変更することができませんでした. 指定されたファイル or MCIデバイスにアクセスできません."
+MCIERR_DEVICE_LENGTH, 		"MCIERR_DEVICE_LENGTH: デバイス・ドライバ名が長すぎます. 79文字(79バイト)以下です."
+MCIERR_DEVICE_ORD_LENGTH, 	"MCIERR_DEVICE_ORD_LENGTH: デバイス・ドライバ名が長すぎます. 69文字(69バイト)以下です."
+MCIERR_NO_INTEGER, 		"MCIERR_NO_INTEGER: 指定されたコマンドはint(整数値)パラメータを必要とします."
+MCIERR_WAVE_OUTPUTSINUSE, 	"MCIERR_WAVE_OUTPUTSINUSE: 現在のファイルを再生するための WAVE 出力はすべて使用中です. WAVE 出力デバイスが解放されてからやりなおしてください."
+MCIERR_WAVE_SETOUTPUTINUSE, 	"MCIERR_WAVE_SETOUTPUTINUSE: WAVE がすべて使用中です. WAVE 出力デバイスが解放されてからやりなおしてください."
+MCIERR_WAVE_INPUTSINUSE, 	"MCIERR_WAVE_INPUTSINUSE: 現在の形式でファイルを取り込むするための WAVE 入力はすべて使用中です. WAVE 入力デバイスが解放されてからやりなおしてください."
+MCIERR_WAVE_SETINPUTINUSE, 	"MCIERR_WAVE_SETINPUTINUSE: WAVE 入力はすべて使用中です. WAVE 入力デバイスが解放されてからやりなおしてください."
+MCIERR_WAVE_OUTPUTUNSPECIFIED,	"MCIERR_WAVE_OUTPUTUNSPECIFIED: 出力デバイスが指定されていません. 互換性のある WAVE 再生デバイスを指定してください."
+MCIERR_WAVE_INPUTUNSPECIFIED, 	"MCIERR_WAVE_INPUTUNSPECIFIED: 入力デバイスが指定されていません. 互換性のある WAVE 入力デバイスを指定してください."
+MCIERR_WAVE_OUTPUTSUNSUITABLE, 	"MCIERR_WAVE_OUTPUTSUNSUITABLE: 現在のフォーマットを再生できる WAVE 出力デバイスが存在しません. Drivers オプションを使って WAVE デバイスをインストールしてください."
+MCIERR_WAVE_SETOUTPUTUNSUITABLE,"MCIERR_WAVE_SETOUTPUTUNSUITABLE: 再生されようとしているデバイスは指定ファイルのフォーマットを認識できません."
+MCIERR_WAVE_INPUTSUNSUITABLE, 	"MCIERR_WAVE_INPUTSUNSUITABLE: 現在のフォーマットを入力できる WAVE 入力デバイスが存在しません. Drivers オプションを使って WAVE デバイスをインストールしてください."
+MCIERR_WAVE_SETINPUTUNSUITABLE, "MCIERR_WAVE_SETINPUTUNSUITABLE: WAVE 入力されようとしているデバイスは指定ファイルのフォーマットを認識できません."
+MCIERR_NO_WINDOW, 		"MCIERR_NO_WINDOW: 表示ウィンドウがありません."
+MCIERR_CREATEWINDOW, 		"MCIERR_CREATEWINDOW: ウィンドウを作成・使用することができません."
+MCIERR_FILE_READ, 		"MCIERR_FILE_READ: 指定ファイルを読み込めません. ファイルが存在しているか、ディスク・ネットワークが正しく動作しているか確認してください."
+MCIERR_FILE_WRITE, 		"MCIERR_FILE_WRITE:指定ファイルを読み込めません. ディスクの空き容量は十分であるか、ネットワークが正しく動作しているか確認してください."
+MCIERR_SEQ_DIV_INCOMPATIBLE, 	"MCIERR_SEQ_DIV_INCOMPATIBLE: \"song pointer\" 時間形式と SMPTE 時間形式は排他的です. 同時に使用することはできません."
+MCIERR_SEQ_NOMIDIPRESENT, 	"MCIERR_SEQ_NOMIDIPRESENT: MIDIデバイスがインストールされていません. MIDI デバイスドライバをインストールしてください."
+MCIERR_SEQ_PORT_INUSE, 		"MCIERR_SEQ_PORT_INUSE: 指定された MIDI ポートは使用中です. 解放されてからやりなおしてください."
+MCIERR_SEQ_PORT_MAPNODEVICE, 	"MCIERR_SEQ_PORT_MAPNODEVICE: MIDIマッパーが参照しているデバイスがインストールされていません. コントロールパネルのMIDI マッパーオプションを使い、インストールしてください."
+MCIERR_SEQ_PORT_MISCERROR, 	"MCIERR_SEQ_PORT_MISCERROR: 指定されたポートで不明なエラーが発生しました."
+MCIERR_SEQ_PORT_NONEXISTENT, 	"MCIERR_SEQ_PORT_NONEXISTENT: MIDIマッパーが参照しているデバイスがインストールされていません. コントロールパネルのMIDI マッパーオプションを使い、インストールしてください."
+MCIERR_SEQ_PORTUNSPECIFIED, 	"MCIERR_SEQ_PORTUNSPECIFIED: 指定された MIDI ポートが存在しません."
+MCIERR_SEQ_TIMER, 		"MCIERR_SEQ_TIMER: すべてのマルチメディアタイマが使用中です. マルチメディアタイマを使用しているアプリケーションをいくつか終了して、やりなおしてみてください."
+
+END
