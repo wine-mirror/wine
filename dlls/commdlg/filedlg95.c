@@ -783,6 +783,8 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
     /* Detail view icon */
     if((hicon = COMDLG32_ImageList_GetIcon(himlToolbar,3,ILD_NORMAL)))
       SendDlgItemMessageA(hwnd,IDC_DETAILS,BM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hicon);
+    /* Cleanup */
+    COMDLG32_ImageList_Destroy(himlToolbar);
   }
 
 

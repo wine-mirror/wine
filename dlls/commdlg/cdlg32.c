@@ -32,6 +32,7 @@ BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA);
 HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
 HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
 BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
+BOOL	(WINAPI* COMDLG32_ImageList_Destroy) (HIMAGELIST himl);
 
 /***********************************************************************
  *	COMDLG32_DllEntryPoint			(COMDLG32.entry)
@@ -91,6 +92,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_ImageList_GetIcon=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_GetIcon");
 		COMDLG32_ImageList_LoadImageA=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_LoadImageA");
 		COMDLG32_ImageList_Draw=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Draw");
+		COMDLG32_ImageList_Destroy=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Destroy");
 		break;
 
 	case DLL_PROCESS_DETACH:

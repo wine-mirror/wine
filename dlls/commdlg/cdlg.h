@@ -36,6 +36,10 @@ typedef struct {
         } user_fr;
 } COMDLG32_FR_Data;
 
+#define PD32_PRINT_TITLE        7000
+#define PD32_PRINT_ALL_X_PAGES  7001
+#define PD32_INVALID_PAGE_RANGE 7003
+
 #include "commctrl.h"
 extern HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
 extern LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
@@ -47,5 +51,6 @@ extern BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA);
 extern HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
 extern HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
 extern BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
+extern BOOL	(WINAPI* COMDLG32_ImageList_Destroy) (HIMAGELIST himl);
 #endif
 
