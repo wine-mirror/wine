@@ -597,10 +597,14 @@ int main(int argc, char **argv)
     strarray_add(link_args, cpp ? "g++" : "gcc");
     strarray_add(link_args, "-shared");
     strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
-    strarray_add(link_args, "-lwine");
-    strarray_add(link_args, "-lm");
+
     for (i = 0; i < llib_paths->size; i++)
 	strarray_add(link_args, llib_paths->base[i]);
+    strarray_add(link_args, "-lwine");
+    strarray_add(link_args, "-lm");
+    for (i = 0; i < lib_files->size; i++)
+	strarray_add(link_args, lib_files->base[i]);
+
     strarray_add(link_args, "-o");
     if (create_wrapper)
 	strarray_add(link_args, strmake("%s/%s.so", base_path, app_name));
