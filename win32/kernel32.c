@@ -363,7 +363,7 @@ void WINAPI REGS_FUNC(FT_Prolog)( CONTEXT *context )
 {
 #ifdef __i386__
     /* Build stack frame */
-    STACK32_PUSH(context, EBP_reg(context));
+    stack32_push(context, EBP_reg(context));
     EBP_reg(context) = ESP_reg(context);
 
     /* Allocate 64-byte Thunk Buffer */
@@ -469,10 +469,10 @@ static void FT_Exit(CONTEXT *context, int nPopArgs)
 
     /* Clean up stack frame */
     ESP_reg(context) = EBP_reg(context);
-    EBP_reg(context) = STACK32_POP(context);
+    EBP_reg(context) = stack32_pop(context);
 
     /* Pop return address to CALLER of thunk code */
-    EIP_reg(context) = STACK32_POP(context);
+    EIP_reg(context) = stack32_pop(context);
     /* Remove arguments */
     ESP_reg(context) += nPopArgs;
 #endif
@@ -774,8 +774,8 @@ void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
     ESP_reg(context) -= 4;
 
     /* Write FT_Prolog call stub */
-    targetTableOffset = STACK32_POP(context);
-    relayCode = (LPBYTE)STACK32_POP(context);
+    targetTableOffset = stack32_pop(context);
+    relayCode = (LPBYTE)stack32_pop(context);
     _write_ftprolog( relayCode, *(DWORD **)(relayCode+targetTableOffset) );
 
     /* Jump to the call stub just created */
@@ -946,7 +946,7 @@ void WINAPI REGS_FUNC(W32S_BackTo32)( CONTEXT *context )
     EAX_reg( context ) = proc( stack[1], stack[2], stack[3], stack[4], stack[5],
                                stack[6], stack[7], stack[8], stack[9], stack[10] );
 
-    EIP_reg( context ) = STACK32_POP(context);
+    EIP_reg( context ) = stack32_pop(context);
 #endif
 }
 

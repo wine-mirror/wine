@@ -7,6 +7,7 @@
 #ifndef __WINE_STACKFRAME_H
 #define __WINE_STACKFRAME_H
 
+#include <string.h>
 #include "ldt.h"
 #include "thread.h"
 
@@ -67,26 +68,44 @@ typedef void *VA_LIST16;
      *((type *)(void *)((char *)(list) - __VA_ROUNDED16(type))))
 #define VA_END16(list) ((void)0)
 
+
 /* Push bytes on the 16-bit stack of a thread;
  * return a segptr to the first pushed byte
  */
-#define STACK16_PUSH(teb,size) \
- (memmove((char*)THREAD_STACK16(teb)-(size),THREAD_STACK16(teb), \
-          sizeof(STACK16FRAME)), \
-  (teb)->cur_stack -= (size), \
-  (SEGPTR)((teb)->cur_stack + sizeof(STACK16FRAME)))
+static inline SEGPTR WINE_UNUSED stack16_push( int size )
+{
+    TEB *teb = NtCurrentTeb();
+    STACK16FRAME *frame = THREAD_STACK16(teb);
+    memmove( (char*)frame - size, frame, sizeof(*frame) );
+    teb->cur_stack -= size;
+    return (SEGPTR)(teb->cur_stack + sizeof(*frame));
+}
 
 /* Pop bytes from the 16-bit stack of a thread */
-#define STACK16_POP(teb,size) \
- (memmove((char*)THREAD_STACK16(teb)+(size),THREAD_STACK16(teb), \
-          sizeof(STACK16FRAME)), \
-  (teb)->cur_stack += (size))
+static inline void WINE_UNUSED stack16_pop( int size )
+{
+    TEB *teb = NtCurrentTeb();
+    STACK16FRAME *frame = THREAD_STACK16(teb);
+    memmove( (char*)frame + size, frame, sizeof(*frame) );
+    teb->cur_stack += size;
+}
 
+#ifdef __i386__
 /* Push a DWORD on the 32-bit stack */
-#define STACK32_PUSH(context,val) (*--(*(DWORD **)&ESP_reg(context)) = (val))
+static inline void WINE_UNUSED stack32_push( CONTEXT *context, DWORD val )
+{
+    ESP_reg(context) -= sizeof(DWORD);
+    *(DWORD *)ESP_reg(context) = val;
+}
 
 /* Pop a DWORD from the 32-bit stack */
-#define STACK32_POP(context) (*(*(DWORD **)&ESP_reg(context))++)
+static inline DWORD WINE_UNUSED stack32_pop( CONTEXT *context )
+{
+    DWORD ret = *(DWORD *)ESP_reg(context);
+    ESP_reg(context) += sizeof(DWORD);
+    return ret;
+}
+#endif  /* __i386__ */
 
 /* Win32 register functions */
 #define REGS_FUNC(name) __regs_##name

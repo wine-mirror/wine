@@ -224,7 +224,7 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
               || memcmp( args+2, "intr_", 5 ) == 0 )
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
-                (WORD)CS_reg(context), IP_reg(context), (WORD)DS_reg(context));
+                (WORD)CS_reg(context), LOWORD(EIP_reg(context)), (WORD)DS_reg(context));
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -275,7 +275,7 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
         CONTEXT86 *context = (CONTEXT86 *)stack[0];
         WORD *stack16 = (WORD *)THREAD_STACK16(teb);
         DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
-                CS_reg(context), IP_reg(context), DS_reg(context) );
+                CS_reg(context), LOWORD(EIP_reg(context)), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
         while (nb_args--) {
 	    --stack16;
@@ -344,13 +344,13 @@ void WINAPI Catch16( LPCATCHBUF lpbuf, CONTEXT86 *context )
      * lpbuf[8] = ss
      */
 
-    lpbuf[0] = IP_reg(context);
+    lpbuf[0] = LOWORD(EIP_reg(context));
     lpbuf[1] = CS_reg(context);
     /* Windows pushes 4 more words before saving sp */
-    lpbuf[2] = SP_reg(context) - 4 * sizeof(WORD);
-    lpbuf[3] = BP_reg(context);
-    lpbuf[4] = SI_reg(context);
-    lpbuf[5] = DI_reg(context);
+    lpbuf[2] = LOWORD(ESP_reg(context)) - 4 * sizeof(WORD);
+    lpbuf[3] = LOWORD(EBP_reg(context));
+    lpbuf[4] = LOWORD(ESI_reg(context));
+    lpbuf[5] = LOWORD(EDI_reg(context));
     lpbuf[6] = DS_reg(context);
     lpbuf[7] = 0;
     lpbuf[8] = SS_reg(context);
@@ -388,13 +388,13 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
         frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
     }
 
-    IP_reg(context) = lpbuf[0];
-    CS_reg(context) = lpbuf[1];
-    SP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
-    BP_reg(context) = lpbuf[3];
-    SI_reg(context) = lpbuf[4];
-    DI_reg(context) = lpbuf[5];
-    DS_reg(context) = lpbuf[6];
+    EIP_reg(context) = lpbuf[0];
+    CS_reg(context)  = lpbuf[1];
+    ESP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
+    EBP_reg(context) = lpbuf[3];
+    ESI_reg(context) = lpbuf[4];
+    EDI_reg(context) = lpbuf[5];
+    DS_reg(context)  = lpbuf[6];
 
     if (lpbuf[8] != SS_reg(context))
         ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
@@ -491,7 +491,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 		break;
 	}
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
-        if (!Ex) STACK16_POP( NtCurrentTeb(), (3 + nrofargs) * sizeof(DWORD) );
+        if (!Ex) stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
 
 	TRACE("%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );

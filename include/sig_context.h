@@ -236,30 +236,6 @@ typedef struct _CONTEXT		/* Note 1 */
 
 #endif  /* __EMX__ */
 
-/* Generic definitions */
-
-#define AX_sig(context)      (*(WORD*)&EAX_sig(context))
-#define BX_sig(context)      (*(WORD*)&EBX_sig(context))
-#define CX_sig(context)      (*(WORD*)&ECX_sig(context))
-#define DX_sig(context)      (*(WORD*)&EDX_sig(context))
-#define SI_sig(context)      (*(WORD*)&ESI_sig(context))
-#define DI_sig(context)      (*(WORD*)&EDI_sig(context))
-#define BP_sig(context)      (*(WORD*)&EBP_sig(context))
-
-#define AL_sig(context)      (*(BYTE*)&EAX_sig(context))
-#define AH_sig(context)      (*((BYTE*)&EAX_sig(context)+1))
-#define BL_sig(context)      (*(BYTE*)&EBX_sig(context))
-#define BH_sig(context)      (*((BYTE*)&EBX_sig(context)+1))
-#define CL_sig(context)      (*(BYTE*)&ECX_sig(context))
-#define CH_sig(context)      (*((BYTE*)&ECX_sig(context)+1))
-#define DL_sig(context)      (*(BYTE*)&EDX_sig(context))
-#define DH_sig(context)      (*((BYTE*)&EDX_sig(context)+1))
-                            
-#define IP_sig(context)      (*(WORD*)&EIP_sig(context))
-#define SP_sig(context)      (*(WORD*)&ESP_sig(context))
-                            
-#define FL_sig(context)      (*(WORD*)&EFL_sig(context))
-
 #ifdef FS_sig
 #include "syslevel.h"
 #define HANDLER_INIT() \

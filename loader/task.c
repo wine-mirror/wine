@@ -255,8 +255,8 @@ void TASK_CallToStart(void)
     EDI_reg(&context) = pTask->hInstance;
     ESI_reg(&context) = pTask->hPrevInstance;
 
-    TRACE_(task)("Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
-                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
+    TRACE_(task)("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
+                  CS_reg(&context), EIP_reg(&context), DS_reg(&context),
                   SELECTOROF(pTask->teb->cur_stack),
                   OFFSETOF(pTask->teb->cur_stack) );
 
@@ -736,9 +736,9 @@ void WINAPI InitTask16( CONTEXT86 *context )
      *
      * 0 (=%bp) is pushed on the stack
      */
-    ptr = STACK16_PUSH( pTask->teb, sizeof(WORD) );
+    ptr = stack16_push( sizeof(WORD) );
     *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
-    SP_reg(context) -= 2;
+    ESP_reg(context) -= 2;
 
     EAX_reg(context) = 1;
         

@@ -235,7 +235,7 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     /* remove extra stuff from the stack */
-    EIP_reg(context) = STACK32_POP(context);
+    EIP_reg(context) = stack32_pop(context);
     args = (int *)ESP_reg(context);
     ESP_reg(context) += 4 * nb_args;
 

@@ -293,7 +293,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 	if (offset)
 	{
 	    void *s = PTR_SEG_TO_LIN(lParam);
-	    lParam = STACK16_PUSH( teb, offset );
+	    lParam = stack16_push( offset );
 	    memcpy( PTR_SEG_TO_LIN(lParam), s, offset );
 	}
     }
@@ -308,7 +308,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[4] = hwnd;
 
     ret = CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
-    if (offset) STACK16_POP( teb, offset );
+    if (offset) stack16_pop( offset );
 
     WIN_RestoreWndsLock(iWndsLocks);
 
@@ -820,10 +820,10 @@ static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
     CONTEXT86 context;
     memset( &context, '\0', sizeof(context) );
 
-    CS_reg( &context ) = SELECTOROF( proc );
-    IP_reg( &context ) = OFFSETOF( proc );
-    BP_reg( &context ) = OFFSETOF( NtCurrentTeb()->cur_stack )
-                         + (WORD)&((STACK16FRAME*)0)->bp;
+    CS_reg( &context )  = SELECTOROF( proc );
+    EIP_reg( &context ) = OFFSETOF( proc );
+    EBP_reg( &context ) = OFFSETOF( NtCurrentTeb()->cur_stack )
+                          + (WORD)&((STACK16FRAME*)0)->bp;
 
     AX_reg( &context ) = timer;
 
@@ -1052,12 +1052,12 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
                               *((WORD *)x)++ = cs;
 
     /* Jump to the stub code just created */
-    IP_reg(context) = LOWORD(EAX_reg(context));
-    CS_reg(context) = HIWORD(EAX_reg(context));
+    EIP_reg(context) = LOWORD(EAX_reg(context));
+    CS_reg(context)  = HIWORD(EAX_reg(context));
 
     /* Since C16ThkSL got called by a jmp, we need to leave the
-       orginal return address on the stack */
-    SP_reg(context) -= 4;
+       original return address on the stack */
+    ESP_reg(context) -= 4;
 }
 
 /***********************************************************************
@@ -1107,12 +1107,12 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
                                   *((WORD *)x)++ = cs;
 
         /* Jump to the stub code just created */
-        IP_reg(context) = LOWORD(EAX_reg(context));
-        CS_reg(context) = HIWORD(EAX_reg(context));
+        EIP_reg(context) = LOWORD(EAX_reg(context));
+        CS_reg(context)  = HIWORD(EAX_reg(context));
 
         /* Since C16ThkSL01 got called by a jmp, we need to leave the
            orginal return address on the stack */
-        SP_reg(context) -= 4;
+        ESP_reg(context) -= 4;
     }
     else
     {
@@ -1145,12 +1145,12 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         }
         else
         {
-            WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
+            WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), LOWORD(ESP_reg(context)));
             DX_reg(context) = HIWORD(td->apiDB[targetNr].errorReturnValue);
             AX_reg(context) = LOWORD(td->apiDB[targetNr].errorReturnValue);
-            IP_reg(context) = stack[2];
-            CS_reg(context) = stack[3];
-            SP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
+            EIP_reg(context) = stack[2];
+            CS_reg(context)  = stack[3];
+            ESP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
 
             ERR_(thunk)("Process %08lx did not ThunkConnect32 %s to %s\n",
                        (DWORD)PROCESS_Current(), td->pszDll32, td->pszDll16);
@@ -1162,13 +1162,17 @@ DWORD WINAPI
 WOW16Call(WORD x,WORD y,WORD z) {
 	int	i;
 	DWORD	calladdr;
+        VA_LIST16 args;
 	FIXME_(thunk)("(0x%04x,0x%04x,%d),calling (",x,y,z);
 
+        VA_START16(args);
 	for (i=0;i<x/2;i++) {
-		WORD	a = STACK16_POP(NtCurrentTeb(),2);
+		WORD	a = VA_ARG16(args,WORD);
 		DPRINTF("%04x ",a);
 	}
-	calladdr = STACK16_POP(NtCurrentTeb(),4);
+	calladdr = VA_ARG16(args,DWORD);
+        VA_END16(args);
+        stack16_pop( x + sizeof(DWORD) );
 	DPRINTF(") calling address was 0x%08lx\n",calladdr);
 	return 0;
 }
@@ -1536,7 +1540,7 @@ void WINAPI InitCBClient16( FARPROC glueLS )
 void WINAPI CBClientGlueSL( CONTEXT86 *context )
 {
     /* Create stack frame */
-    SEGPTR stackSeg = STACK16_PUSH( NtCurrentTeb(), 12 );
+    SEGPTR stackSeg = stack16_push( 12 );
     LPWORD stackLin = PTR_SEG_TO_LIN( stackSeg );
     SEGPTR glue;
     
@@ -1545,8 +1549,8 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     stackLin[1] = DI_reg( context );
     stackLin[0] = DS_reg( context );
 
-    BP_reg( context ) = OFFSETOF( stackSeg ) + 6;
-    SP_reg( context ) = OFFSETOF( stackSeg ) - 4;
+    EBP_reg( context ) = OFFSETOF( stackSeg ) + 6;
+    ESP_reg( context ) = OFFSETOF( stackSeg ) - 4;
     GS_reg( context ) = 0;
 
     /* Jump to 16-bit relay code */
@@ -1591,7 +1595,7 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
     SI_reg( context ) = stackLin[2];
     DI_reg( context ) = stackLin[1];
     DS_reg( context ) = stackLin[0];
-    SP_reg( context ) += 16+nArgs;
+    ESP_reg( context ) += 16+nArgs;
 
     /* Return to caller of CBClient thunklet */
     CS_reg ( context ) = stackLin[9];

@@ -644,6 +644,7 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
 
 /* DPMI Raw Mode Switch handler */
 
+#if 0
 void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 {
   LPDOSTASK lpDosTask = MZ_Current();
@@ -696,13 +697,16 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
   TRACE("re-entering protected mode at %04x:%08lx\n",
 	CS_sig(context), EIP_sig(context));
 }
+#endif
 
 #else
+#if 0
 void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 {
   ERR("don't even think about DPMI raw mode switch without DOS support!\n");
   ExitProcess(1);
 }
+#endif
 #endif
 
 #define DOS_APP_ISDOS(addr,base) ((addr) < 0x110000)
