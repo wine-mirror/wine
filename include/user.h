@@ -63,8 +63,6 @@ typedef struct tagUSER_DRIVER {
     /* screen saver functions */
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);
-    int    (*pGetScreenSaveTimeout)(void);
-    void   (*pSetScreenSaveTimeout)(int);
     /* resource functions */
     HANDLE (*pLoadOEMResource)(WORD,WORD);
     /* clipboard functions */

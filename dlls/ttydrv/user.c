@@ -85,26 +85,6 @@ void TTYDRV_SetScreenSaveActive(BOOL bActivate)
     FIXME("(%d): stub\n", bActivate);
 }
 
-/***********************************************************************
- *              GetScreenSaveTimeout (TTYDRV.@)
- *
- * Return the screen saver timeout
- */
-int TTYDRV_GetScreenSaveTimeout(void)
-{
-    return 0;
-}
-
-/***********************************************************************
- *              SetScreenSaveTimeout (TTYDRV.@)
- *
- * Set the screen saver timeout
- */
-void TTYDRV_SetScreenSaveTimeout(int nTimeout)
-{
-    FIXME("(%d): stub\n", nTimeout);
-}
-
 /**********************************************************************
  *		LoadOEMResource (TTYDRV.@)
  */
