@@ -1200,13 +1200,15 @@ UINT16 WINAPI waveOutGetDevCaps16(UINT16 uDeviceID,
     ret = waveOutGetDevCapsA(uDeviceID, &wocA, sizeof(wocA));
 
     if (ret == MMSYSERR_NOERROR) {
-	lpCaps->wMid = wocA.wMid;
-	lpCaps->wPid = wocA.wPid;
-	lpCaps->vDriverVersion = wocA.vDriverVersion;
-	strcpy(lpCaps->szPname, wocA.szPname);
-	lpCaps->dwFormats = wocA.dwFormats;
-	lpCaps->wChannels = wocA.wChannels;
-	lpCaps->dwSupport = wocA.dwSupport;
+        WAVEOUTCAPS16 woc16;
+        woc16.wMid = wocA.wMid;
+        woc16.wPid = wocA.wPid;
+        woc16.vDriverVersion = wocA.vDriverVersion;
+        strcpy(woc16.szPname, wocA.szPname);
+        woc16.dwFormats = wocA.dwFormats;
+        woc16.wChannels = wocA.wChannels;
+        woc16.dwSupport = wocA.dwSupport;
+        memcpy(lpCaps, &woc16, uSize);
     }
     return ret;
 }
@@ -1495,12 +1497,14 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps,
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if (ret == MMSYSERR_NOERROR) {
-	lpCaps->wMid = wicA.wMid;
-	lpCaps->wPid = wicA.wPid;
-	lpCaps->vDriverVersion = wicA.vDriverVersion;
-	strcpy(lpCaps->szPname, wicA.szPname);
-	lpCaps->dwFormats = wicA.dwFormats;
-	lpCaps->wChannels = wicA.wChannels;
+        WAVEINCAPS16 wic16;
+        wic16.wMid = wicA.wMid;
+        wic16.wPid = wicA.wPid;
+        wic16.vDriverVersion = wicA.vDriverVersion;
+        strcpy(wic16.szPname, wicA.szPname);
+        wic16.dwFormats = wicA.dwFormats;
+        wic16.wChannels = wicA.wChannels;
+        memcpy(lpCaps, &wic16, uSize);
     }
     return ret;
 }
