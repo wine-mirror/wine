@@ -370,7 +370,7 @@ static void thread_detach(void)
         CloseHandle( data->display_fd );
         wine_tsx11_lock();
         XCloseDisplay( data->display );
-        if (data->xim) XCloseIM( data->xim );
+        /* if (data->xim) XCloseIM( data->xim ); */ /* crashes Xlib */
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );
     }
