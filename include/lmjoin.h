@@ -1,7 +1,5 @@
 /*
- * Copyright 2002 Andriy Palamarchuk
- *
- * General lm header which includes other lm headers.
+ * Copyright 2005 Ulrich Czekalla (For CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,16 +16,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LM_H
-#define __WINE_LM_H
+#ifndef __WINE_LMJOIN_H
+#define __WINE_LMJOIN_H
 
-#include <lmcons.h>
-#include <lmerr.h>
-#include <lmbrowsr.h>
-#include <lmaccess.h>
-#include <lmwksta.h>
-#include <lmapibuf.h>
-#include <lmstats.h>
-#include <lmjoin.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum tagNETSETUP_JOIN_STATUS
+{
+    NetSetupUnknownStatus = 0,
+    NetSetupUnjoined,
+    NetSetupWorkgroupName,
+    NetSetupDomainName
+} NETSETUP_JOIN_STATUS, *PNETSETUP_JOIN_STATUS;
+
+NET_API_STATUS NET_API_FUNCTION NetGetJoinInformation(
+    LPCWSTR Server,
+    LPWSTR *Name,
+    PNETSETUP_JOIN_STATUS type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -76,6 +76,7 @@
 @ stub NetGetAnyDCName
 @ stdcall NetGetDCName(wstr wstr ptr)
 @ stub NetGetDisplayInformationIndex
+@ stdcall NetGetJoinInformation(wstr ptr ptr)
 @ stub NetGroupAdd
 @ stub NetGroupAddUser
 @ stub NetGroupDel
