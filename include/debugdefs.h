@@ -129,6 +129,7 @@ char dbch_seh[] = "\003seh";
 char dbch_selector[] = "\003selector";
 char dbch_sendmsg[] = "\003sendmsg";
 char dbch_server[] = "\003server";
+char dbch_setupapi[] = "\003setupapi";
 char dbch_setupx[] = "\003setupx";
 char dbch_shell[] = "\003shell";
 char dbch_snoop[] = "\003snoop";
@@ -172,7 +173,7 @@ char dbch_wnet[] = "\003wnet";
 char dbch_x11[] = "\003x11";
 char dbch_x11drv[] = "\003x11drv";
 
-#define DEBUG_CHANNEL_COUNT 165
+#define DEBUG_CHANNEL_COUNT 166
 
 static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_accel,
@@ -298,6 +299,7 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_selector,
     dbch_sendmsg,
     dbch_server,
+    dbch_setupapi,
     dbch_setupx,
     dbch_shell,
     dbch_snoop,

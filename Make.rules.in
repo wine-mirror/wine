@@ -130,6 +130,7 @@ DLLS = \
 	psapi \
 	rasapi32 \
 	riched32 \
+	setupapi \
 	setupx \
 	shell32 \
 	sound \

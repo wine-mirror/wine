@@ -43,6 +43,7 @@ DLLFILES = \
 	rasapi32/librasapi32.@LIBEXT@ \
 	richedit/libriched32.@LIBEXT@ \
 	setupx/libsetupx.@LIBEXT@ \
+	setupapi/libsetupapi.@LIBEXT@ \
 	shell32/libshell32.@LIBEXT@ \
 	sound/libsound.@LIBEXT@ \
 	stress/libstress.@LIBEXT@ \
@@ -289,6 +290,9 @@ librasapi32.@LIBEXT@ librasapi16.@LIBEXT@: rasapi32/librasapi32.@LIBEXT@
 
 libriched32.@LIBEXT@: richedit/libriched32.@LIBEXT@
 	$(RM) $@ && $(LN_S) richedit/libriched32.@LIBEXT@ $@
+
+libsetupapi.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
+	$(RM) $@ && $(LN_S) setupapi/libsetupapi.@LIBEXT@ $@
 
 libsetupx.@LIBEXT@: setupx/libsetupx.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupx/libsetupx.@LIBEXT@ $@

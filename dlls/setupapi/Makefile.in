@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = setupapi
+SOVERSION = 1.0
+
+C_SRCS = stubs.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

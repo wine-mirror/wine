@@ -1006,6 +1006,7 @@ dlls/opengl32/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
+dlls/setupapi/Makefile
 dlls/setupx/Makefile
 dlls/shell32/Makefile
 dlls/sound/Makefile
