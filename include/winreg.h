@@ -87,6 +87,9 @@ DWORD       WINAPI RegQueryInfoKeyA(HKEY,LPSTR,LPDWORD,LPDWORD,LPDWORD,
                                       LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
                                       LPDWORD,LPFILETIME);
 #define     RegQueryInfoKey WINELIB_NAME_AW(RegQueryInfoKey)
+DWORD       WINAPI RegQueryMultipleValuesA(HKEY,PVALENTA,DWORD,LPSTR,LPDWORD);
+DWORD       WINAPI RegQueryMultipleValuesW(HKEY,PVALENTW,DWORD,LPWSTR,LPDWORD);
+#define     RegQueryMultipleValues WINELIB_NAME_AW(RegQueryMultipleValues)
 LONG        WINAPI RegReplaceKeyA(HKEY,LPCSTR,LPCSTR,LPCSTR);
 LONG        WINAPI RegReplaceKeyW(HKEY,LPCWSTR,LPCWSTR,LPCWSTR);
 #define     RegReplaceKey WINELIB_NAME_AW(RegReplaceKey)

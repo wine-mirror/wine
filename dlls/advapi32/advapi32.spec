@@ -201,8 +201,8 @@
 @ stub RegOpenUserClassesRoot
 @ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyA
 @ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyW
-@ stub RegQueryMultipleValuesA
-@ stub RegQueryMultipleValuesW
+@ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr) RegQueryMultipleValuesA
+@ stdcall RegQueryMultipleValuesW(long ptr long ptr ptr) RegQueryMultipleValuesW
 @ stdcall RegQueryValueA(long str ptr ptr) RegQueryValueA
 @ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) RegQueryValueExA
 @ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) RegQueryValueExW

@@ -511,6 +511,92 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
 
 
 /******************************************************************************
+ *           RegQueryMultipleValuesA   [ADVAPI32.@]
+ */
+DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_vals,
+                                     LPSTR lpValueBuf, LPDWORD ldwTotsize)
+{
+    int i;
+    DWORD maxBytes = *ldwTotsize;
+    HRESULT status;
+    LPSTR bufptr = lpValueBuf;
+    *ldwTotsize = 0;
+
+    TRACE("(%x,%p,%ld,%p,%p=%ld)\n", hkey, val_list, num_vals, lpValueBuf, ldwTotsize, *ldwTotsize);
+
+    for(i=0; i < num_vals; ++i)
+    {
+
+        val_list[i].ve_valuelen=0;
+        status = RegQueryValueExA(hkey, val_list[i].ve_valuename, NULL, NULL, NULL, &val_list[i].ve_valuelen);
+        if(status != ERROR_SUCCESS)
+        {
+            return status;
+        }
+
+        if(lpValueBuf != NULL && *ldwTotsize + val_list[i].ve_valuelen <= maxBytes)
+        {
+            status = RegQueryValueExA(hkey, val_list[i].ve_valuename, NULL, &val_list[i].ve_type,
+                                      bufptr, &val_list[i].ve_valuelen);
+            if(status != ERROR_SUCCESS)
+            {
+                return status;
+            }
+
+            val_list[i].ve_valueptr = (DWORD_PTR)bufptr;
+
+            bufptr += val_list[i].ve_valuelen;
+        }
+
+        *ldwTotsize += val_list[i].ve_valuelen;
+    }
+    return lpValueBuf != NULL && *ldwTotsize <= maxBytes ? ERROR_SUCCESS : ERROR_MORE_DATA;
+}
+
+
+/******************************************************************************
+ *           RegQueryMultipleValuesW   [ADVAPI32.@]
+ */
+DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_vals,
+                                     LPWSTR lpValueBuf, LPDWORD ldwTotsize)
+{
+    int i;
+    DWORD maxBytes = *ldwTotsize;
+    HRESULT status;
+    LPSTR bufptr = (LPSTR)lpValueBuf;
+    *ldwTotsize = 0;
+
+    TRACE("(%x,%p,%ld,%p,%p=%ld)\n", hkey, val_list, num_vals, lpValueBuf, ldwTotsize, *ldwTotsize);
+
+    for(i=0; i < num_vals; ++i)
+    {
+        val_list[i].ve_valuelen=0;
+        status = RegQueryValueExW(hkey, val_list[i].ve_valuename, NULL, NULL, NULL, &val_list[i].ve_valuelen);
+        if(status != ERROR_SUCCESS)
+        {
+            return status;
+        }
+
+        if(lpValueBuf != NULL && *ldwTotsize + val_list[i].ve_valuelen <= maxBytes)
+        {
+            status = RegQueryValueExW(hkey, val_list[i].ve_valuename, NULL, &val_list[i].ve_type,
+                                      bufptr, &val_list[i].ve_valuelen);
+            if(status != ERROR_SUCCESS)
+            {
+                return status;
+            }
+
+            val_list[i].ve_valueptr = (DWORD_PTR)bufptr;
+
+            bufptr += val_list[i].ve_valuelen;
+        }
+
+        *ldwTotsize += val_list[i].ve_valuelen;
+    }
+    return lpValueBuf != NULL && *ldwTotsize <= maxBytes ? ERROR_SUCCESS : ERROR_MORE_DATA;
+}
+
+/******************************************************************************
  *           RegQueryInfoKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWORD reserved,
