@@ -69,6 +69,7 @@ AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
 AC_CYGWIN
+AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
@@ -576,19 +577,36 @@ then
   fi
   if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
   then
-    echo "*** It is currently not possible to build WINE without shared"
-    echo "*** library (.so) support to allow transparent switch between .so"
-    echo "*** and .dll files."
-    echo "*** If you are using Linux, you will need a newer binutils."
-    exit 1
+    LIBEXT="a"
+    if test "$DLLWRAP" = "dllwrap"; then
+      dnl FIXME - check whether dllwrap works correctly...
+      if test "$CYGWIN" = "yes"; then
+        echo "*** use dllwrap for building shared library."
+        LIBEXT="dll"
+      fi
+    fi
   fi
 fi
 
+if test "$LIBEXT" = "a"; then
+  echo "*** It is currently not possible to build WINE without shared"
+  echo "*** library (.so) support to allow transparent switch between .so"
+  echo "*** and .dll files."
+  echo "*** If you are using Linux, you will need a newer binutils."
+  exit 1
+fi
+
 DLLFLAGS=""
+LDPATH=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
     DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) \$(LIBWINE) \$(LIBUNICODE)"
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
+elif test "$LIBEXT" = "dll"; then
+    #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
+    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) \$(LIBWINE) \$(LIBUNICODE)"
+    LDPATH="PATH=\"\$(TOPOBJDIR)/unicode:\$\$PATH\""
 else
     DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) \$(LIBWINE) \$(LIBUNICODE) \$(X_LIBS) \$(XLIB)"
     AC_CACHE_CHECK([whether the linker supports --[[no]]-whole-archive (Linux)],
@@ -621,6 +639,7 @@ AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
 AC_SUBST(LDDLLFLAGS)
 AC_SUBST(LIBEXT)
+AC_SUBST(LDPATH)
 
 dnl **** Check for reentrant libc ****
 dnl

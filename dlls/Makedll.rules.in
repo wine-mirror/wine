@@ -37,6 +37,10 @@ lib$(MODULE).a: $(ALL_OBJS) Makefile.in
 	$(AR) $@ $(ALL_OBJS)
 	$(RANLIB) $@
 
+# Rules for .dll files
+lib$(MODULE).dll: $(ALL_OBJS) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --implib lib$(MODULE).a -o lib$(MODULE).dll $(ALL_OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+
 # Rules for checking that no imports are missing
 
 checklink:: lib$(MODULE).$(LIBEXT)

@@ -29,6 +29,9 @@ libwine.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
+libwine.dll: $(OBJS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS)
+
 install_so: libwine.so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)

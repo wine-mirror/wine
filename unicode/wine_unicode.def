@@ -1,0 +1,10 @@
+EXPORTS
+	cp_mbstowcs
+	cp_wcstombs
+	utf8_wcstombs
+	utf8_mbstowcs
+	cp_get_table
+	cp_enum_table
+	strcmpiW
+	strncmpiW
+	strstrW

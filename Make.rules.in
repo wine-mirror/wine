@@ -36,6 +36,8 @@ LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 LIBEXT    = @LIBEXT@
 LDSHARED  = @LDSHARED@
+DLLWRAP   = @DLLWRAP@
+DLLWRAPFLAGS = --add-stdcall-alias
 RANLIB    = @RANLIB@
 LN_S      = @LN_S@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
@@ -60,7 +62,7 @@ WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WMC       = $(TOPOBJDIR)/tools/wmc/wmc
-LDPATH    = LD_LIBRARY_PATH="$(TOPOBJDIR)/unicode:$$LD_LIBRARY_PATH"
+LDPATH    = @LDPATH@
 DLLDIR    = $(TOPOBJDIR)/dlls
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11

@@ -93,6 +93,10 @@ libwine_unicode.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
+# --export-all don't work correctly because of dllwrap's bug
+libwine_unicode.dll: $(OBJS) wine_unicode.def
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
+
 install_so: libwine_unicode.so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_PROGRAM) libwine_unicode.so.$(SOVERSION) $(libdir)/libwine_unicode.so.$(SOVERSION)

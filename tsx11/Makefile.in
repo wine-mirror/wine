@@ -37,6 +37,9 @@ libwine_tsx11.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
+libwine_tsx11.dll: $(OBJS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine_tsx11.a -o libwine_tsx11.dll $(OBJS)
+
 install_so: libwine_tsx11.so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_PROGRAM) libwine_tsx11.so.$(SOVERSION) $(libdir)/libwine_tsx11.so.$(SOVERSION)
