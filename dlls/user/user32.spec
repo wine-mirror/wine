@@ -629,6 +629,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
 @ stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
 @ stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
+@ stdcall PrivateExtractIconsA (long long long long long long long long) PrivateExtractIconsA
 @ stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
 @ stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
 @ stdcall DeregisterShellHookWindow (long) DeregisterShellHookWindow
