@@ -2527,38 +2527,6 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
   return bResult;
 }
 
-/***
- * DESCRIPTION:
- * Selects an item based on coordinates.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] pt : mouse click ccordinates
- *
- * RETURN:
- *   SUCCESS : item index
- *   FAILURE : -1
- */
-/* FIXME: get rid of this function, use HitTest instead */
-static INT LISTVIEW_GetItemAtPt(LISTVIEW_INFO *infoPtr, POINT pt)
-{
-    ITERATOR i;
-    RECT rcItem;
-   
-    iterator_visibleitems(&i, infoPtr); 
-    while(iterator_next(&i))
-    {
-	rcItem.left = LVIR_SELECTBOUNDS;
-	if (LISTVIEW_GetItemRect(infoPtr, i.nItem, &rcItem))
-	{
-	    TRACE("i=%d, rcItem=%s\n", i.nItem, debugrect(&rcItem));
-	    if (PtInRect(&rcItem, pt)) break;
-	}
-    }
-    iterator_destroy(&i);
-    
-    return i.nItem;
-}
 
 /***
  * DESCRIPTION:
@@ -5578,6 +5546,7 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
  * [I] infoPtr : valid pointer to the listview structure
  * [IO] lpht : hit test information
  * [I] subitem : fill out iSubItem.
+ * [I] select : return the index only if the hit selects the item
  *
  * NOTE:
  * (mm 20001022): We must not allow iSubItem to be touched, for
@@ -5588,12 +5557,12 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem)
+static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem, BOOL select)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     RECT rcBounds, rcIcon, rcLabel;
     
-    TRACE("(x=%ld, y=%ld)\n", lpht->pt.x, lpht->pt.y);
+    TRACE("(pt=%s, subitem=%d, select=%d)\n", debugpoint(&lpht->pt), subitem, select);
     
     lpht->flags = 0;
     lpht->iItem = -1;
@@ -5643,15 +5612,18 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	else
 	{
 	    POINT Origin, Position;
-	    INT nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
+	    INT nPerCol = (uView == LVS_REPORT) ? infoPtr->nItemCount : LISTVIEW_GetCountPerColumn(infoPtr);
 
 	    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
 	    Position.x = lpht->pt.x - Origin.x;
 	    Position.y = lpht->pt.y - Origin.y;
+	    TRACE("Position=%s, nPerCol=%d, nItemHeight=%d, nColHeight=%d\n", 
+		  debugpoint(&Position), nPerCol, infoPtr->nItemHeight, nPerCol * infoPtr->nItemHeight);
 
 	    if (Position.y < nPerCol * infoPtr->nItemHeight)
 	    {
 		lpht->iItem = (Position.x / infoPtr->nItemWidth) * nPerCol + (Position.y / infoPtr->nItemHeight);
+		TRACE("iItem=%d\n", lpht->iItem);
 		if (lpht->iItem < 0 || lpht->iItem >= infoPtr->nItemCount) lpht->iItem = -1;
 	    }
 	}
@@ -5717,7 +5689,11 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	}
     }
 
-    return lpht->iItem;
+    if (!select || lpht->iItem == -1) return lpht->iItem;
+
+    if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) return lpht->iItem;
+
+    return lpht->flags & (LVHT_ONITEMICON | LVHT_ONITEMLABEL) ? lpht->iItem : -1;
 }
 
 
@@ -7599,7 +7575,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
 
     /* send NM_DBLCLK notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    LISTVIEW_HitTest(infoPtr, &htInfo, TRUE);
+    LISTVIEW_HitTest(infoPtr, &htInfo, TRUE, FALSE);
     nmlv.iItem = htInfo.iItem;
     nmlv.iSubItem = htInfo.iSubItem;
     nmlv.ptAction = htInfo.pt;
@@ -7626,6 +7602,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
  */
 static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
+  LVHITTESTINFO lvHitTestInfo;
   LONG lStyle = infoPtr->dwStyle;
   static BOOL bGroupSelect = TRUE;
   POINT pt = { pts.x, pts.y };
@@ -7643,7 +7620,10 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   /* set left button down flag */
   infoPtr->bLButtonDown = TRUE;
 
-  nItem = LISTVIEW_GetItemAtPt(infoPtr, pt);
+  lvHitTestInfo.pt.x = pts.x;
+  lvHitTestInfo.pt.y = pts.y;
+
+  nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   TRACE("at %s, nItem=%d\n", debugpoint(&pt), nItem);
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
@@ -7734,7 +7714,7 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 
     /* send NM_CLICK notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE);
+    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
     nmlv.iItem = lvHitTestInfo.iItem;
     nmlv.iSubItem = lvHitTestInfo.iSubItem;
     nmlv.ptAction = lvHitTestInfo.pt;
@@ -7972,11 +7952,11 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
     /* determine the index of the selected item */
     lvHitTestInfo.pt.x = pts.x;
     lvHitTestInfo.pt.y = pts.y;
-    nItem = LISTVIEW_GetItemAtPt(infoPtr, lvHitTestInfo.pt);
+    nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   
     if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
     {
-	LISTVIEW_SetItemFocus(infoPtr,nItem);
+	LISTVIEW_SetItemFocus(infoPtr, nItem);
 	if (!((wKey & MK_SHIFT) || (wKey & MK_CONTROL)) &&
             !LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
 	    LISTVIEW_SetSelection(infoPtr, nItem);
@@ -7989,7 +7969,6 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 
     /* Send NM_RClICK notification */
     ZeroMemory(&nmlv, sizeof(nmlv));
-    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE);
     nmlv.iItem = lvHitTestInfo.iItem;
     nmlv.iSubItem = lvHitTestInfo.iSubItem;
     nmlv.ptAction = lvHitTestInfo.pt;
@@ -8048,14 +8027,14 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
  */
 static BOOL LISTVIEW_SetCursor(LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHittest, UINT wMouseMsg)
 {
-    POINT pt;
+    LVHITTESTINFO lvHitTestInfo;
 
     if(!(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)) return FALSE;
 
     if(!infoPtr->hHotCursor)  return FALSE;
 
-    GetCursorPos(&pt);
-    if (LISTVIEW_GetItemAtPt(infoPtr, pt) < 0) return FALSE;
+    GetCursorPos(&lvHitTestInfo.pt);
+    if (LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, FALSE, FALSE) < 0) return FALSE;
 
     SetCursor(infoPtr->hHotCursor);
 
@@ -8592,7 +8571,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVN_HASGROUP: */
 
   case LVM_HITTEST:
-    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE);
+    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE, FALSE);
 
   case LVM_INSERTCOLUMNA:
     return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
@@ -8742,7 +8721,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SortItems(infoPtr, (PFNLVCOMPARE)lParam, (LPARAM)wParam);
 
   case LVM_SUBITEMHITTEST:
-    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, TRUE);
+    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, TRUE, FALSE);
 
   case LVM_UPDATE:
     return LISTVIEW_Update(infoPtr, (INT)wParam);
