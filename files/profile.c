@@ -120,9 +120,11 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
             lstrcpynA(env_val, p + 2, min( sizeof(env_val), (int)(p2-p)-1 ));
             if ((env_p = getenv( env_val )) != NULL)
             {
+                int buffer_len;
                 lstrcpynA( buffer, env_p, len );
-                buffer += strlen( buffer );
-                len -= strlen( buffer );
+                buffer_len = strlen( buffer );
+                buffer += buffer_len;
+                len -= buffer_len;
             }
             p = p2 + 1;
         }
