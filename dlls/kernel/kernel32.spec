@@ -781,7 +781,7 @@
 @ stdcall SetStdHandle(long long)
 @ stdcall SetSystemPowerState(long long)
 @ stdcall SetSystemTime(ptr)
-@ stub SetSystemTimeAdjustment
+@ stdcall SetSystemTimeAdjustment(long long)
 @ stdcall SetTapeParameters(ptr long ptr)
 @ stdcall SetTapePosition(ptr long long long long long)
 @ stdcall SetThreadAffinityMask(long long)

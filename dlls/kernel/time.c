@@ -126,6 +126,24 @@ BOOL WINAPI SetSystemTime(
     return !status;
 }
 
+/***********************************************************************
+ *              SetSystemTimeAdjustment  (KERNEL32.@)
+ *
+ *  Enables or disables the timing adjustments to the system's clock.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+BOOL WINAPI SetSystemTimeAdjustment(
+    DWORD dwTimeAdjustment,
+    BOOL bTimeAdjustmentDisabled)
+{
+    /* Fake function for now... */
+    FIXME("(%08lx,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
+    return TRUE;
+}
+
 
 /***********************************************************************
  *              GetTimeZoneInformation  (KERNEL32.@)
