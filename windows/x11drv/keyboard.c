@@ -1532,6 +1532,15 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             *(char*)lpChar = 0;
             ret = 0;
         }
+
+        /* more areas where X returns characters but Windows does not 
+           CTRL + number */
+        if ((lpKeyState[VK_CONTROL] & 0x80)&&(keysym>=48)&&
+            (keysym<=57))
+        {
+            *(char*)lpChar = 0;
+            ret = 0;
+        }
         
         /* We have another special case for delete key (XK_Delete) on an
          extended keyboard. X returns a char for it, but Windows doesn't */
