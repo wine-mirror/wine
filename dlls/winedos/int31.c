@@ -88,6 +88,7 @@ BOOL DOSVM_IsDos32(void)
  */
 static WINE_EXCEPTION_FILTER(dpmi_exception_handler)
 {
+#ifdef __i386__
     EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
     CONTEXT *context = GetExceptionInformation()->ContextRecord;
 
@@ -98,7 +99,7 @@ static WINE_EXCEPTION_FILTER(dpmi_exception_handler)
         DOSVM_SendQueuedEvents(context);
         return EXCEPTION_CONTINUE_EXECUTION;
     }
-
+#endif
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
