@@ -251,29 +251,36 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
         delta = i = 0;
 	if( lpDx ) /* explicit character widths */
 	{
-	    int extra = dc->wndExtX / 2;
+	    const long ve_we = dc->vportExtX*0x10000 / dc->wndExtX;
+	    unsigned short err = 0;
 
 	    while (i < count)
 	    {
 		/* initialize text item with accumulated delta */
 
+		long sum;
+		long fSum;
+		sum = 0;
 		pitem->chars  = str2b + i;
 		pitem->delta  = delta;
 		pitem->nchars = 0;
 		pitem->font   = None;
 		delta = 0;
 
-		/* add characters  to the same XTextItem until new delta
-		 * becomes  non-zero */
+		/* add characters to the same XTextItem
+		 * until new delta becomes non-zero */
 
 		do
 		{
-		    delta += (lpDx[i] * dc->vportExtX + extra) / dc->wndExtX
+		    sum += lpDx[i];
+		    fSum = sum*ve_we+err;
+		    delta = SHIWORD(fSum)
 		      - X11DRV_cptable[pfo->fi->cptable].pTextWidth(
-							pfo, str2b + i, 1);
+		                                pfo, pitem->chars, pitem->nchars+1);
 		    pitem->nchars++;
 		} while ((++i < count) && !delta);
 		pitem++;
+		err = LOWORD(fSum);
 	   }
 	}
 	else /* charExtra or breakExtra */
