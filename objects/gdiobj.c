@@ -948,6 +948,15 @@ DWORD WINAPI GdiSeeGdiDo( WORD wReqType, WORD wParam1, WORD wParam2,
 }
 
 /***********************************************************************
+ *           GdiFreeResources   (GDI.609)
+ */
+WORD WINAPI GdiFreeResources( DWORD reserve )
+{
+   return (WORD)( (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
+                  (int)LOCAL_HeapSize( GDI_HeapSel ) );
+}
+
+/***********************************************************************
  *           MulDiv16   (GDI.128)
  */
 INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )

@@ -378,7 +378,7 @@ file	gdi.exe
 606 pascal16 SetMagicColors(word long word) SetMagicColors16
 607 pascal GetRegionData(word long ptr) GetRegionData16
 608 stub ExtCreateRegion
-609 stub GDIFreeResources
+609 pascal16 GdiFreeResources(long) GdiFreeResources
 610 stub GDISignalProc32
 611 stub GetRandomRgn
 612 pascal16 GetTextCharset(word) GetTextCharset16
