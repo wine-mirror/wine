@@ -2783,6 +2783,8 @@ static BOOL EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy)
 {
 	INT nyoff;
 	INT x_offset_in_pixels;
+	INT lines_per_page = (es->format_rect.bottom - es->format_rect.top) /
+			      es->line_height;
 
 	if (es->style & ES_MULTILINE)
 	{
@@ -2799,8 +2801,8 @@ static BOOL EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy)
 	if (dx > es->text_width - x_offset_in_pixels)
 		dx = es->text_width - x_offset_in_pixels;
 	nyoff = max(0, es->y_offset + dy);
-	if (nyoff >= es->line_count)
-		nyoff = es->line_count - 1;
+	if (nyoff >= es->line_count - lines_per_page)
+		nyoff = es->line_count - lines_per_page;
 	dy = (es->y_offset - nyoff) * es->line_height;
 	if (dx || dy) {
 		RECT rc1;
