@@ -47,7 +47,7 @@ sub check_function {
     } elsif(!$winapi->is_allowed_kind($implemented_return_kind) || !$winapi->allowed_type_in_module($return_type,$module)) {
 	$forbidden_return_type = 1;
 	if($options->report_argument_forbidden($return_type)) {
-	    $output->write("forbidden return type: $return_type ($implemented_return_kind)" . "\n");
+	    $output->write("return type is forbidden: $return_type ($implemented_return_kind)\n");
 	}
     }
     
@@ -138,6 +138,8 @@ sub check_function {
 		    $output->write("forbidden argument " . ($n + 1) . " type " . $type . " (" . $kind . ")\n");
 		}
 	    }
+
+	    # FIXME: Kludge
 	    if(defined($kind) && $kind eq "longlong") {
 		$n+=2;
 		("long", "long");
@@ -156,7 +158,19 @@ sub check_function {
 		$segmented = 1;
 	    }
 
-	    if($argument_kinds[$n] ne $declared_argument_kinds[$n]) {
+	    # FIXME: Kludge
+	    if(!defined($argument_types[$n])) {
+		$argument_types[$n] = "";
+	    }
+
+	    if(!$winapi->is_allowed_kind($argument_kinds[$n]) ||
+	       !$winapi->allowed_type_in_module($argument_types[$n], $module)) 
+	    {
+		if($options->report_argument_forbidden($argument_types[$n])) {
+		    $output->write("argument " . ($n + 1) . " type is forbidden: " .
+				   "$argument_types[$n] ($argument_kinds[$n])\n");
+		}
+	    } elsif($argument_kinds[$n] ne $declared_argument_kinds[$n]) {
 		if($options->report_argument_kind($argument_kinds[$n]) ||
 		   $options->report_argument_kind($declared_argument_kinds[$n]))
 		{

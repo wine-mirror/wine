@@ -281,6 +281,10 @@ misc
 dlls/shell32
 memory
 
+% dlls/shell32/shfolder.spec
+
+dlls/shell32
+
 % dlls/shell32/shlwapi.spec
 
 dlls/shell32
@@ -404,39 +408,39 @@ dlls/wing
 
 dlls/wininet
 
-% dlls/winmm/joystick/joystick.spec
+% dlls/winmm/joystick/joystick.drv.spec
 
 dlls/winmm/joystick
 
-% dlls/winmm/mcianim/mcianim.spec
+% dlls/winmm/mcianim/mcianim.drv.spec
 
 dlls/winmm/mcianim
 
-% dlls/winmm/mciavi/mciavi.spec
+% dlls/winmm/mciavi/mciavi.drv.spec
 
 dlls/winmm/mciavi
 
-% dlls/winmm/mcicda/mcicda.spec
+% dlls/winmm/mcicda/mcicda.drv.spec
 
 dlls/winmm/mcicda
 
-% dlls/winmm/mciseq/mciseq.spec
+% dlls/winmm/mciseq/mciseq.drv.spec
 
 dlls/winmm/mciseq
 
-% dlls/winmm/mciwave/mciwave.spec
+% dlls/winmm/mciwave/mciwave.drv.spec
 
 dlls/winmm/mciwave
 
-% dlls/winmm/midimap/midimap.spec
+% dlls/winmm/midimap/midimap.drv.spec
 
 dlls/winmm/midimap
 
-% dlls/winmm/wavemap/msacm.spec
+% dlls/winmm/wavemap/msacm.drv.spec
 
 dlls/winmm/wavemap
 
-% dlls/winmm/wineoss/wineoss.spec
+% dlls/winmm/wineoss/wineoss.drv.spec
 
 dlls/winmm/wineoss
 
@@ -453,12 +457,16 @@ windows
 
 dlls/winsock
 
+% dlls/winsock/ws2_32.spec
+
+dlls/winsock
+
 % dlls/winsock/wsock32.spec
 
 dlls/winsock
 misc
 
-% dlls/winspool/winspool.spec
+% dlls/winspool/winspool.drv.spec
 
 dlls/winspool
 win32

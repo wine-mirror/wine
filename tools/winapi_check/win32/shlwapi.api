@@ -7,6 +7,7 @@ LONG
 HANDLE
 HDC
 HKEY
+HMENU
 HPALETTE
 HRESULT
 HWND
@@ -31,6 +32,10 @@ LPSTRRET
 LPVOID
 REFGUID
 void *
+
+%ptr --extension
+
+WNDCLASSW *
 
 %str
 

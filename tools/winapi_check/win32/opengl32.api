@@ -35,14 +35,15 @@ GLdouble *
 GLfloat *
 GLint *
 GLshort *
+GLstring
 GLuint *
 GLubyte *
 GLushort *
 GLvoid *
+GLvoid **
 LPGLYPHMETRICSFLOAT
 LPLAYERPLANEDESCRIPTOR
 void *
-void **
 
 %str
 

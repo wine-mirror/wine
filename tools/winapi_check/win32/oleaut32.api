@@ -45,9 +45,6 @@ COLORREF *
 CY *
 DATE *
 FLOAT *
-ICreateErrorInfo **
-IErrorInfo *
-IErrorInfo **
 ITypeLib *
 ITypeLib **
 LONG *
