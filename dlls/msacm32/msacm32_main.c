@@ -153,11 +153,16 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 		val++;
 	*(LPDWORD)pMetric = val;
 	return 0;
-
+    
+    case ACM_METRIC_MAX_SIZE_FORMAT:
+        /* FIXME: According to MSDN, this should return the size of the largest WAVEFORMATEX
+           structure in the system. How is this calculated? */
+        *(LPDWORD)pMetric = sizeof (WAVEFORMATEX);   
+        return 0;
+        
     case ACM_METRIC_COUNT_HARDWARE:
     case ACM_METRIC_HARDWARE_WAVE_INPUT:
     case ACM_METRIC_HARDWARE_WAVE_OUTPUT:
-    case ACM_METRIC_MAX_SIZE_FORMAT:
     case ACM_METRIC_MAX_SIZE_FILTER:
     case ACM_METRIC_DRIVER_SUPPORT:
     case ACM_METRIC_DRIVER_PRIORITY:
