@@ -20,6 +20,10 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
+/* shell policy data */
+#define SHELL_MAX_POLICIES 57         /* number in Win98 */
+unsigned long shell_policies[SHELL_MAX_POLICIES];
+
 /*************************************************************************
  * SHChangeNotifyRegister			[SHELL32.2]
  *
@@ -359,6 +363,57 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 	/* FIXME: do nothing for now, just return 0 (== "allowed") */
 	RegCloseKey(xhkey);
 	return 0;
+}
+
+/*************************************************************************
+ *      SHInitRestricted                         [SHELL32.244]
+ *
+ * Win98+ by-ordinal only routine called by Explorer and MSIE 4 and 5.
+ *
+ * INPUTS
+ * Two inputs: one is a string or NULL.  If non-NULL the pointer
+ * should point to a string containing the following exact text:
+ * "Software\Microsoft\Windows\CurrentVersion\Policies".
+ * The other input is unused.
+ *
+ * NOTES
+ * If the input is non-NULL and does not point to a string containing
+ * that exact text the routine will do nothing.
+ *
+ * If the text does match or the pointer is NULL, then the routine
+ * will init SHRestricted()'s policy table to all 0xffffffff and
+ * returns 0xffffffff as well.
+ *
+ * I haven't yet run into anything calling this with inputs other than
+ * (NULL, NULL), so I may have the inputs reversed.
+ */
+
+BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
+{
+     int i;
+
+     TRACE("(%p, %p)\n", inpRegKey, parm2);
+
+     /* first check - if input is non-NULL and points to the secret
+        key string, then pass.  Otherwise return 0.
+     */
+
+     if (inpRegKey != (LPSTR)NULL)
+     {
+         if (lstrcmpiA(inpRegKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies"))
+	 {
+	     /* doesn't match, fail */
+	     return 0;
+	 }
+     }                               
+
+     /* check passed, init all policy table entries with 0xffffffff */
+     for (i = 0; i < SHELL_MAX_POLICIES; i++)
+     {
+          shell_policies[i] = 0xffffffff;
+     }
+
+     return 0xffffffff;
 }
 
 /*************************************************************************
@@ -1319,3 +1374,15 @@ HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 	return DoEnvironmentSubstA(x, y);
 }
 
+/*************************************************************************
+ *      shell32_243                             [SHELL32.243]
+ * 
+ * Win98+ by-ordinal routine.  In Win98 this routine returns zero and
+ * does nothing else.  Possibly this does something in NT or SHELL32 5.0?
+ *
+ */
+
+BOOL WINAPI shell32_243(DWORD a, DWORD b) 
+{ 
+  return FALSE; 
+}

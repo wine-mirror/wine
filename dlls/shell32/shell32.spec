@@ -248,8 +248,8 @@ init	Shell32LibMain
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
  242 stdcall SHFileOperation (ptr) SHFileOperationAW   # exported by name
- 243 stdcall SHFileOperationA (ptr) SHFileOperationA  # exported by name
- 244 stdcall SHFileOperationW (ptr) SHFileOperationW   # exported by name
+ 243 stdcall shell32_243(long long) shell32_243
+ 244 stdcall SHInitRestricted(ptr ptr) SHInitRestricted # win98+ only, by ordinal
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
  247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDListA
@@ -387,3 +387,8 @@ init	Shell32LibMain
 1221 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA	# win98:292
 1222 stdcall DoEnvironmentSubstA (str str) DoEnvironmentSubstA		# win98:293
 1223 stdcall DoEnvironmentSubstW (wstr wstr) DoEnvironmentSubstW	# win98:204
+
+# by-name routines relocated in win98
+
+1224 stdcall SHFileOperationA (ptr) SHFileOperationA # exported by name
+1225 stdcall SHFileOperationW (ptr) SHFileOperationW # exported by name
