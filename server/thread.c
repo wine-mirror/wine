@@ -260,10 +260,10 @@ void wait4_thread( struct thread *thread, int signal )
             if (!thread)
                 if (!(thread = get_thread_from_pid( pid ))) break;
             if (!(thread->process->suspend + thread->suspend))
-                ptrace( PTRACE_CONT, pid, 0, sig );
+                ptrace( PT_CONTINUE, pid, 0, sig );
             break;
         default:  /* ignore other signals for now */
-            ptrace( PTRACE_CONT, pid, 0, sig );
+            ptrace( PT_CONTINUE, pid, 0, sig );
             break;
         }
         if (signal && sig != signal) goto restart;
@@ -293,7 +293,7 @@ void wait4_thread( struct thread *thread, int signal )
 static int attach_thread( struct thread *thread )
 {
     /* this may fail if the client is already being debugged */
-    if (!use_ptrace || (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
+    if (!use_ptrace || (ptrace( PT_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
     if (debug_level) fprintf( stderr, "ptrace: attached to pid %d\n", thread->unix_pid );
     thread->attached = 1;
     wait4_thread( thread, SIGSTOP );
@@ -310,7 +310,7 @@ static void detach_thread( struct thread *thread )
     {
         wait4_thread( thread, SIGTERM );
         if (debug_level) fprintf( stderr, "ptrace: detaching from %d\n", thread->unix_pid );
-        ptrace( PTRACE_DETACH, thread->unix_pid, 0, SIGTERM );
+        ptrace( PT_DETACH, thread->unix_pid, 0, SIGTERM );
         thread->attached = 0;
     }
 }
@@ -332,7 +332,7 @@ void continue_thread( struct thread *thread )
 {
     if (!thread->unix_pid) return;
     if (!thread->attached) kill( thread->unix_pid, SIGCONT );
-    else ptrace( PTRACE_CONT, thread->unix_pid, 0, SIGSTOP );
+    else ptrace( PT_CONTINUE, thread->unix_pid, 0, SIGSTOP );
 }
  
 /* suspend a thread */
