@@ -468,7 +468,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 
 		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
 		if (fd == -1) {
-			ERR("error=%d\n", errno);
+			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
 			return IE_HARDWARE;
 		} else {
                         unknown[port] = SEGPTR_ALLOC(40);
@@ -1992,11 +1992,7 @@ BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
          int save_error = errno;
          commerror = WinError();
          close( fd );
-#ifdef HAVE_STRERROR
          ERR("tcgetattr error '%s'\n", strerror(save_error));
-#else
-         ERR("tcgetattr error %d\n", save_error);
-#endif
          return FALSE;
      }
 
@@ -2260,11 +2256,7 @@ BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
 	        int save_error=errno;
 		commerror = WinError();	
                 close( fd );
-#ifdef HAVE_STRERROR
                 ERR("tcgetattr error '%s'\n", strerror(save_error));
-#else
-                ERR("tcgetattr error %d\n", save_error);
-#endif
 		return FALSE;
 	} else {
 		commerror = 0;
@@ -2291,11 +2283,7 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
        }
      if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
-#ifdef HAVE_STRERROR
                 ERR("tcgetattr error '%s'\n", strerror(save_error));
-#else
-                ERR("tcgetattr error %d\n", save_error);
-#endif
 		commerror = WinError();	
                 close( fd );
 		return FALSE;

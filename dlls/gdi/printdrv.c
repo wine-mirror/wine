@@ -488,7 +488,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     {
         DOS_FULL_NAME fullName;
 
-        TRACE("Just assume its a file\n");
+        TRACE("Just assume it's a file\n");
 
         /**
          * The file name can be dos based, we have to find its
@@ -498,8 +498,8 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 
         if ((fd = open(fullName.long_name, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
-            ERR("Failed to create spool file %s, errno = %d\n", 
-                fullName.long_name, errno);
+            ERR("Failed to create spool file %s (%s)\n", 
+                fullName.long_name, strerror(errno));
         }
     }
     return fd;

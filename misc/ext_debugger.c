@@ -128,11 +128,11 @@ void DEBUG_ExternalDebugger(void)
     if (status == -1)
     {
       if (dbg_no_xterm)
-        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"%s %s %s\", errno = %d\n", 
-                dbg_external, dbg_wine_location, pid_string, errno);
+        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"%s %s %s\" (%s)\n", 
+                dbg_external, dbg_wine_location, pid_string, strerror(errno));
       else
-        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"xterm -e %s %s %s\", errno = %d\n", 
-                dbg_external, dbg_wine_location, pid_string, errno);
+        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"xterm -e %s %s %s\" (%s)\n", 
+                dbg_external, dbg_wine_location, pid_string, strerror(errno));
     }
 
   }

@@ -281,7 +281,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
     /* EAGAIN is returned when the queue is empty */
     if (errno != EAGAIN) {
 	/* FIXME: error should not be ignored */
-	ERR("Error while reading joystick state (%d)\n", errno);
+	ERR("Error while reading joystick state (%s)\n", strerror(errno));
     }
 #else
     dev_stat = read(dev, &js, sizeof(js));

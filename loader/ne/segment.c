@@ -14,19 +14,16 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
 
 #include "wine/winbase16.h"
 #include "neexe.h"
 #include "global.h"
 #include "task.h"
-#include "selectors.h"
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "debugtools.h"
-#include "toolhelp.h"
 
 DECLARE_DEBUG_CHANNEL(dll);
 DECLARE_DEBUG_CHANNEL(fixup);

@@ -45,27 +45,16 @@
  *
  */
 
-#include "config.h"
-
-#include <X11/Xatom.h>
-
 #include "ts_xlib.h"
 
-#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
 #include "clipboard.h"
-#include "message.h"
 #include "win.h"
 #include "x11drv.h"
-#include "bitmap.h"
-#include "heap.h"
 #include "options.h"
 #include "debugtools.h"
 
@@ -297,9 +286,6 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         ERR("Could not create wait object. Clipboard server won't start!\n");
     else
     {
-        /* Make the event object's handle global */
-        selectionClearEvent = ConvertToGlobalHandle(selectionClearEvent);
-        
         /* Wait until we lose the selection, timing out after a minute */
 
         TRACE("Waiting for clipboard server to acquire selection\n");

@@ -23,31 +23,13 @@
  *   NE_MODULE.module32.
  */
 
-#include "config.h"
-
-#include <errno.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#include "windef.h"
-#include "winbase.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
-#include "callback.h"
-#include "file.h"
-#include "heap.h"
 #include "neexe.h"
 #include "process.h"
-#include "thread.h"
-#include "module.h"
-#include "global.h"
-#include "task.h"
 #include "snoop.h"
 #include "server.h"
 #include "debugtools.h"

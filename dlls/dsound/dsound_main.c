@@ -25,10 +25,8 @@
 
 #include "config.h"
 #include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -40,7 +38,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
-#include "thread.h"
 #include "debugtools.h"
 
 #include "initguid.h"

@@ -66,7 +66,7 @@ struct CCPRIVATE
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
  RECT old3angle;    /* last position of l-marker */
  RECT oldcross;     /* last position of color/satuation marker */
- BOOL updating;     /* to prevent recursive WM_COMMAND/EN_UPDATE procesing */
+ BOOL updating;     /* to prevent recursive WM_COMMAND/EN_UPDATE processing */
  int h;
  int s;
  int l;               /* for temporary storing of hue,sat,lum */

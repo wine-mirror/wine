@@ -38,7 +38,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include <string.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <limits.h>
 #include <sys/timeb.h>
 

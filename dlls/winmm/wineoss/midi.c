@@ -382,8 +382,17 @@ static int midiOpenSeq(void)
 	midiSeqFD = open(MIDI_SEQ, O_RDWR, 0);
 	if (midiSeqFD == -1) {
 	    if (midi_warn)
-		MESSAGE("Can't open MIDI device '%s', errno %d (%s) !\n",
-					MIDI_SEQ, errno, strerror(errno));
+	    {
+		MESSAGE("Can't open MIDI device '%s' ! (%s)%s\n",
+			MIDI_SEQ, strerror(errno),
+			errno == ENOENT ?
+			": create it ! (\"man MAKEDEV\" ?)" :
+			errno == ENODEV ?
+			": Load MIDI sequencer kernel driver !" :
+			errno == EACCES ?
+			": Grant access ! (\"man chmod\")" : ""
+		);
+	    }
 	    midi_warn = 0;
 	    return -1;
 	}

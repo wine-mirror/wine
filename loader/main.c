@@ -2,21 +2,18 @@
  * Main initialization code
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "main.h"
 #include "drive.h"
 #include "file.h"
 #include "options.h"
-#include "process.h"
 #include "shell.h"
 #include "debugtools.h"
 #include "server.h"

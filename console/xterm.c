@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <errno.h>
 
 #include "console.h"
 #include "options.h"

@@ -1283,7 +1283,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (connect(nsocket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) < 0)
     {
-	ERR("Unable to connect: errno(%d)\n", errno);
+	ERR("Unable to connect (%s)\n", strerror(errno));
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
     }
     else

@@ -243,6 +243,9 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         InternetCrackUrlA(lpszReferrer, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName))
             lpwhr->lpszHostName = HEAP_strdupA(GetProcessHeap(), 0, UrlComponents.lpszHostName);
+    } else {
+        lpwhr->lpszHostName = HEAP_strdupA(GetProcessHeap(), 0,
+					   lpwhs->lpszServerName);
     }
 
     if (hIC->lpfnStatusCB)
@@ -821,7 +824,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr)
 
     if (SOCKET_ERROR == result)
     {
-       WARN("Unable to connect to host: %d\n", errno);
+       WARN("Unable to connect to host (%s)\n", strerror(errno));
        goto lend;
     }
 
