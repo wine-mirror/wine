@@ -241,7 +241,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
         LPSTR pname;
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Binding->Endpoint);
-       TRACE("listening on %s\n", pname);
+        TRACE("listening on %s\n", pname);
         Binding->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                          0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
         HeapFree(GetProcessHeap(), 0, pname);
@@ -262,7 +262,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
         LPSTR pname;
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Binding->Endpoint);
-       TRACE("listening on %s\n", pname);
+        TRACE("listening on %s\n", pname);
         Binding->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                          0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
         HeapFree(GetProcessHeap(), 0, pname);
@@ -278,8 +278,8 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
         }
       }
       else {
-       ERR("protseq %s not supported\n", Binding->Protseq);
-       return RPC_S_PROTSEQ_NOT_SUPPORTED;
+        ERR("protseq %s not supported\n", Binding->Protseq);
+        return RPC_S_PROTSEQ_NOT_SUPPORTED;
       }
     }
     else { /* client */
@@ -288,67 +288,65 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
       if (strcmp(Binding->Protseq, "ncalrpc") == 0) {
         static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
         LPSTR pname;
-       HANDLE conn;
-       DWORD err;
+        HANDLE conn;
+        DWORD err;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Binding->Endpoint);
-       TRACE("connecting to %s\n", pname);
-       while (TRUE) {
-         if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
-           conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                              OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-           if (conn != INVALID_HANDLE_VALUE) break;
-           err = GetLastError();
-           if (err == ERROR_PIPE_BUSY) continue;
-           TRACE("connection failed, error=%lx\n", err);
-           HeapFree(GetProcessHeap(), 0, pname);
-           return err;
-         }
-         else {
-           err = GetLastError();
-           TRACE("connection failed, error=%lx\n", err);
-           HeapFree(GetProcessHeap(), 0, pname);
-           return err;
-         }
-       }
+        TRACE("connecting to %s\n", pname);
+        while (TRUE) {
+          if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
+            conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                               OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+            if (conn != INVALID_HANDLE_VALUE) break;
+            err = GetLastError();
+            if (err == ERROR_PIPE_BUSY) continue;
+            TRACE("connection failed, error=%lx\n", err);
+            HeapFree(GetProcessHeap(), 0, pname);
+            return err;
+          } else {
+            err = GetLastError();
+            TRACE("connection failed, error=%lx\n", err);
+            HeapFree(GetProcessHeap(), 0, pname);
+            return err;
+          }
+        }
 
-       /* success */
-       HeapFree(GetProcessHeap(), 0, pname);
+        /* success */
+        HeapFree(GetProcessHeap(), 0, pname);
         memset(&Binding->ovl, 0, sizeof(Binding->ovl));
         Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-       Binding->conn = conn;
+        Binding->conn = conn;
       }
       /* protseq=ncacn_np: named pipes */
       else if (strcmp(Binding->Protseq, "ncacn_np") == 0) {
         static LPSTR prefix = "\\\\.";
         LPSTR pname;
-       HANDLE conn;
-       DWORD err;
+        HANDLE conn;
+        DWORD err;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Binding->Endpoint);
-       TRACE("connecting to %s\n", pname);
-       conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                          OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-       if (conn == INVALID_HANDLE_VALUE) {
-         err = GetLastError();
-         /* we don't need to handle ERROR_PIPE_BUSY here,
-          * the doc says that it is returned to the app */
-         TRACE("connection failed, error=%lx\n", err);
-         HeapFree(GetProcessHeap(), 0, pname);
-         return err;
-       }
+        TRACE("connecting to %s\n", pname);
+        conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+        if (conn == INVALID_HANDLE_VALUE) {
+          err = GetLastError();
+          /* we don't need to handle ERROR_PIPE_BUSY here,
+           * the doc says that it is returned to the app */
+          TRACE("connection failed, error=%lx\n", err);
+          HeapFree(GetProcessHeap(), 0, pname);
+          return err;
+        }
 
-       /* success */
-       HeapFree(GetProcessHeap(), 0, pname);
+        /* success */
+        HeapFree(GetProcessHeap(), 0, pname);
         memset(&Binding->ovl, 0, sizeof(Binding->ovl));
         Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-       Binding->conn = conn;
-      }
-      else {
-       ERR("protseq %s not supported\n", Binding->Protseq);
-       return RPC_S_PROTSEQ_NOT_SUPPORTED;
+        Binding->conn = conn;
+      } else {
+        ERR("protseq %s not supported\n", Binding->Protseq);
+        return RPC_S_PROTSEQ_NOT_SUPPORTED;
       }
     }
   }
@@ -440,9 +438,9 @@ RPC_STATUS WINAPI RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq,
     data += RPCRT4_strcopyA(data, Protseq);
     *data++ = ':';
   }
-  if (NetworkAddr && *NetworkAddr) {
+  if (NetworkAddr && *NetworkAddr)
     data += RPCRT4_strcopyA(data, NetworkAddr);
-  }
+
   if ((Endpoint && *Endpoint) ||
       (Options && *Options)) {
     *data++ = '[';
@@ -566,33 +564,33 @@ RPC_STATUS WINAPI RpcStringBindingParseA( LPSTR StringBinding, LPSTR *ObjUuid,
       /* parse option */
       next = strchr(opt, '=');
       if (!next) {
-       /* not an option, must be an endpoint */
-       if (*Endpoint) goto fail;
-       *Endpoint = opt;
-      }
-      else {
-       if (strncmp(opt, ep_opt, strlen(ep_opt)) == 0) {
-         /* endpoint option */
-         if (*Endpoint) goto fail;
-         *Endpoint = RPCRT4_strdupA(next+1);
-         HeapFree(GetProcessHeap(), 0, opt);
-       }
-       else {
-         /* network option */
-         if (*Options) {
+        /* not an option, must be an endpoint */
+        if (*Endpoint) goto fail;
+        *Endpoint = opt;
+      } else {
+        if (strncmp(opt, ep_opt, strlen(ep_opt)) == 0) {
+          /* endpoint option */
+          if (*Endpoint) goto fail;
+          *Endpoint = RPCRT4_strdupA(next+1);
+          HeapFree(GetProcessHeap(), 0, opt);
+        } else {
+          /* network option */
+          if (*Options) {
             /* FIXME: this is kind of inefficient */
-           *Options = RPCRT4_strconcatA(*Options, opt);
-           HeapFree(GetProcessHeap(), 0, opt);
-         }
-         else *Options = opt;
-       }
+            *Options = RPCRT4_strconcatA(*Options, opt);
+            HeapFree(GetProcessHeap(), 0, opt);
+          } else 
+	    *Options = opt;
+        }
       }
     }
 
     data = close+1;
     if (*data) goto fail;
   }
-  else if (NetworkAddr) *NetworkAddr = RPCRT4_strdupA(data);
+  else if (NetworkAddr) 
+    *NetworkAddr = RPCRT4_strdupA(data);
+
   return RPC_S_OK;
 
 fail:
@@ -657,35 +655,34 @@ RPC_STATUS WINAPI RpcStringBindingParseW( LPWSTR StringBinding, LPWSTR *ObjUuid,
       /* parse option */
       next = strchrW(opt, '=');
       if (!next) {
-       /* not an option, must be an endpoint */
-       if (*Endpoint) goto fail;
-       *Endpoint = opt;
-      }
-      else {
-       if (strncmpW(opt, ep_opt, strlenW(ep_opt)) == 0) {
-         /* endpoint option */
-         if (*Endpoint) goto fail;
-         *Endpoint = RPCRT4_strdupW(next+1);
-         HeapFree(GetProcessHeap(), 0, opt);
-       }
-       else {
-         /* network option */
-         if (*Options) {
+        /* not an option, must be an endpoint */
+        if (*Endpoint) goto fail;
+        *Endpoint = opt;
+      } else {
+        if (strncmpW(opt, ep_opt, strlenW(ep_opt)) == 0) {
+          /* endpoint option */
+          if (*Endpoint) goto fail;
+          *Endpoint = RPCRT4_strdupW(next+1);
+          HeapFree(GetProcessHeap(), 0, opt);
+        } else {
+          /* network option */
+          if (*Options) {
             /* FIXME: this is kind of inefficient */
-           *Options = RPCRT4_strconcatW(*Options, opt);
-           HeapFree(GetProcessHeap(), 0, opt);
-         }
-         else *Options = opt;
-       }
+            *Options = RPCRT4_strconcatW(*Options, opt);
+            HeapFree(GetProcessHeap(), 0, opt);
+          } else 
+	    *Options = opt;
+        }
       }
     }
 
     data = close+1;
     if (*data) goto fail;
-  }
-  else if (NetworkAddr) *NetworkAddr = RPCRT4_strdupW(data);
+  } else if (NetworkAddr) 
+    *NetworkAddr = RPCRT4_strdupW(data);
 
   return RPC_S_OK;
+
 fail:
   if (ObjUuid) RpcStringFreeW(ObjUuid);
   if (Protseq) RpcStringFreeW(Protseq);
@@ -779,8 +776,10 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING
   RpcStringFreeA(&Protseq);
   RpcStringFreeA(&ObjectUuid);
 
-  if (ret == RPC_S_OK) *Binding = (RPC_BINDING_HANDLE)bind;
-  else RPCRT4_DestroyBinding(bind);
+  if (ret == RPC_S_OK) 
+    *Binding = (RPC_BINDING_HANDLE)bind;
+  else 
+    RPCRT4_DestroyBinding(bind);
 
   return ret;
 }
@@ -816,8 +815,10 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDIN
   RpcStringFreeW(&Protseq);
   RpcStringFreeW(&ObjectUuid);
 
-  if (ret == RPC_S_OK) *Binding = (RPC_BINDING_HANDLE)bind;
-  else RPCRT4_DestroyBinding(bind);
+  if (ret == RPC_S_OK)
+    *Binding = (RPC_BINDING_HANDLE)bind;
+  else
+    RPCRT4_DestroyBinding(bind);
 
   return ret;
 }
