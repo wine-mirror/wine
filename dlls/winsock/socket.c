@@ -103,6 +103,9 @@
 # define HAVE_IPX
 #endif
 
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -633,24 +636,15 @@ static void fd_set_unimport( void* wsfds, int lfd[], BOOL b32 )
     }
 }
 
-static int do_block( int fd, int mask )
+/* utility: given an fd, will block until one of the events occurs */
+static inline int do_block( int fd, int events )
 {
-    fd_set fds[3];
-    int i, r;
+  struct pollfd pfd;
 
-    FD_ZERO(&fds[0]);
-    FD_ZERO(&fds[1]);
-    FD_ZERO(&fds[2]);
-    for (i=0; i<3; i++)
-	if (mask & (1<<i))
-	    FD_SET(fd, &fds[i]);
-    i = select( fd+1, &fds[0], &fds[1], &fds[2], NULL );
-    if (i <= 0) return -1;
-    r = 0;
-    for (i=0; i<3; i++)
-	if (FD_ISSET(fd, &fds[i]))
-	    r |= 1<<i;
-    return r;
+  pfd.fd = fd;
+  pfd.events = events;
+  poll(&pfd, 1, -1);
+  return pfd.revents;
 }
 
 void* __ws_memalloc( int size )
@@ -1426,7 +1420,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
 	if (_is_blocking(s))
 	{
 	    /* block here */
-	    do_block(fd, 5);
+	    do_block(fd, POLLIN);
 	    _sync_sock_state(s); /* let wineserver notice connection */
 	    /* retrieve any error codes from it */
 	    SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
@@ -1608,7 +1602,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
             {
                 int result;
                 /* block here */
-                do_block(fd, 7);
+                do_block(fd, POLLIN | POLLOUT );
                 _sync_sock_state(s); /* let wineserver notice connection */
                 /* retrieve any error codes from it */
                 result = _get_sock_error(s, FD_CONNECT_BIT);
@@ -2474,7 +2468,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     if (_is_blocking(s))
     {
         /* FIXME: exceptfds? */
-        do_block(fd, 2);
+        do_block(fd, POLLOUT);
     }
 
     n = WS2_send ( fd, iovec, dwBufferCount, to, tolen, dwFlags );
@@ -3938,7 +3932,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     {
         /* block here */
         /* FIXME: OOB and exceptfds? */
-        do_block(fd, 1);
+        do_block(fd, POLLIN);
     }
 
     n = WS2_recv ( fd, iovec, dwBufferCount, lpFrom, lpFromlen, lpFlags );
