@@ -25,6 +25,10 @@ DEFAULT_DEBUG_CHANNEL(text);
 #define SPACE  32
 #define PREFIX 38
 
+#define ELLIPSIS "..."
+#define FORWARD_SLASH '/'
+#define BACK_SLASH '\\'
+
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 
 static int tabstop = 8;
@@ -47,6 +51,12 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
      *
      * Returns pointer to next char in str after end of the line
      * or NULL if end of str reached.
+     */
+
+    /* FIXME:
+     * GetTextExtentPoint is used to get the width of each character, 
+     * rather than GetCharABCWidth...  So the whitespace between
+     * characters is ignored, and the reported len is too great.
      */
 
     int i = 0, j = 0, k;
@@ -227,6 +237,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 
     if (!str) return 0;
     if (count == -1) count = strlen(str);
+    if (count == 0) return 0;
     strPtr = str;
 
     GetTextMetricsA(hdc, &tm);
@@ -271,6 +282,92 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 	    if (flags & DT_VCENTER) y = rect->top + 
 	    	(rect->bottom - rect->top) / 2 - size.cy / 2;
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
+
+	    if (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS))
+	    {
+	        char swapStr[sizeof(line)];
+	        char* fnameDelim = NULL;
+	        int totalLen = i_count >= 0 ? i_count : strlen(str);
+
+		if (size.cx > width)
+	        {
+	            int fnameLen = totalLen;
+
+	            /* allow room for '...' */
+	            count = min(totalLen+3, sizeof(line)-3);
+
+                    if (flags & DT_WORD_ELLIPSIS)
+	                flags |= DT_WORDBREAK;
+
+		    if (flags & DT_PATH_ELLIPSIS) 
+	            {
+			char* lastBkSlash = NULL;
+			char* lastFwdSlash = NULL;
+	                strncpy(line, str, totalLen); line[totalLen] = '\0';
+	                lastBkSlash = strrchr(line, BACK_SLASH);
+	                lastFwdSlash = strrchr(line, FORWARD_SLASH);
+			fnameDelim = lastFwdSlash ? lastFwdSlash : lastBkSlash;
+			if (lastBkSlash && lastFwdSlash) /* which is last? */
+			   if (lastBkSlash > lastFwdSlash)
+				fnameDelim = lastBkSlash;
+
+	                if (fnameDelim)
+	                    fnameLen = &line[totalLen] - fnameDelim;
+	                else 
+	                    fnameDelim = (char*)str;
+
+	                strcpy(swapStr, ELLIPSIS);
+	                strncat(swapStr, fnameDelim, fnameLen);
+	                swapStr[fnameLen+3] = '\0';
+	                strncat(swapStr, str, totalLen - fnameLen);
+	                swapStr[totalLen+3] = '\0';
+                    }
+                    else  /* DT_END_ELLIPSIS | DT_WORD_ELLIPSIS */
+	            {
+	                strcpy(swapStr, ELLIPSIS);
+	                strncat(swapStr, str, totalLen);
+	            }
+
+	            TEXT_NextLine(hdc, swapStr, &count, line, &len, width, flags); 
+
+	            /* if only the ELLIPSIS will fit, just let it be clipped */
+	            len = max(3, len);
+	            GetTextExtentPointA(hdc, line, len, &size);
+
+	            /* FIXME:
+	             * NextLine uses GetTextExtentPoint for each character, 
+	             * rather than GetCharABCWidth...  So the whitespace between
+	             * characters is ignored in the width measurement, and the 
+	             * reported len is too great.  To compensate, we must get
+	             * the width of the entire line and adjust len accordingly.
+	            */
+	            while ((size.cx > width) && (len > 3))
+	            {
+	                line[--len] = '\0';
+	                GetTextExtentPointA(hdc, line, len, &size);
+	            }
+
+	            if (fnameLen < len-3) /* some of the path will fit */
+	            {
+	                /* put the ELLIPSIS between the path and filename */
+	                strncpy(swapStr, &line[fnameLen+3], len-3-fnameLen); 
+	                swapStr[len-3-fnameLen] = '\0';
+	                strcat(swapStr, ELLIPSIS); 
+	                strncat(swapStr, &line[3], fnameLen); 
+	            }
+	            else
+	            {
+	                /* move the ELLIPSIS to the end */
+	                strncpy(swapStr, &line[3], len-3);
+	                swapStr[len-3] = '\0';
+	                strcat(swapStr, ELLIPSIS);
+	            }
+
+	            strncpy(line, swapStr, len);
+	            line[len] = '\0';
+	            strPtr = NULL;
+	        }
+	    }
 	}
 	if (!(flags & DT_CALCRECT))
 	{
