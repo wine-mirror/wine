@@ -89,14 +89,14 @@ At this moment (May 29, 1999), the following is supported:
                  Sys| Commdlg                   | Shell| Programs
                  Res| OFN PD16 PSD CF CC FR PD32| 32   | Clock Notepad Progman WinHelp
                 ----+---------------------------+------+------------------------------
-Ca Catalan         d   10  10   10 10 10 10  --      2     --    --       --     --
+Ca Catalan        10   10  10   10 10 10 10  --      2     --    --       --     --
 Cs Czech          de   10  10   10  5  5 10  --      1     --    --       --     --
 Da Danish          d   10  10   10 10 10 10  --      2
 De German         10   10  10   10 10 10 10  --      1
 En English        10   10  10   10 10 10 10  10      2
 
 Eo Esperanto      de   10  10   10  5  5 10  --      1     --    --       --     --
-Es Spanish         d   10  10   10 10 10 10  --      2
+Es Spanish        10   10  10   10 10 10 10  --      2
 Fi Finnish        10   10  10   10 10 10 10  --      1
 Fr French         10   10  10   10 10 10 10  --      2
 Hu Hungarian       d   10  10   10 10 10 10  --      1     --    --
