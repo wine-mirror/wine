@@ -43,7 +43,7 @@ static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode);
  */
 void WINAPI DOSVM_Int34Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x34 called-- FP opcode 0xd8");
+    TRACE("Int 0x34 called-- FP opcode 0xd8\n");
     FPU_ModifyCode(context, 0xd8);
 }
 
@@ -58,7 +58,7 @@ void WINAPI DOSVM_Int34Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int35Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x35 called-- FP opcode 0xd9");
+    TRACE("Int 0x35 called-- FP opcode 0xd9\n");
     FPU_ModifyCode(context, 0xd9);
 }
 
@@ -73,7 +73,7 @@ void WINAPI DOSVM_Int35Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int36Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x36 called-- FP opcode 0xda");
+    TRACE("Int 0x36 called-- FP opcode 0xda\n");
     FPU_ModifyCode(context, 0xda);
 }
 
@@ -88,7 +88,7 @@ void WINAPI DOSVM_Int36Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int37Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x37 called-- FP opcode 0xdb");
+    TRACE("Int 0x37 called-- FP opcode 0xdb\n");
     FPU_ModifyCode(context, 0xdb);
 }
 
@@ -106,7 +106,7 @@ void WINAPI DOSVM_Int37Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int38Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x38 called-- FP opcode 0xdc");
+    TRACE("Int 0x38 called-- FP opcode 0xdc\n");
     FPU_ModifyCode(context, 0xdc);
 }
 
@@ -121,7 +121,7 @@ void WINAPI DOSVM_Int38Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int39Handler(CONTEXT86 *context)
 {
-    TRACE("Int 0x39 called-- FP opcode 0xdd");
+    TRACE("Int 0x39 called-- FP opcode 0xdd\n");
     FPU_ModifyCode(context, 0xdd);
 }
 
@@ -136,7 +136,7 @@ void WINAPI DOSVM_Int39Handler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int3aHandler(CONTEXT86 *context)
 {
-    TRACE("Int 0x3a called-- FP opcode 0xde");
+    TRACE("Int 0x3a called-- FP opcode 0xde\n");
     FPU_ModifyCode(context, 0xde);
 }
 
@@ -151,7 +151,7 @@ void WINAPI DOSVM_Int3aHandler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int3bHandler(CONTEXT86 *context)
 {
-    TRACE("Int 0x3b called-- FP opcode 0xdf");
+    TRACE("Int 0x3b called-- FP opcode 0xdf\n");
     FPU_ModifyCode(context, 0xdf);
 }
 
@@ -174,7 +174,7 @@ void WINAPI DOSVM_Int3bHandler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int3cHandler(CONTEXT86 *context)
 {
-    FIXME("Int 3C NOT Implemented");
+    FIXME("Int 3C NOT Implemented\n");
     INT_BARF(context, 0x3c);
 }
 
@@ -188,7 +188,7 @@ void WINAPI DOSVM_Int3cHandler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int3dHandler(CONTEXT86 *context)
 {
-    TRACE("Int 0x3d called-- Standalone FWAIT");
+    TRACE("Int 0x3d called-- Standalone FWAIT\n");
     FPU_ModifyCode(context, 0x90);
 }
 
@@ -206,7 +206,7 @@ void WINAPI DOSVM_Int3dHandler(CONTEXT86 *context)
  */
 void WINAPI DOSVM_Int3eHandler(CONTEXT86 *context)
 {
-    FIXME("Int 3E NOT Implemented");
+    FIXME("Int 3E NOT Implemented\n");
     INT_BARF(context, 0x3e);
 }
 
@@ -232,9 +232,9 @@ static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode)
     code[-2] = 0x9b;          /* The fwait instruction */
     code[-1] = Opcode;        /* Insert the opcode     */
 
-    if ( stack[0] < 2 ) FIXME("Backed up over a segment boundry in FPU code.");
+    if ( stack[0] < 2 ) FIXME("Backed up over a segment boundry in FPU code.\n");
 
     stack[0] -= 2;             /* back up the return address 2 bytes */
 
-    TRACE("Modified code in FPU int call to 0x9b 0x%x",Opcode);
+    TRACE("Modified code in FPU int call to 0x9b 0x%x\n",Opcode);
 }
