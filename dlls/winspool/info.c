@@ -41,6 +41,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "wine/windef16.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -2435,23 +2436,23 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
 }
 
 /*****************************************************************************
- *       GetPrinterDriverDirectoryA  [WINSPOOL.@]
+ *       GetPrinterDriverDirectoryW  [WINSPOOL.@]
  */
-BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
+BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
 				       DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD needed;
 
-    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", pName, pEnvironment, Level,
-	  pDriverDirectory, cbBuf, pcbNeeded);
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(pName), 
+          debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
     if(pName != NULL) {
-        FIXME("pName = `%s' - unsupported\n", pName);
+        FIXME("pName = `%s' - unsupported\n", debugstr_w(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
     if(pEnvironment != NULL) {
-        FIXME("pEnvironment = `%s' - unsupported\n", pEnvironment);
+        FIXME("pEnvironment = `%s' - unsupported\n", debugstr_w(pEnvironment));
 	SetLastError(ERROR_INVALID_ENVIRONMENT);
 	return FALSE;
     }
@@ -2459,10 +2460,16 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
         WARN("Level = %ld - assuming 1\n", Level);
 
     /* FIXME should read from registry */
-    needed = GetSystemDirectoryA(pDriverDirectory, cbBuf);
+    needed = GetSystemDirectoryW( (LPWSTR)pDriverDirectory, cbBuf/sizeof(WCHAR));
+    /* GetSystemDirectoryW returns number of TCHAR without '\0' 
+     * adjust this now
+     */
     needed++;
+    needed*=sizeof(WCHAR);
+
     if(pcbNeeded)
         *pcbNeeded = needed;
+    TRACE("required <%08lx>\n", *pcbNeeded);
     if(needed > cbBuf) {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return FALSE;
@@ -2472,25 +2479,41 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 
 
 /*****************************************************************************
- *       GetPrinterDriverDirectoryW  [WINSPOOL.@]
+ *       GetPrinterDriverDirectoryA  [WINSPOOL.@]
  */
-BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
+BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
 				       DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    LPSTR pNameA = NULL, pEnvironmentA = NULL;
+    UNICODE_STRING nameW, environmentW;
     BOOL ret;
+    DWORD pcbNeededW;
+    INT len = cbBuf * sizeof(WCHAR)/sizeof(CHAR);
+    WCHAR *driverDirectoryW = NULL;
 
-    if(pName)
-        pNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, pName );
-    if(pEnvironment)
-        pEnvironmentA = HEAP_strdupWtoA( GetProcessHeap(), 0, pEnvironment );
-    ret = GetPrinterDriverDirectoryA( pNameA, pEnvironmentA, Level,
-				      pDriverDirectory, cbBuf, pcbNeeded );
-    if(pNameA)
-        HeapFree( GetProcessHeap(), 0, pNameA );
-    if(pEnvironmentA)
-        HeapFree( GetProcessHeap(), 0, pEnvironmentA );
+    if (len) driverDirectoryW = HeapAlloc( GetProcessHeap(), 0, len );
+
+    if(pName) RtlCreateUnicodeStringFromAsciiz(&nameW, pName);
+    else nameW.Buffer = NULL;
+    if(pEnvironment) RtlCreateUnicodeStringFromAsciiz(&environmentW, pEnvironment);
+    else environmentW.Buffer = NULL;
+
+    ret = GetPrinterDriverDirectoryW( nameW.Buffer, environmentW.Buffer, Level,
+				      (LPBYTE)driverDirectoryW, len, &pcbNeededW );
+    if (ret) {
+        ret = WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
+                                   pDriverDirectory, cbBuf, NULL, NULL);
+        *pcbNeeded = WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1,
+                                   NULL, 0, NULL, NULL);
+    } else 
+        *pcbNeeded = pcbNeededW * sizeof(CHAR)/sizeof(WCHAR);
+
+    TRACE("provided<%ld> required <%ld>\n", cbBuf, *pcbNeeded);
+
+    if(driverDirectoryW)
+        HeapFree( GetProcessHeap(), 0, driverDirectoryW );
+    RtlFreeUnicodeString(&environmentW);
+    RtlFreeUnicodeString(&nameW);
 
     return ret;
 }
