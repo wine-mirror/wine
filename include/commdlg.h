@@ -670,8 +670,8 @@ DWORD   WINAPI CommDlgExtendedError(void);
 HWND  WINAPI FindTextA(LPFINDREPLACEA lpFind);
 HWND  WINAPI FindTextW(LPFINDREPLACEW lpFind);
 #define FindText WINELIB_NAME_AW(FindText)
-short   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
-short   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf);
+short   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf);
+short   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf);
 #define GetFileTitle WINELIB_NAME_AW(GetFileTitle)
 BOOL  WINAPI GetOpenFileNameA(LPOPENFILENAMEA ofn);
 BOOL  WINAPI GetOpenFileNameW(LPOPENFILENAMEW ofn);

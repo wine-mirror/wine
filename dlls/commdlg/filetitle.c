@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
  *	GetFileTitleA		(COMDLG32.@)
  *
  */
-short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
+short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf)
 {
     int ret;
     UNICODE_STRING strWFile;
@@ -60,7 +60,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
  *	GetFileTitleW		(COMDLG32.@)
  *
  */
-short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
+short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
 {
 	int i, len;
         static const WCHAR brkpoint[] = {'*','[',']',0};
