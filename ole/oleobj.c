@@ -8,7 +8,6 @@
 #include "ole.h"
 #include "ole2.h"
 #include "winerror.h"
-#include "windows.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"

@@ -92,7 +92,7 @@ type	win32
 0088 stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord32
 0089 stub GetPrivateObjectSecurity
 0090 stdcall GetSecurityDescriptorControl (ptr ptr ptr) GetSecurityDescriptorControl32
-0091 stub GetSecurityDescriptorDacl
+0091 stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr) GetSecurityDescriptorDacl
 0092 stdcall GetSecurityDescriptorGroup(ptr ptr ptr) GetSecurityDescriptorGroup
 0093 stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
 0094 stdcall GetSecurityDescriptorOwner(ptr ptr ptr) GetSecurityDescriptorOwner
@@ -225,10 +225,10 @@ type	win32
 0221 stdcall SetFileSecurityW(wstr long ptr) SetFileSecurity32W
 0222 stub SetKernelObjectSecurity
 0223 stub SetPrivateObjectSecurity
-0224 stdcall SetSecurityDescriptorDacl(ptr long ptr long) RtlSetDaclSecurityDescriptor
-0225 stub SetSecurityDescriptorGroup
-0226 stub SetSecurityDescriptorOwner
-0227 stub SetSecurityDescriptorSacl
+0224 stdcall SetSecurityDescriptorDacl(ptr long ptr long) SetSecurityDescriptorDacl
+0225 stdcall SetSecurityDescriptorGroup (ptr ptr long) SetSecurityDescriptorGroup
+0226 stdcall SetSecurityDescriptorOwner (ptr ptr long) SetSecurityDescriptorOwner
+0227 stdcall SetSecurityDescriptorSacl(ptr long ptr long) SetSecurityDescriptorSacl
 0228 stub SetServiceBits
 0229 stub SetServiceObjectSecurity
 0230 stdcall SetServiceStatus(long long)SetServiceStatus

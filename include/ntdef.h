@@ -3,6 +3,18 @@
 
 #define NTAPI   __stdcall 
 
+#ifndef IN
+#define IN
+#endif
+
+#ifndef OUT
+#define OUT
+#endif
+
+#ifndef OPTIONAL
+#define OPTIONAL
+#endif
+
 /* NT lowlevel Strings (handled by Rtl* functions in NTDLL)
  * If they are zero terminated, Length does not include the terminating 0.
  */

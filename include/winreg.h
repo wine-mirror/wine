@@ -5,23 +5,9 @@
 #define __WINE_WINREG_H
 
 #include "winbase.h"
+#include "winnt.h"
 
-/* FIXME: should be in security.h or whereever */
-#ifndef READ_CONTROL
-#define READ_CONTROL		0x00020000
-#endif
-#ifndef STANDARD_RIGHTS_READ
-#define STANDARD_RIGHTS_READ	READ_CONTROL
-#endif
-#ifndef STANDARD_RIGHTS_WRITE
-#define STANDARD_RIGHTS_WRITE	READ_CONTROL	/* yes, it's right (js) */
-#endif
-#ifndef STANDARD_RIGHTS_ALL
-#define STANDARD_RIGHTS_ALL	0x001f0000
-#endif
-/* ... */
-
-
+/*
 #define SHELL_ERROR_SUCCESS           0L
 #define SHELL_ERROR_BADDB             1L
 #define SHELL_ERROR_BADKEY            2L
@@ -31,6 +17,7 @@
 #define SHELL_ERROR_OUTOFMEMORY       6L
 #define SHELL_ERROR_INVALID_PARAMETER 7L
 #define SHELL_ERROR_ACCESS_DENIED     8L
+*/
 
 #define REG_NONE		0	/* no type */
 #define REG_SZ                  1	/* string type (ASCII) */

@@ -129,7 +129,7 @@ typedef struct tagMESSAGEQUEUE
 #define QUEUE_MAGIC        0xD46E80AF
 
 /* Per queue data management methods */
-PERQUEUEDATA* PERQDATA_CreateInstance( );
+PERQUEUEDATA* PERQDATA_CreateInstance( void );
 ULONG PERQDATA_Addref( PERQUEUEDATA* pQData );
 ULONG PERQDATA_Release( PERQUEUEDATA* pQData );
 HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
