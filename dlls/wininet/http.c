@@ -504,7 +504,10 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOA hIC,
     UrlComponents.lpszHostName = buf;
     UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
-    sprintf(proxy, "http://%s/", hIC->lpszProxy);
+    if (strncasecmp(hIC->lpszProxy,"http://",strlen("http://")))
+	sprintf(proxy, "http://%s/", hIC->lpszProxy);
+    else
+	strcpy(proxy,hIC->lpszProxy);
     if( !InternetCrackUrlA(proxy, 0, 0, &UrlComponents) )
         return FALSE;
     if( UrlComponents.dwHostNameLength == 0 )
