@@ -49,6 +49,7 @@ FILETYPE	VFT_DLL
       VALUE "OriginalFileName", "AVIFIL32.DLL\000"
       VALUE "ProductName", "Wine\000"
       VALUE "ProductVersion", "1.00\000"
+      VALUE "OLESelfRegister", ""
     }
   }
 }

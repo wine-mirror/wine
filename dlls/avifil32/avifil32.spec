@@ -61,6 +61,8 @@
 @ stdcall CreateEditableStream(ptr ptr)
 @ stdcall -private DllCanUnloadNow() AVIFILE_DllCanUnloadNow
 @ stdcall -private DllGetClassObject(ptr ptr ptr) AVIFILE_DllGetClassObject
+@ stdcall -private DllRegisterServer() AVIFILE_DllRegisterServer
+@ stdcall -private DllUnregisterServer() AVIFILE_DllUnregisterServer
 @ stdcall EditStreamClone(ptr ptr)
 @ stdcall EditStreamCopy(ptr ptr ptr ptr)
 @ stdcall EditStreamCut(ptr ptr ptr ptr)
