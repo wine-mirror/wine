@@ -6,10 +6,27 @@
 ##
 ## John R. Sheets <jsheets@codeweavers.com>
 
-## Other possible SGML stylesheets (default Debian versions...may be 
-## different on other distributions).
-#DB_STYLESHEET=/usr/lib/sgml/stylesheet/dsssl/docbook/cygnus/cygnus-both.dsl
-#DB_STYLESHEET=/usr/lib/sgml/stylesheet/dsssl/docbook/nwalsh/html/docbook.dsl
+## The DocBook installations behave differently for the various Linux
+## distributions.  Try to make some sense out of it all....
+##
+## $LINUXDIST holds the name of the distribution
+## $JADETAG adds "/#html" to the stylesheet-specification in the Jade
+##          command line (see comments below), if necessary for that dist.
+if [ -a /etc/debian_version ]; then
+  LINUXDIST="Debian"
+  JADETAG=\#html
+fi
+
+if [ -a /etc/redhat_release ]; then
+  LINUXDIST="Redhat"
+  JADETAG=
+fi
+
+## FIXME: Add more distributions here...
+
+if [ -n "$LINUXDIST" ]; then
+  echo "Using db2html parameters for a $LINUXDIST Linux distribution..."
+fi
 
 ## Use included default.dsl DSSSL stylesheet unless explicitly overridden with
 ## the $WINEDOC_STYLESHEET envar.
@@ -49,7 +66,6 @@ then
   then
     # now make sure that the output directory is always a subdirectory
     # of the current directory
-    echo
     input_file=`basename $1`
     output="`echo $input_file | sed 's,\.sgml$,,;s,\.sgm$,,'`"
     echo "input file was called $input_file -- output will be in $output"
@@ -60,12 +76,17 @@ fi
 mkdir $TMPDIR
 SAVE_PWD=`pwd`
 if [ $1 = `basename $1` ]; then
-  echo "working on ../$1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET}\#html ../$1; cd $SAVE_PWD)
+  EXTRA_PATH=../
 else
-  echo "working on $1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET}\#html $1; cd $SAVE_PWD)
+  EXTRA_PATH=
 fi
+
+JADE_CMD="jade -t sgml -ihtml -d ${DB_STYLESHEET}${JADETAG} ${EXTRA_PATH}$1"
+echo "Invoking command '$JADE_CMD'"
+echo
+
+echo "working on ${EXTRA_PATH}$1"
+(cd $TMPDIR; $JADE_CMD; cd $SAVE_PWD)
 
 if [ $# -eq 1 ]
 then
