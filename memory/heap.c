@@ -430,7 +430,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
     
     /* Decommit the end of the heap */
 
-    if (!(subheap->heap->flags & HEAP_WINE_SHARED)) HEAP_Decommit( subheap, pFree + 1 );
+    if (!(subheap->heap->flags & HEAP_SHARED)) HEAP_Decommit( subheap, pFree + 1 );
 }
 
 
@@ -469,7 +469,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     /* Commit memory */
 
-    if (flags & HEAP_WINE_SHARED)
+    if (flags & HEAP_SHARED)
         commitSize = totalSize;  /* always commit everything in a shared heap */
     if (!VirtualAlloc(address, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
@@ -998,6 +998,11 @@ HANDLE WINAPI HeapCreate(
 ) {
     SUBHEAP *subheap;
 
+    if ( flags & HEAP_SHARED ) {
+      FIXME ( "Shared Heap requested, returning system heap.\n" );
+      return SystemHeap;
+    }
+
     /* Allocate the heap block */
 
     if (!maxSize)
@@ -1039,6 +1044,11 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
+    if ( heap == SystemHeap ) { 
+      FIXME ( "attempt to destroy system heap, returning TRUE!\n" );
+      return TRUE;
+    }
+     
     TRACE("%08x\n", heap );
     if (!heapPtr) return FALSE;
 
@@ -1570,7 +1580,7 @@ BOOL HEAP_CreateSystemHeap(void)
 
     if (created)  /* newly created heap */
     {
-        HEAP_InitSubHeap( heapPtr, heapPtr, HEAP_WINE_SHARED, 0, HEAP_DEF_SIZE );
+        HEAP_InitSubHeap( heapPtr, heapPtr, HEAP_SHARED, 0, HEAP_DEF_SIZE );
         HeapLock( heap );
         descr = heapPtr->private = HeapAlloc( heap, HEAP_ZERO_MEMORY, sizeof(*descr) );
         assert( descr );

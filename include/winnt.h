@@ -163,10 +163,14 @@ typedef struct _SINGLE_LIST_ENTRY {
 #define HEAP_DISABLE_COALESCE_ON_FREE   0x00000080
 #define HEAP_CREATE_ALIGN_16            0x00010000
 #define HEAP_CREATE_ENABLE_TRACING      0x00020000
-#define HEAP_WINE_SEGPTR                0x01000000  /* Not a Win32 flag */
-#define HEAP_WINE_CODESEG               0x02000000  /* Not a Win32 flag */
-#define HEAP_WINE_CODE16SEG             0x04000000  /* Not a Win32 flag */
-#define HEAP_WINE_SHARED                0x08000000  /* Not a Win32 flag */
+
+/* This flag allows it to create heaps shared by all processes under win95,
+   FIXME: correct name */
+#define HEAP_SHARED                     0x04000000  
+
+#define HEAP_WINE_SEGPTR                0x10000000  /* Not a Win32 flag */
+#define HEAP_WINE_CODESEG               0x20000000  /* Not a Win32 flag */
+#define HEAP_WINE_CODE16SEG             0x40000000  /* Not a Win32 flag */
 
 /* Processor feature flags.  */
 #define PF_FLOATING_POINT_PRECISION_ERRATA	0
