@@ -90,14 +90,20 @@ static int utf2mime(int x)
     return -1;
 }
 
-static BOOL encode_streamname(BOOL bTable, LPCWSTR in, LPWSTR out)
+static LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
 {
     DWORD count = MAX_STREAM_NAME;
     DWORD ch, next;
+    LPWSTR out, p;
+
+    if( !bTable )
+        count = strlenW( in )+2;
+    out = HeapAlloc( GetProcessHeap(), 0, count*sizeof(WCHAR) );
+    p = out;
 
     if( bTable )
     {
-         *out++ = 0x4840;
+         *p++ = 0x4840;
          count --;
     }
     while( count -- ) 
@@ -105,8 +111,8 @@ static BOOL encode_streamname(BOOL bTable, LPCWSTR in, LPWSTR out)
         ch = *in++;
         if( !ch )
         {
-            *out = ch;
-            return TRUE;
+            *p = ch;
+            return out;
         }
         if( ( ch < 0x80 ) && ( utf2mime(ch) >= 0 ) )
         {
@@ -123,9 +129,11 @@ static BOOL encode_streamname(BOOL bTable, LPCWSTR in, LPWSTR out)
                 }
             }
         }
-        *out++ = ch;
+        *p++ = ch;
     }
-    return FALSE;
+    ERR("Failed to encode stream name (%s)\n",debugstr_w(in));
+    HeapFree( GetProcessHeap(), 0, out );
+    return NULL;
 }
 
 static int mime2utf(int x)
@@ -204,14 +212,15 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     ULONG sz, count;
     IStream *stm = NULL;
     STATSTG stat;
-    WCHAR encname[0x20];
+    LPWSTR encname;
 
-    encode_streamname(TRUE, stname, encname);
+    encname = encode_streamname(TRUE, stname);
 
     TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
 
     r = IStorage_OpenStream(stg, encname, NULL, 
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    HeapFree( GetProcessHeap(), 0, encname );
     if( FAILED( r ) )
     {
         WARN("open stream failed r = %08lx - empty table?\n",r);
@@ -260,15 +269,16 @@ end:
 
 UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 {
-    WCHAR encname[0x20];
+    LPWSTR encname;
     HRESULT r;
 
-    encode_streamname(FALSE, stname, encname);
+    encname = encode_streamname(FALSE, stname);
 
     TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
 
     r = IStorage_OpenStream(db->storage, encname, NULL, 
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm);
+    HeapFree( GetProcessHeap(), 0, encname );
     if( FAILED( r ) )
     {
         WARN("open stream failed r = %08lx - empty table?\n",r);
@@ -352,12 +362,12 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
     IStream *stm = NULL;
     ULARGE_INTEGER size;
     LARGE_INTEGER pos;
+    LPWSTR encname;
 
-    WCHAR encname[0x20];
-
-    encode_streamname(TRUE, stname, encname);
+    encname = encode_streamname(TRUE, stname );
     r = IStorage_OpenStream( stg, encname, NULL, 
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    HeapFree( GetProcessHeap(), 0, encname );
     if( FAILED(r) )
     {
         r = IStorage_CreateStream( stg, encname,
@@ -664,13 +674,14 @@ HRESULT init_string_table( IStorage *stg )
     USHORT zero[2] = { 0, 0 };
     ULONG count = 0;
     IStream *stm = NULL;
-    WCHAR encname[0x20];
+    LPWSTR encname;
 
-    encode_streamname(TRUE, szStringPool, encname);
+    encname = encode_streamname(TRUE, szStringPool );
 
     /* create the StringPool stream... add the zero string to it*/
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    HeapFree( GetProcessHeap(), 0, encname );
     if( r ) 
     {
         TRACE("Failed\n");
@@ -687,9 +698,10 @@ HRESULT init_string_table( IStorage *stg )
     }
 
     /* create the StringData stream... make it zero length */
-    encode_streamname(TRUE, szStringData, encname);
+    encname = encode_streamname(TRUE, szStringData );
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    HeapFree( GetProcessHeap(), 0, encname );
     if( r ) 
     {
         TRACE("Failed\n");
@@ -1126,17 +1138,13 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( !sval )
         return ERROR_INVALID_PARAMETER;
 
-    if( ( strlenW( sval ) + strlenW( tv->name ) + 1 ) > MAX_STREAM_NAME )
     {
-        ERR("Name of stream is too long %s.%s\n", 
-            debugstr_w( tv->name ), debugstr_w( sval ) );
-        r = ERROR_INVALID_PARAMETER;
-    }
-    else
-    {
-        WCHAR full_name[0x40];
+        LPWSTR full_name;
+        DWORD len;
         static const WCHAR szDot[] = { '.', 0 };
 
+        len = strlenW( tv->name ) + 2 + strlenW( sval );
+        full_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
         strcpyW( full_name, tv->name );
         strcatW( full_name, szDot );
         strcatW( full_name, sval );
@@ -1144,6 +1152,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
         r = db_get_raw_stream( tv->db, full_name, stm );
         if( r )
             ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
+        HeapFree( GetProcessHeap(), 0, full_name );
     }
     HeapFree( GetProcessHeap(), 0, sval );
 
