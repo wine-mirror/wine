@@ -392,8 +392,8 @@ TOOLBAR_DrawImageList (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, IMAGE_LIST_T
 
     if (!TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
 	if (btnPtr->iBitmap == I_IMAGENONE) return FALSE;
-	ERR("index %d is not valid, max %d\n",
-	    btnPtr->iBitmap, infoPtr->nNumBitmaps);
+	ERR("index %d,%d is not valid, max %d\n",
+	    HIWORD(btnPtr->iBitmap), LOWORD(btnPtr->iBitmap), infoPtr->nNumBitmaps);
 	return FALSE;
     }
 
@@ -3290,7 +3290,9 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    return (LRESULT)GETDISIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), 0);
+    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
+    return (LRESULT)GETDISIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), wParam);
 }
 
 
@@ -3308,7 +3310,9 @@ TOOLBAR_GetExtendedStyle (HWND hwnd)
 static LRESULT
 TOOLBAR_GetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    return (LRESULT)GETHOTIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), 0);
+    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
+    return (LRESULT)GETHOTIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), wParam);
 }
 
 
@@ -3330,7 +3334,9 @@ TOOLBAR_GetHotItem (HWND hwnd)
 static LRESULT
 TOOLBAR_GetDefImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    return (LRESULT) GETDEFIMAGELIST(TOOLBAR_GetInfoPtr(hwnd), 0);
+    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
+    return (LRESULT) GETDEFIMAGELIST(TOOLBAR_GetInfoPtr(hwnd), wParam);
 }
 
 
@@ -4305,6 +4311,12 @@ TOOLBAR_SetDrawTextFlags (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)dwTemp;
 }
 
+/* This function differs a bit from what MSDN says it does:
+ * 1. lParam contains extended style flags to OR with current style
+ *  (MSDN isn't clear on the OR bit)
+ * 2. wParam appears to contain extended style flags to be reset
+ *  (MSDN says that this parameter is reserved)
+ */
 static LRESULT
 TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -4312,6 +4324,7 @@ TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DWORD dwTemp;
 
     dwTemp = infoPtr->dwExStyle;
+    infoPtr->dwExStyle &= ~wParam;
     infoPtr->dwExStyle |= (DWORD)lParam;
 
     TRACE("new style 0x%08lx\n", infoPtr->dwExStyle);
@@ -4653,6 +4666,57 @@ TOOLBAR_SetVersion (HWND hwnd, INT iVersion)
     return iOldVersion;
 }
 
+
+static LRESULT
+TOOLBAR_GetStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    WORD iString = HIWORD(wParam);
+    WORD buffersize = LOWORD(wParam);
+    LPSTR str = (LPSTR)lParam;
+    LRESULT ret = -1;
+
+    TRACE("hwnd=%p, iString=%d, buffersize=%d, string=%p\n", hwnd, iString, buffersize, str);
+
+    if (iString < infoPtr->nNumStrings)
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, infoPtr->strings[iString], -1, str, buffersize, NULL, NULL);
+
+        TRACE("returning %s\n", debugstr_a(str));
+    }
+    else
+        ERR("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
+
+    return ret;
+}
+
+
+static LRESULT
+TOOLBAR_GetStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    WORD iString = HIWORD(wParam);
+    WORD len = LOWORD(wParam)/sizeof(WCHAR) - 1;
+    LPWSTR str = (LPWSTR)lParam;
+    LRESULT ret = -1;
+
+    TRACE("hwnd=%p, iString=%d, buffersize=%d, string=%p\n", hwnd, iString, LOWORD(wParam), str);
+
+    if (iString < infoPtr->nNumStrings)
+    {
+        len = min(len, strlenW(infoPtr->strings[iString]));
+        ret = (len+1)*sizeof(WCHAR);
+        memcpy(str, infoPtr->strings[iString], ret);
+        str[len] = '\0';
+
+        TRACE("returning %s\n", debugstr_w(str));
+    }
+    else
+        ERR("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
+
+    return ret;
+}
+
 static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     FIXME("hwnd=%p wParam %08x lParam %08lx stub!\n", hwnd, wParam, lParam);
@@ -4713,10 +4777,21 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+    FIXME("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
 
     InvalidateRect(hwnd, NULL, TRUE);
     return 0;
+}
+
+/* UNDOCUMENTED MESSAGE: This returns the number of maximum number
+ * of image lists associated with the various states. */
+static LRESULT TOOLBAR_Unkwn462(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+
+    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+
+    return max(infoPtr->cimlDef, max(infoPtr->cimlHot, infoPtr->cimlDis));
 }
 
 static LRESULT
@@ -4775,7 +4850,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT TOOLBAR_Unkwn464(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+    FIXME("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
 
     InvalidateRect(hwnd, NULL, TRUE);
     return 1;
@@ -4788,6 +4863,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     LOGFONTA logFont;
+
+    TRACE("hwnd = %p\n", hwnd);
 
     /* initialize info structure */
     infoPtr->nButtonHeight = 22;
@@ -5867,6 +5944,12 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_GETSTATE:
 	    return TOOLBAR_GetState (hwnd, wParam, lParam);
 
+	case TB_GETSTRINGA:
+        return TOOLBAR_GetStringA (hwnd, wParam, lParam);
+
+	case TB_GETSTRINGW:
+	    return TOOLBAR_GetStringW (hwnd, wParam, lParam);
+
 	case TB_GETSTYLE:
 	    return TOOLBAR_GetStyle (hwnd, wParam, lParam);
 
@@ -6014,6 +6097,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TB_UNKWN460:
 	    return TOOLBAR_Unkwn460(hwnd, wParam, lParam);
+
+	case TB_UNKWN462:
+	    return TOOLBAR_Unkwn462(hwnd, wParam, lParam);
 
 	case TB_UNKWN463:
 	    return TOOLBAR_Unkwn463 (hwnd, wParam, lParam);

@@ -1119,6 +1119,7 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TB_UNKWN45D              (WM_USER+93)
 #define TB_UNKWN45E              (WM_USER+94)
 #define TB_UNKWN460              (WM_USER+96)
+#define TB_UNKWN462              (WM_USER+98)
 #define TB_UNKWN463              (WM_USER+99)
 #define TB_UNKWN464              (WM_USER+100)
 
