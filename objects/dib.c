@@ -433,7 +433,14 @@ INT WINAPI GetDIBits(
 	/* If the bitmap object already has a dib section at the
 	   same color depth then get the color map from it */
 	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == info->bmiHeader.biBitCount) {
-	    GetDIBColorTable(hdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
+            if(coloruse == DIB_RGB_COLORS)
+                GetDIBColorTable(hdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
+            else {
+                WORD *index = (WORD*)info->bmiColors;
+                int i;
+                for(i = 0; i < 1 << info->bmiHeader.biBitCount; i++, index++)
+                    *index = i;
+            }
 	}
         else {
             if(info->bmiHeader.biBitCount >= bmp->bitmap.bmBitsPixel) {
