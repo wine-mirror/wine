@@ -44,7 +44,7 @@ HRESULT MediaSeekingImpl_Init(LPVOID pUserData, CHANGEPROC fnChangeStop, CHANGEP
         AM_SEEKING_CanGetStopPos |
         AM_SEEKING_CanGetDuration;
     pSeeking->llStart = 0;
-    pSeeking->llStop = 0x8000000000000000;
+    pSeeking->llStop = ((ULONGLONG)0x80000000) << 32;
     pSeeking->llDuration = pSeeking->llStop - pSeeking->llStart;
     pSeeking->dRate = 1.0;
 
