@@ -1044,6 +1044,57 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
 
 /*******************************************************************
+ *         BuildPendingEventCheck
+ *
+ * Build a function that checks whether there are any
+ * pending DPMI events.
+ *
+ * Stack layout:
+ *   
+ * (sp+12) long   eflags
+ * (sp+6)  long   cs
+ * (sp+2)  long   ip
+ * (sp)    word   fs
+ *
+ * On entry to function, fs register points to a valid TEB.
+ * On exit from function, stack will be popped.
+ */
+void BuildPendingEventCheck( FILE *outfile )
+{
+    /* Function header */
+
+    function_header( outfile, "DPMI_PendingEventCheck" );
+
+    /* Check for pending events. */
+    
+    fprintf( outfile, "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", 
+             STRUCTOFFSET(TEB,vm86_pending) );
+    fprintf( outfile, "\tje DPMI_PendingEventCheck_Cleanup\n" );
+
+    fprintf( outfile, "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", 
+             STRUCTOFFSET(TEB,dpmi_vif) );
+
+    fprintf( outfile, "\tje DPMI_PendingEventCheck_Cleanup\n" );
+
+    /* Process pending events. */
+
+    fprintf( outfile, "\tsti\n" );
+   
+    /* Start cleanup. Restore fs register. */
+
+    fprintf( outfile, ".globl DPMI_PendingEventCheck_Cleanup\n" );
+    fprintf( outfile, "DPMI_PendingEventCheck_Cleanup:\n" );
+    fprintf( outfile, "\tpopw %%fs\n" );
+
+    /* Return from function. */
+
+    fprintf( outfile, ".globl DPMI_PendingEventCheck_Return\n" );
+    fprintf( outfile, "DPMI_PendingEventCheck_Return:\n" );
+    fprintf( outfile, "\tiret\n" );
+}
+
+
+/*******************************************************************
  *         BuildRelays16
  *
  * Build all the 16-bit relay callbacks
@@ -1130,6 +1181,9 @@ void BuildRelays16( FILE *outfile )
 
     /* CBClientThunkSLEx return stub */
     BuildCallTo32CBClientRet( outfile, TRUE  );
+
+    /* Pending DPMI events check stub */
+    BuildPendingEventCheck( outfile );
 
     /* End of Call16_Ret segment */
     fprintf( outfile, "\n\t.globl " __ASM_NAME("Call16_Ret_End") "\n" );

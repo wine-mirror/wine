@@ -83,6 +83,9 @@ extern void Call16_Ret_Start(), Call16_Ret_End();
 extern void CallTo16_Ret();
 extern void CALL32_CBClient_Ret();
 extern void CALL32_CBClientEx_Ret();
+extern void DPMI_PendingEventCheck();
+extern void DPMI_PendingEventCheck_Cleanup();
+extern void DPMI_PendingEventCheck_Return();
 extern DWORD CallTo16_DataSelector;
 extern SEGPTR CALL32_CBClient_RetAddr;
 extern SEGPTR CALL32_CBClientEx_RetAddr;
@@ -93,6 +96,11 @@ extern void RELAY16_InitDebugLists(void);
 
 static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
+
+static WORD  dpmi_checker_selector;
+static DWORD dpmi_checker_offset_call;
+static DWORD dpmi_checker_offset_cleanup;
+static DWORD dpmi_checker_offset_return;
 
 /***********************************************************************
  *           WOWTHUNK_Init
@@ -113,6 +121,15 @@ BOOL WOWTHUNK_Init(void)
         MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClientEx_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
+
+    /* Prepare selector and offsets for DPMI event checking. */
+    dpmi_checker_selector = codesel;
+    dpmi_checker_offset_call = 
+        (char*)DPMI_PendingEventCheck - (char*)Call16_Ret_Start;
+    dpmi_checker_offset_cleanup = 
+        (char*)DPMI_PendingEventCheck_Cleanup - (char*)Call16_Ret_Start;
+    dpmi_checker_offset_return = 
+        (char*)DPMI_PendingEventCheck_Return - (char*)Call16_Ret_Start;
 
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
 
@@ -165,6 +182,75 @@ static BOOL fix_selector( CONTEXT *context )
 
 
 /*************************************************************
+ *            insert_event_check
+ *
+ * Make resuming the context check for pending DPMI events
+ * before the original context is restored. This is required
+ * because DPMI events are asynchronous, they are blocked while 
+ * Wine 32-bit code is being executed and we want to prevent 
+ * a race when returning back to 16-bit or 32-bit DPMI context.
+ */
+static void insert_event_check( CONTEXT *context )
+{
+    char *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+
+    if(context->SegCs == dpmi_checker_selector &&
+       context->Eip   >= dpmi_checker_offset_call && 
+       context->Eip   <= dpmi_checker_offset_cleanup)
+    {
+        /*
+         * Nested call. Stack will be preserved. 
+         */
+    }
+    else if(context->SegCs == dpmi_checker_selector &&
+            context->Eip   == dpmi_checker_offset_return)
+    {
+        /*
+         * Nested call. We have just finished popping the fs
+         * register, lets put it back into stack.
+         */
+
+        stack -= sizeof(WORD);
+        *(WORD*)stack = context->SegFs;
+
+        context->Esp -= 2;
+    }
+    else
+    {
+        /*
+         * Call is not nested.
+         * Push modified registers into stack.
+         * These will be popped by the assembler stub.
+         */
+
+        stack -= sizeof(DWORD);
+        *(DWORD*)stack = context->EFlags;
+   
+        stack -= sizeof(DWORD);
+        *(DWORD*)stack = context->SegCs;
+
+        stack -= sizeof(DWORD);
+        *(DWORD*)stack = context->Eip;
+
+        stack -= sizeof(WORD);
+        *(WORD*)stack = context->SegFs;
+
+        context->Esp  -= 14;
+    }
+
+    /*
+     * Modify the context so that we jump into assembler stub.
+     * TEB access is made easier by providing the stub
+     * with the correct fs register value.
+     */
+
+    context->SegCs = dpmi_checker_selector;
+    context->Eip   = dpmi_checker_offset_call;
+    context->SegFs = wine_get_fs();
+}
+
+
+/*************************************************************
  *            call16_handler
  *
  * Handler for exceptions occurring in 16-bit code.
@@ -191,6 +277,15 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
             SEGPTR gpHandler;
             DWORD ret = INSTR_EmulateInstruction( record, context );
 
+            /*
+             * Insert check for pending DPMI events. Note that this 
+             * check must be inserted after instructions have been 
+             * emulated because the instruction emulation requires
+             * original CS:IP and the emulation may change TEB.dpmi_vif.
+             */
+            if(NtCurrentTeb()->dpmi_vif)
+                insert_event_check( context );
+
             if (ret != ExceptionContinueSearch) return ret;
 
             /* check for Win16 __GP handler */
@@ -211,6 +306,10 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
                 return ExceptionContinueExecution;
             }
         }
+    }
+    else if (record->ExceptionCode == EXCEPTION_VM86_STI)
+    {
+        insert_event_check( context );
     }
     return ExceptionContinueSearch;
 }
@@ -545,6 +644,19 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             {
                 *((SEGPTR *)stack - 1) = call16_ret_addr;
                 cbArgs += sizeof(SEGPTR);
+            }
+
+            /*
+             * Start call by checking for pending events.
+             * Note that wine_call_to_16_regs overwrites context stack
+             * pointer so we may modify it here without a problem.
+             */
+            if (NtCurrentTeb()->dpmi_vif)
+            {
+                context->SegSs = wine_get_ds();
+                context->Esp   = (DWORD)stack;
+                insert_event_check( context );
+                cbArgs += (DWORD)stack - context->Esp;
             }
 
             _EnterWin16Lock();

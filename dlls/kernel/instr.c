@@ -824,6 +824,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             context->Eip += prefixlen + 1;
             if (NtCurrentTeb()->vm86_pending)
             {
+                NtCurrentTeb()->vm86_pending = 0;
                 rec->ExceptionCode = EXCEPTION_VM86_STI;
                 break; /* Handle the pending event. */
             }
