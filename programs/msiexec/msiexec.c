@@ -71,23 +71,28 @@ static const WCHAR ActionAdmin[] = {
 static const WCHAR RemoveAll[] = {
    'R','E','M','O','V','E','=','A','L','L',' ',0 };
 
+static const WCHAR InstallRunOnce[] = {
+   'S','o','f','t','w','a','r','e','\\',
+   'M','i','c','r','o','s','o','f','t','\\',
+   'W','i','n','d','o','w','s','\\',
+   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+   'I','n','s','t','a','l','l','e','r','\\',
+   'R','u','n','O','n','c','e','E','n','t','r','i','e','s',0};
+
 static void ShowUsage(int ExitCode)
 {
 	printf(UsageStr);
 	ExitProcess(ExitCode);
 }
 
-static BOOL GetProductCode(LPWSTR str, LPCWSTR *PackageName, LPGUID ProductCode)
+static BOOL IsProductCode(LPWSTR str)
 {
-	BOOL ret = FALSE;
+	GUID ProductCode;
 
-	if(lstrlenW(str) == 38)
-		ret = (CLSIDFromString(str, ProductCode) == NOERROR);
+	if(lstrlenW(str) != 38)
+		return FALSE;
+	return ( (CLSIDFromString(str, &ProductCode) == NOERROR) );
 
-	if(!ret)
-		*PackageName = str;
-
-	return ret;
 }
 
 static VOID StringListAppend(struct string_list **list, LPCWSTR str)
@@ -399,6 +404,32 @@ void process_args( WCHAR *cmdline, int *pargc, WCHAR ***pargv )
 	*pargv = argv;
 }
 
+BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
+{
+	LONG r;
+	HKEY hkey = 0, hkeyArgs = 0;
+	DWORD sz = 0, type = 0;
+	LPWSTR buf = NULL;
+	BOOL ret = FALSE;
+
+	r = RegOpenKeyW(HKEY_LOCAL_MACHINE, InstallRunOnce, &hkey);
+	if(r != ERROR_SUCCESS)
+		return FALSE;
+	r = RegQueryValueExW(hkey, ident, 0, &type, 0, &sz);
+	if(r == ERROR_SUCCESS && type == REG_SZ)
+	{
+		buf = HeapAlloc(GetProcessHeap(), 0, sz);
+		r = RegQueryValueExW(hkey, ident, 0, &type, (LPBYTE)buf, &sz);
+		if( r == ERROR_SUCCESS )
+		{
+			process_args(buf, pargc, pargv);
+			ret = TRUE;
+		}
+	}
+	RegCloseKey(hkeyArgs);
+	return ret;
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -413,9 +444,7 @@ int main(int argc, char **argv)
 	BOOL FunctionUnregServer = FALSE;
 	BOOL FunctionUnknown = FALSE;
 
-	BOOL GotProductCode = FALSE;
-	LPCWSTR PackageName = NULL;
-	GUID ProductCode;
+	LPWSTR PackageName = NULL;
 	LPWSTR Properties = NULL;
 	struct string_list *property_list = NULL;
 
@@ -439,7 +468,23 @@ int main(int argc, char **argv)
 	DWORD ReturnCode;
 	LPWSTR *argvW = NULL;
 
+	/* overwrite the command line */
 	process_args( GetCommandLineW(), &argc, &argvW );
+
+	/*
+	 * If the args begin with /@ IDENT then we need to load the real
+	 * command line out of the RunOnceEntries key in the registry.
+	 *  We do that before starting to process the real commandline,
+	 * then overwrite the commandline again.
+	 */
+	if(!msi_strequal(argvW[1], "/@"))
+	{
+		if(!process_args_from_reg( argvW[2], &argc, &argvW ))
+			return 1;
+	}
+
+	for(i=0; i<argc; i++)
+		WINE_ERR("argv[%d]=%s\n",i,argv[i]);
 
 	for(i = 1; i < argc; i++)
 	{
@@ -467,7 +512,7 @@ int main(int argc, char **argv)
 				WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 				argvWi = argvW[i];
 			}
-			GotProductCode = GetProductCode(argvWi, &PackageName, &ProductCode);
+			PackageName = argvWi;
 		}
 		else if(!msi_strequal(argvW[i], "/a"))
 		{
@@ -547,7 +592,7 @@ int main(int argc, char **argv)
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
-			GotProductCode = GetProductCode(argvW[i], &PackageName, &ProductCode);
+			PackageName = argvW[i];
 		}
 		else if(!msi_strequal(argvW[i], "/x"))
 		{
@@ -556,7 +601,7 @@ int main(int argc, char **argv)
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
-			GotProductCode = GetProductCode(argvW[i], &PackageName, &ProductCode);
+			PackageName = argvW[i];
 			StringListAppend(&property_list, RemoveAll);
 		}
 		else if(!msi_strprefix(argvW[i], "/j"))
@@ -813,7 +858,7 @@ int main(int argc, char **argv)
 		else
 		{
 			FunctionInstall = TRUE;
-			GotProductCode = GetProductCode(argvW[i], &PackageName, &ProductCode);
+			PackageName = argvW[i];
 		}
 	}
 
@@ -826,14 +871,14 @@ int main(int argc, char **argv)
 	ReturnCode = 1;
 	if(FunctionInstall)
 	{
-		if(GotProductCode)
-			WINE_FIXME("Product code treatment not implemented yet\n");
+		if(IsProductCode(PackageName))
+			ReturnCode = MsiConfigureProductExW(PackageName, 0, INSTALLSTATE_DEFAULT, Properties);
 		else
 			ReturnCode = MsiInstallProductW(PackageName, Properties);
 	}
 	else if(FunctionRepair)
 	{
-		if(GotProductCode)
+		if(IsProductCode(PackageName))
 			WINE_FIXME("Product code treatment not implemented yet\n");
 		else
 			ReturnCode = MsiReinstallProductW(PackageName, RepairMode);
