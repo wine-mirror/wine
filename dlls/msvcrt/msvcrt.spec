@@ -423,7 +423,7 @@
 @ cdecl _scalb( double long)
 @ cdecl _searchenv(str str ptr)
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
-@ stdcall _set_error_mode(long)
+@ cdecl _set_error_mode(long)
 @ stub _set_sbh_threshold #(long)
 @ stub _seterrormode #(long)
 @ cdecl -i386 _setjmp(ptr) MSVCRT__setjmp
