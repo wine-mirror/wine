@@ -622,7 +622,7 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE),
        "wrong dwStyle: %08lx != %08lx\n", info->dwStyle, GetWindowLongA(hwnd, GWL_STYLE));
     ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
-       "wrong dwExStyle: %08lx != %08lx\n", info->dwStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
+       "wrong dwExStyle: %08lx != %08lx\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04lx != %04lx\n",
        info->dwWindowStatus, status);
