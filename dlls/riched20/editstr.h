@@ -192,6 +192,27 @@ typedef enum {
   umAddBackToUndo
 } ME_UndoMode;
 
+typedef struct tagME_FontTableItem {
+  BYTE bCharSet;
+  WCHAR *szFaceName;
+} ME_FontTableItem;
+
+#define STREAMOUT_BUFFER_SIZE 4096
+#define STREAMOUT_FONTTBL_SIZE 8192
+#define STREAMOUT_COLORTBL_SIZE 1024
+
+typedef struct tagME_OutStream {
+  EDITSTREAM *stream;
+  char buffer[STREAMOUT_BUFFER_SIZE];
+  UINT pos, written;
+  UINT nCodePage;
+  UINT nFontTblLen;
+  ME_FontTableItem fonttbl[STREAMOUT_FONTTBL_SIZE];
+  UINT nColorTblLen;
+  COLORREF colortbl[STREAMOUT_COLORTBL_SIZE];
+  UINT nDefaultFont;
+} ME_OutStream;
+
 typedef struct tagME_FontCacheItem
 {
   LOGFONTW lfSpecs;
@@ -224,6 +245,7 @@ typedef struct tagME_TextEditor
   int nParagraphs;
   int nLastSelStart, nLastSelEnd;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
+  ME_OutStream *pStream;
 } ME_TextEditor;
 
 typedef struct tagME_Context

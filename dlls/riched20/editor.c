@@ -461,6 +461,37 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   return 0;
 }
 
+
+ME_DisplayItem *
+ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset)
+{
+  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
+  
+  while (item && item->member.para.next_para->member.para.nCharOfs <= nOffset)
+    item = ME_FindItemFwd(item, diParagraph);
+
+  if (!item)
+    return item;
+
+  nOffset -= item->member.para.nCharOfs;
+  if (nItemType == diParagraph) {
+    if (nItemOffset)
+      *nItemOffset = nOffset;
+    return item;
+  }
+  
+  do {
+    item = ME_FindItemFwd(item, diRun);
+  } while (item && (item->member.run.nCharOfs + ME_StrLen(item->member.run.strText) <= nOffset));
+  if (item) {
+    nOffset -= item->member.run.nCharOfs;
+    if (nItemOffset)
+      *nItemOffset = nOffset;
+  }
+  return item;
+}
+
+
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   HDC hDC;
@@ -586,7 +617,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_STREAMOUT)
   UNSUPPORTED_MSG(WM_SETFONT)
   UNSUPPORTED_MSG(WM_PASTE)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
@@ -597,6 +627,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   
   case EM_STREAMIN:
    return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam);
+  case EM_STREAMOUT:
+   return ME_StreamOut(editor, wParam, (EDITSTREAM *)lParam);
   case WM_GETDLGCODE:
   {
     UINT code = DLGC_WANTCHARS|DLGC_WANTARROWS;
@@ -999,25 +1031,17 @@ int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)
   return i;
 }
 
+
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, int bCRLF)
 {
-  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
+  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
   int nWritten = 0;
   
-  while(item && item->member.para.next_para->member.para.nCharOfs <= nStart)
-    item = ME_FindItemFwd(item, diParagraph);
   if (!item) {
     *buffer = L'\0';
     return 0;
   }
-  nStart -= item->member.para.nCharOfs;
-
-  do {  
-    item = ME_FindItemFwd(item, diRun);
-  } while(item && (item->member.run.nCharOfs + ME_StrLen(item->member.run.strText) <= nStart));
   assert(item);    
-  
-  nStart -= item->member.run.nCharOfs;
   
   if (nStart)
   {
