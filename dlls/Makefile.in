@@ -63,6 +63,7 @@ BASEDIRS = \
 	imagehlp \
 	imm32 \
 	iphlpapi \
+	itss \
 	kernel \
 	lzexpand \
 	mapi32 \
@@ -287,6 +288,7 @@ SYMLINKS_SO = \
 	imagehlp.dll.so \
 	imm32.dll.so \
 	iphlpapi.dll.so \
+	itss.dll.so \
 	joystick.drv.so \
 	kernel32.dll.so \
 	libdxerr8.a \
@@ -577,6 +579,9 @@ imm.dll.so : imm32.dll.so
 
 iphlpapi.dll.so: iphlpapi/iphlpapi.dll.so
 	$(RM) $@ && $(LN_S) iphlpapi/iphlpapi.dll.so $@
+
+itss.dll.so: itss/itss.dll.so
+	$(RM) $@ && $(LN_S) itss/itss.dll.so $@
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
@@ -1013,6 +1018,7 @@ IMPORT_LIBS = \
 	libimagehlp.$(IMPLIBEXT) \
 	libimm32.$(IMPLIBEXT) \
 	libiphlpapi.$(IMPLIBEXT) \
+	libitss.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	liblz32.$(IMPLIBEXT) \
 	libmapi32.$(IMPLIBEXT) \
@@ -1347,6 +1353,11 @@ libiphlpapi.def: iphlpapi/iphlpapi.spec.def
 	$(RM) $@ && $(LN_S) iphlpapi/iphlpapi.spec.def $@
 libiphlpapi.a: iphlpapi/iphlpapi.spec.def
 	$(DLLTOOL) -k -l $@ -d iphlpapi/iphlpapi.spec.def
+
+libitss.def: itss/itss.spec.def
+	$(RM) $@ && $(LN_S) itss/itss.spec.def $@
+libitss.a: itss/itss.spec.def
+	$(DLLTOOL) -k -l $@ -d itss/itss.spec.def
 
 libkernel32.def: kernel/kernel32.spec.def
 	$(RM) $@ && $(LN_S) kernel/kernel32.spec.def $@
@@ -1759,6 +1770,7 @@ icmp/icmp.spec.def: $(WINEBUILD)
 imagehlp/imagehlp.spec.def: $(WINEBUILD)
 imm32/imm32.spec.def: $(WINEBUILD)
 iphlpapi/iphlpapi.spec.def: $(WINEBUILD)
+itss/itss.spec.def: $(WINEBUILD)
 kernel/kernel32.spec.def: $(WINEBUILD)
 lzexpand/lz32.spec.def: $(WINEBUILD)
 mapi32/mapi32.spec.def: $(WINEBUILD)
@@ -1891,6 +1903,7 @@ msacm/imaadp32/imaadp32.acm.so: msacm/imaadp32
 imagehlp/imagehlp.dll.so: imagehlp
 imm32/imm32.dll.so: imm32
 iphlpapi/iphlpapi.dll.so: iphlpapi
+itss/itss.dll.so: itss
 winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel
 lzexpand/lz32.dll.so: lzexpand

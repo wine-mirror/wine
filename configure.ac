@@ -1576,6 +1576,7 @@ dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/iphlpapi/Makefile
 dlls/iphlpapi/tests/Makefile
+dlls/itss/Makefile
 dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile
