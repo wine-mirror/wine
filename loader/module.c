@@ -688,52 +688,33 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
                                       LPSTARTUPINFOA lpStartupInfo,
-                                      LPPROCESS_INFORMATION lpProcessInfo,
-                                      BOOL useWine )
+                                      LPPROCESS_INFORMATION lpProcessInfo )
 {
     const char *argv[256], **argptr;
     char *cmdline = NULL;
-    BOOL iconic = FALSE;
-
-    /* Get Unix file name and iconic flag */
-
-    if ( lpStartupInfo->dwFlags & STARTF_USESHOWWINDOW )
-        if (    lpStartupInfo->wShowWindow == SW_SHOWMINIMIZED
-             || lpStartupInfo->wShowWindow == SW_SHOWMINNOACTIVE )
-            iconic = TRUE;
+    char *p;
+    const char *unixfilename = filename;
+    DOS_FULL_NAME full_name;
 
     /* Build argument list */
     argptr = argv;
-    if ( !useWine )
-    {
-        char *p;
-	const char *unixfilename = filename;
-	DOS_FULL_NAME full_name;
 
-        p = cmdline = strdup(lpCmdLine);
-        if (strchr(filename, '/') || strchr(filename, ':') || strchr(filename, '\\'))
-        {
-            if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
-                unixfilename = full_name.long_name;
-        }
-        if (iconic) *argptr++ = "-iconic";
-        while (1)
-        {
-            while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
-            if (!*p) break;
-            *argptr++ = p;
-            while (*p && *p != ' ' && *p != '\t') p++;
-        }
-	/* overwrite program name gotten from tidy_cmd */
-	argv[0] = unixfilename;
-    }
-    else
+    p = cmdline = strdup(lpCmdLine);
+    if (strchr(filename, '/') || strchr(filename, ':') || strchr(filename, '\\'))
     {
-        *argptr++ = "wine";
-        if (iconic) *argptr++ = "-iconic";
-        *argptr++ = lpCmdLine;
+        if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
+            unixfilename = full_name.long_name;
+    }
+    while (1)
+    {
+        while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
+        if (!*p) break;
+        *argptr++ = p;
+        while (*p && *p != ' ' && *p != '\t') p++;
     }
     *argptr++ = 0;
+    /* overwrite program name gotten from tidy_cmd */
+    argv[0] = unixfilename;
 
     /* Fork and execute */
 
@@ -743,11 +724,6 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
                  has not been correctly initialized! */
 
         execvp( argv[0], (char**)argv );
-
-        /* Failed ! */
-        if ( useWine )
-            fprintf( stderr, "CreateProcess: can't exec 'wine %s'\n", 
-                             lpCmdLine );
         exit( 1 );
     }
 
@@ -781,23 +757,40 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
  */
 HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
-    LOADPARAMS params;
-    UINT16 paramCmdShow[2];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    HINSTANCE hInstance;
 
-    if (!lpCmdLine)
-        return 2;  /* File not found */
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = nCmdShow;
 
-    /* Set up LOADPARAMS buffer for LoadModule */
+    if (CreateProcessA( NULL, (LPSTR)lpCmdLine, NULL, NULL, FALSE,
+                        0, NULL, NULL, &startup, &info ))
+    {
+        /* Give 30 seconds to the app to come up */
+        if (Callout.WaitForInputIdle ( info.hProcess, 30000 ) == 0xFFFFFFFF)
+            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+    
+        /* Get 16-bit hInstance/hTask from process */
+        hInstance = GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
+        /* If there is no hInstance (32-bit process) return a dummy value
+         * that must be > 31
+         * FIXME: should do this in all cases and fix Win16 callers */
+        if (!hInstance) hInstance = 33;
 
-    memset( &params, '\0', sizeof(params) );
-    params.lpCmdLine    = (LPSTR)lpCmdLine;
-    params.lpCmdShow    = paramCmdShow;
-    params.lpCmdShow[0] = 2;
-    params.lpCmdShow[1] = nCmdShow;
+        /* Close off the handles */
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
+    }
+    else if ((hInstance = GetLastError()) >= 32)
+    {
+        FIXME("Strange error set by CreateProcess: %d\n", hInstance );
+        hInstance = 11;
+    }
 
-    /* Now load the executable file */
-
-    return LoadModule( NULL, &params );
+    return hInstance;
 }
 
 /**********************************************************************
@@ -809,230 +802,142 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     HINSTANCE hInstance;
-    PDB *pdb;
-    TDB *tdb;
+    LPSTR cmdline, p;
+    char filename[MAX_PATH];
+    BYTE len;
 
-    memset( &startup, '\0', sizeof(startup) );
+    if (!name) return ERROR_FILE_NOT_FOUND;
+
+    if (!SearchPathA( NULL, name, ".exe", sizeof(filename), filename, NULL ) &&
+        !SearchPathA( NULL, name, NULL, sizeof(filename), filename, NULL ))
+        return GetLastError();
+
+    len = (BYTE)params->lpCmdLine[0];
+    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + len + 2 )))
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    strcpy( cmdline, filename );
+    p = cmdline + strlen(cmdline);
+    *p++ = ' ';
+    memcpy( p, params->lpCmdLine + 1, len );
+    p[len] = 0;
+
+    memset( &startup, 0, sizeof(startup) );
     startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = params->lpCmdShow? params->lpCmdShow[1] : 0;
-
-    if ( !CreateProcessA( name, params->lpCmdLine,
-                          NULL, NULL, FALSE, 0, params->lpEnvAddress,
-                          NULL, &startup, &info ) )
+    if (params->lpCmdShow)
     {
-        hInstance = GetLastError();
-        if ( hInstance < 32 ) return hInstance;
-
-        FIXME("Strange error set by CreateProcess: %d\n", hInstance );
-        return 11;
+        startup.dwFlags = STARTF_USESHOWWINDOW;
+        startup.wShowWindow = params->lpCmdShow[1];
     }
     
-    /* Give 30 seconds to the app to come up */
-    if ( Callout.WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF ) 
-      WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+    if (CreateProcessA( filename, cmdline, NULL, NULL, FALSE, 0,
+                        params->lpEnvAddress, NULL, &startup, &info ))
+    {
+        /* Give 30 seconds to the app to come up */
+        if ( Callout.WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF ) 
+            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
     
-    /* Get 16-bit hInstance/hTask from process */
-    pdb = PROCESS_IdToPDB( info.dwProcessId );
-    tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
-    hInstance = tdb && tdb->hInstance? tdb->hInstance : pdb? pdb->task : 0;
-    /* If there is no hInstance (32-bit process) return a dummy value
-     * that must be > 31
-     * FIXME: should do this in all cases and fix Win16 callers */
-    if (!hInstance) hInstance = 33;
+        /* Get 16-bit hInstance/hTask from process */
+        hInstance = GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
+        /* If there is no hInstance (32-bit process) return a dummy value
+         * that must be > 31
+         * FIXME: should do this in all cases and fix Win16 callers */
+        if (!hInstance) hInstance = 33;
+        /* Close off the handles */
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
+    }
+    else if ((hInstance = GetLastError()) >= 32)
+    {
+        FIXME("Strange error set by CreateProcess: %d\n", hInstance );
+        hInstance = 11;
+    }
 
-    /* Close off the handles */
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
-
+    HeapFree( GetProcessHeap(), 0, cmdline );
     return hInstance;
 }
 
+
 /*************************************************************************
- *               get_makename_token
- * 
- * Get next blank delimited token from input string. If quoted then 
- * process till matching quote and then till blank.
+ *               get_file_name
  *
- * Returns number of characters in token (not including \0). On 
- * end of string (EOS), returns a 0.
- *
- *    from  (IO)  address of start of input string to scan, updated to 
- *                next non-processed character.
- *    to    (IO)  address of start of output string (previous token \0 
- *                char), updated to end of new output string (the \0
- *                char).
+ * Helper for CreateProcess: retrieve the file name to load from the
+ * app name and command line. Store the file name in buffer, and
+ * return a possibly modified command line.
  */
-static int get_makename_token(LPCSTR *from, LPSTR *to )
+static LPSTR get_file_name( LPCSTR appname, LPSTR cmdline, LPSTR buffer, int buflen )
 {
-    int len = 0;
-    LPCSTR to_old = *to;   /* only used for tracing */
+    char *name, *pos, *ret = NULL;
+    const char *p;
 
-    while ( **from == ' ') {
-      /* Copy leading blanks (separators between previous    */
-      /* token and this token).                              */
-      **to = **from;
-      (*from)++;
-      (*to)++;
-      len++;
+    /* if we have an app name, everything is easy */
+
+    if (appname)
+    {
+        /* use the unmodified app name as file name */
+        lstrcpynA( buffer, appname, buflen );
+        if (!(ret = cmdline))
+        {
+            /* no command-line, create one */
+            if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(appname) + 3 )))
+                sprintf( ret, "\"%s\"", appname );
+        }
+        return ret;
     }
-    do {
-      while ( (**from != 0) && (**from != ' ') && (**from != '"') ) {
-          **to = **from; (*from)++; (*to)++; len++;
-      }
-      if ( **from == '"' ) {
-	/* Handle quoted string. */
-        (*from)++;
-        if ( !strchr(*from, '"') ) {
-	  /* fail - no closing quote. Return entire string */
-          while ( **from != 0 ) {
-             **to = **from; (*from)++; (*to)++; len++;
-	  }
-          break;
+
+    if (!cmdline)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    /* first check for a quoted file name */
+
+    if ((cmdline[0] == '"') && ((p = strchr( cmdline + 1, '"' ))))
+    {
+        int len = p - cmdline - 1;
+        /* extract the quoted portion as file name */
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return NULL;
+        memcpy( name, cmdline + 1, len );
+        name[len] = 0;
+
+        if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ) ||
+            SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
+            ret = cmdline;  /* no change necessary */
+        goto done;
+    }
+
+    /* now try the command-line word by word */
+
+    if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 1 ))) return NULL;
+    pos = name;
+    p = cmdline;
+
+    while (*p)
+    {
+        do *pos++ = *p++; while (*p && *p != ' ');
+        *pos = 0;
+        TRACE("trying '%s'\n", name );
+        if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ) ||
+            SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
+        {
+            ret = cmdline;
+            break;
         }
-        while( **from != '"') { 
-            **to = **from;
-            len++;
-            (*to)++;
-            (*from)++;
-        }
-        (*from)++;
-        continue;
-      }
+    }
 
-      /* either EOS or ' ' */
-      break;
+    if (!ret || !strchr( name, ' ' )) goto done;  /* no change necessary */
 
-    } while (1);
+    /* now build a new command-line with quotes */
 
-    **to = 0;   /* terminate output string */
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 3 ))) goto done;
+    sprintf( ret, "\"%s\"%s", name, p );
 
-    TRACE("returning token len=%d, string=%s\n", len, to_old);
-
-    return len;     
+ done:
+    HeapFree( GetProcessHeap(), 0, name );
+    return ret;
 }
 
-/*************************************************************************
- *		make_lpCommandLine_name
- * 
- * Try longer and longer strings from "line" to find an existing
- * file name. Each attempt is delimited by a blank outside of quotes.
- * Also will attempt to append ".exe" if requested and not already
- * present. Returns the address of the remaining portion of the
- * input line.
- *
- */
-
-static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
-                                 LPCSTR *after )
-{
-    BOOL  found = TRUE;
-    LPCSTR from;
-    char  buffer[260];
-    DWORD  retlen;
-    LPSTR to, lastpart;
-    
-    from = line;
-    to = name;
-
-    /* scan over initial blanks if any */
-    while ( *from == ' ') from++;
-
-    /* get a token and append to previous data the check for existance */
-    do {
-        if ( !get_makename_token( &from, &to ) ) {
-	  /* EOS has occured and not found - exit */
-          retlen = 0;
-          found = FALSE;
-          break;
-	}
-        TRACE("checking if file exists '%s'\n", name);
-        retlen = SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, &lastpart);
-	if (!retlen)
-	   retlen = SearchPathA( NULL, name, NULL, sizeof(buffer), buffer, &lastpart);
-   
-        if ( retlen && (retlen < sizeof(buffer)) )  break;
-    } while (1);
-
-    /* if we have a non-null full path name in buffer then move to output */
-    if ( retlen ) {
-       if ( strlen(buffer) <= namelen ) {
-          strcpy( name, buffer );
-       } else {
-          /* not enough space to return full path string */
-          FIXME("internal string not long enough, need %d\n",
-             strlen(buffer) );
-        }
-    }
-
-    /* all done, indicate end of module name and then trace and exit */
-    if (after) *after = from;
-    TRACE("%i, selected file name '%s'\n    and cmdline as %s\n",
-          found, name, debugstr_a(from));
-    return found;
-    }
-
-/*************************************************************************
- *		make_lpApplicationName_name
- * 
- * Scan input string (the lpApplicationName) and remove any quotes
- * if they are balanced. 
- *
- */
-
-static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
-{
-    LPCSTR from;
-    LPSTR to, to_end, to_old;
-    char  buffer[260];
-
-    to = buffer;
-    to_end = to + sizeof(buffer) - 1;
-    to_old = to;
-    
-    while ( *line == ' ' ) line++;  /* point to beginning of string */
-    from = line;
-    do {
-        /* Copy all input till end, or quote */
-        while((*from != 0) && (*from != '"') && (to < to_end)) 
-           *to++ = *from++;
-        if (to >= to_end) { *to = 0; break; }
-
-        if (*from == '"')
-	  {
-	    /* Handle quoted string. If there is a closing quote, copy all */
-	    /* that is inside.                                             */
-            from++;
-            if (!strchr(from, '"'))
-	      {
-	        /* fail - no closing quote */
-		to = to_old; /* restore to previous attempt */
-                *to = 0;     /* end string  */
-                break;       /* exit with  previous attempt */
-	      }
-            while((*from != '"') && (to < to_end)) *to++ = *from++;
-	    if (to >= to_end) { *to = 0; break; }
-            from++;
-            continue;  /* past quoted string, so restart from top */
-	  }
-
-        *to = 0;   /* terminate output string */
-        to_old = to;   /* save for possible use in unmatched quote case */
-
-	/* loop around keeping the blank as part of file name */
-        if (!*from)
-	  break;    /* exit if out of input string */
-    } while (1);
-
-    if (!SearchPathA( NULL, buffer, ".exe", namelen, name, NULL ) && 
-	!SearchPathA( NULL, buffer, NULL, namelen, name, NULL ) ) {
-        TRACE("file not found '%s'\n", buffer );
-        return FALSE;
-    }
-
-    TRACE("selected as file name '%s'\n", name );
-    return TRUE;
-}
 
 /**********************************************************************
  *       CreateProcessA          (KERNEL32.171)
@@ -1046,50 +951,15 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
                             LPPROCESS_INFORMATION lpProcessInfo )
 {
     BOOL retv = FALSE;
-    BOOL found_file = FALSE;
     HANDLE hFile;
     DWORD type;
-    char name[256], dummy[256];
-    LPCSTR cmdline = NULL;
+    char name[MAX_PATH];
     LPSTR tidy_cmdline;
-
-    /* Get name and command line */
-
-    if (!lpApplicationName && !lpCommandLine)
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return FALSE;
-    }
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
-    name[0] = '\0';
-
-    if (lpApplicationName)
-    {
-        found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
-	if (lpCommandLine)
-            make_lpCommandLine_name( lpCommandLine, dummy, sizeof ( dummy ), &cmdline );
-        else
-            cmdline = lpApplicationName;
-    }
-    else
-    {
-        if (lpCommandLine)
-            found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
-    }
-
-    if ( !found_file ) {
-        /* make an early exit if file not found - save second pass */
-        SetLastError( ERROR_FILE_NOT_FOUND );
+    if (!(tidy_cmdline = get_file_name( lpApplicationName, lpCommandLine, name, sizeof(name) )))
         return FALSE;
-    }
-
-    if (!cmdline) cmdline = "";
-    tidy_cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(name) + strlen(cmdline) + 3 );
-    TRACE_(module)("tidy_cmdline: name '%s'[%d], cmdline '%s'[%d]\n",
-                   name, strlen(name), cmdline, strlen(cmdline));
-    sprintf( tidy_cmdline, "\"%s\"%s", name, cmdline);
 
     /* Warn if unsupported features are used */
 
@@ -1147,79 +1017,58 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
         FIXME("(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
+    /* Open file and determine executable type */
 
-    /* Load file and create process */
+    hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
+    if (hFile == INVALID_HANDLE_VALUE) goto done;
 
-    if ( !retv )
+    if ( !MODULE_GetBinaryType( hFile, name, &type ) )
     {
-        /* Open file and determine executable type */
-
-        hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
-                             NULL, OPEN_EXISTING, 0, -1 );
-        if ( hFile == INVALID_HANDLE_VALUE )
-        {
-            SetLastError( ERROR_FILE_NOT_FOUND );
-            HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-            return FALSE;
-        }
-
-        if ( !MODULE_GetBinaryType( hFile, name, &type ) )
-        {
-            CloseHandle( hFile );
-
-            /* FIXME: Try Unix executable only when appropriate! */
-            if ( MODULE_CreateUnixProcess( name, tidy_cmdline, 
-                                           lpStartupInfo, lpProcessInfo, FALSE ) )
-            {
-                HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-                return TRUE;
-            }
-            HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-            SetLastError( ERROR_BAD_FORMAT );
-            return FALSE;
-        }
-
-
-        /* Create process */
-
-        switch ( type )
-        {
-        case SCS_32BIT_BINARY:
-            retv = PE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                     lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, dwCreationFlags,
-                                     lpStartupInfo, lpProcessInfo );
-            break;
-    
-        case SCS_DOS_BINARY:
-            retv = MZ_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                     lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, dwCreationFlags,
-                                     lpStartupInfo, lpProcessInfo );
-            break;
-
-        case SCS_WOW_BINARY:
-            retv = NE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                     lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, dwCreationFlags,
-                                     lpStartupInfo, lpProcessInfo );
-            break;
-
-        case SCS_PIF_BINARY:
-        case SCS_POSIX_BINARY:
-        case SCS_OS216_BINARY:
-            FIXME("Unsupported executable type: %ld\n", type );
-            /* fall through */
-    
-        default:
-            SetLastError( ERROR_BAD_FORMAT );
-            retv = FALSE;
-            break;
-        }
-
         CloseHandle( hFile );
+        /* FIXME: Try Unix executable only when appropriate! */
+        retv = MODULE_CreateUnixProcess( name, tidy_cmdline, lpStartupInfo, lpProcessInfo );
+        goto done;
     }
-    HeapFree( GetProcessHeap(), 0, tidy_cmdline );
+
+    /* Create process */
+
+    switch ( type )
+    {
+    case SCS_32BIT_BINARY:
+        retv = PE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
+                                 lpProcessAttributes, lpThreadAttributes,
+                                 bInheritHandles, dwCreationFlags,
+                                 lpStartupInfo, lpProcessInfo );
+        break;
+    
+    case SCS_DOS_BINARY:
+        retv = MZ_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
+                                 lpProcessAttributes, lpThreadAttributes,
+                                 bInheritHandles, dwCreationFlags,
+                                 lpStartupInfo, lpProcessInfo );
+        break;
+
+    case SCS_WOW_BINARY:
+        retv = NE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
+                                 lpProcessAttributes, lpThreadAttributes,
+                                 bInheritHandles, dwCreationFlags,
+                                 lpStartupInfo, lpProcessInfo );
+        break;
+
+    case SCS_PIF_BINARY:
+    case SCS_POSIX_BINARY:
+    case SCS_OS216_BINARY:
+        FIXME("Unsupported executable type: %ld\n", type );
+        /* fall through */
+
+    default:
+        SetLastError( ERROR_BAD_FORMAT );
+        break;
+    }
+    CloseHandle( hFile );
+
+ done:
+    if (tidy_cmdline != lpCommandLine) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     return retv;
 }
 
