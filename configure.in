@@ -127,7 +127,8 @@ then
 	echo "which you need to install:"
 	echo "Redhat		:	xpm, xpm-devel"
 	echo "Caldera OpenLinux	:	xpm, xpm-devel, xpm-devel-static"
-	echo "SuSE:			xpm"
+	echo "SuSE		:	xpm"
+	echo "Debian/Corel Linux: 	xpm4g, xpm4g-dev"
 	echo
 	echo "Or get the sources from ftp.x.org and all its mirror sites from "
 	echo "the directory /contrib/libraries."
