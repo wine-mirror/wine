@@ -1175,6 +1175,9 @@ static HRESULT DSOUND_PrimaryPlay(IDirectSoundBufferImpl *dsb)
 static HRESULT DSOUND_PrimaryStop(IDirectSoundBufferImpl *dsb)
 {
 	HRESULT err = DS_OK;
+
+	TRACE("\n");
+
 	if (dsb->hwbuf) {
 		err = IDsDriverBuffer_Stop(dsb->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
@@ -3525,8 +3528,8 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	if (!wodn) return DSERR_NODRIVER;
 
 	/* FIXME: How do we find the GUID of an audio device? */
-	/* Well, just use the first available device for now... */
-	wod = 0;
+	wod = 0; /* start at the first audio device */
+
 	/* Get output device caps */
 	waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
 	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
@@ -3570,11 +3573,26 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	/* If the driver requests being opened through MMSYSTEM
 	 * (which is recommended by the DDK), it is supposed to happen
 	 * before the DirectSound interface is opened */
-	if ((*ippDS)->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN) {
+	if ((*ippDS)->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+	{
 		/* FIXME: is this right? */
-		err = mmErr(waveOutOpen(&((*ippDS)->hwo), (*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
-					(DWORD)DSOUND_callback, (DWORD)(*ippDS),
-					CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+
+	        (*ippDS)->drvdesc.dnDevNode = 0;
+		err = DSERR_ALLOCATED;
+
+		/* if this device is busy try the next one */
+		while((err == DSERR_ALLOCATED) && 
+			((*ippDS)->drvdesc.dnDevNode < wodn))
+  		{
+		  err = mmErr(waveOutOpen(&((*ippDS)->hwo), 
+			(*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
+			(DWORD)DSOUND_callback, (DWORD)(*ippDS),
+			CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+                  (*ippDS)->drvdesc.dnDevNode++; /* next wave device */
+		}
+
+                (*ippDS)->drvdesc.dnDevNode--; /* take away last increment */
+		
 	}
 
 	if (drv && (err == DS_OK))
