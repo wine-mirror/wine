@@ -720,7 +720,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
 
     if (DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE) != gsv_found)
     {
-        DEBUG_Printf("Can't get first_option symbol");
+        DEBUG_Printf("Can't get first_dll symbol\n");
         return;
     }
     addr = (void*)DEBUG_ToLinear(&val.addr);
