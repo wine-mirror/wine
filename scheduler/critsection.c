@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(win32);
 DECLARE_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
- *           InitializeCriticalSection   (KERNEL32.472)
+ *           InitializeCriticalSection   (KERNEL32.@)
  */
 void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 {
@@ -53,7 +53,7 @@ DWORD WINAPI SetCriticalSectionSpinCount( CRITICAL_SECTION *crit, DWORD spincoun
 }
 
 /***********************************************************************
- *           MakeCriticalSectionGlobal   (KERNEL32.515)
+ *           MakeCriticalSectionGlobal   (KERNEL32.@)
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
@@ -65,7 +65,7 @@ void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 
 
 /***********************************************************************
- *           ReinitializeCriticalSection   (KERNEL32.581)
+ *           ReinitializeCriticalSection   (KERNEL32.@)
  */
 void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 {
@@ -75,7 +75,7 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 
 
 /***********************************************************************
- *           UninitializeCriticalSection   (KERNEL32.703)
+ *           UninitializeCriticalSection   (KERNEL32.@)
  */
 void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 {

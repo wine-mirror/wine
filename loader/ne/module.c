@@ -1679,7 +1679,7 @@ BOOL16 WINAPI IsRomFile16( HFILE16 unused )
 }
 
 /***************************************************************************
- *		MapHModuleLS			(KERNEL32.520)
+ *		MapHModuleLS			(KERNEL32.@)
  */
 HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
 	NE_MODULE	*pModule;
@@ -1698,7 +1698,7 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
 }
 
 /***************************************************************************
- *		MapHModuleSL			(KERNEL32.521)
+ *		MapHModuleSL			(KERNEL32.@)
  */
 HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 	NE_MODULE	*pModule;
@@ -1716,7 +1716,8 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 }
 
 /***************************************************************************
- *		MapHInstLS			(KERNEL32.516)(KERNEL.472)
+ *		MapHInstLS			(KERNEL32.@)
+ *		MapHInstLS			(KERNEL.472)
  */
 void WINAPI MapHInstLS( CONTEXT86 *context )
 {
@@ -1724,7 +1725,8 @@ void WINAPI MapHInstLS( CONTEXT86 *context )
 }
 
 /***************************************************************************
- *		MapHInstSL			(KERNEL32.518)(KERNEL.473)
+ *		MapHInstSL			(KERNEL32.@)
+ *		MapHInstSL			(KERNEL.473)
  */
 void WINAPI MapHInstSL( CONTEXT86 *context )
 {
@@ -1732,7 +1734,7 @@ void WINAPI MapHInstSL( CONTEXT86 *context )
 }
 
 /***************************************************************************
- *		MapHInstLS_PN			(KERNEL32.517)
+ *		MapHInstLS_PN			(KERNEL32.@)
  */
 void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 {
@@ -1740,7 +1742,7 @@ void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 }
 
 /***************************************************************************
- *		MapHInstSL_PN			(KERNEL32.519)
+ *		MapHInstSL_PN			(KERNEL32.@)
  */
 void WINAPI MapHInstSL_PN( CONTEXT86 *context )
 {

@@ -1523,7 +1523,7 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 
 
 /**************************************************************************
- *         BuildCommDCBA		(KERNEL32.113)
+ *         BuildCommDCBA		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
  *  ascii device control string.  The device control string has two forms
@@ -1541,7 +1541,7 @@ BOOL WINAPI BuildCommDCBA(
 }
 
 /**************************************************************************
- *         BuildCommDCBAndTimeoutsA	(KERNEL32.114)
+ *         BuildCommDCBAndTimeoutsA	(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
  *  ascii device control string.  Taking time out values from a time outs
@@ -1675,7 +1675,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 }
 
 /**************************************************************************
- *         BuildCommDCBAndTimeoutsW		(KERNEL32.115)
+ *         BuildCommDCBAndTimeoutsW		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
  *  unicode device control string.  Taking time out values from a time outs
@@ -1704,7 +1704,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 }
 
 /**************************************************************************
- *         BuildCommDCBW		(KERNEL32.116)
+ *         BuildCommDCBW		(KERNEL32.@)
  *
  *  Updates a device control block structure with values from an
  *  unicode device control string.  The device control string has two forms
@@ -1725,7 +1725,7 @@ BOOL WINAPI BuildCommDCBW(
 int commerror=0;
 
 /*****************************************************************************
- *	SetCommBreak		(KERNEL32.616)
+ *	SetCommBreak		(KERNEL32.@)
  *
  *  Halts the transmission of characters to a communications device.
  *
@@ -1766,7 +1766,7 @@ BOOL WINAPI SetCommBreak(
 }
 
 /*****************************************************************************
- *	ClearCommBreak		(KERNEL32.135)
+ *	ClearCommBreak		(KERNEL32.@)
  *
  *  Resumes character transmission from a communication device.
  *
@@ -1806,7 +1806,7 @@ BOOL WINAPI ClearCommBreak(
 }
 
 /*****************************************************************************
- *	EscapeCommFunction	(KERNEL32.213)
+ *	EscapeCommFunction	(KERNEL32.@)
  *
  *  Directs a communication device to perform an extended function.
  *
@@ -1924,7 +1924,7 @@ BOOL WINAPI EscapeCommFunction(
 }
 
 /********************************************************************
- *      PurgeComm        (KERNEL32.558)
+ *      PurgeComm        (KERNEL32.@)
  *
  *  Terminates pending operations and/or discards buffers on a
  *  communication resource.
@@ -1966,7 +1966,7 @@ BOOL WINAPI PurgeComm(
 }
 
 /*****************************************************************************
- *	ClearCommError	(KERNEL32.136)
+ *	ClearCommError	(KERNEL32.@)
  *
  *  Enables further I/O operations on a communications resource after
  *  supplying error and current status information.
@@ -2025,7 +2025,7 @@ BOOL WINAPI ClearCommError(
 }
 
 /*****************************************************************************
- *      SetupComm       (KERNEL32.677)
+ *      SetupComm       (KERNEL32.@)
  *
  *  Called after CreateFile to hint to the communication resource to use
  *  specified sizes for input and output buffers rather than the default values.
@@ -2056,7 +2056,7 @@ BOOL WINAPI SetupComm(
 } 
 
 /*****************************************************************************
- *	GetCommMask	(KERNEL32.284)
+ *	GetCommMask	(KERNEL32.@)
  *
  *  Obtain the events associated with a communication device that will cause a call
  *  WaitCommEvent to return.
@@ -2086,7 +2086,7 @@ BOOL WINAPI GetCommMask(
 }
 
 /*****************************************************************************
- *	SetCommMask	(KERNEL32.618)
+ *	SetCommMask	(KERNEL32.@)
  *
  *  There be some things we need to hear about yon there communications device.
  *  (Set which events associated with a communication device should cause
@@ -2116,7 +2116,7 @@ BOOL WINAPI SetCommMask(
 }
 
 /*****************************************************************************
- *	SetCommState    (KERNEL32.619)
+ *	SetCommState    (KERNEL32.@)
  *
  *  Re-initializes all hardware and control settings of a communications device,
  *  with values from a device control block without effecting the input and output
@@ -2425,7 +2425,7 @@ BOOL WINAPI SetCommState(
 
 
 /*****************************************************************************
- *	GetCommState	(KERNEL32.287)
+ *	GetCommState	(KERNEL32.@)
  *
  *  Fills in a device control block with information from a communications device.
  *
@@ -2629,7 +2629,7 @@ BOOL WINAPI GetCommState(
 }
 
 /*****************************************************************************
- *	TransmitCommChar	(KERNEL32.697)
+ *	TransmitCommChar	(KERNEL32.@)
  *
  *  Transmits a single character in front of any pending characters in the
  *  output buffer.  Usually used to send an interrupt character to a host.
@@ -2652,7 +2652,7 @@ BOOL WINAPI TransmitCommChar(
 }
 
 /*****************************************************************************
- *	GetCommTimeouts		(KERNEL32.288)
+ *	GetCommTimeouts		(KERNEL32.@)
  *
  *  Obtains the request time out values for the communications device.
  *
@@ -2692,7 +2692,7 @@ BOOL WINAPI GetCommTimeouts(
 }
 
 /*****************************************************************************
- *	SetCommTimeouts		(KERNEL32.620)
+ *	SetCommTimeouts		(KERNEL32.@)
  *
  * Sets the timeouts used when reading and writing data to/from COMM ports.
  *
@@ -2777,7 +2777,7 @@ BOOL WINAPI SetCommTimeouts(
 }
 
 /***********************************************************************
- *           GetCommModemStatus   (KERNEL32.285)
+ *           GetCommModemStatus   (KERNEL32.@)
  *
  *  Obtains the four control register bits if supported by the hardware.
  *
@@ -2931,7 +2931,7 @@ static BOOL COMM_WaitCommEvent(
 }
 
 /***********************************************************************
- *           WaitCommEvent   (KERNEL32.719)
+ *           WaitCommEvent   (KERNEL32.@)
  *
  * Wait until something interesting happens on a COMM port.
  * Interesting things (events) are set by calling SetCommMask before
@@ -2979,7 +2979,7 @@ BOOL WINAPI WaitCommEvent(
 }
   
 /***********************************************************************
- *           GetCommProperties   (KERNEL32.286)
+ *           GetCommProperties   (KERNEL32.@)
  *
  * This function fills in a structure with the capabilities of the 
  * communications port driver.
@@ -3044,7 +3044,7 @@ static CHAR lpszSerialUI[] = "serialui.dll";
 
 
 /***********************************************************************
- *           CommConfigDialogA   (KERNEL32.140)
+ *           CommConfigDialogA   (KERNEL32.@)
  *
  * Raises a dialog that allows the user to configure a comm port.
  * Fills the COMMCONFIG struct with information specified by the user.
@@ -3088,7 +3088,7 @@ BOOL WINAPI CommConfigDialogA(
 }
 
 /***********************************************************************
- *           CommConfigDialogW   (KERNEL32.141)
+ *           CommConfigDialogW   (KERNEL32.@)
  *
  * see CommConfigDialogA for more info
  */
@@ -3152,7 +3152,7 @@ BOOL WINAPI GetCommConfig(
 }
 
 /***********************************************************************
- *           SetCommConfig     (KERNEL32.617)
+ *           SetCommConfig     (KERNEL32.@)
  *
  *  Sets the configuration of the commications device.
  *
@@ -3169,7 +3169,7 @@ BOOL WINAPI SetCommConfig(
 }
 
 /***********************************************************************
- *           SetDefaultCommConfigA   (KERNEL32.638)
+ *           SetDefaultCommConfigA   (KERNEL32.@)
  *
  *  Initializes the default configuration for the specified communication
  *  device. (ascii)
@@ -3207,7 +3207,7 @@ BOOL WINAPI SetDefaultCommConfigA(
 
 
 /***********************************************************************
- *           SetDefaultCommConfigW     (KERNEL32.639)
+ *           SetDefaultCommConfigW     (KERNEL32.@)
  *
  *  Initializes the default configuration for the specified
  *  communication device. (unicode)
@@ -3235,7 +3235,7 @@ BOOL WINAPI SetDefaultCommConfigW(
 
 
 /***********************************************************************
- *           GetDefaultCommConfigA   (KERNEL32.313)
+ *           GetDefaultCommConfigA   (KERNEL32.@)
  *
  *   Acquires the default configuration of the specified communication device. (unicode)
  *
@@ -3283,7 +3283,7 @@ BOOL WINAPI GetDefaultCommConfigA(
 }
 
 /**************************************************************************
- *         GetDefaultCommConfigW		(KERNEL32.314)
+ *         GetDefaultCommConfigW		(KERNEL32.@)
  *
  *   Acquires the default configuration of the specified communication device. (unicode)
  *

@@ -1185,7 +1185,8 @@ BOOL WINAPI DdeDisconnect( HCONV hConv )
 
 
 /*****************************************************************
- *            DdeReconnect   (DDEML.37) (USER32.@)
+ *            DdeReconnect   (DDEML.37)
+ *            DdeReconnect   (USER32.@)
  */
 HCONV WINAPI DdeReconnect( HCONV hConv )
 {

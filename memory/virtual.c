@@ -700,7 +700,7 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
 
 
 /***********************************************************************
- *             VirtualAlloc   (KERNEL32.548)
+ *             VirtualAlloc   (KERNEL32.@)
  * Reserves or commits a region of pages in virtual address space
  *
  * RETURNS
@@ -833,7 +833,7 @@ LPVOID WINAPI VirtualAlloc(
 
 
 /***********************************************************************
- *             VirtualAllocEx   (KERNEL32.548)
+ *             VirtualAllocEx   (KERNEL32.@)
  *
  * Seems to be just as VirtualAlloc, but with process handle.
  */
@@ -852,7 +852,7 @@ LPVOID WINAPI VirtualAllocEx(
 
 
 /***********************************************************************
- *             VirtualFree   (KERNEL32.550)
+ *             VirtualFree   (KERNEL32.@)
  * Release or decommits a region of pages in virtual address space.
  * 
  * RETURNS
@@ -914,7 +914,7 @@ BOOL WINAPI VirtualFree(
 
 
 /***********************************************************************
- *             VirtualLock   (KERNEL32.551)
+ *             VirtualLock   (KERNEL32.@)
  * Locks the specified region of virtual address space
  * 
  * NOTE
@@ -933,7 +933,7 @@ BOOL WINAPI VirtualLock(
 
 
 /***********************************************************************
- *             VirtualUnlock   (KERNEL32.556)
+ *             VirtualUnlock   (KERNEL32.@)
  * Unlocks a range of pages in the virtual address space
  *
  * NOTE
@@ -952,7 +952,7 @@ BOOL WINAPI VirtualUnlock(
 
 
 /***********************************************************************
- *             VirtualProtect   (KERNEL32.552)
+ *             VirtualProtect   (KERNEL32.@)
  * Changes the access protection on a region of committed pages
  *
  * RETURNS
@@ -1005,7 +1005,7 @@ BOOL WINAPI VirtualProtect(
 
 
 /***********************************************************************
- *             VirtualProtectEx   (KERNEL32.553)
+ *             VirtualProtectEx   (KERNEL32.@)
  * Changes the access protection on a region of committed pages in the
  * virtual address space of a specified process
  *
@@ -1028,7 +1028,7 @@ BOOL WINAPI VirtualProtectEx(
 
 
 /***********************************************************************
- *             VirtualQuery   (KERNEL32.554)
+ *             VirtualQuery   (KERNEL32.@)
  * Provides info about a range of pages in virtual address space
  *
  * RETURNS
@@ -1104,7 +1104,7 @@ DWORD WINAPI VirtualQuery(
 
 
 /***********************************************************************
- *             VirtualQueryEx   (KERNEL32.555)
+ *             VirtualQueryEx   (KERNEL32.@)
  * Provides info about a range of pages in virtual address space of a
  * specified process
  *
@@ -1125,7 +1125,7 @@ DWORD WINAPI VirtualQueryEx(
 
 
 /***********************************************************************
- *             IsBadReadPtr   (KERNEL32.354)
+ *             IsBadReadPtr   (KERNEL32.@)
  *
  * RETURNS
  *	FALSE: Process has read access to entire block
@@ -1158,7 +1158,7 @@ BOOL WINAPI IsBadReadPtr(
 
 
 /***********************************************************************
- *             IsBadWritePtr   (KERNEL32.357)
+ *             IsBadWritePtr   (KERNEL32.@)
  *
  * RETURNS
  *	FALSE: Process has write access to entire block
@@ -1190,7 +1190,7 @@ BOOL WINAPI IsBadWritePtr(
 
 
 /***********************************************************************
- *             IsBadHugeReadPtr   (KERNEL32.352)
+ *             IsBadHugeReadPtr   (KERNEL32.@)
  * RETURNS
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
@@ -1204,7 +1204,7 @@ BOOL WINAPI IsBadHugeReadPtr(
 
 
 /***********************************************************************
- *             IsBadHugeWritePtr   (KERNEL32.353)
+ *             IsBadHugeWritePtr   (KERNEL32.@)
  * RETURNS
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
@@ -1218,7 +1218,7 @@ BOOL WINAPI IsBadHugeWritePtr(
 
 
 /***********************************************************************
- *             IsBadCodePtr   (KERNEL32.351)
+ *             IsBadCodePtr   (KERNEL32.@)
  *
  * RETURNS
  *	FALSE: Process has read access to specified memory
@@ -1231,7 +1231,7 @@ BOOL WINAPI IsBadCodePtr( FARPROC ptr ) /* [in] Address of function */
 
 
 /***********************************************************************
- *             IsBadStringPtrA   (KERNEL32.355)
+ *             IsBadStringPtrA   (KERNEL32.@)
  *
  * RETURNS
  *	FALSE: Read access to all bytes in string
@@ -1253,7 +1253,7 @@ BOOL WINAPI IsBadStringPtrA(
 
 
 /***********************************************************************
- *             IsBadStringPtrW   (KERNEL32.356)
+ *             IsBadStringPtrW   (KERNEL32.@)
  * See IsBadStringPtrA
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
@@ -1270,7 +1270,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 
 
 /***********************************************************************
- *             CreateFileMappingA   (KERNEL32.46)
+ *             CreateFileMappingA   (KERNEL32.@)
  * Creates a named or unnamed file-mapping object for the specified file
  *
  * RETURNS
@@ -1334,7 +1334,7 @@ HANDLE WINAPI CreateFileMappingA(
 
 
 /***********************************************************************
- *             CreateFileMappingW   (KERNEL32.47)
+ *             CreateFileMappingW   (KERNEL32.@)
  * See CreateFileMappingA
  */
 HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa, 
@@ -1390,7 +1390,7 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
 
 
 /***********************************************************************
- *             OpenFileMappingA   (KERNEL32.397)
+ *             OpenFileMappingA   (KERNEL32.@)
  * Opens a named file-mapping object.
  *
  * RETURNS
@@ -1423,7 +1423,7 @@ HANDLE WINAPI OpenFileMappingA(
 
 
 /***********************************************************************
- *             OpenFileMappingW   (KERNEL32.398)
+ *             OpenFileMappingW   (KERNEL32.@)
  * See OpenFileMappingA
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
@@ -1449,7 +1449,7 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 
 
 /***********************************************************************
- *             MapViewOfFile   (KERNEL32.385)
+ *             MapViewOfFile   (KERNEL32.@)
  * Maps a view of a file into the address space
  *
  * RETURNS
@@ -1469,7 +1469,7 @@ LPVOID WINAPI MapViewOfFile(
 
 
 /***********************************************************************
- *             MapViewOfFileEx   (KERNEL32.386)
+ *             MapViewOfFileEx   (KERNEL32.@)
  * Maps a view of a file into the address space
  *
  * RETURNS
@@ -1612,7 +1612,7 @@ error:
 
 
 /***********************************************************************
- *             FlushViewOfFile   (KERNEL32.262)
+ *             FlushViewOfFile   (KERNEL32.@)
  * Writes to the disk a byte range within a mapped view of a file
  *
  * RETURNS
@@ -1642,7 +1642,7 @@ BOOL WINAPI FlushViewOfFile(
 
 
 /***********************************************************************
- *             UnmapViewOfFile   (KERNEL32.540)
+ *             UnmapViewOfFile   (KERNEL32.@)
  * Unmaps a mapped view of a file.
  *
  * NOTES

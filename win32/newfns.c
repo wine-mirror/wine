@@ -84,7 +84,7 @@ static void QUERYPERF_Init(void)
 
 		    
 /****************************************************************************
- *		QueryPerformanceCounter (KERNEL32.564)
+ *		QueryPerformanceCounter (KERNEL32.@)
  */
 BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
@@ -111,7 +111,7 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 }
 
 /****************************************************************************
- *		QueryPerformanceFrequency (KERNEL32.565)
+ *		QueryPerformanceFrequency (KERNEL32.@)
  */
 BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
@@ -132,7 +132,7 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 }
 
 /****************************************************************************
- *		FlushInstructionCache (KERNEL32.261)
+ *		FlushInstructionCache (KERNEL32.@)
  */
 BOOL WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
 	FIXME_(debug)("(0x%08lx,0x%08lx,0x%08lx): stub\n",x,y,z);
@@ -171,7 +171,7 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
 
 
 /******************************************************************************
- * CreateMailslotA [KERNEL32.164]
+ * CreateMailslotA [KERNEL32.@]
  */
 HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
                                    DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa)
@@ -183,7 +183,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 
 
 /******************************************************************************
- * CreateMailslotW [KERNEL32.165]  Creates a mailslot with specified name
+ * CreateMailslotW [KERNEL32.@]  Creates a mailslot with specified name
  * 
  * PARAMS
  *    lpName          [I] Pointer to string for mailslot name
@@ -205,7 +205,7 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
 
 
 /******************************************************************************
- * GetMailslotInfo [KERNEL32.347]  Retrieves info about specified mailslot
+ * GetMailslotInfo [KERNEL32.@]  Retrieves info about specified mailslot
  *
  * PARAMS
  *    hMailslot        [I] Mailslot handle
@@ -232,7 +232,7 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
 
 
 /******************************************************************************
- * GetCompressedFileSizeA [KERNEL32.291]
+ * GetCompressedFileSizeA [KERNEL32.@]
  *
  * NOTES
  *    This should call the W function below
@@ -247,7 +247,7 @@ DWORD WINAPI GetCompressedFileSizeA(
 
 
 /******************************************************************************
- * GetCompressedFileSizeW [KERNEL32.292]  
+ * GetCompressedFileSizeW [KERNEL32.@]  
  * 
  * RETURNS
  *    Success: Low-order doubleword of number of bytes
@@ -263,7 +263,7 @@ DWORD WINAPI GetCompressedFileSizeW(
 
 
 /******************************************************************************
- * SetComputerNameA [KERNEL32.621]  
+ * SetComputerNameA [KERNEL32.@]  
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 {
@@ -275,7 +275,7 @@ BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 
 
 /******************************************************************************
- * SetComputerNameW [KERNEL32.622]
+ * SetComputerNameW [KERNEL32.@]
  *
  * PARAMS
  *    lpComputerName [I] Address of new computer name

@@ -352,7 +352,7 @@ static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
 }
 
 /****************************************************************************
- *		DeviceIoControl (KERNEL32.188)
+ *		DeviceIoControl (KERNEL32.@)
  * This is one of those big ugly nasty procedure which can do
  * a million and one things when it comes to devices. It can also be
  * used for VxD communication.

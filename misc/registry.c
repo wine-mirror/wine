@@ -1574,7 +1574,8 @@ void SHELL_LoadRegistry( void )
 /***************************************************************************/
 
 /******************************************************************************
- * RegFlushKey [KERNEL.227] [ADVAPI32.@]
+ * RegFlushKey [KERNEL.227]
+ * RegFlushKey [ADVAPI32.@]
  * Immediately writes key to registry.
  * Only returns after data has been written to disk.
  *
@@ -1667,7 +1668,8 @@ static inline void fix_win16_hkey( HKEY *hkey )
 }
 
 /******************************************************************************
- *           RegEnumKey16   [KERNEL.216] [SHELL.7]
+ *           RegEnumKey16   [KERNEL.216]
+ *           RegEnumKey16   [SHELL.7]
  */
 DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {
@@ -1676,7 +1678,8 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 }
 
 /******************************************************************************
- *           RegOpenKey16   [KERNEL.217] [SHELL.1]
+ *           RegOpenKey16   [KERNEL.217]
+ *           RegOpenKey16   [SHELL.1]
  */
 DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -1685,7 +1688,8 @@ DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 }
 
 /******************************************************************************
- *           RegCreateKey16   [KERNEL.218] [SHELL.2]
+ *           RegCreateKey16   [KERNEL.218]
+ *           RegCreateKey16   [SHELL.2]
  */
 DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -1694,7 +1698,8 @@ DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 }
 
 /******************************************************************************
- *           RegDeleteKey16   [KERNEL.219] [SHELL.4]
+ *           RegDeleteKey16   [KERNEL.219]
+ *           RegDeleteKey16   [SHELL.4]
  */
 DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR name )
 {
@@ -1703,7 +1708,8 @@ DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR name )
 }
 
 /******************************************************************************
- *           RegCloseKey16   [KERNEL.220] [SHELL.3]
+ *           RegCloseKey16   [KERNEL.220]
+ *           RegCloseKey16   [SHELL.3]
  */
 DWORD WINAPI RegCloseKey16( HKEY hkey )
 {
@@ -1712,7 +1718,8 @@ DWORD WINAPI RegCloseKey16( HKEY hkey )
 }
 
 /******************************************************************************
- *           RegSetValue16   [KERNEL.221] [SHELL.5]
+ *           RegSetValue16   [KERNEL.221]
+ *           RegSetValue16   [SHELL.5]
  */
 DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
 {
@@ -1740,7 +1747,8 @@ DWORD WINAPI RegEnumValue16( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_co
 }
 
 /******************************************************************************
- *           RegQueryValue16   [KERNEL.224] [SHELL.6]
+ *           RegQueryValue16   [KERNEL.224]
+ *           RegQueryValue16   [SHELL.6]
  *
  * NOTES
  *    Is this HACK still applicable?

@@ -130,7 +130,7 @@ static INT load_messageW( HMODULE instance, UINT id, WORD lang,
 
 
 /***********************************************************************
- *           FormatMessageA   (KERNEL32.265)
+ *           FormatMessageA   (KERNEL32.@)
  * FIXME: missing wrap,
  */
 DWORD WINAPI FormatMessageA(
@@ -356,7 +356,7 @@ DWORD WINAPI FormatMessageA(
 
 
 /***********************************************************************
- *           FormatMessageW   (KERNEL32.266)
+ *           FormatMessageW   (KERNEL32.@)
  */
 DWORD WINAPI FormatMessageW(
 	DWORD	dwFlags,

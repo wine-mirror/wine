@@ -19,7 +19,7 @@
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
- *           UpdateResourceA                 (KERNEL32.707)
+ *           UpdateResourceA                 (KERNEL32.@)
  */
 BOOL WINAPI UpdateResourceA(
   HANDLE  hUpdate,
@@ -35,7 +35,7 @@ BOOL WINAPI UpdateResourceA(
 }
 
 /***********************************************************************
- *           UpdateResourceW                 (KERNEL32.708)
+ *           UpdateResourceW                 (KERNEL32.@)
  */
 BOOL WINAPI UpdateResourceW(
   HANDLE  hUpdate,

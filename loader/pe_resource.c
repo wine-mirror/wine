@@ -289,7 +289,7 @@ DWORD PE_SizeofResource( HRSRC hRsrc )
 
 
 /**********************************************************************
- *	EnumResourceTypesA	(KERNEL32.90)
+ *	EnumResourceTypesA	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lparam)
 {
@@ -331,7 +331,7 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lpara
 
 
 /**********************************************************************
- *	EnumResourceTypesW	(KERNEL32.91)
+ *	EnumResourceTypesW	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lparam)
 {
@@ -370,7 +370,7 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lpara
 
 
 /**********************************************************************
- *	EnumResourceNamesA	(KERNEL32.88)
+ *	EnumResourceNamesA	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfun, LONG lparam )
 {
@@ -415,7 +415,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
 
 
 /**********************************************************************
- *	EnumResourceNamesW	(KERNEL32.89)
+ *	EnumResourceNamesW	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpfun, LONG lparam )
 {
@@ -457,7 +457,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
 
 
 /**********************************************************************
- *	EnumResourceLanguagesA	(KERNEL32.86)
+ *	EnumResourceLanguagesA	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
                                     ENUMRESLANGPROCA lpfun, LONG lparam )
@@ -485,7 +485,7 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
 
 
 /**********************************************************************
- *	EnumResourceLanguagesW	(KERNEL32.87)
+ *	EnumResourceLanguagesW	(KERNEL32.@)
  */
 BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
                                     ENUMRESLANGPROCW lpfun, LONG lparam )

@@ -267,7 +267,7 @@ static int TIME_GetBias( time_t utc, int *pdaylight)
 
 
 /***********************************************************************
- *              SetLocalTime            (KERNEL32.655)
+ *              SetLocalTime            (KERNEL32.@)
  *
  *  Sets the local time using current time zone and daylight
  *  savings settings.
@@ -320,7 +320,7 @@ BOOL WINAPI SetLocalTime(
 
 
 /***********************************************************************
- *           GetSystemTimeAdjustment     (KERNEL32.407)
+ *           GetSystemTimeAdjustment     (KERNEL32.@)
  *
  *  Indicates the period between clock interrupt and the amount the clock
  *  is adjusted each interrupt so as to keep it insync with an external source.
@@ -347,7 +347,7 @@ DWORD WINAPI GetSystemTimeAdjustment(
 
 
 /***********************************************************************
- *              SetSystemTime            (KERNEL32.665)
+ *              SetSystemTime            (KERNEL32.@)
  *
  *  Sets the system time (utc).
  *
@@ -408,7 +408,7 @@ BOOL WINAPI SetSystemTime(
 
 
 /***********************************************************************
- *              GetTimeZoneInformation  (KERNEL32.424)
+ *              GetTimeZoneInformation  (KERNEL32.@)
  *
  *  Fills in the a time zone information structure with values based on
  *  the current local time.
@@ -440,7 +440,7 @@ DWORD WINAPI GetTimeZoneInformation(
 
 
 /***********************************************************************
- *              SetTimeZoneInformation  (KERNEL32.673)
+ *              SetTimeZoneInformation  (KERNEL32.@)
  *
  *  Set the local time zone with values based on the time zone structure.
  *
@@ -468,7 +468,7 @@ BOOL WINAPI SetTimeZoneInformation(
 
 
 /***********************************************************************
- *              SystemTimeToTzSpecificLocalTime  (KERNEL32.683)
+ *              SystemTimeToTzSpecificLocalTime  (KERNEL32.@)
  *
  *  Converts the system time (utc) to the local time in the specified time zone.
  *
@@ -492,7 +492,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 
 
 /***********************************************************************
- *              GetSystemTimeAsFileTime  (KERNEL32.408)
+ *              GetSystemTimeAsFileTime  (KERNEL32.@)
  *
  *  Fills in a file time structure with the current time in UTC format.
  */
@@ -520,7 +520,7 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 }
 
 /*********************************************************************
- *	GetProcessTimes				(KERNEL32.378)
+ *	GetProcessTimes				(KERNEL32.@)
  *
  *  Returns the user and kernel execution times of a process,
  *  along with the creation and exit times if known.

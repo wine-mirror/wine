@@ -213,7 +213,7 @@ static UTINFO *UTFind( HMODULE hModule )
 
 
 /****************************************************************************
- *		UTRegister (KERNEL32.698)
+ *		UTRegister (KERNEL32.@)
  */
 BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
                         LPSTR lpszInitName, LPSTR lpszProcName,
@@ -270,7 +270,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 }
 
 /****************************************************************************
- *		UTUnRegister (KERNEL32.699)
+ *		UTUnRegister (KERNEL32.@)
  */
 VOID WINAPI UTUnRegister( HMODULE hModule )
 {

@@ -978,7 +978,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
 
 /***********************************************************************
- *           GetShortPathNameA   (KERNEL32.271)
+ *           GetShortPathNameA   (KERNEL32.@)
  *
  * NOTES
  *  observed:
@@ -1081,7 +1081,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
 
 /***********************************************************************
- *           GetShortPathNameW   (KERNEL32.272)
+ *           GetShortPathNameW   (KERNEL32.@)
  */
 DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
                                   DWORD shortlen )
@@ -1159,7 +1159,7 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
 
 
 /***********************************************************************
- *           GetLongPathNameW   (KERNEL32.269)
+ *           GetLongPathNameW   (KERNEL32.@)
  */
 DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
                                   DWORD longlen )
@@ -1335,7 +1335,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 
 
 /***********************************************************************
- *           GetFullPathNameA   (KERNEL32.272)
+ *           GetFullPathNameA   (KERNEL32.@)
  * NOTES
  *   if the path closed with '\', *lastpart is 0 
  */
@@ -1359,7 +1359,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
 
 
 /***********************************************************************
- *           GetFullPathNameW   (KERNEL32.273)
+ *           GetFullPathNameW   (KERNEL32.@)
  */
 DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
                                  LPWSTR *lastpart )
@@ -1633,7 +1633,7 @@ HANDLE WINAPI FindFirstFileExA(
 }
 
 /*************************************************************************
- *           FindFirstFileA   (KERNEL32.123)
+ *           FindFirstFileA   (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstFileA(
 	LPCSTR lpFileName,
@@ -1702,7 +1702,7 @@ HANDLE WINAPI FindFirstFileExW(
 }
 
 /*************************************************************************
- *           FindFirstFileW   (KERNEL32.124)
+ *           FindFirstFileW   (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
 {
@@ -1711,7 +1711,7 @@ HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
 }
 
 /*************************************************************************
- *           FindNextFileA   (KERNEL32.126)
+ *           FindNextFileA   (KERNEL32.@)
  */
 BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
@@ -1742,7 +1742,7 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 
 
 /*************************************************************************
- *           FindNextFileW   (KERNEL32.127)
+ *           FindNextFileW   (KERNEL32.@)
  */
 BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 {
@@ -1763,7 +1763,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 }
 
 /*************************************************************************
- *           FindClose   (KERNEL32.119)
+ *           FindClose   (KERNEL32.@)
  */
 BOOL WINAPI FindClose( HANDLE handle )
 {
@@ -2012,7 +2012,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 
 
 /***********************************************************************
- *           MulDiv   (KERNEL32.391)
+ *           MulDiv   (KERNEL32.@)
  * RETURNS
  *	Result of multiplication and division
  *	-1: Overflow occurred or Divisor was 0
@@ -2065,7 +2065,7 @@ INT WINAPI MulDiv(
 
 
 /***********************************************************************
- *           DosDateTimeToFileTime   (KERNEL32.76)
+ *           DosDateTimeToFileTime   (KERNEL32.@)
  */
 BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 {
@@ -2083,7 +2083,7 @@ BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 
 
 /***********************************************************************
- *           FileTimeToDosDateTime   (KERNEL32.111)
+ *           FileTimeToDosDateTime   (KERNEL32.@)
  */
 BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
                                      LPWORD fattime )
@@ -2100,7 +2100,7 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
 
 
 /***********************************************************************
- *           LocalFileTimeToFileTime   (KERNEL32.373)
+ *           LocalFileTimeToFileTime   (KERNEL32.@)
  */
 BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
                                        LPFILETIME utcft )
@@ -2117,7 +2117,7 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 
 
 /***********************************************************************
- *           FileTimeToLocalFileTime   (KERNEL32.112)
+ *           FileTimeToLocalFileTime   (KERNEL32.@)
  */
 BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )
@@ -2147,7 +2147,7 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
 
 
 /***********************************************************************
- *           FileTimeToSystemTime   (KERNEL32.113)
+ *           FileTimeToSystemTime   (KERNEL32.@)
  */
 BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 {
@@ -2167,7 +2167,7 @@ BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 }
 
 /***********************************************************************
- *           QueryDosDeviceA   (KERNEL32.413)
+ *           QueryDosDeviceA   (KERNEL32.@)
  *
  * returns array of strings terminated by \0, terminated by \0
  */
@@ -2209,7 +2209,7 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
 
 
 /***********************************************************************
- *           QueryDosDeviceW   (KERNEL32.414)
+ *           QueryDosDeviceW   (KERNEL32.@)
  *
  * returns array of strings terminated by \0, terminated by \0
  */
@@ -2227,7 +2227,7 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 
 
 /***********************************************************************
- *           SystemTimeToFileTime   (KERNEL32.526)
+ *           SystemTimeToFileTime   (KERNEL32.@)
  */
 BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 {
@@ -2263,7 +2263,7 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 }
 
 /***********************************************************************
- *           DefineDosDeviceA       (KERNEL32.182)
+ *           DefineDosDeviceA       (KERNEL32.@)
  */
 BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 	FIXME("(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);

@@ -405,7 +405,7 @@ BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
 
 
 /******************************************************************************
- * GenerateConsoleCtrlEvent [KERNEL32.275] Simulate a CTRL-C or CTRL-BREAK
+ * GenerateConsoleCtrlEvent [KERNEL32.@] Simulate a CTRL-C or CTRL-BREAK
  *
  * PARAMS
  *    dwCtrlEvent        [I] Type of event
@@ -440,7 +440,7 @@ BOOL WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
 
 
 /******************************************************************************
- * CreateConsoleScreenBuffer [KERNEL32.151]  Creates a console screen buffer
+ * CreateConsoleScreenBuffer [KERNEL32.@]  Creates a console screen buffer
  *
  * PARAMS
  *    dwDesiredAccess    [I] Access flag
@@ -489,7 +489,7 @@ BOOL WINAPI GetConsoleScreenBufferInfo( HANDLE hConsoleOutput,
 
 
 /******************************************************************************
- * SetConsoleActiveScreenBuffer [KERNEL32.623]  Sets buffer to current console
+ * SetConsoleActiveScreenBuffer [KERNEL32.@]  Sets buffer to current console
  *
  * RETURNS
  *    Success: TRUE
@@ -545,7 +545,7 @@ COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 
 
 /***********************************************************************
- *            FreeConsole (KERNEL32.267)
+ *            FreeConsole (KERNEL32.@)
  */
 BOOL WINAPI FreeConsole(VOID)
 {
@@ -651,7 +651,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 
 
 /***********************************************************************
- *            AllocConsole (KERNEL32.103)
+ *            AllocConsole (KERNEL32.@)
  *
  * creates an xterm with a pty to our program
  */
@@ -695,7 +695,7 @@ BOOL WINAPI AllocConsole(VOID)
 
 
 /******************************************************************************
- * GetConsoleCP [KERNEL32.295]  Returns the OEM code page for the console
+ * GetConsoleCP [KERNEL32.@]  Returns the OEM code page for the console
  *
  * RETURNS
  *    Code page code
@@ -732,7 +732,7 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 
 
 /******************************************************************************
- * SetConsoleMode [KERNEL32.628]  Sets input mode of console's input buffer
+ * SetConsoleMode [KERNEL32.@]  Sets input mode of console's input buffer
  *
  * PARAMS
  *    hcon [I] Handle to console input or screen buffer
@@ -757,7 +757,7 @@ BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 
 
 /******************************************************************************
- * SetConsoleOutputCP [KERNEL32.629]  Set the output codepage used by the console
+ * SetConsoleOutputCP [KERNEL32.@]  Set the output codepage used by the console
  *
  * PARAMS
  *    cp [I] code page to set
@@ -826,7 +826,7 @@ DWORD WINAPI GetConsoleTitleW( LPWSTR title, DWORD size )
 
 
 /***********************************************************************
- *            WriteConsoleA   (KERNEL32.729)
+ *            WriteConsoleA   (KERNEL32.@)
  */
 BOOL WINAPI WriteConsoleA( HANDLE hConsoleOutput,
                                LPCVOID lpBuffer,
@@ -847,7 +847,7 @@ BOOL WINAPI WriteConsoleA( HANDLE hConsoleOutput,
 #define SADD(s) { char *x=s;while (*x) {CADD(*x);x++;}}
 
 /***********************************************************************
- *            WriteConsoleOutputA   (KERNEL32.732)
+ *            WriteConsoleOutputA   (KERNEL32.@)
  */
 BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
                                      LPCHAR_INFO lpBuffer,
@@ -1068,7 +1068,7 @@ BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
 
 
 /******************************************************************************
- * ReadConsoleInputA [KERNEL32.569]  Reads data from a console
+ * ReadConsoleInputA [KERNEL32.@]  Reads data from a console
  *
  * PARAMS
  *    hConsoleInput        [I] Handle to console input buffer
@@ -1108,7 +1108,7 @@ BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
 
 
 /***********************************************************************
- *            ReadConsoleInputW   (KERNEL32.570)
+ *            ReadConsoleInputW   (KERNEL32.@)
  */
 BOOL WINAPI ReadConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read )
@@ -1128,7 +1128,7 @@ BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 
 
 /***********************************************************************
- *            PeekConsoleInputA   (KERNEL32.550)
+ *            PeekConsoleInputA   (KERNEL32.@)
  *
  * Gets 'count' first events (or less) from input queue.
  *
@@ -1147,7 +1147,7 @@ BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count
 
 
 /***********************************************************************
- *            PeekConsoleInputW   (KERNEL32.551)
+ *            PeekConsoleInputW   (KERNEL32.@)
  */
 BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
                                   LPINPUT_RECORD pirBuffer,
@@ -1160,7 +1160,7 @@ BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
 
 
 /******************************************************************************
- * WriteConsoleInputA [KERNEL32.730]  Write data to a console input buffer
+ * WriteConsoleInputA [KERNEL32.@]  Write data to a console input buffer
  *
  */
 BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
@@ -1189,7 +1189,7 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
 }
 
 /******************************************************************************
- * WriteConsoleInputW [KERNEL32.731]  Write data to a console input buffer
+ * WriteConsoleInputW [KERNEL32.@]  Write data to a console input buffer
  *
  */
 BOOL WINAPI WriteConsoleInputW( HANDLE handle, INPUT_RECORD *buffer,
@@ -1268,7 +1268,7 @@ BOOL WINAPI SetConsoleTitleW( LPCWSTR title )
 }
 
 /******************************************************************************
- * SetConsoleCursorPosition [KERNEL32.627]
+ * SetConsoleCursorPosition [KERNEL32.@]
  * Sets the cursor position in console
  *
  * PARAMS
@@ -1310,7 +1310,7 @@ BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
 }
 
 /***********************************************************************
- *            GetNumberOfConsoleMouseButtons   (KERNEL32.358)
+ *            GetNumberOfConsoleMouseButtons   (KERNEL32.@)
  */
 BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 {
@@ -1320,7 +1320,7 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 }
 
 /******************************************************************************
- * GetConsoleCursorInfo [KERNEL32.296]  Gets size and visibility of console
+ * GetConsoleCursorInfo [KERNEL32.@]  Gets size and visibility of console
  *
  * PARAMS
  *    hcon  [I] Handle to console screen buffer
@@ -1350,7 +1350,7 @@ BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo )
 
 
 /******************************************************************************
- * SetConsoleCursorInfo [KERNEL32.626]  Sets size and visibility of cursor
+ * SetConsoleCursorInfo [KERNEL32.@]  Sets size and visibility of cursor
  *
  * RETURNS
  *    Success: TRUE
@@ -1382,7 +1382,7 @@ BOOL WINAPI SetConsoleCursorInfo(
 
 
 /******************************************************************************
- * SetConsoleWindowInfo [KERNEL32.634]  Sets size and position of console
+ * SetConsoleWindowInfo [KERNEL32.@]  Sets size and position of console
  *
  * RETURNS
  *    Success: TRUE
@@ -1399,7 +1399,7 @@ BOOL WINAPI SetConsoleWindowInfo(
 
 
 /******************************************************************************
- * SetConsoleTextAttribute [KERNEL32.631]  Sets colors for text
+ * SetConsoleTextAttribute [KERNEL32.@]  Sets colors for text
  *
  * Sets the foreground and background color attributes of characters
  * written to the screen buffer.
@@ -1430,7 +1430,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput,WORD wAttr)
 
 
 /******************************************************************************
- * SetConsoleScreenBufferSize [KERNEL32.630]  Changes size of console 
+ * SetConsoleScreenBufferSize [KERNEL32.@]  Changes size of console 
  *
  * PARAMS
  *    hConsoleOutput [I] Handle to console screen buffer
@@ -1449,7 +1449,7 @@ BOOL WINAPI SetConsoleScreenBufferSize( HANDLE hConsoleOutput,
 
 
 /******************************************************************************
- * FillConsoleOutputCharacterA [KERNEL32.242]
+ * FillConsoleOutputCharacterA [KERNEL32.@]
  *
  * PARAMS
  *    hConsoleOutput    [I] Handle to screen buffer
@@ -1481,7 +1481,7 @@ BOOL WINAPI FillConsoleOutputCharacterA(
 
 
 /******************************************************************************
- * FillConsoleOutputCharacterW [KERNEL32.243]  Writes characters to console
+ * FillConsoleOutputCharacterW [KERNEL32.@]  Writes characters to console
  *
  * PARAMS
  *    hConsoleOutput    [I] Handle to screen buffer
@@ -1515,7 +1515,7 @@ BOOL WINAPI FillConsoleOutputCharacterW(HANDLE hConsoleOutput,
 
 
 /******************************************************************************
- * FillConsoleOutputAttribute [KERNEL32.241]  Sets attributes for console
+ * FillConsoleOutputAttribute [KERNEL32.@]  Sets attributes for console
  *
  * PARAMS
  *    hConsoleOutput    [I] Handle to screen buffer
@@ -1539,7 +1539,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- * ReadConsoleOutputCharacterA [KERNEL32.573]
+ * ReadConsoleOutputCharacterA [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1554,7 +1554,7 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- * ReadConsoleOutputCharacterW [KERNEL32.574]
+ * ReadConsoleOutputCharacterW [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1570,7 +1570,7 @@ BOOL WINAPI ReadConsoleOutputCharacterW(HANDLE hConsoleOutput,
 
 
 /******************************************************************************
- * ScrollConsoleScreenBufferA [KERNEL32.612]
+ * ScrollConsoleScreenBufferA [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1586,7 +1586,7 @@ BOOL WINAPI ScrollConsoleScreenBufferA( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- * ScrollConsoleScreenBufferW [KERNEL32.613]
+ * ScrollConsoleScreenBufferW [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1602,7 +1602,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- *  ReadConsoleOutputA [KERNEL32.571]
+ *  ReadConsoleOutputA [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1622,7 +1622,7 @@ BOOL WINAPI ReadConsoleOutputA( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- *  ReadConsoleOutputW [KERNEL32.575]
+ *  ReadConsoleOutputW [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1642,7 +1642,7 @@ BOOL WINAPI ReadConsoleOutputW( HANDLE hConsoleOutput,
 }
 
 /******************************************************************************
- *  ReadConsoleOutputAttribute [KERNEL32.572]
+ *  ReadConsoleOutputAttribute [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1675,7 +1675,7 @@ BOOL WINAPI SetConsoleCP( UINT cp )
 }
 
 /******************************************************************************
- *  SetConsoleInputExeNameW	 [KERNEL32.889]
+ *  SetConsoleInputExeNameW	 [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented
@@ -1689,7 +1689,7 @@ BOOL WINAPI SetConsoleInputExeNameW( LPCWSTR name )
 }
 
 /******************************************************************************
- *  SetConsoleInputExeNameA	 [KERNEL32.888]
+ *  SetConsoleInputExeNameA	 [KERNEL32.@]
  * 
  * BUGS
  *   Unimplemented

@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(win32);
 
 
 /***********************************************************************
- *           CreateEventA    (KERNEL32.156)
+ *           CreateEventA    (KERNEL32.@)
  */
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCSTR name )
@@ -47,7 +47,7 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 
 
 /***********************************************************************
- *           CreateEventW    (KERNEL32.157)
+ *           CreateEventW    (KERNEL32.@)
  */
 HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCWSTR name )
@@ -93,7 +93,7 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
 
 
 /***********************************************************************
- *           OpenEventA    (KERNEL32.536)
+ *           OpenEventA    (KERNEL32.@)
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -118,7 +118,7 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenEventW    (KERNEL32.537)
+ *           OpenEventW    (KERNEL32.@)
  */
 HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
@@ -162,7 +162,7 @@ static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
 
 
 /***********************************************************************
- *           PulseEvent    (KERNEL32.557)
+ *           PulseEvent    (KERNEL32.@)
  */
 BOOL WINAPI PulseEvent( HANDLE handle )
 {
@@ -172,7 +172,7 @@ BOOL WINAPI PulseEvent( HANDLE handle )
 
 /***********************************************************************
  *           SetEvent    (KERNEL.458)
- *           SetEvent    (KERNEL32.644)
+ *           SetEvent    (KERNEL32.@)
  */
 BOOL WINAPI SetEvent( HANDLE handle )
 {
@@ -182,7 +182,7 @@ BOOL WINAPI SetEvent( HANDLE handle )
 
 /***********************************************************************
  *           ResetEvent    (KERNEL.459)
- *           ResetEvent    (KERNEL32.586)
+ *           ResetEvent    (KERNEL32.@)
  */
 BOOL WINAPI ResetEvent( HANDLE handle )
 {
@@ -237,7 +237,7 @@ VOID WINAPI VWin32_EventSet(HANDLE event)
 
 
 /***********************************************************************
- *           CreateMutexA   (KERNEL32.166)
+ *           CreateMutexA   (KERNEL32.@)
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
@@ -263,7 +263,7 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 
 
 /***********************************************************************
- *           CreateMutexW   (KERNEL32.167)
+ *           CreateMutexW   (KERNEL32.@)
  */
 HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 {
@@ -294,7 +294,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 
 
 /***********************************************************************
- *           OpenMutexA   (KERNEL32.541)
+ *           OpenMutexA   (KERNEL32.@)
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -319,7 +319,7 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenMutexW   (KERNEL32.542)
+ *           OpenMutexW   (KERNEL32.@)
  */
 HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {
@@ -344,7 +344,7 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 
 
 /***********************************************************************
- *           ReleaseMutex   (KERNEL32.582)
+ *           ReleaseMutex   (KERNEL32.@)
  */
 BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
@@ -365,7 +365,7 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
 
 
 /***********************************************************************
- *           CreateSemaphoreA   (KERNEL32.174)
+ *           CreateSemaphoreA   (KERNEL32.@)
  */
 HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
@@ -401,7 +401,7 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
 
 
 /***********************************************************************
- *           CreateSemaphoreW   (KERNEL32.175)
+ *           CreateSemaphoreW   (KERNEL32.@)
  */
 HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCWSTR name )
@@ -438,7 +438,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
 
 
 /***********************************************************************
- *           OpenSemaphoreA   (KERNEL32.545)
+ *           OpenSemaphoreA   (KERNEL32.@)
  */
 HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -463,7 +463,7 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenSemaphoreW   (KERNEL32.546)
+ *           OpenSemaphoreW   (KERNEL32.@)
  */
 HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {
@@ -488,7 +488,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 
 
 /***********************************************************************
- *           ReleaseSemaphore   (KERNEL32.583)
+ *           ReleaseSemaphore   (KERNEL32.@)
  */
 BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 {
@@ -504,7 +504,7 @@ BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 
 
 /***********************************************************************
- *           CreateNamedPipeA   (KERNEL32.168)
+ *           CreateNamedPipeA   (KERNEL32.@)
  */
 HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
                                 DWORD dwPipeMode, DWORD nMaxInstances,
@@ -520,7 +520,7 @@ HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
 
 
 /***********************************************************************
- *           CreateNamedPipeW   (KERNEL32.169)
+ *           CreateNamedPipeW   (KERNEL32.@)
  */
 HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
                                 DWORD dwPipeMode, DWORD nMaxInstances,
@@ -537,7 +537,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
 
 
 /***********************************************************************
- *           PeekNamedPipe   (KERNEL32.552)
+ *           PeekNamedPipe   (KERNEL32.@)
  */
 BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
                            LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage )
@@ -550,7 +550,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 
 
 /***********************************************************************
- *           WaitNamedPipeA   (KERNEL32.725)
+ *           WaitNamedPipeA   (KERNEL32.@)
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {
@@ -561,7 +561,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 
 
 /***********************************************************************
- *           WaitNamedPipeW   (KERNEL32.726)
+ *           WaitNamedPipeW   (KERNEL32.@)
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {

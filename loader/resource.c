@@ -322,7 +322,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 }
 
 /**********************************************************************
- *	    FindResourceA    (KERNEL32.128)
+ *	    FindResourceA    (KERNEL32.@)
  */
 HRSRC WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
@@ -331,7 +331,7 @@ HRSRC WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 }
 
 /**********************************************************************
- *	    FindResourceExA  (KERNEL32.129)
+ *	    FindResourceExA  (KERNEL32.@)
  */
 HRSRC WINAPI FindResourceExA( HMODULE hModule, 
                                LPCSTR type, LPCSTR name, WORD lang )
@@ -341,7 +341,7 @@ HRSRC WINAPI FindResourceExA( HMODULE hModule,
 }
 
 /**********************************************************************
- *	    FindResourceExW  (KERNEL32.130)
+ *	    FindResourceExW  (KERNEL32.@)
  */
 HRSRC WINAPI FindResourceExW( HMODULE hModule, 
                               LPCWSTR type, LPCWSTR name, WORD lang )
@@ -351,7 +351,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
 }
 
 /**********************************************************************
- *	    FindResourceW    (KERNEL32.131)
+ *	    FindResourceW    (KERNEL32.@)
  */
 HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
@@ -368,7 +368,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 }
 
 /**********************************************************************
- *	    LoadResource     (KERNEL32.370)
+ *	    LoadResource     (KERNEL32.@)
  */
 HGLOBAL WINAPI LoadResource( HINSTANCE hModule, HRSRC hRsrc )
 {
@@ -394,7 +394,7 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 }
 
 /**********************************************************************
- *	    LockResource     (KERNEL32.384)
+ *	    LockResource     (KERNEL32.@)
  */
 LPVOID WINAPI LockResource( HGLOBAL handle )
 {
@@ -434,7 +434,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 }
 
 /**********************************************************************
- *	    FreeResource     (KERNEL32.145)
+ *	    FreeResource     (KERNEL32.@)
  */
 BOOL WINAPI FreeResource( HGLOBAL handle )
 {
@@ -452,7 +452,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 }
 
 /**********************************************************************
- *	    SizeofResource   (KERNEL32.522)
+ *	    SizeofResource   (KERNEL32.@)
  */
 DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {

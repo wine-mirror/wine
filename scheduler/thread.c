@@ -358,7 +358,7 @@ HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
 
 
 /***********************************************************************
- * ExitThread [KERNEL32.215]  Ends a thread
+ * ExitThread [KERNEL32.@]  Ends a thread
  *
  * RETURNS
  *    None
@@ -391,7 +391,7 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 
 
 /***********************************************************************
- * SetThreadContext [KERNEL32.670]  Sets context of thread.
+ * SetThreadContext [KERNEL32.@]  Sets context of thread.
  *
  * RETURNS
  *    Success: TRUE
@@ -484,7 +484,7 @@ BOOL WINAPI SetThreadPriority(
 
 
 /**********************************************************************
- * GetThreadPriorityBoost [KERNEL32.877]  Returns priority boost for thread.
+ * GetThreadPriorityBoost [KERNEL32.@]  Returns priority boost for thread.
  *
  * Always reports that priority boost is disabled.
  *
@@ -502,7 +502,7 @@ BOOL WINAPI GetThreadPriorityBoost(
 
 
 /**********************************************************************
- * SetThreadPriorityBoost [KERNEL32.893]  Sets priority boost for thread.
+ * SetThreadPriorityBoost [KERNEL32.@]  Sets priority boost for thread.
  *
  * Priority boost is not implemented. Thsi function always returns 
  * FALSE and sets last error to ERROR_CALL_NOT_IMPLEMENTED
@@ -520,7 +520,7 @@ BOOL WINAPI SetThreadPriorityBoost(
 
 
 /**********************************************************************
- *           SetThreadAffinityMask   (KERNEL32.669)
+ *           SetThreadAffinityMask   (KERNEL32.@)
  */
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
@@ -539,7 +539,7 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 
 
 /**********************************************************************
- * TerminateThread [KERNEL32.685]  Terminates a thread
+ * TerminateThread [KERNEL32.@]  Terminates a thread
  *
  * RETURNS
  *    Success: TRUE
@@ -582,7 +582,7 @@ BOOL WINAPI GetExitCodeThread(
 
 
 /**********************************************************************
- * ResumeThread [KERNEL32.587]  Resumes a thread.
+ * ResumeThread [KERNEL32.@]  Resumes a thread.
  *
  * Decrements a thread's suspend count.  When count is zero, the
  * execution of the thread is resumed.
@@ -607,7 +607,7 @@ DWORD WINAPI ResumeThread(
 
 
 /**********************************************************************
- * SuspendThread [KERNEL32.681]  Suspends a thread.
+ * SuspendThread [KERNEL32.@]  Suspends a thread.
  *
  * RETURNS
  *    Success: Previous suspend count
@@ -628,7 +628,7 @@ DWORD WINAPI SuspendThread(
 
 
 /***********************************************************************
- *              QueueUserAPC  (KERNEL32.566)
+ *              QueueUserAPC  (KERNEL32.@)
  */
 DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
@@ -698,7 +698,7 @@ LCID WINAPI GetThreadLocale(void)
 
 
 /**********************************************************************
- * SetThreadLocale [KERNEL32.671]  Sets the calling threads current locale.
+ * SetThreadLocale [KERNEL32.@]  Sets the calling threads current locale.
  *
  * RETURNS
  *    Success: TRUE

@@ -16,7 +16,7 @@ DEFAULT_DEBUG_CHANNEL(tape);
 
 
 /************************************************************************
- *		BackupRead  (KERNEL32.107)
+ *		BackupRead  (KERNEL32.@)
  */
 BOOL WINAPI BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, BOOL bAbort,
@@ -33,7 +33,7 @@ BOOL WINAPI BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRea
 
 
 /************************************************************************
- *		BackupSeek  (KERNEL32.108)
+ *		BackupSeek  (KERNEL32.@)
  */
 BOOL WINAPI BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesToSeek,
          	LPDWORD lpdwLowByteSeeked, LPDWORD lpdwHighByteSeeked,
@@ -49,7 +49,7 @@ BOOL WINAPI BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesT
 
 
 /************************************************************************
- *		BackupWrite  (KERNEL32.109)
+ *		BackupWrite  (KERNEL32.@)
  */
 BOOL WINAPI BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWrite,
 		LPDWORD lpNumberOfBytesWritten, BOOL bAbort,
@@ -66,7 +66,7 @@ BOOL WINAPI BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWr
 
 
 /************************************************************************
- *		CreateTapePartition  (KERNEL32.177)
+ *		CreateTapePartition  (KERNEL32.@)
  */
 DWORD WINAPI CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
 			DWORD dwCount, DWORD dwSize )
@@ -81,7 +81,7 @@ DWORD WINAPI CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
 
 
 /************************************************************************
- *		EraseTape  (KERNEL32.212)
+ *		EraseTape  (KERNEL32.@)
  */
 DWORD WINAPI EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 {
@@ -94,7 +94,7 @@ DWORD WINAPI EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 
 
 /************************************************************************
- *		GetTapeParameters  (KERNEL32.409)
+ *		GetTapeParameters  (KERNEL32.@)
  */
 DWORD WINAPI GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 			LPDWORD lpdwSize, LPVOID lpTapeInformation )
@@ -109,7 +109,7 @@ DWORD WINAPI GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 
 
 /************************************************************************
- *		GetTapePosition  (KERNEL32.410)
+ *		GetTapePosition  (KERNEL32.@)
  */
 DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 			LPDWORD lpdwPartition, LPDWORD lpdwOffsetLow,
@@ -125,7 +125,7 @@ DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 
 
 /************************************************************************
- *		GetTapeStatus  (KERNEL32.411)
+ *		GetTapeStatus  (KERNEL32.@)
  */
 DWORD WINAPI GetTapeStatus( HANDLE hDevice )
 {
@@ -138,7 +138,7 @@ DWORD WINAPI GetTapeStatus( HANDLE hDevice )
 
 
 /************************************************************************
- *		PrepareTape  (KERNEL32.554)
+ *		PrepareTape  (KERNEL32.@)
  */
 DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 { 
@@ -151,7 +151,7 @@ DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 
 
 /************************************************************************
- *		SetTapeParameters  (KERNEL32.667)
+ *		SetTapeParameters  (KERNEL32.@)
  */
 DWORD WINAPI SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
                          LPVOID lpTapeInformation )
@@ -165,7 +165,7 @@ DWORD WINAPI SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 
 
 /************************************************************************
- *		SetTapePosition  (KERNEL32.668)
+ *		SetTapePosition  (KERNEL32.@)
  */
 DWORD WINAPI SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
                        dwPartition, DWORD dwOffsetLow, DWORD dwOffsetHigh,
@@ -181,7 +181,7 @@ DWORD WINAPI SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
 
 
 /************************************************************************
- *		WriteTapemark  (KERNEL32.751)
+ *		WriteTapemark  (KERNEL32.@)
  */
 DWORD WINAPI WriteTapemark( HANDLE hDevice,  DWORD dwTapemarkType, DWORD
                      dwTapemarkCount, BOOL bImmediate )

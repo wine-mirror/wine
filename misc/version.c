@@ -381,7 +381,7 @@ LONG WINAPI GetVersion16(void)
 
 
 /***********************************************************************
- *         GetVersion   (KERNEL32.427)
+ *         GetVersion   (KERNEL32.@)
  */
 LONG WINAPI GetVersion(void)
 {
@@ -412,7 +412,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
 
 
 /***********************************************************************
- *         GetVersionExA   (KERNEL32.428)
+ *         GetVersionExA   (KERNEL32.@)
  */
 BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 {
@@ -434,7 +434,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 
 
 /***********************************************************************
- *         GetVersionExW   (KERNEL32.429)
+ *         GetVersionExW   (KERNEL32.@)
  */
 BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 {

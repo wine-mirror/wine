@@ -11,7 +11,7 @@
 
 
 /***********************************************************************
- *	CreatePipe    (KERNEL32.170)
+ *	CreatePipe    (KERNEL32.@)
  */
 BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                           LPSECURITY_ATTRIBUTES sa, DWORD size )

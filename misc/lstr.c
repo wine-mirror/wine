@@ -29,7 +29,8 @@ DEFAULT_DEBUG_CHANNEL(resource);
 extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 
 /***********************************************************************
- *           IsCharAlphaA   (USER.433) (USER32.331)
+ *           IsCharAlphaA   (USER.433)
+ *           IsCharAlphaA   (USER32.@)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharAlphaA(CHAR x)
@@ -38,7 +39,8 @@ BOOL WINAPI IsCharAlphaA(CHAR x)
 }
 
 /***********************************************************************
- *           IsCharAlphaNumericA   (USER.434) (USER32.332)
+ *           IsCharAlphaNumericA   (USER.434)
+ *           IsCharAlphaNumericA   (USER32.@)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharAlphaNumericA(CHAR x)

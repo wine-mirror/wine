@@ -23,7 +23,7 @@
 DEFAULT_DEBUG_CHANNEL(file);
 
 /****************************************************************************
- *		FindFirstChangeNotificationA (KERNEL32.248)
+ *		FindFirstChangeNotificationA (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter ) 
@@ -43,7 +43,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
 }
 
 /****************************************************************************
- *		FindFirstChangeNotificationW (KERNEL32.249)
+ *		FindFirstChangeNotificationW (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
                                                 BOOL bWatchSubtree,
@@ -57,7 +57,7 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
 }
 
 /****************************************************************************
- *		FindNextChangeNotification (KERNEL32.252)
+ *		FindNextChangeNotification (KERNEL32.@)
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle ) 
 {
@@ -66,7 +66,7 @@ BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 }
 
 /****************************************************************************
- *		FindCloseChangeNotification (KERNEL32.247)
+ *		FindCloseChangeNotification (KERNEL32.@)
  */
 BOOL WINAPI FindCloseChangeNotification( HANDLE handle) 
 {

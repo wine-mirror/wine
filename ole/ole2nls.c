@@ -725,7 +725,7 @@ static char *GetLocaleSubkeyName( DWORD lctype )
 }
 
 /******************************************************************************
- *		SetLocaleInfoA	[KERNEL32.656]
+ *		SetLocaleInfoA	[KERNEL32.@]
  */
 BOOL WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
@@ -755,7 +755,7 @@ BOOL WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 }
 
 /******************************************************************************
- *		IsValidLocale	[KERNEL32.489]
+ *		IsValidLocale	[KERNEL32.@]
  */
 BOOL WINAPI IsValidLocale(LCID lcid,DWORD flags)
 {
@@ -778,7 +778,7 @@ static BOOL CALLBACK EnumResourceLanguagesProcW(HMODULE hModule, LPCWSTR type,
 }
 
 /******************************************************************************
- *		EnumSystemLocalesW	[KERNEL32.209]
+ *		EnumSystemLocalesW	[KERNEL32.@]
  */
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum,
                                     DWORD flags )
@@ -802,7 +802,7 @@ static BOOL CALLBACK EnumResourceLanguagesProcA(HMODULE hModule, LPCSTR type,
 }
 
 /******************************************************************************
- *		EnumSystemLocalesA	[KERNEL32.208]
+ *		EnumSystemLocalesA	[KERNEL32.@]
  */
 BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
                                    DWORD flags)
@@ -1335,7 +1335,7 @@ const WORD OLE2NLS_CT_CType3_LUT[] = {
 };
 
 /******************************************************************************
- *		GetStringTypeA	[KERNEL32.396]
+ *		GetStringTypeA	[KERNEL32.@]
  */
 BOOL WINAPI GetStringTypeA(LCID locale,DWORD dwInfoType,LPCSTR src,
                                INT cchSrc,LPWORD chartype)
@@ -1344,7 +1344,7 @@ BOOL WINAPI GetStringTypeA(LCID locale,DWORD dwInfoType,LPCSTR src,
 }
 
 /******************************************************************************
- *		GetStringTypeExA	[KERNEL32.397]
+ *		GetStringTypeExA	[KERNEL32.@]
  *
  * FIXME: Ignores the locale.
  */
@@ -1402,7 +1402,8 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 }
 
 /***********************************************************************
- *           VerLanguageNameA              [KERNEL32.709][VERSION.9]
+ *           VerLanguageNameA              [KERNEL32.@]
+ *           VerLanguageNameA              [VERSION.9]
  */
 DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 {
@@ -1413,7 +1414,8 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 }
 
 /***********************************************************************
- *           VerLanguageNameW              [KERNEL32.710][VERSION.10]
+ *           VerLanguageNameW              [KERNEL32.@]
+ *           VerLanguageNameW              [VERSION.10]
  */
 DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 {
@@ -1857,7 +1859,7 @@ static int identity(int c)
 }
 
 /*************************************************************************
- *              LCMapStringA                [KERNEL32.492]
+ *              LCMapStringA                [KERNEL32.@]
  *
  * Convert a string, or generate a sort key from it.
  *
@@ -2119,7 +2121,7 @@ INT WINAPI LCMapStringA(
 }
 		     
 /*************************************************************************
- *              LCMapStringW                [KERNEL32.493]
+ *              LCMapStringW                [KERNEL32.@]
  *
  * Convert a string, or generate a sort key from it.
  *
@@ -2438,7 +2440,7 @@ static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
 }
 
 /******************************************************************************
- *		CompareStringA	[KERNEL32.143]
+ *		CompareStringA	[KERNEL32.@]
  * Compares two strings using locale
  *
  * RETURNS
@@ -2520,7 +2522,7 @@ UINT WINAPI CompareStringA(
 }
 
 /******************************************************************************
- *		CompareStringW	[KERNEL32.144]
+ *		CompareStringW	[KERNEL32.@]
  * This implementation ignores the locale
  * FIXME :  Does only string sort.  Should
  * be reimplemented the same way as CompareStringA.
@@ -3024,7 +3026,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 
 
 /******************************************************************************
- *		GetDateFormatA	[KERNEL32.310]
+ *		GetDateFormatA	[KERNEL32.@]
  * Makes an ASCII string of the date
  *
  * This function uses format to format the date,  or,  if format
@@ -3113,7 +3115,7 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 }
 
 /******************************************************************************
- *		GetDateFormatW	[KERNEL32.311]
+ *		GetDateFormatW	[KERNEL32.@]
  * Makes a Unicode string of the date
  *
  * Acts the same as GetDateFormatA(),  except that it's Unicode.
@@ -3135,7 +3137,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 }
 
 /**************************************************************************
- *              EnumDateFormatsA	(KERNEL32.198)
+ *              EnumDateFormatsA	(KERNEL32.@)
  */
 BOOL WINAPI EnumDateFormatsA(
   DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
@@ -3400,7 +3402,7 @@ BOOL WINAPI EnumDateFormatsA(
 }
 
 /**************************************************************************
- *              EnumDateFormatsW	(KERNEL32.199)
+ *              EnumDateFormatsW	(KERNEL32.@)
  */
 BOOL WINAPI EnumDateFormatsW(
   DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3411,7 +3413,7 @@ BOOL WINAPI EnumDateFormatsW(
 }
 
 /**************************************************************************
- *              EnumTimeFormatsA	(KERNEL32.210)
+ *              EnumTimeFormatsA	(KERNEL32.@)
  */
 BOOL WINAPI EnumTimeFormatsA(
   TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3482,7 +3484,7 @@ BOOL WINAPI EnumTimeFormatsA(
 }
 
 /**************************************************************************
- *              EnumTimeFormatsW	(KERNEL32.211)
+ *              EnumTimeFormatsW	(KERNEL32.@)
  */
 BOOL WINAPI EnumTimeFormatsW(
   TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
@@ -3612,7 +3614,7 @@ static INT OLE_GetGrouping(char* sRule, INT index)
 }
 
 /**************************************************************************
- *              GetNumberFormatA	(KERNEL32.355)
+ *              GetNumberFormatA	(KERNEL32.@)
  */
 INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 			       LPCSTR lpvalue,   const NUMBERFMTA * lpFormat,
@@ -3870,7 +3872,7 @@ INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
 }
 
 /**************************************************************************
- *              GetCurrencyFormatA	(KERNEL32.302)
+ *              GetCurrencyFormatA	(KERNEL32.@)
  */
 INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
 			       LPCSTR lpvalue,   const CURRENCYFMTA * lpFormat,
@@ -4111,7 +4113,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
 }
 
 /**************************************************************************
- *              GetCurrencyFormatW	(KERNEL32.303)
+ *              GetCurrencyFormatW	(KERNEL32.@)
  */
 INT WINAPI GetCurrencyFormatW(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,   const CURRENCYFMTW * lpFormat,
@@ -4141,7 +4143,7 @@ static LCID OLE2NLS_CheckLocale (LCID locale)
 	}
 }
 /******************************************************************************
- *		GetTimeFormatA	[KERNEL32.422]
+ *		GetTimeFormatA	[KERNEL32.@]
  * Makes an ASCII string of the time
  *
  * Formats date according to format,  or locale default if format is
@@ -4204,7 +4206,7 @@ GetTimeFormatA(LCID locale,        /* [in]  */
 
 
 /******************************************************************************
- *		GetTimeFormatW	[KERNEL32.423]
+ *		GetTimeFormatW	[KERNEL32.@]
  * Makes a Unicode string of the time
  */
 INT WINAPI 
@@ -4252,7 +4254,7 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 }
 
 /******************************************************************************
- *		EnumCalendarInfoA	[KERNEL32.196]
+ *		EnumCalendarInfoA	[KERNEL32.@]
  */
 BOOL WINAPI EnumCalendarInfoA(
 	CALINFO_ENUMPROCA calinfoproc,LCID locale,CALID calendar,CALTYPE caltype

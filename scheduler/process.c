@@ -893,7 +893,7 @@ void WINAPI ExitProcess16( WORD status )
 }
 
 /******************************************************************************
- *           TerminateProcess   (KERNEL32.684)
+ *           TerminateProcess   (KERNEL32.@)
  */
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
@@ -1026,7 +1026,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 
 
 /*********************************************************************
- *           OpenProcess   (KERNEL32.543)
+ *           OpenProcess   (KERNEL32.@)
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
@@ -1109,7 +1109,7 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
 }
 
 /**********************************************************************
- *          GetProcessAffinityMask    (KERNEL32.373)
+ *          GetProcessAffinityMask    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
                                       LPDWORD lpProcessAffinityMask,
@@ -1160,7 +1160,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 
 
 /***********************************************************************
- *		SetProcessWorkingSetSize	[KERNEL32.662]
+ *		SetProcessWorkingSetSize	[KERNEL32.@]
  * Sets the min/max working set sizes for a specified process.
  *
  * PARAMS
@@ -1364,7 +1364,7 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 }
 
 /***********************************************************************
- * GetExitCodeProcess [KERNEL32.325]
+ * GetExitCodeProcess [KERNEL32.@]
  *
  * Gets termination status of specified process
  * 

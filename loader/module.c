@@ -306,7 +306,7 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
 }
 
 /****************************************************************************
- *              DisableThreadLibraryCalls (KERNEL32.74)
+ *              DisableThreadLibraryCalls (KERNEL32.@)
  *
  * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
  */
@@ -671,7 +671,7 @@ static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinar
 }
 
 /***********************************************************************
- *             GetBinaryTypeA                     [KERNEL32.280]
+ *             GetBinaryTypeA                     [KERNEL32.@]
  */
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
@@ -704,7 +704,7 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 }
 
 /***********************************************************************
- *             GetBinaryTypeW                      [KERNEL32.281]
+ *             GetBinaryTypeW                      [KERNEL32.@]
  */
 BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 {
@@ -826,7 +826,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 }
 
 /***********************************************************************
- *           WinExec   (KERNEL32.566)
+ *           WinExec   (KERNEL32.@)
  */
 HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
@@ -865,7 +865,7 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 }
 
 /**********************************************************************
- *	    LoadModule    (KERNEL32.499)
+ *	    LoadModule    (KERNEL32.@)
  */
 HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock ) 
 {
@@ -1006,7 +1006,7 @@ static LPSTR get_file_name( LPCSTR appname, LPSTR cmdline, LPSTR buffer, int buf
 
 
 /**********************************************************************
- *       CreateProcessA          (KERNEL32.171)
+ *       CreateProcessA          (KERNEL32.@)
  */
 BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
                             LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -1128,7 +1128,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 }
 
 /**********************************************************************
- *       CreateProcessW          (KERNEL32.172)
+ *       CreateProcessW          (KERNEL32.@)
  * NOTES
  *  lpReserved is not converted
  */
@@ -1170,7 +1170,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 }
 
 /***********************************************************************
- *              GetModuleHandleA         (KERNEL32.237)
+ *              GetModuleHandleA         (KERNEL32.@)
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
@@ -1198,7 +1198,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 
 
 /***********************************************************************
- *              GetModuleFileNameA      (KERNEL32.235)
+ *              GetModuleFileNameA      (KERNEL32.@)
  *
  * GetModuleFileNameA seems to *always* return the long path;
  * it's only GetModuleFileName16 that decides between short/long path
@@ -1225,7 +1225,7 @@ DWORD WINAPI GetModuleFileNameA(
  
 
 /***********************************************************************
- *              GetModuleFileNameW      (KERNEL32.236)
+ *              GetModuleFileNameW      (KERNEL32.@)
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
                                    DWORD size )
@@ -1466,7 +1466,7 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 }
 
 /***********************************************************************
- *           LoadLibrary32_16   (KERNEL.452)
+ *           LoadLibrary32_16   (KERNEL.482)
  */
 HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 {
@@ -1656,7 +1656,7 @@ void WINAPI PrivateFreeLibrary(HINSTANCE16 handle)
 
 
 /***********************************************************************
- *           WIN32_GetProcAddress16   (KERNEL32.36)
+ *           WIN32_GetProcAddress16   (KERNEL32.37)
  * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
  */
 FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
@@ -1704,7 +1704,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
 
 
 /***********************************************************************
- *           GetProcAddress   		(KERNEL32.257)
+ *           GetProcAddress   		(KERNEL32.@)
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {

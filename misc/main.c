@@ -28,7 +28,7 @@ DECLARE_DEBUG_CHANNEL(file);
 
 
 /***********************************************************************
- *           Beep   (KERNEL32.11)
+ *           Beep   (KERNEL32.@)
  */
 BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
@@ -49,7 +49,9 @@ FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 }
 
 /***********************************************************************
- *           GetTickCount   (USER.13) (KERNEL32.299)
+ *           GetTickCount   (USER.13)
+ *           GetCurrentTime (USER.15)
+ *           GetTickCount   (KERNEL32.@)
  *
  * Returns the number of milliseconds, modulo 2^32, since the start
  * of the wineserver.

@@ -17,7 +17,7 @@ DEFAULT_DEBUG_CHANNEL(debugstr);
 
 
 /******************************************************************************
- *           WaitForDebugEvent   (KERNEL32.720)
+ *           WaitForDebugEvent   (KERNEL32.@)
  *
  *  Waits for a debugging event to occur in a process being debugged before
  *  filling out the debug event structure.
@@ -119,7 +119,7 @@ BOOL WINAPI WaitForDebugEvent(
 
 
 /**********************************************************************
- *           ContinueDebugEvent   (KERNEL32.146)
+ *           ContinueDebugEvent   (KERNEL32.@)
  *           ContinueDebugEvent   (WIN32S16.5)
  *
  *  Enables a thread that previously produced a debug event to continue.
@@ -148,7 +148,7 @@ BOOL WINAPI ContinueDebugEvent(
 
 
 /**********************************************************************
- *           DebugActiveProcess   (KERNEL32.180)
+ *           DebugActiveProcess   (KERNEL32.@)
  *
  *  Attempts to attach the dugger to a process.
  *
@@ -171,7 +171,7 @@ BOOL WINAPI DebugActiveProcess(
 
 
 /***********************************************************************
- *           OutputDebugStringA   (KERNEL32.548)
+ *           OutputDebugStringA   (KERNEL32.@)
  *
  *  Output by an application of a unicode string to a debugger (if attached)
  *  and program log.
@@ -192,7 +192,7 @@ void WINAPI OutputDebugStringA(
 
 
 /***********************************************************************
- *           OutputDebugStringW   (KERNEL32.549)
+ *           OutputDebugStringW   (KERNEL32.@)
  *
  *  Output by an appliccation of a unicode string to a debugger (if attached)
  *  and program log.
@@ -226,7 +226,7 @@ void WINAPI OutputDebugString16(
 
 
 /***********************************************************************
- *           DebugBreak   (KERNEL32.181)
+ *           DebugBreak   (KERNEL32.@)
  *
  *  Raises an exception so that a debugger (if attached)
  *  can take some action.
@@ -264,7 +264,7 @@ void WINAPI DebugBreak16(
 
 
 /***********************************************************************
- *           IsDebuggerPresent   (KERNEL32.827)
+ *           IsDebuggerPresent   (KERNEL32.@)
  *
  *  Allows a process to determine if there is a debugger attached.
  *

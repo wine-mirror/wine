@@ -341,7 +341,7 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
 
 
 /*************************************************************************
- * CreateFileA [KERNEL32.45]  Creates or opens a file or other object
+ * CreateFileA [KERNEL32.@]  Creates or opens a file or other object
  *
  * Creates or opens an object, and returns a handle that can be used to
  * access that object.
@@ -473,7 +473,7 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 
 
 /*************************************************************************
- *              CreateFileW              (KERNEL32.48)
+ *              CreateFileW              (KERNEL32.@)
  */
 HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
@@ -549,7 +549,7 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 
 
 /***********************************************************************
- *             GetFileInformationByHandle   (KERNEL32.219)
+ *             GetFileInformationByHandle   (KERNEL32.@)
  */
 DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
@@ -603,7 +603,7 @@ DWORD WINAPI GetFileAttributes16( LPCSTR name )
 
 
 /**************************************************************************
- *           GetFileAttributesA   (KERNEL32.217)
+ *           GetFileAttributesA   (KERNEL32.@)
  */
 DWORD WINAPI GetFileAttributesA( LPCSTR name )
 {
@@ -623,7 +623,7 @@ DWORD WINAPI GetFileAttributesA( LPCSTR name )
 
 
 /**************************************************************************
- *           GetFileAttributesW   (KERNEL32.218)
+ *           GetFileAttributesW   (KERNEL32.@)
  */
 DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 {
@@ -635,7 +635,7 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 
 
 /***********************************************************************
- *           GetFileSize   (KERNEL32.220)
+ *           GetFileSize   (KERNEL32.@)
  */
 DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 {
@@ -647,7 +647,7 @@ DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 
 
 /***********************************************************************
- *           GetFileTime   (KERNEL32.221)
+ *           GetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
                            FILETIME *lpLastAccessTime,
@@ -662,7 +662,7 @@ BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
 }
 
 /***********************************************************************
- *           CompareFileTime   (KERNEL32.28)
+ *           CompareFileTime   (KERNEL32.@)
  */
 INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 {
@@ -745,7 +745,7 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
 
 
 /***********************************************************************
- *           GetTempFileNameA   (KERNEL32.290)
+ *           GetTempFileNameA   (KERNEL32.@)
  */
 UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
                                   LPSTR buffer)
@@ -754,7 +754,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
 }
 
 /***********************************************************************
- *           GetTempFileNameW   (KERNEL32.291)
+ *           GetTempFileNameW   (KERNEL32.@)
  */
 UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
                                   LPWSTR buffer )
@@ -980,7 +980,7 @@ error:  /* We get here if there was an error opening the file */
 
 
 /***********************************************************************
- *           OpenFile16   (KERNEL.74)
+ *           OpenFile16   (KERNEL.360)
  */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
@@ -989,7 +989,7 @@ HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 
 
 /***********************************************************************
- *           OpenFile   (KERNEL32.396)
+ *           OpenFile   (KERNEL32.@)
  */
 HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 {
@@ -1144,7 +1144,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
 
 
 /***********************************************************************
- *           _lclose   (KERNEL32.592)
+ *           _lclose   (KERNEL32.@)
  */
 HFILE WINAPI _lclose( HFILE hFile )
 {
@@ -1153,7 +1153,7 @@ HFILE WINAPI _lclose( HFILE hFile )
 }
 
 /***********************************************************************
- *              GetOverlappedResult     (KERNEL32.360)
+ *              GetOverlappedResult     (KERNEL32.@)
  *
  * Check the result of an Asynchronous data transfer from a file.
  *
@@ -1350,7 +1350,7 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
 
 
 /***********************************************************************
- *              ReadFile                (KERNEL32.577)
+ *              ReadFile                (KERNEL32.@)
  */
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
@@ -1514,7 +1514,7 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
 
 
 /***********************************************************************
- *             WriteFile               (KERNEL32.738)
+ *             WriteFile               (KERNEL32.@)
  */
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
@@ -1598,7 +1598,7 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 
 
 /***********************************************************************
- *           _lread   (KERNEL32.596)
+ *           _lread   (KERNEL32.@)
  */
 UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
 {
@@ -1627,7 +1627,7 @@ HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 
 
 /***********************************************************************
- *           _lcreat   (KERNEL32.593)
+ *           _lcreat   (KERNEL32.@)
  */
 HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 {
@@ -1641,7 +1641,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 
 
 /***********************************************************************
- *           SetFilePointer   (KERNEL32.492)
+ *           SetFilePointer   (KERNEL32.@)
  */
 DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
                              DWORD method )
@@ -1685,7 +1685,7 @@ LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 
 
 /***********************************************************************
- *           _llseek   (KERNEL32.594)
+ *           _llseek   (KERNEL32.@)
  */
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 {
@@ -1703,7 +1703,7 @@ HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 
 
 /***********************************************************************
- *           _lopen   (KERNEL32.595)
+ *           _lopen   (KERNEL32.@)
  */
 HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
@@ -1724,7 +1724,7 @@ UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 }
 
 /***********************************************************************
- *           _lwrite   (KERNEL32.761)
+ *           _lwrite   (KERNEL32.@)
  */
 UINT WINAPI _lwrite( HFILE hFile, LPCSTR buffer, UINT count )
 {
@@ -1742,7 +1742,7 @@ LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
 
 
 /***********************************************************************
- *           _hread   (KERNEL32.590)
+ *           _hread   (KERNEL32.@)
  */
 LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
 {
@@ -1760,7 +1760,7 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 
 
 /***********************************************************************
- *           _hwrite   (KERNEL32.591)
+ *           _hwrite   (KERNEL32.@)
  *
  *	experimentation yields that _lwrite:
  *		o truncates the file at the current position with 
@@ -1797,7 +1797,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 
 
 /*************************************************************************
- *           SetHandleCount   (KERNEL32.494)
+ *           SetHandleCount   (KERNEL32.@)
  */
 UINT WINAPI SetHandleCount( UINT count )
 {
@@ -1806,7 +1806,7 @@ UINT WINAPI SetHandleCount( UINT count )
 
 
 /***********************************************************************
- *           FlushFileBuffers   (KERNEL32.133)
+ *           FlushFileBuffers   (KERNEL32.@)
  */
 BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 {
@@ -1822,7 +1822,7 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 
 
 /**************************************************************************
- *           SetEndOfFile   (KERNEL32.483)
+ *           SetEndOfFile   (KERNEL32.@)
  */
 BOOL WINAPI SetEndOfFile( HANDLE hFile )
 {
@@ -1847,7 +1847,7 @@ BOOL16 WINAPI DeleteFile16( LPCSTR path )
 
 
 /***********************************************************************
- *           DeleteFileA   (KERNEL32.71)
+ *           DeleteFileA   (KERNEL32.@)
  */
 BOOL WINAPI DeleteFileA( LPCSTR path )
 {
@@ -1878,7 +1878,7 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 
 
 /***********************************************************************
- *           DeleteFileW   (KERNEL32.72)
+ *           DeleteFileW   (KERNEL32.@)
  */
 BOOL WINAPI DeleteFileW( LPCWSTR path )
 {
@@ -1890,7 +1890,7 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
 
 
 /***********************************************************************
- *           GetFileType   (KERNEL32.222)
+ *           GetFileType   (KERNEL32.@)
  */
 DWORD WINAPI GetFileType( HANDLE hFile )
 {
@@ -2003,7 +2003,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
 
 /**************************************************************************
- *           MoveFileA   (KERNEL32.387)
+ *           MoveFileA   (KERNEL32.@)
  *
  *  Move file or directory
  */
@@ -2051,7 +2051,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 
 
 /**************************************************************************
- *           MoveFileW   (KERNEL32.390)
+ *           MoveFileW   (KERNEL32.@)
  */
 BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
 {
@@ -2065,7 +2065,7 @@ BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
 
 
 /**************************************************************************
- *           CopyFileA   (KERNEL32.36)
+ *           CopyFileA   (KERNEL32.@)
  */
 BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists )
 {
@@ -2110,7 +2110,7 @@ done:
 
 
 /**************************************************************************
- *           CopyFileW   (KERNEL32.37)
+ *           CopyFileW   (KERNEL32.@)
  */
 BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists)
 {
@@ -2124,7 +2124,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists)
 
 
 /**************************************************************************
- *           CopyFileExA   (KERNEL32.858)
+ *           CopyFileExA   (KERNEL32.@)
  *
  * This implementation ignores most of the extra parameters passed-in into
  * the "ex" version of the method and calls the CopyFile method.
@@ -2151,7 +2151,7 @@ BOOL WINAPI CopyFileExA(LPCSTR             sourceFilename,
 }
 
 /**************************************************************************
- *           CopyFileExW   (KERNEL32.859)
+ *           CopyFileExW   (KERNEL32.@)
  */
 BOOL WINAPI CopyFileExW(LPCWSTR            sourceFilename,
                            LPCWSTR            destFilename,
@@ -2178,7 +2178,7 @@ BOOL WINAPI CopyFileExW(LPCWSTR            sourceFilename,
 
 
 /***********************************************************************
- *              SetFileTime   (KERNEL32.650)
+ *              SetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI SetFileTime( HANDLE hFile,
                            const FILETIME *lpCreationTime,
@@ -2205,7 +2205,7 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
 
 
 /**************************************************************************
- *           LockFile   (KERNEL32.511)
+ *           LockFile   (KERNEL32.@)
  */
 BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
@@ -2225,7 +2225,7 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
 }
 
 /**************************************************************************
- * LockFileEx [KERNEL32.512]
+ * LockFileEx [KERNEL32.@]
  *
  * Locks a byte range within an open file for shared or exclusive access.
  *
@@ -2256,7 +2256,7 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 
 
 /**************************************************************************
- *           UnlockFile   (KERNEL32.703)
+ *           UnlockFile   (KERNEL32.@)
  */
 BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
@@ -2277,7 +2277,7 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetH
 
 
 /**************************************************************************
- *           UnlockFileEx   (KERNEL32.705)
+ *           UnlockFileEx   (KERNEL32.@)
  */
 BOOL WINAPI UnlockFileEx(
 		HFILE hFile,
@@ -2405,7 +2405,7 @@ static BOOL DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
 
 
 /**************************************************************************
- *           LockFile   (KERNEL32.511)
+ *           LockFile   (KERNEL32.@)
  */
 BOOL WINAPI LockFile(
 	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
@@ -2456,7 +2456,7 @@ BOOL WINAPI LockFile(
 
 
 /**************************************************************************
- *           UnlockFile   (KERNEL32.703)
+ *           UnlockFile   (KERNEL32.@)
  */
 BOOL WINAPI UnlockFile(
 	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
@@ -2496,7 +2496,7 @@ BOOL WINAPI UnlockFile(
 #endif
 
 /**************************************************************************
- * GetFileAttributesExA [KERNEL32.874]
+ * GetFileAttributesExA [KERNEL32.@]
  */
 BOOL WINAPI GetFileAttributesExA(
 	LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
@@ -2531,7 +2531,7 @@ BOOL WINAPI GetFileAttributesExA(
 
 
 /**************************************************************************
- * GetFileAttributesExW [KERNEL32.875]
+ * GetFileAttributesExW [KERNEL32.@]
  */
 BOOL WINAPI GetFileAttributesExW(
 	LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,

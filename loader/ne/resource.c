@@ -266,7 +266,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
 
 
 /**********************************************************************
- *	SetResourceHandler	(KERNEL.43)
+ *	SetResourceHandler	(KERNEL.67)
  */
 FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
                                      FARPROC16 resourceHandler )

@@ -418,7 +418,8 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 
 
 /**********************************************************************
- *           K32WOWGlobalLock16         (WOW32.11) (KERNEL32.60)
+ *           K32WOWGlobalLock16         (WOW32.11)
+ *           K32WOWGlobalLock16         (KERNEL32.60)
  */
 SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 hMem )
 {
@@ -731,7 +732,7 @@ WORD WINAPI GlobalDOSFree16(
 
 
 /***********************************************************************
- *           GlobalPageLock   (KERNEL.191)
+ *           GlobalPageLock   (KERNEL.230)
  */
 WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 {
@@ -745,7 +746,7 @@ WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalPageUnlock   (KERNEL.192)
+ *           GlobalPageUnlock   (KERNEL.231)
  */
 WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 {
@@ -993,7 +994,7 @@ typedef struct __GLOBAL32_INTERN
 
 
 /***********************************************************************
- *           GlobalAlloc   (KERNEL32.315)
+ *           GlobalAlloc   (KERNEL32.@)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -1047,7 +1048,7 @@ HGLOBAL WINAPI GlobalAlloc(
 
 
 /***********************************************************************
- *           GlobalLock   (KERNEL32.326)
+ *           GlobalLock   (KERNEL32.@)
  * RETURNS
  *	Pointer to first byte of block
  *	NULL: Failure
@@ -1082,7 +1083,7 @@ LPVOID WINAPI GlobalLock(
 
 
 /***********************************************************************
- *           GlobalUnlock   (KERNEL32.332)
+ *           GlobalUnlock   (KERNEL32.@)
  * RETURNS
  *	TRUE: Object is still locked
  *	FALSE: Object is unlocked
@@ -1119,7 +1120,7 @@ BOOL WINAPI GlobalUnlock(
 
 
 /***********************************************************************
- *           GlobalHandle   (KERNEL32.325)
+ *           GlobalHandle   (KERNEL32.@)
  * Returns the handle associated with the specified pointer.
  *
  * RETURNS
@@ -1178,7 +1179,7 @@ HGLOBAL WINAPI GlobalHandle(
 
 
 /***********************************************************************
- *           GlobalReAlloc   (KERNEL32.328)
+ *           GlobalReAlloc   (KERNEL32.@)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -1284,7 +1285,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 
 
 /***********************************************************************
- *           GlobalFree   (KERNEL32.322)
+ *           GlobalFree   (KERNEL32.@)
  * RETURNS
  *	NULL: Success
  *	Handle: Failure
@@ -1325,7 +1326,7 @@ HGLOBAL WINAPI GlobalFree(
 
 
 /***********************************************************************
- *           GlobalSize   (KERNEL32.329)
+ *           GlobalSize   (KERNEL32.@)
  * RETURNS
  *	Size in bytes of the global memory object
  *	0: Failure
@@ -1367,7 +1368,7 @@ DWORD WINAPI GlobalSize(
 
 
 /***********************************************************************
- *           GlobalWire   (KERNEL32.333)
+ *           GlobalWire   (KERNEL32.@)
  */
 LPVOID WINAPI GlobalWire(HGLOBAL hmem)
 {
@@ -1376,7 +1377,7 @@ LPVOID WINAPI GlobalWire(HGLOBAL hmem)
 
 
 /***********************************************************************
- *           GlobalUnWire   (KERNEL32.330)
+ *           GlobalUnWire   (KERNEL32.@)
  */
 BOOL WINAPI GlobalUnWire(HGLOBAL hmem)
 {
@@ -1385,7 +1386,7 @@ BOOL WINAPI GlobalUnWire(HGLOBAL hmem)
 
 
 /***********************************************************************
- *           GlobalFix   (KERNEL32.320)
+ *           GlobalFix   (KERNEL32.@)
  */
 VOID WINAPI GlobalFix(HGLOBAL hmem)
 {
@@ -1394,7 +1395,7 @@ VOID WINAPI GlobalFix(HGLOBAL hmem)
 
 
 /***********************************************************************
- *           GlobalUnfix   (KERNEL32.331)
+ *           GlobalUnfix   (KERNEL32.@)
  */
 VOID WINAPI GlobalUnfix(HGLOBAL hmem)
 {
@@ -1403,7 +1404,7 @@ VOID WINAPI GlobalUnfix(HGLOBAL hmem)
 
 
 /***********************************************************************
- *           GlobalFlags   (KERNEL32.321)
+ *           GlobalFlags   (KERNEL32.@)
  * Returns information about the specified global memory object
  *
  * NOTES
@@ -1445,7 +1446,7 @@ UINT WINAPI GlobalFlags(
 
 
 /***********************************************************************
- *           GlobalCompact   (KERNEL32.316)
+ *           GlobalCompact   (KERNEL32.@)
  */
 DWORD WINAPI GlobalCompact( DWORD minfree )
 {
@@ -1454,7 +1455,7 @@ DWORD WINAPI GlobalCompact( DWORD minfree )
 
 
 /***********************************************************************
- *           GlobalMemoryStatus   (KERNEL32.327)
+ *           GlobalMemoryStatus   (KERNEL32.@)
  * RETURNS
  *	None
  */

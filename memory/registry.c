@@ -36,7 +36,7 @@ static inline int is_string( DWORD type )
 
 
 /******************************************************************************
- *           RegCreateKeyExA   [ADVAPI32.130]
+ *           RegCreateKeyExA   [ADVAPI32.@]
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
@@ -74,7 +74,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 
 
 /******************************************************************************
- *           RegCreateKeyA   [ADVAPI32.129]
+ *           RegCreateKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -85,7 +85,7 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 
 
 /******************************************************************************
- *           RegOpenKeyExA   [ADVAPI32.149]
+ *           RegOpenKeyExA   [ADVAPI32.@]
  */
 DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
 {
@@ -113,7 +113,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
 
 
 /******************************************************************************
- *           RegOpenKeyA   [ADVAPI32.148]
+ *           RegOpenKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -122,7 +122,7 @@ DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 
 
 /******************************************************************************
- *           RegEnumKeyExA   [ADVAPI32.138]
+ *           RegEnumKeyExA   [ADVAPI32.@]
  */
 DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPSTR class, LPDWORD class_len, FILETIME *ft )
@@ -189,7 +189,7 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
 
 
 /******************************************************************************
- *           RegEnumKeyA   [ADVAPI32.137]
+ *           RegEnumKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {
@@ -198,7 +198,7 @@ DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 
 
 /******************************************************************************
- *           RegQueryInfoKeyA   [ADVAPI32.152]
+ *           RegQueryInfoKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWORD reserved,
                                LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
@@ -269,7 +269,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
 
 
 /******************************************************************************
- *           RegCloseKey   [ADVAPI32.126]
+ *           RegCloseKey   [ADVAPI32.@]
  *
  * Releases the handle of the specified key
  *
@@ -288,7 +288,7 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
 
 
 /******************************************************************************
- *           RegDeleteKeyA   [ADVAPI32.133]
+ *           RegDeleteKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 {
@@ -307,7 +307,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 
 
 /******************************************************************************
- *           RegSetValueExA   [ADVAPI32.169]
+ *           RegSetValueExA   [ADVAPI32.@]
  */
 DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
                              CONST BYTE *data, DWORD count )
@@ -346,7 +346,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 
 
 /******************************************************************************
- *           RegSetValueA   [ADVAPI32.168]
+ *           RegSetValueA   [ADVAPI32.@]
  */
 DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
 {
@@ -369,7 +369,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
 
 
 /******************************************************************************
- *           RegQueryValueExA   [ADVAPI32.157]
+ *           RegQueryValueExA   [ADVAPI32.@]
  *
  * NOTES:
  * the documentation is wrong: if the buffer is too small it remains untouched 
@@ -459,7 +459,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
 
 /******************************************************************************
- *           RegQueryValueA   [ADVAPI32.156]
+ *           RegQueryValueA   [ADVAPI32.@]
  */
 DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 {
@@ -486,7 +486,7 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 
 
 /******************************************************************************
- *           RegEnumValueA   [ADVAPI32.141]
+ *           RegEnumValueA   [ADVAPI32.@]
  */
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
@@ -582,7 +582,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
 
 /******************************************************************************
- *           RegDeleteValueA   [ADVAPI32.135]
+ *           RegDeleteValueA   [ADVAPI32.@]
  */
 DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
@@ -602,7 +602,7 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 
 
 /******************************************************************************
- *           RegLoadKeyA   [ADVAPI32.184]
+ *           RegLoadKeyA   [ADVAPI32.@]
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
@@ -642,7 +642,7 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 
 
 /******************************************************************************
- *           RegSaveKeyA   [ADVAPI32.165]
+ *           RegSaveKeyA   [ADVAPI32.@]
  *
  * PARAMS
  *    hkey   [I] Handle of key where save begins

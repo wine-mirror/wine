@@ -465,7 +465,8 @@ DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
 
 
 /***********************************************************************
- *           IsCharLowerA   (USER.436) (USER32.@)
+ *           IsCharLowerA   (USER.436)
+ *           IsCharLowerA   (USER32.@)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharLowerA(CHAR x)
@@ -484,7 +485,8 @@ BOOL WINAPI IsCharLowerW(WCHAR x)
 
 
 /***********************************************************************
- *           IsCharUpperA   (USER.435) (USER32.@)
+ *           IsCharUpperA   (USER.435)
+ *           IsCharUpperA   (USER32.@)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperA(CHAR x)

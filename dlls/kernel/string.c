@@ -34,7 +34,7 @@ INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *		k32CharToOemBuffA   (KERNEL32.@)
+ *		k32CharToOemBuffA   (KERNEL32.11)
  */
 BOOL WINAPI k32CharToOemBuffA(LPCSTR s, LPSTR d, DWORD len)
 {
@@ -51,7 +51,7 @@ BOOL WINAPI k32CharToOemBuffA(LPCSTR s, LPSTR d, DWORD len)
 
 
 /***********************************************************************
- *		k32CharToOemA   (KERNEL32.@)
+ *		k32CharToOemA   (KERNEL32.10)
  */
 BOOL WINAPI k32CharToOemA(LPCSTR s, LPSTR d)
 {
@@ -61,7 +61,7 @@ BOOL WINAPI k32CharToOemA(LPCSTR s, LPSTR d)
 
 
 /***********************************************************************
- *		k32OemToCharBuffA   (KERNEL32.@)
+ *		k32OemToCharBuffA   (KERNEL32.13)
  */
 BOOL WINAPI k32OemToCharBuffA(LPCSTR s, LPSTR d, DWORD len)
 {
@@ -78,7 +78,7 @@ BOOL WINAPI k32OemToCharBuffA(LPCSTR s, LPSTR d, DWORD len)
 
 
 /***********************************************************************
- *		k32OemToCharA   (KERNEL32.@)
+ *		k32OemToCharA   (KERNEL32.12)
  */
 BOOL WINAPI k32OemToCharA(LPCSTR s, LPSTR d)
 {
@@ -87,7 +87,7 @@ BOOL WINAPI k32OemToCharA(LPCSTR s, LPSTR d)
 
 
 /**********************************************************************
- *		k32LoadStringA   (KERNEL32.@)
+ *		k32LoadStringA   (KERNEL32.14)
  */
 INT WINAPI k32LoadStringA(HINSTANCE instance, UINT resource_id,
                           LPSTR buffer, INT buflen)
@@ -98,7 +98,7 @@ INT WINAPI k32LoadStringA(HINSTANCE instance, UINT resource_id,
 
 
 /***********************************************************************
- *		k32wvsprintfA   (KERNEL32.@)
+ *		k32wvsprintfA   (KERNEL32.16)
  */
 INT WINAPI k32wvsprintfA(LPSTR buffer, LPCSTR spec, va_list args)
 {
@@ -108,7 +108,7 @@ INT WINAPI k32wvsprintfA(LPSTR buffer, LPCSTR spec, va_list args)
 
 
 /***********************************************************************
- *		k32wsprintfA   (KERNEL32.@)
+ *		k32wsprintfA   (KERNEL32.15)
  */
 INT WINAPIV k32wsprintfA(LPSTR buffer, LPCSTR spec, ...)
 {

@@ -36,7 +36,7 @@ BOOL WINAPI CloseHandle( HANDLE handle )
 
 
 /*********************************************************************
- *           GetHandleInformation   (KERNEL32.336)
+ *           GetHandleInformation   (KERNEL32.@)
  */
 BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
@@ -56,7 +56,7 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 
 
 /*********************************************************************
- *           SetHandleInformation   (KERNEL32.653)
+ *           SetHandleInformation   (KERNEL32.@)
  */
 BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
@@ -75,7 +75,7 @@ BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 
 
 /*********************************************************************
- *           DuplicateHandle   (KERNEL32.192)
+ *           DuplicateHandle   (KERNEL32.@)
  */
 BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
                                HANDLE dest_process, HANDLE *dest,

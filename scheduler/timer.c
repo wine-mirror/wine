@@ -14,7 +14,7 @@
 
 
 /***********************************************************************
- *           CreateWaitableTimerA    (KERNEL32.861)
+ *           CreateWaitableTimerA    (KERNEL32.@)
  */
 HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR name )
 {
@@ -40,7 +40,7 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
 
 
 /***********************************************************************
- *           CreateWaitableTimerW    (KERNEL32.862)
+ *           CreateWaitableTimerW    (KERNEL32.@)
  */
 HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
 {
@@ -66,7 +66,7 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
 
 
 /***********************************************************************
- *           OpenWaitableTimerA    (KERNEL32.881)
+ *           OpenWaitableTimerA    (KERNEL32.@)
  */
 HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
 {
@@ -91,7 +91,7 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           OpenWaitableTimerW    (KERNEL32.882)
+ *           OpenWaitableTimerW    (KERNEL32.@)
  */
 HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 {
@@ -116,7 +116,7 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 
 
 /***********************************************************************
- *           SetWaitableTimer    (KERNEL32.894)
+ *           SetWaitableTimer    (KERNEL32.@)
  */
 BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
@@ -158,7 +158,7 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
 
 
 /***********************************************************************
- *           CancelWaitableTimer    (KERNEL32.857)
+ *           CancelWaitableTimer    (KERNEL32.@)
  */
 BOOL WINAPI CancelWaitableTimer( HANDLE handle )
 {

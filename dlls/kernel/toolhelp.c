@@ -187,7 +187,7 @@ FARPROC16 WINAPI ToolHelpHook16(FARPROC16 lpfnNotifyHandler)
 
 
 /***********************************************************************
- *           CreateToolhelp32Snapshot			(KERNEL32.179)
+ *           CreateToolhelp32Snapshot			(KERNEL32.@)
  */
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {
@@ -250,7 +250,7 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
 }
 
 /***********************************************************************
- *		Thread32First    (KERNEL32.686)
+ *		Thread32First    (KERNEL32.@)
  *
  * Return info about the first thread in a toolhelp32 snapshot
  */
@@ -260,7 +260,7 @@ BOOL WINAPI Thread32First(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
 }
 
 /***********************************************************************
- *		Thread32Next   (KERNEL32.687)
+ *		Thread32Next   (KERNEL32.@)
  *
  * Return info about the "next" thread in a toolhelp32 snapshot
  */
@@ -307,7 +307,7 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
 
 
 /***********************************************************************
- *		Process32First    (KERNEL32.555)
+ *		Process32First    (KERNEL32.@)
  *
  * Return info about the first process in a toolhelp32 snapshot
  */
@@ -317,7 +317,7 @@ BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 }
 
 /***********************************************************************
- *		Process32Next   (KERNEL32.556)
+ *		Process32Next   (KERNEL32.@)
  *
  * Return info about the "next" process in a toolhelp32 snapshot
  */
@@ -364,7 +364,7 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
 }
 
 /***********************************************************************
- *		Module32First   (KERNEL32.527)
+ *		Module32First   (KERNEL32.@)
  *
  * Return info about the "first" module in a toolhelp32 snapshot
  */
@@ -374,7 +374,7 @@ BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 }
 
 /***********************************************************************
- *		Module32Next   (KERNEL32.528)
+ *		Module32Next   (KERNEL32.@)
  *
  * Return info about the "next" module in a toolhelp32 snapshot
  */

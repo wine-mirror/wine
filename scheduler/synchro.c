@@ -244,7 +244,7 @@ static void call_apcs( BOOL alertable )
 }
 
 /***********************************************************************
- *              Sleep  (KERNEL32.679)
+ *              Sleep  (KERNEL32.@)
  */
 VOID WINAPI Sleep( DWORD timeout )
 {
@@ -252,7 +252,7 @@ VOID WINAPI Sleep( DWORD timeout )
 }
 
 /******************************************************************************
- *              SleepEx   (KERNEL32.680)
+ *              SleepEx   (KERNEL32.@)
  */
 DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 {
@@ -263,7 +263,7 @@ DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 
 
 /***********************************************************************
- *           WaitForSingleObject   (KERNEL32.723)
+ *           WaitForSingleObject   (KERNEL32.@)
  */
 DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
@@ -272,7 +272,7 @@ DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )
 
 
 /***********************************************************************
- *           WaitForSingleObjectEx   (KERNEL32.724)
+ *           WaitForSingleObjectEx   (KERNEL32.@)
  */
 DWORD WINAPI WaitForSingleObjectEx( HANDLE handle, DWORD timeout,
                                     BOOL alertable )
@@ -282,7 +282,7 @@ DWORD WINAPI WaitForSingleObjectEx( HANDLE handle, DWORD timeout,
 
 
 /***********************************************************************
- *           WaitForMultipleObjects   (KERNEL32.721)
+ *           WaitForMultipleObjects   (KERNEL32.@)
  */
 DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                      BOOL wait_all, DWORD timeout )
@@ -292,7 +292,7 @@ DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE *handles,
 
 
 /***********************************************************************
- *           WaitForMultipleObjectsEx   (KERNEL32.722)
+ *           WaitForMultipleObjectsEx   (KERNEL32.@)
  */
 DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,

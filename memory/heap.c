@@ -896,7 +896,7 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 }
 
 /***********************************************************************
- *           MapLS   (KERNEL32.522)
+ *           MapLS   (KERNEL32.@)
  *
  * Maps linear pointer to segmented.
  */
@@ -924,7 +924,7 @@ SEGPTR WINAPI MapLS( LPCVOID ptr )
 
 
 /***********************************************************************
- *           UnMapLS   (KERNEL32.700)
+ *           UnMapLS   (KERNEL32.@)
  *
  * Free mapped selector.
  */
@@ -1061,7 +1061,7 @@ static HANDLE HEAP_CreateSystemHeap(void)
 
 
 /***********************************************************************
- *           HeapCreate   (KERNEL32.336)
+ *           HeapCreate   (KERNEL32.@)
  * RETURNS
  *	Handle of heap: Success
  *	NULL: Failure
@@ -1117,7 +1117,7 @@ HANDLE WINAPI HeapCreate(
 }
 
 /***********************************************************************
- *           HeapDestroy   (KERNEL32.337)
+ *           HeapDestroy   (KERNEL32.@)
  * RETURNS
  *	TRUE: Success
  *	FALSE: Failure
@@ -1164,7 +1164,7 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 
 
 /***********************************************************************
- *           HeapAlloc   (KERNEL32.334)
+ *           HeapAlloc   (KERNEL32.@)
  * RETURNS
  *	Pointer to allocated memory block
  *	NULL: Failure
@@ -1235,7 +1235,7 @@ LPVOID WINAPI HeapAlloc(
 
 
 /***********************************************************************
- *           HeapFree   (KERNEL32.338)
+ *           HeapFree   (KERNEL32.@)
  * RETURNS
  *	TRUE: Success
  *	FALSE: Failure
@@ -1282,7 +1282,7 @@ BOOL WINAPI HeapFree(
 
 
 /***********************************************************************
- *           HeapReAlloc   (KERNEL32.340)
+ *           HeapReAlloc   (KERNEL32.@)
  * RETURNS
  *	Pointer to reallocated memory block
  *	NULL: Failure
@@ -1406,7 +1406,7 @@ LPVOID WINAPI HeapReAlloc(
 
 
 /***********************************************************************
- *           HeapCompact   (KERNEL32.335)
+ *           HeapCompact   (KERNEL32.@)
  */
 DWORD WINAPI HeapCompact( HANDLE heap, DWORD flags )
 {
@@ -1416,7 +1416,7 @@ DWORD WINAPI HeapCompact( HANDLE heap, DWORD flags )
 
 
 /***********************************************************************
- *           HeapLock   (KERNEL32.339)
+ *           HeapLock   (KERNEL32.@)
  * Attempts to acquire the critical section object for a specified heap.
  *
  * RETURNS
@@ -1434,7 +1434,7 @@ BOOL WINAPI HeapLock(
 
 
 /***********************************************************************
- *           HeapUnlock   (KERNEL32.342)
+ *           HeapUnlock   (KERNEL32.@)
  * Releases ownership of the critical section object.
  *
  * RETURNS
@@ -1452,7 +1452,7 @@ BOOL WINAPI HeapUnlock(
 
 
 /***********************************************************************
- *           HeapSize   (KERNEL32.341)
+ *           HeapSize   (KERNEL32.@)
  * RETURNS
  *	Size in bytes of allocated memory
  *	0xffffffff: Failure
@@ -1489,7 +1489,7 @@ DWORD WINAPI HeapSize(
 
 
 /***********************************************************************
- *           HeapValidate   (KERNEL32.343)
+ *           HeapValidate   (KERNEL32.@)
  * Validates a specified heap.
  *
  * NOTES
@@ -1512,7 +1512,7 @@ BOOL WINAPI HeapValidate(
 
 
 /***********************************************************************
- *           HeapWalk   (KERNEL32.344)
+ *           HeapWalk   (KERNEL32.@)
  * Enumerates the memory blocks in a specified heap.
  * See HEAP_Dump() for info on heap structure.
  *
@@ -1636,7 +1636,7 @@ HW_end:
 
 
 /***********************************************************************
- *           GetProcessHeap    (KERNEL32.259)
+ *           GetProcessHeap    (KERNEL32.@)
  */
 HANDLE WINAPI GetProcessHeap(void)
 {
@@ -1645,7 +1645,7 @@ HANDLE WINAPI GetProcessHeap(void)
 
 
 /***********************************************************************
- *           GetProcessHeaps    (KERNEL32.376)
+ *           GetProcessHeaps    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
 {
@@ -2136,7 +2136,8 @@ static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
 }
 
 /***********************************************************************
- *           Local32Info   (KERNEL.444)  (TOOLHELP.84)
+ *           Local32Info   (KERNEL.444)
+ *           Local32Info   (TOOLHELP.84)
  */
 BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 {
@@ -2190,7 +2191,8 @@ BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 }
 
 /***********************************************************************
- *           Local32First   (KERNEL.445)  (TOOLHELP.85)
+ *           Local32First   (KERNEL.445)
+ *           Local32First   (TOOLHELP.85)
  */
 BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 {
@@ -2199,7 +2201,8 @@ BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 }
 
 /***********************************************************************
- *           Local32Next   (KERNEL.446)  (TOOLHELP.86)
+ *           Local32Next   (KERNEL.446)
+ *           Local32Next   (TOOLHELP.86)
  */
 BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry )
 {

@@ -190,7 +190,7 @@ LPVOID WINAPI GetThunkBuff(void)
 }
 
 /***********************************************************************
- *		ThunkConnect32		(KERNEL32.688)
+ *		ThunkConnect32		(KERNEL32.@)
  * Connects a 32bit and a 16bit thunkbuffer.
  */
 UINT WINAPI ThunkConnect32( 
@@ -279,7 +279,7 @@ UINT WINAPI ThunkConnect32(
 }
 
 /**********************************************************************
- * 		QT_Thunk			(KERNEL32.559)
+ * 		QT_Thunk			(KERNEL32.@)
  *
  * The target address is in EDX.
  * The 16 bit arguments start at ESP.
@@ -314,7 +314,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
 
 
 /**********************************************************************
- * 		FT_Prolog			(KERNEL32.233)
+ * 		FT_Prolog			(KERNEL32.@)
  * 
  * The set of FT_... thunk routines is used instead of QT_Thunk,
  * if structures have to be converted from 32-bit to 16-bit
@@ -379,7 +379,7 @@ void WINAPI FT_Prolog( CONTEXT86 *context )
 }
 
 /**********************************************************************
- * 		FT_Thunk			(KERNEL32.234)
+ * 		FT_Thunk			(KERNEL32.@)
  *
  * This routine performs the actual call to 16-bit code, 
  * similar to QT_Thunk. The differences are:
@@ -475,77 +475,77 @@ static void FT_Exit(CONTEXT86 *context, int nPopArgs)
 }
 
 /***********************************************************************
- *		FT_Exit0 (KERNEL32.218)
+ *		FT_Exit0 (KERNEL32.@)
  */
 void WINAPI FT_Exit0 (CONTEXT86 *context) { FT_Exit(context,  0); }
 
 /***********************************************************************
- *		FT_Exit4 (KERNEL32.226)
+ *		FT_Exit4 (KERNEL32.@)
  */
 void WINAPI FT_Exit4 (CONTEXT86 *context) { FT_Exit(context,  4); }
 
 /***********************************************************************
- *		FT_Exit8 (KERNEL32.232)
+ *		FT_Exit8 (KERNEL32.@)
  */
 void WINAPI FT_Exit8 (CONTEXT86 *context) { FT_Exit(context,  8); }
 
 /***********************************************************************
- *		FT_Exit12 (KERNEL32.219)
+ *		FT_Exit12 (KERNEL32.@)
  */
 void WINAPI FT_Exit12(CONTEXT86 *context) { FT_Exit(context, 12); }
 
 /***********************************************************************
- *		FT_Exit16 (KERNEL32.220)
+ *		FT_Exit16 (KERNEL32.@)
  */
 void WINAPI FT_Exit16(CONTEXT86 *context) { FT_Exit(context, 16); }
 
 /***********************************************************************
- *		FT_Exit20 (KERNEL32.221)
+ *		FT_Exit20 (KERNEL32.@)
  */
 void WINAPI FT_Exit20(CONTEXT86 *context) { FT_Exit(context, 20); }
 
 /***********************************************************************
- *		FT_Exit24 (KERNEL32.222)
+ *		FT_Exit24 (KERNEL32.@)
  */
 void WINAPI FT_Exit24(CONTEXT86 *context) { FT_Exit(context, 24); }
 
 /***********************************************************************
- *		FT_Exit28 (KERNEL32.223)
+ *		FT_Exit28 (KERNEL32.@)
  */
 void WINAPI FT_Exit28(CONTEXT86 *context) { FT_Exit(context, 28); }
 
 /***********************************************************************
- *		FT_Exit32 (KERNEL32.224)
+ *		FT_Exit32 (KERNEL32.@)
  */
 void WINAPI FT_Exit32(CONTEXT86 *context) { FT_Exit(context, 32); }
 
 /***********************************************************************
- *		FT_Exit36 (KERNEL32.225)
+ *		FT_Exit36 (KERNEL32.@)
  */
 void WINAPI FT_Exit36(CONTEXT86 *context) { FT_Exit(context, 36); }
 
 /***********************************************************************
- *		FT_Exit40 (KERNEL32.227)
+ *		FT_Exit40 (KERNEL32.@)
  */
 void WINAPI FT_Exit40(CONTEXT86 *context) { FT_Exit(context, 40); }
 
 /***********************************************************************
- *		FT_Exit44 (KERNEL32.228)
+ *		FT_Exit44 (KERNEL32.@)
  */
 void WINAPI FT_Exit44(CONTEXT86 *context) { FT_Exit(context, 44); }
 
 /***********************************************************************
- *		FT_Exit48 (KERNEL32.229)
+ *		FT_Exit48 (KERNEL32.@)
  */
 void WINAPI FT_Exit48(CONTEXT86 *context) { FT_Exit(context, 48); }
 
 /***********************************************************************
- *		FT_Exit52 (KERNEL32.230)
+ *		FT_Exit52 (KERNEL32.@)
  */
 void WINAPI FT_Exit52(CONTEXT86 *context) { FT_Exit(context, 52); }
 
 /***********************************************************************
- *		FT_Exit56 (KERNEL32.231)
+ *		FT_Exit56 (KERNEL32.@)
  */
 void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
@@ -964,7 +964,7 @@ void WINAPI W32S_BackTo32( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *			AllocSLCallback		(KERNEL32.105)
+ *			AllocSLCallback		(KERNEL32.@)
  *
  * Win95 uses some structchains for callbacks. It allocates them
  * in blocks of 100 entries, size 32 bytes each, layout:
@@ -1016,7 +1016,7 @@ AllocSLCallback(
 }
 
 /**********************************************************************
- * 		FreeSLCallback		(KERNEL32.274)
+ * 		FreeSLCallback		(KERNEL32.@)
  * Frees the specified 16->32 callback
  */
 void WINAPI
@@ -1067,7 +1067,7 @@ BOOL16 WINAPI IsPeFormat16(
 
 
 /***********************************************************************
- *           K32Thk1632Prolog			(KERNEL32.491)
+ *           K32Thk1632Prolog			(KERNEL32.@)
  */
 void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 {
@@ -1128,7 +1128,7 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           K32Thk1632Epilog			(KERNEL32.490)
+ *           K32Thk1632Epilog			(KERNEL32.@)
  */
 void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
 {
@@ -1653,7 +1653,7 @@ SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target,
 
 /***********************************************************************
  *     AllocLSThunkletCallback             (KERNEL.561)
- *     AllocLSThunkletCallback             (KERNEL.606)
+ *     AllocLSThunkletCallback_dup         (KERNEL.606)
  */
 FARPROC WINAPI AllocLSThunkletCallback16( SEGPTR target, DWORD relay )
 {
@@ -1662,7 +1662,7 @@ FARPROC WINAPI AllocLSThunkletCallback16( SEGPTR target, DWORD relay )
 
 /***********************************************************************
  *     AllocSLThunkletCallback             (KERNEL.562)
- *     AllocSLThunkletCallback             (KERNEL.605)
+ *     AllocSLThunkletCallback_dup         (KERNEL.605)
  */
 SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 {
@@ -1671,7 +1671,7 @@ SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 
 /***********************************************************************
  *     FindLSThunkletCallback              (KERNEL.563)
- *     FindLSThunkletCallback              (KERNEL.609)
+ *     FindLSThunkletCallback_dup          (KERNEL.609)
  */
 FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 {
@@ -1688,7 +1688,7 @@ FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 
 /***********************************************************************
  *     FindSLThunkletCallback              (KERNEL.564)
- *     FindSLThunkletCallback              (KERNEL.610)
+ *     FindSLThunkletCallback_dup          (KERNEL.610)
  */
 SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 {
@@ -1849,7 +1849,7 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           Get16DLLAddress       (KERNEL32.1599)
+ *           Get16DLLAddress       (KERNEL32.@)
  *
  * This function is used by a Win32s DLL if it wants to call a Win16 function.
  * A 16:16 segmented pointer to the function is returned.

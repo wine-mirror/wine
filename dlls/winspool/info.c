@@ -559,7 +559,7 @@ INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
 
 
 /*****************************************************************************
- *          DeviceCapabilitiesW        [WINSPOOL.152]
+ *          DeviceCapabilitiesW        [WINSPOOL.@]
  *
  * Call DeviceCapabilitiesA since we later call 16bit stuff anyway
  *
@@ -610,7 +610,7 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
 }
 
 /******************************************************************
- *              DocumentPropertiesA   [WINSPOOL.155]
+ *              DocumentPropertiesA   [WINSPOOL.@]
  *
  */
 LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
@@ -687,7 +687,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 }
 
 /******************************************************************
- *              OpenPrinterA        [WINSPOOL.196]
+ *              OpenPrinterA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
@@ -715,7 +715,7 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 }
 
 /******************************************************************
- *              OpenPrinterW        [WINSPOOL.197]
+ *              OpenPrinterW        [WINSPOOL.@]
  *
  */
 BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
@@ -763,7 +763,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 }
 
 /******************************************************************
- *              AddMonitorA        [WINSPOOL.107]
+ *              AddMonitorA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
@@ -774,7 +774,7 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 }
 
 /******************************************************************
- *              DeletePrinterDriverA        [WINSPOOL.146]
+ *              DeletePrinterDriverA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI
@@ -788,7 +788,7 @@ DeletePrinterDriverA (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 
 
 /******************************************************************
- *              DeleteMonitorA        [WINSPOOL.135]
+ *              DeleteMonitorA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI
@@ -802,7 +802,7 @@ DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 
 
 /******************************************************************
- *              DeletePortA        [WINSPOOL.137]
+ *              DeletePortA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI
@@ -815,7 +815,7 @@ DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
 }
 
 /******************************************************************************
- *    SetPrinterW  [WINSPOOL.214]
+ *    SetPrinterW  [WINSPOOL.@]
  */
 BOOL WINAPI
 SetPrinterW(
@@ -830,7 +830,7 @@ SetPrinterW(
 }
 
 /******************************************************************************
- *    WritePrinter  [WINSPOOL.223]
+ *    WritePrinter  [WINSPOOL.@]
  */
 BOOL WINAPI
 WritePrinter( 
@@ -845,7 +845,7 @@ WritePrinter(
 }
 
 /*****************************************************************************
- *          AddFormA  [WINSPOOL.103]
+ *          AddFormA  [WINSPOOL.@]
  */
 BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
@@ -854,7 +854,7 @@ BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 }
 
 /*****************************************************************************
- *          AddFormW  [WINSPOOL.104]
+ *          AddFormW  [WINSPOOL.@]
  */
 BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
@@ -863,7 +863,7 @@ BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 }
 
 /*****************************************************************************
- *          AddJobA  [WINSPOOL.105]
+ *          AddJobA  [WINSPOOL.@]
  */
 BOOL WINAPI AddJobA(HANDLE hPrinter, DWORD Level, LPBYTE pData,
                         DWORD cbBuf, LPDWORD pcbNeeded)
@@ -874,7 +874,7 @@ BOOL WINAPI AddJobA(HANDLE hPrinter, DWORD Level, LPBYTE pData,
 }
 
 /*****************************************************************************
- *          AddJobW  [WINSPOOL.106]
+ *          AddJobW  [WINSPOOL.@]
  */
 BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
                         LPDWORD pcbNeeded)
@@ -942,7 +942,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 }
 
 /*****************************************************************************
- *          AddPrinterW  [WINSPOOL.122]
+ *          AddPrinterW  [WINSPOOL.@]
  */
 HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 {
@@ -1097,7 +1097,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 }
 
 /*****************************************************************************
- *          AddPrinterA  [WINSPOOL.117]
+ *          AddPrinterA  [WINSPOOL.@]
  */
 HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
@@ -1124,7 +1124,7 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 
 
 /*****************************************************************************
- *          ClosePrinter  [WINSPOOL.126]
+ *          ClosePrinter  [WINSPOOL.@]
  */
 BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
@@ -1139,7 +1139,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 }
 
 /*****************************************************************************
- *          DeleteFormA  [WINSPOOL.133]
+ *          DeleteFormA  [WINSPOOL.@]
  */
 BOOL WINAPI DeleteFormA(HANDLE hPrinter, LPSTR pFormName)
 {
@@ -1148,7 +1148,7 @@ BOOL WINAPI DeleteFormA(HANDLE hPrinter, LPSTR pFormName)
 }
 
 /*****************************************************************************
- *          DeleteFormW  [WINSPOOL.134]
+ *          DeleteFormW  [WINSPOOL.@]
  */
 BOOL WINAPI DeleteFormW(HANDLE hPrinter, LPWSTR pFormName)
 {
@@ -1157,7 +1157,7 @@ BOOL WINAPI DeleteFormW(HANDLE hPrinter, LPWSTR pFormName)
 }
 
 /*****************************************************************************
- *          DeletePrinter  [WINSPOOL.143]
+ *          DeletePrinter  [WINSPOOL.@]
  */
 BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
@@ -1183,7 +1183,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 }
 
 /*****************************************************************************
- *          SetPrinterA  [WINSPOOL.211]
+ *          SetPrinterA  [WINSPOOL.@]
  */
 BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                            DWORD Command)
@@ -1193,7 +1193,7 @@ BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 }
 
 /*****************************************************************************
- *          SetJobA  [WINSPOOL.209]
+ *          SetJobA  [WINSPOOL.@]
  */
 BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
                        LPBYTE pJob, DWORD Command)
@@ -1204,7 +1204,7 @@ BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
 }
 
 /*****************************************************************************
- *          SetJobW  [WINSPOOL.210]
+ *          SetJobW  [WINSPOOL.@]
  */
 BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
                        LPBYTE pJob, DWORD Command)
@@ -1215,7 +1215,7 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
 }
 
 /*****************************************************************************
- *          GetFormA  [WINSPOOL.181]
+ *          GetFormA  [WINSPOOL.@]
  */
 BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
@@ -1226,7 +1226,7 @@ BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
 }
 
 /*****************************************************************************
- *          GetFormW  [WINSPOOL.182]
+ *          GetFormW  [WINSPOOL.@]
  */
 BOOL WINAPI GetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
@@ -1237,7 +1237,7 @@ BOOL WINAPI GetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
 }
 
 /*****************************************************************************
- *          SetFormA  [WINSPOOL.207]
+ *          SetFormA  [WINSPOOL.@]
  */
 BOOL WINAPI SetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                         LPBYTE pForm)
@@ -1247,7 +1247,7 @@ BOOL WINAPI SetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
 }
 
 /*****************************************************************************
- *          SetFormW  [WINSPOOL.208]
+ *          SetFormW  [WINSPOOL.@]
  */
 BOOL WINAPI SetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                         LPBYTE pForm)
@@ -1257,7 +1257,7 @@ BOOL WINAPI SetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
 }
 
 /*****************************************************************************
- *          ReadPrinter  [WINSPOOL.202]
+ *          ReadPrinter  [WINSPOOL.@]
  */
 BOOL WINAPI ReadPrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf,
                            LPDWORD pNoBytesRead)
@@ -1267,7 +1267,7 @@ BOOL WINAPI ReadPrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf,
 }
 
 /*****************************************************************************
- *          ResetPrinterA  [WINSPOOL.203]
+ *          ResetPrinterA  [WINSPOOL.@]
  */
 BOOL WINAPI ResetPrinterA(HANDLE hPrinter, LPPRINTER_DEFAULTSA pDefault)
 {
@@ -1276,7 +1276,7 @@ BOOL WINAPI ResetPrinterA(HANDLE hPrinter, LPPRINTER_DEFAULTSA pDefault)
 }
 
 /*****************************************************************************
- *          ResetPrinterW  [WINSPOOL.204]
+ *          ResetPrinterW  [WINSPOOL.@]
  */
 BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
 {
@@ -1711,7 +1711,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 }
 
 /*****************************************************************************
- *          GetPrinterW  [WINSPOOL.194]
+ *          GetPrinterW  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 			DWORD cbBuf, LPDWORD pcbNeeded)
@@ -1721,7 +1721,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 }
 
 /*****************************************************************************
- *          GetPrinterA  [WINSPOOL.187]
+ *          GetPrinterA  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                     DWORD cbBuf, LPDWORD pcbNeeded)
@@ -1871,7 +1871,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 
 
 /******************************************************************
- *              EnumPrintersW        [WINSPOOL.175]
+ *              EnumPrintersW        [WINSPOOL.@]
  *
  *    Enumerates the available printers, print servers and print
  *    providers, depending on the specified flags, name and level.
@@ -1935,7 +1935,7 @@ BOOL  WINAPI EnumPrintersW(
 }
 
 /******************************************************************
- *              EnumPrintersA        [WINSPOOL.174]
+ *              EnumPrintersA        [WINSPOOL.@]
  *
  */
 BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
@@ -2210,7 +2210,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 }
 
 /*****************************************************************************
- *          GetPrinterDriverA  [WINSPOOL.190]
+ *          GetPrinterDriverA  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 			      DWORD Level, LPBYTE pDriverInfo,
@@ -2224,7 +2224,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
     return ret;
 }
 /*****************************************************************************
- *          GetPrinterDriverW  [WINSPOOL.193]
+ *          GetPrinterDriverW  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
                                   DWORD Level, LPBYTE pDriverInfo, 
@@ -2235,7 +2235,7 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
 }
 
 /*****************************************************************************
- *       GetPrinterDriverDirectoryA  [WINSPOOL.191]
+ *       GetPrinterDriverDirectoryA  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
@@ -2272,7 +2272,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 
 
 /*****************************************************************************
- *       GetPrinterDriverDirectoryW  [WINSPOOL.192]
+ *       GetPrinterDriverDirectoryW  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
@@ -2296,7 +2296,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 }
 
 /*****************************************************************************
- *          AddPrinterDriverA  [WINSPOOL.120]
+ *          AddPrinterDriverA  [WINSPOOL.@]
  */
 BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 {
@@ -2375,7 +2375,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
     return TRUE;
 }
 /*****************************************************************************
- *          AddPrinterDriverW  [WINSPOOL.121]
+ *          AddPrinterDriverW  [WINSPOOL.@]
  */
 BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level, 
 				   LPBYTE pDriverInfo)
@@ -2387,7 +2387,7 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
 
 
 /*****************************************************************************
- *          PrinterProperties  [WINSPOOL.201]
+ *          PrinterProperties  [WINSPOOL.@]
  *
  *     Displays a dialog to set the properties of the printer.
  *
@@ -2406,7 +2406,7 @@ BOOL WINAPI PrinterProperties(HWND hWnd,      /* [in] handle to parent window */
 }
 
 /*****************************************************************************
- *          EnumJobsA [WINSPOOL.162]
+ *          EnumJobsA [WINSPOOL.@]
  *
  */
 BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
@@ -2421,7 +2421,7 @@ BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 
 
 /*****************************************************************************
- *          EnumJobsW [WINSPOOL.163]
+ *          EnumJobsW [WINSPOOL.@]
  *
  */
 BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
@@ -2543,7 +2543,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
 }
 
 /*****************************************************************************
- *          EnumPrinterDriversW  [WINSPOOL.173]
+ *          EnumPrinterDriversW  [WINSPOOL.@]
  *
  *    see function EnumPrinterDrivers for RETURNS, BUGS
  */
@@ -2556,7 +2556,7 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
 }
 
 /*****************************************************************************
- *          EnumPrinterDriversA  [WINSPOOL.172]
+ *          EnumPrinterDriversA  [WINSPOOL.@]
  *
  *    see function EnumPrinterDrivers for RETURNS, BUGS
  */
@@ -2583,7 +2583,7 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
 
 
 /******************************************************************************
- *		EnumPortsA   (WINSPOOL.166)
+ *		EnumPortsA   (WINSPOOL.@)
  */
 BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
                        LPDWORD bufneeded,LPDWORD bufreturned)
@@ -2753,7 +2753,7 @@ DWORD WINAPI GetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, LPDWORD pType,
 }
 
 /*******************************************************************************
- *		EnumPrinterDataExW	[WINSPOOL.197]
+ *		EnumPrinterDataExW	[WINSPOOL.@]
  */
 DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 				LPBYTE pEnumValues, DWORD cbEnumValues,
@@ -2986,7 +2986,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 }
 
 /*******************************************************************************
- *		EnumPrinterDataExA	[WINSPOOL.196]
+ *		EnumPrinterDataExA	[WINSPOOL.@]
  *
  * This functions returns value names and REG_SZ, REG_EXPAND_SZ, and
  * REG_MULTI_SZ values as ASCII strings in Unicode-sized buffers.  This is

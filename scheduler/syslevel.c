@@ -56,7 +56,8 @@ VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
 }
 
 /************************************************************************
- *           _EnterSysLevel    (KERNEL32.97) (KERNEL.439)
+ *           _EnterSysLevel    (KERNEL32.97)
+ *           _EnterSysLevel    (KERNEL.439)
  */
 VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
 {
@@ -88,7 +89,8 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
 }
 
 /************************************************************************
- *           _LeaveSysLevel    (KERNEL32.98) (KERNEL.440)
+ *           _LeaveSysLevel    (KERNEL32.98)
+ *           _LeaveSysLevel    (KERNEL.440)
  */
 VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
@@ -126,7 +128,8 @@ VOID WINAPI _KERNEL32_86(SYSLEVEL *lock)
 }
 
 /************************************************************************
- *           _ConfirmSysLevel    (KERNEL32.95) (KERNEL.436)
+ *           _ConfirmSysLevel    (KERNEL32.95)
+ *           _ConfirmSysLevel    (KERNEL.436)
  */
 DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
 {
@@ -137,7 +140,8 @@ DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
 }
 
 /************************************************************************
- *           _CheckNotSysLevel    (KERNEL32.94) (KERNEL.437)
+ *           _CheckNotSysLevel    (KERNEL32.94)
+ *           _CheckNotSysLevel    (KERNEL.437)
  */
 VOID WINAPI _CheckNotSysLevel(SYSLEVEL *lock)
 {

@@ -107,7 +107,7 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 }
 
 /***********************************************************************
- *  WinGSetDIBColorTable   (WING.1004)
+ *  WinGSetDIBColorTable   (WING.1006)
  */
 UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
                                      RGBQUAD *colors)

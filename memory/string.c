@@ -49,7 +49,7 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcatA   (KERNEL32.599)
+ *           lstrcatA   (KERNEL32.@)
  */
 LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
@@ -68,7 +68,7 @@ LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcatW   (KERNEL32.600)
+ *           lstrcatW   (KERNEL32.@)
  */
 LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
@@ -129,7 +129,7 @@ INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmpiA   (KERNEL32.605)
+ *           lstrcmpiA   (KERNEL32.@)
  */
 INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
 {    TRACE("strcmpi %s and %s\n",
@@ -139,7 +139,7 @@ INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmpiW   (KERNEL32.606)
+ *           lstrcmpiW   (KERNEL32.@)
  */
 INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 {
@@ -162,7 +162,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcpyA   (KERNEL32.608)
+ *           lstrcpyA   (KERNEL32.@)
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
@@ -183,7 +183,7 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcpyW   (KERNEL32.609)
+ *           lstrcpyW   (KERNEL32.@)
  */
 LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
@@ -212,7 +212,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcpynA   (KERNEL32.611)
+ *           lstrcpynA   (KERNEL32.@)
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
@@ -235,7 +235,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 
 
 /***********************************************************************
- *           lstrcpynW   (KERNEL32.612)
+ *           lstrcpynW   (KERNEL32.@)
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
@@ -267,7 +267,7 @@ INT16 WINAPI lstrlen16( LPCSTR str )
 
 
 /***********************************************************************
- *           lstrlenA   (KERNEL32.614)
+ *           lstrlenA   (KERNEL32.@)
  */
 INT WINAPI lstrlenA( LPCSTR str )
 {
@@ -287,7 +287,7 @@ INT WINAPI lstrlenA( LPCSTR str )
 
 
 /***********************************************************************
- *           lstrlenW   (KERNEL32.615)
+ *           lstrlenW   (KERNEL32.@)
  */
 INT WINAPI lstrlenW( LPCWSTR str )
 {
