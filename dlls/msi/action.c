@@ -2189,7 +2189,7 @@ static LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name,
                 {
                     p = strrchrW(path,'\\');
                     if (p)
-                        *p++ = 0;
+                        *(p+1) = 0;
                 }
             }
             if (folder)
