@@ -88,6 +88,8 @@ static	void MULTIMEDIA_DeleteIData(void)
     LPWINE_MM_IDATA*	ppid;
 	    
     if (iData) {
+	TIME_MMTimeStop();
+
 	for (ppid = &lpFirstIData; *ppid; ppid = &(*ppid)->lpNextIData) {
 	    if (*ppid == iData) {
 		*ppid = iData->lpNextIData;

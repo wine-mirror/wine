@@ -198,3 +198,5 @@ void 				MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
 
+LPWINE_MM_IDATA			TIME_MMTimeStart(void);
+void				TIME_MMTimeStop(void);

@@ -8,14 +8,15 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winemm.h"
-#include "services.h"
 #include "debugtools.h"
+#include "wine/port.h"
 
 DEFAULT_DEBUG_CHANNEL(mmtime);
 
@@ -27,6 +28,8 @@ DEFAULT_DEBUG_CHANNEL(mmtime);
  */
 #define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
+
+#define MMSYSTIME_STDINTERVAL (10) /* reasonable value? */
 
 /* ### start build ### */
 extern WORD CALLBACK TIME_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
@@ -67,10 +70,9 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
+static void CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
 {
     LPWINE_TIMERENTRY 	lpTimer, lpNextTimer;
-    LPWINE_MM_IDATA	iData = (LPWINE_MM_IDATA)ptr_;
     DWORD		delta = GetTickCount() - iData->mmSysTimeMS;
     int			idx;
 
@@ -130,9 +132,30 @@ static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
 }
 
 /**************************************************************************
- * 				MULTIMEDIA_MMTimeStart		[internal]
+ *           TIME_MMSysTimeThread
  */
-static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
+static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
+{
+    LPWINE_MM_IDATA iData = (LPWINE_MM_IDATA)arg;
+    volatile HANDLE *pActive = (volatile HANDLE *)&iData->hMMTimer;
+    DWORD last_time, cur_time;
+
+    usleep(MMSYSTIME_STDINTERVAL * 1000);
+    last_time = GetTickCount();
+    while (*pActive) {
+	TIME_MMSysTimeCallback(iData);
+	cur_time = GetTickCount();
+	while (last_time < cur_time)
+	    last_time += MMSYSTIME_STDINTERVAL;
+	usleep((last_time - cur_time) * 1000);
+    }
+    return 0;
+}
+
+/**************************************************************************
+ * 				TIME_MMTimeStart
+ */
+LPWINE_MM_IDATA	TIME_MMTimeStart(void)
 {
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
 
@@ -140,9 +163,6 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
 	ERR("iData is not correctly set, please report. Expect failure.\n");
 	return 0;
     }
-    /* FIXME: the service timer is never killed, even when process is
-     * detached from this DLL
-     */
     /* one could think it's possible to stop the service thread activity when no more
      * mm timers are active, but this would require to keep mmSysTimeMS up-to-date
      * without being incremented within the service thread callback.
@@ -150,11 +170,29 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
     if (!iData->hMMTimer) {
 	iData->mmSysTimeMS = GetTickCount();
 	iData->lpTimerList = NULL;
-	/* 10ms seems a reasonable value ?? */
-	iData->hMMTimer = SERVICE_AddTimer(10, TIME_MMSysTimeCallback, (DWORD)iData);
+	iData->hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, iData, 0, NULL);
     }
 
     return iData;
+}
+
+/**************************************************************************
+ * 				TIME_MMTimeStop
+ */
+void	TIME_MMTimeStop(void)
+{
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+
+    if (IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
+	ERR("iData is not correctly set, please report. Expect failure.\n");
+	return;
+    }
+    if (iData->hMMTimer) {
+	HANDLE hMMTimer = iData->hMMTimer;
+	iData->hMMTimer = 0;
+	WaitForSingleObject(hMMTimer, INFINITE);
+	CloseHandle(hMMTimer);
+    }
 }
 
 /**************************************************************************
@@ -166,7 +204,7 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 
     if (wSize >= sizeof(*lpTime)) {
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
+	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
@@ -183,7 +221,7 @@ MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 
     if (wSize >= sizeof(*lpTime)) {
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
+	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
@@ -211,7 +249,7 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     if (wDelay < MMSYSTIME_MININTERVAL || wDelay > MMSYSTIME_MAXINTERVAL)
 	return 0;
 
-    iData = MULTIMEDIA_MMTimeStart();
+    iData = TIME_MMTimeStart();
 
     lpNewTimer->uCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
@@ -387,5 +425,5 @@ DWORD WINAPI timeGetTime(void)
     DWORD count;
     ReleaseThunkLock(&count);
     RestoreThunkLock(count);
-    return MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
+    return TIME_MMTimeStart()->mmSysTimeMS;
 }
