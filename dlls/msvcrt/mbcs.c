@@ -650,3 +650,23 @@ char *_mbsrev(char *str)
     return str;
 }
 
+/*********************************************************************
+ *		_mbspbrk (MSVCRT.@)
+ */
+const char *_mbspbrk(const char *str, const char *accept)
+{
+    const char *p;
+
+    while(*str)
+    {
+        for(p = accept; *p; p += (MSVCRT_isleadbyte(*p)?2:1) )
+        {
+            if (*p == *str)
+                if( !MSVCRT_isleadbyte(*p) || ( *(p+1) == *(str+1) ) )
+                     return str;
+        }
+        str += (MSVCRT_isleadbyte(*str)?2:1);
+    }
+    return NULL;
+}
+
