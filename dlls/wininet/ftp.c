@@ -2017,13 +2017,13 @@ BOOL FTP_SendData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, HANDLE hFile)
         nSeconds = e_long_time - s_long_time;
         if( nSeconds / 60 > 0 )
         {
-            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld min %ld sec estimated remainig time %ld sec\n",
+            TRACE( "%ld bytes of %ld bytes (%ld%%) in %ld min %ld sec estimated remainig time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds / 60, 
             nSeconds % 60, (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent );
         }
         else
         {
-            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld sec estimated remainig time %ld sec\n",
+            TRACE( "%ld bytes of %ld bytes (%ld%%) in %ld sec estimated remainig time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds,
             (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent);
         }

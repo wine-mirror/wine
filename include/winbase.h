@@ -586,16 +586,16 @@ typedef struct {
 
 typedef struct
 {
-  int dwFileAttributes;
+  DWORD dwFileAttributes;
   FILETIME ftCreationTime;
   FILETIME ftLastAccessTime;
   FILETIME ftLastWriteTime;
-  int dwVolumeSerialNumber;
-  int nFileSizeHigh;
-  int nFileSizeLow;
-  int nNumberOfLinks;
-  int nFileIndexHigh;
-  int nFileIndexLow;
+  DWORD dwVolumeSerialNumber;
+  DWORD nFileSizeHigh;
+  DWORD nFileSizeLow;
+  DWORD nNumberOfLinks;
+  DWORD nFileIndexHigh;
+  DWORD nFileIndexLow;
 } BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION ;
 
 #define PIPE_ACCESS_INBOUND  1
