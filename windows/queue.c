@@ -456,64 +456,24 @@ void QUEUE_CleanupWindow( HWND hwnd )
 
 
 /***********************************************************************
- *	     QUEUE_GetQueueTask
- */
-HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
-{
-    HTASK16 hTask = 0;
-    
-    MESSAGEQUEUE *queue = QUEUE_Lock( hQueue );
-
-    if (queue)
-    {
-        hTask = queue->teb->htask16;
-        QUEUE_Unlock( queue );
-    }
-
-    return hTask;
-}
-
-
-/***********************************************************************
- *		PostQuitMessage (USER.6)
- */
-void WINAPI PostQuitMessage16( INT16 exitCode )
-{
-    PostQuitMessage( exitCode );
-}
-
-
-/***********************************************************************
- *		PostQuitMessage (USER32.@)
- *
- * PostQuitMessage() posts a message to the system requesting an
- * application to terminate execution. As a result of this function,
- * the WM_QUIT message is posted to the application, and
- * PostQuitMessage() returns immediately.  The exitCode parameter
- * specifies an application-defined exit code, which appears in the
- * _wParam_ parameter of the WM_QUIT message posted to the application.  
- *
- * CONFORMANCE
- *
- *  ECMA-234, Win32
- */
-void WINAPI PostQuitMessage( INT exitCode )
-{
-    PostThreadMessageW( GetCurrentThreadId(), WM_QUIT, exitCode, 0 );
-}
-
-
-/***********************************************************************
  *		GetWindowTask (USER.224)
  */
 HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 {
     HTASK16 retvalue;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    MESSAGEQUEUE *queue;
 
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    retvalue = QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+
+    queue = QUEUE_Lock( wndPtr->hmemTaskQ );
     WIN_ReleaseWndPtr(wndPtr);
+
+    if (!queue) return 0;
+
+    retvalue = queue->teb->htask16;
+    QUEUE_Unlock( queue );
+
     return retvalue;
 }
 
@@ -540,25 +500,6 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     return retvalue;
 }
 
-
-/***********************************************************************
- *		SetMessageQueue (USER.266)
- */
-BOOL16 WINAPI SetMessageQueue16( INT16 size )
-{
-    return SetMessageQueue( size );
-}
-
-
-/***********************************************************************
- *		SetMessageQueue (USER32.@)
- */
-BOOL WINAPI SetMessageQueue( INT size )
-{
-    /* now obsolete the message queue will be expanded dynamically
-     as necessary */
-    return TRUE;
-}
 
 /***********************************************************************
  *		InitThreadInput (USER.409)
@@ -593,14 +534,6 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 }
 
 /***********************************************************************
- *		GetQueueStatus (USER.334)
- */
-DWORD WINAPI GetQueueStatus16( UINT16 flags )
-{
-    return GetQueueStatus( flags );
-}
-
-/***********************************************************************
  *		GetQueueStatus (USER32.@)
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
@@ -617,14 +550,6 @@ DWORD WINAPI GetQueueStatus( UINT flags )
     return ret;
 }
 
-
-/***********************************************************************
- *		GetInputState (USER.335)
- */
-BOOL16 WINAPI GetInputState16(void)
-{
-    return GetInputState();
-}
 
 /***********************************************************************
  *		GetInputState   (USER32.@)

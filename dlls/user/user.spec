@@ -112,8 +112,8 @@ rsrc	resources/version16.res
 105 pascal16 FlashWindow(word word) FlashWindow16
 106 pascal16 GetKeyState(word) GetKeyState16
 107 pascal   DefWindowProc(word word word long) DefWindowProc16
-108 pascal16 GetMessage(segptr word word word) GetMessage16
-109 pascal16 PeekMessage(segptr word word word word) PeekMessage16
+108 pascal16 GetMessage(ptr word word word) GetMessage16
+109 pascal16 PeekMessage(ptr word word word word) PeekMessage16
 110 pascal16 PostMessage(word word word long) PostMessage16
 111 pascal   SendMessage(word word word long) SendMessage16
 112 pascal16 WaitMessage() WaitMessage
@@ -538,8 +538,8 @@ rsrc	resources/version16.res
 802 stub OPENFILENAME_CALLBACK16
 803 stub PRINTDLG_CALLBACK16
 804 stub CHOOSECOLOR_CALLBACK16
-819 pascal16 PeekMessage32(segptr word word word word word) PeekMessage32_16
-820 pascal   GetMessage32(segptr word word word word) GetMessage32_16
+819 pascal16 PeekMessage32(ptr word word word word word) PeekMessage32_16
+820 pascal   GetMessage32(ptr word word word word) GetMessage32_16
 821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16 
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
 822 pascal   DispatchMessage32(ptr word) DispatchMessage32_16

@@ -1338,20 +1338,31 @@ struct wait_input_idle_request
 struct send_message_request
 {
     struct request_header __header;
-    int             kind;
     void*           id;
     int             type;
     handle_t        win;
     unsigned int    msg;
     unsigned int    wparam;
     unsigned int    lparam;
-    unsigned short  x;
-    unsigned short  y;
+    int             x;
+    int             y;
     unsigned int    time;
     unsigned int    info;
+    int             timeout;
+    /* VARARG(data,bytes); */
 };
-enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
-#define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
+
+enum message_type
+{
+    MSG_ASCII,
+    MSG_UNICODE,
+    MSG_NOTIFY,
+    MSG_CALLBACK,
+    MSG_OTHER_PROCESS,
+    MSG_POSTED,
+    MSG_HARDWARE_RAW,
+    MSG_HARDWARE_COOKED
+};
 
 
 
@@ -1362,16 +1373,16 @@ struct get_message_request
     handle_t        get_win;
     unsigned int    get_first;
     unsigned int    get_last;
-    int             kind;
     int             type;
     handle_t        win;
     unsigned int    msg;
     unsigned int    wparam;
     unsigned int    lparam;
-    unsigned short  x;
-    unsigned short  y;
+    int             x;
+    int             y;
     unsigned int    time;
     unsigned int    info;
+    /* VARARG(data,bytes); */
 };
 #define GET_MSG_REMOVE      1
 #define GET_MSG_SENT_ONLY   2
@@ -1383,6 +1394,7 @@ struct reply_message_request
     struct request_header __header;
     unsigned int    result;
     int             remove;
+    /* VARARG(data,bytes); */
 };
 
 
@@ -1392,14 +1404,7 @@ struct get_message_reply_request
     struct request_header __header;
     int             cancel;
     unsigned int    result;
-};
-
-
-
-struct in_send_message_request
-{
-    struct request_header __header;
-    int             flags;
+    /* VARARG(data,bytes); */
 };
 
 
@@ -1639,7 +1644,6 @@ enum request
     REQ_get_message,
     REQ_reply_message,
     REQ_get_message_reply,
-    REQ_in_send_message,
     REQ_cleanup_window_queue,
     REQ_set_win_timer,
     REQ_kill_win_timer,
@@ -1767,7 +1771,6 @@ union generic_request
     struct get_message_request get_message;
     struct reply_message_request reply_message;
     struct get_message_reply_request get_message_reply;
-    struct in_send_message_request in_send_message;
     struct cleanup_window_queue_request cleanup_window_queue;
     struct set_win_timer_request set_win_timer;
     struct kill_win_timer_request kill_win_timer;
@@ -1780,6 +1783,6 @@ union generic_request
     struct connect_named_pipe_request connect_named_pipe;
 };
 
-#define SERVER_PROTOCOL_VERSION 48
+#define SERVER_PROTOCOL_VERSION 49
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

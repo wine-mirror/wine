@@ -11,12 +11,14 @@
 #include "wine/windef16.h"
 #include "winproc.h"
 
-struct tagMSG;
-
 /* message.c */
-extern BOOL MSG_InternalGetMessage( struct tagMSG *msg, HWND hwnd, HWND hwndOwner,
-                                    UINT first, UINT last, WPARAM code,
-                                    WORD flags, BOOL sendIdle, BOOL* idleSent );
+extern BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
+                                              UINT first, UINT last, BOOL remove );
+extern BOOL MSG_process_cooked_hardware_message( MSG *msg, BOOL remove );
+extern void MSG_JournalPlayBackMsg(void);
+
+/* sendmsg.c */
+extern BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags );
 
 /* timer.c */
 extern void TIMER_RemoveWindowTimers( HWND hwnd );

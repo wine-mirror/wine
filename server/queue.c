@@ -17,6 +17,10 @@
 #include "process.h"
 #include "request.h"
 
+enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
+#define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
+
+
 struct message_result
 {
     struct message_result *send_next;   /* next in sender list */
@@ -26,21 +30,26 @@ struct message_result
     int                    replied;     /* has it been replied to? */
     unsigned int           result;      /* reply result */
     unsigned int           error;       /* error code to pass back to sender */
+    void                  *data;        /* message reply data */
+    unsigned int           data_size;   /* size of message reply data */
+    struct timeout_user   *timeout;     /* result timeout */
 };
 
 struct message
 {
     struct message        *next;      /* next message in list */
     struct message        *prev;      /* prev message in list */
-    int                    type;      /* message type (FIXME) */
+    enum message_type      type;      /* message type */
     handle_t               win;       /* window handle */
     unsigned int           msg;       /* message code */
     unsigned int           wparam;    /* parameters */
     unsigned int           lparam;    /* parameters */
-    unsigned short         x;         /* x position */
-    unsigned short         y;         /* y position */
+    int                    x;         /* x position */
+    int                    y;         /* y position */
     unsigned int           time;      /* message time */
     unsigned int           info;      /* extra info */
+    void                  *data;      /* message data for sent messages */
+    unsigned int           data_size; /* size of message data */
     struct message_result *result;    /* result in sender queue */
 };
 
@@ -141,12 +150,19 @@ inline static int is_signaled( struct msg_queue *queue )
     return ((queue->wake_bits & queue->wake_mask) || (queue->changed_bits & queue->changed_mask));
 }
 
-/* set/clear some queue bits */
-inline static void change_queue_bits( struct msg_queue *queue, unsigned int set, unsigned int clear )
+/* set some queue bits */
+inline static void set_queue_bits( struct msg_queue *queue, unsigned int bits )
 {
-    queue->wake_bits = (queue->wake_bits | set) & ~clear;
-    queue->changed_bits = (queue->changed_bits | set) & ~clear;
+    queue->wake_bits |= bits;
+    queue->changed_bits |= bits;
     if (is_signaled( queue )) wake_up( &queue->obj, 0 );
+}
+
+/* clear some queue bits */
+inline static void clear_queue_bits( struct msg_queue *queue, unsigned int bits )
+{
+    queue->wake_bits &= ~bits;
+    queue->changed_bits &= ~bits;
 }
 
 /* get the QS_* bit corresponding to a given hardware message */
@@ -203,6 +219,31 @@ static int merge_message( struct message_list *list, const struct message *msg )
     return 1;
 }
 
+/* free a result structure */
+static void free_result( struct message_result *result )
+{
+    if (result->timeout) remove_timeout_user( result->timeout );
+    if (result->data) free( result->data );
+    free( result );
+}
+
+/* store the message result in the appropriate structure */
+static void store_message_result( struct message_result *res, unsigned int result,
+                                  unsigned int error )
+{
+    res->result  = result;
+    res->error   = error;
+    res->replied = 1;
+    if (res->timeout)
+    {
+        remove_timeout_user( res->timeout );
+        res->timeout = NULL;
+    }
+    /* wake sender queue if waiting on this result */
+    if (res->sender && res->sender->send_result == res)
+        set_queue_bits( res->sender, QS_SMRESULT );
+}
+
 /* free a message when deleting a queue or window */
 static void free_message( struct message *msg )
 {
@@ -211,16 +252,12 @@ static void free_message( struct message *msg )
     {
         if (result->sender)
         {
-            result->result   = 0;
-            result->error    = STATUS_ACCESS_DENIED;  /* FIXME */
-            result->replied  = 1;
             result->receiver = NULL;
-            /* wake sender queue if waiting on this result */
-            if (result->sender->send_result == result)
-                change_queue_bits( result->sender, QS_SMRESULT, 0 );
+            store_message_result( result, 0, STATUS_ACCESS_DENIED /*FIXME*/ );
         }
-        else free( result );
+        else free_result( result );
     }
+    if (msg->data) free( msg->data );
     free( msg );
 }
 
@@ -236,41 +273,59 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
     switch(kind)
     {
     case SEND_MESSAGE:
-        if (!queue->msg_list[kind].first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
+        if (!queue->msg_list[kind].first) clear_queue_bits( queue, QS_SENDMESSAGE );
         break;
     case POST_MESSAGE:
-        if (!queue->msg_list[kind].first) change_queue_bits( queue, 0, QS_POSTMESSAGE );
+        if (!queue->msg_list[kind].first) clear_queue_bits( queue, QS_POSTMESSAGE );
         break;
     case COOKED_HW_MESSAGE:
     case RAW_HW_MESSAGE:
         clr_bit = get_hardware_msg_bit( msg );
         for (other = queue->msg_list[kind].first; other; other = other->next)
             if (get_hardware_msg_bit( other ) == clr_bit) break;
-        if (!other) change_queue_bits( queue, 0, clr_bit );
+        if (!other) clear_queue_bits( queue, clr_bit );
         break;
     }
     free_message( msg );
 }
 
-/* send a message from the sender queue to the receiver queue */
-static int send_message( struct msg_queue *send_queue, struct msg_queue *recv_queue,
-                         struct message *msg )
+/* message timed out without getting a reply */
+static void result_timeout( void *private )
+{
+    struct message_result *result = private;
+
+    assert( !result->replied );
+
+    result->timeout = NULL;
+    store_message_result( result, 0, STATUS_TIMEOUT );
+}
+
+/* allocate and fill a message result structure */
+static struct message_result *alloc_message_result( struct msg_queue *send_queue,
+                                                    struct msg_queue *recv_queue,
+                                                    unsigned int timeout )
 {
     struct message_result *result = mem_alloc( sizeof(*result) );
-    if (!result) return 0;
-
-    /* put the result on the sender result stack */
-    result->sender    = send_queue;
-    result->receiver  = recv_queue;
-    result->replied   = 0;
-    result->send_next = send_queue->send_result;
-    send_queue->send_result = result;
-
-    /* and put the message on the receiver queue */
-    msg->result = result;
-    append_message( &recv_queue->msg_list[SEND_MESSAGE], msg );
-    change_queue_bits( recv_queue, QS_SENDMESSAGE, 0 );
-    return 1;
+    if (result)
+    {
+        /* put the result on the sender result stack */
+        result->sender    = send_queue;
+        result->receiver  = recv_queue;
+        result->replied   = 0;
+        result->data      = NULL;
+        result->data_size = 0;
+        result->timeout   = NULL;
+        result->send_next = send_queue->send_result;
+        send_queue->send_result = result;
+        if (timeout != -1)
+        {
+            struct timeval when;
+            gettimeofday( &when, 0 );
+            add_timeout( &when, timeout );
+            result->timeout = add_timeout_user( &when, result_timeout, result );
+        }
+    }
+    return result;
 }
 
 /* receive a message, removing it from the sent queue */
@@ -280,15 +335,19 @@ static void receive_message( struct msg_queue *queue, struct message *msg )
 
     unlink_message( &queue->msg_list[SEND_MESSAGE], msg );
     /* put the result on the receiver result stack */
-    result->recv_next  = queue->recv_result;
-    queue->recv_result = result;
+    if (result)
+    {
+        result->recv_next  = queue->recv_result;
+        queue->recv_result = result;
+    }
+    if (msg->data) free( msg->data );
     free( msg );
-    if (!queue->msg_list[SEND_MESSAGE].first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
+    if (!queue->msg_list[SEND_MESSAGE].first) clear_queue_bits( queue, QS_SENDMESSAGE );
 }
 
 /* set the result of the current received message */
 static void reply_message( struct msg_queue *queue, unsigned int result,
-                           unsigned int error, int remove )
+                           unsigned int error, int remove, void *data, size_t len )
 {
     struct message_result *res = queue->recv_result;
 
@@ -298,43 +357,15 @@ static void reply_message( struct msg_queue *queue, unsigned int result,
         res->receiver = NULL;
         if (!res->sender)  /* no one waiting for it */
         {
-            free( res );
+            free_result( res );
             return;
         }
     }
     if (!res->replied)
     {
-        res->result  = result;
-        res->error   = error;
-        res->replied = 1;
-        /* wake sender queue if waiting on this result */
-        if (res->sender && res->sender->send_result == res)
-            change_queue_bits( res->sender, QS_SMRESULT, 0 );
+        if (len && (res->data = memdup( data, len ))) res->data_size = len;
+        store_message_result( res, result, error );
     }
-}
-
-/* retrieve the reply of the current message being sent */
-static unsigned int get_message_reply( struct msg_queue *queue, int cancel )
-{
-    struct message_result *res = queue->send_result;
-    unsigned int ret = 0;
-
-    set_error( STATUS_PENDING );
-
-    if (res && (res->replied || cancel))
-    {
-        if (res->replied)
-        {
-            ret = res->result;
-            set_error( res->error );
-        }
-        queue->send_result = res->send_next;
-        res->sender = NULL;
-        if (!res->receiver) free( res );
-        if (!queue->send_result || !queue->send_result->replied)
-            change_queue_bits( queue, 0, QS_SMRESULT );
-    }
-    return ret;
 }
 
 /* empty a message list and free all the messages */
@@ -359,11 +390,12 @@ static void cleanup_results( struct msg_queue *queue )
     {
         next = result->send_next;
         result->sender = NULL;
-        if (!result->receiver) free( result );
+        if (!result->receiver) free_result( result );
         result = next;
     }
 
-    while (queue->recv_result) reply_message( queue, 0, STATUS_ACCESS_DENIED /*FIXME*/, 1 );
+    while (queue->recv_result)
+        reply_message( queue, 0, STATUS_ACCESS_DENIED /*FIXME*/, 1, NULL, 0 );
 }
 
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -454,9 +486,9 @@ static void set_next_timer( struct msg_queue *queue, struct timer *timer )
 
     /* set/clear QS_TIMER bit */
     if (queue->next_timer == queue->first_timer)
-        change_queue_bits( queue, 0, QS_TIMER );
+        clear_queue_bits( queue, QS_TIMER );
     else
-        change_queue_bits( queue, QS_TIMER, 0 );
+        set_queue_bits( queue, QS_TIMER );
 }
 
 /* callback for the next timer expiration */
@@ -504,7 +536,7 @@ static void unlink_timer( struct msg_queue *queue, struct timer *timer )
     else queue->first_timer = timer->next;
     /* check if we removed the next timer */
     if (queue->next_timer == timer) set_next_timer( queue, timer->next );
-    else if (queue->next_timer == queue->first_timer) change_queue_bits( queue, 0, QS_TIMER );
+    else if (queue->next_timer == queue->first_timer) clear_queue_bits( queue, QS_TIMER );
 }
 
 /* restart an expired timer */
@@ -620,9 +652,9 @@ DECL_HANDLER(inc_queue_paint_count)
         if ((queue->paint_count += req->incr) < 0) queue->paint_count = 0;
 
         if (queue->paint_count)
-            change_queue_bits( queue, QS_PAINT, 0 );
+            set_queue_bits( queue, QS_PAINT );
         else
-            change_queue_bits( queue, 0, QS_PAINT );
+            clear_queue_bits( queue, QS_PAINT );
     }
     else set_error( STATUS_INVALID_PARAMETER );
 
@@ -685,40 +717,64 @@ DECL_HANDLER(send_message)
 
     if ((msg = mem_alloc( sizeof(*msg) )))
     {
-        msg->type    = req->type;
-        msg->win     = req->win;
-        msg->msg     = req->msg;
-        msg->wparam  = req->wparam;
-        msg->lparam  = req->lparam;
-        msg->x       = req->x;
-        msg->y       = req->y;
-        msg->time    = req->time;
-        msg->info    = req->info;
-        msg->result  = NULL;
-        switch(req->kind)
+        msg->type      = req->type;
+        msg->win       = req->win;
+        msg->msg       = req->msg;
+        msg->wparam    = req->wparam;
+        msg->lparam    = req->lparam;
+        msg->time      = req->time;
+        msg->x         = req->x;
+        msg->y         = req->y;
+        msg->info      = req->info;
+        msg->result    = NULL;
+        msg->data      = NULL;
+        msg->data_size = 0;
+
+        switch(msg->type)
         {
-        case SEND_MESSAGE:
-            send_message( send_queue, recv_queue, msg );
-            break;
-        case POST_MESSAGE:
-            append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
-            change_queue_bits( recv_queue, QS_POSTMESSAGE, 0 );
-            break;
-        case COOKED_HW_MESSAGE:
-        case RAW_HW_MESSAGE:
-            if (msg->msg == WM_MOUSEMOVE && merge_message( &recv_queue->msg_list[req->kind], msg ))
+       case MSG_OTHER_PROCESS:
+            msg->data_size = get_req_data_size(req);
+            if (msg->data_size && !(msg->data = memdup( get_req_data(req), msg->data_size )))
             {
                 free( msg );
+                break;
             }
-            else
+            /* fall through */
+        case MSG_ASCII:
+        case MSG_UNICODE:
+        case MSG_CALLBACK:
+            if (!(msg->result = alloc_message_result( send_queue, recv_queue, req->timeout )))
             {
-                append_message( &recv_queue->msg_list[req->kind], msg );
-                change_queue_bits( recv_queue, get_hardware_msg_bit(msg), 0 );
+                free( msg );
+                break;
             }
+            /* fall through */
+        case MSG_NOTIFY:
+            append_message( &recv_queue->msg_list[SEND_MESSAGE], msg );
+            set_queue_bits( recv_queue, QS_SENDMESSAGE );
             break;
+        case MSG_POSTED:
+            append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
+            set_queue_bits( recv_queue, QS_POSTMESSAGE );
+            break;
+        case MSG_HARDWARE_RAW:
+        case MSG_HARDWARE_COOKED:
+            {
+                struct message_list *list = ((msg->type == MSG_HARDWARE_RAW) ?
+                                             &recv_queue->msg_list[RAW_HW_MESSAGE] :
+                                             &recv_queue->msg_list[COOKED_HW_MESSAGE]);
+                if (msg->msg == WM_MOUSEMOVE && merge_message( list, msg ))
+                {
+                    free( msg );
+                    break;
+                }
+                append_message( list, msg );
+                set_queue_bits( recv_queue, get_hardware_msg_bit(msg) );
+                break;
+            }
         default:
-            free( msg );
             set_error( STATUS_INVALID_PARAMETER );
+            free( msg );
             break;
         }
     }
@@ -728,6 +784,8 @@ DECL_HANDLER(send_message)
 /* store a message contents into the request buffer; helper for get_message */
 inline static void put_req_message( struct get_message_request *req, const struct message *msg )
 {
+    int len = min( get_req_data_size(req), msg->data_size );
+
     req->type   = msg->type;
     req->win    = msg->win;
     req->msg    = msg->msg;
@@ -737,16 +795,17 @@ inline static void put_req_message( struct get_message_request *req, const struc
     req->y      = msg->y;
     req->time   = msg->time;
     req->info   = msg->info;
+    if (len) memcpy( get_req_data(req), msg->data, len );
+    set_req_data_size( req, len );
 }
 
 /* return a message to the application, removing it from the queue if needed */
 static void return_message_to_app( struct msg_queue *queue, struct get_message_request *req,
                                    struct message *msg, enum message_kind kind )
 {
-    req->kind = kind;
     put_req_message( req, msg );
     /* raw messages always get removed */
-    if ((kind == RAW_HW_MESSAGE) || (req->flags & GET_MSG_REMOVE))
+    if ((msg->type == MSG_HARDWARE_RAW) || (req->flags & GET_MSG_REMOVE))
     {
         queue->last_msg = NULL;
         remove_queue_message( queue, msg, kind );
@@ -784,16 +843,20 @@ DECL_HANDLER(get_message)
     struct message *msg;
     struct msg_queue *queue = get_current_queue();
 
-    if (!queue) return;
+    if (!queue)
+    {
+        set_req_data_size( req, 0 );
+        return;
+    }
 
     /* first check for sent messages */
     if ((msg = queue->msg_list[SEND_MESSAGE].first))
     {
-        req->kind = SEND_MESSAGE;
         put_req_message( req, msg );
         receive_message( queue, msg );
         return;
     }
+    set_req_data_size( req, 0 ); /* only sent messages can have data */
     if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
     /* if requested, remove the last returned but not yet removed message */
@@ -831,8 +894,7 @@ DECL_HANDLER(get_message)
     if ((queue->wake_bits & QS_PAINT) &&
         (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last))
     {
-        req->kind   = POST_MESSAGE;
-        req->type   = 0;
+        req->type   = MSG_POSTED;
         req->win    = 0;
         req->msg    = WM_PAINT;
         req->wparam = 0;
@@ -848,8 +910,7 @@ DECL_HANDLER(get_message)
     if ((timer = find_expired_timer( queue, req->get_win, req->get_first,
                                      req->get_last, (req->flags & GET_MSG_REMOVE) )))
     {
-        req->kind   = POST_MESSAGE;
-        req->type   = 0;
+        req->type   = MSG_POSTED;
         req->win    = timer->win;
         req->msg    = timer->msg;
         req->wparam = timer->id;
@@ -870,7 +931,8 @@ DECL_HANDLER(get_message)
 DECL_HANDLER(reply_message)
 {
     if (current->queue && current->queue->recv_result)
-        reply_message( current->queue, req->result, 0, req->remove );
+        reply_message( current->queue, req->result, 0, req->remove,
+                       get_req_data(req), get_req_data_size(req) );
     else
         set_error( STATUS_ACCESS_DENIED );
 }
@@ -879,26 +941,40 @@ DECL_HANDLER(reply_message)
 /* retrieve the reply for the last message sent */
 DECL_HANDLER(get_message_reply)
 {
-    if (current->queue) req->result = get_message_reply( current->queue, req->cancel );
-    else set_error( STATUS_ACCESS_DENIED );
-}
+    struct msg_queue *queue = current->queue;
+    size_t data_len = 0;
 
-
-/* check if we are processing a sent message */
-DECL_HANDLER(in_send_message)
-{
-    int flags = 0;
-
-    if (current->queue)
+    if (queue)
     {
-        struct message_result *result = current->queue->recv_result;
-        if (result)
+        struct message_result *result = queue->send_result;
+
+        set_error( STATUS_PENDING );
+        req->result = 0;
+
+        if (result && (result->replied || req->cancel))
         {
-            flags |= ISMEX_SEND;  /* FIXME */
-            if (result->replied || !result->sender) flags |= ISMEX_REPLIED;
+            if (result->replied)
+            {
+                req->result = result->result;
+                set_error( result->error );
+                if (result->data)
+                {
+                    data_len = min( result->data_size, get_req_data_size(req) );
+                    memcpy( get_req_data(req), result->data, data_len );
+                    free( result->data );
+                    result->data = NULL;
+                    result->data_size = 0;
+                }
+            }
+            queue->send_result = result->send_next;
+            result->sender = NULL;
+            if (!result->receiver) free_result( result );
+            if (!queue->send_result || !queue->send_result->replied)
+                clear_queue_bits( queue, QS_SMRESULT );
         }
     }
-    req->flags = flags;
+    else set_error( STATUS_ACCESS_DENIED );
+    set_req_data_size( req, data_len );
 }
 
 

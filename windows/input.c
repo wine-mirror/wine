@@ -85,9 +85,8 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
 {
     SERVER_START_REQ( send_message )
     {
-        req->kind   = RAW_HW_MESSAGE;
         req->id     = (void *)GetCurrentThreadId();
-        req->type   = 0;
+        req->type   = MSG_HARDWARE_RAW;
         req->win    = 0;
         req->msg    = message;
         req->wparam = wParam;
@@ -96,6 +95,7 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
         req->y      = yPos;
         req->time   = time;
         req->info   = extraInfo;
+        req->timeout = 0;
         SERVER_CALL();
     }
     SERVER_END_REQ;

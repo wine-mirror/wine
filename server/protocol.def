@@ -1195,20 +1195,31 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
 /* Send a message to a thread queue */
 @REQ(send_message)
-    int             kind;      /* message kind (see below) */
     void*           id;        /* thread id */
-    int             type;      /* message type */
+    int             type;      /* message type (see below) */
     handle_t        win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    wparam;    /* parameters */
     unsigned int    lparam;    /* parameters */
-    unsigned short  x;         /* x position */
-    unsigned short  y;         /* y position */
+    int             x;         /* x position */
+    int             y;         /* y position */
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info */
+    int             timeout;   /* timeout for reply */
+    VARARG(data,bytes);        /* message data for sent messages */
 @END
-enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
-#define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
+
+enum message_type
+{
+    MSG_ASCII,          /* Ascii message (from SendMessageA) */
+    MSG_UNICODE,        /* Unicode message (from SendMessageW) */
+    MSG_NOTIFY,         /* notify message (from SendNotifyMessageW), always Unicode */
+    MSG_CALLBACK,       /* callback message (from SendMessageCallbackW), always Unicode */
+    MSG_OTHER_PROCESS,  /* sent from other process, may include vararg data, always Unicode */
+    MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
+    MSG_HARDWARE_RAW,   /* raw hardware message */
+    MSG_HARDWARE_COOKED /* cooked hardware message */
+};
 
 
 /* Get a message from the current queue */
@@ -1218,16 +1229,16 @@ enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAG
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
 @REPLY
-    int             kind;      /* message kind */
     int             type;      /* message type */
     handle_t        win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    wparam;    /* parameters */
     unsigned int    lparam;    /* parameters */
-    unsigned short  x;         /* x position */
-    unsigned short  y;         /* y position */
+    int             x;         /* x position */
+    int             y;         /* y position */
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info */
+    VARARG(data,bytes);        /* message data for sent messages */
 @END
 #define GET_MSG_REMOVE      1  /* remove the message */
 #define GET_MSG_SENT_ONLY   2  /* only get sent messages */
@@ -1237,6 +1248,7 @@ enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAG
 @REQ(reply_message)
     unsigned int    result;    /* message result */
     int             remove;    /* should we remove the message? */
+    VARARG(data,bytes);        /* message data for sent messages */
 @END
 
 
@@ -1245,13 +1257,7 @@ enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAG
     int             cancel;    /* cancel message if not ready? */
 @REPLY
     unsigned int    result;    /* message result */
-@END
-
-
-/* Check if we are processing a sent message */
-@REQ(in_send_message)
-@REPLY
-    int             flags;     /* ISMEX_* flags */
+    VARARG(data,bytes);        /* message data for sent messages */
 @END
 
 

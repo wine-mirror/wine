@@ -1457,17 +1457,19 @@ static void dump_wait_input_idle_reply( const struct wait_input_idle_request *re
 
 static void dump_send_message_request( const struct send_message_request *req )
 {
-    fprintf( stderr, " kind=%d,", req->kind );
     fprintf( stderr, " id=%p,", req->id );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%d,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
-    fprintf( stderr, " x=%04x,", req->x );
-    fprintf( stderr, " y=%04x,", req->y );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " info=%08x", req->info );
+    fprintf( stderr, " info=%08x,", req->info );
+    fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -1480,22 +1482,25 @@ static void dump_get_message_request( const struct get_message_request *req )
 
 static void dump_get_message_reply( const struct get_message_request *req )
 {
-    fprintf( stderr, " kind=%d,", req->kind );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%d,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
-    fprintf( stderr, " x=%04x,", req->x );
-    fprintf( stderr, " y=%04x,", req->y );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " info=%08x", req->info );
+    fprintf( stderr, " info=%08x,", req->info );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_reply_message_request( const struct reply_message_request *req )
 {
     fprintf( stderr, " result=%08x,", req->result );
-    fprintf( stderr, " remove=%d", req->remove );
+    fprintf( stderr, " remove=%d,", req->remove );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_get_message_reply_request( const struct get_message_reply_request *req )
@@ -1505,16 +1510,9 @@ static void dump_get_message_reply_request( const struct get_message_reply_reque
 
 static void dump_get_message_reply_reply( const struct get_message_reply_request *req )
 {
-    fprintf( stderr, " result=%08x", req->result );
-}
-
-static void dump_in_send_message_request( const struct in_send_message_request *req )
-{
-}
-
-static void dump_in_send_message_reply( const struct in_send_message_request *req )
-{
-    fprintf( stderr, " flags=%d", req->flags );
+    fprintf( stderr, " result=%08x,", req->result );
+    fprintf( stderr, " data=" );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_cleanup_window_queue_request( const struct cleanup_window_queue_request *req )
@@ -1739,7 +1737,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_request,
     (dump_func)dump_reply_message_request,
     (dump_func)dump_get_message_reply_request,
-    (dump_func)dump_in_send_message_request,
     (dump_func)dump_cleanup_window_queue_request,
     (dump_func)dump_set_win_timer_request,
     (dump_func)dump_kill_win_timer_request,
@@ -1863,7 +1860,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply,
     (dump_func)0,
     (dump_func)dump_get_message_reply_reply,
-    (dump_func)dump_in_send_message_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
@@ -1987,7 +1983,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_message",
     "reply_message",
     "get_message_reply",
-    "in_send_message",
     "cleanup_window_queue",
     "set_win_timer",
     "kill_win_timer",

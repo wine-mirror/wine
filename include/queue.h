@@ -30,12 +30,15 @@ typedef struct tagPERQUEUEDATA
   CRITICAL_SECTION cSection;        /* Critical section for thread safe access */
 } PERQUEUEDATA;
 
+struct received_message_info;
+
 /* Message queue */
 typedef struct tagMESSAGEQUEUE
 {
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   TEB*      teb;                    /* Thread owning queue */
   HANDLE    server_queue;           /* Handle to server-side queue */
+  struct received_message_info *receive_info; /* Info about message being currently received */
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
   DWORD     lockCount;              /* reference counter */
@@ -69,7 +72,6 @@ extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_DeleteMsgQueue(void);
-extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
 extern void QUEUE_CleanupWindow( HWND hwnd );
 
 #endif  /* __WINE_QUEUE_H */

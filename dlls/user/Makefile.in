@@ -18,8 +18,10 @@ C_SRCS = \
 	display.c \
 	exticon.c \
 	lstr.c \
+	message.c \
 	misc.c \
 	mouse.c \
+	msg16.c \
 	network.c \
 	resource.c \
 	text.c \
