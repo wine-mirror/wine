@@ -137,9 +137,5 @@ int main( int argc, char *argv[] )
     init_signals();
     init_registry();
     main_loop();
-
-#ifdef DEBUG_OBJECTS
-    dump_objects();  /* dump any remaining objects */
-#endif
     return 0;
 }

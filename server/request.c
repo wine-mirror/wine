@@ -794,6 +794,7 @@ static void close_socket_timeout( void *arg )
     close_global_handles();
     close_registry();
     close_atom_table();
+    dump_objects();  /* dump any remaining objects */
 #else
     exit(0);
 #endif
