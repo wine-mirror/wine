@@ -1449,6 +1449,25 @@ static const USER_MSG propsht_array[] = {
           USM(PSM_SETTITLEW           ,0),
           USM(PSM_SETFINISHTEXTW      ,0),
           {0,0,0} };
+const WCHAR PropSheetInfoStr[] =
+    {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
+
+static const USER_MSG updown_array[] = {
+          USM(UDM_SETRANGE            ,0),
+          USM(UDM_GETRANGE            ,0),
+          USM(UDM_SETPOS              ,0),
+          USM(UDM_GETPOS              ,0),
+          USM(UDM_SETBUDDY            ,0),
+          USM(UDM_GETBUDDY            ,0),
+          USM(UDM_SETACCEL            ,0),
+          USM(UDM_GETACCEL            ,0),
+          USM(UDM_SETBASE             ,0),
+          USM(UDM_GETBASE             ,0),
+          USM(UDM_SETRANGE32          ,0),
+          USM(UDM_GETRANGE32          ,0),
+          USM(UDM_SETPOS32            ,0),
+          USM(UDM_GETPOS32            ,0),
+          {0,0,0} };
 
 #undef SZOF
 #undef USM
@@ -1458,6 +1477,7 @@ static CONTROL_CLASS  cc_array[] = {
     {REBARCLASSNAMEW,   rebar_array,   0},
     {TOOLBARCLASSNAMEW, toolbar_array, 0},
     {WC_PROPSHEETW,     propsht_array, 0},
+    {UPDOWN_CLASSW,     updown_array, 0},
     {0, 0, 0} };
 
 
@@ -1868,7 +1888,14 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
 
     /* save and restore error code over the next call */
     save_error = GetLastError();
-    GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+    /* special code to detect a property sheet dialog   */
+    if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == (LONG)WC_DIALOGW) &&
+	(GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
+	strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
+    }
+    else {
+	GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+    }
     SetLastError(save_error);
 
     len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, sizeof(sp_e->wnd_name)/sizeof(WCHAR));
