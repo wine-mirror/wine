@@ -45,13 +45,15 @@
  *   -- LVA_SNAPTOGRID not implemented
  *   -- LISTVIEW_ApproximateViewRect partially implemented
  *   -- LISTVIEW_[GS]etColumnOrderArray stubs
- *   -- LISTVIEW_GetNextItem is very inefficient
  *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
  *   -- LISTVIEW_SetIconSpacing is incomplete
  *   -- LISTVIEW_SortItems is broken
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
+ *   -- LISTVIEW_GetNextItem needs to be rewritten. It is currently
+ *      linear in the number of items in the list, and this is
+ *      unacceptable for large lists.
  *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
  *      instead of inserting in the right spot
  *   -- we should keep an ordered array of coordinates in iconic mode
@@ -785,16 +787,16 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 
     if (convertToAnsi)
     {
-	    if (notificationCode != LVN_GETDISPINFOW)
-	    {
+	if (notificationCode != LVN_GETDISPINFOW)
+	{
             cchTempBufMax = WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText,
                                                 -1, NULL, 0, NULL, NULL);
         }
-	    else
-	    {
-	        cchTempBufMax = pdi->item.cchTextMax;
-	        *pdi->item.pszText = 0; /* make sure we don't process garbage */
-	    }
+	else
+	{
+	    cchTempBufMax = pdi->item.cchTextMax;
+	    *pdi->item.pszText = 0; /* make sure we don't process garbage */
+	}
 
         pszTempBuf = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR) *
                                cchTempBufMax);
@@ -1016,7 +1018,7 @@ static RANGE iterator_range(ITERATOR* i)
  */
 static inline void iterator_destroy(ITERATOR* i)
 {
-    if (i->ranges) ranges_destroy(i->ranges);
+    ranges_destroy(i->ranges);
 }
 
 /***
@@ -2423,6 +2425,7 @@ static void ranges_clear(RANGES ranges)
 
 static void ranges_destroy(RANGES ranges)
 {
+    if (!ranges) return;
     ranges_clear(ranges);
     DPA_Destroy(ranges->hdpa);
     COMCTL32_Free(ranges);
@@ -2446,7 +2449,7 @@ static RANGES ranges_clone(RANGES ranges)
     
 fail:
     TRACE ("clone failed\n");
-    if (clone) ranges_destroy(clone);
+    ranges_destroy(clone);
     return NULL;
 }
 
@@ -7013,6 +7016,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
     0, 0, 0, 0, hwnd, NULL,
     lpcs->hInstance, NULL);
+  if (!infoPtr->hwndHeader) goto fail;
 
   /* set header unicode format */
   SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, (LPARAM)NULL);
@@ -7020,15 +7024,12 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* set header font */
   SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);
 
-  /* allocate memory for the selection ranges */
-  if (!(infoPtr->selectionRanges = ranges_create(10))) return -1;
-
   /* allocate memory for the data structure */
-  /* FIXME: what if we fail? */
-  infoPtr->hdpaItems = DPA_Create(10);
-  infoPtr->hdpaPosX  = DPA_Create(10);
-  infoPtr->hdpaPosY  = DPA_Create(10);
-  infoPtr->hdpaColumns = DPA_Create(10);
+  if (!(infoPtr->selectionRanges = ranges_create(10))) goto fail;
+  if (!(infoPtr->hdpaItems = DPA_Create(10))) goto fail;
+  if (!(infoPtr->hdpaPosX  = DPA_Create(10))) goto fail;
+  if (!(infoPtr->hdpaPosY  = DPA_Create(10))) goto fail;
+  if (!(infoPtr->hdpaColumns = DPA_Create(10))) goto fail;
 
   /* initialize the icon sizes */
   set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
@@ -7052,6 +7053,16 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   }
 
   return 0;
+
+fail:
+    DestroyWindow(infoPtr->hwndHeader);
+    ranges_destroy(infoPtr->selectionRanges);
+    DPA_Destroy(infoPtr->hdpaItems);
+    DPA_Destroy(infoPtr->hdpaPosX);
+    DPA_Destroy(infoPtr->hdpaPosY);
+    DPA_Destroy(infoPtr->hdpaColumns);
+    COMCTL32_Free(infoPtr);
+    return -1;
 }
 
 /***
@@ -7656,7 +7667,10 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);
-  if (infoPtr->selectionRanges) ranges_destroy(infoPtr->selectionRanges);
+  DPA_Destroy(infoPtr->hdpaPosX);
+  DPA_Destroy(infoPtr->hdpaPosY);
+  DPA_Destroy(infoPtr->hdpaColumns);
+  ranges_destroy(infoPtr->selectionRanges);
 
   /* destroy image lists */
   if (!(infoPtr->dwStyle & LVS_SHAREIMAGELISTS))
@@ -8726,7 +8740,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       {
 	  SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE |
 		       SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
-	  /* FIXME: why do we need this here? */
 	  LISTVIEW_UpdateSize(infoPtr);
 	  LISTVIEW_UpdateScroll(infoPtr);
       }
