@@ -43,6 +43,9 @@ static SHRegGetPathA_func pSHRegGetPathA;
 static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static const char * sTestpath2 = "%FOO%\\subdir1";
 
+static const char * sEnvvar1 = "bar";
+static const char * sEnvvar2 = "ImARatherLongButIndeedNeededString";
+
 static char sExpTestpath1[MAX_PATH];
 static char sExpTestpath2[MAX_PATH];
 static unsigned sExpLen1;
@@ -74,8 +77,8 @@ static HKEY create_test_entries(void)
 	HKEY hKey;
         DWORD ret;
 
-        SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
-        SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
+        SetEnvironmentVariableA("LONGSYSTEMVAR", sEnvvar1);
+        SetEnvironmentVariableA("FOO", sEnvvar2);
 
         ret = RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKey);
 	ok( ERROR_SUCCESS == ret, "RegCreateKeyA failed, ret=%lu\n", ret);
@@ -197,6 +200,7 @@ static void test_SHQUeryValueEx(void)
 
 	/*
 	 * string grows during expanding
+         * dwSize is smaller then the size of the unexpanded string
 	 */
 	strcpy(buf, sEmptyBuffer);
 	dwSize = 6;
@@ -207,7 +211,29 @@ static void test_SHQUeryValueEx(void)
 	ok( dwSize >= nUsedBuffer2, "Buffer size (%lu) should be >= (%lu)\n", dwSize, nUsedBuffer2);
 	ok( REG_SZ == dwType , "Expected REG_SZ, got (%lu)\n", dwType);
 
+        /*
+         * string grows during expanding
+         * dwSize is larger then the size of the unexpanded string but smaller than the part before the backslash
+         * if the unexpanded string fits into the buffer it can get cut when expanded
+         */
+        strcpy(buf, sEmptyBuffer);
+        dwSize = strlen(sEnvvar2) - 2;
+        dwType = -1;
+        dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
+        ok( ERROR_MORE_DATA == dwRet, "Expected ERROR_MORE_DATA, got (%lu)\n", dwRet);
+
+        todo_wine
+        {
+                ok( (0 == strcmp("", buf)) | (0 == strcmp(sTestpath2, buf)),
+                    "Expected empty or unexpanded string (win98), got (%s)\n", buf); 
+        }
+
+        ok( dwSize >= nUsedBuffer2, "Buffer size (%lu) should be >= (%lu)\n", dwSize, nUsedBuffer2);
+        ok( REG_SZ == dwType , "Expected REG_SZ, got (%lu)\n", dwType);
+
 	/*
+         * string grows during expanding
+         * dwSize is larger then the size of the part before the backslash but smaller then the expanded string
 	 * if the unexpanded string fits into the buffer it can get cut when expanded
 	 */
 	strcpy(buf, sEmptyBuffer);
@@ -215,8 +241,13 @@ static void test_SHQUeryValueEx(void)
 	dwType = -1;
         dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
 	ok( ERROR_MORE_DATA == dwRet, "Expected ERROR_MORE_DATA, got (%lu)\n", dwRet);
-	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "Comparing the first (%d) bytes of (%s) and (%s) failed\n", sExpLen2 - 4 - 1, buf, sExpTestpath2);
-	ok( sExpLen2 - 4 - 1 == strlen(buf), "Expected strlen(%s) to be %d instead of %d\n", buf, sExpLen2 - 4 - 1, strlen(buf));
+
+        todo_wine
+        {
+                ok( (0 == strcmp("", buf)) | (0 == strcmp(sEnvvar2, buf)),
+                    "Expected empty or first part of the string (win98), got (%s)\n", buf);
+        }
+
 	ok( dwSize >= nUsedBuffer2, "Buffer size (%lu) should be >= (%lu)\n", dwSize, nUsedBuffer2);
 	ok( REG_SZ == dwType , "Expected REG_SZ, got (%lu)\n", dwType);
 
