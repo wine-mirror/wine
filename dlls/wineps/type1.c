@@ -221,6 +221,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     rc.top = t1->emsize;
     DPtoLP(physDev->hdc, (POINT*)&rc, 2);
     lf.lfHeight = -abs(rc.top - rc.bottom);
+    lf.lfOrientation = lf.lfEscapement = 0;
     unscaled_font = CreateFontIndirectW(&lf);
     old_font = SelectObject(physDev->hdc, unscaled_font);
     len = GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
