@@ -1614,26 +1614,35 @@ static VOID
 DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
 	       PFNDPACOMPARE pfnCompare, LPARAM lParam)
 {
-    LPVOID t, v;
-    INT  i, j;
+    INT m;
+    LPVOID t;
 
     TRACE("l=%i r=%i\n", l, r);
  
-    i = l;
-    j = r;
-    v = lpPtrs[(int)(l+r)/2];
-    do {
-	while ((pfnCompare)(lpPtrs[i], v, lParam) < 0) i++;
-	while ((pfnCompare)(lpPtrs[j], v, lParam) > 0) j--;
-	if (i <= j) 
+    if (l==r)    /* one element is always sorted */
+        return;
+    if (r<l)     /* oops, got it in the wrong order */
 	{
-	    t = lpPtrs[i];
-	    lpPtrs[i++] = lpPtrs[j];
-	    lpPtrs[j--] = t;
+        DPA_QuickSort(lpPtrs, r, l, pfnCompare, lParam);
+        return;
 	}
-    } while (i <= j);
-    if (l < j) DPA_QuickSort (lpPtrs, l, j, pfnCompare, lParam);
-    if (i < r) DPA_QuickSort (lpPtrs, i, r, pfnCompare, lParam);
+    m = (l+r)/2; /* divide by two */
+    DPA_QuickSort(lpPtrs, l, m, pfnCompare, lParam);
+    DPA_QuickSort(lpPtrs, m+1, r, pfnCompare, lParam);
+
+    /* join the two sides */
+    while( (l<=m) && (m<r) ) 
+    {
+        if(pfnCompare(lpPtrs[l],lpPtrs[m+1],lParam)>0)
+        {
+            t = lpPtrs[m+1];
+            memmove(&lpPtrs[l+1],&lpPtrs[l],m-l+1);
+            lpPtrs[l] = t;
+
+            m++;
+        }
+        l++;
+    }
 }
 
 
