@@ -13,13 +13,6 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 
 /***********************************************************************
- *		InitKeyboard (TTYDRV.@)
- */
-void TTYDRV_InitKeyboard(void)
-{
-}
-
-/***********************************************************************
  *		VkKeyScan (TTYDRV.@)
  */
 WORD TTYDRV_VkKeyScan(CHAR cChar)
@@ -60,30 +53,6 @@ INT TTYDRV_ToUnicode( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
  *		Beep (TTYDRV.@)
  */
 void TTYDRV_Beep(void)
-{
-}
-
-/***********************************************************************
- *		GetDIState (TTYDRV.@)
- */
-BOOL TTYDRV_GetDIState(DWORD len, LPVOID ptr)
-{
-  return TRUE;
-}
-
-/***********************************************************************
- *		GetDIData (TTYDRV.@)
- */
-BOOL TTYDRV_GetDIData( BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
-                       LPDWORD entries, DWORD flags )
-{
-  return TRUE;
-}
-
-/***********************************************************************
- *           InitMouse (TTYDRV.@)
- */
-void TTYDRV_InitMouse(LPMOUSE_EVENT_PROC proc)
 {
 }
 

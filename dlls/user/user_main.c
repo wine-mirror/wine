@@ -67,8 +67,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetKeyNameText);
     GET_USER_FUNC(ToUnicode);
     GET_USER_FUNC(Beep);
-    GET_USER_FUNC(GetDIState);
-    GET_USER_FUNC(GetDIData);
     GET_USER_FUNC(InitMouse);
     GET_USER_FUNC(SetCursor);
     GET_USER_FUNC(GetCursorPos);
@@ -245,10 +243,10 @@ static BOOL process_attach(void)
     if (!WIN_CreateDesktopWindow()) return FALSE;
 
     /* Initialize keyboard driver */
-    USER_Driver.pInitKeyboard( InputKeyStateTable );
+    if (USER_Driver.pInitKeyboard) USER_Driver.pInitKeyboard( InputKeyStateTable );
 
     /* Initialize mouse driver */
-    MOUSE_Enable( mouse_event );
+    if (USER_Driver.pInitMouse) USER_Driver.pInitMouse( InputKeyStateTable );
 
     /* Initialize 16-bit serial communications */
     COMM_Init();

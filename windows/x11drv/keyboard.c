@@ -27,12 +27,10 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "dinput.h"
-#include "debugtools.h"
-#include "user.h"
 #include "winnls.h"
 #include "win.h"
 #include "x11drv.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(keyboard);
 DECLARE_DEBUG_CHANNEL(key);
@@ -512,91 +510,101 @@ static unsigned kbd_layout=0; /* index into above table of layouts */
                 /* Yes, to distinguish based on scan codes, also
                    for PrtScn key ... GA */
 
-static const WORD special_key_vkey[] =
+static const WORD nonchar_key_vkey[256] =
 {
+    /* unused */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF00 */
+    /* special keys */
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
     0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
-    0, 0, 0, VK_ESCAPE                                          /* FF18 */
-};
-static const WORD special_key_scan[] =
-{
-    0x0E, 0x0F, 0, /*?*/ 0, 0, 0x1C, 0, 0,                      /* FF08 */
-    0,    0,    0, 0x45, 0x46, 0   , 0, 0,                      /* FF10 */
-    0,    0,    0, 0x01                                         /* FF18 */
-};
-
-static const WORD cursor_key_vkey[] =
-{
-    VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
-                                       VK_NEXT, VK_END          /* FF50 */
-};
-static const WORD cursor_key_scan[] =
-{
-    0x147, 0x14B, 0x148, 0x14D, 0x150, 0x149, 0x151, 0x14F      /* FF50 */
-};
-
-static const WORD misc_key_vkey[] =
-{
+    0, 0, 0, VK_ESCAPE, 0, 0, 0, 0,                             /* FF18 */
+    /* unused */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF20 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF28 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF30 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF38 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF40 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF48 */
+    /* cursor keys */
+    VK_HOME, VK_LEFT, VK_UP, VK_RIGHT,                          /* FF50 */
+    VK_DOWN, VK_PRIOR, VK_NEXT, VK_END,
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF58 */
+    /* misc keys */
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
-    VK_CANCEL, VK_HELP, VK_CANCEL, VK_CANCEL                    /* FF68 */
-};
-static const WORD misc_key_scan[] =
-{
-    /*?*/ 0, 0x137, /*?*/ 0, 0x152, 0, 0, 0, 0,                 /* FF60 */
-    /*?*/ 0, /*?*/ 0, 0x38, 0x146                               /* FF68 */
-};
-
-static const WORD keypad_key_vkey[] =
-{
-    0, VK_NUMLOCK,                                        	/* FF7E */
+    VK_CANCEL, VK_HELP, VK_CANCEL, VK_CANCEL, 0, 0, 0, 0,       /* FF68 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF70 */
+    /* keypad keys */
+    0, 0, 0, 0, 0, 0, 0, VK_NUMLOCK,                            /* FF78 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
     0, 0, 0, 0, 0, VK_RETURN, 0, 0,                             /* FF88 */
     0, 0, 0, 0, 0, VK_HOME, VK_LEFT, VK_UP,                     /* FF90 */
-    VK_RIGHT, VK_DOWN, VK_PRIOR, VK_NEXT, VK_END, 0,
-				 VK_INSERT, VK_DELETE,          /* FF98 */
+    VK_RIGHT, VK_DOWN, VK_PRIOR, VK_NEXT,                       /* FF98 */
+    VK_END, 0, VK_INSERT, VK_DELETE,
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
-    0, 0, VK_MULTIPLY, VK_ADD, VK_SEPARATOR, VK_SUBTRACT, 
-                               VK_DECIMAL, VK_DIVIDE,           /* FFA8 */
-    VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_NUMPAD4,
-                            VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, /* FFB0 */
-    VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
-};
-static const WORD keypad_key_scan[] =
-{
-    0x138, 0x145,                                               /* FF7E */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
-    0, 0, 0, 0, 0, 0x11C, 0, 0,                                 /* FF88 */
-    0, 0, 0, 0, 0, 0x47, 0x4B, 0x48,                            /* FF90 */
-    0x4D, 0x50, 0x49, 0x51, 0x4F, 0x4C, 0x52, 0x53,             /* FF98 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
-    0, 0, 0x37, 0x4E, /*?*/ 0, 0x4A, 0x53, 0x135,               /* FFA8 */
-    0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47,             /* FFB0 */
-    0x48, 0x49                                                  /* FFB8 */
-};
-    
-static const WORD function_key_vkey[] =
-{
-    VK_F1, VK_F2,                                               /* FFBE */
+    0, 0, VK_MULTIPLY, VK_ADD,                                  /* FFA8 */
+    VK_SEPARATOR, VK_SUBTRACT, VK_DECIMAL, VK_DIVIDE,
+    VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3,             /* FFB0 */
+    VK_NUMPAD4, VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7,
+    VK_NUMPAD8, VK_NUMPAD9, 0, 0, 0, 0,                         /* FFB8 */
+    /* function keys */
+    VK_F1, VK_F2,
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
-    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
-};
-static const WORD function_key_scan[] =
-{
-    0x3B, 0x3C,                                                 /* FFBE */
-    0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,             /* FFC0 */
-    0x57, 0x58, 0, 0, 0, 0                                      /* FFC8 */
+    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16, 0, 0,       /* FFC8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD8 */
+    /* modifier keys */
+    0, VK_SHIFT, VK_SHIFT, VK_CONTROL,                          /* FFE0 */
+    VK_CONTROL, VK_CAPITAL, 0, VK_MENU,
+    VK_MENU, VK_MENU, VK_MENU, 0, 0, 0, 0, 0,                   /* FFE8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFF0 */
+    0, 0, 0, 0, 0, 0, 0, VK_DELETE                              /* FFF8 */
 };
 
-static const WORD modifier_key_vkey[] =
+static const WORD nonchar_key_scan[256] =
 {
-    VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL, 0, /* FFE1 */
-    VK_MENU, VK_MENU, VK_MENU, VK_MENU                         /* FFE7 */
+    /* unused */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF00 */
+    /* special keys */
+    0x0E, 0x0F, 0x00, /*?*/ 0, 0x00, 0x1C, 0x00, 0x00,           /* FF08 */
+    0x00, 0x00, 0x00, 0x45, 0x46, 0x00, 0x00, 0x00,              /* FF10 */
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,              /* FF18 */
+    /* unused */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF20 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF28 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF30 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF38 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF40 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF48 */
+    /* cursor keys */
+    0x147, 0x14B, 0x148, 0x14D, 0x150, 0x149, 0x151, 0x14F,      /* FF50 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF58 */
+    /* misc keys */
+    /*?*/ 0, 0x137, /*?*/ 0, 0x152, 0x00, 0x00, 0x00, 0x00,      /* FF60 */
+    /*?*/ 0, /*?*/ 0, 0x38, 0x146, 0x00, 0x00, 0x00, 0x00,       /* FF68 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF70 */
+    /* keypad keys */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x138, 0x145,            /* FF78 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF80 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x11C, 0x00, 0x00,             /* FF88 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x47, 0x4B, 0x48,              /* FF90 */
+    0x4D, 0x50, 0x49, 0x51, 0x4F, 0x4C, 0x52, 0x53,              /* FF98 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFA0 */
+    0x00, 0x00, 0x37, 0x4E, /*?*/ 0, 0x4A, 0x53, 0x135,          /* FFA8 */
+    0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47,              /* FFB0 */
+    0x48, 0x49, 0x00, 0x00, 0x00, 0x00,                          /* FFB8 */
+    /* function keys */
+    0x3B, 0x3C,
+    0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,              /* FFC0 */
+    0x57, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFC8 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD0 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD8 */
+    /* modifier keys */
+    0x00, 0x2A, 0x36, 0x1D, 0x11D, 0x3A, 0x00, 0x38,             /* FFE0 */
+    0x138, 0x38, 0x138, 0x00, 0x00, 0x00, 0x00, 0x00,            /* FFE8 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFF0 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x153              /* FFF8 */
 };
-static const WORD modifier_key_scan[] =
-{
-    0x2A, 0x36, 0x1D, 0x11D, 0x3A, 0,                          /* FFE1 */
-    0x38, 0x138, 0x38, 0x138                                   /* FFE7 */
-};
+
 
 /* Returns the Windows virtual key code associated with the X event <e> */
 static WORD EVENT_event_to_vkey( XKeyEvent *e)
@@ -609,7 +617,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
 	&& (e->state & NumLockMask)) 
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
-        return keypad_key_vkey[(keysym & 0xFF) - 0x7E];
+        return nonchar_key_vkey[keysym & 0xFF];
 
     return keyc2vkey[e->keycode];
 }
@@ -620,11 +628,11 @@ static BOOL NumState=FALSE, CapsState=FALSE;
 /***********************************************************************
  *           send_keyboard_input
  */
-void send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time )
+static void send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time )
 {
     INPUT input;
 
-    input.type             = INPUT_KEYBOARD;
+    input.type             = WINE_INTERNAL_INPUT_KEYBOARD;
     input.u.ki.wVk         = wVk;
     input.u.ki.wScan       = wScan;
     input.u.ki.dwFlags     = dwFlags;
@@ -686,7 +694,7 @@ static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_
  * Updates internal state for <vkey>, depending on key <state> under X
  *
  */
-static void KEYBOARD_UpdateOneState ( int vkey, int state )
+inline static void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
 {
     /* Do something if internal table state != X state for keycode */
     if (((pKeyStateTable[vkey] & 0x80)!=0) != state)
@@ -695,41 +703,44 @@ static void KEYBOARD_UpdateOneState ( int vkey, int state )
               vkey, pKeyStateTable[vkey]);
 
         /* Fake key being pressed inside wine */
-	send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, GetTickCount() );
+        send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, time );
 
         TRACE("State after %#.2x \n",pKeyStateTable[vkey]);
     }
 }
 
 /***********************************************************************
- *           X11DRV_KEYBOARD_UpdateState
+ *           X11DRV_KeymapNotify
  *
- * Update modifiers state (Ctrl, Alt, Shift)
- * when window is activated (called by EVENT_FocusIn in event.c)
+ * Update modifiers state (Ctrl, Alt, Shift) when window is activated.
  *
  * This handles the case where one uses Ctrl+... Alt+... or Shift+.. to switch
  * from wine to another application and back.
- * Toggle keys are handled in HandleEvent. (because XQueryKeymap says nothing
- *  about them)
+ * Toggle keys are handled in HandleEvent.
  */
-void X11DRV_KEYBOARD_UpdateState ( void )
+void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
 {
-/* extract a bit from the char[32] bit suite */
-#define KeyState(keycode) ((keys_return[keycode/8] & (1<<(keycode%8)))!=0)
+    int i, j, alt, control, shift;
+    DWORD time = GetCurrentTime();
 
-    char keys_return[32];
-
-    TRACE("called\n");
-    if (!TSXQueryKeymap(thread_display(), keys_return)) {
-        ERR("Error getting keymap !\n");
-        return;
+    alt = control = shift = 0;
+    for (i = 0; i < 32; i++)
+    {
+        if (!event->key_vector[i]) continue;
+        for (j = 0; j < 8; j++)
+        {
+            if (!(event->key_vector[i] & (1<<j))) continue;
+            switch(keyc2vkey[(i * 8) + j] & 0xff)
+            {
+            case VK_MENU:    alt = 1; break;
+            case VK_CONTROL: control = 1; break;
+            case VK_SHIFT:   shift = 1; break;
+            }
+        }
     }
-
-    /* Adjust the ALT and CONTROL state if any has been changed outside wine */
-    KEYBOARD_UpdateOneState(VK_MENU, KeyState(kcAlt));
-    KEYBOARD_UpdateOneState(VK_CONTROL, KeyState(kcControl));
-    KEYBOARD_UpdateOneState(VK_SHIFT, KeyState(kcShift));
-#undef KeyState
+    KEYBOARD_UpdateOneState( VK_MENU, alt, time );
+    KEYBOARD_UpdateOneState( VK_CONTROL, control, time );
+    KEYBOARD_UpdateOneState( VK_SHIFT, shift, time );
 }
 
 /***********************************************************************
@@ -1022,30 +1033,8 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
         {
             if ((keysym >> 8) == 0xFF)         /* non-character key */
             {
-                int key = keysym & 0xff;
-		
-                if (key >= 0x08 && key <= 0x1B) {        /* special key */
-		    vkey = special_key_vkey[key - 0x08];
-		    scan = special_key_scan[key - 0x08];
-                } else if (key >= 0x50 && key <= 0x57) { /* cursor key */
-		    vkey = cursor_key_vkey[key - 0x50];
-		    scan = cursor_key_scan[key - 0x50];
-                } else if (key >= 0x60 && key <= 0x6B) { /* miscellaneous key */
-		    vkey = misc_key_vkey[key - 0x60];
-		    scan = misc_key_scan[key - 0x60];
-                } else if (key >= 0x7E && key <= 0xB9) { /* keypad key */
-		    vkey = keypad_key_vkey[key - 0x7E];
-		    scan = keypad_key_scan[key - 0x7E];
-                } else if (key >= 0xBE && key <= 0xCD) { /* function key */
-                    vkey = function_key_vkey[key - 0xBE] | 0x100; /* set extended bit */
-                    scan = function_key_scan[key - 0xBE];
-                } else if (key >= 0xE1 && key <= 0xEA) { /* modifier key */
-		    vkey = modifier_key_vkey[key - 0xE1];
-		    scan = modifier_key_scan[key - 0xE1];
-                } else if (key == 0xFF) {                /* DEL key */
-		    vkey = VK_DELETE;
-		    scan = 0x153;
-		}
+                vkey = nonchar_key_vkey[keysym & 0xff];
+                scan = nonchar_key_scan[keysym & 0xff];
 		/* set extended bit when necessary */
 		if (scan & 0x100) vkey |= 0x100;
             } else if (keysym == 0x20) {                 /* Spacebar */
@@ -1653,73 +1642,4 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 void X11DRV_Beep(void)
 {
   TSXBell(thread_display(), 0);
-}
-
-/***********************************************************************
- *		GetDIState (X11DRV.@)
- */
-BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr)
-{
-  if (len==256) {
-    int keyc,vkey;
-    
-    memset(ptr,0,256);
-    for (keyc=min_keycode;keyc<max_keycode;keyc++)
-      {
-	/* X keycode to virtual key */
-	vkey = keyc2vkey[keyc] & 0xFF;
-	/* The windows scancode is keyc-min_keycode */
-	if (pKeyStateTable[vkey]&0x80) {
-	  ((LPBYTE)ptr)[keyc-min_keycode]=0x80;
-	  ((LPBYTE)ptr)[(keyc-min_keycode)|0x80]=0x80;
-	}
-      }
-    return TRUE;
-  }
-  WARN("whoops, got len %ld?\n", len);
-  return TRUE;
-}
-
-/***********************************************************************
- *		GetDIData (X11DRV.@)
- */
-BOOL X11DRV_GetDIData(
-  BYTE *keystate,
-  DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
-  LPDWORD entries, DWORD flags)
-{
-  int keyc,n,vkey,xentries;
-    
-  /* FIXME !!! */
-  
-  if (entries)
-    xentries = *entries; 
-  else
-    xentries = 1;
-  
-  n = 0;
-  
-  for (keyc=min_keycode;(keyc<max_keycode) && (n<*entries);keyc++)
-    {
-      /* X keycode to virtual key */
-      vkey = keyc2vkey[keyc] & 0xFF;
-      if (keystate[vkey] == (pKeyStateTable[vkey]&0x80))
-	continue;
-      if (dod) {
-	/* add an entry */
-	dod[n].dwOfs		= keyc-min_keycode; /* scancode */
-	dod[n].dwData		= pKeyStateTable[vkey]&0x80;
-	dod[n].dwTimeStamp	= 0; /* umm */
-	dod[n].dwSequence	= 0; /* umm */
-	n++;
-      }
-      if (!(flags & DIGDD_PEEK))
-	keystate[vkey] = pKeyStateTable[vkey]&0x80;
-      
-    }
-  
-  if (n) TRACE_(dinput)("%d entries\n",n);
-  *entries = n;
-
-  return TRUE;
 }

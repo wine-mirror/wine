@@ -8,8 +8,7 @@ MODULE    = x11drv
 C_SRCS = \
 	clipboard.c \
 	event.c \
-	keyboard.c \
-	mouse.c
+	keyboard.c
 
 PROGRAMS = wineclipsrv
 

@@ -47,15 +47,11 @@ debug_channels (ttydrv)
 
 # USER driver
 
-@ cdecl InitKeyboard() TTYDRV_InitKeyboard
 @ cdecl VkKeyScan(long) TTYDRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) TTYDRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) TTYDRV_GetKeyNameText
 @ cdecl ToUnicode(long long ptr ptr long long) TTYDRV_ToUnicode
 @ cdecl Beep() TTYDRV_Beep
-@ cdecl GetDIState(long ptr) TTYDRV_GetDIState
-@ cdecl GetDIData(ptr long ptr ptr long) TTYDRV_GetDIData
-@ cdecl InitMouse(ptr) TTYDRV_InitMouse
 @ cdecl SetCursor(ptr) TTYDRV_SetCursor
 @ cdecl GetScreenSaveActive() TTYDRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) TTYDRV_SetScreenSaveActive

@@ -30,7 +30,6 @@ struct tagDC;
 struct tagDeviceCaps;
 struct tagPALETTEOBJ;
 struct tagWINDOWPOS;
-struct DIDEVICEOBJECTDATA;
 
   /* X physical pen */
 typedef struct
@@ -349,8 +348,6 @@ extern BOOL X11DRV_GetClipboardData(UINT wFormat);
 
 /* X11 event driver */
 
-extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
-
 typedef enum {
   X11DRV_INPUT_RELATIVE,
   X11DRV_INPUT_ABSOLUTE
@@ -360,14 +357,6 @@ extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
 #ifdef HAVE_LIBXXF86DGA2
 void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
 #endif
-
-/* X11 mouse driver */
-
-extern void X11DRV_InitMouse(LPMOUSE_EVENT_PROC);
-extern void X11DRV_SetCursor(struct tagCURSORICONINFO *lpCursor);
-extern void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
-                              WORD keyState, DWORD data, DWORD time, HWND hWnd );
 
 /* x11drv private window data */
 struct x11drv_win_data

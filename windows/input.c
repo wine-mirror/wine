@@ -26,7 +26,6 @@
 #include "win.h"
 #include "hook.h"
 #include "input.h"
-#include "mouse.h"
 #include "message.h"
 #include "queue.h"
 #include "debugtools.h"
@@ -46,13 +45,6 @@ BYTE AsyncKeyStateTable[256];
 /* Storage for the USER-maintained mouse positions */
 static DWORD PosX, PosY;
 
-#define GET_KEYSTATE() \
-     ((InputKeyStateTable[SwappedButtons ? VK_RBUTTON : VK_LBUTTON] & 0x80 ? MK_LBUTTON : 0) | \
-      (InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_RBUTTON] & 0x80 ? MK_RBUTTON : 0) | \
-      (InputKeyStateTable[VK_MBUTTON] & 0x80 ? MK_MBUTTON : 0) | \
-      (InputKeyStateTable[VK_SHIFT]   & 0x80 ? MK_SHIFT   : 0) | \
-      (InputKeyStateTable[VK_CONTROL] & 0x80 ? MK_CONTROL : 0))
-
 typedef union
 {
     struct
@@ -68,6 +60,32 @@ typedef union
     } lp1;
     unsigned long lp2;
 } KEYLP;
+
+
+/***********************************************************************
+ *           get_key_state
+ */
+static WORD get_key_state(void)
+{
+    WORD ret = 0;
+
+    if (SwappedButtons)
+    {
+        if (InputKeyStateTable[VK_RBUTTON] & 0x80) ret |= MK_LBUTTON;
+        if (InputKeyStateTable[VK_LBUTTON] & 0x80) ret |= MK_RBUTTON;
+    }
+    else
+    {
+        if (InputKeyStateTable[VK_LBUTTON] & 0x80) ret |= MK_LBUTTON;
+        if (InputKeyStateTable[VK_RBUTTON] & 0x80) ret |= MK_RBUTTON;
+    }
+    if (InputKeyStateTable[VK_MBUTTON] & 0x80)  ret |= MK_MBUTTON;
+    if (InputKeyStateTable[VK_SHIFT] & 0x80)    ret |= MK_SHIFT;
+    if (InputKeyStateTable[VK_CONTROL] & 0x80)  ret |= MK_CONTROL;
+    if (InputKeyStateTable[VK_XBUTTON1] & 0x80) ret |= MK_XBUTTON1;
+    if (InputKeyStateTable[VK_XBUTTON2] & 0x80) ret |= MK_XBUTTON2;
+    return ret;
+}
 
 
 /***********************************************************************
@@ -103,7 +121,7 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
  *
  * Put a keyboard event into a thread queue
  */
-static void queue_kbd_event( const KEYBDINPUT *ki )
+static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
 {
     UINT message;
     KEYLP keylp;
@@ -147,7 +165,7 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
 
     hook.vkCode      = ki->wVk;
     hook.scanCode    = ki->wScan;
-    hook.flags       = keylp.lp2 >> 24; /* FIXME: LLKHF_INJECTED flag */
+    hook.flags       = (keylp.lp2 >> 24) | injected_flags;
     hook.time        = ki->time;
     hook.dwExtraInfo = ki->dwExtraInfo;
     if (!HOOK_CallHooksW( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook ))
@@ -159,27 +177,27 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
 /***********************************************************************
  *           queue_raw_mouse_message
  */
-static void queue_raw_mouse_message( UINT message, WPARAM wParam, LPARAM lParam,
-                                     int xPos, int yPos, DWORD time, ULONG_PTR extra_info )
+static void queue_raw_mouse_message( UINT message, UINT flags, INT x, INT y, const MOUSEINPUT *mi )
 {
     MSLLHOOKSTRUCT hook;
 
-    hook.pt.x        = xPos;
-    hook.pt.y        = yPos;
-    hook.mouseData   = wParam;
-    hook.flags       = 0;  /* FIXME: LLMHF_INJECTED flag */
-    hook.time        = time;
-    hook.dwExtraInfo = extra_info;
+    hook.pt.x        = x;
+    hook.pt.y        = y;
+    hook.mouseData   = MAKELONG( 0, mi->mouseData );
+    hook.flags       = flags;
+    hook.time        = mi->time;
+    hook.dwExtraInfo = mi->dwExtraInfo;
 
     if (!HOOK_CallHooksW( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook ))
-        queue_raw_hardware_message( message, wParam, lParam, xPos, yPos, time, extra_info );
+        queue_raw_hardware_message( message, MAKEWPARAM( get_key_state(), mi->mouseData ),
+                                    0, x, y, mi->time, mi->dwExtraInfo );
 }
 
 
 /***********************************************************************
  *		queue_mouse_event
  */
-static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
+static void queue_mouse_event( const MOUSEINPUT *mi, UINT flags )
 {
     if (mi->dwFlags & MOUSEEVENTF_ABSOLUTE)
     {
@@ -208,53 +226,51 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
 
     if (mi->dwFlags & MOUSEEVENTF_MOVE)
     {
-        queue_raw_mouse_message( WM_MOUSEMOVE, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MOUSEMOVE, flags, PosX, PosY, mi );
     }
-    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN))
+    if (mi->dwFlags & MOUSEEVENTF_LEFTDOWN)
     {
         InputKeyStateTable[VK_LBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_LBUTTON] |= 0x80;
-        queue_raw_mouse_message( WM_LBUTTONDOWN, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( SwappedButtons ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
+                                 flags, PosX, PosY, mi );
     }
-    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP))
+    if (mi->dwFlags & MOUSEEVENTF_LEFTUP)
     {
         InputKeyStateTable[VK_LBUTTON] &= ~0x80;
-        queue_raw_mouse_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( SwappedButtons ? WM_RBUTTONUP : WM_LBUTTONUP,
+                                 flags, PosX, PosY, mi );
     }
-    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN))
+    if (mi->dwFlags & MOUSEEVENTF_RIGHTDOWN)
     {
         InputKeyStateTable[VK_RBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_RBUTTON] |= 0x80;
-        queue_raw_mouse_message( WM_RBUTTONDOWN, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( SwappedButtons ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
+                                 flags, PosX, PosY, mi );
     }
-    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP))
+    if (mi->dwFlags & MOUSEEVENTF_RIGHTUP)
     {
         InputKeyStateTable[VK_RBUTTON] &= ~0x80;
-        queue_raw_mouse_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( SwappedButtons ? WM_LBUTTONUP : WM_RBUTTONUP,
+                                 flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEDOWN)
     {
         InputKeyStateTable[VK_MBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_MBUTTON] |= 0x80;
-        queue_raw_mouse_message( WM_MBUTTONDOWN, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MBUTTONDOWN, flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEUP)
     {
         InputKeyStateTable[VK_MBUTTON] &= ~0x80;
-        queue_raw_mouse_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
-                                 mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MBUTTONUP, flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_WHEEL)
     {
-        queue_raw_mouse_message( WM_MOUSEWHEEL, MAKELONG( keystate, mi->mouseData), 0,
-                                 PosX, PosY, mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MOUSEWHEEL, flags, PosX, PosY, mi );
     }
+    if (flags & LLMHF_INJECTED)  /* we have to actually move the cursor */
+        SetCursorPos( PosX, PosY );
 }
 
 
@@ -272,10 +288,16 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
         switch(inputs->type)
         {
         case INPUT_MOUSE:
-            queue_mouse_event( &inputs->u.mi, GET_KEYSTATE() );
+            queue_mouse_event( &inputs->u.mi, LLMHF_INJECTED );
+            break;
+        case WINE_INTERNAL_INPUT_MOUSE:
+            queue_mouse_event( &inputs->u.mi, 0 );
             break;
         case INPUT_KEYBOARD:
-            queue_kbd_event( &inputs->u.ki );
+            queue_kbd_event( &inputs->u.ki, LLKHF_INJECTED );
+            break;
+        case WINE_INTERNAL_INPUT_KEYBOARD:
+            queue_kbd_event( &inputs->u.ki, 0 );
             break;
         case INPUT_HARDWARE:
             FIXME( "INPUT_HARDWARE not supported\n" );
@@ -326,49 +348,15 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
                          DWORD dwData, DWORD dwExtraInfo )
 {
     INPUT input;
-    WORD keyState;
 
     input.type = INPUT_MOUSE;
     input.u.mi.dx = dx;
     input.u.mi.dy = dy;
     input.u.mi.mouseData = dwData;
     input.u.mi.dwFlags = dwFlags;
-
-    /*
-     * If we are called by the Wine mouse driver, use the additional
-     * info pointed to by the dwExtraInfo argument.
-     * Otherwise, we need to determine that info ourselves (probably
-     * less accurate, but we can't help that ...).
-     */
-    if (dwExtraInfo && !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
-        && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC )
-    {
-        WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
-
-        keyState = wme->keyState;
-
-        if (keyState != GET_KEYSTATE())
-        {
-            /* We need to update the keystate with what X provides us */
-            InputKeyStateTable[SwappedButtons ? VK_RBUTTON : VK_LBUTTON] = (keyState & MK_LBUTTON ? 0x80 : 0);
-            InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_RBUTTON] = (keyState & MK_RBUTTON ? 0x80 : 0);
-            InputKeyStateTable[VK_MBUTTON]             = (keyState & MK_MBUTTON ? 0x80 : 0);
-            InputKeyStateTable[VK_SHIFT]               = (keyState & MK_SHIFT   ? 0x80 : 0);
-            InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
-        }
-        input.u.mi.time = wme->time;
-        input.u.mi.dwExtraInfo = (ULONG_PTR)wme->hWnd;
-        queue_mouse_event( &input.u.mi, keyState );
-    }
-    else
-    {
-        input.u.mi.time = GetCurrentTime();
-        input.u.mi.dwExtraInfo = dwExtraInfo;
-        SendInput( 1, &input, sizeof(input) );
-
-        if ( dwFlags & MOUSEEVENTF_MOVE ) /* we have to actually move the cursor */
-            SetCursorPos( PosX, PosY );
-    }
+    input.u.mi.time = GetCurrentTime();
+    input.u.mi.dwExtraInfo = dwExtraInfo;
+    SendInput( 1, &input, sizeof(input) );
 }
 
 

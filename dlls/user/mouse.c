@@ -10,7 +10,6 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "builtin16.h"
-#include "mouse.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -35,6 +34,8 @@ typedef struct _MOUSEINFO
 
 /**********************************************************************/
 
+typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
+
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
 /***********************************************************************
@@ -53,16 +54,6 @@ WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
     mouseInfo->msMouseCommPort = 0;
 
     return sizeof(MOUSEINFO);
-}
-
-/***********************************************************************
- *           Enable                        (MOUSE.2)
- */
-VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
-{
-    THUNK_Free( (FARPROC)DefMouseEventProc );
-    DefMouseEventProc = lpMouseEventProc;
-    USER_Driver.pInitMouse( lpMouseEventProc );
 }
 
 /**********************************************************************/
@@ -86,14 +77,13 @@ static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
     wine_call_to_16_regs_short( &context, 0 );
 }
 
-/**********************************************************************/
-
-VOID WINAPI WIN16_MOUSE_Enable( FARPROC16 proc )
+/***********************************************************************
+ *           Enable                        (MOUSE.2)
+ */
+VOID WINAPI MOUSE_Enable( FARPROC16 proc )
 {
-    LPMOUSE_EVENT_PROC thunk = 
-      (LPMOUSE_EVENT_PROC)THUNK_Alloc( proc, (RELAY)MOUSE_CallMouseEventProc );
-
-    MOUSE_Enable( thunk );
+    THUNK_Free( (FARPROC)DefMouseEventProc );
+    DefMouseEventProc = (LPMOUSE_EVENT_PROC)THUNK_Alloc( proc, (RELAY)MOUSE_CallMouseEventProc );
 }
 
 /***********************************************************************
@@ -103,5 +93,4 @@ VOID WINAPI MOUSE_Disable(VOID)
 {
     THUNK_Free( (FARPROC)DefMouseEventProc );
     DefMouseEventProc = 0;
-    USER_Driver.pInitMouse( 0 );
 }

@@ -26,7 +26,6 @@
 #include "dce.h"
 #include "debugtools.h"
 #include "input.h"
-#include "mouse.h"
 #include "options.h"
 #include "win.h"
 #include "winpos.h"
@@ -45,11 +44,6 @@ extern Atom wmProtocols;
 extern Atom wmDeleteWindow;
 extern Atom dndProtocol;
 extern Atom dndSelection;
-
-extern void X11DRV_KEYBOARD_UpdateState(void);
-
-#define NB_BUTTONS      5     /* Windows can handle 3 buttons and the wheel too */
-
 
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
@@ -85,9 +79,6 @@ static void EVENT_ProcessEvent( XEvent *event );
 static BOOL X11DRV_CheckFocus(void);
 
   /* Event handlers */
-static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event );
-static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event );
-static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event );
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event );
 static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
@@ -95,7 +86,11 @@ static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
 static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 
+extern void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event );
+extern void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event );
+extern void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event );
 extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
+extern void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event );
 extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
 extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
 extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
@@ -112,9 +107,9 @@ static int DGAKeyReleaseEventType;
 static BOOL DGAUsed = FALSE;
 static HWND DGAhwnd = 0;
 
-static void EVENT_DGAMotionEvent( XDGAMotionEvent *event );
-static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event );
-static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event );
+extern void X11DRV_DGAMotionEvent( HWND hwnd, XDGAMotionEvent *event );
+extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XDGAButtonEvent *event );
+extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XDGAButtonEvent *event );
 #endif
 
 /* Static used for the current input method */
@@ -213,17 +208,17 @@ static void EVENT_ProcessEvent( XEvent *event )
   if (DGAUsed) {
     if (event->type == DGAMotionEventType) {
       TRACE("DGAMotionEvent received.\n");
-      EVENT_DGAMotionEvent((XDGAMotionEvent *) event);
+      X11DRV_DGAMotionEvent( DGAhwnd, (XDGAMotionEvent *)event );
       return;
     }
     if (event->type == DGAButtonPressEventType) {
       TRACE("DGAButtonPressEvent received.\n");
-      EVENT_DGAButtonPressEvent((XDGAButtonEvent *) event);
+      X11DRV_DGAButtonPressEvent( DGAhwnd, (XDGAButtonEvent *)event );
       return;
     }
     if (event->type == DGAButtonReleaseEventType) {
       TRACE("DGAButtonReleaseEvent received.\n");
-      EVENT_DGAButtonReleaseEvent((XDGAButtonEvent *) event);
+      X11DRV_DGAButtonReleaseEvent( DGAhwnd, (XDGAButtonEvent *)event );
       return;
     }
     if ((event->type == DGAKeyPressEventType) ||
@@ -277,17 +272,17 @@ static void EVENT_ProcessEvent( XEvent *event )
       /* FIXME: should generate a motion event if event point is different from current pos */
       X11DRV_KeyEvent( hWnd, (XKeyEvent*)event );
       break;
-      
+
     case ButtonPress:
-      EVENT_ButtonPress( hWnd, (XButtonEvent*)event );
+      X11DRV_ButtonPress( hWnd, (XButtonEvent*)event );
       break;
-      
+
     case ButtonRelease:
-      EVENT_ButtonRelease( hWnd, (XButtonEvent*)event );
+      X11DRV_ButtonRelease( hWnd, (XButtonEvent*)event );
       break;
 
     case MotionNotify:
-      EVENT_MotionNotify( hWnd, (XMotionEvent*)event );
+      X11DRV_MotionNotify( hWnd, (XMotionEvent*)event );
       break;
 
     case FocusIn:
@@ -337,6 +332,10 @@ static void EVENT_ProcessEvent( XEvent *event )
       X11DRV_UnmapNotify( hWnd, (XUnmapEvent *)event );
       break;
 
+    case KeymapNotify:
+      X11DRV_KeymapNotify( hWnd, (XKeymapEvent *)event );
+      break;
+
     case MappingNotify:
       X11DRV_MappingNotify( (XMappingEvent *) event );
       break;
@@ -347,162 +346,6 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
     }
     TRACE( "returns.\n" );
-}
-
-/***********************************************************************
- *           X11DRV_EVENT_XStateToKeyState
- *
- * Translate a X event state (Button1Mask, ShiftMask, etc...) to
- * a Windows key state (MK_SHIFT, MK_CONTROL, etc...)
- */
-WORD X11DRV_EVENT_XStateToKeyState( int state )
-{
-  int kstate = 0;
-  
-  if (state & Button1Mask) kstate |= MK_LBUTTON;
-  if (state & Button2Mask) kstate |= MK_MBUTTON;
-  if (state & Button3Mask) kstate |= MK_RBUTTON;
-  if (state & ShiftMask)   kstate |= MK_SHIFT;
-  if (state & ControlMask) kstate |= MK_CONTROL;
-  return kstate;
-}
-
-
-/* get the coordinates of a mouse event */
-static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
-{
-    struct x11drv_win_data *data;
-    WND *win;
-
-    if (!(win = WIN_FindWndPtr( *hwnd ))) return;
-    data = win->pDriverData;
-
-    if (window == data->whole_window)
-    {
-        x -= data->client_rect.left;
-        y -= data->client_rect.top;
-    }
-    WIN_ReleaseWndPtr( win );
-
-    pt->x = x;
-    pt->y = y;
-    if (*hwnd != GetDesktopWindow())
-    {
-        ClientToScreen( *hwnd, pt );
-        *hwnd = GetAncestor( *hwnd, GA_ROOT );
-    }
-}
-
-
-/***********************************************************************
- *           EVENT_MotionNotify
- */
-static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
-{
-    POINT pt;
-
-    if (current_input_type == X11DRV_INPUT_ABSOLUTE)
-    {
-        get_coords( &hWnd, event->window, event->x, event->y, &pt );
-        X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
-                          X11DRV_EVENT_XStateToKeyState( event->state ), 0,
-                          event->time - X11DRV_server_startticks, hWnd);
-    }
-    else
-    {
-        X11DRV_SendEvent( MOUSEEVENTF_MOVE,
-                          event->x_root, event->y_root,
-                          X11DRV_EVENT_XStateToKeyState( event->state ), 0,
-                          event->time - X11DRV_server_startticks, hWnd);
-    }
-}
-
-
-/***********************************************************************
- *           EVENT_ButtonPress
- */
-static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
-{
-    static const WORD statusCodes[NB_BUTTONS] = { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN,
-                                                  MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_WHEEL,
-                                                  MOUSEEVENTF_WHEEL};
-    int buttonNum = event->button - 1;
-    WORD keystate, wData = 0;
-    POINT pt;
-
-    if (buttonNum >= NB_BUTTONS) return;
-
-    get_coords( &hWnd, event->window, event->x, event->y, &pt );
-
-    /* Get the compatible keystate */
-    keystate = X11DRV_EVENT_XStateToKeyState( event->state );
-
-    /*
-     * Make sure that the state of the button that was just 
-     * pressed is "down".
-     */
-    switch (buttonNum)
-    {
-    case 0:
-        keystate |= MK_LBUTTON;
-        break;
-    case 1:
-        keystate |= MK_MBUTTON;
-        break;
-    case 2:
-        keystate |= MK_RBUTTON;
-        break;
-    case 3:
-        wData = WHEEL_DELTA;
-        break;
-    case 4:
-        wData = -WHEEL_DELTA;
-        break;
-    }
-
-    X11DRV_SendEvent( statusCodes[buttonNum] | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
-                      keystate, wData, event->time - X11DRV_server_startticks, hWnd);
-}
-
-
-/***********************************************************************
- *           EVENT_ButtonRelease
- */
-static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
-{
-    static const WORD statusCodes[NB_BUTTONS] = { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP,
-                                                  MOUSEEVENTF_RIGHTUP, 0, 0 };
-    int buttonNum = event->button - 1;
-    WORD keystate;
-    POINT pt;
-
-    if (buttonNum >= NB_BUTTONS) return;
-
-    get_coords( &hWnd, event->window, event->x, event->y, &pt );
-
-    /* Get the compatible keystate */
-    keystate = X11DRV_EVENT_XStateToKeyState( event->state );
-
-    /*
-     * Make sure that the state of the button that was just 
-     * released is "up".
-     */
-    switch (buttonNum)
-    {
-    case 0:
-        keystate &= ~MK_LBUTTON;
-        break;
-    case 1:
-        keystate &= ~MK_MBUTTON;
-        break;
-    case 2:
-        keystate &= ~MK_RBUTTON;
-        break;
-    default:
-        return;
-    }
-    X11DRV_SendEvent( statusCodes[buttonNum] | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
-                      keystate, 0, event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -543,10 +386,7 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
     }
 
     if (event->detail != NotifyPointer && hWnd != GetForegroundWindow())
-    {
         SetForegroundWindow( hWnd );
-        X11DRV_KEYBOARD_UpdateState();
-    }
 }
 
 
@@ -1470,71 +1310,4 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
     DGAKeyReleaseEventType = event_base + KeyRelease;
   }
 }
-
-/* DGA2 event handlers */
-static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
-{
-  X11DRV_SendEvent( MOUSEEVENTF_MOVE, event->dx, event->dy,
-                    X11DRV_EVENT_XStateToKeyState( event->state ), 0,
-                    event->time - X11DRV_server_startticks, DGAhwnd );
-}
-
-static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
-{
-  static WORD statusCodes[NB_BUTTONS] = 
-    { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN };
-  int buttonNum = event->button - 1;
-  
-  WORD keystate;
-
-  if (buttonNum >= NB_BUTTONS) return;
-  
-  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
-  
-  switch (buttonNum)
-  {
-    case 0:
-      keystate |= MK_LBUTTON;
-      break;
-    case 1:
-      keystate |= MK_MBUTTON;
-      break;
-    case 2:
-      keystate |= MK_RBUTTON;
-      break;
-  }
-  
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, 0,
-                    event->time - X11DRV_server_startticks, DGAhwnd );
-}
-
-static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
-{
-  static WORD statusCodes[NB_BUTTONS] = 
-    { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTUP };
-  int buttonNum = event->button - 1;
-  
-  WORD keystate;
-
-  if (buttonNum >= NB_BUTTONS) return;
-  
-  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
-  
-  switch (buttonNum)
-  {
-    case 0:
-      keystate &= ~MK_LBUTTON;
-      break;
-    case 1:
-      keystate &= ~MK_MBUTTON;
-      break;
-    case 2:
-      keystate &= ~MK_RBUTTON;
-      break;
-  }
-  
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, 0,
-                    event->time - X11DRV_server_startticks, DGAhwnd );
-}
-
 #endif

@@ -31,9 +31,6 @@ extern WORD USER_HeapSel;
 #define USUD_FIRSTCLASS        0x0005
 
 struct tagCURSORICONINFO;
-struct DIDEVICEOBJECTDATA;
-
-typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 
 /* internal messages codes */
 enum wine_internal_message
@@ -44,6 +41,10 @@ enum wine_internal_message
     WM_WINE_SETPARENT
 };
 
+/* internal SendInput codes (FIXME) */
+#define WINE_INTERNAL_INPUT_MOUSE    (16+INPUT_MOUSE)
+#define WINE_INTERNAL_INPUT_KEYBOARD (16+INPUT_KEYBOARD)
+
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
     void   (*pInitKeyboard)(LPBYTE);
@@ -52,10 +53,8 @@ typedef struct tagUSER_DRIVER {
     INT    (*pGetKeyNameText)(LONG,LPSTR,INT);
     INT    (*pToUnicode)(UINT, UINT, LPBYTE, LPWSTR, int, UINT);
     void   (*pBeep)(void);
-    BOOL   (*pGetDIState)(DWORD, LPVOID);
-    BOOL   (*pGetDIData)(BYTE *, DWORD, struct DIDEVICEOBJECTDATA *, LPDWORD, DWORD);
     /* mouse functions */
-    void   (*pInitMouse)(LPMOUSE_EVENT_PROC);
+    void   (*pInitMouse)(LPBYTE);
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
     void   (*pGetCursorPos)(LPPOINT);
     void   (*pSetCursorPos)(INT,INT);
@@ -107,9 +106,6 @@ extern void USER_Unlock(void);
 extern void USER_CheckNotLock(void);
 
 extern BOOL USER_IsExitingThread( DWORD tid );
-
-VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
-VOID WINAPI MOUSE_Disable(VOID);
 
 /* Wine look */
 

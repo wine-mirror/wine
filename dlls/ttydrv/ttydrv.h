@@ -29,7 +29,6 @@ struct tagWND;
 struct tagCURSORICONINFO;
 struct tagCREATESTRUCTA;
 struct tagWINDOWPOS;
-struct DIDEVICEOBJECTDATA;
 
 #if defined(HAVE_LIBCURSES) || defined(HAVE_LIBNCURSES)
 #define WINE_CURSES

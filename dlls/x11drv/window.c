@@ -117,7 +117,7 @@ static int get_window_attributes( Display *display, WND *win, XSetWindowAttribut
                                ButtonPressMask | ButtonReleaseMask);
     if (is_window_top_level( win ))
     {
-        attr->event_mask |= StructureNotifyMask | FocusChangeMask;
+        attr->event_mask |= StructureNotifyMask | FocusChangeMask | KeymapStateMask;
         attr->cursor = X11DRV_GetCursor( display, GlobalLock16(GetCursor()) );
     }
     return (CWOverrideRedirect | CWSaveUnder | CWEventMask | CWColormap | CWCursor);

@@ -9,6 +9,7 @@ IMPORTS   = user32 gdi32 kernel32
 C_SRCS = \
 	desktop.c \
 	dga2.c \
+	mouse.c \
 	scroll.c \
 	window.c \
 	winpos.c \

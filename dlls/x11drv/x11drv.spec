@@ -66,8 +66,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl GetKeyNameText(long str long) X11DRV_GetKeyNameText
 @ cdecl ToUnicode(long long ptr ptr long long) X11DRV_ToUnicode
 @ cdecl Beep() X11DRV_Beep
-@ cdecl GetDIState(long ptr) X11DRV_GetDIState
-@ cdecl GetDIData(ptr long ptr ptr long) X11DRV_GetDIData
 @ cdecl InitMouse(ptr) X11DRV_InitMouse
 @ cdecl SetCursor(ptr) X11DRV_SetCursor
 @ cdecl GetCursorPos(ptr) X11DRV_GetCursorPos
