@@ -1258,24 +1258,16 @@ typedef struct
  
   /* Offsets for GetClassLong() and GetClassWord() */
 #define GCL_MENUNAME        (-8)
-#define GCW_HBRBACKGROUND   (-10)
-#define GCL_HBRBACKGROUND   GCW_HBRBACKGROUND
-#define GCW_HCURSOR         (-12)
-#define GCL_HCURSOR         GCW_HCURSOR
-#define GCW_HICON           (-14)
-#define GCL_HICON           GCW_HICON
-#define GCW_HMODULE         (-16)
-#define GCL_HMODULE         GCW_HMODULE
-#define GCW_CBWNDEXTRA      (-18)
-#define GCL_CBWNDEXTRA      GCW_CBWNDEXTRA
-#define GCW_CBCLSEXTRA      (-20)
-#define GCL_CBCLSEXTRA      GCW_CBCLSEXTRA
+#define GCL_HBRBACKGROUND   (-10)
+#define GCL_HCURSOR         (-12)
+#define GCL_HICON           (-14)
+#define GCL_HMODULE         (-16)
+#define GCL_CBWNDEXTRA      (-18)
+#define GCL_CBCLSEXTRA      (-20)
 #define GCL_WNDPROC         (-24)
-#define GCW_STYLE           (-26)
-#define GCL_STYLE           GCW_STYLE
+#define GCL_STYLE           (-26)
 #define GCW_ATOM            (-32)
-#define GCW_HICONSM         (-34)
-#define GCL_HICONSM         GCW_HICONSM
+#define GCL_HICONSM         (-34)
 
 
 /***** Window hooks *****/

@@ -1744,9 +1744,9 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTCLIENT:
 	{
-	    HICON16 hCursor = (HICON16) GetClassWord(hwnd, GCW_HCURSOR);
+	    HCURSOR hCursor = GetClassLongA(hwnd, GCL_HCURSOR);
 	    if(hCursor) {
-		SetCursor16(hCursor);
+		SetCursor(hCursor);
 		return TRUE;
 	    }
             return FALSE;
@@ -2159,7 +2159,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-        if (!(GetClassWord(hwnd, GCW_STYLE) & CS_NOCLOSE))
+        if (!(GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE))
             SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
 
