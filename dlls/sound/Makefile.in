@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = sound
 
 SPEC_SRCS = sound.spec
-GLUE      = sound.spec.c
 
 C_SRCS = \
 	sound_main.c

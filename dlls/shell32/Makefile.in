@@ -7,7 +7,6 @@ MODULE    = shell32
 WRCEXTRA  = -s -p$(MODULE)
 
 SPEC_SRCS = shell32.spec shell.spec
-GLUE      = shell.spec.c
 
 C_SRCS = \
 	brsfolder.c \

@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = msacm
 
 SPEC_SRCS = msacm.spec
-GLUE      = msacm.spec.c
 
 C_SRCS = \
 	msacm_main.c

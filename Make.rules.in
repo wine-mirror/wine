@@ -82,7 +82,7 @@ LINTS = $(C_SRCS:.c=.ln)
 # Implicit rules
 
 .SUFFIXES:
-.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.s $(SUFFIXES)
+.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.c $(SUFFIXES)
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -114,7 +114,7 @@ LINTS = $(C_SRCS:.c=.ln)
 .spec.spec.c:
 	$(BUILD) @BUILDFLAGS@ -o $@ -spec $<
 
-.c.glue.s:
+.c.glue.c:
 	$(BUILD) @BUILDFLAGS@ -o $@ -glue $<
 
 .c.ln:
@@ -176,13 +176,13 @@ lint:: $(MODULE).ln
 
 $(SPEC_SRCS:.spec=.spec.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
 
-$(GLUE:.c=.glue.s): $(BUILD)
+$(GLUE:.c=.glue.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
 
 depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o *.ln \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.s) $(PROGRAMS)
+	$(RM) *.o *.ln \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.c) $(PROGRAMS)
 
 dummy:
 

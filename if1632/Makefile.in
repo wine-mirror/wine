@@ -43,8 +43,7 @@ C_SRCS = \
 GEN_ASM_SRCS = \
 	call16.s
 
-GLUE = 	$(SPEC_SRCS:.spec=.spec.c) \
-	thunk.c
+GLUE = thunk.c
 
 all: $(MODULE).o
 

@@ -7,7 +7,6 @@ MODULE    = commdlg
 WRCEXTRA  = -s -pcomdlg32
 
 SPEC_SRCS = commdlg.spec comdlg32.spec
-GLUE      = commdlg.spec.c
 
 C_SRCS = \
 	cdlg32.c \

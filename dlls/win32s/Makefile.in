@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = win32s
 
 SPEC_SRCS = w32sys.spec win32s16.spec w32skrnl.spec
-GLUE      = w32sys.spec.c win32s16.spec.c
 
 C_SRCS = \
 	w32skrnl.c \

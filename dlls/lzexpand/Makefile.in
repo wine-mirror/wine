@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = lzexpand
 
 SPEC_SRCS = lz32.spec lzexpand.spec
-GLUE      = lzexpand.spec.c
 
 C_SRCS = \
 	lzexpand_main.c

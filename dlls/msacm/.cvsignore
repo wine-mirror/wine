@@ -1,3 +1,2 @@
 Makefile
 msacm.spec.c
-msacm.spec.glue.s

@@ -1,4 +1,3 @@
 Makefile
 lz32.spec.c
 lzexpand.spec.c
-lzexpand.spec.glue.s

@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = windebug
 
 SPEC_SRCS = windebug.spec
-GLUE      = windebug.spec.c
 
 C_SRCS = \
 	windebug_main.c

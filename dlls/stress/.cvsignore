@@ -1,3 +1,2 @@
 Makefile
 stress.spec.c
-stress.spec.glue.s

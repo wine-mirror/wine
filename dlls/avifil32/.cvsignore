@@ -1,4 +1,3 @@
 Makefile
 avifil32.spec.c
 avifile.spec.c
-avifile.spec.glue.s

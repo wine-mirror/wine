@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = win87em
 
 SPEC_SRCS = win87em.spec
-GLUE      = win87em.spec.c
 
 C_SRCS = \
 	emulate.c
