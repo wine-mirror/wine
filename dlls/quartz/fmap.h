@@ -29,7 +29,7 @@ typedef struct CFilterMapper
 HRESULT QUARTZ_CreateFilterMapper(IUnknown* punkOuter,void** ppobj);
 
 
-void CFilterMapper_InitIFilterMapper( CFilterMapper* pfm );
+HRESULT CFilterMapper_InitIFilterMapper( CFilterMapper* pfm );
 void CFilterMapper_UninitIFilterMapper( CFilterMapper* pfm );
 
 

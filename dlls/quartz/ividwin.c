@@ -547,10 +547,12 @@ static ICOM_VTABLE(IVideoWindow) ivideowindow =
 };
 
 
-void CFilterGraph_InitIVideoWindow( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIVideoWindow( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->vidwin) = &ivideowindow;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIVideoWindow( CFilterGraph* pfg )

@@ -25,6 +25,7 @@ struct QUARTZ_CompList
 {
 	QUARTZ_CompListItem*	pFirst;
 	QUARTZ_CompListItem*	pLast;
+	CRITICAL_SECTION		csList;
 };
 
 struct QUARTZ_CompListItem
@@ -32,6 +33,8 @@ struct QUARTZ_CompListItem
 	IUnknown*	punk;
 	QUARTZ_CompListItem*	pNext;
 	QUARTZ_CompListItem*	pPrev;
+	void*	pvData;
+	DWORD	dwDataLen;
 };
 
 
@@ -45,6 +48,8 @@ QUARTZ_CompList* QUARTZ_CompList_Alloc( void )
 		/* construct. */
 		pList->pFirst = NULL;
 		pList->pLast = NULL;
+
+		InitializeCriticalSection( &pList->csList );
 	}
 
 	return pList;
@@ -63,17 +68,33 @@ void QUARTZ_CompList_Free( QUARTZ_CompList* pList )
 			pNext = pCur->pNext;
 			if ( pCur->punk != NULL )
 				IUnknown_Release( pCur->punk );
+			if ( pCur->pvData != NULL )
+				QUARTZ_FreeMem( pCur->pvData );
 			QUARTZ_FreeMem( pCur );
 			pCur = pNext;
 		}
+
+		DeleteCriticalSection( &pList->csList );
+
 		QUARTZ_FreeMem( pList );
 	}
 }
 
-QUARTZ_CompList* QUARTZ_CompList_Dup( QUARTZ_CompList* pList )
+void QUARTZ_CompList_Lock( QUARTZ_CompList* pList )
+{
+	EnterCriticalSection( &pList->csList );
+}
+
+void QUARTZ_CompList_Unlock( QUARTZ_CompList* pList )
+{
+	LeaveCriticalSection( &pList->csList );
+}
+
+QUARTZ_CompList* QUARTZ_CompList_Dup(
+	const QUARTZ_CompList* pList, BOOL fDupData )
 {
 	QUARTZ_CompList*	pNewList;
-	QUARTZ_CompListItem*	pCur;
+	const QUARTZ_CompListItem*	pCur;
 	HRESULT	hr;
 
 	pNewList = QUARTZ_CompList_Alloc();
@@ -85,7 +106,13 @@ QUARTZ_CompList* QUARTZ_CompList_Dup( QUARTZ_CompList* pList )
 	{
 		if ( pCur->punk != NULL )
 		{
-			hr = QUARTZ_CompList_AddComp( pNewList, pCur->punk );
+			if ( fDupData )
+				hr = QUARTZ_CompList_AddComp(
+					pNewList, pCur->punk,
+					pCur->pvData, pCur->dwDataLen );
+			else
+				hr = QUARTZ_CompList_AddComp(
+					pNewList, pCur->punk, NULL, 0 );
 			if ( FAILED(hr) )
 			{
 				QUARTZ_CompList_Free( pNewList );
@@ -98,21 +125,38 @@ QUARTZ_CompList* QUARTZ_CompList_Dup( QUARTZ_CompList* pList )
 	return pNewList;
 }
 
-HRESULT QUARTZ_CompList_AddComp( QUARTZ_CompList* pList, IUnknown* punk )
+HRESULT QUARTZ_CompList_AddComp(
+	QUARTZ_CompList* pList, IUnknown* punk,
+	const void* pvData, DWORD dwDataLen )
 {
 	QUARTZ_CompListItem*	pItem;
 
 	pItem = (QUARTZ_CompListItem*)QUARTZ_AllocMem( sizeof(QUARTZ_CompListItem) );
 	if ( pItem == NULL )
 		return E_OUTOFMEMORY; /* out of memory. */
+
+	pItem->pvData = NULL;
+	pItem->dwDataLen = 0;
+	if ( pvData != NULL )
+	{
+		pItem->pvData = (void*)QUARTZ_AllocMem( dwDataLen );
+		if ( pItem->pvData == NULL )
+		{
+			QUARTZ_FreeMem( pItem );
+			return E_OUTOFMEMORY;
+		}
+		memcpy( pItem->pvData, pvData, dwDataLen );
+		pItem->dwDataLen = dwDataLen;
+	}
+
 	pItem->punk = punk; IUnknown_AddRef(punk);
 
 	if ( pList->pFirst != NULL )
 		pList->pFirst->pPrev = pItem;
 	else
 		pList->pLast = pItem;
-	pList->pFirst = pItem;
 	pItem->pNext = pList->pFirst;
+	pList->pFirst = pItem;
 	pItem->pPrev = NULL;
 
 	return S_OK;
@@ -139,6 +183,8 @@ HRESULT QUARTZ_CompList_RemoveComp( QUARTZ_CompList* pList, IUnknown* punk )
 	/* release this item. */
 	if ( pCur->punk != NULL )
 		IUnknown_Release( pCur->punk );
+	if ( pCur->pvData != NULL )
+		QUARTZ_FreeMem( pCur->pvData );
 	QUARTZ_FreeMem( pCur );
 
 	return S_OK;
@@ -153,6 +199,23 @@ QUARTZ_CompListItem* QUARTZ_CompList_SearchComp(
 	while ( pCur != NULL )
 	{
 		if ( pCur->punk == punk )
+			return pCur;
+		pCur = pCur->pNext;
+	}
+
+	return NULL;
+}
+
+QUARTZ_CompListItem* QUARTZ_CompList_SearchData(
+	QUARTZ_CompList* pList, const void* pvData, DWORD dwDataLen )
+{
+	QUARTZ_CompListItem*	pCur;
+
+	pCur = pList->pFirst;
+	while ( pCur != NULL )
+	{
+		if ( pCur->dwDataLen == dwDataLen &&
+		     !memcmp( pCur->pvData, pvData, dwDataLen ) )
 			return pCur;
 		pCur = pCur->pNext;
 	}
@@ -175,4 +238,14 @@ QUARTZ_CompListItem* QUARTZ_CompList_GetNext(
 IUnknown* QUARTZ_CompList_GetItemPtr( QUARTZ_CompListItem* pItem )
 {
 	return pItem->punk;
+}
+
+const void* QUARTZ_CompList_GetDataPtr( QUARTZ_CompListItem* pItem )
+{
+	return pItem->pvData;
+}
+
+DWORD QUARTZ_CompList_GetDataLength( QUARTZ_CompListItem* pItem )
+{
+	return pItem->dwDataLen;
 }

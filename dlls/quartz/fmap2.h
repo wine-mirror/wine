@@ -22,6 +22,7 @@ typedef struct CFilterMapper2
 {
 	QUARTZ_IUnkImpl	unk;
 	FM2_IFilterMapper3Impl	fmap3;
+	/* IFilterMapper3 fields */
 } CFilterMapper2;
 
 #define	CFilterMapper2_THIS(iface,member)		CFilterMapper2*	This = ((CFilterMapper2*)(((char*)iface)-offsetof(CFilterMapper2,member)))
@@ -29,7 +30,7 @@ typedef struct CFilterMapper2
 HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj);
 
 
-void CFilterMapper2_InitIFilterMapper3( CFilterMapper2* psde );
+HRESULT CFilterMapper2_InitIFilterMapper3( CFilterMapper2* psde );
 void CFilterMapper2_UninitIFilterMapper3( CFilterMapper2* psde );
 
 

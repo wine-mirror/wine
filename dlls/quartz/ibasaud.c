@@ -158,10 +158,12 @@ static ICOM_VTABLE(IBasicAudio) ibasicaudio =
 };
 
 
-void CFilterGraph_InitIBasicAudio( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIBasicAudio( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->basaud) = &ibasicaudio;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg )

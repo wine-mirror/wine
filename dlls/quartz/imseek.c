@@ -257,10 +257,12 @@ static ICOM_VTABLE(IMediaSeeking) imediaseeking =
 	IMediaSeeking_fnGetPreroll,
 };
 
-void CFilterGraph_InitIMediaSeeking( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIMediaSeeking( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediaseeking) = &imediaseeking;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIMediaSeeking( CFilterGraph* pfg )

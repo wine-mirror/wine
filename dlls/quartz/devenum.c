@@ -41,6 +41,7 @@ static void QUARTZ_DestroySystemDeviceEnum(IUnknown* punk)
 HRESULT QUARTZ_CreateSystemDeviceEnum(IUnknown* punkOuter,void** ppobj)
 {
 	CSysDevEnum*	psde;
+	HRESULT	hr;
 
 	TRACE("(%p,%p)\n",punkOuter,ppobj);
 
@@ -50,7 +51,12 @@ HRESULT QUARTZ_CreateSystemDeviceEnum(IUnknown* punkOuter,void** ppobj)
 
 	QUARTZ_IUnkInit( &psde->unk, punkOuter );
 
-	CSysDevEnum_InitICreateDevEnum( psde );
+	hr = CSysDevEnum_InitICreateDevEnum( psde );
+	if ( FAILED(hr) )
+	{
+		QUARTZ_FreeObj( psde );
+		return hr;
+	}
 
 	psde->unk.pEntries = IFEntries;
 	psde->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);

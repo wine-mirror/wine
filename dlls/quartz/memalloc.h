@@ -30,7 +30,8 @@ typedef struct CMemoryAllocator
 
 HRESULT QUARTZ_CreateMemoryAllocator(IUnknown* punkOuter,void** ppobj);
 
-void CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma );
+HRESULT CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma );
+void CMemoryAllocator_UninitIMemAllocator( CMemoryAllocator* pma );
 
 
 #endif  /* WINE_DSHOW_MEMALLOC_H */

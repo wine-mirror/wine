@@ -50,7 +50,7 @@ typedef struct
 {
 	/* IUnknown fields */
 	ICOM_VFIELD(IClassFactory);
-	DWORD	ref;
+	LONG	ref;
 	/* IClassFactory fields */
 	const QUARTZ_CLASSENTRY* pEntry;
 } IClassFactoryImpl;
@@ -128,16 +128,18 @@ static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return ++(This->ref);
+	return InterlockedExchangeAdd(&(This->ref),1) + 1;
 }
 
 static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
+	LONG	ref;
 
 	TRACE("(%p)->()\n",This);
-	if ( (--(This->ref)) > 0 )
-		return This->ref;
+	ref = InterlockedExchangeAdd(&(This->ref),-1) - 1;
+	if ( ref > 0 )
+		return (ULONG)ref;
 
 	QUARTZ_FreeObj(This);
 	return 0;

@@ -28,7 +28,7 @@ typedef struct CSysDevEnum
 HRESULT QUARTZ_CreateSystemDeviceEnum(IUnknown* punkOuter,void** ppobj);
 
 
-void CSysDevEnum_InitICreateDevEnum( CSysDevEnum* psde );
+HRESULT CSysDevEnum_InitICreateDevEnum( CSysDevEnum* psde );
 void CSysDevEnum_UninitICreateDevEnum( CSysDevEnum* psde );
 
 

@@ -213,10 +213,12 @@ static ICOM_VTABLE(IMediaControl) imediacontrol =
 };
 
 
-void CFilterGraph_InitIMediaControl( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIMediaControl( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediacontrol) = &imediacontrol;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIMediaControl( CFilterGraph* pfg )

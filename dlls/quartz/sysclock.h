@@ -31,7 +31,8 @@ typedef struct CSystemClock
 
 HRESULT QUARTZ_CreateSystemClock(IUnknown* punkOuter,void** ppobj);
 
-void CSystemClock_InitIReferenceClock( CSystemClock* psc );
+HRESULT CSystemClock_InitIReferenceClock( CSystemClock* psc );
+void CSystemClock_UninitIReferenceClock( CSystemClock* psc );
 
 
 #endif  /* WINE_DSHOW_SYSCLOCK_H */

@@ -29,9 +29,18 @@ static QUARTZ_IFEntry IFEntries[] =
   { &IID_IReferenceClock, offsetof(CSystemClock,refclk)-offsetof(CSystemClock,unk) },
 };
 
+
+static void QUARTZ_DestroySystemClock(IUnknown* punk)
+{
+	CSystemClock_THIS(punk,unk);
+
+	CSystemClock_UninitIReferenceClock( This );
+}
+
 HRESULT QUARTZ_CreateSystemClock(IUnknown* punkOuter,void** ppobj)
 {
 	CSystemClock*	psc;
+	HRESULT	hr;
 
 	TRACE("(%p,%p)\n",punkOuter,ppobj);
 
@@ -40,10 +49,16 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown* punkOuter,void** ppobj)
 		return E_OUTOFMEMORY;
 
 	QUARTZ_IUnkInit( &psc->unk, punkOuter );
-	CSystemClock_InitIReferenceClock( psc );
+	hr = CSystemClock_InitIReferenceClock( psc );
+	if ( FAILED(hr) )
+	{
+		QUARTZ_FreeObj( psc );
+		return hr;
+	}
 
 	psc->unk.pEntries = IFEntries;
 	psc->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
+	psc->unk.pOnFinalRelease = QUARTZ_DestroySystemClock;
 
 	*ppobj = (void*)(&psc->unk);
 

@@ -126,8 +126,15 @@ static ICOM_VTABLE(IMemAllocator) imemalloc =
 };
 
 
-void CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma )
+HRESULT CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma )
 {
 	TRACE("(%p)\n",pma);
 	ICOM_VTBL(&pma->memalloc) = &imemalloc;
+
+	return NOERROR;
+}
+
+void CMemoryAllocator_UninitIMemAllocator( CMemoryAllocator* pma )
+{
+	TRACE("(%p)\n",pma);
 }

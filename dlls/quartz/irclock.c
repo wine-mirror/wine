@@ -104,8 +104,15 @@ static ICOM_VTABLE(IReferenceClock) irefclk =
 };
 
 
-void CSystemClock_InitIReferenceClock( CSystemClock* psc )
+HRESULT CSystemClock_InitIReferenceClock( CSystemClock* psc )
 {
 	TRACE("(%p)\n",psc);
 	ICOM_VTBL(&psc->refclk) = &irefclk;
+
+	return NOERROR;
+}
+
+void CSystemClock_UninitIReferenceClock( CSystemClock* psc )
+{
+	TRACE("(%p)\n",psc);
 }

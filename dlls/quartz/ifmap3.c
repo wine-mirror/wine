@@ -11,6 +11,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
@@ -23,6 +24,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "fmap2.h"
+#include "regsvr.h"
 
 
 static HRESULT WINAPI
@@ -60,7 +62,9 @@ IFilterMapper3_fnCreateCategory(IFilterMapper3* iface,REFCLSID rclsidCategory,DW
 {
 	CFilterMapper2_THIS(iface,fmap3);
 
-	FIXME("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s,%lu,%s) stub!\n",This,
+		debugstr_guid(rclsidCategory),
+		(unsigned long)dwMerit,debugstr_w(lpwszDesc));
 
 	return E_NOTIMPL;
 }
@@ -71,7 +75,10 @@ IFilterMapper3_fnUnregisterFilter(IFilterMapper3* iface,const CLSID* pclsidCateg
 {
 	CFilterMapper2_THIS(iface,fmap3);
 
-	FIXME("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s,%s,%s) stub!\n",This,
+		debugstr_guid(pclsidCategory),
+		debugstr_w(lpwszInst),
+		debugstr_guid(rclsidFilter));
 
 	return E_NOTIMPL;
 }
@@ -82,7 +89,10 @@ IFilterMapper3_fnRegisterFilter(IFilterMapper3* iface,REFCLSID rclsidFilter,LPCW
 {
 	CFilterMapper2_THIS(iface,fmap3);
 
-	FIXME("(%p)->() stub!\n",This);
+	FIXME( "(%p)->(%s,%s,%p,%s,%s,%p) stub!\n",This,
+		debugstr_guid(rclsidFilter),debugstr_w(lpName),
+		ppMoniker,debugstr_guid(pclsidCategory),
+		debugstr_w(lpwszInst),pRF2 );
 
 	return E_NOTIMPL;
 }
@@ -129,10 +139,12 @@ static ICOM_VTABLE(IFilterMapper3) ifmap3 =
 };
 
 
-void CFilterMapper2_InitIFilterMapper3( CFilterMapper2* pfm )
+HRESULT CFilterMapper2_InitIFilterMapper3( CFilterMapper2* pfm )
 {
 	TRACE("(%p)\n",pfm);
 	ICOM_VTBL(&pfm->fmap3) = &ifmap3;
+
+	return NOERROR;
 }
 
 void CFilterMapper2_UninitIFilterMapper3( CFilterMapper2* pfm )

@@ -102,9 +102,11 @@ IMediaEventEx_fnGetEventHandle(IMediaEventEx* iface,OAEVENT* hEvent)
 {
 	CFilterGraph_THIS(iface,mediaevent);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	*hEvent = (OAEVENT)This->m_hMediaEvent;
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -215,13 +217,21 @@ static ICOM_VTABLE(IMediaEventEx) imediaevent =
 };
 
 
-void CFilterGraph_InitIMediaEventEx( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIMediaEventEx( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediaevent) = &imediaevent;
+
+	pfg->m_hMediaEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+	if ( pfg->m_hMediaEvent == (HANDLE)NULL )
+		return E_OUTOFMEMORY;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIMediaEventEx( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
+
+	CloseHandle( pfg->m_hMediaEvent );
 }

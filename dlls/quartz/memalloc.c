@@ -29,9 +29,17 @@ static QUARTZ_IFEntry IFEntries[] =
   { &IID_IMemAllocator, offsetof(CMemoryAllocator,memalloc)-offsetof(CMemoryAllocator,unk) },
 };
 
+static void QUARTZ_DestroyMemoryAllocator(IUnknown* punk)
+{
+	CMemoryAllocator_THIS(punk,unk);
+
+	CMemoryAllocator_UninitIMemAllocator( This );
+}
+
 HRESULT QUARTZ_CreateMemoryAllocator(IUnknown* punkOuter,void** ppobj)
 {
 	CMemoryAllocator*	pma;
+	HRESULT	hr;
 
 	TRACE("(%p,%p)\n",punkOuter,ppobj);
 
@@ -40,10 +48,16 @@ HRESULT QUARTZ_CreateMemoryAllocator(IUnknown* punkOuter,void** ppobj)
 		return E_OUTOFMEMORY;
 
 	QUARTZ_IUnkInit( &pma->unk, punkOuter );
-	CMemoryAllocator_InitIMemAllocator( pma );
+	hr = CMemoryAllocator_InitIMemAllocator( pma );
+	if ( FAILED(hr) )
+	{
+		QUARTZ_FreeObj( pma );
+		return hr;
+	}
 
 	pma->unk.pEntries = IFEntries;
 	pma->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
+	pma->unk.pOnFinalRelease = QUARTZ_DestroyMemoryAllocator;
 
 	*ppobj = (void*)(&pma->unk);
 

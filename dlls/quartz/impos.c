@@ -60,9 +60,10 @@ IMediaPosition_fnGetTypeInfoCount(IMediaPosition* iface,UINT* pcTypeInfo)
 {
 	CFilterGraph_THIS(iface,mediaposition);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IDispatch_GetTypeInfoCount(
+		CFilterGraph_IDispatch(This),pcTypeInfo);
 }
 
 static HRESULT WINAPI
@@ -70,9 +71,10 @@ IMediaPosition_fnGetTypeInfo(IMediaPosition* iface,UINT iTypeInfo, LCID lcid, IT
 {
 	CFilterGraph_THIS(iface,mediaposition);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IDispatch_GetTypeInfo(
+		CFilterGraph_IDispatch(This),iTypeInfo,lcid,ppobj);
 }
 
 static HRESULT WINAPI
@@ -80,9 +82,10 @@ IMediaPosition_fnGetIDsOfNames(IMediaPosition* iface,REFIID riid, LPOLESTR* ppws
 {
 	CFilterGraph_THIS(iface,mediaposition);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IDispatch_GetIDsOfNames(
+		CFilterGraph_IDispatch(This),riid,ppwszName,cNames,lcid,pDispId);
 }
 
 static HRESULT WINAPI
@@ -90,9 +93,11 @@ IMediaPosition_fnInvoke(IMediaPosition* iface,DISPID DispId, REFIID riid, LCID l
 {
 	CFilterGraph_THIS(iface,mediaposition);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IDispatch_Invoke(
+		CFilterGraph_IDispatch(This),
+		DispId,riid,lcid,wFlags,pDispParams,pVarRes,pExcepInfo,puArgErr);
 }
 
 
@@ -234,10 +239,12 @@ static ICOM_VTABLE(IMediaPosition) imediaposition =
 };
 
 
-void CFilterGraph_InitIMediaPosition( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIMediaPosition( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediaposition) = &imediaposition;
+
+	return NOERROR;
 }
 
 void CFilterGraph_UninitIMediaPosition( CFilterGraph* pfg )

@@ -11,6 +11,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
@@ -23,6 +24,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "fmap.h"
+#include "regsvr.h"
 
 
 static HRESULT WINAPI
@@ -61,19 +63,35 @@ IFilterMapper_fnRegisterFilter(IFilterMapper* iface,CLSID clsid,LPCWSTR lpwszNam
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s,%s,%08lx)\n",This,
+		debugstr_guid(&clsid),debugstr_w(lpwszName),dwMerit);
 
-	return E_NOTIMPL;
+	/* FIXME */
+	/* FIXME - handle dwMerit! */
+	return QUARTZ_RegisterAMovieFilter(
+		&CLSID_LegacyAmFilterCategory,
+		&clsid,
+		NULL, 0,
+		lpwszName, NULL, TRUE );
 }
 
 static HRESULT WINAPI
 IFilterMapper_fnRegisterFilterInstance(IFilterMapper* iface,CLSID clsid,LPCWSTR lpwszName,CLSID* pclsidMedia)
 {
 	CFilterMapper_THIS(iface,fmap);
+	HRESULT	hr;
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( pclsidMedia == NULL )
+		return E_POINTER;
+	hr = CoCreateGuid(pclsidMedia);
+	if ( FAILED(hr) )
+		return hr;
+
+	/* FIXME */
+	return IFilterMapper_RegisterFilter(iface,
+		*pclsidMedia,lpwszName,0x60000000);
 }
 
 static HRESULT WINAPI
@@ -81,7 +99,7 @@ IFilterMapper_fnRegisterPin(IFilterMapper* iface,CLSID clsidFilter,LPCWSTR lpwsz
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->() stub!\n",This);
 
 	return E_NOTIMPL;
 }
@@ -91,7 +109,7 @@ IFilterMapper_fnRegisterPinType(IFilterMapper* iface,CLSID clsidFilter,LPCWSTR l
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->() stub!\n",This);
 
 	return E_NOTIMPL;
 }
@@ -101,9 +119,13 @@ IFilterMapper_fnUnregisterFilter(IFilterMapper* iface,CLSID clsidFilter)
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s)\n",This,debugstr_guid(&clsidFilter));
 
-	return E_NOTIMPL;
+	/* FIXME */
+	return QUARTZ_RegisterAMovieFilter(
+		&CLSID_LegacyAmFilterCategory,
+		&clsidFilter,
+		NULL, 0, NULL, NULL, FALSE );
 }
 
 static HRESULT WINAPI
@@ -111,9 +133,10 @@ IFilterMapper_fnUnregisterFilterInstance(IFilterMapper* iface,CLSID clsidMedia)
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s)\n",This,debugstr_guid(&clsidMedia));
 
-	return E_NOTIMPL;
+	/* FIXME */
+	return IFilterMapper_UnregisterFilter(iface,clsidMedia);
 }
 
 static HRESULT WINAPI
@@ -121,7 +144,8 @@ IFilterMapper_fnUnregisterPin(IFilterMapper* iface,CLSID clsidPin,LPCWSTR lpwszN
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%s,%s) stub!\n",This,
+		debugstr_guid(&clsidPin),debugstr_w(lpwszName));
 
 	return E_NOTIMPL;
 }
@@ -131,7 +155,7 @@ IFilterMapper_fnEnumMatchingFilters(IFilterMapper* iface,IEnumRegFilters** ppobj
 {
 	CFilterMapper_THIS(iface,fmap);
 
-	TRACE("(%p)->() stub!\n",This);
+	FIXME("(%p)->() stub!\n",This);
 
 	return E_NOTIMPL;
 }
@@ -157,10 +181,12 @@ static ICOM_VTABLE(IFilterMapper) ifmap =
 };
 
 
-void CFilterMapper_InitIFilterMapper( CFilterMapper* pfm )
+HRESULT CFilterMapper_InitIFilterMapper( CFilterMapper* pfm )
 {
 	TRACE("(%p)\n",pfm);
 	ICOM_VTBL(&pfm->fmap) = &ifmap;
+
+	return NOERROR;
 }
 
 void CFilterMapper_UninitIFilterMapper( CFilterMapper* pfm )

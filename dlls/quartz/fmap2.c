@@ -42,6 +42,7 @@ static void QUARTZ_DestroyFilterMapper2(IUnknown* punk)
 HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj)
 {
 	CFilterMapper2*	pfm;
+	HRESULT	hr;
 
 	TRACE("(%p,%p)\n",punkOuter,ppobj);
 
@@ -50,7 +51,12 @@ HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj)
 		return E_OUTOFMEMORY;
 
 	QUARTZ_IUnkInit( &pfm->unk, punkOuter );
-	CFilterMapper2_InitIFilterMapper3( pfm );
+	hr = CFilterMapper2_InitIFilterMapper3( pfm );
+	if ( FAILED(hr) )
+	{
+		QUARTZ_FreeObj( pfm );
+		return hr;
+	}
 
 	pfm->unk.pEntries = IFEntries;
 	pfm->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);

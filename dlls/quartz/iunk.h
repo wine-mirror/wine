@@ -29,7 +29,7 @@
 
 typedef struct QUARTZ_IFEntry
 {
-	REFIID		piid;		/* interface ID. */
+	const IID*	piid;		/* interface ID. */
 	size_t		ofsVTPtr;	/* offset from IUnknown. */
 } QUARTZ_IFEntry;
 

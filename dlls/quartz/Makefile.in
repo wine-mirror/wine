@@ -12,6 +12,10 @@ C_SRCS = \
 	amerror.c \
 	complist.c \
 	devenum.c \
+	devmon.c \
+	enumunk.c \
+	fgclsid.c \
+	fgidisp.c \
 	fgraph.c \
 	fmap.c \
 	fmap2.c \
@@ -21,9 +25,12 @@ C_SRCS = \
 	ifgraph.c \
 	ifmap.c \
 	ifmap3.c \
+	igrver.c \
 	imcntl.c \
 	imem.c \
+	imesink.c \
 	imevent.c \
+	imfilter.c \
 	impos.c \
 	imseek.c \
 	irclock.c \
@@ -31,6 +38,7 @@ C_SRCS = \
 	ividwin.c \
 	main.c \
 	memalloc.c \
+	monprop.c \
 	regsvr.c \
 	sysclock.c
 
