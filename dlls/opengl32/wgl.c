@@ -163,7 +163,12 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
  */
 HGLRC WINAPI wglCreateLayerContext(HDC hdc,
 				   int iLayerPlane) {
-  FIXME("(%p,%d): stub !\n", hdc, iLayerPlane);
+  TRACE("(%p,%d)\n", hdc, iLayerPlane);
+
+  if (iLayerPlane == 0) {
+      return wglCreateContext(hdc);
+  }
+  FIXME(" no handler for layer %d\n", iLayerPlane);
 
   return NULL;
 }
