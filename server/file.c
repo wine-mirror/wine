@@ -456,29 +456,46 @@ static int set_file_pointer( handle_t handle, unsigned int *low, int *high, int 
     return 1;
 }
 
-static int truncate_file( handle_t handle )
+/* extend a file beyond the current end of file */
+static int extend_file( struct file *file, off_t size )
 {
-    struct file *file;
-    off_t result;
+    static const char zero;
 
-    if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
-        return 0;
-    if (((result = lseek( file->obj.fd, 0, SEEK_CUR )) == -1) ||
-        (ftruncate( file->obj.fd, result ) == -1))
+    /* extend the file one byte beyond the requested size and then truncate it */
+    /* this should work around ftruncate implementations that can't extend files */
+    if ((lseek( file->obj.fd, size, SEEK_SET ) != -1) &&
+        (write( file->obj.fd, &zero, 1 ) != -1))
     {
-        file_set_error();
-        release_object( file );
-        return 0;
+        ftruncate( file->obj.fd, size );
+        return 1;
     }
-    release_object( file );
-    return 1;
+    file_set_error();
+    return 0;
+}
+
+/* truncate file at current position */
+static int truncate_file( struct file *file )
+{
+    int ret = 0;
+    off_t pos = lseek( file->obj.fd, 0, SEEK_CUR );
+    off_t eof = lseek( file->obj.fd, 0, SEEK_END );
+
+    if (eof < pos) ret = extend_file( file, pos );
+    else
+    {
+        if (ftruncate( file->obj.fd, pos ) != -1) ret = 1;
+        else file_set_error();
+    }
+    lseek( file->obj.fd, pos, SEEK_SET );  /* restore file pos */
+    return ret;
 }
 
 /* try to grow the file to the specified size */
 int grow_file( struct file *file, int size_high, int size_low )
 {
+    int ret = 0;
     struct stat st;
-    off_t size = size_low + (((off_t)size_high)<<32);
+    off_t old_pos, size = size_low + (((off_t)size_high)<<32);
 
     if (fstat( file->obj.fd, &st ) == -1)
     {
@@ -486,9 +503,10 @@ int grow_file( struct file *file, int size_high, int size_low )
         return 0;
     }
     if (st.st_size >= size) return 1;  /* already large enough */
-    if (ftruncate( file->obj.fd, size ) != -1) return 1;
-    file_set_error();
-    return 0;
+    old_pos = lseek( file->obj.fd, 0, SEEK_CUR );  /* save old pos */
+    ret = extend_file( file, size );
+    lseek( file->obj.fd, old_pos, SEEK_SET );  /* restore file pos */
+    return ret;
 }
 
 static int set_file_time( handle_t handle, time_t access_time, time_t write_time )
@@ -604,7 +622,13 @@ DECL_HANDLER(set_file_pointer)
 /* truncate (or extend) a file */
 DECL_HANDLER(truncate_file)
 {
-    truncate_file( req->handle );
+    struct file *file;
+
+    if ((file = get_file_obj( current->process, req->handle, GENERIC_WRITE )))
+    {
+        truncate_file( file );
+        release_object( file );
+    }
 }
 
 /* flush a file buffers */
