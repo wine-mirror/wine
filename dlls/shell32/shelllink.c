@@ -1043,8 +1043,10 @@ static HRESULT WINAPI IShellLinkA_fnGetWorkingDirectory(IShellLinkA * iface, LPS
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->()\n",This);
-	lstrcpynA(pszDir,"c:\\", cchMaxPath);
+	TRACE("(%p)->(%p len=%u)\n", This, pszDir, cchMaxPath);
+
+	lstrcpynA( pszDir, This->sWorkDir ? This->sWorkDir : "", cchMaxPath );
+
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnSetWorkingDirectory(IShellLinkA * iface, LPCSTR pszDir)
@@ -1064,8 +1066,10 @@ static HRESULT WINAPI IShellLinkA_fnGetArguments(IShellLinkA * iface, LPSTR pszA
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(%p len=%u)\n",This, pszArgs, cchMaxPath);
-	lstrcpynA(pszArgs, "", cchMaxPath);
+	TRACE("(%p)->(%p len=%u)\n", This, pszArgs, cchMaxPath);
+
+	lstrcpynA( pszArgs, This->sArgs ? This->sArgs : "", cchMaxPath );
+
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA * iface, LPCSTR pszArgs)
@@ -1120,9 +1124,11 @@ static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA * iface, LPSTR p
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(%p len=%u iicon=%p)\n",This, pszIconPath, cchIconPath, piIcon);
-	lstrcpynA(pszIconPath,"shell32.dll",cchIconPath);
-	*piIcon=1;
+	TRACE("(%p)->(%p len=%u iicon=%p)\n", This, pszIconPath, cchIconPath, piIcon);
+
+	lstrcpynA( pszIconPath, This->sIcoPath ? This->sIcoPath : "", cchIconPath );
+	*piIcon = This->iIcoNdx;
+
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA * iface, LPCSTR pszIconPath,INT iIcon)
@@ -1286,8 +1292,10 @@ static HRESULT WINAPI IShellLinkW_fnGetWorkingDirectory(IShellLinkW * iface, LPW
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->()\n",This);
-        MultiByteToWideChar( CP_ACP, 0, "c:\\", -1, pszDir, cchMaxPath );
+	TRACE("(%p)->(%p len %u)\n", This, pszDir, cchMaxPath);
+
+	MultiByteToWideChar( CP_ACP, 0, This->sWorkDir ? This->sWorkDir : "", -1, pszDir, cchMaxPath );
+
 	return NOERROR;
 }
 
@@ -1309,8 +1317,10 @@ static HRESULT WINAPI IShellLinkW_fnGetArguments(IShellLinkW * iface, LPWSTR psz
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(%p len=%u)\n",This, pszArgs, cchMaxPath);
-        pszArgs[0] = 0;
+	TRACE("(%p)->(%p len=%u)\n", This, pszArgs, cchMaxPath);
+
+	MultiByteToWideChar( CP_ACP, 0, This->sArgs ? This->sArgs : "", -1, pszArgs, cchMaxPath );
+
 	return NOERROR;
 }
 
@@ -1366,9 +1376,11 @@ static HRESULT WINAPI IShellLinkW_fnGetIconLocation(IShellLinkW * iface, LPWSTR 
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(%p len=%u iicon=%p)\n",This, pszIconPath, cchIconPath, piIcon);
-        MultiByteToWideChar( CP_ACP, 0, "shell32.dll", -1, pszIconPath, cchIconPath );
-	*piIcon=1;
+	TRACE("(%p)->(%p len=%u iicon=%p)\n", This, pszIconPath, cchIconPath, piIcon);
+
+        MultiByteToWideChar( CP_ACP, 0, This->sIcoPath ? This->sIcoPath : "", -1, pszIconPath, cchIconPath );
+	*piIcon = This->iIcoNdx;
+
 	return NOERROR;
 }
 
