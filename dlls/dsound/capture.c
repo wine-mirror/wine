@@ -306,7 +306,6 @@ DSOUND_capture_callback(
                 This->read_position = pHdr->dwBytesRecorded;
 		This->state = STATE_CAPTURING;
 	    }
-	    waveInUnprepareHeader(hwi,&(This->pwave[This->index]),sizeof(WAVEHDR));
 	    if (This->capture_buffer->nrofnotifies)
 		SetEvent(This->capture_buffer->notifies[This->index].hEventNotify);
 	    This->index = (This->index + 1) % This->nrofpwaves;
@@ -315,7 +314,6 @@ DSOUND_capture_callback(
 		This->state = STATE_STOPPED;
 	    } else {
 		if (This->state == STATE_CAPTURING) {
-		    waveInPrepareHeader(hwi,&(This->pwave[index]),sizeof(WAVEHDR));
 		    waveInAddBuffer(hwi, &(This->pwave[index]), sizeof(WAVEHDR));
 	        } else if (This->state == STATE_STOPPING) {
 		    TRACE("stopping\n");
