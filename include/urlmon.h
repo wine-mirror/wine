@@ -162,6 +162,7 @@ typedef enum BINDSTATUS {
 #define INET_E_SECURITY_PROBLEM          0x800C000EL
 #define INET_E_CANNOT_LOAD_DATA          0x800C000FL
 #define INET_E_CANNOT_INSTANTIATE_OBJECT 0x800C0010L
+#define INET_E_QUERYOPTION_UNKNOWN       0x800C0013L
 #define INET_E_REDIRECT_FAILED           0x800C0014L
 #define INET_E_REDIRECT_TO_DIR           0x800C0015L
 #define INET_E_CANNOT_LOCK_REQUEST       0x800C0016L
@@ -317,4 +318,3 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_URLMON_H */
-
