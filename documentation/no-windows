@@ -1,8 +1,8 @@
 Running Wine without Windows
-==================
+============================
 
 Sometimes you can bring applications to run by using some of the
-native Windows DLL's, together with Wine. Here are some Tips by
+native Windows DLL's, together with Wine. Here are some tips by
 Juergen Schmied on how to proceed. This assumes that your C:\windows
 directory in the configuration file does not point to a native Windows
 installation but is in a separate Unix file system. (For instance,
@@ -13,6 +13,11 @@ C:\windows is really /home/ego/wine/drives/c).
   and a messy registry. (Wine creates a special registry in your home
   directory, in $HOME/.wine/*.reg. Perhaps you have to remove these
   files).
+- Point [Drive C] in wine.conf or .winerc to where you want C: to be.
+  Refer to the README file or man page. Remember to use filesystem=win95 !
+- Use tools/wineinstall to compile Wine and install the default
+  registry. Or if you prefer to do it yourself, compile programs/regapi,
+  and run:   programs/regapi/regapi setValue < winedefault.reg
 - Run the application with   -debugmsg +module,+file   to find out
   which files are needed. Copy the required DLL's one by one to the
   C:\windows\system directory.
