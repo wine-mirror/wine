@@ -450,12 +450,12 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     IDirectDrawSurfaceImpl* surf;
     IDirectDrawSurfaceImpl* found = NULL;
 
-    TRACE("(%p)->Looking for caps: %x,%x,%x,%x output: %p\n",This,pCaps->dwCaps, pCaps->dwCaps2, 
+    TRACE("(%p)->Looking for caps: %lx,%lx,%lx,%lx output: %p\n",This,pCaps->dwCaps, pCaps->dwCaps2,
           pCaps->dwCaps3, pCaps->dwCaps4, ppSurface);
 
     for (surf = This->attached; surf != NULL; surf = surf->next_attached)
     {
-        TRACE("Surface: (%p) caps: %x,%x,%x,%x \n",surf ,
+        TRACE("Surface: (%p) caps: %lx,%lx,%lx,%lx \n",surf ,
                surf->surface_desc.ddsCaps.dwCaps,
                surf->surface_desc.ddsCaps.dwCaps2,
                surf->surface_desc.ddsCaps.dwCaps3,
