@@ -187,7 +187,8 @@ static const char *wrapper_code =
     "    }\n"
     "\n"
     "    for (i = 0; i < sizeof(libs)/sizeof(libs[0]); i++) {\n"
-    "        if (!LoadLibrary(libs[i])) error(\"Could not load %%s (%%d)\", libs[i], GetLastError());\n"
+    "        if (!LoadLibrary(libs[i])) \n"
+    "            fprintf(stderr, \"Warning: Could not load %%s (%%d)\\n\", libs[i], GetLastError());\n"
     "    }\n"
     "\n"
     "    /* Load the application's module */\n"
@@ -395,8 +396,7 @@ static void create_the_wrapper(char* base_file, char* base_name, char* app_name,
     strarray_add(wspec_args, strmake("%s.exe", base_name));
     strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
     strarray_add(wspec_args, wrap_o_name);
-    for (i = 0; i < llib_paths->size; i++)
-	strarray_add(wspec_args, llib_paths->base[i]);
+    strarray_add(wspec_args, "-L" DLLDIR);
     strarray_add(wspec_args, "-lkernel32");
     strarray_add(wspec_args, NULL);
 
@@ -422,13 +422,12 @@ static void create_the_wrapper(char* base_file, char* base_name, char* app_name,
     strarray_add(wlink_args, "gcc");
     strarray_add(wlink_args, "-shared");
     strarray_add(wlink_args, "-Wl,-Bsymbolic,-z,defs");
-    strarray_add(wlink_args, "-lwine");
     strarray_add(wlink_args, "-o");
     strarray_add(wlink_args, strmake("%s.exe.so", base_file));
+    strarray_add(wlink_args, "-L" LIBDIR);
+    strarray_add(wlink_args, "-lwine");
     strarray_add(wlink_args, wspec_o_name);
     strarray_add(wlink_args, wrap_o_name);
-    for (i = 0; i < llib_paths->size; i++)
-	strarray_add(wlink_args, llib_paths->base[i]);
     strarray_add(wlink_args, NULL);
 
     spawn(wlink_args);
