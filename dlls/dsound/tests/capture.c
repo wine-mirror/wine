@@ -274,10 +274,9 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
 	/* wait for the notifications */
 	for (i = 0; i < (NOTIFICATIONS * 2); i++) {
-	    rc=MsgWaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE,
-                                         3000,QS_ALLEVENTS);
+	    rc=WaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE,3000);
 	    ok(rc==(WAIT_OBJECT_0+(i%NOTIFICATIONS)),
-               "MsgWaitForMultipleObjects failed: 0x%lx\n",rc);
+               "WaitForMultipleObjects failed: 0x%lx\n",rc);
 	    if (rc!=(WAIT_OBJECT_0+(i%NOTIFICATIONS))) {
 		ok((rc==WAIT_TIMEOUT)||(rc==WAIT_FAILED),
                    "Wrong notification: should be %d, got %ld\n",
