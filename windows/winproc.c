@@ -2207,7 +2207,18 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
         return 1;
-    default:  /* No Unicode translation needed */
+    case LB_GETTEXT:
+    case CB_GETLBTEXT:
+        if ( WINPROC_TestLBForStr( hwnd ))
+        {
+            LPSTR str = (LPSTR) SEGPTR_ALLOC( 256 ); /* fixme: fixed sized buffer */
+            if (!str) return -1;
+            *pmsg16    = (msg32 == LB_GETTEXT)? LB_GETTEXT16 : CB_GETLBTEXT16;
+            *pwparam16 = (WPARAM16)LOWORD(wParam32);
+            *plparam   = (LPARAM)SEGPTR_GET(str);
+        }
+        return 1;
+    default:  /* No Unicode translation needed (?) */
         return WINPROC_MapMsg32ATo16( hwnd, msg32, wParam32, pmsg16,
                                       pwparam16, plparam );
     }
@@ -2230,6 +2241,15 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
             p16->lParam = *((LPARAM *)str - 1);
             lstrcpyAtoW( (LPWSTR)(p16->lParam), str );
             SEGPTR_FREE( (LPARAM *)str - 1 );
+        }
+        break;
+    case LB_GETTEXT:
+    case CB_GETLBTEXT:
+        if ( WINPROC_TestLBForStr( hwnd ))
+        {
+            LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
+            lstrcpyAtoW( (LPWSTR)lParam, str );
+            SEGPTR_FREE( (LPARAM *) str );
         }
         break;
     default:
