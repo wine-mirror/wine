@@ -23,8 +23,11 @@
 
 #define NERR_Success    0
 
-#define NERR_BASE       2100
+#define NERR_BASE                       2100
 
-#define MAX_NERR        (NERR_BASE+899)
+#define NERR_UserNotFound               (NERR_BASE + 121)
+#define NERR_InvalidComputer            (NERR_BASE + 251)
+
+#define MAX_NERR                        (NERR_BASE + 899)
 
 #endif

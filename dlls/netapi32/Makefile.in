@@ -10,7 +10,9 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	access.c \
 	apibuf.c \
+	browsr.c \
 	netapi32.c \
 	wksta.c
 

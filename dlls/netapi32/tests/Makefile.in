@@ -3,9 +3,10 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = netapi32.dll
-IMPORTS   = netapi32
+IMPORTS   = netapi32 advapi32
 
 CTESTS = \
+	access.c \
 	apibuf.c \
 	wksta.c
 

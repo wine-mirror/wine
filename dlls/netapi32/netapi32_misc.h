@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 1999 Rein Klazes
+ * Copyright 2002 Andriy Palamarchuk
+ *
+ * netapi32 internal functions.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -12,24 +14,22 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
+ * License along with this library; if not, writ
+e to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LMCONS_H
-#define __WINE_LMCONS_H
+#ifndef __WINE_NETAPI32_MISC_H
+#define __WINE_NETAPI32_MISC_H
 
-/* Types */
+extern BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName);
 
-#define NET_API_STATUS          DWORD
-
-#define MAX_PREFERRED_LENGTH            ((DWORD) -1)
-
-/* Lan manager API defines */
-
-#define UNLEN       256                 /* Maximum user name length */
-#define PWLEN       256                 /* Maximum password length */
-#define CNLEN       15                  /* Computer name length  */
-#define DNLEN       CNLEN               /* Maximum domain name length */
+#define NETAPI_ForceLocalComputer(ServerName, FailureCode) \
+    if (!NETAPI_IsLocalComputer(ServerName)) \
+    { \
+        FIXME("Action Implemented for local computer only. " \
+              "Requested for server %s\n", debugstr_w(ServerName)); \
+        return FailureCode; \
+    }
 
 #endif

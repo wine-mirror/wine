@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 1999 Rein Klazes
+ * Copyright 2002 Andriy Palamarchuk
+ *
+ * Browser NET API calls
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,20 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LMCONS_H
-#define __WINE_LMCONS_H
+#ifndef __WINE_LMBROWSR_H
+#define __WINE_LMBROWSR_H
 
-/* Types */
 
-#define NET_API_STATUS          DWORD
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define MAX_PREFERRED_LENGTH            ((DWORD) -1)
+typedef struct _BROWSER_EMULATED_DOMAIN {
+    LPWSTR DomainName;
+    LPWSTR EmulatedServerName;
+    DWORD Role;
+} BROWSER_EMULATED_DOMAIN, *PBROWSER_EMULATED_DOMAIN;
 
-/* Lan manager API defines */
+NET_API_STATUS WINAPI I_BrowserSetNetlogonState(
+    LPWSTR ServerName, LPWSTR DomainName, LPWSTR EmulatedServerName,
+    DWORD Role);
 
-#define UNLEN       256                 /* Maximum user name length */
-#define PWLEN       256                 /* Maximum password length */
-#define CNLEN       15                  /* Computer name length  */
-#define DNLEN       CNLEN               /* Maximum domain name length */
+NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
+    LPWSTR ServerName, PBROWSER_EMULATED_DOMAIN *EmulatedDomains,
+    LPDWORD EntriesRead);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,4 +1,5 @@
 Makefile
+access.ok
 apibuf.ok
 netapi32_test.exe.spec.c
 testlist.c

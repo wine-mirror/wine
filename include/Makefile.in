@@ -44,6 +44,7 @@ INSTALLED_INCLUDES = \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
+	lmbrowsr.h \
 	lmcons.h \
 	lmerr.h \
 	lmwksta.h \

@@ -83,12 +83,3 @@ NET_API_STATUS WINAPI NetApiBufferSize(LPVOID Buffer, LPDWORD ByteCount)
 
     return NERR_Success;
 }
-
-/************************************************************
- *                NetapipBufferAllocate  (NETAPI32.@)
- */
-NET_API_STATUS WINAPI NetapipBufferAllocate(DWORD ByteCount, LPVOID* Buffer)
-{
-    TRACE("(%ld, %p)\n", ByteCount, Buffer);
-    return NetApiBufferAllocate(ByteCount, Buffer);
-}

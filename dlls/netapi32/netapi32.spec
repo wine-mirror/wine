@@ -2,13 +2,13 @@ init	NETAPI32_LibMain
 
 @ stub I_BrowserDebugCall
 @ stub I_BrowserDebugTrace
-@ stub I_BrowserQueryEmulatedDomains
+@ stdcall I_BrowserQueryEmulatedDomains(wstr ptr ptr) I_BrowserQueryEmulatedDomains
 @ stub I_BrowserQueryOtherDomains
 @ stub I_BrowserQueryStatistics
 @ stub I_BrowserResetNetlogonState
 @ stub I_BrowserResetStatistics
 @ stub I_BrowserServerEnum
-@ stub I_BrowserSetNetlogonState
+@ stdcall I_BrowserSetNetlogonState(wstr wstr wstr long) I_BrowserSetNetlogonState
 @ stub I_NetAccountDeltas
 @ stub I_NetAccountSync
 @ stub I_NetDatabaseDeltas
@@ -103,7 +103,7 @@ init	NETAPI32_LibMain
 @ stub NetMessageNameDel
 @ stub NetMessageNameEnum
 @ stub NetMessageNameGetInfo
-@ stub NetQueryDisplayInformation
+@ stdcall NetQueryDisplayInformation(wstr long long long long ptr ptr) NetQueryDisplayInformation
 @ stub NetRemoteComputerSupports
 @ stub NetRemoteTOD
 @ stub NetReplExportDirAdd
@@ -190,7 +190,7 @@ init	NETAPI32_LibMain
 @ stub NetUserDel
 @ stub NetUserEnum
 @ stub NetUserGetGroups
-@ stub NetUserGetInfo
+@ stdcall NetUserGetInfo(wstr wstr long ptr) NetUserGetInfo
 @ stub NetUserGetLocalGroups
 @ stub NetUserModalsGet
 @ stub NetUserModalsSet
@@ -204,7 +204,7 @@ init	NETAPI32_LibMain
 @ stub NetWkstaUserEnum
 @ stdcall NetWkstaUserGetInfo(wstr long ptr) NetWkstaUserGetInfo
 @ stub NetWkstaUserSetInfo
-@ stdcall NetapipBufferAllocate(long ptr) NetapipBufferAllocate
+@ stdcall NetapipBufferAllocate(long ptr) NetApiBufferAllocate
 @ stdcall Netbios(ptr) Netbios
 @ stub NetpAccessCheck
 @ stub NetpAccessCheckAndAudit
@@ -221,7 +221,7 @@ init	NETAPI32_LibMain
 @ stub NetpCreateSecurityObject
 @ stub NetpDbgDisplayServerInfo
 @ stub NetpDbgPrint
-@ stub NetpDeleteSecurityObject
+@ forward NetpDeleteSecurityObject ntdll.RtlDeleteSecurityObject
 @ stdcall NetpGetComputerName(ptr) NetpGetComputerName
 @ stub NetpGetConfigBool
 @ stub NetpGetConfigDword
@@ -231,7 +231,7 @@ init	NETAPI32_LibMain
 @ stub NetpGetFileSecurity
 @ stub NetpGetPrivilege
 @ stub NetpHexDump
-@ stub NetpInitOemString
+@ forward NetpInitOemString ntdll.RtlInitAnsiString
 @ stub NetpIsRemote
 @ stub NetpIsUncComputerNameValid
 @ stub NetpLocalTimeZoneOffset

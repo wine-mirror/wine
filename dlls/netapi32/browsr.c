@@ -1,7 +1,7 @@
 /*
  * Copyright 2002 Andriy Palamarchuk
  *
- * General lm header which includes other lm headers.
+ * netapi32 browser functions
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,14 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_LM_H
-#define __WINE_LM_H
-
+#include <winbase.h>
+#include <winerror.h>
 #include <lmcons.h>
-#include <lmerr.h>
 #include <lmbrowsr.h>
-#include <lmaccess.h>
-#include <lmwksta.h>
-#include <lmapibuf.h>
+#include "wine/debug.h"
 
-#endif
+WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
+
+/************************************************************
+ *                I_BrowserSetNetlogonState  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI I_BrowserSetNetlogonState(
+    LPWSTR ServerName, LPWSTR DomainName, LPWSTR EmulatedServerName,
+    DWORD Role)
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+/************************************************************
+ *                I_BrowserQueryEmulatedDomains  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
+    LPWSTR ServerName, PBROWSER_EMULATED_DOMAIN *EmulatedDomains,
+    LPDWORD EntriesRead)
+{
+    return ERROR_NOT_SUPPORTED;
+}
