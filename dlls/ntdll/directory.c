@@ -145,6 +145,14 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
+/* check if a given Unicode char is OK in a DOS short name */
+static inline BOOL is_invalid_dos_char( WCHAR ch )
+{
+    static const WCHAR invalid_chars[] = { INVALID_DOS_CHARS,'~','.',0 };
+    if (ch > 0x7f) return TRUE;
+    return strchrW( invalid_chars, ch ) != NULL;
+}
+
 /***********************************************************************
  *           get_default_com_device
  *
@@ -402,7 +410,6 @@ BOOL DIR_is_hidden_file( const UNICODE_STRING *name )
  */
 static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
 {
-    static const WCHAR invalid_chars[] = { INVALID_DOS_CHARS,'~','.',0 };
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     LPCWSTR p, ext, end = name->Buffer + name->Length / sizeof(WCHAR);
@@ -433,7 +440,7 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     for (i = 4, p = name->Buffer, dst = buffer; i > 0; i--, p++)
     {
         if (p == end || p == ext) break;
-        *dst++ = strchrW( invalid_chars, *p ) ? '_' : toupperW(*p);
+        *dst++ = is_invalid_dos_char(*p) ? '_' : toupperW(*p);
     }
     /* Pad to 5 chars with '~' */
     while (i-- >= 0) *dst++ = '~';
@@ -448,7 +455,7 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     {
         *dst++ = '.';
         for (i = 3, ext++; (i > 0) && ext < end; i--, ext++)
-            *dst++ = strchrW( invalid_chars, *ext ) ? '_' : toupperW(*ext);
+            *dst++ = is_invalid_dos_char(*ext) ? '_' : toupperW(*ext);
     }
     return dst - buffer;
 }
