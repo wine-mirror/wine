@@ -271,15 +271,6 @@ typedef const OLECHAR *LPCOLESTR;
 #ifndef __WINESRC__
 #define OLESTR(str) L##str
 #endif
-typedef CHAR OLECHAR16;
-
-typedef LPSTR LPOLESTR16;
-
-typedef LPCSTR LPCOLESTR16;
-
-typedef OLECHAR16 *BSTR16;
-typedef BSTR16 *LPBSTR16;
-#define OLESTR16(x) x
 typedef LONG SCODE;
 
 typedef struct _COAUTHIDENTITY {

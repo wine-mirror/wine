@@ -265,7 +265,6 @@ typedef struct tagNMTTCUSTOMDRAW
 
 /* StatusWindow */
 
-#define STATUSCLASSNAME16	"msctls_statusbar"
 #define STATUSCLASSNAMEA	"msctls_statusbar32"
 #if defined(__GNUC__)
 # define STATUSCLASSNAMEW (const WCHAR []){ 'm','s','c','t','l','s','_', \
@@ -365,7 +364,6 @@ INT  WINAPI LBItemFromPt (HWND, POINT, BOOL);
 
 /* UpDown */
 
-#define UPDOWN_CLASS16          "msctls_updown"
 #define UPDOWN_CLASSA           "msctls_updown32"
 #if defined(__GNUC__)
 # define UPDOWN_CLASSW (const WCHAR []){ 'm','s','c','t','l','s','_', \
@@ -435,7 +433,6 @@ HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
 
 /* Progress Bar */
 
-#define PROGRESS_CLASS16  "msctls_progress"
 #define PROGRESS_CLASSA   "msctls_progress32"
 #if defined(__GNUC__)
 # define PROGRESS_CLASSW (const WCHAR []){ 'm','s','c','t','l','s','_', \
@@ -632,7 +629,6 @@ _TrackMouseEvent(
 
 /* Flat Scrollbar control */
 
-#define FLATSB_CLASS16        "flatsb_class"
 #define FLATSB_CLASSA         "flatsb_class32"
 #if defined(__GNUC__)
 # define FLATSB_CLASSW (const WCHAR []){ 'f','l','a','t','s','b','_', \
@@ -686,7 +682,6 @@ LRESULT WINAPI DefSubclassProc(HWND, UINT, WPARAM, LPARAM);
 
 /* Header control */
 
-#define WC_HEADER16		"SysHeader"
 #define WC_HEADERA		"SysHeader32"
 #if defined(__GNUC__)
 # define WC_HEADERW (const WCHAR []){ 'S','y','s','H','e','a','d','e','r','3','2',0 }
@@ -949,7 +944,6 @@ typedef struct tagNMHDDISPINFOW
 
 /* Toolbar */
 
-#define TOOLBARCLASSNAME16      "ToolbarWindow"
 #define TOOLBARCLASSNAMEA       "ToolbarWindow32"
 #if defined(__GNUC__)
 # define TOOLBARCLASSNAMEW (const WCHAR []){ 'T','o','o','l','b','a','r', \
@@ -1447,7 +1441,6 @@ CreateMappedBitmap (HINSTANCE, INT, UINT, LPCOLORMAP, INT);
 
 /* Tool tips */
 
-#define TOOLTIPS_CLASS16        "tooltips_class"
 #define TOOLTIPS_CLASSA         "tooltips_class32"
 #if defined(__GNUC__)
 # define TOOLTIPS_CLASSW (const WCHAR []){ 't','o','o','l','t','i','p','s','_', \
@@ -1633,7 +1626,6 @@ typedef struct tagNMTTDISPINFOW
 
 /* Rebar control */
 
-#define REBARCLASSNAME16        "ReBarWindow"
 #define REBARCLASSNAMEA         "ReBarWindow32"
 #if defined(__GNUC__)
 # define REBARCLASSNAMEW (const WCHAR []){ 'R','e','B','a','r', \
@@ -1699,7 +1691,6 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RB_DELETEBAND           (WM_USER+2)
 #define RB_GETBARINFO           (WM_USER+3)
 #define RB_SETBARINFO           (WM_USER+4)
-#define RB_GETBANDINFO          (WM_USER+5)   /* just for compatibility */
 #define RB_SETBANDINFOA         (WM_USER+6)
 #define RB_SETBANDINFOW         (WM_USER+11)
 #define RB_SETBANDINFO          WINELIB_NAME_AW(RB_SETBANDINFO)
@@ -1723,7 +1714,7 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RB_GETBARHEIGHT         (WM_USER+27)
 #define RB_GETBANDINFOW         (WM_USER+28)
 #define RB_GETBANDINFOA         (WM_USER+29)
-#define RB_GETBANDINFO16        WINELIB_NAME_AW(RB_GETBANDINFO16)
+#define RB_GETBANDINFO          WINELIB_NAME_AW(RB_GETBANDINFO)
 #define RB_MINIMIZEBAND         (WM_USER+30)
 #define RB_MAXIMIZEBAND         (WM_USER+31)
 #define RB_GETBANDBORDERS       (WM_USER+34)
@@ -1868,7 +1859,6 @@ typedef struct _RB_HITTESTINFO
 
 /* Trackbar control */
 
-#define TRACKBAR_CLASS16        "msctls_trackbar"
 #define TRACKBAR_CLASSA         "msctls_trackbar32"
 #if defined(__GNUC__)
 # define TRACKBAR_CLASSW (const WCHAR []){ 'm','s','c','t','l','s','_', \
@@ -3550,7 +3540,6 @@ typedef struct NMLVSCROLL
 
 /* Tab Control */
 
-#define WC_TABCONTROL16	"SysTabControl"
 #define WC_TABCONTROLA		"SysTabControl32"
 #if defined(__GNUC__)
 # define WC_TABCONTROLW (const WCHAR []){ 'S','y','s', \
@@ -3928,7 +3917,6 @@ typedef struct
 
 /* Hotkey control */
 
-#define HOTKEY_CLASS16          "msctls_hotkey"
 #define HOTKEY_CLASSA           "msctls_hotkey32"
 #if defined(__GNUC__)
 # define HOTKEY_CLASSW (const WCHAR []){ 'm','s','c','t','l','s','_', \

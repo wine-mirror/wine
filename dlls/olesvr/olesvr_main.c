@@ -101,6 +101,7 @@ typedef enum {
 
 typedef LONG LHSERVER;
 typedef LONG LHSERVERDOC;
+typedef LPCSTR LPCOLESTR16;
 
 typedef struct _OLESERVERDOC *LPOLESERVERDOC;
 

@@ -412,7 +412,7 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAut
 HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
 
 HRESULT WINAPI CoImpersonateClient(void);
-HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR16** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
+HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
 HRESULT WINAPI CoRevertToSelf(void);
 
 /* misc */
@@ -430,15 +430,9 @@ HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGE
 /*****************************************************************************
  *	GUID API
  */
-HRESULT WINAPI StringFromCLSID16(REFCLSID id, LPOLESTR16*);
 HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR*);
-
-HRESULT WINAPI CLSIDFromString16(LPCOLESTR16, CLSID *);
 HRESULT WINAPI CLSIDFromString(LPOLESTR, CLSID *);
-
-HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid);
 HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
-
 HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
 
 INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
@@ -460,13 +454,10 @@ HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid,
  */
 HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 
-HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC* ppbc);
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
 
-HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName, LPMONIKER* ppmk);
 HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
 
-HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 
 HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
@@ -482,7 +473,6 @@ HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER* ppmk);
 HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
 
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
 
 /*****************************************************************************
  *	Storage API

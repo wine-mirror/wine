@@ -1283,12 +1283,14 @@ const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
 /* replace the "0" with a "SZOF(structure)", or with a      */
 /* number. (First method prefered.)                         */
 
+#define RB_GETBANDINFO_OLD (WM_USER+5) /* obsoleted after IE3, but we have to support it anyway */
+
 static const USER_MSG rebar_array[] = {
           USM(RB_INSERTBANDA,          0),
           USM(RB_DELETEBAND,           0),
           USM(RB_GETBARINFO,           0),
           USM(RB_SETBARINFO,           0),
-          USM(RB_GETBANDINFO,          0),
+          USM(RB_GETBANDINFO_OLD,      0),
           USM(RB_SETBANDINFOA,         0),
           USM(RB_SETPARENT,            0),
           USM(RB_HITTEST,              0),

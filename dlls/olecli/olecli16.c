@@ -141,6 +141,7 @@ typedef struct _OLEOBJECT *LPOLEOBJECT;
 typedef struct _OLECLIENT *LPOLECLIENT;
 typedef LONG OLECLIPFORMAT;/* dunno about this type, please change/add */
 typedef OLEOPT_UPDATE *LPOLEOPT_UPDATE;
+typedef LPCSTR LPCOLESTR16;
 
 struct _OLESTREAM;
 

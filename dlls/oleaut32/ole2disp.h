@@ -26,6 +26,12 @@
 #include "wtypes.h"
 #include "wine/windef16.h"
 
+typedef CHAR OLECHAR16;
+typedef LPSTR LPOLESTR16;
+typedef LPCSTR LPCOLESTR16;
+typedef OLECHAR16 *BSTR16;
+typedef BSTR16 *LPBSTR16;
+
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
 BSTR16 WINAPI SysAllocStringLen16(const char*, int);
 VOID   WINAPI SysFreeString16(BSTR16);
