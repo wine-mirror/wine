@@ -39,16 +39,11 @@ LIBRARIES = \
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
 	console \
-	controls \
 	debugger \
 	dlls \
 	dlls/ntdll \
 	documentation \
 	files \
-	graphics \
-	graphics/enhmetafiledrv \
-	graphics/metafiledrv \
-	graphics/win16drv \
 	if1632 \
 	include \
 	library \
@@ -60,7 +55,6 @@ SUBDIRS = \
 	misc \
 	miscemu \
 	msdos \
-	objects \
 	ole \
 	programs \
 	relay32 \
@@ -69,8 +63,7 @@ SUBDIRS = \
 	server \
 	tools \
 	unicode \
-	win32 \
-	windows
+	win32
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -83,14 +76,9 @@ INSTALLSUBDIRS = \
 	unicode
 
 LIBOBJS = \
-	controls/controls.o \
 	console/console.o \
 	dlls/ntdll/ntdll.o \
 	files/files.o \
-	graphics/graphics.o \
-	graphics/enhmetafiledrv/enhmetafiledrv.o \
-	graphics/metafiledrv/metafiledrv.o \
-	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	loader/loader.o \
 	loader/ne/ne.o \
@@ -98,13 +86,11 @@ LIBOBJS = \
 	memory/memory.o \
 	misc/misc.o \
 	msdos/msdos.o \
-	objects/objects.o \
 	ole/ole.o \
 	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
-	win32/win32.o \
-	windows/windows.o
+	win32/win32.o
 
 EMUOBJS = \
 	miscemu/miscemu.o

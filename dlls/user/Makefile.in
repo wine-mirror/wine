@@ -24,7 +24,18 @@ RC_SRCS = \
 
 GLUE = thunk.c
 
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/controls/controls.o \
+	$(TOPOBJDIR)/windows/windows.o
+
+SUBDIRS = \
+	$(TOPOBJDIR)/controls \
+	$(TOPOBJDIR)/windows
+
 @MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:
 

@@ -765,6 +765,7 @@ BOOL WINAPI AttachThreadInput(
     DWORD idAttachTo, /* [in] Thread to attach to */
     BOOL fAttach)   /* [in] Attach or detach */
 {
+#if 0  /* FIXME: cannot call USER functions here */
     MESSAGEQUEUE *pSrcMsgQ = 0, *pTgtMsgQ = 0;
     BOOL16 bRet = 0;
 
@@ -829,6 +830,10 @@ CLEANUP:
         QUEUE_Unlock( pTgtMsgQ );
     
     return bRet;
+#endif
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FIXME( "broken for now\n" );
+    return FALSE;
 }
 
 /**********************************************************************

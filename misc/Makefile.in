@@ -17,14 +17,11 @@ C_SRCS = \
 	main.c \
 	options.c \
 	port.c \
-	printdrv.c \
 	registry.c \
 	system.c \
 	tweak.c \
 	version.c \
 	wsprintf.c
-
-GLUE = printdrv.c
 
 all: $(MODULE).o
 

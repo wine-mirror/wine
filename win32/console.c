@@ -97,6 +97,7 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 		ir.Event.KeyEvent.dwControlKeyState|=LEFT_ALT_PRESSED;
 		inchar &= ~0x80;
 	    }
+#if 0  /* FIXME: cannot call USER functions here */
 	    ir.Event.KeyEvent.wVirtualKeyCode = VkKeyScan16(inchar);
 	    if (ir.Event.KeyEvent.wVirtualKeyCode & 0x0100)
 		ir.Event.KeyEvent.dwControlKeyState|=SHIFT_PRESSED;
@@ -108,6 +109,10 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 	    	ir.Event.KeyEvent.wVirtualKeyCode & 0x00ff,
 		0 /* VirtualKeyCodes to ScanCode */
 	    );
+#else
+	    ir.Event.KeyEvent.wVirtualKeyCode = 0;
+	    ir.Event.KeyEvent.wVirtualScanCode = 0;
+#endif
 	    ir.Event.KeyEvent.uChar.AsciiChar = inchar;
 
 	    if ((inchar==127)||(inchar=='\b')) { /* backspace */
@@ -140,10 +145,15 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 	    ir.Event.KeyEvent.bKeyDown		= 1;
 	    ir.Event.KeyEvent.wRepeatCount	= 0;
 
+#if 0  /* FIXME: cannot call USER functions here */
 	    ir.Event.KeyEvent.wVirtualKeyCode	= VkKeyScan16(27);
 	    ir.Event.KeyEvent.wVirtualScanCode	= MapVirtualKey16(
 	    	ir.Event.KeyEvent.wVirtualKeyCode,0
 	    );
+#else
+	    ir.Event.KeyEvent.wVirtualKeyCode	= VK_ESCAPE;
+	    ir.Event.KeyEvent.wVirtualScanCode	= 1;
+#endif
 	    ir.Event.KeyEvent.dwControlKeyState = 0;
 	    ir.Event.KeyEvent.uChar.AsciiChar	= 27;
 	    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
@@ -225,7 +235,11 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 	    }
 	    if (scancode) {
 		ir.Event.KeyEvent.wVirtualScanCode = scancode;
+#if 0  /* FIXME: cannot call USER functions here */
 		ir.Event.KeyEvent.wVirtualKeyCode = MapVirtualKey16(scancode,1);
+#else
+		ir.Event.KeyEvent.wVirtualKeyCode = 0;
+#endif
 		assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 		ir.Event.KeyEvent.bKeyDown		= 0;
 		assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));

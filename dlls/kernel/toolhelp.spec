@@ -21,8 +21,11 @@ owner	kernel32
 66 pascal16 StackTraceFirst(ptr word) StackTraceFirst16
 67 pascal16 StackTraceCSIPFirst(ptr word word word word) StackTraceCSIPFirst16
 68 pascal16 StackTraceNext(ptr) StackTraceNext16
-69 pascal16 ClassFirst(ptr) ClassFirst16
-70 pascal16 ClassNext(ptr) ClassNext16
+#69 pascal16 ClassFirst(ptr) ClassFirst16
+#70 pascal16 ClassNext(ptr) ClassNext16
+#FIXME: window classes are USER objects
+69 stub ClassFirst
+70 stub ClassNext
 71 pascal16 SystemHeapInfo(ptr) SystemHeapInfo16
 72 pascal16 MemManInfo(ptr) MemManInfo16
 73 pascal16 NotifyRegister(word segptr word) NotifyRegister16

@@ -9,12 +9,30 @@ ALTNAMES  = gdi dispdib wing
 C_SRCS = \
 	bidi16.c \
 	gdi_main.c \
+	printdrv.c \
 	thunk.c \
 	wing.c
 
-GLUE = thunk.c
+GLUE = printdrv.c thunk.c
+
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/graphics/graphics.o \
+	$(TOPOBJDIR)/graphics/enhmetafiledrv/enhmetafiledrv.o \
+	$(TOPOBJDIR)/graphics/metafiledrv/metafiledrv.o \
+	$(TOPOBJDIR)/graphics/win16drv/win16drv.o \
+	$(TOPOBJDIR)/objects/objects.o
+
+SUBDIRS = \
+	$(TOPOBJDIR)/graphics \
+	$(TOPOBJDIR)/graphics/enhmetafiledrv \
+	$(TOPOBJDIR)/graphics/metafiledrv \
+	$(TOPOBJDIR)/graphics/win16drv \
+	$(TOPOBJDIR)/objects
 
 @MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:
 

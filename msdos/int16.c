@@ -58,6 +58,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
    case 0x02: /* Get Shift Flags */      
       AL_reg(context) = 0;
 
+#if 0  /* FIXME: cannot call USER functions here */
       if (GetAsyncKeyState(VK_RSHIFT))
           AL_reg(context) |= 0x01;
       if (GetAsyncKeyState(VK_LSHIFT))
@@ -74,6 +75,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
           AL_reg(context) |= 0x40;
       if (GetAsyncKeyState(VK_INSERT))
           AL_reg(context) |= 0x80;
+#endif
       TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 
