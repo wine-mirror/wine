@@ -245,15 +245,15 @@ typedef struct tagLISTVIEW_INFO
   SIZE iconStateSize;
   UINT uCallbackMask;
   HWND hwndHeader;
-  HFONT hDefaultFont;
   HCURSOR hHotCursor;
+  HFONT hDefaultFont;
   HFONT hFont;
-  INT ntmHeight;		/*  from GetTextMetrics from above font */
-  BOOL bRedraw;
+  INT ntmHeight;		/* From GetTextMetrics from above font */
+  BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
+  BOOL bFirstPaint;		/* Flags if the control has never painted before */
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
-  BOOL bFirstPaint;		/* Flags if the control has never painted before */
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
   INT nItemCount;		/* the number of items in the list */
@@ -1157,9 +1157,14 @@ static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 
 /* Listview invlaidation functions: use _only_ these function to invalidate */
 
+static inline BOOL is_redrawing(LISTVIEW_INFO *infoPtr)
+{
+    return infoPtr->bRedraw && !infoPtr->bFirstPaint;
+}
+
 static inline void LISTVIEW_InvalidateRect(LISTVIEW_INFO *infoPtr, const RECT*rect)
 {
-    if(!infoPtr->bRedraw) return; 
+    if(!is_redrawing(infoPtr)) return; 
     TRACE(" invalidating rect=%s\n", debugrect(rect));
     InvalidateRect(infoPtr->hwndSelf, rect, TRUE);
 }
@@ -1168,7 +1173,7 @@ static inline void LISTVIEW_InvalidateItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     RECT rcBox;
 
-    if(!infoPtr->bRedraw) return; 
+    if(!is_redrawing(infoPtr)) return; 
     LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
     LISTVIEW_InvalidateRect(infoPtr, &rcBox);
 }
@@ -1178,7 +1183,7 @@ static inline void LISTVIEW_InvalidateSubItem(LISTVIEW_INFO *infoPtr, INT nItem,
     POINT Origin, Position;
     RECT rcBox;
     
-    if(!infoPtr->bRedraw) return; 
+    if(!is_redrawing(infoPtr)) return; 
     assert ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT);
     LISTVIEW_GetOrigin(infoPtr, &Origin);
     LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
@@ -1464,7 +1469,6 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     ShowScrollBar(infoPtr->hwndSelf, SB_VERT, (test) ? FALSE : TRUE);
 
     /* update horizontal scrollbar */
-    nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
     scrollInfo.fMask = SIF_POS;
     if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)
        || infoPtr->nItemCount == 0)
@@ -1493,33 +1497,25 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
     if (LISTVIEW_GetViewRect(infoPtr, &rcView))
     {
-      INT nViewWidth = rcView.right - rcView.left;
-      INT nViewHeight = rcView.bottom - rcView.top;
+      TRACE("rcView=%s, rcList=%s\n", debugrect(&rcView), debugrect(&infoPtr->rcList));
 
       /* Update Horizontal Scrollbar */
       scrollInfo.fMask = SIF_POS;
-      if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)
-        || infoPtr->nItemCount == 0)
-      {
+      if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
         scrollInfo.nPos = 0;
-      }
       scrollInfo.nMin = 0;
-      scrollInfo.nMax = max(nViewWidth, 0)-1;
+      scrollInfo.nMax = max(rcView.right - rcView.left - 1, 0);
       scrollInfo.nPage = nListWidth;
       scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
       TRACE("LVS_ICON/SMALLICON Horz.\n");
       SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
 
       /* Update Vertical Scrollbar */
-      nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
       scrollInfo.fMask = SIF_POS;
-      if (!GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo)
-        || infoPtr->nItemCount == 0)
-      {
+      if (!GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
         scrollInfo.nPos = 0;
-      }
       scrollInfo.nMin = 0;
-      scrollInfo.nMax = max(nViewHeight,0)-1;
+      scrollInfo.nMax = max(rcView.bottom - rcView.top - 1, 0);
       scrollInfo.nPage = nListHeight;
       scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
       TRACE("LVS_ICON/SMALLICON Vert.\n");
@@ -4044,6 +4040,9 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     RECT rcScroll;
     POINT Origin;
 
+    /* if we don't refresh, what's the point of scrolling? */
+    /*if (!is_redrawing(infoPtr)) return; */
+    
     assert (abs(dir) == 1);
 
     /* arrange icons if autoarrange is on */
@@ -6890,11 +6889,11 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->nFocusedItem = -1;
   infoPtr->nSelectionMark = -1;
   infoPtr->nHotItem = -1;
-  infoPtr->bRedraw = TRUE;
+  infoPtr->bRedraw = FALSE;
+  infoPtr->bFirstPaint = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
-  infoPtr->bFirstPaint = TRUE;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -7705,11 +7704,11 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
     {
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
 	
+	infoPtr->bFirstPaint = FALSE;
 	LISTVIEW_UpdateItemSize(infoPtr);
 	if (uView == LVS_ICON || uView == LVS_SMALLICON)
 	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 	LISTVIEW_UpdateScroll(infoPtr);
-	infoPtr->bFirstPaint = FALSE;
     }
     if (hdc) 
 	LISTVIEW_Refresh(infoPtr, hdc);
