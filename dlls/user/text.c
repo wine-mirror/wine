@@ -334,21 +334,21 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
  * Returns pointer to next char in str after end of the line
  * or NULL if end of str reached.
  *
- * FIXME:
- * GetTextExtentPoint is used to get the width of each character, 
- * rather than GetCharABCWidth...  So the whitespace between
- * characters is ignored, and the reported len is too great.
  */
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                                   WCHAR *dest, int *len, int width, WORD format)
 {
     int i = 0, j = 0;
     int plen = 0;
+    int seg_plen; /* plen at the beginning of the current text segment */
     SIZE size;
     int wb_i = 0, wb_j = 0, wb_count = 0;
     int maxl = *len;
     int normal_char;
+    int seg_j; /* j at the beginning of the current text segment */
 
+    seg_j = j;
+    seg_plen = plen;
     while (*count && j < maxl)
     {
         normal_char = 1;
@@ -394,10 +394,12 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 		    wb_j = j;
 		    wb_count = *count;
                     plen = ((plen/tabwidth)+1)*tabwidth;
+                    seg_plen = plen;
                 }
 
                 normal_char = 0;
                 dest[j++] = str[i++];
+                seg_j = j;
 	    }
 	    break;
 
@@ -418,9 +420,9 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 	    dest[j++] = str[i++];
 	    if ((format & DT_WORDBREAK))
 	    {
-		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPointW(hdc, &dest[seg_j], j-seg_j, &size))
 		    return NULL;
-		plen += size.cx;
+                plen = seg_plen + size.cx;
 	    }
         }
 
@@ -541,6 +543,9 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     if (count == -1) count = strlenW(str);
     if (count == 0) return 0;
     strPtr = str;
+
+    if (flags & DT_SINGLELINE)
+        flags &= ~DT_WORDBREAK;
 
     GetTextMetricsW(hdc, &tm);
     if (flags & DT_EXTERNALLEADING)
