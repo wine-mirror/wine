@@ -204,18 +204,18 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_BYTES)
-        ok(mmtime.u.cb==duration*pwfx->nAvgBytesPerSec,
+        ok(mmtime.u.cb==duration*pwfx->nAvgBytesPerSec+pwfx->wBitsPerSample/8,
            "waveOutGetPosition returned %ld bytes, should be %ld\n",
-           mmtime.u.cb, (DWORD)(duration*pwfx->nAvgBytesPerSec));
+           mmtime.u.cb, (DWORD)(duration*pwfx->nAvgBytesPerSec)+pwfx->wBitsPerSample/8);
 
     mmtime.wType = TIME_SAMPLES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_SAMPLES)
-        ok(mmtime.u.sample==duration*pwfx->nSamplesPerSec,
+        ok(mmtime.u.sample==duration*pwfx->nSamplesPerSec+1,
            "waveOutGetPosition returned %ld samples, should be %ld\n",
-           mmtime.u.sample, (DWORD)(duration*pwfx->nSamplesPerSec));
+           mmtime.u.sample, (DWORD)(duration*pwfx->nSamplesPerSec)+1);
 
     mmtime.wType = TIME_MS;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
