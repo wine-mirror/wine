@@ -1576,6 +1576,13 @@ VOID WINAPI GlobalMemoryStatus(
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
     lpmem->dwAvailVirtual  = lpmem->dwTotalVirtual-64*1024;
     memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));
+
+    /* it appears some memory display programs want to divide by these values */
+    if(lpmem->dwTotalPageFile==0)
+        lpmem->dwTotalPageFile++;
+
+    if(lpmem->dwAvailPageFile==0)
+        lpmem->dwAvailPageFile++;
 }
 
 /***********************************************************************
