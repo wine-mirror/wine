@@ -35,13 +35,13 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "instance.h"
 #include "local.h"
 #include "global.h"
 #include "module.h"
 #include "stackframe.h"
 #include "selectors.h"
 #include "toolhelp.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(local);

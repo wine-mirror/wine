@@ -43,9 +43,9 @@
 #include "winnt.h"
 #include "msdos.h"
 #include "miscemu.h"
+#include "kernel_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "callback.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 

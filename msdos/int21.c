@@ -55,10 +55,10 @@
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
-#include "callback.h"
 #include "msdos.h"
 #include "miscemu.h"
 #include "task.h"
+#include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

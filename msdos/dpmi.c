@@ -25,7 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "callback.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 #include "wine/windef16.h"
 

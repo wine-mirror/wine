@@ -40,7 +40,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "miscemu.h"
-#include "callback.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);

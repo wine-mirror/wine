@@ -30,7 +30,7 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "wine/debug.h"
-#include "callback.h"
+#include "kernel_private.h"
 #include "thread.h"
 #include "wine/exception.h"
 

@@ -40,7 +40,6 @@
 #include "drive.h"
 #include "file.h"
 #include "global.h"
-#include "instance.h"
 #include "module.h"
 #include "winternl.h"
 #include "selectors.h"

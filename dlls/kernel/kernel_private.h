@@ -53,4 +53,30 @@ extern BOOL WOWTHUNK_Init(void);
 
 extern VOID SYSLEVEL_CheckNotLevel( INT level );
 
+typedef struct
+{
+    void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
+
+    /* I/O functions */
+    DWORD (WINAPI *inport)( int port, int size );
+    void (WINAPI *outport)( int port, int size, DWORD val );
+} DOSVM_TABLE;
+
+extern DOSVM_TABLE Dosvm;
+
+/* this structure is always located at offset 0 of the DGROUP segment */
+#include "pshpack1.h"
+typedef struct
+{
+    WORD null;        /* Always 0 */
+    DWORD old_ss_sp;  /* Stack pointer; used by SwitchTaskTo() */
+    WORD heap;        /* Pointer to the local heap information (if any) */
+    WORD atomtable;   /* Pointer to the local atom table (if any) */
+    WORD stacktop;    /* Top of the stack */
+    WORD stackmin;    /* Lowest stack address used so far */
+    WORD stackbottom; /* Bottom of the stack */
+} INSTANCEDATA;
+#include "poppack.h"
+
 #endif
