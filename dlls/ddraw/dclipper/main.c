@@ -106,10 +106,11 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
     LPDIRECTDRAWCLIPPER iface,LPRECT prcClip,LPRGNDATA lprgn,LPDWORD pdwSize
 ) {
     ICOM_THIS(IDirectDrawClipperImpl,iface);
-    FIXME("(%p,%p,%p,%p),stub!\n",This,prcClip,lprgn,pdwSize);
-    abort();
+    static int warned = 0;
+    if (warned++ < 10)
+	FIXME("(%p,%p,%p,%p),stub!\n",This,prcClip,lprgn,pdwSize);
     if (pdwSize) *pdwSize=0;
-    return DD_OK;
+    return DDERR_NOCLIPLIST;
 }
 
 HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
@@ -117,7 +118,6 @@ HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
 ) {
     ICOM_THIS(IDirectDrawClipperImpl,iface);
     FIXME("(%p,%p,%ld),stub!\n",This,lprgn,pdwSize);
-    abort();
     return DD_OK;
 }
 
