@@ -46,6 +46,8 @@
 static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
+static HWND (WINAPI *pGetAncestor)(HWND,UINT);
+
 /*
 FIXME: add tests for these
 Window Edge Styles (Win31/Win95/98 look), in order of precedence:
@@ -4342,7 +4344,8 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	    ok(!GetWindow(hwnd, GW_CHILD), "children should be unlinked at this point\n");
 	/* fall through */
 	case WM_DESTROY:
-	    ok(GetAncestor(hwnd, GA_PARENT) != 0, "parent should NOT be unlinked at this point\n");
+            if (pGetAncestor)
+	        ok(pGetAncestor(hwnd, GA_PARENT) != 0, "parent should NOT be unlinked at this point\n");
 	    if (test_DestroyWindow_flag)
 	    {
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -5430,8 +5433,10 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child2 */
     test = GetParent(child2);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
-    test = GetAncestor(child2, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(child2, GA_PARENT);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    }
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -5441,40 +5446,50 @@ static void test_DestroyWindow(void)
     /* test owner/parent of the parent */
     test = GetParent(parent);
     ok(!test, "wrong parent %p\n", test);
-    test = GetAncestor(parent, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(parent, GA_PARENT);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    }
     test = GetWindow(parent, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
     /* test owner/parent of child1 */
     test = GetParent(child1);
     ok(test == parent, "wrong parent %p\n", test);
-    test = GetAncestor(child1, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(child1, GA_PARENT);
     ok(test == parent, "wrong parent %p\n", test);
+    }
     test = GetWindow(child1, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
     /* test owner/parent of child2 */
     test = GetParent(child2);
     ok(test == parent, "wrong parent %p\n", test);
-    test = GetAncestor(child2, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(child2, GA_PARENT);
     ok(test == parent, "wrong parent %p\n", test);
+    }
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
     /* test owner/parent of child3 */
     test = GetParent(child3);
     ok(test == child1, "wrong parent %p\n", test);
-    test = GetAncestor(child3, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(child3, GA_PARENT);
     ok(test == child1, "wrong parent %p\n", test);
+    }
     test = GetWindow(child3, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
     /* test owner/parent of child4 */
     test = GetParent(child4);
     ok(test == parent, "wrong parent %p\n", test);
-    test = GetAncestor(child4, GA_PARENT);
+    if(pGetAncestor) {
+        test = pGetAncestor(child4, GA_PARENT);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    }
     test = GetWindow(child4, GW_OWNER);
     ok(test == parent, "wrong owner %p\n", test);
 
@@ -5575,6 +5590,7 @@ START_TEST(msg)
     FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
     FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
     FARPROC pIsWinEventHookInstalled = 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
+    pGetAncestor = (void*) GetProcAddress(user32, "GetAncestor");
 
     if (!RegisterWindowClasses()) assert(0);
 
