@@ -663,7 +663,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         ERR( "nested exception on signal stack in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
              GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        SYSDEPS_AbortThread(1);
+        server_abort_thread(1);
     }
 
     if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + 4096 ||
@@ -675,7 +675,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
             ERR( "stack overflow %u bytes in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
                  diff, GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            SYSDEPS_AbortThread(1);
+            server_abort_thread(1);
         }
         else WARN( "exception outside of stack limits in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
                    GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
@@ -1057,7 +1057,7 @@ static HANDLER_DEF(abrt_handler)
 static HANDLER_DEF(term_handler)
 {
     init_handler( HANDLER_CONTEXT );
-    SYSDEPS_AbortThread(0);
+    server_abort_thread(0);
 }
 
 
@@ -1175,46 +1175,6 @@ BOOL SIGNAL_Init(void)
  error:
     perror("sigaction");
     return FALSE;
-}
-
-
-/**********************************************************************
- *		SIGNAL_Block
- *
- * Block the async signals.
- */
-void SIGNAL_Block(void)
-{
-    sigset_t block_set;
-
-    sigemptyset( &block_set );
-    sigaddset( &block_set, SIGIO );
-    sigaddset( &block_set, SIGHUP );
-    sigaddset( &block_set, SIGUSR1 );
-    sigaddset( &block_set, SIGUSR2 );
-    sigprocmask( SIG_BLOCK, &block_set, NULL );
-}
-
-
-/**********************************************************************
- *		SIGNAL_Reset
- *
- * Restore the default handlers.
- */
-void SIGNAL_Reset(void)
-{
-    signal( SIGINT, SIG_DFL );
-    signal( SIGFPE, SIG_DFL );
-    signal( SIGSEGV, SIG_DFL );
-    signal( SIGILL, SIG_DFL );
-    signal( SIGABRT, SIG_DFL );
-    signal( SIGTERM, SIG_DFL );
-#ifdef SIGBUS
-    signal( SIGBUS, SIG_DFL );
-#endif
-#ifdef SIGTRAP
-    signal( SIGTRAP, SIG_DFL );
-#endif
 }
 
 

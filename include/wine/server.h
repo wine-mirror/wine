@@ -110,8 +110,4 @@ inline static void wine_server_set_reply( void *req_ptr, void *ptr, unsigned int
     } while(0)
 
 
-/* non-exported functions */
-extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
-extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
-
 #endif  /* __WINE_WINE_SERVER_H */

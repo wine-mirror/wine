@@ -42,7 +42,6 @@ static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
 static RTL_BITMAP tls_bitmap;
 static LIST_ENTRY tls_links;
-static struct debug_info info;  /* debug info for initial thread */
 
 
 /***********************************************************************
@@ -96,9 +95,10 @@ void thread_init(void)
     TEB *teb;
     void *addr;
     ULONG size;
+    static struct debug_info debug_info;  /* debug info for initial thread */
 
-    info.str_pos = info.strings;
-    info.out_pos = info.output;
+    debug_info.str_pos = debug_info.strings;
+    debug_info.out_pos = debug_info.output;
 
     peb.ProcessParameters = &params;
     peb.TlsBitmap         = &tls_bitmap;
@@ -115,14 +115,14 @@ void thread_init(void)
     teb->reply_fd      = -1;
     teb->wait_fd[0]    = -1;
     teb->wait_fd[1]    = -1;
-    teb->debug_info    = &info;
+    teb->debug_info    = &debug_info;
     InsertHeadList( &tls_links, &teb->TlsLinks );
 
     SYSDEPS_SetCurThread( teb );
 
     /* setup the server connection */
-    wine_server_init_process();
-    wine_server_init_thread();
+    server_init_process();
+    server_init_thread();
 
     /* create a memory view for the TEB */
     NtAllocateVirtualMemory( GetCurrentProcess(), &addr, teb, &size,
@@ -155,7 +155,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     SYSDEPS_SetCurThread( teb );
     SIGNAL_Init();
-    wine_server_init_thread();
+    server_init_thread();
 
     /* allocate a memory view for the stack */
     size = info->stack_size;
@@ -359,7 +359,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
     if (self)
     {
         if (last) exit( exit_code );
-        else SYSDEPS_AbortThread( exit_code );
+        else server_abort_thread( exit_code );
     }
     return ret;
 }

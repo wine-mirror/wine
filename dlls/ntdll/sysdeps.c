@@ -87,21 +87,6 @@ void SYSDEPS_SetCurThread( TEB *teb )
 
 
 /***********************************************************************
- *           SYSDEPS_AbortThread
- *
- * Same as SYSDEPS_ExitThread, but must not do anything that requires a server call.
- */
-void SYSDEPS_AbortThread( int status )
-{
-    SIGNAL_Block();
-    close( NtCurrentTeb()->wait_fd[0] );
-    close( NtCurrentTeb()->wait_fd[1] );
-    close( NtCurrentTeb()->reply_fd );
-    close( NtCurrentTeb()->request_fd );
-    wine_pthread_abort_thread( status );
-}
-
-/***********************************************************************
  *           SYSDEPS_GetUnixTid
  *
  * Get the Unix tid of the current thread.

@@ -47,9 +47,15 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
                                                  const LARGE_INTEGER *timeout );
 
 /* init routines */
-extern void wine_server_init_process(void);
-extern void wine_server_init_thread(void);
+extern BOOL SIGNAL_Init(void);
 extern void thread_init(void);
+
+/* server support */
+extern void server_init_process(void);
+extern void server_init_thread(void);
+extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
+extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
+extern void DECLSPEC_NORETURN server_abort_thread( int status );
 
 /* module handling */
 extern BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir );

@@ -496,7 +496,7 @@ static int wait_reply( void *cookie )
         server_protocol_perror("wakeup read");
     }
     /* the server closed the connection; time to die... */
-    SYSDEPS_AbortThread(0);
+    server_abort_thread(0);
 }
 
 

@@ -144,15 +144,7 @@ typedef struct _TEB
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
 /* scheduler/sysdeps.c */
-extern int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
 extern int SYSDEPS_GetUnixTid(void);
-extern void DECLSPEC_NORETURN SYSDEPS_ExitThread( int status );
-extern void DECLSPEC_NORETURN SYSDEPS_AbortThread( int status );
-
-/* signal handling */
-extern BOOL SIGNAL_Init(void);
-extern void SIGNAL_Block(void);
-extern void SIGNAL_Reset(void);
 
 #endif  /* __WINE_THREAD_H */
