@@ -5,7 +5,7 @@
  *		      1999  Rein Klazes
  * there is much left to do here before it can be useful for real world
  * programs
- * know problems:
+ * known problems:
  * -. Only one format of typelibs is supported
  * -. All testing so far is done using special written windows programs
  * -. Data structures are straightforward, but slow for look-ups.
@@ -131,7 +131,9 @@ QueryPathOfRegTypeLib(
 
         if (RegQueryValueA(HKEY_LOCAL_MACHINE, szTypeLibKey, szPath, &dwPathLen))
         {
-            if (myLCID == lcid)
+            if (!lcid)
+                break;
+            else if (myLCID == lcid)
             {
                 /* try with sub-langid */
                 myLCID = SUBLANGID(lcid);
@@ -161,7 +163,7 @@ QueryPathOfRegTypeLib(
            hr = S_OK;
         }
     }
-
+    TRACE_(typelib)("%s not found\n", szTypeLibKey);
     return hr;
 }
 
