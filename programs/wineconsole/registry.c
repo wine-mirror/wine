@@ -179,6 +179,8 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->def_attr = 0x000F;
     cfg->win_height = 25;
     cfg->win_width  = 80;
+    cfg->win_pos.X = 0;
+    cfg->win_pos.Y = 0;
     cfg->edition_mode = 0;
     cfg->registry = NULL;
 
