@@ -1341,22 +1341,22 @@ void trace_timeout(void)
     fprintf( stderr, "%08x: *timeout*\n", (unsigned int)current );
 }
 
-void trace_kill( int exit_code )
+void trace_kill( struct thread *thread )
 {
     fprintf( stderr,"%08x: *killed* exit_code=%d\n",
-             (unsigned int)current, exit_code );
+             (unsigned int)thread, thread->exit_code );
 }
 
-void trace_reply( struct thread *thread, unsigned int res, int pass_fd )
+void trace_reply( struct thread *thread )
 {
     fprintf( stderr, "%08x: %s() = %d",
-             (unsigned int)thread, req_names[thread->last_req], res );
+             (unsigned int)thread, req_names[thread->last_req], thread->error );
     if (reply_dumpers[thread->last_req])
     {
         fprintf( stderr, " {" );
         reply_dumpers[thread->last_req]( thread->buffer );
 	fprintf( stderr, " }" );
     }
-    if (pass_fd != -1) fprintf( stderr, " fd=%d\n", pass_fd );
+    if (thread->pass_fd != -1) fprintf( stderr, " fd=%d\n", thread->pass_fd );
     else fprintf( stderr, "\n" );
 }

@@ -39,17 +39,19 @@ static void timer_destroy( struct object *obj );
 
 static const struct object_ops timer_ops =
 {
-    sizeof(struct timer),
-    timer_dump,
-    add_queue,
-    remove_queue,
-    timer_signaled,
-    timer_satisfied,
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    timer_destroy
+    sizeof(struct timer),      /* size */
+    timer_dump,                /* dump */
+    add_queue,                 /* add_queue */
+    remove_queue,              /* remove_queue */
+    timer_signaled,            /* signaled */
+    timer_satisfied,           /* satisfied */
+    NULL,                      /* get_poll_events */
+    NULL,                      /* poll_event */
+    no_read_fd,                /* get_read_fd */
+    no_write_fd,               /* get_write_fd */
+    no_flush,                  /* flush */
+    no_get_file_info,          /* get_file_info */
+    timer_destroy              /* destroy */
 };
 
 

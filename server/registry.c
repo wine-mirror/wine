@@ -106,17 +106,19 @@ static void key_destroy( struct object *obj );
 
 static const struct object_ops key_ops =
 {
-    sizeof(struct key),
-    key_dump,
-    no_add_queue,
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    key_destroy
+    sizeof(struct key),      /* size */
+    key_dump,                /* dump */
+    no_add_queue,            /* add_queue */
+    NULL,                    /* remove_queue */
+    NULL,                    /* signaled */
+    NULL,                    /* satisfied */
+    NULL,                    /* get_poll_events */
+    NULL,                    /* poll_event */
+    no_read_fd,              /* get_read_fd */
+    no_write_fd,             /* get_write_fd */
+    no_flush,                /* flush */
+    no_get_file_info,        /* get_file_info */
+    key_destroy              /* destroy */
 };
 
 
@@ -322,7 +324,7 @@ static WCHAR *req_strdupW( const WCHAR *str )
 static struct key *alloc_key( const WCHAR *name, time_t modif )
 {
     struct key *key;
-    if ((key = (struct key *)alloc_object( &key_ops )))
+    if ((key = (struct key *)alloc_object( &key_ops, -1 )))
     {
         key->name        = NULL;
         key->class       = NULL;

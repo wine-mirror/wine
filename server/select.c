@@ -19,12 +19,6 @@
 #include "thread.h"
 
 
-struct poll_user
-{
-    void (*func)(int event, void *private); /* callback function */
-    void  *private;                         /* callback private data */
-};
-
 struct timeout_user
 {
     struct timeout_user  *next;       /* next in sorted timeout list */
@@ -34,32 +28,31 @@ struct timeout_user
     void                 *private;    /* callback private data */
 };
 
-static struct poll_user *poll_users;        /* users array */
+static struct object **poll_users;          /* users array */
 static struct pollfd *pollfd;               /* poll fd array */
 static int nb_users;                        /* count of array entries actually in use */
 static int active_users;                    /* current number of active users */
 static int allocated_users;                 /* count of allocated entries in the array */
-static struct poll_user *freelist;          /* list of free entries in the array */
+static struct object **freelist;            /* list of free entries in the array */
 
 static struct timeout_user *timeout_head;   /* sorted timeouts list head */
 static struct timeout_user *timeout_tail;   /* sorted timeouts list tail */
 
 
 /* add a user and return an opaque handle to it, or -1 on failure */
-int add_select_user( int fd, void (*func)(int, void *), void *private )
+int add_select_user( struct object *obj )
 {
     int ret;
     if (freelist)
     {
         ret = freelist - poll_users;
-        freelist = poll_users[ret].private;
-        assert( !poll_users[ret].func );
+        freelist = (struct object **)poll_users[ret];
     }
     else
     {
         if (nb_users == allocated_users)
         {
-            struct poll_user *newusers;
+            struct object **newusers;
             struct pollfd *newpoll;
             int new_count = allocated_users ? (allocated_users + allocated_users / 2) : 16;
             if (!(newusers = realloc( poll_users, new_count * sizeof(*poll_users) ))) return -1;
@@ -74,43 +67,53 @@ int add_select_user( int fd, void (*func)(int, void *), void *private )
         }
         ret = nb_users++;
     }
-    pollfd[ret].fd = fd;
+    pollfd[ret].fd = obj->fd;
     pollfd[ret].events = 0;
     pollfd[ret].revents = 0;
-    poll_users[ret].func = func;
-    poll_users[ret].private = private;
+    poll_users[ret] = obj;
+    obj->select = ret;
     active_users++;
     return ret;
 }
 
-/* remove a user and close its fd */
-void remove_select_user( int user )
+/* remove an object from the select list and close its fd */
+void remove_select_user( struct object *obj )
 {
-    if (user == -1) return;  /* avoids checking in all callers */
-    assert( poll_users[user].func );
-    close( pollfd[user].fd );
+    int user = obj->select;
+    assert( poll_users[user] == obj );
     pollfd[user].fd = -1;
     pollfd[user].events = 0;
     pollfd[user].revents = 0;
-    poll_users[user].func = NULL;
-    poll_users[user].private = freelist;
+    poll_users[user] = (struct object *)freelist;
     freelist = &poll_users[user];
+    close( obj->fd );
+    obj->fd = -1;
+    obj->select = -1;
     active_users--;
 }
 
-/* change the fd of a select user (the old fd is closed) */
-void change_select_fd( int user, int fd )
+/* change the fd of an object (the old fd is closed) */
+void change_select_fd( struct object *obj, int fd )
 {
-    assert( poll_users[user].func );
-    close( pollfd[user].fd );
+    int user = obj->select;
+    assert( poll_users[user] == obj );
     pollfd[user].fd = fd;
+    close( obj->fd );
+    obj->fd = fd;
 }
 
 /* set the events that select waits for on this fd */
-void set_select_events( int user, int events )
+void set_select_events( struct object *obj, int events )
 {
-    assert( poll_users[user].func );
-    pollfd[user].events = events;
+    int user = obj->select;
+    assert( poll_users[user] == obj );
+    if (events == -1)  /* stop waiting on this fd completely */
+    {
+        pollfd[user].fd = -1;
+        pollfd[user].events = 0;
+        pollfd[user].revents = 0;
+    }
+    else if (pollfd[user].fd != -1) pollfd[user].events = events;
 }
 
 /* check if events are pending */
@@ -259,7 +262,7 @@ void select_loop(void)
             {
                 if (pollfd[i].revents)
                 {
-                    poll_users[i].func( pollfd[i].revents, poll_users[i].private );
+                    poll_users[i]->ops->poll_event( poll_users[i], pollfd[i].revents );
                     if (!--ret) break;
                 }
             }

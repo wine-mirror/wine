@@ -69,17 +69,19 @@ static void handle_table_destroy( struct object *obj );
 
 static const struct object_ops handle_table_ops =
 {
-    sizeof(struct handle_table),
-    handle_table_dump,
-    no_add_queue,
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    handle_table_destroy
+    sizeof(struct handle_table),     /* size */
+    handle_table_dump,               /* dump */
+    no_add_queue,                    /* add_queue */
+    NULL,                            /* remove_queue */
+    NULL,                            /* signaled */
+    NULL,                            /* satisfied */
+    NULL,                            /* get_poll_events */
+    NULL,                            /* poll_event */
+    no_read_fd,                      /* get_read_fd */
+    no_write_fd,                     /* get_write_fd */
+    no_flush,                        /* flush */
+    no_get_file_info,                /* get_file_info */
+    handle_table_destroy             /* destroy */
 };
 
 /* dump a handle table */
@@ -127,7 +129,7 @@ struct object *alloc_handle_table( struct process *process, int count )
     struct handle_table *table;
 
     if (count < MIN_HANDLE_ENTRIES) count = MIN_HANDLE_ENTRIES;
-    if (!(table = alloc_object( &handle_table_ops )))
+    if (!(table = alloc_object( &handle_table_ops, -1 )))
         return NULL;
     table->process = process;
     table->count   = count;

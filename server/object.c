@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "winerror.h"
 #include "thread.h"
@@ -121,23 +122,34 @@ static void set_object_name( struct object *obj, struct object_name *ptr )
 }
 
 /* allocate and initialize an object */
-void *alloc_object( const struct object_ops *ops )
+/* if the function fails the fd is closed */
+void *alloc_object( const struct object_ops *ops, int fd )
 {
     struct object *obj = mem_alloc( ops->size );
     if (obj)
     {
         obj->refcount = 1;
+        obj->fd       = fd;
+        obj->select   = -1;
         obj->ops      = ops;
         obj->head     = NULL;
         obj->tail     = NULL;
         obj->name     = NULL;
+        if ((fd != -1) && (add_select_user( obj ) == -1))
+        {
+            close( fd );
+            free( obj );
+            return NULL;
+        }
 #ifdef DEBUG_OBJECTS
         obj->prev = NULL;
         if ((obj->next = first) != NULL) obj->next->prev = obj;
         first = obj;
 #endif
+        return obj;
     }
-    return obj;
+    if (fd != -1) close( fd );
+    return NULL;
 }
 
 void *create_named_object( const struct object_ops *ops, const WCHAR *name, size_t len )
@@ -145,7 +157,7 @@ void *create_named_object( const struct object_ops *ops, const WCHAR *name, size
     struct object *obj;
     struct object_name *name_ptr;
 
-    if (!name || !len) return alloc_object( ops );
+    if (!name || !len) return alloc_object( ops, -1 );
     if (!(name_ptr = alloc_name( name, len ))) return NULL;
 
     if ((obj = find_object( name_ptr->name, name_ptr->len )))
@@ -159,7 +171,7 @@ void *create_named_object( const struct object_ops *ops, const WCHAR *name, size
         set_error( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    if ((obj = alloc_object( ops )))
+    if ((obj = alloc_object( ops, -1 )))
     {
         set_object_name( obj, name_ptr );
         clear_error();
@@ -199,14 +211,16 @@ void release_object( void *ptr )
         /* if the refcount is 0, nobody can be in the wait queue */
         assert( !obj->head );
         assert( !obj->tail );
+        obj->ops->destroy( obj );
         if (obj->name) free_name( obj );
+        if (obj->select != -1) remove_select_user( obj );
+        if (obj->fd != -1) close( obj->fd );
 #ifdef DEBUG_OBJECTS
         if (obj->next) obj->next->prev = obj->prev;
         if (obj->prev) obj->prev->next = obj->next;
         else first = obj->next;
-#endif
-        obj->ops->destroy( obj );
         memset( obj, 0xaa, obj->ops->size );
+#endif
         free( obj );
     }
 }
@@ -224,7 +238,7 @@ struct object *find_object( const WCHAR *name, size_t len )
     return NULL;
 }
 
-/* functions for unimplemented object operations */
+/* functions for unimplemented/default object operations */
 
 int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
@@ -265,9 +279,45 @@ void no_destroy( struct object *obj )
 {
 }
 
-void default_select_event( int event, void *private )
+/* default add_queue() routine for objects that poll() on an fd */
+int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    struct object *obj = (struct object *)private;
-    assert( obj );
+    if (!obj->head)  /* first on the queue */
+        set_select_events( obj, obj->ops->get_poll_events( obj ) );
+    add_queue( obj, entry );
+    return 1;
+}
+
+/* default remove_queue() routine for objects that poll() on an fd */
+void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    grab_object(obj);
+    remove_queue( obj, entry );
+    if (!obj->head)  /* last on the queue is gone */
+        set_select_events( obj, 0 );
+    release_object( obj );
+}
+
+/* default signaled() routine for objects that poll() on an fd */
+int default_poll_signaled( struct object *obj, struct thread *thread )
+{
+    int events = obj->ops->get_poll_events( obj );
+
+    if (check_select_events( obj->fd, events ))
+    {
+        /* stop waiting on select() if we are signaled */
+        set_select_events( obj, 0 );
+        return 1;
+    }
+    /* restart waiting on select() if we are no longer signaled */
+    if (obj->head) set_select_events( obj, events );
+    return 0;
+}
+
+/* default handler for poll() events */
+void default_poll_event( struct object *obj, int event )
+{
+    /* an error occurred, stop polling this fd to avoid busy-looping */
+    if (event & (POLLERR | POLLHUP)) set_select_events( obj, -1 );
     wake_up( obj, 0 );
 }

@@ -63,21 +63,24 @@ struct thread_apc
 
 static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
+extern void thread_poll_event( struct object *obj, int event );
 static void destroy_thread( struct object *obj );
 
 static const struct object_ops thread_ops =
 {
-    sizeof(struct thread),
-    dump_thread,
-    add_queue,
-    remove_queue,
-    thread_signaled,
-    no_satisfied,
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    destroy_thread
+    sizeof(struct thread),      /* size */
+    dump_thread,                /* dump */
+    add_queue,                  /* add_queue */
+    remove_queue,               /* remove_queue */
+    thread_signaled,            /* signaled */
+    no_satisfied,               /* satisfied */
+    NULL,                       /* get_poll_events */
+    thread_poll_event,          /* poll_event */
+    no_read_fd,                 /* get_read_fd */
+    no_write_fd,                /* get_write_fd */
+    no_flush,                   /* flush */
+    no_get_file_info,           /* get_file_info */
+    destroy_thread              /* destroy */
 };
 
 static struct thread *first_thread;
@@ -105,9 +108,11 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     struct thread *thread;
     int buf_fd;
 
-    if (!(thread = alloc_object( &thread_ops ))) return NULL;
+    int flags = fcntl( fd, F_GETFL, 0 );
+    fcntl( fd, F_SETFL, flags | O_NONBLOCK );
 
-    thread->client      = NULL;
+    if (!(thread = alloc_object( &thread_ops, fd ))) return NULL;
+
     thread->unix_pid    = 0;  /* not known yet */
     thread->teb         = NULL;
     thread->mutex       = NULL;
@@ -118,6 +123,7 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     thread->apc         = NULL;
     thread->apc_count   = 0;
     thread->error       = 0;
+    thread->pass_fd     = -1;
     thread->state       = RUNNING;
     thread->attached    = 0;
     thread->exit_code   = 0x103;  /* STILL_ACTIVE */
@@ -142,11 +148,8 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     add_process_thread( process, thread );
 
     if ((buf_fd = alloc_client_buffer( thread )) == -1) goto error;
-    if (!(thread->client = add_client( fd, thread )))
-    {
-        close( buf_fd );
-        goto error;
-    }
+
+    set_select_events( &thread->obj, POLLIN );  /* start listening to events */
     set_reply_fd( thread, buf_fd );  /* send the fd to the client */
     send_reply( thread );
     return thread;
@@ -164,6 +167,20 @@ void create_initial_thread( int fd )
     select_loop();
 }
 
+/* handle a client event */
+void thread_poll_event( struct object *obj, int event )
+{
+    struct thread *thread = (struct thread *)obj;
+    assert( obj->ops == &thread_ops );
+
+    if (event & (POLLERR | POLLHUP)) kill_thread( thread, BROKEN_PIPE );
+    else
+    {
+        if (event & POLLOUT) write_request( thread );
+        if (event & POLLIN) read_request( thread );
+    }
+}
+
 /* destroy a thread when its refcount is 0 */
 static void destroy_thread( struct object *obj )
 {
@@ -177,6 +194,7 @@ static void destroy_thread( struct object *obj )
     else first_thread = thread->next;
     if (thread->apc) free( thread->apc );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    if (thread->pass_fd != -1) close( thread->pass_fd );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -499,21 +517,17 @@ static int thread_queue_apc( struct thread *thread, void *func, void *param )
 void kill_thread( struct thread *thread, int exit_code )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
-    remove_client( thread->client, exit_code ); /* this will call thread_killed */
-}
-
-/* a thread has been killed */
-void thread_killed( struct thread *thread, int exit_code )
-{
     thread->state = TERMINATED;
     thread->exit_code = exit_code;
-    thread->client = NULL;
+    if (current == thread) current = NULL;
+    if (debug_level) trace_kill( thread );
     if (thread->wait) end_wait( thread );
     debug_exit_thread( thread, exit_code );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
     detach_thread( thread );
+    remove_select_user( &thread->obj );
     release_object( thread );
 }
 

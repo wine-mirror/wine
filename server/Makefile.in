@@ -25,7 +25,6 @@ C_SRCS = \
 	semaphore.c \
 	snapshot.c \
 	sock.c \
-	socket.c \
 	thread.c \
 	timer.c \
 	trace.c \

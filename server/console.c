@@ -38,8 +38,6 @@ struct screen_buffer;
 struct console_input
 {
     struct object         obj;           /* object header */
-    int                   fd;            /* file descriptor */
-    int                   select;        /* select user id */
     int                   mode;          /* input mode */
     struct screen_buffer *output;        /* associated screen buffer */
     int                   recnum;        /* number of input records */
@@ -49,8 +47,6 @@ struct console_input
 struct screen_buffer
 {
     struct object         obj;           /* object header */
-    int                   fd;            /* file descriptor */
-    int                   select;        /* select user id */
     int                   mode;          /* output mode */
     struct console_input *input;         /* associated console input */
     int                   cursor_size;   /* size of cursor (percentage filled) */
@@ -61,16 +57,12 @@ struct screen_buffer
 
 
 static void console_input_dump( struct object *obj, int verbose );
-static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry );
-static void console_input_remove_queue( struct object *obj, struct wait_queue_entry *entry );
-static int console_input_signaled( struct object *obj, struct thread *thread );
+static int console_input_get_poll_events( struct object *obj );
 static int console_input_get_read_fd( struct object *obj );
 static void console_input_destroy( struct object *obj );
 
 static void screen_buffer_dump( struct object *obj, int verbose );
-static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry );
-static void screen_buffer_remove_queue( struct object *obj, struct wait_queue_entry *entry );
-static int screen_buffer_signaled( struct object *obj, struct thread *thread );
+static int screen_buffer_get_poll_events( struct object *obj );
 static int screen_buffer_get_write_fd( struct object *obj );
 static void screen_buffer_destroy( struct object *obj );
 
@@ -79,32 +71,36 @@ static int console_get_info( struct object *obj, struct get_file_info_request *r
 
 static const struct object_ops console_input_ops =
 {
-    sizeof(struct console_input),
-    console_input_dump,
-    console_input_add_queue,
-    console_input_remove_queue,
-    console_input_signaled,
-    no_satisfied,
-    console_input_get_read_fd,
-    no_write_fd,
-    no_flush,
-    console_get_info,
-    console_input_destroy
+    sizeof(struct console_input),     /* size */
+    console_input_dump,               /* dump */
+    default_poll_add_queue,           /* add_queue */
+    default_poll_remove_queue,        /* remove_queue */
+    default_poll_signaled,            /* signaled */
+    no_satisfied,                     /* satisfied */
+    console_input_get_poll_events,    /* get_poll_events */
+    default_poll_event,               /* poll_event */
+    console_input_get_read_fd,        /* get_read_fd */
+    no_write_fd,                      /* get_write_fd */
+    no_flush,                         /* flush */
+    console_get_info,                 /* get_file_info */
+    console_input_destroy             /* destroy */
 };
 
 static const struct object_ops screen_buffer_ops =
 {
-    sizeof(struct screen_buffer),
-    screen_buffer_dump,
-    screen_buffer_add_queue,
-    screen_buffer_remove_queue,
-    screen_buffer_signaled,
-    no_satisfied,
-    no_read_fd,
-    screen_buffer_get_write_fd,
-    no_flush,
-    console_get_info,
-    screen_buffer_destroy
+    sizeof(struct screen_buffer),     /* size */
+    screen_buffer_dump,               /* dump */
+    default_poll_add_queue,           /* add_queue */
+    default_poll_remove_queue,        /* remove_queue */
+    default_poll_signaled,            /* signaled */
+    no_satisfied,                     /* satisfied */
+    screen_buffer_get_poll_events,    /* get_poll_events */
+    default_poll_event,               /* poll_event */
+    no_read_fd,                       /* get_read_fd */
+    screen_buffer_get_write_fd,       /* get_write_fd */
+    no_flush,                         /* flush */
+    console_get_info,                 /* get_file_info */
+    screen_buffer_destroy             /* destroy */
 };
 
 
@@ -117,21 +113,13 @@ static struct object *create_console_input( int fd )
         file_set_error();
         return NULL;
     }
-    if ((console_input = alloc_object( &console_input_ops )))
-    {
-        console_input->fd      = fd;
-        console_input->mode    = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
-                                 ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
-        console_input->output  = NULL;
-        console_input->recnum  = 0;
-        console_input->records = NULL;
-        console_input->select  = add_select_user( fd, default_select_event, console_input );
-        if (console_input->select != -1) return &console_input->obj;
-        release_object( console_input );
-        return NULL;
-    }
-    close( fd );
-    return NULL;
+    if (!(console_input = alloc_object( &console_input_ops, fd ))) return NULL;
+    console_input->mode    = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+                             ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
+    console_input->output  = NULL;
+    console_input->recnum  = 0;
+    console_input->records = NULL;
+    return &console_input->obj;
 }
 
 static struct object *create_console_output( int fd, struct object *input )
@@ -144,26 +132,15 @@ static struct object *create_console_output( int fd, struct object *input )
         file_set_error();
         return NULL;
     }
-    if ((screen_buffer = alloc_object( &screen_buffer_ops )))
-    {
-        screen_buffer->fd             = fd;
-        screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-        screen_buffer->input          = console_input;
-        screen_buffer->cursor_size    = 100;
-        screen_buffer->cursor_visible = 1;
-        screen_buffer->pid            = 0;
-        screen_buffer->title          = strdup( "Wine console" );
-        screen_buffer->select = add_select_user( fd, default_select_event, screen_buffer );
-        if (screen_buffer->select == -1)
-        {
-            release_object( screen_buffer );
-            return NULL;
-        }
-        console_input->output = screen_buffer;
-        return &screen_buffer->obj;
-    }
-    close( fd );
-    return NULL;
+    if (!(screen_buffer = alloc_object( &screen_buffer_ops, fd ))) return NULL;
+    screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
+    screen_buffer->input          = console_input;
+    screen_buffer->cursor_size    = 100;
+    screen_buffer->cursor_visible = 1;
+    screen_buffer->pid            = 0;
+    screen_buffer->title          = strdup( "Wine console" );
+    console_input->output = screen_buffer;
+    return &screen_buffer->obj;
 }
 
 /* allocate a console for this process */
@@ -223,10 +200,8 @@ static int set_console_fd( int handle, int fd_in, int fd_out, int pid )
     assert( !input->obj.head );
     assert( !output->obj.head );
 
-    change_select_fd( input->select, fd_in );
-    change_select_fd( output->select, fd_out );
-    input->fd   = fd_in;
-    output->fd  = fd_out;
+    change_select_fd( &input->obj, fd_in );
+    change_select_fd( &output->obj, fd_out );
     output->pid = pid;
     release_object( input );
     release_object( output );
@@ -360,54 +335,19 @@ static void console_input_dump( struct object *obj, int verbose )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    fprintf( stderr, "Console input fd=%d\n", console->fd );
+    fprintf( stderr, "Console input fd=%d\n", console->obj.fd );
 }
 
-static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int console_input_get_poll_events( struct object *obj )
 {
-    struct console_input *console = (struct console_input *)obj;
-    assert( obj->ops == &console_input_ops );
-    if (!obj->head)  /* first on the queue */
-        set_select_events( console->select, POLLIN );
-    add_queue( obj, entry );
-    return 1;
-}
-
-static void console_input_remove_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct console_input *console = (struct console_input *)grab_object(obj);
-    assert( obj->ops == &console_input_ops );
-
-    remove_queue( obj, entry );
-    if (!obj->head)  /* last on the queue is gone */
-        set_select_events( console->select, 0 );
-    release_object( obj );
-}
-
-static int console_input_signaled( struct object *obj, struct thread *thread )
-{
-    struct console_input *console = (struct console_input *)obj;
-    assert( obj->ops == &console_input_ops );
-
-    if (check_select_events( console->fd, POLLIN ))
-    {
-        /* stop waiting on select() if we are signaled */
-        set_select_events( console->select, 0 );
-        return 1;
-    }
-    else
-    {
-        /* restart waiting on select() if we are no longer signaled */
-        if (obj->head) set_select_events( console->select, POLLIN );
-        return 0;
-    }
+    return POLLIN;
 }
 
 static int console_input_get_read_fd( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    return dup( console->fd );
+    return dup( console->obj.fd );
 }
 
 static int console_get_info( struct object *obj, struct get_file_info_request *req )
@@ -429,7 +369,6 @@ static void console_input_destroy( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    remove_select_user( console->select );
     if (console->output) console->output->input = NULL;
 }
 
@@ -437,61 +376,25 @@ static void screen_buffer_dump( struct object *obj, int verbose )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    fprintf( stderr, "Console screen buffer fd=%d\n", console->fd );
+    fprintf( stderr, "Console screen buffer fd=%d\n", console->obj.fd );
 }
 
-static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int screen_buffer_get_poll_events( struct object *obj )
 {
-    struct screen_buffer *console = (struct screen_buffer *)obj;
-    assert( obj->ops == &screen_buffer_ops );
-    if (!obj->head)  /* first on the queue */
-        set_select_events( console->select, POLLOUT );
-    add_queue( obj, entry );
-    return 1;
-}
-
-static void screen_buffer_remove_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct screen_buffer *console = (struct screen_buffer *)grab_object(obj);
-    assert( obj->ops == &screen_buffer_ops );
-
-    remove_queue( obj, entry );
-    if (!obj->head)  /* last on the queue is gone */
-        set_select_events( console->select, 0 );
-    release_object( obj );
-}
-
-static int screen_buffer_signaled( struct object *obj, struct thread *thread )
-{
-    struct screen_buffer *console = (struct screen_buffer *)obj;
-    assert( obj->ops == &screen_buffer_ops );
-
-    if (check_select_events( console->fd, POLLOUT ))
-    {
-        /* stop waiting on select() if we are signaled */
-        set_select_events( console->select, 0 );
-        return 1;
-    }
-    else
-    {
-        /* restart waiting on select() if we are no longer signaled */
-        if (obj->head) set_select_events( console->select, POLLOUT );
-        return 0;
-    }
+    return POLLOUT;
 }
 
 static int screen_buffer_get_write_fd( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    return dup( console->fd );
+    return dup( console->obj.fd );
 }
 
 static void screen_buffer_destroy( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    remove_select_user( console->select );
     if (console->input) console->input->output = NULL;
     if (console->title) free( console->title );
 }

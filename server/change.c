@@ -27,24 +27,26 @@ static int change_signaled( struct object *obj, struct thread *thread );
 
 static const struct object_ops change_ops =
 {
-    sizeof(struct change),
-    change_dump,
-    add_queue,
-    remove_queue,
-    change_signaled,
-    no_satisfied,
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    no_destroy
+    sizeof(struct change),    /* size */
+    change_dump,              /* dump */
+    add_queue,                /* add_queue */
+    remove_queue,             /* remove_queue */
+    change_signaled,          /* signaled */
+    no_satisfied,             /* satisfied */
+    NULL,                     /* get_poll_events */
+    NULL,                     /* poll_event */
+    no_read_fd,               /* get_read_fd */
+    no_write_fd,              /* get_write_fd */
+    no_flush,                 /* flush */
+    no_get_file_info,         /* get_file_info */
+    no_destroy                /* destroy */
 };
 
 
 static struct change *create_change_notification( int subtree, int filter )
 {
     struct change *change;
-    if ((change = alloc_object( &change_ops )))
+    if ((change = alloc_object( &change_ops, -1 )))
     {
         change->subtree = subtree;
         change->filter  = filter;

@@ -32,17 +32,19 @@ static void mapping_destroy( struct object *obj );
 
 static const struct object_ops mapping_ops =
 {
-    sizeof(struct mapping),
-    mapping_dump,
-    no_add_queue,
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    mapping_destroy
+    sizeof(struct mapping),      /* size */
+    mapping_dump,                /* dump */
+    no_add_queue,                /* add_queue */
+    NULL,                        /* remove_queue */
+    NULL,                        /* signaled */
+    NULL,                        /* satisfied */
+    NULL,                        /* get_poll_events */
+    NULL,                        /* poll_event */
+    no_read_fd,                  /* get_read_fd */
+    no_write_fd,                 /* get_write_fd */
+    no_flush,                    /* flush */
+    no_get_file_info,            /* get_file_info */
+    mapping_destroy              /* destroy */
 };
 
 #ifdef __i386__

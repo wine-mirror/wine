@@ -34,23 +34,25 @@ static int device_get_info( struct object *obj, struct get_file_info_request *re
 
 static const struct object_ops device_ops =
 {
-    sizeof(struct device),
-    device_dump,
-    no_add_queue,
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    device_get_info,
-    no_destroy
+    sizeof(struct device),    /* size */
+    device_dump,              /* dump */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    NULL,                     /* get_poll_events */
+    NULL,                     /* poll_event */
+    no_read_fd,               /* get_read_fd */
+    no_write_fd,              /* get_write_fd */
+    no_flush,                 /* flush */
+    device_get_info,          /* get_file_info */
+    no_destroy                /* destroy */
 };
 
 static struct device *create_device( int id )
 {
     struct device *dev;
-    if ((dev = alloc_object( &device_ops )))
+    if ((dev = alloc_object( &device_ops, -1 )))
     {
         dev->id = id;
     }

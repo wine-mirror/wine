@@ -46,10 +46,10 @@ struct thread
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */
     int                 error;     /* current error code */
+    int                 pass_fd;   /* fd to pass to the client */
     enum run_state      state;     /* running state */
     int                 attached;  /* is thread attached with ptrace? */
     int                 exit_code; /* thread exit code */
-    struct client      *client;    /* client for socket communications */
     int                 unix_pid;  /* Unix pid of client */
     void               *teb;       /* TEB address (in client address space) */
     int                 priority;  /* priority level */
@@ -74,7 +74,6 @@ extern void resume_all_threads( void );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int exit_code );
-extern void thread_killed( struct thread *thread, int exit_code );
 extern void thread_timeout(void);
 extern void wake_up( struct object *obj, int max );
 

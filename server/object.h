@@ -41,6 +41,10 @@ struct object_ops
     int  (*signaled)(struct object *,struct thread *);
     /* wait satisfied; return 1 if abandoned */
     int  (*satisfied)(struct object *,struct thread *);
+    /* get the events we want to poll() for on this object */
+    int  (*get_poll_events)(struct object *);
+    /* a poll() event occured */
+    void (*poll_event)(struct object *,int event);
     /* return a Unix fd that can be used to read from the object */
     int  (*get_read_fd)(struct object *);
     /* return a Unix fd that can be used to write to the object */
@@ -55,7 +59,9 @@ struct object_ops
 
 struct object
 {
-    unsigned int              refcount;
+    unsigned int              refcount;    /* reference count */
+    int                       fd;          /* file descriptor */
+    int                       select;      /* select() user id */
     const struct object_ops  *ops;
     struct wait_queue_entry  *head;
     struct wait_queue_entry  *tail;
@@ -68,7 +74,7 @@ struct object
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
-extern void *alloc_object( const struct object_ops *ops );
+extern void *alloc_object( const struct object_ops *ops, int fd );
 extern void dump_object_name( struct object *obj );
 extern void *create_named_object( const struct object_ops *ops, const WCHAR *name, size_t len );
 /* grab/release_object can take any pointer, but you better make sure */
@@ -83,17 +89,20 @@ extern int no_write_fd( struct object *obj );
 extern int no_flush( struct object *obj );
 extern int no_get_file_info( struct object *obj, struct get_file_info_request *info );
 extern void no_destroy( struct object *obj );
-extern void default_select_event( int event, void *private );
+extern int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry );
+extern void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry );
+extern int default_poll_signaled( struct object *obj, struct thread *thread );
+extern void default_poll_event( struct object *obj, int event );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
 #endif
 
 /* select functions */
 
-extern int add_select_user( int fd, void (*func)(int, void *), void *private );
-extern void remove_select_user( int user );
-extern void change_select_fd( int user, int fd );
-extern void set_select_events( int user, int events );
+extern int add_select_user( struct object *obj );
+extern void remove_select_user( struct object *obj );
+extern void change_select_fd( struct object *obj, int fd );
+extern void set_select_events( struct object *obj, int events );
 extern int check_select_events( int fd, int events );
 extern void select_loop(void);
 
@@ -113,15 +122,6 @@ static inline int time_before( struct timeval *t1, struct timeval *t2 )
     return ((t1->tv_sec < t2->tv_sec) ||
             ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
 }
-
-/* socket functions */
-
-struct client;
-
-extern struct client *add_client( int client_fd, struct thread *self );
-extern void remove_client( struct client *client, int exit_code );
-extern void client_pass_fd( struct client *client, int pass_fd );
-extern void client_reply( struct client *client, unsigned int res );
 
 /* event functions */
 

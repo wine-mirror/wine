@@ -28,17 +28,19 @@ static int event_satisfied( struct object *obj, struct thread *thread );
 
 static const struct object_ops event_ops =
 {
-    sizeof(struct event),
-    event_dump,
-    add_queue,
-    remove_queue,
-    event_signaled,
-    event_satisfied,
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    no_destroy
+    sizeof(struct event),      /* size */
+    event_dump,                /* dump */
+    add_queue,                 /* add_queue */
+    remove_queue,              /* remove_queue */
+    event_signaled,            /* signaled */
+    event_satisfied,           /* satisfied */
+    NULL,                      /* get_poll_events */
+    NULL,                      /* poll_event */
+    no_read_fd,                /* get_read_fd */
+    no_write_fd,               /* get_write_fd */
+    no_flush,                  /* flush */
+    no_get_file_info,          /* get_file_info */
+    no_destroy                 /* destroy */
 };
 
 

@@ -36,17 +36,19 @@ static void process_destroy( struct object *obj );
 
 static const struct object_ops process_ops =
 {
-    sizeof(struct process),
-    process_dump,
-    add_queue,
-    remove_queue,
-    process_signaled,
-    no_satisfied,
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    process_destroy
+    sizeof(struct process),      /* size */
+    process_dump,                /* dump */
+    add_queue,                   /* add_queue */
+    remove_queue,                /* remove_queue */
+    process_signaled,            /* signaled */
+    no_satisfied,                /* satisfied */
+    NULL,                        /* get_poll_events */
+    NULL,                        /* poll_event */
+    no_read_fd,                  /* get_read_fd */
+    no_write_fd,                 /* get_write_fd */
+    no_flush,                    /* flush */
+    no_get_file_info,            /* get_file_info */
+    process_destroy              /* destroy */
 };
 
 
@@ -56,7 +58,7 @@ static struct process *create_process( struct process *parent, struct new_proces
 {
     struct process *process;
 
-    if (!(process = alloc_object( &process_ops ))) return NULL;
+    if (!(process = alloc_object( &process_ops, -1 ))) return NULL;
     process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;

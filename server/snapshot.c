@@ -33,17 +33,19 @@ static void snapshot_destroy( struct object *obj );
 
 static const struct object_ops snapshot_ops =
 {
-    sizeof(struct snapshot),
-    snapshot_dump,
-    no_add_queue,
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    NULL,  /* should never get called */
-    no_read_fd,
-    no_write_fd,
-    no_flush,
-    no_get_file_info,
-    snapshot_destroy
+    sizeof(struct snapshot),      /* size */
+    snapshot_dump,                /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    NULL,                         /* get_poll_events */
+    NULL,                         /* poll_event */
+    no_read_fd,                   /* get_read_fd */
+    no_write_fd,                  /* get_write_fd */
+    no_flush,                     /* flush */
+    no_get_file_info,             /* get_file_info */
+    snapshot_destroy              /* destroy */
 };
 
 
@@ -52,7 +54,7 @@ static struct snapshot *create_snapshot( int flags )
 {
     struct snapshot *snapshot;
 
-    if ((snapshot = alloc_object( &snapshot_ops )))
+    if ((snapshot = alloc_object( &snapshot_ops, -1 )))
     {
         if (flags & TH32CS_SNAPPROCESS)
             snapshot->process = process_snap( &snapshot->process_count );

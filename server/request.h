@@ -26,17 +26,17 @@
 
 /* request functions */
 
+extern void read_request( struct thread *thread );
+extern int write_request( struct thread *thread );
 extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
-extern void call_req_handler( struct thread *thread, enum request req, int fd );
 extern void call_timeout_handler( void *thread );
-extern void call_kill_handler( struct thread *thread, int exit_code );
 extern void set_reply_fd( struct thread *thread, int pass_fd );
 extern void send_reply( struct thread *thread );
 
 extern void trace_request( enum request req, int fd );
 extern void trace_timeout(void);
-extern void trace_kill( int exit_code );
-extern void trace_reply( struct thread *thread, unsigned int res, int pass_fd );
+extern void trace_kill( struct thread *thread );
+extern void trace_reply( struct thread *thread );
 
 /* get the request buffer */
 static inline void *get_req_ptr( struct thread *thread )
