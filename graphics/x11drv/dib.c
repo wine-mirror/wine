@@ -699,6 +699,83 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
     dstwidth += left;
 
     ptr = (LPWORD) srcbits + left;
+
+    if (bmpImage->format == ZPixmap)
+    {
+        unsigned short indA, indB, indC, indD;
+        BYTE *imageBits;
+    	
+        switch (bmpImage->bits_per_pixel)
+        {
+        case 16:    		
+            indA = (bmpImage->byte_order == LSBFirst) ? 1 : 0;
+            indB = (indA == 1) ? 0 : 1;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, ptr++) {
+                        val = *ptr;
+                        imageBits[(x << 1) + indA] = (BYTE)((val >> 7) & 0x00ff);
+                        imageBits[(x << 1) + indB] = (BYTE)(((val << 1) & 0x00c0) | (val & 0x001f));
+                    }
+                    ptr = (LPWORD)(srcbits += linebytes) + left;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)bmpImage->data;
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, ptr++) {
+                        val = *ptr;
+                        imageBits[(x << 1) + indA] = (BYTE)((val >> 7) & 0x00ff);
+                        imageBits[(x << 1) + indB] = (BYTE)(((val << 1) & 0x00c0) | (val & 0x001f));
+                    }
+                    ptr = (LPWORD)(srcbits += linebytes) + left;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            }
+            return;
+
+        case 32:
+            indA = (bmpImage->byte_order == LSBFirst) ? 3 : 0;
+            indB = (indA == 3) ? 2 : 1;
+            indC = (indB == 2) ? 1 : 2;             	 		
+            indD = (indC == 1) ? 0 : 3;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, ptr ++) {
+                        val = *ptr;
+                        imageBits[(x << 2) + indA] = 0x00; /* a */
+                        imageBits[(x << 2) + indB] = (BYTE)(((val >> 7) & 0x00f8) | ((val >> 12) & 0x0007));  /* red */
+                        imageBits[(x << 2) + indC] = (BYTE)(((val >> 2) & 0x00f8) | ((val >> 7) & 0x0007));   /* green */
+                        imageBits[(x << 2) + indD] = (BYTE)(((val << 3) & 0x00f8) | ((val >> 2) & 0x0007));   /* blue */
+                    }
+                    ptr = (LPWORD)(srcbits += linebytes) + left;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, ptr ++) {
+                        val = *ptr;
+                        imageBits[(x << 2) + indA] = 0x00;
+                        imageBits[(x << 2) + indB] = (BYTE)(((val >> 7) & 0x00f8) | ((val >> 12) & 0x0007));
+                        imageBits[(x << 2) + indC] = (BYTE)(((val >> 2) & 0x00f8) | ((val >> 7) & 0x0007));
+                        imageBits[(x << 2) + indD] = (BYTE)(((val << 3) & 0x00f8) | ((val >> 2) & 0x0007));
+                    }
+                    ptr = (LPWORD)(srcbits += linebytes) + left;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            }
+            return;
+	}
+    }
+
+    /* Not standard format or Not RGB */
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
 	    for (x = left; x < dstwidth; x++, ptr++) {
@@ -801,6 +878,78 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 
     /* "bits" order is reversed for some reason */
 
+    if (bmpImage->format == ZPixmap)
+    {
+        unsigned short indA, indB, indC, indD;
+        BYTE *imageBits;
+      	
+        switch (bmpImage->bits_per_pixel)
+    	{
+        case 16:    		
+            indA = (bmpImage->byte_order == LSBFirst) ? 1 : 0;
+            indB = (indA == 1) ? 0 : 1;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, bits += 3) {
+                        imageBits[(x << 1) + indA] = (bits[0] & 0xf8) | ((bits[1] >> 5) & 0x07);
+                        imageBits[(x << 1) + indB] = ((bits[1] << 3) & 0xc0) | ((bits[2] >> 3) & 0x1f);
+                    }
+                    bits = (srcbits += linebytes) + left * 3;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)bmpImage->data;
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, bits += 3) {
+                        imageBits[(x << 1) + indA] = (bits[0] & 0xf8) | ((bits[1] >> 5) & 0x07);
+                        imageBits[(x << 1) + indB] = ((bits[1] << 3) & 0xc0) | ((bits[2] >> 3) & 0x1f);
+                    }
+                    bits = (srcbits += linebytes) + left * 3;
+                    imageBits += bmpImage->bytes_per_line;
+                }
+            }
+            return;
+
+        case 32:
+            indA = (bmpImage->byte_order == LSBFirst) ? 3 : 0;
+            indB = (indA == 3) ? 2 : 1;
+            indC = (indB == 2) ? 1 : 2;
+            indD = (indC == 1) ? 0 : 3;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, bits += 3) {
+                        imageBits[(x << 2) + indA] = 0x00;	/*a*/
+                        imageBits[(x << 2) + indB] = bits[2];   /*red*/
+                        imageBits[(x << 2) + indC] = bits[1];   /*green*/
+                        imageBits[(x << 2) + indD] = bits[0];   /*blue*/
+                    }
+                    bits = (srcbits += linebytes) + left * 3;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, bits += 3) {
+                        imageBits[(x << 2) + indA] = 0x00;
+                        imageBits[(x << 2) + indB] = bits[2];
+                        imageBits[(x << 2) + indC] = bits[1];
+                        imageBits[(x << 2) + indD] = bits[0];
+                    }
+                    bits = (srcbits += linebytes) + left * 3;
+                    imageBits += bmpImage->bytes_per_line;
+                }
+            }
+            return;
+	}
+    }
+	
+    /* Not standard format or Not RGB */
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
 	    for (x = left; x < dstwidth; x++, bits += 3) {
@@ -886,6 +1035,77 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
     DWORD linebytes = (srcwidth * 4);
 
     dstwidth += left;
+
+    if (bmpImage->format == ZPixmap)
+    {
+        unsigned short indA, indB, indC, indD;
+        BYTE *imageBits;
+
+        switch (bmpImage->bits_per_pixel)
+        {
+        case 16:    		
+            indA = (bmpImage->byte_order == LSBFirst) ? 1 : 0;
+            indB = (indA == 1) ? 0 : 1;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, bits += 4) {
+                        imageBits[(x << 1) + indA] = (bits[0] & 0xf8) | ((bits[1] >> 5) & 0x07);
+                        imageBits[(x << 1) + indB] = ((bits[1] << 3) & 0xc0) | ((bits[2] >> 3) & 0x1f);
+                    }
+                    bits = (srcbits += linebytes) + left * 4;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)bmpImage->data;
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, bits += 4) {
+                        imageBits[(x << 1) + indA] = (bits[0] & 0xf8) | ((bits[1] >> 5) & 0x07);
+                        imageBits[(x << 1) + indB] = ((bits[1] << 3) & 0xc0) | ((bits[2] >> 3) & 0x1f);
+                    }
+                    bits = (srcbits += linebytes) + left * 4;
+                    imageBits += bmpImage->bytes_per_line;
+                }
+            }
+            return;
+
+        case 32:
+            indA = (bmpImage->byte_order == LSBFirst) ? 3 : 0;
+            indB = (indA == 3) ? 2 : 1;
+            indC = (indB == 2) ? 1 : 2;
+            indD = (indC == 1) ? 0 : 3;
+
+            if (lines > 0) {
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = left; x < dstwidth; x++, bits += 4) {
+                        imageBits[(x << 2) + indA] = 0x00;	/*a*/
+                        imageBits[(x << 2) + indB] = bits[2];   /*red*/
+                        imageBits[(x << 2) + indC] = bits[1];   /*green*/
+                        imageBits[(x << 2) + indD] = bits[0];   /*blue*/
+                    }
+                    bits = (srcbits += linebytes) + left * 4;
+                    imageBits -= bmpImage->bytes_per_line;
+                }
+            } else {
+                lines = -lines;
+                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                for (h = 0; h < lines; h++) {
+                    for (x = left; x < dstwidth; x++, bits += 4) {
+                        imageBits[(x << 2) + indA] = 0x00;
+                        imageBits[(x << 2) + indB] = bits[2];
+                        imageBits[(x << 2) + indC] = bits[1];
+                        imageBits[(x << 2) + indD] = bits[0];
+                    }
+                    bits = (srcbits += linebytes) + left * 4;
+                    imageBits += bmpImage->bytes_per_line;
+                }
+            }
+            return;
+	}
+    }
 
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
