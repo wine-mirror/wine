@@ -219,7 +219,7 @@ init	MAIN_GdiInit
 214 stdcall GetROP2(long) GetROP232
 215 stdcall GetRandomRgn(long long long) GetRandomRgn
 216 stdcall GetRasterizerCaps(ptr long) GetRasterizerCaps32
-217 stdcall GetRegionData(long long ptr) GetRegionData
+217 stdcall GetRegionData(long long ptr) GetRegionData32
 218 stdcall GetRelAbs(long) GetRelAbs32
 219 stdcall GetRgnBox(long ptr) GetRgnBox32
 220 stdcall GetStockObject(long) GetStockObject32

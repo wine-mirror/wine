@@ -521,10 +521,10 @@ HRGN32 WINAPI CreateEllipticRgnIndirect32( const RECT32 *rect )
 }
 
 /***********************************************************************
- *           GetRegionData   (GDI32.217)
+ *           GetRegionData32   (GDI32.217)
  * 
  */
-DWORD WINAPI GetRegionData(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
+DWORD WINAPI GetRegionData32(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
 {
     DWORD size;
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
@@ -554,6 +554,15 @@ DWORD WINAPI GetRegionData(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
 
     GDI_HEAP_UNLOCK( hrgn );
     return 1;
+}
+
+/***********************************************************************
+ *           GetRegionData16   (GDI.607)
+ * FIXME: is LPRGNDATA the same in Win16 and Win32 ?
+ */
+DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
+{
+    return GetRegionData32((HRGN32)hrgn, count, rgndata);
 }
 
 /***********************************************************************

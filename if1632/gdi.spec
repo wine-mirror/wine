@@ -376,7 +376,7 @@ file	gdi.exe
 604 pascal16 SetSolidBrush(word long) SetSolidBrush16
 605 pascal16 SysDeleteObject(word) DeleteObject16    # ???
 606 pascal16 SetMagicColors(word long word) SetMagicColors16
-607 stub GetRegionData
+607 pascal GetRegionData(word long ptr) GetRegionData16
 608 stub ExtCreateRegion
 609 stub GDIFreeResources
 610 stub GDISignalProc32

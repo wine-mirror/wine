@@ -1684,12 +1684,12 @@ INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
     WORD *Param, *StartBand;
     BOOL32 ret;
 
-    len = GetRegionData( hrgn, 0, NULL );
+    len = GetRegionData32( hrgn, 0, NULL );
     if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
         WARN(metafile, "MF_CreateRegion: can't alloc rgndata buffer\n");
 	return -1;
     }
-    GetRegionData( hrgn, len, rgndata );
+    GetRegionData32( hrgn, len, rgndata );
 
     /* Overestimate of length:
      * Assume every rect is a separate band -> 6 WORDs per rect

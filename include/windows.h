@@ -6872,7 +6872,6 @@ DWORD       WINAPI GetObjectType(HANDLE32);
 UINT32      WINAPI GetOEMCP(void);
 DWORD       WINAPI GetPriorityClass(HANDLE32);
 HANDLE32    WINAPI GetProcessHeap(void);
-DWORD       WINAPI GetRegionData(HRGN32,DWORD,LPRGNDATA);
 DWORD       WINAPI GetShortPathName32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetShortPathName32W(LPCWSTR,LPWSTR,DWORD);
 #define     GetShortPathName WINELIB_NAME_AW(GetShortPathName)
@@ -8238,6 +8237,9 @@ DWORD       WINAPI GetQueueStatus32(UINT32);
 BOOL16      WINAPI GetRasterizerCaps16(LPRASTERIZER_STATUS,UINT16);
 BOOL32      WINAPI GetRasterizerCaps32(LPRASTERIZER_STATUS,UINT32);
 #define     GetRasterizerCaps WINELIB_NAME(GetRasterizerCaps)
+DWORD       WINAPI GetRegionData16(HRGN16,DWORD,LPRGNDATA);
+DWORD       WINAPI GetRegionData32(HRGN32,DWORD,LPRGNDATA);
+#define     GetRegionData WINELIB_NAME(GetRegionData)
 INT16       WINAPI GetRelAbs16(HDC16);
 INT32       WINAPI GetRelAbs32(HDC32);
 #define     GetRelAbs WINELIB_NAME(GetRelAbs)

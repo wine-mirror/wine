@@ -391,14 +391,14 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    DWORD size;
 	    RGNDATA *clip;
 
-	    size = GetRegionData( hClipRgn, 0, NULL );
+	    size = GetRegionData32( hClipRgn, 0, NULL );
 	    clip = HeapAlloc( SystemHeap, 0, size );
 	    if(!clip) 
 	    {
 	        WARN(win16drv, "Can't alloc clip array in PRTDRV_Output\n");
 		return FALSE;
 	    }
-	    GetRegionData( hClipRgn, size, clip );
+	    GetRegionData32( hClipRgn, size, clip );
 	    if( clip->rdh.nCount == 0 )
 	    {
 		wRet = Callbacks->CallDrvOutputProc(pLPD->fn[FUNC_OUTPUT], 
