@@ -25,12 +25,14 @@ ${prefix} = "";
 
 LINE: while(<>) {
   chomp;
-  s/\r$//;                  # Get rid of 0x0a
+  s/\r$//;                    # Get rid of 0x0a
 
-  next LINE if(/^$/);       # This is an empty line
+  next LINE if(/^\s*$/);      # This is an empty line
+  next LINE if(/^\s*;/);      # This is a comment (no way to diff it)
 
   if( /^\[/ ) {
-    ${prefix} = ${_};       # assign the prefix for the forthcomming section
+    ${prefix} = ${_};         # assign the prefix for the forthcoming section
+    ${prefix} =~ s/\s+\d+$//; # get rid of timestamp
     print "${prefix}\n";
     next LINE;
   }

@@ -58,9 +58,13 @@ LINE: while($s = <>) {
   else
   {
       ($key, $value) = ($s =~ /^\[(.*?)\](.+)$/);
-      if (!defined($key) || ($key ne $curr_key))
+      if (!defined($key))
       {
 	  die "Unrecognized string $s";
+      }
+      if ($key ne $curr_key)	   #curr_key might got chopped from regSet.sh
+      {
+          print "\n[$key]\n";
       }
       print "$value\n"
   }

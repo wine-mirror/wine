@@ -38,39 +38,52 @@ echo "Assuming that $2 is the \"after\" file..."
 # do not attempt to regFix.pl /dev/null ...
 #
 echo "Fixing exported registry files..."
+
+FIX1_FILE=`mktemp -q /tmp/file1_fix.XXXXXXXXX`
+FIX2_FILE=`mktemp -q /tmp/file2_fix.XXXXXXXXX`
+DIFF_FILE=`mktemp -q /tmp/file2_diff.XXXXXXXXX`
+FILE_TOADD_CLEAN=`mktemp -q /tmp/file_toAdd_clean.XXXXXXXXX`
+FILE_TOADD=`mktemp -q /tmp/file_toAdd.XXXXXXXXX`
+
 if [ $1 != "/dev/null" ]; then  
-  cat $1 | ./regFixer.pl > $1.fix
+  cat $1 | ./regFixer.pl > $FIX1_FILE
 fi
 
-cat $2 | ./regFixer.pl > $2.fix
+cat $2 | ./regFixer.pl > $FIX2_FILE
+
 
 #
 # diff accordingly depending on /dev/null
 #
 echo "Diffing..."
 if [ $1 != "/dev/null" ]; then  
-  diff $1.fix $2.fix > $2.diff
+  diff $FIX1_FILE $FIX2_FILE > $DIFF_FILE
 else
-  diff /dev/null $2.fix > $2.diff
+  diff /dev/null  $FIX2_FILE > $DIFF_FILE
 fi
 
 #
 # Keep only added lines
 # 
 echo "Grepping keys to add and generating cleaned fixed registry file."
-cat $2.diff | grep '^> ' | sed -e 's/^> //' > $2.toAdd.clean
+cat $DIFF_FILE | grep '^> ' | sed -e 's/^> //' > $FILE_TOADD_CLEAN
 
 # 
 # Restore the file format to the regedit export 'like' format
 #
 echo "Restoring key's in the regedit export format..."
-cat $2.toAdd.clean | ./regRestorer.pl > $2.toAdd
+cat $FILE_TOADD_CLEAN | ./regRestorer.pl > $FILE_TOADD
 
 echo "Cleaning..."
-rm $1.fix $2.fix    >/dev/null 2>&1
-rm $2.diff          >/dev/null 2>&1
-rm $2.toAdd.clean   >/dev/null 2>&1
+rm $FIX1_FILE $FIX2_FILE    >/dev/null 2>&1
+rm $DIFF_FILE              >/dev/null 2>&1
+rm $FILE_TOADD_CLEAN       >/dev/null 2>&1
 
-echo "Operation completed, result file is $2.toAdd"
+if mv $FILE_TOADD $2.toAdd
+then
+  FILE_TOADD=$2.toAdd
+fi
+
+echo "Operation completed, result file is '$FILE_TOADD'"
 
 exit 0
