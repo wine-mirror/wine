@@ -10,6 +10,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -29,6 +30,12 @@ DEFAULT_DEBUG_CHANNEL(text);
 #define FORWARD_SLASH '/'
 #define BACK_SLASH '\\'
 
+static const WCHAR SPACEW[] = {' ', 0};
+static const WCHAR oW[] = {'o', 0};
+static const WCHAR ELLIPSISW[] = {'.','.','.', 0};
+static const WCHAR FORWARD_SLASHW[] = {'/', 0};
+static const WCHAR BACK_SLASHW[] = {'\\', 0};                                                           
+
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 
 static int tabstop = 8;
@@ -36,8 +43,8 @@ static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
 
-static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
-                                  char *dest, int *len, int width, WORD format)
+static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
+                                  WCHAR *dest, int *len, int width, WORD format)
 {
     /* Return next line of text from a string.
      * 
@@ -88,7 +95,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		(format & DT_WORDBREAK))
 	    {
-		if (!GetTextExtentPointA(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -108,7 +115,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
             if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
                 (format & DT_WORDBREAK))
             {
-                if (!GetTextExtentPointA(hdc, &dest[j-1], 1, &size))
+                if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
                     return NULL;
                 plen += size.cx;
             }
@@ -121,7 +128,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		wb_j = j;
 		wb_count = *count;
 
-		if (!GetTextExtentPointA(hdc, &dest[lasttab], j - lasttab, &size))
+		if (!GetTextExtentPointW(hdc, &dest[lasttab], j - lasttab, &size))
 		    return NULL;
 
 		numspaces = (tabwidth - size.cx) / spacewidth;
@@ -136,7 +143,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		    (format & DT_WORDBREAK))
 		{
-		    if (!GetTextExtentPointA(hdc, &dest[j-1], 1, &size))
+		    if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 			return NULL;
 		    plen += size.cx;
 		}
@@ -151,7 +158,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		wb_i = i;
 		wb_j = j - 1;
 		wb_count = *count;
-		if (!GetTextExtentPointA(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -162,7 +169,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		(format & DT_WORDBREAK))
 	    {
-		if (!GetTextExtentPointA(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -216,31 +223,37 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
 
 
 /***********************************************************************
- *           DrawTextA    (USER32.164)
+ *           DrawTextExW    (USER32.166)
  */
-INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
+INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count, 
+                     LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
     SIZE size;
-    const char *strPtr;
-    static char line[1024];
+    const WCHAR *strPtr;
+    static WCHAR line[1024];
     int len, lh, count=i_count;
     int prefix_x = 0;
     int prefix_end = 0;
-    TEXTMETRICA tm;
+    TEXTMETRICW tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
     int max_width = 0;
 
     TRACE("%s, %d , [(%d,%d),(%d,%d)]\n",
-	  debugstr_an (str, count), count,
+	  debugstr_wn (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
 
+    if(dtp) {
+        FIXME("Ignores params:%d,%d,%d,%d\n",dtp->cbSize,
+                   dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin);
+    }
+
     if (!str) return 0;
-    if (count == -1) count = strlen(str);
+    if (count == -1) count = strlenW(str);
     if (count == 0) return 0;
     strPtr = str;
 
-    GetTextMetricsA(hdc, &tm);
+    GetTextMetricsW(hdc, &tm);
     if (flags & DT_EXTERNALLEADING)
 	lh = tm.tmHeight + tm.tmExternalLeading;
     else
@@ -251,9 +264,9 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 
     if (flags & DT_EXPANDTABS)
     {
-	GetTextExtentPointA(hdc, " ", 1, &size);
+	GetTextExtentPointW(hdc, SPACEW, 1, &size);
 	spacewidth = size.cx;
-	GetTextExtentPointA(hdc, "o", 1, &size);
+	GetTextExtentPointW(hdc, oW, 1, &size);
 	tabwidth = size.cx * tabstop;
     }
 
@@ -262,17 +275,17 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
     do
     {
 	prefix_offset = -1;
-	strPtr = TEXT_NextLine(hdc, strPtr, &count, line, &len, width, flags);
+	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags);
 
 	if (prefix_offset != -1)
 	{
-	    GetTextExtentPointA(hdc, line, prefix_offset, &size);
+	    GetTextExtentPointW(hdc, line, prefix_offset, &size);
 	    prefix_x = size.cx;
-	    GetTextExtentPointA(hdc, line, prefix_offset + 1, &size);
+	    GetTextExtentPointW(hdc, line, prefix_offset + 1, &size);
 	    prefix_end = size.cx - 1;
 	}
 
-	if (!GetTextExtentPointA(hdc, line, len, &size)) return 0;
+	if (!GetTextExtentPointW(hdc, line, len, &size)) return 0;
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
 	else if (flags & DT_RIGHT) x = rect->right - size.cx;
@@ -285,9 +298,9 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 
 	    if (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS))
 	    {
-	        char swapStr[sizeof(line)];
-	        char* fnameDelim = NULL;
-	        int totalLen = i_count >= 0 ? i_count : strlen(str);
+	        WCHAR swapStr[sizeof(line)];
+	        WCHAR* fnameDelim = NULL;
+	        int totalLen = i_count >= 0 ? i_count : strlenW(str);
 
 		if (size.cx > width)
 	        {
@@ -301,11 +314,12 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 
 		    if (flags & DT_PATH_ELLIPSIS) 
 	            {
-			char* lastBkSlash = NULL;
-			char* lastFwdSlash = NULL;
-	                strncpy(line, str, totalLen); line[totalLen] = '\0';
-	                lastBkSlash = strrchr(line, BACK_SLASH);
-	                lastFwdSlash = strrchr(line, FORWARD_SLASH);
+			WCHAR* lastBkSlash = NULL;
+			WCHAR* lastFwdSlash = NULL;
+	                strncpyW(line, str, totalLen);
+                        line[totalLen] = '\0';
+	                lastBkSlash = strrchrW(line, BACK_SLASHW[0]);
+	                lastFwdSlash = strrchrW(line, FORWARD_SLASHW[0]);
 			fnameDelim = lastFwdSlash ? lastFwdSlash : lastBkSlash;
 			if (lastBkSlash && lastFwdSlash) /* which is last? */
 			   if (lastBkSlash > lastFwdSlash)
@@ -314,25 +328,25 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 	                if (fnameDelim)
 	                    fnameLen = &line[totalLen] - fnameDelim;
 	                else 
-	                    fnameDelim = (char*)str;
+	                    fnameDelim = (WCHAR*)str;
 
-	                strcpy(swapStr, ELLIPSIS);
-	                strncat(swapStr, fnameDelim, fnameLen);
+	                strcpyW(swapStr, ELLIPSISW);
+	                strncpyW(swapStr+strlenW(swapStr), fnameDelim, fnameLen);
 	                swapStr[fnameLen+3] = '\0';
-	                strncat(swapStr, str, totalLen - fnameLen);
+	                strncpyW(swapStr+strlenW(swapStr), str, totalLen - fnameLen);
 	                swapStr[totalLen+3] = '\0';
                     }
                     else  /* DT_END_ELLIPSIS | DT_WORD_ELLIPSIS */
 	            {
-	                strcpy(swapStr, ELLIPSIS);
-	                strncat(swapStr, str, totalLen);
+	                strcpyW(swapStr, ELLIPSISW);
+	                strncpyW(swapStr+strlenW(swapStr), str, totalLen);
 	            }
 
-	            TEXT_NextLine(hdc, swapStr, &count, line, &len, width, flags); 
+	            TEXT_NextLineW(hdc, swapStr, &count, line, &len, width, flags); 
 
 	            /* if only the ELLIPSIS will fit, just let it be clipped */
 	            len = max(3, len);
-	            GetTextExtentPointA(hdc, line, len, &size);
+	            GetTextExtentPointW(hdc, line, len, &size);
 
 	            /* FIXME:
 	             * NextLine uses GetTextExtentPoint for each character, 
@@ -344,26 +358,26 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 	            while ((size.cx > width) && (len > 3))
 	            {
 	                line[--len] = '\0';
-	                GetTextExtentPointA(hdc, line, len, &size);
+	                GetTextExtentPointW(hdc, line, len, &size);
 	            }
 
 	            if (fnameLen < len-3) /* some of the path will fit */
 	            {
 	                /* put the ELLIPSIS between the path and filename */
-	                strncpy(swapStr, &line[fnameLen+3], len-3-fnameLen); 
+	                strncpyW(swapStr, &line[fnameLen+3], len-3-fnameLen); 
 	                swapStr[len-3-fnameLen] = '\0';
-	                strcat(swapStr, ELLIPSIS); 
-	                strncat(swapStr, &line[3], fnameLen); 
+	                strcatW(swapStr, ELLIPSISW); 
+	                strncpyW(swapStr+strlenW(swapStr), &line[3], fnameLen); 
 	            }
 	            else
 	            {
 	                /* move the ELLIPSIS to the end */
-	                strncpy(swapStr, &line[3], len-3);
+	                strncpyW(swapStr, &line[3], len-3);
 	                swapStr[len-3] = '\0';
-	                strcat(swapStr, ELLIPSIS);
+	                strcpyW(swapStr+strlenW(swapStr), ELLIPSISW);
 	            }
 
-	            strncpy(line, swapStr, len);
+	            strncpyW(line, swapStr, len);
 	            line[len] = '\0';
 	            strPtr = NULL;
 	        }
@@ -371,7 +385,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 	}
 	if (!(flags & DT_CALCRECT))
 	{
-	    if (!ExtTextOutA(hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
+	    if (!ExtTextOutW(hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
                              rect, line, len, NULL )) return 0;
             if (prefix_offset != -1)
             {
@@ -405,6 +419,27 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
     return y - rect->top;
 }
 
+/***********************************************************************
+ *           DrawTextA    (USER32.164)
+ */
+INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
+{
+   WCHAR *wstr;
+   INT ret = 0;
+   DWORD wcount;
+
+   if (count == -1) count = strlen(str);
+   if (!count) return 0;
+   wcount = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
+   wstr = HeapAlloc(GetProcessHeap(), 0, wcount * sizeof(WCHAR));
+   if (wstr)
+   {
+       MultiByteToWideChar( CP_ACP, 0, str, count, wstr, wcount );
+       ret = DrawTextExW( hdc, wstr, wcount, rect, flags, NULL );
+       HeapFree(GetProcessHeap(), 0, wstr);
+   }
+   return ret;
+}
 
 /***********************************************************************
  *           DrawTextW    (USER32.167)
@@ -412,19 +447,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags 
 INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
                           LPRECT rect, UINT flags )
 {
-    LPSTR p;
-    INT acount;
-    INT ret;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-        
-    acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
-    p = HeapAlloc( GetProcessHeap(), 0, acount );
-    acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
-    if (count == -1) acount = -1;
-    ret = DrawTextA( hdc, p, acount, rect, flags );
-
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
+    return DrawTextExW(hdc, str, count, rect, flags, NULL);
 }
 
 /***********************************************************************
@@ -441,16 +464,6 @@ INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
     return DrawTextA(hdc,str,count,rect,flags);
 }
 
-/***********************************************************************
- *           DrawTextExW    (USER32.166)
- */
-INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT count,
-                     LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
-{
-    TRACE("(%d,%p,%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
-    FIXME("ignores extended functionality\n");
-    return DrawTextW(hdc,str,count,rect,flags);
-}
 /***********************************************************************
  *           TEXT_GrayString
  *
