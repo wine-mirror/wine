@@ -7,13 +7,6 @@
 #ifndef __WINE_WINE_OBJ_SHELLFOLDER_H
 #define __WINE_WINE_OBJ_SHELLFOLDER_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_moniker.h"		/* for LPBC */
-#include "wine/obj_enumidlist.h"
-#include "wine/obj_oleaut.h"
-#include "winbase.h"
-#include "shell.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

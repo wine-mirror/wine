@@ -11,13 +11,14 @@
 
 #include <string.h>
 
-#include "wine/obj_storage.h"
-#include "heap.h"
+#include "winbase.h"
 #include "winerror.h"
+#include "shlobj.h"
 #include "debugtools.h"
+#include "heap.h"
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVOID *ppvObj);
 static ULONG WINAPI IStream_fnAddRef(IStream *iface);

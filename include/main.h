@@ -14,4 +14,6 @@ extern void MAIN_ParseDebugOptions(const char *options);
 extern BOOL RELAY_Init(void);
 extern int RELAY_ShowDebugmsgRelay(const char *func);
 
+extern void SHELL_LoadRegistry(void);
+
 #endif  /* __WINE_MAIN_H */

@@ -5,13 +5,6 @@
 #ifndef __WINE_WINE_OBJ_SHELLEXTINIT_H
 #define __WINE_WINE_OBJ_SHELLEXTINIT_H
 
-#include "shell.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/obj_base.h"
-#include "wine/obj_dataobject.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

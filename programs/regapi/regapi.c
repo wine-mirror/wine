@@ -14,7 +14,6 @@
 #include <winerror.h>
 #include <winnt.h>
 #include <string.h>
-#include <shell.h>
 
 /******************************************************************************
  * Defines and consts

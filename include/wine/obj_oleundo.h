@@ -7,13 +7,6 @@
 #ifndef __WINE_WINE_OBJ_OLEUNDO_H
 #define __WINE_WINE_OBJ_OLEUNDO_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_dataobject.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_olefont.h"
-#include "wine/obj_property.h"
-#include "winbase.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

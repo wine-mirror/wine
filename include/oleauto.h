@@ -2,6 +2,7 @@
 #define __WINE_OLEAUTO_H
 
 #include "wtypes.h"
+#include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
 #include "wine/obj_errorinfo.h"
 

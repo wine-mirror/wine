@@ -7,9 +7,6 @@
 #include <stdio.h>
 #include "windows.h"
 #include "commdlg.h"
-#ifdef WINELIB
-#include "shell.h"
-#endif
 #include "winhelp.h"
 #include "macro.h"
 

@@ -12,7 +12,6 @@
 #include <winerror.h>
 
 #ifdef WINELIB
-#include "shell.h"
 #include "options.h"
 #endif
 

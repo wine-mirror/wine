@@ -6,7 +6,6 @@
 #define __WINE_SHELL_MAIN_H
 
 #include "commctrl.h"
-#include "shell.h"
 #include "docobj.h"
 
 #include "wine/obj_shellfolder.h"
@@ -62,10 +61,6 @@ extern HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
 extern HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
 */
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
-
-HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
-HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
-HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
 
 /* Iconcache */
 #define INVALID_INDEX -1
@@ -164,6 +159,10 @@ void FreeChangeNotifications(void);
 
 /* file operation */
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
+
+HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
+
+extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
 
 inline static BOOL SHELL_OsIsUnicode(void)
 {

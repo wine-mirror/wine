@@ -16,11 +16,10 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "wine/obj_storage.h"
 
 #include "storage32.h"
 
-DEFAULT_DEBUG_CHANNEL(storage)
+DEFAULT_DEBUG_CHANNEL(storage);
 
 
 /*

@@ -7,9 +7,11 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "wine/obj_base.h"
+#include "wine/obj_misc.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
-#include "wine/obj_base.h"
+#include "wine/obj_dataobject.h"
 #include "wine/obj_dragdrop.h"
 #include "wine/obj_inplace.h"
 #include "wine/obj_oleobj.h"

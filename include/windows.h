@@ -9,7 +9,6 @@ extern "C" {
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "shell.h"
 #include "winreg.h"
 #include "winnetwk.h"
 #include "winver.h"

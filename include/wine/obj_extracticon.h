@@ -5,12 +5,6 @@
 #ifndef __WINE_WINE_OBJ_EXTRACTICON_H
 #define __WINE_WINE_OBJ_EXTRACTICON_H
 
-#include "winbase.h"
-#include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

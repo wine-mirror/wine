@@ -14,7 +14,6 @@
 #include "drive.h"
 #include "file.h"
 #include "options.h"
-#include "shell.h"
 #include "debugtools.h"
 #include "server.h"
 #include "loadorder.h"

@@ -88,7 +88,7 @@ typedef struct {
 #define PD32_MILIMETERS                       1587
 
 #include "commctrl.h"
-#include "wine/undocshell.h"
+#include "shlobj.h"
 #include "shellapi.h"
 
 /* IMAGELIST */

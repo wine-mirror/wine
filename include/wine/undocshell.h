@@ -3,9 +3,7 @@
 
 #include "windef.h"
 #include "commctrl.h"
-#include "wine/obj_shellfolder.h"
-#include "wine/obj_shellview.h"
-#include "wine/obj_dragdrop.h"
+#include "shlobj.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,19 +96,19 @@ HRESULT WINAPI StrRetToStrNA (
 	LPVOID dest,
 	DWORD len,
 	LPSTRRET src,
-	LPITEMIDLIST pidl);
+	const ITEMIDLIST *pidl);
 
 HRESULT WINAPI StrRetToStrNW (
 	LPVOID dest,
 	DWORD len,
 	LPSTRRET src,
-	LPITEMIDLIST pidl);
+	const ITEMIDLIST *pidl);
 
 HRESULT WINAPI StrRetToStrNAW (
 	LPVOID dest,
 	DWORD len,
 	LPSTRRET src,
-	LPITEMIDLIST pidl);
+	const ITEMIDLIST *pidl);
 
 
 /****************************************************************************

@@ -8,8 +8,6 @@
 #ifndef __WINE_WINE_OBJ_MISC_H
 #define __WINE_WINE_OBJ_MISC_H
 
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -5,8 +5,6 @@
 #ifndef __WINE_WINE_OBJ_OLEAUT_H
 #define __WINE_WINE_OBJ_OLEAUT_H
 
-#include "wine/obj_base.h"
-
 /*****************************************************************************
  * Predeclare the interfaces
  */

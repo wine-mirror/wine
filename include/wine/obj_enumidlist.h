@@ -7,10 +7,6 @@
 #ifndef __WINE_WINE_OBJ_ENUMIDLIST_H
 #define __WINE_WINE_OBJ_ENUMIDLIST_H
 
-#include "wine/obj_base.h"
-#include "shell.h"
-#include "winbase.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

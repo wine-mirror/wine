@@ -6,10 +6,6 @@
 #ifndef __WINE_WINE_OBJ_OLEVIEW_H
 #define __WINE_WINE_OBJ_OLEVIEW_H
 
-
-#include "wine/obj_base.h"
-#include "wine/obj_dataobject.h"
-
 struct tagLOGPALETTE;
 
 #ifdef __cplusplus

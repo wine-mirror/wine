@@ -7,6 +7,11 @@
 
 #include <assert.h>
 #include "winerror.h"
+#include "wtypes.h"
+#include "winbase.h"
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_misc.h"
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
 #include "heap.h"

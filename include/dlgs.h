@@ -5,8 +5,6 @@
 #ifndef __WINE_DLGS_H
 #define __WINE_DLGS_H
 
-#include "wine/obj_shellview.h"
-
 #define ctlFirst    0x0400
 #define ctlLast     0x04ff
     /* Push buttons */

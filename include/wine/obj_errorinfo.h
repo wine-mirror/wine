@@ -5,9 +5,6 @@
 #ifndef __WINE_WINE_OBJ_ERRORINFO_H
 #define __WINE_WINE_OBJ_ERRORINFO_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_oleaut.h"
-
 DEFINE_GUID(IID_IErrorInfo,0x1CF2B120,0x547D,0x101B,0x8E,0x65,0x08,0x00,0x2B,0x2B,0xD1,0x19);
 typedef struct IErrorInfo IErrorInfo,*LPERRORINFO;
 

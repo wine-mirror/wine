@@ -7,11 +7,6 @@
 #ifndef __WINE_WINE_OBJ_PICTURE_H
 #define __WINE_WINE_OBJ_PICTURE_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_oleaut.h"
-#include "windows.h"
-#include "windef.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

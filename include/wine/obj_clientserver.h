@@ -5,8 +5,6 @@
 #ifndef __WINE_WINE_OBJ_CLIENTSERVER_H
 #define __WINE_WINE_OBJ_CLIENTSERVER_H
 
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -7,7 +7,6 @@
 #define __WINE_SHELLFOLDER_HELP_H
 
 #include "winbase.h"
-#include "shell.h"
 
 #include "wine/obj_base.h"
 #include "wine/obj_shellfolder.h"

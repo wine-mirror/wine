@@ -14,6 +14,8 @@
 #include "winerror.h"
 #include "thread.h"
 #include "debugtools.h"
+#include "wine/obj_base.h"
+#include "wine/obj_oleaut.h"
 #include "wine/obj_errorinfo.h"
 #include "wine/unicode.h"
 

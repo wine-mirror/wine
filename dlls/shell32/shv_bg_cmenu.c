@@ -16,10 +16,9 @@
 
 #include "shell32_main.h"
 #include "shellfolder.h"
-#include "shell.h" /* DROPFILESTRUCT */
 #include "wine/undocshell.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 /**************************************************************************
 *  IContextMenu Implementation

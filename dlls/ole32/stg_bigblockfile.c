@@ -26,6 +26,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "ole2.h"
 

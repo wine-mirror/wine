@@ -7,11 +7,6 @@
 #ifndef __WINE_WINE_OBJ_OLEOBJ_H
 #define __WINE_WINE_OBJ_OLEOBJ_H
 
-
-#include "wine/obj_moniker.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_dataobject.h"
-
 struct tagMSG;
 struct tagLOGPALETTE;
 

@@ -5,8 +5,6 @@
 #ifndef __WINE_WINE_OBJ_CHANNEL_H
 #define __WINE_WINE_OBJ_CHANNEL_H
 
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

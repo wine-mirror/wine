@@ -13,12 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "heap.h"
+#include "wine/winestring.h"
+#include "shlobj.h"
 #include "shellapi.h"
 #include "shell32_main.h"
-#include "windows.h"
 #include "commctrl.h"
 #include "debugtools.h"
+#include "heap.h"
 #include "config.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)

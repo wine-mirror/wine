@@ -5,12 +5,6 @@
 #ifndef __WINE_WINE_OBJ_DOCKINGWINDOWFRAME_H
 #define __WINE_WINE_OBJ_DOCKINGWINDOWFRAME_H
 
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/obj_base.h"
-#include "wine/obj_inplace.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

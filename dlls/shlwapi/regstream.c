@@ -4,8 +4,9 @@
 #include <string.h>
 
 #include "winerror.h"
+#include "winbase.h"
 #include "winreg.h"
-#include "wine/obj_storage.h"
+#include "shlobj.h"
 
 #include "heap.h"
 #include "debugtools.h"

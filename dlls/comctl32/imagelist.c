@@ -22,12 +22,13 @@
  *      limited in functionality too.
  */
 
+#include "winerror.h"
+#include "winbase.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "debugtools.h"
-#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(imagelist);
 

@@ -17,6 +17,7 @@
 
 #include "wtypes.h"
 #include "winnt.h"
+#include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 
 /*

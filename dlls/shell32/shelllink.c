@@ -8,14 +8,14 @@
 #include <string.h>
 #include "debugtools.h"
 #include "winerror.h"
+#include "winbase.h"
+#include "winnls.h"
 
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_shelllink.h"
+#include "shlobj.h"
+#include "wine/winestring.h"
 #include "wine/undocshell.h"
 
 #include "heap.h"
-#include "winnls.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"

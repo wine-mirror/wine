@@ -7,9 +7,7 @@
 #ifndef __WINE_WINE_OBJ_INPLACE_H
 #define __WINE_WINE_OBJ_INPLACE_H
 
-
 struct tagMSG;
-#include "wine/obj_moniker.h"
 
 #ifdef __cplusplus
 extern "C" {

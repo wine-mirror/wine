@@ -5,10 +5,6 @@
 #ifndef __WINE_WINE_OBJ_STORAGE_H
 #define __WINE_WINE_OBJ_STORAGE_H
 
-
-#include "winnt.h"
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -3,6 +3,7 @@
 
 
 #include "wine/obj_base.h"
+#include "wine/obj_misc.h"
 
 /* the following depend only on obj_base.h */
 #include "wine/obj_storage.h"

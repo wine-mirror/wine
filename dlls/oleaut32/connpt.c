@@ -9,6 +9,8 @@
 
 #include <assert.h>
 #include "winerror.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "olectl.h"
 #include "wine/obj_base.h"
 #include "wine/obj_connection.h"

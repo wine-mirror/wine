@@ -1,26 +1,51 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_shelllink.h"
-#include "wine/obj_shellfolder.h"
-#include "wine/obj_shellbrowser.h"
-#include "wine/obj_contextmenu.h"
-#include "wine/obj_shellextinit.h"
-#include "wine/obj_extracticon.h"
-#include "wine/obj_commdlgbrowser.h"
-#include "wine/obj_dockingwindowframe.h"
-
 #include "windef.h"
 #include "winbase.h"	/* WIN32_FIND_* */
 #include "ole2.h"
-#include "shell.h"
 #include "commctrl.h"
 #include "prsht.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
+
+/****************************************************************************
+* SHITEMID, ITEMIDLIST, PIDL API 
+*/
+#include "pshpack1.h"
+typedef struct
+{
+    WORD cb;      /* nr of bytes in this item */
+    BYTE abID[1]; /* first byte in this item */
+} SHITEMID, *LPSHITEMID;
+typedef LPSHITEMID const LPCSHITEMID;
+
+typedef struct _ITEMIDLIST
+{
+    SHITEMID mkid; /* first itemid in list */
+} ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
+#include "poppack.h"
+
+BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
+BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
+#define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
+
+
+#include "wine/obj_base.h"
+#include "wine/obj_enumidlist.h"
+#include "wine/obj_inplace.h"
+#include "wine/obj_oleaut.h"
+#include "wine/obj_shellfolder.h"
+#include "wine/obj_shellview.h"
+#include "wine/obj_shelllink.h"
+#include "wine/obj_shellbrowser.h"
+#include "wine/obj_contextmenu.h"
+#include "wine/obj_shellextinit.h"
+#include "wine/obj_extracticon.h"
+#include "wine/obj_commdlgbrowser.h"
+#include "wine/obj_dockingwindowframe.h"
 
 /*****************************************************************************
  * Predeclare interfaces
@@ -94,6 +119,16 @@ ICOM_DEFINE(IShellIcon, IUnknown)
 #define IShellIcon_Release(p)                 ICOM_CALL (Release,p)
 /*** IShellIcon methods ***/
 #define IShellIcon_GetIconOf(p,a,b,c)         ICOM_CALL3(GetIconOf,p,a,b,c)
+
+/****************************************************************************
+* SHAddToRecentDocs API
+*/
+#define SHARD_PIDL      0x00000001L
+#define SHARD_PATHA     0x00000002L
+#define SHARD_PATHW     0x00000003L
+#define SHARD_PATH WINELIB_NAME_AW(SHARD_PATH)
+
+DWORD WINAPI SHAddToRecentDocs(UINT uFlags, LPCVOID pv);
 
 /****************************************************************************
  * Shell Execute API

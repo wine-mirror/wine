@@ -4,10 +4,6 @@
 #ifndef __WINE_WINE_OBJ_MONIKER_H
 #define __WINE_WINE_OBJ_MONIKER_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_misc.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

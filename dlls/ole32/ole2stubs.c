@@ -5,13 +5,14 @@
  * Move these functions to dlls/ole32/ole2impl.c when you implement them.
  */
 
-#include "ole2.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ole2.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /******************************************************************************
  *               OleCreateLinkToFile        [OLE32.96]

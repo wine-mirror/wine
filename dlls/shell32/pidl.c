@@ -13,15 +13,15 @@
 #include <string.h>
 #include "winbase.h"
 #include "debugtools.h"
-#include "shell.h"
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "wine/winestring.h"
+#include "wine/undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
 
 #include "pidl.h"
-#include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(pidl);
 DECLARE_DEBUG_CHANNEL(shell);

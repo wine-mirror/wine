@@ -11,11 +11,11 @@
 #include "winerror.h"
 #include "winreg.h"
 
-#include "wine/obj_queryassociations.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "shlguid.h"
 #include "shresdef.h"
+#include "wine/obj_queryassociations.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

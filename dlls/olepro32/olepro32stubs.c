@@ -7,6 +7,7 @@
  */
 
 #include "debugtools.h"
+#include "winbase.h"
 #include "ole2.h"
 #include "windef.h"
 

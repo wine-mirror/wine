@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "wine/unicode.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
 #include "wine/obj_olefont.h"

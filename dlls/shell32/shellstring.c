@@ -8,6 +8,7 @@
 #include "debugtools.h"
 #include "heap.h"
 
+#include "shlobj.h"
 #include "shlwapi.h"
 #include "shellapi.h"
 #include "shell32_main.h"
@@ -26,17 +27,17 @@ DEFAULT_DEBUG_CHANNEL(shell);
  * NOTES
  *  the pidl is for STRRET OFFSET
  */
-HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
         return StrRetToBufA( src, pidl, dest, len );
 }
 
-HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
         return StrRetToBufW( src, pidl, dest, len );
 }
 
-HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
 	if(SHELL_OsIsUnicode())
 	  return StrRetToStrNW (dest, len, src, pidl);

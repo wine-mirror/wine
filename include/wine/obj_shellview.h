@@ -5,15 +5,6 @@
 #ifndef __WINE_WINE_OBJ_SHELLVIEW_H
 #define __WINE_WINE_OBJ_SHELLVIEW_H
 
-#include "winbase.h"
-#include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/obj_base.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_shellfolder.h"
-#include "prsht.h"	/* LPFNADDPROPSHEETPAGE */
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

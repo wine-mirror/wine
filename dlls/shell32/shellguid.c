@@ -6,6 +6,8 @@
  *  this in in a single file due to interfering definitions
  *
  */
+#include "winbase.h"
+
 #include "initguid.h"
 
 #include "shlwapi.h"

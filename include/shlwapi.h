@@ -1,9 +1,7 @@
 #ifndef __WINE_SHLWAPI_H
 #define __WINE_SHLWAPI_H
 
-#include "windef.h"
-#include "wine/obj_queryassociations.h"
-#include "wine/obj_shellfolder.h"
+#include "objbase.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,10 +111,10 @@ LPSTR WINAPI StrDupA(LPCSTR lpSrc);
 LPWSTR WINAPI StrDupW(LPCWSTR lpSrc);
 #define StrDup WINELIB_NAME_AW(StrDup)
 
-HRESULT WINAPI StrRetToBufA(LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest,
-			    DWORD len);
-HRESULT WINAPI StrRetToBufW(LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest,
-			    DWORD len);
+struct _STRRET;
+struct _ITEMIDLIST;
+HRESULT WINAPI StrRetToBufA(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPSTR dest, DWORD len);
+HRESULT WINAPI StrRetToBufW(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPWSTR dest, DWORD len);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
 void WINAPI PathRemoveBlanksA(LPSTR lpszPath);

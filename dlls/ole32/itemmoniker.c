@@ -4,13 +4,15 @@
  *           Copyright 1999  Noomen Hamza
  ***************************************************************************************/
 
-#include "wine/obj_base.h"
-#include "wine/obj_moniker.h"
-#include "winbase.h"
-
 #include <assert.h>
 #include "winerror.h"
+#include "winbase.h"
 #include "debugtools.h"
+#include "wine/winestring.h"
+#include "wine/obj_base.h"
+#include "wine/obj_misc.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 #include "wine/obj_inplace.h"
 #include "wine/unicode.h"
 

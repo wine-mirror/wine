@@ -14,11 +14,13 @@
 
 #include "debugtools.h"
 #include "winerror.h"
+#include "winbase.h"
 
 #include "oleidl.h"
 #include "shlguid.h"
 
 #include "pidl.h"
+#include "wine/winestring.h"
 #include "wine/obj_base.h"
 #include "wine/obj_dragdrop.h"
 #include "wine/obj_shellfolder.h"
@@ -30,7 +32,7 @@
 #define INITGUID
 #include "initguid.h"
 #include "shellfolder.h"
-
+#include "wine/obj_queryassociations.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 

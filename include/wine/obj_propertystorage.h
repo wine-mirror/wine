@@ -5,9 +5,6 @@
 #ifndef __WINE_WINE_OBJ_PROPERTYSTORAGE_H
 #define __WINE_WINE_OBJ_PROPERTYSTORAGE_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

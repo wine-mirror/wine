@@ -7,13 +7,6 @@
 #ifndef __WINE_WINE_OBJ_CONTROL_H
 #define __WINE_WINE_OBJ_CONTROL_H
 
-
-#include "winbase.h"
-#include "wine/obj_oleaut.h" /* for DISPID */
-#include "wine/obj_oleview.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_dragdrop.h"
-
 struct tagMSG;
 
 #ifdef __cplusplus

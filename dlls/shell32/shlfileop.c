@@ -4,10 +4,10 @@
 #include <string.h>
 #include "debugtools.h"
 #include "shellapi.h"
-#include "shell32_main.h"
 
 #include "shlobj.h"
 #include "shresdef.h"
+#include "shell32_main.h"
 #include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

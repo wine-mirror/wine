@@ -8,10 +8,10 @@
 #include <string.h>
 #include "debugtools.h"
 #include "winreg.h"
-#include "wine/obj_base.h"
-#include "wine/obj_enumidlist.h"
 #include "wine/undocshell.h"
 #include "winerror.h"
+#include "wine/obj_base.h"
+#include "wine/obj_enumidlist.h"
 
 #include "pidl.h"
 #include "shlguid.h"

@@ -5,10 +5,13 @@
 
 #include "winerror.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "shlwapi.h"
+#include "shlobj.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -332,7 +335,7 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
  * NOTES
  *  the pidl is for STRRET OFFSET
  */
-HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD len)
+HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, DWORD len)
 {
 	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
 
@@ -370,7 +373,7 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD 
  * NOTES
  *  the pidl is for STRRET OFFSET
  */
-HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len)
+HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, DWORD len)
 {
 	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
 
