@@ -33,7 +33,13 @@ static DWORD delete_key( HKEY hkey )
 
     while (!(ret = RegEnumKeyW(hkey, 0, name, sizeof(name))))
     {
-        if ((ret = delete_key( hkey ))) break;
+        HKEY tmp;
+        if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
+        {
+            ret = delete_key( tmp );
+            RegCloseKey( tmp );
+        }
+        if (ret) break;
     }
     if (ret != ERROR_NO_MORE_ITEMS) return ret;
     RegDeleteKeyA( hkey, NULL );
