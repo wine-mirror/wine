@@ -36,37 +36,18 @@
  *      Optimize WINMM and negotiate fragment size, decrease DS_HEL_MARGIN
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <assert.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/fcntl.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winreg.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
 #include "mmsystem.h"
 #include "winternl.h"
 #include "mmddk.h"
-#include "wine/windef16.h"
-#include "wine/winbase16.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsdriver.h"
