@@ -84,10 +84,11 @@ LRESULT WINAPI SendDriverMessage( HDRVR hDriver, UINT message,
 HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDriver);
 HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 
-/* only win31 version for those below ? */
+/* only win31 version for those exist */
 HDRVR16 WINAPI GetNextDriver16(HDRVR16, DWORD);
 BOOL16 WINAPI GetDriverInfo16(HDRVR16, DRIVERINFOSTRUCT16 *);
 
+#ifdef __WINE__
 /* The following definitions are WINE internals */
 /* FIXME: This is a WINE internal struct and should be moved in include/wine directory
  * Please note that WINE shares 16 and 32 bit drivers on a single list...
@@ -129,16 +130,6 @@ LPWINE_DRIVER	DRIVER_RegisterDriver16(LPCSTR, HMODULE16, DRIVERPROC16, LPARAM, B
 LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE,   DRIVERPROC,   LPARAM, BOOL);
 int		DRIVER_GetType(HDRVR);
 
-#if 0
-#error "It's never used"
-/* internal */
-typedef struct
-{
-    UINT			length;
-    HDRVR			hDriver;
-    HMODULE			hModule;
-    CHAR			szAliasName[128];
-} DRIVERINFOSTRUCTA, *LPDRIVERINFOSTRUCTA;
-#endif
+#endif  /*  __WINE__ */
 
 #endif  /* __WINE_DRIVER_H */
