@@ -153,6 +153,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     }
 
     pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
+    if (This->myDesc.Format == D3DFMT_DXT1) /* DXT1 is half byte per pixel */
+        pLockedRect->Pitch = pLockedRect->Pitch/2;
     
     if (NULL == pRect) {
       pLockedRect->pBits = This->allocatedMemory;
@@ -163,7 +165,12 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       TRACE("Locked Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
     } else {
       TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
-      pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
+
+      if (This->myDesc.Format == D3DFMT_DXT1) { /* DXT1 is half byte per pixel */
+          pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
+      } else {
+          pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
+      }
       This->lockedRect.left   = pRect->left;
       This->lockedRect.top    = pRect->top;
       This->lockedRect.right  = pRect->right;
@@ -491,6 +498,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 
       LEAVE_GL();
     }
+#else
+    FIXME("Using DXT1/3/5 without advertized support\n");
 #endif
   } else {
     TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",

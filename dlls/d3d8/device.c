@@ -625,7 +625,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         volume->myDesc.Pool   = Pool;
         volume->myDesc.Usage  = Usage;
         volume->bytesPerPixel   = D3DFmtGetBpp(This, Format);
-        volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
+        /* Note: Volume textures cannot be dxtn, hence no need to check here */
+        volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth; 
         volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
 
 	volume->lockable = TRUE;
@@ -779,7 +780,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    if (Format == D3DFMT_DXT1) { 
+        object->myDesc.Size = (Width * object->bytesPerPixel)/2 * Height;  /* DXT1 is half byte per pixel */
+    } else {
+        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    }
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = Lockable;
     object->locked = FALSE;
@@ -814,7 +819,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    if (Format == D3DFMT_DXT1) { 
+        object->myDesc.Size = (Width * object->bytesPerPixel)/2 * Height; /* DXT1 is half byte per pixel */
+    } else {
+        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    }
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : FALSE;
     object->locked = FALSE;
@@ -844,7 +853,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->myDesc.Usage = 0;
     object->myDesc.Pool = D3DPOOL_SYSTEMMEM;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    if (Format == D3DFMT_DXT1) { 
+        object->myDesc.Size = ((Width * object->bytesPerPixel) * Height) / 2; /* DXT1 is half byte per pixel */
+    } else {
+        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    }
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = TRUE;
     object->locked = FALSE;
@@ -921,11 +934,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
 
         int bytesPerPixel = ((IDirect3DSurface8Impl*) pSourceSurface)->bytesPerPixel;
         int i;
+
         /* Copy rect by rect */
         for (i = 0; i < cRects; i++) {
             CONST RECT*  r = &pSourceRectsArray[i];
             CONST POINT* p = &pDestPointsArray[i];
-            int copyperline = (r->right - r->left) * bytesPerPixel;
+            int copyperline;
             int j;
             D3DLOCKED_RECT lrSrc;
             D3DLOCKED_RECT lrDst;
@@ -933,7 +947,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
  
 
             TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);
-
+            if (src->myDesc.Format == D3DFMT_DXT1) { 
+                copyperline = ((r->right - r->left) * bytesPerPixel)/2; /* DXT1 is half byte per pixel */
+            } else {
+                copyperline = ((r->right - r->left) * bytesPerPixel);
+            }
             IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, r, D3DLOCK_READONLY);
             dest_rect.left  = p->x;
             dest_rect.top   = p->y;
@@ -943,15 +961,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
             TRACE("Locked src and dst\n");
 
             /* Find where to start */
-#if 0
-            from = copyfrom + (r->top * pitchFrom) + (r->left * bytesPerPixel);
-            to   = copyto   + (p->y * pitchTo) + (p->x * bytesPerPixel);
-            /* Copy line by line */
-            for (j = 0; j < (r->bottom - r->top); j++) {
-               memcpy(to + (j * pitchTo), from + (j * pitchFrom), copyperline);
-            }
-#endif
-
 	    for (j = 0; j < (r->bottom - r->top); j++) {
                memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
 	    }
@@ -1074,17 +1083,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
 
     ENTER_GL();
 
-    /*
-    {
-      IDirect3DSurface8Impl* tmp = ((IDirect3DSurface8Impl*) pDestSurface);
-      FIXME("dest:%u,%u,bpp:%u\n", tmp->myDesc.Width, tmp->myDesc.Height, tmp->bytesPerPixel);
-      FIXME("dest2:pitch%u\n", lockedRect.Pitch);
-      FIXME("src:%u,%u\n", This->PresentParms.BackBufferWidth, This->PresentParms.BackBufferHeight);
-      tmp = This->frontBuffer;
-      FIXME("src2:%u,%u,bpp:%u\n", tmp->myDesc.Width, tmp->myDesc.Height, tmp->bytesPerPixel);
-    }
-    */
-
     glFlush();
     vcheckGLcall("glFlush");
     glGetIntegerv(GL_READ_BUFFER, &prev_read);
@@ -1206,6 +1204,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
 	{
 	  long j;
 	  long pitch = This->renderTarget->myDesc.Width * This->renderTarget->bytesPerPixel;
+
+          if (This->renderTarget->myDesc.Format == D3DFMT_DXT1) /* DXT1 is half byte per pixel */
+              pitch = pitch / 2;
+
 	  for (j = 0; j < This->renderTarget->myDesc.Height; ++j) {
 	    glReadPixels(0, 
 			 This->renderTarget->myDesc.Height - j - 1, 
@@ -4025,6 +4027,10 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       {
 	long j;
 	long pitch = This->renderTarget->myDesc.Width * This->renderTarget->bytesPerPixel;
+
+        if (This->renderTarget->myDesc.Format == D3DFMT_DXT1) /* DXT1 is half byte per pixel */
+            pitch = pitch / 2;
+
 	for (j = 0; j < This->renderTarget->myDesc.Height; ++j) {
 	  glReadPixels(0, 
 		       This->renderTarget->myDesc.Height - j - 1, 

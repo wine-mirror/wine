@@ -786,9 +786,11 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
 	  FIXME(" FOUND: EXT Secondary coord support\n");
 	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;
+#if defined(GL_EXT_texture_compression_s3tc)
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
 	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
+#endif
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
 	  if (FALSE == This->gl_info.supported[ARB_TEXTURE_ENV_DOT3]) {
 	    FIXME(" FOUND: EXT Dot3 support\n");
