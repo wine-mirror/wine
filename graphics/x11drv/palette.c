@@ -217,26 +217,27 @@ int X11DRV_PALETTE_Init(void)
 
     TRACE(" visual class %i (%i)\n",  visual->class, monoPlane);
 
-    memset(X11DRV_PALETTE_freeList, 0, 256*sizeof(unsigned char));
-
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
-    if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
-        X11DRV_PALETTE_BuildPrivateMap( sys_pal_template );
-    else
-        X11DRV_PALETTE_BuildSharedMap( sys_pal_template );
-
-    /* Build free list */
-
-    if( X11DRV_PALETTE_firstFree != -1 )
-        X11DRV_PALETTE_FormatSystemPalette();
-
-    X11DRV_PALETTE_FillDefaultColors( sys_pal_template );
-
     if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
+    {
         palette_size = 0;
+    }
     else
+    {
+        if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
+            X11DRV_PALETTE_BuildPrivateMap( sys_pal_template );
+        else
+            X11DRV_PALETTE_BuildSharedMap( sys_pal_template );
+
+        /* Build free list */
+
+        if( X11DRV_PALETTE_firstFree != -1 )
+            X11DRV_PALETTE_FormatSystemPalette();
+
+        X11DRV_PALETTE_FillDefaultColors( sys_pal_template );
         palette_size = visual->map_entries;
+    }
 
     return palette_size;
 }
@@ -407,9 +408,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
    for (i = 0; i < defaultCM_max_copy; i++)
        defaultColors[i].pixel = (long) i;
-   TSXQueryColors(gdi_display, defaultCM, &defaultColors[0], defaultCM_max_copy);
+   wine_tsx11_lock();
+   XQueryColors(gdi_display, defaultCM, &defaultColors[0], defaultCM_max_copy);
    for (i = 0; i < defaultCM_max_copy; i++)
-       TSXAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
+       XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
 
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
@@ -426,7 +428,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         color.blue  = sys_pal_template[i].peBlue * 65535 / 255;
         color.flags = DoRed | DoGreen | DoBlue;
 
-        if (!TSXAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &color ))
+        if (!XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &color ))
         {
 	     XColor	best, c;
 
@@ -455,7 +457,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	     best.pixel = best.red = best.green = best.blue = 0;
 	     for( c.pixel = 0, diff = 0x7fffffff; c.pixel < max; c.pixel += step )
 	     {
-		TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &c);
+		XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &c);
 		r = (c.red - color.red)>>8;
 		g = (c.green - color.green)>>8;
 		b = (c.blue - color.blue)>>8;
@@ -463,7 +465,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 		if( r < diff ) { best = c; diff = r; }
 	     }
 
-	     if( TSXAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &best) )
+	     if( XAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &best) )
 		 color.pixel = best.pixel;
 	     else color.pixel = (i < NB_RESERVED_COLORS/2)? bp : wp;
         }
@@ -480,6 +482,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         else if (i >= NB_RESERVED_COLORS - 8 )
             X11DRV_PALETTE_mapEGAPixel[i - (NB_RESERVED_COLORS-16)] = color.pixel;
      }
+   wine_tsx11_unlock();
 
    /* now allocate changeable set */
 
@@ -498,19 +501,20 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	    return FALSE;
         }
 
+        wine_tsx11_lock();
 	/* comment this out if you want to debug palette init */
-	TSXGrabServer(gdi_display);
+	XGrabServer(gdi_display);
 
         while( c_max - c_min > 0 )
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;
 
-             if( !TSXAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
+             if( !XAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
                                    plane_masks, 0, pixDynMapping, c_val) )
                  c_max = c_val - 1;
              else
                {
-                 TSXFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap, pixDynMapping, c_val, 0);
+                 XFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap, pixDynMapping, c_val, 0);
                  c_min = c_val;
                }
           }
@@ -521,7 +525,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 
 	if( c_min > 0 )
-	  if( !TSXAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
+	  if( !XAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
 	      WARN("Inexplicable failure during colorcell allocation.\n");
@@ -530,7 +534,8 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
         palette_size = c_min + NB_RESERVED_COLORS;
 
-	TSXUngrabServer(gdi_display);
+	XUngrabServer(gdi_display);
+        wine_tsx11_unlock();
 
 	TRACE("adjusted size %i colorcells\n", palette_size);
      }
@@ -650,6 +655,8 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
   inc_g = (255 - NB_COLORCUBE_START_INDEX)/no_g;
   inc_b = (255 - NB_COLORCUBE_START_INDEX)/no_b;
 
+  wine_tsx11_lock();
+
   idx = X11DRV_PALETTE_firstFree;
 
   if( idx != -1 )
@@ -683,7 +690,7 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	   color.green = COLOR_sysPal[idx].peGreen << 8;
 	   color.blue =  COLOR_sysPal[idx].peBlue << 8;
 	   color.flags = DoRed | DoGreen | DoBlue;
-	   TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+	   XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
 	 }
 	 idx = X11DRV_PALETTE_freeList[idx];
       }
@@ -703,11 +710,11 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	{
 	  xc.pixel = i;
 
-	  TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc);
+	  XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc);
 	  r = xc.red>>8; g = xc.green>>8; b = xc.blue>>8;
 
 	  if( xc.pixel < 256 && X11DRV_PALETTE_CheckSysColor( sys_pal_template, RGB(r, g, b)) &&
-	      TSXAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc) )
+	      XAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc) )
 	  {
 	     X11DRV_PALETTE_XPixelToPalette[xc.pixel] = idx;
 	     X11DRV_PALETTE_PaletteToXPixel[idx] = xc.pixel;
@@ -718,6 +725,7 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	}
     COLOR_gapFilled = idx - COLOR_gapStart;
   }
+  wine_tsx11_unlock();
 }
 
 
