@@ -197,7 +197,6 @@ static void tweak_init(void)
 static BOOL process_attach(void)
 {
     HINSTANCE16 instance;
-    int queueSize;
 
     /* Create USER heap */
     if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
@@ -231,10 +230,6 @@ static BOOL process_attach(void)
 
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
-
-    /* Create system message queue */
-    queueSize = GetProfileIntA( "windows", "TypeAhead", 120 );
-    if (!QUEUE_CreateSysMsgQueue( queueSize )) return FALSE;
 
     /* Set double click time */
     SetDoubleClickTime( GetProfileIntA("windows","DoubleClickSpeed",452) );

@@ -1345,34 +1345,43 @@ struct wait_input_idle_request
 struct send_message_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int             posted;    /* posted instead of sent message? */
+    IN  int             kind;      /* message kind (see below) */
     IN  void*           id;        /* thread id */
     IN  int             type;      /* message type */
     IN  handle_t        win;       /* window handle */
     IN  unsigned int    msg;       /* message code */
     IN  unsigned int    wparam;    /* parameters */
     IN  unsigned int    lparam;    /* parameters */
+    IN  unsigned short  x;         /* x position */
+    IN  unsigned short  y;         /* y position */
+    IN  unsigned int    time;      /* message time */
     IN  unsigned int    info;      /* extra info */
 };
+enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
+#define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
 
 
 /* Get a message from the current queue */
 struct get_message_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int             remove;    /* remove it? */
-    IN  int             posted;    /* check posted messages too? */
+    IN  int             flags;     /* see below */
     IN  handle_t        get_win;   /* window handle to get */
     IN  unsigned int    get_first; /* first message code to get */
     IN  unsigned int    get_last;  /* last message code to get */
-    OUT int             sent;      /* it is a sent message */
+    OUT int             kind;      /* message kind */
     OUT int             type;      /* message type */
     OUT handle_t        win;       /* window handle */
     OUT unsigned int    msg;       /* message code */
     OUT unsigned int    wparam;    /* parameters */
     OUT unsigned int    lparam;    /* parameters */
+    OUT unsigned short  x;         /* x position */
+    OUT unsigned short  y;         /* y position */
+    OUT unsigned int    time;      /* message time */
     OUT unsigned int    info;      /* extra info */
 };
+#define GET_MSG_REMOVE 1     /* remove the message */
+#define GET_MSG_SENT_ONLY 2  /* only get sent messages */
 
 
 /* Reply to a sent message */
@@ -1734,7 +1743,7 @@ union generic_request
     struct create_async_request create_async;
 };
 
-#define SERVER_PROTOCOL_VERSION 45
+#define SERVER_PROTOCOL_VERSION 46
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

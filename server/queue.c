@@ -37,6 +37,9 @@ struct message
     unsigned int           msg;       /* message code */
     unsigned int           wparam;    /* parameters */
     unsigned int           lparam;    /* parameters */
+    unsigned short         x;         /* x position */
+    unsigned short         y;         /* y position */
+    unsigned int           time;      /* message time */
     unsigned int           info;      /* extra info */
     struct message_result *result;    /* result in sender queue */
 };
@@ -66,8 +69,7 @@ struct msg_queue
     unsigned int           wake_mask;     /* wakeup mask */
     unsigned int           changed_bits;  /* changed wakeup bits */
     unsigned int           changed_mask;  /* changed wakeup mask */
-    struct message_list    send_list;     /* list of sent messages */
-    struct message_list    post_list;     /* list of posted messages */
+    struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct message_result *send_result;   /* stack of sent messages waiting for result */
     struct message_result *recv_result;   /* stack of received messages waiting for result */
     struct timer          *first_timer;   /* head of timer list */
@@ -104,6 +106,7 @@ static const struct object_ops msg_queue_ops =
 static struct msg_queue *create_msg_queue( struct thread *thread )
 {
     struct msg_queue *queue;
+    int i;
 
     if ((queue = alloc_object( &msg_queue_ops, -1 )))
     {
@@ -111,16 +114,15 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
         queue->wake_mask       = 0;
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
-        queue->send_list.first = NULL;
-        queue->send_list.last  = NULL;
-        queue->post_list.first = NULL;
-        queue->post_list.last  = NULL;
         queue->send_result     = NULL;
         queue->recv_result     = NULL;
         queue->first_timer     = NULL;
         queue->last_timer      = NULL;
         queue->next_timer      = NULL;
         queue->timeout         = NULL;
+        for (i = 0; i < NB_MSG_KINDS; i++)
+            queue->msg_list[i].first = queue->msg_list[i].last = NULL;
+
         thread->queue = queue;
         if (!thread->process->queue)
             thread->process->queue = (struct msg_queue *)grab_object( queue );
@@ -140,6 +142,14 @@ inline static void change_queue_bits( struct msg_queue *queue, unsigned int set,
     queue->wake_bits = (queue->wake_bits | set) & ~clear;
     queue->changed_bits = (queue->changed_bits | set) & ~clear;
     if (is_signaled( queue )) wake_up( &queue->obj, 0 );
+}
+
+/* get the QS_* bit corresponding to a given hardware message */
+inline static int get_hardware_msg_bit( struct message *msg )
+{
+    if (msg->msg == WM_MOUSEMOVE || msg->msg == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
+    if (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST) return QS_KEY;
+    return QS_MOUSEBUTTON;
 }
 
 /* get the current thread queue, creating it if needed */
@@ -189,20 +199,31 @@ static void free_message( struct message *msg )
     free( msg );
 }
 
-/* remove (and free) a message from the sent messages list */
-static void remove_sent_message( struct msg_queue *queue, struct message *msg )
+/* remove (and free) a message from a message list */
+static void remove_queue_message( struct msg_queue *queue, struct message *msg,
+                                  enum message_kind kind )
 {
-    unlink_message( &queue->send_list, msg );
-    free_message( msg );
-    if (!queue->send_list.first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
-}
+    int clr_bit;
+    struct message *other;
 
-/* remove (and free) a message from the posted messages list */
-static void remove_posted_message( struct msg_queue *queue, struct message *msg )
-{
-    unlink_message( &queue->post_list, msg );
+    unlink_message( &queue->msg_list[kind], msg );
+    switch(kind)
+    {
+    case SEND_MESSAGE:
+        if (!queue->msg_list[kind].first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
+        break;
+    case POST_MESSAGE:
+        if (!queue->msg_list[kind].first) change_queue_bits( queue, 0, QS_POSTMESSAGE );
+        break;
+    case COOKED_HW_MESSAGE:
+    case RAW_HW_MESSAGE:
+        clr_bit = get_hardware_msg_bit( msg );
+        for (other = queue->msg_list[kind].first; other; other = other->next)
+            if (get_hardware_msg_bit( other ) == clr_bit) break;
+        if (!other) change_queue_bits( queue, 0, clr_bit );
+        break;
+    }
     free_message( msg );
-    if (!queue->post_list.first) change_queue_bits( queue, 0, QS_POSTMESSAGE );
 }
 
 /* send a message from the sender queue to the receiver queue */
@@ -221,7 +242,7 @@ static int send_message( struct msg_queue *send_queue, struct msg_queue *recv_qu
 
     /* and put the message on the receiver queue */
     msg->result = result;
-    append_message( &recv_queue->send_list, msg );
+    append_message( &recv_queue->msg_list[SEND_MESSAGE], msg );
     change_queue_bits( recv_queue, QS_SENDMESSAGE, 0 );
     return 1;
 }
@@ -231,12 +252,12 @@ static void receive_message( struct msg_queue *queue, struct message *msg )
 {
     struct message_result *result = msg->result;
 
-    unlink_message( &queue->send_list, msg );
+    unlink_message( &queue->msg_list[SEND_MESSAGE], msg );
     /* put the result on the receiver result stack */
     result->recv_next  = queue->recv_result;
     queue->recv_result = result;
     free( msg );
-    if (!queue->send_list.first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
+    if (!queue->msg_list[SEND_MESSAGE].first) change_queue_bits( queue, 0, QS_SENDMESSAGE );
 }
 
 /* set the result of the current received message */
@@ -380,10 +401,10 @@ static void msg_queue_destroy( struct object *obj )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
     struct timer *timer = queue->first_timer;
+    int i;
 
     cleanup_results( queue );
-    empty_msg_list( &queue->send_list );
-    empty_msg_list( &queue->post_list );
+    for (i = 0; i < NB_MSG_KINDS; i++) empty_msg_list( &queue->msg_list[i] );
 
     while (timer)
     {
@@ -457,6 +478,7 @@ static void unlink_timer( struct msg_queue *queue, struct timer *timer )
     else queue->first_timer = timer->next;
     /* check if we removed the next timer */
     if (queue->next_timer == timer) set_next_timer( queue, timer->next );
+    else if (queue->next_timer == queue->first_timer) change_queue_bits( queue, 0, QS_TIMER );
 }
 
 /* restart an expired timer */
@@ -521,6 +543,7 @@ static void cleanup_window( struct msg_queue *queue, handle_t win )
 {
     struct timer *timer;
     struct message *msg;
+    int i;
 
     /* remove timers */
     timer = queue->first_timer;
@@ -535,22 +558,16 @@ static void cleanup_window( struct msg_queue *queue, handle_t win )
         timer = next;
     }
 
-    /* remove sent messages */
-    msg = queue->send_list.first;
-    while (msg)
+    /* remove messages */
+    for (i = 0; i < NB_MSG_KINDS; i++)
     {
-        struct message *next = msg->next;
-        if (msg->win == win) remove_sent_message( queue, msg );
-        msg = next;
-    }
-
-    /* remove posted messages */
-    msg = queue->post_list.first;
-    while (msg)
-    {
-        struct message *next = msg->next;
-        if (msg->win == win) remove_posted_message( queue, msg );
-        msg = next;
+        msg = queue->msg_list[i].first;
+        while (msg)
+        {
+            struct message *next = msg->next;
+            if (msg->win == win) remove_queue_message( queue, msg, i );
+            msg = next;
+        }
     }
 }
 
@@ -638,17 +655,64 @@ DECL_HANDLER(send_message)
         msg->msg     = req->msg;
         msg->wparam  = req->wparam;
         msg->lparam  = req->lparam;
+        msg->x       = req->x;
+        msg->y       = req->y;
+        msg->time    = req->time;
         msg->info    = req->info;
         msg->result  = NULL;
-        if (!req->posted) send_message( send_queue, recv_queue, msg );
-        else
+        switch(req->kind)
         {
-            append_message( &recv_queue->post_list, msg );
+        case SEND_MESSAGE:
+            send_message( send_queue, recv_queue, msg );
+            break;
+        case POST_MESSAGE:
+            append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
             change_queue_bits( recv_queue, QS_POSTMESSAGE, 0 );
+            break;
+        case COOKED_HW_MESSAGE:
+        case RAW_HW_MESSAGE:
+            append_message( &recv_queue->msg_list[req->kind], msg );
+            change_queue_bits( recv_queue, get_hardware_msg_bit(msg), 0 );
+            break;
+        default:
+            free( msg );
+            set_error( STATUS_INVALID_PARAMETER );
+            break;
         }
     }
     release_object( thread );
 }
+
+/* store a message contents into the request buffer; helper for get_message */
+inline static void put_req_message( struct get_message_request *req, const struct message *msg )
+{
+    req->type   = msg->type;
+    req->win    = msg->win;
+    req->msg    = msg->msg;
+    req->wparam = msg->wparam;
+    req->lparam = msg->lparam;
+    req->x      = msg->x;
+    req->y      = msg->y;
+    req->time   = msg->time;
+    req->info   = msg->info;
+}
+
+inline static struct message *find_matching_message( const struct message_list *list, handle_t win,
+                                                     unsigned int first, unsigned int last )
+{
+    struct message *msg;
+
+    for (msg = list->first; msg; msg = msg->next)
+    {
+        /* check against the filters */
+        if (win && msg->win && msg->win != win) continue;
+        if (msg->msg < first) continue;
+        if (msg->msg > last) continue;
+        break; /* found one */
+    }
+    return msg;
+}
+
 
 /* get a message from the current queue */
 DECL_HANDLER(get_message)
@@ -660,62 +724,75 @@ DECL_HANDLER(get_message)
     if (!queue) return;
 
     /* first check for sent messages */
-    if ((msg = queue->send_list.first))
+    if ((msg = queue->msg_list[SEND_MESSAGE].first))
     {
-        req->sent   = 1;
-        req->type   = msg->type;
-        req->win    = msg->win;
-        req->msg    = msg->msg;
-        req->wparam = msg->wparam;
-        req->lparam = msg->lparam;
-        req->info   = msg->info;
+        req->kind = SEND_MESSAGE;
+        put_req_message( req, msg );
         receive_message( queue, msg );
         return;
     }
-    if (!req->posted) goto done;  /* nothing else to check */
+    if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
-    /* then try a posted message */
-    req->sent = 0;
-    for (msg = queue->post_list.first; msg; msg = msg->next)
+    /* then check for posted messages */
+    if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], req->get_win,
+                                      req->get_first, req->get_last )))
     {
-        /* check against the filters */
-        if (req->get_win && msg->win != req->get_win) continue;
-        if (msg->msg >= req->get_first && msg->msg <= req->get_last)
-        {
-            /* found one */
-            req->type   = msg->type;
-            req->win    = msg->win;
-            req->msg    = msg->msg;
-            req->wparam = msg->wparam;
-            req->lparam = msg->lparam;
-            req->info   = msg->info;
-            if (req->remove) remove_posted_message( queue, msg );
-            return;
-        }
+        req->kind = POST_MESSAGE;
+        put_req_message( req, msg );
+        if (req->flags & GET_MSG_REMOVE) remove_queue_message( queue, msg, POST_MESSAGE );
+        return;
+    }
+
+    /* then check for cooked hardware messages */
+    if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], req->get_win,
+                                      req->get_first, req->get_last )))
+    {
+        req->kind = COOKED_HW_MESSAGE;
+        put_req_message( req, msg );
+        if (req->flags & GET_MSG_REMOVE) remove_queue_message( queue, msg, COOKED_HW_MESSAGE );
+        return;
+    }
+
+    /* then check for any raw hardware message */
+    if ((msg = queue->msg_list[RAW_HW_MESSAGE].first))
+    {
+        req->kind = RAW_HW_MESSAGE;
+        put_req_message( req, msg );
+        /* raw messages always get removed */
+        remove_queue_message( queue, msg, RAW_HW_MESSAGE );
+        return;
     }
 
     /* now check for WM_PAINT */
     if ((queue->wake_bits & QS_PAINT) &&
         (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last))
     {
+        req->kind   = POST_MESSAGE;
         req->type   = 0;
         req->win    = 0;
         req->msg    = WM_PAINT;
         req->wparam = 0;
         req->lparam = 0;
+        req->x      = 0;
+        req->y      = 0;
+        req->time   = 0;
         req->info   = 0;
         return;
     }
 
     /* now check for timer */
     if ((timer = find_expired_timer( queue, req->get_win, req->get_first,
-                                     req->get_last, req->remove )))
+                                     req->get_last, (req->flags & GET_MSG_REMOVE) )))
     {
+        req->kind   = POST_MESSAGE;
         req->type   = 0;
         req->win    = timer->win;
         req->msg    = timer->msg;
         req->wparam = timer->id;
         req->lparam = timer->lparam;
+        req->x      = 0;
+        req->y      = 0;
+        req->time   = 0;
         req->info   = 0;
         return;
     }

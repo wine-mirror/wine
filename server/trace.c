@@ -1464,20 +1464,22 @@ static void dump_wait_input_idle_reply( const struct wait_input_idle_request *re
 
 static void dump_send_message_request( const struct send_message_request *req )
 {
-    fprintf( stderr, " posted=%d,", req->posted );
+    fprintf( stderr, " kind=%d,", req->kind );
     fprintf( stderr, " id=%p,", req->id );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%d,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " x=%04x,", req->x );
+    fprintf( stderr, " y=%04x,", req->y );
+    fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x", req->info );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
 {
-    fprintf( stderr, " remove=%d,", req->remove );
-    fprintf( stderr, " posted=%d,", req->posted );
+    fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " get_win=%d,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
     fprintf( stderr, " get_last=%08x", req->get_last );
@@ -1485,12 +1487,15 @@ static void dump_get_message_request( const struct get_message_request *req )
 
 static void dump_get_message_reply( const struct get_message_request *req )
 {
-    fprintf( stderr, " sent=%d,", req->sent );
+    fprintf( stderr, " kind=%d,", req->kind );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%d,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " x=%04x,", req->x );
+    fprintf( stderr, " y=%04x,", req->y );
+    fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x", req->info );
 }
 

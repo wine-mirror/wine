@@ -897,7 +897,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (!ret)
     {
         WIN_UnlinkWindow( hwnd );
-        goto failed;
+        X11DRV_DestroyWindow( hwnd );
+        return FALSE;
     }
 
     /* Send the size messages */

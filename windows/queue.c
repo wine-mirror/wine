@@ -21,20 +21,13 @@
 #include "server.h"
 #include "spy.h"
 
-DECLARE_DEBUG_CHANNEL(sendmsg);
 DEFAULT_DEBUG_CHANNEL(msg);
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 static HQUEUE16 hExitingQueue = 0;
-static HQUEUE16 hmemSysMsgQueue = 0;
-static MESSAGEQUEUE *sysMsgQueue = NULL;
 static PERQUEUEDATA *pQDataWin16 = NULL;  /* Global perQData for Win16 tasks */
 
-static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
-static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
-
-HQUEUE16 hCursorQueue = 0;
 HQUEUE16 hActiveQueue = 0;
 
 
@@ -470,8 +463,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     }
 
     msgQueue->magic = 0;
-    
-    if( hCursorQueue == hQueue ) hCursorQueue = 0;
+
     if( hActiveQueue == hQueue ) hActiveQueue = 0;
 
     HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
@@ -496,142 +488,10 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 
 
 /***********************************************************************
- *           QUEUE_CreateSysMsgQueue
+ *           handle_sent_message
  *
- * Create the system message queue, and set the double-click speed.
- * Must be called only once.
+ * Handle the reception of a sent message by calling the corresponding window proc
  */
-BOOL QUEUE_CreateSysMsgQueue( int size )
-{
-    /* Note: We dont need perQ data for the system message queue */
-    if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( FALSE )))
-        return FALSE;
-    FarSetOwner16( hmemSysMsgQueue, 0 );
-    sysMsgQueue = (MESSAGEQUEUE *) GlobalLock16( hmemSysMsgQueue );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           QUEUE_GetSysQueue
- */
-MESSAGEQUEUE *QUEUE_GetSysQueue(void)
-{
-    return sysMsgQueue;
-}
-
-
-/***********************************************************************
- *           QUEUE_SetWakeBit
- *
- * See "Windows Internals", p.449
- */
-static BOOL QUEUE_TrySetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear, BOOL always )
-{
-    BOOL wake = FALSE;
-
-    TRACE_(msg)("queue = %04x, set = %04x, clear = %04x, always = %d\n",
-                queue->self, set, clear, always );
-    if (!queue->server_queue) return FALSE;
-
-    SERVER_START_REQ( set_queue_bits )
-    {
-        req->handle    = queue->server_queue;
-        req->set       = set;
-        req->clear     = clear;
-        req->mask_cond = always ? 0 : set;
-        if (!SERVER_CALL()) wake = (req->changed_mask & set) != 0;
-    }
-    SERVER_END_REQ;
-
-    if (wake || always)
-    {
-        if (set & QS_MOUSE) pMouseQueue = queue;
-        if (set & QS_KEY) pKbdQueue = queue;
-    }
-    return wake;
-}
-void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear )
-{
-    QUEUE_TrySetWakeBit( queue, set, clear, TRUE );
-}
-
-
-/***********************************************************************
- *           QUEUE_ClearWakeBit
- */
-void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
-{
-    QUEUE_SetWakeBit( queue, 0, bit );
-}
-
-/***********************************************************************
- *           QUEUE_WaitBits
- *
- * See "Windows Internals", p.447
- *
- * return values:
- *    0 if exit with timeout
- *    1 otherwise
- */
-int QUEUE_WaitBits( WORD bits, DWORD timeout )
-{
-    MESSAGEQUEUE *queue;
-    HQUEUE16 hQueue;
-
-    TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
-
-    hQueue = GetFastQueue16();
-    if (!(queue = QUEUE_Lock( hQueue ))) return 0;
-    
-    for (;;)
-    {
-        unsigned int wake_bits = 0, changed_bits = 0;
-        DWORD dwlc;
-
-        SERVER_START_REQ( set_queue_mask )
-        {
-            req->wake_mask    = QS_SENDMESSAGE;
-            req->changed_mask = bits | QS_SENDMESSAGE;
-            req->skip_wait    = 1;
-            if (!SERVER_CALL())
-            {
-                wake_bits    = req->wake_bits;
-                changed_bits = req->changed_bits;
-            }
-        }
-        SERVER_END_REQ;
-
-        if (changed_bits & bits)
-        {
-            /* One of the bits is set; we can return */
-            QUEUE_Unlock( queue );
-            return 1;
-        }
-        if (wake_bits & QS_SENDMESSAGE)
-        {
-            /* Process the sent message immediately */
-            QMSG msg;
-            QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg );
-            continue;  /* nested sm crux */
-        }
-
-        TRACE_(msg)("(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
-                    queue->self, bits, wake_bits, changed_bits );
-
-        ReleaseThunkLock( &dwlc );
-        if (dwlc) TRACE_(msg)("had win16 lock\n");
-
-        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, timeout, 0, 0 );
-        else
-            WaitForSingleObject( queue->server_queue, timeout );
-        if (dwlc) RestoreThunkLock( dwlc );
-    }
-}
-
-
-/* handle the reception of a sent message by calling the corresponding window proc */
 static void handle_sent_message( QMSG *msg )
 {
     LRESULT result = 0;
@@ -680,13 +540,150 @@ static void handle_sent_message( QMSG *msg )
 
 
 /***********************************************************************
+ *           process_sent_messages
+ *
+ * Process all pending sent messages
+ */
+static void process_sent_messages(void)
+{
+    QMSG msg;
+    unsigned int res;
+
+    for (;;)
+    {
+        SERVER_START_REQ( get_message )
+        {
+            req->flags = GET_MSG_REMOVE | GET_MSG_SENT_ONLY;
+            req->get_win   = 0;
+            req->get_first = 0;
+            req->get_last  = ~0;
+            if (!(res = SERVER_CALL()))
+            {
+                msg.type        = req->type;
+                msg.msg.hwnd    = req->win;
+                msg.msg.message = req->msg;
+                msg.msg.wParam  = req->wparam;
+                msg.msg.lParam  = req->lparam;
+                msg.msg.time    = req->time;
+                msg.msg.pt.x    = req->x;
+                msg.msg.pt.y    = req->y;
+                msg.extraInfo   = req->info;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (res) break;
+        handle_sent_message( &msg );
+    }
+}
+
+
+
+/***********************************************************************
+ *           QUEUE_SetWakeBit
+ *
+ * See "Windows Internals", p.449
+ */
+void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear )
+{
+    TRACE_(msg)("queue = %04x, set = %04x, clear = %04x\n",
+                queue->self, set, clear );
+    if (!queue->server_queue) return;
+
+    SERVER_START_REQ( set_queue_bits )
+    {
+        req->handle    = queue->server_queue;
+        req->set       = set;
+        req->clear     = clear;
+        req->mask_cond = 0;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
+}
+
+
+/***********************************************************************
+ *           QUEUE_ClearWakeBit
+ */
+void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
+{
+    QUEUE_SetWakeBit( queue, 0, bit );
+}
+
+
+/***********************************************************************
+ *           QUEUE_WaitBits
+ *
+ * See "Windows Internals", p.447
+ *
+ * return values:
+ *    0 if exit with timeout
+ *    1 otherwise
+ */
+int QUEUE_WaitBits( WORD bits, DWORD timeout )
+{
+    MESSAGEQUEUE *queue;
+    HQUEUE16 hQueue;
+
+    TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
+
+    hQueue = GetFastQueue16();
+    if (!(queue = QUEUE_Lock( hQueue ))) return 0;
+    
+    for (;;)
+    {
+        unsigned int wake_bits = 0, changed_bits = 0;
+        DWORD dwlc;
+
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->wake_mask    = QS_SENDMESSAGE;
+            req->changed_mask = bits | QS_SENDMESSAGE;
+            req->skip_wait    = 1;
+            if (!SERVER_CALL())
+            {
+                wake_bits    = req->wake_bits;
+                changed_bits = req->changed_bits;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (changed_bits & bits)
+        {
+            /* One of the bits is set; we can return */
+            QUEUE_Unlock( queue );
+            return 1;
+        }
+        if (wake_bits & QS_SENDMESSAGE)
+        {
+            /* Process the sent message immediately */
+            process_sent_messages();
+            continue;  /* nested sm crux */
+        }
+
+        TRACE_(msg)("(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
+                    queue->self, bits, wake_bits, changed_bits );
+
+        ReleaseThunkLock( &dwlc );
+        if (dwlc) TRACE_(msg)("had win16 lock\n");
+
+        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, timeout, 0, 0 );
+        else
+            WaitForSingleObject( queue->server_queue, timeout );
+        if (dwlc) RestoreThunkLock( dwlc );
+    }
+}
+
+
+/***********************************************************************
  *           QUEUE_FindMsg
  *
- * Find a message matching the given parameters. Return -1 if none available.
+ * Find a message matching the given parameters. Return FALSE if none available.
  */
-BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, BOOL sent_only, QMSG *msg )
+BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, QMSG *msg )
 {
-    BOOL ret = FALSE, sent = FALSE;
+    BOOL ret = FALSE;
 
     if (!first && !last) last = ~0;
 
@@ -694,28 +691,27 @@ BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, BOOL sent_onl
     {
         SERVER_START_REQ( get_message )
         {
-            req->remove    = remove;
-            req->posted    = !sent_only;
+            req->flags     = remove ? GET_MSG_REMOVE : 0;
             req->get_win   = hwnd;
             req->get_first = first;
             req->get_last  = last;
             if ((ret = !SERVER_CALL()))
             {
-                sent             = req->sent;
+                msg->kind        = req->kind;
                 msg->type        = req->type;
                 msg->msg.hwnd    = req->win;
                 msg->msg.message = req->msg;
                 msg->msg.wParam  = req->wparam;
                 msg->msg.lParam  = req->lparam;
-                msg->msg.time    = 0;  /* FIXME */
-                msg->msg.pt.x    = 0;  /* FIXME */
-                msg->msg.pt.y    = 0;  /* FIXME */
+                msg->msg.time    = req->time;
+                msg->msg.pt.x    = req->x;
+                msg->msg.pt.y    = req->y;
                 msg->extraInfo   = req->info;
             }
         }
         SERVER_END_REQ;
 
-        if (!ret || !sent) break;
+        if (!ret || (msg->kind != SEND_MESSAGE)) break;
         handle_sent_message( msg );
     }
 
@@ -769,92 +765,6 @@ void QUEUE_CleanupWindow( HWND hwnd )
         SERVER_CALL();
     }
     SERVER_END_REQ;
-}
-
-
-/***********************************************************************
- *           hardware_event
- *
- * Add an event to the system message queue.
- * Note: the position is relative to the desktop window.
- */
-void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
-		     int xPos, int yPos, DWORD time, DWORD extraInfo )
-{
-    MSG *msg;
-    QMSG  *qmsg;
-    MESSAGEQUEUE *queue;
-    int  mergeMsg = 0;
-
-    if (!sysMsgQueue) return;
-
-    EnterCriticalSection( &sysMsgQueue->cSection );
-
-    /* Merge with previous event if possible */
-    qmsg = sysMsgQueue->lastMsg;
-
-    if ((message == WM_MOUSEMOVE) && sysMsgQueue->lastMsg)
-    {
-        msg = &(sysMsgQueue->lastMsg->msg);
-        
-	if ((msg->message == message) && (msg->wParam == wParam))
-        {
-            /* Merge events */
-            qmsg = sysMsgQueue->lastMsg;
-            mergeMsg = 1;
-        }
-    }
-
-    if (!mergeMsg)
-    {
-        /* Should I limit the number of messages in
-          the system message queue??? */
-
-        /* Don't merge allocate a new msg in the global heap */
-        
-        if (!(qmsg = (QMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(QMSG) ) ))
-        {
-            LeaveCriticalSection( &sysMsgQueue->cSection );
-            return;
-        }
-        
-        /* put message at the end of the linked list */
-        qmsg->nextMsg = 0;
-        qmsg->prevMsg = sysMsgQueue->lastMsg;
-
-        if (sysMsgQueue->lastMsg)
-            sysMsgQueue->lastMsg->nextMsg = qmsg;
-
-        /* set last and first anchor index in system message queue */
-        sysMsgQueue->lastMsg = qmsg;
-        if (!sysMsgQueue->firstMsg)
-            sysMsgQueue->firstMsg = qmsg;
-    }
-
-      /* Store message */
-    msg = &(qmsg->msg);
-    msg->hwnd    = 0;
-    msg->message = message;
-    msg->wParam  = wParam;
-    msg->lParam  = lParam;
-    msg->time    = time;
-    msg->pt.x    = xPos;
-    msg->pt.y    = yPos;
-    qmsg->extraInfo = extraInfo;
-    qmsg->type      = QMSG_HARDWARE;
-
-    LeaveCriticalSection( &sysMsgQueue->cSection );
-
-    if ((queue = QUEUE_Lock( GetFastQueue16() )))
-    {
-        WORD wakeBit;
-
-        if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
-        else wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
-
-        QUEUE_SetWakeBit( queue, wakeBit, 0 );
-        QUEUE_Unlock( queue );
-    }
 }
 
 
@@ -1116,9 +1026,8 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
         ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
         if ( ret == ( WAIT_OBJECT_0 + 1 )) 
         {
-            QMSG msg;
-            QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg );
-            continue; 
+            process_sent_messages();
+            continue;
         }
         if ( ret == WAIT_TIMEOUT || ret == 0xFFFFFFFF ) 
         {
@@ -1141,18 +1050,14 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
  */
 void WINAPI UserYield16(void)
 {
-    QMSG msg;
-
     /* Handle sent messages */
-    while (QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg ))
-        ;
+    process_sent_messages();
 
     /* Yield */
     OldYield16();
 
     /* Handle sent messages again */
-    while (QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg ))
-        ;
+    process_sent_messages();
 }
 
 /***********************************************************************

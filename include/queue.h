@@ -17,6 +17,7 @@
   /* Message as stored in the queue (contains the extraInfo field) */
 typedef struct tagQMSG
 {
+    int   kind;   /* message kind (sent,posted,hardware) */
     int   type;
     MSG   msg;
     DWORD extraInfo;  /* Only in 3.1 */
@@ -98,22 +99,16 @@ extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
-extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear );
 extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );
-extern WORD QUEUE_TestWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern int QUEUE_WaitBits( WORD bits, DWORD timeout );
 extern void QUEUE_IncPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE16 hQueue );
-extern BOOL QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
-extern BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove,
-                           BOOL sent_only, QMSG *msg );
+extern BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, QMSG *msg );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg );
 extern void QUEUE_CleanupWindow( HWND hwnd );
-extern void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
-			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 
 extern HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags );
 

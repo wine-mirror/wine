@@ -23,6 +23,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
+#include "server.h"
 #include "win.h"
 #include "heap.h"
 #include "input.h"
@@ -33,10 +34,10 @@
 #include "debugtools.h"
 #include "winerror.h"
 
-DECLARE_DEBUG_CHANNEL(event);
 DECLARE_DEBUG_CHANNEL(key);
 DECLARE_DEBUG_CHANNEL(keyboard);
 DECLARE_DEBUG_CHANNEL(win);
+DEFAULT_DEBUG_CHANNEL(event);
 
 static BOOL InputEnabled = TRUE;
 static BOOL SwappedButtons;
@@ -72,6 +73,35 @@ typedef union
     } lp1;
     unsigned long lp2;
 } KEYLP;
+
+
+/***********************************************************************
+ *           queue_raw_hardware_message
+ *
+ * Add a message to the raw hardware queue.
+ * Note: the position is relative to the desktop window.
+ */
+static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lParam,
+                                        int xPos, int yPos, DWORD time, DWORD extraInfo )
+{
+    SERVER_START_REQ( send_message )
+    {
+        req->kind   = RAW_HW_MESSAGE;
+        req->id     = (void *)GetCurrentThreadId();
+        req->type   = QMSG_HARDWARE;
+        req->win    = 0;
+        req->msg    = message;
+        req->wparam = wParam;
+        req->lparam = lParam;
+        req->x      = xPos;
+        req->y      = yPos;
+        req->time   = time;
+        req->info   = extraInfo;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
+}
+
 
 /***********************************************************************
  *		keybd_event (USER32.@)
@@ -147,7 +177,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
     TRACE_(key)("            wParam=%04X, lParam=%08lX\n", bVk, keylp.lp2 );
     TRACE_(key)("            InputKeyState=%X\n", InputKeyStateTable[bVk] );
 
-    hardware_event( message, bVk, keylp.lp2, PosX, PosY, time, extra );
+    queue_raw_hardware_message( message, bVk, keylp.lp2, PosX, PosY, time, extra );
 }
 
 /***********************************************************************
@@ -242,49 +272,41 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 
     if ( dwFlags & MOUSEEVENTF_MOVE )
     {
-        hardware_event( WM_MOUSEMOVE,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_MOUSEMOVE, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN) )
     {
         MouseButtonsStates[0] = AsyncMouseButtonsStates[0] = TRUE;
-        hardware_event( WM_LBUTTONDOWN,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_LBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP) )
     {
         MouseButtonsStates[0] = FALSE;
-        hardware_event( WM_LBUTTONUP,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_LBUTTONUP, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN) )
     {
         MouseButtonsStates[2] = AsyncMouseButtonsStates[2] = TRUE;
-        hardware_event( WM_RBUTTONDOWN,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_RBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP) )
     {
         MouseButtonsStates[2] = FALSE;
-        hardware_event( WM_RBUTTONUP,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_RBUTTONUP, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN )
     {
         MouseButtonsStates[1] = AsyncMouseButtonsStates[1] = TRUE;
-        hardware_event( WM_MBUTTONDOWN,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_MBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & MOUSEEVENTF_MIDDLEUP )
     {
         MouseButtonsStates[1] = FALSE;
-        hardware_event( WM_MBUTTONUP,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_MBUTTONUP, keyState, 0, PosX, PosY, time, extra );
     }
     if ( dwFlags & MOUSEEVENTF_WHEEL )
     {
-        hardware_event( WM_MOUSEWHEEL,
-                        keyState, 0L, PosX, PosY, time, extra );
+        queue_raw_hardware_message( WM_MOUSEWHEEL, keyState, 0, PosX, PosY, time, extra );
     }
 }
 

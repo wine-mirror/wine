@@ -11,6 +11,7 @@
     "int"           => "%d",
     "char"          => "%c",
     "unsigned char" => "%02x",
+    "unsigned short"=> "%04x",
     "unsigned int"  => "%08x",
     "void*"         => "%p",
     "time_t"        => "%ld",
