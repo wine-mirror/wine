@@ -1013,6 +1013,5 @@ AFM PSDRV_ZapfChancery_MediumItalic =
 	440, 560, 420, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_ZapfChancery_MediumItalic,		/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_ZapfChancery_MediumItalic		/* Metrics */
 };

@@ -1014,6 +1014,5 @@ AFM PSDRV_AvantGarde_Book =
 	0				/* CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_AvantGarde_Book,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_AvantGarde_Book			/* Metrics */
 };

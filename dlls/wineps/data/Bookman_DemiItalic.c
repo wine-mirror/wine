@@ -1014,6 +1014,5 @@ AFM PSDRV_Bookman_DemiItalic =
 	0				/* CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Bookman_DemiItalic,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Bookman_DemiItalic			/* Metrics */
 };

@@ -1015,5 +1015,4 @@ AFM PSDRV_AvantGarde_DemiOblique =
     },
     228,					/* NumofMetrics */
     met_AvantGarde_DemiOblique,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
 };

@@ -267,8 +267,6 @@ static void FreeAFM(AFM *afm)
     	HeapFree(PSDRV_Heap, 0, afm->EncodingScheme);
     if (afm->Metrics != NULL)
     	HeapFree(PSDRV_Heap, 0, afm->Metrics);
-    if (afm->Encoding != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->Encoding);
 	
     HeapFree(PSDRV_Heap, 0, afm);
 }
@@ -339,14 +337,12 @@ static BOOL ReadMetricsTables(AFM *afm)
  *
  *  Reads metrics for each glyph in a TrueType font.  Since FreeAFM will try to
  *  free afm->Metrics and afm->Encoding if they are non-NULL, don't free them
- *  in the event of an error.  (FreeAFM depends on the fact that afm->Encoding
- *  and its associated array of UNICODEGLYPHs are allocated as a single object.)
+ *  in the event of an error.
  *
  */
 static BOOL ReadCharMetrics(AFM *afm)
 {
     FT_ULong	    charcode, index;
-    UNICODEGLYPH    *glyphs;
     
     /*
      *	There does not seem to be an easy way to get the number of characters
@@ -361,15 +357,9 @@ static BOOL ReadCharMetrics(AFM *afm)
     afm->NumofMetrics = index;
     
     afm->Metrics = HeapAlloc(PSDRV_Heap, 0, index * sizeof(AFMMETRICS));
-    afm->Encoding = HeapAlloc(PSDRV_Heap, 0, sizeof(UNICODEVECTOR) +
-    	    index * sizeof(UNICODEGLYPH));
-    if (afm->Metrics == NULL || afm->Encoding == NULL)
+    if (afm->Metrics == NULL)
     	return FALSE;
 	
-    glyphs = (UNICODEGLYPH *)(afm->Encoding + 1);
-    afm->Encoding->size = index;
-    afm->Encoding->glyphs = glyphs;
-    
     for (charcode = 0, index = 0; charcode <= 65536; ++charcode)
     {
     	FT_UInt     glyph_index = FT_Get_Char_Index(face, charcode);
@@ -422,9 +412,6 @@ static BOOL ReadCharMetrics(AFM *afm)
 	    	afm->Metrics[index].N->sz, afm->Metrics[index].WX,
 		afm->Metrics[index].B.llx, afm->Metrics[index].B.lly,
 	      	afm->Metrics[index].B.urx, afm->Metrics[index].B.ury);
-	
-	glyphs[index].UV = charcode;
-	glyphs[index].name = afm->Metrics[index].N;
 	
 	if (charcode == 0x0048)     	    	    /* 'H' */
 	    afm->CapHeight = PSUnits(bbox.yMax);
@@ -535,7 +522,7 @@ static BOOL ReadTrueTypeFile(LPCSTR filename)
 	return FALSE;
     }
     
-    if (afm->Encoding == NULL)	    /* last element to be set */
+    if (afm->Metrics == NULL)	    	    	/* last element to be set */
     {
     	FreeAFM(afm);
 	return TRUE;

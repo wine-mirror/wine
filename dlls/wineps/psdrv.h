@@ -85,7 +85,6 @@ typedef struct _tagAFM {
     float		CharWidths[256];
     int			NumofMetrics;
     AFMMETRICS		*Metrics;
-    UNICODEVECTOR   	*Encoding;
 } AFM; /* CharWidths is a shortcut to the WX values of numbered glyphs */
 
 /* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than

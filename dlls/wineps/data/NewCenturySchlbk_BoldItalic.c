@@ -1013,6 +1013,5 @@ AFM PSDRV_NewCenturySchlbk_BoldItalic =
 	574, 852, 574, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_NewCenturySchlbk_BoldItalic,		/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_NewCenturySchlbk_BoldItalic		/* Metrics */
 };

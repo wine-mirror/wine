@@ -1013,6 +1013,5 @@ AFM PSDRV_Times_Bold =
 	500, 722, 556, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Times_Bold,				/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Times_Bold				/* Metrics */
 };

@@ -1013,6 +1013,5 @@ AFM PSDRV_Bookman_Demi =
 	620, 940, 660, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Bookman_Demi,				/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Bookman_Demi				/* Metrics */
 };

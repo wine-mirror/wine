@@ -1013,6 +1013,5 @@ AFM PSDRV_Times_Roman =
 	500, 722, 500, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Times_Roman,				/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Times_Roman				/* Metrics */
 };

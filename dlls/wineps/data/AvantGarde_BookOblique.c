@@ -1014,6 +1014,5 @@ AFM PSDRV_AvantGarde_BookOblique =
 	0				/* CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_AvantGarde_BookOblique,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_AvantGarde_BookOblique			/* Metrics */
 };

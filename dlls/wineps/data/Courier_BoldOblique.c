@@ -1073,6 +1073,5 @@ AFM PSDRV_Courier_BoldOblique =
 	600, 0, 0, 0, 0			/* CharWidths[251] - CharWidths[255] */
     },
     243,					/* NumofMetrics */
-    met_Courier_BoldOblique,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Courier_BoldOblique			/* Metrics */
 };

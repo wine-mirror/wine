@@ -1013,6 +1013,5 @@ AFM PSDRV_Palatino_Roman =
 	556, 827, 556, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Palatino_Roman,				/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Palatino_Roman				/* Metrics */
 };

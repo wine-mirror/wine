@@ -1073,6 +1073,5 @@ AFM PSDRV_Courier =
 	600, 0, 0, 0, 0			/* CharWidths[251] - CharWidths[255] */
     },
     243,					/* NumofMetrics */
-    met_Courier,				/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Courier				/* Metrics */
 };

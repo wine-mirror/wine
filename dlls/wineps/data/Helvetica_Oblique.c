@@ -1013,6 +1013,5 @@ AFM PSDRV_Helvetica_Oblique =
 	611, 944, 611, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
     },
     228,					/* NumofMetrics */
-    met_Helvetica_Oblique,			/* Metrics */
-    &PSDRV_AdobeGlyphList			/* Encoding */
+    met_Helvetica_Oblique			/* Metrics */
 };

@@ -231,54 +231,6 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
     return TRUE;
 }
 
-/*******************************************************************************
- *  BuildEncoding
- *
- *  Builds a custom encoding vector if necessary.  Leaves vector in the same
- *  order as the afm->Metrics array; see SortFontMetrics().
- *
- */
-static BOOL BuildEncoding(AFM *afm)
-{
-    UNICODEVECTOR   *uv;
-    UNICODEGLYPH    *ug;
-    int     	    i;
-
-    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
-    {
-    	afm->Encoding = &PSDRV_AdobeGlyphList;
-	return TRUE;
-    }
-    
-    uv = HeapAlloc(PSDRV_Heap, 0, sizeof(UNICODEVECTOR) +
-    	    afm->NumofMetrics * sizeof(UNICODEGLYPH));
-    if (uv == NULL)
-    	return FALSE;
-	
-    afm->Encoding = uv;
-    ug = (UNICODEGLYPH *)(uv + 1);
-    uv->glyphs = ug;
-    uv->size = afm->NumofMetrics;
-    
-    for (i = 0; i < afm->NumofMetrics; ++i)
-    {
-    	ug[i].name = afm->Metrics[i].N;
-	
-    	if (afm->Metrics[i].C < 0)	    /* unencoded glyph */
-	{
-	    WARN("Glyph '%s' in font '%s' has no encoding\n", ug[i].name->sz,
-	    	    afm->FullName);
-	    ug[i].UV = -1;
-	}
-	else
-	{
-	    ug[i].UV = afm->Metrics[i].C | 0xf000;  /* private use area? */
-	}
-    }
-    
-    return TRUE;
-}
-    
 
 /***********************************************************
  *
@@ -500,12 +452,6 @@ static AFM *PSDRV_AFMParse(char const *file)
     if(afm->Weight == 0)
         afm->Weight = FW_NORMAL;
 	
-    if (BuildEncoding(afm) == FALSE)
-    {
-    	FreeAFM(afm);
-	return NULL;
-    }
-
     return afm;
 }
 
@@ -698,11 +644,6 @@ static int UnicodeGlyphByNameIndex(const UNICODEGLYPH *a, const UNICODEGLYPH *b)
     return a->name->index - b->name->index;
 }
 
-static int UnicodeGlyphByUV(const UNICODEGLYPH *a, const UNICODEGLYPH *b)
-{
-    return a->UV - b->UV;
-}
- 
 static int AFMMetricsByUV(const AFMMETRICS *a, const AFMMETRICS *b)
 {
     return a->UV - b->UV;
@@ -722,7 +663,7 @@ static BOOL SortFontMetrics()
 	    AFM *afm = afmle->afm;  	/* should always be valid */
 	    INT i;
 	    
-	    if (afm->Encoding == &PSDRV_AdobeGlyphList)
+	    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
 	    {
 	    	if (aglCopy == NULL)	/* do this once, if necessary */
 		{
@@ -761,22 +702,10 @@ static BOOL SortFontMetrics()
 		    }
 		}
 	    }
-	    else    	    	/* FontSpecific encoding or TrueType font */
+	    else    	    	    	    	/* FontSpecific encoding */
 	    {
 	    	for (i = 0; i < afm->NumofMetrics; ++i)
-		    afm->Metrics[i].UV = afm->Encoding->glyphs[i].UV;
-		
-		/* typecast avoids compiler warning */
-    	    	qsort((void *)(afm->Encoding->glyphs), afm->Encoding->size,
-		    	sizeof(UNICODEGLYPH),
-			(compar_callback_fn)UnicodeGlyphByUV);
-			
-		for (i = 0; i < afm->Encoding->size; ++i)
-		    if (afm->Encoding->glyphs[i].UV >= 0)
-		    	break;
-			
-		afm->Encoding->size -= i;   	/* Ignore unencoded glyphs */
-		afm->Encoding->glyphs += i;  	/* from now on */
+		    afm->Metrics[i].UV = afm->Metrics[i].C;
 	    }
 	    
 	    qsort(afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
@@ -786,7 +715,7 @@ static BOOL SortFontMetrics()
 	    	if (afm->Metrics[i].UV >= 0)
 		    break;
 		    
-	    afm->NumofMetrics -= i; 	/* Ignore unencoded glyphs here too */
+	    afm->NumofMetrics -= i; 	    /* Ignore unencoded glyphs */
 	    afm->Metrics += i;
 	    
 	    afmle = afmle->next;
