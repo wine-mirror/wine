@@ -438,7 +438,7 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
     LPWAVEHDR	waveHdr;
     unsigned	i;
 
-    dwRet = waveOutOpen(&wma->hWave, WAVE_MAPPER, wma->lpWaveFormat,
+    dwRet = waveOutOpen((HWAVEOUT *)&wma->hWave, WAVE_MAPPER, wma->lpWaveFormat,
 			(DWORD)MCIAVI_waveCallback, (DWORD)wma, CALLBACK_FUNCTION);
     if (dwRet != 0) {
 	TRACE("Can't open low level audio device %ld\n", dwRet);

@@ -456,7 +456,7 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
     case WOM_CLOSE:
     case WOM_DONE:
 	if (wwo->wFlags != DCB_NULL &&
-	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, wwo->waveDesc.hWave,
+	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, (HDRVR)wwo->waveDesc.hWave,
 			    wMsg, wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	    WARN("can't notify client !\n");
 	    return MMSYSERR_ERROR;

@@ -775,7 +775,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
      * change from output to input and back
      */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
-    dwRet = waveOutOpen(&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
+    dwRet = waveOutOpen((HWAVEOUT *)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
 			(DWORD)WAVE_mciPlayCallback, (DWORD)wmw, CALLBACK_FUNCTION);
 
     if (dwRet != 0) {
@@ -1006,7 +1006,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
      * change from output to input and back
      */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
-    dwRet = waveInOpen(&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
+    dwRet = waveInOpen((HWAVEIN*)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
 			(DWORD)WAVE_mciRecordCallback, (DWORD)wmw, CALLBACK_FUNCTION);
 
     if (dwRet != 0) {
