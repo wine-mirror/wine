@@ -1302,13 +1302,10 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
        if( CB_GETTYPE(lphc) == CBS_DROPDOWNLIST )
            SendMessageA( lphc->hWndLBox, LB_CARETON, 0, 0 );
 
-       if( lphc->wState & CBF_EDIT )
-           SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
        lphc->wState |= CBF_FOCUSED;
+
        if( !(lphc->wState & CBF_EDIT) )
-       {
 	 InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
-       }
 
        CB_NOTIFY( lphc, CBN_SETFOCUS );
    }
@@ -1323,8 +1320,6 @@ static void COMBO_KillFocus( LPHEADCOMBO lphc )
 
    if( lphc->wState & CBF_FOCUSED )
    {
-       SendMessageA( hWnd, WM_LBUTTONUP, 0, (LPARAM)(-1) );
-
        CBRollUp( lphc, FALSE, TRUE );
        if( IsWindow( hWnd ) )
        {
@@ -1334,12 +1329,8 @@ static void COMBO_KillFocus( LPHEADCOMBO lphc )
  	   lphc->wState &= ~CBF_FOCUSED;
 
            /* redraw text */
-           if( lphc->wState & CBF_EDIT )
-               SendMessageA( lphc->hWndEdit, EM_SETSEL, (WPARAM)(-1), 0 );
-           else
-	   {
+	   if( !(lphc->wState & CBF_EDIT) )
 	     InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
-	   }
 
            CB_NOTIFY( lphc, CBN_KILLFOCUS );
        }
@@ -1362,7 +1353,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		TRACE("[%04x]: edit [%04x] got focus\n", 
 			     CB_HWND(lphc), lphc->hWndEdit );
 
-		if( !(lphc->wState & CBF_FOCUSED) ) COMBO_SetFocus( lphc );
+		COMBO_SetFocus( lphc );
 	        break;
 
 	   case (EN_KILLFOCUS >> 8):
