@@ -33,9 +33,14 @@ static char     resfile[MAX_PATH];
 static int      myARGC;
 static char**   myARGV;
 
+/* as some environment variables get very long on Unix, we only test for
+ * the first 127 bytes
+ */
+#define MAX_LISTED_ENV_VAR      128
+
 /* ---------------- portable memory allocation thingie */
 
-static char     memory[16384];
+static char     memory[1024*32];
 static char*    memory_index = memory;
 
 static char*    grab_memory(size_t len)
@@ -250,36 +255,38 @@ static void     doChild(const char* file)
     ptrA = GetEnvironmentStringsA();
     if (ptrA)
     {
+        char    env_var[MAX_LISTED_ENV_VAR];
+
         childPrintf(hFile, "[EnvironmentA]\n");
         i = 0;
         while (*ptrA)
         {
-            if (strlen(ptrA) < 128)
-            {
-                childPrintf(hFile, "env%d=%s\n", i, encodeA(ptrA));
-                i++;
-            }
+            strncpy(env_var, ptrA, MAX_LISTED_ENV_VAR - 1);
+            env_var[MAX_LISTED_ENV_VAR - 1] = '\0';
+            childPrintf(hFile, "env%d=%s\n", i, encodeA(env_var));
+            i++;
             ptrA += strlen(ptrA) + 1;
         }
-        childPrintf(hFile, "\n");
+        childPrintf(hFile, "len=%d\n\n", i);
     }
 
     /* output of environment (Unicode) */
     ptrW = GetEnvironmentStringsW();
     if (ptrW)
     {
+        WCHAR   env_var[MAX_LISTED_ENV_VAR];
+
         childPrintf(hFile, "[EnvironmentW]\n");
         i = 0;
         while (*ptrW)
         {
-            if (lstrlenW(ptrW) < 128)
-            {
-                childPrintf(hFile, "env%d=%s\n", i, encodeW(ptrW));
-                i++;
-            }
+            lstrcpynW(env_var, ptrW, MAX_LISTED_ENV_VAR - 1);
+            env_var[MAX_LISTED_ENV_VAR - 1] = '\0';
+            childPrintf(hFile, "env%d=%s\n", i, encodeW(ptrW));
+            i++;
             ptrW += lstrlenW(ptrW) + 1;
         }
-        childPrintf(hFile, "\n");
+        childPrintf(hFile, "len=%d\n\n", i);
     }
 
     childPrintf(hFile, "[Misc]\n");
@@ -697,6 +704,232 @@ static void test_Directory(void)
     assert(DeleteFileA(resfile) != 0);
 }
 
+static BOOL is_str_env_drive_dir(const char* str)
+{
+    return str[0] == '=' && str[1] >= 'A' && str[1] <= 'Z' && str[2] == ':' &&
+        str[3] == '=' && str[4] == str[1];
+}
+
+/* compared expected child's environment (in gesA) from actual
+ * environment our child got
+ */
+static void cmpEnvironment(const char* gesA)
+{
+    int                 i, clen;
+    const char*         ptrA;
+    char*               res;
+    char                key[32];
+    BOOL                found;
+
+    clen = GetPrivateProfileIntA("EnvironmentA", "len", 0, resfile);
+    
+    /* now look each parent env in child */
+    if ((ptrA = gesA) != NULL)
+    {
+        while (*ptrA)
+        {
+            for (i = 0; i < clen; i++)
+            {
+                sprintf(key, "env%d", i);
+                res = getChildString("EnvironmentA", key);
+                if (strncmp(ptrA, res, MAX_LISTED_ENV_VAR - 1) == 0)
+                    break;
+            }
+            found = i < clen;
+            ok(found, "Parent-env string %s isn't in child process", ptrA);
+            
+            ptrA += strlen(ptrA) + 1;
+            release_memory();
+        }
+    }
+    /* and each child env in parent */
+    for (i = 0; i < clen; i++)
+    {
+        sprintf(key, "env%d", i);
+        res = getChildString("EnvironmentA", key);
+        if ((ptrA = gesA) != NULL)
+        {
+            while (*ptrA)
+            {
+                if (strncmp(res, ptrA, MAX_LISTED_ENV_VAR - 1) == 0)
+                    break;
+                ptrA += strlen(ptrA) + 1;
+            }
+            if (!*ptrA) ptrA = NULL;
+        }
+
+        if (!is_str_env_drive_dir(res))
+        {
+            found = ptrA != NULL;
+            ok(found, "Child-env string %s isn't in parent process", res);
+        }
+        /* else => should also test we get the right per drive default directory here... */
+    }
+}
+
+static void test_Environment(void)
+{
+    char                buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    char                child_env[4096];
+    char*               ptr;
+    char*               env;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    /* the basics */
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess");
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    
+    cmpEnvironment(GetEnvironmentStringsA());
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    /* the basics */
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s", selfname, resfile);
+    ptr = child_env;
+    sprintf(ptr, "=%c:=%s", 'C', "C:\\FOO\\BAR");
+    ptr += strlen(ptr) + 1;
+    strcpy(ptr, "PATH=C:\\WINDOWS;C:\\WINDOWS\\SYSTEM;C:\\MY\\OWN\\DIR");
+    ptr += strlen(ptr) + 1;
+    strcpy(ptr, "FOO=BAR");
+    ptr += strlen(ptr) + 1;
+    strcpy(ptr, "BAR=FOOBAR");
+    ptr += strlen(ptr) + 1;
+    /* copy all existing variables except:
+     * - WINELOADER
+     * - PATH (already set above)
+     * - the directory definitions (=[A-Z]:=)
+     */
+    for (env = GetEnvironmentStringsA(); *env; env += strlen(env) + 1)
+    {
+        if (strncmp(env, "PATH=", 5) != 0 &&
+            strncmp(env, "WINELOADER=", 11) != 0 &&
+            !is_str_env_drive_dir(env))
+        {
+            strcpy(ptr, env);
+            ptr += strlen(ptr) + 1;
+        }
+    }
+    *ptr = '\0';
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, child_env, NULL, &startup, &info), "CreateProcess");
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    
+    cmpEnvironment(child_env);
+
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+}
+
+static  void    test_SuspendFlag(void)
+{
+    char                buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    DWORD               exit_status;
+
+    /* let's start simplistic */
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess");
+
+    ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running");
+    Sleep(8000);
+    ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running");
+    ok(ResumeThread(info.hThread) == 1, "Resuming thread\n");
+
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    okChildInt("StartupInfoA", "cb", startup.cb);
+    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildInt("StartupInfoA", "dwX", startup.dwX);
+    okChildInt("StartupInfoA", "dwY", startup.dwY);
+    okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
+    okChildInt("StartupInfoA", "dwYSize", startup.dwYSize);
+    okChildInt("StartupInfoA", "dwXCountChars", startup.dwXCountChars);
+    okChildInt("StartupInfoA", "dwYCountChars", startup.dwYCountChars);
+    okChildInt("StartupInfoA", "dwFillAttribute", startup.dwFillAttribute);
+    okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
+    okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+}
+
+static  void    test_DebuggingFlag(void)
+{
+    char                buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    DEBUG_EVENT         de;
+    unsigned            dbg = 0;
+
+    /* let's start simplistic */
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info), "CreateProcess");
+
+    /* get all startup events up to the entry point break exception */
+    do 
+    {
+        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event");
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        if (de.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) dbg++;
+    } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+
+    ok(dbg, "I have seen a debug event");
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    okChildInt("StartupInfoA", "cb", startup.cb);
+    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildInt("StartupInfoA", "dwX", startup.dwX);
+    okChildInt("StartupInfoA", "dwY", startup.dwY);
+    okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
+    okChildInt("StartupInfoA", "dwYSize", startup.dwYSize);
+    okChildInt("StartupInfoA", "dwXCountChars", startup.dwXCountChars);
+    okChildInt("StartupInfoA", "dwYCountChars", startup.dwYCountChars);
+    okChildInt("StartupInfoA", "dwFillAttribute", startup.dwFillAttribute);
+    okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
+    okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -711,10 +944,11 @@ START_TEST(process)
     test_Startup();
     test_CommandLine();
     test_Directory();
-
+    test_Environment();
+    test_SuspendFlag();
+    test_DebuggingFlag();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
-     *  environment:    check environment string passing
      *  handles:        check the handle inheritance stuff (+sec options)
      *  console:        check if console creation parameters work
      */
