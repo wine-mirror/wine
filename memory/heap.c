@@ -1219,7 +1219,7 @@ BOOL WINAPI HeapFree(
 
     /* Validate the parameters */
 
-    if (!ptr) return TRUE;  /* freeing a NULL ptr is doesn't indicate an error in Win2k */
+    if (!ptr) return TRUE;  /* freeing a NULL ptr isn't an error in Win2k */
     if (flags & HEAP_WINE_SEGPTR) heapPtr = segptrHeap;
     if (!heapPtr) return FALSE;
 

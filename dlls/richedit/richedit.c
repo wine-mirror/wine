@@ -1,9 +1,9 @@
 /*
  * RichEdit32  functions
  *
- * This module is a simple wrap-arround the edit controls.
- * At the point, it is good only for application who use the RICHEDIT control to 
- * display RTF text.
+ * This module is a simple wrapper for the edit controls.
+ * At the point, it is good only for application who use the RICHEDIT 
+ * control to display RTF text.
  *
  * Copyright 2000 by Jean-Claude Batista
  * 

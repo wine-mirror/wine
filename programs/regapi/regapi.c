@@ -619,7 +619,7 @@ static HRESULT openKey( LPSTR stdInput)
 
 }
 /******************************************************************************
- * This function is a wrapper arround the setValue function.  It prepares the 
+ * This function is a wrapper for the setValue function.  It prepares the 
  * land and clean the area once completed.
  */
 static void processSetValue(LPSTR cmdline)
@@ -675,7 +675,7 @@ static void processSetValue(LPSTR cmdline)
 }
 
 /******************************************************************************
- * This function is a wrapper arround the queryValue function.  It prepares the 
+ * This function is a wrapper for the queryValue function.  It prepares the 
  * land and clean the area once completed.
  */
 static void processQueryValue(LPSTR cmdline)

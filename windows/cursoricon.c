@@ -62,7 +62,7 @@ static HDC screen_dc;
  *
  * FIXME: This should not be allocated on the system heap, but on a
  *        subsystem-global heap (i.e. one for all Win16 processes,
- *        and one each for every Win32 process).
+ *        and one for each Win32 process).
  */
 typedef struct tagICONCACHE
 {
@@ -843,7 +843,7 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
     {
         ICONCACHE* pIconCache = CURSORICON_FindCache(Handle);
 
-        /* Not Found in Cache, then do a strait copy
+        /* Not Found in Cache, then do a straight copy
         */
         if(pIconCache == NULL)
         {
@@ -876,7 +876,7 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
                     SM_CXICON : SM_CXCURSOR);
             }
 
-            /* Retreive the CURSORICONDIRENTRY 
+            /* Retrieve the CURSORICONDIRENTRY 
             */
             if (!(hMem = LoadResource( pIconCache->hModule , 
                             pIconCache->hGroupRsrc))) 
