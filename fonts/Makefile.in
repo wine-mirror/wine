@@ -7,6 +7,7 @@ fontdir   = $(datadir)/fonts/wine
 
 BITMAP_FONTS  = \
 	wine_coure.fon \
+	wine_couree.fon \
 	wine_courer.fon \
 	wine_sserife.fon \
 	wine_sserifee.fon \
@@ -27,6 +28,9 @@ all: $(FONTS)
 
 wine_courier-1252-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_courier.ttf 13 1252 96 128
+
+wine_courier-1250-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_courier.ttf 13 1250 96 128
 
 wine_courier-1251-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_courier.ttf 13 1251 96 128
@@ -78,6 +82,9 @@ wine_vgasysr.fon: wine_system-1251-96-16.fnt $(FNT2FON)
 
 wine_coure.fon: wine_courier-1252-96-13.fnt $(FNT2FON)
 	$(FNT2FON) wine_courier-1252-96-13.fnt $@
+
+wine_couree.fon: wine_courier-1250-96-13.fnt $(FNT2FON)
+	$(FNT2FON) wine_courier-1250-96-13.fnt $@
 
 wine_courer.fon: wine_courier-1251-96-13.fnt $(FNT2FON)
 	$(FNT2FON) wine_courier-1251-96-13.fnt $@
