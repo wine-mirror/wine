@@ -7442,8 +7442,7 @@ static LRESULT LISTVIEW_Update(HWND hwnd, INT nItem)
     else
     {
       /* get item bounding rectangle */
-      rc.left = LVIR_BOUNDS;
-      ListView_GetItemRect(hwnd, nItem, &rc, rc.left);
+      ListView_GetItemRect(hwnd, nItem, &rc, LVIR_BOUNDS);
       InvalidateRect(hwnd, &rc, TRUE);
     }
   }
