@@ -1213,6 +1213,183 @@ static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
 };
 
 
+/************************************************************************/
+
+
+/* WM_USER+n message values for "common controls" */
+
+typedef struct
+{
+    const char *name;      /* name of control message           */
+    UINT        value;     /* message number (0x0401-0x0fff     */
+    UINT        len;       /* length of space at lParam to dump */
+} USER_MSG;
+
+
+typedef struct
+{
+      CHAR       *classname;  /* class name to match                  */
+const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
+      USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
+} CONTROL_CLASS;
+
+#define USM(a,b) { #a ,a,sizeof(b)}
+
+static const USER_MSG rebar_array[] = {
+          USM(RB_INSERTBANDA,          0), 
+          USM(RB_DELETEBAND,           0), 
+          USM(RB_GETBARINFO,           0), 
+          USM(RB_SETBARINFO,           0), 
+          USM(RB_GETBANDINFO,          0), 
+          USM(RB_SETBANDINFOA,         0), 
+          USM(RB_SETPARENT,            0), 
+          USM(RB_HITTEST,              0), 
+          USM(RB_GETRECT,              0), 
+          USM(RB_INSERTBANDW,          0), 
+          USM(RB_SETBANDINFOW,         0), 
+          USM(RB_GETBANDCOUNT,         0), 
+          USM(RB_GETROWCOUNT,          0), 
+          USM(RB_GETROWHEIGHT,         0), 
+          USM(RB_IDTOINDEX,            0), 
+          USM(RB_GETTOOLTIPS,          0), 
+          USM(RB_SETTOOLTIPS,          0),  
+          USM(RB_SETBKCOLOR,           0), 
+          USM(RB_GETBKCOLOR,           0), 
+          USM(RB_SETTEXTCOLOR,         0), 
+          USM(RB_GETTEXTCOLOR,         0), 
+          USM(RB_SIZETORECT,           0), 
+          USM(RB_BEGINDRAG,            0), 
+          USM(RB_ENDDRAG,              0), 
+          USM(RB_DRAGMOVE,             0), 
+          USM(RB_GETBARHEIGHT,         0), 
+          USM(RB_GETBANDINFOW,         0), 
+          USM(RB_GETBANDINFOA,         0), 
+          USM(RB_MINIMIZEBAND,         0), 
+          USM(RB_MAXIMIZEBAND,         0), 
+          USM(RB_GETBANDBORDERS,       0), 
+          USM(RB_SHOWBAND,             0), 
+          USM(RB_SETPALETTE,           0), 
+          USM(RB_GETPALETTE,           0), 
+          USM(RB_MOVEBAND,             0), 
+          {0,0,0} };
+
+static const USER_MSG toolbar_array[] = {
+          USM(TB_ENABLEBUTTON          ,0),
+          USM(TB_CHECKBUTTON           ,0),
+          USM(TB_PRESSBUTTON           ,0),
+          USM(TB_HIDEBUTTON            ,0),
+          USM(TB_INDETERMINATE         ,0),
+          USM(TB_MARKBUTTON	       ,0),
+          USM(TB_ISBUTTONENABLED       ,0), 
+          USM(TB_ISBUTTONCHECKED       ,0), 
+          USM(TB_ISBUTTONPRESSED       ,0), 
+          USM(TB_ISBUTTONHIDDEN        ,0),
+          USM(TB_ISBUTTONINDETERMINATE ,0),
+          USM(TB_ISBUTTONHIGHLIGHTED   ,0),
+          USM(TB_SETSTATE              ,0),
+          USM(TB_GETSTATE              ,0),
+          USM(TB_ADDBITMAP             ,0),
+          USM(TB_ADDBUTTONSA           ,0),
+          USM(TB_INSERTBUTTONA         ,0),
+          USM(TB_DELETEBUTTON          ,0),
+          USM(TB_GETBUTTON             ,0),
+          USM(TB_BUTTONCOUNT           ,0),
+          USM(TB_COMMANDTOINDEX        ,0),
+          USM(TB_SAVERESTOREA          ,0),
+          USM(TB_CUSTOMIZE             ,0),
+          USM(TB_ADDSTRINGA            ,0), 
+          USM(TB_GETITEMRECT           ,0),
+          USM(TB_BUTTONSTRUCTSIZE      ,0),
+          USM(TB_SETBUTTONSIZE         ,0),
+          USM(TB_SETBITMAPSIZE         ,0),
+          USM(TB_AUTOSIZE              ,0),
+          USM(TB_GETTOOLTIPS           ,0),
+          USM(TB_SETTOOLTIPS           ,0),
+          USM(TB_SETPARENT             ,0),
+          USM(TB_SETROWS               ,0),
+          USM(TB_GETROWS               ,0),
+          USM(TB_GETBITMAPFLAGS        ,0),
+          USM(TB_SETCMDID              ,0),
+          USM(TB_CHANGEBITMAP          ,0),
+          USM(TB_GETBITMAP             ,0),
+          USM(TB_GETBUTTONTEXTA        ,0),
+          USM(TB_REPLACEBITMAP         ,0),
+          USM(TB_SETINDENT             ,0),
+          USM(TB_SETIMAGELIST          ,0),
+          USM(TB_GETIMAGELIST          ,0),
+          USM(TB_LOADIMAGES            ,0),
+          USM(TB_GETRECT               ,0),
+          USM(TB_SETHOTIMAGELIST       ,0),
+          USM(TB_GETHOTIMAGELIST       ,0),
+          USM(TB_SETDISABLEDIMAGELIST  ,0),
+          USM(TB_GETDISABLEDIMAGELIST  ,0),
+          USM(TB_SETSTYLE              ,0),
+          USM(TB_GETSTYLE              ,0),
+          USM(TB_GETBUTTONSIZE         ,0),
+          USM(TB_SETBUTTONWIDTH        ,0),
+          USM(TB_SETMAXTEXTROWS        ,0),
+          USM(TB_GETTEXTROWS           ,0),
+          USM(TB_GETOBJECT             ,0),
+          USM(TB_GETBUTTONINFOW        ,0),
+          USM(TB_SETBUTTONINFOW        ,0),
+          USM(TB_GETBUTTONINFOA        ,0),
+          USM(TB_SETBUTTONINFOA        ,0),
+          USM(TB_INSERTBUTTONW         ,0),
+          USM(TB_ADDBUTTONSW           ,0),
+          USM(TB_HITTEST               ,0),
+          USM(TB_SETDRAWTEXTFLAGS      ,0),
+          USM(TB_GETHOTITEM            ,0),
+          USM(TB_SETHOTITEM            ,0),
+          USM(TB_SETANCHORHIGHLIGHT    ,0),
+          USM(TB_GETANCHORHIGHLIGHT    ,0),
+          USM(TB_GETBUTTONTEXTW        ,0),
+          USM(TB_SAVERESTOREW          ,0),
+          USM(TB_ADDSTRINGW            ,0), 
+          USM(TB_MAPACCELERATORA       ,0),
+          USM(TB_GETINSERTMARK         ,0),
+          USM(TB_SETINSERTMARK         ,0),
+          USM(TB_INSERTMARKHITTEST     ,0),
+          USM(TB_MOVEBUTTON            ,0),
+          USM(TB_GETMAXSIZE            ,0),
+          USM(TB_SETEXTENDEDSTYLE      ,0),
+          USM(TB_GETEXTENDEDSTYLE      ,0),
+          USM(TB_GETPADDING            ,0),
+          USM(TB_SETPADDING            ,0),
+          USM(TB_SETINSERTMARKCOLOR    ,0),
+          USM(TB_GETINSERTMARKCOLOR    ,0),
+          USM(TB_MAPACCELERATORW       ,0),
+          {0,0,0} };
+
+static const USER_MSG comboex_array[] = {
+          USM(CBEM_INSERTITEMA        ,0),
+          USM(CBEM_SETIMAGELIST       ,0),
+          USM(CBEM_GETIMAGELIST       ,0),
+          USM(CBEM_GETITEMA           ,0),
+          USM(CBEM_SETITEMA           ,0),
+          USM(CBEM_GETCOMBOCONTROL    ,0),
+          USM(CBEM_GETEDITCONTROL     ,0),
+          USM(CBEM_SETEXSTYLE         ,0),
+          USM(CBEM_GETEXTENDEDSTYLE   ,0),
+          USM(CBEM_HASEDITCHANGED     ,0),
+          USM(CBEM_INSERTITEMW        ,0),
+          USM(CBEM_SETITEMW           ,0),
+          USM(CBEM_GETITEMW           ,0),
+          USM(CBEM_SETEXTENDEDSTYLE   ,0),
+          {0,0,0} };
+
+
+#undef USM
+
+static CONTROL_CLASS  cc_array[] = {
+    {WC_COMBOBOXEXA,    comboex_array, 0},
+    {REBARCLASSNAMEA,   rebar_array,   0},
+    {TOOLBARCLASSNAMEA, toolbar_array, 0},
+    {0, 0, 0} };
+
+
+/************************************************************************/
+
+
 /* WM_NOTIFY function codes display */
 
 typedef struct
@@ -1382,10 +1559,24 @@ static int SPY_IndentLevel  = 0;
 #define SPY_EXCLUDE(msg) \
     (SPY_Exclude[(msg) > SPY_MAX_MSGNUM ? SPY_MAX_MSGNUM : (msg)])
 
+
+typedef struct
+{
+    UINT       msgnum;           /* message number */
+    HWND       msg_hwnd;         /* window handle for message          */
+    WPARAM     wParam;           /* message parameter                  */
+    LPARAM     lParam;           /* message parameter                  */
+    INT        data_len;         /* length of data to dump             */
+    char       msg_name[60];     /* message name (see SPY_GetMsgName)  */
+    CHAR       wnd_class[60];    /* window class name (full)           */
+    CHAR       wnd_name[16];     /* window name for message            */
+} SPY_INSTANCE;
+
+
 /***********************************************************************
- *           SPY_GetMsgName
+ *           SPY_GetMsgInternal
  */
-const char *SPY_GetMsgName( UINT msg )
+static const char *SPY_GetMsgInternal( UINT msg, BOOL support_common_clts )
 {
     static char msg_buffer[20];
 
@@ -1436,33 +1627,123 @@ const char *SPY_GetMsgName( UINT msg )
 }
 
 /***********************************************************************
- *           SPY_GetWndName
+ *           SPY_Bsearch_Msg
  */
-const char *SPY_GetWndName( HWND hwnd )
+const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UINT code)
 {
-    static char wnd_buffer[16];
+    INT count;
+    const USER_MSG *test;
 
-    WND* pWnd = WIN_FindWndPtr( hwnd );
+    while (last >= first) {
+	count = 1 + last - first;
+	if (count < 3) {
+	    /* TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+	       code, first->value, first->name, last->value, last->name, last->len); */
+	    if (first->value == code) return first;
+	    if (last->value == code) return last;
+	    return NULL;
+	}
+	count = count / 2;
+	test = first + count;
+	/* TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+	   first, last, test, test->value, code, count); */
+	if (test->value == code) return test;
+	if (test->value > code)
+	    last = test - 1;
+	else
+	    first = test + 1;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *           SPY_GetMsgStuff
+ *
+ *  Get message name and other information for dumping
+ */
+static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
+{
+    const USER_MSG *p;
+
+    sp_e->msg_name[sizeof(sp_e->msg_name)-1] = 0;
+    strncpy (sp_e->msg_name, SPY_GetMsgInternal( sp_e->msgnum, TRUE ),
+	     sizeof(sp_e->msg_name)-1);
+
+    if (strncmp(sp_e->msg_name, "WM_USER+", 8) == 0) {
+	INT i = 0;
+
+	/* TRACE("looking class %s\n", sp_e->wnd_class); */
+
+	while (cc_array[i].classname &&
+	       strcmp(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
+
+	if (!cc_array[i].classname) return;
+	/* TRACE("process class %s, first %p, last %p\n", 
+	      cc_array[i].classname, cc_array[i].classmsg, 
+	      cc_array[i].lastmsg); */
+	p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
+			 sp_e->msgnum);
+	if (p) {
+	    strncpy (sp_e->msg_name, p->name, sizeof(sp_e->msg_name)-1);
+	    sp_e->data_len = p->len;
+	}
+    }
+}
+
+/***********************************************************************
+ *           SPY_GetMsgName
+ *
+ *  ****  External function  **** 
+ *
+ *  Get message name
+ */
+const char *SPY_GetMsgName( UINT msg )
+{
+    return SPY_GetMsgInternal( msg, FALSE );
+}
+
+/***********************************************************************
+ *           SPY_GetWndName
+ *
+ *  Sets the value of "wnd_name" and "wnd_class" members of the 
+ *  instance structure.
+ *
+ */
+void SPY_GetWndName( SPY_INSTANCE *sp_e )
+{
+    WND* pWnd = WIN_FindWndPtr( sp_e->msg_hwnd );
     if( pWnd )
     {
-	LPSTR p = wnd_buffer;
+	LPSTR p = (LPSTR)&sp_e->wnd_name;
+	LPSTR s = (LPSTR)&sp_e->wnd_name;
         char  postfix;
-	
+	DWORD save_error;
+
+	/* save and restore error code over the next call */	
+	save_error = GetLastError();
+	GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), 
+			       (LPSTR)&sp_e->wnd_class, 
+			       sizeof(sp_e->wnd_class)-1);
+	SetLastError(save_error);
+
 	if( pWnd->text && pWnd->text[0] != '\0' )
 	{
 	    LPWSTR src = pWnd->text;
-	    int n=sizeof(wnd_buffer)-2;
+	    int n=sizeof(sp_e->wnd_name)-2;
 	    *(p++) = postfix = '\"';
 	    while ((n-- > 0) && *src) *p++ = *src++;
 	}
 	else /* get class name */
 	{
+	    LPSTR src = (LPSTR)&sp_e->wnd_class;
+	    int n=sizeof(sp_e->wnd_name)-2;
 	    *(p++) = '{';
-	    p+=GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), p, sizeof(wnd_buffer)-1);
+	    while ((n-- > 0) && *src) *p++ = *src++;
 	    postfix='}';
 	}
-	if( p-wnd_buffer == sizeof(wnd_buffer)-1 ) {
-	    p=wnd_buffer+sizeof(wnd_buffer)-5;
+
+	if( p-s >= sizeof(sp_e->wnd_name)-1 ) {
+	    p = s + sizeof(sp_e->wnd_name)-5;
 	    *(p++) = '.';
 	    *(p++) = '.';
 	    *(p++) = '.';
@@ -1472,8 +1753,8 @@ const char *SPY_GetWndName( HWND hwnd )
         WIN_ReleaseWndPtr(pWnd);
 
     }
-    else strcpy( wnd_buffer, "\"NULL\"" );
-    return wnd_buffer;
+    else {strcpy( sp_e->wnd_name, "\"NULL\"" ); sp_e->wnd_class[0] = 0;}
+    return;
 }
 
 /***********************************************************************
@@ -1631,25 +1912,30 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
                        WPARAM wParam, LPARAM lParam )
 {
-    LPCSTR pname;
+    SPY_INSTANCE sp_e;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg)) return;
+
+    sp_e.msgnum = msg;
+    sp_e.msg_hwnd   = hWnd;
+    sp_e.lParam = lParam;
+    sp_e.wParam = wParam;
+    SPY_GetWndName(&sp_e);
+    SPY_GetMsgStuff(&sp_e);
 
     /* each SPY_SENDMESSAGE must be complemented by call to SPY_ExitMessage */
     switch(iFlag)
     {
     case SPY_DISPATCHMESSAGE16:
-	pname = SPY_GetWndName(hWnd);
         TRACE("%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
-                        wParam, lParam);
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        sp_e.msg_name, wParam, lParam);
         break;
 
     case SPY_DISPATCHMESSAGE:
-	pname = SPY_GetWndName(hWnd);
         TRACE("%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
-                        wParam, lParam);
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg, 
+                        sp_e.msg_name, wParam, lParam);
         break;
 
     case SPY_SENDMESSAGE16:
@@ -1665,16 +1951,15 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
                 sprintf( taskName, "task %04x ???", hTask );
                 GetModuleName16( hTask, taskName + 10, sizeof(taskName) - 10 );
             }
-	    pname = SPY_GetWndName(hWnd);
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
-			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
-			     taskName, wParam, lParam );
+			     SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg, 
+			     sp_e.msg_name, taskName, wParam, lParam );
             else
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
-			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
-			     taskName, wParam, lParam );
+			     SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+			     sp_e.msg_name, taskName, wParam, lParam );
 		SPY_DumpStructure(msg, TRUE, lParam);
 	    }
         }
@@ -1683,14 +1968,14 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
+                        SPY_IndentLevel, "", hWnd, sp_e.msg_name,
                         msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC:
 	if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
+                        SPY_IndentLevel, "", hWnd, sp_e.msg_name,
                         msg, wParam, lParam );
         break;
     }  
@@ -1704,11 +1989,18 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
                        WPARAM wParam, LPARAM lParam )
 {
-    LPCSTR pname;
+    SPY_INSTANCE sp_e;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
 	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
 	return;
+
+    sp_e.msgnum = msg;
+    sp_e.msg_hwnd   = hWnd;
+    sp_e.lParam = lParam;
+    sp_e.wParam = wParam;
+    SPY_GetWndName(&sp_e);
+    SPY_GetMsgStuff(&sp_e);
 
     if (SPY_IndentLevel) SPY_IndentLevel -= SPY_INDENT_UNIT;
 
@@ -1716,41 +2008,37 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     {
     case SPY_RESULT_DEFWND16:
 	TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
-			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
+			SPY_IndentLevel, "", hWnd, sp_e.msg_name, msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND:
 	TRACE(" %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
-			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
+			SPY_IndentLevel, "", hWnd, sp_e.msg_name, msg, lReturn );
 	break;
 
     case SPY_RESULT_OK16:
-	pname = SPY_GetWndName(hWnd);
         TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg,
-                        SPY_GetMsgName( msg ), lReturn );
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        sp_e.msg_name, lReturn );
         break;
 
     case SPY_RESULT_OK:
-	pname = SPY_GetWndName(hWnd);
         TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg,
-                        SPY_GetMsgName( msg ), lReturn );
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        sp_e.msg_name, lReturn );
 	SPY_DumpStructure(msg, FALSE, lParam);
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
-	pname = SPY_GetWndName(hWnd);
         WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg,
-                        SPY_GetMsgName( msg ) );
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        sp_e.msg_name );
         break;
 
     case SPY_RESULT_INVALIDHWND:
-	pname = SPY_GetWndName(hWnd);
         WARN(" %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
-                        SPY_IndentLevel, "", hWnd, pname, msg,
-                        SPY_GetMsgName( msg ) );
+                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        sp_e.msg_name );
         break;
    }
 }
@@ -1761,9 +2049,10 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
  */
 int SPY_Init(void)
 {
-    int i;
+    int i, j;
     char buffer[1024];
     const SPY_NOTIFY *p;
+    const USER_MSG *q;
     HKEY hkey;
 
     if (!TRACE_ON(message)) return TRUE;
@@ -1810,9 +2099,44 @@ int SPY_Init(void)
 
     /* find last good entry in spy notify array and save addr for b-search */
     p = &spnfy_array[0];
-    while (p->name) p++;
+    j = 0xffffffff;
+    while (p->name) {
+	if ((UINT)p->value > (UINT)j) {
+	    ERR("Notify message array out of order\n");
+	    ERR("  between values [%08x] %s and [%08x] %s\n",
+		j, (p-1)->name, p->value, p->name);
+	    break;
+	}
+	j = p->value;
+	p++;
+    }
     p--;
     end_spnfy_array = p;
+
+    /* find last good entry in each common control message array 
+     *  and save addr for b-search.
+     */
+    i = 0;
+    while (cc_array[i].classname) {
+
+	j = 0x0400; /* minimum entry in array */
+	q = cc_array[i].classmsg;
+	while(q->name) {
+	    if (q->value <= j) {
+		ERR("Class message array out of order for class ""%s""\n",
+		    cc_array[i].classname);
+		ERR("  between values [%04x] %s and [%04x] %s\n",
+		    j, (q-1)->name, q->value, q->name);
+		break;
+	    }
+	    j = q->value;
+	    q++;
+	}
+	q--;
+	cc_array[i].lastmsg = (USER_MSG *)q;
+
+	i++;
+    }
 
     return 1;
 }
