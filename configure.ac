@@ -905,16 +905,12 @@ case $host_os in
 
         case $host_cpu in
           *i[[3456789]]86*)
-            AC_CACHE_CHECK([whether we can relocate the executable to 0x00110000], ac_cv_ld_reloc_exec,
-              [saved_CFLAGS="$CFLAGS"
-               CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x00110400"
-               AC_TRY_RUN([#include <unistd.h>
-                           int main() { return (sbrk(32*1024*1024) == (void *)-1); }],
-                          ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no", ac_cv_ld_reloc_exec="no")
-               CFLAGS="$saved_CFLAGS"])
+            AC_CACHE_CHECK([whether we can relocate the executable to 0x77f00000], ac_cv_ld_reloc_exec,
+              [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x77f00400],
+                               ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
             if test "$ac_cv_ld_reloc_exec" = "yes"
             then
-              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x00110400"
+              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x77f00400"
             fi
             ;;
         esac
@@ -980,7 +976,7 @@ esac
 
 case $host_os in
   linux*)
-    AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread")
+    AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader")
     AC_SUBST(MAIN_BINARY,"wine-glibc")
     ;;
   *)

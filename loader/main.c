@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "wine/library.h"
+#include "main.h"
+
+/* the preloader will set this variable */
+const struct wine_preload_info *wine_main_preload_info = NULL;
 
 /**********************************************************************
  *           main
@@ -28,6 +32,14 @@
 int main( int argc, char *argv[] )
 {
     char error[1024];
+    int i;
+
+    if (wine_main_preload_info)
+    {
+        for (i = 0; wine_main_preload_info[i].size; i++)
+            wine_mmap_add_reserved_area( wine_main_preload_info[i].addr,
+                                         wine_main_preload_info[i].size );
+    }
 
     wine_init( argc, argv, error, sizeof(error) );
     fprintf( stderr, "wine: failed to initialize: %s\n", error );

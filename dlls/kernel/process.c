@@ -1462,10 +1462,10 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         if (argv && envp)
         {
             /* first, try for a WINELOADER environment variable */
-            argv[0] = getenv("WINELOADER");
-            if (argv[0]) execve( argv[0], argv, envp );
+            const char *loader = getenv("WINELOADER");
+            if (loader) wine_exec_wine_binary( loader, argv, envp, TRUE );
             /* now use the standard search strategy */
-            wine_exec_wine_binary( NULL, argv, envp );
+            wine_exec_wine_binary( NULL, argv, envp, TRUE );
         }
         err = errno;
         write( execfd[1], &err, sizeof(err) );

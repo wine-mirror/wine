@@ -271,20 +271,50 @@ const char *wine_get_user_name(void)
     return user_name;
 }
 
+/* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
+static void preloader_exec( char **argv, char **envp, int use_preloader )
+{
+#ifdef linux
+    if (use_preloader)
+    {
+        static const char preloader[] = "wine-preloader";
+        char *p, *full_name;
+
+        if (!(p = strrchr( argv[0], '/' ))) p = argv[0];
+        else p++;
+
+        full_name = xmalloc( p - argv[0] + sizeof(preloader) );
+        memcpy( full_name, argv[0], p - argv[0] );
+        memcpy( full_name + (p - argv[0]), preloader, sizeof(preloader) );
+        if (envp) execve( full_name, argv, envp );
+        else execv( full_name, argv );
+        free( full_name );
+        return;
+    }
+#else
+    if (envp) execve( argv[0], argv, envp );
+    else execv( argv[0], argv );
+#endif
+}
+
 /* exec a wine internal binary (either the wine loader or the wine server) */
-/* if name is null, default to the name of the current binary */
-void wine_exec_wine_binary( const char *name, char **argv, char **envp )
+void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_preloader )
 {
     const char *path, *pos, *ptr;
 
-    if (!envp) envp = environ;
-    if (!name) name = argv0_name;
+    if (name && strchr( name, '/' ))
+    {
+        argv[0] = (char *)name;
+        preloader_exec( argv, envp, use_preloader );
+        return;
+    }
+    else if (!name) name = argv0_name;
 
     /* first, try bin directory */
     argv[0] = xmalloc( sizeof(BINDIR "/") + strlen(name) );
     strcpy( argv[0], BINDIR "/" );
     strcat( argv[0], name );
-    execve( argv[0], argv, envp );
+    preloader_exec( argv, envp, use_preloader );
     free( argv[0] );
 
     /* now try the path of argv0 of the current binary */
@@ -293,7 +323,7 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp )
         argv[0] = xmalloc( strlen(argv0_path) + strlen(name) + 1 );
         strcpy( argv[0], argv0_path );
         strcat( argv[0], name );
-        execve( argv[0], argv, envp );
+        preloader_exec( argv, envp, use_preloader );
         free( argv[0] );
     }
 
@@ -310,7 +340,7 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp )
             memcpy( argv[0], pos, ptr - pos );
             strcpy( argv[0] + (ptr - pos), "/" );
             strcat( argv[0] + (ptr - pos), name );
-            execve( argv[0], argv, envp );
+            preloader_exec( argv, envp, use_preloader );
             pos = ptr;
         }
         free( argv[0] );

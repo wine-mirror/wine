@@ -93,13 +93,12 @@ int main( int argc, char *argv[] )
         strcpy( new_loader, "WINELOADER=" );
         strcat( new_loader, new_name );
         putenv( new_loader );
-        argv[0] = new_name;
-        execv( argv[0], argv );
+        wine_exec_wine_binary( new_name, argv, NULL, TRUE );
     }
     else
     {
         wine_init_argv0_path( argv[0] );
-        wine_exec_wine_binary( threads, argv, NULL );
+        wine_exec_wine_binary( threads, argv, NULL, TRUE );
     }
     fprintf( stderr, "wine: could not exec %s\n", argv[0] );
     exit(1);

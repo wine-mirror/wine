@@ -512,7 +512,7 @@ static void start_server( const char *oldcwd )
                               "    specified in the WINESERVER environment variable", p );
             }
             /* now use the standard search strategy */
-            wine_exec_wine_binary( argv[0], argv, NULL );
+            wine_exec_wine_binary( argv[0], argv, NULL, FALSE );
             fatal_error( "could not exec wineserver\n" );
         }
         waitpid( pid, &status, 0 );
@@ -703,7 +703,7 @@ static void create_config_dir(void)
         argv[2] = "--prefix";
         argv[3] = tmp_dir;
         argv[4] = NULL;
-        wine_exec_wine_binary( argv[0], (char **)argv, NULL );
+        wine_exec_wine_binary( argv[0], (char **)argv, NULL, FALSE );
         rmdir( tmp_dir );
         fatal_perror( "could not exec wineprefixcreate" );
     }

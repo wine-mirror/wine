@@ -2,4 +2,5 @@ Makefile
 wine
 wine-glibc
 wine-kthread
+wine-preloader
 wine-pthread
