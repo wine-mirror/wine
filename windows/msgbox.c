@@ -35,7 +35,6 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 
     if (TWEAK_WineLook >= WIN95_LOOK) {
 	NONCLIENTMETRICSA nclm;
-	INT i;
 	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
 	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
 	hFont = CreateFontIndirectA (&nclm.lfMessageFont);

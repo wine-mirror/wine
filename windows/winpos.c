@@ -2662,12 +2662,12 @@ Pos:  /* -----------------------------------------------------------------------
 			  != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER)) )
 	{
 	    /* get a previous visible region for SWP_CopyValidBits() */
-	    DWORD flags = DCX_WINDOW;
+	    DWORD dflags = DCX_WINDOW;
   
             if (wndPtr->dwStyle & WS_CLIPSIBLINGS)
-               flags |= DCX_CLIPSIBLINGS;
+               dflags |= DCX_CLIPSIBLINGS;
 
-	    visRgn = DCE_GetVisRgn(hwnd, flags, 0, 0);
+	    visRgn = DCE_GetVisRgn(hwnd, dflags, 0, 0);
 	}
     }
 

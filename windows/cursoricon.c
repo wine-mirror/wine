@@ -523,7 +523,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 		CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 	    if( hXorBits )
 	    {
-		char* bits = (char *)bmi + size +
+		char* xbits = (char *)bmi + size +
 			DIB_GetDIBImageBytes(bmi->bmiHeader.biWidth,
 					     bmi->bmiHeader.biHeight,
 					     bmi->bmiHeader.biBitCount) / 2;
@@ -558,14 +558,14 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 		  hOld = SelectObject(hMem, hAndBits);
 	          res = StretchDIBits(hMem, 0, 0, width, height, 0, 0,
 		    pInfo->bmiHeader.biWidth, pInfo->bmiHeader.biHeight,
-		    bits, pInfo, DIB_RGB_COLORS, SRCCOPY);
+		    xbits, pInfo, DIB_RGB_COLORS, SRCCOPY);
 		  SelectObject(hMem, hOld);
 		  DeleteDC(hMem);
 	        } else res = FALSE;
 		if (!res) { DeleteObject(hAndBits); hAndBits = 0; }
 	      }
 	    } else hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader,
-	      CBM_INIT, bits, pInfo, DIB_RGB_COLORS );
+	      CBM_INIT, xbits, pInfo, DIB_RGB_COLORS );
 
 		if( !hAndBits ) DeleteObject( hXorBits );
 	    }

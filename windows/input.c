@@ -398,10 +398,10 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
         
         if( capturePrev )
     {
-        WND* wndPtr = WIN_FindWndPtr( capturePrev );
-        if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
+        WND* xwndPtr = WIN_FindWndPtr( capturePrev );
+        if( xwndPtr && (xwndPtr->flags & WIN_ISWIN32) )
             SendMessageA( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
-            WIN_ReleaseWndPtr(wndPtr);
+	WIN_ReleaseWndPtr(xwndPtr);
     }
 }
 
