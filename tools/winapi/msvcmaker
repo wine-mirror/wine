@@ -1,0 +1,793 @@
+#! /usr/bin/perl -w
+
+# Copyright 2002 Patrik Stridvall
+
+use strict;
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/msvcmaker$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(&file_directory &get_spec_files &get_makefile_in_files $current_dir $wine_dir);
+use output qw($output);
+
+########################################################################
+# _compare_files
+
+sub _compare_files {
+    my $file1 = shift;
+    my $file2 = shift;
+
+    local $/ = undef;
+
+    return -1 if !open(IN, "< $file1");
+    my $s1 = <IN>;
+    close(IN);
+
+    return 1 if !open(IN, "< $file2");
+    my $s2 = <IN>;
+    close(IN);
+
+    return $s1 cmp $s2;
+}
+
+########################################################################
+# replace_file
+
+sub replace_file {
+    my $filename = shift;
+    my $function = shift;
+
+    open(OUT, "> $filename.tmp") || die "Can't open file '$filename.tmp'";
+
+    my $result = &$function(\*OUT, @_);
+
+    close(OUT);
+
+    if($result && _compare_files($filename, "$filename.tmp")) {
+        unlink("$filename");
+        rename("$filename.tmp", $filename);
+    } else {
+        unlink("$filename.tmp");
+    }
+
+    return $result;
+}
+
+########################################################################
+# main
+
+my @spec_files = get_spec_files("winelib");
+my @makefile_in_files = get_makefile_in_files("winelib");
+
+my $wine = 1;
+
+my $output_prefix_dir = "Output";
+my $no_release = 1;
+my $no_msvc_headers = 1;
+
+my %modules;
+
+foreach my $spec_file (@spec_files) {
+    my $module = $spec_file;
+    $module =~ s%^.*?([^/]+)\.spec$%$1%;
+    $module .= ".dll" if $module !~ /\./;
+
+    my $type = "win32";
+
+    open(IN, "< $wine_dir/$spec_file");
+
+    my $header = 1;
+    my $lookahead = 0;
+    while($lookahead || defined($_ = <IN>)) {
+	$lookahead = 0;
+
+	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
+	s/^(.*?)\s*#.*$/$1/;  # remove comments
+	/^$/ && next;         # skip empty lines
+
+	if($header)  {
+	    if(/^\d+|@/) {
+		$header = 0;
+		$lookahead = 1;
+	    }
+	    next;
+	}
+
+	if(/^(\d+|@)\s+pascal(?:16)?/) {
+	    $type = "win16";
+	    last;
+	}
+    }
+    close(IN);
+
+    # FIXME: Kludge
+    if($module =~ /^(?:comm|imm|ole2conv|ole2prox|ole2thk|rasapi16|windebug)\.dll$/) {
+	$type = "win16";
+    }
+
+    if($type eq "win32") {
+	$modules{$module}{module} = $module;
+	$modules{$module}{type} = $type;
+	$modules{$module}{spec_file} = $spec_file;
+    }
+}
+
+my @ntdll_dirs = qw(files if1632 loader/ne loader memory misc msdos ole relay32 scheduler win32);
+
+push @makefile_in_files, "library/Makefile.in";
+push @makefile_in_files, "unicode/Makefile.in";
+push @makefile_in_files, "tools/winebuild/Makefile.in";
+
+sub filter_files {
+    my $files = shift;
+    my $filter = shift;
+
+    my $filtered_files = [];
+    my $rest_of_files = [];
+    foreach my $file (@$files) {
+	if($file =~ /$filter/) {
+	    $file =~ s%.*?([^/]+)$%./$1%; # FIXME: Kludge
+	    push @$filtered_files, $file;
+	} else {
+	    push @$rest_of_files, $file;
+	}
+    }
+    return ($rest_of_files, $filtered_files);
+}
+
+MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
+    open(IN, "< $wine_dir/$makefile_in_file");
+
+    my $topobjdir;
+    my $module;
+
+    my %vars;
+
+    my $again = 0;
+    my $lookahead = 0;
+    while($again || defined(my $line = <IN>)) {
+	if(!$again) {
+	    chomp $line;
+	    if($lookahead) {
+		$lookahead = 0;
+		$_ .= "\n" . $line;
+	    } else {
+		$_ = $line;
+	    }
+	} else {
+	    $again = 0;
+	}
+
+	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
+	s/^(.*?)\s*#.*$/$1/;  # remove comments
+	/^$/ && next;         # skip empty lines
+
+	if(s/\\$/ /s) {
+	    $lookahead = 1;
+	    next;
+	}
+
+	if(/^MODULE\s*=\s*([\w\.]+)$/) {
+	    $module = $1;
+
+	    if($module eq "none") {
+		if($makefile_in_file eq "library/Makefile.in") {
+		    $module = "wine.dll";
+		} elsif($makefile_in_file eq "unicode/Makefile.in") {
+		    $module = "wine_unicode.dll";
+		} elsif($makefile_in_file eq "tools/winebuild/Makefile.in") {
+		    $module = "winebuild.exe";
+		} else {
+		    next MAKEFILE_IN;
+		}
+	    }
+	} elsif(/^TOPOBJDIR\s*=\s*(\S+)\s*$/) {
+	    $topobjdir = $1;
+	} elsif(/^(\w+)\s*=\s*/) {
+	    my $var = $1;
+	    my @files = split /\s+/s, $';
+
+	    # @files = ();
+
+	    @files = map {
+		if(/^\$\((\w+):\%=(.*?)\%(.*?)\)$/) {
+		    my @list = @{$vars{$1}};
+		    my $prefix = $2;
+		    my $suffix = $3;
+		    foreach my $item (@list) {
+			$item = "$prefix$item$suffix";
+		    }
+		    @list;
+		} elsif(/^\$\(TOPOBJDIR\)(.*?)$/) {
+		    "$topobjdir$1";
+		} elsif(/^\$/) {
+		    print STDERR "unknown variable '$_'\n" if 0;
+		    ();
+		} else {
+		    $_;
+		}
+	    } @files;
+
+	    $vars{$var} = \@files;
+	}
+    }
+
+    close(IN);
+
+    next if !$module;
+
+    my $source_files = [];
+    if(exists($vars{C_SRCS})) {
+	$source_files = [sort(@{$vars{C_SRCS}})];
+    }
+
+    my $header_files = [];
+    if(exists($vars{H_SRCS})) {
+	$header_files = [sort(@{$vars{H_SRCS}})];
+    }
+
+    my $resource_files = [];
+    if(exists($vars{RC_SRCS})) {
+	$resource_files = [sort(@{$vars{RC_SRCS}})];
+    }
+
+    my $project = $module;
+    $project =~ s/\.(?:dll|exe|lib)$//;
+    $project =~ y/./_/;
+
+    my $type;
+    if($module =~ /\.exe$/) {
+	$type = "exe";
+    } elsif($module =~ /\.lib$/) {
+	$type = "lib";
+    } else {
+	$type = "dll";
+    }
+
+    my $dsp_file = $makefile_in_file;
+    $dsp_file =~ s/Makefile.in$/$project.dsp/;
+
+    if($module eq "ntdll.dll") {
+	foreach my $dir (@ntdll_dirs) {
+	    my $module = "ntdll_$dir.lib";
+	    $module =~ s%/%_%g;
+
+	    my $project = "ntdll_$dir";
+	    $project =~ s%/%_%g;
+
+	    my $type = "lib";
+	    my $dsp_file = "$dir/$project.dsp";
+
+	    ($source_files, my $local_source_files) = filter_files($source_files, "/$dir/");
+	    ($header_files, my $local_header_files) = filter_files($header_files, "/$dir/");
+	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "/$dir/");
+
+	    $modules{$module}{project} = $project;
+	    $modules{$module}{type} = $type;
+	    $modules{$module}{dsp_file} = $dsp_file;
+	    $modules{$module}{source_files} = $local_source_files;
+	    $modules{$module}{header_files} = $local_header_files;
+	    $modules{$module}{resource_files} = $local_resource_files;
+	}
+    }
+
+    $modules{$module}{project} = $project;
+    $modules{$module}{type} = $type;
+    $modules{$module}{dsp_file} = $dsp_file;
+    $modules{$module}{source_files} = $source_files;
+    $modules{$module}{header_files} = $header_files;
+    $modules{$module}{resource_files} = $resource_files;
+}
+
+foreach my $module (sort(keys(%modules))) {
+    if($module =~ /^(?:ttydrv.dll|x11drv.dll)$/) {
+	delete $modules{$module};
+    }
+}
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(keys(%modules));
+
+foreach my $module (sort(keys(%modules))) {
+    my $dsp_file = $modules{$module}{dsp_file};
+
+    replace_file("$wine_dir/$dsp_file", \&_generate_dsp, $module);
+}
+
+sub _generate_dsp {
+    local *OUT = shift;
+
+    my $module = shift;
+
+    my $dsp_file = $modules{$module}{dsp_file};
+    my $project = $modules{$module}{project};
+
+    my $lib = ($modules{$module}{type} eq "lib");
+    my $dll = ($modules{$module}{type} eq "dll");
+    my $exe = ($modules{$module}{type} eq "exe");
+
+
+    my $wine_include_dir = do {
+	my @parts = split(m%/%, $dsp_file);
+	if($#parts == 1) {
+	    "..\\include";
+	} elsif($#parts == 2) {
+	    "..\\..\\include";
+	} else {
+	    "..\\..\\..\\include";
+	}
+    };
+
+    $progress_current++;
+    $output->progress("$dsp_file (file $progress_current of $progress_max)");
+
+    my @source_files = @{$modules{$module}{source_files}};
+    my @header_files = @{$modules{$module}{header_files}};
+    my @resource_files = @{$modules{$module}{resource_files}};
+
+    if($project !~ /^(?:wine(?:_unicode)?|winebuild)$/ &&
+       $project !~ /^ntdll_.+?$/)
+    {
+	push @source_files, "$project.spec";
+	# push @source_files, "$project.spec.c";
+	@source_files = sort(@source_files);
+    }
+
+    my @cfgs;
+    if($no_release && $no_msvc_headers) {
+	push @cfgs, "$project - Win32";
+    } elsif($no_release && !$no_msvc_headers) {
+	push @cfgs, "$project - Win32 MS Headers";
+	push @cfgs, "$project - Win32 Wine Headers";
+    } elsif(!$no_release && $no_msvc_headers) {
+	push @cfgs, "$project - Win32 Release";
+	push @cfgs, "$project - Win32 Debug";
+    } else {
+	push @cfgs, "$project - Win32 Release MS Headers";
+	push @cfgs, "$project - Win32 Debug MS Headers";
+	push @cfgs, "$project - Win32 Release Wine Headers";
+	push @cfgs, "$project - Win32 Debug Wine Headers";
+    }
+    my $default_cfg = $cfgs[$#cfgs];
+
+    my $msvc_include = "d:\\program files\\microsoft visual studio\\vc98\\include";
+
+    print OUT "# Microsoft Developer Studio Project File - Name=\"$project\" - Package Owner=<4>\r\n";
+    print OUT "# Microsoft Developer Studio Generated Build File, Format Version 6.00\r\n";
+    print OUT "# ** DO NOT EDIT **\r\n";
+    print OUT "\r\n";
+
+    if($lib) {
+	print OUT "# TARGTYPE \"Win32 (x86) Static Library\" 0x0104\r\n";
+    } else {
+	print OUT "# TARGTYPE \"Win32 (x86) Dynamic-Link Library\" 0x0102\r\n";
+    }
+    print OUT "\r\n";
+
+    print OUT "CFG=$default_cfg\r\n";
+    print OUT "!MESSAGE This is not a valid makefile. To build this project using NMAKE,\r\n";
+    print OUT "!MESSAGE use the Export Makefile command and run\r\n";
+    print OUT "!MESSAGE \r\n";
+    print OUT "!MESSAGE NMAKE /f \"$project.mak\".\r\n";
+    print OUT "!MESSAGE \r\n";
+    print OUT "!MESSAGE You can specify a configuration when running NMAKE\r\n";
+    print OUT "!MESSAGE by defining the macro CFG on the command line. For example:\r\n";
+    print OUT "!MESSAGE \r\n";
+    print OUT "!MESSAGE NMAKE /f \"$project.mak\" CFG=\"$default_cfg\"\r\n";
+    print OUT "!MESSAGE \r\n";
+    print OUT "!MESSAGE Possible choices for configuration are:\r\n";
+    print OUT "!MESSAGE \r\n";
+    foreach my $cfg (@cfgs) {
+	if($lib) {
+	    print OUT "!MESSAGE \"$cfg\" (based on \"Win32 (x86) Static Library\")\r\n";
+	} else {
+	    print OUT "!MESSAGE \"$cfg\" (based on \"Win32 (x86) Dynamic-Link Library\")\r\n";
+	}
+    }
+    print OUT "!MESSAGE \r\n";
+    print OUT "\r\n";
+
+    print OUT "# Begin Project\r\n";
+    print OUT "# PROP AllowPerConfigDependencies 0\r\n";
+    print OUT "# PROP Scc_ProjName \"\"\r\n";
+    print OUT "# PROP Scc_LocalPath \"\"\r\n";
+    print OUT "CPP=cl.exe\r\n";
+    print OUT "MTL=midl.exe\r\n" if !$lib;
+    print OUT "RSC=rc.exe\r\n";
+    print OUT "\r\n";
+
+    my $n = 0;
+
+    my $output_dir;
+    foreach my $cfg (@cfgs) {
+	if($#cfgs == 0) {
+	    # Nothing
+	} elsif($n == 0) {
+	    print OUT "!IF  \"\$(CFG)\" == \"$cfg\"\r\n";
+	    print OUT "\r\n";
+	} else {
+	    print OUT "\r\n";
+	    print OUT "!ELSEIF  \"\$(CFG)\" == \"$cfg\"\r\n";
+	    print OUT "\r\n";
+	}
+
+	my $debug = ($cfg !~ /Release/);
+	my $msvc_headers = ($cfg =~ /MS Headers/);
+
+	print OUT "# PROP BASE Use_MFC 0\r\n";
+
+	if($debug) {
+	    print OUT "# PROP BASE Use_Debug_Libraries 1\r\n";
+	} else {
+	    print OUT "# PROP BASE Use_Debug_Libraries 0\r\n";
+	}
+
+	$output_dir = $cfg;
+	$output_dir =~ s/^$project -//;
+	$output_dir =~ s/ //g;
+	if($output_prefix_dir) {
+	    $output_dir = "$output_prefix_dir\\$output_dir";
+	}
+
+	print OUT "# PROP BASE Output_Dir \"$output_dir\"\r\n";
+	print OUT "# PROP BASE Intermediate_Dir \"$output_dir\"\r\n";
+
+	print OUT "# PROP BASE Target_Dir \"\"\r\n";
+
+	print OUT "# PROP Use_MFC 0\r\n";
+	if($debug) {
+	    print OUT "# PROP Use_Debug_Libraries 1\r\n";
+	} else {
+	    print OUT "# PROP Use_Debug_Libraries 0\r\n";
+	}
+	print OUT "# PROP Output_Dir \"$output_dir\"\r\n";
+	print OUT "# PROP Intermediate_Dir \"$output_dir\"\r\n";
+
+	print OUT "# PROP Ignore_Export_Lib 0\r\n" if !$lib;
+	print OUT "# PROP Target_Dir \"\"\r\n";
+
+	my @defines;
+	if($debug) {
+	    if($lib) {
+		print OUT "# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od";
+		@defines = (qw(WIN32 _DEBUG _MBCS _LIB));
+	    } else {
+		print OUT "# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		@defines = (qw(WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+	    }
+	} else {
+	    if($lib) {
+		print OUT "# ADD BASE CPP /nologo /W3 /GX /O2";
+		@defines = (qw(WIN32 NDEBUG _MBCS _LIB));
+	    } else {
+		print OUT "# ADD BASE CPP /nologo /MT /W3 /GX /O2";
+		@defines = (qw(WIN32 NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+	    }
+	}
+
+	foreach my $define (@defines) {
+	    print OUT " /D \"$define\"";
+	}
+	print OUT " /YX" if $lib;
+	print OUT " /FD";
+	print OUT " /GZ" if $debug;
+	print OUT " " if $debug && $lib;
+	print OUT " /c";
+	print OUT "\r\n";
+
+	my @defines2;
+	if($debug) {
+	    if($lib) {
+		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		@defines2 = qw(WIN32 _DEBUG _WINDOWS _MBCS _LIB);
+	    } else {
+		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		@defines2 = qw(_DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+	    }
+	} else {
+	    if($lib) {
+		print OUT "# ADD CPP /nologo /MT /W3 /GX /O2";
+		@defines2 = qw(WIN32 NDEBUG _WINDOWS _MBCS _LIB);
+	    } else {
+		print OUT "# ADD CPP /nologo /MT /W3 /GX /O2";
+		@defines2 = qw(NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+	    }
+	}
+
+	if($wine) {
+	    push @defines2, "_\U${project}\E_";
+	    push @defines2, "__WINE__" if $module !~ /^winebuild\.exe$/;
+	    push @defines2, qw(__i386__ _X86_);
+
+	    print OUT " /X" if $msvc_headers;
+
+	    my @includes = ();
+	    if($msvc_headers) {
+		push @includes, $msvc_include;
+	    }
+
+	    push @includes, $wine_include_dir;
+
+	    foreach my $include (@includes) {
+		print OUT " /I \"$include\"";
+	    }
+	}
+
+	foreach my $define (@defines2) {
+	    print OUT " /D \"$define\"";
+	}
+	print OUT " /D inline=__inline" if $wine;
+	print OUT " /D \"__STDC__\"" if 0 && $wine;
+
+	print OUT " /YX" if $lib;
+	print OUT " /FR" if !$lib;
+	print OUT " /FD";
+	print OUT " /GZ" if $debug;
+	print OUT " " if $debug && $lib;
+	print OUT " /c";
+	print OUT "\r\n";
+
+	if($debug) {
+	    print OUT "# SUBTRACT CPP /X /YX\r\n" if !$lib;
+	    print OUT "# ADD BASE MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# ADD MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# ADD BASE RSC /l 0x41d /d \"_DEBUG\"\r\n";
+	    print OUT "# ADD RSC /l 0x41d /d \"_DEBUG\"\r\n";
+	} else {
+	    print OUT "# SUBTRACT CPP /YX\r\n" if !$lib;;
+	    print OUT "# ADD BASE MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# ADD MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# ADD BASE RSC /l 0x41d /d \"NDEBUG\"\r\n";
+	    print OUT "# ADD RSC /l 0x41d /d \"NDEBUG\"\r\n";
+	}
+	print OUT "BSC32=bscmake.exe\r\n";
+	print OUT "# ADD BASE BSC32 /nologo\r\n";
+	print OUT "# ADD BSC32 /nologo\r\n";
+
+	if($exe || $dll) {
+	    print OUT "LINK32=link.exe\r\n";
+	    print OUT "# ADD BASE LINK32 ";
+	    my @libraries = qw(kernel32.lib user32.lib gdi32.lib winspool.lib
+			       comdlg32.lib advapi32.lib shell32.lib ole32.lib
+			       oleaut32.lib uuid.lib odbc32.lib odbccp32.lib);
+	    foreach my $library (@libraries) {
+		print OUT "$library ";
+	    }
+	    if($debug) {
+		print OUT "/nologo /dll /debug /machine:I386 /pdbtype:sept\r\n";
+	    } else {
+		print OUT "/nologo /dll /machine:I386\r\n";
+	    }
+
+	    print OUT "# ADD LINK32 /nologo";
+	    print OUT " /dll" if $dll;
+	    print OUT " /debug" if $debug;
+	    print OUT " /machine:I386";
+	    print OUT " /def:\"$project.def\"" if $dll;
+	    print OUT " /pdbtype:sept" if $debug;
+	    print OUT "\r\n";
+	} else {
+	    print OUT "LIB32=link.exe -lib\r\n";
+	    print OUT "# ADD BASE LIB32 /nologo\r\n";
+	    print OUT "# ADD LIB32 /nologo\r\n";
+	}
+
+	$n++;
+    }
+
+    if($#cfgs != 0) {
+	print OUT "\r\n";
+	print OUT "!ENDIF \r\n";
+	print OUT "\r\n";
+    }
+
+    if($project eq "winebuild") {
+	print OUT "# Begin Special Build Tool\r\n";
+	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
+        print OUT "PostBuild_Desc=Copying wine.dll and wine_unicode.dll ...\r\n";
+	print OUT "PostBuild_Cmds=";
+	print OUT "copy ..\\..\\library\\$output_dir\\wine.dll \$(OutDir)\t";
+	print OUT "copy ..\\..\\unicode\\$output_dir\\wine_unicode.dll \$(OutDir)\r\n";
+	print OUT "# End Special Build Tool\r\n";
+    }
+    print OUT "# Begin Target\r\n";
+    print OUT "\r\n";
+    foreach my $cfg (@cfgs) {
+	print OUT "# Name \"$cfg\"\r\n";
+    }
+
+    print OUT "# Begin Group \"Source Files\"\r\n";
+    print OUT "\r\n";
+    print OUT "# PROP Default_Filter \"cpp;c;cxx;rc;def;r;odl;idl;hpj;bat\"\r\n";
+
+    foreach my $source_file (@source_files) {
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+
+	$source_file =~ s%/%\\%g;
+	if($source_file !~ /^\./) {
+	    $source_file = ".\\$source_file";
+	}
+
+	print OUT "SOURCE=$source_file\r\n";
+
+	if($source_file =~ /^(.*?)\.spec$/) {
+	    my $spec_file = $source_file;
+	    # my $spec_c_file = "$1.spec.c";
+	    my $def_file = "$1.def";
+
+	    print OUT "\r\n";
+	    print OUT "# Begin Custom Build\r\n";
+	    print OUT "InputPath=$spec_file\r\n";
+	    print OUT "\r\n";
+	    # print OUT "\"$def_file $spec_c_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	    print OUT "\"$def_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -def $spec_file > $def_file\r\n";
+	    # print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -spec $spec_file > $spec_c_file\r\n";
+	    print OUT "\r\n";
+	    print OUT "# End Custom Build\r\n";
+	}
+
+	print OUT "# End Source File\r\n";
+    }
+    print OUT "# End Group\r\n";
+
+    print OUT "# Begin Group \"Header Files\"\r\n";
+    print OUT "\r\n";
+    print OUT "# PROP Default_Filter \"h;hpp;hxx;hm;inl\"\r\n";
+    foreach my $header_file (@header_files) {
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+	print OUT "SOURCE=.\\$header_file\r\n";
+	print OUT "# End Source File\r\n";
+    }
+    print OUT "# End Group\r\n";
+
+
+
+    print OUT "# Begin Group \"Resource Files\"\r\n";
+    print OUT "\r\n";
+    print OUT "# PROP Default_Filter \"ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe\"\r\n";
+    foreach my $resource_file (@resource_files) {
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+	print OUT "SOURCE=.\\$resource_file\r\n";
+	print OUT "# End Source File\r\n";
+    }
+    print OUT "# End Group\r\n";
+
+    print OUT "# End Target\r\n";
+    print OUT "# End Project\r\n";
+
+    close(OUT);
+}
+
+
+do {
+    my $dsw_file = "wine.dsw";
+    $output->progress("$dsw_file");
+    replace_file("$wine_dir/$dsw_file", \&_generate_dsw);
+};
+
+sub _generate_dsw {
+    local *OUT = shift;
+
+    print OUT "Microsoft Developer Studio Workspace File, Format Version 6.00\r\n";
+    print OUT "# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!\r\n";
+    print OUT "\r\n";
+    foreach my $module (sort(keys(%modules))) {
+	my $project = $modules{$module}{project};
+	my $dsp_file = $modules{$module}{dsp_file};
+
+	$dsp_file = "./$dsp_file";
+	$dsp_file =~ y%/%\\%;
+
+	my @dependencies;
+	if($project =~ /^wine(?:_unicode)?$/) {
+	    @dependencies = ();
+	} elsif($project =~ /^winebuild$/) {
+	    @dependencies = ("wine", "wine_unicode");
+	} elsif($project =~ /^ntdll_.+?$/) {
+	    @dependencies = ();
+	} else {
+	    @dependencies = ("wine", "wine_unicode", "winebuild");
+	}
+
+        if($project =~ /^ntdll$/) {
+	    foreach my $dir (@ntdll_dirs) {
+		my $module = "ntdll_$dir";
+		$module =~ s%/%_%g;
+		push @dependencies, $module;
+	    }
+        }
+
+	@dependencies = sort(@dependencies);
+
+	print OUT "###############################################################################\r\n";
+	print OUT "\r\n";
+	print OUT "Project: \"$project\"=$dsp_file - Package Owner=<4>\r\n";
+	print OUT "\r\n";
+	print OUT "Package=<5>\r\n";
+	print OUT "{{{\r\n";
+	print OUT "}}}\r\n";
+	print OUT "\r\n";
+	print OUT "Package=<4>\r\n";
+	print OUT "{{{\r\n";
+	foreach my $dependency (@dependencies) {
+	    print OUT "    Begin Project Dependency\r\n";
+	    print OUT "    Project_Dep_Name $dependency\r\n";
+	    print OUT "    End Project Dependency\r\n";
+	}
+	print OUT "}}}\r\n";
+	print OUT "\r\n";
+    }
+
+    print OUT "###############################################################################\r\n";
+    print OUT "\r\n";
+    print OUT "Global:\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<5>\r\n";
+    print OUT "{{{\r\n";
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<3>\r\n";
+    print OUT "{{{\r\n";
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+    print OUT "###############################################################################\r\n";
+    print OUT "\r\n";
+
+    return 1;
+}
+
+do {
+    my $config_h = "include/config.h";
+
+    $output->progress("$config_h");
+
+    replace_file("$wine_dir/$config_h", \&_generate_config_h);
+};
+
+sub _generate_config_h {
+    local *OUT = shift;
+
+    print OUT "#define __WINE_CONFIG_H\n";
+    print OUT "\n";
+
+    my @headers = qw(direct.h io.h);
+    foreach my $header (@headers) {
+	$header =~ y/\.\//__/;
+	print OUT "#define HAVE_\U$header\E\n";
+	print OUT "\n";
+    }
+
+    my @functions = qw(
+        _access	_chdir _close _lseek _mkdir _open _pclose _popen _read _rmdir _write _stat
+        _snprintf _stricmp _strnicmp _vsnprintf _wcsicmp wcslen
+        ecvt fcvt gcvt
+        strerror
+    );
+    foreach my $function (@functions) {
+	print OUT "#define HAVE_\U$function\E 1\n";
+	print OUT "\n";
+    }
+
+    if(0) {
+	print OUT "#define NEED_STDCALL_DECORATION 1\n";
+	print OUT "\n";
+    }
+
+    print OUT "#define X_DISPLAY_MISSING 1\n";
+    print OUT "\n";
+
+    print OUT "/* Define to a macro to generate an assembly function directive */\n";
+    print OUT "#define __ASM_FUNC(name) \"\"\n";
+
+    print OUT "/* Define to a macro to generate an assembly name from a C symbol */\n";
+    print OUT "#define __ASM_NAME(name) name\n";
+
+    close(OUT);
+}

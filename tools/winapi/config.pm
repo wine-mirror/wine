@@ -31,7 +31,10 @@ require Exporter;
     &file_directory
     &file_type &files_filter
     &file_skip &files_skip
-    &get_c_files &get_h_files &get_spec_files
+    &get_c_files
+    &get_h_files
+    &get_makefile_in_files
+    &get_spec_files
 );
 @EXPORT_OK = qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
@@ -141,11 +144,11 @@ sub file_directory {
 }
 
 sub _get_files {
-    my $extension = shift;
+    my $pattern = shift;
     my $type = shift;
     my $dir = shift;
 
-    $output->progress("$wine_dir: searching for *.$extension");
+    $output->progress("$wine_dir: searching for /$pattern/");
 
     if(!defined($dir)) {
 	$dir = $wine_dir;
@@ -159,12 +162,13 @@ sub _get_files {
 	my @entries= readdir(DIR);
 	closedir(DIR);
 	foreach (@entries) {
+	    my $basefile = $_;
 	    $_ = "$dir/$_";
 	    if(/\.\.?$/) {
 		# Nothing
 	    } elsif(-d $_) {
 		push @dirs, $_;
-	    } elsif(/\.$extension$/ && (!defined($type) || file_type($_) eq $type)) {
+	    } elsif($basefile =~ /$pattern/ && (!defined($type) || file_type($_) eq $type)) {
 		s%^$wine_dir/%%;
 		push @files, $_;
 	    }
@@ -174,8 +178,9 @@ sub _get_files {
     return @files;
 }
 
-sub get_c_files { return _get_files("c", @_); }
-sub get_h_files { return _get_files("h", @_); }
-sub get_spec_files { return _get_files("spec", @_); }
+sub get_c_files { return _get_files('\.c$', @_); }
+sub get_h_files { return _get_files('\.h$', @_); }
+sub get_spec_files { return _get_files('\.spec$', @_); }
+sub get_makefile_in_files { return _get_files('^Makefile.in$', @_); }
 
 1;
