@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "winuser.h"
+#include "windowsx.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "dialog.h"
@@ -75,30 +76,97 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
 
 
 /***********************************************************************
+ *           DIALOG_GetCharSizeFromDC
+ *
+ * 
+ *  Calculates the *true* average size of English characters in the 
+ *  specified font as oppposed to the one returned by GetTextMetrics.
+ */
+static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
+{
+    BOOL Success = FALSE;
+    HFONT hFontPrev = 0;
+    pSize->cx = xBaseUnit;
+    pSize->cy = yBaseUnit;
+    if ( hDC ) 
+    {
+        /* select the font */
+        TEXTMETRICA tm;
+        memset(&tm,0,sizeof(tm));
+        if (hFont) hFontPrev = SelectFont(hDC,hFont);
+        if (GetTextMetricsA(hDC,&tm))
+        {
+            pSize->cx = tm.tmAveCharWidth;
+            pSize->cy = tm.tmHeight;
+
+            /* if variable width font */
+            if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) 
+            {
+                SIZE total;
+                static const char szAvgChars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+                /* Calculate a true average as opposed to the one returned 
+                 * by tmAveCharWidth. This works better when dealing with 
+                 * proportional spaced fonts and (more important) that's 
+                 * how Microsoft's dialog creation code calculates the size 
+                 * of the font
+                 */
+                if (GetTextExtentPointA(hDC,szAvgChars,sizeof(szAvgChars),&total))
+                {
+                   /* round up */
+                    pSize->cx = ((2*total.cx/sizeof(szAvgChars)) + 1)/2;
+                    Success = TRUE;
+                }
+            } 
+            else 
+            {
+                Success = TRUE;
+            }
+        }
+
+        /* select the original font */
+        if (hFontPrev) SelectFont(hDC,hFontPrev);
+    }
+    return (Success);
+}
+
+
+/***********************************************************************
+ *           DIALOG_GetCharSize
+ *
+ * 
+ *  Calculates the *true* average size of English characters in the 
+ *  specified font as oppposed to the one returned by GetTextMetrics.
+ *  A convenient variant of DIALOG_GetCharSizeFromDC.
+ */
+static BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
+{
+    HDC  hDC = GetDC(0);
+    BOOL Success = DIALOG_GetCharSizeFromDC( hDC, hFont, pSize );    
+    ReleaseDC(0, hDC);
+    return Success;
+}
+
+
+/***********************************************************************
  *           DIALOG_Init
  *
  * Initialisation of the dialog manager.
  */
 BOOL DIALOG_Init(void)
 {
-    TEXTMETRIC16 tm;
     HDC16 hdc;
-    
+    SIZE size;
+
       /* Calculate the dialog base units */
 
     if (!(hdc = CreateDC16( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
-    GetTextMetrics16( hdc, &tm );
+    if (!DIALOG_GetCharSizeFromDC( hdc, 0, &size )) return FALSE;
     DeleteDC( hdc );
-    xBaseUnit = tm.tmAveCharWidth;
-    yBaseUnit = tm.tmHeight;
+    xBaseUnit = size.cx;
+    yBaseUnit = size.cy;
 
-      /* Dialog units are based on a proportional system font */
-      /* so we adjust them a bit for a fixed font. */
-    if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
-        xBaseUnit = xBaseUnit * 5 / 4;
-
-    TRACE(dialog, "base units = %d,%d\n",
-                    xBaseUnit, yBaseUnit );
+    TRACE(dialog, "base units = %d,%d\n", xBaseUnit, yBaseUnit );
     return TRUE;
 }
 
@@ -597,21 +665,13 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 				  FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 				  PROOF_QUALITY, FF_DONTCARE,
 				  template.faceName );
-	if (hFont)
-	{
-	    TEXTMETRIC16 tm;
-	    HFONT16 oldFont;
-
-	    HDC hdc = GetDC(0);
-	    oldFont = SelectObject( hdc, hFont );
-	    GetTextMetrics16( hdc, &tm );
-	    SelectObject( hdc, oldFont );
-	    ReleaseDC( 0, hdc );
-	    xUnit = tm.tmAveCharWidth;
-	    yUnit = tm.tmHeight;
-            if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
-                xBaseUnit = xBaseUnit * 5 / 4;  /* See DIALOG_Init() */
-	}
+        if (hFont)
+        {
+            SIZE charSize;
+            DIALOG_GetCharSize(hFont,&charSize); 
+            xUnit = charSize.cx;
+            yUnit = charSize.cy;
+        }
     }
     
     /* Create dialog main window */
