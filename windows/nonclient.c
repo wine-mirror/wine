@@ -98,8 +98,8 @@ BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle )
 {
     if (!(style & WS_CHILD) && Options.managed  &&
         (((style & WS_CAPTION) == WS_CAPTION) ||
-         (style & WS_THICKFRAME) ||
-         (exStyle & WS_EX_DLGMODALFRAME))) return TRUE;
+         (style & WS_THICKFRAME)))
+        return TRUE;
     return FALSE;
 }
 
@@ -861,9 +861,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
-                if ((wndPtr->dwStyle & WS_SYSMENU) &&
-		    (((HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM)) ||
-		     ((HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON))))
+                if ((wndPtr->dwStyle & WS_SYSMENU) && (!(wndPtr->dwStyle & DS_MODALFRAME)))
                     rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
                 if (pt.x < rect.left) return HTSYSMENU;
 
@@ -1060,6 +1058,12 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 
 	hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
 	if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
+
+	/* If there is no hIcon specified or this is not a modal dialog, */ 
+        /* get the default one.                                          */
+	if(hIcon == 0) 
+	    if (!(wndPtr->dwStyle & DS_MODALFRAME))
+		hIcon = LoadImageA(0, MAKEINTRESOURCEA(OIC_WINEICON), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 
 	if (hIcon)
 	    DrawIconEx (hdc, rect.left + 2, rect.top + 2, hIcon,
