@@ -2681,7 +2681,10 @@ typedef struct tagNMLVCACHEHINT
     (BOOL)SendMessageA((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
     (UINT)SendMessageA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
-
+#define ListView_EditLabelA(hwndLV, i) \
+    (HWND)SendMessageA((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
+#define ListView_EditLabelW(hwndLV, i) \
+    (HWND)SendMessageW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
 
 /* Tab Control */
 
