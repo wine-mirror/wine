@@ -1493,13 +1493,18 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  }
 	}
 
-        /* Check that size size of the file does not exceed buffer size */
-        if(strlen(lpstrPathAndFile) < fodInfos->ofnInfos->nMaxFile)
+        /* Check that the size of the file does not exceed buffer size.
+             (Allow for extra \0 if OFN_MULTISELECT is set.) */
+        if(strlen(lpstrPathAndFile) < fodInfos->ofnInfos->nMaxFile -
+            ((fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT) ? 1 : 0))
         {
           LPSTR lpszTemp;
 	  
           /* fill destination buffer */
           strcpy(fodInfos->ofnInfos->lpstrFile, lpstrPathAndFile);
+          if (fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT)
+            fodInfos->ofnInfos->lpstrFile[strlen(fodInfos->ofnInfos->lpstrFile)
+                + 1] = '\0';
 
           /* set filename offset */
           lpszTemp = COMDLG32_PathFindFileNameA(lpstrPathAndFile);
