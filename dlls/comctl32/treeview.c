@@ -414,10 +414,21 @@ TREEVIEW_GetListItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
 static INT get_notifycode(TREEVIEW_INFO *infoPtr, INT code)
 {
-    if (infoPtr->bNtfUnicode) {
-	if ( code >= (TVN_FIRST + TVN_LAST) / 2) code -= (TVN_FIRST - TVN_LAST) / 2;
-    } else {
-	if ( code < (TVN_FIRST + TVN_LAST) / 2) code += (TVN_FIRST - TVN_LAST) / 2;
+    if (!infoPtr->bNtfUnicode) {
+	switch (code) {
+	case TVN_SELCHANGINGW:	  return TVN_SELCHANGINGA;
+	case TVN_SELCHANGEDW:	  return TVN_SELCHANGEDA;
+	case TVN_GETDISPINFOW:	  return TVN_GETDISPINFOA;
+	case TVN_SETDISPINFOW:	  return TVN_SETDISPINFOA;
+	case TVN_ITEMEXPANDINGW:  return TVN_ITEMEXPANDINGA;
+	case TVN_ITEMEXPANDEDW:	  return TVN_ITEMEXPANDEDA;
+	case TVN_BEGINDRAGW:	  return TVN_BEGINDRAGA;
+	case TVN_BEGINRDRAGW:	  return TVN_BEGINRDRAGA;
+	case TVN_DELETEITEMW:	  return TVN_DELETEITEMA;
+	case TVN_BEGINLABELEDITW: return TVN_BEGINLABELEDITA;
+	case TVN_ENDLABELEDITW:	  return TVN_ENDLABELEDITA;
+	case TVN_GETINFOTIPW:	  return TVN_GETINFOTIPA;
+	}
     }
     return code;
 }
@@ -633,7 +644,7 @@ TREEVIEW_BeginLabelEditNotify(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
 
     tvdi.hdr.hwndFrom = hwnd;
     tvdi.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    tvdi.hdr.code = get_notifycode(infoPtr, TVN_BEGINLABELEDITA);
+    tvdi.hdr.code = get_notifycode(infoPtr, TVN_BEGINLABELEDITW);
 
     tvdi.item.mask = TVIF_HANDLE | TVIF_STATE | TVIF_PARAM | TVIF_TEXT;
     tvdi.item.hItem = editItem;
@@ -677,8 +688,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     callback.hdr.hwndFrom         = hwnd;
     callback.hdr.idFrom           = GetWindowLongA(hwnd, GWL_ID);
-    callback.hdr.code             = (infoPtr->bNtfUnicode) ? TVN_GETDISPINFOW :
-	                                           TVN_GETDISPINFOA;
+    callback.hdr.code             = get_notifycode(infoPtr, TVN_GETDISPINFOW);
 
     /* 'state' always contains valid value, as well as 'lParam'.
      * All other parameters are uninitialized.
@@ -1445,9 +1455,7 @@ TREEVIEW_RemoveItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
 {
     TRACE("%p, (%s)\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    TREEVIEW_SendTreeviewNotify(infoPtr,
-				(infoPtr->bNtfUnicode) ? TVN_DELETEITEMW :
-				                         TVN_DELETEITEMA,
+    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_DELETEITEMW,
 				TVIF_HANDLE | TVIF_PARAM, 0, wineItem, 0);
 
     if (wineItem->firstChild)
@@ -3059,10 +3067,7 @@ static BOOL
 TREEVIEW_SendExpanding(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 		       UINT action)
 {
-    return !TREEVIEW_SendTreeviewNotify(infoPtr,
-				(infoPtr->bNtfUnicode) ? TVN_ITEMEXPANDINGW :
-				                         TVN_ITEMEXPANDINGA,
-				action,
+    return !TREEVIEW_SendTreeviewNotify(infoPtr, TVN_ITEMEXPANDINGW, action,
 					TVIF_HANDLE | TVIF_STATE | TVIF_PARAM
 					| TVIF_IMAGE | TVIF_SELECTEDIMAGE,
 					0, wineItem);
@@ -3072,10 +3077,7 @@ static VOID
 TREEVIEW_SendExpanded(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 		      UINT action)
 {
-    TREEVIEW_SendTreeviewNotify(infoPtr,
-				(infoPtr->bNtfUnicode) ? TVN_ITEMEXPANDEDW :
-				                         TVN_ITEMEXPANDEDA,
-				action,
+    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_ITEMEXPANDEDW, action,
 				TVIF_HANDLE | TVIF_STATE | TVIF_PARAM
 				| TVIF_IMAGE | TVIF_SELECTEDIMAGE,
 				0, wineItem);
@@ -3638,7 +3640,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
     tvdi.hdr.hwndFrom = hwnd;
     tvdi.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    tvdi.hdr.code = get_notifycode(infoPtr, TVN_ENDLABELEDITA);
+    tvdi.hdr.code = get_notifycode(infoPtr, TVN_ENDLABELEDITW);
     tvdi.item.mask = 0;
     tvdi.item.hItem = editedItem;
     tvdi.item.state = editedItem->state;
@@ -3884,8 +3886,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     {   /* if TREEVIEW_TrackMouse == 1 dragging occurred and the cursor left the dragged item's rectangle */
 	if (TREEVIEW_TrackMouse(infoPtr, ht.pt))
 	{
-	    TREEVIEW_SendTreeviewDnDNotify(infoPtr, TVN_BEGINDRAGA, ht.hItem,
-					   ht.pt);
+	    TREEVIEW_SendTreeviewDnDNotify(infoPtr, TVN_BEGINDRAGW, ht.hItem, ht.pt);
 	    infoPtr->dropItem = ht.hItem;
 
             /* clean up focusedItem as we dragged and won't select this item */
@@ -4009,8 +4010,7 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     {
 	if (ht.hItem)
 	{
-	    TREEVIEW_SendTreeviewDnDNotify(infoPtr, TVN_BEGINRDRAGA, ht.hItem,
-					   ht.pt);
+	    TREEVIEW_SendTreeviewDnDNotify(infoPtr, TVN_BEGINRDRAGW, ht.hItem, ht.pt);
 	    infoPtr->dropItem = ht.hItem;
 	}
     }
@@ -4128,7 +4128,7 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 	    return FALSE;
 
 	if (TREEVIEW_SendTreeviewNotify(infoPtr,
-					TVN_SELCHANGINGA,
+					TVN_SELCHANGINGW,
 					cause,
 					TVIF_HANDLE | TVIF_STATE | TVIF_PARAM,
 					prevSelect,
@@ -4145,7 +4145,7 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 	TREEVIEW_EnsureVisible(infoPtr, infoPtr->selectedItem, FALSE);
 
 	TREEVIEW_SendTreeviewNotify(infoPtr,
-				    TVN_SELCHANGEDA,
+				    TVN_SELCHANGEDW,
 				    cause,
 				    TVIF_HANDLE | TVIF_STATE | TVIF_PARAM,
 				    prevSelect,
