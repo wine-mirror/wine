@@ -166,7 +166,6 @@ WIN16_FILES = \
 	win87em.dll$(DLLEXT) \
 	winaspi.dll$(DLLEXT) \
 	windebug.dll$(DLLEXT) \
-	winedos16.dll$(DLLEXT) \
 	wineps16.dll$(DLLEXT) \
 	wing.dll$(DLLEXT) \
 	winnls.dll$(DLLEXT) \
@@ -524,7 +523,7 @@ winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv$(DLLEXT) $@
 
-winedos.dll$(DLLEXT) winedos16.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
+winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
 winejack.drv$(DLLEXT): winmm/winejack/winejack.drv$(DLLEXT)
@@ -576,85 +575,85 @@ x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 # Import libraries
 
 IMPORT_LIBS = \
-	libadvapi32.$(IMPLIBEXT) \
-	libavicap32.$(IMPLIBEXT) \
-	libavifil32.$(IMPLIBEXT) \
-	libcabinet.$(IMPLIBEXT) \
-	libcomcat.$(IMPLIBEXT) \
-	libcomctl32.$(IMPLIBEXT) \
-	libcomdlg32.$(IMPLIBEXT) \
-	libcrtdll.$(IMPLIBEXT) \
-	libcrypt32.$(IMPLIBEXT) \
-	libd3d8.$(IMPLIBEXT) \
-	libdciman32.$(IMPLIBEXT) \
-	libddraw.$(IMPLIBEXT) \
-	libdevenum.$(IMPLIBEXT) \
-	libdinput.$(IMPLIBEXT) \
-	libdinput8.$(IMPLIBEXT) \
-	libdplay.$(IMPLIBEXT) \
-	libdplayx.$(IMPLIBEXT) \
-	libdsound.$(IMPLIBEXT) \
-	libgdi32.$(IMPLIBEXT) \
-	libglu32.$(IMPLIBEXT) \
-	libicmp.$(IMPLIBEXT) \
-	libimagehlp.$(IMPLIBEXT) \
-	libimm32.$(IMPLIBEXT) \
-	libkernel32.$(IMPLIBEXT) \
-	liblz32.$(IMPLIBEXT) \
-	libmapi32.$(IMPLIBEXT) \
-	libmpr.$(IMPLIBEXT) \
-	libmsacm32.$(IMPLIBEXT) \
-	libmsdmo.$(IMPLIBEXT) \
-	libmsimg32.$(IMPLIBEXT) \
-	libmsnet32.$(IMPLIBEXT) \
-	libmsrle32.$(IMPLIBEXT) \
-	libmsvcrt.$(IMPLIBEXT) \
-	libmsvcrt20.$(IMPLIBEXT) \
-	libmsvfw32.$(IMPLIBEXT) \
-	libnetapi32.$(IMPLIBEXT) \
-	libntdll.$(IMPLIBEXT) \
-	libodbc32.$(IMPLIBEXT) \
-	libole32.$(IMPLIBEXT) \
-	liboleaut32.$(IMPLIBEXT) \
-	libolecli32.$(IMPLIBEXT) \
-	liboledlg.$(IMPLIBEXT) \
-	libolepro32.$(IMPLIBEXT) \
-	libolesvr32.$(IMPLIBEXT) \
-	libopengl32.$(IMPLIBEXT) \
-	libpsapi.$(IMPLIBEXT) \
-	libqcap.$(IMPLIBEXT) \
-	libquartz.$(IMPLIBEXT) \
-	librasapi32.$(IMPLIBEXT) \
-	libriched32.$(IMPLIBEXT) \
-	librpcrt4.$(IMPLIBEXT) \
-	libserialui.$(IMPLIBEXT) \
-	libsetupapi.$(IMPLIBEXT) \
-	libshdocvw.$(IMPLIBEXT) \
-	libshell32.$(IMPLIBEXT) \
-	libshfolder.$(IMPLIBEXT) \
-	libshlwapi.$(IMPLIBEXT) \
-	libsnmpapi.$(IMPLIBEXT) \
-	libsti.$(IMPLIBEXT) \
-	libtapi32.$(IMPLIBEXT) \
-	libttydrv.$(IMPLIBEXT) \
-	libtwain_32.$(IMPLIBEXT) \
-	liburl.$(IMPLIBEXT) \
-	liburlmon.$(IMPLIBEXT) \
-	libuser32.$(IMPLIBEXT) \
-	libversion.$(IMPLIBEXT) \
-	libw32skrnl.$(IMPLIBEXT) \
-	libwinedos.$(IMPLIBEXT) \
-	libwineps.$(IMPLIBEXT) \
-	libwininet.$(IMPLIBEXT) \
-	libwinmm.$(IMPLIBEXT) \
-	libwinnls32.$(IMPLIBEXT) \
-	libwinspool.$(IMPLIBEXT) \
-	libwintrust.$(IMPLIBEXT) \
-	libwnaspi32.$(IMPLIBEXT) \
-	libwow32.$(IMPLIBEXT) \
-	libws2_32.$(IMPLIBEXT) \
-	libwsock32.$(IMPLIBEXT) \
-	libx11drv.$(IMPLIBEXT)
+	libadvapi32 \
+	libavicap32 \
+	libavifil32 \
+	libcabinet \
+	libcomcat \
+	libcomctl32 \
+	libcomdlg32 \
+	libcrtdll \
+	libcrypt32 \
+	libd3d8 \
+	libdciman32 \
+	libddraw \
+	libdevenum \
+	libdinput \
+	libdinput8 \
+	libdplay \
+	libdplayx \
+	libdsound \
+	libgdi32 \
+	libglu32 \
+	libicmp \
+	libimagehlp \
+	libimm32 \
+	libkernel32 \
+	liblz32 \
+	libmapi32 \
+	libmpr \
+	libmsacm32 \
+	libmsdmo \
+	libmsimg32 \
+	libmsnet32 \
+	libmsrle32 \
+	libmsvcrt \
+	libmsvcrt20 \
+	libmsvfw32 \
+	libnetapi32 \
+	libntdll \
+	libodbc32 \
+	libole32 \
+	liboleaut32 \
+	libolecli32 \
+	liboledlg \
+	libolepro32 \
+	libolesvr32 \
+	libopengl32 \
+	libpsapi \
+	libqcap \
+	libquartz \
+	librasapi32 \
+	libriched32 \
+	librpcrt4 \
+	libserialui \
+	libsetupapi \
+	libshdocvw \
+	libshell32 \
+	libshfolder \
+	libshlwapi \
+	libsnmpapi \
+	libsti \
+	libtapi32 \
+	libttydrv \
+	libtwain_32 \
+	liburl \
+	liburlmon \
+	libuser32 \
+	libversion \
+	libw32skrnl \
+	libwinedos \
+	libwineps \
+	libwininet \
+	libwinmm \
+	libwinnls32 \
+	libwinspool \
+	libwintrust \
+	libwnaspi32 \
+	libwow32 \
+	libws2_32 \
+	libwsock32 \
+	libx11drv
 
 libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
@@ -1131,7 +1130,8 @@ winsock/ws2_32.spec.def: $(WINEBUILD)
 wsock32/wsock32.spec.def: $(WINEBUILD)
 x11drv/x11drv.spec.def: $(WINEBUILD)
 
-$(SUBDIRS): $(IMPORT_LIBS)
+$(SUBDIRS): $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
+$(SUBDIRS:%=%/__crosstest__): $(IMPORT_LIBS:%=%.a)
 
 # Map library name to the corresponding directory
 
@@ -1358,18 +1358,18 @@ install install-lib::
 
 # Misc rules
 
-install install-dev:: $(IMPORT_LIBS)
+install install-dev:: $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
 	$(MKINSTALLDIRS) $(dlldir)
-	for f in $(IMPORT_LIBS); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
+	for f in $(IMPORT_LIBS:%=%.$(IMPLIBEXT)); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
 
 install install-lib:: $(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	$(RM) $(IMPORT_LIBS:%=$(dlldir)/%)
+	$(RM) $(IMPORT_LIBS:%=$(dlldir)/%.$(IMPLIBEXT))
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(IMPORT_LIBS)
+	$(RM) $(IMPORT_LIBS:%=%.a) $(IMPORT_LIBS:%=%.def)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

@@ -211,7 +211,7 @@ print NEWMAKE "\n# Import libraries\n\nIMPORT_LIBS =";
 foreach my $mod (sort @implibs)
 {
     my $def = $mod;
-    $def =~ s/\.(dll|drv)$/.\$(IMPLIBEXT)/;
+    $def =~ s/\.(dll|drv)$//;
     printf NEWMAKE " \\\n\tlib%s", $def;
 }
 print NEWMAKE "\n\n";
@@ -239,7 +239,8 @@ foreach my $mod (sort @implibs)
 
 print NEWMAKE <<EOF;
 
-\$(SUBDIRS): \$(IMPORT_LIBS)
+\$(SUBDIRS): \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
+\$(SUBDIRS:%=%/__crosstest__): \$(IMPORT_LIBS:%=%.a)
 
 EOF
 
@@ -312,18 +313,18 @@ print NEWMAKE "\tfi\n\n";
 print NEWMAKE <<EOF;
 # Misc rules
 
-install install-dev:: \$(IMPORT_LIBS)
+install install-dev:: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
 	\$(MKINSTALLDIRS) \$(dlldir)
-	for f in \$(IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+	for f in \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT)); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
 
 install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%)
+	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%.\$(IMPLIBEXT))
 	-rmdir \$(dlldir)
 
 clean::
-	\$(RM) \$(IMPORT_LIBS)
+	\$(RM) \$(IMPORT_LIBS:%=%.a) \$(IMPORT_LIBS:%=%.def)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 

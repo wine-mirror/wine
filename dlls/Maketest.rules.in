@@ -44,7 +44,7 @@ $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
 # Rules for .exe main module
 
 $(MODULE): $(OBJS) $(RCOBJS) $(IMPORTLIBS) Makefile.in
-	$(CC) $(OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(CC) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for building test list
 
@@ -64,7 +64,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSCC) $(CROSSOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
+	$(CROSSCC) $(CROSSOBJS) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
 
 # Rules for cleaning
 
