@@ -291,17 +291,17 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUT7A iface)
 {
 	IDirectInputImpl *This = (IDirectInputImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement((&This->ref));
 }
 
 static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 {
 	IDirectInputImpl *This = (IDirectInputImpl *)iface;
-	if (!(--This->ref)) {
+	ULONG ref;
+	ref = InterlockedDecrement(&(This->ref));
+	if (ref == 0)
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
-	}
-	return This->ref;
+	return ref;
 }
 
 static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, REFIID riid, LPVOID *ppobj) {
@@ -640,13 +640,13 @@ static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOI
 
 static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&(This->ref));
 }
 
 static HRESULT WINAPI DICF_CreateInstance(

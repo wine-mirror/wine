@@ -303,10 +303,11 @@ DECL_GLOBAL_CONSTRUCTOR(keyboarddev_register) { dinput_register_device(&keyboard
 static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
 	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+	ULONG ref;
 
-	This->ref--;
-	if (This->ref)
-		return This->ref;
+	ref = InterlockedDecrement(&(This->ref));
+	if (ref)
+		return ref;
 
 	EnterCriticalSection(&keyboard_crit);
 	if (!--keyboard_users) {

@@ -475,11 +475,11 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    This->ref--;
-    if (This->ref)
-	return This->ref;
-    HeapFree(GetProcessHeap(),0,This);
-    return DI_OK;
+    ULONG ref;
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref == 0)
+        HeapFree(GetProcessHeap(),0,This);
+    return ref;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
@@ -548,7 +548,7 @@ ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
 	LPDIRECTINPUTDEVICE8A iface)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    return ++This->ref;
+    return InterlockedIncrement(&(This->ref));
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
@@ -688,8 +688,6 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
     FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
     
-    if (lpCallback)
-	lpCallback(NULL, lpvRef);
     return DI_OK;
 }
 
@@ -702,8 +700,6 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
     FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
     
-    if (lpCallback)
-	lpCallback(NULL, lpvRef);
     return DI_OK;
 }
 

@@ -662,10 +662,11 @@ DECL_GLOBAL_CONSTRUCTOR(joydev_register) { dinput_register_device(&joydev); }
 static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
+    ULONG ref;
 
-    This->ref--;
-    if (This->ref)
-        return This->ref;
+    ref = InterlockedDecrement((&This->ref));
+    if (ref)
+        return ref;
 
     /* Free the device name */
     if (This->name)

@@ -326,10 +326,11 @@ DECL_GLOBAL_CONSTRUCTOR(mousedev_register) { dinput_register_device(&mousedev); 
 static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
-    
-    This->ref--;
-    if (This->ref)
-	return This->ref;
+    ULONG ref;
+ 
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref)
+	return ref;
     
     /* Free the data queue */
     if (This->data_queue != NULL)
@@ -349,7 +350,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     }
     
     HeapFree(GetProcessHeap(),0,This);
-    return DI_OK;
+    return 0;
 }
 
 
