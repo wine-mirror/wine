@@ -1445,7 +1445,7 @@ static	DWORD	MIX_Init(void)
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
                 MIX_Mixers[i].name = HeapAlloc(GetProcessHeap(),0,strlen(info.name) + 1);
-                strncpy(MIX_Mixers[i].name, info.name, sizeof(info.name));
+                strcpy(MIX_Mixers[i].name, info.name);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
                  * implement it properly, and there are probably similar issues
