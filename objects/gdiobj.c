@@ -507,6 +507,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 	/* NOTE: No GDI_Release is necessary */
         return TRUE;
     }
+    if (obj == hPseudoStockBitmap) return TRUE;
     if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
 
     TRACE("%04x\n", obj );
