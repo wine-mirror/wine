@@ -112,6 +112,7 @@ void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
         "      bne 1f\n"
         "      stwcx. %3,0,%2\n"
         "      bne- 0b\n"
+        "      isync\n"
         "1:    "
         : "=&r"(ret), "=&r"(scratch)
         : "r"(dest), "r"(xchg), "r"(compare)
@@ -129,6 +130,7 @@ long interlocked_cmpxchg( long *dest, long xchg, long compare)
         "      bne 1f\n"
         "      stwcx. %3,0,%2\n"
         "      bne- 0b\n"
+        "      isync\n"
         "1:    "
         : "=&r"(ret), "=&r"(scratch)
         : "r"(dest), "r"(xchg), "r"(compare)
@@ -145,6 +147,7 @@ long interlocked_xchg_add( long *dest, long incr )
         "      add %0, %2, %0\n"
         "      stwcx. %0, %3, %1\n"
         "      bne- 0b\n"
+        "      isync\n"
         : "=&r" (ret)
         : "r"(dest), "r"(incr), "r"(zero)
         : "cr0", "memory", "r0"
@@ -159,6 +162,7 @@ long interlocked_xchg( long* dest, long val )
         "0:    lwarx %0,0,%1\n"
         "      stwcx. %2,0,%1\n"
         "      bne- 0b\n"
+        "      isync\n"
         : "=&r"(ret)
         : "r"(dest), "r"(val)
         : "cr0","memory","r0");
@@ -172,6 +176,7 @@ void* interlocked_xchg_ptr( void** dest, void* val )
         "0:    lwarx %0,0,%1\n"
         "      stwcx. %2,0,%1\n"
         "      bne- 0b \n"
+        "      isync\n"
         : "=&r"(ret)
         : "r"(dest), "r"(val)
         : "cr0","memory","r0");
