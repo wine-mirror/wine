@@ -1558,6 +1558,29 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	return dwReturn;
 }
 
+ /**************************************************************************
+ *  _ILSimpleGetTextW
+ *
+ * gets the text for the first item in the pidl (eg. simple pidl)
+ *
+ * returns the length of the string
+ */
+DWORD _ILSimpleGetTextW (LPCITEMIDLIST pidl, LPWSTR szOut, UINT uOutSize)
+{
+	DWORD	dwReturn;
+	char	szTemp[MAX_PATH];
+
+	TRACE("(%p %p %x)\n",pidl,szOut,uOutSize);
+
+	dwReturn = _ILSimpleGetText(pidl, szTemp, uOutSize);
+
+	if (!MultiByteToWideChar(CP_ACP, 0, szTemp, -1, szOut, MAX_PATH))
+		*szOut = 0;
+
+	TRACE("-- (%p=%s 0x%08lx)\n",szOut,debugstr_w(szOut),dwReturn);
+	return dwReturn;
+}
+
 /**************************************************************************
  *
  *	### 4. getting pointers to parts of pidls ###

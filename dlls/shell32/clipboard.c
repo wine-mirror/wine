@@ -43,6 +43,7 @@
 #include "shell32_main.h"
 #include "shlwapi.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -202,7 +203,7 @@ HGLOBAL RenderFILEDESCRIPTOR (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT 
 	return 0;
 }
 
-HGLOBAL RenderFILENAME (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
+HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
 	int len, size = 0;
 	char szTemp[MAX_PATH], *szFileName;
@@ -220,7 +221,32 @@ HGLOBAL RenderFILENAME (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	/* fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
-        szFileName = (char *)GlobalLock(hGlobal);
+	szFileName = (char *)GlobalLock(hGlobal);
+	memcpy(szFileName, szTemp, size);
+	GlobalUnlock(hGlobal);
+	return hGlobal;
+}
+
+HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
+{
+	int len, size = 0;
+	WCHAR szTemp[MAX_PATH], *szFileName;
+	HGLOBAL hGlobal;
+
+	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
+
+	/* build name of first file */
+	SHGetPathFromIDListW(pidlRoot, szTemp);
+	PathAddBackslashW(szTemp);
+	len = strlenW(szTemp);
+	_ILSimpleGetTextW(apidl[0], szTemp+len, MAX_PATH - len);
+	size = sizeof(WCHAR) * (strlenW(szTemp)+1);
+
+	/* fill the structure */
+	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
+	if(!hGlobal) return hGlobal;
+	szFileName = (WCHAR *)GlobalLock(hGlobal);
+	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
 	return hGlobal;
 }

@@ -201,7 +201,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMAT
 */
 
 /* number of supported formats */
-#define MAX_FORMATS 3
+#define MAX_FORMATS 4
 
 typedef struct
 {
@@ -216,7 +216,8 @@ typedef struct
 
 	FORMATETC	pFormatEtc[MAX_FORMATS];
 	UINT		cfShellIDList;
-	UINT		cfFileName;
+	UINT		cfFileNameA;
+	UINT		cfFileNameW;
 
 } IDataObjectImpl;
 
@@ -240,10 +241,12 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 	  dto->cidl = cidl;
 
 	  dto->cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
-	  dto->cfFileName = RegisterClipboardFormatA(CFSTR_FILENAMEA);
+	  dto->cfFileNameA = RegisterClipboardFormatA(CFSTR_FILENAMEA);
+	  dto->cfFileNameW = RegisterClipboardFormatA(CFSTR_FILENAMEW);
 	  InitFormatEtc(dto->pFormatEtc[0], dto->cfShellIDList, TYMED_HGLOBAL);
 	  InitFormatEtc(dto->pFormatEtc[1], CF_HDROP, TYMED_HGLOBAL);
-	  InitFormatEtc(dto->pFormatEtc[2], dto->cfFileName, TYMED_HGLOBAL);
+	  InitFormatEtc(dto->pFormatEtc[2], dto->cfFileNameA, TYMED_HGLOBAL);
+	  InitFormatEtc(dto->pFormatEtc[3], dto->cfFileNameW, TYMED_HGLOBAL);
 	}
 
 	TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
@@ -331,10 +334,15 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pfor
 	  if (This->cidl < 1) return(E_UNEXPECTED);
 	  pmedium->u.hGlobal = RenderHDROP(This->pidl, This->apidl, This->cidl);
 	}
-	else if	(pformatetcIn->cfFormat == This->cfFileName)
+	else if	(pformatetcIn->cfFormat == This->cfFileNameA)
 	{
 	  if (This->cidl < 1) return(E_UNEXPECTED);
-	  pmedium->u.hGlobal = RenderFILENAME(This->pidl, This->apidl, This->cidl);
+	  pmedium->u.hGlobal = RenderFILENAMEA(This->pidl, This->apidl, This->cidl);
+	}
+	else if	(pformatetcIn->cfFormat == This->cfFileNameW)
+	{
+	  if (This->cidl < 1) return(E_UNEXPECTED);
+	  pmedium->u.hGlobal = RenderFILENAMEW(This->pidl, This->apidl, This->cidl);
 	}
 	else
 	{

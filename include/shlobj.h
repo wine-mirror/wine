@@ -111,6 +111,8 @@ extern UINT cfFileContents;
 #define CFSTR_PASTESUCCEEDED    "Paste Succeeded"
 #define CFSTR_INDRAGLOOP        "InShellDragLoop"
 
+#define CFSTR_FILENAME WINELIB_NAME_AW(CFSTR_FILENAME)
+
 
 /************************************************************************
 * IShellView interface
