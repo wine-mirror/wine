@@ -72,9 +72,9 @@
 #include "cderr.h"
 #include "shellapi.h"
 #include "shlguid.h"
+#include "shlobj.h"
 #include "filedlgbrowser.h"
 #include "shlwapi.h"
-#include "wine/obj_contextmenu.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 

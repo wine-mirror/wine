@@ -260,7 +260,6 @@ WINE_INCLUDES = \
 	obj_oleview.h \
 	obj_picture.h \
 	obj_property.h \
-	obj_serviceprovider.h \
 	obj_shellbrowser.h \
 	obj_shellextinit.h \
 	obj_shellfolder.h \

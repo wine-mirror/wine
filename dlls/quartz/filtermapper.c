@@ -30,8 +30,8 @@
 
 #define COM_NO_WINDOWS_H
 #include "ole2.h"
+#include "olectl.h"
 #include "strmif.h"
-#include "wine/obj_property.h"
 #include "wine/unicode.h"
 #include "uuids.h"
 

@@ -36,7 +36,7 @@
 #include "filedlgbrowser.h"
 #include "cdlg.h"
 #include "shlguid.h"
-#include "wine/obj_serviceprovider.h"
+#include "servprov.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);

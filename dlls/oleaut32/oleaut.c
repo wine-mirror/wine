@@ -29,7 +29,6 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "oleauto.h"
-#include "wine/obj_olefont.h"
 
 #include "tmarshal.h"
 

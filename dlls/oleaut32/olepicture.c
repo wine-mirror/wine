@@ -59,8 +59,6 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "oleauto.h"
-#include "wine/obj_picture.h"
-#include "wine/obj_connection.h"
 #include "connpt.h"
 #include "wine/debug.h"
 

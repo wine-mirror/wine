@@ -25,11 +25,7 @@
 #include "commctrl.h"
 #include "docobj.h"
 #include "undocshell.h"
-#include "wine/obj_shellfolder.h"
-#include "wine/obj_contextmenu.h"
-#include "wine/obj_shellview.h"
-#include "wine/obj_shelllink.h"
-#include "wine/obj_extracticon.h"
+#include "shlobj.h"
 #include "wine/windef16.h"
 
 /*******************************************
