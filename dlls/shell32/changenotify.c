@@ -276,7 +276,6 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 {
     LPITEMIDLIST Pidls[2];
     LPNOTIFICATIONLIST ptr;
-    DWORD dummy;
     UINT typeFlag = uFlags & SHCNF_TYPE;
 
     Pidls[0] = NULL;
@@ -313,12 +312,12 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     switch (typeFlag)
     {
     case SHCNF_PATHA:
-        if (dwItem1) SHILCreateFromPathA((LPCSTR)dwItem1, &Pidls[0], &dummy);
-        if (dwItem2) SHILCreateFromPathA((LPCSTR)dwItem2, &Pidls[1], &dummy);
+        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathA((LPCSTR)dwItem1);
+        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathA((LPCSTR)dwItem2);
         break;
     case SHCNF_PATHW:
-        if (dwItem1) SHILCreateFromPathW((LPCWSTR)dwItem1, &Pidls[0], &dummy);
-        if (dwItem2) SHILCreateFromPathW((LPCWSTR)dwItem2, &Pidls[1], &dummy);
+        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathW((LPCWSTR)dwItem1);
+        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathW((LPCWSTR)dwItem2);
         break;
     case SHCNF_IDLIST:
         Pidls[0] = (LPITEMIDLIST)dwItem1;
@@ -392,8 +391,8 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     TRACE("notify Done\n");
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
     
-    /* if we allocated it, free it */
-    if ((typeFlag == SHCNF_PATHA) || (typeFlag == SHCNF_PATHW))
+    /* if we allocated it, free it. The ANSI flag is also set in its Unicode sibling. */
+    if ((typeFlag & SHCNF_PATHA) || (typeFlag & SHCNF_PRINTERA))
     {
         if (Pidls[0]) SHFree(Pidls[0]);
         if (Pidls[1]) SHFree(Pidls[1]);
