@@ -136,6 +136,7 @@ typedef struct {
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwTotalRecorded;
     WAVEINCAPSA			caps;
+    BOOL                        bTriggerSupport;
 
     /* synchronization stuff */
     HANDLE			hThread;
@@ -293,6 +294,13 @@ LONG OSS_WaveInit(void)
 #endif
     WInDev[0].caps.dwFormats = 0x00000000;
     WInDev[0].caps.wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
+    
+    WInDev[0].bTriggerSupport = FALSE;
+    if (IOCTL(audio, SNDCTL_DSP_GETCAPS, caps) == 0) {
+	TRACE("OSS dsp in caps=%08X\n", caps);
+	if (caps & DSP_CAP_TRIGGER)
+            WInDev[0].bTriggerSupport = TRUE;
+    }
 
     IOCTL(audio, SNDCTL_DSP_GETFMTS, mask);
     TRACE("OSS in dsp mask=%08x\n", mask);
@@ -417,7 +425,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	    return FALSE;
 	}
 	
-	TRACE("Fragments %d/%d\n", info.fragments, info.fragstotal);
+        TRACE("info={frag=%d fsize=%d ftotal=%d bytes=%d}\n", info.fragments, info.fragsize, info.fragstotal, info.bytes);
 
 	if (!info.fragments)	/* output queue is full, wait a bit */
 	    return FALSE;
@@ -1695,128 +1703,154 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
 
-    TRACE("imhere[0]\n");
     SetEvent(wwi->hEvent);
     
 	/* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
+    TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
-    
-	for (; ; ) {
+    for (; ; ) {
 	/* wait for dwSleepTime or an event in thread's queue */
 	/* FIXME: could improve wait time depending on queue state,
 	 * ie, number of queued fragments
 	 */
-	TRACE("imhere[1]\n");
 
-	if (wwi->lpQueuePtr != NULL && wwi->state == WINE_WS_PLAYING) {
-		lpWaveHdr = wwi->lpQueuePtr;
-			   
+	if (wwi->lpQueuePtr != NULL && wwi->state == WINE_WS_PLAYING) 
+        {
+            lpWaveHdr = wwi->lpQueuePtr;
+
+
 	    ioctl(wwi->unixdev, SNDCTL_DSP_GETISPACE, &info);
-	   
-	    if (info.fragments > 1)
-		{
-		if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded > wwi->dwFragmentSize)
-	    {
-		    /* directly read fragment in wavehdr */
-		    bytesRead = read(wwi->unixdev, 
-					     lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, 
-				    	 wwi->dwFragmentSize);
+            TRACE("info={frag=%d fsize=%d ftotal=%d bytes=%d}\n", info.fragments, info.fragsize, info.fragstotal, info.bytes);
 
+
+            /* read all the fragments accumulated so far */
+            while ((info.fragments > 0) && (wwi->lpQueuePtr))
+            {
+                info.fragments --;
+
+                if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded > wwi->dwFragmentSize)
+                {
+                    /* directly read fragment in wavehdr */
+                    bytesRead = read(wwi->unixdev, 
+		      		     lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, 
+                                     wwi->dwFragmentSize);
+
+                    TRACE("bytesRead=%ld (direct)\n", bytesRead);
 		    if (bytesRead != (DWORD) -1)
 		    {
-				/* update number of bytes recorded in current buffer and by this device */
-			    lpWaveHdr->dwBytesRecorded += bytesRead;
-				wwi->dwTotalRecorded       += bytesRead;
+			/* update number of bytes recorded in current buffer and by this device */
+                        lpWaveHdr->dwBytesRecorded += bytesRead;
+			wwi->dwTotalRecorded       += bytesRead;
 				
-				/* buffer is full. notify client */
-			    if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
+			/* buffer is full. notify client */
+			if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
+			{
+			    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+			    lpWaveHdr->dwFlags |=  WHDR_DONE;
+
+			    if (OSS_NotifyClient(uDevID, 
+						 WIM_DATA, 
+						 (DWORD)lpWaveHdr, 
+                                                 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
 			    {
-				    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-				    lpWaveHdr->dwFlags |=  WHDR_DONE;
-
-				    if (OSS_NotifyClient(uDevID, 
-										 WIM_DATA, 
-										 (DWORD)lpWaveHdr, 
-										 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
-				    {
-						WARN("can't notify client !\n");
-				    }
-				    lpWaveHdr = wwi->lpQueuePtr = lpWaveHdr->lpNext;
+				WARN("can't notify client !\n");
 			    }
-    		}
-	    }
-	    else
-		{
-			/* read fragment in our local buffer */
-		    bytesRead = read(wwi->unixdev, buffer, wwi->dwFragmentSize);
-			pOffset = buffer;
-
-			/* copy data in client buffers */	
-		    while (bytesRead != (DWORD) -1 && bytesRead > 0)
-		    {
-				DWORD dwToCopy = min (bytesRead, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
-
-				memcpy(lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
-				       pOffset,
-				       dwToCopy);
-
-				/* update number of bytes recorded in current buffer and by this device */
-				lpWaveHdr->dwBytesRecorded += dwToCopy;
-				wwi->dwTotalRecorded += dwToCopy;
-				bytesRead -= dwToCopy;
-				pOffset   += dwToCopy;
-				
-				/* client buffer is full. notify client */
-				if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
-				{
-				    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-				    lpWaveHdr->dwFlags |=  WHDR_DONE;
-
-				    if (OSS_NotifyClient(uDevID, 
-										 WIM_DATA, 
-										 (DWORD)lpWaveHdr, 
-										 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
-				    {
-						WARN("can't notify client !\n");
-				    }
-				   
-					if (lpWaveHdr->lpNext)
-					{	
-						lpWaveHdr = lpWaveHdr->lpNext;
-						wwi->lpQueuePtr = lpWaveHdr;
-					}
-					else
-					{
-						/* no more buffer to copy data to, but we did read more. 
-						 * what hasn't been copied will be dropped
-						 */ 
-						if (bytesRead) WARN("buffer over run! %lu bytes dropped.\n", bytesRead);
-						wwi->lpQueuePtr = NULL;
-						break;
-					}
- 			    }
+			    lpWaveHdr = wwi->lpQueuePtr = lpWaveHdr->lpNext;
 			}
-		}	
-		}
-		else {
-			TRACE("No data (%s)\n", strerror(errno));
-	    }
+                    }
+                }
+                else
+		{
+                    /* read the fragment in a local buffer */
+                    bytesRead = read(wwi->unixdev, buffer, wwi->dwFragmentSize);
+                    pOffset = buffer;
+
+                    TRACE("bytesRead=%ld (local)\n", bytesRead);
+
+                    /* copy data in client buffers */	
+                    while (bytesRead != (DWORD) -1 && bytesRead > 0)
+                    {
+                        DWORD dwToCopy = min (bytesRead, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+
+                        memcpy(lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
+                               pOffset,
+                               dwToCopy);
+
+                        /* update number of bytes recorded in current buffer and by this device */
+                        lpWaveHdr->dwBytesRecorded += dwToCopy;
+                        wwi->dwTotalRecorded += dwToCopy;
+                        bytesRead -= dwToCopy;
+                        pOffset   += dwToCopy;
+				
+                        /* client buffer is full. notify client */
+                        if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
+                        {
+                            lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+                            lpWaveHdr->dwFlags |=  WHDR_DONE;
+
+                            if (OSS_NotifyClient(uDevID, 
+                                                 WIM_DATA, 
+                                                 (DWORD)lpWaveHdr, 
+                                                 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
+                            {
+                                WARN("can't notify client !\n");
+                            }
+				   
+                            if (lpWaveHdr->lpNext)
+                            {	
+                                lpWaveHdr = lpWaveHdr->lpNext;
+                                wwi->lpQueuePtr = lpWaveHdr;
+                            }
+                            else
+                            {
+                                /* no more buffer to copy data to, but we did read more. 
+                                 * what hasn't been copied will be dropped
+                                 */ 
+                                if (bytesRead) WARN("buffer over run! %lu bytes dropped.\n", bytesRead);
+                                wwi->lpQueuePtr = NULL;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 	}
 	
 	MsgWaitForMultipleObjects(0, NULL, FALSE, dwSleepTime, QS_POSTMESSAGE);
-	TRACE("imhere[2] (q=%p)\n", wwi->lpQueuePtr);
 
 	while (PeekMessageA(&msg, 0, WINE_WM_FIRST, WINE_WM_LAST, PM_REMOVE)) {
+
+            TRACE("msg=0x%x wParam=0x%x lParam=0x%lx\n", msg.message, msg.wParam, msg.lParam);
 	    switch (msg.message) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
+                /*FIXME("Device should stop recording");*/
 		SetEvent(wwi->hEvent);
 		break;
 	    case WINE_WM_RESTARTING:
+            {
+                int enable = PCM_ENABLE_INPUT;
 		wwi->state = WINE_WS_PLAYING;
+
+                if (wwi->bTriggerSupport)
+                {
+                    /* start the recording */
+                    if (ioctl(wwi->unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) 
+                    {
+                        ERR("ioctl(SNDCTL_DSP_SETTRIGGER) failed (%d)\n", errno);
+                    }
+                }
+                else
+                {
+                    unsigned char data[4];
+                    /* read 4 bytes to start the recording */
+                    read(wwi->unixdev, data, 4);
+                }
+                
 		SetEvent(wwi->hEvent);
 		break;
+            }
 	    case WINE_WM_HEADER:
 		lpWaveHdr = (LPWAVEHDR)msg.lParam;
 		lpWaveHdr->lpNext = 0;
