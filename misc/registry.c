@@ -647,7 +647,7 @@ static void _save_USTRING( FILE *F, LPWSTR wstr, int escapeeq )
 	s=wstr;
 	while (*s) {
 		doescape=0;
-		if (*s>0xff)
+		if (*s>0x7f)
 			doescape = 1;
 		if (*s=='\n')
 			doescape = 1;
