@@ -120,6 +120,10 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+#ifdef __FreeBSD__
+# define sipx_network    sipx_addr.x_net
+# define sipx_node       sipx_addr.x_host
+#endif  /* __FreeBSD__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
@@ -878,8 +882,10 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
              * in one go
              */
             memcpy(&uipx->sipx_network,wsipx->sa_netnum,sizeof(uipx->sipx_network)+sizeof(uipx->sipx_node));
+#ifdef IPX_FRAME_NONE
             uipx->sipx_type=IPX_FRAME_NONE;
-            uipx->sipx_zero=0;
+#endif
+            memset(&uipx->sipx_zero,0,sizeof uipx->sipx_zero);
             return (const struct sockaddr*)uipx;
         }
 #endif
