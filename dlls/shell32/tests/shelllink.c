@@ -136,9 +136,17 @@ static void test_get_set()
     ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
+    r = IShellLinkA_SetPath(sl, "");
+    ok(r==S_OK, "SetPath failed (0x%08lx)\n", r);
+
+    strcpy(buffer,"garbage");
+    r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
+    ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+    ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
+
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetPath(sl, str);
-    ok(SUCCEEDED(r), "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);

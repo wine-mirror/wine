@@ -1336,11 +1336,16 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
     char buffer[MAX_PATH];
     LPSTR fname;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(path=%s)\n",This, pszFile);
 
-    if (!GetFullPathNameA(pszFile, MAX_PATH, buffer, &fname))
+    if(*pszFile == '\0')
+        *buffer = '\0';
+    else if (!GetFullPathNameA(pszFile, MAX_PATH, buffer, &fname))
 	return E_FAIL;
+    else if(!PathFileExistsA(buffer))
+        hr = S_FALSE;
 
     HeapFree(GetProcessHeap(), 0, This->sPath);
     This->sPath = HEAP_strdupAtoW(GetProcessHeap(), 0, buffer);
@@ -1349,7 +1354,7 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 
     This->bDirty = TRUE;
 
-    return S_OK;
+    return hr;
 }
 
 /**************************************************************************
@@ -1756,11 +1761,16 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
     WCHAR buffer[MAX_PATH];
     LPWSTR fname;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
 
-    if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, &fname))
+    if (*pszFile == '\0')
+        *buffer = '\0';
+    else if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, &fname))
 	return E_FAIL;
+    else if(!PathFileExistsW(buffer))
+        hr = S_FALSE;
 
     HeapFree(GetProcessHeap(), 0, This->sPath);
     This->sPath = HeapAlloc( GetProcessHeap(), 0,
@@ -1771,7 +1781,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     lstrcpyW(This->sPath, buffer);
     This->bDirty = TRUE;
 
-    return S_OK;
+    return hr;
 }
 
 /**************************************************************************
