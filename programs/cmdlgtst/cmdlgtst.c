@@ -65,8 +65,6 @@ static OPENFILENAME ofn;
 static HWND findDialogBox = 0;
 static UINT findMessageId = 0;
 
-static int findDialogBoxInit = 0;
-static int findDialogStructInit = 0;
 static FINDREPLACE frS;
 static char fromstring[1024], tostring[1024];
 
@@ -390,9 +388,9 @@ void mw_PrintSetup(HWND hWnd)
 		// Escape(tmp.hDC, NEWFRAME, 0, NULL, NULL);
 		// Escape(tmp.hDC, ENDDOC, 0, NULL, NULL);
 	 //	DeleteDC(tmp.hDC);
-		 if (pd.hDevMode != NULL)
+		 if (pd.hDevMode != 0)
 			 GlobalFree(pd.hDevMode);
-		 if (pd.hDevNames != NULL)
+		 if (pd.hDevNames != 0)
 			 GlobalFree(pd.hDevNames);
 
 		 pd.hDevMode = 0;

@@ -32,7 +32,7 @@
     }
 
     for (i=0; i<nSPLen; i++) {
-       delta[szSP[i]] = (nSPLen - rightmostpos(szSP[i], szSP, nSPLen));
+       delta[(int)szSP[i]] = (nSPLen - rightmostpos(szSP[i], szSP, nSPLen));
     }
  }
 
@@ -41,13 +41,13 @@
     int j = nSPLen;
     
     do {
-       if (szBuf[i] = szSP[j]) {
+       if ((szBuf[i] = szSP[j])) {
          i--; j--;
        } else {
-         if ((nSPLen-j+1) > delta[szBuf[i]]) {
+         if ((nSPLen-j+1) > delta[(int)szBuf[i]]) {
            i+= (nSPLen-j+1);
          } else {
-           i+= delta[szBuf[i]];
+           i+= delta[(int)szBuf[i]];
          }
        }
     } while (j>0 && i<=nBufLen);

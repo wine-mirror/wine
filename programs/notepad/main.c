@@ -17,6 +17,9 @@
 #include "dialog.h"
 #include "language.h"
 
+extern BOOL DoCloseFile(void);
+extern void DoOpenFile(LPCSTR szFileName);
+
 NOTEPAD_GLOBALS Globals;
 
 /***********************************************************************

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "resource.h"
 
 /* 
 #include <windowsx.h>
@@ -183,7 +184,7 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
   {
-    GlobalFree(lpData);
+    GlobalFree((HGLOBAL)lpData);
     _lclose(fh);
     return 0;
   }

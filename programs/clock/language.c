@@ -181,7 +181,7 @@ VOID LANGUAGE_Init(VOID)
   CHAR szBuffer[MAX_PATHNAME_LEN];
 
   #ifdef WINELIB
-   Globals.lpszLanguage = Languages[Options.language].name;
+   Globals.lpszLanguage = (LPSTR)Languages[Options.language].name;
   #endif
   
   if (Globals.lpszLanguage == "En") {

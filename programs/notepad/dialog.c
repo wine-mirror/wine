@@ -47,7 +47,7 @@ int AlertIDS(UINT ids_message, UINT ids_caption, WORD type) {
    return (MessageBox(Globals.hMainWnd, szMessage, szCaption, type));
 }
 
-void AlertFileNotFound(LPCSTR szFileName) {
+void AlertFileNotFound(LPSTR szFileName) {
 
    int nResult;
    CHAR szMessage[MAX_STRING_LEN];
@@ -65,7 +65,7 @@ void AlertFileNotFound(LPCSTR szFileName) {
 
 }
 
-int AlertFileNotSaved(LPCSTR szFileName) {
+int AlertFileNotSaved(LPSTR szFileName) {
 
    int nResult;
    CHAR szMessage[MAX_STRING_LEN];
@@ -373,14 +373,14 @@ VOID DIALOG_FilePrint(VOID)
 */
 
         /* Let commdlg manage copy settings */
-        printer.nCopies               = PD_USEDEVMODECOPIES;
+        printer.nCopies               = (WORD)PD_USEDEVMODECOPIES;
 
         if (PrintDlg(&printer)) {
 
             /* initialize DOCINFO */
             di.cbSize = sizeof(DOCINFO);
-            lstrcpy(di.lpszDocName, szDocumentName);
-            lstrcpy(di.lpszOutput,  szOutput);
+            lstrcpy((LPSTR)di.lpszDocName, szDocumentName);
+            lstrcpy((LPSTR)di.lpszOutput,  szOutput);
 
             hContext = printer.hDC;
             assert(hContext!=0);
@@ -627,7 +627,7 @@ VOID DIALOG_PageSetup(VOID)
   WNDPROC lpfnDlg;
 
   lpfnDlg = MakeProcInstance(DIALOG_PAGESETUP_DlgProc, Globals.hInstance);
-  DialogBox(Globals.hInstance, STRING_PAGESETUP_Xx, Globals.hMainWnd, lpfnDlg);
+  DialogBox(Globals.hInstance, STRING_PAGESETUP_Xx, Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
 

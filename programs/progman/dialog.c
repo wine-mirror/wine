@@ -35,7 +35,7 @@ INT DIALOG_New(INT nDefault)
   New.nDefault = nDefault;
 
   ret = DialogBox(Globals.hInstance,  STRING_NEW_Xx,
-		  Globals.hMainWnd, lpfnDlg);
+		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return ret;
 }
@@ -97,7 +97,7 @@ HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
 
   ret = DialogBox(Globals.hInstance,
 		  bMove ? STRING_MOVE_Xx : STRING_COPY_Xx,
-		  Globals.hMainWnd, lpfnDlg);
+		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
   return((ret == IDOK) ? CopyMove.hToGroup : 0);
@@ -186,7 +186,7 @@ BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
   GroupAttributes.lpszGrpFile = lpszGrpFile;
 
   ret = DialogBox(Globals.hInstance,  STRING_GROUP_Xx,
-		  Globals.hMainWnd, lpfnDlg);
+		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return(ret == IDOK);
 }
@@ -269,7 +269,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
   lstrcpyn(ProgramAttributes.lpszTmpIconFile, lpszIconFile, MAX_PATHNAME_LEN);
 
   ret = DialogBox(Globals.hInstance,  STRING_PROGRAM_Xx,
-		  Globals.hMainWnd, lpfnDlg);
+		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
   return(ret == IDOK);
@@ -391,7 +391,7 @@ VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
   Symbol.lpnIconIndex = lpnIconIndex;
 
   DialogBox(Globals.hInstance, STRING_SYMBOL_Xx,
-	    Globals.hMainWnd, lpfnDlg);
+	    Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
 
@@ -476,7 +476,7 @@ VOID DIALOG_Execute()
 {
   WNDPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
   DialogBox(Globals.hInstance, STRING_EXECUTE_Xx,
-	    Globals.hMainWnd, lpfnDlg);
+	    Globals.hMainWnd, (DLGPROC)lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
 

@@ -177,7 +177,7 @@ VOID MACRO_ExecuteMacro(LPCSTR macro)
   if (!lstrcmpi(macro, "MacroTest"))
     {
       WNDPROC lpfnDlg = MakeProcInstance(MACRO_TestDialogProc, Globals.hInstance);
-      DialogBox(Globals.hInstance, STRING_DIALOG_TEST, Globals.active_win->hMainWnd, lpfnDlg);
+      DialogBox(Globals.hInstance, STRING_DIALOG_TEST, Globals.active_win->hMainWnd, (DLGPROC)lpfnDlg);
       FreeProcInstance(lpfnDlg);
       macro = szTestMacro;
     }

@@ -5,7 +5,9 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "windows.h"
+#include "windowsx.h"
 #include "license.h"
 #include "progman.h"
 
@@ -14,6 +16,8 @@
 #endif
 
 GLOBALS Globals;
+
+VOID WINAPI WriteOutProfiles16(void);
 
 static VOID MAIN_CreateGroups(void);
 static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);

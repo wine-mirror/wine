@@ -4,7 +4,9 @@
  * Copyright 1996 Ulrich Schmid
  */
 
+#include <string.h>
 #include "windows.h"
+#include "windowsx.h"
 #include "progman.h"
 
 /***********************************************************************
