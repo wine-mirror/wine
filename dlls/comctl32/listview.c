@@ -152,7 +152,7 @@ typedef struct tagLISTVIEW_INFO
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
-  UINT nItemCount;
+  INT nItemCount;
   HDPA hdpaItems;
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
@@ -1297,11 +1297,11 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	if (uView == LVS_REPORT) doIcon = TRUE;
         else doLabel = TRUE;
     }
-    if (lprcLabel) doLabel = doIcon = TRUE;
-    if (lprcIcon) doIcon = TRUE;
     if (uView == LVS_ICON && infoPtr->bFocus && 
 	LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
-	oversizedBox = doLabel = doIcon = TRUE;
+	oversizedBox = doLabel = TRUE;
+    if (lprcLabel) doLabel = TRUE;
+    if (doLabel || lprcIcon) doIcon = TRUE;
     
     /************************************************************/
     /* compute the box rectangle (it should be cheap to do)     */
@@ -1311,12 +1311,16 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	Box.left = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
 	Box.top = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
     }
-    else /* LVS_REPORT && LVS_LIST */
+    else if (uView == LVS_LIST)
     {
         INT nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
 	Box.left = nItem / nCountPerColumn * infoPtr->nItemWidth;
 	Box.top = nItem % nCountPerColumn * infoPtr->nItemHeight;
-	if (uView == LVS_REPORT) Box.left += REPORT_MARGINX;
+    }
+    else /* LVS_REPORT */
+    {
+	Box.left = REPORT_MARGINX;
+	Box.top = nItem * infoPtr->nItemHeight;
     }
     Box.left += Origin.x;
     Box.top += Origin.y;
@@ -1430,7 +1434,7 @@ nobounds:
     
     if (oversizedBox) UnionRect(lprcBox, &Box, &Label);
     else if (lprcBox) *lprcBox = Box; 
-    TRACE("Box=%s\n", debugrect(&Box));
+    TRACE("hwnd=%x, item=%d, box=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Box));
 
     return TRUE;
 }
@@ -3075,7 +3079,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, &rcIcon, &rcLabel)) return FALSE;
 
   /* Set the item to the boundary box for now */
-  ERR("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
+  TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
 
   /* Figure out text colours etc. depending on state
    * At least the following states exist; there may be more.
@@ -5136,7 +5140,7 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     case LVIR_SELECTBOUNDS:
 	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, &label_rect)) return FALSE;
 	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
-	     (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) )
+	     !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) )
 	    lprc->right = label_rect.right;
         break;
 
@@ -5337,8 +5341,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
     INT nCountPerColumn;
     INT i;
 
-    TRACE("nItem=%d, uFlags=%x\n", nItem, uFlags);
-
+    TRACE("nItem=%d, uFlags=%x, nItemCount=%d\n", nItem, uFlags, infoPtr->nItemCount);
     if (nItem < -1 || nItem >= infoPtr->nItemCount) return -1;
 
     ZeroMemory(&lvFindInfo, sizeof(lvFindInfo));
@@ -5582,7 +5585,7 @@ static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lph
   RECT rcItem,rcSubItem;
   DWORD xterm, yterm, dist, mindist;
 
-  TRACE("(x=%ld, y=%ld)\n", lpht->pt.x, lpht->pt.y);
+  TRACE("(lpht->pt=%s, subitem=%d\n", debugpoint(&lpht->pt), subitem);
 
   nearestItem = -1;
   mindist = -1;
@@ -5694,6 +5697,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     TRACE("(x=%ld, y=%ld)\n", lpht->pt.x, lpht->pt.y);
     
     lpht->flags = 0;
+    lpht->iItem = -1;
+    if (subitem) lpht->iSubItem = 0;
 
     if (infoPtr->rcList.left > lpht->pt.x)
 	lpht->flags |= LVHT_TOLEFT;
@@ -7637,7 +7642,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   infoPtr->bLButtonDown = TRUE;
 
   nItem = LISTVIEW_GetItemAtPt(infoPtr, pt);
-  TRACE("nItem=%d\n", nItem);
+  TRACE("at %s, nItem=%d\n", debugpoint(&pt), nItem);
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
     if (lStyle & LVS_SINGLESEL)
@@ -7715,30 +7720,22 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  */
 static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
-  TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
-
-  if (infoPtr->bLButtonDown)
-  {
     LVHITTESTINFO lvHitTestInfo;
     NMLISTVIEW nmlv;
+    
+    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
+
+    if (!infoPtr->bLButtonDown) return 0;
 
     lvHitTestInfo.pt.x = pts.x;
     lvHitTestInfo.pt.y = pts.y;
 
-  /* send NM_CLICK notification */
+    /* send NM_CLICK notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    if (LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE) != -1)
-    {
-        nmlv.iItem = lvHitTestInfo.iItem;
-        nmlv.iSubItem = lvHitTestInfo.iSubItem;
-    }
-    else
-    {
-        nmlv.iItem = -1;
-        nmlv.iSubItem = 0;
-    }
-    nmlv.ptAction.x = pts.x;
-    nmlv.ptAction.y = pts.y;
+    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE);
+    nmlv.iItem = lvHitTestInfo.iItem;
+    nmlv.iSubItem = lvHitTestInfo.iSubItem;
+    nmlv.ptAction = lvHitTestInfo.pt;
     notify_listview(infoPtr, NM_CLICK, &nmlv);
 
     /* set left button flag */
@@ -7746,14 +7743,13 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 
     if(infoPtr->nEditLabelItem != -1)
     {
-      if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && lvHitTestInfo.flags & LVHT_ONITEMLABEL) {
-        LISTVIEW_EditLabelT(infoPtr, lvHitTestInfo.iItem, TRUE);
-      }
-      infoPtr->nEditLabelItem = -1;
+        if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && 
+	   (lvHitTestInfo.flags & LVHT_ONITEMLABEL))
+            LISTVIEW_EditLabelT(infoPtr, lvHitTestInfo.iItem, TRUE);
+        infoPtr->nEditLabelItem = -1;
     }
-  }
 
-  return 0;
+    return 0;
 }
 
 /***
