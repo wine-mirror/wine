@@ -228,8 +228,11 @@ void TASK_CallToStart(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     CONTEXT86 context;
 
-    /* Add task to 16-bit scheduler pool */
-    TASK_Reschedule();
+    SYSLEVEL_EnterWin16Lock();
+
+    /* Add task to 16-bit scheduler pool if necessary */
+    if ( hCurrentTask != GetCurrentTask() )
+        TASK_Reschedule();
 
     /* Registers at initialization must be:
      * ax   zero
