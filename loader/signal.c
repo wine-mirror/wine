@@ -87,31 +87,12 @@ static inline int wine_sigaction( int sig, struct kernel_sigaction *new,
 /* Signal stack */
 
 static char SIGNAL_Stack[16384];
-static sigset_t async_signal_set;
-
-/**********************************************************************
- *              SIGNAL_child
- * 
- * wait4 terminated child processes
- */
-static HANDLER_DEF(SIGNAL_child)
-{
-    HANDLER_INIT();
-#ifdef HAVE_WAIT4
-    wait4( 0, NULL, WNOHANG, NULL);
-#elif defined (HAVE_WAITPID)
-    /* I am sort-of guessing that this is the same as the wait4 call.  */
-    waitpid (0, NULL, WNOHANG);
-#else
-    wait(NULL);
-#endif
-}
 
 
 /**********************************************************************
  *		SIGNAL_SetHandler
  */
-void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
+void SIGNAL_SetHandler( int sig, void (*func)() )
 {
     int ret;
 
@@ -119,7 +100,7 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 
     struct kernel_sigaction sig_act;
     sig_act.sa_handler = func;
-    sig_act.sa_flags   = SA_RESTART | (flags) ? SA_NOMASK : 0;
+    sig_act.sa_flags   = SA_RESTART | SA_NOMASK;
     sig_act.sa_mask    = 0;
     /* Point to the top of the stack, minus 4 just in case, and make
        it aligned  */
@@ -153,19 +134,6 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
     }
 }
 
-extern void stop_wait(int a);
-extern void WINSOCK_sigio(int a);
-extern void ASYNC_sigio(int a);
-
-
-/**********************************************************************
- *              SIGNAL_MaskAsyncEvents
- */
-void SIGNAL_MaskAsyncEvents( BOOL flag )
-{
-  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &async_signal_set, NULL);
-}
-
 
 /**********************************************************************
  *		SIGNAL_Init
@@ -184,18 +152,10 @@ BOOL SIGNAL_Init(void)
     }
 #endif  /* HAVE_SIGALTSTACK */
     
-    sigemptyset(&async_signal_set);
-
-    SIGNAL_SetHandler( SIGCHLD, (void (*)())SIGNAL_child, 1);
-#ifdef SIGIO
-    sigaddset(&async_signal_set, SIGIO);
-/*    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0);  */
-    SIGNAL_SetHandler( SIGIO,   (void (*)())ASYNC_sigio, 0); 
-#endif
-    sigaddset(&async_signal_set, SIGALRM);
-
     /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
     signal (SIGPIPE, SIG_IGN);
+    /* automatic child reaping to avoid zombies */
+    signal (SIGCHLD, SIG_IGN);
     EXC_InitHandlers();
     return TRUE;
 }

@@ -186,8 +186,7 @@ extern void WINAPI XMS_Handler(CONTEXT86*);
 
 /* loader/signal.c */
 extern BOOL SIGNAL_Init(void);
-extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
-extern void SIGNAL_MaskAsyncEvents( BOOL flag );
+extern void SIGNAL_SetHandler( int sig, void (*func)() );
 
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT86 *context);

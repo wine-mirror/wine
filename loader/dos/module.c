@@ -423,8 +423,6 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   /* put our pipes somewhere dosmod can find them */
   dup2(write_fd[0],0); /* stdin */
   dup2(x_fd,1);        /* stdout */
-  /* enable signals */
-  SIGNAL_MaskAsyncEvents(FALSE);
   /* now load dosmod */
   /* check argv[0]-derived paths first, since the newest dosmod is most likely there
    * (at least it was once for Andreas Mohr, so I decided to make it easier for him) */

@@ -690,15 +690,15 @@ static HANDLER_DEF(EXC_int)
  */
 void EXC_InitHandlers(void)
 {
-    SIGNAL_SetHandler( SIGINT,  (void (*)())EXC_int,  1 );
-    SIGNAL_SetHandler( SIGFPE,  (void (*)())EXC_fpe,  1 );
-    SIGNAL_SetHandler( SIGSEGV, (void (*)())EXC_segv, 1 );
-    SIGNAL_SetHandler( SIGILL,  (void (*)())EXC_segv, 1 );
+    SIGNAL_SetHandler( SIGINT,  (void (*)())EXC_int );
+    SIGNAL_SetHandler( SIGFPE,  (void (*)())EXC_fpe );
+    SIGNAL_SetHandler( SIGSEGV, (void (*)())EXC_segv );
+    SIGNAL_SetHandler( SIGILL,  (void (*)())EXC_segv );
 #ifdef SIGBUS
-    SIGNAL_SetHandler( SIGBUS,  (void (*)())EXC_segv, 1 );
+    SIGNAL_SetHandler( SIGBUS,  (void (*)())EXC_segv );
 #endif
 #ifdef SIGTRAP
-    SIGNAL_SetHandler( SIGTRAP, (void (*)())EXC_trap, 1 );
+    SIGNAL_SetHandler( SIGTRAP, (void (*)())EXC_trap );
 #endif
     return;
 }
