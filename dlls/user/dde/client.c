@@ -166,7 +166,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 	hwndClient = CreateWindowA(WDML_szClientConvClassA, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
-    SetWindowLongA(hwndClient, GWL_WDML_INSTANCE, (DWORD)pInstance);
+    SetWindowLongPtrW(hwndClient, GWL_WDML_INSTANCE, (LONG_PTR)pInstance);
 
     if (hszService)
     {
@@ -1270,6 +1270,8 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
     UINT	uiLo, uiHi;
     WDML_CONV*	pConv = NULL;
     HSZ		hszSrv, hszTpc;
+
+    TRACE("%p %04x %08x %08lx\n", hwnd, iMsg, wParam , lParam);
 
     if (iMsg == WM_DDE_ACK &&
 	/* in the initial WM_INITIATE sendmessage */

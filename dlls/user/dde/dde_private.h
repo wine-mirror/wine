@@ -173,7 +173,7 @@ extern CRITICAL_SECTION WDML_CritSect;		/* protection for instance list */
 /* header for the DDE Data objects */
 typedef struct tagDDE_DATAHANDLE_HEAD
 {
-    short	cfFormat;
+    WORD	cfFormat;
     WORD        bAppOwned;
 } DDE_DATAHANDLE_HEAD;
 

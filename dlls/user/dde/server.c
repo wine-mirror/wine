@@ -562,7 +562,7 @@ static	WDML_XACT*	WDML_ServerQueueRequest(WDML_CONV* pConv, LPARAM lParam)
 static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pXAct)
 {
     HDDEDATA		hDdeData = 0;
-    WDML_QUEUE_STATE	ret = WDML_QS_HANDLED;
+    BOOL		fAck = TRUE;
 
     if (!(pConv->instance->CBFflags & CBF_FAIL_REQUESTS))
     {
@@ -574,12 +574,13 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
     switch ((ULONG_PTR)hDdeData)
     {
     case 0:
-	WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, FALSE, pXAct->atom,
-                     pXAct->lParam, WM_DDE_REQUEST);
+	TRACE("No data returned from the Callback\n");
+	fAck = FALSE;
 	break;
+
     case (ULONG_PTR)CBR_BLOCK:
-	ret = WDML_QS_BLOCK;
-	break;
+	return WDML_QS_BLOCK;
+
     default:
         {
 	    HGLOBAL	hMem = WDML_DataHandle2Global(hDdeData, TRUE, FALSE, FALSE, FALSE);
@@ -589,12 +590,17 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
 	    {
 		DdeFreeDataHandle(hDdeData);
 		GlobalFree(hMem);
+		fAck = FALSE;
 	    }
 	}
 	break;
     }
+
+    WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, fAck, pXAct->atom, pXAct->lParam, WM_DDE_REQUEST);
+
     WDML_DecHSZ(pConv->instance, pXAct->hszItem);
-    return ret;
+
+    return WDML_QS_HANDLED;
 }
 
 /******************************************************************
@@ -633,8 +639,8 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
     UINT		uType;
     WDML_LINK*		pLink;
     DDEADVISE*		pDdeAdvise;
-    HDDEDATA		hDdeData;
-    BOOL		fAck;
+    HDDEDATA		hDdeData = 0;
+    BOOL		fAck = TRUE;
 
     pDdeAdvise = (DDEADVISE*)GlobalLock(pXAct->hMem);
     uType = XTYP_ADVSTART |
@@ -646,15 +652,18 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
 	hDdeData = WDML_InvokeCallback(pConv->instance, XTYP_ADVSTART, pDdeAdvise->cfFormat,
 				       (HCONV)pConv, pConv->hszTopic, pXAct->hszItem, 0, 0, 0);
     }
-    else
-    {
-	hDdeData = 0;
-    }
 
-    if ((UINT)hDdeData)
+    switch ((ULONG_PTR)hDdeData)
     {
-	fAck           = TRUE;
+    case 0:
+	TRACE("No data returned from the Callback\n");
+	fAck = FALSE;
+	break;
 
+    case (ULONG_PTR)CBR_BLOCK:
+	return WDML_QS_BLOCK;
+
+    default:
 	/* billx: first to see if the link is already created. */
 	pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_SERVER_SIDE,
 			      pXAct->hszItem, TRUE, pDdeAdvise->cfFormat);
@@ -670,11 +679,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
 	    WDML_AddLink(pConv->instance, (HCONV)pConv, WDML_SERVER_SIDE,
 			 uType, pXAct->hszItem, pDdeAdvise->cfFormat);
 	}
-    }
-    else
-    {
-	TRACE("No data returned from the Callback\n");
-	fAck = FALSE;
+	break;
     }
 
     GlobalUnlock(pXAct->hMem);
@@ -792,8 +797,11 @@ static	WDML_QUEUE_STATE WDML_ServerHandleExecute(WDML_CONV* pConv, WDML_XACT* pX
 				       pConv->hszTopic, 0, hDdeData, 0L, 0L);
     }
 
-    switch ((UINT)hDdeData)
+    switch ((ULONG_PTR)hDdeData)
     {
+    case (ULONG_PTR)CBR_BLOCK:
+	return WDML_QS_BLOCK;
+
     case DDE_FACK:
 	fAck = TRUE;
 	break;
@@ -801,7 +809,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleExecute(WDML_CONV* pConv, WDML_XACT* pX
 	fBusy = TRUE;
 	break;
     default:
-	WARN("Bad result code\n");
+	FIXME("Unsupported returned value %p\n", hDdeData);
 	/* fall through */
     case DDE_FNOTPROCESSED:
 	break;
@@ -984,6 +992,8 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
     WDML_INSTANCE*	pInstance;
     WDML_CONV*		pConv;
     WDML_XACT*		pXAct = NULL;
+
+    TRACE("%p %04x %08x %08lx\n", hwndServer, iMsg, wParam , lParam);
 
     if (iMsg == WM_DESTROY)
     {

@@ -1277,9 +1277,13 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
     DDE_DATAHANDLE_HEAD*	pDdh;
     WCHAR psz[MAX_BUFFER_LEN];
 
-    GetAtomNameW(HSZ2ATOM(hszItem), psz, MAX_BUFFER_LEN);
+    if (!GetAtomNameW(HSZ2ATOM(hszItem), psz, MAX_BUFFER_LEN))
+    {
+        psz[0] = HSZ2ATOM(hszItem);
+        psz[1] = 0;
+    }
 
-    TRACE("(%ld,%p,cb %ld, cbOff %ld,%p <%s>,%x,%x)\n",
+    TRACE("(%ld,%p,cb %ld, cbOff %ld,%p <%s>,fmt %04x,%x)\n",
 	  idInst, pSrc, cb, cbOff, hszItem, debugstr_w(psz), wFmt, afCmd);
 
     if (afCmd != 0 && afCmd != HDATA_APPOWNED)
@@ -1309,6 +1313,7 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
     }
     GlobalUnlock(hMem);
 
+    TRACE("=> %p\n", hMem);
     return (HDDEDATA)hMem;
 }
 
@@ -1416,7 +1421,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
     {
 	*pcbDataSize = GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD);
     }
-    TRACE("=> %p (%lu)\n", pDdh + 1, GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD));
+    TRACE("=> %p (%lu) fmt %04x\n", pDdh + 1, GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD), pDdh->cfFormat);
     return (LPBYTE)(pDdh + 1);
 }
 
@@ -1491,8 +1496,8 @@ HDDEDATA        WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* p)
             switch (pDd->cfFormat)
             {
             default:
-                FIXME("Unsupported format (%d) for data... assuming raw information\n",
-                      pDd->cfFormat);
+                FIXME("Unsupported format (%04x) for data %p, passing raw information\n",
+                      pDd->cfFormat, hMem);
                 /* fall thru */
             case 0:
             case CF_TEXT:
@@ -1550,7 +1555,8 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
         switch (pDdh->cfFormat)
         {
         default:
-            FIXME("Unsupported format (%d) for data... passing raw information\n", pDdh->cfFormat);
+            FIXME("Unsupported format (%04x) for data %p, passing raw information\n",
+                   pDdh->cfFormat, hDdeData);
             /* fall thru */
         case 0:
         case CF_TEXT:
