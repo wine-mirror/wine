@@ -1,5 +1,5 @@
 @ stdcall DirectInputCreateA(long long ptr ptr)
-@ stub DirectInputCreateW
+@ stdcall DirectInputCreateW(long long ptr ptr)
 @ stdcall DirectInputCreateEx(long long ptr ptr ptr)
 @ stdcall DllCanUnloadNow() DINPUT_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) DINPUT_DllGetClassObject

@@ -1196,6 +1196,30 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
 ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 #undef INTERFACE
 
+/*****************************************************************************
+ * IDirectInputDeviceW interface
+ */
+#define INTERFACE IDirectInputDeviceW
+#define IDirectInputDeviceW_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(GetCapabilities)(THIS_ LPDIDEVCAPS lpDIDevCaps) PURE; \
+    STDMETHOD(EnumObjects)(THIS_ LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetProperty)(THIS_ REFGUID rguidProp, LPDIPROPHEADER pdiph) PURE; \
+    STDMETHOD(SetProperty)(THIS_ REFGUID rguidProp, LPCDIPROPHEADER pdiph) PURE; \
+    STDMETHOD(Acquire)(THIS) PURE; \
+    STDMETHOD(Unacquire)(THIS) PURE; \
+    STDMETHOD(GetDeviceState)(THIS_ DWORD cbData, LPVOID lpvData) PURE; \
+    STDMETHOD(GetDeviceData)(THIS_ DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags) PURE; \
+    STDMETHOD(SetDataFormat)(THIS_ LPCDIDATAFORMAT lpdf) PURE; \
+    STDMETHOD(SetEventNotification)(THIS_ HANDLE hEvent) PURE; \
+    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwFlags) PURE; \
+    STDMETHOD(GetObjectInfo)(THIS_ LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow) PURE; \
+    STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCEW pdidi) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion, REFGUID rguid) PURE;
+ICOM_DEFINE(IDirectInputDeviceW,IUnknown)
+#undef INTERFACE
+
 #ifdef COBJMACROS
     /*** IUnknown methods ***/
 #define IDirectInputDevice_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1236,6 +1260,24 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
     STDMETHOD(Poll)(THIS) PURE; \
     STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
 ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
+#undef INTERFACE
+
+/*****************************************************************************
+ * IDirectInputDevice2W interface
+ */
+#define INTERFACE IDirectInputDevice2W
+#define IDirectInputDevice2W_METHODS \
+    IDirectInputDeviceW_METHODS \
+    STDMETHOD(CreateEffect)(THIS_ REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter) PURE; \
+    STDMETHOD(EnumEffects)(THIS_ LPDIENUMEFFECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwEffType) PURE; \
+    STDMETHOD(GetEffectInfo)(THIS_ LPDIEFFECTINFOW pdei, REFGUID rguid) PURE; \
+    STDMETHOD(GetForceFeedbackState)(THIS_ LPDWORD pdwOut) PURE; \
+    STDMETHOD(SendForceFeedbackCommand)(THIS_ DWORD dwFlags) PURE; \
+    STDMETHOD(EnumCreatedEffectObjects)(THIS_ LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl) PURE; \
+    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE pesc) PURE; \
+    STDMETHOD(Poll)(THIS) PURE; \
+    STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
+ICOM_DEFINE(IDirectInputDevice2W,IDirectInputDeviceW)
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1281,6 +1323,17 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
     STDMETHOD(EnumEffectsInFile)(THIS_ LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
     STDMETHOD(WriteEffectToFile)(THIS_ LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
 ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
+#undef INTERFACE
+
+/*****************************************************************************
+ * IDirectInputDevice7W interface
+ */
+#define INTERFACE IDirectInputDevice7W
+#define IDirectInputDevice7W_METHODS \
+    IDirectInputDevice2W_METHODS \
+    STDMETHOD(EnumEffectsInFile)(THIS_ LPCWSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
+    STDMETHOD(WriteEffectToFile)(THIS_ LPCWSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
+ICOM_DEFINE(IDirectInputDevice7W,IDirectInputDevice2W)
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1332,6 +1385,18 @@ ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
     STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader) PURE;
 ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
+#undef INTERFACE
+
+/*****************************************************************************
+ * IDirectInputDevice8W interface
+ */
+#define INTERFACE IDirectInputDevice8W
+#define IDirectInputDevice8W_METHODS \
+    IDirectInputDevice7W_METHODS \
+    STDMETHOD(BuildActionMap)(THIS_ LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags) PURE; \
+    STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags) PURE; \
+    STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERW lpdiDevImageInfoHeader) PURE;
+ICOM_DEFINE(IDirectInputDevice8W,IDirectInputDevice7W)
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1426,17 +1491,31 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
 ICOM_DEFINE(IDirectInputA,IUnknown)
 #undef INTERFACE
 
+/*****************************************************************************
+ * IDirectInputW interface
+ */
+#define INTERFACE IDirectInputW
+#define IDirectInputW_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE;
+ICOM_DEFINE(IDirectInputW,IUnknown)
+#undef INTERFACE
+
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInputA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectInputA_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirectInputA_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirectInputA methods ***/
-#define IDirectInputA_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
-#define IDirectInputA_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
-#define IDirectInputA_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
-#define IDirectInputA_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
-#define IDirectInputA_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectInput_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput_Release(p)            (p)->lpVtbl->Release(p)
+	/*** IDirectInput methods ***/
+#define IDirectInput_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
 #endif
 
 /*****************************************************************************
@@ -1449,19 +1528,29 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 #undef INTERFACE
 
+/*****************************************************************************
+ * IDirectInput2W interface
+ */
+#define INTERFACE IDirectInput2W
+#define IDirectInput2W_METHODS \
+    IDirectInputW_METHODS \
+    STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance) PURE;
+ICOM_DEFINE(IDirectInput2W,IDirectInputW)
+#undef INTERFACE
+
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput2A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectInput2A_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirectInput2A_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirectInputA methods ***/
-#define IDirectInput2A_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
-#define IDirectInput2A_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
-#define IDirectInput2A_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
-#define IDirectInput2A_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
-#define IDirectInput2A_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
-	/*** IDirectInput2A methods ***/
-#define IDirectInput2A_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
+#define IDirectInput2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput2_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput2_Release(p)            (p)->lpVtbl->Release(p)
+	/*** IDirectInput methods ***/
+#define IDirectInput2_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput2_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput2_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput2_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput2_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
+	/*** IDirectInput2 methods ***/
+#define IDirectInput2_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
 #endif
 
 #if DIRECTINPUT_VERSION >= 0x0700
@@ -1475,21 +1564,31 @@ ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 #undef INTERFACE
 
+/*****************************************************************************
+ * IDirectInput7W interface
+ */
+#define INTERFACE IDirectInput7W
+#define IDirectInput7W_METHODS \
+    IDirectInput2W_METHODS \
+    STDMETHOD(CreateDeviceEx)(THIS_ REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter) PURE;
+ICOM_DEFINE(IDirectInput7W,IDirectInput2W)
+#undef INTERFACE
+
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput7A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectInput7A_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirectInput7A_Release(p)            (p)->lpVtbl->Release(p)
-	/*** IDirectInputA methods ***/
-#define IDirectInput7A_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
-#define IDirectInput7A_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
-#define IDirectInput7A_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
-#define IDirectInput7A_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
-#define IDirectInput7A_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
-	/*** IDirectInput2A methods ***/
-#define IDirectInput7A_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
-	/*** IDirectInput7A methods ***/
-#define IDirectInput7A_CreateDeviceEx(p,a,b,c,d) (p)->lpVtbl->CreateDeviceEx(p,a,b,c,d)
+#define IDirectInput7_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput7_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput7_Release(p)            (p)->lpVtbl->Release(p)
+	/*** IDirectInput methods ***/
+#define IDirectInput7_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput7_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput7_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput7_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput7_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
+	/*** IDirectInput2 methods ***/
+#define IDirectInput7_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
+	/*** IDirectInput7 methods ***/
+#define IDirectInput7_CreateDeviceEx(p,a,b,c,d) (p)->lpVtbl->CreateDeviceEx(p,a,b,c,d)
 #endif
 
 #endif /* DI7 */
@@ -1512,20 +1611,37 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 ICOM_DEFINE(IDirectInput8A,IUnknown)
 #undef INTERFACE
 
+/*****************************************************************************
+ * IDirectInput8W interface
+ */
+#define INTERFACE IDirectInput8W
+#define IDirectInput8W_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICE8W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE; \
+    STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance) PURE; \
+    STDMETHOD(EnumDevicesBySemantics)(THIS_ LPCWSTR ptszUserName, LPDIACTIONFORMATW lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBW lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(ConfigureDevices)(THIS_ LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) PURE;
+ICOM_DEFINE(IDirectInput8W,IUnknown)
+#undef INTERFACE
+
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput8A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectInput8A_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirectInput8A_Release(p)            (p)->lpVtbl->Release(p)
-      /*** IDirectInput8A methods ***/
-#define IDirectInput8A_CreateDevice(p,a,b,c)       (p)->lpVtbl->CreateDevice(p,a,b,c)
-#define IDirectInput8A_EnumDevices(p,a,b,c,d)      (p)->lpVtbl->EnumDevices(p,a,b,c,d)
-#define IDirectInput8A_GetDeviceStatus(p,a)        (p)->lpVtbl->GetDeviceStatus(p,a)
-#define IDirectInput8A_RunControlPanel(p,a,b)      (p)->lpVtbl->RunControlPanel(p,a,b)
-#define IDirectInput8A_Initialize(p,a,b)           (p)->lpVtbl->Initialize(p,a,b)
-#define IDirectInput8A_FindDevice(p,a,b,c)         (p)->lpVtbl->FindDevice(p,a,b,c)
-#define IDirectInput8A_EnumDevicesBySemantics(p,a,b,c,d,e) (p)->lpVtbl->EnumDevicesBySemantics(p,a,b,c,d,e)
-#define IDirectInput8A_ConfigureDevices(p,a,b,c,d) (p)->lpVtbl->ConfigureDevices(p,a,b,c,d)
+#define IDirectInput8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput8_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput8_Release(p)            (p)->lpVtbl->Release(p)
+      /*** IDirectInput8 methods ***/
+#define IDirectInput8_CreateDevice(p,a,b,c)       (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput8_EnumDevices(p,a,b,c,d)      (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput8_GetDeviceStatus(p,a)        (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput8_RunControlPanel(p,a,b)      (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput8_Initialize(p,a,b)           (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectInput8_FindDevice(p,a,b,c)         (p)->lpVtbl->FindDevice(p,a,b,c)
+#define IDirectInput8_EnumDevicesBySemantics(p,a,b,c,d,e) (p)->lpVtbl->EnumDevicesBySemantics(p,a,b,c,d,e)
+#define IDirectInput8_ConfigureDevices(p,a,b,c,d) (p)->lpVtbl->ConfigureDevices(p,a,b,c,d)
 #endif
 
 #endif /* DI8 */
@@ -1541,7 +1657,7 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);
 #endif
 
 HRESULT WINAPI DirectInputCreateA(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
-HRESULT WINAPI DirectInputCreateW(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
+HRESULT WINAPI DirectInputCreateW(HINSTANCE,DWORD,LPDIRECTINPUTW *,LPUNKNOWN);
 #define DirectInputCreate WINELIB_NAME_AW(DirectInputCreate)
 
 HRESULT WINAPI DirectInputCreateEx(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);

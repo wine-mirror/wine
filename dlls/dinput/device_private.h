@@ -70,12 +70,24 @@ extern DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT 
   }										\
 }
 
+/**
+ * Callback Data used by specific callback 
+ *  for EnumObject on 'W' interfaces
+ */
+typedef struct {
+  LPDIENUMDEVICEOBJECTSCALLBACKW lpCallBack;
+  LPVOID lpvRef;
+} device_enumobjects_AtoWcb_data;
+
+extern BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
+
 
 /* Various debug tools */
 extern void _dump_cooperativelevel_DI(DWORD dwFlags) ;
 extern void _dump_EnumObjects_flags(DWORD dwFlags) ;
 extern void _dump_DIPROPHEADER(DIPROPHEADER *diph) ;
 extern void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) ;
+extern void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) ;
 
 /* And the stubs */
 extern HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
@@ -85,13 +97,18 @@ extern HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 extern HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 	LPDIRECTINPUTDEVICE8A iface,HANDLE hnd ) ;
 extern ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface) ;
-extern HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
-	LPDIRECTINPUTDEVICE8A iface,REFIID riid,LPVOID *ppobj ) ;
+extern HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(LPDIRECTINPUTDEVICE8A iface,REFIID riid,LPVOID *ppobj);
+extern HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W iface,REFIID riid,LPVOID *ppobj);
 extern ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
 	LPDIRECTINPUTDEVICE8A iface) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags) ;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(
+	LPDIRECTINPUTDEVICE8W iface,
+	LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback,
 	LPVOID lpvRef,
 	DWORD dwFlags) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
@@ -103,9 +120,16 @@ extern HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	LPDIDEVICEOBJECTINSTANCEA pdidoi,
 	DWORD dwObj,
 	DWORD dwHow) ;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface, 
+							     LPDIDEVICEOBJECTINSTANCEW pdidoi,
+							     DWORD dwObj,
+							     DWORD dwHow);
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVICEINSTANCEA pdidi) ;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceInfo(
+	LPDIRECTINPUTDEVICE8W iface,
+	LPDIDEVICEINSTANCEW pdidi) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	LPDIRECTINPUTDEVICE8A iface,
 	HWND hwndOwner,
@@ -126,9 +150,18 @@ extern HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
 	LPDIENUMEFFECTSCALLBACKA lpCallback,
 	LPVOID lpvRef,
 	DWORD dwFlags) ;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
+	LPDIRECTINPUTDEVICE8W iface,
+	LPDIENUMEFFECTSCALLBACKW lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIEFFECTINFOA lpdei,
+	REFGUID rguid) ;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo(
+	LPDIRECTINPUTDEVICE8W iface,
+	LPDIEFFECTINFOW lpdei,
 	REFGUID rguid) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetForceFeedbackState(
 	LPDIRECTINPUTDEVICE8A iface,
@@ -157,8 +190,18 @@ extern HRESULT WINAPI IDirectInputDevice7AImpl_EnumEffectsInFile(LPDIRECTINPUTDE
 								 LPDIENUMEFFECTSINFILECALLBACK pec,
 								 LPVOID pvRef,
 								 DWORD dwFlags) ;
+extern HRESULT WINAPI IDirectInputDevice7WImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8W iface,
+								 LPCWSTR lpszFileName,
+								 LPDIENUMEFFECTSINFILECALLBACK pec,
+								 LPVOID pvRef,
+								 DWORD dwFlags) ;
 extern HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8A iface,
 								 LPCSTR lpszFileName,
+								 DWORD dwEntries,
+								 LPDIFILEEFFECT rgDiFileEft,
+								 DWORD dwFlags) ;
+extern HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W iface,
+								 LPCWSTR lpszFileName,
 								 DWORD dwEntries,
 								 LPDIFILEEFFECT rgDiFileEft,
 								 DWORD dwFlags) ;
@@ -166,11 +209,21 @@ extern HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVIC
 							      LPDIACTIONFORMATA lpdiaf,
 							      LPCSTR lpszUserName,
 							      DWORD dwFlags);
+extern HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
+							      LPDIACTIONFORMATW lpdiaf,
+							      LPCWSTR lpszUserName,
+							      DWORD dwFlags);
 extern HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
 							    LPDIACTIONFORMATA lpdiaf,
 							    LPCSTR lpszUserName,
 							    DWORD dwFlags);
+extern HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
+							    LPDIACTIONFORMATW lpdiaf,
+							    LPCWSTR lpszUserName,
+							    DWORD dwFlags);
 extern HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo(LPDIRECTINPUTDEVICE8A iface,
 							    LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
+extern HRESULT WINAPI IDirectInputDevice8WImpl_GetImageInfo(LPDIRECTINPUTDEVICE8W iface,
+							    LPDIDEVICEIMAGEINFOHEADERW lpdiDevImageInfoHeader);
 
 #endif /* __WINE_DLLS_DINPUT_DINPUTDEVICE_PRIVATE_H */
