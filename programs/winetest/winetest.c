@@ -164,11 +164,6 @@ unsigned long perl_call_wine
     return ret;
 }
 
-/* wrapper around LoadLibraryA to be called from perl */
-unsigned int load_library( const char *module )
-{
-    return (unsigned int)LoadLibraryA( module );
-}
 
 /* perl extension initialisation */
 static void xs_init(void)

@@ -11,7 +11,7 @@ C_SRCS = winetest.c
 
 EXTRA_OBJS = wine.o
 
-PERLMAKE = $(MAKE) -fMakefile.perl
+PERLMAKE = $(MAKE) -fMakefile.perl INC="$(DIVINCL)"
 
 @MAKE_PROG_RULES@
 

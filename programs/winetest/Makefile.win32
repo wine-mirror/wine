@@ -2,9 +2,9 @@
 PERLDIR = c:\perl\5.6.0\lib\MSWin32-x86\CORE
 
 CC = cl -c
-CFLAGS = -DWIN32 -D_X86_ -I$(PERLDIR)
+CFLAGS = -DWIN32 -D_X86_ -D__i386__ -I$(PERLDIR)
 PERLLIB = -libpath:$(PERLDIR) perl56.lib
-PERLMAKE = $(MAKE) /fMakefile.perl
+PERLMAKE = $(MAKE) /fMakefile.perl "DEFINE=$(CFLAGS)"
 
 OBJS = winetest.obj wine.obj
 

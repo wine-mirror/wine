@@ -3,36 +3,29 @@
 # | ---------------------------------------------------------------------------- |
 # | Purpose:     Module to supply wrapper around and support for gateway to wine |
 # |              API functions                                                   |
-# |                                                                              |
-# | Methods:                                                                     |
-# |                                                                              |
-# |     new  -- object constructor                                               |
-# |     err  -- return last error code                                           |
-# |     call -- call wine API function                                           |
-# |                                                                              |
-# |     There are also object accessor function implemented with AUTOLOAD        |
 # --------------------------------------------------------------------------------
 
 package wine;
 
-    use strict;
-    use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD
-                %return_types %prototypes %loaded_modules);
+use strict;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD
+            %return_types %prototypes %loaded_modules);
 
-    require Exporter;
+require Exporter;
 
-    @ISA = qw(Exporter);
+@ISA = qw(Exporter);
 
-    # Items to export into callers namespace by default. Note: do not export
-    # names by default without a very good reason. Use EXPORT_OK instead.
-    # Do not simply export all your public functions/methods/constants.
-    @EXPORT = qw(
-        AUTOLOAD
-        assert
-        hd
-        wc
-        wclen
-    );
+# Items to export into callers namespace by default. Note: do not export
+# names by default without a very good reason. Use EXPORT_OK instead.
+# Do not simply export all your public functions/methods/constants.
+@EXPORT = qw(
+             AUTOLOAD
+             alloc_callback
+             assert
+             hd
+             wc
+             wclen
+            );
 
 $VERSION = '0.01';
 bootstrap wine $VERSION;
@@ -53,16 +46,15 @@ $wine::debug = 0;
 %return_types = ( "void" => 0, "int" => 1, "word" => 2, "ptr" => 3 );
 
 
-# Preloaded methods go here.
-
 # ------------------------------------------------------------------------
-# | Method:    new                                                       |
+# | Sub:       AUTOLOAD                                                  |
 # | -------------------------------------------------------------------- |
-# | Purpose:   Object constructor                                        |
+# | Purpose:   Used to catch calls to undefined routines                 |
 # |                                                                      |
-# | Usage:     $obj->new                                                 |
-# |                                                                      |
-# | Returns:   new wine object                                           |
+# |     Any routine which is called and not defined is assumed to be     |
+# |     a call to the Wine API function of the same name.  We trans-     |
+# |     late it into a call to the call() subroutine, with FUNCTION      |
+# |     set to the function invoked and all other args passed thru.      |
 # ------------------------------------------------------------------------
 sub AUTOLOAD
 {
@@ -102,20 +94,11 @@ sub AUTOLOAD
 
 
 # ------------------------------------------------------------------------
-# | Method:      call                                                    |
+# | Sub:         call                                                    |
 # | -------------------------------------------------------------------- |
 # | Purpose:     Call a wine API function                                |
 # |                                                                      |
-# | Usage:       call ARGS                                               |
-# |                                                                      |
-# |     where ARGS is a hash initializer with the following format:      |
-# |                                                                      |
-# |     (                                                                |
-# |         module   => <module_name>,                                   |
-# |         function => <function_name>,                                 |
-# |         ret_type => <int|ptr>,                                       |
-# |         args     => [ <arg1>, <arg2>, ... ]                          |
-# |     )                                                                |
+# | Usage:       call MODULE, FUNCTION, RET_TYPE, DEBUG, [ARGS ...]      |
 # |                                                                      |
 # | Returns:     value returned by API function called                   |
 # ------------------------------------------------------------------------
@@ -207,6 +190,48 @@ sub declare
     {
         $prototypes{$func} = [ $module, $list{$func} ];
     }
+}
+
+
+# ------------------------------------------------------------------------
+# | Sub:         alloc_callback                                          |
+# | -------------------------------------------------------------------- |
+# | Purpose:     Allocate a thunk for a Wine API callback function.      |
+# |                                                                      |
+# |     Basically a thin wrapper over alloc_thunk(); see wine.xs for     |
+# |     details ...                                                      |
+# |                                                                      |
+# | Usage:       alloc_callback SUB_REF, [ ARGS_TYPES ... ]              |
+# |                                                                      |
+# | Returns:     Pointer to thunk allocated (as an integer value)        |
+# |                                                                      |
+# |     The returned value is just a raw pointer to a block of memory    |
+# |     allocated by the C code (cast into a Perl integer).  It isn't    |
+# |     really suitable for anything but to be passed to a wine API      |
+# |     function ...                                                     |
+# ------------------------------------------------------------------------
+sub alloc_callback
+{
+    # ----------------------------------------------
+    # | Locals                                     |
+    # |                                            |
+    # | [todo]  Check arg types                    |
+    # ----------------------------------------------
+    my  $sub_ref            = shift;
+    my  @callback_arg_types = @_;
+ 
+    # [todo]  Check args
+    # [todo]  Some way of specifying args passed to callback
+
+    # --------------------------------------------------------------
+    # | Convert arg types to integers                              |
+    # --------------------------------------------------------------
+    map { $_ = $return_types{$_} } @callback_arg_types;
+
+    # --------------------------------------------------------------
+    # | Pass thru to alloc_thunk()                                 |
+    # --------------------------------------------------------------
+    return alloc_thunk ($sub_ref, @callback_arg_types);
 }
 
 
