@@ -60,6 +60,26 @@ BOOL UXTHEME_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR 
     return TRUE;
 }
 
+BOOL UXTHEME_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize) {
+    LPCWSTR cur = lpStringStart;
+    LPCWSTR start;
+    LPCWSTR end;
+
+    while(cur < lpStringEnd && (isspace(*cur) || *cur == ',')) cur++;
+    if(cur >= lpStringEnd) {
+        return FALSE;
+    }
+    start = cur;
+    while(cur < lpStringEnd && *cur != ',') cur++;
+    end = cur;
+    while(isspace(*end)) end--;
+
+    lstrcpynW(lpBuff, start, min(buffSize, end-start+1));
+
+    if(lpValEnd) *lpValEnd = cur;
+    return TRUE;
+}
+
 /***********************************************************************
  *      GetThemeBool                                        (UXTHEME.@)
  */
@@ -156,10 +176,46 @@ HRESULT WINAPI GetThemeFilename(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeFont(HTHEME hTheme, HDC hdc, int iPartId,
                             int iStateId, int iPropId, LOGFONTW *pFont)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpCur;
+    LPCWSTR lpEnd;
+    PTHEME_PROPERTY tp;
+    int pointSize;
+    WCHAR attr[32];
+    const WCHAR szBold[] = {'b','o','l','d','\0'};
+    const WCHAR szItalic[] = {'i','t','a','l','i','c','\0'};
+    const WCHAR szUnderline[] = {'u','n','d','e','r','l','i','n','e','\0'};
+    const WCHAR szStrikeOut[] = {'s','t','r','i','k','e','o','u','t','\0'};
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FONT, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    ZeroMemory(pFont, sizeof(LOGFONTW));
+
+    if(!UXTHEME_GetNextToken(lpCur, lpEnd, &lpCur, pFont->lfFaceName, LF_FACESIZE)) {
+        TRACE("Property is there, but failed to get face name\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pointSize)) {
+        TRACE("Property is there, but failed to get point size\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    pFont->lfHeight = -MulDiv(pointSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    pFont->lfWeight = FW_REGULAR;
+    pFont->lfCharSet = DEFAULT_CHARSET;
+    while(UXTHEME_GetNextToken(lpCur, lpEnd, &lpCur, attr, sizeof(attr)/sizeof(attr[0]))) {
+        if(!lstrcmpiW(szBold, attr)) pFont->lfWeight = FW_BOLD;
+        else if(!!lstrcmpiW(szItalic, attr)) pFont->lfItalic = TRUE;
+        else if(!!lstrcmpiW(szUnderline, attr)) pFont->lfUnderline = TRUE;
+        else if(!!lstrcmpiW(szStrikeOut, attr)) pFont->lfStrikeOut = TRUE;
+    }
+    return S_OK;
 }
 
 /***********************************************************************
@@ -189,10 +245,26 @@ HRESULT WINAPI GetThemeInt(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeIntList(HTHEME hTheme, int iPartId, int iStateId,
                                int iPropId, INTLIST *pIntList)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpCur;
+    LPCWSTR lpEnd;
+    int i;
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_INTLIST, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    for(i=0; i < MAX_INTLIST_COUNT; i++) {
+        if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pIntList->iValues[i]))
+            break;
+    }
+    pIntList->iValueCount = i;
+    return S_OK;
 }
 
 /***********************************************************************

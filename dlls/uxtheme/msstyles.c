@@ -765,3 +765,17 @@ PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId
         return tp;
     return NULL;
 }
+
+HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename)
+{
+    WCHAR szFile[MAX_PATH];
+    LPWSTR tmp;
+    lstrcpynW(szFile, lpFilename, sizeof(szFile)/sizeof(szFile[0]));
+    tmp = szFile;
+    do {
+        if(*tmp == '\\') *tmp = '_';
+        if(*tmp == '/') *tmp = '_';
+        if(*tmp == '.') *tmp = '_';
+    } while(*tmp++);
+    return LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_SHARED|LR_CREATEDIBSECTION);
+}

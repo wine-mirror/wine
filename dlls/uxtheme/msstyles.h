@@ -82,6 +82,7 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf);
 PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext);
 PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName);
 PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId);
+HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename);
 
 PUXINI_FILE UXINI_LoadINI(HMODULE hTheme, LPCWSTR lpName);
 void UXINI_CloseINI(PUXINI_FILE uf);
