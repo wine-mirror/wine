@@ -15,6 +15,30 @@ extern "C" {
 #define GCT_WILD	0x0004
 #define GCT_SEPARATOR	0x0008
 
+
+/* These are used by UrlGetPart routine */
+typedef enum {
+    URL_PART_NONE    = 0,
+    URL_PART_SCHEME  = 1,
+    URL_PART_HOSTNAME,
+    URL_PART_USERNAME,
+    URL_PART_PASSWORD,
+    URL_PART_PORT,
+    URL_PART_QUERY,
+} URL_PART;
+#define URL_PARTFLAG_KEEPSCHEME  0x00000001
+
+/* These are used by the UrlIs... routines */
+typedef enum {
+    URLIS_URL,
+    URLIS_OPAQUE,
+    URLIS_NOHISTORY,
+    URLIS_FILEURL,
+    URLIS_APPLIABLE,
+    URLIS_DIRECTORY,
+    URLIS_HASQUERY,
+} URLIS;
+
 #define URL_WININET_COMPATIBILITY    0x80000000
 #define URL_PLUGGABLE_PROTOCOL       0x40000000
 #define URL_ESCAPE_UNSAFE            0x20000000
@@ -186,6 +210,8 @@ LPSTR WINAPI StrChrIA(LPCSTR lpStart, WORD wMatch);
 LPWSTR WINAPI StrChrIW(LPCWSTR lpStart, WCHAR wMatch); 
 #define StrChrI WINELIB_NAME_AW(StrChrI)
 
+INT WINAPI StrCmpIW(LPCWSTR lpStr1, LPCWSTR lpStr2);
+
 INT WINAPI StrCmpNA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
 INT WINAPI StrCmpNW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
 #define StrCmpN WINELIB_NAME_AW(StrCmpN)
@@ -194,6 +220,12 @@ INT WINAPI StrCmpNIA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
 INT WINAPI StrCmpNIW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
 #define StrCmpNI WINELIB_NAME_AW(StrCmpNI)
 
+INT WINAPI StrCmpW(LPCWSTR lpStr1, LPCWSTR lpStr2);
+
+LPWSTR WINAPI StrCpyW(LPWSTR lpStr1, LPCWSTR lpStr2);
+
+LPWSTR WINAPI StrCpyNW(LPWSTR lpStr1, LPCWSTR lpStr2, int n);
+
 LPSTR WINAPI StrDupA(LPCSTR lpSrc);
 LPWSTR WINAPI StrDupW(LPCWSTR lpSrc);
 #define StrDup WINELIB_NAME_AW(StrDup)
@@ -201,6 +233,38 @@ LPWSTR WINAPI StrDupW(LPCWSTR lpSrc);
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
 #define StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
+
+LPSTR WINAPI StrNCatA(LPSTR front, LPCSTR back, INT cchMax);
+LPWSTR WINAPI StrNCatW(LPWSTR front, LPCWSTR back, INT cchMax);
+#define StrNCat WINELIB_NAME_AW(StrNCat)
+
+LPSTR WINAPI StrRChrA(LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch);
+LPWSTR WINAPI StrRChrW(LPCWSTR lpStart, LPCWSTR lpEnd, WCHAR wMatch); 
+#define StrRChr WINELIB_NAME_AW(StrRChr)
+
+LPSTR WINAPI StrRChrIA(LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch);
+LPWSTR WINAPI StrRChrIW(LPCWSTR lpStart, LPCWSTR lpEnd, WCHAR wMatch); 
+#define StrRChrI WINELIB_NAME_AW(StrRChrI)
+
+LPSTR WINAPI StrStrA(LPCSTR lpFirst, LPCSTR lpSrch);
+LPWSTR WINAPI StrStrW(LPCWSTR lpFirst, LPCWSTR lpSrch);
+#define StrStr WINELIB_NAME_AW(StrStr)
+
+LPSTR WINAPI StrStrIA(LPCSTR lpFirst, LPCSTR lpSrch);
+LPWSTR WINAPI StrStrIW(LPCWSTR lpFirst, LPCWSTR lpSrch);
+#define StrStrI WINELIB_NAME_AW(StrStrI)
+
+int WINAPI StrToIntA(LPCSTR lpSrc);
+int WINAPI StrToIntW(LPCWSTR lpSrc);
+#define StrToInt WINELIB_NAME_AW(StrToInt)
+
+int WINAPI StrToIntExA(LPCSTR lpSrc, DWORD dwFlags, LPINT piRet);
+int WINAPI StrToIntExW(LPCWSTR lpSrc, DWORD dwFlags, LPINT piRet);
+#define StrToIntEx WINELIB_NAME_AW(StrToIntEx)
+
+BOOL WINAPI StrTrimA(LPSTR pszSrc, LPCSTR pszTrimChars);
+BOOL WINAPI StrTrimW(LPWSTR pszSrc, LPCWSTR pszTrimChars);
+#define StrTrim WINELIB_NAME_AW(StrTrim)
 
 INT WINAPI wvnsprintfA(LPSTR lpOut, INT cchLimitIn, LPCSTR lpFmt, va_list arglist);
 INT WINAPI wvnsprintfW(LPWSTR lpOut, INT cchLimitIn, LPCWSTR lpFmt, va_list arglist);
@@ -273,6 +337,11 @@ typedef enum {
     SHREGENUM_BOTH = 0x11,  /* do both HKCU and HKLM without dups */
 } SHREGENUM_FLAGS; 
 
+#define SHREGSET_HKCU        0x00000001  /* Write to HKCU if empty */
+#define SHREGSET_FORCE_HKCU  0x00000002  /* Write to HKCU          */
+#define SHREGSET_HKLM        0x00000004  /* Write to HKLM if empty */
+#define SHREGSET_FORCE_HKLM  0x00000008  /* Write to HKLM          */
+#define SHREGSET_DEFAULT  (SHREGSET_FORCE_HKCU | SHREGSET_HKLM)
 
 /* Shell User Key Registry interfaces */
 
@@ -332,6 +401,11 @@ LONG  WINAPI SHRegEnumUSKeyW(HUSKEY hUSKey, DWORD dwIndex, LPWSTR pszName,
 			     SHREGENUM_FLAGS enumRegFlags);
 #define SHRegEnumUSKey WINELIB_NAME_AW(SHRegEnumUSKey)
 
+LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
+				LPVOID pvData, DWORD cbData, DWORD dwFlags);
+LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
+				LPVOID pvData, DWORD cbData, DWORD dwFlags);
+#define SHRegWriteUSValue WINELIB_NAME_AW(SHRegWriteUSValue)
 
 /* Shell URL interfaces */
 
@@ -359,11 +433,29 @@ LPCSTR  WINAPI UrlGetLocationA(LPCSTR pszUrl);
 LPCWSTR WINAPI UrlGetLocationW(LPCWSTR pszUrl);
 #define UrlGetLocation WINELIB_NAME_AW(UrlGetLocation)
 
+HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, 
+			   DWORD dwPart, DWORD dwFlags);
+HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, 
+			   DWORD dwPart, DWORD dwFlags);
+#define UrlGetPart WINELIB_NAME_AW(UrlGetPart)
+
 BOOL    WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
 			unsigned char *lpDest, INT nDestLen);
 HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestlen);
 HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestlen);
 #define UrlHash WINELIB_NAME_AW(UrlHash)
+
+BOOL    WINAPI UrlIsA(LPCSTR pszUrl, URLIS UrlIs);
+BOOL    WINAPI UrlIsW(LPCWSTR pszUrl, URLIS UrlIs);
+#define UrlIs WINELIB_NAME_AW(UrlIs)
+
+BOOL    WINAPI UrlIsNoHistoryA(LPCSTR pszUrl);
+BOOL    WINAPI UrlIsNoHistoryW(LPCWSTR pszUrl);
+#define UrlIsNoHistory WINELIB_NAME_AW(UrlIsNoHistory)
+
+BOOL    WINAPI UrlIsOpaqueA(LPCSTR pszUrl);
+BOOL    WINAPI UrlIsOpaqueW(LPCWSTR pszUrl);
+#define UrlIsOpaque WINELIB_NAME_AW(UrlIsOpaque)
 
 HRESULT WINAPI UrlUnescapeA(LPCSTR pszUrl, LPSTR pszUnescaped,
 			    LPDWORD pcchUnescaped, DWORD dwFlags);

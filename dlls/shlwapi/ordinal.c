@@ -195,10 +195,205 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.7]
+ * (Used by IE4 during startup)
+ * appears to return HWND (used as input to 8 below)
+ */
+HRESULT WINAPI SHLWAPI_7 (
+	LPVOID w,
+	LPVOID x,
+	LPVOID y)    /* appears to be result of GetCurrentProcessId() */
+{
+    FIXME("(%p %p %p) stub\n", w, x, y);
+    return 0;
+#if 0
+    /* pseudo code extracted from relay trace */
+    fhnd = CreateFileMappingA(-1, 0, 4, 0, 0x58, 0);
+    addr = MapViewOfFile(fhnd, 6, 0, 0, 0);
+    UnmapViewOfFile(addr);
+    GetCurrentProcessId();
+    GetCurrentProcessId();
+    sph = GetCurrentProcess();
+    GetCurrentProcessId();
+    dph = GetCurrentProcess();
+    DuplicateHandle(sph, fhnd, dph, &hoho, 0x000f001f, 0, 2);
+    GetCurrentProcessId();
+    GetCurrentProcessId();
+    CloseHandle(fhnd);
+    return hoho;
+#endif
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.8]
+ * (Used by IE4 during startup)
+ * appears to return MapViewOfFile+4 (used as input to 9 below)
+ */
+LONG WINAPI SHLWAPI_8 (
+	LPVOID w,    /* possibly HANDLE */
+	LPVOID x)    /* appears to be result of GetCurrentProcessId() */
+{
+    FIXME("(%p %p) stub\n", w, x);
+    return 0;
+#if 0
+    /* pseudo code extracted from relay trace */
+    GetCurrentProcessId();
+    GetCurrentProcessId();
+    sph = GetCurrentProcess();
+    GetCurrentProcessId();
+    dph = GetCurrentProcess();
+    DuplicateHandle(sph, w, dph, &hoho, 0x000f001f, 0, 2);
+    GetCurrentProcessId();
+    GetCurrentProcessId();
+    addr = MapViewOfFile(hoho, 6, 0, 0, 0);
+    CloseHandle(hoho);
+    return (LONG)addr + 4;
+#endif
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.9]
+ * (Used by IE4 during startup)
+ */
+HRESULT WINAPI SHLWAPI_9 (
+	LPVOID w)
+{
+    FIXME("(%p) stub\n", w);
+    return 0;
+#if 0
+    /* pseudo code extracted from relay trace */
+    return UnmapViewOfFile((LPVOID)((LONG)w-4));
+#endif
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.13]
+ * (Used by IE4 during startup)
+ */
+HRESULT WINAPI SHLWAPI_13 (
+	LPVOID w,
+	LPVOID x)
+{
+	FIXME("(%p %p)stub\n",w,x);
+	return 1;
+#if 0
+	/* pseudo code extracted from relay trace */
+	RegOpenKeyA(HKLM, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Aceepted Documents", &newkey);
+	ret = 0;
+	i = 0;
+	size = 0;
+	while(!ret) {
+	    ret = RegEnumValueA(newkey, i, a1, a2, 0, a3, 0, 0);
+	    size += ???;
+	    i++;
+	}
+	b1 = LocalAlloc(0x40, size);
+	ret = 0;
+	i = 0;
+	while(!ret) {
+	    ret = RegEnumValueA(newkey, i, a1, a2, 0, a3, a4, a5);
+	    RegisterClipBoardFormatA(a4);
+	    i++;
+	}
+	hwnd1 = GetModuleHandleA("URLMON.DLL");
+	proc = GetProcAddress(hwnd1, "CreateFormatEnumerator");
+	HeapAlloc(??, 0, 0x14);
+	HeapAlloc(??, 0, 0x50);
+	LocalAlloc(0x40, 0x78);
+	/* FIXME: bad string below */
+	lstrlenW(L"{D0FCA420-D3F5-11CF-B211-00AA004AE837}");
+	StrCpyW(a6,  L"{D0FCA420-D3F5-11CF-B211-00AA004AE837}");
+
+	GetTickCount();
+	IsBadReadPtr(c1 = 0x403fd210,4);
+	InterlockedIncrement(c1+4);
+	LocalFree(b1);
+	RegCloseKey(newkey);
+	IsBadReadPtr(c1 = 0x403fd210,4);
+	InterlockedIncrement(c1+4);
+
+	HeapAlloc(40350000,00000000,00000014) retval=403fd0a8;
+	HeapAlloc(40350000,00000000,00000050) retval=403feb44;
+	hwnd1 = GetModuleHandleA("URLMON.DLL");
+	proc = GetProcAddress(hwnd1, "RegisterFormatEnumerator");
+	/* 0x1a40c88c is in URLMON.DLL just before above proc
+	 * content is L"_EnumFORMATETC_"
+	 * label is d1
+	 */
+        IsBadReadPtr(d1 = 0x1a40c88c,00000002);
+	lstrlenW(d1);
+	lstrlenW(d1);
+	HeapAlloc(40350000,00000000,0000001e) retval=403fed44;
+	IsBadReadPtr(d2 = 0x403fd0a8,00000004);
+	InterlockedIncrement(d2+4);
+	IsBadReadPtr(d2 = 0x403fd0a8,00000004);
+	InterlockedDecrement(d2+4);
+	IsBadReadPtr(c1,00000004);
+	InterlockedDecrement(c1+4);
+	IsBadReadPtr(c1,00000004);
+	InterlockedDecrement(c1+4);
+
+#endif
+}
+
+/*************************************************************************
+ *      SHLWAPI_14	[SHLWAPI.14]
+ *
+ * Function:
+ *    Retrieves IE "AcceptLanguage" value from registry. ASCII mode.
+ *  
+ */
+HRESULT WINAPI SHLWAPI_14 (
+	LPSTR langbuf,
+	LPDWORD buflen)
+{
+	CHAR *mystr;
+	DWORD mystrlen, mytype;
+	HKEY mykey;
+	LCID mylcid;
+
+	mystrlen = (*buflen > 6) ? *buflen : 6;
+	mystr = (CHAR*)HeapAlloc(GetProcessHeap(), 
+				 HEAP_ZERO_MEMORY, mystrlen);
+	RegOpenKeyA(HKEY_CURRENT_USER, 
+		    "Software\\Microsoft\\Internet Explorer\\International", 
+		    &mykey);
+	if (RegQueryValueExA(mykey, "AcceptLanguage", 
+			      0, &mytype, mystr, &mystrlen)) {
+	    /* Did not find value */
+	    mylcid = GetUserDefaultLCID();
+	    /* somehow the mylcid translates into "en-us"
+	     *  this is similar to "LOCALE_SABBREVLANGNAME"
+	     *  which could be gotten via GetLocaleInfo.
+	     *  The only problem is LOCALE_SABBREVLANGUAGE" is
+	     *  a 3 char string (first 2 are country code and third is
+	     *  letter for "sublanguage", which does not come close to
+	     *  "en-us"
+	     */
+	    lstrcpyA(mystr, "en-us");
+	    mystrlen = lstrlenA(mystr);
+	}
+	else {
+	    /* handle returned string */
+	    FIXME("missing code\n");
+	}
+	if (mystrlen > *buflen) 
+	    lstrcpynA(langbuf, mystr, *buflen);
+	else {
+	    lstrcpyA(langbuf, mystr);
+	    *buflen = lstrlenA(langbuf);
+	}        
+	RegCloseKey(mykey);
+	HeapFree(GetProcessHeap(), 0, mystr);
+	TRACE("language is %s\n", debugstr_a(langbuf));
+	return 0;
+}
+
+/*************************************************************************
  *      SHLWAPI_15	[SHLWAPI.15]
  *
  * Function:
- *    Retrieves IE "AcceptLanguage" value from registry
+ *    Retrieves IE "AcceptLanguage" value from registry. UNICODE mode.
  *  
  */
 HRESULT WINAPI SHLWAPI_15 (
@@ -210,7 +405,7 @@ HRESULT WINAPI SHLWAPI_15 (
 	HKEY mykey;
 	LCID mylcid;
 
-	mystrlen = *buflen;
+	mystrlen = (*buflen > 6) ? *buflen : 6;
 	mystr = (CHAR*)HeapAlloc(GetProcessHeap(), 
 				 HEAP_ZERO_MEMORY, mystrlen);
 	RegOpenKeyA(HKEY_CURRENT_USER, 
@@ -218,6 +413,7 @@ HRESULT WINAPI SHLWAPI_15 (
 		    &mykey);
 	if (RegQueryValueExA(mykey, "AcceptLanguage", 
 			      0, &mytype, mystr, &mystrlen)) {
+	    /* Did not find value */
 	    mylcid = GetUserDefaultLCID();
 	    /* somehow the mylcid translates into "en-us"
 	     *  this is similar to "LOCALE_SABBREVLANGNAME"
@@ -227,7 +423,7 @@ HRESULT WINAPI SHLWAPI_15 (
 	     *  letter for "sublanguage", which does not come close to
 	     *  "en-us"
 	     */
-	    lstrcpynA(mystr, "en-us", mystrlen);
+	    lstrcpyA(mystr, "en-us");
 	    mystrlen = lstrlenA(mystr);
 	}
 	else {
@@ -262,7 +458,7 @@ HRESULT WINAPI SHLWAPI_16 (
  *         space size 0x14
  *  return is 0 (unless out of memory???)
  *
- * related to _21 and _22 below
+ * related to _19, _21 and _22 below
  *  only seen invoked by SHDOCVW
  */
 LONG WINAPI SHLWAPI_18 (
@@ -275,6 +471,22 @@ LONG WINAPI SHLWAPI_18 (
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.19]
+ *
+ *  w is address of allocated memory from _21
+ *  return is 0 (unless out of memory???)
+ *
+ * related to _18, _21 and _22 below
+ *  only seen invoked by SHDOCVW
+ */
+LONG WINAPI SHLWAPI_19 (
+	LPVOID w)
+{
+	FIXME("(%p) stub\n",w);
+	return 0;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.21]
  *
  *  w points to space allocated via .18 above
@@ -283,7 +495,7 @@ LONG WINAPI SHLWAPI_18 (
  *  x values seen 0xa0000005
  *  returns 1
  *
- *  relates to _18 and _22 above and below
+ *  relates to _18, _19 and _22 above and below
  *   only seen invoked by SHDOCVW
  */
 LONG WINAPI SHLWAPI_21 (
@@ -299,7 +511,7 @@ LONG WINAPI SHLWAPI_21 (
  *
  *  return is 'w' value seen in x is 0xa0000005
  *
- *  relates to _18 and _21 above
+ *  relates to _18, _19 and _21 above
  *   only seen invoked by SHDOCVW
  */
 LPVOID WINAPI SHLWAPI_22 (
@@ -463,6 +675,17 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
 {
     FIXME("(%p, 0x%08lx, %p): stub\n", p1, dw2, p3);
     return TRUE;
+}
+
+/*************************************************************************
+ *      SHLWAPI_36	[SHLWAPI.36]
+ *
+ */
+BOOL WINAPI SHLWAPI_36(HMENU h1, UINT ui2, UINT h3, LPCWSTR p4)
+{
+    TRACE("(0x%08x, 0x%08x, 0x%08x, %s): stub\n", 
+	  h1, ui2, h3, debugstr_w(p4));
+    return AppendMenuW(h1, ui2, h3, p4);
 }
 
 /*************************************************************************

@@ -10,25 +10,25 @@ import ntdll.dll
 
 debug_channels (shell)
 
-1   stdcall @(ptr ptr) SHLWAPI_1
+1   stdcall @(str ptr) SHLWAPI_1
 2   stdcall @(wstr ptr) SHLWAPI_2
 3   stub @
 4   stub @
 5   stub @
 6   stub @
-7   stub @
-8   stub @
-9   stub @
+7   stdcall @(long long long) SHLWAPI_7
+8   stdcall @(long long) SHLWAPI_8
+9   stdcall @(long) SHLWAPI_9
 10  stub @
 11  stub @
 12  stub @
-13  stub @
-14  stub @
+13  stdcall @(ptr ptr) SHLWAPI_13
+14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
 16  stdcall @(long long long long) SHLWAPI_16
 17  stub @
 18  stdcall @(ptr ptr) SHLWAPI_18
-19  stub @
+19  stdcall @(ptr) SHLWAPI_19
 20  stub @
 21  stdcall @(ptr long) SHLWAPI_21
 22  stdcall @(ptr long) SHLWAPI_22
@@ -45,7 +45,7 @@ debug_channels (shell)
 33  stdcall @(long) SHLWAPI_33
 34  stdcall @(long) SHLWAPI_34
 35  stdcall @(ptr long ptr) SHLWAPI_35
-36  stub @
+36  stdcall @(long long long wstr) SHLWAPI_36
 37  forward @ user32.CallWindowProcW
 38  forward @ user32.CharLowerW
 39  forward @ user32.CharLowerBuffW
@@ -608,8 +608,8 @@ debug_channels (shell)
 @ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long ) SHRegQueryUSValueW
 @ stub    SHRegSetUSValueA
 @ stub    SHRegSetUSValueW
-@ stub    SHRegWriteUSValueA
-@ stub    SHRegWriteUSValueW
+@ stdcall SHRegWriteUSValueA (long str long ptr long long) SHRegWriteUSValueA
+@ stdcall SHRegWriteUSValueW (long str long ptr long long) SHRegWriteUSValueW
 @ stdcall SHSetValueA (long  str  str long ptr long) SHSetValueA
 @ stdcall SHSetValueW (long wstr wstr long ptr long) SHSetValueW
 @ stdcall StrCSpnA (str str) StrCSpnA
@@ -675,16 +675,16 @@ debug_channels (shell)
 @ stdcall UrlEscapeW(wstr ptr ptr long)UrlEscapeW
 @ stdcall UrlGetLocationA(str) UrlGetLocationA
 @ stdcall UrlGetLocationW(wstr) UrlGetLocationW
-@ stub    UrlGetPartA
-@ stub    UrlGetPartW
+@ stdcall UrlGetPartA(str ptr ptr long long) UrlGetPartA
+@ stdcall UrlGetPartW(wstr ptr ptr long long) UrlGetPartW
 @ stdcall UrlHashA(str ptr long) UrlHashA
 @ stub    UrlHashW
-@ stub    UrlIsA
-@ stub    UrlIsNoHistoryA
-@ stub    UrlIsNoHistoryW
-@ stub    UrlIsOpaqueA
-@ stub    UrlIsOpaqueW
-@ stub    UrlIsW
+@ stdcall UrlIsA(str long) UrlIsA
+@ stdcall UrlIsNoHistoryA(str) UrlIsNoHistoryA
+@ stdcall UrlIsNoHistoryW(wstr) UrlIsNoHistoryW
+@ stdcall UrlIsOpaqueA(str) UrlIsOpaqueA
+@ stdcall UrlIsOpaqueW(wstr) UrlIsOpaqueW
+@ stdcall UrlIsW(wstr long) UrlIsW
 @ stdcall UrlUnescapeA(str ptr ptr long) UrlUnescapeA
 @ stdcall UrlUnescapeW(wstr ptr ptr long) UrlUnescapeW
 @ varargs wnsprintfA(ptr long str) wnsprintfA

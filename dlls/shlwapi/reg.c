@@ -563,13 +563,32 @@ DWORD WINAPI SHRegQueryInfoUSKeyW(
  */
 LONG WINAPI SHRegEnumUSKeyA(
 	HUSKEY hUSKey,                 /* [in]  */
-	DWORD dwIndex,
-	LPSTR pszName,
-	LPDWORD pcchValueNameLen,
+	DWORD dwIndex,                 /* [in]  */
+	LPSTR pszName,                 /* [out] */
+	LPDWORD pcchValueNameLen,      /* [in/out] */
 	SHREGENUM_FLAGS enumRegFlags)  /* [in]  */
 {
-	FIXME("%s stub\n",debugstr_a(pszName));
-	return ERROR_NO_MORE_ITEMS;
+	HKEY dokey;
+
+	TRACE("(0x%lx,%ld,%p,%p(%ld),%d)\n",
+	      (LONG)hUSKey, dwIndex, pszName, pcchValueNameLen,
+	      *pcchValueNameLen, enumRegFlags);
+
+	if (((enumRegFlags == SHREGENUM_HKCU) ||
+	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
+	    return RegEnumKeyExA(dokey, dwIndex, pszName, pcchValueNameLen, 
+				0, 0, 0, 0);
+	}
+
+	if (((enumRegFlags == SHREGENUM_HKLM) ||
+	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
+	    return RegEnumKeyExA(dokey, dwIndex, pszName, pcchValueNameLen, 
+				0, 0, 0, 0);
+	}
+	FIXME("no support for SHREGNUM_BOTH\n");
+	return ERROR_INVALID_FUNCTION;
 }
 
 /*************************************************************************
@@ -577,13 +596,54 @@ LONG WINAPI SHRegEnumUSKeyA(
  */
 LONG WINAPI SHRegEnumUSKeyW(
 	HUSKEY hUSKey,                 /* [in]  */
-	DWORD dwIndex,
-	LPWSTR pszName,
-	LPDWORD pcchValueNameLen,
+	DWORD dwIndex,                 /* [in]  */
+	LPWSTR pszName,                /* [out] */
+	LPDWORD pcchValueNameLen,      /* [in/out] */
 	SHREGENUM_FLAGS enumRegFlags)  /* [in]  */
 {
-	FIXME("%s stub\n",debugstr_w(pszName));
-	return ERROR_NO_MORE_ITEMS;
+	HKEY dokey;
+
+	TRACE("(0x%lx,%ld,%p,%p(%ld),%d)\n",
+	      (LONG)hUSKey, dwIndex, pszName, pcchValueNameLen,
+	      *pcchValueNameLen, enumRegFlags);
+
+	if (((enumRegFlags == SHREGENUM_HKCU) ||
+	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
+	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen, 
+				0, 0, 0, 0);
+	}
+
+	if (((enumRegFlags == SHREGENUM_HKLM) ||
+	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
+	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen, 
+				0, 0, 0, 0);
+	}
+	FIXME("no support for SHREGNUM_BOTH\n");
+	return ERROR_INVALID_FUNCTION;
+}
+
+/*************************************************************************
+ *      SHRegWriteUSValueA   	[SHLWAPI.@]
+ */
+LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
+				LPVOID pvData, DWORD cbData, DWORD dwFlags)
+{
+    FIXME("(0x%lx,%s,%ld,%p,%ld,%ld): stub\n",
+	  (LONG)hUSKey, debugstr_a(pszValue), dwType, pvData, cbData, dwFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ *      SHRegWriteUSValueW   	[SHLWAPI.@]
+ */
+LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
+				LPVOID pvData, DWORD cbData, DWORD dwFlags)
+{
+    FIXME("(0x%lx,%s,%ld,%p,%ld,%ld): stub\n",
+	  (LONG)hUSKey, debugstr_w(pszValue), dwType, pvData, cbData, dwFlags);
+    return ERROR_SUCCESS;
 }
 
 /*************************************************************************
