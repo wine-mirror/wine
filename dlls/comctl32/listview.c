@@ -362,7 +362,6 @@ typedef struct tagLISTVIEW_INFO
   TRACE("hwndSelf=%p, rcList=%s\n", iP->hwndSelf, debugrect(&iP->rcList)); \
 } while(0)
 
-
 /*
  * forward declarations
  */
@@ -674,7 +673,6 @@ undo:
     return text;
 }
 
-
 static char* debuglvhittestinfo(const LVHITTESTINFO *lpht)
 {
     if (lpht) 
@@ -685,6 +683,24 @@ static char* debuglvhittestinfo(const LVHITTESTINFO *lpht)
     	return buf;
     } else return "(null)";
 }
+
+/* Return the corresponding text for a given scroll value */
+static inline LPCSTR debugscrollcode(int nScrollCode)
+{
+  switch(nScrollCode)
+  {
+  case SB_LINELEFT: return "SB_LINELEFT";
+  case SB_LINERIGHT: return "SB_LINERIGHT";
+  case SB_PAGELEFT: return "SB_PAGELEFT";
+  case SB_PAGERIGHT: return "SB_PAGERIGHT";
+  case SB_THUMBPOSITION: return "SB_THUMBPOSITION";
+  case SB_THUMBTRACK: return "SB_THUMBTRACK";
+  case SB_ENDSCROLL: return "SB_ENDSCROLL";
+  case SB_INTERNAL: return "SB_INTERNAL";
+  default: return "unknown";
+  }
+}
+
 
 /******** Notification functions i************************************/
 
@@ -1513,6 +1529,11 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     {
 	INT nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
 	horzInfo.nMax = (infoPtr->nItemCount + nPerCol - 1) / nPerCol;
+
+	/* scroll by at least one column per page */
+	if(horzInfo.nPage < infoPtr->nItemWidth)
+		horzInfo.nPage = infoPtr->nItemWidth;
+
 	horzInfo.nPage /= infoPtr->nItemWidth;
     }
     else if (uView == LVS_REPORT)
@@ -1543,6 +1564,11 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     if (uView == LVS_REPORT)
     {
 	vertInfo.nMax = infoPtr->nItemCount;
+	
+	/* scroll by at least one page */
+	if(vertInfo.nPage < infoPtr->nItemHeight)
+	  vertInfo.nPage = infoPtr->nItemHeight;
+
 	vertInfo.nPage /= infoPtr->nItemHeight;
     }
     else if (uView != LVS_LIST) /* LVS_ICON, or LVS_SMALLICON */
@@ -7144,7 +7170,8 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     SCROLLINFO scrollInfo;
     BOOL is_an_icon;
 
-    TRACE("(nScrollCode=%d, nScrollDiff=%d)\n", nScrollCode, nScrollDiff);
+    TRACE("(nScrollCode=%d(%s), nScrollDiff=%d)\n", nScrollCode, 
+	debugscrollcode(nScrollCode), nScrollDiff);
 
     if (infoPtr->hwndEdit) SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
@@ -7247,7 +7274,8 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     INT nOldScrollPos, nNewScrollPos;
     SCROLLINFO scrollInfo;
 
-    TRACE("(nScrollCode=%d, nScrollDiff=%d)\n", nScrollCode, nScrollDiff);
+    TRACE("(nScrollCode=%d(%s), nScrollDiff=%d)\n", nScrollCode, 
+	debugscrollcode(nScrollCode), nScrollDiff);
 
     if (infoPtr->hwndEdit) SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
@@ -7257,7 +7285,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)) return 1;
 
     nOldScrollPos = scrollInfo.nPos;
-   
+
     switch (nScrollCode)
     {
     case SB_INTERNAL:
