@@ -35,8 +35,7 @@ enum startup_state { STARTUP_IN_PROGRESS, STARTUP_DONE, STARTUP_ABORTED };
 
 struct process_dll
 {
-    struct process_dll  *next;            /* per-process dll list */
-    struct process_dll  *prev;
+    struct list          entry;           /* entry in per-process dll list */
     struct file         *file;            /* dll file */
     void                *base;            /* dll base address (in process addr space) */
     size_t               size;            /* dll size */
@@ -76,6 +75,7 @@ struct process
     struct atom_table   *atom_table;      /* pointer to local atom table */
     struct token        *token;           /* security token associated with this process */
     struct process_dll   exe;             /* main exe file */
+    struct list          dlls;            /* list of loaded dlls */
     void                *peb;             /* PEB address in client address space */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
 };

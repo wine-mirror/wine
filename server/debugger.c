@@ -488,7 +488,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
 /* generate all startup events of a given process */
 void generate_startup_debug_events( struct process *process, void *entry )
 {
-    struct process_dll *dll;
+    struct list *ptr;
     struct thread *thread, *first_thread = get_process_first_thread( process );
 
     /* generate creation events */
@@ -501,12 +501,12 @@ void generate_startup_debug_events( struct process *process, void *entry )
     }
 
     /* generate dll events (in loading order, i.e. reverse list order) */
-    dll = &process->exe;
-    while (dll->next) dll = dll->next;
-    while (dll != &process->exe)
+    ptr = list_tail( &process->dlls );
+    while (ptr)
     {
+        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
-        dll = dll->prev;
+        ptr = list_prev( &process->dlls, ptr );
     }
 }
 

@@ -275,8 +275,6 @@ struct thread *create_process( int fd )
     process->atom_table      = NULL;
     process->peb             = NULL;
     process->ldt_copy        = NULL;
-    process->exe.next        = NULL;
-    process->exe.prev        = NULL;
     process->exe.file        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
@@ -287,6 +285,7 @@ struct thread *create_process( int fd )
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->classes );
+    list_init( &process->dlls );
 
     gettimeofday( &process->start_time, NULL );
     list_add_head( &process_list, &process->entry );
@@ -492,6 +491,20 @@ struct process *get_process_from_handle( obj_handle_t handle, unsigned int acces
                                              access, &process_ops );
 }
 
+/* find a dll from its base address */
+static inline struct process_dll *find_process_dll( struct process *process, void *base )
+{
+    struct process_dll *dll;
+
+    if (process->exe.base == base) return &process->exe;
+
+    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
+    {
+        if (dll->base == base) return dll;
+    }
+    return NULL;
+}
+
 /* add a dll to a process list */
 static struct process_dll *process_load_dll( struct process *process, struct file *file,
                                              void *base, const WCHAR *filename, size_t name_len )
@@ -499,7 +512,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
     struct process_dll *dll;
 
     /* make sure we don't already have one with the same base address */
-    for (dll = process->exe.next; dll; dll = dll->next) if (dll->base == base)
+    if (find_process_dll( process, base ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
@@ -507,7 +520,6 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
 
     if ((dll = mem_alloc( sizeof(*dll) )))
     {
-        dll->prev = &process->exe;
         dll->file = NULL;
         dll->base = base;
         dll->filename = NULL;
@@ -518,8 +530,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
             return NULL;
         }
         if (file) dll->file = (struct file *)grab_object( file );
-        if ((dll->next = process->exe.next)) dll->next->prev = dll;
-        process->exe.next = dll;
+        list_add_head( &process->dlls, &dll->entry );
     }
     return dll;
 }
@@ -527,22 +538,17 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
 /* remove a dll from a process list */
 static void process_unload_dll( struct process *process, void *base )
 {
-    struct process_dll *dll;
+    struct process_dll *dll = find_process_dll( process, base );
 
-    for (dll = process->exe.next; dll; dll = dll->next)
+    if (dll && dll != &process->exe)
     {
-        if (dll->base == base)
-        {
-            if (dll->file) release_object( dll->file );
-            if (dll->next) dll->next->prev = dll->prev;
-            if (dll->prev) dll->prev->next = dll->next;
-            if (dll->filename) free( dll->filename );
-            free( dll );
-            generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
-            return;
-        }
+        if (dll->file) release_object( dll->file );
+        if (dll->filename) free( dll->filename );
+        list_remove( &dll->entry );
+        free( dll );
+        generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
     }
-    set_error( STATUS_INVALID_PARAMETER );
+    else set_error( STATUS_INVALID_PARAMETER );
 }
 
 /* kill all processes */
@@ -584,6 +590,8 @@ void kill_console_processes( struct thread *renderer, int exit_code )
 /* a process has been killed (i.e. its last thread died) */
 static void process_killed( struct process *process )
 {
+    struct list *ptr;
+
     assert( list_empty( &process->thread_list ));
     gettimeofday( &process->end_time, NULL );
     if (process->handles) release_object( process->handles );
@@ -592,12 +600,12 @@ static void process_killed( struct process *process )
     /* close the console attached to this process, if any */
     free_console( process );
 
-    while (process->exe.next)
+    while ((ptr = list_head( &process->dlls )))
     {
-        struct process_dll *dll = process->exe.next;
-        process->exe.next = dll->next;
+        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         if (dll->file) release_object( dll->file );
         if (dll->filename) free( dll->filename );
+        list_remove( &dll->entry );
         free( dll );
     }
     destroy_process_classes( process );
@@ -855,17 +863,25 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 {
     struct module_snapshot *snapshot, *ptr;
     struct process_dll *dll;
-    int total = 0;
+    int total = 1;
 
-    for (dll = &process->exe; dll; dll = dll->next) total++;
+    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry ) total++;
     if (!(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
 
-    for (ptr = snapshot, dll = &process->exe; dll; dll = dll->next, ptr++)
+    /* first entry is main exe */
+    snapshot->base     = process->exe.base;
+    snapshot->size     = process->exe.size;
+    snapshot->namelen  = process->exe.namelen;
+    snapshot->filename = memdup( process->exe.filename, process->exe.namelen );
+    ptr = snapshot + 1;
+
+    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
     {
         ptr->base     = dll->base;
         ptr->size     = dll->size;
         ptr->namelen  = dll->namelen;
         ptr->filename = memdup( dll->filename, dll->namelen );
+        ptr++;
     }
     *count = total;
     return snapshot;
@@ -1156,24 +1172,21 @@ DECL_HANDLER(get_dll_info)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        struct process_dll *dll;
+        struct process_dll *dll = find_process_dll( process, req->base_address );
 
-        for (dll = &process->exe; dll; dll = dll->next)
+        if (dll)
         {
-            if (dll->base == req->base_address)
+            reply->size = dll->size;
+            reply->entry_point = 0; /* FIXME */
+            if (dll->filename)
             {
-                reply->size = dll->size;
-                reply->entry_point = 0; /* FIXME */
-                if (dll->filename)
-                {
-                    size_t len = min( dll->namelen, get_reply_max_size() );
-                    set_reply_data( dll->filename, len );
-                }
-                break;
+                size_t len = min( dll->namelen, get_reply_max_size() );
+                set_reply_data( dll->filename, len );
             }
         }
-        if (!dll)
-            set_error(STATUS_DLL_NOT_FOUND);
+        else
+            set_error( STATUS_DLL_NOT_FOUND );
+
         release_object( process );
     }
 }
