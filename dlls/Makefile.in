@@ -835,7 +835,7 @@ ttydrv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32
           libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
 twain:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 url:      kernel32.dll$(DLLEXT)
-urlmon:   ole32.dll$(DLLEXT)
+urlmon:   ole32.dll$(DLLEXT) wininet.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 user:     gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT) \
           libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
 version:  lz32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
