@@ -294,9 +294,11 @@ static void thread_detach(void)
 
 
 /***********************************************************************
- *           USER initialisation routine
+ *           UserClientDllInitialize  (USER32.@)
+ *
+ * USER dll initialisation routine
  */
-BOOL WINAPI USER_Init( HINSTANCE inst, DWORD reason, LPVOID reserved )
+BOOL WINAPI UserClientDllInitialize( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     BOOL ret = TRUE;
     switch(reason)

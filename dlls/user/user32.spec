@@ -1,6 +1,6 @@
 name	user32
 type	win32
-init	USER_Init
+init	UserClientDllInitialize
 rsrc	resources/user32.res
 
 import	gdi32.dll
@@ -582,7 +582,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall UnregisterHotKey(long long) UnregisterHotKey
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long) UpdateWindow
-@ stub UserClientDllInitialize
+@ stdcall UserClientDllInitialize(long long ptr) UserClientDllInitialize
 @ stub UserHandleGrantAccess
 @ stdcall UserRealizePalette(long) UserRealizePalette
 @ stub UserRegisterWowHandlers
