@@ -2837,6 +2837,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
  */
 static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 {
+    POPUPMENU *menu;
+    
     TRACE("hwnd=%p hmenu=%p\n", hWnd, hMenu);
 
     HideCaret(0);
@@ -2849,7 +2851,6 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
     if (!(wFlags & TPM_NONOTIFY))
     {
-       POPUPMENU *menu;
        SendMessageW( hWnd, WM_INITMENU, (WPARAM)hMenu, 0 );
        if ((menu = MENU_GetMenu( hMenu )) && (!menu->Height))
        { /* app changed/recreated menu bar entries in WM_INITMENU
@@ -2859,6 +2860,13 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
        }
     }
+    
+    /* This makes the menus of applications built with Delphi work.
+     * It also enables menus to be displayed in more than one window,
+     * but there are some bugs left that need to be fixed in this case.
+     */
+    if ((menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
+    
     return TRUE;
 }
 /***********************************************************************
