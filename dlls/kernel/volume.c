@@ -491,29 +491,50 @@ static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
         size != SUPERBLOCK_SIZE)
         return FS_ERROR;
 
-    if (buff[0] == 0xE9 || (buff[0] == 0xEB && buff[2] == 0x90))
+    /* FIXME: do really all FAT have their name beginning with
+     * "FAT" ? (At least FAT12, FAT16 and FAT32 have :)
+     */
+    if (!memcmp(buff+0x36, "FAT", 3) || !memcmp(buff+0x52, "FAT", 3))
     {
         /* guess which type of FAT we have */
-        unsigned int sz, nsect, nclust;
-        sz = GETWORD(buff, 0x16);
-        if (!sz) sz = GETLONG(buff, 0x24);
-        nsect = GETWORD(buff, 0x13);
-        if (!nsect) nsect = GETLONG(buff, 0x20);
-        nsect -= GETWORD(buff, 0x0e) + buff[0x10] * sz +
-            (GETWORD(buff, 0x11) * 32 + (GETWORD(buff, 0x0b) - 1)) / GETWORD(buff, 0x0b);
-        nclust = nsect / buff[0x0d];
-
+        int reasonable;
+        unsigned int sectors,
+                     sect_per_fat,
+                     total_sectors,
+                     num_boot_sectors,
+                     num_fats,
+                     num_root_dir_ents,
+                     bytes_per_sector,
+                     sectors_per_cluster,
+                     nclust;
+        sect_per_fat = GETWORD(buff, 0x16);
+        if (!sect_per_fat) sect_per_fat = GETLONG(buff, 0x24);
+        total_sectors = GETWORD(buff, 0x13);
+        if (!total_sectors)
+            total_sectors = GETLONG(buff, 0x20);
+        num_boot_sectors = GETWORD(buff, 0x0e);
+        num_fats =  buff[0x10];
+        num_root_dir_ents = GETWORD(buff, 0x11);
+        bytes_per_sector = GETWORD(buff, 0x0b);
+        sectors_per_cluster = buff[0x0d];
+        /* check if the parameters are reasonable and will not cause
+         * arithmetic errors in the calculation */
+        reasonable = num_boot_sectors < 16 &&
+                     num_fats < 16 &&
+                     bytes_per_sector >= 512 && bytes_per_sector % 512 == 0 &&
+                     sectors_per_cluster > 1;
+        if (!reasonable) return FS_UNKNOWN;
+        sectors =  total_sectors - num_boot_sectors - num_fats * sect_per_fat -
+            (num_root_dir_ents * 32 + bytes_per_sector - 1) / bytes_per_sector;
+        nclust = sectors / sectors_per_cluster;
+        if ((buff[0x42] == 0x28 || buff[0x42] == 0x29) &&
+                !memcmp(buff+0x52, "FAT", 3)) return FS_FAT32;
         if (nclust < 65525)
         {
-            if (buff[0x26] == 0x29 && !memcmp(buff+0x36, "FAT", 3))
-            {
-                /* FIXME: do really all FAT have their name beginning with
-                 * "FAT" ? (At least FAT12, FAT16 and FAT32 have :)
-                 */
+            if ((buff[0x26] == 0x28 || buff[0x26] == 0x29) &&
+                    !memcmp(buff+0x36, "FAT", 3))
                 return FS_FAT1216;
-            }
         }
-        else if (!memcmp(buff+0x52, "FAT", 3)) return FS_FAT32;
     }
     return FS_UNKNOWN;
 }
