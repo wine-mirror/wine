@@ -741,16 +741,27 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 	/* Remove also fogging... */
 	glDisable(GL_FOG);
     }
-    
-    if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == FALSE)) {
-        glEnable(GL_LIGHTING);
-    } else if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == TRUE)) {
+
+    /* Handle the 'no-normal' case */
+    if (vertex_lit == FALSE)
         glDisable(GL_LIGHTING);
+    else if (glThis->render_state.lighting_enable == TRUE)
+        glEnable(GL_LIGHTING);
+
+    /* Handle the code for pre-vertex material properties */
+    if (vertex_transformed == FALSE) {
+        if (glThis->render_state.lighting_enable == TRUE) {
+	    if ((glThis->render_state.color_diffuse != D3DMCS_MATERIAL) ||
+		(glThis->render_state.color_specular != D3DMCS_MATERIAL) ||
+		(glThis->render_state.color_ambient != D3DMCS_MATERIAL) ||
+		(glThis->render_state.color_emissive != D3DMCS_MATERIAL)) {
+	        glEnable(GL_COLOR_MATERIAL);
+	    }
+	}
     }
 
     /* And save the current state */
     glThis->last_vertices_transformed = vertex_transformed;
-    glThis->last_vertices_lit = vertex_lit;
 }
 
 
@@ -933,26 +944,92 @@ inline static void handle_xyzrhw(D3DVALUE *coords) {
 inline static void handle_normal(D3DVALUE *coords) {
     glNormal3fv(coords);
 }
-inline static void handle_specular(DWORD *color) {
-    /* Specular not handled yet properly... */
+
+inline static void handle_diffuse_base(RenderState *rs, DWORD *color) {
+    if (rs->alpha_blend_enable == TRUE) {
+        glColor4ub((*color >> 16) & 0xFF,
+		   (*color >>  8) & 0xFF,
+		   (*color >>  0) & 0xFF,
+		   (*color >> 24) & 0xFF);
+    } else {
+        glColor3ub((*color >> 16) & 0xFF,
+		   (*color >>  8) & 0xFF,
+		   (*color >>  0) & 0xFF);    
+    }
 }
-inline static void handle_diffuse(DWORD *color) {
+
+inline static void handle_specular_base(RenderState *rs, DWORD *color) {
     glColor4ub((*color >> 16) & 0xFF,
 	       (*color >>  8) & 0xFF,
 	       (*color >>  0) & 0xFF,
-	       (*color >> 24) & 0xFF);
+	       (*color >> 24) & 0xFF); /* No idea if the alpha field is really used.. */
 }
-inline static void handle_diffuse_and_specular(DWORD *color_d, DWORD *color_s) {
-    handle_diffuse(color_d);
+
+inline static void handle_diffuse(RenderState *rs, DWORD *color) {
+    if (rs->lighting_enable == TRUE) {
+        if (rs->color_diffuse == D3DMCS_COLOR1) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+	    handle_diffuse_base(rs, color);
+	}
+	if (rs->color_ambient == D3DMCS_COLOR1) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT);
+	    handle_diffuse_base(rs, color);
+	}
+	if ((rs->color_specular == D3DMCS_COLOR1) && (rs->specular_enable == TRUE)) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
+	    handle_diffuse_base(rs, color);
+	}
+	if (rs->color_emissive == D3DMCS_COLOR1) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_EMISSION);
+	    handle_diffuse_base(rs, color);
+	}
+    } else {
+        handle_diffuse_base(rs, color);
+    }    
 }
-inline static void handle_diffuse_no_alpha(DWORD *color) {
-    glColor3ub((*color >> 16) & 0xFF,
-	       (*color >>  8) & 0xFF,
-	       (*color >>  0) & 0xFF);
+
+inline static void handle_specular(RenderState *rs, DWORD *color) {
+    if (rs->lighting_enable == TRUE) {
+        if (rs->color_diffuse == D3DMCS_COLOR2) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+	    handle_specular(rs, color);
+	}
+	if (rs->color_ambient == D3DMCS_COLOR2) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT);
+	    handle_specular(rs, color);
+	}
+	if ((rs->color_specular == D3DMCS_COLOR2) && (rs->specular_enable == TRUE)) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
+	    handle_specular(rs, color);
+	}
+	if (rs->color_emissive == D3DMCS_COLOR2) {
+	    glColorMaterial(GL_FRONT_AND_BACK, GL_EMISSION);
+	    handle_specular(rs, color);
+	}
+    }
+    /* No else here as we do not know how to handle 'specular' on its own in any case.. */
 }
-inline static void handle_diffuse_and_specular_no_alpha(DWORD *color_d, DWORD *color_s) {
-    handle_diffuse_no_alpha(color_d);
+
+inline static void handle_diffuse_and_specular(RenderState *rs, DWORD *color_d, DWORD *color_s, BOOLEAN transformed) {
+    if (transformed == TRUE) {
+        if (rs->fog_on == TRUE) {
+	    /* Special case where the specular value is used to do fogging. TODO */
+	}
+	if (rs->specular_enable == TRUE) {
+	    /* Standard specular value in transformed mode. TODO */
+	}
+	handle_diffuse_base(rs, color_d);
+    } else {
+        if (rs->lighting_enable == TRUE) {
+	    handle_diffuse(rs, color_d);
+	    handle_specular(rs, color_s);
+	} else {
+	    /* In that case, only put the diffuse color... */
+	    handle_diffuse_base(rs, color_d);	  
+	}
+    }
 }
+
 inline static void handle_texture(D3DVALUE *coords) {
     glTexCoord2fv(coords);
 }
@@ -1018,10 +1095,7 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	    D3DVALUE *position =
 	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 
-	    if (glThis->render_state.alpha_blend_enable == TRUE)
-	        handle_diffuse_and_specular(color_d, color_s);
-	    else
-	        handle_diffuse_and_specular_no_alpha(color_d, color_s);
+	    handle_diffuse_and_specular(&(glThis->render_state), color_d, color_s, TRUE);
 	    handle_texture(tex_coord);
 	    handle_xyzrhw(position);
 
@@ -1056,22 +1130,16 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
 		DWORD *color_s = 
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		if (glThis->render_state.alpha_blend_enable == TRUE)
-		    handle_diffuse_and_specular(color_d, color_s);
-		else
-		    handle_diffuse_and_specular_no_alpha(color_d, color_s);
+		handle_diffuse_and_specular(&(glThis->render_state), color_d, color_s, (d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW);
 	    } else {
 	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
 		    DWORD *color_s = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		    handle_specular(color_s);
+		    handle_specular(&(glThis->render_state), color_s);
 		} else if (d3dvtVertexType & D3DFVF_DIFFUSE) {
 		    DWORD *color_d = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
-		    if (glThis->render_state.alpha_blend_enable == TRUE)
-		        handle_diffuse(color_d);
-		    else
-		        handle_diffuse_no_alpha(color_d);
+		    handle_diffuse(&(glThis->render_state), color_d);
 		}
 	    }
 		
@@ -1148,6 +1216,10 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
     }
     
     glEnd();
+
+    /* Whatever the case, disable the color material stuff */
+    glDisable(GL_COLOR_MATERIAL);
+
     LEAVE_GL();
     TRACE("End\n");    
 }

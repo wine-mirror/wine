@@ -125,7 +125,6 @@ typedef struct IDirect3DDeviceGLImpl
 
     /* The last type of vertex drawn */
     BOOLEAN last_vertices_transformed;
-    BOOLEAN last_vertices_lit;
 
     Display  *display;
     Drawable drawable;
