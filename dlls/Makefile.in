@@ -1341,6 +1341,7 @@ wsock32/wsock32.spec.def: $(WINEBUILD)
 x11drv/x11drv.spec.def: $(WINEBUILD)
 
 $(SUBDIRS): $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
+$(SUBDIRS:%=%/__install__): $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
 $(SUBDIRS:%=%/__crosstest__): $(IMPORT_LIBS:%=%.a)
 
 # Map library name to the corresponding directory
