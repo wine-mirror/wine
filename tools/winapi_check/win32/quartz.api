@@ -2,6 +2,7 @@
 
 DWORD
 HRESULT
+LONG
 
 %ptr
 

@@ -9,6 +9,7 @@ INT
 LONG
 SOCKET
 UINT
+WORD
 WSAEVENT
 int
 u_long
@@ -23,22 +24,27 @@ SOCKET16
 FARPROC
 INT *
 LPDWORD
+LPGUID
 LPINT
 LPVOID
+LPWPUPOSTMESSAGE
 LPWSABUF
 LPWSADATA
 LPWSAOVERLAPPED
 LPWSAOVERLAPPED_COMPLETION_ROUTINE
 LPWSANETWORKEVENTS
 LPWSAPROTOCOL_INFOA
+LPWSAPROTOCOL_INFOW
 ULONG *
 WIN_hostent *
 WIN_protoent *
 WIN_servent *
 char *
+int *
 struct sockaddr *
 struct timeval *
 ws_fd_set32 *
+ws_sockaddr *
 
 %str
 
@@ -52,3 +58,7 @@ struct in_addr
 %void
 
 void
+
+%wstr
+
+LPCWSTR

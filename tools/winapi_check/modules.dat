@@ -120,6 +120,14 @@ ole
 scheduler
 win32
 
+% dlls/mapi32/mapi32.spec
+
+dlls/mapi32
+
+% dlls/msimg32/msimg32.spec
+
+dlls/msimg32
+
 % dlls/msvcrt/msvcrt.spec
 
 dlls/msvcrt
@@ -315,6 +323,10 @@ dlls/shlwapi
 
 dlls/tapi32
 
+% dlls/sti/sti.spec
+
+dlls/sti
+
 % dlls/ttydrv/ttydrv.spec
 
 dlls/ttydrv
@@ -340,6 +352,10 @@ windows
 % dlls/user/mouse.spec
 
 dlls/user
+
+% dlls/url/url.spec
+
+dlls/url
 
 % dlls/user/user.spec
 

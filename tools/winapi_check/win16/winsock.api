@@ -14,9 +14,9 @@ INT16 *
 LPWSADATA16
 ULONG *
 char *
-struct sockaddr *
 struct timeval *
 ws_fd_set16 *
+ws_sockaddr *
 
 %segptr
 
