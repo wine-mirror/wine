@@ -91,7 +91,8 @@ ATOM RegisterClass( LPWNDCLASS class )
 {
     CLASS * newClass, * prevClassPtr;
     HCLASS handle, prevClass;
-    
+    int classExtra;
+
 #ifdef DEBUG_CLASS
     printf( "RegisterClass: wndproc=%08x hinst=%d name='%s' background %x\n", 
 	    class->lpfnWndProc, class->hInstance, class->lpszClassName,
@@ -110,20 +111,18 @@ ATOM RegisterClass( LPWNDCLASS class )
 	if (!(prevClassPtr->wc.style & CS_GLOBALCLASS)) return 0;
     }
 
-      /* bug for bug compatible */
-
-    if (class->cbClsExtra < 0) class->cbClsExtra = 0;
-    if (class->cbWndExtra < 0) class->cbWndExtra = 0;
-
       /* Create class */
 
-    handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CLASS)+class->cbClsExtra );
+    classExtra = (class->cbClsExtra < 0) ? 0 : class->cbClsExtra;
+    handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CLASS) + classExtra );
     if (!handle) return 0;
     newClass = (CLASS *) USER_HEAP_ADDR( handle );
-    newClass->hNext      = firstClass;
-    newClass->wMagic     = CLASS_MAGIC;
-    newClass->cWindows   = 0;  
-    newClass->wc         = *class;
+    newClass->hNext         = firstClass;
+    newClass->wMagic        = CLASS_MAGIC;
+    newClass->cWindows      = 0;  
+    newClass->wc            = *class;
+    newClass->wc.cbWndExtra = (class->cbWndExtra < 0) ? 0 : class->cbWndExtra;
+    newClass->wc.cbClsExtra = classExtra;
 
     if (newClass->wc.style & CS_GLOBALCLASS)
 	newClass->atomName = GlobalAddAtom( class->lpszClassName );
@@ -147,7 +146,7 @@ ATOM RegisterClass( LPWNDCLASS class )
 	}
     }
 
-    if (class->cbClsExtra) memset( newClass->wExtra, 0, class->cbClsExtra );
+    if (classExtra) memset( newClass->wExtra, 0, classExtra );
     firstClass = handle;
     return newClass->atomName;
 }

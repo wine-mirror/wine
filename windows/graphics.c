@@ -153,6 +153,8 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 			 (double)(xend-xcenter)*(bottom-top) );
     diff_angle  = end_angle - start_angle;
     if (diff_angle < 0.0) diff_angle += 2*PI;
+    if (left > right) swap_int( &left, &right );
+    if (top > bottom) swap_int( &top, &bottom );
 
     XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,

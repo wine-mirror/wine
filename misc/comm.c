@@ -18,20 +18,11 @@
 
 #include "wine.h"
 #include "windows.h"
+#include "comm.h"
 
 /* #define DEBUG_COMM /* */
 
-#define MAX_PORTS	16
-
 int commerror = 0, eventmask = 0;
-
-struct DosDeviceStruct {
-	char *devicename;	/* /dev/cua1 */
-	int fd;
-	int suspended;
-	int unget;
-	int unget_byte;
-};
 
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];

@@ -595,13 +595,13 @@ WORD IsDlgButtonChecked( HWND hwnd, WORD id )
  */
 void CheckRadioButton( HWND hwndDlg, WORD firstID, WORD lastID, WORD checkID )
 {
-    HWND button = GetDlgItem( hwndDlg, firstID );
+    HWND button = GetDlgItem( hwndDlg, lastID );
     while (button != 0)
     {
 	WND * wndPtr = WIN_FindWndPtr( button );
 	if (!wndPtr) break;
 	SendMessage( button, BM_SETCHECK, (wndPtr->wIDmenu == checkID), 0 );
-        if (wndPtr->wIDmenu == lastID) break;
+        if (wndPtr->wIDmenu == firstID) break;
 	button = wndPtr->hwndNext;
     }
 }

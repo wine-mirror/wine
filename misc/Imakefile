@@ -16,7 +16,9 @@ SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
+	mcicda.c \
 	message.c \
+	mmaux.c \
 	mmsystem.c \
 	network.c \
 	profile.c \

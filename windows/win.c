@@ -253,7 +253,10 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 				exStyle, className, windowName, style, x, y, width, height, 
 				parent, menu, instance, data);
 #endif
-
+	/* 'soundrec.exe' has negative position ! 
+	Why ? For now, here a patch : */
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
     {
@@ -366,24 +369,15 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     else
        win_attr.backing_store = Always;
 
-    if (Options.nosaveunders)
-       win_attr.save_under = FALSE;
-    else
-       win_attr.save_under = TRUE;        
+    win_attr.save_under = ((classPtr->wc.style & CS_SAVEBITS) != 0);
 
-
-    /* set the background of all windows to be white, just like
-     * MS-Windows does (hopefully!)
-     */   
-    win_attr.background_pixel = WhitePixelOfScreen(screen);
-    
     wndPtr->window = XCreateWindow( display, parentPtr->window,
 		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
 		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,
 		   width, height, 0,
 		   CopyFromParent, InputOutput, CopyFromParent,
 		   CWEventMask | CWOverrideRedirect | CWColormap |
-		   CWSaveUnder | CWBackingStore | CWBackPixel, &win_attr );
+		   CWSaveUnder | CWBackingStore, &win_attr );
     XStoreName( display, wndPtr->window, windowName );
 
 

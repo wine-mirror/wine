@@ -15,7 +15,6 @@ struct options
     int    usePrivateMap;
     int    synchronous;
     int    nobackingstore;
-    int    nosaveunders;
     short  cmdShow;
     int    relay_debug;
     int    debug;

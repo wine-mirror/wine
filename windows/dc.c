@@ -105,7 +105,6 @@ static void DC_InitDC( HDC hdc )
     SelectObject( hdc, dc->w.hFont );
     XSetGraphicsExposures( XT_display, dc->u.x.gc, False );
     CLIPPING_SetDeviceClipping( dc );
-    FONT_SelectObject(dc, STOCK_SYSTEM_FIXED_FONT, NULL);
 }
 
 
@@ -204,7 +203,7 @@ int DC_SetupGCForText( DC * dc )
 
     if (!dc->u.x.font.fstruct)
     {
-	FONT_SelectObject(dc, STOCK_SYSTEM_FIXED_FONT, NULL);
+	FONT_SelectObject(dc, STOCK_SYSTEM_FONT, NULL);
     }
     val.function   = DC_XROPfunction[dc->w.ROPmode-1];
     val.foreground = dc->w.textPixel;
@@ -235,6 +234,7 @@ HDC GetDCState( HDC hdc )
 #endif
 
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
+    memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
     newdc->saveLevel = 0;
     newdc->w.flags |= DC_SAVED;
 

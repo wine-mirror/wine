@@ -8,6 +8,11 @@
 typedef LPSTR		    HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
 
+#define MAXWAVEDRIVERS 10
+#define MAXMIDIDRIVERS 10
+#define MAXAUXDRIVERS 10
+#define MAXMCIDRIVERS 32
+
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
 #define MAXERRORLENGTH   128    /* max error text length (including NULL) */
 
@@ -166,7 +171,7 @@ typedef WAVECALLBACK FAR *LPWAVECALLBACK;
 #define  WAVE_FORMAT_QUERY     0x0001
 #define  WAVE_ALLOWSYNC        0x0002
 
-typedef struct {
+typedef struct wavehdr_tag {
     LPSTR       lpData;                 /* pointer to locked data buffer */
     DWORD       dwBufferLength;         /* length of data buffer */
     DWORD       dwBytesRecorded;        /* used for input only */
@@ -764,8 +769,10 @@ YIELDPROC WINAPI mciGetYieldProc (UINT uDeviceID, DWORD FAR* lpdwYieldData);
 
 #define MCIERR_CUSTOM_DRIVER_BASE       (MCIERR_BASE + 256)
 
-#define MCI_OPEN                        0x0803
-#define MCI_CLOSE                       0x0804
+#define MCI_OPEN_DRIVER					0x0801
+#define MCI_CLOSE_DRIVER				0x0802
+#define MCI_OPEN						0x0803
+#define MCI_CLOSE						0x0804
 #define MCI_ESCAPE                      0x0805
 #define MCI_PLAY                        0x0806
 #define MCI_SEEK                        0x0807
@@ -1389,6 +1396,126 @@ typedef MCI_OVLY_LOAD_PARMS FAR * LPMCI_OVLY_LOAD_PARMS;
  * 		Linux MMSYSTEM Internals & Sample Audio Drivers
  */
 
+#define DRVM_INIT             100
+#define WODM_INIT             DRVM_INIT
+#define WIDM_INIT             DRVM_INIT
+#define MODM_INIT             DRVM_INIT
+#define MIDM_INIT             DRVM_INIT
+#define AUXM_INIT             DRVM_INIT
+
+#define WODM_GETNUMDEVS       3
+#define WODM_GETDEVCAPS       4
+#define WODM_OPEN             5
+#define WODM_CLOSE            6
+#define WODM_PREPARE          7
+#define WODM_UNPREPARE        8
+#define WODM_WRITE            9
+#define WODM_PAUSE            10
+#define WODM_RESTART          11
+#define WODM_RESET            12 
+#define WODM_GETPOS           13
+#define WODM_GETPITCH         14
+#define WODM_SETPITCH         15
+#define WODM_GETVOLUME        16
+#define WODM_SETVOLUME        17
+#define WODM_GETPLAYBACKRATE  18
+#define WODM_SETPLAYBACKRATE  19
+#define WODM_BREAKLOOP        20
+
+#define WIDM_GETNUMDEVS  50
+#define WIDM_GETDEVCAPS  51
+#define WIDM_OPEN        52
+#define WIDM_CLOSE       53
+#define WIDM_PREPARE     54
+#define WIDM_UNPREPARE   55
+#define WIDM_ADDBUFFER   56
+#define WIDM_START       57
+#define WIDM_STOP        58
+#define WIDM_RESET       59
+#define WIDM_GETPOS      60
+
+#define MODM_GETNUMDEVS		1
+#define MODM_GETDEVCAPS		2
+#define MODM_OPEN			3
+#define MODM_CLOSE			4
+#define MODM_PREPARE		5
+#define MODM_UNPREPARE		6
+#define MODM_DATA			7
+#define MODM_LONGDATA		8
+#define MODM_RESET          9
+#define MODM_GETVOLUME		10
+#define MODM_SETVOLUME		11
+#define MODM_CACHEPATCHES		12      
+#define MODM_CACHEDRUMPATCHES	13     
+
+#define MIDM_GETNUMDEVS  53
+#define MIDM_GETDEVCAPS  54
+#define MIDM_OPEN        55
+#define MIDM_CLOSE       56
+#define MIDM_PREPARE     57
+#define MIDM_UNPREPARE   58
+#define MIDM_ADDBUFFER   59
+#define MIDM_START       60
+#define MIDM_STOP        61
+#define MIDM_RESET       62
+
+#define AUXDM_GETNUMDEVS    3
+#define AUXDM_GETDEVCAPS    4
+#define AUXDM_GETVOLUME     5
+#define AUXDM_SETVOLUME     6
+
+#define MCI_MAX_DEVICE_TYPE_LENGTH 80
+
+#define MCI_FALSE                       (MCI_STRING_OFFSET + 19)
+#define MCI_TRUE                        (MCI_STRING_OFFSET + 20)
+
+#define MCI_FORMAT_RETURN_BASE          MCI_FORMAT_MILLISECONDS_S
+#define MCI_FORMAT_MILLISECONDS_S       (MCI_STRING_OFFSET + 21)
+#define MCI_FORMAT_HMS_S                (MCI_STRING_OFFSET + 22)
+#define MCI_FORMAT_MSF_S                (MCI_STRING_OFFSET + 23)
+#define MCI_FORMAT_FRAMES_S             (MCI_STRING_OFFSET + 24)
+#define MCI_FORMAT_SMPTE_24_S           (MCI_STRING_OFFSET + 25)
+#define MCI_FORMAT_SMPTE_25_S           (MCI_STRING_OFFSET + 26)
+#define MCI_FORMAT_SMPTE_30_S           (MCI_STRING_OFFSET + 27)
+#define MCI_FORMAT_SMPTE_30DROP_S       (MCI_STRING_OFFSET + 28)
+#define MCI_FORMAT_BYTES_S              (MCI_STRING_OFFSET + 29)
+#define MCI_FORMAT_SAMPLES_S            (MCI_STRING_OFFSET + 30)
+#define MCI_FORMAT_TMSF_S               (MCI_STRING_OFFSET + 31)
+
+#define MCI_VD_FORMAT_TRACK_S           (MCI_VD_OFFSET + 5)
+
+#define WAVE_FORMAT_PCM_S               (MCI_WAVE_OFFSET + 0)
+#define WAVE_MAPPER_S                   (MCI_WAVE_OFFSET + 1)
+
+#define MCI_SEQ_MAPPER_S                (MCI_SEQ_OFFSET + 5)
+#define MCI_SEQ_FILE_S                  (MCI_SEQ_OFFSET + 6)
+#define MCI_SEQ_MIDI_S                  (MCI_SEQ_OFFSET + 7)
+#define MCI_SEQ_SMPTE_S                 (MCI_SEQ_OFFSET + 8)
+#define MCI_SEQ_FORMAT_SONGPTR_S        (MCI_SEQ_OFFSET + 9)
+#define MCI_SEQ_NONE_S                  (MCI_SEQ_OFFSET + 10)
+#define MIDIMAPPER_S                    (MCI_SEQ_OFFSET + 11)
+
+#define MCI_RESOURCE_RETURNED       0x00010000  /* resource ID */
+#define MCI_COLONIZED3_RETURN       0x00020000  /* colonized ID, 3 bytes data */
+#define MCI_COLONIZED4_RETURN       0x00040000  /* colonized ID, 4 bytes data */
+#define MCI_INTEGER_RETURNED        0x00080000  /* integer conversion needed */
+#define MCI_RESOURCE_DRIVER         0x00100000  /* driver owns returned resource */
+
+#define MCI_NO_COMMAND_TABLE    0xFFFF
+
+#define MCI_COMMAND_HEAD        0
+#define MCI_STRING              1
+#define MCI_INTEGER             2
+#define MCI_END_COMMAND         3
+#define MCI_RETURN              4
+#define MCI_FLAG                5
+#define MCI_END_COMMAND_LIST    6
+#define MCI_RECT                7
+#define MCI_CONSTANT            8
+#define MCI_END_CONSTANT        9
+
+#define MAKEMCIRESOURCE(wRet, wRes) MAKELRESULT((wRet), (wRes))
+
 typedef struct {
 	DWORD   	dwCallback;
 	DWORD   	dwInstance;
@@ -1396,6 +1523,56 @@ typedef struct {
 	DWORD   	dwFlags;
 	}	PORTALLOC;
 typedef PORTALLOC FAR *LPPORTALLOC;
+
+typedef struct {
+	HWAVE			hWave;
+	LPWAVEFORMAT	lpFormat;
+	DWORD			dwCallBack;
+	DWORD			dwInstance;
+	} WAVEOPENDESC;
+typedef WAVEOPENDESC FAR *LPWAVEOPENDESC;
+
+typedef struct {
+	HMIDI			hMidi;
+	DWORD			dwCallback;
+	DWORD			dwInstance;
+	} MIDIOPENDESC;
+typedef MIDIOPENDESC FAR *LPMIDIOPENDESC;
+
+typedef struct {
+	UINT			wDelay;
+	UINT			wResolution;
+	LPTIMECALLBACK	lpFunction;
+	DWORD			dwUser;
+	UINT			wFlags;
+	} TIMEREVENT;
+typedef TIMEREVENT FAR *LPTIMEREVENT;
+
+typedef struct {
+	UINT    wDeviceID;				/* device ID */
+	LPSTR 	lpstrParams;			/* parameter string for entry in SYSTEM.INI */
+	UINT    wCustomCommandTable;	/* custom command table (0xFFFF if none) */
+									/* filled in by the driver */
+	UINT    wType;					/* driver type */
+									/* filled in by the driver */
+	} MCI_OPEN_DRIVER_PARMS;
+typedef MCI_OPEN_DRIVER_PARMS FAR * LPMCI_OPEN_DRIVER_PARMS;
+
+DWORD WINAPI mciGetDriverData(UINT uDeviceID);
+BOOL  WINAPI mciSetDriverData(UINT uDeviceID, DWORD dwData);
+UINT  WINAPI mciDriverYield(UINT uDeviceID);
+BOOL  WINAPI mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
+    UINT uStatus);
+UINT  WINAPI mciLoadCommandResource(HINSTANCE hInstance,
+    LPCSTR lpResName, UINT uType);
+BOOL  WINAPI mciFreeCommandResource(UINT uTable);
+
+#define DCB_NULL		0x0000
+#define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
+#define DCB_TASK		0x0002			/* dwCallback is a HTASK */
+#define DCB_FUNCTION	0x0003			/* dwCallback is a FARPROC */
+#define DCB_TYPEMASK	0x0007
+#define DCB_NOSWITCH	0x0008			/* don't switch stacks for callback */
 
 BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
 		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);

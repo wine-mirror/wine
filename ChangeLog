@@ -1,4 +1,72 @@
 ----------------------------------------------------------------------
+Sun, 3 Jul 1994 20:15:56 +0100 (BST)  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/edit.c]
+	Bug fixes and tidying up.  Preliminary tab stop support
+	(doesn't work yet).
+
+	* [windows/dialog.c]
+	Reversed order of buttons in CheckRadioButtons so that all
+	buttons are now displayed.
+
+Tue Jul  5 18:30:24 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [include/options.h] [misc/main.c] [windows/win.c]
+	Removed nosaveunders option, replaced by handling
+	the CS_SAVEBITS flag.
+
+	* [windows/class.c]
+	Modified the fix for negative size in class extra bytes to
+	avoid modifying the caller's data.
+
+	* [windows/dc.c]
+	Bug fix: system font must be a proportional font.
+	Fixed a bug that caused the default pen to not be selected
+	correctly in a DC.
+
+	* [windows/graphics.c]
+	Bug fix in GRAPH_DrawArc(). Thanks to Adriano Azevedo for
+	noticing it.
+
+	* [windows/painting.c]
+	Removed incorrect selecting of default objects in BeginPaint()
+	(no longer needed because of the fix in dc.c).
+
+Jul 4, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [misc/mmsystem.c]
+	* [misc/audio.c]
+	Add more code to interface '/dev/dsp'.
+
+	* New file [misc/mcicda.c]
+	Create an MCI_DEVTYPE_CD_AUDIO driver connected to '/dev/sbpcd'.
+
+	* New file [misc/mmaux.c]
+	Stubs to make a future driver connected to '/dev/mixer'.
+
+	* [windows/win.c]
+	Temporary patch to CreateWindowEx() for reseting negative
+	coordinates to 0,0 ; because 'soundrec.exe' give negative values
+	and I need it to work on MMSYSTEM ... :-)
+
+	* [miscemu/int2f.c]
+	add a stub 'do_int2f_16' (function 0x16) for DMPI server.
+
+Mon Jun 20 10:08:40 BST 1994  William Smith (wos@dcs.warwick.ac.uk)
+
+	* include/comm.h
+	New file -- some definitions that were in comm.c now need to
+	be shared with misc/dos_fs.c
+
+	* misc/comm.c
+	Some definitions moved into include/comm.h
+
+	* misc/dos_fs.c (DOS_GetEquipment):
+	Fixed error in equipment -- bitwise or of two values should
+	be used instead of logical or.  Also added code to correctly
+	report the number of serial and parallel devices.
+
+----------------------------------------------------------------------
 Mon Jun 20 14:26:41 1994  Bob Amstadt  (bob@pooh)
 
 	* [objects/bitmap.c]

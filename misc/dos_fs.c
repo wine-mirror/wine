@@ -27,6 +27,7 @@
 #include "msdos.h"
 #include "prototypes.h"
 #include "autoconf.h"
+#include "comm.h"
 
 /* #define DEBUG /* */
 
@@ -170,6 +171,11 @@ WORD DOS_GetEquipment(void)
 {
 	WORD equipment;
 	int diskdrives = 0;
+	int parallelports = 0;
+	int serialports = 0;
+	int x;
+	extern struct DosDeviceStruct COM[MAX_PORTS];
+	extern struct DosDeviceStruct LPT[MAX_PORTS];
 
 /* borrowed from Ralph Brown's interrupt lists 
 
@@ -190,6 +196,12 @@ WORD DOS_GetEquipment(void)
 		    bit      1: =1 if math co-processor
 		    bit      0: =1 if diskette available for boot
 */
+/*  Currently the only of these bits correctly set are:
+		bits 15-14 		} Added by William Owen Smith, 
+		bits 11-9		} wos@dcs.warwick.ac.uk
+		bits 7-6
+		bit  2			(always set)
+*/
 
 	if (DosDrives[0].rootdir != NULL)
 		diskdrives++;
@@ -197,8 +209,27 @@ WORD DOS_GetEquipment(void)
 		diskdrives++;
 	if (diskdrives)
 		diskdrives--;
+	
+	for (x=0; x!=MAX_PORTS; x++) {
+		if (COM[x].devicename)
+			serialports++;
+		if (LPT[x].devicename)
+			parallelports++;
+	}
+	if (serialports > 7)		/* 3 bits -- maximum value = 7 */
+		serialports=7;
+	if (parallelports > 3)		/* 2 bits -- maximum value = 3 */
+		parallelports=3;
 
-	equipment = (diskdrives << 6) || 0x02;
+	equipment = (diskdrives << 6) | (serialports << 9) | 
+		    (parallelports << 14) | 0x02;
+
+#ifdef DEBUG
+	fprintf(stderr, "DOS_GetEquipment : diskdrives = %d serialports = %d "
+			"parallelports = %d\n"
+			"DOS_GetEquipment : equipment = %d\n",
+			diskdrives, serialports, parallelports, equipment);
+#endif
 
 	return (equipment);
 }

@@ -264,7 +264,10 @@ int _WinMain(int argc, char **argv)
 	    strncpy(filename, Argv[0], p - Argv[0]);
 	    filename[p - Argv[0]] = '\0';
 	    strcat(WindowsPath, ";");
-	    strcat(WindowsPath, filename);
+	    if (strchr(filename, '/'))
+		    strcat(WindowsPath, GetDosFileName(filename));
+	    else
+	    	    strcat(WindowsPath, filename);
 	}
 	
 	if ((hInstMain = LoadImage(Argv[0], EXE, 1)) < 32) {

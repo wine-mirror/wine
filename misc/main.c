@@ -53,7 +53,6 @@ struct options Options =
     FALSE,          /* usePrivateMap */
     FALSE,          /* synchronous */
     FALSE,          /* no backing store */
-    FALSE,          /* no save unders */
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE
 };
@@ -69,7 +68,6 @@ static XrmOptionDescRec optionsTable[] =
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-nobackingstore",".nobackingstore",  XrmoptionNoArg,  (caddr_t)"on" },
-    { "-nosaveunders",  ".nosaveunders",    XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-relaydbg",      ".relaydbg",        XrmoptionNoArg,  (caddr_t)"on" }
@@ -90,7 +88,6 @@ static XrmOptionDescRec optionsTable[] =
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -nobackingstore Turn off backing store\n" \
-  "    -nosaveunders   Turn off saveunders\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
   "    -relaydbg       Display call relay information\n"
 
@@ -245,8 +242,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.usePrivateMap = TRUE;
     if (MAIN_GetResource( db, ".synchronous", &value ))
 	Options.synchronous = TRUE;
-    if (MAIN_GetResource( db, ".nosaveunders", &value ))
-	Options.nosaveunders = TRUE;
     if (MAIN_GetResource( db, ".nobackingstore", &value ))
 	Options.nobackingstore = TRUE;	
     if (MAIN_GetResource( db, ".relaydbg", &value ))
@@ -297,16 +292,11 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     else
        win_attr.backing_store = Always;
 
-    if (Options.nosaveunders)
-       win_attr.save_under = FALSE;
-    else
-       win_attr.save_under = TRUE;        
-
     rootWindow = XCreateWindow( display, DefaultRootWindow(display),
 			        desktopX, desktopY, width, height, 0,
 			        CopyFromParent, InputOutput, CopyFromParent,
-			        CWEventMask | CWCursor | CWSaveUnder |
-				CWBackingStore, &win_attr );
+			        CWEventMask | CWCursor |
+			        CWBackingStore, &win_attr );
 
       /* Set window manager properties */
 

@@ -61,7 +61,7 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
 /***************************************************************************
  _lread
  ***************************************************************************/
-INT _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
+INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
 {
   int result;
 
@@ -81,7 +81,7 @@ INT _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
 /****************************************************************************
  _lwrite
 ****************************************************************************/
-INT _lwrite (INT hFile, LPSTR lpBuffer, INT wBytes)
+INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
 {
 	int result;
 

@@ -1151,7 +1151,7 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 		{
 			if (DOS_ValidDrive(x))
 			{
-				sprintf(temp, "[-%c-]", 'A'+x);
+				sprintf(temp, "[-%c-]", 'a'+x);
 				if ( (wRet = ListBoxAddString(hwnd, temp)) == LB_ERR)
 	    				break;
 			}		
