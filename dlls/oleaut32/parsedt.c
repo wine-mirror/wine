@@ -703,7 +703,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
-#ifdef USE_POSIX_TIME
+			/* FIXME: The code below is not correct */
+#if 0 /* defined(USE_POSIX_TIME) */
 			tm->tm_year -= 1900;
 			tm->tm_mon -= 1;
 			tm->tm_isdst = -1;
@@ -711,7 +712,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			tm->tm_year += 1900;
 			tm->tm_mon += 1;
 
-#ifdef HAVE_INT_TIMEZONE
+#if 0 /* defined(HAVE_INT_TIMEZONE) */
 			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
 
 #else							/* !HAVE_INT_TIMEZONE */
