@@ -59,6 +59,76 @@ BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName)
     }
 }
 
+int enum_hw(void);
+void wprint_mac(WCHAR* buffer, int index);
+
+NET_API_STATUS WINAPI 
+NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
+		      DWORD prefmaxlen, LPDWORD read_entries,
+		      LPDWORD total_entries, LPDWORD hresume)
+{
+  FIXME(":%s, 0x%08lx, %p, 0x%08lx, %p, %p, %p\n", debugstr_w(ServerName), 
+	level, pbuf, prefmaxlen, read_entries, total_entries,hresume);
+  if (!NETAPI_IsLocalComputer(ServerName))
+    {
+      FIXME(":not implemented for non-local computers\n");
+      return ERROR_INVALID_LEVEL;
+    }
+  else
+    {
+      if (hresume && *hresume)
+	{
+	  FIXME(":resume handle not implemented\n");
+	  return ERROR_INVALID_LEVEL;
+	}
+	
+      switch (level)
+	{
+	case 0: /* transport info */
+	  {
+	    PWKSTA_TRANSPORT_INFO_0 ti;
+	    int i,size_needed,n_adapt  = enum_hw();
+	    
+	    size_needed = n_adapt * (sizeof(WKSTA_TRANSPORT_INFO_0) 
+				     * 13 * sizeof (WCHAR));
+	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
+	      NetApiBufferAllocate( size_needed, (LPVOID *) pbuf);
+	    else
+	      {
+		if (size_needed > prefmaxlen)
+		  return ERROR_MORE_DATA;
+		NetApiBufferAllocate(prefmaxlen,
+				     (LPVOID *) pbuf);
+	      }
+	    for (i = 0; i <n_adapt; i++)
+	      {
+		ti = (PWKSTA_TRANSPORT_INFO_0) 
+		  ((PBYTE) *pbuf + i * sizeof(WKSTA_TRANSPORT_INFO_0));
+		ti->wkti0_quality_of_service=0;
+		ti->wkti0_number_of_vcs=0;
+		ti->wkti0_transport_name=NULL;
+		ti->wkti0_transport_address= (LPWSTR)
+		  ((PBYTE )*pbuf + n_adapt* sizeof(WKSTA_TRANSPORT_INFO_0) 
+		   + i * 13 * sizeof (WCHAR));
+		ti->wkti0_wan_ish=TRUE; /*TCPIP/NETBIOS Protocoll*/
+		wprint_mac(ti->wkti0_transport_address,i);
+		TRACE("%d of %d:ti at %p transport_address at %p %s\n",i,n_adapt,
+		      ti, ti->wkti0_transport_address, debugstr_w(ti->wkti0_transport_address));
+	      }
+	    if(read_entries)*read_entries = n_adapt;
+	    if(total_entries)*total_entries = n_adapt;
+	    if(hresume) *hresume= 0;
+	    break;
+	  }
+	default:
+	  ERR("Invalid level %ld is specified\n", level);
+	  return ERROR_INVALID_LEVEL;
+	}
+      return NERR_Success;
+    }
+}
+					    
+
 /************************************************************
  *                NetWkstaUserGetInfo  (NETAPI32.@)
  */

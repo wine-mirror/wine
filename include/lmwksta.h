@@ -28,6 +28,14 @@ extern "C" {
 /* NetBIOS */
 UCHAR WINAPI Netbios(PNCB pncb);
 
+typedef struct _WKSTA_TRANSPORT_INFO_0 {
+  DWORD wkti0_quality_of_service;
+  DWORD wkti0_number_of_vcs;
+  LPWSTR wkti0_transport_name;
+  LPWSTR wkti0_transport_address;
+  BOOL wkti0_wan_ish;
+} WKSTA_TRANSPORT_INFO_0, *PWKSTA_TRANSPORT_INFO_0, *LPWKSTA_TRANSPORT_INFO_0;
+
 typedef struct _WKSTA_USER_INFO_0 {
     LPWSTR  wkui0_username;
 } WKSTA_USER_INFO_0, *PWKSTA_USER_INFO_0, *LPWKSTA_USER_INFO_0;

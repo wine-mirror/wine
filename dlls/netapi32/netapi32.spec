@@ -198,7 +198,7 @@
 @ stub NetWkstaSetInfo
 @ stub NetWkstaTransportAdd
 @ stub NetWkstaTransportDel
-@ stub NetWkstaTransportEnum
+@ stdcall NetWkstaTransportEnum (wstr long ptr long ptr ptr ptr) NetWkstaTransportEnum
 @ stub NetWkstaUserEnum
 @ stdcall NetWkstaUserGetInfo(wstr long ptr) NetWkstaUserGetInfo
 @ stub NetWkstaUserSetInfo

@@ -99,22 +99,15 @@ int get_hw_address(int sd, struct ifreq *ifr, unsigned char *address)
 #  endif /* SIOCGENADDR */
 # endif /* SIOCGIFHWADDR */
 
-static UCHAR NETBIOS_Enum(PNCB ncb)
+int enum_hw(void)
 {
+    int ret = 0;
 #ifdef HAVE_NET_IF_H
     int             sd;
     struct ifreq    ifr, *ifrp;
     struct ifconf   ifc;
     unsigned char   buf[1024];
     int             i, ofs;
-#endif
-    LANA_ENUM *lanas = (PLANA_ENUM) ncb->ncb_buffer;
-
-    TRACE("NCBENUM\n");
-
-    lanas->length = 0;
-
-#ifdef HAVE_NET_IF_H
     /* BSD 4.4 defines the size of an ifreq to be
      * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
      * However, under earlier systems, sa_len isn't present, so
@@ -156,13 +149,49 @@ static UCHAR NETBIOS_Enum(PNCB ncb)
                         a[0],a[1],a[2],a[3],a[4],a[5]);
 
             NETBIOS_Adapter[i].valid = TRUE;
-            lanas->lana[lanas->length] = i;
-            lanas->length++;
+
+	    ret++;
         }
         ofs += ifreq_size(ifr);
     }
     close(sd);
+    TRACE("found %d adapters\n",ret);
 #endif /* HAVE_NET_IF_H */
+    return ret;
+}
+
+void wprint_mac(WCHAR* buffer, int index)
+{
+  int i;
+  unsigned char  val;
+  for (i = 0; i<6; i++)
+    {
+      val = NETBIOS_Adapter[index].address[i];
+      if ((val >>4) >9)
+	buffer[2*i] = (WCHAR)((val >>4) + 'A' - 10);
+      else
+	buffer[2*i] = (WCHAR)((val >>4) + '0');
+      if ((val & 0xf ) >9)
+	buffer[2*i+1] = (WCHAR)((val & 0xf) + 'A' - 10);
+      else
+	buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
+    }
+  buffer[12]=(WCHAR)0;
+      
+}
+static UCHAR NETBIOS_Enum(PNCB ncb)
+{
+    int             i;
+    LANA_ENUM *lanas = (PLANA_ENUM) ncb->ncb_buffer;
+
+    TRACE("NCBENUM\n");
+
+    lanas->length = 0;
+    for (i = 0; i < enum_hw(); i++)
+    {
+         lanas->lana[lanas->length] = i;
+	 lanas->length++;
+    }
     return NRC_GOODRET;
 }
 
@@ -266,4 +295,3 @@ BOOL WINAPI Netbios(PNCB pncb)
     pncb->ncb_retcode = ret;
     return ret;
 }
-
