@@ -171,32 +171,83 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
     HBITMAP hbmpRet = 0;
     DC *dc;
 
-    TRACE("(%p,%d,%d) = \n", hdc, width, height );
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    if ((width >= 0x10000) || (height >= 0x10000)) {
-	FIXME("got bad width %d or height %d, please look for reason\n",
-	      width, height );
+    TRACE("(%p,%d,%d) = \n", hdc, width, height);
+
+    if ((width >= 0x10000) || (height >= 0x10000))
+    {
+        FIXME("got bad width %d or height %d, please look for reason\n",
+              width, height);
     }
     else
     {
-        INT planes, bpp;
+        if (!(dc = DC_GetDCPtr(hdc))) return 0;
 
         if (GDIMAGIC( dc->header.wMagic ) != MEMORY_DC_MAGIC)
         {
-            planes = GetDeviceCaps( hdc, PLANES );
-            bpp = GetDeviceCaps( hdc, BITSPIXEL );
+            hbmpRet = CreateBitmap(width, height,
+                                   GetDeviceCaps(hdc, PLANES),
+                                   GetDeviceCaps(hdc, BITSPIXEL),
+                                   NULL);
         }
-        else  /* memory DC, get the depth of the bitmap */
+        else  /* Memory DC */
         {
             BITMAPOBJ *bmp = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
-            planes = bmp->bitmap.bmPlanes;
-            bpp = bmp->bitmap.bmBitsPixel;
-            GDI_ReleaseObj( dc->hBitmap );
+
+            if (!bmp->dib)
+            {
+                /* A device-dependent bitmap is selected in the DC */
+                hbmpRet = CreateBitmap(width, height,
+                                       bmp->bitmap.bmPlanes,
+                                       bmp->bitmap.bmBitsPixel,
+                                       NULL);
+            }
+            else
+            {
+                /* A DIB section is selected in the DC */
+                BITMAPINFO *bi;
+                void *bits;
+
+                /* Allocate memory for a BITMAPINFOHEADER structure and a
+                   color table. The maximum number of colors in a color table
+                   is 256 which corresponds to a bitmap with depth 8.
+                   Bitmaps with higher depths don't have color tables. */
+                bi = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+
+                if (bi)
+                {
+                    bi->bmiHeader.biSize          = sizeof(bi->bmiHeader);
+                    bi->bmiHeader.biWidth         = width;
+                    bi->bmiHeader.biHeight        = height;
+                    bi->bmiHeader.biPlanes        = bmp->dib->dsBmih.biPlanes;
+                    bi->bmiHeader.biBitCount      = bmp->dib->dsBmih.biBitCount;
+                    bi->bmiHeader.biCompression   = bmp->dib->dsBmih.biCompression;
+                    bi->bmiHeader.biSizeImage     = 0;
+                    bi->bmiHeader.biXPelsPerMeter = bmp->dib->dsBmih.biXPelsPerMeter;
+                    bi->bmiHeader.biYPelsPerMeter = bmp->dib->dsBmih.biYPelsPerMeter;		
+                    bi->bmiHeader.biClrUsed       = bmp->dib->dsBmih.biClrUsed;
+                    bi->bmiHeader.biClrImportant  = bmp->dib->dsBmih.biClrImportant;
+
+                    if (bi->bmiHeader.biCompression == BI_BITFIELDS)
+                    {
+                        /* Copy the color masks */
+                        CopyMemory(bi->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD));
+                    }
+                    else if (bi->bmiHeader.biBitCount <= 8)
+                    {
+                        /* Copy the color table */
+                        GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
+                    }
+
+                    hbmpRet = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+                    HeapFree(GetProcessHeap(), 0, bi);
+                }
+            }
+            GDI_ReleaseObj(dc->hBitmap);
         }
-        hbmpRet = CreateBitmap( width, height, planes, bpp, NULL );
+        GDI_ReleaseObj(hdc);
     }
+
     TRACE("\t\t%p\n", hbmpRet);
-    GDI_ReleaseObj(hdc);
     return hbmpRet;
 }
 
@@ -618,6 +669,8 @@ BOOL WINAPI GetBitmapDimensionEx(
  * SetBitmapDimensionEx [GDI32.@]
  *
  * Assigns dimensions to a bitmap.
+ * MSDN says that this function will fail if hbitmap is a handle created by
+ * CreateDIBSection, but that's not true on Windows 2000.
  *
  * RETURNS
  *    Success: TRUE

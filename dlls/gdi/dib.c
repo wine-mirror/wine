@@ -18,6 +18,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+  Important information:
+  
+  * Current Windows versions support two different DIB structures:
+
+    - BITMAPCOREINFO / BITMAPCOREHEADER (legacy structures; used in OS/2)
+    - BITMAPINFO / BITMAPINFOHEADER
+  
+    Most Windows API functions taking a BITMAPINFO* / BITMAPINFOHEADER* also
+    accept the old "core" structures, and so must WINE.
+    You can distinguish them by looking at the first member (bcSize/biSize),
+    or use the internal function DIB_GetBitmapInfo.
+
+    
+  * The palettes are stored in different formats:
+
+    - BITMAPCOREINFO: Array of RGBTRIPLE
+    - BITMAPINFO:     Array of RGBQUAD
+
+    
+  * There are even more DIB headers, but they all extend BITMAPINFOHEADER:
+    
+    - BITMAPV4HEADER: Introduced in Windows 95 / NT 4.0
+    - BITMAPV5HEADER: Introduced in Windows 98 / 2000
+
+
+  * You should never access the color table using the bmiColors member,
+    because the passed structure may have one of the extended headers
+    mentioned above. Use this to calculate the location:
+    
+    BITMAPINFO* info;
+    void* colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+
+    
+  * More information:
+    Search for "Bitmap Structures" in MSDN
+*/
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +68,12 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
+
+
+/*
+  Some of the following helper functions are duplicated in
+  dlls/x11drv/dib.c
+*/
 
 /***********************************************************************
  *           DIB_GetDIBWidthBytes
@@ -174,12 +218,27 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
     {
         HBITMAP hBitmap, hOldBitmap;
         HPALETTE hpal = NULL;
-	HDC hdcMem;
+        HDC hdcMem;
+        LONG height;
+        LONG width;
+        WORD bpp;
+        DWORD compr;
+
+        if (DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &width, &height, &bpp, &compr ) == -1)
+        {
+            ERR("Invalid bitmap\n");
+            return 0;
+        }
+
+        if (width < 0)
+        {
+            ERR("Bitmap has a negative width\n");
+            return 0;
+        }
 
         GDI_ReleaseObj( hdc );
 	hdcMem = CreateCompatibleDC( hdc );
-        hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth,
-                                         info->bmiHeader.biHeight);
+        hBitmap = CreateCompatibleBitmap(hdc, width, height);
         hOldBitmap = SelectObject( hdcMem, hBitmap );
         if(wUsage == DIB_PAL_COLORS)
         {
@@ -206,18 +265,17 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	    */
 
             /* copy existing bitmap from destination dc */
-            StretchBlt( hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
+            StretchBlt( hdcMem, xSrc, abs(height) - heightSrc - ySrc,
                         widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
                         dwRop );
         }
 
-        SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits,
-		     info, wUsage);
+        SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
 
         /* Origin for DIBitmap may be bottom left (positive biHeight) or top
            left (negative biHeight) */
         StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-		    hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
+		    hdcMem, xSrc, abs(height) - heightSrc - ySrc,
 		    widthSrc, heightSrc, dwRop );
         if(hpal)
             SelectPalette(hdcMem, hpal, FALSE);
@@ -346,8 +404,8 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
    NB. RGBQUAD and PALETTEENTRY have different orderings of red, green
    and blue - sigh */
 
-static RGBQUAD EGAColors[16] = {
-/* rgbBlue, rgbGreen, rgbRed, rgbReserverd */
+static RGBQUAD EGAColorsQuads[16] = {
+/* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80, 0x00 },
     { 0x00, 0x80, 0x00, 0x00 },
@@ -366,9 +424,28 @@ static RGBQUAD EGAColors[16] = {
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
+static RGBTRIPLE EGAColorsTriples[16] = {
+/* rgbBlue, rgbGreen, rgbRed */
+    { 0x00, 0x00, 0x00 },
+    { 0x00, 0x00, 0x80 },
+    { 0x00, 0x80, 0x00 },
+    { 0x00, 0x80, 0x80 },
+    { 0x80, 0x00, 0x00 },
+    { 0x80, 0x00, 0x80 },
+    { 0x80, 0x80, 0x00 },
+    { 0x80, 0x80, 0x80 },
+    { 0xc0, 0xc0, 0xc0 },
+    { 0x00, 0x00, 0xff },
+    { 0x00, 0xff, 0x00 },
+    { 0x00, 0xff, 0xff },
+    { 0xff, 0x00, 0x00 } ,
+    { 0xff, 0x00, 0xff },
+    { 0xff, 0xff, 0x00 },
+    { 0xff, 0xff, 0xff }
+};
 
-static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
-/* rgbBlue, rgbGreen, rgbRed, rgbReserverd */
+static RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
+/* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80, 0x00 },
     { 0x00, 0x80, 0x00, 0x00 },
@@ -389,6 +466,30 @@ static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
     { 0xff, 0x00, 0xff, 0x00 },
     { 0xff, 0xff, 0x00, 0x00 },
     { 0xff, 0xff, 0xff, 0x00 }
+};
+
+static RGBTRIPLE DefLogPaletteTriples[20] = { /* Copy of Default Logical Palette */
+/* rgbBlue, rgbGreen, rgbRed */
+    { 0x00, 0x00, 0x00 },
+    { 0x00, 0x00, 0x80 },
+    { 0x00, 0x80, 0x00 },
+    { 0x00, 0x80, 0x80 },
+    { 0x80, 0x00, 0x00 },
+    { 0x80, 0x00, 0x80 },
+    { 0x80, 0x80, 0x00 },
+    { 0xc0, 0xc0, 0xc0 },
+    { 0xc0, 0xdc, 0xc0 },
+    { 0xf0, 0xca, 0xa6 },
+    { 0xf0, 0xfb, 0xff },
+    { 0xa4, 0xa0, 0xa0 },
+    { 0x80, 0x80, 0x80 },
+    { 0x00, 0x00, 0xf0 },
+    { 0x00, 0xff, 0x00 },
+    { 0x00, 0xff, 0xff },
+    { 0xff, 0x00, 0x00 },
+    { 0xff, 0x00, 0xff },
+    { 0xff, 0xff, 0x00 },
+    { 0xff, 0xff, 0xff}
 };
 
 
@@ -416,8 +517,25 @@ INT WINAPI GetDIBits(
     BITMAPOBJ * bmp;
     int i;
     HDC memdc;
+    int bitmap_type;
+    BOOL core_header;
+    LONG width;
+    LONG height;
+    WORD bpp;
+    DWORD compr;
+    void* colorPtr;
+    RGBTRIPLE* rgbTriples;
+    RGBQUAD* rgbQuads;
 
     if (!info) return 0;
+
+    bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &width, &height, &bpp, &compr);
+    if (bitmap_type == -1)
+    {
+        ERR("Invalid bitmap format\n");
+        return 0;
+    }
+    core_header = (bitmap_type == 0);
     memdc = CreateCompatibleDC(hdc);
     if (!(dc = DC_GetDCUpdate( hdc )))
     {
@@ -431,30 +549,57 @@ INT WINAPI GetDIBits(
 	return 0;
     }
 
+    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+    rgbTriples = (RGBTRIPLE *) colorPtr;
+    rgbQuads = (RGBQUAD *) colorPtr;
+
     /* Transfer color info */
 
-    if (info->bmiHeader.biBitCount <= 8 && info->bmiHeader.biBitCount > 0 ) {
-
-	info->bmiHeader.biClrUsed = 0;
+    if (bpp <= 8 && bpp > 0)
+    {
+        if (!core_header) info->bmiHeader.biClrUsed = 0;
 
 	/* If the bitmap object already has a dib section at the
 	   same color depth then get the color map from it */
-	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == info->bmiHeader.biBitCount) {
+	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == bpp) {
             if(coloruse == DIB_RGB_COLORS) {
-                HBITMAP oldbm;
-                oldbm = SelectObject(memdc, hbitmap);
-                GetDIBColorTable(memdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
+                HBITMAP oldbm = SelectObject(memdc, hbitmap);
+                unsigned int colors = 1 << bpp;
+
+                if (core_header)
+                {
+                    /* Convert the color table (RGBQUAD to RGBTRIPLE) */		    
+                    RGBQUAD* buffer = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD));
+
+                    if (buffer)
+                    {
+                        RGBTRIPLE* index = rgbTriples;
+                        GetDIBColorTable(memdc, 0, colors, buffer);
+
+                        for (i=0; i < colors; i++, index++)
+                        {
+                            index->rgbtRed   = buffer[i].rgbRed;
+                            index->rgbtGreen = buffer[i].rgbGreen;
+                            index->rgbtBlue  = buffer[i].rgbBlue;
+                        }
+
+                        HeapFree(GetProcessHeap(), 0, buffer);
+                    }
+                }
+                else
+                {
+                    GetDIBColorTable(memdc, 0, colors, colorPtr);
+                }
                 SelectObject(memdc, oldbm);
             }
             else {
-                WORD *index = (WORD*)info->bmiColors;
-                int i;
+                WORD *index = colorPtr;
                 for(i = 0; i < 1 << info->bmiHeader.biBitCount; i++, index++)
                     *index = i;
             }
-	}
+        }
         else {
-            if(info->bmiHeader.biBitCount >= bmp->bitmap.bmBitsPixel) {
+            if(bpp >= bmp->bitmap.bmBitsPixel) {
                 /* Generate the color map from the selected palette */
                 PALETTEENTRY * palEntry;
                 PALETTEOBJ * palette;
@@ -467,48 +612,93 @@ INT WINAPI GetDIBits(
                 palEntry = palette->logpalette.palPalEntry;
                 for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++, palEntry++) {
                     if (coloruse == DIB_RGB_COLORS) {
-                        info->bmiColors[i].rgbRed      = palEntry->peRed;
-                        info->bmiColors[i].rgbGreen    = palEntry->peGreen;
-                        info->bmiColors[i].rgbBlue     = palEntry->peBlue;
-                        info->bmiColors[i].rgbReserved = 0;
+                        if (core_header)
+                        {
+                            rgbTriples[i].rgbtRed   = palEntry->peRed;
+                            rgbTriples[i].rgbtGreen = palEntry->peGreen;
+                            rgbTriples[i].rgbtBlue  = palEntry->peBlue;
+                        }
+                        else
+                        {
+                            rgbQuads[i].rgbRed      = palEntry->peRed;
+                            rgbQuads[i].rgbGreen    = palEntry->peGreen;
+                            rgbQuads[i].rgbBlue     = palEntry->peBlue;
+                            rgbQuads[i].rgbReserved = 0;
+                        }
                     }
-                    else ((WORD *)info->bmiColors)[i] = (WORD)i;
+                    else ((WORD *)colorPtr)[i] = (WORD)i;
                 }
                 GDI_ReleaseObj( dc->hPalette );
             } else {
-                switch (info->bmiHeader.biBitCount) {
+                switch (bpp) {
                 case 1:
-                    info->bmiColors[0].rgbRed = info->bmiColors[0].rgbGreen =
-                        info->bmiColors[0].rgbBlue = 0;
-                    info->bmiColors[0].rgbReserved = 0;
-                    info->bmiColors[1].rgbRed = info->bmiColors[1].rgbGreen =
-                        info->bmiColors[1].rgbBlue = 0xff;
-                    info->bmiColors[1].rgbReserved = 0;
+                    if (core_header)
+                    {
+                        rgbTriples[0].rgbtRed = rgbTriples[0].rgbtGreen =
+                            rgbTriples[0].rgbtBlue = 0;
+                        rgbTriples[1].rgbtRed = rgbTriples[1].rgbtGreen =
+                            rgbTriples[1].rgbtBlue = 0xff;
+                    }
+                    else
+                    {    
+                        rgbQuads[0].rgbRed = rgbQuads[0].rgbGreen =
+                            rgbQuads[0].rgbBlue = 0;
+                        rgbQuads[0].rgbReserved = 0;
+                        rgbQuads[1].rgbRed = rgbQuads[1].rgbGreen =
+                            rgbQuads[1].rgbBlue = 0xff;
+                        rgbQuads[1].rgbReserved = 0;
+                    }
                     break;
 
                 case 4:
-                    memcpy(info->bmiColors, EGAColors, sizeof(EGAColors));
+                    if (core_header)
+                        memcpy(colorPtr, EGAColorsTriples, sizeof(EGAColorsTriples));
+                    else
+                        memcpy(colorPtr, EGAColorsQuads, sizeof(EGAColorsQuads));
+
                     break;
 
                 case 8:
                     {
-                        INT r, g, b;
-                        RGBQUAD *color;
+                        if (core_header)
+                        {
+                            INT r, g, b;
+                            RGBTRIPLE *color;
 
-                        memcpy(info->bmiColors, DefLogPalette,
-                               10 * sizeof(RGBQUAD));
-                        memcpy(info->bmiColors + 246, DefLogPalette + 10,
-                               10 * sizeof(RGBQUAD));
-                        color = info->bmiColors + 10;
-                        for(r = 0; r <= 5; r++) /* FIXME */
-                            for(g = 0; g <= 5; g++)
-                                for(b = 0; b <= 5; b++) {
-                                    color->rgbRed =   (r * 0xff) / 5;
-                                    color->rgbGreen = (g * 0xff) / 5;
-                                    color->rgbBlue =  (b * 0xff) / 5;
-                                    color->rgbReserved = 0;
-                                    color++;
-                                }
+                            memcpy(rgbTriples, DefLogPaletteTriples,
+                                       10 * sizeof(RGBTRIPLE));
+                            memcpy(rgbTriples + 246, DefLogPaletteTriples + 10,
+                                       10 * sizeof(RGBTRIPLE));
+                            color = rgbTriples + 10;
+                            for(r = 0; r <= 5; r++) /* FIXME */
+                                for(g = 0; g <= 5; g++)
+                                    for(b = 0; b <= 5; b++) {
+                                        color->rgbtRed =   (r * 0xff) / 5;
+                                        color->rgbtGreen = (g * 0xff) / 5;
+                                        color->rgbtBlue =  (b * 0xff) / 5;
+                                        color++;
+                                    }
+                        }
+                        else
+                        {
+                            INT r, g, b;
+                            RGBQUAD *color;
+
+                            memcpy(rgbQuads, DefLogPaletteQuads,
+                                       10 * sizeof(RGBQUAD));
+                            memcpy(rgbQuads + 246, DefLogPaletteQuads + 10,
+                                   10 * sizeof(RGBQUAD));
+                            color = rgbQuads + 10;
+                            for(r = 0; r <= 5; r++) /* FIXME */
+                                for(g = 0; g <= 5; g++)
+                                    for(b = 0; b <= 5; b++) {
+                                        color->rgbRed =   (r * 0xff) / 5;
+                                        color->rgbGreen = (g * 0xff) / 5;
+                                        color->rgbBlue =  (b * 0xff) / 5;
+                                        color->rgbReserved = 0;
+                                        color++;
+                                    }
+                        }
                     }
                 }
             }
@@ -518,22 +708,22 @@ INT WINAPI GetDIBits(
     if (bits && lines)
     {
         /* If the bitmap object already have a dib section that contains image data, get the bits from it */
-        if(bmp->dib && bmp->dib->dsBm.bmBitsPixel >= 15 && info->bmiHeader.biBitCount >= 15)
+        if(bmp->dib && bmp->dib->dsBm.bmBitsPixel >= 15 && bpp >= 15)
         {
             /*FIXME: Only RGB dibs supported for now */
             unsigned int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
-            unsigned int dstwidth = info->bmiHeader.biWidth;
-            int dstwidthb = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+            unsigned int dstwidth = width;
+            int dstwidthb = DIB_GetDIBWidthBytes( width, bpp );
             LPBYTE dbits = bits, sbits = (LPBYTE) bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
             unsigned int x, y, width, widthb;
 
-            if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
+            if ((height < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
             {
                 dbits = (LPBYTE)bits + (dstwidthb * (lines-1));
                 dstwidthb = -dstwidthb;
             }
 
-            switch( info->bmiHeader.biBitCount ) {
+            switch( bpp ) {
 
 	    case 15:
             case 16: /* 16 bpp dstDIB */
@@ -734,35 +924,41 @@ INT WINAPI GetDIBits(
             }
         }
     }
-    else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) )
+    else
     {
 	/* fill in struct members */
 
-        if( info->bmiHeader.biBitCount == 0)
-	{
-	    info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
-	    info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
-	    info->bmiHeader.biPlanes = 1;
-	    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-	    info->bmiHeader.biSizeImage =
-                             DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
-						   bmp->bitmap.bmHeight,
-						   bmp->bitmap.bmBitsPixel );
-	    info->bmiHeader.biCompression = 0;
-	}
-	else
-	{
-	    info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
-					       info->bmiHeader.biWidth,
-					       info->bmiHeader.biHeight,
-					       info->bmiHeader.biBitCount );
-	}
-	lines = info->bmiHeader.biHeight;
+        if (bpp == 0)
+        {
+            if (core_header)
+            {
+                BITMAPCOREHEADER* coreheader = (BITMAPCOREHEADER*) info;
+                coreheader->bcWidth = bmp->bitmap.bmWidth;
+                coreheader->bcHeight = bmp->bitmap.bmHeight;
+                coreheader->bcPlanes = 1;
+                coreheader->bcBitCount = bmp->bitmap.bmBitsPixel;
+            }
+            else
+            {
+                info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
+                info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
+                info->bmiHeader.biPlanes = 1;
+                info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+                info->bmiHeader.biSizeImage =
+                                 DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
+                                                       bmp->bitmap.bmHeight,
+                                                       bmp->bitmap.bmBitsPixel );
+                info->bmiHeader.biCompression = 0;
+            }
+            lines = abs(bmp->bitmap.bmHeight);
+        }
     }
 
-    TRACE("biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
-	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
-	  info->bmiHeader.biHeight);
+    if (!core_header)
+    {
+        TRACE("biSizeImage = %ld, ", info->bmiHeader.biSizeImage);
+    }
+    TRACE("biWidth = %ld, biHeight = %ld\n", width, height);
 
     GDI_ReleaseObj( hdc );
     GDI_ReleaseObj( hbitmap );
@@ -841,15 +1037,33 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
         if (bmp && bmp->dib && bits32)
         {
             const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
-            INT height = bi->biHeight >= 0 ? bi->biHeight : -bi->biHeight;
-            INT width_bytes = DIB_GetDIBWidthBytes(bi->biWidth, bi->biBitCount);
-            INT size  = (bi->biSizeImage && bi->biCompression != BI_RGB) ?
-                         bi->biSizeImage : width_bytes * height;
+            LONG width, height;
+            WORD bpp;
+            DWORD compr;
+            BOOL core_header;
+            INT width_bytes;
+            INT size;
+            WORD count, sel;
+            int i;
+
+            core_header = (DIB_GetBitmapInfo(bi, &width, &height, &bpp, &compr) == 0);
+
+            height = height >= 0 ? height : -height;
+            width_bytes = DIB_GetDIBWidthBytes(width, bpp);
+            
+            if (core_header)
+            {
+                size = width_bytes * height;
+            }
+            else
+            {
+                size = (bi->biSizeImage && compr != BI_RGB) ?
+                        bi->biSizeImage : width_bytes * height;
+            }
 
             /* calculate number of sel's needed for size with 64K steps */
-            WORD count = (size + 0xffff) / 0x10000;
-            WORD sel = AllocSelectorArray16(count);
-            int i;
+            count = (size + 0xffff) / 0x10000;
+            sel = AllocSelectorArray16(count);
 
             for (i = 0; i < count; i++)
             {

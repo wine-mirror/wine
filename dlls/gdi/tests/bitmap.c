@@ -160,7 +160,11 @@ static void test_dibsections(void)
     HDC hdc, hdcmem, hdcmem2;
     HBITMAP hdib, oldbm, hdib2, oldbm2;
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    char bcibuf[sizeof(BITMAPCOREINFO) + 256 * sizeof(RGBTRIPLE)];
     BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
+    BITMAPCOREINFO *pbci = (BITMAPCOREINFO *)bcibuf;
+    HBITMAP hcoredib;
+    char coreBits[256];
     BYTE *bits;
     RGBQUAD rgb[256];
     int ret;
@@ -187,6 +191,37 @@ static void test_dibsections(void)
 
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+
+    /* Test if the old BITMAPCOREINFO structure is supported */    
+        
+    pbci->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
+    pbci->bmciHeader.bcBitCount = 0;
+
+    ret = GetDIBits(hdc, hdib, 0, 16, NULL, (BITMAPINFO*) pbci, DIB_RGB_COLORS);    
+    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+    ok((pbci->bmciHeader.bcWidth == 16) && (pbci->bmciHeader.bcHeight == 16)
+        && (pbci->bmciHeader.bcBitCount == 1) && (pbci->bmciHeader.bcPlanes == 1),
+	"GetDIBits did't fill in the BITMAPCOREHEADER structure properly\n");
+
+    ret = GetDIBits(hdc, hdib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
+    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+    ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
+       (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
+       (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
+       "The color table has not been translated to the old BITMAPCOREINFO format\n");
+
+    hcoredib = CreateDIBSection(hdc, (BITMAPINFO*) pbci, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hcoredib != NULL, "CreateDIBSection failed with a BITMAPCOREINFO\n");
+
+    ZeroMemory(pbci->bmciColors, 256 * sizeof(RGBTRIPLE));
+    ret = GetDIBits(hdc, hcoredib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
+    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+    ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
+       (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
+       (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
+       "The color table has not been translated to the old BITMAPCOREINFO format\n");    
+
+    DeleteObject(hcoredib);
 
     hdcmem = CreateCompatibleDC(hdc);
     oldbm = SelectObject(hdcmem, hdib);

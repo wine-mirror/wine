@@ -83,6 +83,12 @@ enum Rle_EscapeCodes
   RLE_DELTA = 2  /* Delta */
 };
 
+
+/* 
+  Some of the following helper functions are duplicated in
+  dlls/gdi/dib.c
+*/
+
 /***********************************************************************
  *           X11DRV_DIB_GetXImageWidthBytes
  *
@@ -140,13 +146,24 @@ static int X11DRV_DIB_GetDIBWidthBytes( int width, int depth )
 
 
 /***********************************************************************
+ *           X11DRV_DIB_GetDIBImageBytes
+ *
+ * Return the number of bytes used to hold the image in a DIB bitmap.
+ */
+static int X11DRV_DIB_GetDIBImageBytes( int width, int height, int depth )
+{
+    return X11DRV_DIB_GetDIBWidthBytes( width, depth ) * abs( height );
+}
+
+
+/***********************************************************************
  *           X11DRV_DIB_BitmapInfoSize
  *
  * Return the size of the bitmap info structure including color table.
  */
 int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
 {
-    int colors;
+    unsigned int colors;
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
@@ -187,33 +204,54 @@ XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth )
 
 
 /***********************************************************************
- *           DIB_GetBitmapInfo
+ *           DIB_GetBitmapInfoEx
  *
  * Get the info from a bitmap header.
  * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
  */
-static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
-                              int *height, WORD *bpp, WORD *compr )
+static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
+                                LONG *height, WORD *planes, WORD *bpp,
+                                WORD *compr, DWORD *size )
 {
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
         BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
         *width  = core->bcWidth;
         *height = core->bcHeight;
+        *planes = core->bcPlanes;
         *bpp    = core->bcBitCount;
         *compr  = 0;
+        *size   = 0;
         return 0;
     }
     if (header->biSize >= sizeof(BITMAPINFOHEADER))
     {
         *width  = header->biWidth;
         *height = header->biHeight;
+        *planes = header->biPlanes;
         *bpp    = header->biBitCount;
         *compr  = header->biCompression;
+        *size   = header->biSizeImage;
         return 1;
     }
     ERR("(%ld): unknown/wrong size for header\n", header->biSize );
     return -1;
+}
+
+
+/***********************************************************************
+ *           DIB_GetBitmapInfo
+ *
+ * Get the info from a bitmap header.
+ * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
+ */
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
+                              LONG *height, WORD *bpp, WORD *compr )
+{
+    WORD planes;
+    DWORD size;
+    
+    return DIB_GetBitmapInfoEx( header, width, height, &planes, bpp, compr, &size);    
 }
 
 
@@ -285,23 +323,24 @@ int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
 int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
                                const BITMAPINFO *info, int *nColors )
 {
-    int colors;
+    unsigned int colors;
     BOOL isInfo;
     const void *colorPtr;
     int *colorMapping;
 
-    if ((isInfo = (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))))
+    isInfo = info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER);
+
+    if (isInfo)
     {
-        /* assume BITMAPINFOHEADER */
         colors = info->bmiHeader.biClrUsed;
         if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-        colorPtr = info->bmiColors;
     }
-    else  /* BITMAPCOREHEADER */
+    else
     {
         colors = 1 << ((BITMAPCOREHEADER *)info)->bcBitCount;
-        colorPtr = (WORD *)((BITMAPCOREINFO *)info)->bmciColors;
     }
+
+    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
     if (colors > 256)
     {
@@ -333,10 +372,19 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
                                             const BITMAPINFO *info )
 {
     RGBQUAD *colorTable;
-    int colors, i;
+    unsigned int colors;
+    int i;
+    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
 
-    colors = info->bmiHeader.biClrUsed;
-    if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+    if (core_info)
+    {
+        colors = 1 << ((BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
+    }
+    else
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+    }
 
     if (colors > 256) {
         ERR("called with >256 colors!\n");
@@ -347,14 +395,33 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
 	return NULL;
 
     if(coloruse == DIB_RGB_COLORS)
-        memcpy(colorTable, info->bmiColors, colors * sizeof(RGBQUAD));
-    else {
+    {
+        if (core_info)
+        {
+           /* Convert RGBTRIPLEs to RGBQUADs */
+           for (i=0; i < colors; i++)
+           {
+               colorTable[i].rgbRed   = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
+               colorTable[i].rgbGreen = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
+               colorTable[i].rgbBlue  = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
+               colorTable[i].rgbReserved = 0;
+           }
+        }
+        else
+        {
+            memcpy(colorTable, (LPBYTE) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
+        }
+    }
+    else
+    {
         HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
         PALETTEENTRY pal_ents[256];
-        WORD *index;
+        WORD *index = (WORD*) ((LPBYTE) info + (WORD) info->bmiHeader.biSize);
 
         GetPaletteEntries(hpal, 0, 256, pal_ents);
-        for(i = 0, index = (WORD*)info->bmiColors; i < colors; i++, index++) {
+
+        for(i = 0; i < colors; i++, index++)
+        {
             colorTable[i].rgbRed = pal_ents[*index].peRed;
             colorTable[i].rgbGreen = pal_ents[*index].peGreen;
             colorTable[i].rgbBlue = pal_ents[*index].peBlue;
@@ -370,7 +437,7 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
  */
 int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys, int oldcol )
 {
-    int color;
+    unsigned int color;
 
     if ((oldcol < nPhysMap) && (physMap[oldcol] == phys))
         return oldcol;
@@ -3626,15 +3693,16 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 				const BITMAPINFO *info, UINT coloruse )
 {
     X11DRV_DIB_IMAGEBITS_DESCR descr;
-    DWORD width;
     INT result;
-    int height;
+    LONG width, height;
     BOOL top_down;
     POINT pt;
+    void* colorPtr;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
         return 0;
+
     top_down = (height < 0);
     if (top_down) height = -height;
 
@@ -3685,6 +3753,8 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
     wine_tsx11_unlock();
 
+    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+
     switch (descr.infoBpp)
     {
        case 1:
@@ -3698,17 +3768,17 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
     }
@@ -3750,8 +3820,9 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
 {
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   BITMAPOBJ *bmp;
-  int height, tmpheight;
+  LONG height, tmpheight;
   INT result;
+  void* colorPtr;
 
   descr.physDev = physDev;
 
@@ -3767,6 +3838,8 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
   if (startscan + lines > height) lines = height - startscan;
+
+  colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
   switch (descr.infoBpp)
   {
@@ -3786,17 +3859,17 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
 
@@ -3839,21 +3912,35 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   PALETTEENTRY palette[256];
   BITMAPOBJ *bmp;
   int height;
+  LONG tempHeight;
+  int bitmap_type;
+  BOOL core_header;
+  void* colorPtr;
 
   GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
 
   if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
   dib = (X11DRV_DIBSECTION *) bmp->dib;
+  
+  bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &descr.infoWidth, &tempHeight, &descr.infoBpp, &descr.compression);
+  descr.lines = tempHeight;
+  if (bitmap_type == -1)
+  {
+      ERR("Invalid bitmap\n");
+      lines = 0;
+      goto done;
+  }
+  core_header = (bitmap_type == 0);
+  colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
   TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
 	lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	(int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
-        startscan );
+	(int)descr.infoWidth, descr.lines, startscan);
 
   if( lines > bmp->bitmap.bmHeight ) lines = bmp->bitmap.bmHeight;
 
-  height = info->bmiHeader.biHeight;
+  height = descr.lines;
   if (height < 0) height = -height;
   if( lines > height ) lines = height;
   /* Top-down images have a negative biHeight, the scanlines of theses images
@@ -3862,16 +3949,9 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
    * (the number of scan lines to copy).
    * Negative lines are correctly handled by X11DRV_DIB_GetImageBits_xx.
    */
-  if( info->bmiHeader.biHeight < 0 && lines > 0) lines = -lines;
+  if( descr.lines < 0 && lines > 0) lines = -lines;
 
   if( startscan >= bmp->bitmap.bmHeight )
-  {
-      lines = 0;
-      goto done;
-  }
-
-  if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &descr.lines,
-                        &descr.infoBpp, &descr.compression ) == -1)
   {
       lines = 0;
       goto done;
@@ -3886,12 +3966,12 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
       case 8:
           descr.rMask= descr.gMask = descr.bMask = 0;
           if(coloruse == DIB_RGB_COLORS)
-              descr.colorMap = info->bmiColors;
+              descr.colorMap = colorPtr;
           else {
               int num_colors = 1 << descr.infoBpp, i;
               RGBQUAD *rgb;
               COLORREF colref;
-              WORD *index = (WORD*)info->bmiColors;
+              WORD *index = (WORD*)colorPtr;
               descr.colorMap = rgb = HeapAlloc(GetProcessHeap(), 0, num_colors * sizeof(RGBQUAD));
               for(i = 0; i < num_colors; i++, rgb++, index++) {
                   colref = X11DRV_PALETTE_ToLogical(X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));
@@ -3904,15 +3984,15 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
           break;
       case 15:
       case 16:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x03e0;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x001f;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
           break;
       case 24:
       case 32:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0xff0000;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x00ff00;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x0000ff;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
           break;
   }
 
@@ -3929,7 +4009,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.xDest     = 0;
   descr.yDest     = 0;
   descr.xSrc      = 0;
-  descr.sizeImage = info->bmiHeader.biSizeImage;
+  descr.sizeImage = core_header ? 0 : info->bmiHeader.biSizeImage;
 
   if (descr.lines > 0)
   {
@@ -3951,25 +4031,25 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   X11DRV_DIB_GetImageBits( &descr );
   X11DRV_DIB_Unlock(bmp, TRUE);
 
-  if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-      info->bmiHeader.biSizeImage = X11DRV_DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
-                                                                 info->bmiHeader.biBitCount )
-                                    * abs( info->bmiHeader.biHeight );
+  if(!core_header && info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
+      info->bmiHeader.biSizeImage = X11DRV_DIB_GetDIBImageBytes( descr.infoWidth,
+                                                                 descr.lines,
+                                                                 descr.infoBpp);
 
   if (descr.compression == BI_BITFIELDS)
   {
-    *(DWORD *)info->bmiColors = descr.rMask;
-    *((DWORD *)info->bmiColors+1) = descr.gMask;
-    *((DWORD *)info->bmiColors+2) = descr.bMask;
+    *(DWORD *) colorPtr      = descr.rMask;
+    *((DWORD *)colorPtr + 1) = descr.gMask;
+    *((DWORD *)colorPtr + 2) = descr.bMask;
   }
-  else
+  else if (!core_header)
   {
     /* if RLE or JPEG compression were supported,
      * this line would be invalid. */
     info->bmiHeader.biCompression = 0;
   }
 
-  if(descr.colorMap && descr.colorMap != info->bmiColors)
+  if(descr.colorMap && descr.colorMap != colorPtr)
       HeapFree(GetProcessHeap(), 0, descr.colorMap);
 done:
   GDI_ReleaseObj( hbitmap );
@@ -4014,7 +4094,7 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   int identity[2] = {0,1};
 
-  if (DIB_GetBitmapInfo( &dib->dibSection.dsBmih, &descr.infoWidth, &descr.lines,
+  if (DIB_GetBitmapInfo( &dib->dibSection.dsBmih, &descr.infoWidth, (DWORD*) &descr.lines,
 			 &descr.infoBpp, &descr.compression ) == -1)
     return;
 
@@ -4596,29 +4676,43 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   int nColorMap;
   RGBQUAD *colorTable = NULL;
 
-  /* Fill BITMAP32 structure with DIB data */
-  const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+  /* Fill BITMAP structure with DIB data */
   INT effHeight, totalSize;
   BITMAP bm;
   LPVOID mapBits = NULL;
 
-  TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
-	bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
-	bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+  int bitmap_type;
+  BOOL core_header;
+  LONG width, height;
+  WORD planes, bpp, compression;
+  DWORD sizeImage;
+  void* colorPtr;
 
-  effHeight = bi->biHeight >= 0 ? bi->biHeight : -bi->biHeight;
+  if (((bitmap_type = DIB_GetBitmapInfoEx((BITMAPINFOHEADER*) bmi,
+        &width, &height, &planes, &bpp, &compression, &sizeImage)) == -1))
+  {
+      ERR("Invalid bitmap\n");
+      return 0;
+  }
+  core_header = (bitmap_type == 0);
+  
+  TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, %s\n",
+        width, height, planes, bpp, 
+        sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+
+  effHeight = height >= 0 ? height : -height;
   bm.bmType = 0;
-  bm.bmWidth = bi->biWidth;
+  bm.bmWidth = width;
   bm.bmHeight = effHeight;
-  bm.bmWidthBytes = ovr_pitch ? ovr_pitch : X11DRV_DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
-  bm.bmPlanes = bi->biPlanes;
-  bm.bmBitsPixel = bi->biBitCount;
+  bm.bmWidthBytes = ovr_pitch ? ovr_pitch : X11DRV_DIB_GetDIBWidthBytes(bm.bmWidth, bpp);
+  bm.bmPlanes = planes;
+  bm.bmBitsPixel = bpp;
   bm.bmBits = NULL;
 
-  /* Get storage location for DIB bits.  Only use biSizeImage if it's valid and
+  /* Get storage location for DIB bits.  Only use sizeImage if it's valid and
      we're dealing with a compressed bitmap.  Otherwise, use width * height. */
-  if (bi->biSizeImage && (bi->biCompression == BI_RLE4 || bi->biCompression == BI_RLE8))
-      totalSize = bi->biSizeImage;
+  if (sizeImage && (compression == BI_RLE4 || compression == BI_RLE8))
+      totalSize = sizeImage;
   else
       totalSize = bm.bmWidthBytes * effHeight;
 
@@ -4658,28 +4752,47 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   if (dib)
     {
       dib->dibSection.dsBm = bm;
-      dib->dibSection.dsBmih = *bi;
+
+      if (core_header)
+      {
+          /* Convert the BITMAPCOREHEADER to a BITMAPINFOHEADER.
+             The structure is already filled with zeros */
+          dib->dibSection.dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+          dib->dibSection.dsBmih.biWidth = width;
+          dib->dibSection.dsBmih.biHeight = height;
+          dib->dibSection.dsBmih.biPlanes = planes;
+          dib->dibSection.dsBmih.biBitCount = bpp;
+          dib->dibSection.dsBmih.biCompression = compression;
+      }
+      else
+      {
+          /* Truncate extended bitmap headers (BITMAPV4HEADER etc.) */
+          dib->dibSection.dsBmih = *((BITMAPINFOHEADER*) bmi);
+          dib->dibSection.dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+      }
+
       dib->dibSection.dsBmih.biSizeImage = totalSize;
+      colorPtr = (LPBYTE) bmi + (WORD) bmi->bmiHeader.biSize;
 
       /* Set dsBitfields values */
-       if ( usage == DIB_PAL_COLORS || bi->biBitCount <= 8)
+       if ( usage == DIB_PAL_COLORS || bpp <= 8)
        {
            dib->dibSection.dsBitfields[0] = dib->dibSection.dsBitfields[1] = dib->dibSection.dsBitfields[2] = 0;
        }
-       else switch( bi->biBitCount )
+       else switch( bpp )
        {
            case 15:
            case 16:
-               dib->dibSection.dsBitfields[0] = (bi->biCompression == BI_BITFIELDS) ? *(DWORD *)bmi->bmiColors : 0x7c00;
-               dib->dibSection.dsBitfields[1] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 1) : 0x03e0;
-               dib->dibSection.dsBitfields[2] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 2) : 0x001f;
+               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
+               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
+               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
                break;
 
            case 24:
            case 32:
-               dib->dibSection.dsBitfields[0] = (bi->biCompression == BI_BITFIELDS) ? *(DWORD *)bmi->bmiColors       : 0xff0000;
-               dib->dibSection.dsBitfields[1] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 1) : 0x00ff00;
-               dib->dibSection.dsBitfields[2] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 2) : 0x0000ff;
+               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
+               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
+               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
                break;
        }
       dib->dibSection.dshSection = section;
@@ -4694,8 +4807,8 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Create Device Dependent Bitmap and add DIB pointer */
   if (dib)
     {
-      int depth = (bi->biBitCount == 1) ? 1 : GetDeviceCaps(physDev->hdc, BITSPIXEL);
-      res = CreateBitmap(bi->biWidth, effHeight, 1, depth, NULL);
+      int depth = (bpp == 1) ? 1 : GetDeviceCaps(physDev->hdc, BITSPIXEL);
+      res = CreateBitmap(width, effHeight, 1, depth, NULL);
 
       if (res)
 	{
