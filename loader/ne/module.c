@@ -1029,9 +1029,11 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
         startup.wShowWindow = ((UINT16 *)PTR_SEG_TO_LIN(params->showCmd))[1];
     }
 
+    SYSLEVEL_ReleaseWin16Lock();
     pdb = PROCESS_Create( pModule, new_cmd_line, env,
                           hInstance, hPrevInstance, 
                           NULL, NULL, TRUE, 0, &startup, &info );
+    SYSLEVEL_RestoreWin16Lock();
 
     CloseHandle( info.hThread );
     CloseHandle( info.hProcess );
