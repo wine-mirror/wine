@@ -33,7 +33,6 @@ while ($#ARGV >= 0)
     if ($arg eq "-h") { usage; }
     if ($arg eq "-q") { $ENV{WINETEST_DEBUG} = 0; next; }
     if ($arg eq "-v") { $ENV{WINETEST_DEBUG}++; next; }
-    if ($arg eq "-I") { $ENV{WINETEST_DEBUG} = 0; next; }
     if ($arg eq "-P") { $platform = shift @ARGV; next; }
     if ($arg eq "-I") { push @include_dirs, shift @ARGV; next; }
     if ($arg eq "-T")
