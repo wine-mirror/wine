@@ -315,6 +315,11 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
     init_ip = mz_header.e_ip;
     init_ss = load_seg+mz_header.e_ss;
     init_sp = mz_header.e_sp;
+    if (old_com){
+      /* .COM files exit with ret. Make sure they jump to psp start (=int 20) */
+      WORD* stack = PTR_REAL_TO_LIN(init_ss, init_sp);
+      *stack = 0;
+    }
 
     TRACE("entry point: %04x:%04x\n",init_cs,init_ip);
   }
