@@ -25,6 +25,7 @@
 
 #if defined(__GLIBC__)
 #include <pthread.h>
+#include <signal.h>
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"
@@ -35,6 +36,13 @@
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
  asm(".globl " PREFIX #alias "\n\t.set " PREFIX #alias "," PREFIX #orig)
+
+/* strong_alias does not work on external symbols (.o format limitation?),
+ * so for those, we need to use the pogo stick */
+#ifdef __i386__
+#define jump_alias(orig, alias) \
+ asm(".globl " PREFIX #alias "\n\t" PREFIX #alias ":\n\tjmp " PREFIX #orig)
+#endif
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
@@ -77,6 +85,25 @@ int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
   return 0;
 }
 strong_alias(__pthread_once, pthread_once);
+
+void __pthread_kill_other_threads_np(void)
+{
+  /* FIXME: this is supposed to be preparation for exec() */
+  P_OUTPUT("FIXME:pthread_kill_other_threads_np\n");
+}
+strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
+
+int __pthread_atfork(void (*prepare)(void),
+		     void (*parent)(void),
+		     void (*child)(void))
+{
+  P_OUTPUT("FIXME:pthread_atfork\n");
+  return 0;
+}
+strong_alias(__pthread_atfork, pthread_atfork);
+
+
+/***** MUTEXES *****/
 
 int __pthread_mutex_init(pthread_mutex_t *mutex,
                         const pthread_mutexattr_t *mutexattr)
@@ -154,14 +181,9 @@ int __pthread_mutex_destroy(pthread_mutex_t *mutex)
 }
 strong_alias(__pthread_mutex_destroy, pthread_mutex_destroy);
 
-int __pthread_atfork(void (*prepare)(void),
-		     void (*parent)(void),
-		     void (*child)(void))
-{
-  /* are we going to fork? nah */
-  return 0;
-}
-strong_alias(__pthread_atfork, pthread_atfork);
+
+/***** MUTEX ATTRIBUTES *****/
+/* just dummies, since critical sections are always recursive */
 
 int __pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
@@ -201,6 +223,9 @@ int __pthread_mutexattr_gettype(pthread_mutexattr_t *attr, int *kind)
 }
 strong_alias(__pthread_mutexattr_gettype, pthread_mutexattr_gettype);
 
+
+/***** THREAD-SPECIFIC VARIABLES (KEYS) *****/
+
 int __pthread_key_create(pthread_key_t *key, void (*destr_function)(void *))
 {
   static pthread_key_t keycnt = FIRST_KEY;
@@ -237,6 +262,10 @@ void *__pthread_getspecific(pthread_key_t key)
 }
 strong_alias(__pthread_getspecific, pthread_getspecific);
 
+
+/***** "EXCEPTION" FRAMES *****/
+/* not implemented right now */
+
 void _pthread_cleanup_push(struct _pthread_cleanup_buffer *buffer, void (*routine)(void *), void *arg)
 {
   ((wine_cleanup)buffer)->routine = routine;
@@ -258,6 +287,61 @@ void _pthread_cleanup_pop_restore(struct _pthread_cleanup_buffer *buffer, int ex
   _pthread_cleanup_pop(buffer, execute);
 }
 
+
+/***** CONDITIONS *****/
+/* not implemented right now */
+
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+{
+  P_OUTPUT("FIXME:pthread_cond_init\n");
+  return 0;
+}
+
+int pthread_cond_destroy(pthread_cond_t *cond)
+{
+  P_OUTPUT("FIXME:pthread_cond_destroy\n");
+  return 0;
+}
+
+int pthread_cond_signal(pthread_cond_t *cond)
+{
+  P_OUTPUT("FIXME:pthread_cond_signal\n");
+  return 0;
+}
+
+int pthread_cond_broadcast(pthread_cond_t *cond)
+{
+  P_OUTPUT("FIXME:pthread_cond_broadcast\n");
+  return 0;
+}
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+{
+  P_OUTPUT("FIXME:pthread_cond_wait\n");
+  return 0;
+}
+
+int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
+{
+  P_OUTPUT("FIXME:pthread_cond_timedwait\n");
+  return 0;
+}
+
+/**** CONDITION ATTRIBUTES *****/
+/* not implemented right now */
+
+int pthread_condattr_init(pthread_condattr_t *attr)
+{
+  return 0;
+}
+
+int pthread_condattr_destroy(pthread_condattr_t *attr)
+{
+  return 0;
+}
+
+/***** MISC *****/
+
 pthread_t pthread_self(void)
 {
   return (pthread_t)GetCurrentThreadId();
@@ -268,10 +352,27 @@ int pthread_equal(pthread_t thread1, pthread_t thread2)
   return (DWORD)thread1 == (DWORD)thread2;
 }
 
+void pthread_exit(void *retval)
+{
+  ExitThread((DWORD)retval);
+}
+
 int pthread_setcanceltype(int type, int *oldtype)
 {
   if (oldtype) *oldtype = PTHREAD_CANCEL_ASYNCHRONOUS;
   return 0;
 }
+
+/***** ANTI-OVERRIDES *****/
+/* pthreads tries to override these, point them back to libc */
+
+#ifdef jump_alias
+jump_alias(__sigaction, sigaction);
+#else
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+  return __sigaction(signum, act, oldact);
+}
+#endif
 
 #endif /* __GLIBC__ */
