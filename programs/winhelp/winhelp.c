@@ -37,7 +37,7 @@ static BOOL MacroTest = FALSE;
  *           WinMain
  */
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   LPCSTR opt_lang = "En";
   CHAR   lang[3];
@@ -77,10 +77,6 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 	  break;
 	}
     }
-
-#ifdef WINELIB
-  opt_lang = Languages[Options.language].name;
-#endif
 
   /* Find language specific string table */
   for (langnum = 0; langnum <= MAX_LANGUAGE_NUMBER; langnum++)

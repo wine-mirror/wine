@@ -170,10 +170,10 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
       if (hWorkDir)  LocalFree(hWorkDir);
       return(0);
     }
-  hmemcpy16(LocalLock(hName),     lpszName,     1 + lstrlen(lpszName));
-  hmemcpy16(LocalLock(hCmdLine),  lpszCmdLine,  1 + lstrlen(lpszCmdLine));
-  hmemcpy16(LocalLock(hIconFile), lpszIconFile, 1 + lstrlen(lpszIconFile));
-  hmemcpy16(LocalLock(hWorkDir),  lpszWorkDir,  1 + lstrlen(lpszWorkDir));
+  memcpy(LocalLock(hName),     lpszName,     1 + lstrlen(lpszName));
+  memcpy(LocalLock(hCmdLine),  lpszCmdLine,  1 + lstrlen(lpszCmdLine));
+  memcpy(LocalLock(hIconFile), lpszIconFile, 1 + lstrlen(lpszIconFile));
+  memcpy(LocalLock(hWorkDir),  lpszWorkDir,  1 + lstrlen(lpszWorkDir));
 
   group->hActiveProgram  = hProgram;
 

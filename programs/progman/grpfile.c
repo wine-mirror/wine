@@ -89,7 +89,7 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     INT *piSize)
 {
-  INT    len, size;
+  UINT    len, size;
   LPSTR  buffer;
   HLOCAL hBuffer, hNewBuffer;
   HFILE  file;
@@ -119,7 +119,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 
   _lclose(file);
 
-  if (len == HFILE_ERROR)
+  if (len == (UINT)HFILE_ERROR)
     {
       LocalFree(hBuffer);
       return FALSE;
@@ -563,7 +563,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
   PUT_SHORT(buffer, 30, 0x0000); /* unknown */
   PUT_SHORT(buffer, 32, NumProg);
 
-  if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 34)) return FALSE;
+  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 34)) return FALSE;
 
   /* Program table */
   CurrProg = Progs;
@@ -574,7 +574,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       PROGRAM *program = LocalLock(hProgram);
 
       PUT_SHORT(buffer, 0, CurrProg);
-      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2)) 
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2)) 
 	      return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -582,7 +582,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
     }
 
   /* Title */
-  if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle, 
+  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle, 
 					       lstrlen(lpszTitle) + 1))
     return FALSE;
 
@@ -616,10 +616,10 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       ptr += lstrlen(CmdLine) + 1;
       PUT_SHORT(buffer, 22, ptr);
 
-      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 24) ||
-	  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, lstrlen(Name) + 1) ||
-	  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, lstrlen(CmdLine) + 1) ||
-	  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 24) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, lstrlen(Name) + 1) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, lstrlen(CmdLine) + 1) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
 	return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -645,9 +645,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       buffer[10] = iconinfo->bPlanes;
       buffer[11] = iconinfo->bBitsPerPixel;
 
-      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 12) ||
-	  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, AndBits, sizeAnd) ||
-	  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, XorBits, sizeXor)) return FALSE;
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 12) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, AndBits, sizeAnd) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, XorBits, sizeXor)) return FALSE;
 
       hProgram = program->hNext;
     }
@@ -660,7 +660,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       PUT_SHORT(buffer, 4, 0x000a);
       buffer[6] = 'P', buffer[7] = 'M';
       buffer[8] = 'C', buffer[9] = 'C';
-      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10)) 
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10)) 
 	      return FALSE;
 
       seqnum = 0;
@@ -676,8 +676,8 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
 	      PUT_SHORT(buffer, 0, 0x8101);
 	      PUT_SHORT(buffer, 2, seqnum);
 	      PUT_SHORT(buffer, 4, 7 + lstrlen(lpszWorkDir));
-	      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6) ||
-		  HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
+	      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6) ||
+		  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
 		return FALSE;
 	    }
 
@@ -688,7 +688,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
 	      PUT_SHORT(buffer, 2, seqnum);
 	      PUT_SHORT(buffer, 4, 8);
 	      PUT_SHORT(buffer, 6, program->nHotKey);
-	      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+	      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
 	    }
 
 	  /* Show command */
@@ -698,7 +698,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
 	      PUT_SHORT(buffer, 2, seqnum);
 	      PUT_SHORT(buffer, 4, 8);
 	      PUT_SHORT(buffer, 6, program->nCmdShow);
-	      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+	      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
 	    }
 
 	  seqnum++;
@@ -709,7 +709,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       PUT_SHORT(buffer, 0, 0xffff);
       PUT_SHORT(buffer, 2, 0xffff);
       PUT_SHORT(buffer, 4, 0x0000);
-      if (HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6)) return FALSE;
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6)) return FALSE;
     }
 
   checksum = GRPFILE_GetChecksum();

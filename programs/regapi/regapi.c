@@ -142,7 +142,7 @@ static const BOOL commandSaveRegistry[COMMAND_COUNT] = {
 /* 
  * Generic prototyes
  */
-static HKEY    getDataType(LPSTR *lpValue);
+static DWORD   getDataType(LPSTR *lpValue);
 static LPSTR   getRegKeyName(LPSTR lpLine);
 static HKEY    getRegClass(LPSTR lpLine);
 static LPSTR   getArg(LPSTR arg);
@@ -231,10 +231,10 @@ static char helpText[] =
 
 /******************************************************************************
  * This function returns the HKEY associated with the data type encoded in the 
- * value.  It modify the input parameter (key value) in order to skip this 
+ * value.  It modifies the input parameter (key value) in order to skip this 
  * "now useless" data type information.
  */
-HKEY getDataType(LPSTR *lpValue) 
+DWORD getDataType(LPSTR *lpValue) 
 {
   INT   counter  = 0;
   DWORD dwReturn = REG_SZ;
@@ -285,7 +285,7 @@ LPSTR getRegKeyName(LPSTR lpLine)
 
 /******************************************************************************
  * Extracts from a [HKEY/some/key/path] type of line the key class (what 
- * starts after the '[' and end before the first '\'
+ * starts after the '[' and ends before the first '\'
  */
 static HKEY getRegClass(LPSTR lpClass) 
 {
@@ -295,7 +295,7 @@ static HKEY getRegClass(LPSTR lpClass)
   char  lpClassCopy[KEY_MAX_LEN];
   
   if (lpClass == NULL)
-    return ERROR_INVALID_PARAMETER;
+    return (HKEY)ERROR_INVALID_PARAMETER;
 
   strcpy(lpClassCopy, lpClass);
 
@@ -314,7 +314,7 @@ static HKEY getRegClass(LPSTR lpClass)
   else if (strcmp( classNameBeg, "HKEY_CURRENT_USER") == IDENTICAL )
     return  HKEY_CURRENT_USER;
   else
-    return ERROR_INVALID_PARAMETER;
+    return (HKEY)ERROR_INVALID_PARAMETER;
 }
 
 /******************************************************************************
@@ -593,8 +593,8 @@ static HRESULT openKey( LPSTR stdInput)
 
   /* Get the registry class */
   currentKeyClass = getRegClass(stdInput); /* Sets global variable */
-  if (currentKeyClass == ERROR_INVALID_PARAMETER)
-    return ERROR_INVALID_PARAMETER;
+  if (currentKeyClass == (HKEY)ERROR_INVALID_PARAMETER)
+    return (HRESULT)ERROR_INVALID_PARAMETER;
 
   /* Get the key name */
   currentKeyName = getRegKeyName(stdInput); /* Sets global variable */
@@ -1002,7 +1002,7 @@ static void doUnregisterDLL(LPSTR stdInput) {
  *        It then read the STDIN lines by lines forwarding their processing
  *        to the appropriate method.
  */
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
   LPSTR  token          = NULL;  /* current token analized */
   LPSTR  stdInput       = NULL;  /* line read from stdin */

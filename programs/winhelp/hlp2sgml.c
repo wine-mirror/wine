@@ -255,7 +255,7 @@ static FILE *file = 0;
 HFILE WINAPI OpenFile( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
   file = *path ? fopen(path, "r") : stdin;
-  return file ? 1 : HFILE_ERROR;
+  return file ? (HFILE)1 : HFILE_ERROR;
 }
 
 HFILE WINAPI _lclose( HFILE hFile )

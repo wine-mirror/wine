@@ -117,8 +117,8 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
       if (hGrpFile) LocalFree(hGrpFile);
       return(0);
     }
-  hmemcpy16(LocalLock(hName), lpszName, 1 + lstrlen(lpszName));
-  hmemcpy16(LocalLock(hGrpFile), lpszGrpFile, 1 + lstrlen(lpszGrpFile));
+  memcpy(LocalLock(hName), lpszName, 1 + lstrlen(lpszName));
+  memcpy(LocalLock(hGrpFile), lpszGrpFile, 1 + lstrlen(lpszGrpFile));
 
   Globals.hActiveGroup   = hGroup;
 
