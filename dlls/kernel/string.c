@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define WINE_NO_INLINE_STRING
 #include "windef.h"
 #include "winbase.h"
 #include "excpt.h"

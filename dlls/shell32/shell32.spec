@@ -252,13 +252,13 @@
  306 stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
  307 stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
  308 stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
- 309 stdcall StrCpyNA (ptr str long) lstrcpynA
+ 309 stdcall StrCpyNA (ptr str long) kernel32.lstrcpynA
  310 stdcall StrCpyNW(wstr wstr long) shlwapi.StrCpyNW
  311 stdcall StrNCmpA(str str long) shlwapi.StrCmpNA
  312 stdcall StrNCmpIA(str str long) shlwapi.StrCmpNIA
  313 stdcall StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
  314 stdcall StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
- 315 stdcall StrNCpyA (ptr str long) lstrcpynA
+ 315 stdcall StrNCpyA (ptr str long) kernel32.lstrcpynA
  316 stdcall StrNCpyW(wstr wstr long) shlwapi.StrCpyNW
  317 stdcall StrRChrA(str str long) shlwapi.StrRChrA
  318 stdcall StrRChrIA(str str long) shlwapi.StrRChrIA

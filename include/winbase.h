@@ -1966,18 +1966,96 @@ BOOL        WINAPI WriteProfileStringA(LPCSTR,LPCSTR,LPCSTR);
 BOOL        WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WriteProfileString WINELIB_NAME_AW(WriteProfileString)
 #define     Yield()
+
+#if defined(WINE_NO_INLINE_STRING) || !defined(__WINESRC__)
+
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
-#define     lstrcat WINELIB_NAME_AW(lstrcat)
 LPSTR       WINAPI lstrcpyA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcpyW(LPWSTR,LPCWSTR);
-#define     lstrcpy WINELIB_NAME_AW(lstrcpy)
 LPSTR       WINAPI lstrcpynA(LPSTR,LPCSTR,INT);
 LPWSTR      WINAPI lstrcpynW(LPWSTR,LPCWSTR,INT);
-#define     lstrcpyn WINELIB_NAME_AW(lstrcpyn)
 INT         WINAPI lstrlenA(LPCSTR);
 INT         WINAPI lstrlenW(LPCWSTR);
+
+#else /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
+
+/* string functions without the exception handler */
+
+extern inline LPWSTR lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+{
+    LPWSTR d = dst;
+    LPCWSTR s = src;
+    UINT count = n;
+
+    while ((count > 1) && *s)
+    {
+        count--;
+        *d++ = *s++;
+    }
+    if (count) *d = 0;
+    return dst;
+}
+
+extern inline LPSTR lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+{
+    LPSTR d = dst;
+    LPCSTR s = src;
+    UINT count = n;
+
+    while ((count > 1) && *s)
+    {
+        count--;
+        *d++ = *s++;
+    }
+    if (count) *d = 0;
+    return dst;
+}
+
+extern inline INT lstrlenW( LPCWSTR str )
+{
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+extern inline INT lstrlenA( LPCSTR str )
+{
+    return strlen( str );
+}
+
+extern inline LPWSTR lstrcpyW( LPWSTR dst, LPCWSTR src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return dst;
+}
+
+extern inline LPSTR lstrcpyA( LPSTR dst, LPCSTR src )
+{
+    return strcpy( dst, src );
+}
+
+extern inline LPWSTR lstrcatW( LPWSTR dst, LPCWSTR src )
+{
+    WCHAR *p = dst;
+    while (*p) p++;
+    while ((*p++ = *src++));
+    return dst;
+}
+
+extern inline LPSTR lstrcatA( LPSTR dst, LPCSTR src )
+{
+    return strcat( dst, src );
+}
+
+#endif /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
+
+#define     lstrcat WINELIB_NAME_AW(lstrcat)
+#define     lstrcpy WINELIB_NAME_AW(lstrcpy)
+#define     lstrcpyn WINELIB_NAME_AW(lstrcpyn)
 #define     lstrlen WINELIB_NAME_AW(lstrlen)
+
 LONG        WINAPI _hread(HFILE,LPVOID,LONG);
 LONG        WINAPI _hwrite(HFILE,LPCSTR,LONG);
 HFILE       WINAPI _lcreat(LPCSTR,INT);
