@@ -160,7 +160,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
     return 0;
   }
   xsize = GlobalSize16(HACCEL_16(src))/sizeof(ACCEL16);
-  if (xsize>entries) entries=xsize;
+  if (xsize<entries) entries=xsize;
 
   i=0;
   while(!done) {
@@ -171,15 +171,13 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
     /* Copy data to the destination structure array (if dst == NULL,
        we're just supposed to count the number of entries). */
     if(dst) {
-      dst[i].fVirt = accel[i].fVirt;
+      dst[i].fVirt = accel[i].fVirt&0x7f;
       dst[i].key = accel[i].key;
       dst[i].cmd = accel[i].cmd;
 
       /* Check if we've reached the end of the application supplied
          accelerator table. */
       if(i+1 == entries) {
-	/* Turn off the high order bit, just in case. */
-	dst[i].fVirt &= 0x7f;
 	done = TRUE;
       }
     }
@@ -308,6 +306,8 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
+    if( !handle )
+        return FALSE;
     return !GlobalFree16(HACCEL_16(handle));
 }
 
