@@ -3992,7 +3992,7 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
         }
         WIN_ReleaseWndPtr(wndPtr);
     }
-    return retvalue;
+    return bRevert ? 0 : retvalue;
 }
 
 
