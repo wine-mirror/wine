@@ -17,13 +17,13 @@ DEFAULT_DEBUG_CHANNEL(timer)
 typedef struct tagTIMER
 {
     HWND           hwnd;
-    HQUEUE16         hq;
-    UINT16           msg;  /* WM_TIMER or WM_SYSTIMER */
+    HQUEUE16       hq;
+    UINT16         msg;  /* WM_TIMER or WM_SYSTIMER */
     UINT           id;
     UINT           timeout;
-    struct tagTIMER *next;
-    DWORD            expires;  /* Next expiration, or 0 if already expired */
-    HWINDOWPROC      proc;
+    HANDLE         hService;
+    BOOL           expired;
+    HWINDOWPROC    proc;
 } TIMER;
 
 #define NB_TIMERS            34
@@ -31,13 +31,7 @@ typedef struct tagTIMER
 
 static TIMER TimersArray[NB_TIMERS];
 
-static TIMER * pNextTimer = NULL;  /* Next timer to expire */
-
 static CRITICAL_SECTION csTimer;
-
-  /* Duration from 'time' until expiration of the timer */
-#define EXPIRE_TIME(pTimer,time) \
-          (((pTimer)->expires <= (time)) ? 0 : (pTimer)->expires - (time))
 
 
 /***********************************************************************
@@ -55,61 +49,24 @@ BOOL TIMER_Init( void )
 
 
 /***********************************************************************
- *           TIMER_InsertTimer
- *
- * Insert the timer at its place in the chain.
- */
-static void TIMER_InsertTimer( TIMER * pTimer )
-{
-    EnterCriticalSection( &csTimer );
-    
-    if (!pNextTimer || (pTimer->expires < pNextTimer->expires))
-    {
-	pTimer->next = pNextTimer;
-	pNextTimer = pTimer;
-    }
-    else
-    {
-        TIMER * ptr = pNextTimer;	
-	while (ptr->next && (pTimer->expires >= ptr->next->expires))
-	    ptr = ptr->next;
-	pTimer->next = ptr->next;
-	ptr->next = pTimer;
-    }
-    
-    LeaveCriticalSection( &csTimer );
-}
-
-
-/***********************************************************************
- *           TIMER_RemoveTimer
- *
- * Remove the timer from the chain.
- */
-static void TIMER_RemoveTimer( TIMER * pTimer )
-{
-    TIMER **ppTimer = &pNextTimer;
-
-    EnterCriticalSection( &csTimer );
-    
-    while (*ppTimer && (*ppTimer != pTimer)) ppTimer = &(*ppTimer)->next;
-    if (*ppTimer) *ppTimer = pTimer->next;
-    pTimer->next = NULL;
-    
-    LeaveCriticalSection( &csTimer );
-    
-    if (!pTimer->expires) QUEUE_DecTimerCount( pTimer->hq );
-}
-
-
-/***********************************************************************
  *           TIMER_ClearTimer
  *
  * Clear and remove a timer.
  */
 static void TIMER_ClearTimer( TIMER * pTimer )
 {
-    TIMER_RemoveTimer( pTimer );
+    if ( pTimer->hService != INVALID_HANDLE_VALUE ) 
+    {
+        SERVICE_Delete( pTimer->hService );
+        pTimer->hService = INVALID_HANDLE_VALUE;
+    }
+
+    if ( pTimer->expired ) 
+    {
+        QUEUE_DecTimerCount( pTimer->hq );
+        pTimer->expired = FALSE;
+    }
+
     pTimer->hwnd    = 0;
     pTimer->msg     = 0;
     pTimer->id      = 0;
@@ -159,77 +116,38 @@ void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
 
 
 /***********************************************************************
- *           TIMER_RestartTimers
- *
- * Restart an expired timer.
+ *           TIMER_CheckTimer
  */
-static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
+static void CALLBACK TIMER_CheckTimer( ULONG_PTR timer_ptr )
 {
-    TIMER_RemoveTimer( pTimer );
-    pTimer->expires = curTime + pTimer->timeout;
-    TIMER_InsertTimer( pTimer );
-}
-
-/***********************************************************************
- *           TIMER_CheckTimers
- *
- * Mark expired timers and wake the appropriate queues.
- */
-static void CALLBACK TIMER_CheckTimers( ULONG_PTR forceTimer )
-{
-    static HANDLE ServiceHandle  = INVALID_HANDLE_VALUE;
-    static LONG   ServiceTimeout = 0;
-
-    TIMER *pTimer;
-    DWORD curTime = GetTickCount();
+    TIMER *pTimer = (TIMER *)timer_ptr;
+    HQUEUE16 wakeQueue = 0;
 
     EnterCriticalSection( &csTimer );
 
-    TRACE(timer, "Called at %ld (%s)\n", curTime, forceTimer? "manual" : "auto" );
-    
-    pTimer = pNextTimer;
-    
-    while (pTimer && !pTimer->expires)  /* Skip already expired timers */
-        pTimer = pTimer->next;
-    while (pTimer && (pTimer->expires <= curTime))
+    /* Paranoid check to prevent a race condition ... */
+    if ( !pTimer->timeout )
     {
-        pTimer->expires = 0;
-        QUEUE_IncTimerCount( pTimer->hq );
-        pTimer = pTimer->next;
+        LeaveCriticalSection( &csTimer );
+        return;
     }
 
-    /* Install service callback with appropriate timeout, so that
-       we get called again once the next timer has expired */
-
-    if (pTimer)
+    if ( !pTimer->expired )
     {
-        LONG timeout = pTimer->expires - curTime;
+        TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
+                     pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
-        if ( forceTimer || timeout != ServiceTimeout )
-        {
-            if ( ServiceHandle != INVALID_HANDLE_VALUE ) 
-              SERVICE_Delete( ServiceHandle );
-
-            ServiceHandle = SERVICE_AddTimer( timeout * 1000L, 
-                                              TIMER_CheckTimers, FALSE );
-            ServiceTimeout = timeout;
-
-            TRACE(timer, "Installed service callback with timeout %ld\n", timeout );
-        }
+        pTimer->expired = TRUE;
+        wakeQueue = pTimer->hq;
     }
-    else
-    {
-        if ( ServiceHandle != INVALID_HANDLE_VALUE )
-        {
-            SERVICE_Delete( ServiceHandle );
-            ServiceHandle = INVALID_HANDLE_VALUE;
-            ServiceTimeout = 0;
 
-            TRACE(timer, "Deleted service callback\n" );
-        }
-    }
-    
     LeaveCriticalSection( &csTimer );
+
+    /* Note: This has to be done outside the csTimer critical section,
+             otherwise we'll get deadlocks. */
+
+    if ( wakeQueue )
+        QUEUE_IncTimerCount( wakeQueue );
 }
 
 
@@ -242,38 +160,33 @@ BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
                           HQUEUE16 hQueue, BOOL remove )
 {
     TIMER *pTimer;
-    DWORD curTime = GetTickCount();
+    int i;
 
     EnterCriticalSection( &csTimer );
 
-    pTimer = pNextTimer;
-    
-    if (hwnd)  /* Find first timer for this window */
-	while (pTimer && (pTimer->hwnd != hwnd)) pTimer = pTimer->next;
-    else   /* Find first timer for this queue */
-	while (pTimer && (pTimer->hq != hQueue)) pTimer = pTimer->next;
+    for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
+        if (    pTimer->timeout != 0 && pTimer->expired
+             && (hwnd? (pTimer->hwnd == hwnd) : (pTimer->hq == hQueue)) )
+            break;
 
-    if (!pTimer || (pTimer->expires > curTime))
+    if ( i == NB_TIMERS )
     {
         LeaveCriticalSection( &csTimer );
         return FALSE; /* No timer */
     }
     
-    TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
+    TRACE(timer, "Timer got message: %04x, %04x, %04x, %08lx\n", 
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
     if (remove)	
-    {
-        TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
-        TIMER_CheckTimers( TRUE );
-    }
+        pTimer->expired = FALSE;
 
       /* Build the message */
     msg->hwnd    = pTimer->hwnd;
     msg->message = pTimer->msg;
     msg->wParam  = pTimer->id;
     msg->lParam  = (LONG)pTimer->proc;
-    msg->time    = curTime;
+    msg->time    = GetTickCount();
 
     LeaveCriticalSection( &csTimer );
     
@@ -300,32 +213,25 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
         if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
             (pTimer->timeout != 0))
         {
-              /* Got one: set new values and return */
-            TIMER_RemoveTimer( pTimer );
-            pTimer->timeout = timeout;
-            WINPROC_FreeProc( pTimer->proc, WIN_PROC_TIMER );
-            pTimer->proc = (HWINDOWPROC)0;
-            if (proc) WINPROC_SetProc( &pTimer->proc, proc,
-                                       type, WIN_PROC_TIMER );
-            pTimer->expires = GetTickCount() + timeout;
-            TIMER_InsertTimer( pTimer );
-            TIMER_CheckTimers( TRUE );
-            LeaveCriticalSection( &csTimer );
-            return id;
+            TIMER_ClearTimer( pTimer );
+            break;
         }
 
-      /* Find a free timer */
-    
-    for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
-	if (!pTimer->timeout) break;
-
-    if ( (i >= NB_TIMERS) ||
-         (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) )
+    if ( i == NB_TIMERS )
     {
-        LeaveCriticalSection( &csTimer );
-        return 0;
-    }
+          /* Find a free timer */
     
+        for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
+            if (!pTimer->timeout) break;
+
+        if ( (i >= NB_TIMERS) ||
+             (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) )
+        {
+            LeaveCriticalSection( &csTimer );
+            return 0;
+        }
+    }
+
     if (!hwnd) id = i + 1;
     
       /* Add the timer */
@@ -336,15 +242,17 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
-    pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = (HWINDOWPROC)0;
     if (proc) WINPROC_SetProc( &pTimer->proc, proc, type, WIN_PROC_TIMER );
+
+    pTimer->expired  = FALSE;
+    pTimer->hService = SERVICE_AddTimer( timeout * 1000L, 
+                                         TIMER_CheckTimer, (ULONG_PTR)pTimer );
+
     TRACE(timer, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
-    TIMER_InsertTimer( pTimer );
-    TIMER_CheckTimers( TRUE );
-    
+
     LeaveCriticalSection( &csTimer );
     
     if (!id) return TRUE;
