@@ -611,7 +611,7 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 /*************************************************************************
  *           SHELL_Execute16 [Internal]
  */
-static UINT SHELL_Execute16(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
+static UINT SHELL_Execute16(char *lpCmd, void* env, LPSHELLEXECUTEINFOA sei, BOOL shWait)
 {
     UINT ret = WinExec16(lpCmd, sei->nShow);
     sei->hInstApp = HINSTANCE_32(ret);
