@@ -128,7 +128,20 @@ then
     if test "$ac_cv_header_X11_xpm_h" = "yes"
     then 
         AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11)
+    else
+    	echo "When compiling with X support, you need the Xpm library, or"
+	echo "WINE will not work. This Xpm library is within the following RPM,"
+	echo "which you need to install:"
+	echo "Redhat		:	xpm, xpm-devel"
+	echo "Caldera OpenLinux	:	xpm, xpm-devel, xpm-devel-static"
+	echo "SuSE:			xpm"
+	echo
+	echo "Or get the sources from ftp.x.org and all its mirror sites from "
+	echo "the directory /contrib/libraries."
+	echo
+	exit 1
     fi
+
 
     dnl Check for X Shm extension
     AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/XShm.h)
