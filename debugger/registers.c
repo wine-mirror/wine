@@ -4,6 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include "selectors.h"

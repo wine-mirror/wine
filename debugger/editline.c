@@ -33,7 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-typedef unsigned char	CHAR;
+#include "wintypes.h"
 
 /*
 **  Manifest constants.

@@ -135,7 +135,7 @@ typedef long long       __int64;
 
 /* Pointers types. These are the same for emulator and library. */
 /* winnt types */
-typedef void           *PVOID;
+typedef VOID           *PVOID;
 typedef const void     *PCVOID;
 typedef CHAR           *PCHAR;
 typedef UCHAR          *PUCHAR;

@@ -55,7 +55,6 @@
 #include "winsock.h"
 #include "winnt.h"
 #include "heap.h"
-#include "ldt.h"
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"

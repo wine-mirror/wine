@@ -5,12 +5,13 @@
  */
 
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <neexe.h>
+#include "neexe.h"
 #include "module.h"
 #include "process.h"
 #include "selectors.h"

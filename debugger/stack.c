@@ -5,6 +5,7 @@
  * Copyright 1996 Eric Youngdale
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "xmalloc.h"

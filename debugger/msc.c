@@ -14,6 +14,7 @@
  *	Add symbol size to internal symbol table.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -4,14 +4,14 @@
  * Copyright (C) 1997, Eric Youngdale.
  */
 #include <signal.h>
-
-#include <ldt.h>
+#include <X11/Xlib.h>
+#include "config.h"
+#include "ldt.h"
 #include "windows.h"
 #include "toolhelp.h"
 #include "module.h"
 #include "debugger.h"
 #include "class.h"
-#include <X11/Xlib.h>
 
 #include "debugger.h"
 #include "peexe.h"

@@ -6,6 +6,7 @@
  * Copyright 1995 Morten Welinder
  */
 
+#include "config.h"
 #include "ts_xlib.h"
 #include "x11drv.h"
 

@@ -7,6 +7,7 @@
  * upon which full support for datatype handling will eventually be hung.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 
