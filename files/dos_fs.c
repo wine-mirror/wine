@@ -705,13 +705,13 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 /**************************************************************************
  *         DOSFS_CreateCommPort
  */
-static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
+static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes)
 {
     HANDLE ret;
     char devname[40];
     size_t len;
 
-    TRACE("%s %lx\n", name, access);
+    TRACE_(file)("%s %lx %lx\n", name, access, attributes);
 
     PROFILE_GetWineIniString("serialports",name,"",devname,sizeof devname);
     if(!devname[0])
@@ -724,6 +724,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
     {
         req->access  = access;
         req->inherit = 0;  /*FIXME*/
+        req->attributes = attributes;
         req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
         memcpy( server_data_ptr(req), devname, len );
         SetLastError(0);
@@ -745,7 +746,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
  * Returns 0 on failure.
  */
-HANDLE DOSFS_OpenDevice( const char *name, DWORD access )
+HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes )
 {
     int i;
     const char *p;
@@ -790,7 +791,7 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access )
                     return FILE_CreateDevice( i, access, NULL );
 		}
 
-                if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access)) )
+                if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access,attributes)) )
                     return handle;
                 FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return 0;

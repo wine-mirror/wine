@@ -576,6 +576,7 @@ struct get_handle_fd_request
 #define FD_TYPE_DEFAULT    1
 #define FD_TYPE_CONSOLE    2
 #define FD_TYPE_OVERLAPPED 3
+#define FD_TYPE_TIMEOUT    4
 
 
 
@@ -1454,6 +1455,7 @@ struct create_serial_request
     struct request_header __header;
     unsigned int access;
     int          inherit;
+    unsigned int attributes;
     unsigned int sharing;
     /* VARARG(name,string); */
     handle_t     handle;
@@ -1917,6 +1919,6 @@ union generic_request
     struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 54
+#define SERVER_PROTOCOL_VERSION 55
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

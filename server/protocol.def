@@ -532,6 +532,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 #define FD_TYPE_DEFAULT    1
 #define FD_TYPE_CONSOLE    2
 #define FD_TYPE_OVERLAPPED 3
+#define FD_TYPE_TIMEOUT    4
 
 
 /* Set a file current position */
@@ -1299,6 +1300,7 @@ enum message_type
 @REQ(create_serial)
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
+    unsigned int attributes;   /* eg. FILE_FLAG_OVERLAPPED */
     unsigned int sharing;      /* sharing flags */
     VARARG(name,string);       /* file name */
 @REPLY

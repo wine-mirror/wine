@@ -44,6 +44,7 @@ struct serial
 {
     struct object       obj;
     unsigned int        access;
+    unsigned int        attrib;
 
     /* timeout values */
     unsigned int        readinterval;
@@ -78,7 +79,7 @@ static const struct object_ops serial_ops =
 
 /* SERIAL PORT functions */
 
-static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access )
+static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access, int attributes )
 {
     struct serial *serial;
     struct termios tios;
@@ -115,8 +116,14 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
         return NULL;
     }
 
+    /* set the fd back to blocking if necessary */
+    if( ! (attributes & FILE_FLAG_OVERLAPPED) )
+       if(0>fcntl(fd, F_SETFL, 0))
+           perror("fcntl");
+
     if ((serial = alloc_object( &serial_ops, fd )))
     {
+        serial->attrib       = attributes;
         serial->access       = access;
         serial->readinterval = 0;
         serial->readmult     = 0;
@@ -160,6 +167,9 @@ static int serial_get_fd( struct object *obj )
 
 static int serial_get_info( struct object *obj, struct get_file_info_request *req )
 {
+    struct serial *serial = (struct serial *) obj;
+    assert( obj->ops == &serial_ops );
+
     if (req)
     {
         req->type        = FILE_TYPE_CHAR;
@@ -173,7 +183,11 @@ static int serial_get_info( struct object *obj, struct get_file_info_request *re
         req->index_low   = 0;
         req->serial      = 0;
     }
-    return FD_TYPE_DEFAULT;
+
+    if(serial->attrib & FILE_FLAG_OVERLAPPED)
+        return FD_TYPE_OVERLAPPED;
+
+    return FD_TYPE_TIMEOUT;
 }
 
 /* these function calculates the timeout for an async operation
@@ -202,7 +216,7 @@ DECL_HANDLER(create_serial)
     struct serial *serial;
 
     req->handle = 0;
-    if ((serial = create_serial( get_req_data(req), get_req_data_size(req), req->access )))
+    if ((serial = create_serial( get_req_data(req), get_req_data_size(req), req->access, req->attributes )))
     {
         req->handle = alloc_handle( current->process, serial, req->access, req->inherit );
         release_object( serial );

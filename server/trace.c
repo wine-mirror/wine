@@ -1556,6 +1556,7 @@ static void dump_create_serial_request( const struct create_serial_request *req 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " name=" );
     cur_pos += dump_varargs_string( req );

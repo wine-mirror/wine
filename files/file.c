@@ -488,7 +488,7 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     {
         TRACE("opening device '%s'\n", filename );
 
-        if (!(ret = DOSFS_OpenDevice( filename, access )))
+        if (!(ret = DOSFS_OpenDevice( filename, access, attributes )))
         {
             /* Do not silence this please. It is a critical error. -MM */
             ERR("Couldn't open device '%s'!\n",filename);
