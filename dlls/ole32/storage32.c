@@ -5426,7 +5426,7 @@ HRESULT WINAPI StgCreateDocfile(
 {
   StorageImpl* newStorage = 0;
   HANDLE       hFile      = INVALID_HANDLE_VALUE;
-  HRESULT        hr         = S_OK;
+  HRESULT        hr         = STG_E_INVALIDFLAG;
   DWORD          shareMode;
   DWORD          accessMode;
   DWORD          creationMode;
@@ -5449,7 +5449,7 @@ HRESULT WINAPI StgCreateDocfile(
    * Validate the STGM flags
    */
   if ( FAILED( validateSTGM(grfMode) ))
-    return STG_E_INVALIDFLAG;
+    goto end;
 
   /* StgCreateDocFile always opens for write */
   switch(STGM_ACCESS_MODE(grfMode))
@@ -5458,7 +5458,7 @@ HRESULT WINAPI StgCreateDocfile(
   case STGM_READWRITE:
     break;
   default:
-    return STG_E_INVALIDFLAG;
+    goto end;
   }
 
   /* can't share write */
@@ -5468,22 +5468,13 @@ HRESULT WINAPI StgCreateDocfile(
   case STGM_SHARE_DENY_WRITE:
     break;
   default:
-    return STG_E_INVALIDFLAG;
+    goto end;
   }
 
-  /* need to create in transacted mode */
-  if( STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
-      !(grfMode&STGM_TRANSACTED) )
-    return STG_E_INVALIDFLAG;
-
-  /*
-   * Write only access only works in create mode.
-   * I guess we need read access to read in the old file if there is one.
-   */
-  if( STGM_ACCESS_MODE(grfMode) == STGM_WRITE &&
-      STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
-      STGM_CREATE_MODE(grfMode) != STGM_CREATE )
-    return STG_E_INVALIDFLAG;
+  /* shared reading requires transacted mode */
+  if( STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
+     !(grfMode&STGM_TRANSACTED) )
+    goto end;
 
   /*
    * Generate a unique name.
@@ -5494,7 +5485,7 @@ HRESULT WINAPI StgCreateDocfile(
     static const WCHAR prefix[] = { 'S', 'T', 'O', 0 };
 
     if (STGM_SHARE_MODE(grfMode) == STGM_SHARE_EXCLUSIVE)
-      return STG_E_INVALIDFLAG;
+      goto end;
 
     memset(tempPath, 0, sizeof(tempPath));
     memset(tempFileName, 0, sizeof(tempFileName));
@@ -5505,7 +5496,10 @@ HRESULT WINAPI StgCreateDocfile(
     if (GetTempFileNameW(tempPath, prefix, 0, tempFileName) != 0)
       pwcsName = tempFileName;
     else
-      return STG_E_INSUFFICIENTMEMORY;
+    {
+      hr = STG_E_INSUFFICIENTMEMORY;
+      goto end;
+    }
 
     creationMode = TRUNCATE_EXISTING;
   }
@@ -5544,8 +5538,10 @@ HRESULT WINAPI StgCreateDocfile(
   if (hFile == INVALID_HANDLE_VALUE)
   {
     if(GetLastError() == ERROR_FILE_EXISTS)
-      return STG_E_FILEALREADYEXISTS;
-    return E_FAIL;
+      hr = STG_E_FILEALREADYEXISTS;
+    else
+      hr = E_FAIL;
+    goto end;
   }
 
   /*
@@ -5554,7 +5550,10 @@ HRESULT WINAPI StgCreateDocfile(
   newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
 
   if (newStorage == 0)
-    return STG_E_INSUFFICIENTMEMORY;
+  {
+    hr = STG_E_INSUFFICIENTMEMORY;
+    goto end;
+  }
 
   hr = StorageImpl_Construct(
          newStorage,
@@ -5568,7 +5567,7 @@ HRESULT WINAPI StgCreateDocfile(
   if (FAILED(hr))
   {
     HeapFree(GetProcessHeap(), 0, newStorage);
-    return hr;
+    goto end;
   }
 
   /*
@@ -5578,6 +5577,8 @@ HRESULT WINAPI StgCreateDocfile(
          (IStorage*)newStorage,
          (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
+end:
+  TRACE("<-- %p  r = %08lx\n", *ppstgOpen, hr);
 
   return hr;
 }
@@ -6186,7 +6187,6 @@ static DWORD GetAccessModeFromSTGM(DWORD stgm)
   case STGM_READ:
     return GENERIC_READ;
   case STGM_WRITE:
-    return GENERIC_WRITE;
   case STGM_READWRITE:
     return GENERIC_READ | GENERIC_WRITE;
   }
@@ -6884,7 +6884,7 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
                     STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
     if( FAILED ( r ) )
     {
-        ERR("Failed to open stream\n");
+        WARN("Failed to open stream r = %08lx\n", r);
         return r;
     }
 

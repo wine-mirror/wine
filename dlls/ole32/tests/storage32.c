@@ -153,15 +153,15 @@ void test_create_storage_modes(void)
    ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
    r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_WRITE, 0, &stg);
    ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
-   /*ok(DeleteFileW(filename), "failed to delete file\n"); */
 
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_DENY_WRITE | STGM_READWRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
    ok(r==S_OK, "StgCreateDocfile failed\n");
    r = IStorage_Release(stg);
    ok(r == 0, "storage not released\n");
 
    ok(DeleteFileW(filename), "failed to delete file\n");
-
 
    /* test the way excel uses StgCreateDocFile */
    r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_CREATE|STGM_SHARE_DENY_WRITE|STGM_READWRITE, 0, &stg);
@@ -176,6 +176,24 @@ void test_create_storage_modes(void)
    /* looks like we need STGM_TRANSACTED or STGM_CREATE */
    r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE, 0, &stg);
    ok(r==S_OK, "StgCreateDocfile the excel way failed\n");
+   if(r == S_OK)
+   {
+      r = IStorage_Release(stg);
+      ok(r == 0, "storage not released\n");
+      ok(DeleteFileW(filename), "failed to delete file\n");
+   }
+
+   r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_CREATE|STGM_SHARE_DENY_WRITE|STGM_WRITE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile the excel way failed\n");
+   if(r == S_OK)
+   {
+      r = IStorage_Release(stg);
+      ok(r == 0, "storage not released\n");
+      ok(DeleteFileW(filename), "failed to delete file\n");
+   }
+
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile the powerpoint way failed\n");
    if(r == S_OK)
    {
       r = IStorage_Release(stg);
@@ -454,7 +472,6 @@ void test_storage_suminfo(void)
     ok(r == STG_E_FILENOTFOUND, "open failed\n");
     if(r == S_OK)
         IPropertyStorage_Release(ps);
-    printf("r = %08lx\n",r);
 
     r = IPropertySetStorage_Release( propset );
     ok(r == 1, "ref count wrong\n");
