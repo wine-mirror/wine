@@ -2895,6 +2895,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		       }
 		     }
 		     return LISTBOX_HandleLButtonUp( wnd, descr );
+		case WM_LBUTTONDBLCLK:
 		case WM_LBUTTONDOWN:
                      return LISTBOX_HandleLButtonDownCombo(wnd, descr, wParam, 
                                           (INT16)LOWORD(lParam),
