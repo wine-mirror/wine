@@ -3083,7 +3083,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 
 		hrgn = CreateRectRgn(0, 0, 0, 0);
 		EDIT_BuildLineDefs_ML(wnd, es, s, s + strl, 
-				strl - (es->selection_end - es->selection_start), hrgn);
+				strl - abs(es->selection_end - es->selection_start), hrgn);
 	}
 	else
 	    EDIT_CalcLineWidth_SL(wnd, es);
