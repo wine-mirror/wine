@@ -868,7 +868,7 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
         }
         else
         {
-            int iTargetCX, iTargetCY;
+            int iTargetCY = iDesiredCY, iTargetCX = iDesiredCX;
             LPBYTE pBits;
             HANDLE hMem;
             HRSRC hRsrc;
@@ -936,8 +936,11 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
 
             pBits = (LPBYTE)LockResource( hMem );
          
-            iTargetCY = GetSystemMetrics(SM_CYICON);
-            iTargetCX = GetSystemMetrics(SM_CXICON);
+	    if(nFlags & LR_DEFAULTSIZE)
+	    {
+	        iTargetCY = GetSystemMetrics(SM_CYICON);
+                iTargetCX = GetSystemMetrics(SM_CXICON);
+	    }
 
             /* Create a New Icon with the proper dimension
             */
