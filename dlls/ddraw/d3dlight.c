@@ -111,6 +111,7 @@ LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2)
   IDirect3DLightImpl* light;
 
   light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
+  light->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dl_private));
   light->ref = 1;
   ICOM_VTBL(light) = &light_vtable;
   light->d3d.d3d2 = d3d2;
@@ -129,6 +130,7 @@ LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1)
   IDirect3DLightImpl* light;
 
   light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
+  light->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dl_private));
   light->ref = 1;
   ICOM_VTBL(light) = &light_vtable;
 
@@ -173,9 +175,10 @@ static ULONG WINAPI IDirect3DLightImpl_AddRef(LPDIRECT3DLIGHT iface)
 static ULONG WINAPI IDirect3DLightImpl_Release(LPDIRECT3DLIGHT iface)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
   if (!--(This->ref)) {
+    HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
