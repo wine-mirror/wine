@@ -61,9 +61,9 @@ typedef struct
     char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
-    char      label_conf[12]; /* drive label as cfg'd in wine.conf */
+    char      label_conf[12]; /* drive label as cfg'd in wine config */
     char      label_read[12]; /* drive label as read from device */
-    DWORD     serial_conf;    /* drive serial number as cfg'd in wine.conf */
+    DWORD     serial_conf;    /* drive serial number as cfg'd in wine config */
     UINT      type;      /* drive type */
     UINT      flags;     /* drive flags */
     dev_t     dev;       /* unix device number */

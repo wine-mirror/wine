@@ -80,7 +80,7 @@ int DIR_Init(void)
     cwd = path;
     if ((drive = DRIVE_FindDriveRoot( &cwd )) == -1)
     {
-        MESSAGE("Warning: could not find wine.conf [Drive x] entry "
+        MESSAGE("Warning: could not find wine config [Drive x] entry "
             "for current working directory %s; "
 	    "starting in windows directory.\n", cwd );
     }
@@ -120,7 +120,7 @@ int DIR_Init(void)
                              path, sizeof(path) );
     if (strchr(path, '/'))
     {
-	MESSAGE("No '/' allowed in [wine] 'Path=' statement of wine.conf !\n");
+	MESSAGE("No '/' allowed in [wine] 'Path=' statement of wine config!\n");
 	PROFILE_UsageWineIni();
 	ExitProcess(1);
     }
