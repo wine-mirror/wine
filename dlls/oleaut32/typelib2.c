@@ -174,7 +174,7 @@ typedef struct tagICreateTypeInfo2Impl
     ICreateTypeInfo2Vtbl *lpVtbl;
     ITypeInfo2Vtbl       *lpVtblTypeInfo2;
 
-    UINT ref;
+    ULONG ref;
 
     ICreateTypeLib2Impl *typelib;
     MSFT_TypeInfoBase *typeinfo;
