@@ -168,7 +168,7 @@ WIN16_FILES = \
 	win87em.dll$(DLLEXT) \
 	winaspi.dll$(DLLEXT) \
 	windebug.dll$(DLLEXT) \
-	wineps16.dll$(DLLEXT) \
+	wineps16.drv$(DLLEXT) \
 	wing.dll$(DLLEXT) \
 	winnls.dll$(DLLEXT) \
 	winsock.dll$(DLLEXT) \
@@ -545,7 +545,7 @@ winenas.drv$(DLLEXT): winmm/winenas/winenas.drv$(DLLEXT)
 wineoss.drv$(DLLEXT): winmm/wineoss/wineoss.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv$(DLLEXT) $@
 
-wineps.dll$(DLLEXT) wineps16.dll$(DLLEXT): wineps/wineps.dll$(DLLEXT)
+wineps.dll$(DLLEXT) wineps16.drv$(DLLEXT): wineps/wineps.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wineps/wineps.dll$(DLLEXT) $@
 
 wininet.dll$(DLLEXT): wininet/wininet.dll$(DLLEXT)

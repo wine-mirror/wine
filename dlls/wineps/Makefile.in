@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps.dll
 IMPORTS   = user32 gdi32 winspool advapi32 kernel32
-ALTNAMES  = wineps16.dll
+ALTNAMES  = wineps16.drv
 EXTRAINCL = @FREETYPEINCL@
 
 LDDLLFLAGS = @LDDLLFLAGS@

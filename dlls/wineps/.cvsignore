@@ -3,4 +3,4 @@ rsrc.res
 wineps.dll.dbg.c
 wineps.spec.c
 wineps.spec.def
-wineps16.spec.c
+wineps16.drv.spec.c
