@@ -36,15 +36,15 @@ HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFI
 
 ULONG WINAPI IWineD3DResourceImpl_AddRef(IWineD3DResource *iface) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
-    return InterlockedIncrement(&This->resource.ref);
+    ULONG ref = InterlockedIncrement(&This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
+    return ref; 
 }
 
 ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
-    ref = InterlockedDecrement(&This->resource.ref);
+    ULONG ref = InterlockedDecrement(&This->resource.ref);
+    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);

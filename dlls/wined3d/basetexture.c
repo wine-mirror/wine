@@ -37,16 +37,17 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface
 
 ULONG WINAPI IWineD3DBaseTextureImpl_AddRef(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    ULONG ref = InterlockedIncrement(&This->resource.ref);
+    
+    TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
     IUnknown_AddRef(This->resource.parent);
-    return InterlockedIncrement(&This->resource.ref);
+    return ref;
 }
 
 ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
-    ref = InterlockedDecrement(&This->resource.ref);
+    ULONG ref = InterlockedDecrement(&This->resource.ref);
+    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);

@@ -38,16 +38,16 @@ HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *ifa
 
 ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    ULONG ref = InterlockedIncrement(&This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
     IUnknown_AddRef(This->resource.parent);
-    return InterlockedIncrement(&This->resource.ref);
+    return ref;
 }
 
 ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
-    ref = InterlockedDecrement(&This->resource.ref);
+    ULONG ref = InterlockedDecrement(&This->resource.ref);
+    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
