@@ -149,9 +149,9 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IOleWindow_QueryInterface(p,a,b)      ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IOleWindow_AddRef(p)                  ICOM_ICALL (IUnknown,AddRef,p)
-#define IOleWindow_Release(p)                 ICOM_ICALL (IUnknown,Release,p)
+#define IOleWindow_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IOleWindow_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IOleWindow_Release(p)                 ICOM_CALL (Release,p)
 /*** IOleWindow methods ***/
 #define IOleWindow_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
 #define IOleWindow_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)

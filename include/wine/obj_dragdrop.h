@@ -48,9 +48,9 @@ ICOM_DEFINE(IDropSource,IUnknown)
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IDropSource_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IDropSource_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IDropSource_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IDropSource_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDropSource_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDropSource_Release(p)            ICOM_CALL (Release,p)
 /*** IDropTarget methods ***/
 #define IDropSource_QueryContinueDrag(p,a,b) ICOM_CALL2(QueryContinueDrag,p,a,b)
 #define IDropSource_GiveFeedback(p,a)        ICOM_CALL1(GiveFeedback,p,a)
@@ -72,9 +72,9 @@ ICOM_DEFINE(IDropTarget,IUnknown)
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IDropTarget_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IDropTarget_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IDropTarget_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IDropTarget_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDropTarget_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDropTarget_Release(p)            ICOM_CALL (Release,p)
 /*** IDropTarget methods ***/
 #define IDropTarget_DragEnter(p,a,b,c,d)  ICOM_CALL4(DragEnter,p,a,b,c,d)
 #define IDropTarget_DragOver(p,a,b,c)     ICOM_CALL3(DragOver,p,a,b,c)
