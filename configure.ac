@@ -83,7 +83,7 @@ then
   AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
 fi
 
-AC_CHECK_TOOL(AS,as,as)
+AC_CHECK_TOOLS(AS,[gas as],as)
 AC_CHECK_TOOL(LD,ld,ld)
 AC_CHECK_TOOL(AR,ar,ar)
 AC_PROG_RANLIB
