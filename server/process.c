@@ -207,22 +207,17 @@ static void set_process_startup_state( struct process *process, enum startup_sta
 static int set_process_console( struct process *process, struct thread *parent_thread,
                                 struct startup_info *info, struct init_process_reply *reply )
 {
-    if (process->create_flags & CREATE_NEW_CONSOLE)
-    {
-        /* let the process init do the allocation */
-        return 1;
-    }
-    else if (info && !(process->create_flags & DETACHED_PROCESS))
-    {
-        /* FIXME: some better error checking should be done...
-         * like if hConOut and hConIn are console handles, then they should be on the same
-         * physical console
-         */
-        inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
-    }
     if (info)
     {
-        if (!info->inherit_all)
+        if (!(process->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
+        {
+            /* FIXME: some better error checking should be done...
+             * like if hConOut and hConIn are console handles, then they should be on the same
+             * physical console
+             */
+            inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
+        }
+        if (!info->inherit_all && !(process->create_flags & CREATE_NEW_CONSOLE))
         {
             reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
                                                0, TRUE, DUPLICATE_SAME_ACCESS );

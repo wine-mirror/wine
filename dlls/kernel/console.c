@@ -1142,22 +1142,29 @@ BOOL WINAPI AllocConsole(void)
     if (!start_console_renderer(&siConsole))
 	goto the_end;
 
-    /* all std I/O handles are inheritable by default */
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-
-    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
-                             0, &sa, OPEN_EXISTING, 0, 0 );
-    if (handle_in == INVALID_HANDLE_VALUE) goto the_end;
-
-    handle_out = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE,
-                              0, &sa, OPEN_EXISTING, 0, 0 );
-    if (handle_out == INVALID_HANDLE_VALUE) goto the_end;
-
-    if (!DuplicateHandle(GetCurrentProcess(), handle_out, GetCurrentProcess(), &handle_err,
-			 0, TRUE, DUPLICATE_SAME_ACCESS))
-	goto the_end;
+    if( !(siCurrent.dwFlags & STARTF_USESTDHANDLES) ) {
+        /* all std I/O handles are inheritable by default */
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = NULL;
+        sa.bInheritHandle = TRUE;
+  
+        handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
+                0, &sa, OPEN_EXISTING, 0, 0 );
+        if (handle_in == INVALID_HANDLE_VALUE) goto the_end;
+  
+        handle_out = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE,
+                                  0, &sa, OPEN_EXISTING, 0, 0 );
+        if (handle_out == INVALID_HANDLE_VALUE) goto the_end;
+  
+        if (!DuplicateHandle(GetCurrentProcess(), handle_out, GetCurrentProcess(),
+                    &handle_err, 0, TRUE, DUPLICATE_SAME_ACCESS))
+            goto the_end;
+    } else {
+        /*  STARTF_USESTDHANDLES flag: use handles from StartupInfo */
+        handle_in  =  siCurrent.hStdInput;
+        handle_out =  siCurrent.hStdOutput;
+        handle_err =  siCurrent.hStdError;
+    }
 
     /* NT resets the STD_*_HANDLEs on console alloc */
     SetStdHandle(STD_INPUT_HANDLE,  handle_in);
