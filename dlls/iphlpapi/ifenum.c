@@ -682,7 +682,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
   if (!name || !len || !addr || !type)
     return ERROR_INVALID_PARAMETER;
 
-  if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
+  if (sysctl(mib, 6, NULL, &mibLen, NULL, 0) < 0)
     return ERROR_NO_MORE_FILES;
 
   buf = (u_char *)malloc(mibLen);
