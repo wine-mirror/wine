@@ -50,6 +50,8 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #include "ver.h"
 
 #define CUSTOM_ACTION_TYPE_MASK 0x3F
+#define REG_PROGRESS_VALUE 13200
+#define COMPONENT_PROGRESS_VALUE 24000
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -1182,7 +1184,6 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
     TRACE("Performing action (%s)\n",debugstr_w(action));
     ui_actioninfo(package, action, TRUE, 0);
     ui_actionstart(package, action);
-    ui_progress(package,2,1,0,0);
 
     /* pre install, setup and configuration block */
     if (strcmpW(action,szLaunchConditions)==0)
@@ -3117,7 +3118,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         return ERROR_INVALID_HANDLE;
 
     /* increment progress bar each time action data is sent */
-    ui_progress(package,1,1,1,0);
+    ui_progress(package,1,1,0,0);
 
     for (index = 0; index < package->loaded_files; index++)
     {
@@ -3132,6 +3133,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (package->components[file->ComponentIndex].ActionRequest != 
              INSTALLSTATE_LOCAL)
         {
+            ui_progress(package,2,file->FileSize,0,0);
             TRACE("File %s is not scheduled for install\n",
                    debugstr_w(file->File));
 
@@ -3172,6 +3174,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             MSI_RecordSetInteger(uirow,6,file->FileSize);
             ui_actiondata(package,szInstallFiles,uirow);
             msiobj_release( &uirow->hdr );
+            ui_progress(package,2,file->FileSize,0,0);
 
             if (!MoveFileW(file->SourcePath,file->TargetPath))
             {
@@ -3198,8 +3201,6 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             }
             else
                 file->State = 4;
-
-            ui_progress(package,2,0,0,0);
         }
     }
 
@@ -3475,7 +3476,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     }
 
     /* increment progress bar each time action data is sent */
-    ui_progress(package,1,1,1,0);
+    ui_progress(package,1,REG_PROGRESS_VALUE,1,0);
 
     while (1)
     {
@@ -3505,6 +3506,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             rc = ERROR_SUCCESS;
             break;
         }
+        ui_progress(package,2,0,0,0);
 
         value = NULL;
         key = NULL;
@@ -3591,7 +3593,6 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
                 MSI_RecordSetStringW(uirow,3,value);
 
             ui_actiondata(package,szWriteRegistryValues,uirow);
-            ui_progress(package,2,0,0,0);
             msiobj_release( &uirow->hdr );
 
             HeapFree(GetProcessHeap(),0,value_data);
@@ -3717,12 +3718,14 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 {
     DWORD progress = 0;
+    DWORD total = 0;
     static const WCHAR q1[]={
         'S','E','L','E','C','T',' ','*',' ',
         'F','R','O','M',' ','R','e','g','i','s','t','r','y',0};
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
+    int i;
 
     TRACE(" InstallValidate \n");
 
@@ -3752,7 +3755,11 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
 
-    ui_progress(package,0,progress+package->loaded_files,0,0);
+    total = total + progress * REG_PROGRESS_VALUE;
+    total = total + package->loaded_components * COMPONENT_PROGRESS_VALUE;
+    for (i=0; i < package->loaded_files; i++)
+        total += package->files[i].FileSize;
+    ui_progress(package,0,total,0,0);
 
     return ERROR_SUCCESS;
 }
@@ -3927,9 +3934,11 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     rc = RegCreateKeyW(hkey,szComponents,&hkey2);
     if (rc != ERROR_SUCCESS)
         goto end;
-  
+      
+    ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
     for (i = 0; i < package->loaded_components; i++)
     {
+        ui_progress(package,2,0,0,0);
         if (package->components[i].ComponentId[0]!=0)
         {
             WCHAR *keypath = NULL;
