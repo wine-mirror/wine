@@ -1,6 +1,6 @@
 /**************************************************************************
 ASPI routines
-(C) 2000 David Elliott <dfe@netnitco.net>
+(C) 2000 David Elliott <dfe@infinite-internet.net>
 Licensed under the WINE (X11) license
 */
 
@@ -28,6 +28,7 @@ HKEY_DYN_DATA
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -71,7 +72,7 @@ ASPI_GetNumControllers()
 
 	if( RegOpenKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, KEY_ALL_ACCESS, &hkeyScsi ) != ERROR_SUCCESS )
 	{
-		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not open HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		return 0;
 	}
 
@@ -84,7 +85,7 @@ ASPI_GetNumControllers()
 	}
 	if( RegQueryValueExA(hkeyControllerMap, NULL, NULL, &type, (LPBYTE)&num_ha, &cbData ) != ERROR_SUCCESS )
 	{
-		ERR("Could not query value HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not query value HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		num_ha=0;
 	}
 	RegCloseKey(hkeyControllerMap);
@@ -103,7 +104,7 @@ SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData )
 
 	if( RegOpenKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, KEY_ALL_ACCESS, &hkeyScsi ) != ERROR_SUCCESS )
 	{
-		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not open HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		return FALSE;
 	}
 
@@ -145,7 +146,7 @@ ASPI_GetHCforController( int controller )
 #endif
 	if( (error=RegCreateKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyScsi, &disposition )) != ERROR_SUCCESS )
 	{
-		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not open HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		SetLastError(error);
 		return hc;
 	}
@@ -183,6 +184,7 @@ SCSI_OpenDevice( int h, int c, int t, int d )
 	char devstr[20];
 	DWORD cbData = 20;
 	int fd = -1;
+	char dainbread_linux_hack = 1;
 
 	if(!SCSI_GetDeviceName( h, c, t, d, devstr, &cbData ))
 	{
@@ -190,14 +192,33 @@ SCSI_OpenDevice( int h, int c, int t, int d )
 		return -1;
 	}
 
+linux_hack:
 	TRACE("Opening device %s mode O_RDWR\n",devstr);
 	fd = open(devstr, O_RDWR);
 
 	if( fd < 0 )
 	{
-		TRACE("open failed\n");
+		int len = strlen(devstr);
 		FILE_SetDosError(); /* SetLastError() to errno */
-		TRACE("GetLastError: %ld\n", GetLastError());
+		TRACE("Open failed (%s)\n", strerror(errno));
+
+		/* in case of "/dev/sgX", convert from sga to sg0
+		 * and the other way around.
+		 * FIXME: remove it if the distributions
+		 * finally manage to agree on something.
+		 * The best would probably be a complete
+		 * rewrite of the Linux SCSI layer
+		 * to use CAM + devfs :-) */
+		if ( (dainbread_linux_hack) &&
+		     (len >= 3) &&
+		     (devstr[len-3] == 's') && (devstr[len-2] == 'g') )
+		{
+			char *p = &devstr[len-1];
+			*p = (*p >= 'a') ? *p - 'a' + '0' : *p - '0' + 'a';
+			dainbread_linux_hack = 0;
+			TRACE("Retry with \"equivalent\" Linux device '%s'\n", devstr);
+			goto linux_hack;
+		}
 	}
 	return fd;
 }
@@ -227,7 +248,7 @@ SCSI_LinuxSetTimeout( int fd, int timeout )
 	retval=ioctl(fd,SG_SET_TIMEOUT,&timeout);
 	if(retval)
 	{
-		WARN("Could not set timeout errno=%d!\n",errno);
+		WARN("Could not set timeout ! (%s)\n", strerror(errno));
 	}
 	return retval;
 	
@@ -249,7 +270,7 @@ SCSI_LinuxDeviceIo( int fd,
 	DWORD dwBytes;
 	DWORD save_error;
 
-	TRACE("Writing to Liunx sg device\n");
+	TRACE("Writing to Linux sg device\n");
 	dwBytes = write( fd, lpInBuffer, cbInBuffer );
 	if( dwBytes != cbInBuffer )
 	{
@@ -257,7 +278,7 @@ SCSI_LinuxDeviceIo( int fd,
 		save_error = GetLastError();
 		WARN("Not enough bytes written to scsi device. bytes=%ld .. %ld\n", cbInBuffer, dwBytes );
 		if( save_error == ERROR_NOT_ENOUGH_MEMORY )
-			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device.  Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h");
+			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device. Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h)");
 		WARN("error= %ld\n", save_error );
 		*lpcbBytesReturned = 0;
 		return FALSE;
@@ -381,7 +402,7 @@ SCSI_MapHCtoController()
 
 	if( RegCreateKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyScsi, &disposition ) != ERROR_SUCCESS )
 	{
-		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not open HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		return;
 	}
 	if( disposition != REG_OPENED_EXISTING_KEY )
@@ -425,13 +446,34 @@ SCSI_MapHCtoController()
 	/* Set (default) value to number of controllers */
 	if( RegSetValueExA(hkeyControllerMap, NULL, 0, REG_DWORD, (LPBYTE)&num_controller, sizeof(DWORD) ) != ERROR_SUCCESS )
 	{
-		ERR("Could not set value HEKY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+		ERR("Could not set value HKEY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
 	}
 	RegCloseKey(hkeyControllerMap);
 	RegCloseKey(hkeyScsi);
 	return;
 }
 #endif
+
+int SCSI_Linux_CheckDevices(void)
+{
+    DIR *devdir;
+    struct dirent *dent = NULL;
+
+    devdir = opendir("/dev");
+    for (dent=readdir(devdir);dent;dent=readdir(devdir))
+    {
+        if (!(strncmp(dent->d_name, "sg", 2)))
+            break;
+    }
+    closedir(devdir);
+
+    if (dent == NULL)
+    {
+	MESSAGE("WARNING: You don't have any /dev/sgX generic scsi devices ! \"man MAKEDEV\" !\n");
+	return 0;
+    }
+    return 1;
+}
 
 static void
 SCSI_GetProcinfo()
@@ -441,8 +483,10 @@ SCSI_GetProcinfo()
  */
 {
 #ifdef linux
+	static const char procname[] = "/proc/scsi/scsi";
 	FILE * procfile = NULL;
 
+	char read_line[40], read1[10] = "\0", read2[10] = "\0";
 	int result = 0;
 
 	struct LinuxProcScsiDevice dev;
@@ -456,23 +500,35 @@ SCSI_GetProcinfo()
 	HKEY hkeyScsi;
 	DWORD disposition;
 
-	procfile = fopen( "/proc/scsi/scsi", "r" );
+	/* Check whether user has generic scsi devices at all */
+	if (!(SCSI_Linux_CheckDevices()))
+	    return;
+	
+	procfile = fopen( procname, "r" );
 	if( !procfile )
 	{
-		ERR("Could not open /proc/scsi/scsi\n");
+		ERR("Could not open %s\n", procname);
 		return;
 	}
 
-	result = fscanf( procfile, "Attached devices: \n");
-	if( result != 0 )
+	fgets(read_line, 40, procfile);
+	sscanf( read_line, "Attached %9s %9s", read1, read2);
+
+	if(strcmp(read1, "devices:"))
 	{
-		ERR("Incorrect /proc/scsi/scsi format");
+		ERR("Incorrect %s format\n", procname);
+		return;
+	}
+
+	if(!(strcmp(read2, "none")))
+	{
+		ERR("No devices found in %s. Make sure you loaded your SCSI driver or set up ide-scsi emulation for your IDE device if this app needs it !\n", procname);
 		return;
 	}
 
 	if( RegCreateKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyScsi, &disposition ) != ERROR_SUCCESS )
 	{
-		ERR("Could not create HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not create HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		return;
 	}
 
@@ -485,7 +541,7 @@ SCSI_GetProcinfo()
 		sprintf(devstr, "/dev/sg%c", 'a'+devnum);
 		if( RegSetValueExA(hkeyScsi, idstr, 0, REG_SZ, devstr, strlen(devstr)+1 ) != ERROR_SUCCESS )
 		{
-			ERR("Could not set value HEKY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, idstr);
+			ERR("Could not set value HKEY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, idstr);
 		}
 
 		/* Debug output */
@@ -499,12 +555,12 @@ SCSI_GetProcinfo()
 	} /* while(1) */
 	if( result != EOF )
 	{
-		ERR("Incorrect /proc/scsi/scsi format");
+		ERR("Sorry, incorrect %s format\n", procname);
 	}
 	fclose( procfile );
 	if( RegSetValueExA(hkeyScsi, NULL, 0, REG_DWORD, (LPBYTE)&num_ha, sizeof(num_ha) ) != ERROR_SUCCESS )
 	{
-		ERR("Could not set value HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		ERR("Could not set value HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 	}
 	RegCloseKey(hkeyScsi);
 	return;

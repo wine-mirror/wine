@@ -192,12 +192,12 @@ ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
   {
       DPRINTF("Request Sense reports:\n");
       if ((rqbuf[0]&0x7f)!=0x70) {
-	      DPRINTF("\tInvalid sense header.\n");
+	      DPRINTF("\tInvalid sense header: 0x%02x instead of 0x70\n", rqbuf[0]&0x7f);
 	      return;
       }
       DPRINTF("\tCurrent command read filemark: %s\n",(rqbuf[2]&0x80)?"yes":"no");
       DPRINTF("\tEarly warning passed: %s\n",(rqbuf[2]&0x40)?"yes":"no");
-      DPRINTF("\tIncorrect blocklengt: %s\n",(rqbuf[2]&0x20)?"yes":"no");
+      DPRINTF("\tIncorrect blocklength: %s\n",(rqbuf[2]&0x20)?"yes":"no");
       DPRINTF("\tSense Key: %d\n",rqbuf[2]&0xf);
       if (rqbuf[0]&0x80)
 	DPRINTF("\tResidual Length: %d\n",rqbuf[3]*0x1000000+rqbuf[4]*0x10000+rqbuf[5]*0x100+rqbuf[6]);
@@ -315,8 +315,6 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   ASPI_DebugPrintCmd(lpPRB);
   fd = ASPI_OpenDevice(lpPRB);
   if (fd == -1) {
-      TRACE("Failed: could not open device c%01dt%01dd%01d. Device permissions !?\n",
-	  lpPRB->SRB_HaId,lpPRB->SRB_Target,lpPRB->SRB_Lun);
       return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
   }
 
@@ -550,3 +548,20 @@ DWORD WINAPI GetASPI32DLLVersion()
 #endif
 }
 
+BOOL __cdecl GetASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
+{
+    FIXME("(%p), stub !\n", pab);
+    return TRUE;
+}
+
+BOOL __cdecl FreeASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
+{
+    FIXME("(%p), stub !\n", pab);
+    return TRUE;
+}
+
+BOOL __cdecl TranslateASPI32Address(LPDWORD pdwPath, LPDWORD pdwDEVNODE)
+{
+    FIXME("(%p, %p), stub !\n", pdwPath, pdwDEVNODE);
+    return TRUE;
+}
