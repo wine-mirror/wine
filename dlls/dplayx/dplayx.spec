@@ -7,3 +7,5 @@
   9 stdcall DirectPlayEnumerate(ptr ptr) DirectPlayEnumerateA
   10 stdcall -private DllCanUnloadNow() DPLAYX_DllCanUnloadNow
   11 stdcall -private DllGetClassObject(ptr ptr ptr) DPLAYX_DllGetClassObject
+@ stdcall -private DllRegisterServer() DPLAYX_DllRegisterServer
+@ stdcall -private DllUnregisterServer() DPLAYX_DllUnregisterServer

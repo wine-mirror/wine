@@ -19,7 +19,8 @@ C_SRCS = \
 	dplayx_messages.c \
 	dplobby.c \
 	lobbysp.c \
-	name_server.c
+	name_server.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 
