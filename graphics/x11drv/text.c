@@ -31,7 +31,7 @@ DEFAULT_DEBUG_CHANNEL(text);
  *
  * dup a Unicode string into a XChar2b array; must be HeapFree'd by the caller
  */
-static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage )
+static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage, UINT def_char )
 {
     XChar2b *str2b;
     UINT i, total_size = count * (sizeof(XChar2b) + (codepage ? sizeof(WCHAR) : 0));
@@ -41,9 +41,10 @@ static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage )
     if (codepage != 0)  /* a one byte font */
     {
 	BYTE *str = (BYTE *)(str2b + count);
+        char ch = def_char;
 
 	/* we have to convert from unicode to codepage first */
-        WideCharToMultiByte( codepage, 0, wstr, count, str, count, NULL, NULL );
+        WideCharToMultiByte( codepage, 0, wstr, count, str, count, &ch, NULL );
         for (i = 0; i < count; i++)
         {
             str2b[i].byte1 = 0;
@@ -261,7 +262,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
     
     /* Draw the text (count > 0 verified) */
-    if (!(str2b = unicode_to_char2b( wstr, count, pfo->fi->codepage ))) goto FAIL;
+    if (!(str2b = unicode_to_char2b( wstr, count, pfo->fi->codepage, pfo->fs->default_char )))
+        goto FAIL;
 
     TSXSetForeground( display, physDev->gc, physDev->textPixel );
     if(!rotated)
@@ -427,7 +429,7 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
         if( !pfo->lpX11Trans ) {
 	    int dir, ascent, descent;
 	    XCharStruct info;
-	    XChar2b *p = unicode_to_char2b( str, count, pfo->fi->codepage );
+	    XChar2b *p = unicode_to_char2b( str, count, pfo->fi->codepage, pfo->fs->default_char );
             if (!p) return FALSE;
 	    TSXTextExtents16( pfo->fs, p, count, &dir, &ascent, &descent, &info );
 	    size->cx = abs((info.width + dc->w.breakRem + count * 
