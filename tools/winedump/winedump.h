@@ -138,6 +138,8 @@ void  dll_open (const char *dll_name);
 int dll_next_symbol (parsed_symbol * sym);
 
 /* Symbol functions */
+int   symbol_init(parsed_symbol* symbol, const char* name);
+
 int   symbol_demangle (parsed_symbol *symbol);
 
 int   symbol_search (parsed_symbol *symbol);

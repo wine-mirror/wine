@@ -149,7 +149,7 @@ struct option
 
 static const struct option option_table[] = {
   {"-h",    NONE, 0, do_usage,    "-h           Display this help message"},
-  {"sym",   DMGL, 2, do_demangle, "sym <sym>    Demangle C++ symbol <sym>' and exit"},
+  {"sym",   DMGL, 2, do_demangle, "sym <sym>    Demangle C++ symbol <sym> and exit"},
   {"spec",  SPEC, 2, do_spec,     "spec <dll>   Use dll for input file and generate implementation code"},
   {"-I",    SPEC, 1, do_include,  "-I dir       Look for prototypes in 'dir' (implies -c)"},
   {"-c",    SPEC, 0, do_code,     "-c           Generate skeleton code (requires -I)"},
@@ -259,7 +259,6 @@ int   main (int argc, char *argv[])
 {
     parsed_symbol symbol;
     int count = 0;
-    int result;
 
     globals.mode = NONE;
 
@@ -272,15 +271,18 @@ int   main (int argc, char *argv[])
     case DMGL:
 	globals.uc_dll_name = "";
 	VERBOSE = 1;
-	symbol.symbol = strdup(globals.input_name);
-	result = symbol_demangle (&symbol);
+
+	symbol_init (&symbol, globals.input_name);
+	if (symbol_demangle (&symbol) == -1);
+	    fatal( "Symbol hasn't got a mangled name\n");
 	if (symbol.flags & SYM_DATA)
 	    printf (symbol.arg_text[0]);
 	else
 	    output_prototype (stdout, &symbol);
 	fputc ('\n', stdout);
-	return result ? 1 : 0;
+	symbol_clear(&symbol);
 	break;
+
     case SPEC:
 	dll_open (globals.input_name);
 

@@ -72,6 +72,12 @@ static const char *known_longs[] =
   "WCHAR", "BOOL", "bool", "INT16", "WORD", "DWORD", NULL
 };
 
+int symbol_init(parsed_symbol* sym, const char* name)
+{
+    memset(sym, 0, sizeof(parsed_symbol));
+    sym->symbol = strdup(name);
+    return 0;
+}
 
 /*******************************************************************
  *         symbol_clear

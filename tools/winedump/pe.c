@@ -336,15 +336,17 @@ static	void	dump_dir_exported_functions(void)
 	name = (char*)RVA(*pName, sizeof(DWORD));
 	if (name && globals.do_demangle)
 	{
-	    symbol.symbol = strdup(name);
-	    symbol_demangle (&symbol);
-	    
 	    printf("  %08lX  %4lu ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
-	    if (symbol.flags & SYM_DATA)
-		printf (symbol.arg_text[0]);
+
+	    symbol_init(&symbol, name);
+	    if (symbol_demangle(&symbol) == -1)
+		printf(name);
+	    else if (symbol.flags & SYM_DATA)
+		printf(symbol.arg_text[0]);
 	    else
 		output_prototype(stdout, &symbol);
 	    printf("\n");
+	    symbol_clear(&symbol);
 	}
 	else
 	{

@@ -486,7 +486,10 @@ static char *demangle_datatype (char **str, compound_type *ct,
 
         /* FIXME: P6 = Function pointer, others who knows.. */
         if (isdigit (*iter))
+	{
+	  if (*iter == 6) printf("Function pointer in argument list is not handled yet\n");
           return NULL;
+	}
 
         /* Recurse to get the pointed-to type */
         if (!demangle_datatype (&iter, &sub_ct, sym))
