@@ -500,8 +500,8 @@ static HANDLER_DEF(EXC_segv)
         break;
     }
 #else  /* TRAP_sig */
-# ifdef __i386
-    if (INSTR_EmulateInstruction( &context )) return;
+# ifdef __i386__
+    if (INSTR_EmulateInstruction( &context )) goto restore;
 # endif
     rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;  /* generic error */
 #endif  /* TRAP_sig */
