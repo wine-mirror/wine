@@ -1,8 +1,187 @@
   <chapter id="build">
-    <title>The Wine Build System</title>
-    <para>FIXME: How the Wine build system works, and how to tweak it...</para>
-  </chapter>
+    <title>Building Wine</title>
 
+    <sect1 id="build-intro">
+      <title>Introduction</title>
+
+      <para>
+        Written by &name-shachar-shemesh; <email>&email-shachar-shemesh;</email>
+	(Last updated: 5/27/2003)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/building</filename>)
+      </para>
+      <para>
+        This section explains how to build Wine locally. If you are a packager, please also refer to
+        <filename>wine/documentation/PACKAGING</filename> for package specific considerations.
+      </para>
+    <sect1 id="soft-vs-hard-dep">
+      <title>Before you compile - Soft vs. Hard dependencies</title>
+
+      <para>
+        Wine is a compatibility layer. It is not an attempt to create a new OS. As such, it tries to
+        rely on existing functionality wherever possible. This means that some aspects of Wine require
+        libraries to be available during compilation and runtime, or certain functionality will not
+        be available.
+      </para>
+
+      <para>
+        There are two types of dependencies. These are the <quote>soft dependency</quote> and the
+        <quote>hard dependency</quote>. 
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term>Hard Dependency</term>
+          <listitem>
+            <para>
+              This is a dependency of Wine that, if compiled into the code, must be available at runtime
+              or Wine will not function. Due to it's restrictive manner, developers go to a great length
+              to make sure there are as few of those as possible.
+            </para>
+            <note>
+              <title>Fixme</title>
+              <para>
+                How many of those are there?
+              <para>
+            </note>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Soft Dependency</term>
+          <listitem>
+            <para>
+              These are libraries that, if present during both compilation and runtime, will add to Wine's
+              capabilities. Unlike the hard dependencies above, compiling Wine with these libraries will
+              allow Wine to work even on runtime environments where some or all of the soft dependencies
+              are not available.
+            </para>
+            <note>
+              <title>Packager's note</title>
+              <para>
+                Please do your best to make sure that as many soft dependencies are available during
+                compilation. Failing to have a soft dependency available means that users cannot benefit
+                from a Wine capability.
+              </para>
+            </note>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <sect2>
+        <title>Soft dependencies list</title>
+        <para>
+          Here is a list of the libraries Wine needs, and their dependency is soft. We suggest packagers
+          install each and every last of those before building the package. These libraries are not
+          dependencies in the RPM sense. In DEB packages, they should appear as "Suggests" or "Recommends",
+          as the case may be.
+        <para>
+        <variablelist>
+          <varlistentry>
+            <term><ulink url="http://www.freetype.org/">FreeType</ulink></term>
+            <listitem>
+              <para>
+                This library is used for direct rendering of fonts. It provides better support of fonts than
+                using the X11 fonts engine. It is only needed for the X11 back end engine. Used from GDI.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><ulink url="http://sourceforge.net/projects/alsa">Alsa</ulink> - Linux only</term>
+            <listitem>
+              <para>
+                This library gives sound support to the Windows environment.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><ulink url="http://jackit.sourceforge.net/">libjack</ulink></term>
+            <listitem>
+              <para>
+                Something to do with the MultiMedia system. Recording sound?
+              </para>
+              <note><title>Fixme</title>
+                <para>I don't truely know what this lib is.</para>
+              </note>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><ulink url="http://www.cups.org/">CUPS</ulink> - Common Unix Printing System</term>
+            <listitem>
+              <para>
+                This library allows Windows to see CUPS defined printers, and to print to them.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>OpenGL</term>
+            <listitem>
+              <para>
+                This is used for both OpenGL and Direct3D (and some other DirectX functions as well) support
+                in Wine. There are many many libraries for providing this functionality. It is enough for one
+                of them to be available when compiling Wine. Wine can work with any other library during
+                runtime.
+              </para>
+              <para>
+                If no library is available, packagers are encouraged to compile Wine with
+                <ulink url="http://www.mesa3d.org/">Mesa3D</ulink>, which requires no hardware support to
+                install.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </sect2>
+    </sect1>
+
+    <sect1 id="get-source">
+      <title>Getting the sources</title>
+      
+      <sect2>
+        <title>HTTP Download</title>
+        <para>
+          The latest released sources
+          <ulink url="http://www.winehq.org/?page=download_source">http://www.winehq.org/?page=download_source</ulink>.
+          Installation instructions are also available at the same place.
+        </para>
+      </sect2>
+      <sect2>
+        <title>Getting sources from CVS</title>
+        <para>
+            In order to get the sources from CVS, you first need to log into the CVS server. Issue the
+            following command:
+        </para>
+        <screen>
+<prompt>~/sources$ </prompt><command>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine login</command>
+Logging in to :pserver:cvs@cvs.winehq.org:2401/home/wine
+CVS password:</screen>
+        <para>
+          Use "<command>cvs</command>" as password. Next, you need to pull the sources from CVS. Use the
+          following command:
+        </para>
+        <screen>
+<prompt>~/sources$ </prompt><command>cvs -z 0 -d :pserver:cvs@cvs.winehq.org:/home/wine co wine</command>
+cvs checkout: Updating wine
+U wine/.cvsignore
+U wine/ANNOUNCE
+U wine/AUTHORS
+U wine/BUGS
+U wine/COPYING.LIB</screen>
+        <para>
+          The list will go on. When the operation finishes, a new directory called "wine" will be created,
+          and in it all the sources will reside.
+        </para>
+        <note>
+          <title>Warning</title>
+          <para>
+            In the above example, compression was disabled. Versions of CVS up to, and including, 1.11.1
+            hang if compression is enabled. If you have version 1.11.5 or higher, you can enable compression
+            by feeding other values to the <command>-z</command> argument.
+          </para>
+        </note>
+        <para>
+          For more details, consult the HOWTO at <ulink url="http://www.winehq.org/?page=cvs">http://www.winehq.org/?page=cvs</ulink>
+        </para>
+      </sect2>
+    </sect1>
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml

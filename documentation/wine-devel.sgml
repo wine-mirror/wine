@@ -4,6 +4,7 @@
 <!entity % authors SYSTEM "authors.ent">
 %authors;
 
+<!entity build SYSTEM "build.sgml">
 <!entity debugger SYSTEM "debugger.sgml">
 <!entity documentation SYSTEM "documentation.sgml">
 <!entity patches SYSTEM "patches.sgml">
@@ -15,7 +16,6 @@
 <!entity dlls SYSTEM "dlls.sgml">
 <!entity debugging SYSTEM "debugging.sgml">
 <!entity ole SYSTEM "ole.sgml">
-<!entity build SYSTEM "build.sgml">
 <!entity opengl SYSTEM "opengl.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
 
@@ -39,6 +39,7 @@
   <part id="part-one">
     <title>Developing Wine</title>
 
+    &build;
     &debugger;
     &documentation;
     &patches;
@@ -54,7 +55,6 @@
     &dlls;
     &debugging;
     &ole;
-    &build;
     &opengl;
     &multimedia;
   </part>
