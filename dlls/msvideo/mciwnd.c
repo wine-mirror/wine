@@ -313,7 +313,7 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
         else
             lParam = (LPARAM)cs->lpCreateParams;
 
-        /* If it's our internal caption, file name is a unicode string */
+        /* If it's our internal class pointer, file name is a unicode string */
         if (cs->lpszClass == mciWndClassW)
             SendMessageW(hWnd, MCIWNDM_OPENW, 0, lParam);
         else
