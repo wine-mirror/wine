@@ -918,6 +918,13 @@ NTSTATUS WINAPI NtReleaseSemaphore( IN HANDLE SemaphoreHandle,
                                     IN ULONG ReleaseCount,
                                     IN PULONG PreviousCount);
 
+NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit );
+NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit );
+NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit );
+NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit );
+NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit );
+BOOL     WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit );
+NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit );
 
 /* string functions */
 extern LPSTR _strlwr( LPSTR str );

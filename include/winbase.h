@@ -1206,13 +1206,25 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 
 /*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
 
+LONG WINAPI RtlEnterCriticalSection( CRITICAL_SECTION *crit );
+LONG WINAPI RtlLeaveCriticalSection( CRITICAL_SECTION *crit );
+LONG WINAPI RtlDeleteCriticalSection( CRITICAL_SECTION *crit );
+BOOL WINAPI RtlTryEnterCriticalSection( CRITICAL_SECTION *crit );
+/* FIXME: need to use defines because we don't have proper imports yet */
+#define     EnterCriticalSection(crit) RtlEnterCriticalSection(crit)
+#define     LeaveCriticalSection(crit) RtlLeaveCriticalSection(crit)
+#define     DeleteCriticalSection(crit) RtlDeleteCriticalSection(crit)
+#define     TryEnterCriticalSection(crit) RtlTryEnterCriticalSection(crit)
+#if 0
 void      WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL      WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
-void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+#endif
+
+void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
-BOOL    WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
+BOOL      WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
 DWORD     WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
 void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 BOOL    WINAPI SetProcessWorkingSetSize(HANDLE,DWORD,DWORD);

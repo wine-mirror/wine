@@ -331,7 +331,7 @@ type	win32
 @ stub RtlDecompressFragment
 @ stub RtlDelete
 @ stub RtlDeleteAce
-@ stdcall RtlDeleteCriticalSection(ptr) DeleteCriticalSection
+@ stdcall RtlDeleteCriticalSection(ptr) RtlDeleteCriticalSection
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteRegistryValue
 @ stdcall RtlDeleteResource(ptr) RtlDeleteResource
@@ -348,7 +348,7 @@ type	win32
 @ stub RtlEnlargedIntegerMultiply
 @ stub RtlEnlargedUnsignedDivide
 @ stub RtlEnlargedUnsignedMultiply
-@ stdcall RtlEnterCriticalSection(ptr) EnterCriticalSection
+@ stdcall RtlEnterCriticalSection(ptr) RtlEnterCriticalSection
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableWithoutSplaying
@@ -410,7 +410,7 @@ type	win32
 @ stdcall RtlInitUnicodeString(ptr wstr) RtlInitUnicodeString
 @ stdcall RtlInitializeBitMap(long long long) RtlInitializeBitMap
 @ stub RtlInitializeContext
-@ stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection
+@ stdcall RtlInitializeCriticalSection(ptr) RtlInitializeCriticalSection
 @ stdcall RtlInitializeGenericTable() RtlInitializeGenericTable
 @ stub RtlInitializeRXact
 @ stdcall RtlInitializeResource(ptr) RtlInitializeResource
@@ -430,7 +430,7 @@ type	win32
 @ stub RtlLargeIntegerShiftRight
 @ stub RtlLargeIntegerSubtract
 @ stub RtlLargeIntegerToChar
-@ stdcall RtlLeaveCriticalSection(ptr) LeaveCriticalSection
+@ stdcall RtlLeaveCriticalSection(ptr) RtlLeaveCriticalSection
 @ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 @ stdcall RtlLengthSecurityDescriptor(ptr) RtlLengthSecurityDescriptor
 @ stdcall RtlLengthSid(ptr) RtlLengthSid
@@ -973,7 +973,7 @@ type	win32
 @ stub RtlIsValidHandle
 @ stub RtlLookupAtomInAtomTable
 @ stub RtlQueryAtomInAtomTable
-@ stdcall RtlTryEnterCriticalSection(ptr) TryEnterCriticalSection
+@ stdcall RtlTryEnterCriticalSection(ptr) RtlTryEnterCriticalSection
 @ stub RtlEnumerateProperties
 @ stub RtlSetPropertyClassId
 @ stub RtlSetPropertyNames

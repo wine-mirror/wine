@@ -19,166 +19,23 @@ DEFAULT_DEBUG_CHANNEL(win32);
 DECLARE_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
- *           get_semaphore
- */
-static inline HANDLE get_semaphore( CRITICAL_SECTION *crit )
-{
-    HANDLE ret = crit->LockSemaphore;
-    if (!ret)
-    {
-        HANDLE sem = CreateSemaphoreA( NULL, 0, 1, NULL );
-        if (!(ret = (HANDLE)InterlockedCompareExchange( (PVOID *)&crit->LockSemaphore,
-                                                        (PVOID)sem, 0 )))
-            ret = sem;
-        else
-            CloseHandle(sem);  /* somebody beat us to it */
-    }
-    return ret;
-}
-
-/***********************************************************************
- *           InitializeCriticalSection   (KERNEL32.472) (NTDLL.406)
+ *           InitializeCriticalSection   (KERNEL32.472)
  */
 void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 {
-    crit->LockCount      = -1;
-    crit->RecursionCount = 0;
-    crit->OwningThread   = 0;
-    crit->LockSemaphore  = 0;
+    NTSTATUS ret = RtlInitializeCriticalSection( crit );
+    if (ret) RtlRaiseStatus( ret );
 }
-
-
-/***********************************************************************
- *           DeleteCriticalSection   (KERNEL32.185) (NTDLL.327)
- */
-void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
-{
-    if (crit->RecursionCount && crit->OwningThread != GetCurrentThreadId())
-        ERR("Deleting owned critical section (%p)\n", crit );
-
-    crit->LockCount      = -1;
-    crit->RecursionCount = 0;
-    crit->OwningThread   = 0;
-    if (crit->LockSemaphore) CloseHandle( crit->LockSemaphore );
-    crit->LockSemaphore  = 0;
-}
-
-
-/***********************************************************************
- *           RtlpWaitForCriticalSection   (NTDLL.@)
- */
-void WINAPI RtlpWaitForCriticalSection( CRITICAL_SECTION *crit )
-{
-    for (;;)
-    {
-        EXCEPTION_RECORD rec;
-        HANDLE sem = get_semaphore( crit );
-
-        DWORD res = WaitForSingleObject( sem, 5000L );
-        if ( res == WAIT_TIMEOUT )
-        {
-            ERR("Critical section %p wait timed out, retrying (60 sec)\n", crit );
-            res = WaitForSingleObject( sem, 60000L );
-            if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
-            {
-                ERR("Critical section %p wait timed out, retrying (5 min)\n", crit );
-                res = WaitForSingleObject( sem, 300000L );
-            }
-        }
-        if (res == STATUS_WAIT_0) break;
-
-        rec.ExceptionCode    = EXCEPTION_CRITICAL_SECTION_WAIT;
-        rec.ExceptionFlags   = 0;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = RtlRaiseException;  /* sic */
-        rec.NumberParameters = 1;
-        rec.ExceptionInformation[0] = (DWORD)crit;
-        RtlRaiseException( &rec );
-    }
-}
-
-
-/***********************************************************************
- *           RtlpUnWaitCriticalSection   (NTDLL.@)
- */
-void WINAPI RtlpUnWaitCriticalSection( CRITICAL_SECTION *crit )
-{
-    HANDLE sem = get_semaphore( crit );
-    ReleaseSemaphore( sem, 1, NULL );
-}
-
-
-/***********************************************************************
- *           EnterCriticalSection   (KERNEL32.195) (NTDLL.344)
- */
-void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
-{
-    if (InterlockedIncrement( &crit->LockCount ))
-    {
-        if (crit->OwningThread == GetCurrentThreadId())
-        {
-            crit->RecursionCount++;
-            return;
-        }
-
-        /* Now wait for it */
-        RtlpWaitForCriticalSection( crit );
-    }
-    crit->OwningThread   = GetCurrentThreadId();
-    crit->RecursionCount = 1;
-}
-
-
-/***********************************************************************
- *           TryEnterCriticalSection   (KERNEL32.898) (NTDLL.969)
- */
-BOOL WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
-{
-    BOOL ret = FALSE;
-    if (InterlockedCompareExchange( (PVOID *)&crit->LockCount,
-                                    (PVOID)0L, (PVOID)-1L ) == (PVOID)-1L)
-    {
-        crit->OwningThread   = GetCurrentThreadId();
-        crit->RecursionCount = 1;
-        ret = TRUE;
-    }
-    else if (crit->OwningThread == GetCurrentThreadId())
-    {
-	InterlockedIncrement( &crit->LockCount );
-	crit->RecursionCount++;
-	ret = TRUE;
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           LeaveCriticalSection   (KERNEL32.494) (NTDLL.426)
- */
-void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
-{
-    if (crit->OwningThread != GetCurrentThreadId()) return;
-       
-    if (--crit->RecursionCount)
-    {
-        InterlockedDecrement( &crit->LockCount );
-        return;
-    }
-    crit->OwningThread = 0;
-    if (InterlockedDecrement( &crit->LockCount ) >= 0)
-    {
-        /* Someone is waiting */
-        RtlpUnWaitCriticalSection( crit );
-    }
-}
-
 
 /***********************************************************************
  *           MakeCriticalSectionGlobal   (KERNEL32.515)
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
-    crit->LockSemaphore = ConvertToGlobalHandle( get_semaphore( crit ) );
+    /* let's assume that only one thread at a time will try to do this */
+    HANDLE sem = crit->LockSemaphore;
+    if (!sem) sem = CreateSemaphoreA( NULL, 0, 1, NULL );
+    crit->LockSemaphore = ConvertToGlobalHandle( sem );
 }
 
 
@@ -188,7 +45,7 @@ void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 {
     if ( !crit->LockSemaphore )
-        InitializeCriticalSection( crit );
+        RtlInitializeCriticalSection( crit );
 }
 
 
@@ -197,7 +54,7 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 {
-    DeleteCriticalSection( crit );
+    RtlDeleteCriticalSection( crit );
 }
 
 #ifdef __i386__

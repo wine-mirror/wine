@@ -8,6 +8,7 @@ MODULE    = ntdll
 SPEC_SRCS = ntdll.spec
 
 C_SRCS = \
+	critsection.c \
 	exception.c \
 	error.c \
 	file.c \
@@ -29,5 +30,7 @@ all: $(MODULE).o
 
 @MAKE_RULES@
 
-### Dependencies:
+$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDCOMBINE) $(OBJS) -o $@
 
+### Dependencies:

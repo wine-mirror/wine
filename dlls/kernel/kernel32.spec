@@ -201,7 +201,7 @@ import  ntdll.dll
 182 stdcall DefineDosDeviceA(long str str) DefineDosDeviceA
 183 stub DefineDosDeviceW
 184 stdcall DeleteAtom(long) DeleteAtom
-185 stdcall DeleteCriticalSection(ptr) DeleteCriticalSection
+185 forward DeleteCriticalSection ntdll.RtlDeleteCriticalSection
 186 stdcall DeleteFileA(str) DeleteFileA
 187 stdcall DeleteFileW(wstr) DeleteFileW
 188 stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) DeviceIoControl
@@ -211,7 +211,7 @@ import  ntdll.dll
 192 stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 193 stub EndUpdateResourceA
 194 stub EndUpdateResourceW
-195 stdcall EnterCriticalSection(ptr) EnterCriticalSection
+195 forward EnterCriticalSection ntdll.RtlEnterCriticalSection
 196 stdcall EnumCalendarInfoA(ptr long long long) EnumCalendarInfoA
 197 stub EnumCalendarInfoW
 198 stdcall EnumDateFormatsA(ptr long long) EnumDateFormatsA
@@ -510,7 +510,7 @@ import  ntdll.dll
 491 register K32Thk1632Prolog() K32Thk1632Prolog
 492 stdcall LCMapStringA(long long str long ptr long) LCMapStringA
 493 stdcall LCMapStringW(long long wstr long ptr long) LCMapStringW
-494 stdcall LeaveCriticalSection(ptr) LeaveCriticalSection
+494 forward LeaveCriticalSection ntdll.RtlLeaveCriticalSection
 495 stdcall LoadLibraryA(str) LoadLibraryA
 496 stdcall LoadLibraryExA( str long long) LoadLibraryExA
 497 stdcall LoadLibraryExW(wstr long long) LoadLibraryExW
@@ -914,7 +914,7 @@ import  ntdll.dll
 895 stub SignalObjectAndWait
 896 stub SwitchToFiber
 897 stub SwitchToThread
-898 stdcall TryEnterCriticalSection(ptr) TryEnterCriticalSection
+898 forward TryEnterCriticalSection ntdll.RtlTryEnterCriticalSection
 899 stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx
 900 stub VirtualFreeEx
 901 stub WriteFileGather
