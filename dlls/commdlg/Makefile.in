@@ -33,8 +33,9 @@ RC_BINARIES = \
 	800.bmp \
 	cdrom.ico \
 	floppy.ico \
-	folder2.ico \
 	folder.ico \
+	folder2.ico \
+	fontpics.bmp \
 	hdisk.ico \
 	network.ico \
 	pd32_collate.ico \

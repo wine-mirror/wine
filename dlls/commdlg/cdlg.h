@@ -203,9 +203,10 @@ typedef struct
   int  added;
 } CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
 
-INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType, LPCHOOSEFONTA lpcf, 
-					HWND hwnd, LPCFn_ENUMSTRUCT e);
-INT AddFontStyle(const ENUMLOGFONTEXA *lpElfex, const TEXTMETRICA *metrics,
+INT AddFontFamily(const ENUMLOGFONTEXA *lpElfex, const NEWTEXTMETRICEXA *lpNTM,
+                  UINT nFontType, LPCHOOSEFONTA lpcf, HWND hwnd,
+                  LPCFn_ENUMSTRUCT e);
+INT AddFontStyle(const ENUMLOGFONTEXA *lpElfex, const NEWTEXTMETRICEXA *metrics,
                  UINT nFontType, LPCHOOSEFONTA lpcf, HWND hcmb2, HWND hcmb3,
                  HWND hDlg, BOOL iswin16);
 void _dump_cf_flags(DWORD cflags);

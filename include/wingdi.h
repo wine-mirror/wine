@@ -1098,6 +1098,14 @@ DECL_WINELIB_TYPE_AW(LPPOLYTEXT)
 #define NTM_BOLD        0x00000020L
 #define NTM_ITALIC      0x00000001L
 
+#define NTM_NONNEGATIVE_AC  0x00010000
+#define NTM_PS_OPENTYPE     0x00020000
+#define NTM_TT_OPENTYPE     0x00040000
+#define NTM_MULTIPLEMASTER  0x00080000
+#define NTM_TYPE1           0x00100000
+#define NTM_DSIG            0x00200000
+
+
 typedef struct
 {
     LONG      tmHeight;

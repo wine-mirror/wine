@@ -43,7 +43,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-static HBITMAP hBitmapTT = 0;
+/* image list with TrueType bitmaps and more */
+static HIMAGELIST himlTT = 0;
+#define TTBITMAP_XSIZE 20 /* x-size of the bitmaps */
 
 
 INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -396,11 +398,12 @@ static BOOL CFn_HookCallChk32(LPCHOOSEFONTA lpcf)
 /*************************************************************************
  *              AddFontFamily                               [internal]
  */
-INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType,
-        LPCHOOSEFONTA lpcf, HWND hwnd, LPCFn_ENUMSTRUCT e)
+INT AddFontFamily(const ENUMLOGFONTEXA *lpElfex, const NEWTEXTMETRICEXA *lpNTM,
+        UINT nFontType, LPCHOOSEFONTA lpcf, HWND hwnd, LPCFn_ENUMSTRUCT e)
 {
     int i;
     WORD w;
+    const LOGFONTA *lplf = &(lpElfex->elfLogFont);
 
     TRACE("font=%s (nFontType=%d)\n", lplf->lfFaceName,nFontType);
 
@@ -420,8 +423,9 @@ INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType,
     if (i == CB_ERR) {
         i = SendMessageA(hwnd, CB_ADDSTRING, 0, (LPARAM)lplf->lfFaceName);
         if( i != CB_ERR) {
-            w=(lplf->lfCharSet << 8) | lplf->lfPitchAndFamily;
             /* store some important font information */
+            w = (lplf->lfPitchAndFamily) << 8 |
+                (HIWORD(lpNTM->ntmTm.ntmFlags) & 0xff);
             SendMessageA(hwnd, CB_SETITEMDATA, i, MAKELONG(nFontType,w));
         }
     }
@@ -431,12 +435,13 @@ INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType,
 /*************************************************************************
  *              FontFamilyEnumProc32                           [internal]
  */
-static INT WINAPI FontFamilyEnumProc(const LOGFONTA *lpLogFont,
+static INT WINAPI FontFamilyEnumProc(const ENUMLOGFONTEXA *lpElfex,
         const TEXTMETRICA *metrics, DWORD dwFontType, LPARAM lParam)
 {
     LPCFn_ENUMSTRUCT e;
     e=(LPCFn_ENUMSTRUCT)lParam;
-    return AddFontFamily(lpLogFont, dwFontType, e->lpcf32a, e->hWnd1, e);
+    return AddFontFamily( lpElfex, (NEWTEXTMETRICEXA *) metrics,
+            dwFontType, e->lpcf32a, e->hWnd1, e);
 }
 
 /*************************************************************************
@@ -547,7 +552,7 @@ inline void CFn_ReleaseDC(LPCHOOSEFONTA lpcf, HDC hdc)
 /***********************************************************************
  *                 AddFontStyle                          [internal]
  */
-INT AddFontStyle( const ENUMLOGFONTEXA *lpElfex, const TEXTMETRICA *lpTM,
+INT AddFontStyle( const ENUMLOGFONTEXA *lpElfex, const NEWTEXTMETRICEXA *lpNTM,
                 UINT nFontType, LPCHOOSEFONTA lpcf, HWND hcmb2, HWND hcmb3,
                 HWND hDlg, BOOL iswin16)
 {
@@ -568,8 +573,8 @@ INT AddFontStyle( const ENUMLOGFONTEXA *lpElfex, const TEXTMETRICA *lpTM,
     {
         INT points;
         if(!(hdc = CFn_GetDC(lpcf))) return 0;
-        points = MulDiv( lpTM->tmHeight - lpTM->tmInternalLeading, 72,
-                GetDeviceCaps(hdc, LOGPIXELSY));
+        points = MulDiv( lpNTM->ntmTm.tmHeight - lpNTM->ntmTm.tmInternalLeading,
+                72, GetDeviceCaps(hdc, LOGPIXELSY));
         CFn_ReleaseDC(lpcf, hdc);
         i = AddFontSizeToCombo3(hcmb3, points, lpcf);
         if( i) return 0;
@@ -671,8 +676,8 @@ static INT WINAPI FontStyleEnumProc( const ENUMLOGFONTEXA *lpElfex,
     HWND hcmb2=s->hWnd1;
     HWND hcmb3=s->hWnd2;
     HWND hDlg=GetParent(hcmb3);
-    return AddFontStyle( lpElfex, metrics, dwFontType, s->lpcf32a,
-            hcmb2, hcmb3, hDlg, FALSE);
+    return AddFontStyle( lpElfex, (const NEWTEXTMETRICEXA *) metrics,
+            dwFontType, s->lpcf32a, hcmb2, hcmb3, hDlg, FALSE);
 }
 
 /***********************************************************************
@@ -698,8 +703,9 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
         EndDialog (hDlg, 0);
         return FALSE;
     }
-    if (!hBitmapTT)
-        hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
+    if (!himlTT)
+        himlTT = ImageList_LoadImageA( COMDLG32_hInstance, MAKEINTRESOURCEA(38),
+                TTBITMAP_XSIZE, 0, CLR_DEFAULT, IMAGE_BITMAP, 0);
 
     if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
         ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
@@ -739,9 +745,14 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     s.hWnd1=GetDlgItem(hDlg,cmb1);
     s.lpcf32a=lpcf;
     do {
+        LOGFONTA elf;
         s.added = 0;
-        if (!EnumFontFamiliesA(hdc, NULL, FontFamilyEnumProc, (LPARAM)&s)) {
-            TRACE("EnumFontFamilies returns 0\n");
+        elf.lfCharSet = DEFAULT_CHARSET; /* enum all charsets */
+        elf.lfPitchAndFamily = 0;
+        elf.lfFaceName[0] = '\0'; /* enum all fonts */
+        if (!EnumFontFamiliesExA(hdc, &elf, (FONTENUMPROCA)FontFamilyEnumProc, (LPARAM)&s, 0))
+        {
+            TRACE("EnumFontFamiliesEx returns 0\n");
             break;
         }
         if (s.added) break;
@@ -810,13 +821,23 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
  */
 LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-    BITMAP bm;
+    HDC hdc;
+    HFONT hfontprev;
+    TEXTMETRICW tm;
     LPMEASUREITEMSTRUCT lpmi=(LPMEASUREITEMSTRUCT)lParam;
-    if (!hBitmapTT)
-        hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
-    GetObjectA( hBitmapTT, sizeof(bm), &bm );
-    lpmi->itemHeight=bm.bmHeight;
-    /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
+    if (!himlTT)
+        himlTT = ImageList_LoadImageA( COMDLG32_hInstance, MAKEINTRESOURCEA(38),
+                TTBITMAP_XSIZE, 0, CLR_DEFAULT, IMAGE_BITMAP, 0);
+    ImageList_GetIconSize( himlTT, 0, &lpmi->itemHeight);
+    lpmi->itemHeight += 2;
+    /* use MAX of bitmap height and tm.tmHeight .*/
+    hdc=GetDC( hDlg);
+    if(!hdc) return 0;
+    hfontprev = SelectObject( hdc, GetStockObject( SYSTEM_FONT));
+    GetTextMetricsW( hdc, &tm);
+    if( tm.tmHeight > lpmi->itemHeight) lpmi->itemHeight = tm.tmHeight;
+    SelectObject( hdc, hfontprev);
+    ReleaseDC( hDlg, hdc);
     return 0;
 }
 
@@ -828,12 +849,10 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
     HBRUSH hBrush;
     char buffer[40];
-    BITMAP bm;
     COLORREF cr, oldText=0, oldBk=0;
     RECT rect;
-    HDC hMemDC;
     int nFontType;
-    HBITMAP objPrev; /* for TT usage */
+    int idx;
     LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)lParam;
 
     if (lpdi->itemID == (UINT)-1)  /* got no items */
@@ -864,19 +883,23 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
             /* TRACE(commdlg,"WM_Drawitem cmb1\n"); */
             SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
                          (LPARAM)buffer);
-            GetObjectA( hBitmapTT, sizeof(bm), &bm );
-            TextOutA(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
+            TextOutA(lpdi->hDC, lpdi->rcItem.left + TTBITMAP_XSIZE + 10,
                      lpdi->rcItem.top, buffer, strlen(buffer));
             nFontType = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
-            if (nFontType & TRUETYPE_FONTTYPE)
-            {
-                hMemDC = CreateCompatibleDC(lpdi->hDC);
-                objPrev = SelectObject(hMemDC, hBitmapTT);
-                BitBlt(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
-                       bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-                SelectObject(hMemDC, objPrev);
-                DeleteDC(hMemDC);
-            }
+            idx = -1;
+            if (nFontType & TRUETYPE_FONTTYPE) {
+                idx = 0;  /* picture: TT */
+                if( nFontType & NTM_TT_OPENTYPE)
+                    idx = 2; /* picture: O */
+            } else if( nFontType & NTM_PS_OPENTYPE)
+                idx = 3; /* picture: O+ps */
+            else if( nFontType & NTM_TYPE1)
+                idx = 4; /* picture: a */
+            else if( nFontType & DEVICE_FONTTYPE)
+                idx = 1; /* picture: printer */
+            if( idx >= 0)
+                ImageList_Draw( himlTT, idx, lpdi->hDC, lpdi->rcItem.left,
+                        lpdi->rcItem.top, ILD_TRANSPARENT);
             break;
         case cmb2:
         case cmb3:
@@ -929,7 +952,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
         LPCHOOSEFONTA lpcf)
 {
-    int i,j;
+    int i;
     long l;
     HDC hdc;
     LPLOGFONTA lpxx=lpcf->lpLogFont;
@@ -1002,13 +1025,11 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
                 SendDlgItemMessageA(hDlg,cmb1,CB_GETLBTEXT,i,
                                     (LPARAM)str);
                 l=SendDlgItemMessageA(hDlg,cmb1,CB_GETITEMDATA,i,0);
-                j=HIWORD(l);
                 lpcf->nFontType = LOWORD(l);
                 /* FIXME:   lpcf->nFontType |= ....  SIMULATED_FONTTYPE and so */
                 /* same value reported to the EnumFonts
                    call back with the extra FONTTYPE_...  bits added */
-                lpxx->lfPitchAndFamily=j&0xff;
-                lpxx->lfCharSet=j>>8;
+                lpxx->lfPitchAndFamily = HIWORD(l) >> 8;
             }
             strcpy(lpxx->lfFaceName,str);
             i=SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0);
@@ -1037,6 +1058,8 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
             i=SendDlgItemMessageA(hDlg, cmb5, CB_GETCURSEL, 0, 0);
             if (i!=CB_ERR)
                 lpxx->lfCharSet=SendDlgItemMessageA(hDlg, cmb5, CB_GETITEMDATA, i, 0);
+            else
+                lpxx->lfCharSet = DEFAULT_CHARSET;
             lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
             lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
             lpxx->lfWidth=lpxx->lfOrientation=lpxx->lfEscapement=0;
