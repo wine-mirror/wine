@@ -718,7 +718,8 @@ static BOOL INT21_CreateTempFile( CONTEXT86 *context )
         sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
         counter = (counter + 1) % 1000;
 
-        if ((SET_AX( context, _lcreat16_uniq( name, 0 ))) != (WORD)HFILE_ERROR16)
+        SET_AX( context, _lcreat16_uniq( name, 0 ) );
+        if (AX_reg(context) != HFILE_ERROR16)
         {
             TRACE("created %s\n", name );
             return TRUE;
@@ -1392,11 +1393,11 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	    TRACE(" LONG FILENAME - FIND FIRST MATCHING FILE for %s\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx));
             /* FIXME: use attributes in CX */
-            if ((SET_AX( context, FindFirstFile16(
-                   CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-                   (WIN32_FIND_DATAA *)CTX_SEG_OFF_TO_LIN(context, context->SegEs,
-                                                          context->Edi))))
-		== INVALID_HANDLE_VALUE16)
+            SET_AX( context, FindFirstFile16(
+                        CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
+                        (WIN32_FIND_DATAA *)CTX_SEG_OFF_TO_LIN(context, context->SegEs,
+                                                               context->Edi)));
+            if (AX_reg(context) == INVALID_HANDLE_VALUE16)
 		bSetDOSExtendedError = TRUE;
             break;
         case 0x4f:  /* Find next file */
