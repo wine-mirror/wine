@@ -14,8 +14,8 @@ init	COMCTL32_LibMain
   6 stdcall CreateStatusWindowA(long str long long) CreateStatusWindowA
   7 stdcall CreateToolbar(long long long long long long ptr long) CreateToolbar
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
-  9 stdcall DPA_LoadStream(ptr ptr long long) DPA_LoadStream
- 10 stdcall DPA_SaveStream(long long long long) DPA_SaveStream
+  9 stdcall DPA_LoadStream(ptr ptr ptr long) DPA_LoadStream
+ 10 stdcall DPA_SaveStream(ptr ptr ptr long) DPA_SaveStream
  11 stdcall DPA_Merge(ptr ptr long ptr ptr long) DPA_Merge
 #12 stub Cctl1632_ThunkData32
  13 stdcall MakeDragList(long) MakeDragList

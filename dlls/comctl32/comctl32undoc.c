@@ -19,6 +19,8 @@
 #include <ctype.h>
 
 #include "winbase.h"
+#include "winerror.h"
+#include "objbase.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -37,6 +39,135 @@ extern LPWSTR WINAPI lstrrchrw(LPCWSTR, LPCWSTR, WORD);
 extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
 
 
+typedef struct _STREAMDATA
+{
+    DWORD dwSize;
+    DWORD dwData2;
+    DWORD dwItems;
+} STREAMDATA, *PSTREAMDATA;
+
+typedef struct _LOADDATA
+{
+    INT   nCount;
+    PVOID ptr;
+} LOADDATA, *LPLOADDATA;
+
+typedef HRESULT(CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
+
+
+/**************************************************************************
+ * DPA_LoadStream [COMCTL32.9]
+ *
+ * Loads a dynamic pointer array from a stream
+ *
+ * PARAMS
+ *     phDpa    [O] pointer to a handle to a dynamic pointer array
+ *     loadProc [I] pointer to a callback function
+ *     pStream  [I] pointer to a stream
+ *     lParam   [I] application specific value
+ *
+ * NOTES
+ *     No more information available yet!
+ */
+
+HRESULT WINAPI
+DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lParam)
+{
+    HRESULT errCode;
+    LARGE_INTEGER position;
+    ULARGE_INTEGER newPosition;
+    STREAMDATA  streamData;
+    LOADDATA loadData;
+    ULONG ulRead;
+    HDPA hDpa;
+    PVOID *ptr;
+
+    FIXME ("phDpa=%p loadProc=%p pStream=%p lParam=%lx\n",
+	   phDpa, loadProc, pStream, lParam);
+
+    if (!phDpa || !loadProc || !pStream)
+	return E_INVALIDARG;
+
+    *phDpa = (HDPA)NULL;
+
+    position.LowPart = 0;
+    position.HighPart = 0;
+
+    errCode = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &newPosition);
+    if (errCode != S_OK)
+	return errCode;
+
+    errCode = IStream_Read (pStream, &streamData, sizeof(STREAMDATA), &ulRead);
+    if (errCode != S_OK)
+	return errCode;
+
+    FIXME ("dwSize=%lu dwData2=%lu dwItems=%lu\n",
+	   streamData.dwSize, streamData.dwData2, streamData.dwItems);
+
+    if (lParam < sizeof(STREAMDATA) ||
+	streamData.dwSize < sizeof(STREAMDATA) ||
+	streamData.dwData2 < 1) {
+	errCode = E_FAIL;
+    }
+
+    /* create the dpa */
+    hDpa = DPA_Create (streamData.dwItems);
+    if (!hDpa)
+	return E_OUTOFMEMORY;
+
+    if (!DPA_Grow (hDpa, streamData.dwItems))
+	return E_OUTOFMEMORY;
+
+    /* load data from the stream into the dpa */
+    ptr = hDpa->ptrs;
+    for (loadData.nCount = 0; loadData.nCount < streamData.dwItems; loadData.nCount++) {
+        errCode = (loadProc)(&loadData, pStream, lParam);
+	if (errCode != S_OK) {
+	    errCode = S_FALSE;
+	    break;
+	}
+
+	*ptr = loadData.ptr;
+	ptr++;
+    }
+
+    /* set the number of items */
+    hDpa->nItemCount = loadData.nCount;
+
+    /* store the handle to the dpa */
+    *phDpa = hDpa;
+    FIXME ("new hDpa=%p\n", hDpa);
+
+    return errCode;
+}
+
+
+/**************************************************************************
+ * DPA_SaveStream [COMCTL32.10]
+ *
+ * Saves a dynamic pointer array to a stream
+ *
+ * PARAMS
+ *     hDpa     [I] handle to a dynamic pointer array
+ *     loadProc [I] pointer to a callback function
+ *     pStream  [I] pointer to a stream
+ *     lParam   [I] application specific value
+ *
+ * NOTES
+ *     No more information available yet!
+ */
+
+HRESULT WINAPI
+DPA_SaveStream (const HDPA hDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lParam)
+{
+
+    FIXME ("hDpa=%p loadProc=%p pStream=%p lParam=%lx\n",
+	   hDpa, loadProc, pStream, lParam);
+
+    return E_FAIL;
+}
+
+
 /**************************************************************************
  * DPA_Merge [COMCTL32.11]
  *
@@ -45,7 +176,7 @@ extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
  *     hdpa2    [I] handle to a dynamic pointer array
  *     dwFlags  [I] flags
  *     pfnSort  [I] pointer to sort function
- *     dwParam5 [I]
+ *     pfnMerge [I] pointer to merge function
  *     lParam   [I] application specific value
  *
  * NOTES
@@ -54,13 +185,15 @@ extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
 
 BOOL WINAPI
 DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
-	   PFNDPACOMPARE pfnCompare, LPVOID pfnParam5, LPARAM lParam)
+	   PFNDPACOMPARE pfnCompare, PFNDPAMERGE pfnMerge, LPARAM lParam)
 {
-    /* LPVOID *pWork1, *pWork2; */
-    INT  nCount1, nCount2;
+    LPVOID pWork1, pWork2;
+    INT nResult;
+    INT nCount, nIndex;
+    INT nNewItems;
 
-    TRACE("(%p %p %08lx %p %p %08lx): stub!\n",
-	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnParam5, lParam);
+    TRACE("(%p %p %08lx %p %p %08lx): semi stub!\n",
+	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnMerge, lParam);
 
     if (IsBadWritePtr (hdpa1, sizeof(DPA)))
 	return FALSE;
@@ -71,44 +204,87 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
     if (IsBadCodePtr ((FARPROC)pfnCompare))
 	return FALSE;
 
-    if (IsBadCodePtr ((FARPROC)pfnParam5))
+    if (IsBadCodePtr ((FARPROC)pfnMerge))
 	return FALSE;
 
     if (dwFlags & DPAM_SORT) {
 	TRACE("sorting dpa's!\n");
+	if (hdpa1->nItemCount > 0)
 	DPA_Sort (hdpa1, pfnCompare, lParam);
+	TRACE ("dpa 1 sorted!\n");
+	if (hdpa2->nItemCount > 0)
 	DPA_Sort (hdpa2, pfnCompare, lParam);
+	TRACE ("dpa 2 sorted!\n");
     }
 
-    if (hdpa2->nItemCount <= 0)
+    if (hdpa2->nItemCount < 1)
 	return TRUE;
 
-    nCount1 = hdpa1->nItemCount - 1;
+    TRACE("hdpa1->nItemCount=%d hdpa2->nItemCount=%d\n",
+	   hdpa1->nItemCount, hdpa2->nItemCount);
 
-    nCount2 = hdpa2->nItemCount - 1;
 
-    FIXME("nCount1=%d nCount2=%d\n", nCount1, nCount2);
-    FIXME("semi stub!\n");
+    /* preliminary hack - simply append the pointer list hdpa2 to hdpa1*/
+    for (nCount = 0; nCount < hdpa2->nItemCount; nCount++)
+	DPA_InsertPtr (hdpa1, hdpa1->nItemCount + 1, hdpa2->ptrs[nCount]);
+
 #if 0
+    /* incomplete implementation */
 
-    do {
+    pWork1 = &(hdpa1->ptrs[hdpa1->nItemCount - 1]);
+    pWork2 = &(hdpa2->ptrs[hdpa2->nItemCount - 1]);
 
+    nIndex = hdpa1->nItemCount - 1;
+    nCount = hdpa2->nItemCount - 1;
 
-	if (nResult == 0) {
+    do
+    {
+	nResult = (pfnCompare)(pWork1, pWork2, lParam);
 
+	if (nResult == 0)
+	{
+	    PVOID ptr;
+
+	    ptr = (pfnMerge)(1, pWork1, pWork2, lParam);
+	    if (!ptr)
+		return FALSE;
+
+	    nCount--;
+	    pWork2--;
+	    pWork1 = ptr;
 	}
-	else if (nResult > 0) {
+	else if (nResult < 0)
+	{
+	    if (!dwFlags & 8)
+	    {
+		PVOID ptr;
 
-	}
-	else {
+		ptr = DPA_DeletePtr (hdpa1, hdpa1->nItemCount - 1);
 
+		(pfnMerge)(2, ptr, NULL, lParam);
+	    }
 	}
+	else
+	{
+	    if (!dwFlags & 4)
+	    {
+		PVOID ptr;
+
+		ptr = (pfnMerge)(3, pWork2, NULL, lParam);
+		if (!ptr)
+		    return FALSE;
+		DPA_InsertPtr (hdpa1, nIndex, ptr);
+    }
+	    nCount--;
+	    pWork2--;
+	}
+
+	nIndex--;
+	pWork1--;
 
     }
-    while (nCount2 >= 0);
-
+    while (nCount >= 0);
 #endif
-
 
     return TRUE;
 }
@@ -1874,32 +2050,4 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
       return (INT)(lpLoop-lpStr);
   
   return (INT)(lpLoop-lpStr);
-}
-
-/*************************************************************************
- * DPA_LoadStream [COMCTL32.9]
- *
- * NOTE: Ordinal is only accurate for Win98 / IE 4 and later
- */
-
-DWORD WINAPI DPA_LoadStream(HDPA *hDpa, DWORD pfnDpaLoadCallback, DWORD param3, DWORD param4)
-{
-  FIXME("(%p %lx %lx %lx): partial stub!\n", hDpa, pfnDpaLoadCallback, param3, param4);
-
- *hDpa = DPA_Create(8);
-
-  return(0);
-}
-
-/************************************************************************
- * DPA_SaveStream [COMCTL32.10]
- *
- * NOTE: Ordinal is only accurate for Win98 / IE 4 and later
- */
-
-DWORD WINAPI DPA_SaveStream(DWORD param1, DWORD param2, DWORD param3, DWORD param4)
-{
-  FIXME("(%lx %lx %lx %lx): stub!\n", param1, param2, param3, param4);
-
-  return(0);
 }
