@@ -605,12 +605,26 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
     DWORD ret;
     HKEY tmp;
 
-    if (!name || !*name) return NtDeleteKey( hkey );
-    if (!(ret = RegOpenKeyExW( hkey, name, 0, 0, &tmp )))
+    if (!name || !*name)
     {
+        ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
+    }
+    else if (!(ret = RegOpenKeyExW( hkey, name, 0, 0, &tmp )))
+    {
+        if (!is_version_nt()) /* win95 does recursive key deletes */
+        {
+            WCHAR name[MAX_PATH];
+
+            while(!RegEnumKeyW(tmp, 0, name, sizeof name))
+            {
+                if(RegDeleteKeyW(tmp, name))  /* recurse */
+                    break;
+            }
+        }
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
         RegCloseKey( tmp );
     }
+    TRACE("%s ret=%08lx\n", debugstr_w(name), ret);
     return ret;
 }
 
@@ -623,12 +637,26 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
     DWORD ret;
     HKEY tmp;
 
-    if (!name || !*name) return NtDeleteKey( hkey );
-    if (!(ret = RegOpenKeyExA( hkey, name, 0, 0, &tmp )))
+    if (!name || !*name)
     {
+        ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
+    }
+    else if (!(ret = RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, &tmp )))
+    {
+        if (!is_version_nt()) /* win95 does recursive key deletes */
+        {
+            CHAR name[MAX_PATH];
+
+            while(!RegEnumKeyA(tmp, 0, name, sizeof name))
+            {
+                if(RegDeleteKeyA(tmp, name))  /* recurse */
+                    break;
+            }
+        }
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
         RegCloseKey( tmp );
     }
+    TRACE("%s ret=%08lx\n", debugstr_a(name), ret);
     return ret;
 }
 
