@@ -10,6 +10,7 @@
 #include "callback.h"
 #include "task.h"
 #include "syslevel.h"
+#include "queue.h"
 
 
 /**********************************************************************
@@ -271,7 +272,6 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     CALLBACK_CallLoadAppSegProc,      /* CallLoadAppSegProc */
     CALLBACK_CallLocalNotifyFunc,     /* CallLocalNotifyFunc */
     CALLBACK_CallResourceHandlerProc, /* CallResourceHandlerProc */
-    NULL,                             /* CallPostAppMessageProc */
     CALLBACK_CallWOWCallbackProc,     /* CallWOWCallbackProc */
     CALLBACK_CallWOWCallback16Ex,     /* CallWOWCallback16Ex */
     CALLBACK_CallASPIPostProc,        /* CallASPIPostProc */
@@ -290,4 +290,24 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 
 const CALLBACKS_TABLE *Callbacks = &CALLBACK_WinelibTable;
 
+
+/**********************************************************************
+ *	     CALLOUT_Table
+ *
+ * The callout function table for Winelib
+ */
+
+CALLOUT_TABLE Callout = 
+{
+    PeekMessage16, PeekMessage32A, PeekMessage32W,
+    GetMessage16, GetMessage32A, GetMessage32W,
+    SendMessage16, SendMessage32A, SendMessage32W,
+    PostMessage16, PostMessage32A, PostMessage32W,
+    PostAppMessage16, PostThreadMessage32A, PostThreadMessage32W,
+    TranslateMessage16, TranslateMessage32,
+    DispatchMessage16, DispatchMessage32A, DispatchMessage32W,
+    RedrawWindow16, RedrawWindow32,
+    InitThreadInput,
+    UserYield
+};
 

@@ -34,6 +34,7 @@ extern LONG CALLBACK CallTo16_lreg_(const CONTEXT *context, INT32 offset);
 extern WORD CALLBACK CallTo16_word_     (FARPROC16);
 extern LONG CALLBACK CallTo16_long_     (FARPROC16);
 extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
+extern WORD CALLBACK CallTo16_word_l    (FARPROC16,LONG);
 extern LONG CALLBACK CallTo16_long_l    (FARPROC16,LONG);
 extern WORD CALLBACK CallTo16_word_ww   (FARPROC16,WORD,WORD);
 extern WORD CALLBACK CallTo16_word_wl   (FARPROC16,WORD,LONG);
@@ -47,11 +48,14 @@ extern LONG CALLBACK CallTo16_long_lll  (FARPROC16,LONG,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
+extern WORD CALLBACK CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
 extern WORD CALLBACK CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
+extern LONG CALLBACK CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern LONG CALLBACK CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
+extern WORD CALLBACK CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
 extern LONG CALLBACK CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
@@ -158,7 +162,6 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
     (void *)CallTo16_word_www,             /* CallLocalNotifyFunc */
     (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
-    (void *)CallTo16_word_wwwl,            /* CallPostAppMessageProc */
     (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
     THUNK_WOWCallback16Ex,                 /* CallWOWCallback16Ex */
     (void *)CallTo16_long_l,               /* CallASPIPostProc */
@@ -850,6 +853,57 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
     return timer;
 }
 
+/***********************************************************************
+ *           THUNK_InitCallout
+ */
+void THUNK_InitCallout(void)
+{
+    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
+    if ( hModule )
+    {
+#define GETADDR( var, name )  \
+        *(FARPROC32 *)&Callout.##var = GetProcAddress32( hModule, name )
+
+        GETADDR( PeekMessage32A, "PeekMessageA" );
+        GETADDR( PeekMessage32W, "PeekMessageW" );
+        GETADDR( GetMessage32A, "GetMessageA" );
+        GETADDR( GetMessage32W, "GetMessageW" );
+        GETADDR( SendMessage32A, "SendMessageA" );
+        GETADDR( SendMessage32W, "SendMessageW" );
+        GETADDR( PostMessage32A, "PostMessageA" );
+        GETADDR( PostMessage32W, "PostMessageW" );
+        GETADDR( PostThreadMessage32A, "PostThreadMessageA" );
+        GETADDR( PostThreadMessage32W, "PostThreadMessageW" );
+        GETADDR( TranslateMessage32, "TranslateMessage" );
+        GETADDR( DispatchMessage32W, "DispatchMessageW" );
+        GETADDR( DispatchMessage32A, "DispatchMessageA" );
+        GETADDR( RedrawWindow32, "RedrawWindow" );
+
+#undef GETADDR
+    }
+
+    hModule = GetModuleHandle16( "USER" );
+    if ( hModule )
+    {
+#define GETADDR( var, name, thk )  \
+        *(FARPROC32 *)&Callout.##var = (FARPROC32) \
+              THUNK_Alloc( WIN32_GetProcAddress16( hModule, name ), \
+                           (RELAY)CallTo16_##thk )
+
+        GETADDR( PeekMessage16, "PeekMessage", word_lwwww );
+        GETADDR( GetMessage16, "GetMessage", word_lwww );
+        GETADDR( SendMessage16, "SendMessage", long_wwwl );
+        GETADDR( PostMessage16, "PostMessage", word_wwwl );
+        GETADDR( PostAppMessage16, "PostAppMessage", word_wwwl );
+        GETADDR( TranslateMessage16, "TranslateMessage", word_l );
+        GETADDR( DispatchMessage16, "DispatchMessage", long_l );
+        GETADDR( RedrawWindow16, "RedrawWindow", word_wlww );
+        GETADDR( InitThreadInput, "InitThreadInput", word_ww );
+        GETADDR( UserYield, "UserYield", word_ );
+
+#undef GETADDR
+    }
+}
 
 /***********************************************************************
  * 16->32 Flat Thunk routines:

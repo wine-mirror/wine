@@ -38,7 +38,6 @@ typedef struct
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
     WORD (CALLBACK *CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
     HGLOBAL16 (CALLBACK *CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
-    BOOL16 (CALLBACK *CallPostAppMessageProc)( FARPROC16, HTASK16, UINT16, WPARAM16, LPARAM );
     DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
     BOOL32 (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
                                             LPDWORD );
@@ -70,5 +69,63 @@ typedef struct
 } CALLBACKS_TABLE;
 
 extern const CALLBACKS_TABLE *Callbacks;
+
+typedef struct
+{
+    BOOL16 WINAPI (*PeekMessage16)( LPMSG16 msg, HWND16 hwnd, 
+                                    UINT16 first, UINT16 last, UINT16 flags );
+    BOOL32 WINAPI (*PeekMessage32A)( LPMSG32 lpmsg, HWND32 hwnd,
+                                     UINT32 min, UINT32 max, UINT32 wRemoveMsg );
+    BOOL32 WINAPI (*PeekMessage32W)( LPMSG32 lpmsg, HWND32 hwnd, 
+                                     UINT32 min, UINT32 max, UINT32 wRemoveMsg );
+
+    BOOL16 WINAPI (*GetMessage16)( SEGPTR msg, HWND16 hwnd, 
+                                   UINT16 first, UINT16 last );
+    BOOL32 WINAPI (*GetMessage32A)( MSG32* lpmsg, HWND32 hwnd, 
+                                    UINT32 min, UINT32 max );
+    BOOL32 WINAPI (*GetMessage32W)( MSG32* lpmsg, HWND32 hwnd, 
+                                    UINT32 min, UINT32 max );
+
+    LRESULT WINAPI (*SendMessage16)( HWND16 hwnd, UINT16 msg, 
+                                     WPARAM16 wParam, LPARAM lParam );
+    LRESULT WINAPI (*SendMessage32A)( HWND32 hwnd, UINT32 msg, 
+                                      WPARAM32 wParam, LPARAM lParam );
+    LRESULT WINAPI (*SendMessage32W)( HWND32 hwnd, UINT32 msg, 
+                                      WPARAM32 wParam, LPARAM lParam );
+
+    BOOL16 WINAPI (*PostMessage16)( HWND16 hwnd, UINT16 message, 
+                                    WPARAM16 wParam, LPARAM lParam );
+    BOOL32 WINAPI (*PostMessage32A)( HWND32 hwnd, UINT32 message, 
+                                     WPARAM32 wParam, LPARAM lParam );
+    BOOL32 WINAPI (*PostMessage32W)( HWND32 hwnd, UINT32 message, 
+                                     WPARAM32 wParam, LPARAM lParam );
+
+    BOOL16 WINAPI (*PostAppMessage16)( HTASK16 hTask, UINT16 message, 
+                                       WPARAM16 wParam, LPARAM lParam );
+    BOOL32 WINAPI (*PostThreadMessage32A)( DWORD idThread , UINT32 message,
+                                           WPARAM32 wParam, LPARAM lParam );
+    BOOL32 WINAPI (*PostThreadMessage32W)( DWORD idThread , UINT32 message,
+                                           WPARAM32 wParam, LPARAM lParam );
+
+    BOOL16 WINAPI (*TranslateMessage16)( const MSG16 *msg );
+    BOOL32 WINAPI (*TranslateMessage32)( const MSG32 *msg );
+
+    LONG WINAPI (*DispatchMessage16)( const MSG16* msg );
+    LONG WINAPI (*DispatchMessage32A)( const MSG32* msg );
+    LONG WINAPI (*DispatchMessage32W)( const MSG32* msg );
+
+    BOOL16 WINAPI (*RedrawWindow16)( HWND16 hwnd, const RECT16 *rectUpdate,
+                                     HRGN16 hrgnUpdate, UINT16 flags );
+
+    BOOL32 WINAPI (*RedrawWindow32)( HWND32 hwnd, const RECT32 *rectUpdate,
+                                     HRGN32 hrgnUpdate, UINT32 flags );
+
+    HQUEUE16 WINAPI (*InitThreadInput)( WORD unknown, WORD flags );
+    void WINAPI (*UserYield)( void );
+    
+}  CALLOUT_TABLE;
+
+extern CALLOUT_TABLE Callout;
+
 
 #endif /* __WINE_CALLBACK_H */
