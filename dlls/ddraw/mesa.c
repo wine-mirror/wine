@@ -144,6 +144,9 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
 	    case D3DRENDERSTATE_SRCBLEND:           /* 19 */
 	        switch ((D3DBLEND) dwRenderState) {
+		    case D3DBLEND_ONE:
+		          rs->src = GL_ONE;
+			  break;
 		    case D3DBLEND_SRCALPHA:
 		          rs->src = GL_SRC_ALPHA;
 			  break;
@@ -155,6 +158,9 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
 	    case D3DRENDERSTATE_DESTBLEND:          /* 20 */
 	        switch ((D3DBLEND) dwRenderState) {
+		    case D3DBLEND_ONE:
+		        rs->dst = GL_ONE;
+			break;
 		    case D3DBLEND_INVSRCALPHA:
 		        rs->dst = GL_ONE_MINUS_SRC_ALPHA;
 			break;
