@@ -465,7 +465,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
         rcTime += CurYear * DAYSPERNORMALYEAR;
 
 	for (CurMonth = 1; CurMonth < TimeFields.Month; CurMonth++)
-	{ rcTime += MonthLengths[IsLeapYear(CurYear)][CurMonth - 1];
+	{ rcTime += MonthLengths[IsLeapYear(TimeFields.Year)][CurMonth - 1];
 	}
 	rcTime += TimeFields.Day - 1;
 	rcTime *= SECSPERDAY;
