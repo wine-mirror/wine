@@ -1083,7 +1083,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     cx = (pimldp->cx == 0) ? himl->cx : pimldp->cx;
     cy = (pimldp->cy == 0) ? himl->cy : pimldp->cy;
     clrBk = (pimldp->rgbBk == CLR_DEFAULT) ? himl->clrBk : pimldp->rgbBk;
-    bIsTransparent = himl->hbmMask && ((fStyle & ILD_TRANSPARENT) || clrBk == CLR_NONE);
+    bIsTransparent = (fStyle & ILD_TRANSPARENT) || clrBk == CLR_NONE;
     bBlend = fStyle & (ILD_BLEND25 | ILD_BLEND50);
 
     TRACE("hbmMask(0x%08x) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
@@ -1115,15 +1115,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     oldImageFg = SetTextColor( hImageDC, RGB( 0, 0, 0 ) );
     oldImageBk = SetBkColor( hImageDC, RGB( 0xff, 0xff, 0xff ) );
 
-    /* If we have an opaque image, draw the background */
-    if (!bIsTransparent && himl->hbmMask) {
-        HBRUSH hOldBrush = SelectObject (hImageDC, CreateSolidBrush (clrBk));
-        PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
-        DeleteObject (SelectObject (hImageDC, hOldBrush));
-    }
-
     /*
-     * Draw Image over the current background
+     * Draw the initial image
      */
     if(fStyle & ILD_MASK) {
 	if (himl->hbmMask) {
@@ -1133,12 +1126,15 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	    PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY);
 	    SelectObject(hImageDC, hOldBrush);
 	}
-    } else if (himl->hbmMask) {
+    } else if (himl->hbmMask && !bIsTransparent) {
+	/* blend the image with the needed solid background */
+        HBRUSH hOldBrush = SelectObject (hImageDC, CreateSolidBrush (clrBk));
+        PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
         BitBlt( hImageDC, 0, 0, cx, cy, hMaskListDC, lx, ly, SRCAND );
         BitBlt( hImageDC, 0, 0, cx, cy, hImageListDC, lx, ly, SRCPAINT );
+        DeleteObject (SelectObject (hImageDC, hOldBrush));
     } else {
-	/* the image is opaque, just copy it */
-	TRACE("    - Image is opaque\n");
+	/* start off with the image, if we have a mask, we'll use it later */
         BitBlt( hImageDC, 0, 0, cx, cy, hImageListDC, lx, ly, SRCCOPY);
     }
   
@@ -1194,7 +1190,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     
     /* now copy the image to the screen */
     dwRop = SRCCOPY;
-    if (bIsTransparent && !(fStyle & ILD_MASK)) {
+    if (himl->hbmMask && bIsTransparent && !(fStyle & ILD_MASK)) {
 	COLORREF oldDstFg = SetTextColor(pimldp->hdcDst, RGB( 0, 0, 0 ) );
 	COLORREF oldDstBk = SetBkColor(pimldp->hdcDst, RGB( 0xff, 0xff, 0xff ));
         BitBlt (pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hMaskListDC, lx, ly, SRCAND);
