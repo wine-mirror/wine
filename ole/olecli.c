@@ -10,7 +10,7 @@
 #include "winerror.h"
 #include "ole.h"
 #include "gdi.h"
-#include "wine/obj_dataobject.h"
+#include "objidl.h"
 #include "debug.h"
 
 

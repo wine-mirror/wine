@@ -22,6 +22,7 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
 /*****************************************************************************
  * DROPEFFECT enumeration
  */
+#define MK_ALT (0x20)
 #define	DROPEFFECT_NONE		0
 #define	DROPEFFECT_COPY		1
 #define	DROPEFFECT_MOVE		2

@@ -48,9 +48,24 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 BOOL16 WINAPI IsEqualGUID16(GUID* g1,GUID* g2);
 BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 /*#define IsEqualGUID WINELIB_NAME(IsEqualGUID)*/
+#ifdef __cplusplus
+#define IsEqualGUID(rguid1, rguid2) (!memcmp(&(rguid1), &(rguid2), sizeof(GUID)))
+#else
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
+#endif /* cplusplus */
 #define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
 #define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
+
+#ifdef __cplusplus
+inline BOOL operator==(const GUID& guidOne, const GUID& guidOther)
+{
+    return !memcmp(&guidOne,&guidOther,sizeof(GUID));
+}
+inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
+{
+    return !(guidOne == guidOther);
+}
+#endif 
 
 
 /*****************************************************************************
@@ -339,6 +354,14 @@ BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
     private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h); \
     public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
 
+#define ICOM_METHOD9(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
+    private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i); \
+    public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h,i); };
+
+#define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
+    private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j); \
+    public: inline ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h,i,j); };
+
 
 #define ICOM_CMETHOD(ret,xfn) \
     private: ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me); \
@@ -525,6 +548,12 @@ BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
     ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
+#define ICOM_METHOD9(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
+    ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
+
+#define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
+    ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
+
 
 #define ICOM_CMETHOD(ret,xfn) \
         ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me);
@@ -649,6 +678,7 @@ BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CALL6(xfn, p,a,b,c,d,e,f) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f)
 #define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g)
 #define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g,h)
+#define ICOM_CALL10(xfn, p,a,b,c,d,e,f,g,h,i,j) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g,h,i,j)
 
 
 #define ICOM_THIS(impl,iface)          impl* const This=(impl*)iface

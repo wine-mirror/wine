@@ -48,7 +48,5 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 *  the following should be moved to the right place
 */
 DEFINE_GUID (IID_MyComputer,		0x20D04FE0L, 0x3AEA, 0x1069, 0xA2, 0xD8, 0x08, 0x00, 0x2B, 0x30, 0x30, 0x9D);
-DEFINE_SHLGUID(IID_IEnumOLEVERB,	0x00000104L, 0, 0);
-DEFINE_SHLGUID(IID_IViewObject,		0x0000010DL, 0, 0);
 
 #endif /* __WINE_SHLGUID_H */

@@ -9,14 +9,31 @@
 
 
 #include "winbase.h"
-#include "winuser.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_dragdrop.h"
-
+#include "wine/obj_oleaut.h" /* for DISPID */
 
 /*****************************************************************************
  * Declare the structures
  */
+typedef enum tagGUIDKIND
+{
+		GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
+} GUIDKIND;
+
+typedef enum tagREADYSTATE
+{
+	READYSTATE_UNINITIALIZED  = 0,
+	READYSTATE_LOADING  = 1,
+	READYSTATE_LOADED = 2,
+	READYSTATE_INTERACTIVE  = 3,
+	READYSTATE_COMPLETE = 4
+} READYSTATE;
+																 
+typedef struct tagExtentInfo
+{
+	ULONG cb;
+	DWORD dwExtentMode;
+	SIZEL sizelProposed;
+} DVEXTENTINFO;
 
 typedef struct tagVARIANT_BLOB
 {
@@ -98,6 +115,15 @@ typedef struct IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless, *LPOLEIN
 DEFINE_GUID(IID_IClassFactory2, 0xb196b28f, 0xbab4, 0x101a, 0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
 typedef struct IClassFactory2 IClassFactory2, *LPCLASSFACTORY2;
 
+DEFINE_GUID(IID_IViewObjectEx, 0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00); /* FIXME need GUID */
+typedef struct IViewObjectEx IViewObjectEx, *LPVIEWOBJECTEX;
+ 
+DEFINE_GUID(IID_IProvideClassInfo, 0xb196b283, 0xbab4, 0x101a, 0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
+typedef struct IProvideClassInfo IProvideClassInfo, *LPPROVIDECLASSINFO;
+ 
+DEFINE_GUID(IID_IProvideClassInfo2, 0xa6bc3ac0, 0xdbaa, 0x11ce, 0x9d, 0xe3, 0x00, 0xaa, 0x00, 0x4b, 0xb8, 0x51);
+typedef struct IProvideClassInfo2 IProvideClassInfo2, *LPPROVIDECLASSINFO2;
+ 
 /*****************************************************************************
  * IOleControl interface
  */
@@ -133,6 +159,7 @@ ICOM_DEFINE(IOleControl,IUnknown)
 #define IOleControlSite_METHODS \
 	ICOM_METHOD (HRESULT,OnControlInfoChanged); \
 	ICOM_METHOD1(HRESULT,LockInPlaceActive, BOOL,fLock); \
+	ICOM_METHOD1(HRESULT,GetExtendedControl, IDispatch**,ppDisp) \
 	ICOM_METHOD3(HRESULT,TransformCoords, POINTL*,pPtlHimetric, POINTF*,pPtfContainer, DWORD,dwFlags); \
 	ICOM_METHOD2(HRESULT,TranslateAccelerator, MSG*,pMsg, DWORD,grfModifiers) ;\
 	ICOM_METHOD1(HRESULT,OnFocus, BOOL,fGotFocus); \
@@ -151,6 +178,7 @@ ICOM_DEFINE(IOleControlSite,IUnknown)
 /*** IOleControlSite methods ***/
 #define IOleControlSite_OnControlInfoChanged(p)      ICOM_CALL1(OnControlInfoChanged,p)
 #define IOleControlSite_LockInPlaceActive(p,a)       ICOM_CALL1(LockInPlaceActive,p,a)
+#define IOleControlSite_GetExtendedControl(p,a)      ICOM_CALL1(GetExtendedControl,p,a)
 #define IOleControlSite_TransformCoords(p,a,b,c)     ICOM_CALL1(TransformCoords,p,a,b,c)
 #define IOleControlSite_TranslateAccelerator(p,a,b)  ICOM_CALL1(TranslateAccelerator,p,a,b)
 #define IOleControlSite_OnFocus(p,a)                 ICOM_CALL1(OnFocus,p,a)
@@ -208,11 +236,11 @@ ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
 	ICOM_METHOD1(HRESULT,SetCapture, BOOL,fCapture); \
 	ICOM_METHOD (HRESULT,GetFocus); \
 	ICOM_METHOD1(HRESULT,SetFocus, BOOL,fFocus); \
-	ICOM_METHOD3(HRESULT,GetDC, LPCRECT32,pRect, DWORD,grfFlags, HDC*,phDC); \
+	ICOM_METHOD3(HRESULT,GetDC, LPCRECT,pRect, DWORD,grfFlags, HDC*,phDC); \
 	ICOM_METHOD1(HRESULT,ReleaseDC, HDC,hDC); \
-	ICOM_METHOD2(HRESULT,InvalidateRect, LPCRECT32,pRect, BOOL,fErase); \
+	ICOM_METHOD2(HRESULT,InvalidateRect, LPCRECT,pRect, BOOL,fErase); \
 	ICOM_METHOD2(HRESULT,InvalidateRgn, HRGN,hRgn, BOOL,fErase); \
-	ICOM_METHOD4(HRESULT,ScrollRect, INT,dx, INT,dy, LPCRECT32,pRectScroll, LPCRECT32,pRectClip); \
+	ICOM_METHOD4(HRESULT,ScrollRect, INT,dx, INT,dy, LPCRECT,pRectScroll, LPCRECT,pRectClip); \
 	ICOM_METHOD1(HRESULT,AdjustRect, LPRECT,prc); \
 	ICOM_METHOD4(HRESULT,OnDefWindowMessage, UINT,msg, WPARAM,wParam, LPARAM,lParam, LRESULT*,plResult);
 #define IOleInPlaceSiteWindowless_IMETHODS \
@@ -317,6 +345,92 @@ ICOM_DEFINE(IClassFactory2,IClassFactory)
 #endif
 
 
-#endif /* __WINE_WINE_OBJ_CONTROL_H */
+/*****************************************************************************
+ * IViewObject interface
+ */
+#define ICOM_INTERFACE IViewObjectEx
+#define IViewObjectEx_METHODS \
+	ICOM_METHOD2(HRESULT,GetRect, DWORD,dwAspect, LPRECTL,pRect) \
+	ICOM_METHOD1(HRESULT,GetViewStatus, DWORD*,pdwStatus) \
+	ICOM_METHOD5(HRESULT,QueryHitPoint, DWORD,dwAspect, LPCRECT,pRectBounds, POINT,ptlLoc, LONG,lCloseHint, DWORD*,pHitResult) \
+	ICOM_METHOD5(HRESULT,QueryHitRect, DWORD,dwAspect, LPCRECT,pRectBounds, LPCRECT,pRectLoc, LONG,lCloseHint, DWORD*,pHitResult) \
+	ICOM_METHOD6(HRESULT,GetNaturalExtent, DWORD,dwAspect, LONG,lindex, DVTARGETDEVICE*,ptd, HDC,hicTargetDev, DVEXTENTINFO*,pExtentInfo, LPSIZEL,pSizel)
+#define IViewObjectEx_IMETHODS \
+	IViewObject2_IMETHODS \
+	IViewObjectEx_METHODS
+ICOM_DEFINE(IViewObjectEx,IViewObject2)
+#undef ICOM_INTERFACE
 
+#ifdef ICOM_CINTERFACE
+/*** IUnknwon methods ***/
+#define IViewObjectEx_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IViewObjectEx_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IViewObjectEx_Release(p)                   ICOM_CALL (Release,p)
+/*** IViewObject methods ***/
+#define IViewObjectEx_Draw(p,a,b,c,d,e,f,g,h,i,j)  ICOM_CALL10(Draw,p,a,b,c,d,e,f,g,h,i,j)
+#define IViewObjectEx_GetColorSet(p,a,b,c,d,e,f)   ICOM_CALL6(GetColorSet,p,a,b,c,d,e,f)
+#define IViewObjectEx_Freeze(p,a,b,c,d)            ICOM_CALL4(Freeze,p,a,b,c,d)
+#define IViewObjectEx_Unfreeze(p,a)                ICOM_CALL1(Unfreeze,p,a)
+#define IViewObjectEx_SetAdvise(p,a,b,c)           ICOM_CALL3(SetAdvise,p,a,b,c)
+#define IViewObjectEx_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
+/*** IViewObject2 methods ***/
+#define IViewObjectEx_GetExtent(p,a,b,c,d)         ICOM_CALL4(GetExtent,p,a,b,c,d)
+/*** IViewObjectEx methods ***/
+#define IViewObjectEx_GetRect(p,a,b)                  ICOM_CALL2(GetRect,p,a,b)
+#define IViewObjectEx_GetViewStatus(p,a)              ICOM_CALL1(GetViewStatus,p,a)
+#define IViewObjectEx_QueryHitPoint(p,a,b,c,d,e)      ICOM_CALL5(QueryHitPoint,p,a,b,c,d,e)
+#define IViewObjectEx_QueryHitRect(p,a,b,c,d,e)       ICOM_CALL5(QueryHitRect,p,a,b,c,d,e)
+#define IViewObjectEx_GetNaturalExtent(p,a,b,c,d,e,f) ICOM_CALL6(GetNaturalExtent,p,a,b,c,d,e,f)
+#endif
+
+
+/*****************************************************************************
+ * IProvideClassInfo interface
+ */
+#define ICOM_INTERFACE IProvideClassInfo
+#define IProvideClassInfo_METHODS \
+	ICOM_METHOD1(HRESULT,GetClassInfo, ITypeInfo**,ppTI) 
+#define IProvideClassInfo_IMETHODS \
+	IUnknown_IMETHODS \
+	IProvideClassInfo_METHODS
+ICOM_DEFINE(IProvideClassInfo,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknwon methods ***/
+#define IProvideClassInfo_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IProvideClassInfo_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IProvideClassInfo_Release(p)                   ICOM_CALL (Release,p)
+/*** IProvideClassInfo methods ***/
+#define IProvideClassInfo_GetClassInfo(p,a)            ICOM_CALL1(GetClassInfo,p,a)
+#endif
+
+
+				
+/*****************************************************************************
+ * IProvideClassInfo2 interface
+ */
+#define ICOM_INTERFACE IProvideClassInfo2
+#define IProvideClassInfo2_METHODS \
+	ICOM_METHOD2(HRESULT,GetGUID, DWORD,dwGuidKind, GUID*,pGUID)
+#define IProvideClassInfo2_IMETHODS \
+	IProvideClassInfo_IMETHODS \
+	IProvideClassInfo2_METHODS
+ICOM_DEFINE(IProvideClassInfo2,IProvideClassInfo)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknwon methods ***/
+#define IProvideClassInfo2_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
+#define IProvideClassInfo2_AddRef(p)               ICOM_CALL (AddRef,p)
+#define IProvideClassInfo2_Release(p)              ICOM_CALL (Release,p)
+/*** IProvideClassInfo methods ***/
+#define IProvideClassInfo2_GetClassInfo(p,a)       ICOM_CALL1(GetClassInfo,p,a) 
+/*** IProvideClassInfo2 methods ***/
+#define IProvideClassInfo2_GetGUID(p,a,b)          ICOM_CALL2(GetGUID,p,a,b)
+#endif
+
+
+
+#endif /* __WINE_WINE_OBJ_CONTROL_H */
 

@@ -7,7 +7,6 @@
  * so that the corresponding variables get defined. But they
  * don't even all belong to the same DLL !!!
  */
-#include "oleobj.h"
 #include "oleidl.h"
 #include "oaidl.h"
 #include "ocidl.h"

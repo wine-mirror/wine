@@ -7,11 +7,9 @@
 #include "wintypes.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "ole.h"
 #include "oledlg.h"
-#include "wine/obj_base.h"
 #include "debug.h"
-
+#include "ole2.h"
 /***********************************************************************
  *           OleUIAddVerbMenu32A (OLEDLG.1)
  */

@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include "winerror.h"
-#include "ole.h"
+#include "ole2.h"
 #include "oleauto.h"
 #include "wine/obj_base.h"
 #include "heap.h"
@@ -290,10 +290,10 @@ int WINAPI SysStringByteLen(BSTR str)
 /******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
-OLESTATUS WINAPI CreateDispTypeInfo16(
+HRESULT CreateDispTypeInfo16(
 	INTERFACEDATA *pidata,
 	LCID lcid,
-	LPVOID **pptinfo /*ITypeInfo*/ 
+	ITypeInfo **pptinfo
 ) {
 	FIXME(ole,"(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return 0;
@@ -302,8 +302,8 @@ OLESTATUS WINAPI CreateDispTypeInfo16(
 /******************************************************************************
  * RegisterActiveObject [OLE2DISP.35]
  */
-OLESTATUS WINAPI RegisterActiveObject16(
-	IUnknown * punk,REFCLSID rclsid,DWORD dwFlags, DWORD * pdwRegister
+HRESULT RegisterActiveObject16(
+	IUnknown *punk, REFCLSID rclsid, DWORD dwFlags, unsigned long *pdwRegister
 ) {
 	char	buf[80];
 	WINE_StringFromCLSID(rclsid,buf);

@@ -5,8 +5,9 @@
 extern "C" {
 #endif 
 
-#include <ole.h>
+/*#include <ole.h> */
 #include "mapidefs.h"
+#include "wine/obj_oleaut.h"
 #include "oaidl.h"
 
 BSTR16 WINAPI SysAllocString16(LPOLESTR16);

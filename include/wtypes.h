@@ -35,19 +35,19 @@ typedef BSTR		*LPBSTR;
 
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
-struct _GUID
+typedef struct _GUID
 {
     DWORD Data1;
     WORD  Data2;
     WORD  Data3;
     BYTE  Data4[8];
-};
+} GUID;
 #endif
 
-typedef struct _GUID	GUID,*LPGUID;
-typedef struct _GUID	CLSID,*LPCLSID;
-typedef struct _GUID	IID,*LPIID;
-typedef struct _GUID	FMTID,*LPFMTID;
+typedef GUID  *LPGUID;
+typedef GUID  CLSID,*LPCLSID;
+typedef GUID	IID,*LPIID;
+typedef GUID	FMTID,*LPFMTID;
 #ifdef __cplusplus
 #define REFGUID             const GUID &
 #define REFCLSID            const CLSID &
@@ -60,6 +60,16 @@ typedef struct _GUID	FMTID,*LPFMTID;
 #define REFFMTID            const FMTID* const
 #endif // !__cplusplus
 
+#define GUID_NULL  ((GUID*)NULL) /* Is this right? */
+#define CLSID_NULL ((REFCLSID)NULL)
+   
+typedef enum tagDVASPECT
+{ 
+       DVASPECT_CONTENT   = 1,
+       DVASPECT_THUMBNAIL = 2,
+       DVASPECT_ICON      = 4,   
+       DVASPECT_DOCPRINT  = 8
+} DVASPECT;
 
 #define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE a
 DECLARE_HANDLE(HMETAFILEPICT);

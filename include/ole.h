@@ -14,6 +14,9 @@
  */
 #include "wtypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define OLESTR16(x) x
 #define OLESTR(x) L##x	/* probably wrong */
@@ -276,5 +279,9 @@ void WINAPI CoFreeUnusedLibraries(void);
 HINSTANCE WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL bAutoFree);
 void WINAPI CoFreeUnusedLibraries(void);
 void WINAPI CoFreeAllLibraries(void);
+
+#ifdef __cplusplus
+} /*extern*/
+#endif
 
 #endif  /* __WINE_OLE_H */

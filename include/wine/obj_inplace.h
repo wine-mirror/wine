@@ -76,7 +76,7 @@ typedef struct tagOLEVERB
 	
 typedef HGLOBAL HOLEMENU;
 typedef LPRECT LPBORDERWIDTHS;
-typedef LPCRECT32 LPCBORDERWIDTHS;
+typedef LPCRECT LPCBORDERWIDTHS;
 	
 	
 /*****************************************************************************
@@ -143,7 +143,7 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 #define IOleInPlaceObject_METHODS \
 	ICOM_METHOD (HRESULT,InPlaceDeactivate); \
 	ICOM_METHOD (HRESULT,UIDeactivate); \
-	ICOM_METHOD2(HRESULT,SetObjectRects, LPCRECT32,lprcPosRect, LPCRECT32,lprcClipRect); \
+	ICOM_METHOD2(HRESULT,SetObjectRects, LPCRECT,lprcPosRect, LPCRECT,lprcClipRect); \
 	ICOM_METHOD (HRESULT,ReactivateAndUndo);
 #define IOleInPlaceObject_IMETHODS \
 	IOleWindow_IMETHODS \
@@ -174,7 +174,7 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 	ICOM_METHOD1(HRESULT,TranslateAccelerator, LPMSG,lpmsg); \
 	ICOM_METHOD1(HRESULT,OnFrameWindowActivate, BOOL,fActivate); \
 	ICOM_METHOD1(HRESULT,OnDocWindowActivate, BOOL,fActivate); \
-	ICOM_METHOD3(HRESULT,ResizeBorder, LPCRECT32,prcBorder, IOleInPlaceUIWindow*,pUIWindow, BOOL,fWindowFrame); \
+	ICOM_METHOD3(HRESULT,ResizeBorder, LPCRECT,prcBorder, IOleInPlaceUIWindow*,pUIWindow, BOOL,fWindowFrame); \
 	ICOM_METHOD1(HRESULT,EnableModeless, BOOL,fEnable);
 #define IOleInPlaceActiveObject_IMETHODS \
 	IOleWindow_IMETHODS \
@@ -243,6 +243,7 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #define IOleInPlaceFrame_IMETHODS \
 	IOleInPlaceUIWindow_IMETHODS \
 	IOleInPlaceFrame_METHODS
+ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #undef ICOM_INTERFACE
 
 #ifdef ICOM_CINTERFACE
@@ -282,7 +283,7 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 	ICOM_METHOD (HRESULT,OnInPlaceDeactivate); \
 	ICOM_METHOD (HRESULT,DiscardUndoState); \
 	ICOM_METHOD (HRESULT,DeactivateAndUndo); \
-	ICOM_METHOD1(HRESULT,OnPosRectChange, LPCRECT32,lprcPosRect);
+	ICOM_METHOD1(HRESULT,OnPosRectChange, LPCRECT,lprcPosRect);
 #define IOleInPlaceSite_IMETHODS \
 	IOleWindow_IMETHODS \
 	IOleInPlaceSite_METHODS

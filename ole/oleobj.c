@@ -6,44 +6,46 @@
 
 
 #include <string.h>
-#include "oleobj.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
-#include "wine/obj_dataobject.h"
+#include "oleidl.h"
 #include "debug.h"
 
 
 /**************************************************************************
  *  IOleAdviseHolder Implementation
  */
-static HRESULT WINAPI IOleAdviseHolder_QueryInterface(LPOLEADVISEHOLDER,REFIID,LPVOID*);
-static ULONG WINAPI   IOleAdviseHolder_AddRef(LPOLEADVISEHOLDER);
-static ULONG WINAPI   IOleAdviseHolder_Release(LPOLEADVISEHOLDER);
-static HRESULT WINAPI IOleAdviseHolder_Advise(LPOLEADVISEHOLDER, IAdviseSink*, DWORD*);
-static HRESULT WINAPI IOleAdviseHolder_Unadvise (LPOLEADVISEHOLDER, DWORD);
-static HRESULT WINAPI IOleAdviseHolder_EnumAdvise (LPOLEADVISEHOLDER, IEnumSTATDATA **);
-static HRESULT WINAPI IOleAdviseHolder_SendOnRename (LPOLEADVISEHOLDER, IMoniker *);
-static HRESULT WINAPI IOleAdviseHolder_SendOnSave (LPOLEADVISEHOLDER this);
-static HRESULT WINAPI IOleAdviseHolder_SendOnClose (LPOLEADVISEHOLDER this);
+typedef struct
+{
+	ICOM_VTABLE(IOleAdviseHolder)* lpvtbl;
+	DWORD ref;
+} IOleAdviseHolderImpl;
+
+static HRESULT WINAPI IOleAdviseHolder_fnQueryInterface(LPOLEADVISEHOLDER,REFIID,LPVOID*);
+static ULONG WINAPI   IOleAdviseHolder_fnAddRef(LPOLEADVISEHOLDER);
+static ULONG WINAPI   IOleAdviseHolder_fnRelease(LPOLEADVISEHOLDER);
+static HRESULT WINAPI IOleAdviseHolder_fnAdvise(LPOLEADVISEHOLDER, IAdviseSink*, DWORD*);
+static HRESULT WINAPI IOleAdviseHolder_fnUnadvise (LPOLEADVISEHOLDER, DWORD);
+static HRESULT WINAPI IOleAdviseHolder_fnEnumAdvise (LPOLEADVISEHOLDER, IEnumSTATDATA **);
+static HRESULT WINAPI IOleAdviseHolder_fnSendOnRename (LPOLEADVISEHOLDER, IMoniker *);
+static HRESULT WINAPI IOleAdviseHolder_fnSendOnSave (LPOLEADVISEHOLDER);
+static HRESULT WINAPI IOleAdviseHolder_fnSendOnClose (LPOLEADVISEHOLDER);
 
 
 /**************************************************************************
  *  IOleAdviseHolder_VTable
  */
-static IOleAdviseHolder_VTable oahvt =
+static struct ICOM_VTABLE(IOleAdviseHolder) oahvt =
 {
-    IOleAdviseHolder_QueryInterface,
-    IOleAdviseHolder_AddRef,
-    IOleAdviseHolder_Release,
-    IOleAdviseHolder_Advise,
-    IOleAdviseHolder_Unadvise,
-    IOleAdviseHolder_EnumAdvise,
-    IOleAdviseHolder_SendOnRename,
-    IOleAdviseHolder_SendOnSave,
-    IOleAdviseHolder_SendOnClose
+    IOleAdviseHolder_fnQueryInterface,
+    IOleAdviseHolder_fnAddRef,
+    IOleAdviseHolder_fnRelease,
+    IOleAdviseHolder_fnAdvise,
+    IOleAdviseHolder_fnUnadvise,
+    IOleAdviseHolder_fnEnumAdvise,
+    IOleAdviseHolder_fnSendOnRename,
+    IOleAdviseHolder_fnSendOnSave,
+    IOleAdviseHolder_fnSendOnClose
 };
 
 /**************************************************************************
@@ -52,39 +54,40 @@ static IOleAdviseHolder_VTable oahvt =
 
 LPOLEADVISEHOLDER IOleAdviseHolder_Constructor()
 {
-    LPOLEADVISEHOLDER lpoah;
+    IOleAdviseHolderImpl* lpoah;
 
-    lpoah= (LPOLEADVISEHOLDER)HeapAlloc(GetProcessHeap(),0,sizeof(IOleAdviseHolder));
+    lpoah= (IOleAdviseHolderImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IOleAdviseHolderImpl));
     lpoah->ref = 1;
     lpoah->lpvtbl = &oahvt;
     FIXME (ole, "(%p)->()\n", lpoah);
 
-    return lpoah;
+    return (LPOLEADVISEHOLDER)lpoah;
 }
 
 /**************************************************************************
  *  IOleAdviseHolder_QueryInterface
  */
 static HRESULT WINAPI
-IOleAdviseHolder_QueryInterface (LPOLEADVISEHOLDER this, REFIID riid, LPVOID *ppvObj)
+IOleAdviseHolder_fnQueryInterface (LPOLEADVISEHOLDER iface, REFIID riid, LPVOID *ppvObj)
 {
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
     char xriid[50];
     WINE_StringFromCLSID((LPCLSID)riid,xriid);
-    FIXME (ole, "(%p)->(\n\tIID:\t%s)\n", this, xriid);
+    FIXME (ole, "(%p)->(\n\tIID:\t%s)\n", This, xriid);
 
     *ppvObj = NULL;
 
     if(IsEqualIID(riid, &IID_IUnknown)) {
 	/* IUnknown */
-	*ppvObj = this; 
+	*ppvObj = This; 
     }
     else if(IsEqualIID(riid, &IID_IOleAdviseHolder)) {
 	/* IOleAdviseHolder */
-	*ppvObj = (IOleAdviseHolder*) this;
+	*ppvObj = (IOleAdviseHolder*) This;
     }
 
     if(*ppvObj) {
-	(*(LPOLEADVISEHOLDER*)ppvObj)->lpvtbl->fnAddRef(this);  	
+	(*(LPOLEADVISEHOLDER*)ppvObj)->lpvtbl->fnAddRef(iface);  	
 	FIXME (ole, "-- Interface: (%p)->(%p)\n", ppvObj, *ppvObj);
 	return S_OK;
     }
@@ -97,35 +100,38 @@ IOleAdviseHolder_QueryInterface (LPOLEADVISEHOLDER this, REFIID riid, LPVOID *pp
  * IOleAdviseHolder_AddRef
  */
 static ULONG WINAPI
-IOleAdviseHolder_AddRef (LPOLEADVISEHOLDER this)
+IOleAdviseHolder_fnAddRef (LPOLEADVISEHOLDER iface)
 {
-    FIXME (ole, "(%p)->(count=%lu)\n", this, this->ref);
-    return ++(this->ref);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(count=%lu)\n", This, This->ref);
+    return ++(This->ref);
 }
 
 /******************************************************************************
  * IOleAdviseHolder_Release
  */
 static ULONG WINAPI
-IOleAdviseHolder_Release (LPOLEADVISEHOLDER this)
+IOleAdviseHolder_fnRelease (LPOLEADVISEHOLDER iface)
 {
-    FIXME (ole, "(%p)->(count=%lu)\n", this, this->ref);
-    if (!--(this->ref)) {
-	FIXME (ole, "-- destroying IOleAdviseHolder(%p)\n", this);
-	HeapFree(GetProcessHeap(),0,this);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(count=%lu)\n", This, This->ref);
+    if (!--(This->ref)) {
+	FIXME (ole, "-- destroying IOleAdviseHolder(%p)\n", This);
+	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
-    return this->ref;
+    return This->ref;
 }
 
 /******************************************************************************
  * IOleAdviseHolder_Advise
  */
 static HRESULT WINAPI
-IOleAdviseHolder_Advise (LPOLEADVISEHOLDER this,
+IOleAdviseHolder_fnAdvise (LPOLEADVISEHOLDER iface,
 			 IAdviseSink *pAdvise, DWORD *pdwConnection)
 {
-    FIXME (ole, "(%p)->(%p %p)\n", this, pAdvise, pdwConnection);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(%p %p)\n", This, pAdvise, pdwConnection);
 
     *pdwConnection = 0;
 
@@ -136,9 +142,10 @@ IOleAdviseHolder_Advise (LPOLEADVISEHOLDER this,
  * IOleAdviseHolder_Unadvise
  */
 static HRESULT WINAPI
-IOleAdviseHolder_Unadvise (LPOLEADVISEHOLDER this, DWORD dwConnection)
+IOleAdviseHolder_fnUnadvise (LPOLEADVISEHOLDER iface, DWORD dwConnection)
 {
-    FIXME (ole, "(%p)->(%lu)\n", this, dwConnection);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(%lu)\n", This, dwConnection);
 
     return S_OK;
 }
@@ -147,9 +154,10 @@ IOleAdviseHolder_Unadvise (LPOLEADVISEHOLDER this, DWORD dwConnection)
  * IOleAdviseHolder_EnumAdvise
  */
 static HRESULT WINAPI
-IOleAdviseHolder_EnumAdvise (LPOLEADVISEHOLDER this, IEnumSTATDATA **ppenumAdvise)
+IOleAdviseHolder_fnEnumAdvise (LPOLEADVISEHOLDER iface, IEnumSTATDATA **ppenumAdvise)
 {
-    FIXME (ole, "(%p)->(%p)\n", this, ppenumAdvise);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(%p)\n", This, ppenumAdvise);
 
     *ppenumAdvise = NULL;
 
@@ -160,9 +168,10 @@ IOleAdviseHolder_EnumAdvise (LPOLEADVISEHOLDER this, IEnumSTATDATA **ppenumAdvis
  * IOleAdviseHolder_SendOnRename
  */
 static HRESULT WINAPI
-IOleAdviseHolder_SendOnRename (LPOLEADVISEHOLDER this, IMoniker *pmk)
+IOleAdviseHolder_fnSendOnRename (LPOLEADVISEHOLDER iface, IMoniker *pmk)
 {
-    FIXME (ole, "(%p)->(%p)\n", this, pmk);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)->(%p)\n", This, pmk);
 
 
     return S_OK;
@@ -172,9 +181,10 @@ IOleAdviseHolder_SendOnRename (LPOLEADVISEHOLDER this, IMoniker *pmk)
  * IOleAdviseHolder_SendOnSave
  */
 static HRESULT WINAPI
-IOleAdviseHolder_SendOnSave (LPOLEADVISEHOLDER this)
+IOleAdviseHolder_fnSendOnSave (LPOLEADVISEHOLDER iface)
 {
-    FIXME (ole, "(%p)\n", this);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)\n", This);
 
 
     return S_OK;
@@ -184,9 +194,10 @@ IOleAdviseHolder_SendOnSave (LPOLEADVISEHOLDER this)
  * IOleAdviseHolder_SendOnClose
  */
 static HRESULT WINAPI
-IOleAdviseHolder_SendOnClose (LPOLEADVISEHOLDER this)
+IOleAdviseHolder_fnSendOnClose (LPOLEADVISEHOLDER iface)
 {
-    FIXME (ole, "(%p)\n", this);
+		ICOM_THIS(IOleAdviseHolderImpl, iface); 
+    FIXME (ole, "(%p)\n", This);
 
 
     return S_OK;

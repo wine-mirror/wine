@@ -33,11 +33,12 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include "windef.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
 #include "winerror.h"
 #include "ole.h"
-#include "ole2.h"
+#include "ole2ver.h"
 #include "debug.h"
 #include "file.h"
 #include "heap.h"

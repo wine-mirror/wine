@@ -12,8 +12,7 @@
 #include "debug.h"
 #include "winerror.h"
 
-#include "wine/obj_base.h"
-#include "wine/obj_dragdrop.h"
+#include "oleidl.h"
 #include "shlguid.h"
 
 #include "pidl.h"

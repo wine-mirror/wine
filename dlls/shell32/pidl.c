@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
 #include "ole2.h"
 #include "debug.h"
 #include "shlobj.h"

@@ -36,6 +36,16 @@
 
 #define ANYSIZE_ARRAY 1
 
+#define MINCHAR       0x80
+#define MAXCHAR       0x7f
+#define MINSHORT      0x8000
+#define MAXSHORT      0x7fff
+#define MINLONG       0x80000000
+#define MAXLONG       0x7fffffff
+#define MAXBYTE       0xff
+#define MAXWORD       0xffff
+#define MAXDWORD      0xffffffff
+
 #define FIELD_OFFSET(type, field) \
   ((LONG)(INT)&(((type *)0)->field))
 
@@ -345,6 +355,9 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 
 #define ANYSIZE_ARRAY   1
 
+/* FIXME:  Orphan.  What does it point to? */
+typedef PVOID PACCESS_TOKEN;
+
 /*
  * TOKEN_INFORMATION_CLASS
  */
@@ -369,7 +382,7 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 
 typedef struct {
     BYTE Value[6];
-} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
 
 typedef struct _SID {
     BYTE Revision;
@@ -460,15 +473,19 @@ typedef struct _LARGE_INTEGER
 {
     DWORD    LowPart;
     LONG     HighPart;
-} LARGE_INTEGER,*PLARGE_INTEGER;
+} LARGE_INTEGER, *LPLARGE_INTEGER, *PLARGE_INTEGER;
 
 typedef struct _ULARGE_INTEGER
 {
     DWORD    LowPart;
     DWORD    HighPart;
-} ULARGE_INTEGER,*PULARGE_INTEGER;
+} ULARGE_INTEGER, *LPULARGE_INTEGER, *PULARGE_INTEGER;
 
-typedef LARGE_INTEGER LUID,*PLUID; /* locally unique ids */
+/*
+ * Locally Unique Identifier
+ */
+
+typedef LARGE_INTEGER LUID,*PLUID;
 
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid; 
@@ -499,6 +516,7 @@ typedef struct _TOKEN_OWNER {
 typedef struct _TOKEN_PRIMARY_GROUP {
   PSID PrimaryGroup; 
 } TOKEN_PRIMARY_GROUP; 
+
 
 /*
  * TOKEN_DEFAULT_DACL
@@ -684,6 +702,11 @@ typedef enum tagSID_NAME_USE {
 #define THREAD_IMPERSONATE         0x0100
 #define THREAD_DIRECT_IMPERSONATION 0x0200
 #define THREAD_ALL_ACCESS          (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3ff)
+
+#define THREAD_BASE_PRIORITY_LOWRT  15 
+#define THREAD_BASE_PRIORITY_MAX    2 
+#define THREAD_BASE_PRIORITY_MIN   -2
+#define THREAD_BASE_PRIORITY_IDLE  -15
 
 #define FILE_READ_DATA            0x0001    /* file & pipe */
 #define FILE_LIST_DIRECTORY       0x0001    /* directory */

@@ -7,7 +7,7 @@
  */
 #include <string.h>
 
-#include "wine/obj_dataobject.h"
+#include "oleidl.h"
 #include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"

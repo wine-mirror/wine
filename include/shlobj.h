@@ -7,7 +7,6 @@
 #include "wine/obj_shelllink.h"
 #include "ole2.h"
 #include "shell.h"
-#include "oleobj.h"
 #include "commctrl.h"
 #include "prsht.h"
 
@@ -61,7 +60,7 @@ typedef struct _STRRET
 /*****************************************************************************
  * IContextMenu interface
  */
-#define THIS LPCONTEXTMENU this
+#define THIS LPCONTEXTMENU me
 
 /* default menu items*/
 #define IDM_EXPLORE  0
@@ -178,18 +177,6 @@ ICOM_DEFINE(IContextMenu, IUnknown)
 #define IContextMenu_HandleMenuMsg(p,a,b,c)            ICOM_CALL3(HandleMenuMsg,p,a,b,c)
 #endif
 
-/*****************************************************************************
- * structures for shell clipboard formats
- */
-typedef enum tagDVASPECT
-{	DVASPECT_CONTENT	= 1,
-        DVASPECT_THUMBNAIL	= 2,
-        DVASPECT_ICON	= 4,
-        DVASPECT_DOCPRINT	= 8
-} DVASPECT;
-
-/* shell specific clipboard formats */
-
 /* DATAOBJECT_InitShellIDList*/
 #define CFSTR_SHELLIDLIST       "Shell IDList Array"      /* CF_IDLIST */
 
@@ -232,7 +219,7 @@ extern UINT cfFileContents;
  */
 typedef struct tagLPIDLLIST	*LPIDLLIST,	IDLList;
 
-#define THIS LPIDLLIST this
+#define THIS LPIDLLIST me
 
 typedef enum
 {	State_UnInit=1,
@@ -257,14 +244,14 @@ struct tagLPIDLLIST
 };
 
 extern LPIDLLIST IDLList_Constructor (UINT uStep);
-extern void IDLList_Destructor(LPIDLLIST this);
+extern void IDLList_Destructor(LPIDLLIST me);
 #undef THIS
 
 
 /*****************************************************************************
  * IShellExtInit interface
  */
-#define THIS LPSHELLEXTINIT this
+#define THIS LPSHELLEXTINIT me
 
 typedef struct IShellExtInit_VTable 
 {   /* *** IUnknown methods *** */
@@ -286,7 +273,7 @@ struct tagSHELLEXTINIT
 /*****************************************************************************
  * IEnumIDList interface
  */
-#define THIS LPENUMIDLIST this
+#define THIS LPENUMIDLIST me
 
 typedef struct tagENUMLIST
 { struct tagENUMLIST	*pNext;
@@ -374,7 +361,7 @@ typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
  * IShellFolder interface
  */
 
-#define THIS LPSHELLFOLDER this
+#define THIS LPSHELLFOLDER me
 
 /* IShellFolder::GetDisplayNameOf/SetNameOf uFlags */
 typedef enum
@@ -454,7 +441,7 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *);
 /************************************************************************
 * IShellBrowser interface
 */
-#define THIS LPSHELLBROWSER this
+#define THIS LPSHELLBROWSER me
 /* targets for GetWindow/SendControlMsg */
 #define FCW_STATUS		0x0001
 #define FCW_TOOLBAR		0x0002
@@ -534,7 +521,7 @@ struct tagSHELLBROWSER
 /************************************************************************
 * IShellView interface
 */
-#define THIS LPSHELLVIEW this
+#define THIS LPSHELLVIEW me
 
 /* shellview select item flags*/
 #define SVSI_DESELECT   0x0000
@@ -666,7 +653,7 @@ typedef GUID SHELLVIEWID;
 /****************************************************************************
  * ICommDlgBrowser interface
  */
-#define THIS LPCOMMDLGBROWSER this
+#define THIS LPCOMMDLGBROWSER me
 
 /* for OnStateChange*/
 #define CDBOSC_SETFOCUS     0x00000000
@@ -698,7 +685,7 @@ struct tagCOMMDLGBROWSER
  * FIXME
  *  Is the ExtractIconA interface
  */
-#define THIS LPEXTRACTICON this
+#define THIS LPEXTRACTICON me
 
 /* GetIconLocation() input flags*/
 #define GIL_OPENICON     0x0001      /* allows containers to specify an "open" look */
@@ -738,7 +725,7 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
  * IShellIcon interface
  */
 
-#define THIS LPSHELLICON this
+#define THIS LPSHELLICON me
 
 typedef struct IShellIcon_VTable
 { /*** IUnknown methods ***/
@@ -758,7 +745,7 @@ struct tagSHELLICON
 /****************************************************************************
  * IDockingWindowFrame interface
  */
-#define THIS LPDOCKINGWINDOWFRAME this
+#define THIS LPDOCKINGWINDOWFRAME me
 
 #define DWFRF_NORMAL		0x0000  /* femove toolbar flags*/
 #define DWFRF_DELETECONFIGDATA	0x0001

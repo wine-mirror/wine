@@ -464,7 +464,7 @@ typedef struct tagRECT
     INT  right;
     INT  bottom;
 } RECT, *PRECT, *LPRECT;
-typedef const RECT *LPCRECT32;
+typedef const RECT *LPCRECT;
 
 
 typedef struct tagRECTL

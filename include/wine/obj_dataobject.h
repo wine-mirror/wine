@@ -7,13 +7,21 @@
 #ifndef __WINE_WINE_OBJ_DATAOBJECT_H
 #define __WINE_WINE_OBJ_DATAOBJECT_H
 
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
+#ifdef __cplusplus
+#define DUMMY_UNION_NAME
+#else
+#define DUMMY_UNION_NAME u
+#endif
 
 /*****************************************************************************
  * Predeclare the structures
  */
+typedef enum tagDATADIR
+{
+	DATADIR_GET = 1,
+	DATADIR_SET = 2
+} DATADIR;
+ 
 typedef struct DVTARGETDEVICE16 DVTARGETDEVICE16, *LPDVTARGETDEVICE16;
 typedef struct DVTARGETDEVICE DVTARGETDEVICE, *LPDVTARGETDEVICE;
 
@@ -100,7 +108,7 @@ struct STGMEDIUM
         LPOLESTR lpszFileName;
         IStream *pstm;
         IStorage *pstg;
-    } u;
+    } DUMMY_UNION_NAME;
     IUnknown *pUnkForRelease;
 };   
 
