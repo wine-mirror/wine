@@ -97,10 +97,12 @@ TREEVIEW_Edit_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam,
    FIXME: check other failures.
  */
 
-
-
-static TREEVIEW_ITEM *
-TREEVIEW_ValidItem (TREEVIEW_INFO *infoPtr,HTREEITEM  handle)
+/***************************************************************************
+ * This method returns the TREEVIEW_ITEM object given the handle
+ */
+static TREEVIEW_ITEM* TREEVIEW_ValidItem(
+  TREEVIEW_INFO *infoPtr,
+  HTREEITEM  handle)
 {
  
  if ((!handle) || (handle>infoPtr->uMaxHandle)) return NULL;
@@ -109,75 +111,159 @@ TREEVIEW_ValidItem (TREEVIEW_INFO *infoPtr,HTREEITEM  handle)
  return & infoPtr->items[(INT)handle];
 }
 
-
-
-static TREEVIEW_ITEM *TREEVIEW_GetPrevListItem (TREEVIEW_INFO *infoPtr, 
-					TREEVIEW_ITEM *tvItem)
+/***************************************************************************
+ * This method returns the last expanded child item of a tree node
+ */
+static TREEVIEW_ITEM *TREEVIEW_GetLastListItem(
+  TREEVIEW_INFO *infoPtr,
+  TREEVIEW_ITEM *tvItem)
 
 {
- TREEVIEW_ITEM *wineItem;
+  TREEVIEW_ITEM *wineItem = tvItem;
 
- if (tvItem->upsibling) {
-		wineItem=& infoPtr->items[(INT)tvItem->upsibling];
-		if ((wineItem->firstChild) && (wineItem->state & TVIS_EXPANDED)) {
-			wineItem=& infoPtr->items[(INT)wineItem->firstChild];
-			while (wineItem->sibling)
-				 wineItem= & infoPtr->items[(INT)wineItem->sibling];
-		}
-		return wineItem;
- }
+  /* 
+   * Get this item last sibling 
+   */
+  while (wineItem->sibling) 
+ 	  wineItem=& infoPtr->items [(INT)wineItem->sibling];
 
- wineItem=tvItem;
- while (wineItem->parent) {
-	wineItem=& infoPtr->items[(INT)wineItem->parent];
-	if (wineItem->upsibling) 
-                return (& infoPtr->items[(INT)wineItem->upsibling]);
- } 
+  /* 
+   * If the last sibling has expanded children, restart.
+   */
+  if ( ( wineItem->cChildren > 0 ) && ( wineItem->state & TVIS_EXPANDED) )
+    return TREEVIEW_GetLastListItem(
+             infoPtr, 
+             &(infoPtr->items[(INT)wineItem->firstChild]));
 
- return wineItem;
+  return wineItem;
+}
+
+/***************************************************************************
+ * This method returns the previous physical item in the list not 
+ * considering the tree hierarchy.
+ */
+static TREEVIEW_ITEM *TREEVIEW_GetPrevListItem(
+  TREEVIEW_INFO *infoPtr, 
+  TREEVIEW_ITEM *tvItem)
+{
+  if (tvItem->upsibling) 
+  {
+    /* 
+     * This item has a upsibling, get the last item.  Since, GetLastListItem
+     * first looks at siblings, we must feed it with the first child.
+     */
+    TREEVIEW_ITEM *upItem = &infoPtr->items[(INT)tvItem->upsibling];
+    
+    if ( ( upItem->cChildren > 0 ) && ( upItem->state & TVIS_EXPANDED) )
+      return TREEVIEW_GetLastListItem( 
+               infoPtr, 
+               &infoPtr->items[(INT)upItem->firstChild]);
+    else
+      return upItem;
+  }
+  else
+  {
+    /*
+     * this item does not have a upsibling, get the parent
+     */
+    if (tvItem->parent) 
+      return &infoPtr->items[(INT)tvItem->parent];
+  }
+
+  return NULL;
 }
 
 
-static TREEVIEW_ITEM *TREEVIEW_GetNextListItem (TREEVIEW_INFO *infoPtr, 
-					TREEVIEW_ITEM *tvItem)
-
+/***************************************************************************
+ * This method returns the next physical item in the treeview not 
+ * considering the tree hierarchy.
+ */
+static TREEVIEW_ITEM *TREEVIEW_GetNextListItem(
+  TREEVIEW_INFO *infoPtr, 
+  TREEVIEW_ITEM *tvItem)
 {
- TREEVIEW_ITEM *wineItem;
+  TREEVIEW_ITEM *wineItem = NULL;
 
+  /* 
+   * If this item has children and is expanded, return the first child
+   */
   if ((tvItem->firstChild) && (tvItem->state & TVIS_EXPANDED)) 
 		return (& infoPtr->items[(INT)tvItem->firstChild]);
 
-
- if (tvItem->sibling) 
+  /*
+   * try to get the sibling
+   */
+  if (tvItem->sibling) 
 		return (& infoPtr->items[(INT)tvItem->sibling]);
 
- wineItem=tvItem;
- while (wineItem->parent) {
-	wineItem=& infoPtr->items [(INT)wineItem->parent];
-	if (wineItem->sibling) 
-                return (& infoPtr->items [(INT)wineItem->sibling]);
- } 
+  /*
+   * Otherwise, get the parent's sibling.
+   */
+  wineItem=tvItem;
+  while (wineItem->parent) {
+    wineItem=& infoPtr->items [(INT)wineItem->parent];
+  	if (wineItem->sibling) 
+      return (& infoPtr->items [(INT)wineItem->sibling]);
+  } 
 
- return NULL;  /* was wineItem */
+  return NULL;  
 }
 
-static TREEVIEW_ITEM *TREEVIEW_GetLastListItem (TREEVIEW_INFO *infoPtr,
-					TREEVIEW_ITEM *tvItem)
-
+/***************************************************************************
+ * This method returns the nth item starting at the given item.  It returns 
+ * the last item (or first) we we run out of items.
+ *
+ * Will scroll backward if count is <0.
+ *             forward if count is >0.
+ */
+static TREEVIEW_ITEM *TREEVIEW_GetListItem(
+  TREEVIEW_INFO *infoPtr, 
+  TREEVIEW_ITEM *tvItem,
+  LONG          count)
 {
- TREEVIEW_ITEM *wineItem;
+  TREEVIEW_ITEM *previousItem = NULL;
+  TREEVIEW_ITEM *wineItem     = tvItem;
+  LONG          iter          = 0;
 
- wineItem=tvItem;
- while (wineItem->sibling) 
-	wineItem=& infoPtr->items [(INT)wineItem->sibling];
+  if      (count > 0)
+  {
+    /* Find count item downward */
+    while ((iter++ < count) && (wineItem != NULL))
+    {
+      /* Keep a pointer to the previous in case we ask for more than we got */
+      previousItem = wineItem; 
+      wineItem     = TREEVIEW_GetNextListItem(infoPtr, wineItem);
+    } 
 
- return wineItem;
+    if (wineItem == NULL)
+      wineItem = previousItem;
+  }
+  else if (count < 0)
+  {
+    /* Find count item upward */
+    while ((iter-- > count) && (wineItem != NULL))
+    {
+      /* Keep a pointer to the previous in case we ask for more than we got */
+      previousItem = wineItem; 
+      wineItem = TREEVIEW_GetPrevListItem(infoPtr, wineItem);
+    }
+
+    if (wineItem == NULL)
+      wineItem = previousItem;
+  }
+  else
+    wineItem = NULL;
+
+  return wineItem;
 }
-	
- 
-static void TREEVIEW_RemoveAllChildren (HWND hwnd,
-					   TREEVIEW_ITEM *parentItem)
 
+ 
+/***************************************************************************
+ * This method 
+ */
+static void TREEVIEW_RemoveAllChildren(
+  HWND hwnd,
+  TREEVIEW_ITEM *parentItem)
 {
  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
  TREEVIEW_ITEM *killItem;
@@ -721,8 +807,6 @@ TREEVIEW_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 									lpRect->top,lpRect->bottom);
   return TRUE;
 }
-
-
 
 static LRESULT
 TREEVIEW_GetVisibleCount (HWND hwnd,  WPARAM wParam, LPARAM lParam)
@@ -1481,25 +1565,20 @@ TREEVIEW_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
-  RECT parent_rect;
-  UINT  cx,cy;
-  HWND parent;
 
-  if (infoPtr->bAutoSize) {
+  if (infoPtr->bAutoSize) 
+  {
     infoPtr->bAutoSize = FALSE;
     return 0;
-    }
-    infoPtr->bAutoSize = TRUE;
+  }
+  infoPtr->bAutoSize = TRUE;
 
-    if (!wParam)  {
-    parent = GetParent (hwnd);
-    GetClientRect(parent, &parent_rect);
-    cx=LOWORD (lParam);
-  	cy=HIWORD (lParam);
-	SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top, 
-			cx, cy, SWP_NOZORDER);
-   } else {
-	FIXME (treeview,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
+  if (wParam == SIZE_RESTORED)  
+  {
+    infoPtr->uTotalWidth  = LOWORD (lParam);
+  	infoPtr->uTotalHeight = HIWORD (lParam);
+  } else {
+  	FIXME (treeview,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
   }
 
   TREEVIEW_QueueRefresh (hwnd);
@@ -1931,7 +2010,6 @@ TREEVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
    know if it also applies here.
 */
 
-
 static LRESULT
 TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1955,7 +2033,7 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
   }
 
-  if (flag & TVE_TOGGLE) {    /* FIXME: check exact behaviour here */
+  if (flag == TVE_TOGGLE) {    /* FIXME: check exact behaviour here */
    flag &= ~TVE_TOGGLE;    /* ie: bitwise ops or 'case' ops */
    if (wineItem->state & TVIS_EXPANDED) 
      flag |= TVE_COLLAPSE;
@@ -1977,7 +2055,7 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
       if (!wineItem->state & TVIS_EXPANDED) 
         return 0;
 
-      wineItem->state &= ~TVIS_EXPANDED;
+      wineItem->state &= ~(TVIS_EXPANDEDONCE | TVIS_EXPANDED);
       break;
 
     case TVE_EXPAND: 
@@ -2015,8 +2093,6 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TREEVIEW_QueueRefresh (hwnd);
   return TRUE;
 }
-
-
 
 
 
@@ -2426,65 +2502,6 @@ TREEVIEW_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* FIXME: does KEYDOWN also send notifications?? If so, use 
-   TREEVIEW_DoSelectItem.
-*/
-
-
-static LRESULT
-TREEVIEW_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
- TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
- TREEVIEW_ITEM *prevItem,*newItem;
- int prevSelect;
-
-
- TRACE (treeview,"%x %lx\n",wParam, lParam);
- prevSelect=(INT)infoPtr->selectedItem;
- if (!prevSelect) return FALSE;
-
- prevItem= TREEVIEW_ValidItem (infoPtr, (HTREEITEM)prevSelect);
- 
- newItem=NULL;
- switch (wParam) {
-	case VK_UP: 
-		newItem=TREEVIEW_GetPrevListItem (infoPtr, prevItem);
-		if (!newItem) 
-			newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
-		break;
-	case VK_DOWN: 
-		newItem=TREEVIEW_GetNextListItem (infoPtr, prevItem);
-		if (!newItem) newItem=prevItem;
-		break;
-	case VK_HOME:
-		newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
-		break;
-	case VK_END:
-		newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
-		newItem=TREEVIEW_GetLastListItem (infoPtr, newItem);
-		break;
-	case VK_PRIOR:
-	case VK_NEXT:
-	case VK_BACK:
-	case VK_RETURN:
-		FIXME (treeview, "%x not implemented\n", wParam);
-		break;
- }
-
- if (!newItem) return FALSE;
-
- if (prevItem!=newItem) {
- 	prevItem->state &= ~TVIS_SELECTED;
- 	newItem->state |= TVIS_SELECTED;
- 	infoPtr->selectedItem=newItem->hItem;
- 	TREEVIEW_QueueRefresh (hwnd);
- 	return TRUE;
- }
-
- return FALSE;
-}
-
-
 
 static LRESULT
 TREEVIEW_VScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2575,6 +2592,149 @@ TREEVIEW_HScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TREEVIEW_QueueRefresh (hwnd);
   return TRUE;
 }
+
+
+/* FIXME: does KEYDOWN also send notifications?? If so, use 
+   TREEVIEW_DoSelectItem.
+*/
+static LRESULT
+TREEVIEW_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+ TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+ TREEVIEW_ITEM *prevItem,*newItem;
+ int prevSelect;
+
+
+ TRACE (treeview,"%x %lx\n",wParam, lParam);
+ prevSelect=(INT)infoPtr->selectedItem;
+ if (!prevSelect) return FALSE;
+
+ prevItem= TREEVIEW_ValidItem (infoPtr, (HTREEITEM)prevSelect);
+ 
+ newItem=NULL;
+ switch (wParam) {
+	case VK_UP: 
+		newItem=TREEVIEW_GetPrevListItem (infoPtr, prevItem);
+
+		if (!newItem) 
+			newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
+
+    if (! newItem->visible)
+      TREEVIEW_VScroll(hwnd, SB_LINEUP, 0);
+
+		break;
+
+	case VK_DOWN: 
+		newItem=TREEVIEW_GetNextListItem (infoPtr, prevItem);
+
+		if (!newItem) 
+      newItem=prevItem;
+
+    if (! newItem->visible)
+      TREEVIEW_VScroll(hwnd, SB_LINEDOWN, 0);
+		break;
+
+	case VK_HOME:
+		newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
+    infoPtr->cy = 0;
+		break;
+
+	case VK_END:
+		newItem=& infoPtr->items[(INT)infoPtr->TopRootItem];
+		newItem=TREEVIEW_GetLastListItem (infoPtr, newItem);
+
+    if (! newItem->visible)
+      infoPtr->cy = infoPtr->uTotalHeight-infoPtr->uVisibleHeight; 
+
+		break;
+
+	case VK_LEFT:
+    if ( (prevItem->cChildren > 0) && (prevItem->state & TVIS_EXPANDED) )
+    {
+      TREEVIEW_Expand(hwnd, TVE_COLLAPSE, prevSelect );
+    }
+    else if ((INT)prevItem->parent) 
+    {
+      newItem = (& infoPtr->items[(INT)prevItem->parent]);
+      if (! newItem->visible) 
+        /* FIXME find a way to make this item the first visible... */
+        newItem = NULL; 
+    }
+
+    break;
+
+	case VK_RIGHT:
+    if ( ( prevItem->cChildren > 0)  || 
+         ( prevItem->cChildren == I_CHILDRENCALLBACK))
+    {
+      if (! (prevItem->state & TVIS_EXPANDED))
+        TREEVIEW_Expand(hwnd, TVE_EXPAND, prevSelect );
+      else
+        newItem = (& infoPtr->items[(INT)prevItem->firstChild]);
+    }
+    break;
+
+  case VK_ADD:
+    if (! (prevItem->state & TVIS_EXPANDED))
+      TREEVIEW_Expand(hwnd, TVE_EXPAND, prevSelect );
+    break;
+
+  case VK_SUBTRACT:
+    if (prevItem->state & TVIS_EXPANDED)
+      TREEVIEW_Expand(hwnd, TVE_COLLAPSE, prevSelect );
+    break;
+
+  case VK_PRIOR:
+    
+		newItem=TREEVIEW_GetListItem(
+              infoPtr, 
+              prevItem,
+              -1*(TREEVIEW_GetVisibleCount(hwnd,0,0)-3));
+		if (!newItem) 
+      newItem=prevItem;
+  
+    if (! newItem->visible)
+      TREEVIEW_VScroll(hwnd, SB_PAGEUP, 0);
+
+		break;
+
+  case VK_NEXT:
+		newItem=TREEVIEW_GetListItem(
+              infoPtr, 
+              prevItem,
+              TREEVIEW_GetVisibleCount(hwnd,0,0)-3);
+
+		if (!newItem) 
+      newItem=prevItem;
+
+    if (! newItem->visible)
+      TREEVIEW_VScroll(hwnd, SB_PAGEDOWN, 0);
+
+		break;
+
+	case VK_BACK:
+
+	case VK_RETURN:
+
+  default:
+		FIXME (treeview, "%x not implemented\n", wParam);
+		break;
+ }
+
+ if (!newItem) return FALSE;
+
+ if (prevItem!=newItem) {
+ 	prevItem->state &= ~TVIS_SELECTED;
+ 	newItem->state |= TVIS_SELECTED;
+ 	infoPtr->selectedItem=newItem->hItem;
+ 	TREEVIEW_QueueRefresh (hwnd);
+ 	return TRUE;
+ }
+
+ return FALSE;
+}
+
+
 
 
 
