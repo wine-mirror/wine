@@ -318,7 +318,6 @@ HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEA *lpInitData )
     return physDev->hdc;
 }
 
-
 /***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
@@ -331,9 +330,11 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
     case TECHNOLOGY:
         return DT_RASPRINTER;
     case HORZSIZE:
-        return physDev->horzSize;
+        return MulDiv(physDev->horzSize, 100,
+		      physDev->Devmode->dmPublic.dmScale);
     case VERTSIZE:
-        return physDev->vertSize;
+        return MulDiv(physDev->vertSize, 100,
+		      physDev->Devmode->dmPublic.dmScale);
     case HORZRES:
         return physDev->horzRes;
     case VERTRES:
@@ -379,9 +380,11 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
         return (int)hypot( (double)physDev->pi->ppd->DefaultResolution,
                            (double)physDev->pi->ppd->DefaultResolution );
     case LOGPIXELSX:
-        return physDev->logPixelsX;
+        return MulDiv(physDev->logPixelsX,
+		      physDev->Devmode->dmPublic.dmScale, 100);
     case LOGPIXELSY:
-        return physDev->logPixelsY;
+        return MulDiv(physDev->logPixelsY,
+		      physDev->Devmode->dmPublic.dmScale, 100);
     case SIZEPALETTE:
         return 0;
     case NUMRESERVED:
