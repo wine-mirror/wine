@@ -96,19 +96,40 @@ AC_CHECK_LIB(dl,dlopen)
 AC_SUBST(XLIB)
 if test "$have_x" = "yes"
 then
-    XLIB="-lXpm -lXext -lX11"
+    XLIB="-lXext -lX11"
+
     dnl Check for -lXpm
-    dnl FIXME: should be done once we can compile without -lXpm
-    dnl AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11)
+    AC_CHECK_HEADERS(X11/xpm.h)
+    if test "$ac_cv_header_X11_xpm_h" = "yes"
+    then 
+        AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11)
+    fi
+
     dnl Check for X Shm extension
-    AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11)
+    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/XShm.h)
+    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+    then 
+        AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11)
+    fi
     dnl Check for XFree86 DGA extension
-    AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86dga.h)
+    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
+    then 
+         AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+    fi
+
     dnl Check for XFree86 VMODE extension
-    AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
+    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86vmode.h)
+    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
+    then 
+        AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
+    fi
     dnl Check for the presence of Mesa
-    AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
-    AC_CHECK_HEADERS(GL/osmesa.h)
+    AC_CHECK_HEADERS(GL/gl.h GL/osmesa.h)
+    if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_osmesa_h" = "yes"
+    then
+        AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+    fi
 else
     XLIB=""
     X_CFLAGS=""
@@ -116,13 +137,21 @@ else
 fi
 
 dnl **** Check which curses lib to use ***
-AC_CHECK_LIB(ncurses,waddch)
+AC_CHECK_HEADERS(ncurses.h)
+if test "$ac_cv_header_ncurses_h" = "yes"
+then 
+    AC_CHECK_LIB(ncurses,waddch)
+fi
 if test "$ac_cv_lib_ncurses_waddch" = "yes"
 then
     AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
 else
-    AC_CHECK_LIB(curses,waddch)
-    AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+    AC_CHECK_HEADERS(curses.h)
+    if test "$ac_cv_header_curses_h" = "yes"
+    then    
+       AC_CHECK_LIB(curses,waddch)
+       AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+    fi
 fi
 
 dnl **** Check for IPX (currently Linux only) ****
@@ -310,6 +339,8 @@ dnl This may fail to determine whether X libraries are reentrant if
 dnl AC_PATH_XTRA does not set x_libraries. In this case manual configuration
 dnl is possible with the --without-reentrant-x option.
 
+if test "$have_x" = "yes"
+then
 AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
   [ if test "x$with_reentrant_x" = "xno"
     then
@@ -337,6 +368,9 @@ AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
 	    wine_cv_x_reentrant=unknown
 	fi
     fi ] )
+else
+    wine_cv_x_reentrant=no
+fi
 if test "$wine_cv_x_reentrant" = "no"
 then
   AC_DEFINE(NO_REENTRANT_X11)
@@ -584,6 +618,7 @@ files/Makefile
 graphics/Makefile
 graphics/metafiledrv/Makefile
 graphics/psdrv/Makefile
+graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile

@@ -24,6 +24,9 @@
 /* Define if you have the Xxf86vm library */
 #undef HAVE_LIBXXF86VM
 
+/* Define if you have the Xpm library */
+#undef HAVE_LIBXXPM
+
 /* Define if you have the Open Sound system.  */
 #undef HAVE_OSS
 
