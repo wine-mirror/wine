@@ -78,6 +78,7 @@ INSTALLED_INCLUDES = \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
 	msvcrt/string.h \
+	msvcrt/sys/locking.h \
 	msvcrt/sys/stat.h \
 	msvcrt/sys/timeb.h \
 	msvcrt/sys/types.h \

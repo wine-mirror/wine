@@ -32,6 +32,7 @@
 #include "msvcrt/direct.h"
 #include "msvcrt/fcntl.h"
 #include "msvcrt/io.h"
+#include "msvcrt/sys/locking.h"
 #include "msvcrt/stdio.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
@@ -505,6 +506,60 @@ LONG _lseek(int fd, LONG offset, int whence)
       break;
     }
   return -1;
+}
+
+/*********************************************************************
+ *		_locking (MSVCRT.@)
+ *
+ * This is untested; the underlying LockFile doesn't work yet.
+ */
+int _locking(int fd, int mode, LONG nbytes)
+{
+  BOOL ret;
+  DWORD cur_locn;
+  HANDLE hand = msvcrt_fdtoh(fd);
+
+  TRACE(":fd (%d) handle (%d)\n",fd,hand);
+  if (hand == INVALID_HANDLE_VALUE)
+    return -1;
+
+  if (mode < 0 || mode > 4)
+  {
+    SET_THREAD_VAR(errno,MSVCRT_EINVAL);
+    return -1;
+  }
+
+  TRACE(":fd (%d) by 0x%08lx mode %s\n",
+        fd,nbytes,(mode==_LK_UNLCK)?"_LK_UNLCK":
+        (mode==_LK_LOCK)?"_LK_LOCK":
+        (mode==_LK_NBLCK)?"_LK_NBLCK":
+        (mode==_LK_RLCK)?"_LK_RLCK":
+        (mode==_LK_NBRLCK)?"_LK_NBRLCK":
+                          "UNKNOWN");
+
+  if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == 0xffffffff)
+  {
+    FIXME ("Seek failed\n");
+    SET_THREAD_VAR(errno,MSVCRT_EINVAL); /* FIXME */
+    return -1;
+  }
+  if (mode == _LK_LOCK || mode == _LK_RLCK)
+  {
+    int nretry = 10;
+    ret = 1; /* just to satisfy gcc */
+    while (nretry--)
+    {
+      ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
+      if (ret) break;
+      sleep (1);
+    }
+  }
+  else if (mode == _LK_UNLCK)
+    ret = UnlockFile(hand, cur_locn, 0L, nbytes, 0L);
+  else
+    ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
+  /* FIXME - what about error settings? */
+  return ret ? 0 : -1;
 }
 
 /*********************************************************************

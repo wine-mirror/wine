@@ -326,7 +326,7 @@ debug_channels (msvcrt)
 @ cdecl _loaddll(str) _loaddll
 @ cdecl _local_unwind2(ptr long) _local_unwind2
 @ cdecl _lock(long) _lock
-@ stub _locking #(long long long)
+@ cdecl _locking(long long long) _locking
 @ cdecl _logb( double ) _logb
 @ stub _longjmpex
 @ cdecl _lrotl(long long) _lrotl
