@@ -96,7 +96,7 @@ DWORD DEBUG_SendCreateThreadEvent( void *entry )
  *
  * Send an LOAD_DLL_DEBUG_EVENT event to the current process debugger.
  */
-DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR name )
+DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name )
 {
     struct debug_event_load_dll event;
 

@@ -1461,7 +1461,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
 
                         if (PROCESS_Current()->flags & PDB32_DEBUGGED)
-                            DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, pwm->module, pwm->modname );
+                            DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, pwm->module, &pwm->modname );
                         
 			return pwm;
 		}
