@@ -32,6 +32,7 @@
 #include "winuser.h"
 
 #include "wine/test.h"
+#include "wine/unicode.h"
 
 #define MDI_FIRST_CHILD_ID 2004
 
@@ -2935,6 +2936,89 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
 }
 
+static const WCHAR wszUnicode[] = {'U','n','i','c','o','d','e',0};
+static const WCHAR wszAnsi[] = {'U',0};
+
+static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case CB_FINDSTRINGEXACT:
+        trace("String: %p\n", (LPCWSTR)lParam);
+        if (!strcmpW((LPCWSTR)lParam, wszUnicode))
+            return 1;
+        if (!strcmpW((LPCWSTR)lParam, wszAnsi))
+            return 0;
+        return -1;
+    }
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+}
+
+static void test_message_conversion(void)
+{
+    static const WCHAR wszMsgConversionClass[] =
+        {'M','s','g','C','o','n','v','e','r','s','i','o','n','C','l','a','s','s',0};
+    WNDCLASSW cls;
+    LRESULT lRes;
+    HWND hwnd;
+    WNDPROC wndproc;
+
+    cls.style = 0;
+    cls.lpfnWndProc = MsgConversionProcW;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleW(NULL);
+    cls.hIcon = NULL;
+    cls.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
+    cls.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = wszMsgConversionClass;
+    /* this call will fail on Win9x, but that doesn't matter as this test is
+     * meaningless on those platforms */
+    if(!RegisterClassW(&cls)) return;
+
+    hwnd = CreateWindowExW(0, wszMsgConversionClass, NULL, WS_OVERLAPPED,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "Window creation failed\n");
+
+    /* {W, A} -> A */
+
+    wndproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    lRes = CallWindowProcA(wndproc, hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0, "String should have been converted\n");
+    lRes = CallWindowProcW(wndproc, hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 1, "String shouldn't have been converted\n");
+
+    /* {W, A} -> W */
+
+    wndproc = (WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+    lRes = CallWindowProcA(wndproc, hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 1, "String shouldn't have been converted\n");
+    lRes = CallWindowProcW(wndproc, hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 1, "String shouldn't have been converted\n");
+
+    /* Synchronous messages */
+
+    lRes = SendMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0, "String should have been converted\n");
+    lRes = SendMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 1, "String shouldn't have been converted\n");
+
+    /* Asynchronous messages */
+
+    todo_wine
+    {
+    SetLastError(0);
+    lRes = PostMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = PostMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    }
+}
+
 START_TEST(msg)
 {
     if (!RegisterWindowClasses()) assert(0);
@@ -2946,6 +3030,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_paint_messages();
+    test_message_conversion();
 
     UnhookWindowsHookEx(hCBT_hook);
 }
