@@ -324,12 +324,12 @@ static const int cursor_key_scan[] =
 static const int misc_key_vkey[] =
 {
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
-    VK_CANCEL, VK_HELP, VK_CANCEL, VK_MENU                      /* FF68 */
+    VK_CANCEL, VK_HELP, VK_CANCEL, VK_CANCEL                    /* FF68 */
 };
 static const int misc_key_scan[] =
 {
     /*?*/ 0, 0x137, /*?*/ 0, 0x152, 0, 0, 0, 0,                 /* FF60 */
-    /*?*/ 0, /*?*/ 0, 0x38                                      /* FF68 */
+    /*?*/ 0, /*?*/ 0, 0x38, 0x146                               /* FF68 */
 };
 
 static const int keypad_key_vkey[] =
