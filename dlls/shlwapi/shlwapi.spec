@@ -294,7 +294,7 @@ init SHLWAPI_LibMain
 292 stub @
 293 stub @
 294 stdcall @(long long long long long) SHLWAPI_294
-295 stub @
+295 stdcall @(wstr ptr wstr wstr) SHLWAPI_295
 296 stub @
 297 stub @
 298 forward @ kernel32.WritePrivateProfileStringW
@@ -393,7 +393,7 @@ init SHLWAPI_LibMain
 391 stdcall @(ptr ptr ptr ptr ptr ) SHLWAPI_391
 392 stub @
 393 stub @
-394 stub @
+394 stdcall @(long long wstr long) SHLWAPI_394
 395 stub @
 396 stub @
 397 stub @

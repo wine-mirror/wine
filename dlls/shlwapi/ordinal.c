@@ -140,7 +140,7 @@ static WORD    (WINAPI *pVerQueryValueW)(LPVOID,LPCWSTR,LPVOID*,UINT*);
 
 /*
  NOTES: Most functions exported by ordinal seem to be superflous.
- The reason for these functions to be there is to provide a wraper
+ The reason for these functions to be there is to provide a wrapper
  for unicode functions to provide these functions on systems without
  unicode functions eg. win95/win98. Since we have such functions we just
  call these. If running Wine with native DLL's, some late bound calls may
@@ -565,7 +565,7 @@ HRESULT WINAPI SHLWAPI_13 (
 	return 1;
 #if 0
 	/* pseudo code extracted from relay trace */
-	RegOpenKeyA(HKLM, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Aceepted Documents", &newkey);
+	RegOpenKeyA(HKLM, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Accepted Documents", &newkey);
 	ret = 0;
 	i = 0;
 	size = 0;
@@ -582,8 +582,8 @@ HRESULT WINAPI SHLWAPI_13 (
 	    RegisterClipBoardFormatA(a4);
 	    i++;
 	}
-	hwnd1 = GetModuleHandleA("URLMON.DLL");
-	proc = GetProcAddress(hwnd1, "CreateFormatEnumerator");
+	hmod1 = GetModuleHandleA("URLMON.DLL");
+	proc = GetProcAddress(hmod1, "CreateFormatEnumerator");
 	HeapAlloc(??, 0, 0x14);
 	HeapAlloc(??, 0, 0x50);
 	LocalAlloc(0x40, 0x78);
@@ -601,8 +601,8 @@ HRESULT WINAPI SHLWAPI_13 (
 
 	HeapAlloc(40350000,00000000,00000014) retval=403fd0a8;
 	HeapAlloc(40350000,00000000,00000050) retval=403feb44;
-	hwnd1 = GetModuleHandleA("URLMON.DLL");
-	proc = GetProcAddress(hwnd1, "RegisterFormatEnumerator");
+	hmod1 = GetModuleHandleA("URLMON.DLL");
+	proc = GetProcAddress(hmod1, "RegisterFormatEnumerator");
 	/* 0x1a40c88c is in URLMON.DLL just before above proc
 	 * content is L"_EnumFORMATETC_"
 	 * label is d1
@@ -1497,7 +1497,7 @@ INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, INT MultiCharCount)
 /*************************************************************************
  *      @	[SHLWAPI.219]
  *
- * Seems to be "super" QueryInterface. Supplied with at table of interfaces
+ * Seems to be "super" QueryInterface. Supplied with a table of interfaces
  * and an array of IIDs and offsets into the table.
  *
  * NOTES
@@ -1804,7 +1804,24 @@ BOOL WINAPI SHLWAPI_294(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPC
      * shlwapi.294(str1, str2, pStr, some_len, lpStr2);
      * shlwapi.PathRemoveBlanksW(pStr);
      */
-    ERR("('%s', '%s', '%s', %08lx, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
+    FIXME("('%s', '%s', '%s', %08lx, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
+    return TRUE;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.295]
+ *
+ * Called by ICQ2000b install via SHDOCVW:
+ * str1: "InternetShortcut"
+ * x: some unknown pointer
+ * str2: "http://free.aol.com/tryaolfree/index.adp?139269"
+ * str3: "C:\\WINDOWS\\Desktop.new2\\Free AOL & Unlimited Internet.url"
+ *
+ * In short: this one maybe creates a desktop link :-)
+ */
+BOOL WINAPI SHLWAPI_295(LPWSTR str1, LPVOID x, LPWSTR str2, LPWSTR str3)
+{
+    FIXME("('%s', %p, '%s', '%s'), stub.\n", debugstr_w(str1), x, debugstr_w(str2), debugstr_w(str3));
     return TRUE;
 }
 
@@ -2218,9 +2235,21 @@ COLORREF WINAPI ColorHLSToRGB(WORD wHue, WORD wLuminosity, WORD wSaturation)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.394]
+ *
+ * Called by ICQ2000b install via SHDOCVW
+ */
+LPVOID WINAPI SHLWAPI_394 (DWORD x, DWORD y, LPWSTR someURL, DWORD z)
+{
+	FIXME("(0x%08lx, 0x%08lx, '%s', 0x%08lx), stub.\n", x, y, debugstr_w(someURL), z);
+	return (LPVOID)0xdeadbee1;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.413]
  *
  * Function unknown seems to always to return 0
+ * x can be 0x3.
  */
 DWORD WINAPI SHLWAPI_413 (DWORD x)
 {
