@@ -70,7 +70,7 @@ static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD heigh
 static void palette_convert_16_to_8(
 	LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count
 ) {
-    int i;
+    unsigned int i;
     unsigned int *pal = (unsigned int *) screen_palette;
 
     for (i = 0; i < count; i++)
@@ -82,7 +82,7 @@ static void palette_convert_16_to_8(
 static void palette_convert_15_to_8(
 	LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count
 ) {
-    int i;
+    unsigned int i;
     unsigned int *pal = (unsigned int *) screen_palette;
 
     for (i = 0; i < count; i++)
@@ -167,7 +167,7 @@ static void pixel_convert_32_to_8(
 static void palette_convert_24_to_8(
 	LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count
 ) {
-    int i;
+    unsigned int i;
     unsigned int *pal = (unsigned int *) screen_palette;
 
     for (i = 0; i < count; i++)

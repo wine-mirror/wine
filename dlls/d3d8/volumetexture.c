@@ -113,7 +113,7 @@ DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetPriority(LPDIRECT3DVOLUMET
     return 0;
 }
 void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE8 iface) {
-    int i;
+    unsigned int i;
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     TRACE("(%p) : About to load texture\n", This);
 

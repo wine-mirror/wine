@@ -995,7 +995,7 @@ HANDLE VFWAPI ICImageDecompress(
 	BYTE*	pMem = NULL;
 	BOOL	bReleaseIC = FALSE;
 	BYTE*	pHdr = NULL;
-	LONG	cbHdr = 0;
+	ULONG	cbHdr = 0;
 	BOOL	bSucceeded = FALSE;
 	BOOL	bInDecompress = FALSE;
 	DWORD	biSizeImage;

@@ -509,7 +509,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len)
 {
-	INT     i, ilen, field, nBlockAlign, todo;
+	INT     ilen, field, nBlockAlign;
+	UINT    i, todo;
 	BYTE	*buf, *ibuf;
 
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,len);

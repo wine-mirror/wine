@@ -723,7 +723,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 						  DWORD flags
 ) {
     ICOM_THIS(SysMouseImpl,iface);
-    DWORD len, nqtail;
+    DWORD len;
+    int nqtail;
     
     TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
     

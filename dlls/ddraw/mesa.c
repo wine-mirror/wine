@@ -990,8 +990,8 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
         case CONVERT_PALETTED: {
 	    IDirectDrawPaletteImpl* pal = current_surface->palette;
 	    BYTE table[256][4];
-	    int i;
-	    int x, y;
+	    unsigned int i;
+	    unsigned int x, y;
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (pal == NULL) {
@@ -1044,7 +1044,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	       Note2: when using color-keying + alpha, are the alpha bits part of the
 	              color-space or not ?
 	    */
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1067,7 +1067,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_CK_5551: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1090,7 +1090,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_CK_4444: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1113,7 +1113,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_CK_4444_ARGB: {
 	    /* Move the four Alpha bits... */
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1135,7 +1135,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	} break;
 	
         case CONVERT_CK_1555: {
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1158,7 +1158,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_555: {
 	    /* Converting the 0555 format in 5551 packed */
-	    int x, y;
+	    unsigned int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1192,7 +1192,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_CK_RGB24: {
 	    /* This is a pain :-) */
-	    int x, y;
+	    unsigned int x, y;
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    DWORD *dst;
 	    
@@ -1217,7 +1217,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 
         case CONVERT_CK_8888: {
 	    /* Just use the alpha component to handle color-keying... */
-	    int x, y;
+	    unsigned int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1239,7 +1239,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	} break;
 	
         case CONVERT_CK_8888_ARGB: {
-	    int x, y;
+	    unsigned int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1262,7 +1262,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_RGB32_888: {
 	    /* Just add an alpha component and handle color-keying... */
-	    int x, y;
+	    unsigned int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)

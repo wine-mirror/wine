@@ -1409,9 +1409,9 @@ static LONG load_VDMX(GdiFont font, LONG height)
     BYTE hdr[6], tmp[2], group[4];
     BYTE devXRatio, devYRatio;
     USHORT numRecs, numRatios;
-    DWORD offset = -1;
+    DWORD result, offset = -1;
     LONG ppem = 0;
-    int i, result;
+    int i;
 
     result = WineEngGetFontData(font, MS_VDMX_TAG, 0, hdr, 6);
 
@@ -1541,7 +1541,7 @@ static void calc_hash(FONT_DESC *pfd)
 {
     DWORD hash = 0, *ptr, two_chars;
     WORD *pwc;
-    int i;
+    unsigned int i;
 
     for(i = 0, ptr = (DWORD*)&pfd->matrix; i < sizeof(FMAT2)/sizeof(DWORD); i++, ptr++)
         hash ^= *ptr;
@@ -2432,7 +2432,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     case GGO_GRAY8_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
       {
-	int mult, row, col;
+	unsigned int mult, row, col;
 	BYTE *start, *ptr;
 
         width = lpgm->gmBlackBoxX;

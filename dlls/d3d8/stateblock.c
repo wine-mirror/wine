@@ -62,7 +62,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         float f;
 	DWORD d;
     } tmpfloat;
-    int i;
+    unsigned int i;
     int j;
     LPDIRECT3DDEVICE8 iface = (LPDIRECT3DDEVICE8) This;
 
@@ -585,7 +585,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
         IDirect3DDeviceImpl_DeleteStateBlock(This, tmpBlock);
 
     } else {
-        int i, j;
+        unsigned int i, j;
         PLIGHTINFOEL *src;
 
         /* Recorded => Only update 'changed' values */

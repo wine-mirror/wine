@@ -898,7 +898,7 @@ HRESULT WINAPI DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface) {
 		&CLSID_DirectSoundWave
 	};
 	
-	int i;
+	unsigned int i;
 	WCHAR wszCurrent[MAX_PATH];
 
 	TRACE(": (%p)\n", This);

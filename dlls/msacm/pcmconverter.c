@@ -121,7 +121,7 @@ static	struct {
  */
 static DWORD PCM_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
-    int i;
+    unsigned int i;
     TRACE("(%p)\n", wfx);
 
     for (i = 0; i < NUM_PCM_FORMATS; i++) {

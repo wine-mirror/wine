@@ -61,7 +61,7 @@ ULONG WINAPI IDirect3DTexture9Impl_AddRef(LPDIRECT3DTEXTURE9 iface) {
 ULONG WINAPI IDirect3DTexture9Impl_Release(LPDIRECT3DTEXTURE9 iface) {
     ICOM_THIS(IDirect3DTexture9Impl,iface);
     ULONG ref = --This->ref;
-    int i;
+    unsigned int i;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {

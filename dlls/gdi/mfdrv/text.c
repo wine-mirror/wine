@@ -79,7 +79,7 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     RECT16	rect16;
     LPINT16	lpdx16 = NULL;
     BOOL	ret;
-    int		i, j;
+    unsigned int i, j;
     LPSTR       ascii;
     DWORD len;
     CHARSETINFO csi;

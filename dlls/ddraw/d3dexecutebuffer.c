@@ -318,7 +318,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    
 		    /* Enough for the moment */
 		    if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
-		        int nb;
+		        unsigned int nb;
 			D3DVERTEX  *src = ((LPD3DVERTEX)  ((char *)This->desc.lpData + vs)) + ci->wStart;
 			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
 			D3DMATRIX *mat2 = lpDevice->world_mat;
@@ -369,7 +369,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			    
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
-		        int nb;
+		        unsigned int nb;
 			D3DLVERTEX *src  = ((LPD3DLVERTEX) ((char *)This->desc.lpData + vs)) + ci->wStart;
 			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
 			D3DMATRIX mat;

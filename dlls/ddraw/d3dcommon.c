@@ -262,7 +262,7 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
 	FE(D3DFVF_DIFFUSE),
 	FE(D3DFVF_SPECULAR)
     };
-    int i;
+    unsigned int i;
     
     if (d3dvtVertexType & D3DFVF_RESERVED0) DPRINTF("D3DFVF_RESERVED0 ");
     switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
@@ -298,7 +298,7 @@ void
 convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided, DWORD dwStartVertex)
 {
     int current_offset = 0;
-    int tex_index;
+    unsigned int tex_index;
     int size = get_flexible_vertex_size(d3dvtVertexType);
 
     lpvVertices = ((BYTE *) lpvVertices) + (size * dwStartVertex);

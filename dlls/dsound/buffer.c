@@ -106,7 +106,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	}
 
 	if (TRACE_ON(dsound)) {
-	    int	i;
+	    unsigned int	i;
 	    for (i=0;i<howmuch;i++)
 		TRACE("notify at %ld to 0x%08lx\n",
 		    notify[i].dwOffset,(DWORD)notify[i].hEventNotify);

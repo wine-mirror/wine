@@ -162,7 +162,7 @@ DWORD InitTextureStageStateTab[] = {
 	
 void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version)
 {
-    int i, j;  
+    unsigned int i, j;  
     TRACE("(%p,%d)\n", lpStateBlock, version);    
     memset(lpStateBlock, 0, sizeof(STATEBLOCK));
     

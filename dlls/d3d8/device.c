@@ -604,7 +604,7 @@ void     WINAPI  IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DG
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, UINT Levels, DWORD Usage,
                                                     D3DFORMAT Format, D3DPOOL Pool, IDirect3DTexture8** ppTexture) {
     IDirect3DTexture8Impl *object;
-    int i;
+    unsigned int i;
     UINT tmpW;
     UINT tmpH;
 
@@ -667,7 +667,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
                                                           D3DFORMAT Format, D3DPOOL Pool, IDirect3DVolumeTexture8** ppVolumeTexture) {
 
     IDirect3DVolumeTexture8Impl *object;
-    int i;
+    unsigned int i;
     UINT tmpW;
     UINT tmpH;
     UINT tmpD;
@@ -759,7 +759,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 
     IDirect3DCubeTexture8Impl *object;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    int i,j;
+    unsigned int i,j;
     UINT tmpW;
 
     /* Allocate the storage for it */
@@ -1046,7 +1046,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
 	if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
 
 	  int bytesPerPixel = ((IDirect3DSurface8Impl*) pSourceSurface)->bytesPerPixel;
-	  int i;
+	  unsigned int i;
 
 	  /* Copy rect by rect */
 	  for (i = 0; i < cRects; i++) {
@@ -1205,7 +1205,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     vcheckGLcall("glPixelStorei");
     /* stupid copy */
     {
-      long j;
+      unsigned long j;
       for (j = 0; j < This->PresentParms.BackBufferHeight; ++j) {
 	glReadPixels(0, This->PresentParms.BackBufferHeight - j - 1, This->PresentParms.BackBufferWidth, 1,
 		     GL_BGRA, GL_UNSIGNED_BYTE, ((char*) lockedRect.pBits) + (j * lockedRect.Pitch));
@@ -1361,7 +1361,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     GLfloat old_z_clear_value;
     GLint   old_stencil_clear_value;
     GLfloat old_color_clear_value[4];
-    int i;
+    unsigned int i;
     CONST D3DRECT* curRect;
 
     TRACE("(%p) Count (%ld), pRects (%p), Flags (%lx), Z (%f), Stencil (%ld)\n", This,
@@ -1464,7 +1464,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    int k;
+    unsigned int k;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
@@ -2527,7 +2527,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_TEXTUREFACTOR             :
         {
-            int i;
+            unsigned int i;
 
             /* Note the texture color applies to all textures whereas 
                GL_TEXTURE_ENV_COLOR applies to active only */
@@ -3162,7 +3162,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 
     IDirect3DBaseTexture8 *oldTxt;
     BOOL reapplyStates = TRUE;
-    DWORD oldTextureDimensions = -1;
+    INT oldTextureDimensions = -1;
     DWORD reapplyFlags = 0;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);

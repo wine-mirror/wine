@@ -454,7 +454,7 @@ static const struct DefaultFontInfo default_fonts[] =
  */
 static const struct DefaultFontInfo* get_default_fonts(UINT charset)
 {
-        int     n;
+        unsigned int n;
 
         for(n=0;n<(sizeof(default_fonts)/sizeof(default_fonts[0]));n++)
         {
@@ -1265,7 +1265,8 @@ RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
 INT WINAPI EnumObjects( HDC hdc, INT nObjType,
                             GOBJENUMPROC lpEnumFunc, LPARAM lParam )
 {
-    INT i, retval = 0;
+    UINT i;
+    INT retval = 0;
     LOGPEN pen;
     LOGBRUSH brush;
 

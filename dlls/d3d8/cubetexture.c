@@ -59,8 +59,7 @@ ULONG WINAPI IDirect3DCubeTexture8Impl_AddRef(LPDIRECT3DCUBETEXTURE8 iface) {
 ULONG WINAPI IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 iface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     ULONG ref = --This->ref;
-    int i;
-    int j;
+    unsigned int i, j;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -134,8 +133,7 @@ static const GLenum cube_targets[6] = {
 };
 
 void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 iface) {
-    int i;
-    int j;
+    unsigned int i, j;
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->Dirty);
 

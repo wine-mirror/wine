@@ -88,7 +88,7 @@ BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID* padid, DWORD fmtTag, LPDWORD i
 static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
 {
     HACMDRIVER		        had = 0;
-    int			        ntag;
+    unsigned int		        ntag;
     ACMDRIVERDETAILSW	        add;
     ACMFORMATTAGDETAILSW        aftd;
 

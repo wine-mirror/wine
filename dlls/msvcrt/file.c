@@ -192,7 +192,7 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
  */
 static MSVCRT_FILE* msvcrt_alloc_fp(void)
 {
-  int i;
+  unsigned int i;
 
   for (i = 3; i < sizeof(MSVCRT_fstreams) / sizeof(MSVCRT_fstreams[0]); i++)
   {

@@ -1867,7 +1867,7 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
     DC *dc = DC_GetDCPtr(hdc);
-    int	i;
+    unsigned int i;
     BOOL ret = FALSE;
 
     if(dc->gdiFont)
@@ -2022,7 +2022,7 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
 DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
                                  LPKERNINGPAIR lpKerningPairs )
 {
-    int i;
+    unsigned int i;
     FIXME("(%p,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
     for (i = 0; i < cPairs; i++)
         lpKerningPairs[i].iKernAmount = 0;

@@ -118,7 +118,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument (
 
 HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen) {
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
-	int r = 0;
+	unsigned int r = 0;
 	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
 	struct list *listEntry;
 		

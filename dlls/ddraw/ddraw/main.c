@@ -802,7 +802,7 @@ BOOL Main_DirectDraw_DDSD_Match(const DDSURFACEDESC2* requested,
 
 #undef CMP
 
-    int i;
+    unsigned int i;
 
     if ((requested->dwFlags & provided->dwFlags) != requested->dwFlags)
 	return FALSE;

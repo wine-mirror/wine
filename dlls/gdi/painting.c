@@ -818,7 +818,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     DC *dc;
     BOOL result;
     POINT lastmove;
-    int i;
+    unsigned int i;
 
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
@@ -1137,7 +1137,7 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                           void * grad_array, ULONG ngrad, ULONG mode )
 {
-  int i;
+  unsigned int i;
 
   TRACE("vert_array:0x%08lx nvert:%ld grad_array:0x%08lx ngrad:%ld\n",
         (long)vert_array, nvert, (long)grad_array, ngrad);

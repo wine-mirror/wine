@@ -223,7 +223,7 @@ static DWORD choose_mode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP,
 			 DWORD dwRefreshRate, DWORD dwFlags)
 {
     int best = -1;
-    int i;
+    unsigned int i;
 
     if (!dd_gbl.dwNumModes) return 0;
 
@@ -525,7 +525,7 @@ HRESULT WINAPI
 HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 			       LPDWORD pCodes)
 {
-    int i;
+    unsigned int i;
     ICOM_THIS(IDirectDrawImpl,iface);
     if (*pNumCodes)
 	*pNumCodes=dd_gbl.dwNumFourCC;

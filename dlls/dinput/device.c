@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
  */
 void _dump_cooperativelevel_DI(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
-	int   i;
+	unsigned int   i;
 	static const struct {
 	    DWORD       mask;
 	    const char  *name;
@@ -64,7 +64,7 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
 
 void _dump_EnumObjects_flags(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
-	int   i;
+	unsigned int   i;
 	DWORD type, instance;
 	static const struct {
 	    DWORD       mask;
@@ -134,7 +134,7 @@ void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) {
 
 /* This function is a helper to convert a GUID into any possible DInput GUID out there */
 const char *_dump_dinput_GUID(const GUID *guid) {
-    int i;
+    unsigned int i;
     static const struct {
 	const GUID *guid;
 	const char *name;
@@ -179,7 +179,7 @@ const char *_dump_dinput_GUID(const GUID *guid) {
 }
 
 void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
-    int i;
+    unsigned int i;
 
     TRACE("Dumping DIDATAFORMAT structure:\n");
     TRACE("  - dwSize: %ld\n", df->dwSize);
@@ -284,7 +284,7 @@ void release_DataFormat(DataFormat * format)
 DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) {
     DataFormat *ret;
     DataTransform *dt;
-    int i, j;
+    unsigned int i, j;
     int same = 1;
     int *done;
     int index = 0;

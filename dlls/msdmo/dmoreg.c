@@ -461,7 +461,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     if (!pCLSID || !Names || !pcItemsFetched)
         return E_POINTER;
 
-    while (count < (INT)cItemsToFetch)
+    while (count < cItemsToFetch)
     {
         This->index++;
 
@@ -485,7 +485,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pInTypes)
         {
-            INT i, j;
+            UINT i, j;
             DWORD cInTypes;
             DMO_PARTIAL_MEDIATYPE* pInTypes;
 
@@ -521,7 +521,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pOutTypes)
         {
-            INT i, j;
+            UINT i, j;
             DWORD cOutTypes;
             DMO_PARTIAL_MEDIATYPE* pOutTypes;
 

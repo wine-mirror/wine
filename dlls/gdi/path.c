@@ -870,7 +870,7 @@ BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         i;
+   UINT        i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -901,7 +901,7 @@ BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         i;
+   UINT        i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -920,7 +920,7 @@ BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         i;
+   UINT        i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -939,7 +939,7 @@ BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         i;
+   UINT        i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -972,7 +972,7 @@ BOOL PATH_Polygon(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         i;
+   UINT        i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -994,7 +994,8 @@ BOOL PATH_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt, startpt;
-   INT         poly, point, i;
+   UINT        poly, i;
+   INT         point;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -1019,7 +1020,7 @@ BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 {
    GdiPath     *pPath = &dc->path;
    POINT       pt;
-   INT         poly, point, i;
+   UINT        poly, point, i;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)

@@ -108,7 +108,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     BOOL 		bLocal = TRUE;
     PWINE_ACMDRIVERID	padid;
     DWORD		val = 0;
-    int			i;
+    unsigned int	i;
     MMRESULT		mmr = MMSYSERR_NOERROR;
 
     TRACE("(%p, %d, %p);\n", hao, uMetric, pMetric);

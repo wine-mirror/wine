@@ -121,7 +121,7 @@ Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 
     if (This->global.dwFlags & DDPCAPS_8BITENTRIES)
     {
-	int i;
+	unsigned int i;
 	LPBYTE entry = (LPBYTE)palent;
 
 	for (i=dwStart; i < dwCount+dwStart; i++)
@@ -145,7 +145,7 @@ Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 
     if (This->global.dwFlags & DDPCAPS_8BITENTRIES)
     {
-	int i;
+	unsigned int i;
 	const BYTE* entry = (const BYTE*)palent;
 
 	for (i=dwStart; i < dwCount+dwStart; i++)

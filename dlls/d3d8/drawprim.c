@@ -521,7 +521,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
                  BOOL isPtSize, float ptSize,                       /* pointSize    */
                  D3DVECTOR_4 *texcoords, int *numcoords)               /* texture info */
 {
-    int textureNo;
+    unsigned int textureNo;
     float s, t, r, q;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
@@ -665,7 +665,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
 void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
-    int          textureNo   = 0;
+    unsigned int textureNo   = 0;
     GLenum       glPrimType  = GL_POINTS;
     int          NumVertexes = NumPrimitives;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -927,7 +927,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
-    int                        textureNo    = 0;
+    unsigned int               textureNo    = 0;
     GLenum                     glPrimType   = GL_POINTS;
     int                        NumVertexes  = NumPrimitives;
     const short               *pIdxBufS     = NULL;
@@ -1237,7 +1237,7 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
-    int                        textureNo    = 0;
+    unsigned int               textureNo    = 0;
     GLenum                     glPrimType   = GL_POINTS;
     int                        NumVertexes  = NumPrimitives;
     const short               *pIdxBufS     = NULL;
@@ -1467,7 +1467,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    int                           i;
+    unsigned int                  i;
     int                           useHW = FALSE;
 
     /* Work out what the FVF should look like */

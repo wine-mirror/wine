@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
-    INT16 index;
+    UINT16 index;
 
     for(index = 0; index < physDev->handles_size; index++)
         if(physDev->handles[index] == 0) break; 

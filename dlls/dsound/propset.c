@@ -372,7 +372,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     if ( IsEqualGUID( &ppd->DeviceId, &DSDEVID_DefaultPlayback) ||
 	 IsEqualGUID( &ppd->DeviceId, &DSDEVID_DefaultVoicePlayback) ) {
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
@@ -401,7 +401,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     } else if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultCapture) ||
 	        IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoiceCapture) ) {
 	ULONG wid;
-	int widn;
+	unsigned int widn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
@@ -430,7 +430,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     } else {
 	BOOL found = FALSE;
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
@@ -461,7 +461,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
 
 	if (found == FALSE) {
             ULONG wid;
-            int widn;
+            unsigned int widn;
             /* given specific device so try the capture devices next */
             widn = waveInGetNumDevs();
             for (wid = 0; wid < widn; wid++) {
@@ -538,7 +538,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
     if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) ||
 	 IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoicePlayback) ) {
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
@@ -574,7 +574,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
     } else if (IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultCapture) ||
 	       IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoiceCapture) ) {
 	ULONG wid;
-	int widn;
+	unsigned int widn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
@@ -611,7 +611,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
     } else {
 	BOOL found = FALSE;
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
@@ -694,7 +694,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) ||
 	 IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoicePlayback) ) {
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
@@ -730,7 +730,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     } else if (IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultCapture) ||
 	       IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoiceCapture) ) {
 	ULONG wid;
-	int widn;
+	unsigned int widn;
 	TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
@@ -767,7 +767,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     } else {
 	BOOL found = FALSE;
 	ULONG wod;
-	int wodn;
+	unsigned int wodn;
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {

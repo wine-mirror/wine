@@ -72,7 +72,7 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 
 	    if (acmDriverOpen(&had, hadid, 0) == MMSYSERR_NOERROR) {
 		ACMFORMATDETAILSA	afd;
-		int			i, idx;
+		unsigned int		i, idx;
 		MMRESULT		mmr;
 		char			buffer[ACMFORMATDETAILS_FORMAT_CHARS+16];
 
@@ -441,7 +441,7 @@ static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 				   DWORD fdwEnum)
 {
     ACMFORMATTAGDETAILSW	aftd;
-    int				i, j;
+    unsigned int			i, j;
 
     for (i = 0; i < padid->cFormatTags; i++) {
 	memset(&aftd, 0, sizeof(aftd));
@@ -771,7 +771,7 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
 				  DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
-    int				i;
+    unsigned int			i;
     BOOL			bPcmDone = FALSE;
 
     TRACE("(%p, %p, %p, %ld, %ld)\n",

@@ -206,7 +206,7 @@ static char *_dump_DIDEVTYPE_value(DWORD dwDevType) {
 
 static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
-	int   i;
+	unsigned int   i;
 	static const struct {
 	    DWORD       mask;
 	    const char  *name;

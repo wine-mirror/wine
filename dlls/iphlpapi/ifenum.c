@@ -576,7 +576,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
     if ((ioctl(fd, SIOCGIFHWADDR, &ifr)))
       ret = ERROR_INVALID_DATA;
     else {
-      int addrLen;
+      unsigned int addrLen;
 
       switch (ifr.ifr_hwaddr.sa_family)
       {

@@ -1257,7 +1257,7 @@ void DIB_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 					  LPPALETTEENTRY palent)
 {
     RGBQUAD col[256];
-    int n;
+    unsigned int n;
     HDC dc;
 
     TRACE("updating primary palette\n");

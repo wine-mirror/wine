@@ -381,7 +381,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     LPCDIDATAFORMAT df)
 {
     ICOM_THIS(JoystickImpl,iface);
-    int i;
+    unsigned int i;
     LPDIDATAFORMAT new_df = 0;
     LPDIOBJECTDATAFORMAT new_rgodf = 0;
     ObjProps * new_props = 0;
@@ -1051,7 +1051,7 @@ HRESULT WINAPI JoystickAImpl_GetObjectInfo(
 {
     ICOM_THIS(JoystickImpl,iface);
     DIDEVICEOBJECTINSTANCEA didoiA;
-    int i;
+    unsigned int i;
 
     TRACE("(%p,%p,%ld,0x%08lx(%s))\n",
           iface, pdidoi, dwObj, dwHow,

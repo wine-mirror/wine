@@ -473,7 +473,8 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 			DWORD iType)
 {
     EMRPOLYPOLYLINE *emr;
-    DWORD cptl = 0, poly, size, point;
+    DWORD cptl = 0, poly, size;
+    INT point;
     RECTL bounds;
     const POINT *pts;
     BOOL ret;

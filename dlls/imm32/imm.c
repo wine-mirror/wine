@@ -81,7 +81,7 @@ static void ImmInternalSetOpenStatus(BOOL fOpen);
 
 static VOID IMM_PostResult(InputContextData *data)
 {
-    int i;
+    unsigned int i;
     TRACE("Posting result as IME_CHAR\n");
 
     for (i = 0; i < data->dwResultStringSize / sizeof (WCHAR); i++)
@@ -613,11 +613,11 @@ LONG WINAPI ImmGetCompositionStringW(
     }
     else if (dwIndex == GCS_COMPATTR)
     {
-        int len = data->dwCompStringLength;
+        unsigned int len = data->dwCompStringLength;
         
         if (dwBufLen >= len)
         {
-            int i=0;
+            unsigned int i=0;
             for (i = 0;  i < len; i++)
                 ((LPBYTE)lpBuf)[i] = ATTR_INPUT;
         }

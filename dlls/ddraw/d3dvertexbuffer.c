@@ -287,7 +287,7 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
     IDirect3DVertexBufferGLImpl *glThis = (IDirect3DVertexBufferGLImpl *) This;
     DWORD size = get_flexible_vertex_size(dwVertexTypeDesc);
     char *dest_ptr;
-    int i;
+    unsigned int i;
 
     This->processed = TRUE;
 
@@ -321,7 +321,7 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
     memcpy(&(glThis->proj_mat), device_impl->proj_mat, sizeof(D3DMATRIX));
 
     for (i = 0; i < dwCount; i++) {
-        int tex_index;
+        unsigned int tex_index;
 
 	if ((dwVertexTypeDesc & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
 	    D3DVALUE *position =

@@ -59,7 +59,7 @@ ULONG WINAPI IDirect3DTexture8Impl_AddRef(LPDIRECT3DTEXTURE8 iface) {
 ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     ULONG ref = --This->ref;
-    int i;
+    unsigned int i;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -109,7 +109,7 @@ DWORD    WINAPI        IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTURE8 ifac
     return 0;
 }
 void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
-    int i;
+    unsigned int i;
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) : About to load texture\n", This);
 

@@ -95,7 +95,7 @@ static void _dump_DSCAPS(DWORD xmask) {
         FE(DSCAPS_SECONDARY16BIT)
 #undef FE
     };
-    int     i;
+    unsigned int     i;
 
     for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
         if ((flags[i].mask & xmask) == flags[i].mask)
@@ -123,7 +123,7 @@ static void _dump_DSBCAPS(DWORD xmask) {
         FE(DSBCAPS_MUTE3DATMAXDISTANCE)
 #undef FE
     };
-    int     i;
+    unsigned int     i;
 
     for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
         if ((flags[i].mask & xmask) == flags[i].mask)
@@ -263,7 +263,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HRESULT hres;
-        UINT i;
+        INT i;
 
         timeKillEvent(This->timerID);
         timeEndPeriod(DS_TIME_RES);

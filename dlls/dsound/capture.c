@@ -828,7 +828,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     }
 
     if (TRACE_ON(dsound)) {
-	int	i;
+	unsigned int i;
 	for (i=0;i<howmuch;i++)
 	    TRACE("notify at %ld to 0x%08lx\n",
 	    notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
@@ -1338,7 +1338,7 @@ IDirectSoundCaptureBufferImpl_Start(
 
         if (ipDSC->buffer) {
             if (This->nrofnotifies) {
-            	unsigned c;
+            	int c;
 
 		ipDSC->nrofpwaves = This->nrofnotifies;
 		TRACE("nrofnotifies=%d\n", This->nrofnotifies);

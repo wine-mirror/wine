@@ -192,7 +192,7 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 				   DWORD fdwEnum)
 {
     ACMFILTERTAGDETAILSW	aftd;
-    int				i, j;
+    unsigned int i, j;
 
     for (i = 0; i < padid->cFilterTags; i++) {
 	memset(&aftd, 0, sizeof(aftd));
@@ -425,7 +425,7 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
 				  DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
-    int				i;
+    unsigned int			i;
 
     TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);

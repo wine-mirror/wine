@@ -448,7 +448,7 @@ static UCHAR NetBTNameWaitLoop(NetBTAdapter *adapter, SOCKET fd, PNCB ncb,
  DWORD sendTo, BOOL broadcast, DWORD timeout, DWORD maxQueries,
  NBNameCacheEntry **cacheEntry)
 {
-    int queries;
+    unsigned int queries;
     NetBTNameQueryData queryData;
 
     if (!adapter) return NRC_BADDR;
@@ -534,7 +534,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
      name[NCBNAMSZ - 1] == 0x20))
     {
         UCHAR toLookup[NCBNAMSZ];
-        int i;
+        unsigned int i;
 
         for (i = 0; i < NCBNAMSZ - 1 && name[i] && name[i] != ' '; i++)
             toLookup[i] = name[i];
@@ -915,7 +915,8 @@ static UCHAR NetBTSessionReq(SOCKET fd, const UCHAR *calledName,
  const UCHAR *callingName)
 {
     UCHAR buffer[NBSS_HDRSIZE + MAX_DOMAIN_NAME_LEN * 2], ret;
-    int len = 0, r;
+    int r;
+    unsigned int len = 0;
     DWORD bytesSent, bytesReceived, recvFlags = 0;
     WSABUF wsaBuf;
 

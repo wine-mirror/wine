@@ -201,7 +201,7 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
     BOOL ret;
     DWORD len;
     METARECORD *mr;
-    int       i,j;
+    unsigned int i,j;
     LPPOINT16 pt16;
     INT16 totalpoint16 = 0;
     INT16 * pointcounts;

@@ -1122,7 +1122,7 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
 static void flush_zbuffer_to_GL(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDirectDrawSurfaceImpl *surf) {
     static BOOLEAN first = TRUE;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    int row;
+    unsigned int row;
     GLenum type;
     
     if (first == TRUE) {
@@ -1427,7 +1427,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	
 	/* Some fast paths first before the generic case.... */
 	if ((d3dvtVertexType == D3DFVF_VERTEX) && (num_active_stages <= 1)) {
-	    int index;
+	    unsigned int index;
 	    
 	    for (index = 0; index < dwIndexCount; index++) {
 		int i = (dwIndices == NULL) ? index : dwIndices[index];
@@ -1448,7 +1448,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   tex_coord[0], tex_coord[1]);
 	    }
 	} else if ((d3dvtVertexType == D3DFVF_TLVERTEX) && (num_active_stages <= 1)) {
-	    int index;
+	    unsigned int index;
 	    
 	    for (index = 0; index < dwIndexCount; index++) {
 		int i = (dwIndices == NULL) ? index : dwIndices[index];
@@ -1482,7 +1482,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	    /* This is the 'slow path' but that should support all possible vertex formats out there...
 	       Note that people should write a fast path for all vertex formats out there...
 	       */  
-	    int index;
+	    unsigned int index;
 	    static const D3DVALUE no_index[] = { 0.0, 0.0, 0.0, 0.0 };
 	    
 	    for (index = 0; index < dwIndexCount; index++) {
@@ -1535,7 +1535,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		}
 		
 		if (TRACE_ON(ddraw_geom)) {
-		    int tex_index;
+		    unsigned int tex_index;
 		    
 		    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
 			D3DVALUE *position =
@@ -2781,12 +2781,12 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     GLbitfield bitfield = 0;
     D3DRECT rect;
-    int i;
+    unsigned int i;
     
     TRACE("(%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     if (TRACE_ON(ddraw)) {
 	if (dwCount > 0) {
-	    int i;
+	    unsigned int i;
 	    TRACE(" rectangles : \n");
 	    for (i = 0; i < dwCount; i++) {
 	        TRACE("  - %ld x %ld     %ld x %ld\n", lpRects[i].u1.x1, lpRects[i].u2.y1, lpRects[i].u3.x2, lpRects[i].u4.y2);

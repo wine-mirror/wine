@@ -554,7 +554,7 @@ Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
 		valid_windows++;
 
 		if (valid_windows < NUMBER_OF_WINDOWS) {
-		    int i;
+		    unsigned int i;
 		    tot_meas = valid_windows * MEASUREMENT_WINDOW;
 		    for (i = 0; i < valid_windows; i++) {
 			total_time += perf_storage[i];

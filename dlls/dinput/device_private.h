@@ -57,7 +57,7 @@ extern void release_DataFormat(DataFormat *df) ;
 {										\
   /* If queue_len > 0, queuing is requested -> TRACE the event queued */	\
   if (This->queue_len > 0) {							\
-    DWORD nq;									\
+    int nq;									\
     TRACE(" queueing %d at offset %d (queue head %d / size %d)\n", 		\
 	  (int) (data), (int) (offset),                           		\
 	  (int) (This->queue_head), (int) (This->queue_len));			\
