@@ -42,6 +42,7 @@ static int vga_width;
 static int vga_height;
 static int vga_depth;
 static BYTE vga_text_attr;
+static char *textbuf_old = NULL;
 
 static BOOL vga_mode_initialized = FALSE;
 
@@ -447,6 +448,25 @@ void VGA_Unlock(void)
 
 /*** TEXT MODE ***/
 
+/* prepare the text mode video memory copy that is used to only
+ * update the video memory line that did get updated. */
+void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
+{
+    char *p, *p2;
+    int i;
+
+    textbuf_old = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textbuf_old, Xres * Yres * 2); /* char + attr */
+
+    p = VGA_AlphaBuffer();
+    p2 = textbuf_old;
+
+    /* make sure the video mem copy contains the exact opposite of our
+     * actual text mode memory area to make sure the screen
+     * does get updated fully initially */
+    for (i=0; i < Xres*Yres*2; i++)
+	*p2++ ^= *p++; /* XOR it */
+}
+
 int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
 {
     COORD siz;
@@ -456,8 +476,10 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
     /* FIXME: Where to initialize text attributes? */
     VGA_SetTextAttribute(0xf);
 
-    /* the xterm is slow, so refresh only every 200ms (5fps) */
-    VGA_InstallTimer(200);
+    VGA_PrepareVideoMemCopy(Xres, Yres);
+
+    /* poll every 30ms (33fps should provide adequate responsiveness) */
+    VGA_InstallTimer(30);
 
     siz.X = Xres;
     siz.Y = Yres;
@@ -481,7 +503,7 @@ void VGA_SetCursorShape(unsigned char start_options, unsigned char end)
      * 0x0607 == CGA, 0x0b0c == monochrome, 0x0d0e == EGA/VGA */
 
     /* calculate percentage from bottom - assuming VGA (bottom 0x0e) */
-    cci.dwSize = ((end & 0x1f) - (start_options & 0x1f))/0x0e * 100; 
+    cci.dwSize = ((end & 0x1f) - (start_options & 0x1f))/0x0e * 100;
     if (!cci.dwSize) cci.dwSize++; /* NULL cursor would make SCCI() fail ! */
     cci.bVisible = ((start_options & 0x60) != 0x20); /* invisible ? */
 
@@ -671,6 +693,8 @@ void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 
 /*** CONTROL ***/
 
+/* FIXME: optimize by doing this only if the data has actually changed
+ *        (in a way similar to DIBSection, perhaps) */
 static void VGA_Poll_Graphics(void)
 {
   unsigned int Pitch, Height, Width, X, Y;
@@ -725,29 +749,41 @@ static void VGA_Poll_Graphics(void)
 
 static void VGA_Poll_Text(void)
 {
-    char *dat;
+    char *dat, *old, *p_line;
     unsigned int Height,Width,Y,X;
-    CHAR_INFO ch[80];
+    CHAR_INFO ch[256]; /* that should suffice for the largest text width */
     COORD siz, off;
     SMALL_RECT dest;
     HANDLE con = VGA_AlphaConsole();
+    BOOL linechanged = FALSE; /* video memory area differs from stored copy ? */
 
     VGA_GetAlphaMode(&Width,&Height);
     dat = VGA_AlphaBuffer();
-    siz.X = 80; siz.Y = 1;
+    old = textbuf_old; /* pointer to stored video mem copy */
+    siz.X = Width; siz.Y = 1;
     off.X = 0; off.Y = 0;
     /* copy from virtual VGA frame buffer to console */
     for (Y=0; Y<Height; Y++) {
-        dest.Top=Y; dest.Bottom=Y;
-       for (X=0; X<Width; X++) {
-           ch[X].Char.AsciiChar = *dat++;
-           /* WriteConsoleOutputA doesn't like "dead" chars */
-           if (ch[X].Char.AsciiChar == '\0')
-               ch[X].Char.AsciiChar = ' ';
-           ch[X].Attributes = *dat++;
-       }
-       dest.Left=0; dest.Right=Width+1;
-       WriteConsoleOutputA(con, ch, siz, off, &dest);
+	linechanged = memcmp(dat, old, Width*2);
+	if (linechanged)
+	{
+	    /*TRACE("line %d changed\n", Y);*/
+	    p_line = dat;
+            for (X=0; X<Width; X++) {
+                ch[X].Char.AsciiChar = *p_line++;
+                /* WriteConsoleOutputA doesn't like "dead" chars */
+                if (ch[X].Char.AsciiChar == '\0')
+                    ch[X].Char.AsciiChar = ' ';
+                ch[X].Attributes = *p_line++;
+            }
+            dest.Top=Y; dest.Bottom=Y;
+            dest.Left=0; dest.Right=Width+1;
+            WriteConsoleOutputA(con, ch, siz, off, &dest);
+	    memcpy(old, dat, Width*2);
+	}
+	/* advance to next text line */
+	dat += Width*2;
+	old += Width*2;
     }
 }
 
@@ -756,8 +792,6 @@ static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
     if(!TryEnterCriticalSection(&vga_lock))
         return;
 
-    /* FIXME: optimize by doing this only if the data has actually changed
-     *        (in a way similar to DIBSection, perhaps) */
     if (lpddraw) {
         VGA_Poll_Graphics();
     } else {
