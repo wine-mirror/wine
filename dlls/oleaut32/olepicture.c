@@ -746,4 +746,15 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 	lpstream, lSize, fRunmode, reed, ppvObj);
   return S_OK;
 }
+
+/***********************************************************************
+ * OleLoadPictureEx
+ */
+HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
+		            REFIID reed, DWORD xsiz, DWORD ysiz, DWORD flags, LPVOID *ppvObj )
+{
+  FIXME("(%p,%ld,%d,%p,%lx,%lx,%lx,%p), not implemented\n",
+	lpstream, lSize, fRunmode, reed, xsiz, ysiz, flags, ppvObj);
+  return S_OK;
+}
  

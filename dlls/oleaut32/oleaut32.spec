@@ -301,7 +301,7 @@ debug_channels (ole typelib)
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath
-425 stub OleLoadPictureEx
+425 stdcall OleLoadPictureEx(ptr long long long long long long ptr) OleLoadPictureEx
 
 #Win98 and higher (NT4.0sp4)
 426 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
