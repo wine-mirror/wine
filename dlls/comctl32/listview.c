@@ -59,6 +59,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -883,7 +884,6 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     RECT frame = *lprc, rcItem, rcTemp;
-    INT lower, upper, nItem;
     POINT Origin;
     
     /* in case we fail, we want to return an empty iterator */
@@ -895,6 +895,8 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 
     if (uView == LVS_ICON || uView == LVS_SMALLICON)
     {
+	INT nItem;
+	
 	if (uView == LVS_ICON)
 	{
 	    if (LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcItem) && IntersectRect(&rcTemp, &rcItem, lprc))
@@ -918,27 +920,44 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
     }
     else if (uView == LVS_REPORT)
     {
+	INT lower, upper;
+	
 	if (frame.left >= infoPtr->nItemWidth) return TRUE;
 	if (frame.top >= infoPtr->nItemHeight * infoPtr->nItemCount) return TRUE;
 	
-	lower = frame.top / infoPtr->nItemHeight;
-	upper = (frame.bottom - 1) / infoPtr->nItemHeight;
+	lower = max(frame.top / infoPtr->nItemHeight, 0);
+	upper = min((frame.bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1);
+	if (upper < lower) return TRUE;
+	i->range.lower = lower;
+	i->range.upper = upper;
     }
     else
     {
 	INT nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1);
-	if (frame.top >= infoPtr->nItemHeight * nPerCol) return TRUE;
-	lower = (frame.left / infoPtr->nItemWidth) * nPerCol + frame.top / infoPtr->nItemHeight;
-	upper = ((frame.right - 1) / infoPtr->nItemWidth) * nPerCol + (frame.bottom - 1) / infoPtr->nItemHeight;
+	INT nFirstRow = max(frame.top / infoPtr->nItemHeight, 0);
+	INT nLastRow = min((frame.bottom - 1) / infoPtr->nItemHeight, nPerCol - 1);
+	INT nFirstCol = max(frame.left / infoPtr->nItemWidth, 0);
+	INT nLastCol = min((frame.right - 1) / infoPtr->nItemWidth, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
+	INT lower = nFirstCol * nPerCol + nFirstRow;
+	RANGE item_range;
+	INT nCol;
+
+	TRACE("nPerCol=%d, nFirstRow=%d, nLastRow=%d, nFirstCol=%d, nLastCol=%d, lower=%d\n",
+	      nPerCol, nFirstRow, nLastRow, nFirstCol, nLastCol, lower);
+	
+	if (nLastCol < nFirstCol || nLastRow < nFirstRow) return TRUE;
+
+	if (!(i->ranges = DPA_Create(nLastCol - nFirstCol + 1))) return FALSE;
+	for (nCol = nFirstCol; nCol < nLastCol; nCol++)
+	{
+	    item_range.lower = nCol * nPerCol + nFirstRow;
+	    if(item_range.lower >= infoPtr->nItemCount) break;
+	    item_range.upper = min(nCol * nPerCol + nLastRow, infoPtr->nItemCount - 1);
+	    TRACE("   range=[%d,%d]\n", item_range.lower, item_range.upper);
+	    ranges_add(i->ranges, item_range);
+	}
     }
 
-    if (upper < 0 || lower >= infoPtr->nItemCount) return TRUE;
-    lower = max(lower, 0);
-    upper = min(upper, infoPtr->nItemCount - 1);
-    if (upper < lower) return TRUE;
-    i->range.lower = lower;
-    i->range.upper = upper;
-    
     return TRUE;
 }
 
@@ -1560,11 +1579,8 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     }
     if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel))
     {
-	if (!(lpLVItem->mask & LVIF_STATE) || 
-	    !(lpLVItem->stateMask & LVIS_FOCUSED)) 
-	    goto fail;
-	if (lpLVItem->state & LVIS_FOCUSED)
-	    oversizedBox = doLabel = TRUE;
+	assert((lpLVItem->mask & LVIF_STATE) && (lpLVItem->stateMask & LVIS_FOCUSED));
+	if (lpLVItem->state & LVIS_FOCUSED) oversizedBox = doLabel = TRUE;
     }
     if (lprcLabel) doLabel = TRUE;
     if (doLabel || lprcIcon) doIcon = TRUE;
@@ -1593,7 +1609,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	else
 	{
 	    /* we need the ident in report mode, if we don't have it, we fail */
-	    if (uView == LVS_REPORT && !(lpLVItem->mask & LVIF_INDENT)) goto fail;
+	    assert(uView != LVS_REPORT || (lpLVItem->mask & LVIF_INDENT));
 	    State.left = Box.left;
 	    if (uView == LVS_REPORT) State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
 	    State.top  = Box.top;
@@ -1655,7 +1671,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	   goto calc_label;
 	}
 	/* we need the text in non owner draw mode */
-	if (!(lpLVItem->mask & LVIF_TEXT)) goto fail;
+	assert(lpLVItem->mask & LVIF_TEXT);
 	if (is_textT(lpLVItem->pszText, TRUE))
         {
     	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
@@ -1740,11 +1756,6 @@ calc_label:
     TRACE("    - box=%s\n", debugrect(&Box));
 
     return TRUE;
-
-fail:
-    ERR("Incorrect item=%s; please report.\n", debuglvitem_t(lpLVItem, TRUE));
-    *((char *)0) = 0;   /* it's an internal function, should never happen */
-    return FALSE;
 }
 
 /***
