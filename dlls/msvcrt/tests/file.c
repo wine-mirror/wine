@@ -48,6 +48,45 @@ static void test_fdopen( void )
     unlink ("fdopen.tst");
 }
 
+static void test_fileops( void )
+{
+    static char outbuffer[] = "0,1,2,3,4,5,6,7,8,9";
+    char buffer[256];
+    WCHAR wbuffer[256];
+    int fd;
+    FILE *file;
+
+    fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
+    write (fd, outbuffer, sizeof (outbuffer));
+    close (fd);
+
+    fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
+    file = fdopen (fd, "rb");
+    ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"fgets failed unexpected");
+    ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF");
+    ok(feof(file) !=0,"feof doesn't signal EOF");
+    rewind(file);
+    ok(fgets(buffer,strlen(outbuffer),file) !=0,"fgets failed unexpected");
+    ok(lstrlenA(buffer) == strlen(outbuffer) -1,"fgets didn't read right size");
+    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected");
+    ok(strlen(buffer) == 1,"fgets dropped chars");
+    ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars");
+    fclose (file);
+    fd = open ("fdopen.tst", O_RDONLY | O_TEXT);
+    file = fdopen (fd, "rt"); /* open in TEXT mode */
+    ok(fgetws(wbuffer,sizeof(wbuffer),file) !=0,"fgetws failed unexpected");
+    ok(fgetws(wbuffer,sizeof(wbuffer),file) ==0,"fgetws didn't signal EOF");
+    ok(feof(file) !=0,"feof doesn't signal EOF");
+    rewind(file);
+    ok(fgetws(wbuffer,strlen(outbuffer),file) !=0,"fgetws failed unexpected");
+    ok(lstrlenW(wbuffer) == (strlen(outbuffer) -1),"fgetws didn't read right size");
+    ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected");
+    ok(lstrlenW(wbuffer) == 1,"fgets dropped chars");
+    fclose (file);
+    unlink ("fdopen.tst");
+} 
+
 static WCHAR* AtoW( char* p )
 {
     WCHAR* buffer;
@@ -181,6 +220,7 @@ static void test_file_write_read( void )
 START_TEST(file)
 {
     test_fdopen();
+    test_fileops();
     test_fgetwc();
     test_file_put_get();
     test_file_write_read();
