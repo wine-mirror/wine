@@ -6836,6 +6836,7 @@ dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
+dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
@@ -7078,6 +7079,7 @@ dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
+dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile

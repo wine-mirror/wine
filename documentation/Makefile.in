@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 BOOKNAME  = wine-doc
-DB2HTML   = $(SRCDIR)/db2html-winehq
+DB2HTML   = db2html
 
 EXTRASUBDIRS = samples status
 

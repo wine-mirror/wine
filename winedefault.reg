@@ -151,3 +151,24 @@
 @="dsound.dll"
 "ThreadingModel"="Both"
 
+#
+# Entries for IWebBrowser
+# Used by Internet Explorer HTML-rendering control
+#
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8856f961-340a-11d0-a96b-00c04fd705a2}]
+@="Shortcut"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8856f961-340a-11d0-a96b-00c04fd705a2}\InProcServer32]
+@="shdocvw.dll"
+"ThreadingModel"="Apartment"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8856f961-340a-11d0-a96b-00c04fd705a2}]
+@="Shortcut"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8856f961-340a-11d0-a96b-00c04fd705a2}\InProcServer32]
+@="shdocvw.dll"
+"ThreadingModel"="Apartment"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8856f961-340a-11d0-a96b-00c04fd705a2}\shellex\MayChangeDefaultMenu]
+@=""

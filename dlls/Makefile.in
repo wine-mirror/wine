@@ -48,6 +48,7 @@ DLLFILES = \
 	rpcrt4/librpcrt4.@LIBEXT@ \
 	serialui/libserialui.@LIBEXT@ \
 	setupapi/libsetupapi.@LIBEXT@ \
+	shdocvw/libshdocvw.@LIBEXT@ \
 	shell32/libshell32.@LIBEXT@ \
 	shfolder/libshfolder.@LIBEXT@ \
 	shlwapi/libshlwapi.@LIBEXT@ \
@@ -163,6 +164,7 @@ SUBDIRS = \
 	rpcrt4 \
 	serialui \
 	setupapi \
+	shdocvw \
 	shell32 \
 	shfolder \
 	shlwapi \
@@ -337,6 +339,9 @@ libserialui.@LIBEXT@: serialui/libserialui.@LIBEXT@
 libsetupapi.@LIBEXT@ libsetupx.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupapi/libsetupapi.@LIBEXT@ $@
 
+libshdocvw.@LIBEXT@: shdocvw/libshdocvw.@LIBEXT@
+	$(RM) $@ && $(LN_S) shdocvw/libshdocvw.@LIBEXT@ $@
+
 libshell32.@LIBEXT@ libshell.@LIBEXT@: shell32/libshell32.@LIBEXT@
 	$(RM) $@ && $(LN_S) shell32/libshell32.@LIBEXT@ $@
 
@@ -439,6 +444,7 @@ richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.
 rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 serialui/libserialui.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 setupapi/libsetupapi.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+shdocvw/libshdocvw.@LIBEXT@: libole32.@LIBEXT@ libntdll.@LIBEXT@
 shell32/libshell32.@LIBEXT@: libole32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 shfolder/libshfolder.@LIBEXT@: libshell32.@LIBEXT@
 shlwapi/libshlwapi.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
