@@ -625,8 +625,7 @@ static BOOL process_attach(void)
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
   HMODULE mod = GetModuleHandleA( "x11drv.dll" );
   void *opengl_handle;
-  const char *extensions = NULL;
-  
+
   if (!root || !mod)
   {
       ERR("X11DRV not loaded. Cannot create default context.\n");
@@ -667,7 +666,6 @@ static BOOL process_attach(void)
   vis = XGetVisualInfo(default_display, VisualIDMask, &template, &num);
   if (vis != NULL) default_cx = glXCreateContext(default_display, vis, 0, GL_TRUE);
   if (default_cx != NULL) glXMakeCurrent(default_display, root, default_cx);
-  extensions = glXQueryExtensionsString(default_display, DefaultScreen(default_display));
   XFree(vis);
   LEAVE_GL();
 
