@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
  */
 LONG TTYDRV_GetBitmapBits(HBITMAP hbitmap, void *bits, LONG count)
 {
-    FIXME("(%x, %p, %ld): stub\n", hbitmap, bits, count);
+    FIXME("(%p, %p, %ld): stub\n", hbitmap, bits, count);
     memset(bits, 0, count);
     return count;
 }
@@ -45,7 +45,7 @@ LONG TTYDRV_GetBitmapBits(HBITMAP hbitmap, void *bits, LONG count)
  */
 LONG TTYDRV_SetBitmapBits(HBITMAP hbitmap, const void *bits, LONG count)
 {
-    FIXME("(%x, %p, %ld): stub\n", hbitmap, bits, count);
+    FIXME("(%p, %p, %ld): stub\n", hbitmap, bits, count);
     return count;
 }
 
@@ -56,7 +56,7 @@ HBITMAP TTYDRV_BITMAP_CreateDIBSection(
   TTYDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage,
   LPVOID *bits, HANDLE section, DWORD offset)
 {
-  FIXME("(%x, %p, %u, %p, 0x%04x, %ld): stub\n",
+  FIXME("(%p, %p, %u, %p, %p, %ld): stub\n",
 	physDev->hdc, bmi, usage, bits, section, offset);
 
   return (HBITMAP) NULL;
@@ -70,7 +70,7 @@ INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, D
 				UINT startscan, UINT lines, LPCVOID bits,
 				const BITMAPINFO *info, UINT coloruse)
 {
-  FIXME("(%x, %d, %d, %ld, %ld, %d, %d, %u, %u, %p, %p, %u): stub\n",
+  FIXME("(%p, %d, %d, %ld, %ld, %d, %d, %u, %u, %p, %p, %u): stub\n",
 	physDev->hdc, xDest, yDest, cx, cy, xSrc, ySrc, startscan, lines, bits, info, coloruse);
 
   return 0;

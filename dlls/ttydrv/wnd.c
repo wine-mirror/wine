@@ -24,6 +24,7 @@
 #include "ttydrv.h"
 #include "win.h"
 #include "winpos.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 #include "hook.h"
 
@@ -49,7 +50,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     WINDOW *window;
     INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
-    TRACE("(%x)\n", hwnd);
+    TRACE("(%p)\n", hwnd);
 
     /* Only create top-level windows */
     if (!(wndPtr->dwStyle & WS_CHILD))
@@ -120,7 +121,7 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
     WND *wndPtr = WIN_GetPtr( hwnd );
     WINDOW *window = wndPtr->pDriverData;
 
-    TRACE("(%x)\n", hwnd);
+    TRACE("(%p)\n", hwnd);
 
     if (window && window != root_window) delwin(window);
     wndPtr->pDriverData = NULL;
@@ -383,9 +384,9 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         org.y = wndPtr->rectClient.top;
     }
 
-    SetDCOrg16( hdc, org.x, org.y );
+    SetDCOrg16( HDC_16(hdc), org.x, org.y );
 
-    if (SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
+    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         if (flags & DCX_PARENTCLIP)
         {
@@ -418,7 +419,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
             OffsetRgn( hrgnVisible, org.x, org.y );
         }
-        SelectVisRgn16( hdc, hrgnVisible );
+        SelectVisRgn16( HDC_16(hdc), HRGN_16(hrgnVisible) );
     }
 
     /* apply additional region operation (if any) */
@@ -427,14 +428,14 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     {
         if( !hrgnVisible ) hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
 
-        TRACE("\tsaved VisRgn, clipRgn = %04x\n", hrgn);
+        TRACE("\tsaved VisRgn, clipRgn = %p\n", hrgn);
 
-        SaveVisRgn16( hdc );
+        SaveVisRgn16( HDC_16(hdc) );
         CombineRgn( hrgnVisible, hrgn, 0, RGN_COPY );
         OffsetRgn( hrgnVisible, org.x, org.y );
-        CombineRgn( hrgnVisible, InquireVisRgn16( hdc ), hrgnVisible,
+        CombineRgn( hrgnVisible, HRGN_32(InquireVisRgn16(HDC_16(hdc))), hrgnVisible,
                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-        SelectVisRgn16( hdc, hrgnVisible );
+        SelectVisRgn16(HDC_16(hdc), HRGN_16(hrgnVisible));
     }
 
     if (hrgnVisible) DeleteObject( hrgnVisible );
@@ -454,7 +455,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     BOOL retvalue;
     HWND hwndActive = GetForegroundWindow();
 
-    TRACE( "hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n",
+    TRACE( "hwnd %p, swp (%i,%i)-(%i,%i) flags %08x\n",
            winpos->hwnd, winpos->x, winpos->y,
            winpos->x + winpos->cx, winpos->y + winpos->cy, winpos->flags);
 
@@ -670,8 +671,8 @@ static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     UINT swpFlags = 0;
     WINDOWPLACEMENT wpl;
 
-    TRACE("0x%04x %u\n", hwnd, cmd );
-    FIXME("(%x): stub\n", hwnd);
+    TRACE("%p %u\n", hwnd, cmd );
+    FIXME("(%p): stub\n", hwnd);
 
     wpl.length = sizeof(wpl);
     GetWindowPlacement( hwnd, &wpl );
@@ -700,7 +701,7 @@ BOOL TTYDRV_ShowWindow( HWND hwnd, INT cmd )
     if (!wndPtr) return FALSE;
     hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
-    TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
+    TRACE("hwnd=%p, cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 

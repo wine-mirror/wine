@@ -77,7 +77,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR dev
  */
 BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev)
 {
-    TRACE("(%x)\n", physDev->hdc);
+    TRACE("(%p)\n", physDev->hdc);
 
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
@@ -161,7 +161,7 @@ INT TTYDRV_GetDeviceCaps( TTYDRV_PDEVICE *physDev, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }

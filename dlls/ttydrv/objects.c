@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
  */
 HFONT TTYDRV_SelectFont(TTYDRV_PDEVICE *physDev, HFONT hfont)
 {
-  TRACE("(%x, 0x%04x)\n", physDev->hdc, hfont);
+  TRACE("(%p, %p)\n", physDev->hdc, hfont);
 
-  return TRUE; /* Use device font */
+  return (HFONT)1; /* Use device font */
 }
