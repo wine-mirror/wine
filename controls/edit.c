@@ -250,6 +250,7 @@ static void	EDIT_WM_Size(WND *wnd, EDITSTATE *es, UINT action, INT width, INT he
 static LRESULT	EDIT_WM_SysKeyDown(WND *wnd, EDITSTATE *es, INT key, DWORD key_data);
 static void	EDIT_WM_Timer(WND *wnd, EDITSTATE *es, INT id, TIMERPROC timer_proc);
 static LRESULT	EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos, HWND scroll_bar);
+static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase);
 
 
 /*********************************************************************
@@ -384,14 +385,14 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 			RECT rc;
 			CONV_RECT16TO32((LPRECT16)PTR_SEG_TO_LIN(lParam), &rc);
 			EDIT_SetRectNP(wnd, es, &rc);
-			InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+			EDIT_UpdateText(wnd, NULL, TRUE);
 		}
 		break;
 	case EM_SETRECT:
 		DPRINTF_EDIT_MSG32("EM_SETRECT");
 		if ((es->style & ES_MULTILINE) && lParam) {
 			EDIT_SetRectNP(wnd, es, (LPRECT)lParam);
-			InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+			EDIT_UpdateText(wnd, NULL, TRUE);
 		}
 		break;
 
@@ -753,7 +754,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case WM_ENABLE:
 		DPRINTF_EDIT_MSG32("WM_ENABLE");
                 es->bEnableState = (BOOL) wParam;
-		InvalidateRect(hwnd, NULL, TRUE);
+		EDIT_UpdateText(wnd, NULL, TRUE);
 		break;
 
 	case WM_ERASEBKGND:
@@ -1255,7 +1256,7 @@ static void EDIT_SL_InvalidateText(WND *wnd, EDITSTATE *es, INT start, INT end)
 
 	EDIT_GetLineRect(wnd, es, 0, start, end, &line_rect);
 	if (IntersectRect(&rc, &line_rect, &es->format_rect))
-		InvalidateRect(wnd->hwndSelf, &rc, FALSE);
+		EDIT_UpdateText(wnd, &rc, FALSE);
 }
 
 
@@ -1298,25 +1299,25 @@ static void EDIT_ML_InvalidateText(WND *wnd, EDITSTATE *es, INT start, INT end)
 	if (sl == el) {
 		EDIT_GetLineRect(wnd, es, sl, sc, ec, &rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wnd->hwndSelf, &rcUpdate, FALSE);
+			EDIT_UpdateText(wnd, &rcUpdate, FALSE);
 	} else {
 		EDIT_GetLineRect(wnd, es, sl, sc,
 				EDIT_EM_LineLength(wnd, es,
 					EDIT_EM_LineIndex(wnd, es, sl)),
 				&rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wnd->hwndSelf, &rcUpdate, FALSE);
+			EDIT_UpdateText(wnd, &rcUpdate, FALSE);
 		for (l = sl + 1 ; l < el ; l++) {
 			EDIT_GetLineRect(wnd, es, l, 0,
 				EDIT_EM_LineLength(wnd, es,
 					EDIT_EM_LineIndex(wnd, es, l)),
 				&rcLine);
 			if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-				InvalidateRect(wnd->hwndSelf, &rcUpdate, FALSE);
+				EDIT_UpdateText(wnd, &rcUpdate, FALSE);
 		}
 		EDIT_GetLineRect(wnd, es, el, 0, ec, &rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wnd->hwndSelf, &rcUpdate, FALSE);
+			EDIT_UpdateText(wnd, &rcUpdate, FALSE);
 	}
 }
 
@@ -2469,10 +2470,8 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 	es->flags |= EF_UPDATE;
 	EDIT_EM_ScrollCaret(wnd, es);
 
-	EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
-
 	/* FIXME: really inefficient */
-	InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+	EDIT_UpdateText(wnd, NULL, TRUE);
 }
 
 
@@ -2567,7 +2566,7 @@ static void EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es)
 				x = SLOWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, FALSE));
 			} while ((x < goal) && es->x_offset);
 			/* FIXME: use ScrollWindow() somehow to improve performance */
-			InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+			EDIT_UpdateText(wnd, NULL, TRUE);
 		} else if (x > es->format_rect.right) {
 			INT x_last;
 			INT len = lstrlenA(es->text);
@@ -2578,7 +2577,7 @@ static void EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es)
 				x_last = SLOWORD(EDIT_EM_PosFromChar(wnd, es, len, FALSE));
 			} while ((x > goal) && (x_last > es->format_rect.right));
 			/* FIXME: use ScrollWindow() somehow to improve performance */
-			InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+			EDIT_UpdateText(wnd, NULL, TRUE);
 		}
 	}
 }
@@ -2622,7 +2621,7 @@ static void EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL hloc)
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
 	EDIT_BuildLineDefs_ML(wnd, es);
-	InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
@@ -2665,7 +2664,7 @@ static void EDIT_EM_SetHandle16(WND *wnd, EDITSTATE *es, HLOCAL16 hloc)
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
 	EDIT_BuildLineDefs_ML(wnd, es);
-	InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
@@ -2744,7 +2743,7 @@ static void EDIT_EM_SetPasswordChar(WND *wnd, EDITSTATE *es, CHAR c)
 		wnd->dwStyle &= ~ES_PASSWORD;
 		es->style &= ~ES_PASSWORD;
 	}
-	InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+	EDIT_UpdateText(wnd, NULL, TRUE);
 }
 
 
@@ -2867,7 +2866,7 @@ static void EDIT_EM_SetWordBreakProc(WND *wnd, EDITSTATE *es, EDITWORDBREAKPROCA
 	es->word_break_proc16 = NULL;
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
 		EDIT_BuildLineDefs_ML(wnd, es);
-		InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+		EDIT_UpdateText(wnd, NULL, TRUE);
 	}
 }
 
@@ -2886,7 +2885,7 @@ static void EDIT_EM_SetWordBreakProc16(WND *wnd, EDITSTATE *es, EDITWORDBREAKPRO
 	es->word_break_proc16 = wbp;
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
 		EDIT_BuildLineDefs_ML(wnd, es);
-		InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+		EDIT_UpdateText(wnd, NULL, TRUE);
 	}
 }
 
@@ -3909,7 +3908,7 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
 		EDIT_BuildLineDefs_ML(wnd, es);
 
 	if (redraw)
-		InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+		EDIT_UpdateText(wnd, NULL, TRUE);
 	if (es->flags & EF_FOCUSED) {
 		DestroyCaret();
 		CreateCaret(wnd->hwndSelf, 0, 2, es->line_height);
@@ -3968,7 +3967,7 @@ static void EDIT_WM_Size(WND *wnd, EDITSTATE *es, UINT action, INT width, INT he
 		RECT rc;
 		SetRect(&rc, 0, 0, width, height);
 		EDIT_SetRectNP(wnd, es, &rc);
-		InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+		EDIT_UpdateText(wnd, NULL, TRUE);
 	}
 }
 
@@ -4134,4 +4133,21 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos, HWN
 	if (dy)
 		EDIT_EM_LineScroll(wnd, es, 0, dy);
 	return 0;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_UpdateText
+ *
+ */
+static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase)
+{
+    EDITSTATE *es = *(EDITSTATE **)((wnd)->wExtra);
+
+    /* EF_UPDATE will be turned off in paint */
+    if (es->flags & EF_UPDATE)
+	EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
+
+    InvalidateRect(wnd->hwndSelf, rc, bErase);
 }
