@@ -19,6 +19,7 @@ C_SRCS = \
 	clipboard.c \
 	control.c \
 	dataobject.c \
+	debughlp.c \
 	dialogs.c \
 	enumidlist.c \
 	folders.c \
@@ -49,4 +50,3 @@ RC_SRCS= \
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

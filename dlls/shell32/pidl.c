@@ -36,108 +36,12 @@
 #include "shlwapi.h"
 
 #include "pidl.h"
+#include "debughlp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);
 WINE_DECLARE_DEBUG_CHANNEL(shell);
 
-void pdump (LPCITEMIDLIST pidl)
-{
-	LPITEMIDLIST pidltemp = pidl;
-	if (!TRACE_ON(pidl))
-	  return;
-
-	if (! pidltemp)
-	{
-	  MESSAGE ("-------- pidl=NULL (Desktop)\n");
-	}
-	else
-	{
-	  MESSAGE ("-------- pidl=%p\n", pidl);
-	  if (pidltemp->mkid.cb)
-	  { 
-	    do
-	    {
-	      DWORD dwAttrib = 0;
-	      LPPIDLDATA pData   = _ILGetDataPointer(pidltemp);
-	      DWORD type         = pData->type;
-	      LPSTR szLongName   = _ILGetTextPointer(pidltemp);
-	      LPSTR szShortName  = _ILGetSTextPointer(pidltemp);
-	      char szName[MAX_PATH];
-
-	      _ILSimpleGetText(pidltemp, szName, MAX_PATH);
-	      if( PT_FOLDER == type)
-	        dwAttrib = pData->u.folder.uFileAttribs;
-	      else if( PT_VALUE == type)
-	        dwAttrib = pData->u.file.uFileAttribs;
-
-	      MESSAGE ("-- pidl=%p size=%u type=%lx attr=0x%08lx name=%s (%s,%s)\n",
-	               pidltemp, pidltemp->mkid.cb,type,dwAttrib,szName,debugstr_a(szLongName), debugstr_a(szShortName));
-
-	      pidltemp = ILGetNext(pidltemp);
-
-	    } while (pidltemp->mkid.cb);
-	  }
-	  else
-	  {
-	    MESSAGE ("empty pidl (Desktop)\n");
-	  }
-	  pcheck(pidl);
-	}
-}
-#define BYTES_PRINTED 32
-BOOL pcheck (LPCITEMIDLIST pidl)
-{
-        DWORD type, ret=TRUE;
-        LPITEMIDLIST pidltemp = pidl;
-
-        if (pidltemp && pidltemp->mkid.cb)
-        { do
-          { type   = _ILGetDataPointer(pidltemp)->type;
-            switch (type)
-	    { case PT_DESKTOP:
-	      case PT_MYCOMP:
-	      case PT_SPECIAL:
-	      case PT_DRIVE:
-	      case PT_DRIVE1:
-	      case PT_DRIVE2:
-	      case PT_DRIVE3:
-	      case PT_FOLDER:
-	      case PT_VALUE:
-	      case PT_FOLDER1:
-	      case PT_WORKGRP:
-	      case PT_COMP:
-	      case PT_NETWORK:
-	      case PT_IESPECIAL1:
-	      case PT_IESPECIAL2:
-	      case PT_SHARE:
-		break;
-	      default:
-	      {
-		char szTemp[BYTES_PRINTED*4 + 1];
-		int i;
-		unsigned char c;
-
-		memset(szTemp, ' ', BYTES_PRINTED*4 + 1);
-		for ( i = 0; (i<pidltemp->mkid.cb) && (i<BYTES_PRINTED); i++)
-		{
-		  c = ((unsigned char *)pidltemp)[i];
-
-		  szTemp[i*3+0] = ((c>>4)>9)? (c>>4)+55 : (c>>4)+48;
-		  szTemp[i*3+1] = ((0x0F&c)>9)? (0x0F&c)+55 : (0x0F&c)+48;
-		  szTemp[i*3+2] = ' ';
-		  szTemp[i+BYTES_PRINTED*3]  =  (c>=0x20 && c <=0x80) ? c : '.';
-		}
-		szTemp[BYTES_PRINTED*4] = 0x00;
-		ERR("unknown IDLIST type size=%u type=%lx\n%s\n",pidltemp->mkid.cb,type, szTemp);
-		ret = FALSE;
-	      }
-	    }
-	    pidltemp = ILGetNext(pidltemp);
-	  } while (pidltemp->mkid.cb);
-	}
-	return ret;
-}
 
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
