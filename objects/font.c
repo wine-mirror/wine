@@ -910,7 +910,7 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
         }
     }
     GDI_ReleaseObj( hdc );
-    TRACE("(%08x %s %d %p): returning %d,%d\n",
+    TRACE("(%08x %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
     return ret;
 }
@@ -939,7 +939,7 @@ BOOL WINAPI GetTextExtentPoint32W(
 	    ret = dc->funcs->pGetTextExtentPoint( dc, str, count, size );
         GDI_ReleaseObj( hdc );
     }
-    TRACE("(%08x %s %d %p): returning %d,%d\n",
+    TRACE("(%08x %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
     return ret;
 }
@@ -1021,8 +1021,9 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     *lpnFit = nFit;
     ret = TRUE;
 
-    TRACE("(%08x %s %d) returning %d %d %d\n",
+    TRACE("(%08x %s %d) returning %d %ld x %ld\n",
           hdc,debugstr_wn(str,count),maxExt,nFit, size->cx,size->cy);
+
 done:
     GDI_ReleaseObj( hdc );
     return ret;

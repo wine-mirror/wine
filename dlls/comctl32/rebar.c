@@ -425,7 +425,7 @@ REBAR_ForceResize (HWND hwnd)
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
     RECT rc;
 
-    TRACE(" to [%d x %d]!\n",
+    TRACE( " to [%ld x %ld]!\n",
 	   infoPtr->calcSize.cx, infoPtr->calcSize.cy);
 
     infoPtr->bAutoResize = TRUE;

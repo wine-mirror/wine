@@ -169,7 +169,8 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
                 Success = TRUE;
             }
 	    /* Use the text metrics */
-	    TRACE("Using tm: %ldx%ld (dlg: %dx%d) (%s)\n", tm.tmAveCharWidth, tm.tmHeight, pSize->cx, pSize->cy,
+	    TRACE("Using tm: %ldx%ld (dlg: %ld x %ld) (%s)\n",
+                  tm.tmAveCharWidth, tm.tmHeight, pSize->cx, pSize->cy,
 		  tm.tmPitchAndFamily & TMPF_FIXED_PITCH ? "variable" : "fixed");		
 	    pSize->cx = tm.tmAveCharWidth;
 	    pSize->cy = tm.tmHeight;

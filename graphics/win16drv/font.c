@@ -39,8 +39,7 @@ BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
 			      win16drv_SegPtr_TextXForm, NULL, NULL, 0);
     size->cx = XDSTOLS(dc,LOWORD(dwRet));
     size->cy = YDSTOLS(dc,HIWORD(dwRet));
-    TRACE("cx=0x%x, cy=0x%x\n",
-		size->cx, size->cy );
+    TRACE("cx=%ld, cy=%ld\n", size->cx, size->cy );
     HeapFree( GetProcessHeap(), 0, str );
     return TRUE;
 }

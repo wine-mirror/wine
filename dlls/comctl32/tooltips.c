@@ -314,7 +314,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
-    TRACE("size %d - %d\n", size.cx, size.cy);
+    TRACE("size %ld x %ld\n", size.cx, size.cy);
 
     if (toolPtr->uFlags & TTF_CENTERTIP) {
 	RECT rc;
@@ -437,7 +437,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
-    TRACE("size %d - %d\n", size.cx, size.cy);
+    TRACE("size %ld x %ld\n", size.cx, size.cy);
 
     if (toolPtr->uFlags & TTF_ABSOLUTE) {
 	rect.left = infoPtr->xTrackPos;

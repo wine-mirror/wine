@@ -1060,7 +1060,8 @@ static HRESULT WINAPI DefaultHandler_SetExtent(
 	    DWORD              dwDrawAspect, 
 	    SIZEL*             psizel)
 {
-  TRACE("(%p, %lx, (%d,%d))\n", iface, dwDrawAspect, psizel->cx, psizel->cy);
+  TRACE("(%p, %lx, (%ld x %ld))\n", iface,
+        dwDrawAspect, psizel->cx, psizel->cy);
   return OLE_E_NOTRUNNING;
 }
 
