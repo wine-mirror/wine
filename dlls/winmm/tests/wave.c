@@ -51,10 +51,9 @@ void wave_out_tests()
     HWAVEOUT wout;
     MMRESULT rc;
     UINT ndev,d,f;
-    int success;
 
     ndev=waveOutGetNumDevs();
-    winetest_trace("found %d WaveOut devices\n",ndev);
+    trace("found %d WaveOut devices\n",ndev);
 
     todo_wine {
         rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
@@ -75,16 +74,16 @@ void wave_out_tests()
 
     for (d=0;d<ndev;d++) {
         rc=waveOutGetDevCapsA(d,&caps,sizeof(caps));
-        success=(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID);
-        ok(success,"failed to get capabilities of device %d: rc=%d",d,rc);
-        if (!success)
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
+           "failed to get capabilities of device %d: rc=%d",d,rc);
+        if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
-        winetest_trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%04lx support=%04lx\n",
-                       d,caps.szPname,caps.vDriverVersion >> 8,
-                       caps.vDriverVersion & 0xff,
-                       caps.wMid,caps.wPid,
-                       caps.wChannels,caps.dwFormats,caps.dwSupport);
+        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%04lx support=%04lx\n",
+              d,caps.szPname,caps.vDriverVersion >> 8,
+              caps.vDriverVersion & 0xff,
+              caps.wMid,caps.wPid,
+              caps.wChannels,caps.dwFormats,caps.dwSupport);
 
         for (f=0;f<TEST_FORMATS;f++) {
             if (!(caps.dwFormats & win_formats[f][0]))
@@ -99,9 +98,9 @@ void wave_out_tests()
             format.cbSize=0;
 
             rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL);
-            success=(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID);
-            ok(success, "failed to open device %d: rc=%d",d,rc);
-            if (success) {
+            ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
+               "failed to open device %d: rc=%d",d,rc);
+            if (rc==MMSYSERR_NOERROR) {
                 ok(format.nChannels==win_formats[f][3] &&
                    format.wBitsPerSample==win_formats[f][2] &&
                    format.nSamplesPerSec==win_formats[f][1],
@@ -109,15 +108,16 @@ void wave_out_tests()
                    format.nSamplesPerSec, format.wBitsPerSample,
                    format.nChannels, win_formats[f][1], win_formats[f][2],
                    win_formats[f][3]);
-            }
-            if (rc==MMSYSERR_NOERROR)
                 waveOutClose(wout);
+            }
 
-            /* Try again with WAVE_FORMAT_DIRECT */
+            /* Try again with WAVE_FORMAT_DIRECT
+             * Note: Win9x doesn't know WAVE_FORMAT_DIRECT
+             */
             rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-            success=(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID);
-            ok(success, "failed to open device %d: rc=%d",d,rc);
-            if (success) {
+            ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_INVALFLAG,
+               "failed to open device %d: rc=%d",d,rc);
+            if (rc==MMSYSERR_NOERROR) {
                 ok(format.nChannels==win_formats[f][3] &&
                    format.wBitsPerSample==win_formats[f][2] &&
                    format.nSamplesPerSec==win_formats[f][1],
@@ -125,14 +125,12 @@ void wave_out_tests()
                    format.nSamplesPerSec, format.wBitsPerSample,
                    format.nChannels, win_formats[f][1], win_formats[f][2],
                    win_formats[f][3]);
-            }
-            if (rc==MMSYSERR_NOERROR)
                 waveOutClose(wout);
+            }
         }
 
-        /* Check an invalid format to test error handling */
-        todo_wine {
-        winetest_trace("Testing invalid 2MHz format\n");
+        /* Try an invalid format to test error handling */
+        trace("Testing invalid 2MHz format\n");
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=2;
         format.wBitsPerSample=16;
@@ -141,16 +139,15 @@ void wave_out_tests()
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL);
-        success=(rc==WAVERR_BADFORMAT);
-        ok(success, "opening the device at 2MHz should fail %d: rc=%d",d,rc);
+        ok(rc==WAVERR_BADFORMAT,
+           "opening the device at 2MHz should fail %d: rc=%d",d,rc);
         if (rc==MMSYSERR_NOERROR) {
-            winetest_trace("     got %ldx%2dx%d for %dx%2dx%d\n",
-                           format.nSamplesPerSec, format.wBitsPerSample,
-                           format.nChannels,
-                           win_formats[f][1], win_formats[f][2],
-                           win_formats[f][3]);
+            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
+                  format.nSamplesPerSec, format.wBitsPerSample,
+                  format.nChannels,
+                  win_formats[f][1], win_formats[f][2],
+                  win_formats[f][3]);
             waveOutClose(wout);
-        }
         }
 
         format.wFormatTag=WAVE_FORMAT_PCM;
@@ -161,14 +158,14 @@ void wave_out_tests()
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        success=(rc==WAVERR_BADFORMAT);
-        ok(success, "opening the device at 2MHz should fail %d: rc=%d",d,rc);
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+           "opening the device at 2MHz should fail %d: rc=%d",d,rc);
         if (rc==MMSYSERR_NOERROR) {
-            winetest_trace("     got %ldx%2dx%d for %dx%2dx%d\n",
-                           format.nSamplesPerSec, format.wBitsPerSample,
-                           format.nChannels,
-                           win_formats[f][1], win_formats[f][2],
-                           win_formats[f][3]);
+            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
+                  format.nSamplesPerSec, format.wBitsPerSample,
+                  format.nChannels,
+                  win_formats[f][1], win_formats[f][2],
+                  win_formats[f][3]);
             waveOutClose(wout);
         }
     }

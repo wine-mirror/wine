@@ -217,7 +217,8 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     HeapFree(GetProcessHeap(), 0, wom);
-    return MMSYSERR_ALLOCATED;
+    return WAVERR_BADFORMAT;
+
 found:
     if (dwFlags & WAVE_FORMAT_QUERY) {
 	*lpdwUser = 0L;
