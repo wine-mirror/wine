@@ -267,8 +267,8 @@ file	gdi.exe
 403 stub GDIINIT2
 404 stub GetTTGlyphIndexMap
 405 stub FINALGDIINIT
-407 stub CREATEUSERBITMAP
-409 stub CREATEUSERDISCARDABLEBITMAP
+407 pascal16 CreateUserBitmap(word word word word ptr) CreateUserBitmap16
+409 pascal16 CreateUserDiscardableBitmap(word word word) CreateUserDiscardableBitmap16
 410 pascal16 IsValidMetaFile (word) IsValidMetaFile
 411 pascal16 GetCurLogFont(word) GetCurLogFont
 412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette

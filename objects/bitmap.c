@@ -120,6 +120,26 @@ INT32 BITMAP_GetBitsWidth( int bmWidth, int bpp )
 }
 
 /***********************************************************************
+ *           CreateUserBitmap16    (GDI.407)
+ */
+HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
+                                     UINT16 bpp, LPCVOID bits )
+{
+    return CreateBitmap16( width, height, planes, bpp, bits );
+}
+
+/***********************************************************************
+ *           CreateUserDiscardableBitmap16    (GDI.409)
+ */
+HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy, 
+                                                INT16 width, INT16 height )
+{
+    return CreateUserBitmap16( width, height, 1, screenDepth, NULL );
+}
+
+
+
+/***********************************************************************
  *           CreateBitmap16    (GDI.48)
  */
 HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
