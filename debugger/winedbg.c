@@ -988,6 +988,10 @@ int main(int argc, char** argv)
     DWORD	retv = 0;
     unsigned    gdb_flags = 0;
 
+    /* Initialize the type handling stuff. */
+    DEBUG_InitTypes();
+    DEBUG_InitCVDataTypes();
+
     /* Initialize internal vars (types must have been initialized before) */
     if (!DEBUG_IntVarsRW(TRUE)) return -1;
 
@@ -1102,10 +1106,6 @@ int main(int argc, char** argv)
     /* don't save local vars in gdb mode */
     if (local_mode == gdb_mode && DEBUG_CurrPid)
         return DEBUG_GdbRemote(gdb_flags);
-
-    /* Initialize the type handling stuff. */
-    DEBUG_InitTypes();
-    DEBUG_InitCVDataTypes();
 
     DEBUG_InitConsole();
 
