@@ -178,6 +178,12 @@ struct IDirect3DExecuteBufferImpl
                     IDirect3DViewportImpl* vp);
 };
 
+/* Internal structure to store the state of the clipping planes */
+typedef struct d3d7clippingplane 
+{
+    D3DVALUE plane[4];
+} d3d7clippingplane;
+
 /*****************************************************************************
  * IDirect3DDevice implementation structure
  */
@@ -218,6 +224,10 @@ struct IDirect3DDeviceImpl
     DWORD active_lights, set_lights;
     D3DLIGHT7 light_parameters[MAX_LIGHTS];
 
+    /* clipping planes */
+    DWORD max_clipping_planes;
+    d3d7clippingplane *clipping_planes;
+    
     void (*set_context)(IDirect3DDeviceImpl*);
     HRESULT (*clear)(IDirect3DDeviceImpl *This,
 		     DWORD dwCount,

@@ -875,14 +875,20 @@ Main_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_GetClipPlane(LPDIRECT3DDEVICE7 iface,
-                                        DWORD dwIndex,
-                                        D3DVALUE* pPlaneEquation)
+HRESULT  WINAPI  
+Main_IDirect3DDeviceImpl_7_GetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, D3DVALUE* pPlaneEquation)
 {
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwIndex, pPlaneEquation);
-    return DD_OK;
+    ICOM_THIS(IDirect3DDeviceImpl,iface);
+
+    TRACE("(%p)->(%ld,%p)\n", This, dwIndex, pPlaneEquation);
+
+    if (dwIndex>=This->max_clipping_planes) {
+	return DDERR_INVALIDPARAMS;
+    }
+
+    memcpy( pPlaneEquation, This->clipping_planes[dwIndex].plane, sizeof(D3DVALUE[4]));
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI

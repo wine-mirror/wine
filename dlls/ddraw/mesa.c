@@ -455,8 +455,24 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_CLIPPING:    /* 136 */
-	        /* Nothing to do here... Even if what we receive is already clipped by the application,
-		   we cannot tell OpenGL to not re-clip it. */
+	    case D3DRENDERSTATE_CLIPPLANEENABLE: /*152*/
+		{
+		    GLint i;
+		    DWORD mask, runner;
+		    
+		    if (dwRenderStateType==D3DRENDERSTATE_CLIPPING) {
+			mask = ((dwRenderState)?(This->parent.state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE-1]):(0x0000));
+		    } else {
+			mask = dwRenderState;
+		    }
+		    for (i = 0, runner = 1; i < This->parent.max_clipping_planes; i++, runner = (runner<<1)) {
+			if (mask & runner) {
+			    glEnable(GL_CLIP_PLANE0 + i);
+			} else {
+			    glDisable(GL_CLIP_PLANE0 + i);
+			}
+		    }
+		}
 	        break;
 
 	    case D3DRENDERSTATE_LIGHTING:    /* 137 */

@@ -328,6 +328,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
+	HeapFree(GetProcessHeap(), 0, This->clipping_planes);
 
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
@@ -1572,6 +1573,32 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+HRESULT  WINAPI  
+GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CONST D3DVALUE* pPlaneEquation) 
+{
+    ICOM_THIS(IDirect3DDeviceImpl,iface);
+    GLdouble plane[4];
+
+    TRACE("(%p)->(%ld,%p)\n", This, dwIndex, pPlaneEquation);
+
+    if (dwIndex>=This->max_clipping_planes) {
+	return DDERR_INVALIDPARAMS;
+    }
+
+    TRACE(" clip plane %ld : %f %f %f %f\n", dwIndex, pPlaneEquation[0], pPlaneEquation[1], pPlaneEquation[2], pPlaneEquation[3] );
+
+    memcpy( This->clipping_planes[dwIndex].plane, pPlaneEquation, sizeof(D3DVALUE[4]));
+    plane[0] = pPlaneEquation[0];
+    plane[1] = pPlaneEquation[1];
+    plane[2] = pPlaneEquation[2];
+    plane[3] = pPlaneEquation[3];
+
+    /* XXX: is here also code needed to handle the transformation of the world? */
+    glClipPlane( GL_CLIP_PLANE0+dwIndex, (const GLdouble*)(&plane) );
+
+    return D3D_OK;
+}
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3DDevice7.fun))
 #else
@@ -1627,7 +1654,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(Load) Main_IDirect3DDeviceImpl_7_Load,
     XCAST(LightEnable) GL_IDirect3DDeviceImpl_7_LightEnable,
     XCAST(GetLightEnable) Main_IDirect3DDeviceImpl_7_GetLightEnable,
-    XCAST(SetClipPlane) Main_IDirect3DDeviceImpl_7_SetClipPlane,
+    XCAST(SetClipPlane) GL_IDirect3DDeviceImpl_7_SetClipPlane,
     XCAST(GetClipPlane) Main_IDirect3DDeviceImpl_7_GetClipPlane,
     XCAST(GetInfo) Main_IDirect3DDeviceImpl_7_GetInfo,
 };
@@ -2036,6 +2063,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     XVisualInfo template;
     GLenum buffer = GL_FRONT;
     int light;
+    GLint max_clipping_planes = 0;
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDeviceGLImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
@@ -2135,6 +2163,16 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     memcpy(object->world_mat, id_mat, 16 * sizeof(float));
     memcpy(object->view_mat , id_mat, 16 * sizeof(float));
     memcpy(object->proj_mat , id_mat, 16 * sizeof(float));
+
+    /* allocate the clipping planes */
+    glGetIntegerv(GL_MAX_CLIP_PLANES,&max_clipping_planes);
+    if (max_clipping_planes>32) {
+	object->max_clipping_planes=32;
+    } else {
+	object->max_clipping_planes = max_clipping_planes;
+    }
+    TRACE(" capable of %d clipping planes\n", (int)object->max_clipping_planes );
+    object->clipping_planes = (d3d7clippingplane*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->max_clipping_planes * sizeof(d3d7clippingplane));
 
     /* Initialisation */
     TRACE(" setting current context\n");
