@@ -4484,13 +4484,13 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode
 	EDIT_EM_SetSel(wnd, es, 0, (UINT)-1, FALSE);
 	if (text) {
 		TRACE("%s\n", debugstr_w(text));
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !(es->style & ES_MULTILINE));
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !(es->style & (ES_MULTILINE | ES_COMBO)));
 		if(!unicode)
 		    HeapFree(GetProcessHeap(), 0, text);
 	} else {
 		static const WCHAR empty_stringW[] = {0};
 		TRACE("<NULL>\n");
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, !(es->style & ES_MULTILINE));
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, !(es->style & (ES_MULTILINE | ES_COMBO)));
 	}
 	es->x_offset = 0;
 	es->flags &= ~EF_MODIFIED;
