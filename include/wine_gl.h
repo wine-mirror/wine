@@ -17,8 +17,10 @@
 #undef CALLBACK
 #undef WINAPI
 
+#define XMD_H /* This is to prevent the Xmd.h inclusion bug to happen :-/ */
 #include <GL/gl.h>
 #include <GL/glx.h>
+#undef  XMD_H
 
 #undef APIENTRY
 #undef CALLBACK

@@ -153,7 +153,9 @@ then
     AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86dga.h)
     if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
     then 
-         AC_CHECK_LIB(Xxf86dga,XDGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA2) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+         AC_CHECK_LIB(Xxf86dga,
+	              XDGAQueryExtension,
+		      AC_DEFINE(HAVE_LIBXXF86DGA2) AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	 if test "$ac_cv_lib_Xxf86dga_XDGAQueryExtension" = "no"
 	 then
            AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
