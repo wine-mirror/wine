@@ -58,7 +58,6 @@ typedef struct _DOSEVENT {
 extern BOOL MZ_InitTask( LPDOSTASK lpDosTask );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
 extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
-extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data );
 
 #endif /* linux-i386 */
 
@@ -69,6 +68,7 @@ extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR
                               BOOL inherit, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );
+extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data );
 extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void DOSVM_SetTimer( unsigned ticks );
 extern unsigned DOSVM_GetTimer( void );

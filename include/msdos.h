@@ -55,6 +55,15 @@ typedef struct
 
 typedef struct
 {
+    DWORD next_dev;
+    WORD  attr;
+    WORD  strategy;
+    WORD  interrupt;
+    char  name[8];
+} DOS_DEVICE_HEADER;
+
+typedef struct _DOS_LISTOFLISTS
+{
     WORD  CX_Int21_5e01;	/* contents of CX from INT 21/AX=5E01h */
     WORD  LRU_count_FCB_cache;	
     WORD  LRU_count_FCB_open;
@@ -76,7 +85,7 @@ typedef struct
     WORD  nr_protect_FCB;
     BYTE  nr_block_dev;
     BYTE  nr_avail_drive_letters;
-    BYTE  NUL_dev_header[18];
+    DOS_DEVICE_HEADER NUL_dev WINE_PACKED;
     BYTE  nr_drives_JOINed;
     WORD  ptr_spec_prg_names WINE_PACKED;
     DWORD ptr_SETVER_prg_list WINE_PACKED;

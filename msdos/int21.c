@@ -85,9 +85,6 @@ struct DosHeap {
 static struct DosHeap *heap;
 static WORD DosHeapHandle;
 
-WORD sharing_retries = 3;      /* number of retries at sharing violation */
-WORD sharing_pause = 1;        /* pause between retries */
-
 extern char TempDirectory[];
 
 static BOOL INT21_CreateHeap(void)
@@ -940,64 +937,6 @@ static WORD INT21_GetCurrentPSP()
 }
 
 
-SEGPTR INT21_GetListOfLists()
-{
-	static DOS_LISTOFLISTS *LOL;
-	static SEGPTR seg_LOL;
-
-/*
-Output of DOS 6.22:
-
-0133:0020                    6A 13-33 01 CC 00 33 01 59 00         j.3...3.Y.
-0133:0030  70 00 00 00 72 02 00 02-6D 00 33 01 00 00 2E 05   p...r...m.3.....
-0133:0040  00 00 FC 04 00 00 03 08-92 21 11 E0 04 80 C6 0D   .........!......
-0133:0050  CC 0D 4E 55 4C 20 20 20-20 20 00 00 00 00 00 00   ..NUL     ......
-0133:0060  00 4B BA C1 06 14 00 00-00 03 01 00 04 70 CE FF   .K...........p..
-0133:0070  FF 00 00 00 00 00 00 00-00 01 00 00 0D 05 00 00   ................
-0133:0080  00 FF FF 00 00 00 00 FE-00 00 F8 03 FF 9F 70 02   ..............p.
-0133:0090  D0 44 C8 FD D4 44 C8 FD-D4 44 C8 FD D0 44 C8 FD   .D...D...D...D..
-0133:00A0  D0 44 C8 FD D0 44                                 .D...D
-*/
-	if (!LOL) {
-		LOL = SEGPTR_ALLOC(sizeof(DOS_LISTOFLISTS));
-
-		LOL->CX_Int21_5e01		= 0x0;
-		LOL->LRU_count_FCB_cache	= 0x0;
-		LOL->LRU_count_FCB_open		= 0x0;
-		LOL->OEM_func_handler		= -1; /* not available */
-		LOL->INT21_offset		= 0x0;
-		LOL->sharing_retry_count	= sharing_retries; /* default value: 3 */
-		LOL->sharing_retry_delay	= sharing_pause; /* default value: 1 */
-		LOL->ptr_disk_buf		= 0x0;
-		LOL->offs_unread_CON		= 0x0;
-		LOL->seg_first_MCB		= 0x0;
-		LOL->ptr_first_DPB		= 0x0;
-		LOL->ptr_first_SysFileTable	= 0x0;
-		LOL->ptr_clock_dev_hdr		= 0x0;
-		LOL->ptr_CON_dev_hdr		= 0x0;
-		LOL->max_byte_per_sec		= 512;
-		LOL->ptr_disk_buf_info		= 0x0;
-		LOL->ptr_array_CDS		= 0x0;
-		LOL->ptr_sys_FCB		= 0x0;
-		LOL->nr_protect_FCB		= 0x0;
-		LOL->nr_block_dev		= 0x0;
-		LOL->nr_avail_drive_letters	= 26; /* A - Z */
-		LOL->nr_drives_JOINed		= 0x0;
-		LOL->ptr_spec_prg_names		= 0x0;
-		LOL->ptr_SETVER_prg_list	= 0x0; /* no SETVER list */
-		LOL->DOS_HIGH_A20_func_offs	= 0x0;
-		LOL->PSP_last_exec		= 0x0;
-		LOL->BUFFERS_val		= 99; /* maximum: 99 */
-		LOL->BUFFERS_nr_lookahead	= 8; /* maximum: 8 */
-		LOL->boot_drive			= 3; /* C: */
-		LOL->flag_DWORD_moves		= 0x01; /* i386+ */
-		LOL->size_extended_mem		= 0xf000; /* very high value */
-	}	
-	if (!seg_LOL) seg_LOL = SEGPTR_GET(LOL);
-	return seg_LOL+(WORD)&((DOS_LISTOFLISTS*)0)->ptr_first_DPB;
-}
-
-
 /***********************************************************************
  *           INT21_GetExtendedError
  */
@@ -1723,9 +1662,9 @@ void WINAPI DOS3Call( CONTEXT *context )
                 SET_CFLAG(context);
                 break;
             }
-            sharing_pause = CX_reg(context);
+            DOS_LOL->sharing_retry_delay = CX_reg(context);
             if (!DX_reg(context))
-                sharing_retries = DX_reg(context);
+                DOS_LOL->sharing_retry_count = DX_reg(context);
             RESET_CFLAG(context);
             break;
 
@@ -1909,10 +1848,8 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
         TRACE(int21,"SYSVARS - GET LIST OF LISTS\n");
         {
-                SEGPTR lol;
-                lol = INT21_GetListOfLists();
-                ES_reg(context) = HIWORD(lol);
-                BX_reg(context) = LOWORD(lol);
+	    ES_reg(context) = ISV86(context) ? HIWORD(DOS_LOLSeg) : LOWORD(DOS_LOLSeg);
+            BX_reg(context) = FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB);
         }
         break;
 

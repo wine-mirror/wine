@@ -86,6 +86,9 @@ extern DWORD DOSMEM_CollateTable;
 extern DWORD DOSMEM_ErrorCall;
 extern DWORD DOSMEM_ErrorBuffer;
 
+extern struct _DOS_LISTOFLISTS * DOS_LOL;
+extern DWORD DOS_LOLSeg;
+
 extern BOOL DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
@@ -97,6 +100,9 @@ extern UINT DOSMEM_Available(HMODULE16 hModule);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
 extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
+
+/* msdos/devices.c */
+extern void DOSDEV_InstallDOSDevices(void);
 
 /* msdos/interrupts.c */
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
@@ -134,6 +140,7 @@ extern void WINAPI INT_Int15Handler(CONTEXT*);
 
 /* msdos/int16.c */
 extern void WINAPI INT_Int16Handler(CONTEXT*);
+extern int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan);
 
 /* msdos/int17.c */
 extern void WINAPI INT_Int17Handler(CONTEXT*);

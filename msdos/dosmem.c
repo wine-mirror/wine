@@ -407,6 +407,7 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
         DOSMEM_InitDPMI();
+	DOSDEV_InstallDOSDevices();
     }
     else
     {
