@@ -656,6 +656,30 @@ static BOOL CALLBACK enum_resources_types_delete_all(HMODULE hModule, LPWSTR lpT
     return EnumResourceNamesW(hModule, lpType, enum_resources_names_delete_all, lParam);
 }
 
+static BOOL CALLBACK enum_resources_languages_add_all(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLang, LONG_PTR lParam)
+{
+    DWORD size;
+    HRSRC hResource = FindResourceExW(hModule, lpType, lpName, wLang);
+    HGLOBAL hGlobal;
+    LPVOID lpData;
+
+    if(hResource == NULL) return FALSE;
+    if(!(hGlobal = LoadResource(hModule, hResource))) return FALSE;
+    if(!(lpData = LockResource(hGlobal))) return FALSE;
+    if(!(size = SizeofResource(hModule, hResource))) return FALSE;
+    return UpdateResourceW((HANDLE)lParam, lpType, lpName, wLang, lpData, size);
+}
+
+static BOOL CALLBACK enum_resources_names_add_all(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+{
+    return EnumResourceLanguagesW(hModule, lpType, lpName, enum_resources_languages_add_all, lParam);
+}
+
+static BOOL CALLBACK enum_resources_types_add_all(HMODULE hModule, LPWSTR lpType, LONG_PTR lParam)
+{
+    return EnumResourceNamesW(hModule, lpType, enum_resources_names_add_all, lParam);
+}
+
 /***********************************************************************
  *          BeginUpdateResourceW                 (KERNEL32.@)
  */
@@ -709,8 +733,15 @@ HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResou
     list_init(&current_updates->resources_list);
 
     if(bDeleteExistingResources)
-        if(!EnumResourceTypesW(hModule, enum_resources_types_delete_all, (LONG_PTR)&current_updates))
+    {
+        if(!EnumResourceTypesW(hModule, enum_resources_types_delete_all, (LONG_PTR)hUpdate))
             goto done;
+    }
+    else
+    {
+        if(!EnumResourceTypesW(hModule, enum_resources_types_add_all, (LONG_PTR)hUpdate))
+            goto done;
+    }
     ret = hUpdate;
 
 done:
@@ -850,7 +881,6 @@ BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
     }
     current_resource->wLanguage = wLanguage;
     memcpy(current_resource->lpData, lpData, cbData);
-    current_resource->lpData = lpData;
     current_resource->cbData = cbData;
     list_add_tail(&current_updates->resources_list, &current_resource->entry);
     ret = TRUE;
