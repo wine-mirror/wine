@@ -1873,6 +1873,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
     case ONOPEN_OPEN:   /* fill in the return struct and close the dialog */
       TRACE("ONOPEN_OPEN %s\n", debugstr_w(lpstrPathAndFile));
       {
+        /* update READONLY check box flag */
+	if ((SendMessageA(GetDlgItem(hwnd,IDC_OPENREADONLY),BM_GETCHECK,0,0) & 0x03) == BST_CHECKED)
+	  fodInfos->ofnInfos->Flags |= OFN_READONLY;
+	else
+	  fodInfos->ofnInfos->Flags &= ~OFN_READONLY;
+
 	/* add default extension */
 	if (fodInfos->defext)
 	{
