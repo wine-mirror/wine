@@ -23,6 +23,7 @@
 
 HRESULT WINAPI StdProxy_Construct(REFIID riid,
 				  LPUNKNOWN pUnkOuter,
+				  PCInterfaceName name,
 				  CInterfaceProxyVtbl *vtbl,
 				  CInterfaceStubVtbl *svtbl,
 				  LPPSFACTORYBUFFER pPSFactory,
@@ -35,6 +36,7 @@ HRESULT WINAPI StdProxy_GetIID(LPVOID iface,
 
 HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
 					LPUNKNOWN pUnkServer,
+					PCInterfaceName name,
 					CInterfaceStubVtbl *vtbl,
 					LPPSFACTORYBUFFER pPSFactory,
 					LPRPCSTUBBUFFER *ppStub);

@@ -45,6 +45,7 @@ typedef struct {
   const MIDL_STUBLESS_PROXY_INFO *stubless;
   const IID* piid;
   LPUNKNOWN pUnkOuter;
+  PCInterfaceName name;
   LPPSFACTORYBUFFER pPSFactory;
   LPRPCCHANNELBUFFER pChannel;
   struct StublessThunk *thunks;
@@ -108,6 +109,7 @@ struct StublessThunk { int dummy; };
 
 HRESULT WINAPI StdProxy_Construct(REFIID riid,
                                  LPUNKNOWN pUnkOuter,
+                                 PCInterfaceName name,
                                  CInterfaceProxyVtbl *vtbl,
                                  CInterfaceStubVtbl *svtbl,
                                  LPPSFACTORYBUFFER pPSFactory,
@@ -117,7 +119,7 @@ HRESULT WINAPI StdProxy_Construct(REFIID riid,
   StdProxyImpl *This;
   const MIDL_STUBLESS_PROXY_INFO *stubless = NULL;
 
-  TRACE("(%p,%p,%p,%p,%p)\n", pUnkOuter, vtbl, pPSFactory, ppProxy, ppvObj);
+  TRACE("(%p,%p,%p,%p,%p) %s\n", pUnkOuter, vtbl, pPSFactory, ppProxy, ppvObj, name);
 
   /* I can't find any other way to detect stubless proxies than this hack */
   if (!IsEqualGUID(vtbl->header.piid, riid)) {
@@ -167,6 +169,7 @@ HRESULT WINAPI StdProxy_Construct(REFIID riid,
   This->stubless = stubless;
   This->piid = vtbl->header.piid;
   This->pUnkOuter = pUnkOuter;
+  This->name = name;
   This->pPSFactory = pPSFactory;
   This->pChannel = NULL;
   *ppProxy = (LPRPCPROXYBUFFER)&This->lpVtbl;
@@ -263,7 +266,7 @@ HRESULT WINAPI StdProxy_GetChannel(LPVOID iface,
                                   LPRPCCHANNELBUFFER *ppChannel)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-  TRACE("(%p)->GetChannel(%p)\n",This,ppChannel);
+  TRACE("(%p)->GetChannel(%p) %s\n",This,ppChannel,This->name);
 
   *ppChannel = This->pChannel;
   return S_OK;
@@ -273,7 +276,7 @@ HRESULT WINAPI StdProxy_GetIID(LPVOID iface,
                               const IID **ppiid)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-  TRACE("(%p)->GetIID(%p)\n",This,ppiid);
+  TRACE("(%p)->GetIID(%p) %s\n",This,ppiid,This->name);
 
   *ppiid = This->piid;
   return S_OK;
@@ -284,14 +287,14 @@ HRESULT WINAPI IUnknown_QueryInterface_Proxy(LPUNKNOWN iface,
                                             LPVOID *ppvObj)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-  TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(riid),ppvObj);
+  TRACE("(%p)->QueryInterface(%s,%p) %s\n",This,debugstr_guid(riid),ppvObj,This->name);
   return IUnknown_QueryInterface(This->pUnkOuter,riid,ppvObj);
 }
 
 ULONG WINAPI IUnknown_AddRef_Proxy(LPUNKNOWN iface)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-  TRACE("(%p)->AddRef()\n",This);
+  TRACE("(%p)->AddRef() %s\n",This,This->name);
 #if 0 /* interface refcounting */
   return ++(This->RefCount);
 #else /* object refcounting */
@@ -302,7 +305,7 @@ ULONG WINAPI IUnknown_AddRef_Proxy(LPUNKNOWN iface)
 ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-  TRACE("(%p)->Release()\n",This);
+  TRACE("(%p)->Release() %s\n",This,This->name);
 #if 0 /* interface refcounting */
   if (!--(This->RefCount)) {
     StdProxy_Destruct((LPRPCPROXYBUFFER)&This->lpVtbl);

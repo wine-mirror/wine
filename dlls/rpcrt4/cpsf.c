@@ -92,8 +92,9 @@ static HRESULT WINAPI CStdPSFactory_CreateProxy(LPPSFACTORYBUFFER iface,
        debugstr_guid(riid),ppProxy,ppv);
   if (!FindProxyInfo(This->pProxyFileList,riid,&ProxyInfo,&Index))
     return E_NOINTERFACE;
-  return StdProxy_Construct(riid, pUnkOuter, ProxyInfo->pProxyVtblList[Index],
-                           ProxyInfo->pStubVtblList[Index], iface, ppProxy, ppv);
+  return StdProxy_Construct(riid, pUnkOuter, ProxyInfo->pNamesArray[Index],
+                            ProxyInfo->pProxyVtblList[Index],
+                            ProxyInfo->pStubVtblList[Index], iface, ppProxy, ppv);
 }
 
 static HRESULT WINAPI CStdPSFactory_CreateStub(LPPSFACTORYBUFFER iface,
@@ -108,7 +109,8 @@ static HRESULT WINAPI CStdPSFactory_CreateStub(LPPSFACTORYBUFFER iface,
        pUnkServer,ppStub);
   if (!FindProxyInfo(This->pProxyFileList,riid,&ProxyInfo,&Index))
     return E_NOINTERFACE;
-  return CStdStubBuffer_Construct(riid, pUnkServer, ProxyInfo->pStubVtblList[Index], iface, ppStub);
+  return CStdStubBuffer_Construct(riid, pUnkServer, ProxyInfo->pNamesArray[Index],
+                                  ProxyInfo->pStubVtblList[Index], iface, ppStub);
 }
 
 static ICOM_VTABLE(IPSFactoryBuffer) CStdPSFactory_Vtbl =
@@ -173,7 +175,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
       TRACE("registering %s %s => %s\n", name, debugstr_guid(proxy->header.piid), clsid);
 
       UuidToStringA((UUID*)proxy->header.piid, (unsigned char**)&iid);
-      snprintf(keyname, sizeof(keyname), "Interface\\%s", iid);
+      snprintf(keyname, sizeof(keyname), "Interface\\{%s}", iid);
       RpcStringFreeA((unsigned char**)&iid);
       if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                           KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
@@ -181,7 +183,8 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
           RegSetValueExA(key, NULL, 0, REG_SZ, name, strlen(name));
         if (RegCreateKeyExA(key, "ProxyStubClsid32", 0, NULL, 0,
                             KEY_WRITE, NULL, &subkey, NULL) == ERROR_SUCCESS) {
-          RegSetValueExA(subkey, NULL, 0, REG_SZ, clsid, strlen(clsid));
+          snprintf(module, sizeof(module), "{%s}", clsid);
+          RegSetValueExA(subkey, NULL, 0, REG_SZ, module, strlen(module));
           RegCloseKey(subkey);
         }
         RegCloseKey(key);
@@ -191,7 +194,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   }
 
   /* register clsid to point to module */
-  snprintf(keyname, sizeof(keyname), "CLSID\\%s", clsid);
+  snprintf(keyname, sizeof(keyname), "CLSID\\{%s}", clsid);
   GetModuleFileNameA(hDll, module, sizeof(module));
   TRACE("registering CLSID %s => %s\n", clsid, module);
   if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
@@ -233,7 +236,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
       TRACE("unregistering %s %s <= %s\n", name, debugstr_guid(proxy->header.piid), clsid);
 
       UuidToStringA((UUID*)proxy->header.piid, (unsigned char**)&iid);
-      snprintf(keyname, sizeof(keyname), "Interface\\%s", iid);
+      snprintf(keyname, sizeof(keyname), "Interface\\{%s}", iid);
       RpcStringFreeA((unsigned char**)&iid);
       RegDeleteKeyA(HKEY_CLASSES_ROOT, keyname);
     }
@@ -241,7 +244,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   }
 
   /* unregister clsid */
-  snprintf(keyname, sizeof(keyname), "CLSID\\%s", clsid);
+  snprintf(keyname, sizeof(keyname), "CLSID\\{%s}", clsid);
   GetModuleFileNameA(hDll, module, sizeof(module));
   TRACE("unregistering CLSID %s <= %s\n", clsid, module);
   RegDeleteKeyA(HKEY_CLASSES_ROOT, keyname);

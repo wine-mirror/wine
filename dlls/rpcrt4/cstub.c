@@ -36,13 +36,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
                                        LPUNKNOWN pUnkServer,
+                                       PCInterfaceName name,
                                        CInterfaceStubVtbl *vtbl,
                                        LPPSFACTORYBUFFER pPSFactory,
                                        LPRPCSTUBBUFFER *ppStub)
 {
   CStdStubBuffer *This;
 
-  TRACE("(%p,%p,%p,%p)\n", pUnkServer, vtbl, pPSFactory, ppStub);
+  TRACE("(%p,%p,%p,%p) %s\n", pUnkServer, vtbl, pPSFactory, ppStub, name);
   TRACE("iid=%s\n", debugstr_guid(vtbl->header.piid));
   TRACE("vtbl=%p\n", &vtbl->Vtbl);
 
