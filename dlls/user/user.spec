@@ -87,7 +87,7 @@ file	user.exe
 83  pascal16 FrameRect(word ptr word) FrameRect16
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon16
 85  pascal16 DrawText(word str s_word ptr word) DrawText16
-86  stub BEAR86 # IconSize
+86  pascal   IconSize() IconSize16 # later versions: BEAR86
 87  pascal16 DialogBox(word segstr word segptr) DialogBox16
 88  pascal16 EndDialog(word s_word) EndDialog16
 89  pascal16 CreateDialog(word segstr word segptr) CreateDialog16
@@ -279,7 +279,7 @@ file	user.exe
 270 pascal16 GlobalFindAtom(str) GlobalFindAtomA
 271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomNameA
 272 pascal16 IsZoomed(word) IsZoomed16
-273 stub ControlPanelInfo
+273 pascal16 ControlPanelInfo(word word str) ControlPanelInfo16
 274 stub GetNextQueueWindow
 275 stub RepaintScreen
 276 stub LockMyTask

@@ -1347,6 +1347,17 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 
 
 /***********************************************************************
+ *           IconSize16    (USER.86)
+ *
+ * See "Undocumented Windows". Used by W2.0 paint.exe.
+ */
+DWORD WINAPI IconSize16( void )
+{
+    return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
+}
+
+
+/***********************************************************************
  *           DumpIcon    (USER.459)
  */
 DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,

@@ -29,6 +29,14 @@ LONG WINAPI GetTimerResolution16(void)
 }
 
 /***********************************************************************
+ *	ControlPanelInfo16   (USER.273)
+ */
+void WINAPI ControlPanelInfo16( INT16 nInfoType, WORD wData, LPSTR lpBuffer)
+{
+	FIXME("(%d, %04x, %p): stub.\n", nInfoType, wData, lpBuffer);
+}
+
+/***********************************************************************
  *	SystemParametersInfoA   (USER32.540)
  */
 BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
