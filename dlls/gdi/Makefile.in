@@ -21,7 +21,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/bitmap.c \
 	$(TOPOBJDIR)/objects/brush.c \
 	$(TOPOBJDIR)/objects/clipping.c \
-	$(TOPOBJDIR)/objects/color.c \
 	$(TOPOBJDIR)/objects/dc.c \
 	$(TOPOBJDIR)/objects/dcvalues.c \
 	$(TOPOBJDIR)/objects/dib.c \

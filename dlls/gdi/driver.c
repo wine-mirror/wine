@@ -101,8 +101,10 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(GetDIBits);
     GET_FUNC(GetDeviceCaps);
     GET_FUNC(GetDeviceGammaRamp);
+    GET_FUNC(GetNearestColor);
     GET_FUNC(GetPixel);
     GET_FUNC(GetPixelFormat);
+    GET_FUNC(GetSystemPaletteEntries);
     GET_FUNC(GetTextExtentPoint);
     GET_FUNC(GetTextMetrics);
     GET_FUNC(IntersectClipRect);
@@ -123,6 +125,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(Polygon);
     GET_FUNC(Polyline);
     GET_FUNC(PolylineTo);
+    GET_FUNC(RealizeDefaultPalette);
     GET_FUNC(RealizePalette);
     GET_FUNC(Rectangle);
     GET_FUNC(ResetDC);

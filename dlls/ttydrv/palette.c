@@ -22,21 +22,18 @@
 
 #include <stdlib.h>
 
-#include "color.h"
-#include "wine/debug.h"
 #include "palette.h"
 #include "winbase.h"
 #include "ttydrv.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
-extern PALETTEENTRY *COLOR_sysPal;
+static PALETTEENTRY *COLOR_sysPal;
 
 static int palette_size = 256;  /* FIXME */
-
-extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS];
 
 /***********************************************************************
  *	     TTYDRV_PALETTE_Initialize
@@ -44,6 +41,7 @@ extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS];
 BOOL TTYDRV_PALETTE_Initialize(void)
 {
   int i;
+  PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS];
 
   TRACE("(void)\n");
 
@@ -53,14 +51,16 @@ BOOL TTYDRV_PALETTE_Initialize(void)
     return FALSE;
   }
 
+  GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
+
   for(i=0; i < palette_size; i++ ) {
     const PALETTEENTRY *src;
     PALETTEENTRY *dst = &COLOR_sysPal[i];
 
     if(i < NB_RESERVED_COLORS/2) {
-      src = &COLOR_sysPalTemplate[i];
+      src = &sys_pal_template[i];
     } else if(i >= palette_size - NB_RESERVED_COLORS/2) {
-      src = &COLOR_sysPalTemplate[NB_RESERVED_COLORS + i - palette_size];
+      src = &sys_pal_template[NB_RESERVED_COLORS + i - palette_size];
     } else {
       PALETTEENTRY pe = { 0, 0, 0, 0 };
       src = &pe;
@@ -80,4 +80,28 @@ BOOL TTYDRV_PALETTE_Initialize(void)
   }
 
   return TRUE;
+}
+
+
+/***********************************************************************
+ *               GetSystemPaletteEntries   (TTYDRV.@)
+ */
+UINT TTYDRV_GetSystemPaletteEntries( TTYDRV_PDEVICE *dev, UINT start, UINT count,
+                                     LPPALETTEENTRY entries )
+{
+    UINT i;
+
+    if (!entries) return palette_size;
+    if (start >= palette_size) return 0;
+    if (start + count >= palette_size) count = palette_size - start;
+
+    for (i = 0; i < count; i++)
+    {
+        entries[i].peRed   = COLOR_sysPal[start + i].peRed;
+        entries[i].peGreen = COLOR_sysPal[start + i].peGreen;
+        entries[i].peBlue  = COLOR_sysPal[start + i].peBlue;
+        entries[i].peFlags = 0;
+        TRACE("\tidx(%02x) -> RGB(%08lx)\n", start + i, *(COLORREF*)(entries + i) );
+    }
+    return count;
 }

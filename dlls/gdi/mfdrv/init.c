@@ -70,8 +70,10 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pGetDIBits */
     NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
+    NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
+    NULL,                            /* pGetSystemPaletteEntries */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
@@ -92,6 +94,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pPolylineTo */
+    NULL,                            /* pRealizeDefaultPalette */
     NULL,                            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pResetDC */

@@ -23,7 +23,11 @@
 
 #include "gdi.h"
 
-#define NB_RESERVED_COLORS              20 /* number of fixed colors in system palette */
+#define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
+
+#define PC_SYS_USED            0x80 /* palentry is used (both system and logical) */
+#define PC_SYS_RESERVED        0x40 /* system palentry is not to be mapped to */
+#define PC_SYS_MAPPED          0x10 /* logical palentry is a direct alias for system palentry */
 
   /* GDI logical palette object */
 typedef struct tagPALETTEOBJ
@@ -32,15 +36,6 @@ typedef struct tagPALETTEOBJ
     int                          *mapping;
     LOGPALETTE                   logpalette; /* _MUST_ be the last field */
 } PALETTEOBJ;
-
-typedef struct tagPALETTE_DRIVER
-{
-  int  (*pSetMapping)(struct tagPALETTEOBJ *, UINT, UINT, BOOL);
-  int  (*pUpdateMapping)(struct tagPALETTEOBJ *);
-  BOOL (*pIsDark)(int pixel);
-} PALETTE_DRIVER;
-
-extern PALETTE_DRIVER *PALETTE_Driver;
 
 extern HPALETTE16 PALETTE_Init(void);
 

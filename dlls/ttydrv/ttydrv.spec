@@ -15,6 +15,7 @@ init	TTYDRV_Init
 @ cdecl GetCharWidth(ptr long long ptr) TTYDRV_DC_GetCharWidth
 @ cdecl GetDeviceCaps(ptr long) TTYDRV_GetDeviceCaps
 @ cdecl GetPixel(ptr long long) TTYDRV_DC_GetPixel
+@ cdecl GetSystemPaletteEntries(ptr long long ptr) TTYDRV_GetSystemPaletteEntries
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) TTYDRV_DC_GetTextExtentPoint
 @ cdecl GetTextMetrics(ptr ptr) TTYDRV_DC_GetTextMetrics
 @ cdecl LineTo(ptr long long) TTYDRV_DC_LineTo

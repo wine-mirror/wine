@@ -97,8 +97,10 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pGetDIBits */
     WIN16DRV_GetDeviceCaps,          /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
+    NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
+    NULL,                            /* pGetSystemPaletteEntries */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
@@ -119,6 +121,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_Polygon,                /* pPolygon */
     WIN16DRV_Polyline,               /* pPolyline */
     NULL,                            /* pPolylineTo */
+    NULL,                            /* pRealizeDefaultPalette */
     NULL,                            /* pRealizePalette */
     WIN16DRV_Rectangle,              /* pRectangle */
     NULL,                            /* pResetDC */
@@ -444,5 +447,3 @@ static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in
     FIXME("temporarily broken, please fix\n");
     return 0;
 }
-
-

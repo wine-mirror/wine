@@ -190,8 +190,10 @@ typedef struct tagDC_FUNCS
     INT      (*pGetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPVOID,BITMAPINFO*,UINT);
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);
+    UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
     BOOL     (*pGetTextExtentPoint)(PHYSDEV,LPCWSTR,INT,LPSIZE);
     BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
     INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
@@ -212,7 +214,8 @@ typedef struct tagDC_FUNCS
     BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
-    UINT     (*pRealizePalette)(PHYSDEV);
+    UINT     (*pRealizeDefaultPalette)(PHYSDEV);
+    UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
     HDC      (*pResetDC)(PHYSDEV,const DEVMODEA*);
     BOOL     (*pRestoreDC)(PHYSDEV,INT);

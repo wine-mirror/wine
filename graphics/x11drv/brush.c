@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include "bitmap.h"
-#include "color.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 

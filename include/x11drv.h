@@ -302,12 +302,6 @@ extern BOOL X11DRV_IsSolidColor(COLORREF color);
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
 
-extern struct tagPALETTE_DRIVER X11DRV_PALETTE_Driver;
-
-extern int X11DRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly);
-extern int X11DRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
-extern BOOL X11DRV_PALETTE_IsDark(int pixel);
-
 /* GDI escapes */
 
 #define X11DRV_ESCAPE 6789

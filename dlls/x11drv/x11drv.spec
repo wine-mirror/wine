@@ -25,8 +25,10 @@ init	X11DRV_Init
 @ cdecl GetDIBits(ptr long long long ptr ptr long) X11DRV_GetDIBits
 @ cdecl GetDeviceCaps(ptr long) X11DRV_GetDeviceCaps
 @ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp
+@ cdecl GetNearestColor(ptr long) X11DRV_GetNearestColor
 @ cdecl GetPixel(ptr long long) X11DRV_GetPixel
 @ cdecl GetPixelFormat(ptr) X11DRV_GetPixelFormat
+@ cdecl GetSystemPaletteEntries(ptr long long ptr) X11DRV_GetSystemPaletteEntries
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) X11DRV_GetTextExtentPoint
 @ cdecl GetTextMetrics(ptr ptr) X11DRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) X11DRV_LineTo
@@ -37,6 +39,8 @@ init	X11DRV_Init
 @ cdecl PolyPolyline(ptr ptr ptr long) X11DRV_PolyPolyline
 @ cdecl Polygon(ptr ptr long) X11DRV_Polygon
 @ cdecl Polyline(ptr ptr long) X11DRV_Polyline
+@ cdecl RealizeDefaultPalette(ptr) X11DRV_RealizeDefaultPalette
+@ cdecl RealizePalette(ptr long long) X11DRV_RealizePalette
 @ cdecl Rectangle(ptr long long long long) X11DRV_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) X11DRV_RoundRect
 @ cdecl SelectBitmap(ptr long) X11DRV_SelectBitmap

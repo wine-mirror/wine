@@ -25,24 +25,15 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "palette.h"
-#include "wine/debug.h"
 #include "winnt.h"
 #include "x11drv.h"
 #include "x11font.h"
 #include "ddrawi.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 const DC_FUNCTIONS *X11DRV_DC_Funcs = NULL;  /* hack */
-
-PALETTE_DRIVER X11DRV_PALETTE_Driver =
-{
-  X11DRV_PALETTE_SetMapping,
-  X11DRV_PALETTE_UpdateMapping,
-  X11DRV_PALETTE_IsDark
-};
-
 
 Display *gdi_display;  /* display to use for all GDI functions */
 
@@ -65,7 +56,6 @@ BOOL X11DRV_GDI_Initialize( Display *display )
     Screen *screen = DefaultScreenOfDisplay(display);
 
     gdi_display = display;
-    PALETTE_Driver = &X11DRV_PALETTE_Driver;
 
     palette_size = X11DRV_PALETTE_Init();
 
