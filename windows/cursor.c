@@ -416,7 +416,8 @@ int ShowCursor(BOOL bShow)
  */
 void ClipCursor(LPRECT lpNewClipRect)
 {
-    CopyRect(&ClipCursorRect, lpNewClipRect);
+    if (!lpNewClipRect) SetRectEmpty( &ClipCursorRect );
+    else CopyRect( &ClipCursorRect, lpNewClipRect );
 }
 
 

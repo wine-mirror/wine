@@ -1468,9 +1468,6 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define SW_SHOWMINNOACTIVE  7
 #define SW_SHOWNA           8
 #define SW_RESTORE          9
-#define SW_INTERNAL_HIDE    20
-#define SW_INTERNAL_RESTORE 21
-
 
   /* WM_SIZE message wParam values */
 #define SIZE_RESTORED        0

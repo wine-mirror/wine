@@ -9,6 +9,7 @@
 #include <math.h>
 #include "windows.h"
 #include "win.h"
+#include "nonclient.h"
 #include "mdi.h"
 #include "user.h"
 #include "menu.h"
@@ -271,7 +272,7 @@ LONG MDIMaximizeChild(HWND parent, HWND child, MDICLIENTINFO *ci)
     SendMessage(child, WM_SIZE, SIZE_MAXIMIZED,
 		MAKELONG(w->rectClient.right-w->rectClient.left,
 			 w->rectClient.bottom-w->rectClient.top));
-    SendMessage(GetParent(parent), WM_NCPAINT, 1, 0);
+    SendMessage(GetParent(parent), WM_NCPAINT, 0, 0);
 
     return 0;
 }
@@ -298,7 +299,7 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
     ci->flagChildMaximized = FALSE;
 
     ShowWindow(child, SW_RESTORE);		/* display the window */
-    SendMessage(GetParent(parent), WM_NCPAINT, 1, 0);
+    SendMessage(GetParent(parent), WM_NCPAINT, 0, 0);
     MDIBringChildToTop(parent, child, FALSE, FALSE);
 
     return 0;
@@ -496,7 +497,6 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
     
     MDICLIENTINFO *ci;
     WND           *w;
-    LONG           rv;
     HDC            hdc, hdcMem;
     RECT           rect;
     WND           *wndPtr = WIN_FindWndPtr(hwndFrame);
@@ -512,11 +512,10 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 
     if (ci->flagChildMaximized && wndPtr && wndPtr->wIDmenu != 0)
     {
-	rv = NC_DoNCPaint( hwndFrame, (HRGN) 1, wParam, TRUE);
-    
+	NC_DoNCPaint( hwndFrame, wParam, TRUE);
+
 	hdc = GetDCEx(hwndFrame, 0, DCX_CACHE | DCX_WINDOW);
-	if (!hdc)
-	    return rv;
+	if (!hdc) return 0;
 
 	hdcMem = CreateCompatibleDC(hdc);
 
@@ -563,7 +562,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
     else
 	DefWindowProc(hwndFrame, message, wParam, lParam);
 
-    return rv;
+    return 0;
 }
 
 /**********************************************************************
@@ -725,8 +724,8 @@ DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	break;
 	
       case WM_NCPAINT:
-	return NC_DoNCPaint(hwnd, (HRGN)1, 
-			    hwnd == ci->hwndActiveChild);
+	NC_DoNCPaint( hwnd, hwnd == ci->hwndActiveChild, FALSE );
+        return 0;
 
       case WM_SYSCOMMAND:
 	switch (wParam)

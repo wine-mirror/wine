@@ -256,7 +256,6 @@ static WORD EVENT_XStateToKeyState( int state )
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 {
     RECT rect;
-    UINT flags;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
 
@@ -266,10 +265,9 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN;
-      /* Erase desktop background synchronously */
-/*     if (event->window == rootWindow) flags |= RDW_ERASENOW | RDW_NOCHILDREN; */
-    RedrawWindow( hwnd, &rect, 0, flags );
+    RedrawWindow( hwnd, &rect, 0,
+                  RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
+                  (event->count ? 0 : RDW_ERASENOW) );
 }
 
 

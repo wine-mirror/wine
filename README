@@ -8,11 +8,6 @@ API calls to their Unix/X11 equivalent.
 Wine is free software. See the file LICENSE for the details.
 Basically, you can do anything with it, except claim that you wrote it.
 
-Important note: current versions of Wine include a built-in debugger
-for 16-bit code, that is based on code from gdb. This means that if
-you redistribute a version of Wine that includes this debugger, you
-must follow the terms of the GNU General Public License.
-
 
 2. COMPILATION
 

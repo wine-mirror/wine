@@ -181,10 +181,6 @@ BOOL GDI_Init(void)
 
     if (!BITMAP_Init()) return FALSE;
 
-      /* Initialise regions */
-
-    if (!REGION_Init()) return FALSE;
-    
       /* Initialise brush dithering */
 
     if (!BRUSH_Init()) return FALSE;

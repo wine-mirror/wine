@@ -105,19 +105,25 @@ static HPALETTE COLOR_InitPalette(void)
 
     size = DefaultVisual( display, DefaultScreen(display) )->map_entries;
     COLOR_ColormapSize = size;
-    if (!(hSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-				            sizeof(WORD)*NB_RESERVED_COLORS )))
-        return FALSE;
-    if (!(hRevSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-                                                    sizeof(WORD)*size )))
-        return FALSE;
-    colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
-    revTranslation   = (WORD *) GDI_HEAP_ADDR( hRevSysColorTranslation );
+    if (screenDepth <= 8)
+    {
+        if (!(hSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
+                                            sizeof(WORD)*NB_RESERVED_COLORS )))
+            return FALSE;
+        if (!(hRevSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
+                                                        sizeof(WORD)*size )))
+            return FALSE;
+        colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
+        revTranslation   = (WORD *) GDI_HEAP_ADDR( hRevSysColorTranslation );
+    }
+    else colorTranslation = revTranslation = NULL;
 
     if ((COLOR_WinColormap == DefaultColormapOfScreen(screen)) && (screenDepth <= 8))
     {
         COLOR_PaletteToPixel = (int *)malloc( sizeof(int) * size );
         COLOR_PixelToPalette = (int *)malloc( sizeof(int) * size );
+        for (i = 0; i < size; i++)  /* Set the default mapping */
+            COLOR_PaletteToPixel[i] = COLOR_PixelToPalette[i] = i;
     }
 
     for (i = 0; i < NB_RESERVED_COLORS; i++)
@@ -157,8 +163,8 @@ static HPALETTE COLOR_InitPalette(void)
                 COLOR_PixelToPalette[color.pixel] = pixel;
             }
         }
-	colorTranslation[i] = color.pixel;
-        revTranslation[color.pixel] = i;
+        if (colorTranslation) colorTranslation[i] = color.pixel;
+        if (revTranslation) revTranslation[color.pixel] = i;
 	  /* Set EGA mapping if color in the first or last eight */
 	if (i < 8)
 	    COLOR_mapEGAPixel[i] = color.pixel;

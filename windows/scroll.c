@@ -154,8 +154,8 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect,
 
     if (flags | SW_INVALIDATE)
     {
-	RedrawWindow(hwnd, NULL, hrgnUpdate,
-		     RDW_INVALIDATE | ((flags & SW_ERASE) ? RDW_ERASENOW : 0));
+	RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
+                      ((flags & SW_ERASE) ? RDW_ERASENOW : 0));
     }
 
     ReleaseDC(hwnd, hdc);

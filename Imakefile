@@ -7,7 +7,11 @@ CC = gcc -D__FreeBSD__
 #endif
 
 DEFINES = AutoDefines -DUSE_READLINE -DWINESTAT
+#ifdef __ELF__
+CDEBUGFLAGS = -O2 -Wall -static
+#else
 CDEBUGFLAGS = -O2 -Wall
+#endif
 
 /*
  * This is the second try at using Imakefiles. There are probably many

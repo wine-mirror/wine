@@ -6,20 +6,19 @@
 
 MODULE = debugger
 
-SUBDIRS = opcodes readline
+SUBDIRS = readline
 
-DEFINES = -DUSE_READLINE -Iopcodes
+DEFINES = -DUSE_READLINE
 
 SRCS = \
-	dbg.tab.c \
 	break.c \
+	db_disasm.c \
+	dbg.tab.c \
 	hash.c \
-	lex.yy.c \
-	info.c
+	info.c \
+	lex.yy.c
 
-SUBDIRS_OBJS = \
-	opcodes/opcodes.o \
-	readline/readline.o
+SUBDIRS_OBJS = readline/readline.o
 
 OBJS = $(SRCS:.c=.o) $(SUBDIRS_OBJS)
 

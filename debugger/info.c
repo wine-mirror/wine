@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "opcodes/dis-asm.h"
+#include "db_disasm.h"
 #include "regpos.h"
 
 extern int * regval;
@@ -30,6 +30,7 @@ void print_address(unsigned int addr, FILE * outfile){
 
 }
 
+#ifdef GNU_DISASM
 void print_address_info(bfd_vma addr, disassemble_info * info){
 	print_address((unsigned int) addr, info->stream);
 }
@@ -54,6 +55,23 @@ int print_insn(char *realmemaddr, char *memaddr, FILE *stream, int addrlen){
 	fprintf(stderr, "invalid address length %d.\n", addrlen);
 	return 0;
 }
+#else
+void db_task_printsym(unsigned int addr){
+  print_address(addr, stderr);
+}
+
+int print_insn(char *realmemaddr, char *memaddr, FILE *stream, int addrlen)
+{
+	if (addrlen == 16)
+		return db_disasm((unsigned int) realmemaddr, 0, 1) - 
+			((unsigned int) realmemaddr);
+	if (addrlen == 32)
+	    return db_disasm((unsigned int) realmemaddr, 0, 0) -
+	      ((unsigned int) realmemaddr);
+	fprintf(stderr, "invalid address length %d.\n", addrlen);
+	return 0;
+}
+#endif
 
 void info_reg(){
 
@@ -191,7 +209,7 @@ void examine_memory(int addr, int count, char format){
 				fprintf(stderr," %c", *pnt++);
 			if ((i % 32) == 7) {
 				fprintf(stderr,"\n");
-				print_address((unsigned int) dump, stderr);
+				print_address((unsigned int) pnt, stderr);
 				fprintf(stderr,":  ");
 			};
 		}
@@ -222,21 +240,14 @@ char * helptext[] = {
 "The commands accepted by the Wine debugger are a small subset",
 "of the commands that gdb would accept.  The commands currently",
 "are:\n",
-"  info [reg,stack,break]",
-"  break *<addr>",
-"  enable bpnum",
-"  disable bpnum",
-"  help",
-"  quit",
-"  print <expr>",
-"  bt",
-"  mode [16,32]",
-"  symbolfile <filename>",
+"  break *<addr>                        bt",
+"  disable bpnum                        enable bpnum",
+"  help                                 quit",
+"  x <expr>                             cont",
+"  mode [16,32]                         print <expr>",
+"  set <reg> = <expr>                   set *<expr> = <expr>",
+"  info [reg,stack,break,segments]      symbolfile <filename>",
 "  define <identifier> <expr>",
-"  x <expr>",
-"  cont",
-"  set <reg> = <expr>",
-"  set *<expr> = <expr>",
 "",
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.",
@@ -282,19 +293,19 @@ void dbg_bt(){
     return;
   }
 
+  frame = (struct frame *) ((SC_EBP(dbg_mask) & ~1) | (SC_SS << 16));
+
   fprintf(stderr,"Backtrace:\n");
   fprintf(stderr,"%d ",frameno);
   print_address(frame->u.win32.saved_ip,stderr);
   cs = SC_CS;
-
-  frame = (struct frame *) ((SC_EBP(dbg_mask) & ~1) | (SC_SS << 16));
   while((cs & 3) == 3) {
     /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
     if ((cs & 7) != 7) {
       void CallTo32();
       fprintf(stderr,"\n%d ",frameno++);
       print_address(frame->u.win32.saved_ip,stderr);
-      if(frame->u.win32.saved_ip<((char*)CallTo32+1000))break;
+      if(frame->u.win32.saved_ip<((unsigned long)CallTo32+1000))break;
       frame = (struct frame *) frame->u.win32.saved_bp;
     } else {
       cs = frame->u.win16.saved_cs;

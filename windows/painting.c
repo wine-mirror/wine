@@ -10,6 +10,9 @@
 #include "win.h"
 #include "message.h"
 #include "gdi.h"
+#include "stddebug.h"
+/* #define DEBUG_WIN */
+#include "debug.h"
 
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
@@ -34,21 +37,29 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
 
-    if (!(lps->hdc = GetDCEx( hwnd, hrgnUpdate,
-			      DCX_INTERSECTRGN | DCX_USESTYLE )))
+    if (wndPtr->flags & WIN_NEEDS_NCPAINT)
     {
-        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd=%d\n", hwnd );
-        DeleteObject( hrgnUpdate );
+        SendMessage( hwnd, WM_NCPAINT, 0, 0 );
+        wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+    }
+
+    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
+    DeleteObject( hrgnUpdate );
+    if (!lps->hdc)
+    {
+        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd=%x\n", hwnd );
         return 0;
     }
+
     GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
     DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
 
-    SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
-    DeleteObject( hrgnUpdate );
-
-    if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
-    else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
+    if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
+    {
+        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
+        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+    }
+    else lps->fErase = TRUE;
 
     return lps->hdc;
 }
@@ -86,7 +97,7 @@ void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
     {
 	if (!hwndParent) return;
 	hbrush = (HBRUSH)SendMessage( hwndParent, WM_CTLCOLOR,
-				      hdc, hwnd | (hbrush << 16) );
+				      hdc, MAKELONG( hwnd, hbrush ) );
     }
     if (hbrush) FillRect( hdc, rect, hbrush );
 }
@@ -106,14 +117,23 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
+    if (rectUpdate)
+    {
+        dprintf_win( stddeb, "RedrawWindow: %x %d,%d-%d,%d %x flags=%04x\n",
+                     hwnd, rectUpdate->left, rectUpdate->top,
+                     rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags);
+    }
+    else
+    {
+        dprintf_win( stddeb, "RedrawWindow: %x NULL %x flags=%04x\n",
+                     hwnd, hrgnUpdate, flags);
+    }
     GetClientRect( hwnd, &rectClient );
     rectWindow = wndPtr->rectWindow;
     OffsetRect(&rectWindow, -wndPtr->rectClient.left, -wndPtr->rectClient.top);
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
-	if (flags & RDW_ERASE) wndPtr->flags |= WIN_ERASE_UPDATERGN;
-
 	if (hrgnUpdate)  /* Invalidate a region */
 	{
 	    if (flags & RDW_FRAME) tmpRgn = CreateRectRgnIndirect(&rectWindow);
@@ -162,11 +182,13 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 		wndPtr->hrgnUpdate = tmpRgn;
 	    }
 	}
+        if (flags & RDW_FRAME) wndPtr->flags |= WIN_NEEDS_NCPAINT;
+        if (flags & RDW_ERASE) wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
 	flags |= RDW_FRAME;  /* Force invalidating the frame of children */
     }
     else if (flags & RDW_VALIDATE)  /* Validate */
     {
-	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_ERASE_UPDATERGN;
+	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
 	if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
 	  /* Remove frame from update region */
@@ -231,22 +253,31 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
       /* Erase/update window */
 
-    if (flags & RDW_UPDATENOW) UpdateWindow( hwnd );
+    if (flags & RDW_UPDATENOW) SendMessage( hwnd, WM_PAINT, 0, 0 );
     else if (flags & RDW_ERASENOW)
     {
-	HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
-			   DCX_INTERSECTRGN | DCX_USESTYLE );
-	if (hdc)
-	{
-            SendMessage( hwnd, WM_NCPAINT, wndPtr->hrgnUpdate, 0 );
-
+        if (wndPtr->flags & WIN_NEEDS_NCPAINT)
+        {
+            SendMessage( hwnd, WM_NCPAINT, 0, 0 );
+            wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+        }
+        if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
+        {
+            HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
+                               DCX_INTERSECTRGN | DCX_USESTYLE );
+            if (hdc)
+            {
               /* Don't send WM_ERASEBKGND to icons */
               /* (WM_ICONERASEBKGND is sent during processing of WM_NCPAINT) */
-            if (!(wndPtr->dwStyle & WS_MINIMIZE)
-                || !WIN_CLASS_INFO(wndPtr).hIcon)
-                SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
-	    ReleaseDC( hwnd, hdc );
-	}
+                if (!(wndPtr->dwStyle & WS_MINIMIZE)
+                    || !WIN_CLASS_INFO(wndPtr).hIcon)
+                {
+                    if (SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 ))
+                        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+                }
+                ReleaseDC( hwnd, hdc );
+            }
+        }
     }
 
       /* Recursively process children */
@@ -294,10 +325,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
  */
 void UpdateWindow( HWND hwnd )
 {
-    if (GetUpdateRect( hwnd, NULL, FALSE )) 
-    {
-	if (IsWindowVisible( hwnd )) SendMessage( hwnd, WM_PAINT, 0, 0 );
-    }
+    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
 }
 
 
@@ -372,27 +400,15 @@ int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 
     if (!wndPtr->hrgnUpdate)
     {
-	if (!(hrgnClip = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
-	retval = CombineRgn( hrgn, hrgnClip, 0, RGN_COPY );
+        SetRectRgn( hrgn, 0, 0, 0, 0 );
+        return NULLREGION;
     }
-    else
-    {
-	hrgnClip = CreateRectRgn( 0, 0,
-			   wndPtr->rectClient.right-wndPtr->rectClient.left,
-			   wndPtr->rectClient.bottom-wndPtr->rectClient.top );
-	if (!hrgnClip) return ERROR;
-	retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, hrgnClip, RGN_AND );
-	if (erase)
-	{
-	    HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
-			      DCX_INTERSECTRGN | DCX_USESTYLE );
-	    if (hdc)
-	    {
-		SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
-		ReleaseDC( hwnd, hdc );
-	    }
-	}	
-    }
+    hrgnClip = CreateRectRgn( 0, 0,
+                             wndPtr->rectClient.right-wndPtr->rectClient.left,
+                             wndPtr->rectClient.bottom-wndPtr->rectClient.top);
+    if (!hrgnClip) return ERROR;
+    retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, hrgnClip, RGN_AND );
+    if (erase) RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
     DeleteObject( hrgnClip );
     return retval;
 }

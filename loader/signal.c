@@ -13,12 +13,6 @@
 #else
 #include <syscall.h>
 #endif
-#ifdef linux
-#define inline __inline__  /* So we can compile with -ansi */
-#include <linux/sched.h>
-#include <asm/system.h>
-#undef inline
-#endif
 
 #include "wine.h"
 #include "dos_fs.h"

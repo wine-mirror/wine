@@ -355,11 +355,8 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     BITMAPINFO 	*bmi;
     BITMAPINFOHEADER 	*bih;
     RGBQUAD	*rgbq;
-    HDC 	hMemDC;
-    HDC 	hMemDC2;
     HDC 	hdc;
     int 	image_size;
-    HBITMAP     hbmpOld1, hbmpOld2;
 
     if(debugging_resource){
 	printf("LoadIcon(%04X", instance);
@@ -422,14 +419,9 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
         lpico->hBitmap = 0;
     bih->biBitCount = 1;
     bih->biClrUsed = bih->biClrImportant  = 2;
-    rgbq[0].rgbBlue 	= 0xFF;
-    rgbq[0].rgbGreen 	= 0xFF;
-    rgbq[0].rgbRed 	= 0xFF;
-    rgbq[0].rgbReserved = 0x00;
-    rgbq[1].rgbBlue 	= 0x00;
-    rgbq[1].rgbGreen 	= 0x00;
-    rgbq[1].rgbRed 	= 0x00;
-    rgbq[1].rgbReserved = 0x00;
+    rgbq[0].rgbBlue = rgbq[0].rgbGreen = rgbq[0].rgbRed = 0x00;
+    rgbq[1].rgbBlue = rgbq[1].rgbGreen = rgbq[1].rgbRed = 0xff;
+    rgbq[0].rgbReserved = rgbq[1].rgbReserved = 0;
     if (bih->biSizeImage == 0) {
 	if (bih->biCompression != BI_RGB) {
 	    fprintf(stderr,"Unknown size for compressed Icon bitmap.\n");
@@ -445,15 +437,6 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
 	(BITMAPINFO *)bih, DIB_RGB_COLORS );
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
-    hMemDC = CreateCompatibleDC(hdc);
-    hMemDC2 = CreateCompatibleDC(hdc);
-    hbmpOld1 = SelectObject(hMemDC, lpico->hBitmap);
-    hbmpOld2 = SelectObject(hMemDC2, lpico->hBitMask);
-    BitBlt(hMemDC, 0, 0, bih->biWidth, bih->biHeight, hMemDC2, 0, 0,SRCINVERT);
-    SelectObject( hMemDC, hbmpOld1 );
-    SelectObject( hMemDC2, hbmpOld2 );
-    DeleteDC(hMemDC);
-    DeleteDC(hMemDC2);
     ReleaseDC(GetDesktopWindow(), hdc);
     GlobalUnlock(hIcon);
     dprintf_resource(stddeb,"LoadIcon Alloc hIcon=%X\n", hIcon);

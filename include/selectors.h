@@ -23,5 +23,6 @@ extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal, int *sel,
 					int *addr);
 extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt, 
 					int ordinal);
+extern void InitSelectors(void);
 
 #endif /* __WINE_SELECTORS_H */

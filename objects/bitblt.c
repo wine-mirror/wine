@@ -547,7 +547,7 @@ static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
  */
 static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
                               short startSrc, short widthSrc,
-                              short xinc, WORD mode )
+                              int xinc, WORD mode )
 {
     register int xdst = xinc * startSrc;
     rowSrc += startSrc;
@@ -642,6 +642,10 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
       /* When stretching, all modes are the same, and DELETESCANS is faster */
     if ((widthSrc < widthDst) && (heightSrc < heightDst))
         mode = STRETCH_DELETESCANS;
+
+    if (mode != STRETCH_DELETESCANS)
+        memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
+                widthDst*sizeof(int) );
 
     hstretch = ((widthSrc < widthDst) || (mode == STRETCH_DELETESCANS));
     vstretch = ((heightSrc < heightDst) || (mode == STRETCH_DELETESCANS));
@@ -1225,7 +1229,8 @@ BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
                 "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
-
+    dprintf_bitblt(stddeb,"        src org=%d,%d  dst org=%d,%d\n",
+                dcSrc->w.DCOrgX, dcSrc->w.DCOrgY, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
     return BITBLT_InternalStretchBlt( dcDst, xDst, yDst, width, height,
                                       dcSrc, xSrc, ySrc, width, height, rop );
 }

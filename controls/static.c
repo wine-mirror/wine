@@ -134,7 +134,11 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    break;
 
 	case WM_SETTEXT:
-	    DEFWND_SetText( hWnd, (LPSTR)lParam );
+	    if (style == SS_ICON)
+                STATIC_SetIcon( hWnd, LoadIcon( wndPtr->hInstance,
+                                                (LPSTR)lParam ) );
+            else
+                DEFWND_SetText( hWnd, (LPSTR)lParam );
 	    InvalidateRect( hWnd, NULL, FALSE );
 	    UpdateWindow( hWnd );
 	    break;

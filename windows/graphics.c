@@ -542,8 +542,6 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-      /* FIXME: the region is supposed to be in logical coordinates */
-
       /* Modify visible region */
 
     if (!(prevVisRgn = SaveVisRgn( hdc ))) return FALSE;
@@ -558,7 +556,7 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
 
       /* Fill the region */
 
-    GetClipBox( hdc, &box );
+    GetRgnBox( dc->w.hGCClipRgn, &box );
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
@@ -717,21 +715,13 @@ BOOL Polyline (HDC hdc, LPPOINT pt, int count)
     }
 
     if (DC_SetupGCForPen( dc ))
-    {
 	for (i = 0; i < count-1; i ++)
 	    XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
 		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
 		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
 		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
 		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
-	XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
-		   dc->w.DCOrgX + XLPTODP(dc, pt [count-1].x),
-		   dc->w.DCOrgY + YLPTODP(dc, pt [count-1].y),
-		   dc->w.DCOrgX + XLPTODP(dc, pt [0].x),
-		   dc->w.DCOrgY + YLPTODP(dc, pt [0].y));
-    } 
-	
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -915,7 +905,7 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
     }
 
     if (!PtVisible( hdc, x, y )) return FALSE;
-    if (GetClipBox( hdc, &rect ) == ERROR) return FALSE;
+    if (GetRgnBox( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
     pixel = COLOR_ToPhysical( dc, color );
 
     if (!(image = XGetImage( display, dc->u.x.drawable,

@@ -28,6 +28,7 @@
  */
 #define MAX_SELECTORS		512
 #define SELECTOR_ISFREE		0x8000
+#define SELECTOR_IS32BIT        0x4000
 #define SELECTOR_INDEXMASK	0x0fff
 
 extern unsigned short SelectorMap[MAX_SELECTORS];
@@ -75,10 +76,16 @@ extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
 #define GLOBAL_FLAGS_EXECUTEONLY	0x00020000
 #define GLOBAL_FLAGS_READONLY		0x00020000
 
+#ifdef __ELF__
+#define FIRST_SELECTOR 2
+#define IS_16_BIT_ADDRESS(addr)  \
+     (!(SelectorMap[(unsigned int)(addr)>>19]& SELECTOR_IS32BIT))
+#else
 #define FIRST_SELECTOR	8
-
 #define IS_16_BIT_ADDRESS(addr)  \
      ((unsigned int)(addr) >= (((FIRST_SELECTOR << 3) | 0x0007) << 16))
+#endif
+
 
 extern SEGDESC Segments[];
 

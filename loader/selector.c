@@ -37,7 +37,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #ifdef linux
 #define DEV_ZERO
+#ifdef __ELF__
+#define  UTEXTSEL 0x0f
+#else
 #define UTEXTSEL 0x23
+#endif
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
@@ -72,6 +76,35 @@ extern char **environ;
 
 unsigned int 
 GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal);
+
+
+/**********************************************************************
+ *					InitSelectors
+ */
+void
+InitSelectors(void) {
+    int i;
+    for (i = 0; i < MAX_SELECTORS; i++) {
+	if (i < FIRST_SELECTOR) {
+	    SelectorMap[i] = SELECTOR_IS32BIT;
+#ifdef __ELF__
+	    /* quick hack, just reserves 4 meg for wine. */
+	} else if ((i << 19) >= 0x8000000 &&
+		   (i << 19) <= 0x8400000) {
+	    SelectorMap[i]= SELECTOR_IS32BIT;
+#endif
+	} else {
+	    SelectorMap[i]=0;
+	}
+    }
+#ifdef __ELF__
+    /* create an ldt. */
+    if (set_ldt_entry(1, 0x8000000, 65535, 1,0x1a ,1,0)) {
+	perror ("set_ldt_entry");
+	exit (1);
+    }
+#endif
+    }
 
 /**********************************************************************
  *					FindUnusedSelectors
@@ -90,6 +123,8 @@ FindUnusedSelectors(int n_selectors)
 	    n_found = 0;
 	    i = FIRST_SELECTOR;
 	}
+
+	if (SelectorMap[i] && n_found) n_found=0;
 	
 	if (!SelectorMap[i] && ++n_found == n_selectors)
 	    break;
@@ -364,13 +399,13 @@ unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
 	if (zfile == NULL)
 	    zfile = fopen("/dev/zero","r");
 	p = (void *) mmap((char *) dst_s->base_addr,
-			  ((dst_s->length + PAGE_SIZE) 
+			  ((dst_s->length + PAGE_SIZE-1) 
 			   & ~(PAGE_SIZE - 1)),
 			  PROT_EXEC | PROT_READ | PROT_WRITE,
 			  MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
 #else
 	p = (void *) mmap((char *) dst_s->base_addr,
-			  ((dst_s->length + PAGE_SIZE) 
+			  ((dst_s->length + PAGE_SIZE-1) 
 			   & ~(PAGE_SIZE - 1)),
 			  PROT_EXEC | PROT_READ | PROT_WRITE,
 			  MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);

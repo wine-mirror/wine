@@ -57,8 +57,8 @@ void mode_command(int);
 	| QUIT  '\n'       { exit(0); }
 	| 'q' '\n'         { exit(0); }
 	| HELP  '\n'       { dbg_help(); }
-	| CONT '\n'        { return; }
-	| 'c' '\n'         { return; }
+	| CONT '\n'        { return 0; }
+	| 'c' '\n'         { return 0; }
 	| ABORT '\n'       { kill(getpid(), SIGABRT); }
 	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); }
 	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, $3); }
@@ -150,7 +150,6 @@ void
 wine_debug(int signal, int * regs)
 {
 	static int dummy_regs[32];
-	int i;
 #ifdef YYDEBUG
 	yydebug = 0;
 #endif
@@ -223,7 +222,9 @@ wine_debug(int signal, int * regs)
 }
 
 
-yyerror(char * s){
+int yyerror(char * s)
+{
 	fprintf(stderr,"%s\n", s);
+        return 0;
 }
 

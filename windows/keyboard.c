@@ -3,9 +3,6 @@
  *
  * Copyright 1993 Bob Amstadt
  */
-
-static char Copyright[] = "Copyright  Bob Amstadt, 1993";
-
 #include <string.h>
 #include "win.h"
 #include "windows.h"

@@ -27,6 +27,11 @@ A(IF1632_Saved32_ebp:)
 	.long	0
 A(IF1632_Saved32_ss:)
 	.word	0
+#ifdef __ELF__
+A(IF1632_ELF_KLUDGE:)
+	.long	0
+	.word	0x0f
+#endif
 
 /**********************************************************************
  *	Places to keep info about the current 16-bit stack frame.
@@ -74,6 +79,16 @@ A(CallToInit16:)
 	pushl	A(IF1632_Saved32_ebp)
 	pushw	A(IF1632_Saved32_ss)
 
+#ifdef __ELF__
+	/* change to the other code segment */
+	movw	$0x0f, %ax
+	movw	%ax, A(IF1632_ELF_KLUDGE)+4
+	movl	$L4, %eax
+	andl	$0x0000ffff, %eax
+	movl	%eax,A(IF1632_ELF_KLUDGE)
+	ljmp	A(IF1632_ELF_KLUDGE)
+L4:
+#endif
 	/*
 	 * Get target address.
 	 */
@@ -147,6 +162,15 @@ A(CallToInit16:)
 	popl	A(IF1632_Saved32_ebp)
 	popl	A(IF1632_Saved32_esp)
 	movl	%eax,return_value
+#ifdef __ELF__
+	/* change back  */
+	movw	$0x23, %ax
+	movw	%ax, A(IF1632_ELF_KLUDGE)+4
+	movl	$L5, %eax
+	movl	%eax,A(IF1632_ELF_KLUDGE)
+	ljmp	A(IF1632_ELF_KLUDGE)
+L5:
+#endif
 	popal
 	movl	return_value,%eax
 	.align	2,0x90
@@ -182,7 +206,19 @@ A(CallTo16cx:)
 	/*
 	 * Get target address and new ds
 	 */
-L1:	movl	8(%ebp),%eax
+L1:
+#ifdef __ELF__
+	/* change code segments */
+	movw	$0x0f, %ax
+	movw	%ax, A(IF1632_ELF_KLUDGE)+4
+	movl	$L2, %eax
+	andl	$0x0000ffff, %eax
+	movl	%eax,A(IF1632_ELF_KLUDGE)
+	ljmp	A(IF1632_ELF_KLUDGE)
+L2:
+#endif
+	/* At this point we have changed segments. */
+	movl	8(%ebp),%eax
 	movl	%eax,jump_target
 	lea	jump_target,%edx
 	movw	12(%ebp),%ax
@@ -244,6 +280,18 @@ L1:	movl	8(%ebp),%eax
 
 	movl	%eax,return_value
 	movw	return_value+2,%dx
+	/* switch segments */
+#ifdef __ELF__
+	movw	$0x23, %ax
+	movw	%ax, A(IF1632_ELF_KLUDGE)+4
+	movl	$L3, %eax
+	movl	%eax,A(IF1632_ELF_KLUDGE)
+	ljmp	A(IF1632_ELF_KLUDGE)
+L3:
+	/* back in the regular segment set up. */
+	/* restore eax */
+	movl	return_value, %eax
+#endif
 	.align	2,0x90
 	leave
 	ret

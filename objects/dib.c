@@ -670,33 +670,14 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     if (hIcon == (HICON)NULL) return FALSE;
     lpico = (ICONALLOC *)GlobalLock(hIcon);
     GetObject(lpico->hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-    dprintf_icon(stddeb,"DrawIcon / x=%d y=%d\n", x, y);
-    dprintf_icon(stddeb,"DrawIcon / icon Width=%d\n", 
-		 (int)lpico->descriptor.Width);
-    dprintf_icon(stddeb,"DrawIcon / icon Height=%d\n", 
-		 (int)lpico->descriptor.Height);
-    dprintf_icon(stddeb,"DrawIcon / icon ColorCount=%d\n", 
-		 (int)lpico->descriptor.ColorCount);
-    dprintf_icon(stddeb,"DrawIcon / icon icoDIBSize=%lX\n", 
-		 (DWORD)lpico->descriptor.icoDIBSize);
-    dprintf_icon(stddeb,"DrawIcon / icon icoDIBOffset=%lX\n", 
-		 (DWORD)lpico->descriptor.icoDIBOffset);
-    dprintf_icon(stddeb,"DrawIcon / bitmap bmWidth=%d bmHeight=%d\n", 
-		 bm.bmWidth, bm.bmHeight);
     hMemDC = CreateCompatibleDC(hDC);
-    if(debugging_icon){
-    hBitTemp = SelectObject(hMemDC, lpico->hBitmap);
-    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-    SelectObject(hMemDC, lpico->hBitMask);
-    BitBlt(hDC, x, y + bm.bmHeight, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-    }else{
     hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
     SelectObject(hMemDC, lpico->hBitmap);
-    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCPAINT);
-    }
+    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCINVERT);
     SelectObject( hMemDC, hBitTemp );
     DeleteDC(hMemDC);
+    GlobalUnlock( hIcon );
     return TRUE;
 }
 

@@ -69,7 +69,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     case WM_PAINTICON: 
     case WM_NCPAINT:
-	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
+	return NC_HandleNCPaint( hwnd );
 
     case WM_NCHITTEST:
 	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );
@@ -145,8 +145,8 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
-	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 1;
-	    if (!classPtr->wc.hbrBackground) return 1;
+	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+	    if (!classPtr->wc.hbrBackground) return 0;
             if (classPtr->wc.hbrBackground <= COLOR_MAX+1)
             {
                  HBRUSH hbrush;
@@ -158,7 +158,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
             else
 	         FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
 		        classPtr->wc.hbrBackground );
-	    return 0;
+	    return 1;
 	}
 
     case WM_GETDLGCODE:
@@ -211,7 +211,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     case WM_SETTEXT:
 	DEFWND_SetText( hwnd, (LPSTR)lParam );
-	NC_HandleNCPaint( hwnd, (HRGN)1 );  /* Repaint caption */
+	NC_HandleNCPaint( hwnd );  /* Repaint caption */
 	return 0;
 
     case WM_SETCURSOR:

@@ -537,33 +537,18 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
  *           NC_DoNCPaint
  *
  * Paint the non-client area.
- * 'hrgn' is the update rgn to use (in client coords) or 1 if no update rgn.
  */
-void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
+void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 {
     HDC hdc;
     RECT rect;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
-    if (!wndPtr || !hrgn) return;
-    if (!(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
-    if (!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME)) &&
-        !(wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)) return; /* Nothing to do */
+    dprintf_nonclient(stddeb, "NC_DoNCPaint: %x %d\n", hwnd, active );
+    if (!wndPtr || !(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
 
-    if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
-    else
-    {
-	  /* Make region relative to window area */
-	int xoffset = wndPtr->rectWindow.left - wndPtr->rectClient.left;
-	int yoffset = wndPtr->rectWindow.top - wndPtr->rectClient.top;
-	OffsetRgn( hrgn, -xoffset, -yoffset );
-	hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE|DCX_WINDOW|DCX_INTERSECTRGN );
-	OffsetRgn( hrgn, xoffset, yoffset );  /* Restore region */
-    }
-    if (!hdc) return;
-
+    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
     /*
      * If this is an icon, we don't want to do any more nonclient painting
@@ -654,9 +639,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn )
+LONG NC_HandleNCPaint( HWND hwnd )
 {
-    NC_DoNCPaint( hwnd, hrgn, hwnd == GetActiveWindow(), FALSE );
+    NC_DoNCPaint( hwnd, hwnd == GetActiveWindow(), FALSE );
     return 0;
 }
 
@@ -668,7 +653,7 @@ LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn )
  */
 LONG NC_HandleNCActivate( HWND hwnd, WORD wParam )
 {
-    NC_DoNCPaint( hwnd, (HRGN)1, wParam, FALSE );
+    NC_DoNCPaint( hwnd, wParam, FALSE );
     return TRUE;
 }
 

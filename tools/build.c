@@ -7,7 +7,11 @@
 #include "wine.h"
 
 #ifdef linux
+#ifdef __ELF__
+#define UTEXTSEL 0x0f
+#else
 #define UTEXTSEL 0x23
+#endif
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #define UTEXTSEL 0x1f
@@ -753,20 +757,29 @@ int main(int argc, char **argv)
 
     sprintf(filename, "dll_%s.S", LowerDLLName);
     fp = fopen(filename, "w");
-
+    fprintf (fp, "#define __ASSEMBLY__\n");
+    fprintf (fp, "#include <asm/segment.h>\n");
     fprintf(fp, "\t.globl " PREFIX "%s_Dispatch\n", UpperDLLName);
     fprintf(fp, PREFIX "%s_Dispatch:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
-    fprintf(fp, "\tjmp\t" PREFIX "CallTo32\n\n");
+#ifdef __ELF__
+    fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
+#else
+    fprintf(fp, "\tjmp\t_CallTo32\n\n");
+#endif
 
     fprintf(fp, "\t.globl " PREFIX "%s_Dispatch_16\n", UpperDLLName);
     fprintf(fp, PREFIX "%s_Dispatch_16:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
-    fprintf(fp, "\tjmp\t" PREFIX "CallTo32_16\n\n");
+#ifdef __ELF__
+    fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32_16\n\n");
+#else
+    fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
+#endif
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)

@@ -1357,6 +1357,7 @@ void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt )
 void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr->wIDmenu) return;
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
       /* Select first selectable item */
     MENU_SelectItem( wndPtr->wIDmenu, NO_SELECTED_ITEM );

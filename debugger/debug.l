@@ -142,6 +142,25 @@ int yywrap(void) { return 1; }
 #include "readline/chardefs.h"
 #endif
 
+/* Strip whitespace from the start and end of STRING. */
+static void stripwhite (char *string)
+{
+  register int i = 0;
+
+  while (whitespace (string[i]))
+    i++;
+
+  if (i)
+    strcpy (string, string + i);
+
+  i = strlen (string) - 1;
+
+  while (i > 0 && whitespace (string[i]))
+    i--;
+
+  string[++i] = '\0';
+}
+
 dbg_read(char * buf, int size){
 	char * line;
 	int len;
@@ -178,25 +197,6 @@ dbg_read(char * buf, int size){
 		}
 
 	} while (1==1);
-}
-
-/* Strip whitespace from the start and end of STRING. */
-void stripwhite (char *string)
-{
-  register int i = 0;
-
-  while (whitespace (string[i]))
-    i++;
-
-  if (i)
-    strcpy (string, string + i);
-
-  i = strlen (string) - 1;
-
-  while (i > 0 && whitespace (string[i]))
-    i--;
-
-  string[++i] = '\0';
 }
 
 static char *local_symbols[10];

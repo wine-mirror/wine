@@ -174,15 +174,15 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 	    user_tab = FindDLLTable("USER");
 
 	/* DefWindowProc */
-	if (user_tab[107].address == address)
+	if (((LONG)user_tab[107].address &0xffff) == (LONG) address)
 	    return DefWindowProc(hwnd, message, wParam, lParam);
 	
 	/* DefDlgProc */
-	else if (user_tab[308].address == address)
+	else if (((LONG)user_tab[308].address &0xffff) == (LONG)address)
 	    return DefDlgProc(hwnd, message, wParam, lParam);
 	
 	/* DefMDIChildProc */
-	else if (user_tab[447].address == address)
+	else if (((LONG)user_tab[447].address &0xffff) == (LONG)address)
 	    return DefMDIChildProc(hwnd, message, wParam, lParam);
 	
 	/* default */

@@ -11,7 +11,6 @@
 #include "winpos.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN */
-/* #undef  DEBUG_WIN */
 #include "debug.h"
 
 static HWND hwndActive = 0;  /* Currently active window */
@@ -274,7 +273,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	     */
             MoveWindow(hwnd, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
                        SYSMETRICS_CXICON, SYSMETRICS_CYICON, FALSE);
-            RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_ERASENOW );
+            RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_ERASE | RDW_ERASENOW);
 	    break;
 
 	case SW_SHOWNA:
@@ -604,7 +603,7 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter, BOOL erase )
             OffsetRect( &rect, -wndPtr->rectClient.left,
                         -wndPtr->rectClient.top );
             RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
-                          RDW_FRAME | (erase ? RDW_ERASENOW : RDW_ERASE) );
+                          RDW_FRAME | RDW_ERASE | (erase ? RDW_ERASENOW : 0) );
             hwndCur = curPtr->hwndNext;
         }
     }
@@ -620,7 +619,7 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter, BOOL erase )
             OffsetRect( &rect, -curPtr->rectClient.left,
                         -curPtr->rectClient.top );
             RedrawWindow( hwndCur, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
-                          RDW_FRAME | (erase ? RDW_ERASENOW : RDW_ERASE) );
+                          RDW_FRAME | RDW_ERASE | (erase ? RDW_ERASENOW : 0) );
             hwndCur = curPtr->hwndNext;
         }
     }
@@ -775,12 +774,13 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
             HRGN hrgn3 = CreateRectRgn( 0, 0, 0, 0 );
             CombineRgn( hrgn3, hrgn1, hrgn2, RGN_DIFF );
             RedrawWindow( wndPtr->hwndParent, NULL, hrgn3,
-                          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASENOW );
+                          RDW_INVALIDATE | RDW_ALLCHILDREN |
+                          RDW_ERASE | RDW_ERASENOW );
             if ((oldWindowRect.left != wndPtr->rectWindow.left) ||
                 (oldWindowRect.top != wndPtr->rectWindow.top))
             {
                 RedrawWindow( winpos->hwnd, NULL, 0, RDW_INVALIDATE |
-                              RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASENOW );
+                      RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW );
             }
             DeleteObject( hrgn1 );
             DeleteObject( hrgn2 );
@@ -794,9 +794,11 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
         if (wndPtr->window)
         {
             XMapWindow( display, wndPtr->window );
-            MSG_Synchronize();
-            if (flags & SWP_NOREDRAW)  /* Validate the whole window */
-                RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE );
+        }
+        else
+        {
+            RedrawWindow( winpos->hwnd, NULL, 0,
+                          RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
         }
     }
     else if (flags & SWP_HIDEWINDOW)
@@ -810,7 +812,7 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
         {
             RedrawWindow( wndPtr->hwndParent, &wndPtr->rectWindow, 0,
                           RDW_INVALIDATE | RDW_FRAME |
-                          RDW_ALLCHILDREN | RDW_ERASENOW );
+                          RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW );
         }
         if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
             SetFocus( GetParent(winpos->hwnd) );  /* Revert focus to parent */
@@ -835,23 +837,14 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
 	    WINPOS_ChangeActiveWindow( winpos->hwnd, FALSE );
     }
     
-      /* Send WM_NCPAINT message if needed */
+      /* Repaint the window */
 
-    if (flags & SWP_SHOWWINDOW)
-    {
-	  /* Repaint the window frame and background */
-	RedrawWindow( winpos->hwnd, NULL, 0,
-		      RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW );
-    }
-    else
-    {
-	if ((flags & SWP_FRAMECHANGED) ||
-	    (!(flags & SWP_NOSIZE)) ||
-	    (!(flags & SWP_NOMOVE)) ||
-	    (!(flags & SWP_NOACTIVATE)) ||
-	    (!(flags & SWP_NOZORDER)))
-	        SendMessage( winpos->hwnd, WM_NCPAINT, 1, 0L );
-    }
+    if (wndPtr->window) MSG_Synchronize();  /* Wait for all expose events */
+    if (flags & SWP_FRAMECHANGED)
+        RedrawWindow( winpos->hwnd, NULL, 0,
+                      RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
+    RedrawWindow( winpos->hwnd, NULL, 0,
+                  (flags & SWP_NOREDRAW) ? RDW_VALIDATE : RDW_ERASENOW );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 

@@ -25,7 +25,7 @@ $(RCOBJS): winerc $(TOP)/include/windows.h
 includes::
 
 clean::
-	$(RM) $(RCSRCS:.rc=.c)
+	$(RM) $(RCSRCS:.rc=.c) $(RCSRCS:.rc=.h)
 
 
 XCOMM Rules to build the winerc program

@@ -7,7 +7,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <ctype.h>
 
 #ifdef linux
+#ifdef __ELF__
+#define UTEXTSEL 	0x0f
+#else
 #define UTEXTSEL 	0x23
+#endif
 #define UDATASEL	0x2b
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)

@@ -56,12 +56,13 @@ typedef struct tagWND
 } WND;
 
   /* WND flags values */
-#define WIN_ERASE_UPDATERGN     0x01  /* Update region needs erasing */
-#define WIN_NEEDS_BEGINPAINT    0x02  /* WM_PAINT sent to window */
-#define WIN_GOT_SIZEMSG         0x04  /* WM_SIZE has been sent to the window */
+#define WIN_NEEDS_BEGINPAINT    0x01  /* WM_PAINT sent to window */
+#define WIN_NEEDS_ERASEBKGND    0x02  /* WM_ERASEBKGND must be sent to window*/
+#define WIN_NEEDS_NCPAINT       0x04  /* WM_NCPAINT must be sent to window */
 #define WIN_RESTORE_MAX         0x08  /* Maximize when restoring */
 #define WIN_INTERNAL_PAINT      0x10  /* Internal WM_PAINT message pending */
 #define WIN_NO_REDRAW           0x20  /* WM_SETREDRAW called for this window */
+#define WIN_GOT_SIZEMSG         0x40  /* WM_SIZE has been sent to the window */
 
 #define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
 #define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)

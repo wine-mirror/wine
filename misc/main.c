@@ -25,6 +25,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "desktop.h"
 #include "prototypes.h"
 #include "texts.h"
+#include "selectors.h" /* for InitSelectors prototype */
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -488,6 +489,7 @@ int main( int argc, char *argv[] )
     if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
+    InitSelectors();
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();

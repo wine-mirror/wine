@@ -1,7 +1,17 @@
+/*
+ * Window non-client functions definitions
+ *
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #ifndef __WINE_NONCLIENT_H
 #define __WINE_NONCLIENT_H
 
-extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
+#include "windows.h"
+
+extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
+extern void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint );
+extern LONG NC_HandleNCPaint( HWND hwnd );
 extern LONG NC_HandleNCActivate( HWND hwnd, WORD wParam );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );

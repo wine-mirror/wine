@@ -209,7 +209,7 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
     BOOL eatMsg = FALSE;
-    LONG hittest_result;
+    INT hittest_result;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
@@ -231,14 +231,14 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
       /* Send the WM_NCHITTEST message */
 
-    hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
-				  MAKELONG( msg->pt.x, msg->pt.y ) );
+    hittest_result = (INT)SendMessage( msg->hwnd, WM_NCHITTEST, 0,
+                                       MAKELONG( msg->pt.x, msg->pt.y ) );
     while ((hittest_result == HTTRANSPARENT) && (msg->hwnd))
     {
 	msg->hwnd = WINPOS_NextWindowFromPoint( msg->hwnd, msg->pt );
 	if (msg->hwnd)
-	    hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
-					  MAKELONG( msg->pt.x, msg->pt.y ) );
+	    hittest_result = (INT)SendMessage( msg->hwnd, WM_NCHITTEST, 0,
+                                             MAKELONG( msg->pt.x, msg->pt.y ));
     }
     if (!msg->hwnd) msg->hwnd = GetDesktopWindow();
 

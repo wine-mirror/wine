@@ -1,3 +1,81 @@
+----------------------------------------------------------------------
+Sun Jan 22 18:55:33 1995  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [loader/resource.c] [objects/dib.c]
+	Fixed icon loading and drawing, now that BitBlt() works correctly.
+	
+	* [objects/clipping.c] [objects/region.c]
+	Implemented elliptic regions with a set of rectangle. This greatly
+	simplifies the region code and should boost clipping performance.
+
+	* [objects/color.c]
+	Fixed bug that caused seg-fault on 24bpp displays.
+
+	* [objects/bitblt.c]
+	Fixed bug when shrinking a bitmap to more than half its size.
+
+	* [windows/graphics.c]
+	Fixed bugs in PaintRgn() and Polyline().
+
+	* [windows/nonclient.c] [windows/painting.c] [windows/winpos.c]
+	Fixed some problems with window background painting.
+
+Thu Jan 12 12:20:25 PST 1995 Ross Biro (biro@yggdrasil.com)
+
+       * [tools/build.c]
+       * [tools/newbuild.c]
+       * [Imakefile]
+       * [include/wine.h]
+       * [loader/call.S]
+       * [loader/selector.c]
+       * [include/segmem.h]
+       * [misc/main.c]
+       Changed selector code and 16/32 bit xfer code so that wine
+       no longer has to be loaded low in memory.  Changed wine
+       to work with ELF binary formats under Linux.
+       
+Sat Sep 17 11:08:49 1994  Eric Youngdale  (eric@esp22)
+
+	* [debugger/db_disasm.c]
+	New instruction disassembler - borrowed from Mach kernel.  Has a
+	BSD style of license as opposed to the gdb code we were previously
+	using which was under the GPL.
+
+----------------------------------------------------------------------
+Mon Jan  9 18:27:11 1995  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [Imakefile]
+	Compiling with -Wall flag.
+
+	* [*/*]
+	Fixes to minimize the number of compilation warnings.
+
+	* [objects/bitblt.c]
+	Fixed BitBlt() and used the same code to rewrite PatBlt() and
+	StretchBlt(). The three *Blt() functions should now be correct in
+	every case (famous last words).
+
+	* [objects/brush.c] [objects/dither.c]
+	Merged the two files into brush.c
+
+	* [objects/dc.c]
+	Fixed bug when the Windows programs forget to re-select the
+	original bitmap in a memory DC.
+
+	* [objects/font.c]
+	Tty to use 'fixed' font when the system font can't be found.
+
+	* [windows/dialog.c]
+	Tentative fix to make dialogs look better when using fixed-width
+	fonts.
+
+	* [windows/graphics.c]
+	Partially implemented the PS_INSIDEFRAME pen style.
+
+	* [windows/nonclient.c]
+	Fix for windows that have the WS_EX_DLGMODALFRAME style bit
+	without the WS_DLGFRAME style.
+
 Thu Jan  5 13:37:42 1995  Cameron Heide  (heide@ee.ualberta.ca)
 
 	* [memory/global.c]
@@ -10,11 +88,13 @@ Thu Jan  5 13:37:42 1995  Cameron Heide  (heide@ee.ualberta.ca)
 
 Sun Jan  1 23:30:25 1995  Fons Botman  <botman@rabo.nl>
 
-	* objects/font.c (GetTextExtentPoint): 
-	Fixed debug output, str is counted string, not zero terminated.
+	* [objects/font.c]
+	GetTextExtentPoint: fixed debug output, str is counted string, not
+        zero terminated.
 
-	* if1632/relay.c (DLLRelay): 
-	When debugging_stack got segv, added upper bound for stack dump.
+	* [if1632/relay.c]
+	DLLRelay: when debugging_stack got segv, added upper bound for
+        stack dump.
 
 ----------------------------------------------------------------------
 Tue Dec 27 13:35:16 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
