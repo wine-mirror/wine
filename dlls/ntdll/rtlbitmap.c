@@ -1010,7 +1010,7 @@ static ULONG WINAPI NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries
  *
  * PARAMS
  *  lpBits   [I] Bitmap pointer
- *  ulSeries [O] Array for each run found
+ *  lpSeries [O] Array for each run found
  *  ulCount  [I] Number of runs to find
  *  bLongest [I] Whether to find the very longest runs or not
  *

@@ -310,7 +310,7 @@ NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...)
 
 
 /******************************************************************************
- *	DbgPrint	[NTDLL.@]
+ *	DbgPrintEx	[NTDLL.@]
  */
 NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...)
 {
@@ -473,7 +473,7 @@ VOID WINAPI RtlZeroMemory( VOID *Destination, SIZE_T Length )
  * PARAMS
  *  Source1 [I] Source block
  *  Source2 [I] Block to compare to Source1
- *  Length  [I] Number of bytes to fill
+ *  Length  [I] Number of bytes to compare
  *
  * RETURNS
  *  The length of the first byte at which Source1 and Source2 differ, or Length
@@ -635,9 +635,9 @@ __ASM_GLOBAL_FUNC(NTDLL_RtlUshortByteSwap,
  *  Generates an uniform random number using D.H. Lehmer's 1948 algorithm.
  *  In our case the algorithm is:
  *
- *  result = (*seed * 0x7fffffed + 0x7fffffc3) % MAXLONG;
- *
- *  *seed = result;
+ *|  result = (*seed * 0x7fffffed + 0x7fffffc3) % MAXLONG;
+ *|
+ *|  *seed = result;
  *
  * DIFFERENCES
  *  The native documentation states that the random number is
@@ -734,6 +734,10 @@ BOOLEAN WINAPI RtlAreAllAccessesGranted(
  *
  * Check if at least one of the desired accesses is granted
  *
+ * PARAMS
+ *  GrantedAccess [I] Access mask of granted accesses
+ *  DesiredAccess [I] Access mask of desired accesses
+ *
  * RETURNS
  *  TRUE: At least one of the desired accesses is granted
  *  FALSE: Otherwise
@@ -781,7 +785,11 @@ void WINAPI RtlMapGenericMask(
 /*************************************************************************
  * RtlCopyLuid   [NTDLL.@]
  *
- * Copies the LuidSrc to LuidDest.
+ * Copy a local unique ID.
+ *
+ * PARAMS
+ *  LuidDest [O] Destination for the copied Luid
+ *  LuidSrc  [I] Source Luid to copy to LuidDest
  *
  * RETURNS
  *  Nothing.
@@ -795,7 +803,11 @@ void WINAPI RtlCopyLuid (PLUID LuidDest, const LUID *LuidSrc)
 /*************************************************************************
  * RtlEqualLuid   [NTDLL.@]
  *
- * Compares two local unique ID's.
+ * Compare two local unique ID's.
+ *
+ * PARAMS
+ *  Luid1 [I] First Luid to compare to Luid2
+ *  Luid2 [I] Second Luid to compare to Luid1
  *
  * RETURNS
  *  TRUE: The two LUID's are equal.
@@ -810,10 +822,18 @@ BOOLEAN WINAPI RtlEqualLuid (const LUID *Luid1, const LUID *Luid2)
 /*************************************************************************
  * RtlCopyLuidAndAttributesArray   [NTDLL.@]
  *
- * Copies an array of LUID's and attributes.
+ * Copy an array of local unique ID's and attributes.
+ *
+ * PARAMS
+ *  Count [I] Number of Luid/attributes in Src
+ *  Src   [I] Source Luid/attributes to copy
+ *  Dest  [O] Destination for copied Luid/attributes
  *
  * RETURNS
  *  Nothing.
+ *
+ * NOTES
+ *  Dest must be large enough to hold Src.
  */
 void WINAPI RtlCopyLuidAndAttributesArray(
     ULONG Count,

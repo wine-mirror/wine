@@ -35,6 +35,21 @@
 
 /*********************************************************************
  *                  _memicmp   (NTDLL.@)
+ *
+ * Compare two blocks of memory as strings, ignoring case.
+ *
+ * PARAMS
+ *  s1  [I] First string to compare to s2
+ *  s2  [I] Second string to compare to s1
+ *  len [I] Number of bytes to compare
+ *
+ * RETURNS
+ *  An integer less than, equal to, or greater than zero indicating that
+ *  s1 is less than, equal to or greater than s2 respectively.
+ *
+ * NOTES
+ *  Any Nul characters in s1 or s2 are ignored. This function always
+ *  compares up to len bytes or the first place where s1 and s2 differ.
  */
 INT __cdecl NTDLL__memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 {
@@ -51,6 +66,15 @@ INT __cdecl NTDLL__memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 
 /*********************************************************************
  *                  _strupr   (NTDLL.@)
+ *
+ * Convert a string to upper case.
+ *
+ * PARAMS
+ *  str [I/O] String to convert
+ *
+ * RETURNS
+ *  str. There is no error return, if str is NULL or invalid, this
+ *  function will crash.
  */
 LPSTR __cdecl _strupr( LPSTR str )
 {
@@ -63,7 +87,14 @@ LPSTR __cdecl _strupr( LPSTR str )
 /*********************************************************************
  *                  _strlwr   (NTDLL.@)
  *
- * convert a string in place to lowercase
+ * Convert a string to lowercase
+ *
+ * PARAMS
+ *  str [I/O] String to convert
+ *
+ * RETURNS
+ *  str. There is no error return, if str is NULL or invalid, this
+ *  function will crash.
  */
 LPSTR __cdecl _strlwr( LPSTR str )
 {
@@ -76,16 +107,16 @@ LPSTR __cdecl _strlwr( LPSTR str )
 /*********************************************************************
  *      _ultoa   (NTDLL.@)
  *
- * Converts an unsigned long integer to a string.
+ * Convert an unsigned long integer to a string.
  *
  * RETURNS
- *  Always returns str.
+ *  str.
  *
  * NOTES
- *  Converts value to a '\0' terminated string which is copied to str.
- *  The maximum length of the copied str is 33 bytes.
- *  Does not check if radix is in the range of 2 to 36.
- *  If str is NULL it crashes, as the native function does.
+ *  - Converts value to a Nul terminated string which is copied to str.
+ *  - The maximum length of the copied str is 33 bytes.
+ *  - Does not check if radix is in the range of 2 to 36.
+ *  - If str is NULL it crashes, as the native function does.
  */
 char * __cdecl _ultoa(
     unsigned long value, /* [I] Value to be converted */
@@ -117,17 +148,17 @@ char * __cdecl _ultoa(
 /*********************************************************************
  *      _ltoa   (NTDLL.@)
  *
- * Converts a long integer to a string.
+ * Convert a long integer to a string.
  *
  * RETURNS
- *  Always returns str.
+ *  str.
  *
  * NOTES
- *  Converts value to a '\0' terminated string which is copied to str.
- *  The maximum length of the copied str is 33 bytes. If radix
+ *  - Converts value to a Nul terminated string which is copied to str.
+ *  - The maximum length of the copied str is 33 bytes. If radix
  *  is 10 and value is negative, the value is converted with sign.
- *  Does not check if radix is in the range of 2 to 36.
- *  If str is NULL it crashes, as the native function does.
+ *  - Does not check if radix is in the range of 2 to 36.
+ *  - If str is NULL it crashes, as the native function does.
  */
 char * __cdecl _ltoa(
     long value, /* [I] Value to be converted */
@@ -176,14 +207,14 @@ char * __cdecl _ltoa(
  * Converts an integer to a string.
  *
  * RETURNS
- *  Always returns str.
+ *  str.
  *
  * NOTES
- *  Converts value to a '\0' terminated string which is copied to str.
- *  The maximum length of the copied str is 33 bytes. If radix
+ *  - Converts value to a '\0' terminated string which is copied to str.
+ *  - The maximum length of the copied str is 33 bytes. If radix
  *  is 10 and value is negative, the value is converted with sign.
- *  Does not check if radix is in the range of 2 to 36.
- *  If str is NULL it crashes, as the native function does.
+ *  - Does not check if radix is in the range of 2 to 36.
+ *  - If str is NULL it crashes, as the native function does.
  */
 char * __cdecl _itoa(
     int value, /* [I] Value to be converted */
@@ -200,13 +231,13 @@ char * __cdecl _itoa(
  * Converts a large unsigned integer to a string.
  *
  * RETURNS
- *  Always returns str.
+ *  str.
  *
  * NOTES
- *  Converts value to a '\0' terminated string which is copied to str.
- *  The maximum length of the copied str is 65 bytes.
- *  Does not check if radix is in the range of 2 to 36.
- *  If str is NULL it crashes, as the native function does.
+ *  - Converts value to a '\0' terminated string which is copied to str.
+ *  - The maximum length of the copied str is 65 bytes.
+ *  - Does not check if radix is in the range of 2 to 36.
+ *  - If str is NULL it crashes, as the native function does.
  */
 char * __cdecl _ui64toa(
     ULONGLONG value, /* [I] Value to be converted */
@@ -241,21 +272,21 @@ char * __cdecl _ui64toa(
  * Converts a large integer to a string.
  *
  * RETURNS
- *  Always returns str.
+ *  str.
  *
  * NOTES
- *  Converts value to a '\0' terminated string which is copied to str.
- *  The maximum length of the copied str is 65 bytes. If radix
+ *  - Converts value to a Nul terminated string which is copied to str.
+ *  - The maximum length of the copied str is 65 bytes. If radix
  *  is 10 and value is negative, the value is converted with sign.
- *  Does not check if radix is in the range of 2 to 36.
- *  If str is NULL it crashes, as the native function does.
+ *  - Does not check if radix is in the range of 2 to 36.
+ *  - If str is NULL it crashes, as the native function does.
  *
  * DIFFERENCES
  * - The native DLL converts negative values (for base 10) wrong:
- *                     -1 is converted to -18446744073709551615
- *                     -2 is converted to -18446744073709551614
- *   -9223372036854775807 is converted to  -9223372036854775809
- *   -9223372036854775808 is converted to  -9223372036854775808
+ *|                     -1 is converted to -18446744073709551615
+ *|                     -2 is converted to -18446744073709551614
+ *|   -9223372036854775807 is converted to  -9223372036854775809
+ *|   -9223372036854775808 is converted to  -9223372036854775808
  *   The native msvcrt _i64toa function and our ntdll _i64toa function
  *   do not have this bug.
  */
@@ -303,18 +334,20 @@ char * __cdecl _i64toa(
 /*********************************************************************
  *      _atoi64   (NTDLL.@)
  *
- * Converts a string to a large integer.
+ * Convert a string to a large integer.
  *
  * PARAMS
- *  str [I] Wstring to be converted
+ *  str [I] String to be converted
  *
  * RETURNS
- *  On success it returns the integer value otherwise it returns 0.
+ *  Success: The integer value represented by str.
+ *  Failure: 0. Note that this cannot be distinguished from a successful
+ *           return, if the string contains "0".
  *
  * NOTES
- *  Accepts: {whitespace} [+|-] {digits}
- *  No check is made for value overflow, only the lower 64 bits are assigned.
- *  If str is NULL it crashes, as the native function does.
+ *  - Accepts: {whitespace} [+|-] {digits}
+ *  - No check is made for value overflow, only the lower 64 bits are assigned.
+ *  - If str is NULL it crashes, as the native function does.
  */
 LONGLONG __cdecl _atoi64( char *str )
 {
@@ -343,6 +376,15 @@ LONGLONG __cdecl _atoi64( char *str )
 
 /*********************************************************************
  *		_splitpath (NTDLL.@)
+ *
+ * Split a path into its component pieces.
+ *
+ * PARAMS
+ *  inpath [I] Path to split
+ *  drv    [O] Destination for drive component (e.g. "A:"). Must be at least 3 characters.
+ *  dir    [O] Destination for directory component. Should be at least MAX_PATH characters.
+ *  fname  [O] Destination for File name component. Should be at least MAX_PATH characters.
+ *  ext    [O] Destination for file extension component. Should be at least MAX_PATH characters.
  */
 void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
                         char* fname, char * ext )
