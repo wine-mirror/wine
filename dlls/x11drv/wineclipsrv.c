@@ -77,6 +77,10 @@
 
 /* Internal definitions (do not use these directly) */
 
+#ifdef __SUNPRO_C
+#define __FUNCTION__ __func__
+#endif
+
 enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL_COUNT };
 
 extern char __debug_msg_enabled[__DBCL_COUNT];

@@ -215,7 +215,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xb7:  /* append */
-        LOBYTE(context->Eax) = 0; /* not installed */
+        AL_reg(context) = 0; /* not installed */
         break;
     case 0xb8:  /* network */
         switch (LOBYTE(context->Eax))

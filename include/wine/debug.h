@@ -76,7 +76,20 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 
-#else  /* __GNUC__ */
+#elif defined(__SUNPRO_C)
+
+#define __WINE_DPRINTF(dbcl,dbch) \
+  do { if(__WINE_GET_DEBUGGING(dbcl,(dbch))) { \
+       const char * const __dbch = (dbch); \
+       const enum __WINE_DEBUG_CLASS __dbcl = __WINE_DBCL##dbcl; \
+       __WINE_DBG_LOG
+
+#define __WINE_DBG_LOG(...) \
+   wine_dbg_log( __dbcl, __dbch, __func__, __VA_ARGS__); } } while(0)
+
+#define __WINE_PRINTF_ATTR(fmt,args)
+
+#else  /* !__GNUC__ && !__SUNPRO_C */
 
 #define __WINE_DPRINTF(dbcl,dbch) \
     (!__WINE_GET_DEBUGGING(dbcl,(dbch)) || \
@@ -85,7 +98,7 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_PRINTF_ATTR(fmt, args)
 
-#endif  /* __GNUC__ */
+#endif  /* !__GNUC__ && !__SUNPRO_C */
 
 
 /*

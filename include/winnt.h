@@ -152,11 +152,11 @@
 # define NONAMELESSUNION
 #else
 /* Anonymous struct support starts with gcc/g++ 2.96 */
-# if !defined(NONAMELESSSTRUCT) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 96)))
+# if !defined(NONAMELESSSTRUCT) && (defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 96)))) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #  define NONAMELESSSTRUCT
 # endif
 /* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
-# if !defined(NONAMELESSUNION) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))
+# if !defined(NONAMELESSUNION) && (defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #  define NONAMELESSUNION
 # endif
 #endif
@@ -1137,6 +1137,18 @@ typedef CONTEXT *PCONTEXT;
 #endif  /* __i386__ */
 
 #ifdef __sparc__
+
+#ifdef __SUNPRO_C
+static DWORD __builtin_return_address(int p_iDepth)
+{
+  asm("ta      3");
+  asm("mov     %fp, %l0");
+  while (p_iDepth--)
+    asm("ld      [%l0+56], %l0");
+  asm("ld      [%l0+60], %i0");
+}
+#endif
+
 /* FIXME: use getcontext() to retrieve full context */
 #define _GET_CONTEXT \
     CONTEXT context;   \
@@ -1210,7 +1222,17 @@ typedef CONTEXT *PCONTEXT;
             ".previous"); } \
     static void func(void)
 # else  /* __i386__ */
-#  error You must define the DECL_GLOBAL_CONSTRUCTOR macro for your platform
+#  ifdef __sparc__
+#   define DECL_GLOBAL_CONSTRUCTOR(func) \
+     static void __dummy_init_##func(void) { \
+         asm("\t.section \".init\",#alloc,#execinstr\n" \
+             "\tcall " #func "\n" \
+             "\tnop\n" \
+	     "\t.section \".text\",#alloc,#execinstr\n" ); } \
+     static void func(void)
+#  else
+#   error You must define the DECL_GLOBAL_CONSTRUCTOR macro for your platform
+#  endif
 # endif
 #endif  /* __GNUC__ */
 
