@@ -114,7 +114,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     GET_FS( fs );
     DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
 
-    SYSLEVEL_CheckNotLevel( 1 );
+    SYSLEVEL_CheckNotLevel( 2 );
 
     if (*relay_addr == 0xc3) /* cdecl */
     {
@@ -204,7 +204,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
              buffer, ret, ret_addr, fs );
 
-    SYSLEVEL_CheckNotLevel( 1 );
+    SYSLEVEL_CheckNotLevel( 2 );
 
     return ret;
 }
@@ -256,7 +256,7 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
             EBP_reg(context), ESP_reg(context), DS_reg(context),
             ES_reg(context), GS_reg(context), EFL_reg(context) );
 
-    SYSLEVEL_CheckNotLevel( 1 );
+    SYSLEVEL_CheckNotLevel( 2 );
 
     /* Now call the real function */
     switch(nb_args)
@@ -300,7 +300,7 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
             EBP_reg(context), ESP_reg(context), DS_reg(context),
             ES_reg(context), GS_reg(context), EFL_reg(context) );
 
-    SYSLEVEL_CheckNotLevel( 1 );
+    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 #else  /* __i386__ */
