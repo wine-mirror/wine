@@ -170,7 +170,13 @@ xf86vmode_setdisplaymode(width,height) {
     orig_mode->vsyncend = mod_tmp.vsyncend; 
     orig_mode->vtotal = mod_tmp.vtotal;
     orig_mode->flags = mod_tmp.flags; 
-    orig_mode->private = mod_tmp.private;
+	/* copy private data to our orig_mode structure */
+    orig_mode->privsize = mod_tmp.privsize;
+    if (orig_mode->privsize)
+    {
+      orig_mode->private = malloc(mod_tmp.privsize);
+      memcpy(orig_mode->private, mod_tmp.private, mod_tmp.privsize);
+    }
 
     TSXF86VidModeGetAllModeLines(display,DefaultScreen(display),&mode_count,&all_modes);
     for (i=0;i<mode_count;i++) {
@@ -202,8 +208,10 @@ void xf86vmode_restore() {
     if (!orig_mode)
 	return;
     TSXF86VidModeSwitchToMode(display,DefaultScreen(display),orig_mode);
+    /* manually free the private data if it was allocated */
     if (orig_mode->privsize)
-	TSXFree(orig_mode->private);		
+	free(orig_mode->private);		
+
     free(orig_mode);
     orig_mode = NULL;
 }
