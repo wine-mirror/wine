@@ -30,12 +30,15 @@ winegcc$(EXEEXT): winegcc.o utils.o
 	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
 
 install:: $(PROGRAMS)
-	$(MKINSTALLDIRS) $(bindir)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_PROGRAM) winegcc$(EXEEXT) $(bindir)/winegcc$(EXEEXT)
 	cd $(bindir) && $(RM) wineg++$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) wineg++$(EXEEXT)
 	cd $(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)
+	$(INSTALL_DATA) $(SRCDIR)/winegcc.man $(mandir)/man$(prog_manext)/winegcc.$(prog_manext)
+	cd $(mandir)/man$(prog_manext) && $(RM) wineg++.$(prog_manext) && $(LN_S) winegcc.$(prog_manext) wineg++.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winegcc$(EXEEXT) $(bindir)/wineg++$(EXEEXT) $(bindir)/winecpp$(EXEEXT)
+	$(RM) $(bindir)/winegcc$(EXEEXT) $(bindir)/wineg++$(EXEEXT) $(bindir)/winecpp$(EXEEXT) \
+	      $(mandir)/man$(prog_manext)/winegcc.$(prog_manext) $(mandir)/man$(prog_manext)/wineg++.$(prog_manext)
 
 ### Dependencies:
