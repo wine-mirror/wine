@@ -3270,11 +3270,38 @@ TOOLBAR_SetButtonWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (infoPtr == NULL)
+    if (infoPtr == NULL) {
+	TRACE("Toolbar not initialized yet?????\n");
 	return FALSE;
+    }
 
+    /* if setting to current values, ignore */
+    if ((infoPtr->cxMin == (INT)LOWORD(lParam)) &&
+	(infoPtr->cxMax == (INT)HIWORD(lParam))) {
+	TRACE("matches current width, min=%d, max=%d, no recalc\n",
+	      infoPtr->cxMin, infoPtr->cxMax);
+	return TRUE; 
+    }
+
+    /* save new values */
     infoPtr->cxMin = (INT)LOWORD(lParam);
     infoPtr->cxMax = (INT)HIWORD(lParam);
+
+    /* if both values are 0 then we are done */
+    if (lParam == 0) {
+	TRACE("setting both min and max to 0, norecalc\n"); 
+	return TRUE;
+    }
+
+    /* otherwise we need to recalc the toolbar and in some cases
+       recalc the bounding rectangle (does DrawText w/ DT_CALCRECT
+       which doesn't actually draw - GA). */
+    TRACE("number of buttons %d, cx=%d, cy=%d, recalcing\n", 
+	infoPtr->nNumButtons, infoPtr->cxMin, infoPtr->cxMax);
+
+    TOOLBAR_CalcToolbar (hwnd);
+
+    InvalidateRect (hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -4160,12 +4187,15 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
     HDC hdc;
     PAINTSTRUCT ps;
 
-    TRACE("\n");
-
     /* fill ps.rcPaint with a default rect */
     memcpy(&(ps.rcPaint), &(infoPtr->rcBound), sizeof(infoPtr->rcBound)); 
 
     hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
+
+    TRACE("psrect=(%d,%d)-(%d,%d)\n",
+	  ps.rcPaint.left, ps.rcPaint.top,
+	  ps.rcPaint.right, ps.rcPaint.bottom);
+
     TOOLBAR_Refresh (hwnd, hdc, &ps);
     if (!wParam) EndPaint (hwnd, &ps);
 
