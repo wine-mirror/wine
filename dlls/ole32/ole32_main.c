@@ -12,9 +12,8 @@ DEFAULT_DEBUG_CHANNEL(ole);
 HINSTANCE OLE32_hInstance = 0;
 static INT OLE32_RefCount = 0;
 
-/*************************************************************************
- * OLE32_DllEntryPoint
- *
+/***********************************************************************
+ *		DllEntryPoint (OLE32.@)
  */
 
 BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
@@ -37,6 +36,9 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
     return TRUE;
 }
 
+/***********************************************************************
+ *		DllRegisterServer (OLE32.@)
+ */
 HRESULT WINAPI OLE32_DllRegisterServer() {
     /* FIXME: what Interfaces should we register ... */
     FIXME("(), stub!\n");

@@ -10,6 +10,9 @@
 #include "winerror.h"
 #include "debugtools.h"
 
+/***********************************************************************
+ *		DCIOpenProvider (DCIMAN32.@)
+ */
 HDC WINAPI
 DCIOpenProvider(void) {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
