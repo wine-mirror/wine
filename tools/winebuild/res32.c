@@ -310,8 +310,8 @@ int output_resources( FILE *outfile )
 
     /* resource directory definition */
 
-    fprintf( outfile, "#define OFFSETOF(field) ((char*)&resources.field - (char*)&resources)\n" );
-    fprintf( outfile, "static struct {\n" );
+    fprintf( outfile, "#define OFFSETOF(field) ((char*)&((struct res_struct *)0)->field - (char*)((struct res_struct *) 0))\n" );
+    fprintf( outfile, "static struct res_struct{\n" );
     fprintf( outfile, "  struct res_dir        type_dir;\n" );
     fprintf( outfile, "  struct res_dir_entry  type_entries[%d];\n", nb_types );
 
