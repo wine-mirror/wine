@@ -191,7 +191,7 @@ static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val, LPDWORD
      
     switch (wmw->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
-	ret = (val * 1000) / wmw->lpWaveFormat->nAvgBytesPerSec;
+	ret = MulDiv(val,1000,wmw->lpWaveFormat->nAvgBytesPerSec);
 	break;
     case MCI_FORMAT_BYTES:
 	ret = val;
