@@ -356,7 +356,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
          * so, we don't consider EINVAL an error here
          */
         if (rc != 0 && errno != EINVAL) {
-	    ERR("ioctl(%s, SNDCTL_DSP_SETDUPLEX) failed (%s)\n", ossdev->dev_name, strerror(errno));
+            WARN("ioctl(%s, SNDCTL_DSP_SETDUPLEX) failed (%s)\n", ossdev->dev_name, strerror(errno));
             goto error2;
 	}
     }
