@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+#
+# Update the dll dependencies in the dlls main Makefile.in.
+# Must be run in the dlls/ directory of the Wine tree.
+#
+# Copyright 2001 Alexandre Julliard
+#
+
+$makefiles = `find . -name Makefile.in -print`;
+
+%imports = ();
+%directories = ();
+%altnames = ();
+
+foreach $i (split(/\s/,$makefiles))
+{
+    open MAKE,$i;
+    while (<MAKE>)
+    {
+        chop;
+        if (/^MODULE\s*=\s*([a-zA-Z0-9_.]+)/)
+        {
+            $module = $1;
+            ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+            next;
+        }
+        if (/^ALTNAMES\s*=\s*(.*)/)
+        {
+            my @list = split(/\s/,$1);
+            $altnames{$module} = \@list;
+            next;
+        }
+    }
+}
+
+foreach $mod (sort keys %directories)
+{
+    my $spec = sprintf("%s/%s.spec", $directories{$mod}, $mod);
+    open SPEC,$spec or die "cannot open $spec";
+    $imports{$mod} = [ ];
+    while (<SPEC>)
+    {
+        if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_]+)\.dll/)
+        {
+            my $imp = $2;
+            push @{$imports{$mod}}, $imp;
+            next;
+        }
+        if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_.]+)/)
+        {
+            my $imp = $2;
+            push @{$imports{$mod}}, $imp;
+            next;
+        }
+    }
+}
+
+open OLDMAKE,"Makefile.in" or die "cannot open Makefile.in";
+open NEWMAKE,">Makefile.in.new" or die "cannot create Makefile.in.new";
+
+while (<OLDMAKE>)
+{
+    last if (/^EXTRADLLNAMES/);
+    print NEWMAKE $_;
+}
+close OLDMAKE;
+
+printf NEWMAKE "EXTRADLLNAMES =";
+foreach $extra (values %altnames) { push @extra, @$extra; }
+foreach $extra (sort @extra)
+{
+    printf NEWMAKE " \\\n\t%s", $extra;
+}
+
+printf NEWMAKE "\n\nSUBDIRS =";
+foreach $dir (sort values %directories)
+{
+    printf NEWMAKE " \\\n\t%s", $dir;
+}
+printf NEWMAKE "\n";
+
+print NEWMAKE <<EOF;
+
+\@MAKE_RULES\@
+
+all: \$(DLLS:%=lib%.\@LIBEXT\@) \$(EXTRADLLNAMES:%=lib%.\@LIBEXT\@)
+
+# Map library name to directory
+
+EOF
+
+foreach $mod (sort keys %directories)
+{
+    my $count = 0;
+    printf NEWMAKE "lib%s.\@LIBEXT\@", $mod;
+    foreach $i (sort @{$altnames{$mod}})
+    {
+        if ($count++ >= 3)
+        {
+            $count = 0;
+            printf NEWMAKE " \\\n ";
+        }
+        printf NEWMAKE " lib%s.\@LIBEXT\@", $i;
+    }
+    printf NEWMAKE ": %s/lib%s.\@LIBEXT\@\n", $directories{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.\@LIBEXT\@ \$@\n\n", $directories{$mod}, $mod;
+}
+
+print NEWMAKE "# Inter-dll dependencies (only necessary for dynamic libs)\n\n";
+
+my @depends = ();
+foreach $mod (sort keys %imports)
+{
+    next unless $#{$imports{$mod}} >= 0;
+    my $dep = sprintf("%s/lib%s.\@LIBEXT\@:", $directories{$mod}, $mod);
+    foreach $i (@{$imports{$mod}})
+    {
+        $dep .= sprintf(" lib%s.\@LIBEXT\@", $i);
+    }
+    push @depends, $dep . "\n";
+}
+print NEWMAKE sort @depends;
+
+print NEWMAKE <<EOF;
+
+\$(DLLFILES): dummy
+	\@cd `dirname \$\@` && \$(MAKE)
+
+\$(DLLFILES:%=%_install_): dummy
+	\@cd `dirname \$\@` && \$(MAKE) install
+
+\$(DLLFILES:%=%_uninstall_): dummy
+	\@cd `dirname \$\@` && \$(MAKE) uninstall
+
+\$(DLLFILES:%=%_checklink_): dummy
+	\@cd `dirname \$\@` && \$(MAKE) checklink
+
+install:: \$(DLLFILES:%=%_install_)
+
+uninstall:: \$(DLLFILES:%=%_uninstall_)
+
+checklink:: \$(DLLFILES:%=%_checklink_)
+EOF
+
+close NEWMAKE;
+rename "Makefile.in.new", "Makefile.in";
+printf "Successfully updated Makefile.in\n";
