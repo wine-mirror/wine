@@ -960,11 +960,14 @@
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) CreateTimerQueueTimer
 @ stdcall DeleteTimerQueueEx (long long) DeleteTimerQueueEx
 @ stdcall DeleteTimerQueueTimer(long long long) DeleteTimerQueueTimer
+@ stdcall DnsHostnameToComputerNameA (str ptr ptr) DnsHostnameToComputerNameA
+@ stdcall DnsHostnameToComputerNameW (wstr ptr ptr) DnsHostnameToComputerNameW
 @ stdcall GetCalendarInfoA(long long long ptr long ptr) GetCalendarInfoA
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW
 @ stdcall GetSystemWindowsDirectoryA(ptr long) GetSystemWindowsDirectoryA
 @ stdcall GetSystemWindowsDirectoryW(ptr long) GetSystemWindowsDirectoryW
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long) InitializeCriticalSectionAndSpinCount
+@ stub PrivCopyFileExW
 @ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId
 @ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
 @ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW

@@ -643,3 +643,27 @@ BOOL WINAPI SetComputerNameExA( COMPUTER_NAME_FORMAT type, LPCSTR lpComputerName
         return FALSE;
     }
 }
+
+/***********************************************************************
+ *              DnsHostnameToComputerNameA         (KERNEL32.@)
+ */
+BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR Hostname, LPSTR ComputerName,
+                              LPDWORD nSize)
+{
+    FIXME("(%s, %s, %08lx): stub\n", debugstr_a(Hostname),
+          debugstr_a(ComputerName), *nSize);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *              DnsHostnameToComputerNameW         (KERNEL32.@)
+ */
+BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR Hostname, LPWSTR ComputerName,
+                              LPDWORD nSize)
+{
+    FIXME("(%s, %s, %08lx): stub\n", debugstr_w(Hostname),
+          debugstr_w(ComputerName), *nSize);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

@@ -1223,6 +1223,9 @@ BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DeviceIoControl(HANDLE,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);
 BOOL        WINAPI DisconnectNamedPipe(HANDLE);
+BOOL        WINAPI DnsHostnameToComputerNameA(LPCSTR,LPSTR,LPDWORD);
+BOOL        WINAPI DnsHostnameToComputerNameW(LPCWSTR,LPWSTR,LPDWORD);
+#define     DnsHostnameToComputerName WINELIB_NAME_AW(DnsHostnameToComputerName)
 BOOL        WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD,BOOL,DWORD);
 BOOL        WINAPI EscapeCommFunction(HANDLE,UINT);
