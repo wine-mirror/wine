@@ -1192,7 +1192,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 		return DSERR_INVALIDPARAM;
 
 	*freq = This->freq;
-	TRACE("-> %d\n", *freq);
+	TRACE("-> %ld\n", *freq);
 
 	return DS_OK;
 }

@@ -14,7 +14,6 @@
 #include "aspi.h"
 #include "winescsi.h"
 #include "winaspi.h"
-#include "winescsi.h"
 #include "options.h"
 #include "heap.h"
 #include "debugtools.h"

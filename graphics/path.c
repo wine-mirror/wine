@@ -67,7 +67,7 @@ DEFAULT_DEBUG_CHANNEL(gdi)
 #define GROW_FACTOR_DENOM    1  /* Denominator of grow factor             */
 
 
-static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
+static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    HRGN *pHrgn);
 static void   PATH_EmptyPath(GdiPath *pPath);
 static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint,
@@ -1133,7 +1133,7 @@ static BOOL PATH_FlattenPath(GdiPath *pPath)
  * error occurs, SetLastError is called with the appropriate value and
  * FALSE is returned.
  */
-static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
+static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    HRGN *pHrgn)
 {
    int    numStrokes, iStroke, i;
@@ -1143,7 +1143,7 @@ static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
    assert(pPath!=NULL);
    assert(pHrgn!=NULL);
 
-      PATH_FlattenPath(pPath);
+   PATH_FlattenPath(pPath);
 
    /* FIXME: What happens when number of points is zero? */
    

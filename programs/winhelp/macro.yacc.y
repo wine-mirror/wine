@@ -5,6 +5,7 @@
  * Copyright 1996 Ulrich Schmid
  */
 
+#include <stdlib.h>
 #include "macro.h"
 
 static int   skip = 0;
