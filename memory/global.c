@@ -388,22 +388,25 @@ HGLOBAL16 WINAPI GlobalFree16(
  */
 SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 {
-    TRACE("(%04x) -> %08lx\n",
-                    handle, MAKELONG( 0, GlobalHandleToSel16(handle)) );
+    WORD sel = GlobalHandleToSel16( handle );
+    TRACE("(%04x) -> %08lx\n", handle, MAKELONG( 0, sel ) );
+
     if (handle)
     {
 	if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
 
 	if (!VALID_HANDLE(handle)) {
 	    WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
-	    return (SEGPTR)0;
+	    sel = 0;
 	}
-	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
-        GET_ARENA_PTR(handle)->lockCount++;
-	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(handle), 0 );
-	/* FIXME: put segment value in CX as well */
+	if (!GET_ARENA_PTR(handle)->base) 
+            sel = 0;
+        else
+            GET_ARENA_PTR(handle)->lockCount++;
     }
-    return (SEGPTR)0;
+
+    CURRENT_STACK16->ecx = sel;  /* selector must be returned in CX as well */
+    return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
 }
 
 
