@@ -1076,7 +1076,7 @@ int no_flush( struct fd *fd, struct event **event )
 }
 
 /* default get_file_info() routine */
-int no_get_file_info( struct fd *fd, struct get_file_info_reply *info, int *flags )
+int no_get_file_info( struct fd *fd, int *flags )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     *flags = 0;
@@ -1138,20 +1138,7 @@ DECL_HANDLER(get_handle_fd)
             assert( fd->unix_fd != -1 );
             send_client_fd( current->process, fd->unix_fd, req->handle );
         }
-        reply->type = fd->fd_ops->get_file_info( fd, NULL, &reply->flags );
-        release_object( fd );
-    }
-}
-
-/* get a file information */
-DECL_HANDLER(get_file_info)
-{
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
-
-    if (fd)
-    {
-        int flags;
-        fd->fd_ops->get_file_info( fd, reply, &flags );
+        reply->type = fd->fd_ops->get_file_info( fd, &reply->flags );
         release_object( fd );
     }
 }

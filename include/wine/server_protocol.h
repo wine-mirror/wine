@@ -830,31 +830,6 @@ struct flush_file_reply
 
 
 
-struct get_file_info_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct get_file_info_reply
-{
-    struct reply_header __header;
-    int          type;
-    int          attr;
-    time_t       access_time;
-    time_t       write_time;
-    time_t       change_time;
-    int          size_high;
-    int          size_low;
-    int          alloc_high;
-    int          alloc_low;
-    int          links;
-    int          index_high;
-    int          index_low;
-    unsigned int serial;
-};
-
-
-
 struct lock_file_request
 {
     struct request_header __header;
@@ -3165,7 +3140,6 @@ enum request
     REQ_get_handle_fd,
     REQ_truncate_file,
     REQ_flush_file,
-    REQ_get_file_info,
     REQ_lock_file,
     REQ_unlock_file,
     REQ_create_socket,
@@ -3350,7 +3324,6 @@ union generic_request
     struct get_handle_fd_request get_handle_fd_request;
     struct truncate_file_request truncate_file_request;
     struct flush_file_request flush_file_request;
-    struct get_file_info_request get_file_info_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
     struct create_socket_request create_socket_request;
@@ -3533,7 +3506,6 @@ union generic_reply
     struct get_handle_fd_reply get_handle_fd_reply;
     struct truncate_file_reply truncate_file_reply;
     struct flush_file_reply flush_file_reply;
-    struct get_file_info_reply get_file_info_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
     struct create_socket_reply create_socket_reply;
@@ -3672,6 +3644,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 138
+#define SERVER_PROTOCOL_VERSION 139
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

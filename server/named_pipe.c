@@ -125,8 +125,7 @@ static const struct object_ops named_pipe_ops =
 
 /* common to clients and servers */
 static int pipe_end_get_poll_events( struct fd *fd );
-static int pipe_end_get_info( struct fd *fd, 
-                  struct get_file_info_reply *reply, int *flags );
+static int pipe_end_get_info( struct fd *fd, int *flags );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
@@ -471,22 +470,8 @@ static int pipe_client_flush( struct fd *fd, struct event **event )
     return 0;
 }
 
-static int pipe_end_get_info( struct fd *fd, 
-                        struct get_file_info_reply *reply, int *flags )
+static int pipe_end_get_info( struct fd *fd, int *flags )
 {
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_PIPE;
-        reply->attr        = 0;
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
     *flags = 0;
     return FD_TYPE_DEFAULT;
 }

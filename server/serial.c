@@ -61,7 +61,7 @@ static void serial_destroy(struct object *obj);
 
 static int serial_get_poll_events( struct fd *fd );
 static void serial_poll_event( struct fd *fd, int event );
-static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int serial_get_info( struct fd *fd, int *flags );
 static int serial_flush( struct fd *fd, struct event **event );
 static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count);
 
@@ -201,24 +201,10 @@ static int serial_get_poll_events( struct fd *fd )
     return events;
 }
 
-static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
+static int serial_get_info( struct fd *fd, int *flags )
 {
     struct serial *serial = get_fd_user( fd );
     assert( serial->obj.ops == &serial_ops );
-
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_CHAR;
-        reply->attr        = 0;
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
 
     *flags = 0;
     if (!(serial->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))

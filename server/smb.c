@@ -57,7 +57,7 @@ static void smb_dump( struct object *obj, int verbose );
 static struct fd *smb_get_fd( struct object *obj );
 static void smb_destroy(struct object *obj);
 
-static int smb_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int smb_get_info( struct fd *fd, int *flags );
 static int smb_get_poll_events( struct fd *fd );
 
 struct smb
@@ -130,27 +130,12 @@ static int smb_get_poll_events( struct fd *fd )
     return events;
 }
 
-static int smb_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
+static int smb_get_info( struct fd *fd, int *flags )
 {
 /*    struct smb *smb = get_fd_user( fd ); */
 /*    assert( smb->obj.ops == &smb_ops ); */
 
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_CHAR;
-        reply->attr        = 0;
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
-
     *flags = 0;
-
     return FD_TYPE_SMB;
 }
 

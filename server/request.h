@@ -144,7 +144,6 @@ DECL_HANDLER(alloc_file_handle);
 DECL_HANDLER(get_handle_fd);
 DECL_HANDLER(truncate_file);
 DECL_HANDLER(flush_file);
-DECL_HANDLER(get_file_info);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
 DECL_HANDLER(create_socket);
@@ -328,7 +327,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_handle_fd,
     (req_handler)req_truncate_file,
     (req_handler)req_flush_file,
-    (req_handler)req_get_file_info,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,
     (req_handler)req_create_socket,

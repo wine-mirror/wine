@@ -69,7 +69,7 @@ static void file_destroy( struct object *obj );
 static int file_get_poll_events( struct fd *fd );
 static void file_poll_event( struct fd *fd, int event );
 static int file_flush( struct fd *fd, struct event **event );
-static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int file_get_info( struct fd *fd, int *flags );
 static void file_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
 static const struct object_ops file_ops =
@@ -266,49 +266,10 @@ static int file_flush( struct fd *fd, struct event **event )
     return ret;
 }
 
-static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
+static int file_get_info( struct fd *fd, int *flags )
 {
-    struct stat st;
     struct file *file = get_fd_user( fd );
-    int unix_fd = get_unix_fd( fd );
 
-    if (reply)
-    {
-        if (fstat( unix_fd, &st ) == -1)
-        {
-            file_set_error();
-            return FD_TYPE_INVALID;
-        }
-        if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-            S_ISSOCK(st.st_mode) || isatty(unix_fd)) reply->type = FILE_TYPE_CHAR;
-        else reply->type = FILE_TYPE_DISK;
-        if (S_ISDIR(st.st_mode)) reply->attr = FILE_ATTRIBUTE_DIRECTORY;
-        else reply->attr = FILE_ATTRIBUTE_ARCHIVE;
-        if (!(st.st_mode & S_IWUSR)) reply->attr |= FILE_ATTRIBUTE_READONLY;
-        reply->access_time = st.st_atime;
-        reply->write_time  = st.st_mtime;
-        reply->change_time = st.st_ctime;
-        if (S_ISDIR(st.st_mode))
-        {
-            reply->size_high  = 0;
-            reply->size_low   = 0;
-            reply->alloc_high = 0;
-            reply->alloc_low  = 0;
-        }
-        else
-        {
-            file_pos_t  alloc;
-            reply->size_high  = st.st_size >> 32;
-            reply->size_low   = st.st_size & 0xffffffff;
-            alloc = (file_pos_t)st.st_blksize * st.st_blocks;
-            reply->alloc_high = alloc >> 32;
-            reply->alloc_low  = alloc & 0xffffffff;
-        }
-        reply->links       = st.st_nlink;
-        reply->index_high  = st.st_dev;
-        reply->index_low   = st.st_ino;
-        reply->serial      = 0; /* FIXME */
-    }
     *flags = 0;
     if (is_overlapped( file )) *flags |= FD_FLAG_OVERLAPPED;
     return FD_TYPE_DEFAULT;

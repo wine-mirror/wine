@@ -93,7 +93,7 @@ static void sock_destroy( struct object *obj );
 
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
-static int sock_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int sock_get_info( struct fd *fd, int *flags );
 static void sock_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
 static int sock_get_error( int err );
@@ -475,24 +475,11 @@ static int sock_get_poll_events( struct fd *fd )
     return ev;
 }
 
-static int sock_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
+static int sock_get_info( struct fd *fd, int *flags )
 {
     struct sock *sock = get_fd_user( fd );
     assert ( sock->obj.ops == &sock_ops );
 
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_PIPE;
-        reply->attr        = 0;
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
     *flags = 0;
     if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
     if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )

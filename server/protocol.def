@@ -629,26 +629,6 @@ enum fd_type
 @END
 
 
-/* Get information about a file */
-@REQ(get_file_info)
-    obj_handle_t handle;        /* handle to the file */
-@REPLY
-    int          type;          /* file type */
-    int          attr;          /* file attributes */
-    time_t       access_time;   /* last access time */
-    time_t       write_time;    /* last write time */
-    time_t       change_time;   /* last change time */
-    int          size_high;     /* file size */
-    int          size_low;      /* file size */
-    int          alloc_high;    /* size used on disk */
-    int          alloc_low;     /* size used on disk */
-    int          links;         /* number of links */
-    int          index_high;    /* unique index */
-    int          index_low;     /* unique index */
-    unsigned int serial;        /* volume serial number */
-@END
-
-
 /* Lock a region of a file */
 @REQ(lock_file)
     obj_handle_t handle;        /* handle to the file */

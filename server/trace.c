@@ -886,28 +886,6 @@ static void dump_flush_file_reply( const struct flush_file_reply *req )
     fprintf( stderr, " event=%p", req->event );
 }
 
-static void dump_get_file_info_request( const struct get_file_info_request *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
-static void dump_get_file_info_reply( const struct get_file_info_reply *req )
-{
-    fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " attr=%d,", req->attr );
-    fprintf( stderr, " access_time=%ld,", (long)req->access_time );
-    fprintf( stderr, " write_time=%ld,", (long)req->write_time );
-    fprintf( stderr, " change_time=%ld,", (long)req->change_time );
-    fprintf( stderr, " size_high=%d,", req->size_high );
-    fprintf( stderr, " size_low=%d,", req->size_low );
-    fprintf( stderr, " alloc_high=%d,", req->alloc_high );
-    fprintf( stderr, " alloc_low=%d,", req->alloc_low );
-    fprintf( stderr, " links=%d,", req->links );
-    fprintf( stderr, " index_high=%d,", req->index_high );
-    fprintf( stderr, " index_low=%d,", req->index_low );
-    fprintf( stderr, " serial=%08x", req->serial );
-}
-
 static void dump_lock_file_request( const struct lock_file_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -2585,7 +2563,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_handle_fd_request,
     (dump_func)dump_truncate_file_request,
     (dump_func)dump_flush_file_request,
-    (dump_func)dump_get_file_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_create_socket_request,
@@ -2766,7 +2743,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_handle_fd_reply,
     (dump_func)0,
     (dump_func)dump_flush_file_reply,
-    (dump_func)dump_get_file_info_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
     (dump_func)dump_create_socket_reply,
@@ -2947,7 +2923,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_handle_fd",
     "truncate_file",
     "flush_file",
-    "get_file_info",
     "lock_file",
     "unlock_file",
     "create_socket",
