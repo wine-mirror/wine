@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wingdi.h"
 #include "commctrl.h"
 #include "cache.h"
 #include "comctl32.h"

@@ -28,7 +28,6 @@
 #include "debugtools.h"
 #include "keyboard.h"
 #include "message.h"
-#include "windef.h"
 #include "winnls.h"
 #include "x11drv.h"
 

@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wingdi.h"
 #include "win.h"
 #include "winnls.h"
 #include "commctrl.h"

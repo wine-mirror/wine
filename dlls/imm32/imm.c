@@ -9,7 +9,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "windef.h"
 #include "debugtools.h"
 #include "winversion.h"
 #include "imm.h"

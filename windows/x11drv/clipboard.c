@@ -64,7 +64,6 @@
 #include "clipboard.h"
 #include "message.h"
 #include "win.h"
-#include "windef.h"
 #include "x11drv.h"
 #include "bitmap.h"
 #include "heap.h"

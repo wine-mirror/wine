@@ -10,7 +10,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"
-#include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "debugtools.h"

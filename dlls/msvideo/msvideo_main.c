@@ -8,7 +8,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wingdi.h"
 #include "vfw.h"
 #include "wine/winestring.h"
 #include "driver.h"
