@@ -380,6 +380,43 @@ typedef struct _SHELLVIEWDATA   /* idl */
 DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
 
 /**********************************************************************
+ * SHGetSetSettings ()
+ */
+
+typedef struct
+{
+    BOOL fShowAllObjects : 1;
+    BOOL fShowExtensions : 1;
+    BOOL fNoConfirmRecycle : 1;
+
+    BOOL fShowSysFiles : 1;
+    BOOL fShowCompColor : 1;
+    BOOL fDoubleClickInWebView : 1;
+    BOOL fDesktopHTML : 1;
+    BOOL fWin95Classic : 1;
+    BOOL fDontPrettyPath : 1;
+    BOOL fShowAttribCol : 1;
+    BOOL fMapNetDrvBtn : 1;
+    BOOL fShowInfoTip : 1;
+    BOOL fHideIcons : 1;
+    BOOL fWebView : 1;
+    BOOL fFilter : 1;
+    BOOL fShowSuperHidden : 1;
+    BOOL fNoNetCrawling : 1;
+
+    DWORD dwWin95Unused;
+    UINT  uWin95Unused;
+    LONG   lParamSort;
+    int    iSortDirection;
+    UINT   version;
+    UINT uNotUsed;
+    BOOL fSepProcess: 1;
+    BOOL fStartPanelOn: 1;
+    BOOL fShowStartPage: 1;
+    UINT fSpareFlags : 13;
+} SHELLSTATE, *LPSHELLSTATE;
+
+/**********************************************************************
  * SHGetSettings ()
  */
 typedef struct

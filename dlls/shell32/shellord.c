@@ -174,9 +174,16 @@ BOOL WINAPI GetFileNameFromBrowse(
 /*************************************************************************
  * SHGetSetSettings				[SHELL32.68]
  */
-VOID WINAPI SHGetSetSettings(DWORD x, DWORD y, DWORD z)
+VOID WINAPI SHGetSetSettings(LPSHELLSTATE lpss, DWORD dwMask, BOOL bSet)
 {
-	FIXME("0x%08lx 0x%08lx 0x%08lx\n", x, y, z);
+  if(bSet)
+  {
+    FIXME("%p 0x%08lx TRUE\n", lpss, dwMask);
+  }
+  else
+  {
+    SHGetSettings((LPSHELLFLAGSTATE)lpss,dwMask);
+  }
 }
 
 /*************************************************************************
