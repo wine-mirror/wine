@@ -1786,6 +1786,8 @@ static fontResource* XFONT_FindFIList( fontResource* pfr, const char* pTypeFace 
     if( !strcasecmp( pfr->lfFaceName, pTypeFace ) ) break;
     pfr = pfr->next;
   }
+  /* Give the app back the font name it asked for. Encarta checks this. */
+  if (pfr) strcpy(pfr->lfFaceName,pTypeFace);
   return pfr;
 }
 
