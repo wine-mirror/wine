@@ -30,7 +30,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "user.h"
-#include "sysmetrics.h"
 
 static int sysMetrics[SM_WINE_CMETRICS+1];
 

@@ -40,7 +40,7 @@ typedef struct tagTIMER
     UINT           msg;  /* WM_TIMER or WM_SYSTIMER */
     UINT           id;
     UINT           timeout;
-    HWINDOWPROC    proc;
+    WNDPROC        proc;
 } TIMER;
 
 #define NB_TIMERS            34
@@ -112,11 +112,11 @@ void TIMER_RemoveThreadTimers(void)
  *           TIMER_SetTimer
  */
 static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
-                              WNDPROC16 proc, WINDOWPROCTYPE type, BOOL sys )
+                                WNDPROC proc, WINDOWPROCTYPE type, BOOL sys )
 {
     int i;
     TIMER * pTimer;
-    HWINDOWPROC winproc = 0;
+    WNDPROC winproc = 0;
 
     if (hwnd && !(hwnd = WIN_IsCurrentThread( hwnd )))
     {
@@ -243,7 +243,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 {
     TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC16)proc,
+    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC)proc,
                            WIN_PROC_16, FALSE );
 }
 
@@ -255,14 +255,14 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                           TIMERPROC proc )
 {
     TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, FALSE );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC)proc, WIN_PROC_32A, FALSE );
 }
 
 
 /***********************************************************************
  *           TIMER_IsTimerValid
  */
-BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, HWINDOWPROC hProc )
+BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, WNDPROC proc )
 {
     int i;
     TIMER *pTimer;
@@ -272,8 +272,7 @@ BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, HWINDOWPROC hProc )
     EnterCriticalSection( &csTimer );
 
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
-        if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
-            (pTimer->proc == hProc))
+        if ((pTimer->hwnd == hwnd) && (pTimer->id == id) && (pTimer->proc == proc))
         {
             ret = TRUE;
             break;
@@ -292,8 +291,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 {
     TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC16)proc,
-                           WIN_PROC_16, TRUE );
+    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC)proc, WIN_PROC_16, TRUE );
 }
 
 
@@ -304,7 +302,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                                 TIMERPROC proc )
 {
     TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, TRUE );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC)proc, WIN_PROC_32A, TRUE );
 }
 
 

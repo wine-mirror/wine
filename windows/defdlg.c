@@ -298,7 +298,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         /* Call dialog procedure */
         result = CallWindowProc16( dlgproc, hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
+        if( WINPROC_GetProcType( (WNDPROC)dlgproc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 

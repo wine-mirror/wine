@@ -39,7 +39,6 @@
 #include "dce.h"
 #include "cursoricon.h"
 #include "nonclient.h"
-#include "message.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"

@@ -142,8 +142,25 @@ extern HBRUSH CACHE_GetPattern55AABrush(void);
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 extern BOOL HOOK_IsHooked( INT id );
 
+/* input.c */
+extern BYTE InputKeyStateTable[256];
+extern BYTE AsyncKeyStateTable[256];
+
 /* syscolor.c */
+extern void SYSCOLOR_Init(void);
 extern HPEN SYSCOLOR_GetPen( INT index );
+
+/* sysmetrics.c */
+extern void SYSMETRICS_Init(void);
+extern INT SYSMETRICS_Set( INT index, INT value );
+
+/* Wine extensions */
+#define SM_WINE_BPP (SM_CMETRICS+1)  /* screen bpp */
+#define SM_WINE_CMETRICS SM_WINE_BPP
+
+/* sysparams.c */
+extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
+extern INT SYSPARAMS_GetMouseButtonSwap( void );
 
 extern HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground );
 

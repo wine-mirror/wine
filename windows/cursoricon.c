@@ -57,8 +57,6 @@
 #include "module.h"
 #include "wine/debug.h"
 #include "user.h"
-#include "queue.h"
-#include "input.h"
 #include "message.h"
 #include "winerror.h"
 #include "msvcrt/excpt.h"

@@ -30,12 +30,9 @@
 #include "user.h"
 #include "win.h"
 #include "message.h"
-#include "queue.h"
 #include "winpos.h"
-#include "dce.h"
 #include "nonclient.h"
 #include "wine/debug.h"
-#include "input.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 

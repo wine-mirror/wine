@@ -30,12 +30,9 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "global.h"
-#include "input.h"
 #include "message.h"
-#include "queue.h"
-#include "spy.h"
-#include "sysmetrics.h"
 #include "user.h"
+#include "thread.h"
 #include "win.h"
 #include "wine/debug.h"
 

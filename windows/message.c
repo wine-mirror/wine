@@ -34,17 +34,15 @@
 #include "message.h"
 #include "winerror.h"
 #include "wine/server.h"
-#include "win.h"
-#include "heap.h"
-#include "input.h"
-#include "spy.h"
-#include "winpos.h"
-#include "dde.h"
-#include "queue.h"
-#include "winproc.h"
-#include "user.h"
-#include "thread.h"
 #include "controls.h"
+#include "dde.h"
+#include "heap.h"
+#include "message.h"
+#include "thread.h"
+#include "user.h"
+#include "win.h"
+#include "winpos.h"
+#include "winproc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
@@ -1061,7 +1059,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
             /* before calling window proc, verify whether timer is still valid;
                there's a slim chance that the application kills the timer
 	       between GetMessage and DispatchMessage API calls */
-            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (WNDPROC)msg->lParam))
                 return 0; /* invalid winproc */
 
 	    return CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
@@ -1153,7 +1151,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
             /* before calling window proc, verify whether timer is still valid;
                there's a slim chance that the application kills the timer
 	       between GetMessage and DispatchMessage API calls */
-            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (WNDPROC)msg->lParam))
                 return 0; /* invalid winproc */
 
 	    return CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,

@@ -26,13 +26,12 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "queue.h"
+#include "message.h"
 #include "win.h"
 #include "user.h"
 #include "thread.h"
 #include "wine/debug.h"
 #include "wine/server.h"
-#include "spy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 

@@ -22,9 +22,9 @@
 #include "wownt32.h"
 #include "winerror.h"
 #include "message.h"
-#include "spy.h"
 #include "thread.h"
 #include "win.h"
+#include "winproc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
@@ -266,7 +266,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
             /* before calling window proc, verify whether timer is still valid;
                there's a slim chance that the application kills the timer
 	       between GetMessage and DispatchMessage API calls */
-            if (!TIMER_IsTimerValid(hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+            if (!TIMER_IsTimerValid(hwnd, (UINT) msg->wParam, (WNDPROC)msg->lParam))
                 return 0; /* invalid winproc */
 
             return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,

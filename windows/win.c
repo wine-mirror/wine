@@ -36,7 +36,6 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "message.h"
-#include "queue.h"
 #include "winpos.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -1944,7 +1943,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
-            retvalue = (LONG)WINPROC_GetProc( (HWINDOWPROC)retvalue, type );
+            retvalue = (LONG)WINPROC_GetProc( (WNDPROC)retvalue, type );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
@@ -2015,9 +2014,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
-            retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
-            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval,
-                             type, WIN_PROC_WINDOW );
+            retval = (LONG)WINPROC_GetProc( (WNDPROC)*ptr, type );
+            WINPROC_SetProc( (WNDPROC *)ptr, (WNDPROC)newval, type, WIN_PROC_WINDOW );
             WIN_ReleasePtr( wndPtr );
             return retval;
         }
@@ -2055,8 +2053,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             }
         case GWL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
-            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval,
-                             type, WIN_PROC_WINDOW );
+            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC)newval, type, WIN_PROC_WINDOW );
             WIN_ReleasePtr( wndPtr );
             return retval;
         case GWL_ID:

@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winproc.h"
 #include "winuser.h"
 #include "wine/windef16.h"
 
@@ -42,7 +41,7 @@ typedef struct tagWND
     HWND           parent;        /* Window parent */
     HWND           owner;         /* Window owner */
     struct tagCLASS *class;       /* Window class */
-    HWINDOWPROC    winproc;       /* Window procedure */
+    WNDPROC        winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     DWORD          tid;           /* Owner thread id */
     HINSTANCE      hInstance;     /* Window hInstance (from CreateWindow) */
@@ -136,15 +135,5 @@ inline static void WIN_ReleasePtr( WND *ptr )
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
-
-/* Classes functions */
-struct tagCLASS;  /* opaque structure */
-struct builtin_class_descr;
-extern ATOM CLASS_RegisterBuiltinClass( const struct builtin_class_descr *descr );
-extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
-                                         INT *winExtra, WNDPROC *winproc,
-                                         DWORD *style, struct tagDCE **dce );
-extern void CLASS_RemoveWindow( struct tagCLASS *cls );
-extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
 #endif  /* __WINE_WIN_H */

@@ -37,15 +37,13 @@
 #include "shlobj.h"  /* DROPFILES */
 
 #include "clipboard.h"
-#include "dce.h"
-#include "wine/debug.h"
-#include "input.h"
 #include "win.h"
 #include "winpos.h"
 #include "windef.h"
 #include "winreg.h"
 #include "x11drv.h"
 #include "shellapi.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 

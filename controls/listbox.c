@@ -29,7 +29,7 @@
 #include "wine/unicode.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "spy.h"
+#include "message.h"
 #include "user.h"
 #include "controls.h"
 #include "wine/debug.h"

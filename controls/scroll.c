@@ -26,7 +26,7 @@
 #include "win.h"
 #include "wine/debug.h"
 #include "user.h"
-#include "spy.h"
+#include "message.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 

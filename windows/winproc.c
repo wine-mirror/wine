@@ -38,7 +38,7 @@
 #include "win.h"
 #include "winproc.h"
 #include "wine/debug.h"
-#include "spy.h"
+#include "message.h"
 #include "thread.h"
 #include "dde.h"
 
@@ -265,7 +265,7 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
  *
  * Return a pointer to the win proc.
  */
-static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
+static WINDOWPROC *WINPROC_GetPtr( WNDPROC handle )
 {
     BYTE *ptr;
     WINDOWPROC *proc;
@@ -305,7 +305,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
  *
  * Allocate a new window procedure.
  */
-static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
+static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC func, WINDOWPROCTYPE type,
                                          WINDOWPROCUSER user )
 {
     static FARPROC16 relay_32A, relay_32W;
@@ -329,7 +329,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         case WIN_PROC_16:
             proc->thunk.t_from32.popl_eax    = 0x58;   /* popl  %eax */
             proc->thunk.t_from32.pushl_func  = 0x68;   /* pushl $proc */
-            proc->thunk.t_from32.proc        = func;
+            proc->thunk.t_from32.proc        = (WNDPROC16)func;
             proc->thunk.t_from32.pushl_eax   = 0x50;   /* pushl %eax */
             proc->thunk.t_from32.jmp         = 0xe9;   /* jmp   relay*/
             proc->thunk.t_from32.relay =  /* relative jump */
@@ -341,7 +341,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                                           "__wine_call_wndproc_32A" );
             proc->thunk.t_from16.popl_eax     = 0x58;   /* popl  %eax */
             proc->thunk.t_from16.pushl_func   = 0x68;   /* pushl $proc */
-            proc->thunk.t_from16.proc         = (WNDPROC)func;
+            proc->thunk.t_from16.proc         = func;
             proc->thunk.t_from16.pushl_eax    = 0x50;   /* pushl %eax */
             proc->thunk.t_from16.ljmp         = 0xea;   /* ljmp   relay*/
             proc->thunk.t_from16.relay_offset = OFFSETOF(relay_32A);
@@ -355,14 +355,14 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                                           "__wine_call_wndproc_32W" );
             proc->thunk.t_from16.popl_eax     = 0x58;   /* popl  %eax */
             proc->thunk.t_from16.pushl_func   = 0x68;   /* pushl $proc */
-            proc->thunk.t_from16.proc         = (WNDPROC)func;
+            proc->thunk.t_from16.proc         = func;
             proc->thunk.t_from16.pushl_eax    = 0x50;   /* pushl %eax */
             proc->thunk.t_from16.ljmp         = 0xea;   /* ljmp   relay*/
             proc->thunk.t_from16.relay_offset = OFFSETOF(relay_32W);
             proc->thunk.t_from16.relay_sel    = SELECTOROF(relay_32W);
             proc->jmp.jmp  = 0xe9;
             /* Fixup relative jump */
-            proc->jmp.proc = (WNDPROC)((DWORD)func - (DWORD)(&proc->jmp.proc + 1));
+            proc->jmp.proc = (WNDPROC)((char *)func - (char *)(&proc->jmp.proc + 1));
             break;
         default:
             /* Should not happen */
@@ -373,8 +373,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         proc->user  = user;
     }
     proc->next  = NULL;
-    TRACE_(win)("(%08x,%d): returning %08x\n",
-                 (UINT)func, type, (UINT)proc );
+    TRACE_(win)("(%p,%d): returning %p\n", func, type, proc );
     return proc;
 }
 
@@ -384,7 +383,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
  *
  * Get a window procedure pointer that can be passed to the Windows program.
  */
-WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
+WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
 {
     WINDOWPROC *ptr = (WINDOWPROC *)proc;
 
@@ -431,8 +430,8 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
  * window is destroyed.
  *
  */
-BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
-                        WINDOWPROCTYPE type, WINDOWPROCUSER user )
+BOOL WINPROC_SetProc( WNDPROC *pFirst, WNDPROC func,
+                      WINDOWPROCTYPE type, WINDOWPROCUSER user )
 {
     BOOL bRecycle = FALSE;
     WINDOWPROC *proc, **ppPrev;
@@ -462,7 +461,7 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
         else
         {
             if (((*ppPrev)->type == type) &&
-                (func == WINPROC_THUNKPROC(*ppPrev)))
+                (func == (WNDPROC)WINPROC_THUNKPROC(*ppPrev)))
             {
                 if((*ppPrev)->user == user)
                 {
@@ -470,7 +469,7 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
                 }
                 else
                 {
-                    WINPROC_FreeProc( *ppPrev, user );
+                    WINPROC_FreeProc( (WNDPROC)*ppPrev, user );
                     *ppPrev = NULL;
                 }
                 break;
@@ -493,7 +492,7 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
         if (proc)  /* Was already a win proc */
         {
             type = proc->type;
-            func = WINPROC_THUNKPROC(proc);
+            func = (WNDPROC)WINPROC_THUNKPROC(proc);
         }
         proc = WINPROC_AllocWinProc( func, type, user );
         if (!proc) return FALSE;
@@ -514,15 +513,16 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
  *
  * Free a list of win procs.
  */
-void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
+void WINPROC_FreeProc( WNDPROC proc, WINDOWPROCUSER user )
 {
-    while (proc)
+    WINDOWPROC *ptr = (WINDOWPROC *)proc;
+    while (ptr)
     {
-        WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
-        if (((WINDOWPROC *)proc)->user != user) break;
-        TRACE_(win)("freeing %08x (%d)\n", (UINT)proc, user);
-        HeapFree( WinProcHeap, 0, proc );
-        proc = next;
+        WINDOWPROC *next = ptr->next;
+        if (ptr->user != user) break;
+        TRACE_(win)("freeing %p (%d)\n", ptr, user);
+        HeapFree( WinProcHeap, 0, ptr );
+        ptr = next;
     }
 }
 
@@ -532,7 +532,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
  *
  * Return the window procedure type.
  */
-WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
+WINDOWPROCTYPE WINPROC_GetProcType( WNDPROC proc )
 {
     if (!proc ||
         (((WINDOWPROC *)proc)->magic != WINPROC_MAGIC))
@@ -2710,11 +2710,11 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 
     if (!func) return 0;
 
-    if (!(proc = WINPROC_GetPtr( func )))
+    if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
         return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 
 #if testing
-    func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_16 );
+    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_16 );
     return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 #endif
 
@@ -2768,12 +2768,12 @@ LRESULT WINAPI CallWindowProcA(
     WPARAM wParam, /* [in] message dependent parameter */
     LPARAM lParam  /* [in] message dependent parameter */
 ) {
-    WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
+    WINDOWPROC *proc = WINPROC_GetPtr( func );
 
     if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
-    func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32A );
+    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32A );
     return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 #endif
 
@@ -2804,12 +2804,12 @@ LRESULT WINAPI CallWindowProcA(
 LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
                                   WPARAM wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
+    WINDOWPROC *proc = WINPROC_GetPtr( func );
 
     if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
-    func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32W );
+    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32W );
     return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 #endif
 

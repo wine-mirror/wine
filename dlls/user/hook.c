@@ -66,7 +66,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "heap.h"
-#include "queue.h"
+#include "message.h"
 #include "win.h"
 #include "wine/server.h"
 #include "wine/unicode.h"

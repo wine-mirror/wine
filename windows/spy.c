@@ -29,7 +29,7 @@
 #include "wine/unicode.h"
 #include "win.h"
 #include "wine/debug.h"
-#include "spy.h"
+#include "message.h"
 #include "commctrl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(message);

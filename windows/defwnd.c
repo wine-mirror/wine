@@ -26,15 +26,15 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "dce.h"
-#include "wine/debug.h"
-#include "spy.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "imm.h"
+#include "message.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
-#include "imm.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 

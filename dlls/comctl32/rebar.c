@@ -146,7 +146,6 @@
 #include "wingdi.h"
 #include "wine/unicode.h"
 #include "commctrl.h"
-/* #include "spy.h" */
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rebar);
@@ -4261,7 +4260,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
 
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
-	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
+	  hwnd, uMsg, wParam, lParam);
     if (!infoPtr && (uMsg != WM_NCCREATE))
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)

@@ -26,8 +26,9 @@
 #include "winuser.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
-#include "queue.h"
+#include "message.h"
 #include "win.h"
+#include "winproc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);

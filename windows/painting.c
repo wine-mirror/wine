@@ -29,7 +29,7 @@
 #include "gdi.h"
 #include "user.h"
 #include "win.h"
-#include "queue.h"
+#include "message.h"
 #include "dce.h"
 #include "wine/debug.h"
 

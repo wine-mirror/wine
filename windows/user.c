@@ -31,8 +31,6 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "message.h"
-#include "miscemu.h"
-#include "sysmetrics.h"
 #include "local.h"
 #include "module.h"
 #include "winternl.h"

@@ -38,7 +38,6 @@
 #include "x11drv.h"
 #include "win.h"
 #include "winpos.h"
-#include "dce.h"
 #include "mwm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);

@@ -40,8 +40,6 @@ typedef enum
     WIN_PROC_TIMER
 } WINDOWPROCUSER;
 
-typedef void *HWINDOWPROC;  /* Really a pointer to a WINDOWPROC */
-
 typedef struct
 {
     WPARAM16	wParam;
@@ -56,12 +54,14 @@ typedef struct
     LRESULT	lResult;
 } MSGPARAM;
 
+struct tagWINDOWPROC;
+
 extern BOOL WINPROC_Init(void);
-extern WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type );
-extern BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
+extern WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type );
+extern BOOL WINPROC_SetProc( WNDPROC *pFirst, WNDPROC func,
                                WINDOWPROCTYPE type, WINDOWPROCUSER user );
-extern void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user );
-extern WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc );
+extern void WINPROC_FreeProc( WNDPROC proc, WINDOWPROCUSER user );
+extern WINDOWPROCTYPE WINPROC_GetProcType( WNDPROC proc );
 
 extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam,
                                      LPARAM *plparam );
@@ -131,5 +131,22 @@ inline static void unmap_str_16_to_32W( LPCWSTR str )
 {
     if (HIWORD(str)) HeapFree( GetProcessHeap(), 0, (void *)str );
 }
+
+
+/* Class functions */
+struct tagCLASS;  /* opaque structure */
+struct builtin_class_descr;
+struct tagDCE;
+extern ATOM CLASS_RegisterBuiltinClass( const struct builtin_class_descr *descr );
+extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
+                                         INT *winExtra, WNDPROC *winproc,
+                                         DWORD *style, struct tagDCE **dce );
+extern void CLASS_RemoveWindow( struct tagCLASS *cls );
+extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
+
+/* Timer functions */
+extern void TIMER_RemoveWindowTimers( HWND hwnd );
+extern void TIMER_RemoveThreadTimers(void);
+extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, WNDPROC proc );
 
 #endif  /* __WINE_WINPROC_H */

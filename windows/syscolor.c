@@ -27,7 +27,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "sysmetrics.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wownt32.h"

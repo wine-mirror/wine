@@ -29,12 +29,10 @@
 #include "dde.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "queue.h"
-#include "input.h"
 #include "message.h"
-#include "spy.h"
 #include "user.h"
 #include "win.h"
+#include "winproc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);

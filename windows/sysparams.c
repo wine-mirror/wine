@@ -34,7 +34,6 @@
 #include "controls.h"
 #include "user.h"
 #include "wine/debug.h"
-#include "sysmetrics.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(system);
 
