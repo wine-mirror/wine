@@ -33,7 +33,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MSVCRT_S_IEXEC  (_S_IEXEC  | (_S_IEXEC  >> 3) | (_S_IEXEC  >> 6))
 
 /* _access() bit flags FIXME: incomplete */
-#define W_OK      2
+#define MSVCRT_W_OK      0x02
 
 
 /* FIXME: Make this dynamic */
@@ -202,7 +202,7 @@ int _access(const char *filename, int mode)
     MSVCRT__set_errno(GetLastError());
     return -1;
   }
-  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & W_OK))
+  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
   {
     MSVCRT__set_errno(ERROR_ACCESS_DENIED);
     return -1;
@@ -224,7 +224,7 @@ int _waccess(const WCHAR *filename, int mode)
     MSVCRT__set_errno(GetLastError());
     return -1;
   }
-  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & W_OK))
+  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
   {
     MSVCRT__set_errno(ERROR_ACCESS_DENIED);
     return -1;
