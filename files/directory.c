@@ -649,7 +649,8 @@ done:
  *    Failure: Zero
  * 
  * NOTES
- *    Should call SetLastError(but currently doesn't).
+ *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
+ *    (tested on NT 4.0)
  */
 DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
                             LPSTR buffer, LPSTR *lastpart )
@@ -657,7 +658,11 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
     LPSTR p, res;
     DOS_FULL_NAME full_name;
 
-    if (!DIR_SearchPath( path, name, ext, &full_name, TRUE )) return 0;
+    if (!DIR_SearchPath( path, name, ext, &full_name, TRUE ))
+    {
+	SetLastError(ERROR_FILE_NOT_FOUND);
+	return 0;
+    }
     lstrcpynA( buffer, full_name.short_name, buflen );
     res = full_name.long_name +
               strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
