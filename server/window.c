@@ -1075,8 +1075,8 @@ static int validate_window_rectangles( const rectangle_t *window_rect, const rec
 
 /* set the window and client rectangles, updating the update region if necessary */
 static void set_window_pos( struct window *win, struct window *top, struct window *previous,
-                            unsigned int swp_flags, unsigned int wvr_flags,
-                            const rectangle_t *window_rect, const rectangle_t *client_rect )
+                            unsigned int swp_flags, const rectangle_t *window_rect,
+                            const rectangle_t *client_rect, const rectangle_t *valid_rects )
 {
     struct region *old_vis_rgn, *new_vis_rgn;
     const rectangle_t old_window_rect = win->window_rect;
@@ -1114,9 +1114,13 @@ static void set_window_pos( struct window *win, struct window *top, struct windo
 
     /* expose anything revealed by the change */
 
-    offset_region( old_vis_rgn, old_window_rect.left - window_rect->left,
-                   old_window_rect.top - window_rect->top );
-    if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn )) expose_window( win, top, new_vis_rgn );
+    if (!(swp_flags & SWP_NOREDRAW))
+    {
+        offset_region( old_vis_rgn, old_window_rect.left - window_rect->left,
+                       old_window_rect.top - window_rect->top );
+        if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
+            expose_window( win, top, new_vis_rgn );
+    }
     free_region( old_vis_rgn );
 
     if (!(win->style & WS_VISIBLE))
@@ -1126,31 +1130,35 @@ static void set_window_pos( struct window *win, struct window *top, struct windo
         goto done;
     }
 
+    if (swp_flags & SWP_NOREDRAW) goto done;  /* do not repaint anything */
+
     /* expose the whole non-client area if it changed in any way */
 
     if ((swp_flags & SWP_FRAMECHANGED) ||
         memcmp( window_rect, &old_window_rect, sizeof(old_window_rect) ) ||
         memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
     {
-        struct region *tmp = create_region( client_rect, 1 );
+        struct region *tmp;
+
+        /* subtract the valid portion of client rect from the total region */
+        if (!memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
+            tmp = create_region( client_rect, 1 );
+        else if (valid_rects)
+            tmp = create_region( &valid_rects[0], 1 );
+        else
+            tmp = create_empty_region();
 
         if (tmp)
         {
             set_region_rect( new_vis_rgn, window_rect );
             if (subtract_region( tmp, new_vis_rgn, tmp ))
             {
-                offset_region( tmp, -window_rect->left, -window_rect->top );
-                add_update_region( win, tmp );
+                offset_region( tmp, -client_rect->left, -client_rect->top );
+                redraw_window( win, tmp, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
             }
-            else free_region( tmp );
+            free_region( tmp );
         }
     }
-
-    /* expose/validate new client areas + children */
-
-    /* FIXME: expose everything for now */
-    if (memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
-        redraw_window( win, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
 
 done:
     free_region( new_vis_rgn );
@@ -1434,6 +1442,7 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
+    const rectangle_t *valid_rects = NULL;
     struct window *previous = NULL;
     struct window *top = top_window;
     struct window *win = get_window( req->handle );
@@ -1476,7 +1485,9 @@ DECL_HANDLER(set_window_pos)
         return;
     }
 
-    set_window_pos( win, top, previous, flags, req->redraw_flags, &req->window, &req->client );
+    if (get_req_data_size() >= 2 * sizeof(rectangle_t)) valid_rects = get_req_data();
+
+    set_window_pos( win, top, previous, flags, &req->window, &req->client, valid_rects );
     reply->new_style = win->style;
 }
 

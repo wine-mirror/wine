@@ -1825,9 +1825,9 @@ enum message_type
     user_handle_t  top_win;       /* top window to clip against */
     user_handle_t  previous;      /* previous window in Z order */
     unsigned int   flags;         /* SWP_* flags */
-    unsigned int   redraw_flags;  /* WVR_* flags */
     rectangle_t    window;        /* window rectangle */
     rectangle_t    client;        /* client rectangle */
+    VARARG(valid,rectangles);     /* valid rectangles from WM_NCCALCSIZE */
 @REPLY
     unsigned int   new_style;     /* new window style */
 @END

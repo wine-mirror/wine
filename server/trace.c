@@ -2174,12 +2174,14 @@ static void dump_set_window_pos_request( const struct set_window_pos_request *re
     fprintf( stderr, " top_win=%p,", req->top_win );
     fprintf( stderr, " previous=%p,", req->previous );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " redraw_flags=%08x,", req->redraw_flags );
     fprintf( stderr, " window=" );
     dump_rectangle( &req->window );
     fprintf( stderr, "," );
     fprintf( stderr, " client=" );
     dump_rectangle( &req->client );
+    fprintf( stderr, "," );
+    fprintf( stderr, " valid=" );
+    dump_varargs_rectangles( cur_size );
 }
 
 static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )

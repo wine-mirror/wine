@@ -589,15 +589,15 @@ void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect )
  * Synchronize the X window position with the Windows one
  */
 void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
-                                  UINT swp_flags, const RECT *new_client_rect )
+                                  UINT swp_flags, const RECT *new_client_rect,
+                                  const RECT *new_whole_rect )
 {
     XWindowChanges changes;
     int mask;
     RECT old_whole_rect;
 
     old_whole_rect = data->whole_rect;
-    data->whole_rect = data->window_rect;
-    X11DRV_window_to_X_rect( data, &data->whole_rect );
+    data->whole_rect = *new_whole_rect;
 
     data->client_rect = *new_client_rect;
     OffsetRect( &data->client_rect, -data->whole_rect.left, -data->whole_rect.top );
@@ -706,9 +706,9 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     mask = get_window_attributes( data, &attr );
 
     /* set the attributes that don't change over the lifetime of the window */
-    attr.bit_gravity       = ForgetGravity;
-    attr.win_gravity       = NorthWestGravity;
-    attr.backing_store     = NotUseful/*WhenMapped*/;
+    attr.bit_gravity   = NorthWestGravity;
+    attr.win_gravity   = StaticGravity;
+    attr.backing_store = NotUseful;
     mask |= CWBitGravity | CWWinGravity | CWBackingStore;
 
     wine_tsx11_lock();
@@ -910,7 +910,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
+    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
 
     parent = GetAncestor( hwnd, GA_PARENT );
     if (!parent)
@@ -946,7 +946,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         if (cs->cy < 0) cs->cy = 0;
 
         SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        if (!X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 )) return FALSE;
+        if (!X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL )) return FALSE;
     }
 
     /* send WM_NCCREATE */
@@ -979,7 +979,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     /* yes, even if the CBT hook was called with HWND_TOP */
     insert_after = ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
-    X11DRV_set_window_pos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, 0 );
+    X11DRV_set_window_pos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, NULL );
 
     TRACE( "win %p window %ld,%ld,%ld,%ld client %ld,%ld,%ld,%ld whole %ld,%ld,%ld,%ld X client %ld,%ld,%ld,%ld xwin %x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,

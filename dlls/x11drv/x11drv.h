@@ -565,9 +565,10 @@ extern void X11DRV_create_desktop_thread(void);
 extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
 extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
 extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
-                                         UINT swp_flags, const RECT *new_client_rect );
+                                         UINT swp_flags, const RECT *new_client_rect,
+                                         const RECT *new_whole_rect );
 extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                   const RECT *rectClient, UINT swp_flags, UINT wvr_flags );
+                                   const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
 
 extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);

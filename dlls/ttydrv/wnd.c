@@ -83,7 +83,7 @@ static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
  * Set a window position and Z order.
  */
 static void set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                            const RECT *rectClient, UINT swp_flags, UINT wvr_flags )
+                            const RECT *rectClient, UINT swp_flags )
 {
     WND *win = WIN_GetPtr( hwnd );
     BOOL ret;
@@ -100,7 +100,6 @@ static void set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         req->top_win       = 0;
         req->previous      = insert_after;
         req->flags         = swp_flags;
-        req->redraw_flags  = wvr_flags;
         req->window.left   = rectWindow->left;
         req->window.top    = rectWindow->top;
         req->window.right  = rectWindow->right;
@@ -139,7 +138,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
+    set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER );
 
     parent = GetAncestor( hwnd, GA_PARENT );
     if (!parent)  /* desktop window */
@@ -415,7 +414,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
     set_window_pos( winpos->hwnd, winpos->hwndInsertAfter,
-                    &newWindowRect, &newClientRect, winpos->flags, wvrFlags );
+                    &newWindowRect, &newClientRect, winpos->flags );
 
     if( winpos->flags & SWP_SHOWWINDOW )
         WIN_SetStyle( winpos->hwnd, WS_VISIBLE, 0 );

@@ -2583,9 +2583,9 @@ struct set_window_pos_request
     user_handle_t  top_win;
     user_handle_t  previous;
     unsigned int   flags;
-    unsigned int   redraw_flags;
     rectangle_t    window;
     rectangle_t    client;
+    /* VARARG(valid,rectangles); */
 };
 struct set_window_pos_reply
 {
@@ -3712,6 +3712,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 154
+#define SERVER_PROTOCOL_VERSION 155
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

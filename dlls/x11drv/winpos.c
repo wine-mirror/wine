@@ -47,10 +47,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-#define SWP_AGG_NOGEOMETRYCHANGE \
-    (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
 #define SWP_AGG_NOPOSCHANGE \
-    (SWP_AGG_NOGEOMETRYCHANGE | SWP_NOZORDER)
+    (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 #define SWP_AGG_STATUSFLAGS \
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
 
@@ -328,10 +326,74 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           get_valid_rects
+ *
+ * Compute the valid rects from the old and new client rect and WVR_* flags.
+ * Helper for WM_NCCALCSIZE handling.
+ */
+static inline void get_valid_rects( const RECT *old_client, const RECT *new_client, UINT flags,
+                                    RECT *valid )
+{
+    int cx, cy;
+
+    if (flags & WVR_REDRAW)
+    {
+        SetRectEmpty( &valid[0] );
+        SetRectEmpty( &valid[1] );
+        return;
+    }
+
+    if (flags & WVR_VALIDRECTS)
+    {
+        if (!IntersectRect( &valid[0], &valid[0], new_client ) ||
+            !IntersectRect( &valid[1], &valid[1], old_client ))
+        {
+            SetRectEmpty( &valid[0] );
+            SetRectEmpty( &valid[1] );
+            return;
+        }
+        flags = WVR_ALIGNLEFT | WVR_ALIGNTOP;
+    }
+    else
+    {
+        valid[0] = *new_client;
+        valid[1] = *old_client;
+    }
+
+    /* make sure the rectangles have the same size */
+    cx = min( valid[0].right - valid[0].left, valid[1].right - valid[1].left );
+    cy = min( valid[0].bottom - valid[0].top, valid[1].bottom - valid[1].top );
+
+    if (flags & WVR_ALIGNBOTTOM)
+    {
+        valid[0].top = valid[0].bottom - cy;
+        valid[1].top = valid[1].bottom - cy;
+    }
+    else
+    {
+        valid[0].bottom = valid[0].top + cy;
+        valid[1].bottom = valid[1].top + cy;
+    }
+    if (flags & WVR_ALIGNRIGHT)
+    {
+        valid[0].left = valid[0].right - cx;
+        valid[1].left = valid[1].right - cx;
+    }
+    else
+    {
+        valid[0].right = valid[0].left + cx;
+        valid[1].right = valid[1].left + cx;
+    }
+}
+
+
 /***********************************************************************
  *           SWP_DoNCCalcSize
  */
-static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RECT* pNewClientRect )
+static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RECT* pNewClientRect,
+                              RECT *validRects )
 {
     UINT wvrFlags = 0;
     WND *wndPtr;
@@ -374,10 +436,19 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
 
         if( (pNewClientRect->right - pNewClientRect->left !=
-             wndPtr->rectClient.right - wndPtr->rectClient.left) ||
-            (pNewClientRect->bottom - pNewClientRect->top !=
-             wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
+             wndPtr->rectClient.right - wndPtr->rectClient.left))
             pWinpos->flags &= ~SWP_NOCLIENTSIZE;
+        else
+            wvrFlags &= ~WVR_HREDRAW;
+
+        if (pNewClientRect->bottom - pNewClientRect->top !=
+             wndPtr->rectClient.bottom - wndPtr->rectClient.top)
+            pWinpos->flags &= ~SWP_NOCLIENTSIZE;
+        else
+            wvrFlags &= ~WVR_VREDRAW;
+
+        validRects[0] = params.rgrc[1];
+        validRects[1] = params.rgrc[2];
     }
     else
     {
@@ -386,6 +457,14 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
              pNewClientRect->top != wndPtr->rectClient.top))
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
     }
+
+    if (pWinpos->flags & (SWP_NOCOPYBITS | SWP_NOREDRAW | SWP_SHOWWINDOW | SWP_HIDEWINDOW))
+    {
+        SetRectEmpty( &validRects[0] );
+        SetRectEmpty( &validRects[1] );
+    }
+    else get_valid_rects( &wndPtr->rectClient, pNewClientRect, wvrFlags, validRects );
+
     WIN_ReleasePtr( wndPtr );
     return wvrFlags;
 }
@@ -607,15 +686,39 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
  * Set a window position and Z order.
  */
 BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                            const RECT *rectClient, UINT swp_flags, UINT wvr_flags )
+                            const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
     struct x11drv_win_data *data;
     HWND top = get_top_clipping_window( hwnd );
+    RECT new_whole_rect;
     WND *win;
     DWORD old_style, new_style;
     BOOL ret;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
+
+    new_whole_rect = *rectWindow;
+    X11DRV_window_to_X_rect( data, &new_whole_rect );
+
+    if (!IsRectEmpty( &valid_rects[0] ))
+    {
+        int x_offset = 0, y_offset = 0;
+
+        if (data->whole_window)
+        {
+            /* the X server will move the bits for us */
+            x_offset = data->whole_rect.left - new_whole_rect.left;
+            y_offset = data->whole_rect.top - new_whole_rect.top;
+        }
+
+        if (x_offset != valid_rects[1].left - valid_rects[0].left ||
+            y_offset != valid_rects[1].top - valid_rects[0].top)
+        {
+            /* FIXME: should copy the window bits here */
+            valid_rects = NULL;
+        }
+    }
+
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_OTHER_PROCESS)
     {
@@ -629,7 +732,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         req->top_win       = top;
         req->previous      = insert_after;
         req->flags         = swp_flags & ~SWP_WINE_NOHOSTMOVE;
-        req->redraw_flags  = wvr_flags;
         req->window.left   = rectWindow->left;
         req->window.top    = rectWindow->top;
         req->window.right  = rectWindow->right;
@@ -638,6 +740,8 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         req->client.top    = rectClient->top;
         req->client.right  = rectClient->right;
         req->client.bottom = rectClient->bottom;
+        if (!IsRectEmpty( &valid_rects[0] ))
+            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
         ret = !wine_server_call( req );
         new_style = reply->new_style;
     }
@@ -674,7 +778,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
                 /* window got hidden, unmap it */
                 TRACE( "unmapping win %p\n", hwnd );
                 wine_tsx11_lock();
-                XUnmapWindow( thread_display(), data->whole_window );
+                XUnmapWindow( display, data->whole_window );
                 wine_tsx11_unlock();
             }
             else if ((new_style & WS_VISIBLE) && !X11DRV_is_window_rect_mapped( rectWindow ))
@@ -687,7 +791,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
             }
         }
 
-        X11DRV_sync_window_position( display, data, swp_flags, rectClient );
+        X11DRV_sync_window_position( display, data, swp_flags, rectClient, &new_whole_rect );
 
         if (data->whole_window)
         {
@@ -727,8 +831,8 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
  */
 BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 {
-    RECT newWindowRect, newClientRect;
-    UINT wvr_flags, orig_flags;
+    RECT newWindowRect, newClientRect, valid_rects[2];
+    UINT orig_flags;
 
     TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x\n",
            winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
@@ -769,13 +873,10 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* Common operations */
 
-    wvr_flags = SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect );
-
-    /* FIXME: actually do something with WVR_VALIDRECTS */
+    SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect, valid_rects );
 
     if (!X11DRV_set_window_pos( winpos->hwnd, winpos->hwndInsertAfter,
-                                &newWindowRect, &newClientRect,
-                                orig_flags, wvr_flags ))
+                                &newWindowRect, &newClientRect, orig_flags, valid_rects ))
         return FALSE;
 
     if( winpos->flags & SWP_HIDEWINDOW )
@@ -1316,7 +1417,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     screen_height = height;
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
     SetRect( &rect, 0, 0, width, height );
-    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER|SWP_NOMOVE|SWP_WINE_NOHOSTMOVE, 0 );
+    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER|SWP_NOMOVE|SWP_WINE_NOHOSTMOVE, NULL );
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 }
