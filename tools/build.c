@@ -1636,12 +1636,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
 
     ret_type = reg_func? "void" : short_ret? "WORD" : "LONG";
 
-    fprintf( outfile, "%s%s WINAPI %s_CallFrom16_%s( FARPROC proc, LPBYTE args%s )\n{\n",
-             local? "static " : "", ret_type, prefix, profile,
-             reg_func? ", struct _CONTEXT86 *context" : "" );
-
-    fprintf( outfile, "    %s((%s WINAPI (*)( ", 
-             reg_func? "" : "return ", ret_type );
+    fprintf( outfile, "typedef %s WINAPI (*proc_%s_t)( ", 
+                      ret_type, profile );
     args = profile + 7;
     for ( i = 0; args[i]; i++ )
     {
@@ -1658,7 +1654,14 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
         fprintf( outfile, "%sstruct _CONTEXT86 *", i? ", " : "" );
     else if ( !i )
         fprintf( outfile, "void" );
-    fprintf( outfile, " )) proc) (\n" );
+    fprintf( outfile, " );\n" );
+    
+    fprintf( outfile, "%s%s WINAPI %s_CallFrom16_%s( FARPROC proc, LPBYTE args%s )\n{\n",
+             local? "static " : "", ret_type, prefix, profile,
+             reg_func? ", struct _CONTEXT86 *context" : "" );
+
+    fprintf( outfile, "    %s((proc_%s_t) proc) (\n",
+             reg_func? "" : "return ", profile );
     args = profile + 7;
     pos = !usecdecl? argsize : 0;
     for ( i = 0; args[i]; i++ )
