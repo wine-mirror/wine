@@ -673,8 +673,10 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     if ( THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
         DirectedYield16( destQ->thdb->teb.htask16 );
 
-    /* wait for the result */
-    while ( !(smsg->flags & SMSG_HAVE_RESULT) )
+    /* wait for the result, note that 16-bit apps almost always get out of
+     * DirectedYield() with SMSG_HAVE_RESULT flag already set */
+
+    while ( TRUE )
     {
         /*
          * The sequence is crucial to avoid deadlock situations:
@@ -686,21 +688,26 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
          * we are guaranteed that -should we now clear the QS_SMRESULT that
          * was signalled already by the receiver- we will not start waiting.
          */
-        QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-
-        if (   !(smsg->flags & SMSG_HAVE_RESULT)
-             && QUEUE_WaitBits( QS_SMRESULT, timeout ) == 0 )
-        {
-            /* return with timeout */
-            SetLastError( 0 );
-            retVal = 0;
-            break;
-        }
 
         if ( smsg->flags & SMSG_HAVE_RESULT )
         {
-            *pRes = smsg->lResult;
-            TRACE(sendmsg,"smResult = %08x\n", (unsigned)*pRes );
+got:
+             *pRes = smsg->lResult;
+             TRACE(sendmsg,"smResult = %08x\n", (unsigned)*pRes );
+             break;
+        }
+
+        QUEUE_ClearWakeBit( queue, QS_SMRESULT );
+
+        if ( smsg->flags & SMSG_HAVE_RESULT )
+             goto got;
+
+        if(  QUEUE_WaitBits( QS_SMRESULT, timeout ) == 0 )
+        {
+             /* return with timeout */
+             SetLastError( 0 );
+             retVal = 0;
+             break;
         }
     }
 
