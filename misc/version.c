@@ -249,7 +249,10 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	          WinVersion = DllVersion;
 	        else {
 	          if (WinVersion != DllVersion) {
-	            ERR("You mixed system dlls from different windows versions! Expect a crash!\n");
+	            ERR("You mixed system dlls from different windows versions! Expect a crash! (%s: expected version '%s', but is '%s')\n",
+			wm->modname,
+			VersionData[WinVersion].getVersionEx.szCSDVersion,
+			VersionData[DllVersion].getVersionEx.szCSDVersion);
 	            return WIN31; /* this may let the exe exiting */
 	          }
 	        }
