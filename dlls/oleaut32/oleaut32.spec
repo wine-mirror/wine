@@ -316,6 +316,7 @@
 321 stdcall -private DllUnregisterServer() OLEAUT32_DllUnregisterServer
 322 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
 323 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
+327 stdcall SetOaNoCache()
 330 stdcall VarDateFromUdate(ptr long ptr)
 331 stdcall VarUdateFromDate(double long ptr)
 332 stub GetAltMonthNames

@@ -43,13 +43,51 @@ extern const GUID CLSID_PSOAInterface;
 /* IDispatch marshaler */
 extern const GUID CLSID_PSDispatch;
 
+static BOOL BSTR_bCache = TRUE; /* Cache allocations to minimise alloc calls? */
+
+/******************************************************************************
+ * BSTR  {OLEAUT32}
+ *
+ * NOTES
+ *  BSTR is a simple typedef for a wide-character string used as the principle
+ *  string type in ole automation. When encapsulated in a Variant type they are
+ *  automatically copied and destroyed as the variant is processed.
+ *
+ *  The low level BSTR Api allows manipulation of these strings and is used by
+ *  higher level Api calls to manage the strings transparently to the caller.
+ *
+ *  Internally the BSTR type is allocated with space for a DWORD byte count before
+ *  the string data begins. This is undocumented and non-system code should not
+ *  access the count directly. Use SysStringLen() or SysStringByteLen()
+ *  instead. Note that the byte count does not include the terminating NUL.
+ *
+ *  To create a new BSTR, use SysAllocString(), SysAllocStringLen() or
+ *  SysAllocStringByteLen(). To change the size of an existing BSTR, use SysReAllocString()
+ *  or SysReAllocStringLen(). Finally to destroy a string use SysFreeString().
+ *
+ *  BSTR's are cached by Ole Automation by default. To override this behaviour
+ *  either set the environment variable 'OANOCACHE', or call SetOaNoCache().
+ *
+ * SEE ALSO
+ *  'Inside OLE, second edition' by Kraig Brockshmidt.
+ */
+
 /******************************************************************************
  *             SysStringLen  [OLEAUT32.7]
  *
- * The Windows documentation states that the length returned by this function
- * is not necessarely the same as the length returned by the _lstrlenW method.
- * It is the same number that was passed in as the "len" parameter if the
- * string was allocated with a SysAllocStringLen method call.
+ * Get the allocated length of a BSTR in wide characters.
+ *
+ * PARAMS
+ *  str [I] BSTR to find the length of
+ *
+ * RETURNS
+ *  The allocated length of str, or 0 if str is NULL.
+ *
+ * NOTES
+ *  See BSTR.
+ *  The returned length may be different from the length of the string as
+ *  calculated by lstrlenW(), since it returns the length that was used to
+ *  allocate the string by SysAllocStringLen().
  */
 int WINAPI SysStringLen(BSTR str)
 {
@@ -70,10 +108,16 @@ int WINAPI SysStringLen(BSTR str)
 /******************************************************************************
  *             SysStringByteLen  [OLEAUT32.149]
  *
- * The Windows documentation states that the length returned by this function
- * is not necessarely the same as the length returned by the _lstrlenW method.
- * It is the same number that was passed in as the "len" parameter if the
- * string was allocated with a SysAllocStringLen method call.
+ * Get the allocated length of a BSTR in bytes.
+ *
+ * PARAMS
+ *  str [I] BSTR to find the length of
+ *
+ * RETURNS
+ *  The allocated length of str, or 0 if str is NULL.
+ *
+ * NOTES
+ *  See SysStringLen(), BSTR().
  */
 int WINAPI SysStringByteLen(BSTR str)
 {
@@ -94,34 +138,57 @@ int WINAPI SysStringByteLen(BSTR str)
 /******************************************************************************
  *		SysAllocString	[OLEAUT32.2]
  *
- * MSDN (October 2001) states that this returns a NULL value if the argument
- * is a zero-length string.  This does not appear to be true; certainly it
- * returns a value under Win98 (Oleaut32.dll Ver 2.40.4515.0)
+ * Create a BSTR from an OLESTR.
+ *
+ * PARAMS
+ *  str [I] Source to create BSTR from
+ *
+ * RETURNS
+ *  Success: A BSTR allocated with SysAllocStringLen().
+ *  Failure: NULL, if oleStr is NULL.
+ *
+ * NOTES
+ *  See BSTR.
+ *  MSDN (October 2001) incorrectly states that NULL is returned if oleStr has
+ *  a length of 0. Native Win32 and this implementation both return a valid
+ *  empty BSTR in this case.
  */
-BSTR WINAPI SysAllocString(LPCOLESTR in)
+BSTR WINAPI SysAllocString(LPCOLESTR str)
 {
-    if (!in) return 0;
+    if (!str) return 0;
 
     /* Delegate this to the SysAllocStringLen32 method. */
-    return SysAllocStringLen(in, lstrlenW(in));
+    return SysAllocStringLen(str, lstrlenW(str));
 }
 
 /******************************************************************************
  *		SysFreeString	[OLEAUT32.6]
+ *
+ * Free a BSTR.
+ *
+ * PARAMS
+ *  str [I] BSTR to free.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  See BSTR.
+ *  str may be NULL, in which case this function does nothing.
  */
-void WINAPI SysFreeString(BSTR in)
+void WINAPI SysFreeString(BSTR str)
 {
     DWORD* bufferPointer;
 
     /* NULL is a valid parameter */
-    if(!in) return;
+    if(!str) return;
 
     /*
      * We have to be careful when we free a BSTR pointer, it points to
      * the beginning of the string but it skips the byte count contained
      * before the string.
      */
-    bufferPointer = (DWORD*)in;
+    bufferPointer = (DWORD*)str;
 
     bufferPointer--;
 
@@ -134,14 +201,20 @@ void WINAPI SysFreeString(BSTR in)
 /******************************************************************************
  *             SysAllocStringLen     [OLEAUT32.4]
  *
- * In "Inside OLE, second edition" by Kraig Brockshmidt. In the Automation
- * section, he describes the DWORD value placed *before* the BSTR data type.
- * he describes it as a "DWORD count of characters". By experimenting with
- * a windows application, this count seems to be a DWORD count of bytes in
- * the string. Meaning that the count is double the number of wide
- * characters in the string.
+ * Create a BSTR from an OLESTR of a given wide character length.
+ *
+ * PARAMS
+ *  str [I] Source to create BSTR from
+ *  len [I] Length of oleStr in wide characters
+ *
+ * RETURNS
+ *  Success: A newly allocated BSTR from SysAllocStringByteLen()
+ *  Failure: NULL, if len is >= 0x80000000, or memory allocation fails.
+ *
+ * NOTES
+ *  See BSTR(), SysAllocStringByteLen().
  */
-BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
+BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
 {
     DWORD  bufferSize;
     DWORD* newBuffer;
@@ -183,8 +256,8 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
      * Since it is valid to pass a NULL pointer here, we'll initialize the
      * buffer to nul if it is the case.
      */
-    if (in != 0)
-      memcpy(newBuffer, in, bufferSize);
+    if (str != 0)
+      memcpy(newBuffer, str, bufferSize);
     else
       memset(newBuffer, 0, bufferSize);
 
@@ -200,8 +273,23 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
 
 /******************************************************************************
  *             SysReAllocStringLen   [OLEAUT32.5]
+ *
+ * Change the length of a previously created BSTR.
+ *
+ * PARAMS
+ *  old [O] BSTR to change the length of
+ *  str [I] New source for pbstr
+ *  len [I] Length of oleStr in wide characters
+ *
+ * RETURNS
+ *  Success: 1. The size of pbstr is updated.
+ *  Failure: 0, if len >= 0x80000000 or memory allocation fails.
+ *
+ * NOTES
+ *  See BSTR(), SysAllocStringByteLen().
+ *  *pbstr may be changed by this function.
  */
-int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
+int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
 {
     /*
      * Sanity check
@@ -214,12 +302,12 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
       DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
       *old = (BSTR)(ptr+1);
       *ptr = newbytelen;
-      if (in) {
-        memcpy(*old, in, newbytelen);
+      if (str) {
+        memcpy(*old, str, newbytelen);
         (*old)[len] = 0;
       } else {
 	/* Subtle hidden feature: The old string data is still there
-	 * when 'in' is NULL! 
+	 * when 'in' is NULL!
 	 * Some Microsoft program needs it.
 	 */
       }
@@ -227,7 +315,7 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
       /*
        * Allocate the new string
        */
-      *old = SysAllocStringLen(in, len);
+      *old = SysAllocStringLen(str, len);
     }
 
     return 1;
@@ -236,8 +324,24 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
 /******************************************************************************
  *             SysAllocStringByteLen     [OLEAUT32.150]
  *
+ * Create a BSTR from an OLESTR of a given byte length.
+ *
+ * PARAMS
+ *  str [I] Source to create BSTR from
+ *  len [I] Length of oleStr in bytes
+ *
+ * RETURNS
+ *  Success: A newly allocated BSTR
+ *  Failure: NULL, if len is >= 0x80000000, or memory allocation fails.
+ *
+ * NOTES
+ *  -If len is 0 or oleStr is NULL the resulting string is empty ("").
+ *  -This function always NUL terminates the resulting BSTR.
+ *  -oleStr may be either an LPCSTR or LPCOLESTR, since it is copied
+ *  without checking for a terminating NUL.
+ *  See BSTR.
  */
-BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
+BSTR WINAPI SysAllocStringByteLen(LPCSTR str, UINT len)
 {
     DWORD* newBuffer;
     char* stringBuffer;
@@ -273,8 +377,8 @@ BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
      * Since it is valid to pass a NULL pointer here, we'll initialize the
      * buffer to nul if it is the case.
      */
-    if (in != 0)
-      memcpy(newBuffer, in, len);
+    if (str != 0)
+      memcpy(newBuffer, str, len);
 
     /*
      * Make sure that there is a nul character at the end of the
@@ -289,8 +393,21 @@ BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
 
 /******************************************************************************
  *		SysReAllocString	[OLEAUT32.3]
+ *
+ * Change the length of a previously created BSTR.
+ *
+ * PARAMS
+ *  old [I/O] BSTR to change the length of
+ *  str [I]   New source for pbstr
+ *
+ * RETURNS
+ *  Success: 1
+ *  Failure: 0.
+ *
+ * NOTES
+ *  See BSTR(), SysAllocStringStringLen().
  */
-INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
+INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR str)
 {
     /*
      * Sanity check
@@ -307,9 +424,28 @@ INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
     /*
      * Allocate the new string
      */
-    *old = SysAllocString(in);
+    *old = SysAllocString(str);
 
      return 1;
+}
+
+/******************************************************************************
+ *		SetOaNoCache (OLEAUT32.327)
+ *
+ * Instruct Ole Automation not to cache BSTR allocations.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  See BSTR.
+ */
+void WINAPI SetOaNoCache(void)
+{
+  BSTR_bCache = FALSE;
 }
 
 static WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
