@@ -266,10 +266,6 @@ static BOOL ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
     if (!hDC || !infoPtr->inbih)
 	return TRUE;
 
-    if (infoPtr->dwStyle & ACS_TRANSPARENT)
-        infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
-                                                 (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
-
     if (infoPtr->hic )
     {
         pBitmapData = infoPtr->outdata;
@@ -384,22 +380,6 @@ static BOOL ANIMATE_DrawFrame(ANIMATE_INFO *infoPtr)
     return TRUE;
 }
 
-static LRESULT ANIMATE_Paint(ANIMATE_INFO *infoPtr, HDC hdc)
-{
-    PAINTSTRUCT ps;
-    HDC hDC = hdc;
-
-    if (!hdc) hDC = BeginPaint(infoPtr->hwndSelf, &ps);
-
-    EnterCriticalSection(&infoPtr->cs);
-    ANIMATE_PaintFrame(infoPtr, hDC);
-    LeaveCriticalSection(&infoPtr->cs);
-
-    if (!hdc) EndPaint(infoPtr->hwndSelf, &ps);
-
-    return 0;
-}
-
 static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
 {
     ANIMATE_INFO *infoPtr = (ANIMATE_INFO *)ptr_;
@@ -457,6 +437,11 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
     } 
     else 
     {
+        if(infoPtr->dwStyle & ACS_TRANSPARENT)
+            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                     WM_CTLCOLORSTATIC, 0,
+                                                     (LPARAM)infoPtr->hwndSelf);
+
 	TRACE("Using an animation thread\n");
         infoPtr->hStopEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
         infoPtr->hThread = CreateThread(0, 0, ANIMATE_AnimationThread,
@@ -905,16 +890,48 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         return ANIMATE_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
     case WM_TIMER:
+        if (infoPtr->dwStyle & ACS_TRANSPARENT)
+            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                     WM_CTLCOLORSTATIC,
+                                                     wParam, (LPARAM)infoPtr->hwndSelf);
         return ANIMATE_DrawFrame(infoPtr);
 
     case WM_PAINT:
-        /* the animation isn't playing, or has not decompressed
-         * (and displayed) the first frame yet, do default painting
-         */
-        if ((!infoPtr->uTimer && !infoPtr->hThread) || !infoPtr->hbmPrevFrame)
-            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-        else
-            return ANIMATE_Paint(infoPtr, (HDC)wParam);
+        {
+            /* the animation isn't playing, or has not decompressed
+             * (and displayed) the first frame yet, don't paint
+             */
+            if ((!infoPtr->uTimer && !infoPtr->hThread) ||
+                !infoPtr->hbmPrevFrame)
+            {
+                /* default paint handling */
+                return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+            }
+
+            if (infoPtr->dwStyle & ACS_TRANSPARENT)
+                infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                         WM_CTLCOLORSTATIC,
+                                                         wParam, (LPARAM)infoPtr->hwndSelf);
+
+            if (wParam)
+            {
+                EnterCriticalSection(&infoPtr->cs);
+                ANIMATE_PaintFrame(infoPtr, (HDC)wParam);
+                LeaveCriticalSection(&infoPtr->cs);
+            }
+            else
+            {
+                PAINTSTRUCT ps;
+                HDC hDC = BeginPaint(infoPtr->hwndSelf, &ps);
+
+                EnterCriticalSection(&infoPtr->cs);
+                ANIMATE_PaintFrame(infoPtr, hDC);
+                LeaveCriticalSection(&infoPtr->cs);
+
+                EndPaint(infoPtr->hwndSelf, &ps);
+            }
+        }
+        break;
 
     case WM_SIZE:
         if (infoPtr->dwStyle & ACS_CENTER) 
