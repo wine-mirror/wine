@@ -1,0 +1,464 @@
+Copyright 1999 Adam Sacarny (magicbox@bestweb.net)
+1. WHAT IS THE WINE CONFIG FILE?
+
+The Wine config file stores various settings for Wine. These include:
+	Drives and Information about them
+	Directory Settings
+	Port Settings
+	The Wine look and feel
+	Wine's DLL Usage
+
+2. HOW DO I MAKE ONE?
+
+This section will guide you through the process of making a config file. Take a
+look at the file <dirs to wine>/wine.ini
+It is organized by section.
+
+
+     Name        | Needed? | What it does
+----------------------------------------------------------------
+[Drive X]        | yes     | Sets up drives recognized by wine
+[wine]           | yes     | Settings for wine directories
+[DllDefaults]    | recmd   | Defaults for loading DLL's
+[DllPairs]       | recmd   | Sanity checkers for DLL's
+[DllOverrides]   | recmd   | Overides defaults for DLL loading
+[options]        | no      | No one seems to know
+[fonts]          | yes     | Font appearance and recognition
+[serialports]    | no      | COM ports seen by wine
+[parallelports]  | no      | LPT ports seen by wine
+[spooler]        | no      | Print spooling
+[ports]          | no      | Direct port access
+[spy]            | no      | What to do with certain debug messages
+[Registry]       | no      | Specifies locations of windows registry files
+[tweak.layout]   | recmd   | Appearance of wine
+[programs]       | no      | Programs to be run automatically
+[Console]        | no      | Console settings
+Recmd-Recommended
+2.1 THE [Drive X] SECTION
+It should be pretty self explanatory, but here is an in-depth tutorial about
+them.
+There are up to 6 lines for each drive in Wine.
+
+[Drive X]
+
+The above line begins the section for a drive whose letter is X. 
+
+Path=/dir/to/path
+
+This path is where the drive will begin. When Wine is browsing in drive X, it
+will see the files that are in the directory "/dir/to/path". Don't forget to
+leave off the trailing slash!
+
+Type=floppy|hd|cdrom|network <--- the |'s mean Type=<one of the options>
+
+Sets up the type of drive Wine will see it as. Type must equal one of the four
+"floppy", "hd", "cdrom", or "network". They are self-explanatory.
+
+Label=blah
+
+Defines the drive label. Generally only needed for programs that look for a
+special CD-ROM. Info on finding the lable is in <dirs to
+wine>/documentation/cdrom-labels. The label may be up to 11 characters.
+
+Serial=deadbeef
+
+Tells Wine the serial number of the drive. A few programs with intense
+protection for pirating might need this, but otherwise don't use it. Up to 8
+characters and hexadecimal.
+
+Filesystem=msdos|win95|unix
+
+Sets up the way Wine looks at files on the drive.
+
+	msdos -> Case insensitive filesystem. Alike to DOS and Windows 3.x.
+	8.3 is the maximum length of files (eightdot.123) - longer ones will be
+	truncated. (NOTE: this is a very bad choice if you plan on running apps
+	that use long filenames. win95 should work fine with apps that were
+	designed to run under the msdos system. In other words, you might not
+	want to use this.)
+	
+	win95 -> Case insensitive. Alike to Windows 9x/NT 4. This is the long
+	filename filesystem you are probably used to working with. The
+	filesystem of choice for most applications to be run under wine. 
+	PROBABLY THE ONE YOU WANT
+	
+	unix  -> Case sensitive. This filesystem has almost no use (Windows apps
+	expect case insensitive filenames). Try it if you dare, but win95 is a 
+	much better choice.
+
+Device=/dev/xx
+
+Use this ONLY for floppy and cdrom devices. Using it on Extended2 partitions can
+have dire results (When a windows app tries to do a lowlevel write, they do it
+in a FAT way -- FAT does not mix with Extended2). Currently, it is useless when
+used on cdrom's, however functionality could be implemented later to allow wine
+to automatically find the cdrom label.
+NOTE: This setting is not terribly important, almost all apps will have no
+problem if it remains unspecified. If you are unsure about specifying device
+names, just leave out this setting for your drives.
+
+Here is a setup for Drive X, a generic hard drive:
+[Drive X]
+Path=/dos-a
+Type=hd
+Label=Hard Drive
+Filesystem=win95
+This is a setup for Drive X, a generic CD-ROM drive:
+[Drive X]
+Path=/dos-d
+Type=cdrom
+Label=Total Annihilation
+Filesystem=win95
+Device=/dev/hdc
+And here is a setup for Drive X, a generic floppy drive:
+[Drive X]
+Type=floppy
+Path=/mnt/floppy
+Label=Floppy Drive
+Serial=87654321
+Filesystem=win95
+Device=/dev/fd0
+
+2.2 THE [wine] SECTION 
+
+The [wine] section of the configuration file contains information wine uses for
+directories. When specifying the directories for the settings, make them as they
+would appear in wine. If your drive C has a Path of /dos, and your windows
+directory is located in /dos/windows, Windows=c:\windows.
+
+Windows=c:\windows
+
+Sets up the windows directory. Make one if you don't have windows. NO TRAILING
+SLASH (NOT C:\windows\)!
+
+System=c:\windows\system
+
+Sets up where the windows system files are. Should reside in the directory used
+for the "Windows" setting. If you don't have windows then this is where the
+system files will go. NO TRAILING SLASH!
+
+Temp=c:\temp
+
+This should be the directory you want your temp files stored in. YOU MUST HAVE
+WRITE ACCESS TO IT.
+
+Path=c:\windows;c:\windows\system;c:\blanco
+
+Behaves like the PATH setting on unix boxes. When wine is run like "wine
+sol.exe", if sol.exe resides in a directory specified in the "Path" setting,
+wine will run it (Of course, if sol.exe resides in the current directory, wine
+will run that one). Make sure it always has your windows directory and system
+directory (For this setup, it must have c:\windows;c:\windows\system).
+
+SymbolTableFile=wine.sym
+
+Sets up the symbol table file for the wine debugger. You probably don't need to
+fiddle with this. May be useful if your wine is stripped.
+
+printer=off|on
+
+Tells wine whether to allow printer drivers and printing to work. Using these
+things are pretty alpha, so you might want to watch out. Some people might find
+it useful, however. If you're not planning on working on printing, don't even
+add this to your wine.ini (It probably isn't already in it). Check out the
+[spooler] and [parallelports] sections too.
+
+2.3 INTRODUCTION TO DLL SECTIONS
+
+There are a few things you will need to know before configuring the DLL sections
+in your wine configuration file.
+
+	2.3.1 WINDOWS DLL PAIRS
+	
+	Most windows DLL's have a win16 (Windows 3.x) and win32 (Windows 9x/NT)
+	form.  The combination of the win16 and win32 DLL versions are called
+	the "DLL pair". This is a list of the most common pairs:
+	   Win16   |   Win32   | Native* 
+	-----------------------------
+	KERNEL     | KERNEL32  | No!
+	USER       | USER32    | No!
+	SHELL      | SHELL32   | Yes
+	GDI        | GDI32     | No!
+	COMMDLG    | COMDLG32  | Yes
+	VER        | VERSION   | Yes
+	*-Is it possible to use native dll with wine?(See next section)
+
+	2.3.2 DIFFERENT FORMS OF DLL'S
+	
+	There are a few different forms of DLL's wine can load:
+		native -> The DLL's that are included with windows. Many windows
+		DLL's can be loaded in their native form. Many times these
+		native versions work better than their non-Microsoft equivalent
+		-- other times they don't.
+		elfdll -> ELF encapsulated windows DLL's. This is currently
+		experimental (Not working yet).
+		so -> Native ELF libraries. Will not work yet.
+		builtin -> The most common form of DLL loading. This is what you
+		will use if the DLL is error-prone in native form (KERNEL for
+		example), you don't have the native DLL, or you just want to be
+		Microsoft-free.
+	
+2.4 THE [DllDefaults] SECTION
+
+These settings provide wine's default handling of DLL loading.
+
+EXTRA_LD_LIBRARY_PATH=/dirs
+
+The directory specified here is appended to the normal search path for certain
+forms of DLL's (elfdll and .so).
+
+DefaultLoadOrder = native, elfdll, so, builtin
+
+This setting is a comma-delimited list of which order to attempt loading DLL's.
+If the first option fails, it will try the second, and so on. The order
+specified above is probably the best in most conditions.
+
+2.5 THE [DllPairs] SECTION
+
+This section is optional, but strongly recommended. If you try to use native
+SHELL32, but builtin SHELL, you could have some big problems (native and
+builtin/so/elfdll do certain things in different ways). Using different forms of
+a pair is a *very*, **very** bad idea. By specifying DLL pairs here, wine will
+print out a message if you use different forms of a pair.
+You shouldn't need to change anything in this section, the following should work
+fine in all cases:
+
+[DllPairs]
+kernel	= kernel32
+gdi	= gdi32
+user	= user32
+commdlg	= comdlg32
+commctrl= comctl32
+ver	= version
+shell	= shell32
+lzexpand= lz32
+winsock	= wsock32
+
+2.6 THE [DllOverrides] SECTION
+
+The format for this section is the same for each line:
+
+<DLL>{,<DLL>,<DLL>...} = <FORM>{,<FORM>,<FORM>...}
+
+For example, to load builtin KERNEL pair (Case doesn't matter here):
+
+kernel,kernel32 = builtin
+
+To load the native COMMDLG pair, but if that doesn't work try builtin:
+
+commdlg,comdlg32 = native,builtin
+
+To load the native COMCTL32:
+
+comctl32 = native
+
+Here is a good generic setup (As it is defined in wine.ini that was included
+with your wine package):
+
+[DllOverrides]
+kernel32, gdi32, user32	= builtin
+kernel, gdi, user	= builtin
+toolhelp		= builtin
+comdlg32, commdlg	= elfdll, builtin, native
+version, ver		= elfdll, builtin, native
+shell32, shell		= builtin, native
+lz32, lzexpand		= builtin, native
+commctrl, comctl32	= builtin, native
+wsock32, winsock	= builtin
+advapi32, crtdll, ntdll	= builtin, native
+mpr, winspool		= builtin, native
+ddraw, dinput, dsound	= builtin, native
+winmm, w32skrnl, msvfw32= builtin
+wnaspi32, wow32		= builtin
+system, display, wprocs	= builtin
+wineps			= builtin
+
+NOTE: You see that elfdll or so is the first option for a few of these dll's.
+This will fail for you, but you won't notice it as wine will just use the second
+or third option.
+
+2.7 THE [options] SECTION
+
+No one seems to know what this section is...
+
+AllocSystemColors=100
+
+System colors to allocate? Just leave it at 100.
+
+2.8 THE [fonts] SECTION
+
+This section sets up wine's font handling.
+
+Resolution = 96
+
+Since the way X handles fonts is different from the way Windows does, wine uses
+a special mechanism to deal with them. It must scale them using the number
+defined in the "Resolution" setting. 60-120 are reasonable values, 96 is a nice
+in the middle one. If you have the real windows fonts available (<dirs to
+wine>/documentation/ttfserver and fonts), this parameter will not be as
+important. Of course, it's always good to get your X fonts working acceptably in
+wine.
+
+Default = -adobe-times-
+
+The default font wine uses. Fool around with it if you'd like.
+
+OPTIONAL: 
+
+The "Alias" setting allows you to map an X font to a font used in wine. This is
+good for apps that need a special font you don't have, but a good replacement
+exists. The syntax is like so:
+
+AliasX = [Fake windows name],[Real X name]<,optional "masking" section>
+
+Pretty straightforward. Replace "AliasX" with "Alias0", then "Alias1" and so on.
+The fake windows name is the name that the font will be under a windows app in
+wine. The real X name is the font name as seen by X (Run "xfontsel").
+The optional "masking" section allows you to utilize the fake windows name you
+define. If it is not used, then wine will just try to extract the fake windows
+name itself and not use the value you enter.
+
+Here is an example of an alias without masking. The font will show up in windows
+apps as "Google". When defining an alias in a config file, forget about my
+comment text (The "<-- blah" stuff)
+
+Alias0 = Foo,--google-      <-- Note the no spaces after the " = ". Important!
+
+Here is an example with masking enabled. The font will show up as "Foo" in
+windows apps.
+
+Alias1 = Foo,--google-,subst 
+
+For more info check out <dirs to wine>/documentation/fonts
+
+2.9 THE [serialports], [parallelports], [spooler], AND [ports] SECTIONS
+
+Even though it sounds like a lot of sections, these are all closely related.
+They all are for communications and parallel ports. 
+
+The [serialports] section tells wine what serial ports it is allowed to use.
+
+ComX=/dev/cuaY
+
+Replace X with the number of the COM port in Windows (1-8) and Y with the
+number of it in X (Usually the number of the port in Windows minus 1). ComX can
+actually equal any device (/dev/modem is acceptable). It is not always necessary
+to define any COM ports (An optional setting). Here is an example:
+
+Com1=/dev/cua0
+
+Use as many of these as you like in the section to define all of the COM ports
+you need.
+
+The [parallelports] section sets up any parallel ports that will be allowed
+access under wine.
+
+LptX=/dev/lpY
+
+Seem farmiliar? Syntax is just like the COM port setting. Replace X with a value
+from 1-4 as it is in Windows and Y with a value from 0-3 (Y is usually the value
+in windows minus 1, just like for COM ports). You don't always need to define a
+parallel port (AKA, it's optional). As with the other section, LptX can equal 
+any device (Maybe /dev/printer). Here is an example:
+
+Lpt1=/dev/lp0
+
+The [spooler] section will inform wine where to spool print jobs. Use this if
+you want to try printing. Wine docs claim that spooling is "rather primitive" at
+this time, so it won't work perfectly. IT IS OPTIONAL
+The only setting you use in this section works to map a port (LPT1, for example)
+to a file or a command. Here is an example, mapping LPT1 to the file "out.ps":
+
+LPT1:=out.ps
+
+The following command maps printing jobs to LPT1 to the command "lpr". Notice 
+the |:
+
+LPT1:=|lpr
+
+The [ports] section is usually useful only for people who need direct port
+access for programs requiring dongles or scanners. IF YOU DON'T NEED IT, DON'T
+USE IT! 
+
+read=0x779,0x379,0x280-0x2a0
+
+Gives direct read access to those IO's.
+
+write=0x779,0x379,0x280-0x2a0 
+
+Gives direct write access to those IO's. It probably a good idea to keep the
+values of the "read" and "write" settings the same. This stuff will only work 
+when you're root.
+
+2.10 THE [spy], [Registry], [tweak.layout], and [programs] SECTIONS
+
+[spy] is used to Include or exclude debug messages, and to output them to a
+file. The latter is rarely used. THESE ARE ALL OPTIONAL AND YOU PROBABLY DON'T
+NEED TO ADD OR REMOVE ANYTHING IN THIS SECTION TO YOUR CONFIG.
+
+File=/blanco
+
+Sets the logfile for wine. Set to CON to log to standard out. THIS IS RARELY
+USED
+
+Exclude=WM_SIZE;WM_TIMER;
+
+Excludes debug messages about WM_SIZE and WM_TIMER in the logfile.
+
+Include=WM_SIZE;WM_TIMER;
+
+Includes debug messages about WM_SIZE and WM_TIMER in the logfile.
+
+[Registry] can be used to tell wine where your old windows registry files exist. This
+section is completely optional and useless to people using wine without an existing
+windows installation.
+
+UserFileName=/dirs/to/user.reg
+
+The location of your old user.reg file.
+
+LocalMachineFileName=/dirs/to/system.reg
+
+The location of your old system.reg file.
+
+[tweak.layout] is devoted to wine's look. There is only one setting for it.
+
+WineLook=win31|win95|win98
+
+Will change the look of wine from Windows 3.1 to Windows 95. "win98" behaves
+just like "win95" most of the time.
+
+[programs] can be used to say what programs run under special conditions.
+
+Default=/program/to/execute.exe
+
+Sets the program to be run if wine is started without specifying a program.
+
+Startup=/program/to/execute.exe
+
+Sets the program to automatically be run at startup every time.
+
+3. WHERE DO I PUT IT?
+
+The wine config file can go in two places. 
+
+	/usr/local/etc/wine.conf <--- A systemwide config file, used for anyone
+	who doesn't have their own.
+	$HOME/.winerc <--- Your own config file, that only is used for your
+	user. 
+
+So copy the file you made to be the wine.conf to /usr/local/etc/wine.conf or 
+$HOME/.winerc for wine to recognize it. 
+
+4. WHAT IF IT DOESN'T WORK?
+
+There is always a chance that things will go wrong. If the unthinkable happens, 
+try the newsgroup, comp.emulators.ms-windows.wine
+Make sure that you have looked over this document thoroughly, and have also
+read:
+README
+documentation/bugreports
+http://www.westfalen.de/witch/wine-HOWTO.txt (Optional but recommended)
+If indeed it looks like you've done your research, be prepared for helpful
+suggestions. If you haven't, brace yourself for heaving flaming.
+
