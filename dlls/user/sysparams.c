@@ -602,6 +602,7 @@ void SYSPARAMS_Init(void)
     HKEY hkey; /* key to the window metrics area of the registry */
     WCHAR buf[10];
     INT border;
+    CPINFO cpinfo;
 
     display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
     assert( display_dc );
@@ -681,7 +682,8 @@ void SYSPARAMS_Init(void)
 
     SystemParametersInfoW( SPI_GETMENUDROPALIGNMENT, 0, &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
     sysMetrics[SM_PENWINDOWS] = 0;
-    sysMetrics[SM_DBCSENABLED] = 0;
+    GetCPInfo( CP_ACP, &cpinfo );
+    sysMetrics[SM_DBCSENABLED] = (cpinfo.MaxCharSize > 1);
 
     /* FIXME: Need to query X for the following */
     sysMetrics[SM_CMOUSEBUTTONS] = 3;
