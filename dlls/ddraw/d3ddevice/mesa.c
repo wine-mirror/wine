@@ -105,13 +105,13 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     DWORD opt_bitmap = 0x00000000;
     
-    if (gl_d3d_dev->current_bound_texture[1] != NULL) {
+    if ((gl_d3d_dev->current_bound_texture[1] != NULL) &&
+	((d3d_dev->state_block.texture_stage_state[1][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE))) {
 	if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE1_WINE) {
 	    GL_extensions.glActiveTexture(GL_TEXTURE1_WINE);
 	    gl_d3d_dev->current_active_tex_unit = GL_TEXTURE1_WINE;
 	}
-	/* 'unbound' texture level 1 in that case to disable multi-texturing */
-	glBindTexture(GL_TEXTURE_2D, 0);
+	/* Disable multi-texturing for level 1 to disable all others */
 	glDisable(GL_TEXTURE_2D);
     }
     if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE0_WINE) {
@@ -196,7 +196,6 @@ static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DW
     if (gl_d3d_dev->blending != 0) glEnable(GL_BLEND);
     if (gl_d3d_dev->fogging != 0) glEnable(GL_FOG);
     glDisable(GL_SCISSOR_TEST);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_d3d_dev->current_tex_env);
     if (opt_bitmap & DEPTH_RANGE_BIT) {
 	glDepthRange(d3d_dev->active_viewport.dvMinZ, d3d_dev->active_viewport.dvMaxZ);
     }
@@ -209,11 +208,27 @@ static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DW
 	d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
     }
     
-    /* This is a hack to prevent querying the current texture from GL. Basically, at the next
-       DrawPrimitive call, this will bind the correct texture to this stage. */
+    if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE0_WINE) {
+	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
+	gl_d3d_dev->current_active_tex_unit = GL_TEXTURE0_WINE;
+    }
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_d3d_dev->current_tex_env);
+    /* Note that here we could directly re-bind the previous texture... But it would in some case be a spurious
+       bind if ever the game changes the texture just after.
+
+       So choose 0x00000001 to postpone the binding to the next time we draw something on screen. */
     gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
-    gl_d3d_dev->current_bound_texture[1] = (IDirectDrawSurfaceImpl *) 0x00000000;
     if (d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE) glDisable(GL_TEXTURE_2D);
+
+    /* And re-enabled if needed texture level 1 */
+    if ((gl_d3d_dev->current_bound_texture[1] != NULL) &&
+	(d3d_dev->state_block.texture_stage_state[1][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE)) {
+	if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE1_WINE) {
+	    GL_extensions.glActiveTexture(GL_TEXTURE1_WINE);
+	    gl_d3d_dev->current_active_tex_unit = GL_TEXTURE1_WINE;
+	}
+	glEnable(GL_TEXTURE_2D);
+    }
 }
 
 /* retrieve the X drawable to use on a given DC */
@@ -1332,7 +1347,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     /* Compute the number of active texture stages and set the various texture parameters */
     num_active_stages = draw_primitive_handle_textures(This);
 
-    /* And restore to handle '0' in the case we use glTexCorrd calls */
+    /* And restore to handle '0' in the case we use glTexCoord calls */
     if (glThis->current_active_tex_unit != GL_TEXTURE0_WINE) {
 	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
 	glThis->current_active_tex_unit = GL_TEXTURE0_WINE;
@@ -1909,14 +1924,16 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
                 glDisable(GL_TEXTURE_2D);
 		TRACE(" disabling 2D texturing.\n");
             } else {
-	        /* Re-enable texturing */
-	        if (This->current_texture[0] != NULL) {
+	        /* Re-enable texturing only if COLOROP was not already disabled... */
+	        if ((glThis->current_bound_texture[dwStage] != NULL) &&
+		    (This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE)) {
 		    glEnable(GL_TEXTURE_2D);
 		    TRACE(" enabling 2D texturing.\n");
 		}
 		
                 /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT */
-                if (dwState != D3DTOP_DISABLE) {
+                if ((dwState != D3DTOP_DISABLE) &&
+		    (This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE)) {
 		    if (glThis->current_tex_env != GL_COMBINE_EXT) {
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 			glThis->current_tex_env = GL_COMBINE_EXT;
@@ -2153,6 +2170,10 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 	IDirectDrawSurfaceImpl *surf_ptr = This->current_texture[stage];
 	GLenum unit;
 
+	/* If this stage is disabled, no need to go further... */
+	if (This->state_block.texture_stage_state[stage][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE)
+	    break;
+	
 	/* First check if we need to bind any other texture for this stage */
 	if (This->current_texture[stage] != glThis->current_bound_texture[stage]) {
 	    if (This->current_texture[stage] == NULL) {
@@ -2164,10 +2185,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 		    glThis->current_active_tex_unit = unit;
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
-
-		if (stage == 0) {
-		    glDisable(GL_TEXTURE_2D);
-		}
+		glDisable(GL_TEXTURE_2D);
 	    } else {
 		GLenum tex_name = ((IDirect3DTextureGLImpl *) surf_ptr->tex_private)->tex_name;
 		

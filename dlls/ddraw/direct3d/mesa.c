@@ -446,7 +446,7 @@ HRESULT direct3d_create(IDirectDrawImpl *This)
 
     This->d3d_private = globject;
 
-    TRACE(" creating Mesa private storage at %p.\n", globject);
+    TRACE(" creating OpenGL private storage at %p.\n", globject);
     
     return D3D_OK;
 }
