@@ -18,12 +18,20 @@ struct tagVARIANT;
 extern "C" {
 #endif 
 
+
+/*
+ * BSTR API
+ */
+
 BSTR WINAPI SysAllocString(const OLECHAR*);
-INT WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
-VOID WINAPI SysFreeString(BSTR);
-BSTR WINAPI SysAllocStringLen(const OLECHAR*, UINT);
-int WINAPI SysReAllocStringLen(BSTR*, const OLECHAR*, UINT);
-int WINAPI SysStringLen(BSTR);
+BSTR WINAPI SysAllocStringByteLen(char*,int);
+BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT);
+void WINAPI SysFreeString(BSTR);
+INT  WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
+int  WINAPI SysReAllocStringLen(BSTR*,const OLECHAR*,UINT);
+int  WINAPI SysStringByteLen(BSTR);
+int  WINAPI SysStringLen(BSTR);
+
 
 /*****************************************************************
  *  ErrorInfo API
@@ -507,8 +515,6 @@ typedef enum tagREGKIND
 } REGKIND;
 
 
-HRESULT WINAPI LoadTypeLib(OLECHAR *szFile, ITypeLib **pptLib);
-HRESULT WINAPI LoadTypeLibEx(LPOLESTR szFile, REGKIND regKind, ITypeLib **pptLib);
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
 
 HRESULT WINAPI DispGetParam(DISPPARAMS* pdispparams, UINT position,
@@ -530,5 +536,20 @@ HRESULT WINAPI DispCallFunc(void* pvInstance, ULONG oVft, CALLCONV cc,
 #define VARCMP_EQ   1
 #define VARCMP_GT   2
 #define VARCMP_NULL 3
+
+
+/*
+ * TypeLib API
+ */
+
+HRESULT WINAPI CreateTypeLib(SYSKIND,const OLECHAR*,ICreateTypeLib**);
+HRESULT WINAPI CreateTypeLib2(SYSKIND,LPCOLESTR,ICreateTypeLib2**);
+HRESULT WINAPI LoadRegTypeLib(REFGUID,WORD,WORD,LCID,ITypeLib**);
+HRESULT WINAPI LoadTypeLib(const OLECHAR*,ITypeLib**);
+HRESULT WINAPI LoadTypeLibEx(LPCOLESTR,REGKIND,ITypeLib**);
+HRESULT WINAPI QueryPathOfRegTypeLib(REFGUID,WORD,WORD,LCID,LPBSTR);
+HRESULT WINAPI RegisterTypeLib(ITypeLib*,OLECHAR*,OLECHAR*);
+HRESULT WINAPI UnRegisterTypeLib(REFGUID,WORD,WORD,LCID,SYSKIND);
+
 
 #endif /*__WINE_OLEAUTO_H*/
