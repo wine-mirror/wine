@@ -402,24 +402,24 @@ static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
 }
 
 #define XDPTOLP(dc,x) \
-    (((x)-(dc)->vportOrgX) * (dc)->wndExtX / (dc)->vportExtX+(dc)->wndOrgX)
+    (MulDiv(((x)-(dc)->vportOrgX), (dc)->wndExtX, (dc)->vportExtX) + (dc)->wndOrgX)
 #define YDPTOLP(dc,y) \
-    (((y)-(dc)->vportOrgY) * (dc)->wndExtY / (dc)->vportExtY+(dc)->wndOrgY)
+    (MulDiv(((y)-(dc)->vportOrgY), (dc)->wndExtY, (dc)->vportExtY) + (dc)->wndOrgY)
 #define XLPTODP(dc,x) \
-    (((x)-(dc)->wndOrgX) * (dc)->vportExtX / (dc)->wndExtX+(dc)->vportOrgX)
+    (MulDiv(((x)-(dc)->wndOrgX), (dc)->vportExtX, (dc)->wndExtX) + (dc)->vportOrgX)
 #define YLPTODP(dc,y) \
-    (((y)-(dc)->wndOrgY) * (dc)->vportExtY / (dc)->wndExtY+(dc)->vportOrgY)
+    (MulDiv(((y)-(dc)->wndOrgY), (dc)->vportExtY, (dc)->wndExtY) + (dc)->vportOrgY)
 
   /* Device <-> logical size conversion */
 
 #define XDSTOLS(dc,x) \
-    ((x) * (dc)->wndExtX / (dc)->vportExtX)
+    MulDiv((x), (dc)->wndExtX, (dc)->vportExtX)
 #define YDSTOLS(dc,y) \
-    ((y) * (dc)->wndExtY / (dc)->vportExtY)
+    MulDiv((y), (dc)->wndExtY, (dc)->vportExtY)
 #define XLSTODS(dc,x) \
-    ((x) * (dc)->vportExtX / (dc)->wndExtX)
+    MulDiv((x), (dc)->vportExtX, (dc)->wndExtX)
 #define YLSTODS(dc,y) \
-    ((y) * (dc)->vportExtY / (dc)->wndExtY)
+    MulDiv((y), (dc)->vportExtY, (dc)->wndExtY)
 
   /* GDI local heap */
 
