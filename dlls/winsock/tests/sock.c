@@ -625,6 +625,45 @@ static void do_test( test_setup *test )
         CloseHandle ( client_ready[i] );
 }
 
+static void test_so_reuseaddr()
+{
+    struct sockaddr_in saddr;
+    SOCKET s1,s2;
+    int rc,reuse,size;
+
+    saddr.sin_family      = AF_INET;
+    saddr.sin_port        = htons(9375);
+    saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    s1=socket(AF_INET, SOCK_STREAM, 0);
+    ok(s1!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
+    rc = bind(s1, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(rc!=SOCKET_ERROR, "bind(s1) failed error: %d\n", WSAGetLastError());
+
+    s2=socket(AF_INET, SOCK_STREAM, 0);
+    ok(s2!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
+
+    reuse=0x1234;
+    size=sizeof(reuse);
+    rc=getsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, &size );
+    ok(rc==0 && reuse==0,"wrong result in getsockopt(SO_REUSEADDR): rc=%d reuse=%d\n",rc,reuse);
+
+    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(rc==SOCKET_ERROR, "bind() succeeded\n");
+
+    reuse = 1;
+    rc = setsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+    ok(rc==0, "setsockopt() failed error: %d\n", WSAGetLastError());
+
+    todo_wine {
+    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(rc==0, "bind() failed error: %d\n", WSAGetLastError());
+    }
+
+    closesocket(s2);
+    closesocket(s1);
+}
+
 /************* Array containing the tests to run **********/
 
 #define STD_STREAM_SOCKET \
@@ -685,6 +724,8 @@ START_TEST( sock )
 {
     int i;
     Init();
+
+    test_so_reuseaddr();
 
     for (i = 0; i < NUM_TESTS; i++)
     {
