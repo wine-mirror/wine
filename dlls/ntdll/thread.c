@@ -31,6 +31,7 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/server.h"
+#include "wine/pthread.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
@@ -60,6 +61,7 @@ static TEB *alloc_teb( ULONG *size )
         return NULL;
     }
     teb->Tib.ExceptionList = (void *)~0UL;
+    teb->Tib.StackBase     = (void *)~0UL;
     teb->Tib.Self          = &teb->Tib;
     teb->Peb               = &peb;
     teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
@@ -76,8 +78,6 @@ static inline void free_teb( TEB *teb )
     ULONG size = 0;
     void *addr = teb;
 
-    if (teb->DeallocationStack)
-        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
     NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
     wine_ldt_free_fs( teb->teb_sel );
     munmap( teb, SIGNAL_STACK_SIZE + sizeof(TEB) );
@@ -110,7 +110,6 @@ void thread_init(void)
     InitializeListHead( &tls_links );
 
     teb = alloc_teb( &size );
-    teb->Tib.StackBase = (void *)~0UL;
     teb->tibflags      = TEBF_WIN32;
     teb->request_fd    = -1;
     teb->reply_fd      = -1;
@@ -143,18 +142,34 @@ void thread_init(void)
  *
  * Startup routine for a newly created thread.
  */
-static void start_thread( TEB *teb )
+static void start_thread( struct wine_pthread_thread_info *info )
 {
+    TEB *teb = info->teb_base;
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)teb->entry_point;
-    struct debug_info info;
+    struct debug_info debug_info;
+    ULONG size;
 
-    info.str_pos = info.strings;
-    info.out_pos = info.output;
-    teb->debug_info = &info;
+    debug_info.str_pos = debug_info.strings;
+    debug_info.out_pos = debug_info.output;
+    teb->debug_info = &debug_info;
 
     SYSDEPS_SetCurThread( teb );
     SIGNAL_Init();
     wine_server_init_thread();
+
+    /* allocate a memory view for the stack */
+    size = info->stack_size;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, info->stack_base,
+                             &size, MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+    /* limit is lower than base since the stack grows down */
+    teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
+    teb->Tib.StackLimit = info->stack_base;
+
+    /* setup the guard page */
+    size = 1;
+    NtProtectVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size,
+                            PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
+    RtlFreeHeap( GetProcessHeap(), 0, info );
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &teb->TlsLinks );
@@ -173,11 +188,11 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
+    struct wine_pthread_thread_info *info = NULL;
     HANDLE handle = 0;
     TEB *teb = NULL;
     DWORD tid = 0;
     ULONG size;
-    void *base;
     int request_pipe[2];
     NTSTATUS status;
 
@@ -201,6 +216,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     if (status) goto error;
 
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*info) )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto error;
+    }
+
     if (!(teb = alloc_teb( &size )))
     {
         status = STATUS_NO_MEMORY;
@@ -219,8 +240,10 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->entry_arg   = param;
     teb->htask16     = NtCurrentTeb()->htask16;
 
-    NtAllocateVirtualMemory( GetCurrentProcess(), &base, teb, &size,
+    NtAllocateVirtualMemory( GetCurrentProcess(), &info->teb_base, teb, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+    info->teb_size = size;
+    info->teb_sel  = teb->teb_sel;
 
     if (!stack_reserve || !stack_commit)
     {
@@ -231,22 +254,13 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     if (stack_reserve < stack_commit) stack_reserve = stack_commit;
     stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
 
-    status = NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, NULL,
-                                      &stack_reserve, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    if (status != STATUS_SUCCESS) goto error;
+    info->stack_base = NULL;
+    info->stack_size = stack_reserve;
+    info->entry      = start_thread;
 
-    /* limit is lower than base since the stack grows down */
-    teb->Tib.StackBase  = (char *)teb->DeallocationStack + stack_reserve;
-    teb->Tib.StackLimit = teb->DeallocationStack;
-
-    /* setup the guard page */
-    size = 1;
-    NtProtectVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size,
-                            PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
-
-    if (SYSDEPS_SpawnThread( start_thread, teb ) == -1)
+    if (wine_pthread_create_thread( info ) == -1)
     {
-        status = STATUS_TOO_MANY_THREADS;
+        status = STATUS_NO_MEMORY;
         goto error;
     }
 
@@ -258,6 +272,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
 error:
     if (teb) free_teb( teb );
+    if (info) RtlFreeHeap( GetProcessHeap(), 0, info );
     if (handle) NtClose( handle );
     close( request_pipe[1] );
     return status;

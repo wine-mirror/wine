@@ -38,33 +38,49 @@
 #endif
 
 #include "wine/library.h"
-
-#ifdef HAVE_PTHREAD_H
-
 #include "wine/pthread.h"
+
+/* Note: the wine_pthread functions are just placeholders,
+ * they will be overridden by the pthread support code.
+ */
 
 /***********************************************************************
  *           wine_pthread_init_process
- *
- * This function is just a placeholder, it will be overridden by the pthread support code.
  */
 void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 {
-    assert(0);  /* we must never get here */
 }
-
 
 /***********************************************************************
  *           wine_pthread_init_thread
- *
- * This function is just a placeholder, it will be overridden by the pthread support code.
  */
 void wine_pthread_init_thread(void)
 {
-    assert(0);  /* we must never get here */
 }
 
-#endif  /* HAVE_PTHREAD_H */
+/***********************************************************************
+ *           wine_pthread_create_thread
+ */
+int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
+{
+    return -1;
+}
+
+/***********************************************************************
+ *           wine_pthread_exit_thread
+ */
+void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
+{
+    exit( info->exit_status );
+}
+
+/***********************************************************************
+ *           wine_pthread_abort_thread
+ */
+void wine_pthread_abort_thread( int status )
+{
+    exit( status );
+}
 
 
 /***********************************************************************

@@ -25,8 +25,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_NPTL
-
 struct _pthread_cleanup_buffer;
 
 #include <assert.h>
@@ -58,7 +56,10 @@ struct _pthread_cleanup_buffer;
 #include <valgrind/memcheck.h>
 #endif
 
+#include "wine/library.h"
 #include "wine/pthread.h"
+
+#ifndef HAVE_NPTL
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
 
@@ -151,6 +152,43 @@ static inline void writejump( const char *symbol, void *dest )
 #endif  /* __GLIBC__ && __i386__ */
 }
 
+/* temporary stacks used on thread exit */
+#define TEMP_STACK_SIZE 1024
+#define NB_TEMP_STACKS  8
+static char temp_stacks[NB_TEMP_STACKS][TEMP_STACK_SIZE];
+static LONG next_temp_stack;  /* next temp stack to use */
+
+/***********************************************************************
+ *           get_temp_stack
+ *
+ * Get a temporary stack address to run the thread exit code on.
+ */
+inline static char *get_temp_stack(void)
+{
+    unsigned int next = interlocked_xchg_add( &next_temp_stack, 1 );
+    return temp_stacks[next % NB_TEMP_STACKS] + TEMP_STACK_SIZE;
+}
+
+
+/***********************************************************************
+ *           cleanup_thread
+ *
+ * Cleanup the remains of a thread. Runs on a temporary stack.
+ */
+static void cleanup_thread( void *ptr )
+{
+    /* copy the info structure since it is on the stack we will free */
+    struct wine_pthread_thread_info info = *(struct wine_pthread_thread_info *)ptr;
+    wine_ldt_free_fs( info.teb_sel );
+    munmap( info.stack_base, info.stack_size );
+    munmap( info.teb_base, info.teb_size );
+#ifdef HAVE__LWP_CREATE
+    _lwp_exit();
+#endif
+    _exit( info.exit_status );
+}
+
+
 /***********************************************************************
  *           wine_pthread_init_process
  *
@@ -188,6 +226,78 @@ void wine_pthread_init_thread(void)
     descr->cancel_state = PTHREAD_CANCEL_ENABLE;
     descr->cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
     if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
+}
+
+
+/***********************************************************************
+ *           wine_pthread_create_thread
+ */
+int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
+{
+    if (!info->stack_base)
+    {
+        info->stack_base = wine_anon_mmap( NULL, info->stack_size,
+                                           PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+        if (info->stack_base == (void *)-1) return -1;
+    }
+#ifdef HAVE_CLONE
+    if (clone( (int (*)(void *))info->entry, (char *)info->stack_base + info->stack_size,
+               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, info ) < 0)
+        return -1;
+    return 0;
+#elif defined(HAVE_RFORK)
+    {
+        void **sp = (void **)((char *)info->stack_base + info->stack_size);
+        *--sp = info;
+        *--sp = 0;
+        *--sp = info->entry;
+        __asm__ __volatile__(
+            "pushl %2;\n\t"             /* flags */
+            "pushl $0;\n\t"             /* 0 ? */
+            "movl %1,%%eax;\n\t"        /* SYS_rfork */
+            ".byte 0x9a; .long 0; .word 7;\n\t" /* lcall 7:0... FreeBSD syscall */
+            "cmpl $0, %%edx;\n\t"
+            "je 1f;\n\t"
+            "movl %0,%%esp;\n\t"        /* child -> new thread */
+            "ret;\n"
+            "1:\n\t"                    /* parent -> caller thread */
+            "addl $8,%%esp" :
+            : "r" (sp), "g" (SYS_rfork), "g" (RFPROC | RFMEM)
+            : "eax", "edx");
+        return 0;
+    }
+#elif defined(HAVE__LWP_CREATE)
+    {
+        ucontext_t context;
+        _lwp_makecontext( &context, (void(*)(void *))info->entry, info,
+                          NULL, info->stack_base, info->stack_size );
+        if ( _lwp_create( &context, 0, NULL ) )
+            return -1;
+        return 0;
+    }
+#endif
+    return -1;
+}
+
+
+/***********************************************************************
+ *           wine_pthread_exit_thread
+ */
+void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
+{
+    wine_switch_to_stack( cleanup_thread, info, get_temp_stack() );
+}
+
+
+/***********************************************************************
+ *           wine_pthread_abort_thread
+ */
+void wine_pthread_abort_thread( int status )
+{
+#ifdef HAVE__LWP_CREATE
+    _lwp_exit();
+#endif
+    _exit( status );
 }
 
 
@@ -825,12 +935,84 @@ static struct pthread_functions libc_pthread_functions =
 
 #else  /* HAVE_NPTL */
 
+/***********************************************************************
+ *           wine_pthread_init_process
+ *
+ * Initialization for a newly created process.
+ */
 void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 {
 }
 
+
+/***********************************************************************
+ *           wine_pthread_init_thread
+ *
+ * Initialization for a newly created thread.
+ */
 void wine_pthread_init_thread(void)
 {
+}
+
+
+/***********************************************************************
+ *           wine_pthread_create_thread
+ */
+int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
+{
+    pthread_t id;
+    pthread_attr_t attr;
+
+    if (!info->stack_base)
+    {
+        info->stack_base = wine_anon_mmap( NULL, info->stack_size,
+                                           PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+        if (info->stack_base == (void *)-1) return -1;
+    }
+    pthread_attr_init( &attr );
+    pthread_attr_setstack( &attr, info->stack_base, info->stack_size );
+    if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) return -1;
+    return 0;
+}
+
+
+/***********************************************************************
+ *           wine_pthread_exit_thread
+ */
+void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
+{
+    struct cleanup_info
+    {
+        pthread_t self;
+        struct wine_pthread_thread_info thread_info;
+    };
+
+    static struct cleanup_info *previous_info;
+    struct cleanup_info *cleanup_info, *free_info;
+    void *ptr;
+
+    /* store it at the end of the TEB structure */
+    cleanup_info = (struct cleanup_info *)((char *)info->teb_base + info->teb_size) - 1;
+    cleanup_info->self = pthread_self();
+    cleanup_info->thread_info = *info;
+
+    if ((free_info = interlocked_xchg_ptr( (void **)&previous_info, cleanup_info )) != NULL)
+    {
+        pthread_join( free_info->self, &ptr );
+        wine_ldt_free_fs( free_info->thread_info.teb_sel );
+        munmap( free_info->thread_info.stack_base, free_info->thread_info.stack_size );
+        munmap( free_info->thread_info.teb_base, free_info->thread_info.teb_size );
+    }
+    pthread_exit( (void *)info->exit_status );
+}
+
+
+/***********************************************************************
+ *           wine_pthread_abort_thread
+ */
+void wine_pthread_abort_thread( int status )
+{
+    pthread_exit( (void *)status );
 }
 
 #endif  /* HAVE_NPTL */

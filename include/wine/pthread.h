@@ -21,6 +21,10 @@
 #ifndef __WINE_WINE_PTHREAD_H
 #define __WINE_WINE_PTHREAD_H
 
+struct wine_pthread_functions;
+
+#ifdef HAVE_PTHREAD_H
+
 #define _GNU_SOURCE
 #include <pthread.h>
 
@@ -65,7 +69,35 @@ struct wine_pthread_functions
                                             const struct timespec *abstime);
 };
 
+#endif /* HAVE_PTHREAD_H */
+
+/* we don't want to include winnt.h here */
+#ifndef DECLSPEC_NORETURN
+# if defined(_MSC_VER) && (_MSC_VER >= 1200)
+#  define DECLSPEC_NORETURN __declspec(noreturn)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NORETURN __attribute__((noreturn))
+# else
+#  define DECLSPEC_NORETURN
+# endif
+#endif
+
+/* thread information used to creating and exiting threads */
+struct wine_pthread_thread_info
+{
+    void          *stack_base;
+    size_t         stack_size;
+    void          *teb_base;
+    size_t         teb_size;
+    unsigned short teb_sel;
+    void         (*entry)( struct wine_pthread_thread_info *info );
+    int            exit_status;
+};
+
 extern void wine_pthread_init_process( const struct wine_pthread_functions *functions );
 extern void wine_pthread_init_thread(void);
+extern int wine_pthread_create_thread( struct wine_pthread_thread_info *info );
+extern void DECLSPEC_NORETURN wine_pthread_exit_thread( struct wine_pthread_thread_info *info );
+extern void DECLSPEC_NORETURN wine_pthread_abort_thread( int status );
 
 #endif  /* __WINE_WINE_PTHREAD_H */

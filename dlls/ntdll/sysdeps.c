@@ -55,21 +55,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
-struct thread_cleanup_info
-{
-    void *stack_base;
-    ULONG stack_size;
-    void *teb_base;
-    ULONG teb_size;
-    int   status;
-};
-
-/* temporary stacks used on thread exit */
-#define TEMP_STACK_SIZE 1024
-#define NB_TEMP_STACKS  8
-static char temp_stacks[NB_TEMP_STACKS][TEMP_STACK_SIZE];
-static LONG next_temp_stack;  /* next temp stack to use */
-
 
 /***********************************************************************
  *           SYSDEPS_SetCurThread
@@ -97,148 +82,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );
 #endif
-
-#ifdef HAVE_NPTL
-    teb->pthread_data = (void *)pthread_self();
-#else
     wine_pthread_init_thread();
-#endif
-}
-
-
-/***********************************************************************
- *           get_temp_stack
- *
- * Get a temporary stack address to run the thread exit code on.
- */
-inline static char *get_temp_stack(void)
-{
-    unsigned int next = interlocked_xchg_add( &next_temp_stack, 1 );
-    return temp_stacks[next % NB_TEMP_STACKS] + TEMP_STACK_SIZE;
-}
-
-
-/***********************************************************************
- *           cleanup_thread
- *
- * Cleanup the remains of a thread. Runs on a temporary stack.
- */
-static void cleanup_thread( void *ptr )
-{
-    /* copy the info structure since it is on the stack we will free */
-    struct thread_cleanup_info info = *(struct thread_cleanup_info *)ptr;
-    munmap( info.stack_base, info.stack_size );
-    munmap( info.teb_base, info.teb_size );
-    wine_ldt_free_fs( wine_get_fs() );
-#ifdef HAVE__LWP_CREATE
-    _lwp_exit();
-#endif
-    _exit( info.status );
-}
-
-
-/***********************************************************************
- *           SYSDEPS_SpawnThread
- *
- * Start running a new thread.
- * Return -1 on error, 0 if OK.
- */
-int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
-{
-#ifdef HAVE_NPTL
-    pthread_t id;
-    pthread_attr_t attr;
-
-    pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, teb->DeallocationStack,
-                           (char *)teb->Tib.StackBase - (char *)teb->DeallocationStack );
-    if (pthread_create( &id, &attr, (void * (*)(void *))func, teb )) return -1;
-    return 0;
-#elif defined(HAVE_CLONE)
-    if (clone( (int (*)(void *))func, teb->Tib.StackBase,
-               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
-        return -1;
-    return 0;
-#elif defined(HAVE_RFORK)
-    void **sp = (void **)teb->Tib.StackBase;
-    *--sp = teb;
-    *--sp = 0;
-    *--sp = func;
-    __asm__ __volatile__(
-    "pushl %2;\n\t"		/* flags */
-    "pushl $0;\n\t"		/* 0 ? */
-    "movl %1,%%eax;\n\t"	/* SYS_rfork */
-    ".byte 0x9a; .long 0; .word 7;\n\t"	/* lcall 7:0... FreeBSD syscall */
-    "cmpl $0, %%edx;\n\t"
-    "je 1f;\n\t"
-    "movl %0,%%esp;\n\t"	/* child -> new thread */
-    "ret;\n"
-    "1:\n\t"		/* parent -> caller thread */
-    "addl $8,%%esp" :
-    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC | RFMEM)
-    : "eax", "edx");
-    return 0;
-#elif defined(HAVE__LWP_CREATE)
-    ucontext_t context;
-    _lwp_makecontext( &context, (void(*)(void *))func, teb,
-                      NULL, teb->DeallocationStack, (char *)teb->Tib.StackBase - (char *)teb->DeallocationStack );
-    if ( _lwp_create( &context, 0, NULL ) )
-        return -1;
-    return 0;
-#endif
-
-    FIXME("CreateThread: stub\n" );
-    return -1;
-}
-
-
-/***********************************************************************
- *           SYSDEPS_ExitThread
- *
- * Exit a running thread; must not return.
- */
-void SYSDEPS_ExitThread( int status )
-{
-#ifdef HAVE_NPTL
-    static TEB *teb_to_free;
-    TEB *free_teb;
-
-    if ((free_teb = interlocked_xchg_ptr( (void **)&teb_to_free, NtCurrentTeb() )) != NULL)
-    {
-        DWORD size = 0;
-        void *ptr;
-
-        TRACE("freeing prev teb %p stack %p fs %04x\n",
-              free_teb, free_teb->DeallocationStack, free_teb->teb_sel );
-
-        pthread_join( (pthread_t)free_teb->pthread_data, &ptr );
-        wine_ldt_free_fs( free_teb->teb_sel );
-        ptr = free_teb->DeallocationStack;
-        NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
-        ptr = free_teb;
-        NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE | MEM_SYSTEM );
-        munmap( ptr, size );
-    }
-    SYSDEPS_AbortThread( status );
-#else
-    struct thread_cleanup_info info;
-
-    SIGNAL_Block();
-    info.status     = status;
-    info.stack_base = NtCurrentTeb()->DeallocationStack;
-    info.stack_size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base,
-                         &info.stack_size, MEM_RELEASE | MEM_SYSTEM );
-    info.teb_base = NtCurrentTeb();
-    info.teb_size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base,
-                         &info.teb_size, MEM_RELEASE | MEM_SYSTEM );
-    close( NtCurrentTeb()->wait_fd[0] );
-    close( NtCurrentTeb()->wait_fd[1] );
-    close( NtCurrentTeb()->reply_fd );
-    close( NtCurrentTeb()->request_fd );
-    wine_switch_to_stack( cleanup_thread, &info, get_temp_stack() );
-#endif
 }
 
 
@@ -254,15 +98,7 @@ void SYSDEPS_AbortThread( int status )
     close( NtCurrentTeb()->wait_fd[1] );
     close( NtCurrentTeb()->reply_fd );
     close( NtCurrentTeb()->request_fd );
-#ifdef HAVE_NPTL
-    pthread_exit( (void *)status );
-#endif
-    SIGNAL_Reset();
-#ifdef HAVE__LWP_CREATE
-    _lwp_exit();
-#endif
-    for (;;)  /* avoid warning */
-        _exit( status );
+    wine_pthread_abort_thread( status );
 }
 
 /***********************************************************************

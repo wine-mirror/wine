@@ -1082,6 +1082,5 @@
 @ cdecl MODULE_DllThreadAttach(ptr)
 @ cdecl MODULE_GetLoadOrderA(ptr str str long)
 @ cdecl MODULE_GetLoadOrderW(ptr wstr wstr long)
-@ cdecl SYSDEPS_ExitThread(long)
 @ cdecl VERSION_Init(wstr)
 @ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)
