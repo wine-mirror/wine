@@ -267,7 +267,7 @@ struct _actions {
     STANDARDACTIONHANDLER handler;
 };
 
-struct _actions StandardActions[] = {
+static struct _actions StandardActions[] = {
     { szAllocateRegistrySpace, NULL},
     { szAppSearch, ACTION_AppSearch },
     { szBindImage, NULL},
@@ -3120,7 +3120,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
             rc = ERROR_SUCCESS;
         
         if (rc != ERROR_SUCCESS)
-            ERR("Failed to copy file\n");
+            ERR("Failed to copy file %s -> %s, last error %ld\n", debugstr_w(file_source), debugstr_w(dest_path), GetLastError());
 
         FIXME("We should track these duplicate files as well\n");   
  

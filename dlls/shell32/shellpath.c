@@ -1267,7 +1267,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
         }
         else
         {
-            FIXME("LoadString failed, missing translation?\n");
+            FIXME("(%d,%s), LoadString failed, missing translation?\n", folder, debugstr_w(pszPath));
             hr = E_FAIL;
         }
     }
