@@ -330,7 +330,10 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	          if (SUCCEEDED(IShellFolder_BindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
 	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
 	          }
-	          TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
+	          /* My Computer is already sorted and trying to do a simple text
+	           * sort will only mess things up */
+	          if (!_ILIsMyComputer(lptvid->lpi))
+	            TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
 		}
 	        break;
 	      case TVN_SELCHANGEDA:
