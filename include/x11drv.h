@@ -218,9 +218,9 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 
 extern struct _CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
-extern void X11DRV_CLIPBOARD_EmptyClipboard();
+extern void X11DRV_CLIPBOARD_EmptyClipboard(void);
 extern void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
-extern BOOL32 X11DRV_CLIPBOARD_RequestSelection();
+extern BOOL32 X11DRV_CLIPBOARD_RequestSelection(void);
 extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL32 bFooBar);
 
 void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
@@ -278,15 +278,15 @@ extern void KEYBOARD_UpdateState ( void );
 /* X11 main driver */
 
 extern Display *display;
-extern Screen *X11DRV_GetXScreen();
-extern Window X11DRV_GetXRootWindow();
+extern Screen *X11DRV_GetXScreen(void);
+extern Window X11DRV_GetXRootWindow(void);
 
-extern void X11DRV_MAIN_Finalize();
-extern void X11DRV_MAIN_Initialize();
+extern void X11DRV_MAIN_Finalize(void);
+extern void X11DRV_MAIN_Initialize(void);
 extern void X11DRV_MAIN_ParseOptions(int *argc, char *argv[]);
-extern void X11DRV_MAIN_Create();
-extern void X11DRV_MAIN_SaveSetup();
-extern void X11DRV_MAIN_RestoreSetup();
+extern void X11DRV_MAIN_Create(void);
+extern void X11DRV_MAIN_SaveSetup(void);
+extern void X11DRV_MAIN_RestoreSetup(void);
 
 /* X11 monitor driver */
 

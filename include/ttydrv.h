@@ -18,8 +18,8 @@ struct tagWND;
 typedef struct {
 } TTYDRV_PDEVICE;
 
-extern BOOL32 TTYDRV_GDI_Initialize();
-extern void TTDRV_GDI_Finalize();
+extern BOOL32 TTYDRV_GDI_Initialize(void);
+extern void TTDRV_GDI_Finalize(void);
 extern BOOL32 TTYDRV_GDI_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE16 *initData);
 extern BOOL32 TTYDRV_GDI_DeleteDC(struct tagDC *dc);
 extern INT32 TTYDRV_GDI_Escape(struct tagDC *dc, INT32 nEscape, INT32 cbInput, SEGPTR lpInData, SEGPTR lpOutData);
@@ -28,9 +28,9 @@ extern INT32 TTYDRV_GDI_Escape(struct tagDC *dc, INT32 nEscape, INT32 cbInput, S
 
 extern struct _CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
 
-extern void TTYDRV_CLIPBOARD_EmptyClipboard();
+extern void TTYDRV_CLIPBOARD_EmptyClipboard(void);
 extern void TTYDRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
-extern BOOL32 TTYDRV_CLIPBOARD_RequestSelection();
+extern BOOL32 TTYDRV_CLIPBOARD_RequestSelection(void);
 extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL32 bFooBar);
 
 /* TTY desktop driver */
@@ -52,7 +52,7 @@ extern void TTYDRV_EVENT_AddIO(int fd, unsigned flag);
 extern void TTYDRV_EVENT_DeleteIO(int fd, unsigned flag);
 extern BOOL32 TTYDRV_EVENT_WaitNetEvent(BOOL32 sleep, BOOL32 peek);
 extern void TTYDRV_EVENT_Synchronize(void);
-extern BOOL32 TTYDRV_EVENT_CheckFocus( void );
+extern BOOL32 TTYDRV_EVENT_CheckFocus(void);
 extern BOOL32 TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void TTYDRV_EVENT_DummyMotionNotify(void);
 extern BOOL32 TTYDRV_EVENT_Pending(void);
@@ -70,12 +70,12 @@ extern INT16 TTYDRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpK
 
 /* TTY main driver */
 
-extern void TTYDRV_MAIN_Finalize();
-extern void TTYDRV_MAIN_Initialize();
+extern void TTYDRV_MAIN_Finalize(void);
+extern void TTYDRV_MAIN_Initialize(void);
 extern void TTYDRV_MAIN_ParseOptions(int *argc, char *argv[]);
-extern void TTYDRV_MAIN_Create();
-extern void TTYDRV_MAIN_SaveSetup();
-extern void TTYDRV_MAIN_RestoreSetup();
+extern void TTYDRV_MAIN_Create(void);
+extern void TTYDRV_MAIN_SaveSetup(void);
+extern void TTYDRV_MAIN_RestoreSetup(void);
 
 /* TTY monitor driver */
 

@@ -27,13 +27,13 @@
 
 typedef struct CONSOLE_DRIVER
 {
-   void (*init)();
-   void (*close)();
+   void (*init)(void);
+   void (*close)(void);
    void (*write)(char, int, int, int);
    void (*moveCursor)(char, char);
    void (*getCursorPosition)(char *, char *);
    void (*getCharacterAtCursor)(char *, int *, int *, int *);
-   void (*clearScreen)();
+   void (*clearScreen)(void);
 
    /* Color-control functions */
    int  (*allocColor)(int color);
@@ -53,10 +53,10 @@ typedef struct CONSOLE_DRIVER
    void (*scrollDownWindow)(char, char, char, char, char, int, int);
 
    /* Accellerator Functions (Keyboard) */
-   char (*getCharacter)();
+   char (*getCharacter)(void);
 
    /* Other functions */
-   void (*refresh)();
+   void (*refresh)(void);
    
    /* Other data */
    int norefresh;
@@ -80,43 +80,43 @@ int  CONSOLE_CheckForKeystroke(char *, char*);
 void CONSOLE_GetKeystroke(char *, char *);
 void CONSOLE_GetCursorPosition(char *, char *);
 void CONSOLE_GetCharacterAtCursor(char *, int *, int *, int *);
-void CONSOLE_Refresh();
+void CONSOLE_Refresh(void);
 void CONSOLE_SetRefresh(int);
-int  CONSOLE_GetRefresh();
-void CONSOLE_ClearScreen();
-char CONSOLE_GetCharacter();
-void CONSOLE_ResizeScreen();
-void CONSOLE_NotifyResizeScreen(); 
+int  CONSOLE_GetRefresh(void);
+void CONSOLE_ClearScreen(void);
+char CONSOLE_GetCharacter(void);
+void CONSOLE_ResizeScreen(int, int);
+void CONSOLE_NotifyResizeScreen(int, int); 
 void CONSOLE_WriteRawString(char *);
 int  CONSOLE_AllocColor(int);
 void CONSOLE_SetBackgroundColor(int fg, int bg);
 
 /* Generic Defines */
-void GENERIC_Start();
+void GENERIC_Start(void);
 void GENERIC_ClearWindow(char, char, char, char, int, int);
 void GENERIC_ScrollUpWindow(char, char, char, char, char, int, int);
 void GENERIC_ScrollDownWindow(char, char, char, char, char, int, int);
-char GENERIC_GetCharacter();
+char GENERIC_GetCharacter(void);
 
 /* TTY specific defines */
 void TTY_Write(char out, int fg_color, int bg_color, int attribute);
-void TTY_Start();
+void TTY_Start(void);
 void TTY_GetKeystroke(char *, char *);
 
 #ifdef WINE_NCURSES
 
 /* ncurses defines */
 void NCURSES_Write(char out, int fg_color, int bg_color, int attribute);
-void NCURSES_Start();
-void NCURSES_Init();
-void NCURSES_Close();
+void NCURSES_Start(void);
+void NCURSES_Init(void);
+void NCURSES_Close(void);
 int  NCURSES_CheckForKeystroke(char *, char *);
 void NCURSES_GetKeystroke(char *, char *);
 void NCURSES_MoveCursor(char ,char);
 void NCURSES_GetCursorPosition(char *, char *);
 void NCURSES_GetCharacterAtCursor(char *, int *, int *, int *);
-void NCURSES_Refresh();
-void NCURSES_ClearScreen();
+void NCURSES_Refresh(void);
+void NCURSES_ClearScreen(void);
 void NCURSES_NotifyResizeScreen(int x, int y);
 int  NCURSES_AllocColor(int);
 void NCURSES_SetBackgroundColor(int fg, int bg);
@@ -124,9 +124,9 @@ void NCURSES_SetBackgroundColor(int fg, int bg);
 #endif /* WINE_NCURSES */
 
 /* Xterm specific defines */
-void XTERM_Start();
-void XTERM_Close();
-void XTERM_Init();
+void XTERM_Start(void);
+void XTERM_Close(void);
+void XTERM_Init(void);
 void XTERM_ResizeScreen(int x, int y);
 
 /* Color defines */

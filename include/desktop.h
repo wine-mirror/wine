@@ -29,9 +29,9 @@ typedef struct _DESKTOP_DRIVER {
   void (*pFinalize)(struct tagDESKTOP *pDesktop);
 } DESKTOP_DRIVER;
 
-extern int DESKTOP_GetScreenWidth();
-extern int DESKTOP_GetScreenHeight();
-extern int DESKTOP_GetScreenDepth();
+extern int DESKTOP_GetScreenWidth(void);
+extern int DESKTOP_GetScreenHeight(void);
+extern int DESKTOP_GetScreenDepth(void);
 
 extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
 extern LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,

@@ -18,13 +18,13 @@ typedef struct tagCLIPFORMAT {
 
 typedef struct _CLIPBOARD_DRIVER
 {
-    void (*pEmptyClipboard)();
+    void (*pEmptyClipboard)(void);
     void (*pSetClipboardData)(UINT32);
-    BOOL32 (*pRequestSelection)();
+    BOOL32 (*pRequestSelection)(void);
     void (*pResetOwner)(WND *, BOOL32);
 } CLIPBOARD_DRIVER;
 
-CLIPBOARD_DRIVER *CLIPBOARD_GetDriver();
+CLIPBOARD_DRIVER *CLIPBOARD_GetDriver(void);
 
 extern void CLIPBOARD_ResetLock(HQUEUE16 hqRef, HQUEUE16 hqNew);
 extern void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange);
