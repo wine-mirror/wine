@@ -41,7 +41,6 @@ static const char *app_loader_script =
     "#!/bin/sh\n"
     "\n"
     "appname=\"%s\"\n"
-    "dlls=\"%s\"\n"
     "# determine the application directory\n"
     "appdir=''\n"
     "case \"$0\" in\n"
@@ -61,6 +60,22 @@ static const char *app_loader_script =
     "    ;;\n"
     "esac\n"
     "\n"
+    "while true; do\n"
+    "  case \"$1\" in\n"
+    "    --debugmsg)\n"
+    "      debugmsg=\"$1 $2\"\n"
+    "      shift; shift;\n"
+    "      ;;\n"
+    "    --dll)\n"
+    "      dll=\"$1 $2\"\n"
+    "      shift; shift;\n"
+    "      ;;\n"
+    "    *)\n"
+    "      break\n"
+    "      ;;\n"
+    "  esac\n"
+    "done\n"
+    "\n"
     "# figure out the full app path\n"
     "if [ -n \"$appdir\" ]; then\n"
     "    apppath=\"$appdir/$appname.exe.so\"\n"
@@ -72,7 +87,7 @@ static const char *app_loader_script =
     "if [ ! -x \"$WINELOADER\" ]; then WINELOADER=\"wine\"; fi\n"
     "\n"
     "# and try to start the app\n"
-    "exec \"$WINELOADER\" \"$apppath\" \"$@\"\n"
+    "exec \"$WINELOADER\" $debugmsg $dll \"$apppath\" -- \"$@\"\n"
 ;
 
 static const char *app_gui_spec =
@@ -413,8 +428,8 @@ void add_lib_file(const char* library)
 
 int main(int argc, char **argv)
 {
-    char *library = 0, *path = 0, *dlls="", *p;
-    int i, j, no_opt = 0, gui_mode = 0, create_wrapper = 1;
+    char *library = 0, *path = 0, *p;
+    int i, j, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = 1;
     char *base_name, *app_temp_name, *wrp_temp_name;
     char *spec_name, *spec_c_name, *spec_o_name;
     char *wspec_name, *wspec_c_name, *wspec_o_name;
@@ -465,8 +480,8 @@ int main(int argc, char **argv)
 		printf("winewrap v0.31\n");
 		exit(0);
 		break;
-	    case 'W':
-		/* ignore such options for now for gcc compatibility */
+	    case 'C':
+		cpp = 1;
 		break;
 	    case '-':
 		if (argv[i][2]) error("No long option supported.");
@@ -545,7 +560,7 @@ int main(int argc, char **argv)
     /* build ld's argument list */
     link_args = malloc( (nb_obj_files + 20) * sizeof (char *) );
     j = 0;
-    link_args[j++] = "gcc";
+    link_args[j++] = cpp ? "g++" : "gcc";
     link_args[j++] = "-shared";
     link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
     for (i = 0; i < nb_lib_files; i++)
@@ -581,9 +596,8 @@ int main(int argc, char **argv)
     wspec_args[j++] = output_name;
     wspec_args[j++] = gui_mode ? "-mgui" : "-mcui";
     wspec_args[j++] = wrap_o_name;
-    wspec_args[j++] = "-L" WINEDLLS;
-    wspec_args[j++] = "-luser32";
-    wspec_args[j++] = "-lkernel32";
+    for (i = 0; i < nb_dll_files; i++)
+	wspec_args[j++] = dll_files[i];
     wspec_args[j] = 0;
 
     /* build wrapper gcc's argument list */
@@ -600,7 +614,7 @@ int main(int argc, char **argv)
     /* build wrapper ld's argument list */
     wlink_args = malloc( 20 * sizeof (char *) );
     j = 0;
-    wlink_args[j++] = "gcc";
+    wlink_args[j++] = cpp ? "g++" : "gcc";
     wlink_args[j++] = "-shared";
     wlink_args[j++] = "-Wl,-Bsymbolic,-z,defs";
     wlink_args[j++] = "-lwine";
@@ -642,9 +656,7 @@ int main(int argc, char **argv)
     }
 
     /* create the loader script */
-    for (i = 0; i < nb_dll_files; i++)
-	if (dll_files[i][1] == 'l') dlls = strmake(" %s %s", dlls, dll_files[i]);
-    create_file(base_name, app_loader_script, base_name, dlls);
+    create_file(base_name, app_loader_script, base_name);
     chmod(base_name, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
     return 0;    
