@@ -31,6 +31,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pBeginPath */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */
+    NULL,                            /* pChoosePixelFormat */
     PSDRV_Chord,                     /* pChord */
     NULL,                            /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
@@ -39,6 +40,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pCreateDIBSection16 */
     PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    NULL,                            /* pDescribePixelFormat */
     PSDRV_DeviceCapabilities,        /* pDeviceCapabilities */
     PSDRV_Ellipse,                   /* pEllipse */
     PSDRV_EndDoc,                    /* pEndDoc */
@@ -57,6 +59,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_GetCharWidth,              /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetPixel */
+    NULL,                            /* pGetPixelFormat */
     PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
     PSDRV_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
@@ -96,6 +99,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
     PSDRV_SetPixel,                  /* pSetPixel */
+    NULL,                            /* pSetPixelFormat */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
@@ -114,6 +118,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_StretchDIBits,             /* pStretchDIBits */
     NULL,                            /* pStrokeAndFillPath */
     NULL,                            /* pStrokePath */
+    NULL,                            /* pSwapBuffers */
     NULL                             /* pWidenPath */
 };
 

@@ -126,6 +126,8 @@ AC_SUBST(X_DLLS)
 X_DLLS=""
 AC_SUBST(XFILES)
 XFILES=""
+AC_SUBST(OPENGLFILES)
+OPENGLFILES=""
 AC_SUBST(DGA_SRCS)
 DGA_SRCS=""
 AC_SUBST(DGA2_SRCS)
@@ -195,64 +197,58 @@ then
         AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
     fi
 
-    dnl Check for the presence of Mesa
+    dnl Check for the presence of OpenGL
     if test $OPENGL = "yes" -o $OPENGL = "normal"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h)
-	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h)
+	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes" -a "$ac_cv_header_GL_glext_h" = "yes"
 	then
 	    dnl Check for some problems due to old Mesa versions
-	    AC_CACHE_CHECK("for up-to-date OpenGL version", wine_cv_mesa_version_OK,
+	    AC_CACHE_CHECK("for up-to-date OpenGL version", wine_cv_opengl_version_OK,
 	      AC_TRY_COMPILE(
 		[#include <GL/gl.h>],
 		[GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
-		[wine_cv_mesa_version_OK="yes"],
-		[wine_cv_mesa_version_OK="no"]
+		[wine_cv_opengl_version_OK="yes"],
+		[wine_cv_opengl_version_OK="no"]
 	      )
             )
 
 	    dnl Check for the thread-safety of the OpenGL library
 	    AC_CACHE_CHECK("for thread-safe OpenGL version", 
-			   wine_cv_mesa_version_threadsafe,
+			   wine_cv_opengl_version_threadsafe,
               [saved_libs=$LIBS
 	       LIBS="$X_LIBS -lGL"
 	       AC_TRY_LINK([],[pthread_getspecific();],
-			      [wine_cv_mesa_version_threadsafe="yes"],
-			      [wine_cv_mesa_version_threadsafe="no"])
+			      [wine_cv_opengl_version_threadsafe="yes"],
+			      [wine_cv_opengl_version_threadsafe="no"])
 	       LIBS=$saved_libs]
 	    )
 
-	    if test "$wine_cv_mesa_version_OK" = "yes" -a \( "$wine_cv_mesa_version_threadsafe" = "no" -o $OPENGL = "yes" \)
+	    if test "$wine_cv_opengl_version_OK" = "yes" -a \( "$wine_cv_opengl_version_threadsafe" = "no" -o $OPENGL = "yes" \)
             then
 		dnl Check for the presense of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
-			     AC_DEFINE(HAVE_LIBMESAGL)
 			     X_PRE_LIBS="$X_PRE_LIBS -lGL"
 			     MESA_SRCS='$(MESA_SRCS)'
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
-		if test "$ac_cv_lib_GL_glXCreateContext" = "no"
+		if test $ac_cv_lib_GL_glXCreateContext = "yes"
 		then
-			AC_CHECK_LIB(MesaGL,glXCreateContext,
-				     AC_DEFINE(HAVE_LIBMESAGL)
-				     X_PRE_LIBS="$X_PRE_LIBS -lMesaGL"
-				     MESA_SRCS='$(MESA_SRCS)'
-				     ,,
-				     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-	        fi
+			dnl Check for the Color Table and Paletted Texture extensions
+			AC_CACHE_CHECK("for the OpenGL Color Index extension",dummy,
+				       AC_TRY_COMPILE([#include <GL/gl.h>],
+			               [GLenum test = GL_COLOR_INDEX8_EXT;],
+				       [AC_DEFINE(HAVE_GL_COLOR_TABLE)],))
 
-		dnl Check for the Color Table and Paletted Texture extensions
-		AC_CACHE_CHECK("for the OpenGL Color Index extension",dummy,
-			       AC_TRY_COMPILE([#include <GL/gl.h>],
-			                      [GLenum test = GL_COLOR_INDEX8_EXT;],
-					      [AC_DEFINE(HAVE_GL_COLOR_TABLE)],))
+		        AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+			AC_CHECK_LIB(GL,glXGetProcAddressARB,AC_DEFINE(HAVE_GLX_GETPROCADDRESS),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
-    	        if test "$ac_cv_lib_GL_glXCreateContext" = "no"
-		then
-			AC_CHECK_LIB(MesaGL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-		else
-			AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
+			then
+				AC_DEFINE(HAVE_OPENGL)
+				OPENGLFILES='$(OPENGLFILES)'
+			fi
 		fi
 	     fi
 	 fi
@@ -994,6 +990,7 @@ dlls/olecli/Makefile
 dlls/oledlg/Makefile
 dlls/olepro32/Makefile
 dlls/olesvr/Makefile
+dlls/opengl32/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
@@ -1108,14 +1105,14 @@ then
   echo "*** reentrant version of libc."
 fi
 
-if test "$wine_cv_mesa_version_OK" = "no"
+if test "$wine_cv_opengl_version_OK" = "no"
 then
   echo
   echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
   echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
 fi
 
-if test "$wine_cv_mesa_version_threadsafe" = "yes" -a $OPENGL = "normal"
+if test "$wine_cv_opengl_version_threadsafe" = "yes" -a $OPENGL = "normal"
 then
   echo
   echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
@@ -1124,7 +1121,7 @@ then
   echo "*** start configure with '--enable-opengl' to force OpenGL support."
 fi
 
-if test "$wine_cv_mesa_version_threadsafe" = "yes" -a $OPENGL = "yes"
+if test "$wine_cv_opengl_version_threadsafe" = "yes" -a $OPENGL = "yes"
 then
   echo
   echo "*** Warning: you explicitely linked in a thread-safe OpenGL version. If you"

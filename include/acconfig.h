@@ -96,8 +96,8 @@
 /* Define if IPX includes are taken from Linux kernel */
 #undef HAVE_IPX_LINUX
 
-/* Define if Mesa is present on the system or not */
-#undef HAVE_LIBMESAGL
+/* Define if OpenGL is present on the system or not */
+#undef HAVE_OPENGL
 
 /* Define if the system has dynamic link library support with the dl* API */
 #undef HAVE_DL_API
@@ -110,3 +110,6 @@
 
 /* Define if the OpenGL implementation supports the GL_EXT_paletted_texture extension */
 #undef HAVE_GL_PALETTED_TEXTURE
+
+/* Define if the OpenGL library supports the glXGetProcAddressARB call */
+#undef HAVE_GLX_GETPROCADDRESS

@@ -553,7 +553,7 @@ static void fill_caps(LPDDCAPS caps) {
     DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
       /*DDSCAPS_OVERLAY |*/ DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
 	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
-#ifdef HAVE_MESAGL
+#ifdef HAVE_OPENGL
   caps->dwCaps |= DDCAPS_3D | DDCAPS_ZBLTS;
   caps->dwCaps2 |=  DDCAPS2_NO2DDURING3DSCENE;
   caps->ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
@@ -650,7 +650,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 
 	return S_OK;
     }
-#ifdef HAVE_MESAGL
+#ifdef HAVE_OPENGL
     if ( IsEqualGUID( &IID_IDirect3D, refiid ) )
 	return create_direct3d(obj,This);
     if ( IsEqualGUID( &IID_IDirect3D2, refiid ) )

@@ -1,0 +1,20 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = opengl32
+SOVERSION = 1.0
+IMPORTS   = \
+	x11drv \
+	gdi32
+
+SPEC_SRCS = opengl32.spec
+
+C_SRCS = \
+	wgl.c \
+	opengl_norm.c \
+	opengl_ext.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

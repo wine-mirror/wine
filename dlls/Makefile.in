@@ -3,8 +3,12 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
+OPENGLFILES= \
+	opengl32/libopengl32.@LIBEXT@
+
 XFILES = \
 	ddraw/libddraw.@LIBEXT@ \
+	@OPENGLFILES@ \
 	x11drv/libx11drv.@LIBEXT@
 
 DLLFILES = \
@@ -118,6 +122,7 @@ SUBDIRS = \
 	oledlg \
 	olepro32 \
 	olesvr \
+	opengl32 \
 	psapi \
 	rasapi32 \
 	richedit \
@@ -246,6 +251,9 @@ libolepro32.@LIBEXT@: olepro32/libolepro32.@LIBEXT@
 libolesvr32.@LIBEXT@ libolesvr.@LIBEXT@: olesvr/libolesvr32.@LIBEXT@
 	$(RM) $@ && $(LN_S) olesvr/libolesvr32.@LIBEXT@ $@
 
+libopengl32.@LIBEXT@: opengl32/libopengl32.@LIBEXT@
+	$(RM) $@ && $(LN_S) opengl32/libopengl32.@LIBEXT@ $@
+
 libpsapi.@LIBEXT@: psapi/libpsapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) psapi/libpsapi.@LIBEXT@ $@
 
@@ -325,6 +333,7 @@ msvideo/libmsvfw32.so: libwinmm.so
 oleaut32/liboleaut32.so: libole32.so libcomctl32.so
 olecli/libolecli32.so: libolesvr32.so libole32.so
 olepro32/libolepro32.so: liboleaut32.so libole32.so
+opengl32/libopengl32.so: libx11drv.so libgdi32.so
 shell32/libshell32.so: libole32.so
 urlmon/liburlmon.so: libole32.so
 version/libversion.so: liblz32.so

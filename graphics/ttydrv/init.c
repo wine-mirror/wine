@@ -25,6 +25,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pBeginPath */
   TTYDRV_DC_BitBlt,    /* pBitBlt */
   TTYDRV_DC_BitmapBits,/* pBitmapBits */
+  NULL,                /* pChoosePixelFormat */
   TTYDRV_DC_Chord,     /* pChord */
   NULL,                /* pCloseFigure */
   TTYDRV_DC_CreateBitmap, /* pCreateBitmap */
@@ -33,6 +34,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pCreateDIBSection16 */
   TTYDRV_DC_DeleteDC,  /* pDeleteDC */
   TTYDRV_DC_DeleteObject, /* pDeleteObject */
+  NULL,                /* pDescribePixelFormat */
   NULL,                /* pDeviceCapabilities */
   TTYDRV_DC_Ellipse,   /* pEllipse */
   NULL,                /* pEndDoc */
@@ -51,6 +53,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   TTYDRV_DC_GetCharWidth, /* pGetCharWidth */
   NULL,                /* pGetDCOrgEx */
   TTYDRV_DC_GetPixel,  /* pGetPixel */
+  NULL,                /* pGetPixelFormat */
   TTYDRV_DC_GetTextExtentPoint, /* pGetTextExtentPoint */
   TTYDRV_DC_GetTextMetrics,  /* pGetTextMetrics */
   NULL,                /* pIntersectClipRect */
@@ -90,6 +93,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pSetMapMode (optional) */
   NULL,                /* pSetMapperFlags */
   TTYDRV_DC_SetPixel,  /* pSetPixel */
+  NULL,                /* pSetPixelFormat */
   NULL,                /* pSetPolyFillMode */
   NULL,                /* pSetROP2 */
   NULL,                /* pSetRelAbs */
@@ -108,6 +112,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pStretchDIBits */
   NULL,                /* pStrokeAndFillPath */
   NULL,                /* pStrokePath */
+  NULL,                /* pSwapBuffers */
   NULL                 /* pWidenPath */
 };
 

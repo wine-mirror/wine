@@ -1,0 +1,86 @@
+#!/usr/bin/perl -w
+
+#
+# First, the basics and the wgl functions
+#
+print "
+name opengl32
+type win32
+
+@  stdcall wglCreateContext(long) wglCreateContext
+@  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
+@  stdcall wglCopyContext(long long long) wglCopyContext
+@  stdcall wglDeleteContext(long) wglDeleteContext
+@  stdcall wglDescribeLayerPlane(long long long long ptr) wglDescribeLayerPlane
+@  stdcall wglGetCurrentContext() wglGetCurrentContext
+@  stdcall wglGetCurrentDC() wglGetCurrentDC
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr) wglGetLayerPaletteEntries
+@  stdcall wglGetProcAddress(str) wglGetProcAddress
+@  stdcall wglMakeCurrent(long long) wglMakeCurrent
+@  stdcall wglRealizeLayerPalette(long long long) wglRealizeLayerPalette
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr) wglSetLayerPaletteEntries
+@  stdcall wglShareLists(long long) wglShareLists
+@  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
+@  stdcall wglUseFontBitmaps(long long long long) wglUseFontBitmaps
+@  stdcall wglUseFontOutlines(long long long long long long long) wglUseFontOutlines
+@  stub    glGetLevelParameterfv
+@  stub    glGetLevelParameteriv
+@  stub    wglUseFontBitmapsA
+@  stub    wglUseFontOutlinesA
+@  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
+@  forward wglDescribePixelFormat GDI32.DescribePixelFormat
+@  forward wglGetPixelFormat GDI32.GetPixelFormat
+@  forward wglSetPixelFormat GDI32.SetPixelFormat
+@  forward wglSwapBuffers GDI32.SwapBuffers
+";
+
+#
+# Now, the functions from the include file
+#
+open(INC, "/usr/X11R6/include/GL/gl.h") || die "Could not open GL/gl.h";
+
+while ($line = <INC>) {
+    if ($line =~ /GLAPI.*GLAPIENTRY/) {
+	# Start of a function declaration
+	($name, $args) = ($line =~ /GLAPIENTRY *(.*)\((.*)/);
+	
+	# Remove all extensions except the multitexture one (see OpenGL ABI)
+	if (($name !~ /(MESA|PGI|ARB|EXT)/) ||
+	    ($name =~ /MultiTexCoord/) ||
+	    ($name =~ /ActiveTextureARB/)) {
+	    print "@  stdcall $name(";
+
+	    # Now, get the parameters
+	    while (1) {
+		@args = split /,/, $args;
+
+		foreach (@args) {
+		    if ($_ =~ /\)/) {
+			($_) = ($_ =~ /(.*)\)/);
+		    }
+
+		    if ($_ =~ /\*/) {
+			print "ptr ";
+		    } elsif ($_ =~ /[a-zA-Z]/) {
+			($type) = ($_ =~ /^ *(.*) +.*/);
+			if ($type =~ /double/) {
+			    print "double ";
+			} elsif ($type !~ /void/) {
+			    print "long ";
+			}
+		    }
+		}
+
+		if ($args !~ /\)/) {
+		    $args = <INC>;
+		} else {
+		    last;
+		}
+	    }
+	    
+	    print ") wine_$name\n";
+	}
+    }
+}
+
+close(INC);

@@ -9,9 +9,13 @@
 
 #include "config.h"
 
-#if defined(HAVE_LIBMESAGL) && defined(HAVE_GL_GLX_H)
+#if defined(HAVE_OPENGL)
 
-#define HAVE_MESAGL
+#include "x11drv.h"
+
+/* As GLX relies on X, this is needed */
+#define ENTER_GL() EnterCriticalSection( &X11DRV_CritSection )
+#define LEAVE_GL() LeaveCriticalSection( &X11DRV_CritSection )
 
 #undef APIENTRY
 #undef CALLBACK
@@ -20,6 +24,7 @@
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug to happen :-/ */
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <GL/glext.h>
 #undef  XMD_H
 
 #undef APIENTRY
@@ -31,10 +36,6 @@
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
-#else /* HAVE_LIBMESAGL */
-
-#undef HAVE_MESAGL
-
-#endif /* HAVE_LIBMESAGL */
+#endif /* HAVE_OPENGL */
 
 #endif /* __WINE_WINE_GL_H */

@@ -27,6 +27,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_BeginPath,                 /* pBeginPath */
     MFDRV_BitBlt,                    /* pBitBlt */
     NULL,                            /* pBitmapBits */	
+    NULL,                            /* pChoosePixelFormat */
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
@@ -35,6 +36,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateDIBSection16 */
     NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEndDoc */
@@ -53,6 +55,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
     NULL, /* no implementation */    /* pGetPixel */
+    NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
@@ -92,6 +95,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetMapMode,                /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     MFDRV_SetPixel,                  /* pSetPixel */
+    NULL,                            /* pSetPixelFormat */
     MFDRV_SetPolyFillMode,           /* pSetPolyFillMode */
     MFDRV_SetROP2,                   /* pSetROP2 */
     MFDRV_SetRelAbs,                 /* pSetRelAbs */
@@ -110,6 +114,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_StretchDIBits,             /* pStretchDIBits */
     MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
     MFDRV_StrokePath,                /* pStrokePath */
+    NULL,                            /* pSwapBuffers */
     MFDRV_WidenPath                  /* pWidenPath */
 };
 

@@ -104,6 +104,7 @@ char dbch_nonclient[] = "\003nonclient";
 char dbch_ntdll[] = "\003ntdll";
 char dbch_odbc[] = "\003odbc";
 char dbch_ole[] = "\003ole";
+char dbch_opengl[] = "\003opengl";
 char dbch_pager[] = "\003pager";
 char dbch_palette[] = "\003palette";
 char dbch_pidl[] = "\003pidl";
@@ -171,7 +172,7 @@ char dbch_wnet[] = "\003wnet";
 char dbch_x11[] = "\003x11";
 char dbch_x11drv[] = "\003x11drv";
 
-#define DEBUG_CHANNEL_COUNT 164
+#define DEBUG_CHANNEL_COUNT 165
 
 static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_accel,
@@ -272,6 +273,7 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_ntdll,
     dbch_odbc,
     dbch_ole,
+    dbch_opengl,
     dbch_pager,
     dbch_palette,
     dbch_pidl,

@@ -40,14 +40,6 @@ typedef struct mesa_d3dv_private
     GLenum                      nextlight;
 } mesa_d3dv_private;
 
-#ifdef USE_OSMESA
-# define LEAVE_GL() ;
-# define ENTER_GL() ;
-#else
-# define LEAVE_GL() LeaveCriticalSection( &X11DRV_CritSection )
-# define ENTER_GL() EnterCriticalSection( &X11DRV_CritSection )
-#endif
-
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\
 {						\

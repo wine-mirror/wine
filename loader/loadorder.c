@@ -59,6 +59,7 @@ static struct tagDllOverride {
 	/* we have to use libglide2x.so instead of glide2x.dll ... */
 	{"glide2x",			"so,native"},
 	{"odbc32",			"builtin"},
+	{"opengl32",                    "builtin,native"},
 	{NULL,NULL},
 };
 
@@ -482,6 +483,8 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	char *name;
 	int len;
 
+	TRACE("looking for %s\n", path);
+	
 	assert(path != NULL);
 
 	/* Strip path information */

@@ -17,7 +17,7 @@
 #include "debugtools.h"
 #include "x11_private.h"
 
-#ifdef HAVE_MESAGL
+#ifdef HAVE_OPENGL
 /* for d3d texture stuff */
 # include "mesa_private.h"
 #endif
@@ -59,7 +59,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_QueryInterface(
 	    TRACE("  Creating IDirectDrawSurface interface (%p)\n", *obj);
 	    return S_OK;
     }
-#ifdef HAVE_MESAGL
+#ifdef HAVE_OPENGL
     if ( IsEqualGUID( &IID_IDirect3DTexture2, refiid ) ) {
 	/* Texture interface */
 	*obj = d3dtexture2_create(This);
@@ -74,7 +74,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_QueryInterface(
 	TRACE("  Creating IDirect3DTexture interface (%p)\n", *obj);
 	return S_OK;
     }
-#endif /* HAVE_MESAGL */
+#endif /* HAVE_OPENGL */
     FIXME("(%p):interface for IID %s NOT found!\n",This,debugstr_guid(refiid));
     return OLE_E_ENUM_NOMORE;
 }

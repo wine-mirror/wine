@@ -404,8 +404,17 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
  */
 INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
 {
-    FIXME("(%d,%p): stub\n",hdc,ppfd);
-    return 1;
+  DC * dc = DC_GetDCPtr( hdc );
+
+  TRACE("(%08x,%p)\n",hdc,ppfd);
+  
+  if (dc == NULL) return 0;
+  if (dc->funcs->pChoosePixelFormat == NULL) {
+    FIXME(" :stub\n");
+    return 0;
+  }
+  
+  return dc->funcs->pChoosePixelFormat(dc,ppfd);
 }
 
 
@@ -423,8 +432,16 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
 BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
                             const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    FIXME("(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
-    return TRUE;
+  DC * dc = DC_GetDCPtr( hdc );
+
+  TRACE("(%d,%d,%p)\n",hdc,iPixelFormat,ppfd);
+
+  if (dc == NULL) return 0;
+  if (dc->funcs->pSetPixelFormat == NULL) {
+    FIXME(" :stub\n");
+    return 0;
+  }
+  return dc->funcs->pSetPixelFormat(dc,iPixelFormat,ppfd);
 }
 
 
@@ -441,8 +458,16 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
  */
 INT WINAPI GetPixelFormat( HDC hdc )
 {
-    FIXME("(%d): stub\n",hdc);
-    return 1;
+  DC * dc = DC_GetDCPtr( hdc );
+
+  TRACE("(%08x)\n",hdc);
+
+  if (dc == NULL) return 0;
+  if (dc->funcs->pGetPixelFormat == NULL) {
+    FIXME(" :stub\n");
+    return 0;
+  }
+  return dc->funcs->pGetPixelFormat(dc);
 }
 
 
@@ -463,10 +488,18 @@ INT WINAPI GetPixelFormat( HDC hdc )
 INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
                                 LPPIXELFORMATDESCRIPTOR ppfd )
 {
-    FIXME("(%d,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
+  DC * dc = DC_GetDCPtr( hdc );
+
+  TRACE("(%08x,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
+
+  if (dc == NULL) return 0;
+  if (dc->funcs->pDescribePixelFormat == NULL) {
+    FIXME(" :stub\n");
     ppfd->nSize = nBytes;
     ppfd->nVersion = 1;
     return 3;
+  }
+  return dc->funcs->pDescribePixelFormat(dc,iPixelFormat,nBytes,ppfd);
 }
 
 
@@ -481,8 +514,16 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
  */
 BOOL WINAPI SwapBuffers( HDC hdc )
 {
-    FIXME("(%d): stub\n",hdc);
+  DC * dc = DC_GetDCPtr( hdc );
+
+  TRACE("(%08x)\n",hdc);
+
+  if (dc == NULL) return 0;
+  if (dc->funcs->pSwapBuffers == NULL) {
+    FIXME(" :stub\n");
     return TRUE;
+  }
+  return dc->funcs->pSwapBuffers(dc);
 }
 
 

@@ -38,6 +38,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     NULL,                            /* pBeginPath */
     X11DRV_BitBlt,                   /* pBitBlt */
     X11DRV_BitmapBits,               /* pBitmapBits */
+    X11DRV_ChoosePixelFormat,        /* pChoosePixelFormat */
     X11DRV_Chord,                    /* pChord */
     NULL,                            /* pCloseFigure */
     X11DRV_CreateBitmap,             /* pCreateBitmap */
@@ -46,6 +47,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     X11DRV_DIB_CreateDIBSection16,   /* pCreateDIBSection16 */
     X11DRV_DeleteDC,                 /* pDeleteDC */
     X11DRV_DeleteObject,             /* pDeleteObject */
+    X11DRV_DescribePixelFormat,      /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     X11DRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */
@@ -64,6 +66,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     X11DRV_GetCharWidth,             /* pGetCharWidth */
     X11DRV_GetDCOrgEx,               /* pGetDCOrgEx */
     X11DRV_GetPixel,                 /* pGetPixel */
+    X11DRV_GetPixelFormat,           /* pGetPixelFormat */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     X11DRV_GetTextMetrics,           /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
@@ -103,6 +106,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
     X11DRV_SetPixel,                 /* pSetPixel */
+    X11DRV_SetPixelFormat,           /* pSetPixelFormat */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
@@ -121,6 +125,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     NULL,                            /* pStretchDIBits */
     NULL,                            /* pStrokeAndFillPath */
     NULL,                            /* pStrokePath */
+    X11DRV_SwapBuffers,              /* pSwapBuffers */
     NULL                             /* pWidenPath */
 };
 
@@ -265,6 +270,9 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
     }
 
+    physDev->current_pf   = 0;
+    physDev->used_visuals = 0;
+    
     if (!dc->w.hVisRgn)
     {
         TSXFreeGC( display, physDev->gc );
@@ -285,6 +293,8 @@ static BOOL X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     TSXFreeGC( display, physDev->gc );
+    while (physDev->used_visuals-- > 0)
+      TSXFree(physDev->visuals[physDev->used_visuals]);
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     return TRUE;

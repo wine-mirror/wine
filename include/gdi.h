@@ -176,6 +176,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pBeginPath)(DC*);
     BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
     LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
+    INT      (*pChoosePixelFormat)(DC*,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(DC*);
     BOOL     (*pCreateBitmap)(HBITMAP); 
@@ -186,6 +187,7 @@ typedef struct tagDC_FUNCS
 				     DWORD,DWORD);
     BOOL     (*pDeleteDC)(DC*);
     BOOL     (*pDeleteObject)(HGDIOBJ);
+    INT      (*pDescribePixelFormat)(DC *,INT,UINT,PIXELFORMATDESCRIPTOR *);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
     INT      (*pEndDoc)(DC*);
@@ -206,6 +208,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
     BOOL     (*pGetDCOrgEx)(DC*,LPPOINT);
     COLORREF (*pGetPixel)(DC*,INT,INT);
+    INT      (*pGetPixelFormat)(DC*);
     BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
     BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
@@ -246,6 +249,7 @@ typedef struct tagDC_FUNCS
     INT      (*pSetMapMode)(DC*,INT);
     DWORD    (*pSetMapperFlags)(DC*,DWORD);
     COLORREF (*pSetPixel)(DC*,INT,INT,COLORREF);
+    BOOL     (*pSetPixelFormat)(DC*,INT,const PIXELFORMATDESCRIPTOR *);
     INT      (*pSetPolyFillMode)(DC*,INT);
     INT      (*pSetROP2)(DC*,INT);
     INT      (*pSetRelAbs)(DC*,INT);
@@ -265,6 +269,7 @@ typedef struct tagDC_FUNCS
 			       const void *,const BITMAPINFO *,UINT,DWORD);
     BOOL     (*pStrokeAndFillPath)(DC*);
     BOOL     (*pStrokePath)(DC*);
+    BOOL     (*pSwapBuffers)(DC*);
     BOOL     (*pWidenPath)(DC*);
 } DC_FUNCTIONS;
 

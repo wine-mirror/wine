@@ -15,6 +15,7 @@ C_SRCS = \
 	init.c \
 	objects.c \
 	oembitmap.c \
+	opengl.c \
 	palette.c \
 	pen.c \
 	text.c \

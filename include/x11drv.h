@@ -19,6 +19,7 @@
 #include "winbase.h"
 #include "windef.h"
 
+#define MAX_PIXELFORMATS 8
 
 struct tagBITMAPOBJ;
 struct tagCLASS;
@@ -67,6 +68,9 @@ typedef struct
     X_PHYSBRUSH   brush;
     int           backgroundPixel;
     int           textPixel;
+    XVisualInfo  *visuals[MAX_PIXELFORMATS];
+    int           used_visuals;
+    int           current_pf;
 } X11DRV_PDEVICE;
 
 
@@ -152,6 +156,13 @@ extern INT X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP hbitmap,
 				      UINT lines, LPSTR bits,
 				      LPBITMAPINFO info, UINT coloruse );
 extern HANDLE X11DRV_LoadOEMResource( WORD id, WORD type );
+
+/* OpenGL / X11 driver functions */
+extern int X11DRV_ChoosePixelFormat(DC *dc, const PIXELFORMATDESCRIPTOR *pppfd) ;
+extern int X11DRV_DescribePixelFormat(DC *dc, int iPixelFormat, UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd) ;
+extern int X11DRV_GetPixelFormat(DC *dc) ;
+extern BOOL X11DRV_SetPixelFormat(DC *dc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) ;
+extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 
 /* X11 driver internal functions */
 

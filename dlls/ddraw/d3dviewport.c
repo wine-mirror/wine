@@ -14,10 +14,14 @@
 #include "x11drv.h"
 
 #include "d3d_private.h"
+#include "mesa_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
 
-#ifdef HAVE_MESAGL
+#ifdef HAVE_OPENGL
+
+#define D3DVPRIVATE(x) mesa_d3dv_private*dvpriv=((mesa_d3dv_private*)x->private)
+#define D3DLPRIVATE(x) mesa_d3dl_private*dlpriv=((mesa_d3dl_private*)x->private)
 
 static ICOM_VTABLE(IDirect3DViewport2) viewport2_vtable;
 
@@ -44,6 +48,7 @@ LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2)
   IDirect3DViewport2Impl* vp;
   
   vp = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DViewport2Impl));
+  vp->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dv_private));
   vp->ref = 1;
   ICOM_VTBL(vp) = &viewport2_vtable;
   vp->d3d.d3d2 = d3d2;
@@ -54,7 +59,7 @@ LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2)
 
   vp->lights = NULL;
 
-  vp->nextlight = GL_LIGHT0;
+  ((mesa_d3dv_private *) vp->private)->nextlight = GL_LIGHT0;
   
   return (LPDIRECT3DVIEWPORT2)vp;
 }
@@ -64,6 +69,7 @@ LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1)
   IDirect3DViewport2Impl* vp;
   
   vp = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DViewport2Impl));
+  vp->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dv_private));
   vp->ref = 1;
   ICOM_VTBL(vp) = &viewport2_vtable;
   vp->d3d.d3d1 = d3d1;
@@ -74,7 +80,7 @@ LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1)
 
   vp->lights = NULL;
 
-  vp->nextlight = GL_LIGHT0;
+  ((mesa_d3dv_private *) vp->private)->nextlight = GL_LIGHT0;
   
   return (LPDIRECT3DVIEWPORT) vp;
 }
@@ -83,7 +89,7 @@ LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1)
  *				IDirect3DViewport2 methods
  */
 
-static HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 iface,
 							REFIID riid,
 							LPVOID* ppvObj)
 {
@@ -96,7 +102,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 
 
 
 
-static ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
+ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
   TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
@@ -106,7 +112,7 @@ static ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
 
 
 
-static ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
+ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
@@ -120,7 +126,7 @@ static ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
 }
 
 /*** IDirect3DViewport methods ***/
-static HRESULT WINAPI IDirect3DViewport2Impl_Initialize(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_Initialize(LPDIRECT3DVIEWPORT2 iface,
 						    LPDIRECT3D d3d)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -129,7 +135,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_Initialize(LPDIRECT3DVIEWPORT2 ifac
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_GetViewport(LPDIRECT3DVIEWPORT2 iface,
 						     LPD3DVIEWPORT lpvp)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -143,7 +149,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport(LPDIRECT3DVIEWPORT2 ifa
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_SetViewport(LPDIRECT3DVIEWPORT2 iface,
 						     LPD3DVIEWPORT lpvp)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -167,7 +173,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport(LPDIRECT3DVIEWPORT2 ifa
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_TransformVertices(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_TransformVertices(LPDIRECT3DVIEWPORT2 iface,
 							   DWORD dwVertexCount,
 							   LPD3DTRANSFORMDATA lpData,
 							   DWORD dwFlags,
@@ -180,7 +186,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_TransformVertices(LPDIRECT3DVIEWPOR
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_LightElements(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_LightElements(LPDIRECT3DVIEWPORT2 iface,
 						       DWORD dwElementCount,
 						       LPD3DLIGHTDATA lpData)
 {
@@ -190,7 +196,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_LightElements(LPDIRECT3DVIEWPORT2 i
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_SetBackground(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_SetBackground(LPDIRECT3DVIEWPORT2 iface,
 						       D3DMATERIALHANDLE hMat)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -199,7 +205,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetBackground(LPDIRECT3DVIEWPORT2 i
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_GetBackground(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_GetBackground(LPDIRECT3DVIEWPORT2 iface,
 						       LPD3DMATERIALHANDLE lphMat,
 						       LPBOOL lpValid)
 {
@@ -209,7 +215,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetBackground(LPDIRECT3DVIEWPORT2 i
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_SetBackgroundDepth(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_SetBackgroundDepth(LPDIRECT3DVIEWPORT2 iface,
 							    LPDIRECTDRAWSURFACE lpDDSurface)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -218,7 +224,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetBackgroundDepth(LPDIRECT3DVIEWPO
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_GetBackgroundDepth(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_GetBackgroundDepth(LPDIRECT3DVIEWPORT2 iface,
 							    LPDIRECTDRAWSURFACE* lplpDDSurface,
 							    LPBOOL lpValid)
 {
@@ -228,7 +234,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetBackgroundDepth(LPDIRECT3DVIEWPO
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_Clear(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_Clear(LPDIRECT3DVIEWPORT2 iface,
 					       DWORD dwCount,
 					       LPD3DRECT lpRects,
 					       DWORD dwFlags)
@@ -257,7 +263,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_Clear(LPDIRECT3DVIEWPORT2 iface,
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_AddLight(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_AddLight(LPDIRECT3DVIEWPORT2 iface,
 						  LPDIRECT3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -270,6 +276,9 @@ static HRESULT WINAPI IDirect3DViewport2Impl_AddLight(LPDIRECT3DVIEWPORT2 iface,
 
   /* If active, activate the light */
   if (This->device.active_device1 != NULL) {
+    D3DVPRIVATE(This);
+    D3DLPRIVATE(ilpLight);
+    
     /* Get the rendering context */
     if (This->use_d3d2)
       This->device.active_device2->set_context(This->device.active_device2);
@@ -277,14 +286,14 @@ static HRESULT WINAPI IDirect3DViewport2Impl_AddLight(LPDIRECT3DVIEWPORT2 iface,
       This->device.active_device1->set_context(This->device.active_device1);
     
     /* Activate the light */
-    ilpLight->light_num = This->nextlight++;
+    dlpriv->light_num = dvpriv->nextlight++;
     ilpLight->activate(ilpLight);
   }
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(LPDIRECT3DVIEWPORT2 iface,
 						     LPDIRECT3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -293,7 +302,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(LPDIRECT3DVIEWPORT2 ifa
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_NextLight(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_NextLight(LPDIRECT3DVIEWPORT2 iface,
 						   LPDIRECT3DLIGHT lpLight,
 						   LPDIRECT3DLIGHT* lplpLight,
 						   DWORD dwFlags)
@@ -305,7 +314,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_NextLight(LPDIRECT3DVIEWPORT2 iface
 }
 
 /*** IDirect3DViewport2 methods ***/
-static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport2(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_GetViewport2(LPDIRECT3DVIEWPORT2 iface,
 						      LPD3DVIEWPORT2 lpViewport2)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -319,7 +328,7 @@ static HRESULT WINAPI IDirect3DViewport2Impl_GetViewport2(LPDIRECT3DVIEWPORT2 if
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport2(LPDIRECT3DVIEWPORT2 iface,
+HRESULT WINAPI IDirect3DViewport2Impl_SetViewport2(LPDIRECT3DVIEWPORT2 iface,
 						      LPD3DVIEWPORT2 lpViewport2)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
@@ -372,7 +381,7 @@ static ICOM_VTABLE(IDirect3DViewport2) viewport2_vtable =
   IDirect3DViewport2Impl_SetViewport2
 };
 
-#else /* HAVE_MESAGL */
+#else /* HAVE_OPENGL */
 
 LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1) {
   ERR("Should not be called...\n");
@@ -384,4 +393,4 @@ LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2) {
   return NULL;
 }
 
-#endif /* HAVE_MESAGL */
+#endif /* HAVE_OPENGL */
