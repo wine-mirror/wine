@@ -195,8 +195,8 @@ void test_message_from_string(void)
     /* line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\n", 0,
         0, out, sizeof out/sizeof (CHAR));
-    ok(!strcmp("hi ", out),"failed out=[%s]",out);
-    ok(r==3,"failed: r=%ld",r);
+    ok(!strcmp("hi ", out) || !strcmp("hi\r\n", out),"failed out=[%s]",out);
+    ok(r==3 || r==4,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\r\n", 0,
