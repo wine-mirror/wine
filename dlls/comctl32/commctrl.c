@@ -1210,14 +1210,15 @@ COMCTL32_CreateToolTip(HWND hwndOwner)
     if (hwndToolTip)
     {
 	NMTOOLTIPSCREATED nmttc;
-
-	nmttc.hdr.hwndFrom = hwndOwner;
-	nmttc.hdr.idFrom = GetWindowLongA(hwndOwner, GWL_ID);
+        /* true owner can be different if hwndOwner is a child window */
+        HWND hwndTrueOwner = GetWindow(hwndToolTip, GW_OWNER);
+        nmttc.hdr.hwndFrom = hwndTrueOwner;
+        nmttc.hdr.idFrom = GetWindowLongA(hwndTrueOwner, GWL_ID);
 	nmttc.hdr.code = NM_TOOLTIPSCREATED;
 	nmttc.hwndToolTips = hwndToolTip;
 
-	SendMessageA(GetParent(hwndOwner), WM_NOTIFY,
-		     (WPARAM)GetWindowLongA(hwndOwner, GWL_ID),
+       SendMessageA(GetParent(hwndTrueOwner), WM_NOTIFY,
+                    (WPARAM)GetWindowLongA(hwndTrueOwner, GWL_ID),
 		     (LPARAM)&nmttc);
     }
 
