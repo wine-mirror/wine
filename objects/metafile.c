@@ -1357,57 +1357,63 @@ BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 BOOL MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 {
     DWORD len, bmSize, biSize;
-    HGLOBAL16 hmr;
     METARECORD *mr;
-    BITMAPOBJ *bmp;
     BITMAPINFO *info;
-    BITMAPINFOHEADER *infohdr;
     int index;
     char buffer[sizeof(METARECORD)];
 
     switch (logbrush->lbStyle)
     {
     case BS_PATTERN:
-	bmp = (BITMAPOBJ *)GDI_GetObjPtr((HGDIOBJ16)logbrush->lbHatch, BITMAP_MAGIC);
-	if (!bmp) return FALSE;
-	len = sizeof(METARECORD) + sizeof(BITMAPINFOHEADER) + 
-	      (bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes) + 6;
-	if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	  {
-	    GDI_HEAP_UNLOCK((HGDIOBJ16)logbrush->lbHatch);
-	    return FALSE;
-	  }
-	mr = (METARECORD *)GlobalLock16(hmr);
-	memset(mr, 0, len);
-	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
-	mr->rdSize = len / 2;
-	*(mr->rdParm) = logbrush->lbStyle;
-	*(mr->rdParm + 1) = DIB_RGB_COLORS;
-	infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
-	infohdr->biSize = sizeof(BITMAPINFOHEADER);
-	infohdr->biWidth = bmp->bitmap.bmWidth;
-	infohdr->biHeight = bmp->bitmap.bmHeight;
-	infohdr->biPlanes = bmp->bitmap.bmPlanes;
-	infohdr->biBitCount = bmp->bitmap.bmBitsPixel;
-	memcpy(mr->rdParm + (sizeof(BITMAPINFOHEADER) / 2) + 4,
-	       PTR_SEG_TO_LIN(bmp->bitmap.bmBits),
-	       bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes);
-	GDI_HEAP_UNLOCK(logbrush->lbHatch);
-	break;
+        {
+	    BITMAP bm;
+	    BYTE *bits;
+
+	    GetObjectA(logbrush->lbHatch, sizeof(bm), &bm);
+	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
+	        FIXME(metafile, "Trying to store a colour pattern brush\n");
+		return FALSE;
+	    }
+
+	    bmSize = bm.bmHeight * DIB_GetDIBWidthBytes(bm.bmWidth, 1);
+
+	    len = sizeof(METARECORD) +  sizeof(WORD) + sizeof(BITMAPINFO) + 
+	      sizeof(RGBQUAD) + bmSize;
+	     
+	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+	    if(!mr) return FALSE;
+	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
+	    mr->rdSize = len / 2;
+	    mr->rdParm[0] = BS_PATTERN;
+	    mr->rdParm[1] = DIB_RGB_COLORS;
+	    info = (BITMAPINFO *)(mr->rdParm + 2);
+
+	    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	    info->bmiHeader.biWidth = bm.bmWidth;
+	    info->bmiHeader.biHeight = bm.bmHeight;
+	    info->bmiHeader.biPlanes = 1;
+	    info->bmiHeader.biBitCount = 1;
+	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
+
+	    GetDIBits(dc->hSelf, logbrush->lbHatch, 0, bm.bmHeight, bits,
+		      info, DIB_RGB_COLORS);
+	    *(DWORD *)info->bmiColors = 0;
+	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
+	    break;
+	}
 
     case BS_DIBPATTERN:
 	info = (BITMAPINFO *)GlobalLock16((HGLOBAL16)logbrush->lbHatch);
 	if (info->bmiHeader.biCompression)
             bmSize = info->bmiHeader.biSizeImage;
         else
-	    bmSize = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount 
-		    + 31) / 32 * 8 * info->bmiHeader.biHeight;
+	    bmSize = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
+					  info->bmiHeader.biBitCount) 
+	               * info->bmiHeader.biHeight;
 	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush->lbColor)); 
 	len = sizeof(METARECORD) + biSize + bmSize + 2;
-	if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	    return FALSE;
-	mr = (METARECORD *)GlobalLock16(hmr);
-	memset(mr, 0, len);
+	mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+	if(!mr) return FALSE;
 	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	mr->rdSize = len / 2;
 	*(mr->rdParm) = logbrush->lbStyle;
@@ -1419,11 +1425,11 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
     }
     if (!(MF_WriteRecord(dc, mr, len)))
     {
-	GlobalFree16(hmr);
+	HeapFree(GetProcessHeap(), 0, mr);
 	return FALSE;
     }
 
-    GlobalFree16(hmr);
+    HeapFree(GetProcessHeap(), 0, mr);
     
     mr = (METARECORD *)&buffer;
     mr->rdSize = sizeof(METARECORD) / 2;
