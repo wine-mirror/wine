@@ -1277,7 +1277,7 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
     ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
     ICOM_METHOD (HRESULT,RestoreDisplayMode) \
     ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
-    ICOM_METHOD3(HRESULT,SetDisplayMode,         DWORD,, DWORD,, DWORD,) \
+    ICOM_METHOD3(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP) \
     ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent)
 #define IDirectDraw_IMETHODS \
     IUnknown_IMETHODS \
@@ -1416,10 +1416,10 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
           /* added in v2 */ \
 /*5c*/    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS2,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree) \
     /* added in v4 */ \
-    ICOM_METHOD2(HRESULT,GetSurfaceFromDC,    HDC,, LPDIRECTDRAWSURFACE4*,) \
+    ICOM_METHOD2(HRESULT,GetSurfaceFromDC,    HDC,hdc, LPDIRECTDRAWSURFACE4*,pSurf) \
     ICOM_METHOD (HRESULT,RestoreAllSurfaces) \
     ICOM_METHOD (HRESULT,TestCooperativeLevel) \
-    ICOM_METHOD2(HRESULT,GetDeviceIdentifier, LPDDDEVICEIDENTIFIER,, DWORD,)
+    ICOM_METHOD2(HRESULT,GetDeviceIdentifier, LPDDDEVICEIDENTIFIER,pDDDI, DWORD,dwFlags)
 #define IDirectDraw4_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDraw4_METHODS
@@ -1491,13 +1491,13 @@ ICOM_DEFINE(IDirectDraw4,IUnknown)
           /* added in v2 */ \
 /*5c*/    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS2,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree) \
           /* added in v4 */ \
-/*60*/    ICOM_METHOD2(HRESULT,GetSurfaceFromDC,    HDC,, LPDIRECTDRAWSURFACE7*,) \
+/*60*/    ICOM_METHOD2(HRESULT,GetSurfaceFromDC,    HDC,hdc, LPDIRECTDRAWSURFACE7*,pSurf) \
 /*64*/    ICOM_METHOD (HRESULT,RestoreAllSurfaces) \
 /*68*/    ICOM_METHOD (HRESULT,TestCooperativeLevel) \
-/*6c*/    ICOM_METHOD2(HRESULT,GetDeviceIdentifier, LPDDDEVICEIDENTIFIER2,, DWORD,) \
+/*6c*/    ICOM_METHOD2(HRESULT,GetDeviceIdentifier, LPDDDEVICEIDENTIFIER2,pDDDI, DWORD,dwFlags) \
           /* added in v7 */ \
-/*70*/    ICOM_METHOD3(HRESULT,StartModeTest,    LPSIZE,, DWORD,, DWORD,) \
-/*74*/    ICOM_METHOD2(HRESULT,EvaluateMode,     DWORD,, DWORD *,)
+/*70*/    ICOM_METHOD3(HRESULT,StartModeTest,    LPSIZE,pModes, DWORD,dwNumModes, DWORD,dwFlags) \
+/*74*/    ICOM_METHOD2(HRESULT,EvaluateMode,     DWORD,dwFlags, DWORD *,pTimeout)
 #define IDirectDraw7_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDraw7_METHODS
@@ -1866,10 +1866,10 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     /* added in v3 */ \
     ICOM_METHOD2(HRESULT,SetSurfaceDesc, LPDDSURFACEDESC2,lpDDSD, DWORD,dwFlags) \
     /* added in v4 */ \
-    ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,, LPVOID,, DWORD,, DWORD,) \
-    ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,, LPVOID,, LPDWORD,) \
-    ICOM_METHOD1(HRESULT,FreePrivateData,      REFGUID,) \
-    ICOM_METHOD1(HRESULT,GetUniquenessValue,   LPDWORD,) \
+    ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,tag, LPVOID,pData, DWORD,cbSize, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,tag, LPVOID,pBuffer, LPDWORD,pcbBufferSize) \
+    ICOM_METHOD1(HRESULT,FreePrivateData,      REFGUID,tag) \
+    ICOM_METHOD1(HRESULT,GetUniquenessValue,   LPDWORD,pValue) \
     ICOM_METHOD (HRESULT,ChangeUniquenessValue)
 #define IDirectDrawSurface4_IMETHODS \
     IUnknown_IMETHODS \
@@ -1974,10 +1974,10 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
     /* added in v3 */ \
     ICOM_METHOD2(HRESULT,SetSurfaceDesc, LPDDSURFACEDESC2,lpDDSD, DWORD,dwFlags) \
     /* added in v4 */ \
-    ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,, LPVOID,, DWORD,, DWORD,) \
-    ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,, LPVOID,, LPDWORD,) \
-    ICOM_METHOD1(HRESULT,FreePrivateData,      REFGUID,) \
-    ICOM_METHOD1(HRESULT,GetUniquenessValue,   LPDWORD,) \
+    ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,tag, LPVOID,pData, DWORD,cbSize, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,tag, LPVOID,pBuffer, LPDWORD,pcbBufferSize) \
+    ICOM_METHOD1(HRESULT,FreePrivateData,      REFGUID,tag) \
+    ICOM_METHOD1(HRESULT,GetUniquenessValue,   LPDWORD,pValue) \
     ICOM_METHOD (HRESULT,ChangeUniquenessValue) \
     /* added in v7 */ \
     ICOM_METHOD1(HRESULT,SetPriority,    DWORD,prio) \
