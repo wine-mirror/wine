@@ -26,6 +26,7 @@
 #include <float.h>
 #include <time.h>
 
+#define COBJMACROS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -94,28 +95,28 @@ static IRecordInfoImpl *IRecordInfoImpl_Construct()
 
 static ULONG CALLBACK IRecordInfoImpl_AddRef(IRecordInfo *iface)
 {
-  ICOM_THIS(IRecordInfoImpl, iface);
+  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
   return ++This->ref;
 }
 
 static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
 {
-  ICOM_THIS(IRecordInfoImpl, iface);
+  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
   return --This->ref;
 }
 
 static BOOL fail_GetSize; /* Whether to fail the GetSize call */
 
-static HRESULT CALLBACK IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvExisting WINE_UNUSED)
+static HRESULT CALLBACK IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvExisting)
 {
-  ICOM_THIS(IRecordInfoImpl, iface);
+  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
   This->clearCalled++;
   return S_OK;
 }
 
 static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
 {
-  ICOM_THIS(IRecordInfoImpl, iface);
+  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
   This->sizeCalled++;
   *size = 17;
   if (fail_GetSize)
@@ -124,7 +125,7 @@ static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
   return S_OK;
 }
 
-static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface WINE_UNUSED)
+static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface)
 {
   trace("Called an unexpected IRecordInfo method - please report!\n");
   /* Quit because we'll just crash anyway */
