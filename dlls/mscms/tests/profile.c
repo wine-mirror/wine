@@ -1,7 +1,7 @@
 /*
  * Tests for color profile functions
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -743,21 +743,18 @@ static void test_SetColorProfileElement()
         profile.pProfileData = testprofile;
         profile.cbDataSize = strlen(testprofile);
 
+        /* Parameter checks */
+
         handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
 
-        todo_wine
-        {
         ret = SetColorProfileElement( handle, tag, 0, &size, data );
         ok( !ret, "SetColorProfileElement() succeeded (%ld)\n", GetLastError() );
-        }
 
         CloseColorProfile( handle );
 
         handle = OpenColorProfileA( &profile, PROFILE_READWRITE, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
-
-        /* Parameter checks */
 
         ret = SetColorProfileElement( NULL, 0, 0, NULL, NULL );
         ok( !ret, "SetColorProfileElement() succeeded (%ld)\n", GetLastError() );
@@ -827,11 +824,8 @@ static void test_SetColorProfileHeader()
         handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
 
-        todo_wine
-        {
         ret = SetColorProfileHeader( handle, &header );
         ok( !ret, "SetColorProfileHeader() succeeded (%ld)\n", GetLastError() );
-        }
 
         CloseColorProfile( handle );
 

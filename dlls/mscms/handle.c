@@ -44,12 +44,15 @@ static CRITICAL_SECTION MSCMS_handle_cs = { &MSCMS_handle_cs_debug, -1, 0, 0, 0,
 /*  A simple structure to tie together a pointer to an icc profile, an lcms
  *  color profile handle and a Windows file handle. Windows color profile 
  *  handles are built from indexes into an array of these structures. If
- *  the profile is memory based the file handle field is NULL.
+ *  the profile is memory based the file handle field is NULL. The 'access'
+ *  field records the access parameter supplied to an OpenColorProfile()
+ *  call, i.e. PROFILE_READ or PROFILE_READWRITE.
  */
 
 struct handlemap
 {
     HANDLE file;
+    DWORD access;
     icProfile *iccprofile;
     cmsHPROFILE cmsprofile;
 };
@@ -94,6 +97,20 @@ HANDLE MSCMS_hprofile2handle( HPROFILE profile )
     LeaveCriticalSection( &MSCMS_handle_cs );
 
     return file;
+}
+
+DWORD MSCMS_hprofile2access( HPROFILE profile )
+{
+    DWORD access;
+    unsigned int i;
+
+    EnterCriticalSection( &MSCMS_handle_cs );
+
+    i = (unsigned int)profile - 1;
+    access = handlemaptable[i].access;
+
+    LeaveCriticalSection( &MSCMS_handle_cs );
+    return access;
 }
 
 HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile )
@@ -172,7 +189,8 @@ icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile )
     return iccprofile;
 }
 
-HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHPROFILE cmsprofile )
+HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile,
+                                       cmsHPROFILE cmsprofile, DWORD access )
 {
     HPROFILE profile = NULL;
     unsigned int i;
@@ -186,6 +204,7 @@ HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHP
         if (handlemaptable[i].iccprofile == 0)
         {
             handlemaptable[i].file = file;
+            handlemaptable[i].access = access;
             handlemaptable[i].iccprofile = iccprofile;
             handlemaptable[i].cmsprofile = cmsprofile;
 
@@ -195,7 +214,6 @@ HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHP
 
 out:
     LeaveCriticalSection( &MSCMS_handle_cs );
-
     return profile;
 }
 

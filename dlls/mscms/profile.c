@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -554,12 +554,14 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS_H
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
-    DWORD i, count;
+    DWORD i, count, access = MSCMS_hprofile2access( profile );
     icTag tag;
 
     TRACE( "( %p, 0x%08lx, %ld, %p, %p )\n", profile, type, offset, size, buffer );
 
     if (!iccprofile || !size || !buffer) return FALSE;
+    if (!(access & PROFILE_READWRITE)) return FALSE;
+
     count = MSCMS_get_tag_count( iccprofile );
 
     for (i = 0; i < count; i++)
@@ -584,10 +586,12 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS_H
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
+    DWORD access = MSCMS_hprofile2access( profile );
 
     TRACE( "( %p, %p )\n", profile, header );
 
     if (!iccprofile || !header) return FALSE;
+    if (!(access & PROFILE_READWRITE)) return FALSE;
 
     MSCMS_set_profile_header( iccprofile, header );
     return TRUE;
@@ -794,7 +798,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     }
 
     if (cmsprofile)
-        return MSCMS_create_hprofile_handle( handle, iccprofile, cmsprofile );
+        return MSCMS_create_hprofile_handle( handle, iccprofile, cmsprofile, access );
 
 #endif /* HAVE_LCMS_H */
     return NULL;
@@ -815,15 +819,26 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 BOOL WINAPI CloseColorProfile( HPROFILE profile )
 {
     BOOL ret = FALSE;
+#ifdef HAVE_LCMS_H
+    icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
+    HANDLE file = MSCMS_hprofile2handle( profile );
+    DWORD access = MSCMS_hprofile2access( profile );
 
     TRACE( "( %p )\n", profile );
 
-#ifdef HAVE_LCMS_H
+    if (file && (access & PROFILE_READWRITE))
+    {
+        DWORD written, size = MSCMS_get_profile_size( iccprofile );
+
+        if (SetFilePointer( file, 0, NULL, FILE_BEGIN ) ||
+            !WriteFile( file, iccprofile, size, &written, NULL ) || written != size)
+            ERR( "Unable to write color profile\n" );
+    }
+
     ret = cmsCloseProfile( MSCMS_hprofile2cmsprofile( profile ) );
-
     HeapFree( GetProcessHeap(), 0, MSCMS_hprofile2iccprofile( profile ) );
-    CloseHandle( MSCMS_hprofile2handle( profile ) );
 
+    CloseHandle( MSCMS_hprofile2handle( profile ) );
     MSCMS_destroy_hprofile_handle( profile );
 
 #endif /* HAVE_LCMS_H */

@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -68,6 +68,7 @@
 #define DWORD   DWORD
 #define LPDWORD LPDWORD
 
+extern DWORD MSCMS_hprofile2access( HPROFILE );
 extern HPROFILE MSCMS_handle2hprofile( HANDLE file );
 extern HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile );
 extern HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile );
@@ -75,7 +76,8 @@ extern HANDLE MSCMS_hprofile2handle( HPROFILE profile );
 extern cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile );
 extern icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile );
 
-extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHPROFILE cmsprofile );
+extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile,
+                                              cmsHPROFILE cmsprofile, DWORD access );
 extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
 
 extern DWORD MSCMS_get_tag_count( icProfile *iccprofile );
@@ -84,5 +86,6 @@ extern void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset,
 extern void MSCMS_set_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
 extern void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
 extern void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
+extern DWORD MSCMS_get_profile_size( icProfile *iccprofile );
 
 #endif /* HAVE_LCMS_H */

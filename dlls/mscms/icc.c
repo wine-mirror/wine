@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,6 +99,14 @@ void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *
 void MSCMS_set_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer )
 {
     memcpy( (char *)iccprofile + tag->offset + offset, buffer, tag->size - offset );
+}
+
+DWORD MSCMS_get_profile_size( icProfile *iccprofile )
+{
+    DWORD size = ((icHeader *)iccprofile)->size;
+
+    MSCMS_adjust_endianess32( (ULONG *)&size );
+    return size;
 }
 
 #endif /* HAVE_LCMS_H */
