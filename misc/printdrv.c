@@ -533,6 +533,7 @@ BOOL ENUMPRINTERS_AddInfo2A(
     }
  else
     {
+     if (bCalcSpaceOnly==FALSE)
      lpPInfo2->pServerName = NULL;
      bCalcSpaceOnly = ENUMPRINTERS_AddStringFromRegistryA(hPrinterSettings, 
      			                  "Name", &(lpPInfo2->pPrinterName), 
