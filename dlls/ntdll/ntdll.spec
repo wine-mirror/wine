@@ -41,8 +41,8 @@ name	ntdll
 @ stub LdrFindEntryForAddress
 @ stub LdrFindResourceDirectory_U
 @ stub LdrFindResource_U
-@ stub LdrGetDllHandle
-@ stub LdrGetProcedureAddress
+@ stdcall LdrGetDllHandle(long long ptr ptr) LdrGetDllHandle
+@ stdcall LdrGetProcedureAddress(ptr ptr long ptr) LdrGetProcedureAddress
 @ stub LdrInitializeThunk
 @ stub LdrLoadDll
 @ stub LdrProcessRelocationBlock
