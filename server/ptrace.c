@@ -66,10 +66,6 @@
 inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
-#ifndef __WALL
-#define __WALL 0
-#endif
-
 static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 
 /* handle a status returned by wait4 */
@@ -108,6 +104,23 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     return 0;
 }
 
+/* wait4 wrapper to handle missing __WALL flag in older kernels */
+static inline pid_t wait4_wrapper( pid_t pid, int *status, int options, struct rusage *usage )
+{
+#ifdef __WALL
+    static int wall_flag = __WALL;
+
+    for (;;)
+    {
+        pid_t ret = wait4( pid, status, options | wall_flag, usage );
+        if (ret != -1 || !wall_flag || errno != EINVAL) return ret;
+        wall_flag = 0;
+    }
+#else
+    return wait4( pid, status, options, usage );
+#endif
+}
+
 /* handle a SIGCHLD signal */
 void sigchld_callback(void)
 {
@@ -115,7 +128,7 @@ void sigchld_callback(void)
 
     for (;;)
     {
-        if (!(pid = wait4( -1, &status, WUNTRACED | WNOHANG | __WALL, NULL ))) break;
+        if (!(pid = wait4_wrapper( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
         if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status, -1 );
         else break;
     }
@@ -128,7 +141,7 @@ static void wait4_thread( struct thread *thread, int signal )
 
     do
     {
-        if ((res = wait4( get_ptrace_pid(thread), &status, WUNTRACED | __WALL, NULL )) == -1)
+        if ((res = wait4_wrapper( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
         {
             if (errno == ECHILD)  /* must have died */
             {
