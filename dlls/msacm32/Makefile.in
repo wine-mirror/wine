@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32
 
+SPEC_SRCS = msacm32.spec
+
 C_SRCS = \
 	builtin.c \
 	driver.c \

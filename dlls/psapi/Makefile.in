@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = psapi
 
+SPEC_SRCS = psapi.spec
+
 C_SRCS = \
 	psapi_main.c
 

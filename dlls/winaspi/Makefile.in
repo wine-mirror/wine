@@ -5,6 +5,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winaspi
 
+SPEC_SRCS = winaspi.spec
+GLUE      = winaspi.spec.c
+
 C_SRCS = \
 	winaspi16.c
 

@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32
 
+SPEC_SRCS = rasapi32.spec
+
 C_SRCS = rasapi.c 
 
 all: $(MODULE).o

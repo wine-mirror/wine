@@ -1,2 +1,3 @@
 Makefile
+shell32.spec.c
 shres.s

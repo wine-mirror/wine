@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wnaspi32
 
+SPEC_SRCS = wnaspi32.spec
+
 C_SRCS = \
 	winaspi32.c
 

@@ -5,6 +5,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ver
 
+SPEC_SRCS = ver.spec
+GLUE      = ver.spec.c
+
 C_SRCS = \
 	ver16.c
 

@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = tapi32
 
+SPEC_SRCS = tapi32.spec
+
 C_SRCS = \
 	assisted.c \
 	line.c \

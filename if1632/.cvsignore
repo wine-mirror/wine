@@ -8,8 +8,6 @@ callto16.spec.c
 callto16.spec.glue.s
 comm.spec.c
 comm.spec.glue.s
-commdlg.spec.c
-commdlg.spec.glue.s
 compobj.spec.c
 compobj.spec.glue.s
 ddeml.spec.c
@@ -30,8 +28,6 @@ mmsystem.spec.c
 mmsystem.spec.glue.s
 mouse.spec.c
 mouse.spec.glue.s
-msacm.spec.c
-msacm.spec.glue.s
 msvideo.spec.c
 msvideo.spec.glue.s
 ole2.spec.c
@@ -69,16 +65,10 @@ typelib.spec.c
 typelib.spec.glue.s
 user.spec.c
 user.spec.glue.s
-ver.spec.c
-ver.spec.glue.s
 w32sys.spec.c
 w32sys.spec.glue.s
 win32s16.spec.c
 win32s16.spec.glue.s
-win87em.spec.c
-win87em.spec.glue.s
-winaspi.spec.c
-winaspi.spec.glue.s
 windebug.spec.c
 windebug.spec.glue.s
 wineps.spec.c

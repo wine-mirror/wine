@@ -8,7 +8,6 @@ MODULE    = if1632
 SPEC_SRCS = \
 	avifile.spec \
 	comm.spec \
-	commdlg.spec \
 	compobj.spec \
 	ddeml.spec \
 	dispdib.spec \
@@ -19,7 +18,6 @@ SPEC_SRCS = \
 	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
-	msacm.spec \
 	msvideo.spec \
 	ole2.spec \
 	ole2conv.spec \
@@ -38,11 +36,8 @@ SPEC_SRCS = \
 	toolhelp.spec \
 	typelib.spec \
 	user.spec \
-	ver.spec \
 	w32sys.spec \
 	win32s16.spec \
-	win87em.spec \
-	winaspi.spec \
 	windebug.spec \
 	wineps.spec \
 	wing.spec \

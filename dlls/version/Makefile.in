@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = version
 
+SPEC_SRCS = version.spec
+
 C_SRCS = \
 	info.c \
 	install.c \

@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imagehlp
 
+SPEC_SRCS = imagehlp.spec
+
 C_SRCS = \
 	access.c \
 	debug.c \

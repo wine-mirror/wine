@@ -6,6 +6,8 @@ VPATH     = @srcdir@
 MODULE    = comctl32
 WRCEXTRA  = -s -p$(MODULE)
 
+SPEC_SRCS = comctl32.spec
+
 C_SRCS = \
 	animate.c \
 	comboex.c \

@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winspool
 
+SPEC_SRCS = winspool.spec
+
 C_SRCS = \
 	info.c
 

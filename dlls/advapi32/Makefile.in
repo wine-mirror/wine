@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32
 
+SPEC_SRCS = advapi32.spec
+
 C_SRCS = \
 	advapi.c \
 	crypt.c \

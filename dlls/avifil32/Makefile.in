@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avifil32
 
+SPEC_SRCS = avifil32.spec
+
 C_SRCS = \
 	avifile.c
 

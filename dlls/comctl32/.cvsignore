@@ -1,2 +1,3 @@
 Makefile
+comctl32.spec.c
 rsrc.s
