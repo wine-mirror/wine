@@ -38,7 +38,7 @@
 
 #define VARTYPE_NOT_SUPPORTED 0
 static struct {
-	enum VARENUM vt; /* VT */
+	VARTYPE vt;    /* VT */
 	UINT elemsize; /* elementsize by VT */
 	UINT expflags; /* fFeatures from SafeArrayAllocDescriptorEx */
 	UINT addflags; /* additional fFeatures from SafeArrayCreate */
