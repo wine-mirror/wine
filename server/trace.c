@@ -2696,6 +2696,49 @@ static void dump_duplicate_token_reply( const struct duplicate_token_reply *req 
     fprintf( stderr, " new_handle=%p", req->new_handle );
 }
 
+static void dump_create_mailslot_request( const struct create_mailslot_request *req )
+{
+    fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
+    fprintf( stderr, " read_timeout=%08x,", req->read_timeout );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_mailslot_reply( const struct create_mailslot_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_mailslot_request( const struct open_mailslot_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " sharing=%08x,", req->sharing );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_mailslot_reply( const struct open_mailslot_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_set_mailslot_info_request( const struct set_mailslot_info_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " read_timeout=%08x", req->read_timeout );
+}
+
+static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
+{
+    fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
+    fprintf( stderr, " read_timeout=%08x,", req->read_timeout );
+    fprintf( stderr, " msg_count=%08x,", req->msg_count );
+    fprintf( stderr, " next_msgsize=%08x", req->next_msgsize );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2882,6 +2925,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_adjust_token_privileges_request,
     (dump_func)dump_get_token_privileges_request,
     (dump_func)dump_duplicate_token_request,
+    (dump_func)dump_create_mailslot_request,
+    (dump_func)dump_open_mailslot_request,
+    (dump_func)dump_set_mailslot_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3070,6 +3116,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_adjust_token_privileges_reply,
     (dump_func)dump_get_token_privileges_reply,
     (dump_func)dump_duplicate_token_reply,
+    (dump_func)dump_create_mailslot_reply,
+    (dump_func)dump_open_mailslot_reply,
+    (dump_func)dump_set_mailslot_info_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3258,6 +3307,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "adjust_token_privileges",
     "get_token_privileges",
     "duplicate_token",
+    "create_mailslot",
+    "open_mailslot",
+    "set_mailslot_info",
 };
 
 /* ### make_requests end ### */

@@ -21,6 +21,7 @@ C_SRCS = \
 	file.c \
 	handle.c \
 	hook.c \
+	mailslot.c \
 	main.c \
 	mapping.c \
 	mutex.c \

@@ -130,6 +130,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
     static const WCHAR pipeW[] = {'\\','?','?','\\','p','i','p','e','\\'};
+    static const WCHAR mailslotW[] = {'\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     ANSI_STRING unix_name;
     int created = FALSE;
 
@@ -156,6 +157,25 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_named_pipe )
         {
             req->access = access;
+            req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
+            wine_server_add_data( req, attr->ObjectName->Buffer + 4,
+                                  attr->ObjectName->Length - 4*sizeof(WCHAR) );
+            io->u.Status = wine_server_call( req );
+            *handle = reply->handle;
+        }
+        SERVER_END_REQ;
+        return io->u.Status;
+    }
+
+    /* check for mailslot */
+
+    if (attr->ObjectName->Length > sizeof(mailslotW) &&
+        !memicmpW( attr->ObjectName->Buffer, mailslotW, sizeof(mailslotW)/sizeof(WCHAR) ))
+    {
+        SERVER_START_REQ( open_mailslot )
+        {
+            req->access = access & GENERIC_WRITE;
+            req->sharing = sharing;
             req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
             wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                                   attr->ObjectName->Length - 4*sizeof(WCHAR) );
@@ -1766,7 +1786,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         '\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     NTSTATUS ret;
 
-    FIXME("%p %08lx %p %p %08lx %08lx %08lx %p\n",
+    TRACE("%p %08lx %p %p %08lx %08lx %08lx %p\n",
               pHandle, DesiredAccess, attr, IoStatusBlock,
               CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
 
@@ -1777,7 +1797,18 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         return STATUS_OBJECT_NAME_INVALID;
     }
 
-    ret = STATUS_NOT_IMPLEMENTED;
-
+    SERVER_START_REQ( create_mailslot )
+    {
+        req->max_msgsize = MaxMessageSize;
+        req->read_timeout = TimeOut->QuadPart / -10000;
+        req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
+        wine_server_add_data( req, attr->ObjectName->Buffer + 4,
+                              attr->ObjectName->Length - 4*sizeof(WCHAR) );
+        ret = wine_server_call( req );
+        if( ret == STATUS_SUCCESS )
+            *pHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+ 
     return ret;
 }

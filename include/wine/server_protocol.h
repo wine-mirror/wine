@@ -3241,6 +3241,57 @@ struct duplicate_token_reply
 };
 
 
+
+struct create_mailslot_request
+{
+    struct request_header __header;
+    unsigned int   max_msgsize;
+    unsigned int   read_timeout;
+    int            inherit;
+    /* VARARG(name,unicode_str); */
+};
+struct create_mailslot_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
+
+struct open_mailslot_request
+{
+    struct request_header __header;
+    unsigned int   access;
+    int            inherit;
+    unsigned int   sharing;
+    /* VARARG(name,unicode_str); */
+};
+struct open_mailslot_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
+
+struct set_mailslot_info_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+    unsigned int   flags;
+    unsigned int   read_timeout;
+};
+struct set_mailslot_info_reply
+{
+    struct reply_header __header;
+    unsigned int   max_msgsize;
+    unsigned int   read_timeout;
+    unsigned int   msg_count;
+    unsigned int   next_msgsize;
+};
+#define MAILSLOT_SET_READ_TIMEOUT  1
+
+
 enum request
 {
     REQ_new_process,
@@ -3428,6 +3479,9 @@ enum request
     REQ_adjust_token_privileges,
     REQ_get_token_privileges,
     REQ_duplicate_token,
+    REQ_create_mailslot,
+    REQ_open_mailslot,
+    REQ_set_mailslot_info,
     REQ_NB_REQUESTS
 };
 
@@ -3620,6 +3674,9 @@ union generic_request
     struct adjust_token_privileges_request adjust_token_privileges_request;
     struct get_token_privileges_request get_token_privileges_request;
     struct duplicate_token_request duplicate_token_request;
+    struct create_mailslot_request create_mailslot_request;
+    struct open_mailslot_request open_mailslot_request;
+    struct set_mailslot_info_request set_mailslot_info_request;
 };
 union generic_reply
 {
@@ -3810,8 +3867,11 @@ union generic_reply
     struct adjust_token_privileges_reply adjust_token_privileges_reply;
     struct get_token_privileges_reply get_token_privileges_reply;
     struct duplicate_token_reply duplicate_token_reply;
+    struct create_mailslot_reply create_mailslot_reply;
+    struct open_mailslot_reply open_mailslot_reply;
+    struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 164
+#define SERVER_PROTOCOL_VERSION 165
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

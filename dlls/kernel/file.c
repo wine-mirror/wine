@@ -1217,9 +1217,11 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     if (!strncmpW(filename, bkslashes_with_dotW, 4))
     {
         static const WCHAR pipeW[] = {'P','I','P','E','\\',0};
+        static const WCHAR mailslotW[] = {'M','A','I','L','S','L','O','T','\\',0};
 
         if ((isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0') ||
-            !strncmpiW( filename + 4, pipeW, 5 ))
+            !strncmpiW( filename + 4, pipeW, 5 ) ||
+            !strncmpiW( filename + 4, mailslotW, 9 ))
         {
             dosdev = 0;
         }

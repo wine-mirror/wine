@@ -1641,9 +1641,31 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpNextSize, LPDWORD lpMessageCount,
                                LPDWORD lpReadTimeout )
 {
-    FIXME("(%p): stub\n",hMailslot);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL r;
+
+    TRACE("%p %p %p %p %p\n",hMailslot,
+          lpMaxMessageSize,lpNextSize,lpMessageCount,lpReadTimeout);
+
+    SERVER_START_REQ( set_mailslot_info )
+    {
+        req->handle = hMailslot;
+        req->flags = 0;
+        r = !wine_server_call_err( req );
+        if( r )
+        {
+            if( lpMaxMessageSize )
+                *lpMaxMessageSize = reply->max_msgsize;
+            if( lpNextSize )
+                *lpNextSize = reply->next_msgsize;
+            if( lpMessageCount )
+                *lpMessageCount = reply->msg_count;
+            if( lpReadTimeout )
+                *lpReadTimeout = reply->read_timeout;
+        }
+    }
+    SERVER_END_REQ;
+
+    return r;
 }
 
 
@@ -1662,9 +1684,20 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
  */
 BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 {
-    FIXME("%p %ld: stub\n", hMailslot, dwReadTimeout);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL r;
+
+    TRACE("%p %ld\n", hMailslot, dwReadTimeout);
+
+    SERVER_START_REQ( set_mailslot_info )
+    {
+        req->handle = hMailslot;
+        req->flags = MAILSLOT_SET_READ_TIMEOUT;
+        req->read_timeout = dwReadTimeout;
+        r = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    return r;
 }
 
 

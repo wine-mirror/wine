@@ -2272,3 +2272,39 @@ enum message_type
 @REPLY
     obj_handle_t  new_handle; /* duplicated handle */
 @END
+
+
+/* Create a mailslot */
+@REQ(create_mailslot)
+    unsigned int   max_msgsize;
+    unsigned int   read_timeout;
+    int            inherit;
+    VARARG(name,unicode_str);     /* mailslot name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the mailslot */
+@END
+
+
+/* Open an existing mailslot */
+@REQ(open_mailslot)
+    unsigned int   access;
+    int            inherit;       /* inherit flag */
+    unsigned int   sharing;       /* sharing mode */
+    VARARG(name,unicode_str);     /* mailslot name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the mailslot */
+@END
+
+
+/* Set mailslot information */
+@REQ(set_mailslot_info)
+    obj_handle_t   handle;        /* handle to the mailslot */
+    unsigned int   flags;
+    unsigned int   read_timeout;
+@REPLY
+    unsigned int   max_msgsize;
+    unsigned int   read_timeout;
+    unsigned int   msg_count;
+    unsigned int   next_msgsize;
+@END
+#define MAILSLOT_SET_READ_TIMEOUT  1
