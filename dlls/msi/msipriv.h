@@ -171,12 +171,6 @@ typedef struct tagMSIVIEWOPS
 
 } MSIVIEWOPS;
 
-typedef struct tagMSISUMMARYINFO
-{
-    MSIOBJECTHDR hdr;
-    IPropertyStorage *propstg;
-} MSISUMMARYINFO;
-
 struct tagMSIVIEW
 {
     MSIOBJECTHDR hdr;

@@ -181,6 +181,21 @@ UINT WINAPI MsiPreviewBillboardA(MSIHANDLE, LPCSTR, LPCSTR);
 UINT WINAPI MsiPreviewBillboardW(MSIHANDLE, LPCWSTR, LPCWSTR);
 #define     MsiPreviewBillboard WINELIB_NAME_AW(MsiPreviewBillboard)
 
+UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE, LPCSTR, UINT, MSIHANDLE *);
+UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE, LPCWSTR, UINT, MSIHANDLE *);
+#define     MsiGetSummaryInformation WINELIB_NAME_AW(MsiGetSummaryInformation)
+
+UINT WINAPI MsiSummaryInfoGetPropertyA(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPSTR,DWORD*);
+UINT WINAPI MsiSummaryInfoGetPropertyW(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPWSTR,DWORD*);
+#define     MsiSummaryInfoGetProperty WINELIB_NAME_AW(MsiSummaryInfoGetProperty)
+
+UINT WINAPI MsiSummaryInfoSetPropertyA(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPSTR);
+UINT WINAPI MsiSummaryInfoSetPropertyW(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPWSTR);
+#define     MsiSummaryInfoSetProperty WINELIB_NAME_AW(MsiSummaryInfoSetProperty)
+
+UINT WINAPI MsiSummaryInfoPersist(MSIHANDLE);
+UINT WINAPI MsiSummaryInfoGetPropertyCount(MSIHANDLE,UINT*);
+
 UINT WINAPI MsiEnableUIPreview(MSIHANDLE, MSIHANDLE*);
 BOOL WINAPI MsiGetMode(MSIHANDLE, MSIRUNMODE);
 
