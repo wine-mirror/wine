@@ -375,7 +375,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *);
 static void LISTVIEW_SetSelection(LISTVIEW_INFO *, INT);
-static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *);
+static void LISTVIEW_UpdateSize(LISTVIEW_INFO *);
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *, INT, BOOL);
 static LRESULT LISTVIEW_Command(LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
@@ -8059,9 +8059,12 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
  */
 static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 {
+    RECT rcOld = infoPtr->rcList;
+
     TRACE("(width=%d, height=%d)\n", Width, Height);
 
-    if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
+    LISTVIEW_UpdateSize(infoPtr);
+    if (EqualRect(&rcOld, &infoPtr->rcList)) return 0;
   
     /* do not bother with display related stuff if we're not redrawing */ 
     if (!is_redrawing(infoPtr)) return 0;
@@ -8084,58 +8087,41 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
  * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
- * Zero if no size change
- * 1 of size changed
+ *  None
  */
-static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
+static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  RECT rcList;
-  RECT rcOld;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
-  GetClientRect(infoPtr->hwndSelf, &rcList);
-  CopyRect(&rcOld,&(infoPtr->rcList));
-  infoPtr->rcList.left = 0;
-  infoPtr->rcList.right = max(rcList.right - rcList.left, 1);
-  infoPtr->rcList.top = 0;
-  infoPtr->rcList.bottom = max(rcList.bottom - rcList.top, 1);
+    GetClientRect(infoPtr->hwndSelf, &infoPtr->rcList);
 
-  if (uView == LVS_LIST)
-  {
-    /* Apparently the "LIST" style is supposed to have the same
-     * number of items in a column even if there is no scroll bar.
-     * Since if a scroll bar already exists then the bottom is already
-     * reduced, only reduce if the scroll bar does not currently exist.
-     * The "2" is there to mimic the native control. I think it may be
-     * related to either padding or edges.  (GLA 7/2002)
-     */
-    if (!(infoPtr->dwStyle & WS_HSCROLL))
+    if (uView == LVS_LIST)
     {
-      INT nHScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
-      if (infoPtr->rcList.bottom > nHScrollHeight)
-        infoPtr->rcList.bottom -= (nHScrollHeight + 2);
+	/* Apparently the "LIST" style is supposed to have the same
+	 * number of items in a column even if there is no scroll bar.
+	 * Since if a scroll bar already exists then the bottom is already
+	 * reduced, only reduce if the scroll bar does not currently exist.
+	 * The "2" is there to mimic the native control. I think it may be
+	 * related to either padding or edges.  (GLA 7/2002)
+	 */
+    	if (!(infoPtr->dwStyle & WS_HSCROLL))
+	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
+        infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
-    else
+    else if (uView == LVS_REPORT)
     {
-      if (infoPtr->rcList.bottom > 2)
-        infoPtr->rcList.bottom -= 2;
+	HDLAYOUT hl;
+	WINDOWPOS wp;
+
+	hl.prc = &infoPtr->rcList;
+	hl.pwpos = &wp;
+	Header_Layout(infoPtr->hwndHeader, &hl);
+
+	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+
+	if (!(infoPtr->dwStyle & LVS_NOCOLUMNHEADER))
+	    infoPtr->rcList.top = max(wp.cy, 0);
     }
-  }
-  else if (uView == LVS_REPORT)
-  {
-    HDLAYOUT hl;
-    WINDOWPOS wp;
-
-    hl.prc = &rcList;
-    hl.pwpos = &wp;
-    Header_Layout(infoPtr->hwndHeader, &hl);
-
-    SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
-
-    if (!(LVS_NOCOLUMNHEADER & infoPtr->dwStyle))
-      infoPtr->rcList.top = max(wp.cy, 0);
-  }
-  return (EqualRect(&rcOld,&(infoPtr->rcList)));
 }
 
 /***
