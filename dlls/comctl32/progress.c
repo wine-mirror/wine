@@ -64,7 +64,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     /* draw the background */
     FillRect(hdc, &rect, hbrBk);
 
-    rect.left++; rect.right--; rect.top++; rect.bottom--;
+    InflateRect(&rect, -1, -1);
 
     /* get the window style */
     dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
@@ -202,17 +202,20 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     PROGRESS_INFO *infoPtr = (PROGRESS_INFO *)GetWindowLongW(hwnd, 0);
     DWORD dwExStyle;
     UINT temp;
-  
-    if (!infoPtr && message != WM_CREATE && message != WM_NCCREATE)
-        return DefWindowProcW( hwnd, message, wParam, lParam ); 
-  
-    switch(message) {
-    case WM_NCCREATE:
-        dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
-        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle | WS_EX_STATICEDGE);
-        return TRUE;
 
+    if (!infoPtr && message != WM_CREATE)
+        return DefWindowProcW( hwnd, message, wParam, lParam ); 
+
+    switch(message) {
     case WM_CREATE:
+        dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
+	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+	dwExStyle |= WS_EX_STATICEDGE;
+        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle | WS_EX_STATICEDGE);
+	/* Force recalculation of a non-client area */
+	SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+	    SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
         /* allocate memory for info struct */
         infoPtr = (PROGRESS_INFO *)COMCTL32_Alloc (sizeof(PROGRESS_INFO));
         if (!infoPtr) return -1;
