@@ -405,15 +405,16 @@ sub source_set_options
       print STDERR "warning: --wrap no longer supported, ignoring\n";
       #@$target[$T_FLAGS]|=$TF_WRAP;
     } elsif (@$target[$T_TYPE] != $TT_DLL and 
-             $option =~ /^--no-wrap/) {
+             $option =~ /^--nowrap/) {
       @$target[$T_FLAGS]&=~$TF_WRAP;
     } elsif ($option =~ /^--mfc/) {
       @$target[$T_FLAGS]|=$TF_MFC;
       #if (@$target[$T_TYPE] != $TT_DLL) {
       #  @$target[$T_FLAGS]|=$TF_WRAP;
       #}
-    } elsif ($option =~ /^--no-mfc/) {
-      @$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
+    } elsif ($option =~ /^--nomfc/) {
+      @$target[$T_FLAGS]&=~$TF_MFC;
+      #@$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
     } else {
       print STDERR "warning: unknown option \"$option\", ignoring it\n";
     }
@@ -501,7 +502,7 @@ sub source_scan_directory
       } elsif ($dentry =~ /\.(cpp|cxx)$/i) {
 	if ($dentry =~ /^stdafx.cpp$/i) {
 	  push @sources_misc,"$dentry";
-	  @$project_settings[$T_FLAGS]|=$TF_MFC|$TF_WRAP;
+	  @$project_settings[$T_FLAGS]|=$TF_MFC;
 	} else {
 	  push @sources_cxx,"$dentry";
 	}
@@ -510,7 +511,7 @@ sub source_scan_directory
       } elsif ($dentry =~ /\.(h|hxx|inl|rc2|dlg)$/i) {
 	push @sources_misc,"$dentry";
 	if ($dentry =~ /^stdafx.h$/i) {
-	  @$project_settings[$T_FLAGS]|=$TF_MFC|$TF_WRAP;
+	  @$project_settings[$T_FLAGS]|=$TF_MFC;
 	}
       } elsif ($dentry =~ /\.dsp$/i) {
 	push @dsp_files,"$dentry";
@@ -1477,11 +1478,12 @@ sub generate_list
   my $last=$_[1];
   my $list=$_[2];
   my $data=$_[3];
+  my $first=$name;
 
   if ($name) {
-    printf FILEO "%-9s =",$name;
+    printf FILEO "%-21s =",$name;
   }
-  if (defined $list and @$list > 0) {
+  if (defined $list) {
     foreach $item (@$list) {
       my $value;
       if (defined $data) {
@@ -1490,12 +1492,17 @@ sub generate_list
 	$value=$item;
       }
       if ($value ne "") {
-	print FILEO " \\\n\t$value";
+	if ($first) {
+	  print FILEO " $value";
+	  $first=0;
+	} else {
+	  print FILEO " \\\n\t\t\t$value";
+	}
       }
     }
   }
   if ($last) {
-    print FILEO "\n\n";
+    print FILEO "\n";
   }
 }
 
@@ -1557,7 +1564,7 @@ sub generate_project_files
 		  {
 		    return "@{$_[0]}[$T_NAME]";
 		  });
-    print FILEO "\n\n";
+    print FILEO "\n\n\n";
 
     print FILEO "### Global settings\n\n";
     # Make it so that the project-wide settings override the global settings
@@ -1616,13 +1623,14 @@ sub generate_project_files
       generate_list("EXTRA_C_SRCS",1,@$project_settings[$T_SOURCES_C]);
       generate_list("EXTRA_CXX_SRCS",1,@$project_settings[$T_SOURCES_CXX]);
       generate_list("EXTRA_RC_SRCS",1,@$project_settings[$T_SOURCES_RC]);
-      print FILEO "EXTRA_OBJS = \$(EXTRA_C_SRCS:.c=.o) \$(EXTRA_CXX_SRCS:.cpp=.o)\n";
-      print FILEO "\n\n";
+      print FILEO "\n";
+      generate_list("EXTRA_OBJS",1,["\$(EXTRA_C_SRCS:.c=.o)","\$(EXTRA_CXX_SRCS:.cpp=.o)"]);
+      print FILEO "\n\n\n";
     }
     
     # Iterate over all the targets...
     foreach $target (@{@$project[$P_TARGETS]}) {
-      print FILEO "\n### @$target[$T_NAME] sources and settings\n\n";
+      print FILEO "### @$target[$T_NAME] sources and settings\n\n";
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s+_so$++;
       generate_list("${canon}_C_SRCS",1,@$target[$T_SOURCES_C]);
@@ -1648,8 +1656,9 @@ sub generate_project_files
 		    {
 		      return "$_[0]";
 		    });
-      print FILEO "${canon}_OBJS = \$(${canon}_C_SRCS:.c=.o) \$(${canon}_CXX_SRCS:.cpp=.o) \$(EXTRA_OBJS)\n";
-      print FILEO "\n\n";
+      print FILEO "\n";
+      generate_list("${canon}_OBJS",1,["\$(${canon}_C_SRCS:.c=.o)","\$(${canon}_CXX_SRCS:.cpp=.o)","\$(EXTRA_OBJS)"]);
+      print FILEO "\n\n\n";
     }
     print FILEO "### Global source lists\n\n";
     generate_list("C_SRCS",$no_extra,@$project[$P_TARGETS],sub 
@@ -1677,7 +1686,7 @@ sub generate_project_files
 		    return "\$(${canon}_RC_SRCS)";
 		  });
     if (!$no_extra) {
-      generate_list("",1,@$project_settings[$T_SOURCES_RC]);
+      generate_list("",1,[ "\$(EXTRA_RC_SRCS)" ]);
     }
     generate_list("SPEC_SRCS",1,@$project[$P_TARGETS],sub 
 		  {
@@ -1685,16 +1694,18 @@ sub generate_project_files
 		    $canon =~ s+_so$++;
 		    return "\$(${canon}_SPEC_SRCS)";
 		  });
-    print FILEO "\n\n";
   }
+  print FILEO "\n\n\n";
 
   print FILEO "### Generic autoconf targets\n\n";
+  print FILEO "all: ";
   if (@$project[$P_PATH] eq "") {
-    print FILEO "all: \$(SUBDIRS) \$(EXES:%=%.so) \$(DLLS)\n";
-  } else {
-    print FILEO "all: \$(EXES:%=%.so) \$(DLLS)\n";
+    print FILEO "\$(SUBDIRS)";
   }
-  print FILEO "\n";
+  if (@{@$project[$P_TARGETS]} > 0) {
+    print FILEO "\$(EXES:%=%.so) \$(DLLS)";
+  }
+  print FILEO "\n\n";
   print FILEO "\@MAKE_RULES\@\n";
   print FILEO "\n";
   print FILEO "install::\n";
@@ -1740,8 +1751,8 @@ sub generate_project_files
       print FILEO "\t\$(LDSHARED) \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
       if (@$target[$T_TYPE] ne $TT_DLL) {
         print FILEO "\ttest -e @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
-    }
-      print FILEO "\n";
+      }
+      print FILEO "\n\n";
     }
   }
   close(FILEO);
@@ -1944,11 +1955,11 @@ while (@ARGV>0) {
     $opt_lower=$OPT_LOWER_UPPERCASE;
   } elsif ($arg eq "--lower-include") {
     $opt_lower_include=1;
-  } elsif ($arg eq "--no-lower-include") {
+  } elsif ($arg eq "--nolower-include") {
     $opt_lower_include=0;
   } elsif ($arg eq "--generated-files") {
     $opt_no_generated_files=0;
-  } elsif ($arg eq "--no-generated-files") {
+  } elsif ($arg eq "--nogenerated-files") {
     $opt_no_generated_files=1;
 
   } elsif ($arg =~ /^-D/) {
@@ -2004,11 +2015,12 @@ if ($opt_no_banner == 0 or defined $usage) {
 if (defined $usage) {
   print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup]\n";
   print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
+  print STDERR "                 [--lower-include|--nolower-include]\n";
   print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
-  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-llibrary]\n";
+  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-iimport] [-llibrary]\n";
   print STDERR "                 [--interactive] [--single-target name]\n";
-  print STDERR "                 [--generated-files|--no-generated-files]\n";
+  print STDERR "                 [--generated-files|--nogenerated-files]\n";
   exit (2);
 }
 
@@ -2579,7 +2591,7 @@ then
   else
     MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT:$MFC_LIBRARY_ROOT/lib:$MFC_LIBRARY_ROOT/mfc/src";
   fi
-  AC_PATH_LIBRARY(MFC_LIBRARY_ROOT,[-lmfc],[$WINE_LIBRARY_PATH -lwine -lwine_unicode -lncurses -ldl -lutil -ladvapi32 -lcomctl32 -lcomdlg32 -lcrtdll -ldplayx -lgdi32 -limagehlp -lkernel32 -lodbc32 -lntdll -lole32 -loleaut32 -loledlg -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinmm -lwinspool.drv -lwow32 -lws2_32],[
+  AC_PATH_LIBRARY(MFC_LIBRARY_ROOT,[-lmfc],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
     AC_MSG_ERROR([Could not find the MFC library])
   ],$MFC_LIBRARY_ROOT)
   if test -n "$MFC_LIBRARY_ROOT" -a "$MFC_LIBRARY_ROOT" != "$WINE_LIBRARY_ROOT"
