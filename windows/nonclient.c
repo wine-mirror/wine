@@ -566,6 +566,12 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT *winRect )
 	    winRect->right  -= tmpRect.right;
 	    winRect->bottom -= tmpRect.bottom;
 	}
+
+        if (winRect->top > winRect->bottom)
+            winRect->bottom = winRect->top;
+
+        if (winRect->left > winRect->right)
+            winRect->right = winRect->left;
     }
     return result;
 }
