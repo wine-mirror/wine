@@ -436,7 +436,7 @@ init	MAIN_UserInit
 432 stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormatW
 433 stdcall RegisterHotKey(long long long long) RegisterHotKey
 434 stdcall RegisterLogonProcess(long long) RegisterLogonProcess
-435 stub RegisterSystemThread
+435 stdcall RegisterSystemThread(long long) RegisterSystemThread
 436 stdcall RegisterTasklist (long) RegisterTaskList
 437 stdcall RegisterWindowMessageA(str) RegisterWindowMessageA
 438 stdcall RegisterWindowMessageW(wstr) RegisterWindowMessageW

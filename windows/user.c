@@ -564,3 +564,11 @@ BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
 {	FIXME(win32,"(%08x,%08x),stub!\n",  hcur, id);
 	return TRUE;
 }
+
+/***********************************************************************
+ *	RegisterSystemThread	(USER32.435)
+ */
+void RegisterSystemThread(DWORD flags, DWORD reserved)
+{
+	FIXME(win32, "(%08lx, %08lx)\n", flags, reserved);
+}
