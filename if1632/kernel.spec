@@ -488,10 +488,10 @@ file	krnl386.exe
 616 pascal16 ConvertMenu32To16(long long long) ConvertMenu32To16
 617 pascal16 GetMenu32Size(ptr) GetMenu32Size16
 618 pascal16 GetDialog32Size(ptr) GetDialog32Size16
-619 pascal16 RegisterCBClient(word ptr long) RegisterCBClient16
+619 pascal16 RegisterCBClient(word segptr long) RegisterCBClient16
 620 register CBClientThunkSL() CBClientThunkSL
 621 register CBClientThunkSLEx() CBClientThunkSLEx
-622 pascal16 UnRegisterCBClient(word ptr long) UnRegisterCBClient16
+622 pascal16 UnRegisterCBClient(word segptr long) UnRegisterCBClient16
 623 pascal16 InitCBClient(long) InitCBClient16
 624 pascal SetFastQueue(long long) SetFastQueue16
 625 pascal GetFastQueue() GetFastQueue16

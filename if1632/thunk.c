@@ -1246,14 +1246,14 @@ BOOL16 WINAPI FreeThunklet16( DWORD unused1, DWORD unused2 )
 #define N_CBC_VARIABLE 10
 #define N_CBC_TOTAL    (N_CBC_FIXED + N_CBC_VARIABLE)
 
-static SEGPTR    *CBClientRelay16[ N_CBC_TOTAL ];
+static SEGPTR CBClientRelay16[ N_CBC_TOTAL ];
 static FARPROC *CBClientRelay32[ N_CBC_TOTAL ];
 
 /***********************************************************************
  *     RegisterCBClient                    (KERNEL.619)
  */
 INT16 WINAPI RegisterCBClient16( INT16 wCBCId, 
-                               SEGPTR *relay16, FARPROC *relay32 )
+                                 SEGPTR relay16, FARPROC *relay32 )
 {
     /* Search for free Callback ID */
     if ( wCBCId == -1 )
@@ -1277,7 +1277,7 @@ INT16 WINAPI RegisterCBClient16( INT16 wCBCId,
  *     UnRegisterCBClient                  (KERNEL.622)
  */
 INT16 WINAPI UnRegisterCBClient16( INT16 wCBCId, 
-                                 SEGPTR *relay16, FARPROC *relay32 )
+                                   SEGPTR relay16, FARPROC *relay32 )
 {
     if (    wCBCId >= N_CBC_FIXED && wCBCId < N_CBC_TOTAL 
          && CBClientRelay16[ wCBCId ] == relay16 
@@ -1312,7 +1312,7 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     /* Create stack frame */
     SEGPTR stackSeg = stack16_push( 12 );
     LPWORD stackLin = PTR_SEG_TO_LIN( stackSeg );
-    SEGPTR glue;
+    SEGPTR glue, *glueTab;
     
     stackLin[3] = BP_reg( context );
     stackLin[2] = SI_reg( context );
@@ -1324,7 +1324,8 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     GS_reg( context ) = 0;
 
     /* Jump to 16-bit relay code */
-    glue = CBClientRelay16[ stackLin[5] ][ stackLin[4] ];
+    glueTab = PTR_SEG_TO_LIN( CBClientRelay16[ stackLin[5] ] );
+    glue = glueTab[ stackLin[4] ];
     CS_reg ( context ) = SELECTOROF( glue );
     EIP_reg( context ) = OFFSETOF  ( glue );
 }
