@@ -512,6 +512,18 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 }
 
 
+
+/******************************************************************************
+ *        VerifyVersionInfoW   (KERNEL32.@)
+ */
+BOOL WINAPI VerifyVersionInfoW( /* LPOSVERSIONINFOEXW */ LPVOID lpVersionInfo, DWORD dwTypeMask,
+                                DWORDLONG dwlConditionMask)
+{
+    FIXME("%p %lu %llx\n", lpVersionInfo, dwTypeMask, dwlConditionMask);
+    return TRUE;
+}
+
+
 /***********************************************************************
  *	    GetWinFlags   (KERNEL.132)
  */

@@ -968,6 +968,7 @@ debug_channels (comm console debugstr dll int resource stress thunk toolhelp
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW
 @ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
 @ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW
+@ stdcall VerifyVersionInfoW(long long long long)VerifyVersionInfoW
 
 # XP extensions
 @ stdcall DebugActiveProcessStop(long) DebugActiveProcessStop
