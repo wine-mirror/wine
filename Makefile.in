@@ -74,7 +74,7 @@ INSTALLSUBDIRS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) wine
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(LIBSYMLINKS) wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -85,8 +85,8 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: $(EMUOBJS) $(LIBSYMLINKS) $(IMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT)
-	$(CC) -o wine $(EMUOBJS) -L. $(IMPORTS:%=-l%) $(LIBWINE) $(LIBS) $(LDFLAGS)
+wine: $(EMUOBJS) $(IMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT) unicode/libwine_unicode.$(LIBEXT)
+	$(CC) -o wine $(EMUOBJS) -L. $(IMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
 install_wine: dummy
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
