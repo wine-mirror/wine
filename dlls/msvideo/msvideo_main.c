@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Marcus Meissner
  * Copyright 2000 Bradley Baetz
+ * Copyright 2003 Michael Günnewig
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,8 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "windowsx.h"
 
 #include "wine/debug.h"
 
@@ -666,11 +669,32 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 /***********************************************************************
  *		ICCompressorChoose   [MSVFW32.@]
  */
-BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn, LPVOID lpData,
-                               PCOMPVARS pc, LPSTR lpszTitle)
+BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn,
+                               LPVOID lpData, PCOMPVARS pc, LPSTR lpszTitle)
 {
-    FIXME("stub\n");
+  FIXME("(%p,0x%X,%p,%p,%p,%s),stub!\n",hwnd,uiFlags,pvIn,lpData,pc,lpszTitle);
+
+  if (pc == NULL || pc->cbSize != sizeof(COMPVARS))
     return FALSE;
+
+  if ((pc->dwFlags & ICMF_COMPVARS_VALID) == 0) {
+    pc->dwFlags   = 0;
+    pc->fccType   = pc->fccHandler = 0;
+    pc->hic       = NULL;
+    pc->lpbiOut   = NULL;
+    pc->lpBitsOut = pc->lpBitsPrev = pc->lpState = NULL;
+    pc->lQ        = ICQUALITY_DEFAULT;
+    pc->lKey      = -1;
+    pc->lDataRate = 300; /* kB */
+    pc->lpState   = NULL;
+    pc->cbState   = 0;
+  }
+  if (pc->fccType == 0)
+    pc->fccType = ICTYPE_VIDEO;
+
+  /* FIXME */
+  
+  return FALSE;
 }
 
 
@@ -679,7 +703,31 @@ BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn, LPVOID lpDa
  */
 void VFWAPI ICCompressorFree(PCOMPVARS pc)
 {
-    FIXME("stub\n");
+  TRACE("(%p)\n",pc);
+
+  if (pc != NULL && pc->cbSize == sizeof(COMPVARS)) {
+    if (pc->hic != NULL) {
+      ICClose(pc->hic);
+      pc->hic = NULL;
+    }
+    if (pc->lpbiOut != NULL) {
+      GlobalFreePtr(pc->lpbiOut);
+      pc->lpbiOut = NULL;
+    }
+    if (pc->lpBitsOut != NULL) {
+      GlobalFreePtr(pc->lpBitsOut);
+      pc->lpBitsOut = NULL;
+    }
+    if (pc->lpBitsPrev != NULL) {
+      GlobalFreePtr(pc->lpBitsPrev);
+      pc->lpBitsPrev = NULL;
+    }
+    if (pc->lpState != NULL) {
+      GlobalFreePtr(pc->lpBitsPrev);
+      pc->lpState = NULL;
+    }
+    pc->dwFlags = 0;
+  }
 }
 
 
@@ -1030,14 +1078,41 @@ err:
 	return (HANDLE)hMem;
 }
 
+static BOOL GetFileNamePreview(LPVOID lpofn,BOOL bSave,BOOL bUnicode)
+{
+  CHAR    szFunctionName[20];
+  BOOL    (*fnGetFileName)(LPVOID);
+  HMODULE hComdlg32;
+  BOOL    ret;
+
+  FIXME("(%p,%d,%d), semi-stub!\n",lpofn,bSave,bUnicode);
+
+  lstrcpyA(szFunctionName, (bSave ? "GetSaveFileName" : "GetOpenFileName"));
+  lstrcatA(szFunctionName, (bUnicode ? "W" : "A"));
+
+  hComdlg32 = LoadLibraryA("COMDLG32.DLL");
+  if (hComdlg32 == NULL)
+    return FALSE;
+
+  fnGetFileName = (LPVOID)GetProcAddress(hComdlg32, szFunctionName);
+  if (fnGetFileName == NULL)
+    return FALSE;
+
+  /* FIXME: need to add OFN_ENABLEHOOK and our own handler */
+  ret = fnGetFileName(lpofn);
+
+  FreeLibrary(hComdlg32);
+  return ret;
+}
+
 /***********************************************************************
  *		GetOpenFileNamePreviewA	[MSVFW32.@]
  */
 BOOL WINAPI GetOpenFileNamePreviewA(LPOPENFILENAMEA lpofn)
 {
-  FIXME("(%p), stub!\n", lpofn);
+  FIXME("(%p), semi-stub!\n", lpofn);
 
-  return FALSE;
+  return GetFileNamePreview(lpofn, FALSE, FALSE);
 }
 
 /***********************************************************************
@@ -1045,9 +1120,9 @@ BOOL WINAPI GetOpenFileNamePreviewA(LPOPENFILENAMEA lpofn)
  */
 BOOL WINAPI GetOpenFileNamePreviewW(LPOPENFILENAMEW lpofn)
 {
-  FIXME("(%p), stub!\n", lpofn);
+  FIXME("(%p), semi-stub!\n", lpofn);
 
-  return FALSE;
+  return GetFileNamePreview(lpofn, FALSE, TRUE);
 }
 
 /***********************************************************************
@@ -1055,9 +1130,9 @@ BOOL WINAPI GetOpenFileNamePreviewW(LPOPENFILENAMEW lpofn)
  */
 BOOL WINAPI GetSaveFileNamePreviewA(LPOPENFILENAMEA lpofn)
 {
-  FIXME("(%p), stub!\n", lpofn);
+  FIXME("(%p), semi-stub!\n", lpofn);
 
-  return FALSE;
+  return GetFileNamePreview(lpofn, TRUE, FALSE);
 }
 
 /***********************************************************************
@@ -1065,7 +1140,7 @@ BOOL WINAPI GetSaveFileNamePreviewA(LPOPENFILENAMEA lpofn)
  */
 BOOL WINAPI GetSaveFileNamePreviewW(LPOPENFILENAMEW lpofn)
 {
-  FIXME("(%p), stub!\n", lpofn);
+  FIXME("(%p), semi-stub!\n", lpofn);
 
-  return FALSE;
+  return GetFileNamePreview(lpofn, TRUE, TRUE);
 }
