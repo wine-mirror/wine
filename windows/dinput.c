@@ -34,6 +34,7 @@
 #include "message.h"
 #include "mouse.h"
 #include "sysmetrics.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "winuser.h"
 
@@ -86,6 +87,7 @@ struct SysMouseAImpl
         int queue_pos, queue_len;
         int need_warp;
         int acquired;
+        HANDLE hEvent;
 };
 
 
@@ -726,11 +728,15 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   /* Check if the mouse is in absolute or relative mode */
   if (df->dwFlags == DIDF_ABSAXIS)
     This->absolute = 1;
-  else 
+  else if (df->dwFlags == DIDF_RELAXIS)
     This->absolute = 0;
+  else
+    ERR("Neither absolute nor relative flag set.");
   
   return 0;
 }
+
+
 
 #define GEN_EVENT(offset,data,time,seq)						\
 {										\
@@ -749,6 +755,10 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 {
   DWORD posX, posY, keyState, time, extra;
   SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
+  
+  /* Mouse moved -> send event if asked */
+  if (This->hEvent)
+    SetEvent(This->hEvent);
   
   if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
       && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC ) {
@@ -1057,6 +1067,21 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
   return 0;
 }
 
+/******************************************************************************
+  *     SetEventNotification : specifies event to be sent on state change
+  */
+static HRESULT WINAPI SysMouseAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2A iface,
+							 HANDLE hnd) {
+  ICOM_THIS(SysMouseAImpl,iface);
+
+  TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
+
+  This->hEvent = hnd;
+
+  return DI_OK;
+}
+
+
 
 static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt = 
 {
@@ -1105,7 +1130,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt =
 	SysMouseAImpl_GetDeviceState,
 	SysMouseAImpl_GetDeviceData,
 	SysMouseAImpl_SetDataFormat,
-	IDirectInputDevice2AImpl_SetEventNotification,
+	SysMouseAImpl_SetEventNotification,
 	SysMouseAImpl_SetCooperativeLevel,
 	IDirectInputDevice2AImpl_GetObjectInfo,
 	IDirectInputDevice2AImpl_GetDeviceInfo,
