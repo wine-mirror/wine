@@ -1995,7 +1995,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 
 #ifdef HAVE_LIBXXF86VM
         {
-            XF86VidModeModeInfo **all_modes, *vidmode;
+            XF86VidModeModeInfo **all_modes, *vidmode = NULL;
             /* set fullscreen mode */
             /* do we need to save the old video mode and restore it when we exit? */
  
