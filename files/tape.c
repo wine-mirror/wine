@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(tape)
 /************************************************************************
  *		BackupRead  (KERNEL32.107)
  */
-BOOL BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead,
+BOOL WINAPI BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, BOOL bAbort,
 		BOOL bProcessSecurity, LPVOID *lpContext )
 {
@@ -35,7 +35,7 @@ BOOL BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead,
 /************************************************************************
  *		BackupSeek  (KERNEL32.108)
  */
-BOOL BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesToSeek,
+BOOL WINAPI BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesToSeek,
          	LPDWORD lpdwLowByteSeeked, LPDWORD lpdwHighByteSeeked,
 		LPVOID *lpContext )
 {
@@ -51,7 +51,7 @@ BOOL BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesToSeek,
 /************************************************************************
  *		BackupWrite  (KERNEL32.109)
  */
-BOOL BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWrite,
+BOOL WINAPI BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWrite,
 		LPDWORD lpNumberOfBytesWritten, BOOL bAbort,
 		BOOL bProcessSecurity, LPVOID *lpContext )
 {
@@ -68,7 +68,7 @@ BOOL BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWrite,
 /************************************************************************
  *		CreateTapePartition  (KERNEL32.177)
  */
-DWORD CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
+DWORD WINAPI CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
 			DWORD dwCount, DWORD dwSize )
 {
   FIXME("(%04x, %d, %d, %d) stub!\n", hDevice, dwPartitionMethod, dwCount,
@@ -83,7 +83,7 @@ DWORD CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
 /************************************************************************
  *		EraseTape  (KERNEL32.212)
  */
-DWORD EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
+DWORD WINAPI EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 {
   FIXME("(%04x, %d, %d) stub!\n", hDevice, dwEraseType, bImmediate);
 
@@ -96,7 +96,7 @@ DWORD EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 /************************************************************************
  *		GetTapeParameters  (KERNEL32.409)
  */
-DWORD GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
+DWORD WINAPI GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 			LPDWORD lpdwSize, LPVOID lpTapeInformation )
 {
   FIXME("(%04x, %d, %p, %p) stub!\n", hDevice, dwOperation, lpdwSize,
@@ -111,7 +111,7 @@ DWORD GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 /************************************************************************
  *		GetTapePosition  (KERNEL32.410)
  */
-DWORD GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
+DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 			LPDWORD lpdwPartition, LPDWORD lpdwOffsetLow,
 			LPDWORD lpdwOffsetHigh )
 { 
@@ -127,7 +127,7 @@ DWORD GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 /************************************************************************
  *		GetTapeStatus  (KERNEL32.411)
  */
-DWORD GetTapeStatus( HANDLE hDevice )
+DWORD WINAPI GetTapeStatus( HANDLE hDevice )
 {
   FIXME("(%04x) stub!\n", hDevice);
 
@@ -140,7 +140,7 @@ DWORD GetTapeStatus( HANDLE hDevice )
 /************************************************************************
  *		PrepareTape  (KERNEL32.554)
  */
-DWORD PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
+DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 { 
   FIXME("(%04x, %d, %d) stub!\n", hDevice, dwOperation, bImmediate);
 
@@ -153,7 +153,7 @@ DWORD PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 /************************************************************************
  *		SetTapeParameters  (KERNEL32.667)
  */
-DWORD SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
+DWORD WINAPI SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
                          LPVOID lpTapeInformation )
 {
   FIXME("(%04x, %d, %p) stub!\n", hDevice, dwOperation, lpTapeInformation);
@@ -167,7 +167,7 @@ DWORD SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 /************************************************************************
  *		SetTapePosition  (KERNEL32.668)
  */
-DWORD SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
+DWORD WINAPI SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
                        dwPartition, DWORD dwOffsetLow, DWORD dwOffsetHigh,
                        BOOL bImmediate )
 {
@@ -183,7 +183,7 @@ DWORD SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
 /************************************************************************
  *		WriteTapemark  (KERNEL32.751)
  */
-DWORD WriteTapemark( HANDLE hDevice,  DWORD dwTapemarkType, DWORD
+DWORD WINAPI WriteTapemark( HANDLE hDevice,  DWORD dwTapemarkType, DWORD
                      dwTapemarkCount, BOOL bImmediate )
 {
   FIXME("(%04x, %d, %d, %d) stub!\n", hDevice, dwTapemarkType,
