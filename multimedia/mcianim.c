@@ -325,6 +325,7 @@ static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 {
     WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
     LPSTR		str = 0;
+    DWORD		ret = 0;
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
@@ -351,7 +352,17 @@ static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
 
-    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
+    if (str) {
+	if (lpParms->dwRetSize <= strlen(str)) {
+	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	    ret = MCIERR_PARAM_OVERFLOW;
+	} else {
+	    strcpy(lpParms->lpstrReturn, str);
+	}	
+    } else {
+	*lpParms->lpstrReturn = 0;
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -661,14 +672,14 @@ LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	FIXME("Unsupported message=%s\n", MCI_MessageToString(wMsg));
+	FIXME("Unsupported message [%lu]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
+	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

@@ -39,6 +39,85 @@ typedef struct {
     DWORD			dwPosition;	/* position in bytes in chunk for playing */
 } WINE_MCIWAVE;
 
+/* ===================================================================
+ * ===================================================================
+ * FIXME: should be using the new mmThreadXXXX functions from WINMM
+ * instead of those
+ * it would require to add a wine internal flag to mmThreadCreate
+ * in order to pass a 32 bit function instead of a 16 bit
+ * ===================================================================
+ * =================================================================== */
+
+struct SCA {
+    UINT 	wDevID;
+    UINT 	wMsg;
+    DWORD 	dwParam1;
+    DWORD 	dwParam2;
+    BOOL	allocatedCopy;
+};
+
+/* EPP DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2); */
+
+/**************************************************************************
+ * 				MCI_SCAStarter			[internal]
+ */
+static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
+{
+    struct SCA*	sca = (struct SCA*)arg;
+    DWORD		ret;
+
+    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
+	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
+    ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
+    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
+	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
+    if (sca->allocatedCopy)
+	HeapFree(GetProcessHeap(), 0, (LPVOID)sca->dwParam2);
+    HeapFree(GetProcessHeap(), 0, sca);
+    ExitThread(ret);
+    WARN("Should not happen ? what's wrong \n");
+    /* should not go after this point */
+    return ret;
+}
+
+/**************************************************************************
+ * 				MCI_SendCommandAsync		[internal]
+ */
+static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, 
+				   DWORD dwParam2, UINT size)
+{
+    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA));
+
+    if (sca == 0)
+	return MCIERR_OUT_OF_MEMORY;
+
+    sca->wDevID   = wDevID;
+    sca->wMsg     = wMsg;
+    sca->dwParam1 = dwParam1;
+    
+    if (size) {
+	sca->dwParam2 = (DWORD)HeapAlloc(GetProcessHeap(), 0, size);
+	if (sca->dwParam2 == 0) {
+	    HeapFree(GetProcessHeap(), 0, sca);
+	    return MCIERR_OUT_OF_MEMORY;
+	}
+	sca->allocatedCopy = TRUE;
+	/* copy structure passed by program in dwParam2 to be sure 
+	 * we can still use it whatever the program does 
+	 */
+	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
+    } else {
+	sca->dwParam2 = dwParam2;
+	sca->allocatedCopy = FALSE;
+    }
+
+    if (CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL) == 0) {
+	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
+	return MCI_SCAStarter(&sca);
+    }
+    return 0;
+}
+
 /*======================================================================*
  *                  	    MCI WAVE implemantation			*
  *======================================================================*/
@@ -1009,17 +1088,17 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	FIXME("Unsupported yet command=%s\n", MCI_MessageToString(wMsg));
+	FIXME("Unsupported yet command [%lu]\n", wMsg);
 	break;
     case MCI_WINDOW:		
-	TRACE("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	TRACE("Unsupported command [%lu]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	FIXME("is probably wrong msg=%s\n", MCI_MessageToString(wMsg));
+	FIXME("is probably wrong msg [%lu]\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

@@ -353,14 +353,6 @@ BOOL16			WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
 					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
-/* FIXME: the Wine builtin MCI drivers still use those winmm internal functions
- * 		remove them ASAP
- */
-extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
-extern const char* 		MCI_MessageToString(UINT16 wMsg);
-extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
-
-
 #include "poppack.h"
 
 #endif /* __MMDDK_H */

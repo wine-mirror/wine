@@ -338,7 +338,8 @@ static DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpPar
 {
     LPSTR		str = 0;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
@@ -355,7 +356,17 @@ static DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpPar
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
+    if (str) {
+	if (lpParms->dwRetSize <= strlen(str)) {
+	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	    ret = MCIERR_PARAM_OVERFLOW;
+	} else {
+	    strcpy(lpParms->lpstrReturn, str);
+	}	
+    } else {
+	*lpParms->lpstrReturn = 0;
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -417,7 +428,7 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 		return CDAUDIO_mciGetError(wmcda);
 	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0) ? 
 		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-	    TRACE("MCI_STATUS_MEDIA_PRESENT =%s!\n", LOWORD(lpParms->dwReturn) ? "Y" : "N");
+	    TRACE("MCI_STATUS_MEDIA_PRESENT =%c!\n", LOWORD(lpParms->dwReturn) ? 'Y' : 'N');
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
@@ -751,18 +762,18 @@ LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	FIXME("Unsupported yet command=%s\n", MCI_MessageToString(wMsg));
+	FIXME("Unsupported yet command [%lu]\n", wMsg);
 	break;
     /* commands that should report an error */
     case MCI_WINDOW:		
-	FIXME("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	FIXME("Unsupported command [%lu]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
+	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

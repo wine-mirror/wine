@@ -61,6 +61,85 @@ typedef struct tagWINE_MCIMIDI {
     DWORD		dwStartTicks;
 } WINE_MCIMIDI;
 
+/* ===================================================================
+ * ===================================================================
+ * FIXME: should be using the new mmThreadXXXX functions from WINMM
+ * instead of those
+ * it would require to add a wine internal flag to mmThreadCreate
+ * in order to pass a 32 bit function instead of a 16 bit
+ * ===================================================================
+ * =================================================================== */
+
+struct SCA {
+    UINT 	wDevID;
+    UINT 	wMsg;
+    DWORD 	dwParam1;
+    DWORD 	dwParam2;
+    BOOL	allocatedCopy;
+};
+
+/* EPP DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2); */
+
+/**************************************************************************
+ * 				MCI_SCAStarter			[internal]
+ */
+static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
+{
+    struct SCA*	sca = (struct SCA*)arg;
+    DWORD		ret;
+
+    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
+	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
+    ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
+    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
+	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
+    if (sca->allocatedCopy)
+	HeapFree(GetProcessHeap(), 0, (LPVOID)sca->dwParam2);
+    HeapFree(GetProcessHeap(), 0, sca);
+    ExitThread(ret);
+    WARN("Should not happen ? what's wrong \n");
+    /* should not go after this point */
+    return ret;
+}
+
+/**************************************************************************
+ * 				MCI_SendCommandAsync		[internal]
+ */
+static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, 
+				   DWORD dwParam2, UINT size)
+{
+    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA));
+
+    if (sca == 0)
+	return MCIERR_OUT_OF_MEMORY;
+
+    sca->wDevID   = wDevID;
+    sca->wMsg     = wMsg;
+    sca->dwParam1 = dwParam1;
+    
+    if (size) {
+	sca->dwParam2 = (DWORD)HeapAlloc(GetProcessHeap(), 0, size);
+	if (sca->dwParam2 == 0) {
+	    HeapFree(GetProcessHeap(), 0, sca);
+	    return MCIERR_OUT_OF_MEMORY;
+	}
+	sca->allocatedCopy = TRUE;
+	/* copy structure passed by program in dwParam2 to be sure 
+	 * we can still use it whatever the program does 
+	 */
+	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
+    } else {
+	sca->dwParam2 = dwParam2;
+	sca->allocatedCopy = FALSE;
+    }
+
+    if (CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL) == 0) {
+	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
+	return MCI_SCAStarter(&sca);
+    }
+    return 0;
+}
+
 /*======================================================================*
  *                  	    MCI MIDI implemantation			*
  *======================================================================*/
@@ -835,7 +914,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	
 	doPlay = (wmm->dwPositionMS >= dwStartMS && wmm->dwPositionMS <= dwEndMS);
 	
-	TRACE("wmm->dwStatus=%d, doPlay=%s\n", wmm->dwStatus, doPlay ? "T" : "F");
+	TRACE("wmm->dwStatus=%d, doPlay=%c\n", wmm->dwStatus, doPlay ? 'T' : 'F');
 	
 	if ((mmt = MIDI_mciFindNextEvent(wmm, &hiPulse)) == NULL)
 	    break;  /* no more event on tracks */
@@ -1416,7 +1495,8 @@ static DWORD MIDI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     LPCSTR		str = 0;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
@@ -1443,7 +1523,17 @@ static DWORD MIDI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
+    if (str) {
+	if (lpParms->dwRetSize <= strlen(str)) {
+	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	    ret = MCIERR_PARAM_OVERFLOW;
+	} else {
+	    strcpy(lpParms->lpstrReturn, str);
+	}	
+    } else {
+	*lpParms->lpstrReturn = 0;
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -1534,18 +1624,18 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	WARN("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	WARN("Unsupported command [%lu]\n", wMsg);
 	break;
     /* commands that should report an error */
     case MCI_WINDOW:		
-	TRACE("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	TRACE("Unsupported command [%lu]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
+	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

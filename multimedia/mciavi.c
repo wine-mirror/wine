@@ -502,7 +502,8 @@ static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpP
 {
     LPSTR		str = 0;
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%04X, %08lX, %p) : stub;\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
@@ -529,7 +530,17 @@ static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpP
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
+    if (str) {
+	if (lpParms->dwRetSize <= strlen(str)) {
+	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	    ret = MCIERR_PARAM_OVERFLOW;
+	} else {
+	    strcpy(lpParms->lpstrReturn, str);
+	}	
+    } else {
+	*lpParms->lpstrReturn = 0;
+    }
+    return ret;
 }
 
 /***************************************************************************
@@ -1025,14 +1036,14 @@ LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	
     case MCI_SPIN:
     case MCI_ESCAPE:		
-	WARN("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	WARN("Unsupported command [%lu]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
+	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
