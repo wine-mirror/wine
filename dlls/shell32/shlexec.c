@@ -736,13 +736,10 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 	/* launch a document by fileclass like 'WordPad.Document.1' */
         /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
         /* FIXME: szCommandline should not be of a fixed size. Fixed to 1024, MAX_PATH is way too short! */
-        if (sei->fMask & SEE_MASK_CLASSKEY)
-            HCR_GetExecuteCommandExW(sei->hkeyClass,
-                                    (sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass: NULL,
-                                    (sei->lpVerb) ? sei->lpVerb : wszOpen, wszCommandline, sizeof(wszCommandline)/sizeof(WCHAR));
-        else if (sei->fMask & SEE_MASK_CLASSNAME)
-            HCR_GetExecuteCommandW(sei->lpClass, (sei->lpVerb) ? sei->lpVerb :
-                                  wszOpen, wszCommandline, sizeof(wszCommandline)/sizeof(WCHAR));
+        HCR_GetExecuteCommandW((sei->fMask & SEE_MASK_CLASSKEY) ? sei->hkeyClass : NULL,
+                               (sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass: NULL,
+                               (sei->lpVerb) ? sei->lpVerb : wszOpen,
+                               wszCommandline, sizeof(wszCommandline)/sizeof(WCHAR));
 
         /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
         TRACE("SEE_MASK_CLASSNAME->'%s', doc->'%s'\n", debugstr_w(wszCommandline), debugstr_w(wszApplicationName));
