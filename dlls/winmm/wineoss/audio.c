@@ -600,7 +600,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
         if (oss_mask & AFMT_U16_LE) TRACE("AFMT_U16_LE ");
         if (oss_mask & AFMT_U16_BE) TRACE("AFMT_U16_BE ");
         if (oss_mask & AFMT_MPEG) TRACE("AFMT_MPEG ");
+#ifdef AFMT_AC3
         if (oss_mask & AFMT_AC3) TRACE("AFMT_AC3 ");
+#endif
         TRACE(")\n");
         ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &oss_caps);
         TRACE("Caps=%08x\n",oss_caps);
