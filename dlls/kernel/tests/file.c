@@ -1103,19 +1103,32 @@ static void test_file_sharing(void)
     DeleteFileA( filename );
 }
 
+static char get_windows_drive()
+{
+    char windowsdir[MAX_PATH];
+    GetWindowsDirectory(windowsdir, sizeof(windowsdir));
+    return windowsdir[0];
+}
+
 static void test_FindFirstFileA()
 {
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
     int err;
+    char buffer[5] = "C:\\";
 
-    handle = FindFirstFileA("C:\\",&search_results);
+    /* try FindFirstFileA on "C:\" */
+    buffer[0] = get_windows_drive();
+    handle = FindFirstFileA(buffer,&search_results);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail\n");
+    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on root directory should Fail\n");
     if (handle == INVALID_HANDLE_VALUE)
       ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err);
-    handle = FindFirstFileA("C:\\*",&search_results);
-    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on C:\\* should succeed\n" );
+
+    /* try FindFirstFileA on "C:\*" */
+    strcat(buffer, "*");
+    handle = FindFirstFileA(buffer,&search_results);
+    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer );
     ok ( FindClose(handle) == TRUE, "Failed to close handle\n");
 }
 
@@ -1124,8 +1137,10 @@ static void test_FindNextFileA()
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
     int err;
+    char buffer[5] = "C:\\*";
 
-    handle = FindFirstFileA("C:\\*",&search_results);
+    buffer[0] = get_windows_drive();
+    handle = FindFirstFileA(buffer,&search_results);
     ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on C:\\* should succeed\n" );
     while (FindNextFile(handle, &search_results))
     {
@@ -1173,8 +1188,6 @@ static void test_MapFile()
     ok(test_Mapfile_createtemp(&handle), "Couldn't create test file.\n");
 
     hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0, 0, NULL );
-    ok( hmap == NULL, "Mapping should not work, no name provided.\n" );
-
     ok( hmap == NULL, "mapped zero size file\n");
     ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
 
