@@ -295,19 +295,33 @@ BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
 /***********************************************************************
  *		TOOLHELP_Process32Next
  *
- * Implementation of Process32First/Next
+ * Implementation of Process32First/Next. Note that the ANSI / Unicode
+ * version check is a bit of a hack as it relies on the fact that only
+ * the last field is actually different.
  */
-static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL first )
+static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32W lppe, BOOL first, BOOL unicode )
 {
     BOOL ret;
-    WCHAR exe[MAX_PATH];
+    WCHAR exe[MAX_PATH-1];
     DWORD len;
 
-    if (lppe->dwSize < sizeof(PROCESSENTRY32))
+    if (unicode)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
-        return FALSE;
+        if (lppe->dwSize < sizeof(PROCESSENTRY32W))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32W), lppe->dwSize);
+            return FALSE;
+        }
+    }
+    else
+    {
+        if (lppe->dwSize < sizeof(PROCESSENTRY32))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
+            return FALSE;
+        }
     }
     SERVER_START_REQ( next_process )
     {
@@ -324,9 +338,20 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
             lppe->th32ParentProcessID = reply->ppid;
             lppe->pcPriClassBase      = reply->priority;
             lppe->dwFlags             = -1; /* FIXME */
-            len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
-                                       lppe->szExeFile, sizeof(lppe->szExeFile), NULL, NULL );
-            lppe->szExeFile[len] = 0;
+            if (unicode)
+            {
+                len = wine_server_reply_size(reply) / sizeof(WCHAR);
+                memcpy(lppe->szExeFile, reply, wine_server_reply_size(reply));
+                lppe->szExeFile[len] = 0;
+            }
+            else
+            {
+                LPPROCESSENTRY32 lppe_a = (LPPROCESSENTRY32) lppe;
+
+                len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
+                                           lppe_a->szExeFile, sizeof(lppe_a->szExeFile)-1, NULL, NULL );
+                lppe_a->szExeFile[len] = 0;
+            }
         }
     }
     SERVER_END_REQ;
@@ -341,7 +366,7 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
  */
 BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 {
-    return TOOLHELP_Process32Next( hSnapshot, lppe, TRUE );
+    return TOOLHELP_Process32Next( hSnapshot, (LPPROCESSENTRY32W) lppe, TRUE, FALSE /* ANSI */ );
 }
 
 /***********************************************************************
@@ -351,7 +376,27 @@ BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
  */
 BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 {
-    return TOOLHELP_Process32Next( hSnapshot, lppe, FALSE );
+    return TOOLHELP_Process32Next( hSnapshot, (LPPROCESSENTRY32W) lppe, FALSE, FALSE /* ANSI */ );
+}
+
+/***********************************************************************
+ *		Process32FirstW    (KERNEL32.@)
+ *
+ * Return info about the first process in a toolhelp32 snapshot
+ */
+BOOL WINAPI Process32FirstW(HANDLE hSnapshot, LPPROCESSENTRY32W lppe)
+{
+    return TOOLHELP_Process32Next( hSnapshot, lppe, TRUE, TRUE /* Unicode */ );
+}
+
+/***********************************************************************
+ *		Process32NextW   (KERNEL32.@)
+ *
+ * Return info about the "next" process in a toolhelp32 snapshot
+ */
+BOOL WINAPI Process32NextW(HANDLE hSnapshot, LPPROCESSENTRY32W lppe)
+{
+    return TOOLHELP_Process32Next( hSnapshot, lppe, FALSE, TRUE /* Unicode */ );
 }
 
 

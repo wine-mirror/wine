@@ -661,9 +661,9 @@
 @ stdcall PrepareTape(ptr long long)
 @ stub PrivMoveFileIdentityW
 @ stdcall Process32First (ptr ptr)
-@ stub Process32FirstW
+@ stdcall Process32FirstW (ptr ptr)
 @ stdcall Process32Next (ptr ptr)
-@ stub Process32NextW
+@ stdcall Process32NextW (ptr ptr)
 @ stdcall PulseEvent(long)
 @ stdcall PurgeComm(long long)
 @ stdcall -register -i386 QT_Thunk()
