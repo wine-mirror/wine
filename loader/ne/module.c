@@ -43,6 +43,8 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
 
+static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
+
 /***********************************************************************
  *           NE_GetPtr
  */
@@ -990,7 +992,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     /* Load module */
 
-    if ( (hModule = GetModuleHandle16(name) ) != 0 )
+    if ( (hModule = NE_GetModuleByFilename(name) ) != 0 )
     {
         /* Special case: second instance of an already loaded NE module */
 
@@ -1091,7 +1093,7 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 
     /* Special case: second instance of an already loaded NE module */
 
-    if ( ( hModule = GetModuleHandle16( ofs->szPathName ) ) != 0 )
+    if ( ( hModule = NE_GetModuleByFilename( ofs->szPathName ) ) != 0 )
     {
         if (   !( pModule = NE_GetPtr( hModule) )
             ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
@@ -1217,37 +1219,9 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
 
 /***********************************************************************
  *           LoadLibrary16   (KERNEL.95)
- *
- * In Win95 LoadLibrary16("c:/junkname/user.foo") returns the HINSTANCE 
- * to user.exe. As GetModuleHandle as of 990425 explicitly asks _not_ 
- * to change its handling of extensions, we have to try a stripped down
- * libname here too (bon 990425)   
  */
 HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
-    char strippedname[256];
-    char *dirsep1,*dirsep2;
-    HINSTANCE16 ret;
-
-    dirsep1=strrchr(libname,'\\');
-    dirsep2=strrchr(libname,'/');
-    dirsep1=MAX(dirsep1,dirsep2);
-    if (!dirsep1)
-      dirsep1 =(LPSTR)libname;
-    else
-      dirsep1++;
-    lstrcpynA(strippedname,dirsep1,256);
-    dirsep1=strchr(strippedname,'.');
-    if (dirsep1)
-      *dirsep1=0;
-
-    TRACE("looking for (%p) %s and %s \n", 
-	   libname, libname,strippedname );
-
-    /* Load library module */
-    ret= LoadModule16( strippedname, (LPVOID)-1 );
-    if (ret > HINSTANCE_ERROR)
-      return ret;
     return LoadModule16(libname, (LPVOID)-1 );
 }
 
@@ -1580,6 +1554,79 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     return 0;
 }
 
+/**********************************************************************
+ *	    NE_GetModuleByFilename
+ */
+static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
+{
+    HMODULE16	hModule;
+    LPSTR	s, p;
+    BYTE	len, *name_table;
+    char	tmpstr[128];
+    NE_MODULE *pModule;
+
+    strncpy(tmpstr, name, sizeof(tmpstr));
+    tmpstr[sizeof(tmpstr)-1] = '\0';
+
+    /* If the base filename of 'name' matches the base filename of the module
+     * filename of some module (case-insensitive compare):
+     * Return its handle.
+     */
+
+    /* basename: search backwards in passed name to \ / or : */
+    s = tmpstr + strlen(tmpstr);
+    while (s > tmpstr)
+    {
+    	if (s[-1]=='/' || s[-1]=='\\' || s[-1]==':')
+		break;
+	s--;
+    }
+
+    /* search this in loaded filename list */
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+    	char		*loadedfn;
+	OFSTRUCT	*ofs;
+
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+	if (!pModule->fileinfo) continue;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+
+        ofs = (OFSTRUCT*)((BYTE *)pModule + pModule->fileinfo);
+	loadedfn = ((char*)ofs->szPathName) + strlen(ofs->szPathName);
+	/* basename: search backwards in pathname to \ / or : */
+	while (loadedfn > (char*)ofs->szPathName)
+	{
+	    if (loadedfn[-1]=='/' || loadedfn[-1]=='\\' || loadedfn[-1]==':')
+		    break;
+	    loadedfn--;
+	}
+	/* case insensitive compare ... */
+	if (!lstrcmpiA(loadedfn, s))
+	    return hModule;
+    }
+
+    /* If basename (without ext) matches the module name of a module:
+     * Return its handle.
+     */
+
+    if ( (p = strrchr( s, '.' )) != NULL ) *p = '\0';
+    len = strlen(s);
+
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+
+        name_table = (BYTE *)pModule + pModule->name_table;
+        if ((*name_table == len) && !lstrncmpiA(s, name_table+1, len))
+            return hModule;
+    }
+
+    return 0;
+}
 
 /**********************************************************************
  *	    ModuleFirst    (TOOLHELP.59)
