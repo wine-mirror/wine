@@ -69,6 +69,7 @@ C_SRCS = \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
+	env.c \
 	error.c \
 	exception.c \
 	file.c \

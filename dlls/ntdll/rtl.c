@@ -316,14 +316,6 @@ VOID WINAPI RtlReleasePebLock(void)
 }
 
 /******************************************************************************
- *  RtlSetEnvironmentVariable		[NTDLL.@]
- */
-DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
-	FIXME("(0x%08lx,%s,%s),stub!\n",x1,debugstr_w(key->Buffer),debugstr_w(val->Buffer));
-	return 0;
-}
-
-/******************************************************************************
  *  RtlNewSecurityObject		[NTDLL.@]
  */
 DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
@@ -426,31 +418,6 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
     return TRUE;
 }
 
-
-/******************************************************************************
- *  RtlCreateEnvironment		[NTDLL.@]
- */
-DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
-	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
-	return 0;
-}
-
-
-/******************************************************************************
- *  RtlDestroyEnvironment		[NTDLL.@]
- */
-DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
-	FIXME("(0x%08lx),stub!\n",x);
-	return 0;
-}
-
-/******************************************************************************
- *  RtlQueryEnvironmentVariable_U		[NTDLL.@]
- */
-DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
-	FIXME("(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
-	return 0;
-}
 
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
@@ -652,8 +619,8 @@ VOID WINAPI RtlFillMemoryUlong(ULONG* lpDest, ULONG ulCount, ULONG ulValue)
  */
 DWORD WINAPI RtlGetLongestNtPathLength(void)
 {
-  TRACE("()\n");
-  return 277;
+    TRACE("()\n");
+    return 277;
 }
 
 /*********************************************************************

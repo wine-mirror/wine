@@ -319,7 +319,7 @@
 @ stdcall RtlCopyUnicodeString(ptr ptr)
 @ stdcall RtlCreateAcl(ptr long long)
 @ stub RtlCreateAndSetSD
-@ stdcall RtlCreateEnvironment(long long)
+@ stdcall RtlCreateEnvironment(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
 @ stub RtlCreateProcessParameters
 @ stub RtlCreateQueryDebugBuffer
@@ -343,7 +343,7 @@
 @ stub RtlDeleteRegistryValue
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(long)
-@ stdcall RtlDestroyEnvironment(long)
+@ stdcall RtlDestroyEnvironment(ptr)
 @ stdcall RtlDestroyHeap(long)
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
@@ -484,7 +484,7 @@
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlProtectHeap
-@ stdcall RtlQueryEnvironmentVariable_U(long long long)
+@ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
 @ stub RtlQueryInformationAcl
 @ stub RtlQueryProcessBackTraceInformation
 @ stub RtlQueryProcessDebugInformation
@@ -512,9 +512,9 @@
 @ stdcall RtlSetAllBits(ptr)
 @ stdcall RtlSetBits(ptr long long)
 @ stub RtlSetCurrentDirectory_U
-@ stub RtlSetCurrentEnvironment
+@ stdcall RtlSetCurrentEnvironment(wstr ptr)
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
-@ stdcall RtlSetEnvironmentVariable(long long long)
+@ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stub RtlSetInformationAcl
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)

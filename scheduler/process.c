@@ -46,6 +46,7 @@
 #include "wine/server.h"
 #include "options.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -105,6 +106,8 @@ typedef struct _PDB
 } PDB;
 
 PDB current_process;
+
+RTL_USER_PROCESS_PARAMETERS     process_pmts;
 
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
