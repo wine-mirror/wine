@@ -23,38 +23,31 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
-typedef struct SystrayData {
+typedef struct SystrayItem {
   HWND                  hWnd;
   HWND                  hWndToolTip;
   NOTIFYICONDATAA       notifyIcon;
-  int                   nitem; /* number of current element = tooltip id */
-  struct SystrayData    *nextTrayItem;
-} SystrayData;
+  struct SystrayItem    *nextTrayItem;
+} SystrayItem;
 
-typedef struct Systray {
-  int              hasCritSection;
-  CRITICAL_SECTION critSection;
-  SystrayData      *systrayItemList;
-} Systray;
-
-static Systray systray;
-static int nNumberTrayElements;
-
+static SystrayItem *systray=NULL;
+static int firstSystray=TRUE; /* defer creation of window class until first systray item is created */
 
 static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid);
 
 
-/**************************************************************************
-*  internal systray
-*
-*/
+#define ICON_SIZE GetSystemMetrics(SM_CXSMICON)
+/* space around icon (forces icon to center of KDE systray area) */
+#define ICON_BORDER  4
 
-#define SMALL_ICON_SIZE GetSystemMetrics(SM_CXSMICON)
 
-/* space between icons and frame */
-#define IBORDER 3
-#define OBORDER 2
-#define TBORDER  (OBORDER+1+IBORDER)
+
+static BOOL SYSTRAY_ItemIsEqual(PNOTIFYICONDATAA pnid1, PNOTIFYICONDATAA pnid2)
+{
+  if (pnid1->hWnd != pnid2->hWnd) return FALSE;
+  if (pnid1->uID  != pnid2->uID)  return FALSE;
+  return TRUE;
+}
 
 static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -65,18 +58,20 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
   case WM_PAINT:
   {
     RECT rc;
-    SystrayData  *ptrayItem = systray.systrayItemList;
+    SystrayItem  *ptrayItem = systray;
 
-    while (ptrayItem)
-    {
-      if (ptrayItem->hWnd == hWnd)
-      {
-        hdc = BeginPaint(hWnd, &ps);
-        GetClientRect(hWnd, &rc);
-
-        if (!DrawIconEx(hdc, rc.left, rc.top, ptrayItem->notifyIcon.hIcon,
-                        SMALL_ICON_SIZE, SMALL_ICON_SIZE, 0, 0, DI_DEFAULTSIZE|DI_NORMAL))
-          SYSTRAY_Delete(&ptrayItem->notifyIcon);
+    while (ptrayItem) {
+      if (ptrayItem->hWnd==hWnd) {
+	if (ptrayItem->notifyIcon.hIcon) {
+	  hdc = BeginPaint(hWnd, &ps);
+	  GetClientRect(hWnd, &rc);
+	  if (!DrawIconEx(hdc, rc.left+ICON_BORDER, rc.top+ICON_BORDER, ptrayItem->notifyIcon.hIcon,
+			  ICON_SIZE, ICON_SIZE, 0, 0, DI_DEFAULTSIZE|DI_NORMAL)) {
+	    ERR("Paint(SystrayWindow 0x%08x) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
+	    SYSTRAY_Delete(&ptrayItem->notifyIcon);
+	  }
+	}
+	break;
       }
       ptrayItem = ptrayItem->nextTrayItem;
     }
@@ -93,12 +88,10 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
   case WM_MBUTTONUP:
   {
     MSG msg;
-    SystrayData *ptrayItem = systray.systrayItemList;
+    SystrayItem *ptrayItem = systray;
 
-    while ( ptrayItem )
-    {
-      if (ptrayItem->hWnd == hWnd)
-      {
+    while ( ptrayItem ) {
+      if (ptrayItem->hWnd == hWnd) {
         msg.hwnd=hWnd;
         msg.message=message;
         msg.wParam=wParam;
@@ -112,27 +105,24 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
       ptrayItem = ptrayItem->nextTrayItem;
     }
   }
+  /* fallthru */
 
   case WM_LBUTTONDBLCLK:
   case WM_RBUTTONDBLCLK:
   case WM_MBUTTONDBLCLK:
   {
-    int xPos;
-    SystrayData *ptrayItem = systray.systrayItemList;
+    SystrayItem *ptrayItem = systray;
 
-    while (ptrayItem)
-    {
-      if (ptrayItem->hWnd == hWnd)
-      {
-        xPos = LOWORD(lParam);
-        if( (xPos >= TBORDER) &&
-            (xPos < (TBORDER+SMALL_ICON_SIZE)) )
-        {
+    while (ptrayItem) {
+      if (ptrayItem->hWnd == hWnd) {
+	if (ptrayItem->notifyIcon.hWnd && ptrayItem->notifyIcon.uCallbackMessage) {
           if (!PostMessageA(ptrayItem->notifyIcon.hWnd, ptrayItem->notifyIcon.uCallbackMessage,
-                            (WPARAM)ptrayItem->notifyIcon.uID, (LPARAM)message))
-            SYSTRAY_Delete(&ptrayItem->notifyIcon);
-          break;
+                            (WPARAM)ptrayItem->notifyIcon.uID, (LPARAM)message)) {
+	      ERR("PostMessage(SystrayWindow 0x%08x) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
+	      SYSTRAY_Delete(&ptrayItem->notifyIcon);
+	    }
         }
+	break;
       }
       ptrayItem = ptrayItem->nextTrayItem;
     }
@@ -146,6 +136,7 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
 
 }
 
+
 BOOL SYSTRAY_RegisterClass(void)
 {
   WNDCLASSA  wc;
@@ -155,7 +146,7 @@ BOOL SYSTRAY_RegisterClass(void)
   wc.cbClsExtra    = 0;
   wc.cbWndExtra    = 0;
   wc.hInstance     = 0;
-  wc.hIcon         = 0; /* LoadIcon (NULL, IDI_EXCLAMATION); */
+  wc.hIcon         = 0;
   wc.hCursor       = LoadCursorA(0, IDC_ARROWA);
   wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
   wc.lpszMenuName  = NULL;
@@ -169,15 +160,14 @@ BOOL SYSTRAY_RegisterClass(void)
 }
 
 
-BOOL SYSTRAY_Create(SystrayData *ptrayItem)
+BOOL SYSTRAY_ItemInit(SystrayItem *ptrayItem)
 {
   RECT rect;
 
   /* Register the class if this is our first tray item. */
-  if ( nNumberTrayElements == 1 )
-  {
-    if ( !SYSTRAY_RegisterClass() )
-    {
+  if ( firstSystray ) {
+    firstSystray = FALSE;
+    if ( !SYSTRAY_RegisterClass() ) {
       ERR( "RegisterClass(WineSystray) failed\n" );
       return FALSE;
     }
@@ -186,9 +176,10 @@ BOOL SYSTRAY_Create(SystrayData *ptrayItem)
   /* Initialize the window size. */
   rect.left   = 0;
   rect.top    = 0;
-  rect.right  = SMALL_ICON_SIZE+2*TBORDER;
-  rect.bottom = SMALL_ICON_SIZE+2*TBORDER;
+  rect.right  = ICON_SIZE+2*ICON_BORDER;
+  rect.bottom = ICON_SIZE+2*ICON_BORDER;
 
+  ZeroMemory( ptrayItem, sizeof(SystrayItem) );
   /* Create tray window for icon. */
   ptrayItem->hWnd = CreateWindowExA( WS_EX_TRAYWINDOW,
                                 "WineSystray", "Wine-Systray",
@@ -196,8 +187,7 @@ BOOL SYSTRAY_Create(SystrayData *ptrayItem)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 rect.right-rect.left, rect.bottom-rect.top,
                                 0, 0, 0, 0 );
-  if ( !ptrayItem->hWnd )
-  {
+  if ( !ptrayItem->hWnd ) {
     ERR( "CreateWindow(WineSystray) failed\n" );
     return FALSE;
   }
@@ -207,210 +197,103 @@ BOOL SYSTRAY_Create(SystrayData *ptrayItem)
                                      CW_USEDEFAULT, CW_USEDEFAULT,
                                      CW_USEDEFAULT, CW_USEDEFAULT,
                                      ptrayItem->hWnd, 0, 0, 0 );
-  if ( ptrayItem->hWndToolTip==0 )
-  {
+  if ( !ptrayItem->hWndToolTip ) {
     ERR( "CreateWindow(TOOLTIP) failed\n" );
     return FALSE;
   }
   return TRUE;
 }
 
-static void SYSTRAY_RepaintAll(void)
+
+static void SYSTRAY_ItemTerm(SystrayItem *ptrayItem)
 {
-  SystrayData  *ptrayItem = systray.systrayItemList;
-
-  while(ptrayItem)
-  {
-    InvalidateRect(ptrayItem->hWnd, NULL, TRUE);
-    ptrayItem = ptrayItem->nextTrayItem;
-  }
-
-}
-
-static void SYSTRAY_RepaintItem(int nitem)
-{
-
-  SystrayData *ptrayItem = systray.systrayItemList;
-
-  while(ptrayItem)
-  {
-    if (ptrayItem->nitem == nitem)
-      InvalidateRect(ptrayItem->hWnd, NULL, TRUE);
-
-    ptrayItem = ptrayItem->nextTrayItem;
-  }
-}
-
-void SYSTRAY_InitItem(SystrayData *ptrayItem)
-{
-  ptrayItem->nitem = nNumberTrayElements++;
-  SYSTRAY_Create(ptrayItem);
-}
-
-void SYSTRAY_SetIcon(SystrayData *ptrayItem, HICON hIcon)
-{
-  /* keep our own copy of "hIcon" object */     
-  ptrayItem->notifyIcon.hIcon = CopyIcon(hIcon); 
-}
-
-void SYSTRAY_SetTip(SystrayData *ptrayItem, CHAR* szTip)
-{
-  TTTOOLINFOA ti;
-
-  strncpy(ptrayItem->notifyIcon.szTip, szTip, sizeof(ptrayItem->notifyIcon.szTip));
-  ptrayItem->notifyIcon.szTip[sizeof(ptrayItem->notifyIcon.szTip)-1]=0;
-
-  ti.cbSize = sizeof(TTTOOLINFOA);
-  ti.uFlags = 0;
-  ti.hwnd = ptrayItem->hWnd;
-  ti.hinst = 0;
-  ti.uId = ptrayItem->nitem;
-  ti.lpszText = ptrayItem->notifyIcon.szTip;
-  ti.rect.left   = 0;
-  ti.rect.top    = 0;
-  ti.rect.right  = SMALL_ICON_SIZE+2*TBORDER;
-  ti.rect.bottom = SMALL_ICON_SIZE+2*TBORDER;
-
-  SendMessageA(ptrayItem->hWndToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
-}
-
-static void SYSTRAY_ModifyTip(SystrayData *ptrayItem, CHAR* szTip)
-{
-  TTTOOLINFOA ti;
-
-  strncpy(ptrayItem->notifyIcon.szTip, szTip, sizeof(ptrayItem->notifyIcon.szTip));
-  ptrayItem->notifyIcon.szTip[sizeof(ptrayItem->notifyIcon.szTip)-1]=0;
-
-  ti.cbSize = sizeof(TTTOOLINFOA);
-  ti.uFlags = 0;
-  ti.hwnd = ptrayItem->hWnd;
-  ti.hinst = 0;
-  ti.uId = ptrayItem->nitem;
-  ti.lpszText = ptrayItem->notifyIcon.szTip;
-  ti.rect.left   = 0;
-  ti.rect.top    = 0;
-  ti.rect.right  = SMALL_ICON_SIZE+2*TBORDER;
-  ti.rect.bottom = SMALL_ICON_SIZE+2*TBORDER;
-
-  SendMessageA(ptrayItem->hWndToolTip, TTM_UPDATETIPTEXTA, 0, (LPARAM)&ti);
-}
-
-static void SYSTRAY_TermItem(SystrayData *removeItem)
-{
-  int nitem;
-  SystrayData **trayItem;
-  TTTOOLINFOA ti;
-  ti.cbSize = sizeof(TTTOOLINFOA);
-  ti.uFlags = 0;
-  ti.hinst = 0;
-
-  /* delete all tooltips ...*/
-  trayItem = &systray.systrayItemList;
-  while (*trayItem) {
-    ti.uId = (*trayItem)->nitem;
-    ti.hwnd = (*trayItem)->hWnd;
-    SendMessageA((*trayItem)->hWndToolTip, TTM_DELTOOLA, 0, (LPARAM)&ti);
-    trayItem = &((*trayItem)->nextTrayItem);
-  }
-  /* ... and add them again, because uID may shift */
-  nitem=0;
-  trayItem = &systray.systrayItemList;
-  while (*trayItem)
-  {
-    if (*trayItem != removeItem)
-    {
-      (*trayItem)->nitem = nitem;
-      ti.uId = nitem;
-      ti.hwnd = (*trayItem)->hWnd;
-      ti.lpszText = (*trayItem)->notifyIcon.szTip;
-      ti.rect.left   = 0;
-      ti.rect.top    = 0;
-      ti.rect.right  = SMALL_ICON_SIZE+2*TBORDER;
-      ti.rect.bottom = SMALL_ICON_SIZE+2*TBORDER;
-      SendMessageA((*trayItem)->hWndToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
-      nitem++;
-    }
-    trayItem = &((*trayItem)->nextTrayItem);
-  }
-  nNumberTrayElements--;
+  if(ptrayItem->hWndToolTip)
+      DestroyWindow(ptrayItem->hWndToolTip);
+  if(ptrayItem->hWnd)
+    DestroyWindow(ptrayItem->hWnd);
+  return;
 }
 
 
-/**************************************************************************
-*  helperfunctions
-*
-*/
-void SYSTRAY_SetMessage(SystrayData *ptrayItem, UINT uCallbackMessage)
+void SYSTRAY_ItemSetMessage(SystrayItem *ptrayItem, UINT uCallbackMessage)
 {
   ptrayItem->notifyIcon.uCallbackMessage = uCallbackMessage;
 }
 
-static BOOL SYSTRAY_IsEqual(PNOTIFYICONDATAA pnid1, PNOTIFYICONDATAA pnid2)
+
+void SYSTRAY_ItemSetIcon(SystrayItem *ptrayItem, HICON hIcon)
 {
-  if (pnid1->hWnd != pnid2->hWnd) return FALSE;
-  if (pnid1->uID  != pnid2->uID)  return FALSE;
-  return TRUE;
+  ptrayItem->notifyIcon.hIcon = hIcon; /* do we need a copy? */
+  InvalidateRect(ptrayItem->hWnd, NULL, TRUE);
 }
+
+
+void SYSTRAY_ItemSetTip(SystrayItem *ptrayItem, CHAR* szTip, int modify)
+{
+  TTTOOLINFOA ti;
+
+  strncpy(ptrayItem->notifyIcon.szTip, szTip, sizeof(ptrayItem->notifyIcon.szTip));
+  ptrayItem->notifyIcon.szTip[sizeof(ptrayItem->notifyIcon.szTip)-1]=0;
+
+  ti.cbSize = sizeof(TTTOOLINFOA);
+  ti.uFlags = 0;
+  ti.hwnd = ptrayItem->hWnd;
+  ti.hinst = 0;
+  ti.uId = 0;
+  ti.lpszText = ptrayItem->notifyIcon.szTip;
+  ti.rect.left   = 0;
+  ti.rect.top    = 0;
+  ti.rect.right  = ICON_SIZE+2*ICON_BORDER;
+  ti.rect.bottom = ICON_SIZE+2*ICON_BORDER;
+
+  if(modify)
+    SendMessageA(ptrayItem->hWndToolTip, TTM_UPDATETIPTEXTA, 0, (LPARAM)&ti);
+  else
+    SendMessageA(ptrayItem->hWndToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+}
+
 
 static BOOL SYSTRAY_Add(PNOTIFYICONDATAA pnid)
 {
-  SystrayData **ptrayItem = &systray.systrayItemList;
+  SystrayItem **ptrayItem = &systray;
 
-  /* Find empty space for new element. */
-  while( *ptrayItem )
-  {
-    if ( SYSTRAY_IsEqual(pnid, &(*ptrayItem)->notifyIcon) )
+  /* Find last element. */
+  while( *ptrayItem ) {
+    if ( SYSTRAY_ItemIsEqual(pnid, &(*ptrayItem)->notifyIcon) )
       return FALSE;
     ptrayItem = &((*ptrayItem)->nextTrayItem);
   }
-
-  /* Allocate SystrayData for element and zero memory. */
-  (*ptrayItem) = ( SystrayData *)malloc( sizeof(SystrayData) );
-  ZeroMemory( (*ptrayItem), sizeof(SystrayData) );
-
-  /* Copy notification data */
-  memcpy( &(*ptrayItem)->notifyIcon, pnid, sizeof(NOTIFYICONDATAA) );
+  /* Allocate SystrayItem for element and add to end of list. */
+  (*ptrayItem) = ( SystrayItem *)malloc( sizeof(SystrayItem) );
 
   /* Initialize and set data for the tray element. */
-  SYSTRAY_InitItem( (*ptrayItem) );
+  SYSTRAY_ItemInit( (*ptrayItem) );
+  (*ptrayItem)->notifyIcon.uID = pnid->uID; /* only needed for callback message */
+  (*ptrayItem)->notifyIcon.hWnd = pnid->hWnd; /* only needed for callback message */
+  SYSTRAY_ItemSetIcon   (*ptrayItem, (pnid->uFlags&NIF_ICON)   ?pnid->hIcon           :0);
+  SYSTRAY_ItemSetMessage(*ptrayItem, (pnid->uFlags&NIF_MESSAGE)?pnid->uCallbackMessage:0);
+  SYSTRAY_ItemSetTip    (*ptrayItem, (pnid->uFlags&NIF_TIP)    ?pnid->szTip           :"", FALSE);
 
-  SYSTRAY_SetIcon   (*ptrayItem, (pnid->uFlags&NIF_ICON)   ?pnid->hIcon           :0);
-  SYSTRAY_SetMessage(*ptrayItem, (pnid->uFlags&NIF_MESSAGE)?pnid->uCallbackMessage:0);
-  SYSTRAY_SetTip    (*ptrayItem, (pnid->uFlags&NIF_TIP)    ?pnid->szTip           :"");
-
-  (*ptrayItem)->nextTrayItem = NULL; /* may be overkill after the ZeroMemory call. */
-
-  /* Repaint all system tray icons as we have added one. */
-  SYSTRAY_RepaintAll();
-
-  TRACE("%p: 0x%08x %d %s\n",  (*ptrayItem), (*ptrayItem)->notifyIcon.hWnd,
-                               (*ptrayItem)->notifyIcon.uID,
-                               (*ptrayItem)->notifyIcon.szTip);
+  TRACE("%p: 0x%08x %s\n",  (*ptrayItem), (*ptrayItem)->notifyIcon.hWnd,
+                                          (*ptrayItem)->notifyIcon.szTip);
   return TRUE;
 }
 
+
 static BOOL SYSTRAY_Modify(PNOTIFYICONDATAA pnid)
 {
-  SystrayData *ptrayItem = systray.systrayItemList;
+  SystrayItem *ptrayItem = systray;
 
-  while ( ptrayItem )
-  {
-    if ( SYSTRAY_IsEqual(pnid, &ptrayItem->notifyIcon) )
-    {
+  while ( ptrayItem ) {
+    if ( SYSTRAY_ItemIsEqual(pnid, &ptrayItem->notifyIcon) ) {
       if (pnid->uFlags & NIF_ICON)
-      {
-        SYSTRAY_SetIcon(ptrayItem, pnid->hIcon);
-        SYSTRAY_RepaintItem(ptrayItem->nitem);
-      }
-
+        SYSTRAY_ItemSetIcon(ptrayItem, pnid->hIcon);
       if (pnid->uFlags & NIF_MESSAGE)
-        SYSTRAY_SetMessage(ptrayItem, pnid->uCallbackMessage);
-
+        SYSTRAY_ItemSetMessage(ptrayItem, pnid->uCallbackMessage);
       if (pnid->uFlags & NIF_TIP)
-        SYSTRAY_ModifyTip(ptrayItem, pnid->szTip);
+        SYSTRAY_ItemSetTip(ptrayItem, pnid->szTip, TRUE);
 
-      TRACE("%p: 0x%08x %d %s\n", ptrayItem, ptrayItem->notifyIcon.hWnd,
-            ptrayItem->notifyIcon.uID, ptrayItem->notifyIcon.szTip);
+      TRACE("%p: 0x%08x %s\n", ptrayItem, ptrayItem->notifyIcon.hWnd, ptrayItem->notifyIcon.szTip);
       return TRUE;
     }
     ptrayItem = ptrayItem->nextTrayItem;
@@ -418,27 +301,19 @@ static BOOL SYSTRAY_Modify(PNOTIFYICONDATAA pnid)
   return FALSE; /* not found */
 }
 
+
 static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
 {
-  SystrayData **ptrayItem = &systray.systrayItemList;
+  SystrayItem **ptrayItem = &systray;
 
-  while (*ptrayItem)
-  {
-    if (SYSTRAY_IsEqual(pnid, &(*ptrayItem)->notifyIcon))
-    {
-      SystrayData *next = (*ptrayItem)->nextTrayItem;
-      TRACE("%p: 0x%08x %d %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd,
-            (*ptrayItem)->notifyIcon.uID, (*ptrayItem)->notifyIcon.szTip);
-      SYSTRAY_TermItem(*ptrayItem);
-
-	  DestroyIcon  ((*ptrayItem)->notifyIcon.hIcon);
-      DestroyWindow((*ptrayItem)->hWndToolTip);
-      DestroyWindow((*ptrayItem)->hWnd);
+  while (*ptrayItem) {
+    if (SYSTRAY_ItemIsEqual(pnid, &(*ptrayItem)->notifyIcon)) {
+      SystrayItem *next = (*ptrayItem)->nextTrayItem;
+      TRACE("%p: 0x%08x %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
+      SYSTRAY_ItemTerm(*ptrayItem);
 
       free(*ptrayItem);
       *ptrayItem = next;
-
-      SYSTRAY_RepaintAll();
 
       return TRUE;
     }
@@ -453,16 +328,8 @@ static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
  */
 BOOL SYSTRAY_Init(void)
 {
-  if (!systray.hasCritSection)
-  {
-    systray.hasCritSection=1;
-    InitializeCriticalSection(&systray.critSection);
-    MakeCriticalSectionGlobal(&systray.critSection);
-    TRACE(" =%p\n", &systray.critSection);
-  }
   return TRUE;
 }
-
 
 /*************************************************************************
  * Shell_NotifyIconA			[SHELL32.297]
@@ -470,15 +337,9 @@ BOOL SYSTRAY_Init(void)
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {
   BOOL flag=FALSE;
-  TRACE("wait %d %d %ld\n", pnid->hWnd, pnid->uID, dwMessage);
-  /* must be serialized because all apps access same systray */
-  EnterCriticalSection(&systray.critSection);
   TRACE("enter %d %d %ld\n", pnid->hWnd, pnid->uID, dwMessage);
-
-
   switch(dwMessage) {
   case NIM_ADD:
-    TRACE("Calling systray add\n");
     flag = SYSTRAY_Add(pnid);
     break;
   case NIM_MODIFY:
@@ -488,9 +349,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
     flag = SYSTRAY_Delete(pnid);
     break;
   }
-
-  LeaveCriticalSection(&systray.critSection);
-  TRACE("leave %d %d %ld\n", pnid->hWnd, pnid->uID, dwMessage);
+  TRACE("leave %d %d %ld=%d\n", pnid->hWnd, pnid->uID, dwMessage, flag);
   return flag;
 }
 
@@ -511,6 +370,7 @@ BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
 	HeapFree(GetProcessHeap(),0,p);
 	return ret;
 }
+
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
  */
