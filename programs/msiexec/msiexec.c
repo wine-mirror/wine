@@ -462,7 +462,7 @@ int main(int argc, char **argv)
 	LPWSTR PatchFileName = NULL;
 	INSTALLTYPE InstallType = INSTALLTYPE_DEFAULT;
 
-	INSTALLUILEVEL InstallUILevel = 0, retInstallUILevel;
+	INSTALLUILEVEL InstallUILevel = INSTALLUILEVEL_FULL;
 
 	LPWSTR DllName = NULL;
 	DWORD ReturnCode;
@@ -482,9 +482,6 @@ int main(int argc, char **argv)
 		if(!process_args_from_reg( argvW[2], &argc, &argvW ))
 			return 1;
 	}
-
-	for(i=0; i<argc; i++)
-		WINE_ERR("argv[%d]=%s\n",i,argv[i]);
 
 	for(i = 1; i < argc; i++)
 	{
@@ -812,12 +809,6 @@ int main(int argc, char **argv)
 				fprintf(stderr, "Unknown option \"%s\" for UI level\n",
 					 wine_dbgstr_w(argvW[i]+2));
 			}
-			retInstallUILevel = MsiSetInternalUI(InstallUILevel, NULL);
-			if(retInstallUILevel == INSTALLUILEVEL_NOCHANGE)
-			{
-				fprintf(stderr, "Setting the UI level to 0x%x failed.\n", InstallUILevel);
-				ExitProcess(1);
-			}
 		}
 		else if(!msi_strequal(argvW[i], "/y"))
 		{
@@ -861,6 +852,9 @@ int main(int argc, char **argv)
 			PackageName = argvW[i];
 		}
 	}
+
+	/* start the GUI */
+	MsiSetInternalUI(InstallUILevel, NULL);
 
 	Properties = build_properties( property_list );
 	Transforms = build_transforms( transform_list );
