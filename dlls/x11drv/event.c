@@ -165,6 +165,9 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                          timeout, flags & MWMO_ALERTABLE );
 
+    /* check whether only server queue handle was passed in */
+    if (count < 2) flags &= ~MWMO_WAITALL;
+
     for (i = 0; i < count; i++) new_handles[i] = handles[i];
     new_handles[count] = data->display_fd;
 
