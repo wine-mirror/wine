@@ -1229,6 +1229,31 @@ static void LISTBOX_MakeItemVisible( WND *wnd, LB_DESCR *descr, INT index,
     LISTBOX_SetTopItem( wnd, descr, top, TRUE );
 }
 
+/***********************************************************************
+ *           LISTBOX_SetCaretIndex
+ *
+ * NOTES
+ *   index must be between 0 and descr->nb_items-1, or LB_ERR is returned.
+ *
+ */
+static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT index,
+                                      BOOL fully_visible )
+{
+    INT oldfocus = descr->focus_item;          
+
+    if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+    if (index == oldfocus) return LB_OKAY;
+    descr->focus_item = index;
+    if ((oldfocus != -1) && descr->caret_on && (descr->in_focus))
+        LISTBOX_RepaintItem( wnd, descr, oldfocus, ODA_FOCUS );
+
+    LISTBOX_MakeItemVisible( wnd, descr, index, fully_visible );
+    if (descr->caret_on && (descr->in_focus))
+        LISTBOX_RepaintItem( wnd, descr, index, ODA_FOCUS );
+
+    return LB_OKAY;
+}
+
 
 /***********************************************************************
  *           LISTBOX_SelectItemRange
@@ -1258,6 +1283,7 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT first,
             descr->items[i].selected = TRUE;
             LISTBOX_RepaintItem( wnd, descr, i, ODA_SELECT );
         }
+        LISTBOX_SetCaretIndex( wnd, descr, last, TRUE );
     }
     else  /* Turn selection off */
     {
@@ -1270,33 +1296,6 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT first,
     }
     return LB_OKAY;
 }
-
-
-/***********************************************************************
- *           LISTBOX_SetCaretIndex
- *
- * NOTES
- *   index must be between 0 and descr->nb_items-1, or LB_ERR is returned.
- *
- */
-static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT index,
-                                      BOOL fully_visible )
-{
-    INT oldfocus = descr->focus_item;          
-
-    if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
-    if (index == oldfocus) return LB_OKAY;
-    descr->focus_item = index;
-    if ((oldfocus != -1) && descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( wnd, descr, oldfocus, ODA_FOCUS );
-
-    LISTBOX_MakeItemVisible( wnd, descr, index, fully_visible );
-    if (descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( wnd, descr, index, ODA_FOCUS );
-
-    return LB_OKAY;
-}
-
 
 /***********************************************************************
  *           LISTBOX_SetSelection
