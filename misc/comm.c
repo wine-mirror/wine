@@ -233,7 +233,7 @@ static void comm_notification(int fd,void*private)
       } else {
 	/* check for events */
 	if ((ptr->eventmask & EV_RXFLAG) &&
-	    memchr(ptr->inbuf + ptr->ibuf_head, ptr->evtchar, bleft)) {
+	    memchr(ptr->inbuf + ptr->ibuf_head, ptr->evtchar, len)) {
 	  *(WORD*)(unknown[cid]) |= EV_RXFLAG;
 	  mask |= CN_EVENT;
 	}
@@ -564,13 +564,15 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 	struct termios port;
 
     	TRACE("cid=%d, function=%d\n", cid, nFunction);
-	if ((ptr = GetDeviceStruct(cid)) == NULL) {
-		return -1;
-	}
-	if (tcgetattr(ptr->fd,&port) == -1) {
-		ptr->commerror=WinError();	
-		return -1;
-	}
+	if ((nFunction != GETMAXCOM) && (nFunction != GETMAXLPT)) {
+		if ((ptr = GetDeviceStruct(cid)) == NULL) {
+			return -1;
+		}
+		if (tcgetattr(ptr->fd,&port) == -1) {
+			ptr->commerror=WinError();	
+			return -1;
+		}
+	} else ptr = NULL;
 
 	switch (nFunction) {
 		case RESETDEV:
@@ -586,6 +588,19 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 			for (max = MAX_PORTS;!LPT[max].devicename;max--)
 				;
 			return FLAG_LPT + max;
+			break;
+
+		case GETBASEIRQ:
+			/* FIXME: use tables */
+			/* just fake something for now */
+			if (cid & FLAG_LPT) {
+				/* LPT1: irq 7, LPT2: irq 5 */
+				return (cid & 0x7f) ? 5 : 7;
+			} else {
+				/* COM1: irq 4, COM2: irq 3,
+				   COM3: irq 4, COM4: irq 3 */
+				return 4 - (cid & 1);
+			}
 			break;
 
 #ifdef TIOCM_DTR
