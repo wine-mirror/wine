@@ -807,6 +807,16 @@ struct debug_process_request
 };
 
 
+/* Read data from a process address space */
+struct read_process_memory_request
+{
+    IN  int          handle;       /* process handle */
+    IN  void*        addr;         /* addr to read from (must be int-aligned) */
+    IN  int          len;          /* number of ints to read */
+    OUT unsigned int data[1];      /* result data */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -883,6 +893,7 @@ enum request
     REQ_SEND_DEBUG_EVENT,
     REQ_CONTINUE_DEBUG_EVENT,
     REQ_DEBUG_PROCESS,
+    REQ_READ_PROCESS_MEMORY,
     REQ_NB_REQUESTS
 };
 

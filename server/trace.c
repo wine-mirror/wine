@@ -11,14 +11,35 @@
 #include "request.h"
 
 
+/* utility functions */
+
+static void dump_ints( const int *ptr, int len )
+{
+    fputc( '{', stderr );
+    while (len)
+    {
+        fprintf( stderr, "%d", *ptr++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_bytes( const unsigned char *ptr, int len )
+{
+    fputc( '{', stderr );
+    while (len)
+    {
+        fprintf( stderr, "%02x", *ptr++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 /* dumping for functions for requests that have a variable part */
 
 static void dump_varargs_select( struct select_request *req )
 {
-    int i;
-    for (i = 0; i < req->count; i++)
-        fprintf( stderr, "%c%d", i ? ',' : '{', req->handles[i] );
-    fprintf( stderr, "}" );
+    dump_ints( req->handles, req->count );
 }
 
 static void dump_varargs_get_apcs( struct get_apcs_request *req )
@@ -31,10 +52,13 @@ static void dump_varargs_get_apcs( struct get_apcs_request *req )
 
 static void dump_varargs_get_socket_event( struct get_socket_event_request *req )
 {
-    int i;
-    for (i = 0; i < FD_MAX_EVENTS; i++)
-        fprintf( stderr, "%c%d", i ? ',' : '{', req->errors[i] );
-    fprintf( stderr, "}" );
+    dump_ints( req->errors, FD_MAX_EVENTS );
+}
+
+static void dump_varargs_read_process_memory( struct read_process_memory_request *req )
+{
+    int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
+    dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 
 
@@ -763,6 +787,19 @@ static void dump_debug_process_request( struct debug_process_request *req )
     fprintf( stderr, " pid=%p", req->pid );
 }
 
+static void dump_read_process_memory_request( struct read_process_memory_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " addr=%p,", req->addr );
+    fprintf( stderr, " len=%d", req->len );
+}
+
+static void dump_read_process_memory_reply( struct read_process_memory_request *req )
+{
+    fprintf( stderr, " data=" );
+    dump_varargs_read_process_memory( req );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
@@ -835,6 +872,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_send_debug_event_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
+    (dump_func)dump_read_process_memory_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -909,6 +947,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_send_debug_event_reply,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)dump_read_process_memory_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -983,6 +1022,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "send_debug_event",
     "continue_debug_event",
     "debug_process",
+    "read_process_memory",
 };
 
 /* ### make_requests end ### */

@@ -366,6 +366,7 @@ void file_set_error(void)
     case EINVAL:    set_error( ERROR_INVALID_PARAMETER ); break;
     case ESPIPE:    set_error( ERROR_SEEK ); break;
     case ENOTEMPTY: set_error( ERROR_DIR_NOT_EMPTY ); break;
+    case EIO:       set_error( ERROR_NOACCESS ); break;
     default:        perror("file_set_error"); set_error( ERROR_UNKNOWN ); break;
     }
 }

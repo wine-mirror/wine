@@ -1065,19 +1065,54 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
     return TRUE;
 }
 
+
 /***********************************************************************
  *           ReadProcessMemory    		(KERNEL32)
- * FIXME: check this, if we ever run win32 binaries in different addressspaces
- *	  ... and add a sizecheck
  */
-BOOL WINAPI ReadProcessMemory( HANDLE hProcess, LPCVOID lpBaseAddress,
-                                 LPVOID lpBuffer, DWORD nSize,
-                                 LPDWORD lpNumberOfBytesRead )
+BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
+                               LPDWORD bytes_read )
 {
-	memcpy(lpBuffer,lpBaseAddress,nSize);
-	if (lpNumberOfBytesRead) *lpNumberOfBytesRead = nSize;
-	return TRUE;
+    struct read_process_memory_request *req = get_req_buffer();
+    unsigned int offset = (unsigned int)addr % sizeof(int);
+    unsigned int max = server_remaining( req->data );  /* max length in one request */
+    unsigned int pos;
+
+    if (bytes_read) *bytes_read = size;
+
+    /* first time, read total length to check for permissions */
+    req->handle = process;
+    req->addr   = (char *)addr - offset;
+    req->len    = (size + offset + sizeof(int) - 1) / sizeof(int);
+    if (server_call( REQ_READ_PROCESS_MEMORY )) goto error;
+
+    if (size <= max - offset)
+    {
+        memcpy( buffer, (char *)req->data + offset, size );
+        return TRUE;
+    }
+
+    /* now take care of the remaining data */
+    memcpy( buffer, (char *)req->data + offset, max - offset );
+    pos = max - offset;
+    size -= pos;
+    while (size)
+    {
+        if (max > size) max = size;
+        req->handle = process;
+        req->addr   = (char *)addr + pos;
+        req->len    = (max + sizeof(int) - 1) / sizeof(int);
+        if (server_call( REQ_READ_PROCESS_MEMORY )) goto error;
+        memcpy( (char *)buffer + pos, (char *)req->data, max );
+        size -= max;
+        pos += max;
+    }
+    return TRUE;
+
+ error:
+    if (bytes_read) *bytes_read = 0;
+    return FALSE;
 }
+
 
 /***********************************************************************
  *           WriteProcessMemory    		(KERNEL32)

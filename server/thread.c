@@ -337,18 +337,19 @@ void continue_thread( struct thread *thread )
 }
  
 /* suspend a thread */
-static int suspend_thread( struct thread *thread )
+int suspend_thread( struct thread *thread, int check_limit )
 {
     int old_count = thread->suspend;
-    if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
+    if (thread->suspend < MAXIMUM_SUSPEND_COUNT || !check_limit)
     {
         if (!(thread->process->suspend + thread->suspend++)) stop_thread( thread );
     }
+    else set_error( ERROR_SIGNAL_REFUSED );
     return old_count;
 }
 
 /* resume a thread */
-static int resume_thread( struct thread *thread )
+int resume_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend > 0)
@@ -364,7 +365,7 @@ void suspend_all_threads( void )
     struct thread *thread;
     for ( thread = first_thread; thread; thread = thread->next )
         if ( thread != current )
-            suspend_thread( thread );
+            suspend_thread( thread, 0 );
 }
 
 /* resume all threads but the current */
@@ -709,7 +710,7 @@ DECL_HANDLER(suspend_thread)
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        req->count = suspend_thread( thread );
+        req->count = suspend_thread( thread, 1 );
         release_object( thread );
     }
 }

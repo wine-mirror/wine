@@ -5,11 +5,13 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ptrace.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -314,6 +316,38 @@ static void set_process_info( struct process *process,
     }
 }
 
+/* read data from a process memory space */
+/* len is the total size (in ints), max is the size we can actually store in the input buffer */
+/* we read the total size in all cases to check for permissions */
+static void read_process_memory( struct process *process, const int *addr, int len,
+                                 int max, int *dest )
+{
+    struct thread *thread = process->thread_list;
+    int pid = thread->unix_pid;
+
+    suspend_thread( thread, 0 );
+    if (thread->attached)
+    {
+        while (len-- > 0)
+        {
+            int data = ptrace( PT_READ_D, pid, addr );
+            if ((data == -1) && errno)
+            {
+                file_set_error();
+                break;
+            }
+            if (max)
+            {
+                *dest++ = data;
+                max--;
+            }
+            addr++;
+        }
+    }
+    else set_error( ERROR_ACCESS_DENIED );
+    resume_thread( thread );
+}
+
 /* take a snapshot of currently running processes */
 struct process_snapshot *process_snap( int *count )
 {
@@ -437,6 +471,19 @@ DECL_HANDLER(set_process_info)
     if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
     {
         set_process_info( process, req );
+        release_object( process );
+    }
+}
+
+/* read data from a process address space */
+DECL_HANDLER(read_process_memory)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_VM_READ )))
+    {
+        read_process_memory( process, req->addr, req->len,
+                             get_req_size( req->data, sizeof(int) ), req->data );
         release_object( process );
     }
 }
