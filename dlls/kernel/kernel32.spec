@@ -246,9 +246,9 @@
 @ stdcall EndUpdateResourceW(long long)
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 @ stdcall EnumCalendarInfoA(ptr long long long)
-@ stub EnumCalendarInfoW
-@ stub EnumCalendarInfoExA
-@ stub EnumCalendarInfoExW
+@ stdcall EnumCalendarInfoW(ptr long long long)
+@ stdcall EnumCalendarInfoExA(ptr long long long)
+@ stdcall EnumCalendarInfoExW(ptr long long long)
 @ stdcall EnumDateFormatsA(ptr long long)
 @ stdcall EnumDateFormatsW(ptr long long)
 @ stub EnumDateFormatsExA
