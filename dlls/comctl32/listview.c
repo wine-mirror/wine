@@ -3471,7 +3471,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    COLORREF oldTextColor;
+    COLORREF oldTextColor, oldClrTextBk, oldClrText;
     NMLVCUSTOMDRAW nmlvcd;
     HFONT hOldFont;
     DWORD cdmode;
@@ -3487,11 +3487,18 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     oldBkMode = GetBkMode(hdc);
     infoPtr->clrTextBkDefault = GetBkColor(hdc);
     oldTextColor = GetTextColor(hdc);
+
+    oldClrTextBk = infoPtr->clrTextBk;
+    oldClrText   = infoPtr->clrText;
    
     GetClientRect(infoPtr->hwndSelf, &rcClient);
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, NULL);
     cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
+
+    /* Use these colors to draw the items */
+    infoPtr->clrTextBk = nmlvcd.clrTextBk;
+    infoPtr->clrText = nmlvcd.clrText;
 
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
@@ -3514,7 +3521,9 @@ enddraw:
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
 	notify_customdraw(infoPtr, CDDS_POSTPAINT, &nmlvcd);
 
-    /* unselect objects */
+    infoPtr->clrTextBk = oldClrTextBk;
+    infoPtr->clrText = oldClrText;
+
     SelectObject(hdc, hOldFont);
     SetBkMode(hdc, oldBkMode);
     SetBkColor(hdc, infoPtr->clrTextBkDefault);
