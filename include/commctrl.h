@@ -752,7 +752,7 @@ typedef struct tagNMHDDISPINFOW
 /* Toolbar */
 
 #define TOOLBARCLASSNAME16      "ToolbarWindow" 
-#define TOOLBARCLASSNAMEW     L"ToolbarWindow32" 
+#define TOOLBARCLASSNAMEW     "ToolbarWindow32" 
 #define TOOLBARCLASSNAMEA     "ToolbarWindow32" 
 #define TOOLBARCLASSNAME WINELIB_NAME_AW(TOOLBARCLASSNAME)
 

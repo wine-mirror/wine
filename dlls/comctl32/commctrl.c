@@ -629,34 +629,29 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 			(WPARAM)uStructSize, 0);
 
 	/* set bitmap and button size */
-	if (hBMInst == HINST_COMMCTRL) {
-	    if (wBMID & 1) {
-		SendMessageA (hwndTB, TB_SETBITMAPSIZE, 0,
-				MAKELPARAM(26, 25));
-		SendMessageA (hwndTB, TB_SETBUTTONSIZE, 0,
-				MAKELPARAM(33, 32));
-	    }
-	    else {
-		SendMessageA (hwndTB, TB_SETBITMAPSIZE, 0,
-				MAKELPARAM(16, 15));
-		SendMessageA (hwndTB, TB_SETBUTTONSIZE, 0,
-				MAKELPARAM(23, 22));
-	    }
-	}
-	else {
+	/*If CreateToolbarEx receive 0, windows set default values*/
+	if (dyBitmap < 0)
+	    dyBitmap = 16;
+	if (dxBitmap < 0)
+	    dxBitmap = 16;
+
 	    SendMessageA (hwndTB, TB_SETBITMAPSIZE, 0,
 			    MAKELPARAM((WORD)dyBitmap, (WORD)dxBitmap));
 	    SendMessageA (hwndTB, TB_SETBUTTONSIZE, 0,
 			    MAKELPARAM((WORD)dyButton, (WORD)dxButton));
-	}
+
 
 	/* add bitmaps */
+	if (nBitmaps > 0)
+	{
 	tbab.hInst = hBMInst;
 	tbab.nID   = wBMID;
+
 	SendMessageA (hwndTB, TB_ADDBITMAP,
 			(WPARAM)nBitmaps, (LPARAM)&tbab);
-
+	}
 	/* add buttons */
+	if(iNumButtons > 0)
 	SendMessageA (hwndTB, TB_ADDBUTTONSA,
 			(WPARAM)iNumButtons, (LPARAM)lpButtons);
     }

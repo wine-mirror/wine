@@ -2107,7 +2107,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 
     if (!himl)
 	return FALSE;
-    if (himl->cCurImage <= iImageCount)
+    if (himl->cCurImage >= iImageCount)
 	return FALSE;
     if (himl->cMaxImage > iImageCount)
 	return TRUE;

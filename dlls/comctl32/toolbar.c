@@ -1,3 +1,4 @@
+
 /*
  * Toolbar control
  *
@@ -224,8 +225,14 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 	TOOLBAR_DrawPattern (hdc, &rc);
 	if (dwStyle & TBSTYLE_FLAT)
+	{
+	    if (infoPtr->himlDef != NULL)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			    rc.left+2, rc.top+2, ILD_NORMAL);
+	else
+	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+			    rc.left+2, rc.top+2, ILD_NORMAL);
+	}
 	else
 	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
 			    rc.left+2, rc.top+2, ILD_NORMAL);
@@ -244,16 +251,27 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	return;
     }
 
+    if (dwStyle & TBSTYLE_FLAT)
+    {
+	if(btnPtr->bHot)
+	    DrawEdge (hdc, &rc, BDR_RAISEDINNER,
+		       BF_RECT | BF_MIDDLE | BF_SOFT);
+
+	if(infoPtr->himlDef != NULL)
+	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+			    rc.left +2, rc.top +2, ILD_NORMAL);
+	else
+	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+			    rc.left +2, rc.top +2, ILD_NORMAL);
+    }
+    else{
     /* normal state */
     DrawEdge (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-    if (dwStyle & TBSTYLE_FLAT)
-	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left+1, rc.top+1, ILD_NORMAL);
-    else
 	ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
 			rc.left+1, rc.top+1, ILD_NORMAL);
+    }
 
     TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 }
@@ -610,7 +628,10 @@ TOOLBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     SendMessageA (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
 
-
+/***********************************************************************
+ * TOOLBAR_AddBitmap:  Add the bitmaps to the default image list.
+ *
+ */
 static LRESULT
 TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -623,26 +644,42 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE (toolbar, "adding %d bitmaps!\n", wParam);
 
-    if (!(infoPtr->himlDef)) {
-	/* create new default image list */
-	TRACE (toolbar, "creating default image list!\n");
+    if (!(infoPtr->himlStd)) {
+	/* create new standard image list */
+
+	TRACE (toolbar, "creating standard image list!\n");
+
+
+	/* Windows resize all the buttons to the size of a newly added STandard Image*/
+	/* TODO: The resizing  should be done each time a standard image is added*/
+	if (lpAddBmp->hInst == HINST_COMMCTRL)
+	{
+
+	    if (lpAddBmp->nID & 1) 
+	    {
+		SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
+			      MAKELPARAM((WORD)26, (WORD)26));
+		SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
+			      MAKELPARAM((WORD)33, (WORD)33));
+	    }
+	    else 
+	    {
+		SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
+			      MAKELPARAM((WORD)16, (WORD)16));
+
+		SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
+			      MAKELPARAM((WORD)22, (WORD)22));
+	    }
+
+	    TOOLBAR_CalcToolbar (hwnd);
+	}
+
 	infoPtr->himlStd =
 	    ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
 			      ILC_COLOR | ILC_MASK, (INT)wParam, 2);
     }
 
-#if 0
-    if (!(infoPtr->himlDis)) {
-	/* create new disabled image list */
-	TRACE (toolbar, "creating disabled image list!\n");
-	infoPtr->himlDis =
-	    ImageList_Create (infoPtr->nBitmapWidth, 
-			      infoPtr->nBitmapHeight, ILC_COLOR | ILC_MASK,
-			      (INT)wParam, 2);
-    }
-#endif
-
-    /* Add bitmaps to the default image list */
+    /* Add bitmaps to the standard image list */
     if (lpAddBmp->hInst == (HINSTANCE)0) {
 	nIndex = 
 	    ImageList_AddMasked (infoPtr->himlStd, (HBITMAP)lpAddBmp->nID,
@@ -650,22 +687,23 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     else if (lpAddBmp->hInst == HINST_COMMCTRL) {
 	/* add internal bitmaps */
+	
 	FIXME (toolbar, "internal bitmaps not supported!\n");
+	/* TODO: Resize all the buttons when a new standard image is added */
 
 	/* Hack to "add" some reserved images within the image list 
 	   to get the right image indices */
 	nIndex = ImageList_GetImageCount (infoPtr->himlStd);
 	ImageList_SetImageCount (infoPtr->himlStd, nIndex + (INT)wParam);
+	
     }
     else {
 	HBITMAP hBmp =
 	    LoadBitmapA (lpAddBmp->hInst, (LPSTR)lpAddBmp->nID);
-
 	nIndex = ImageList_AddMasked (infoPtr->himlStd, hBmp, CLR_DEFAULT);
 
 	DeleteObject (hBmp); 
     }
-
 
     infoPtr->nNumBitmaps += (INT)wParam;
 
@@ -711,6 +749,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
 	btnPtr->dwData    = lpTbb[nCount].dwData;
 	btnPtr->iString   = lpTbb[nCount].iString;
+	btnPtr->bHot      = FALSE;
 
 	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & TBSTYLE_SEP)) {
 	    TTTOOLINFOA ti;
@@ -2156,10 +2195,9 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->nButtonDown = -1;
     infoPtr->nOldHit = -1;
-
+    infoPtr->nHotItem = -2; // It has to be initially different from nOldHit
     infoPtr->hwndNotify = GetParent (hwnd);
     infoPtr->bTransparent = (dwStyle & TBSTYLE_FLAT);
-    infoPtr->nHotItem = -1;
     infoPtr->dwDTFlags = DT_CENTER;
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -2390,8 +2428,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    TBUTTON_INFO *btnPtr, *oldBtnPtr;
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    TBUTTON_INFO *btnPtr;
     POINT pt;
     INT   nHit;
     HDC   hdc;
@@ -2402,10 +2440,34 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     pt.x = (INT)LOWORD(lParam);
     pt.y = (INT)HIWORD(lParam);
+
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
+    if (infoPtr->nOldHit != nHit)
+    {
+	//Remove the effect of an old hot button
+	if(infoPtr->nOldHit == infoPtr->nHotItem)
+	{
+	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
+	    oldBtnPtr->bHot = FALSE;
+		    
+	    InvalidateRect (hwnd, &oldBtnPtr->rect, TRUE);
+	}
+
+	// It's not a separator or in nowhere. It's a hot button.
+	if (nHit >= 0)
+	{
+	    btnPtr = &infoPtr->buttons[nHit];
+	    btnPtr->bHot = TRUE;
+
+	    hdc = GetDC (hwnd);
+	    TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+	    ReleaseDC (hwnd, hdc);
+
+	    infoPtr->nHotItem = nHit;
+	}
+
     if (infoPtr->bCaptured) {
-	if (infoPtr->nOldHit != nHit) {
 	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	    if (infoPtr->nOldHit == infoPtr->nButtonDown) {
 		btnPtr->fsState &= ~TBSTATE_PRESSED;
@@ -2422,7 +2484,6 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	infoPtr->nOldHit = nHit;
     }
-
     return 0;
 }
 

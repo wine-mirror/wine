@@ -17,6 +17,7 @@ typedef struct tagTBUTTON_INFO
     DWORD dwData;
     INT iString;
 
+    BOOL bHot;
     INT nRow;
     RECT rect;
 } TBUTTON_INFO; 
@@ -45,8 +46,8 @@ typedef struct tagTOOLBAR_INFO
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
     HFONT    hFont;           /* text font */
-    HIMAGELIST himlStd;         /* standard image list */
-    HIMAGELIST himlDef;         /* default image list */
+    HIMAGELIST himlStd;         /* standard image list for TB_ADDBITMAP command*/
+    HIMAGELIST himlDef;         /* default image list for TB_SETIMAGELIST*/
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
     HWND     hwndToolTip;     /* handle to tool tip control */
