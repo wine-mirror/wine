@@ -51,6 +51,7 @@ DECLARE_DEBUG_CHANNEL(relay)
 #endif
 
 #define IF_CLR(ctx)     ((ctx)->EFlags &= ~VIF_MASK)
+#define IF_SET(ctx)     ((ctx)->EFlags |= VIF_MASK)
 #define IF_ENABLED(ctx) ((ctx)->EFlags & VIF_MASK)
 #define SET_PEND(ctx)   ((ctx)->EFlags |= VIP_MASK)
 #define CLR_PEND(ctx)   ((ctx)->EFlags &= ~VIP_MASK)
@@ -126,7 +127,7 @@ static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
  printf("\n");
 }
 
-static int DOSVM_SimulateInt( int vect, CONTEXT86 *context )
+static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
 {
   FARPROC16 handler=INT_GetRMHandler(vect);
 
@@ -139,12 +140,17 @@ static int DOSVM_SimulateInt( int vect, CONTEXT86 *context )
     /* we could probably move some other dodgy stuff here too from dpmi.c */
   }
   /* check if the call is from our fake BIOS interrupt stubs */
-  if (context->SegCs==0xf000) {
+  if ((context->SegCs==0xf000) && !inwine) {
+    if (vect != (context->Eip/4)) {
+      TRACE_(int)("something fishy going on here (interrupt stub is %02lx)\n", context->Eip/4);
+    }
+    TRACE_(int)("builtin interrupt %02x has been branched to\n", vect);
     INT_RealModeInterrupt(vect, context);
   }
   /* check if the call goes to an unhooked interrupt */
   else if (SELECTOROF(handler)==0xf000) {
     /* if so, call it directly */
+    TRACE_(int)("builtin interrupt %02x has been invoked (through vector %02x)\n", OFFSETOF(handler)/4, vect);
     INT_RealModeInterrupt(OFFSETOF(handler)/4, context);
   }
   /* the interrupt is hooked, simulate interrupt in DOS space */
@@ -184,7 +190,7 @@ static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
       TRACE_(int)("dispatching IRQ %d\n",event->irq);
       /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
        * current_event might be cleared (and event freed) in this very call! */
-      DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context);
+      DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context,TRUE);
     } else {
       /* callback event */
       TRACE_(int)("dispatching callback event\n");
@@ -319,13 +325,14 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
   case VM86_INTx:
    if (TRACE_ON(relay))
     DPRINTF("Call DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
-   ret=DOSVM_SimulateInt(VM86_ARG(fn),&context);
+   ret=DOSVM_SimulateInt(VM86_ARG(fn),&context,FALSE);
    if (TRACE_ON(relay))
     DPRINTF("Ret  DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
    break;
   case VM86_STI:
-  case VM86_PICRETURN:
-    TRACE_(int)("DOS task enabled interrupts with events pending, sending events\n");
+    IF_SET(&context);
+  /* case VM86_PICRETURN: */
+    TRACE_(int)("DOS task enabled interrupts %s events pending, sending events\n", IS_PEND(&context)?"with":"without");
     DOSVM_SendQueuedEvents(&context);
     break;
   case VM86_TRAP:
@@ -459,6 +466,7 @@ int DOSVM_Enter( CONTEXT86 *context )
  struct vm86plus_struct VM86;
  int stat,len,sig;
 
+ memset(&VM86, 0, sizeof(VM86));
 #define CP(x,y) VM86.regs.x = context->y
   CV;
 #undef CP
