@@ -18,6 +18,7 @@ LIBEXT=so       # library type .so or .a
 TRACE_MSGS=yes	# the TRACE() macro
 DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 CURSES=yes
+OPENGL=normal
 
 AC_ARG_ENABLE(emulator,
 [  --disable-emulator      build only the Wine library, not the emulator],
@@ -30,6 +31,10 @@ AC_ARG_ENABLE(dll,
 AC_ARG_ENABLE(debug,
 [  --disable-debug         compile out all debugging messages],
 [if test "$enableval" = "no"; then DEBUG_MSGS="no"; fi])
+
+AC_ARG_ENABLE(opengl,
+[  --enable-opengl         force usage of OpenGL even if the latter is thread-safe],
+[if test "$enableval" = "no"; then OPENGL="no"; elif test "$enableval" = "yes"; then OPENGL="yes"; fi])
 
 AC_ARG_ENABLE(trace,
 [  --disable-trace         compile out TRACE messages],
@@ -188,64 +193,66 @@ then
     fi
 
     dnl Check for the presence of Mesa
-    AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/osmesa.h)
-    if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
+    if test $OPENGL = "yes" -o $OPENGL = "normal"
     then
-        dnl Check for some problems due to old Mesa versions
-        AC_CACHE_CHECK("for up-to-date Mesa version", wine_cv_mesa_version_OK,
-          AC_TRY_COMPILE(
-            [#include <GL/gl.h>],
-            [GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
-            [wine_cv_mesa_version_OK="yes"],
-            [wine_cv_mesa_version_OK="no"]
-	  )
-        )
-
-	dnl Check for the thread-safety of the OpenGL library
-        AC_CACHE_CHECK("for thread-safe Mesa version", 
-		       wine_cv_mesa_version_threadsafe,
-                       [saved_libs=$LIBS
-		        LIBS="$X_LIBS -lGL"
-			AC_TRY_LINK([],[pthread_getspecific();],
-				    [wine_cv_mesa_version_threadsafe="yes"],
-				    [wine_cv_mesa_version_threadsafe="no"])
-			LIBS=$saved_libs]
-	)
-
-        if test "$wine_cv_mesa_version_OK" = "yes" -a "$wine_cv_mesa_version_threadsafe" = "no"
-        then
-	    dnl Check for the presense of the library
-            AC_CHECK_LIB(GL,glXCreateContext,
-		AC_DEFINE(HAVE_LIBMESAGL)
-		X_PRE_LIBS="$X_PRE_LIBS -lGL"
-		MESA_SRCS='$(MESA_SRCS)'
-		,,
-		$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-	    if test "$ac_cv_lib_GL_glXCreateContext" = "no"
-	    then
-		AC_CHECK_LIB(MesaGL,glXCreateContext,
-		    AC_DEFINE(HAVE_LIBMESAGL)
-		    X_PRE_LIBS="$X_PRE_LIBS -lMesaGL"
-		    MESA_SRCS='$(MESA_SRCS)'
-		    ,,
-		    $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-	    fi
-
-	    dnl Check for the Color Table and Paletted Texture extensions
-	    AC_CACHE_CHECK("for the OpenGL Color Index extension",dummy,
-              AC_TRY_COMPILE(
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h)
+	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
+	then
+	    dnl Check for some problems due to old Mesa versions
+	    AC_CACHE_CHECK("for up-to-date OpenGL version", wine_cv_mesa_version_OK,
+	      AC_TRY_COMPILE(
 		[#include <GL/gl.h>],
-		[GLenum test = GL_COLOR_INDEX8_EXT;],
-		[AC_DEFINE(HAVE_GL_COLOR_TABLE)],
+		[GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
+		[wine_cv_mesa_version_OK="yes"],
+		[wine_cv_mesa_version_OK="no"]
 	      )
+            )
+
+	    dnl Check for the thread-safety of the OpenGL library
+	    AC_CACHE_CHECK("for thread-safe OpenGL version", 
+			   wine_cv_mesa_version_threadsafe,
+              [saved_libs=$LIBS
+	       LIBS="$X_LIBS -lGL"
+	       AC_TRY_LINK([],[pthread_getspecific();],
+			      [wine_cv_mesa_version_threadsafe="yes"],
+			      [wine_cv_mesa_version_threadsafe="no"])
+	       LIBS=$saved_libs]
 	    )
-    	    if test "$ac_cv_lib_GL_glXCreateContext" = "no"
-	    then
-		AC_CHECK_LIB(MesaGL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-	    else
-		AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-	    fi
-        fi
+
+	    if test "$wine_cv_mesa_version_OK" = "yes" -a \( "$wine_cv_mesa_version_threadsafe" = "no" -o $OPENGL = "yes" \)
+            then
+		dnl Check for the presense of the library
+		AC_CHECK_LIB(GL,glXCreateContext,
+			     AC_DEFINE(HAVE_LIBMESAGL)
+			     X_PRE_LIBS="$X_PRE_LIBS -lGL"
+			     MESA_SRCS='$(MESA_SRCS)'
+			     ,,
+			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+
+		if test "$ac_cv_lib_GL_glXCreateContext" = "no"
+		then
+			AC_CHECK_LIB(MesaGL,glXCreateContext,
+				     AC_DEFINE(HAVE_LIBMESAGL)
+				     X_PRE_LIBS="$X_PRE_LIBS -lMesaGL"
+				     MESA_SRCS='$(MESA_SRCS)'
+				     ,,
+				     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+	        fi
+
+		dnl Check for the Color Table and Paletted Texture extensions
+		AC_CACHE_CHECK("for the OpenGL Color Index extension",dummy,
+			       AC_TRY_COMPILE([#include <GL/gl.h>],
+			                      [GLenum test = GL_COLOR_INDEX8_EXT;],
+					      [AC_DEFINE(HAVE_GL_COLOR_TABLE)],))
+
+    	        if test "$ac_cv_lib_GL_glXCreateContext" = "no"
+		then
+			AC_CHECK_LIB(MesaGL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+		else
+			AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+		fi
+	     fi
+	 fi
     fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
@@ -1103,13 +1110,23 @@ then
   echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
 fi
 
-if test "$wine_cv_mesa_version_threadsafe" = "yes"
+if test "$wine_cv_mesa_version_threadsafe" = "yes" -a $OPENGL = "normal"
 then
   echo
   echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
-  echo "*** thread-safety. To prevent crashes, OpenGL support has been removed"
-  echo "*** (while we work on a better fix)."
+  echo "*** thread-safety. To prevent crashes, OpenGL support has been removed."
+  echo "*** A fix for glibc 2.1.3 that seem to work is included in this version of Wine,"
+  echo "*** start configure with '--enable-opengl' to force OpenGL support."
 fi
+
+if test "$wine_cv_mesa_version_threadsafe" = "yes" -a $OPENGL = "yes"
+then
+  echo
+  echo "*** Warning: you explicitely linked in a thread-safe OpenGL version. If you"
+  echo "*** experience unusual crashes on DirectDraw games, try first to disable OpenGL"
+  echo "*** support before reporting bugs."
+fi
+
 
 echo
 echo "Configure finished.  Do 'make depend && make' to compile Wine."
