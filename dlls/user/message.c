@@ -1518,11 +1518,11 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return 1;
     }
 
-    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
-
     if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
 
     if (USER_IsExitingThread( dest_tid )) return 0;
+
+    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
     if (dest_tid == GetCurrentThreadId())
     {
@@ -1566,11 +1566,11 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return 1;
     }
 
-    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
-
     if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
 
     if (USER_IsExitingThread( dest_tid )) return 0;
+
+    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
     if (dest_tid == GetCurrentThreadId())
     {
