@@ -605,7 +605,7 @@ int _locking(int fd, int mode, LONG nbytes)
         (mode==_LK_NBRLCK)?"_LK_NBRLCK":
                           "UNKNOWN");
 
-  if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == 0xffffffff)
+  if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == INVALID_SET_FILE_POINTER)
   {
     FIXME ("Seek failed\n");
     *MSVCRT__errno() = MSVCRT_EINVAL; /* FIXME */

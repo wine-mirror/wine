@@ -110,7 +110,8 @@ STORAGE_get_big_block(HANDLE hf,int n,BYTE *block)
     DWORD result;
 
     assert(n>=-1);
-    if (!SetFilePointer( hf, (n+1)*BIGSIZE, NULL, SEEK_SET ))
+    if ((SetFilePointer( hf, (n+1)*BIGSIZE, NULL,
+                         SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
     {
         WARN(" seek failed (%ld)\n",GetLastError());
         return FALSE;
@@ -132,9 +133,10 @@ STORAGE_put_big_block(HANDLE hf,int n,BYTE *block)
     DWORD result;
 
     assert(n>=-1);
-    if (!SetFilePointer( hf, (n+1)*BIGSIZE, NULL, SEEK_SET ))
+    if ((SetFilePointer( hf, (n+1)*BIGSIZE, NULL,
+                         SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
     {
-        WARN(" seek failed (%ld)\n",GetLastError());
+        WARN("seek failed (%ld)\n",GetLastError());
         return FALSE;
     }
     if (!WriteFile( hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE)
