@@ -1429,7 +1429,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 
 	    /* compute rough rectangle where the label will go */
 	    SetRectEmpty(&rcText);
-	    rcText.right = infoPtr->nItemWidth - 2;
+	    rcText.right = infoPtr->nItemWidth - TRAILING_PADDING;
 	    rcText.bottom = infoPtr->nItemHeight;
 	    if (uView == LVS_ICON) 
 		rcText.bottom -= ICON_TOP_PADDING + infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
@@ -1442,7 +1442,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	    
     	    DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat | DT_CALCRECT);
 
-	    labelSize.cx = rcText.right - rcText.left;
+	    labelSize.cx = min(rcText.right - rcText.left + TRAILING_PADDING, infoPtr->nItemWidth);
 	    labelSize.cy = rcText.bottom - rcText.top;
 
     	    SelectObject(hdc, hOldFont);
@@ -1466,9 +1466,8 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	{
 	    Label.left = Icon.right;
 	    Label.top = Box.top;
-	    Label.right = Label.left;
+	    Label.right = Label.left + labelSize.cx;
 	    if (infoPtr->himlSmall) Label.right += IMAGE_PADDING;
-	    Label.right += labelSize.cx + TRAILING_PADDING;
 	    if (Label.right > Box.right) Label.right = Box.right;
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
@@ -3845,6 +3844,7 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
   LISTVIEW_RemoveAllSelections(infoPtr);
   infoPtr->nSelectionMark=-1;
   infoPtr->nFocusedItem=-1;
+  SetRectEmpty(&infoPtr->rcFocus);
   /* But we are supposed to leave nHotItem as is! */
 
   if (lStyle & LVS_OWNERDATA)
@@ -4068,6 +4068,11 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
   SendMessageW((infoPtr->hwndSelf), WM_NOTIFY, (WPARAM)lCtrlId,
                (LPARAM)&nmlv);
 
+  if (nItem == infoPtr->nFocusedItem)
+  {
+    infoPtr->nFocusedItem = -1;
+    SetRectEmpty(&infoPtr->rcFocus);
+  }
 
   /* remove it from the selection range */
   item.state = LVIS_SELECTED;
@@ -8271,9 +8276,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
   {
     infoPtr->dwStyle = lpss->styleNew;
 
-    if (uOldView == LVS_REPORT)
-      ShowWindow(infoPtr->hwndHeader, SW_HIDE);
-
     if (((lpss->styleOld & WS_HSCROLL) != 0)&&
         ((lpss->styleNew & WS_HSCROLL) == 0))
        ShowScrollBar(infoPtr->hwndSelf, SB_HORZ, FALSE);
@@ -8286,7 +8288,13 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
      * decide.
      */
     if (uNewView != uOldView)
+    {
+        if (uOldView == LVS_REPORT)
+           ShowWindow(infoPtr->hwndHeader, SW_HIDE);
+
 	ShowScrollBar(infoPtr->hwndSelf, SB_BOTH, FALSE);
+	SetRectEmpty(&infoPtr->rcFocus);
+    }
 
     if (uNewView == LVS_ICON)
     {
