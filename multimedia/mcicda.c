@@ -57,7 +57,7 @@ typedef struct {
     int			unixdev;
 #ifdef linux
     struct cdrom_subchnl	sc;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     struct cd_sub_channel_info	sc;
 #endif
     int			mode;
@@ -84,7 +84,7 @@ static UINT16 CDAUDIO_GetNumberOfTracks(UINT16 wDevID)
 #if defined(linux) || defined(__FreeBSD__)
 #ifdef linux
     struct cdrom_tochdr	hdr;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     struct ioc_toc_header	hdr;
 #endif
     
@@ -92,7 +92,7 @@ static UINT16 CDAUDIO_GetNumberOfTracks(UINT16 wDevID)
 	if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 		  CDROMREADTOCHDR
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 		  CDIOREADTOCHEADER
 #endif
 		  , &hdr)) {
@@ -102,7 +102,7 @@ static UINT16 CDAUDIO_GetNumberOfTracks(UINT16 wDevID)
 	}
 #ifdef linux
 	CDADev[wDevID].nTracks = hdr.cdth_trk1;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	CDADev[wDevID].nTracks = hdr.ending_track - hdr.starting_track + 1;
 #endif
     }
@@ -124,7 +124,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
     int		total_length = 0;
 #ifdef linux
     struct cdrom_tocentry	entry;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     struct ioc_read_toc_entry	entry;
     struct cd_toc_entry             toc_buffer;
 #endif
@@ -155,19 +155,19 @@ static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
 	if (i == CDADev[wDevID].nTracks)
 #ifdef linux
 	    entry.cdte_track = CDROM_LEADOUT;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 #define LEADOUT 0xaa
 	entry.starting_track = LEADOUT; /* XXX */
 #endif
 	else
 #ifdef linux
 	    entry.cdte_track = i + 1;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	entry.starting_track = i + 1;
 #endif
 #ifdef linux
 	entry.cdte_format = CDROM_MSF;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	bzero((char *)&toc_buffer, sizeof(toc_buffer));
 	entry.address_format = CD_MSF_FORMAT;
 	entry.data_len = sizeof(toc_buffer);
@@ -176,7 +176,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
 	if (ioctl(CDADev[wDevID].unixdev, 
 #ifdef linux
 		  CDROMREADTOCENTRY
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 		  CDIOREADTOCENTRYS
 #endif
 		  , &entry)) {
@@ -187,7 +187,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
 	start = CDFRAMES_PERSEC * (SECONDS_PERMIN * 
 				   entry.cdte_addr.msf.minute + entry.cdte_addr.msf.second) + 
 	    entry.cdte_addr.msf.frame;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	start = CDFRAMES_PERSEC * (SECONDS_PERMIN *
 				   toc_buffer.addr.msf.minute + toc_buffer.addr.msf.second) +
 	    toc_buffer.addr.msf.frame;
@@ -472,7 +472,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
     if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 	      CDROMSUBCHNL, &CDADev[wDevID].sc
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCREADSUBCHANNEL, &read_sc
 #endif
 	      )) {
@@ -483,25 +483,25 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
     switch (
 #ifdef linux
 	    CDADev[wDevID].sc.cdsc_audiostatus
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	    CDADev[wDevID].sc.header.audio_status
 #endif
 	    ) {
 #ifdef linux
     case CDROM_AUDIO_INVALID:
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     case CD_AS_AUDIO_INVALID:
 #endif
 	WARN(cdaudio, "device doesn't support status, returning NOT_READY.\n");
 #ifdef linux
 	CDADev[wDevID].mode = MCI_MODE_NOT_READY;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	CDADev[wDevID].mode = MCI_MODE_STOP;
 #endif
 	break;
 #ifdef linux
     case CDROM_AUDIO_NO_STATUS: 
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     case CD_AS_NO_STATUS:
 #endif
 	CDADev[wDevID].mode = MCI_MODE_STOP;
@@ -509,7 +509,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 	break;
 #ifdef linux
     case CDROM_AUDIO_PLAY: 
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     case CD_AS_PLAY_IN_PROGRESS:
 #endif
 	CDADev[wDevID].mode = MCI_MODE_PLAY;
@@ -517,7 +517,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 	break;
 #ifdef linux
     case CDROM_AUDIO_PAUSED:
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     case CD_AS_PLAY_PAUSED:
 #endif
 	CDADev[wDevID].mode = MCI_MODE_PAUSE;
@@ -527,7 +527,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 #ifdef linux
 	TRACE(cdaudio,"status=%02X !\n",
 	      CDADev[wDevID].sc.cdsc_audiostatus);
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	TRACE(cdaudio,"status=%02X !\n",
 	      CDADev[wDevID].sc.header.audio_status);
 #endif
@@ -538,7 +538,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 	CDFRAMES_PERMIN * CDADev[wDevID].sc.cdsc_absaddr.msf.minute +
 	CDFRAMES_PERSEC * CDADev[wDevID].sc.cdsc_absaddr.msf.second +
 	CDADev[wDevID].sc.cdsc_absaddr.msf.frame;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     CDADev[wDevID].nCurTrack = CDADev[wDevID].sc.what.position.track_number;
     CDADev[wDevID].dwCurFrame = 
 	CDFRAMES_PERMIN * CDADev[wDevID].sc.what.position.absaddr.msf.minute +
@@ -551,7 +551,7 @@ static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 	  CDADev[wDevID].sc.cdsc_absaddr.msf.minute,
 	  CDADev[wDevID].sc.cdsc_absaddr.msf.second,
 	  CDADev[wDevID].sc.cdsc_absaddr.msf.frame);
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     TRACE(cdaudio,"%02u-%02u:%02u:%02u \n",
 	  CDADev[wDevID].sc.what.position.track_number,
 	  CDADev[wDevID].sc.what.position.absaddr.msf.minute,
@@ -736,7 +736,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     int 	start, end;
 #ifdef linux
     struct 	cdrom_msf	msf;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     struct	ioc_play_msf	msf;
 #endif
     
@@ -767,7 +767,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     msf.cdmsf_min1 = end / CDFRAMES_PERMIN;
     msf.cdmsf_sec1 = (end % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.cdmsf_frame1 = end % CDFRAMES_PERSEC;
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     msf.start_m     = start / CDFRAMES_PERMIN;
     msf.start_s     = (start % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.start_f     = start % CDFRAMES_PERSEC;
@@ -778,7 +778,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 	      CDROMSTART
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCSTART
 #endif
 	      )) {
@@ -788,7 +788,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     if (ioctl(CDADev[wDevID].unixdev, 
 #ifdef linux
 	      CDROMPLAYMSF
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCPLAYMSF
 #endif
 	      , &msf)) {
@@ -799,7 +799,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
 	  msf.cdmsf_min0, msf.cdmsf_sec0, msf.cdmsf_frame0,
 	  msf.cdmsf_min1, msf.cdmsf_sec1, msf.cdmsf_frame1);
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
     TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
 	  msf.start_m, msf.start_s, msf.start_f,
 	  msf.end_m,   msf.end_s,   msf.end_f);
@@ -831,7 +831,7 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
     if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 	      CDROMSTOP
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCSTOP
 #endif
 	      )) return MCIERR_HARDWARE;
@@ -860,7 +860,7 @@ static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS 
     if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 	      CDROMPAUSE
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCPAUSE
 #endif
 	      )) return MCIERR_HARDWARE;
@@ -889,7 +889,7 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
     if (ioctl(CDADev[wDevID].unixdev, 
 #ifdef linux
 	      CDROMRESUME
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCRESUME
 #endif
 	      )) return MCIERR_HARDWARE;
@@ -920,7 +920,7 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
     if (ioctl(CDADev[wDevID].unixdev,
 #ifdef linux
 	      CDROMRESUME
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 	      CDIOCRESUME
 #endif
 	      )) {

@@ -31,7 +31,15 @@
 #include "heap.h"
 #include "win.h"
 #include "debug.h"
+
+#if defined(__FreeBSD__)
+#include <bitstring.h>
+#define test_bit(bit,name) bit_test(name,bit)
+#define set_bit(bit,name) bit_set(name,bit)
+#define clear_bit(bit,name) bit_clear(name,bit)
+#else
 #include <asm/bitops.h>      /* FIXME: linux specific */
+#endif
 
 #define TREEVIEW_GetInfoPtr(wndPtr) ((TREEVIEW_INFO *)wndPtr->wExtra[0])
 
