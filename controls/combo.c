@@ -1498,6 +1498,9 @@ static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg, LPARAM lParam )
 
 /***********************************************************************
  *           COMBO_GetText
+ *
+ * NOTE! LB_GETTEXT does not count terminating \0, WM_GETTEXT does.
+ *       also LB_GETTEXT might return values < 0, WM_GETTEXT doesn't.
  */
 static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unicode)
 {
@@ -1539,8 +1542,8 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unico
 				strncpyW(lpText, lpBuffer, (N > n) ? n+1 : N-1);
 			    lpText[N - 1] = '\0';
 			}
+	                HeapFree( GetProcessHeap(), 0, lpBuffer );
                    }
-	           HeapFree( GetProcessHeap(), 0, lpBuffer );
 	       }
 	   }
 	   else
@@ -1566,10 +1569,14 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unico
 				strncpy(lpText, lpBuffer, (N > n) ? n+1 : N-1);
 			    lpText[N - 1] = '\0';
 			}
+	                HeapFree( GetProcessHeap(), 0, lpBuffer );
                    }
-	           HeapFree( GetProcessHeap(), 0, lpBuffer );
 	       }
 	   }
+	   if (n<0)
+	       n=0;
+	   else
+	       n++;
 	   return (LRESULT)n;
        }
    }
