@@ -74,7 +74,7 @@ static void DOSVM_InitializeVideoMode( BIOSDATA *data )
   if (width >= 80 && height >= 25) {
     VGA_SetAlphaMode(80, 25);
     data->VideoColumns = 80;
-    data->VideoMode = 0x02;
+    data->VideoMode = 0x03;
   } else {
     VGA_SetAlphaMode(40, 25);
     data->VideoColumns = 40;
@@ -464,8 +464,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         else
         {
            VGA_SetCursorPos(DL_reg(context), DH_reg(context));
-           TRACE("Set Cursor Position: %d %d\n", DH_reg(context),
-              DL_reg(context));
+           TRACE("Set Cursor Position: %d/%d\n", DL_reg(context),
+              DH_reg(context));
         }
         break;
 
@@ -478,7 +478,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
           BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
           SET_DH( context, row );
           SET_DL( context, col );
-          TRACE("Cursor Position: %d %d\n", DH_reg(context), DL_reg(context));
+          TRACE("Cursor Position: %d/%d\n", DL_reg(context), DH_reg(context));
         }
         break;
 
@@ -488,7 +488,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x05: /* SELECT ACTIVE DISPLAY PAGE */
-        FIXME("Select Active Display Page - Not Supported\n");
+        FIXME("Select Active Display Page (%d) - Not Supported\n", AL_reg(context));
         data->VideoCurPage = AL_reg(context);
         break;
 
@@ -569,11 +569,11 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                also sets up the default background attributes for clears
                and scrolls... */
             /* Bear in mind here that we do not want to change,
-               apparantly, the foreground or attribute of the background
+               apparently, the foreground or attribute of the background
                with this call, so we should check first to see what the
                foreground already is... FIXME */
-            FIXME("Set Background/Border Color: %d\n",
-               BL_reg(context));
+            FIXME("Set Background/Border Color: %d/%d\n",
+               BH_reg(context), BL_reg(context));
             break;
         case 0x01: /* SET PALETTE */
             FIXME("Set Palette - Not Supported\n");
@@ -601,7 +601,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
-        TRACE("Get current video mode\n");
+        TRACE("Get current video mode: -> mode %d, columns %d\n", data->VideoMode, data->VideoColumns);
         /* Note: This should not be a constant value. */
         SET_AL( context, data->VideoMode );
         SET_AH( context, data->VideoColumns );
