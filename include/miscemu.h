@@ -171,7 +171,15 @@ struct DPMI_segments
     WORD xms_seg;
     WORD dpmi_seg;
     WORD dpmi_sel;
+    WORD int48_seg;
+    WORD int48_sel;
 };
+
+/* 48-bit segmented pointers for DOS DPMI32 */
+typedef struct {
+  WORD  selector;
+  DWORD offset;
+} SEGPTR48, FARPROC48;
 
 extern struct DPMI_segments DOSMEM_dpmi_segments;
 extern const struct DPMI_segments *DOSMEM_GetDPMISegments(void);
@@ -194,6 +202,8 @@ extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 typedef void (WINAPI *INTPROC)(CONTEXT86*);
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
 extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
+extern FARPROC48 INT_GetPMHandler48( BYTE intnum );
+extern void INT_SetPMHandler48( BYTE intnum, FARPROC48 handler );
 
 /* msdos/ioports.c */
 extern DWORD IO_inport( int port, int count );

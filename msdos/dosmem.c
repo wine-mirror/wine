@@ -161,6 +161,7 @@ static void DOSMEM_MakeIsrStubs(void)
 static void DOSMEM_InitDPMI(void)
 {
     LPSTR ptr;
+    int   i;
 
     static const char wrap_code[]={
      0xCD,0x31, /* int $0x31 */
@@ -210,6 +211,20 @@ static void DOSMEM_InitDPMI(void)
     ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_segments.dpmi_seg );
     memcpy( ptr, enter_pm, sizeof(enter_pm) );
     DOSMEM_dpmi_segments.dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
+
+    ptr = DOSMEM_GetBlock( 4 * 256, &DOSMEM_dpmi_segments.int48_seg );
+    for(i=0; i<256; i++) {
+        /*
+         * Each 32-bit interrupt handler is 4 bytes:
+         * 0xCD,<i>  = int <i> (nested 16-bit interrupt)
+         * 0x66,0xCF = iretd   (32-bit interrupt return)
+         */
+        ptr[i * 4 + 0] = 0xCD;
+        ptr[i * 4 + 1] = i;
+        ptr[i * 4 + 2] = 0x66;
+        ptr[i * 4 + 3] = 0xCF;
+    }
+    DOSMEM_dpmi_segments.int48_sel = SELECTOR_AllocBlock( ptr, 4 * 256, WINE_LDT_FLAGS_CODE );
 }
 
 static BIOSDATA * DOSMEM_BiosData(void)

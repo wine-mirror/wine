@@ -29,6 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 static FARPROC16 INT_Vectors[256];
+static FARPROC48 INT_Vectors48[256];
 
 /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
 #define FIRST_INTERRUPT 100
@@ -73,6 +74,37 @@ void INT_SetPMHandler( BYTE intnum, FARPROC16 handler )
     TRACE("Set protected mode interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
     INT_Vectors[intnum] = handler;
+}
+
+
+/**********************************************************************
+ *         INT_GetPMHandler48
+ *
+ * Return the protected mode interrupt vector for a given interrupt.
+ * Used to get 48-bit pointer for 32-bit interrupt handlers in DPMI32.
+ */
+FARPROC48 INT_GetPMHandler48( BYTE intnum )
+{
+    if (!INT_Vectors48[intnum].selector)
+    {
+        INT_Vectors48[intnum].selector = DOSMEM_dpmi_segments.int48_sel;
+        INT_Vectors48[intnum].offset = 4 * intnum;
+    }
+    return INT_Vectors48[intnum];
+}
+
+
+/**********************************************************************
+ *         INT_SetPMHandler48
+ *
+ * Set the protected mode interrupt handler for a given interrupt.
+ * Used to set 48-bit pointer for 32-bit interrupt handlers in DPMI32.
+ */
+void INT_SetPMHandler48( BYTE intnum, FARPROC48 handler )
+{
+    TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08x\n",
+          intnum, handler.selector, handler.offset );
+    INT_Vectors48[intnum] = handler;
 }
 
 

@@ -686,19 +686,22 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
         case 0xcd: /* int <XX> */
             if (long_op)
             {
-                ERR("int xx from 32-bit code is not supported.\n");
-                break;  /* Unable to emulate it */
+                FARPROC48 addr = INT_GetPMHandler48( instr[1] );
+                DWORD *stack = get_stack( context );
+                /* Push the flags and return address on the stack */
+                *(--stack) = context->EFlags;
+                *(--stack) = context->SegCs;
+                *(--stack) = context->Eip + prefixlen + 2;
+                add_stack(context, -3 * sizeof(DWORD));
+                /* Jump to the interrupt handler */
+                context->SegCs  = addr.selector;
+                context->Eip = addr.offset;
+               return TRUE;
             }
             else
             {
                 FARPROC16 addr = INT_GetPMHandler( instr[1] );
                 WORD *stack = get_stack( context );
-                if (!addr)
-                {
-                    FIXME("no handler for interrupt %02x, ignoring it\n", instr[1]);
-                    context->Eip += prefixlen + 2;
-                    return TRUE;
-                }
                 /* Push the flags and return address on the stack */
                 *(--stack) = LOWORD(context->EFlags);
                 *(--stack) = context->SegCs;
