@@ -179,6 +179,8 @@ int main(int argc, char *argv[])
 	BOOL FunctionPatch = FALSE;
 	BOOL FunctionDllRegisterServer = FALSE;
 	BOOL FunctionDllUnregisterServer = FALSE;
+	BOOL FunctionRegServer = FALSE;
+	BOOL FunctionUnregServer = FALSE;
 
 	BOOL GotProductCode = FALSE;
 	LPCSTR PackageName = NULL;
@@ -209,7 +211,15 @@ int main(int argc, char *argv[])
 	{
 		WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 
-		if(!strncasecmp(argv[i], "/i", 2))
+                if (!strcasecmp(argv[i], "/regserver"))
+                {
+                    FunctionRegServer = TRUE;
+                }
+                else if (!strcasecmp(argv[i], "/unregserver") || !strcasecmp(argv[i], "/unregister"))
+                {
+                    FunctionUnregServer = TRUE;
+                }
+		else if(!strncasecmp(argv[i], "/i", 2))
 		{
 			char *argvi = argv[i];
 			FunctionInstall = TRUE;
@@ -618,6 +628,14 @@ int main(int argc, char *argv[])
 	else if(FunctionDllUnregisterServer)
 	{
 		DllUnregisterServer(DllName);
+	}
+	else if (FunctionRegServer)
+	{
+		WINE_FIXME( "/regserver not implemented yet, ignoring\n" );
+	}
+	else if (FunctionUnregServer)
+	{
+		WINE_FIXME( "/unregserver not implemented yet, ignoring\n" );
 	}
 	else
 		ShowUsage(1);
