@@ -320,16 +320,17 @@ VOID WINAPI GetSystemInfo(
 				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 					cachedsi.wProcessorLevel= 4;
 					break;
-				case 5:
-				case 6: /* PPro/2/3 has same info as P1 */
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
+					break;
+				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+					cachedsi.wProcessorLevel= 6;
 					break;
 				case 1: /* two-figure levels */
                                     if (value[1] == '5')
                                     {
                                         cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-                                        cachedsi.wProcessorLevel= 5;
+                                        cachedsi.wProcessorLevel= 6;
                                         break;
                                     }
                                     /* fall through */
@@ -352,10 +353,11 @@ VOID WINAPI GetSystemInfo(
 				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 					cachedsi.wProcessorLevel= 4;
 					break;
-				case 5:
-				case 6: /* PPro/2/3 has same info as P1 */
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
+					break;
+				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+					cachedsi.wProcessorLevel= 6;
 					break;
 				default:
 					FIXME("unknown Linux 2.0 cpu family '%s', please report ! (-> setting to 386)\n", value);
@@ -485,7 +487,7 @@ VOID WINAPI GetSystemInfo(
                        }
                        if (!strncmp(cpuclass+1, "686", 3)) {
                             cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-                            cachedsi.wProcessorLevel= 5;
+                            cachedsi.wProcessorLevel= 6;
                             /* this should imply MMX */
                             PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
                        }
@@ -537,10 +539,13 @@ VOID WINAPI GetSystemInfo(
 			cachedsi.wProcessorLevel = 4;
 			break;
 		case 5:
+			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+			cachedsi.wProcessorLevel = 5;
+			break;
 		case 6:
 		case 15: /* PPro/2/3/4 has same info as P1 */
 			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-			cachedsi.wProcessorLevel = 5;
+			cachedsi.wProcessorLevel = 6;
 			break;
 		default:
 			FIXME("unknown FreeBSD cpu family %d, please report! (-> setting to 386)\n", \
