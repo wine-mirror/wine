@@ -151,6 +151,7 @@ int main(int argc, char *argv[])
 
     for (i = 1; argv[i]; i++)
     {
+        *path='\0';
         if (outputformats & LONGFORMAT) {
             GetLongPathNameA(argv[i], path, sizeof(path));
             printf("%s\n", path);
