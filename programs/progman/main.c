@@ -33,7 +33,7 @@ static VOID MAIN_AutoStart(void);
  *           WinMain
  */
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
 
@@ -48,23 +48,18 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     PROFILE_GetWineIniString("progman", "progman.ini", "progman.ini", 
 			     buffer, sizeof(buffer));
     Globals.lpszIniFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    hmemcpy16(p, buffer, 1 + lstrlen(buffer));
+    memcpy(p, buffer, 1 + lstrlen(buffer));
 
     /* Redirect `progman.ico' */
     PROFILE_GetWineIniString("progman", "progman.ico", "progman.ico", 
 			     buffer, sizeof(buffer));
     Globals.lpszIcoFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    hmemcpy16(p, buffer, 1 + lstrlen(buffer));
+    memcpy(p, buffer, 1 + lstrlen(buffer));
   }
 #endif
 
   /* Select Language */
-#ifdef WINELIB
-  Globals.lpszLanguage = Languages[Options.language].name;
-#else
   Globals.lpszLanguage = "En";
-#endif
-
   Globals.hInstance           = hInstance;
   Globals.hGroups             = 0;
   Globals.hActiveGroup        = 0;
