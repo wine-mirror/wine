@@ -5862,11 +5862,23 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
  *
  *
  */
-HRESULT WINAPI StgSetTimes(OLECHAR const *str, FILETIME const *a,
-                           FILETIME const *b, FILETIME const *c )
+HRESULT WINAPI StgSetTimes(OLECHAR const *str, FILETIME const *pctime,
+                           FILETIME const *patime, FILETIME const *pmtime)
 {
-  FIXME("(%s, %p, %p, %p),stub!\n", debugstr_w(str), a, b, c);
-  return S_OK;
+  IStorage *stg = NULL;
+  HRESULT r;
+ 
+  TRACE("%s %p %p %p\n", debugstr_w(str), pctime, patime, pmtime);
+
+  r = StgOpenStorage(str, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE,
+                     0, 0, &stg);
+  if( SUCCEEDED(r) )
+  {
+    r = IStorage_SetElementTimes(stg, NULL, pctime, patime, pmtime);
+    IStorage_Release(stg);
+  }
+
+  return r;
 }
 
 /******************************************************************************
