@@ -111,6 +111,9 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
+    static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR VenidIntelW[] = {'G','e','n','u','i','n','e','I','n','t','e','l',0};
+    /* static const WCHAR VenidAMDW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0}; */
 
     unsigned int i;
     HKEY hkey, system_key, cpu_key;
@@ -146,12 +149,20 @@ static void create_registry_keys( const SYSTEM_INFO *info )
             RtlCreateUnicodeStringFromAsciiz( &nameW, num );
             if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
             {
-                WCHAR idW[20];
+                WCHAR idW[40];
                 DWORD cpuMHz = cpuHz / 1000000;
 
-                sprintf( id, "CPU %ld", info->dwProcessorType );
+                /*TODO: report 64bit processors properly*/
+                RtlInitUnicodeString( &valueW, IdentifierW );
+                sprintf( id, "x86 Family %d Model %d Stepping %d",
+                         info->wProcessorLevel /*model and family are messed up*/, info->wProcessorLevel, info->wProcessorRevision);
+
                 RtlMultiByteToUnicodeN( idW, sizeof(idW), NULL, id, strlen(id)+1 );
                 NtSetValueKey( hkey, &valueW, 0, REG_SZ, idW, (strlenW(idW)+1)*sizeof(WCHAR) );
+
+                /*TODO; report amd's properly*/
+                RtlInitUnicodeString( &valueW, VendorIdentifierW );
+                NtSetValueKey( hkey, &valueW, 0, REG_SZ, VenidIntelW, (strlenW(VenidIntelW)+1) * sizeof(WCHAR) );
 
                 RtlInitUnicodeString( &valueW, mhzKeyW );
                 NtSetValueKey( hkey, &valueW, 0, REG_DWORD, &cpuMHz, sizeof(DWORD) );
