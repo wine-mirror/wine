@@ -18,6 +18,7 @@
 #include "main.h"
 #include "module.h"
 #include "neexe.h"
+#include "dosexe.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"
@@ -501,8 +502,14 @@ void PROCESS_InitWine( int argc, char *argv[] )
         break;
 
     case SCS_DOS_BINARY:
-        FIXME( "DOS binaries support is broken at the moment; feel free to fix it...\n" );
-        SetLastError( ERROR_BAD_FORMAT );
+        {
+            HMODULE main_module;
+            /* create 32-bit module for main exe */
+            if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
+            NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+            if (!MZ_LoadImage( main_module, main_exe_file, main_exe_name )) goto error;
+            PROCESS_Start( main_module, NULL );
+        }
         break;
 
     case SCS_PIF_BINARY:
