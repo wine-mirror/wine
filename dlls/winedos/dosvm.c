@@ -91,14 +91,33 @@ static struct _DOSEVENT *pending_event, *current_event;
 static int sig_sent;
 static HANDLE event_notifier;
 
-#define SHOULD_PEND(x) \
-  (x && ((!current_event) || (x->priority < current_event->priority)))
+
+/***********************************************************************
+ *              DOSVM_HasPendingEvents
+ *
+ * Return true if there are pending events that are not
+ * blocked by currently active event.
+ */
+static BOOL DOSVM_HasPendingEvents( void )
+{   
+    if (!pending_event)
+        return FALSE;
+
+    if (!current_event)
+        return TRUE;
+
+    if (pending_event->priority < current_event->priority)
+        return TRUE;
+
+    return FALSE;
+}
+
 
 static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
 {
   LPDOSEVENT event = pending_event;
 
-  if (SHOULD_PEND(event)) {
+  if (DOSVM_HasPendingEvents()) {
     /* remove from "pending" list */
     pending_event = event->next;
     /* process event */
@@ -118,7 +137,7 @@ static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
       free(event);
     }
   }
-  if (!SHOULD_PEND(pending_event)) {
+  if (!DOSVM_HasPendingEvents()) {
     TRACE("clearing Pending flag\n");
     CLR_PEND(context);
   }
@@ -268,13 +287,31 @@ static void DOSVM_ProcessMessage(MSG *msg)
  */
 void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
 {
-    if (SHOULD_PEND(pending_event)) 
+    if (DOSVM_HasPendingEvents())
     {
         /*
-         * FIXME: This does not work in protected mode DOS programs.
          * FIXME: Critical section locking is broken.
          */
         CONTEXT86 context = *waitctx;
+        
+        /*
+         * If DOSVM_Wait is called from protected mode we emulate
+         * interrupt reflection and convert context into real mode context.
+         * This is actually the correct thing to do as long as DOSVM_Wait
+         * is only called from those interrupt functions that DPMI reflects
+         * to real mode.
+         *
+         * FIXME: Need to think about where to place real mode stack.
+         * FIXME: If DOSVM_Wait calls are nested stack gets corrupted.
+         *        Can this really happen?
+         */
+        if (!ISV86(&context))
+        {
+            context.EFlags |= 0x00020000;
+            context.SegSs = 0xffff;
+            context.Esp = 0;
+        }
+
         IF_SET(&context);
         SET_PEND(&context);
         context.SegCs = 0;
@@ -473,7 +510,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 	(*event->relay)(NULL,event->data);
 	free(event);
 
-	if (pending_event) {
+	if (DOSVM_HasPendingEvents()) {
 	  /* another event is pending, which we should probably
 	   * be able to process now */
 	  TRACE("another event pending, setting flag\n");
