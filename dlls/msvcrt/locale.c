@@ -4,7 +4,9 @@
  * Copyright 2000 Jon Griffiths
  */
 #include "winnt.h"
+
 #include "msvcrt.h"
+#include "msvcrt/locale.h"
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -32,16 +34,6 @@ extern int MSVCRT___mb_cur_max;
 extern unsigned char MSVCRT_mbctype[257];
 
 #define MSVCRT_LEADBYTE  0x8000
-
-/* Locales */
-#define MSVCRT_LC_ALL		0
-#define MSVCRT_LC_COLLATE	1
-#define MSVCRT_LC_CTYPE		2
-#define MSVCRT_LC_MONETARY	3
-#define MSVCRT_LC_NUMERIC	4
-#define MSVCRT_LC_TIME		5
-#define MSVCRT_LC_MIN		MSVCRT_LC_ALL
-#define MSVCRT_LC_MAX		MSVCRT_LC_TIME
 
 /* Friendly country strings & iso codes for synonym support.
  * Based on MS documentation for setlocale().

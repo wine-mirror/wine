@@ -59,6 +59,7 @@ INSTALLED_INCLUDES = \
 	msvcrt/eh.h \
 	msvcrt/fcntl.h \
 	msvcrt/io.h \
+	msvcrt/locale.h \
 	msvcrt/malloc.h \
 	msvcrt/process.h \
 	msvcrt/search.h \

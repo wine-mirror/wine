@@ -60,7 +60,7 @@ int _stat(const char*,struct _stat*);
 int _stati64(const char*,struct _stati64*);
 
 int _wstat(const WCHAR*,struct _stat*);
-int _wstati64(const wchar_t*,struct _stati64*);
+int _wstati64(const WCHAR*,struct _stati64*);
 
 #ifdef __cplusplus
 }

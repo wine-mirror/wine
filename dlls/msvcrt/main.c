@@ -5,6 +5,7 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/locale.h"
 #include "msvcrt/stdio.h"
 
 
@@ -32,7 +33,6 @@ void msvcrt_free_console(void);
 void msvcrt_init_args(void);
 void msvcrt_free_args(void);
 void msvcrt_init_vtables(void);
-char* MSVCRT_setlocale(int category, const char* locale);
 
 
 /*********************************************************************

@@ -9,13 +9,13 @@
 #define __WINE_WCHAR_H
 
 #include "msvcrt/io.h"
-/* FIXME: does not exist yet #include "msvcrt/locale.h" */
-/* FIXME: does not exist yet #include "msvcrt/process.h" */
+#include "msvcrt/locale.h"
+#include "msvcrt/process.h"
 #include "msvcrt/stdio.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 #include "msvcrt/sys/stat.h"
-/* FIXME: does not exist yet #include "msvcrt/sys/types.h" */
+#include "msvcrt/sys/types.h"
 #include "msvcrt/time.h"
 #include "msvcrt/wctype.h"
 
