@@ -1145,14 +1145,12 @@ HANDLE32 WINAPI CreateFileMapping32A(
 	    CHAR	buf[260];
 
 	    GetTempPath32A(260,buf);
-	    GetTempFileName32A(buf,"wine",260,buf);
+	    GetTempFileName32A(buf,"wine",0,buf);
 	    hFile = CreateFile32A(buf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,0,0);
+	    /* FIXME: bad hack to avoid lots of leftover tempfiles */
+	    DeleteFile32A(buf); 
 	    if (hFile == INVALID_HANDLE_VALUE32)
 	    	FIXME(virtual,"could not create temp. file for anon shared mapping: reason was 0x%08lx\n",GetLastError());
-	    else {
-                SetFilePointer(hFile,size_low,&size_high,FILE_BEGIN);
-	    	SetEndOfFile(hFile);
-	    }
 	}
     }
     if (hFile != INVALID_HANDLE_VALUE32) /* We have a file */
