@@ -405,6 +405,12 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
       WORD *wp = (WORD *)lpszOutput;
       int i = 0;
 
+      /* We explicitly list DMBIN_AUTO first; actually while win9x does this
+	 win2000 lists DMBIN_FORMSOURCE instead. */
+      i++;
+      if(lpszOutput != NULL)
+	*wp++ = DMBIN_AUTO;
+
       for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
 	if(lpszOutput != NULL)
 	  *wp++ = slot->WinBin;
@@ -417,6 +423,13 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
       char *cp = lpszOutput;
       int i = 0;
       
+      /* Add an entry corresponding to DMBIN_AUTO, see DC_BINS */
+      i++;
+      if(lpszOutput != NULL) {
+	strcpy(cp, "Automatically Select");
+	cp += 24;
+      }
+
       for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
 	if(lpszOutput != NULL) {
 	  lstrcpynA(cp, slot->FullName, 24);
