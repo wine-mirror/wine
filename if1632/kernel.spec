@@ -111,7 +111,7 @@ file	krnl386.exe
 107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
 109 register SwitchStackBack() SwitchStackBack
-110 pascal16 PatchCodeHandle(word) PatchCodeHandle
+110 pascal   PatchCodeHandle(word) PatchCodeHandle
 111 pascal   GlobalWire(word) GlobalWire16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
 113 equate __AHSHIFT 3

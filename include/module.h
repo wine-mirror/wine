@@ -74,7 +74,7 @@ typedef struct
 
 typedef struct
 {
-    WORD      version;       /* Must be 0xA0 */
+    WORD      version;       /* Must be "A0" (0x3041) */
     WORD      reserved;
     FARPROC16 BootApp;       /* startup procedure */
     FARPROC16 LoadAppSeg;    /* procedure to load a segment */

@@ -69,17 +69,20 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
     pSegTable = NE_SEG_TABLE( pModule );
     pSeg = pSegTable + segnum - 1;
-    pModuleTable = NE_MODULE_TABLE( pModule );
+
+    if (pSeg->flags & NE_SEGFLAGS_LOADED) /* already loaded ? */
+        return TRUE;
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
+    pModuleTable = NE_MODULE_TABLE( pModule );
+
     fd = NE_OpenFile( pModule );
     TRACE(module, "Loading segment %d, hSeg=%04x, flags=%04x\n",
                     segnum, pSeg->hSeg, pSeg->flags );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
-    else if (pSeg->minsize) size = pSeg->minsize;
-    else size = 0x10000;
+    else size = pSeg->minsize ? pSeg->minsize : 0x10000;
     mem = GlobalLock16(pSeg->hSeg);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1)
     {
@@ -382,12 +385,12 @@ unknown:
 BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
 {
     int i;
+    SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 
     if (pModule->flags & NE_FFLAGS_SELFLOAD)
     {
         HFILE32 hf;
         /* Handle self loading modules */
-        SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
         SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
         THDB *thdb = THREAD_Current();
@@ -430,12 +433,8 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
         thdb->cur_stack = oldstack;
 
-	/* FIXME
-	commented out by Andreas Mohr;
-	some self-loading exe ("BLINKER") relies on non-primary segs not loaded.
-	contact me if you experience problems */
-        /*for (i = 2; i <= pModule->seg_count; i++)
-            if (!NE_LoadSegment( pModule, i )) return FALSE;*/
+        for (i = 2; i <= pModule->seg_count; i++)
+            if (!NE_LoadSegment( pModule, i )) return FALSE;
     }
     else
     {
@@ -443,6 +442,20 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
             if (!NE_LoadSegment( pModule, i )) return FALSE;
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           PatchCodeHandle
+ *
+ * Needed for self-loading modules.
+ */
+
+/* It does nothing */
+DWORD WINAPI PatchCodeHandle(HANDLE16 hSel)
+{
+    FIXME(module,"(%04x): stub.\n",hSel);
+    return (DWORD)NULL;
 }
 
 
@@ -752,19 +765,6 @@ HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
     pSegment->hSeg = hNewInstance;
     pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
     return hNewInstance;
-}
-
-
-/***********************************************************************
- *           PatchCodeHandle
- *
- * Needed for self-loading modules.
- */
-
-/* It does nothing */
-void WINAPI PatchCodeHandle(HANDLE16 hSel)
-{
-    FIXME(module,"(%04x): stub.\n",hSel);
 }
 
 
