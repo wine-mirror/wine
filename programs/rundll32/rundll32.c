@@ -17,8 +17,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This version deliberately differs in error handling compared to the
- * windows version.
  */
 
 /*
@@ -80,6 +78,8 @@ int main(int argc, char* argv[])
     EntryPointA pfEntryPointA;
     HMODULE DllHandle=NULL;
 
+    if(argc<2)
+        return 0;
     comma=strchr(argv[1],',');
     if(comma==NULL)
         return 0;
