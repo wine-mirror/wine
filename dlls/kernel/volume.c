@@ -959,7 +959,7 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
     else
     {
         TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
-        if (GetLastError() != ERROR_ACCESS_DENIED) return FALSE;
+        if (GetLastError() == ERROR_ACCESS_DENIED) return FALSE;
     }
 
     /* we couldn't open the device, fallback to default strategy */
