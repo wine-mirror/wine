@@ -612,6 +612,14 @@ WORD WINAPI GetAsyncKeyState16(INT16 nKey)
     return GetAsyncKeyState32(nKey);
 }
 
+/*********************************************************************
+ *                    CreateAcceleratorTable   (USER.64)
+ */
+HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries) {
+   fprintf(stderr, "CreateAcceleratorTable32A Stub\n");
+   return NULL;
+}
+
 /**********************************************************************
  *			TranslateAccelerator 	[USER.178][USER32.551..]
  *

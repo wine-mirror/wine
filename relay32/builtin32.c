@@ -106,7 +106,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
  *
  * Load a built-in Win32 module. Helper function for BUILTIN32_LoadModule.
  */
-static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
+static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
 {
     extern void RELAY_CallFrom32();
     extern void CALL32_Regs();
@@ -124,7 +124,6 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
     DEBUG_ENTRY_POINT *debug;
     REG_ENTRY_POINT *regs;
     PE_MODREF *pem;
-    PDB32 *pdb = PROCESS_Current();
     INT32 i, size;
     BYTE *addr;
 
@@ -279,8 +278,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
 
     /* Create a modref */
 
-    pem = (PE_MODREF *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                  sizeof(*pem) );
+    pem = (PE_MODREF *)HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(*pem) );
     pem->module = (HMODULE32)addr;
     pem->pe_export = exp;
     pem->next = pdb->modref_list;
@@ -304,7 +302,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force )
+HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force, PDB32 *process )
 {
     BUILTIN32_DLL *table;
     char dllname[16], *p;
@@ -320,7 +318,7 @@ HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force )
     if (!table->descr) return 0;
     if (!table->used && !force) return 0;
 
-    return BUILTIN32_DoLoadModule( table );
+    return BUILTIN32_DoLoadModule( table, process );
 }
 
 

@@ -20,7 +20,7 @@
 
 #define MENU_EDIT                    "&Redigera"
 #define MENU_EDIT_COPY_DIALOG        "&Kopiera..."
-#define MENU_EDIT_ANNOTATE           "&Annmärk..."
+#define MENU_EDIT_ANNOTATE           "&Markera..."
 
 #define MENU_BOOKMARK                "&Bokmärke"
 #define MENU_BOOKMARK_DEFINE         "&Defingera..."

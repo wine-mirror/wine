@@ -659,7 +659,7 @@ BOOL32 WINAPI VirtualProtectEx( HANDLE32 handle, LPVOID addr, DWORD size,
 {
     BOOL32 ret = FALSE;
 
-    PDB32 *pdb = (PDB32 *)PROCESS_GetObjPtr( handle, K32OBJ_PROCESS );
+    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_VM_OPERATION );
     if (pdb)
     {
         if (pdb == PROCESS_Current())
@@ -742,7 +742,7 @@ BOOL32 WINAPI VirtualQueryEx( HANDLE32 handle, LPCVOID addr,
 {
     BOOL32 ret = FALSE;
 
-    PDB32 *pdb = (PDB32 *)PROCESS_GetObjPtr( handle, K32OBJ_PROCESS );
+    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_QUERY_INFORMATION );
     if (pdb)
     {
         if (pdb == PROCESS_Current())
@@ -877,7 +877,7 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            handle = PROCESS_AllocHandle( obj, 0 );
+            handle = HANDLE_Alloc( obj, FILE_MAP_ALL_ACCESS /*FIXME*/, FALSE );
         }
         else
         {
@@ -919,9 +919,16 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
     else  /* We have a file */
     {
         BY_HANDLE_FILE_INFORMATION info;
-        if (!(obj = PROCESS_GetObjPtr( hFile, K32OBJ_FILE ))) goto error;
-        /* FIXME: should check if the file permissions agree
-         *        with the required protection flags */
+        DWORD access = GENERIC_READ;
+
+        if (((protect & 0xff) == PAGE_READWRITE) ||
+            ((protect & 0xff) == PAGE_WRITECOPY) ||
+            ((protect & 0xff) == PAGE_EXECUTE_READWRITE) ||
+            ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
+                access |= GENERIC_WRITE;
+        if (!(obj = HANDLE_GetObjPtr( hFile, K32OBJ_FILE, access )))
+            goto error;
+
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -950,7 +957,8 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
     mapping->file            = (FILE_OBJECT *)obj;
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
-    else handle = PROCESS_AllocHandle( &mapping->header, 0 );
+    else handle = HANDLE_Alloc( &mapping->header,
+                                FILE_MAP_ALL_ACCESS /*FIXME*/, FALSE );
     K32OBJ_DecCount( &mapping->header );
     return handle;
 
@@ -986,7 +994,7 @@ HANDLE32 WINAPI OpenFileMapping32A( DWORD access, BOOL32 inherit, LPCSTR name )
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
     {
-        handle = PROCESS_AllocHandle( obj, 0 );
+        handle = HANDLE_Alloc( obj, access, inherit );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -1053,8 +1061,9 @@ LPVOID WINAPI MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offset_high,
         return NULL;
     }
 
-    if (!(mapping = (FILE_MAPPING *)PROCESS_GetObjPtr( handle,
-                                                     K32OBJ_MEM_MAPPED_FILE )))
+    if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( handle,
+                                                      K32OBJ_MEM_MAPPED_FILE,
+                                                      0  /* FIXME */ )))
         return NULL;
 
     if (mapping->size_high || offset_high)

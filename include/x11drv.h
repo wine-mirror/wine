@@ -7,8 +7,7 @@
 
 #include "ts_xlib.h"
 #include "ts_xutil.h"
-#include "tsx11defs.h"
-
+#include "winbase.h"
 #include "windows.h"
 
   /* X physical pen */
@@ -110,5 +109,9 @@ extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
 extern BOOL32 X11DRV_BITMAP_Init(void);
 extern BOOL32 X11DRV_BRUSH_Init(void);
 extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
+
+/* Xlib critical section */
+
+extern CRITICAL_SECTION X11DRV_CritSection;
 
 #endif  /* __WINE_X11DRV_H */

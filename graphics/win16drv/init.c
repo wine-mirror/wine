@@ -471,7 +471,7 @@ static int CreateSpoolFile(LPSTR pszOutput)
 
     PROFILE_GetWineIniString( "spooler", pszOutput, "",
                               psCmd, sizeof(psCmd) );
-    printf("Got printerSpoolCommand \"%s\"\n",psCmd);
+    printf("Got printerSpoolCommand \"%s\" for output device \"%s\"\n",psCmd, pszOutput);
     if (!*psCmd)
         psCmdP = pszOutput;
     else

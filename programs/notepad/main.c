@@ -4,15 +4,109 @@
  * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
  */
 
-#include <windows.h>
-
+#include <stdio.h>
+#include "windows.h"
 #include "main.h"
 #include "license.h"
+#include "dialog.h"
+#ifdef WINELIB
+#include "options.h"
+#include "resource.h"
+#include "shell.h"
+void LIBWINE_Register_De();
+void LIBWINE_Register_En();
+void LIBWINE_Register_Sw();
+#endif
 
 NOTEPAD_GLOBALS Globals;
 
-CHAR STRING_MENU_Xx[]      = "MENU_En";
-CHAR STRING_PAGESETUP_Xx[] = "DIALOG_PAGESETUP_En";
+CHAR STRING_MENU_Xx[]      = "MENU_Xx";
+CHAR STRING_PAGESETUP_Xx[] = "DIALOG_PAGESETUP_Xx";
+
+static BOOL MAIN_LoadStringOtherLanguage(UINT num, UINT ids, LPSTR str, UINT len)
+{
+  ids -= Globals.wStringTableOffset;
+  ids += num * 0x100;
+  return(LoadString(Globals.hInstance, ids, str, len));
+};
+
+VOID MAIN_SelectLanguageByName(LPCSTR lang)
+{
+  INT i;
+  CHAR newlang[3];
+
+  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
+    if (MAIN_LoadStringOtherLanguage(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)) &&
+	!lstrcmp(lang, newlang))
+      {
+        MAIN_SelectLanguageByNumber(i);
+	return;
+      }
+
+  /* Fallback */
+    for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
+    if (MAIN_LoadStringOtherLanguage(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)))
+      {
+	MAIN_SelectLanguageByNumber(i);
+	return;
+      }
+
+  MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
+  PostQuitMessage(1);
+}
+
+VOID MAIN_SelectLanguageByNumber(UINT num)
+{
+  INT    i;
+  CHAR   lang[3];
+  CHAR   caption[MAX_STRING_LEN];
+  CHAR   item[MAX_STRING_LEN];
+  HMENU  hMainMenu;
+
+  /* Select string table */
+  Globals.wStringTableOffset = num * 0x100;
+
+  /* Get Language id */
+  LoadString(Globals.hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang));
+  Globals.lpszLanguage = lang;
+
+  /* Set frame caption */
+  LoadString(Globals.hInstance, IDS_NOTEPAD, caption, sizeof(caption));
+  SetWindowText(Globals.hMainWnd, caption);
+
+  /* Change Resource names */
+  lstrcpyn(STRING_MENU_Xx    + sizeof(STRING_MENU_Xx)    - 3, lang, 3);
+  lstrcpyn(STRING_PAGESETUP_Xx    + sizeof(STRING_PAGESETUP_Xx)    - 3, lang, 3);
+
+  /* Create menu */
+  hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
+    Globals.hFileMenu     = GetSubMenu(hMainMenu, 0);
+    Globals.hEditMenu     = GetSubMenu(hMainMenu, 1);
+    Globals.hSearchMenu   = GetSubMenu(hMainMenu, 2);
+    Globals.hLanguageMenu = GetSubMenu(hMainMenu, 3);
+    Globals.hHelpMenu     = GetSubMenu(hMainMenu, 4);
+
+  /* Remove dummy item */
+  RemoveMenu(Globals.hLanguageMenu, 0, MF_BYPOSITION);
+  /* Add language items */
+  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
+    if (MAIN_LoadStringOtherLanguage(i, IDS_LANGUAGE_MENU_ITEM, item, sizeof(item)))
+      AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
+		 NP_FIRST_LANGUAGE + i, item);
+
+  SetMenu(Globals.hMainWnd, hMainMenu);
+
+  /* Destroy old menu */
+  if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
+  Globals.hMainMenu = hMainMenu;
+
+#ifdef WINELIB
+  /* Update system menus */
+  for (i = 0; Languages[i].name && lstrcmp(lang, Languages[i].name);) i++;
+  if (Languages[i].name) Options.language = i;
+
+#endif
+}
 
 /***********************************************************************
  *
@@ -47,7 +141,7 @@ void NOTEPAD_RegisterLanguages(void) {
       if (langnum > MAX_LANGUAGE_NUMBER)
 	{
 	MessageBox(0, "No language found", "FATAL ERROR", MB_OK);
-	return(1);
+	PostQuitMessage(0);
 	}
     }
 
@@ -65,61 +159,42 @@ void NOTEPAD_RegisterLanguages(void) {
 
 int NOTEPAD_MenuCommand (WPARAM wParam)
 {  
-   printf("NOTEPAD_MenuCommand()\n");
+//   printf("NOTEPAD_MenuCommand()\n");
 
    switch (wParam) {
-     case NP_FILE_NEW:          break;
-     case NP_FILE_SAVE:         break;
-     case NP_FILE_SAVEAS:       break;
-     case NP_FILE_PRINT:        break;
-     case NP_FILE_PAGESETUP:    break;
-     case NP_FILE_PRINTSETUP:   break;
+     case NP_FILE_NEW:          DIALOG_FileNew(); break;
+     case NP_FILE_OPEN:         DIALOG_FileOpen(); break;
+     case NP_FILE_SAVE:         DIALOG_FileSave(); break;
+     case NP_FILE_SAVEAS:       DIALOG_FileSaveAs(); break;
+     case NP_FILE_PRINT:        DIALOG_FilePrint(); break;
+     case NP_FILE_PAGESETUP:    DIALOG_FilePageSetup(); break;
+     case NP_FILE_PRINTSETUP:   DIALOG_FilePrinterSetup();break;
+     case NP_FILE_EXIT:         DIALOG_FileExit(); break;
 
-     case NP_FILE_EXIT:         
-        PostQuitMessage(0);
-        break;
+     case NP_EDIT_UNDO:         DIALOG_EditUndo(); break;
+     case NP_EDIT_CUT:          DIALOG_EditCut(); break;
+     case NP_EDIT_COPY:         DIALOG_EditCopy(); break;
+     case NP_EDIT_PASTE:        DIALOG_EditPaste(); break;
+     case NP_EDIT_DELETE:       DIALOG_EditDelete(); break;
+     case NP_EDIT_SELECTALL:    DIALOG_EditSelectAll(); break;
+     case NP_EDIT_TIMEDATE:     DIALOG_EditTimeDate();break;
+     case NP_EDIT_WRAP:         DIALOG_EditWrap(); break;
 
-     case NP_EDIT_UNDO:         break;
-     case NP_EDIT_CUT:          break;
-     case NP_EDIT_COPY:         break;
-     case NP_EDIT_PASTE:        break;
-     case NP_EDIT_DELETE:       break;
-     case NP_EDIT_TIMEDATE:     break;
-     case NP_EDIT_WRAP:         
-        Globals.bWrapLongLines = !Globals.bWrapLongLines;
-	CheckMenuItem(Globals.hEditMenu, NP_EDIT_WRAP, MF_BYCOMMAND | 
-                (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
-        break;
+     case NP_SEARCH_SEARCH:     DIALOG_Search(); break;
+     case NP_SEARCH_NEXT:       DIALOG_SearchNext(); break;
 
-     case NP_SEARCH_SEARCH:     break;
-     case NP_SEARCH_NEXT:       break;
-
-     case NP_HELP_CONTENTS:     
-        printf("NP_HELP_CONTENTS\n");
-        WinHelp(Globals.hMainWnd, HELPFILE, HELP_INDEX, 0);
-        break;
-
-     case NP_HELP_SEARCH:       break;
-
-     case NP_HELP_ON_HELP:      
-        printf("NP_HELP_ON_HELP\n");
-        WinHelp(Globals.hMainWnd, HELPFILE, HELP_HELPONHELP, 0);
-        break;
-	
-     case NP_HELP_LICENSE:
-        WineLicense(Globals.hMainWnd, Globals.lpszLanguage);
-        break;
-	
-     case NP_HELP_NO_WARRANTY: 
-        printf("NP_ABOUT_NO_WARRANTY\n");
-        WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
-        break;
-
-     case NP_HELP_ABOUT_WINE:
-        printf("NP_ABOUT_WINE\n");
-        ShellAbout(Globals.hMainWnd, "WINE", "Notepad", 0);
-        break;
-
+     case NP_HELP_CONTENTS:     DIALOG_HelpContents(); break;
+     case NP_HELP_SEARCH:       DIALOG_HelpSearch(); break;
+     case NP_HELP_ON_HELP:      DIALOG_HelpHelp(); break;
+     case NP_HELP_LICENSE:      DIALOG_HelpLicense(); break;
+     case NP_HELP_NO_WARRANTY:  DIALOG_HelpNoWarranty(); break;
+     case NP_HELP_ABOUT_WINE:   DIALOG_HelpAboutWine(); break;
+     
+     // Handle languages
+     default:
+       if ((wParam >=NP_FIRST_LANGUAGE) && (wParam<=NP_LAST_LANGUAGE))
+          MAIN_SelectLanguageByNumber(wParam - NP_FIRST_LANGUAGE);
+     else printf("Unimplemented menu command %i\n", wParam);  
    }
    return 0;
 }
@@ -172,7 +247,7 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void DumpGlobals(void) {
 
-    printf("DumpGlobals()");
+    printf("DumpGlobals()\n");
     printf(" Globals.lpszIniFile: %s\n", Globals.lpszIniFile); 
     printf(" Globals.lpszIcoFile: %s\n", Globals.lpszIcoFile);
     printf("Globals.lpszLanguage: %s\n", Globals.lpszLanguage);
@@ -188,25 +263,33 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     char className[] = "NPClass";  /* To make sure className >= 0x10000 */
     char winName[]   = "Notepad";
 
+    #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
+      /* Register resources */
+      LIBWINE_Register_De();
+      LIBWINE_Register_En();
+      LIBWINE_Register_Sw();
+    #endif
+
     printf("WinMain()\n");
     
     /* Setup Globals */
 
     Globals.lpszIniFile   = "notepad.ini";
     Globals.lpszIcoFile   = "notepad.ico";
-    Globals.lpszLanguage  = "En";
+
+  /* Select Language */
+#ifdef WINELIB
+  Globals.lpszLanguage = Languages[Options.language].name;
+#else
+  Globals.lpszLanguage = "En";
+#endif
+
     Globals.hInstance     = hInstance;
-    Globals.hMainMenu     = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
-    Globals.hFileMenu     = GetSubMenu(Globals.hMainMenu, 0);
-    Globals.hEditMenu     = GetSubMenu(Globals.hMainMenu, 1);
-    Globals.hSearchMenu   = GetSubMenu(Globals.hMainMenu, 2);
-    Globals.hLanguageMenu = GetSubMenu(Globals.hMainMenu, 3);
-    Globals.hHelpMenu     = GetSubMenu(Globals.hMainMenu, 4);
     Globals.hMainIcon     = ExtractIcon(Globals.hInstance, 
                                         Globals.lpszIcoFile, 0);
     if (!Globals.hMainIcon) Globals.hMainIcon = 
                                   LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
-    
+
     DumpGlobals();				  
 				  
     if (!prev){
@@ -228,11 +311,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
 			LoadMenu(Globals.hInstance, STRING_MENU_Xx),
 			Globals.hInstance, 0);
+    MAIN_SelectLanguageByName(Globals.lpszLanguage);
 
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);		
 			
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
+
 
     while (GetMessage (&msg, 0, 0, 0)) {
         TranslateMessage (&msg);

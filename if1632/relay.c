@@ -58,6 +58,20 @@ BOOL32 RELAY_Init(void)
 }
 
 
+ 
+static void RELAY_dumpstr( unsigned char *s )
+{
+    fputc( '\"', stdout );
+    for ( ; *s; s++)
+    {
+        if (*s < ' ') printf( "\\0x%02x", *s );
+        else if (*s == '\\') fputs( "\\\\", stdout );
+        else fputc( *s, stdout );
+    }
+    fputc( '\"', stdout );
+}
+
+
 /***********************************************************************
  *           RELAY_DebugCallFrom16
  */
@@ -76,94 +90,102 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
                                                  frame->entry_ip,
                                                  &ordinal ));
     VA_START16( args16 );
-    for (i = 0; i < strlen(args); i++)
+
+    if (func_type & 4)  /* cdecl */
     {
-        switch(args[i])
+        while (*args)
         {
-        case 'w':
-        case 's':
-            args16 += 2;
-            break;
-        case 'l':
-        case 'p':
-        case 't':
-        case 'T':
-            args16 += 4;
-            break;
+            switch(*args)
+            {
+            case 'w':
+            case 's':
+                printf( "0x%04x", *(WORD *)args16 );
+                args16 += 2;
+                break;
+            case 'l':
+                printf( "0x%08x", *(int *)args16 );
+                args16 += 4;
+                break;
+            case 't':
+                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                if (HIWORD(*(SEGPTR *)args16))
+                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                args16 += 4;
+                break;
+            case 'p':
+                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                args16 += 4;
+                break;
+            case 'T':
+                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                if (HIWORD( *(SEGPTR *)args16 ))
+                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                args16 += 4;
+                break;
+            }
+            args++;
+            if (*args) printf( "," );
+        }
+    }
+    else  /* not cdecl */
+    {
+        /* Start with the last arg */
+        for (i = 0; args[i]; i++)
+        {
+            switch(args[i])
+            {
+            case 'w':
+            case 's':
+                args16 += 2;
+                break;
+            case 'l':
+            case 'p':
+            case 't':
+            case 'T':
+                args16 += 4;
+                break;
+            }
+        }
+
+        while (*args)
+        {
+            switch(*args)
+            {
+            case 'w':
+            case 's':
+                args16 -= 2;
+                printf( "0x%04x", *(WORD *)args16 );
+                break;
+            case 'l':
+                args16 -= 4;
+                printf( "0x%08x", *(int *)args16 );
+                break;
+            case 't':
+                args16 -= 4;
+                printf( "0x%08x", *(int *)args16 );
+                if (HIWORD(*(SEGPTR *)args16))
+                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                break;
+            case 'p':
+                args16 -= 4;
+                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                break;
+            case 'T':
+                args16 -= 4;
+                printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                if (HIWORD( *(SEGPTR *)args16 ))
+                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                break;
+            }
+            args++;
+            if (*args) printf( "," );
         }
     }
 
-    while (*args)
-    {
-        switch(*args)
-        {
-        case 'w':
-        case 's':
-            args16 -= 2;
-            printf( "0x%04x", *(WORD *)args16 );
-            break;
-        case 'l':
-            args16 -= 4;
-            printf( "0x%08x", *(int *)args16 );
-            break;
-        case 't':
-            args16 -= 4;
-	    printf( "0x%08x", *(int *)args16 );
-            if (HIWORD(*(int *)args16)) {
-	    	LPBYTE s = (LPBYTE)PTR_SEG_TO_LIN(*(int*)args16);
-
-		/* filter out non printable chars, which would destroy output */
-		fputs(" \"",stdout);
-		while (*s) {
-			if (*s < ' ') {
-				printf( "\\0x%02x",*s++);
-				continue;
-			}
-			if (*s=='\\') {
-				fputs( "\\\\",stdout);
-				s++;
-				continue;
-			}
-			fputc(*s++,stdout);
-		}
-		fputs("\"",stdout);
-	    }
-            break;
-        case 'p':
-            args16 -= 4;
-            printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-            break;
-        case 'T':
-            args16 -= 4;
-            printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-            if (HIWORD(*(int *)args16)) {
-	    	LPBYTE s = (LPBYTE)PTR_SEG_TO_LIN(*(int*)args16);
-
-		/* filter out non printable chars, which would destroy output */
-		fputs(" \"",stdout);
-		while (*s) {
-			if (*s < ' ') {
-				printf( "\\0x%02x",*s++);
-				continue;
-			}
-			if (*s=='\\') {
-				fputs( "\\\\",stdout);
-				s++;
-				continue;
-			}
-			fputc(*s++,stdout);
-		}
-		fputs("\"",stdout);
-	    }
-            break;
-        }
-        args++;
-        if (*args) printf( "," );
-    }
     printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
     VA_END16( args16 );
 
-    if (func_type == 2)  /* register function */
+    if (func_type & 2)  /* register function */
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -248,7 +270,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
                 CS_reg(context), IP_reg(context), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
         while (nb_args--) printf( ",0x%04x", *(--stack16) );
-        printf( ")\n" );
+        printf( ") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
+                OFFSETOF(thdb->cur_stack) );
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -261,7 +284,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
                 SELECTOROF(thdb->cur_stack) );
         stack++;
         while (nb_args--) printf( ",0x%04x", *stack++ );
-        printf( ")\n" );
+        printf( ") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
+                OFFSETOF(thdb->cur_stack) );
     }
 }
 
@@ -301,7 +325,8 @@ void WINAPI Catch( CONTEXT *context )
 
     lpbuf[0] = IP_reg(context);
     lpbuf[1] = CS_reg(context);
-    lpbuf[2] = SP_reg(context);
+    /* Windows pushes 4 more words before saving sp */
+    lpbuf[2] = SP_reg(context) - 4 * sizeof(WORD);
     lpbuf[3] = BP_reg(context);
     lpbuf[4] = SI_reg(context);
     lpbuf[5] = DI_reg(context);
@@ -334,22 +359,31 @@ void WINAPI Throw( CONTEXT *context )
     VA_END16( valist );
 
     /* Find the frame32 corresponding to the frame16 we are jumping to */
+    pFrame = THREAD_STACK16( thdb );
     frame32 = THREAD_STACK16( thdb )->frame32;
     while (frame32 && frame32->frame16)
     {
-        if (OFFSETOF(frame32->frame16) > lpbuf[2]) break;
+        if (OFFSETOF(frame32->frame16) < OFFSETOF(thdb->cur_stack))
+            break;  /* Something strange is going on */
+        if (OFFSETOF(frame32->frame16) > lpbuf[2])
+        {
+            /* We found the right frame */
+            pFrame->frame32 = frame32;
+            break;
+        }
         frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
     }
 
-    thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( lpbuf[8], lpbuf[2]-sizeof(WORD) );
-    pFrame = THREAD_STACK16( thdb );
-    pFrame->frame32 = frame32;
     IP_reg(context) = lpbuf[0];
     CS_reg(context) = lpbuf[1];
+    SP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) + sizeof(WORD) /*extra arg*/;
     BP_reg(context) = lpbuf[3];
     SI_reg(context) = lpbuf[4];
     DI_reg(context) = lpbuf[5];
     DS_reg(context) = lpbuf[6];
+
+    if (lpbuf[8] != SS_reg(context))
+        fprintf( stderr, "Switching stack segment with Throw() not supported; expect crash now\n" );
 
     if (debugging_relay)  /* Make sure we have a valid entry point address */
     {

@@ -20,7 +20,7 @@ void BootTask()
  *
  * Written without any docu.
  */
-SEGPTR WINAPI StackLinearToSegmented()
+SEGPTR WINAPI StackLinearToSegmented(WORD w1, WORD w2)
 {
 	fprintf(stderr, "StackLinearToSegmented(), stub !\n");
 	return (SEGPTR)NULL;

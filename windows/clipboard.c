@@ -179,9 +179,14 @@ void CLIPBOARD_ResetOwner(WND* pWnd)
  */
 static void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
 {
-    if( lpFormat->wFormatID >= CF_GDIOBJFIRST &&
-	lpFormat->wFormatID <= CF_GDIOBJLAST )
+    if( (lpFormat->wFormatID >= CF_GDIOBJFIRST &&
+	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP )
 	DeleteObject32(lpFormat->hData);
+    else if( lpFormat->wFormatID == CF_METAFILEPICT && lpFormat->hData )
+    {
+        DeleteMetaFile16( ((METAFILEPICT16 *)GlobalLock16( lpFormat->hData ))->hMF );
+	GlobalFree16(lpFormat->hData);
+    }
     else if( lpFormat->hData )
 	GlobalFree16(lpFormat->hData);
 

@@ -91,7 +91,7 @@ type	win32
 
 
 102 stdcall AddAtomW(wstr) AddAtom32W
-103 stub AllocConsole
+103 stdcall AllocConsole() AllocConsole
 104 stub AllocLSCallback
 105 stdcall AllocSLCallback(ptr ptr) AllocSLCallback
 106 stdcall AreFileApisANSI() AreFileApisANSI
@@ -255,7 +255,7 @@ type	win32
 264 stub FoldStringW
 265 stdcall FormatMessageA(long ptr long long ptr long ptr) FormatMessage32A
 266 stdcall FormatMessageW(long ptr long long ptr long ptr) FormatMessage32W
-267 stub FreeConsole
+267 stdcall FreeConsole() FreeConsole
 268 stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStrings32A
 269 stdcall FreeEnvironmentStringsW(ptr) FreeEnvironmentStrings32W
 270 stub FreeLSCallback
@@ -324,7 +324,7 @@ type	win32
 333 stdcall GetFullPathNameA(str long ptr ptr) GetFullPathName32A
 334 stdcall GetFullPathNameW(wstr long ptr ptr) GetFullPathName32W
 335 stub GetHandleContext
-336 stub GetHandleInformation
+336 stdcall GetHandleInformation(long ptr) GetHandleInformation
 337 stub GetLSCallbackTarget
 338 stub GetLSCallbackTemplate
 339 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
@@ -641,7 +641,7 @@ type	win32
 650 stdcall SetFileTime(long ptr ptr ptr) SetFileTime
 651 stub SetHandleContext
 652 stdcall SetHandleCount(long) SetHandleCount32
-653 stub SetHandleInformation
+653 stdcall SetHandleInformation(long long long) SetHandleInformation
 654 stdcall SetLastError(long) SetLastError
 655 stub SetLocalTime
 656 stdcall SetLocaleInfoA(long long str) SetLocaleInfoA

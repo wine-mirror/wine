@@ -107,6 +107,7 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
     unsigned int x, y;
     Pixmap pixmap;
 
+    EnterCriticalSection( &X11DRV_CritSection );
     if (color != prevColor)
     {
 	int r = GetRValue( color ) * DITHER_LEVELS;
@@ -122,16 +123,17 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 		int dr = ((r + d) / MATRIX_SIZE_2) / 256;
 		int dg = ((g + d) / MATRIX_SIZE_2) / 256;
 		int db = ((b + d) / MATRIX_SIZE_2) / 256;
-		TSXPutPixel( ditherImage, x, y, PIXEL_VALUE(dr,dg,db) );
+		XPutPixel( ditherImage, x, y, PIXEL_VALUE(dr,dg,db) );
 	    }
 	}
 	prevColor = color;
     }
     
-    pixmap = TSXCreatePixmap( display, rootWindow,
-			    MATRIX_SIZE, MATRIX_SIZE, screenDepth );
-    TSXPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
+    pixmap = XCreatePixmap( display, rootWindow,
+                            MATRIX_SIZE, MATRIX_SIZE, screenDepth );
+    XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
+    LeaveCriticalSection( &X11DRV_CritSection );
     return pixmap;
 }
 

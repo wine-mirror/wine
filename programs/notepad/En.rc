@@ -72,8 +72,8 @@
 
 #define STRING_UNTITLED              "(untitled)"
 
-#define STRING_ALLFILES              "All files (*.*)"
-#define STRING_TEXTFILES             "Text files (*.txt)"
+#define STRING_ALL_FILES              "All files (*.*)"
+#define STRING_TEXT_FILES_TXT         "Text files (*.txt)"
 
 #define STRING_TOOLARGE         "File '%s' is too large for notepad.\n \
 Please use a different editor."

@@ -1800,7 +1800,8 @@ FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 	);
 	return (FARPROC32)0;
     }
-    return PE_FindExportedFunction( pModule->module32, function );
+    return PE_FindExportedFunction( PROCESS_Current(), pModule->module32,
+                                    function );
 }
 
 /***********************************************************************

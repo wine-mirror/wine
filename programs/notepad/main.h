@@ -38,20 +38,27 @@ extern NOTEPAD_GLOBALS Globals;
 /* function prototypes */
 
 /* class names */
+VOID MAIN_SelectLanguageByName(LPCSTR);
+VOID MAIN_SelectLanguageByNumber(UINT);
 
-/* resource names */
-// extern CHAR[] STRING_MENU_Xx;
+/* Resource names */
+extern CHAR STRING_MENU_Xx[];
+extern CHAR STRING_PAGESETUP_Xx[];
 
-   #define STRINGID(id) (0x##id + Globals.wStringTableOffset)
+#define STRINGID(id) (0x##id + Globals.wStringTableOffset)
    
 #else  /* RC_INVOKED */
 
-   #define STRINGID(id) id
+#define STRINGID(id) id
    
 #endif
 
 /* string table index */
-#define IDS_LANGUAGE_ID STRINGID(00)
+#define IDS_LANGUAGE_ID                STRINGID(00)
+#define IDS_LANGUAGE_MENU_ITEM         STRINGID(01)
+#define IDS_NOTEPAD                    STRINGID(02)
+#define IDS_TEXT_FILES_TXT	       STRINGID(03)
+#define IDS_ALL_FILES                  STRINGID(04)
 
 /* main menu */
 
@@ -89,10 +96,20 @@ extern NOTEPAD_GLOBALS Globals;
 
 /* Dialog `Page Setup' */
 
-#define NP_PAGESETUP_LEFT       1000
-#define NP_PAGESETUP_RIGHT      1001
-#define NP_PAGESETUP_TOP        1002
-#define NP_PAGESETUP_BOTTOM     1003
+#define NP_PAGESETUP_HEAD	1000
+#define NP_PAGESETUP_HEAD_TXT	1001
+#define NP_PAGESETUP_TAIL	1002
+#define NP_PAGESETUP_TAIL_TXT	1003
+#define NP_PAGESETUP_LEFT       1005
+#define NP_PAGESETUP_LEFT_TXT	1006
+#define NP_PAGESETUP_RIGHT   	1007
+#define NP_PAGESETUP_RIGHT_TXT	1008
+#define NP_PAGESETUP_TOP      	1009
+#define NP_PAGESETUP_TOP_TXT	1010
+#define NP_PAGESETUP_BOTTOM     1011
+#define NP_PAGESETUP_BOTTOM_TXT	1012
+#define NP_HELP			1013
+#define NP_PAGESETUP_BORDER 	1014
 
 
 /* Local Variables:    */

@@ -106,7 +106,7 @@ BOOL32 WINAPI ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy,
     }
 
     PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
-			    RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, RDW_C_USEHRGN );
+			    RDW_INVALIDATE, RDW_C_USEHRGN );
 
     DeleteObject32( hrgnUpdate );
     if( hCaretWnd ) 
@@ -143,7 +143,7 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
 /*************************************************************************
  *             ScrollDC32   (USER32.448)
  * 
- * Both 'rc' and 'rLClip' are in logical units but update info is 
+ * Both 'rc' and 'prLClip' are in logical units but update info is 
  * returned in device coordinates.
  */
 BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,

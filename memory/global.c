@@ -800,7 +800,20 @@ BOOL16 WINAPI GlobalInfo( GLOBALINFO *pInfo )
  */
 BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 {
-    return FALSE;
+    GLOBALARENA *pArena = GET_ARENA_PTR(hItem);
+
+    pGlobal->dwAddress    = pArena->base;
+    pGlobal->dwBlockSize  = pArena->size;
+    pGlobal->hBlock       = pArena->handle;
+    pGlobal->wcLock       = pArena->lockCount;
+    pGlobal->wcPageLock   = pArena->pageLockCount;
+    pGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
+    pGlobal->wHeapPresent = FALSE;
+    pGlobal->hOwner       = pArena->hOwner;
+    pGlobal->wType        = GT_UNKNOWN;
+    pGlobal->wData        = 0;
+    pGlobal->dwNext++;
+    return TRUE;
 }
 
 

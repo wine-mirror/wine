@@ -509,7 +509,7 @@ static void MAIN_RestoreSetup(void)
     keyboard_value.bell_duration	= keyboard_state.bell_duration;
     keyboard_value.auto_repeat_mode	= keyboard_state.global_auto_repeat;
 
-    TSXChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
+    XChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
     	KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 }
 
@@ -555,6 +555,9 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     setlocale(LC_CTYPE,"");
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+
+    /* We need this before calling any Xlib function */
+    InitializeCriticalSection( &X11DRV_CritSection );
 
     TSXrmInitialize();
 
@@ -759,6 +762,26 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 #undef lpnm
 		break;
 
+        case SPI_GETANIMATION: {
+                LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)lpvParam;
+ 
+                /* Tell it "disabled" */
+                lpAnimInfo->cbSize = sizeof(ANIMATIONINFO);
+                uParam = sizeof(ANIMATIONINFO);
+                lpAnimInfo->iMinAnimate = 0; /* Minimise and restore animation is disabled (nonzero == enabled) */
+                break;
+        }
+ 
+        case SPI_SETANIMATION: {
+                LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)lpvParam;
+ 
+                /* Do nothing */
+                fprintf(stderr, "SystemParametersInfo: SPI_SETANIMATION ignored.\n");
+                lpAnimInfo->cbSize = sizeof(ANIMATIONINFO);
+                uParam = sizeof(ANIMATIONINFO);
+                break;
+        }
+ 
 	default:
 		return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
 	}

@@ -31,6 +31,7 @@ extern int WIN32_LastError;
 #define ERROR_LOCK_VIOLATION        33
 #define ERROR_DUP_NAME              52
 #define ERROR_FILE_EXISTS           80
+#define ERROR_CANNOT_MAKE           82
 #define ERROR_INVALID_PARAMETER     87
 #define ERROR_BROKEN_PIPE           109
 #define ERROR_DISK_FULL             112

@@ -99,6 +99,7 @@ BOOL32 DIALOG_Init(void)
 static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 {
     static char buffer[10];
+    int int_id;
 
     info->x       = GET_WORD(p);  p += sizeof(WORD);
     info->y       = GET_WORD(p);  p += sizeof(WORD);
@@ -128,28 +129,34 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 	info->className = p;
 	p += strlen(p) + 1;
     }
-    dprintf_dialog(stddeb, "   %s ", info->className );
 
-    if ((BYTE)*p == 0xff)
+    int_id = ((BYTE)*p == 0xff);
+    if (int_id)
     {
 	  /* Integer id, not documented (?). Only works for SS_ICON controls */
 	info->windowName = (LPCSTR)(UINT32)GET_WORD(p+1);
 	p += 3;
-        dprintf_dialog( stddeb,"%04x", LOWORD(info->windowName) );
     }
     else
     {
 	info->windowName = p;
 	p += strlen(p) + 1;
-        dprintf_dialog(stddeb,"'%s'", info->windowName );
     }
 
     info->data = (LPVOID)(*p ? p + 1 : NULL);  /* FIXME: should be a segptr */
     p += *p + 1;
 
-    dprintf_dialog( stddeb," %d, %d, %d, %d, %d, %08lx, %08lx\n", 
-                    info->id, info->x, info->y, info->cx, info->cy,
-                    info->style, (DWORD)info->data);
+    if(int_id)
+      dprintf_dialog( stddeb,"   %s %04x %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+		      info->className,  LOWORD(info->windowName),
+		      info->id, info->x, info->y, info->cx, info->cy,
+		      info->style, (DWORD)info->data);
+    else
+      dprintf_dialog( stddeb,"   %s '%s' %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+		      info->className,  info->windowName,
+		      info->id, info->x, info->y, info->cx, info->cy,
+		      info->style, (DWORD)info->data);
+
     return p;
 }
 
@@ -163,6 +170,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
 {
     static WCHAR buffer[10];
+    int int_id;
 
     info->style   = GET_DWORD(p); p += 2;
     info->exStyle = GET_DWORD(p); p += 2;
@@ -192,19 +200,17 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
         info->className = (LPCSTR)p;
         p += lstrlen32W( (LPCWSTR)p ) + 1;
     }
-    dprintf_dialog(stddeb, "   %p ", info->className );
 
-    if (GET_WORD(p) == 0xffff)
+    int_id = (GET_WORD(p) == 0xffff);
+    if (int_id)
     {
 	info->windowName = (LPCSTR)(p + 1);
 	p += 2;
-        dprintf_dialog( stddeb,"%04x", LOWORD(info->windowName) );
     }
     else
     {
 	info->windowName = (LPCSTR)p;
         p += lstrlen32W( (LPCWSTR)p ) + 1;
-        dprintf_dialog(stddeb,"'%p'", info->windowName );
     }
 
     if (GET_WORD(p))
@@ -215,9 +221,17 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
     else info->data = NULL;
     p++;
 
-    dprintf_dialog( stddeb," %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
-                    info->id, info->x, info->y, info->cx, info->cy,
-                    info->style, info->exStyle, (DWORD)info->data);
+    if(int_id)
+      dprintf_dialog( stddeb,"   %p %04x %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+		      info->className, LOWORD(info->windowName),
+		      info->id, info->x, info->y, info->cx, info->cy,
+		      info->style, info->exStyle, (DWORD)info->data);
+    else
+      dprintf_dialog( stddeb,"   %p '%p' %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+		      info->className, info->windowName,
+		      info->id, info->x, info->y, info->cx, info->cy,
+		      info->style, info->exStyle, (DWORD)info->data);
+
     /* Next control is on dword boundary */
     return (const WORD *)((((int)p) + 3) & ~3);
 }

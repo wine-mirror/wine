@@ -90,7 +90,8 @@ void dump_exports( HMODULE32 hModule )
  * If it is a ordinal:
  *	- use ordinal-pe_export->Base as offset into the functionlist
  */
-FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
+FARPROC32 PE_FindExportedFunction( PDB32 *process, HMODULE32 hModule,
+                                   LPCSTR funcName)
 {
 	IMAGE_EXPORT_DIRECTORY 		*exports;
 	unsigned			load_addr;
@@ -98,7 +99,6 @@ FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
 	u_long				* function;
 	u_char				** name, *ename;
 	int				i;
-	PDB32				*process=PROCESS_Current();
 	PE_MODREF			*pem;
 	u_long				rva_start, rva_end, addr;
 	char				* forward;
@@ -157,12 +157,14 @@ FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
 	}
 	if (forward)
         {
+                HMODULE32 hMod;
 		char module[256];
 		char *end = strchr(forward, '.');
 		if (!end) return NULL;
 		strncpy(module, forward, (end - forward));
 		module[end-forward] = 0;
-		return GetProcAddress32(MODULE_FindModule(module), end + 1);
+                hMod = MODULE_HANDLEtoHMODULE32( MODULE_FindModule(module) );
+		return PE_FindExportedFunction( process, hMod, end + 1);
 	}
 	return NULL;
 }
@@ -259,8 +261,10 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 	char			*Module;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	LPIMAGE_THUNK_DATA	import_list,thunk_list;
+        HMODULE32 hImpModule;
 
 	Module = (char *) RVA(pe_imp->Name);
+        hImpModule = MODULE_HANDLEtoHMODULE32( MODULE_FindModule(Module) );
 	dprintf_win32 (stddeb, "%s\n", Module);
 
 	/* FIXME: forwarder entries ... */
@@ -275,7 +279,8 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
 		    dprintf_win32 (stddeb, "--- Ordinal %s,%d\n", Module, ordinal);
-		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),(LPCSTR)ordinal);
+		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
+                        process, hImpModule, (LPCSTR)ordinal);
 		    if (!thunk_list->u1.Function) {
 			fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
 				Module, ordinal);
@@ -284,9 +289,8 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		} else {		/* import by name */
 		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    dprintf_win32 (stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(
-						MODULE_FindModule (Module),
-						pe_name->Name);
+		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
+                        process, hImpModule, pe_name->Name);
 		    if (!thunk_list->u1.Function) {
 			fprintf(stderr,"No implementation for %s.%d(%s), setting to NULL\n",
 				Module,pe_name->Hint,pe_name->Name);
@@ -305,8 +309,8 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
 		    dprintf_win32(stddeb,"--- Ordinal %s.%d\n",Module,ordinal);
-		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),
-						     (LPCSTR) ordinal);
+		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
+                        process, hImpModule, (LPCSTR) ordinal);
 		    if (!thunk_list->u1.Function) {
 			fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
 				Module,ordinal);
@@ -316,7 +320,8 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    dprintf_win32(stddeb,"--- %s %s.%d\n",
 		   		  pe_name->Name,Module,pe_name->Hint);
-		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),pe_name->Name);
+		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
+                        process, hImpModule, pe_name->Name );
 		    if (!thunk_list->u1.Function) {
 		    	fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
 				Module, pe_name->Hint);
@@ -504,7 +509,7 @@ static HMODULE32 PE_MapImage( HMODULE32 hModule, PDB32 *process,
         IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *)hModule;
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(hModule);
 	
-	pem = (PE_MODREF*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+	pem = (PE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,
                                     sizeof(*pem));
 	/* NOTE: fixup_imports takes care of the correct order */
 	pem->next	= process->modref_list;
@@ -725,7 +730,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 			 * internal dll but in another process. Just create
 			 * a PE_MODREF and return.
 			 */
-			pem = (PE_MODREF*)HeapAlloc(GetProcessHeap(),
+			pem = (PE_MODREF*)HeapAlloc(process->heap,
 				HEAP_ZERO_MEMORY,sizeof(*pem));
 			pem->module 	     = hModule;
 			dh = (IMAGE_DOS_HEADER*)pem->module;
@@ -739,13 +744,13 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 	} else {
 
 		/* try to load builtin, enabled modules first */
-		if ((hModule = BUILTIN32_LoadModule( name, FALSE )))
+		if ((hModule = BUILTIN32_LoadModule( name, FALSE, process )))
                     return MODULE_HANDLEtoHMODULE32( hModule );
 
 		/* try to open the specified file */
 		if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
 			/* Now try the built-in even if disabled */
-			if ((hModule = BUILTIN32_LoadModule( name, TRUE ))) {
+			if ((hModule = BUILTIN32_LoadModule( name, TRUE, process ))) {
 				fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
                                 return MODULE_HANDLEtoHMODULE32( hModule );
 			}

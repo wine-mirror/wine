@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <resource.h>
 #include "hello3res.h"
 #include <commdlg.h>
 

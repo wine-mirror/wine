@@ -64,7 +64,7 @@ type	win32
  61 stdcall CopyImage(long long long long long) CopyImage32
  62 stdcall CopyRect(ptr ptr) CopyRect32
  63 stdcall CountClipboardFormats() CountClipboardFormats32
- 64 stub CreateAcceleratorTableA
+ 64 stdcall CreateAcceleratorTableA(ptr long) CreateAcceleratorTable32A
  65 stub CreateAcceleratorTableW
  66 stdcall CreateCaret(long long long long) CreateCaret32
  67 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor32
@@ -424,7 +424,7 @@ type	win32
 419 stdcall PostMessageA(long long long long) PostMessage32A
 420 stdcall PostMessageW(long long long long) PostMessage32W
 421 stdcall PostQuitMessage(long) PostQuitMessage32
-422 stub PostThreadMessageA
+422 stdcall PostThreadMessageA(long long long long) PostThreadMessage32A
 423 stub PostThreadMessageW
 424 stdcall PtInRect(ptr long long) PtInRect32
 425 stub QuerySendMessage

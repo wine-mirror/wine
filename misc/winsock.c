@@ -396,8 +396,6 @@ INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
     if( --pwsi->num_startup > 0 ) return 0;
 
     SIGNAL_MaskAsyncEvents( TRUE );
-    if( pTask ) 
-	pTask->pwsi = NULL;
     WINSOCK_cancel_task_aops( pTask->hSelf, __ws_memfree );
     SIGNAL_MaskAsyncEvents( FALSE );
 
@@ -439,6 +437,8 @@ INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
     if( pwsi->buffer ) SEGPTR_FREE(pwsi->buffer);
     if( pwsi->dbuffer ) SEGPTR_FREE(pwsi->dbuffer);
 	
+    if( pTask )
+        pTask->pwsi = NULL;
     memset( pwsi, 0, sizeof(WSINFO) );
     WS_FREE(pwsi);
     return 0;

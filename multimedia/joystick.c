@@ -293,7 +293,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 {
         struct js_status js;
 
-        dprintf_mmsys(stderr, "JoyGetPos(%04X, %p):", wID, lpInfo);
+        dprintf_mmsys(stderr, "JoyGetPos(%04X, %p)\n", wID, lpInfo);
         if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
 	dev_stat = read(joy_dev[wID], &js, sizeof(js));
 	if (dev_stat != sizeof(js)) {
@@ -307,7 +307,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 	lpInfo->wYpos = js.y;
 	lpInfo->wZpos = 0; /* FIXME: Don't know what to do with this value as joystick driver doesn't provide a Z value */
 	lpInfo->wButtons = js.buttons;
-	dprintf_mmsys(stderr, "x: %d, y: %d, buttons: %d\n", js.x, js.y, js.buttons);
+	dprintf_mmsys(stderr, "JoyGetPos: x: %d, y: %d, buttons: %d\n", js.x, js.y, js.buttons);
 	return JOYERR_NOERROR;
 }
 

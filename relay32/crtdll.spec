@@ -268,7 +268,7 @@ type	win32
 264 stub _setjmp
 265 cdecl _setmode(long long) CRTDLL__setmode
 266 stub _setsystime
-267 cdecl _sleep(long) sleep
+267 cdecl _sleep(long) CRTDLL__sleep
 268 stub _snprintf
 269 stub _snwprintf
 270 stub _sopen

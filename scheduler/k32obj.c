@@ -20,6 +20,7 @@ extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
 extern const K32OBJ_OPS FILE_Ops;
 extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
+extern const K32OBJ_OPS CONSOLE_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
@@ -41,7 +42,7 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &THREAD_Ops,            /* K32OBJ_THREAD */
     &FILE_Ops,              /* K32OBJ_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_CHANGE */
-    &K32OBJ_NullOps,        /* K32OBJ_CONSOLE */
+    &CONSOLE_Ops,           /* K32OBJ_CONSOLE */
     &K32OBJ_NullOps,        /* K32OBJ_SCREEN_BUFFER */
     &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_SERIAL */
@@ -159,7 +160,7 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
  * The refcount of the object must be decremented once it is initialized.
  */
 K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
-                       HANDLE32 *handle )
+                       DWORD access, HANDLE32 *handle )
 {
     /* Check if the name already exists */
 
@@ -169,7 +170,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
         if (obj->type == type)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            *handle = PROCESS_AllocHandle( obj, 0 );
+            *handle = HANDLE_Alloc( obj, access, FALSE );
         }
         else
         {
@@ -206,7 +207,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
 
     /* Allocate a handle */
 
-    *handle = PROCESS_AllocHandle( obj, 0 );
+    *handle = HANDLE_Alloc( obj, access, FALSE );
     SYSTEM_UNLOCK();
     return obj;
 }

@@ -29,7 +29,8 @@ struct _PDB32;
 typedef struct pe_modref PE_MODREF;
 
 extern int PE_unloadImage(HMODULE32 hModule);
-extern FARPROC32 PE_FindExportedFunction(HMODULE32 hModule, LPCSTR funcName);
+extern FARPROC32 PE_FindExportedFunction( struct _PDB32 *process,
+                                          HMODULE32 hModule, LPCSTR funcName);
 extern void my_wcstombs(char * result, u_short * source, int len);
 extern BOOL32 PE_EnumResourceTypes32A(HMODULE32,ENUMRESTYPEPROC32A,LONG);
 extern BOOL32 PE_EnumResourceTypes32W(HMODULE32,ENUMRESTYPEPROC32W,LONG);

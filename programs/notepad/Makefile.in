@@ -13,7 +13,8 @@ LICENSELANG = En
 
 MOSTSRCS = \
 	license.c \
-	main.c
+	main.c \
+	dialog.c
 
 # Some strings need addresses >= 0x10000
 STRINGSRCS = \

@@ -26,8 +26,8 @@ type	win16
 72 pascal16 MemManInfo(ptr) MemManInfo
 73 pascal16 NotifyRegister(word segptr word) NotifyRegister
 74 pascal16 NotifyUnregister(word) NotifyUnregister
-75 return INTERRUPTREGISTER 6 0
-76 return INTERRUPTUNREGISTER 2 0
+75 return INTERRUPTREGISTER 6 1
+76 return INTERRUPTUNREGISTER 2 1
 77 stub TERMINATEAPP
 78 pascal   MemoryRead(word long ptr long) MemoryRead
 79 pascal   MemoryWrite(word long ptr long) MemoryWrite

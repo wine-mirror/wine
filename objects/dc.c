@@ -276,15 +276,17 @@ BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
         {
             register int x, y;
             XImage *image;
-            pixmap = TSXCreatePixmap( display, rootWindow, 8, 8, screenDepth );
-            image = TSXGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
+            EnterCriticalSection( &X11DRV_CritSection );
+            pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
+            image = XGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
                 for (x = 0; x < 8; x++)
-                    TSXPutPixel( image, x, y,
-                               COLOR_PixelToPalette[TSXGetPixel( image, x, y)] );
-            TSXPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
-            TSXDestroyImage( image );
+                    XPutPixel( image, x, y,
+                               COLOR_PixelToPalette[XGetPixel( image, x, y)] );
+            XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
+            XDestroyImage( image );
+            LeaveCriticalSection( &X11DRV_CritSection );
             val.tile = pixmap;
         }
         else val.tile = dc->u.x.brush.pixmap;

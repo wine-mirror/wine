@@ -148,6 +148,7 @@ extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
 
 /* relay32/builtin.c */
-extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force );
+extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force,
+                                       struct _PDB32 *process );
 
 #endif  /* __WINE_MODULE_H */

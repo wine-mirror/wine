@@ -25,5 +25,6 @@ extern UINT16 LOCAL_CountFree( HANDLE16 ds );
 extern LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
 extern SEGPTR LOCAL_LockSegptr( HANDLE16 ds, HLOCAL16 handle );
 extern BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
+extern WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags );
 
 #endif  /* __WINE_LOCAL_H */

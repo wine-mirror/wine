@@ -1701,3 +1701,11 @@ VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
 LONG __cdecl CRTDLL__ftol(double fl) {
 	return (LONG)fl;
 }
+/*********************************************************************
+ *                  _sleep           (CRTDLL.267)
+ */
+VOID __cdecl CRTDLL__sleep(unsigned long timeout) 
+{
+  dprintf_crtdll(stddeb,"CRTDLL__sleep for %ld milliseconds\n",timeout);
+  Sleep((timeout)?timeout:1);
+}

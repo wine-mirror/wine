@@ -1136,11 +1136,9 @@ BOOL16 WINAPI GetRasterizerCaps16( LPRASTERIZER_STATUS lprs, UINT16 cbNumBytes)
  */
 BOOL32 WINAPI GetRasterizerCaps32( LPRASTERIZER_STATUS lprs, UINT32 cbNumBytes)
 {
-  RASTERIZER_STATUS rs;
-
-  rs.nSize = sizeof(rs);
-  rs.wFlags = 0;
-  rs.nLanguageID = 0;
+  lprs->nSize = sizeof(RASTERIZER_STATUS);
+  lprs->wFlags = TT_AVAILABLE|TT_ENABLED;
+  lprs->nLanguageID = 0;
   return TRUE;
 }
 

@@ -518,6 +518,20 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     case 0x0703:  /* Discard page contents */
         break;  /* Just ignore it */
 
+     case 0x0800:  /* Physical address mapping */
+         if(!(ptr=DOSMEM_MapRealToLinear(MAKELONG(CX_reg(context),BX_reg(context)))))
+         {
+             AX_reg(context) = 0x8021; 
+             SET_CFLAG(context);
+         }
+         else
+         {
+             BX_reg(context) = HIWORD(ptr);
+             CX_reg(context) = LOWORD(ptr);
+             RESET_CFLAG(context);
+         }
+         break;
+
     default:
         INT_BARF( context, 0x31 );
         AX_reg(context) = 0x8001;  /* unsupported function */

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #if defined(__linux__) || defined(sun) || defined(hpux)
 #include <sys/vfs.h>

@@ -133,7 +133,7 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
 /* TASK_Reschedule() 16-bit entry point */
 static FARPROC16 TASK_RescheduleProc;
 
-extern void CallFrom16_long_wwwll(void);
+extern void CallFrom16_p_long_wwwll(void);
 
 /* Callbacks function table for the emulator */
 static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
@@ -141,7 +141,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_sreg_,                /* CallRegisterShortProc */
     (void *)CallTo16_lreg_,                /* CallRegisterLongProc */
     THUNK_CallTaskReschedule,              /* CallTaskRescheduleProc */
-    CallFrom16_long_wwwll,                 /* CallFrom16WndProc */
+    CallFrom16_p_long_wwwll,               /* CallFrom16WndProc */
     THUNK_CallWndProc16,                   /* CallWndProc */
     (void *)CallTo16_long_lwwll,           /* CallDriverProc */
     (void *)CallTo16_word_wwlll,           /* CallDriverCallback */

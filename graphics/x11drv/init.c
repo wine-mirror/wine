@@ -5,10 +5,10 @@
  */
 
 #include <string.h>
-#include "tsx11defs.h"
 #include "x11drv.h"
 #include "color.h"
 #include "bitmap.h"
+
 
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -109,8 +109,6 @@ static DeviceCaps X11DRV_DevCaps = {
  */
 BOOL32 X11DRV_Init(void)
 {
-    if (!TSX11_Init()) return FALSE;
-
     /* FIXME: colormap management should be merged with the X11DRV */
 
     if( !COLOR_Init() ) return FALSE;

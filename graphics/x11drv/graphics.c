@@ -408,23 +408,25 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
+    EnterCriticalSection( &X11DRV_CritSection );
     if (dc->w.flags & DC_MEMORY)
     {
-        image = TSXGetImage( display, dc->u.x.drawable, x, y, 1, 1,
+        image = XGetImage( display, dc->u.x.drawable, x, y, 1, 1,
                            AllPlanes, ZPixmap );
     }
     else
     {
         /* If we are reading from the screen, use a temporary copy */
         /* to avoid a BadMatch error */
-        if (!pixmap) pixmap = TSXCreatePixmap( display, rootWindow,
+        if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
                                              1, 1, dc->w.bitsPerPixel );
-        TSXCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
+        XCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
                    x, y, 1, 1, 0, 0 );
-        image = TSXGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
+        image = XGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
     }
-    pixel = TSXGetPixel( image, 0, 0 );
-    TSXDestroyImage( image );
+    pixel = XGetPixel( image, 0, 0 );
+    XDestroyImage( image );
+    LeaveCriticalSection( &X11DRV_CritSection );
     
     return COLOR_ToLogical(pixel);
 }
@@ -579,8 +581,8 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
     int left, right;
 
 #define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
-                        (TSXGetPixel(image,x,y) != pixel) : \
-                        (TSXGetPixel(image,x,y) == pixel))
+                        (XGetPixel(image,x,y) != pixel) : \
+                        (XGetPixel(image,x,y) == pixel))
 
     if (!TO_FLOOD(x,y)) return;
 
@@ -589,15 +591,15 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
     left = right = x;
     while ((left > 0) && TO_FLOOD( left-1, y )) left--;
     while ((right < image->width) && TO_FLOOD( right, y )) right++;
-    TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                     xOrg + left, yOrg + y, right-left, 1 );
 
       /* Set the pixels of this line so we don't fill it again */
 
     for (x = left; x < right; x++)
     {
-        if (fillType == FLOODFILLBORDER) TSXPutPixel( image, x, y, pixel );
-        else TSXPutPixel( image, x, y, ~pixel );
+        if (fillType == FLOODFILLBORDER) XPutPixel( image, x, y, pixel );
+        else XPutPixel( image, x, y, ~pixel );
     }
 
       /* Fill the line above */
@@ -637,6 +639,8 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
  *          X11DRV_DoFloodFill
  *
  * Main flood-fill routine.
+ *
+ * The Xlib critical section must be entered before calling this function.
  */
 
 struct FloodFill_params
@@ -656,7 +660,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
 
     if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
-    if (!(image = TSXGetImage( display, dc->u.x.drawable,
+    if (!(image = XGetImage( display, dc->u.x.drawable,
                              dc->w.DCOrgX + rect.left,
                              dc->w.DCOrgY + rect.top,
                              rect.right - rect.left,
@@ -666,7 +670,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
     if (DC_SetupGCForBrush( dc ))
     {
           /* ROP mode is always GXcopy for flood-fill */
-        TSXSetFunction( display, dc->u.x.gc, GXcopy );
+        XSetFunction( display, dc->u.x.gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
                                  XLPTODP(dc,params->x) - rect.left,
                                  YLPTODP(dc,params->y) - rect.top,
@@ -676,7 +680,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
                                  params->fillType );
     }
 
-    TSXDestroyImage( image );
+    XDestroyImage( image );
     return TRUE;
 }
 
@@ -688,11 +692,15 @@ BOOL32
 X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
                      UINT32 fillType )
 {
+    BOOL32 result;
     struct FloodFill_params params = { dc, x, y, color, fillType };
 
     dprintf_graphics( stddeb, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
 
     if (!PtVisible32( dc->hSelf, x, y )) return FALSE;
-    return CALL_LARGE_STACK( X11DRV_DoFloodFill, &params );
+    EnterCriticalSection( &X11DRV_CritSection );
+    result = CALL_LARGE_STACK( X11DRV_DoFloodFill, &params );
+    LeaveCriticalSection( &X11DRV_CritSection );
+    return result;
 }

@@ -20,6 +20,8 @@ short sysMetrics[SM_CMETRICS+1];
  */
 void SYSMETRICS_Init(void)
 {
+    sysMetrics[SM_CXCURSOR] = 32;
+    sysMetrics[SM_CYCURSOR] = 32;
     sysMetrics[SM_CXSCREEN] = screenWidth;
     sysMetrics[SM_CYSCREEN] = screenHeight;
     sysMetrics[SM_CXVSCROLL] =

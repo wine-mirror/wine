@@ -15,6 +15,7 @@
 #include "heap.h"
 #include "metafile.h"
 #include "metafiledrv.h"
+#include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -365,9 +366,9 @@ BOOL16 WINAPI EnumMetaFile16(
     METARECORD *mr;
     HANDLETABLE16 *ht;
     HGLOBAL16 hHT;
-    SEGPTR spht, spRecord;
+    SEGPTR spht;
     int offset = 0;
-    WORD i;
+    WORD i, seg;
     HPEN32 hPen;
     HBRUSH32 hBrush;
     HFONT32 hFont;
@@ -389,19 +390,20 @@ BOOL16 WINAPI EnumMetaFile16(
 		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
     spht = WIN16_GlobalLock16(hHT);
    
+    seg = GlobalHandleToSel(hmf);
     offset = mh->mtHeaderSize * 2;
     
     /* loop through metafile records */
     
-    spRecord = WIN16_GlobalLock16(hmf);
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
         if (!lpEnumFunc( hdc, (HANDLETABLE16 *)spht,
-                         (METARECORD *)((UINT32)spRecord + offset),
-                         mh->mtNoObjects, (LONG)lpData)) {
-	  result = FALSE;
-	  break;
+			 (METARECORD *) PTR_SEG_OFF_TO_HUGEPTR(seg, offset),
+                         mh->mtNoObjects, (LONG)lpData ))
+	{
+	    result = FALSE;
+	    break;
 	}
 	
 
@@ -421,7 +423,7 @@ BOOL16 WINAPI EnumMetaFile16(
 
     /* free handle table */
     GlobalFree16(hHT);
-
+    GlobalUnlock16(hmf);
     return result;
 }
 
@@ -1025,7 +1027,7 @@ static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
  * Warning: this function can change the metafile handle.
  */
 
-static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, WORD rlen)
+static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
 {
     DWORD len;
     METAHEADER *mh;

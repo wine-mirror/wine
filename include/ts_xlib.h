@@ -67,6 +67,7 @@ extern int  TSXFillPolygon(Display*, Drawable, GC, XPoint*, int, int, int);
 extern int  TSXFillRectangle(Display*, Drawable, GC, int, int, unsigned int, unsigned int);
 extern int  TSXFlush(Display*);
 extern int  TSXFree(void*);
+extern int  TSXFreeColormap(Display*, Colormap);
 extern int  TSXFreeColors(Display*, Colormap, unsigned long*, int, unsigned long);
 extern int  TSXFreeCursor(Display*, Cursor);
 extern int  TSXFreeFont(Display*, XFontStruct*);

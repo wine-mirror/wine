@@ -13,8 +13,7 @@ HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force ) {
 }
 
 extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
-extern int MAIN_WinelibInit(void);
-extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
+extern BOOL32 MAIN_WinelibInit( int *argc, char *argv[] );
 extern void TASK_Reschedule(void);
 
 /* Most Windows C/C++ compilers use something like this to */
@@ -30,7 +29,7 @@ int main( int argc, char *argv [] )
   _ARGC = argc;
   _ARGV = (char **)argv;
 
-  MAIN_WineInit( &argc, argv );
+  if (!MAIN_WinelibInit( &argc, argv )) return 0;
 
   /* Alloc szCmdParam */
   for (i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
@@ -40,7 +39,6 @@ int main( int argc, char *argv [] )
   else lpszCmdParam[0] = '\0';
   for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
 
-  if(!MAIN_WinelibInit()) return 0;
   hInstance = WinExec32( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
   InitApp( hInstance );

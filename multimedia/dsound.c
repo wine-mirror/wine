@@ -159,14 +159,13 @@ static HRESULT WINAPI IDirectSoundBuffer_SetFormat(
 ) {
 
 	memcpy(&(this->wfx),wfex,sizeof(this->wfx));
-	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->SetFormat(%p),stub!\n",this,wfex);
-	dprintf_dsound(stderr,"	[formattag=0x%04x,",wfex->wFormatTag);
-	dprintf_dsound(stderr,"chans=%d,",wfex->nChannels);
-	dprintf_dsound(stderr,"samplerate=%ld,",wfex->nSamplesPerSec);
-	dprintf_dsound(stderr,"bytespersec=%ld,",wfex->nAvgBytesPerSec);
-	dprintf_dsound(stderr,"blockalign=%d,",wfex->nBlockAlign);
-	dprintf_dsound(stderr,"bitspersamp=%d,",wfex->wBitsPerSample);
-	dprintf_dsound(stderr,"cbSize=%d]\n",wfex->cbSize);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->SetFormat(%p),stub!\n",
+		       this,wfex);
+	dprintf_dsound(stderr,"	[formattag=0x%04x,chans=%d,samplerate=%ld"
+		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d]\n",
+		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
+		   wfex->nAvgBytesPerSec, wfex->nBlockAlign, 
+		   wfex->wBitsPerSample, wfex->cbSize);
 
 	return 0;
 }

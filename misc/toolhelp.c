@@ -14,6 +14,7 @@
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "heap.h"
 
 /* FIXME: to make this working, we have to callback all these registered 
  * functions from all over the WINE code. Someone with more knowledge than
@@ -37,15 +38,16 @@ BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
 
     dprintf_toolhelp( stddeb, "NotifyRegister(%x,%lx,%x) called.\n",
                       htask, (DWORD)lpfnCallback, wFlags );
+    if (!htask) htask = GetCurrentTask();
     for (i=0;i<nrofnotifys;i++)
         if (notifys[i].htask==htask)
             break;
     if (i==nrofnotifys) {
         if (notifys==NULL)
-            notifys=(struct notify*)HeapAlloc( GetProcessHeap(), 0,
+            notifys=(struct notify*)HeapAlloc( SystemHeap, 0,
                                                sizeof(struct notify) );
         else
-            notifys=(struct notify*)HeapReAlloc( GetProcessHeap(), 0, notifys,
+            notifys=(struct notify*)HeapReAlloc( SystemHeap, 0, notifys,
                                         sizeof(struct notify)*(nrofnotifys+1));
         if (!notifys) return FALSE;
         nrofnotifys++;
@@ -61,13 +63,14 @@ BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
     int	i;
     
     dprintf_toolhelp( stddeb, "NotifyUnregister(%x) called.\n", htask );
+    if (!htask) htask = GetCurrentTask();
     for (i=nrofnotifys;i--;)
         if (notifys[i].htask==htask)
             break;
     if (i==-1)
         return FALSE;
     memcpy(notifys+i,notifys+(i+1),sizeof(struct notify)*(nrofnotifys-i-1));
-    notifys=(struct notify*)HeapReAlloc( GetProcessHeap(), 0, notifys,
+    notifys=(struct notify*)HeapReAlloc( SystemHeap, 0, notifys,
                                         (nrofnotifys-1)*sizeof(struct notify));
     nrofnotifys--;
     return TRUE;

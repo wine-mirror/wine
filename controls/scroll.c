@@ -973,27 +973,31 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
 
     /* Check if the scrollbar should be hidden or disabled */
 
-    new_flags = infoPtr->flags;
-    if (infoPtr->MinVal >= infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
+    if (info->fMask & (SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL))
     {
-        /* Hide or disable scroll-bar */
-        if (info->fMask & SIF_DISABLENOSCROLL) new_flags = ESB_DISABLE_BOTH;
-        else if (nBar != SB_CTL)
+        new_flags = infoPtr->flags;
+        if (infoPtr->MinVal >= infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
         {
-            ShowScrollBar32( hwnd, nBar, FALSE );
-            bRedraw = FALSE;  /* No need to repaint anything */
+            /* Hide or disable scroll-bar */
+            if (info->fMask & SIF_DISABLENOSCROLL)
+                new_flags = ESB_DISABLE_BOTH;
+            else if (nBar != SB_CTL)
+            {
+                ShowScrollBar32( hwnd, nBar, FALSE );
+                bRedraw = FALSE;  /* No need to repaint anything */
+            }
         }
-    }
-    else  /* Show and enable scroll-bar */
-    {
-        new_flags = 0;
-        if (nBar != SB_CTL) ShowScrollBar32( hwnd, nBar, TRUE );
-    }
+        else  /* Show and enable scroll-bar */
+        {
+            new_flags = 0;
+            if (nBar != SB_CTL) ShowScrollBar32( hwnd, nBar, TRUE );
+        }
 
-    if (infoPtr->flags != new_flags)
-    {
-        infoPtr->flags = new_flags;
-        repaint_arrows = TRUE;
+        if (infoPtr->flags != new_flags)
+        {
+            infoPtr->flags = new_flags;
+            repaint_arrows = TRUE;
+        }
     }
 
     if (bRedraw || repaint_arrows)

@@ -318,4 +318,86 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 #define LANG_TURKISH                     0x1f
 #define LANG_UKRAINIAN                   0x22
 
+
+/* Access rights */
+
+#define DELETE                     0x00010000
+#define READ_CONTROL               0x00020000
+#define WRITE_DAC                  0x00040000
+#define WRITE_OWNER                0x00080000
+#define SYNCHRONIZE                0x00100000
+#define STANDARD_RIGHTS_REQUIRED   0x000f0000
+
+#define STANDARD_RIGHTS_READ       READ_CONTROL
+#define STANDARD_RIGHTS_WRITE      READ_CONTROL
+#define STANDARD_RIGHTS_EXECUTE    READ_CONTROL
+
+#define STANDARD_RIGHTS_ALL        0x001f0000
+
+#define SPECIFIC_RIGHTS_ALL        0x0000ffff
+
+#define GENERIC_READ               0x80000000
+#define GENERIC_WRITE              0x40000000
+#define GENERIC_EXECUTE            0x20000000
+#define GENERIC_ALL                0x10000000
+
+#define EVENT_MODIFY_STATE         0x0002
+#define EVENT_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
+
+#define SEMAPHORE_MODIFY_STATE     0x0002
+#define SEMAPHORE_ALL_ACCESS       (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
+
+#define MUTEX_MODIFY_STATE         0x0001
+#define MUTEX_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1)
+
+#define PROCESS_TERMINATE          0x0001
+#define PROCESS_CREATE_THREAD      0x0002
+#define PROCESS_VM_OPERATION       0x0008
+#define PROCESS_VM_READ            0x0010
+#define PROCESS_VM_WRITE           0x0020
+#define PROCESS_DUP_HANDLE         0x0040
+#define PROCESS_CREATE_PROCESS     0x0080
+#define PROCESS_SET_QUOTA          0x0100
+#define PROCESS_SET_INFORMATION    0x0200
+#define PROCESS_QUERY_INFORMATION  0x0400
+#define PROCESS_ALL_ACCESS         (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xfff)
+
+#define THREAD_TERMINATE           0x0001
+#define THREAD_SUSPEND_RESUME      0x0002
+#define THREAD_GET_CONTEXT         0x0008
+#define THREAD_SET_CONTEXT         0x0010
+#define THREAD_SET_INFORMATION     0x0020
+#define THREAD_QUERY_INFORMATION   0x0040
+#define THREAD_SET_THREAD_TOKEN    0x0080
+#define THREAD_IMPERSONATE         0x0100
+#define THREAD_DIRECT_IMPERSONATION 0x0200
+#define THREAD_ALL_ACCESS          (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3ff)
+
+#define FILE_READ_DATA            0x0001    /* file & pipe */
+#define FILE_LIST_DIRECTORY       0x0001    /* directory */
+#define FILE_WRITE_DATA           0x0002    /* file & pipe */
+#define FILE_ADD_FILE             0x0002    /* directory */
+#define FILE_APPEND_DATA          0x0004    /* file */
+#define FILE_ADD_SUBDIRECTORY     0x0004    /* directory */
+#define FILE_CREATE_PIPE_INSTANCE 0x0004    /* named pipe */
+#define FILE_READ_EA              0x0008    /* file & directory */
+#define FILE_READ_PROPERTIES      FILE_READ_EA
+#define FILE_WRITE_EA             0x0010    /* file & directory */
+#define FILE_WRITE_PROPERTIES     FILE_WRITE_EA
+#define FILE_EXECUTE              0x0020    /* file */
+#define FILE_TRAVERSE             0x0020    /* directory */
+#define FILE_DELETE_CHILD         0x0040    /* directory */
+#define FILE_READ_ATTRIBUTES      0x0080    /* all */
+#define FILE_WRITE_ATTRIBUTES     0x0100    /* all */
+#define FILE_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1ff)
+
+#define FILE_GENERIC_READ         (STANDARD_RIGHTS_READ | FILE_READ_DATA | \
+                                   FILE_READ_ATTRIBUTES | FILE_READ_EA | \
+                                   SYNCHRONIZE)
+#define FILE_GENERIC_WRITE        (STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | \
+                                   FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | \
+                                   FILE_APPEND_DATA | SYNCHRONIZE)
+#define FILE_GENERIC_EXECUTE      (STANDARD_RIGHTS_EXECUTE | FILE_EXECUTE | \
+                                   FILE_READ_ATTRIBUTES | SYNCHRONIZE)
+
 #endif  /* __WINE_WINNT_H */

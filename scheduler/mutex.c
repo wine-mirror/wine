@@ -84,7 +84,7 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
 
     SYSTEM_LOCK();
     mutex = (MUTEX *)K32OBJ_Create( K32OBJ_MUTEX, sizeof(*mutex),
-                                    name, &handle );
+                                    name, MUTEX_ALL_ACCESS, &handle );
     if (mutex)
     {
         /* Finish initializing it */
@@ -138,7 +138,7 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_MUTEX )) != NULL)
     {
-        handle = PROCESS_AllocHandle( obj, 0 );
+        handle = HANDLE_Alloc( obj, access, inherit );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -165,7 +165,8 @@ BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
 {
     MUTEX *mutex;
     SYSTEM_LOCK();
-    if (!(mutex = (MUTEX *)PROCESS_GetObjPtr( handle, K32OBJ_MUTEX )))
+    if (!(mutex = (MUTEX *)HANDLE_GetObjPtr( handle, K32OBJ_MUTEX,
+                                             MUTEX_MODIFY_STATE )))
     {
         SYSTEM_UNLOCK();
         return FALSE;

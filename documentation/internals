@@ -24,13 +24,13 @@ functions (or do their own synchronization that is compatible with the
 wrappers). The wrapper for a function X...() is calles TSX...() (for
 "Thread Safe X ..."). So for example, instead of calling XOpenDisplay()
 in the code, TSXOpenDisplay() must be used. Likewise, X include files
-that contain function prototypes are wrapped, so that eg. "TSXutil.h" must
-be included rather than <X11/Xutil.h>. It is important that this scheme
-is used everywhere to avoid the introduction of nondeterministic and
-hard-to-find errors in Wine.
+that contain function prototypes are wrapped, so that eg. "ts_xutil.h"
+must be included rather than <X11/Xutil.h>. It is important that this
+scheme is used everywhere to avoid the introduction of nondeterministic
+and hard-to-find errors in Wine.
 
 The code for the thread safe X wrappers is contained in the tsx11/
-directory and in include/TS*.h. To use a new (ie. not previously used) X
+directory and in include/ts*.h. To use a new (ie. not previously used) X
 function in Wine, a new wrapper must be created. The wrappers are
 generated (semi-)automatically from the X11R6 includes using the
 tools/make_X11wrappers perl script. In simple cases it should be enough

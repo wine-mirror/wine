@@ -638,7 +638,7 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 /***********************************************************************
  *           LOCAL_Compact
  */
-static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
+WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;

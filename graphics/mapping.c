@@ -74,8 +74,8 @@ BOOL32 WINAPI DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
     {
 	if (dc->w.UseWorldXform)
 	{
-            x = (FLOAT)points->x - dc->w.WorldXform.eDx;
-	    y = (FLOAT)points->y - dc->w.WorldXform.eDy;
+            x = (FLOAT)XDPTOLP( dc, points->x ) - dc->w.WorldXform.eDx;
+	    y = (FLOAT)YDPTOLP( dc, points->y ) - dc->w.WorldXform.eDy;
 	    points->x = (INT32)( (x*dc->w.WorldXform.eM22 -
 	       y*dc->w.WorldXform.eM21) / determinant );
 	    points->y = (INT32)( (-x*dc->w.WorldXform.eM12 +
@@ -83,8 +83,8 @@ BOOL32 WINAPI DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 	}
 	else
 	{
-	    points->x = XLPTODP( dc, points->x );
-	    points->y = YLPTODP( dc, points->y );
+	    points->x = XDPTOLP( dc, points->x );
+	    points->y = YDPTOLP( dc, points->y );
 	}
         points++;
     }
@@ -130,14 +130,14 @@ BOOL32 WINAPI LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 	    y = (FLOAT)points->x * dc->w.WorldXform.eM12 +
 	        (FLOAT)points->y * dc->w.WorldXform.eM22 +
 		dc->w.WorldXform.eDy;
-	    points->x = XDPTOLP( dc, (INT32)x );
-	    points->y = YDPTOLP( dc, (INT32)y );
+	    points->x = XLPTODP( dc, (INT32)x );
+	    points->y = YLPTODP( dc, (INT32)y );
 	    
 	}
 	else
 	{
-	    points->x = XDPTOLP( dc, points->x );
-	    points->y = YDPTOLP( dc, points->y );
+	    points->x = XLPTODP( dc, points->x );
+	    points->y = YLPTODP( dc, points->y );
 	}
         points++;
     }

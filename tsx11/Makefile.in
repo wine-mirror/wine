@@ -10,8 +10,7 @@ C_SRCS = \
 	ts_xlib.c \
 	ts_xresource.c \
 	ts_xutil.c \
-	ts_xpm.c \
-	tsx11defs.c
+	ts_xpm.c
 
 all: $(MODULE).o
 

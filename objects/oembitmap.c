@@ -322,6 +322,8 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
  *           OBM_CreateBitmaps
  *
  * Create the 2 bitmaps from XPM data.
+ *
+ * The Xlib critical section must be entered before calling this function.
  */
 static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
 {
@@ -330,14 +332,14 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     int err;
 
     attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
-                                          TSXpmAttributesSize() );
+                                          XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
     attrs->colormap     = COLOR_GetColormap();
     attrs->depth        = descr->color ? screenDepth : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
         
-    err = TSXpmCreatePixmapFromData( display, rootWindow, descr->data,
+    err = XpmCreatePixmapFromData( display, rootWindow, descr->data,
                                    &pixmap, &pixmask, attrs );
 
     if (err != XpmSuccess)
@@ -355,8 +357,8 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     HeapFree( GetProcessHeap(), 0, attrs );
     if (!descr->bitmap)
     {
-        if (pixmap) TSXFreePixmap( display, pixmap );
-        if (pixmask) TSXFreePixmap( display, pixmask );
+        if (pixmap) XFreePixmap( display, pixmap );
+        if (pixmask) XFreePixmap( display, pixmask );
         if (descr->bitmap) GDI_FreeObject( descr->bitmap );
         if (descr->need_mask && descr->mask) GDI_FreeObject( descr->mask );
         return FALSE;
@@ -381,11 +383,14 @@ HBITMAP16 OBM_LoadBitmap( WORD id )
     descr.color     = OBM_Pixmaps_Data[id].color;
     descr.need_mask = FALSE;
 
+    EnterCriticalSection( &X11DRV_CritSection );
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
+        LeaveCriticalSection( &X11DRV_CritSection );
         fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
     }
+    LeaveCriticalSection( &X11DRV_CritSection );
     return descr.bitmap;
 }
 
@@ -424,11 +429,14 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     descr.color     = !fCursor;
     descr.need_mask = TRUE;
 
+    EnterCriticalSection( &X11DRV_CritSection );
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
+        LeaveCriticalSection( &X11DRV_CritSection );
         fprintf( stderr, "Error creating OEM cursor/icon %d\n", id );
         return 0;
     }
+    LeaveCriticalSection( &X11DRV_CritSection );
 
     bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( descr.bitmap, BITMAP_MAGIC );
     bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( descr.mask, BITMAP_MAGIC );

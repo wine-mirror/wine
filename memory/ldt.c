@@ -289,7 +289,7 @@ void LDT_Print( int start, int length )
             flags[1] = (ldt_flags_copy[i] & LDT_FLAGS_READONLY) ? '-' : 'w';
             flags[2] = '-';
         }
-        printf("%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
+        fprintf(stderr,"%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
                 i, ENTRY_TO_SELECTOR(i),
                 ldt_copy[i].base, ldt_copy[i].limit,
                 ldt_flags_copy[i] & LDT_FLAGS_32BIT ? 32 : 16,

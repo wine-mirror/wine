@@ -164,26 +164,33 @@ static BOOL32 fEndMenu = FALSE;
  * Print a menuitem in readable form.
  */
 
+#define debug_print_menuitem(pre, mp, post) \
+  if(debugging_menu) do_debug_print_menuitem(pre, mp, post)
+
 #define MENUOUT(text) \
-  dprintf_menu (stddeb, "%s%s", (count++ ? "," : ""), (text))
+  p+=sprintf(p, "%s%s", (count++ ? "," : ""), (text))
 
 #define MENUFLAG(bit,text) \
   do { \
     if (flags & (bit)) { flags &= ~(bit); MENUOUT ((text)); } \
   } while (0)
 
-static void debug_print_menuitem(const char *prefix, MENUITEM * mp, const char *postfix)
+static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp, 
+				    const char *postfix)
 {
-    dprintf_menu(stddeb, "%s", prefix);
+    char buff[256];
+    char *p;
+
+    p = buff;
     if (mp) {
 	UINT32 flags = mp->fType;
 	int typ = MENU_ITEM_TYPE(flags);
-	dprintf_menu(stddeb, "{ ID=0x%x", mp->wID);
+	p+=sprintf(p, "{ ID=0x%x", mp->wID);
 	if (flags & MF_POPUP)
-	    dprintf_menu(stddeb, ", Sub=0x%x", mp->hSubMenu);
+	    p+=sprintf(p, ", Sub=0x%x", mp->hSubMenu);
 	if (flags) {
 	    int count = 0;
-	    dprintf_menu(stddeb, ", Typ=");
+	    p+=sprintf(p, ", Typ=");
 	    if (typ == MFT_STRING)
 		/* Nothing */ ;
 	    else if (typ == MFT_SEPARATOR)
@@ -205,12 +212,12 @@ static void debug_print_menuitem(const char *prefix, MENUITEM * mp, const char *
 	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");
 
 	    if (flags)
-		dprintf_menu(stddeb, "+0x%x", flags);
+		p+=sprintf(p, "+0x%x", flags);
 	}
 	flags = mp->fState;
 	if (flags) {
 	    int count = 0;
-	    dprintf_menu(stddeb, ", State=");
+	    p+=sprintf(p, ", State=");
 	    MENUFLAG(MFS_GRAYED, "grey");
 	    MENUFLAG(MFS_DISABLED, "dis");
 	    MENUFLAG(MFS_CHECKED, "check");
@@ -218,27 +225,28 @@ static void debug_print_menuitem(const char *prefix, MENUITEM * mp, const char *
 	    MENUFLAG(MF_USECHECKBITMAPS, "usebit");
 	    MENUFLAG(MF_MOUSESELECT, "mouse");
 	    if (flags)
-		dprintf_menu(stddeb, "+0x%x", flags);
+		p+=sprintf(p, "+0x%x", flags);
 	}
 	if (mp->hCheckBit)
-	    dprintf_menu(stddeb, ", Chk=0x%x", mp->hCheckBit);
+	    p+=sprintf(p, ", Chk=0x%x", mp->hCheckBit);
 	if (mp->hUnCheckBit)
-	    dprintf_menu(stddeb, ", Unc=0x%x", mp->hUnCheckBit);
+	    p+=sprintf(p, ", Unc=0x%x", mp->hUnCheckBit);
 
 	if (typ == MFT_STRING) {
 	    if (mp->text)
-		dprintf_menu(stddeb, ", Text=\"%s\"", mp->text);
+		p+=sprintf(p, ", Text=\"%s\"", mp->text);
 	    else
-		dprintf_menu(stddeb, ", Text=Null");
+		p+=sprintf(p, ", Text=Null");
 	} else if (mp->text == NULL)
 	    /* Nothing */ ;
 	else
-	    dprintf_menu(stddeb, ", Text=%p", mp->text);
-	dprintf_menu(stddeb, " }");
+	    p+=sprintf(p, ", Text=%p", mp->text);
+	p+=sprintf(p, " }");
     } else {
-	dprintf_menu(stddeb, "NULL");
+	p+=sprintf(p, "NULL");
     }
-    dprintf_menu(stddeb, "%s", postfix);
+
+    dprintf_menu(stddeb, "%s %s %s\n", prefix, buff, postfix);
 }
 
 #undef MENUOUT
@@ -595,9 +603,10 @@ static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND32 hwndOwner,
     DWORD dwSize;
     char *p;
 
-    dprintf_menu(stddeb, "MENU_CalcItemSize: HDC 0x%x at (%d,%d): ",
+    dprintf_menu(stddeb, "MENU_CalcItemSize: HDC 0x%x at (%d,%d)\n",
                  hdc, orgX, orgY);
-    debug_print_menuitem("", lpitem, (menuBar ? " (MenuBar)\n" : "\n"));
+    debug_print_menuitem("MENU_CalcItemSize: menuitem:", lpitem, 
+			 (menuBar ? " (MenuBar)" : ""));
 
     SetRect32( &lpitem->rect, orgX, orgY, orgX, orgY );
 
@@ -770,7 +779,7 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
 	    dprintf_menu( stddeb,
 			  "MENU_MenuBarCalcSize: calling MENU_CalcItemSize"
 			  " org=(%d, %d)\n", orgX, orgY );
-	    debug_print_menuitem ("  item: ", lpitem, "\n");
+	    debug_print_menuitem ("  item: ", lpitem, "");
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE );
 	    if (lpitem->rect.right > lprect->right)
 	    {
@@ -816,7 +825,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 {
     RECT32 rect;
 
-    debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "\n");
+    debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "");
 
     if (lpitem->fType & MF_SYSMENU)
     {
@@ -1408,7 +1417,7 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
 {
     LPSTR prevText = IS_STRING_ITEM(item->fType) ? item->text : NULL;
 
-    debug_print_menuitem("MENU_SetItemData from: ", item, "\n");
+    debug_print_menuitem("MENU_SetItemData from: ", item, "");
 
     if (IS_STRING_ITEM(flags))
     {
@@ -1465,7 +1474,7 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
     SetRectEmpty32( &item->rect );
     if (prevText) HeapFree( SystemHeap, 0, prevText );
 
-    debug_print_menuitem("MENU_SetItemData to  : ", item, "\n");
+    debug_print_menuitem("MENU_SetItemData to  : ", item, "");
     return TRUE;
 }
 
@@ -2904,7 +2913,7 @@ UINT32 WINAPI GetMenuState32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
     dprintf_menu(stddeb,"GetMenuState(%04x, %04x, %04x);\n", 
 		 hMenu, wItemID, wFlags);
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return -1;
-    debug_print_menuitem ("  item: ", item, "\n");
+    debug_print_menuitem ("  item: ", item, "");
     if (item->fType & MF_POPUP)
     {
 	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( item->hSubMenu );
@@ -3722,7 +3731,7 @@ static BOOL32 GetMenuItemInfo32_common ( HMENU32 hmenu, UINT32 item,
 					 BOOL32 unicode)
 {
   MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos);
-    debug_print_menuitem("GetMenuItemInfo32_common: ", menu, "\n");
+    debug_print_menuitem("GetMenuItemInfo32_common: ", menu, "");
     if (!menu)
 	return FALSE;
 
@@ -3829,7 +3838,7 @@ static BOOL32 SetMenuItemInfo32_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_DATA)
 	menu->dwItemData = lpmii->dwItemData;
 
-    debug_print_menuitem("SetMenuItemInfo32_common: ", menu, "\n");
+    debug_print_menuitem("SetMenuItemInfo32_common: ", menu, "");
     return TRUE;
 }
 
@@ -3860,7 +3869,7 @@ BOOL32 WINAPI SetMenuDefaultItem32(HMENU32 hmenu, UINT32 item, BOOL32 bypos)
 {
     MENUITEM *menu = MENU_FindItem(&hmenu, &item, bypos);
     if (!menu) return FALSE;
-    debug_print_menuitem("SetMenuDefaultItem32: ", menu, "\n");
+    debug_print_menuitem("SetMenuDefaultItem32: ", menu, "");
     fprintf(stdnimp, "SetMenuDefaultItem32 (0x%x,%d,%d), empty stub!\n",
 	    hmenu, item, bypos);
     return TRUE;

@@ -362,12 +362,6 @@ static int ParseExportFunction( ORDDEF *odp )
                      SpecName, Line );
             return -1;
         }
-        if (odp->type == TYPE_CDECL)
-        {
-            fprintf( stderr, "%s:%d: 'cdecl' not supported for Win16\n",
-                     SpecName, Line );
-            return -1;
-        }
         break;
     case SPEC_WIN32:
         if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
@@ -918,6 +912,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
 	switch (odp->type)
 	{
+        case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
         case TYPE_REGISTER:
@@ -1209,6 +1204,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
             break;
 
           case TYPE_REGISTER:
+          case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
@@ -1217,9 +1213,10 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
             fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
             /* FreeBSD does not understand lcall, so do it the hard way */
             fprintf( outfile, "\t.byte 0x9a\n" );
-            fprintf( outfile, "\t.long " PREFIX "CallFrom16_%s_%s\n",
+            fprintf( outfile, "\t.long " PREFIX "CallFrom16_%s_%s_%s\n",
+                     (odp->type == TYPE_CDECL) ? "c" : "p",
                      (odp->type == TYPE_REGISTER) ? "regs" :
-                     (odp->type == TYPE_PASCAL) ? "long" : "word",
+                     (odp->type == TYPE_PASCAL_16) ? "word" : "long",
                      odp->u.func.arg_types );
             fprintf( outfile, "\t.long 0x%08lx\n",
                      MAKELONG( Code_Selector, 0x9090 /* nop ; nop */ ) );
@@ -1305,19 +1302,21 @@ static int BuildSpecFile( FILE *outfile, char *specname )
  *  (bp+4)    cs
  *  (bp+2)    ip
  *  (bp)      bp
+ *
+ * For 'cdecl' argn up to arg1 are reversed.
  */
-static int TransferArgs16To32( FILE *outfile, char *args )
+static int TransferArgs16To32( FILE *outfile, char *args, int usecdecl )
 {
     int i, pos16, pos32;
 
     /* Copy the arguments */
 
     pos16 = 6;  /* skip bp and return address */
-    pos32 = 0;
+    pos32 = usecdecl ? -(strlen(args) * 4) : 0;
 
     for (i = strlen(args); i > 0; i--)
     {
-        pos32 -= 4;
+        if (!usecdecl) pos32 -= 4;
         switch(args[i-1])
         {
         case 'w':  /* word */
@@ -1356,6 +1355,7 @@ static int TransferArgs16To32( FILE *outfile, char *args )
         default:
             fprintf( stderr, "Unknown arg type '%c'\n", args[i-1] );
         }
+        if (usecdecl) pos32 += 4;
     }
 
     return pos16 - 6;  /* Return the size of the 16-bit args */
@@ -1400,6 +1400,9 @@ static void BuildContext16( FILE *outfile )
     fprintf( outfile, "\tmovzwl 2(%%ebp),%%eax\n" ); /* Get %ip from stack */
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(Eip) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tleal 2(%%ebp),%%eax\n" );  /* Get initial %sp */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(Esp) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovzwl 4(%%ebp),%%eax\n" ); /* Get %cs from stack */
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegCs) - sizeof(CONTEXT) );
@@ -1423,7 +1426,6 @@ static void BuildContext16( FILE *outfile )
  *         RestoreContext16
  *
  * Restore the registers from the context structure.
- * %edx must point to the 32-bit stack top.
  */
 static void RestoreContext16( FILE *outfile )
 {
@@ -1432,9 +1434,15 @@ static void RestoreContext16( FILE *outfile )
     fprintf( outfile, "\tleal -%d(%%ebp),%%ebx\n",
              STRUCTOFFSET(STACK32FRAME,ebp) );
 
-    /* Remove everything up to the return address from the 16-bit stack */
+    /* Remove everything up to (including) the return address
+     * from the 16-bit stack */
 
-    fprintf( outfile, "\taddl $22,%%esp\n" );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%eax\n",
+             CONTEXTOFFSET(SegSs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovw %%ax,%%ss\n" );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%esp\n",
+             CONTEXTOFFSET(Esp) - sizeof(CONTEXT) );
+    fprintf( outfile, "\taddl $4,%%esp\n" );  /* Remove return address */
 
     /* Restore the registers */
 
@@ -1472,7 +1480,8 @@ static void RestoreContext16( FILE *outfile )
  *         BuildCallFrom16Func
  *
  * Build a 16-bit-to-Wine callback function. The syntax of the function
- * profile is: type_xxxxx, where 'type' is one of 'regs', 'word' or
+ * profile is: call_type_xxxxx, where 'call' is the letter 'c' or 'p' for C or
+ * Pascal calling convention, 'type' is one of 'regs', 'word' or
  * 'long' and each 'x' is an argument ('w'=word, 's'=signed word,
  * 'l'=long, 'p'=linear pointer, 't'=linear pointer to null-terminated string,
  * 'T'=segmented pointer to null-terminated string).
@@ -1500,13 +1509,21 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     int argsize = 0;
     int short_ret = 0;
     int reg_func = 0;
-    char *args = profile + 5;
+    int cdecl = 0;
+    char *args = profile + 7;
 
     /* Parse function type */
 
-    if (!strncmp( "word_", profile, 5 )) short_ret = 1;
-    else if (!strncmp( "regs_", profile, 5 )) reg_func = 1;
-    else if (strncmp( "long_", profile, 5 ))
+    if (!strncmp( "c_", profile, 2 )) cdecl = 1;
+    else if (strncmp( "p_", profile, 2 ))
+    {
+        fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
+        return;
+    }
+
+    if (!strncmp( "word_", profile + 2, 5 )) short_ret = 1;
+    else if (!strncmp( "regs_", profile + 2, 5 )) reg_func = 1;
+    else if (strncmp( "long_", profile + 2, 5 ))
     {
         fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
         return;
@@ -1568,7 +1585,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Transfer the arguments */
 
     if (reg_func) BuildContext16( outfile );
-    else if (*args) argsize = TransferArgs16To32( outfile, args );
+    else if (*args) argsize = TransferArgs16To32( outfile, args, cdecl );
 
     /* Get the address of the API function */
 
@@ -1602,9 +1619,15 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     if (debugging)
     {
+        int ftype = 0;
+
+        if (cdecl) ftype |= 4;
+        if (reg_func) ftype |= 2;
+        if (short_ret) ftype |= 1;
+
         fprintf( outfile, "\tpushl %%eax\n" );
         fprintf( outfile, "\tpushl $Profile_%s\n", profile );
-        fprintf( outfile, "\tpushl $%d\n", reg_func ? 2 : (short_ret ? 1 : 0));
+        fprintf( outfile, "\tpushl $%d\n", ftype );
         fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
@@ -1698,7 +1721,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     /* Remove the arguments and return */
 
-    if (argsize)
+    if (argsize && !cdecl)
     {
         fprintf( outfile, "\t.byte 0x66\n" );
         fprintf( outfile, "\tlret $%d\n", argsize );
@@ -2212,7 +2235,7 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
         for (i = 2; i < argc; i++)
         {
             fprintf( outfile, "Profile_%s:\t", argv[i] );
-            fprintf( outfile, STRING " \"%s\\0\"\n", argv[i] + 5 );
+            fprintf( outfile, STRING " \"%s\\0\"\n", argv[i] + 7 );
         }
     }
 

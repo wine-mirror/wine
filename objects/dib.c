@@ -252,25 +252,25 @@ static void DIB_SetImageBits_1_Line(DWORD dstwidth, int left, int *colors,
     for (i = dstwidth/8, x = left&~7; (i > 0); i--)
     {
 	pix = *bits++;
-	TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 6) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 5) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 4) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 3) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 2) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[(pix >> 1) & 1] );
-	TSXPutPixel( bmpImage, x++, h, colors[pix & 1] );
+	XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 6) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 5) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 4) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 3) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 2) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[(pix >> 1) & 1] );
+	XPutPixel( bmpImage, x++, h, colors[pix & 1] );
     }
     pix = *bits;
     switch(dstwidth & 7)
     {
-    case 7: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 6: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 5: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 4: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 3: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 2: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 1: TSXPutPixel( bmpImage, x++, h, colors[pix >> 7] );
+    case 7: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 6: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 5: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 4: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 3: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 2: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
+    case 1: XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
     }
 }
 
@@ -326,10 +326,10 @@ static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
 	for (h = lines-1; h >= 0; h--) {
 	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
 		BYTE pix = *bits++;
-		TSXPutPixel( bmpImage, x++, h, colors[pix >> 4] );
-		TSXPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
+		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
+		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
 	    }
-	    if (dstwidth & 1) TSXPutPixel( bmpImage, x, h, colors[*bits >> 4] );
+	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
 	    srcbits += linebytes;
 	    bits	 = srcbits + (left >> 1);
 	}
@@ -338,10 +338,10 @@ static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
 	for (h = 0; h < lines; h++) {
 	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
 		BYTE pix = *bits++;
-		TSXPutPixel( bmpImage, x++, h, colors[pix >> 4] );
-		TSXPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
+		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
+		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
 	    }
-	    if (dstwidth & 1) TSXPutPixel( bmpImage, x, h, colors[*bits >> 4] );
+	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
 	    srcbits += linebytes;
 	    bits	 = srcbits + (left >> 1);
 	}
@@ -375,11 +375,11 @@ static void DIB_SetImageBits_RLE4( int lines, const BYTE *bits, DWORD width,
 		if (length) {	/* encoded */
 			c = *bits++;
 			while (length--) {
-				TSXPutPixel(bmpImage, x++, lines, colors[c >> 4]);
+				XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
 				check_xy(x, y);
 				if (length) {
 					length--;
-					TSXPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+					XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 					check_xy(x, y);
 				}
 			}
@@ -402,11 +402,11 @@ static void DIB_SetImageBits_RLE4( int lines, const BYTE *bits, DWORD width,
 				default: /* absolute */
 					while (length--) {
 						c = *bits++;
-						TSXPutPixel(bmpImage, x++, lines, colors[c >> 4]);
+						XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
 						check_xy(x, y);
 						if (length) {
 							length--;
-							TSXPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+							XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 							check_xy(x, y);
 						}
 					}
@@ -438,7 +438,7 @@ static void DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
 	    for (x = left; x < dstwidth; x++, bits++) {
-		TSXPutPixel( bmpImage, x, h, colors[*bits] );
+		XPutPixel( bmpImage, x, h, colors[*bits] );
 	    }
 	    bits = (srcbits += linebytes) + left;
 	}
@@ -446,7 +446,7 @@ static void DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    for (x = left; x < dstwidth; x++, bits++) {
-		TSXPutPixel( bmpImage, x, h, colors[*bits] );
+		XPutPixel( bmpImage, x, h, colors[*bits] );
 	    }
 	    bits = (srcbits += linebytes) + left;
 	}
@@ -530,7 +530,7 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
 		color = colors[color_index];
 
 		while(length--)
-		  TSXPutPixel(bmpImage, x++, line, color);
+		  XPutPixel(bmpImage, x++, line, color);
 	    }
 	  else 
 	    {    
@@ -595,7 +595,7 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
 			  while(length--)
 			    {
 				color_index = (*pIn++);
-				TSXPutPixel(bmpImage, x++, line, 
+				XPutPixel(bmpImage, x++, line, 
 					  colors[color_index]);
 			    }
 			  
@@ -662,7 +662,7 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 		r = (BYTE) ((val & 0x7c00) >> 7);
 		g = (BYTE) ((val & 0x03e0) >> 2);
 		b = (BYTE) ((val & 0x001f) << 3);
-		TSXPutPixel( bmpImage, x, h,
+		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(r,g,b)) );
 	    }
 	    ptr = (LPWORD) (srcbits += linebytes) + left;
@@ -675,7 +675,7 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 		r = (BYTE) ((val & 0x7c00) >> 7);
 		g = (BYTE) ((val & 0x03e0) >> 2);
 		b = (BYTE) ((val & 0x001f) << 3);
-		TSXPutPixel( bmpImage, x, h,
+		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(r,g,b)) );
 	    }
 	    ptr = (LPWORD) (srcbits += linebytes) + left;
@@ -707,7 +707,7 @@ static void DIB_SetImageBits_24( int lines, const BYTE *srcbits,
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
 	    for (x = left; x < dstwidth; x++, bits += 3) {
-		TSXPutPixel( bmpImage, x, h, 
+		XPutPixel( bmpImage, x, h, 
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
 	    bits = (srcbits += linebytes) + left * 3;
@@ -716,7 +716,7 @@ static void DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    for (x = left; x < dstwidth; x++, bits += 3) {
-		TSXPutPixel( bmpImage, x, h,
+		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
 	    bits = (srcbits += linebytes) + left * 3;
@@ -745,7 +745,7 @@ static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
 	    for (x = left; x < dstwidth; x++, bits += 4) {
-		TSXPutPixel( bmpImage, x, h, 
+		XPutPixel( bmpImage, x, h, 
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
 	    bits = (srcbits += linebytes) + left * 4;
@@ -754,7 +754,7 @@ static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    for (x = left; x < dstwidth; x++, bits += 4) {
-		TSXPutPixel( bmpImage, x, h,
+		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
 	    bits = (srcbits += linebytes) + left * 4;
@@ -768,6 +768,7 @@ static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
  *
  * Transfer the bits to an X image.
  * Helper function for SetDIBits() and SetDIBitsToDevice().
+ * The Xlib critical section must be entered before calling this function.
  */
 static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 {
@@ -831,10 +832,10 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
         break;
     }
     if (colorMapping) HeapFree( GetProcessHeap(), 0, colorMapping );
-    TSXPutImage( display, descr->drawable, descr->gc, bmpImage,
+    XPutImage( display, descr->drawable, descr->gc, bmpImage,
                descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                descr->width, descr->height );
-    TSXDestroyImage( bmpImage );
+    XDestroyImage( bmpImage );
     return lines;
 }
 
@@ -944,7 +945,10 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     descr.width     = bmp->bitmap.bmWidth;
     descr.height    = lines;
 
+    EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+    LeaveCriticalSection( &X11DRV_CritSection );
+
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
     return result;
@@ -975,6 +979,7 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     DIB_SETIMAGEBITS_DESCR descr;
     DC * dc;
     DWORD width, oldcy = cy;
+    INT32 result;
     int height, tmpheight;
 
       /* Check parameters */
@@ -1018,7 +1023,10 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     descr.width     = cx;
     descr.height    = cy;
 
-    return CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+    EnterCriticalSection( &X11DRV_CritSection );
+    result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+    LeaveCriticalSection( &X11DRV_CritSection );
+    return result;
 }
 
 /***********************************************************************
@@ -1199,6 +1207,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
             xend = info->bmiHeader.biWidth;
 	}
 
+        EnterCriticalSection( &X11DRV_CritSection );
 	bmpImage = (XImage *)CALL_LARGE_STACK( BITMAP_GetXImage, bmp );
 
 	switch( info->bmiHeader.biBitCount )
@@ -1209,7 +1218,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
 		   for( x = 0; x < xend; x++ )
-			*bbits++ = TSXGetPixel( bmpImage, x, y );
+			*bbits++ = XGetPixel( bmpImage, x, y );
 		   bbits += pad;
 		}
 		break;
@@ -1220,7 +1229,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		   *bbits = 0;
 		   for( x = 0; x < xend; x++ ) {
 		   	
-			*bbits |= TSXGetPixel( bmpImage, x, y)<<(7-(x&7));
+			*bbits |= XGetPixel( bmpImage, x, y)<<(7-(x&7));
 			if ((x&7)==7) {
 			    bbits++;
 			    *bbits=0;
@@ -1236,7 +1245,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		   *bbits = 0;
 		   for( x = 0; x < xend; x++ ) {
 		   	
-			*bbits |= TSXGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
+			*bbits |= XGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
 			if ((x&1)==1) {
 			    bbits++;
 			    *bbits=0;
@@ -1252,7 +1261,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		{
 		   *bbits = 0;
 		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=TSXGetPixel( bmpImage, x, y);
+		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = pixel & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 		   }
@@ -1265,7 +1274,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		{
 		   *bbits = 0;
 		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=TSXGetPixel( bmpImage, x, y);
+		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = (pixel >>16) & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
@@ -1278,7 +1287,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		{
 		   *bbits = 0;
 		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=TSXGetPixel( bmpImage, x, y);
+		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = (pixel >>16) & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
@@ -1292,7 +1301,8 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	   	break;
 	}
 
-	TSXDestroyImage( bmpImage );
+	XDestroyImage( bmpImage );
+        LeaveCriticalSection( &X11DRV_CritSection );
 
 	info->bmiHeader.biCompression = 0;
     }

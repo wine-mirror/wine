@@ -242,7 +242,8 @@ HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 
     for (table = BuiltinDLLs; table->descr; table++)
         if (!lstrcmpi32A( table->descr->name, dllname )) break;
-    if (!table->descr) return BUILTIN32_LoadModule( name, force );
+    if (!table->descr) return BUILTIN32_LoadModule( name, force,
+                                                    PROCESS_Current() );
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
     return BUILTIN_DoLoadModule16( table->descr );

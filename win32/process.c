@@ -69,7 +69,7 @@ BOOL32 WINAPI GetProcessAffinityMask(HANDLE32 hProcess,
  */
 BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
 {
-	THDB	*thdb = (THDB*)PROCESS_GetObjPtr(hThread,K32OBJ_THREAD);
+	THDB	*thdb = THREAD_GetPtr( hThread, THREAD_SET_INFORMATION );
 
 	if (!thdb) 
 		return FALSE;

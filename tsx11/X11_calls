@@ -2,7 +2,7 @@
 # protected by a critical section for multi-threaded use.
 #
 # To add a new call, put it on this list and run tools/make_X11wrappers.
-# Also read the comments at the top of tools_make_X11wrappers.
+# Also read the comments at the top of tools/make_X11wrappers.
 #
 XActivateScreenSaver
 XAddPixel
@@ -53,6 +53,7 @@ XFillRectangle
 XFindContext
 XFlush
 XFree
+XFreeColormap
 XFreeColors
 XFreeCursor
 XFreeFont
@@ -68,9 +69,9 @@ XGetInputFocus
 XGetKeyboardControl
 XGetKeyboardMapping
 XGetModifierMapping
-XGetPixel
 XGetScreenSaver
 XGetSelectionOwner
+XGetVisualInfo
 XGetWMSizeHints
 XGetWindowAttributes
 XGetWindowProperty
@@ -98,7 +99,6 @@ XPointInRegion
 XPolygonRegion
 XPutBackEvent
 XPutImage
-XPutPixel
 XQueryColor
 XQueryPointer
 XQueryTree

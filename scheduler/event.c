@@ -86,7 +86,7 @@ HANDLE32 WINAPI CreateEvent32A( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
 
     SYSTEM_LOCK();
     event = (EVENT *)K32OBJ_Create( K32OBJ_EVENT, sizeof(*event),
-                                    name, &handle );
+                                    name, EVENT_ALL_ACCESS, &handle );
     if (event)
     {
         /* Finish initializing it */
@@ -123,7 +123,7 @@ HANDLE32 WINAPI OpenEvent32A( DWORD access, BOOL32 inherit, LPCSTR name )
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_EVENT )) != NULL)
     {
-        handle = PROCESS_AllocHandle( obj, 0 );
+        handle = HANDLE_Alloc( obj, access, inherit );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -150,7 +150,8 @@ BOOL32 WINAPI PulseEvent( HANDLE32 handle )
 {
     EVENT *event;
     SYSTEM_LOCK();
-    if (!(event = (EVENT *)PROCESS_GetObjPtr( handle, K32OBJ_EVENT )))
+    if (!(event = (EVENT *)HANDLE_GetObjPtr( handle, K32OBJ_EVENT,
+                                             EVENT_MODIFY_STATE )))
     {
         SYSTEM_UNLOCK();
         return FALSE;
@@ -171,7 +172,8 @@ BOOL32 WINAPI SetEvent( HANDLE32 handle )
 {
     EVENT *event;
     SYSTEM_LOCK();
-    if (!(event = (EVENT *)PROCESS_GetObjPtr( handle, K32OBJ_EVENT )))
+    if (!(event = (EVENT *)HANDLE_GetObjPtr( handle, K32OBJ_EVENT,
+                                             EVENT_MODIFY_STATE )))
     {
         SYSTEM_UNLOCK();
         return FALSE;
@@ -191,7 +193,8 @@ BOOL32 WINAPI ResetEvent( HANDLE32 handle )
 {
     EVENT *event;
     SYSTEM_LOCK();
-    if (!(event = (EVENT *)PROCESS_GetObjPtr( handle, K32OBJ_EVENT )))
+    if (!(event = (EVENT *)HANDLE_GetObjPtr( handle, K32OBJ_EVENT,
+                                             EVENT_MODIFY_STATE )))
     {
         SYSTEM_UNLOCK();
         return FALSE;

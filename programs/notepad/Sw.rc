@@ -72,8 +72,8 @@
 
 #define STRING_UNTITLED              "(untitled)"
 
-#define STRING_ALLFILES              "Alla filer (*.*)"
-#define STRING_TEXTFILES             "Text filer (*.txt)"
+#define STRING_ALL_FILES              "Alla filer (*.*)"
+#define STRING_TEXT_FILES_TXT         "Text filer (*.txt)"
 
 #define STRING_TOOLARGE         "Filen '%s' är för stor för notepad.\n \
 Använd en annan editor."

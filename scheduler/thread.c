@@ -44,7 +44,7 @@ const K32OBJ_OPS THREAD_Ops =
  * Return a pointer to a thread object. The object count must be decremented
  * when no longer used.
  */
-static THDB *THREAD_GetPtr( HANDLE32 handle )
+THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access )
 {
     THDB *thread;
 
@@ -53,7 +53,7 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
         thread = THREAD_Current();
         K32OBJ_IncCount( &thread->header );
     }
-    else thread = (THDB *)PROCESS_GetObjPtr( handle, K32OBJ_THREAD );
+    else thread = (THDB *)HANDLE_GetObjPtr( handle, K32OBJ_THREAD, access );
     return thread;
 }
 
@@ -287,7 +287,7 @@ HANDLE32 WINAPI CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
     HANDLE32 handle;
     THDB *thread = THREAD_Create( PROCESS_Current(), stack, start, param );
     if (!thread) return INVALID_HANDLE_VALUE32;
-    handle = PROCESS_AllocHandle( &thread->header, 0 );
+    handle = HANDLE_Alloc( &thread->header, THREAD_ALL_ACCESS, FALSE );
     if (handle == INVALID_HANDLE_VALUE32) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
     *id = THDB_TO_THREAD_ID( thread );
@@ -470,7 +470,7 @@ BOOL32 WINAPI TlsSetValue( DWORD index, LPVOID value )
  */
 BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
 {
-    THDB *thread = THREAD_GetPtr( handle );
+    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT );
     if (!thread) return FALSE;
     *context = thread->context;
     K32OBJ_DecCount( &thread->header );
@@ -486,7 +486,8 @@ INT32 WINAPI GetThreadPriority(HANDLE32 hthread)
     THDB *thread;
     INT32 ret;
     
-    if (!(thread = THREAD_GetPtr( hthread ))) return 0;
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+        return 0;
     ret = thread->delta_priority;
     K32OBJ_DecCount( &thread->header );
     return ret;
@@ -500,7 +501,8 @@ BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
 {
     THDB *thread;
     
-    if (!(thread = THREAD_GetPtr( hthread ))) return FALSE;
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_SET_INFORMATION )))
+        return FALSE;
     thread->delta_priority = priority;
     K32OBJ_DecCount( &thread->header );
     return TRUE;
@@ -522,7 +524,8 @@ BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
 {
     THDB *thread;
     
-    if (!(thread = THREAD_GetPtr( hthread ))) return FALSE;
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+        return FALSE;
     if (exitcode) *exitcode = thread->exit_code;
     K32OBJ_DecCount( &thread->header );
     return TRUE;

@@ -36,7 +36,7 @@
  *   This function will print via dprintf_ver to stddeb the prologue string,
  *   followed by the address of teststring and the string it contains if
  *   teststring is non-null or "(null)" otherwise, and then the epilogue
- *   string.
+ *   string followed by a new line.
  *
  *   Revision history
  *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
@@ -44,6 +44,9 @@
  *      05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
  *         Fixed problem that caused bug with tools/make_debug -- renaming
  *         this function should fix the problem.
+ *      15-Feb-1998 Dimitrie Paun (dimi@cs.toronto.edu)
+ *         Modified it to make it print the message using only one
+ *         dprintf_ver call.
  *
  *****************************************************************************/
 
@@ -52,17 +55,131 @@ static void  ver_dstring(
     char const * teststring,
     char const * epilogue )
 {
-    dprintf_ver(stddeb, "%s", prologue);
-    
-    if(teststring)
-	dprintf_ver(stddeb, "%p (\"%s\")", (void const *) teststring,
-		    teststring);
-    else
-	dprintf_ver(stddeb, "(null)");
+    dprintf_ver(stddeb, "%s %p (\"%s\") %s\n", prologue, 
+		(void const *) teststring, 
+		teststring ? teststring : "(null)",
+		epilogue);
+}
 
-    dprintf_ver(stddeb, "%s", epilogue);
+/******************************************************************************
+ *
+ *   This function will print via dprintf_ver to stddeb debug info regarding
+ *   the file info structure vffi.
+ *      15-Feb-1998 Dimitrie Paun (dimi@cs.toronto.edu)
+ *      Added this function to clean up the code.
+ *
+ *****************************************************************************/
+static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
+{
+        char buff[1024];
+	char *p;
 
-    return;
+	dprintf_ver(stddeb," structversion=0x%lx.0x%lx, fileversion=0x%lx.0x%lx, productversion=0x%lx.0x%lx, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
+		    (vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
+		    vffi->dwFileVersionMS,vffi->dwFileVersionLS,
+		    vffi->dwProductVersionMS,vffi->dwProductVersionLS,
+		    vffi->dwFileFlagsMask,
+		    (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
+		    (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
+		    (vffi->dwFileFlags & VS_FF_PATCHED) ? "PATCHED," : "",
+		    (vffi->dwFileFlags & VS_FF_PRIVATEBUILD) ? "PRIVATEBUILD," : "",
+		    (vffi->dwFileFlags & VS_FF_INFOINFERRED) ? "INFOINFERRED," : "",
+		    (vffi->dwFileFlags & VS_FF_SPECIALBUILD) ? "SPECIALBUILD," : ""
+		    );
+
+	p = buff;
+	p+=sprintf(p," OS=0x%lx.0x%lx (",
+		(vffi->dwFileOS&0xFFFF0000)>>16,
+		vffi->dwFileOS&0x0000FFFF
+	);
+	switch (vffi->dwFileOS&0xFFFF0000) {
+	case VOS_DOS:p+=sprintf(p,"DOS,");break;
+	case VOS_OS216:p+=sprintf(p,"OS/2-16,");break;
+	case VOS_OS232:p+=sprintf(p,"OS/2-32,");break;
+	case VOS_NT:p+=sprintf(p,"NT,");break;
+	case VOS_UNKNOWN:
+	default:
+		p+=sprintf(p,"UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
+	}
+	switch (vffi->dwFileOS & 0xFFFF) {
+	case VOS__BASE:p+=sprintf(p,"BASE");break;
+	case VOS__WINDOWS16:p+=sprintf(p,"WIN16");break;
+	case VOS__WINDOWS32:p+=sprintf(p,"WIN32");break;
+	case VOS__PM16:p+=sprintf(p,"PM16");break;
+	case VOS__PM32:p+=sprintf(p,"PM32");break;
+	default:p+=sprintf(p,"UNKNOWN(0x%lx)",vffi->dwFileOS&0xFFFF);break;
+	}
+	p+=sprintf(p,")");
+	dprintf_ver(stddeb, "%s\n", buff);
+
+	p = buff;
+	switch (vffi->dwFileType) {
+	default:
+	case VFT_UNKNOWN:
+		p+=sprintf(p,"filetype=Unknown(0x%lx)",vffi->dwFileType);
+		break;
+	case VFT_APP:p+=sprintf(p,"filetype=APP,");break;
+	case VFT_DLL:p+=sprintf(p,"filetype=DLL,");break;
+	case VFT_DRV:
+		p+=sprintf(p,"filetype=DRV,");
+		switch(vffi->dwFileSubtype) {
+		default:
+		case VFT2_UNKNOWN:
+			p+=sprintf(p,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
+			break;
+		case VFT2_DRV_PRINTER:
+			p+=sprintf(p,"PRINTER");
+			break;
+		case VFT2_DRV_KEYBOARD:
+			p+=sprintf(p,"KEYBOARD");
+			break;
+		case VFT2_DRV_LANGUAGE:
+			p+=sprintf(p,"LANGUAGE");
+			break;
+		case VFT2_DRV_DISPLAY:
+			p+=sprintf(p,"DISPLAY");
+			break;
+		case VFT2_DRV_MOUSE:
+			p+=sprintf(p,"MOUSE");
+			break;
+		case VFT2_DRV_NETWORK:
+			p+=sprintf(p,"NETWORK");
+			break;
+		case VFT2_DRV_SYSTEM:
+			p+=sprintf(p,"SYSTEM");
+			break;
+		case VFT2_DRV_INSTALLABLE:
+			p+=sprintf(p,"INSTALLABLE");
+			break;
+		case VFT2_DRV_SOUND:
+			p+=sprintf(p,"SOUND");
+			break;
+		case VFT2_DRV_COMM:
+			p+=sprintf(p,"COMM");
+			break;
+		case VFT2_DRV_INPUTMETHOD:
+			p+=sprintf(p,"INPUTMETHOD");
+			break;
+		}
+		break;
+	case VFT_FONT:
+		p+=sprintf(p,"filetype=FONT.");
+		switch (vffi->dwFileSubtype) {
+		default:
+			p+=sprintf(p,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
+			break;
+		case VFT2_FONT_RASTER:p+=sprintf(p,"RASTER");break;
+		case VFT2_FONT_VECTOR:p+=sprintf(p,"VECTOR");break;
+		case VFT2_FONT_TRUETYPE:p+=sprintf(p,"TRUETYPE");break;
+		}
+		break;
+	case VFT_VXD:p+=sprintf(p,"filetype=VXD");break;
+	case VFT_STATIC_LIB:p+=sprintf(p,"filetype=STATIC_LIB");break;
+	}
+	dprintf_ver(stddeb, "%s\n", buff);
+
+	dprintf_ver(stddeb, "  filedata=0x%lx.0x%lx\n",
+		    vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
 
 /******************************************************************************
@@ -515,110 +632,10 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	}
 	if (*(WORD*)buf < len)
 		len = *(WORD*)buf;
-	dprintf_ver(stddeb,"	structversion=0x%lx.0x%lx,\n    fileversion=0x%lx.0x%lx,\n    productversion=0x%lx.0x%lx,\n    flagmask=0x%lx,\n    flags=",
-		(vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
-		vffi->dwFileVersionMS,vffi->dwFileVersionLS,
-		vffi->dwProductVersionMS,vffi->dwProductVersionLS,
-		vffi->dwFileFlagsMask
-	);
-	if (vffi->dwFileFlags & VS_FF_DEBUG) 
-		dprintf_ver(stddeb,"DEBUG,");
-	if (vffi->dwFileFlags & VS_FF_PRERELEASE)
-		dprintf_ver(stddeb,"PRERELEASE,");
-	if (vffi->dwFileFlags & VS_FF_PATCHED)
-		dprintf_ver(stddeb,"PATCHED,");
-	if (vffi->dwFileFlags & VS_FF_PRIVATEBUILD)
-		dprintf_ver(stddeb,"PRIVATEBUILD,");
-	if (vffi->dwFileFlags & VS_FF_INFOINFERRED)
-		dprintf_ver(stddeb,"INFOINFERRED,");
-	if (vffi->dwFileFlags & VS_FF_SPECIALBUILD)
-		dprintf_ver(stddeb,"SPECIALBUILD,");
-	dprintf_ver(stddeb,"\n    OS=0x%lx.0x%lx (",
-		(vffi->dwFileOS&0xFFFF0000)>>16,
-		vffi->dwFileOS&0x0000FFFF
-	);
-	switch (vffi->dwFileOS&0xFFFF0000) {
-	case VOS_DOS:dprintf_ver(stddeb,"DOS,");break;
-	case VOS_OS216:dprintf_ver(stddeb,"OS/2-16,");break;
-	case VOS_OS232:dprintf_ver(stddeb,"OS/2-32,");break;
-	case VOS_NT:dprintf_ver(stddeb,"NT,");break;
-	case VOS_UNKNOWN:
-	default:
-		dprintf_ver(stddeb,"UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
-	}
-	switch (vffi->dwFileOS & 0xFFFF) {
-	case VOS__BASE:dprintf_ver(stddeb,"BASE");break;
-	case VOS__WINDOWS16:dprintf_ver(stddeb,"WIN16");break;
-	case VOS__WINDOWS32:dprintf_ver(stddeb,"WIN32");break;
-	case VOS__PM16:dprintf_ver(stddeb,"PM16");break;
-	case VOS__PM32:dprintf_ver(stddeb,"PM32");break;
-	default:dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileOS&0xFFFF);break;
-	}
-	dprintf_ver(stddeb,")\n    ");
-	switch (vffi->dwFileType) {
-	default:
-	case VFT_UNKNOWN:
-		dprintf_ver(stddeb,"filetype=Unknown(0x%lx)",vffi->dwFileType);
-		break;
-	case VFT_APP:dprintf_ver(stddeb,"filetype=APP,");break;
-	case VFT_DLL:dprintf_ver(stddeb,"filetype=DLL,");break;
-	case VFT_DRV:
-		dprintf_ver(stddeb,"filetype=DRV,");
-		switch(vffi->dwFileSubtype) {
-		default:
-		case VFT2_UNKNOWN:
-			dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
-			break;
-		case VFT2_DRV_PRINTER:
-			dprintf_ver(stddeb,"PRINTER");
-			break;
-		case VFT2_DRV_KEYBOARD:
-			dprintf_ver(stddeb,"KEYBOARD");
-			break;
-		case VFT2_DRV_LANGUAGE:
-			dprintf_ver(stddeb,"LANGUAGE");
-			break;
-		case VFT2_DRV_DISPLAY:
-			dprintf_ver(stddeb,"DISPLAY");
-			break;
-		case VFT2_DRV_MOUSE:
-			dprintf_ver(stddeb,"MOUSE");
-			break;
-		case VFT2_DRV_NETWORK:
-			dprintf_ver(stddeb,"NETWORK");
-			break;
-		case VFT2_DRV_SYSTEM:
-			dprintf_ver(stddeb,"SYSTEM");
-			break;
-		case VFT2_DRV_INSTALLABLE:
-			dprintf_ver(stddeb,"INSTALLABLE");
-			break;
-		case VFT2_DRV_SOUND:
-			dprintf_ver(stddeb,"SOUND");
-			break;
-		case VFT2_DRV_COMM:
-			dprintf_ver(stddeb,"COMM");
-			break;
-		case VFT2_DRV_INPUTMETHOD:
-			dprintf_ver(stddeb,"INPUTMETHOD");
-			break;
-		}
-		break;
-	case VFT_FONT:
-		dprintf_ver(stddeb,"filetype=FONT.");
-		switch (vffi->dwFileSubtype) {
-		default:
-			dprintf_ver(stddeb,"UNKNOWN(0x%lx)",vffi->dwFileSubtype);
-			break;
-		case VFT2_FONT_RASTER:dprintf_ver(stddeb,"RASTER");break;
-		case VFT2_FONT_VECTOR:dprintf_ver(stddeb,"VECTOR");break;
-		case VFT2_FONT_TRUETYPE:dprintf_ver(stddeb,"TRUETYPE");break;
-		}
-		break;
-	case VFT_VXD:dprintf_ver(stddeb,"filetype=VXD");break;
-	case VFT_STATIC_LIB:dprintf_ver(stddeb,"filetype=STATIC_LIB");break;
-	}
-	dprintf_ver(stddeb,"\n    filedata=0x%lx.0x%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
+
+	if(debugging_ver)
+	  print_vffi_debug(vffi);
+
 	return len;
 }
 
@@ -706,9 +723,9 @@ DWORD WINAPI VerFindFile16(
     else
 	dprintf_ver(stddeb, "\n");
 
-    ver_dstring("\tlpszFilename = ", lpszFilename, "\n");
-    ver_dstring("\tlpszWinDir = ", lpszWinDir, "\n");
-    ver_dstring("\tlpszAppDir = ", lpszAppDir, "\n");
+    ver_dstring("\tlpszFilename = ", lpszFilename, "");
+    ver_dstring("\tlpszWinDir = ", lpszWinDir, "");
+    ver_dstring("\tlpszAppDir = ", lpszAppDir, "");
 
     dprintf_ver(stddeb, "\tlpszCurDir = %p\n", lpszCurDir);
     if(lpuCurDirLen)
@@ -807,30 +824,19 @@ DWORD WINAPI VerFindFile16(
 	*lpuCurDirLen = curDirSizeReq;
     }
 
-    dprintf_ver(stddeb, "VerFindFile() ret = %lu ",
-		retval);
+    dprintf_ver(stddeb, "VerFindFile() ret = %lu (%s%s%s)\n", retval,
+		(retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
+		(retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
+		(retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "");
 
-    if(retval) {
-	dprintf_ver(stddeb, "( ");
-
-	if(retval & VFF_CURNEDEST)
-	    dprintf_ver(stddeb, "VFF_CURNEDEST ");
-	if(retval & VFF_FILEINUSE)
-	    dprintf_ver(stddeb, "VFF_FILEINUSE ");
-	if(retval & VFF_BUFFTOOSMALL)
-	    dprintf_ver(stddeb, "VFF_BUFFTOOSMALL ");
-
-	dprintf_ver(stddeb, ")");
-    }
-
-    ver_dstring("\n\t(Exit) lpszCurDir = ", lpszCurDir, "\n");
+    ver_dstring("\t(Exit) lpszCurDir = ", lpszCurDir, "");
     if(lpuCurDirLen)
 	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
 	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = (null)\n");
 
-    ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "\n");
+    ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "");
     if(lpuDestDirLen)
 	dprintf_ver(stddeb, "\t(Exit) lpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);

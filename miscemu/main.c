@@ -44,6 +44,7 @@ BOOL32 MAIN_EmulatorInit(void)
  */
 int main( int argc, char *argv[] )
 {
+    extern BOOL32 PROCESS_Init(void);
     extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
     extern void *CALL32_Init(void);
     extern char * DEBUG_argv0;
@@ -59,6 +60,10 @@ int main( int argc, char *argv[] )
      */
     DEBUG_argv0 = argv[0];
 
+    /* Create the initial process */
+    if (!PROCESS_Init()) return FALSE;
+
+    /* Parse command-line */
     if (!MAIN_WineInit( &argc, argv )) return 1;
 
     /* Handle -dll option (hack) */

@@ -1141,6 +1141,7 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT32 first,
 
     /* A few sanity checks */
 
+    if ((last == -1) && (descr->nb_items == 0)) return LB_OKAY;
     if (!(descr->style & LBS_MULTIPLESEL)) return LB_ERR;
     if (last == -1) last = descr->nb_items - 1;
     if ((first < 0) || (first >= descr->nb_items)) return LB_ERR;

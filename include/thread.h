@@ -122,6 +122,7 @@ extern THDB *pCurrentThread;
 extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
+extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 

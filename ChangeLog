@@ -1,4 +1,103 @@
 ----------------------------------------------------------------------
+Sun Feb 15 12:02:59 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [graphics/x11drv/*.c] [objects/*.c]
+	A few X11 critical section optimizations, mostly with XGet/PutPixel.
+
+	* [scheduler/sysdeps.c] [misc/main.c]
+	Make sure X11 critical section is available before any Xlib call.
+
+	* [if1632/relay.c] [tools/build.c]
+	Yet another attempt at fixing Catch/Throw.
+
+	* [loader/pe_image.c]
+	Fixed broken PE DLL loading.
+
+	* [include/winnt.h] [scheduler/handle.c] [scheduler/*.c]
+	Implemented handle access rights.
+	Added Get/SetHandleInformation.
+
+Sun Feb 15 09:45:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [misc/winsock.c]
+	Fixed bug in WSACleanup which lead to crashes in WINSOCK_HandleIO.
+
+	* [graphics/fontengine.c] [include/font.h]
+	Minor improvements.
+
+	* [memory/global.c]
+	Implemented GlobalEntryHandle.
+
+	* [misc/toolhelp.c]
+	Fixed a memory bug in Notify*register.
+
+	* [misc/w32scomb.c]
+	Improved Get16DLLAddress.
+
+	* [objects/gdiobj.c]
+	Implemented GdiSeeGdiDo.
+
+
+Sat Feb 14 14:57:39 1998  John Richardson <jrichard@zko.dec.com>
+
+	* [win32/console.c]
+	Added the console implementation, AllocConsole, FreeConsole,
+	CONSOLE_InheritConsole.
+
+	* [documentation/console]
+	Some documentation on the console.
+
+	* [include/winerror.h]
+	Added some error defines.
+
+	* [scheduler/k32obj.c]
+	Registered the scheduler ops.
+
+Fri Feb 13 19:35:35 1998  James Moody  <013263m@dragon.acadiau.ca>
+
+	* [ole/ole2nls.c]
+	Some English language fixes for missing values.
+
+	* [controls/listbox.c]
+	Fix to allow an empty listbox to deselect all items.
+
+	* [relay32/user32.spec] [windows/keyboard.c]
+	CreateAcceleratorTableA stub method.
+
+	* [windows/sysmetrics.c]
+	Added missing SM_CXCURSOR & SM_CYCURSOR initializers.
+
+	* [windows/message.c]
+	PostThreadMessage32A stub method.
+
+Fri Feb 13 17:12:24 1998  Jim Peterson <jspeter@roanoke.infi.net>
+
+	* [libtest/hello3res.rc] [libtest/hello3.c] [libtest/Makefile.in]
+	Updated the 'hello3' test so that it functions properly again.
+
+Fri Feb 13 14:08:07 1998  Martin Boehme  <boehme@informatik.mu-luebeck.de>
+	
+	* [graphics/mapping.c]
+	Fixed the embarrassing bugs I introduced into DPtoLP and
+	LPtoDP.
+
+	* [windows/scroll.c]
+	Prevent ScrollWindow32 from sending WM_ERASEBKGND.
+
+Thu Feb 12 22:46:53 1998  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile] [include/ldt.h]
+	Fix to cope with records longer than 64K.
+
+	* [windows/clipboard.c]
+	Clean up bitmaps and metapicts properly.
+
+Mon Feb  3 21:52:18 1998  Karl Backström <karl_b@geocities.com>
+
+	* [programs/winhelp/Sw.rc] [resources/sysres_Sw.rc]
+	Minor update of Swedish language support.
+
+----------------------------------------------------------------------
 Sun Feb  1 13:24:54 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [files/drive.c]

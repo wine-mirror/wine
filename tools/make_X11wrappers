@@ -73,12 +73,11 @@ END
 /*
  * Thread safe wrappers around $name calls.
  * This file was generated automatically by tools/make_X11wrappers
- *
- * Copyright 1998 Kristian Nielsen
+ * DO NOT EDIT!
  */
 
 $x11_incl#include <X11/$extensions_dir$name.h>
-#include "tsx11defs.h"
+#include "x11drv.h"
 #include "stddebug.h"
 #include "debug.h"
 END
@@ -214,11 +213,11 @@ sub raw_output_fn {
     print OUTC "{\n";
     print OUTC "  $resultdecl;\n" if $resultdecl;
     print OUTC "  dprintf_x11(stddeb, \"Call $fn_name\\n\");\n";
-    print OUTC "  X11_LOCK();\n";
+    print OUTC "  EnterCriticalSection( &X11DRV_CritSection );\n";
     print OUTC "  ";
     print OUTC "r = " if $resultdecl;
     print OUTC "$fn_name($actuals);\n";
-    print OUTC "  X11_UNLOCK();\n";
+    print OUTC "  LeaveCriticalSection( &X11DRV_CritSection );\n";
     print OUTC "  dprintf_x11(stddeb, \"Ret $fn_name\\n\");\n";
     print OUTC "  return r;\n" if $resultdecl;
     print OUTC "}\n";

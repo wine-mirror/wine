@@ -64,6 +64,8 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
  (__winelib ? (void*)(ptr) : PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr)))
 #define PTR_SEG_OFF_TO_SEGPTR(seg,off) \
  (__winelib ? (SEGPTR)PTR_SEG_OFF_TO_LIN(seg,off) : (SEGPTR)MAKELONG(off,seg))
+#define PTR_SEG_OFF_TO_HUGEPTR(seg,off) \
+ (PTR_SEG_OFF_TO_SEGPTR( (seg) + (HIWORD(off) << __AHSHIFT), LOWORD(off) ))
 
 extern unsigned char ldt_flags_copy[LDT_SIZE];
 

@@ -850,6 +850,28 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 
 
 /***********************************************************************
+ *           GdiSeeGdiDo   (GDI.452)
+ */
+DWORD WINAPI GdiSeeGdiDo( WORD wReqType, WORD wParam1, WORD wParam2,
+                          WORD wParam3 )
+{
+    switch (wReqType)
+    {
+    case 0x0001:  /* LocalAlloc */
+        return LOCAL_Alloc( GDI_HeapSel, wParam1, wParam3 );
+    case 0x0002:  /* LocalFree */
+        return LOCAL_Free( GDI_HeapSel, wParam1 );
+    case 0x0003:  /* LocalCompact */
+        return LOCAL_Compact( GDI_HeapSel, wParam3, 0 );
+    case 0x0103:  /* LocalHeap */
+        return GDI_HeapSel;
+    default:
+        fprintf(stderr, "GdiSeeGdiDo: wReqType %04x (unknown)", wReqType);
+        return (DWORD)-1;
+    }
+}
+
+/***********************************************************************
  *           MulDiv16   (GDI.128)
  */
 INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )

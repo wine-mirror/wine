@@ -969,6 +969,7 @@ DWORD WINAPI DumpIcon( SEGPTR pInfo, WORD *lpLen,
  *           CURSORICON_SetCursor
  *
  * Change the X cursor. Helper function for SetCursor() and ShowCursor().
+ * The Xlib critical section must be entered before calling this function.
  */
 static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
 {
@@ -981,12 +982,12 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         static const char data[] = { 0 };
 
         bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = TSXCreateBitmapFromData( display, rootWindow, data, 1, 1 );
+        pixmapBits = XCreateBitmapFromData( display, rootWindow, data, 1, 1 );
         if (pixmapBits)
         {
-            cursor = TSXCreatePixmapCursor( display, pixmapBits, pixmapBits,
+            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
                                           &bg, &bg, 0, 0 );
-            TSXFreePixmap( display, pixmapBits );
+            XFreePixmap( display, pixmapBits );
         }
     }
     else  /* Create the X cursor from the bits */
@@ -1008,9 +1009,9 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
 	 *	 as the Windows cursor data). Perhaps use a more generic
 	 *	 algorithm here.
 	 */
-        pixmapAll = TSXCreatePixmap( display, rootWindow,
+        pixmapAll = XCreatePixmap( display, rootWindow,
                                    ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = TSXCreateImage( display, DefaultVisualOfScreen(screen),
+        image = XCreateImage( display, DefaultVisualOfScreen(screen),
                               1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
                               ptr->nHeight * 2, 16, ptr->nWidthBytes);
         if (image)
@@ -1018,19 +1019,19 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
             image->byte_order = MSBFirst;
             image->bitmap_bit_order = MSBFirst;
             image->bitmap_unit = 16;
-            TS_XInitImageFuncPtrs(image);
+            _XInitImageFuncPtrs(image);
             if (pixmapAll)
-                TSXPutImage( display, pixmapAll, BITMAP_monoGC, image,
+                XPutImage( display, pixmapAll, BITMAP_monoGC, image,
                            0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
             image->data = NULL;
-            TSXDestroyImage( image );
+            XDestroyImage( image );
         }
 
         /* Now create the 2 pixmaps for bits and mask */
 
-        pixmapBits = TSXCreatePixmap( display, rootWindow,
+        pixmapBits = XCreatePixmap( display, rootWindow,
                                     ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = TSXCreatePixmap( display, rootWindow,
+        pixmapMask = XCreatePixmap( display, rootWindow,
                                     ptr->nWidth, ptr->nHeight, 1 );
 
         /* Make sure everything went OK so far */
@@ -1059,39 +1060,39 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
              * I don't know if it's correct per the X spec, but maybe
              * we ought to take advantage of it.  -- AJ
              */
-            TSXCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            TSXCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            TSXSetFunction( display, BITMAP_monoGC, GXandReverse );
-            TSXCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            XSetFunction( display, BITMAP_monoGC, GXandReverse );
+            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            TSXSetFunction( display, BITMAP_monoGC, GXorReverse );
-            TSXCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            XSetFunction( display, BITMAP_monoGC, GXorReverse );
+            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            TSXSetFunction( display, BITMAP_monoGC, GXcopy );
+            XSetFunction( display, BITMAP_monoGC, GXcopy );
             fg.red = fg.green = fg.blue = 0xffff;
             bg.red = bg.green = bg.blue = 0x0000;
-            cursor = TSXCreatePixmapCursor( display, pixmapBits, pixmapMask,
+            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
                                 &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
         }
 
         /* Now free everything */
 
-        if (pixmapAll) TSXFreePixmap( display, pixmapAll );
-        if (pixmapBits) TSXFreePixmap( display, pixmapBits );
-        if (pixmapMask) TSXFreePixmap( display, pixmapMask );
+        if (pixmapAll) XFreePixmap( display, pixmapAll );
+        if (pixmapBits) XFreePixmap( display, pixmapBits );
+        if (pixmapMask) XFreePixmap( display, pixmapMask );
         GlobalUnlock16( hCursor );
     }
 
     if (cursor == None) return FALSE;
-    if (CURSORICON_XCursor != None) TSXFreeCursor( display, CURSORICON_XCursor );
+    if (CURSORICON_XCursor != None) XFreeCursor( display, CURSORICON_XCursor );
     CURSORICON_XCursor = cursor;
 
     if (rootWindow != DefaultRootWindow(display))
     {
         /* Set the cursor on the desktop window */
-        TSXDefineCursor( display, rootWindow, cursor );
+        XDefineCursor( display, rootWindow, cursor );
     }
     else
     {
@@ -1100,7 +1101,7 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );
-            if (win) TSXDefineCursor( display, win, cursor );
+            if (win) XDefineCursor( display, win, cursor );
             hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
         }
     }
@@ -1130,7 +1131,11 @@ HCURSOR32 WINAPI SetCursor32( HCURSOR32 hCursor )
     hActiveCursor = hCursor;
     /* Change the cursor shape only if it is visible */
     if (CURSOR_ShowCount >= 0)
+    {
+        EnterCriticalSection( &X11DRV_CritSection );
         CALL_LARGE_STACK( CURSORICON_SetCursor, hActiveCursor );
+        LeaveCriticalSection( &X11DRV_CritSection );
+    }
     return hOldCursor;
 }
 
@@ -1172,6 +1177,7 @@ INT32 WINAPI ShowCursor32( BOOL32 bShow )
     dprintf_cursor( stddeb, "ShowCursor: %d, count=%d\n",
                     bShow, CURSOR_ShowCount );
 
+    EnterCriticalSection( &X11DRV_CritSection );
     if (bShow)
     {
         if (++CURSOR_ShowCount == 0)  /* Show it */
@@ -1182,6 +1188,7 @@ INT32 WINAPI ShowCursor32( BOOL32 bShow )
         if (--CURSOR_ShowCount == -1)  /* Hide it */
             CALL_LARGE_STACK( CURSORICON_SetCursor, 0 );
     }
+    LeaveCriticalSection( &X11DRV_CritSection );
     return CURSOR_ShowCount;
 }
 

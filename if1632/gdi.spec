@@ -211,9 +211,9 @@ file	gdi.exe
 282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
 299 stub ENGINEGETCHARWIDTHEX
 300 pascal EngineEnumerateFont(ptr segptr long) EngineEnumerateFont
-301 stub ENGINEDELETEFONT
+301 pascal16 EngineDeleteFont(ptr) EngineDeleteFont
 302 pascal EngineRealizeFont(ptr ptr ptr) EngineRealizeFont
-303 stub ENGINEGETCHARWIDTH
+303 pascal16 EngineGetCharWidth(ptr word word ptr) EngineGetCharWidth
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP
 306 stub ENGINEMAKEFONTDIR
@@ -285,7 +285,7 @@ file	gdi.exe
 449 stub DEVICECOLORMATCH
 450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon16
 451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn16
-452 stub GDISEEGDIDO
+452 pascal   GdiSeeGdiDo(word word word word) GdiSeeGdiDo
 460 stub GDITASKTERMINATION
 461 pascal16 SetObjectOwner(word word) SetObjectOwner16
 462 pascal16 IsGDIObject(word) IsGDIObject

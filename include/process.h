@@ -17,7 +17,7 @@
 /* Process handle entry */
 typedef struct
 {
-    DWORD    flags;   /* Handle flags */
+    DWORD    access;  /* Access flags */
     K32OBJ  *ptr;     /* Object ptr */
 } HANDLE_ENTRY;
 
@@ -103,12 +103,17 @@ typedef struct _PDB32
 #define PROCESS_ID_TO_PDB(id)  ((PDB32 *)((id) ^ PROCESS_OBFUSCATOR))
 #define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
 
+/* scheduler/handle.c */
+extern HANDLE_TABLE *HANDLE_AllocTable( PDB32 *process );
+extern HANDLE32 HANDLE_Alloc( K32OBJ *ptr, DWORD access, BOOL32 inherit );
+extern K32OBJ *HANDLE_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type,
+                                 DWORD access );
+extern BOOL32 HANDLE_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD access );
+
 /* scheduler/process.c */
 extern PDB32 *PROCESS_Current(void);
+extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
-extern HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags);
-extern K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type );
-extern BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags );
 extern PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line );
 
 #endif  /* __WINE_PROCESS_H */

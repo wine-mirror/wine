@@ -84,7 +84,8 @@ static HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->unix_name = NULL;
     (*file)->type = FILE_TYPE_DISK;
 
-    handle = PROCESS_AllocHandle( &(*file)->header, 0 );
+    handle = HANDLE_Alloc( &(*file)->header, FILE_ALL_ACCESS | GENERIC_READ |
+                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, FALSE );
     /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
@@ -118,7 +119,7 @@ static void FILE_Destroy( K32OBJ *ptr )
  */
 static FILE_OBJECT *FILE_GetFile( HFILE32 handle )
 {
-    return (FILE_OBJECT *)PROCESS_GetObjPtr( handle, K32OBJ_FILE );
+    return (FILE_OBJECT *)HANDLE_GetObjPtr( handle, K32OBJ_FILE, 0 /*FIXME*/ );
 }
 
 
@@ -511,7 +512,7 @@ HFILE32 FILE_Dup( HFILE32 hFile )
 
     dprintf_file( stddeb, "FILE_Dup for handle %d\n", hFile );
     if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
-    handle = PROCESS_AllocHandle( &file->header, 0 );
+    handle = HANDLE_Alloc( &file->header, FILE_ALL_ACCESS /*FIXME*/, FALSE );
     FILE_ReleaseFile( file );
     dprintf_file( stddeb, "FILE_Dup return handle %d\n", handle );
     return handle;
@@ -528,8 +529,9 @@ HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
     FILE_OBJECT *file;
 
     dprintf_file( stddeb, "FILE_Dup2 for handle %d\n", hFile1 );
+    /* FIXME: should use DuplicateHandle */
     if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR32;
-    if (!PROCESS_SetObjPtr( hFile2, &file->header, 0 )) hFile2 = HFILE_ERROR32;
+    if (!HANDLE_SetObjPtr( hFile2, &file->header, 0 )) hFile2 = HFILE_ERROR32;
     FILE_ReleaseFile( file );
     return hFile2;
 }

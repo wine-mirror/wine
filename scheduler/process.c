@@ -18,8 +18,8 @@
 #include "winerror.h"
 #include "pe_image.h"
 
-#define HTABLE_SIZE  0x30  /* Handle table initial size */
-#define HTABLE_INC   0x10  /* Handle table increment */
+/* Process self-handle */
+#define PROCESS_SELF ((HANDLE32)0x7fffffff)
 
 static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
 static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
@@ -38,47 +38,30 @@ const K32OBJ_OPS PROCESS_Ops =
 
 
 /***********************************************************************
- *           PROCESS_AllocHandleTable
- */
-static HANDLE_TABLE *PROCESS_AllocHandleTable( PDB32 *process )
-{
-    HANDLE_TABLE *table = HeapAlloc( process->system_heap, HEAP_ZERO_MEMORY,
-                                     sizeof(HANDLE_TABLE) +
-                                     (HTABLE_SIZE-1) * sizeof(HANDLE_ENTRY) );
-    if (!table) return NULL;
-    table->count = HTABLE_SIZE;
-    return table;
-}
-
-
-/***********************************************************************
- *           PROCESS_GrowHandleTable
- */
-static BOOL32 PROCESS_GrowHandleTable( PDB32 *process )
-{
-    HANDLE_TABLE *table;
-    SYSTEM_LOCK();
-    table = process->handle_table;
-    table = HeapReAlloc( process->system_heap,
-                         HEAP_ZERO_MEMORY | HEAP_NO_SERIALIZE, table,
-                         sizeof(HANDLE_TABLE) +
-                         (table->count+HTABLE_INC-1) * sizeof(HANDLE_ENTRY) );
-    if (table)
-    {
-        table->count += HTABLE_INC;
-        process->handle_table = table;
-    }
-    SYSTEM_UNLOCK();
-    return (table != NULL);
-}
-
-
-/***********************************************************************
  *           PROCESS_Current
  */
 PDB32 *PROCESS_Current(void)
 {
     return THREAD_Current()->process;
+}
+
+
+/***********************************************************************
+ *           PROCESS_GetPtr
+ *
+ * Get a process from a handle, incrementing the PDB refcount.
+ */
+PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access )
+{
+    PDB32 *pdb;
+
+    if (handle == PROCESS_SELF)
+    {
+        pdb = PROCESS_Current();
+        K32OBJ_IncCount( &pdb->header );
+        return pdb;
+    }
+    return (PDB32 *)HANDLE_GetObjPtr( handle, K32OBJ_PROCESS, access );
 }
 
 
@@ -99,124 +82,6 @@ PDB32 *PROCESS_IdToPDB( DWORD id )
         return NULL;
     }
     return pdb;
-}
-
-
-/***********************************************************************
- *           PROCESS_AllocHandle
- *
- * Allocate a handle for a kernel object and increment its refcount.
- */
-HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags )
-{
-    HANDLE32 h;
-    HANDLE_ENTRY *entry;
-    PDB32 *pdb = PROCESS_Current();
-
-    assert( ptr );
-    SYSTEM_LOCK();
-    K32OBJ_IncCount( ptr );
-    entry = pdb->handle_table->entries;
-    for (h = 0; h < pdb->handle_table->count; h++, entry++)
-        if (!entry->ptr) break;
-    if ((h < pdb->handle_table->count) || PROCESS_GrowHandleTable( pdb ))
-    {
-        entry = &pdb->handle_table->entries[h];
-        entry->flags = flags;
-        entry->ptr   = ptr;
-        SYSTEM_UNLOCK();
-        return h + 1;  /* Avoid handle 0 */
-    }
-    K32OBJ_DecCount( ptr );
-    SYSTEM_UNLOCK();
-    SetLastError( ERROR_OUTOFMEMORY );
-    return INVALID_HANDLE_VALUE32;
-}
-
-
-/***********************************************************************
- *           PROCESS_GetObjPtr
- *
- * Retrieve a pointer to a kernel object and increments its reference count.
- * The refcount must be decremented when the pointer is no longer used.
- */
-K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type )
-{
-    K32OBJ *ptr = NULL;
-    PDB32 *pdb = PROCESS_Current();
-
-    SYSTEM_LOCK();
-
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
-        ptr = pdb->handle_table->entries[handle - 1].ptr;
-    else if (handle == 0x7fffffff) ptr = &pdb->header;
-
-    if (ptr && ((type == K32OBJ_UNKNOWN) || (ptr->type == type)))
-        K32OBJ_IncCount( ptr );
-    else ptr = NULL;
-
-    SYSTEM_UNLOCK();
-    if (!ptr) SetLastError( ERROR_INVALID_HANDLE );
-    return ptr;
-}
-
-
-/***********************************************************************
- *           PROCESS_SetObjPtr
- *
- * Change the object pointer of a handle, and increment the refcount.
- * Use with caution!
- */
-BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags )
-{
-    BOOL32 ret = TRUE;
-    K32OBJ *old_ptr = NULL;
-    PDB32 *pdb = PROCESS_Current();
-
-    SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
-    {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
-        old_ptr = entry->ptr;
-        K32OBJ_IncCount( ptr );
-        entry->flags = flags;
-        entry->ptr   = ptr;
-    }
-    else
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        ret = FALSE;
-    }
-    if (old_ptr) K32OBJ_DecCount( old_ptr );
-    SYSTEM_UNLOCK();
-    return ret;
-}
-
-
-/*********************************************************************
- *           CloseHandle   (KERNEL32.23)
- */
-BOOL32 WINAPI CloseHandle( HANDLE32 handle )
-{
-    BOOL32 ret = FALSE;
-    K32OBJ *ptr = NULL;
-    PDB32 *pdb = PROCESS_Current();
-
-    SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
-    {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
-        if ((ptr = entry->ptr))
-        {
-            entry->flags = 0;
-            entry->ptr   = NULL;
-            ret = TRUE;
-        }
-    }
-    if (ptr) K32OBJ_DecCount( ptr );
-    SYSTEM_UNLOCK();
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
-    return ret;
 }
 
 
@@ -265,7 +130,6 @@ static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask, LPCSTR cmd_line )
     if (!(pdb->env_db->cmd_line =
 	  HEAP_strdupA( pdb->heap, 0, cmd_line + (unsigned char)cmd_line[0] + 2)))
         goto error;
-
     return TRUE;
 
 error:
@@ -284,7 +148,7 @@ error:
 static void PROCESS_FreePDB( PDB32 *pdb )
 {
     pdb->header.type = K32OBJ_UNKNOWN;
-    if (pdb->heap) HeapDestroy( pdb->heap );
+    if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
     if (pdb->handle_table) HeapFree( pdb->system_heap, 0, pdb->handle_table );
     if (pdb->load_done_evt) K32OBJ_DecCount( pdb->load_done_evt );
     if (pdb->event) K32OBJ_DecCount( pdb->event );
@@ -313,6 +177,7 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
     pdb->parent          = parent;
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
+    pdb->heap            = pdb->system_heap;  /* will be changed later on */
 
     InitializeCriticalSection( &pdb->crit_section );
 
@@ -323,7 +188,7 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
 
     /* Allocate the handle table */
 
-    if (!(pdb->handle_table = PROCESS_AllocHandleTable( pdb ))) goto error;
+    if (!(pdb->handle_table = HANDLE_AllocTable( pdb ))) goto error;
     return pdb;
 
 error:
@@ -337,12 +202,22 @@ error:
  */
 BOOL32 PROCESS_Init(void)
 {
+    extern BOOL32 VIRTUAL_Init(void);
     PDB32 *pdb;
     THDB *thdb;
 
+    /* Initialize virtual memory management */
+    if (!VIRTUAL_Init()) return FALSE;
+
+    /* Create the system and SEGPTR heaps */
+    if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
+    if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
+
+    /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, NULL, NULL ))) return FALSE;
     SET_CUR_THREAD( thdb );
+
     return TRUE;
 }
 
@@ -495,7 +370,7 @@ HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
         SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
-    return PROCESS_AllocHandle( &pdb->header, 0 );
+    return HANDLE_Alloc( &pdb->header, access, inherit );
 }			      
 
 
@@ -805,9 +680,7 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 {
-    PDB32	*pdb;
-
-    pdb = (PDB32*)PROCESS_GetObjPtr(hprocess,K32OBJ_PROCESS);
+    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_SET_INFORMATION );
     if (!pdb) return FALSE;
     switch (priorityclass)
     {
@@ -827,7 +700,7 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
     	fprintf(stderr,"SetPriorityClass: unknown priority class %ld\n",priorityclass);
 	break;
     }
-    K32OBJ_DecCount((K32OBJ*)pdb);
+    K32OBJ_DecCount( &pdb->header );
     return TRUE;
 }
 
@@ -837,11 +710,8 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
  */
 DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 {
-    PDB32	*pdb;
-    DWORD	ret;
-
-    pdb = (PDB32*)PROCESS_GetObjPtr(hprocess,K32OBJ_PROCESS);
-    ret = 0;
+    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_QUERY_INFORMATION );
+    DWORD ret = 0;
     if (pdb)
     {
     	switch (pdb->priority)
@@ -861,7 +731,7 @@ DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 	default:
 	    fprintf(stderr,"GetPriorityClass: unknown priority %ld\n",pdb->priority);
 	}
-	K32OBJ_DecCount((K32OBJ*)pdb);
+	K32OBJ_DecCount( &pdb->header );
     }
     return ret;
 }
@@ -918,6 +788,7 @@ HANDLE32 WINAPI GetStdHandle( DWORD std_handle )
 BOOL32 WINAPI SetStdHandle( DWORD std_handle, HANDLE32 handle )
 {
     PDB32 *pdb = PROCESS_Current();
+    /* FIXME: should we close the previous handle? */
     switch(std_handle)
     {
     case STD_INPUT_HANDLE:

@@ -4698,8 +4698,6 @@ typedef struct {
 
 /* File creation flags
  */
-#define GENERIC_READ            0x80000000L
-#define GENERIC_WRITE           0x40000000L
 #define CREATE_NEW              1
 #define CREATE_ALWAYS           2
 #define OPEN_EXISTING           3
@@ -5360,6 +5358,12 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS);
 DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS);
 
+typedef struct tagANIMATIONINFO
+{
+       UINT32          cbSize;
+       INT32           iMinAnimate;
+} ANIMATIONINFO, *LPANIMATIONINFO;
+
 typedef struct tagNMHDR
 {
     HWND32  hwndFrom;
@@ -5661,6 +5665,7 @@ VOID        WINAPI hmemcpy(LPVOID,LPCVOID,LONG);
 
 /* Declarations for functions that exist only in Win32 */
 
+BOOL32      WINAPI AllocConsole(void);
 BOOL32      WINAPI AreFileApisANSI(void);
 BOOL32      WINAPI Beep(DWORD,DWORD);
 BOOL32      WINAPI ClearCommError(INT32,LPDWORD,LPCOMSTAT);
@@ -5738,6 +5743,7 @@ BOOL32      WINAPI FlushFileBuffers(HFILE32);
 DWORD       WINAPI FormatMessage32A(DWORD,LPCVOID,DWORD,DWORD,LPSTR,
 				    DWORD,LPDWORD);
 #define     FormatMessage WINELIB_NAME_AW(FormatMessage)
+BOOL32      WINAPI FreeConsole(void);
 BOOL32      WINAPI FreeEnvironmentStrings32A(LPSTR);
 BOOL32      WINAPI FreeEnvironmentStrings32W(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
@@ -5776,6 +5782,7 @@ DWORD       WINAPI GetFullPathName32A(LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI GetFullPathName32W(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 INT32       WINAPI GetGraphicsMode(HDC32);
+BOOL32      WINAPI GetHandleInformation(HANDLE32,LPDWORD);
 DWORD       WINAPI GetLargestConsoleWindowSize(HANDLE32);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
@@ -5917,6 +5924,7 @@ DWORD       WINAPI SetFilePointer(HFILE32,LONG,LPLONG,DWORD);
 BOOL32      WINAPI SetFileTime(HFILE32,const FILETIME*,const FILETIME*,
                                const FILETIME*);
 INT32       WINAPI SetGraphicsMode(HDC32,INT32);
+BOOL32      WINAPI SetHandleInformation(HANDLE32,DWORD,DWORD);
 VOID        WINAPI SetLastErrorEx(DWORD,DWORD);
 BOOL32      WINAPI SetMenuItemInfo32A(HMENU32,UINT32,BOOL32,const MENUITEMINFO32A*);
 BOOL32      WINAPI SetMenuItemInfo32W(HMENU32,UINT32,BOOL32,const MENUITEMINFO32W*);

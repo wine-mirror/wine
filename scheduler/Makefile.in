@@ -8,6 +8,7 @@ MODULE    = scheduler
 C_SRCS = \
 	critsection.c \
 	event.c \
+	handle.c \
 	k32obj.c \
 	mutex.c \
 	process.c \

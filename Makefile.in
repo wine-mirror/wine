@@ -119,7 +119,7 @@ libwine.a: $(LIBOBJS)
 libwine.so.1.0: $(LIBOBJS)
 	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
-install_emu: dummy
+install_emu: install_lib
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
 install_lib: install_includes

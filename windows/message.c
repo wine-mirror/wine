@@ -1132,6 +1132,16 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
    pmsg->hwnd = cwp.hwnd;
 }
 
+/**********************************************************************
+ *           PostThreadMessage32A    (USER32.422)
+ */
+BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
+                                   WPARAM32 wParam, LPARAM lParam )
+{
+   fprintf(stderr, "PostThreadMessage32A Stub\n");
+   return FALSE;
+}
+
 /***********************************************************************
  *           SendMessage32A   (USER32.453)
  */
