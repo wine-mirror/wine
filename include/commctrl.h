@@ -378,7 +378,7 @@ static const WCHAR UPDOWN_CLASSW[] = { 'm','s','c','t','l','s','_',
 #endif
 #define UPDOWN_CLASS            WINELIB_NAME_AW(UPDOWN_CLASS)
 
-typedef struct tagUDACCEL
+typedef struct _UDACCEL
 {
     UINT nSec;
     UINT nInc;
@@ -3713,8 +3713,33 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 #define TCHT_ONITEMLABEL  0x04
 #define TCHT_ONITEM       (TCHT_ONITEMICON | TCHT_ONITEMLABEL)
 
+typedef struct tagTCITEMHEADERA
+{
+    UINT  mask;
+    UINT  lpReserved1;
+    UINT  lpReserved2;
+    LPSTR pszText;
+    int   cchTextMax;
+    int   iImage;
+} TCITEMHEADERA, *LPTCITEMHEADERA;
 
-typedef struct tagTCITEMA {
+typedef struct tagTCITEMHEADERW
+{
+    UINT   mask;
+    UINT   lpReserved1;
+    UINT   lpReserved2;
+    LPWSTR pszText;
+    int    cchTextMax;
+    int    iImage;
+} TCITEMHEADERW, *LPTCITEMHEADERW;
+
+#define TCITEMHEADER    WINELIB_NAME_AW(TCITEMHEADER)
+#define LPTCITEMHEADER  WINELIB_NAME_AW(LPTCITEMHEADER)
+#define TC_ITEMHEADER   WINELIB_NAME_AW(TCITEMHEADER)
+#define LPTC_ITEMHEADER WINELIB_NAME_AW(LPTCITEMHEADER)
+
+typedef struct tagTCITEMA
+{
     UINT mask;
     UINT dwState;
     UINT dwStateMask;
@@ -3735,9 +3760,10 @@ typedef struct tagTCITEMW
     LPARAM lParam;
 } TCITEMW, *LPTCITEMW;
 
-#define TCITEM   WINELIB_NAME_AW(TCITEM)
-#define LPTCITEM WINELIB_NAME_AW(LPTCITEM)
-#define TC_ITEM  TCITEM
+#define TCITEM    WINELIB_NAME_AW(TCITEM)
+#define LPTCITEM  WINELIB_NAME_AW(LPTCITEM)
+#define TC_ITEM   WINELIB_NAME_AW(TCITEM)
+#define LPTC_ITEM WINELIB_NAME_AW(LPTCITEM)
 
 #define TCN_FIRST               (0U-550U)
 #define TCN_LAST                (0U-580U)
