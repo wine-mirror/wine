@@ -2120,7 +2120,7 @@ ret:
  *
  * Initialisation of the shell objects
  */
-static HRESULT FILEDLG95_SHELL_Init(HWND hwnd)
+static LRESULT FILEDLG95_SHELL_Init(HWND hwnd)
 {
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 

@@ -141,6 +141,6 @@ extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 /* Timer functions */
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveThreadTimers(void);
-extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, WNDPROC proc );
+extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, WNDPROC proc );
 
 #endif  /* __WINE_WINPROC_H */

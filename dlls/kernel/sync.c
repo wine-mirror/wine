@@ -1583,10 +1583,10 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
  *		CreateIoCompletionPort (KERNEL32.@)
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingCompletionPort,
-                                     DWORD dwCompletionKey, DWORD dwNumberOfConcurrentThreads)
+                                     ULONG_PTR CompletionKey, DWORD dwNumberOfConcurrentThreads)
 {
     FIXME("(%p, %p, %08lx, %08lx): stub.\n",
-          hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
+          hFileHandle, hExistingCompletionPort, CompletionKey, dwNumberOfConcurrentThreads);
     return NULL;
 }
 
@@ -1595,11 +1595,11 @@ HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingComplet
  *		GetQueuedCompletionStatus (KERNEL32.@)
  */
 BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
-                                       LPDWORD lpCompletionKey, LPOVERLAPPED *lpOverlapped,
+                                       PULONG_PTR pCompletionKey, LPOVERLAPPED *lpOverlapped,
                                        DWORD dwMilliseconds )
 {
     FIXME("(%p,%p,%p,%p,%ld), stub!\n",
-          CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
+          CompletionPort,lpNumberOfBytesTransferred,pCompletionKey,lpOverlapped,dwMilliseconds);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

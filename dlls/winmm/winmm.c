@@ -1678,8 +1678,8 @@ UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
     return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
-UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
-                 DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
+                 DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HANDLE		hMidiIn;
     LPWINE_MIDI		lpwm;
@@ -1717,7 +1717,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
  * 				midiInOpen		[WINMM.@]
  */
 UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
-		       DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
+		       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return MIDI_InOpen(lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
@@ -2226,7 +2226,7 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
  * 				MMSYSTEM_MidiStream_Open	[internal]
  */
 MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi,
-                         DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen, 
+                         DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD fdwOpen, 
                          BOOL bFrom32)
 {
     WINE_MIDIStream*	lpMidiStrm;
@@ -2293,8 +2293,8 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
  * 				midiStreamOpen			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-			       DWORD cMidi, DWORD dwCallback,
-			       DWORD dwInstance, DWORD fdwOpen)
+			       DWORD cMidi, DWORD_PTR dwCallback,
+			       DWORD_PTR dwInstance, DWORD fdwOpen)
 {
     return MIDI_StreamOpen(lphMidiStrm, lpuDeviceID, cMidi, dwCallback,
                            dwInstance, fdwOpen, TRUE);
@@ -2478,8 +2478,8 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
 }
 
 UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType, 
-               const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
-               DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+               const LPWAVEFORMATEX lpFormat, DWORD_PTR dwCallback, 
+               DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HANDLE		handle;
     LPWINE_MLD		wmld;
@@ -3046,8 +3046,8 @@ UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  * 				waveInOpen			[WINMM.@]
  */
 UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
-		       const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
-		       DWORD dwInstance, DWORD dwFlags)
+		       const LPWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
+		       DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return WAVE_Open((HANDLE*)lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
                      dwCallback, dwInstance, dwFlags, TRUE);

@@ -2599,7 +2599,7 @@ DWORD WINAPI GetPriorityClass(HANDLE hProcess)
 /***********************************************************************
  *          SetProcessAffinityMask   (KERNEL32.@)
  */
-BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
+BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
 {
     BOOL ret;
     SERVER_START_REQ( set_process_info )

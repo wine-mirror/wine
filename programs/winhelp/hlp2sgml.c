@@ -298,13 +298,13 @@ HANDLE WINAPI GetProcessHeap(void)
     return 0;
 }
 
-void* WINAPI HeapAlloc( HANDLE heap, DWORD flags, DWORD size )
+void* WINAPI HeapAlloc( HANDLE heap, DWORD flags, SIZE_T size )
 {
     assert(flags == 0);
     return malloc(size);
 }
 
-void* WINAPI HeapReAlloc( HANDLE heap, DWORD flags, void* ptr, DWORD size)
+void* WINAPI HeapReAlloc( HANDLE heap, DWORD flags, void* ptr, SIZE_T size)
 {
     assert(flags == 0);
     return realloc(ptr, size);

@@ -2866,7 +2866,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 /***********************************************************************
  *		WSAEventSelect (WS2_32.39)
  */
-int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
+int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, long lEvent)
 {
     int ret;
 
@@ -2944,7 +2944,7 @@ BOOL WINAPI WSAGetOverlappedResult ( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 /***********************************************************************
  *      WSAAsyncSelect			(WS2_32.101)
  */
-INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
+INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, long lEvent)
 {
     int ret;
 
