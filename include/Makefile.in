@@ -107,6 +107,8 @@ WINDOWS_INCLUDES = \
 	mmsystem.h \
 	msacm.h \
 	msacmdlg.h \
+	msi.h \
+	msiquery.h \
 	mssip.h \
 	mswsock.h \
 	nb30.h \

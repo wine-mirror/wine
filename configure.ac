@@ -1452,6 +1452,7 @@ dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
 dlls/msacm/winemp3/Makefile
 dlls/msdmo/Makefile
+dlls/msi/Makefile
 dlls/msimg32/Makefile
 dlls/msisys/Makefile
 dlls/msnet32/Makefile

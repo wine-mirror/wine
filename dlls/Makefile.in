@@ -58,6 +58,7 @@ BASEDIRS = \
 	msacm/msg711 \
 	msacm/winemp3 \
 	msdmo \
+	msi \
 	msimg32 \
 	msisys \
 	msnet32 \
@@ -247,6 +248,7 @@ SYMLINKS = \
 	msadp32.acm$(DLLEXT) \
 	msdmo.dll$(DLLEXT) \
 	msg711.acm$(DLLEXT) \
+	msi.dll$(DLLEXT) \
 	msimg32.dll$(DLLEXT) \
 	msisys.ocx$(DLLEXT) \
 	msnet32.dll$(DLLEXT) \
@@ -481,6 +483,9 @@ msdmo.dll$(DLLEXT): msdmo/msdmo.dll$(DLLEXT)
 
 msg711.acm$(DLLEXT): msacm/msg711/msg711.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm$(DLLEXT) $@
+
+msi.dll$(DLLEXT): msi/msi.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msi/msi.dll$(DLLEXT) $@
 
 msimg32.dll$(DLLEXT): msimg32/msimg32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msimg32/msimg32.dll$(DLLEXT) $@
@@ -719,6 +724,7 @@ IMPORT_LIBS = \
 	libmpr \
 	libmsacm32 \
 	libmsdmo \
+	libmsi \
 	libmsimg32 \
 	libmsnet32 \
 	libmsrle32 \
@@ -993,6 +999,11 @@ libmsdmo.def: msdmo/msdmo.spec.def
 	$(RM) $@ && $(LN_S) msdmo/msdmo.spec.def $@
 libmsdmo.a: msdmo/msdmo.spec.def
 	$(DLLTOOL) -k -l $@ -d msdmo/msdmo.spec.def
+
+libmsi.def: msi/msi.spec.def
+	$(RM) $@ && $(LN_S) msi/msi.spec.def $@
+libmsi.a: msi/msi.spec.def
+	$(DLLTOOL) -k -l $@ -d msi/msi.spec.def
 
 libmsimg32.def: msimg32/msimg32.spec.def
 	$(RM) $@ && $(LN_S) msimg32/msimg32.spec.def $@
@@ -1308,6 +1319,7 @@ mapi32/mapi32.spec.def: $(WINEBUILD)
 mpr/mpr.spec.def: $(WINEBUILD)
 msacm/msacm32.spec.def: $(WINEBUILD)
 msdmo/msdmo.spec.def: $(WINEBUILD)
+msi/msi.spec.def: $(WINEBUILD)
 msimg32/msimg32.spec.def: $(WINEBUILD)
 msnet32/msnet32.spec.def: $(WINEBUILD)
 msvideo/msrle32/msrle32.spec.def: $(WINEBUILD)
@@ -1424,6 +1436,7 @@ msacm/msacm32.dll$(DLLEXT): msacm
 msacm/msadp32/msadp32.acm$(DLLEXT): msacm/msadp32
 msdmo/msdmo.dll$(DLLEXT): msdmo
 msacm/msg711/msg711.acm$(DLLEXT): msacm/msg711
+msi/msi.dll$(DLLEXT): msi
 msimg32/msimg32.dll$(DLLEXT): msimg32
 msisys/msisys.ocx$(DLLEXT): msisys
 msnet32/msnet32.dll$(DLLEXT): msnet32

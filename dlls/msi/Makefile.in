@@ -1,0 +1,39 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msi.dll
+IMPORTS   = ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	distinct.c \
+	handle.c \
+	msi.c \
+	msiquery.c \
+	order.c \
+	record.c \
+	select.c \
+	suminfo.c \
+	table.c \
+	tokenize.c \
+	where.c
+
+#RC_SRCS= msi_rc.rc
+
+EXTRA_SRCS = sql.y 
+EXTRA_OBJS = y.tab.o
+
+@MAKE_DLL_RULES@
+
+y.tab.c y.tab.h: sql.y
+	$(YACC) -d -t $(SRCDIR)/sql.y
+
+# hack to allow parallel make
+y.tab.h: y.tab.c
+y.tab.o: y.tab.h
+
+### Dependencies:
