@@ -1595,7 +1595,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
 	/* now adjust all rectangles by using the height found above */
 	xy = 0;
-	row = 1;
+	row = 0;
 	for (i=0; i<infoPtr->uNumBands; i++) {
 	    lpBand = &infoPtr->bands[i];
 	    if (HIDDENBAND(lpBand)) continue;
@@ -1771,6 +1771,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
             if( !(lpBand->fDraw&DRAW_LAST_IN_ROW) )
                 continue;
 
+            /* FIXME: this next line is wrong, but fixing it to be inverted causes IE's sidebars to be the wrong size */
 	    if (lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
 	    if (((INT)lpBand->cyMaxChild < 1) ||
 		((INT)lpBand->cyIntegral < 1)) {
