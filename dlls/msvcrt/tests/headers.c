@@ -151,6 +151,12 @@ void test_structs()
     CHECK_STRUCT(_complex);
     CHECK_FIELD(_complex, x);
     CHECK_FIELD(_complex, y);
+    CHECK_STRUCT(_div_t);
+    CHECK_FIELD(_div_t, quot);
+    CHECK_FIELD(_div_t, rem);
+    CHECK_STRUCT(_ldiv_t);
+    CHECK_FIELD(_ldiv_t, quot);
+    CHECK_FIELD(_ldiv_t, rem);
     CHECK_STRUCT(_heapinfo);
     CHECK_FIELD(_heapinfo, _pentry);
     CHECK_FIELD(_heapinfo, _size);
