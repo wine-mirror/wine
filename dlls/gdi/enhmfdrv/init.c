@@ -207,15 +207,18 @@ void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
     RECTL *bounds = &physDev->emh->rclBounds;
+    RECTL vportRect = *rect;
+
+    LPtoDP(physDev->hdc, (LPPOINT)&vportRect, 2);
 
     if(bounds->left > bounds->right) {/* first rect */
-        *bounds = *rect;
+	*bounds = vportRect;
 	return;
     }
-    bounds->left   = min(bounds->left,   rect->left);
-    bounds->top    = min(bounds->top,    rect->top);
-    bounds->right  = max(bounds->right,  rect->right);
-    bounds->bottom = max(bounds->bottom, rect->bottom);
+    bounds->left   = min(bounds->left,   vportRect.left);
+    bounds->top    = min(bounds->top,    vportRect.top);
+    bounds->right  = max(bounds->right,  vportRect.right);
+    bounds->bottom = max(bounds->bottom, vportRect.bottom);
     return;
 }
 
