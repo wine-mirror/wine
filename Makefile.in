@@ -97,7 +97,7 @@ install:: install-lib install-dev install-aclocal
 
 uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 	$(RM) $(datadir)/aclocal/wine.m4
-	-rmdir $(datadir)/aclocal
+	-rmdir $(datadir)/wine $(datadir)/aclocal
 
 .PHONY: install-aclocal
 
