@@ -196,9 +196,7 @@ import  ntdll.dll
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 179 stdcall CreateToolhelp32Snapshot(long long) CreateToolhelp32Snapshot
 180 stdcall DebugActiveProcess(long) DebugActiveProcess
-# FIXME
-#181 register DebugBreak() DebugBreak
-181 stub DebugBreak
+181 register DebugBreak() DebugBreak
 182 stdcall DefineDosDeviceA(long str str) DefineDosDeviceA
 183 stub DefineDosDeviceW
 184 stdcall DeleteAtom(long) DeleteAtom

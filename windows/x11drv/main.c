@@ -299,7 +299,7 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
  */
 static int X11DRV_USER_ErrorHandler(Display *display, XErrorEvent *error_evt)
 {
-    kill( getpid(), SIGHUP ); /* force an entry in the debugger */
+    DebugBreak();  /* force an entry in the debugger */
     return 0;
 }
 

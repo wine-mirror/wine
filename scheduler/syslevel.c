@@ -6,7 +6,6 @@
 
 #include <unistd.h>
 #include <sys/types.h>
-#include <signal.h>
 #include "syslevel.h"
 #include "heap.h"
 #include "stackframe.h"
@@ -241,8 +240,7 @@ VOID SYSLEVEL_CheckNotLevel( INT level )
         {
             ERR("(%d): Holding lock of level %d!\n", 
                        level, i );
-
-            kill( getpid(), SIGHUP );
+            DebugBreak();
             break;
         }
 }
