@@ -54,8 +54,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
 /* address where we try to map the system heap */
-#define SYSTEM_HEAP_BASE  ((void*)0x65430000)
-#define SYSTEM_HEAP_SIZE  0x100000   /* Default heap size = 1Mb */
+#define SYSTEM_HEAP_BASE  ((void*)0x80000000)
+#define SYSTEM_HEAP_SIZE  0x1000000   /* Default heap size = 16Mb */
 
 static HANDLE systemHeap;   /* globally shared heap */
 
@@ -87,10 +87,10 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
     HANDLE map, event;
 
     /* create the system heap event first */
-    event = CreateEventA( NULL, TRUE, FALSE, "__SystemHeapEvent" );
+    event = CreateEventA( NULL, TRUE, FALSE, "__wine_system_heap_event" );
 
     if (!(map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
-                                    0, SYSTEM_HEAP_SIZE, "__SystemHeap" ))) return 0;
+                                    0, SYSTEM_HEAP_SIZE, "__wine_system_heap" ))) return 0;
     created = (GetLastError() != ERROR_ALREADY_EXISTS);
 
     if (!(base = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, SYSTEM_HEAP_BASE )))
