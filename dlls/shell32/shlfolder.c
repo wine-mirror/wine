@@ -862,9 +862,11 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 	LPCITEMIDLIST  pidlTemp;
 	PIDLTYPE pt1, pt2;
 
-	TRACE("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",This,lParam,pidl1,pidl2);
-	pdump (pidl1);
-	pdump (pidl2);
+	if (TRACE_ON(shell)) {
+	    TRACE("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",This,lParam,pidl1,pidl2);
+	    pdump (pidl1);
+	    pdump (pidl2);
+	}
 	
 	if (!pidl1 && !pidl2)
 	{
@@ -1144,6 +1146,27 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	    len = strlen(szPath);
 	  }
 	  _ILSimpleGetText(pidl, szPath + len, MAX_PATH - len);	/* append my own path */
+
+          /* MSDN also mentions SHGDN_FOREDITING, which isn't defined in wine */
+          if(!(dwFlags & SHGDN_FORPARSING) &&
+             ((dwFlags & SHGDN_INFOLDER) || (dwFlags == SHGDN_NORMAL)))
+          {
+              HKEY hKey;
+              DWORD dwData;
+              DWORD dwDataSize = sizeof(DWORD);
+              BOOL  doHide = TRUE; /* assume the default value is TRUE */
+
+              /* XXX should it do this only for known file types? -- that would make it even slower! */
+              if(!RegCreateKeyExA(HKEY_CURRENT_USER,
+                                  "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+                                  0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
+              {
+                  if(!RegQueryValueExA(hKey, "HideFileExt", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+                      doHide = dwData;
+                  RegCloseKey(hKey);
+              }
+              if(doHide && szPath[0]!='.') PathRemoveExtensionA(szPath);
+          }
 	}
 	
 	if ( (dwFlags & SHGDN_FORPARSING) && !bSimplePidl)	/* go deeper if needed */
