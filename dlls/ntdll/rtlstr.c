@@ -1405,7 +1405,11 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
 */
 /* Tests that we currently implement */
 #define ITU_IMPLEMENTED_TESTS \
-        (IS_TEXT_UNICODE_SIGNATURE|IS_TEXT_UNICODE_ODD_LENGTH)
+    (IS_TEXT_UNICODE_SIGNATURE | \
+     IS_TEXT_UNICODE_REVERSE_SIGNATURE | \
+     IS_TEXT_UNICODE_ODD_LENGTH | \
+     IS_TEXT_UNICODE_STATISTICS | \
+     IS_TEXT_UNICODE_NULL_BYTES)
 
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
@@ -1443,12 +1447,42 @@ DWORD WINAPI RtlIsTextUnicode(
 	 */
 
 	/* Check for an odd length ... pass if even. */
-	if (!(len & 1))
+	if ((flags & IS_TEXT_UNICODE_ODD_LENGTH) && (len & 1))
 		out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
 
-	/* Check for the special unicode marker byte. */
-	if (*s == 0xFEFF)
+	/* Check for the special byte order unicode marks. */
+	if ((flags & IS_TEXT_UNICODE_SIGNATURE) && *s == 0xFEFF)
 		out_flags |= IS_TEXT_UNICODE_SIGNATURE;
+
+    if ((flags & IS_TEXT_UNICODE_REVERSE_SIGNATURE) && *s == 0xFFFE)
+        out_flags |= IS_TEXT_UNICODE_REVERSE_SIGNATURE;
+
+    /* apply some statistical analysis */
+    if (flags & IS_TEXT_UNICODE_STATISTICS)
+    {
+        DWORD i, stats = 0;
+        /* FIXME: checks only for ASCII characters in the unicode stream */
+        for (i = 0; i < len / sizeof(WCHAR); i++)
+        {
+            if (s[i] <= 255) stats++;
+        }
+        if (stats > len / sizeof(WCHAR) / 2)
+            out_flags |= IS_TEXT_UNICODE_STATISTICS;
+    }
+
+    /* Check for unicode NULL chars */
+    if (flags & IS_TEXT_UNICODE_NULL_BYTES)
+    {
+        DWORD i;
+        for (i = 0; i < len / sizeof(WCHAR); i++)
+        {
+            if (!s[i])
+            {
+                out_flags |= IS_TEXT_UNICODE_NULL_BYTES;
+                break;
+            }
+        }
+    }
 
 	/*
 	 * Check whether the string passed all of the tests.
