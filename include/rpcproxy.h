@@ -209,7 +209,7 @@ ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
 
 #if 0
 
-/* see http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp?frame=true */
+/* see http://www.microsoft.com/msj/0199/com/com0199.aspx */
 
 RPCRTAPI HRESULT RPC_ENTRY
   CreateProxyFromTypeInfo( LPTYPEINFO pTypeInfo, LPUNKNOWN pUnkOuter, REFIID riid,
