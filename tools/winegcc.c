@@ -140,6 +140,7 @@ char *get_obj_file(char **argv, int n)
 
     if (strendswith(argv[n], ".o")) return argv[n];
     if (strendswith(argv[n], ".a")) return argv[n];
+    if (strendswith(argv[n], ".res")) return argv[n];
     
     tmpobj = get_temp_file(".o");
     compargv = malloc(sizeof(char*) * (n + 10));
