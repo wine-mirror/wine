@@ -227,9 +227,9 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
  *    value on OK or NULL on error
  */
 DWORD ENUMPRINTERS_GetDWORDFromRegistryA(
-				HKEY  hPrinterSettings,  /* handle to registry key */
-				LPSTR KeyName			 /* name key to retrieve string from*/
-){                   
+		 HKEY  hPrinterSettings,  /* handle to registry key */
+		 LPSTR KeyName		  /* name key to retrieve string from*/
+){
  DWORD DataSize=8;
  DWORD DataType;
  BYTE  Data[8];
@@ -237,7 +237,7 @@ DWORD ENUMPRINTERS_GetDWORDFromRegistryA(
 
  if (RegQueryValueExA(hPrinterSettings, KeyName, NULL, &DataType,
   					Data, &DataSize)!=ERROR_SUCCESS)
-	FIXME("Query of register didn't succeed?\n");                     
+	FIXME("Query of register '%s' didn't succeed?\n", KeyName);
  if (DataType == REG_DWORD_LITTLE_ENDIAN)
  	Result = Data[0] + (Data[1]<<8) + (Data[2]<<16) + (Data[3]<<24);
  if (DataType == REG_DWORD_BIG_ENDIAN)
@@ -594,22 +594,23 @@ BOOL ENUMPRINTERS_AddInfo5A(
  *      exist, which makes this function return an empty list.
  */
 BOOL  WINAPI EnumPrintersA(
-					DWORD dwType,      /* Types of print objects to enumerate */
-                    LPSTR lpszName,    /* name of objects to enumerate */
-			        DWORD dwLevel,     /* type of printer info structure */
-                    LPBYTE lpbPrinters,/* buffer which receives info*/		        DWORD cbBuf,       /* max size of buffer in bytes */
-                    LPDWORD lpdwNeeded,/* pointer to var: # bytes used/needed */
-			        LPDWORD lpdwReturned/* number of entries returned */
-                   )
+		DWORD dwType,        /* Types of print objects to enumerate */
+                LPSTR lpszName,      /* name of objects to enumerate */
+	        DWORD dwLevel,       /* type of printer info structure */
+                LPBYTE lpbPrinters,  /* buffer which receives info */
+		DWORD cbBuf,         /* max size of buffer in bytes */
+		LPDWORD lpdwNeeded,  /* pointer to var: # bytes used/needed */
+		LPDWORD lpdwReturned /* number of entries returned */
+		)
 {
  HKEY  hPrinterListKey;
  DWORD dwIndex=0;
  char  PrinterName[255];
  DWORD PrinterNameLength=255;
  FILETIME FileTime;
- DWORD dwNextStringPos;	  /* position of next space for a string in the buffer*/
+ DWORD dwNextStringPos;	 /* position of next space for a string in the buffer*/
  DWORD dwStructPrinterInfoSize;	/* size of a Printer_Info_X structure */
- BOOL  bCalcSpaceOnly=FALSE;/* if TRUE: don't store data, just calculate space*/
+ BOOL  bCalcSpaceOnly=FALSE;/*if TRUE: don't store data, just calculate space*/
  
  TRACE("entered.\n");
 
@@ -629,11 +630,12 @@ BOOL  WINAPI EnumPrintersA(
  *lpdwNeeded = 0;
 
  /* check for valid Flags */
- if (dwType != PRINTER_ENUM_LOCAL && dwType != PRINTER_ENUM_NAME)
- 	{
+ if (!((dwType & PRINTER_ENUM_LOCAL) || (dwType & PRINTER_ENUM_NAME)))
+   {
+     FIXME("dwType = %08lx\n", dwType);
      SetLastError(ERROR_INVALID_FLAGS);
      return(0);
-    }
+   }
  switch(dwLevel)
  	{
      case 1:
@@ -712,7 +714,7 @@ BOOL  WINAPI EnumPrintersA(
      /* check whether this printer is allowed in the list
       * by comparing name to lpszName 
       */
-     if (dwType == PRINTER_ENUM_NAME)
+     if (dwType & PRINTER_ENUM_NAME)
         if (strcmp(PrinterName,lpszName)!=0)
         	continue;		
 
@@ -1234,7 +1236,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed = size;
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi2->pPrinterName = ptr;
 	    ptr += size;
 	} else
@@ -1242,7 +1244,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi2->pPortName = ptr;
 	    ptr += size;
 	} else
@@ -1251,7 +1253,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Printer Driver", ptr, cbBuf,
 				   &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi2->pDriverName = ptr;
 	    ptr += size;
 	} else
@@ -1260,7 +1262,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Default DevMode", ptr, cbBuf,
 				   &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi2->pDevMode = (LPDEVMODEA)ptr;
 	    ptr += size;
 	} else
@@ -1269,7 +1271,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Print Processor", ptr, cbBuf,
 				   &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi2->pPrintProcessor = ptr;
 	    ptr += size;
 	} else
@@ -1293,7 +1295,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed = size;
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi5->pPrinterName = ptr;
 	    ptr += size;
 	} else
@@ -1301,7 +1303,7 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    pi5->pPortName = ptr;
 	    ptr += size;
 	} else
@@ -1463,7 +1465,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Driver", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di2->pDriverPath = ptr;
 	    ptr += size;
 	} else
@@ -1471,7 +1473,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Data File", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di2->pDataFile = ptr;
 	    ptr += size;
 	} else
@@ -1480,7 +1482,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Configuration File", ptr,
 				   cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di2->pConfigFile = ptr;
 	    ptr += size;
 	} else
@@ -1492,7 +1494,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
         DRIVER_INFO_3A *di3 = (DRIVER_INFO_3A *)pDriverInfo;
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Help File", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di3->pHelpFile = ptr;
 	    ptr += size;
 	} else
@@ -1501,7 +1503,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Dependent Files", ptr, cbBuf,
 				   &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di3->pDependentFiles = ptr;
 	    ptr += size;
 	} else
@@ -1509,7 +1511,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "Monitor", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di3->pMonitorName = ptr;
 	    ptr += size;
 	} else
@@ -1517,7 +1519,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 	needed += size;
 
 	WINSPOOL_GetStringFromRegA(hkeyDriver, "DataType", ptr, cbBuf, &size);
-	if(size <= cbBuf) {
+	if(cbBuf && size <= cbBuf) {
 	    di3->pDefaultDataType = ptr;
 	    ptr += size;
 	} else
