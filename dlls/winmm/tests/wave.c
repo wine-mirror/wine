@@ -29,7 +29,7 @@
  */
 
 #define TEST_FORMATS 12
-static const int win_formats[TEST_FORMATS][4]={
+static const unsigned int win_formats[TEST_FORMATS][4]={
     {WAVE_FORMAT_1M08, 11025,  8, 1},
     {WAVE_FORMAT_1S08, 11025,  8, 2},
     {WAVE_FORMAT_1M16, 11025, 16, 1},
