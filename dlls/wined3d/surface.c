@@ -167,9 +167,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     /* DXTn formats don't have exact pitches as they are to the new row of blocks,
          where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)      
           ie pitch = (width/4) * bytes per block                                  */
-    if (This->currentDesc.Format == D3DFMT_DXT1) /* DXT1 is 8 bytes per block */
+    if (This->currentDesc.Format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width/4) * 8;
-    else if (This->currentDesc.Format == D3DFMT_DXT3 || This->currentDesc.Format == D3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
+    else if (This->currentDesc.Format == WINED3DFMT_DXT3 || This->currentDesc.Format == WINED3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width/4) * 16;
     else
         pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */    
@@ -184,7 +184,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     } else {
         TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if (This->currentDesc.Format == D3DFMT_DXT1) { /* DXT1 is half byte per pixel */
+        if (This->currentDesc.Format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
             pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
         } else {
             pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
@@ -392,21 +392,21 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
             vcheckGLcall("glRasterPos2f");
             switch (This->currentDesc.Format) {
-            case D3DFMT_R5G6B5:
+            case WINED3DFMT_R5G6B5:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
                                  GL_RGB, GL_UNSIGNED_SHORT_5_6_5, This->allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
-            case D3DFMT_R8G8B8:
+            case WINED3DFMT_R8G8B8:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
                                  GL_RGB, GL_UNSIGNED_BYTE, This->allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
-            case D3DFMT_A8R8G8B8:
+            case WINED3DFMT_A8R8G8B8:
                 {
                     glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
                     vcheckGLcall("glPixelStorei");
@@ -485,9 +485,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
 
         if (gl_level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
-        else if (This->currentDesc.Format == D3DFMT_P8 || This->currentDesc.Format == D3DFMT_A8P8 ||
-                 This->currentDesc.Format == D3DFMT_DXT1 || This->currentDesc.Format == D3DFMT_DXT3 ||
-                 This->currentDesc.Format == D3DFMT_DXT5)
+        else if (This->currentDesc.Format == WINED3DFMT_P8 || This->currentDesc.Format == WINED3DFMT_A8P8 ||
+                 This->currentDesc.Format == WINED3DFMT_DXT1 || This->currentDesc.Format == WINED3DFMT_DXT3 ||
+                 This->currentDesc.Format == WINED3DFMT_DXT5)
             FIXME("Format %d not supported\n", This->currentDesc.Format);
         else {
             glCopyTexImage2D(gl_target,
@@ -506,7 +506,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         return D3D_OK;
     }
 
-    if ((This->currentDesc.Format == D3DFMT_P8 || This->currentDesc.Format == D3DFMT_A8P8) && 
+    if ((This->currentDesc.Format == WINED3DFMT_P8 || This->currentDesc.Format == WINED3DFMT_A8P8) &&
         !GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
         /**
          * wanted a paletted texture and not really support it in HW 
@@ -523,7 +523,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
             *dst++ = pal[color].peRed;
             *dst++ = pal[color].peGreen;
             *dst++ = pal[color].peBlue;
-            if (This->currentDesc.Format == D3DFMT_A8P8)
+            if (This->currentDesc.Format == WINED3DFMT_A8P8)
                 *dst++ = pal[color].peFlags;
             else
                 *dst++ = 0xFF; 
@@ -558,9 +558,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         return D3D_OK;    
     }
 
-    if (This->currentDesc.Format == D3DFMT_DXT1 || 
-        This->currentDesc.Format == D3DFMT_DXT3 || 
-        This->currentDesc.Format == D3DFMT_DXT5) {
+    if (This->currentDesc.Format == WINED3DFMT_DXT1 ||
+        This->currentDesc.Format == WINED3DFMT_DXT3 ||
+        This->currentDesc.Format == WINED3DFMT_DXT5) {
         if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
                   gl_target, 
@@ -657,8 +657,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 
     fprintf(f, "P6\n%u %u\n255\n", This->currentDesc.Width, This->currentDesc.Height);
     switch (This->currentDesc.Format) {
-    case D3DFMT_X8R8G8B8:
-    case D3DFMT_A8R8G8B8:
+    case WINED3DFMT_X8R8G8B8:
+    case WINED3DFMT_A8R8G8B8:
         {
             DWORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
@@ -669,7 +669,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
             }
         }
         break;
-    case D3DFMT_R8G8B8:
+    case WINED3DFMT_R8G8B8:
         {
             BYTE* color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
@@ -680,7 +680,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
             }
         }
         break;
-    case D3DFMT_A1R5G5B5: 
+    case WINED3DFMT_A1R5G5B5:
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
@@ -691,7 +691,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
             }
         }
         break;
-    case D3DFMT_A4R4G4B4:
+    case WINED3DFMT_A4R4G4B4:
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
@@ -703,7 +703,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         }
         break;
 
-    case D3DFMT_R5G6B5: 
+    case WINED3DFMT_R5G6B5:
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {

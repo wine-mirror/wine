@@ -126,13 +126,12 @@ extern int num_lock;
 
 #define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
                             See MaxStreams in MSDN under GetDeviceCaps */
+                         /* Maximum number of constants provided to the shaders */
 #define HIGHEST_TRANSFORMSTATE 512 
                          /* Highest value in D3DTRANSFORMSTATETYPE */
-#define HIGHEST_RENDER_STATE   209
-                         /* Highest D3DRS_ value                   */
-#define HIGHEST_TEXTURE_STATE   32
+#define HIGHEST_TEXTURE_STATE   D3DTSS_CONSTANT
                          /* Highest D3DTSS_ value                  */
-#define WINED3D_VSHADER_MAX_CONSTANTS  96   
+#define HIGHEST_SAMPLER_STATE   D3DSAMP_DMAPOFFSET
                          /* Maximum number of constants provided to the shaders */
 #define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
@@ -666,7 +665,7 @@ typedef struct SAVEDSTATES {
         BOOL                      textures[8];
         BOOL                      transform[HIGHEST_TRANSFORMSTATE];
         BOOL                      viewport;
-        BOOL                      renderState[HIGHEST_RENDER_STATE];
+        BOOL                      renderState[WINEHIGHEST_RENDER_STATE];
         BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
@@ -727,7 +726,7 @@ struct IWineD3DStateBlockImpl
     FLOAT                     tween_factor;
 
     /* RenderState */
-    DWORD                     renderState[HIGHEST_RENDER_STATE];
+    DWORD                     renderState[WINEHIGHEST_RENDER_STATE];
 
     /* Texture */
     IWineD3DBaseTexture      *textures[8];
@@ -739,6 +738,31 @@ struct IWineD3DStateBlockImpl
 };
 
 extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
+
+/*****************************************************************************
+ * IWineD3DQueryImpl implementation structure (extends IUnknown)
+ */
+typedef struct IWineD3DQueryImpl
+{
+    IWineD3DQueryVtbl        *lpVtbl;
+    DWORD                     ref;     /* Note: Ref counting not required */
+    
+    IUnknown                 *parent;
+    /*TODO: replace with iface usage */
+#if 0
+    IWineD3DDevice         *wineD3DDevice;
+#else
+    IWineD3DDeviceImpl       *wineD3DDevice;
+#endif
+    /* IWineD3DQuery fields */
+
+    D3DQUERYTYPE              type;
+    void                     *extendedData;
+    
+  
+} IWineD3DQueryImpl;
+
+extern IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
 
 /*****************************************************************************
  * Utility function prototypes 

@@ -217,7 +217,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     /* Note the D3DRS value applies to all textures, but GL has one
      *  per texture, so apply it now ready to be used!
      */
-    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[D3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
@@ -433,12 +433,12 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
       *********************************/
-    if (Format == D3DFMT_DXT1) {
+    if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
         object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2;
         
-    } else if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT3 || 
-               Format == D3DFMT_DXT4 || Format == D3DFMT_DXT5) { 
+    } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
+               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
         object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
     } else {
         object->currentDesc.Size = (Width     * object->bytesPerPixel) * Height;
@@ -491,7 +491,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
 
     object->locked   = FALSE;
-    object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : Lockable;
+    object->lockable = (WINED3DFMT_D16_LOCKABLE == Format) ? TRUE : Lockable;
     /* TODO: memory management */
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->currentDesc.Size);
     if(object->allocatedMemory == NULL ) {
@@ -505,7 +505,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     IWineD3DSurface_CleanDirtyRect(*ppSurface);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
-           (D3DFMT_D16_LOCKABLE == Format), *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+           (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->allocatedMemory, object->currentDesc.Size);
     return D3D_OK;
 
 }
@@ -754,50 +754,42 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, D3DQUERYTYPE Type, void** ppQuery, IUnknown* parent){
+HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown* parent){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    
+    IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
+
     if(NULL == ppQuery){
         /* Just a check to see if we support this type of query */
         HRESULT hr = D3DERR_NOTAVAILABLE;
-#if 0 /* TODO: query support */
         /* Lie and say everything is good (we can return ok fake data from a stub) */
         switch(Type){
-        case D3DQUERYTYPE_VCACHE:
-        case D3DQUERYTYPE_RESOURCEMANAGER:
-        case D3DQUERYTYPE_VERTEXSTATS:
-        case D3DQUERYTYPE_EVENT:
-        case D3DQUERYTYPE_OCCLUSION:
-        case D3DQUERYTYPE_TIMESTAMP:
-        case D3DQUERYTYPE_TIMESTAMPDISJOINT:
-        case D3DQUERYTYPE_TIMESTAMPFREQ:
-        case D3DQUERYTYPE_PIPELINETIMINGS:
-        case D3DQUERYTYPE_INTERFACETIMINGS:
-        case D3DQUERYTYPE_VERTEXTIMINGS:
-        case D3DQUERYTYPE_PIXELTIMINGS:
-        case D3DQUERYTYPE_BANDWIDTHTIMINGS:
-        case D3DQUERYTYPE_CACHEUTILIZATION:
+        case WINED3DQUERYTYPE_VCACHE:
+        case WINED3DQUERYTYPE_RESOURCEMANAGER:
+        case WINED3DQUERYTYPE_VERTEXSTATS:
+        case WINED3DQUERYTYPE_EVENT:
+        case WINED3DQUERYTYPE_OCCLUSION:
+        case WINED3DQUERYTYPE_TIMESTAMP:
+        case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
+        case WINED3DQUERYTYPE_TIMESTAMPFREQ:
+        case WINED3DQUERYTYPE_PIPELINETIMINGS:
+        case WINED3DQUERYTYPE_INTERFACETIMINGS:
+        case WINED3DQUERYTYPE_VERTEXTIMINGS:
+        case WINED3DQUERYTYPE_PIXELTIMINGS:
+        case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
+        case WINED3DQUERYTYPE_CACHEUTILIZATION:
             hr = D3D_OK;
         break;
         default:
             FIXME("(%p) Unhandled query type %d\n",This , Type);       
         }
-#endif
         FIXME("(%p) : Stub request for query type %d returned %ld\n", This, Type, hr);
         return hr;
     }
 
-#if 0 /* TODO: query support */
-    IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
-    
     D3DCREATEOBJECTINSTANCE(object, Query)
     object->type         = Type;
     object->extendedData = 0;
     TRACE("(%p) : Created Query %p\n", This, object);
-#else
-        *ppQuery = NULL;
-        FIXME("(%p) : Stub\n",This);
-#endif
     return D3D_OK;
 }
 
@@ -1726,7 +1718,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
     checkGLcall("glMaterialfv");
 
     /* Only change material color if specular is enabled, otherwise it is set to black */
-    if (This->stateBlock->renderState[D3DRS_SPECULARENABLE]) {
+    if (This->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
        checkGLcall("glMaterialfv");
     } else {
@@ -1865,18 +1857,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     ENTER_GL();
 
     switch (State) {
-    case D3DRS_FILLMODE                  :
+    case WINED3DRS_FILLMODE                  :
         switch ((D3DFILLMODE) Value) {
         case D3DFILL_POINT               : glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); break;
         case D3DFILL_WIREFRAME           : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); break;
         case D3DFILL_SOLID               : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); break;
         default:
-            FIXME("Unrecognized D3DRS_FILLMODE value %ld\n", Value);
+            FIXME("Unrecognized WINED3DRS_FILLMODE value %ld\n", Value);
         }
         checkGLcall("glPolygonMode (fillmode)");
         break;
 
-    case D3DRS_LIGHTING                  :
+    case WINED3DRS_LIGHTING                  :
         if (Value) {
             glEnable(GL_LIGHTING);
             checkGLcall("glEnable GL_LIGHTING");
@@ -1886,7 +1878,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ZENABLE                   :
+    case WINED3DRS_ZENABLE                   :
         switch ((D3DZBUFFERTYPE) Value) {
         case D3DZB_FALSE:
             glDisable(GL_DEPTH_TEST);
@@ -1906,7 +1898,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_CULLMODE                  :
+    case WINED3DRS_CULLMODE                  :
 
         /* If we are culling "back faces with clockwise vertices" then
            set front faces to be counter clockwise and enable culling  
@@ -1945,7 +1937,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_SHADEMODE                 :
+    case WINED3DRS_SHADEMODE                 :
         switch ((D3DSHADEMODE) Value) {
         case D3DSHADE_FLAT:
             glShadeModel(GL_FLAT);
@@ -1965,7 +1957,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_DITHERENABLE              :
+    case WINED3DRS_DITHERENABLE              :
         if (Value) {
             glEnable(GL_DITHER);
             checkGLcall("glEnable GL_DITHER");
@@ -1975,7 +1967,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ZWRITEENABLE              :
+    case WINED3DRS_ZWRITEENABLE              :
         if (Value) {
             glDepthMask(1);
             checkGLcall("glDepthMask");
@@ -1985,7 +1977,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ZFUNC                     :
+    case WINED3DRS_ZFUNC                     :
         {
             int glParm = GL_LESS;
 
@@ -2006,7 +1998,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_AMBIENT                   :
+    case WINED3DRS_AMBIENT                   :
         {
             float col[4];
             D3DCOLORTOGLFLOAT4(Value, col);
@@ -2017,7 +2009,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ALPHABLENDENABLE          :
+    case WINED3DRS_ALPHABLENDENABLE          :
         if (Value) {
             glEnable(GL_BLEND);
             checkGLcall("glEnable GL_BLEND");
@@ -2027,8 +2019,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         };
         break;
 
-    case D3DRS_SRCBLEND                  :
-    case D3DRS_DESTBLEND                 :
+    case WINED3DRS_SRCBLEND                  :
+    case WINED3DRS_DESTBLEND                 :
         {
             int newVal = GL_ZERO;
             switch (Value) {
@@ -2057,8 +2049,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 FIXME("Unrecognized src/dest blend value %ld (%d)\n", Value, State);
             }
 
-            if (State == D3DRS_SRCBLEND) This->srcBlend = newVal;
-            if (State == D3DRS_DESTBLEND) This->dstBlend = newVal;
+            if (State == WINED3DRS_SRCBLEND) This->srcBlend = newVal;
+            if (State == WINED3DRS_DESTBLEND) This->dstBlend = newVal;
             TRACE("glBlendFunc src=%x, dst=%x\n", This->srcBlend, This->dstBlend);
             glBlendFunc(This->srcBlend, This->dstBlend);
 
@@ -2066,7 +2058,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ALPHATESTENABLE           :
+    case WINED3DRS_ALPHATESTENABLE           :
         if (Value) {
             glEnable(GL_ALPHA_TEST);
             checkGLcall("glEnable GL_ALPHA_TEST");
@@ -2076,10 +2068,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ALPHAFUNC                 :
+    case WINED3DRS_ALPHAFUNC                 :
         {
             int glParm = GL_LESS;
-            float ref = ((float) This->stateBlock->renderState[D3DRS_ALPHAREF]) / 255.0f;
+            float ref = ((float) This->stateBlock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
 
             switch ((D3DCMPFUNC) Value) {
             case D3DCMP_NEVER:         glParm = GL_NEVER; break;
@@ -2100,7 +2092,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ALPHAREF                  :
+    case WINED3DRS_ALPHAREF                  :
         {
             int glParm = This->alphafunc;
             float ref = 1.0f;
@@ -2112,20 +2104,20 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_CLIPPLANEENABLE           :
-    case D3DRS_CLIPPING                  :
+    case WINED3DRS_CLIPPLANEENABLE           :
+    case WINED3DRS_CLIPPING                  :
         {
             /* Ensure we only do the changed clip planes */
             DWORD enable  = 0xFFFFFFFF;
             DWORD disable = 0x00000000;
             
             /* If enabling / disabling all */
-            if (State == D3DRS_CLIPPING) {
+            if (State == WINED3DRS_CLIPPING) {
                 if (Value) {
-                    enable  = This->stateBlock->renderState[D3DRS_CLIPPLANEENABLE];
+                    enable  = This->stateBlock->renderState[WINED3DRS_CLIPPLANEENABLE];
                     disable = 0x00;
                 } else {
-                    disable = This->stateBlock->renderState[D3DRS_CLIPPLANEENABLE];
+                    disable = This->stateBlock->renderState[WINED3DRS_CLIPPLANEENABLE];
                     enable  = 0x00;
                 }
             } else {
@@ -2158,7 +2150,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_BLENDOP                   :
+    case WINED3DRS_BLENDOP                   :
         {
             int glParm = GL_FUNC_ADD;
 
@@ -2177,7 +2169,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_TEXTUREFACTOR             :
+    case WINED3DRS_TEXTUREFACTOR             :
         {
             unsigned int i;
 
@@ -2206,7 +2198,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_SPECULARENABLE            : 
+    case WINED3DRS_SPECULARENABLE            :
         {
             /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
                and (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR) to swap between enabled/disabled
@@ -2245,7 +2237,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILENABLE             :
+    case WINED3DRS_STENCILENABLE             :
         if (Value) {
             glEnable(GL_STENCIL_TEST);
             checkGLcall("glEnable GL_STENCIL_TEST");
@@ -2255,11 +2247,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILFUNC               :
+    case WINED3DRS_STENCILFUNC               :
         {
            int glParm = GL_ALWAYS;
-           int ref = This->stateBlock->renderState[D3DRS_STENCILREF];
-           GLuint mask = This->stateBlock->renderState[D3DRS_STENCILMASK];
+           int ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
+           GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
 
            switch ((D3DCMPFUNC) Value) {
            case D3DCMP_NEVER:         glParm=GL_NEVER; break;
@@ -2280,11 +2272,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILREF                :
+    case WINED3DRS_STENCILREF                :
         {
            int glParm = This->stencilfunc;
            int ref = 0;
-           GLuint mask = This->stateBlock->renderState[D3DRS_STENCILMASK];
+           GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
 
            ref = Value;
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
@@ -2293,10 +2285,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILMASK               :
+    case WINED3DRS_STENCILMASK               :
         {
            int glParm = This->stencilfunc;
-           int ref = This->stateBlock->renderState[D3DRS_STENCILREF];
+           int ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
            GLuint mask = Value;
 
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
@@ -2305,7 +2297,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILFAIL               :
+    case WINED3DRS_STENCILFAIL               :
         {
             GLenum fail  ; 
             GLenum zpass ; 
@@ -2322,7 +2314,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             checkGLcall("glStencilOp(fail, zfail, zpass);");
         }
         break;
-    case D3DRS_STENCILZFAIL              :
+    case WINED3DRS_STENCILZFAIL              :
         {
             GLenum fail  ; 
             GLenum zpass ; 
@@ -2339,7 +2331,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             checkGLcall("glStencilOp(fail, zfail, zpass);");
         }
         break;
-    case D3DRS_STENCILPASS               :
+    case WINED3DRS_STENCILPASS               :
         {
             GLenum fail  ; 
             GLenum zpass ; 
@@ -2357,7 +2349,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_STENCILWRITEMASK          :
+    case WINED3DRS_STENCILWRITEMASK          :
         {
             glStencilMask(Value);
             TRACE("glStencilMask(%lu)\n", Value);
@@ -2365,9 +2357,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGENABLE                 :
+    case WINED3DRS_FOGENABLE                 :
         {
-          if (Value/* && This->stateBlock->renderState[D3DRS_FOGTABLEMODE] != D3DFOG_NONE*/) {
+          if (Value/* && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] != D3DFOG_NONE*/) {
                glEnable(GL_FOG);
                checkGLcall("glEnable GL_FOG");
             } else {
@@ -2377,7 +2369,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_RANGEFOGENABLE            :
+    case WINED3DRS_RANGEFOGENABLE            :
         {
             if (Value) {
               TRACE("Enabled RANGEFOG");
@@ -2387,7 +2379,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGCOLOR                  :
+    case WINED3DRS_FOGCOLOR                  :
         {
             float col[4];
             D3DCOLORTOGLFLOAT4(Value, col);
@@ -2397,7 +2389,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGTABLEMODE              :
+    case WINED3DRS_FOGTABLEMODE              :
         { 
           glHint(GL_FOG_HINT, GL_NICEST);
           switch (Value) {
@@ -2406,7 +2398,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
           case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
           case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
           default:
-            FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+            FIXME("Unsupported Value(%lu) for WINED3DRS_FOGTABLEMODE!\n", Value);
           }
           if (GL_SUPPORT(NV_FOG_DISTANCE)) {
             glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
@@ -2414,7 +2406,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGVERTEXMODE             :
+    case WINED3DRS_FOGVERTEXMODE             :
         { 
           glHint(GL_FOG_HINT, GL_FASTEST);
           switch (Value) {
@@ -2423,15 +2415,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
           case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
           case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
           default:
-            FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+            FIXME("Unsupported Value(%lu) for WINED3DRS_FOGTABLEMODE!\n", Value);
           }
           if (GL_SUPPORT(NV_FOG_DISTANCE)) {
-            glFogi(GL_FOG_DISTANCE_MODE_NV, This->stateBlock->renderState[D3DRS_RANGEFOGENABLE] ? GL_EYE_RADIAL_NV : GL_EYE_PLANE_ABSOLUTE_NV);
+            glFogi(GL_FOG_DISTANCE_MODE_NV, This->stateBlock->renderState[WINED3DRS_RANGEFOGENABLE] ? GL_EYE_RADIAL_NV : GL_EYE_PLANE_ABSOLUTE_NV);
           }
         }
         break;
 
-    case D3DRS_FOGSTART                  :
+    case WINED3DRS_FOGSTART                  :
         {
             tmpvalue.d = Value;
             glFogfv(GL_FOG_START, &tmpvalue.f);
@@ -2440,7 +2432,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGEND                    :
+    case WINED3DRS_FOGEND                    :
         {
             tmpvalue.d = Value;
             glFogfv(GL_FOG_END, &tmpvalue.f);
@@ -2449,7 +2441,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_FOGDENSITY                :
+    case WINED3DRS_FOGDENSITY                :
         {
             tmpvalue.d = Value;
             glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
@@ -2457,14 +2449,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_VERTEXBLEND               :
+    case WINED3DRS_VERTEXBLEND               :
         {
           This->updateStateBlock->vertex_blend = (D3DVERTEXBLENDFLAGS) Value;
           TRACE("Vertex Blending state to %ld\n",  Value);
         }
         break;
 
-    case D3DRS_TWEENFACTOR               :
+    case WINED3DRS_TWEENFACTOR               :
         {
           tmpvalue.d = Value;
           This->updateStateBlock->tween_factor = tmpvalue.f;
@@ -2472,38 +2464,38 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_INDEXEDVERTEXBLENDENABLE  :
+    case WINED3DRS_INDEXEDVERTEXBLENDENABLE  :
         {
           TRACE("Indexed Vertex Blend Enable to %ul\n", (BOOL) Value);
         }
         break;
 
-    case D3DRS_COLORVERTEX               :
-    case D3DRS_DIFFUSEMATERIALSOURCE     :
-    case D3DRS_SPECULARMATERIALSOURCE    :
-    case D3DRS_AMBIENTMATERIALSOURCE     :
-    case D3DRS_EMISSIVEMATERIALSOURCE    :
+    case WINED3DRS_COLORVERTEX               :
+    case WINED3DRS_DIFFUSEMATERIALSOURCE     :
+    case WINED3DRS_SPECULARMATERIALSOURCE    :
+    case WINED3DRS_AMBIENTMATERIALSOURCE     :
+    case WINED3DRS_EMISSIVEMATERIALSOURCE    :
         {
             GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
 
-            if (This->stateBlock->renderState[D3DRS_COLORVERTEX]) {
+            if (This->stateBlock->renderState[WINED3DRS_COLORVERTEX]) {
                 TRACE("diff %ld, amb %ld, emis %ld, spec %ld\n",
-                      This->stateBlock->renderState[D3DRS_DIFFUSEMATERIALSOURCE],
-                      This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE],
-                      This->stateBlock->renderState[D3DRS_EMISSIVEMATERIALSOURCE],
-                      This->stateBlock->renderState[D3DRS_SPECULARMATERIALSOURCE]);
+                      This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
+                      This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE],
+                      This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE],
+                      This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE]);
 
-                if (This->stateBlock->renderState[D3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
-                    if (This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                if (This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
                         Parm = GL_AMBIENT_AND_DIFFUSE;
                     } else {
                         Parm = GL_DIFFUSE;
                     }
-                } else if (This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
                     Parm = GL_AMBIENT;
-                } else if (This->stateBlock->renderState[D3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
                     Parm = GL_EMISSION;
-                } else if (This->stateBlock->renderState[D3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
                     Parm = GL_SPECULAR;
                 } else {
                     Parm = -1;
@@ -2522,7 +2514,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break; 
 
-    case D3DRS_LINEPATTERN               :
+    case WINED3DRS_LINEPATTERN               :
         {
             union {
                 DWORD                 d;
@@ -2544,7 +2536,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_ZBIAS                     :
+    case WINED3DRS_ZBIAS                     :
         {
             if (Value) {
                 tmpvalue.d = Value;
@@ -2568,7 +2560,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_NORMALIZENORMALS          :
+    case WINED3DRS_NORMALIZENORMALS          :
         if (Value) {
             glEnable(GL_NORMALIZE);
             checkGLcall("glEnable(GL_NORMALIZE);");
@@ -2578,50 +2570,50 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case D3DRS_POINTSIZE                 :
+    case WINED3DRS_POINTSIZE                 :
         tmpvalue.d = Value;
         TRACE("Set point size to %f\n", tmpvalue.f);
         glPointSize(tmpvalue.f);
         checkGLcall("glPointSize(...);");
         break;
 
-    case D3DRS_POINTSIZE_MIN             :
+    case WINED3DRS_POINTSIZE_MIN             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
           tmpvalue.d = Value;
           GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
           checkGLcall("glPointParameterfEXT(...);");
         } else {
-          FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
+          FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl\n");
         }
         break;
 
-    case D3DRS_POINTSIZE_MAX             :
+    case WINED3DRS_POINTSIZE_MAX             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
           tmpvalue.d = Value;
           GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
           checkGLcall("glPointParameterfEXT(...);");
         } else {
-          FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
+          FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl\n");
         }
         break;
 
-    case D3DRS_POINTSCALE_A              :
-    case D3DRS_POINTSCALE_B              :
-    case D3DRS_POINTSCALE_C              :
-    case D3DRS_POINTSCALEENABLE          :
+    case WINED3DRS_POINTSCALE_A              :
+    case WINED3DRS_POINTSCALE_B              :
+    case WINED3DRS_POINTSCALE_C              :
+    case WINED3DRS_POINTSCALEENABLE          :
         {
             /* If enabled, supply the parameters, otherwise fall back to defaults */
-            if (This->stateBlock->renderState[D3DRS_POINTSCALEENABLE]) {
+            if (This->stateBlock->renderState[WINED3DRS_POINTSCALEENABLE]) {
                 GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-                att[0] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_A]);
-                att[1] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_B]);
-                att[2] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_C]);
+                att[0] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_A]);
+                att[1] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_B]);
+                att[2] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_C]);
 
                 if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
                   GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
                   checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
                 } else {
-                  TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
+                  TRACE("WINED3DRS_POINTSCALEENABLE not supported on this opengl\n");
                 }
             } else {
                 GLfloat att[3] = {1.0f, 0.0f, 0.0f};
@@ -2629,13 +2621,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                   GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
                   checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
                 } else {
-                  TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
+                  TRACE("WINED3DRS_POINTSCALEENABLE not supported, but not on either\n");
                 }
             }
             break;
         }
 
-    case D3DRS_COLORWRITEENABLE          :
+    case WINED3DRS_COLORWRITEENABLE          :
       {
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
               Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
@@ -2650,7 +2642,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
       }
       break;
 
-    case D3DRS_LOCALVIEWER               :
+    case WINED3DRS_LOCALVIEWER               :
       {
         GLint state = (Value) ? 1 : 0;
         TRACE("Local Viewer Enable to %ul\n", (BOOL) Value);        
@@ -2658,7 +2650,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
       }
       break;
 
-    case D3DRS_LASTPIXEL                 :
+    case WINED3DRS_LASTPIXEL                 :
       {
         if (Value) {
           TRACE("Last Pixel Drawing Enabled\n");  
@@ -2668,7 +2660,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
       }
       break;
 
-    case D3DRS_SOFTWAREVERTEXPROCESSING  :
+    case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
       {
         if (Value) {
           TRACE("Software Processing Enabled\n");  
@@ -2679,30 +2671,30 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
       break;
 
       /** not supported */
-    case D3DRS_ZVISIBLE                  :
+    case WINED3DRS_ZVISIBLE                  :
       {
         LEAVE_GL();
         return D3DERR_INVALIDCALL;
       }
 
         /* Unhandled yet...! */
-    case D3DRS_EDGEANTIALIAS             :
-    case D3DRS_WRAP0                     :
-    case D3DRS_WRAP1                     :
-    case D3DRS_WRAP2                     :
-    case D3DRS_WRAP3                     :
-    case D3DRS_WRAP4                     :
-    case D3DRS_WRAP5                     :
-    case D3DRS_WRAP6                     :
-    case D3DRS_WRAP7                     :
-    case D3DRS_POINTSPRITEENABLE         :
-    case D3DRS_MULTISAMPLEANTIALIAS      :
-    case D3DRS_MULTISAMPLEMASK           :
-    case D3DRS_PATCHEDGESTYLE            :
-    case D3DRS_PATCHSEGMENTS             :
-    case D3DRS_DEBUGMONITORTOKEN         :
-    case D3DRS_POSITIONORDER             :
-    case D3DRS_NORMALORDER               :
+    case WINED3DRS_EDGEANTIALIAS             :
+    case WINED3DRS_WRAP0                     :
+    case WINED3DRS_WRAP1                     :
+    case WINED3DRS_WRAP2                     :
+    case WINED3DRS_WRAP3                     :
+    case WINED3DRS_WRAP4                     :
+    case WINED3DRS_WRAP5                     :
+    case WINED3DRS_WRAP6                     :
+    case WINED3DRS_WRAP7                     :
+    case WINED3DRS_POINTSPRITEENABLE         :
+    case WINED3DRS_MULTISAMPLEANTIALIAS      :
+    case WINED3DRS_MULTISAMPLEMASK           :
+    case WINED3DRS_PATCHEDGESTYLE            :
+    case WINED3DRS_PATCHSEGMENTS             :
+    case WINED3DRS_DEBUGMONITORTOKEN         :
+    case WINED3DRS_POSITIONORDER             :
+    case WINED3DRS_NORMALORDER               :
         /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
         FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
         break;
@@ -3284,7 +3276,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
                   determine the texture wrapping mode.  
                   eg. SetTextureStageState( 0, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
                   means use the vertex position (camera-space) as the input texture coordinates 
-                  for this texture stage, and the wrap mode set in the D3DRS_WRAP1 render 
+                  for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
                   state. We do not (yet) support the D3DRENDERSTATE_WRAPx values, nor tie them up
                   to the TEXCOORDINDEX value */
           
@@ -3660,13 +3652,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     DeleteDC(hdc);
 
     switch (bpp) {
-    case  8: pMode->Format       = D3DFMT_R8G8B8; break;
-    case 16: pMode->Format       = D3DFMT_R5G6B5; break;
-    case 24: /*pMode->Format       = D3DFMT_R8G8B8; break; */
-    case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+    case  8: pMode->Format       = WINED3DFMT_R8G8B8; break;
+    case 16: pMode->Format       = WINED3DFMT_R5G6B5; break;
+    case 24: /*pMode->Format       = WINED3DFMT_R8G8B8; break; */
+    case 32: pMode->Format       = WINED3DFMT_A8R8G8B8; break;
     default: 
        FIXME("Unrecognized display mode format\n");
-       pMode->Format       = D3DFMT_UNKNOWN;
+       pMode->Format       = WINED3DFMT_UNKNOWN;
     }
 
     FIXME("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate, 
@@ -3931,7 +3923,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
     /* Restore the old values (why..?) */
     if (Flags & D3DCLEAR_STENCIL) {
         glClearStencil(old_stencil_clear_value);
-        glStencilMask(This->stateBlock->renderState[D3DRS_STENCILWRITEMASK]);
+        glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
     }    
     if (Flags & D3DCLEAR_ZBUFFER) {
         glDepthMask(old_ztest);
@@ -3942,10 +3934,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
                      old_color_clear_value[1],
                      old_color_clear_value[2], 
                      old_color_clear_value[3]);
-        glColorMask(This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE, 
-                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
-                    This->stateBlock->renderState[D3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+        glColorMask(This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     }
 
     glDisable(GL_SCISSOR_TEST);
@@ -3991,7 +3983,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
           minIndex, NumVertices, startIndex, baseVIndex, primCount);
 
     IWineD3DIndexBuffer_GetDesc(pIB, &IdxBufDsc);
-    if (IdxBufDsc.Format == D3DFMT_INDEX16) {
+    if (IdxBufDsc.Format == WINED3DFMT_INDEX16) {
         idxStride = 2;
     } else {
         idxStride = 4;
@@ -4043,7 +4035,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
 
     if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
 
-    if (IndexDataFormat == D3DFMT_INDEX16) {
+    if (IndexDataFormat == WINED3DFMT_INDEX16) {
         idxStride = 2;
     } else {
         idxStride = 4;
@@ -4268,7 +4260,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, U
 
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
-    if (D3DFMT_A8R8G8B8 != pSur->currentDesc.Format) {
+    if (WINED3DFMT_A8R8G8B8 != pSur->currentDesc.Format) {
       ERR("(%p) : surface(%p) have a invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }

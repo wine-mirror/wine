@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2002-2003 Jason Edmeades 
- *                         Raphael Junqueira
+ * Copyright (C) 2002-2003 Raphael Junqueira
+ * Copyright (C) 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -73,6 +74,7 @@
 #define D3DLOCK_NOSYSLOCK          0x0800
 #define D3DLOCK_NOOVERWRITE        0x1000
 #define D3DLOCK_DISCARD            0x2000
+#define D3DLOCK_DONOTWAIT          0x4000
 #define D3DLOCK_NO_DIRTY_UPDATE    0x8000
 
 #define D3DMAXUSERCLIPPLANES       32
@@ -86,6 +88,7 @@
 
 #define D3DRENDERSTATE_WRAPBIAS    128UL
 
+/* MSDN has this in d3d9caps.h, but it should be here */
 #define D3DTSS_TCI_PASSTHRU                       0x00000
 #define D3DTSS_TCI_CAMERASPACENORMAL              0x10000
 #define D3DTSS_TCI_CAMERASPACEPOSITION            0x20000
@@ -99,15 +102,25 @@
 #define D3DTS_WORLD3 D3DTS_WORLDMATRIX(3)
 #define D3DTS_WORLDMATRIX(index) (D3DTRANSFORMSTATETYPE)(index + 256)
 
-#define D3DUSAGE_RENDERTARGET       0x01
-#define D3DUSAGE_DEPTHSTENCIL       0x02
-#define D3DUSAGE_WRITEONLY          0x08
-#define D3DUSAGE_SOFTWAREPROCESSING 0x10
-#define D3DUSAGE_DONOTCLIP          0x20
-#define D3DUSAGE_POINTS             0x40
-#define D3DUSAGE_RTPATCHES          0x80
-#define D3DUSAGE_NPATCHES           0x100
-#define D3DUSAGE_DYNAMIC            0x200
+#define D3DUSAGE_RENDERTARGET       0x00000001L
+#define D3DUSAGE_DEPTHSTENCIL       0x00000002L
+#define D3DUSAGE_WRITEONLY          0x00000008L
+#define D3DUSAGE_SOFTWAREPROCESSING 0x00000010L
+#define D3DUSAGE_DONOTCLIP          0x00000020L
+#define D3DUSAGE_POINTS             0x00000040L
+#define D3DUSAGE_RTPATCHES          0x00000080L
+#define D3DUSAGE_NPATCHES           0x00000100L
+#define D3DUSAGE_DYNAMIC            0x00000200L
+#define D3DUSAGE_AUTOGENMIPMAP      0x00000400L 
+#define D3DUSAGE_DMAP               0x00004000L
+
+#define D3DUSAGE_QUERY_FILTER                   0x00020000L
+#define D3DUSAGE_QUERY_LEGACYBUMPMAP            0x00008000L
+#define D3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING 0x00080000L
+#define D3DUSAGE_QUERY_SRGBREAD                 0x00010000L
+#define D3DUSAGE_QUERY_SRGBWRITE                0x00040000L
+#define D3DUSAGE_QUERY_VERTEXTEXTURE            0x00100000L
+
 
 #define D3DWRAP_U        1
 #define D3DWRAP_V        2
@@ -164,7 +177,18 @@
 #define D3DCOLORWRITEENABLE_BLUE  (1L<<2)
 #define D3DCOLORWRITEENABLE_ALPHA (1L<<3)
 
+#define D3DPV_DONOTCOPYDATA         (1 << 0)
+
+#define D3DSTREAMSOURCE_INDEXEDDATA  (1 << 30)
+#define D3DSTREAMSOURCE_INSTANCEDATA (2 << 30)
+
 #define D3D_MAX_SIMULTANEOUS_RENDERTARGETS 4
+
+#define MAXD3DDECLLENGTH         64 /* +end marker */
+#define MAXD3DDECLMETHOD         D3DDECLMETHOD_LOOKUPPRESAMPLED
+#define MAXD3DDECLTYPE           D3DDECLTYPE_UNUSED
+#define MAXD3DDECLUSAGE          D3DDECLUSAGE_SAMPLE
+#define MAXD3DDECLUSAGEINDEX     15
 
 #define D3DDMAPSAMPLER 256
 #define D3DVERTEXTEXTURESAMPLER0 (D3DDMAPSAMPLER+1)
@@ -175,6 +199,14 @@
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+
+/* Constants used by D3DPRESENT_PARAMETERS. when creating a device or swapchain */
+
+#define D3DPRESENTFLAG_LOCKABLE_BACKBUFFER  0x00000001 /* Create a lockable backbuffer */
+#define D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL 0x00000002 /* Discard Z buffer */
+#define D3DPRESENTFLAG_DEVICECLIP           0x00000004 /* Clip the window blited into the client area 2k + xp only */
+#define D3DPRESENTFLAG_VIDEO                0x00000010 /* backbuffer 'may' contain video data */
+
 
 
 /**************************** 
@@ -198,21 +230,32 @@ typedef enum _D3DDECLUSAGE {
   D3DDECLUSAGE_SAMPLE       = 13     
 } D3DDECLUSAGE;
 
-#define MAXD3DDECLUSAGE         D3DDECLUSAGE_SAMPLE
-#define MAXD3DDECLUSAGEINDEX    15
-#define MAXD3DDECLLENGTH        64
+/* MSDN is quite confussing at this point...
+http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/constants/OTHER_D3D.asp
+says D3DMAX, and D3DMAXDECLUSAGE = D3DDECLUSAGE_DEPTH
+http://msdn.microsoft.com/library/default.asp?url=/archive/en-us/directx9_c_summer_03/directx/graphics/reference/d3d/constants/other_d3d.asp
+says MAXD3D, and D3DDECLUSAGE_SAMPLE
+
+So both are defined
+*/
+
+#define D3DMAXDECLUSAGE         D3DDECLUSAGE_SAMPLE
+#define D3DMAXDECLUSAGEINDEX    15
+#define D3DMAXDECLLENGTH        18
+#define D3DMAXDECLUSAGE_DX8     D3DDECLUSAGE_TEXCOORD
 
 typedef enum _D3DDECLMETHOD {
-  D3DDECLMETHOD_DEFAULT = 0,
-  D3DDECLMETHOD_PARTIALU,
-  D3DDECLMETHOD_PARTIALV,
-  D3DDECLMETHOD_CROSSUV,
-  D3DDECLMETHOD_UV,
-  D3DDECLMETHOD_LOOKUP,
-  D3DDECLMETHOD_LOOKUPPRESAMPLED
+  D3DDECLMETHOD_DEFAULT          = 0,
+  D3DDECLMETHOD_PARTIALU         = 1,
+  D3DDECLMETHOD_PARTIALV         = 2,
+  D3DDECLMETHOD_CROSSUV          = 3,
+  D3DDECLMETHOD_UV               = 4,
+  D3DDECLMETHOD_LOOKUP           = 5,
+  D3DDECLMETHOD_LOOKUPPRESAMPLED = 6
 } D3DDECLMETHOD;
 
-#define MAXD3DDECLMETHOD        D3DDECLMETHOD_LOOKUPPRESAMPLED
+
+#define D3DMAXDECLMETHOD        D3DDECLMETHOD_LOOKUPPRESAMPLED
 
 typedef enum _D3DDECLTYPE {
   D3DDECLTYPE_FLOAT1    =  0,
@@ -236,7 +279,7 @@ typedef enum _D3DDECLTYPE {
   D3DDECLTYPE_UNUSED    = 17,
 } D3DDECLTYPE;
 
-#define MAXD3DDECLTYPE          D3DDECLTYPE_UNUSED
+#define D3DMAXDECLTYPE          D3DDECLTYPE_UNUSED
 
 typedef struct _D3DVERTEXELEMENT9 {
   WORD    Stream;
@@ -246,6 +289,29 @@ typedef struct _D3DVERTEXELEMENT9 {
   BYTE    Usage;
   BYTE    UsageIndex;
 } D3DVERTEXELEMENT9, *LPD3DVERTEXELEMENT9;
+
+
+typedef enum _D3DQUERYTYPE {
+    D3DQUERYTYPE_VCACHE = 4,
+    D3DQUERYTYPE_RESOURCEMANAGER = 5,
+    D3DQUERYTYPE_VERTEXSTATS = 6,
+    D3DQUERYTYPE_EVENT = 8,
+    D3DQUERYTYPE_OCCLUSION = 9,
+    D3DQUERYTYPE_TIMESTAMP = 10,
+    D3DQUERYTYPE_TIMESTAMPDISJOINT = 11,
+    D3DQUERYTYPE_TIMESTAMPFREQ = 12,
+    D3DQUERYTYPE_PIPELINETIMINGS = 13,
+    D3DQUERYTYPE_INTERFACETIMINGS = 14,
+    D3DQUERYTYPE_VERTEXTIMINGS = 15,
+    D3DQUERYTYPE_PIXELTIMINGS = 16,
+    D3DQUERYTYPE_BANDWIDTHTIMINGS = 17,
+    D3DQUERYTYPE_CACHEUTILIZATION = 18
+} D3DQUERYTYPE;
+
+#define D3DISSUE_BEGIN   (1 << 1)
+#define D3DISSUE_END     (1 << 0)
+#define D3DGETDATA_FLUSH (1 << 0)
+
 
 #define D3DDECL_END() {0xFF,0,D3DDECLTYPE_UNUSED,0,0,0}
 #define D3DDP_MAXTEXCOORD   8
@@ -582,6 +648,8 @@ typedef enum _D3DBACKBUFFER_TYPE {
     D3DBACKBUFFER_TYPE_FORCE_DWORD  = 0x7fffffff
 } D3DBACKBUFFER_TYPE;
 
+#define D3DPRESENT_BACK_BUFFER_MAX 3L
+
 typedef enum _D3DBASISTYPE {
    D3DBASIS_BEZIER        = 0,
    D3DBASIS_BSPLINE       = 1,
@@ -658,6 +726,15 @@ typedef enum _D3DDEBUGMONITORTOKENS {
     D3DDMT_FORCE_DWORD     = 0x7fffffff
 } D3DDEBUGMONITORTOKENS;
 
+typedef enum _D3DDEGREETYPE {
+    D3DDEGREE_LINEAR      = 1,
+    D3DDEGREE_QUADRATIC   = 2,
+    D3DDEGREE_CUBIC       = 3,
+    D3DDEGREE_QUINTIC     = 5,
+    
+    D3DDEGREE_FORCE_DWORD   = 0x7fffffff
+} D3DDEGREETYPE;
+
 typedef enum _D3DDEVTYPE {
     D3DDEVTYPE_HAL         = 1,
     D3DDEVTYPE_REF         = 2,
@@ -697,6 +774,13 @@ typedef enum _D3DFORMAT {
     D3DFMT_A8                   =  28,
     D3DFMT_A8R3G3B2             =  29,
     D3DFMT_X4R4G4B4             =  30,
+    D3DFMT_A2B10G10R10          =  31,
+    D3DFMT_A8B8G8R8             =  32,
+    D3DFMT_X8B8G8R8             =  33,
+    D3DFMT_G16R16               =  34,
+    D3DFMT_A2R10G10B10          =  35,
+    D3DFMT_A16B16G16R16         =  36,
+  
 
     D3DFMT_A8P8                 =  40,
     D3DFMT_P8                   =  41,
@@ -711,6 +795,7 @@ typedef enum _D3DFORMAT {
     D3DFMT_Q8W8V8U8             =  63,
     D3DFMT_V16U16               =  64,
     D3DFMT_W11V11U10            =  65,
+    D3DFMT_A2W10V10U10          =  67,
 
     D3DFMT_UYVY                 =  MAKEFOURCC('U', 'Y', 'V', 'Y'),
     D3DFMT_YUY2                 =  MAKEFOURCC('Y', 'U', 'Y', '2'),
@@ -719,18 +804,35 @@ typedef enum _D3DFORMAT {
     D3DFMT_DXT3                 =  MAKEFOURCC('D', 'X', 'T', '3'),
     D3DFMT_DXT4                 =  MAKEFOURCC('D', 'X', 'T', '4'),
     D3DFMT_DXT5                 =  MAKEFOURCC('D', 'X', 'T', '5'),
+    D3DFMT_MULTI2_ARGB          =  MAKEFOURCC('M', 'E', 'T', '1'),
+    D3DFMT_G8R8_G8B8            =  MAKEFOURCC('G', 'R', 'G', 'B'),
+    D3DFMT_R8G8_B8G8            =  MAKEFOURCC('R', 'G', 'B', 'G'),
 
     D3DFMT_D16_LOCKABLE         =  70,
     D3DFMT_D32                  =  71,
     D3DFMT_D15S1                =  73,
-    D3DFMT_D24S8                =  75,
-    D3DFMT_D16                  =  80,
     D3DFMT_D24X8                =  77,
     D3DFMT_D24X4S4              =  79,
+    D3DFMT_D16                  =  80,
+    D3DFMT_D32F_LOCKABLE        =  82,
+    D3DFMT_D24FS8               =  83,
 
     D3DFMT_VERTEXDATA           = 100,
     D3DFMT_INDEX16              = 101,
     D3DFMT_INDEX32              = 102,
+    D3DFMT_Q16W16V16U16         = 110,
+    /* Flaoting point formats */
+    D3DFMT_R16F                 = 111,
+    D3DFMT_G16R16F              = 112,
+    D3DFMT_A16B16G16R16F        = 113,
+    
+    /* IEEE formats */
+    D3DFMT_R32F                 = 114,
+    D3DFMT_G32R32F              = 115,
+    D3DFMT_A32B32G32R32F        = 116,
+    
+    D3DFMT_CxV8U8               = 117,
+
 
     D3DFMT_FORCE_DWORD          = 0xFFFFFFFF
 } D3DFORMAT;
@@ -753,6 +855,7 @@ typedef enum _D3DMATERIALCOLORSOURCE {
 
 typedef enum _D3DMULTISAMPLE_TYPE {
     D3DMULTISAMPLE_NONE            =  0,
+    D3DMULTISAMPLE_NONMASKABLE     =  1,
     D3DMULTISAMPLE_2_SAMPLES       =  2,
     D3DMULTISAMPLE_3_SAMPLES       =  3,
     D3DMULTISAMPLE_4_SAMPLES       =  4,
@@ -772,6 +875,7 @@ typedef enum _D3DMULTISAMPLE_TYPE {
     D3DMULTISAMPLE_FORCE_DWORD     = 0xffffffff
 } D3DMULTISAMPLE_TYPE;
 
+#if 0
 typedef enum _D3DORDERTYPE {
    D3DORDER_LINEAR      = 1,
    D3DORDER_QUADRATIC   = 2,
@@ -780,7 +884,7 @@ typedef enum _D3DORDERTYPE {
 
    D3DORDER_FORCE_DWORD = 0x7fffffff
 } D3DORDERTYPE;
-
+#endif
 typedef enum _D3DPATCHEDGESTYLE {
    D3DPATCHEDGE_DISCRETE    = 0,
    D3DPATCHEDGE_CONTINUOUS  = 1,
@@ -812,7 +916,6 @@ typedef enum _D3DRENDERSTATETYPE {
     D3DRS_ZENABLE                   =   7,
     D3DRS_FILLMODE                  =   8,
     D3DRS_SHADEMODE                 =   9,
-    D3DRS_LINEPATTERN               =  10,
     D3DRS_ZWRITEENABLE              =  14,
     D3DRS_ALPHATESTENABLE           =  15,
     D3DRS_LASTPIXEL                 =  16,
@@ -826,14 +929,11 @@ typedef enum _D3DRENDERSTATETYPE {
     D3DRS_ALPHABLENDENABLE          =  27,
     D3DRS_FOGENABLE                 =  28,
     D3DRS_SPECULARENABLE            =  29,
-    D3DRS_ZVISIBLE                  =  30,
     D3DRS_FOGCOLOR                  =  34,
     D3DRS_FOGTABLEMODE              =  35,
     D3DRS_FOGSTART                  =  36,
     D3DRS_FOGEND                    =  37,
     D3DRS_FOGDENSITY                =  38,
-    D3DRS_EDGEANTIALIAS             =  40,
-    D3DRS_ZBIAS                     =  47,
     D3DRS_RANGEFOGENABLE            =  48,
     D3DRS_STENCILENABLE             =  52,
     D3DRS_STENCILFAIL               =  53,
@@ -865,7 +965,6 @@ typedef enum _D3DRENDERSTATETYPE {
     D3DRS_EMISSIVEMATERIALSOURCE    = 148,
     D3DRS_VERTEXBLEND               = 151,
     D3DRS_CLIPPLANEENABLE           = 152,
-    D3DRS_SOFTWAREVERTEXPROCESSING  = 153,
     D3DRS_POINTSIZE                 = 154,
     D3DRS_POINTSIZE_MIN             = 155,
     D3DRS_POINTSPRITEENABLE         = 156,
@@ -876,15 +975,14 @@ typedef enum _D3DRENDERSTATETYPE {
     D3DRS_MULTISAMPLEANTIALIAS      = 161,
     D3DRS_MULTISAMPLEMASK           = 162,
     D3DRS_PATCHEDGESTYLE            = 163,
-    D3DRS_PATCHSEGMENTS             = 164,
     D3DRS_DEBUGMONITORTOKEN         = 165,
     D3DRS_POINTSIZE_MAX             = 166,
     D3DRS_INDEXEDVERTEXBLENDENABLE  = 167,
     D3DRS_COLORWRITEENABLE          = 168,
     D3DRS_TWEENFACTOR               = 170,
     D3DRS_BLENDOP                   = 171,
-    D3DRS_POSITIONORDER             = 172,
-    D3DRS_NORMALORDER               = 173,
+    D3DRS_POSITIONDEGREE            = 172,
+    D3DRS_NORMALDEGREE              = 173,
     D3DRS_SCISSORTESTENABLE         = 174,
     D3DRS_SLOPESCALEDEPTHBIAS       = 175,
     D3DRS_ANTIALIASEDLINEENABLE     = 176,
@@ -934,6 +1032,8 @@ typedef enum _D3DRESOURCETYPE {
     D3DRTYPE_FORCE_DWORD            = 0x7fffffff
 } D3DRESOURCETYPE;
 
+#define D3DRTYPECOUNT (D3DRTYPE_INDEXBUFFER+1)
+
 typedef enum _D3DSHADEMODE {
     D3DSHADE_FLAT               = 1,
     D3DSHADE_GOURAUD            = 2,
@@ -967,8 +1067,6 @@ typedef enum _D3DSWAPEFFECT {
     D3DSWAPEFFECT_DISCARD         = 1,
     D3DSWAPEFFECT_FLIP            = 2,
     D3DSWAPEFFECT_COPY            = 3,
-    D3DSWAPEFFECT_COPY_VSYNC      = 4,
-
     D3DSWAPEFFECT_FORCE_DWORD     = 0xFFFFFFFF
 } D3DSWAPEFFECT;
 
@@ -1037,6 +1135,7 @@ typedef enum _D3DTEXTURESTAGESTATETYPE {
     D3DTSS_BUMPENVMAT10          =  9,
     D3DTSS_BUMPENVMAT11          = 10,
     D3DTSS_TEXCOORDINDEX         = 11,
+#if 1 /* TODO: remove once samplerstates are implemented.  */
     D3DTSS_ADDRESSU              = 13,
     D3DTSS_ADDRESSV              = 14,
     D3DTSS_BORDERCOLOR           = 15,
@@ -1046,6 +1145,7 @@ typedef enum _D3DTEXTURESTAGESTATETYPE {
     D3DTSS_MIPMAPLODBIAS         = 19,
     D3DTSS_MAXMIPLEVEL           = 20,
     D3DTSS_MAXANISOTROPY         = 21,
+#endif
     D3DTSS_BUMPENVLSCALE         = 22,
     D3DTSS_BUMPENVLOFFSET        = 23,
     D3DTSS_TEXTURETRANSFORMFLAGS = 24,
@@ -1172,6 +1272,75 @@ typedef struct _D3DDEVICE_CREATION_PARAMETERS {
     DWORD         BehaviorFlags;
 } D3DDEVICE_CREATION_PARAMETERS;
 
+typedef struct _D3DDEVINFO_D3D9BANDWIDTHTIMINGS {
+    float         MaxBandwidthUtilized;
+    float         FrontEndUploadMemoryUtilizedPercent;
+    float         VertexRateUtilizedPercent;
+    float         TriangleSetupRateUtilizedPercent;
+    float         FillRateUtilizedPercent;
+} D3DDEVINFO_D3D9BANDWIDTHTIMINGS;
+
+typedef struct _D3DDEVINFO_D3D9CACHEUTILIZATION {
+    float         TextureCacheHitRate;
+    float         PostTransformVertexCacheHitRate;
+} D3DDEVINFO_D3D9CACHEUTILIZATION;
+
+typedef struct _D3DDEVINFO_D3D9INTERFACETIMINGS {
+    float         WaitingForGPUToUseApplicationResourceTimePercent;
+    float         WaitingForGPUToAcceptMoreCommandsTimePercent;
+    float         WaitingForGPUToStayWithinLatencyTimePercent;
+    float         WaitingForGPUExclusiveResourceTimePercent;
+    float         WaitingForGPUOtherTimePercent;
+} D3DDEVINFO_D3D9INTERFACETIMINGS;
+
+typedef struct _D3DDEVINFO_D3D9PIPELINETIMINGS {
+    float         VertexProcessingTimePercent;
+    float         PixelProcessingTimePercent;
+    float         OtherGPUProcessingTimePercent;
+    float         GPUIdleTimePercent;
+} D3DDEVINFO_D3D9PIPELINETIMINGS;
+
+typedef struct _D3DDEVINFO_D3D9STAGETIMINGS {
+    float         MemoryProcessingPercent;
+    float         ComputationProcessingPercent;
+} D3DDEVINFO_D3D9STAGETIMINGS;
+
+
+/* Vertex cache optimization hints. */
+typedef struct D3DDEVINFO_VCACHE {
+    /* Must be a 4 char code FOURCC (e.g. CACH) */
+    DWORD         Pattern; 
+    /* 0 to get the longest  strips, 1 vertex cache */
+    DWORD         OptMethod; 
+     /* Cache size to use (only valid if OptMethod==1) */
+    DWORD         CacheSize;
+    /* internal for deciding when to restart strips, non user modifyable (only valid if OptMethod==1) */
+    DWORD         MagicNumber; 
+} D3DDEVINFO_VCACHE;
+
+typedef struct D3DRESOURCESTATS {
+    BOOL                bThrashing;
+    DWORD               ApproxBytesDownloaded;
+    DWORD               NumEvicts;
+    DWORD               NumVidCreates;
+    DWORD               LastPri;
+    DWORD               NumUsed;
+    DWORD               NumUsedInVidMem;
+    DWORD               WorkingSet;
+    DWORD               WorkingSetBytes;
+    DWORD               TotalManaged;
+    DWORD               TotalBytes;
+} D3DRESOURCESTATS;
+
+typedef struct _D3DDEVINFO_D3DRESOURCEMANAGER {
+    D3DRESOURCESTATS stats[D3DRTYPECOUNT];
+} D3DDEVINFO_D3DRESOURCEMANAGER;
+
+typedef struct _D3DDEVINFO_D3DVERTEXSTATS {
+    DWORD NumRenderedTriangles;
+    DWORD NumExtraClippingTriangles;
+} D3DDEVINFO_D3DVERTEXSTATS;
+
 typedef struct _D3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;
@@ -1296,7 +1465,7 @@ typedef struct _D3DRECTPATCH_INFO {
     UINT                Height;
     UINT                Stride;
     D3DBASISTYPE        Basis;
-    D3DORDERTYPE        Order;
+    D3DDEGREETYPE       Degree;
 } D3DRECTPATCH_INFO;
 
 typedef struct _D3DSURFACE_DESC {
@@ -1314,7 +1483,7 @@ typedef struct _D3DTRIPATCH_INFO {
     UINT                StartVertexOffset;
     UINT                NumVertices;
     D3DBASISTYPE        Basis;
-    D3DORDERTYPE        Order;
+    D3DDEGREETYPE       Degree;
 } D3DTRIPATCH_INFO;
 
 typedef struct _D3DVERTEXBUFFER_DESC {
@@ -1345,13 +1514,5 @@ typedef struct _D3DVOLUME_DESC {
     UINT                Height;
     UINT                Depth;
 } D3DVOLUME_DESC;
-
-typedef enum _D3DQUERYTYPE {
-  D3DQUERYTYPE_VCACHE           = 4, 
-  D3DQUERYTYPE_RESOURCEMANAGER  = 5, 
-  D3DQUERYTYPE_VERTEXSTATS      = 6, 
-  D3DQUERYTYPE_EVENT            = 8, 
-  D3DQUERYTYPE_OCCLUSION        = 9
-} D3DQUERYTYPE;
 
 #endif /* __WINE_D3D9TYPES_H */

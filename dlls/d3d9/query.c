@@ -2,7 +2,8 @@
  * IDirect3DQuery9 implementation
  *
  * Copyright 2002-2003 Raphael Junqueira
- *                     Jason Edmeades
+ * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,15 +23,16 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DQuery9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DQuery9Impl_QueryInterface(LPDIRECT3DQUERY9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DQuery9)) {
-        IDirect3DQuery9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -44,7 +46,6 @@ ULONG WINAPI IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface) {
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
-
     return ref;
 }
 
@@ -63,34 +64,43 @@ ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
 /* IDirect3DQuery9 Interface follow: */
 HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->Device);
-    *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
-    IDirect3DDevice9Impl_AddRef(*ppDevice);
-    return D3D_OK;
+    IWineD3DDevice* pDevice;
+    HRESULT hr;
+
+    TRACE("(%p) Relay\n", This);
+
+    hr = IWineD3DQuery_GetDevice(This->wineD3DQuery, &pDevice);
+    if(hr != D3D_OK){
+        *ppDevice = NULL;
+    }else{
+        hr = IWineD3DDevice_GetParent(pDevice, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(pDevice);
+    }
+    return hr;
 }
 
 D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DQuery_GetType(This->wineD3DQuery);
 }
 
 DWORD WINAPI IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DQuery_GetDataSize(This->wineD3DQuery);
 }
 
 HRESULT WINAPI IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dwIssueFlags) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DQuery_Issue(This->wineD3DQuery, dwIssueFlags);
 }
 
 HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DQuery_GetData(This->wineD3DQuery, pData, dwSize, dwGetDataFlags);
 }
 
 
@@ -109,12 +119,11 @@ IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DQuery9 Methods follow: */
 HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) {
-#if 0
   IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#endif
   IDirect3DQuery9Impl *object = NULL;
   HRESULT hr = D3D_OK;
-    
+
+  TRACE("(%p) Relay\n", This);
   if (NULL == ppQuery) {
     return D3DERR_INVALIDCALL;
   }
@@ -128,8 +137,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
   
   object->lpVtbl = &Direct3DQuery9_Vtbl;
   object->ref = 1;
-#if 0
-  hr = IWineD3DDevice_CreateQuery(This->WineD3DDevice, 9, pVertexElements, &(object->wineD3DQuery));
+  hr = IWineD3DDevice_CreateQuery(This->WineD3DDevice, Type, &(object->wineD3DQuery), (IUnknown*)object);
   
   if (FAILED(hr)) {
     /* free up object */ 
@@ -139,6 +147,6 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
   } else {
     *ppQuery = (LPDIRECT3DQUERY9) object;
   }
-#endif
+    TRACE("(%p) : returning %p \n", This, *ppQuery);
   return hr;
 }

@@ -2,7 +2,8 @@
  * Direct3D 9 private include file
  *
  * Copyright 2002-2003 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -83,7 +84,7 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define MAX_LEVELS        256
 
 /* Other useful values */
-#define HIGHEST_RENDER_STATE 174
+#define HIGHEST_RENDER_STATE D3DRS_BLENDOPALPHA
 #define HIGHEST_TEXTURE_STATE 29
 #define HIGHEST_TRANSFORMSTATE 512
 #define D3DSBT_RECORDED 0xfffffffe
@@ -108,7 +109,6 @@ typedef struct IDirect3DStateBlock9Impl        IDirect3DStateBlock9Impl;
 typedef struct IDirect3DVertexShader9Impl      IDirect3DVertexShader9Impl;
 typedef struct IDirect3DPixelShader9Impl       IDirect3DPixelShader9Impl;
 typedef struct IDirect3DVertexDeclaration9Impl IDirect3DVertexDeclaration9Impl;
-typedef struct IDirect3DQuery9Impl             IDirect3DQuery9Impl;
 
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
@@ -1108,26 +1108,15 @@ extern IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl;
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-struct IDirect3DQuery9Impl { 
+typedef struct IDirect3DQuery9Impl {
     /* IUnknown fields */
     IDirect3DQuery9Vtbl *lpVtbl;
-    DWORD ref;
+    DWORD                ref;
 
-    /* IDirect3DQuery9 fields */  
-    IDirect3DDevice9Impl* Device;
-};
+    /* IDirect3DQuery9 fields */
+    IWineD3DQuery       *wineD3DQuery;
+} IDirect3DQuery9Impl;
 
-/* IUnknown: */
-extern HRESULT  WINAPI     IDirect3DQuery9Impl_QueryInterface(LPDIRECT3DQUERY9 iface, REFIID riid, LPVOID* ppobj);
-extern ULONG    WINAPI     IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface);
-extern ULONG    WINAPI     IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface);
-
-/* IDirect3DQuery9: */
-extern HRESULT  WINAPI     IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDevice9** ppDevice);
-extern D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface);
-extern DWORD    WINAPI     IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 iface);
-extern HRESULT  WINAPI     IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dwIssueFlags);
-extern HRESULT  WINAPI     IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags);
 
 /* Callbacks */
 extern HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 

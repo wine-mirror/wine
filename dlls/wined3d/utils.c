@@ -31,46 +31,58 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 const char* debug_d3dformat(D3DFORMAT fmt) {
   switch (fmt) {
 #define FMT_TO_STR(fmt) case fmt: return #fmt
-    FMT_TO_STR(D3DFMT_UNKNOWN);
-    FMT_TO_STR(D3DFMT_R8G8B8);
-    FMT_TO_STR(D3DFMT_A8R8G8B8);
-    FMT_TO_STR(D3DFMT_X8R8G8B8);
-    FMT_TO_STR(D3DFMT_R5G6B5);
-    FMT_TO_STR(D3DFMT_X1R5G5B5);
-    FMT_TO_STR(D3DFMT_A1R5G5B5);
-    FMT_TO_STR(D3DFMT_A4R4G4B4);
-    FMT_TO_STR(D3DFMT_R3G3B2);
-    FMT_TO_STR(D3DFMT_A8);
-    FMT_TO_STR(D3DFMT_A8R3G3B2);
-    FMT_TO_STR(D3DFMT_X4R4G4B4);
-    FMT_TO_STR(D3DFMT_A8P8);
-    FMT_TO_STR(D3DFMT_P8);
-    FMT_TO_STR(D3DFMT_L8);
-    FMT_TO_STR(D3DFMT_A8L8);
-    FMT_TO_STR(D3DFMT_A4L4);
-    FMT_TO_STR(D3DFMT_V8U8);
-    FMT_TO_STR(D3DFMT_L6V5U5);
-    FMT_TO_STR(D3DFMT_X8L8V8U8);
-    FMT_TO_STR(D3DFMT_Q8W8V8U8);
-    FMT_TO_STR(D3DFMT_V16U16);
-    FMT_TO_STR(D3DFMT_W11V11U10);
-    FMT_TO_STR(D3DFMT_UYVY);
-    FMT_TO_STR(D3DFMT_YUY2);
-    FMT_TO_STR(D3DFMT_DXT1);
-    FMT_TO_STR(D3DFMT_DXT2);
-    FMT_TO_STR(D3DFMT_DXT3);
-    FMT_TO_STR(D3DFMT_DXT4);
-    FMT_TO_STR(D3DFMT_DXT5);
-    FMT_TO_STR(D3DFMT_D16_LOCKABLE);
-    FMT_TO_STR(D3DFMT_D32);
-    FMT_TO_STR(D3DFMT_D15S1);
-    FMT_TO_STR(D3DFMT_D24S8);
-    FMT_TO_STR(D3DFMT_D16);
-    FMT_TO_STR(D3DFMT_D24X8);
-    FMT_TO_STR(D3DFMT_D24X4S4);
-    FMT_TO_STR(D3DFMT_VERTEXDATA);
-    FMT_TO_STR(D3DFMT_INDEX16);
-    FMT_TO_STR(D3DFMT_INDEX32);
+    FMT_TO_STR(WINED3DFMT_UNKNOWN);
+    FMT_TO_STR(WINED3DFMT_R8G8B8);
+    FMT_TO_STR(WINED3DFMT_A8R8G8B8);
+    FMT_TO_STR(WINED3DFMT_X8R8G8B8);
+    FMT_TO_STR(WINED3DFMT_R5G6B5);
+    FMT_TO_STR(WINED3DFMT_X1R5G5B5);
+    FMT_TO_STR(WINED3DFMT_A1R5G5B5);
+    FMT_TO_STR(WINED3DFMT_A4R4G4B4);
+    FMT_TO_STR(WINED3DFMT_R3G3B2);
+    FMT_TO_STR(WINED3DFMT_A8);   
+    FMT_TO_STR(WINED3DFMT_A8R3G3B2);
+    FMT_TO_STR(WINED3DFMT_X4R4G4B4);
+    FMT_TO_STR(WINED3DFMT_G16R16);
+    FMT_TO_STR(WINED3DFMT_A2R10G10B10);
+    FMT_TO_STR(WINED3DFMT_A16B16G16R16);    
+    FMT_TO_STR(WINED3DFMT_A8P8);
+    FMT_TO_STR(WINED3DFMT_P8);
+    FMT_TO_STR(WINED3DFMT_L8);
+    FMT_TO_STR(WINED3DFMT_A8L8);
+    FMT_TO_STR(WINED3DFMT_A4L4);
+    FMT_TO_STR(WINED3DFMT_V8U8);
+    FMT_TO_STR(WINED3DFMT_L6V5U5);
+    FMT_TO_STR(WINED3DFMT_X8L8V8U8);
+    FMT_TO_STR(WINED3DFMT_Q8W8V8U8);
+    FMT_TO_STR(WINED3DFMT_V16U16);
+    FMT_TO_STR(WINED3DFMT_W11V11U10);
+    FMT_TO_STR(WINED3DFMT_A2W10V10U10);    
+    FMT_TO_STR(WINED3DFMT_UYVY);
+    FMT_TO_STR(WINED3DFMT_YUY2);
+    FMT_TO_STR(WINED3DFMT_DXT1);
+    FMT_TO_STR(WINED3DFMT_DXT2);
+    FMT_TO_STR(WINED3DFMT_DXT3);
+    FMT_TO_STR(WINED3DFMT_DXT4);
+    FMT_TO_STR(WINED3DFMT_DXT5);
+    FMT_TO_STR(WINED3DFMT_MULTI2_ARGB);
+    FMT_TO_STR(WINED3DFMT_G8R8_G8B8);
+    FMT_TO_STR(WINED3DFMT_R8G8_B8G8);
+    FMT_TO_STR(WINED3DFMT_D16_LOCKABLE);
+    FMT_TO_STR(WINED3DFMT_D32);
+    FMT_TO_STR(WINED3DFMT_D15S1);
+    FMT_TO_STR(WINED3DFMT_D24S8);
+    FMT_TO_STR(WINED3DFMT_D24X8);
+    FMT_TO_STR(WINED3DFMT_D24X4S4);
+    FMT_TO_STR(WINED3DFMT_D16);
+    FMT_TO_STR(WINED3DFMT_D32F_LOCKABLE);
+    FMT_TO_STR(WINED3DFMT_VERTEXDATA);
+    FMT_TO_STR(WINED3DFMT_INDEX16);
+    FMT_TO_STR(WINED3DFMT_INDEX32);
+    FMT_TO_STR(WINED3DFMT_Q16W16V16U16);
+    FMT_TO_STR(WINED3DFMT_R16F);
+    FMT_TO_STR(WINED3DFMT_G16R16F);
+    FMT_TO_STR(WINED3DFMT_A16B16G16R16F);
 #undef FMT_TO_STR
   default:
     FIXME("Unrecognized %u D3DFORMAT!\n", fmt);
@@ -147,82 +159,82 @@ const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType) {
 const char* debug_d3drenderstate(DWORD state) {
   switch (state) {
 #define D3DSTATE_TO_STR(u) case u: return #u
-    D3DSTATE_TO_STR(D3DRS_ZENABLE                   );
-    D3DSTATE_TO_STR(D3DRS_FILLMODE                  );
-    D3DSTATE_TO_STR(D3DRS_SHADEMODE                 );
-    D3DSTATE_TO_STR(D3DRS_LINEPATTERN               );
-    D3DSTATE_TO_STR(D3DRS_ZWRITEENABLE              );
-    D3DSTATE_TO_STR(D3DRS_ALPHATESTENABLE           );
-    D3DSTATE_TO_STR(D3DRS_LASTPIXEL                 );
-    D3DSTATE_TO_STR(D3DRS_SRCBLEND                  );
-    D3DSTATE_TO_STR(D3DRS_DESTBLEND                 );
-    D3DSTATE_TO_STR(D3DRS_CULLMODE                  );
-    D3DSTATE_TO_STR(D3DRS_ZFUNC                     );
-    D3DSTATE_TO_STR(D3DRS_ALPHAREF                  );
-    D3DSTATE_TO_STR(D3DRS_ALPHAFUNC                 );
-    D3DSTATE_TO_STR(D3DRS_DITHERENABLE              );
-    D3DSTATE_TO_STR(D3DRS_ALPHABLENDENABLE          );
-    D3DSTATE_TO_STR(D3DRS_FOGENABLE                 );
-    D3DSTATE_TO_STR(D3DRS_SPECULARENABLE            );
-    D3DSTATE_TO_STR(D3DRS_ZVISIBLE                  );
-    D3DSTATE_TO_STR(D3DRS_FOGCOLOR                  );
-    D3DSTATE_TO_STR(D3DRS_FOGTABLEMODE              );
-    D3DSTATE_TO_STR(D3DRS_FOGSTART                  );
-    D3DSTATE_TO_STR(D3DRS_FOGEND                    );
-    D3DSTATE_TO_STR(D3DRS_FOGDENSITY                );
-    D3DSTATE_TO_STR(D3DRS_EDGEANTIALIAS             );
-    D3DSTATE_TO_STR(D3DRS_ZBIAS                     );
-    D3DSTATE_TO_STR(D3DRS_RANGEFOGENABLE            );
-    D3DSTATE_TO_STR(D3DRS_STENCILENABLE             );
-    D3DSTATE_TO_STR(D3DRS_STENCILFAIL               );
-    D3DSTATE_TO_STR(D3DRS_STENCILZFAIL              );
-    D3DSTATE_TO_STR(D3DRS_STENCILPASS               );
-    D3DSTATE_TO_STR(D3DRS_STENCILFUNC               );
-    D3DSTATE_TO_STR(D3DRS_STENCILREF                );
-    D3DSTATE_TO_STR(D3DRS_STENCILMASK               );
-    D3DSTATE_TO_STR(D3DRS_STENCILWRITEMASK          );
-    D3DSTATE_TO_STR(D3DRS_TEXTUREFACTOR             );
-    D3DSTATE_TO_STR(D3DRS_WRAP0                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP1                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP2                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP3                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP4                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP5                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP6                     );
-    D3DSTATE_TO_STR(D3DRS_WRAP7                     );
-    D3DSTATE_TO_STR(D3DRS_CLIPPING                  );
-    D3DSTATE_TO_STR(D3DRS_LIGHTING                  );
-    D3DSTATE_TO_STR(D3DRS_AMBIENT                   );
-    D3DSTATE_TO_STR(D3DRS_FOGVERTEXMODE             );
-    D3DSTATE_TO_STR(D3DRS_COLORVERTEX               );
-    D3DSTATE_TO_STR(D3DRS_LOCALVIEWER               );
-    D3DSTATE_TO_STR(D3DRS_NORMALIZENORMALS          );
-    D3DSTATE_TO_STR(D3DRS_DIFFUSEMATERIALSOURCE     );
-    D3DSTATE_TO_STR(D3DRS_SPECULARMATERIALSOURCE    );
-    D3DSTATE_TO_STR(D3DRS_AMBIENTMATERIALSOURCE     );
-    D3DSTATE_TO_STR(D3DRS_EMISSIVEMATERIALSOURCE    );
-    D3DSTATE_TO_STR(D3DRS_VERTEXBLEND               );
-    D3DSTATE_TO_STR(D3DRS_CLIPPLANEENABLE           );
-    D3DSTATE_TO_STR(D3DRS_SOFTWAREVERTEXPROCESSING  );
-    D3DSTATE_TO_STR(D3DRS_POINTSIZE                 );
-    D3DSTATE_TO_STR(D3DRS_POINTSIZE_MIN             );
-    D3DSTATE_TO_STR(D3DRS_POINTSPRITEENABLE         );
-    D3DSTATE_TO_STR(D3DRS_POINTSCALEENABLE          );
-    D3DSTATE_TO_STR(D3DRS_POINTSCALE_A              );
-    D3DSTATE_TO_STR(D3DRS_POINTSCALE_B              );
-    D3DSTATE_TO_STR(D3DRS_POINTSCALE_C              );
-    D3DSTATE_TO_STR(D3DRS_MULTISAMPLEANTIALIAS      );
-    D3DSTATE_TO_STR(D3DRS_MULTISAMPLEMASK           );
-    D3DSTATE_TO_STR(D3DRS_PATCHEDGESTYLE            );
-    D3DSTATE_TO_STR(D3DRS_PATCHSEGMENTS             );
-    D3DSTATE_TO_STR(D3DRS_DEBUGMONITORTOKEN         );
-    D3DSTATE_TO_STR(D3DRS_POINTSIZE_MAX             );
-    D3DSTATE_TO_STR(D3DRS_INDEXEDVERTEXBLENDENABLE  );
-    D3DSTATE_TO_STR(D3DRS_COLORWRITEENABLE          );
-    D3DSTATE_TO_STR(D3DRS_TWEENFACTOR               );
-    D3DSTATE_TO_STR(D3DRS_BLENDOP                   );
-    D3DSTATE_TO_STR(D3DRS_POSITIONORDER             );
-    D3DSTATE_TO_STR(D3DRS_NORMALORDER               );
+    D3DSTATE_TO_STR(WINED3DRS_ZENABLE                   );
+    D3DSTATE_TO_STR(WINED3DRS_FILLMODE                  );
+    D3DSTATE_TO_STR(WINED3DRS_SHADEMODE                 );
+    D3DSTATE_TO_STR(WINED3DRS_LINEPATTERN               );
+    D3DSTATE_TO_STR(WINED3DRS_ZWRITEENABLE              );
+    D3DSTATE_TO_STR(WINED3DRS_ALPHATESTENABLE           );
+    D3DSTATE_TO_STR(WINED3DRS_LASTPIXEL                 );
+    D3DSTATE_TO_STR(WINED3DRS_SRCBLEND                  );
+    D3DSTATE_TO_STR(WINED3DRS_DESTBLEND                 );
+    D3DSTATE_TO_STR(WINED3DRS_CULLMODE                  );
+    D3DSTATE_TO_STR(WINED3DRS_ZFUNC                     );
+    D3DSTATE_TO_STR(WINED3DRS_ALPHAREF                  );
+    D3DSTATE_TO_STR(WINED3DRS_ALPHAFUNC                 );
+    D3DSTATE_TO_STR(WINED3DRS_DITHERENABLE              );
+    D3DSTATE_TO_STR(WINED3DRS_ALPHABLENDENABLE          );
+    D3DSTATE_TO_STR(WINED3DRS_FOGENABLE                 );
+    D3DSTATE_TO_STR(WINED3DRS_SPECULARENABLE            );
+    D3DSTATE_TO_STR(WINED3DRS_ZVISIBLE                  );
+    D3DSTATE_TO_STR(WINED3DRS_FOGCOLOR                  );
+    D3DSTATE_TO_STR(WINED3DRS_FOGTABLEMODE              );
+    D3DSTATE_TO_STR(WINED3DRS_FOGSTART                  );
+    D3DSTATE_TO_STR(WINED3DRS_FOGEND                    );
+    D3DSTATE_TO_STR(WINED3DRS_FOGDENSITY                );
+    D3DSTATE_TO_STR(WINED3DRS_EDGEANTIALIAS             );
+    D3DSTATE_TO_STR(WINED3DRS_ZBIAS                     );
+    D3DSTATE_TO_STR(WINED3DRS_RANGEFOGENABLE            );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILENABLE             );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILFAIL               );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILZFAIL              );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILPASS               );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILFUNC               );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILREF                );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILMASK               );
+    D3DSTATE_TO_STR(WINED3DRS_STENCILWRITEMASK          );
+    D3DSTATE_TO_STR(WINED3DRS_TEXTUREFACTOR             );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP0                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP1                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP2                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP3                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP4                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP5                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP6                     );
+    D3DSTATE_TO_STR(WINED3DRS_WRAP7                     );
+    D3DSTATE_TO_STR(WINED3DRS_CLIPPING                  );
+    D3DSTATE_TO_STR(WINED3DRS_LIGHTING                  );
+    D3DSTATE_TO_STR(WINED3DRS_AMBIENT                   );
+    D3DSTATE_TO_STR(WINED3DRS_FOGVERTEXMODE             );
+    D3DSTATE_TO_STR(WINED3DRS_COLORVERTEX               );
+    D3DSTATE_TO_STR(WINED3DRS_LOCALVIEWER               );
+    D3DSTATE_TO_STR(WINED3DRS_NORMALIZENORMALS          );
+    D3DSTATE_TO_STR(WINED3DRS_DIFFUSEMATERIALSOURCE     );
+    D3DSTATE_TO_STR(WINED3DRS_SPECULARMATERIALSOURCE    );
+    D3DSTATE_TO_STR(WINED3DRS_AMBIENTMATERIALSOURCE     );
+    D3DSTATE_TO_STR(WINED3DRS_EMISSIVEMATERIALSOURCE    );
+    D3DSTATE_TO_STR(WINED3DRS_VERTEXBLEND               );
+    D3DSTATE_TO_STR(WINED3DRS_CLIPPLANEENABLE           );
+    D3DSTATE_TO_STR(WINED3DRS_SOFTWAREVERTEXPROCESSING  );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSIZE                 );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSIZE_MIN             );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSPRITEENABLE         );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSCALEENABLE          );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSCALE_A              );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSCALE_B              );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSCALE_C              );
+    D3DSTATE_TO_STR(WINED3DRS_MULTISAMPLEANTIALIAS      );
+    D3DSTATE_TO_STR(WINED3DRS_MULTISAMPLEMASK           );
+    D3DSTATE_TO_STR(WINED3DRS_PATCHEDGESTYLE            );
+    D3DSTATE_TO_STR(WINED3DRS_PATCHSEGMENTS             );
+    D3DSTATE_TO_STR(WINED3DRS_DEBUGMONITORTOKEN         );
+    D3DSTATE_TO_STR(WINED3DRS_POINTSIZE_MAX             );
+    D3DSTATE_TO_STR(WINED3DRS_INDEXEDVERTEXBLENDENABLE  );
+    D3DSTATE_TO_STR(WINED3DRS_COLORWRITEENABLE          );
+    D3DSTATE_TO_STR(WINED3DRS_TWEENFACTOR               );
+    D3DSTATE_TO_STR(WINED3DRS_BLENDOP                   );
+    D3DSTATE_TO_STR(WINED3DRS_POSITIONORDER             );
+    D3DSTATE_TO_STR(WINED3DRS_NORMALORDER               );
 #undef D3DSTATE_TO_STR
   default:
     FIXME("Unrecognized %lu render state!\n", state);
@@ -1540,9 +1552,9 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
-        case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
-        case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
-        case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        case WINED3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case WINED3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case WINED3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         default:
             /* stupid compiler */
             break;
@@ -1552,29 +1564,29 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (retVal == 0) {
         switch (fmt) {
         /* Paletted */
-        case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
-        case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
+        case WINED3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
+        case WINED3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
             /* Luminance */
-        case D3DFMT_L8:               retVal = GL_LUMINANCE8; break;
-        case D3DFMT_A8L8:             retVal = GL_LUMINANCE8_ALPHA8; break;
-        case D3DFMT_A4L4:             retVal = GL_LUMINANCE4_ALPHA4; break;
+        case WINED3DFMT_L8:               retVal = GL_LUMINANCE8; break;
+        case WINED3DFMT_A8L8:             retVal = GL_LUMINANCE8_ALPHA8; break;
+        case WINED3DFMT_A4L4:             retVal = GL_LUMINANCE4_ALPHA4; break;
             /* Bump */
-        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX8_EXT; break;
-        case D3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
-        case D3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX8_EXT; break;
-        case D3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_V8U8:             retVal = GL_COLOR_INDEX8_EXT; break;
+        case WINED3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX8_EXT; break;
+        case WINED3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
             /* color buffer */ 
-        case D3DFMT_R3G3B2:           retVal = GL_R3_G3_B2; break;
-        case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
-        case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
-        case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
-        case D3DFMT_X1R5G5B5:         retVal = GL_RGB5_A1; break;
-        case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
-        case D3DFMT_X4R4G4B4:         retVal = GL_RGBA4; break;
-        case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
-        case D3DFMT_X8R8G8B8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_R3G3B2:           retVal = GL_R3_G3_B2; break;
+        case WINED3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
+        case WINED3DFMT_R8G8B8:           retVal = GL_RGB8; break;
+        case WINED3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
+        case WINED3DFMT_X1R5G5B5:         retVal = GL_RGB5_A1; break;
+        case WINED3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
+        case WINED3DFMT_X4R4G4B4:         retVal = GL_RGBA4; break;
+        case WINED3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_X8R8G8B8:         retVal = GL_RGBA8; break;
             /* to see */
-        case D3DFMT_A8:               retVal = GL_ALPHA8; break;
+        case WINED3DFMT_A8:               retVal = GL_ALPHA8; break;
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_RGB8;
@@ -1589,9 +1601,9 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
-        case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
-        case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
-        case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        case WINED3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case WINED3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case WINED3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         default:
             /* stupid compiler */
             break;
@@ -1601,29 +1613,29 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (retVal == 0) {
         switch (fmt) {
         /* Paletted */
-        case D3DFMT_P8:               retVal = GL_COLOR_INDEX; break;
-        case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_P8:               retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
             /* Luminance */
-        case D3DFMT_L8:               retVal = GL_LUMINANCE; break;
-        case D3DFMT_A8L8:             retVal = GL_LUMINANCE_ALPHA; break;
-        case D3DFMT_A4L4:             retVal = GL_LUMINANCE_ALPHA; break;
+        case WINED3DFMT_L8:               retVal = GL_LUMINANCE; break;
+        case WINED3DFMT_A8L8:             retVal = GL_LUMINANCE_ALPHA; break;
+        case WINED3DFMT_A4L4:             retVal = GL_LUMINANCE_ALPHA; break;
             /* Bump */
-        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX; break;
-        case D3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
-        case D3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX; break;
-        case D3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_V8U8:             retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
             /* color buffer */
-        case D3DFMT_R3G3B2:           retVal = GL_BGR; break;
-        case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
-        case D3DFMT_R8G8B8:           retVal = GL_RGB; break;
-        case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
-        case D3DFMT_X1R5G5B5:         retVal = GL_BGRA; break;
-        case D3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
-        case D3DFMT_X4R4G4B4:         retVal = GL_BGRA; break;
-        case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
-        case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_R3G3B2:           retVal = GL_BGR; break;
+        case WINED3DFMT_R5G6B5:           retVal = GL_RGB; break;
+        case WINED3DFMT_R8G8B8:           retVal = GL_RGB; break;
+        case WINED3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
+        case WINED3DFMT_X1R5G5B5:         retVal = GL_BGRA; break;
+        case WINED3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
+        case WINED3DFMT_X4R4G4B4:         retVal = GL_BGRA; break;
+        case WINED3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
             /* to see */
-        case D3DFMT_A8:               retVal = GL_ALPHA; break;
+        case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_BGR;
@@ -1639,9 +1651,9 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
-        case D3DFMT_DXT1:             retVal = 0; break;
-        case D3DFMT_DXT3:             retVal = 0; break;
-        case D3DFMT_DXT5:             retVal = 0; break;
+        case WINED3DFMT_DXT1:             retVal = 0; break;
+        case WINED3DFMT_DXT3:             retVal = 0; break;
+        case WINED3DFMT_DXT5:             retVal = 0; break;
         default:
             /* stupid compiler */
             break;
@@ -1651,29 +1663,29 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (retVal == 0) {
         switch (fmt) {
         /* Paletted */
-        case D3DFMT_P8:               retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;        
+        case WINED3DFMT_P8:               retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;
             /* Luminance */
-        case D3DFMT_L8:               retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_A8L8:             retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_A4L4:             retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_L8:               retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_A8L8:             retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_A4L4:             retVal = GL_UNSIGNED_BYTE; break;
             /* Bump */
-        case D3DFMT_V8U8:             retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_V16U16:           retVal = GL_UNSIGNED_SHORT; break;
-        case D3DFMT_L6V5U5:           retVal = GL_UNSIGNED_SHORT_5_5_5_1; break;
-        case D3DFMT_X8L8V8U8:         retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_V8U8:             retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_V16U16:           retVal = GL_UNSIGNED_SHORT; break;
+        case WINED3DFMT_L6V5U5:           retVal = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case WINED3DFMT_X8L8V8U8:         retVal = GL_UNSIGNED_BYTE; break;
             /* Color buffer */
-        case D3DFMT_R3G3B2:           retVal = GL_UNSIGNED_BYTE_2_3_3_REV; break;
-        case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
-        case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
-        case D3DFMT_X1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
-        case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
-        case D3DFMT_X4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
-        case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
-        case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case WINED3DFMT_R3G3B2:           retVal = GL_UNSIGNED_BYTE_2_3_3_REV; break;
+        case WINED3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
+        case WINED3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
+        case WINED3DFMT_X1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
+        case WINED3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
+        case WINED3DFMT_X4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
+        case WINED3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case WINED3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
             /* to see */
-        case D3DFMT_A8:               retVal = GL_ALPHA; break;
+        case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_UNSIGNED_BYTE;
@@ -1689,45 +1701,45 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
     switch (fmt) {
     /* color buffer */
-    case D3DFMT_R3G3B2:           retVal = 1; break;
-    case D3DFMT_R5G6B5:           retVal = 2; break;
-    case D3DFMT_R8G8B8:           retVal = 3; break;
-    case D3DFMT_A1R5G5B5:         retVal = 2; break;
-    case D3DFMT_X1R5G5B5:         retVal = 2; break;
-    case D3DFMT_A4R4G4B4:         retVal = 2; break;
-    case D3DFMT_X4R4G4B4:         retVal = 2; break;
-    case D3DFMT_A8R8G8B8:         retVal = 4; break;
-    case D3DFMT_X8R8G8B8:         retVal = 4; break;
+    case WINED3DFMT_R3G3B2:           retVal = 1; break;
+    case WINED3DFMT_R5G6B5:           retVal = 2; break;
+    case WINED3DFMT_R8G8B8:           retVal = 3; break;
+    case WINED3DFMT_A1R5G5B5:         retVal = 2; break;
+    case WINED3DFMT_X1R5G5B5:         retVal = 2; break;
+    case WINED3DFMT_A4R4G4B4:         retVal = 2; break;
+    case WINED3DFMT_X4R4G4B4:         retVal = 2; break;
+    case WINED3DFMT_A8R8G8B8:         retVal = 4; break;
+    case WINED3DFMT_X8R8G8B8:         retVal = 4; break;
         /* Paletted */
-    case D3DFMT_P8:               retVal = 1; break;
-    case D3DFMT_A8P8:             retVal = 2; break;
+    case WINED3DFMT_P8:               retVal = 1; break;
+    case WINED3DFMT_A8P8:             retVal = 2; break;
         /* depth/stencil buffer */
-    case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
-    case D3DFMT_D16:              retVal = 2; break;
-    case D3DFMT_D32:              retVal = 4; break;
-    case D3DFMT_D15S1:            retVal = 2; break;
-    case D3DFMT_D24X4S4:          retVal = 4; break;
-    case D3DFMT_D24S8:            retVal = 4; break;
-    case D3DFMT_D24X8:            retVal = 4; break;
+    case WINED3DFMT_D16_LOCKABLE:     retVal = 2; break;
+    case WINED3DFMT_D16:              retVal = 2; break;
+    case WINED3DFMT_D32:              retVal = 4; break;
+    case WINED3DFMT_D15S1:            retVal = 2; break;
+    case WINED3DFMT_D24X4S4:          retVal = 4; break;
+    case WINED3DFMT_D24S8:            retVal = 4; break;
+    case WINED3DFMT_D24X8:            retVal = 4; break;
         /* Luminance */
-    case D3DFMT_L8:               retVal = 1; break;
-    case D3DFMT_A4L4:             retVal = 1; break;
-    case D3DFMT_A8L8:             retVal = 2; break;
+    case WINED3DFMT_L8:               retVal = 1; break;
+    case WINED3DFMT_A4L4:             retVal = 1; break;
+    case WINED3DFMT_A8L8:             retVal = 2; break;
         /* Bump */
-    case D3DFMT_V8U8:             retVal = 2; break;
-    case D3DFMT_L6V5U5:           retVal = 2; break;
-    case D3DFMT_V16U16:           retVal = 4; break;
-    case D3DFMT_X8L8V8U8:         retVal = 4; break;
+    case WINED3DFMT_V8U8:             retVal = 2; break;
+    case WINED3DFMT_L6V5U5:           retVal = 2; break;
+    case WINED3DFMT_V16U16:           retVal = 4; break;
+    case WINED3DFMT_X8L8V8U8:         retVal = 4; break;
         /* Compressed */                                  
-    case D3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
-    case D3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
-    case D3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+    case WINED3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
+    case WINED3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+    case WINED3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
         /* to see */
-    case D3DFMT_A8:               retVal = 1; break;      
+    case WINED3DFMT_A8:               retVal = 1; break;
         /* unknown */                                  
-    case D3DFMT_UNKNOWN:
+    case WINED3DFMT_UNKNOWN:
         /* Guess at the highest value of the above */
-        TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
+        TRACE("WINED3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
         retVal = 4;
         break;
 

@@ -35,15 +35,6 @@ extern IDirect3DPixelShaderImpl*             PixelShaders[64];
 #undef GL_VERSION_1_4 /* To be fixed, caused by mesa headers */
 #endif
 
-/* Useful internal structure, holding place for 4 floats */
-typedef struct _D3DVECTOR_4 {
-    float x;
-    float y;
-    float z;
-    float w;
-} D3DVECTOR_4;
-
-
 /* Returns bits for what is expected from the fixed function pipeline, and whether 
    a vertex shader will be in use. Note the fvf bits returned may be split over
    multiple streams only if the vertex shader was created, otherwise it all relates
@@ -519,7 +510,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
                  BOOL isDiffuse, float *dRGBA,                         /* 1st   colors */
                  BOOL isSpecular, float *sRGB,                         /* 2ndry colors */
                  BOOL isPtSize, float ptSize,                       /* pointSize    */
-                 D3DVECTOR_4 *texcoords, int *numcoords)               /* texture info */
+                 WINED3DVECTOR_4 *texcoords, int *numcoords)        /* texture info */
 {
     unsigned int textureNo;
     float s, t, r, q;

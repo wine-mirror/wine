@@ -31,6 +31,7 @@
 # error You must include d3d8.h or d3d9.h header to use this header
 #endif
 
+#include "wined3d_types.h"
 /*****************************************************************
  * THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES 
  * PLEASE USE wine/wined3d_gl.h INSTEAD
@@ -114,113 +115,6 @@ DEFINE_GUID(IID_IWineD3DQuery,
 0x905ddbac, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
 
 
-
-/*****************************************************************************
- * WineD3D Structures to be used when d3d8 and d3d9 are incompatible
- */
-
-typedef enum _WINED3DSAMPLERSTATETYPE {
-    WINED3DSAMP_ADDRESSU       = 1,
-    WINED3DSAMP_ADDRESSV       = 2,
-    WINED3DSAMP_ADDRESSW       = 3,
-    WINED3DSAMP_BORDERCOLOR    = 4,
-    WINED3DSAMP_MAGFILTER      = 5,
-    WINED3DSAMP_MINFILTER      = 6,
-    WINED3DSAMP_MIPFILTER      = 7,
-    WINED3DSAMP_MIPMAPLODBIAS  = 8,
-    WINED3DSAMP_MAXMIPLEVEL    = 9,
-    WINED3DSAMP_MAXANISOTROPY  = 10,
-    WINED3DSAMP_SRGBTEXTURE    = 11,
-    WINED3DSAMP_ELEMENTINDEX   = 12,
-    WINED3DSAMP_DMAPOFFSET     = 13,
-                                
-    WINED3DSAMP_FORCE_DWORD   = 0x7fffffff,
-} WINED3DSAMPLERSTATETYPE;
-
-typedef struct _WINED3DADAPTER_IDENTIFIER {
-    char           *Driver;
-    char           *Description;
-    char           *DeviceName;
-    LARGE_INTEGER  *DriverVersion; 
-    DWORD          *VendorId;
-    DWORD          *DeviceId;
-    DWORD          *SubSysId;
-    DWORD          *Revision;
-    GUID           *DeviceIdentifier;
-    DWORD          *WHQLLevel;
-} WINED3DADAPTER_IDENTIFIER;
-
-typedef struct _WINED3DPRESENT_PARAMETERS {
-    UINT                *BackBufferWidth;
-    UINT                *BackBufferHeight;
-    D3DFORMAT           *BackBufferFormat;
-    UINT                *BackBufferCount;
-    D3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD               *MultiSampleQuality;
-    D3DSWAPEFFECT       *SwapEffect;
-    HWND                *hDeviceWindow;
-    BOOL                *Windowed;
-    BOOL                *EnableAutoDepthStencil;
-    D3DFORMAT           *AutoDepthStencilFormat;
-    DWORD               *Flags;
-    UINT                *FullScreen_RefreshRateInHz;
-    UINT                *PresentationInterval;
-} WINED3DPRESENT_PARAMETERS;
-
-typedef struct _WINED3DSURFACE_DESC
-{
-    D3DFORMAT           *Format;
-    D3DRESOURCETYPE     *Type;
-    DWORD               *Usage;
-    D3DPOOL             *Pool;
-    UINT                *Size;
-                        
-    D3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD               *MultiSampleQuality;
-    UINT                *Width;
-    UINT                *Height;
-} WINED3DSURFACE_DESC;
-
-typedef struct _WINED3DVOLUME_DESC
-{
-    D3DFORMAT           *Format;
-    D3DRESOURCETYPE     *Type;
-    DWORD               *Usage;
-    D3DPOOL             *Pool;
-    UINT                *Size;
-                        
-    UINT                *Width;
-    UINT                *Height;
-    UINT                *Depth;
-} WINED3DVOLUME_DESC;
-
-typedef struct _WINED3DVERTEXELEMENT {
-  WORD    Stream;
-  WORD    Offset;
-  BYTE    Type;
-  BYTE    Method;
-  BYTE    Usage;
-  BYTE    UsageIndex;
-} WINED3DVERTEXELEMENT, *LPWINED3DVERTEXELEMENT;
-
-
-typedef enum _WINED3DQUERYTYPE {
-    WINED3DQUERYTYPE_VCACHE             = 4,
-    WINED3DQUERYTYPE_RESOURCEMANAGER    = 5,
-    WINED3DQUERYTYPE_VERTEXSTATS        = 6,
-    WINED3DQUERYTYPE_EVENT              = 8,
-    WINED3DQUERYTYPE_OCCLUSION          = 9,
-    WINED3DQUERYTYPE_TIMESTAMP          = 10,
-    WINED3DQUERYTYPE_TIMESTAMPDISJOINT  = 11,
-    WINED3DQUERYTYPE_TIMESTAMPFREQ      = 12,
-    WINED3DQUERYTYPE_PIPELINETIMINGS    = 13,
-    WINED3DQUERYTYPE_INTERFACETIMINGS   = 14,
-    WINED3DQUERYTYPE_VERTEXTIMINGS      = 15,
-    WINED3DQUERYTYPE_PIXELTIMINGS       = 16,
-    WINED3DQUERYTYPE_BANDWIDTHTIMINGS   = 17,
-    WINED3DQUERYTYPE_CACHEUTILIZATION   = 18
-} WINED3DQUERYTYPE;
-
 /* The following have differing names, but actually are the same layout. */
 /* Also, D3DCAPS8 is a subset of D3DCAPS9 so can be typecase as long as
      none of the 9 fields are accessed when the device is d3d8           */
@@ -260,6 +154,7 @@ typedef struct IWineD3DVolume         IWineD3DVolume;
 typedef struct IWineD3DVertexDeclaration   IWineD3DVertexDeclaration;
 typedef struct IWineD3DVertexShader   IWineD3DVertexShader;
 typedef struct IWineD3DPixelShader    IWineD3DPixelShader;
+typedef struct IWineD3DQuery          IWineD3DQuery;
 
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
@@ -386,7 +281,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
     STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateCubeTexture)(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
-    STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, void **ppQuery, IUnknown *pParent);
+    STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown *pParent);
     STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, void** pSwapChain, IUnknown* pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
     STDMETHOD(CreateVertexDeclaration)(THIS_ CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent) PURE;
     STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD* pFunction, IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
@@ -1193,6 +1088,41 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
 #define IWineD3DStateBlock_InitStartupStateBlock(p)             (p)->lpVtbl->InitStartupStateBlock(p)
 #endif
 
+/*****************************************************************************
+ * WineD3DQuery interface 
+ */
+#define INTERFACE IWineD3DQuery
+DECLARE_INTERFACE_(IWineD3DQuery,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DQuery methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
+    STDMETHOD(GetData)(THIS_  void *pData, DWORD dwSize, DWORD dwGetDataFlags) PURE;
+    STDMETHOD_(DWORD,GetDataSize)(THIS) PURE;
+    STDMETHOD_(WINED3DQUERYTYPE, GetType)(THIS) PURE;
+    STDMETHOD(Issue)(THIS_ DWORD dwIssueFlags) PURE;
+    
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DQuery_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DQuery_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IWineD3DQuery_Release(p)                   (p)->lpVtbl->Release(p)
+/*** IWineD3DQuery methods ***/
+#define IWineD3DQuery_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DQuery_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DQuery_GetData(p,a,b,c)             (p)->lpVtbl->GetData(p,a,b,c)
+#define IWineD3DQuery_GetDataSize(p)               (p)->lpVtbl->GetDataSize(p)
+#define IWineD3DQuery_GetType(p)                   (p)->lpVtbl->GetType(p)
+#define IWineD3DQuery_Issue(p,a)                   (p)->lpVtbl->Issue(p,a)
+
+#endif
 
 /*****************************************************************************
  * IWineD3DVertexShader interface 
