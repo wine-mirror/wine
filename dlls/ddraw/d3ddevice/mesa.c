@@ -2232,11 +2232,15 @@ GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
     }
     This->active_viewport = *lpData;
 
+    ENTER_GL();
+    
     /* Set the viewport */
     glDepthRange(lpData->dvMinZ, lpData->dvMaxZ);
     glViewport(lpData->dwX,
 	       This->surface->surface_desc.dwHeight - (lpData->dwHeight + lpData->dwY),
 	       lpData->dwWidth, lpData->dwHeight);
+
+    LEAVE_GL();
     
     return DD_OK;
 }

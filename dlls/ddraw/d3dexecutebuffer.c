@@ -74,11 +74,6 @@ static void execute(IDirect3DExecuteBufferImpl *This,
     if (TRACE_ON(ddraw))
       _dump_executedata(&(This->data));
 
-    if (((IDirect3DDeviceGLImpl *) lpDevice)->state == SURFACE_MEMORY_DIRTY) {
-        lpDevice->flush_to_framebuffer(lpDevice, NULL, ((IDirect3DDeviceGLImpl *) lpDevice)->lock_surf);
-    }
-    ((IDirect3DDeviceGLImpl *) lpDevice)->state = SURFACE_GL;
-    
     while (1) {
         LPD3DINSTRUCTION current = (LPD3DINSTRUCTION) instr;
 	BYTE size;
