@@ -1,6 +1,7 @@
 /*
  * cfgmgr32 implementation
  *
+ * Copyright 2004 Aric Stewart for CodeWeavers
  * Copyright 2003 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -22,19 +23,32 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "cfgmgr32.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cfgmgr32);
-
-typedef DWORD CONFIGRET;
-
-#define CR_SUCCESS 0
 
 CONFIGRET WINAPI CM_Get_Device_ID_ListA( 
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
     FIXME("%p %p %ld %ld\n", pszFilter, Buffer, BufferLen, ulFlags );
     memset(Buffer,0,2);
+    return CR_SUCCESS;
+}
+
+CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
+                                        ULONG  ulFlags)
+{
+    FIXME("%p %p %lu\n",pulLen, dnDevInst, ulFlags);
+    *pulLen = 1;
+    return CR_SUCCESS;
+}
+
+CONFIGRET WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer, 
+                                   ULONG  BufferLen, ULONG  ulFlags)
+{
+    FIXME("%p, %p, %lu %lu\n",dnDevInst, Buffer, BufferLen, ulFlags);
+    Buffer[0] = 0;
     return CR_SUCCESS;
 }
