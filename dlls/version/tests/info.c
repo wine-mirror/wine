@@ -80,9 +80,9 @@ static void test_info_size(void)
     ok( retval,
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
 	retval);
-    ok( NO_ERROR == GetLastError(),
-	"Last error wrong! NO_ERROR expected, got 0x%08lx\n",
-	GetLastError());
+    ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
+	"Last error wrong! NO_ERROR/0x%08lx (NT4)  expected, got 0x%08lx\n",
+	MY_LAST_ERROR, GetLastError());
 
     hdl = 0x55555555;
     SetLastError(MY_LAST_ERROR);
