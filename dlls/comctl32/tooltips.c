@@ -192,7 +192,7 @@ TOOLTIPS_InitSystemSettings (TOOLTIPS_INFO *infoPtr)
 
     DeleteObject (infoPtr->hFont);
     nclm.cbSize = sizeof(nclm);
-    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, sizeof(nclm), &nclm, 0);
     infoPtr->hFont = CreateFontIndirectW (&nclm.lfStatusFont);
 
     DeleteObject (infoPtr->hTitleFont);
