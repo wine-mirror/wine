@@ -74,6 +74,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "DndSelection",
     "_MOTIF_WM_HINTS",
     "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
+    "_NET_WM_MOVERESIZE",
     "_NET_WM_PID",
     "_NET_WM_PING",
     "_NET_WM_NAME",

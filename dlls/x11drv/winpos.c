@@ -72,6 +72,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 #define ON_BOTTOM_BORDER(hit) \
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
+#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
+#define _NET_WM_MOVERESIZE_SIZE_TOP          1
+#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
+#define _NET_WM_MOVERESIZE_SIZE_RIGHT        3
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOM       5
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
+#define _NET_WM_MOVERESIZE_SIZE_LEFT         7
+#define _NET_WM_MOVERESIZE_MOVE              8   /* movement only */
+#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
+#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
+
 
 /***********************************************************************
  *		clip_children
@@ -1838,6 +1850,42 @@ static void set_movesize_capture( HWND hwnd )
         SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
 }
 
+/***********************************************************************
+ *           X11DRV_WMMoveResizeWindow
+ *
+ * Tells the window manager to initiate a move or resize operation.
+ *
+ * SEE
+ *  http://freedesktop.org/Standards/wm-spec/1.3/ar01s04.html
+ *  or search for "_NET_WM_MOVERESIZE"
+ */
+static void X11DRV_WMMoveResizeWindow( HWND hwnd, int x, int y, int dir )
+{
+    XEvent xev;
+    Display *display = thread_display();
+
+    wine_tsx11_lock();
+
+    /* need to ungrab the pointer that may have been automatically grabbed
+     * with a ButtonPress event */
+    XUngrabPointer( display, CurrentTime );
+
+    xev.xclient.type = ClientMessage;
+    xev.xclient.window = X11DRV_get_whole_window(hwnd);
+    xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
+    xev.xclient.serial = 0;
+    xev.xclient.display = display;
+    xev.xclient.send_event = True;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = x; /* x coord */
+    xev.xclient.data.l[1] = y; /* y coord */
+    xev.xclient.data.l[2] = dir; /* direction */
+    xev.xclient.data.l[3] = 1; /* button */
+    xev.xclient.data.l[4] = 0; /* unused */
+    XSendEvent(display, root_window, False, SubstructureNotifyMask, &xev);
+
+    wine_tsx11_unlock();
+}
 
 /***********************************************************************
  *           SysCommandSizeMove   (X11DRV.@)
@@ -1851,6 +1899,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     HDC hdc;
     HWND parent;
     LONG hittest = (LONG)(wParam & 0x0f);
+    WPARAM syscommand = wParam & 0xfff0;
     HCURSOR hDragCursor = 0, hOldCursor = 0;
     POINT minTrack, maxTrack;
     POINT capturePoint, pt;
@@ -1866,22 +1915,51 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     Display *old_gdi_display = NULL;
     Display *display = thread_display();
 
-    SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
-
     pt.x = (short)LOWORD(dwPoint);
     pt.y = (short)HIWORD(dwPoint);
     capturePoint = pt;
 
-    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) || (exstyle & WS_EX_MANAGED)) return;
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
 
-    if ((wParam & 0xfff0) == SC_MOVE)
+    /* if we are managed then we let the WM do all the work */
+    if (exstyle & WS_EX_MANAGED)
+    {
+        int dir;
+        if (syscommand == SC_MOVE)
+        {
+            if (!hittest) dir = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+            else dir = _NET_WM_MOVERESIZE_MOVE;
+        }
+        else if (!hittest) dir = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+        else
+            switch (hittest)
+            {
+            case WMSZ_LEFT:        dir = _NET_WM_MOVERESIZE_SIZE_LEFT; break;
+            case WMSZ_RIGHT:       dir = _NET_WM_MOVERESIZE_SIZE_RIGHT; break;
+            case WMSZ_TOP:         dir = _NET_WM_MOVERESIZE_SIZE_TOP; break;
+            case WMSZ_TOPLEFT:     dir = _NET_WM_MOVERESIZE_SIZE_TOPLEFT; break;
+            case WMSZ_TOPRIGHT:    dir = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT; break;
+            case WMSZ_BOTTOM:      dir = _NET_WM_MOVERESIZE_SIZE_BOTTOM; break;
+            case WMSZ_BOTTOMLEFT:  dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT; break;
+            case WMSZ_BOTTOMRIGHT: dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT; break;
+            default:
+                ERR("Invalid hittest value: %ld\n", hittest);
+                dir = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+            }
+        X11DRV_WMMoveResizeWindow( hwnd, pt.x, pt.y, dir );
+        return;
+    }
+
+    SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
+
+    if (syscommand == SC_MOVE)
     {
         if (!hittest) hittest = start_size_move( hwnd, wParam, &capturePoint, style );
         if (!hittest) return;
     }
     else  /* SC_SIZE */
     {
-        if ( hittest && ((wParam & 0xfff0) != SC_MOUSEMENU) )
+        if ( hittest && (syscommand != SC_MOUSEMENU) )
             hittest += (HTLEFT - WMSZ_LEFT);
         else
         {
