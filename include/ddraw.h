@@ -1016,6 +1016,12 @@ typedef struct {
 	DWORD	dwReserved1;
 } DDCOLORCONTROL,*LPDDCOLORCONTROL;
 
+typedef struct {
+	WORD	red[256];
+	WORD	green[256];
+	WORD	blue[256];
+} DDGAMMARAMP,*LPDDGAMMARAMP;
+
 typedef BOOL CALLBACK (*LPDDENUMCALLBACKA)(GUID *, LPSTR, LPSTR, LPVOID);
 typedef BOOL CALLBACK (*LPDDENUMCALLBACKW)(GUID *, LPWSTR, LPWSTR, LPVOID);
 DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACK)
@@ -2041,6 +2047,27 @@ ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 	/*** IDirectDrawColorControl methods ***/
 #define IDirectDrawColorControl_GetColorControls(p,a) ICOM_CALL(GetColorControls,p,a)
 #define IDirectDrawColorControl_SetColorControls(p,a) ICOM_CALL(SetColorControls,p,a)
+
+/*****************************************************************************
+ * IDirectDrawGammaControl interface
+ */
+#define ICOM_INTERFACE IDirectDrawGammaControl
+#define IDirectDrawGammaControl_METHODS \
+    ICOM_METHOD2(HRESULT,GetGammaRamp, DWORD,dwFlags, LPDDGAMMARAMP,lpGammaRamp) \
+    ICOM_METHOD2(HRESULT,SetGammaRamp, DWORD,dwFlags, LPDDGAMMARAMP,lpGammaRamp)
+#define IDirectDrawGammaControl_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectDrawGammaControl_METHODS
+ICOM_DEFINE(IDirectDrawGammaControl,IUnknown)
+#undef ICOM_INTERFACE
+
+	/*** IUnknown methods ***/
+#define IDirectDrawGammaControl_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectDrawGammaControl_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectDrawGammaControl_Release(p)            ICOM_CALL (Release,p)
+	/*** IDirectDrawGammaControl methods ***/
+#define IDirectDrawGammaControl_GetGammaRamp(p,a,b)   ICOM_CALL(GetGammaRamp,p,a,b)
+#define IDirectDrawGammaControl_SetGammaRamp(p,a,b)   ICOM_CALL(SetGammaRamp,p,a,b)
 
 
 HRESULT WINAPI DirectDrawCreate(LPGUID,LPDIRECTDRAW*,LPUNKNOWN);
