@@ -1343,7 +1343,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
     }
 
     return (IsWindowUnicode(hwnd)) ?
-	DefWindowProcA(hwnd, iMsg, wParam, lParam) : DefWindowProcW(hwnd, iMsg, wParam, lParam);
+	DefWindowProcW(hwnd, iMsg, wParam, lParam) : DefWindowProcA(hwnd, iMsg, wParam, lParam);
 }
 
 /*****************************************************************
