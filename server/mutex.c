@@ -10,8 +10,9 @@
 
 #include "winerror.h"
 #include "winnt.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct mutex
 {
@@ -43,7 +44,7 @@ static const struct object_ops mutex_ops =
 };
 
 
-struct object *create_mutex( const char *name, int owned )
+static struct object *create_mutex( const char *name, int owned )
 {
     struct mutex *mutex;
 
@@ -61,11 +62,6 @@ struct object *create_mutex( const char *name, int owned )
     return &mutex->obj;
 }
 
-int open_mutex( unsigned int access, int inherit, const char *name )
-{
-    return open_object( name, &mutex_ops, access, inherit );
-}
-
 /* release a mutex once the recursion count is 0 */
 static void do_release( struct mutex *mutex, struct thread *thread )
 {
@@ -79,7 +75,7 @@ static void do_release( struct mutex *mutex, struct thread *thread )
     wake_up( &mutex->obj, 0 );
 }
 
-int release_mutex( int handle )
+static int release_mutex( int handle )
 {
     struct mutex *mutex;
 
@@ -147,4 +143,41 @@ static void mutex_destroy( struct object *obj )
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
     free( mutex );
+}
+
+/* create a mutex */
+DECL_HANDLER(create_mutex)
+{
+    struct create_mutex_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_mutex", name, len );
+
+    obj = create_mutex( name, req->owned );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, MUTEX_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to a mutex */
+DECL_HANDLER(open_mutex)
+{
+    struct open_mutex_reply reply;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "open_mutex", name, len );
+
+    reply.handle = open_object( name, &mutex_ops, req->access, req->inherit );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* release a mutex */
+DECL_HANDLER(release_mutex)
+{
+    if (release_mutex( req->handle )) CLEAR_ERROR();
+    send_reply( current, -1, 0 );
 }

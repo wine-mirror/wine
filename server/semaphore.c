@@ -10,8 +10,9 @@
 
 #include "winerror.h"
 #include "winnt.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct semaphore
 {
@@ -40,7 +41,7 @@ static const struct object_ops semaphore_ops =
 };
 
 
-struct object *create_semaphore( const char *name, unsigned int initial, unsigned int max )
+static struct object *create_semaphore( const char *name, unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
 
@@ -60,12 +61,7 @@ struct object *create_semaphore( const char *name, unsigned int initial, unsigne
     return &sem->obj;
 }
 
-int open_semaphore( unsigned int access, int inherit, const char *name )
-{
-    return open_object( name, &semaphore_ops, access, inherit );
-}
-
-int release_semaphore( int handle, unsigned int count, unsigned int *prev_count )
+static int release_semaphore( int handle, unsigned int count, unsigned int *prev_count )
 {
     struct semaphore *sem;
 
@@ -123,4 +119,42 @@ static void semaphore_destroy( struct object *obj )
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
     free( sem );
+}
+
+/* create a semaphore */
+DECL_HANDLER(create_semaphore)
+{
+    struct create_semaphore_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_semaphore", name, len );
+
+    obj = create_semaphore( name, req->initial, req->max );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, SEMAPHORE_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to a semaphore */
+DECL_HANDLER(open_semaphore)
+{
+    struct open_semaphore_reply reply;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "open_semaphore", name, len );
+
+    reply.handle = open_object( name, &semaphore_ops, req->access, req->inherit );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* release a semaphore */
+DECL_HANDLER(release_semaphore)
+{
+    struct release_semaphore_reply reply;
+    if (release_semaphore( req->handle, req->count, &reply.prev_count )) CLEAR_ERROR();
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

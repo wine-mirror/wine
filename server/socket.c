@@ -18,8 +18,7 @@
 
 #include "config.h"
 #include "server.h"
-
-#include "server/object.h"
+#include "object.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS

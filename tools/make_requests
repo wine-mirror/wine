@@ -33,7 +33,7 @@ print TRACE <<EOF;
 #include <sys/types.h>
 #include <sys/uio.h>
 #include "server.h"
-#include "server/thread.h"
+#include "thread.h"
 EOF
 
 ### Parse server.h to find request/reply structure definitions
@@ -158,9 +158,6 @@ print REQUESTS <<EOF;
 };
 
 #ifdef WANT_REQUEST_HANDLERS
-
-#define DECL_HANDLER(name) \\
-    static void req_##name( struct name##_request *req, void *data, int len, int fd )
 
 EOF
 

@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "server/object.h"
+#include "object.h"
 
 /* select user fd */
 struct user

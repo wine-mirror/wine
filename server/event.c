@@ -10,8 +10,9 @@
 
 #include "winerror.h"
 #include "winnt.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct event
 {
@@ -40,7 +41,7 @@ static const struct object_ops event_ops =
 };
 
 
-struct object *create_event( const char *name, int manual_reset, int initial_state )
+static struct object *create_event( const char *name, int manual_reset, int initial_state )
 {
     struct event *event;
 
@@ -55,12 +56,7 @@ struct object *create_event( const char *name, int manual_reset, int initial_sta
     return &event->obj;
 }
 
-int open_event( unsigned int access, int inherit, const char *name )
-{
-    return open_object( name, &event_ops, access, inherit );
-}
-
-int pulse_event( int handle )
+static int pulse_event( int handle )
 {
     struct event *event;
 
@@ -75,7 +71,7 @@ int pulse_event( int handle )
     return 1;
 }
 
-int set_event( int handle )
+static int set_event( int handle )
 {
     struct event *event;
 
@@ -89,7 +85,7 @@ int set_event( int handle )
     return 1;
 }
 
-int reset_event( int handle )
+static int reset_event( int handle )
 {
     struct event *event;
 
@@ -131,4 +127,54 @@ static void event_destroy( struct object *obj )
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
     free( event );
+}
+
+/* create an event */
+DECL_HANDLER(create_event)
+{
+    struct create_event_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_event", name, len );
+
+    obj = create_event( name, req->manual_reset, req->initial_state );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, EVENT_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to an event */
+DECL_HANDLER(open_event)
+{
+    struct open_event_reply reply;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "open_event", name, len );
+
+    reply.handle = open_object( name, &event_ops, req->access, req->inherit );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* do an event operation */
+DECL_HANDLER(event_op)
+{
+    switch(req->op)
+    {
+    case PULSE_EVENT:
+        pulse_event( req->handle );
+        break;
+    case SET_EVENT:
+        set_event( req->handle );
+        break;
+    case RESET_EVENT:
+        reset_event( req->handle );
+        break;
+    default:
+        fatal_protocol_error( "event_op: invalid operation %d\n", req->op );
+    }
+    send_reply( current, -1, 0 );
 }

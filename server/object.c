@@ -11,8 +11,7 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "server.h"
-#include "server/thread.h"
+#include "thread.h"
 
 int debug_level = 0;
 

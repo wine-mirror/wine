@@ -81,6 +81,7 @@ extern void default_select_event( int fd, int event, void *private );
 struct iovec;
 struct thread;
 
+extern void fatal_protocol_error( const char *err, ... );
 extern void call_req_handler( struct thread *thread, enum request req,
                               void *data, int len, int fd );
 extern void call_timeout_handler( struct thread *thread );
@@ -91,6 +92,11 @@ extern void trace_timeout(void);
 extern void trace_kill( int exit_code );
 extern void trace_reply( struct thread *thread, int type, int pass_fd,
                          struct iovec *vec, int veclen );
+/* check that the string is NULL-terminated and that the len is correct */
+#define CHECK_STRING(func,str,len) \
+  do { if (((str)[(len)-1] || strlen(str) != (len)-1)) \
+         fatal_protocol_error( "%s: invalid string '%.*s'\n", (func), (len), (str) ); \
+     } while(0)
 
 /* select functions */
 
@@ -118,88 +124,22 @@ extern void set_timeout( int client_fd, struct timeval *when );
 extern int send_reply_v( int client_fd, int type, int pass_fd,
                          struct iovec *vec, int veclen );
 
-/* event functions */
-
-extern struct object *create_event( const char *name, int manual_reset, int initial_state );
-extern int open_event( unsigned int access, int inherit, const char *name );
-extern int pulse_event( int handle );
-extern int set_event( int handle );
-extern int reset_event( int handle );
-
-
 /* mutex functions */
 
-extern struct object *create_mutex( const char *name, int owned );
-extern int open_mutex( unsigned int access, int inherit, const char *name );
-extern int release_mutex( int handle );
 extern void abandon_mutexes( struct thread *thread );
-
-
-/* semaphore functions */
-
-extern struct object *create_semaphore( const char *name, unsigned int initial, unsigned int max );
-extern int open_semaphore( unsigned int access, int inherit, const char *name );
-extern int release_semaphore( int handle, unsigned int count, unsigned int *prev_count );
-
 
 /* file functions */
 
-extern struct object *create_file( int fd, const char *name, unsigned int access,
-                                   unsigned int sharing, int create, unsigned int attrs );
 extern struct file *get_file_obj( struct process *process, int handle,
                                   unsigned int access );
 extern int file_get_mmap_fd( struct file *file );
-extern int set_file_pointer( int handle, int *low, int *high, int whence );
-extern int truncate_file( int handle );
 extern int grow_file( struct file *file, int size_high, int size_low );
 extern struct file *create_temp_file( int access );
-extern int set_file_time( int handle, time_t access_time, time_t write_time );
-extern int file_lock( struct file *file, int offset_high, int offset_low,
-                      int count_high, int count_low );
-extern int file_unlock( struct file *file, int offset_high, int offset_low,
-                        int count_high, int count_low );
 extern void file_set_error(void);
-
-
-/* pipe functions */
-
-extern int create_pipe( struct object *obj[2] );
-
 
 /* console functions */
 
-struct tagINPUT_RECORD;
 extern int create_console( int fd, struct object *obj[2] );
-extern int set_console_fd( int handle, int fd, int pid );
-extern int get_console_mode( int handle, int *mode );
-extern int set_console_mode( int handle, int mode );
-extern int set_console_info( int handle, struct set_console_info_request *req,
-                             const char *title );
-extern int get_console_info( int handle, struct get_console_info_reply *reply,
-                             const char **title );
-extern int write_console_input( int handle, int count, struct tagINPUT_RECORD *records );
-extern int read_console_input( int handle, int count, int flush );
-
-
-/* change notification functions */
-
-extern struct object *create_change_notification( int subtree, int filter );
-
-
-/* file mapping functions */
-extern struct object *create_mapping( int size_high, int size_low, int protect,
-                                      int handle, const char *name );
-extern int open_mapping( unsigned int access, int inherit, const char *name );
-extern int get_mapping_info( int handle, struct get_mapping_info_reply *reply );
-
-
-/* device functions */
-extern struct object *create_device( int id );
-
-
-/* snapshot functions */
-extern struct object *create_snapshot( int flags );
-extern int snapshot_next_process( int handle, int reset, struct next_process_reply *reply );
 
 extern int debug_level;
 

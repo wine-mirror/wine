@@ -23,8 +23,10 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "wincon.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "process.h"
+#include "thread.h"
 
 struct screen_buffer;
 
@@ -153,7 +155,7 @@ int create_console( int fd, struct object *obj[2] )
     return 1;
 }
 
-int set_console_fd( int handle, int fd, int pid )
+static int set_console_fd( int handle, int fd, int pid )
 {
     struct console_input *input;
     struct screen_buffer *output;
@@ -206,7 +208,7 @@ int set_console_fd( int handle, int fd, int pid )
     return 1;
 }
 
-int get_console_mode( int handle, int *mode )
+static int get_console_mode( int handle, int *mode )
 {
     struct object *obj;
     int ret = 0;
@@ -228,7 +230,7 @@ int get_console_mode( int handle, int *mode )
     return ret;
 }
 
-int set_console_mode( int handle, int mode )
+static int set_console_mode( int handle, int mode )
 {
     struct object *obj;
     int ret = 0;
@@ -251,7 +253,7 @@ int set_console_mode( int handle, int mode )
 }
 
 /* set misc console information (output handle only) */
-int set_console_info( int handle, struct set_console_info_request *req, const char *title )
+static int set_console_info( int handle, struct set_console_info_request *req, const char *title )
 {
     struct screen_buffer *console;
     if (!(console = (struct screen_buffer *)get_handle_obj( current->process, handle,
@@ -272,7 +274,7 @@ int set_console_info( int handle, struct set_console_info_request *req, const ch
 }
 
 /* get misc console information (output handle only) */
-int get_console_info( int handle, struct get_console_info_reply *reply, const char **title )
+static int get_console_info( int handle, struct get_console_info_reply *reply, const char **title )
 {
     struct screen_buffer *console;
     if (!(console = (struct screen_buffer *)get_handle_obj( current->process, handle,
@@ -287,7 +289,7 @@ int get_console_info( int handle, struct get_console_info_reply *reply, const ch
 }
 
 /* add input events to a console input queue */
-int write_console_input( int handle, int count, INPUT_RECORD *records )
+static int write_console_input( int handle, int count, INPUT_RECORD *records )
 {
     INPUT_RECORD *new_rec;
     struct console_input *console;
@@ -310,7 +312,7 @@ int write_console_input( int handle, int count, INPUT_RECORD *records )
 }
 
 /* retrieve a pointer to the console input records */
-int read_console_input( int handle, int count, int flush )
+static int read_console_input( int handle, int count, int flush )
 {
     struct console_input *console;
 
@@ -471,4 +473,92 @@ static void screen_buffer_destroy( struct object *obj )
     if (console->pid) kill( console->pid, SIGTERM );
     if (console->title) free( console->title );
     free( console );
+}
+
+/* allocate a console for the current process */
+DECL_HANDLER(alloc_console)
+{
+    alloc_console( current->process );
+    send_reply( current, -1, 0 );
+}
+
+/* free the console of the current process */
+DECL_HANDLER(free_console)
+{
+    free_console( current->process );
+    send_reply( current, -1, 0 );
+}
+
+/* open a handle to the process console */
+DECL_HANDLER(open_console)
+{
+    struct object *obj;
+    struct open_console_reply reply = { -1 };
+    if ((obj = get_console( current->process, req->output )))
+    {
+        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set info about a console (output only) */
+DECL_HANDLER(set_console_info)
+{
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "set_console_info", name, len );
+    set_console_info( req->handle, req, name );
+    send_reply( current, -1, 0 );
+}
+
+/* get info about a console (output only) */
+DECL_HANDLER(get_console_info)
+{
+    struct get_console_info_reply reply;
+    const char *title;
+    get_console_info( req->handle, &reply, &title );
+    send_reply( current, -1, 2, &reply, sizeof(reply),
+                title, title ? strlen(title)+1 : 0 );
+}
+
+/* set a console fd */
+DECL_HANDLER(set_console_fd)
+{
+    set_console_fd( req->handle, fd, req->pid );
+    send_reply( current, -1, 0 );
+}
+
+/* get a console mode (input or output) */
+DECL_HANDLER(get_console_mode)
+{
+    struct get_console_mode_reply reply;
+    get_console_mode( req->handle, &reply.mode );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set a console mode (input or output) */
+DECL_HANDLER(set_console_mode)
+{
+    set_console_mode( req->handle, req->mode );
+    send_reply( current, -1, 0 );
+}
+
+/* add input records to a console input queue */
+DECL_HANDLER(write_console_input)
+{
+    struct write_console_input_reply reply;
+    INPUT_RECORD *records = (INPUT_RECORD *)data;
+
+    if (len != req->count * sizeof(INPUT_RECORD))
+        fatal_protocol_error( "write_console_input: bad length %d for %d records\n",
+                              len, req->count );
+    reply.written = write_console_input( req->handle, req->count, records );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* fetch input records from a console input queue */
+DECL_HANDLER(read_console_input)
+{
+    read_console_input( req->handle, req->count, req->flush );
 }

@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include "server.h"
-#include "server/thread.h"
+#include "thread.h"
 
 static int dump_new_process_request( struct new_process_request *req, int len )
 {
@@ -269,6 +269,20 @@ static int dump_event_op_request( struct event_op_request *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_open_event_request( struct open_event_request *req, int len )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
+}
+
+static int dump_open_event_reply( struct open_event_reply *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 static int dump_create_mutex_request( struct create_mutex_request *req, int len )
 {
     fprintf( stderr, " owned=%d,", req->owned );
@@ -284,6 +298,20 @@ static int dump_create_mutex_reply( struct create_mutex_reply *req, int len )
 }
 
 static int dump_release_mutex_request( struct release_mutex_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_open_mutex_request( struct open_mutex_request *req, int len )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
+}
+
+static int dump_open_mutex_reply( struct open_mutex_reply *req, int len )
 {
     fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
@@ -317,16 +345,15 @@ static int dump_release_semaphore_reply( struct release_semaphore_reply *req, in
     return (int)sizeof(*req);
 }
 
-static int dump_open_named_obj_request( struct open_named_obj_request *req, int len )
+static int dump_open_semaphore_request( struct open_semaphore_request *req, int len )
 {
-    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
-static int dump_open_named_obj_reply( struct open_named_obj_reply *req, int len )
+static int dump_open_semaphore_reply( struct open_semaphore_reply *req, int len )
 {
     fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
@@ -584,6 +611,20 @@ static int dump_create_mapping_reply( struct create_mapping_reply *req, int len 
     return (int)sizeof(*req);
 }
 
+static int dump_open_mapping_request( struct open_mapping_request *req, int len )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
+}
+
+static int dump_open_mapping_reply( struct open_mapping_reply *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 static int dump_get_mapping_info_request( struct get_mapping_info_request *req, int len )
 {
     fprintf( stderr, " handle=%d", req->handle );
@@ -694,16 +735,20 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_create_event_reply },
     { (int(*)(void *,int))dump_event_op_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_open_event_request,
+      (void(*)())dump_open_event_reply },
     { (int(*)(void *,int))dump_create_mutex_request,
       (void(*)())dump_create_mutex_reply },
     { (int(*)(void *,int))dump_release_mutex_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_open_mutex_request,
+      (void(*)())dump_open_mutex_reply },
     { (int(*)(void *,int))dump_create_semaphore_request,
       (void(*)())dump_create_semaphore_reply },
     { (int(*)(void *,int))dump_release_semaphore_request,
       (void(*)())dump_release_semaphore_reply },
-    { (int(*)(void *,int))dump_open_named_obj_request,
-      (void(*)())dump_open_named_obj_reply },
+    { (int(*)(void *,int))dump_open_semaphore_request,
+      (void(*)())dump_open_semaphore_reply },
     { (int(*)(void *,int))dump_create_file_request,
       (void(*)())dump_create_file_reply },
     { (int(*)(void *,int))dump_get_read_fd_request,
@@ -750,6 +795,8 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_create_change_notification_reply },
     { (int(*)(void *,int))dump_create_mapping_request,
       (void(*)())dump_create_mapping_reply },
+    { (int(*)(void *,int))dump_open_mapping_request,
+      (void(*)())dump_open_mapping_reply },
     { (int(*)(void *,int))dump_get_mapping_info_request,
       (void(*)())dump_get_mapping_info_reply },
     { (int(*)(void *,int))dump_create_device_request,
@@ -785,11 +832,13 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "select",
     "create_event",
     "event_op",
+    "open_event",
     "create_mutex",
     "release_mutex",
+    "open_mutex",
     "create_semaphore",
     "release_semaphore",
-    "open_named_obj",
+    "open_semaphore",
     "create_file",
     "get_read_fd",
     "get_write_fd",
@@ -813,6 +862,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "read_console_input",
     "create_change_notification",
     "create_mapping",
+    "open_mapping",
     "get_mapping_info",
     "create_device",
     "create_snapshot",

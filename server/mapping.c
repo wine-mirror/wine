@@ -12,8 +12,10 @@
 #include "config.h"
 #include "winerror.h"
 #include "winnt.h"
-#include "server/process.h"
-#include "server/thread.h"
+#include "winbase.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct mapping
 {
@@ -79,8 +81,8 @@ static void init_page_size(void)
    (((int)(size) + ((int)(addr) & page_mask) + page_mask) & ~page_mask)
 
 
-struct object *create_mapping( int size_high, int size_low, int protect,
-                               int handle, const char *name )
+static struct object *create_mapping( int size_high, int size_low, int protect,
+                                      int handle, const char *name )
 {
     struct mapping *mapping;
     int access = 0;
@@ -131,12 +133,7 @@ struct object *create_mapping( int size_high, int size_low, int protect,
     return NULL;
 }
 
-int open_mapping( unsigned int access, int inherit, const char *name )
-{
-    return open_object( name, &mapping_ops, access, inherit );
-}
-
-int get_mapping_info( int handle, struct get_mapping_info_reply *reply )
+static int get_mapping_info( int handle, struct get_mapping_info_reply *reply )
 {
     struct mapping *mapping;
     int fd;
@@ -168,4 +165,44 @@ static void mapping_destroy( struct object *obj )
     assert( obj->ops == &mapping_ops );
     if (mapping->file) release_object( mapping->file );
     free( mapping );
+}
+
+/* create a file mapping */
+DECL_HANDLER(create_mapping)
+{
+    struct object *obj;
+    struct create_mapping_reply reply = { -1 };
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_mapping", name, len );
+
+    if ((obj = create_mapping( req->size_high, req->size_low,
+                               req->protect, req->handle, name )))
+    {
+        int access = FILE_MAP_ALL_ACCESS;
+        if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
+        reply.handle = alloc_handle( current->process, obj, access, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to a mapping */
+DECL_HANDLER(open_mapping)
+{
+    struct open_mapping_reply reply;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "open_mapping", name, len );
+
+    reply.handle = open_object( name, &mapping_ops, req->access, req->inherit );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get a mapping information */
+DECL_HANDLER(get_mapping_info)
+{
+    struct get_mapping_info_reply reply;
+    int map_fd = get_mapping_info( req->handle, &reply );
+    send_reply( current, map_fd, 1, &reply, sizeof(reply) );
 }

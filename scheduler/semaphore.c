@@ -60,14 +60,13 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
  */
 HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_named_obj_request req;
-    struct open_named_obj_reply reply;
+    struct open_semaphore_request req;
+    struct open_semaphore_reply reply;
     int len = name ? strlen(name) + 1 : 0;
 
-    req.type    = OPEN_SEMAPHORE;
     req.access  = access;
     req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_OPEN_SEMAPHORE, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
     return reply.handle;

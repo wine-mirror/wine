@@ -13,8 +13,10 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "tlhelp32.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "process.h"
+#include "thread.h"
 
 
 struct snapshot
@@ -44,7 +46,7 @@ static const struct object_ops snapshot_ops =
 
 
 /* create a new snapshot */
-struct object *create_snapshot( int flags )
+static struct object *create_snapshot( int flags )
 {
     struct snapshot *snapshot;
     if (!(snapshot = mem_alloc( sizeof(*snapshot) ))) return NULL;
@@ -59,7 +61,7 @@ struct object *create_snapshot( int flags )
 }
 
 /* get the next process in the snapshot */
-int snapshot_next_process( int handle, int reset, struct next_process_reply *reply )
+static int snapshot_next_process( int handle, int reset, struct next_process_reply *reply )
 {
     struct snapshot *snapshot;
     struct process_snapshot *ptr;
@@ -107,4 +109,26 @@ static void snapshot_destroy( struct object *obj )
         free( snapshot->process );
     }
     free( snapshot );
+}
+
+/* create a snapshot */
+DECL_HANDLER(create_snapshot)
+{
+    struct object *obj;
+    struct create_snapshot_reply reply = { -1 };
+
+    if ((obj = create_snapshot( req->flags )))
+    {
+        reply.handle = alloc_handle( current->process, obj, 0, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get the next process from a snapshot */
+DECL_HANDLER(next_process)
+{
+    struct next_process_reply reply;
+    snapshot_next_process( req->handle, req->reset, &reply );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

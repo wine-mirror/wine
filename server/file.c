@@ -20,8 +20,9 @@
 
 #include "winerror.h"
 #include "winbase.h"
-#include "server/process.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct file
 {
@@ -98,8 +99,8 @@ static int check_sharing( const char *name, int hash, unsigned int access,
     return 1;
 }
 
-struct object *create_file( int fd, const char *name, unsigned int access,
-                            unsigned int sharing, int create, unsigned int attrs )
+static struct object *create_file( int fd, const char *name, unsigned int access,
+                                   unsigned int sharing, int create, unsigned int attrs )
 {
     struct file *file;
     int hash = 0;
@@ -399,7 +400,7 @@ int file_get_mmap_fd( struct file *file )
     return dup( file->fd );
 }
 
-int set_file_pointer( int handle, int *low, int *high, int whence )
+static int set_file_pointer( int handle, int *low, int *high, int whence )
 {
     struct file *file;
     int result;
@@ -428,7 +429,7 @@ int set_file_pointer( int handle, int *low, int *high, int whence )
     return 1;
 }
 
-int truncate_file( int handle )
+static int truncate_file( int handle )
 {
     struct file *file;
     int result;
@@ -468,7 +469,7 @@ int grow_file( struct file *file, int size_high, int size_low )
     return 0;
 }
 
-int set_file_time( int handle, time_t access_time, time_t write_time )
+static int set_file_time( int handle, time_t access_time, time_t write_time )
 {
     struct file *file;
     struct utimbuf utimbuf;
@@ -493,16 +494,142 @@ int set_file_time( int handle, time_t access_time, time_t write_time )
     return 0;
 }
 
-int file_lock( struct file *file, int offset_high, int offset_low,
-               int count_high, int count_low )
+static int file_lock( struct file *file, int offset_high, int offset_low,
+                      int count_high, int count_low )
 {
     /* FIXME: implement this */
     return 1;
 }
 
-int file_unlock( struct file *file, int offset_high, int offset_low,
-                 int count_high, int count_low )
+static int file_unlock( struct file *file, int offset_high, int offset_low,
+                        int count_high, int count_low )
 {
     /* FIXME: implement this */
     return 1;
+}
+/* create a file */
+DECL_HANDLER(create_file)
+{
+    struct create_file_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_file", name, len );
+
+    if ((obj = create_file( fd, name, req->access,
+                            req->sharing, req->create, req->attrs )) != NULL)
+    {
+        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get a Unix fd to read from a file */
+DECL_HANDLER(get_read_fd)
+{
+    struct object *obj;
+    int read_fd;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_READ, NULL )))
+    {
+        read_fd = obj->ops->get_read_fd( obj );
+        release_object( obj );
+    }
+    else read_fd = -1;
+    send_reply( current, read_fd, 0 );
+}
+
+/* get a Unix fd to write to a file */
+DECL_HANDLER(get_write_fd)
+{
+    struct object *obj;
+    int write_fd;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
+    {
+        write_fd = obj->ops->get_write_fd( obj );
+        release_object( obj );
+    }
+    else write_fd = -1;
+    send_reply( current, write_fd, 0 );
+}
+
+/* set a file current position */
+DECL_HANDLER(set_file_pointer)
+{
+    struct set_file_pointer_reply reply;
+    reply.low = req->low;
+    reply.high = req->high;
+    set_file_pointer( req->handle, &reply.low, &reply.high, req->whence );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* truncate (or extend) a file */
+DECL_HANDLER(truncate_file)
+{
+    truncate_file( req->handle );
+    send_reply( current, -1, 0 );
+}
+
+/* flush a file buffers */
+DECL_HANDLER(flush_file)
+{
+    struct object *obj;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
+    {
+        obj->ops->flush( obj );
+        release_object( obj );
+    }
+    send_reply( current, -1, 0 );
+}
+
+/* set a file access and modification times */
+DECL_HANDLER(set_file_time)
+{
+    set_file_time( req->handle, req->access_time, req->write_time );
+    send_reply( current, -1, 0 );
+}
+
+/* get a file information */
+DECL_HANDLER(get_file_info)
+{
+    struct object *obj;
+    struct get_file_info_reply reply;
+
+    if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
+    {
+        obj->ops->get_file_info( obj, &reply );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* lock a region of a file */
+DECL_HANDLER(lock_file)
+{
+    struct file *file;
+
+    if ((file = get_file_obj( current->process, req->handle, 0 )))
+    {
+        file_lock( file, req->offset_high, req->offset_low,
+                   req->count_high, req->count_low );
+        release_object( file );
+    }
+    send_reply( current, -1, 0 );
+}
+
+/* unlock a region of a file */
+DECL_HANDLER(unlock_file)
+{
+    struct file *file;
+
+    if ((file = get_file_obj( current->process, req->handle, 0 )))
+    {
+        file_unlock( file, req->offset_high, req->offset_low,
+                     req->count_high, req->count_low );
+        release_object( file );
+    }
+    send_reply( current, -1, 0 );
 }

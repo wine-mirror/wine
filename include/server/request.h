@@ -28,11 +28,13 @@ enum request
     REQ_SELECT,
     REQ_CREATE_EVENT,
     REQ_EVENT_OP,
+    REQ_OPEN_EVENT,
     REQ_CREATE_MUTEX,
     REQ_RELEASE_MUTEX,
+    REQ_OPEN_MUTEX,
     REQ_CREATE_SEMAPHORE,
     REQ_RELEASE_SEMAPHORE,
-    REQ_OPEN_NAMED_OBJ,
+    REQ_OPEN_SEMAPHORE,
     REQ_CREATE_FILE,
     REQ_GET_READ_FD,
     REQ_GET_WRITE_FD,
@@ -56,6 +58,7 @@ enum request
     REQ_READ_CONSOLE_INPUT,
     REQ_CREATE_CHANGE_NOTIFICATION,
     REQ_CREATE_MAPPING,
+    REQ_OPEN_MAPPING,
     REQ_GET_MAPPING_INFO,
     REQ_CREATE_DEVICE,
     REQ_CREATE_SNAPSHOT,
@@ -64,9 +67,6 @@ enum request
 };
 
 #ifdef WANT_REQUEST_HANDLERS
-
-#define DECL_HANDLER(name) \
-    static void req_##name( struct name##_request *req, void *data, int len, int fd )
 
 DECL_HANDLER(new_process);
 DECL_HANDLER(new_thread);
@@ -91,11 +91,13 @@ DECL_HANDLER(open_process);
 DECL_HANDLER(select);
 DECL_HANDLER(create_event);
 DECL_HANDLER(event_op);
+DECL_HANDLER(open_event);
 DECL_HANDLER(create_mutex);
 DECL_HANDLER(release_mutex);
+DECL_HANDLER(open_mutex);
 DECL_HANDLER(create_semaphore);
 DECL_HANDLER(release_semaphore);
-DECL_HANDLER(open_named_obj);
+DECL_HANDLER(open_semaphore);
 DECL_HANDLER(create_file);
 DECL_HANDLER(get_read_fd);
 DECL_HANDLER(get_write_fd);
@@ -119,6 +121,7 @@ DECL_HANDLER(write_console_input);
 DECL_HANDLER(read_console_input);
 DECL_HANDLER(create_change_notification);
 DECL_HANDLER(create_mapping);
+DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
 DECL_HANDLER(create_device);
 DECL_HANDLER(create_snapshot);
@@ -151,11 +154,13 @@ static const struct handler {
     { (void(*)())req_select, sizeof(struct select_request) },
     { (void(*)())req_create_event, sizeof(struct create_event_request) },
     { (void(*)())req_event_op, sizeof(struct event_op_request) },
+    { (void(*)())req_open_event, sizeof(struct open_event_request) },
     { (void(*)())req_create_mutex, sizeof(struct create_mutex_request) },
     { (void(*)())req_release_mutex, sizeof(struct release_mutex_request) },
+    { (void(*)())req_open_mutex, sizeof(struct open_mutex_request) },
     { (void(*)())req_create_semaphore, sizeof(struct create_semaphore_request) },
     { (void(*)())req_release_semaphore, sizeof(struct release_semaphore_request) },
-    { (void(*)())req_open_named_obj, sizeof(struct open_named_obj_request) },
+    { (void(*)())req_open_semaphore, sizeof(struct open_semaphore_request) },
     { (void(*)())req_create_file, sizeof(struct create_file_request) },
     { (void(*)())req_get_read_fd, sizeof(struct get_read_fd_request) },
     { (void(*)())req_get_write_fd, sizeof(struct get_write_fd_request) },
@@ -179,6 +184,7 @@ static const struct handler {
     { (void(*)())req_read_console_input, sizeof(struct read_console_input_request) },
     { (void(*)())req_create_change_notification, sizeof(struct create_change_notification_request) },
     { (void(*)())req_create_mapping, sizeof(struct create_mapping_request) },
+    { (void(*)())req_open_mapping, sizeof(struct open_mapping_request) },
     { (void(*)())req_get_mapping_info, sizeof(struct get_mapping_info_request) },
     { (void(*)())req_create_device, sizeof(struct create_device_request) },
     { (void(*)())req_create_snapshot, sizeof(struct create_snapshot_request) },

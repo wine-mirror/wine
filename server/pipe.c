@@ -18,7 +18,9 @@
 
 #include "winerror.h"
 #include "winbase.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 enum side { READ_SIDE, WRITE_SIDE };
 
@@ -59,7 +61,7 @@ static const struct select_ops select_ops =
     NULL   /* we never set a timeout on a pipe */
 };
 
-int create_pipe( struct object *obj[2] )
+static int create_pipe( struct object *obj[2] )
 {
     struct pipe *newpipe[2];
     int fd[2];
@@ -199,4 +201,28 @@ static void pipe_destroy( struct object *obj )
     if (pipe->other) pipe->other->other = NULL;
     close( pipe->fd );
     free( pipe );
+}
+
+/* create an anonymous pipe */
+DECL_HANDLER(create_pipe)
+{
+    struct create_pipe_reply reply = { -1, -1 };
+    struct object *obj[2];
+    if (create_pipe( obj ))
+    {
+        reply.handle_read = alloc_handle( current->process, obj[0],
+                                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
+                                          req->inherit );
+        if (reply.handle_read != -1)
+        {
+            reply.handle_write = alloc_handle( current->process, obj[1],
+                                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
+                                               req->inherit );
+            if (reply.handle_write == -1)
+                close_handle( current->process, reply.handle_read );
+        }
+        release_object( obj[0] );
+        release_object( obj[1] );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

@@ -10,7 +10,9 @@
 
 #include "winerror.h"
 #include "winnt.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct change
 {
@@ -38,7 +40,7 @@ static const struct object_ops change_ops =
 };
 
 
-struct object *create_change_notification( int subtree, int filter )
+static struct object *create_change_notification( int subtree, int filter )
 {
     struct change *change;
     if (!(change = mem_alloc( sizeof(*change) ))) return NULL;
@@ -68,4 +70,19 @@ static void change_destroy( struct object *obj )
     struct change *change = (struct change *)obj;
     assert( obj->ops == &change_ops );
     free( change );
+}
+
+/* create a change notification */
+DECL_HANDLER(create_change_notification)
+{
+    struct object *obj;
+    struct create_change_notification_reply reply = { -1 };
+
+    if ((obj = create_change_notification( req->subtree, req->filter )))
+    {
+        reply.handle = alloc_handle( current->process, obj,
+                                     STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

@@ -1118,14 +1118,13 @@ HANDLE WINAPI OpenFileMappingA(
                 BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    struct open_named_obj_request req;
-    struct open_named_obj_reply reply;
+    struct open_mapping_request req;
+    struct open_mapping_reply reply;
     int len = name ? strlen(name) + 1 : 0;
 
-    req.type    = OPEN_MAPPING;
     req.access  = access;
     req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_OPEN_MAPPING, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
     return reply.handle;

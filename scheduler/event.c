@@ -60,14 +60,13 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_named_obj_request req;
-    struct open_named_obj_reply reply;
+    struct open_event_request req;
+    struct open_event_reply reply;
     int len = name ? strlen(name) + 1 : 0;
 
-    req.type    = OPEN_EVENT;
     req.access  = access;
     req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_OPEN_EVENT, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
     return (HANDLE)reply.handle;

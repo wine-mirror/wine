@@ -18,9 +18,11 @@
 
 #include "winbase.h"
 #include "winerror.h"
+
+#include "handle.h"
 #include "server.h"
-#include "server/thread.h"
-#include "server/process.h"
+#include "process.h"
+#include "thread.h"
 
 
 /* thread queues */
@@ -81,6 +83,7 @@ static void init_thread( struct thread *thread, int fd )
     thread->client_fd = fd;
     thread->unix_pid  = 0;  /* not known yet */
     thread->mutex     = NULL;
+    thread->debugger  = NULL;
     thread->wait      = NULL;
     thread->apc       = NULL;
     thread->apc_count = 0;
@@ -107,7 +110,7 @@ void create_initial_thread( int fd )
 }
 
 /* create a new thread */
-struct thread *create_thread( int fd, void *pid, int suspend, int inherit, int *handle )
+static struct thread *create_thread( int fd, void *pid, int suspend, int inherit, int *handle )
 {
     struct thread *thread;
     struct process *process;
@@ -192,19 +195,9 @@ struct thread *get_thread_from_handle( int handle, unsigned int access )
                                             access, &thread_ops );
 }
 
-/* get all information about a thread */
-void get_thread_info( struct thread *thread,
-                      struct get_thread_info_reply *reply )
-{
-    reply->tid       = thread;
-    reply->exit_code = thread->exit_code;
-    reply->priority  = thread->priority;
-}
-
-
 /* set all information about a thread */
-void set_thread_info( struct thread *thread,
-                      struct set_thread_info_request *req )
+static void set_thread_info( struct thread *thread,
+                             struct set_thread_info_request *req )
 {
     if (req->mask & SET_THREAD_INFO_PRIORITY)
         thread->priority = req->priority;
@@ -216,7 +209,7 @@ void set_thread_info( struct thread *thread,
 }
 
 /* suspend a thread */
-int suspend_thread( struct thread *thread )
+static int suspend_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
@@ -230,7 +223,7 @@ int suspend_thread( struct thread *thread )
 }
 
 /* resume a thread */
-int resume_thread( struct thread *thread )
+static int resume_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend > 0)
@@ -456,7 +449,7 @@ static int wake_thread( struct thread *thread )
 }
 
 /* sleep on a list of objects */
-void sleep_on( struct thread *thread, int count, int *handles, int flags, int timeout )
+static void sleep_on( struct thread *thread, int count, int *handles, int flags, int timeout )
 {
     assert( !thread->wait );
     if (!wait_on( thread, count, handles, flags, timeout ))
@@ -498,7 +491,7 @@ void wake_up( struct object *obj, int max )
 }
 
 /* queue an async procedure call */
-int thread_queue_apc( struct thread *thread, void *func, void *param )
+static int thread_queue_apc( struct thread *thread, void *func, void *param )
 {
     struct thread_apc *apc;
     if (!thread->apc)
@@ -533,4 +526,131 @@ void thread_killed( struct thread *thread, int exit_code )
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
     release_object( thread );
+}
+
+/* create a new thread */
+DECL_HANDLER(new_thread)
+{
+    struct new_thread_reply reply;
+    int new_fd;
+
+    if ((new_fd = dup(fd)) != -1)
+    {
+        reply.tid = create_thread( new_fd, req->pid, req->suspend,
+                                   req->inherit, &reply.handle );
+        if (!reply.tid) close( new_fd );
+    }
+    else
+        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* initialize a new thread */
+DECL_HANDLER(init_thread)
+{
+    struct init_thread_reply reply;
+
+    if (current->state != STARTING)
+    {
+        fatal_protocol_error( "init_thread: already running\n" );
+        return;
+    }
+    current->state    = RUNNING;
+    current->unix_pid = req->unix_pid;
+    if (current->suspend > 0) kill( current->unix_pid, SIGSTOP );
+    reply.pid = current->process;
+    reply.tid = current;
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* terminate a thread */
+DECL_HANDLER(terminate_thread)
+{
+    struct thread *thread;
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_TERMINATE )))
+    {
+        kill_thread( thread, req->exit_code );
+        release_object( thread );
+    }
+    if (current) send_reply( current, -1, 0 );
+}
+
+/* fetch information about a thread */
+DECL_HANDLER(get_thread_info)
+{
+    struct thread *thread;
+    struct get_thread_info_reply reply = { 0, 0, 0 };
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
+    {
+        reply.tid       = thread;
+        reply.exit_code = thread->exit_code;
+        reply.priority  = thread->priority;
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set information about a thread */
+DECL_HANDLER(set_thread_info)
+{
+    struct thread *thread;
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_INFORMATION )))
+    {
+        set_thread_info( thread, req );
+        release_object( thread );
+    }
+    send_reply( current, -1, 0 );
+}
+
+/* suspend a thread */
+DECL_HANDLER(suspend_thread)
+{
+    struct thread *thread;
+    struct suspend_thread_reply reply = { -1 };
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
+    {
+        reply.count = suspend_thread( thread );
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    
+}
+
+/* resume a thread */
+DECL_HANDLER(resume_thread)
+{
+    struct thread *thread;
+    struct resume_thread_reply reply = { -1 };
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
+    {
+        reply.count = resume_thread( thread );
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    
+}
+
+/* select on a handle list */
+DECL_HANDLER(select)
+{
+    if (len != req->count * sizeof(int))
+        fatal_protocol_error( "select: bad length %d for %d handles\n",
+                              len, req->count );
+    sleep_on( current, req->count, (int *)data, req->flags, req->timeout );
+}
+
+/* queue an APC for a thread */
+DECL_HANDLER(queue_apc)
+{
+    struct thread *thread;
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    {
+        thread_queue_apc( thread, req->func, req->param );
+        release_object( thread );
+    }
+    send_reply( current, -1, 0 );
 }

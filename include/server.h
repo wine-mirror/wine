@@ -30,6 +30,9 @@ struct cmsg_fd
     int fd;    /* fd to pass */
 };
 
+/* request handler definition */
+#define DECL_HANDLER(name) \
+    void req_##name( struct name##_request *req, void *data, int len, int fd )
 
 /* Request structures */
 
@@ -314,6 +317,19 @@ struct event_op_request
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
 
+/* Open an event */
+struct open_event_request
+{
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    char         name[0];       /* object name */
+};
+struct open_event_reply
+{
+    int          handle;        /* handle to the event */
+};
+
+
 /* Create a mutex */
 struct create_mutex_request
 {
@@ -329,6 +345,19 @@ struct create_mutex_reply
 
 /* Release a mutex */
 struct release_mutex_request
+{
+    int          handle;        /* handle to the mutex */
+};
+
+
+/* Open a mutex */
+struct open_mutex_request
+{
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    char         name[0];       /* object name */
+};
+struct open_mutex_reply
 {
     int          handle;        /* handle to the mutex */
 };
@@ -360,19 +389,16 @@ struct release_semaphore_reply
 };
 
 
-/* Open a named object (event, mutex, semaphore) */
-struct open_named_obj_request
+/* Open a semaphore */
+struct open_semaphore_request
 {
-    int          type;          /* object type (see below) */
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
     char         name[0];       /* object name */
 };
-enum open_named_obj { OPEN_EVENT, OPEN_MUTEX, OPEN_SEMAPHORE, OPEN_MAPPING };
-
-struct open_named_obj_reply
+struct open_semaphore_reply
 {
-    int          handle;        /* handle to the object */
+    int          handle;        /* handle to the semaphore */
 };
 
 
@@ -640,6 +666,19 @@ struct create_mapping_reply
 #define VPROT_COMMITTED  0x40
 
 
+/* Open a mapping */
+struct open_mapping_request
+{
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    char         name[0];       /* object name */
+};
+struct open_mapping_reply
+{
+    int          handle;        /* handle to the mapping */
+};
+
+
 /* Get information about a file mapping */
 struct get_mapping_info_request
 {
@@ -692,11 +731,12 @@ struct next_process_reply
 };
 
 
+/* requests definitions */
+#include "server/request.h"
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
-
-#include "server/request.h"
 
 /* client communication functions */
 extern void CLIENT_SendRequest( enum request req, int pass_fd,

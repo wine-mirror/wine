@@ -18,7 +18,9 @@
 
 #include "winerror.h"
 #include "winbase.h"
-#include "server/thread.h"
+
+#include "handle.h"
+#include "thread.h"
 
 struct device
 {
@@ -44,7 +46,7 @@ static const struct object_ops device_ops =
     device_destroy
 };
 
-struct object *create_device( int id )
+static struct object *create_device( int id )
 {
     struct device *dev;
 
@@ -76,4 +78,19 @@ static void device_destroy( struct object *obj )
     struct device *dev = (struct device *)obj;
     assert( obj->ops == &device_ops );
     free( dev );
+}
+
+/* create a device */
+DECL_HANDLER(create_device)
+{
+    struct object *obj;
+    struct create_device_reply reply = { -1 };
+
+    if ((obj = create_device( req->id )))
+    {
+        reply.handle = alloc_handle( current->process, obj,
+                                     req->access, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

@@ -11,8 +11,8 @@
 #include <unistd.h>
 
 #include "server.h"
-#include "server/object.h"
-#include "server/thread.h"
+#include "object.h"
+#include "thread.h"
 
 int main( int argc, char *argv[] )
 {

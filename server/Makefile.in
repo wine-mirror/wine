@@ -11,6 +11,7 @@ C_SRCS = \
 	device.c \
 	event.c \
 	file.c \
+	handle.c \
 	mapping.c \
 	mutex.c \
 	object.c \
