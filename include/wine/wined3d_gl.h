@@ -35,6 +35,7 @@
 
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
 #include <GL/gl.h>
+#define GL_GLEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #ifdef HAVE_GL_GLEXT_H
