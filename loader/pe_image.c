@@ -1056,7 +1056,12 @@ void PE_InitTls( void )
 		
 		if ( pem->tlsindex == -1 ) {
 			pem->tlsindex = TlsAlloc();
-			*pdir->AddressOfIndex=pem->tlsindex;   
+			if ((((DWORD)pdir->AddressOfIndex)>peh->OptionalHeader.ImageBase)
+			      &&(((DWORD)pdir->AddressOfIndex)<peh->OptionalHeader.ImageBase+peh->OptionalHeader.SizeOfImage)
+			)
+				*pdir->AddressOfIndex=pem->tlsindex;   
+			else
+				*(LPDWORD)((((char*)pdir->AddressOfIndex)+delta))=pem->tlsindex;
 		}
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
