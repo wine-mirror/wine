@@ -225,7 +225,7 @@
 @ stub NtSetSystemEnvironmentValue
 @ stub NtSetSystemInformation
 @ stub NtSetSystemPowerState
-@ stub NtSetSystemTime
+@ stdcall NtSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall NtSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stub NtSetTimerResolution
 @ stdcall NtSetValueKey(long long long long long long) NtSetValueKey
@@ -481,7 +481,7 @@
 @ stub RtlQueryRegistryValues
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
-@ stub RtlQueryTimeZoneInformation
+@ stdcall RtlQueryTimeZoneInformation(ptr) RtlQueryTimeZoneInformation
 @ stdcall RtlRaiseException(ptr) RtlRaiseException
 @ stdcall RtlRaiseStatus(long) RtlRaiseStatus
 @ stub RtlRandom
@@ -508,7 +508,7 @@
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long) RtlSetOwnerSecurityDescriptor
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long) RtlSetSaclSecurityDescriptor
 @ stub RtlSetSecurityObject
-@ stub RtlSetTimeZoneInformation
+@ stdcall RtlSetTimeZoneInformation(ptr) RtlSetTimeZoneInformation
 @ stub RtlSetUserFlagsHeap
 @ stub RtlSetUserValueHeap
 @ stdcall RtlSizeHeap(long long ptr) RtlSizeHeap
@@ -740,7 +740,7 @@
 @ stub ZwSetSystemEnvironmentValue
 @ stub ZwSetSystemInformation
 @ stub ZwSetSystemPowerState
-@ stub ZwSetSystemTime
+@ stdcall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stub ZwSetTimerResolution
 @ stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
