@@ -132,7 +132,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 
        TRACE("Starting debugger (fmt=%s)\n", format);
        hEvent = ConvertToGlobalHandle(CreateEventA(NULL, FALSE, FALSE, NULL));
-       sprintf(buffer, format, (unsigned long)pdb->server_pid, hEvent);
+       sprintf(buffer, format, GetCurrentProcessId(), hEvent);
        memset(&startup, 0, sizeof(startup));
        startup.cb = sizeof(startup);
        startup.dwFlags = STARTF_USESHOWWINDOW;

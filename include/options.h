@@ -70,7 +70,7 @@ extern struct options Options;
 extern const char *argv0;
 
 extern void OPTIONS_Usage(void) WINE_NORETURN;
-extern void OPTIONS_ParseOptions( int argc, char *argv[] );
+extern void OPTIONS_ParseOptions( char *argv[] );
 
 /* Profile functions */
 

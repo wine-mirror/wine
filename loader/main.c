@@ -60,19 +60,17 @@ DEFAULT_DEBUG_CHANNEL(server);
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
+BOOL MAIN_MainInit( char *argv[] )
 {
     /* store the program name */
     argv0 = argv[0];
 
     /* Create the initial process */
-    if (!PROCESS_Init( win32 )) return 0;
-
-    /* Initialize syslevel handling */
-    SYSLEVEL_Init();
+    if (!PROCESS_Init()) return FALSE;
 
     /* Parse command line arguments */
-    MAIN_WineInit( argc, argv );
+    OPTIONS_ParseOptions( argv );
+    MAIN_WineInit();
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;

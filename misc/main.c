@@ -80,21 +80,6 @@ const WINE_LANGUAGE_DEF Languages[] =
 
 WORD WINE_LanguageId = 0x409;	/* english as default */
 
-struct options Options =
-{  /* default options */
-    0,              /* argc */
-    NULL,           /* argv */
-    NULL,           /* desktopGeometry */
-    NULL,           /* display */
-    NULL,           /* dllFlags */
-    FALSE,          /* synchronous */
-    0,              /* language */
-    FALSE,          /* Managed windows */
-    NULL            /* Alternate config file name */
-};
-
-const char *argv0;
-
 /***********************************************************************
  *          MAIN_ParseDebugOptions
  *
@@ -636,7 +621,7 @@ static void called_at_exit(void)
  *
  * Wine initialisation and command-line parsing
  */
-BOOL MAIN_WineInit( int argc, char *argv[] )
+void MAIN_WineInit(void)
 {
     struct timeval tv;
 
@@ -662,10 +647,7 @@ BOOL MAIN_WineInit( int argc, char *argv[] )
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
     
-    OPTIONS_ParseOptions( argc, argv );
-
     atexit(called_at_exit);
-    return TRUE;
 }
 
 /***********************************************************************

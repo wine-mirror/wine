@@ -271,7 +271,7 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
         break;
 
     case USIG_PROCESS_DESTROY:      
-      hInst = GetProcessDword( dwThreadOrProcessID, GPD_HINSTANCE16 );
+      hInst = ((TDB *)GlobalLock16( GetCurrentTask() ))->hInstance;
       USER_AppExit( hInst );
 
       pdb = PROCESS_Current();

@@ -183,6 +183,7 @@ extern void MODULE_DllThreadDetach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
+extern BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType );
 extern HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
@@ -201,12 +202,6 @@ extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
 extern HANDLE NE_OpenFile( NE_MODULE *pModule );
-extern BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
-                              LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                              LPPROCESS_INFORMATION info );
-extern BOOL NE_InitProcess( NE_MODULE *pModule );
-
 
 /* loader/ne/resource.c */
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);

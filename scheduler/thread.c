@@ -229,14 +229,14 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
  *           THREAD_Create
  *
  */
-TEB *THREAD_Create( PDB *pdb, int fd, DWORD stack_size, BOOL alloc_stack16 )
+TEB *THREAD_Create( int fd, DWORD stack_size, BOOL alloc_stack16 )
 {
     TEB *teb;
 
     if ((teb = THREAD_InitStack( NULL, stack_size, alloc_stack16 )))
     {
-        teb->tibflags = (pdb->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
-        teb->process  = pdb;
+        teb->tibflags = (PROCESS_Current()->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
+        teb->process  = PROCESS_Current();
         teb->socket   = fd;
         fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
         TRACE("(%p) succeeded\n", teb);
@@ -287,7 +287,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     handle = req->handle;
     tid = req->tid;
 
-    if (!(teb = THREAD_Create( PROCESS_Current(), socket, stack, TRUE )))
+    if (!(teb = THREAD_Create( socket, stack, TRUE )))
     {
         close( socket );
         return 0;
@@ -296,6 +296,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
+    teb->htask16     = GetCurrentTask();
     if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
@@ -347,13 +348,12 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     if (req->last)
     {
         MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
-        TASK_KillTask( 0 );
         exit( code );
     }
     else
     {
         MODULE_DllThreadDetach( NULL );
-        PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
+        if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_KillTask( 0 );
         SYSDEPS_ExitThread( code );
     }
 }

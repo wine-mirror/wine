@@ -82,6 +82,8 @@ BOOL ENV_BuildEnvironment(void)
 
     if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
     PROCESS_Current()->env_db->environ = p;
+    PROCESS_Current()->env_db->env_sel = SELECTOR_AllocBlock( p, 0x10000, SEGMENT_DATA,
+                                                              FALSE, FALSE );
 
     /* And fill it with the Unix environment */
 
@@ -95,68 +97,6 @@ BOOL ENV_BuildEnvironment(void)
 
     FILL_EXTRA_ENV( p );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           ENV_InheritEnvironment
- *
- * Make a process inherit the environment from its parent or from an
- * explicit environment.
- */
-BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
-{
-    DWORD size;
-    LPCSTR src;
-    LPSTR dst;
-
-    /* Compute the environment size */
-
-    src = env;
-    size = EXTRA_ENV_SIZE;
-    while (*src)
-    {
-        int len = strlen(src) + 1;
-        src += len;
-        if ((len > MAX_WIN16_LEN) && (pdb->flags & PDB32_WIN16_PROC))
-            len = MAX_WIN16_LEN;
-        size += len;
-    }
-
-    /* Copy the environment */
-
-    if (!(pdb->env_db->environ = HeapAlloc( GetProcessHeap(), 0, size )))
-        return FALSE;
-    pdb->env_db->env_sel = SELECTOR_AllocBlock( pdb->env_db->environ,
-                                                0x10000, SEGMENT_DATA,
-                                                FALSE, FALSE );
-    src = env;
-    dst = pdb->env_db->environ;
-    while (*src)
-    {
-        if (pdb->flags & PDB32_WIN16_PROC)
-            lstrcpynA( dst, src, MAX_WIN16_LEN );
-        else
-            strcpy( dst, src );
-        src += strlen(src) + 1;
-        dst += strlen(dst) + 1;
-    }
-    FILL_EXTRA_ENV( dst );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           ENV_FreeEnvironment
- *
- * Free a process environment.
- */
-void ENV_FreeEnvironment( PDB *pdb )
-{
-    if (!pdb->env_db) return;
-    if (pdb->env_db->env_sel) SELECTOR_FreeBlock( pdb->env_db->env_sel, 1 );
-    DeleteCriticalSection( &pdb->env_db->section );
-    /* the storage will be deleted when the process heap is destroyed */
 }
 
 

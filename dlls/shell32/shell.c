@@ -392,13 +392,11 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
     strcpy(cmd,lpFile);
     strcat(cmd,lpParameters ? lpParameters : "");
 
-    SYSLEVEL_ReleaseWin16Lock();
-    retval = WinExec( cmd, iShowCmd );
-    SYSLEVEL_RestoreWin16Lock();
+    retval = WinExec16( cmd, iShowCmd );
 
     /* Unable to execute lpFile directly
        Check if we can match an application to lpFile */
-    if(retval < 31)
+    if(retval < 32)
     { 
       cmd[0] = '\0';
       retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
@@ -410,9 +408,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
             strcat(cmd," ");
             strcat(cmd,lpParameters);
         }
-        SYSLEVEL_ReleaseWin16Lock();
-        retval = WinExec( cmd, iShowCmd );
-        SYSLEVEL_RestoreWin16Lock();
+        retval = WinExec16( cmd, iShowCmd );
       }
       else if(PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
       {
@@ -477,9 +473,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 		}
 	    }
  
-	    SYSLEVEL_ReleaseWin16Lock();
-	    retval = WinExec( cmd, iShowCmd );
-	    SYSLEVEL_RestoreWin16Lock();
+	    retval = WinExec16( cmd, iShowCmd );
 	}
       }
     /* Check if file specified is in the form www.??????.*** */

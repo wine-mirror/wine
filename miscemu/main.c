@@ -3,89 +3,40 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
+#include "winbase.h"
 #include "wine/winbase16.h"
+#include "wingdi.h"
+#include "winuser.h"
+
+#include "builtin32.h"
 #include "callback.h"
-#include "main.h"
-#include "miscemu.h"
-#include "module.h"
 #include "options.h"
 #include "process.h"
-#include "thread.h"
-#include "task.h"
-#include "stackframe.h"
-#include "wine/exception.h"
 #include "debugtools.h"
-
-static BOOL exec_program( LPCSTR cmdline )
-{
-    HINSTANCE handle = WinExec( cmdline, SW_SHOWNORMAL );
-    if (handle < 32) 
-    {
-        MESSAGE( "%s: can't exec '%s': ", argv0, cmdline );
-        switch (handle) 
-        {
-        case  2: MESSAGE("file not found\n" ); break;
-        case 11: MESSAGE("invalid exe file\n" ); break;
-        default: MESSAGE("error=%d\n", handle ); break;
-        }
-    }
-    return (handle >= 32);
-}
 
 /***********************************************************************
  *           Main loop of initial task
  */
-void MAIN_EmulatorRun( void )
+static void initial_task(void)
 {
-    char startProg[256], defProg[256];
-    int i, tasks = 0;
     MSG msg;
-    char szGraphicsDriver[MAX_PATH];
+    HINSTANCE16 instance;
+    STARTUPINFOA info;
 
-    if (PROFILE_GetWineIniString( "Wine", "GraphicsDriver", 
-        "x11drv", szGraphicsDriver, sizeof(szGraphicsDriver)))
+    GetStartupInfoA( &info );
+    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWNORMAL;
+
+    if ((instance = WinExec16( GetCommandLineA(), info.wShowWindow )) < 32)
     {
-        if (!LoadLibraryA( szGraphicsDriver )) ExitProcess(1);
-    }
-
-    /* Load system DLLs into the initial process (and initialize them) */
-    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
-        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
-        ExitProcess( 1 );
-
-    /* Get pointers to USER routines called by KERNEL */
-    THUNK_InitCallout();
-
-    /* Call FinalUserInit routine */
-    Callout.FinalUserInit16();
-
-    /* Call InitApp for initial task */
-    Callout.InitApp16( MapHModuleLS( 0 ) );
-
-    /* Add the Startup Program to the run list */
-    PROFILE_GetWineIniString( "programs", "Startup", "", 
-			       startProg, sizeof(startProg) );
-    if (startProg[0]) tasks += exec_program( startProg );
-
-    /* Add the Default Program if no program on the command line */
-    if (!Options.argv[1])
-    {
-        PROFILE_GetWineIniString( "programs", "Default", "",
-                                  defProg, sizeof(defProg) );
-        if (defProg[0]) tasks += exec_program( defProg );
-        else if (!tasks && !startProg[0]) OPTIONS_Usage();
-    }
-    else
-    {
-        /* Load and run executables given on command line */
-        for (i = 1; Options.argv[i]; i++)
+        MESSAGE( "%s: can't exec '%s': ", argv0, GetCommandLineA() );
+        switch (instance) 
         {
-            tasks += exec_program( Options.argv[i] );
+        case  2: MESSAGE("file not found\n" ); break;
+        case 11: MESSAGE("invalid exe file\n" ); break;
+        default: MESSAGE("error=%d\n", instance ); break;
         }
+        ExitProcess(instance);
     }
-    if (!tasks) ExitProcess( 0 );
 
     /* Start message loop for desktop window */
 
@@ -104,28 +55,13 @@ void MAIN_EmulatorRun( void )
  */
 int main( int argc, char *argv[] )
 {
-    NE_MODULE *pModule;
+    BUILTIN32_DESCRIPTOR descriptor;
 
-    /* Initialize everything */
-    if (!MAIN_MainInit( argc, argv, FALSE )) return 1;
+    memset( &descriptor, 0, sizeof(descriptor) );
+    descriptor.filename = argv[0];
+    descriptor.dllentrypoint = initial_task;
+    BUILTIN32_RegisterDLL( &descriptor );
 
-    if (!THREAD_InitStack( NtCurrentTeb(), 0, TRUE )) return 1;
-    SIGNAL_Init();  /* reinitialize signal stack */
-
-    /* Initialize KERNEL */
-    if (!LoadLibraryA( "KERNEL32" )) return FALSE;
-
-    /* Create initial task */
-    if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;
-    if ( !TASK_Create( pModule, FALSE ) ) return 1;
-
-    /* Switch to initial task */
-    PostEvent16( PROCESS_Current()->task );
-    TASK_Reschedule();
-
-    /* Switch stacks and jump to MAIN_EmulatorRun */
-    CALL32_Init( &IF1632_CallLargeStack, MAIN_EmulatorRun, NtCurrentTeb()->stack_top );
-
-    MESSAGE( "main: Should never happen: returned from CALL32_Init()\n" );
-    return 0;
+    PROCESS_InitWine( argc, argv );
+    return 1;  /* not reached */
 }

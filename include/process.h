@@ -88,9 +88,7 @@ typedef struct _PDB
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */
-    void            *server_pid;       /*    Server id for this process */
     HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
-    struct _PDB     *next;             /*    List reference - list of PDB's */
     WORD             winver;           /*    Windows version figured out by VERSION_GetVersion */
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
     HANDLE           idle_event;       /* event to signal, when the process is idle */
@@ -149,22 +147,17 @@ extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 
 /* memory/environ.c */
 extern BOOL ENV_BuildEnvironment(void);
-extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
-extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/process.c */
-extern BOOL PROCESS_Init( BOOL win32 );
+extern BOOL PROCESS_Init(void);
+extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
+extern void PROCESS_InitWinelib( int argc, char *argv[] ) WINE_NORETURN;
 extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
-extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
-                            LPCSTR cmd_line, LPCSTR env, 
+extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
-extern BOOL PROCESS_CreateUnixProcess( LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
-                                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                                       LPPROCESS_INFORMATION info );
 
 static inline PDB * WINE_UNUSED PROCESS_Current(void)
 {

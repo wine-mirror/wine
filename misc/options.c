@@ -27,6 +27,20 @@ struct option
 int _ARGC;
 char **_ARGV;
 
+/* default options */
+struct options Options =
+{
+    NULL,           /* desktopGeometry */
+    NULL,           /* display */
+    NULL,           /* dllFlags */
+    FALSE,          /* synchronous */
+    0,              /* language */
+    FALSE,          /* Managed windows */
+    NULL            /* Alternate config file name */
+};
+
+const char *argv0;
+
 static void do_config( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
@@ -116,10 +130,9 @@ static void do_config( const char *arg )
     Options.configFileName = strdup( arg );
 }
 
-static inline void remove_options( int *argc, char *argv[], int pos, int count )
+static inline void remove_options( char *argv[], int pos, int count )
 {
     while ((argv[pos] = argv[pos+count])) pos++;
-    *argc -= count;
 }
 
 /***********************************************************************
@@ -128,7 +141,7 @@ static inline void remove_options( int *argc, char *argv[], int pos, int count )
 void OPTIONS_Usage(void)
 {
     const struct option *opt;
-    MESSAGE( "Usage: %s [options] \"program_name [arguments]\"\n\n", argv0 );
+    MESSAGE( "Usage: %s [options] program_name [arguments]\n\n", argv0 );
     MESSAGE( "Options:\n" );
     for (opt = option_table; opt->longname; opt++) MESSAGE( "   %s\n", opt->usage );
     ExitProcess(0);
@@ -137,7 +150,7 @@ void OPTIONS_Usage(void)
 /***********************************************************************
  *              OPTIONS_ParseOptions
  */
-void OPTIONS_ParseOptions( int argc, char *argv[] )
+void OPTIONS_ParseOptions( char *argv[] )
 {
     const struct option *opt;
     int i;
@@ -163,12 +176,12 @@ void OPTIONS_ParseOptions( int argc, char *argv[] )
         if (opt->has_arg && argv[i+1])
         {
             opt->func( argv[i+1] );
-            remove_options( &argc, argv, i, 2 );
+            remove_options( argv, i, 2 );
         }
         else
         {
             opt->func( "" );
-            remove_options( &argc, argv, i, 1 );
+            remove_options( argv, i, 1 );
         }
         i--;
     }
@@ -178,7 +191,7 @@ void OPTIONS_ParseOptions( int argc, char *argv[] )
     {
         if (!strcmp( argv[i], "--" ))
         {
-            remove_options( &argc, argv, i, 1 );
+            remove_options( argv, i, 1 );
             break;
         }
         if (argv[i][0] == '-')
@@ -187,8 +200,9 @@ void OPTIONS_ParseOptions( int argc, char *argv[] )
             OPTIONS_Usage();
         }
     }
-    Options.argc = argc;
-    Options.argv = argv;
-    _ARGC = argc;
+
+    /* count the resulting arguments */
     _ARGV = argv;
+    _ARGC = 0;
+    while (argv[_ARGC]) _ARGC++;
 }

@@ -1146,7 +1146,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
-        ExitProcess( 0 );
+        ExitThread( 0 );
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
@@ -1841,7 +1841,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
         TRACE("EXIT with return code %d\n",AL_reg(context));
-        ExitProcess( AL_reg(context) );
+        ExitThread( AL_reg(context) );
         break;
 
     case 0x4d: /* GET RETURN CODE */

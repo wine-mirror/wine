@@ -404,10 +404,10 @@ void QUEUE_WalkQueues(void)
             WARN_(msg)("Bad queue handle %04x\n", hQueue );
             return;
         }
-        if (!GetModuleName16( queue->teb->process->task, module, sizeof(module )))
+        if (!GetModuleName16( queue->teb->htask16, module, sizeof(module )))
             strcpy( module, "???" );
         DPRINTF( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
-                 queue->teb, queue->teb->process->task, module );
+                 queue->teb, queue->teb->htask16, module );
         hQueue = queue->next;
         QUEUE_Unlock( queue );
     }
@@ -640,7 +640,7 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         if ( THREAD_IsWin16( queue->teb ) )
         {
             int iWndsLock = WIN_SuspendWndsLock();
-            PostEvent16( queue->teb->process->task );
+            PostEvent16( queue->teb->htask16 );
             WIN_RestoreWndsLock( iWndsLock );
         }
         else
@@ -1274,7 +1274,7 @@ HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
 
     if (queue)
 {
-        hTask = queue->teb->process->task;
+        hTask = queue->teb->htask16;
         QUEUE_Unlock( queue );
 }
 

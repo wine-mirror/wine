@@ -572,6 +572,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
                        filename, aoep, lowest_va );
 
 
+#if 0
     /* FIXME:  Hack!  While we don't really support shared sections yet,
      *         this checks for those special cases where the whole DLL
      *         consists only of shared sections and is mapped into the
@@ -599,7 +600,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
             return sharedMod;
         }
     }
-
+#endif
 
     /* Allocate memory for module */
     load_addr = nt->OptionalHeader.ImageBase;
@@ -981,53 +982,6 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
     HeapFree( GetProcessHeap(), 0, wm->filename );
     HeapFree( GetProcessHeap(), 0, wm->short_filename );
     HeapFree( GetProcessHeap(), 0, wm );
-}
-
-/*****************************************************************************
- * Load the PE main .EXE. All other loading is done by PE_LoadLibraryExA
- * FIXME: this function should use PE_LoadLibraryExA, but currently can't
- * due to the PROCESS_Create stuff.
- */
-BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
-                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                       LPPROCESS_INFORMATION info )
-{
-    HMODULE16 hModule16;
-    HMODULE hModule32;
-    NE_MODULE *pModule;
-
-    /* Load file */
-    if ( (hModule32 = PE_LoadImage( hFile, filename )) < 32 )
-    {
-        SetLastError( hModule32 );
-        return FALSE;
-    }
-#if 0
-    if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
-    {
-        SetLastError( 20 );  /* FIXME: not the right error code */
-        return FALSE;
-    }
-#endif
-
-    /* Create 16-bit dummy module */
-    if ( (hModule16 = MODULE_CreateDummyModule( filename, hModule32 )) < 32 ) 
-    {
-        SetLastError( hModule16 );
-        return FALSE;
-    }
-    pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-
-    /* Create new process */
-    if ( !PROCESS_Create( pModule, hFile, cmd_line, env,
-                          psa, tsa, inherit, flags, startup, info ) )
-        return FALSE;
-
-    /* Note: PE_CreateModule and the remaining process initialization will
-             be done in the context of the new process, in TASK_CallToStart */
-
-    return TRUE;
 }
 
 

@@ -29,8 +29,9 @@
 #include "debugtools.h"
 #include "loadorder.h"
 #include "elfdll.h"
+#include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(module)
+DEFAULT_DEBUG_CHANNEL(module);
 
 #define hFirstModule (pThhook->hExeHead)
 
@@ -38,6 +39,7 @@ static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
+static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask );
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
 
@@ -991,15 +993,16 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
+    struct new_thread_request *req = get_req_buffer();
+    TEB *teb = NULL;
     BOOL lib_only = !paramBlock || (paramBlock == (LPVOID)-1);
     LOADPARAMS16 *params;
-    LPSTR cmd_line, new_cmd_line;
-    LPCVOID env = NULL;
-    STARTUPINFOA startup;
-    PROCESS_INFORMATION info;
+    HINSTANCE16 instance;
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    PDB *pdb;
+    LPSTR cmdline;
+    WORD cmdShow;
+    int socket;
 
     /* Load module */
 
@@ -1037,128 +1040,52 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
      *  has already been incremented (to avoid having the module vanish 
      *  in the meantime), or else to a stub module which contains only header 
      *  information.
-     *
-     *  All remaining initialization (really loading the module in the second
-     *  case, and creating the new instance in both cases) are to be done in
-     *  the context of the new process. This happens in the NE_InitProcess
-     *  routine, which will be called from the 32-bit process initialization.
      */
 
+    /* Create the main thread */
+
+    req->suspend = 0;
+    req->inherit = 0;
+    if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
+    CloseHandle( req->handle );
+
+    if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
+    teb->startup = TASK_CallToStart;
+
+    /* Create a task for this process */
 
     params = (LOADPARAMS16 *)paramBlock;
-    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
-    if (!cmd_line) cmd_line = "";
-    else if (*cmd_line) cmd_line++;  /* skip the length byte */
+    cmdShow = ((WORD *)PTR_SEG_TO_LIN(params->showCmd))[1];
+    cmdline = PTR_SEG_TO_LIN( params->cmdLine );
+    if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
 
-    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
-                                    strlen(cmd_line)+strlen(name)+2 )))
-        return 0;
-    strcpy( new_cmd_line, name );
-    strcat( new_cmd_line, " " );
-    strcat( new_cmd_line, cmd_line );
+    if ((instance = NE_InitProcess( pModule, teb->htask16 )) < 32) goto error;
 
-    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
+    if (SYSDEPS_SpawnThread( teb ) == -1) goto error;
 
-    memset( &info, '\0', sizeof(info) );
-    memset( &startup, '\0', sizeof(startup) );
-    startup.cb = sizeof(startup);
-    if (params->showCmd)
-    {
-        startup.dwFlags = STARTF_USESHOWWINDOW;
-        startup.wShowWindow = ((UINT16 *)PTR_SEG_TO_LIN(params->showCmd))[1];
-    }
+    /* Post event to start the task */
+    PostEvent16( teb->htask16 );
+    OldYield16();
 
-    SYSLEVEL_ReleaseWin16Lock();
-    pdb = PROCESS_Create( pModule, -1, new_cmd_line, env,
-                          NULL, NULL, TRUE, 0, &startup, &info );
-    SYSLEVEL_RestoreWin16Lock();
-
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
-
-    if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
-    HeapFree( GetProcessHeap(), 0, new_cmd_line );
-
-    return GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
-}
-
-/**********************************************************************
- *          NE_CreateProcess
- */
-BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
-                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                       LPPROCESS_INFORMATION info )
-{
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    SYSLEVEL_EnterWin16Lock();
-
-    /* Special case: second instance of an already loaded NE module
-     * FIXME: maybe we should mark the module in a special way during
-     * "second instance" loading stage ?
-     * NE_CreateSegment and NE_LoadSegment might get confused without it,
-     * especially when it comes to self-loaders */
-
-    if ( ( hModule = NE_GetModuleByFilename( filename ) ) != 0 )
-    {
-        if (   !( pModule = NE_GetPtr( hModule) )
-            ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
-            ||  pModule->module32 )
-        {
-            SetLastError( ERROR_BAD_FORMAT );
-            goto error;
-        }
-
-        pModule->count++;
-    }
-
-    /* Main case: load first instance of NE module */
-    else
-    {
-        /* Load module */
-
-        hModule = NE_LoadExeHeader( filename );
-        if ( hModule < 32 )
-        {
-            SetLastError( hModule );
-            goto error;
-        }
-
-        if (   !( pModule = NE_GetPtr( hModule ) )
-            ||  ( pModule->flags & NE_FFLAGS_LIBMODULE) )
-        {
-            GlobalFreeAll16( hModule );
-            SetLastError( ERROR_BAD_FORMAT );
-            goto error;
-        }
-    }
-
-    SYSLEVEL_LeaveWin16Lock();
-
-    if ( !PROCESS_Create( pModule, hFile, cmd_line, env,
-                          psa, tsa, inherit, flags, startup, info ) )
-        return FALSE;
-
-    return TRUE;
+    return instance;
 
  error:
-    SYSLEVEL_LeaveWin16Lock();
-    return FALSE;
+    /* FIXME: free TEB and task */
+    close( socket );
+    return 0;  /* FIXME */
 }
+
 
 /**********************************************************************
  *          NE_InitProcess
  */
-BOOL NE_InitProcess( NE_MODULE *pModule  )
+static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask )
 {
     HINSTANCE16 hInstance, hPrevInstance;
-    BOOL retv = TRUE;
+    TDB *pTask;
 
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     WORD sp;
-    TDB *pTask;
 
     SYSLEVEL_EnterWin16Lock();
 
@@ -1187,30 +1114,25 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
         hPrevInstance = 0;
     }
 
-    if ( hInstance < 32 )
+    if ( hInstance >= 32 )
     {
-        SYSLEVEL_LeaveWin16Lock();
+        /* Enter instance handles into task struct */
 
-        SetLastError( hInstance );
-        return FALSE;
+        pTask = (TDB *)GlobalLock16( hTask );
+        pTask->hInstance = hInstance;
+        pTask->hPrevInstance = hPrevInstance;
+
+        /* Use DGROUP for 16-bit stack */
+ 
+        if (!(sp = pModule->sp))
+            sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+        sp &= ~1;
+        sp -= sizeof(STACK16FRAME);
+        pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(hInstance), sp );
     }
 
-    /* Enter instance handles into task struct */
-
-    pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    pTask->hInstance = hInstance;
-    pTask->hPrevInstance = hPrevInstance;
-
-    /* Use DGROUP for 16-bit stack */
- 
-    if (!(sp = pModule->sp))
-        sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
-    sp &= ~1;  sp -= sizeof(STACK16FRAME);
-    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(hInstance), sp );
- 
     SYSLEVEL_LeaveWin16Lock();
-
-    return retv;
+    return hInstance;
 }
 
 /***********************************************************************

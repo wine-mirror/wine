@@ -452,6 +452,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
  return TRUE;
 }
 
+#if 0
 BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env, 
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
@@ -508,6 +509,7 @@ BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env
  }
  return TRUE;
 }
+#endif
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
 {

@@ -274,11 +274,10 @@ void TASK_CallToStart(void)
  *       by entering the Win16Lock while linking the task into the
  *       global task list.
  */
-BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
+BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, BYTE len )
 {
     HTASK16 hTask;
     TDB *pTask;
-    LPSTR cmd_line;
     char name[10];
     PDB *pdb32 = PROCESS_Current();
 
@@ -310,7 +309,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
-    pTask->teb           = NtCurrentTeb();
+    pTask->teb           = teb;
     pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
     strcpy( pTask->curdir, "\\" );
     lstrcpynA( pTask->curdir + 1, DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() ),
@@ -349,11 +348,17 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
 
     /* Fill the command line */
 
-    cmd_line = pdb32->env_db->cmd_line;
-    while (*cmd_line && (*cmd_line != ' ') && (*cmd_line != '\t')) cmd_line++;
-    while ((*cmd_line == ' ') || (*cmd_line == '\t')) cmd_line++;
-    lstrcpynA( pTask->pdb.cmdLine+1, cmd_line, sizeof(pTask->pdb.cmdLine)-1);
-    pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
+    if (!cmdline)
+    {
+        cmdline = pdb32->env_db->cmd_line;
+        while (*cmdline && (*cmdline != ' ') && (*cmdline != '\t')) cmdline++;
+        while ((*cmdline == ' ') || (*cmdline == '\t')) cmdline++;
+        len = strlen(cmdline);
+    }
+    if (len >= sizeof(pTask->pdb.cmdLine)) len = sizeof(pTask->pdb.cmdLine)-1;
+    pTask->pdb.cmdLine[0] = len;
+    memcpy( pTask->pdb.cmdLine + 1, cmdline, len );
+    /* pTask->pdb.cmdLine[len+1] = 0; */
 
       /* Get the compatibility flags */
 
@@ -384,10 +389,10 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
 
     /* Enter task handle into thread and process */
  
-    pTask->teb->htask16 = pTask->teb->process->task = hTask;
+    teb->htask16 = hTask;
     if (!initial_task) initial_task = hTask;
 
-    TRACE("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
+    TRACE("module='%s' cmdline='%.*s' task=%04x\n", name, *cmdline, cmdline+1, hTask );
 
     /* Add the task to the linked list */
 
@@ -932,7 +937,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
     hInstanceSelector = GlobalHandleToSel16(hInstance);
 
-    TRACE("(%08lx, %04x);", (DWORD)func, hInstance);
+    TRACE("(%08lx, %04x);\n", (DWORD)func, hInstance);
 
     if (!HIWORD(func)) {
       /* Win95 actually protects via SEH, but this is better for debugging */
@@ -1168,8 +1173,8 @@ HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue )
     {
         teb->queue = hQueue;
 
-        if ( GetTaskQueue16( teb->process->task ) == oldQueue )
-            SetTaskQueue16( teb->process->task, hQueue );
+        if ( GetTaskQueue16( teb->htask16 ) == oldQueue )
+            SetTaskQueue16( teb->htask16, hQueue );
     }
 
     return oldQueue;
@@ -1334,7 +1339,7 @@ void WINAPI GetTaskQueueES16(void)
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
-    return PROCESS_Current()->task;
+    return NtCurrentTeb()->htask16;
 }
 
 DWORD WINAPI WIN16_GetCurrentTask(void)

@@ -2225,6 +2225,13 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    ((msg.message == WM_KEYDOWN) && 
 	     ((msg.wParam == VK_RETURN) || (msg.wParam == VK_ESCAPE)))) break;
 
+        if (msg.message == WM_PAINT)
+        {
+            if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+            UpdateWindow( msg.hwnd );
+            if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+            continue;
+        }
 	if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
 	    continue;  /* We are not interested in other messages */
 

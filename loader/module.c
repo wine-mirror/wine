@@ -39,35 +39,6 @@
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(win32);
 
-/*************************************************************************
- *		MODULE_WalkModref
- * Walk MODREFs for input process ID
- */
-void MODULE_WalkModref( DWORD id )
-{
-    int i;
-    WINE_MODREF  *zwm, *prev = NULL;
-    PDB *pdb = PROCESS_IdToPDB( id );
-
-    if (!pdb) {
-        MESSAGE("Invalid process id (pid)\n");
-        return;
-    }
-
-    MESSAGE("Modref list for process pdb=%p\n", pdb);
-    MESSAGE("Modref     next       prev        handle  deps  flags  name\n");
-    for ( zwm = pdb->modref_list; zwm; zwm = zwm->next) {
-        MESSAGE("%p %p %p %04x %5d %04x %s\n", zwm, zwm->next, zwm->prev,
-               zwm->module, zwm->nDeps, zwm->flags, zwm->modname);
-        for ( i = 0; i < zwm->nDeps; i++ ) {
-            if ( zwm->deps[i] )
-                MESSAGE("    %d %p %s\n", i, zwm->deps[i], zwm->deps[i]->modname);
-	}
-        if (prev != zwm->prev) 
-            MESSAGE("   --> modref corrupt, previous pointer wrong!!\n");
-        prev = zwm;
-    }
-}
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE
@@ -502,8 +473,7 @@ WINE_MODREF *MODULE_FindModule(
  * Note that .COM and .PIF files are only recognized by their
  * file name extension; but Windows does it the same way ...
  */
-static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename,
-                                  LPDWORD lpBinaryType )
+BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
 {
     IMAGE_DOS_HEADER mz_header;
     char magic[4], *ptr;
@@ -690,13 +660,59 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
-    HINSTANCE16 hInst;
+    LPCSTR p;
+    LPSTR name, cmdline;
+    int len;
+    HINSTANCE16 ret;
+    char buffer[MAX_PATH];
 
-    SYSLEVEL_ReleaseWin16Lock();
-    hInst = WinExec( lpCmdLine, nCmdShow );
-    SYSLEVEL_RestoreWin16Lock();
+    if ((p = strchr( lpCmdLine, ' ' )))
+    {
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, p - lpCmdLine + 1 )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        memcpy( name, lpCmdLine, p - lpCmdLine );
+        name[p - lpCmdLine] = 0;
+        p++;
+        len = strlen(p);
+        cmdline = SEGPTR_ALLOC( len + 2 );
+        cmdline[0] = (BYTE)len;
+        strcpy( cmdline + 1, p );
+    }
+    else
+    {
+        name = (LPSTR)lpCmdLine;
+        cmdline = SEGPTR_ALLOC(2);
+        cmdline[0] = cmdline[1] = 0;
+    }
 
-    return hInst;
+    if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
+    {
+        LOADPARAMS16 params;
+        WORD *showCmd = SEGPTR_ALLOC( 2*sizeof(WORD) );
+        showCmd[0] = 2;
+        showCmd[1] = nCmdShow;
+
+        params.hEnvironment = 0;
+        params.cmdLine = SEGPTR_GET(cmdline);
+        params.showCmd = SEGPTR_GET(showCmd);
+        params.reserved = 0;
+
+        ret = LoadModule16( buffer, &params );
+
+        SEGPTR_FREE( showCmd );
+        SEGPTR_FREE( cmdline );
+    }
+    else ret = GetLastError();
+
+    if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
+
+    if (ret == 21)  /* 32-bit module */
+    {
+        SYSLEVEL_ReleaseWin16Lock();
+        ret = WinExec( lpCmdLine, nCmdShow );
+        SYSLEVEL_RestoreWin16Lock();
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -719,14 +735,7 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
         /* Give 30 seconds to the app to come up */
         if (Callout.WaitForInputIdle ( info.hProcess, 30000 ) == 0xFFFFFFFF)
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-    
-        /* Get 16-bit hInstance/hTask from process */
-        hInstance = GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
-        /* If there is no hInstance (32-bit process) return a dummy value
-         * that must be > 31
-         * FIXME: should do this in all cases and fix Win16 callers */
-        if (!hInstance) hInstance = 33;
-
+        hInstance = 33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
@@ -783,13 +792,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         /* Give 30 seconds to the app to come up */
         if ( Callout.WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF ) 
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-    
-        /* Get 16-bit hInstance/hTask from process */
-        hInstance = GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
-        /* If there is no hInstance (32-bit process) return a dummy value
-         * that must be > 31
-         * FIXME: should do this in all cases and fix Win16 callers */
-        if (!hInstance) hInstance = 33;
+        hInstance = 33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
@@ -905,6 +908,8 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
+    TRACE("app '%s' cmdline '%s'\n", lpApplicationName, lpCommandLine );
+
     if (!(tidy_cmdline = get_file_name( lpApplicationName, lpCommandLine, name, sizeof(name) )))
         return FALSE;
 
@@ -972,11 +977,10 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if ( !MODULE_GetBinaryType( hFile, name, &type ) )
     {
         CloseHandle( hFile );
-        /* FIXME: Try Unix executable only when appropriate! */
-        retv = PROCESS_CreateUnixProcess( name, tidy_cmdline, lpEnvironment, 
-                                          lpProcessAttributes, lpThreadAttributes,
-                                          bInheritHandles, dwCreationFlags,
-                                          lpStartupInfo, lpProcessInfo );
+        retv = PROCESS_Create( -1, name, tidy_cmdline, lpEnvironment, 
+                               lpProcessAttributes, lpThreadAttributes,
+                               bInheritHandles, dwCreationFlags,
+                               lpStartupInfo, lpProcessInfo );
         goto done;
     }
 
@@ -985,24 +989,12 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     switch ( type )
     {
     case SCS_32BIT_BINARY:
-        retv = PE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                 lpProcessAttributes, lpThreadAttributes,
-                                 bInheritHandles, dwCreationFlags,
-                                 lpStartupInfo, lpProcessInfo );
-        break;
-    
-    case SCS_DOS_BINARY:
-        retv = MZ_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                 lpProcessAttributes, lpThreadAttributes,
-                                 bInheritHandles, dwCreationFlags,
-                                 lpStartupInfo, lpProcessInfo );
-        break;
-
     case SCS_WOW_BINARY:
-        retv = NE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
-                                 lpProcessAttributes, lpThreadAttributes,
-                                 bInheritHandles, dwCreationFlags,
-                                 lpStartupInfo, lpProcessInfo );
+    case SCS_DOS_BINARY:
+        retv = PROCESS_Create( hFile, name, tidy_cmdline, lpEnvironment, 
+                               lpProcessAttributes, lpThreadAttributes,
+                               bInheritHandles, dwCreationFlags,
+                               lpStartupInfo, lpProcessInfo );
         break;
 
     case SCS_PIF_BINARY:
