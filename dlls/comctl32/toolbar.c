@@ -640,7 +640,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    else
 		TOOLBAR_DrawFlatSeparator (&rc, hdc);
 	}
-	else {
+	else if (btnPtr->fsStyle != TBSTYLE_SEP) {
 	    FIXME("Draw some kind of separator: fsStyle=%x\n",
 		  btnPtr->fsStyle);
 	}
