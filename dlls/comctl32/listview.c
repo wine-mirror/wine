@@ -858,7 +858,7 @@ static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HD
     lpnmlvcd->clrTextBk = infoPtr->clrTextBk;
     lpnmlvcd->clrText   = infoPtr->clrText;
     if (!lplvItem) return;
-    lpnmlvcd->nmcd.dwItemSpec = lplvItem->iItem;
+    lpnmlvcd->nmcd.dwItemSpec = lplvItem->iItem + 1;
     lpnmlvcd->iSubItem = lplvItem->iSubItem;
     if (lplvItem->state & LVIS_SELECTED) lpnmlvcd->nmcd.uItemState |= CDIS_SELECTED;
     if (lplvItem->state & LVIS_FOCUSED) lpnmlvcd->nmcd.uItemState |= CDIS_FOCUS;
@@ -868,9 +868,16 @@ static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HD
 
 static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, NMLVCUSTOMDRAW *lpnmlvcd)
 {
+    BOOL isForItem = (lpnmlvcd->nmcd.dwItemSpec != 0);
+    DWORD result;
+
     lpnmlvcd->nmcd.dwDrawStage = dwDrawStage;
-    if (lpnmlvcd->nmcd.dwItemSpec) lpnmlvcd->nmcd.dwDrawStage |= CDDS_ITEM;
-    return notify_hdr(infoPtr, NM_CUSTOMDRAW, &lpnmlvcd->nmcd.hdr);
+    if (isForItem) lpnmlvcd->nmcd.dwDrawStage |= CDDS_ITEM; 
+    if (lpnmlvcd->iSubItem) lpnmlvcd->nmcd.dwDrawStage |= CDDS_SUBITEM;
+    if (isForItem) lpnmlvcd->nmcd.dwItemSpec--;
+    result = notify_hdr(infoPtr, NM_CUSTOMDRAW, &lpnmlvcd->nmcd.hdr);
+    if (isForItem) lpnmlvcd->nmcd.dwItemSpec++;
+    return result;
 }
 
 static DWORD notify_prepaint (LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpnmlvcd)
