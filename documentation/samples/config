@@ -51,7 +51,7 @@ WINE REGISTRY Version 2
 "Filesystem" = "win95"
 
 [Drive F]
-"Path" = "${HOME}"
+"Path" = "%HOME%"
 "Type" = "network"
 "Label" = "Home"
 "Filesystem" = "win95"

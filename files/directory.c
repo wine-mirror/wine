@@ -69,14 +69,19 @@ inline static int FILE_contains_pathW (LPCWSTR name)
  *
  * Get a path name from the wine.ini file and make sure it is valid.
  */
-static int DIR_GetPath( LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_name,
+static int DIR_GetPath( HKEY hkey, LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_name,
                         LPWSTR longname, INT longname_len, BOOL warn )
 {
-    WCHAR path[MAX_PATHNAME_LEN];
+    UNICODE_STRING nameW;
+    DWORD dummy;
+    WCHAR tmp[MAX_PATHNAME_LEN];
     BY_HANDLE_FILE_INFORMATION info;
+    const WCHAR *path = defval;
     const char *mess = "does not exist";
 
-    PROFILE_GetWineIniString( wineW, keyname, defval, path, MAX_PATHNAME_LEN );
+    RtlInitUnicodeString( &nameW, keyname );
+    if (hkey && !NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        path = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
 
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
         (!FILE_Stat( full_name->long_name, &info, NULL ) && (mess=strerror(errno)))||
@@ -97,11 +102,18 @@ static int DIR_GetPath( LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_nam
  */
 int DIR_Init(void)
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey;
     char path[MAX_PATHNAME_LEN];
     WCHAR longpath[MAX_PATHNAME_LEN];
     DOS_FULL_NAME tmp_dir, profile_dir;
     int drive;
     const char *cwd;
+    static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','o','f','t','w','a','r','e','\\',
+                                  'W','i','n','e','\\','W','i','n','e','\\',
+                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
     static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
     static const WCHAR systemW[] = {'s','y','s','t','e','m',0};
     static const WCHAR tempW[] = {'t','e','m','p',0};
@@ -144,11 +156,22 @@ int DIR_Init(void)
             chdir("/"); /* change to root directory so as not to lock cdroms */
     }
 
-    if (!(DIR_GetPath( windowsW, windows_dirW, &DIR_Windows, longpath, MAX_PATHNAME_LEN, TRUE )) ||
- 	!(DIR_GetPath( systemW, system_dirW, &DIR_System, longpath, MAX_PATHNAME_LEN, TRUE )) ||
- 	!(DIR_GetPath( tempW, windows_dirW, &tmp_dir, longpath, MAX_PATHNAME_LEN, TRUE )))
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, wineW );
+    if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) hkey = 0;
+
+    if (!(DIR_GetPath( hkey, windowsW, windows_dirW, &DIR_Windows, longpath, MAX_PATHNAME_LEN, TRUE )) ||
+        !(DIR_GetPath( hkey, systemW, system_dirW, &DIR_System, longpath, MAX_PATHNAME_LEN, TRUE )) ||
+        !(DIR_GetPath( hkey, tempW, windows_dirW, &tmp_dir, longpath, MAX_PATHNAME_LEN, TRUE )))
     {
 	PROFILE_UsageWineIni();
+        if (hkey) NtClose( hkey );
         return 0;
     }
     if (-1 == access( tmp_dir.long_name, W_OK ))
@@ -181,16 +204,27 @@ int DIR_Init(void)
     }
 
     /* set PATH only if not set already */
-    if (!GetEnvironmentVariableW( path_capsW, longpath, MAX_PATHNAME_LEN ))
+    if (!GetEnvironmentVariableW( path_capsW, NULL, 0 ))
     {
-        PROFILE_GetWineIniString(wineW, pathW, path_dirW, longpath, MAX_PATHNAME_LEN);
-        if (strchrW(longpath, '/'))
+        WCHAR tmp[MAX_PATHNAME_LEN];
+        DWORD dummy;
+        const WCHAR *path = path_dirW;
+
+        RtlInitUnicodeString( &nameW, pathW );
+        if (hkey && !NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      tmp, sizeof(tmp), &dummy ))
+        {
+            path = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        }
+
+        if (strchrW(path, '/'))
         {
             MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
             PROFILE_UsageWineIni();
             ExitProcess(1);
         }
-        SetEnvironmentVariableW( path_capsW, longpath );
+        SetEnvironmentVariableW( path_capsW, path );
+        TRACE("Path       = %s\n", debugstr_w(path) );
     }
 
     SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
@@ -204,11 +238,10 @@ int DIR_Init(void)
           debugstr_w(DIR_System.short_name), DIR_System.long_name );
     TRACE("TempDir    = %s (%s)\n",
           debugstr_w(tmp_dir.short_name), tmp_dir.long_name );
-    TRACE("Path       = %s\n", debugstr_w(longpath) );
     TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, debugstr_w(DRIVE_GetDosCwd(drive)) );
 
-    if (DIR_GetPath( profileW, empty_strW, &profile_dir, longpath, MAX_PATHNAME_LEN, FALSE ))
+    if (DIR_GetPath( hkey, profileW, empty_strW, &profile_dir, longpath, MAX_PATHNAME_LEN, FALSE ))
     {
         TRACE("USERPROFILE= %s\n", debugstr_w(longpath) );
         SetEnvironmentVariableW( userprofileW, longpath );
@@ -216,6 +249,7 @@ int DIR_Init(void)
 
     TRACE("SYSTEMROOT = %s\n", debugstr_w(DIR_Windows.short_name) );
     SetEnvironmentVariableW( systemrootW, DIR_Windows.short_name );
+    if (hkey) NtClose( hkey );
 
     return 1;
 }

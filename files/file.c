@@ -81,6 +81,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 HANDLE dos_handles[DOS_TABLE_SIZE];
 mode_t FILE_umask;
 
@@ -707,6 +709,46 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
 
 
 /***********************************************************************
+ *           get_show_dot_files_option
+ */
+static BOOL get_show_dot_files_option(void)
+{
+    static const WCHAR WineW[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','o','f','t','w','a','r','e','\\',
+                                  'W','i','n','e','\\','W','i','n','e','\\',
+                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
+    static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
+
+    char tmp[80];
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    BOOL ret = FALSE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, WineW );
+
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    {
+        RtlInitUnicodeString( &nameW, ShowDotFilesW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            ret = IS_OPTION_TRUE( str[0] );
+        }
+        NtClose( hkey );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           FILE_Stat
  *
  * Stat a Unix path name. Return TRUE if OK.
@@ -742,11 +784,9 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_syml
     p = p ? p + 1 : unixName;
     if (*p == '.' && *(p+1)  && (*(p+1) != '.' || *(p+2)))
     {
-	static const WCHAR wineW[] = {'w','i','n','e',0};
-	static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
 	static int show_dot_files = -1;
 	if (show_dot_files == -1)
-	    show_dot_files = PROFILE_GetWineIniBool(wineW, ShowDotFilesW, 0);
+	    show_dot_files = get_show_dot_files_option();
 	if (!show_dot_files)
 	    info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
     }

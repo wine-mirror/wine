@@ -40,13 +40,8 @@
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/debug.h"
-#include "file.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(computername);
-
-/* Wine config options */ 
-static const WCHAR NetworkW[] = {'N','e','t','w','o','r','k',0};
-static const WCHAR UseDNSW[] = {'U','s','e','D','n','s','C','o','m','p','u','t','e','r','N','a','m','e',0};
 
 /* Registry key and value names */
 static const WCHAR ComputerW[] = {'M','a','c','h','i','n','e','\\',
@@ -58,6 +53,8 @@ static const WCHAR ActiveComputerNameW[] =   {'A','c','t','i','v','e','C','o','m
 static const WCHAR ComputerNameW[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
 
 static const char default_ComputerName[] = "WINE";
+
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -189,6 +186,41 @@ inline static void _init_attr ( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *name )
     attr->SecurityQualityOfService = NULL;
 }
 
+/***********************************************************************
+ *           get_use_dns_option
+ */
+static BOOL get_use_dns_option(void)
+{
+    static const WCHAR NetworkW[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','o','f','t','w','a','r','e','\\',
+                                  'W','i','n','e','\\','W','i','n','e','\\',
+                                  'C','o','n','f','i','g','\\','N','e','t','w','o','r','k',0};
+    static const WCHAR UseDNSW[] = {'U','s','e','D','n','s','C','o','m','p','u','t','e','r','N','a','m','e',0};
+
+    char tmp[80];
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    BOOL ret = TRUE;
+
+    _init_attr( &attr, &nameW );
+    RtlInitUnicodeString( &nameW, NetworkW );
+
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    {
+        RtlInitUnicodeString( &nameW, UseDNSW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            ret = IS_OPTION_TRUE( str[0] );
+        }
+        NtClose( hkey );
+    }
+    return ret;
+}
+
+
 /*********************************************************************** 
  *                      COMPUTERNAME_Init    (INTERNAL)
  */
@@ -216,8 +248,7 @@ void COMPUTERNAME_Init (void)
     
     st = NtQueryValueKey( hsubkey, &nameW, KeyValuePartialInformation, buf, len, &len );
 
-    if ( st == STATUS_OBJECT_NAME_NOT_FOUND || 
-         ( st == STATUS_SUCCESS && PROFILE_GetWineIniBool( NetworkW, UseDNSW, 1 ) ) )
+    if ( st == STATUS_OBJECT_NAME_NOT_FOUND || ( st == STATUS_SUCCESS && get_use_dns_option()))
     {
         char hbuf[256];
         int hlen = sizeof (hbuf);
@@ -539,7 +570,7 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
     int i;
     NTSTATUS st = STATUS_INTERNAL_ERROR;
 
-    if ( PROFILE_GetWineIniBool ( NetworkW, UseDNSW, 1 ) )
+    if (get_use_dns_option())
     {
         /* This check isn't necessary, but may help debugging problems. */
         WARN( "Disabled by Wine Configuration.\n" );

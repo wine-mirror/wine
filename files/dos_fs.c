@@ -84,6 +84,8 @@ typedef struct
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
@@ -854,17 +856,41 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile )
 static HANDLE DOSFS_CreateCommPort(LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa)
 {
     HANDLE ret;
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR *devnameW;
+    char tmp[128];
     char devname[40];
-    WCHAR devnameW[40];
-    static const WCHAR serialportsW[] = {'s','e','r','i','a','l','p','o','r','t','s',0};
-    static const WCHAR empty_strW[] = { 0 };
+
+    static const WCHAR serialportsW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'W','i','n','e','\\','W','i','n','e','\\',
+                                         'C','o','n','f','i','g','\\',
+                                         'S','e','r','i','a','l','P','o','r','t','s',0};
 
     TRACE_(file)("%s %lx %lx\n", debugstr_w(name), access, attributes);
 
-    PROFILE_GetWineIniString(serialportsW, name, empty_strW, devnameW, 40);
-    if(!devnameW[0])
-        return 0;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, serialportsW );
 
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 0;
+
+    RtlInitUnicodeString( &nameW, name );
+    if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        devnameW = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+    else
+        devnameW = NULL;
+
+    NtClose( hkey );
+
+    if (!devnameW) return 0;
     WideCharToMultiByte(CP_ACP, 0, devnameW, -1, devname, sizeof(devname), NULL, NULL);
 
     TRACE("opening %s as %s\n", devname, debugstr_w(name));
@@ -1693,6 +1719,46 @@ BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
 
 
 /***********************************************************************
+ *           get_show_dir_symlinks_option
+ */
+static BOOL get_show_dir_symlinks_option(void)
+{
+    static const WCHAR WineW[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','o','f','t','w','a','r','e','\\',
+                                  'W','i','n','e','\\','W','i','n','e','\\',
+                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
+    static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
+
+    char tmp[80];
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    BOOL ret = FALSE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, WineW );
+
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    {
+        RtlInitUnicodeString( &nameW, ShowDirSymlinksW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            ret = IS_OPTION_TRUE( str[0] );
+        }
+        NtClose( hkey );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           DOSFS_FindNextEx
  */
 static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
@@ -1774,11 +1840,9 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
         }
         if (is_symlink && (fileinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
-            static const WCHAR wineW[] = {'w','i','n','e',0};
-            static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
             static int show_dir_symlinks = -1;
             if (show_dir_symlinks == -1)
-                show_dir_symlinks = PROFILE_GetWineIniBool(wineW, ShowDirSymlinksW, 0);
+                show_dir_symlinks = get_show_dir_symlinks_option();
             if (!show_dir_symlinks) continue;
         }
 

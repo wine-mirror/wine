@@ -111,9 +111,6 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
 
 /* profile.c */
 extern void PROFILE_UsageWineIni(void);
-extern int PROFILE_GetWineIniString( LPCWSTR section, LPCWSTR key_name,
-                                     LPCWSTR def, LPWSTR buffer, int len );
-extern int PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def );
 
 /* win32/device.c */
 extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );

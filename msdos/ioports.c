@@ -38,9 +38,10 @@
 #endif
 #include "windef.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "callback.h"
-#include "file.h"
 #include "miscemu.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -162,54 +163,54 @@ static void set_IO_permissions(int val1, int val, char rw)
  * Helper function for IO_port_init
  */
 
-static void do_IO_port_init_read_or_write(char* temp, char rw)
+static void do_IO_port_init_read_or_write(const WCHAR *str, char rw)
 {
-	int val, val1, i, len;
-	if (!strcasecmp(temp, "all")) {
-		MESSAGE("Warning!!! Granting FULL IO port access to"
-			" windoze programs!\nWarning!!! "
-			"*** THIS IS NOT AT ALL "
-			"RECOMMENDED!!! ***\n");
-		for (i=0; i < sizeof(port_permissions); i++)
-			port_permissions[i] |= rw;
+    int val, val1, i;
+    WCHAR *end;
+    static const WCHAR allW[] = {'a','l','l',0};
 
-	} else if (!(!strcmp(temp, "*") || *temp == '\0')) {
-		len = strlen(temp);
-		val = -1;
-		val1 = -1;
-		for (i = 0; i < len; i++) {
-			switch (temp[i]) {
-			case '0':
-				if (temp[i+1] == 'x' || temp[i+1] == 'X') {
-					sscanf(temp+i, "%x", &val);
-					i += 2;
-				} else {
-					sscanf(temp+i, "%d", &val);
-				}
-				while (isxdigit(temp[i]))
-					i++;
-				i--;
-				break;
-			case ',':
-			case ' ':
-			case '\t':
-				set_IO_permissions(val1, val, rw);
-				val1 = -1; val = -1;
-				break;
-			case '-':
-				val1 = val;
-				if (val1 == -1) val1 = 0;
-				break;
-			default:
-				if (temp[i] >= '0' && temp[i] <= '9') {
-					sscanf(temp+i, "%d", &val);
-					while (isdigit(temp[i]))
-						i++;
-				}
-			}
-		}
-		set_IO_permissions(val1, val, rw);
-	}
+    if (!strcmpiW(str, allW))
+    {
+        for (i=0; i < sizeof(port_permissions); i++)
+            port_permissions[i] |= rw;
+    }
+    else
+    {
+        val = -1;
+        val1 = -1;
+        while (*str)
+        {
+            switch(*str)
+            {
+            case ',':
+            case ' ':
+            case '\t':
+                set_IO_permissions(val1, val, rw);
+                val1 = -1;
+                val = -1;
+                str++;
+                break;
+            case '-':
+                val1 = val;
+                if (val1 == -1) val1 = 0;
+                str++;
+                break;
+            default:
+                if (isdigitW(*str))
+                {
+                    val = strtoulW( str, &end, 0 );
+                    if (end == str)
+                    {
+                        val = -1;
+                        str++;
+                    }
+                    else str = end;
+                }
+                break;
+            }
+        }
+        set_IO_permissions(val1, val, rw);
+    }
 }
 
 static inline BYTE inb( WORD port )
@@ -250,25 +251,50 @@ static inline void outl( DWORD value, WORD port )
 
 static void IO_port_init(void)
 {
-	char temp[1024];
-	WCHAR tempW[1024];
-        static const WCHAR portsW[] = {'p','o','r','t','s',0};
-        static const WCHAR readW[] = {'r','e','a','d',0};
-        static const WCHAR writeW[] = {'w','r','i','t','e',0};
-        static const WCHAR asteriskW[] = {'*',0};
+    char tmp[1024];
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
 
-        do_direct_port_access = 0;
-	/* Can we do that? */
-	if (!iopl(3)) {
-		iopl(0);
+    static const WCHAR portsW[] = {'M','a','c','h','i','n','e','\\',
+                                   'S','o','f','t','w','a','r','e','\\',
+                                   'W','i','n','e','\\','W','i','n','e','\\',
+                                   'C','o','n','f','i','g','\\','P','o','r','t','s',0};
+    static const WCHAR readW[] = {'r','e','a','d',0};
+    static const WCHAR writeW[] = {'w','r','i','t','e',0};
 
-		PROFILE_GetWineIniString( portsW, readW, asteriskW, tempW, 1024 );
-		WideCharToMultiByte(CP_ACP, 0, tempW, -1, temp, 1024, NULL, NULL);
-		do_IO_port_init_read_or_write(temp, IO_READ);
-		PROFILE_GetWineIniString( portsW, writeW, asteriskW, tempW, 1024 );
-		WideCharToMultiByte(CP_ACP, 0, tempW, -1, temp, 1024, NULL, NULL);
-		do_IO_port_init_read_or_write(temp, IO_WRITE);
-	}
+    do_direct_port_access = 0;
+    /* Can we do that? */
+    if (!iopl(3))
+    {
+        iopl(0);
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &nameW, portsW );
+
+        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+        {
+            RtlInitUnicodeString( &nameW, readW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                do_IO_port_init_read_or_write(str, IO_READ);
+            }
+            RtlInitUnicodeString( &nameW, writeW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                do_IO_port_init_read_or_write(str, IO_WRITE);
+            }
+            NtClose( hkey );
+        }
+    }
     IO_FixCMOSCheckSum();
 }
 

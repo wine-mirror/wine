@@ -138,27 +138,23 @@ inline static char *heap_strdup( const char *str )
     return p;
 }
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 extern void CDROM_InitRegistry(int dev);
 
 /***********************************************************************
  *           DRIVE_GetDriveType
  */
-static UINT DRIVE_GetDriveType( LPCWSTR name )
+static inline UINT DRIVE_GetDriveType( INT drive, LPCWSTR value )
 {
-    WCHAR buffer[20];
     int i;
-    static const WCHAR TypeW[] = {'T','y','p','e',0};
-    static const WCHAR hdW[] = {'h','d',0};
 
-    PROFILE_GetWineIniString( name, TypeW, hdW, buffer, 20 );
-    if(!buffer[0])
-        strcpyW(buffer,hdW);
     for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
     {
-        if (!strcmpiW( buffer, DRIVE_Types[i] )) return i;
+        if (!strcmpiW( value, DRIVE_Types[i] )) return i;
     }
-    MESSAGE("%s: unknown drive type %s, defaulting to 'hd'.\n",
-            debugstr_w(name), debugstr_w(buffer) );
+    MESSAGE("Drive %c: unknown drive type %s, defaulting to 'hd'.\n",
+            'A' + drive, debugstr_w(value) );
     return DRIVE_FIXED;
 }
 
@@ -166,14 +162,14 @@ static UINT DRIVE_GetDriveType( LPCWSTR name )
 /***********************************************************************
  *           DRIVE_GetFSFlags
  */
-static UINT DRIVE_GetFSFlags( LPCWSTR name, LPCWSTR value )
+static UINT DRIVE_GetFSFlags( INT drive, LPCWSTR value )
 {
     const FS_DESCR *descr;
 
     for (descr = DRIVE_Filesystems; *descr->name; descr++)
         if (!strcmpiW( value, descr->name )) return descr->flags;
-    MESSAGE("%s: unknown filesystem type %s, defaulting to 'win95'.\n",
-            debugstr_w(name), debugstr_w(value) );
+    MESSAGE("Drive %c: unknown filesystem type %s, defaulting to 'win95'.\n",
+            'A' + drive, debugstr_w(value) );
     return DRIVE_CASE_PRESERVING;
 }
 
@@ -184,36 +180,59 @@ static UINT DRIVE_GetFSFlags( LPCWSTR name, LPCWSTR value )
 int DRIVE_Init(void)
 {
     int i, len, count = 0;
-    WCHAR name[] = {'D','r','i','v','e',' ','A',0};
+    WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+                      'W','i','n','e','\\','W','i','n','e','\\',
+                      'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
     WCHAR drive_env[] = {'=','A',':',0};
     WCHAR path[MAX_PATHNAME_LEN];
-    WCHAR buffer[80];
+    char tmp[MAX_PATHNAME_LEN*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
     struct stat drive_stat_buffer;
     WCHAR *p;
     DOSDRIVE *drive;
+    HKEY hkey;
+    DWORD dummy;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
     static const WCHAR PathW[] = {'P','a','t','h',0};
-    static const WCHAR empty_strW[] = { 0 };
     static const WCHAR CodepageW[] = {'C','o','d','e','p','a','g','e',0};
     static const WCHAR LabelW[] = {'L','a','b','e','l',0};
     static const WCHAR SerialW[] = {'S','e','r','i','a','l',0};
-    static const WCHAR zeroW[] = {'0',0};
-    static const WCHAR def_serialW[] = {'1','2','3','4','5','6','7','8',0};
+    static const WCHAR TypeW[] = {'T','y','p','e',0};
     static const WCHAR FilesystemW[] = {'F','i','l','e','s','y','s','t','e','m',0};
-    static const WCHAR win95W[] = {'w','i','n','9','5',0};
     static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
     static const WCHAR ReadVolInfoW[] = {'R','e','a','d','V','o','l','I','n','f','o',0};
     static const WCHAR FailReadOnlyW[] = {'F','a','i','l','R','e','a','d','O','n','l','y',0};
     static const WCHAR driveC_labelW[] = {'D','r','i','v','e',' ','C',' ',' ',' ',' ',0};
 
-    for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, name[6]++, drive++)
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
     {
-        PROFILE_GetWineIniString( name, PathW, empty_strW, path, MAX_PATHNAME_LEN );
-        if (path[0])
+        RtlInitUnicodeString( &nameW, driveW );
+        nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
+
+        /* Get the code page number */
+        RtlInitUnicodeString( &nameW, CodepageW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
         {
-            /* Get the code page number */
-            PROFILE_GetWineIniString( name, CodepageW, zeroW, /* 0 == CP_ACP */
-                                      buffer, 80 );
-            drive->codepage = strtolW( buffer, NULL, 10 );
+            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            drive->codepage = strtolW( data, NULL, 10 );
+        }
+
+        /* Get the root path */
+        RtlInitUnicodeString( &nameW, PathW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            ExpandEnvironmentStringsW( data, path, sizeof(path)/sizeof(WCHAR) );
 
             p = path + strlenW(path) - 1;
             while ((p > path) && (*p == '/')) *p-- = '\0';
@@ -232,7 +251,8 @@ int DRIVE_Init(void)
                 len += WideCharToMultiByte(drive->codepage, 0, path, -1, NULL, 0, NULL, NULL) + 2;
                 drive->root = HeapAlloc( GetProcessHeap(), 0, len );
                 len -= sprintf( drive->root, "%s/", config );
-                WideCharToMultiByte(drive->codepage, 0, path, -1, drive->root + strlen(drive->root), len, NULL, NULL);
+                WideCharToMultiByte(drive->codepage, 0, path, -1,
+                                    drive->root + strlen(drive->root), len, NULL, NULL);
             }
 
             if (stat( drive->root, &drive_stat_buffer ))
@@ -241,7 +261,7 @@ int DRIVE_Init(void)
                         drive->root, strerror(errno), 'A' + i);
                 HeapFree( GetProcessHeap(), 0, drive->root );
                 drive->root = NULL;
-                continue;
+                goto next;
             }
             if (!S_ISDIR(drive_stat_buffer.st_mode))
             {
@@ -249,19 +269,32 @@ int DRIVE_Init(void)
                         drive->root, 'A' + i );
                 HeapFree( GetProcessHeap(), 0, drive->root );
                 drive->root = NULL;
-                continue;
+                goto next;
             }
 
             drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
             drive->unix_cwd = heap_strdup( "" );
-            drive->type     = DRIVE_GetDriveType( name );
             drive->device   = NULL;
             drive->flags    = 0;
             drive->dev      = drive_stat_buffer.st_dev;
             drive->ino      = drive_stat_buffer.st_ino;
 
+            /* Get the drive type */
+            RtlInitUnicodeString( &nameW, TypeW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                drive->type = DRIVE_GetDriveType( i, data );
+            }
+            else drive->type = DRIVE_FIXED;
+
             /* Get the drive label */
-            PROFILE_GetWineIniString( name, LabelW, empty_strW, drive->label_conf, 12 );
+            RtlInitUnicodeString( &nameW, LabelW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                lstrcpynW( drive->label_conf, data, 12 );
+            }
             if ((len = strlenW(drive->label_conf)) < 11)
             {
                 /* Pad label with spaces */
@@ -270,51 +303,73 @@ int DRIVE_Init(void)
             }
 
             /* Get the serial number */
-            PROFILE_GetWineIniString( name, SerialW, def_serialW, buffer, 80 );
-            drive->serial_conf = strtoulW( buffer, NULL, 16 );
+            RtlInitUnicodeString( &nameW, SerialW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                drive->serial_conf = strtoulW( data, NULL, 16 );
+            }
+            else drive->serial_conf = 12345678;
 
             /* Get the filesystem type */
-            PROFILE_GetWineIniString( name, FilesystemW, win95W, buffer, 80 );
-            drive->flags = DRIVE_GetFSFlags( name, buffer );
+            RtlInitUnicodeString( &nameW, FilesystemW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                drive->flags = DRIVE_GetFSFlags( i, data );
+            }
+            else drive->flags = DRIVE_CASE_PRESERVING;
 
             /* Get the device */
-            PROFILE_GetWineIniString( name, DeviceW, empty_strW, buffer, 80 );
-            if (buffer[0])
-	    {
-		int cd_fd;
-                len = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
+            RtlInitUnicodeString( &nameW, DeviceW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                len = WideCharToMultiByte(CP_ACP, 0, data, -1, NULL, 0, NULL, NULL);
                 drive->device = HeapAlloc(GetProcessHeap(), 0, len);
-                WideCharToMultiByte(drive->codepage, 0, buffer, -1, drive->device, len, NULL, NULL);
+                WideCharToMultiByte(drive->codepage, 0, data, -1, drive->device, len, NULL, NULL);
 
- 		if (PROFILE_GetWineIniBool( name, ReadVolInfoW, 1))
-                    drive->flags |= DRIVE_READ_VOL_INFO;
+                RtlInitUnicodeString( &nameW, ReadVolInfoW );
+                if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+                {
+                    WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                    if (IS_OPTION_TRUE(data[0])) drive->flags |= DRIVE_READ_VOL_INFO;
+                }
+                else drive->flags |= DRIVE_READ_VOL_INFO;
 
                 if (drive->type == DRIVE_CDROM)
                 {
+                    int cd_fd;
                     if ((cd_fd = open(drive->device, O_RDONLY|O_NONBLOCK)) != -1)
                     {
                         CDROM_InitRegistry(cd_fd);
                         close(cd_fd);
                     }
                 }
-	    }
+            }
 
             /* Get the FailReadOnly flag */
-            if (PROFILE_GetWineIniBool( name, FailReadOnlyW, 0 ))
-                drive->flags |= DRIVE_FAIL_READ_ONLY;
+            RtlInitUnicodeString( &nameW, FailReadOnlyW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+            {
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                if (IS_OPTION_TRUE(data[0])) drive->flags |= DRIVE_FAIL_READ_ONLY;
+            }
 
             /* Make the first hard disk the current drive */
             if ((DRIVE_CurDrive == -1) && (drive->type == DRIVE_FIXED))
                 DRIVE_CurDrive = i;
 
             count++;
-            TRACE("%s: path=%s type=%s label=%s serial=%08lx "
+            TRACE("Drive %c: path=%s type=%s label=%s serial=%08lx "
                   "flags=%08x codepage=%u dev=%x ino=%x\n",
-                  debugstr_w(name), drive->root, debugstr_w(DRIVE_Types[drive->type]),
+                  'A' + i, drive->root, debugstr_w(DRIVE_Types[drive->type]),
                   debugstr_w(drive->label_conf), drive->serial_conf, drive->flags,
                   drive->codepage, (int)drive->dev, (int)drive->ino );
         }
-        else WARN("%s: not defined\n", debugstr_w(name) );
+
+    next:
+        NtClose( hkey );
     }
 
     if (!count)
