@@ -186,7 +186,7 @@
 @ stub NetUserAdd
 @ stub NetUserChangePassword
 @ stub NetUserDel
-@ stub NetUserEnum
+@ stdcall NetUserEnum(wstr long long ptr long ptr ptr ptr)
 @ stub NetUserGetGroups
 @ stdcall NetUserGetInfo(wstr wstr long ptr)
 @ stub NetUserGetLocalGroups

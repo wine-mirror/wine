@@ -256,6 +256,20 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     return NERR_Success;
 }
 
+
+
+/************************************************************
+ *                NetUserEnum  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI
+NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
+	    DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
+	    LPDWORD resume_handle)
+{
+  FIXME("stub!\n");
+  return ERROR_ACCESS_DENIED;
+}
+
 /************************************************************
  *                ACCESS_QueryAdminDisplayInformation
  *
