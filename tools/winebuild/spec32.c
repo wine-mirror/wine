@@ -237,44 +237,49 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
     for (i = Base; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
+        unsigned int j, mask = 0;
 
-        if (odp && ((odp->type == TYPE_STDCALL) ||
-                    (odp->type == TYPE_STDCALL64) ||
-                    (odp->type == TYPE_CDECL) ||
-                    (odp->type == TYPE_REGISTER)))
+        /* skip non-existent entry points */
+        if (!odp) goto ignore;
+        /* skip non-functions */
+        if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_STDCALL64) &&
+            (odp->type != TYPE_CDECL) && (odp->type != TYPE_REGISTER)) goto ignore;
+        /* skip wine internal functions */
+        if (!strncmp( odp->name, "wine_", 5 ) || !strncmp( odp->name, "__wine_", 7 )) goto ignore;
+
+        for (j = 0; odp->u.func.arg_types[j]; j++)
         {
-            unsigned int j, mask = 0;
-            for (j = 0; odp->u.func.arg_types[j]; j++)
-            {
-                if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
-                if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
-            }
-
-            switch(odp->type)
-            {
-            case TYPE_STDCALL64:
-                if (j < 16) mask |= 0x80000000;
-                /* fall through */
-            case TYPE_STDCALL:
-                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
-                         strlen(odp->u.func.arg_types) * sizeof(int),
-                         odp->u.func.link_name, mask );
-                break;
-            case TYPE_CDECL:
-                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
-                         strlen(odp->u.func.arg_types) * sizeof(int),
-                         odp->u.func.link_name, mask );
-                break;
-            case TYPE_REGISTER:
-                fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, __regs_%d, 0x%08x }",
-                         0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)), i, mask );
-                break;
-            default:
-                assert(0);
-            }
+            if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
+            if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
         }
-        else fprintf( outfile, "    { 0, { 0,0,0,0 }, 0, 0, 0, 0 }" );
 
+        switch(odp->type)
+        {
+        case TYPE_STDCALL64:
+            if (j < 16) mask |= 0x80000000;
+            /* fall through */
+        case TYPE_STDCALL:
+            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
+                     strlen(odp->u.func.arg_types) * sizeof(int),
+                     odp->u.func.link_name, mask );
+            break;
+        case TYPE_CDECL:
+            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
+                     strlen(odp->u.func.arg_types) * sizeof(int),
+                     odp->u.func.link_name, mask );
+            break;
+        case TYPE_REGISTER:
+            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, __regs_%d, 0x%08x }",
+                     0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)), i, mask );
+            break;
+        default:
+            assert(0);
+        }
+        goto done;
+
+    ignore:
+        fprintf( outfile, "    { 0, { 0,0,0,0 }, 0, 0, 0, 0 }" );
+    done:
         if (i < Limit) fprintf( outfile, ",\n" );
     }
 #endif  /* __i386__ */
