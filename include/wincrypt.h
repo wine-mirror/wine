@@ -761,6 +761,8 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define PUBLICKEYBLOBEX         0xA
 #define SYMMETRICWRAPKEYBLOB    0xB
 
+#define CUR_BLOB_VERSION        2
+
 /* cert store provider types */
 #define CERT_STORE_PROV_MSG                  ((LPCSTR)1)
 #define CERT_STORE_PROV_MEMORY               ((LPCSTR)2)
