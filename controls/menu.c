@@ -865,8 +865,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     }
     
 
-    /* If we get here, then it must be a text item */
-    if (IS_STRING_ITEM( lpitem->fType ))
+    /* it must be a text item - unless it's the system menu */
+    if (!(lpitem->fType & MF_SYSMENU) && IS_STRING_ITEM( lpitem->fType ))
     {   SIZE size;
 
 	GetTextExtentPoint32W(hdc, lpitem->text,  strlenW(lpitem->text), &size);
@@ -1852,6 +1852,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
     LPWSTR prevText = IS_STRING_ITEM(item->fType) ? item->text : NULL;
 
     debug_print_menuitem("MENU_SetItemData from: ", item, "");
+    TRACE("flags=%x str=%p\n", flags, str);
 
     if (IS_STRING_ITEM(flags))
     {
@@ -4511,6 +4512,8 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 {
     if (!menu) return FALSE;
 
+    debug_print_menuitem("MENU_SetItemInfo_common from: ", menu, "");
+
     if (lpmii->fMask & MIIM_TYPE ) {
 	/* Get rid of old string.  */
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
@@ -4524,11 +4527,15 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
 	menu->text = lpmii->dwTypeData;
 
-	if (IS_STRING_ITEM(menu->fType) && menu->text) {
-	    if (unicode)
-		menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
-	    else
-		menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR)lpmii->dwTypeData);
+       if (IS_STRING_ITEM(menu->fType)) {
+            if (menu->text) {
+                if (unicode)
+                   menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
+                else
+                   menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR)lpmii->dwTypeData);
+                }
+            else
+                menu->fType |= MF_SEPARATOR;
 	}
     }
 
@@ -4540,16 +4547,22 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	}
 	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
 	menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
+        if ( IS_STRING_ITEM(menu->fType) && !menu->text )
+            menu->fType |= MF_SEPARATOR;
     }
 
     if (lpmii->fMask & MIIM_STRING ) {
 	/* free the string when used */
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
 	    HeapFree(GetProcessHeap(), 0, menu->text);
-	    if (unicode)
-		menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
-	    else
-		menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR) lpmii->dwTypeData);
+            if (lpmii->dwTypeData) {
+	        if (unicode)
+		    menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
+	        else
+		    menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR) lpmii->dwTypeData);
+            }
+            else
+                menu->fType |= MF_SEPARATOR;
 	}
     }
 
@@ -4589,7 +4602,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_DATA)
 	menu->dwItemData = lpmii->dwItemData;
 
-    debug_print_menuitem("SetMenuItemInfo_common: ", menu, "");
+    debug_print_menuitem("SetMenuItemInfo_common to : ", menu, "");
     return TRUE;
 }
 
