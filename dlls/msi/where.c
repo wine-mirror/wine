@@ -336,8 +336,8 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
     if( wv->cond )
         delete_expr( wv->cond );
 
-    HeapFree( GetProcessHeap(), 0, wv );
     msiobj_release( &wv->db->hdr );
+    HeapFree( GetProcessHeap(), 0, wv );
 
     return ERROR_SUCCESS;
 }

@@ -241,8 +241,8 @@ static UINT DISTINCT_delete( struct tagMSIVIEW *view )
 
     if( dv->translation )
         HeapFree( GetProcessHeap(), 0, dv->translation );
-    HeapFree( GetProcessHeap(), 0, dv );
     msiobj_release( &dv->db->hdr );
+    HeapFree( GetProcessHeap(), 0, dv );
 
     return ERROR_SUCCESS;
 }

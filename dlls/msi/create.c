@@ -212,9 +212,9 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
         HeapFree( GetProcessHeap(), 0, t->colname );
         HeapFree( GetProcessHeap(), 0, t );
     }
+    msiobj_release( &cv->db->hdr );
     HeapFree( GetProcessHeap(), 0, cv->name );
     HeapFree( GetProcessHeap(), 0, cv );
-    msiobj_release( &cv->db->hdr );
 
     return ERROR_SUCCESS;
 }

@@ -171,8 +171,8 @@ static UINT UPDATE_delete( struct tagMSIVIEW *view )
     if( wv )
         wv->ops->delete( wv );
     delete_value_list( uv->vals );
-    HeapFree( GetProcessHeap(), 0, uv );
     msiobj_release( &uv->db->hdr );
+    HeapFree( GetProcessHeap(), 0, uv );
 
     return ERROR_SUCCESS;
 }

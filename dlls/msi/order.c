@@ -244,8 +244,8 @@ static UINT ORDER_delete( struct tagMSIVIEW *view )
         HeapFree( GetProcessHeap(), 0, ov->reorder );
     ov->reorder = NULL;
 
-    HeapFree( GetProcessHeap(), 0, ov );
     msiobj_release( &ov->db->hdr );
+    HeapFree( GetProcessHeap(), 0, ov );
 
     return ERROR_SUCCESS;
 }
