@@ -53,6 +53,7 @@ struct new_process_request
     int          hstdin;       /* handle for stdin */
     int          hstdout;      /* handle for stdout */
     int          hstderr;      /* handle for stderr */
+    int          cmd_show;     /* main window show mode */
     void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     char         cmd_line[0];  /* command line */
 };
@@ -95,7 +96,9 @@ struct init_process_reply
     int          hstdin;       /* handle for stdin */
     int          hstdout;      /* handle for stdout */
     int          hstderr;      /* handle for stderr */
+    int          cmd_show;     /* main window show mode */
     void*        env_ptr;      /* pointer to environment (FIXME: hack) */
+    char         cmdline[0];   /* command line */
 };
 
 
@@ -285,12 +288,12 @@ struct select_request
     int          count;        /* handles count */
     int          flags;        /* wait flags (see below) */
     int          timeout;      /* timeout in ms */
-    /* int handles[] */
+    int          handles[0];   /* handles to select on */
 };
 struct select_reply
 {
     int          signaled;     /* signaled handle */
-/*  void*        apcs[]; */    /* async procedures to call */
+    void*        apcs[0];      /* async procedures to call */
 };
 #define SELECT_ALL       1
 #define SELECT_ALERTABLE 2

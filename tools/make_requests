@@ -11,10 +11,12 @@
     "int"          => "%d",
     "long"         => "%ld",
     "char"         => "%c",
-    "char[0]"      => "\\\"%.*s\\\"",
     "unsigned int" => "%08x",
     "void*"        => "%p",
-    "time_t"       => "%ld"
+    "time_t"       => "%ld",
+    "char[0]"      => "dump_chars",
+    "int[0]"       => "dump_ints",
+    "void*[0]"     => "dump_ptrs"
 );
 
 my @requests = ();
@@ -34,6 +36,40 @@ print TRACE <<EOF;
 #include <sys/uio.h>
 #include "server.h"
 #include "thread.h"
+
+static int dump_chars( void *ptr, int len )
+{
+    fprintf( stderr, "\\\"%.*s\\\"", len, (char *)ptr );
+    return len;
+}
+
+static int dump_ints( void *ptr, int len )
+{
+    int i;
+    if (!(len /= sizeof(int)))
+    {
+        fprintf( stderr, "{}" );
+        return 0;
+    }
+    for (i = 0; i < len; i++)
+        fprintf( stderr, "%c%d", i ? ',' : '{', *((int *)ptr + i) );
+    fprintf( stderr, "}" );
+    return len * sizeof(int);
+}
+
+static int dump_ptrs( void *ptr, int len )
+{
+    int i;
+    if (!(len /= sizeof(void*)))
+    {
+        fprintf( stderr, "{}" );
+        return 0;
+    }
+    for (i = 0; i < len; i++)
+        fprintf( stderr, "%c%p", i ? ',' : '{', *((void **)ptr + i) );
+    fprintf( stderr, "}" );
+    return len * sizeof(void*);
+}
 EOF
 
 ### Parse server.h to find request/reply structure definitions
@@ -46,29 +82,22 @@ while (<SERVER>)
 
 ### Output the dumping function tables
 
-print TRACE<<EOF;
-
-struct dumper
-{
-    int (*dump_req)( void *data, int len );
-    void (*dump_reply)( void *data );
-};
-
-static const struct dumper dumpers[REQ_NB_REQUESTS] =
-{
-EOF
-
+print TRACE "typedef int (*dump_func)( void *req, int len );\n\n";
+print TRACE "static const dump_func req_dumpers[REQ_NB_REQUESTS] = {\n";
 foreach $req (@requests)
 {
-    $request = $req . "_request";
-    $reply = $replies{$req} ? "dump_${req}_reply" : "0";
-    print TRACE "    { (int(*)(void *,int))dump_$request,\n";
-    print TRACE "      (void(*)())$reply },\n";
+    print TRACE "    (dump_func)dump_${req}_request,\n";
 }
+print TRACE "};\n\n";
+
+print TRACE "static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {\n";
+foreach $req (@requests)
+{
+    print TRACE "    (dump_func)", $replies{$req} ? "dump_${req}_reply,\n" : "0,\n";
+}
+print TRACE "};\n\n";
 
 print TRACE <<EOF;
-};
-
 static const char * const req_names[REQ_NB_REQUESTS] =
 {
 EOF
@@ -87,7 +116,7 @@ void trace_request( enum request req, void *data, int len, int fd )
     int size;
     current->last_req = req;
     fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
-    size = dumpers[req].dump_req( data, len );
+    size = req_dumpers[req]( data, len );
     if ((len -= size) > 0)
     {
         unsigned char *ptr = (unsigned char *)data + size;
@@ -111,24 +140,26 @@ void trace_kill( int exit_code )
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
+    static char buffer[MAX_MSG_LENGTH];
+
     if (!thread) return;
     fprintf( stderr, "%08x: %s() = %d",
              (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
+        char *p = buffer;
+        int len;
+        for (; veclen; veclen--, vec++)
+        {
+            memcpy( p, vec->iov_base, vec->iov_len );
+            p += vec->iov_len;
+        }
 	fprintf( stderr, " {" );
-	if (dumpers[thread->last_req].dump_reply)
-	{
-	    dumpers[thread->last_req].dump_reply( vec->iov_base );
-	    vec++;
-	    veclen--;
-	}
-	for (; veclen; veclen--, vec++)
-	{
-	    unsigned char *ptr = vec->iov_base;
-	    int len = vec->iov_len;
-	    while (len--) fprintf( stderr, ", %02x", *ptr++ );
-	}
+        len = p - buffer;
+	if (reply_dumpers[thread->last_req])
+	    len -= reply_dumpers[thread->last_req]( buffer, len );
+        p -= len;
+        while (len--) fprintf( stderr, ", %02x", *p++ );
 	fprintf( stderr, " }" );
     }
     if (pass_fd != -1) fprintf( stderr, " fd=%d\\n", pass_fd );
@@ -238,18 +269,20 @@ sub DO_DUMP_FUNC
     {
 	my $type = shift;
 	my $var = shift;
-	print TRACE "    fprintf( stderr, \" $var=$formats{$type}";
-	print TRACE "," if ($#_ > 0);
-	print TRACE "\", ";
-	if ($type =~ s/\[0\]$//g)  # vararg type?
+	if ($type =~ /\[0\]$/)  # vararg type?
 	{
 	    $vararg = 1;
-	    print TRACE "len - (int)sizeof(*req), ($type *)(req+1) );\n";
+	    print TRACE "    fprintf( stderr, \" $var=\" );\n";
+	    print TRACE "    return $formats{$type}( req+1, len - (int)sizeof(*req) ) + sizeof(*req);\n";
 	}
 	else
 	{
+	    print TRACE "    fprintf( stderr, \" $var=$formats{$type}";
+	    print TRACE "," if ($#_ > 0);
+	    print TRACE "\", ";
 	    print TRACE "req->$var );\n";
         }
     }
-    print TRACE "    return ", $vararg ? "len" : "(int)sizeof(*req)", ";\n}\n";
+    print TRACE "    return (int)sizeof(*req);\n" unless $vararg;
+    print TRACE "}\n";
 }

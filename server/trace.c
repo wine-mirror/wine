@@ -6,6 +6,40 @@
 #include "server.h"
 #include "thread.h"
 
+static int dump_chars( void *ptr, int len )
+{
+    fprintf( stderr, "\"%.*s\"", len, (char *)ptr );
+    return len;
+}
+
+static int dump_ints( void *ptr, int len )
+{
+    int i;
+    if (!(len /= sizeof(int)))
+    {
+        fprintf( stderr, "{}" );
+        return 0;
+    }
+    for (i = 0; i < len; i++)
+        fprintf( stderr, "%c%d", i ? ',' : '{', *((int *)ptr + i) );
+    fprintf( stderr, "}" );
+    return len * sizeof(int);
+}
+
+static int dump_ptrs( void *ptr, int len )
+{
+    int i;
+    if (!(len /= sizeof(void*)))
+    {
+        fprintf( stderr, "{}" );
+        return 0;
+    }
+    for (i = 0; i < len; i++)
+        fprintf( stderr, "%c%p", i ? ',' : '{', *((void **)ptr + i) );
+    fprintf( stderr, "}" );
+    return len * sizeof(void*);
+}
+
 static int dump_new_process_request( struct new_process_request *req, int len )
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
@@ -15,9 +49,10 @@ static int dump_new_process_request( struct new_process_request *req, int len )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
+    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " env_ptr=%p,", req->env_ptr );
-    fprintf( stderr, " cmd_line=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " cmd_line=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_new_process_reply( struct new_process_reply *req, int len )
@@ -60,8 +95,10 @@ static int dump_init_process_reply( struct init_process_reply *req, int len )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " env_ptr=%p", req->env_ptr );
-    return (int)sizeof(*req);
+    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
+    fprintf( stderr, " env_ptr=%p,", req->env_ptr );
+    fprintf( stderr, " cmdline=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_init_thread_request( struct init_thread_request *req, int len )
@@ -239,14 +276,16 @@ static int dump_select_request( struct select_request *req, int len )
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " timeout=%d", req->timeout );
-    return (int)sizeof(*req);
+    fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " handles=" );
+    return dump_ints( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_select_reply( struct select_reply *req, int len )
 {
-    fprintf( stderr, " signaled=%d", req->signaled );
-    return (int)sizeof(*req);
+    fprintf( stderr, " signaled=%d,", req->signaled );
+    fprintf( stderr, " apcs=" );
+    return dump_ptrs( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_event_request( struct create_event_request *req, int len )
@@ -254,8 +293,8 @@ static int dump_create_event_request( struct create_event_request *req, int len 
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_event_reply( struct create_event_reply *req, int len )
@@ -275,8 +314,8 @@ static int dump_open_event_request( struct open_event_request *req, int len )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_open_event_reply( struct open_event_reply *req, int len )
@@ -289,8 +328,8 @@ static int dump_create_mutex_request( struct create_mutex_request *req, int len 
 {
     fprintf( stderr, " owned=%d,", req->owned );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_mutex_reply( struct create_mutex_reply *req, int len )
@@ -309,8 +348,8 @@ static int dump_open_mutex_request( struct open_mutex_request *req, int len )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_open_mutex_reply( struct open_mutex_reply *req, int len )
@@ -324,8 +363,8 @@ static int dump_create_semaphore_request( struct create_semaphore_request *req, 
     fprintf( stderr, " initial=%08x,", req->initial );
     fprintf( stderr, " max=%08x,", req->max );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_semaphore_reply( struct create_semaphore_reply *req, int len )
@@ -351,8 +390,8 @@ static int dump_open_semaphore_request( struct open_semaphore_request *req, int 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_open_semaphore_reply( struct open_semaphore_reply *req, int len )
@@ -368,8 +407,8 @@ static int dump_create_file_request( struct create_file_request *req, int len )
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " attrs=%08x,", req->attrs );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_file_reply( struct create_file_reply *req, int len )
@@ -538,8 +577,8 @@ static int dump_set_console_info_request( struct set_console_info_request *req, 
     fprintf( stderr, " mask=%d,", req->mask );
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
-    fprintf( stderr, " title=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " title=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_get_console_info_request( struct get_console_info_request *req, int len )
@@ -603,8 +642,8 @@ static int dump_create_mapping_request( struct create_mapping_request *req, int 
     fprintf( stderr, " protect=%d,", req->protect );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_create_mapping_reply( struct create_mapping_reply *req, int len )
@@ -617,8 +656,8 @@ static int dump_open_mapping_request( struct open_mapping_request *req, int len 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " name=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_open_mapping_reply( struct open_mapping_reply *req, int len )
@@ -722,139 +761,136 @@ static int dump_debug_process_request( struct debug_process_request *req, int le
     fprintf( stderr, " pid=%p", req->pid );
     return (int)sizeof(*req);
 }
+typedef int (*dump_func)( void *req, int len );
 
-struct dumper
-{
-    int (*dump_req)( void *data, int len );
-    void (*dump_reply)( void *data );
+static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
+    (dump_func)dump_new_process_request,
+    (dump_func)dump_new_thread_request,
+    (dump_func)dump_set_debug_request,
+    (dump_func)dump_init_process_request,
+    (dump_func)dump_init_thread_request,
+    (dump_func)dump_terminate_process_request,
+    (dump_func)dump_terminate_thread_request,
+    (dump_func)dump_get_process_info_request,
+    (dump_func)dump_set_process_info_request,
+    (dump_func)dump_get_thread_info_request,
+    (dump_func)dump_set_thread_info_request,
+    (dump_func)dump_suspend_thread_request,
+    (dump_func)dump_resume_thread_request,
+    (dump_func)dump_debugger_request,
+    (dump_func)dump_queue_apc_request,
+    (dump_func)dump_close_handle_request,
+    (dump_func)dump_get_handle_info_request,
+    (dump_func)dump_set_handle_info_request,
+    (dump_func)dump_dup_handle_request,
+    (dump_func)dump_open_process_request,
+    (dump_func)dump_select_request,
+    (dump_func)dump_create_event_request,
+    (dump_func)dump_event_op_request,
+    (dump_func)dump_open_event_request,
+    (dump_func)dump_create_mutex_request,
+    (dump_func)dump_release_mutex_request,
+    (dump_func)dump_open_mutex_request,
+    (dump_func)dump_create_semaphore_request,
+    (dump_func)dump_release_semaphore_request,
+    (dump_func)dump_open_semaphore_request,
+    (dump_func)dump_create_file_request,
+    (dump_func)dump_get_read_fd_request,
+    (dump_func)dump_get_write_fd_request,
+    (dump_func)dump_set_file_pointer_request,
+    (dump_func)dump_truncate_file_request,
+    (dump_func)dump_set_file_time_request,
+    (dump_func)dump_flush_file_request,
+    (dump_func)dump_get_file_info_request,
+    (dump_func)dump_lock_file_request,
+    (dump_func)dump_unlock_file_request,
+    (dump_func)dump_create_pipe_request,
+    (dump_func)dump_alloc_console_request,
+    (dump_func)dump_free_console_request,
+    (dump_func)dump_open_console_request,
+    (dump_func)dump_set_console_fd_request,
+    (dump_func)dump_get_console_mode_request,
+    (dump_func)dump_set_console_mode_request,
+    (dump_func)dump_set_console_info_request,
+    (dump_func)dump_get_console_info_request,
+    (dump_func)dump_write_console_input_request,
+    (dump_func)dump_read_console_input_request,
+    (dump_func)dump_create_change_notification_request,
+    (dump_func)dump_create_mapping_request,
+    (dump_func)dump_open_mapping_request,
+    (dump_func)dump_get_mapping_info_request,
+    (dump_func)dump_create_device_request,
+    (dump_func)dump_create_snapshot_request,
+    (dump_func)dump_next_process_request,
+    (dump_func)dump_wait_debug_event_request,
+    (dump_func)dump_send_debug_event_request,
+    (dump_func)dump_continue_debug_event_request,
+    (dump_func)dump_debug_process_request,
 };
 
-static const struct dumper dumpers[REQ_NB_REQUESTS] =
-{
-    { (int(*)(void *,int))dump_new_process_request,
-      (void(*)())dump_new_process_reply },
-    { (int(*)(void *,int))dump_new_thread_request,
-      (void(*)())dump_new_thread_reply },
-    { (int(*)(void *,int))dump_set_debug_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_init_process_request,
-      (void(*)())dump_init_process_reply },
-    { (int(*)(void *,int))dump_init_thread_request,
-      (void(*)())dump_init_thread_reply },
-    { (int(*)(void *,int))dump_terminate_process_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_terminate_thread_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_process_info_request,
-      (void(*)())dump_get_process_info_reply },
-    { (int(*)(void *,int))dump_set_process_info_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_thread_info_request,
-      (void(*)())dump_get_thread_info_reply },
-    { (int(*)(void *,int))dump_set_thread_info_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_suspend_thread_request,
-      (void(*)())dump_suspend_thread_reply },
-    { (int(*)(void *,int))dump_resume_thread_request,
-      (void(*)())dump_resume_thread_reply },
-    { (int(*)(void *,int))dump_debugger_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_queue_apc_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_close_handle_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_handle_info_request,
-      (void(*)())dump_get_handle_info_reply },
-    { (int(*)(void *,int))dump_set_handle_info_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_dup_handle_request,
-      (void(*)())dump_dup_handle_reply },
-    { (int(*)(void *,int))dump_open_process_request,
-      (void(*)())dump_open_process_reply },
-    { (int(*)(void *,int))dump_select_request,
-      (void(*)())dump_select_reply },
-    { (int(*)(void *,int))dump_create_event_request,
-      (void(*)())dump_create_event_reply },
-    { (int(*)(void *,int))dump_event_op_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_open_event_request,
-      (void(*)())dump_open_event_reply },
-    { (int(*)(void *,int))dump_create_mutex_request,
-      (void(*)())dump_create_mutex_reply },
-    { (int(*)(void *,int))dump_release_mutex_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_open_mutex_request,
-      (void(*)())dump_open_mutex_reply },
-    { (int(*)(void *,int))dump_create_semaphore_request,
-      (void(*)())dump_create_semaphore_reply },
-    { (int(*)(void *,int))dump_release_semaphore_request,
-      (void(*)())dump_release_semaphore_reply },
-    { (int(*)(void *,int))dump_open_semaphore_request,
-      (void(*)())dump_open_semaphore_reply },
-    { (int(*)(void *,int))dump_create_file_request,
-      (void(*)())dump_create_file_reply },
-    { (int(*)(void *,int))dump_get_read_fd_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_write_fd_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_set_file_pointer_request,
-      (void(*)())dump_set_file_pointer_reply },
-    { (int(*)(void *,int))dump_truncate_file_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_set_file_time_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_flush_file_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_file_info_request,
-      (void(*)())dump_get_file_info_reply },
-    { (int(*)(void *,int))dump_lock_file_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_unlock_file_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_create_pipe_request,
-      (void(*)())dump_create_pipe_reply },
-    { (int(*)(void *,int))dump_alloc_console_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_free_console_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_open_console_request,
-      (void(*)())dump_open_console_reply },
-    { (int(*)(void *,int))dump_set_console_fd_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_console_mode_request,
-      (void(*)())dump_get_console_mode_reply },
-    { (int(*)(void *,int))dump_set_console_mode_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_set_console_info_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_get_console_info_request,
-      (void(*)())dump_get_console_info_reply },
-    { (int(*)(void *,int))dump_write_console_input_request,
-      (void(*)())dump_write_console_input_reply },
-    { (int(*)(void *,int))dump_read_console_input_request,
-      (void(*)())dump_read_console_input_reply },
-    { (int(*)(void *,int))dump_create_change_notification_request,
-      (void(*)())dump_create_change_notification_reply },
-    { (int(*)(void *,int))dump_create_mapping_request,
-      (void(*)())dump_create_mapping_reply },
-    { (int(*)(void *,int))dump_open_mapping_request,
-      (void(*)())dump_open_mapping_reply },
-    { (int(*)(void *,int))dump_get_mapping_info_request,
-      (void(*)())dump_get_mapping_info_reply },
-    { (int(*)(void *,int))dump_create_device_request,
-      (void(*)())dump_create_device_reply },
-    { (int(*)(void *,int))dump_create_snapshot_request,
-      (void(*)())dump_create_snapshot_reply },
-    { (int(*)(void *,int))dump_next_process_request,
-      (void(*)())dump_next_process_reply },
-    { (int(*)(void *,int))dump_wait_debug_event_request,
-      (void(*)())dump_wait_debug_event_reply },
-    { (int(*)(void *,int))dump_send_debug_event_request,
-      (void(*)())dump_send_debug_event_reply },
-    { (int(*)(void *,int))dump_continue_debug_event_request,
-      (void(*)())0 },
-    { (int(*)(void *,int))dump_debug_process_request,
-      (void(*)())0 },
+static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
+    (dump_func)dump_new_process_reply,
+    (dump_func)dump_new_thread_reply,
+    (dump_func)0,
+    (dump_func)dump_init_process_reply,
+    (dump_func)dump_init_thread_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_process_info_reply,
+    (dump_func)0,
+    (dump_func)dump_get_thread_info_reply,
+    (dump_func)0,
+    (dump_func)dump_suspend_thread_reply,
+    (dump_func)dump_resume_thread_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_handle_info_reply,
+    (dump_func)0,
+    (dump_func)dump_dup_handle_reply,
+    (dump_func)dump_open_process_reply,
+    (dump_func)dump_select_reply,
+    (dump_func)dump_create_event_reply,
+    (dump_func)0,
+    (dump_func)dump_open_event_reply,
+    (dump_func)dump_create_mutex_reply,
+    (dump_func)0,
+    (dump_func)dump_open_mutex_reply,
+    (dump_func)dump_create_semaphore_reply,
+    (dump_func)dump_release_semaphore_reply,
+    (dump_func)dump_open_semaphore_reply,
+    (dump_func)dump_create_file_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_set_file_pointer_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_file_info_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_create_pipe_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_open_console_reply,
+    (dump_func)0,
+    (dump_func)dump_get_console_mode_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_console_info_reply,
+    (dump_func)dump_write_console_input_reply,
+    (dump_func)dump_read_console_input_reply,
+    (dump_func)dump_create_change_notification_reply,
+    (dump_func)dump_create_mapping_reply,
+    (dump_func)dump_open_mapping_reply,
+    (dump_func)dump_get_mapping_info_reply,
+    (dump_func)dump_create_device_reply,
+    (dump_func)dump_create_snapshot_reply,
+    (dump_func)dump_next_process_reply,
+    (dump_func)dump_wait_debug_event_reply,
+    (dump_func)dump_send_debug_event_reply,
+    (dump_func)0,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -928,7 +964,7 @@ void trace_request( enum request req, void *data, int len, int fd )
     int size;
     current->last_req = req;
     fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
-    size = dumpers[req].dump_req( data, len );
+    size = req_dumpers[req]( data, len );
     if ((len -= size) > 0)
     {
         unsigned char *ptr = (unsigned char *)data + size;
@@ -952,24 +988,26 @@ void trace_kill( int exit_code )
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
+    static char buffer[MAX_MSG_LENGTH];
+
     if (!thread) return;
     fprintf( stderr, "%08x: %s() = %d",
              (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
+        char *p = buffer;
+        int len;
+        for (; veclen; veclen--, vec++)
+        {
+            memcpy( p, vec->iov_base, vec->iov_len );
+            p += vec->iov_len;
+        }
 	fprintf( stderr, " {" );
-	if (dumpers[thread->last_req].dump_reply)
-	{
-	    dumpers[thread->last_req].dump_reply( vec->iov_base );
-	    vec++;
-	    veclen--;
-	}
-	for (; veclen; veclen--, vec++)
-	{
-	    unsigned char *ptr = vec->iov_base;
-	    int len = vec->iov_len;
-	    while (len--) fprintf( stderr, ", %02x", *ptr++ );
-	}
+        len = p - buffer;
+	if (reply_dumpers[thread->last_req])
+	    len -= reply_dumpers[thread->last_req]( buffer, len );
+        p -= len;
+        while (len--) fprintf( stderr, ", %02x", *p++ );
 	fprintf( stderr, " }" );
     }
     if (pass_fd != -1) fprintf( stderr, " fd=%d\n", pass_fd );

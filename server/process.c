@@ -97,7 +97,7 @@ struct process *create_initial_process(void)
 }
 
 /* create a new process */
-static struct process *create_process( struct new_process_request *req )
+static struct process *create_process( struct new_process_request *req, const char *cmd_line )
 {
     struct process *process = NULL;
     struct process *parent = current->process;
@@ -110,8 +110,9 @@ static struct process *create_process( struct new_process_request *req )
     }
     init_process( process );
 
-    if (!(process->info = mem_alloc( sizeof(*process->info) ))) goto error;
+    if (!(process->info = mem_alloc( sizeof(*process->info) + strlen(cmd_line) + 1 ))) goto error;
     memcpy( process->info, req, sizeof(*req) );
+    strcpy( process->info->cmd_line, cmd_line );
 
     /* set the process console */
     if (req->create_flags & CREATE_NEW_CONSOLE)
@@ -200,21 +201,6 @@ struct process *get_process_from_handle( int handle, unsigned int access )
 {
     return (struct process *)get_handle_obj( current->process, handle,
                                              access, &process_ops );
-}
-
-/* retrieve the initialization info for a new process */
-static int get_process_init_info( struct process *process, struct init_process_reply *reply )
-{
-    struct new_process_request *info;
-    if (!(info = process->info)) return 0;
-    process->info = NULL;
-    reply->start_flags = info->start_flags;
-    reply->hstdin      = info->hstdin;
-    reply->hstdout     = info->hstdout;
-    reply->hstderr     = info->hstderr;
-    reply->env_ptr     = info->env_ptr;
-    free( info );
-    return 1;
 }
 
 /* a process has been killed (i.e. its last thread died) */
@@ -377,8 +363,10 @@ DECL_HANDLER(new_process)
 {
     struct new_process_reply reply;
     struct process *process;
+    char *cmd_line = (char *)data;
 
-    if ((process = create_process( req )))
+    CHECK_STRING( "new_process", cmd_line, len );
+    if ((process = create_process( req, cmd_line )))
     {
         reply.pid    = process;
         reply.handle = alloc_handle( current->process, process,
@@ -397,17 +385,28 @@ DECL_HANDLER(new_process)
 DECL_HANDLER(init_process)
 {
     struct init_process_reply reply;
+    struct new_process_request *info;
+
     if (current->state != RUNNING)
     {
         fatal_protocol_error( "init_process: init_thread not called yet\n" );
         return;
     }
-    if (!get_process_init_info( current->process, &reply ))
+    if (!(info = current->process->info))
     {
         fatal_protocol_error( "init_process: called twice\n" );
         return;
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    current->process->info = NULL;
+    reply.start_flags = info->start_flags;
+    reply.hstdin      = info->hstdin;
+    reply.hstdout     = info->hstdout;
+    reply.hstderr     = info->hstderr;
+    reply.cmd_show    = info->cmd_show;
+    reply.env_ptr     = info->env_ptr;
+    send_reply( current, -1, 2, &reply, sizeof(reply),
+                info->cmd_line, strlen(info->cmd_line) + 1 );
+    free( info );
 }
 
 /* open a handle to a process */
