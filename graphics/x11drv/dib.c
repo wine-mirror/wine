@@ -4023,8 +4023,16 @@ UINT X11DRV_DIB_SetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count,
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
 
   if (dib && dib->colorMap) {
-    X11DRV_DIB_GenColorMap( dc, dib->colorMap, DIB_RGB_COLORS, dib->dibSection.dsBm.bmBitsPixel,
+    /*
+     * Changing color table might change the mapping between
+     * DIB colors and X11 colors and thus alter the visible state
+     * of the bitmap object.
+     */
+    X11DRV_DIB_Lock(bmp, DIB_Status_AppMod, FALSE);
+    X11DRV_DIB_GenColorMap( dc, dib->colorMap, DIB_RGB_COLORS, 
+                           dib->dibSection.dsBm.bmBitsPixel,
                             TRUE, colors, start, count + start );
+    X11DRV_DIB_Unlock(bmp, TRUE);
     return count;
   }
   return 0;
