@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "shellapi.h"
 #include "vfw.h"
+#include "msacm.h"
 
 #include "avifile_private.h"
 
@@ -42,6 +43,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
  */
 HRESULT WINAPI SHCoCreateInstance(LPCSTR lpszClsid,REFCLSID rClsid,
 				  LPUNKNOWN pUnkOuter,REFIID riid,LPVOID *ppv);
+
+/***********************************************************************
+ * for AVIBuildFilterW -- uses fixed size table
+ */
+#define MAX_FILTERS 30 /* 30 => 7kB */
+
+typedef struct _AVIFilter {
+  WCHAR szClsid[40];
+  WCHAR szExtensions[MAX_FILTERS * 7];
+} AVIFilter;
+
+/***********************************************************************
+ * for AVISaveOptions
+ */
+static struct {
+  UINT                  uFlags;
+  INT                   nStreams;
+  PAVISTREAM           *ppavis;
+  LPAVICOMPRESSOPTIONS *ppOptions;
+  INT                   nCurrent;
+} SaveOpts;
 
 /***********************************************************************
  * copied from dlls/ole32/compobj.c
@@ -884,10 +906,21 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
  */
 HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
-  WCHAR  szAllFiles[40];
-  LONG   size;
+  static const WCHAR szClsid[] = {'C','L','S','I','D',0};
+  static const WCHAR szExtensionFmt[] = {';','*','.','%','s',0};
+  static const WCHAR szAVIFileExtensions[] =
+    {'A','V','I','F','i','l','e','\\','E','x','t','e','n','s','i','o','n','s',0};
 
-  FIXME("(%p,%ld,%d): partial stub\n", szFilter, cbFilter, fSaving);
+  AVIFilter *lp;
+  WCHAR      szAllFiles[40];
+  WCHAR      szFileExt[10];
+  WCHAR      szValue[128];
+  HKEY       hKey;
+  LONG       n, i;
+  LONG       size;
+  LONG       count = 0;
+
+  TRACE("(%p,%ld,%d)\n", szFilter, cbFilter, fSaving);
 
   /* check parameters */
   if (szFilter == NULL)
@@ -895,20 +928,107 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   if (cbFilter < 2)
     return AVIERR_BADSIZE;
 
-  /* FIXME:
-   *
+  lp = (AVIFilter*)GlobalAllocPtr(GHND, MAX_FILTERS * sizeof(AVIFilter));
+  if (lp == NULL)
+    return AVIERR_MEMORY;
+
+  /*
    * 1. iterate over HKEY_CLASSES_ROOT\\AVIFile\\Extensions and collect
    *    extensions and CLSID's
    * 2. iterate over collected CLSID's and copy it's description and it's
    *    extensions to szFilter if it fits
    *
-   * First filter is named "All multimedia files" and it's ilter is a
+   * First filter is named "All multimedia files" and it's filter is a
    * collection of all possible extensions except "*.*".
    */
+  if (RegOpenKeyW(HKEY_CLASSES_ROOT, szAVIFileExtensions, &hKey) != S_OK) {
+    GlobalFreePtr(lp);
+    return AVIERR_ERROR;
+  }
+  for (n = 0;RegEnumKeyW(hKey, n, szFileExt, sizeof(szFileExt)) == S_OK;n++) {
+    /* get CLSID to extension */
+    size = sizeof(szValue)/sizeof(szValue[0]);
+    if (RegQueryValueW(hKey, szFileExt, szValue, &size) != S_OK)
+      break;
+
+    /* search if the CLSID is already known */
+    for (i = 1; i <= count; i++) {
+      if (lstrcmpW(lp[i].szClsid, szValue) == 0)
+	break; /* a new one */
+    }
+
+    if (count - i == -1) {
+      /* it's a new CLSID */
+
+      /* FIXME: How do we get info's about read/write capabilities? */
+
+      if (count >= MAX_FILTERS) {
+	/* try to inform user of our full fixed size table */
+	ERR(": More than %d filters found! Adjust MAX_FILTERS in dlls/avifil32/api.c\n", MAX_FILTERS);
+	break;
+      }
+
+      lstrcpyW(lp[i].szClsid, szValue);
+
+      count++;
+    }
+
+    /* append extension to the filter */
+    wsprintfW(szValue, szExtensionFmt, szFileExt);
+    if (lp[i].szExtensions[0] == 0)
+      lstrcatW(lp[i].szExtensions, szValue + 1);
+    else
+      lstrcatW(lp[i].szExtensions, szValue);
+
+    /* also append to the "all multimedia"-filter */
+    if (lp[0].szExtensions[0] == 0)
+      lstrcatW(lp[0].szExtensions, szValue + 1);
+    else
+      lstrcatW(lp[0].szExtensions, szValue);
+  }
+  RegCloseKey(hKey);
+
+  /* 2. get descriptions for the CLSIDs and fill out szFilter */
+  if (RegOpenKeyW(HKEY_CLASSES_ROOT, szClsid, &hKey) != S_OK) {
+    GlobalFreePtr(lp);
+    return AVIERR_ERROR;
+  }
+  for (n = 0; n <= count; n++) {
+    /* first the description */
+    if (n != 0) {
+      size = sizeof(szValue)/sizeof(szValue[0]);
+      if (RegQueryValueW(hKey, lp[n].szClsid, szValue, &size) == S_OK) {
+	size = lstrlenW(szValue);
+	lstrcpynW(szFilter, szValue, cbFilter);
+      }
+    } else
+      size = LoadStringW(AVIFILE_hModule,IDS_ALLMULTIMEDIA,szFilter,cbFilter);
+
+    /* check for enough space */
+    size++;
+    if (cbFilter < size + lstrlenW(lp[n].szExtensions) + 2) {
+      szFilter[0] = 0;
+      szFilter[1] = 0;
+      GlobalFreePtr(lp);
+      RegCloseKey(hKey);
+      return AVIERR_BUFFERTOOSMALL;
+    }
+    cbFilter -= size;
+    szFilter += size;
+
+    /* and then the filter */
+    lstrcpynW(szFilter, lp[n].szExtensions, cbFilter);
+    size = lstrlenW(lp[n].szExtensions) + 1;
+    cbFilter -= size;
+    szFilter += size;
+  }
+
+  RegCloseKey(hKey);
+  GlobalFreePtr(lp);
 
   /* add "All files" "*.*" filter if enough space left */
   size = LoadStringW(AVIFILE_hModule, IDS_ALLFILES,
-		     szAllFiles, sizeof(szAllFiles));
+		     szAllFiles, sizeof(szAllFiles)) + 1;
   if (cbFilter > size) {
     int i;
 
@@ -920,22 +1040,356 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
       }
     }
       
-    memcpy(szFilter, szAllFiles, size);
+    memcpy(szFilter, szAllFiles, size * sizeof(szAllFiles[0]));
+    szFilter += size;
+    szFilter[0] = 0;
+
+    return AVIERR_OK;
+  } else {
+    szFilter[0] = 0;
+    return AVIERR_BUFFERTOOSMALL;
+  }
+}
+
+static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
+{
+  LPAVICOMPRESSOPTIONS pOptions = SaveOpts.ppOptions[SaveOpts.nCurrent];
+  AVISTREAMINFOW       sInfo;
+
+  TRACE("(%p)\n", hWnd);
+
+  if (pOptions == NULL || SaveOpts.ppavis[SaveOpts.nCurrent] == NULL) {
+    ERR(": bad state!\n");
+    return FALSE;
   }
 
-  return AVIERR_OK;
+  if (FAILED(AVIStreamInfoW(SaveOpts.ppavis[SaveOpts.nCurrent],
+			    &sInfo, sizeof(sInfo)))) {
+    ERR(": AVIStreamInfoW failed!\n");
+    return FALSE;
+  }
+
+  if (sInfo.fccType == streamtypeVIDEO) {
+    COMPVARS cv;
+    BOOL     ret;
+
+    memset(&cv, 0, sizeof(cv));
+
+    if ((pOptions->dwFlags & AVICOMPRESSF_VALID) == 0) {
+      memset(pOptions, 0, sizeof(AVICOMPRESSOPTIONS));
+      pOptions->fccType    = streamtypeVIDEO;
+      pOptions->fccHandler = comptypeDIB;
+      pOptions->dwQuality  = ICQUALITY_DEFAULT;
+    }
+
+    cv.cbSize     = sizeof(cv);
+    cv.dwFlags    = ICMF_COMPVARS_VALID;
+    /*cv.fccType    = pOptions->fccType; */
+    cv.fccHandler = pOptions->fccHandler;
+    cv.lQ         = pOptions->dwQuality;
+    cv.lpState    = pOptions->lpParms;
+    cv.cbState    = pOptions->cbParms;
+    if (pOptions->dwFlags & AVICOMPRESSF_KEYFRAMES)
+      cv.lKey = pOptions->dwKeyFrameEvery;
+    else
+      cv.lKey = 0;
+    if (pOptions->dwFlags & AVICOMPRESSF_DATARATE)
+      cv.lDataRate = pOptions->dwBytesPerSecond / 1024; /* need kBytes */
+    else
+      cv.lDataRate = 0;
+
+    ret = ICCompressorChoose(hWnd, SaveOpts.uFlags, NULL,
+			     SaveOpts.ppavis[SaveOpts.nCurrent], &cv, NULL);
+
+    if (ret) {
+      pOptions->lpParms   = cv.lpState;
+      pOptions->cbParms   = cv.cbState;
+      pOptions->dwQuality = cv.lQ;
+      if (cv.lKey != 0) {
+	pOptions->dwKeyFrameEvery = cv.lKey;
+	pOptions->dwFlags |= AVICOMPRESSF_KEYFRAMES;
+      } else
+	pOptions->dwFlags &= ~AVICOMPRESSF_KEYFRAMES;
+      if (cv.lDataRate != 0) {
+	pOptions->dwBytesPerSecond = cv.lDataRate * 1024; /* need bytes */
+	pOptions->dwFlags |= AVICOMPRESSF_DATARATE;
+      } else
+	pOptions->dwFlags &= ~AVICOMPRESSF_DATARATE;
+      pOptions->dwFlags  |= AVICOMPRESSF_VALID;
+    }
+    ICCompressorFree(&cv);
+
+    return ret;
+  } else if (sInfo.fccType == streamtypeAUDIO) {
+    ACMFORMATCHOOSEW afmtc;
+    MMRESULT         ret;
+    LONG             size;
+
+    /* FIXME: check ACM version -- Which version is needed? */
+
+    memset(&afmtc, 0, sizeof(afmtc));
+    afmtc.cbStruct  = sizeof(afmtc);
+    afmtc.fdwStyle  = 0;
+    afmtc.hwndOwner = hWnd;
+
+    acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, &size);
+    if ((pOptions->cbFormat == 0 || pOptions->lpFormat == NULL) && size != 0) {
+      pOptions->lpFormat = GlobalAllocPtr(GMEM_MOVEABLE, size);
+      pOptions->cbFormat = size;
+    } else if (pOptions->cbFormat < size) {
+      pOptions->lpFormat = GlobalReAllocPtr(pOptions->lpFormat, size, GMEM_MOVEABLE);
+      pOptions->cbFormat = size;
+    }
+    if (pOptions->lpFormat == NULL)
+      return FALSE;
+    afmtc.pwfx  = pOptions->lpFormat;
+    afmtc.cbwfx = pOptions->cbFormat;
+
+    size = 0;
+    AVIStreamFormatSize(SaveOpts.ppavis[SaveOpts.nCurrent],
+			sInfo.dwStart, &size);
+    if (size < sizeof(PCMWAVEFORMAT))
+      size = sizeof(PCMWAVEFORMAT);
+    afmtc.pwfxEnum = GlobalAllocPtr(GHND, size);
+    if (afmtc.pwfxEnum != NULL) {
+      AVIStreamReadFormat(SaveOpts.ppavis[SaveOpts.nCurrent],
+			  sInfo.dwStart, afmtc.pwfxEnum, &size);
+      afmtc.fdwEnum = ACM_FORMATENUMF_CONVERT;
+    }
+
+    ret = acmFormatChooseW(&afmtc);
+    if (ret == S_OK)
+      pOptions->dwFlags |= AVICOMPRESSF_VALID;
+
+    if (afmtc.pwfxEnum != NULL)
+      GlobalFreePtr(afmtc.pwfxEnum);
+
+    return (ret == S_OK ? TRUE : FALSE);
+  } else {
+    ERR(": unknown streamtype 0x%08lX\n", sInfo.fccType);
+    return FALSE;
+  }
+}
+
+static void AVISaveOptionsUpdate(HWND hWnd)
+{
+  static const WCHAR szVideoFmt[]={'%','l','d','x','%','l','d','x','%','d',0};
+  static const WCHAR szAudioFmt[]={'%','s',' ','%','s',0};
+
+  WCHAR          szFormat[128];
+  AVISTREAMINFOW sInfo;
+  LPVOID         lpFormat;
+  LONG           size;
+
+  TRACE("(%p)\n", hWnd);
+
+  SaveOpts.nCurrent = SendDlgItemMessageW(hWnd,IDC_STREAM,CB_GETCURSEL,0,0);
+  if (SaveOpts.nCurrent < 0)
+    return;
+
+  if (FAILED(AVIStreamInfoW(SaveOpts.ppavis[SaveOpts.nCurrent], &sInfo, sizeof(sInfo))))
+    return;
+
+  AVIStreamFormatSize(SaveOpts.ppavis[SaveOpts.nCurrent],sInfo.dwStart,&size);
+  if (size > 0) {
+    szFormat[0] = 0;
+
+    /* read format to build format descriotion string */
+    lpFormat = GlobalAllocPtr(GHND, size);
+    if (lpFormat != NULL) {
+      if (SUCCEEDED(AVIStreamReadFormat(SaveOpts.ppavis[SaveOpts.nCurrent],sInfo.dwStart,lpFormat, &size))) {
+	if (sInfo.fccType == streamtypeVIDEO) {
+	  LPBITMAPINFOHEADER lpbi = lpFormat;
+	  ICINFO icinfo;
+
+	  wsprintfW(szFormat, szVideoFmt, lpbi->biWidth,
+		    lpbi->biHeight, lpbi->biBitCount);
+
+	  if (lpbi->biCompression != BI_RGB) {
+	    HIC    hic;
+
+	    hic = ICLocate(ICTYPE_VIDEO, sInfo.fccHandler, lpFormat,
+			   NULL, ICMODE_DECOMPRESS);
+	    if (hic != (HIC)NULL) {
+	      if (ICGetInfo(hic, &icinfo, sizeof(icinfo)) == S_OK)
+		lstrcatW(szFormat, icinfo.szDescription);
+	      ICClose(hic);
+	    }
+	  } else {
+	    LoadStringW(AVIFILE_hModule, IDS_UNCOMPRESSED,
+			icinfo.szDescription, sizeof(icinfo.szDescription));
+	    lstrcatW(szFormat, icinfo.szDescription);
+	  }
+	} else if (sInfo.fccType == streamtypeAUDIO) {
+	  ACMFORMATTAGDETAILSW aftd;
+	  ACMFORMATDETAILSW    afd;
+
+	  memset(&aftd, 0, sizeof(aftd));
+	  memset(&afd, 0, sizeof(afd));
+
+	  aftd.cbStruct     = sizeof(aftd);
+	  aftd.dwFormatTag  = afd.dwFormatTag =
+	    ((PWAVEFORMATEX)lpFormat)->wFormatTag;
+	  aftd.cbFormatSize = afd.cbwfx = size;
+
+	  afd.cbStruct      = sizeof(afd);
+	  afd.pwfx          = lpFormat;
+
+	  if (acmFormatTagDetailsW((HACMDRIVER)NULL, &aftd,
+				   ACM_FORMATTAGDETAILSF_FORMATTAG) == S_OK) {
+	    if (acmFormatDetailsW(NULL,&afd,ACM_FORMATDETAILSF_FORMAT) == S_OK)
+	      wsprintfW(szFormat, szAudioFmt, afd.szFormat, aftd.szFormatTag);
+	  }
+	}
+      }
+      GlobalFreePtr(lpFormat);
+    }
+
+    /* set text for format description */
+    SetDlgItemTextW(hWnd, IDC_FORMATTEXT, szFormat);
+
+    /* Disable option button for unsupported streamtypes */
+    if (sInfo.fccType == streamtypeVIDEO ||
+	sInfo.fccType == streamtypeAUDIO)
+      EnableWindow(GetDlgItem(hWnd, IDC_OPTIONS), TRUE);
+    else
+      EnableWindow(GetDlgItem(hWnd, IDC_OPTIONS), FALSE);
+  }
+
+}
+
+BOOL CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
+				    WPARAM wParam, LPARAM lParam)
+{
+  DWORD dwInterleave;
+  BOOL  bIsInterleaved;
+  INT   n;
+
+  /*TRACE("(%p,%u,0x%04X,0x%08lX)\n", hWnd, uMsg, wParam, lParam);*/
+
+  switch (uMsg) {
+  case WM_INITDIALOG:
+    SaveOpts.nCurrent = 0;
+    if (SaveOpts.nStreams == 1) {
+      EndDialog(hWnd, AVISaveOptionsFmtChoose(hWnd));
+      return FALSE;
+    }
+
+    /* add streams */
+    for (n = 0; n < SaveOpts.nStreams; n++) {
+      AVISTREAMINFOW sInfo;
+
+      AVIStreamInfoW(SaveOpts.ppavis[n], &sInfo, sizeof(sInfo));
+      SendDlgItemMessageW(hWnd, IDC_STREAM, CB_ADDSTRING,
+			  0L, (LPARAM)sInfo.szName);
+    }
+
+    /* select first stream */
+    SendDlgItemMessageW(hWnd, IDC_STREAM, CB_SETCURSEL, 0, 0);
+    SendMessageW(hWnd, WM_COMMAND,
+		 GET_WM_COMMAND_MPS(IDC_STREAM, hWnd, CBN_SELCHANGE));
+
+    /* initialize interleave */
+    if (SaveOpts.ppOptions[0] != NULL &&
+	(SaveOpts.ppOptions[0]->dwFlags & AVICOMPRESSF_VALID)) {
+      bIsInterleaved = (SaveOpts.ppOptions[0]->dwFlags & AVICOMPRESSF_INTERLEAVE);
+      dwInterleave = SaveOpts.ppOptions[0]->dwInterleaveEvery;
+    } else {
+      bIsInterleaved = TRUE;
+      dwInterleave   = 0;
+    }
+    CheckDlgButton(hWnd, IDC_INTERLEAVE, bIsInterleaved);
+    SetDlgItemInt(hWnd, IDC_INTERLEAVEEVERY, dwInterleave, FALSE);
+    EnableWindow(GetDlgItem(hWnd, IDC_INTERLEAVEEVERY), bIsInterleaved);
+    break;
+  case WM_COMMAND:
+    switch (GET_WM_COMMAND_CMD(wParam, lParam)) {
+    case IDOK:
+      /* get data from controls and save them */
+      dwInterleave   = GetDlgItemInt(hWnd, IDC_INTERLEAVEEVERY, NULL, 0);
+      bIsInterleaved = IsDlgButtonChecked(hWnd, IDC_INTERLEAVE);
+      for (n = 0; n < SaveOpts.nStreams; n++) {
+	if (SaveOpts.ppOptions[n] != NULL) {
+	  if (bIsInterleaved) {
+	    SaveOpts.ppOptions[n]->dwFlags |= AVICOMPRESSF_INTERLEAVE;
+	    SaveOpts.ppOptions[n]->dwInterleaveEvery = dwInterleave;
+	  } else
+	    SaveOpts.ppOptions[n]->dwFlags &= ~AVICOMPRESSF_INTERLEAVE;
+	}
+      }
+      /* fall through */
+    case IDCANCEL:
+      EndDialog(hWnd, GET_WM_COMMAND_CMD(wParam, lParam) == IDOK);
+      break;
+    case IDC_INTERLEAVE:
+      EnableWindow(GetDlgItem(hWnd, IDC_INTERLEAVEEVERY),
+		   IsDlgButtonChecked(hWnd, IDC_INTERLEAVE));
+      break;
+    case IDC_STREAM:
+      if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
+	/* update control elements */
+	AVISaveOptionsUpdate(hWnd);
+      }
+      break;
+    case IDC_OPTIONS:
+      AVISaveOptionsFmtChoose(hWnd);
+      break;
+    };
+    return FALSE;
+  };
+
+  return TRUE;
 }
 
 /***********************************************************************
  *		AVISaveOptions		(AVIFIL32.@)
  */
-BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStream,
+BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
 			   PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *ppOptions)
 {
-  FIXME("(%p,0x%X,%d,%p,%p): stub\n", hWnd, uFlags, nStream,
+  LPAVICOMPRESSOPTIONS pSavedOptions = NULL;
+  INT ret, n;
+
+  TRACE("(%p,0x%X,%d,%p,%p)\n", hWnd, uFlags, nStreams,
 	ppavi, ppOptions);
 
-  return FALSE;
+  /* check parameters */
+  if (nStreams <= 0 || ppavi == NULL || ppOptions == NULL)
+    return AVIERR_BADPARAM;
+
+  /* save options for case user press cancel */
+  if (ppOptions != NULL && nStreams > 1) {
+    pSavedOptions = GlobalAllocPtr(GHND,nStreams * sizeof(AVICOMPRESSOPTIONS));
+    if (pSavedOptions == NULL)
+      return FALSE;
+
+    for (n = 0; n < nStreams; n++) {
+      if (ppOptions[n] != NULL)
+	memcpy(pSavedOptions + n, ppOptions[n], sizeof(AVICOMPRESSOPTIONS));
+    }
+  }
+
+  SaveOpts.uFlags    = uFlags;
+  SaveOpts.nStreams  = nStreams;
+  SaveOpts.ppavis    = ppavi;
+  SaveOpts.ppOptions = ppOptions;
+
+  ret = DialogBoxW(AVIFILE_hModule, MAKEINTRESOURCEW(IDD_SAVEOPTIONS),
+		   hWnd, AVISaveOptionsDlgProc);
+
+  if (ret == -1)
+    ret = FALSE;
+
+  /* restore options when user pressed cancel */
+  if (pSavedOptions != NULL && ret == FALSE) {
+    for (n = 0; n < nStreams; n++) {
+      if (ppOptions[n] != NULL)
+	memcpy(ppOptions[n], pSavedOptions + n, sizeof(AVICOMPRESSOPTIONS));
+    }
+    GlobalFreePtr(pSavedOptions);
+  }
+
+  return (BOOL)ret;
 }
 
 /***********************************************************************
