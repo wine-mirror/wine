@@ -78,22 +78,22 @@ static SYM_TYPE pe_load_stabs(const struct process* pcs, struct module* module,
  * loads a .dbg file
  */
 static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* module,
-                                 char* dbg_name, DWORD timestamp)
+                                 const char* dbg_name, DWORD timestamp)
 {
-    char                        tmp[MAX_PATH];
-    HANDLE                      hFile, hMap = 0;
-    const BYTE*                 dbg_mapping = NULL;
-    PIMAGE_SEPARATE_DEBUG_HEADER hdr;
-    PIMAGE_DEBUG_DIRECTORY      dbg;
-    SYM_TYPE                    sym_type = -1;
+    char                                tmp[MAX_PATH];
+    HANDLE                              hFile, hMap = 0;
+    const BYTE*                         dbg_mapping = NULL;
+    const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
+    const IMAGE_DEBUG_DIRECTORY*        dbg;
+    SYM_TYPE                            sym_type = -1;
 
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
-    if ((hFile = FindDebugInfoFile(dbg_name, pcs->search_path, tmp)) != NULL &&
+    if ((hFile = FindDebugInfoFile((char*)dbg_name, pcs->search_path, tmp)) != NULL &&
         ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((dbg_mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
     {
-        hdr = (PIMAGE_SEPARATE_DEBUG_HEADER)dbg_mapping;
+        hdr = (const IMAGE_SEPARATE_DEBUG_HEADER*)dbg_mapping;
         if (hdr->TimeDateStamp != timestamp)
         {
             WINE_ERR("Warning - %s has incorrect internal timestamp\n",
@@ -105,7 +105,7 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
              * which have incorrect timestamps.
              */
         }
-        dbg = (PIMAGE_DEBUG_DIRECTORY) 
+        dbg = (const IMAGE_DEBUG_DIRECTORY*) 
             (dbg_mapping + sizeof(*hdr) + 
              hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
              hdr->ExportedNamesSize);
@@ -133,24 +133,24 @@ static SYM_TYPE pe_load_msc_debug_info(const struct process* pcs,
                                        struct module* module,
                                        const void* mapping, IMAGE_NT_HEADERS* nth)
 {
-    SYM_TYPE               sym_type = -1;
-    PIMAGE_DATA_DIRECTORY  dir;
-    PIMAGE_DEBUG_DIRECTORY dbg = NULL;
-    int                    nDbg;
+    SYM_TYPE                    sym_type = -1;
+    const IMAGE_DATA_DIRECTORY* dir;
+    const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
+    int                         nDbg;
 
     /* Read in debug directory */
     dir = nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
     nDbg = dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
     if (!nDbg) return sym_type;
 
-    dbg = (PIMAGE_DEBUG_DIRECTORY)((char*)mapping + dir->VirtualAddress);
+    dbg = (const IMAGE_DEBUG_DIRECTORY*)((const char*)mapping + dir->VirtualAddress);
 
     /* Parse debug directory */
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
     {
         /* Debug info is stripped to .DBG file */
-        PIMAGE_DEBUG_MISC misc = (PIMAGE_DEBUG_MISC)
-            ((char*)mapping + dbg->PointerToRawData);
+        const IMAGE_DEBUG_MISC* misc = (const IMAGE_DEBUG_MISC*)
+            ((const char*)mapping + dbg->PointerToRawData);
 
         if (nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC ||
             misc->DataType != IMAGE_DEBUG_MISC_EXENAME)
@@ -179,7 +179,6 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
                                           struct module* module, 
                                           const void* mapping, IMAGE_NT_HEADERS* nth)
 {
-    char			buffer[512];
     unsigned int 		i;
     IMAGE_DATA_DIRECTORY* 	dir;
     DWORD			base = module->module.BaseOfImage;
@@ -196,21 +195,20 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
 #endif
     
     /* Add entry point */
-    snprintf(buffer, sizeof(buffer), "%s.EntryPoint", module->module.ModuleName);
-    symt_new_public(module, NULL, buffer, 
+    symt_new_public(module, NULL, "EntryPoint", 
                     base + nth->OptionalHeader.AddressOfEntryPoint, 0,
                     TRUE /* FIXME */, TRUE /* FIXME */);
 
 #if 0
+    /* FIXME: we'd better store addresses linked to sections rather than 
+       absolute values */
     IMAGE_SECTION_HEADER*       section;
     /* Add start of sections */
     section = (IMAGE_SECTION_HEADER*)
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++) 
     {
-	snprintf(buffer, sizeof(buffer), "%s.%s", 
-                 module->module.ModuleName, section->Name);
-	symt_new_public(module, NULL, buffer, base + section->VirtualAddress, 0,
+	symt_new_public(module, NULL, section->Name, base + section->VirtualAddress, 0,
                         TRUE /* FIXME */, TRUE /* FIXME */);
     }
 #endif
@@ -219,23 +217,22 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
     if ((dir = RtlImageDirectoryEntryToData((void*)mapping, TRUE, 
                                             IMAGE_DIRECTORY_ENTRY_EXPORT, NULL)))
     {
-	IMAGE_EXPORT_DIRECTORY* exports;
-	WORD*			ordinals = NULL;
-	void**			functions = NULL;
-	DWORD*			names = NULL;
-	unsigned int		j;
-	
-        exports   = (void*)((char*)mapping + dir->VirtualAddress);
-        functions = (void*)((char*)mapping + exports->AddressOfFunctions);
-        ordinals  = (void*)((char*)mapping + exports->AddressOfNameOrdinals);
-        names     = (void*)((char*)mapping + exports->AddressOfNames);
+	const IMAGE_EXPORT_DIRECTORY*   exports;
+	const WORD*			ordinals = NULL;
+	const void* const*		functions = NULL;
+	const DWORD*			names = NULL;
+	unsigned int		        j;
+	char                            buffer[16];
+
+        exports   = (const void*)((const char*)mapping + dir->VirtualAddress);
+        functions = (const void*)((const char*)mapping + exports->AddressOfFunctions);
+        ordinals  = (const void*)((const char*)mapping + exports->AddressOfNameOrdinals);
+        names     = (const void*)((const char*)mapping + exports->AddressOfNames);
 	    
         for (i = 0; i < exports->NumberOfNames; i++) 
         {
             if (!names[i]) continue;
-            snprintf(buffer, sizeof(buffer), "%s.%s", 
-                     module->module.ModuleName, (char*)base + names[i]);
-            symt_new_public(module, NULL, buffer, 
+            symt_new_public(module, NULL, (const char*)base + names[i], 
                             base + (DWORD)functions[ordinals[i]], 0,
                             TRUE /* FIXME */, TRUE /* FIXME */);
         }
@@ -247,9 +244,8 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
             for (j = 0; j < exports->NumberOfNames; j++)
                 if ((ordinals[j] == i) && names[j]) break;
             if (j < exports->NumberOfNames) continue;
-            snprintf(buffer, sizeof(buffer), "%s.%ld", 
-                     module->module.ModuleName, i + exports->Base);
-            symt_new_public(module, NULL, buffer,  base + (DWORD)functions[i], 0,
+            snprintf(buffer, sizeof(buffer), "%ld", i + exports->Base);
+            symt_new_public(module, NULL, buffer, base + (DWORD)functions[i], 0,
                             TRUE /* FIXME */, TRUE /* FIXME */);
         }
     }

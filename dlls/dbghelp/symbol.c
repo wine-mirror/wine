@@ -70,8 +70,8 @@ inline static int cmp_sorttab_addr(const struct module* module, int idx, DWORD a
 
 int symt_cmp_addr(const void* p1, const void* p2)
 {
-    struct symt*        sym1 = *(struct symt**)p1;
-    struct symt*        sym2 = *(struct symt**)p2;
+    const struct symt*  sym1 = *(const struct symt* const *)p1;
+    const struct symt*  sym2 = *(const struct symt* const *)p2;
     DWORD               a1, a2;
 
     symt_get_info(sym1, TI_GET_ADDRESS, &a1);
@@ -188,6 +188,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
 {
     struct symt_data*   sym;
     struct symt**       p;
+    DWORD               tsz;
 
     TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n", 
                          module->module.ModuleName, name, addr, type);
@@ -201,6 +202,12 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
         sym->u.address     = addr;
+        if (type && size && symt_get_info(type, TI_GET_LENGTH, &tsz))
+        {
+            if (tsz != size)
+                FIXME("Size mismatch for %s.%s between type (%lu) and src (%lu)\n",
+                      module->module.ModuleName, name, tsz, size);
+        }
         if (compiland)
         {
             p = vector_add(&compiland->vchildren, &module->pool);
@@ -230,10 +237,9 @@ struct symt_function* symt_new_function(struct module* module,
         hash_table_add(&module->ht_symbols, &sym->hash_elt);
         module->sortlist_valid = FALSE;
         sym->container = &compiland->symt;
-        sym->addr      = addr;
+        sym->address   = addr;
         sym->type      = sig_type;
         sym->size      = size;
-        sym->addr      = addr;
         vector_init(&sym->vlines,  sizeof(struct line_info), 64);
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
         if (compiland)
@@ -282,7 +288,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     dli->is_source_file = 0;
     dli->is_first       = dli->is_last = 0;
     dli->line_number    = line_num;
-    dli->u.pc_offset    = func->addr + offset;
+    dli->u.pc_offset    = func->address + offset;
 }
 
 struct symt_data* symt_add_func_local(struct module* module, 
@@ -341,7 +347,7 @@ struct symt_block* symt_open_func_block(struct module* module,
     assert(!parent_block || parent_block->symt.tag == SymTagBlock);
     block = pool_alloc(&module->pool, sizeof(*block));
     block->symt.tag = SymTagBlock;
-    block->address  = func->addr + pc;
+    block->address  = func->address + pc;
     block->size     = len;
     block->container = parent_block ? &parent_block->symt : &func->symt;
     vector_init(&block->vchildren, sizeof(struct symt*), 4);
@@ -360,7 +366,7 @@ struct symt_block* symt_close_func_block(struct module* module,
 {
     assert(func->symt.tag == SymTagFunction);
 
-    if (pc) block->size = func->addr + pc - block->address;
+    if (pc) block->size = func->address + pc - block->address;
     return (block->container->tag == SymTagBlock) ? 
         GET_ENTRY(block->container, struct symt_block, symt) : NULL;
 }
@@ -408,6 +414,37 @@ BOOL symt_normalize_function(struct module* module, struct symt_function* func)
     return TRUE;
 }
 
+struct symt_thunk* symt_new_thunk(struct module* module, 
+                                  struct symt_compiland* compiland, 
+                                  const char* name, THUNK_ORDINAL ord,
+                                  unsigned long addr, unsigned long size)
+{
+    struct symt_thunk*  sym;
+
+
+    TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n", 
+                         module->module.ModuleName, name, addr, addr + size - 1);
+
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        sym->symt.tag  = SymTagThunk;
+        sym->hash_elt.name = pool_strdup(&module->pool, name);
+        hash_table_add(&module->ht_symbols, &sym->hash_elt);
+        module->sortlist_valid = FALSE;
+        sym->container = &compiland->symt;
+        sym->address   = addr;
+        sym->size      = size;
+        sym->ordinal   = ord;
+        if (compiland)
+        {
+            struct symt**       p;
+            p = vector_add(&compiland->vchildren, &module->pool);
+            *p = &sym->symt;
+        }
+    }
+    return sym;
+}
+
 /* expect sym_info->MaxNameLen to be set before being called */
 static void symt_fill_sym_info(const struct module* module, 
                                const struct symt* sym, SYMBOL_INFO* sym_info)
@@ -423,7 +460,7 @@ static void symt_fill_sym_info(const struct module* module,
     {
     case SymTagData:
         {
-            struct symt_data*  data = (struct symt_data*)sym;
+            const struct symt_data*  data = (const struct symt_data*)sym;
             switch (data->kind)
             {
             case DataIsLocal:
@@ -474,6 +511,10 @@ static void symt_fill_sym_info(const struct module* module,
         break;
     case SymTagFunction:
         sym_info->Flags |= SYMFLAG_FUNCTION;
+        symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+        break;
+    case SymTagThunk:
+        sym_info->Flags |= SYMFLAG_THUNK;
         symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
         break;
     default:
@@ -571,9 +612,10 @@ static BOOL resort_symbols(struct module* module)
 }
 
 /* assume addr is in module */
-static int symt_find_nearest(struct module* module, DWORD addr)
+int symt_find_nearest(struct module* module, DWORD addr)
 {
     int         mid, high, low;
+    DWORD       ref;
 
     if (!module->sortlist_valid && !resort_symbols(module)) return -1;
 
@@ -582,6 +624,15 @@ static int symt_find_nearest(struct module* module, DWORD addr)
      */
     low = 0;
     high = module->module.NumSyms;
+
+    symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref);
+    if (addr < ref) return -1;
+    if (high)
+    {
+        symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref);
+        /* FIXME: use the size of symbol here if known */
+        if (addr > ref + 0x1000) return -1;
+    }
     
     while (high > low + 1)
     {
@@ -600,8 +651,6 @@ static int symt_find_nearest(struct module* module, DWORD addr)
      */
     if (module->addr_sorttab[low]->symt.tag == SymTagPublicSymbol)
     {   
-        DWORD   ref;
-
         symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref);
         if (low > 0 &&
             module->addr_sorttab[low - 1]->symt.tag != SymTagPublicSymbol &&

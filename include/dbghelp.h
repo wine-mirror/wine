@@ -72,6 +72,9 @@ typedef struct _tagADDRESS
 #define SYMF_EXPORT           0x00000200
 #define SYMF_FORWARDER        0x00000400
 #define SYMF_FUNCTION         0x00000800
+#define SYMF_VIRTUAL          0x00001000
+#define SYMF_THUNK            0x00002000
+#define SYMF_TLSREL           0x00004000
 
 typedef enum 
 {
@@ -529,6 +532,11 @@ typedef struct _MINIDUMP_THREAD_LIST
     MINIDUMP_THREAD             Threads[1]; /* FIXME: no support of 0 sized array */
 } MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
 
+BOOL WINAPI MiniDumpWriteDump(HANDLE,DWORD,HANDLE,MINIDUMP_TYPE,const PMINIDUMP_EXCEPTION_INFORMATION,
+                              const PMINIDUMP_USER_STREAM_INFORMATION,const PMINIDUMP_CALLBACK_INFORMATION);
+BOOL WINAPI MiniDumpReadDumpStream(PVOID,ULONG,PMINIDUMP_DIRECTORY*,PVOID*,ULONG*);
+
+
 /*************************
  *    MODULE handling    *
  *************************/
@@ -586,7 +594,7 @@ typedef struct _SYMBOL_INFO
     ULONG       SizeOfStruct;
     ULONG       TypeIndex;
     ULONG       Reserved[2];
-    ULONG       info;
+    ULONG       info;   /* sdk states info, while MSDN says it's Index... */
     ULONG       Size;
     ULONG       ModBase;
     ULONG       Flags;
@@ -666,8 +674,12 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, DWORD BaseOfDll,
 BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD addr, DWORD* displacement, 
                         SYMBOL_INFO* sym_info);
 BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol);
+BOOL WINAPI SymGetSymFromAddr(HANDLE,DWORD,PDWORD,PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymGetSymFromName(HANDLE,PSTR,PIMAGEHLP_SYMBOL);
 BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, DWORD BaseOfDll, LPSTR Name,
                                PSYMBOL_INFO Symbol);
+BOOL WINAPI SymGetSymNext(HANDLE,PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymGetSymPrev(HANDLE,PIMAGEHLP_SYMBOL);
 BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                            PVOID UserContext);
@@ -681,6 +693,7 @@ typedef BOOL (CALLBACK *PSYMBOL_REGISTERED_CALLBACK)(HANDLE hProcess, ULONG Acti
 BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
                                 PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
                                 PVOID UserContext);
+BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL,PSTR,DWORD);
 DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
                                   DWORD UndecoratedLength, DWORD Flags);
 
@@ -731,6 +744,11 @@ PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(PIMAGE_NT_HEADERS NtHeaders,
                                                PVOID Base, ULONG Rva);
 PVOID WINAPI ImageRvaToVa(PIMAGE_NT_HEADERS NtHeaders, PVOID Base,
                           ULONG Rva, OUT PIMAGE_SECTION_HEADER *LastRvaSection);
+BOOL WINAPI SymGetSearchPath(HANDLE,PSTR,DWORD);
+BOOL WINAPI SymSetSearchPath(HANDLE,PSTR);
+DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE);
+BOOL WINAPI MakeSureDirectoryPathExists(PCSTR);
+BOOL WINAPI SearchTreeForFile(PSTR,PSTR,PSTR);
 
 /*************************
  *   Context management  *

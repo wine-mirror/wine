@@ -288,10 +288,15 @@ void hash_table_destroy(struct hash_table* ht)
 
 void hash_table_add(struct hash_table* ht, struct hash_table_elt* elt)
 {
-    unsigned    hash = hash_table_hash(elt->name, ht->num_buckets);
+    unsigned                    hash = hash_table_hash(elt->name, ht->num_buckets);
+    struct hash_table_elt**     p;
 
-    elt->next = ht->buckets[hash];
-    ht->buckets[hash] = elt;
+    /* in some cases, we need to get back the symbols of same name in the order
+     * in which they've been inserted. So insert new elements at the end of the list.
+     */
+    for (p = &ht->buckets[hash]; *p; p = &((*p)->next));
+    *p = elt;
+    elt->next = NULL;
 }
 
 void* hash_table_find(const struct hash_table* ht, const char* name)

@@ -70,10 +70,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-typedef struct tagELF_DBG_INFO
+struct elf_module_info
 {
-    unsigned long       elf_addr;
-} ELF_DBG_INFO;
+    unsigned long               elf_addr;
+    unsigned short	        elf_mark : 1,
+                                elf_loader : 1;
+};
 
 #ifdef __ELF__
 
@@ -82,43 +84,57 @@ typedef struct tagELF_DBG_INFO
 
 struct elf_info
 {
-    unsigned            flags;          /* IN  one (or several) of the ELF_INFO constants */
-    unsigned long       dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
-    struct module*      module;         /* OUT loaded module (if ELF_INFO_MODULE is set) */
+    unsigned                    flags;          /* IN  one (or several) of the ELF_INFO constants */
+    unsigned long               dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
+    struct module*              module;         /* OUT loaded module (if ELF_INFO_MODULE is set) */
+};
+
+struct symtab_elt
+{
+    struct hash_table_elt       ht_elt;
+    const Elf32_Sym*            symp;
+    const char*                 filename;
+    unsigned                    used;
+};
+
+struct thunk_area
+{
+    const char*                 symname;
+    THUNK_ORDINAL               ordinal;
+    unsigned long               rva_start;
+    unsigned long               rva_end;
 };
 
 /******************************************************************
- *		elf_load_symtab
+ *		elf_hash_symtab
  *
- * Walk through the entire symbol table and add any symbols we find there.
- * This can be used in cases where we have stripped ELF shared libraries,
- * or it can be used in cases where we have data symbols for which the address
- * isn't encoded in the stabs.
- *
- * This is all really quite easy, since we don't have to worry about line
- * numbers or local data variables.
+ * creating an internal hash table to ease use ELF symtab information lookup
  */
-static int elf_load_symtab(struct module* module, const char* addr,
-                           unsigned long load_addr, const Elf32_Shdr* symtab,
-                           const Elf32_Shdr* strtab)
+static void elf_hash_symtab(const struct module* module, struct pool* pool, 
+                            struct hash_table* ht_symtab, const char* map_addr,
+                            const Elf32_Shdr* symtab, const Elf32_Shdr* strtab,
+                            unsigned num_areas, struct thunk_area* thunks)
 {
-    int		                i, nsym;
+    int		                i, j, nsym;
     const char*                 strp;
     const char*                 symname;
+    const char*                 filename = NULL;
     const Elf32_Sym*            symp;
-    struct symt_compiland*      compiland = NULL;
+    struct symtab_elt*          ste;
 
-    symp = (Elf32_Sym*)(addr + symtab->sh_offset);
+    symp = (const Elf32_Sym*)(map_addr + symtab->sh_offset);
     nsym = symtab->sh_size / sizeof(*symp);
-    strp = (char*)(addr + strtab->sh_offset);
+    strp = (const char*)(map_addr + strtab->sh_offset);
+
+    for (j = 0; j < num_areas; j++)
+        thunks[j].rva_start = thunks[j].rva_end = 0;
 
     for (i = 0; i < nsym; i++, symp++)
     {
         /* Ignore certain types of entries which really aren't of that much
          * interest.
          */
-        if (ELF32_ST_TYPE(symp->st_info) == STT_SECTION || 
-            symp->st_shndx == SHN_UNDEF)
+        if (ELF32_ST_TYPE(symp->st_info) == STT_SECTION || symp->st_shndx == SHN_UNDEF)
         {
             continue;
         }
@@ -127,14 +143,252 @@ static int elf_load_symtab(struct module* module, const char* addr,
 
         if (ELF32_ST_TYPE(symp->st_info) == STT_FILE)
         {
-            compiland = symt_new_compiland(module, symname);
+            filename = symname;
             continue;
         }
-        symt_new_public(module, compiland, symname,
-                        load_addr + symp->st_value, symp->st_size,
-                        TRUE /* FIXME */, ELF32_ST_TYPE(symp->st_info) == STT_FUNC);
+        for (j = 0; j < num_areas; j++)
+        {
+            if (!strcmp(symname, thunks[j].symname))
+            {
+                thunks[j].rva_start = symp->st_value;
+                thunks[j].rva_end   = symp->st_value + symp->st_size;
+                break;
+            }
+        }
+        if (j < num_areas) continue;
+        ste = pool_alloc(pool, sizeof(*ste));
+        ste->ht_elt.name = symname;
+        ste->symp        = symp;
+        ste->filename    = filename;
+        ste->used        = 0;
+        hash_table_add(ht_symtab, &ste->ht_elt);
     }
+}
 
+/******************************************************************
+ *		elf_lookup_symtab
+ *
+ * lookup a symbol by name in our internal hash table for the symtab
+ */
+static const Elf32_Sym* elf_lookup_symtab(const struct module* module,        
+                                          const struct hash_table* ht_symtab,
+                                          const char* name, struct symt* compiland)
+{
+    struct symtab_elt*          weak_result = NULL; /* without compiland name */
+    struct symtab_elt*          result = NULL;
+    struct hash_table_iter      hti;
+    struct symtab_elt*          ste;
+    const char*                 compiland_name;
+    const char*                 compiland_basename;
+    const char*                 base;
+
+    /* we need weak match up (at least) when symbols of same name, 
+     * defined several times in different compilation units,
+     * are merged in a single one (hence a different filename for c.u.)
+     */
+    if (compiland)
+    {
+        compiland_name = source_get(module,
+                                    ((struct symt_compiland*)compiland)->source);
+        compiland_basename = strrchr(compiland_name, '/');
+        if (!compiland_basename++) compiland_basename = compiland_name;
+    }
+    else compiland_name = compiland_basename = NULL;
+    
+    hash_table_iter_init(ht_symtab, &hti, name);
+    while ((ste = hash_table_iter_up(&hti)))
+    {
+        if (ste->used || strcmp(ste->ht_elt.name, name)) continue;
+
+        weak_result = ste;
+        if ((ste->filename && !compiland_name) || (!ste->filename && compiland_name))
+            continue;
+        if (ste->filename && compiland_name)
+        {
+            if (strcmp(ste->filename, compiland_name))
+            {
+                base = strrchr(ste->filename, '/');
+                if (!base++) base = ste->filename;
+                if (strcmp(base, compiland_basename)) continue;
+            }
+        }
+        if (result)
+        {
+            FIXME("Already found symbol %s (%s) in symtab %s @%08x and %s @%08x\n", 
+                  name, compiland_name, result->filename, result->symp->st_value,
+                  ste->filename, ste->symp->st_value);
+        }
+        else
+        {
+            result = ste;
+            ste->used = 1;
+        }
+    }
+    if (!result && !(result = weak_result))
+    {
+        FIXME("Couldn't find symbol %s.%s in symtab\n", 
+              module->module.ModuleName, name);
+        return NULL;
+    }
+    return result->symp;
+}
+
+/******************************************************************
+ *		elf_finish_stabs_info
+ *
+ * - get any relevant information (address & size) from the bits we got from the
+ *   stabs debugging information
+ */
+static void elf_finish_stabs_info(struct module* module, struct hash_table* symtab)
+{
+    struct hash_table_iter      hti;
+    void*                       ptr;
+    struct symt_ht*             sym;
+    const Elf32_Sym*            symp;
+
+    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
+    while ((ptr = hash_table_iter_up(&hti)))
+    {
+        sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+        switch (sym->symt.tag)
+        {
+        case SymTagFunction:
+            if (((struct symt_function*)sym)->address != module->elf_info->elf_addr)
+                break;
+            symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
+                                     ((struct symt_function*)sym)->container);
+            if (symp)
+            {
+                ((struct symt_function*)sym)->address = module->elf_info->elf_addr +
+                                                        symp->st_value;
+                ((struct symt_function*)sym)->size    = symp->st_size;
+            }
+            break;
+        case SymTagData:
+            switch (((struct symt_data*)sym)->kind)
+            {
+            case DataIsGlobal:
+            case DataIsFileStatic:
+                if (((struct symt_data*)sym)->u.address != module->elf_info->elf_addr)
+                    break;
+                symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
+                                         ((struct symt_data*)sym)->container);
+                if (symp)
+                    ((struct symt_data*)sym)->u.address = module->elf_info->elf_addr +
+                                                          symp->st_value;
+                break;
+            default:;
+            }
+            break;
+        default:
+            FIXME("Unsupported tag %u\n", sym->symt.tag);
+            break;
+        }
+    }
+}
+
+/******************************************************************
+ *		elf_load_wine_thunks
+ *
+ * creating the thunk objects for a wine native DLL
+ */
+static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symtab,
+                               unsigned num_areas, struct thunk_area* thunks)
+{
+    int		                j;
+    struct symt_compiland*      compiland = NULL;
+    const char*                 compiland_name = NULL;
+    struct hash_table_iter      hti;
+    struct symtab_elt*          ste;
+    DWORD                       addr;
+
+    hash_table_iter_init(ht_symtab, &hti, NULL);
+    while ((ste = hash_table_iter_up(&hti)))
+    {
+        if (ste->used) continue;
+
+        /* FIXME: this is not a good idea anyway... we are creating several
+         * compiland objects for a same compilation unit
+         * We try to cache the last compiland used, but it's not enough
+         * (we should here only create compilands if they are not yet 
+         *  defined)
+         */
+        if (!compiland_name || compiland_name != ste->filename)
+            compiland = symt_new_compiland(module, 
+                                           compiland_name = ste->filename);
+
+        addr = module->elf_info->elf_addr + ste->symp->st_value;
+
+        for (j = 0; j < num_areas; j++)
+        {
+            if (ste->symp->st_value >= thunks[j].rva_start && 
+                ste->symp->st_value < thunks[j].rva_end)
+                break;
+        }
+        if (j < num_areas) /* thunk found */
+        {
+            symt_new_thunk(module, compiland, ste->ht_elt.name, thunks[j].ordinal,
+                           addr, ste->symp->st_size);
+        }
+        else if (symt_find_nearest(module, addr) == -1)
+        {
+            /* creating public symbols for all the ELF symbols which haven't been
+             * used yet (ie we have no debug information on them)
+             * That's the case, for example, of the .spec.c files
+             */
+            if (ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC)
+            {
+                symt_new_function(module, compiland, ste->ht_elt.name,
+                                  addr, ste->symp->st_size, NULL);
+            }
+            else
+            {
+                symt_new_global_variable(module, compiland, ste->ht_elt.name,
+                                         FALSE /* FIXME */,
+                                         addr, ste->symp->st_size, NULL);
+            }
+        }
+    }
+    return TRUE;
+}
+
+/******************************************************************
+ *		elf_new_public_symbols
+ *
+ * Creates a set of public symbols from an ELF symtab
+ */
+static int elf_new_public_symbols(struct module* module, struct hash_table* symtab,
+                                  BOOL dont_check)
+{
+    struct symt_compiland*      compiland = NULL;
+    const char*                 compiland_name = NULL;
+    struct hash_table_iter      hti;
+    struct symtab_elt*          ste;
+
+    if (!(dbghelp_options & SYMOPT_NO_PUBLICS)) return TRUE;
+
+    hash_table_iter_init(symtab, &hti, NULL);
+    while ((ste = hash_table_iter_up(&hti)))
+    {
+        /* FIXME: this is not a good idea anyway... we are creating several
+         * compiland objects for a same compilation unit
+         * We try to cache the last compiland used, but it's not enough
+         * (we should here only create compilands if they are not yet 
+         *  defined)
+         */
+        if (!compiland_name || compiland_name != ste->filename)
+            compiland = symt_new_compiland(module, 
+                                           compiland_name = ste->filename);
+
+        if (dont_check || !(dbghelp_options & SYMOPT_AUTO_PUBLICS) ||
+            symt_find_nearest(module, module->elf_info->elf_addr + ste->symp->st_value) == -1)
+        {
+            symt_new_public(module, compiland, ste->ht_elt.name,
+                            module->elf_info->elf_addr + ste->symp->st_value,
+                            ste->symp->st_size, TRUE /* FIXME */, 
+                            ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
+        }
+    }
     return TRUE;
 }
 
@@ -160,10 +414,22 @@ SYM_TYPE elf_load_debug_info(struct module* module)
     const Elf32_Shdr*   spnt;
     const char*	        shstrtab;
     int	       	        i;
-    int		        stabsect, stabstrsect, debugsect;
-    int                 symsect, dynsect;
+    int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect, debug_sect;
+    struct pool         pool;
+    struct hash_table   ht_symtab;
+    struct thunk_area   thunks[] = 
+    {
+        {"__wine_spec_import_thunks",           THUNK_ORDINAL_NOTYPE, 0, 0},    /* inter DLL calls */
+        {"__wine_spec_delayed_import_loaders",  THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
+        {"__wine_spec_delayed_import_thunks",   THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
+        {"__wine_delay_load",                   THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
+        {"__wine_spec_thunk_text_16",           -16,                  0, 0},    /* 16 => 32 thunks */
+        {"__wine_spec_thunk_data_16",           -16,                  0, 0},    /* 16 => 32 thunks */
+        {"__wine_spec_thunk_text_32",           -32,                  0, 0},    /* 32 => 16 thunks */
+        {"__wine_spec_thunk_data_32",           -32,                  0, 0},    /* 32 => 16 thunks */
+    };
 
-    if (module->type != DMT_ELF || !module->elf_dbg_info)
+    if (module->type != DMT_ELF || !module->elf_info)
     {
 	ERR("Bad elf module '%s'\n", module->module.LoadedImageName);
 	return sym_type;
@@ -195,54 +461,85 @@ SYM_TYPE elf_load_debug_info(struct module* module)
     spnt = (Elf32_Shdr*)(addr + ehptr->e_shoff);
     shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
 
-    symsect = dynsect = stabsect = stabstrsect = debugsect = -1;
+    symtab_sect = dynsym_sect = stab_sect = stabstr_sect = debug_sect = -1;
 
     for (i = 0; i < ehptr->e_shnum; i++)
     {
 	if (strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0)
-	    stabsect = i;
+	    stab_sect = i;
 	if (strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0)
-	    stabstrsect = i;
+	    stabstr_sect = i;
 	if (strcmp(shstrtab + spnt[i].sh_name, ".debug_info") == 0)
-	    debugsect = i;
+	    debug_sect = i;
 	if ((strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0) &&
 	    (spnt[i].sh_type == SHT_SYMTAB))
-            symsect = i;
-	if ((strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0) &&
-	    (spnt[i].sh_type == SHT_DYNSYM))
-            dynsect = i;
+            symtab_sect = i;
+        if ((strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0) &&
+            (spnt[i].sh_type == SHT_DYNSYM))
+            dynsym_sect = i;
     }
-    /* start loading dynamic symbol info (so that we can get the correct address) */
-    if (symsect != -1)
-        elf_load_symtab(module, addr, module->elf_dbg_info->elf_addr,
-                        spnt + symsect, spnt + spnt[symsect].sh_link);
-    else if (dynsect != -1)
-        elf_load_symtab(module, addr, module->elf_dbg_info->elf_addr,
-                        spnt + dynsect, spnt + spnt[dynsect].sh_link);
+
     sym_type = SymExport;
 
-    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    if (symtab_sect == -1)
     {
-        if (stabsect != -1 && stabstrsect != -1)
-        {
-            /* OK, now just parse all of the stabs. */
-            sym_type = stabs_parse(module, addr, module->elf_dbg_info->elf_addr,
-                                   spnt[stabsect].sh_offset, spnt[stabsect].sh_size,
-                                   spnt[stabstrsect].sh_offset,
-                                   spnt[stabstrsect].sh_size);
-            if (sym_type == -1)
-            {
-                WARN("Couldn't read correctly read stabs\n");
-                goto leave;
-            }
-        }
-        else if (debugsect != -1)
-        {
-            /* Dwarf 2 debug information */
-            FIXME("Unsupported Dwarf2 information\n");
-            sym_type = SymNone;
-        }
+        /* if we don't have a symtab but a dynsym, process the dynsym
+         * section instead. It'll contain less (relevant) information, 
+         * but it'll be better than nothing
+         */
+        if (dynsym_sect == -1) goto leave;
+        symtab_sect = dynsym_sect;
     }
+
+    /* FIXME: guess a better size from ELF info */
+    pool_init(&pool, 65536);
+    hash_table_init(&pool, &ht_symtab, 256);
+
+    /* create a hash table for the symtab */
+    elf_hash_symtab(module, &pool, &ht_symtab, addr, 
+                    spnt + symtab_sect, spnt + spnt[symtab_sect].sh_link,
+                    sizeof(thunks) / sizeof(thunks[0]), thunks);
+
+    if (stab_sect != -1 && stabstr_sect != -1 && 
+        !(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    {
+        /* OK, now just parse all of the stabs. */
+        sym_type = stabs_parse(module, addr, module->elf_info->elf_addr,
+                               spnt[stab_sect].sh_offset, spnt[stab_sect].sh_size,
+                               spnt[stabstr_sect].sh_offset,
+                               spnt[stabstr_sect].sh_size);
+        if (sym_type == -1)
+        {
+            WARN("Couldn't read correctly read stabs\n");
+            goto leave;
+        }
+        /* and fill in the missing information for stabs */
+        elf_finish_stabs_info(module, &ht_symtab);
+    }
+    else if (debug_sect != -1)
+    {
+        /* Dwarf 2 debug information */
+        FIXME("Unsupported Dwarf2 information\n");
+        sym_type = SymNone;
+    }
+    if (strstr(module->module.ModuleName, "<elf>"))
+    {
+        /* add the thunks for native libraries */
+        if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+            elf_new_wine_thunks(module, &ht_symtab, 
+                                sizeof(thunks) / sizeof(thunks[0]), thunks);
+        /* add the public symbols from symtab
+        * (only if they haven't been defined yet)
+        */
+        elf_new_public_symbols(module, &ht_symtab, FALSE);
+    }
+    else
+    {
+        /* add all the public symbols from symtab */
+        elf_new_public_symbols(module, &ht_symtab, TRUE);
+    }
+
+    pool_destroy(&pool);
 
 leave:
     if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
@@ -298,6 +595,7 @@ static SYM_TYPE elf_load_file(struct process* pcs, const char* filename,
     const char*         shstrtab;
     int	       	        i;
     DWORD	        delta, size;
+    unsigned            tmp, page_mask = getpagesize() - 1;
 
     TRACE("Processing elf file '%s' at %08lx\n", filename, load_offset);
 
@@ -317,10 +615,10 @@ static SYM_TYPE elf_load_file(struct process* pcs, const char* filename,
      * this thing.  We need the main executable header, and the section
      * table.
      */
-    ehptr = (Elf32_Ehdr*)addr;
+    ehptr = (const Elf32_Ehdr*)addr;
     if (memcmp(ehptr->e_ident, elf_signature, sizeof(elf_signature))) goto leave;
 
-    spnt = (Elf32_Shdr*)(addr + ehptr->e_shoff);
+    spnt = (const Elf32_Shdr*)(addr + ehptr->e_shoff);
     shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
 
     /* if non relocatable ELF, then remove fixed address from computation
@@ -329,14 +627,14 @@ static SYM_TYPE elf_load_file(struct process* pcs, const char* filename,
     delta = (load_offset == 0) ? ehptr->e_entry : 0;
 
     /* grab size of module once loaded in memory */
-    ppnt = (Elf32_Phdr*)(addr + ehptr->e_phoff);
+    ppnt = (const Elf32_Phdr*)(addr + ehptr->e_phoff);
     size = 0;
     for (i = 0; i < ehptr->e_phnum; i++)
     {
-	if (ppnt[i].p_type == PT_LOAD)
+        if (ppnt[i].p_type == PT_LOAD)
         {
-            size += (ppnt[i].p_align <= 1) ? ppnt[i].p_memsz :
-                (ppnt[i].p_memsz + ppnt[i].p_align - 1) & ~(ppnt[i].p_align - 1);
+            tmp = (ppnt[i].p_vaddr + ppnt[i].p_memsz + page_mask) & ~page_mask;
+            if (size < tmp) size = tmp;
         }
     }
 
@@ -375,16 +673,19 @@ static SYM_TYPE elf_load_file(struct process* pcs, const char* filename,
                                       size, 0, 0);
         if (elf_info->module)
         {
-            if ((elf_info->module->elf_dbg_info = HeapAlloc(GetProcessHeap(), 0, sizeof(ELF_DBG_INFO))) == NULL) 
+            elf_info->module->elf_info = HeapAlloc(GetProcessHeap(), 
+                                                   0, sizeof(struct elf_module_info));
+            if (elf_info->module->elf_info == NULL) 
             {
                 ERR("OOM\n");
                 exit(0); /* FIXME */
             }
-            elf_info->module->elf_dbg_info->elf_addr = load_offset;
+            elf_info->module->elf_info->elf_addr = load_offset;
             elf_info->module->module.SymType = sym_type = 
                 (dbghelp_options & SYMOPT_DEFERRED_LOADS) ? SymDeferred : 
                 elf_load_debug_info(elf_info->module);
-            elf_info->module->elf_mark = 1;
+            elf_info->module->elf_info->elf_mark = 1;
+            elf_info->module->elf_info->elf_loader = 0;
         }
         else sym_type = -1;
     }
@@ -447,7 +748,7 @@ static SYM_TYPE elf_search_and_load_file(struct process* pcs, const char* filena
     if ((module = module_find_by_name(pcs, filename, DMT_ELF)))
     {
         elf_info->module = module;
-        module->elf_mark = 1;
+        module->elf_info->elf_mark = 1;
         return module->module.SymType;
     }
 
@@ -493,7 +794,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (module->type == DMT_ELF) module->elf_mark = 0;
+        if (module->type == DMT_ELF) module->elf_info->elf_mark = 0;
     }
 
     elf_info.flags = ELF_INFO_MODULE;
@@ -519,7 +820,8 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (module->type == DMT_ELF && !module->elf_mark)
+        if (module->type == DMT_ELF && !module->elf_info->elf_mark && 
+            !module->elf_info->elf_loader)
         {
             module_remove(pcs, module);
             /* restart all over */
@@ -532,15 +834,15 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 /******************************************************************
  *		elf_read_wine_loader_dbg_info
  *
- * Try to find a decent wine executable which could have loader the debuggee
+ * Try to find a decent wine executable which could have loaded the debuggee
  */
-unsigned long        elf_read_wine_loader_dbg_info(struct process* pcs)
+BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
 {
     const char*         ptr;
     SYM_TYPE            sym_type;
     struct elf_info     elf_info;
 
-    elf_info.flags = ELF_INFO_DEBUG_HEADER;
+    elf_info.flags = ELF_INFO_DEBUG_HEADER | ELF_INFO_MODULE;
     /* All binaries are loaded with WINELOADER (if run from tree) or by the
      * main executable (either wine-kthread or wine-pthread)
      * Note: the heuristic use to know whether we need to load wine-pthread or
@@ -553,7 +855,10 @@ unsigned long        elf_read_wine_loader_dbg_info(struct process* pcs)
         if ((sym_type = elf_search_and_load_file(pcs, "wine-kthread", 0, &elf_info)) == -1)
             sym_type = elf_search_and_load_file(pcs, "wine-pthread", 0, &elf_info);
     }
-    return (sym_type < 0) ? 0 : elf_info.dbg_hdr_addr;
+    if (sym_type < 0) return FALSE;
+    elf_info.module->elf_info->elf_loader = 1;
+    strcpy(elf_info.module->module.ModuleName, "<wine-loader>");
+    return (pcs->dbg_hdr_addr = elf_info.dbg_hdr_addr) != 0;
 }
 
 /******************************************************************

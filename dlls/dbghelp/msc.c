@@ -70,9 +70,9 @@ struct msc_debug_info
 {
     struct module*              module;
     int			        nsect;
-    PIMAGE_SECTION_HEADER       sectp;
+    const IMAGE_SECTION_HEADER* sectp;
     int			        nomap;
-    OMAP_DATA*                  omapp;
+    const OMAP_DATA*            omapp;
     const BYTE*                 root;
 };
 
@@ -218,8 +218,8 @@ static SYM_TYPE coff_process_info(const struct msc_debug_info* msc_dbg)
         if (coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE)
 	{
             curr_file_idx = coff_add_file(&coff_files, msc_dbg->module, 
-                                          (char*)(coff_sym + 1));
-            TRACE("New file %s\n", (char*)(coff_sym + 1));
+                                          (const char*)(coff_sym + 1));
+            TRACE("New file %s\n", (const char*)(coff_sym + 1));
             i += naux;
             continue;
 	}
@@ -1111,27 +1111,27 @@ static int numeric_leaf(int* value, const unsigned short int* leaf)
         {
         case LF_CHAR:
             length += 1;
-            *value = *(char*)leaf;
+            *value = *(const char*)leaf;
             break;
 
         case LF_SHORT:
             length += 2;
-            *value = *(short*)leaf;
+            *value = *(const short*)leaf;
             break;
 
         case LF_USHORT:
             length += 2;
-            *value = *(unsigned short*)leaf;
+            *value = *(const unsigned short*)leaf;
             break;
 
         case LF_LONG:
             length += 4;
-            *value = *(int*)leaf;
+            *value = *(const int*)leaf;
             break;
 
         case LF_ULONG:
             length += 4;
-            *value = *(unsigned int*)leaf;
+            *value = *(const unsigned int*)leaf;
             break;
 
         case LF_QUADWORD:
@@ -1327,7 +1327,7 @@ static int codeview_add_type_enum_field_list(struct module* module,
     symt = symt_new_enum(module, NULL);
     while (ptr - list < len)
     {
-        union codeview_fieldtype* type = (union codeview_fieldtype*)ptr;
+        const union codeview_fieldtype* type = (const union codeview_fieldtype*)ptr;
 
         if (*ptr >= 0xf0)       /* LF_PAD... */
         {
@@ -1340,7 +1340,7 @@ static int codeview_add_type_enum_field_list(struct module* module,
         case LF_ENUMERATE:
         {
             int value, vlen = numeric_leaf(&value, &type->enumerate.value);
-            unsigned char* name = (unsigned char*)&type->enumerate.value + vlen;
+            const unsigned char* name = (const unsigned char*)&type->enumerate.value + vlen;
 
             symt_add_enum_element(module, symt, terminate_string(name), value);
             ptr += 2 + 2 + vlen + (1 + name[0]);
@@ -1400,7 +1400,7 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_IVBCLASS:
         {
             int vbpoff, vbplen = numeric_leaf(&vbpoff, &type->vbclass.vbpoff);
-            const unsigned short int* p_vboff = (const unsigned short int*)((char*)&type->vbclass.vbpoff + vbpoff);
+            const unsigned short int* p_vboff = (const unsigned short int*)((const char*)&type->vbclass.vbpoff + vbpoff);
             int vpoff, vplen = numeric_leaf(&vpoff, p_vboff);
 
             /* FIXME: ignored for now */
@@ -1413,7 +1413,7 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_IVBCLASS_32:
         {
             int vbpoff, vbplen = numeric_leaf(&vbpoff, &type->vbclass32.vbpoff);
-            const unsigned short int* p_vboff = (const unsigned short int*)((char*)&type->vbclass32.vbpoff + vbpoff);
+            const unsigned short int* p_vboff = (const unsigned short int*)((const char*)&type->vbclass32.vbpoff + vbpoff);
             int vpoff, vplen = numeric_leaf(&vpoff, p_vboff);
 
             /* FIXME: ignored for now */
@@ -1759,16 +1759,16 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
     int				file_segcount;
     char			filename[PATH_MAX];
     const unsigned int*         filetab;
-    char*                       fn;
+    const char*                 fn;
     int				i;
     int				k;
     struct codeview_linetab*    lt_hdr;
-    unsigned int*               lt_ptr;
+    const unsigned int*         lt_ptr;
     int				nfile;
     int				nseg;
     union any_size		pnt;
     union any_size		pnt2;
-    struct startend*            start;
+    const struct startend*      start;
     int				this_seg;
     struct symt_compiland*      compiland;
 
@@ -1820,13 +1820,13 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
         file_segcount = *pnt2.s;
 
         pnt2.ui++;
-        lt_ptr = (unsigned int*) pnt2.c;
-        start = (struct startend*)(lt_ptr + file_segcount);
+        lt_ptr = (const unsigned int*) pnt2.c;
+        start = (const struct startend*)(lt_ptr + file_segcount);
 
         /*
          * Now snarf the filename for all of the segments for this file.
          */
-        fn = (unsigned char*)(start + file_segcount);
+        fn = (const unsigned char*)(start + file_segcount);
         memset(filename, 0, sizeof(filename));
         memcpy(filename, fn + 1, *fn);
         compiland = symt_new_compiland(module, filename);
@@ -1840,7 +1840,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
             lt_hdr[this_seg].segno      = *pnt2.s++;
             lt_hdr[this_seg].nline      = *pnt2.s++;
             lt_hdr[this_seg].offtab     = pnt2.ui;
-            lt_hdr[this_seg].linetab    = (unsigned short*)(pnt2.ui + lt_hdr[this_seg].nline);
+            lt_hdr[this_seg].linetab    = (const unsigned short*)(pnt2.ui + lt_hdr[this_seg].nline);
 	}
     }
 
@@ -2334,11 +2334,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
 
         case S_COMPILE:
-            TRACE("S-Compile %x %.*s\n", ((LPBYTE)sym)[4], ((LPBYTE)sym)[8], (LPBYTE)sym + 9);
+            TRACE("S-Compile %x %.*s\n", ((const BYTE*)sym)[4], ((const BYTE*)sym)[8], (const BYTE*)sym + 9);
             break;
 
         case S_OBJNAME:
-            TRACE("S-ObjName %.*s\n", ((LPBYTE)sym)[8], (LPBYTE)sym + 9);
+            TRACE("S-ObjName %.*s\n", ((const BYTE*)sym)[8], (const BYTE*)sym + 9);
             break;
 
         case S_LABEL:
@@ -2347,7 +2347,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             if (curr_func)
             {
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, 
-                                        codeview_get_address(msc_dbg, sym->label.segment, sym->label.offset) - curr_func->addr,
+                                        codeview_get_address(msc_dbg, sym->label.segment, sym->label.offset) - curr_func->address,
                                         symname);
             }
             else FIXME("No current function for label %s\n", symname);
@@ -2407,7 +2407,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_DATAREF:
 	case S_LPROCREF:
             {
-                LPBYTE name = (LPBYTE)sym + length;
+                const BYTE* name = (const BYTE*)sym + length;
                 length += (*name + 1 + 3) & ~3;
             }
             break;
@@ -2629,7 +2629,7 @@ static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
     memset(types, 0, sizeof(PDB_TYPES));
     if (!image) return;
 
-    if (*(DWORD*)image < 19960000)   /* FIXME: correct version? */
+    if (*(const DWORD*)image < 19960000)   /* FIXME: correct version? */
     {
         /* Old version of the types record header */
         const PDB_TYPES_OLD*    old = (const PDB_TYPES_OLD*)image;
@@ -2653,7 +2653,7 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
     memset(symbols, 0, sizeof(PDB_SYMBOLS));
     if (!image) return;
 
-    if (*(DWORD*)image != 0xffffffff)
+    if (*(const DWORD*)image != 0xffffffff)
     {
         /* Old version of the symbols record header */
         const PDB_SYMBOLS_OLD*  old = (const PDB_SYMBOLS_OLD*)image;
@@ -2686,7 +2686,7 @@ static const char*  get_last_sep(const char* str)
 }
 
 static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
-                            char* filename)
+                            const char* filename)
 {
     HANDLE      h;
     char        dbg_file_path[MAX_PATH];
@@ -2695,7 +2695,7 @@ static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE)
     {
-        h = FindDebugInfoFile(filename, pcs->search_path, dbg_file_path);
+        h = FindDebugInfoFile((char*)filename, pcs->search_path, dbg_file_path);
         if (h == NULL)
         {
             const char* p;
@@ -2716,7 +2716,7 @@ static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
 
 static SYM_TYPE pdb_process_file(const struct process* pcs, 
                                  const struct msc_debug_info* msc_dbg,
-                                 char* filename, DWORD timestamp)
+                                 const char* filename, DWORD timestamp)
 {
     SYM_TYPE    sym_type = -1;
     HANDLE      hFile, hMap = NULL;
@@ -2982,7 +2982,7 @@ static SYM_TYPE codeview_process_info(const struct process* pcs,
 
     case CODEVIEW_NB10_SIG:
     {
-        PCODEVIEW_PDB_DATA pdb = (PCODEVIEW_PDB_DATA)(cv + 1);
+        const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)(cv + 1);
 
         codeview_init_basic_types(msc_dbg->module);
         sym_type = pdb_process_file(pcs, msc_dbg, pdb->name, pdb->timestamp);
@@ -3001,17 +3001,17 @@ static SYM_TYPE codeview_process_info(const struct process* pcs,
  * Process debug directory.
  */
 SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* module, 
-                                 const BYTE* mapping, PIMAGE_DEBUG_DIRECTORY dbg, 
+                                 const BYTE* mapping, const IMAGE_DEBUG_DIRECTORY* dbg, 
                                  int nDbg)
 {
     SYM_TYPE                    sym_type;
     int                         i;
     struct msc_debug_info       msc_dbg;
-    IMAGE_NT_HEADERS*           nth = RtlImageNtHeader((void*)mapping);
+    const IMAGE_NT_HEADERS*     nth = RtlImageNtHeader((void*)mapping);
 
     msc_dbg.module = module;
     msc_dbg.nsect  = nth->FileHeader.NumberOfSections;
-    msc_dbg.sectp  = (PIMAGE_SECTION_HEADER)((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
+    msc_dbg.sectp  = (const IMAGE_SECTION_HEADER*)((const char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     msc_dbg.nomap  = 0;
     msc_dbg.omapp  = NULL;
 
@@ -3025,7 +3025,7 @@ SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* modul
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC)
             {
                 msc_dbg.nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
-                msc_dbg.omapp = (OMAP_DATA*)(mapping + dbg[i].PointerToRawData);
+                msc_dbg.omapp = (const OMAP_DATA*)(mapping + dbg[i].PointerToRawData);
                 break;
             }
         }

@@ -149,7 +149,7 @@ struct symt_function
 {
     struct symt                 symt;
     struct hash_table_elt       hash_elt;       /* if global symbol */
-    unsigned long               addr;
+    unsigned long               address;
     struct symt*                container;      /* compiland */
     struct symt*                type;           /* points to function_signature */
     unsigned long               size;
@@ -174,6 +174,16 @@ struct symt_public
     unsigned long               size;
     unsigned                    in_code : 1,
                                 is_function : 1;
+};
+
+struct symt_thunk
+{
+    struct symt                 symt;
+    struct hash_table_elt       hash_elt;
+    struct symt*                container;      /* compiland */
+    unsigned long               address;
+    unsigned long               size;
+    THUNK_ORDINAL               ordinal;        /* FIXME: doesn't seem to be accessible */
 };
 
 /* class tree */
@@ -229,15 +239,19 @@ struct symt_udt
     struct vector               vchildren;
 };
 
-enum DbgModuleType {DMT_UNKNOWN, DMT_ELF, DMT_NE, DMT_PE};
+enum module_type
+{
+    DMT_UNKNOWN,        /* for lookup, not actually used for a module */
+    DMT_ELF,            /* a real ELF shared module */
+    DMT_PE,             /* a native or builtin PE module */
+};
 
 struct module
 {
     IMAGEHLP_MODULE             module;
     struct module*              next;
-    enum DbgModuleType		type;
-    unsigned short		elf_mark : 1;
-    struct tagELF_DBG_INFO*	elf_dbg_info;
+    enum module_type		type;
+    struct elf_module_info*	elf_info;
     
     /* memory allocation pool */
     struct pool                 pool;
@@ -275,8 +289,7 @@ extern struct process* process_find_by_handle(HANDLE hProcess);
 extern SYM_TYPE     elf_load_debug_info(struct module* module);
 extern struct module*
                     elf_load_module(struct process* pcs, const char* name);
-extern unsigned long
-                    elf_read_wine_loader_dbg_info(struct process* pcs);
+extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
 
 /* memory.c */
@@ -294,15 +307,15 @@ extern unsigned long WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDR
 /* module.c */
 extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
-                                        enum DbgModuleType type);
+                                        enum module_type type);
 extern struct module*
                     module_find_by_name(const struct process* pcs, 
-                                        const char* name, enum DbgModuleType type);
+                                        const char* name, enum module_type type);
 extern struct module*
                     module_get_debug(const struct process* pcs, struct module*);
 extern struct module*
                     module_new(struct process* pcs, const char* name, 
-                               enum DbgModuleType type, unsigned long addr, 
+                               enum module_type type, unsigned long addr, 
                                unsigned long size, unsigned long stamp, 
                                unsigned long checksum);
 
@@ -312,7 +325,7 @@ extern BOOL         module_remove(struct process* pcs,
 extern SYM_TYPE     pe_load_debug_directory(const struct process* pcs, 
                                             struct module* module, 
                                             const BYTE* file_map,
-                                            PIMAGE_DEBUG_DIRECTORY dbg, int nDbg);
+                                            const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 /* pe_module.c */
 extern struct module*
                     pe_load_module(struct process* pcs, char* name,
@@ -335,6 +348,7 @@ extern SYM_TYPE     stabs_parse(struct module* module, const char* addr,
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
 extern int          symt_cmp_addr(const void* p1, const void* p2);
+extern int          symt_find_nearest(struct module* module, DWORD addr);
 extern struct symt_compiland*
                     symt_new_compiland(struct module* module, 
                                        const char* filename);
@@ -351,10 +365,10 @@ extern struct symt_data*
                                              unsigned long addr, unsigned long size, 
                                              struct symt* type);
 extern struct symt_function*
-                    symt_new_function(struct module* module, 
+                    symt_new_function(struct module* module,
                                       struct symt_compiland* parent,
                                       const char* name,
-                                      unsigned long addr, unsigned long size,        
+                                      unsigned long addr, unsigned long size,
                                       struct symt* type);
 extern BOOL         symt_normalize_function(struct module* module, 
                                             struct symt_function* func);
@@ -386,6 +400,11 @@ extern BOOL         symt_fill_func_line_info(struct module* module,
                                              struct symt_function* func, 
                                              DWORD addr, IMAGEHLP_LINE* line);
 extern BOOL         symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line);
+extern struct symt_thunk*
+                    symt_new_thunk(struct module* module, 
+                                   struct symt_compiland* parent,
+                                   const char* name, THUNK_ORDINAL ord,
+                                   unsigned long addr, unsigned long size);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
@@ -424,3 +443,7 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name);
+
+
+/* some more Wine extensions */
+#define SYMOPT_WINE_WITH_ELF_MODULES 0x40000000

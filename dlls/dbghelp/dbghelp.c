@@ -42,9 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *      + we should add parameters' types to the function's signature
  *        while processing a function's parameters
  *      + get rid of MSC reading FIXME:s (lots of types are not defined)
+ *      + support the PUBLICS_ONLY, NO_PUBLICS and AUTO_PUBLICS options
  *      + C++ management
  *  - stabs: 
- *      + should identify the relay code in Wine and mark it as thunk type
  *      + C++ management
  *  - implement the callback notification mechanism
  */
@@ -122,7 +122,7 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath,
 static BOOL process_invade(HANDLE hProcess)
 {
     HMODULE     hMods[256];
-    char        img[256], mod[256];
+    char        img[256];
     DWORD       i, sz;
     MODULEINFO  mi;
 
@@ -133,8 +133,7 @@ static BOOL process_invade(HANDLE hProcess)
     {
         if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
             !GetModuleFileNameExA(hProcess, hMods[i], img, sizeof(img)) ||
-            !GetModuleBaseNameA(hProcess, hMods[i], mod, sizeof(mod)) ||
-            !SymLoadModule(hProcess, 0, img, mod, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage))
+            !SymLoadModule(hProcess, 0, img, NULL, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage))
             return FALSE;
     }
 
@@ -218,8 +217,7 @@ BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProc
 
     if (fInvadeProcess)
     {
-        pcs->dbg_hdr_addr = elf_read_wine_loader_dbg_info(pcs);
-        if (pcs->dbg_hdr_addr == 0)
+        if (!elf_read_wine_loader_dbg_info(pcs))
         {
             SymCleanup(hProcess);
             return FALSE;

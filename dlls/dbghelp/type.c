@@ -80,15 +80,16 @@ const char* symt_get_name(const struct symt* sym)
     switch (sym->tag)
     {
     /* lexical tree */
-    case SymTagData:            return ((struct symt_data*)sym)->hash_elt.name;
-    case SymTagFunction:        return ((struct symt_function*)sym)->hash_elt.name;
-    case SymTagPublicSymbol:    return ((struct symt_public*)sym)->hash_elt.name;
-    case SymTagBaseType:        return ((struct symt_basic*)sym)->hash_elt.name;
-    case SymTagLabel:           return ((struct symt_function_point*)sym)->name;
+    case SymTagData:            return ((const struct symt_data*)sym)->hash_elt.name;
+    case SymTagFunction:        return ((const struct symt_function*)sym)->hash_elt.name;
+    case SymTagPublicSymbol:    return ((const struct symt_public*)sym)->hash_elt.name;
+    case SymTagBaseType:        return ((const struct symt_basic*)sym)->hash_elt.name;
+    case SymTagLabel:           return ((const struct symt_function_point*)sym)->name;
+    case SymTagThunk:           return ((const struct symt_thunk*)sym)->hash_elt.name;
     /* hierarchy tree */
-    case SymTagEnum:            return ((struct symt_enum*)sym)->name;
-    case SymTagTypedef:         return ((struct symt_typedef*)sym)->hash_elt.name;
-    case SymTagUDT:             return ((struct symt_udt*)sym)->hash_elt.name;
+    case SymTagEnum:            return ((const struct symt_enum*)sym)->name;
+    case SymTagTypedef:         return ((const struct symt_typedef*)sym)->hash_elt.name;
+    case SymTagUDT:             return ((const struct symt_udt*)sym)->hash_elt.name;
     default:
         FIXME("Unsupported sym-tag %s\n", symt_get_tag_str(sym->tag));
         /* fall through */
@@ -417,10 +418,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
 
             switch (type->tag)
             {
-            case SymTagUDT:          v = &((struct symt_udt*)type)->vchildren; break;
-            case SymTagEnum:         v = &((struct symt_enum*)type)->vchildren; break;
-            case SymTagFunctionType: v = &((struct symt_function_signature*)type)->vchildren; break;
-            case SymTagFunction:     v = &((struct symt_function*)type)->vchildren; break;
+            case SymTagUDT:          v = &((const struct symt_udt*)type)->vchildren; break;
+            case SymTagEnum:         v = &((const struct symt_enum*)type)->vchildren; break;
+            case SymTagFunctionType: v = &((const struct symt_function_signature*)type)->vchildren; break;
+            case SymTagFunction:     v = &((const struct symt_function*)type)->vchildren; break;
             default:
                 FIXME("Unsupported sym-tag %s for find-children\n", 
                       symt_get_tag_str(type->tag));
@@ -438,26 +439,29 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagData:
-            switch (((struct symt_data*)type)->kind)
+            switch (((const struct symt_data*)type)->kind)
             {
             case DataIsGlobal:
             case DataIsFileStatic:
-                X(DWORD) = ((struct symt_data*)type)->u.address;
+                X(DWORD) = ((const struct symt_data*)type)->u.address;
                 break;
             default: return FALSE;
             }
             break;
         case SymTagFunction:
-            X(DWORD) = ((struct symt_function*)type)->addr;
+            X(DWORD) = ((const struct symt_function*)type)->address;
             break;
         case SymTagPublicSymbol:
-            X(DWORD) = ((struct symt_public*)type)->address;
+            X(DWORD) = ((const struct symt_public*)type)->address;
             break;
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagLabel:
-            X(DWORD) = ((struct symt_function_point*)type)->parent->addr + 
-                ((struct symt_function_point*)type)->offset;
+            X(DWORD) = ((const struct symt_function_point*)type)->parent->address + 
+                ((const struct symt_function_point*)type)->offset;
+            break;
+        case SymTagThunk:
+            X(DWORD) = ((const struct symt_thunk*)type)->address;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-address\n", 
@@ -470,7 +474,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagBaseType:
-            X(DWORD) = ((struct symt_basic*)type)->bt;
+            X(DWORD) = ((const struct symt_basic*)type)->bt;
             break;
         case SymTagEnum:
             X(DWORD) = btInt;
@@ -482,29 +486,30 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
 
     case TI_GET_BITPOSITION:
         if (type->tag != SymTagData || 
-            ((struct symt_data*)type)->kind != DataIsMember ||
-            ((struct symt_data*)type)->u.s.length == 0)
+            ((const struct symt_data*)type)->kind != DataIsMember ||
+            ((const struct symt_data*)type)->u.s.length == 0)
             return FALSE;
-        X(DWORD) = ((struct symt_data*)type)->u.s.offset & 7;
+        X(DWORD) = ((const struct symt_data*)type)->u.s.offset & 7;
         break;
 
     case TI_GET_CHILDRENCOUNT:
         switch (type->tag)
         {
         case SymTagUDT:
-            X(DWORD) = vector_length(&((struct symt_udt*)type)->vchildren);
+            X(DWORD) = vector_length(&((const struct symt_udt*)type)->vchildren);
             break;
         case SymTagEnum:
-            X(DWORD) = vector_length(&((struct symt_enum*)type)->vchildren);
+            X(DWORD) = vector_length(&((const struct symt_enum*)type)->vchildren);
             break;
         case SymTagFunctionType:
-            X(DWORD) = vector_length(&((struct symt_function_signature*)type)->vchildren);
+            X(DWORD) = vector_length(&((const struct symt_function_signature*)type)->vchildren);
             break;
         case SymTagFunction:
-            X(DWORD) = vector_length(&((struct symt_function*)type)->vchildren);
+            X(DWORD) = vector_length(&((const struct symt_function*)type)->vchildren);
             break;
         case SymTagPointerType: /* MS does it that way */
         case SymTagArrayType: /* MS does it that way */
+        case SymTagThunk: /* MS does it that way */
             X(DWORD) = 0;
             break;
         default:
@@ -524,51 +529,54 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
          * also include 'this' (GET_CHILDREN_COUNT+1)
          */
         if (type->tag != SymTagArrayType) return FALSE;
-        X(DWORD) = ((struct symt_array*)type)->end - 
-            ((struct symt_array*)type)->start;
+        X(DWORD) = ((const struct symt_array*)type)->end - 
+            ((const struct symt_array*)type)->start + 1;
         break;
 
     case TI_GET_DATAKIND:
         if (type->tag != SymTagData) return FALSE;
-        X(DWORD) = ((struct symt_data*)type)->kind;
+        X(DWORD) = ((const struct symt_data*)type)->kind;
         break;
 
     case TI_GET_LENGTH:
         switch (type->tag)
         {
         case SymTagBaseType:
-            X(DWORD) = ((struct symt_basic*)type)->size;
+            X(DWORD) = ((const struct symt_basic*)type)->size;
             break;
         case SymTagFunction:
-            X(DWORD) = ((struct symt_function*)type)->size;
+            X(DWORD) = ((const struct symt_function*)type)->size;
             break;
         case SymTagPointerType:
             X(DWORD) = sizeof(void*);
             break;
         case SymTagUDT:
-            X(DWORD) = ((struct symt_udt*)type)->size;
+            X(DWORD) = ((const struct symt_udt*)type)->size;
             break;
         case SymTagEnum:
             X(DWORD) = sizeof(int); /* FIXME: should be size of base-type of enum !!! */
             break;
         case SymTagData:
-            if (((struct symt_data*)type)->kind != DataIsMember ||
-                !((struct symt_data*)type)->u.s.length)
+            if (((const struct symt_data*)type)->kind != DataIsMember ||
+                !((const struct symt_data*)type)->u.s.length)
                 return FALSE;
-            X(DWORD) = ((struct symt_data*)type)->u.s.length;
+            X(DWORD) = ((const struct symt_data*)type)->u.s.length;
             break;
         case SymTagArrayType:   
-            if (!symt_get_info(((struct symt_array*)type)->basetype, 
+            if (!symt_get_info(((const struct symt_array*)type)->basetype, 
                                TI_GET_LENGTH, pInfo))
                 return FALSE;
-            X(DWORD) *= ((struct symt_array*)type)->end - 
-                ((struct symt_array*)type)->start;
+            X(DWORD) *= ((const struct symt_array*)type)->end - 
+                ((const struct symt_array*)type)->start + 1;
             break;
         case SymTagPublicSymbol:
-            X(DWORD) = ((struct symt_public*)type)->size;
+            X(DWORD) = ((const struct symt_public*)type)->size;
             break;
         case SymTagTypedef:
-            return symt_get_info(((struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
+            return symt_get_info(((const struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
+            break;
+        case SymTagThunk:
+            X(DWORD) = ((const struct symt_thunk*)type)->size;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 
@@ -581,10 +589,16 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagBlock:
-            X(DWORD) = (DWORD)((struct symt_block*)type)->container;
+            X(DWORD) = (DWORD)((const struct symt_block*)type)->container;
             break;
         case SymTagData:
-            X(DWORD) = (DWORD)((struct symt_data*)type)->container;
+            X(DWORD) = (DWORD)((const struct symt_data*)type)->container;
+            break;
+        case SymTagFunction:
+            X(DWORD) = (DWORD)((const struct symt_function*)type)->container;
+            break;
+        case SymTagThunk:
+            X(DWORD) = (DWORD)((const struct symt_thunk*)type)->container;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-lexical-parent\n", 
@@ -609,16 +623,16 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagData:
-            switch (((struct symt_data*)type)->kind)
+            switch (((const struct symt_data*)type)->kind)
             {
             case DataIsParam:
             case DataIsLocal:
             case DataIsMember:
-                X(ULONG) = ((struct symt_data*)type)->u.s.offset >> 3; 
+                X(ULONG) = ((const struct symt_data*)type)->u.s.offset >> 3; 
                 break;
             default:
                 FIXME("Unknown kind (%u) for get-offset\n",     
-                      ((struct symt_data*)type)->kind);
+                      ((const struct symt_data*)type)->kind);
                 return FALSE;
             }
             break;
@@ -650,41 +664,42 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         {
             /* hierarchical => hierarchical */
         case SymTagArrayType:
-            X(DWORD) = (DWORD)((struct symt_array*)type)->basetype;
+            X(DWORD) = (DWORD)((const struct symt_array*)type)->basetype;
             break;
         case SymTagPointerType:
-            X(DWORD) = (DWORD)((struct symt_pointer*)type)->pointsto;
+            X(DWORD) = (DWORD)((const struct symt_pointer*)type)->pointsto;
             break;
         case SymTagFunctionType:
-            X(DWORD) = (DWORD)((struct symt_function_signature*)type)->rettype;
+            X(DWORD) = (DWORD)((const struct symt_function_signature*)type)->rettype;
             break;
         case SymTagTypedef:
-            X(DWORD) = (DWORD)((struct symt_typedef*)type)->type;
+            X(DWORD) = (DWORD)((const struct symt_typedef*)type)->type;
             break;
             /* lexical => hierarchical */
         case SymTagData:
-            X(DWORD) = (DWORD)((struct symt_data*)type)->type; 
+            X(DWORD) = (DWORD)((const struct symt_data*)type)->type; 
             break;
         case SymTagFunction:
-            X(DWORD) = (DWORD)((struct symt_function*)type)->type;
+            X(DWORD) = (DWORD)((const struct symt_function*)type)->type;
             break;
             /* FIXME: should also work for enums and FunctionArgType */
         default:
             FIXME("Unsupported sym-tag %s for get-type\n", 
                   symt_get_tag_str(type->tag));
+        case SymTagThunk:
             return FALSE;
         }
         break;
 
     case TI_GET_UDTKIND:
         if (type->tag != SymTagUDT) return FALSE;
-        X(DWORD) = ((struct symt_udt*)type)->kind;
+        X(DWORD) = ((const struct symt_udt*)type)->kind;
         break;
 
     case TI_GET_VALUE:
-        if (type->tag != SymTagData || ((struct symt_data*)type)->kind != DataIsConstant)
+        if (type->tag != SymTagData || ((const struct symt_data*)type)->kind != DataIsConstant)
             return FALSE;
-        X(VARIANT) = ((struct symt_data*)type)->u.value;
+        X(VARIANT) = ((const struct symt_data*)type)->u.value;
         break;
 
 #undef X

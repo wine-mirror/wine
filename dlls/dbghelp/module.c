@@ -33,16 +33,37 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+static void module_fill_module(const char* in, char* out, unsigned size)
+{
+    const char*         ptr;
+    unsigned            len;
+
+    for (ptr = in + strlen(in) - 1; 
+         *ptr != '/' && *ptr != '\\' && ptr >= in; 
+         ptr--);
+    if (ptr < in || *ptr == '/' || *ptr == '\\') ptr++;
+    strncpy(out, ptr, size);
+    out[size - 1] = '\0';
+    len = strlen(out);
+    if (len > 4 && 
+        (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
+        out[len - 4] = '\0';
+    else 
+        if (len > 7 && 
+            (!strcasecmp(&out[len - 7], ".dll.so") || !strcasecmp(&out[len - 7], ".exe.so")))
+            strcpy(&out[len - 7], "<elf>");
+    while ((*out = tolower(*out))) out++;
+}
+
 /***********************************************************************
  * Creates and links a new module to a process 
  */
 struct module* module_new(struct process* pcs, const char* name, 
-                          enum DbgModuleType type, 
+                          enum module_type type, 
                           unsigned long mod_addr, unsigned long size,
                           unsigned long stamp, unsigned long checksum) 
 {
     struct module*      module;
-    const char*         ptr;
 
     if (!(module = HeapAlloc(GetProcessHeap(), 0, sizeof(*module))))
 	return NULL;
@@ -61,12 +82,7 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.SizeOfStruct = sizeof(module->module);
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;
-    for (ptr = name + strlen(name) - 1; 
-         *ptr != '/' && *ptr != '\\' && ptr >= name; 
-         ptr--);
-    if (ptr < name || *ptr == '/' || *ptr == '\\') ptr++;
-    strncpy(module->module.ModuleName, ptr, sizeof(module->module.ModuleName));
-    module->module.ModuleName[sizeof(module->module.ModuleName) - 1] = '\0';
+    module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
     module->module.ImageName[0] = '\0';
     strncpy(module->module.LoadedImageName, name, 
             sizeof(module->module.LoadedImageName));
@@ -97,7 +113,7 @@ struct module* module_new(struct process* pcs, const char* name,
  *
  */
 struct module* module_find_by_name(const struct process* pcs, 
-                                   const char* name, enum DbgModuleType type)
+                                   const char* name, enum module_type type)
 {
     struct module*      module;
 
@@ -188,7 +204,7 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
  * module
  */
 struct module* module_find_by_addr(const struct process* pcs, unsigned long addr, 
-                                   enum DbgModuleType type)
+                                   enum module_type type)
 {
     struct module*      module;
     
@@ -226,6 +242,13 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
 
     pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
+
+    /* this is a Wine extension to the API */
+    if (!ImageName && !hFile)
+    {
+        elf_synchronize_module_list(pcs);
+        return 0;
+    }
 
     if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
     {
@@ -316,7 +339,8 @@ BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
     
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (module->type != DMT_PE) continue;
+        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type != DMT_PE)
+            continue;
         if (!EnumModulesCallback(module->module.ModuleName, 
                                  module->module.BaseOfImage, UserContext))
             break;
@@ -333,7 +357,7 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
                                     PVOID UserContext)
 {
     HMODULE*    hMods;
-    char        img[256], mod[256];
+    char        base[256], mod[256];
     DWORD       i, sz;
     MODULEINFO  mi;
 
@@ -351,9 +375,10 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
     for (i = 0; i < sz; i++)
     {
         if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
-            !GetModuleFileNameExA(hProcess, hMods[i], img, sizeof(img)) ||
-            !GetModuleBaseNameA(hProcess, hMods[i], mod, sizeof(mod)))
-            break;
+            !GetModuleBaseNameA(hProcess, hMods[i], base, sizeof(base)))
+            continue;
+        module_fill_module(base, mod, sizeof(mod));
+
         EnumLoadedModulesCallback(mod, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage, 
                                   UserContext);
     }

@@ -57,10 +57,6 @@
 
 #include "dbghelp_private.h"
 
-#if defined(__svr4__) || defined(__sun)
-#define __ELF__
-#endif
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
@@ -842,6 +838,9 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                             udt, symt_get_name(&udt->symt), udt->symt.tag);
                         return -1;
                     }
+                    if (strcmp(udt->hash_elt.name, typename))
+                        ERR("Forward declaration name mismatch %s <> %s\n",
+                            udt->hash_elt.name, typename);
                     /* should check typename is the same too */
                     new_dt = &udt->symt;
                 }
@@ -1042,76 +1041,6 @@ struct pending_loc_var
     unsigned            regno;
 };
 
-static
-struct symt_public* lookup_public(const struct module* module, 
-                                  const struct symt_compiland* compiland,
-                                  const char* name)
-{
-    unsigned                    nfind = 0;
-    struct symt_public*         found = NULL;
-    struct symt_public*         xfound = NULL;
-    struct symt_public*         sym;
-    const char*                 xname;
-    const char*                 tmp;
-    void*                       ptr;
-    struct hash_table_iter      hti;
-    const char*                 in_src;
-    const char*                 out_src;
-
-    if (compiland && compiland->symt.tag == SymTagCompiland)
-        in_src = source_get(module, compiland->source);
-    else in_src = NULL;
-
-    hash_table_iter_init(&module->ht_symbols, &hti, name);
-    while ((ptr = hash_table_iter_up(&hti)))
-    {
-        sym = GET_ENTRY(ptr, struct symt_public, hash_elt);
-        if (sym->symt.tag == SymTagPublicSymbol)
-        {
-            xname = symt_get_name(&sym->symt);
-            if (!xname || strcmp(xname, name)) continue;
-
-            if (sym->container &&
-                sym->container->tag == SymTagCompiland)
-                out_src = source_get(module, ((struct symt_compiland*)sym->container)->source);
-            else out_src = NULL;
-
-            xfound = sym;
-            if ((in_src && !out_src) || (!in_src && out_src)) continue;
-            
-            if (in_src)
-            {
-                if (strcmp(in_src, out_src) || (tmp = strrchr(in_src, '/')) == NULL ||
-                    strcmp(tmp + 1, out_src))
-                    continue;
-            }
-
-            /* we continue once found to insure uniqueness of public symbol's name */
-            if (nfind++)
-            {
-                FIXME("More than one public symbol (%s) in %s: [%u] %p {%lx,%lx} in %s\n", 
-                      name, in_src, nfind, sym, sym->address, sym->size, out_src);
-            }
-            else found = sym;
-        }
-    }
-    if (!nfind)
-    {
-        if (xfound) found = xfound;
-        else FIXME("Couldn't locate %s in public symbols\n", name);
-    }
-    if (found)
-    {
-        if (found->container &&
-            found->container->tag == SymTagCompiland)
-            out_src = source_get(module, ((struct symt_compiland*)found->container)->source);
-        else out_src = NULL;
-        TRACE("Found for %s in %s: %p {%lx,%lx} in %s\n", 
-              name, in_src, found, found->address, found->size, out_src);
-    }
-    return found;
-}
-
 /******************************************************************
  *		stabs_finalize_function
  *
@@ -1128,11 +1057,11 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
     /* To define the debug-start of the function, we use the second line number.
      * Not 100% bullet proof, but better than nothing
      */
-    if (symt_fill_func_line_info(module, func, func->addr, &il) &&
+    if (symt_fill_func_line_info(module, func, func->address, &il) &&
         symt_get_func_line_next(module, &il))
     {
         symt_add_function_point(module, func, SymTagFuncDebugStart, 
-                                il.Address - func->addr, NULL);
+                                il.Address - func->address, NULL);
     }
 }
 
@@ -1142,7 +1071,6 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
 {
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
-    struct symt_public*         public;
     struct symt_compiland*      compiland = NULL;
     char                        currpath[PATH_MAX];
     int                         i, j;
@@ -1162,8 +1090,8 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
     unsigned                    num_allocated_pending_vars = 0;
 
     nstab = stablen / sizeof(struct stab_nlist);
-    stab_ptr = (struct stab_nlist*)(addr + staboff);
-    strs = (char*)(addr + strtaboff);
+    stab_ptr = (const struct stab_nlist*)(addr + staboff);
+    strs = (const char*)(addr + strtaboff);
 
     memset(currpath, 0, sizeof(currpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
@@ -1270,16 +1198,9 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
              * With a.out or mingw, they actually do make some amount of sense.
              */
             stab_strcpy(symname, sizeof(symname), ptr);
-#ifdef __ELF__
-            if ((public = lookup_public(module, compiland, symname)))
-                symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                         public->address, public->size,
-                                         stabs_parse_type(ptr));
-#else
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
                                      load_offset + stab_ptr->n_value, 0,
                                      stabs_parse_type(ptr));
-#endif
             break;
         case N_LCSYM:
         case N_STSYM:
@@ -1396,19 +1317,8 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             if (curr_func != NULL)
             {
                 assert(source_idx >= 0);
-#ifdef __ELF__
                 symt_add_func_line(module, curr_func, source_idx, 
                                    stab_ptr->n_desc, stab_ptr->n_value);
-#else
-                /*
-                 * This isn't right.  The order of the stabs is different under
-                 * a.out, and as a result we would end up attaching the line
-                 * number to the wrong function.
-                 */
-                symt_add_func_line(module, curr_func, source_idx,
-                                   stab_ptr->n_desc,
-                                   stab_ptr->n_value - curr_func->addr);
-#endif
             }
             break;
         case N_FUN:
@@ -1433,16 +1343,9 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
                 struct symt_function_signature* func_type;
                 func_type = symt_new_function_signature(module, 
                                                         stabs_parse_type(ptr));
-#ifdef __ELF__
-                if ((public = lookup_public(module, compiland, symname)))
-                    curr_func = symt_new_function(module, compiland, symname, 
-                                                  public->address, public->size,
-                                                  &func_type->symt);
-#else
                 curr_func = symt_new_function(module, compiland, symname, 
                                               load_offset + stab_ptr->n_value, 0,
                                               &func_type->symt);
-#endif
             }
             else
             {
