@@ -30,7 +30,7 @@ static BOOL X11DRV_MOUSE_WarpPointer = TRUE;  /* hack; see DISPLAY_MoveCursor */
  */
 static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 {
-    Pixmap pixmapBits, pixmapMask, pixmapAll;
+    Pixmap pixmapBits, pixmapMask, pixmapMaskInv, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
 
@@ -88,6 +88,8 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
                                     ptr->nWidth, ptr->nHeight, 1 );
         pixmapMask = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                     ptr->nWidth, ptr->nHeight, 1 );
+        pixmapMaskInv = XCreatePixmap( display, X11DRV_GetXRootWindow(),
+                                    ptr->nWidth, ptr->nHeight, 1 );
 
         /* Make sure everything went OK so far */
 
@@ -97,34 +99,46 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
              * compatible between Windows and X11. Under X11, there
              * are only 3 possible color cursor: black, white and
              * masked. So we map the 4th Windows color (invert the
-             * bits on the screen) to black. This require some boolean
-             * arithmetic:
+             * bits on the screen) to black and an additional white bit on 
+             * an other place (+1,+1). This require some boolean arithmetic:
              *
              *         Windows          |          X11
-             * Xor    And      Result   |   Bits     Mask     Result
+             * And    Xor      Result   |   Bits     Mask     Result
              *  0      0     black      |    0        1     background
-             *  0      1     no change  |    X        0     no change
-             *  1      0     white      |    1        1     foreground
+             *  0      1     white      |    1        1     foreground
+             *  1      0     no change  |    X        0     no change
              *  1      1     inverted   |    0        1     background
              *
              * which gives:
-             *  Bits = 'Xor' and not 'And'
-             *  Mask = 'Xor' or not 'And'
+             *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
+             *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
              *
              * FIXME: apparently some servers do support 'inverted' color.
              * I don't know if it's correct per the X spec, but maybe
              * we ought to take advantage of it.  -- AJ
              */
+            XSetFunction( display, BITMAP_monoGC, GXcopy );
             XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
             XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XCopyArea( display, pixmapAll, pixmapMaskInv, BITMAP_monoGC,
+                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XSetFunction( display, BITMAP_monoGC, GXand );
+            XCopyArea( display, pixmapAll, pixmapMaskInv, BITMAP_monoGC,
+                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
             XSetFunction( display, BITMAP_monoGC, GXandReverse );
             XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
             XSetFunction( display, BITMAP_monoGC, GXorReverse );
             XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+            /* Additional white */
+            XSetFunction( display, BITMAP_monoGC, GXor );
+            XCopyArea( display, pixmapMaskInv, pixmapMask, BITMAP_monoGC,
+                       0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
+            XCopyArea( display, pixmapMaskInv, pixmapBits, BITMAP_monoGC,
+                       0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
             XSetFunction( display, BITMAP_monoGC, GXcopy );
             fg.red = fg.green = fg.blue = 0xffff;
             bg.red = bg.green = bg.blue = 0x0000;
@@ -137,6 +151,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         if (pixmapAll) XFreePixmap( display, pixmapAll );
         if (pixmapBits) XFreePixmap( display, pixmapBits );
         if (pixmapMask) XFreePixmap( display, pixmapMask );
+        if (pixmapMaskInv) XFreePixmap( display, pixmapMaskInv );
     }
 
     if (cursor == None) return FALSE;
