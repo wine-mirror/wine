@@ -68,7 +68,12 @@ then
 else
   LD_LIBRARY_PATH="$topdir/libs"
 fi
-WINEDLLPATH="$topdir/dlls:$topdir/programs"
+if [ -n "$WINEDLLPATH" ]
+then
+  WINEDLLPATH="$topdir/dlls:$topdir/programs:$WINEDLLPATH"
+else
+  WINEDLLPATH="$topdir/dlls:$topdir/programs"
+fi
 WINESERVER="$topdir/server/wineserver"
 WINELOADER="$topdir/loader/wine"
 export LD_LIBRARY_PATH WINEDLLPATH WINESERVER WINELOADER
