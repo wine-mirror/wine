@@ -15,6 +15,8 @@
 #include "console.h"
 #include "options.h"
 
+CONSOLE_device driver;
+
 static int pop_driver(char **, char **, int *);
 
 static int console_initialized = FALSE;

@@ -66,7 +66,7 @@ typedef struct CONSOLE_DRIVER
 
 } CONSOLE_device;
 
-CONSOLE_device driver; /* Global driver struct */
+extern CONSOLE_device driver; /* Global driver struct */
 
 /* Generic defines */
 int  CONSOLE_Init(char *drivers);
