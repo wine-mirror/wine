@@ -93,9 +93,15 @@ static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDD
   info->dwAlphaBitMask = 0;
 }
 
+static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
+{
+    return 1;
+}
+
 void X11DRV_XF86VM_Init(void)
 {
   int nmodes, i;
+  Bool ok;
 
   if (xf86vm_major) return; /* already initialized? */
 
@@ -106,7 +112,10 @@ void X11DRV_XF86VM_Init(void)
 
   /* see if XVidMode is available */
   if (!TSXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error)) return;
-  if (!TSXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor)) return;
+  X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
+  ok = TSXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor);
+  if (X11DRV_check_error()) ok = FALSE;
+  if (!ok) return;
 
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_major > 2 || (xf86vm_major == 2 && xf86vm_minor >= 1))

@@ -58,9 +58,15 @@ static void convert_mode(XDGAMode *mode, LPDDHALMODEINFO info)
         info->dwWidth, info->dwHeight, info->dwBPP, info->wRefreshRate);
 }
 
+static int DGA2ErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
+{
+    return 1;
+}
+
 void X11DRV_XF86DGA2_Init(void)
 {
   int nmodes, major, minor, i;
+  Bool ok;
 
   if (xf86dga2_modes) return; /* already initialized? */
 
@@ -71,7 +77,10 @@ void X11DRV_XF86DGA2_Init(void)
 
   if (!TSXDGAQueryExtension(gdi_display, &dga_event, &dga_error)) return;
 
-  if (!TSXDGAQueryVersion(gdi_display, &major, &minor)) return;
+  X11DRV_expect_error(gdi_display, DGA2ErrorHandler, NULL);
+  ok = TSXDGAQueryVersion(gdi_display, &major, &minor);
+  if (X11DRV_check_error()) ok = FALSE;
+  if (!ok) return;
 
   if (major < 2) return; /* only bother with DGA 2+ */
 
