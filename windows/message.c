@@ -1211,9 +1211,12 @@ BOOL WINAPI PeekMessageW(
   UINT min,       /* minimum message to receive */
   UINT max,       /* maximum message to receive */
   UINT wRemoveMsg /* removal flags */ 
-) {
-	/* FIXME: Should perform Unicode translation on specific messages */
-	return PeekMessageA(lpmsg,hwnd,min,max,wRemoveMsg);
+) 
+{
+	BOOL bRet = PeekMessageA(lpmsg,hwnd,min,max,wRemoveMsg);
+	if (bRet)
+	    FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
+	return bRet;
 }
 
 /***********************************************************************
@@ -1315,9 +1318,13 @@ BOOL WINAPI GetMessageW(
   HWND hwnd,  /* restrict to messages for hwnd */
   UINT min,   /* minimum message to receive */
   UINT max    /* maximum message to receive */
-) {
-    /* FIXME */
-    return GetMessageA(lpmsg, hwnd, min, max);
+) 
+{
+    BOOL bRet = GetMessageA(lpmsg, hwnd, min, max);
+    if (bRet)
+        FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
+    return bRet;
+
 }
 
 
@@ -1393,7 +1400,7 @@ END:
 BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
                               LPARAM lParam )
 {
-  /* FIXME */
+  FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(message));
   return PostMessageA( hwnd, message, wParam, lParam );
 }
 
@@ -1614,7 +1621,7 @@ BOOL WINAPI PostThreadMessageA(DWORD idThread , UINT message,
 BOOL WINAPI PostThreadMessageW(DWORD idThread , UINT message,
                                    WPARAM wParam, LPARAM lParam )
 {
-   FIXME(sendmsg, "(...): Should do unicode/ascii conversion!\n");
+   FIXME(sendmsg, "(%s) unicode<->ascii\n",SPY_GetMsgName(message));
    return PostThreadMessageA(idThread, message, wParam, lParam);
 }
 
@@ -2413,12 +2420,12 @@ BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 }
 
 /***********************************************************************
- *           SendMessageCallBack32A
+ *           SendMessageCallback32A
  * FIXME: It's like PostMessage. The callback gets called when the message
  * is processed. We have to modify the message processing for a exact
  * implementation...
  */
-BOOL WINAPI SendMessageCallBackA(
+BOOL WINAPI SendMessageCallbackA(
 	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
 	FARPROC lpResultCallBack,DWORD dwData)
 {	
@@ -2426,6 +2433,26 @@ BOOL WINAPI SendMessageCallBackA(
 		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
 	if ( hWnd == HWND_BROADCAST)
 	{	PostMessageA( hWnd, Msg, wParam, lParam);
+		FIXME(msg,"Broadcast: Callback will not be called!\n");
+		return TRUE;
+	}
+	(lpResultCallBack)( hWnd, Msg, dwData, SendMessageA ( hWnd, Msg, wParam, lParam ));
+		return TRUE;
+}
+/***********************************************************************
+ *           SendMessageCallback32W
+ * FIXME: It's like PostMessage. The callback gets called when the message
+ * is processed. We have to modify the message processing for a exact
+ * implementation...
+ */
+BOOL WINAPI SendMessageCallbackW(
+	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
+	FARPROC lpResultCallBack,DWORD dwData)
+{	
+	FIXME(msg,"(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
+		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
+	if ( hWnd == HWND_BROADCAST)
+	{	PostMessageW( hWnd, Msg, wParam, lParam);
 		FIXME(msg,"Broadcast: Callback will not be called!\n");
 		return TRUE;
 	}

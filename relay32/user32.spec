@@ -456,8 +456,8 @@ init	MAIN_UserInit
 452 stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessageA
 453 stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessageW
 454 stdcall SendMessageA(long long long long) SendMessageA
-455 stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallBackA
-456 stub SendMessageCallbackW
+455 stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallbackA
+456 stdcall SendMessageCallbackW(long long long long ptr long) SendMessageCallbackW
 457 stdcall SendMessageTimeoutA(long long long long ptr ptr) SendMessageTimeoutA
 458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeoutW
 459 stdcall SendMessageW(long long long long) SendMessageW
