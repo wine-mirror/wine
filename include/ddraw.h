@@ -650,6 +650,11 @@ typedef struct _DDPIXELFORMAT {
 #define DDEDM_REFRESHRATES	0x00000001
 #define DDEDM_STANDARDVGAMODES	0x00000002
 
+/* WaitForVerticalDisplay flags */
+
+#define DDWAITVB_BLOCKBEGIN		0x00000001
+#define DDWAITVB_BLOCKBEGINEVENT	0x00000002
+#define DDWAITVB_BLOCKEND		0x00000004
 
 typedef struct _DDSURFACEDESC
 {
@@ -1145,7 +1150,7 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #define IDirectDrawSurface_IsLost(p)                    ICOM_CALL (IsLost,p)
 #define IDirectDrawSurface_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirectDrawSurface_ReleaseDC(p,a)               ICOM_CALL1(ReleaseDC,p,a)
-#define IDirectDrawSurface_Restore(p,a,b)               ICOM_CALL (Restore,p,a,b)
+#define IDirectDrawSurface_Restore(p)                   ICOM_CALL (Restore,p)
 #define IDirectDrawSurface_SetClipper(p,a,b)            ICOM_CALL1(SetClipper,p,a,b)
 #define IDirectDrawSurface_SetColorKey(p,a,b)           ICOM_CALL2(SetColorKey,p,a,b)
 #define IDirectDrawSurface_SetOverlayPosition(p,a,b)    ICOM_CALL2(SetOverlayPosition,p,a,b)
