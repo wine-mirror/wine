@@ -60,7 +60,7 @@ static DWORD JACK_drvLoad(void)
   {
     jackhandle = wine_dlopen(SONAME_LIBJACK, RTLD_NOW, NULL, 0);
     TRACE("JACK_drvLoad: SONAME_LIBJACK == %s\n", SONAME_LIBJACK);
-    TRACE("JACK_drvLoad: jackhandle == 0x%x\n", jackhandle);
+    TRACE("JACK_drvLoad: jackhandle == %p\n", jackhandle);
     if(!jackhandle)
     {
       FIXME("JACK_drvLoad: error loading the jack library %s, please install this library to use jack\n", SONAME_LIBJACK);
