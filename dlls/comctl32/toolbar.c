@@ -113,6 +113,7 @@ typedef struct
     DWORD      dwStructSize;   /* size of TBBUTTON struct */
     INT      nHeight;        /* height of the toolbar */
     INT      nWidth;         /* width of the toolbar */
+    RECT     client_rect;
     INT      nButtonHeight;
     INT      nButtonWidth;
     INT      nBitmapHeight;
@@ -497,7 +498,7 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc, TOOLBAR_INFO *infoPtr)
 /***********************************************************************
 * 		TOOLBAR_DrawDDFlatSeparator
 *
-* This function draws the separator that was flaged as BTNS_DROPDOWN.
+* This function draws the separator that was flagged as BTNS_DROPDOWN.
 * In this case, the separator is a pixel high line of COLOR_BTNSHADOW,
 * followed by a pixel high line of COLOR_BTNHIGHLIGHT. These separators
 * are horizontal as opposed to the vertical separators for not dropdown
@@ -4896,6 +4897,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->clrBtnShadow = CLR_DEFAULT;
     infoPtr->szPadding.cx = 7;
     infoPtr->szPadding.cy = 6;
+    GetClientRect(hwnd, &infoPtr->client_rect);
     TOOLBAR_NotifyFormat(infoPtr, (WPARAM)hwnd, (LPARAM)NF_REQUERY);
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -5778,8 +5780,50 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    cx += GetSystemMetrics(SM_CYEDGE);
 	}
 
-	SetWindowPos (hwnd, 0,  x,  y, cx, cy, uPosFlags | SWP_NOZORDER);
+        if(infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS)
+        {
+            RECT delta_width, delta_height, client, dummy;
+            DWORD min_x, max_x, min_y, max_y;
+            TBUTTON_INFO *btnPtr;
+            INT i;
+
+            GetClientRect(hwnd, &client);
+            if(client.right > infoPtr->client_rect.right)
+            {
+                min_x = infoPtr->client_rect.right;
+                max_x = client.right;
+            }
+            else
+            {
+                max_x = infoPtr->client_rect.right;
+                min_x = client.right;
+            }
+            if(client.bottom > infoPtr->client_rect.bottom)
+            {
+                min_y = infoPtr->client_rect.bottom;
+                max_y = client.bottom;
+            }
+            else
+            {
+                max_y = infoPtr->client_rect.bottom;
+                min_y = client.bottom;
+            }
+
+            SetRect(&delta_width, min_x, 0, max_x, min_y);
+            SetRect(&delta_height, 0, min_y, max_x, max_y);
+
+            TRACE("delta_width %s delta_height %s\n", wine_dbgstr_rect(&delta_width), wine_dbgstr_rect(&delta_height));
+            btnPtr = infoPtr->buttons;
+            for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
+                if(IntersectRect(&dummy, &delta_width, &btnPtr->rect) ||
+                   IntersectRect(&dummy, &delta_height, &btnPtr->rect))
+                    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
+        }
+
+        if((uPosFlags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) 
+            SetWindowPos (hwnd, 0,  x,  y, cx, cy, uPosFlags | SWP_NOZORDER);
     }
+    GetClientRect(hwnd, &infoPtr->client_rect);
     return 0;
 }
 
