@@ -127,7 +127,7 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 			This->pwqueue = 0;
 			This->playpos = 0;
 			This->mixpos = 0;
-			memset(This->buffer, (This->pwfx->wBitsPerSample == 16) ? 0 : 128, This->buflen);
+			FillMemory(This->buffer, This->buflen, (This->pwfx->wBitsPerSample == 16) ? 0 : 128);
 			TRACE("fraglen=%ld\n", This->fraglen);
 			DSOUND_WaveQueue(This, (DWORD)-1);
 		}
@@ -371,7 +371,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 
 	nSamplesPerSec = dsound->pwfx->nSamplesPerSec;
 
-        memcpy(dsound->pwfx, wfex, cp_size);
+        CopyMemory(dsound->pwfx, wfex, cp_size);
 
 	if (dsound->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) {
 		DWORD flags = CALLBACK_FUNCTION;
@@ -656,7 +656,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
 
     if (lpwf) {	/* NULL is valid */
         if (wfsize >= size) {
-            memcpy(lpwf,This->dsound->pwfx,size);
+            CopyMemory(lpwf,This->dsound->pwfx,size);
             if (wfwritten)
                 *wfwritten = size;
         } else {
@@ -1089,7 +1089,7 @@ HRESULT WINAPI PrimaryBufferImpl_Create(
 	dsb->dsound = ds;
 	dsb->lpVtbl = &dspbvt;
 
-	memcpy(&ds->dsbd, dsbd, sizeof(*dsbd));
+	CopyMemory(&ds->dsbd, dsbd, sizeof(*dsbd));
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"

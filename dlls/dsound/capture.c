@@ -657,11 +657,11 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 
         if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
 	    ipDSC->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
-            memcpy(ipDSC->pwfx, wfex, sizeof(WAVEFORMATEX));
+            CopyMemory(ipDSC->pwfx, wfex, sizeof(WAVEFORMATEX));
 	    ipDSC->pwfx->cbSize = 0;
 	} else {
 	    ipDSC->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
-            memcpy(ipDSC->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
+            CopyMemory(ipDSC->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
         }
     } else {
 	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
@@ -692,7 +692,7 @@ DSOUND_CreateDirectSoundCaptureBuffer(
         This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
             lpcDSCBufferDesc->dwSize);
         if (This->pdscbd)
-            memcpy(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
+            CopyMemory(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
         else {
             WARN("no memory\n");
             This->dsound->capture_buffer = 0;
@@ -862,7 +862,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 	    WARN("out of memory\n");
 	    return DSERR_OUTOFMEMORY;
 	}
-	memcpy(This->dscb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	CopyMemory(This->dscb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	This->dscb->nrofnotifies = howmuch;
     } else {
         HeapFree(GetProcessHeap(), 0, This->dscb->notifies);
@@ -1132,7 +1132,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
         dwSizeAllocated = sizeof(WAVEFORMATEX) + This->dsound->pwfx->cbSize;
 
     if (lpwfxFormat) { /* NULL is valid (just want size) */
-        memcpy(lpwfxFormat, This->dsound->pwfx, dwSizeAllocated);
+        CopyMemory(lpwfxFormat, This->dsound->pwfx, dwSizeAllocated);
         if (lpdwSizeWritten)
             *lpdwSizeWritten = dwSizeAllocated;
     } else {
@@ -1376,8 +1376,8 @@ IDirectSoundCaptureBufferImpl_Start(
 		    }
                 }
 
-                memset(ipDSC->buffer,
-                    (ipDSC->pwfx->wBitsPerSample == 8) ? 128 : 0, ipDSC->buflen);
+                FillMemory(ipDSC->buffer, ipDSC->buflen,
+                    (ipDSC->pwfx->wBitsPerSample == 8) ? 128 : 0);
             } else {
 		TRACE("no notifiers specified\n");
 		/* no notifiers specified so just create a single default header */

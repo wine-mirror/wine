@@ -129,7 +129,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 		    WARN("out of memory\n");
 		    return DSERR_OUTOFMEMORY;
 	    }
-	    memcpy(This->dsb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    CopyMemory(This->dsb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	    This->dsb->nrofnotifies = howmuch;
         } else {
            HeapFree(GetProcessHeap(), 0, This->dsb->notifies);
@@ -568,7 +568,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
 
     if (lpwf) { /* NULL is valid */
         if (wfsize >= size) {
-            memcpy(lpwf,This->pwfx,size);
+            CopyMemory(lpwf,This->pwfx,size);
             if (wfwritten)
                 *wfwritten = size;
         } else {
@@ -1059,7 +1059,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	dsb->iks = NULL;
 
 	/* size depends on version */
-	memcpy(&dsb->dsbd, dsbd, dsbd->dwSize);
+	CopyMemory(&dsb->dsbd, dsbd, dsbd->dwSize);
 
 	/* variable sized struct so calculate size based on format */
 	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
@@ -1076,7 +1076,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 		return DSERR_OUTOFMEMORY;
 	}
 
-	memcpy(dsb->pwfx, wfex, cp_size);
+	CopyMemory(dsb->pwfx, wfex, cp_size);
 
 	dsb->buflen = dsbd->dwBufferBytes;
 	dsb->freq = dsbd->lpwfxFormat->nSamplesPerSec;

@@ -539,7 +539,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
         return DSERR_OUTOFMEMORY;
     }
 
-    memcpy(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
+    CopyMemory(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
 
     if (pdsb->hwbuf) {
         TRACE("duplicating hardware buffer\n");
@@ -597,7 +597,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
             return DSERR_OUTOFMEMORY;
     }
 
-    memcpy(dsb->pwfx, pdsb->pwfx, size);
+    CopyMemory(dsb->pwfx, pdsb->pwfx, size);
 
     InitializeCriticalSection(&(dsb->lock));
     dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";

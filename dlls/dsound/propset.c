@@ -859,7 +859,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
 			DWORD size;
-			memset(&data, 0, sizeof(data));
+			ZeroMemory(&data, sizeof(data));
 			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 			data.WaveDeviceId = wod;
 			data.DeviceId = renderer_guids[wod];
@@ -889,7 +889,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
 			DWORD size;
-			memset(&data, 0, sizeof(data));
+			ZeroMemory(&data, sizeof(data));
 			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 			data.WaveDeviceId = wid;
 			data.DeviceId = capture_guids[wid];
@@ -959,7 +959,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,size);
 			    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wInterface, size));
 			    if (err == DS_OK) {
-				memset(&data, 0, sizeof(data));
+				ZeroMemory(&data, sizeof(data));
 				data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 				data.WaveDeviceId = wod;
 				data.DeviceId = renderer_guids[wod];
@@ -993,7 +993,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,size);
 			    err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wInterface, size));
 			    if (err == DS_OK) {
-				memset(&data, 0, sizeof(data));
+				ZeroMemory(&data, sizeof(data));
 				data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 				data.WaveDeviceId = wid;
 				data.DeviceId = capture_guids[wid];

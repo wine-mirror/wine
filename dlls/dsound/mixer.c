@@ -240,10 +240,10 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	        DWORD bytesleft = dsb->buflen - dsb->buf_mixpos;
 		TRACE("(%p) Best case\n", dsb);
 	    	if (len <= bytesleft )
-			memcpy(obp, ibp, len);
+			CopyMemory(obp, ibp, len);
 		else { /* wrap */
-			memcpy(obp, ibp, bytesleft );
-			memcpy(obp + bytesleft, dsb->buffer->memory, len - bytesleft);
+			CopyMemory(obp, ibp, bytesleft);
+			CopyMemory(obp + bytesleft, dsb->buffer->memory, len - bytesleft);
 		}
 		return len;
 	}
@@ -903,10 +903,10 @@ static void DSOUND_MixReset(IDirectSoundImpl *dsound, DWORD writepos)
 
 	/* wipe out premixed data */
 	if (dsound->mixpos < writepos) {
-		memset(dsound->buffer + writepos, nfiller, dsound->buflen - writepos);
-		memset(dsound->buffer, nfiller, dsound->mixpos);
+		FillMemory(dsound->buffer + writepos, dsound->buflen - writepos, nfiller);
+		FillMemory(dsound->buffer, dsound->mixpos, nfiller);
 	} else {
-		memset(dsound->buffer + writepos, nfiller, dsound->mixpos - writepos);
+		FillMemory(dsound->buffer + writepos, dsound->mixpos - writepos, nfiller);
 	}
 
 	/* reset primary mix position */
@@ -992,10 +992,10 @@ void DSOUND_PerformMix(IDirectSoundImpl *dsound)
 		assert(dsound->playpos < dsound->buflen);
 		/* wipe out just-played sound data */
 		if (playpos < dsound->playpos) {
-			memset(dsound->buffer + dsound->playpos, nfiller, dsound->buflen - dsound->playpos);
-			memset(dsound->buffer, nfiller, playpos);
+			FillMemory(dsound->buffer + dsound->playpos, dsound->buflen - dsound->playpos, nfiller);
+			FillMemory(dsound->buffer, playpos, nfiller);
 		} else {
-			memset(dsound->buffer + dsound->playpos, nfiller, playpos - dsound->playpos);
+			FillMemory(dsound->buffer + dsound->playpos, playpos - dsound->playpos, nfiller);
 		}
 		dsound->playpos = playpos;
 
@@ -1067,7 +1067,7 @@ void DSOUND_PerformMix(IDirectSoundImpl *dsound)
 			inq = 0;
 			maxq = dsound->buflen;
 			if (maxq > frag) maxq = frag;
-			memset(dsound->buffer, nfiller, dsound->buflen);
+			FillMemory(dsound->buffer, dsound->buflen, nfiller);
 			paused = TRUE;
 		}
 
