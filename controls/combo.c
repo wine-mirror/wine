@@ -1089,13 +1089,12 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 {
    INT	length;
    LPWSTR pText = NULL;
+   static const WCHAR empty_stringW[] = { 0 };
 
    TRACE("\t %i\n", index );
 
    if( index >= 0 ) /* got an entry */
    {
-       static const WCHAR empty_stringW[] = { 0 };
-
        length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, (WPARAM)index, 0);
        if( length )
        {
@@ -1105,13 +1104,11 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 				(WPARAM)index, (LPARAM)pText );
 	   }
        }
-
-       lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
-       SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)empty_stringW);
-       lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
    }
-   else
-       InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
+
+   lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+   SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)empty_stringW);
+   lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
 
    if( lphc->wState & CBF_FOCUSED )
       SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1));
