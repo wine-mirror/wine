@@ -269,6 +269,10 @@ typedef struct cds_forward {
   int (*decompress)(int, int, struct cds_forward *); /* chosen compress fn  */
   cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!       */
   cab_UBYTE outbuf[CAB_BLOCKMAX];
+  cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
+  cab_ULONG q_position_base[42];
+  cab_ULONG lzx_position_base[51];
+  cab_UBYTE extra_bits[51];
   union {
     struct ZIPstate zip;
     struct QTMstate qtm;
@@ -344,6 +348,7 @@ typedef struct {
 #define DECR_CHECKSUM     (4)
 #define DECR_INPUT        (5)
 #define DECR_OUTPUT       (6)
+#define DECR_USERABORT    (7)
 
 /* Bitstream reading macros (Quantum / normal byte order)
  *

@@ -24,7 +24,10 @@
  * cabextract.c... it would theoretically be preferable to have only one, shared
  * implementation, however there are semantic differences which may discourage efforts
  * to unify the two.  It should be possible, if awkward, to go back and reimplement
- * cabextract.c using FDI (once the FDI implementation is complete, of course).
+ * cabextract.c using FDI (once the FDI implementation is complete, of course).  Also,
+ * cabextract's implementation is pretty efficient; fdi.c is, by contrast, extremely
+ * wasteful...
+ *
  *   -gmt
  */
 
@@ -47,7 +50,6 @@ THOSE_ZIP_CONSTS;
 
 struct fdi_file {
   struct fdi_file *next;               /* next file in sequence          */
-  struct fdi_folder *folder;           /* folder that contains this file */
   LPCSTR filename;                     /* output name of file            */
   int    fh;                           /* open file handle or NULL       */
   cab_ULONG length;                    /* uncompressed length of file    */
@@ -59,13 +61,27 @@ struct fdi_file {
 
 struct fdi_folder {
   struct fdi_folder *next;
-  cab_off_t offset[CAB_SPLITMAX];      /* offset to data blocks (32 bit) */
+  cab_off_t offset;                    /* offset to data blocks (32 bit) */
   cab_UWORD comp_type;                 /* compression format/window size */
   cab_ULONG comp_size;                 /* compressed size of folder      */
   cab_UBYTE num_splits;                /* number of split blocks + 1     */
   cab_UWORD num_blocks;                /* total number of blocks         */
-  struct fdi_file *contfile;           /* the first split file           */
 };
+
+/*
+ * this structure fills the gaps between what is available in a PFDICABINETINFO
+ * vs what is needed by FDICopy.  Memory allocated for these becomes the responsibility
+ * of the caller to free.  Yes, I am aware that this is totally, utterly inelegant.
+ * To make things even more unneccesarily confusing, we now attach these to the
+ * fdi_decomp_state.
+ */
+typedef struct {
+   char *prevname, *previnfo;
+   char *nextname, *nextinfo;
+   BOOL hasnext;  /* bug free indicator */
+   int folder_resv, header_resv;
+   cab_UBYTE block_resv;
+} MORE_ISCAB_INFO, *PMORE_ISCAB_INFO;
 
 /*
  * ugh, well, this ended up being pretty damn silly...
@@ -73,18 +89,16 @@ struct fdi_folder {
  * I should have just used those, or, better yet, unified the two... sue me.
  * (Note to Microsoft: That's a joke.  Please /don't/ actually sue me! -gmt).
  * Nevertheless, I've come this far, it works, so I'm not gonna change it
- * for now.
+ * for now.  This implementation has significant semantic differences anyhow.
  */
 
 typedef struct fdi_cds_fwd {
   void *hfdi;                      /* the hfdi we are using                 */
   int filehf, cabhf;               /* file handle we are using              */
   struct fdi_folder *current;      /* current folder we're extracting from  */
-  cab_UBYTE block_resv;
   cab_ULONG offset;                /* uncompressed offset within folder     */
   cab_UBYTE *outpos;               /* (high level) start of data to use up  */
   cab_UWORD outlen;                /* (high level) amount of data to use up */
-  cab_UWORD split;                 /* at which split in current folder?     */
   int (*decompress)(int, int, struct fdi_cds_fwd *); /* chosen compress fn  */
   cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!       */
   cab_UBYTE outbuf[CAB_BLOCKMAX];
@@ -93,22 +107,19 @@ typedef struct fdi_cds_fwd {
     struct QTMstate qtm;
     struct LZXstate lzx;
   } methods;
+  /* some temp variables for use during decompression */
+  cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
+  cab_ULONG q_position_base[42];
+  cab_ULONG lzx_position_base[51];
+  cab_UBYTE extra_bits[51];
+  USHORT  setID;                   /* Cabinet set ID */
+  USHORT  iCabinet;                /* Cabinet number in set (0 based) */
+  struct fdi_cds_fwd *decomp_cab;
+  MORE_ISCAB_INFO mii;
   struct fdi_folder *firstfol; 
   struct fdi_file   *firstfile;
   struct fdi_cds_fwd *next;
 } fdi_decomp_state;
-
-/*
- * this structure fills the gaps between what is available in a PFDICABINETINFO
- * vs what is needed by FDICopy.  Memory allocated for these becomes the responsibility
- * of the caller to free.  Yes, I am aware that this is totally, utterly inelegant.
- */
-typedef struct {
-  char *prevname, *previnfo;
-  char *nextname, *nextinfo;
-  int folder_resv, header_resv;
-  cab_UBYTE block_resv;
-} MORE_ISCAB_INFO, *PMORE_ISCAB_INFO;
 
 /***********************************************************************
  *		FDICreate (CABINET.20)
@@ -131,10 +142,6 @@ HFDI __cdecl FDICreate(
         pfnalloc, pfnfree, pfnopen, pfnread, pfnwrite, pfnclose, pfnseek,
         cpuType, perf);
 
-  /* PONDERME: Certainly, we cannot tolerate a missing pfnalloc, as we call it just below.
-     pfnfree is tested as well, for symmetry.  As for the rest, should we test these
-     too?  In a vacuum, I would say yes... but does Windows care?  If not, then, I guess,
-     neither do we.... */
   if ((!pfnalloc) || (!pfnfree)) {
     perf->erfOper = FDIERROR_NONE;
     perf->erfType = ERROR_BAD_ARGUMENTS;
@@ -256,15 +263,12 @@ char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
  * process the cabinet header in the style of FDIIsCabinet, but
  * without the sanity checks (and bug)
  *
- * if pmii is non-null, some info not expressed in FDICABINETINFO struct
- * will be stored there... responsibility to free the enclosed stuff is
- * delegated to the caller in this case.
  */
 BOOL FDI_read_entries(
-	HFDI             hfdi,
-	INT_PTR          hf,
-	PFDICABINETINFO  pfdici,
-	PMORE_ISCAB_INFO pmii)
+        HFDI             hfdi,
+        INT_PTR          hf,
+        PFDICABINETINFO  pfdici,
+        PMORE_ISCAB_INFO pmii)
 {
   int num_folders, num_files, header_resv, folder_resv = 0;
   LONG base_offset, cabsize;
@@ -273,8 +277,6 @@ BOOL FDI_read_entries(
   char *prevname = NULL, *previnfo = NULL, *nextname = NULL, *nextinfo = NULL;
 
   TRACE("(hfdi == ^%p, hf == %d, pfdici == ^%p)\n", hfdi, hf, pfdici);
-
-  if (pmii) ZeroMemory(pmii, sizeof(MORE_ISCAB_INFO));
 
   /* get basic offset & size info */
   base_offset = FDI_getoffset(hfdi, hf);
@@ -407,6 +409,8 @@ BOOL FDI_read_entries(
   }
 
   if (flags & cfheadNEXT_CABINET) {
+    if (pmii)
+      pmii->hasnext = TRUE;
     nextname = FDI_read_string(hfdi, hf, cabsize);
     if (!nextname) {
       if ((flags & cfheadPREV_CABINET) && pmii) {
@@ -487,10 +491,6 @@ BOOL __cdecl FDIIsCabinet(
   return rv;
 }
 
-/* FIXME: eliminate global variables */
-static cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
-static cab_ULONG q_position_base[42];
-
 /******************************************************************
  * QTMfdi_initmodel (internal)
  *
@@ -533,12 +533,12 @@ int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
 
   /* initialise static slot/extrabits tables */
   for (i = 0, j = 0; i < 27; i++) {
-    q_length_extra[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
-    q_length_base[i] = j; j += 1 << ((i == 26) ? 5 : q_length_extra[i]);
+    CAB(q_length_extra)[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
+    CAB(q_length_base)[i] = j; j += 1 << ((i == 26) ? 5 : CAB(q_length_extra)[i]);
   }
   for (i = 0, j = 0; i < 42; i++) {
-    q_extra_bits[i] = (i < 2 ? 0 : i-2) >> 1;
-    q_position_base[i] = j; j += 1 << q_extra_bits[i];
+    CAB(q_extra_bits)[i] = (i < 2 ? 0 : i-2) >> 1;
+    CAB(q_position_base)[i] = j; j += 1 << CAB(q_extra_bits)[i];
   }
 
   /* initialise arithmetic coding models */
@@ -560,10 +560,6 @@ int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
 
   return DECR_OK;
 }
-
-/* FIXME: Eliminate global variables */
-static cab_ULONG lzx_position_base[51];
-static cab_UBYTE extra_bits[51];
 
 /************************************************************
  * LZXfdi_init (internal)
@@ -587,12 +583,12 @@ int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
 
   /* initialise static tables */
   for (i=0, j=0; i <= 50; i += 2) {
-    extra_bits[i] = extra_bits[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
+    CAB(extra_bits)[i] = CAB(extra_bits)[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
     if ((i != 0) && (j < 17)) j++; /* 0,0,1,2,3,4...15,16,17,17,17,17... */
   }
   for (i=0, j=0; i <= 50; i++) {
-    lzx_position_base[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
-    j += 1 << extra_bits[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
+    CAB(lzx_position_base)[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
+    j += 1 << CAB(extra_bits)[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
   }
 
   /* calculate required position slots */
@@ -600,7 +596,7 @@ int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   else if (window == 21) posn_slots = 50;
   else posn_slots = window << 1;
 
-  /*posn_slots=i=0; while (i < wndsize) i += 1 << extra_bits[posn_slots++]; */
+  /*posn_slots=i=0; while (i < wndsize) i += 1 << CAB(extra_bits)[posn_slots++]; */
 
   LZX(R0)  =  LZX(R1)  = LZX(R2) = 1;
   LZX(main_elements)   = LZX_NUM_CHARS + (posn_slots << 3);
@@ -1260,27 +1256,27 @@ int QTMfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
     case 4:
       /* selector 4 = fixed length of 3 */
       GET_SYMBOL(model4, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       match_length = 3;
       break;
 
     case 5:
       /* selector 5 = fixed length of 4 */
       GET_SYMBOL(model5, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       match_length = 4;
       break;
 
     case 6:
       /* selector 6 = variable length */
       GET_SYMBOL(model6len, sym);
-      Q_READ_BITS(extra, q_length_extra[sym]);
-      match_length = q_length_base[sym] + extra + 5;
+      Q_READ_BITS(extra, CAB(q_length_extra)[sym]);
+      match_length = CAB(q_length_base)[sym] + extra + 5;
       GET_SYMBOL(model6pos, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       break;
 
     default:
@@ -1504,9 +1500,9 @@ int LZXfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state) {
             if (match_offset > 2) {
               /* not repeated offset */
               if (match_offset != 3) {
-                extra = extra_bits[match_offset];
+                extra = CAB(extra_bits)[match_offset];
                 READ_BITS(verbatim_bits, extra);
-                match_offset = lzx_position_base[match_offset] 
+                match_offset = CAB(lzx_position_base)[match_offset] 
                                - 2 + verbatim_bits;
               }
               else {
@@ -1577,8 +1573,8 @@ int LZXfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state) {
   
             if (match_offset > 2) {
               /* not repeated offset */
-              extra = extra_bits[match_offset];
-              match_offset = lzx_position_base[match_offset] - 2;
+              extra = CAB(extra_bits)[match_offset];
+              match_offset = CAB(lzx_position_base)[match_offset] - 2;
               if (extra > 3) {
                 /* verbatim and aligned bits */
                 extra -= 3;
@@ -1698,16 +1694,26 @@ int LZXfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state) {
 
 /**********************************************************
  * fdi_decomp (internal)
+ *
+ * Decompress the "appropriate" number of bytes.  If savemode is zero,
+ * do not save the output anywhere, just plow through blocks until we
+ * reach the starting point for fi, and remember the position of the
+ * cabfile pointer after we are done; otherwise, save it out, decompressing
+ * the number of bytes in the file specified by fi.  This is also where we
+ * jumping to additional cabinets in the case of split cab's, and provide
+ * (most of) the NEXT_CABINET notification semantics described in the SDK.
  */
-int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state)
+int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state,
+  char *pszCabPath, PFNFDINOTIFY pfnfdin, void *pvUser)
 {
   cab_ULONG bytes = savemode ? fi->length : fi->offset - CAB(offset);
   cab_UBYTE buf[cfdata_SIZEOF], *data;
   cab_UWORD inlen, len, outlen, cando;
   cab_ULONG cksum;
   cab_LONG err;
+  fdi_decomp_state *cab = (savemode && CAB(decomp_cab)) ? CAB(decomp_cab) : decomp_state;
 
-  TRACE("(fi == ^%p, savemode == %d)\n", fi, savemode);
+  TRACE("(fi == ^%p, savemode == %d, bytes == %d)\n", fi, savemode, bytes);
 
   while (bytes > 0) {
     /* cando = the max number of bytes we can do */
@@ -1728,10 +1734,10 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
     inlen = outlen = 0;
     while (outlen == 0) {
       /* read the block header, skip the reserved part */
-      if (PFDI_READ(CAB(hfdi), CAB(cabhf), buf, cfdata_SIZEOF) != cfdata_SIZEOF)
+      if (PFDI_READ(CAB(hfdi), cab->cabhf, buf, cfdata_SIZEOF) != cfdata_SIZEOF)
         return DECR_INPUT;
 
-      if (PFDI_SEEK(CAB(hfdi), CAB(cabhf), CAB(block_resv), SEEK_CUR) == -1)
+      if (PFDI_SEEK(CAB(hfdi), cab->cabhf, cab->mii.block_resv, SEEK_CUR) == -1)
         return DECR_INPUT;
 
       /* we shouldn't get blocks over CAB_INPUTMAX in size */
@@ -1739,7 +1745,7 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
       len = EndGetI16(buf+cfdata_CompressedSize);
       inlen += len;
       if (inlen > CAB_INPUTMAX) return DECR_INPUT;
-      if (PFDI_READ(CAB(hfdi), CAB(cabhf), data, len) != len)
+      if (PFDI_READ(CAB(hfdi), cab->cabhf, data, len) != len)
         return DECR_INPUT;
 
       /* clear two bytes after read-in data */
@@ -1750,16 +1756,195 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
       if (cksum && cksum != checksum(buf+4, 4, checksum(data, len, 0)))
         return DECR_CHECKSUM; /* checksum is wrong */
 
-      /* outlen=0 means this block was part of a split block */
       outlen = EndGetI16(buf+cfdata_UncompressedSize);
+
+      /* outlen=0 means this block was the last contiguous part
+         of a split block, continued in the next cabinet */
       if (outlen == 0) {
-      /* 
-        cabinet_close(cab);
-        cab = CAB(current)->cab[++CAB(split)];
-        if (!cabinet_open(cab)) return DECR_INPUT;
-        cabinet_seek(cab, CAB(current)->offset[CAB(split)]); */
-        FIXME("split block... ack! fix this.\n");
-        return DECR_INPUT;
+        int pathlen, filenamelen, idx, i, cabhf;
+        char fullpath[MAX_PATH], userpath[256];
+        FDINOTIFICATION fdin;
+        FDICABINETINFO fdici;
+        char emptystring = '\0';
+        cab_UBYTE buf2[64];
+        int success = FALSE;
+        struct fdi_folder *fol = NULL, *linkfol = NULL; 
+        struct fdi_file   *file = NULL, *linkfile = NULL;
+
+        tryanothercab:
+
+        /* set up the next decomp_state... */
+        if (!(cab->next)) {
+          if (!cab->mii.hasnext) return DECR_INPUT;
+
+          if (!((cab->next = PFDI_ALLOC(CAB(hfdi), sizeof(fdi_decomp_state)))))
+            return DECR_NOMEMORY;
+        
+          ZeroMemory(cab->next, sizeof(fdi_decomp_state));
+
+          /* copy pszCabPath to userpath */
+          ZeroMemory(userpath, 256);
+          pathlen = (pszCabPath) ? strlen(pszCabPath) : 0;
+          if (pathlen) {
+            if (pathlen < 256) {
+              for (i = 0; i <= pathlen; i++)
+                userpath[i] = pszCabPath[i];
+            } /* else we are in a wierd place... let's leave it blank and see if the user fixes it */
+          } 
+
+          /* initial fdintNEXT_CABINET notification */
+          ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+          fdin.psz1 = (cab->mii.nextname) ? cab->mii.nextname : &emptystring;
+          fdin.psz2 = (cab->mii.nextinfo) ? cab->mii.nextinfo : &emptystring;
+          fdin.psz3 = &userpath[0];
+          fdin.fdie = FDIERROR_NONE;
+          fdin.pv = pvUser;
+
+          if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
+
+          do {
+
+            pathlen = (userpath) ? strlen(userpath) : 0;
+            filenamelen = (cab->mii.nextname) ? strlen(cab->mii.nextname) : 0;
+
+            /* slight overestimation here to save CPU cycles in the developer's brain */
+            if ((pathlen + filenamelen + 3) > MAX_PATH) {
+              ERR("MAX_PATH exceeded.\n");
+              return DECR_ILLEGALDATA;
+            }
+
+            /* paste the path and filename together */
+            idx = 0;
+            if (pathlen) {
+              for (i = 0; i < pathlen; i++) fullpath[idx++] = userpath[i];
+              if (fullpath[idx - 1] != '\\') fullpath[idx++] = '\\';
+            }
+            if (filenamelen) for (i = 0; i < filenamelen; i++) fullpath[idx++] = cab->mii.nextname[i];
+            fullpath[idx] = '\0';
+        
+            TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
+        
+            /* try to get a handle to the cabfile */
+            cabhf = PFDI_OPEN(CAB(hfdi), fullpath, _O_BINARY | _O_RDONLY | _O_SEQUENTIAL, 0);
+            if (cabhf == -1) {
+              /* no file.  allow the user to try again */
+              fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
+              if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
+              continue;
+            }
+        
+            /* check if it's really a cabfile. Note that this doesn't implement the bug */
+            if (!FDI_read_entries(CAB(hfdi), cabhf, &fdici, &(cab->next->mii))) {
+              WARN("FDIIsCabinet failed.\n");
+              PFDI_CLOSE(CAB(hfdi), cabhf);
+              fdin.fdie = FDIERROR_NOT_A_CABINET;
+              if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
+              continue;
+            }
+
+            if ((fdici.setID != cab->setID) || (fdici.iCabinet != (cab->iCabinet + 1))) {
+              WARN("Wrong Cabinet.\n");
+              PFDI_CLOSE(CAB(hfdi), cabhf);
+              fdin.fdie = FDIERROR_WRONG_CABINET;
+              if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
+              continue;
+            }
+           
+            break;
+
+          } while (1);
+          
+          /* cabinet notification */
+          ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+          fdin.setID = fdici.setID;
+          fdin.iCabinet = fdici.iCabinet;
+          fdin.pv = pvUser;
+          fdin.psz1 = (cab->next->mii.nextname) ? cab->next->mii.nextname : &emptystring;
+          fdin.psz2 = (cab->next->mii.nextinfo) ? cab->next->mii.nextinfo : &emptystring;
+          fdin.psz3 = pszCabPath;
+        
+          if (((*pfnfdin)(fdintCABINET_INFO, &fdin))) return DECR_USERABORT;
+          
+          cab->next->setID = fdici.setID;
+          cab->next->iCabinet = fdici.iCabinet;
+          cab->next->hfdi = CAB(hfdi);
+          cab->next->filehf = CAB(filehf);
+          cab->next->cabhf = cabhf;
+          cab->next->decompress = CAB(decompress); /* crude, but unused anyhow */
+
+          cab = cab->next; /* advance to the next cabinet */
+
+          /* read folders */
+          for (i = 0; i < fdici.cFolders; i++) {
+            if (PFDI_READ(CAB(hfdi), cab->cabhf, buf2, cffold_SIZEOF) != cffold_SIZEOF) 
+              return DECR_INPUT;
+
+            if (cab->mii.folder_resv > 0)
+              PFDI_SEEK(CAB(hfdi), cab->cabhf, cab->mii.folder_resv, SEEK_CUR);
+        
+            fol = (struct fdi_folder *) PFDI_ALLOC(CAB(hfdi), sizeof(struct fdi_folder));
+            if (!fol) {
+              ERR("out of memory!\n");
+              return DECR_NOMEMORY;
+            }
+            ZeroMemory(fol, sizeof(struct fdi_folder));
+            if (!(cab->firstfol)) cab->firstfol = fol;
+        
+            fol->offset = (cab_off_t) EndGetI32(buf2+cffold_DataOffset);
+            fol->num_blocks = EndGetI16(buf2+cffold_NumBlocks);
+            fol->comp_type  = EndGetI16(buf2+cffold_CompType);
+        
+            if (linkfol)
+              linkfol->next = fol; 
+            linkfol = fol;
+          }
+        
+          /* read files */
+          for (i = 0; i < fdici.cFiles; i++) {
+            if (PFDI_READ(CAB(hfdi), cab->cabhf, buf2, cffile_SIZEOF) != cffile_SIZEOF)
+              return DECR_INPUT;
+              
+            file = (struct fdi_file *) PFDI_ALLOC(CAB(hfdi), sizeof(struct fdi_file));
+            if (!file) {
+              ERR("out of memory!\n"); 
+              return DECR_NOMEMORY;
+            }
+            ZeroMemory(file, sizeof(struct fdi_file));
+            if (!(cab->firstfile)) cab->firstfile = file;
+              
+            file->length   = EndGetI32(buf2+cffile_UncompressedSize);
+            file->offset   = EndGetI32(buf2+cffile_FolderOffset);
+            file->index    = EndGetI16(buf2+cffile_FolderIndex);
+            file->time     = EndGetI16(buf2+cffile_Time);
+            file->date     = EndGetI16(buf2+cffile_Date);
+            file->attribs  = EndGetI16(buf2+cffile_Attribs);
+            file->filename = FDI_read_string(CAB(hfdi), cab->cabhf, fdici.cbCabinet);
+        
+            if (!file->filename) return DECR_INPUT;
+        
+            if (linkfile)
+              linkfile->next = file;
+            linkfile = file;
+          }
+        
+        } else 
+            cab = cab->next; /* advance to the next cabinet */
+
+        /* iterate files -- if we encounter the continued file, process it --
+           otherwise, jump to the label above and keep looking */
+
+        for (file = cab->firstfile; (file); file = file->next) {
+          if ((file->index & cffileCONTINUED_FROM_PREV) == cffileCONTINUED_FROM_PREV) {
+            /* check to ensure a real match */
+            if (strcasecmp(fi->filename, file->filename) == 0) {
+              success = TRUE;
+              if (PFDI_SEEK(CAB(hfdi), cab->cabhf, cab->firstfol->offset, SEEK_SET) == -1)
+                return DECR_INPUT;
+              break;
+            }
+          }
+        }
+        if (!success) goto tryanothercab; /* this should never happen */
       }
     }
 
@@ -1769,7 +1954,8 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
     CAB(outlen) = outlen;
     CAB(outpos) = CAB(outbuf);
   }
-
+  
+  CAB(decomp_cab) = cab;
   return DECR_OK;
 }
 
@@ -1787,14 +1973,12 @@ BOOL __cdecl FDICopy(
 { 
   FDICABINETINFO    fdici;
   FDINOTIFICATION   fdin;
-  MORE_ISCAB_INFO   mii;
   int               cabhf, filehf;
   int               i, idx;
   char              fullpath[MAX_PATH];
   size_t            pathlen, filenamelen;
   char              emptystring = '\0';
   cab_UBYTE         buf[64];
-  BOOL              initialcab = TRUE;
   struct fdi_folder *fol = NULL, *linkfol = NULL; 
   struct fdi_file   *file = NULL, *linkfile = NULL;
   fdi_decomp_state _decomp_state;
@@ -1846,7 +2030,7 @@ BOOL __cdecl FDICopy(
   }
 
   /* check if it's really a cabfile. Note that this doesn't implement the bug */
-  if (!FDI_read_entries(hfdi, cabhf, &fdici, &mii)) {
+  if (!FDI_read_entries(hfdi, cabhf, &fdici, &(CAB(mii)))) {
     ERR("FDIIsCabinet failed.\n");
     PFDI_CLOSE(hfdi, cabhf);
     return FALSE;
@@ -1857,8 +2041,8 @@ BOOL __cdecl FDICopy(
   fdin.setID = fdici.setID;
   fdin.iCabinet = fdici.iCabinet;
   fdin.pv = pvUser;
-  fdin.psz1 = (mii.nextname) ? mii.nextname : &emptystring;
-  fdin.psz2 = (mii.nextinfo) ? mii.nextinfo : &emptystring;
+  fdin.psz1 = (CAB(mii).nextname) ? CAB(mii).nextname : &emptystring;
+  fdin.psz2 = (CAB(mii).nextinfo) ? CAB(mii).nextinfo : &emptystring;
   fdin.psz3 = pszCabPath;
 
   if (((*pfnfdin)(fdintCABINET_INFO, &fdin))) {
@@ -1867,6 +2051,9 @@ BOOL __cdecl FDICopy(
     PFDI_INT(hfdi)->perf->fError = TRUE;
     goto bail_and_fail;
   }
+
+  CAB(setID) = fdici.setID;
+  CAB(iCabinet) = fdici.iCabinet;
 
   /* read folders */
   for (i = 0; i < fdici.cFolders; i++) {
@@ -1877,8 +2064,8 @@ BOOL __cdecl FDICopy(
       goto bail_and_fail;
     }
 
-    if (mii.folder_resv > 0)
-      PFDI_SEEK(hfdi, cabhf, mii.folder_resv, SEEK_CUR);
+    if (CAB(mii).folder_resv > 0)
+      PFDI_SEEK(hfdi, cabhf, CAB(mii).folder_resv, SEEK_CUR);
 
     fol = (struct fdi_folder *) PFDI_ALLOC(hfdi, sizeof(struct fdi_folder));
     if (!fol) {
@@ -1892,7 +2079,7 @@ BOOL __cdecl FDICopy(
     ZeroMemory(fol, sizeof(struct fdi_folder));
     if (!CAB(firstfol)) CAB(firstfol) = fol;
 
-    fol->offset[0]  = (cab_off_t) EndGetI32(buf+cffold_DataOffset);
+    fol->offset = (cab_off_t) EndGetI32(buf+cffold_DataOffset);
     fol->num_blocks = EndGetI16(buf+cffold_NumBlocks);
     fol->comp_type  = EndGetI16(buf+cffold_CompType);
 
@@ -1943,14 +2130,14 @@ BOOL __cdecl FDICopy(
   }
 
   for (file = CAB(firstfile); (file); file = file->next) {
-    /* partial file notification (do it just once for the first cabinet) */
-    if (initialcab && ((file->index & cffileCONTINUED_FROM_PREV) == cffileCONTINUED_FROM_PREV)) {
+    /* partial-file notification (do it just once for the first cabinet) */
+    if ((file->index & cffileCONTINUED_FROM_PREV) == cffileCONTINUED_FROM_PREV) {
       /* OK, more MS bugs to simulate here, I think.  I don't have a huge spanning
        * cabinet to test this theory on ATM, but here's the deal.  The SDK says that we
        * are supposed to notify the user of the filename and "disk name" (info) of
        * the cabinet where the spanning file /started/.  That would certainly be convenient
        * for the consumer, who could decide to abort everything and try to start over with
-       * that cabinet so as not to create a front-truncated output file.  Note that this
+       * that cabinet so as to avoid partial file notification and successfully unpack.  This
        * task would be a horrible bitch from the implementor's (wine's) perspective: the
        * information is associated nowhere with the file header and is not to be found in
        * the cabinet header.  So we would have to open the previous cabinet, and check
@@ -1966,8 +2153,8 @@ BOOL __cdecl FDICopy(
       ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
       fdin.pv = pvUser;
       fdin.psz1 = (char *)file->filename;
-      fdin.psz2 = (mii.prevname) ? mii.prevname : &emptystring;
-      fdin.psz3 = (mii.previnfo) ? mii.previnfo : &emptystring;
+      fdin.psz2 = (CAB(mii).prevname) ? CAB(mii).prevname : &emptystring;
+      fdin.psz3 = (CAB(mii).previnfo) ? CAB(mii).previnfo : &emptystring;
 
       if (((*pfnfdin)(fdintPARTIAL_FILE, &fdin))) {
         PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
@@ -1975,13 +2162,12 @@ BOOL __cdecl FDICopy(
         PFDI_INT(hfdi)->perf->fError = TRUE;
         goto bail_and_fail;
       }
-      /* I don't think we are supposed to decompress partial files */
+      /* I don't think we are supposed to decompress partial files.  This prevents it. */
       file->oppressed = TRUE;
     }
     if (file->oppressed) {
       filehf = 0;
     } else {
-      /* fdintCOPY_FILE notification (TODO: skip for spanning cab's we already should have hf) */
       ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
       fdin.pv = pvUser;
       fdin.psz1 = (char *)file->filename;
@@ -1997,6 +2183,21 @@ BOOL __cdecl FDICopy(
       }
     }
 
+    /* find the folder for this file if necc. */
+    if (filehf) {
+      int i2;
+
+      fol = CAB(firstfol);
+      if ((file->index & cffileCONTINUED_TO_NEXT) == cffileCONTINUED_TO_NEXT) {
+        /* pick the last folder */
+        while (fol->next) fol = fol->next;
+      } else {
+        for (i2 = 0; (i2 < file->index); i2++)
+          if (fol->next) /* bug resistance, should always be true */
+            fol = fol->next;
+      }
+    }
+
     if (filehf) {
       cab_UWORD comptype = fol->comp_type;
       int ct1 = comptype & cffoldCOMPTYPE_MASK;
@@ -2004,14 +2205,12 @@ BOOL __cdecl FDICopy(
 
       TRACE("Extracting file %s as requested by callee.\n", debugstr_a(file->filename));
 
-      /* set up decomp_state (unnecessary?); at least
-         ignore trailing three pointers in the struct */
-      ZeroMemory(decomp_state, sizeof(fdi_decomp_state) - sizeof(void*) * 3);
+      /* set up decomp_state */
       CAB(hfdi) = hfdi;
       CAB(filehf) = filehf;
       CAB(cabhf) = cabhf;
-      CAB(current) = file->folder;
-      CAB(block_resv) = mii.block_resv;
+      CAB(current) = fol;
+      CAB(decomp_cab) = NULL;
 
       /* set up the appropriate decompressor */
       switch (ct1) {
@@ -2049,16 +2248,20 @@ BOOL __cdecl FDICopy(
           goto bail_and_fail;
       }
 
-      PFDI_SEEK(CAB(hfdi), CAB(cabhf), fol->offset[0], SEEK_SET);
+      PFDI_SEEK(CAB(hfdi), CAB(cabhf), fol->offset, SEEK_SET);
       CAB(offset) = 0;
       CAB(outlen) = 0;
-      CAB(split)  = 0;
 
       if (file->offset > CAB(offset)) {
         /* decode bytes and send them to /dev/null */
-        switch ((err = fdi_decomp(file, 0, decomp_state))) {
+        switch ((err = fdi_decomp(file, 0, decomp_state, pszCabPath, pfnfdin, pvUser))) {
           case DECR_OK:
             break;
+          case DECR_USERABORT:
+            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
+            PFDI_INT(hfdi)->perf->erfType = 0;
+            PFDI_INT(hfdi)->perf->fError = TRUE;
+            goto bail_and_fail;
           case DECR_NOMEMORY:
             PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
             PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
@@ -2075,12 +2278,17 @@ BOOL __cdecl FDICopy(
       }
 
       /* now do the actual decompression */
-      err = fdi_decomp(file, 1, decomp_state);
+      err = fdi_decomp(file, 1, decomp_state, pszCabPath, pfnfdin, pvUser);
       if (err) CAB(current) = NULL; else CAB(offset) += file->length;
 
       switch (err) {
         case DECR_OK:
           break;
+        case DECR_USERABORT:
+          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
+          PFDI_INT(hfdi)->perf->erfType = 0;
+          PFDI_INT(hfdi)->perf->fError = TRUE;
+          goto bail_and_fail;
         case DECR_NOMEMORY:
           PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
           PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
@@ -2092,6 +2300,24 @@ BOOL __cdecl FDICopy(
           PFDI_INT(hfdi)->perf->erfOper = 0;
           PFDI_INT(hfdi)->perf->fError = TRUE;
           goto bail_and_fail;
+      }
+
+      /* free decompression temps */
+      switch (ct1) {
+        case cffoldCOMPTYPE_LZX:
+          if (LZX(window)) {
+            PFDI_FREE(hfdi, LZX(window));
+            LZX(window) = NULL;
+          }
+          break;
+        case cffoldCOMPTYPE_QUANTUM:
+          if (QTM(window)) {
+            PFDI_FREE(hfdi, QTM(window));
+            QTM(window) = NULL;
+          }
+          break;
+        default:
+          break;
       }
 
       /* fdintCLOSE_FILE_INFO notification */
@@ -2120,6 +2346,15 @@ BOOL __cdecl FDICopy(
 
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
+
+    PFDI_CLOSE(hfdi, CAB(cabhf));
+
+    /* free the storage remembered by mii */
+    if (CAB(mii).nextname) PFDI_FREE(hfdi, CAB(mii).nextname);
+    if (CAB(mii).nextinfo) PFDI_FREE(hfdi, CAB(mii).nextinfo);
+    if (CAB(mii).prevname) PFDI_FREE(hfdi, CAB(mii).prevname);
+    if (CAB(mii).previnfo) PFDI_FREE(hfdi, CAB(mii).previnfo);
+
     while (CAB(firstfol)) {
       fol = CAB(firstfol);
       CAB(firstfol) = CAB(firstfol)->next;
@@ -2127,6 +2362,7 @@ BOOL __cdecl FDICopy(
     }
     while (CAB(firstfile)) {
       file = CAB(firstfile);
+      if (file->filename) PFDI_FREE(hfdi, (void *)file->filename);
       CAB(firstfile) = CAB(firstfile)->next;
       PFDI_FREE(hfdi, file);
     }
@@ -2136,19 +2372,21 @@ BOOL __cdecl FDICopy(
       PFDI_FREE(hfdi, prev_fds);
   }
  
-  /* free the storage remembered by mii */
-  if (mii.nextname) PFDI_FREE(hfdi, mii.nextname);
-  if (mii.nextinfo) PFDI_FREE(hfdi, mii.nextinfo);
-  if (mii.prevname) PFDI_FREE(hfdi, mii.prevname);
-  if (mii.previnfo) PFDI_FREE(hfdi, mii.previnfo);
-
-  PFDI_CLOSE(hfdi, cabhf);
   return TRUE;
 
   bail_and_fail: /* here we free ram before error returns */
 
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
+
+    PFDI_CLOSE(hfdi, CAB(cabhf));
+
+    /* free the storage remembered by mii */
+    if (CAB(mii).nextname) PFDI_FREE(hfdi, CAB(mii).nextname);
+    if (CAB(mii).nextinfo) PFDI_FREE(hfdi, CAB(mii).nextinfo);
+    if (CAB(mii).prevname) PFDI_FREE(hfdi, CAB(mii).prevname);
+    if (CAB(mii).previnfo) PFDI_FREE(hfdi, CAB(mii).previnfo);
+
     while (CAB(firstfol)) {
       fol = CAB(firstfol);
       CAB(firstfol) = CAB(firstfol)->next;
@@ -2156,6 +2394,7 @@ BOOL __cdecl FDICopy(
     }
     while (CAB(firstfile)) {
       file = CAB(firstfile);
+      if (file->filename) PFDI_FREE(hfdi, (void *)file->filename);
       CAB(firstfile) = CAB(firstfile)->next;
       PFDI_FREE(hfdi, file);
     }
@@ -2165,13 +2404,6 @@ BOOL __cdecl FDICopy(
       PFDI_FREE(hfdi, prev_fds);
   }
 
-  /* free the storage remembered by mii */
-  if (mii.nextname) PFDI_FREE(hfdi, mii.nextname);
-  if (mii.nextinfo) PFDI_FREE(hfdi, mii.nextinfo);
-  if (mii.prevname) PFDI_FREE(hfdi, mii.prevname);
-  if (mii.previnfo) PFDI_FREE(hfdi, mii.previnfo);
-
-  PFDI_CLOSE(hfdi, cabhf);
   return FALSE;
 }
 

@@ -1123,10 +1123,6 @@ int ZIPdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
 /* This decruncher was researched and implemented by Matthew Russoto. */
 /* It has since been tidied up by Stuart Caie */
 
-/* FIXME: eliminate global variables */
-static cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
-static cab_ULONG q_position_base[42];
-
 /******************************************************************
  * QTMinitmodel (internal)
  *
@@ -1169,12 +1165,12 @@ int QTMinit(int window, int level, cab_decomp_state *decomp_state) {
 
   /* initialise static slot/extrabits tables */
   for (i = 0, j = 0; i < 27; i++) {
-    q_length_extra[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
-    q_length_base[i] = j; j += 1 << ((i == 26) ? 5 : q_length_extra[i]);
+    CAB(q_length_extra)[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
+    CAB(q_length_base)[i] = j; j += 1 << ((i == 26) ? 5 : CAB(q_length_extra)[i]);
   }
   for (i = 0, j = 0; i < 42; i++) {
-    q_extra_bits[i] = (i < 2 ? 0 : i-2) >> 1;
-    q_position_base[i] = j; j += 1 << q_extra_bits[i];
+    CAB(q_extra_bits)[i] = (i < 2 ? 0 : i-2) >> 1;
+    CAB(q_position_base)[i] = j; j += 1 << CAB(q_extra_bits)[i];
   }
 
   /* initialise arithmetic coding models */
@@ -1312,27 +1308,27 @@ int QTMdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
     case 4:
       /* selector 4 = fixed length of 3 */
       GET_SYMBOL(model4, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       match_length = 3;
       break;
 
     case 5:
       /* selector 5 = fixed length of 4 */
       GET_SYMBOL(model5, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       match_length = 4;
       break;
 
     case 6:
       /* selector 6 = variable length */
       GET_SYMBOL(model6len, sym);
-      Q_READ_BITS(extra, q_length_extra[sym]);
-      match_length = q_length_base[sym] + extra + 5;
+      Q_READ_BITS(extra, CAB(q_length_extra)[sym]);
+      match_length = CAB(q_length_base)[sym] + extra + 5;
       GET_SYMBOL(model6pos, sym);
-      Q_READ_BITS(extra, q_extra_bits[sym]);
-      match_offset = q_position_base[sym] + extra + 1;
+      Q_READ_BITS(extra, CAB(q_extra_bits)[sym]);
+      match_offset = CAB(q_position_base)[sym] + extra + 1;
       break;
 
     default:
@@ -1434,10 +1430,6 @@ int QTMdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
  * - lzx_extra_bits states how many bits of offset-from-base data is needed.
  */
 
-/* FIXME: Eliminate global variables */
-static cab_ULONG lzx_position_base[51];
-static cab_UBYTE extra_bits[51];
-
 /************************************************************
  * LZXinit (internal)
  */
@@ -1460,12 +1452,12 @@ int LZXinit(int window, cab_decomp_state *decomp_state) {
 
   /* initialise static tables */
   for (i=0, j=0; i <= 50; i += 2) {
-    extra_bits[i] = extra_bits[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
+    CAB(extra_bits)[i] = CAB(extra_bits)[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
     if ((i != 0) && (j < 17)) j++; /* 0,0,1,2,3,4...15,16,17,17,17,17... */
   }
   for (i=0, j=0; i <= 50; i++) {
-    lzx_position_base[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
-    j += 1 << extra_bits[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
+    CAB(lzx_position_base)[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
+    j += 1 << CAB(extra_bits)[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
   }
 
   /* calculate required position slots */
@@ -1473,7 +1465,7 @@ int LZXinit(int window, cab_decomp_state *decomp_state) {
   else if (window == 21) posn_slots = 50;
   else posn_slots = window << 1;
 
-  /*posn_slots=i=0; while (i < wndsize) i += 1 << extra_bits[posn_slots++]; */
+  /*posn_slots=i=0; while (i < wndsize) i += 1 << CAB(extra_bits)[posn_slots++]; */
 
   LZX(R0)  =  LZX(R1)  = LZX(R2) = 1;
   LZX(main_elements)   = LZX_NUM_CHARS + (posn_slots << 3);
@@ -1757,9 +1749,9 @@ int LZXdecompress(int inlen, int outlen, cab_decomp_state *decomp_state) {
             if (match_offset > 2) {
               /* not repeated offset */
               if (match_offset != 3) {
-                extra = extra_bits[match_offset];
+                extra = CAB(extra_bits)[match_offset];
                 READ_BITS(verbatim_bits, extra);
-                match_offset = lzx_position_base[match_offset] 
+                match_offset = CAB(lzx_position_base)[match_offset] 
                                - 2 + verbatim_bits;
               }
               else {
@@ -1830,8 +1822,8 @@ int LZXdecompress(int inlen, int outlen, cab_decomp_state *decomp_state) {
   
             if (match_offset > 2) {
               /* not repeated offset */
-              extra = extra_bits[match_offset];
-              match_offset = lzx_position_base[match_offset] - 2;
+              extra = CAB(extra_bits)[match_offset];
+              match_offset = CAB(lzx_position_base)[match_offset] - 2;
               if (extra > 3) {
                 /* verbatim and aligned bits */
                 extra -= 3;
