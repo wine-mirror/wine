@@ -85,37 +85,37 @@ void trace_request( enum request req, void *data, int len, int fd )
 {
     int size;
     current->last_req = req;
-    printf( "%08x: %s(", (unsigned int)current, req_names[req] );
+    fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
     size = dumpers[req].dump_req( data, len );
     if ((len -= size) > 0)
     {
         unsigned char *ptr = (unsigned char *)data + size;
-        while (len--) printf( ", %02x", *ptr++ );
+        while (len--) fprintf( stderr, ", %02x", *ptr++ );
     }
-    if (fd != -1) printf( " ) fd=%d\\n", fd );
-    else printf( " )\\n" );
+    if (fd != -1) fprintf( stderr, " ) fd=%d\\n", fd );
+    else fprintf( stderr, " )\\n" );
 }
 
 void trace_timeout(void)
 {
-    printf( "%08x: *timeout*\\n", (unsigned int)current );
+    fprintf( stderr, "%08x: *timeout*\\n", (unsigned int)current );
 }
 
 void trace_kill( int exit_code )
 {
-    printf( "%08x: *killed* exit_code=%d\\n",
-            (unsigned int)current, exit_code );
+    fprintf( stderr,"%08x: *killed* exit_code=%d\\n",
+             (unsigned int)current, exit_code );
 }
 
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
     if (!thread) return;
-    printf( "%08x: %s() = %d",
-            (unsigned int)thread, req_names[thread->last_req], type );
+    fprintf( stderr, "%08x: %s() = %d",
+             (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
-	printf( " {" );
+	fprintf( stderr, " {" );
 	if (dumpers[thread->last_req].dump_reply)
 	{
 	    dumpers[thread->last_req].dump_reply( vec->iov_base );
@@ -126,12 +126,12 @@ void trace_reply( struct thread *thread, int type, int pass_fd,
 	{
 	    unsigned char *ptr = vec->iov_base;
 	    int len = vec->iov_len;
-	    while (len--) printf( ", %02x", *ptr++ );
+	    while (len--) fprintf( stderr, ", %02x", *ptr++ );
 	}
-	printf( " }" );
+	fprintf( stderr, " }" );
     }
-    if (pass_fd != -1) printf( " fd=%d\\n", pass_fd );
-    else printf( "\\n" );
+    if (pass_fd != -1) fprintf( stderr, " fd=%d\\n", pass_fd );
+    else fprintf( stderr, "\\n" );
 }
 EOF
 
@@ -240,7 +240,7 @@ sub DO_DUMP_FUNC
     {
 	my $type = shift;
 	my $var = shift;
-	print TRACE "    printf( \" $var=$formats{$type}";
+	print TRACE "    fprintf( stderr, \" $var=$formats{$type}";
 	print TRACE "," if ($#_ > 0);
 	print TRACE "\", ";
 	if ($type =~ s/\[0\]$//g)  # vararg type?
