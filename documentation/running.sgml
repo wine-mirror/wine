@@ -101,7 +101,6 @@ Usage: ./wine [options] program_name [arguments]
 
 Options:
    --debugmsg name  Turn debugging-messages on or off
-   --dll name       Enable or disable built-in DLLs
    --help,-h        Show this help message
    --version,-v     Display the Wine version
         </screen>
@@ -328,19 +327,6 @@ winspool</><entry>wnet</><entry>x11</>
           For more details about debug channels, check out the
           <ulink url="http://wine.codeweavers.com/docs/wine-devel/">
             The Wine Developer's Guide</ulink>.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>--dll</title>
-        <para>
-          Specifies whether to load the builtin or the native (if
-	  available) version of a DLL.
-	  Example:
-	  <screen>
-<prompt>$</prompt> <userinput>wine --dll setupx=n foo.exe</userinput>
-          </screen>
-	  See the <link linkend="config-dll">DLL chapter</link> for more details.
         </para>
       </sect2>
 
