@@ -166,7 +166,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   while (*pProxyFileList) {
     unsigned u;
     for (u=0; u<(*pProxyFileList)->TableSize; u++) {
-      CInterfaceProxyVtbl *proxy = (*pProxyFileList)->pProxyVtblList[u];
+      CInterfaceStubVtbl *proxy = (*pProxyFileList)->pStubVtblList[u];
       PCInterfaceName name = (*pProxyFileList)->pNamesArray[u];
       LPSTR iid;
 
@@ -193,7 +193,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   /* register clsid to point to module */
   snprintf(keyname, sizeof(keyname), "CLSID\\%s", clsid);
   GetModuleFileNameA(hDll, module, sizeof(module));
-  TRACE("registering %s => %s\n", clsid, module);
+  TRACE("registering CLSID %s => %s\n", clsid, module);
   if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                       KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
      if (RegCreateKeyExA(key, "InProcServer32", 0, NULL, 0,
@@ -226,7 +226,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   while (*pProxyFileList) {
     unsigned u;
     for (u=0; u<(*pProxyFileList)->TableSize; u++) {
-      CInterfaceProxyVtbl *proxy = (*pProxyFileList)->pProxyVtblList[u];
+      CInterfaceStubVtbl *proxy = (*pProxyFileList)->pStubVtblList[u];
       PCInterfaceName name = (*pProxyFileList)->pNamesArray[u];
       LPSTR iid;
 
@@ -243,7 +243,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   /* unregister clsid */
   snprintf(keyname, sizeof(keyname), "CLSID\\%s", clsid);
   GetModuleFileNameA(hDll, module, sizeof(module));
-  TRACE("unregistering %s <= %s\n", clsid, module);
+  TRACE("unregistering CLSID %s <= %s\n", clsid, module);
   RegDeleteKeyA(HKEY_CLASSES_ROOT, keyname);
 
   /* done */
