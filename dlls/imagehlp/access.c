@@ -58,7 +58,7 @@ BOOL WINAPI EnumerateLoadedModules(
   PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
   PVOID UserContext)
 {
-  FIXME("(0x%08x, %p, %p): stub\n",
+  FIXME("(%p, %p, %p): stub\n",
     hProcess, EnumLoadedModulesCallback, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -70,7 +70,7 @@ BOOL WINAPI EnumerateLoadedModules(
  */
 DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
 {
-  FIXME("(0x%08x): stub\n", Module);
+  FIXME("(%p): stub\n", Module);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }

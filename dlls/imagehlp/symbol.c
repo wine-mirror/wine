@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
  */
 BOOL WINAPI SymCleanup(HANDLE hProcess)
 {
-  FIXME("(0x%08x): stub\n", hProcess);
+  FIXME("(%p): stub\n", hProcess);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -44,7 +44,7 @@ BOOL WINAPI SymEnumerateModules(
   HANDLE hProcess, PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
   PVOID UserContext)
 {
-  FIXME("(0x%08x, %p, %p): stub\n",
+  FIXME("(%p, %p, %p): stub\n",
     hProcess, EnumModulesCallback, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -58,7 +58,7 @@ BOOL WINAPI SymEnumerateSymbols(
   HANDLE hProcess, DWORD BaseOfDll,
   PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext)
 {
-  FIXME("(0x%08x, 0x%08lx, %p, %p): stub\n",
+  FIXME("(%p, 0x%08lx, %p, %p): stub\n",
     hProcess, BaseOfDll, EnumSymbolsCallback, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -70,7 +70,7 @@ BOOL WINAPI SymEnumerateSymbols(
  */
 PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
 {
-  FIXME("(0x%08x, 0x%08lx): stub\n", hProcess, AddrBase);
+  FIXME("(%p, 0x%08lx): stub\n", hProcess, AddrBase);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -80,7 +80,7 @@ PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
  */
 DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 {
-  FIXME("(0x%08x, 0x%08lx): stub\n", hProcess, dwAddr);
+  FIXME("(%p, 0x%08lx): stub\n", hProcess, dwAddr);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -92,7 +92,7 @@ BOOL WINAPI SymGetModuleInfo(
   HANDLE hProcess, DWORD dwAddr,
   PIMAGEHLP_MODULE ModuleInfo)
 {
-  FIXME("(0x%08x, 0x%08lx, %p): stub\n",
+  FIXME("(%p, 0x%08lx, %p): stub\n",
     hProcess, dwAddr, ModuleInfo
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -115,7 +115,7 @@ DWORD WINAPI SymGetOptions()
 BOOL WINAPI SymGetSearchPath(
   HANDLE hProcess, LPSTR szSearchPath, DWORD SearchPathLength)
 {
-  FIXME("(0x%08x, %s, %ld): stub\n",
+  FIXME("(%p, %s, %ld): stub\n",
     hProcess, debugstr_an(szSearchPath,SearchPathLength), SearchPathLength
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -129,7 +129,7 @@ BOOL WINAPI SymGetSymFromAddr(
   HANDLE hProcess, DWORD dwAddr,
   PDWORD pdwDisplacement, PIMAGEHLP_SYMBOL Symbol)
 {
-  FIXME("(0x%08x, 0x%08lx, %p, %p): stub\n",
+  FIXME("(%p, 0x%08lx, %p, %p): stub\n",
     hProcess, dwAddr, pdwDisplacement, Symbol
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -142,7 +142,7 @@ BOOL WINAPI SymGetSymFromAddr(
 BOOL WINAPI SymGetSymFromName(
   HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symbol)
 {
-  FIXME("(0x%08x, %s, %p): stub\n", hProcess, Name, Symbol);
+  FIXME("(%p, %s, %p): stub\n", hProcess, Name, Symbol);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -153,7 +153,7 @@ BOOL WINAPI SymGetSymFromName(
 BOOL WINAPI SymGetSymNext(
   HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 {
-  FIXME("(0x%08x, %p): stub\n", hProcess, Symbol);
+  FIXME("(%p, %p): stub\n", hProcess, Symbol);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -165,7 +165,7 @@ BOOL WINAPI SymGetSymNext(
 BOOL WINAPI SymGetSymPrev(
   HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 {
-  FIXME("(0x%08x, %p): stub\n", hProcess, Symbol);
+  FIXME("(%p, %p): stub\n", hProcess, Symbol);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -176,7 +176,7 @@ BOOL WINAPI SymGetSymPrev(
 BOOL WINAPI SymInitialize(
   HANDLE hProcess, LPSTR UserSearchPath, BOOL fInvadeProcess)
 {
-  FIXME("(0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %s, %d): stub\n",
     hProcess, debugstr_a(UserSearchPath), fInvadeProcess
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -191,7 +191,7 @@ BOOL WINAPI SymLoadModule(
   HANDLE hProcess, HANDLE hFile, LPSTR ImageName, LPSTR ModuleName,
   DWORD BaseOfDll, DWORD SizeOfDll)
 {
-  FIXME("(0x%08x, 0x%08x, %s, %s, %ld, %ld): stub\n",
+  FIXME("(%p, %p, %s, %s, %ld, %ld): stub\n",
     hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
     BaseOfDll, SizeOfDll
   );
@@ -206,7 +206,7 @@ BOOL WINAPI SymRegisterCallback(
   HANDLE hProcess, PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
   PVOID UserContext)
 {
-  FIXME("(0x%08x, %p, %p): stub\n",
+  FIXME("(%p, %p, %p): stub\n",
     hProcess, CallbackFunction, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -228,7 +228,7 @@ DWORD WINAPI SymSetOptions(DWORD SymOptions)
  */
 BOOL WINAPI SymSetSearchPath(HANDLE hProcess, LPSTR szSearchPath)
 {
-  FIXME("(0x%08x, %s): stub\n",
+  FIXME("(%p, %s): stub\n",
     hProcess, debugstr_a(szSearchPath)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -254,7 +254,7 @@ BOOL WINAPI SymUnDName(
 BOOL WINAPI SymUnloadModule(
   HANDLE hProcess, DWORD BaseOfDll)
 {
-  FIXME("(0x%08x, 0x%08lx): stub\n", hProcess, BaseOfDll);
+  FIXME("(%p, 0x%08lx): stub\n", hProcess, BaseOfDll);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }

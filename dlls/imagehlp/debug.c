@@ -61,7 +61,7 @@ PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
   HANDLE FileHandle, LPSTR FileName,
   LPSTR SymbolPath, DWORD ImageBase)
 {
-  FIXME("(0x%08x, %s, %s, 0x%08lx): stub\n",
+  FIXME("(%p, %s, %s, 0x%08lx): stub\n",
     FileHandle, FileName, SymbolPath, ImageBase
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -80,7 +80,7 @@ BOOL WINAPI StackWalk(
   PTRANSLATE_ADDRESS_ROUTINE TranslateAddress)
 {
   FIXME(
-    "(%ld, 0x%08x, 0x%08x, %p, %p, %p, %p, %p, %p): stub\n",
+    "(%ld, %p, %p, %p, %p, %p, %p, %p, %p): stub\n",
       MachineType, hProcess, hThread, StackFrame, ContextRecord,
       ReadMemoryRoutine, FunctionTableAccessRoutine,
       GetModuleBaseRoutine, TranslateAddress

@@ -1,4 +1,4 @@
-EXTRADEFS = -D_IMAGEHLP_SOURCE_ -DWINE_NO_STRICT
+EXTRADEFS = -D_IMAGEHLP_SOURCE_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -21,4 +21,3 @@ C_SRCS = \
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

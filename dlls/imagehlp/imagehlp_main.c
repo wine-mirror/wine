@@ -117,12 +117,9 @@ BOOL WINAPI SearchTreeForFile(
 BOOL WINAPI TouchFileTimes(
   HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)
 {
-  FIXME("(0x%08x, %p): stub\n",
+  FIXME("(%p, %p): stub\n",
     FileHandle, lpSystemTime
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
-
-
-
