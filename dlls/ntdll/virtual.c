@@ -882,6 +882,41 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         goto error;
     }
 
+    /* check for non page-aligned binary */
+
+    if (nt->OptionalHeader.SectionAlignment <= page_mask)
+    {
+        /* unaligned sections, this happens for native subsystem binaries */
+        /* in that case Windows simply maps in the whole file */
+
+        if (map_file_into_view( view, fd, 0, total_size, 0, VPROT_COMMITTED | VPROT_READ,
+                                removable ) != STATUS_SUCCESS) goto error;
+
+        /* check that all sections are loaded at the right offset */
+        for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+        {
+            if (sec[i].VirtualAddress != sec[i].PointerToRawData)
+                goto error;  /* Windows refuses to load in that case too */
+        }
+
+        /* set the image protections */
+        VIRTUAL_SetProt( view, ptr, total_size,
+                         VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
+
+        /* perform relocations if necessary */
+        /* FIXME: not 100% compatible, Windows doesn't do this for non page-aligned binaries */
+        if (ptr != base)
+        {
+            const IMAGE_DATA_DIRECTORY *relocs;
+            relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+            if (relocs->VirtualAddress && relocs->Size)
+                do_relocations( ptr, relocs, ptr - base, total_size );
+        }
+
+        goto done;
+    }
+
+
     /* map all the sections */
 
     for (i = pos = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
@@ -994,11 +1029,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         }
     }
 
-    if (!removable)  /* don't keep handle open on removable media */
-        NtDuplicateObject( GetCurrentProcess(), hmapping,
-                           GetCurrentProcess(), &view->mapping,
-                           0, 0, DUPLICATE_SAME_ACCESS );
-
     /* set the image protections */
 
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
@@ -1011,6 +1041,13 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
+
+ done:
+    if (!removable)  /* don't keep handle open on removable media */
+        NtDuplicateObject( GetCurrentProcess(), hmapping,
+                           GetCurrentProcess(), &view->mapping,
+                           0, 0, DUPLICATE_SAME_ACCESS );
+
     RtlLeaveCriticalSection( &csVirtual );
 
     *addr_ptr = ptr;

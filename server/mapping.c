@@ -103,8 +103,10 @@ static void init_page_size(void)
 #define ROUND_ADDR(addr) \
    ((int)(addr) & ~page_mask)
 
-#define ROUND_SIZE(addr,size) \
-   (((int)(size) + ((int)(addr) & page_mask) + page_mask) & ~page_mask)
+#define ROUND_SIZE_MASK(addr,size,mask) \
+   (((int)(size) + ((int)(addr) & (mask)) + (mask)) & ~(mask))
+
+#define ROUND_SIZE(addr,size) ROUND_SIZE_MASK( addr, size, page_mask )
 
 
 /* find the shared PE mapping for a given mapping */
@@ -236,7 +238,8 @@ static int get_image_params( struct mapping *mapping )
     mapping->size_low    = ROUND_SIZE( 0, nt.OptionalHeader.SizeOfImage );
     mapping->size_high   = 0;
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
-    mapping->header_size = ROUND_SIZE( mapping->base, nt.OptionalHeader.SizeOfHeaders );
+    mapping->header_size = ROUND_SIZE_MASK( mapping->base, nt.OptionalHeader.SizeOfHeaders,
+                                            nt.OptionalHeader.SectionAlignment - 1 );
     mapping->protect     = VPROT_IMAGE;
 
     /* sanity check */
