@@ -29,9 +29,12 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dsound.h"
+#include "initguid.h"
 #include "dsconf.h"
 
-#include "initguid.h"
+#ifndef DSBCAPS_CTRLDEFAULT
+#define DSBCAPS_CTRLDEFAULT DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLPAN|DSBCAPS_CTRLVOLUME
+#endif
 
 DEFINE_GUID(DSPROPSETID_VoiceManager,0x62A69BAE,0xDF9D,0x11D1,0x99,0xA6,0x00,0xC0,0x4F,0xC9,0x9D,0x46);
 DEFINE_GUID(DSPROPSETID_EAX20_ListenerProperties,0x306a6a8,0xb224,0x11d2,0x99,0xe5,0x0,0x0,0xe8,0xd8,0xc7,0x22);

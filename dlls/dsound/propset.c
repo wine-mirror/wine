@@ -47,9 +47,10 @@
 #include "wine/windef16.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsconf.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
+#include "initguid.h"
+#include "dsconf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 

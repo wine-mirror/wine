@@ -37,7 +37,6 @@
 #include "mmsystem.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#include "dsconf.h"
 #include "dmusici.h"
 #include "dmusics.h"
 #include "dplay.h"
