@@ -516,14 +516,14 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 		  void *data;
 		  if (outp)
                   {
-		      data = MAKE_PTR(seg,
+		      data = MK_PTR(context, seg,
                                long_addr ? ESI_sig(context) : SI_sig(context));
 		      if (long_addr) ESI_sig(context) += step;
 		      else SI_sig(context) += step;
                   }
 		  else
                   {
-		      data = MAKE_PTR(seg,
+		      data = MK_PTR(context, seg,
                                long_addr ? EDI_sig(context) : DI_sig(context));
 		      if (long_addr) EDI_sig(context) += step;
 		      else DI_sig(context) += step;
