@@ -1407,9 +1407,10 @@ LPVOID WINAPI CoTaskMemAlloc(
     LPMALLOC	lpmalloc;
     HRESULT	ret = CoGetMalloc(0,&lpmalloc);
 
-    if (ret) 
+    if (FAILED(ret)) 
 	return NULL;
-    return lpmalloc->lpvtbl->fnAlloc(lpmalloc,size);
+
+    return IMalloc_Alloc(lpmalloc,size);
 }
 
 /***********************************************************************
@@ -1421,8 +1422,28 @@ VOID WINAPI CoTaskMemFree(
     LPMALLOC	lpmalloc;
     HRESULT	ret = CoGetMalloc(0,&lpmalloc);
 
-    if (ret) return;
-    lpmalloc->lpvtbl->fnFree(lpmalloc,ptr);
+    if (FAILED(ret)) 
+      return;
+
+    IMalloc_Free(lpmalloc, ptr);
+}
+
+/***********************************************************************
+ *           CoTaskMemRealloc (OLE32.45)
+ * RETURNS
+ * 	pointer to newly allocated block
+ */
+LPVOID WINAPI CoTaskMemRealloc(
+  LPVOID pvOld,
+  ULONG  size)	/* [in] size of memoryblock to be allocated */
+{
+  LPMALLOC lpmalloc;
+  HRESULT  ret = CoGetMalloc(0,&lpmalloc);
+  
+  if (FAILED(ret)) 
+    return NULL;
+
+  return IMalloc_Realloc(lpmalloc, pvOld, size);
 }
 
 /***********************************************************************

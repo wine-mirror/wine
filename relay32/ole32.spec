@@ -45,7 +45,7 @@ type	win32
  42 stdcall CoSetState(ptr) CoSetState
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
- 45 stub CoTaskMemRealloc           # stdcall (ptr long) return 0,ERR_NOTIMPLEMENTED
+ 45 stdcall CoTaskMemRealloc(ptr long) CoTaskMemRealloc
  46 stub CoTreatAsClass             # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  47 stdcall CoUninitialize() CoUninitialize
  48 stub CoUnloadingWOW
