@@ -74,15 +74,6 @@ DEFAULT_DEBUG_CHANNEL(comm);
 #define	TIOCINQ FIONREAD
 #endif
 
-static int WinError(void)
-{
-        TRACE("errno = %d\n", errno);
-	switch (errno) {
-		default:
-			return CE_IOE;
-		}
-}
-
 static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
 {
     unsigned int mstat, okay;
@@ -379,8 +370,38 @@ BOOL WINAPI BuildCommDCBW(
 	return BuildCommDCBAndTimeoutsW(devid,lpdcb,NULL);
 }
 
-/* FIXME: having these global for win32 for now */
-int commerror=0;
+static BOOL COMM_SetCommError(HANDLE handle, DWORD error)
+{
+    DWORD ret;
+
+    SERVER_START_REQ( set_serial_info )
+    {
+        req->handle = handle;
+        req->flags = SERIALINFO_SET_ERROR;
+        req->commerror = error;
+        ret = !SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
+{
+    DWORD ret;
+
+    if(!lperror)
+        return FALSE;
+
+    SERVER_START_REQ( get_serial_info )
+    {
+        req->handle = handle;
+        ret = !SERVER_CALL_ERR();
+        *lperror = req->commerror;
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
 
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.@)
@@ -489,7 +510,7 @@ BOOL WINAPI EscapeCommFunction(
 	}
 
 	if (tcgetattr(fd,&port) == -1) {
-		commerror=WinError();
+		COMM_SetCommError(handle,CE_IOE);
 		close(fd);
 		return FALSE;
 	}
@@ -562,8 +583,8 @@ BOOL WINAPI EscapeCommFunction(
 	
 	if (!direct)
 	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
-		commerror = WinError();
 		close(fd);
+		COMM_SetCommError(handle,CE_IOE);
 		return FALSE;	
 	  } else 
 	        result= TRUE;
@@ -572,7 +593,7 @@ BOOL WINAPI EscapeCommFunction(
 	    if (result == -1)
 	      {
 		result= FALSE;
-		commerror=WinError();
+		COMM_SetCommError(handle,CE_IOE);
 	      }
 	    else
 	      result = TRUE;
@@ -669,15 +690,8 @@ BOOL WINAPI ClearCommError(
 
     close(fd);
 
-    if(errors)
-        *errors = 0;
-
-    /*
-    ** After an asynchronous write opperation, the
-    ** app will call ClearCommError to see if the
-    ** results are ready yet. It waits for ERROR_IO_PENDING
-    */
-    commerror = ERROR_IO_PENDING;
+    COMM_GetCommError(handle, errors);
+    COMM_SetCommError(handle, 0);
 
     return TRUE;
 }
@@ -807,7 +821,7 @@ BOOL WINAPI SetCommState(
 
      if ((tcgetattr(fd,&port)) == -1) {
          int save_error = errno;
-         commerror = WinError();
+         COMM_SetCommError(handle,CE_IOE);
          close( fd );
          ERR("tcgetattr error '%s'\n", strerror(save_error));
          return FALSE;
@@ -895,7 +909,7 @@ BOOL WINAPI SetCommState(
 			break;		
 #endif
        	        default:
-			commerror = IE_BAUDRATE;
+                        COMM_SetCommError(handle,IE_BAUDRATE);
 			close( fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
 			return FALSE;
@@ -939,7 +953,7 @@ BOOL WINAPI SetCommState(
                         port.c_ospeed = B38400;
                         break;
                 default:
-                        commerror = IE_BAUDRATE;
+                        COMM_SetCommError(handle,IE_BAUDRATE);
                         close( fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
                         return FALSE;
@@ -982,7 +996,7 @@ BOOL WINAPI SetCommState(
                             stopbits = TWOSTOPBITS;
                             port.c_iflag &= ~INPCK;
                         } else {
-                            commerror = IE_BYTESIZE;
+                            COMM_SetCommError(handle,IE_BYTESIZE);
                             close( fd );
                             ERR("Cannot set MARK Parity\n");
                             return FALSE;
@@ -993,7 +1007,7 @@ BOOL WINAPI SetCommState(
                             bytesize +=1;
                             port.c_iflag &= ~INPCK;
                         } else {
-                            commerror = IE_BYTESIZE;
+                            COMM_SetCommError(handle,IE_BYTESIZE);
                             close( fd );
                             ERR("Cannot set SPACE Parity\n");
                             return FALSE;
@@ -1001,7 +1015,7 @@ BOOL WINAPI SetCommState(
                         break;
 #endif
                default:
-                        commerror = IE_BYTESIZE;
+                        COMM_SetCommError(handle,IE_BYTESIZE);
                         close( fd );
 			ERR("Parity\n");
                         return FALSE;
@@ -1023,7 +1037,7 @@ BOOL WINAPI SetCommState(
 			port.c_cflag |= CS8;
 			break;
 		default:
-			commerror = IE_BYTESIZE;
+                        COMM_SetCommError(handle,IE_BYTESIZE);
                         close( fd );
 			ERR("ByteSize\n");
 			return FALSE;
@@ -1038,7 +1052,7 @@ BOOL WINAPI SetCommState(
 				port.c_cflag |= CSTOPB;
 				break;
 		default:
-			commerror = IE_BYTESIZE;
+                        COMM_SetCommError(handle,IE_BYTESIZE);
                         close( fd );
 			ERR("StopBits\n");
 			return FALSE;
@@ -1070,12 +1084,12 @@ BOOL WINAPI SetCommState(
 
 	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
 	        int save_error=errno;
-		commerror = WinError();	
+                COMM_SetCommError(handle,CE_IOE);
                 close( fd );
                 ERR("tcsetattr error '%s'\n", strerror(save_error));
 		return FALSE;
 	} else {
-		commerror = 0;
+                COMM_SetCommError(handle,0);
                 close( fd );
 		return TRUE;
 	}
@@ -1113,7 +1127,7 @@ BOOL WINAPI GetCommState(
      if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
                 ERR("tcgetattr error '%s'\n", strerror(save_error));
-		commerror = WinError();	
+                COMM_SetCommError(handle,CE_IOE);
                 close( fd );
 		return FALSE;
 	}
@@ -1262,7 +1276,7 @@ BOOL WINAPI GetCommState(
 	lpdcb->XonLim = 10;
 	lpdcb->XoffLim = 10;
 
-	commerror = 0;
+        COMM_SetCommError(handle,0);
 
         TRACE("OK\n");
  
