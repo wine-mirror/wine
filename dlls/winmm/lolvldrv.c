@@ -640,9 +640,9 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 	}
         if (TRACE_ON(winmm)) {
             if (MMDRV_GetDescription32(drvFileName, buffer, sizeof(buffer)))
-	    TRACE("%s => %s\n", drvFileName, buffer);
-	else
-	    TRACE("%s => No description\n", drvFileName);
+		TRACE("%s => %s\n", drvFileName, buffer);
+	    else
+		TRACE("%s => No description\n", drvFileName);
         }
     } else if (WINMM_CheckForMMSystem() && pFnLoadMMDrvFunc16) {
         count += pFnLoadMMDrvFunc16(drvFileName, d, lpDrv);
@@ -663,15 +663,20 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
     lpDrv->drvname = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(drvRegName) + 1), drvRegName);
 
     /* Finish init and get the count of the devices */
-    MMDRV_InitPerType(lpDrv, MMDRV_AUX,		AUXDM_GETNUMDEVS);
-    MMDRV_InitPerType(lpDrv, MMDRV_MIXER,	MXDM_GETNUMDEVS);
-    MMDRV_InitPerType(lpDrv, MMDRV_MIDIIN, 	MIDM_GETNUMDEVS);
-    MMDRV_InitPerType(lpDrv, MMDRV_MIDIOUT, 	MODM_GETNUMDEVS);
-    MMDRV_InitPerType(lpDrv, MMDRV_WAVEIN, 	WIDM_GETNUMDEVS);
-    MMDRV_InitPerType(lpDrv, MMDRV_WAVEOUT, 	WODM_GETNUMDEVS);
-    /* FIXME: if all those func calls return FALSE,
-     * then the driver must be unloaded
-     */
+    i = 0;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_AUX,     AUXDM_GETNUMDEVS))	i = 1;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_MIXER,   MXDM_GETNUMDEVS))	i = 1;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_MIDIIN,  MIDM_GETNUMDEVS))	i = 1;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_MIDIOUT, MODM_GETNUMDEVS))	i = 1;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_WAVEIN,  WIDM_GETNUMDEVS))	i = 1;
+    if (MMDRV_InitPerType(lpDrv, MMDRV_WAVEOUT, WODM_GETNUMDEVS))	i = 1;
+    /* if all those func calls return FALSE, then the driver must be unloaded */
+    if (!i) {
+	CloseDriver(lpDrv->hDriver, 0, 0);
+	HeapFree(GetProcessHeap(), 0, lpDrv->drvname);
+	WARN("Driver initialization failed\n");
+	return FALSE;
+    }
 
     MMDrvsHi++;
 
