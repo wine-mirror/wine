@@ -61,9 +61,6 @@ TESTSUBDIRS = \
 	dlls \
 	programs
 
-EMUOBJS = \
-	miscemu/miscemu.o
-
 all: Make.rules wine
 	@echo "Wine build complete."
 
@@ -129,7 +126,7 @@ unicode/__install__: unicode
 checklink:: $(TESTSUBDIRS:%=%/__checklink__)
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
 
-check test:: $(TESTSUBDIRS:%=%/__test__)
+check test:: wine $(TESTSUBDIRS:%=%/__test__)
 
 crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
 

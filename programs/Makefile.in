@@ -25,7 +25,6 @@ SUBDIRS = \
 	winefile \
 	winemine \
 	winepath \
-	winetest \
 	winhelp \
 	winver
 

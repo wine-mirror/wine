@@ -1366,7 +1366,6 @@ WINE_CONFIG_EXTRA_DIR(msdos)
 WINE_CONFIG_EXTRA_DIR(objects)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/regedit/tests)
-WINE_CONFIG_EXTRA_DIR(programs/winetest/tests)
 WINE_CONFIG_EXTRA_DIR(relay32)
 WINE_CONFIG_EXTRA_DIR(scheduler)
 WINE_CONFIG_EXTRA_DIR(win32)
@@ -1527,7 +1526,6 @@ programs/winedbg/Makefile
 programs/winefile/Makefile
 programs/winemine/Makefile
 programs/winepath/Makefile
-programs/winetest/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 server/Makefile
