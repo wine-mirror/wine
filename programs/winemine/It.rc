@@ -4,7 +4,7 @@
  *
  * Copyright 2000 Joshua Thielen
  * Copyright 2003 Marcelo Duarte
- * Copyright 2003 Ivan Leo Murray-Smith
+ * Copyright 2003-2004 Ivan Leo Murray-Smith
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,7 +30,7 @@ STRINGTABLE {
 
 MENU_WINEMINE MENU DISCARDABLE
 {
-    POPUP "&Options" {
+    POPUP "&Opzioni" {
         MENUITEM "&Nuovo",           IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Contrassegna domanda", IDM_MARKQ
