@@ -176,7 +176,6 @@ static BOOL CUPS_LoadPrinters(void)
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
-	SetLastError(ERROR_FILE_NOT_FOUND); /* ?? */
 	return FALSE;
     }
 
@@ -230,130 +229,160 @@ static BOOL CUPS_LoadPrinters(void)
 static BOOL
 PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     PRINTER_INFO_2A	pinfo2a;
-    char		*s,*name,*prettyname,*devname;
-    BOOL		isps = FALSE;
-    char		*port,*devline;
+    char		*e,*s,*name,*prettyname,*devname;
+    BOOL		ret = FALSE, set_default = FALSE;
+    char                *port,*devline,*env_default;
+    HKEY                hkeyPrinter, hkeyPrinters;
 
     while (isspace(*pent)) pent++;
     s = strchr(pent,':');
-    if (!s) return FALSE;
-    *s='\0';
-    name = pent;
-    pent = s+1;
-    TRACE("%s\n",name);
+    if(s) *s='\0';
+    name = HeapAlloc(GetProcessHeap(), 0, strlen(pent) + 1);
+    strcpy(name,pent);
+    if(s) {
+        *s=':';
+        pent = s;
+    } else
+        pent = "";
+
+    TRACE("name=%s entry=%s\n",name, pent);
+
+    if(ispunct(*name)) { /* a tc entry, not a real printer */
+        TRACE("skipping tc entry\n");
+        goto end;
+    }
+
+    if(strstr(pent,":server")) { /* server only version so skip */
+        TRACE("skipping server entry\n");
+        goto end;
+    }
 
     /* Determine whether this is a postscript printer. */
 
-    /* 1. Check if name or aliases contain trigger phrases like 'ps' */
-    if (strstr(name,"ps")		||
-	strstr(name,"pd")		||	/* postscript double page */
-	strstr(name,"postscript")	||
-	strstr(name,"PostScript")
-    ) {
-	TRACE("%s has 'ps' style name, assuming postscript.\n",name);
-	isps = TRUE;
-    }
-    /* 2. Check if this is a remote printer. These usually are postscript
-     *    capable
-     */
-    if (strstr(pent,":rm")) {
-	isps = TRUE;
-	TRACE("%s is remote, assuming postscript.\n",name);
-    }
-    /* 3. Check if we have an input filter program. If we have one, it
-     *    most likely is one capable of converting postscript.
-     *    (Could probably check for occurrence of 'gs' or 'ghostscript'
-     *     in the if file itself.)
-     */
-    if (strstr(pent,":if=/")) {
-	isps = TRUE;
-	TRACE("%s has inputfilter program, assuming postscript.\n",name);
-    }
-
-    /* If it is not a postscript printer, we cannot use it. */
-    if (!isps)
-	return FALSE;
-
+    ret = TRUE;
+    env_default = getenv("PRINTER");
     prettyname = name;
     /* Get longest name, usually the one at the right for later display. */
-    while ((s=strchr(prettyname,'|'))) prettyname = s+1;
-    s=strchr(name,'|');if (s) *s='\0';
+    while((s=strchr(prettyname,'|'))) {
+        *s = '\0';
+        e = s;
+        while(isspace(*--e)) *e = '\0';
+        TRACE("\t%s\n", debugstr_a(prettyname));
+        if(env_default && !strcasecmp(prettyname, env_default)) set_default = TRUE;
+        for(prettyname = s+1; isspace(*prettyname); prettyname++)
+            ;
+    }
+    e = prettyname + strlen(prettyname);
+    while(isspace(*--e)) *e = '\0';
+    TRACE("\t%s\n", debugstr_a(prettyname));
+    if(env_default && !strcasecmp(prettyname, env_default)) set_default = TRUE;
 
     /* prettyname must fit into the dmDeviceName member of DEVMODE struct,
      * if it is too long, we use it as comment below. */
     devname = prettyname;
     if (strlen(devname)>=CCHDEVICENAME-1)
 	 devname = name;
-    if (strlen(devname)>=CCHDEVICENAME-1)
-	return FALSE;
+    if (strlen(devname)>=CCHDEVICENAME-1) {
+        ret = FALSE;
+        goto end;
+    }
 
-    if (isfirst) /* set first entry as default */
-	    WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
-
-    memset(&pinfo2a,0,sizeof(pinfo2a));
-    pinfo2a.pPrinterName	= devname;
-    pinfo2a.pDatatype		= "RAW";
-    pinfo2a.pPrintProcessor	= "WinPrint";
-    pinfo2a.pDriverName		= "PS Driver";
-    pinfo2a.pComment		= "WINEPS Printer using LPR";
-    pinfo2a.pLocation		= prettyname;
     port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
     sprintf(port,"LPR:%s",name);
-    pinfo2a.pPortName		= port;
-    pinfo2a.pParameters		= "<parameters?>";
-    pinfo2a.pShareName		= "<share name?>";
-    pinfo2a.pSepFile		= "<sep file?>";
 
     devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
     sprintf(devline,"WINEPS,%s",port);
     WriteProfileStringA("devices",devname,devline);
     HeapFree(GetProcessHeap(),0,devline);
-
-    if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
-	if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-	    ERR("%s not added by AddPrinterA (%ld)\n",name,GetLastError());
+    
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Printers key\n");
+	ret = FALSE;
+        goto end;
     }
-    HeapFree(GetProcessHeap(),0,port);
-    return TRUE;
+    if(RegOpenKeyA(hkeyPrinters, devname, &hkeyPrinter) == ERROR_SUCCESS) {
+        /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
+           and continue */
+        TRACE("Printer already exists\n");
+        RegDeleteValueW(hkeyPrinter, May_Delete_Value);
+        RegCloseKey(hkeyPrinter);
+    } else {
+        memset(&pinfo2a,0,sizeof(pinfo2a));
+        pinfo2a.pPrinterName            = devname;
+        pinfo2a.pDatatype               = "RAW";
+        pinfo2a.pPrintProcessor	        = "WinPrint";
+        pinfo2a.pDriverName             = "PS Driver";
+        pinfo2a.pComment                = "WINEPS Printer using LPR";
+        pinfo2a.pLocation               = prettyname;
+        pinfo2a.pPortName               = port;
+        pinfo2a.pParameters             = "<parameters?>";
+        pinfo2a.pShareName              = "<share name?>";
+        pinfo2a.pSepFile                = "<sep file?>";
+
+        if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
+            if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
+                ERR("%s not added by AddPrinterA (%ld)\n",name,GetLastError());
+        }
+    }
+    RegCloseKey(hkeyPrinters);
+
+    if (isfirst || set_default)
+        WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
+
+    HeapFree(GetProcessHeap(), 0, port);
+ end:
+    HeapFree(GetProcessHeap(), 0, name);
+    return ret;
 }
 
 static BOOL
 PRINTCAP_LoadPrinters(void) {
-    BOOL		hadprinter = FALSE, isfirst = TRUE;
+    BOOL		hadprinter = FALSE;
     char		buf[200];
     FILE		*f;
+    char *pent = NULL;
+    BOOL had_bash = FALSE;
 
     f = fopen("/etc/printcap","r");
     if (!f)
 	return FALSE;
 
-    while (fgets(buf,sizeof(buf),f)) {
-	char	*pent = NULL;
-	do {
-	    char	*s;
-	    s=strchr(buf,'\n'); if (s) *s='\0';
-	    if ((buf[0]=='#') || (buf[0]=='\0'))
-		continue;
+    while(fgets(buf,sizeof(buf),f)) {
+        char *start, *end;
 
-	    if (pent) {
-		pent=HeapReAlloc(GetProcessHeap(),0,pent,strlen(pent)+strlen(buf)+2);
-		strcat(pent,buf);
-	    } else {
-		pent=HeapAlloc(GetProcessHeap(),0,strlen(buf)+1);
-		strcpy(pent,buf);
-	    }
+        end=strchr(buf,'\n');
+        if (end) *end='\0';
+    
+        start = buf;
+        while(isspace(*start)) start++;
+        if(*start == '#' || *start == '\0')
+            continue;
 
-	    if (strlen(pent) && (pent[strlen(pent)-1] == '\\'))
-		pent[strlen(pent)-1] = '\0';
-	    else
-		break;
-	} while (fgets(buf,sizeof(buf),f));
-	if (pent)
-	    hadprinter |= PRINTCAP_ParseEntry(pent,isfirst);
-	isfirst = FALSE;
-	if (pent) HeapFree(GetProcessHeap(),0,pent);
-	pent = NULL;
-	if (feof(f)) break;
+        if(pent && !had_bash && *start != ':' && *start != '|') { /* start of new entry, parse the previous one */
+	    hadprinter |= PRINTCAP_ParseEntry(pent,!hadprinter);
+            HeapFree(GetProcessHeap(),0,pent);
+            pent = NULL;
+        }
+
+        if (end && *--end == '\\') {
+            *end = '\0';
+            had_bash = TRUE;
+        } else
+            had_bash = FALSE;
+
+        if (pent) {
+            pent=HeapReAlloc(GetProcessHeap(),0,pent,strlen(pent)+strlen(start)+1);
+            strcat(pent,start);
+        } else {
+            pent=HeapAlloc(GetProcessHeap(),0,strlen(start)+1);
+            strcpy(pent,start);
+        }
+
+    }
+    if(pent) {
+        hadprinter |= PRINTCAP_ParseEntry(pent,!hadprinter);
+        HeapFree(GetProcessHeap(),0,pent);
     }
     fclose(f);
     return hadprinter;
@@ -413,9 +442,10 @@ void WINSPOOL_LoadSystemPrinters(void)
         RegCloseKey(hkeyPrinters);
     }
 
-    /* We want to avoid calling AddPrinter on cups printers as much as
-       possible, because this will (eventually) lead to a call to
-       cupsGetPPD which takes forever.  So we'll tag all printers that
+    /* We want to avoid calling AddPrinter on printers as much as
+       possible, because on cups printers this will (eventually) lead
+       to a call to cupsGetPPD which takes forever, even with non-cups
+       printers AddPrinter takes a while.  So we'll tag all printers that
        were automatically added last time around, if they still exist
        we'll leave them be otherwise we'll delete them. */
     EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
@@ -440,10 +470,17 @@ void WINSPOOL_LoadSystemPrinters(void)
 
 
 #ifdef HAVE_CUPS_CUPS_H
-    /* If we have any CUPS based printers, skip looking for printcap printers */
     done = CUPS_LoadPrinters();
-
 #endif
+
+    if(!done) { /* If we have any CUPS based printers, skip looking for printcap printers */
+        /* Check for [ppd] section in config file before parsing /etc/printcap */
+        if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd",
+                        &hkey) == ERROR_SUCCESS) {
+            RegCloseKey(hkey);
+            PRINTCAP_LoadPrinters();
+        }
+    }
 
     /* Now enumerate the list again and delete any printers that a still tagged */
     EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
@@ -469,18 +506,8 @@ void WINSPOOL_LoadSystemPrinters(void)
         HeapFree(GetProcessHeap(), 0, pi);
     }
 
+    return;
 
-    if(done)
-        return;
-
-    /* Check for [ppd] section in config file before parsing /etc/printcap */
-
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd",
-    	    &hkey) == ERROR_SUCCESS)
-    {
-    	RegCloseKey(hkey);
-    	PRINTCAP_LoadPrinters();
-    }
 }
 
 
