@@ -710,6 +710,8 @@ AC_CHECK_FUNCS(\
 	__libc_fork \
 	_lwp_create \
 	clone \
+	finite \
+	fpclass \
 	getnetbyaddr \
 	getnetbyname \
 	getpagesize \

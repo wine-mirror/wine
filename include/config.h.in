@@ -173,6 +173,12 @@
 /* Define if you have the dlopen function.  */
 #undef HAVE_DLOPEN
 
+/* Define if you have the finite function.  */
+#undef HAVE_FINITE
+
+/* Define if you have the fpclass function.  */
+#undef HAVE_FPCLASS
+
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
 

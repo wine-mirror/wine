@@ -24,8 +24,8 @@ UB 000416:
 
 #include "crtdll.h"
 #include <ctype.h>
-#define __USE_ISOC9X 1 /* for isfinite */
-#define __USE_ISOC99 1 /* for isfinite */
+#define __USE_ISOC9X 1
+#define __USE_ISOC99 1
 #include <math.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -33,9 +33,21 @@ UB 000416:
 #include "wingdi.h"
 #include "winuser.h"
 
+#ifndef HAVE_FINITE
+#ifndef finite /* Could be macro */
+#ifdef isfinite 
+#define finite(x) isfinite(x) 
+#else
+#define finite(x) (!isnan(x)) /* At least catch some cases */
+#endif
+#endif
+#endif
+
+#ifndef signbit
+#define signbit(x) 0
+#endif
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
-
 
 double CRTDLL_HUGE_dll;       /* CRTDLL.20 */
 UINT CRTDLL_argc_dll;         /* CRTDLL.23 */
@@ -168,10 +180,10 @@ void __CRTDLL__set_errno(ULONG err)
   __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var2) : ); \
   __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var1) : )
 #else
-#define FPU_DOUBLE(var) double var = quiet_nan(0); \
+#define FPU_DOUBLE(var) double var = sqrt(-1); \
   FIXME(":not implemented\n");
 #define FPU_DOUBLES(var1,var2) double var1,var2; \
-  var1=var2=quiet_nan(0); FIXME(":not implemented\n")
+  var1=var2=sqrt(-1); FIXME(":not implemented\n")
 #endif
 
 /*********************************************************************
@@ -180,7 +192,7 @@ void __CRTDLL__set_errno(ULONG err)
 double __cdecl CRTDLL__CIacos(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0) CRTDLL_errno = EDOM;
+  if (x < -1.0 || x > 1.0 || !finite(x)) CRTDLL_errno = EDOM;
   return acos(x);
 }
 
@@ -191,7 +203,7 @@ double __cdecl CRTDLL__CIacos(void)
 double __cdecl CRTDLL__CIasin(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0) CRTDLL_errno = EDOM;
+  if (x < -1.0 || x > 1.0 || !finite(x)) CRTDLL_errno = EDOM;
   return asin(x);
 }
 
@@ -202,7 +214,7 @@ double __cdecl CRTDLL__CIasin(void)
 double __cdecl CRTDLL__CIatan(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return atan(x);
 }
 
@@ -212,7 +224,7 @@ double __cdecl CRTDLL__CIatan(void)
 double __cdecl CRTDLL__CIatan2(void)
 {
   FPU_DOUBLES(x,y);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return atan2(x,y);
 }
 
@@ -223,7 +235,7 @@ double __cdecl CRTDLL__CIatan2(void)
 double __cdecl CRTDLL__CIcos(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return cos(x);
 }
 
@@ -233,7 +245,7 @@ double __cdecl CRTDLL__CIcos(void)
 double __cdecl CRTDLL__CIcosh(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return cosh(x);
 }
 
@@ -243,7 +255,7 @@ double __cdecl CRTDLL__CIcosh(void)
 double __cdecl CRTDLL__CIexp(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return exp(x);
 }
 
@@ -253,7 +265,7 @@ double __cdecl CRTDLL__CIexp(void)
 double __cdecl CRTDLL__CIfmod(void)
 {
   FPU_DOUBLES(x,y);
-  if (!isfinite(x) | !isfinite(y)) CRTDLL_errno = EDOM;
+  if (!finite(x) || !finite(y)) CRTDLL_errno = EDOM;
   return fmod(x,y);
 }
 
@@ -263,7 +275,7 @@ double __cdecl CRTDLL__CIfmod(void)
 double __cdecl CRTDLL__CIlog(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !isfinite(x)) CRTDLL_errno = EDOM;
+  if (x < 0.0 || !finite(x)) CRTDLL_errno = EDOM;
   if (x == 0.0) CRTDLL_errno = ERANGE;
   return log(x);
 }
@@ -274,7 +286,7 @@ double __cdecl CRTDLL__CIlog(void)
 double __cdecl CRTDLL__CIlog10(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !isfinite(x)) CRTDLL_errno = EDOM;
+  if (x < 0.0 || !finite(x)) CRTDLL_errno = EDOM;
   if (x == 0.0) CRTDLL_errno = ERANGE;
   return log10(x);
 }
@@ -288,7 +300,7 @@ double __cdecl CRTDLL__CIpow(void)
   FPU_DOUBLES(x,y);
   /* FIXME: If x < 0 and y is not integral, set EDOM */
   z = pow(x,y);
-  if (!isfinite(z)) CRTDLL_errno = EDOM;
+  if (!finite(z)) CRTDLL_errno = EDOM;
   return z;
 }
 
@@ -298,7 +310,7 @@ double __cdecl CRTDLL__CIpow(void)
 double __cdecl CRTDLL__CIsin(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return sin(x);
 }
 
@@ -308,7 +320,7 @@ double __cdecl CRTDLL__CIsin(void)
 double __cdecl CRTDLL__CIsinh(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return sinh(x);
 }
 
@@ -318,7 +330,7 @@ double __cdecl CRTDLL__CIsinh(void)
 double __cdecl CRTDLL__CIsqrt(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0) CRTDLL_errno = EDOM;
+  if (x < 0.0 || !finite(x)) CRTDLL_errno = EDOM;
   return sqrt(x);
 }
 
@@ -328,7 +340,7 @@ double __cdecl CRTDLL__CIsqrt(void)
 double __cdecl CRTDLL__CItan(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return tan(x);
 }
 
@@ -338,7 +350,7 @@ double __cdecl CRTDLL__CItan(void)
 double __cdecl CRTDLL__CItanh(void)
 {
   FPU_DOUBLE(x);
-  if (!isfinite(x)) CRTDLL_errno = EDOM;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return tanh(x);
 }
 
@@ -446,27 +458,34 @@ UINT __cdecl CRTDLL__clearfp( VOID )
  */
 INT __cdecl CRTDLL__fpclass(double d)
 {
+#if defined(HAVE_FPCLASS) || defined(fpclass)
+  switch (fpclass( d ))
+  {
+  case FP_SNAN:  return _FPCLASS_SNAN;
+  case FP_QNAN:  return _FPCLASS_QNAN;
+  case FP_NINF:  return _FPCLASS_NINF;
+  case FP_PINF:  return _FPCLASS_PINF;
+  case FP_NDENORM: return _FPCLASS_ND;
+  case FP_PDENORM: return _FPCLASS_PD;
+  case FP_NZERO: return _FPCLASS_NZ;
+  case FP_PZERO: return _FPCLASS_PZ;
+  case FP_NNORM: return _FPCLASS_NN;
+  }
+  return _FPCLASS_PN;
+#elif defined (fpclassify)
   switch (fpclassify( d ))
   {
   case FP_NAN: return _FPCLASS_QNAN;
-  case FP_INFINITE:
-    if (signbit(d))
-      return _FPCLASS_NINF;
-    return _FPCLASS_PINF;
-  case FP_SUBNORMAL:
-    if (signbit(d))
-      return _FPCLASS_ND;
-    return _FPCLASS_PD;
-  case FP_ZERO:
-    if (signbit(d))
-      return _FPCLASS_NZ;
-    return _FPCLASS_PZ;
-  case FP_NORMAL:
-  default:
-    if (signbit(d))
-      return _FPCLASS_NN;
-    return _FPCLASS_PN;
+  case FP_INFINITE: return signbit(d) ? _FPCLASS_NINF : _FPCLASS_PINF;
+  case FP_SUBNORMAL: return signbit(d) ?_FPCLASS_ND : _FPCLASS_PD;
+  case FP_ZERO: return signbit(d) ? _FPCLASS_NZ : _FPCLASS_PZ;
   }
+  return signbit(d) ? _FPCLASS_NN : _FPCLASS_PN;
+#else
+  if (!finite(d))
+    return _FPCLASS_QNAN;
+  return d == 0.0 ? _FPCLASS_PZ : (d < 0 ? _FPCLASS_NN : _FPCLASS_PN);
+#endif
 }
 
 
@@ -555,6 +574,16 @@ UINT __cdecl CRTDLL__rotl(UINT x,INT shift)
 
 
 /*********************************************************************
+ *                  _logb           (CRTDLL.174)
+ */
+double __cdecl CRTDLL__logb(double x)
+{
+  if (!finite(x)) CRTDLL_errno = EDOM;
+  return logb(x);
+}
+
+
+/*********************************************************************
  *                  _lrotl          (CRTDLL.175)
  */
 DWORD __cdecl CRTDLL__lrotl(DWORD x,INT shift)
@@ -593,6 +622,7 @@ double  __cdecl CRTDLL__scalb(double x, LONG y)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double y2 = (double)y;
+  if (!finite(x)) CRTDLL_errno = EDOM;
   return scalb( x, y2 );
 }
 
@@ -959,7 +989,7 @@ INT __cdecl CRTDLL_isdigit(INT c)
  */
 INT __cdecl CRTDLL_isgraph(INT c)
 {
-  return CRTDLL__isctype( c, CRTDLL_ALPHA | CRTDLL_DIGIT  | CRTDLL_PUNCT );
+  return CRTDLL__isctype( c, CRTDLL_ALPHA | CRTDLL_DIGIT | CRTDLL_PUNCT );
 }
 
 
@@ -1023,10 +1053,12 @@ INT __cdecl CRTDLL_isxdigit(INT c)
  */
 double __cdecl CRTDLL_ldexp(double x, LONG y)
 {
-  double z;
-  z = ldexp(x,y);
-  /* FIXME: MS doesn't return -0 or very large/small (e=298+) numbers */
-  if (!isfinite(z)) CRTDLL_errno = ERANGE;
+  double z = ldexp(x,y);
+
+  if (!finite(z))
+    CRTDLL_errno = ERANGE;
+  else if (z == 0 && signbit(z))
+    z = 0.0; /* Convert -0 -> +0 */
   return z;
 }
 
@@ -1423,7 +1455,7 @@ double __cdecl CRTDLL__copysign(double x, double y)
  */
 INT __cdecl  CRTDLL__finite(double d)
 {
-  return (isfinite(d)?1:0); /* See comment for CRTDLL__isnan() */
+  return (finite(d)?1:0); /* See comment for CRTDLL__isnan() */
 }
 
 
@@ -1474,13 +1506,13 @@ VOID __cdecl CRTDLL__purecall(VOID)
 
 
 /*********************************************************************
- *                  _div               (CRTDLL.@)
+ *                  _div               (CRTDLL.358)
  *
  * Return the quotient and remainder of long integer division.
  */
 #ifdef __i386__
 /* Windows binary compatible - returns the struct in eax/edx. */
-LONGLONG __cdecl CRTDLL_div(int x, int y)
+LONGLONG __cdecl CRTDLL_div(INT x, INT y)
 {
   LONGLONG retVal;
   div_t dt = div(x,y);
@@ -1489,7 +1521,7 @@ LONGLONG __cdecl CRTDLL_div(int x, int y)
 }
 #else
 /* Non-x86 cant run win32 apps so dont need binary compatibility */
-div_t __cdecl CRTDLL_div(int x, int y)
+div_t __cdecl CRTDLL_div(INT x, INT y)
 {
   return div(x,y);
 }
@@ -1503,7 +1535,7 @@ div_t __cdecl CRTDLL_div(int x, int y)
  */
 #ifdef __i386__
 /* Windows binary compatible - returns the struct in eax/edx. */
-LONGLONG __cdecl CRTDLL_ldiv(long x, long y)
+LONGLONG __cdecl CRTDLL_ldiv(LONG x, LONG y)
 {
   LONGLONG retVal;
   ldiv_t ldt = ldiv(x,y);
@@ -1512,9 +1544,63 @@ LONGLONG __cdecl CRTDLL_ldiv(long x, long y)
 }
 #else
 /* Non-x86 cant run win32 apps so dont need binary compatibility */
-ldiv_t __cdecl CRTDLL_ldiv(long x, long y)
+ldiv_t __cdecl CRTDLL_ldiv(LONG x, LONG y)
 {
   return ldiv(x,y);
 }
 #endif /* __i386__ */
 
+
+/*********************************************************************
+ *                  _y0               (CRTDLL.332)
+ *
+ */
+double __cdecl CRTDLL__y0(double x)
+{
+  double retVal;
+
+  if (!finite(x)) CRTDLL_errno = EDOM;
+  retVal  = y0(x);
+  if (CRTDLL__fpclass(retVal) == _FPCLASS_NINF)
+  {
+    CRTDLL_errno = EDOM;
+    retVal = sqrt(-1);
+  }
+  return retVal;
+}
+
+/*********************************************************************
+ *                  _y1               (CRTDLL.333)
+ *
+ */
+double __cdecl CRTDLL__y1(double x)
+{
+  double retVal;
+
+  if (!finite(x)) CRTDLL_errno = EDOM;
+  retVal  = y1(x);
+  if (CRTDLL__fpclass(retVal) == _FPCLASS_NINF)
+  {
+    CRTDLL_errno = EDOM;
+    retVal = sqrt(-1);
+  }
+  return retVal;
+}
+
+/*********************************************************************
+ *                  _yn               (CRTDLL.334)
+ *
+ */
+double __cdecl CRTDLL__yn(INT x, double y)
+{
+  double retVal;
+
+  if (!finite(y)) CRTDLL_errno = EDOM;
+  retVal  = yn(x,y);
+  if (CRTDLL__fpclass(retVal) == _FPCLASS_NINF)
+  {
+    CRTDLL_errno = EDOM;
+    retVal = sqrt(-1);
+  }
+  return retVal;
+}

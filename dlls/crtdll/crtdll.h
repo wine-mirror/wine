@@ -344,6 +344,7 @@ INT    __cdecl CRTDLL__isatty(INT fd);
 VOID   __cdecl CRTDLL__beep( UINT freq, UINT duration );
 INT    __cdecl CRTDLL_rand( VOID );
 UINT   __cdecl CRTDLL__rotl( UINT x,INT shift );
+double __cdecl CRTDLL__logb( double x );
 DWORD  __cdecl CRTDLL__lrotl( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__lrotr( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__rotr( UINT x,INT shift );
@@ -412,6 +413,9 @@ INT    __cdecl CRTDLL__isnan( double d );
 LPVOID __cdecl CRTDLL__lsearch( LPVOID match, LPVOID start, LPUINT array_size,
                                 UINT elem_size, comp_func cf );
 VOID   __cdecl CRTDLL__purecall( VOID );
+double __cdecl CRTDLL__y0( double x );
+double __cdecl CRTDLL__y1( double x );
+double __cdecl CRTDLL__yn( INT x, double y );
 
 /* CRTDLL_mem.c */
 LPVOID  __cdecl CRTDLL_new( DWORD size );

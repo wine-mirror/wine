@@ -182,7 +182,7 @@ debug_channels (crtdll)
 @ cdecl _loaddll(str) CRTDLL__loaddll
 @ cdecl _local_unwind2(ptr long) CRTDLL__local_unwind2
 @ stub _locking
-@ cdecl _logb(double) logb
+@ cdecl _logb(double) CRTDLL__logb
 @ cdecl _lrotl (long long) CRTDLL__lrotl
 @ cdecl _lrotr (long long) CRTDLL__lrotr
 @ cdecl _lsearch(ptr ptr long long ptr) CRTDLL__lsearch
@@ -342,9 +342,9 @@ debug_channels (crtdll)
 @ cdecl _write(long ptr long) CRTDLL__write
 @ stub _wtoi
 @ stub _wtol
-@ cdecl _y0(double) y0
-@ cdecl _y1(double) y1
-@ cdecl _yn(long double) yn
+@ cdecl _y0(double) CRTDLL__y0
+@ cdecl _y1(double) CRTDLL__y1
+@ cdecl _yn(long double) CRTDLL__yn
 @ cdecl abort() CRTDLL_abort
 @ cdecl abs(long) abs
 @ cdecl acos(double) acos

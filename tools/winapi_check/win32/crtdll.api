@@ -13,6 +13,7 @@ LONG
 ULONG
 UINT
 WCHAR
+UCHAR
 clock_t
 size_t
 time_t
@@ -22,6 +23,11 @@ time_t
 int
 unsigned int
 unsigned long
+
+%longlong
+ 
+LONGLONG
+ULONGLONG
 
 %ptr
 
@@ -50,6 +56,7 @@ struct _timeb *
 time_t *
 struct _heapinfo *
 struct _utimbuf *
+struct _exception *
 fpos_t *
 diskfree_t *
 unsigned char *
@@ -78,4 +85,6 @@ sig_handler_type
 comp_func
 struct complex
 atexit_function
+div_t
+ldiv_t
 
