@@ -19,8 +19,7 @@
 #include <wincon.h>
 #endif /* !WINELIB */
 
-void WCMD_batch (char *, char *);
-void WCMD_call (void);
+void WCMD_batch (char *, char *, int);
 void WCMD_change_tty (void);
 void WCMD_clear_screen (void);
 void WCMD_copy (void);
@@ -28,8 +27,9 @@ void WCMD_create_dir (void);
 void WCMD_delete (int recurse);
 void WCMD_directory (void);
 void WCMD_echo (char *);
-void WCMD_for (void);
+void WCMD_for (char *);
 void WCMD_give_help (char *command);
+void WCMD_goto (void);
 void WCMD_if (void);
 void WCMD_move (void);
 void WCMD_output (char *format, ...);
@@ -50,13 +50,24 @@ void WCMD_setshow_time (void);
 void WCMD_shift (void);
 void WCMD_show_prompt (void);
 void WCMD_type (void);
-void WCMD_verify (void);
+void WCMD_verify (char *command);
 void WCMD_version (void);
 int  WCMD_volume (int mode, char *command);
 
 char *WCMD_fgets (char *s, int n, HANDLE stream);
+char *WCMD_parameter (char *s, int n);
 char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
+
+/*	Data structure to hold context when executing batch files */
+
+typedef struct {
+  char *command;	/* The command which invoked the batch file */
+  HANDLE h;             /* Handle to the open batch file */
+  int shift_count;	/* Number of SHIFT commands executed */
+  void *prev_context;	/* Pointer to the previous context block */
+} BATCH_CONTEXT;
+
 #endif /* !RC_INVOKED */
 
 /*

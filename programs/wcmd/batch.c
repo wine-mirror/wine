@@ -8,9 +8,7 @@
 
 #include "wcmd.h"
 
-void WCMD_batch_command (HANDLE h, char *command);
-char *WCMD_parameter (char *s, int n);
-BOOL WCMD_go_to (HANDLE h, char *label);
+void WCMD_batch_command (char *line);
 
 extern HANDLE STDin, STDout;
 extern char nyi[];
@@ -18,6 +16,7 @@ extern char newline[];
 extern char version_string[];
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+extern BATCH_CONTEXT *context;
 
 
 
@@ -28,16 +27,17 @@ extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
  * On entry *command includes the complete command line beginning with the name
  * of the batch file (if a CALL command was entered the CALL has been removed).
  * *file is the name of the file, which might not exist and may not have the
- * .BAT suffix on.
+ * .BAT suffix on. Called is 1 for a CALL, 0 otherwise.
  *
  * We need to handle recursion correctly, since one batch program might call another.
+ * So parameters for this batch file are held in a BATCH_CONTEXT structure.
  */
 
-void WCMD_batch (char *file, char *command) {
+void WCMD_batch (char *file, char *command, int called) {
 
 HANDLE h;
 char string[MAX_PATH];
-int n;
+BATCH_CONTEXT *prev_context;
 
   strcpy (string, file);
   CharLower (string);
@@ -49,69 +49,88 @@ int n;
   }
 
 /*
+ *	Create a context structure for this batch file.
+ */
+
+  prev_context = context;
+  context = (BATCH_CONTEXT *)LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
+  context -> h = h;
+  context -> command = command;
+  context -> shift_count = 0;
+  context -> prev_context = prev_context;
+
+/*
  * 	Work through the file line by line. Specific batch commands are processed here,
  * 	the rest are handled by the main command processor.
  */
 
   while (WCMD_fgets (string, sizeof(string), h)) {
-    n = strlen (string);
-    if (string[n-1] == '\n') string[n-1] = '\0';
-    if (string[n-2] == '\r') string[n-2] = '\0'; /* Under Windoze we get CRLF! */
-    WCMD_batch_command (h, string);
+    if (string[0] != ':') {                      /* Skip over labels */
+      WCMD_batch_command (string);
+    }
   }
   CloseHandle (h);
+
+/*
+ *	If invoked by a CALL, we return to the context of our caller. Otherwise return
+ *	to the caller's caller.
+ */
+
+  LocalFree ((HANDLE)context);
+  if ((prev_context != NULL) && (!called)) {
+    CloseHandle (prev_context -> h);
+    context = prev_context -> prev_context;
+    LocalFree ((HANDLE)prev_context);
+  }
+  else {
+    context = prev_context;
+  }
 }
 
 /****************************************************************************
  * WCMD_batch_command
  *
- * Execute one line from a batch file.
+ * Execute one line from a batch file, expanding parameters.
  */
 
-void WCMD_batch_command (HANDLE h, char *command) {
+void WCMD_batch_command (char *line) {
 
 DWORD status;
 char cmd[1024];
+char *p, *s, *t;
+int i;
 
-  if (echo_mode && (command[0] != '@')) WCMD_output ("%s", command);
-  status = ExpandEnvironmentStrings (command, cmd, sizeof(cmd));
+  if (echo_mode && (line[0] != '@')) WCMD_output ("%s", line);
+  status = ExpandEnvironmentStrings (line, cmd, sizeof(cmd));
   if (!status) {
     WCMD_print_error ();
     return;
   }
-  WCMD_process_command (cmd);
+  p = cmd;
+  while ((p = strchr(p, '%'))) {
+    i = *(p+1) - '0';
+    if ((i >= 0) && (i <= 9)) {
+      s = strdup (p+2);
+      t = WCMD_parameter (context -> command, i + context -> shift_count);
+      strcpy (p, t);
+      strcat (p, s);
+      free (s);
 }
-
-/****************************************************************************
- * WCMD_go_to
- *
- * Batch file jump instruction. Not the most efficient algorithm ;-)
- * Returns FALSE if the specified label cannot be found - the file pointer is
- * then at EOF.
- */
-
-BOOL WCMD_go_to (HANDLE h, char *label) {
-
-char string[MAX_PATH];
-
-  SetFilePointer (h, 0, NULL, FILE_BEGIN);
-  while (WCMD_fgets (string, sizeof(string), h)) {
-    if ((string[0] == ':') && (strcmp (&string[1], label) == 0)) return TRUE;
   }
-  return FALSE;
+  WCMD_process_command (cmd);
 }
 
 /*******************************************************************
  * WCMD_parameter - extract a parameter from a command line.
  *
- *	Returns the 'n'th space-delimited parameter on the command line.
+ *	Returns the 'n'th space-delimited parameter on the command line (zero-based).
  *	Parameter is in static storage overwritten on the next call.
- *	Parameters in quotes are handled.
+ *	Parameters in quotes (and brackets) are handled.
  */
 
 char *WCMD_parameter (char *s, int n) {
 
-int i = -1;
+int i = 0;
 static char param[MAX_PATH];
 char *p;
 
@@ -136,6 +155,21 @@ char *p;
         }
 	if (*s == '"') s++;
 	break;
+      case '(':
+	s++;
+	while ((*s != '\0') && (*s != ')')) {
+	  *p++ = *s++;
+	}
+        if (i == n) {
+          *p = '\0';
+          return param;
+        }
+        else {
+          param[0] = '\0';
+          i++;
+        }
+	if (*s == '"') s++;
+	break;
       case '\0':
         return param;
       default:
@@ -148,6 +182,7 @@ char *p;
         }
         else {
           param[0] = '\0';
+          p = param;
           i++;
         }
     }
@@ -158,7 +193,8 @@ char *p;
  * WCMD_fgets
  *
  * Get one line from a batch file. We can't use the native f* functions because
- * of the filename syntax differences between DOS and Unix.
+ * of the filename syntax differences between DOS and Unix. Also need to lose
+ * the LF (or CRLF) from the line.
  */
 
 char *WCMD_fgets (char *s, int n, HANDLE h) {
@@ -170,10 +206,13 @@ char *p;
   p = s;
   do {
     status = ReadFile (h, s, 1, &bytes, NULL);
-    if ((status == 0) || (bytes == 0)) return NULL;
+    if ((status == 0) || ((bytes == 0) && (s == p))) return NULL;
     if (*s == '\n') bytes = 0;
-    *++s = '\0';
+    else if (*s != '\r') {
+      s++;
     n--;
+    }
+    *s = '\0';
   } while ((bytes == 1) && (n > 1));
   return p;
 }

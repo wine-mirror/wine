@@ -6,7 +6,7 @@
 
 /*
  * FIXME:
- * - No support for redirection, pipes, batch commands
+ * - No support for redirection, pipes
  * - 32-bit limit on file sizes in DIR command
  * - Cannot handle parameters in quotes
  * - Lots of functionality missing from builtins
@@ -31,12 +31,13 @@ char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 
 HANDLE STDin, STDout;
 HINSTANCE hinst;
-int echo_mode = 1;
+int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
-char version_string[] = "WCMD Version 0.10\n\n";
+char version_string[] = "WCMD Version 0.11\n\n";
 char anykey[] = "Press any key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+BATCH_CONTEXT *context = NULL;
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
@@ -198,7 +199,7 @@ DWORD count;
         WCMD_setshow_attrib ();
         break;
       case WCMD_CALL:
-        WCMD_batch (param1, p);
+        WCMD_batch (param1, p, 1);
         break;
       case WCMD_CD:
       case WCMD_CHDIR:
@@ -227,9 +228,10 @@ DWORD count;
         WCMD_echo (p);
         break;
       case WCMD_FOR:
-        WCMD_for ();
+        WCMD_for (p);
         break;
       case WCMD_GOTO:
+        WCMD_goto ();
         break;
       case WCMD_HELP:
         WCMD_give_help (p);
@@ -282,7 +284,7 @@ DWORD count;
         WCMD_version ();
         break;
       case WCMD_VERIFY:
-        WCMD_verify ();
+        WCMD_verify (p);
         break;
       case WCMD_VOL:
         WCMD_volume (0, p);
@@ -315,14 +317,14 @@ char filetorun[MAX_PATH];
   if (strpbrk (param1, "\\:") == NULL) {	/* No explicit path given */
     if ((strchr (param1, '.') == NULL) || (strstr (param1, ".bat") != NULL)) {
       if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command);
+        WCMD_batch (filetorun, command, 0);
         return;
       }
     }
   }
   else {                                        /* Explicit path given */
     if (strstr (param1, ".bat") != NULL) {
-      WCMD_batch (param1, command);
+      WCMD_batch (param1, command, 0);
       return;
     }
     if (strchr (param1, '.') == NULL) {
@@ -331,7 +333,7 @@ char filetorun[MAX_PATH];
       h = CreateFile (filetorun, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
       if (h != INVALID_HANDLE_VALUE) {
         CloseHandle (h);
-        WCMD_batch (param1, command);
+        WCMD_batch (param1, command, 0);
         return;
       }
     }

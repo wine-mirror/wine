@@ -12,9 +12,10 @@ WHAT'S INCLUDED
 WHAT'S MISSING
 - Redirection, shell parameters and pipes
 - Command-line qualifiers for most builtin commands
-- MOVE command (plus the batch-only ones)
+- MOVE command
+- IF and FOR commands
 - Wildcards and relative paths in COPY and RENAME
-- Set functionality in DATE, TIME, ATTRIB, SET, LABEL
+- Set functionality in DATE, TIME, ATTRIB, LABEL
 - Full internationalisation of the text (and commands?).
 
 WHAT DOESN'T WORK
@@ -37,9 +38,6 @@ free space are computed to 64 bits.
 but one does exist in a lower directory.
 - Copy, rename, move, need the source and destination to be specified fully
 with an absolute or relative path but no wildcards or partial filenames.
-- Simple batch files work, ie a list of commands as they would be typed. However
-invoking a batch file from within another invokes the CALL function, control
-returns to the calling batch file when the subfile exits.
 
 WINE OR WIN32 BINARY?
 Wcmd can be built as a Wine binary, or (using a Win32 compiler) as a Win32 .EXE

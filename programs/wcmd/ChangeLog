@@ -1,3 +1,8 @@
+v0.11 - 20 June 1999
+Batch command parameters (and the SHIFT command) added.
+GOTO added.
+Batch invokation (including CALL) now functions correctly
+VERIFY command added as a stub.
 
 v0.10 - 2 June 1999
 Additional help text and error codes.

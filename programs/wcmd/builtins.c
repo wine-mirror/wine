@@ -10,7 +10,7 @@
 
 /*
  * FIXME:
- * - No support for redirection, pipes, batch files, shell parameters
+ * - No support for redirection, pipes, shell parameters
  * - 32-bit limit on file sizes in DIR command
  * - Lots of functionality missing from builtins
  * - Messages etc need international support
@@ -25,21 +25,11 @@ extern char nyi[];
 extern char newline[];
 extern char version_string[];
 extern char anykey[];
-extern int echo_mode;
+extern int echo_mode, verify_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+extern BATCH_CONTEXT *context;
 
 
-/****************************************************************************
- * WCMD_call
- *
- * Call another batch file.
- */
-
-void WCMD_call () {
-
-  WCMD_output (nyi);
-
-}
 
 /****************************************************************************
  * WCMD_clear_screen
@@ -201,8 +191,12 @@ int count;
  * Batch file loop processing.
  */
 
-void WCMD_for () {
+void WCMD_for (char *p) {
 
+  if (lstrcmpi (WCMD_parameter (p, 1), "in") || lstrcmpi (WCMD_parameter (p, 3), "do")) {
+    WCMD_output ("Syntax error\n");
+    return;
+  }
   WCMD_output (nyi);
 
 }
@@ -236,6 +230,30 @@ char buffer[2048];
   }
   return;
 }
+
+/****************************************************************************
+ * WCMD_go_to
+ *
+ * Batch file jump instruction. Not the most efficient algorithm ;-)
+ * Prints error message if the specified label cannot be found - the file pointer is
+ * then at EOF, effectively stopping the batch file.
+ * FIXME: DOS is supposed to allow labels with spaces - we don't.
+ */
+
+void WCMD_goto () {
+
+char string[MAX_PATH];
+
+  if (context != NULL) {
+    SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
+    while (WCMD_fgets (string, sizeof(string), context -> h)) {
+      if ((string[0] == ':') && (strcmp (&string[1], param1) == 0)) return;
+    }
+    WCMD_output ("Target to GOTO not found\n");
+  }
+  return;
+}
+
 
 /****************************************************************************
  * WCMD_if
@@ -541,7 +559,7 @@ DWORD count;
 
 void WCMD_shift () {
 
-  WCMD_output (nyi);
+  if (context != NULL) context -> shift_count++;
 
 }
 
@@ -574,12 +592,30 @@ DWORD count;
  * WCMD_verify
  *
  * Display verify flag.
+ * FIXME: We don't actually do anything with the verify flag other than toggle
+ * it...
  */
 
-void WCMD_verify () {
+void WCMD_verify (char *command) {
 
-  WCMD_output (nyi);
+static char *von = "Verify is ON\n", *voff = "Verify is OFF\n";
+int count;
 
+  count = strlen(command);
+  if (count == 0) {
+    if (verify_mode) WCMD_output (von);
+    else WCMD_output (voff);
+    return;
+  }
+  if (lstrcmpi(command, "ON") == 0) {
+    verify_mode = 1;
+    return;
+  }
+  else if (lstrcmpi(command, "OFF") == 0) {
+    verify_mode = 0;
+    return;
+  }
+  else WCMD_output ("Verify must be ON or OFF\n");
 }
 
 /****************************************************************************
