@@ -88,6 +88,11 @@ IDirectDrawSurface4Impl* _common_find_flipto(
     int	i,j,flipable=0;
     struct _surface_chain	*chain = This->s.chain;
 
+    if (!chain) {
+	ERR("No flip chain? -> returning This.\n");
+	return This;
+    }
+
     /* if there was no override flipto, look for current backbuffer */
     if (!flipto) {
 	/* walk the flip chain looking for backbuffer */
