@@ -187,6 +187,7 @@ typedef struct _MIDL_STUB_MESSAGE
   int fHasExtensions:1;
   int fHasNewCorrDesc:1;
   int fUnused:10;
+  int fUnused2:16;
   unsigned long dwDestContext;
   void *pvDestContext;
   NDR_SCONTEXT *SavedContextHandles;
