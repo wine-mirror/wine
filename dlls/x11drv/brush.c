@@ -185,17 +185,19 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     if ((physDev->depth == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
-        physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, 1);
+        physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
+                                               bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 1);
         /* FIXME: should probably convert to monochrome instead */
         XCopyPlane( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                    BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
+                    BITMAP_monoGC, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0, 1 );
     }
     else
     {
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
-                                               8, 8, bmp->bitmap.bmBitsPixel );
+                                               bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                                               bmp->bitmap.bmBitsPixel );
         XCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                   BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
+                   BITMAP_GC(bmp), 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
     }
     wine_tsx11_unlock();
 
