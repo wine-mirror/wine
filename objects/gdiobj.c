@@ -963,6 +963,16 @@ DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
 }
 
 /***********************************************************************
+ *           GdiSignalProc     (GDI.610)
+ */
+WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
+                           DWORD dwFlags, HMODULE16 hModule )
+{
+    return 0;
+}
+
+
+/***********************************************************************
  *           GdiFreeResources   (GDI.609)
  */
 WORD WINAPI GdiFreeResources16( DWORD reserve )

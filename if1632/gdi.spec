@@ -379,7 +379,7 @@ file	gdi.exe
 607 pascal GetRegionData(word long ptr) GetRegionData16
 608 stub ExtCreateRegion
 609 pascal16 GdiFreeResources(long) GdiFreeResources16
-610 stub GDISignalProc32
+610 pascal16 GdiSignalProc32(long long long word) GdiSignalProc
 611 stub GetRandomRgn
 612 pascal16 GetTextCharset(word) GetTextCharset16
 613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) THUNK_EnumFontFamiliesEx16
