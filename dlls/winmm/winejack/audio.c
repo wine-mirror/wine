@@ -1,4 +1,4 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
+/* -*- tab-width: 8; c-basic-offset: 2 -*- */
 /*
  * Wine Driver for jack Sound Server
  *   http://jackit.sourceforge.net
@@ -29,7 +29,6 @@
  *    right now we use the winmm layer to do resampling although it would 
  *    be nice to have a full set of algorithms to choose from based on cpu 
  *    time
- *  implement wave-in support with jack
  *
  * FIXME:
  *  pause in waveOut during loop is not handled correctly
@@ -83,6 +82,7 @@ MAKE_FUNCPTR(jack_port_register);
 MAKE_FUNCPTR(jack_port_get_buffer);
 MAKE_FUNCPTR(jack_get_ports);
 MAKE_FUNCPTR(jack_port_name);
+MAKE_FUNCPTR(jack_get_buffer_size);
 #undef MAKE_FUNCPTR
 
 /* define the below to work around a bug in jack where closing a port */
@@ -96,7 +96,7 @@ typedef jack_nframes_t nframes_t;
 
 /* only allow 10 output devices through this driver, this ought to be adequate */
 #define MAX_WAVEOUTDRV  (10)
-#define MAX_WAVEINDRV   (1)
+#define MAX_WAVEINDRV   (10)
 
 /* state diagram for waveOut writing:
  *
@@ -170,6 +170,19 @@ typedef struct {
     DWORD           dwTotalRecorded;
     WAVEINCAPSA     caps;
     BOOL            bTriggerSupport;
+    WORD              wDevID;
+
+    jack_port_t*      in_port_l;   /* ports for left and right channels */
+    jack_port_t*      in_port_r;
+    jack_client_t*    client;
+    long              sample_rate;        /* jack server sample rate */
+
+#if JACK_CLOSE_HACK
+    BOOL              in_use; /* TRUE if this device is in use */
+#endif
+
+    char*             sound_buffer;
+    unsigned long     buffer_size;
 
     /* synchronization stuff */
     CRITICAL_SECTION    access_crst;
@@ -185,12 +198,19 @@ static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
 
-static int JACK_OpenDevice(WINE_WAVEOUT* wwo);
+static int JACK_OpenWaveOutDevice(WINE_WAVEOUT* wwo);
+static int JACK_OpenWaveInDevice(WINE_WAVEIN* wwi, WORD nChannels);
 
 #if JACK_CLOSE_HACK
-static void	JACK_CloseDevice(WINE_WAVEOUT* wwo, BOOL close_client);
+static void	JACK_CloseWaveOutDevice(WINE_WAVEOUT* wwo, BOOL close_client);
 #else
-static void	JACK_CloseDevice(WINE_WAVEOUT* wwo);
+static void	JACK_CloseWaveOutDevice(WINE_WAVEOUT* wwo);
+#endif
+
+#if JACK_CLOSE_HACK
+static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi, BOOL close_client);
+#else
+static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi);
 #endif
 
 
@@ -253,6 +273,25 @@ void sample_move_d16_s16 (sample_t *dst, short *src,
   }
 }       
 
+/* convert from floating point to 16 bit */
+/* allow for copying of a buffer that will hold a single channel stream */
+/* to stereo data with alternating left/right channels */
+/* nsamples is in terms of float samples */
+/* dst_skip is in terms of 16bit samples */
+void sample_move_s16_d16 (short *dst, sample_t *src,
+                        unsigned long nsamples, unsigned long dst_skip)
+{
+  /* ALERT: signed sign-extension portability !!! */
+  while (nsamples--)
+  {
+      *dst = (*src) * SAMPLE_MAX_16BIT;
+/*      TRACE("src=(%.8f,%p) dst=(%d,%p)\n",*src,src,*dst,dst); */
+      dst += dst_skip;
+      src++;
+  }
+}       
+
+
 /* fill dst buffer with nsamples worth of silence */
 void sample_silence_dS (sample_t *dst, unsigned long nsamples)
 {
@@ -265,39 +304,30 @@ void sample_silence_dS (sample_t *dst, unsigned long nsamples)
 }       
 
 /******************************************************************
- *    JACK_callback
+ *    JACK_callback_wwo
  */
 /* everytime the jack server wants something from us it calls this 
 function, so we either deliver it some sound to play or deliver it nothing 
 to play */
-int JACK_callback (nframes_t nframes, void *arg)
+int JACK_callback_wwo (nframes_t nframes, void *arg)
 {
   sample_t* out_l;
   sample_t* out_r;
   WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
 
-  TRACE("wDevID: %d, nframes %ld\n", wwo->wDevID, nframes);
+  TRACE("wDevID: %u, nframes %u state=%u\n", wwo->wDevID, nframes,wwo->state);
 
   if(!wwo->client)
     ERR("client is closed, this is weird...\n");
     
-  out_l = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_l, 
-      nframes);
-  out_r = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_r, 
-      nframes);
-
-  EnterCriticalSection(&wwo->access_crst);
+  out_l = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_l, nframes);
+  out_r = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_r, nframes);
 
   if(wwo->state == WINE_WS_PLAYING)
   {
-    DWORD jackBytesAvailableThisCallback = sizeof(sample_t) * nframes;
-    DWORD jackBytesLeft = sizeof(sample_t) * nframes;
-
-    DWORD inputBytesAvailable; /* number of bytes we have from the app, after conversion to 16bit stereo */
-    DWORD jackBytesToWrite; /* number of bytes we are going to write out, after conversion */
-
-    DWORD bytesInput; /* the number of bytes from the app */
-    DWORD appBytesToWrite; /* number of bytes from the app we are going to write */
+    DWORD jackFramesAvailable = nframes;
+    DWORD outputFramesAvailable;
+    DWORD numFramesToWrite;
 
     long written = 0;
     char* buffer;
@@ -315,65 +345,53 @@ int JACK_callback (nframes_t nframes, void *arg)
 
     TRACE("wwo.state == WINE_WS_PLAYING\n");
 
-    /* see if our buffer is large enough for the data we are writing */
-    /* ie. Buffer_size < (bytes we already wrote + bytes we are going to write in this loop) */
-    if(wwo->buffer_size < jackBytesAvailableThisCallback)
+    /* see if our sound_buffer is large enough to hold the number of frames jack requested */
+    /* Note: sound_buffer is always filled with 16-bit stereo data, even for mono mode */
+    if(wwo->buffer_size < (nframes * sizeof(short) * 2))
     {
       ERR("for some reason JACK_BufSize() didn't allocate enough memory\n");
-      ERR("allocated %ld bytes, need %ld bytes\n", wwo->buffer_size, 
-      jackBytesAvailableThisCallback);
-      LeaveCriticalSection(&wwo->access_crst);
+      ERR("allocated %ld bytes, need %d bytes\n", wwo->buffer_size, (nframes * sizeof(short) * 2));
       return 0;
     }
 
-    /* while we have jackBytesLeft and a wave header to be played */
-    while(jackBytesLeft && wwo->lpPlayPtr)
+    /* while we have jackFramesAvailable and a wave header to be played */
+    while(jackFramesAvailable && wwo->lpPlayPtr)
     {
       /* find the amount of audio to be played at this time */
-      bytesInput = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
-      inputBytesAvailable = bytesInput;
+      outputFramesAvailable = (wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset) / wwo->format.wf.nBlockAlign;
 
-      /* calculate inputBytesAvailable based on audio format conversion */
-      if(wwo->format.wf.nChannels == 1)
-        inputBytesAvailable<<=1; /* multiply by two for mono->stereo conversion */
-
-      /* find the minimum of the inputBytesAvailable and the space available */
-      jackBytesToWrite = min(jackBytesLeft, inputBytesAvailable);
-
-      /* calculate appBytesToWrite based on audio format conversion */
-      appBytesToWrite = jackBytesToWrite;
-      if(wwo->format.wf.nChannels == 1)
-        appBytesToWrite>>=1; /* divide by two for stereo->mono conversion */
-
-      TRACE("jackBytesToWrite == %ld, appBytesToWrite == %ld\n", jackBytesToWrite, appBytesToWrite);
+      numFramesToWrite = min(jackFramesAvailable, outputFramesAvailable);
+      TRACE("dwBufferLength=(%ld) dwPartialOffset=(%ld)\n",wwo->lpPlayPtr->dwBufferLength,wwo->dwPartialOffset);
+      TRACE("outputFramesAvailable == %ld, jackFramesAvailable == %ld\n", outputFramesAvailable, jackFramesAvailable);
 
       buffer = wwo->lpPlayPtr->lpData + wwo->dwPartialOffset;
 
       /* convert from mono to stereo if necessary */
       /* otherwise just memcpy to the output buffer */
+
       if(wwo->format.wf.nChannels == 1)
       {
-        sample_move_d16_d16((short*)wwo->sound_buffer +((jackBytesAvailableThisCallback - jackBytesLeft) / sizeof(short)),
-                 (short*)buffer, jackBytesToWrite, wwo->format.wf.nChannels);
+	sample_move_d16_d16((short*)wwo->sound_buffer + ((nframes - jackFramesAvailable) * sizeof(short)),
+			    (short*)buffer, numFramesToWrite, wwo->format.wf.nChannels);
       } else /* just copy the memory over */
       {
-        memcpy(wwo->sound_buffer + (jackBytesAvailableThisCallback - jackBytesLeft),
-                  buffer, jackBytesToWrite);
+        memcpy(wwo->sound_buffer + ((nframes - jackFramesAvailable) * wwo->format.wf.nBlockAlign),
+	       buffer, numFramesToWrite * wwo->format.wf.nBlockAlign);
       }
 
       /* advance to the next wave header if possible, or advance pointer */
       /* inside of the current header if we haven't completed it */
-      if(appBytesToWrite == bytesInput)
+      if(numFramesToWrite == outputFramesAvailable)
       {
         wodHelper_PlayPtrNext(wwo);            /* we wrote the whole waveheader, skip to the next one*/
       }
       else
       {
-        wwo->dwPartialOffset+=appBytesToWrite; /* else advance by the bytes we took in to write */
+        wwo->dwPartialOffset+=(numFramesToWrite * wwo->format.wf.nBlockAlign); /* else advance by the bytes we took in to write */
       }
 
-      written+=appBytesToWrite; /* add on what we wrote */
-      jackBytesLeft-=jackBytesToWrite; /* take away what was written in terms of output bytes */
+      written+=(numFramesToWrite * wwo->format.wf.nBlockAlign); /* add on what we wrote */
+      jackFramesAvailable-=numFramesToWrite; /* take away what was written in terms of output bytes */
     }
 
     wwo->tickCountMS = GetTickCount();    /* record the current time */
@@ -386,25 +404,22 @@ int JACK_callback (nframes_t nframes, void *arg)
     /* the audio to the jack server */
 
     /* apply volume to the buffer */
-    /* NOTE: buffer_size >> 2 to convert from bytes to 16 bit stereo(32bit) samples */
-    volume_effect32(wwo->sound_buffer, (jackBytesAvailableThisCallback - jackBytesLeft)>>2, wwo->volume_left,
-        wwo->volume_right);
+    volume_effect32(wwo->sound_buffer, (nframes - jackFramesAvailable), wwo->volume_left, wwo->volume_right);
 
     /* convert from stereo 16 bit to single channel 32 bit float */
     /* for each jack server channel */
     /* NOTE: we skip over two sample since we want to only get either the left or right channel */
-    sample_move_d16_s16(out_l, (short*)wwo->sound_buffer, (jackBytesAvailableThisCallback - jackBytesLeft)>>2, 2);
-    sample_move_d16_s16(out_r, (short*)wwo->sound_buffer + 1,
-        (jackBytesAvailableThisCallback - jackBytesLeft)>>2, 2);
+    sample_move_d16_s16(out_l, (short*)wwo->sound_buffer,     (nframes - jackFramesAvailable), 2);
+    sample_move_d16_s16(out_r, (short*)wwo->sound_buffer + 1, (nframes - jackFramesAvailable), 2);
 
     /* see if we still have jackBytesLeft here, if we do that means that we
     ran out of wave data to play and had a buffer underrun, fill in
     the rest of the space with zero bytes */
-    if(jackBytesLeft)
+    if(jackFramesAvailable)
     {
-      ERR("buffer underrun of %ld bytes\n", jackBytesLeft);
-      sample_silence_dS(out_l + ((jackBytesAvailableThisCallback - jackBytesLeft) / sizeof(sample_t)), jackBytesLeft / sizeof(sample_t));
-      sample_silence_dS(out_r + ((jackBytesAvailableThisCallback - jackBytesLeft) / sizeof(sample_t)), jackBytesLeft / sizeof(sample_t));
+      ERR("buffer underrun of %ld frames\n", jackFramesAvailable);
+      sample_silence_dS(out_l + (nframes - jackFramesAvailable), jackFramesAvailable);
+      sample_silence_dS(out_r + (nframes - jackFramesAvailable), jackFramesAvailable);
     }
   }
   else if(wwo->state == WINE_WS_PAUSED || 
@@ -417,33 +432,34 @@ int JACK_callback (nframes_t nframes, void *arg)
   }
 
   /* notify the client of completed wave headers */
+  EnterCriticalSection(&wwo->access_crst);
   wodHelper_NotifyCompletions(wwo, FALSE);
-
   LeaveCriticalSection(&wwo->access_crst);
-
-  TRACE("ending\n");
 
   return 0;
 }
 
 /******************************************************************
- *		JACK_bufsize
+ *		JACK_bufsize_wwo
  *
  *		Called whenever the jack server changes the the max number 
  *		of frames passed to JACK_callback
  */
-int JACK_bufsize (nframes_t nframes, void *arg)
+int JACK_bufsize_wwo (nframes_t nframes, void *arg)
 {
   WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
   DWORD buffer_required;
-  TRACE("the maximum buffer size is now %lu frames\n", nframes);
+  TRACE("wDevID=%d\n",wwo->wDevID);
+  TRACE("the maximum buffer size is now %u frames\n", nframes);
 
   /* make sure the callback routine has adequate memory */
     /* see if our buffer is large enough for the data we are writing */
     /* ie. Buffer_size < (bytes we already wrote + bytes we are going to write in this loop) */
   EnterCriticalSection(&wwo->access_crst);
 
-  buffer_required = sizeof(sample_t) * nframes;
+  /* wwo->sound_buffer is always filled with 16-bit stereo data, even for mono streams */
+  buffer_required = nframes * sizeof(short) * 2;
+  TRACE("wwo->buffer_size (%ld) buffer_required (%ld).\n", wwo->buffer_size,buffer_required);
   if(wwo->buffer_size < buffer_required)
   {
     TRACE("expanding buffer from wwo->buffer_size == %ld, to %ld\n", 
@@ -452,9 +468,9 @@ int JACK_bufsize (nframes_t nframes, void *arg)
     wwo->buffer_size = buffer_required;
 
     if (wwo->sound_buffer)
-        wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, wwo->buffer_size);
+      wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, wwo->buffer_size);
     else
-        wwo->sound_buffer = HeapAlloc(GetProcessHeap(), 0, wwo->buffer_size);
+      wwo->sound_buffer = HeapAlloc(GetProcessHeap(), 0, wwo->buffer_size);
 
     /* if we don't have a buffer then error out */
     if(!wwo->sound_buffer)
@@ -467,8 +483,19 @@ int JACK_bufsize (nframes_t nframes, void *arg)
 
   LeaveCriticalSection(&wwo->access_crst);
 
-  TRACE("called\n");
+  TRACE("ending\n");
 
+  return 0;
+}
+/******************************************************************
+ *		JACK_bufsize_wwi
+ *
+ *		Called whenever the jack server changes the the max number 
+ *		of frames passed to JACK_callback
+ */
+int JACK_bufsize_wwi (nframes_t nframes, void *arg)
+{
+  TRACE("the maximum buffer size is now %u frames\n", nframes);
   return 0;
 }
 
@@ -477,16 +504,16 @@ int JACK_bufsize (nframes_t nframes, void *arg)
  */
 int JACK_srate (nframes_t nframes, void *arg)
 {
-  TRACE("the sample rate is now %lu/sec\n", nframes);
+  TRACE("the sample rate is now %u/sec\n", nframes);
   return 0;
 }
 
 
 /******************************************************************
- *		JACK_shutdown
+ *		JACK_shutdown_wwo
  */
 /* if this is called then jack shut down... handle this appropriately */
-void JACK_shutdown(void* arg)
+void JACK_shutdown_wwo(void* arg)
 {
   WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
 
@@ -496,7 +523,27 @@ void JACK_shutdown(void* arg)
   
   /* lets see if we can't reestablish the connection */
   Sleep(750); /* pause for a short period of time */
-  if(!JACK_OpenDevice(wwo))
+  if(!JACK_OpenWaveOutDevice(wwo))
+  {
+    ERR("unable to reconnect with jack...\n");
+  }
+}
+
+/******************************************************************
+ *		JACK_shutdown_wwi
+ */
+/* if this is called then jack shut down... handle this appropriately */
+void JACK_shutdown_wwi(void* arg)
+{
+  WINE_WAVEIN* wwi = (WINE_WAVEIN*)arg;
+
+  wwi->client = 0; /* reset client */
+
+  TRACE("trying to reconnect after sleeping for a short while...\n");
+  
+  /* lets see if we can't reestablish the connection */
+  Sleep(750); /* pause for a short period of time */
+  if(!JACK_OpenWaveInDevice(wwi,wwi->format.wf.nChannels))
   {
     ERR("unable to reconnect with jack...\n");
   }
@@ -504,9 +551,9 @@ void JACK_shutdown(void* arg)
 
 
 /******************************************************************
- *		JACK_OpenDevice
+ *		JACK_OpenWaveOutDevice
  */
-static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
+static int JACK_OpenWaveOutDevice(WINE_WAVEOUT* wwo)
 {
   const char** ports;
   int i;
@@ -537,8 +584,8 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
         wwo->buffer_size = 0;
 
         /* try to become a client of the JACK server */
-        snprintf(client_name, sizeof(client_name), "wine_jack_client %d", wwo->wDevID);
-        TRACE("client name '%s'\n", client_name);
+        snprintf(client_name, sizeof(client_name), "wine_jack_out_%d", wwo->wDevID);
+	TRACE("client name '%s'\n", client_name);
         if ((client = fp_jack_client_new (client_name)) == 0)
         {
                 /* jack has problems with shutting down clients, so lets */
@@ -550,16 +597,16 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
                   return 0;
                 }
         }
-                
-        /* tell the JACK server to call `JACK_callback()' whenever
+	                
+        /* tell the JACK server to call `JACK_callback_wwo()' whenever
            there is work to be done. */
-        fp_jack_set_process_callback (client, JACK_callback, wwo);
+        fp_jack_set_process_callback (client, JACK_callback_wwo, wwo);
         
-        /* tell the JACK server to call `JACK_bufsize()' whenever   
+        /* tell the JACK server to call `JACK_bufsize_wwo()' whenever   
            the maximum number of frames that will be passed
            to `JACK_Callback()' changes */
-        fp_jack_set_buffer_size_callback (client, JACK_bufsize, wwo);
-          
+        fp_jack_set_buffer_size_callback (client, JACK_bufsize_wwo, wwo);
+
         /* tell the JACK server to call `srate()' whenever
            the sample rate of the system changes. */
         fp_jack_set_sample_rate_callback (client, JACK_srate, wwo);
@@ -567,7 +614,7 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
         /* tell the JACK server to call `jack_shutdown()' if
            it ever shuts down, either entirely, or if it
            just decides to stop calling us. */
-        fp_jack_on_shutdown (client, JACK_shutdown, wwo);
+        fp_jack_on_shutdown (client, JACK_shutdown_wwo, wwo);
         
         /* display the current sample rate. once the client is activated
            (see below), you should rely on your own sample rate
@@ -583,6 +630,8 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
         out_port_r = fp_jack_port_register (client, "out_r",
                          JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
+	TRACE("Created ports. (%p) (%p)\n",out_port_l, out_port_r);
+
         /* save away important values to the WINE_WAVEOUT struct */
         wwo->client = client;
         wwo->out_port_l = out_port_l;
@@ -592,6 +641,9 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
         wwo->in_use = TRUE; /* mark this device as in use since it now is ;-) */
 #endif
 
+	/* set initial buffer size */
+	JACK_bufsize_wwo (fp_jack_get_buffer_size(client),wwo);
+
         /* tell the JACK server that we are ready to roll */
         if (fp_jack_activate (client))
         {
@@ -599,6 +651,7 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
           return 0;
         }
 
+	TRACE("jack activate.\n");
         /* figure out what the ports that we want to output on are */
         /* NOTE: we do this instead of using stuff like "alsa_pcm:playback_X" because */
         /*   this way works if names are changed */
@@ -637,7 +690,11 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
         /* if something failed we need to shut the client down and return 0 */
         if(failed)
         {
-          JACK_CloseDevice(wwo, TRUE);
+#if JACK_CLOSE_HACK
+          JACK_CloseWaveOutDevice(wwo, TRUE);
+#else
+          JACK_CloseWaveOutDevice(wwo);
+#endif
           return 0;
         }
 
@@ -645,20 +702,20 @@ static int JACK_OpenDevice(WINE_WAVEOUT* wwo)
 }
 
 /******************************************************************
- *		JACK_CloseDevice
+ *		JACK_CloseWaveOutDevice
  *
  *	Close the connection to the server cleanly.
  *  If close_client is TRUE we close the client for this device instead of
  *    just marking the device as in_use(JACK_CLOSE_HACK only)
  */
 #if JACK_CLOSE_HACK
-static void	JACK_CloseDevice(WINE_WAVEOUT* wwo, BOOL close_client)
+static void	JACK_CloseWaveOutDevice(WINE_WAVEOUT* wwo, BOOL close_client)
 #else
-static void	JACK_CloseDevice(WINE_WAVEOUT* wwo)
+static void	JACK_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 #endif
 {
 #if JACK_CLOSE_HACK
-  TRACE("wDevID: %d, close_client: %d\n", wwo->wDevID, close_client);
+  TRACE("wDevID: %d, close_client (wwo): %d\n", wwo->wDevID, close_client);
 #else
   TRACE("wDevID: %d\n", wwo->wDevID);
 #endif
@@ -688,6 +745,49 @@ static void	JACK_CloseDevice(WINE_WAVEOUT* wwo)
 }
 
 /******************************************************************
+ *		JACK_CloseWaveInDevice
+ *
+ *	Close the connection to the server cleanly.
+ *  If close_client is TRUE we close the client for this device instead of
+ *    just marking the device as in_use(JACK_CLOSE_HACK only)
+ */
+#if JACK_CLOSE_HACK
+static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi, BOOL close_client)
+#else
+static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi)
+#endif
+{
+#if JACK_CLOSE_HACK
+  TRACE("wDevID: %d, close_client (wwi): %d\n", wwi->wDevID, close_client);
+#else
+  TRACE("wDevID: %d\n", wwi->wDevID);
+#endif
+
+#if JACK_CLOSE_HACK
+  if(close_client)
+  {
+#endif
+    fp_jack_deactivate(wwi->client); /* supposed to help the jack_client_close() to succeed */
+    fp_jack_client_close (wwi->client);
+
+    EnterCriticalSection(&wwi->access_crst);
+    wwi->client = 0; /* reset client */
+    HeapFree(GetProcessHeap(), 0, wwi->sound_buffer); /* free buffer memory */
+    wwi->sound_buffer = 0;
+    wwi->buffer_size = 0; /* zero out size of the buffer */
+    LeaveCriticalSection(&wwi->access_crst);
+#if JACK_CLOSE_HACK
+  } else
+  {
+    EnterCriticalSection(&wwi->access_crst);
+    TRACE("setting in_use to FALSE\n");
+    wwi->in_use = FALSE;
+    LeaveCriticalSection(&wwi->access_crst);
+  }
+#endif
+}
+
+/******************************************************************
  *		JACK_WaveRelease
  *
  *
@@ -696,20 +796,37 @@ LONG	JACK_WaveRelease(void)
 { 
   int iDevice;
 
-  TRACE("closing all open devices\n");
+  TRACE("closing all open waveout devices\n");
 
-  /* close all open devices */
+  /* close all open output devices */
   for(iDevice = 0; iDevice < MAX_WAVEOUTDRV; iDevice++)
   {
     TRACE("iDevice == %d\n", iDevice);
     if(WOutDev[iDevice].client)
     {
 #if JACK_CLOSE_HACK
-      JACK_CloseDevice(&WOutDev[iDevice], TRUE); /* close the device, FORCE the client to close */
+      JACK_CloseWaveOutDevice(&WOutDev[iDevice], TRUE); /* close the device, FORCE the client to close */
 #else
-      JACK_CloseDevice(&WOutDev[iDevice]); /* close the device, FORCE the client to close */
+      JACK_CloseWaveOutDevice(&WOutDev[iDevice]); /* close the device, FORCE the client to close */
 #endif
       DeleteCriticalSection(&(WOutDev[iDevice].access_crst)); /* delete the critical section */
+    }
+  }
+
+  TRACE("closing all open wavein devices\n");
+
+  /* close all open input devices */
+  for(iDevice = 0; iDevice < MAX_WAVEINDRV; iDevice++)
+  {
+    TRACE("iDevice == %d\n", iDevice);
+    if(WInDev[iDevice].client)
+    {
+#if JACK_CLOSE_HACK
+      JACK_CloseWaveInDevice(&WInDev[iDevice], TRUE); /* close the device, FORCE the client to close */
+#else
+      JACK_CloseWaveInDevice(&WInDev[iDevice]); /* close the device, FORCE the client to close */
+#endif
+      DeleteCriticalSection(&(WInDev[iDevice].access_crst)); /* delete the critical section */
     }
   }
 
@@ -745,6 +862,7 @@ LONG JACK_WaveInit(void)
     LOAD_FUNCPTR(jack_port_get_buffer);
     LOAD_FUNCPTR(jack_get_ports);
     LOAD_FUNCPTR(jack_port_name);
+    LOAD_FUNCPTR(jack_get_buffer_size);
 #undef LOAD_FUNCPTR
 
     /* start with output device */
@@ -755,6 +873,7 @@ LONG JACK_WaveInit(void)
 
 #if JACK_CLOSE_HACK
       WOutDev[i].in_use = FALSE;
+      WInDev[i].in_use  = FALSE;
 #endif
 
       memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps));
@@ -800,6 +919,37 @@ LONG JACK_WaveInit(void)
     {
       /* TODO: we should initialize read stuff here */
       memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
+
+    /* FIXME: some programs compare this string against the content of the registry
+     * for MM drivers. The names have to match in order for the program to work
+     * (e.g. MS win9x mplayer.exe)
+     */
+#ifdef EMULATE_SB16
+    	WInDev[i].caps.wMid = 0x0002;
+    	WInDev[i].caps.wPid = 0x0104;
+    	strcpy(WInDev[i].caps.szPname, "SB16 Wave In");
+#else
+	WInDev[i].caps.wMid = 0x00FF;
+	WInDev[i].caps.wPid = 0x0001;
+	strcpy(WInDev[i].caps.szPname,"CS4236/37/38");
+#endif
+	WInDev[i].caps.vDriverVersion = 0x0100;
+
+	WInDev[i].caps.wChannels = 0x2;
+	/* NOTE: we don't support any 8 bit modes so note that */
+/*      WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08; */
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
+/*      WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S08; */
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
+/*      WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;*/
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+	WInDev[i].caps.wReserved1 = 0;
     }
     
     return 1;		/* return success */
@@ -958,11 +1108,13 @@ static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 
     lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
     lpWaveHdr->dwFlags |= WHDR_DONE;
-    TRACE("calling notify client\n");
+    TRACE("notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) dwFlags=(%ld)\n",
+	  lpWaveHdr, wwo->lpPlayPtr, lpWaveHdr->dwFlags);
 
     wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
   }
-
+  TRACE("Not notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) lpLoopPtr=(%p)\n",
+	lpWaveHdr, wwo->lpPlayPtr, wwo->lpLoopPtr);
   retval = (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != 
               wwo->lpLoopPtr) ? 0 : INFINITE;
 
@@ -1042,12 +1194,16 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
       return MMSYSERR_BADDEVICEID;
     }
 
+    TRACE("dwSupport=(0x%lx), dwFormats=(0x%lx)\n", WOutDev[wDevID].caps.dwSupport, WOutDev[wDevID].caps.dwFormats);
     memcpy(lpCaps, &WOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
  * 				wodOpen				[internal]
+ *
+ * NOTE: doesn't it seem like there is a race condition if you try to open 
+ * the same device twice?
  */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
@@ -1082,27 +1238,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       return WAVERR_BADFORMAT;
     }
 
-    wwo = &WOutDev[wDevID];
-    wwo->wDevID = wDevID;
-
-    /* Set things up before we call JACK_OpenDevice because */
-    /* we will start getting callbacks before JACK_OpenDevice */
-    /* even returns and we want to be initialized before then */
-    wwo->state = WINE_WS_STOPPED; /* start in a stopped state */
-    wwo->dwPlayedTotal = 0; /* zero out these totals */
-    wwo->dwWrittenTotal = 0;
-    wwo->bytesInJack = 0;
-    wwo->tickCountMS = 0;
-
-    InitializeCriticalSection(&wwo->access_crst); /* initialize the critical section */
-
-    /* open up jack ports for this device */
-    if (!JACK_OpenDevice(&WOutDev[wDevID]))
-    {
-      ERR("JACK_OpenDevice(%d) failed\n", wDevID);
-      return MMSYSERR_ERROR;		/* return unspecified error */
-    }
-
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
       lpDesc->lpFormat->nChannels == 0 ||
@@ -1122,14 +1257,40 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       return MMSYSERR_NOERROR;
     }
 
-    dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
+    wwo = &WOutDev[wDevID];
+    wwo->wDevID = wDevID;
 
+    /* Set things up before we call JACK_OpenWaveOutDevice because */
+    /* we will start getting callbacks before JACK_OpenWaveOutDevice */
+    /* even returns and we want to be initialized before then */
+    wwo->state = WINE_WS_STOPPED; /* start in a stopped state */
+    wwo->dwPlayedTotal = 0; /* zero out these totals */
+    wwo->dwWrittenTotal = 0;
+    wwo->bytesInJack = 0;
+    wwo->tickCountMS = 0;
+
+    /* Initialize volume to full level */
+    wwo->volume_left = 100;
+    wwo->volume_right = 100;
+
+    InitializeCriticalSection(&wwo->access_crst); /* initialize the critical section */
     EnterCriticalSection(&wwo->access_crst);
+
+    dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
     memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+
+    /* open up jack ports for this device */
+    if (!JACK_OpenWaveOutDevice(&WOutDev[wDevID]))
+    {
+      ERR("JACK_OpenWaveOutDevice(%d) failed\n", wDevID);
+      LeaveCriticalSection(&wwo->access_crst);
+      DeleteCriticalSection(&wwo->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
+      return MMSYSERR_ERROR;		/* return unspecified error */
+    }
 
     LeaveCriticalSection(&wwo->access_crst);
 
@@ -1147,10 +1308,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
          wwo->sample_rate, wwo->format.wf.nSamplesPerSec);
 
 #if JACK_CLOSE_HACK
-      JACK_CloseDevice(wwo, FALSE); /* close this device, don't force the client to close */
+      JACK_CloseWaveOutDevice(wwo, FALSE); /* close this device, don't force the client to close */
 #else
-      JACK_CloseDevice(wwo); /* close this device */
+      JACK_CloseWaveOutDevice(wwo); /* close this device */
 #endif
+      DeleteCriticalSection(&wwo->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
       return WAVERR_BADFORMAT;
     }
 
@@ -1200,17 +1362,18 @@ static DWORD wodClose(WORD wDevID)
       wwo->state = WINE_WS_CLOSED; /* mark the device as closed */
 
 #if JACK_CLOSE_HACK
-      JACK_CloseDevice(wwo, FALSE); /* close the jack device, DO NOT force the client to close */
+      JACK_CloseWaveOutDevice(wwo, FALSE); /* close the jack device, DO NOT force the client to close */
 #else
-      JACK_CloseDevice(wwo); /* close the jack device */
-      DeleteCriticalSection(&wwo->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
+      JACK_CloseWaveOutDevice(wwo); /* close the jack device */
 #endif
+      DeleteCriticalSection(&wwo->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
 
       ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
 
     return ret;
 }
+
 
 /**************************************************************************
  * 				wodWrite			[internal]
@@ -1254,9 +1417,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     for (wh = &(wwo->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
     *wh = lpWaveHdr;
 
-    LeaveCriticalSection(&wwo->access_crst);
-
-    EnterCriticalSection(&wwo->access_crst);
     if (!wwo->lpPlayPtr)
       wodHelper_BeginWaveHdr(wwo,lpWaveHdr);
     if (wwo->state == WINE_WS_STOPPED)
@@ -1626,6 +1786,619 @@ static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
  *======================================================================*/
 
 /**************************************************************************
+ * 			widNotifyClient			[internal]
+ */
+static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    
+    switch (wMsg) {
+    case WIM_OPEN:
+    case WIM_CLOSE:
+    case WIM_DATA:
+      if (wwi->wFlags != DCB_NULL &&
+        !DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags,
+          (HDRVR)wwi->waveDesc.hWave, wMsg, wwi->waveDesc.dwInstance,
+          dwParam1, dwParam2))
+      {
+        WARN("can't notify client !\n");
+        return MMSYSERR_ERROR;
+      }
+    break;
+    default:
+      FIXME("Unknown callback message %u\n", wMsg);
+        return MMSYSERR_INVALPARAM;
+    }
+    return MMSYSERR_NOERROR;
+}
+
+/******************************************************************
+ *    JACK_callback_wwi
+ */
+/* everytime the jack server wants something from us it calls this 
+   function */
+int JACK_callback_wwi (nframes_t nframes, void *arg)
+{
+    sample_t* in_l;
+    sample_t* in_r = 0;
+    WINE_WAVEIN* wwi = (WINE_WAVEIN*)arg;
+
+    TRACE("wDevID: %u, nframes %u\n", wwi->wDevID, nframes);
+    
+    if(!wwi->client)
+	ERR("client is closed, this is weird...\n");
+    
+    in_l = (sample_t *) fp_jack_port_get_buffer(wwi->in_port_l, nframes);
+
+    if (wwi->in_port_r)
+      in_r = (sample_t *) fp_jack_port_get_buffer(wwi->in_port_r, nframes);
+    
+    EnterCriticalSection(&wwi->access_crst);
+    
+    if((wwi->lpQueuePtr != NULL) && (wwi->state == WINE_WS_PLAYING))
+    {
+	LPWAVEHDR lpWaveHdr = wwi->lpQueuePtr;
+	nframes_t jackFramesLeft = nframes;
+
+#if JACK_CLOSE_HACK
+	if(wwi->in_use == FALSE)
+	{
+	  /* do nothing if nothing is being recorded */
+	    return 0;
+	}
+#endif
+	
+	TRACE("wwi.state == WINE_WS_PLAYING\n");
+	
+	while (lpWaveHdr && jackFramesLeft)
+	{
+	    DWORD waveHdrFramesLeft = (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded) / (sizeof(short) * wwi->format.wf.nChannels); 
+	    DWORD numFrames = min (jackFramesLeft, waveHdrFramesLeft);
+	    
+	    TRACE ("dwBufferLength=(%lu) dwBytesRecorded=(%ld)\n",   lpWaveHdr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
+	    TRACE ("jackFramesLeft=(%u) waveHdrFramesLeft=(%lu)\n", jackFramesLeft, waveHdrFramesLeft);
+
+	    if (!in_r) {
+	      /* mono */
+	      sample_move_s16_d16((short *)((char *)lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded), in_l+(nframes-jackFramesLeft), numFrames, 1);
+	    } else {
+	      /* stereo */
+	      sample_move_s16_d16((short *)((char *)lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded), 
+				  in_l+(nframes-jackFramesLeft), numFrames, 2);
+	      sample_move_s16_d16((short *)((char *)lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded + sizeof(short)), 
+				  in_r+(nframes-jackFramesLeft), numFrames, 2);
+	    }
+	    
+	    lpWaveHdr->dwBytesRecorded += (numFrames * sizeof(short) * wwi->format.wf.nChannels );
+	    jackFramesLeft -= numFrames;
+
+	    if (lpWaveHdr->dwBytesRecorded >= lpWaveHdr->dwBufferLength)
+	    {
+		/* must copy the value of next waveHdr, because we have no idea of what
+		 * will be done with the content of lpWaveHdr in callback
+		 */
+		LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+				
+		lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+		lpWaveHdr->dwFlags |=  WHDR_DONE;
+
+		TRACE("WaveHdr full. dwBytesRecorded=(%lu) dwFlags=(0x%lx)\n",lpWaveHdr->dwBytesRecorded,lpWaveHdr->dwFlags);
+
+		widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+
+		lpWaveHdr = wwi->lpQueuePtr = lpNext;
+	    }
+	}
+	TRACE ("jackFramesLeft=(%u) lpWaveHdr=(%p)\n", jackFramesLeft, lpWaveHdr);
+	if (jackFramesLeft > 0) { WARN("Record buffer ran out of WaveHdrs\n"); }
+    }
+    
+    LeaveCriticalSection(&wwi->access_crst);
+
+    return 0;
+}
+
+/******************************************************************
+ *		JACK_OpenWaveInDevice
+ */
+static int JACK_OpenWaveInDevice(WINE_WAVEIN* wwi, WORD nChannels)
+{
+  const char** ports;
+  int i;
+  char client_name[64];
+  jack_port_t* in_port_l;
+  jack_port_t* in_port_r = 0;
+  jack_client_t* client;
+  int failed = 0;
+
+  TRACE("creating jack client and setting up callbacks\n");
+
+  if ((nChannels == 0) || (nChannels > 2)) {
+    ERR ("nChannels = (%d), but we only support mono or stereo.\n", nChannels);
+    return 0;
+  }
+
+#if JACK_CLOSE_HACK
+  /* see if this device is already open */
+        if(wwi->client)
+        {
+          /* if this device is already in use then it is bad for us to be in here */
+          if(wwi->in_use)
+            return 0;
+
+          TRACE("using existing client\n");
+          wwi->in_use = TRUE;
+          return 1;
+        }
+#endif
+
+        /* zero out the buffer pointer and the size of the buffer */
+        wwi->sound_buffer = 0;
+        wwi->buffer_size = 0;
+
+        /* try to become a client of the JACK server */
+        snprintf(client_name, sizeof(client_name), "wine_jack_in_%d", wwi->wDevID);
+        TRACE("client name '%s'\n", client_name);
+        if ((client = fp_jack_client_new (client_name)) == 0)
+        {
+                /* jack has problems with shutting down clients, so lets */
+                /* wait a short while and try once more before we give up */
+                Sleep(250);
+                if ((client = fp_jack_client_new (client_name)) == 0)
+                {
+                  ERR("jack server not running?\n");
+                  return 0;
+                }
+        }
+        wwi->client = client;
+                
+        /* tell the JACK server to call `JACK_wwi_callback()' whenever
+           there is work to be done. */
+        fp_jack_set_process_callback (client, JACK_callback_wwi, wwi);
+        
+        /* tell the JACK server to call `JACK_bufsize_wwi()' whenever   
+           the maximum number of frames that will be passed
+           to `JACK_Callback()' changes */
+        fp_jack_set_buffer_size_callback (client, JACK_bufsize_wwi, wwi);
+          
+        /* tell the JACK server to call `srate()' whenever
+           the sample rate of the system changes. */
+        fp_jack_set_sample_rate_callback (client, JACK_srate, wwi);
+
+        /* tell the JACK server to call `jack_shutdown()' if
+           it ever shuts down, either entirely, or if it
+           just decides to stop calling us. */
+        fp_jack_on_shutdown (client, JACK_shutdown_wwi, wwi);
+        
+        /* display the current sample rate. once the client is activated
+           (see below), you should rely on your own sample rate
+           callback (see above) for this value. */
+        wwi->sample_rate = fp_jack_get_sample_rate(client);
+        TRACE("engine sample rate: %lu\n", wwi->sample_rate);
+          
+        /* create the left and right channel output ports */
+        /* jack's ports are all mono so for stereo you need two */
+        in_port_l = fp_jack_port_register (client, "in_l",
+                         JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+        wwi->in_port_l = in_port_l;
+	TRACE("Created port. (%p)\n", in_port_l);
+
+	if (nChannels == 2)
+	{
+	  in_port_r = fp_jack_port_register (client, "in_r",
+			   JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0); 
+	  TRACE("Created port. (%p)\n", in_port_r);
+	} 
+	wwi->in_port_r = in_port_r;
+
+#if JACK_CLOSE_HACK
+        wwi->in_use = TRUE; /* mark this device as in use since it now is ;-) */
+#endif
+
+	TRACE("activating client.\n");
+        /* tell the JACK server that we are ready to roll */
+        if (fp_jack_activate (client))
+        {
+          ERR( "cannot activate client\n");
+          return 0;
+        }
+	TRACE("activated client.\n");
+        /* figure out what the ports that we want to output on are */
+        /* NOTE: we do this instead of using stuff like "alsa_pcm:playback_X" because */
+        /*   this way works if names are changed */
+        ports = fp_jack_get_ports(client, NULL, NULL, JackPortIsPhysical|JackPortIsOutput);
+
+        /* display a trace of the output ports we found */
+        for(i = 0; ports[i]; i++)
+        {
+          TRACE("ports[%d] = '%s'\n", i, ports[i]);
+        }
+
+        if(!ports)
+        {
+          ERR("jack_get_ports() failed to find 'JackPortIsPhysical|JackPortIsOutput'\n");
+        }
+
+        /* connect the ports. Note: you can't do this before
+           the client is activated (this may change in the future).
+        */ 
+        /* we want to connect to two ports so we have stereo input ;-) */
+
+	if(fp_jack_connect(client, ports[0], fp_jack_port_name(in_port_l)))
+	{
+	  ERR ("cannot connect to input port %d('%s')\n", 0, ports[0]);
+	  failed = 1;
+	}
+	TRACE("Connected (%s)<->(%s)\n",ports[0],fp_jack_port_name(in_port_l));
+
+	if ((nChannels == 2) && in_port_r) {
+	  if(fp_jack_connect(client, ports[1], fp_jack_port_name(in_port_r)))
+	  {
+	    ERR ("cannot connect to input port %d('%s')\n", 1, ports[1]);
+	    failed = 1;
+	  }
+	  TRACE("Connected (%s)<->(%s)\n",ports[1],fp_jack_port_name(in_port_r));
+	}
+        free(ports); /* free the returned array of ports */
+
+        /* if something failed we need to shut the client down and return 0 */
+        if(failed)
+        {
+#if JACK_CLOSE_HACK
+          JACK_CloseWaveInDevice(wwi, TRUE);
+#else
+          JACK_CloseWaveInDevice(wwi);
+#endif
+          return 0;
+        }
+
+	TRACE("return success.\n");
+        return 1; /* return success */
+}
+
+/**************************************************************************
+ * 			widGetDevCaps				[internal]
+ */
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+{
+    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+
+    if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+
+    if (wDevID >= MAX_WAVEINDRV) {
+	TRACE("MAX_WAVEINDRV reached !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    memcpy(lpCaps, &WInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widOpen				[internal]
+ */
+static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+{
+    WINE_WAVEIN*	wwi;
+    DWORD retval;
+
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    if (lpDesc == NULL)
+    {
+	WARN("Invalid Parameter !\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    if (wDevID >= MAX_WAVEINDRV) {
+	TRACE ("MAX_WAVEINDRV reached !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
+
+#if JACK_CLOSE_HACK
+    if(WInDev[wDevID].client && WOutDev[wDevID].in_use)
+#else
+    if(WInDev[wDevID].client)
+#endif
+    {
+      TRACE("device %d already allocated\n", wDevID);
+      return MMSYSERR_ALLOCATED;
+    }
+
+    /* make sure we aren't being opened in 8 bit mode */
+    if(lpDesc->lpFormat->wBitsPerSample == 8)
+    {
+      TRACE("8bits per sample unsupported, returning WAVERR_BADFORMAT\n");
+      return WAVERR_BADFORMAT;
+    }
+
+    /* only PCM format is supported so far... */
+    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
+      lpDesc->lpFormat->nChannels == 0 ||
+      lpDesc->lpFormat->nSamplesPerSec == 0)
+    {
+      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+       lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+       lpDesc->lpFormat->nSamplesPerSec);
+      return WAVERR_BADFORMAT;
+    }
+
+    if (dwFlags & WAVE_FORMAT_QUERY)
+    {
+      TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+       lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+       lpDesc->lpFormat->nSamplesPerSec);
+      return MMSYSERR_NOERROR;
+    }
+
+    wwi = &WInDev[wDevID];
+    wwi->wDevID = wDevID;
+
+    /* Set things up before we call JACK_OpenWaveOutDevice because */
+    /* we will start getting callbacks before JACK_OpenWaveOutDevice */
+    /* even returns and we want to be initialized before then */
+    wwi->state = WINE_WS_STOPPED; /* start in a stopped state */
+
+    InitializeCriticalSection(&wwi->access_crst); /* initialize the critical section */
+    EnterCriticalSection(&wwi->access_crst);
+
+    /* open up jack ports for this device */
+    if (!JACK_OpenWaveInDevice(&WInDev[wDevID], lpDesc->lpFormat->nChannels))
+    {
+      ERR("JACK_OpenWaveInDevice(%d) failed\n", wDevID);
+      LeaveCriticalSection(&wwi->access_crst);
+      DeleteCriticalSection(&wwi->access_crst);
+      return MMSYSERR_ERROR;		/* return unspecified error */
+    }
+
+    dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
+
+    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    
+    memcpy(&wwi->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
+    memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+
+    LeaveCriticalSection(&wwi->access_crst);
+
+    /* display the current wave format */
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n", 
+    wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
+    wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
+    wwi->format.wf.nBlockAlign);
+
+    /* make sure that we have the same sample rate in our audio stream */
+    /* as we do in the jack server */
+    if(wwi->format.wf.nSamplesPerSec != wwi->sample_rate)
+    {
+      TRACE("error: jack server sample rate is '%ld', wave sample rate is '%ld'\n",
+         wwi->sample_rate, wwi->format.wf.nSamplesPerSec);
+
+#if JACK_CLOSE_HACK
+      JACK_CloseWaveInDevice(wwi, FALSE); /* close this device, don't force the client to close */
+#else
+      JACK_CloseWaveInDevice(wwi); /* close this device */
+#endif
+      DeleteCriticalSection(&wwi->access_crst);
+      return WAVERR_BADFORMAT;
+    }
+
+    /* check for an invalid number of bits per sample */
+    if (wwi->format.wBitsPerSample == 0)
+    {
+      WARN("Resetting zeroed wBitsPerSample to 16\n");
+      wwi->format.wBitsPerSample = 16 *
+      (wwi->format.wf.nAvgBytesPerSec /
+       wwi->format.wf.nSamplesPerSec) /
+       wwi->format.wf.nChannels;
+    }
+
+    TRACE("notify client.\n");
+    EnterCriticalSection(&wwi->access_crst);
+    retval = widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    LeaveCriticalSection(&wwi->access_crst);
+
+    return retval;
+}
+/**************************************************************************
+ * 				widClose			[internal]
+ */
+static DWORD widClose(WORD wDevID)
+{
+    DWORD		ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*	wwi;
+
+    TRACE("(%u);\n", wDevID);
+
+    if (wDevID >= MAX_WAVEINDRV || !WInDev[wDevID].client)
+    {
+      WARN("bad device ID !\n");
+      return MMSYSERR_BADDEVICEID;
+    }
+    
+    wwi = &WInDev[wDevID];
+    if (wwi->lpQueuePtr)
+    {
+      WARN("buffers still playing !\n");
+      ret = WAVERR_STILLPLAYING;
+    } else
+    {
+	/* sanity check: this should not happen since the device must have been reset before */
+	if (wwi->lpQueuePtr) ERR("out of sync\n");
+	
+	wwi->state = WINE_WS_CLOSED; /* mark the device as closed */
+	
+#if JACK_CLOSE_HACK
+	JACK_CloseWaveInDevice(wwi, FALSE); /* close the jack device, DO NOT force the client to close */
+#else
+	JACK_CloseWaveInDevice(wwi); /* close the jack device */
+#endif
+	DeleteCriticalSection(&wwi->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
+	
+	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+    }
+
+    return ret;
+}
+
+/**************************************************************************
+ * 				widAddBuffer		[internal]
+ */
+static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    WINE_WAVEIN* wwi = &WInDev[wDevID];
+
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+				WARN("can't do it !\n");
+				return MMSYSERR_INVALHANDLE;
+    }
+    if (!(lpWaveHdr->dwFlags & WHDR_PREPARED)) {
+				TRACE("never been prepared !\n");
+				return WAVERR_UNPREPARED;
+    }
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
+				TRACE("header already in use !\n");
+				return WAVERR_STILLPLAYING;
+    }
+
+    lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
+    lpWaveHdr->dwBytesRecorded = 0;
+    lpWaveHdr->lpNext = NULL;
+
+    EnterCriticalSection(&wwi->access_crst);
+    /* insert buffer at end of queue */
+    {
+	LPWAVEHDR* wh;
+	for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
+	*wh=lpWaveHdr;
+    }
+    LeaveCriticalSection(&wwi->access_crst);
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widPrepare			[internal]
+ */
+static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+		
+    if (wDevID >= MAX_WAVEINDRV) return MMSYSERR_INVALHANDLE;
+		
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
+				return WAVERR_STILLPLAYING;
+
+    lpWaveHdr->dwFlags |= WHDR_PREPARED;
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
+    lpWaveHdr->dwBytesRecorded = 0;
+    lpWaveHdr->lpNext = NULL;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widUnprepare			[internal]
+ */
+static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    if (wDevID >= MAX_WAVEINDRV) {
+				WARN("bad device ID !\n");
+				return MMSYSERR_INVALHANDLE;
+    }
+
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
+				TRACE("Still playing...\n");
+				return WAVERR_STILLPLAYING;
+    }
+
+    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
+    lpWaveHdr->dwFlags |= WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widStart				[internal]
+ */
+static DWORD widStart(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't start recording !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    WInDev[wDevID].state = WINE_WS_PLAYING;
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widStop					[internal]
+ */
+static DWORD widStop(WORD wDevID)
+{
+    WINE_WAVEIN* wwi = &WInDev[wDevID];
+
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't stop !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+    
+    if (wwi->state != WINE_WS_STOPPED)
+    {
+	WAVEHDR*		lpWaveHdr;
+	/* do something here to stop recording ??? */
+	
+	/* return current buffer to app */
+	lpWaveHdr = wwi->lpQueuePtr;
+	if (lpWaveHdr)
+	{
+	    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+	    TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+	    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+	    lpWaveHdr->dwFlags |= WHDR_DONE;
+	    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+	    wwi->lpQueuePtr = lpNext;
+	}
+    }
+    wwi->state = WINE_WS_STOPPED;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widReset				[internal]
+ */
+static DWORD widReset(WORD wDevID)
+{
+    WINE_WAVEIN* wwi = &WInDev[wDevID];
+    WAVEHDR*		lpWaveHdr;
+
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't reset !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    wwi->state = WINE_WS_STOPPED;
+
+    /* return all buffers to the app */
+    for (lpWaveHdr = wwi->lpQueuePtr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
+	TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+	lpWaveHdr->dwFlags |= WHDR_DONE;
+	
+	widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+    }
+    wwi->lpQueuePtr = NULL;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
  * 				widMessage (WINEJACK.6)
  */
 DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
@@ -1634,10 +2407,38 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
   TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
   wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
+    switch (wMsg) {
+    case DRVM_INIT:
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+	/* FIXME: Pretend this is supported */
+	return 0;
+    case WIDM_OPEN:	 	return widOpen		(wDevID, (LPWAVEOPENDESC)dwParam1,	dwParam2);
+    case WIDM_CLOSE:		return widClose		(wDevID);
+    case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSA)dwParam1,	dwParam2);
+    case WIDM_GETNUMDEVS:	return MAX_WAVEINDRV;
+    case WIDM_RESET:		return widReset		(wDevID);
+    case WIDM_START:		return widStart		(wDevID);
+    case WIDM_STOP:		return widStop		(wDevID);
+    default:
+	FIXME("unknown message %d!\n", wMsg);
+    }
+
   return MMSYSERR_NOTSUPPORTED;
 }
 
 #else /* !HAVE_JACK_JACK_H */
+
+DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+			    DWORD dwParam1, DWORD dwParam2)
+{
+  FIXME("(%u, %04X, %08lX, %08lX, %08lX):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  return MMSYSERR_NOTENABLED;
+}
 
 /**************************************************************************
  * 				wodMessage (WINEJACK.7)

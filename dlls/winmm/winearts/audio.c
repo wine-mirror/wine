@@ -32,8 +32,7 @@
  * FIXME:
  *	pause in waveOut does not work correctly in loop mode
  *
- * TODO:
- *	implement wave-in support with artsc
+ *	does something need to be done in for WaveIn DirectSound?
  */
 
 /*#define EMULATE_SB16*/
@@ -65,10 +64,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #include <artsc.h>
 
-#define BUFFER_SIZE		16 * 1024
-#define SPACE_THRESHOLD 	5 * 1024
+/* The following four #defines allow you to fine-tune the packet
+ * settings in arts for better low-latency support. You must also
+ * adjust the latency in the KDE arts control panel. I recommend 4
+ * fragments, 1024 bytes.
+ *
+ * The following is from the ARTS documentation and explains what CCCC
+ * and SSSS mean:
+ * 
+ * @li ARTS_P_PACKET_SETTINGS (rw) This is a way to configure packet
+ * size & packet count at the same time.  The format is 0xCCCCSSSS,
+ * where 2^SSSS is the packet size, and CCCC is the packet count. Note
+ * that when writing this, you don't necessarily get the settings you
+ * requested.
+ */
+#define WAVEOUT_PACKET_CCCC 0x000C
+#define WAVEOUT_PACKET_SSSS 0x0008
+#define WAVEIN_PACKET_CCCC  0x000C
+#define WAVEIN_PACKET_SSSS  0x0008
+
+#define BUFFER_REFILL_THRESHOLD 4
+
+#define WAVEOUT_PACKET_SETTINGS ((WAVEOUT_PACKET_CCCC << 16) | (WAVEOUT_PACKET_SSSS))
+#define WAVEIN_PACKET_SETTINGS  ((WAVEIN_PACKET_CCCC << 16) | (WAVEIN_PACKET_SSSS))
 
 #define MAX_WAVEOUTDRV 	(10)
+#define MAX_WAVEINDRV 	(10)
 
 /* state diagram for waveOut writing:
  *
@@ -96,7 +117,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 /* events to be send to device */
 enum win_wm_message {
     WINE_WM_PAUSING = WM_USER + 1, WINE_WM_RESTARTING, WINE_WM_RESETTING, WINE_WM_HEADER,
-    WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING
+    WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING, WINE_WM_STARTING, WINE_WM_STOPPING
 };
 
 typedef struct {
@@ -126,13 +147,15 @@ typedef struct {
     PCMWAVEFORMAT		format;
     WAVEOUTCAPSA		caps;
 
+    DWORD			dwSleepTime;		/* Num of milliseconds to sleep between filling the dsp buffers */
+
     /* arts information */
     arts_stream_t 		play_stream;		/* the stream structure we get from arts when opening a stream for playing */
     DWORD                       dwBufferSize;           /* size of whole buffer in bytes */
+    int				packetSettings;
 
     char*			sound_buffer;
     long			buffer_size;
-
 
     DWORD			volume_left;		/* volume control information */
     DWORD			volume_right;
@@ -154,7 +177,29 @@ typedef struct {
     ARTS_MSG_RING		msgRing;
 } WINE_WAVEOUT;
 
+typedef struct {
+    volatile int		state;			/* one of the WINE_WS_ manifest constants */
+    WAVEOPENDESC		waveDesc;
+    WORD			wFlags;
+    PCMWAVEFORMAT		format;
+    WAVEINCAPSA			caps;
+
+    /* arts information */
+    arts_stream_t 		record_stream;		/* the stream structure we get from arts when opening a stream for recording */
+    int				packetSettings;
+
+    LPWAVEHDR			lpQueuePtr;
+    DWORD			dwRecordedTotal;
+
+    /* synchronization stuff */
+    HANDLE			hStartUpEvent;
+    HANDLE			hThread;
+    DWORD			dwThreadID;
+    ARTS_MSG_RING		msgRing;
+} WINE_WAVEIN;
+
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
+static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV];
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
@@ -169,6 +214,8 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_UPDATE",
     "WINE_WM_BREAKLOOP",
     "WINE_WM_CLOSING",
+    "WINE_WM_STARTING",
+    "WINE_WM_STOPPING",
 };
 
 /*======================================================================*
@@ -229,19 +276,32 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
 }
 
 /******************************************************************
- *		ARTS_CloseDevice
+ *		ARTS_CloseWaveOutDevice
  *
  */
-void		ARTS_CloseDevice(WINE_WAVEOUT* wwo)
+void		ARTS_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 {
   arts_close_stream(wwo->play_stream); 	/* close the arts stream */
   wwo->play_stream = (arts_stream_t*)-1;
 
   /* free up the buffer we use for volume and reset the size */
   if(wwo->sound_buffer)
+  {
     HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
+    wwo->sound_buffer = NULL;
+  }
 
   wwo->buffer_size = 0;
+}
+
+/******************************************************************
+ *		ARTS_CloseWaveInDevice
+ *
+ */
+void		ARTS_CloseWaveInDevice(WINE_WAVEIN* wwi)
+{
+  arts_close_stream(wwi->record_stream); 	/* close the arts stream */
+  wwi->record_stream = (arts_stream_t*)-1;
 }
 
 /******************************************************************
@@ -264,7 +324,15 @@ LONG		ARTS_WaveClose(void)
     {
       if(WOutDev[iDevice].play_stream != (arts_stream_t*)-1)
       {
-        ARTS_CloseDevice(&WOutDev[iDevice]);
+        ARTS_CloseWaveOutDevice(&WOutDev[iDevice]);
+      }
+    }
+
+    for(iDevice = 0; iDevice < MAX_WAVEINDRV; iDevice++)
+    {
+      if(WInDev[iDevice].record_stream != (arts_stream_t*)-1)
+      {
+        ARTS_CloseWaveInDevice(&WInDev[iDevice]);
       }
     }
 
@@ -331,7 +399,44 @@ LONG ARTS_WaveInit(void)
 	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
     }
 
+    for (i = 0; i < MAX_WAVEINDRV; ++i)
+    {
+	WInDev[i].record_stream = (arts_stream_t*)-1;
+	memset(&WInDev[i].caps, 0, sizeof(WInDev[i].caps)); /* zero out
+							caps values */
+    /* FIXME: some programs compare this string against the content of the registry
+     * for MM drivers. The names have to match in order for the program to work
+     * (e.g. MS win9x mplayer.exe)
+     */
+#ifdef EMULATE_SB16
+    	WInDev[i].caps.wMid = 0x0002;
+    	WInDev[i].caps.wPid = 0x0104;
+    	strcpy(WInDev[i].caps.szPname, "SB16 Wave In");
+#else
+	WInDev[i].caps.wMid = 0x00FF;
+	WInDev[i].caps.wPid = 0x0001;
+	strcpy(WInDev[i].caps.szPname,"CS4236/37/38");
+#endif
+	WInDev[i].caps.vDriverVersion = 0x0100;
+   	WInDev[i].caps.dwFormats = 0x00000000;
 
+    	WInDev[i].caps.wChannels = 2;
+
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S08;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
+    	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
+	WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+
+	WInDev[i].caps.wReserved1 = 0;
+    }
     return 0;
 }
 
@@ -360,6 +465,7 @@ static int ARTS_DestroyRingMessage(ARTS_MSG_RING* mr)
 {
     CloseHandle(mr->msg_event);
     HeapFree(GetProcessHeap(),0,mr->messages);
+    mr->messages=NULL;
     DeleteCriticalSection(&mr->msg_crst);
     return 0;
 }
@@ -376,9 +482,22 @@ static int ARTS_AddRingMessage(ARTS_MSG_RING* mr, enum win_wm_message msg, DWORD
     EnterCriticalSection(&mr->msg_crst);
     if ((mr->msg_toget == ((mr->msg_tosave + 1) % mr->ring_buffer_size)))
     {
+	int old_ring_buffer_size = mr->ring_buffer_size;
 	mr->ring_buffer_size += ARTS_RING_BUFFER_INCREMENT;
 	TRACE("mr->ring_buffer_size=%d\n",mr->ring_buffer_size);
 	mr->messages = HeapReAlloc(GetProcessHeap(),0,mr->messages, mr->ring_buffer_size * sizeof(RING_MSG));
+	/* Now we need to rearrange the ring buffer so that the new
+	   buffers just allocated are in between mr->msg_tosave and
+	   mr->msg_toget.
+	*/
+	if (mr->msg_tosave < mr->msg_toget)
+	{
+	    memmove(&(mr->messages[mr->msg_toget + ARTS_RING_BUFFER_INCREMENT]),
+		    &(mr->messages[mr->msg_toget]),
+		    sizeof(RING_MSG)*(old_ring_buffer_size - mr->msg_toget)
+		    );
+	    mr->msg_toget += ARTS_RING_BUFFER_INCREMENT;
+	}
     }
     if (wait)
     {
@@ -554,25 +673,6 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 }
 
 /**************************************************************************
- * 			     wodPlayer_DSPWait			[internal]
- * Returns the number of milliseconds to wait for the DSP buffer to clear.
- * This is based on the number of fragments we want to be clear before
- * writing and the number of free fragments we already have.
- */
-static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
-{
-	int waitvalue = (wwo->dwBufferSize - arts_stream_get(wwo->play_stream,
-		ARTS_P_BUFFER_SPACE)) / ((wwo->format.wf.nSamplesPerSec *
-		wwo->format.wBitsPerSample * wwo->format.wf.nChannels)
-		/1000);
-
-	TRACE("wait value of %d\n", waitvalue);
-
-        /* return the time left to play the buffer */
-	return waitvalue;
-}
-
-/**************************************************************************
  * 			     wodPlayer_NotifyWait               [internal]
  * Returns the number of milliseconds to wait before attempting to notify
  * completion of the specified wavehdr.
@@ -618,7 +718,10 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     if(wwo->buffer_size < toWrite)
     {
       if(wwo->sound_buffer)
-        HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
+      {
+	HeapRealloc(GetProcessHeap(), 0, wwo->sound_buffer, toWrite);
+	wwo->buffer_size = toWrite;
+      }
     }
 
     /* if we don't have a buffer then get one */
@@ -664,14 +767,22 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
 
     TRACE("written = %d\n", written);
 
-    if (written <= 0) return written; /* if we wrote nothing just return */
+    if (written <= 0) 
+    {
+      *bytes = 0; /* apparently arts is actually full */
+      return written; /* if we wrote nothing just return */
+    }
 
     if (written >= dwLength)
         wodPlayer_PlayPtrNext(wwo);   /* If we wrote all current wavehdr, skip to the next one */
     else
         wwo->dwPartialOffset += written;    /* Remove the amount written */
 
-    *bytes -= written;
+    if (written < toWrite)
+	*bytes = 0;
+    else
+	*bytes -= written;
+
     wwo->dwWrittenTotal += written; /* update stats on this wave device */
 
     return written; /* return the number of bytes written */
@@ -690,6 +801,23 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 {
     LPWAVEHDR		lpWaveHdr;
 
+    if (wwo->lpQueuePtr) {
+	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p), reserved=(%ld), dwWrittenTotal=(%ld), force=(%d)\n", 
+	      wwo->lpQueuePtr,
+	      wwo->lpPlayPtr,
+	      wwo->lpLoopPtr,
+	      wwo->lpQueuePtr->reserved,
+	      wwo->dwWrittenTotal,
+	      force);
+    } else {
+	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p),  dwWrittenTotal=(%ld), force=(%d)\n", 
+	      wwo->lpQueuePtr,
+	      wwo->lpPlayPtr,
+	      wwo->lpLoopPtr,
+	      wwo->dwWrittenTotal,
+	      force);
+    }
+
     /* Start from lpQueuePtr and keep notifying until:
      * - we hit an unwritten wavehdr
      * - we hit the beginning of a running loop
@@ -699,7 +827,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
            (force ||
             (lpWaveHdr != wwo->lpPlayPtr &&
              lpWaveHdr != wwo->lpLoopPtr &&
-             lpWaveHdr->reserved <= wwo->dwPlayedTotal))) {
+	     lpWaveHdr->reserved <= wwo->dwWrittenTotal))) {
 
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
@@ -854,10 +982,9 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     availInQ = arts_stream_get(wwo->play_stream, ARTS_P_BUFFER_SPACE);
     TRACE("availInQ = %ld\n", availInQ);
 
-    /* input queue empty and output buffer with no space */
-    if (!wwo->lpPlayPtr && availInQ) {
+    /* input queue empty */
+    if (!wwo->lpPlayPtr) {
         TRACE("Run out of wavehdr:s... flushing\n");
-        wwo->dwPlayedTotal = wwo->dwWrittenTotal;
         return INFINITE;
     }
 
@@ -865,7 +992,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     if(!availInQ)
     {
 	TRACE("no more room, no need to try to feed\n");
-	return wodPlayer_DSPWait(wwo);
+	return wwo->dwSleepTime;
     }
 
     /* Feed from partial wavehdr */
@@ -878,16 +1005,26 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     /* Feed wavehdrs until we run out of wavehdrs or DSP space */
     if (!wwo->dwPartialOffset)
     {
- 	 while(wwo->lpPlayPtr && availInQ > SPACE_THRESHOLD)
-	 {
-	        TRACE("feeding waveheaders until we run out of space\n");
-		/* note the value that dwPlayedTotal will return when this wave finishes playing */
-		wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-		wodPlayer_WriteMaxFrags(wwo, &availInQ);
-	    }
+	while(wwo->lpPlayPtr && availInQ)
+	{
+	    TRACE("feeding waveheaders until we run out of space\n");
+	    /* note the value that dwPlayedTotal will return when this wave finishes playing */
+	    wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
+	    TRACE("reserved=(%ld) dwWrittenTotal=(%ld) dwBufferLength=(%ld)\n",
+		  wwo->lpPlayPtr->reserved,
+		  wwo->dwWrittenTotal,
+		  wwo->lpPlayPtr->dwBufferLength
+		);
+	    wodPlayer_WriteMaxFrags(wwo, &availInQ);
+	}
     }
 
-    return wodPlayer_DSPWait(wwo);
+    if (!wwo->lpPlayPtr) {
+        TRACE("Ran out of wavehdrs\n");
+        return INFINITE;
+    }
+
+    return wwo->dwSleepTime;
 }
 
 
@@ -1010,13 +1147,18 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if(!wwo->play_stream) return MMSYSERR_ALLOCATED;
 
-    /* Try to set buffer size from constant and store the value that it
-	was set to for future use */
-    wwo->dwBufferSize = arts_stream_set(wwo->play_stream,
-		ARTS_P_BUFFER_SIZE, BUFFER_SIZE);
-    TRACE("Tried to set BUFFER_SIZE of %d, wwo->dwBufferSize is actually %ld\n", BUFFER_SIZE, wwo->dwBufferSize);
+    /* Try to set the packet settings from constant and store the value that it
+       was actually set to for future use */
+    wwo->packetSettings = arts_stream_set(wwo->play_stream, ARTS_P_PACKET_SETTINGS, WAVEOUT_PACKET_SETTINGS);
+    TRACE("Tried to set ARTS_P_PACKET_SETTINGS to (%x), actually set to (%x)\n", WAVEOUT_PACKET_SETTINGS, wwo->packetSettings);
+
+    wwo->dwBufferSize = arts_stream_get(wwo->play_stream, ARTS_P_BUFFER_SIZE);
+    TRACE("Buffer size is now (%ld)\n",wwo->dwBufferSize);
+
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
+
+    wwo->dwSleepTime = ((1 << (wwo->packetSettings & 0xFFFF)) * 1000 * BUFFER_REFILL_THRESHOLD) / wwo->format.wf.nAvgBytesPerSec;
 
     /* Initialize volume to full level */
     wwo->volume_left = 100;
@@ -1076,7 +1218,7 @@ static DWORD wodClose(WORD wDevID)
 
         ARTS_DestroyRingMessage(&wwo->msgRing);
 
-	ARTS_CloseDevice(wwo);	/* close the stream and clean things up */
+	ARTS_CloseWaveOutDevice(wwo);	/* close the stream and clean things up */
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
@@ -1399,6 +1541,499 @@ DWORD WINAPI ARTS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 }
 
 /*======================================================================*
+ *                  Low level WAVE IN implementation			*
+ *======================================================================*/
+
+/**************************************************************************
+ * 				widGetNumDevs			[internal]
+ */
+static	DWORD	widGetNumDevs(void)
+{
+    TRACE("%d \n",MAX_WAVEINDRV);
+    return MAX_WAVEINDRV;
+}
+
+/**************************************************************************
+ * 			widNotifyClient			[internal]
+ */
+static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+
+    switch (wMsg) {
+    case WIM_OPEN:
+    case WIM_CLOSE:
+    case WIM_DATA:
+	if (wwi->wFlags != DCB_NULL &&
+	    !DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags,
+			    (HDRVR)wwi->waveDesc.hWave, wMsg,
+			    wwi->waveDesc.dwInstance, dwParam1, dwParam2)) {
+	    WARN("can't notify client !\n");
+	    return MMSYSERR_ERROR;
+	}
+	break;
+    default:
+	FIXME("Unknown callback message %u\n", wMsg);
+	return MMSYSERR_INVALPARAM;
+    }
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widGetDevCaps				[internal]
+ */
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+{
+    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+
+    if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+
+    if (wDevID >= MAX_WAVEINDRV) {
+	TRACE("MAX_WAVINDRV reached !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    memcpy(lpCaps, &WInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widRecorder			[internal]
+ */
+static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
+{
+    WORD		uDevID = (DWORD)pmt;
+    WINE_WAVEIN*	wwi = (WINE_WAVEIN*)&WInDev[uDevID];
+    WAVEHDR*		lpWaveHdr;
+    DWORD		dwSleepTime;
+    DWORD		bytesRead;
+    int			dwBufferSpace;
+    enum win_wm_message msg;
+    DWORD		param;
+    HANDLE		ev;
+
+    SetEvent(wwi->hStartUpEvent);
+
+    /* make sleep time to be # of ms to record one packet */
+    dwSleepTime = ((1 << (wwi->packetSettings & 0xFFFF)) * 1000) / wwi->format.wf.nAvgBytesPerSec;
+    TRACE("sleeptime=%ld ms\n", dwSleepTime);
+
+    for(;;) {
+	/* Oddly enough, dwBufferSpace is sometimes negative.... 
+	 * 
+	 * NOTE: If you remove this call to arts_stream_get() and
+	 * remove the && (dwBufferSpace > 0) the code will still
+	 * function correctly. I don't know which way is
+	 * faster/better.
+	 */
+	dwBufferSpace = arts_stream_get(wwi->record_stream, ARTS_P_BUFFER_SPACE);
+	TRACE("wwi->lpQueuePtr=(%p), wwi->state=(%d), dwBufferSpace=(%d)\n",wwi->lpQueuePtr,wwi->state,dwBufferSpace);
+
+	/* read all data is arts input buffer. */
+	if ((wwi->lpQueuePtr != NULL) && (wwi->state == WINE_WS_PLAYING) && (dwBufferSpace > 0))
+	{
+	    lpWaveHdr = wwi->lpQueuePtr;
+		
+	    TRACE("read as much as we can\n");
+	    while(wwi->lpQueuePtr)
+	    {
+		TRACE("attempt to read %ld bytes\n",lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+		bytesRead = arts_read(wwi->record_stream,
+				      lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
+				      lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+		TRACE("bytesRead=%ld\n",bytesRead);
+		if (bytesRead==0) break;
+		
+		lpWaveHdr->dwBytesRecorded	+= bytesRead;
+		wwi->dwRecordedTotal		+= bytesRead;
+
+		/* buffer full. notify client */
+		if (lpWaveHdr->dwBytesRecorded >= lpWaveHdr->dwBufferLength)
+		{
+		    /* must copy the value of next waveHdr, because we have no idea of what
+		     * will be done with the content of lpWaveHdr in callback
+		     */
+		    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+
+		    TRACE("waveHdr full.\n");
+		    
+		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+		    lpWaveHdr->dwFlags |=  WHDR_DONE;
+		    
+		    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+		    lpWaveHdr = wwi->lpQueuePtr = lpNext;
+		}
+	    }
+	}
+
+	/* wait for dwSleepTime or an event in thread's queue */
+	WaitForSingleObject(wwi->msgRing.msg_event, dwSleepTime);
+
+	while (ARTS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
+	{
+	    TRACE("msg=%s param=0x%lx\n",wodPlayerCmdString[msg - WM_USER - 1], param);
+	    switch(msg) {
+	    case WINE_WM_PAUSING:
+		wwi->state = WINE_WS_PAUSED;
+
+		/* Put code here to "pause" arts recording
+		 */
+
+		SetEvent(ev);
+		break;
+	    case WINE_WM_STARTING:
+		wwi->state = WINE_WS_PLAYING;
+
+		/* Put code here to "start" arts recording
+		 */
+
+		SetEvent(ev);
+		break;
+	    case WINE_WM_HEADER:
+		lpWaveHdr = (LPWAVEHDR)param;
+		/* insert buffer at end of queue */
+		{
+		    LPWAVEHDR* wh;
+		    int num_headers = 0;
+		    for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext))
+		    {
+			num_headers++;
+
+		    }
+		    *wh=lpWaveHdr;
+		}
+		break;
+	    case WINE_WM_STOPPING:
+		if (wwi->state != WINE_WS_STOPPED)
+		{
+
+		    /* Put code here to "stop" arts recording
+		     */
+
+		    /* return current buffer to app */
+		    lpWaveHdr = wwi->lpQueuePtr;
+		    if (lpWaveHdr)
+		    {
+			LPWAVEHDR lpNext = lpWaveHdr->lpNext;
+		        TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+		        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+		        lpWaveHdr->dwFlags |= WHDR_DONE;
+		        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+		        wwi->lpQueuePtr = lpNext;
+		    }
+		}
+		wwi->state = WINE_WS_STOPPED;
+		SetEvent(ev);
+		break;
+	    case WINE_WM_RESETTING:
+		wwi->state = WINE_WS_STOPPED;
+		wwi->dwRecordedTotal = 0;
+
+		/* return all buffers to the app */
+		for (lpWaveHdr = wwi->lpQueuePtr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
+		    TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+		    lpWaveHdr->dwFlags |= WHDR_DONE;
+
+		    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+		}
+		wwi->lpQueuePtr = NULL; 
+		SetEvent(ev);
+		break;
+	    case WINE_WM_CLOSING:
+		wwi->hThread = 0;
+		wwi->state = WINE_WS_CLOSED;
+		SetEvent(ev);
+		ExitThread(0);
+		/* shouldn't go here */
+	    default:
+		FIXME("unknown message %d\n", msg);
+		break;
+	    }
+	}
+    }
+    ExitThread(0);
+    /* just for not generating compilation warnings... should never be executed */
+    return 0;
+}
+
+/**************************************************************************
+ * 				widOpen				[internal]
+ */
+static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+{
+    WINE_WAVEIN*	wwi;
+
+    TRACE("(%u, %p %08lX);\n",wDevID, lpDesc, dwFlags);
+    if (lpDesc == NULL) {
+	WARN("Invalid Parametr (lpDesc == NULL)!\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= MAX_WAVEINDRV) {
+	TRACE ("MAX_WAVEINDRV reached !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    /* if this device is already open tell the app that it is allocated */
+    if(WInDev[wDevID].record_stream != (arts_stream_t*)-1)
+    {
+	TRACE("device already allocated\n");
+	return MMSYSERR_ALLOCATED;
+    }
+
+    /* only PCM format is support so far... */
+    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
+	lpDesc->lpFormat->nChannels == 0 ||
+	lpDesc->lpFormat->nSamplesPerSec == 0) {
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+	     lpDesc->lpFormat->nSamplesPerSec);
+	return WAVERR_BADFORMAT;
+    }
+
+    if (dwFlags & WAVE_FORMAT_QUERY) {
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+	     lpDesc->lpFormat->nSamplesPerSec);
+	return MMSYSERR_NOERROR;
+    }
+
+    wwi = &WInDev[wDevID];
+
+    /* direct sound not supported, ignore the flag */
+    dwFlags &= ~WAVE_DIRECTSOUND;
+
+    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    
+    memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
+    memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+
+    if (wwi->format.wBitsPerSample == 0) {
+	WARN("Resetting zerod wBitsPerSample\n");
+	wwi->format.wBitsPerSample = 8 *
+	    (wwi->format.wf.nAvgBytesPerSec /
+	     wwi->format.wf.nSamplesPerSec) /
+	    wwi->format.wf.nChannels;
+    }
+
+    wwi->record_stream = arts_record_stream(wwi->format.wf.nSamplesPerSec,
+					    wwi->format.wBitsPerSample,
+					    wwi->format.wf.nChannels,
+					    "winearts");
+    TRACE("(wwi->record_stream=%p)\n",wwi->record_stream);
+    wwi->state = WINE_WS_STOPPED;
+
+    wwi->packetSettings = arts_stream_set(wwi->record_stream, ARTS_P_PACKET_SETTINGS, WAVEIN_PACKET_SETTINGS);
+    TRACE("Tried to set ARTS_P_PACKET_SETTINGS to (%x), actually set to (%x)\n", WAVEIN_PACKET_SETTINGS, wwi->packetSettings);
+    TRACE("Buffer size is now (%d)\n", arts_stream_get(wwi->record_stream, ARTS_P_BUFFER_SIZE));
+
+    if (wwi->lpQueuePtr) {
+	WARN("Should have an empty queue (%p)\n", wwi->lpQueuePtr);
+	wwi->lpQueuePtr = NULL;
+    }
+    arts_stream_set(wwi->record_stream, ARTS_P_BLOCKING, 0);    /* disable blocking on this stream */
+
+    if(!wwi->record_stream) return MMSYSERR_ALLOCATED;
+
+    wwi->dwRecordedTotal = 0;
+    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+
+    ARTS_InitRingMessage(&wwi->msgRing);
+
+    /* create recorder thread */
+    if (!(dwFlags & WAVE_DIRECTSOUND)) {
+	wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
+	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
+	CloseHandle(wwi->hStartUpEvent);
+    } else {
+	wwi->hThread = INVALID_HANDLE_VALUE;
+	wwi->dwThreadID = 0;
+    }
+    wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
+
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
+	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
+	  wwi->format.wf.nBlockAlign);
+    return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+}
+
+/**************************************************************************
+ * 				widClose			[internal]
+ */
+static DWORD widClose(WORD wDevID)
+{
+    WINE_WAVEIN*	wwi;
+
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't close !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    wwi = &WInDev[wDevID];
+
+    if (wwi->lpQueuePtr != NULL) {
+	WARN("still buffers open !\n");
+	return WAVERR_STILLPLAYING;
+    }
+
+    ARTS_AddRingMessage(&wwi->msgRing, WINE_WM_CLOSING, 0, TRUE);
+    ARTS_CloseWaveInDevice(wwi);
+    wwi->state = WINE_WS_CLOSED;
+    ARTS_DestroyRingMessage(&wwi->msgRing);
+    return widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+}
+
+/**************************************************************************
+ * 				widAddBuffer		[internal]
+ */
+static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't do it !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+    if (!(lpWaveHdr->dwFlags & WHDR_PREPARED)) {
+	TRACE("never been prepared !\n");
+	return WAVERR_UNPREPARED;
+    }
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
+	TRACE("header already in use !\n");
+	return WAVERR_STILLPLAYING;
+    }
+
+    lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
+    lpWaveHdr->dwBytesRecorded = 0;
+    lpWaveHdr->lpNext = NULL;
+
+    ARTS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widPrepare			[internal]
+ */
+static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+
+    if (wDevID >= MAX_WAVEINDRV) return MMSYSERR_INVALHANDLE;
+
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
+	return WAVERR_STILLPLAYING;
+
+    lpWaveHdr->dwFlags |= WHDR_PREPARED;
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
+    lpWaveHdr->dwBytesRecorded = 0;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widUnprepare			[internal]
+ */
+static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    if (wDevID >= MAX_WAVEINDRV) {
+	WARN("bad device ID !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
+	TRACE("Still playing...\n");
+	return WAVERR_STILLPLAYING;
+    }
+
+    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
+    lpWaveHdr->dwFlags |= WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widStart				[internal]
+ */
+static DWORD widStart(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't start recording !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    ARTS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STARTING, 0, TRUE);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widStop					[internal]
+ */
+static DWORD widStop(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't stop !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+
+    ARTS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STOPPING, 0, TRUE);
+
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 			widReset				[internal]
+ */
+static DWORD widReset(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("can't reset !\n");
+	return MMSYSERR_INVALHANDLE;
+    }
+    ARTS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widMessage (WINEARTS.6)
+ */
+DWORD WINAPI ARTS_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
+			    DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    switch (wMsg) {
+    case DRVM_INIT:
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+	/* FIXME: Pretend this is supported */
+	return 0;
+    case WIDM_OPEN:	 	return widOpen		(wDevID, (LPWAVEOPENDESC)dwParam1,	dwParam2);
+    case WIDM_CLOSE:		return widClose		(wDevID);
+    case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSA)dwParam1,	dwParam2);
+    case WIDM_GETNUMDEVS:	return widGetNumDevs	();
+    case WIDM_RESET:		return widReset		(wDevID);
+    case WIDM_START:		return widStart		(wDevID);
+    case WIDM_STOP:		return widStop		(wDevID);
+    default:
+	FIXME("unknown message %d!\n", wMsg);
+    }
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+/*======================================================================*
  *                  Low level DSOUND implementation			*
  *======================================================================*/
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
@@ -1430,6 +2065,16 @@ static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
  * 				wodMessage (WINEARTS.@)
  */
 DWORD WINAPI ARTS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+			    DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    return MMSYSERR_NOTENABLED;
+}
+
+/**************************************************************************
+ * 				widMessage (WINEARTS.6)
+ */
+DWORD WINAPI ARTS_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
     FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
