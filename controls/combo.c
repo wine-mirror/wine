@@ -472,8 +472,8 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
   LPCREATESTRUCTA  lpcs = (CREATESTRUCTA*)lParam;
   
   if( !CB_GETTYPE(lphc) ) lphc->dwStyle |= CBS_SIMPLE;
-  else if( CB_GETTYPE(lphc) != CBS_DROPDOWNLIST ) lphc->wState |= CBF_EDIT;
-
+  if( CB_GETTYPE(lphc) != CBS_DROPDOWNLIST ) lphc->wState |= CBF_EDIT;
+  
   lphc->self  = wnd;
   lphc->owner = lpcs->hwndParent;
 
@@ -1113,6 +1113,9 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
    SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)"" );
    lphc->wState &= ~CBF_NOEDITNOTIFY;
 
+   if( lphc->wState & CBF_FOCUSED )
+      SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
+
    if( pText )
        HeapFree( GetProcessHeap(), 0, pText );
 }
@@ -1384,7 +1387,14 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 	        if (!(lphc->wState & CBF_NOEDITNOTIFY))
 		  CB_NOTIFY( lphc, CBN_EDITCHANGE );
 
-		CBUpdateLBox( lphc );
+		if (lphc->wState & CBF_NOLBSELECT)
+		{
+		  lphc->wState &= ~CBF_NOLBSELECT;
+		}
+		else
+		{
+		  CBUpdateLBox( lphc );
+		}
 		break;
 
 	   case (EN_UPDATE >> 8):
@@ -1417,13 +1427,17 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		/* do not roll up if selection is being tracked 
 		 * by arrowkeys in the dropdown listbox */
 
-		if( (lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP) )
-		     CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
+                if( (lphc->dwStyle & CBS_SIMPLE) ||
+                    ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
+                {
+                   CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
+                }
 		else lphc->wState &= ~CBF_NOROLLUP;
 
 		if( lphc->wState & CBF_EDIT )
 		{
 		    INT index = SendMessageA(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
+                    lphc->wState |= CBF_NOLBSELECT;
 		    CBUpdateEdit( lphc, index );
 		    /* select text in edit, as Windows does */
 		    SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
@@ -2055,7 +2069,9 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		wParam = (INT)(INT16)wParam;
 	case CB_SETCURSEL:
 		lParam = SendMessageA( lphc->hWndLBox, LB_SETCURSEL, wParam, 0);
-		if( lphc->wState & CBF_SELCHANGE )
+	        if( lParam >= 0 )
+	            SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, wParam, 0);
+   	        if( lphc->wState & CBF_SELCHANGE )
 		{
 		    /* no LBN_SELCHANGE in this case, update manually */
 		    if( lphc->wState & CBF_EDIT )
