@@ -38,7 +38,7 @@ test_regedit();
 #    }
 #}
 
-# Checks if the files are equal regardless of the encoding.
+# Checks if the files are equal regardless of the end-of-line encoding.
 # Returns 0 if the files are different, otherwise returns 1
 # params - list of file names
 sub files_are_equal
@@ -47,19 +47,6 @@ sub files_are_equal
     my @files = ();
 
     die "At least 2 file names expected" unless ($#file_names);
-
-    #compare the files sizes
-    my $sizes_are_equal = 1;
-    foreach my $file_name (@file_names)
-    {
-        -e $file_name || die "Error! File $file_name does not exist";
-        if (-s $file_names[0] != -s $file_name)
-        {
-            $sizes_are_equal = 0;
-            last;
-        }
-    }
-    return 1 if $sizes_are_equal;
 
     #compare file contents
     foreach my $file_name (@file_names)
