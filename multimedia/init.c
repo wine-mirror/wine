@@ -252,27 +252,44 @@ BOOL MULTIMEDIA_MidiInit(void)
     return TRUE;
 }
 
-extern	int	mciInstalledCount;
-extern	int	mciInstalledListLen;
-extern	LPSTR	lpmciInstallNames;
-
 BOOL MULTIMEDIA_MciInit(void)
 {
-    int		len;
-    LPSTR	ptr;
-    LPSTR	SysFile = "SYSTEM.INI";
+    LPSTR	ptr1, ptr2;
+    char    	buffer[1024];
 
     mciInstalledCount = 0;
-    mciInstalledListLen = 0;
-    ptr = lpmciInstallNames = xmalloc(2048);
+    ptr1 = lpmciInstallNames = xmalloc(2048);
+
     /* FIXME: should do also some registry diving here */
-    GetPrivateProfileStringA("mci", NULL, "", lpmciInstallNames, 2000, SysFile);
-    while (strlen(ptr) > 0) {
-	TRACE(mci, "---> '%s' \n", ptr);
-	len = strlen(ptr) + 1;
-	ptr += len;
-	mciInstalledListLen += len;
+    if (PROFILE_GetWineIniString("options", "mci", "", lpmciInstallNames, 2048) > 0) {
+	TRACE(mci, "Wine => '%s' \n", ptr1);
+	while ((ptr2 = strchr(ptr1, ':')) != 0) {
+	    *ptr2++ = 0;
+	    TRACE(mci, "---> '%s' \n", ptr1);
+	    mciInstalledCount++;
+	    ptr1 = ptr2;
+	}
 	mciInstalledCount++;
+	TRACE(mci, "---> '%s' \n", ptr1);
+	ptr1 += strlen(ptr1) + 1;
+    } else {
+	GetPrivateProfileStringA("mci", NULL, "", lpmciInstallNames, 2048, "SYSTEM.INI");
+	while (strlen(ptr1) > 0) {
+	    TRACE(mci, "---> '%s' \n", ptr1);
+	    ptr1 += (strlen(ptr1) + 1);
+	    mciInstalledCount++;
+	}
+    }
+    mciInstalledListLen = ptr1 - lpmciInstallNames;
+
+    if (PROFILE_GetWineIniString("options", "mciExternal", "", buffer, sizeof(buffer)) > 0) {
+	int		i;
+ 
+	for (i = 0; MCI_InternalDescriptors[i].uDevType != 0xFFFF; i++) {
+	    if (strstr(buffer, MCI_InternalDescriptors[i].lpstrName) != NULL) {
+		MCI_InternalDescriptors[i].uDevType = 0;	/* disable slot */
+	    }
+	}
     }
     return TRUE;
 }
