@@ -11,7 +11,7 @@
  *
  * TODO:
  *   - check for the 'rec ' list in some AVI files
- *   - implement some missing flags (ACS_TRANSPARENT and ACS_CENTER)
+ *   - implement some missing flags (ACS_TRANSPARENT)
  *   - protection between service thread and wndproc messages handling 
  *     concurrent access to infoPtr
  */
@@ -613,6 +613,23 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     return TRUE;
 }
 
+static void ANIMATE_Center(ANIMATE_INFO *infoPtr)
+{
+    int x,y,dx,dy;
+    RECT Rect;
+    HWND hWnd=infoPtr->hWnd;
+    HWND hWndParent=GetWindowLongA(hWnd, GWL_HWNDPARENT);
+
+    if (!hWndParent || !GetWindowRect(hWndParent, &Rect)) return;
+
+    dx=Rect.right-Rect.left+1;
+    dy=Rect.bottom-Rect.top+1;
+    x=infoPtr->mah.dwWidth < dx ? (dx-infoPtr->mah.dwWidth) >> 1 : 0;
+    y=infoPtr->mah.dwHeight < dy ? (dy-infoPtr->mah.dwHeight) >> 1 : 0;
+
+    MoveWindow(hWnd, x, y, infoPtr->mah.dwWidth, infoPtr->mah.dwHeight, TRUE);
+}
+
 static LRESULT ANIMATE_OpenA(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hWnd);
@@ -661,7 +678,9 @@ static LRESULT ANIMATE_OpenA(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
 
     if (GetWindowLongA(hWnd, GWL_STYLE) & ACS_CENTER) {
-	FIXME("ACS_CENTER: NIY\n");
+
+	ANIMATE_Center(infoPtr);
+
     } else {
 	/*	MoveWindow(hWnd, 0, 0, infoPtr->mah.dwWidth, infoPtr->mah.dwHeight, FALSE);*/
 	SetWindowPos(hWnd, 0, 0, 0, infoPtr->mah.dwWidth, infoPtr->mah.dwHeight,
@@ -775,10 +794,10 @@ static LRESULT WINAPI ANIMATE_Size(HWND hWnd, WPARAM wParam, LPARAM lParam)
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hWnd);
 
     if (GetWindowLongA(hWnd, GWL_STYLE) & ACS_CENTER) {
-	FIXME("NIY\n");
 	if (infoPtr->hMMio) {
 	    /* centers the animation in the control, invalidates the control
 	     */
+	    ANIMATE_Center(infoPtr);
 	}
 	InvalidateRect(hWnd, NULL, TRUE);
     }
