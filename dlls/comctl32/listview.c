@@ -3990,6 +3990,8 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
     if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item)) return FALSE;
+    /* add the text from the edit in */
+    dispInfo.item.mask |= LVIF_TEXT;
     dispInfo.item.pszText = pszText;
     dispInfo.item.cchTextMax = textlenT(pszText, isW);
 
@@ -4028,6 +4030,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
     if (~infoPtr->dwStyle & LVS_EDITLABELS) return 0;
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return 0;
 
     infoPtr->nEditLabelItem = nItem;
 
@@ -7421,13 +7424,13 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 
   nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   TRACE("at %s, nItem=%d\n", debugpoint(&pt), nItem);
+  infoPtr->nEditLabelItem = -1;
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
     if (lStyle & LVS_SINGLESEL)
     {
-      if ((LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
-          && infoPtr->nEditLabelItem == -1)
-          infoPtr->nEditLabelItem = nItem;
+      if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
+        infoPtr->nEditLabelItem = nItem;
       else
         LISTVIEW_SetSelection(infoPtr, nItem);
     }
@@ -7465,13 +7468,11 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
       }
       else
       {
-	BOOL was_selected = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
+	if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
+	  infoPtr->nEditLabelItem = nItem;
 
 	/* set selection (clears other pre-existing selections) */
         LISTVIEW_SetSelection(infoPtr, nItem);
-
-        if (was_selected && infoPtr->nEditLabelItem == -1)
-          infoPtr->nEditLabelItem = nItem;
       }
     }
   }
@@ -7514,13 +7515,9 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
 
-    if(infoPtr->nEditLabelItem != -1)
-    {
-        if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && 
-	   (lvHitTestInfo.flags & LVHT_ONITEMLABEL))
-            LISTVIEW_EditLabelT(infoPtr, lvHitTestInfo.iItem, TRUE);
-        infoPtr->nEditLabelItem = -1;
-    }
+    /* if we clicked on a selected item, edit the label */
+    if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && (lvHitTestInfo.flags & LVHT_ONITEMLABEL))
+        LISTVIEW_EditLabelT(infoPtr, lvHitTestInfo.iItem, TRUE);
 
     return 0;
 }
