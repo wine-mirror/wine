@@ -495,7 +495,7 @@ Thunk_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
 				 LPD3DFINDDEVICERESULT lpD3DFDR)
 {
     TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", iface, lpD3DDFS, lpD3DFDR);
-    return IDirect3D3_FindDevice(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D, IDirect3D3, iface),
+    return IDirect3D3_FindDevice(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D2, IDirect3D3, iface),
 				 lpD3DDFS,
 				 lpD3DFDR);
 }
