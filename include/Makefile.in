@@ -5,10 +5,138 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 INSTALLED_INCLUDES = \
+	basetsd.h \
+	cderr.h \
+	commctrl.h \
+	commdlg.h \
+	compobj.h \
+	d3d.h \
+	d3dcaps.h \
+	d3dtypes.h \
+	dde.h \
+	ddeml.h \
+	ddraw.h \
+	digitalv.h \
+	dinput.h \
+	dispdib.h \
+	dlgs.h \
+	docobj.h \
+	dplay.h \
+	dplobby.h \
+	dsound.h \
+	guiddef.h \
+	imagehlp.h \
+	imm.h \
+	initguid.h \
+	instance.h \
+	lmcons.h \
+	lzexpand.h \
+	mapidefs.h \
+	mmreg.h \
+	mmsystem.h \
+	msacm.h \
+	ntsecapi.h \
+	oaidl.h \
+	objbase.h \
+	objidl.h \
+	ocidl.h \
+	ole2.h \
+	ole2ver.h \
+	oleauto.h \
+	olectl.h \
+	oledlg.h \
+	oleidl.h \
+	poppack.h \
+	prsht.h \
+	psapi.h \
+	pshpack1.h \
+	pshpack2.h \
+	pshpack4.h \
+	pshpack8.h \
+	queue.h \
+	ras.h \
+	regstr.h \
+	richedit.h \
+	rpc.h \
+	servprov.h \
+	shellapi.h \
+	shlguid.h \
+	shlobj.h \
+	shlwapi.h \
+	sql.h \
+	sqlext.h \
+	sqltypes.h \
+	storage.h \
+	tapi.h \
+	tlhelp32.h \
+	unknwn.h \
+	urlmon.h \
+	ver.h \
+	vfw.h \
+	winbase.h \
+	wincon.h \
+	wincrypt.h \
 	windef.h \
 	windows.h \
+	windowsx.h \
+	wine/exception.h \
+	wine/icmpapi.h \
+	wine/ipexport.h \
+	wine/obj_base.h \
+	wine/obj_cache.h \
+	wine/obj_channel.h \
+	wine/obj_clientserver.h \
+	wine/obj_commdlgbrowser.h \
+	wine/obj_connection.h \
+	wine/obj_contextmenu.h \
+	wine/obj_control.h \
+	wine/obj_dataobject.h \
+	wine/obj_dockingwindowframe.h \
+	wine/obj_dragdrop.h \
+	wine/obj_enumidlist.h \
+	wine/obj_errorinfo.h \
+	wine/obj_extracticon.h \
+	wine/obj_inplace.h \
+	wine/obj_marshal.h \
+	wine/obj_misc.h \
+	wine/obj_moniker.h \
+	wine/obj_oleaut.h \
+	wine/obj_olefont.h \
+	wine/obj_oleobj.h \
+	wine/obj_oleundo.h \
+	wine/obj_oleview.h \
+	wine/obj_picture.h \
+	wine/obj_property.h \
+	wine/obj_propertystorage.h \
+	wine/obj_queryassociations.h \
+	wine/obj_shellbrowser.h \
+	wine/obj_shellextinit.h \
+	wine/obj_shellfolder.h \
+	wine/obj_shelllink.h \
+	wine/obj_shellview.h \
+	wine/obj_storage.h \
+	wine/port.h \
+	wine/undocshell.h \
+	wine/unicode.h \
+	wine/w32skrnl.h \
+	wine/winestring.h \
+	winerror.h \
 	wingdi.h \
-	winuser.h
+	wininet.h \
+	winioctl.h \
+	winnetwk.h \
+	winnls.h \
+	winnt.h \
+	winreg.h \
+	winresrc.h \
+	winsock.h \
+	winsock2.h \
+	winspool.h \
+	winsvc.h \
+	winuser.h \
+	winver.h \
+	wownt32.h \
+	wtypes.h
 
 EXTRASUBDIRS = bitmaps wine
 
@@ -16,12 +144,13 @@ EXTRASUBDIRS = bitmaps wine
 
 install::
 	[ -d $(includedir) ] || $(MKDIR) $(includedir)
-	for f in $(INSTALLED_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir); done
+	[ -d $(includedir)/wine ] || $(MKDIR) $(includedir)/wine
+	for f in $(INSTALLED_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
 # anything extra the user may have put there.
 uninstall::
 	cd $(includedir) && $(RM) $(INSTALLED_INCLUDES)
-	-rmdir $(includedir)
+	-rmdir $(includedir)/wine $(includedir)
 
 ### Dependencies:
