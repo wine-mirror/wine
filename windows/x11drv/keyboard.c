@@ -17,6 +17,9 @@
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
+#ifdef HAVE_XKB
+#include <X11/XKBlib.h>
+#endif
 
 #include <ctype.h>
 #include <string.h>
@@ -46,6 +49,9 @@ WORD keyc2vkey[256], keyc2scan[256];
 
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
 static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
+#ifdef HAVE_XKB
+static int is_xkb, xkb_opcode, xkb_event, xkb_error;
+#endif
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
@@ -908,6 +914,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
  */
 void X11DRV_InitKeyboard(void)
 {
+#ifdef HAVE_XKB
+    int xkb_major = XkbMajorVersion, xkb_minor = XkbMinorVersion;
+#endif
     KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
@@ -918,6 +927,17 @@ void X11DRV_InitKeyboard(void)
     char ckey[4]={0,0,0,0};
     const char (*lkey)[MAIN_LEN][4];
 
+#ifdef HAVE_XKB
+    wine_tsx11_lock();
+    is_xkb = XkbQueryExtension(display,
+                               &xkb_opcode, &xkb_event, &xkb_error,
+                               &xkb_major, &xkb_minor);
+    if (is_xkb) {
+        /* we have XKB, approximate Windows behaviour */
+        XkbSetDetectableAutoRepeat(display, True, NULL);
+    }
+    wine_tsx11_unlock();
+#endif
     TSXDisplayKeycodes(display, &min_keycode, &max_keycode);
     ksp = TSXGetKeyboardMapping(display, min_keycode,
                               max_keycode + 1 - min_keycode, &keysyms_per_keycode);

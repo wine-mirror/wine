@@ -24,6 +24,9 @@
 /* Define if struct sockaddr_un contains sun_len */
 #undef HAVE_SOCKADDR_SUN_LEN
 
+/* Define if you have the XKB extension */
+#undef HAVE_XKB
+
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */
 #undef HAVE_LIBXXF86DGA
 

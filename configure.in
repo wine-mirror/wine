@@ -173,6 +173,16 @@ then
     dnl *** All three of the following tests require X11/Xlib.h
     AC_CHECK_HEADERS(X11/Xlib.h,
       [
+        dnl *** Check for X keyboard extension
+        AC_CHECK_HEADERS(X11/XKBlib.h,
+            [ dnl *** If X11/XKBlib.h exists...
+              AC_CHECK_LIB(X11, XkbQueryExtension,
+              AC_DEFINE(HAVE_XKB),,
+              $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+            ],
+            AC_MSG_WARN([XKB extension not found!!])
+        )
+
         dnl *** Check for X Shm extension
         AC_CHECK_HEADERS(X11/extensions/XShm.h,
             [ dnl *** If X11/extensions/XShm.h exists...
@@ -184,13 +194,13 @@ then
         )
 
         dnl *** Check for X shape extension
-        AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/shape.h,
+        AC_CHECK_HEADERS(X11/extensions/shape.h,
             [ dnl *** If X11/extensions/shape.h exists...
               AC_CHECK_LIB(Xext,XShapeQueryExtension,
 	      AC_DEFINE(HAVE_LIBXSHAPE),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	    ],
-	    AC_MSG_WARN([XShape extension found!!])
+	    AC_MSG_WARN([XShape extension not found!!])
 	)
         
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
