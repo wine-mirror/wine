@@ -622,7 +622,7 @@ BOOL WINAPI RtlAddAccessAllowedAce(
 {
 	FIXME("(%p,0x%08lx,0x%08lx,%p),stub!\n",
 	pAcl, dwAceRevision, AccessMask, pSid);
-	return 0;
+	return TRUE;
 }
 
 /******************************************************************************
