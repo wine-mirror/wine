@@ -47,6 +47,7 @@ static LONG MSRLE32_DecompressRLE8(
 	LONG width, LONG height )
 {
 	LONG	x,y;
+	LONG	delta_x,delta_y;
 	int		len;
 	UINT	data;
 
@@ -70,7 +71,11 @@ static LONG MSRLE32_DecompressRLE8(
 			case 1: /* END */
 				return ICERR_OK;
 			case 2: /* DELTA */
-				x += (LONG)*pSrc++; y += (LONG)*pSrc++;
+				delta_x = (LONG)*pSrc++;
+				delta_y = (LONG)*pSrc++;
+				x += delta_x;
+				y += delta_y;
+				pDst += delta_y * pitch + delta_x;
 				break;
 			default: /* RAW */
 				len = data;
