@@ -35,11 +35,15 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
-{	LPSERVICE_TABLE_ENTRYA ptr = servent;
+{	
+	LPSERVICE_TABLE_ENTRYA ptr = servent;
+	LPSERVICE_MAIN_FUNCTIONA fpMain;
 
-	while (ptr->lpServiceName)
-	{ FIXME("%s at %p\n", ptr->lpServiceName, ptr);
-	  ptr++;
+	while (ptr->lpServiceName) { 
+		FIXME("%s at %p\n", ptr->lpServiceName, ptr);
+		fpMain = ptr->lpServiceProc;
+		fpMain(0,NULL);	/* try to start the service */
+		ptr++;
 	}
 	return TRUE;
 }
@@ -52,14 +56,16 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
-{	LPSERVICE_TABLE_ENTRYW ptr = servent;
+{	
+	LPSERVICE_TABLE_ENTRYW ptr = servent;
 	LPSERVICE_MAIN_FUNCTIONW fpMain;
 	
-	while (ptr->lpServiceName)
-	{ FIXME("%s at %p): STUB.\n", debugstr_w(ptr->lpServiceName),ptr);
-	  fpMain = ptr->lpServiceProc;
-	  fpMain(0,NULL);	/* try to start the service */
-	  ptr++;
+	while (ptr->lpServiceName) { 
+		FIXME("%s at %p): STUB.\n", 
+		      debugstr_w(ptr->lpServiceName),ptr);
+		fpMain = ptr->lpServiceProc;
+		fpMain(0,NULL);	/* try to start the service */
+		ptr++;
 	}
 	return TRUE;
 }
