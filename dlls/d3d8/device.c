@@ -1670,8 +1670,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
     if (rc == D3D_OK && (cRects == 0 && pSourceRectsArray==NULL && pDestPointsArray==NULL &&
                          src->myDesc.Width == dst->myDesc.Width &&
                          src->myDesc.Height == dst->myDesc.Height)) {
-        TRACE("Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
+        D3DLOCKED_RECT lr;
+
+        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)src, &lr, NULL, D3DLOCK_READONLY);
+        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)dst, &lr, NULL, D3DLOCK_DISCARD);
+        TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
+
         memcpy(dst->allocatedMemory, src->allocatedMemory, src->myDesc.Size);
+
+        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)src);
+        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)dst);
+        TRACE("Unlocked src and dst\n");
 
     } else {
         int i;
@@ -1690,9 +1699,19 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
             char *to;
             int   copyperline   = (r->right - r->left) * bytesPerPixel;
             int j;
+            D3DLOCKED_RECT lr;
+            RECT           dest_rect;
 
             TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top,
                   r->right, r->bottom, p->x, p->y);
+
+            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)src, &lr, r, D3DLOCK_READONLY);
+            dest_rect.left = p->x;
+            dest_rect.top = p->y;
+            dest_rect.right = p->x + (r->right - r->left);
+            dest_rect.left = p->y + (r->bottom - r->top);
+            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)dst, &lr, &dest_rect, 0L);
+            TRACE("Locked src and dst\n");
 
             /* Find where to start */
             from = copyfrom + (r->top * pitchFrom) + (r->left * bytesPerPixel);
@@ -1702,6 +1721,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
             for (j=0; j<(r->bottom - r->top); j++) {
                memcpy(to + (j*pitchTo), from + (j*pitchFrom), copyperline);
             }
+
+            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)src);
+            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)dst);
+            TRACE("Unlocked src and dst\n");
         }
     }
 
