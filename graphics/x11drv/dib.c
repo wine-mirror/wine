@@ -1697,6 +1697,22 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
     switch ( bmpImage->depth )
     {
         case 24:
+	    {
+		if (bmpImage->bits_per_pixel == 24) {
+			int tocopy = linebytes;
+			BYTE *dstpixel;
+			BYTE *ptr = srcbits+left*3;
+
+			if (tocopy < 0 ) tocopy = -tocopy;
+			dstpixel = bmpImage->data + lines*tocopy + left*3;
+                        for(h = lines ; h-- ; ) {
+				dstpixel-=tocopy;
+				memcpy(dstpixel,ptr,tocopy);
+				ptr +=linebytes;
+			}
+			break;
+		}
+	    }
         case 32:
             {
 	        if( bmpImage->blue_mask == 0xff && bmpImage->red_mask == 0xff0000 )  /* packed BGR to unpacked BGR */
@@ -1915,6 +1931,22 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
     switch ( bmpImage->depth )
     {
         case 24:
+	    {
+		if (bmpImage->bits_per_pixel == 24) {
+			int tocopy = linebytes;
+			BYTE *srcpixel;
+			BYTE *ptr = (LPBYTE)dstbits;
+
+			if (tocopy < 0 ) tocopy = -tocopy;
+			srcpixel = bmpImage->data + lines*tocopy;
+                        for(h = lines ; h-- ; ) {
+				srcpixel-=tocopy;
+				memcpy(ptr,srcpixel,tocopy);
+				ptr = (LPBYTE)(dstbits+=linebytes);
+			}
+			break;
+		}
+	    }
         case 32:
             {
                     DWORD  *srcpixel, buf;
