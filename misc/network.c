@@ -141,6 +141,16 @@ UINT32 WINAPI WNetConnectionDialog_32(HWND32 owner, DWORD flags  )
   return ERROR_NO_NETWORK;
 
 }
+
+/*******************************************************************
+ * WNetEnumCachedPasswords32 [MPR.61]
+ */
+UINT32 WINAPI WNetEnumCachedPasswords32(LPSTR sometext, DWORD count1,
+		DWORD res_nr, DWORD *enumPasswordProc)
+{
+    return ERROR_NO_NETWORK;
+}
+
 /********************************************************************
  *   WNetCancelConnection	[USER.518]  undirects a local device
  */

@@ -64,7 +64,7 @@ type win32
 0061 stub WNetDisconnectDialog1A
 0062 stub WNetDisconnectDialog1W
 0063 stub WNetDisconnectDialog
-0064 stub WNetEnumCachedPasswords
+0064 stdcall WNetEnumCachedPasswords(str long long ptr) WNetEnumCachedPasswords32
 0065 stub WNetEnumResourceA
 0066 stub WNetEnumResourceW
 0067 stub WNetFormatNetworkNameA
