@@ -296,7 +296,7 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #define IDirectSoundBuffer_Release(p)            ICOM_CALL (Release,p)
     /*** IDirectSoundBuffer methods ***/
 #define IDirectSoundBuffer_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundBuffer_GetCurrentPosition16(p,a,b) ICOM_CALL2(GetCurrentPosition16,p,a,b)
+#define IDirectSoundBuffer_GetCurrentPosition(p,a,b)   ICOM_CALL2(GetCurrentPosition,p,a,b)
 #define IDirectSoundBuffer_GetFormat(p,a,b,c)          ICOM_CALL3(GetFormat,p,a,b,c)
 #define IDirectSoundBuffer_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
 #define IDirectSoundBuffer_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
