@@ -1,7 +1,7 @@
 /*
  * IDirect3DSurface9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2005 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ HRESULT WINAPI IDirect3DSurface9Impl_QueryInterface(LPDIRECT3DSURFACE9 iface, RE
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IDirect3DResource9)
+        || IsEqualGUID(riid, &IID_IDirect3DResource9)
         || IsEqualGUID(riid, &IID_IDirect3DSurface9)) {
         IDirect3DSurface9Impl_AddRef(iface);
         *ppobj = This;
@@ -43,16 +43,16 @@ HRESULT WINAPI IDirect3DSurface9Impl_QueryInterface(LPDIRECT3DSURFACE9 iface, RE
 ULONG WINAPI IDirect3DSurface9Impl_AddRef(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-      HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-      HeapFree(GetProcessHeap(), 0, This);
+        IWineD3DBaseTexture_Release(This->wineD3DSurface);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -65,89 +65,103 @@ HRESULT WINAPI IDirect3DSurface9Impl_GetDevice(LPDIRECT3DSURFACE9 iface, IDirect
 
 HRESULT WINAPI IDirect3DSurface9Impl_SetPrivateData(LPDIRECT3DSURFACE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DSurface_SetPrivateData(This->wineD3DSurface, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_GetPrivateData(LPDIRECT3DSURFACE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DSurface_GetPrivateData(This->wineD3DSurface, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_FreePrivateData(LPDIRECT3DSURFACE9 iface, REFGUID refguid) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DSurface_FreePrivateData(This->wineD3DSurface, refguid);
 }
 
-DWORD   WINAPI IDirect3DSurface9Impl_SetPriority(LPDIRECT3DSURFACE9 iface, DWORD PriorityNew) {
+DWORD WINAPI IDirect3DSurface9Impl_SetPriority(LPDIRECT3DSURFACE9 iface, DWORD PriorityNew) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    return IDirect3DResource9Impl_SetPriority((LPDIRECT3DRESOURCE9) This, PriorityNew);
+    return IWineD3DSurface_SetPriority(This->wineD3DSurface, PriorityNew);
 }
 
-DWORD   WINAPI IDirect3DSurface9Impl_GetPriority(LPDIRECT3DSURFACE9 iface) {
+DWORD WINAPI IDirect3DSurface9Impl_GetPriority(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    return IDirect3DResource9Impl_GetPriority((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DSurface_GetPriority(This->wineD3DSurface);
 }
 
-void    WINAPI IDirect3DSurface9Impl_PreLoad(LPDIRECT3DSURFACE9 iface) {
+void WINAPI IDirect3DSurface9Impl_PreLoad(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
+    IWineD3DSurface_PreLoad(This->wineD3DSurface);
     return ;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DSurface9Impl_GetType(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    return IDirect3DResource9Impl_GetType((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DSurface_GetType(This->wineD3DSurface);
 }
 
 /* IDirect3DSurface9 Interface follow: */
 HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 iface, REFIID riid, void** ppContainer) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
     HRESULT res;
-    res = IUnknown_QueryInterface(This->Container, riid, ppContainer);
-    if (E_NOINTERFACE == res) { 
-      /**
-       * If the surface is created using CreateImageSurface, CreateRenderTarget, 
-       * or CreateDepthStencilSurface, the surface is considered stand alone. In this case, 
-       * GetContainer will return the Direct3D device used to create the surface. 
-       */
-      res = IUnknown_QueryInterface(This->Container, &IID_IDirect3DDevice9, ppContainer);
+
+    /* The container returned from IWineD3DSurface_GetContainer is either a IWineD3DDevice or
+       opne of the subclasses of resource                                                     */
+    IUnknown *IWineContainer = NULL;
+    res = IWineD3DSurface_GetContainer(This->wineD3DSurface, riid, (void **)&IWineContainer);
+
+    if (res == D3D_OK) {
+        IWineD3DDevice *myDevice = NULL;
+        IWineD3DResource_GetDevice((IWineD3DSurface *)This->wineD3DSurface, &myDevice);
+
+        if (IWineContainer == (IUnknown *)myDevice) {
+            IWineD3DDevice_GetParent((IWineD3DDevice *)IWineContainer, (IUnknown **)ppContainer);
+            IWineD3DDevice_Release((IWineD3DDevice *)IWineContainer);
+        } else {
+            IWineD3DResource_GetParent((IWineD3DResource *)IWineContainer, (IUnknown **)ppContainer);
+            IWineD3DResource_Release((IWineD3DResource *)IWineContainer);
+        }
+
+        IWineD3DDevice_Release(myDevice);
     }
-    TRACE("(%p) : returning %p\n", This, *ppContainer);
+
     return res;
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(LPDIRECT3DSURFACE9 iface, D3DSURFACE_DESC* pDesc) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    TRACE("(%p) : copying into %p\n", This, pDesc);
-    memcpy(pDesc, &This->myDesc, sizeof(D3DSURFACE_DESC));
-    return D3D_OK;
+    WINED3DSURFACE_DESC    wined3ddesc;
+
+    /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
+    wined3ddesc.Format              = &pDesc->Format;
+    wined3ddesc.Type                = &pDesc->Type;
+    wined3ddesc.Usage               = &pDesc->Usage;
+    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.MultiSampleType     = &pDesc->MultiSampleType;
+    wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
+    wined3ddesc.Width               = &pDesc->Width;
+    wined3ddesc.Height              = &pDesc->Height;
+
+    return IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_LockRect(LPDIRECT3DSURFACE9 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DSurface_LockRect(This->wineD3DSurface, pLockedRect, pRect, Flags);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_UnlockRect(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DSurface_UnlockRect(This->wineD3DSurface);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_GetDC(LPDIRECT3DSURFACE9 iface, HDC* phdc) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DSurface_GetDC(This->wineD3DSurface, phdc);
 }
 
 HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, HDC hdc) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DSurface_ReleaseDC(This->wineD3DSurface, hdc);
 }
 
 

@@ -60,102 +60,102 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
  
     /* Render states: */
     if (ThisDevice->presentParms.EnableAutoDepthStencil) {
-       IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZENABLE, D3DZB_TRUE);
+       IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZENABLE, D3DZB_TRUE);
     } else {
-       IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZENABLE, D3DZB_FALSE);
+       IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZENABLE, D3DZB_FALSE);
     }
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FILLMODE, D3DFILL_SOLID);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FILLMODE, D3DFILL_SOLID);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 
     lp.lp.wRepeatFactor = 0; lp.lp.wLinePattern = 0;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_LINEPATTERN, lp.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZWRITEENABLE, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ALPHATESTENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_LASTPIXEL, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_SRCBLEND, D3DBLEND_ONE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_DESTBLEND, D3DBLEND_ZERO);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_CULLMODE, D3DCULL_CCW);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ALPHAFUNC, D3DCMP_ALWAYS);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ALPHAREF, 0xff); /*??*/
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_DITHERENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ALPHABLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_SPECULARENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZVISIBLE, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGCOLOR, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_LINEPATTERN, lp.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZWRITEENABLE, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ALPHATESTENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_LASTPIXEL, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_SRCBLEND, D3DBLEND_ONE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_DESTBLEND, D3DBLEND_ZERO);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_CULLMODE, D3DCULL_CCW);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ALPHAFUNC, D3DCMP_ALWAYS);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ALPHAREF, 0xff); /*??*/
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_DITHERENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ALPHABLENDENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_SPECULARENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZVISIBLE, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGCOLOR, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGSTART, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGSTART, tmpfloat.d);
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGEND, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGEND, tmpfloat.d);
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGDENSITY, tmpfloat.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_EDGEANTIALIAS, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_ZBIAS, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_RANGEFOGENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGDENSITY, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_EDGEANTIALIAS, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_ZBIAS, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_RANGEFOGENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
 
     /* Setting stencil func also uses values for stencil ref/mask, so manually set defaults
      * so only a single call performed (and ensure defaults initialized before making that call)    
      *
-     * IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILREF, 0);
-     * IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILMASK, 0xFFFFFFFF);
+     * IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILREF, 0);
+     * IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILMASK, 0xFFFFFFFF);
      */
     This->renderState[D3DRS_STENCILREF] = 0;
     This->renderState[D3DRS_STENCILMASK] = 0xFFFFFFFF;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_TEXTUREFACTOR, 0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP0, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP1, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP2, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP3, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP4, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP5, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP6, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_WRAP7, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_CLIPPING, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_LIGHTING, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_AMBIENT, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_COLORVERTEX, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_LOCALVIEWER, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_NORMALIZENORMALS, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_COLOR1);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_COLOR2);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_AMBIENTMATERIALSOURCE, D3DMCS_COLOR2);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_EMISSIVEMATERIALSOURCE, D3DMCS_MATERIAL);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_CLIPPLANEENABLE, 0);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_TEXTUREFACTOR, 0xFFFFFFFF);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP0, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP1, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP2, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP3, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP4, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP5, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP6, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_WRAP7, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_CLIPPING, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_LIGHTING, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_AMBIENT, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_COLORVERTEX, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_LOCALVIEWER, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_NORMALIZENORMALS, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_COLOR1);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_COLOR2);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_AMBIENTMATERIALSOURCE, D3DMCS_COLOR2);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_EMISSIVEMATERIALSOURCE, D3DMCS_MATERIAL);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_CLIPPLANEENABLE, 0);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSIZE, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSIZE, tmpfloat.d);
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSIZE_MIN, tmpfloat.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSPRITEENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSCALEENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSCALE_A, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSCALE_B, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSCALE_C, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_MULTISAMPLEANTIALIAS, TRUE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_MULTISAMPLEMASK, 0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_PATCHEDGESTYLE, D3DPATCHEDGE_DISCRETE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSIZE_MIN, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSPRITEENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSCALEENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSCALE_A, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSCALE_B, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSCALE_C, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_MULTISAMPLEMASK, 0xFFFFFFFF);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_PATCHEDGESTYLE, D3DPATCHEDGE_DISCRETE);
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_PATCHSEGMENTS, tmpfloat.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_DEBUGMONITORTOKEN, D3DDMT_DISABLE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_PATCHSEGMENTS, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_DEBUGMONITORTOKEN, D3DDMT_DISABLE);
     tmpfloat.f = 64.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POINTSIZE_MAX, tmpfloat.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_COLORWRITEENABLE, 0x0000000F);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POINTSIZE_MAX, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_COLORWRITEENABLE, 0x0000000F);
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_TWEENFACTOR, tmpfloat.d);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_BLENDOP, D3DBLENDOP_ADD);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_POSITIONORDER, D3DORDER_CUBIC);
-    IWineD3DDevice_SetRenderState(This->wineD3DDevice, D3DRS_NORMALORDER, D3DORDER_LINEAR);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_TWEENFACTOR, tmpfloat.d);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_BLENDOP, D3DBLENDOP_ADD);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_POSITIONORDER, D3DORDER_CUBIC);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice *)This->wineD3DDevice, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
     /** clipping status */
     This->clip_status.ClipUnion = 0;
@@ -231,24 +231,22 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
         checkGLcall("glTexImage1D");
 
         /* Reapply all the texture state information to this texture */
-        IWineD3DDevice_SetupTextureStates(This->wineD3DDevice, i, REAPPLY_ALL);
+        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This->wineD3DDevice, i, REAPPLY_ALL);
     }
 
     LEAVE_GL();
 
-#if 0 /* TODO: Palette support */
-    /* defaulting palettes */
+    /* Defaulting palettes - Note these are device wide but reinitialized here for convenience*/
     for (i = 0; i < MAX_PALETTES; ++i) {
       int j;
       for (j = 0; j < 256; ++j) {
-        This->palettes[i][j].peRed   = 0xFF;
-        This->palettes[i][j].peGreen = 0xFF;
-        This->palettes[i][j].peBlue  = 0xFF;
-        This->palettes[i][j].peFlags = 0xFF;
+        This->wineD3DDevice->palettes[i][j].peRed   = 0xFF;
+        This->wineD3DDevice->palettes[i][j].peGreen = 0xFF;
+        This->wineD3DDevice->palettes[i][j].peBlue  = 0xFF;
+        This->wineD3DDevice->palettes[i][j].peFlags = 0xFF;
       }
     }
-    This->currentPalette = 0;
-#endif /* TODO: Palette support */
+    This->wineD3DDevice->currentPalette = 0;
 
     TRACE("-----------------------> Device defaults now set up...\n");
     return D3D_OK;
@@ -274,7 +272,7 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        IWineD3DDevice_Release(This->wineD3DDevice);
+        IWineD3DDevice_Release((IWineD3DDevice *)This->wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

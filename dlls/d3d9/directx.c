@@ -152,6 +152,23 @@ HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapte
     return IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
 }
 
+/* Internal function called back during the CreateDevice to create a render target */
+HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
+                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                         DWORD MultisampleQuality, BOOL Lockable, 
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
+    HRESULT res = D3D_OK;
+    IDirect3DSurface9Impl *d3dSurface = NULL;
+
+    res = IDirect3DDevice9_CreateRenderTarget((IDirect3DDevice9 *)device, Width, Height, 
+                                         Format, MultiSample, MultisampleQuality, Lockable, 
+                                         (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
+    if (res == D3D_OK) {
+        *ppSurface = d3dSurface->wineD3DSurface;
+    }
+    return res;
+}
+
 HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
 					     DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, 
 					     IDirect3DDevice9** ppReturnedDeviceInterface) {
@@ -191,7 +208,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;       
-    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object);
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateRenderTarget);
 
     FIXME("(%p) : incomplete stub\n", This);
     return D3D_OK;

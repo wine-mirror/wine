@@ -643,6 +643,8 @@ struct IDirect3DSurface8Impl
     BOOL                    Dirty;
     BOOL                    inTexture;
     BOOL                    inPBuffer;
+
+    IWineD3DSurface        *wineD3DSurface;
 };
 
 /* IUnknown: */

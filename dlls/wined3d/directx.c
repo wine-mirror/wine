@@ -1313,7 +1313,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
    and fields being inserted in the middle, a new structure is used in place    */
 HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                            DWORD BehaviourFlags, WINED3DPRESENT_PARAMETERS* pPresentationParameters,
-                                           IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent) {
+                                           IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget) {
 
     HWND                whichHWND;
     HDC                 hDc;
@@ -1479,23 +1479,32 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
     TRACE("Creating initial device surfaces\n");
 
-/* TODO:
-    IWineD3DDevice_CreateRenderTarget((IWineD3DDevice *) object,
-                                      *(pPresentationParameters->BackBufferWidth),
-                                      *(pPresentationParameters->BackBufferHeight),
-                                      *(pPresentationParameters->BackBufferFormat),
-                                      *(pPresentationParameters->MultiSampleType),
-                                      TRUE,
-                                      (IWineD3DSurface *) &object->frontBuffer);
+    /* We need to 'magic' either d3d8 or d3d9 surfaces for the front and backbuuffer 
+       but the respective CreateRenderTarget functions take a differing number of
+       parms. Fix this by passing in a function to call which takes identical parms
+       and handles the differences at the d3dx layer, and returns the IWineD3DSurface
+       pointer rather than the created D3D8/9 one                                      */
+    D3DCB_CreateRenderTarget((IUnknown *) parent,
+                             *(pPresentationParameters->BackBufferWidth),
+                             *(pPresentationParameters->BackBufferHeight),
+                             *(pPresentationParameters->BackBufferFormat),
+                             *(pPresentationParameters->MultiSampleType),
+                             *(pPresentationParameters->MultiSampleQuality),
+                             TRUE,
+                             (IWineD3DSurface **) &object->frontBuffer,
+                             NULL);
 
-    IWineD3DDevice_CreateRenderTarget((IWineD3DDevice *) object,
-                                      *(pPresentationParameters->BackBufferWidth),
-                                      *(pPresentationParameters->BackBufferHeight),
-                                      *(pPresentationParameters->BackBufferFormat),
-                                      *(pPresentationParameters->MultiSampleType),
-                                      TRUE,
-                                      (IWineD3DSurface *) &object->backBuffer);
+    D3DCB_CreateRenderTarget((IUnknown *) parent,
+                             *(pPresentationParameters->BackBufferWidth),
+                             *(pPresentationParameters->BackBufferHeight),
+                             *(pPresentationParameters->BackBufferFormat),
+                             *(pPresentationParameters->MultiSampleType),
+                             *(pPresentationParameters->MultiSampleQuality),
+                             TRUE,
+                             (IWineD3DSurface **) &object->backBuffer,
+                             NULL);
 
+/* TODO: 
     if (*(pPresentationParameters->EnableAutoDepthStencil)) {
        IWineD3DDevice_CreateDepthStencilSurface((IWineD3DDevice *) object,
                                                 *(pPresentationParameters->BackBufferWidth),
@@ -1512,10 +1521,10 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* init the default renderTarget management */
     object->drawable     = object->win;
     object->render_ctx   = object->glCtx;
-/* TODO:
     object->renderTarget = object->backBuffer;
     
     IWineD3DSurface_AddRef((IWineD3DSurface *) object->renderTarget);
+/* TODO: Depth Stencil support
     object->stencilBufferTarget = object->depthStencilBuffer;
     if (NULL != object->stencilBufferTarget) {
       IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->stencilBufferTarget);

@@ -538,6 +538,24 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
 }
 
+/* Internal function called back during the CreateDevice to create a render target */
+HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
+                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                         DWORD MultisampleQuality, BOOL Lockable, 
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
+    HRESULT res = D3D_OK;
+    IDirect3DSurface8Impl *d3dSurface = NULL;
+
+    /* Note - Throw away MultisampleQuality and SharedHandle - only relevant for d3d9  */
+    res = IDirect3DDevice8_CreateRenderTarget((IDirect3DDevice8 *)device, Width, Height, 
+                                         Format, MultiSample, Lockable, 
+                                         (IDirect3DSurface8 **)&d3dSurface);
+    if (res == D3D_OK) {
+        *ppSurface = d3dSurface->wineD3DSurface;
+    }
+    return res;
+}
+
 HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                                             DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
@@ -583,7 +601,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;    /* Renamed in dx9 */
-    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object);
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D8CB_CreateRenderTarget);
 
     /** use StateBlock Factory here, for creating the startup stateBlock */
     object->StateBlock = NULL;

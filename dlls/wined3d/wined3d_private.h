@@ -128,6 +128,8 @@ extern int num_lock;
                          /* Maximum number of constants provided to the shaders */
 #define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
+#define MAX_PALETTES      256
+
 /* Checking of API calls */
 /* --------------------- */
 #define checkGLcall(A) \
@@ -175,6 +177,7 @@ do {                                                                            
 
 /* Advance declaration of structures to satisfy compiler */
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 
 /* Global variables */
 extern const float identity[16];
@@ -366,6 +369,18 @@ typedef struct IWineD3DDeviceImpl
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
 
+    /* Render Target Support */
+    IWineD3DSurfaceImpl    *frontBuffer;
+    IWineD3DSurfaceImpl    *backBuffer;
+    IWineD3DSurfaceImpl    *depthStencilBuffer;
+
+    IWineD3DSurfaceImpl    *renderTarget;
+    IWineD3DSurfaceImpl    *stencilBufferTarget;
+
+    /* palettes texture management */
+    PALETTEENTRY                  palettes[MAX_PALETTES][256];
+    UINT                          currentPalette;
+
     /* For rendering to a texture using glCopyTexImage */
     BOOL                          renderUpsideDown;
 
@@ -387,7 +402,7 @@ typedef struct IWineD3DResourceClass
     /* WineD3DResource Information */
     IUnknown               *parent;
     D3DRESOURCETYPE         resourceType;
-    IWineD3DDevice         *wineD3DDevice;
+    IWineD3DDeviceImpl     *wineD3DDevice;
 
 } IWineD3DResourceClass;
 
@@ -440,6 +455,7 @@ extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 typedef struct IWineD3DBaseTextureClass
 {
     UINT                    levels;
+    BOOL                    dirty;
 
 } IWineD3DBaseTextureClass;
 
@@ -453,6 +469,34 @@ typedef struct IWineD3DBaseTextureImpl
 } IWineD3DBaseTextureImpl;
 
 extern IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
+
+/*****************************************************************************
+ * IWineD3DSurface implementation structure
+ */
+struct IWineD3DSurfaceImpl
+{
+    /* IUnknown & IWineD3DResource Information     */
+    IWineD3DSurfaceVtbl      *lpVtbl;
+    IWineD3DResourceClass     resource;
+
+    /* IWineD3DSurface fields */
+    IUnknown                 *container;
+    D3DSURFACE_DESC           currentDesc;
+    BYTE                     *allocatedMemory;
+
+    UINT                      textureName;
+    UINT                      bytesPerPixel;
+    
+    BOOL                      lockable;
+    BOOL                      locked;
+    RECT                      lockedRect;
+    RECT                      dirtyRect;
+    BOOL                      Dirty;
+    BOOL                      inTexture;
+    BOOL                      inPBuffer;
+};
+
+extern IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 
 /*****************************************************************************
  * IWineD3DStateBlock implementation structure
@@ -482,7 +526,7 @@ struct IWineD3DStateBlockImpl
     
     /* IWineD3DStateBlock information */
     IUnknown                 *parent;
-    IWineD3DDevice           *wineD3DDevice;
+    IWineD3DDeviceImpl       *wineD3DDevice;
     D3DSTATEBLOCKTYPE         blockType;
 
     /* Array indicating whether things have been set or changed */
@@ -555,6 +599,12 @@ GLenum StencilOp(DWORD op);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_texture_matrix(const float *smat, DWORD flags);
 void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
+
+SHORT  D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
+GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
+GLenum D3DFmt2GLType(IWineD3DDeviceImpl *This, D3DFORMAT fmt);
+GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
+
 
 #if 0 /* Needs fixing during rework */
 /*****************************************************************************

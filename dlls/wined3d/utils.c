@@ -1519,3 +1519,210 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
     *source = GL_TEXTURE;
   }
 }
+
+
+#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
+    GLint retVal = 0;
+
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        switch (fmt) {
+        case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        default:
+            /* stupid compiler */
+            break;
+        }
+    }
+
+    if (retVal == 0) {
+        switch (fmt) {
+        /* Paletted */
+        case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
+        case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
+            /* Luminance */
+        case D3DFMT_L8:               retVal = GL_LUMINANCE8; break;
+        case D3DFMT_A8L8:             retVal = GL_LUMINANCE8_ALPHA8; break;
+        case D3DFMT_A4L4:             retVal = GL_LUMINANCE4_ALPHA4; break;
+            /* Bump */
+        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX8_EXT; break;
+        case D3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX8_EXT; break;
+        case D3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+            /* color buffer */ 
+        case D3DFMT_R3G3B2:           retVal = GL_R3_G3_B2; break;
+        case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
+        case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
+        case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
+        case D3DFMT_X1R5G5B5:         retVal = GL_RGB5_A1; break;
+        case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
+        case D3DFMT_X4R4G4B4:         retVal = GL_RGBA4; break;
+        case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+        case D3DFMT_X8R8G8B8:         retVal = GL_RGBA8; break;
+            /* to see */
+        case D3DFMT_A8:               retVal = GL_ALPHA8; break;
+        default:
+            FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+            retVal = GL_RGB8;
+        }
+    }
+    TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
+}
+
+GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
+    GLenum retVal = 0;
+
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        switch (fmt) {
+        case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        default:
+            /* stupid compiler */
+            break;
+        }
+    }
+
+    if (retVal == 0) {
+        switch (fmt) {
+        /* Paletted */
+        case D3DFMT_P8:               retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
+            /* Luminance */
+        case D3DFMT_L8:               retVal = GL_LUMINANCE; break;
+        case D3DFMT_A8L8:             retVal = GL_LUMINANCE_ALPHA; break;
+        case D3DFMT_A4L4:             retVal = GL_LUMINANCE_ALPHA; break;
+            /* Bump */
+        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+            /* color buffer */
+        case D3DFMT_R3G3B2:           retVal = GL_BGR; break;
+        case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
+        case D3DFMT_R8G8B8:           retVal = GL_RGB; break;
+        case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
+        case D3DFMT_X1R5G5B5:         retVal = GL_BGRA; break;
+        case D3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
+        case D3DFMT_X4R4G4B4:         retVal = GL_BGRA; break;
+        case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
+        case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
+            /* to see */
+        case D3DFMT_A8:               retVal = GL_ALPHA; break;
+        default:
+            FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+            retVal = GL_BGR;
+        }
+    }
+
+    TRACE("fmt2glFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
+}
+
+GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
+    GLenum retVal = 0;
+
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        switch (fmt) {
+        case D3DFMT_DXT1:             retVal = 0; break;
+        case D3DFMT_DXT3:             retVal = 0; break;
+        case D3DFMT_DXT5:             retVal = 0; break;
+        default:
+            /* stupid compiler */
+            break;
+        }
+    }
+
+    if (retVal == 0) {
+        switch (fmt) {
+        /* Paletted */
+        case D3DFMT_P8:               retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;        
+            /* Luminance */
+        case D3DFMT_L8:               retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_A8L8:             retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_A4L4:             retVal = GL_UNSIGNED_BYTE; break;
+            /* Bump */
+        case D3DFMT_V8U8:             retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_V16U16:           retVal = GL_UNSIGNED_SHORT; break;
+        case D3DFMT_L6V5U5:           retVal = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case D3DFMT_X8L8V8U8:         retVal = GL_UNSIGNED_BYTE; break;
+            /* Color buffer */
+        case D3DFMT_R3G3B2:           retVal = GL_UNSIGNED_BYTE_2_3_3_REV; break;
+        case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
+        case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
+        case D3DFMT_X1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
+        case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
+        case D3DFMT_X4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
+        case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+            /* to see */
+        case D3DFMT_A8:               retVal = GL_ALPHA; break;
+        default:
+            FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+            retVal = GL_UNSIGNED_BYTE;
+        }
+    }
+
+    TRACE("fmt2glType for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
+}
+
+SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
+    SHORT retVal;
+
+    switch (fmt) {
+    /* color buffer */
+    case D3DFMT_R3G3B2:           retVal = 1; break;
+    case D3DFMT_R5G6B5:           retVal = 2; break;
+    case D3DFMT_R8G8B8:           retVal = 3; break;
+    case D3DFMT_A1R5G5B5:         retVal = 2; break;
+    case D3DFMT_X1R5G5B5:         retVal = 2; break;
+    case D3DFMT_A4R4G4B4:         retVal = 2; break;
+    case D3DFMT_X4R4G4B4:         retVal = 2; break;
+    case D3DFMT_A8R8G8B8:         retVal = 4; break;
+    case D3DFMT_X8R8G8B8:         retVal = 4; break;
+        /* Paletted */
+    case D3DFMT_P8:               retVal = 1; break;
+    case D3DFMT_A8P8:             retVal = 2; break;
+        /* depth/stencil buffer */
+    case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
+    case D3DFMT_D16:              retVal = 2; break;
+    case D3DFMT_D32:              retVal = 4; break;
+    case D3DFMT_D15S1:            retVal = 2; break;
+    case D3DFMT_D24X4S4:          retVal = 4; break;
+    case D3DFMT_D24S8:            retVal = 4; break;
+    case D3DFMT_D24X8:            retVal = 4; break;
+        /* Luminance */
+    case D3DFMT_L8:               retVal = 1; break;
+    case D3DFMT_A4L4:             retVal = 1; break;
+    case D3DFMT_A8L8:             retVal = 2; break;
+        /* Bump */
+    case D3DFMT_V8U8:             retVal = 2; break;
+    case D3DFMT_L6V5U5:           retVal = 2; break;
+    case D3DFMT_V16U16:           retVal = 4; break;
+    case D3DFMT_X8L8V8U8:         retVal = 4; break;
+        /* Compressed */                                  
+    case D3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
+    case D3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+    case D3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+        /* to see */
+    case D3DFMT_A8:               retVal = 1; break;      
+        /* unknown */                                  
+    case D3DFMT_UNKNOWN:
+        /* Guess at the highest value of the above */
+        TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
+        retVal = 4;
+        break;
+
+    default:
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+        retVal = 4;
+    }
+    TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
+}
+#undef GLINFO_LOCATION

@@ -217,8 +217,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVertexBufferImpl));
+    if (NULL == object) {
+        *ppVertexBuffer = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
     object->lpVtbl                = &IWineD3DVertexBuffer_Vtbl;
-    object->resource.wineD3DDevice= iface;
+    object->resource.wineD3DDevice= This;
     IWineD3DDevice_AddRef(iface);
     object->resource.parent       = parent;
     object->resource.resourceType = D3DRTYPE_VERTEXBUFFER;
@@ -243,11 +247,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DIndexBufferImpl));
+    if (NULL == object) {
+        *ppIndexBuffer = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
     object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
-    object->resource.wineD3DDevice = iface;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
     object->resource.resourceType  = D3DRTYPE_INDEXBUFFER;
     object->resource.parent        = parent;
-    IWineD3DDevice_AddRef(iface);
     object->resource.ref = 1;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Length);
     object->currentDesc.Usage = Usage;
@@ -269,8 +277,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
   
     /* Allocate Storage for the state block */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
+    if (NULL == object) {
+        *ppStateBlock = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
     object->lpVtbl        = &IWineD3DStateBlock_Vtbl;
-    object->wineD3DDevice = iface;
+    object->wineD3DDevice = This;
     IWineD3DDevice_AddRef(iface);
     object->parent        = parent;
     object->ref           = 1;
@@ -289,6 +301,49 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
     IWineD3DDevice_AddRef(iface);
     memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
     FIXME("unfinished - needs to set up changed and set attributes\n");
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateRenderTarget(IWineD3DDevice *iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                                     DWORD MultisampleQuality, BOOL Lockable, IWineD3DSurface** ppSurface, HANDLE* pSharedHandle, 
+                                                     IUnknown *parent) {
+    IWineD3DSurfaceImpl *object;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    
+    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurfaceImpl));
+    if (NULL == object) {
+        *ppSurface = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    object->lpVtbl                 = &IWineD3DSurface_Vtbl;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.resourceType  = D3DRTYPE_SURFACE;
+    object->resource.parent        = parent;
+    object->resource.ref           = 1;
+    *ppSurface = (IWineD3DSurface *)object;
+    object->container     = (IUnknown*) This;
+
+    object->currentDesc.Width  = Width;
+    object->currentDesc.Height = Height;
+    object->currentDesc.Format = Format;
+    object->currentDesc.Type   = D3DRTYPE_SURFACE;
+    object->currentDesc.Usage  = D3DUSAGE_RENDERTARGET;
+    object->currentDesc.Pool   = D3DPOOL_DEFAULT;
+    object->currentDesc.MultiSampleType = MultiSample;
+    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
+    if (Format == D3DFMT_DXT1) { 
+        object->currentDesc.Size = (Width * object->bytesPerPixel)/2 * Height;  /* DXT1 is half byte per pixel */
+    } else {
+        object->currentDesc.Size = (Width * object->bytesPerPixel) * Height;
+    }
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->lockable = Lockable;
+    object->locked = FALSE;
+    memset(&object->lockedRect, 0, sizeof(RECT));
+    IWineD3DSurface_CleanDirtyRect(*ppSurface);
+
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->currentDesc.Size);
     return D3D_OK;
 }
 
@@ -1158,12 +1213,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED
     glDepthRange(pViewport->MinZ, pViewport->MaxZ);
     checkGLcall("glDepthRange");
 
-#if 0 /* TODO */
     /* Note: GL requires lower left, DirectX supplies upper left */
-    glViewport(pViewport->X, (This->renderTarget->myDesc.Height - (pViewport->Y + pViewport->Height)), 
+    glViewport(pViewport->X, (This->renderTarget->currentDesc.Height - (pViewport->Y + pViewport->Height)), 
                pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
-#endif
 
     LEAVE_GL();
 
@@ -2610,25 +2663,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     glFlush();
     checkGLcall("glFlush");
 
-#if 0  /* TODO: render targer support */
     if ((This->frontBuffer != This->renderTarget) && (This->backBuffer != This->renderTarget)) {
 
-      IWineD3DBaseTexture *cont = NULL;
-      HRESULT              hr;
+        /* If we are rendering to a texture (surface) then flag it as dirty.
+           A surfaces container is either the appropriate texture or the device itself
+              depending on how the surface was created.                                */
+        if (This->renderTarget != NULL && ((IWineD3DDeviceImpl *)This->renderTarget->container != This)) {
 
-      hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
-      if (SUCCEEDED(hr) && NULL != cont) {
-        /** always dirtify for now. we must find a better way to see that surface have been modified */
-        This->renderTarget->inPBuffer = TRUE;
-        This->renderTarget->inTexture = FALSE;
-              IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
-        IDirect3DBaseTexture8_PreLoad(cont);
-        This->renderTarget->inPBuffer = FALSE;
-        IDirect3DBaseTexture8Impl_Release(cont);
-        cont = NULL;
-      }
+            IWineD3DBaseTexture *cont = (IWineD3DBaseTexture *)This->renderTarget->container;
+            /** always dirtify for now. we must find a better way to see that surface have been modified */
+            This->renderTarget->inPBuffer = TRUE;
+            This->renderTarget->inTexture = FALSE;
+            IWineD3DBaseTexture_SetDirty(cont, TRUE);
+            IWineD3DBaseTexture_PreLoad(cont);
+            This->renderTarget->inPBuffer = FALSE;
+        }
     }
-#endif  /* TODO: render targer support */
 
     LEAVE_GL();
     return D3D_OK;
@@ -2776,24 +2826,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
     /* Now process each rect in turn */
     for (i = 0; i < Count || i == 0; i++) {
 
-#if 0 /* TODO: renderTarget support */
         if (curRect) {
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+                  curRect->x1, (This->renderTarget->currentDesc.Height - curRect->y2), 
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+            glScissor(curRect->x1, (This->renderTarget->currentDesc.Height - curRect->y2), 
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         } else {
             glScissor(This->stateBlock->viewport.X, 
-                      (This->renderTarget->myDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)), 
+                      (This->renderTarget->currentDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)), 
                       This->stateBlock->viewport.Width, 
                       This->stateBlock->viewport.Height);
             checkGLcall("glScissor");
         }
-#endif
 
         /* Clear the selected rectangle (or full screen) */
         glClear(glMask);
@@ -2980,6 +3028,7 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexBuffer,
     IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
+    IWineD3DDeviceImpl_CreateRenderTarget,
 
     IWineD3DDeviceImpl_SetFVF,
     IWineD3DDeviceImpl_GetFVF,

@@ -479,7 +479,7 @@ IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
 };
 
 
-HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
+HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, UINT gl_target, UINT gl_level) {
   IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
   if (This->inTexture)

@@ -48,7 +48,7 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        IWineD3DDevice_Release(This->resource.wineD3DDevice);
+        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
@@ -134,6 +134,15 @@ void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *if
   return ;
 }
 
+/* Internal function, No d3d mapping */
+BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL dirty) {
+    BOOL old;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    old = This->baseTexture.dirty;
+    This->baseTexture.dirty = dirty;
+    return old;
+}
+
 IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
 {
     IWineD3DBaseTextureImpl_QueryInterface,
@@ -153,5 +162,6 @@ IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_GetLevelCount,
     IWineD3DBaseTextureImpl_SetAutoGenFilterType,
     IWineD3DBaseTextureImpl_GetAutoGenFilterType,
-    IWineD3DBaseTextureImpl_GenerateMipSubLevels
+    IWineD3DBaseTextureImpl_GenerateMipSubLevels,
+    IWineD3DBaseTextureImpl_SetDirty
 };

@@ -577,20 +577,8 @@ struct IDirect3DSurface9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    D3DRESOURCETYPE         ResourceType;
+    IWineD3DSurface        *wineD3DSurface;
 
-    /* IDirect3DSurface9 fields */
-    IUnknown               *Container;
-    D3DSURFACE_DESC         myDesc;
-    BYTE                   *allocatedMemory;
-    UINT                    textureName;
-    UINT                    bytesPerPixel;
-
-    BOOL                    lockable;
-    BOOL                    locked;
-    RECT                    lockedRect;
-    RECT                    dirtyRect;
-    BOOL                    Dirty;
 };
 
 /* IUnknown: */

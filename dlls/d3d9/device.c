@@ -114,10 +114,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetCreationParameters(LPDIRECT3DDEVICE9 if
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVICE9 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface9* pCursorBitmap) {
-    IDirect3DSurface9Impl* pSur = (IDirect3DSurface9Impl*) pCursorBitmap;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
+/* TODO:
+    IDirect3DSurface9Impl* pSur = (IDirect3DSurface9Impl*) pCursorBitmap;
     if (D3DFMT_A8R8G8B8 != pSur->myDesc.Format) {
       ERR("(%p) : surface(%p) have a invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
@@ -126,6 +127,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVICE9 ifac
       ERR("(%p) : surface(%p) have a invalid size\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
+*/    
 
     This->xHotSpot = XHotSpot;
     This->yHotSpot = YHotSpot;
@@ -205,9 +207,21 @@ void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9 iface, UINT iSwa
     return;
 }
 
-HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
+HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, 
+                                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                                         DWORD MultisampleQuality, BOOL Lockable, 
+                                                         IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
+    IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
+
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
+    object->lpVtbl = &Direct3DSurface9_Vtbl;
+    object->ref = 1;
+    IWineD3DDevice_CreateRenderTarget(This->WineD3DDevice, Width, Height, Format, MultiSample, MultisampleQuality, 
+                                      Lockable, &object->wineD3DSurface, pSharedHandle, (IUnknown *)This);
+    *ppSurface = (LPDIRECT3DSURFACE9) object;
+
     return D3D_OK;
 }
 

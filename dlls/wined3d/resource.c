@@ -46,7 +46,7 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        IWineD3DDevice_Release(This->resource.wineD3DDevice);
+        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

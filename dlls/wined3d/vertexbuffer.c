@@ -50,7 +50,7 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-        IWineD3DDevice_Release(This->resource.wineD3DDevice);
+        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
