@@ -891,16 +891,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
     }
 
-    if(cs->style & WS_CHILD)
-    {
-        if(cs->cx < 0) cs->cx = 0;
-        if(cs->cy < 0) cs->cy = 0;
-    }
-    else
-    {
-        if (cs->cx <= 0) cs->cx = 1;
-        if (cs->cy <= 0) cs->cy = 1;
-    }
+    if (cs->cx < 0) cs->cx = 0;
+    if (cs->cy < 0) cs->cy = 0;
 
     wndPtr->rectWindow.left   = cs->x;
     wndPtr->rectWindow.top    = cs->y;

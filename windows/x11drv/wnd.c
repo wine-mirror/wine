@@ -301,6 +301,14 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask = 0;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = win_attr.bit_gravity;
+
+      /* Zero-size X11 window hack.  X doesn't like them, and will crash */
+      /* with a BadValue unless we do something ugly like this. */
+      /* FIXME:  there must be a better way.  */
+        if (cs->cx <= 0) cs->cx = 1;
+        if (cs->cy <= 0) cs->cy = 1;
+      /* EMXIF */
+
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, X11DRV_GetXRootWindow(), 
 			 cs->x, cs->y, cs->cx, cs->cy, 
