@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 #ifdef HAVE_SYS_ERRNO_H
@@ -186,10 +187,23 @@ static void save_key( HKEY hkey, const char *filename )
     DWORD ret;
     HANDLE handle;
     char *p;
-    char *name = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + 20 );
+    char *rname = HeapAlloc( GetProcessHeap(), 0, PATH_MAX );
+    char *name;
+
+    /* use realpath to resolve any symlinks
+     * I assume that rname is filled in correctly if the error is ENOENT */
+    if ((realpath(filename, rname) == NULL) && (errno != ENOENT))
+    {
+        ERR( "Failed to find real path of %s: ", filename );
+        perror( "realpath" );
+        HeapFree( GetProcessHeap(), 0, rname );
+        return;
+    }
+
+    name = HeapAlloc( GetProcessHeap(), 0, strlen(rname) + 20 );
 
     if (!name) return;
-    strcpy( name, filename );
+    strcpy( name, rname );
     if ((p = strrchr( name, '/' ))) p++;
     else p = name;
 
@@ -209,15 +223,16 @@ static void save_key( HKEY hkey, const char *filename )
         ret = server_call_noerr( REQ_SAVE_REGISTRY );
         CloseHandle( handle );
         if (ret) unlink( name );
-        else if (rename( name, filename ) == -1)
+        else if (rename( name, rname ) == -1)
         {
-            ERR( "Failed to move %s to %s: ", name, filename );
+            ERR( "Failed to move %s to %s: ", name, rname );
             perror( "rename" );
             unlink( name );
         }
     }
     else ERR( "Failed to save registry to %s, err %ld\n", name, GetLastError() );
 
+    HeapFree( GetProcessHeap(), 0, rname );
     HeapFree( GetProcessHeap(), 0, name );
 }
 
