@@ -463,6 +463,11 @@ STRINGTABLE DISCARDABLE /* Color names */
 STRINGTABLE DISCARDABLE
 {
     IDS_FONT_SIZE   "Select a font size between %d and %d points."
+    IDS_SAVE_BUTTON "&Save"
+    IDS_SAVE_IN     "Save &in:"
+    IDS_SAVE        "Save"
+    IDS_SAVE_AS     "Save as"
+    IDS_OPEN_FILE   "Open File"
 }
 
 /****************************************************************/

@@ -586,10 +586,7 @@ static LRESULT FD31_DiskChange( PFD31_DATA lfs )
 static LRESULT FD31_FileTypeChange( PFD31_DATA lfs )
 {
     LONG lRet;
-    WCHAR diskname[BUFFILE];
     LPWSTR pstr;
-
-    diskname[0] = 0;
 
     lRet = SendDlgItemMessageW(lfs->hwnd, cmb1, CB_GETCURSEL, 0, 0);
     if (lRet == LB_ERR)
@@ -705,7 +702,6 @@ static LPWSTR FD31_DupToW(LPCSTR str, DWORD size)
  */
 void FD31_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open)
 {
-    LPCSTR str;
     UNICODE_STRING usBuffer;
 
     ofnW->lStructSize = sizeof(OPENFILENAMEW);
@@ -727,13 +723,18 @@ void FD31_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open)
         RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpstrInitialDir);
         ofnW->lpstrInitialDir = usBuffer.Buffer;
     }
-    if (ofnA->lpstrTitle)
-        str = ofnA->lpstrTitle;
-    else
-        /* Allocates default title (FIXME : get it from resource) */
-        str = open ? "Open File" : "Save as";
-    RtlCreateUnicodeStringFromAsciiz (&usBuffer,str);
-    ofnW->lpstrTitle = usBuffer.Buffer;
+    if (ofnA->lpstrTitle) {
+        RtlCreateUnicodeStringFromAsciiz (&usBuffer, ofnA->lpstrTitle);
+        ofnW->lpstrTitle = usBuffer.Buffer;
+    } else {
+        WCHAR buf[16];
+        int len;
+        LoadStringW(COMDLG32_hInstance, open ? IDS_OPEN_FILE : IDS_SAVE_AS,
+                    buf, sizeof(buf)/sizeof(WCHAR));
+        len = lstrlenW(buf)+1;
+        ofnW->lpstrTitle = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        memcpy((void*)ofnW->lpstrTitle, buf, len*sizeof(WCHAR));
+    }
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
     ofnW->nFileExtension = ofnA->nFileExtension;

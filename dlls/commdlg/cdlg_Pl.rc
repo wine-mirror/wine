@@ -439,6 +439,11 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
     IDS_FONT_SIZE   "Wybierz czcionkê o rozmiarze pomiêdzy %d a %d punktami."
+    IDS_SAVE_BUTTON "&Zapisz"
+    IDS_SAVE_IN     "Zapisz &w:"
+    IDS_SAVE        "Zapisz"
+    IDS_SAVE_AS     "Zapisz jako"
+    IDS_OPEN_FILE   "Otwórz Plik"
 }
 
 STRINGTABLE DISCARDABLE /* Color names */

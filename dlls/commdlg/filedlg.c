@@ -1164,7 +1164,9 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   }
   else if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
-      SetWindowTextA(hwnd,"Save");
+      WCHAR buf[16];
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE, buf, sizeof(buf)/sizeof(WCHAR));
+      SetWindowTextW(hwnd, buf);
   }
 
   /* Initialise the file name edit control */
@@ -1388,11 +1390,14 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
                  (rectDlg.bottom-rectDlg.top) - (rectHelp.bottom - rectCancel.bottom),
                  SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
   }
-  /* change Open to Save FIXME: use resources */
+  /* change Open to Save */
   if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
-      SetDlgItemTextA(hwnd,IDOK,"&Save");
-      SetDlgItemTextA(hwnd,IDC_LOOKINSTATIC,"Save &in");
+      WCHAR buf[16];
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, buf, sizeof(buf)/sizeof(WCHAR));
+      SetDlgItemTextW(hwnd, IDOK, buf);
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_IN, buf, sizeof(buf)/sizeof(WCHAR));
+      SetDlgItemTextW(hwnd, IDC_LOOKINSTATIC, buf);
   }
   return 0;
 }
@@ -1684,14 +1689,14 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
 #define ONOPEN_SEARCH 3
 static void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
 {
-  char strMsgTitle[MAX_PATH];
-  char strMsgText [MAX_PATH];
+  WCHAR strMsgTitle[MAX_PATH];
+  WCHAR strMsgText [MAX_PATH];
   if (idCaption)
-    LoadStringA(COMDLG32_hInstance, idCaption, strMsgTitle, sizeof(strMsgTitle));
+    LoadStringW(COMDLG32_hInstance, idCaption, strMsgTitle, sizeof(strMsgTitle)/sizeof(WCHAR));
   else
     strMsgTitle[0] = '\0';
-  LoadStringA(COMDLG32_hInstance, idText, strMsgText, sizeof(strMsgText));
-  MessageBoxA(hwnd,strMsgText, strMsgTitle, MB_OK | MB_ICONHAND);
+  LoadStringW(COMDLG32_hInstance, idText, strMsgText, sizeof(strMsgText)/sizeof(WCHAR));
+  MessageBoxW(hwnd,strMsgText, strMsgTitle, MB_OK | MB_ICONHAND);
 }
 
 BOOL FILEDLG95_OnOpen(HWND hwnd)
@@ -3208,7 +3213,6 @@ HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrF
 
   if(!lpsf)
   {
-    HRESULT hRes;
     SHGetDesktopFolder(&lpsf);
     hRes = GetName(lpsf,pidl,dwFlags,lpstrFileName);
     IShellFolder_Release(lpsf);
