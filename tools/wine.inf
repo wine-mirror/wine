@@ -40,11 +40,9 @@ AddReg=\
     Misc,\
     Nls,\
     OLE,\
-    Shell,\
     Tapi
 
 [Strings]
-ShellFolders="Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
 Mci32Str="Software\Microsoft\Windows NT\CurrentVersion\MCI32"
 Desktop="Control Panel\desktop"
@@ -532,31 +530,6 @@ HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00030404",,"9"
 [OLE]
 HKLM,"Software\Microsoft\OLE","EnableDCOM",,"Y"
 HKLM,"Software\Microsoft\OLE","EnableRemoteConnect",,"N"
-
-[Shell]
-HKCU,%ShellFolders%,"Favorites",,"%25%\Favorites"
-HKCU,%ShellFolders%,"StartUp",,"%25%\Start Menu\Programs\Startup"
-HKCU,%ShellFolders%,"Desktop",,"%25%\Desktop"
-HKCU,%ShellFolders%,"Programs",,"%25%\Start Menu\Programs"
-HKCU,%ShellFolders%,"Fonts",,"%25%\Fonts"
-HKCU,%ShellFolders%,"SendTo",,"%25%\SendTo"
-HKCU,%ShellFolders%,"Start Menu",,"%25%\Start Menu"
-HKCU,%ShellFolders%,"Templates",,"%25%\ShellNew"
-HKCU,%ShellFolders%,"Recent",,"%25%\Recent"
-HKCU,%ShellFolders%,"NetHood",,"%25%\NetHood"
-HKCU,%ShellFolders%,"Personal",,"c:\My Documents"
-
-HKU,.Default\%ShellFolders%,"Favorites",,"%25%\Favorites"
-HKU,.Default\%ShellFolders%,"StartUp",,"%25%\Start Menu\Programs\Startup"
-HKU,.Default\%ShellFolders%,"Desktop",,"%25%\Desktop"
-HKU,.Default\%ShellFolders%,"Programs",,"%25%\Start Menu\Programs"
-HKU,.Default\%ShellFolders%,"Fonts",,"%25%\Fonts"
-HKU,.Default\%ShellFolders%,"SendTo",,"%25%\SendTo"
-HKU,.Default\%ShellFolders%,"Start Menu",,"%25%\Start Menu"
-HKU,.Default\%ShellFolders%,"Templates",,"%25%\ShellNew"
-HKU,.Default\%ShellFolders%,"Recent",,"%25%\Recent"
-HKU,.Default\%ShellFolders%,"NetHood",,"%25%\NetHood"
-HKU,.Default\%ShellFolders%,"Personal",,"c:\My Documents"
 
 [Tapi]
 HKLM,%CurrentVersion%\Telephony,"Perf1",0x10001,5045524a
