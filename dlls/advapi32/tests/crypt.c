@@ -220,6 +220,37 @@ static void test_enum_providers(void)
 		(unsigned int)cbName, (unsigned int)providerLen);
 }
 
+static void test_set_provider_ex()
+{
+	DWORD result;
+	DWORD notNull = 5;
+	
+	/* results */
+	LPSTR pszProvName = NULL;
+	DWORD cbProvName;
+	
+	/* check pdwReserved for NULL */
+	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, &notNull, CRYPT_MACHINE_DEFAULT);
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n",
+		ERROR_INVALID_PARAMETER, GetLastError());
+
+	/* remove the default provider and then set it to MS_DEF_PROV/PROV_RSA_FULL */
+	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT | CRYPT_DELETE_DEFAULT);
+	ok(result, "%ld\n", GetLastError());
+
+	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT);
+	ok(result, "%ld\n", GetLastError());
+	
+	/* call CryptGetDefaultProvider to see if they match */
+	result = CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, NULL, &cbProvName);
+	if (!(pszProvName = LocalAlloc(LMEM_ZEROINIT, cbProvName)))
+		return;
+
+	result = CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, pszProvName, &cbProvName);
+	ok(result && !strcmp(MS_DEF_PROV, pszProvName), "expected %s, got %s\n", MS_DEF_PROV, pszProvName);
+	ok(result && cbProvName==(strlen(MS_DEF_PROV) + 1), "expected %i, got %ld\n", (strlen(MS_DEF_PROV) + 1), cbProvName);
+}
+
 START_TEST(crypt)
 {
 	init_environment();
@@ -227,4 +258,5 @@ START_TEST(crypt)
 	clean_up_environment();
 	
 	test_enum_providers();
+	test_set_provider_ex();
 }
