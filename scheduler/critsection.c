@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include "winerror.h"
 #include "winbase.h"
+#include "ntddk.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "thread.h"
@@ -78,21 +79,30 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         }
 
         /* Now wait for it */
-        res = WaitForSingleObject( crit->LockSemaphore, 5000L );
-        if ( res == WAIT_TIMEOUT )
+        for (;;)
         {
-            ERR_(win32)("Critical section %p wait timed out, retrying (60 sec)\n", crit );
-            res = WaitForSingleObject( crit->LockSemaphore, 60000L );
-        }
-        if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
-        {
-            ERR_(win32)("Critical section %p wait timed out, retrying (5 min)\n", crit );
-            res = WaitForSingleObject( crit->LockSemaphore, 300000L );
-        }
-        if (res != STATUS_WAIT_0)
-        {
-            ERR_(win32)("Critical section %p wait failed err=%lx\n", crit, res );
-            /* FIXME: should raise an exception */
+            EXCEPTION_RECORD rec;
+
+            res = WaitForSingleObject( crit->LockSemaphore, 5000L );
+            if ( res == WAIT_TIMEOUT )
+            {
+                ERR_(win32)("Critical section %p wait timed out, retrying (60 sec)\n", crit );
+                res = WaitForSingleObject( crit->LockSemaphore, 60000L );
+                if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
+                {
+                    ERR_(win32)("Critical section %p wait timed out, retrying (5 min)\n", crit );
+                    res = WaitForSingleObject( crit->LockSemaphore, 300000L );
+                }
+            }
+            if (res == STATUS_WAIT_0) break;
+
+            rec.ExceptionCode    = EXCEPTION_CRITICAL_SECTION_WAIT;
+            rec.ExceptionFlags   = 0;
+            rec.ExceptionRecord  = NULL;
+            rec.ExceptionAddress = RtlRaiseException;  /* sic */
+            rec.NumberParameters = 1;
+            rec.ExceptionInformation[0] = (DWORD)crit;
+            RtlRaiseException( &rec );
         }
     }
     crit->OwningThread   = GetCurrentThreadId();

@@ -693,6 +693,9 @@ DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance 
         case CONTROL_C_EXIT:
             fprintf( stderr, "^C" );
             break;
+        case EXCEPTION_CRITICAL_SECTION_WAIT:
+            fprintf( stderr, "critical section %08lx wait failed", rec->ExceptionInformation[0] );
+            break;
         default:
             fprintf( stderr, "%08lx", rec->ExceptionCode );
             break;
