@@ -127,12 +127,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
     }
 
     if (Adapter == 0) { /* Display */
+        FIXME("Autodetect device/Vendor Name and Version using FillGLCaps, currently using NVIDIA ids");
         strcpy(pIdentifier->Driver, "Display");
-        strcpy(pIdentifier->Description, "Direct3D Display");
-        pIdentifier->DriverVersion.u.HighPart = 1;
-        pIdentifier->DriverVersion.u.LowPart = 0;
-        pIdentifier->VendorId = 0;
-        pIdentifier->DeviceId = 0;
+        strcpy(pIdentifier->Description, "Direct3D HAL");
+        pIdentifier->DriverVersion.u.HighPart = 0xa;
+        pIdentifier->DriverVersion.u.LowPart = MAKEDWORD_VERSION(53, 96); /* last Linux Nvidia drivers */
+        pIdentifier->VendorId = VENDOR_NVIDIA;
+        pIdentifier->DeviceId = CARD_NVIDIA_GEFORCE4_TI4600;
         pIdentifier->SubSysId = 0;
         pIdentifier->Revision = 0;
         /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
@@ -270,7 +271,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
                                                             D3DFORMAT BackBufferFormat, BOOL Windowed) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
+    TRACE("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
 	  This, 
 	  Adapter, 
 	  CheckType, debug_d3ddevicetype(CheckType),
@@ -338,7 +339,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
+    TRACE("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
 	  This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType),
@@ -355,7 +356,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
+    TRACE("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
 	  This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType),
@@ -715,10 +716,64 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     const char *GL_Extensions = NULL;
     const char *GLX_Extensions = NULL;
     GLint gl_max;
+    const char* gl_string = NULL;
+    const char* gl_string_cursor = NULL;
+    Bool test = 0;
+    int major, minor;
     ICOM_THIS(IDirect3D8Impl,iface);
 
     if (This->gl_info.bIsFilled) return ;
     This->gl_info.bIsFilled = 1;
+    
+    test = glXQueryVersion(NULL, &major, &minor);
+    This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
+	
+    gl_string = glXGetClientString(NULL, GLX_VENDOR);
+    if (strstr(gl_string, "NVIDIA")) {
+      This->gl_info.gl_vendor = VENDOR_NVIDIA;
+    } else if (strstr(gl_string, "ATI")) {
+      This->gl_info.gl_vendor = VENDOR_ATI;
+    } else {
+      This->gl_info.gl_vendor = VENDOR_WINE;
+    }
+
+    gl_string = glGetString(GL_VERSION);
+    switch (This->gl_info.gl_vendor) {
+    case VENDOR_NVIDIA:
+      gl_string_cursor = strstr(gl_string, "NVIDIA");
+      gl_string_cursor = strstr(gl_string_cursor, " ");
+      while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
+      if (*gl_string_cursor) {
+	char tmp[16];
+	int cursor = 0;
+
+	while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+	  tmp[cursor++] = *gl_string_cursor;
+	  ++gl_string_cursor;
+	}
+	tmp[cursor] = 0;
+	major = atoi(tmp);
+	
+	if (*gl_string_cursor != '.') WARN("malformed GL_VERSION:%s", gl_string);
+	++gl_string_cursor;
+
+	while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+	  tmp[cursor++] = *gl_string_cursor;
+	  ++gl_string_cursor;
+	}
+	tmp[cursor] = 0;
+	minor = atoi(tmp);
+	break;
+      }
+    case VENDOR_ATI:
+    default:
+      major = 0;
+      minor = 9;
+    }
+    This->gl_info.gl_driver_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
+
+    gl_string = glGetString(GL_RENDERER);
+    strcpy(This->gl_info.gl_renderer, gl_string);
 
     /* 
      * Initialize openGL extension related variables

@@ -449,6 +449,20 @@ typedef enum _GL_SupportedExt {
   OPENGL_SUPPORTED_EXT_END
 } GL_SupportedExt;
 
+typedef enum _GL_Vendors {
+  VENDOR_WINE   = 0x0,
+  VENDOR_ATI    = 0x1002,
+  VENDOR_NVIDIA = 0x10de
+} GL_Vendors;
+
+typedef enum _GL_Cards {
+  CARD_WINE  = 0x0,
+  CARD_ATI_RADEON_8500 = 0x514c,
+  CARD_ATI_RADEON_9800PRO = 0x4e48,
+  CARD_NVIDIA_GEFORCE4_TI4600 = 0x0250,
+  CARD_NVIDIA_GEFORCEFX_5900ULTRA = 0x0330
+} GL_Cards;
+
 typedef enum _GL_VSVersion {
   VS_VERSION_NOT_SUPPORTED = 0x0,
   VS_VERSION_10 = 0x10,
@@ -472,6 +486,7 @@ typedef enum _GL_PSVersion {
   PS_VERSION_FORCE_DWORD = 0x7FFFFFFF
 } GL_PSVersion;
 
+#define MAKEDWORD_VERSION(maj, min)  ((maj & 0x0000FFFF) << 16) | (min & 0x0000FFFF)
 
 #define GL_EXT_FUNCS_GEN \
     /** EXT Extensions **/ \
@@ -557,6 +572,14 @@ typedef struct Direct3DVertexStridedData {
 #define USE_GL_FUNC(type, pfn) type pfn;
 typedef struct _GL_Info {
   unsigned bIsFilled;
+
+  DWORD  glx_version;
+  DWORD  gl_version;
+
+  GL_Vendors gl_vendor;
+  GL_Cards   gl_card;
+  DWORD  gl_driver_version;
+  CHAR   gl_renderer[255];
   /** 
    * CAPS Constants 
    */
