@@ -835,7 +835,7 @@
 @ stub ValidateLocale
 @ stdcall VerLanguageNameA(long str long) VerLanguageNameA
 @ stdcall VerLanguageNameW(long wstr long) VerLanguageNameW
-@ stub VerSetConditionMask
+@ forward VerSetConditionMask ntdll.VerSetConditionMask
 @ stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 @ stdcall VirtualFree(ptr long long) VirtualFree
 @ stdcall VirtualLock(ptr long) VirtualLock
