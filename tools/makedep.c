@@ -101,6 +101,17 @@ static char *xstrdup( const char *str )
 
 
 /*******************************************************************
+ *         get_extension
+ */
+static char *get_extension( char *filename )
+{
+    char *ext = strrchr( filename, '.' );
+    if (ext && strchr( ext, '/' )) ext = NULL;
+    return ext;
+}
+
+
+/*******************************************************************
  *         is_generated
  *
  * Test if a given file type is generated during the make process
@@ -271,24 +282,45 @@ static FILE *open_include_file( INCL_FILE *pFile )
 
 
 /*******************************************************************
- *         parse_file
+ *         parse_idl_file
  */
-static void parse_file( INCL_FILE *pFile, int src )
+static void parse_idl_file( INCL_FILE *pFile, FILE *file )
 {
     char buffer[1024];
     char *include;
     int line = 0;
-    FILE *file;
 
-    if (is_generated( pFile->name ))
+    while (fgets( buffer, sizeof(buffer)-1, file ))
     {
-        /* file is generated during make, don't try to open it */
-        pFile->filename = xstrdup( pFile->name );
-        return;
+        char *p = buffer;
+        line++;
+        while (*p && isspace(*p)) p++;
+        if (strncmp( p, "import", 6 )) continue;
+        p += 6;
+        while (*p && isspace(*p)) p++;
+        if (*p != '\"') continue;
+        p++;
+        include = p;
+        while (*p && (*p != '\"')) p++;
+        if (!*p)
+        {
+            fprintf( stderr, "%s:%d: Malformed import directive\n",
+                     pFile->filename, line );
+            exit(1);
+        }
+        *p = 0;
+        add_include( pFile, include, line, 0 );
     }
+}
 
-    file = src ? open_src_file( pFile ) : open_include_file( pFile );
-    if (!file) return;
+/*******************************************************************
+ *         parse_c_file
+ */
+static void parse_c_file( INCL_FILE *pFile, FILE *file )
+{
+    char buffer[1024];
+    char *include;
+    int line = 0;
 
     while (fgets( buffer, sizeof(buffer)-1, file ))
     {
@@ -315,6 +347,29 @@ static void parse_file( INCL_FILE *pFile, int src )
         *p = 0;
         add_include( pFile, include, line, (quote == '>') );
     }
+}
+
+
+/*******************************************************************
+ *         parse_file
+ */
+static void parse_file( INCL_FILE *pFile, int src )
+{
+    char *ext;
+    FILE *file;
+
+    if (is_generated( pFile->name ))
+    {
+        /* file is generated during make, don't try to open it */
+        pFile->filename = xstrdup( pFile->name );
+        return;
+    }
+
+    file = src ? open_src_file( pFile ) : open_include_file( pFile );
+    if (!file) return;
+    ext = get_extension( pFile->name );
+    if (ext && !strcmp( ext, ".idl" )) parse_idl_file( pFile, file );
+    else parse_c_file( pFile, file );
     fclose(file);
 }
 
@@ -349,8 +404,7 @@ static void output_include( FILE *file, INCL_FILE *pFile,
 static void output_src( FILE *file, INCL_FILE *pFile, int *column )
 {
     char *obj = xstrdup( pFile->name );
-    char *ext = strrchr( obj, '.' );
-    if (ext && strchr( ext, '/' )) ext = NULL;
+    char *ext = get_extension( obj );
     if (ext)
     {
         *ext++ = 0;
@@ -369,6 +423,10 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
             *column += fprintf( file, "%s.mc.rc: %s", obj, pFile->filename );
+        }
+        else if (!strcmp( ext, "idl" ))  /* IDL file */
+        {
+            *column += fprintf( file, "%s.h: %s", obj, pFile->filename );
         }
         else
         {

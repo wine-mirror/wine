@@ -175,6 +175,7 @@ WINDOWS_INCLUDES = \
 	wshisotp.h \
 	wsipx.h \
 	zmouse.h \
+	$(IDL_SRCS) \
 	$(IDL_SRCS:.idl=.h)
 
 MSVCRT_INCLUDES = \
@@ -251,8 +252,6 @@ EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 
 .idl.h:
 	$(LDPATH) $(WIDL) $(DEFS) -b -h -H $@ $<
-
-$(IDL_SRCS:.idl=.h): $(WIDL)
 
 .PHONY: idl
 
