@@ -249,6 +249,7 @@ struct pthread_functions
   int (*ptr_pthread_sigaction) (int sig, const struct sigaction * act, struct sigaction *oact);
   int (*ptr_pthread_sigwait) (const sigset_t *set, int *sig);
   int (*ptr_pthread_raise) (int sig);
+  int (*ptr___pthread_cond_timedwait) (pthread_cond_t *, pthread_mutex_t *, const struct timespec *);
 };
 
 static pid_t (*libc_fork)(void);
@@ -810,7 +811,8 @@ static struct pthread_functions libc_pthread_functions =
     pthread_internal_tsd_address,  /* ptr_pthread_internal_tsd_address */
     NULL,                          /* ptr_pthread_sigaction */
     NULL,                          /* ptr_pthread_sigwait */
-    NULL                           /* ptr_pthread_raise */
+    NULL,                          /* ptr_pthread_raise */
+    __pthread_cond_timedwait       /* ptr___pthread_cond_timedwait */
 };
 
 #endif /* __GLIBC__ || __FREEBSD__ */
