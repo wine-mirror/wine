@@ -74,20 +74,20 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
 
 /*
  * Draw the text string for this button.
- * note: himl is not used, except to determine whether this button has
- *       an associated bitmap.  If himl and infoPtr->himlDef are non-zero
- *       the text is drawn below it, otherwise the text is drawn within
- *       the rectangle of the button itself.
+ * note: infoPtr->himlDis *SHOULD* be non-zero when infoPtr->himlDef
+ * 	is non-zero, so we can simply check himlDef to see if we have
+ *      an image list
  */
 static void
 TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
-		    HDC hdc, INT nState, DWORD dwStyle, HIMAGELIST himl)
+		    HDC hdc, INT nState, DWORD dwStyle)
 {
     RECT   rcText = btnPtr->rect;
     HFONT  hOldFont;
     INT    nOldBkMode;
     COLORREF clrOld;
     LPWSTR lpText = NULL;
+    HIMAGELIST himl = infoPtr->himlDef;
 
     TRACE ("iString: %x\n", btnPtr->iString);
 
@@ -106,8 +106,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 	InflateRect (&rcText, -3, -3);
 
-	if ((himl || infoPtr->himlDef) &&
-		TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
+	if (himl && TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
 		if ((dwStyle & TBSTYLE_LIST) &&
 		    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
 		    (btnPtr->iBitmap != I_IMAGENONE)) {
@@ -246,8 +245,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	else
 	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
-		infoPtr->himlDis);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -260,8 +258,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
-	    infoPtr->himlDef);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -281,8 +278,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
-		infoPtr->himlDef);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -293,8 +289,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 	TOOLBAR_DrawPattern (hdc, &rc);
 	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
-		infoPtr->himlDef);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -321,8 +316,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			rc.left+1, rc.top+1, ILD_NORMAL);
     }
 
-    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
-		infoPtr->himlDef);
+    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 }
 
 
