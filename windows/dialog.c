@@ -885,8 +885,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         {
             /* check where the focus is again,
 	     * some controls status might have changed in WM_INITDIALOG */
-            dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE); 
-            SetFocus( dlgInfo->hwndFocus );
+            dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
+            if( dlgInfo->hwndFocus )
+                SetFocus( dlgInfo->hwndFocus );
         }
         else
         {
@@ -896,7 +897,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
                 (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
             {
                 dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE); 
-                SetFocus( dlgInfo->hwndFocus );
+                if( dlgInfo->hwndFocus )
+                    SetFocus( dlgInfo->hwndFocus );
             }
         }
 
