@@ -2179,6 +2179,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
 	}
 
 	if (uOptions & DPAS_INSERTBEFORE) {
+	    if (r == -1) r = 0;
 	    TRACE("-- ret=%d\n", r);
 	    return r;
 	}
