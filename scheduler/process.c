@@ -373,7 +373,7 @@ BOOL PROCESS_Init(void)
  */
 void PROCESS_Start(void)
 {
-    UINT cmdShow = 0;
+    UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry = NULL;
     PDB *pdb = PROCESS_Current();
     NE_MODULE *pModule = NE_GetPtr( pdb->module );
