@@ -209,7 +209,7 @@ void HEAP_Dump( HEAP *heap )
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
         DPRINTF( "%08lx free %08lx prev=%08lx next=%08lx\n",
-	      (DWORD)&heap->freeList[i].arena, heap->freeList[i].arena.size,
+	      (DWORD)&heap->freeList[i].arena, heap->freeList[i].size,
 	      (DWORD)heap->freeList[i].arena.prev,
 	      (DWORD)heap->freeList[i].arena.next );
 
