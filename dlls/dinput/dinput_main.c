@@ -44,10 +44,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static ICOM_VTABLE(IDirectInput7A) ddi7avt;
-static ICOM_VTABLE(IDirectInput7W) ddi7wvt;
-static ICOM_VTABLE(IDirectInput8A) ddi8avt;
-static ICOM_VTABLE(IDirectInput8W) ddi8wvt;
+static IDirectInput7AVtbl ddi7avt;
+static IDirectInput7WVtbl ddi7wvt;
+static IDirectInput8AVtbl ddi8avt;
+static IDirectInput8WVtbl ddi8wvt;
 
 /* This array will be filled a dinput.so loading */
 #define MAX_WINE_DINPUT_DEVICES 4
@@ -542,7 +542,7 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInput7A) ddi7avt = {
+static IDirectInput7AVtbl ddi7avt = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputAImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
@@ -563,7 +563,7 @@ static ICOM_VTABLE(IDirectInput7A) ddi7avt = {
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInput7W) ddi7wvt = {
+static IDirectInput7WVtbl ddi7wvt = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputWImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
@@ -584,7 +584,7 @@ static ICOM_VTABLE(IDirectInput7W) ddi7wvt = {
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInput8A) ddi8avt = {
+static IDirectInput8AVtbl ddi8avt = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInput8AImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
@@ -605,7 +605,7 @@ static ICOM_VTABLE(IDirectInput8A) ddi8avt = {
 #else
 # define XCAST(fun)	(void*)
 #endif
-static ICOM_VTABLE(IDirectInput8W) ddi8wvt = {
+static IDirectInput8WVtbl ddi8wvt = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInput8WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
@@ -677,7 +677,7 @@ static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DICF_Vtbl = {
+static IClassFactoryVtbl DICF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DICF_QueryInterface,
 	DICF_AddRef,

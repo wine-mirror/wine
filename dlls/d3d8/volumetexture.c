@@ -257,7 +257,7 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMET
 }
 
 
-ICOM_VTABLE(IDirect3DVolumeTexture8) Direct3DVolumeTexture8_Vtbl =
+IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVolumeTexture8Impl_QueryInterface,

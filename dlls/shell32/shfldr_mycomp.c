@@ -64,8 +64,8 @@ typedef struct {
     int dwAttributes;		/* attributes returned by GetAttributesOf FIXME: use it */
 } IGenericSFImpl;
 
-static struct ICOM_VTABLE (IShellFolder2) vt_ShellFolder2;
-static struct ICOM_VTABLE (IPersistFolder2) vt_PersistFolder2;
+static struct IShellFolder2Vtbl vt_ShellFolder2;
+static struct IPersistFolder2Vtbl vt_PersistFolder2;
 
 #define _IPersistFolder2_Offset ((int)(&(((IGenericSFImpl*)0)->lpVtblPersistFolder2)))
 #define _ICOM_THIS_From_IPersistFolder2(class, name) class* This = (class*)(((char*)name)-_IPersistFolder2_Offset);
@@ -715,7 +715,7 @@ static HRESULT WINAPI ISF_MyComputer_fnMapColumnToSCID (IShellFolder2 * iface, U
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE (IShellFolder2) vt_ShellFolder2 =
+static IShellFolder2Vtbl vt_ShellFolder2 =
 {
         ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISF_MyComputer_fnQueryInterface,
@@ -820,7 +820,7 @@ static HRESULT WINAPI IMCFldr_PersistFolder2_GetCurFolder (IPersistFolder2 * ifa
     return S_OK;
 }
 
-static ICOM_VTABLE (IPersistFolder2) vt_PersistFolder2 =
+static IPersistFolder2Vtbl vt_PersistFolder2 =
 {
 ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IMCFldr_PersistFolder2_QueryInterface,

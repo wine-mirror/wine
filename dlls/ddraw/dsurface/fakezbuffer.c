@@ -46,7 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static ICOM_VTABLE(IDirectDrawSurface7) FakeZBuffer_IDirectDrawSurface7_VTable;
+static IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable;
 
 #ifdef HAVE_OPENGL
 static void zbuffer_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
@@ -259,7 +259,7 @@ FakeZBuffer_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 }
 
 
-static ICOM_VTABLE(IDirectDrawSurface7) FakeZBuffer_IDirectDrawSurface7_VTable=
+static IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable=
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,

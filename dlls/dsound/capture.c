@@ -75,9 +75,9 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(
     LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
     LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 );
 
-static ICOM_VTABLE(IDirectSoundCapture) dscvt;
-static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt;
-static ICOM_VTABLE(IDirectSoundFullDuplex) dsfdvt;
+static IDirectSoundCaptureVtbl dscvt;
+static IDirectSoundCaptureBuffer8Vtbl dscbvt;
+static IDirectSoundFullDuplexVtbl dsfdvt;
 
 static IDirectSoundCaptureImpl*       dsound_capture = NULL;
 static GUID                           capture_guids[MAXWAVEDRIVERS];
@@ -631,7 +631,7 @@ IDirectSoundCaptureImpl_Initialize(
     return err;
 }
 
-static ICOM_VTABLE(IDirectSoundCapture) dscvt =
+static IDirectSoundCaptureVtbl dscvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
@@ -889,7 +889,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-ICOM_VTABLE(IDirectSoundNotify) dscnvt =
+IDirectSoundNotifyVtbl dscnvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSoundCaptureNotifyImpl_QueryInterface,
@@ -1591,7 +1591,7 @@ IDirectSoundCaptureBufferImpl_GetFXStatus(
     return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt =
+static IDirectSoundCaptureBuffer8Vtbl dscbvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
@@ -1676,7 +1676,7 @@ DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSCCF_Vtbl =
+static IClassFactoryVtbl DSCCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DSCCF_QueryInterface,
@@ -1840,7 +1840,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     return E_FAIL;
 }
 
-static ICOM_VTABLE(IDirectSoundFullDuplex) dsfdvt =
+static IDirectSoundFullDuplexVtbl dsfdvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
@@ -1915,7 +1915,7 @@ DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSFDCF_Vtbl =
+static IClassFactoryVtbl DSFDCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DSFDCF_QueryInterface,

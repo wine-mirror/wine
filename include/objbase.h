@@ -200,7 +200,7 @@
  *
  *    } _IDirect3D;
  *
- *    static ICOM_VTABLE(IDirect3D) d3dvt;
+ *    static IDirect3DVtbl d3dvt;
  *
  *    // implement the IDirect3D methods here
  *
@@ -212,7 +212,7 @@
  *
  *    // ...
  *
- *    static ICOM_VTABLE(IDirect3D) d3dvt = {
+ *    static IDirect3DVtbl d3dvt = {
  *        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
  *        IDirect3D_QueryInterface,
  *        IDirect3D_Add,
@@ -297,7 +297,6 @@
 
 /* Wine-specific macros */
 
-#define ICOM_VTABLE(iface)       iface##Vtbl
 #define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
 #define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 

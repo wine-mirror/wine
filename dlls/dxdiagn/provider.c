@@ -94,7 +94,7 @@ HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDi
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
 }
 
-ICOM_VTABLE(IDxDiagProvider) DxDiagProvider_Vtbl =
+IDxDiagProviderVtbl DxDiagProvider_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDxDiagProviderImpl_QueryInterface,

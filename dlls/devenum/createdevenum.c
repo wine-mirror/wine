@@ -33,7 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
-extern ICOM_VTABLE(IEnumMoniker) IEnumMoniker_Vtbl;
+extern IEnumMonikerVtbl IEnumMoniker_Vtbl;
 
 extern HINSTANCE DEVENUM_hInstance;
 
@@ -190,7 +190,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 /**********************************************************************
  * ICreateDevEnum_Vtbl
  */
-static ICOM_VTABLE(ICreateDevEnum) ICreateDevEnum_Vtbl =
+static ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_ICreateDevEnum_QueryInterface,

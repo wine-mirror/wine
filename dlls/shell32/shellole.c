@@ -274,7 +274,7 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
  */
 
 /* set the vtable later */
-static ICOM_VTABLE(IMalloc) VT_Shell_IMalloc32;
+static IMallocVtbl VT_Shell_IMalloc32;
 
 /* this is the static object instance */
 typedef struct {
@@ -382,7 +382,7 @@ static VOID WINAPI IShellMalloc_fnHeapMinimize(LPMALLOC iface)
 	TRACE("()\n");
 }
 
-static ICOM_VTABLE(IMalloc) VT_Shell_IMalloc32 =
+static IMallocVtbl VT_Shell_IMalloc32 =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellMalloc_fnQueryInterface,
@@ -506,7 +506,7 @@ typedef struct
     ULONG *			pcRefDll; /* pointer to refcounter in external dll (ugrrr...) */
 } IDefClFImpl;
 
-static ICOM_VTABLE(IClassFactory) dclfvt;
+static IClassFactoryVtbl dclfvt;
 
 /**************************************************************************
  *  IDefClF_fnConstructor
@@ -609,7 +609,7 @@ static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 	return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IClassFactory) dclfvt =
+static IClassFactoryVtbl dclfvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDefClF_fnQueryInterface,

@@ -63,7 +63,7 @@ static HRESULT WINAPI    OleAdviseHolderImpl_SendOnClose (LPOLEADVISEHOLDER);
 /**************************************************************************
  *  OleAdviseHolderImpl_VTable
  */
-static struct ICOM_VTABLE(IOleAdviseHolder) oahvt =
+static struct IOleAdviseHolderVtbl oahvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     OleAdviseHolderImpl_QueryInterface,
@@ -411,7 +411,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
 /**************************************************************************
  *  DataAdviseHolderImpl_VTable
  */
-static struct ICOM_VTABLE(IDataAdviseHolder) DataAdviseHolderImpl_VTable =
+static struct IDataAdviseHolderVtbl DataAdviseHolderImpl_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataAdviseHolder_QueryInterface,

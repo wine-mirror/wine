@@ -191,7 +191,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static ICOM_VTABLE(IKsPropertySet) iksbvt = {
+static IKsPropertySetVtbl iksbvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IKsBufferPropertySetImpl_QueryInterface,
     IKsBufferPropertySetImpl_AddRef,
@@ -1125,7 +1125,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static ICOM_VTABLE(IKsPropertySet) ikspvt = {
+static IKsPropertySetVtbl ikspvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IKsPrivatePropertySetImpl_QueryInterface,
     IKsPrivatePropertySetImpl_AddRef,

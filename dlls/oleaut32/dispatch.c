@@ -441,7 +441,7 @@ static HRESULT WINAPI StdDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMember, 
     return DispInvoke(This->pvThis, This->pTypeInfo, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static ICOM_VTABLE(IDispatch) StdDispatch_VTable =
+static IDispatchVtbl StdDispatch_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   StdDispatch_QueryInterface,

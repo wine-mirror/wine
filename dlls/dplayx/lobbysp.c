@@ -60,7 +60,7 @@ struct IDPLobbySPImpl
 };
 
 /* Forward declaration of virtual tables */
-static ICOM_VTABLE(IDPLobbySP) dpLobbySPVT;
+static IDPLobbySPVtbl dpLobbySPVT;
 
 extern
 HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp )
@@ -440,7 +440,7 @@ HRESULT WINAPI IDPLobbySPImpl_StartSession
 }
 
 
-static struct ICOM_VTABLE(IDPLobbySP) dpLobbySPVT =
+static struct IDPLobbySPVtbl dpLobbySPVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

@@ -141,7 +141,7 @@ static HRESULT WINAPI XFCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) XFCF_Vtbl =
+static IClassFactoryVtbl XFCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XFCF_QueryInterface,

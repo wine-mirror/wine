@@ -101,7 +101,7 @@ HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, 
 }
 
 
-ICOM_VTABLE(IDirect3DQuery9) Direct3DQuery9_Vtbl =
+IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DQuery9Impl_QueryInterface,

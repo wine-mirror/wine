@@ -233,7 +233,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 ifa
 }
 
 
-ICOM_VTABLE(IDirect3DTexture8) Direct3DTexture8_Vtbl =
+IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DTexture8Impl_QueryInterface,

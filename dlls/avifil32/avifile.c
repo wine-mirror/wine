@@ -69,7 +69,7 @@ static HRESULT WINAPI IAVIFile_fnReadData(IAVIFile*iface,DWORD ckid,LPVOID lpDat
 static HRESULT WINAPI IAVIFile_fnEndRecord(IAVIFile*iface);
 static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
 
-struct ICOM_VTABLE(IAVIFile) iavift = {
+struct IAVIFileVtbl iavift = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IAVIFile_fnQueryInterface,
   IAVIFile_fnAddRef,
@@ -93,7 +93,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile*iface,LPCOLESTR pszFileNa
 static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile*iface,LPCOLESTR pszFileName);
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile*iface,LPOLESTR*ppszFileName);
 
-struct ICOM_VTABLE(IPersistFile) ipersistft = {
+struct IPersistFileVtbl ipersistft = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IPersistFile_fnQueryInterface,
   IPersistFile_fnAddRef,
@@ -121,7 +121,7 @@ static HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp
 static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
 static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
-struct ICOM_VTABLE(IAVIStream) iavist = {
+struct IAVIStreamVtbl iavist = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IAVIStream_fnQueryInterface,
   IAVIStream_fnAddRef,

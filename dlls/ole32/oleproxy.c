@@ -83,7 +83,7 @@ const CLSID CLSID_PSFactoryBuffer = { 0x00000320, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0,
  * COM will load the appropriate interface stubs and proxies as needed.
  */
 typedef struct _CFStub {
-    ICOM_VTABLE(IRpcStubBuffer)	*lpvtbl;
+    IRpcStubBufferVtbl	*lpvtbl;
     DWORD			ref;
 
     LPUNKNOWN			pUnkServer;
@@ -236,7 +236,7 @@ CFStub_DebugServerRelease(LPRPCSTUBBUFFER iface,void *pv) {
     FIXME("(%p), stub!\n",pv);
 }
 
-static ICOM_VTABLE(IRpcStubBuffer) cfstubvt = {
+static IRpcStubBufferVtbl cfstubvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CFStub_QueryInterface,
     CFStub_AddRef,
@@ -267,8 +267,8 @@ CFStub_Construct(LPRPCSTUBBUFFER *ppv) {
  * the refcount.
  */
 typedef struct _CFProxy {
-    ICOM_VTABLE(IClassFactory)		*lpvtbl_cf;
-    ICOM_VTABLE(IRpcProxyBuffer)	*lpvtbl_proxy;
+    IClassFactoryVtbl		*lpvtbl_cf;
+    IRpcProxyBufferVtbl	*lpvtbl_proxy;
     DWORD				ref;
 
     IRpcChannelBuffer			*chanbuf;
@@ -411,7 +411,7 @@ static HRESULT WINAPI CFProxy_LockServer(LPCLASSFACTORY iface,BOOL fLock) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IRpcProxyBuffer) pspbvtbl = {
+static IRpcProxyBufferVtbl pspbvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IRpcProxyBufferImpl_QueryInterface,
     IRpcProxyBufferImpl_AddRef,
@@ -419,7 +419,7 @@ static ICOM_VTABLE(IRpcProxyBuffer) pspbvtbl = {
     IRpcProxyBufferImpl_Connect,
     IRpcProxyBufferImpl_Disconnect
 };
-static ICOM_VTABLE(IClassFactory) cfproxyvt = {
+static IClassFactoryVtbl cfproxyvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CFProxy_QueryInterface,
     CFProxy_AddRef,
@@ -495,7 +495,7 @@ PSFacBuf_CreateStub(
     return E_FAIL;
 }
 
-static ICOM_VTABLE(IPSFactoryBuffer) psfacbufvtbl = {
+static IPSFactoryBufferVtbl psfacbufvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PSFacBuf_QueryInterface,
     PSFacBuf_AddRef,
@@ -505,7 +505,7 @@ static ICOM_VTABLE(IPSFactoryBuffer) psfacbufvtbl = {
 };
 
 /* This is the whole PSFactoryBuffer object, just the vtableptr */
-static ICOM_VTABLE(IPSFactoryBuffer) *lppsfac = &psfacbufvtbl;
+static IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
 
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]

@@ -61,7 +61,7 @@ static HRESULT WINAPI DirectMusicCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DirectMusicCF_Vtbl = {
+static IClassFactoryVtbl DirectMusicCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DirectMusicCF_QueryInterface,
 	DirectMusicCF_AddRef,
@@ -104,7 +104,7 @@ static HRESULT WINAPI CollectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) CollectionCF_Vtbl = {
+static IClassFactoryVtbl CollectionCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	CollectionCF_QueryInterface,
 	CollectionCF_AddRef,

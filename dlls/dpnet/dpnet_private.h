@@ -42,7 +42,7 @@ typedef struct IDirectPlay8AddressImpl IDirectPlay8AddressImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirectPlay8Client) DirectPlay8Client_Vtbl;
+extern IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl;
 
 /*****************************************************************************
  * IDirectPlay8Client implementation structure
@@ -88,7 +88,7 @@ extern HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT if
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirectPlay8Address) DirectPlay8Address_Vtbl;
+extern IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl;
 
 /*****************************************************************************
  * IDirectPlay8Address implementation structure

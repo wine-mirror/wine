@@ -37,8 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt;
-static ICOM_VTABLE(IDirectInputDevice8W) SysKeyboardWvt;
+static IDirectInputDevice8AVtbl SysKeyboardAvt;
+static IDirectInputDevice8WVtbl SysKeyboardWvt;
 
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
@@ -695,7 +695,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
     return DI_OK;
 }
 
-static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
+static IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -738,7 +738,7 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInputDevice8W) SysKeyboardWvt =
+static IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2WImpl_QueryInterface,

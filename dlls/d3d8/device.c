@@ -4343,7 +4343,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, U
 }
 
 
-ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl =
+IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DDevice8Impl_QueryInterface,

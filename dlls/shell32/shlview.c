@@ -98,21 +98,21 @@ typedef struct
 	HANDLE		hAccel;
 } IShellViewImpl;
 
-static struct ICOM_VTABLE(IShellView) svvt;
+static struct IShellViewVtbl svvt;
 
-static struct ICOM_VTABLE(IOleCommandTarget) ctvt;
+static struct IOleCommandTargetVtbl ctvt;
 #define _IOleCommandTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblOleCommandTarget)))
 #define _ICOM_THIS_From_IOleCommandTarget(class, name) class* This = (class*)(((char*)name)-_IOleCommandTarget_Offset);
 
-static struct ICOM_VTABLE(IDropTarget) dtvt;
+static struct IDropTargetVtbl dtvt;
 #define _IDropTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblDropTarget)))
 #define _ICOM_THIS_From_IDropTarget(class, name) class* This = (class*)(((char*)name)-_IDropTarget_Offset);
 
-static struct ICOM_VTABLE(IDropSource) dsvt;
+static struct IDropSourceVtbl dsvt;
 #define _IDropSource_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblDropSource)))
 #define _ICOM_THIS_From_IDropSource(class, name) class* This = (class*)(((char*)name)-_IDropSource_Offset);
 
-static struct ICOM_VTABLE(IViewObject) vovt;
+static struct IViewObjectVtbl vovt;
 #define _IViewObject_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblViewObject)))
 #define _ICOM_THIS_From_IViewObject(class, name) class* This = (class*)(((char*)name)-_IViewObject_Offset);
 
@@ -1983,7 +1983,7 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 	return S_OK;
 }
 
-static struct ICOM_VTABLE(IShellView) svvt =
+static struct IShellViewVtbl svvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellView_fnQueryInterface,
@@ -2096,7 +2096,7 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 	return OLECMDERR_E_UNKNOWNGROUP;
 }
 
-static ICOM_VTABLE(IOleCommandTarget) ctvt =
+static IOleCommandTargetVtbl ctvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVOleCmdTarget_QueryInterface,
@@ -2192,7 +2192,7 @@ static HRESULT WINAPI ISVDropTarget_Drop(
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IDropTarget) dtvt =
+static struct IDropTargetVtbl dtvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVDropTarget_QueryInterface,
@@ -2263,7 +2263,7 @@ static HRESULT WINAPI ISVDropSource_GiveFeedback(
 	return DRAGDROP_S_USEDEFAULTCURSORS;
 }
 
-static struct ICOM_VTABLE(IDropSource) dsvt =
+static struct IDropSourceVtbl dsvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVDropSource_QueryInterface,
@@ -2395,7 +2395,7 @@ static HRESULT WINAPI ISVViewObject_GetAdvise(
 }
 
 
-static struct ICOM_VTABLE(IViewObject) vovt =
+static struct IViewObjectVtbl vovt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVViewObject_QueryInterface,

@@ -83,7 +83,7 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 ifac
 }
 
 
-ICOM_VTABLE(IDirect3DPixelShader9) Direct3DPixelShader9_Vtbl =
+IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DPixelShader9Impl_QueryInterface,

@@ -2570,7 +2570,7 @@ GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
+IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface,
@@ -2635,7 +2635,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
+IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_3_QueryInterface,
@@ -2693,7 +2693,7 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DDevice2) VTABLE_IDirect3DDevice2 =
+IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_2_QueryInterface,
@@ -2742,7 +2742,7 @@ ICOM_VTABLE(IDirect3DDevice2) VTABLE_IDirect3DDevice2 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DDevice) VTABLE_IDirect3DDevice =
+IDirect3DDeviceVtbl VTABLE_IDirect3DDevice =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_1_QueryInterface,

@@ -53,7 +53,7 @@ typedef struct
 
 } IEnumIDListImpl;
 
-static struct ICOM_VTABLE(IEnumIDList) eidlvt;
+static struct IEnumIDListVtbl eidlvt;
 
 /**************************************************************************
  *  AddToEnumList()
@@ -361,7 +361,7 @@ static HRESULT WINAPI IEnumIDList_fnClone(
 /**************************************************************************
  *  IEnumIDList_fnVTable
  */
-static ICOM_VTABLE (IEnumIDList) eidlvt =
+static IEnumIDListVtbl eidlvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEnumIDList_fnQueryInterface,

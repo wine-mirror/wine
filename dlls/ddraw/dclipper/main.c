@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *			DirectDrawCreateClipper (DDRAW.@)
  */
 
-static ICOM_VTABLE(IDirectDrawClipper) DDRAW_Clipper_VTable;
+static IDirectDrawClipperVtbl DDRAW_Clipper_VTable;
 
 HRESULT WINAPI DirectDrawCreateClipper(
     DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter
@@ -207,7 +207,7 @@ HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
     return DD_OK;
 }
 
-static ICOM_VTABLE(IDirectDrawClipper) DDRAW_Clipper_VTable =
+static IDirectDrawClipperVtbl DDRAW_Clipper_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawClipper_QueryInterface,

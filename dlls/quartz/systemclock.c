@@ -183,7 +183,7 @@ static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMs
   return PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
 }
 
-ICOM_VTABLE(IReferenceClock) SystemClock_Vtbl;
+IReferenceClockVtbl SystemClock_Vtbl;
 
 static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
   ICOM_THIS(SystemClockImpl,iface);
@@ -343,7 +343,7 @@ out:
   return ret;
 }
 
-ICOM_VTABLE(IReferenceClock) SystemClock_Vtbl = 
+IReferenceClockVtbl SystemClock_Vtbl = 
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     SystemClockImpl_QueryInterface,

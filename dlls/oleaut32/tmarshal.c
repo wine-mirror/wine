@@ -302,7 +302,7 @@ typedef struct _TMAsmProxy {
 
 typedef struct _TMProxyImpl {
     DWORD				*lpvtbl;
-    ICOM_VTABLE(IRpcProxyBuffer)	*lpvtbl2;
+    IRpcProxyBufferVtbl	*lpvtbl2;
     DWORD				ref;
 
     TMAsmProxy				*asmstubs;
@@ -367,7 +367,7 @@ TMProxyImpl_Disconnect(LPRPCPROXYBUFFER iface) {
 }
 
 
-static ICOM_VTABLE(IRpcProxyBuffer) tmproxyvtable = {
+static IRpcProxyBufferVtbl tmproxyvtable = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     TMProxyImpl_QueryInterface,
     TMProxyImpl_AddRef,
@@ -1436,7 +1436,7 @@ PSFacBuf_CreateProxy(
 }
 
 typedef struct _TMStubImpl {
-    ICOM_VTABLE(IRpcStubBuffer)	*lpvtbl;
+    IRpcStubBufferVtbl	*lpvtbl;
     DWORD			ref;
 
     LPUNKNOWN			pUnk;
@@ -1709,7 +1709,7 @@ TMStubImpl_DebugServerRelease(LPRPCSTUBBUFFER iface, LPVOID ppv) {
     return;
 }
 
-ICOM_VTABLE(IRpcStubBuffer) tmstubvtbl = {
+IRpcStubBufferVtbl tmstubvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     TMStubImpl_QueryInterface,
     TMStubImpl_AddRef,
@@ -1753,7 +1753,7 @@ PSFacBuf_CreateStub(
     return hres;
 }
 
-static ICOM_VTABLE(IPSFactoryBuffer) psfacbufvtbl = {
+static IPSFactoryBufferVtbl psfacbufvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PSFacBuf_QueryInterface,
     PSFacBuf_AddRef,
@@ -1763,7 +1763,7 @@ static ICOM_VTABLE(IPSFactoryBuffer) psfacbufvtbl = {
 };
 
 /* This is the whole PSFactoryBuffer object, just the vtableptr */
-static ICOM_VTABLE(IPSFactoryBuffer) *lppsfac = &psfacbufvtbl;
+static IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
 
 /***********************************************************************
  *           DllGetClassObject [OLE32.63]

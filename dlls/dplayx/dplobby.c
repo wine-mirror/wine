@@ -136,13 +136,13 @@ struct IDirectPlayLobby3Impl
 
 
 /* Forward declarations of virtual tables */
-static ICOM_VTABLE(IDirectPlayLobby)  directPlayLobbyWVT;
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT;
-static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3WVT;
+static IDirectPlayLobbyVtbl  directPlayLobbyWVT;
+static IDirectPlayLobby2Vtbl directPlayLobby2WVT;
+static IDirectPlayLobby3Vtbl directPlayLobby3WVT;
 
-static ICOM_VTABLE(IDirectPlayLobby)  directPlayLobbyAVT;
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT;
-static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT;
+static IDirectPlayLobbyVtbl  directPlayLobbyAVT;
+static IDirectPlayLobby2Vtbl directPlayLobby2AVT;
+static IDirectPlayLobby3Vtbl directPlayLobby3AVT;
 
 
 
@@ -1764,7 +1764,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 
 /* Direct Play Lobby 1 (ascii) Virtual Table for methods */
 /* All lobby 1 methods are exactly the same except QueryInterface */
-static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT =
+static struct IDirectPlayLobbyVtbl directPlayLobbyAVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1795,7 +1795,7 @@ static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT =
 #endif
 
 /* Direct Play Lobby 1 (unicode) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT =
+static IDirectPlayLobbyVtbl directPlayLobbyWVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1825,7 +1825,7 @@ static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT =
 #endif
 
 /* Direct Play Lobby 2 (ascii) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT =
+static IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1857,7 +1857,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT =
 #endif
 
 /* Direct Play Lobby 2 (unicode) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT =
+static IDirectPlayLobby2Vtbl directPlayLobby2WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1890,7 +1890,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT =
+static IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DPL_QueryInterface,
@@ -1927,7 +1927,7 @@ static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3WVT =
+static IDirectPlayLobby3Vtbl directPlayLobby3WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DPL_QueryInterface,

@@ -94,12 +94,12 @@ typedef struct tagCInterfaceStubHeader
 typedef struct tagCInterfaceStubVtbl
 {
   CInterfaceStubHeader header;
-  ICOM_VTABLE(IRpcStubBuffer) Vtbl;
+  IRpcStubBufferVtbl Vtbl;
 } CInterfaceStubVtbl;
 
 typedef struct tagCStdStubBuffer
 {
-  const ICOM_VTABLE(IRpcStubBuffer) *lpVtbl;
+  const IRpcStubBufferVtbl *lpVtbl;
   long RefCount;
   struct IUnknown *pvServerObject;
   const struct ICallFactoryVtbl *pCallFactoryVtbl;

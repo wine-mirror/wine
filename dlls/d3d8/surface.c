@@ -461,7 +461,7 @@ unlock_end:
 }
 
 
-ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
+IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DSurface8Impl_QueryInterface,

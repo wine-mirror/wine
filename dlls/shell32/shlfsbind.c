@@ -52,7 +52,7 @@ static ULONG WINAPI IFileSystemBindData_fnRelease(IFileSystemBindData *iface);
 static HRESULT WINAPI IFileSystemBindData_fnGetFindData(IFileSystemBindData *iface, WIN32_FIND_DATAW *pfd);
 static HRESULT WINAPI IFileSystemBindData_fnSetFindData(IFileSystemBindData *iface, const WIN32_FIND_DATAW *pfd);
 
-static struct ICOM_VTABLE(IFileSystemBindData) sbvt =
+static struct IFileSystemBindDataVtbl sbvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IFileSystemBindData_fnQueryInterface,

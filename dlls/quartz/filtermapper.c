@@ -49,8 +49,8 @@ typedef struct FilterMapper2Impl
     ULONG refCount;
 } FilterMapper2Impl;
 
-static struct ICOM_VTABLE(IFilterMapper2) fm2vtbl;
-static struct ICOM_VTABLE(IFilterMapper) fmvtbl;
+static struct IFilterMapper2Vtbl fm2vtbl;
+static struct IFilterMapperVtbl fmvtbl;
 
 #define _IFilterMapper_Offset ((int)(&(((FilterMapper2Impl*)0)->lpVtblFilterMapper)))
 #define ICOM_THIS_From_IFilterMapper(impl, iface) impl* This = (impl*)(((char*)iface)-_IFilterMapper_Offset)
@@ -984,7 +984,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
     return hr;
 }
 
-static ICOM_VTABLE(IFilterMapper2) fm2vtbl =
+static IFilterMapper2Vtbl fm2vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1471,7 +1471,7 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
     return hr;
 }
 
-static ICOM_VTABLE(IFilterMapper) fmvtbl =
+static IFilterMapperVtbl fmvtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

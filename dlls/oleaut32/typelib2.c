@@ -2798,7 +2798,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
 
 /*================== ICreateTypeInfo2 & ITypeInfo2 VTABLEs And Creation ===================================*/
 
-static ICOM_VTABLE(ICreateTypeInfo2) ctypeinfo2vt =
+static ICreateTypeInfo2Vtbl ctypeinfo2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -2847,7 +2847,7 @@ static ICOM_VTABLE(ICreateTypeInfo2) ctypeinfo2vt =
     ICreateTypeInfo2_fnSetName
 };
 
-static ICOM_VTABLE(ITypeInfo2) typeinfo2vt =
+static ITypeInfo2Vtbl typeinfo2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -3757,7 +3757,7 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
 
 /*================== ICreateTypeLib2 & ITypeLib2 VTABLEs And Creation ===================================*/
 
-static ICOM_VTABLE(ICreateTypeLib2) ctypelib2vt =
+static ICreateTypeLib2Vtbl ctypelib2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -3782,7 +3782,7 @@ static ICOM_VTABLE(ICreateTypeLib2) ctypelib2vt =
     ICreateTypeLib2_fnSetHelpStringDll
 };
 
-static ICOM_VTABLE(ITypeLib2) typelib2vt =
+static ITypeLib2Vtbl typelib2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

@@ -230,7 +230,7 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Stat (LPSTREAM iface, STATST
     return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IStream) DirectMusicLoaderFileStream_Stream_Vtbl = {
+IStreamVtbl DirectMusicLoaderFileStream_Stream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderFileStream_IStream_QueryInterface,
 	IDirectMusicLoaderFileStream_IStream_AddRef,
@@ -274,7 +274,7 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_GetLoader (LPD
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderFileStream_GetLoader_Vtbl = {
+IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_AddRef,
@@ -498,7 +498,7 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Stat (LPSTREAM iface, ST
     return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IStream) DirectMusicLoaderResourceStream_Stream_Vtbl = {
+IStreamVtbl DirectMusicLoaderResourceStream_Stream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderResourceStream_IStream_QueryInterface,
 	IDirectMusicLoaderResourceStream_IStream_AddRef,
@@ -542,7 +542,7 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_GetLoader 
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderResourceStream_GetLoader_Vtbl = {
+IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_AddRef,
@@ -758,7 +758,7 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Stat (LPSTREAM iface, STA
 	return IStream_Stat (This->pStream, pstatstg, grfStatFlag);
 }
 
-ICOM_VTABLE(IStream) DirectMusicLoaderGenericStream_Stream_Vtbl = {
+IStreamVtbl DirectMusicLoaderGenericStream_Stream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderGenericStream_IStream_QueryInterface,
 	IDirectMusicLoaderGenericStream_IStream_AddRef,
@@ -802,7 +802,7 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_GetLoader (
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderGenericStream_GetLoader_Vtbl = {
+IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef,

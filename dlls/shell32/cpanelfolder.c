@@ -70,10 +70,10 @@ typedef struct {
     int dwAttributes;		/* attributes returned by GetAttributesOf FIXME: use it */
 } ICPanelImpl;
 
-static ICOM_VTABLE(IShellFolder2) vt_ShellFolder2;
-static ICOM_VTABLE(IPersistFolder2) vt_PersistFolder2;
-static ICOM_VTABLE(IShellExecuteHookW) vt_ShellExecuteHookW;
-static ICOM_VTABLE(IShellExecuteHookA) vt_ShellExecuteHookA;
+static IShellFolder2Vtbl vt_ShellFolder2;
+static IPersistFolder2Vtbl vt_PersistFolder2;
+static IShellExecuteHookWVtbl vt_ShellExecuteHookW;
+static IShellExecuteHookAVtbl vt_ShellExecuteHookA;
 
 #define _IPersistFolder2_Offset	    ((int)(&(((ICPanelImpl*)0)->lpVtblPersistFolder2)))
 #define _ICOM_THIS_From_IPersistFolder2(class, name) class* This = (class*)(((char*)name)-_IPersistFolder2_Offset);
@@ -785,7 +785,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnMapColumnToSCID(IShellFolder2 * iface, 
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IShellFolder2) vt_ShellFolder2 =
+static IShellFolder2Vtbl vt_ShellFolder2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -892,7 +892,7 @@ static HRESULT WINAPI ICPanel_PersistFolder2_GetCurFolder(IPersistFolder2 * ifac
     return S_OK;
 }
 
-static ICOM_VTABLE(IPersistFolder2) vt_PersistFolder2 =
+static IPersistFolder2Vtbl vt_PersistFolder2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW* iface, LP
 	return S_FALSE;
 }
 
-static ICOM_VTABLE(IShellExecuteHookW) vt_ShellExecuteHookW =
+static IShellExecuteHookWVtbl vt_ShellExecuteHookW =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -1082,7 +1082,7 @@ static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA* iface, LP
 	return S_FALSE;
 }
 
-static ICOM_VTABLE(IShellExecuteHookA) vt_ShellExecuteHookA =
+static IShellExecuteHookAVtbl vt_ShellExecuteHookA =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

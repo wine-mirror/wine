@@ -59,7 +59,7 @@ static HRESULT WINAPI ChordMapCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) ChordMapCF_Vtbl = {
+static IClassFactoryVtbl ChordMapCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ChordMapCF_QueryInterface,
 	ChordMapCF_AddRef,
@@ -102,7 +102,7 @@ static HRESULT WINAPI ComposerCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) ComposerCF_Vtbl = {
+static IClassFactoryVtbl ComposerCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ComposerCF_QueryInterface,
 	ComposerCF_AddRef,
@@ -145,7 +145,7 @@ static HRESULT WINAPI ChordMapTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) ChordMapTrackCF_Vtbl = {
+static IClassFactoryVtbl ChordMapTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ChordMapTrackCF_QueryInterface,
 	ChordMapTrackCF_AddRef,
@@ -190,7 +190,7 @@ static HRESULT WINAPI TemplateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) TemplateCF_Vtbl = {
+static IClassFactoryVtbl TemplateCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	TemplateCF_QueryInterface,
 	TemplateCF_AddRef,
@@ -233,7 +233,7 @@ static HRESULT WINAPI SignPostTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SignPostTrackCF_Vtbl = {
+static IClassFactoryVtbl SignPostTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SignPostTrackCF_QueryInterface,
 	SignPostTrackCF_AddRef,

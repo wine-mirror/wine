@@ -95,8 +95,8 @@ static const DIDATAFORMAT Wine_InternalMouseFormat = {
     (LPDIOBJECTDATAFORMAT) Wine_InternalMouseObjectFormat
 };
 
-static ICOM_VTABLE(IDirectInputDevice8A) SysMouseAvt;
-static ICOM_VTABLE(IDirectInputDevice8W) SysMouseWvt;
+static IDirectInputDevice8AVtbl SysMouseAvt;
+static IDirectInputDevice8WVtbl SysMouseWvt;
 
 typedef struct SysMouseImpl SysMouseImpl;
 
@@ -1068,7 +1068,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
 }
 
 
-static ICOM_VTABLE(IDirectInputDevice8A) SysMouseAvt =
+static IDirectInputDevice8AVtbl SysMouseAvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectInputDevice2AImpl_QueryInterface,
@@ -1111,7 +1111,7 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysMouseAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInputDevice8W) SysMouseWvt =
+static IDirectInputDevice8WVtbl SysMouseWvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectInputDevice2WImpl_QueryInterface,

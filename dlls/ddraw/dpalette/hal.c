@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static ICOM_VTABLE(IDirectDrawPalette) DDRAW_HAL_Palette_VTable;
+static IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable;
 
 /******************************************************************************
  *			IDirectDrawPalette
@@ -125,7 +125,7 @@ void HAL_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This)
     Main_DirectDrawPalette_final_release(This);
 }
 
-static ICOM_VTABLE(IDirectDrawPalette) DDRAW_HAL_Palette_VTable =
+static IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawPalette_QueryInterface,

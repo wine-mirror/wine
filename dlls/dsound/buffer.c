@@ -145,7 +145,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectSoundNotify) dsnvt =
+IDirectSoundNotifyVtbl dsnvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSoundNotifyImpl_QueryInterface,
@@ -1010,7 +1010,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	return E_NOINTERFACE;
 }
 
-static ICOM_VTABLE(IDirectSoundBuffer8) dsbvt =
+static IDirectSoundBuffer8Vtbl dsbvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundBufferImpl_QueryInterface,
@@ -1505,7 +1505,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetObjectInPath(
 	return IDirectSoundBufferImpl_GetObjectInPath((LPDIRECTSOUNDBUFFER8)This->dsb,rguidObject,dwIndex,rguidInterface,ppObject);
 }
 
-static ICOM_VTABLE(IDirectSoundBuffer8) sbvt =
+static IDirectSoundBuffer8Vtbl sbvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SecondaryBufferImpl_QueryInterface,

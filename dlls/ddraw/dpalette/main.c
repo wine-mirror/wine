@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* For unsigned x. 0 is not a power of 2. */
 #define IS_POW_2(x) (((x) & ((x) - 1)) == 0)
 
-static ICOM_VTABLE(IDirectDrawPalette) DDRAW_Main_Palette_VTable;
+static IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable;
 
 /******************************************************************************
  *			IDirectDrawPalette
@@ -266,7 +266,7 @@ Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
     }
 }
 
-static ICOM_VTABLE(IDirectDrawPalette) DDRAW_Main_Palette_VTable =
+static IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawPalette_QueryInterface,

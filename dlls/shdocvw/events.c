@@ -103,7 +103,7 @@ static HRESULT WINAPI WBCPC_FindConnectionPoint(LPCONNECTIONPOINTCONTAINER iface
  * IConnectionPointContainer virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IConnectionPointContainer) WBCPC_Vtbl =
+static IConnectionPointContainerVtbl WBCPC_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBCPC_QueryInterface,
@@ -198,7 +198,7 @@ static HRESULT WINAPI WBCP_EnumConnections(LPCONNECTIONPOINT iface,
  * IConnectionPoint virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IConnectionPoint) WBCP_Vtbl =
+static IConnectionPointVtbl WBCP_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBCP_QueryInterface,

@@ -70,7 +70,7 @@ DirectDrawGammaControl_SetGammaRamp(LPDIRECTDRAWGAMMACONTROL iface, DWORD dwFlag
     return This->set_gamma_ramp(This, dwFlags, lpGammaRamp);
 }
 
-ICOM_VTABLE(IDirectDrawGammaControl) DDRAW_IDDGC_VTable =
+IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DirectDrawGammaControl_QueryInterface,

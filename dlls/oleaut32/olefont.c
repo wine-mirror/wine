@@ -63,12 +63,12 @@ struct OLEFontImpl
    * The first two are supported by the first vtable, the next two are
    * supported by the second table and the last two have their own.
    */
-  ICOM_VTABLE(IFont)*				lpvtbl1;
-  ICOM_VTABLE(IDispatch)*			lpvtbl2;
-  ICOM_VTABLE(IPersistStream)*			lpvtbl3;
-  ICOM_VTABLE(IConnectionPointContainer)*	lpvtbl4;
-  ICOM_VTABLE(IPersistPropertyBag)*		lpvtbl5;
-  ICOM_VTABLE(IPersistStreamInit)*		lpvtbl6;
+  IFontVtbl*				lpvtbl1;
+  IDispatchVtbl*			lpvtbl2;
+  IPersistStreamVtbl*			lpvtbl3;
+  IConnectionPointContainerVtbl*	lpvtbl4;
+  IPersistPropertyBagVtbl*		lpvtbl5;
+  IPersistStreamInitVtbl*		lpvtbl6;
   /*
    * Reference count for that instance of the class.
    */
@@ -220,7 +220,7 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
 /*
  * Virtual function tables for the OLEFontImpl class.
  */
-static ICOM_VTABLE(IFont) OLEFontImpl_VTable =
+static IFontVtbl OLEFontImpl_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_QueryInterface,
@@ -252,7 +252,7 @@ static ICOM_VTABLE(IFont) OLEFontImpl_VTable =
   OLEFontImpl_SetHdc
 };
 
-static ICOM_VTABLE(IDispatch) OLEFontImpl_IDispatch_VTable =
+static IDispatchVtbl OLEFontImpl_IDispatch_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IDispatch_QueryInterface,
@@ -264,7 +264,7 @@ static ICOM_VTABLE(IDispatch) OLEFontImpl_IDispatch_VTable =
   OLEFontImpl_Invoke
 };
 
-static ICOM_VTABLE(IPersistStream) OLEFontImpl_IPersistStream_VTable =
+static IPersistStreamVtbl OLEFontImpl_IPersistStream_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistStream_QueryInterface,
@@ -277,7 +277,7 @@ static ICOM_VTABLE(IPersistStream) OLEFontImpl_IPersistStream_VTable =
   OLEFontImpl_GetSizeMax
 };
 
-static ICOM_VTABLE(IConnectionPointContainer)
+static IConnectionPointContainerVtbl
      OLEFontImpl_IConnectionPointContainer_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -288,8 +288,8 @@ static ICOM_VTABLE(IConnectionPointContainer)
   OLEFontImpl_FindConnectionPoint
 };
 
-static ICOM_VTABLE(IPersistPropertyBag) OLEFontImpl_IPersistPropertyBag_VTable;
-static ICOM_VTABLE(IPersistStreamInit) OLEFontImpl_IPersistStreamInit_VTable;
+static IPersistPropertyBagVtbl OLEFontImpl_IPersistPropertyBag_VTable;
+static IPersistStreamInitVtbl OLEFontImpl_IPersistStreamInit_VTable;
 /******************************************************************************
  *		OleCreateFontIndirect	[OLEAUT32.420]
  */
@@ -1855,7 +1855,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Save(
   return E_FAIL;
 }
 
-static ICOM_VTABLE(IPersistPropertyBag) OLEFontImpl_IPersistPropertyBag_VTable = 
+static IPersistPropertyBagVtbl OLEFontImpl_IPersistPropertyBag_VTable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistPropertyBag_QueryInterface,
@@ -1934,7 +1934,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_InitNew(
   return S_OK;
 }
 
-static ICOM_VTABLE(IPersistStreamInit) OLEFontImpl_IPersistStreamInit_VTable = 
+static IPersistStreamInitVtbl OLEFontImpl_IPersistStreamInit_VTable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistStreamInit_QueryInterface,
@@ -1992,7 +1992,7 @@ static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SFCF_Vtbl = {
+static IClassFactoryVtbl SFCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SFCF_QueryInterface,
 	SFCF_AddRef,

@@ -45,7 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable;
+static IDirectDraw7Vtbl HAL_DirectDraw_VTable;
 
 static DDVERSIONDATA hal_version;
 static DD32BITDRIVERDATA hal_driverdata;
@@ -550,7 +550,7 @@ HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 }
 
 
-static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable =
+static IDirectDraw7Vtbl HAL_DirectDraw_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,

@@ -57,7 +57,7 @@ static HRESULT WINAPI ICMStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,
 static HRESULT WINAPI ICMStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
 static HRESULT WINAPI ICMStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
-struct ICOM_VTABLE(IAVIStream) iicmst = {
+struct IAVIStreamVtbl iicmst = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   ICMStream_fnQueryInterface,
   ICMStream_fnAddRef,

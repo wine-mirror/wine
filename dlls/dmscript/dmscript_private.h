@@ -51,14 +51,14 @@ typedef struct IDirectMusicScriptTrack IDirectMusicScriptTrack;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IUnknown)           DirectMusicScript_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicScript) DirectMusicScript_Script_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject) DirectMusicScript_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicScript_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicScript_Unknown_Vtbl;
+extern IDirectMusicScriptVtbl DirectMusicScript_Script_Vtbl;
+extern IDirectMusicObjectVtbl DirectMusicScript_Object_Vtbl;
+extern IPersistStreamVtbl     DirectMusicScript_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicScriptTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicScriptTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicScriptTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicScriptTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicScriptTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicScriptTrack_PersistStream_Vtbl;
 
 /*****************************************************************************
  * ClassFactory
@@ -72,10 +72,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack (LPCGUID lpcGUID, LPVO
  */
 struct IDirectMusicScriptImpl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicScript) *ScriptVtbl;
-  ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicScriptVtbl *ScriptVtbl;
+  IDirectMusicObjectVtbl *ObjectVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicScriptImpl fields */
@@ -127,9 +127,9 @@ extern HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetSizeMax (LPPERSIS
  */
 struct IDirectMusicScriptTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicScriptTrack fields */

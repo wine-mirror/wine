@@ -83,7 +83,7 @@ HRESULT WINAPI BindCtxImpl_Destroy(BindCtxImpl* This);
 HRESULT WINAPI BindCtxImpl_GetObjectIndex(BindCtxImpl* This,IUnknown* punk,LPOLESTR pszkey,DWORD *index);
 
 /* Virtual function table for the BindCtx class. */
-static ICOM_VTABLE(IBindCtx) VT_BindCtxImpl =
+static IBindCtxVtbl VT_BindCtxImpl =
     {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     BindCtxImpl_QueryInterface,

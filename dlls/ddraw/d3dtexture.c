@@ -825,7 +825,7 @@ Thunk_IDirect3DTextureImpl_1_Load(LPDIRECT3DTEXTURE iface,
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
+IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
@@ -847,7 +847,7 @@ ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DTexture) VTABLE_IDirect3DTexture =
+IDirect3DTextureVtbl VTABLE_IDirect3DTexture =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_1_QueryInterface,

@@ -76,7 +76,7 @@ typedef struct {
 #define _IUnknown_(This)	(IShellFolder*)&(This->lpVtbl)
 #define _IShellFolder_(This)	(IShellFolder*)&(This->lpVtbl)
 
-static struct ICOM_VTABLE (IShellFolder2) vt_MCFldr_ShellFolder2;
+static struct IShellFolder2Vtbl vt_MCFldr_ShellFolder2;
 
 static shvheader DesktopSFHeader[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
@@ -712,7 +712,7 @@ static HRESULT WINAPI ISF_Desktop_fnMapColumnToSCID (IShellFolder2 * iface, UINT
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE (IShellFolder2) vt_MCFldr_ShellFolder2 =
+static IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISF_Desktop_fnQueryInterface,

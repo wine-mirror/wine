@@ -80,11 +80,11 @@ typedef struct {
     BOOL fAcceptFmt;		/* flag for pending Drop */
 } IGenericSFImpl;
 
-static struct ICOM_VTABLE (IUnknown) unkvt;
-static struct ICOM_VTABLE (IShellFolder2) sfvt;
-static struct ICOM_VTABLE (IPersistFolder3) vt_FSFldr_PersistFolder3;	/* IPersistFolder3 for a FS_Folder */
-static struct ICOM_VTABLE (IDropTarget) dtvt;
-static struct ICOM_VTABLE (ISFHelper) shvt;
+static struct IUnknownVtbl unkvt;
+static struct IShellFolder2Vtbl sfvt;
+static struct IPersistFolder3Vtbl vt_FSFldr_PersistFolder3;	/* IPersistFolder3 for a FS_Folder */
+static struct IDropTargetVtbl dtvt;
+static struct ISFHelperVtbl shvt;
 
 #define _IShellFolder2_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblShellFolder)))
 #define _ICOM_THIS_From_IShellFolder2(class, name) class* This = (class*)(((char*)name)-_IShellFolder2_Offset);
@@ -196,7 +196,7 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
     return This->ref;
 }
 
-static ICOM_VTABLE (IUnknown) unkvt =
+static IUnknownVtbl unkvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE IUnknown_fnQueryInterface,
       IUnknown_fnAddRef,
@@ -858,7 +858,7 @@ static HRESULT WINAPI IShellFolder_fnMapColumnToSCID (IShellFolder2 * iface, UIN
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE (IShellFolder2) sfvt =
+static IShellFolder2Vtbl sfvt =
 {
         ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellFolder_fnQueryInterface,
@@ -1098,7 +1098,7 @@ ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl, LPC
     return S_OK;
 }
 
-static ICOM_VTABLE (ISFHelper) shvt =
+static ISFHelperVtbl shvt =
 {
         ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFHelper_fnQueryInterface,
@@ -1274,7 +1274,7 @@ IFSFldr_PersistFolder3_GetFolderTargetInfo (IPersistFolder3 * iface, PERSIST_FOL
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE (IPersistFolder3) vt_FSFldr_PersistFolder3 =
+static IPersistFolder3Vtbl vt_FSFldr_PersistFolder3 =
 {
         ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IFSFldr_PersistFolder3_QueryInterface,
@@ -1389,7 +1389,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject, DWORD dwKeyS
     return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE (IDropTarget) dtvt = {
+static struct IDropTargetVtbl dtvt = {
         ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFDropTarget_QueryInterface,
 	ISFDropTarget_AddRef,

@@ -508,7 +508,7 @@ static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSCF_Vtbl = {
+static IClassFactoryVtbl DSCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DSCF_QueryInterface,
 	DSCF_AddRef,
@@ -575,7 +575,7 @@ DSPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSPCF_Vtbl = {
+static IClassFactoryVtbl DSPCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DSPCF_QueryInterface,
 	DSPCF_AddRef,

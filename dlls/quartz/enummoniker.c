@@ -43,7 +43,7 @@ typedef struct EnumMonikerImpl
     ULONG index;
 } EnumMonikerImpl;
 
-static struct ICOM_VTABLE(IEnumMoniker) EnumMonikerImpl_Vtbl;
+static struct IEnumMonikerVtbl EnumMonikerImpl_Vtbl;
 
 static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface);
 
@@ -187,7 +187,7 @@ static HRESULT WINAPI EnumMonikerImpl_Clone(LPENUMMONIKER iface, IEnumMoniker **
 /**********************************************************************
  * IEnumMoniker_Vtbl
  */
-static ICOM_VTABLE(IEnumMoniker) EnumMonikerImpl_Vtbl =
+static IEnumMonikerVtbl EnumMonikerImpl_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     EnumMonikerImpl_QueryInterface,

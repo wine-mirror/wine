@@ -942,7 +942,7 @@ IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 This,
     return hr;
 }
 
-ICOM_VTABLE(IDirectDraw) DDRAW_IDirectDraw_VTable =
+IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDrawImpl_QueryInterface,
@@ -970,7 +970,7 @@ ICOM_VTABLE(IDirectDraw) DDRAW_IDirectDraw_VTable =
     IDirectDrawImpl_WaitForVerticalBlank,
 };
 
-ICOM_VTABLE(IDirectDraw2) DDRAW_IDirectDraw2_VTable =
+IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDraw2Impl_QueryInterface,
@@ -999,7 +999,7 @@ ICOM_VTABLE(IDirectDraw2) DDRAW_IDirectDraw2_VTable =
     IDirectDraw2Impl_GetAvailableVidMem
 };
 
-ICOM_VTABLE(IDirectDraw4) DDRAW_IDirectDraw4_VTable =
+IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDraw4Impl_QueryInterface,

@@ -45,7 +45,7 @@ typedef struct PrivateData
     DWORD size;
 } PrivateData;
 
-extern ICOM_VTABLE(IDirectDrawGammaControl) DDRAW_IDDGC_VTable;
+extern IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable;
 
 /* Non-interface functions */
 HRESULT

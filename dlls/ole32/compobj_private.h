@@ -55,7 +55,7 @@ typedef struct tagXIF {
 
 /* exported object */
 typedef struct tagXOBJECT {
-  ICOM_VTABLE(IRpcStubBuffer) *lpVtbl;
+  IRpcStubBufferVtbl *lpVtbl;
   struct tagAPARTMENT *parent;
   struct tagXOBJECT *next;
   LPUNKNOWN obj;           /* object identity (IUnknown) */
@@ -78,7 +78,7 @@ typedef struct tagIIF {
 
 /* imported object */
 typedef struct tagIOBJECT {
-  ICOM_VTABLE(IRemUnknown) *lpVtbl;
+  IRemUnknownVtbl *lpVtbl;
   struct tagAPARTMENT *parent;
   struct tagIOBJECT *next;
   LPRPCCHANNELBUFFER chan; /* channel to object */

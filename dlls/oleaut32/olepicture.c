@@ -96,10 +96,10 @@ typedef struct OLEPictureImpl {
    * IPicture handles IUnknown
    */
 
-    ICOM_VTABLE(IPicture)       *lpvtbl1;
-    ICOM_VTABLE(IDispatch)      *lpvtbl2;
-    ICOM_VTABLE(IPersistStream) *lpvtbl3;
-    ICOM_VTABLE(IConnectionPointContainer) *lpvtbl4;
+    IPictureVtbl       *lpvtbl1;
+    IDispatchVtbl      *lpvtbl2;
+    IPersistStreamVtbl *lpvtbl3;
+    IConnectionPointContainerVtbl *lpvtbl4;
 
   /* Object referenece count */
     DWORD ref;
@@ -145,10 +145,10 @@ typedef struct OLEPictureImpl {
 /*
  * Predeclare VTables.  They get initialized at the end.
  */
-static ICOM_VTABLE(IPicture) OLEPictureImpl_VTable;
-static ICOM_VTABLE(IDispatch) OLEPictureImpl_IDispatch_VTable;
-static ICOM_VTABLE(IPersistStream) OLEPictureImpl_IPersistStream_VTable;
-static ICOM_VTABLE(IConnectionPointContainer) OLEPictureImpl_IConnectionPointContainer_VTable;
+static IPictureVtbl OLEPictureImpl_VTable;
+static IDispatchVtbl OLEPictureImpl_IDispatch_VTable;
+static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable;
+static IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable;
 
 /***********************************************************************
  * Implementation of the OLEPictureImpl class.
@@ -1469,7 +1469,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
 }
 
 
-static ICOM_VTABLE(IPicture) OLEPictureImpl_VTable =
+static IPictureVtbl OLEPictureImpl_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_QueryInterface,
@@ -1491,7 +1491,7 @@ static ICOM_VTABLE(IPicture) OLEPictureImpl_VTable =
   OLEPictureImpl_get_Attributes
 };
 
-static ICOM_VTABLE(IDispatch) OLEPictureImpl_IDispatch_VTable =
+static IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IDispatch_QueryInterface,
@@ -1503,7 +1503,7 @@ static ICOM_VTABLE(IDispatch) OLEPictureImpl_IDispatch_VTable =
   OLEPictureImpl_Invoke
 };
 
-static ICOM_VTABLE(IPersistStream) OLEPictureImpl_IPersistStream_VTable =
+static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IPersistStream_QueryInterface,
@@ -1516,7 +1516,7 @@ static ICOM_VTABLE(IPersistStream) OLEPictureImpl_IPersistStream_VTable =
   OLEPictureImpl_GetSizeMax
 };
 
-static ICOM_VTABLE(IConnectionPointContainer) OLEPictureImpl_IConnectionPointContainer_VTable =
+static IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IConnectionPointContainer_QueryInterface,
@@ -1680,7 +1680,7 @@ static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SPCF_Vtbl = {
+static IClassFactoryVtbl SPCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SPCF_QueryInterface,
 	SPCF_AddRef,

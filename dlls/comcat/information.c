@@ -276,7 +276,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
 /**********************************************************************
  * COMCAT_ICatInformation_Vtbl
  */
-ICOM_VTABLE(ICatInformation) COMCAT_ICatInformation_Vtbl =
+ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_ICatInformation_QueryInterface,
@@ -449,7 +449,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
     return S_OK;
 }
 
-ICOM_VTABLE(IEnumCATEGORYINFO) COMCAT_IEnumCATEGORYINFO_Vtbl =
+IEnumCATEGORYINFOVtbl COMCAT_IEnumCATEGORYINFO_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_IEnumCATEGORYINFO_QueryInterface,
@@ -757,7 +757,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
     return S_OK;
 }
 
-ICOM_VTABLE(IEnumGUID) COMCAT_CLSID_IEnumGUID_Vtbl =
+IEnumGUIDVtbl COMCAT_CLSID_IEnumGUID_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_CLSID_IEnumGUID_QueryInterface,
@@ -932,7 +932,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Clone(
     return S_OK;
 }
 
-ICOM_VTABLE(IEnumGUID) COMCAT_CATID_IEnumGUID_Vtbl =
+IEnumGUIDVtbl COMCAT_CATID_IEnumGUID_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_CATID_IEnumGUID_QueryInterface,

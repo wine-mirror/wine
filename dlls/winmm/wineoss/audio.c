@@ -2456,7 +2456,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QuerySupport(
     return DSERR_UNSUPPORTED;
 }
 
-ICOM_VTABLE(IDsDriverPropertySet) dsdpsvt =
+IDsDriverPropertySetVtbl dsdpsvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverPropertySetImpl_QueryInterface,
@@ -2552,7 +2552,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-ICOM_VTABLE(IDsDriverNotify) dsdnvt =
+IDsDriverNotifyVtbl dsdnvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverNotifyImpl_QueryInterface,
@@ -2871,7 +2871,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     return DS_OK;
 }
 
-static ICOM_VTABLE(IDsDriverBuffer) dsdbvt =
+static IDsDriverBufferVtbl dsdbvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverBufferImpl_QueryInterface,
@@ -3097,7 +3097,7 @@ static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
     return DSERR_INVALIDCALL;
 }
 
-static ICOM_VTABLE(IDsDriver) dsdvt =
+static IDsDriverVtbl dsdvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverImpl_QueryInterface,
@@ -4103,7 +4103,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     return DSERR_UNSUPPORTED;
 }
 
-ICOM_VTABLE(IDsDriverPropertySet) dscdpsvt =
+IDsDriverPropertySetVtbl dscdpsvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsCaptureDriverPropertySetImpl_QueryInterface,
@@ -4202,7 +4202,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-ICOM_VTABLE(IDsDriverNotify) dscdnvt =
+IDsDriverNotifyVtbl dscdnvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsCaptureDriverNotifyImpl_QueryInterface,
@@ -4486,7 +4486,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(
     return DSERR_UNSUPPORTED;
 }
 
-static ICOM_VTABLE(IDsCaptureDriverBuffer) dscdbvt =
+static IDsCaptureDriverBufferVtbl dscdbvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsCaptureDriverBufferImpl_QueryInterface,
@@ -4693,7 +4693,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     return DS_OK;
 }
 
-static ICOM_VTABLE(IDsCaptureDriver) dscdvt =
+static IDsCaptureDriverVtbl dscdvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsCaptureDriverImpl_QueryInterface,

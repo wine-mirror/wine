@@ -64,7 +64,7 @@ typedef struct
   HKEY hkeyProgID;
 } IQueryAssociationsImpl;
 
-static struct ICOM_VTABLE(IQueryAssociations) IQueryAssociations_vtbl;
+static struct IQueryAssociationsVtbl IQueryAssociations_vtbl;
 
 /**************************************************************************
  *  IQueryAssociations_Constructor [internal]
@@ -691,7 +691,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetEnum(
   return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IQueryAssociations) IQueryAssociations_vtbl =
+static struct IQueryAssociationsVtbl IQueryAssociations_vtbl =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IQueryAssociations_fnQueryInterface,

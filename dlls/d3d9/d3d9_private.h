@@ -169,7 +169,7 @@ typedef struct D3DSHADERVECTORI {
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3D9) Direct3D9_Vtbl;
+extern IDirect3D9Vtbl Direct3D9_Vtbl;
 
 /*****************************************************************************
  * IDirect3D implementation structure
@@ -214,7 +214,7 @@ extern HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adap
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DDevice9) Direct3DDevice9_Vtbl;
+extern IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DDevice9 implementation structure
@@ -419,7 +419,7 @@ extern HRESULT  WINAPI  IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DVolume9) Direct3DVolume9_Vtbl;
+extern IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVolume9 implementation structure
@@ -470,7 +470,7 @@ extern HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface);
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DSwapChain9) Direct3DSwapChain9_Vtbl;
+extern IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DSwapChain9 implementation structure
@@ -511,7 +511,7 @@ extern HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWA
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DResource9) Direct3DResource9_Vtbl;
+extern IDirect3DResource9Vtbl Direct3DResource9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DResource9 implementation structure
@@ -550,7 +550,7 @@ extern D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DSurface9) Direct3DSurface9_Vtbl;
+extern IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DSurface9 implementation structure
@@ -610,7 +610,7 @@ extern HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, 
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DVertexBuffer9) Direct3DVertexBuffer9_Vtbl;
+extern IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexBuffer9 implementation structure
@@ -658,7 +658,7 @@ extern HRESULT  WINAPI        IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTE
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DIndexBuffer9) Direct3DIndexBuffer9_Vtbl;
+extern IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DIndexBuffer9 implementation structure
@@ -706,7 +706,7 @@ extern HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXB
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DBaseTexture9) Direct3DBaseTexture9_Vtbl;
+extern IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DBaseTexture9 implementation structure
@@ -758,7 +758,7 @@ extern void     WINAPI        IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPD
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DCubeTexture9) Direct3DCubeTexture9_Vtbl;
+extern IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DCubeTexture9 implementation structure
@@ -822,7 +822,7 @@ extern HRESULT  WINAPI        IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DC
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DTexture9) Direct3DTexture9_Vtbl;
+extern IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DTexture9 implementation structure
@@ -887,7 +887,7 @@ extern HRESULT  WINAPI        IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTU
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DVolumeTexture9) Direct3DVolumeTexture9_Vtbl;
+extern IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVolumeTexture9 implementation structure
@@ -953,7 +953,7 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3D
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DStateBlock9) Direct3DStateBlock9_Vtbl;
+extern IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DStateBlock9 implementation structure
@@ -1051,7 +1051,7 @@ extern HRESULT WINAPI         IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOC
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DVertexDeclaration9) Direct3DVertexDeclaration9_Vtbl;
+extern IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexShaderDeclaration implementation structure
@@ -1090,7 +1090,7 @@ extern HRESULT  WINAPI      IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIR
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DVertexShader9) Direct3DVertexShader9_Vtbl;
+extern IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
@@ -1132,7 +1132,7 @@ extern HRESULT WINAPI         IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DV
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DPixelShader9) Direct3DPixelShader9_Vtbl;
+extern IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
@@ -1173,7 +1173,7 @@ extern HRESULT WINAPI         IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPI
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirect3DQuery9) Direct3DQuery9_Vtbl;
+extern IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure

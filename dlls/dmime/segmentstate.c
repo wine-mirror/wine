@@ -97,7 +97,7 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGME
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicSegmentState8) DirectMusicSegmentState8_Vtbl = {
+IDirectMusicSegmentState8Vtbl DirectMusicSegmentState8_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSegmentState8Impl_QueryInterface,
 	IDirectMusicSegmentState8Impl_AddRef,

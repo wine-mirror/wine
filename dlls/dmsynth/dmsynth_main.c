@@ -61,7 +61,7 @@ static HRESULT WINAPI SynthCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SynthCF_Vtbl = {
+static IClassFactoryVtbl SynthCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SynthCF_QueryInterface,
 	SynthCF_AddRef,
@@ -104,7 +104,7 @@ static HRESULT WINAPI SynthSinkCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SynthSinkCF_Vtbl = {
+static IClassFactoryVtbl SynthSinkCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SynthSinkCF_QueryInterface,
 	SynthSinkCF_AddRef,

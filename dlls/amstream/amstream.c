@@ -37,7 +37,7 @@ typedef struct {
     int ref;
 } IAMMultiMediaStreamImpl;
 
-static struct ICOM_VTABLE(IAMMultiMediaStream) AM_Vtbl;
+static struct IAMMultiMediaStreamVtbl AM_Vtbl;
 
 HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
@@ -243,7 +243,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IAMMultiMediaStream) AM_Vtbl =
+static IAMMultiMediaStreamVtbl AM_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAMMultiMediaStreamImpl_QueryInterface,

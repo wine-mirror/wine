@@ -302,7 +302,7 @@ static void light_released(IDirectDrawImpl *This, GLenum light_num)
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
+IDirect3D7Vtbl VTABLE_IDirect3D7 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_7_QueryInterface,
@@ -326,7 +326,7 @@ ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3D3) VTABLE_IDirect3D3 =
+IDirect3D3Vtbl VTABLE_IDirect3D3 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_3_QueryInterface,
@@ -354,7 +354,7 @@ ICOM_VTABLE(IDirect3D3) VTABLE_IDirect3D3 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3D2) VTABLE_IDirect3D2 =
+IDirect3D2Vtbl VTABLE_IDirect3D2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_2_QueryInterface,
@@ -379,7 +379,7 @@ ICOM_VTABLE(IDirect3D2) VTABLE_IDirect3D2 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3D) VTABLE_IDirect3D =
+IDirect3DVtbl VTABLE_IDirect3D =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_1_QueryInterface,

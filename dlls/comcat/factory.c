@@ -128,7 +128,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_LockServer(
 /**********************************************************************
  * IClassFactory_Vtbl
  */
-static ICOM_VTABLE(IClassFactory) IClassFactory_Vtbl =
+static IClassFactoryVtbl IClassFactory_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_IClassFactory_QueryInterface,

@@ -550,7 +550,7 @@ static HRESULT WINAPI DummyDispatch_Invoke(LPDISPATCH iface,
   return S_OK;
 }
 
-static ICOM_VTABLE(IDispatch) DummyDispatch_VTable =
+static IDispatchVtbl DummyDispatch_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DummyDispatch_QueryInterface,

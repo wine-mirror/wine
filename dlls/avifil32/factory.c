@@ -48,7 +48,7 @@ static ULONG   WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface);
 static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj);
 static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL dolock);
 
-static ICOM_VTABLE(IClassFactory) iclassfact = {
+static IClassFactoryVtbl iclassfact = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IClassFactory_fnQueryInterface,
   IClassFactory_fnAddRef,

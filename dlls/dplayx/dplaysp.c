@@ -73,7 +73,7 @@ struct IDirectPlaySPImpl
 };
 
 /* Forward declaration of virtual tables */
-static ICOM_VTABLE(IDirectPlaySP) directPlaySPVT;
+static IDirectPlaySPVtbl directPlaySPVT;
 
 /* This structure is passed to the DP object for safe keeping */
 typedef struct tagDP_SPPLAYERDATA
@@ -943,7 +943,7 @@ static VOID WINAPI IDirectPlaySPImpl_SendComplete
 }
 
 
-static struct ICOM_VTABLE(IDirectPlaySP) directPlaySPVT =
+static struct IDirectPlaySPVtbl directPlaySPVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

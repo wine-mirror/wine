@@ -52,20 +52,20 @@ typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IUnknown)             DirectMusicChordMap_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicChordMap) DirectMusicChordMap_ChordMap_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject)   DirectMusicChordMap_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)       DirectMusicChordMap_PersistStream_Vtbl;
+extern IUnknownVtbl             DirectMusicChordMap_Unknown_Vtbl;
+extern IDirectMusicChordMapVtbl DirectMusicChordMap_ChordMap_Vtbl;
+extern IDirectMusicObjectVtbl   DirectMusicChordMap_Object_Vtbl;
+extern IPersistStreamVtbl       DirectMusicChordMap_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IDirectMusicComposer) DirectMusicComposer_Vtbl;
+extern IDirectMusicComposerVtbl DirectMusicComposer_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)             DirectMusicChordMapTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8)   DirectMusicChordMapTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)       DirectMusicChordMapTrack_PersistStream_Vtbl;
+extern IUnknownVtbl             DirectMusicChordMapTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl   DirectMusicChordMapTrack_Track_Vtbl;
+extern IPersistStreamVtbl       DirectMusicChordMapTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)             DirectMusicSignPostTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8)   DirectMusicSignPostTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)       DirectMusicSignPostTrack_PersistStream_Vtbl;
+extern IUnknownVtbl             DirectMusicSignPostTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl   DirectMusicSignPostTrack_Track_Vtbl;
+extern IPersistStreamVtbl       DirectMusicSignPostTrack_PersistStream_Vtbl;
 
 /*****************************************************************************
  * ClassFactory
@@ -80,10 +80,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LP
  */
 struct IDirectMusicChordMapImpl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicChordMap) *ChordMapVtbl;
-  ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicChordMapVtbl *ChordMapVtbl;
+  IDirectMusicObjectVtbl *ObjectVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD ref;
 
   /* IDirectMusicChordMapImpl fields */
@@ -146,9 +146,9 @@ extern HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMP
  */
 struct IDirectMusicChordMapTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicChordMapTrack fields */
@@ -194,9 +194,9 @@ extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetSizeMax (LPPER
  */
 struct IDirectMusicSignPostTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicSignPostTrack fields */

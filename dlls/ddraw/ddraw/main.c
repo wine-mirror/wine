@@ -74,9 +74,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-extern ICOM_VTABLE(IDirectDraw) DDRAW_IDirectDraw_VTable;
-extern ICOM_VTABLE(IDirectDraw2) DDRAW_IDirectDraw2_VTable;
-extern ICOM_VTABLE(IDirectDraw4) DDRAW_IDirectDraw4_VTable;
+extern IDirectDrawVtbl DDRAW_IDirectDraw_VTable;
+extern IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable;
+extern IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable;
 
 static void DDRAW_UnsubclassWindow(IDirectDrawImpl* This);
 
@@ -1418,7 +1418,7 @@ void Uninit_DirectDraw_final_release(IDirectDrawImpl *This)
     Main_DirectDraw_final_release(This);
 }
 
-static ICOM_VTABLE(IDirectDraw7) Uninit_DirectDraw_VTable;
+static IDirectDraw7Vtbl Uninit_DirectDraw_VTable;
 
 /* Not called from the vtable. */
 HRESULT Uninit_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
@@ -1658,7 +1658,7 @@ Uninit_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface, DWORD dwFlags,
     return DDERR_NOTINITIALIZED;
 }
 
-static ICOM_VTABLE(IDirectDraw7) Uninit_DirectDraw_VTable =
+static IDirectDraw7Vtbl Uninit_DirectDraw_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,

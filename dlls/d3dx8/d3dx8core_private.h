@@ -38,7 +38,7 @@ typedef struct ID3DXFontImpl   ID3DXFontImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(ID3DXBuffer) D3DXBuffer_Vtbl;
+extern ID3DXBufferVtbl D3DXBuffer_Vtbl;
 
 /*****************************************************************************
  * ID3DXBufferImpl implementation structure
@@ -70,7 +70,7 @@ extern DWORD WINAPI  ID3DXBufferImpl_GetBufferSize(LPD3DXBUFFER iface);
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(ID3DXFont) D3DXFont_Vtbl;
+extern ID3DXFontVtbl D3DXFont_Vtbl;
 
 /*****************************************************************************
  * ID3DXFontImpl implementation structure

@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static ICOM_VTABLE(IDirectDrawSurface7) HAL_IDirectDrawSurface7_VTable;
+static IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable;
 
 static HRESULT HAL_DirectDrawSurface_create_surface(IDirectDrawSurfaceImpl* This,
 						    IDirectDrawImpl* pDD)
@@ -362,7 +362,7 @@ HWND HAL_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This)
     return 0;
 }
 
-static ICOM_VTABLE(IDirectDrawSurface7) HAL_IDirectDrawSurface7_VTable =
+static IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,

@@ -220,7 +220,7 @@ HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE9 if
 }
 
 
-ICOM_VTABLE(IDirect3DCubeTexture9) Direct3DCubeTexture9_Vtbl =
+IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DCubeTexture9Impl_QueryInterface,

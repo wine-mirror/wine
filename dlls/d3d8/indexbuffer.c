@@ -125,7 +125,7 @@ HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 
     return D3D_OK;
 }
 
-ICOM_VTABLE(IDirect3DIndexBuffer8) Direct3DIndexBuffer8_Vtbl =
+IDirect3DIndexBuffer8Vtbl Direct3DIndexBuffer8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DIndexBuffer8Impl_QueryInterface,

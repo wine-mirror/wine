@@ -220,7 +220,7 @@ HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CO
   return DPN_OK; 
 }
 
-ICOM_VTABLE(IDirectPlay8Client) DirectPlay8Client_Vtbl =
+IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectPlay8ClientImpl_QueryInterface,

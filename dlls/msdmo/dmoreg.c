@@ -94,7 +94,7 @@ typedef struct
 const GUID IID_IEnumDMO = { 0x2c3cd98a, 0x2bfa, 0x4a53,
     { 0x9c, 0x27, 0x52, 0x49, 0xba, 0x64, 0xba, 0x0f}};
 
-static struct ICOM_VTABLE(IEnumDMO) edmovt;
+static struct IEnumDMOVtbl edmovt;
 
 static LPWSTR GUIDToString(LPWSTR lpwstr, REFGUID lpcguid)
 {
@@ -647,7 +647,7 @@ HRESULT WINAPI DMOEnum(
 }
 
 
-static ICOM_VTABLE (IEnumDMO) edmovt =
+static IEnumDMOVtbl edmovt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEnumDMO_fnQueryInterface,

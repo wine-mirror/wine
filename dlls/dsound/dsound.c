@@ -696,7 +696,7 @@ static HRESULT WINAPI IDirectSoundImpl_VerifyCertification(
     return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound8) IDirectSoundImpl_Vtbl =
+static IDirectSound8Vtbl IDirectSoundImpl_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSoundImpl_QueryInterface,
@@ -978,7 +978,7 @@ static ULONG WINAPI IDirectSound_IUnknown_Release(
     return ulReturn;
 }
 
-static ICOM_VTABLE(IUnknown) DirectSound_Unknown_Vtbl =
+static IUnknownVtbl DirectSound_Unknown_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSound_IUnknown_QueryInterface,
@@ -1132,7 +1132,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_Initialize(
     return IDirectSoundImpl_Initialize(This->pds,lpcGuid);
 }
 
-static ICOM_VTABLE(IDirectSound) DirectSound_DirectSound_Vtbl =
+static IDirectSoundVtbl DirectSound_DirectSound_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSound_IDirectSound_QueryInterface,
@@ -1219,7 +1219,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_Release(
     return ulReturn;
 }
 
-static ICOM_VTABLE(IUnknown) DirectSound8_Unknown_Vtbl =
+static IUnknownVtbl DirectSound8_Unknown_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSound8_IUnknown_QueryInterface,
@@ -1373,7 +1373,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_Initialize(
     return IDirectSoundImpl_Initialize(This->pds,lpcGuid);
 }
 
-static ICOM_VTABLE(IDirectSound) DirectSound8_DirectSound_Vtbl =
+static IDirectSoundVtbl DirectSound8_DirectSound_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSound8_IDirectSound_QueryInterface,
@@ -1544,7 +1544,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_VerifyCertification(
     return IDirectSoundImpl_VerifyCertification(This->pds,pdwCertified);
 }
 
-static ICOM_VTABLE(IDirectSound8) DirectSound8_DirectSound8_Vtbl =
+static IDirectSound8Vtbl DirectSound8_DirectSound8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSound8_IDirectSound8_QueryInterface,

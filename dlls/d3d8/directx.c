@@ -1479,7 +1479,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     return D3D_OK;
 }
 
-ICOM_VTABLE(IDirect3D8) Direct3D8_Vtbl =
+IDirect3D8Vtbl Direct3D8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3D8Impl_QueryInterface,

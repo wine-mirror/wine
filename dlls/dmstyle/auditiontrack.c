@@ -65,7 +65,7 @@ ULONG WINAPI IDirectMusicAuditionTrack_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-ICOM_VTABLE(IUnknown) DirectMusicAuditionTrack_Unknown_Vtbl = {
+IUnknownVtbl DirectMusicAuditionTrack_Unknown_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAuditionTrack_IUnknown_QueryInterface,
 	IDirectMusicAuditionTrack_IUnknown_AddRef,
@@ -185,7 +185,7 @@ HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTR
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicTrack8) DirectMusicAuditionTrack_Track_Vtbl = {
+IDirectMusicTrack8Vtbl DirectMusicAuditionTrack_Track_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAuditionTrack_IDirectMusicTrack_QueryInterface,
 	IDirectMusicAuditionTrack_IDirectMusicTrack_AddRef,
@@ -244,7 +244,7 @@ HRESULT WINAPI IDirectMusicAuditionTrack_IPersistStream_GetSizeMax (LPPERSISTSTR
 	return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IPersistStream) DirectMusicAuditionTrack_PersistStream_Vtbl = {
+IPersistStreamVtbl DirectMusicAuditionTrack_PersistStream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAuditionTrack_IPersistStream_QueryInterface,
 	IDirectMusicAuditionTrack_IPersistStream_AddRef,

@@ -68,7 +68,7 @@ ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-ICOM_VTABLE(IUnknown) DirectMusicChordMap_Unknown_Vtbl = {
+IUnknownVtbl DirectMusicChordMap_Unknown_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapImpl_IUnknown_QueryInterface,
 	IDirectMusicChordMapImpl_IUnknown_AddRef,
@@ -97,7 +97,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_GetScale (LPDIRECTM
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicChordMap) DirectMusicChordMap_ChordMap_Vtbl = {
+IDirectMusicChordMapVtbl DirectMusicChordMap_ChordMap_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapImpl_IDirectMusicChordMap_QueryInterface,
 	IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef,
@@ -311,7 +311,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor (LPDI
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicObject) DirectMusicChordMap_Object_Vtbl = {
+IDirectMusicObjectVtbl DirectMusicChordMap_Object_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicChordMapImpl_IDirectMusicObject_AddRef,
@@ -501,7 +501,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERSISTSTRE
 	return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IPersistStream) DirectMusicChordMap_PersistStream_Vtbl = {
+IPersistStreamVtbl DirectMusicChordMap_PersistStream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapImpl_IPersistStream_QueryInterface,
 	IDirectMusicChordMapImpl_IPersistStream_AddRef,

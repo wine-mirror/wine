@@ -101,7 +101,7 @@ HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNT
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl = {
+IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSynthSinkImpl_QueryInterface,
 	IDirectMusicSynthSinkImpl_AddRef,

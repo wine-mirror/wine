@@ -58,22 +58,22 @@ typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirectMusic8) DirectMusic8_Vtbl;
-extern ICOM_VTABLE(IDirectMusicBuffer) DirectMusicBuffer_Vtbl;
-extern ICOM_VTABLE(IDirectMusicDownloadedInstrument) DirectMusicDownloadedInstrument_Vtbl;
-extern ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl;
-extern ICOM_VTABLE(IDirectMusicPortDownload) DirectMusicPortDownload_Vtbl;
-extern ICOM_VTABLE(IDirectMusicPort) DirectMusicPort_Vtbl;
-extern ICOM_VTABLE(IDirectMusicThru) DirectMusicThru_Vtbl;
-extern ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl;
+extern IDirectMusic8Vtbl DirectMusic8_Vtbl;
+extern IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl;
+extern IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl;
+extern IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl;
+extern IDirectMusicPortDownloadVtbl DirectMusicPortDownload_Vtbl;
+extern IDirectMusicPortVtbl DirectMusicPort_Vtbl;
+extern IDirectMusicThruVtbl DirectMusicThru_Vtbl;
+extern IReferenceClockVtbl ReferenceClock_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)               DirectMusicCollection_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicCollection) DirectMusicCollection_Collection_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject)     DirectMusicCollection_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)         DirectMusicCollection_PersistStream_Vtbl;
+extern IUnknownVtbl               DirectMusicCollection_Unknown_Vtbl;
+extern IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl;
+extern IDirectMusicObjectVtbl     DirectMusicCollection_Object_Vtbl;
+extern IPersistStreamVtbl         DirectMusicCollection_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)               DirectMusicInstrument_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicInstrument) DirectMusicInstrument_Instrument_Vtbl;
+extern IUnknownVtbl               DirectMusicInstrument_Unknown_Vtbl;
+extern IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl;
 
 /*****************************************************************************
  * Some stuff to make my life easier :=)
@@ -323,10 +323,10 @@ typedef struct _DMUS_PRIVATE_POOLCUE {
  */
 struct IDirectMusicCollectionImpl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicCollection) *CollectionVtbl;
-  ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicCollectionVtbl *CollectionVtbl;
+  IDirectMusicObjectVtbl *ObjectVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicCollectionImpl fields */
@@ -376,8 +376,8 @@ extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax (LPPE
  */
 struct IDirectMusicInstrumentImpl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicInstrument) *InstrumentVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicInstrumentVtbl *InstrumentVtbl;
   DWORD          ref;
 
   /* IDirectMusicInstrumentImpl fields */

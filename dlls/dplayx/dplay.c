@@ -77,13 +77,13 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Forward declarations of virtual tables */
-static ICOM_VTABLE(IDirectPlay2) directPlay2AVT;
-static ICOM_VTABLE(IDirectPlay3) directPlay3AVT;
-static ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
+static IDirectPlay2Vtbl directPlay2AVT;
+static IDirectPlay3Vtbl directPlay3AVT;
+static IDirectPlay4Vtbl directPlay4AVT;
 
-static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
-static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
-static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
+static IDirectPlay2Vtbl directPlay2WVT;
+static IDirectPlay3Vtbl directPlay3WVT;
+static IDirectPlay4Vtbl directPlay4WVT;
 
 /* Helper methods for player/group interfaces */
 static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
@@ -4818,7 +4818,7 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlay2) directPlay2WVT =
+static IDirectPlay2Vtbl directPlay2WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
@@ -4864,7 +4864,7 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2WVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlay2) directPlay2AVT =
+static IDirectPlay2Vtbl directPlay2AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
@@ -4911,7 +4911,7 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2AVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlay3) directPlay3AVT =
+static IDirectPlay3Vtbl directPlay3AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
@@ -4972,7 +4972,7 @@ static ICOM_VTABLE(IDirectPlay3) directPlay3AVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static ICOM_VTABLE(IDirectPlay3) directPlay3WVT =
+static IDirectPlay3Vtbl directPlay3WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
@@ -5033,7 +5033,7 @@ static ICOM_VTABLE(IDirectPlay3) directPlay3WVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static ICOM_VTABLE(IDirectPlay4) directPlay4WVT =
+static IDirectPlay4Vtbl directPlay4WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
@@ -5102,7 +5102,7 @@ static ICOM_VTABLE(IDirectPlay4) directPlay4WVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static ICOM_VTABLE(IDirectPlay4) directPlay4AVT =
+static IDirectPlay4Vtbl directPlay4AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,

@@ -61,7 +61,7 @@ static HRESULT WINAPI SectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) SectionCF_Vtbl = {
+static IClassFactoryVtbl SectionCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SectionCF_QueryInterface,
 	SectionCF_AddRef,
@@ -104,7 +104,7 @@ static HRESULT WINAPI StyleCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) StyleCF_Vtbl = {
+static IClassFactoryVtbl StyleCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	StyleCF_QueryInterface,
 	StyleCF_AddRef,
@@ -147,7 +147,7 @@ static HRESULT WINAPI ChordTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) ChordTrackCF_Vtbl = {
+static IClassFactoryVtbl ChordTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ChordTrackCF_QueryInterface,
 	ChordTrackCF_AddRef,
@@ -190,7 +190,7 @@ static HRESULT WINAPI CommandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) CommandTrackCF_Vtbl = {
+static IClassFactoryVtbl CommandTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	CommandTrackCF_QueryInterface,
 	CommandTrackCF_AddRef,
@@ -233,7 +233,7 @@ static HRESULT WINAPI StyleTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) StyleTrackCF_Vtbl = {
+static IClassFactoryVtbl StyleTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	StyleTrackCF_QueryInterface,
 	StyleTrackCF_AddRef,
@@ -276,7 +276,7 @@ static HRESULT WINAPI MotifTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) MotifTrackCF_Vtbl = {
+static IClassFactoryVtbl MotifTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	MotifTrackCF_QueryInterface,
 	MotifTrackCF_AddRef,
@@ -319,7 +319,7 @@ static HRESULT WINAPI AuditionTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) AuditionTrackCF_Vtbl = {
+static IClassFactoryVtbl AuditionTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	AuditionTrackCF_QueryInterface,
 	AuditionTrackCF_AddRef,
@@ -362,7 +362,7 @@ static HRESULT WINAPI MuteTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) MuteTrackCF_Vtbl = {
+static IClassFactoryVtbl MuteTrackCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	MuteTrackCF_QueryInterface,
 	MuteTrackCF_AddRef,

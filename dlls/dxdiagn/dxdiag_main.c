@@ -77,7 +77,7 @@ static HRESULT WINAPI DXDiagCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
   return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DXDiagCF_Vtbl = {
+static IClassFactoryVtbl DXDiagCF_Vtbl = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DXDiagCF_QueryInterface,
   DXDiagCF_AddRef,

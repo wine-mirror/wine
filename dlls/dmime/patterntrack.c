@@ -72,7 +72,7 @@ HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTE
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl = {
+IDirectMusicPatternTrackVtbl DirectMusicPatternTrack_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicPatternTrackImpl_QueryInterface,
 	IDirectMusicPatternTrackImpl_AddRef,

@@ -163,7 +163,7 @@ HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, HDC hdc
 }
 
 
-ICOM_VTABLE(IDirect3DSurface9) Direct3DSurface9_Vtbl =
+IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DSurface9Impl_QueryInterface,

@@ -698,7 +698,7 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 	return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt =
+static IDirectSound3DBufferVtbl ds3dbvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound3DListener) ds3dlvt =
+static IDirectSound3DListenerVtbl ds3dlvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */

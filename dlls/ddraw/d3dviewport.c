@@ -477,7 +477,7 @@ Main_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DViewport3) VTABLE_IDirect3DViewport3 =
+IDirect3DViewport3Vtbl VTABLE_IDirect3DViewport3 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DViewportImpl_3_2_1_QueryInterface,

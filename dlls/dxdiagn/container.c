@@ -139,7 +139,7 @@ HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwsz
 }
 
 
-ICOM_VTABLE(IDxDiagContainer) DxDiagContainer_Vtbl =
+IDxDiagContainerVtbl DxDiagContainer_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDxDiagContainerImpl_QueryInterface,

@@ -89,7 +89,7 @@ HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER if
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicComposer) DirectMusicComposer_Vtbl = {
+IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicComposerImpl_QueryInterface,
 	IDirectMusicComposerImpl_AddRef,

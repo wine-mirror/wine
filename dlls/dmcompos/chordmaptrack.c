@@ -65,7 +65,7 @@ ULONG WINAPI IDirectMusicChordMapTrack_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-ICOM_VTABLE(IUnknown) DirectMusicChordMapTrack_Unknown_Vtbl = {
+IUnknownVtbl DirectMusicChordMapTrack_Unknown_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapTrack_IUnknown_QueryInterface,
 	IDirectMusicChordMapTrack_IUnknown_AddRef,
@@ -183,7 +183,7 @@ HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTR
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicTrack8) DirectMusicChordMapTrack_Track_Vtbl = {
+IDirectMusicTrack8Vtbl DirectMusicChordMapTrack_Track_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface,
 	IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef,
@@ -243,7 +243,7 @@ HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetSizeMax (LPPERSISTSTR
 	return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IPersistStream) DirectMusicChordMapTrack_PersistStream_Vtbl = {
+IPersistStreamVtbl DirectMusicChordMapTrack_PersistStream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicChordMapTrack_IPersistStream_QueryInterface,
 	IDirectMusicChordMapTrack_IPersistStream_AddRef,

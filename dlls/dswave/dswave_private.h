@@ -48,10 +48,10 @@ typedef struct IDirectMusicWaveImpl IDirectMusicWaveImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IUnknown)               DirectMusicWave_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject)     DirectMusicWave_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)         DirectMusicWave_PersistStream_Vtbl;
-extern ICOM_VTABLE(IDirectMusicSegment8)   DirectMusicWave_Segment_Vtbl;
+extern IUnknownVtbl               DirectMusicWave_Unknown_Vtbl;
+extern IDirectMusicObjectVtbl     DirectMusicWave_Object_Vtbl;
+extern IPersistStreamVtbl         DirectMusicWave_PersistStream_Vtbl;
+extern IDirectMusicSegment8Vtbl   DirectMusicWave_Segment_Vtbl;
 
 
 /*****************************************************************************
@@ -65,10 +65,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicWaveImpl (LPCGUID lpcGUID, LPVOID*
  */
 struct IDirectMusicWaveImpl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicSegment8) *SegmentVtbl;
-  ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicSegment8Vtbl *SegmentVtbl;
+  IDirectMusicObjectVtbl *ObjectVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicWaveImpl fields */

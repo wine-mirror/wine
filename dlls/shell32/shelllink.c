@@ -112,10 +112,10 @@ typedef struct _LOCAL_VOLUME_INFO
 
 #include "poppack.h"
 
-static ICOM_VTABLE(IShellLinkA)		slvt;
-static ICOM_VTABLE(IShellLinkW)		slvtw;
-static ICOM_VTABLE(IPersistFile)	pfvt;
-static ICOM_VTABLE(IPersistStream)	psvt;
+static IShellLinkAVtbl		slvt;
+static IShellLinkWVtbl		slvtw;
+static IPersistFileVtbl	pfvt;
+static IPersistStreamVtbl	psvt;
 
 /* IShellLink Implementation */
 
@@ -326,7 +326,7 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *p
 	return NOERROR;
 }
 
-static ICOM_VTABLE(IPersistFile) pfvt =
+static IPersistFileVtbl pfvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IPersistFile_fnQueryInterface,
@@ -768,7 +768,7 @@ static HRESULT WINAPI IPersistStream_fnGetSizeMax(
 	return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IPersistStream) psvt =
+static IPersistStreamVtbl psvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IPersistStream_fnQueryInterface,
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 * IShellLink Implementation
 */
 
-static ICOM_VTABLE(IShellLinkA) slvt =
+static IShellLinkAVtbl slvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellLinkA_fnQueryInterface,
@@ -1715,7 +1715,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 * IShellLinkW Implementation
 */
 
-static ICOM_VTABLE(IShellLinkW) slvtw =
+static IShellLinkWVtbl slvtw =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellLinkW_fnQueryInterface,

@@ -109,7 +109,7 @@ static wine_pipe *pipes = NULL;
 static int nrofpipes = 0;
 
 typedef struct _PipeBuf {
-    ICOM_VTABLE(IRpcChannelBuffer)	*lpVtbl;
+    IRpcChannelBufferVtbl	*lpVtbl;
     DWORD				ref;
 
     wine_marshal_id			mid;
@@ -465,7 +465,7 @@ PipeBuf_IsConnected(LPRPCCHANNELBUFFER iface) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IRpcChannelBuffer) pipebufvt = {
+static IRpcChannelBufferVtbl pipebufvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PipeBuf_QueryInterface,
     PipeBuf_AddRef,

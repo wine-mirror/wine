@@ -55,7 +55,7 @@ static HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER li
 static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag);
 static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm);
 
-static ICOM_VTABLE(IStream) stvt =
+static IStreamVtbl stvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IStream_fnQueryInterface,
@@ -76,7 +76,7 @@ static ICOM_VTABLE(IStream) stvt =
 };
 
 typedef struct
-{	ICOM_VTABLE(IStream)	*lpvtst;
+{	IStreamVtbl	*lpvtst;
 	DWORD		ref;
 	HANDLE		handle;
 } ISHFileStream;

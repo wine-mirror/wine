@@ -51,7 +51,7 @@ typedef struct
 } ItemCmImpl;
 
 
-static struct ICOM_VTABLE(IContextMenu2) cmvt;
+static struct IContextMenu2Vtbl cmvt;
 
 /**************************************************************************
 * ISvItemCm_CanRenameItems()
@@ -513,7 +513,7 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IContextMenu2) cmvt =
+static struct IContextMenu2Vtbl cmvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISvItemCm_fnQueryInterface,

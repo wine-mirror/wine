@@ -149,7 +149,7 @@ void WINAPI IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPDIRECT3DBASETEXTURE
 }
 
 
-ICOM_VTABLE(IDirect3DBaseTexture9) Direct3DBaseTexture9_Vtbl =
+IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DBaseTexture9Impl_QueryInterface,

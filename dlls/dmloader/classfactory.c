@@ -82,7 +82,7 @@ HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface, BOOL doloc
 	return S_OK;
 }
 
-ICOM_VTABLE(IClassFactory) DirectMusicLoaderCF_Vtbl = {
+IClassFactoryVtbl DirectMusicLoaderCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderCF_QueryInterface,
 	IDirectMusicLoaderCF_AddRef,
@@ -170,7 +170,7 @@ HRESULT WINAPI IDirectMusicContainerCF_LockServer (LPCLASSFACTORY iface, BOOL do
 	return S_OK;
 }
 
-ICOM_VTABLE(IClassFactory) DirectMusicContainerCF_Vtbl = {
+IClassFactoryVtbl DirectMusicContainerCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicContainerCF_QueryInterface,
 	IDirectMusicContainerCF_AddRef,

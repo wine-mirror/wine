@@ -207,7 +207,7 @@ GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DLight) VTABLE_IDirect3DLight =
+IDirect3DLightVtbl VTABLE_IDirect3DLight =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DLightImpl_1_QueryInterface,

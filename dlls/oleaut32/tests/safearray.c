@@ -72,13 +72,13 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
  */
 typedef struct IRecordInfoImpl
 {
-  ICOM_VTABLE(IRecordInfo) *lpvtbl;
+  IRecordInfoVtbl *lpvtbl;
   DWORD ref;
   DWORD sizeCalled;
   DWORD clearCalled;
 } IRecordInfoImpl;
 
-static ICOM_VTABLE(IRecordInfo) IRecordInfoImpl_VTable;
+static IRecordInfoVtbl IRecordInfoImpl_VTable;
 
 static IRecordInfoImpl *IRecordInfoImpl_Construct()
 {
@@ -132,7 +132,7 @@ static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface WINE_UNUSED)
   exit(255);
 }
 
-static ICOM_VTABLE(IRecordInfo) IRecordInfoImpl_VTable =
+static IRecordInfoVtbl IRecordInfoImpl_VTable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   (PVOID)IRecordInfoImpl_Dummy,
@@ -1022,7 +1022,7 @@ static ULONG WINAPI tunk_Release(LPUNKNOWN punk) {
 	return --tunk_xref;
 }
 
-static ICOM_VTABLE(IUnknown) xtunk_vtbl = {
+static IUnknownVtbl xtunk_vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	tunk_QueryInterface,
 	tunk_AddRef,
@@ -1030,7 +1030,7 @@ static ICOM_VTABLE(IUnknown) xtunk_vtbl = {
 };
 
 static struct xtunk_iface {
-	ICOM_VTABLE(IUnknown)	*lpvtbl;
+	IUnknownVtbl	*lpvtbl;
 } xtunk_iface;
 
 

@@ -126,7 +126,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
 }
 
 
-ICOM_VTABLE(IDirect3DVolume9) Direct3DVolume9_Vtbl =
+IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVolume9Impl_QueryInterface,

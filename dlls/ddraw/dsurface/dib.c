@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 extern HBITMAP DIB_CreateDIBSection( HDC hdc, const BITMAPINFO *bmi, UINT usage, VOID **bits,
                                      HANDLE section, DWORD offset, DWORD ovr_pitch );
 
-static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable;
+static IDirectDrawSurface7Vtbl DIB_IDirectDrawSurface7_VTable;
 
 /* Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned. */
 inline static int get_dib_width_bytes( int width, int depth )
@@ -1356,7 +1356,7 @@ DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 /* UpdateOverlayDisplay: generic */
 /* UpdateOverlayZOrder: generic */
 
-static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable =
+static IDirectDrawSurface7Vtbl DIB_IDirectDrawSurface7_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,

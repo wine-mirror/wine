@@ -636,7 +636,7 @@ static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) MLANGCF_Vtbl =
+static IClassFactoryVtbl MLANGCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     MLANGCF_QueryInterface,
@@ -691,9 +691,9 @@ HRESULT WINAPI MLANG_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
 typedef struct tagMLang_impl
 {
-    ICOM_VTABLE(IMLangFontLink) *vtbl_IMLangFontLink;
-    ICOM_VTABLE(IMultiLanguage) *vtbl_IMultiLanguage;
-    ICOM_VTABLE(IMultiLanguage2) *vtbl_IMultiLanguage2;
+    IMLangFontLinkVtbl *vtbl_IMLangFontLink;
+    IMultiLanguageVtbl *vtbl_IMultiLanguage;
+    IMultiLanguage2Vtbl *vtbl_IMultiLanguage2;
     DWORD ref;
     DWORD total_cp, total_scripts;
 } MLang_impl;
@@ -758,7 +758,7 @@ static HRESULT WINAPI MLang_QueryInterface(
 
 typedef struct tagEnumCodePage_impl
 {
-    ICOM_VTABLE(IEnumCodePage) *vtbl_IEnumCodePage;
+    IEnumCodePageVtbl *vtbl_IEnumCodePage;
     DWORD ref;
     MIMECPINFO *cpinfo;
     DWORD total, pos;
@@ -868,7 +868,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
     return S_OK;
 }
 
-static ICOM_VTABLE(IEnumCodePage) IEnumCodePage_vtbl =
+static IEnumCodePageVtbl IEnumCodePage_vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIEnumCodePage_QueryInterface,
@@ -930,7 +930,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
 
 typedef struct tagEnumScript_impl
 {
-    ICOM_VTABLE(IEnumScript) *vtbl_IEnumScript;
+    IEnumScriptVtbl *vtbl_IEnumScript;
     DWORD ref;
     SCRIPTINFO *script_info;
     DWORD total, pos;
@@ -1038,7 +1038,7 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
     return S_OK;
 }
 
-static ICOM_VTABLE(IEnumScript) IEnumScript_vtbl =
+static IEnumScriptVtbl IEnumScript_vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIEnumScript_QueryInterface,
@@ -1183,7 +1183,7 @@ static HRESULT WINAPI fnIMLangFontLink_ResetFontMapping(
 }
 
 
-static ICOM_VTABLE(IMLangFontLink) IMLangFontLink_vtbl =
+static IMLangFontLinkVtbl IMLangFontLink_vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMLangFontLink_QueryInterface,
@@ -1368,7 +1368,7 @@ static HRESULT WINAPI fnIMultiLanguage_CreateConvertCharset(
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IMultiLanguage) IMultiLanguage_vtbl =
+static IMultiLanguageVtbl IMultiLanguage_vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMultiLanguage_QueryInterface,
@@ -1766,7 +1766,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
     return S_FALSE;
 }
 
-static ICOM_VTABLE(IMultiLanguage2) IMultiLanguage2_vtbl =
+static IMultiLanguage2Vtbl IMultiLanguage2_vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMultiLanguage2_QueryInterface,

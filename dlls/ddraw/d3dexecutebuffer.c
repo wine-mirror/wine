@@ -652,7 +652,7 @@ Main_IDirect3DExecuteBufferImpl_1_Optimize(LPDIRECT3DEXECUTEBUFFER iface,
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DExecuteBuffer) VTABLE_IDirect3DExecuteBuffer =
+IDirect3DExecuteBufferVtbl VTABLE_IDirect3DExecuteBuffer =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DExecuteBufferImpl_1_QueryInterface,

@@ -880,8 +880,8 @@ typedef struct tagITypeLibImpl
     WCHAR *path;
 } ITypeLibImpl;
 
-static struct ICOM_VTABLE(ITypeLib2) tlbvt;
-static struct ICOM_VTABLE(ITypeComp) tlbtcvt;
+static struct ITypeLib2Vtbl tlbvt;
+static struct ITypeCompVtbl tlbtcvt;
 
 #define _ITypeComp_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeComp)))
 #define ICOM_THIS_From_ITypeComp(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeComp_Offset(impl))
@@ -993,8 +993,8 @@ typedef struct tagITypeInfoImpl
     struct tagITypeInfoImpl * next;
 } ITypeInfoImpl;
 
-static struct ICOM_VTABLE(ITypeInfo2) tinfvt;
-static struct ICOM_VTABLE(ITypeComp)  tcompvt;
+static struct ITypeInfo2Vtbl tinfvt;
+static struct ITypeCompVtbl  tcompvt;
 
 static ITypeInfo2 * WINAPI ITypeInfo_Constructor();
 
@@ -3950,7 +3950,7 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
     return S_OK;
 }
 
-static ICOM_VTABLE(ITypeLib2) tlbvt = {
+static ITypeLib2Vtbl tlbvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ITypeLib2_fnQueryInterface,
     ITypeLib2_fnAddRef,
@@ -4018,7 +4018,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(ITypeComp) tlbtcvt =
+static ITypeCompVtbl tlbtcvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -5661,7 +5661,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
-static ICOM_VTABLE(ITypeInfo2) tinfvt =
+static ITypeInfo2Vtbl tinfvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
@@ -5816,7 +5816,7 @@ static HRESULT WINAPI ITypeComp_fnBindType(
     return S_OK;
 }
 
-static ICOM_VTABLE(ITypeComp) tcompvt =
+static ITypeCompVtbl tcompvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 

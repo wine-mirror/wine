@@ -62,23 +62,23 @@ typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IClassFactory)         DirectMusicLoaderCF_Vtbl;
-extern ICOM_VTABLE(IClassFactory)         DirectMusicContainerCF_Vtbl;
+extern IClassFactoryVtbl         DirectMusicLoaderCF_Vtbl;
+extern IClassFactoryVtbl         DirectMusicContainerCF_Vtbl;
 
-extern ICOM_VTABLE(IDirectMusicLoader8)   DirectMusicLoader_Loader_Vtbl;
+extern IDirectMusicLoader8Vtbl   DirectMusicLoader_Loader_Vtbl;
 
-extern ICOM_VTABLE(IDirectMusicContainer) DirectMusicContainer_Container_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject)    DirectMusicContainer_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)        DirectMusicContainer_PersistStream_Vtbl;
+extern IDirectMusicContainerVtbl DirectMusicContainer_Container_Vtbl;
+extern IDirectMusicObjectVtbl    DirectMusicContainer_Object_Vtbl;
+extern IPersistStreamVtbl        DirectMusicContainer_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IStream)               DirectMusicLoaderFileStream_Stream_Vtbl;
-extern ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderFileStream_GetLoader_Vtbl;
+extern IStreamVtbl               DirectMusicLoaderFileStream_Stream_Vtbl;
+extern IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtbl;
 
-extern ICOM_VTABLE(IStream)               DirectMusicLoaderResourceStream_Stream_Vtbl;
-extern ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderResourceStream_GetLoader_Vtbl;
+extern IStreamVtbl               DirectMusicLoaderResourceStream_Stream_Vtbl;
+extern IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader_Vtbl;
 
-extern ICOM_VTABLE(IStream)               DirectMusicLoaderGenericStream_Stream_Vtbl;
-extern ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicLoaderGenericStream_GetLoader_Vtbl;
+extern IStreamVtbl               DirectMusicLoaderGenericStream_Stream_Vtbl;
+extern IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_Vtbl;
 
 /*****************************************************************************
  * Creation helpers
@@ -155,7 +155,7 @@ typedef struct _WINE_LOADER_OPTION {
  */
 struct IDirectMusicLoaderImpl {
 	/* VTABLEs */
-	ICOM_VTABLE(IDirectMusicLoader8) *LoaderVtbl;
+	IDirectMusicLoader8Vtbl *LoaderVtbl;
 	/* reference counter */
 	DWORD dwRef;	
 	/* simple cache (linked list) */
@@ -198,9 +198,9 @@ typedef struct _WINE_CONTAINER_ENTRY {
  */
 struct IDirectMusicContainerImpl {
 	/* VTABLEs */
-	ICOM_VTABLE(IDirectMusicContainer) *ContainerVtbl;
-	ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-	ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+	IDirectMusicContainerVtbl *ContainerVtbl;
+	IDirectMusicObjectVtbl *ObjectVtbl;
+	IPersistStreamVtbl *PersistStreamVtbl;
 	/* reference counter */
 	DWORD dwRef;
 	/* stream */
@@ -241,8 +241,8 @@ extern HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetSizeMax (LPPER
  */
 struct IDirectMusicLoaderFileStream {
 	/* VTABLEs */
-	ICOM_VTABLE(IStream) *StreamVtbl;
-	ICOM_VTABLE(IDirectMusicGetLoader) *GetLoaderVtbl;
+	IStreamVtbl *StreamVtbl;
+	IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
 	DWORD dwRef;
 	/* file */
@@ -282,8 +282,8 @@ extern HRESULT WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_GetLoad
  */
 struct IDirectMusicLoaderResourceStream {
 	/* IUnknown fields */
-	ICOM_VTABLE(IStream) *StreamVtbl;
-	ICOM_VTABLE(IDirectMusicGetLoader) *GetLoaderVtbl;
+	IStreamVtbl *StreamVtbl;
+	IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
 	DWORD dwRef;
 	/* data */
@@ -325,8 +325,8 @@ extern HRESULT WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_Get
  */
 struct IDirectMusicLoaderGenericStream {
 	/* IUnknown fields */
-	ICOM_VTABLE(IStream) *StreamVtbl;
-	ICOM_VTABLE(IDirectMusicGetLoader) *GetLoaderVtbl;
+	IStreamVtbl *StreamVtbl;
+	IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
 	DWORD dwRef;
 	/* stream */

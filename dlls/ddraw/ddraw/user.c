@@ -42,7 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static ICOM_VTABLE(IDirectDraw7) User_DirectDraw_VTable;
+static IDirectDraw7Vtbl User_DirectDraw_VTable;
 
 static const DDDEVICEIDENTIFIER2 user_device =
 {
@@ -525,7 +525,7 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 /* TestCooperativeLevel: generic? */
 /* WaitForVerticalBlank: ??? */
 
-static ICOM_VTABLE(IDirectDraw7) User_DirectDraw_VTable =
+static IDirectDraw7Vtbl User_DirectDraw_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,

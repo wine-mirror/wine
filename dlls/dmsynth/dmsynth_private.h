@@ -48,8 +48,8 @@ typedef struct IDirectMusicSynthSinkImpl IDirectMusicSynthSinkImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDirectMusicSynth8) DirectMusicSynth8_Vtbl;
-extern ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl;
+extern IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl;
+extern IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl;
 
 /*****************************************************************************
  * ClassFactory

@@ -134,7 +134,7 @@ HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXBUFFER9 
 }
 
 
-ICOM_VTABLE(IDirect3DIndexBuffer9) Direct3DIndexBuffer9_Vtbl =
+IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DIndexBuffer9Impl_QueryInterface,

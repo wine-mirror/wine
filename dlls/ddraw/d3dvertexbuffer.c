@@ -469,7 +469,7 @@ GL_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided(LPDIRECT3DVERTEXBUFFER7 if
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DVertexBuffer7) VTABLE_IDirect3DVertexBuffer7 =
+IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DVertexBufferImpl_7_1T_QueryInterface,
@@ -494,7 +494,7 @@ ICOM_VTABLE(IDirect3DVertexBuffer7) VTABLE_IDirect3DVertexBuffer7 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DVertexBuffer) VTABLE_IDirect3DVertexBuffer =
+IDirect3DVertexBufferVtbl VTABLE_IDirect3DVertexBuffer =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,

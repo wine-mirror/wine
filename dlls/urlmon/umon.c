@@ -49,8 +49,8 @@ static const WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e',
 /* filemoniker data structure */
 typedef struct URLMonikerImpl{
 
-    ICOM_VTABLE(IMoniker)*  lpvtbl1;  /* VTable relative to the IMoniker interface.*/
-    ICOM_VTABLE(IBinding)*  lpvtbl2;  /* VTable to IBinding interface */
+    IMonikerVtbl*  lpvtbl1;  /* VTable relative to the IMoniker interface.*/
+    IBindingVtbl*  lpvtbl2;  /* VTable to IBinding interface */
 
     ULONG ref; /* reference counter for this object */
 
@@ -113,7 +113,7 @@ static HRESULT URLMonikerImpl_Destroy(URLMonikerImpl* iface);
 /********************************************************************************/
 /* Virtual function table for the URLMonikerImpl class which  include IPersist,*/
 /* IPersistStream and IMoniker functions.                                       */
-static ICOM_VTABLE(IMoniker) VT_URLMonikerImpl =
+static IMonikerVtbl VT_URLMonikerImpl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     URLMonikerImpl_QueryInterface,
@@ -141,7 +141,7 @@ static ICOM_VTABLE(IMoniker) VT_URLMonikerImpl =
     URLMonikerImpl_IsSystemMoniker
 };
 
-static ICOM_VTABLE(IBinding) VTBinding_URLMonikerImpl =
+static IBindingVtbl VTBinding_URLMonikerImpl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     URLMonikerImpl_IBinding_QueryInterface,

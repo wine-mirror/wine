@@ -68,7 +68,7 @@ ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-ICOM_VTABLE(IUnknown) DirectMusicInstrument_Unknown_Vtbl = {
+IUnknownVtbl DirectMusicInstrument_Unknown_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicInstrumentImpl_IUnknown_QueryInterface,
 	IDirectMusicInstrumentImpl_IUnknown_AddRef,
@@ -105,7 +105,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_SetPatch (LPDIR
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicInstrument) DirectMusicInstrument_Instrument_Vtbl = {
+IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicInstrumentImpl_IDirectMusicInstrument_QueryInterface,
 	IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef,

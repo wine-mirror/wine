@@ -236,7 +236,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassReqCategories(
 /**********************************************************************
  * COMCAT_ICatRegister_Vtbl
  */
-ICOM_VTABLE(ICatRegister) COMCAT_ICatRegister_Vtbl =
+ICatRegisterVtbl COMCAT_ICatRegister_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_ICatRegister_QueryInterface,

@@ -50,7 +50,7 @@ typedef struct {
     DWORD ref;
 } IDropTargetHelperImpl;
 
-static struct ICOM_VTABLE (IDropTargetHelper) vt_IDropTargetHelper;
+static struct IDropTargetHelperVtbl vt_IDropTargetHelper;
 
 #define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
 #define _IDropTargetHelper_(This) (IDropTargetHelper*)&(This->lpVtbl)
@@ -171,7 +171,7 @@ static HRESULT WINAPI IDropTargetHelper_fnShow (IDropTargetHelper * iface, BOOL 
     return E_NOTIMPL;
 }
 
-static ICOM_VTABLE (IDropTargetHelper) vt_IDropTargetHelper =
+static IDropTargetHelperVtbl vt_IDropTargetHelper =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDropTargetHelper_fnQueryInterface,

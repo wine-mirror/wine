@@ -90,7 +90,7 @@ HRESULT WINAPI RunningObjectTableImpl_Destroy();
 HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* This,DWORD identReg,IMoniker* pmk,DWORD *indx);
 
 /* Virtual function table for the IRunningObjectTable class. */
-static ICOM_VTABLE(IRunningObjectTable) VT_RunningObjectTableImpl =
+static IRunningObjectTableVtbl VT_RunningObjectTableImpl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     RunningObjectTableImpl_QueryInterface,

@@ -61,7 +61,7 @@ static HRESULT WINAPI WaveCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) WaveCF_Vtbl = {
+static IClassFactoryVtbl WaveCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	WaveCF_QueryInterface,
 	WaveCF_AddRef,

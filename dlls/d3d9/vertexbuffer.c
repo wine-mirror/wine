@@ -134,7 +134,7 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface,
 }
 
 
-ICOM_VTABLE(IDirect3DVertexBuffer9) Direct3DVertexBuffer9_Vtbl =
+IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVertexBuffer9Impl_QueryInterface,

@@ -47,7 +47,7 @@ typedef struct
 } BgCmImpl;
 
 
-static struct ICOM_VTABLE(IContextMenu2) cmvt;
+static struct IContextMenu2Vtbl cmvt;
 
 /**************************************************************************
 *   ISVBgCm_Constructor()
@@ -431,7 +431,7 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 * IContextMenu2 VTable
 *
 */
-static struct ICOM_VTABLE(IContextMenu2) cmvt =
+static struct IContextMenu2Vtbl cmvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVBgCm_fnQueryInterface,

@@ -140,7 +140,7 @@ static HRESULT WINAPI AMCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSCF_Vtbl =
+static IClassFactoryVtbl DSCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AMCF_QueryInterface,

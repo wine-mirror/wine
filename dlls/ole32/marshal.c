@@ -193,7 +193,7 @@ MARSHAL_Register_Proxy(wine_marshal_id *mid,LPUNKNOWN punk) {
 
 /********************** StdMarshal implementation ****************************/
 typedef struct _StdMarshalImpl {
-  ICOM_VTABLE(IMarshal)	*lpvtbl;
+  IMarshalVtbl	*lpvtbl;
   DWORD			ref;
 
   IID			iid;
@@ -391,7 +391,7 @@ StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved) {
   return S_OK;
 }
 
-ICOM_VTABLE(IMarshal) stdmvtbl = {
+IMarshalVtbl stdmvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StdMarshalImpl_QueryInterface,
     StdMarshalImpl_AddRef,
@@ -751,7 +751,7 @@ SMCF_LockServer(LPCLASSFACTORY iface, BOOL fLock) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) dfmarshalcfvtbl = {
+static IClassFactoryVtbl dfmarshalcfvtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     SMCF_QueryInterface,
     SMCF_AddRef,
@@ -759,7 +759,7 @@ static ICOM_VTABLE(IClassFactory) dfmarshalcfvtbl = {
     SMCF_CreateInstance,
     SMCF_LockServer
 };
-static ICOM_VTABLE(IClassFactory) *pdfmarshalcfvtbl = &dfmarshalcfvtbl;
+static IClassFactoryVtbl *pdfmarshalcfvtbl = &dfmarshalcfvtbl;
 
 HRESULT
 MARSHAL_GetStandardMarshalCF(LPVOID *ppv) {

@@ -32,13 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
-static struct ICOM_VTABLE(IDirectXFile) IDirectXFile_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileBinary) IDirectXFileBinary_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileData) IDirectXFileData_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileDataReference) IDirectXFileDataReference_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileEnumObject) IDirectXFileEnumObject_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileObject) IDirectXFileObject_Vtbl;
-static struct ICOM_VTABLE(IDirectXFileSaveObject) IDirectXFileSaveObject_Vtbl;
+static struct IDirectXFileVtbl IDirectXFile_Vtbl;
+static struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
+static struct IDirectXFileDataVtbl IDirectXFileData_Vtbl;
+static struct IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl;
+static struct IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl;
+static struct IDirectXFileObjectVtbl IDirectXFileObject_Vtbl;
+static struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFile) IDirectXFile_Vtbl =
+static IDirectXFileVtbl IDirectXFile_Vtbl =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectXFileImpl_QueryInterface,
@@ -256,7 +256,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPV
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileBinary) IDirectXFileBinary_Vtbl =
+static IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileBinaryImpl_QueryInterface,
@@ -402,7 +402,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* ifa
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileData) IDirectXFileData_Vtbl =
+static IDirectXFileDataVtbl IDirectXFileData_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileDataImpl_QueryInterface,
@@ -505,7 +505,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileDataReference) IDirectXFileDataReference_Vtbl =
+static IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileDataReferenceImpl_QueryInterface,
@@ -609,7 +609,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFil
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileEnumObject) IDirectXFileEnumObject_Vtbl =
+static IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileEnumObjectImpl_QueryInterface,
@@ -696,7 +696,7 @@ static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LP
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileObject) IDirectXFileObject_Vtbl =
+static IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileObjectImpl_QueryInterface,
@@ -790,7 +790,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject
   return S_FALSE;
 }
 
-static ICOM_VTABLE(IDirectXFileSaveObject) IDirectXFileSaveObject_Vtbl =
+static IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileSaveObjectImpl_QueryInterface,

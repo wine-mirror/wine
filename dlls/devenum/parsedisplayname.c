@@ -167,7 +167,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
 /**********************************************************************
  * IParseDisplayName_Vtbl
  */
-static ICOM_VTABLE(IParseDisplayName) IParseDisplayName_Vtbl =
+static IParseDisplayNameVtbl IParseDisplayName_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IParseDisplayName_QueryInterface,

@@ -83,7 +83,7 @@ HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDE
 }
 
 
-ICOM_VTABLE(IDirect3DVertexDeclaration9) Direct3DVertexDeclaration9_Vtbl =
+IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVertexDeclaration9Impl_QueryInterface,

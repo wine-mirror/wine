@@ -736,7 +736,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFile (LPD
 	return IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (iface, &ObjDesc, iidInterfaceID, ppObject);
 }
 
-ICOM_VTABLE(IDirectMusicLoader8) DirectMusicLoader_Loader_Vtbl = {
+IDirectMusicLoader8Vtbl DirectMusicLoader_Loader_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface,
 	IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef,

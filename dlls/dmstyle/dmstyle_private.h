@@ -57,38 +57,38 @@ typedef struct IDirectMusicStyleTrack IDirectMusicStyleTrack;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IUnknown)           DirectMusicStyle8_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicStyle8) DirectMusicStyle8_Style_Vtbl;
-extern ICOM_VTABLE(IDirectMusicObject) DirectMusicStyle8_Object_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicStyle8_IPersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicStyle8_Unknown_Vtbl;
+extern IDirectMusicStyle8Vtbl DirectMusicStyle8_Style_Vtbl;
+extern IDirectMusicObjectVtbl DirectMusicStyle8_Object_Vtbl;
+extern IPersistStreamVtbl     DirectMusicStyle8_IPersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicAuditionTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicAuditionTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicAuditionTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicAuditionTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicAuditionTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicAuditionTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicChordTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicChordTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicChordTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicChordTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicChordTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicChordTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicCommandTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicCommandTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicCommandTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicCommandTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicCommandTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicCommandTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicMelodyFormulationTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicMelodyFormulationTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicMelodyFormulationTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicMelodyFormulationTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicMelodyFormulationTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicMelodyFormulationTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicMotifTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicMotifTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicMotifTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicMotifTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicMotifTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicMotifTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicMuteTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicMuteTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicMuteTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicMuteTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicMuteTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicMuteTrack_PersistStream_Vtbl;
 
-extern ICOM_VTABLE(IUnknown)           DirectMusicStyleTrack_Unknown_Vtbl;
-extern ICOM_VTABLE(IDirectMusicTrack8) DirectMusicStyleTrack_Track_Vtbl;
-extern ICOM_VTABLE(IPersistStream)     DirectMusicStyleTrack_PersistStream_Vtbl;
+extern IUnknownVtbl           DirectMusicStyleTrack_Unknown_Vtbl;
+extern IDirectMusicTrack8Vtbl DirectMusicStyleTrack_Track_Vtbl;
+extern IPersistStreamVtbl     DirectMusicStyleTrack_PersistStream_Vtbl;
 
 /*****************************************************************************
  * ClassFactory
@@ -124,10 +124,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOI
  */
 struct IDirectMusicStyle8Impl {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicStyle8) *StyleVtbl;
-  ICOM_VTABLE(IDirectMusicObject) *ObjectVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicStyle8Vtbl *StyleVtbl;
+  IDirectMusicObjectVtbl *ObjectVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicStyle8Impl fields */
@@ -182,9 +182,9 @@ extern HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_GetSizeMax (LPPERSIS
  */
 struct IDirectMusicAuditionTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicAuditionTrack fields */
@@ -230,9 +230,9 @@ extern HRESULT WINAPI IDirectMusicAuditionTrack_IPersistStream_GetSizeMax (LPPER
  */
 struct IDirectMusicChordTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicChordTrack fields */
@@ -284,9 +284,9 @@ typedef struct _DMUS_PRIVATE_COMMAND {
  */
 struct IDirectMusicCommandTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicCommandTrack fields */
@@ -334,9 +334,9 @@ extern HRESULT WINAPI IDirectMusicCommandTrack_IPersistStream_GetSizeMax (LPPERS
  */
 struct IDirectMusicMelodyFormulationTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicMelodyFormulationTrack fields */
@@ -382,9 +382,9 @@ extern HRESULT WINAPI IDirectMusicMelodyFormulationTrack_IPersistStream_GetSizeM
  */
 struct IDirectMusicMotifTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicMotifTrack fields */
@@ -430,9 +430,9 @@ extern HRESULT WINAPI IDirectMusicMotifTrack_IPersistStream_GetSizeMax (LPPERSIS
  */
 struct IDirectMusicMuteTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicMuteTrack fields */
@@ -478,9 +478,9 @@ extern HRESULT WINAPI IDirectMusicMuteTrack_IPersistStream_GetSizeMax (LPPERSIST
  */
 struct IDirectMusicStyleTrack {
   /* IUnknown fields */
-  ICOM_VTABLE(IUnknown) *UnknownVtbl;
-  ICOM_VTABLE(IDirectMusicTrack8) *TrackVtbl;
-  ICOM_VTABLE(IPersistStream) *PersistStreamVtbl;
+  IUnknownVtbl *UnknownVtbl;
+  IDirectMusicTrack8Vtbl *TrackVtbl;
+  IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicStyleTrack fields */

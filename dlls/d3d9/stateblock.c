@@ -89,7 +89,7 @@ HRESULT WINAPI IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface) {
 }
 
 
-ICOM_VTABLE(IDirect3DStateBlock9) Direct3DStateBlock9_Vtbl =
+IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DStateBlock9Impl_QueryInterface,

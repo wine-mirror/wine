@@ -73,8 +73,8 @@ typedef struct
     AUTOCOMPLETEOPTIONS options;
 } IAutoCompleteImpl;
 
-static struct ICOM_VTABLE(IAutoComplete) acvt;
-static struct ICOM_VTABLE(IAutoComplete2) ac2vt;
+static struct IAutoCompleteVtbl acvt;
+static struct IAutoComplete2Vtbl ac2vt;
 
 #define _IAutoComplete2_Offset ((int)(&(((IAutoCompleteImpl*)0)->lpvtblAutoComplete2)))
 #define _ICOM_THIS_From_IAutoComplete2(class, name) class* This = (class*)(((char*)name)-_IAutoComplete2_Offset);
@@ -310,7 +310,7 @@ static HRESULT WINAPI IAutoComplete_fnInit(
 /**************************************************************************
  *  IAutoComplete_fnVTable
  */
-static ICOM_VTABLE (IAutoComplete) acvt =
+static IAutoCompleteVtbl acvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAutoComplete_fnQueryInterface,
@@ -431,7 +431,7 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
 /**************************************************************************
  *  IAutoComplete2_fnVTable
  */
-static ICOM_VTABLE (IAutoComplete2) ac2vt =
+static IAutoComplete2Vtbl ac2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAutoComplete2_fnQueryInterface,

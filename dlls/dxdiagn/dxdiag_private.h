@@ -42,7 +42,7 @@ typedef struct IDxDiagContainerImpl IDxDiagContainerImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDxDiagProvider) DxDiagProvider_Vtbl;
+extern IDxDiagProviderVtbl DxDiagProvider_Vtbl;
 
 /*****************************************************************************
  * IDxDiagProvider implementation structure
@@ -79,7 +79,7 @@ typedef struct IDxDiagContainerImpl_SubContainer {
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern ICOM_VTABLE(IDxDiagContainer) DxDiagContainer_Vtbl;
+extern IDxDiagContainerVtbl DxDiagContainer_Vtbl;
 
 /*****************************************************************************
  * IDxDiagContainer implementation structure

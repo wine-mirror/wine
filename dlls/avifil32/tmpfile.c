@@ -50,7 +50,7 @@ static HRESULT WINAPI ITmpFile_fnReadData(IAVIFile*iface,DWORD ckid,LPVOID lpDat
 static HRESULT WINAPI ITmpFile_fnEndRecord(IAVIFile*iface);
 static HRESULT WINAPI ITmpFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
 
-struct ICOM_VTABLE(IAVIFile) itmpft = {
+struct IAVIFileVtbl itmpft = {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   ITmpFile_fnQueryInterface,
   ITmpFile_fnAddRef,

@@ -59,7 +59,7 @@ HRESULT WINAPI IDirectMusicThruImpl_ThruChannel (LPDIRECTMUSICTHRU iface, DWORD 
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicThru) DirectMusicThru_Vtbl = {
+IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicThruImpl_QueryInterface,
 	IDirectMusicThruImpl_AddRef,

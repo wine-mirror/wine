@@ -56,7 +56,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnSkip(LPENUMFORMATETC iface, ULONG celt);
 static HRESULT WINAPI IEnumFORMATETC_fnReset(LPENUMFORMATETC iface);
 static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMATETC* ppenum);
 
-static struct ICOM_VTABLE(IEnumFORMATETC) efvt =
+static struct IEnumFORMATETCVtbl efvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         IEnumFORMATETC_fnQueryInterface,
@@ -223,7 +223,7 @@ typedef struct
 
 } IDataObjectImpl;
 
-static struct ICOM_VTABLE(IDataObject) dtovt;
+static struct IDataObjectVtbl dtovt;
 
 /**************************************************************************
 *  IDataObject_Constructor
@@ -440,7 +440,7 @@ static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDAT
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IDataObject) dtovt =
+static struct IDataObjectVtbl dtovt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDataObject_fnQueryInterface,

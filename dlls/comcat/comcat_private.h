@@ -54,15 +54,15 @@ extern ClassFactoryImpl COMCAT_ClassFactory;
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IUnknown) *unkVtbl;
-    ICOM_VTABLE(ICatRegister) *regVtbl;
-    ICOM_VTABLE(ICatInformation) *infVtbl;
+    IUnknownVtbl *unkVtbl;
+    ICatRegisterVtbl *regVtbl;
+    ICatInformationVtbl *infVtbl;
     DWORD ref;
 } ComCatMgrImpl;
 
 extern ComCatMgrImpl COMCAT_ComCatMgr;
-extern ICOM_VTABLE(ICatRegister) COMCAT_ICatRegister_Vtbl;
-extern ICOM_VTABLE(ICatInformation) COMCAT_ICatInformation_Vtbl;
+extern ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
+extern ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
 
 /**********************************************************************
  * Global string constant declarations

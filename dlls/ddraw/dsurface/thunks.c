@@ -390,7 +390,7 @@ IDirectDrawSurface3Impl_SetSurfaceDesc(LPDIRECTDRAWSURFACE3 This,
 					      dwFlags);
 }
 
-ICOM_VTABLE(IDirectDrawSurface3) DDRAW_IDDS3_Thunk_VTable =
+IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDrawSurface3Impl_QueryInterface,

@@ -78,7 +78,7 @@ ULONG WINAPI IDirectMusicWaveImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-ICOM_VTABLE(IUnknown) DirectMusicWave_Unknown_Vtbl = {
+IUnknownVtbl DirectMusicWave_Unknown_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicWaveImpl_IUnknown_QueryInterface,
 	IDirectMusicWaveImpl_IUnknown_AddRef,
@@ -269,7 +269,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_Unload (LPDIRECTMUSICSE
 	return S_OK;
 }
 
-ICOM_VTABLE(IDirectMusicSegment8) DirectMusicSegment8_Segment_Vtbl = {
+IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicWaveImpl_IDirectMusicSegment8_QueryInterface,
 	IDirectMusicWaveImpl_IDirectMusicSegment8_AddRef,
@@ -510,7 +510,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (LPDIRECT
 	return S_OK;	
 }
 
-ICOM_VTABLE(IDirectMusicObject) DirectMusicWave_Object_Vtbl = {
+IDirectMusicObjectVtbl DirectMusicWave_Object_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicWaveImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicWaveImpl_IDirectMusicObject_AddRef,
@@ -700,7 +700,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM i
 	return E_NOTIMPL;
 }
 
-ICOM_VTABLE(IPersistStream) DirectMusicWave_PersistStream_Vtbl = {
+IPersistStreamVtbl DirectMusicWave_PersistStream_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicWaveImpl_IPersistStream_QueryInterface,
 	IDirectMusicWaveImpl_IPersistStream_AddRef,

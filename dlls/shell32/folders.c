@@ -53,9 +53,9 @@ typedef struct
 	LPITEMIDLIST       pidl;
 } IExtractIconWImpl;
 
-static struct ICOM_VTABLE(IExtractIconA) eiavt;
-static struct ICOM_VTABLE(IExtractIconW) eivt;
-static struct ICOM_VTABLE(IPersistFile) pfvt;
+static struct IExtractIconAVtbl eiavt;
+static struct IExtractIconWVtbl eivt;
+static struct IPersistFileVtbl pfvt;
 
 #define _IPersistFile_Offset ((int)(&(((IExtractIconWImpl*)0)->lpvtblPersistFile)))
 #define _ICOM_THIS_From_IPersistFile(class, name) class* This = (class*)(((char*)name)-_IPersistFile_Offset);
@@ -385,7 +385,7 @@ static HRESULT WINAPI IExtractIconW_fnExtract(IExtractIconW * iface, LPCWSTR psz
 	return S_OK;
 }
 
-static struct ICOM_VTABLE(IExtractIconW) eivt =
+static struct IExtractIconWVtbl eivt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IExtractIconW_fnQueryInterface,
@@ -478,7 +478,7 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 	return ret;
 }
 
-static struct ICOM_VTABLE(IExtractIconA) eiavt =
+static struct IExtractIconAVtbl eiavt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IExtractIconA_fnQueryInterface,
@@ -551,7 +551,7 @@ static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFi
 
 }
 
-static struct ICOM_VTABLE(IPersistFile) pfvt =
+static struct IPersistFileVtbl pfvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEIPersistFile_fnQueryInterface,

@@ -326,7 +326,7 @@ static void activate(IDirect3DMaterialImpl* This) {
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DMaterial3) VTABLE_IDirect3DMaterial3 =
+IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DMaterialImpl_3_2T_1T_QueryInterface,
@@ -348,7 +348,7 @@ ICOM_VTABLE(IDirect3DMaterial3) VTABLE_IDirect3DMaterial3 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DMaterial2) VTABLE_IDirect3DMaterial2 =
+IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_2_QueryInterface,
@@ -370,7 +370,7 @@ ICOM_VTABLE(IDirect3DMaterial2) VTABLE_IDirect3DMaterial2 =
 # define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DMaterial) VTABLE_IDirect3DMaterial =
+IDirect3DMaterialVtbl VTABLE_IDirect3DMaterial =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_1_QueryInterface,

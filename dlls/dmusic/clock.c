@@ -78,7 +78,7 @@ HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdv
 	return S_OK;
 }
 
-ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl = {
+IReferenceClockVtbl ReferenceClock_Vtbl = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IReferenceClockImpl_QueryInterface,
 	IReferenceClockImpl_AddRef,
