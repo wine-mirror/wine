@@ -25,7 +25,58 @@ struct Win87EmInfoStruct
 /* have a look at /usr/src/linux/arch/i386/math-emu/ *.[ch] for more info 
  * especially control_w.h and status_w.h
  */
-/* FIXME: Only skeletal implementation for now */
+/* FIXME: Still rather skeletal implementation only */
+
+static BOOL Installed = 0;
+static WORD RefCount = 0;
+static WORD CtrlWord_1 = 0;
+static WORD CtrlWord_2 = 0;
+static WORD CtrlWord_Internal = 0;
+static WORD StatusWord_1 = 0x000b;
+static WORD StatusWord_2 = 0;
+static WORD StatusWord_3 = 0;
+static WORD StackTop = 175;
+static WORD StackBottom = 0;
+static WORD Inthandler02hVar = 1;
+
+void WIN87_ClearCtrlWord( CONTEXT86 *context )
+{
+    AX_reg(context) = 0;
+    if (Installed)
+#ifdef __i386__
+        __asm__("fclex");
+#else
+        ;
+#endif
+    StatusWord_3 = StatusWord_2 = 0;
+}
+
+void WIN87_SetCtrlWord( CONTEXT86 *context )
+{
+    CtrlWord_1 = AX_reg(context);
+    AX_reg(context) &= 0xff3c;
+    if (Installed) {
+        CtrlWord_Internal = AX_reg(context);
+#ifdef __i386__
+        __asm__("wait;fldcw %0" : : "m" (CtrlWord_Internal));
+#endif
+    }
+    CtrlWord_2 = AX_reg(context);
+}
+
+void WIN87_Init( CONTEXT86 *context )
+{
+    if (Installed) {
+#ifdef __i386__
+        __asm__("fninit");
+        __asm__("fninit");
+#endif
+    }
+    StackBottom = StackTop;
+    AX_reg(context) = 0x1332;
+    WIN87_SetCtrlWord(context);
+    WIN87_ClearCtrlWord(context);
+}
 
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
@@ -37,17 +88,24 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
     switch(BX_reg(context))
     {
     case 0: /* install (increase instanceref) emulator, install NMI vector */
+        RefCount++;
+        if (Installed)
+            /* InstallIntVecs02hAnd75h(); */    ;
+        WIN87_Init(context);
         AX_reg(context) = 0;
         break;
 
     case 1: /* Init Emulator */
-        AX_reg(context) = 0;
+        WIN87_Init(context);
         break;
 
     case 2: /* deinstall emulator (decrease instanceref), deinstall NMI vector	
              * if zero. Every '0' call should have a matching '2' call.
              */
-        AX_reg(context) = 0;   	
+        WIN87_Init(context);
+        if (!(--RefCount) && (Installed))
+            /* RestoreInt02h() */   ;
+        
         break;
 
     case 3:
@@ -56,9 +114,11 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 
     case 4: /* set control word (& ~(CW_Denormal|CW_Invalid)) */
         /* OUT: newset control word in AX */
+        WIN87_SetCtrlWord(context);
         break;
 
     case 5: /* return internal control word in AX */
+        AX_reg(context) = CtrlWord_1;
         break;
 
     case 6: /* round top of stack to integer using method AX & 0x0C00 */
@@ -92,10 +152,21 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         }
         break;
 
-    case 8: /* restore internal control words from emulator control word */
+    case 8: /* restore internal status words from emulator status word */
+        AX_reg(context) = 0;
+        if (Installed) {
+#ifdef __i386__
+            __asm__("fstsw %0;wait" : "=m" (StatusWord_1));
+#endif
+            AL_reg(context) = (BYTE)StatusWord_1 & 0x3f;
+        }
+        AX_reg(context) |= StatusWord_2;
+        AX_reg(context) &= 0x1fff;
+        StatusWord_2 = AX_reg(context);
         break;
 
     case 9: /* clear emu control word and some other things */
+        WIN87_ClearCtrlWord(context);
         break;
 
     case 10: /* dunno. but looks like returning nr. of things on stack in AX */
@@ -104,10 +175,11 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 
     case 11: /* just returns the installed flag in DX:AX */
         DX_reg(context) = 0;
-        AX_reg(context) = 1;
+        AX_reg(context) = Installed;
         break;
 
     case 12: /* save AX in some internal state var */
+        Inthandler02hVar = AX_reg(context);
         break;
 
     default: /* error. Say that loud and clear */
@@ -121,18 +193,18 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
                               int cbWin87EmInfoStruct)
 {
-  TRACE("(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
+  FIXME("(%p,%d), stub !\n",pWIS,cbWin87EmInfoStruct);
 }
 
 void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
                                  int cbWin87EmSaveArea)
 {
-  TRACE("(%p,%d)\n",
+  FIXME("(%p,%d), stub !\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
 
 void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
-  TRACE("(%p,%d)\n",
+  FIXME("(%p,%d), stub !\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
