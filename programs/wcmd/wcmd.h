@@ -33,6 +33,7 @@ void WCMD_goto (void);
 void WCMD_if (char *);
 void WCMD_move (void);
 void WCMD_output (char *format, ...);
+void WCMD_output_asis (char *message);                   
 void WCMD_parse (char *s, char *q, char *p1, char *p2);
 void WCMD_pause (void);
 void WCMD_print_error (void);

@@ -95,18 +95,22 @@ BATCH_CONTEXT *prev_context;
 void WCMD_batch_command (char *line) {
 
 DWORD status;
-char cmd[1024];
+char cmd1[1024],cmd2[1024];
 char *p, *s, *t;
 int i;
 
-  if (echo_mode && (line[0] != '@')) WCMD_output ("%s", line);
-  status = ExpandEnvironmentStrings (line, cmd, sizeof(cmd));
-  if (!status) {
-    WCMD_print_error ();
-    return;
-  }
+  /* Get working version of command line */                  
+  strcpy(cmd1, line);                                    
 
-  p = cmd;
+  /* Expand environment variables in a batch file %{0-9} first  */
+  /*   Then env vars, and if any left (ie use of undefined vars,*/
+  /*   replace with spaces                                      */
+  /* FIXME: Winnt would replace %1%fred%1 with first parm, then */
+  /*   contents of fred, then the digit 1. Would need to remove */
+  /*   ExpandEnvStrings to achieve this                         */
+
+  /* Replace use of %0...%9 */                                
+  p = cmd1;                                                   
   while ((p = strchr(p, '%'))) {
     i = *(p+1) - '0';
     if ((i >= 0) && (i <= 9)) {
@@ -115,9 +119,39 @@ int i;
       strcpy (p, t);
       strcat (p, s);
       free (s);
-}
+    } else {                                                  
+      p++;                                                    
+    }
   }
-  WCMD_process_command (cmd);
+
+  /* Now replace environment variables */
+  status = ExpandEnvironmentStrings(cmd1, cmd2, sizeof(cmd2));
+  if (!status) {
+    WCMD_print_error ();
+    return;
+  }
+
+  /* In a batch program, unknown variables are replace by nothing */
+  /* so remove any remaining %var%                                */
+  p = cmd2;                                                   
+  while ((p = strchr(p, '%'))) {                              
+    s = strchr(p+1, '%');                                     
+    if (!s) {                                                 
+      *p=0x00;                                                
+    } else {                                                  
+      t = strdup(s+1);                                        
+      strcpy(p, t);                                           
+      free(t);                                                
+    }                                                         
+  }                                                           
+
+  /* Show prompt before batch line IF echo is on */
+  if (echo_mode && (line[0] != '@')) {                        
+    WCMD_show_prompt();                                       
+    WCMD_output ("%s\n", cmd2);                               
+  }                                                           
+
+  WCMD_process_command (cmd2);                             
 }
 
 /*******************************************************************

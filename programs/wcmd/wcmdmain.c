@@ -127,6 +127,7 @@ char *p;
 int status, i;
 DWORD count;
 HANDLE old_stdin = 0, old_stdout = 0, h;
+char *whichcmd;
 
 /*
  *	Throw away constructs we don't support yet
@@ -156,7 +157,8 @@ HANDLE old_stdin = 0, old_stdout = 0, h;
       if (!status) WCMD_print_error ();
       return;
     }
-    WCMD_output (newline);
+
+    /* Dont issue newline WCMD_output (newline);           @JED*/
 
 /*
  *	Redirect stdin and/or stdout if required.
@@ -185,20 +187,26 @@ HANDLE old_stdin = 0, old_stdout = 0, h;
     }
     if ((p = strchr(cmd,'<')) != NULL) *p = '\0';
 
+/*                                                               
+ * Strip leading whitespaces, and a '@' if supplied              
+ */                                                            
+    whichcmd = WCMD_strtrim_leading_spaces(cmd);               
+    if (whichcmd[0] == '@') whichcmd++;                        
+
 /*
  *	Check if the command entered is internal. If it is, pass the rest of the
  *	line down to the command. If not try to run a program.
  */
 
     count = 0;
-    while (IsCharAlphaNumeric(cmd[count])) {
+    while (IsCharAlphaNumeric(whichcmd[count])) {              
       count++;
     }
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-      	  cmd, count, inbuilt[i], -1) == 2) break;
+      	  whichcmd, count, inbuilt[i], -1) == 2) break;        
     }
-    p = WCMD_strtrim_leading_spaces (&cmd[count]);
+    p = WCMD_strtrim_leading_spaces (&whichcmd[count]);       
     WCMD_parse (p, quals, param1, param2);
     switch (i) {
 
@@ -232,8 +240,13 @@ HANDLE old_stdin = 0, old_stdout = 0, h;
         WCMD_directory ();
         break;
       case WCMD_ECHO:
-        WCMD_echo (p);
-        break;
+        /* Use the unstripped version of the following data - step over the space */
+        /* but only if a parameter follows                                        */
+        if (strlen(&whichcmd[count]) > 0)                                       
+          WCMD_echo(&whichcmd[count+1]);                                        
+        else                                                                    
+          WCMD_echo(&whichcmd[count]);                                          
+        break;                         
       case WCMD_FOR:
         WCMD_for (p);
         break;
@@ -299,7 +312,7 @@ HANDLE old_stdin = 0, old_stdout = 0, h;
       case WCMD_EXIT:
         ExitProcess (0);
       default:
-        WCMD_run_program (cmd);
+        WCMD_run_program (whichcmd);                   
     };
     if (old_stdin) {
       CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
@@ -542,6 +555,17 @@ DWORD count;
   WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), string, lstrlen(string), &count, NULL);
   va_end(ap);
 }
+
+/******************************************************************* 
+ * WCMD_output_asis - send output to current standard output device.
+ *        without formatting eg. when message contains '%'
+ */
+
+void WCMD_output_asis (char *message) {
+  DWORD count;
+  WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, lstrlen(message), &count, NULL);
+}
+
 
 
 /*	Remove leading spaces from a string. Return a pointer to the first
