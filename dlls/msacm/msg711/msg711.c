@@ -30,97 +30,11 @@
 #include "winuser.h"
 #include "mmsystem.h"
 #include "msacm.h"
+#include "../msacmdrv.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg711);
-
-
-/***********************************************************************/
-
-#define ACMDM_DRIVER_NOTIFY             (ACMDM_BASE + 1)
-#define ACMDM_DRIVER_DETAILS            (ACMDM_BASE + 10)
-
-#define ACMDM_HARDWARE_WAVE_CAPS_INPUT  (ACMDM_BASE + 20)
-#define ACMDM_HARDWARE_WAVE_CAPS_OUTPUT (ACMDM_BASE + 21)
-
-#define ACMDM_FORMATTAG_DETAILS         (ACMDM_BASE + 25)
-#define ACMDM_FORMAT_DETAILS            (ACMDM_BASE + 26)
-#define ACMDM_FORMAT_SUGGEST            (ACMDM_BASE + 27)
-
-#define ACMDM_FILTERTAG_DETAILS         (ACMDM_BASE + 50)
-#define ACMDM_FILTER_DETAILS            (ACMDM_BASE + 51)
-
-#define ACMDM_STREAM_OPEN               (ACMDM_BASE + 76)
-#define ACMDM_STREAM_CLOSE              (ACMDM_BASE + 77)
-#define ACMDM_STREAM_SIZE               (ACMDM_BASE + 78)
-#define ACMDM_STREAM_CONVERT            (ACMDM_BASE + 79)
-#define ACMDM_STREAM_RESET              (ACMDM_BASE + 80)
-#define ACMDM_STREAM_PREPARE            (ACMDM_BASE + 81)
-#define ACMDM_STREAM_UNPREPARE          (ACMDM_BASE + 82)
-#define ACMDM_STREAM_UPDATE             (ACMDM_BASE + 83)
-
-typedef struct _ACMDRVSTREAMINSTANCE
-{
-  DWORD           cbStruct;
-  PWAVEFORMATEX   pwfxSrc;
-  PWAVEFORMATEX   pwfxDst;
-  PWAVEFILTER     pwfltr;
-  DWORD           dwCallback;
-  DWORD           dwInstance;
-  DWORD           fdwOpen;
-  DWORD           fdwDriver;
-  DWORD           dwDriver;
-  HACMSTREAM    has;
-} ACMDRVSTREAMINSTANCE, *PACMDRVSTREAMINSTANCE;
-
-typedef struct _ACMDRVSTREAMHEADER *PACMDRVSTREAMHEADER;
-typedef struct _ACMDRVSTREAMHEADER {
-  DWORD  cbStruct;
-  DWORD  fdwStatus;
-  DWORD  dwUser;
-  LPBYTE pbSrc;
-  DWORD  cbSrcLength;
-  DWORD  cbSrcLengthUsed;
-  DWORD  dwSrcUser;
-  LPBYTE pbDst;
-  DWORD  cbDstLength;
-  DWORD  cbDstLengthUsed;
-  DWORD  dwDstUser;
-
-  DWORD fdwConvert;
-  PACMDRVSTREAMHEADER *padshNext;
-  DWORD fdwDriver;
-  DWORD dwDriver;
-
-  /* Internal fields for ACM */
-  DWORD  fdwPrepared;
-  DWORD  dwPrepared;
-  LPBYTE pbPreparedSrc;
-  DWORD  cbPreparedSrcLength;
-  LPBYTE pbPreparedDst;
-  DWORD  cbPreparedDstLength;
-} ACMDRVSTREAMHEADER;
-
-typedef struct _ACMDRVSTREAMSIZE
-{
-  DWORD cbStruct;
-  DWORD fdwSize;
-  DWORD cbSrcLength;
-  DWORD cbDstLength;
-} ACMDRVSTREAMSIZE, *PACMDRVSTREAMSIZE;
-
-typedef struct _ACMDRVFORMATSUGGEST
-{
-  DWORD           cbStruct;
-  DWORD           fdwSuggest;
-  PWAVEFORMATEX   pwfxSrc;
-  DWORD           cbwfxSrc;
-  PWAVEFORMATEX   pwfxDst;
-  DWORD           cbwfxDst;
-} ACMDRVFORMATSUGGEST, *PACMDRVFORMATSUGGEST;
-
-
 
 
 /***********************************************************************/
