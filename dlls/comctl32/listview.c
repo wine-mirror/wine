@@ -4981,6 +4981,7 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
   LISTVIEW_ITEM *lpItem;
   INT* piImage;
   LPSTR* ppszText;
+  LPARAM *plParam;
   HDPA hdpaSubItems;
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   /* In the following:
@@ -5037,6 +5038,7 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
   {
     piImage=&lpItem->iImage;
     ppszText=&lpItem->pszText;
+    plParam=&lpItem->lParam;
     if ((infoPtr->uCallbackMask != 0) && (lpLVItem->mask & LVIF_STATE))
     {        
       dispInfo.item.mask |= LVIF_STATE;
@@ -5050,11 +5052,13 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     {
       piImage=&lpSubItem->iImage;
       ppszText=&lpSubItem->pszText;
+      plParam=NULL;
     }
     else
     {
       piImage=NULL;
       ppszText=NULL;
+      plParam=NULL;
     }
   }
 
@@ -5087,6 +5091,10 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
   if (dispInfo.item.mask & LVIF_IMAGE)
   {
     lpLVItem->iImage = dispInfo.item.iImage;
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && piImage)
+    {
+      *piImage = dispInfo.item.iImage;
+    }
   }
   else if (lpLVItem->mask & LVIF_IMAGE)
   {
@@ -5096,6 +5104,10 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
   if (dispInfo.item.mask & LVIF_PARAM)
   {
     lpLVItem->lParam = dispInfo.item.lParam;
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && plParam)
+    {
+      *plParam = dispInfo.item.lParam;
+    }
   }
   else if (lpLVItem->mask & LVIF_PARAM)
   {
