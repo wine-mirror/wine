@@ -175,8 +175,10 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   if (id != 0)
       return FALSE;
 
-  if ((dwDevType != 0) && (GET_DIDEVICE_TYPE(dwDevType) != DIDEVTYPE_JOYSTICK))
-      return FALSE;
+  if (!((dwDevType == 0) ||
+        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
+        ((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))))
+    return FALSE;
 
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
     return FALSE;
@@ -211,8 +213,10 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   if (id != 0)
       return FALSE;
 
-  if ((dwDevType != 0) && (GET_DIDEVICE_TYPE(dwDevType) != DIDEVTYPE_JOYSTICK))
-      return FALSE;
+  if (!((dwDevType == 0) ||
+        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
+        ((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))))
+    return FALSE;
 
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
     return FALSE;

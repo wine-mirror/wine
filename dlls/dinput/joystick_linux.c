@@ -157,7 +157,9 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         return FALSE;
     }
 
-    if ((dwDevType==0) || (GET_DIDEVICE_TYPE(dwDevType)==DIDEVTYPE_JOYSTICK)) {
+    if ((dwDevType == 0) ||
+	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
+	((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
@@ -205,7 +207,9 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         return FALSE;
     }
 
-    if ((dwDevType==0) || (GET_DIDEVICE_TYPE(dwDevType)==DIDEVTYPE_JOYSTICK)) {
+    if ((dwDevType == 0) ||
+	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
+	((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
