@@ -476,8 +476,8 @@ static BOOL32 FILE_InUse(char * name, int * mode)
                  FILE_ReleaseFile(file);
                  return TRUE;
                }
-             FILE_ReleaseFile(file);
            }
+         FILE_ReleaseFile(file);
        }
     }
   return FALSE;
