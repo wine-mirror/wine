@@ -695,6 +695,18 @@ then
     AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS)
 fi
 
+dnl *** check for the need to define __i386__
+
+AC_CACHE_CHECK("whether we need to define __i386__",ac_cv_cpp_def_i386,
+ AC_EGREP_CPP(yes,[#if (defined(i386) || defined(__i386)) && !defined(__i386__)
+yes
+#endif],
+ ac_cv_cpp_def_i386="yes", ac_cv_cpp_def_i386="no"))
+if test "$ac_cv_cpp_def_i386" = "yes"
+then
+    CFLAGS="$CFLAGS -D__i386__"
+fi
+
 dnl $GCC is set by autoconf
 GCC_NO_BUILTIN=""
 if test "$GCC" = "yes"
