@@ -11,6 +11,7 @@
 #include <string.h>
 #include "debugger.h"
 
+#include "ntddk.h"
 #include "thread.h"
 #include "file.h"
 #include "wincon.h"
@@ -727,7 +728,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 			 buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
 			 de->u.LoadDll.dwDebugInfoFileOffset,
 			 de->u.LoadDll.nDebugInfoSize);
-	    CharUpper(buffer);
+	    _strupr(buffer);
 	    DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
 	    if (DBG_IVAR(BreakOnDllLoad)) {
 		DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n", 
