@@ -14,6 +14,7 @@
 /* Add your language specific defines here */
 #include "winmm_En.rc"
 #include "winmm_Fr.rc"
+#include "winmm_Nl.rc"
 
 /* do not add NLS specific stuff below that line */
 
