@@ -17,7 +17,9 @@ init    MSVCRT_Init
 @ cdecl ??1exception@@UAE@XZ(ptr) MSVCRT_exception_dtor
 @ cdecl ??1type_info@@UAE@XZ(ptr) MSVCRT_type_info_dtor
 @ cdecl ??2@YAPAXI@Z(long) MSVCRT_operator_new
+@ cdecl ??_U@YAPAXI@Z(long) MSVCRT_operator_new
 @ cdecl ??3@YAXPAX@Z(ptr) MSVCRT_operator_delete
+@ cdecl ??_V@YAXPAX@Z(ptr) MSVCRT_operator_delete
 @ cdecl ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_opequals
 @ cdecl ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_bad_cast_opequals
 @ cdecl ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr ptr)MSVCRT_bad_typeid_opequals
