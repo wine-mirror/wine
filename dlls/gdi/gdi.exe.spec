@@ -147,7 +147,7 @@
 155 pascal16 QueryAbort(word word) QueryAbort16
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
 157 stub CompatibleBitmap # W1.1, W2.0
-158 pascal16 EnumCallback(ptr ptr word long) EnumCallback16
+158 stub EnumCallback
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits16
 160 pascal16 SetMetaFileBits(word) SetMetaFileBits16
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion16
@@ -183,11 +183,11 @@
 196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter16
 201 stub DMBITBLT
 202 stub DMCOLORINFO
-206 pascal16 dmEnumDFonts(ptr str ptr ptr) dmEnumDFonts16
+206 stub dmEnumDFonts
 207 stub DMENUMOBJ
 208 stub DMOUTPUT
 209 stub DMPIXEL
-210 pascal16 dmRealizeObject(ptr word ptr ptr segptr) dmRealizeObject16
+210 stub dmRealizeObject
 211 stub DMSTRBLT
 212 stub DMSCANLR
 213 stub BRUTE

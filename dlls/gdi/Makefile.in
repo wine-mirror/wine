@@ -52,13 +52,7 @@ C_SRCS = \
 	mfdrv/mapping.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
-	printdrv.c \
-	win16drv/font.c \
-	win16drv/graphics.c \
-	win16drv/init.c \
-	win16drv/objects.c \
-	win16drv/prtdrv.c \
-	win16drv/text.c
+	printdrv.c
 
 C_SRCS16 = \
 	bidi16.c \
