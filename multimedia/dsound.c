@@ -208,7 +208,7 @@ static HRESULT WINAPI IDirectSoundBuffer_Play(
 	TRACE(dsound,"(%p,%08lx,%08lx,%08lx)\n",
 		this,reserved1,reserved2,flags
 	);
-	this->playpos = 0;
+	/* this->playpos = 0; */
 	this->playflags = flags;
 	this->playing = 1;
 	return 0;
@@ -217,27 +217,29 @@ static HRESULT WINAPI IDirectSoundBuffer_Play(
 static HRESULT WINAPI IDirectSoundBuffer_Stop(LPDIRECTSOUNDBUFFER this) {
 	TRACE(dsound,"(%p)\n",this);
 	this->playing = 0;
-	this->writepos = 0; /* hmm */
+	/* this->writepos = 0; hmm */
 	return 0;
 }
 
 static DWORD WINAPI IDirectSoundBuffer_AddRef(LPDIRECTSOUNDBUFFER this) {
+  	TRACE(dsound,"(%p) ref was %ld\n",this, this->ref);
+	
 	return ++(this->ref);
 }
 static DWORD WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER this) {
 	int	i;
 
+	TRACE(dsound,"(%p) ref was %ld\n",this, this->ref);
+	
 	if (--this->ref)
 		return this->ref;
 	for (i=0;i<this->dsound->nrofbuffers;i++)
 		if (this->dsound->buffers[i] == this)
 			break;
 	if (i < this->dsound->nrofbuffers) {
-		memcpy(
-			this->dsound->buffers+i,
-			this->dsound->buffers+i+1,
-			sizeof(LPDIRECTSOUNDBUFFER)*(this->dsound->nrofbuffers-i-1)
-		);
+	  /* Put the last buffer of the list in the (now empty) position */
+	  this->dsound->buffers[i] = this->dsound->buffers[this->dsound->nrofbuffers - 1];
+	  
 		this->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,this->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER)*this->dsound->nrofbuffers);
 		this->dsound->nrofbuffers--;
 		this->dsound->lpvtbl->fnRelease(this->dsound);
@@ -367,11 +369,17 @@ static HRESULT WINAPI IDirectSoundBuffer_Initialize(
 static HRESULT WINAPI IDirectSoundBuffer_GetCaps(
 	LPDIRECTSOUNDBUFFER this,LPDSBCAPS caps
 ) {
+  	TRACE(dsound,"(%p)->(%p)\n",this,caps);
+  
 	caps->dwSize = sizeof(*caps);
-	caps->dwFlags = DSBCAPS_PRIMARYBUFFER|DSBCAPS_STATIC|DSBCAPS_CTRLALL|DSBCAPS_LOCSOFTWARE;
-	caps->dwBufferBytes = 65536;
-	caps->dwUnlockTransferRate = 0;
+	caps->dwFlags = this->dsbd.dwFlags | DSBCAPS_LOCSOFTWARE;
+	caps->dwBufferBytes = this->dsbd.dwBufferBytes;
+	/* This value represents the speed of the "unlock" command.
+	   As unlock is quite fast (it does not do anything), I put
+	   4096 ko/s = 4 Mo / s */
+	caps->dwUnlockTransferRate = 4096;
 	caps->dwPlayCpuOverhead = 0;
+	
 	return DS_OK;
 }
 
@@ -380,6 +388,7 @@ static HRESULT WINAPI IDirectSoundBuffer_QueryInterface(
 ) {
 	char	xbuf[50];
 
+	TRACE(dsound,"(%p,%s,%p)\n",this,xbuf,ppobj);
 	if (!memcmp(&IID_IDirectSoundNotify,riid,sizeof(*riid))) {
 		IDirectSoundNotify	*dsn;
 
@@ -392,7 +401,6 @@ static HRESULT WINAPI IDirectSoundBuffer_QueryInterface(
 		return 0;
 	}
 	WINE_StringFromCLSID(riid,xbuf);
-	TRACE(dsound,"(%p,%s,%p)\n",this,xbuf,ppobj);
 	return E_FAIL;
 }
 
@@ -443,6 +451,7 @@ static HRESULT WINAPI IDirectSound_CreateSoundBuffer(
 		TRACE(dsound,"(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
 	}
 	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBuffer));
+
 	(*ppdsb)->ref =1;
 	(*ppdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsbd->dwBufferBytes);
 	(*ppdsb)->buflen = dsbd->dwBufferBytes;
@@ -503,12 +512,12 @@ static HRESULT WINAPI IDirectSound_GetCaps(LPDIRECTSOUND this,LPDSCAPS caps) {
 }
 
 static ULONG WINAPI IDirectSound_AddRef(LPDIRECTSOUND this) {
-	TRACE(dsound,"(%p), ref was %d\n",this,this->ref);
+	TRACE(dsound,"(%p), ref was %ld\n",this,this->ref);
 	return ++(this->ref);
 }
 
 static ULONG WINAPI IDirectSound_Release(LPDIRECTSOUND this) {
-	TRACE(dsound,"(%p), ref was %d\n",this,this->ref);
+	TRACE(dsound,"(%p), ref was %ld\n",this,this->ref);
 	if (!--(this->ref)) {
 		HeapFree(GetProcessHeap(),0,this);
 		dsound = NULL;
