@@ -166,9 +166,6 @@ static BOOL process_attach(void)
         LoadLibrary16( "system.drv" );
     }
 
-    /* Create 16-bit task */
-    TASK_CreateMainTask();
-
     /* Create the shared heap for broken win95 native dlls */
     HeapCreate( HEAP_SHARED, 0, 0 );
 
@@ -195,7 +192,9 @@ static BOOL process_attach(void)
     if (main_create_flags & CREATE_NEW_PROCESS_GROUP)
         SetConsoleCtrlHandler(NULL, TRUE);
 
+    /* Create 16-bit task */
     thread_attach();
+    TASK_CreateMainTask();
     return TRUE;
 }
 

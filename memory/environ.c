@@ -31,87 +31,23 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "thread.h"
-#include "wine/winbase16.h"
 #include "wine/server.h"
 #include "wine/library.h"
-#include "heap.h"
 #include "winternl.h"
-#include "selectors.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
-/* TODO:
- * - 16 bit environment ??? (see generate_env_block16 for the details)
- */
-
-/* Format of an environment block:
- * ASCIIZ   string 1 (xx=yy format)
- * ...
- * ASCIIZ   string n
- * BYTE     0
- * WORD     1
- * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
- *
- * Notes:
+/* Notes:
  * - contrary to Microsoft docs, the environment strings do not appear
  *   to be sorted on Win95 (although they are on NT); so we don't bother
  *   to sort them either.
- * - on Win2K (and likely most of NT versions) the last part (WORD 1 and 
- *   program name no longer appear in the environment block (from the 32
- *   bit interface)
  */
-
-static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
 
 static STARTUPINFOW startup_infoW;
 static STARTUPINFOA startup_infoA;
 
-/* Maximum length of a Win16 environment string (including NULL) */
-#define MAX_WIN16_LEN  128
-
-static WORD env_sel;     /* selector to the 16 bit environment */
-
-/******************************************************************
- *		generate_env_block16
- *
- * This internal function generates a suitable environment for the 16 bit
- * subsystem and returns the value as a segmented pointer.
- *
- * FIXME: current implementation will allocate a private copy of the
- *        environment strings, but will not follow the modifications (if any)
- *        from the unicode env block stored in the PEB
- *              => how should this be updated from the ntdll modifications ?
- *                 should we use the peb->EnvironmentUpdateCount field to 
- *                 know when environment has changed ???
- *        we currently regenerate this block each time an environment 
- *        variable is modified from a Win32 API call, but we'll miss all
- *        direct access to the NTDLL APIs
- */
-static SEGPTR generate_env_block16(void)
-{
-    static LPSTR env16;
-
-    DWORD       size, new_size;
-    WORD        one = 1;
-
-    if (env16) FreeEnvironmentStringsA( env16 );
-
-    env16 = GetEnvironmentStringsA();
-    size = HeapSize(GetProcessHeap(), 0, env16);
-    new_size = size + sizeof(WORD) + sizeof(ENV_program_name);
-    if (!(env16 = HeapReAlloc( GetProcessHeap(), 0, env16, new_size ))) return 0;
-
-    memcpy(env16 + size, &one, sizeof(one));
-    memcpy(env16 + size + sizeof(WORD), ENV_program_name, sizeof(ENV_program_name));
-    if (env_sel)
-        env_sel = SELECTOR_ReallocBlock( env_sel, env16, new_size );
-    else
-        env_sel = SELECTOR_AllocBlock( env16, 0x10000, WINE_LDT_FLAGS_DATA );
-
-    return MAKESEGPTR( env_sel, 0 );
-}
 
 /***********************************************************************
  *           GetCommandLineA      (KERNEL32.@)
@@ -361,9 +297,6 @@ BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
-
-    /* FIXME: see comments in generate_env_block16 */
-    if (env_sel) generate_env_block16();
     return TRUE;
 }
 
@@ -426,15 +359,6 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     }
 
     return res;
-}
-
-
-/***********************************************************************
- *           GetDOSEnvironment     (KERNEL.131)
- */
-SEGPTR WINAPI GetDOSEnvironment16(void)
-{
-    return generate_env_block16();
 }
 
 

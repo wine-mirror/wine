@@ -1554,3 +1554,47 @@ DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
     if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
     return pTask->compat_flags;
 }
+
+
+/***********************************************************************
+ *           GetDOSEnvironment     (KERNEL.131)
+ *
+ * Note: the environment is allocated once, it doesn't track changes
+ * made using the Win32 API. This shouldn't matter.
+ *
+ * Format of a 16-bit environment block:
+ * ASCIIZ   string 1 (xx=yy format)
+ * ...
+ * ASCIIZ   string n
+ * BYTE     0
+ * WORD     1
+ * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
+ */
+SEGPTR WINAPI GetDOSEnvironment16(void)
+{
+    static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
+    static HGLOBAL16 handle;  /* handle to the 16 bit environment */
+
+    if (!handle)
+    {
+        DWORD size;
+        LPSTR p, env;
+
+        p = env = GetEnvironmentStringsA();
+        while (*p) p += strlen(p) + 1;
+        p++;  /* skip last null */
+        size = (p - env) + sizeof(WORD) + sizeof(ENV_program_name);
+        handle = GlobalAlloc16( GMEM_FIXED, size );
+        if (handle)
+        {
+            WORD one = 1;
+            LPSTR env16 = GlobalLock16( handle );
+            memcpy( env16, env, p - env );
+            memcpy( env16 + (p - env), &one, sizeof(one));
+            memcpy( env16 + (p - env) + sizeof(WORD), ENV_program_name, sizeof(ENV_program_name));
+            GlobalUnlock16( handle );
+        }
+        FreeEnvironmentStringsA( env );
+    }
+    return K32WOWGlobalLock16( handle );
+}
