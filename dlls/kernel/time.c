@@ -13,12 +13,247 @@
 #include "ntddk.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "wine/unicode.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /* maximum time adjustment in seconds for SetLocalTime and SetSystemTime */
 #define SETTIME_MAX_ADJUST 120
+
+
+/* This structure is used to store strings that represent all of the time zones
+   in the world. (This is used to help GetTimeZoneInformation)
+*/
+struct tagTZ_INFO
+{
+    const char *psTZFromUnix;
+    WCHAR psTZWindows[32];
+    int bias;
+    int dst;
+};
+
+static const struct tagTZ_INFO TZ_INFO[] =
+{
+   {"MHT", 
+    {'D','a','t','e','l','i','n','e',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -720, 0},
+   {"SST", 
+    {'S','a','m','o','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    660, 0},
+   {"HST",
+    {'H','a','w','a','i','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    600, 0},
+   {"AKDT", 
+    {'A','l','a','s','k','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    480, 1},
+   {"PDT", 
+    {'P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    420, 1},
+   {"MST",
+    {'U','S',' ','M','o','u','n','t','a','i','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    420, 0},
+   {"MDT",
+    {'M','o','u','n','t','a','i','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    360, 1},
+   {"CST",
+    {'C','e','n','t','r','a','l',' ','A','m','e','r','i','c','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    360, 0},
+   {"CDT",
+    {'C','e','n','t','r','a','l',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    300, 1},
+   {"COT",
+    {'S','A',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    300, 0},
+   {"EDT",
+    {'E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+     240, 1},
+   {"EST",
+    {'U','S',' ','E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    300, 0},
+   {"ADT",
+    {'A','t','l','a','n','t','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    180, 1},
+   {"VET",
+    {'S','A',' ','W','e','s','t','e','r','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+     240, 0},
+   {"CLT",
+    {'P','a','c','i','f','i','c',' ','S','A',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+     240, 0},
+   {"NDT",
+    {'N','e','w','f','o','u','n','d','l','a','n','d',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    150, 1},
+   {"BRT",
+    {'E','.',' ','S','o','u','t','h',' ','A','m','e','r','i','c','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    180, 0},
+   {"ART",
+    {'S','A',' ','E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    180, 0},
+   {"WGST",
+    {'G','r','e','e','n','l','a','n','d',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    120, 1},
+   {"GST",
+    {'M','i','d','-','A','t','l','a','n','t','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    120, 0},
+   {"AZOST",
+    {'A','z','o','r','e','s',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    0, 1},
+   {"CVT",
+    {'C','a','p','e',' ','V','e','r','d','e',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    60, 0},
+   {"WET",
+    {'G','r','e','e','n','w','i','c','h',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    0, 0},
+   {"BST",
+    {'G','M','T',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -60, 1},
+   {"GMT",
+    {'G','M','T',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    0, 0},
+   {"CEST",
+    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -120, 1},
+   {"WAT",
+    {'W','.',' ','C','e','n','t','r','a','l',' ','A','f','r','i','c','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -60, 0},
+   {"EEST",
+    {'E','.',' ','E','u','r','o','p','e',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -180, 1},
+   {"EET",
+    {'E','g','y','p','t',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -120, 0},
+   {"CAT",
+    {'S','o','u','t','h',' ','A','f','r','i','c','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -120, 0},
+   {"IST",
+    {'I','s','r','a','e','l',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -120, 0},
+   {"ADT",
+    {'A','r','a','b','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -240, 1},
+   {"AST",
+    {'A','r','a','b',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -180, 0},
+   {"MSD",
+    {'R','u','s','s','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -240, 1},
+   {"EAT",
+    {'E','.',' ','A','f','r','i','c','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -180, 0},
+   {"IRST",
+    {'I','r','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -270, 1},
+   {"GST",
+    {'A','r','a','b','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -240, 0},
+   {"AZST",
+    {'C','a','u','c','a','s','u','s',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -300, 1},
+   {"AFT",
+    {'A','f','g','h','a','n','i','s','t','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -270, 0},
+   {"YEKST",
+    {'E','k','a','t','e','r','i','n','b','u','r','g',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -360, 1},
+   {"PKT",
+    {'W','e','s','t',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -300, 0},
+   {"IST",
+    {'I','n','d','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -330, 0},
+   {"NPT",
+    {'N','e','p','a','l',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -345, 0},
+   {"ALMST",
+    {'N','.',' ','C','e','n','t','r','a','l',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -420, 1},
+   {"BDT",
+    {'C','e','n','t','r','a','l',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -360, 0},
+   {"LKT",
+    {'S','r','i',' ','L','a','n','k','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -360, 0},
+   {"MMT",
+    {'M','y','a','n','m','a','r',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -390, 0},
+   {"ICT",
+    {'S','E',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -420, 0},
+   {"KRAST",
+    {'N','o','r','t','h',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -480, 1},
+   {"CST",
+    {'C','h','i','n','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -480, 0},
+   {"IRKST",
+    {'N','o','r','t','h',' ','A','s','i','a',' ','E','a','s','t',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -540, 1},
+   {"SGT",
+    {'M','a','l','a','y',' ','P','e','n','i','n','s','u','l','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -480, 0},
+   {"WST",
+    {'W','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -480, 0},
+   {"JST",
+    {'T','o','k','y','o',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -540, 0},
+   {"KST",
+    {'K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -540, 0},
+   {"YAKST",
+    {'Y','a','k','u','t','s','k',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -600, 1},
+   {"CST",
+    {'C','e','n','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -570, 0},
+   {"EST",
+    {'E','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -600, 0},
+   {"GST",
+    {'W','e','s','t',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -600, 0},
+   {"VLAST",
+    {'V','l','a','d','i','v','o','s','t','o','k',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -660, 1},
+   {"MAGST",
+    {'C','e','n','t','r','a','l',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -720, 1},
+   {"NZST",
+    {'N','e','w',' ','Z','e','a','l','a','n','d',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -720, 0},
+   {"FJT",
+    {'F','i','j','i',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -720, 0},
+   {"TOT",
+    {'T','o','n','g','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
+    -780, 0}
+};
+
+/* TIME_GetTZAsStr: helper function that returns the given timezone as a string.
+   This could be done with a hash table instead of merely iterating through
+   a table, however with the small amount of entries (60 or so) I didn't think
+   it was worth it. */
+static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
+{
+   char psTZName[7];
+   struct tm *ptm = localtime(&utc);
+   int i;
+
+   if (!strftime (psTZName, 7, "%Z", ptm))
+      return (NULL);
+
+   for (i=0; i<(sizeof(TZ_INFO) / sizeof(struct tagTZ_INFO)); i++) 
+   {
+      if ( strcmp(TZ_INFO[i].psTZFromUnix, psTZName) == 0 &&
+           TZ_INFO[i].bias == bias &&
+           TZ_INFO[i].dst == dst
+         )
+            return TZ_INFO[i].psTZWindows;
+   }
+
+   return (NULL);
+}
+
 
 /* TIME_GetBias: helper function calculates delta local time from UTC */
 static int TIME_GetBias( time_t utc, int *pdaylight)
@@ -187,6 +422,8 @@ DWORD WINAPI GetTimeZoneInformation(
 {
     time_t gmt;
     int bias, daylight;
+    const WCHAR *psTZ;
+
 
     memset(tzinfo, 0, sizeof(TIME_ZONE_INFORMATION));
 
@@ -196,7 +433,8 @@ DWORD WINAPI GetTimeZoneInformation(
     tzinfo->Bias = -bias / 60;
     tzinfo->StandardBias = 0;
     tzinfo->DaylightBias = -60;
-
+    psTZ = TIME_GetTZAsStr (gmt, (-bias/60), daylight);
+    if (psTZ) strcpyW( tzinfo->StandardName, psTZ );
     return TIME_ZONE_ID_STANDARD;
 }
 
