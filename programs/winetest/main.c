@@ -132,6 +132,7 @@ const char* get_test_source_file(const char* test, const char* subtest)
 {
     static const char* special_dirs[][2] = {
 	{ "gdi32", "gdi"}, { "kernel32", "kernel" },
+        { "msacm32", "msacm" },
 	{ "user32", "user" }, { "winspool.drv", "winspool" },
 	{ "ws2_32", "winsock" }, { 0, 0 }
     };
