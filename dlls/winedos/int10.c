@@ -26,7 +26,6 @@
 #include "miscemu.h"
 #include "vga.h"
 #include "wine/debug.h"
-#include "console.h"
 #include "dosexe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);

@@ -31,7 +31,6 @@
 #include "dosexe.h"
 #include "miscemu.h"
 #include "msdos.h"
-#include "console.h"
 #include "file.h"
 #include "wine/debug.h"
 

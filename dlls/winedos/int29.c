@@ -22,7 +22,6 @@
 
 #include "winnt.h"
 
-#include "console.h"
 #include "miscemu.h"
 #include "dosexe.h"
 
