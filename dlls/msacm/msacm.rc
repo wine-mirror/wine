@@ -25,3 +25,4 @@
 
 #include "msacm_En.rc"
 #include "msacm_Fr.rc"
+#include "msacm_Nl.rc"

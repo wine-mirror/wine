@@ -42,6 +42,7 @@
 #include "wps_En.rc"
 #include "wps_Es.rc"
 #include "wps_It.rc"
+#include "wps_Nl.rc"
 #include "wps_Pt.rc"
 #include "wps_Ru.rc"
 #include "wps_Sk.rc"
