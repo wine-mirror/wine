@@ -160,8 +160,6 @@ typedef unsigned short  WCHAR;
 typedef int             BOOL;
 typedef double          DATE;
 typedef double          DOUBLE;
-typedef double          LONGLONG;
-typedef double          ULONGLONG;
 
 /* FIXME: Wine does not compile with strict on, therefore strict
  * handles are presently only usable on machines where sizeof(UINT) ==

@@ -636,6 +636,7 @@ typedef struct
 #define WM_COPYDATA		0x004a
 #define WM_CANCELJOURNAL	0x004b
 #define WM_NOTIFY		0x004e
+#define WM_TCARD                0x0052
 #define WM_HELP			0x0053
 #define WM_NOTIFYFORMAT		0x0055
 

@@ -7,6 +7,7 @@
 #ifndef __WINE_WINNT_H
 #define __WINE_WINNT_H
 
+#include "basetsd.h"
 #include "windef.h"
 
 #ifndef RC_INVOKED
@@ -141,6 +142,17 @@ typedef LPCSTR PCTSTR, LPCTSTR;
 
 typedef BYTE     BOOLEAN;
 typedef BOOLEAN *PBOOLEAN;
+
+#ifndef _DWORDLONG_
+#define _DWORDLONG_
+typedef __uint64 DWORDLONG, *PDWORDLONG;
+#endif
+
+#ifndef _ULONGLONG_
+#define _ULONGLONG_
+typedef __int64 LONGLONG, *PLONGLONG;
+typedef __uint64 ULONGLONG, *PULONGLONG;
+#endif
 
 typedef struct _LIST_ENTRY {
   struct _LIST_ENTRY *Flink;

@@ -5,10 +5,8 @@
 #ifndef __WINE_WTYPES_H
 #define __WINE_WTYPES_H
 
-
-#include "windef.h"
+#include "basetsd.h"
 #include "rpc.h"
-
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
 
@@ -26,6 +24,17 @@ typedef OLECHAR	*BSTR;
 
 typedef BSTR16		*LPBSTR16;
 typedef BSTR		*LPBSTR;
+
+#ifndef _DWORDLONG_
+#define _DWORDLONG_
+typedef __uint64 DWORDLONG, *PDWORDLONG;
+#endif
+
+#ifndef _ULONGLONG_
+#define _ULONGLONG_
+typedef __int64 LONGLONG, *PLONGLONG;
+typedef __uint64 ULONGLONG, *PULONGLONG;
+#endif
 
 #define OLESTR16(x) x
 #define OLESTR(x) L##x
