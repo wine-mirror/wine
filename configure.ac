@@ -1015,7 +1015,10 @@ esac
 
 case $host_os in
   linux*)
-    AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader")
+    case $host_cpu in
+      *i[[3456789]]86*) AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader") ;;
+      *) AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread") ;;
+    esac
     AC_SUBST(MAIN_BINARY,"wine-glibc")
     ;;
   darwin*)

@@ -14258,8 +14258,12 @@ esac
 
 case $host_os in
   linux*)
-    WINE_BINARIES="wine-glibc wine-kthread wine-pthread wine-preloader"
-
+    case $host_cpu in
+      *i[3456789]86*) WINE_BINARIES="wine-glibc wine-kthread wine-pthread wine-preloader"
+ ;;
+      *) WINE_BINARIES="wine-glibc wine-kthread wine-pthread"
+ ;;
+    esac
     MAIN_BINARY="wine-glibc"
 
     ;;
