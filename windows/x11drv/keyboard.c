@@ -370,6 +370,15 @@ static const char main_key_PT_br[MAIN_LEN][4] =
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
+/*** US international keyboard layout (contributed by Gustavo Noronha (kov@debian.org)) */
+static const char main_key_US_intl[MAIN_LEN][4] =
+{
+  "`~", "1!", "2@", "3#", "4$", "5%", "6^", "7&", "8*", "9(", "0)", "-_", "=+", "\\|",
+  "qQ", "wW", "eE", "rR", "tT", "yY", "uU", "iI", "oO", "pP", "[{", "]}",
+  "aA", "sS", "dD", "fF", "gG", "hH", "jJ", "kK", "lL", ";:", "'\"",
+  "zZ", "xX", "cC", "vV", "bB", "nN", "mM", ",<", ".>", "/?"
+};
+
 /*** Slovak keyboard layout (see cssk_ibm(sk_qwerty) in xkbsel)
   - dead_abovering replaced with degree - no symbol in iso8859-2
   - brokenbar replaced with bar					*/
@@ -453,6 +462,7 @@ static const struct {
  {"Swiss French keyboard layout", 28591, &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Portuguese keyboard layout", 28591, &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States International keyboard layout", 28591, &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Finnish keyboard layout", 28591, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
