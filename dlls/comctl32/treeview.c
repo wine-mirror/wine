@@ -1721,6 +1721,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
      switch ((DWORD) ptdi->hInsertAfter) {
 		case (DWORD) TVI_FIRST: 
+			if (sibItem==wineItem) break;
 			if (wineItem->parent) {
 				wineItem->sibling=parentItem->firstChild;
 				parentItem->firstChild=(HTREEITEM)iItem;
