@@ -37,6 +37,35 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
     systime->wMilliseconds = (tv.tv_usec / 1000) % 1000;
 }
 
+
+/***********************************************************************
+ *              SetLocalTime            (KERNEL32.655)
+ *
+ * FIXME: correct ? Is the timezone param of settimeofday() needed ?
+ * I don't have any docu about SetLocal/SystemTime(), argl...
+ */
+VOID WINAPI SetLocalTime(LPSYSTEMTIME systime)
+{
+    struct timeval tv;
+    struct tm t;
+    time_t sec;
+
+    /* get the number of seconds */
+    t.tm_sec = systime->wSecond;
+    t.tm_min = systime->wMinute;
+    t.tm_hour = systime->wHour;
+    t.tm_mday = systime->wDay;
+    t.tm_mon = systime->wMonth;
+    t.tm_year = systime->wYear;
+    sec = mktime (&t);
+
+    /* set the new time */
+    tv.tv_sec = sec;
+    tv.tv_usec = systime->wMilliseconds * 1000;
+    return !settimeofday(&tv, NULL);
+}
+
+
 /***********************************************************************
  *              GetSystemTime            (KERNEL32.285)
  */
@@ -86,14 +115,7 @@ BOOL WINAPI SetSystemTime(const SYSTEMTIME *systime)
     /* set the new time */
     tv.tv_sec = sec;
     tv.tv_usec = systime->wMilliseconds * 1000;
-    if (settimeofday(&tv, &tz))
-    {
-        return FALSE;
-    }
-    else
-    {
-        return TRUE;
-    }
+    return !settimeofday(&tv, &tz);
 }
 
 

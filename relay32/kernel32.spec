@@ -671,7 +671,7 @@ import  ntdll.dll
 652 stdcall SetHandleCount(long) SetHandleCount
 653 stdcall SetHandleInformation(long long long) SetHandleInformation
 654 stdcall SetLastError(long) SetLastError
-655 stub SetLocalTime
+655 stdcall SetLocalTime(ptr) SetLocalTime
 656 stdcall SetLocaleInfoA(long long str) SetLocaleInfoA
 657 stub SetLocaleInfoW
 658 stub SetMailslotInfo
