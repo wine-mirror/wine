@@ -362,11 +362,8 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
  */
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
-    FIXME("(%p, %p): stub (NT impl. only)\n", thread, token);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    return FALSE;
+    CallWin32ToNt (NtSetInformationThread( thread ? *thread : GetCurrentThread(),
+                                           ThreadImpersonationToken, &token, sizeof token ));
 }
 
 /*	##############################

@@ -539,12 +539,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         FIXME( "ZeroTlsCell not supported on other threads\n" );
         return STATUS_NOT_IMPLEMENTED;
 
+    case ThreadImpersonationToken:
+        {
+            const HANDLE *phToken = data;
+            if (length != sizeof(HANDLE)) return STATUS_INVALID_PARAMETER;
+            FIXME("Set ThreadImpersonationToken handle to %p\n", *phToken );
+            return STATUS_SUCCESS;
+        }
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadAffinityMask:
-    case ThreadImpersonationToken:
     case ThreadDescriptorTableEntry:
     case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
