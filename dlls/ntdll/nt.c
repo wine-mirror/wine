@@ -737,3 +737,13 @@ NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ *        VerSetConditionMask   (NTDLL.@)
+ */
+ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBitMask,
+                                      BYTE dwConditionMask)
+{
+    FIXME("%llx %lu %u\n", dwlConditionMask, dwTypeBitMask, dwConditionMask);
+    return dwlConditionMask;
+}

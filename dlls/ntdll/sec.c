@@ -23,6 +23,9 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <pwd.h>
+#include <unistd.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
@@ -721,23 +724,29 @@ NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
 
 /******************************************************************************
  * RtlConvertSidToUnicodeString (NTDLL.@)
+ *
+ * The returned SID is used to access the USER registry hive usually
+ *
+ * the native function returns something like
+ * "S-1-5-21-0000000000-000000000-0000000000-500";
  */
 NTSTATUS WINAPI RtlConvertSidToUnicodeString(
-       PUNICODE_STRING UnicodeSID,
-       PSID *pSid)
+       PUNICODE_STRING String,
+       PSID Sid,
+       BOOLEAN AllocateString)
 {
-/*	LPSTR GenSID = "S-1-5-21-0000000000-000000000-0000000000-500"; */
-
-	LPSTR GenSID = ".Default";	/* usually the returned SID is used to */
-					/* access  "\\REGISTRY\\USER\\.DEFAULT" */
-
+        const char *p;
+        NTSTATUS status;
         ANSI_STRING AnsiStr;
 
-	FIXME("(%p %p)\n", UnicodeSID, pSid);
-        if (UnicodeSID)
-            TRACE("%p(<OUT>) (%u %u)\n",
-                  UnicodeSID->Buffer, UnicodeSID->Length, UnicodeSID->MaximumLength);
+        struct passwd *pwd = getpwuid( getuid() );
+        p = (pwd) ? pwd->pw_name : ".Default";
 
-        RtlInitAnsiString(&AnsiStr, GenSID);
-        return RtlAnsiStringToUnicodeString(UnicodeSID, &AnsiStr, TRUE);
+	FIXME("(%p %p %u)\n", String, Sid, AllocateString);
+
+        RtlInitAnsiString(&AnsiStr, p);
+        status = RtlAnsiStringToUnicodeString(String, &AnsiStr, AllocateString);
+
+        TRACE("%s (%u %u)\n",debugstr_w(String->Buffer),String->Length,String->MaximumLength);
+        return status;
 }

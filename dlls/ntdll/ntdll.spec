@@ -310,7 +310,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlConvertExclusiveToShared
 @ stdcall -ret64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
 @ stub RtlConvertSharedToExclusive
-@ stdcall RtlConvertSidToUnicodeString(ptr ptr)RtlConvertSidToUnicodeString
+@ stdcall RtlConvertSidToUnicodeString(ptr ptr long) RtlConvertSidToUnicodeString
 @ stub RtlConvertUiListToApiList
 @ stdcall -ret64 RtlConvertUlongToLargeInteger(long) RtlConvertUlongToLargeInteger
 @ stub RtlCopyLuid
@@ -1013,6 +1013,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlCreatePropertySet
 @ stub RtlSetPropertySetClassId
 @ stdcall NtPowerInformation(long long long long long) NtPowerInformation
+@ stdcall -ret64 VerSetConditionMask(long long long long) VerSetConditionMask
 
 ##################
 # Wine extensions
