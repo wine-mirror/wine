@@ -1705,7 +1705,7 @@ typedef struct
     DWORD        bV4BlueMask;
     DWORD        bV4AlphaMask;
     DWORD        bV4CSType;
-    CIEXYZTRIPLE bV4EndPoints;
+    CIEXYZTRIPLE bV4Endpoints;
     DWORD        bV4GammaRed;
     DWORD        bV4GammaGreen;
     DWORD        bV4GammaBlue;

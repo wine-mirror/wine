@@ -206,15 +206,15 @@ static void convert_bitmap_swap_v4(BITMAPV4HEADER *b4h)
 	b4h->bV4BlueMask	= BYTESWAP_DWORD(b4h->bV4BlueMask);
 	b4h->bV4AlphaMask	= BYTESWAP_DWORD(b4h->bV4AlphaMask);
 	b4h->bV4CSType		= BYTESWAP_DWORD(b4h->bV4CSType);
-	b4h->bV4EndPoints.ciexyzRed.ciexyzX	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzRed.ciexyzX);
-	b4h->bV4EndPoints.ciexyzRed.ciexyzY	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzRed.ciexyzY);
-	b4h->bV4EndPoints.ciexyzRed.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzRed.ciexyzZ);
-	b4h->bV4EndPoints.ciexyzGreen.ciexyzX	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzGreen.ciexyzX);
-	b4h->bV4EndPoints.ciexyzGreen.ciexyzY	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzGreen.ciexyzY);
-	b4h->bV4EndPoints.ciexyzGreen.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzGreen.ciexyzZ);
-	b4h->bV4EndPoints.ciexyzBlue.ciexyzX	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzBlue.ciexyzX);
-	b4h->bV4EndPoints.ciexyzBlue.ciexyzY	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzBlue.ciexyzY);
-	b4h->bV4EndPoints.ciexyzBlue.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4EndPoints.ciexyzBlue.ciexyzZ);
+	b4h->bV4Endpoints.ciexyzRed.ciexyzX	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzRed.ciexyzX);
+	b4h->bV4Endpoints.ciexyzRed.ciexyzY	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzRed.ciexyzY);
+	b4h->bV4Endpoints.ciexyzRed.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzRed.ciexyzZ);
+	b4h->bV4Endpoints.ciexyzGreen.ciexyzX	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzGreen.ciexyzX);
+	b4h->bV4Endpoints.ciexyzGreen.ciexyzY	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzGreen.ciexyzY);
+	b4h->bV4Endpoints.ciexyzGreen.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzGreen.ciexyzZ);
+	b4h->bV4Endpoints.ciexyzBlue.ciexyzX	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzBlue.ciexyzX);
+	b4h->bV4Endpoints.ciexyzBlue.ciexyzY	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzBlue.ciexyzY);
+	b4h->bV4Endpoints.ciexyzBlue.ciexyzZ	= BYTESWAP_DWORD(b4h->bV4Endpoints.ciexyzBlue.ciexyzZ);
 	b4h->bV4GammaRed	= BYTESWAP_DWORD(b4h->bV4GammaRed);
 	b4h->bV4GammaGreen	= BYTESWAP_DWORD(b4h->bV4GammaGreen);
 	b4h->bV4GammaBlue	= BYTESWAP_DWORD(b4h->bV4GammaBlue);
@@ -1136,4 +1136,3 @@ style_t *new_style(DWORD or_mask, DWORD and_mask)
 	st->and_mask = and_mask;
 	return st;
 }
-
