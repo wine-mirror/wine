@@ -125,7 +125,7 @@ static char *preloader_start, *preloader_end;
 struct wld_link_map {
     ElfW(Addr) l_addr;
     ElfW(Dyn) *l_ld;
-    const ElfW(Phdr) *l_phdr;
+    ElfW(Phdr)*l_phdr;
     ElfW(Addr) l_entry;
     ElfW(Half) l_ldnum;
     ElfW(Half) l_phnum;
@@ -138,14 +138,19 @@ struct wld_link_map {
  * The _start function is the entry and exit point of this program
  *
  *  It calls wld_start, passing a pointer to the args it receives
- *  then jumps to the address wld_start returns after removing the
- *  first argv[] value, and decrementing argc
+ *  then jumps to the address wld_start returns.
  */
 void _start();
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
+                  "\tmovl %esp,%eax\n"
+                  "\tleal -128(%esp),%esp\n"  /* allocate some space for extra aux values */
+                  "\tpushl %eax\n"            /* orig stack pointer */
+                  "\tpushl %esp\n"            /* ptr to orig stack pointer */
                   "\tcall wld_start\n"
-                  "\tpush %eax\n"
+                  "\tpopl %ecx\n"             /* remove ptr to stack pointer */
+                  "\tpopl %esp\n"             /* new stack pointer */
+                  "\tpush %eax\n"             /* ELF interpreter entry point */
                   "\txor %eax,%eax\n"
                   "\txor %ecx,%ecx\n"
                   "\txor %edx,%edx\n"
@@ -219,42 +224,82 @@ static void fatal_error(const char *fmt, ... )
  */
 static void dump_auxiliary( ElfW(auxv_t) *av )
 {
-  for (  ; av->a_type != AT_NULL; av++)
-    switch (av->a_type)
-      {
-      case AT_PAGESZ:
-        wld_printf("AT_PAGESZ = %x\n",av->a_un.a_val);
-        break;
-      case AT_PHDR:
-        wld_printf("AT_PHDR = %x\n",av->a_un.a_ptr);
-        break;
-      case AT_PHNUM:
-        wld_printf("AT_PHNUM = %x\n",av->a_un.a_val);
-        break;
-      case AT_ENTRY:
-        wld_printf("AT_ENTRY = %x\n",av->a_un.a_val);
-        break;
-      case AT_BASE:
-        wld_printf("AT_BASE = %x\n",av->a_un.a_val);
-        break;
-      }
+#define NAME(at) { at, #at }
+    static const struct { int val; const char *name; } names[] =
+    {
+        NAME(AT_BASE),
+        NAME(AT_CLKTCK),
+        NAME(AT_EGID),
+        NAME(AT_ENTRY),
+        NAME(AT_EUID),
+        NAME(AT_FLAGS),
+        NAME(AT_GID),
+        NAME(AT_HWCAP),
+        NAME(AT_PAGESZ),
+        NAME(AT_PHDR),
+        NAME(AT_PHENT),
+        NAME(AT_PHNUM),
+        NAME(AT_PLATFORM),
+        NAME(AT_UID),
+        { 0, NULL }
+    };
+#undef NAME
+
+    int i;
+
+    for (  ; av->a_type != AT_NULL; av++)
+    {
+        for (i = 0; names[i].name; i++) if (names[i].val == av->a_type) break;
+        if (names[i].name) wld_printf("%s = %x\n", names[i].name, av->a_un.a_val);
+        else wld_printf( "%x = %x\n", av->a_type, av->a_un.a_val );
+    }
 }
 #endif
 
 /*
- * set_auxiliary
+ * set_auxiliary_values
  *
- * Set a field of the auxiliary structure
+ * Set the new auxiliary values
  */
-static void set_auxiliary( ElfW(auxv_t) *av, int type, long int val )
+static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av, void **stack )
 {
-  for ( ; av->a_type != AT_NULL; av++)
-    if( av->a_type == type )
+    int i, j, av_count = 0, new_count = 0;
+
+    /* count how many aux values we have already */
+    while (av[av_count].a_type != AT_NULL) av_count++;
+
+    /* count how many values we have in new_av that aren't in av */
+    for (j = 0; new_av[j].a_type != AT_NULL; j++)
     {
-      av->a_un.a_val = val;
-      return;
+        for (i = 0; i < av_count; i++) if (av[i].a_type == new_av[j].a_type) break;
+        if (i == av_count) new_count++;
     }
-  wld_printf( "wine-preloader: cannot set auxiliary value %x, please report\n", type );
+
+    if (new_count)  /* need to make room for the extra values */
+    {
+        char *new_stack = (char *)*stack - new_count * sizeof(*av);
+        memmove( new_stack, *stack, (char *)(av + av_count) - (char *)*stack );
+        *stack = new_stack;
+        av -= new_count;
+    }
+
+    /* now set the values */
+    for (j = 0; new_av[j].a_type != AT_NULL; j++)
+    {
+        for (i = 0; i < av_count; i++) if (av[i].a_type == new_av[j].a_type) break;
+        if (i < av_count) av[i].a_un.a_val = new_av[j].a_un.a_val;
+        else
+        {
+            av[av_count].a_type     = new_av[j].a_type;
+            av[av_count].a_un.a_val = new_av[j].a_un.a_val;
+            av_count++;
+        }
+    }
+
+#ifdef DUMP_AUX_INFO
+    wld_printf("New auxiliary info:\n");
+    dump_auxiliary( av );
+#endif
 }
 
 /*
@@ -262,15 +307,11 @@ static void set_auxiliary( ElfW(auxv_t) *av, int type, long int val )
  *
  * Get a field of the auxiliary structure
  */
-static int get_auxiliary( ElfW(auxv_t) *av, int type, int *val )
+static int get_auxiliary( ElfW(auxv_t) *av, int type, int def_val )
 {
   for ( ; av->a_type != AT_NULL; av++)
-    if( av->a_type == type )
-    {
-      *val = av->a_un.a_val;
-      return 1;
-    }
-  return 0;
+      if( av->a_type == type ) return av->a_un.a_val;
+  return def_val;
 }
 
 /*
@@ -633,19 +674,20 @@ error:
  *  Load the binary and then its ELF interpreter.
  *  Note, we assume that the binary is a dynamically linked ELF shared object.
  */
-void* wld_start( int argc, ... )
+void* wld_start( void **stack )
 {
-    int i;
+    int i, *pargc;
     char **argv, **p;
     char *interp, *reserve = NULL;
-    ElfW(auxv_t)* av;
+    ElfW(auxv_t) new_av[11], *av;
     struct wld_link_map main_binary_map, ld_so_map;
     struct wine_preload_info **wine_main_preload_info;
 
-    argv = (char **)&argc + 1;
+    pargc = *stack;
+    argv = (char **)pargc + 1;
 
     /* skip over the parameters */
-    p = argv + argc + 1;
+    p = argv + *pargc + 1;
 
     /* skip over the environment */
     while (*p)
@@ -656,14 +698,15 @@ void* wld_start( int argc, ... )
     }
 
     av = (ElfW(auxv_t)*) (p+1);
-    if (!get_auxiliary( av, AT_PAGESZ, &page_size )) page_size = 4096;
+    page_size = get_auxiliary( av, AT_PAGESZ, 4096 );
     page_mask = page_size - 1;
 
     preloader_start = (char *)_start - ((unsigned int)_start & page_mask);
     preloader_end = (char *)((unsigned int)(_end + page_mask) & ~page_mask);
 
 #ifdef DUMP_AUX_INFO
-    for( i = 0; i<argc; i++ ) wld_printf("argv[%x] = %s\n", i, argv[i]);
+    wld_printf( "stack = %x\n", *stack );
+    for( i = 0; i < *pargc; i++ ) wld_printf("argv[%x] = %s\n", i, argv[i]);
     dump_auxiliary( av );
 #endif
 
@@ -686,14 +729,24 @@ void* wld_start( int argc, ... )
     if (wine_main_preload_info) *wine_main_preload_info = preload_info;
     else wld_printf( "wine_main_preload_info not found\n" );
 
-    set_auxiliary( av, AT_PHDR, (unsigned long)main_binary_map.l_phdr );
-    set_auxiliary( av, AT_PHNUM, main_binary_map.l_phnum );
-    set_auxiliary( av, AT_BASE, ld_so_map.l_addr );
-    set_auxiliary( av, AT_ENTRY, main_binary_map.l_entry );
+#define SET_NEW_AV(n,type,val) new_av[n].a_type = (type); new_av[n].a_un.a_val = (val);
+    SET_NEW_AV( 0, AT_PHDR, (unsigned long)main_binary_map.l_phdr );
+    SET_NEW_AV( 1, AT_PHENT, sizeof(ElfW(Phdr)) );
+    SET_NEW_AV( 2, AT_PHNUM, main_binary_map.l_phnum );
+    SET_NEW_AV( 3, AT_PAGESZ, page_size );
+    SET_NEW_AV( 4, AT_BASE, ld_so_map.l_addr );
+    SET_NEW_AV( 5, AT_FLAGS, get_auxiliary( av, AT_FLAGS, 0 ) );
+    SET_NEW_AV( 6, AT_ENTRY, main_binary_map.l_entry );
+    SET_NEW_AV( 7, AT_UID, get_auxiliary( av, AT_UID, getuid() ) );
+    SET_NEW_AV( 8, AT_EUID, get_auxiliary( av, AT_EUID, geteuid() ) );
+    SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, getgid() ) );
+    SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, getegid() ) );
+#undef SET_NEW_AV
+
+    set_auxiliary_values( av, new_av, stack );
 
 #ifdef DUMP_AUX_INFO
-    wld_printf("New auxiliary info:\n");
-    dump_auxiliary( av );
+    wld_printf("new stack = %x\n", *stack);
     wld_printf("jumping to %x\n", ld_so_map.l_entry);
 #endif
 
