@@ -3167,7 +3167,7 @@ static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
     DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
     WCHAR root[] = {'A',':','\\',0};
 
-    root[0] += INT21_MapDrive(BL_reg(context));
+    root[0] += INT21_MapDrive(DL_reg(context));
     if (!GetDiskFreeSpaceW( root, &cluster_sectors, &sector_bytes,
                             &free_clusters, &total_clusters )) return 0;
     SET_AX( context, cluster_sectors );
