@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 BOOL
 X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                    const RECT *lprect, LPCWSTR wstr, UINT count,
-                   const INT *lpDx )
+                   const INT *lpDx, INT breakExtra )
 {
     int 	        i;
     fontObject*		pfo;
@@ -58,14 +58,11 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     BOOL                result = TRUE;
     HRGN                saved_region = 0;
     POINT               pt;
-    DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
     INT charExtra = GetTextCharacterExtra( physDev->hdc );
 
-    if(dc->gdiFont)
-        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count,
-					 lpDx);
-
+    if(physDev->dc->gdiFont)
+        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx, breakExtra);
 
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
@@ -271,7 +268,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     wine_tsx11_unlock();
     if(!rotated)
     {
-      if (!charExtra && !dc->breakExtra && !lpDx)
+      if (!charExtra && !breakExtra && !lpDx)
       {
         X11DRV_cptable[pfo->fi->cptable].pDrawString(
 		pfo, gdi_display, physDev->drawable, physDev->gc,
@@ -293,7 +290,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	    long ve_we;
 	    unsigned short err = 0;
 
-	    ve_we = (LONG)(dc->xformWorld2Vport.eM11 * 0x10000);
+	    ve_we = (LONG)(physDev->dc->xformWorld2Vport.eM11 * 0x10000);
 
 	    while (i < count)
 	    {
@@ -338,7 +335,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                 {
                     delta += charExtra;
                     if (str2b[i].byte2 == (char)dfBreakChar)
-		      delta += dc->breakExtra;
+		      delta += breakExtra;
 		    pitem->nchars++;
                 } while ((++i < count) && !delta);
 		pitem++;
@@ -381,7 +378,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	                  * pfo->lpX11Trans->pixelsize / 1000.0;
 	  offset += charExtra;
 	  if (str2b[i].byte2 == (char)dfBreakChar)
-	    offset += dc->breakExtra;
+	    offset += breakExtra;
 	}
       }
     }

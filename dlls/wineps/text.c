@@ -18,10 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <string.h>
-#include "gdi.h"
+#include <stdarg.h>
+#include <math.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "psdrv.h"
-#include "wine/debug.h"
 #include "winspool.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -34,7 +39,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
  */
 BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		       const RECT *lprect, LPCWSTR str, UINT count,
-		       const INT *lpDx )
+		       const INT *lpDx, INT breakExtra )
 {
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;
@@ -96,7 +101,6 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     POINT pt;
     INT ascent, descent;
     WORD *glyphs = NULL;
-    DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
     INT char_extra;
     INT *deltas = NULL;
@@ -124,13 +128,9 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	}
     }
 
-    if(align & TA_UPDATECP) {
-	x = dc->CursPosX;
-	y = dc->CursPosY;
-    }
-
     pt.x = x;
     pt.y = y;
+    if(align & TA_UPDATECP) GetCurrentPositionEx( physDev->hdc, &pt );
     LPtoDP(physDev->hdc, &pt, 1);
     x = pt.x;
     y = pt.y;
@@ -188,8 +188,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
             pt.x = x + sz.cx * cosEsc;
             pt.y = y - sz.cx * sinEsc;
             DPtoLP( physDev->hdc, &pt, 1 );
-            dc->CursPosX = pt.x;
-            dc->CursPosY = pt.y;
+            MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
 	}
 	break;
 
@@ -207,8 +206,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
             pt.x = x;
             pt.y = y;
             DPtoLP( physDev->hdc, &pt, 1 );
-            dc->CursPosX = pt.x;
-            dc->CursPosY = pt.y;
+            MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
 	}
 	break;
     }

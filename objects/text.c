@@ -166,10 +166,11 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                               lpReorderedString, count, NULL );
 
                 ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
-                                             lprect,lpReorderedString,count,lpDx);
+                                             lprect,lpReorderedString,count,lpDx,dc->breakExtra);
                 HeapFree(GetProcessHeap(), 0, lpReorderedString);
             } else
-                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
+                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,
+                                             lpDx,dc->breakExtra);
         }
         GDI_ReleaseObj( hdc );
     }

@@ -338,7 +338,7 @@ BOOL TTYDRV_DC_StretchBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst,
  */
 BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 			  const RECT *lpRect, LPCWSTR str, UINT count,
-			  const INT *lpDx)
+			  const INT *lpDx, INT breakExtra )
 {
 #ifdef WINE_CURSES
   INT row, col;

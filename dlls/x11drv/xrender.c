@@ -930,7 +930,7 @@ static int XRenderErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
  */
 BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR wstr, UINT count,
-				const INT *lpDx )
+				const INT *lpDx, INT breakExtra )
 {
     XRenderColor col;
     int idx;
@@ -1514,7 +1514,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 
 BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR wstr, UINT count,
-				const INT *lpDx )
+				const INT *lpDx, INT breakExtra )
 {
   assert(0);
   return FALSE;
