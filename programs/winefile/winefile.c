@@ -2645,10 +2645,6 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 		hbrush = CreateSolidBrush(bkcolor);
 		FillRect(dis->hDC, &focusRect, hbrush);
-		if (entry->down && entry->expanded) {
-			MoveToEx(dis->hDC, img_pos + IMAGE_WIDTH/2 + TREE_LINE_DX, dis->rcItem.top+IMAGE_HEIGHT+2, 0);
-			LineTo(dis->hDC, img_pos + IMAGE_WIDTH/2 + TREE_LINE_DX, dis->rcItem.bottom);
-		}
 		DeleteObject(hbrush);
 
 		SetBkMode(dis->hDC, TRANSPARENT);
