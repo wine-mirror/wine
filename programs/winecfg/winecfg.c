@@ -487,15 +487,6 @@ char *keypath(char *section)
     return result;
 }
 
-/* returns a string with the window text of the dialog item. user is responsible for freeing the result */
-char *getDialogItemText(HWND hDlg, WORD controlID) {
-    HWND item = GetDlgItem(hDlg, controlID);
-    int len = GetWindowTextLength(item) + 1;
-    char *result = malloc(len);
-    if (GetWindowText(item, result, len) == 0) return NULL;
-    return result;
-}
-
 void PRINTERROR(void)
 {
         LPSTR msg;

@@ -538,32 +538,32 @@ void onEditChanged(HWND hDlg, WORD controlID) {
   WINE_TRACE("controlID=%d\n", controlID);
   switch (controlID) {
       case IDC_EDIT_LABEL: {
-        char *label = getDialogItemText(hDlg, controlID);
+        char *label = get_control_text(hDlg, controlID);
         if(!label) label = strdup("");
         setDriveLabel(editDriveEntry, label);
         refreshDriveDlg(driveDlgHandle);
-        if (label) free(label);
+        if (label) HeapFree(GetProcessHeap(), 0, label);
         break;
       }
       case IDC_EDIT_PATH: {
-          char *path = getDialogItemText(hDlg, controlID);
+          char *path = get_control_text(hDlg, controlID);
           if (!path) path = strdup("fake_windows"); /* default to assuming fake_windows in the .wine directory */
           WINE_TRACE("got path from control of '%s'\n", path);
           setDrivePath(editDriveEntry, path);
-          if(path) free(path);
+          if (path) HeapFree(GetProcessHeap(), 0, path);
           break;
       }
       case IDC_EDIT_SERIAL: {
-          char *serial = getDialogItemText(hDlg, controlID);
+          char *serial = get_control_text(hDlg, controlID);
           if(!serial) serial = strdup("");
           setDriveSerial(editDriveEntry, serial);
-          if (serial) free (serial);
+          if (serial) HeapFree(GetProcessHeap(), 0, serial);
           break;
       }
       case IDC_EDIT_DEVICE: {
-          char *device = getDialogItemText(hDlg,controlID);
+          char *device = get_control_text(hDlg,controlID);
           /* TODO: handle device if/when it makes sense to do so.... */
-          if (device) free(device);
+          if (device) HeapFree(GetProcessHeap(), 0, device);
           refreshDriveDlg(driveDlgHandle);
           break;
       }
@@ -635,15 +635,15 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	  case IDC_RADIO_ASSIGN:
       {
         char *edit, *serial;
-        edit = getDialogItemText(hDlg, IDC_EDIT_LABEL);
+        edit = get_control_text(hDlg, IDC_EDIT_LABEL);
         if(!edit) edit = strdup("");
         setDriveLabel(editDriveEntry, edit);
-        free(edit);
+        HeapFree(GetProcessHeap(), 0, edit);
 
-        serial = getDialogItemText(hDlg, IDC_EDIT_SERIAL);
+        serial = get_control_text(hDlg, IDC_EDIT_SERIAL);
         if(!serial) serial = strdup("");
         setDriveSerial(editDriveEntry, serial);
-        free(serial);
+        HeapFree(GetProcessHeap(), 0, serial);
 
         /* TODO: we don't have a device at this point */
 /*      setDriveValue(editWindowLetter, "Device", NULL); */
@@ -669,9 +669,11 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 }
 
 void onAddDriveClicked(HWND hDlg) {
-  /* we should allocate a drive letter automatically. We also need some way to let the user choose the mapping point,
-     for now we will just force them to enter a path automatically, with / being the default. In future we should
-     be able to temporarily map / then invoke the directory chooser dialog. */
+  /* we should allocate a drive letter automatically. We also need
+     some way to let the user choose the mapping point, for now we
+     will just force them to enter a path automatically, with / being
+     the default. In future we should be able to temporarily map /
+     then invoke the directory chooser dialog. */
   
   char newLetter = 'C'; /* we skip A and B, they are historically floppy drives */
   long mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */

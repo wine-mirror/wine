@@ -72,109 +72,119 @@ void update_gui_for_desktop_mode(HWND dialog) {
     updating_ui = FALSE;
 }
 
-/* pokes the win32 api to setup the dialog from the config struct */
-void initGraphDlg (HWND hDlg)
+static void init_dialog (HWND dialog)
 {
     static char *default_desktop = "640x480";
     char *buf;
     char *bufindex;
 
-    update_gui_for_desktop_mode(hDlg);
+    update_gui_for_desktop_mode(dialog);
 
     updating_ui = TRUE;
     
     /* desktop size */
     buf = get(keypath("x11drv"), "Desktop", default_desktop);
     bufindex = strchr(buf, 'x');
+    
     if(!bufindex) /* handle invalid "Desktop" values */
     {
-      free(buf);
-      buf = strdup(default_desktop);
-      bufindex = strchr(buf, 'x');
+        HeapFree(GetProcessHeap(), 0, buf);
+        buf = strdupA(default_desktop);
+        bufindex = strchr(buf, 'x');
     }
+    
     *bufindex = '\0';
     bufindex++;
-    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), buf);
-    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), bufindex);
+    SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), buf);
+    SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_RESETCONTENT, 0, 0);
-    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "8 bit");
-    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "16 bit");
-    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
-    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
+    SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_RESETCONTENT, 0, 0);
+    SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "8 bit");
+    SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "16 bit");
+    SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
+    SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
 
     buf = get(keypath("x11drv"), "ScreenDepth", "24");
     if (strcmp(buf, "8") == 0)
-	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
     else if (strcmp(buf, "16") == 0)
-	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 1, 0);
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 1, 0);
     else if (strcmp(buf, "24") == 0)
-	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 2, 0);
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 2, 0);
     else if (strcmp(buf, "32") == 0)
-	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 3, 0);
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 3, 0);
     else
 	WINE_ERR("Invalid screen depth read from registry (%s)\n", buf);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
-    SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
+    SendDlgItemMessage(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
+    SendDlgItemMessage(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
     buf = get(keypath("x11drv"), "DXGrab", "Y");
     if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_CHECKED);
+	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
-	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
+	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
     buf = get(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
     if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_CHECKED);
+	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_CHECKED);
     else
-	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
+	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
     
     updating_ui = FALSE;
 }
 
-void setFromDesktopSizeEdits(HWND hDlg) {
-    char *width = HeapAlloc(GetProcessHeap(), 0, RES_MAXLEN+1);
-    char *height = HeapAlloc(GetProcessHeap(), 0, RES_MAXLEN+1);
-    char *new = HeapAlloc(GetProcessHeap(), 0, (RES_MAXLEN*2) + 2);
+static void set_from_desktop_edits(HWND dialog) {
+    char *width, *height, *new;
 
-    if (updating_ui) goto end;
+    if (updating_ui) return;
     
     WINE_TRACE("\n");
-    
-    GetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), width, RES_MAXLEN+1);
-    GetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), height, RES_MAXLEN+1);
 
-    if (strcmp(width, "") == 0) strcpy(width, "640");
-    if (strcmp(height, "") == 0) strcpy(height, "480");
+    width = get_control_text(dialog, IDC_DESKTOP_WIDTH);
+    height = get_control_text(dialog, IDC_DESKTOP_HEIGHT);
+
+    if (strcmp(width, "") == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, width);
+        width = strdupA("640");
+    }
     
+    if (strcmp(height, "") == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, height);
+        height = strdupA("480");
+    }
+
+    new = HeapAlloc(GetProcessHeap(), 0, strlen(width) + strlen(height) + 2 /* x + terminator */);
     sprintf(new, "%sx%s", width, height);
     set(keypath("x11drv"), "Desktop", new);
     
-end:
     HeapFree(GetProcessHeap(), 0, width);
     HeapFree(GetProcessHeap(), 0, height);
     HeapFree(GetProcessHeap(), 0, new);
 }
 
-void onEnableDesktopClicked(HWND hDlg) {
+void on_enable_desktop_clicked(HWND dialog) {
     WINE_TRACE("\n");
-    if (IsDlgButtonChecked(hDlg, IDC_ENABLE_DESKTOP) == BST_CHECKED) {
+    
+    if (IsDlgButtonChecked(dialog, IDC_ENABLE_DESKTOP) == BST_CHECKED) {
 	/* it was just unchecked, so read the values of the edit boxes, set the config value */
-	setFromDesktopSizeEdits(hDlg);
+	set_from_desktop_edits(dialog);
     } else {
 	/* it was just checked, so remove the config values */
 	set(keypath("x11drv"), "Desktop", NULL);
     }
-    update_gui_for_desktop_mode(hDlg);
+    
+    update_gui_for_desktop_mode(dialog);
 }
 
-void onScreenDepthChanged(HWND hDlg) {
-    char *newvalue = getDialogItemText(hDlg, IDC_SCREEN_DEPTH);
+static void on_screen_depth_changed(HWND dialog) {
+    char *newvalue = get_control_text(dialog, IDC_SCREEN_DEPTH);
     char *spaceIndex = strchr(newvalue, ' ');
     
     WINE_TRACE("newvalue=%s\n", newvalue);
@@ -182,19 +192,19 @@ void onScreenDepthChanged(HWND hDlg) {
 
     *spaceIndex = '\0';
     set(keypath("x11drv"), "ScreenDepth", newvalue);
-    free(newvalue);
+    HeapFree(GetProcessHeap(), 0, newvalue);
 }
 
-void onDXMouseGrabClicked(HWND hDlg) {
-    if (IsDlgButtonChecked(hDlg, IDC_DX_MOUSE_GRAB) == BST_CHECKED)
+static void on_dx_mouse_grab_clicked(HWND dialog) {
+    if (IsDlgButtonChecked(dialog, IDC_DX_MOUSE_GRAB) == BST_CHECKED)
 	set(keypath("x11drv"), "DXGrab", "Y");
     else
 	set(keypath("x11drv"), "DXGrab", "N");
 }
 
 
-void onDoubleBufferClicked(HWND hDlg) {
-    if (IsDlgButtonChecked(hDlg, IDC_DOUBLE_BUFFER) == BST_CHECKED)
+static void on_double_buffer_clicked(HWND dialog) {
+    if (IsDlgButtonChecked(dialog, IDC_DOUBLE_BUFFER) == BST_CHECKED)
 	set(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
     else
 	set(keypath("x11drv"), "DesktopDoubleBuffered", "N");
@@ -216,20 +226,20 @@ GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case EN_CHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 		    if ( ((LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT)) && !updating_ui )
-			setFromDesktopSizeEdits(hDlg);
+			set_from_desktop_edits(hDlg);
 		    break;
 		}
 		case BN_CLICKED: {
 		    if (updating_ui) break;
 		    switch(LOWORD(wParam)) {
-			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
-			case IDC_DX_MOUSE_GRAB:  onDXMouseGrabClicked(hDlg); break;
-			case IDC_DOUBLE_BUFFER:  onDoubleBufferClicked(hDlg); break;
-		    };
+			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
+			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
+                        case IDC_DOUBLE_BUFFER:  on_double_buffer_clicked(hDlg); break;
+		    }
 		    break;
 		}
 		case CBN_SELCHANGE: {
-		    if (LOWORD(wParam) == IDC_SCREEN_DEPTH) onScreenDepthChanged(hDlg);
+		    if (LOWORD(wParam) == IDC_SCREEN_DEPTH) on_screen_depth_changed(hDlg);
 		    break;
 		}
 		    
@@ -251,7 +261,7 @@ GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    break;
 		}
 		case PSN_SETACTIVE: {
-		    initGraphDlg (hDlg);
+		    init_dialog (hDlg);
 		    break;
 		}
 	    }

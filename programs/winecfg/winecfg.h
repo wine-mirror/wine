@@ -93,7 +93,6 @@ INT_PTR CALLBACK LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* some basic utilities to make win32 suck less */
-char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
@@ -105,6 +104,14 @@ static inline char *strdupA(char *s)
     return strcpy(r, s);
 }
 
+static inline char *get_control_text(HWND dialog, WORD id)
+{
+    HWND item = GetDlgItem(dialog, id);
+    int len = GetWindowTextLength(item) + 1;
+    char *result = HeapAlloc(GetProcessHeap(), 0, len);
+    if (GetWindowText(item, result, len) == 0) return NULL;
+    return result;
+}
 
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 
