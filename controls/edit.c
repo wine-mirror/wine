@@ -2439,6 +2439,8 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 	es->flags |= EF_UPDATE;
 	EDIT_EM_ScrollCaret(wnd, es);
 
+	EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
+
 	/* FIXME: really inefficient */
 	InvalidateRect(wnd->hwndSelf, NULL, TRUE);
 }
@@ -3687,9 +3689,6 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
-	if (es->flags & EF_UPDATE)
-		EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
-
         if (!wParam)
             dc = BeginPaint(wnd->hwndSelf, &ps);
         else
@@ -3888,6 +3887,9 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 	es->flags &= ~EF_MODIFIED;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
+
+	if (es->flags & EF_UPDATE)
+		EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
 }
 
 
