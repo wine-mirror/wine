@@ -4045,7 +4045,12 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
 
     /* arrange icons if autoarrange is on */
     if (infoPtr->dwStyle & LVS_AUTOARRANGE)
-	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+    {
+	BOOL arrange = TRUE;
+	if (dir < 0 && nItem >= infoPtr->nItemCount) arrange = FALSE;
+	if (dir > 0 && nItem == infoPtr->nItemCount - 1) arrange = FALSE;
+	if (arrange) LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+    }
 
     /* scrollbars need updating */
     LISTVIEW_UpdateScroll(infoPtr);
