@@ -1255,6 +1255,11 @@ int WINAPI CompareStringW(LCID lcid, DWORD fdwStyle,
 	if(fdwStyle & NORM_IGNORESYMBOLS)
 		FIXME("IGNORESYMBOLS not supported\n");
 
+    if(s1==NULL || s2==NULL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 	/* Is strcmp defaulting to string sort or to word sort?? */
 	/* FIXME: Handle NORM_STRINGSORT */
 	l1 = (l1==-1)?strlenW(s1):l1;
