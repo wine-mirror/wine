@@ -22,8 +22,6 @@ RC_SRCS = rsrc.rc
 
 all: $(PROGRAMS)
 
-depend: y.tab.h
-
 @MAKE_RULES@
 
 $(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)

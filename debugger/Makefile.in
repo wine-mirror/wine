@@ -32,8 +32,6 @@ EXTRA_OBJS = y.tab.o lex.yy.o
 
 all: $(PROGRAMS)
 
-depend: y.tab.h
-
 @MAKE_RULES@
 
 y.tab.c y.tab.h: dbg.y

@@ -20,7 +20,7 @@ EXTRA_OBJS = y.tab.o
 
 all: $(PROGRAMS)
 
-depend mcl.o: y.tab.h
+mcl.o: y.tab.h
 
 @MAKE_RULES@
 

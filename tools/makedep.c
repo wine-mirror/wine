@@ -18,6 +18,8 @@ typedef struct _INCL_FILE
     struct _INCL_FILE *next;
     char              *name;
     char              *filename;
+    struct _INCL_FILE *included_by;   /* file that included this one */
+    int                included_line; /* line where this file was included */
     struct _INCL_FILE *owner;
     struct _INCL_FILE *files[MAX_INCLUDES];
 } INCL_FILE;
@@ -78,6 +80,23 @@ static char *xstrdup( const char *str )
 
 
 /*******************************************************************
+ *         is_generated
+ *
+ * Test if a given file type is generated during the make process
+ */
+static int is_generated( const char *name )
+{
+    static const char * const extensions[] = { ".tab.h", ".mc.rc" };
+    int i, len = strlen(name);
+    for (i = 0; i < sizeof(extensions)/sizeof(extensions[0]); i++)
+    {
+        if (len <= strlen(extensions[i])) continue;
+        if (!strcmp( name + len - strlen(extensions[i]), extensions[i] )) return 1;
+    }
+    return 0;
+}
+
+/*******************************************************************
  *         add_include_path
  *
  * Add a directory to the include path.
@@ -115,7 +134,7 @@ static INCL_FILE *add_src_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static INCL_FILE *add_include( INCL_FILE *pFile, const char *name )
+static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line )
 {
     INCL_FILE **p = &firstInclude;
     int pos;
@@ -134,6 +153,8 @@ static INCL_FILE *add_include( INCL_FILE *pFile, const char *name )
         *p = xmalloc( sizeof(INCL_FILE) );
         memset( *p, 0, sizeof(INCL_FILE) );
         (*p)->name = xstrdup(name);
+        (*p)->included_by = pFile;
+        (*p)->included_line = line;
     }
     pFile->files[pos] = *p;
     return *p;
@@ -191,6 +212,12 @@ static FILE *open_include_file( INCL_FILE *pFile )
         if (firstPath) perror( pFile->name );
         else fprintf( stderr, "%s: %s: File not found\n",
                       ProgramName, pFile->name );
+        while (pFile->included_by)
+        {
+            fprintf( stderr, "  %s was first included from %s:%d\n",
+                     pFile->name, pFile->included_by->name, pFile->included_line );
+            pFile = pFile->included_by;
+        }
         exit(1);
     }
     return file;
@@ -205,8 +232,17 @@ static void parse_file( INCL_FILE *pFile, int src )
     char buffer[1024];
     char *include;
     int line = 0;
+    FILE *file;
 
-    FILE *file = src ? open_src_file( pFile ) : open_include_file( pFile );
+    if (is_generated( pFile->name ))
+    {
+        /* file is generated during make, don't try to open it */
+        pFile->filename = xstrdup( pFile->name );
+        return;
+    }
+
+    file = src ? open_src_file( pFile ) : open_include_file( pFile );
+
     while (fgets( buffer, sizeof(buffer)-1, file ))
     {
         char *p = buffer;
@@ -227,7 +263,7 @@ static void parse_file( INCL_FILE *pFile, int src )
             exit(1);
         }
         *p = 0;
-        add_include( pFile, include );
+        add_include( pFile, include, line );
     }
     fclose(file);
 }
@@ -263,6 +299,7 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
 {
     char *obj = xstrdup( pFile->name );
     char *ext = strrchr( obj, '.' );
+    if (ext && strchr( ext, '/' )) ext = NULL;
     if (ext)
     {
         *ext++ = 0;
@@ -278,9 +315,9 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         {
             *column += fprintf( file, "%s.res: %s", obj, pFile->filename );
         }
-        else if (!strcmp( ext, "rc16" ))  /* Win16 resource file */
+        else if (!strcmp( ext, "mc" ))  /* message file */
         {
-            *column += fprintf( file, "%s.s: %s", obj, pFile->filename );
+            *column += fprintf( file, "%s.mc.rc: %s", obj, pFile->filename );
         }
         else
         {
