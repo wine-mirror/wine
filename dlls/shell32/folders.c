@@ -191,7 +191,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	  else
 	  {
 	    lstrcpynA(szIconFile, "shell32.dll", cchMax);
-	    *piIndex = 3;
+	    *piIndex = (uFlags & GIL_OPENICON)? 4 : 3;
 	  }
 	}
 	else	/* object is file */

@@ -614,7 +614,8 @@ BOOL SIC_Initialize(void)
 	  return TRUE;
 	  
 	InitializeCriticalSection(&SHELL32_SicCS);
-
+	MakeCriticalSectionGlobal(&SHELL32_SicCS);
+	
 	sic_hdpa = pDPA_Create(16);
 	
 	if (!sic_hdpa)
@@ -672,6 +673,7 @@ void SIC_Destroy(void)
 	sic_hdpa = NULL;
 
 	LeaveCriticalSection(&SHELL32_SicCS);
+	DeleteCriticalSection(&SHELL32_SicCS);
 }
 /*************************************************************************
  * Shell_GetImageList			[SHELL32.71]
@@ -698,23 +700,30 @@ BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
  *	sh	[IN]	IShellFolder
  *	pidl	[IN]
  *	bBigIcon [IN]
+ *	uFlags	[IN]	GIL_*
  *	pIndex	[OUT]	index within the SIC
  *
  */
-BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT * pIndex)
+BOOL PidlToSicIndex (
+	IShellFolder * sh,
+	LPITEMIDLIST pidl,
+	BOOL bBigIcon,
+	UINT uFlags,
+	UINT * pIndex)
 {	
-	IExtractIcon	*ei;
+	IExtractIconA	*ei;
 	char		szIconFile[MAX_PATH];	/* file containing the icon */
 	INT		iSourceIndex;		/* index or resID(negated) in this file */
 	BOOL		ret = FALSE;
 	UINT		dwFlags = 0;
 	
-	TRACE("sf=%p pidl=%p\n", sh, pidl);
+	TRACE("sf=%p pidl=%p %s\n", sh, pidl, bBigIcon?"Big":"Small");
 
 	if (SUCCEEDED (IShellFolder_GetUIObjectOf(sh, 0, 1, &pidl, &IID_IExtractIconA, 0, (void **)&ei)))
 	{
-	  if (NOERROR==IExtractIconA_GetIconLocation(ei, 0, szIconFile, MAX_PATH, &iSourceIndex, &dwFlags))
-	  { *pIndex = SIC_GetIconIndex(szIconFile, iSourceIndex);
+	  if (SUCCEEDED(IExtractIconA_GetIconLocation(ei, uFlags, szIconFile, MAX_PATH, &iSourceIndex, &dwFlags)))
+	  {
+	    *pIndex = SIC_GetIconIndex(szIconFile, iSourceIndex);
 	    ret = TRUE;
 	  }
 	  IExtractIconA_Release(ei);
@@ -744,8 +753,8 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
 	pdump(pidl);
 	
 	if (pIndex)
-	  PidlToSicIndex ( sh, pidl, 1, pIndex);
-	PidlToSicIndex ( sh, pidl, 0, &Index);
+	  PidlToSicIndex ( sh, pidl, 1, 0, pIndex);
+	PidlToSicIndex ( sh, pidl, 0, 0, &Index);
 	return Index;
 }
 
