@@ -527,6 +527,8 @@ static void wave_out_test_deviceOut(int device, double duration,
               get_format_str(pwfx->wFormatTag),
               flags & WAVE_FORMAT_DIRECT ? "WAVE_FORMAT_DIRECT" :
               flags & WAVE_MAPPED ? "WAVE_MAPPED" : "");
+        if (sine && !volume)
+            trace("*** Warning the sound is muted, you will not hear the test\n");
 
         /* Check that the position is 0 at start */
         check_position(device, wout, 0, pwfx);
