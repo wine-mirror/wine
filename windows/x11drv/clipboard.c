@@ -235,6 +235,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
     char clearSelection[8] = "0";
     int persistent_selection = 1;
     HKEY hkey;
+    int fd[2], err;
 
     /* If persistant selection has been disabled in the .winerc Clipboard section,
      * don't launch the server
@@ -258,6 +259,10 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
      *  take ownership of the X selection and continue to service selection
      *  requests from other apps.
      */
+
+    if(pipe(fd) == -1) return FALSE;
+    fcntl(fd[1], F_SETFD, 1); /* set close on exec */
+
     selectionWindow = selectionPrevWindow;
     if ( !fork() )
     {
@@ -267,6 +272,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         int dbgClasses = 0;
         char selMask[8], dbgClassMask[8];
 
+	close(fd[0]);
         sprintf(selMask, "%d", selectionAcquired);
 
         /* Build the debug class mask to pass to the server, by inheriting
@@ -287,8 +293,16 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
 
         /* Exec Failed! */
         perror("Could not start Wine clipboard server");
-        exit( 1 ); /* Exit the child process */
+	write(fd[1], &err, sizeof(err));
+        _exit( 1 ); /* Exit the child process */
     }
+    close(fd[1]);
+
+    if(read(fd[0], &err, sizeof(err)) > 0) { /* exec failed */
+        close(fd[0]);
+        return FALSE;
+    }
+    close(fd[0]);
 
     /* Wait until the clipboard server acquires the selection.
      * We must release the windows lock to enable Wine to process
