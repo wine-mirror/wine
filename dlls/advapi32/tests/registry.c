@@ -28,6 +28,9 @@
 
 static HKEY hkey_main;
 
+static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
+static const char * sTestpath2 = "%FOO%\\subdir1";
+
 /* delete key and all its subkeys */
 static DWORD delete_key( HKEY hkey )
 {
@@ -57,6 +60,19 @@ static void setup_main_key(void)
                               REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey_main, NULL ));
 }
 
+static void create_test_entries(void)
+{
+    SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
+    SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
+
+    ok(!RegSetValueExA(hkey_main,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), 
+        "RegSetValueExA failed\n");
+    ok(!RegSetValueExA(hkey_main,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), 
+        "RegSetValueExA failed\n");
+    ok(!RegSetValueExA(hkey_main,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), 
+        "RegSetValueExA failed\n");
+}
+        
 static void test_enum_value(void)
 {
     DWORD res;
@@ -227,10 +243,24 @@ CLEANUP:
     RegDeleteValueA( hkey_main, "Test" );
 }
 
+static void test_query_value_ex()
+{
+    DWORD ret;
+    DWORD size;
+    DWORD type;
+    
+    ret = RegQueryValueExA(hkey_main, "Test2", NULL, &type, NULL, &size);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(size == strlen(sTestpath1) + 1, "(%ld,%ld)\n", (DWORD)strlen(sTestpath1) + 1, size);
+    ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
+}
+
 START_TEST(registry)
 {
     setup_main_key();
+    create_test_entries();
     test_enum_value();
+    test_query_value_ex();
 
     /* cleanup */
     delete_key( hkey_main );
