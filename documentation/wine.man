@@ -160,20 +160,44 @@ Use a desktop window of the given geometry
 .I -display name
 Use the specified display
 .TP
-.I -dll name
-Enables/disables built-in DLL's - starting wine with
-.I -dll -commdlg
-is probably a good idea.
-The full list of DLLs modifiable by this is:
-ADVAPI32, AVIFILE, COMCTL32, COMDLG32, COMM, COMMDLG, COMPOBJ, CRTDLL, 
-DCIMAN32, DDEML, DDRAW, DINPUT, DISPLAY, DPLAY, DPLAYX, DSOUND, GDI, GDI32, 
-IMAGEHLP, IMM32, KEYBOARD, LZ32, LZEXPAND, MMSYSTEM, MOUSE, MPR, MSACM, 
-MSACM32, MSNET32, MSVFW32, MSVIDEO, OLE2, OLE32, OLE2CONV, OLE2DISP, OLE2NLS, 
-OLE2PROX, OLE2THK, OLEAUT32, OLECLI, OLECLI32, OLEDLG, OLESVR, OLESVR32, 
-PSAPI, RASAPI16, RASAPI32, SHELL, SHELL32, SOUND, STORAGE, STRESS, SYSTEM,
-TAPI32, TOOLHELP, TYPELIB, USER, USER32, VER, VERSION, W32SKRNL, W32SYS, 
-WIN32S16, WIN87EM, WINASPI, WINDEBUG, WINEPS, WINMM, WING, WINSOCK, WINSPOOL, 
-WNASPI32, WOW32, WPROCS, WSOCK32
+.I -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
+Selects the override type and load order of dll used in the loading process
+for any dll. The default is set in wine.conf or ~/.winerc. There are
+currently four types of libraries that can be loaded into a process' address
+space: Native windows dlls (
+.I native
+), ELF encapsulated windows dlls (
+.I elfdll
+), native ELF libraries (
+.I so
+)and wine internal dlls (
+.I builtin
+). The type may be abbreviated with the first letter of the type (
+.I n, e, s, b
+). Each sequence of orders must be seperated by commas.
+.br
+Each dll may have its own specific load order. The load order determines
+which verion of the dll is attempted to be loaded into the address space. If
+the first fails, then the next is tried and so on. Different load orders can
+be specified by seperating the entries with a colon. Multiple libraries
+with the same load order can be separated with commas.
+.br
+Examples:
+.br
+.I -dll comdlg32,commdlg=n,b
+.br
+Try to load comdlg32 and commdlg as native windows dll first and try
+the builtin version if the native load fails.
+.br
+.I -dll comdlg32,commdlg=e,n:shell,shell32=b:comctl32,commctrl=n
+.br
+Try to load comdlg32 and commdlg as elfdll first and try the native version
+if the elfdll load fails; load shell32/shell always as builtin and
+comctl32/commctrl always as native.
+.br
+Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
+having exactly the same load order. This will prevent mismatches at runtime.
+See also configuration file format below.
 .TP
 .I -failreadonly
 Read only files may not be opened in write mode (the default is to
@@ -361,6 +385,81 @@ default: wine.sym
 .br
 Used to specify the path and file name of the symbol table used by the built-in
 debugger.
+.PP
+.B [DllDefaults]
+.br
+.I format: EXTRA_LD_LIBRARY_PATH=/usr/local/lib/wine[:/more/path/to/search[:...]]
+.br
+The path will be appended to any existing LD_LIBRARY_PATH from the 
+environment for the search of elfdlls and .so libraries.
+.PP
+.I format: DefaultLoadOrder=native,elfdll,so,builtin
+.br
+A comma seperated list of module-types to try to load in that specific
+order. The DefaultLoadOrder key is used as a fallback when a module is
+not specified explicitely. If the DefaultLoadOrder key is not found, 
+then the order "native,elfdll,so,builtin" is used.
+.br
+Case is not (yet) important and only the first letter of each type is enough
+to identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
+ignored. Keep everything in lower case to be sure that your entries keep the
+same meaning. See also commandline option
+.I -dll
+for details about the alowable types.
+.PP
+.B [DllOverrides]
+.br
+There are no explicit keys defined other than module/library names. A comma
+separated list of modules is followed by an assignment of the load-order
+for these specific modules. See above for possible types. You should not
+specify an extension.
+.br
+Examples:
+.br
+.I kernel32, gdi32, user32 = builtin
+.br
+.I kernel, gdi, user = builtin
+.br
+.I comdlg32 = elfdll, native, builtin
+.br
+.I commdlg = native, builtin
+.br
+.I version, ver = elfdll, native, builtin
+.br
+Changing the load order of kernel/kernel32, gdi/gdi32 and user/user32 to
+anything other than builtin will cause wine to fail because wine cannot
+use native versions for these libraries (user[32] and gdi[32] might work
+native someday, but kernel[32] will never work native). These libraries are
+also the last to be converted to elfdlls and will live as builtins for quite
+some time to come.
+.br
+Always make sure that you have some kind of strategy in mind when you start
+fiddling with the current defaults and needless to say that you must know
+what you are doing.
+.PP
+.B [DllPairs]
+.br
+This is a simple pairing in the form 'name1 = name2'. It is supposed to
+identify the dlls that cannot live without eachother unless they are
+loaded in the same format. Examples are common dialogs and controls,
+shell, kernel, gdi, user, etc...
+.br
+The code will issue a warning if the loadorder of these pairs are different
+and might cause hard-to-find bugs due to incompatible pairs loaded at
+run-time. Note that this pairing gives
+.B no
+guarantee that the pairs
+actually get loaded as the same type, nor that the correct versions are
+loaded (might be implemented later). It merely notes obvious trouble.
+.br
+Examples:
+.br
+.I kernel = kernel32
+.br
+.I commdlg = comdlg32
+.br
+The implementation will probably change in a later stage to force pairs to
+be loaded correctly, but there are also drawbacks with such an approach.
 .PP
 .B [serialports]
 .br
