@@ -1,0 +1,21 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = midimap.drv
+
+SPEC_SRCS = \
+	midimap.spec
+
+C_SRCS = \
+	midimap.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+call32.s: $(BUILD)
+	$(BUILD) @BUILDFLAGS@ -o $@ -call32
+
+### Dependencies:

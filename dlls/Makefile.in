@@ -6,6 +6,7 @@ SUBDIRS = \
 	crtdll \
 	dciman32 \
 	dplayx \
+	dsound \
 	imagehlp \
 	imm32 \
 	lzexpand \
@@ -32,6 +33,7 @@ SUBDIRS = \
 	winaspi \
 	windebug \
 	wing \
+	winmm \
 	winspool \
 	wnaspi32
 

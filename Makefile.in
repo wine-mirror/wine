@@ -71,6 +71,8 @@ LIBSUBDIRS = \
 	dlls/winmm/mcicda \
 	dlls/winmm/mciseq \
 	dlls/winmm/mciwave \
+	dlls/winmm/midimap \
+	dlls/winmm/wavemap \
 	dlls/winmm/wineoss \
 	dlls/winspool \
 	dlls/wnaspi32 \
@@ -170,13 +172,15 @@ LIBOBJS = \
 	dlls/winaspi/winaspi.o \
 	dlls/windebug/windebug.o \
 	dlls/wing/wing.o \
+	dlls/winmm/winmm.o \
 	dlls/winmm/mcianim/mcianim.drv.o \
 	dlls/winmm/mciavi/mciavi.drv.o \
 	dlls/winmm/mcicda/mcicda.drv.o \
 	dlls/winmm/mciseq/mciseq.drv.o \
 	dlls/winmm/mciwave/mciwave.drv.o \
+	dlls/winmm/midimap/midimap.drv.o \
+	dlls/winmm/wavemap/msacm.drv.o \
 	dlls/winmm/wineoss/wineoss.o \
-	dlls/winmm/winmm.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \

@@ -51,6 +51,7 @@ static struct tagDllOverride {
 	{"mcicda.drv, mciseq.drv",	"builtin, native"},
 	{"mciwave.drv",			"builtin, native"},
 	{"mciavi.drv, mcianim.drv",	"native, builtin"},
+	{"msacm.drv, midimap.drv",      "builtin, native"},
 	{"w32skrnl",			"builtin"},
 	{"wnaspi32,wow32",		"builtin"},
 	{"system,display,wprocs	",	"builtin"},

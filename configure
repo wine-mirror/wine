@@ -5673,6 +5673,8 @@ dlls/winmm/mciavi/Makefile
 dlls/winmm/mcicda/Makefile
 dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
+dlls/winmm/midimap/Makefile
+dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
@@ -5874,6 +5876,8 @@ dlls/winmm/mciavi/Makefile
 dlls/winmm/mcicda/Makefile
 dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
+dlls/winmm/midimap/Makefile
+dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
