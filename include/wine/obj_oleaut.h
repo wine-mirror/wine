@@ -21,9 +21,6 @@
 #ifndef __WINE_WINE_OBJ_OLEAUT_H
 #define __WINE_WINE_OBJ_OLEAUT_H
 
-
-DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
-
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -215,11 +212,6 @@ typedef LONG DISPID;
 typedef DWORD HREFTYPE;
 typedef DISPID MEMBERID;
 
-#define DISPATCH_METHOD         0x1
-#define DISPATCH_PROPERTYGET    0x2
-#define DISPATCH_PROPERTYPUT    0x4
-#define DISPATCH_PROPERTYPUTREF 0x8
-
 #define DISPID_UNKNOWN  ( -1 )
 #define DISPID_VALUE  ( 0 )
 #define DISPID_PROPERTYPUT  ( -3 )
@@ -228,8 +220,6 @@ typedef DISPID MEMBERID;
 #define DISPID_CONSTRUCTOR  ( -6 )
 #define DISPID_DESTRUCTOR ( -7 )
 #define DISPID_COLLECT  ( -8 )
-
-#define MEMBERID_NIL DISPID_UNKNOWN
 
 #define IMPLTYPEFLAG_FDEFAULT         (0x1)
 #define IMPLTYPEFLAG_FSOURCE          (0x2)

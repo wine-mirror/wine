@@ -26,6 +26,7 @@
 #include "winuser.h"
 
 #include "objbase.h"
+#include "oleauto.h"
 #include "olectl.h"
 #include "initguid.h"
 

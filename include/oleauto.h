@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
+
 struct tagSAFEARRAY;
 struct tagSAFEARRAYBOUND;
 struct tagVARIANT;
@@ -632,6 +634,13 @@ HRESULT WINAPI GetActiveObject(REFCLSID, void*, IUnknown**);
 /*
  * TypeLib API
  */
+
+#define MEMBERID_NIL DISPID_UNKNOWN
+
+#define DISPATCH_METHOD         0x1
+#define DISPATCH_PROPERTYGET    0x2
+#define DISPATCH_PROPERTYPUT    0x4
+#define DISPATCH_PROPERTYPUTREF 0x8
 
 HRESULT WINAPI CreateTypeLib(SYSKIND,const OLECHAR*,ICreateTypeLib**);
 HRESULT WINAPI CreateTypeLib2(SYSKIND,LPCOLESTR,ICreateTypeLib2**);
