@@ -647,20 +647,20 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) );
 
     /* Session names may or may not exist */
-    if( src->lpSessionDesc->sess.lpszSessionNameA )
+    if( src->lpSessionDesc->u1.lpszSessionNameA )
     {
-      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->sess.lpszSessionNameA );
-      dest->lpSessionDesc->sess.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->u1.lpszSessionNameA );
+      dest->lpSessionDesc->u1.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        strlen( (LPSTR)dest->lpSessionDesc->sess.lpszSessionNameA ) + 1;
+        strlen( (LPSTR)dest->lpSessionDesc->u1.lpszSessionNameA ) + 1;
     }
 
-    if( src->lpSessionDesc->pass.lpszPasswordA )
+    if( src->lpSessionDesc->u2.lpszPasswordA )
     {
-      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPasswordA );
-      dest->lpSessionDesc->pass.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->u2.lpszPasswordA );
+      dest->lpSessionDesc->u2.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace += 
-        strlen( (LPSTR)dest->lpSessionDesc->pass.lpszPasswordA ) + 1;
+        strlen( (LPSTR)dest->lpSessionDesc->u2.lpszPasswordA ) + 1;
     }
   }
 
@@ -671,20 +671,20 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     lpStartOfFreeSpace += sizeof( DPNAME );
     CopyMemory( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
 
-    if( src->lpPlayerName->psn.lpszShortNameA )
+    if( src->lpPlayerName->u1.lpszShortNameA )
     {
-      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortNameA );
-      dest->lpPlayerName->psn.lpszShortNameA = (LPSTR)lpStartOfFreeSpace;
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->u1.lpszShortNameA );
+      dest->lpPlayerName->u1.lpszShortNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        strlen( (LPSTR)dest->lpPlayerName->psn.lpszShortNameA ) + 1;
+        strlen( (LPSTR)dest->lpPlayerName->u1.lpszShortNameA ) + 1;
     }
 
-    if( src->lpPlayerName->pln.lpszLongNameA )
+    if( src->lpPlayerName->u2.lpszLongNameA )
     {
-      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongNameA );
-      dest->lpPlayerName->pln.lpszLongNameA = (LPSTR)lpStartOfFreeSpace;
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->u2.lpszLongNameA );
+      dest->lpPlayerName->u2.lpszLongNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        strlen( (LPSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 ;
+        strlen( (LPSTR)dest->lpPlayerName->u2.lpszLongName ) + 1 ;
     }
 
   }
@@ -769,20 +769,20 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) ); 
 
     /* Session names may or may not exist */
-    if( src->lpSessionDesc->sess.lpszSessionName )
+    if( src->lpSessionDesc->u1.lpszSessionName )
     {
-      strcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->sess.lpszSessionName );
-      src->lpSessionDesc->sess.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->u1.lpszSessionName );
+      src->lpSessionDesc->u1.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( strlenW( (LPWSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpSessionDesc->u1.lpszSessionName ) + 1 );
     }
 
-    if( src->lpSessionDesc->pass.lpszPassword )
+    if( src->lpSessionDesc->u2.lpszPassword )
     {
-      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPassword );
-      dest->lpSessionDesc->pass.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->u2.lpszPassword );
+      dest->lpSessionDesc->u2.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( strlenW( (LPWSTR)dest->lpSessionDesc->pass.lpszPassword ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpSessionDesc->u2.lpszPassword ) + 1 );
     }
   }
 
@@ -793,20 +793,20 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     lpStartOfFreeSpace += sizeof( DPNAME );
     CopyMemory( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
    
-    if( src->lpPlayerName->psn.lpszShortName )
+    if( src->lpPlayerName->u1.lpszShortName )
     {
-      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortName );
-      dest->lpPlayerName->psn.lpszShortName = (LPWSTR)lpStartOfFreeSpace;
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->u1.lpszShortName );
+      dest->lpPlayerName->u1.lpszShortName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( strlenW( (LPWSTR)dest->lpPlayerName->psn.lpszShortName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpPlayerName->u1.lpszShortName ) + 1 );
     }
 
-    if( src->lpPlayerName->pln.lpszLongName )
+    if( src->lpPlayerName->u2.lpszLongName )
     {
-      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongName );
-      dest->lpPlayerName->pln.lpszLongName = (LPWSTR)lpStartOfFreeSpace;
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->u2.lpszLongName );
+      dest->lpPlayerName->u2.lpszLongName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( strlenW( (LPWSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpPlayerName->u2.lpszLongName ) + 1 );
     }
 
   }
@@ -952,14 +952,14 @@ DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
   {
     dwTotalSize += sizeof( DPSESSIONDESC2 );
 
-    if( lpConn->lpSessionDesc->sess.lpszSessionNameA )
+    if( lpConn->lpSessionDesc->u1.lpszSessionNameA )
     {
-      dwTotalSize += strlen( lpConn->lpSessionDesc->sess.lpszSessionNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpSessionDesc->u1.lpszSessionNameA ) + 1;
     }
  
-    if( lpConn->lpSessionDesc->pass.lpszPasswordA )
+    if( lpConn->lpSessionDesc->u2.lpszPasswordA )
     {
-      dwTotalSize += strlen( lpConn->lpSessionDesc->pass.lpszPasswordA ) + 1;
+      dwTotalSize += strlen( lpConn->lpSessionDesc->u2.lpszPasswordA ) + 1;
     }
   }
 
@@ -967,14 +967,14 @@ DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
   {
     dwTotalSize += sizeof( DPNAME );
 
-    if( lpConn->lpPlayerName->psn.lpszShortNameA )
+    if( lpConn->lpPlayerName->u1.lpszShortNameA )
     {
-      dwTotalSize += strlen( lpConn->lpPlayerName->psn.lpszShortNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpPlayerName->u1.lpszShortNameA ) + 1;
     }
 
-    if( lpConn->lpPlayerName->pln.lpszLongNameA )
+    if( lpConn->lpPlayerName->u2.lpszLongNameA )
     {
-      dwTotalSize += strlen( lpConn->lpPlayerName->pln.lpszLongNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpPlayerName->u2.lpszLongNameA ) + 1;
     }
 
   }
@@ -999,16 +999,16 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
   {
     dwTotalSize += sizeof( DPSESSIONDESC2 );
 
-    if( lpConn->lpSessionDesc->sess.lpszSessionName )
+    if( lpConn->lpSessionDesc->u1.lpszSessionName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpSessionDesc->sess.lpszSessionName ) + 1 );
+        ( strlenW( lpConn->lpSessionDesc->u1.lpszSessionName ) + 1 );
     }
 
-    if( lpConn->lpSessionDesc->pass.lpszPassword )
+    if( lpConn->lpSessionDesc->u2.lpszPassword )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpSessionDesc->pass.lpszPassword ) + 1 );
+        ( strlenW( lpConn->lpSessionDesc->u2.lpszPassword ) + 1 );
     }
   }
 
@@ -1016,16 +1016,16 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
   {
     dwTotalSize += sizeof( DPNAME );
 
-    if( lpConn->lpPlayerName->psn.lpszShortName )
+    if( lpConn->lpPlayerName->u1.lpszShortName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpPlayerName->psn.lpszShortName ) + 1 );
+        ( strlenW( lpConn->lpPlayerName->u1.lpszShortName ) + 1 );
     }
 
-    if( lpConn->lpPlayerName->pln.lpszLongName )
+    if( lpConn->lpPlayerName->u2.lpszLongName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpPlayerName->pln.lpszLongName ) + 1 );
+        ( strlenW( lpConn->lpPlayerName->u2.lpszLongName ) + 1 );
     }
 
   }
@@ -1053,17 +1053,17 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
 {
   CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
 
-  if( lpSessionSrc->sess.lpszSessionNameA )
+  if( lpSessionSrc->u1.lpszSessionNameA )
   {
-      if ((lpSessionDest->sess.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0,
-                                                             strlen(lpSessionSrc->sess.lpszSessionNameA)+1 )))
-          strcpy( lpSessionDest->sess.lpszSessionNameA, lpSessionSrc->sess.lpszSessionNameA );
+      if ((lpSessionDest->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0,
+                                                             strlen(lpSessionSrc->u1.lpszSessionNameA)+1 )))
+          strcpy( lpSessionDest->u1.lpszSessionNameA, lpSessionSrc->u1.lpszSessionNameA );
   }
-  if( lpSessionSrc->pass.lpszPasswordA )
+  if( lpSessionSrc->u2.lpszPasswordA )
   {
-      if ((lpSessionDest->pass.lpszPasswordA = HeapAlloc( GetProcessHeap(), 0,
-                                                          strlen(lpSessionSrc->pass.lpszPasswordA)+1 )))
-          strcpy( lpSessionDest->pass.lpszPasswordA, lpSessionSrc->pass.lpszPasswordA );
+      if ((lpSessionDest->u2.lpszPasswordA = HeapAlloc( GetProcessHeap(), 0,
+                                                          strlen(lpSessionSrc->u2.lpszPasswordA)+1 )))
+          strcpy( lpSessionDest->u2.lpszPasswordA, lpSessionSrc->u2.lpszPasswordA );
   }
 
   return TRUE;

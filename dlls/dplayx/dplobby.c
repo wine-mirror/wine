@@ -932,7 +932,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
 
     dplAppInfo.dwSize               = sizeof( dplAppInfo );
     dplAppInfo.guidApplication      = serviceProviderGUID;
-    dplAppInfo.appName.lpszAppNameA = subKeyName; 
+    dplAppInfo.u.lpszAppNameA = subKeyName; 
 
     EnterCriticalSection( &This->unk->DPL_lock );
  

@@ -429,7 +429,7 @@ HRESULT WINAPI MESA_IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface) {
      I am currently working on a set of patches for Mesa to have OSMesa support
      16 bpp surfaces => we will able to render directly onto the surface, no
      need to do a bpp conversion */
-  dest = (unsigned short *) sdesc.y.lpSurface;
+  dest = (unsigned short *) sdesc.u2.lpSurface;
   src = ((unsigned char *) odev->buffer) + 4 * (sdesc.dwWidth * (sdesc.dwHeight - 1));
   for (y = 0; y < sdesc.dwHeight; y++) {
     unsigned char *lsrc = src;
@@ -448,7 +448,7 @@ HRESULT WINAPI MESA_IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface) {
   }
 
   /* Unlock the surface */
-  IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
+  IDirectDrawSurface3_Unlock(surf,sdesc.u2.lpSurface);
 #else
   /* No need to do anything here... */
 #endif
@@ -698,45 +698,45 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
     case D3DVT_VERTEX: {						\
       D3DVERTEX *vx = ((D3DVERTEX *) lpvertex) + INDEX;			\
 									\
-      glNormal3f(vx->nx.nx, vx->ny.ny, vx->nz.nz);			\
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);				\
-      TRACE("   V: %f %f %f\n", vx->x.x, vx->y.y, vx->z.z);		\
+      glNormal3f(vx->u4.nx, vx->u5.ny, vx->u6.nz);			\
+      glVertex3f(vx->u1.x, vx->u2.y, vx->u3.z);				\
+      TRACE("   V: %f %f %f\n", vx->u1.x, vx->u2.y, vx->u3.z);		\
     } break;								\
 									\
     case D3DVT_LVERTEX: {						\
       D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + INDEX;		\
-      DWORD col = vx->c.color;						\
+      DWORD col = vx->u4.color;						\
 									\
       glColor3f(((col >> 16) & 0xFF) / 255.0,				\
 		((col >>  8) & 0xFF) / 255.0,				\
 		((col >>  0) & 0xFF) / 255.0);				\
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);				\
+      glVertex3f(vx->u1.x, vx->u2.y, vx->u3.z);				\
       TRACE("  LV: %f %f %f (%02lx %02lx %02lx)\n",			\
-	    vx->x.x, vx->y.y, vx->z.z,					\
+	    vx->u1.x, vx->u2.y, vx->u3.z,				\
 	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));\
     } break;								\
 									\
     case D3DVT_TLVERTEX: {						\
       D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + INDEX;		\
-      DWORD col = vx->c.color;						\
+      DWORD col = vx->u5.color;						\
 									\
       glColor3f(((col >> 16) & 0xFF) / 255.0,				\
 		((col >>  8) & 0xFF) / 255.0,				\
 		((col >>  0) & 0xFF) / 255.0);				\
-      glTexCoord2f(vx->u.tu, vx->v.tv);					\
-      if (vx->r.rhw < 0.01)						\
-	glVertex3f(vx->x.sx,						\
-		   vx->y.sy,						\
-		   vx->z.sz);						\
+      glTexCoord2f(vx->u7.tu, vx->u8.tv);				\
+      if (vx->u4.rhw < 0.01)						\
+	glVertex3f(vx->u1.sx,						\
+		   vx->u2.sy,						\
+		   vx->u3.sz);						\
       else								\
-	glVertex4f(vx->x.sx / vx->r.rhw,				\
-		   vx->y.sy / vx->r.rhw,				\
-		   vx->z.sz / vx->r.rhw,				\
-		   1.0 / vx->r.rhw);					\
+	glVertex4f(vx->u1.sx / vx->u4.rhw,				\
+		   vx->u2.sy / vx->u4.rhw,				\
+		   vx->u3.sz / vx->u4.rhw,				\
+		   1.0 / vx->u4.rhw);					\
       TRACE(" TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",	\
-	    vx->x.sx, vx->y.sy, vx->z.sz,				\
+	    vx->u1.sx, vx->u2.sy, vx->u3.sz,				\
 	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),\
-	    vx->u.tu, vx->v.tv, vx->r.rhw);				\
+	    vx->u7.tu, vx->u8.tv, vx->u4.rhw);				\
     } break;								\
 									\
     default:								\
@@ -985,7 +985,7 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface
   FIXME("(%p)->(): stub\n", This);
   
   /* We get the pointer to the surface (should be done on flip) */
-  /* odev->zb->pbuf = This->surface->s.surface_desc.y.lpSurface; */
+  /* odev->zb->pbuf = This->surface->s.surface_desc.u2.lpSurface; */
   
   return DD_OK;
 }
@@ -1018,7 +1018,7 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
      I am currently working on a set of patches for Mesa to have OSMesa support
      16 bpp surfaces => we will able to render directly onto the surface, no
      need to do a bpp conversion */
-  dest = (unsigned short *) sdesc.y.lpSurface;
+  dest = (unsigned short *) sdesc.u2.lpSurface;
   src = ((unsigned char *) odev->buffer) + 4 * (sdesc.dwWidth * (sdesc.dwHeight - 1));
   for (y = 0; y < sdesc.dwHeight; y++) {
     unsigned char *lsrc = src;
@@ -1038,7 +1038,7 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
   }
 
   /* Unlock the surface */
-  IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
+  IDirectDrawSurface3_Unlock(surf,sdesc.u2.lpSurface);
 #else
   /* No need to do anything here... */
 #endif

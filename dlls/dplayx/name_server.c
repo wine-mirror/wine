@@ -118,9 +118,9 @@ void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
 
   CopyMemory( lpCacheNode->data, &lpMsg->sd, sizeof( *lpCacheNode->data ) );
   len = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1, NULL, 0, NULL, NULL );
-  if ((lpCacheNode->data->sess.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
+  if ((lpCacheNode->data->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
       WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1,
-                           lpCacheNode->data->sess.lpszSessionNameA, len, NULL, NULL );
+                           lpCacheNode->data->u1.lpszSessionNameA, len, NULL, NULL );
 
   lpCacheNode->dwTime = timeGetTime();
 
@@ -341,10 +341,10 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
 
   if (bAnsi)
       dwVariableLen = MultiByteToWideChar( CP_ACP, 0,
-                                           lpDP->dp2->lpSessionDesc->sess.lpszSessionNameA,
+                                           lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA,
                                            -1, NULL, 0 );
   else
-      dwVariableLen = strlenW( lpDP->dp2->lpSessionDesc->sess.lpszSessionName ) + 1;
+      dwVariableLen = strlenW( lpDP->dp2->lpSessionDesc->u1.lpszSessionName ) + 1;
 
   dwVariableSize = dwVariableLen * sizeof( WCHAR );
 
@@ -364,8 +364,8 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
               sizeof( lpDP->dp2->lpSessionDesc->dwSize ) ); 
   rmsg->dwUnknown = 0x0000005c;
   if( bAnsi )
-      MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->sess.lpszSessionNameA, -1,
+      MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA, -1,
                            (LPWSTR)(rmsg+1), dwVariableLen );
   else
-      strcpyW( (LPWSTR)(rmsg+1), lpDP->dp2->lpSessionDesc->sess.lpszSessionName );
+      strcpyW( (LPWSTR)(rmsg+1), lpDP->dp2->lpSessionDesc->u1.lpszSessionName );
 }

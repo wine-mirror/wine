@@ -106,25 +106,25 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 #define DO_TLVERTEX(index)							\
 {										\
   D3DTLVERTEX *vx = &(tl_vx[index]);						\
-  DWORD col = vx->c.color;							\
+  DWORD col = vx->u5.color;							\
 										\
   glColor3f(((col >> 16) & 0xFF) / 255.0,					\
             ((col >>  8) & 0xFF) / 255.0,					\
             ((col >>  0) & 0xFF) / 255.0);					\
-  glTexCoord2f(vx->u.tu, vx->v.tv);						\
-  if (vx->r.rhw < 0.01)								\
-    glVertex3f(vx->x.sx,							\
-               vx->y.sy,							\
-               vx->z.sz);							\
+  glTexCoord2f(vx->u7.tu, vx->u8.tv);						\
+  if (vx->u4.rhw < 0.01)							\
+    glVertex3f(vx->u1.sx,							\
+               vx->u2.sy,							\
+               vx->u3.sz);							\
   else										\
-    glVertex4f(vx->x.sx / vx->r.rhw,						\
-               vx->y.sy / vx->r.rhw,						\
-               vx->z.sz / vx->r.rhw,						\
-               1.0 / vx->r.rhw);						\
+    glVertex4f(vx->u1.sx / vx->u4.rhw,						\
+               vx->u2.sy / vx->u4.rhw,						\
+               vx->u3.sz / vx->u4.rhw,						\
+               1.0 / vx->u4.rhw);						\
   TRACE(" TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",		\
-        vx->x.sx, vx->y.sy, vx->z.sz,						\
+        vx->u1.sx, vx->u2.sy, vx->u3.sz,						\
         ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
-        vx->u.tu, vx->v.tv, vx->r.rhw);						\
+        vx->u7.tu, vx->u8.tv, vx->u4.rhw);						\
 }
 
 #define TRIANGLE_LOOP(macro)				\
@@ -134,7 +134,7 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
       LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;		\
       							\
       TRACE("  v1: %d  v2: %d  v3: %d\n",	\
-	    ci->v1.v1, ci->v2.v2, ci->v3.v3);		\
+	    ci->u1.v1, ci->u2.v2, ci->u3.v3);		\
       TRACE("  Flags : ");			\
       if (TRACE_ON(ddraw)) {				\
 	/* Wireframe */					\
@@ -158,9 +158,9 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
       }							\
 							\
       /* Draw the triangle */				\
-      macro(ci->v1.v1);					\
-      macro(ci->v2.v2);					\
-      macro(ci->v3.v3);					\
+      macro(ci->u1.v1);					\
+      macro(ci->u2.v2);					\
+      macro(ci->u3.v3);					\
 							\
       instr += size;					\
     }							\
@@ -367,24 +367,24 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
 
 	/* Handle the state transform */
-	switch (ci->t.dtstTransformStateType) {
+	switch (ci->u1.dtstTransformStateType) {
 	case D3DTRANSFORMSTATE_WORLD: {
-	  TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
-	  odev->world_mat = (D3DMATRIX*) ci->v.dwArg[0];
+	  TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
+	  odev->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
-	  TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
-	  odev->view_mat = (D3DMATRIX*) ci->v.dwArg[0];
+	  TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
+	  odev->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
-    	  TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->v.dwArg[0]);
-	  odev->proj_mat = (D3DMATRIX*) ci->v.dwArg[0];
+    	  TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
+	  odev->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 	} break;
 
 	default:
-	  ERR("  Unhandled state transformation !! (%d)\n", (int) ci->t.dtstTransformStateType);
+	  ERR("  Unhandled state transformation !! (%d)\n", (int) ci->u1.dtstTransformStateType);
 	  break;
 	  
 	}
@@ -401,9 +401,9 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
 	
 	/* Handle the state transform */
-	switch (ci->t.dlstLightStateType) {
+	switch (ci->u1.dlstLightStateType) {
 	case D3DLIGHTSTATE_MATERIAL: {
-	  IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) ci->v.dwArg[0];
+	  IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) ci->u2.dwArg[0];
 	  TRACE("  MATERIAL\n");
 	  
 	  if (mat != NULL) {
@@ -415,7 +415,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  
 	case D3DLIGHTSTATE_AMBIENT: {
 	  float light[4];
-	  DWORD dwLightState = ci->v.dwArg[0];
+	  DWORD dwLightState = ci->u2.dwArg[0];
 	  TRACE("  AMBIENT\n");
 	  
 	  light[0] = ((dwLightState >> 16) & 0xFF) / 255.0;
@@ -452,7 +452,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	} break ;
 	  
 	default:
-	  ERR("  Unhandled light state !! (%d)\n", (int) ci->t.dlstLightStateType);
+	  ERR("  Unhandled light state !! (%d)\n", (int) ci->u1.dlstLightStateType);
 	  break;
 	}
 	instr += size;
@@ -467,7 +467,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
 	
 	/* Handle the state transform */
-	set_render_state(ci->t.drstRenderStateType, ci->v.dwArg[0], &(odev->rs));
+	set_render_state(ci->u1.drstRenderStateType, ci->u2.dwArg[0], &(odev->rs));
 
 	instr += size;
       }
@@ -539,18 +539,18 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  
 	  for (nb = 0; nb < ci->dwCount; nb++) {
 	    /* For the moment, no normal transformation... */
-	    dst->nx = src->nx.nx;
-	    dst->ny = src->ny.ny;
-	    dst->nz = src->nz.nz;
+	    dst->nx = src->u4.nx;
+	    dst->ny = src->u5.ny;
+	    dst->nz = src->u6.nz;
 	    
-	    dst->u  = src->u.tu;
-	    dst->v  = src->v.tv;
+	    dst->u  = src->u7.tu;
+	    dst->v  = src->u8.tv;
 
 	    /* Now, the matrix multiplication */
-	    dst->x = (src->x.x * mat->_11) + (src->y.y * mat->_21) + (src->z.z * mat->_31) + (1.0 * mat->_41);
-	    dst->y = (src->x.x * mat->_12) + (src->y.y * mat->_22) + (src->z.z * mat->_32) + (1.0 * mat->_42);
-	    dst->z = (src->x.x * mat->_13) + (src->y.y * mat->_23) + (src->z.z * mat->_33) + (1.0 * mat->_43);
-	    dst->w = (src->x.x * mat->_14) + (src->y.y * mat->_24) + (src->z.z * mat->_34) + (1.0 * mat->_44);
+	    dst->x = (src->u1.x * mat->_11) + (src->u2.y * mat->_21) + (src->u3.z * mat->_31) + (1.0 * mat->_41);
+	    dst->y = (src->u1.x * mat->_12) + (src->u2.y * mat->_22) + (src->u3.z * mat->_32) + (1.0 * mat->_42);
+	    dst->z = (src->u1.x * mat->_13) + (src->u2.y * mat->_23) + (src->u3.z * mat->_33) + (1.0 * mat->_43);
+	    dst->w = (src->u1.x * mat->_14) + (src->u2.y * mat->_24) + (src->u3.z * mat->_34) + (1.0 * mat->_44);
 	    
 	    src++;
 	    dst++;
@@ -567,16 +567,16 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  ilpBuff->vertex_type = D3DVT_LVERTEX;
 	  
 	  for (nb = 0; nb < ci->dwCount; nb++) {
-	    dst->c  = src->c.color;
-	    dst->sc = src->s.specular;
-	    dst->u  = src->u.tu;
-	    dst->v  = src->v.tv;
+	    dst->c  = src->u4.color;
+	    dst->sc = src->u5.specular;
+	    dst->u  = src->u6.tu;
+	    dst->v  = src->u7.tv;
 
 	    /* Now, the matrix multiplication */
-	    dst->x = (src->x.x * mat->_11) + (src->y.y * mat->_21) + (src->z.z * mat->_31) + (1.0 * mat->_41);
-	    dst->y = (src->x.x * mat->_12) + (src->y.y * mat->_22) + (src->z.z * mat->_32) + (1.0 * mat->_42);
-	    dst->z = (src->x.x * mat->_13) + (src->y.y * mat->_23) + (src->z.z * mat->_33) + (1.0 * mat->_43);
-	    dst->w = (src->x.x * mat->_14) + (src->y.y * mat->_24) + (src->z.z * mat->_34) + (1.0 * mat->_44);
+	    dst->x = (src->u1.x * mat->_11) + (src->u2.y * mat->_21) + (src->u3.z * mat->_31) + (1.0 * mat->_41);
+	    dst->y = (src->u1.x * mat->_12) + (src->u2.y * mat->_22) + (src->u3.z * mat->_32) + (1.0 * mat->_42);
+	    dst->z = (src->u1.x * mat->_13) + (src->u2.y * mat->_23) + (src->u3.z * mat->_33) + (1.0 * mat->_43);
+	    dst->w = (src->u1.x * mat->_14) + (src->u2.y * mat->_24) + (src->u3.z * mat->_34) + (1.0 * mat->_44);
 	    
 	    src++;
 	    dst++;

@@ -33,25 +33,25 @@ static void activate(IDirect3DMaterial2Impl* This) {
     This->device.active_device1->set_context(This->device.active_device1);
 
   /* Set the current Material */
-  _dump_colorvalue("Diffuse", This->mat.a.diffuse);
+  _dump_colorvalue("Diffuse", This->mat.u.diffuse);
   glMaterialfv(GL_FRONT,
 	       GL_DIFFUSE,
-	       (float *) &(This->mat.a.diffuse));
-  _dump_colorvalue("Ambient", This->mat.b.ambient);
+	       (float *) &(This->mat.u.diffuse));
+  _dump_colorvalue("Ambient", This->mat.u1.ambient);
   glMaterialfv(GL_FRONT,
 	       GL_AMBIENT,
-	       (float *) &(This->mat.b.ambient));
-  _dump_colorvalue("Specular", This->mat.c.specular);
+	       (float *) &(This->mat.u1.ambient));
+  _dump_colorvalue("Specular", This->mat.u2.specular);
   glMaterialfv(GL_FRONT,
 	       GL_SPECULAR,
-	       (float *) &(This->mat.c.specular));
-  _dump_colorvalue("Emissive", This->mat.d.emissive);
+	       (float *) &(This->mat.u2.specular));
+  _dump_colorvalue("Emissive", This->mat.u3.emissive);
   glMaterialfv(GL_FRONT,
 	       GL_EMISSION,
-	       (float *) &(This->mat.d.emissive));
+	       (float *) &(This->mat.u3.emissive));
   
   TRACE("Size  : %ld\n", This->mat.dwSize);
-  TRACE("Power : %f\n", This->mat.e.power);
+  TRACE("Power : %f\n", This->mat.u4.power);
 
   TRACE("Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
   LEAVE_GL();

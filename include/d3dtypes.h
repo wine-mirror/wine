@@ -156,15 +156,15 @@ typedef struct _D3DHVERTEX {
  union {
     D3DVALUE    hx;
     D3DVALUE    dvHX;
-  } x;
+  } DUMMYUNIONNAME1;
   union {
     D3DVALUE    hy;
     D3DVALUE    dvHY;
-  } y;
+  } DUMMYUNIONNAME2;
   union {
     D3DVALUE    hz;
     D3DVALUE    dvHZ;
-  } z;
+  } DUMMYUNIONNAME3;
 } D3DHVERTEX, *LPD3DHVERTEX;
 
 /*
@@ -174,35 +174,35 @@ typedef struct {
   union {
     D3DVALUE    sx;
     D3DVALUE    dvSX;
-  } x;
+  } DUMMYUNIONNAME1;
   union {
     D3DVALUE    sy;
     D3DVALUE    dvSY;
-  } y;
+  } DUMMYUNIONNAME2;
   union {
     D3DVALUE    sz;
     D3DVALUE    dvSZ;
-  } z;
+  } DUMMYUNIONNAME3;
   union {
     D3DVALUE    rhw;
     D3DVALUE    dvRHW;
-  } r;
+  } DUMMYUNIONNAME4;
   union {
     D3DCOLOR    color;
     D3DCOLOR    dcColor;
-  } c;
+  } DUMMYUNIONNAME5;
   union {
     D3DCOLOR    specular;
     D3DCOLOR    dcSpecular;
-  } s;
+  } DUMMYUNIONNAME6;
   union {
     D3DVALUE    tu;
     D3DVALUE    dvTU;
-  } u;
+  } DUMMYUNIONNAME7;
   union {
     D3DVALUE    tv;
     D3DVALUE    dvTV;
-  } v;
+  } DUMMYUNIONNAME8;
   /* There are C++ members associated with this class */
 } D3DTLVERTEX, *LPD3DTLVERTEX;
 
@@ -210,67 +210,67 @@ typedef struct _D3DLVERTEX {
   union {
     D3DVALUE x;
     D3DVALUE dvX;
-  } x;
+  } DUMMYUNIONNAME1;
   union {
     D3DVALUE y;
     D3DVALUE dvY;
-  } y;
+  } DUMMYUNIONNAME2;
   union {
     D3DVALUE z;
     D3DVALUE dvZ;
-  } z;
+  } DUMMYUNIONNAME3;
   DWORD            dwReserved;
   union {
     D3DCOLOR     color;
     D3DCOLOR     dcColor;
-  } c;
+  } DUMMYUNIONNAME4;
   union {
     D3DCOLOR     specular;
     D3DCOLOR     dcSpecular;
-  } s;
+  } DUMMYUNIONNAME5;
   union {
     D3DVALUE     tu;
     D3DVALUE     dvTU;
-  } u;
+  } DUMMYUNIONNAME6;
   union {
     D3DVALUE     tv;
     D3DVALUE     dvTV;
-  } v;
+  } DUMMYUNIONNAME7;
 } D3DLVERTEX, *LPD3DLVERTEX;
 
 typedef struct _D3DVERTEX {
   union {
     D3DVALUE     x;
     D3DVALUE     dvX;
-  } x;
+  } DUMMYUNIONNAME1;
   union {
     D3DVALUE     y;
     D3DVALUE     dvY;
-  } y;
+  } DUMMYUNIONNAME2;
   union {
     D3DVALUE     z;
     D3DVALUE     dvZ;
-  } z;
+  } DUMMYUNIONNAME3;
   union {
     D3DVALUE     nx;
     D3DVALUE     dvNX;
-  } nx;
+  } DUMMYUNIONNAME4;
   union {
     D3DVALUE     ny;
     D3DVALUE     dvNY;
-  } ny;
+  } DUMMYUNIONNAME5;
   union {
     D3DVALUE     nz;
     D3DVALUE     dvNZ;
-  } nz;
+  } DUMMYUNIONNAME6;
   union {
     D3DVALUE     tu;
     D3DVALUE     dvTU;
-  } u;
+  } DUMMYUNIONNAME7;
   union {
     D3DVALUE     tv;
     D3DVALUE     dvTV;
-  } v;
+  } DUMMYUNIONNAME8;
   /* FIXME: Some C++ stuff to go here */
 } D3DVERTEX, *LPD3DVERTEX;
 
@@ -432,23 +432,23 @@ typedef struct _D3DMATERIAL {
   union {
     D3DCOLORVALUE   diffuse;
     D3DCOLORVALUE   dcvDiffuse;
-  } a;
+  } DUMMYUNIONNAME;
   union {
     D3DCOLORVALUE   ambient;
     D3DCOLORVALUE   dcvAmbient;
-  } b;
+  } DUMMYUNIONNAME1;
   union {
     D3DCOLORVALUE   specular;
     D3DCOLORVALUE   dcvSpecular;
-  } c;
+  } DUMMYUNIONNAME2;
   union {
     D3DCOLORVALUE   emissive;
     D3DCOLORVALUE   dcvEmissive;
-  } d;
+  } DUMMYUNIONNAME3;
   union {
     D3DVALUE        power;
     D3DVALUE        dvPower;
-  } e;
+  } DUMMYUNIONNAME4;
   D3DTEXTUREHANDLE    hTexture;
   DWORD               dwRampSize;
 } D3DMATERIAL, *LPD3DMATERIAL;
@@ -911,11 +911,11 @@ typedef struct _D3DSTATE {
     D3DTRANSFORMSTATETYPE dtstTransformStateType;
     D3DLIGHTSTATETYPE     dlstLightStateType;
     D3DRENDERSTATETYPE    drstRenderStateType;
-  } t;
+  } DUMMYUNIONNAME1;
   union {
     DWORD                 dwArg[1];
     D3DVALUE              dvArg[1];
-  } v;
+  } DUMMYUNIONNAME2;
 } D3DSTATE, *LPD3DSTATE;
 
 typedef struct _D3DMATRIXLOAD {
@@ -1064,15 +1064,15 @@ typedef struct _D3DTRIANGLE {
   union {
     WORD v1;
     WORD wV1;
-  } v1;
+  } DUMMYUNIONNAME1;
   union {
     WORD v2;
     WORD wV2;
-  } v2;
+  } DUMMYUNIONNAME2;
   union {
     WORD v3;
     WORD wV3;
-  } v3;
+  } DUMMYUNIONNAME3;
   WORD     wFlags;
 } D3DTRIANGLE, *LPD3DTRIANGLE;
 
@@ -1080,11 +1080,11 @@ typedef struct _D3DLINE {
   union {
     WORD v1;
     WORD wV1;
-  } v1;
+  } DUMMYUNIONNAME1;
   union {
     WORD v2;
     WORD wV2;
-  } v2;
+  } DUMMYUNIONNAME2;
 } D3DLINE, *LPD3DLINE;
 
 typedef struct _D3DSPAN {

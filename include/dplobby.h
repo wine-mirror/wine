@@ -1,12 +1,6 @@
 #ifndef __WINE_DPLOBBY_H
 #define __WINE_DPLOBBY_H
 
-/* FIXME: GCC doesn't yet support annon structures so some of the structures 
- * defined here don't match the sdk exactly. I've tried to come up with 
- * suitably terse names, but this file won't cut it for inclusion into a 
- * Winelib app.
- */
-
 #include "dplay.h"
 
 #ifdef __cplusplus
@@ -276,7 +270,7 @@ typedef struct tagDPLAPPINFO
     {
         LPSTR   lpszAppNameA;      
         LPWSTR  lpszAppName;
-    } appName;
+    } DUMMYUNIONNAME;
 
 } DPLAPPINFO, *LPDPLAPPINFO;
 typedef const DPLAPPINFO *LPCDPLAPPINFO;
@@ -298,7 +292,7 @@ typedef struct tagDPAPPLICATIONDESC
     {
         LPSTR       lpszApplicationNameA;
         LPWSTR      lpszApplicationName;
-    } appName;
+    } DUMMYUNIONNAME1;
 
     GUID        guidApplication;
 
@@ -306,25 +300,25 @@ typedef struct tagDPAPPLICATIONDESC
     {
         LPSTR       lpszFilenameA;
         LPWSTR      lpszFilename;
-    } fileName;
+    } DUMMYUNIONNAME2;
 
     union
     {
         LPSTR       lpszCommandLineA;
         LPWSTR      lpszCommandLine;
-    } cmdLine;
+    } DUMMYUNIONNAME3;
 
     union
     {
         LPSTR       lpszPathA;
         LPWSTR      lpszPath;
-    } path;
+    } DUMMYUNIONNAME4;
 
     union
     {
         LPSTR       lpszCurrentDirectoryA;
         LPWSTR      lpszCurrentDirectory;
-    } curDir;
+    } DUMMYUNIONNAME5;
 
     LPSTR       lpszDescriptionA;
     LPWSTR      lpszDescriptionW;
