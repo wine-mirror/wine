@@ -7,7 +7,6 @@ extern "C" {
 
 /* Some types */
 
-typedef unsigned char*          LPBYTE;
 #ifndef __LHANDLE
 #define __LHANDLE
 typedef unsigned long           LHANDLE, *LPLHANDLE;

@@ -3,7 +3,7 @@ type win32
 
 import ntdll.dll
 
-debug_channels()
+debug_channels (mapi)
 
 @ stub BMAPIAddress
 @ stub BMAPIDetails
@@ -94,7 +94,7 @@ debug_channels()
 @ stub MAPIAddress
 @ stub MAPIAdminProfiles
 # @ stub MAPIAdminProfiles@8
-@ stub MAPIAllocateBuffer
+@ stdcall MAPIAllocateBuffer(long ptr) MAPIAllocateBuffer
 # @ stub MAPIAllocateBuffer@8
 @ stub MAPIAllocateMore
 # @ stub MAPIAllocateMore@12
@@ -106,11 +106,11 @@ debug_channels()
 # @ stub MAPIFreeBuffer@4
 @ stub MAPIGetDefaultMalloc@0
 @ stub MAPIInitIdle@4
-@ stub MAPIInitialize
+@ stdcall MAPIInitialize(ptr) MAPIInitialize
 # @ stub MAPIInitialize@4
 @ stub MAPILogoff
-@ stub MAPILogon
-@ stub MAPILogonEx
+@ stdcall MAPILogon(long ptr ptr long long ptr) MAPILogon
+@ stdcall MAPILogonEx(long ptr ptr long ptr) MAPILogonEx
 # @ stub MAPILogonEx@20
 @ stub MAPIOpenFormMgr
 # @ stub MAPIOpenFormMgr@8
@@ -121,7 +121,7 @@ debug_channels()
 @ stub MAPISaveMail
 @ stub MAPISendDocuments
 @ stub MAPISendMail
-@ stub MAPIUninitialize
+@ stdcall MAPIUninitialize()    MAPIUninitialize
 # @ stub MAPIUninitialize@0
 @ stub MNLS_CompareStringW@24
 @ stub MNLS_IsBadStringPtrW@8

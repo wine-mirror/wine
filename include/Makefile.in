@@ -43,6 +43,7 @@ INSTALLED_INCLUDES = \
 	lmcons.h \
 	lzexpand.h \
 	mapi.h \
+	mapicode.h \
 	mapidefs.h \
 	mciavi.h \
 	mcx.h \
