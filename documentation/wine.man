@@ -311,11 +311,22 @@ number.
 .PP
 .I format: Filesystem = <fstype>
 .br
-default: unix
+default: win95
 .br
-Used to specify the type of the filesystem on which the drive resides;
-supported types are msdos (or fat), win95 (or vfat), unix. If the
-drive spans several different filesystems, say unix.
+Used to specify the type of the file system Wine should emulate on a given
+directory structure/underlying file system.
+.br
+Supported types are msdos (or fat), win95 (or vfat), unix.
+.br
+Recommended:
+.br
+  win95 for ext2fs, VFAT and FAT32
+.br
+  msdos for FAT16 (ugly)
+.br
+You definitely don't want to use "unix" unless you intend to port programs using Winelib.
+.br
+Always try to avoid using FAT16. Use VFAT/FAT32 OS file system driver instead !
 .PP
 .B [wine]
 .br

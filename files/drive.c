@@ -120,9 +120,9 @@ static UINT32 DRIVE_GetFSFlags( const char *name, const char *value )
 
     for (descr = DRIVE_Filesystems; descr->name; descr++)
         if (!strcasecmp( value, descr->name )) return descr->flags;
-    MSG("%s: unknown filesystem type '%s', defaulting to 'unix'.\n",
+    MSG("%s: unknown filesystem type '%s', defaulting to 'win95'.\n",
 	name, value );
-    return DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING;
+    return DRIVE_CASE_PRESERVING;
 }
 
 
@@ -184,7 +184,7 @@ int DRIVE_Init(void)
             drive->serial = strtoul( buffer, NULL, 16 );
 
             /* Get the filesystem type */
-            PROFILE_GetWineIniString( name, "Filesystem", "unix",
+            PROFILE_GetWineIniString( name, "Filesystem", "win95",
                                       buffer, sizeof(buffer) );
             drive->flags = DRIVE_GetFSFlags( name, buffer );
 
