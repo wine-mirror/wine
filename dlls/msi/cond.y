@@ -181,7 +181,7 @@ term:
         }
   | value_s
         {
-            $$ = atoiW($1);
+            $$ = $1[0] ? MSICONDITION_TRUE : MSICONDITION_FALSE;
         }
   | value_i comp_op_i value_i
         {
