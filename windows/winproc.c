@@ -407,11 +407,18 @@ BOOL32 WINPROC_TestLBForStr ( HWND32 hwnd )
  *
  * Map a message from Ansi to Unicode.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
- * fixme WM_CHAR, WM_CHARTOITEM, WM_DEADCHAR, WM_MENUCHAR, WM_SYSCHAR,
- * WM_SYSDEADCHAR ???
+ *
+ * FIXME:
+ *  WM_CHAR, WM_CHARTOITEM, WM_DEADCHAR, WM_MENUCHAR, WM_SYSCHAR, WM_SYSDEADCHAR
+ *
+ * FIXME:
+ *  WM_GETTEXT/WM_SETTEXT and static control with SS_ICON style:
+ *  the first four bytes are the handle of the icon 
+ *  when the WM_SETTEXT message has been used to set the icon
  */
 INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
-{   switch(msg)
+{
+    switch(msg)
     {
     case WM_GETTEXT:
         {
@@ -533,12 +540,13 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
  * Unmap a message that was mapped from Ansi to Unicode.
  */
 void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam )
-{   switch(msg)
+{
+    switch(msg)
     {
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpynWtoA( (LPSTR)*ptr, (LPWSTR)(ptr + 1), wParam ); /* fixme: shouldn't be there lParam instead of ptr ???*/
+            lstrcpynWtoA( (LPSTR)*ptr, (LPWSTR)lParam, wParam );
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
@@ -747,12 +755,13 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
  * Unmap a message that was mapped from Unicode to Ansi.
  */
 void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam )
-{   switch(msg)
+{
+    switch(msg)
     {
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            lstrcpynAtoW( (LPWSTR)*ptr, (LPSTR)(ptr + 1), wParam ); /* fixme: shouldn't be there lParam instead of ptr ???*/
+            lstrcpynAtoW( (LPWSTR)*ptr, (LPSTR)lParam, wParam );
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
