@@ -560,3 +560,81 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
     if (!hRsrc) return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
+
+
+/***********************************************************************
+ *          BeginUpdateResourceA                 (KERNEL32.@)
+ */
+HANDLE WINAPI BeginUpdateResourceA( LPCSTR pFileName, BOOL bDeleteExistingResources )
+{
+  FIXME("(%s,%d): stub\n",debugstr_a(pFileName),bDeleteExistingResources);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}
+
+
+/***********************************************************************
+ *          BeginUpdateResourceW                 (KERNEL32.@)
+ */
+HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResources )
+{
+  FIXME("(%s,%d): stub\n",debugstr_w(pFileName),bDeleteExistingResources);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}
+
+
+/***********************************************************************
+ *          EndUpdateResourceA                 (KERNEL32.@)
+ */
+BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
+{
+  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+
+/***********************************************************************
+ *          EndUpdateResourceW                 (KERNEL32.@)
+ */
+BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
+{
+  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+
+/***********************************************************************
+ *           UpdateResourceA                 (KERNEL32.@)
+ */
+BOOL WINAPI UpdateResourceA(
+  HANDLE  hUpdate,
+  LPCSTR  lpType,
+  LPCSTR  lpName,
+  WORD    wLanguage,
+  LPVOID  lpData,
+  DWORD   cbData)
+{
+  FIXME(": stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+
+/***********************************************************************
+ *           UpdateResourceW                 (KERNEL32.@)
+ */
+BOOL WINAPI UpdateResourceW(
+  HANDLE  hUpdate,
+  LPCWSTR lpType,
+  LPCWSTR lpName,
+  WORD    wLanguage,
+  LPVOID  lpData,
+  DWORD   cbData)
+{
+  FIXME(": stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}

@@ -40,6 +40,8 @@ C_SRCS = \
 	stress.c \
 	string.c \
 	sync.c \
+	tape.c \
+	thread.c \
 	thunk.c \
 	time.c \
 	toolhelp.c \
