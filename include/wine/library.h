@@ -53,7 +53,7 @@ extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
 extern char **__wine_main_environ;
-extern void wine_init( int argc, char *argv[], char *envp[], char *error, int error_size );
+extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
 /* debugging */
 

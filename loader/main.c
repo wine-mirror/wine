@@ -33,7 +33,6 @@ int main( int argc, char *argv[] )
 {
     char error[1024];
     int i;
-    extern char **environ;
 
     if (wine_main_preload_info)
     {
@@ -42,7 +41,7 @@ int main( int argc, char *argv[] )
                                          wine_main_preload_info[i].size );
     }
 
-    wine_init( argc, argv, environ, error, sizeof(error) );
+    wine_init( argc, argv, error, sizeof(error) );
     fprintf( stderr, "wine: failed to initialize: %s\n", error );
     exit(1);
 }
