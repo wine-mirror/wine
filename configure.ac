@@ -1545,6 +1545,7 @@ dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
 dlls/glut32/Makefile
+dlls/hhctrl.ocx/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
 dlls/ifsmgr.vxd/Makefile

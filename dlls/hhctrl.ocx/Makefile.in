@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = hhctrl.ocx
+IMPORTS   = shell32
+
+C_SRCS = hhctrl.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

@@ -53,6 +53,7 @@ BASEDIRS = \
 	dswave \
 	dxdiagn \
 	gdi \
+	hhctrl.ocx \
 	iccvid \
 	icmp \
 	ifsmgr.vxd \
@@ -269,6 +270,7 @@ SYMLINKS_SO = \
 	dswave.dll.so \
 	dxdiagn.dll.so \
 	gdi32.dll.so \
+	hhctrl.ocx.so \
 	iccvid.dll.so \
 	icmp.dll.so \
 	ifsmgr.vxd.so \
@@ -528,6 +530,9 @@ glu32.dll.so: glu32/glu32.dll.so
 
 glut32.dll.so: glut32/glut32.dll.so
 	$(RM) $@ && $(LN_S) glut32/glut32.dll.so $@
+
+hhctrl.ocx.so: hhctrl.ocx/hhctrl.ocx.so
+	$(RM) $@ && $(LN_S) hhctrl.ocx/hhctrl.ocx.so $@
 
 iccvid.dll.so: iccvid/iccvid.dll.so
 	$(RM) $@ && $(LN_S) iccvid/iccvid.dll.so $@
@@ -1820,6 +1825,7 @@ dxdiagn/dxdiagn.dll.so: dxdiagn
 gdi/gdi32.dll.so: gdi
 glu32/glu32.dll.so: glu32
 glut32/glut32.dll.so: glut32
+hhctrl.ocx/hhctrl.ocx.so: hhctrl.ocx
 iccvid/iccvid.dll.so: iccvid
 icmp/icmp.dll.so: icmp
 ifsmgr.vxd/ifsmgr.vxd.so: ifsmgr.vxd
