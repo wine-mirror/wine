@@ -118,39 +118,39 @@ static BOOL DoTest1(void)
 
     /* create an imagelist to play with */
     himl = ImageList_Create(84,84,0x10,0,3);
-    ok(himl!=0,"failed to create imagelist");
+    ok(himl!=0,"failed to create imagelist\n");
 
     /* load the icons to add to the image list */
     hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon1 != 0, "no hicon1");
+    ok(hicon1 != 0, "no hicon1\n");
     hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon2 != 0, "no hicon2");
+    ok(hicon2 != 0, "no hicon2\n");
     hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon3 != 0, "no hicon3");
+    ok(hicon3 != 0, "no hicon3\n");
 
     /* remove when nothing exists */
-    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon\n");
 
     /* add three */
-    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1");
-    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2");
-    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3");
+    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1\n");
+    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2\n");
+    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3\n");
 
     /* remove three */
-    ok(ImageList_Remove(himl,0),"can't remove 0");
-    ok(ImageList_Remove(himl,0),"can't remove 0");
-    ok(ImageList_Remove(himl,0),"can't remove 0");
+    ok(ImageList_Remove(himl,0),"can't remove 0\n");
+    ok(ImageList_Remove(himl,0),"can't remove 0\n");
+    ok(ImageList_Remove(himl,0),"can't remove 0\n");
 
     /* remove one extra */
-    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon\n");
 
     /* destroy it */
-    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+    ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
     /* icons should be deleted by the imagelist */
-    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted");
-    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted");
-    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted");
+    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted\n");
+    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted\n");
+    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted\n");
 
     return TRUE;
 }
@@ -165,31 +165,31 @@ static BOOL DoTest2(void)
 
     /* create an imagelist to play with */
     himl = ImageList_Create(84,84,0x10,0,3);
-    ok(himl!=0,"failed to create imagelist");
+    ok(himl!=0,"failed to create imagelist\n");
 
     /* load the icons to add to the image list */
     hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon1 != 0, "no hicon1");
+    ok(hicon1 != 0, "no hicon1\n");
     hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon2 != 0, "no hicon2");
+    ok(hicon2 != 0, "no hicon2\n");
     hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon3 != 0, "no hicon3");
+    ok(hicon3 != 0, "no hicon3\n");
 
     /* remove when nothing exists */
-    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon\n");
 
     /* add three */
-    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1");
-    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2");
-    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3");
+    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1\n");
+    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2\n");
+    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3\n");
 
     /* destroy it */
-    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+    ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
     /* icons should be deleted by the imagelist */
-    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted");
-    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted");
-    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted");
+    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted\n");
+    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted\n");
+    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted\n");
 
     return TRUE;
 }
@@ -252,61 +252,61 @@ static BOOL DoTest3(void)
 
     /* create an imagelist to play with */
     himl = ImageList_Create(48,48,0x10,0,3);
-    ok(himl!=0,"failed to create imagelist");
+    ok(himl!=0,"failed to create imagelist\n");
 
     /* load the icons to add to the image list */
     hbm1 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
-    ok(hbm1 != 0, "no bitmap 1");
+    ok(hbm1 != 0, "no bitmap 1\n");
     hbm2 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
-    ok(hbm2 != 0, "no bitmap 2");
+    ok(hbm2 != 0, "no bitmap 2\n");
     hbm3 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
-    ok(hbm3 != 0, "no bitmap 3");
+    ok(hbm3 != 0, "no bitmap 3\n");
 
     /* remove when nothing exists */
-    ok(!ImageList_Remove(himl,0),"removed non-existent bitmap");
+    ok(!ImageList_Remove(himl,0),"removed non-existent bitmap\n");
 
     /* add three */
-    ok(0==ImageList_Add(himl, hbm1, 0),"failed to add bitmap 1");
-    ok(1==ImageList_Add(himl, hbm2, 0),"failed to add bitmap 2");
+    ok(0==ImageList_Add(himl, hbm1, 0),"failed to add bitmap 1\n");
+    ok(1==ImageList_Add(himl, hbm2, 0),"failed to add bitmap 2\n");
 
-    ok(ImageList_SetImageCount(himl,3),"Setimage count failed");
-    /*ok(2==ImageList_Add(himl, hbm3, NULL),"failed to add bitmap 3"); */
-    ok(ImageList_Replace(himl, 2, hbm3, 0),"failed to replace bitmap 3");
+    ok(ImageList_SetImageCount(himl,3),"Setimage count failed\n");
+    /*ok(2==ImageList_Add(himl, hbm3, NULL),"failed to add bitmap 3\n"); */
+    ok(ImageList_Replace(himl, 2, hbm3, 0),"failed to replace bitmap 3\n");
 
     Rectangle(hdc, 100, 100, 74, 74);
     memset(&imldp, 0, sizeof imldp);
-    ok(!pImageList_DrawIndirect(&imldp), "zero data succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp), "zero data succeeded!\n");
     imldp.cbSize = sizeof imldp;
-    ok(!pImageList_DrawIndirect(&imldp), "zero hdc succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp), "zero hdc succeeded!\n");
     imldp.hdcDst = hdc;
-    ok(!pImageList_DrawIndirect(&imldp),"zero himl succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp),"zero himl succeeded!\n");
     imldp.himl = himl;
-    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded\n");
     imldp.fStyle = SRCCOPY;
     imldp.rgbBk = CLR_DEFAULT;
     imldp.rgbFg = CLR_DEFAULT;
     imldp.y = 100;
     imldp.x = 100;
-    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded\n");
     imldp.i ++;
-    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded\n");
     imldp.i ++;
-    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded\n");
     imldp.i ++;
-    ok(!pImageList_DrawIndirect(&imldp),"should fail");
+    ok(!pImageList_DrawIndirect(&imldp),"should fail\n");
 
     /* remove three */
-    ok(ImageList_Remove(himl, 0), "removing 1st bitmap");
-    ok(ImageList_Remove(himl, 0), "removing 2nd bitmap");
-    ok(ImageList_Remove(himl, 0), "removing 3rd bitmap");
+    ok(ImageList_Remove(himl, 0), "removing 1st bitmap\n");
+    ok(ImageList_Remove(himl, 0), "removing 2nd bitmap\n");
+    ok(ImageList_Remove(himl, 0), "removing 3rd bitmap\n");
 
     /* destroy it */
-    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+    ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
     /* icons should be deleted by the imagelist */
-    ok(DeleteObject(hbm1),"bitmap 1 can't be deleted");
-    ok(DeleteObject(hbm2),"bitmap 2 can't be deleted");
-    ok(DeleteObject(hbm3),"bitmap 3 can't be deleted");
+    ok(DeleteObject(hbm1),"bitmap 1 can't be deleted\n");
+    ok(DeleteObject(hbm2),"bitmap 2 can't be deleted\n");
+    ok(DeleteObject(hbm3),"bitmap 3 can't be deleted\n");
 
     ReleaseDC(hwndfortest, hdc);
     DestroyWindow(hwndfortest);
