@@ -1694,7 +1694,7 @@ NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice,
                                LPVOID lpInBuffer, DWORD nInBufferSize,
                                LPVOID lpOutBuffer, DWORD nOutBufferSize)
 {
-    DWORD       sz;
+    DWORD       sz = 0;
     NTSTATUS    status = STATUS_SUCCESS;
     int         dev;
 
