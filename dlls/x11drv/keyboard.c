@@ -850,7 +850,7 @@ static const WORD nonchar_key_scan[256] =
 /* x11 lock must be held */
 static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 {
-    KeySym keysym;
+    KeySym keysym = 0;
 
     if (xic)
         XmbLookupString(xic, e, NULL, 0, &keysym, NULL);
@@ -995,7 +995,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
 void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 {
     char Str[24];
-    KeySym keysym;
+    KeySym keysym = 0;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
     int ascii_chars;
@@ -1010,9 +1010,8 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     wine_tsx11_unlock();
 
     /* Ignore some unwanted events */
-    if (ascii_chars &&
-        ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
-         keysym == XK_Mode_switch))
+    if ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
+         keysym == XK_Mode_switch)
     {
         TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
         return;
@@ -1271,6 +1270,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     OEMvkey = VK_OEM_7; /* next is available.  */
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
+        keysym = 0;
         e2.keycode = (KeyCode)keyc;
         XLookupString(&e2, NULL, 0, &keysym, NULL);
         vkey = 0; scan = 0;
@@ -1771,7 +1771,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 {
     Display *display = thread_display();
     XKeyEvent e;
-    KeySym keysym;
+    KeySym keysym = 0;
     INT ret;
     int keyc;
     char lpChar[10];
