@@ -147,6 +147,18 @@ static HRESULT WINAPI IDirect3DViewport2_SetViewport(LPDIRECT3DVIEWPORT2 this,
   this->use_vp2 = 0;
   this->viewport.vp1 = *lpvp;
   
+  TRACE(ddraw, "dwSize = %ld   dwX = %ld   dwY = %ld\n",
+	lpvp->dwSize, lpvp->dwX, lpvp->dwY);
+  TRACE(ddraw, "dwWidth = %ld   dwHeight = %ld\n",
+	lpvp->dwWidth, lpvp->dwHeight);
+  TRACE(ddraw, "dvScaleX = %f   dvScaleY = %f\n",
+	lpvp->dvScaleX, lpvp->dvScaleY);
+  TRACE(ddraw, "dvMaxX = %f   dvMaxY = %f\n",
+	lpvp->dvMaxX, lpvp->dvMaxY);
+  TRACE(ddraw, "dvMinZ = %f   dvMaxZ = %f\n",
+	lpvp->dvMinZ, lpvp->dvMaxZ);
+
+  
   return DD_OK;
 }
 
@@ -174,7 +186,7 @@ static HRESULT WINAPI IDirect3DViewport2_LightElements(LPDIRECT3DVIEWPORT2 this,
 static HRESULT WINAPI IDirect3DViewport2_SetBackground(LPDIRECT3DVIEWPORT2 this,
 						       D3DMATERIALHANDLE hMat)
 {
-  FIXME(ddraw, "(%p)->(%08x): stub\n", this, hMat);
+  FIXME(ddraw, "(%p)->(%08lx): stub\n", this, (DWORD) hMat);
   
   return DD_OK;
 }
@@ -220,13 +232,13 @@ static HRESULT WINAPI IDirect3DViewport2_Clear(LPDIRECT3DVIEWPORT2 this,
       this->device.active_device2->set_context(this->device.active_device2);
     else
       this->device.active_device1->set_context(this->device.active_device1);
+  }
 
     /* Clears the screen */
     glGetBooleanv(GL_DEPTH_TEST, &ztest);
     glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDepthMask(ztest);
-  }
   
   return DD_OK;
 }
