@@ -196,20 +196,11 @@ extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 
-/* msdos/int11.c */
-extern void WINAPI INT_Int11Handler(CONTEXT86*);
-
-/* msdos/int15.c */
-extern void WINAPI INT_Int15Handler(CONTEXT86*);
-
 /* msdos/int25.c */
 extern void WINAPI INT_Int25Handler(CONTEXT86*);
 
 /* msdos/int26.c */
 extern void WINAPI INT_Int26Handler(CONTEXT86*);
-
-/* msdos/int5c.c */
-extern void WINAPI NetBIOSCall16(CONTEXT86*);
 
 /* msdos/dpmi.c */
 extern BOOL DPMI_LoadDosSystem(void);

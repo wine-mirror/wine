@@ -116,11 +116,17 @@ extern BYTE WINAPI DOSVM_Int09ReadScan(BYTE*ascii);
 extern void WINAPI DOSVM_Int10Handler(CONTEXT86*);
 extern void WINAPI DOSVM_PutChar(BYTE ascii);
 
+/* int11.c */
+extern void WINAPI DOSVM_Int11Handler(CONTEXT86*);
+
 /* int12.c */
 extern void WINAPI DOSVM_Int12Handler(CONTEXT86*);
 
 /* int13.c */
 extern void WINAPI DOSVM_Int13Handler(CONTEXT86*);
+
+/* int15.c */
+extern void WINAPI DOSVM_Int15Handler(CONTEXT86*);
 
 /* int1a.c */
 extern void WINAPI DOSVM_Int1aHandler(CONTEXT86*);
@@ -168,6 +174,9 @@ extern void WINAPI DOSVM_Int41Handler(CONTEXT86*);
 
 /* int4b.c */
 extern void WINAPI DOSVM_Int4bHandler(CONTEXT86*);
+
+/* int5c.c */
+extern void WINAPI DOSVM_Int5cHandler(CONTEXT86*);
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);

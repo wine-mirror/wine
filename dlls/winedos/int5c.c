@@ -25,12 +25,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 
 /***********************************************************************
- *           NetBIOSCall      (KERNEL.103)
- *           INT_Int5cHandler (WPROCS.192)
+ *           DOSVM_Int5cHandler (WINEDOS16.192)
  *
- * Also handler for interrupt 5c.
+ * Called from NetBIOSCall16.
  */
-void WINAPI NetBIOSCall16( CONTEXT86 *context )
+void WINAPI DOSVM_Int5cHandler( CONTEXT86 *context )
 {
     BYTE* ptr;
     ptr = MapSL( MAKESEGPTR(context->SegEs,BX_reg(context)) );

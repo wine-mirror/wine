@@ -55,3 +55,14 @@ BOOL DPMI_LoadDosSystem(void)
 #undef GET_ADDR
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           NetBIOSCall      (KERNEL.103)
+ *
+ */
+void WINAPI NetBIOSCall16( CONTEXT86 *context )
+{
+    if (Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+        Dosvm.CallBuiltinHandler( context, 0x5c );
+}

@@ -50,12 +50,9 @@ C_SRCS = \
 	$(TOPOBJDIR)/msdos/dosconf.c \
 	$(TOPOBJDIR)/msdos/dosmem.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/msdos/int11.c \
-	$(TOPOBJDIR)/msdos/int15.c \
 	$(TOPOBJDIR)/msdos/int21.c \
 	$(TOPOBJDIR)/msdos/int25.c \
 	$(TOPOBJDIR)/msdos/int26.c \
-	$(TOPOBJDIR)/msdos/int5c.c \
 	$(TOPOBJDIR)/msdos/ioports.c \
 	$(TOPOBJDIR)/msdos/ppdev.c \
 	$(TOPOBJDIR)/msdos/vxd.c \

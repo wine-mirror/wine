@@ -21,16 +21,17 @@
 #include <stdlib.h>
 #include "miscemu.h"
 #include "wine/debug.h"
+#include "wine/winbase16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 
 /**********************************************************************
- *	    INT_Int15Handler (WPROCS.121)
+ *	    DOSVM_Int15Handler (WINEDOS16.121)
  *
  * Handler for int 15h
  */
-void WINAPI INT_Int15Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {
@@ -55,7 +56,6 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
         }
 
         RESET_CFLAG(context);
-
         break;
 
     case 0x88: /* get size of memory above 1 M */
@@ -64,14 +64,23 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
         break;
 
     case 0xc0: /* GET CONFIGURATION */
-        if (ISV86(context)) /* real */
+        if (ISV86(context))
+        {
+            /* real mode segment */
             context->SegEs = 0xf000;
+        }
         else
-            context->SegEs = DOSMEM_BiosSysSeg;
+        {
+            /* KERNEL.194: __F000H - protected mode selector */
+            FARPROC16 proc = GetProcAddress16( GetModuleHandle16("KERNEL"),
+                                               (LPCSTR)(ULONG_PTR)194 );
+            context->SegEs = LOWORD(proc);
+        }
         SET_BX( context, 0xe6f5 );
         SET_AH( context, 0x0 );
         RESET_CFLAG(context);
         break;
+
     case 0xc2:
 	switch(AL_reg(context))
 	{
@@ -98,7 +107,8 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
 	    break;
 	case 0x04: /* Get Pointing Device Type */
 	    FIXME("Get Pointing Device Type - not implemented\n");
-	    SET_BH( context, 0x01 );/*Device id FIXME what is it supposed to be?*/
+            /* FIXME: BH = Device id, What is it supposed to be? */
+	    SET_BH( context, 0x01 );
 	    break;
 	default:
 	    INT_BARF( context, 0x15 );

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winedos.dll
-IMPORTS   = user32 kernel32 ntdll
+IMPORTS   = user32 advapi32 kernel32 ntdll
 ALTNAMES  = winedos16.dll
 EXTRALIBS = $(LIBUNICODE)
 
@@ -18,8 +18,10 @@ C_SRCS = \
 	fpu.c \
 	int09.c \
 	int10.c \
+	int11.c \
 	int12.c \
 	int13.c \
+	int15.c \
 	int16.c \
 	int17.c \
 	int19.c \
@@ -33,6 +35,7 @@ C_SRCS = \
 	int33.c \
 	int41.c \
 	int4b.c \
+	int5c.c \
 	int67.c \
 	interrupts.c \
 	ioports.c \
