@@ -64,7 +64,7 @@ void async_notify(struct async *async, int status)
 {
     /* fprintf(stderr,"notifying %p!\n",async->overlapped); */
     async->status = status;
-    thread_queue_apc(async->thread, NULL, async->func, APC_ASYNC, 1, 2, async->overlapped, status);
+    thread_queue_apc(async->thread, NULL, NULL, APC_ASYNC_IO, 1, 2, async->overlapped, status);
 }
 
 void destroy_async_queue( struct async_queue *q )
@@ -116,7 +116,7 @@ static void async_callback(void *private)
     destroy_async(async);
 }
 
-struct async *create_async(struct object *obj, struct thread *thread, void *func, 
+struct async *create_async(struct object *obj, struct thread *thread,
                            void *overlapped)
 {
     struct async *async = (struct async *) malloc(sizeof(struct async));
@@ -128,7 +128,6 @@ struct async *create_async(struct object *obj, struct thread *thread, void *func
 
     async->obj = obj;
     async->thread = thread;
-    async->func = func;
     async->overlapped = overlapped;
     async->next = NULL;
     async->prev = NULL;
@@ -165,7 +164,7 @@ DECL_HANDLER(register_async)
         if(req->status==STATUS_PENDING)
         {
             if(!async)
-                async = create_async(obj, current, req->func, req->overlapped);
+                async = create_async(obj, current, req->overlapped);
 
             if(async)
             {

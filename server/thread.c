@@ -959,8 +959,9 @@ DECL_HANDLER(get_apc)
         }
         /* Optimization: ignore APCs that have a NULL func; they are only used
          * to wake up a thread, but since we got here the thread woke up already.
+         * Exception: for APC_ASYNC_IO, func == NULL is legal.
          */
-        if (apc->func) break;
+        if (apc->func || apc->type == APC_ASYNC_IO) break;
         free( apc );
     }
     size = apc->nb_args * sizeof(apc->args[0]);

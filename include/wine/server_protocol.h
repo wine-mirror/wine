@@ -502,7 +502,7 @@ struct get_apc_reply
     int          type;
     /* VARARG(args,ptrs); */
 };
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 
 
@@ -2278,7 +2278,6 @@ struct register_async_request
 {
     struct request_header __header;
     handle_t     handle;
-    void*        func;
     int          type;
     void*        overlapped;
     int          count;
@@ -3184,6 +3183,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 77
+#define SERVER_PROTOCOL_VERSION 78
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

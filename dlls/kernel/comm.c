@@ -80,6 +80,7 @@
 #include "winerror.h"
 
 #include "wine/server.h"
+#include "async.h"
 #include "file.h"
 #include "heap.h"
 
@@ -90,6 +91,52 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(comm);
+
+/***********************************************************************
+ * Asynchronous I/O for asynchronous wait requests                     *
+ */
+
+static DWORD commio_get_async_status (const async_private *ovp);
+static DWORD commio_get_async_count (const async_private *ovp);
+static void commio_set_async_status (async_private *ovp, const DWORD status);
+static void CALLBACK commio_call_completion_func (ULONG_PTR data);
+
+static async_ops commio_async_ops =
+{
+    commio_get_async_status,       /* get_status */
+    commio_set_async_status,       /* set_status */
+    commio_get_async_count,        /* get_count */
+    commio_call_completion_func    /* call_completion */
+};
+
+typedef struct async_commio
+{
+    struct async_private             async;
+    LPOVERLAPPED                     lpOverlapped;
+    char                             *buffer;
+} async_commio;
+
+static DWORD commio_get_async_status (const struct async_private *ovp)
+{
+    return ((async_commio*) ovp)->lpOverlapped->Internal;
+}
+
+static void commio_set_async_status (async_private *ovp, const DWORD status)
+{
+    ((async_commio*) ovp)->lpOverlapped->Internal = status;
+}
+
+static DWORD commio_get_async_count (const struct async_private *ovp)
+{
+    return 0;
+}
+
+static void CALLBACK commio_call_completion_func (ULONG_PTR data)
+{
+    HeapFree(GetProcessHeap(), 0, (void*) data);
+}
+
+/***********************************************************************/
 
 #if !defined(TIOCINQ) && defined(FIONREAD)
 #define	TIOCINQ FIONREAD
@@ -1558,12 +1605,13 @@ BOOL WINAPI GetCommModemStatus(
  */
 static void COMM_WaitCommEventService(async_private *ovp)
 {
-    LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
+    async_commio *commio = (async_commio*) ovp;
+    LPOVERLAPPED lpOverlapped = commio->lpOverlapped;
 
     TRACE("overlapped %p\n",lpOverlapped);
 
     /* FIXME: detect other events */
-            *ovp->buffer = EV_RXCHAR;
+    *commio->buffer = EV_RXCHAR;
  
     lpOverlapped->Internal = STATUS_SUCCESS;
 }
@@ -1579,8 +1627,8 @@ static BOOL COMM_WaitCommEvent(
     LPDWORD lpdwEvents,        /* [out] event(s) that were detected */
     LPOVERLAPPED lpOverlapped) /* [in/out] for Asynchronous waiting */
 {
-    int fd,ret;
-    async_private *ovp;
+    int fd;
+    async_commio *ovp;
 
     if(!lpOverlapped)
     {
@@ -1591,53 +1639,32 @@ static BOOL COMM_WaitCommEvent(
     if(NtResetEvent(lpOverlapped->hEvent,NULL))
         return FALSE;
 
-    lpOverlapped->Internal = STATUS_PENDING;
-    lpOverlapped->InternalHigh = 0;
-    lpOverlapped->Offset = 0;
-    lpOverlapped->OffsetHigh = 0;
-
     fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if(fd<0)
 	return FALSE;
 
-    ovp = (async_private *) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    ovp = (async_commio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
     if(!ovp)
     {
         close(fd);
         return FALSE;
     }
-    ovp->event = lpOverlapped->hEvent;
+
+    ovp->async.ops = &commio_async_ops;
+    ovp->async.handle = hFile;
+    ovp->async.fd = fd;
+    ovp->async.type = ASYNC_TYPE_WAIT;
+    ovp->async.func = COMM_WaitCommEventService;
+    ovp->async.event = lpOverlapped->hEvent;
     ovp->lpOverlapped = lpOverlapped;
-    ovp->func = COMM_WaitCommEventService;
     ovp->buffer = (char *)lpdwEvents;
-    ovp->fd = fd;
-    ovp->count = 0;
-    ovp->completion_func = 0;                                                  
-    ovp->type = ASYNC_TYPE_WAIT;
-    ovp->handle = hFile;
-  
-    ovp->next = NtCurrentTeb()->pending_list;
-    ovp->prev = NULL;
-    if(ovp->next)
-        ovp->next->prev=ovp;
-    NtCurrentTeb()->pending_list = ovp;
-  
-    /* start an ASYNCHRONOUS WaitCommEvent */
-    SERVER_START_REQ( register_async )
-    {
-        req->handle = hFile;
-        req->overlapped = lpOverlapped;
-        req->type = ASYNC_TYPE_WAIT;
-        req->count = 0;
-        req->func = check_async_list;
-        req->status = STATUS_PENDING;
 
-        ret=wine_server_call_err(req);
-    }
-    SERVER_END_REQ;
+    lpOverlapped->InternalHigh = 0;
+    lpOverlapped->Offset = 0;
+    lpOverlapped->OffsetHigh = 0;
 
-    if (!ret)
-    SetLastError(ERROR_IO_PENDING);
+    if ( !register_new_async (&ovp->async) )
+        SetLastError( ERROR_IO_PENDING );
 
     return FALSE;
 }

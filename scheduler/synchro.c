@@ -30,6 +30,7 @@
 #include "thread.h"
 #include "winerror.h"
 #include "wine/server.h"
+#include "async.h"
 
 
 /***********************************************************************
@@ -50,74 +51,32 @@ inline static void get_timeout( struct timeval *when, int timeout )
     }
 }
 
-static void CALLBACK call_completion_routine(ULONG_PTR data)
-{
-    async_private* ovp = (async_private*)data;
-
-    ovp->completion_func(ovp->lpOverlapped->Internal,
-                         ovp->lpOverlapped->InternalHigh,
-                         ovp->lpOverlapped);
-    ovp->completion_func=NULL;
-    HeapFree(GetProcessHeap(), 0, ovp);
-}
-
-void finish_async(async_private *ovp, DWORD status)
-{
-    ovp->lpOverlapped->Internal=status;
-
-    /* call ReadFileEx/WriteFileEx's overlapped completion function */
-    if(ovp->completion_func)
-    {
-        QueueUserAPC(call_completion_routine,GetCurrentThread(),(ULONG_PTR)ovp);
-    }
-
-    /* remove it from the active list */
-    if(ovp->prev)
-        ovp->prev->next = ovp->next;
-    else
-        NtCurrentTeb()->pending_list = ovp->next;
-
-    if(ovp->next)
-        ovp->next->prev = ovp->prev;
-
-    ovp->next=NULL;
-    ovp->prev=NULL;
-
-    close(ovp->fd);
-    if(ovp->event!=INVALID_HANDLE_VALUE)
-        NtSetEvent(ovp->event,NULL);
-    if(!ovp->completion_func) HeapFree(GetProcessHeap(), 0, ovp);
-}
-
 /***********************************************************************
  *           check_async_list
  *
  * Process a status event from the server.
  */
-void WINAPI check_async_list(LPOVERLAPPED overlapped, DWORD status)
+static void WINAPI check_async_list(async_private *asp, DWORD status)
 {
     async_private *ovp;
+    DWORD ovp_status;
 
-    /* fprintf(stderr,"overlapped %p status %x\n",overlapped,status); */
-
-    for(ovp = NtCurrentTeb()->pending_list; ovp; ovp = ovp->next)
-        if(ovp->lpOverlapped == overlapped)
-            break;
+    for( ovp = NtCurrentTeb()->pending_list; ovp && ovp != asp; ovp = ovp->next );
 
     if(!ovp)
             return;
 
-    if(status != STATUS_ALERTED)
-        ovp->lpOverlapped->Internal = status;
+    if( status != STATUS_ALERTED )
+    {
+        ovp_status = status;
+        ovp->ops->set_status (ovp, status);
+    }
+    else ovp_status = ovp->ops->get_status (ovp);
 
-    if(ovp->lpOverlapped->Internal==STATUS_PENDING)
-        {
-        ovp->func(ovp);
-        FILE_StartAsync(ovp->handle, ovp->lpOverlapped, ovp->type, 0, ovp->lpOverlapped->Internal);
-        }
+    if( ovp_status == STATUS_PENDING ) ovp->func( ovp );
 
-    if(ovp->lpOverlapped->Internal!=STATUS_PENDING)
-        finish_async(ovp,ovp->lpOverlapped->Internal);
+    /* This will destroy all but PENDING requests */
+    register_old_async( ovp );
 }
 
 
@@ -200,6 +159,9 @@ static void call_apcs( BOOL alertable )
             /* convert sec/usec to NT time */
             DOSFS_UnixTimeToFileTime( (time_t)args[0], &ft, (DWORD)args[1] * 10 );
             proc( args[2], ft.dwLowDateTime, ft.dwHighDateTime );
+            break;
+        case APC_ASYNC_IO:
+            check_async_list ( args[0], (DWORD) args[1]);
             break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", type );

@@ -1846,7 +1846,6 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
 static void dump_register_async_request( const struct register_async_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " overlapped=%p,", req->overlapped );
     fprintf( stderr, " count=%d,", req->count );

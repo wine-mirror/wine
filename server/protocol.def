@@ -412,7 +412,7 @@ typedef struct
     int          type;         /* function type */
     VARARG(args,ptrs);         /* function arguments */
 @END
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 
 /* Close a handle for the current process */
@@ -1615,10 +1615,9 @@ enum message_type
 #define SERIALINFO_SET_ERROR     0x04
 
 
-/* Create/Destroy an async I/O */
+/* Create / reschedule an async I/O */
 @REQ(register_async)
     handle_t     handle;  /* handle to comm port, socket or file */
-    void*        func;
     int          type;
     void*        overlapped;
     int          count;
