@@ -1029,9 +1029,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	/* Trivial Case: If the coercion is from two types that are
 	 * identical then we can blindly copy from one argument to another.*/
 	if ((vt==vtFrom))
-	{
 	   return VariantCopy(pd,ps);
-	}
 
 	/* Cases requiring thought*/
 	switch( vt )
@@ -1050,9 +1048,6 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	case( VT_I1 ):
 		switch( vtFrom )
         {
-        case( VT_I1 ):
-            res = VariantCopy( pd, ps );
-            break;
 		case( VT_I2 ):
 			res = VarI1FromI2( V_UNION(ps,iVal), &V_UNION(pd,cVal) );
 			break;
@@ -1095,7 +1090,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_I1\n", vtFrom );
 			break;
 		}
 		break;
@@ -1106,9 +1101,6 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_I1 ):
 			res = VarI2FromI1( V_UNION(ps,cVal), &V_UNION(pd,iVal) );
 			break;
-        case( VT_I2 ):
-            res = VariantCopy( pd, ps );
-            break;
 		case( VT_INT ):
 		case( VT_I4 ):
 			res = VarI2FromI4( V_UNION(ps,lVal), &V_UNION(pd,iVal) );
@@ -1148,7 +1140,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_I2\n", vtFrom);
 			break;
 		}
 		break;
@@ -1211,7 +1203,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_INT/VT_I4\n", vtFrom);
 			break;
 		}
 		break;
@@ -1264,7 +1256,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_UI1\n", vtFrom);
 			break;
 		}
 		break;
@@ -1317,7 +1309,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_UI2\n", vtFrom);
 			break;
 		}
 		break;
@@ -1370,7 +1362,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_UINT/VT_UI4\n", vtFrom);
 			break;
 		}
 		break;
@@ -1427,7 +1419,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_R4\n", vtFrom);
 			break;
 		}
 		break;
@@ -1480,7 +1472,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_R8\n", vtFrom);
 			break;
 		}
 		break;
@@ -1518,9 +1510,6 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_R8 ):
 			res = VarDateFromR8( V_UNION(ps,dblVal), &V_UNION(pd,date) );
 			break;
-        case( VT_DATE ):
-            res = VariantCopy( pd, ps );
-            break;
 		case( VT_BOOL ):
 			res = VarDateFromBool( V_UNION(ps,boolVal), &V_UNION(pd,date) );
 			break;
@@ -1537,7 +1526,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_DATE\n", vtFrom);
 			break;
 		}
 		break;
@@ -1582,9 +1571,6 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_DATE ):
 			res = VarBoolFromDate( V_UNION(ps,date), &V_UNION(pd,boolVal) );
 			break;
-        case( VT_BOOL ):
-            res = VariantCopy( pd, ps );
-            break;
 		case( VT_BSTR ):
 			res = VarBoolFromStr( V_UNION(ps,bstrVal), lcid, 0, &V_UNION(pd,boolVal) );
 			break;
@@ -1598,7 +1584,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_BOOL\n", vtFrom);
 			break;
 		}
 		break;
@@ -1661,7 +1647,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME("Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to VT_BSTR\n", vtFrom);
 			break;
 		}
 		break;
@@ -1719,20 +1705,66 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	  case( VT_UNKNOWN ):
 	  default:
 	     res = DISP_E_TYPEMISMATCH;
-	     FIXME("Coercion from %d to %d\n", vtFrom, vt );
+	     FIXME("Coercion from %d to VT_CY\n", vtFrom);
 	     break;
 	  }
 	break;
 
 	case( VT_UNKNOWN ):
-	    if (vtFrom == VT_DISPATCH)
-	    {
-		res = IDispatch_QueryInterface(V_DISPATCH(ps), &IID_IUnknown, (LPVOID*)&V_UNKNOWN(pd));
-	    }
-	    else
-	    {
+	    switch (vtFrom) {
+	    case VT_DISPATCH:
+		if (V_DISPATCH(ps) == NULL) {
+			V_UNKNOWN(pd) = NULL;
+		} else {
+			res = IDispatch_QueryInterface(V_DISPATCH(ps), &IID_IUnknown, (LPVOID*)&V_UNKNOWN(pd));
+		}
+		break;
+	    case VT_EMPTY: case VT_NULL: case VT_I2: case VT_I4:
+	    case VT_R4: case VT_R8: case VT_CY: case VT_DATE:
+	    case VT_BSTR: case VT_ERROR: case VT_BOOL:
+	    case VT_VARIANT: case VT_DECIMAL: case VT_I1: case VT_UI1:
+	    case VT_UI2: case VT_UI4: case VT_I8: case VT_UI8: case VT_INT:
+	    case VT_UINT: case VT_VOID: case VT_HRESULT: case VT_PTR:
+	    case VT_SAFEARRAY: case VT_CARRAY: case VT_USERDEFINED:
+	    case VT_LPSTR: case VT_LPWSTR: case VT_RECORD: case VT_FILETIME:
+	    case VT_BLOB: case VT_STREAM: case VT_STORAGE:
+	    case VT_STREAMED_OBJECT: case VT_STORED_OBJECT: case VT_BLOB_OBJECT:
+	    case VT_CF: case VT_CLSID:
 		res = DISP_E_TYPEMISMATCH;
-		FIXME("Coercion from %d to %d\n", vtFrom, vt );
+		break;
+	    default:
+		FIXME("Coercion from %d to VT_UNKNOWN unhandled.\n", vtFrom);
+		res = DISP_E_BADVARTYPE;
+		break;
+	    }
+	    break;
+
+	case( VT_DISPATCH ):
+	    switch (vtFrom) {
+	    case VT_UNKNOWN:
+		if (V_UNION(ps,punkVal) == NULL) {
+			V_UNION(pd,pdispVal) = NULL;
+		} else {
+			res = IUnknown_QueryInterface(V_UNION(ps,punkVal), &IID_IDispatch, (LPVOID*)&V_UNION(pd,pdispVal));
+		}
+		break;
+	    case VT_EMPTY: case VT_NULL: case VT_I2: case VT_I4:
+	    case VT_R4: case VT_R8: case VT_CY: case VT_DATE:
+	    case VT_BSTR: case VT_ERROR: case VT_BOOL:
+	    case VT_VARIANT: case VT_DECIMAL: case VT_I1: case VT_UI1:
+	    case VT_UI2: case VT_UI4: case VT_I8: case VT_UI8: case VT_INT:
+	    case VT_UINT: case VT_VOID: case VT_HRESULT: case VT_PTR:
+	    case VT_SAFEARRAY: case VT_CARRAY: case VT_USERDEFINED:
+	    case VT_LPSTR: case VT_LPWSTR: case VT_RECORD: case VT_FILETIME:
+	    case VT_BLOB: case VT_STREAM: case VT_STORAGE:
+	    case VT_STREAMED_OBJECT: case VT_STORED_OBJECT: case VT_BLOB_OBJECT:
+	    case VT_CF: case VT_CLSID:
+		res = DISP_E_TYPEMISMATCH;
+		break;
+	    default:
+		FIXME("Coercion from %d to VT_DISPATCH unhandled.\n", vtFrom);
+		res = DISP_E_BADVARTYPE;
+		break;
 	    }
 	    break;
 
