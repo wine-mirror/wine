@@ -53,6 +53,7 @@ typedef struct tagTREEVIEW_INFO
   HTREEITEM     uMaxHandle;     /* needed for delete_item */
   HTREEITEM     TopRootItem;    /* handle to first item in treeview */
   INT           cdmode;         /* last custom draw setting */
+  UINT          uScrollTime;	/* max. time for scrolling in milliseconds*/
   UINT          uItemHeight;    /* item height, -1 for default item height */
   UINT          uRealItemHeight;/* current item height in pixels */
   UINT          uVisibleHeight; /* visible height of treeview in pixels */

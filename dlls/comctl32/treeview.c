@@ -1461,7 +1461,8 @@ LRESULT WINAPI TREEVIEW_Sort (
 
 	/* undocumented feature: TVI_ROOT means `sort the whole tree' */
 
-  if (parent==TVI_ROOT) parent=infoPtr->TopRootItem;
+  if (parent==TVI_ROOT)
+    parent=infoPtr->TopRootItem;
 
   /* Check for a valid handle to the parent item */
   if (!TREEVIEW_ValidItem(infoPtr, parent))
@@ -1870,6 +1871,8 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
    return (LRESULT) iItem;
 }
+
+
 static LRESULT
 TREEVIEW_InsertItemW(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1919,8 +1922,6 @@ TREEVIEW_InsertItemW(HWND hwnd, WPARAM wParam, LPARAM lParam)
     return lRes;
 
 }
-
-
 
 
 static LRESULT
@@ -2176,6 +2177,7 @@ TREEVIEW_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->clrText=-1;	/* use system color */
     infoPtr->dropItem=0;
     infoPtr->pCallBackSort=NULL;
+    infoPtr->uScrollTime = 300;  /* milliseconds */
 
 /*
     infoPtr->hwndNotify = GetParent32 (hwnd);
@@ -3498,6 +3500,27 @@ TREEVIEW_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
+static LRESULT
+TREEVIEW_GetScrollTime (HWND hwnd)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+
+  return infoPtr->uScrollTime;
+}
+
+
+static LRESULT
+TREEVIEW_SetScrollTime (HWND hwnd, UINT uScrollTime)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  UINT uOldScrollTime = infoPtr->uScrollTime;
+
+  infoPtr->uScrollTime = min (uScrollTime, 100);
+
+  return uOldScrollTime;
+}
+
+
 LRESULT WINAPI
 TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -3542,7 +3565,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_GetItemA (hwnd, wParam, lParam);
 
     	case TVM_GETITEMW:
-      		FIXME("Unimplemented msg TVM_GETITEM32W\n");
+      		FIXME("Unimplemented msg TVM_GETITEMW\n");
       		return 0;
 
     	case TVM_SETITEMA:
@@ -3553,11 +3576,11 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return 0;
 
     	case TVM_EDITLABELA:
-      		FIXME("Unimplemented msg TVM_EDITLABEL32A \n");
+      		FIXME("Unimplemented msg TVM_EDITLABELA \n");
       		return 0;
 
     	case TVM_EDITLABELW:
-      		FIXME("Unimplemented msg TVM_EDITLABEL32W \n");
+      		FIXME("Unimplemented msg TVM_EDITLABELW \n");
       		return 0;
 
     	case TVM_GETEDITCONTROL:
@@ -3586,11 +3609,11 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_EndEditLabelNow (hwnd, wParam, lParam);
   
     	case TVM_GETISEARCHSTRINGA:
-      		FIXME("Unimplemented msg TVM_GETISEARCHSTRING32A\n");
+      		FIXME("Unimplemented msg TVM_GETISEARCHSTRINGA\n");
       		return 0;
   
     	case TVM_GETISEARCHSTRINGW:
-      		FIXME("Unimplemented msg TVM_GETISEARCHSTRING32W\n");
+      		FIXME("Unimplemented msg TVM_GETISEARCHSTRINGW\n");
       		return 0;
   
     	case TVM_GETTOOLTIPS:
@@ -3622,12 +3645,10 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_GetTextColor (hwnd);
   
     	case TVM_SETSCROLLTIME:
-      		FIXME("Unimplemented msg TVM_SETSCROLLTIME\n");
-      		return 0;
+      		return TREEVIEW_SetScrollTime (hwnd, (UINT)wParam);
   
     	case TVM_GETSCROLLTIME:
-      		FIXME("Unimplemented msg TVM_GETSCROLLTIME\n");
-      		return 0;
+      		return TREEVIEW_GetScrollTime (hwnd);
 
     	case TVM_GETITEMSTATE:
       		return TREEVIEW_GetItemState (hwnd,wParam, lParam);

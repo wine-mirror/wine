@@ -45,6 +45,7 @@ typedef struct tagLISTVIEW_INFO
     INT nItemHeight;
     INT nItemWidth;
     INT nSelectionMark;
+    INT nHotItem;
     SHORT notifyFormat;
     RECT rcList;
     RECT rcView;
