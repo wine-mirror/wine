@@ -209,7 +209,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     /* get a pointer to the text */
     lpText = TOOLBAR_GetText(infoPtr, btnPtr);
 
-    TRACE ("lpText: \"%s\"\n", debugstr_w(lpText));
+    TRACE ("lpText: %s\n", debugstr_w(lpText));
 
     /* draw text */
     if (lpText) {
@@ -1879,7 +1879,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	len = LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
 			     szString, MAX_RESOURCE_STRING_LENGTH);
 
-	TRACE("len=%d \"%s\"\n", len, debugstr_w(szString));
+	TRACE("len=%d %s\n", len, debugstr_w(szString));
 	TRACE("First char: 0x%x\n", *szString);
 	if (szString[0] == L'|')
 	{
@@ -1902,7 +1902,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    }
 
 	    len = COMCTL32_StrChrW (p, L'|') - p;
-	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
+	    TRACE("len=%d %s\n", len, debugstr_w(p));
 	    infoPtr->strings[infoPtr->nNumStrings] =
 		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
 	    lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len);
@@ -1944,7 +1944,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	while (*p) {
 	    len = strlenW (p);
 
-	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
+	    TRACE("len=%d %s\n", len, debugstr_w(p));
 	    if (infoPtr->nNumStrings == 0) {
 		infoPtr->strings =
 		    COMCTL32_Alloc (sizeof(LPWSTR));

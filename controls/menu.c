@@ -266,7 +266,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 
 	if (typ == MFT_STRING) {
 	    if (mp->text)
-		DPRINTF( ", Text=\"%s\"", debugstr_w(mp->text));
+		DPRINTF( ", Text=%s", debugstr_w(mp->text));
 	    else
 		DPRINTF( ", Text=Null");
 	} else if (mp->text == NULL)

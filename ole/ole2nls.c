@@ -438,7 +438,7 @@ static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWST
     }
 
     FreeResource(hmem);
-    TRACE("\"%s\" loaded!\n", debugstr_w(buffer));
+    TRACE("%s loaded!\n", debugstr_w(buffer));
     return (i + 1);
 }
 
