@@ -93,6 +93,8 @@ extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
 
+extern BOOL is_current_process( HANDLE handle );
+
 /* code pages */
 extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,

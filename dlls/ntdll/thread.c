@@ -216,6 +216,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     int request_pipe[2];
     NTSTATUS status;
 
+    if( ! is_current_process( process ) )
+    {
+        ERR("Unsupported on other process\n");
+        return STATUS_ACCESS_DENIED;
+    }
+
     if (pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
     fcntl( request_pipe[1], F_SETFD, 1 ); /* set close on exec flag */
     wine_server_send_fd( request_pipe[0] );

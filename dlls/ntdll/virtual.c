@@ -1028,7 +1028,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
  *
  * Check whether a process handle is for the current process.
  */
-static BOOL is_current_process( HANDLE handle )
+BOOL is_current_process( HANDLE handle )
 {
     BOOL ret = FALSE;
 
