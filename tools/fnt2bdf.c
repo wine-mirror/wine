@@ -352,6 +352,8 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
       /* charset */
 
+     if( g_lpstrCharSet ) fprintf(fs, "%s\n", g_lpstrCharSet);
+     else
       switch( cpe_font_struct->hdr.dfCharSet[0] )
       {
 	/* Microsoft just had to invent its own charsets! */
@@ -370,12 +372,8 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
 	default:
 	case OEM_CHARSET: 
-		if( !g_lpstrCharSet ) 
-		{ 
 		    fputs("Undefined charset, use -c option.\n", stderr); 
 		    return ERROR_DATA; 
-		}
-	        fprintf(fs, "%s\n", g_lpstrCharSet);
       }
     }
     else return ERROR_DATA;
