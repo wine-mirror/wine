@@ -253,7 +253,8 @@ void __getmainargs(int *argc, char** *argv, char** *envp,
   *argc = MSVCRT___argc;
   *argv = MSVCRT___argv;
   *envp = MSVCRT__environ;
-  MSVCRT__set_new_mode( *new_mode );
+  if (new_mode)
+    MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
@@ -266,7 +267,8 @@ void __wgetmainargs(int *argc, WCHAR** *wargv, WCHAR** *wenvp,
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
   *wenvp = MSVCRT__wenviron;
-  MSVCRT__set_new_mode( *new_mode );
+  if (new_mode)
+    MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
