@@ -40,6 +40,10 @@ sub import {
     &Exporter::import(@_);
     $Exporter::ExportLevel--;
 
+    if (defined($modules) && defined($win16api) && defined($win32api)) {
+	return;
+    }
+
     require modules;
     import modules qw($modules);
 
@@ -286,6 +290,7 @@ sub parse_spec_file {
 	    if($flags =~ /(?:-register|-interrupt)/) {
 		if($arguments) { $arguments .= " "; }
 		$arguments .= "ptr";
+		$calling_convention .= " -register";
 	    }
 
             if($external_name ne "@") {

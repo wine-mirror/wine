@@ -44,6 +44,10 @@ sub import {
     &Exporter::import(@_);
     $Exporter::ExportLevel--;
 
+    if (defined($modules)) {
+	return;
+    }
+
     $modules = 'modules'->new;
 }
 

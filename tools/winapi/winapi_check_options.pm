@@ -76,7 +76,7 @@ my %options_long = (
     "calling-convention-win32" => { default => 1, parent => "calling-convention", description => "calling convention checking (Win32)" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
-    "cross-call" => { default => 0, parent => "statements",  description => "check for cross calling functions" },
+    "cross-call" => { default => 0, parent => ["statements", "win16", "win32"],  description => "check for cross calling functions" },
     "cross-call-win32-win16" => {
 	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
      },

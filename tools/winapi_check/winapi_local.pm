@@ -150,6 +150,12 @@ sub _check_function {
     my $declared_calling_convention = $winapi->function_internal_calling_convention($internal_name);
     my @declared_argument_kinds = split(/\s+/, $winapi->function_internal_arguments($internal_name));
 
+    my $declared_register = 0;
+    if ($declared_calling_convention =~ /^(\w+) -register$/) {
+	$declared_register = 1;
+	$declared_calling_convention = $1;
+    }
+
     if($implemented_calling_convention ne $declared_calling_convention &&
        $implemented_calling_convention ne "asm" &&
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
@@ -179,7 +185,7 @@ sub _check_function {
     }
 
     if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&
-       $internal_name !~ /^(Get|Set)ThreadContext$/) # FIXME: Kludge
+       $internal_name =~ /^(?:RtlRaiseException|RtlUnwind|NtRaiseException)$/) # FIXME: Kludge
     {
 	$#argument_types--;
     }
@@ -219,6 +225,10 @@ sub _check_function {
 		$kind;
 	    }
 	} @argument_types;
+
+	if ($declared_register && $argument_kinds[$#argument_kinds] ne "context86") {
+	    $output->write("function declared as register, but CONTEXT86 * is not last argument\n");
+	}
 
 	for my $n (0..$#argument_kinds) {
 	    if(!defined($argument_kinds[$n]) || !defined($declared_argument_kinds[$n])) { next; }

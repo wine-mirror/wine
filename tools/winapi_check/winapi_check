@@ -61,10 +61,9 @@ use winapi_local;
 use winapi_global;
 use winapi_parser;
 
-my %declared_functions;
-
 my %include2info;
-{
+
+if ($options->global) {
     my @files = get_h_files("winelib");
 
     my $progress_current = 0;
@@ -151,6 +150,8 @@ if(1) {
 
 my $progress_current = 0;
 my $progress_max = scalar(@c_files);
+
+my %declared_functions;
 
 if($options->headers) {
     $progress_max += scalar(@h_files);
@@ -340,14 +341,9 @@ foreach my $file (@c_files) {
 	    }
 	}
 
-	foreach my $module ($function->modules) {
-	    $module2functions{$module}{$internal_name} = $function;
-
-	    my @types = ($return_type);
-
-	    my $refargument_types = $function->argument_types;
-	    if(defined($refargument_types)) {
-		push @types, @$refargument_types;
+	if ($options->global) {
+	    foreach my $module ($function->modules) {
+		$module2functions{$module}{$internal_name} = $function;
 	    }
 	}
 

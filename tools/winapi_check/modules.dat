@@ -16,6 +16,10 @@ dlls/avifil32
 
 dlls/avifil32
 
+% dlls/cabinet/cabinet.spec
+
+dlls/cabinet
+
 % dlls/comcat/comcat.spec
 
 dlls/comcat

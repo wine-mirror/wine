@@ -296,7 +296,7 @@ sub options_set {
 	if(/^default$/) {
 	    $$refvalue = $$option{default};
 	} elsif(/^all$/) {
-	    if($name !~ /^help|debug|verbose|module$/) {
+	    if($name !~ /^(?:help|debug|verbose|module)$/) {
 		if(ref($$refvalue) ne "HASH") {
 		    $$refvalue = 1;
 		} else {
@@ -304,7 +304,7 @@ sub options_set {
 		}
 	    }
 	} elsif(/^none$/) {
-	    if($name !~ /^help|debug|verbose|module$/) {
+	    if($name !~ /^(?:help|debug|verbose|module)$/) {
 		if(ref($$refvalue) ne "HASH") {
 		    $$refvalue = 0;
 		} else {
@@ -367,8 +367,6 @@ sub show_help {
 	    }
 	}
         if($default == $current) {
-	    $output->write("$description (default)\n");
-	} else {
 	    $output->write("$description\n");
 	}
     }
