@@ -25,8 +25,10 @@
 #include "winbase.h"   /* for LPSTARTUPINFO32A */
 #include "winnt.h"     /* for PCONTEXT */
 #include "wincon.h"    /* for MOUSE_EVENT_RECORD */
+#include "miscemu.h"
 
 struct _DOSEVENT;
+struct DPMI_segments;
 
 typedef void (*DOSRELAY)(CONTEXT86*,void*);
 
@@ -39,6 +41,7 @@ typedef void (*DOSRELAY)(CONTEXT86*,void*);
 extern WORD DOSVM_psp;     /* psp of current DOS task */
 extern WORD DOSVM_retval;  /* return value of previous DOS task */
 extern DWORD DOS_LOLSeg;
+extern const struct DPMI_segments *DOSVM_dpmi_segments;
 
 #if defined(linux) && defined(__i386__)
 #define MZ_SUPPORTED
@@ -47,7 +50,6 @@ extern DWORD DOS_LOLSeg;
 #define V86_FLAG 0x00020000
 
 #define BIOS_DATA ((void *)0x400)
-#define BIOS_SYS  ((void *)0xf0000)
 
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
 extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );

@@ -91,8 +91,7 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
     case 0x00: /* GET SuperVGA INFORMATION */
         TRACE("VESA GET SuperVGA INFORMATION\n");
         memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-               (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),
-               sizeof(VESAINFO));
+               &BIOS_EXTRA_PTR->vesa_info, sizeof(VESAINFO));
         SET_AL( context, 0x4f );
         SET_AH( context, 0x00 ); /* 0x00 = successful 0x01 = failed */
         break;
@@ -789,7 +788,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
           SET_AL( context, 0x1b );
           /* Copy state information structure to ES:DI */
           memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-                 (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VIDEOSTATE),sizeof(VIDEOSTATE));
+                 &BIOS_EXTRA_PTR->vid_state,sizeof(VIDEOSTATE));
         }
         break;
 

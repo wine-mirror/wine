@@ -144,13 +144,20 @@ typedef struct
     DWORD StaticModeList;
 } VESAINFO;
 
+/* layout of BIOS extra data starting at f000:e000 */
+typedef struct
+{
+    VIDEOFUNCTIONALITY vid_func;
+    VIDEOSTATE         vid_state;
+    VESAINFO           vesa_info;
+    char               vesa_string[32];
+    WORD               vesa_modes[40];
+} BIOS_EXTRA;
+
+#define BIOS_EXTRA_PTR    ((BIOS_EXTRA *)0xfe000)
+#define BIOS_EXTRA_SEGPTR MAKESEGPTR(0xf000,0xe000)
+
 #include "poppack.h"
-
-/* Index for bios structures stored at f000:e000 */
-enum {OFF_VIDEOSTATE,OFF_VIDEOFUNCTIONALITY,OFF_VESAINFO,OFF_VESASTRING,OFF_VESAMODELIST};
-
-extern WORD DOSMEM_AddBiosSysStruct(int,int);
-extern WORD DOSMEM_GetBiosSysStructOffset(int);
 
 extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;
@@ -158,10 +165,16 @@ extern WORD DOSMEM_BiosSysSeg;
 extern DWORD DOSMEM_CollateTable;
 
 /* various real-mode code stubs */
-extern WORD DOSMEM_wrap_seg;
-extern WORD DOSMEM_xms_seg;
-extern WORD DOSMEM_dpmi_seg;
-extern WORD DOSMEM_dpmi_sel;
+struct DPMI_segments
+{
+    WORD wrap_seg;
+    WORD xms_seg;
+    WORD dpmi_seg;
+    WORD dpmi_sel;
+};
+
+extern struct DPMI_segments DOSMEM_dpmi_segments;
+extern const struct DPMI_segments *DOSMEM_GetDPMISegments(void);
 
 extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);

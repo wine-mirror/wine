@@ -60,6 +60,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 WORD DOSVM_psp = 0;
 WORD DOSVM_retval = 0;
+const struct DPMI_segments *DOSVM_dpmi_segments = NULL;
 
 #ifdef MZ_SUPPORTED
 
@@ -98,7 +99,7 @@ static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
 
   /* check for our real-mode hooks */
   if (vect==0x31) {
-    if (context->SegCs==DOSMEM_wrap_seg) {
+    if (context->SegCs==DOSVM_dpmi_segments->wrap_seg) {
       /* exit from real-mode wrapper */
       return -1;
     }
@@ -699,6 +700,7 @@ BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved 
         TRACE("Initializing DOS memory structures\n");
         DOSMEM_Init( TRUE );
         DOSDEV_InstallDOSDevices();
+        DOSVM_dpmi_segments = DOSMEM_GetDPMISegments();
 
 #ifdef MZ_SUPPORTED
         event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);

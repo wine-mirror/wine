@@ -310,7 +310,7 @@ callrmproc_again:
             *stack16 = LOWORD(context->EFlags);
         }
         /* push return address (return to interrupt wrapper) */
-        *(--stack16) = DOSMEM_wrap_seg;
+        *(--stack16) = DOSVM_dpmi_segments->wrap_seg;
         *(--stack16) = 0;
         /* adjust stack */
         context->Esp -= 2*sizeof(WORD);
@@ -321,7 +321,7 @@ callrmproc_again:
         /* RMCB call, invoke protected-mode handler directly */
         DPMI_CallRMCBProc(context, CurrRMCB, dpmi_flag);
         /* check if we returned to where we thought we would */
-        if ((context->SegCs != DOSMEM_wrap_seg) ||
+        if ((context->SegCs != DOSVM_dpmi_segments->wrap_seg) ||
             (LOWORD(context->Eip) != 0)) {
             /* we need to continue at different address in real-mode space,
                so we need to set it all up for real mode again */
@@ -418,7 +418,7 @@ static void StartPM( CONTEXT86 *context )
     psp->environment = SELECTOR_AllocBlock( (void *)(env_seg<<4), 0x10000, WINE_LDT_FLAGS_DATA );
 
     pm_ctx = *context;
-    pm_ctx.SegCs = DOSMEM_dpmi_sel;
+    pm_ctx.SegCs = DOSVM_dpmi_segments->dpmi_sel;
 /* our mode switch wrapper expects the new CS in DX, and the new SS in AX */
     pm_ctx.Eax   = ss;
     pm_ctx.Edx   = cs;
@@ -613,12 +613,12 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 {
     /* check if it's our wrapper */
     TRACE("called from real mode\n");
-    if (context->SegCs==DOSMEM_dpmi_seg) {
+    if (context->SegCs==DOSVM_dpmi_segments->dpmi_seg) {
         /* This is the protected mode switch */
         StartPM(context);
         return;
     }
-    else if (context->SegCs==DOSMEM_xms_seg)
+    else if (context->SegCs==DOSVM_dpmi_segments->xms_seg)
     {
         /* This is the XMS driver entry point */
         XMS_Handler(context);

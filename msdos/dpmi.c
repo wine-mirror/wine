@@ -258,7 +258,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     DWORD dw;
     BYTE *ptr;
 
-    if (context->SegCs == DOSMEM_dpmi_sel) {
+    if (context->SegCs == DOSMEM_dpmi_segments.dpmi_sel) {
         RawModeSwitch( context );
         return;
     }
@@ -472,7 +472,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         /* we probably won't need this kind of state saving */
         SET_AX( context, 0 );
 	/* real mode: just point to the lret */
-	SET_BX( context, DOSMEM_wrap_seg );
+	SET_BX( context, DOSMEM_dpmi_segments.wrap_seg );
 	context->Ecx = 2;
 	/* protected mode: don't have any handler yet... */
 	FIXME("no protected-mode dummy state save/restore handler yet\n");
@@ -483,10 +483,10 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     case 0x0306:  /* Get Raw Mode Switch Addresses */
         TRACE("get raw mode switch addresses\n");
         /* real mode, point to standard DPMI return wrapper */
-        SET_BX( context, DOSMEM_wrap_seg );
+        SET_BX( context, DOSMEM_dpmi_segments.wrap_seg );
         context->Ecx = 0;
         /* protected mode, point to DPMI call wrapper */
-        SET_SI( context, DOSMEM_dpmi_sel );
+        SET_SI( context, DOSMEM_dpmi_segments.dpmi_sel );
         context->Edi = 8; /* offset of the INT 0x31 call */
 	break;
     case 0x0400:  /* Get DPMI version */

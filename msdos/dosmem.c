@@ -47,9 +47,6 @@ WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
 DWORD DOSMEM_CollateTable;
 
-static int StructOffset[256];            /* Offsets for all structures at f000:e000*/
-static int CurrentStructOffset = 0xe000; /* Current free offset */
-
 /* use 2 low bits of 'size' for the housekeeping */
 
 #define DM_BLOCK_DEBUG		0xABE00000
@@ -86,10 +83,15 @@ static char *DOSMEM_dosmem;
 static char *DOSMEM_sysmem;
 
 /* various real-mode code stubs */
-WORD DOSMEM_wrap_seg;
-WORD DOSMEM_xms_seg;
-WORD DOSMEM_dpmi_seg;
-WORD DOSMEM_dpmi_sel;
+struct DPMI_segments DOSMEM_dpmi_segments;
+
+/***********************************************************************
+ *           DOSMEM_GetDPMISegments
+ */
+const struct DPMI_segments *DOSMEM_GetDPMISegments(void)
+{
+    return &DOSMEM_dpmi_segments;
+}
 
 /***********************************************************************
  *           DOSMEM_MemoryTop
@@ -201,34 +203,18 @@ static void DOSMEM_InitDPMI(void)
         0xCB                 /* lret */
     };
 
-    ptr = DOSMEM_GetBlock( sizeof(wrap_code), &DOSMEM_wrap_seg );
+    ptr = DOSMEM_GetBlock( sizeof(wrap_code), &DOSMEM_dpmi_segments.wrap_seg );
     memcpy( ptr, wrap_code, sizeof(wrap_code) );
-    ptr = DOSMEM_GetBlock( sizeof(enter_xms), &DOSMEM_xms_seg );
+    ptr = DOSMEM_GetBlock( sizeof(enter_xms), &DOSMEM_dpmi_segments.xms_seg );
     memcpy( ptr, enter_xms, sizeof(enter_xms) );
-    ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_seg );
+    ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_segments.dpmi_seg );
     memcpy( ptr, enter_pm, sizeof(enter_pm) );
-    DOSMEM_dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
+    DOSMEM_dpmi_segments.dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
 }
 
 static BIOSDATA * DOSMEM_BiosData(void)
 {
     return (BIOSDATA *)(DOSMEM_sysmem + 0x400);
-}
-
-/* Add a structure in the BiosSys area (with size and index) and
-   return its offset */
-WORD DOSMEM_AddBiosSysStruct(int size,int index)
-{
-  int Offset = CurrentStructOffset;
-  StructOffset[index]= CurrentStructOffset;
-  CurrentStructOffset += size;
-  return Offset;
-}
-
-/* Return the offset of a structure specified by the index */
-WORD DOSMEM_GetBiosSysStructOffset(int index)
-{
-  return StructOffset[index];
 }
 
 
@@ -241,6 +227,7 @@ static void DOSMEM_FillBiosSegments(void)
 {
     BYTE *pBiosSys = DOSMEM_dosmem + 0xf0000;
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
+    BIOS_EXTRA *extra = (BIOS_EXTRA *)(DOSMEM_dosmem + (int)BIOS_EXTRA_PTR);
     BIOSDATA *pBiosData = DOSMEM_BiosData();
 
     /* Supported VESA mode, see int10.c */
@@ -251,16 +238,11 @@ static void DOSMEM_FillBiosSegments(void)
     char * ConstVesaString = "WINE SVGA BOARD";
     int i;
 
-    VIDEOFUNCTIONALITY *pVidFunc = (VIDEOFUNCTIONALITY *)
-          (pBiosSys+DOSMEM_AddBiosSysStruct(sizeof(VIDEOFUNCTIONALITY),OFF_VIDEOFUNCTIONALITY));
-    VIDEOSTATE *pVidState = (VIDEOSTATE *)
-          (pBiosSys+DOSMEM_AddBiosSysStruct(sizeof(VIDEOSTATE),OFF_VIDEOSTATE));
-    VESAINFO *pVesaInfo = (VESAINFO *)
-          (pBiosSys+DOSMEM_AddBiosSysStruct(sizeof(VESAINFO),OFF_VESAINFO));
-    char * VesaString = (char *)
-          (pBiosSys+DOSMEM_AddBiosSysStruct(strlen(ConstVesaString)+1,OFF_VESASTRING));
-    WORD * VesaModeList = (WORD *)
-          (pBiosSys+DOSMEM_AddBiosSysStruct(sizeof(ConstVesaModeList),OFF_VESAMODELIST));
+    VIDEOFUNCTIONALITY *pVidFunc = &extra->vid_func;
+    VIDEOSTATE *pVidState = &extra->vid_state;
+    VESAINFO *pVesaInfo = &extra->vesa_info;
+    char * VesaString = extra->vesa_string;
+    WORD * VesaModeList = extra->vesa_modes;
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );
@@ -317,7 +299,7 @@ static void DOSMEM_FillBiosSegments(void)
     pVidFunc->SavePointerFlags    = 0x3f;
 
                                     /* FIXME: always real mode ? */
-    pVidState->StaticFuncTable    = (0xf000<<16)+DOSMEM_GetBiosSysStructOffset(OFF_VIDEOFUNCTIONALITY);
+    pVidState->StaticFuncTable    = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vid_func);
     pVidState->VideoMode          = pBiosData->VideoMode; /* needs updates! */
     pVidState->NumberColumns      = pBiosData->VideoColumns; /* needs updates! */
     pVidState->RegenBufLen        = 0;
@@ -353,10 +335,10 @@ static void DOSMEM_FillBiosSegments(void)
     pVesaInfo->Major              = 2;
     pVesaInfo->Minor              = 0;
                                     /* FIXME: always real mode ? */
-    pVesaInfo->StaticVendorString = (0xF000<<16)+DOSMEM_GetBiosSysStructOffset(OFF_VESASTRING);
+    pVesaInfo->StaticVendorString = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vesa_string);
     pVesaInfo->CapabilitiesFlags  = 0xfffffffd; /* FIXME: not really supported */
                                     /* FIXME: always real mode ? */
-    pVesaInfo->StaticModeList     = (0xF000<<16)+DOSMEM_GetBiosSysStructOffset(OFF_VESAMODELIST);
+    pVesaInfo->StaticModeList     = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vesa_modes);
 
     strcpy(VesaString,ConstVesaString);
     memcpy(VesaModeList,ConstVesaModeList,sizeof(ConstVesaModeList));

@@ -129,7 +129,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
-            context->SegEs = DOSMEM_xms_seg;
+            context->SegEs = DOSMEM_dpmi_segments.xms_seg;
             SET_BX( context, 0 );
             break;
 	}
@@ -374,7 +374,7 @@ static void do_int2f_16( CONTEXT86 *context )
             SET_CL( context, si.wProcessorLevel );
             SET_DX( context, 0x005a ); /* DPMI major/minor 0.90 */
             SET_SI( context, 0 );      /* # of para. of DOS extended private data */
-            context->SegEs = DOSMEM_dpmi_seg;
+            context->SegEs = DOSMEM_dpmi_segments.dpmi_seg;
             SET_DI( context, 0 );      /* ES:DI is DPMI switch entry point */
             break;
         }
