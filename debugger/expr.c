@@ -302,6 +302,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
   struct datatype * type2;
 
   rtn.type = NULL;
+  rtn.cookie = DV_INVALID;
   rtn.addr.off = 0;
   rtn.addr.seg = 0;
 

@@ -55,6 +55,7 @@ typedef struct
 
 #define	DV_TARGET	0xF00D
 #define	DV_HOST		0x50DA
+#define	DV_INVALID      0x0000
 
 typedef struct
 {

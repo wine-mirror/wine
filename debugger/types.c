@@ -761,13 +761,23 @@ DEBUG_ArrayIndex(const DBG_VALUE * value, DBG_VALUE * result, int index)
        */
       size = DEBUG_GetObjectSize(value->type->un.pointer.pointsto);
       result->type = value->type->un.pointer.pointsto;
-      result->addr.off = (*(unsigned int*) (value->addr.off)) + size * index;
+      result->addr.off = (DWORD)DEBUG_ReadMemory(value) + size*index;
+
+      /* Contents of array must be on same target */
+      result->cookie = value->cookie;
     }
   else if (value->type->type == DT_ARRAY)
     {
       size = DEBUG_GetObjectSize(value->type->un.array.basictype);
       result->type = value->type->un.array.basictype;
       result->addr.off = value->addr.off + size * (index - value->type->un.array.start);
+  
+      /* Contents of array must be on same target */
+      result->cookie = value->cookie;
+    }
+  else
+    {
+      assert(FALSE);
     }
 
   return TRUE;
