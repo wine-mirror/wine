@@ -2115,7 +2115,7 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 {
     MSG msg;
-    RECT sizingRect, mouseRect;
+    RECT sizingRect, mouseRect, origRect;
     HDC hdc;
     LONG hittest = (LONG)(wParam & 0x0f);
     HCURSOR16 hDragCursor = 0, hOldCursor = 0;
@@ -2126,6 +2126,10 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     BOOL    iconic = wndPtr->dwStyle & WS_MINIMIZE;
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
+    BOOL DragFullWindows = FALSE;
+    int iWndsLocks;
+    
+    SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
     capturePoint = pt = *(POINT16*)&dwPoint;
 
@@ -2158,6 +2162,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
     WINPOS_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
+    origRect = sizingRect;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
     else 
@@ -2213,6 +2218,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
     /* invert frame if WIN31_LOOK to indicate mouse click on caption */
     if( !iconic && TWEAK_WineLook == WIN31_LOOK )
+	if(!DragFullWindows)
 	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     while(1)
@@ -2228,16 +2234,16 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
         if (msg.message == WM_PAINT)
         {
-            if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+            if(!iconic && !DragFullWindows) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
             UpdateWindow( msg.hwnd );
-            if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+            if(!iconic && !DragFullWindows) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
             continue;
         }
+
 	if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
 	    continue;  /* We are not interested in other messages */
 
-	dwPoint = GetMessagePos ();
-	pt = *(POINT16*)&dwPoint;
+	CONV_POINT32TO16(&msg.pt, &pt);
 	
 	if (msg.message == WM_KEYDOWN) switch(msg.wParam)
 	{
@@ -2268,6 +2274,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 		    WINPOS_ShowIconTitle( wndPtr, FALSE );
 		} else if(TWEAK_WineLook != WIN31_LOOK)
                 {
+		    if(!DragFullWindows)
 		    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
                 }
 	    }
@@ -2283,7 +2290,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 		else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
 		if (ON_TOP_BORDER(hittest)) newRect.top += dy;
 		else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
-		if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+		if(!iconic && !DragFullWindows) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 		capturePoint = pt;
                 
                 /* determine the hit location */
@@ -2291,7 +2298,21 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
                     wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
 		SendMessageA( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
 
-		if (!iconic) NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		if (!iconic)
+		{
+		    if(!DragFullWindows)
+			NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		    else {
+			/* To avoid any deadlocks, all the locks on the windows
+			   structures must be suspended before the SetWindowPos */
+			iWndsLocks = WIN_SuspendWndsLock();
+			SetWindowPos( hwnd, 0, newRect.left, newRect.top,
+			    newRect.right - newRect.left,
+			    newRect.bottom - newRect.top,
+			    ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+			WIN_RestoreWndsLock(iWndsLocks);
+		    }
+		}
 		sizingRect = newRect;
 	    }
 	}
@@ -2308,6 +2329,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
         DestroyCursor( hDragCursor );
     }
     else if(moved || TWEAK_WineLook == WIN31_LOOK)
+	if(!DragFullWindows)
         NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     if (wndPtr->dwStyle & WS_CHILD)
@@ -2337,17 +2359,31 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     /* window moved or resized */
     if (moved)
     {
+	/* To avoid any deadlocks, all the locks on the windows
+	   structures must be suspended before the SetWindowPos */
+	iWndsLocks = WIN_SuspendWndsLock();
+
         /* if the moving/resizing isn't canceled call SetWindowPos
          * with the new position or the new size of the window
          */
         if (!((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
         {
 	/* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
+	if(!DragFullWindows)
 	SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
 			sizingRect.right - sizingRect.left,
 			sizingRect.bottom - sizingRect.top,
 		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
+	else { /* restore previous size/position */
+	    if(DragFullWindows)
+		SetWindowPos( hwnd, 0, origRect.left, origRect.top,
+			origRect.right - origRect.left,
+			origRect.bottom - origRect.top,
+			( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+	}
+
+	WIN_RestoreWndsLock(iWndsLocks);
     }
 
     if( IsWindow(hwnd) )

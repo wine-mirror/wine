@@ -40,6 +40,9 @@
 "Personal"="C:\My Documents"
 "Favorites"="C:\WINDOWS\Favorites"
 
+[HKEY_CURRENT_USER\Control Panel\desktop]
+"DragFullWindows"="0"
+
 #
 # Overwrite default load address of BDE 
 # (Borland database engine)

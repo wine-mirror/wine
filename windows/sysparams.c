@@ -6,9 +6,11 @@
 
 #include "config.h"
 
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
 
@@ -58,6 +60,22 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 
 	case SPI_GETDRAGFULLWINDOWS:
 		*(BOOL *) lpvParam = FALSE;
+
+		{
+		    HKEY hKey;
+		    char buffer[20];
+		    DWORD dwBufferSize = sizeof(buffer);
+
+		    if(RegOpenKeyExA(HKEY_CURRENT_USER,
+			    "Control Panel\\desktop",
+			    0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+			if(RegQueryValueExA(hKey, "DragFullWindows", NULL,
+			    0, buffer, &dwBufferSize) == ERROR_SUCCESS)
+			    *(BOOL *)lpvParam = atoi(buffer) != 0;
+
+			RegCloseKey(hKey);
+		    }
+		}
 		break;
 
 	case SPI_SETDRAGFULLWINDOWS:
