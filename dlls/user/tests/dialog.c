@@ -761,13 +761,13 @@ static void InitialFocusTest (void)
     ok (((g_styleInitialFocusT1 & WS_TABSTOP) == 0),
        "Error in wrc - Detected WS_TABSTOP as default style for GROUPBOX\n");
 
-    todo_wine ok (((g_styleInitialFocusT2 & WS_VISIBLE) == 0),
+    ok (((g_styleInitialFocusT2 & WS_VISIBLE) == 0),
        "Modal dialogs should not be shown until the message queue first goes empty\n");
 
-    todo_wine ok ((g_hwndInitialFocusT1 == NULL),
-                  "Error in initial focus when WM_INITDIALOG returned FALSE: "
-                  "Expected NULL focus, got %s (%p).\n",
-                  GetHwndString(g_hwndInitialFocusT1), g_hwndInitialFocusT1);
+    ok ((g_hwndInitialFocusT1 == NULL),
+        "Error in initial focus when WM_INITDIALOG returned FALSE: "
+        "Expected NULL focus, got %s (%p).\n",
+        GetHwndString(g_hwndInitialFocusT1), g_hwndInitialFocusT1);
 
     todo_wine ok ((g_hwndInitialFocusT2 == g_hwndButton2),
                   "Error after first SetFocus() when WM_INITDIALOG returned FALSE: "

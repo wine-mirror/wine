@@ -765,24 +765,30 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     MSG msg;
     INT retval;
     HWND ownerMsg = GetAncestor( owner, GA_ROOT );
+    BOOL bFirstEmpty;
 
     if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE ))) return -1;
 
+    bFirstEmpty = TRUE;
     if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
     {
-        ShowWindow( hwnd, SW_SHOW );
         for (;;)
         {
-            if (!(GetWindowLongW( hwnd, GWL_STYLE ) & DS_NOIDLEMSG))
+            if (!PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
             {
-                if (!PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+                if (bFirstEmpty)
                 {
+                    /* ShowWindow the first time the queue goes empty */
+                    ShowWindow( hwnd, SW_SHOWNORMAL );
+                    bFirstEmpty = FALSE;
+                }
+                if (!(GetWindowLongW( hwnd, GWL_STYLE ) & DS_NOIDLEMSG))
+               {
                     /* No message present -> send ENTERIDLE and wait */
                     SendMessageW( ownerMsg, WM_ENTERIDLE, MSGF_DIALOGBOX, (LPARAM)hwnd );
-                    if (!GetMessageW( &msg, 0, 0, 0 )) break;
                 }
+                if (!GetMessageW( &msg, 0, 0, 0 )) break;
             }
-            else if (!GetMessageW( &msg, 0, 0, 0 )) break;
 
             if (!IsWindow( hwnd )) return -1;
             if (!(dlgInfo->flags & DF_END) && !IsDialogMessageW( hwnd, &msg))
