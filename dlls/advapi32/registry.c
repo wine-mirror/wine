@@ -162,7 +162,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
  *
  * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
-DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
+DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPCWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
                               PHKEY retkey, LPDWORD dispos )
 {
@@ -192,7 +192,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
  *
  * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
-DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
+DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPCSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
                               PHKEY retkey, LPDWORD dispos )
 {
