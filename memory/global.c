@@ -1175,6 +1175,7 @@ HGLOBAL WINAPI GlobalReAlloc(
    HGLOBAL            hnew;
    PGLOBAL32_INTERN     pintern;
    HANDLE heap = GLOBAL_GetHeap( hmem );
+   DWORD heap_flags = (flags & GMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
 
    hnew = 0;
    /* HeapLock(heap); */
@@ -1216,7 +1217,7 @@ HGLOBAL WINAPI GlobalReAlloc(
       if(ISPOINTER(hmem))
       {
 	 /* reallocate fixed memory */
-	 hnew=(HGLOBAL)HeapReAlloc(heap, 0, (LPVOID) hmem, size);
+	 hnew=(HGLOBAL)HeapReAlloc(heap, heap_flags, (LPVOID) hmem, size);
       }
       else
       {
@@ -1230,14 +1231,14 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    hnew=hmem;
 	    if(pintern->Pointer)
 	    {
-	       palloc=HeapReAlloc(heap, 0,
+	       palloc=HeapReAlloc(heap, heap_flags,
 				  (char *) pintern->Pointer-sizeof(HGLOBAL),
 				  size+sizeof(HGLOBAL) );
 	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
 	    else
 	    {
-	       palloc=HeapAlloc(heap, 0, size+sizeof(HGLOBAL));
+	       palloc=HeapAlloc(heap, heap_flags, size+sizeof(HGLOBAL));
 	       *(HGLOBAL *)palloc=hmem;
 	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
