@@ -2595,8 +2595,12 @@ Pos:  /* -----------------------------------------------------------------------
 			  != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER)) )
 	{
 	    /* get a previous visible region for SWP_CopyValidBits() */
+	    DWORD flags = DCX_WINDOW;
+  
+            if (wndPtr->dwStyle & WS_CLIPSIBLINGS)
+               flags |= DCX_CLIPSIBLINGS;
 
-	    visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS, 0, 0);
+	    visRgn = DCE_GetVisRgn(hwnd, flags, 0, 0);
 	}
     }
 
