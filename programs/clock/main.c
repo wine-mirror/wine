@@ -189,7 +189,7 @@ LRESULT CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  *           WinMain
  */
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
     WNDCLASS class;
@@ -229,7 +229,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     if (!RegisterClass (&class)) return FALSE;
 
     Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 
+        CW_USEDEFAULT, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 0,
         LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
 			
     LANGUAGE_SelectByName(Globals.lpszLanguage);
