@@ -4,6 +4,8 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -12,7 +14,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <unistd.h>
 
 #include "winbase.h"

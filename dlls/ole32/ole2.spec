@@ -1,4 +1,4 @@
-name	OLE2
+name	ole2
 type	win16
 
 1 pascal OleBuildVersion() OleBuildVersion
