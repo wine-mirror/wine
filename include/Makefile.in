@@ -117,10 +117,7 @@ INSTALLED_INCLUDES = \
 	wine/obj_shellview.h \
 	wine/obj_storage.h \
 	wine/port.h \
-	wine/undocshell.h \
 	wine/unicode.h \
-	wine/w32skrnl.h \
-	wine/winestring.h \
 	winerror.h \
 	wingdi.h \
 	wininet.h \

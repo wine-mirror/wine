@@ -5,8 +5,6 @@ LANGUAGE LANG_WALON, SUBLANG_DEFAULT
  * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
  */
 
-#include <windows.h>
-
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
  MENUITEM "&Rifé", 61728
