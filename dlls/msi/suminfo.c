@@ -272,3 +272,22 @@ UINT WINAPI MsiSummaryInfoGetPropertyW(
 
     return ERROR_SUCCESS;
 }
+
+UINT WINAPI MsiSummaryInfoSetPropertyA( MSIHANDLE hSummaryInfo, UINT uiProperty,
+                                       UINT uiDataType, INT iValue, 
+                                       FILETIME* pftValue, LPSTR szValue)
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE hSummaryInfo, UINT uiProperty,
+                                       UINT uiDataType, INT iValue, 
+                                       FILETIME* pftValue, LPWSTR szValue)
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiSummaryInfoPersist(MSIHANDLE hSummaryInfo)
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

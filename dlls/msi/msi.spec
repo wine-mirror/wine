@@ -148,9 +148,9 @@
 148 stdcall MsiSummaryInfoGetPropertyA(long long ptr ptr ptr ptr ptr)
 149 stdcall MsiSummaryInfoGetPropertyCount(long ptr)
 150 stdcall MsiSummaryInfoGetPropertyW(long long ptr ptr ptr ptr ptr)
-151 stub MsiSummaryInfoPersist
-152 stub MsiSummaryInfoSetPropertyA
-153 stub MsiSummaryInfoSetPropertyW
+151 stdcall MsiSummaryInfoPersist(long)
+152 stdcall MsiSummaryInfoSetPropertyA(long long long long ptr str)
+153 stdcall MsiSummaryInfoSetPropertyW(long long long long ptr wstr)
 154 stub MsiUseFeatureA
 155 stub MsiUseFeatureW
 156 stdcall MsiVerifyPackageA(str)
