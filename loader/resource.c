@@ -877,9 +877,8 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     
     TRACE_(resource)("strlen = %d\n", (int)*p );
     
+    if (buffer == NULL) return *p;
     i = MIN(buflen - 1, *p);
-    if (buffer == NULL)
-	return i;
     if (i > 0) {
 	memcpy(buffer, p + 1, i);
 	buffer[i] = '\0';
@@ -928,9 +927,8 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     
     TRACE_(resource)("strlen = %d\n", (int)*p );
     
+    if (buffer == NULL) return *p;
     i = MIN(buflen - 1, *p);
-    if (buffer == NULL)
-	return i;
     if (i > 0) {
 	memcpy(buffer, p + 1, i * sizeof (WCHAR));
 	buffer[i] = (WCHAR) 0;
@@ -1038,7 +1036,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     TRACE_(resource)("	- strlen=%d\n",slen);
     i = MIN(buflen - 1, slen);
     if (buffer == NULL)
-	return slen; /* different to LoadString */
+	return slen;
     if (i>0) {
 	lstrcpynA(buffer,(char*)mre->Text,i);
 	buffer[i]=0;
