@@ -951,7 +951,11 @@ case $host_os in
             LDDLLFLAGS="-bundle -flat_namespace -undefined suppress"
             LDSHARED="\$(CC) -dynamiclib"
             CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
-            STRIP="$STRIP -u -r" 
+            STRIP="$STRIP -u -r"
+            dnl Relocate wine executable
+            AC_SUBST(LDEXECFLAGS,"-seg1addr 0x120000")
+            dnl Relocate libwine.dyld too
+            AC_SUBST(LDLIBWINEFLAGS,"-seg1addr 0x140000")
           fi
         fi
       fi
