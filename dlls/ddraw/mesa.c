@@ -86,7 +86,14 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
     case D3DRENDERSTATE_FILLMODE:           /*  8 */
       switch ((D3DFILLMODE) dwRenderState) {
+      case D3DFILL_POINT:
+        glPolygonMode(GL_FRONT_AND_BACK,GL_POINT);        
+        break;
+      case D3DFILL_WIREFRAME:
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE); 
+        break;
       case D3DFILL_SOLID:
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); 
 	break;
 
       default:
