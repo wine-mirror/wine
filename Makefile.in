@@ -121,7 +121,7 @@ checklink:: $(TESTSUBDIRS:%=%/__checklink__)
 
 check test:: wine $(TESTSUBDIRS:%=%/__test__)
 
-crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
+crosstest:: tools $(TESTSUBDIRS:%=%/__crosstest__)
 
 # Misc rules
 
