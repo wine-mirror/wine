@@ -94,12 +94,14 @@ static char str_header[] =
 
 static char *dup_u2c(int cp, const WCHAR *uc)
 {
-	int len = unistrlen(uc);
-	char *cptr = xmalloc(len+1);
+	int len;
+	char *cptr;
 	const union cptable *cpdef = find_codepage(cp);
 	if(!cpdef)
 		internal_error(__FILE__, __LINE__, "Codepage %d not found (vanished?)", cp);
-	if((len = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, cptr, len+1, NULL, NULL)) < 0)
+	len = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, NULL, 0, NULL, NULL);
+	cptr = xmalloc(len);
+	if((len = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, cptr, len, NULL, NULL)) < 0)
 		internal_error(__FILE__, __LINE__, "Buffer overflow? code %d.", len);
 	return cptr;
 }
@@ -377,12 +379,14 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 	}
 	else
 	{
-		char *tmp = xmalloc(2*len+1);
-		char *cc = tmp;
+		char *tmp, *cc;
+		int mlen;
 		const union cptable *cpdef = find_codepage(codepage);
 
 		assert(cpdef != NULL);
-		if((i = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, 2*len+1, NULL, NULL)) < 0)
+		mlen = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, NULL, 0, NULL, NULL);
+		cc = tmp = xmalloc(mlen);
+		if((i = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, mlen, NULL, NULL)) < 0)
 			internal_error(__FILE__, __LINE__, "Buffer overflow? code %d.", i);
 		*cptr++ = ' ';
 		*cptr++ = '"';
