@@ -343,7 +343,11 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{imports} = [];
 }
 
-$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{files} = ["wtmain.c"];
+$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{files} = [
+  '../../include/wine/exception.h',
+  '../../include/wine/test.h',
+  '../../include/wine/unicode.h'
+];
 $wine_test_dsp_files{"programs/winetest/winetest.dsp"}{imports} = [];
 
 foreach my $dsp_file (keys(%wine_test_dsp_files)) {
@@ -468,26 +472,43 @@ sub _generate_dsp {
 	@source_files = sort(@source_files);
     }
 
+    my $no_cpp = 1;
     my $no_msvc_headers = 1;
     if ($project =~ /^(?:winetest)$/ || $project =~ /_test$/) {
 	$no_msvc_headers = 0;
     }
 
     my @cfgs;
-    if($no_release && $no_msvc_headers) {
-	push @cfgs, "$project - Win32";
-    } elsif($no_release && !$no_msvc_headers) {
-	push @cfgs, "$project - Win32 MSVC Headers";
-	push @cfgs, "$project - Win32 Wine Headers";
-    } elsif(!$no_release && $no_msvc_headers) {
-	push @cfgs, "$project - Win32 Release";
-	push @cfgs, "$project - Win32 Debug";
-    } else {
-	push @cfgs, "$project - Win32 Release MSVC Headers";
-	push @cfgs, "$project - Win32 Debug MSVC Headers";
-	push @cfgs, "$project - Win32 Release Wine Headers";
-	push @cfgs, "$project - Win32 Debug Wine Headers";
+
+    push @cfgs, "$project - Win32";
+
+    if (!$no_cpp) {
+	my @_cfgs;
+	foreach my $cfg (@cfgs) {
+	    push @_cfgs, "$cfg C";
+	    push @_cfgs, "$cfg C++";
+	}
+	@cfgs = @_cfgs;
     }
+
+    if (!$no_release) {
+	my @_cfgs;
+	foreach my $cfg (@cfgs) {
+	    push @_cfgs, "$cfg Debug";
+	    push @_cfgs, "$cfg Release";
+	}
+	@cfgs = @_cfgs;
+    }
+
+    if (!$no_msvc_headers) {
+	my @_cfgs;
+	foreach my $cfg (@cfgs) {
+	    push @_cfgs, "$cfg MSVC Headers";
+	    push @_cfgs, "$cfg Wine Headers";
+	}
+	@cfgs = @_cfgs;
+    }
+
     my $default_cfg = $cfgs[$#cfgs];
 
     print OUT "# Microsoft Developer Studio Project File - Name=\"$project\" - Package Owner=<4>\r\n";
@@ -566,6 +587,7 @@ sub _generate_dsp {
 	$output_dir = $cfg;
 	$output_dir =~ s/^$project - //;
 	$output_dir =~ s/ /_/g;
+	$output_dir =~ s/C\+\+/Cxx/g;
 	if($output_prefix_dir) {
 	    $output_dir = "$output_prefix_dir\\$output_dir";
 	}
@@ -681,6 +703,7 @@ sub _generate_dsp {
 	print OUT " /GZ" if $debug;
 	print OUT " " if $debug && $lib;
 	print OUT " /c";
+	print OUT " /TP" if !$no_cpp;
 	print OUT "\r\n";
 
 	if($debug) {
@@ -766,7 +789,7 @@ sub _generate_dsp {
 	print OUT "copy ..\\..\\library\\$output_dir\\wine.dll \$(OutDir)\t";
 	print OUT "copy ..\\..\\unicode\\$output_dir\\wine_unicode.dll \$(OutDir)\r\n";
 	print OUT "# End Special Build Tool\r\n";
-    } elsif ($project eq "winetest") {
+    } elsif (0 && $project eq "winetest") {
 	print OUT "# Begin Special Build Tool\r\n";
 	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
 	
@@ -862,6 +885,44 @@ sub _generate_dsp {
 	    print OUT "\"$dbg_c_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
 	    print OUT "   \$(BuildCmds)\r\n";
 	    print OUT "# End Custom Build\r\n";
+	} elsif($source_file =~ /([^\\]*?\.h)$/) {
+	    my $h_file = $1;
+
+	    foreach my $cfg (@cfgs) {
+		if($#cfgs == 0) {
+		    # Nothing
+		} elsif($n == 0) {
+		    print OUT "!IF  \"\$(CFG)\" == \"$cfg\"\r\n";
+		    print OUT "\r\n";
+		} else {
+		    print OUT "\r\n";
+		    print OUT "!ELSEIF  \"\$(CFG)\" == \"$cfg\"\r\n";
+		    print OUT "\r\n";
+		}
+
+		$output_dir = $cfg;
+		$output_dir =~ s/^$project - //;
+		$output_dir =~ s/ /_/g;
+		$output_dir =~ s/C\+\+/Cxx/g;
+		if($output_prefix_dir) {
+		    $output_dir = "$output_prefix_dir\\$output_dir";
+		}
+
+		print OUT "# Begin Custom Build\r\n";
+		print OUT "OutDir=$output_dir\r\n";
+		print OUT "InputPath=$source_file\r\n";
+		print OUT "\r\n";
+		print OUT "\"\$(OutDir)\\wine\\$h_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+		print OUT "\tcopy \$(InputPath) \$(OutDir)\\wine\r\n";
+		print OUT "\r\n";
+		print OUT "# End Custom Build\r\n";
+	    }
+
+	    if($#cfgs != 0) {
+		print OUT "\r\n";
+		print OUT "!ENDIF \r\n";
+		print OUT "\r\n";
+	    }
 	}
 
 	print OUT "# End Source File\r\n";
@@ -1068,21 +1129,31 @@ sub _generate_testlist_c {
 
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
     print OUT "\n";
+    print OUT "#include <stdio.h>\n";
+    print OUT "#include <stdlib.h>\n";
+    print OUT "#include \"windef.h\"\n";
+    print OUT "#include \"winbase.h\"\n";
+    print OUT "\n";
     foreach my $test (@tests) {
 	print OUT "extern void func_$test(void);\n";
     }
     print OUT "\n";
-    print OUT "const struct\n";
+    print OUT "struct test\n";
     print OUT "{\n";
     print OUT "    const char *name;\n";
     print OUT "    void (*func)(void);\n";
-    print OUT "} winetest_testlist[] =\n";
+    print OUT "};\n";
+    print OUT "\n";
+    print OUT "static const struct test winetest_testlist[] =\n";
     print OUT "{\n";
     foreach my $test (@tests) {
 	print OUT "    { \"$test\", func_$test },\n";
     }
     print OUT "    { 0, 0 }\n";
     print OUT "};\n";
+    print OUT "\n";
+    print OUT "#define WINETEST_WANT_MAIN\n";
+    print OUT "#include \"wine/test.h\"\n";
 }
 
 if ($options->wine) {
