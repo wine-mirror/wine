@@ -2026,6 +2026,42 @@
 @="dsound.dll"
 "ThreadingModel"="Both"
 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3901cc3f-84b5-4fa4-ba35-aa8172b8a09b}]
+@="DirectSound 8.0 Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3901cc3f-84b5-4fa4-ba35-aa8172b8a09b}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
+ 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B2F586D4-5558-49D1-A07B-3249DBBB33C2}]
+@="DirectSoundBufferConfig Object"
+ 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B2F586D4-5558-49D1-A07B-3249DBBB33C2}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
+ 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0210780-89CD-11D0-AF08-00A0C925CD16}]
+@="DirectSoundCapture Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0210780-89CD-11D0-AF08-00A0C925CD16}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
+ 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{E4BCAC13-7F99-4908-9A8E-74E3BF24B6E1}]
+@="DirectSoundCapture 8.0 Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{E4BCAC13-7F99-4908-9A8E-74E3BF24B6E1}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
+ 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{FEA4300C-7959-4147-B26A-2377B9E7A91D}]
+@="DirectSoundFullDuplex Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{FEA4300C-7959-4147-B26A-2377B9E7A91D}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
+ 
+
 
 
 #
