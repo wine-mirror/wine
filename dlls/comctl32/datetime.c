@@ -139,6 +139,28 @@ DATETIME_SetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
 
 
 static LRESULT
+DATETIME_GetRange (HWND hwnd, LPARAM lParam )
+{
+  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
+  LRESULT ret;
+
+  TRACE("%08lx\n", lParam);
+  ret =  SendMessageA (infoPtr->hMonthCal, MCM_GETRANGE, 0, lParam);
+  if (!ret) ret = 1; /* bug emulation... */
+  return ret;
+}
+
+static LRESULT
+DATETIME_SetRange (HWND hwnd, WPARAM wParam, LPARAM lParam )
+{
+  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
+
+  TRACE("%04x %08lx\n",wParam,lParam);
+
+  return SendMessageA (infoPtr->hMonthCal, MCM_SETRANGE, wParam, lParam);
+}
+
+static LRESULT
 DATETIME_GetMonthCalColor (HWND hwnd, WPARAM wParam)
 {
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
@@ -1179,18 +1201,16 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case DTM_GETSYSTEMTIME:
-		DATETIME_GetSystemTime (hwnd, wParam, lParam);
+        return DATETIME_GetSystemTime (hwnd, wParam, lParam);
 
     case DTM_SETSYSTEMTIME:
-		DATETIME_SetSystemTime (hwnd, wParam, lParam);
+	return DATETIME_SetSystemTime (hwnd, wParam, lParam);
 
     case DTM_GETRANGE:
-        FIXME("Unimplemented msg DTM_GETRANGE\n");
-        return 0;
+        return DATETIME_GetRange(hwnd, lParam);
 
     case DTM_SETRANGE:
-        FIXME("Unimplemented msg DTM_SETRANGE\n");
-        return 1;
+        return DATETIME_SetRange(hwnd, wParam, lParam);
 
     case DTM_SETFORMATA:
         return DATETIME_SetFormat (hwnd, wParam, lParam);
