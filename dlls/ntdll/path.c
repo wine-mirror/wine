@@ -333,7 +333,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     if (sz == 0) return FALSE;
     if (sz > sizeof(local))
     {
-        ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz);
+        if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz))) return FALSE;
         sz = RtlGetFullPathName_U(dos_path, sz, ptr, file_part);
     }
 
@@ -346,7 +346,6 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     }
 
     strcpyW(ntpath->Buffer, NTDosPrefixW);
-    offset = 0;
     switch (RtlDetermineDosPathNameType_U(ptr))
     {
     case UNC_PATH: /* \\foo */
@@ -357,7 +356,8 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
         offset = 4;
         break;
     default:
-        break; /* needed to keep gcc quiet */
+        offset = 0;
+        break;
     }
 
     strcatW(ntpath->Buffer, ptr + offset);
@@ -917,7 +917,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    nts = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_DIRECTORY_FILE );
+    nts = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     if (nts != STATUS_SUCCESS) goto out;
 
     /* don't keep the directory handle open on removable media */
