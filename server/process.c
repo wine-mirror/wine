@@ -125,6 +125,7 @@ struct process *create_initial_process(void)
                                   GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
     info->hstderr = alloc_handle( &initial_process, initial_process.console_out,
                                   GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+    info->env_ptr = NULL;
     initial_process.info = info;
     grab_object( &initial_process ); /* so that we never free it */
     return &initial_process;
@@ -232,6 +233,7 @@ int get_process_init_info( struct process *process, struct init_process_reply *r
     reply->hstdin      = info->hstdin;
     reply->hstdout     = info->hstdout;
     reply->hstderr     = info->hstderr;
+    reply->env_ptr     = info->env_ptr;
     free( info );
     return 1;
 }

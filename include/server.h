@@ -49,6 +49,7 @@ struct new_process_request
     int          hstdin;       /* handle for stdin */
     int          hstdout;      /* handle for stdout */
     int          hstderr;      /* handle for stderr */
+    void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     char         cmd_line[0];  /* command line */
 };
 struct new_process_reply
@@ -90,6 +91,7 @@ struct init_process_reply
     int          hstdin;       /* handle for stdin */
     int          hstdout;      /* handle for stdout */
     int          hstderr;      /* handle for stderr */
+    void*        env_ptr;      /* pointer to environment (FIXME: hack) */
 };
 
 

@@ -14,6 +14,7 @@ static int dump_new_process_request( struct new_process_request *req, int len )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
+    fprintf( stderr, " env_ptr=%p,", req->env_ptr );
     fprintf( stderr, " cmd_line=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
@@ -57,7 +58,8 @@ static int dump_init_process_reply( struct init_process_reply *req, int len )
     fprintf( stderr, " start_flags=%d,", req->start_flags );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
-    fprintf( stderr, " hstderr=%d", req->hstderr );
+    fprintf( stderr, " hstderr=%d,", req->hstderr );
+    fprintf( stderr, " env_ptr=%p", req->env_ptr );
     return (int)sizeof(*req);
 }
 

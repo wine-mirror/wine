@@ -220,8 +220,8 @@ sub DO_REPLY
         next if /^{$/;
 	s!/\*.*\*/!!g;
 	next if /^\s*$/;
-	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
-	my $type = $1;
+	/ *(\w+\**( +\w+\**)*) +(\w+)(\[0\])?;/ or die "Unrecognized syntax $_";
+	my $type = $1 . ($4 || "");
 	my $var = $3;
         die "Unrecognized type $type" unless defined($formats{$type});
 	push @struct, $type, $var;
