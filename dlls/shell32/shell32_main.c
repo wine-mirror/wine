@@ -92,15 +92,15 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 
     if (*lpCmdline==0) {
         /* Return the path to the executable */
-        DWORD size;
+        DWORD size=16;
 
-        hargv=0;
-        size=16;
-        do {
+        hargv=GlobalAlloc(size, 0);
+	argv=GlobalLock(hargv);
+	while (GetModuleFileNameW(0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0) {
             size*=2;
             hargv=GlobalReAlloc(hargv, size, 0);
             argv=GlobalLock(hargv);
-        } while (GetModuleFileNameW(0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0);
+        }
         argv[0]=(LPWSTR)(argv+1);
         if (numargs)
             *numargs=2;
