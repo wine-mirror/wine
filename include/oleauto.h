@@ -24,7 +24,7 @@ extern "C" {
  */
 
 BSTR WINAPI SysAllocString(const OLECHAR*);
-BSTR WINAPI SysAllocStringByteLen(char*,int);
+BSTR WINAPI SysAllocStringByteLen(LPCSTR,UINT);
 BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT);
 void WINAPI SysFreeString(BSTR);
 INT  WINAPI SysReAllocString(LPBSTR,const OLECHAR*);

@@ -431,7 +431,7 @@ HRESULT WINAPI OleTranslateColor(
  *             SysAllocStringByteLen     [OLEAUT32.150]
  *
  */
-BSTR WINAPI SysAllocStringByteLen(char *in, int len)
+BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
 {
     DWORD* newBuffer;
     char* stringBuffer;
