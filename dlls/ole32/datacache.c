@@ -275,7 +275,7 @@ static HRESULT WINAPI DataCache_Draw(
 	    HDC              hdcDraw,
 	    LPCRECTL         lprcBounds,
 	    LPCRECTL         lprcWBounds,
-	    IVO_ContCallback pfnContinue,
+	    BOOL  (CALLBACK *pfnContinue)(ULONG_PTR dwContinue),
 	    DWORD            dwContinue);
 static HRESULT WINAPI DataCache_GetColorSet(
             IViewObject2*   iface,
@@ -1567,7 +1567,7 @@ static HRESULT WINAPI DataCache_Draw(
 	    HDC              hdcDraw,
 	    LPCRECTL         lprcBounds,
 	    LPCRECTL         lprcWBounds,
-	    IVO_ContCallback pfnContinue,
+	    BOOL  (CALLBACK *pfnContinue)(ULONG_PTR dwContinue),
 	    DWORD            dwContinue)
 {
   PresentationDataHeader presData;
