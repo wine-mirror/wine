@@ -363,7 +363,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             ctx.SegEs = rmcb->regs_sel;
             ctx.Edi   = rmcb->regs_ofs;
             /* FIXME: I'm pretty sure this isn't right - should push flags first */
-            WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
+            WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&ctx );
             es = ctx.SegEs;
             edi = ctx.Edi;
         }
