@@ -26,6 +26,7 @@ my $module_declarations = {
     "BeginPaint" => ["long",  ["long", "ptr"]],
     "BringWindowToTop" => ["long",  ["long"]],
     "BroadcastSystemMessage" => ["long",  ["long", "ptr", "long", "long", "long"]],
+    "BroadcastSystemMessageA" => ["long",  ["long", "ptr", "long", "long", "long"]],
     "CalcChildScroll" => ["void",  ["long", "long"]],
     "CallMsgFilterA" => ["long",  ["ptr", "long"]],
     "CallMsgFilterW" => ["long",  ["ptr", "long"]],

@@ -34,9 +34,9 @@ my $module_declarations = {
     "RpcStringFreeA" => ["long",  ["ptr"]],
     "UuidCreate" => ["long",  ["ptr"]],
     "UuidCreateSequential" => ["long",  ["ptr"]],
-    "UuidFromStringA" => ["long",  ["ptr", "ptr"]],
-    "UuidFromStringW" => ["long",  ["ptr", "ptr"]],
-    "UuidHash" => ["ptr",  ["ptr", "ptr"]],
+    "UuidFromStringA" => ["long",  ["str", "ptr"]],
+    "UuidFromStringW" => ["long",  ["wstr", "ptr"]],
+    "UuidHash" => ["long",  ["ptr", "ptr"]],
     "UuidToStringA" => ["long",  ["ptr", "ptr"]]
 };
 
