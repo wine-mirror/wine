@@ -136,11 +136,20 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         }
         break;
 
-    case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
-        SendMessageA( hWnd, BM_SETSTATE, TRUE, 0 );
+	if(wndPtr->dwStyle & BS_NOTIFY || 
+		style==BS_RADIOBUTTON ||
+		style==BS_USERBUTTON ||
+		style==BS_OWNERDRAW){
+	    SendMessageA( GetParent(hWnd), WM_COMMAND,
+		    MAKEWPARAM( wndPtr->wIDmenu, BN_DOUBLECLICKED ), hWnd);
+	    break;
+	}
+	/* fall through */
+    case WM_LBUTTONDOWN:
         SetCapture( hWnd );
         SetFocus( hWnd );
+        SendMessageA( hWnd, BM_SETSTATE, TRUE, 0 );
         break;
 
     case WM_LBUTTONUP:
