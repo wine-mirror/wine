@@ -62,7 +62,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     SEGTABLEENTRY *pSegment;
     OFSTRUCT *pFileInfo;
     BYTE *pstr;
-    WORD *pword;
     ET_BUNDLE *bundle = 0;
     ET_ENTRY *entry = 0;
 
@@ -143,14 +142,12 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
       /* Resource table */
 
-    pword = (WORD *)pSegment;
-    pModule->res_table = (int)pword - (int)pModule;
-    *pword++ = 0;
-    *pword++ = 0;
+    pstr = (char *)pSegment;
+    pModule->res_table = (int)pstr - (int)pModule;
+    pstr += output_res16_directory( pstr );
 
       /* Imported names table */
 
-    pstr = (char *)pword;
     pModule->import_table = (int)pstr - (int)pModule;
     *pstr++ = 0;
     *pstr++ = 0;
@@ -243,7 +240,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
       /* Dump the module content */
 
-    dump_bytes( outfile, (char *)pModule, (int)pstr - (int)pModule, "Module" );
+    dump_bytes( outfile, (char *)pModule, (int)pstr - (int)pModule, "Module", 0 );
     return (int)pstr - (int)pModule;
 }
 
@@ -498,7 +495,7 @@ void BuildSpec16File( FILE *outfile )
 {
     ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
-    int code_offset, data_offset, module_size;
+    int code_offset, data_offset, module_size, res_size;
     unsigned char *data;
 
     /* File header */
@@ -699,15 +696,14 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output data segment */
 
-    dump_bytes( outfile, data, data_offset, "Data_Segment" );
+    dump_bytes( outfile, data, data_offset, "Data_Segment", 0 );
 
     /* Build the module */
 
     module_size = BuildModule16( outfile, code_offset, data_offset );
+    res_size = output_res16_data( outfile );
 
     /* Output the DLL descriptor */
-
-    if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
 
     fprintf( outfile, "\nstatic const BUILTIN16_DESCRIPTOR descriptor = \n{\n" );
     fprintf( outfile, "    \"%s\",\n", DLLName );
@@ -716,9 +712,9 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    (BYTE *)&Code_Segment,\n" );
     fprintf( outfile, "    (BYTE *)Data_Segment,\n" );
     fprintf( outfile, "    \"%s\",\n", owner_name );
-    fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
+    fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
     fprintf( outfile, "};\n" );
-    
+
     /* Output the DLL constructor */
 
     fprintf( outfile, "#ifdef __GNUC__\n" );

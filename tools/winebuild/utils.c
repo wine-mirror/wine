@@ -101,17 +101,18 @@ void warning( const char *msg, ... )
 }
 
 /* dump a byte stream into the assembly code */
-void dump_bytes( FILE *outfile, const unsigned char *data, int len, const char *label )
+void dump_bytes( FILE *outfile, const unsigned char *data, int len,
+                 const char *label, int constant )
 {
     int i;
 
-    fprintf( outfile, "\nstatic unsigned char %s[] = \n{", label );
-
+    fprintf( outfile, "\nstatic %sunsigned char %s[%d] = {",
+             constant ? "const " : "", label, len );
     for (i = 0; i < len; i++)
     {
-        if (!(i & 0x0f)) fprintf( outfile, "\n    " );
-        fprintf( outfile, "%d", *data++ );
-        if (i < len - 1) fprintf( outfile, ", " );
+        if (!(i & 7)) fprintf( outfile, "\n  " );
+        fprintf( outfile, "0x%02x", *data++ );
+        if (i < len - 1) fprintf( outfile, "," );
     }
     fprintf( outfile, "\n};\n" );
 }

@@ -63,9 +63,8 @@ static struct res_type *res_types;
 static int nb_types;     /* total number of types */
 static int nb_id_types;  /* number of types that have a numeric id */
 
-static const char *file_base;  /* base of resource file */
-static const char *file_pos;   /* current position in resource file */
-static const char *file_end;   /* end of resource file */
+static const unsigned char *file_pos;   /* current position in resource file */
+static const unsigned char *file_end;   /* end of resource file */
 static const char *file_name;  /* current resource file name */
 
 
@@ -121,8 +120,7 @@ static DWORD get_dword(void)
 /* get a string from the current resource file */
 static void get_string( struct string_id *str )
 {
-    WCHAR *p = (WCHAR *)file_pos;
-    if (*p == 0xffff)
+    if (*(WCHAR *)file_pos == 0xffff)
     {
         get_word();  /* skip the 0xffff */
         str->str = NULL;
@@ -130,9 +128,9 @@ static void get_string( struct string_id *str )
     }
     else
     {
-        str->str = xmalloc( (strlenW(p) + 1) * sizeof(WCHAR) );
-        str->id = 0;
-        p = str->str;
+        WCHAR *p = xmalloc( (strlenW((WCHAR*)file_pos) + 1) * sizeof(WCHAR) );
+        str->str = p;
+        str->id  = 0;
         while ((*p++ = get_word()));
     }
 }
@@ -197,9 +195,8 @@ void load_res32_file( const char *name )
     }
 
     file_name = name;
-    file_base = base;
-    file_pos  = file_base;
-    file_end  = file_base + st.st_size;
+    file_pos  = base;
+    file_end  = file_pos + st.st_size;
     check_header();
     while (file_pos < file_end) load_next_resource();
 }

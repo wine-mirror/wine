@@ -22,11 +22,10 @@ C_SRCS = \
 	thunk.c \
 	user_main.c
 
-RC16_SRCS = \
-	resources/display.rc16 \
-	resources/mouse.rc16
-
-RC_SRCS = resources/user32.rc
+RC_SRCS = \
+	resources/display.rc \
+	resources/mouse.rc \
+	resources/user32.rc
 
 GLUE = thunk.c
 
@@ -45,5 +44,13 @@ EXTRASUBDIRS = \
 
 $(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
+
+# Special rules for 16-bit resource files
+
+resources/display.res: resources/display.rc
+	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r resources/display.rc
+
+resources/mouse.res: resources/mouse.rc
+	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r resources/mouse.rc
 
 ### Dependencies:

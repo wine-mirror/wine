@@ -43,7 +43,6 @@ int debugging = 1;
 char DLLName[80];
 char DLLFileName[80];
 char DLLInitFunc[80];
-char rsrc_name[80];
 char owner_name[80];
 
 const char *input_file_name;

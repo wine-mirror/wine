@@ -79,7 +79,7 @@ CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.glue.c y.tab.c y.tab.h lex.yy.c core
 
 OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
-       $(ASM_SRCS:.S=.o) $(RC16_SRCS:.rc16=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
+       $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 LINTS = $(C_SRCS:.c=.ln)
 
@@ -154,7 +154,7 @@ DLLS = \
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .rc16 .res .spec .spec.c .spec.o .glue.c
+.SUFFIXES: .mc .rc .res .spec .spec.c .spec.o .glue.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -170,9 +170,6 @@ DLLS = \
 
 .mc.rc:
 	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WMC) -i -H /dev/null -o $@ $<
-
-.rc16.s:
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -w16 -m -c -p `basename $*` -s $<
 
 .rc.res:
 	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
@@ -253,8 +250,8 @@ winapi_check::
 $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
-depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(RC16_SRCS) $(EXTRA_SRCS) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC16_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
+depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
 
 # Rules for cleaning
 
@@ -265,7 +262,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC16_SRCS:.rc16=.s) $(MC_SRCS:.mc=.rc) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.rc) $(PROGRAMS)
 
 # Rules for installing
 
@@ -281,7 +278,7 @@ $(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
 
 $(GLUE:.c=.glue.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
 
-$(RC_SRCS:.rc=.res) $(RC16_SRCS:.rc16=.s): $(WRC)
+$(RC_SRCS:.rc=.res): $(WRC)
 
 $(MC_SRCS:.mc=.rc): $(WMC)
 

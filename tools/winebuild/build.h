@@ -139,12 +139,16 @@ extern char *strupper(char *s);
 extern void fatal_error( const char *msg, ... );
 extern void fatal_perror( const char *msg, ... );
 extern void warning( const char *msg, ... );
-extern void dump_bytes( FILE *outfile, const unsigned char *data, int len, const char *label );
+extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
+                        const char *label, int constant );
 extern void add_import_dll( const char *name );
 extern void resolve_imports( FILE *outfile );
 extern int output_imports( FILE *outfile );
 extern void load_res32_file( const char *name );
 extern int output_resources( FILE *outfile );
+extern void load_res16_file( const char *name );
+extern int output_res16_data( FILE *outfile );
+extern int output_res16_directory( unsigned char *buffer );
 
 extern void BuildGlue( FILE *outfile, FILE *infile );
 extern void BuildRelays( FILE *outfile );
@@ -169,7 +173,6 @@ extern unsigned short data_selector;
 extern char DLLName[80];
 extern char DLLFileName[80];
 extern char DLLInitFunc[80];
-extern char rsrc_name[80];
 extern char owner_name[80];
 extern const char *input_file_name;
 extern const char *output_file_name;

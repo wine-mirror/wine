@@ -23,14 +23,6 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 
-typedef struct
-{
-    LPVOID  res_start;          /* address of resource data */
-    DWORD   nr_res;
-    DWORD   res_size;           /* size of resource data */
-} BUILTIN16_RESOURCE;
-
-
 /* Table of all built-in DLLs */
 
 #define MAX_DLLS 50
@@ -47,54 +39,20 @@ static int nb_dlls;
 static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 {
     NE_MODULE *pModule;
-    int minsize, res_off;
+    int minsize;
     SEGTABLEENTRY *pSegTable;
     HMODULE16 hModule;
-    const BUILTIN16_RESOURCE *rsrc = descr->rsrc;
 
-    if (!rsrc)
-    {
-        hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
-                                      descr->module_size, 0,
-                                      FALSE, FALSE, FALSE );
-        if (!hModule) return 0;
-        FarSetOwner16( hModule, hModule );
+    hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
+                                  descr->module_size, 0,
+                                  FALSE, FALSE, FALSE );
+    if (!hModule) return 0;
+    FarSetOwner16( hModule, hModule );
 
-        pModule = (NE_MODULE *)GlobalLock16( hModule );
-    }
-    else
-    {
-        ET_BUNDLE *bundle;
-
-        hModule = GLOBAL_Alloc( GMEM_MOVEABLE, 
-                                descr->module_size + rsrc->res_size, 
-                                0, FALSE, FALSE, FALSE );
-        if (!hModule) return 0;
-        FarSetOwner16( hModule, hModule );
-
-        pModule = (NE_MODULE *)GlobalLock16( hModule );
-        res_off = ((NE_MODULE *)descr->module_start)->res_table;
-
-        memcpy( (LPBYTE)pModule, descr->module_start, res_off );
-        memcpy( (LPBYTE)pModule + res_off, rsrc->res_start, rsrc->res_size );
-        memcpy( (LPBYTE)pModule + res_off + rsrc->res_size, 
-                (LPBYTE)descr->module_start + res_off, descr->module_size - res_off );
-
-        /* Have to fix up various pModule-based near pointers.  Ugh! */
-        pModule->name_table   += rsrc->res_size;
-        pModule->modref_table += rsrc->res_size;
-        pModule->import_table += rsrc->res_size;
-        pModule->entry_table  += rsrc->res_size;
-
-        for ( bundle = (ET_BUNDLE *)((LPBYTE)pModule + pModule->entry_table);
-              bundle->next;
-              bundle = (ET_BUNDLE *)((LPBYTE)pModule + bundle->next) )
-            bundle->next += rsrc->res_size;
-
-        /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
-        pModule->hRsrcMap = rsrc->res_start;
-    }
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;
+    /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
+    pModule->hRsrcMap = (void *)descr->rsrc;
 
     TRACE( "Built-in %s: hmodule=%04x\n", descr->name, hModule );
 
@@ -120,8 +78,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
         LocalInit16( GlobalHandleToSel16(pSegTable->hSeg),
 		pSegTable->minsize, minsize );
 
-	if (rsrc)
-		NE_InitResourceHandler(hModule);
+    if (descr->rsrc) NE_InitResourceHandler(hModule);
 
     NE_RegisterModule( pModule );
     return hModule;
