@@ -5309,10 +5309,18 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem,
     }
     else if (uView == LVS_REPORT)
     {
+      SCROLLINFO scrollInfo;
       bResult = TRUE;
       lpptPosition->x = REPORT_MARGINX;
       lpptPosition->y = ((nItem - ListView_GetTopIndex(hwnd)) * 
                          infoPtr->nItemHeight) + infoPtr->rcList.top;
+
+	  /* Adjust position by scrollbar offset */
+	  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+	  scrollInfo.cbSize = sizeof(SCROLLINFO);
+	  scrollInfo.fMask = SIF_POS;
+	  GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+	  lpptPosition->x -= scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
     }
     else
     {
@@ -5359,8 +5367,6 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
   INT nIndent;
   TEXTMETRICA tm;
   LVITEMA lvItem;
-  INT scrollOffset;
-  SCROLLINFO scrollInfo;
 
   TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", hwnd, nItem, lprc);
 
@@ -5729,16 +5735,6 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         }
         break;
       }
-	  /* Adjust rectangle by scrollbar offset*/
-	  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
-	  scrollInfo.cbSize = sizeof(SCROLLINFO);
-	  scrollInfo.fMask = SIF_POS;
-
-	  GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
-
-	  scrollOffset = scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
-	  lprc->left -= scrollOffset;
-	  lprc->right -= scrollOffset;
     }
   }
   return bResult;
