@@ -1273,6 +1273,13 @@ typedef BOOL (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
 #define BN_DISABLE             4
 #define BN_DOUBLECLICKED       5
 
+/* Button states */
+#define BST_UNCHECKED        0x0000
+#define BST_CHECKED          0x0001
+#define BST_INDETERMINATE    0x0002
+#define BST_PUSHED           0x0004
+#define BST_FOCUS            0x0008      
+
 /* Static Control Styles */
 #define SS_LEFT             0x00000000L
 #define SS_CENTER           0x00000001L
