@@ -34,7 +34,7 @@ HINSTANCE OLE32_hInstance = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:

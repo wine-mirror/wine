@@ -101,44 +101,51 @@ static void _create_istream16(LPSTREAM16 *str);
  * Reading OLE compound storage
  */
 static BOOL
-STORAGE_get_big_block(HFILE hf,int n,BYTE *block) {
-	assert(n>=-1);
-	if (-1==_llseek(hf,(n+1)*BIGSIZE,SEEK_SET)) {
-		WARN(" seek failed (%ld)\n",GetLastError());
-		return FALSE;
-	}
-	assert((n+1)*BIGSIZE==_llseek(hf,0,SEEK_CUR));
-	if (BIGSIZE!=_lread(hf,block,BIGSIZE)) {
-		WARN("(block size %d): read didn't read (%ld)\n",n,GetLastError());
-		assert(0);
-		return FALSE;
-	}
-	return TRUE;
+STORAGE_get_big_block(HANDLE hf,int n,BYTE *block)
+{
+    DWORD result;
+
+    assert(n>=-1);
+    if (!SetFilePointer( hf, (n+1)*BIGSIZE, NULL, SEEK_SET ))
+    {
+        WARN(" seek failed (%ld)\n",GetLastError());
+        return FALSE;
+    }
+    if (!ReadFile( hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE)
+    {
+        WARN("(block size %d): read didn't read (%ld)\n",n,GetLastError());
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
  * STORAGE_put_big_block [INTERNAL]
  */
 static BOOL
-STORAGE_put_big_block(HFILE hf,int n,BYTE *block) {
-	assert(n>=-1);
-	if (-1==_llseek(hf,(n+1)*BIGSIZE,SEEK_SET)) {
-		WARN(" seek failed (%ld)\n",GetLastError());
-		return FALSE;
-	}
-	assert((n+1)*BIGSIZE==_llseek(hf,0,SEEK_CUR));
-	if (BIGSIZE!=_lwrite(hf,block,BIGSIZE)) {
-		WARN(" write failed (%ld)\n",GetLastError());
-		return FALSE;
-	}
-	return TRUE;
+STORAGE_put_big_block(HANDLE hf,int n,BYTE *block)
+{
+    DWORD result;
+
+    assert(n>=-1);
+    if (!SetFilePointer( hf, (n+1)*BIGSIZE, NULL, SEEK_SET ))
+    {
+        WARN(" seek failed (%ld)\n",GetLastError());
+        return FALSE;
+    }
+    if (!WriteFile( hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE)
+    {
+        WARN(" write failed (%ld)\n",GetLastError());
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
  * STORAGE_get_next_big_blocknr [INTERNAL]
  */
 static int
-STORAGE_get_next_big_blocknr(HFILE hf,int blocknr) {
+STORAGE_get_next_big_blocknr(HANDLE hf,int blocknr) {
 	INT	bbs[BIGSIZE/sizeof(INT)];
 	struct	storage_header	sth;
 
@@ -157,7 +164,7 @@ STORAGE_get_next_big_blocknr(HFILE hf,int blocknr) {
  * STORAGE_get_nth_next_big_blocknr [INTERNAL]
  */
 static int
-STORAGE_get_nth_next_big_blocknr(HFILE hf,int blocknr,int nr) {
+STORAGE_get_nth_next_big_blocknr(HANDLE hf,int blocknr,int nr) {
 	INT	bbs[BIGSIZE/sizeof(INT)];
 	int	lastblock = -1;
 	struct storage_header sth;
@@ -183,7 +190,7 @@ STORAGE_get_nth_next_big_blocknr(HFILE hf,int blocknr,int nr) {
  *		STORAGE_get_root_pps_entry	[Internal]
  */
 static BOOL
-STORAGE_get_root_pps_entry(HFILE hf,struct storage_pps_entry *pstde) {
+STORAGE_get_root_pps_entry(HANDLE hf,struct storage_pps_entry *pstde) {
 	int	blocknr,i;
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry	*stde=(struct storage_pps_entry*)block;
@@ -210,7 +217,7 @@ STORAGE_get_root_pps_entry(HFILE hf,struct storage_pps_entry *pstde) {
  * STORAGE_get_small_block [INTERNAL]
  */
 static BOOL
-STORAGE_get_small_block(HFILE hf,int blocknr,BYTE *sblock) {
+STORAGE_get_small_block(HANDLE hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
 	int				bigblocknr;
 	struct storage_pps_entry	root;
@@ -229,7 +236,7 @@ STORAGE_get_small_block(HFILE hf,int blocknr,BYTE *sblock) {
  * STORAGE_put_small_block [INTERNAL]
  */
 static BOOL
-STORAGE_put_small_block(HFILE hf,int blocknr,BYTE *sblock) {
+STORAGE_put_small_block(HANDLE hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
 	int				bigblocknr;
 	struct storage_pps_entry	root;
@@ -250,7 +257,7 @@ STORAGE_put_small_block(HFILE hf,int blocknr,BYTE *sblock) {
  * STORAGE_get_next_small_blocknr [INTERNAL]
  */
 static int
-STORAGE_get_next_small_blocknr(HFILE hf,int blocknr) {
+STORAGE_get_next_small_blocknr(HANDLE hf,int blocknr) {
 	BYTE				block[BIGSIZE];
 	LPINT				sbd = (LPINT)block;
 	int				bigblocknr;
@@ -269,7 +276,7 @@ STORAGE_get_next_small_blocknr(HFILE hf,int blocknr) {
  * STORAGE_get_nth_next_small_blocknr [INTERNAL]
  */
 static int
-STORAGE_get_nth_next_small_blocknr(HFILE hf,int blocknr,int nr) {
+STORAGE_get_nth_next_small_blocknr(HANDLE hf,int blocknr,int nr) {
 	int	lastblocknr;
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
@@ -298,7 +305,7 @@ STORAGE_get_nth_next_small_blocknr(HFILE hf,int blocknr,int nr) {
  * STORAGE_get_pps_entry [INTERNAL]
  */
 static int
-STORAGE_get_pps_entry(HFILE hf,int n,struct storage_pps_entry *pstde) {
+STORAGE_get_pps_entry(HANDLE hf,int n,struct storage_pps_entry *pstde) {
 	int	blocknr;
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)(((LPBYTE)block)+128*(n&3));
@@ -318,7 +325,7 @@ STORAGE_get_pps_entry(HFILE hf,int n,struct storage_pps_entry *pstde) {
  *		STORAGE_put_pps_entry	[Internal]
  */
 static int
-STORAGE_put_pps_entry(HFILE hf,int n,struct storage_pps_entry *pstde) {
+STORAGE_put_pps_entry(HANDLE hf,int n,struct storage_pps_entry *pstde) {
 	int	blocknr;
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)(((LPBYTE)block)+128*(n&3));
@@ -339,7 +346,7 @@ STORAGE_put_pps_entry(HFILE hf,int n,struct storage_pps_entry *pstde) {
  *		STORAGE_look_for_named_pps	[Internal]
  */
 static int
-STORAGE_look_for_named_pps(HFILE hf,int n,LPOLESTR name) {
+STORAGE_look_for_named_pps(HANDLE hf,int n,LPOLESTR name) {
 	struct storage_pps_entry	stde;
 	int				ret;
 
@@ -400,13 +407,14 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
  * STORAGE_init_storage [INTERNAL]
  */
 static BOOL
-STORAGE_init_storage(HFILE hf) {
+STORAGE_init_storage(HANDLE hf) {
 	BYTE	block[BIGSIZE];
 	LPDWORD	bbs;
 	struct storage_header *sth;
 	struct storage_pps_entry *stde;
+        DWORD result;
 
-	assert(-1!=_llseek(hf,0,SEEK_SET));
+        SetFilePointer( hf, 0, NULL, SEEK_SET );
 	/* block -1 is the storage header */
 	sth = (struct storage_header*)block;
 	memcpy(sth->magic,STORAGE_magic,8);
@@ -418,13 +426,13 @@ STORAGE_init_storage(HFILE hf) {
 	sth->sbd_startblock	= 0xffffffff;
 	memset(sth->bbd_list,0xff,sizeof(sth->bbd_list));
 	sth->bbd_list[0]	= 0;
-	assert(BIGSIZE==_lwrite(hf,block,BIGSIZE));
+        if (!WriteFile( hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE) return FALSE;
 	/* block 0 is the big block directory */
 	bbs=(LPDWORD)block;
 	memset(block,0xff,sizeof(block)); /* mark all blocks as free */
 	bbs[0]=STORAGE_CHAINENTRY_ENDOFCHAIN; /* for this block */
 	bbs[1]=STORAGE_CHAINENTRY_ENDOFCHAIN; /* for directory entry */
-	assert(BIGSIZE==_lwrite(hf,block,BIGSIZE));
+        if (!WriteFile( hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE) return FALSE;
 	/* block 1 is the root directory entry */
 	memset(block,0x00,sizeof(block));
 	stde = (struct storage_pps_entry*)block;
@@ -437,15 +445,14 @@ STORAGE_init_storage(HFILE hf) {
 	stde->pps_prev		= -1;
 	stde->pps_sb		= 0xffffffff;
 	stde->pps_size		= 0;
-	assert(BIGSIZE==_lwrite(hf,block,BIGSIZE));
-	return TRUE;
+        return (WriteFile( hf, block, BIGSIZE, &result, NULL ) && result == BIGSIZE);
 }
 
 /******************************************************************************
  *		STORAGE_set_big_chain	[Internal]
  */
 static BOOL
-STORAGE_set_big_chain(HFILE hf,int blocknr,INT type) {
+STORAGE_set_big_chain(HANDLE hf,int blocknr,INT type) {
 	BYTE	block[BIGSIZE];
 	LPINT	bbd = (LPINT)block;
 	int	nextblocknr,bigblocknr;
@@ -473,7 +480,7 @@ STORAGE_set_big_chain(HFILE hf,int blocknr,INT type) {
  * STORAGE_set_small_chain [Internal]
  */
 static BOOL
-STORAGE_set_small_chain(HFILE hf,int blocknr,INT type) {
+STORAGE_set_small_chain(HANDLE hf,int blocknr,INT type) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	int	lastblocknr,nextsmallblocknr,bigblocknr;
@@ -506,7 +513,7 @@ STORAGE_set_small_chain(HFILE hf,int blocknr,INT type) {
  *		STORAGE_get_free_big_blocknr	[Internal]
  */
 static int
-STORAGE_get_free_big_blocknr(HFILE hf) {
+STORAGE_get_free_big_blocknr(HANDLE hf) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	int	lastbigblocknr,i,curblock,bigblocknr;
@@ -565,7 +572,7 @@ STORAGE_get_free_big_blocknr(HFILE hf) {
  *		STORAGE_get_free_small_blocknr	[Internal]
  */
 static int
-STORAGE_get_free_small_blocknr(HFILE hf) {
+STORAGE_get_free_small_blocknr(HANDLE hf) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	int	lastbigblocknr,newblocknr,i,curblock,bigblocknr;
@@ -647,7 +654,7 @@ STORAGE_get_free_small_blocknr(HFILE hf) {
  *		STORAGE_get_free_pps_entry	[Internal]
  */
 static int
-STORAGE_get_free_pps_entry(HFILE hf) {
+STORAGE_get_free_pps_entry(HANDLE hf) {
 	int	blocknr,i,curblock,lastblocknr;
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)block;
@@ -693,7 +700,7 @@ typedef struct
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
         struct storage_pps_entry        stde;
         int                             ppsent;
-        HFILE                         hf;
+        HANDLE                         hf;
         ULARGE_INTEGER                  offset;
 } IStream16Impl;
 
@@ -855,7 +862,7 @@ HRESULT WINAPI IStream16_fnWrite(
 	BYTE	block[BIGSIZE];
 	ULONG	*byteswritten=pcbWrite,xxwritten;
 	int	oldsize,newsize,i,curoffset=0,lastblocknr,blocknr,cc;
-	HFILE	hf = This->hf;
+	HANDLE	hf = This->hf;
 
 	if (!pcbWrite) byteswritten=&xxwritten;
 	*byteswritten = 0;
@@ -1184,7 +1191,7 @@ typedef struct
         /* IStream32 fields */
         struct storage_pps_entry        stde;
         int                             ppsent;
-        HFILE                         hf;
+        HANDLE                         hf;
         ULARGE_INTEGER                  offset;
 } IStream32Impl;
 
@@ -1239,7 +1246,7 @@ typedef struct
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
         struct storage_pps_entry        stde;
         int                             ppsent;
-        HFILE                         hf;
+        HANDLE                         hf;
 } IStorage16Impl;
 
 /******************************************************************************
@@ -1344,7 +1351,7 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
 	struct storage_header sth;
-	HFILE		hf=This->hf;
+	HANDLE		hf=This->hf;
 
 	READ_HEADER;
 
@@ -1593,7 +1600,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 HRESULT WINAPI StgCreateDocFile16(
 	LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved,IStorage16 **ppstgOpen
 ) {
-	HFILE		hf;
+	HANDLE		hf;
 	int		i,ret;
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
@@ -1653,7 +1660,7 @@ HRESULT WINAPI StgOpenStorage16(
 	LPCOLESTR16 pwcsName,IStorage16 *pstgPriority,DWORD grfMode,
 	SNB16 snbExclude,DWORD reserved, IStorage16 **ppstgOpen
 ) {
-	HFILE		hf;
+	HANDLE		hf;
 	int		ret,i;
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;

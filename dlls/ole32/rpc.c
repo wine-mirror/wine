@@ -90,11 +90,11 @@ static HRESULT WINAPI
 _xread(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!ReadFile(hf,ptr,size,&res,NULL)) {
-	FIXME("Failed to read from %x, le is %lx\n",hf,GetLastError());
+	FIXME("Failed to read from %p, le is %lx\n",hf,GetLastError());
 	return E_FAIL;
     }
     if (res!=size) {
-	FIXME("Read only %ld of %ld bytes from %x.\n",res,size,hf);
+	FIXME("Read only %ld of %ld bytes from %p.\n",res,size,hf);
 	return E_FAIL;
     }
     return S_OK;
@@ -126,11 +126,11 @@ static HRESULT WINAPI
 _xwrite(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!WriteFile(hf,ptr,size,&res,NULL)) {
-	FIXME("Failed to write to %x, le is %lx\n",hf,GetLastError());
+	FIXME("Failed to write to %p, le is %lx\n",hf,GetLastError());
 	return E_FAIL;
     }
     if (res!=size) {
-	FIXME("Wrote only %ld of %ld bytes to %x.\n",res,size,hf);
+	FIXME("Wrote only %ld of %ld bytes to %p.\n",res,size,hf);
 	return E_FAIL;
     }
     return S_OK;
@@ -441,7 +441,7 @@ PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf) {
 	      NULL,
 	      OPEN_EXISTING,
 	      0,
-	      -1
+	      0
       );
       if (hPipe == INVALID_HANDLE_VALUE) {
 	  FIXME("Could not open named pipe %s, le is %lx\n",pipefn,GetLastError());
@@ -518,7 +518,7 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
 	      NULL,
 	      OPEN_EXISTING,
 	      0,
-	      -1
+	      0
       );
       if (hPipe == INVALID_HANDLE_VALUE) {
 	  if (tries == 1) {

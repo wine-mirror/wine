@@ -51,6 +51,7 @@ WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 #define HICON_16(h32)		(LOWORD(h32))
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
+#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the
@@ -335,7 +336,7 @@ HRESULT WINAPI RegisterDragDrop(
 {
   DropTargetNode* dropTargetInfo;
 
-  TRACE("(0x%x,%p)\n", hwnd, pDropTarget);
+  TRACE("(%p,%p)\n", hwnd, pDropTarget);
 
   /*
    * First, check if the window is already registered.
@@ -387,7 +388,7 @@ HRESULT WINAPI RevokeDragDrop(
 {
   DropTargetNode* dropTargetInfo;
 
-  TRACE("(0x%x)\n", hwnd);
+  TRACE("(%p)\n", hwnd);
 
   /*
    * First, check if the window is already registered.
@@ -1370,7 +1371,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
 
   if ( lpFrame || lpActiveObject )
   {
-     FIXME("(%x, %x, %x, %p, %p), Context sensitive help filtering not implemented!\n",
+     FIXME("(%x, %p, %p, %p, %p), Context sensitive help filtering not implemented!\n",
 	(unsigned int)hOleMenu,
 	hwndFrame,
 	hwndActiveObject,
@@ -1437,7 +1438,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
     if(!lpMsg) return FALSE;
     if (!hAccel || !(lpAccelTbl = (LPACCEL16)LockResource16(HACCEL_16(hAccel))))
     {
-	WARN_(accel)("invalid accel handle=%04x\n", hAccel);
+	WARN_(accel)("invalid accel handle=%p\n", hAccel);
 	return FALSE;
     }
     if((lpMsg->message != WM_KEYDOWN &&
@@ -1446,8 +1447,8 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
 	lpMsg->message != WM_SYSKEYUP &&
 	lpMsg->message != WM_CHAR)) return FALSE;
 
-    TRACE_(accel)("hAccel=%04x, cAccelEntries=%d,"
-		"msg->hwnd=%04x, msg->message=%04x, wParam=%08x, lParam=%08lx\n",
+    TRACE_(accel)("hAccel=%p, cAccelEntries=%d,"
+		"msg->hwnd=%p, msg->message=%04x, wParam=%08x, lParam=%08lx\n",
 		hAccel, cAccelEntries,
 		lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
     for(i = 0; i < cAccelEntries; i++)
@@ -2243,10 +2244,10 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 	    HINSTANCE16 hInstance = LoadLibrary16(lpszSourceFile);
 
 	    /* load the icon at index from lpszSourceFile */
-	    hIcon = HICON_16(LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex));
+	    hIcon = HICON_16(LoadIconA(HINSTANCE_32(hInstance), (LPCSTR)(DWORD)iIconIndex));
 	    FreeLibrary16(hInstance);
 	} else
-	    return (HGLOBAL)NULL;
+	    return 0;
     }
 
     hdc = CreateMetaFileA(NULL);

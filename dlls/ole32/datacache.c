@@ -1580,7 +1580,7 @@ static HRESULT WINAPI DataCache_Draw(
 
   _ICOM_THIS_From_IViewObject2(DataCache, iface);
 
-  TRACE("(%p, %lx, %ld, %p, %x, %x, %p, %p, %p, %lx)\n",
+  TRACE("(%p, %lx, %ld, %p, %p, %p, %p, %p, %p, %lx)\n",
 	iface,
 	dwDrawAspect,
 	lindex,
@@ -2035,5 +2035,3 @@ static HRESULT WINAPI DataCache_OnStop(
   FIXME("stub\n");
   return E_NOTIMPL;
 }
-
-

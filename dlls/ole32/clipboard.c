@@ -110,9 +110,9 @@ struct OLEClipbrd
   UINT                       cfDataObj;
 
   /*
-   * The handle to our ourself
+   * The handle to ourself
    */
-  UINT                       hSelf;
+  HGLOBAL                    hSelf;
 
   /*
    * Reference count of this object
@@ -1779,4 +1779,3 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
 
   return (*ppenum) ? S_OK : E_OUTOFMEMORY;
 }
-

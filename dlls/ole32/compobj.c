@@ -220,7 +220,7 @@ static void COMPOBJ_DllList_FreeUnused(int Timeout)
 	if ( (DllCanUnloadNow != NULL) && (DllCanUnloadNow() == S_OK) ) {
 	    next = curr->next;
 
-	    TRACE("freeing 0x%08x\n", curr->hLibrary);
+	    TRACE("freeing %p\n", curr->hLibrary);
 	    FreeLibrary(curr->hLibrary);
 
 	    HeapFree(GetProcessHeap(), 0, curr);
