@@ -503,7 +503,9 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 						        case FOURCC_RIFF: {
 								IDirectMusicObject* pObject = NULL;
 								DMUS_OBJECTDESC desc;
-								
+
+								ZeroMemory ((LPVOID)&desc, sizeof(DMUS_OBJECTDESC));
+								desc.dwSize = sizeof(DMUS_OBJECTDESC);
 								desc.dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS;
 								desc.guidClass = CLSID_DirectMusicContainer;
 								desc.pStream = NULL;
