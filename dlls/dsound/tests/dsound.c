@@ -26,8 +26,6 @@
 #include <stdlib.h>
 
 #include "wine/test.h"
-#include "objbase.h"
-#include "initguid.h"
 #include "dsound.h"
 
 #ifndef DSBCAPS_CTRLDEFAULT
