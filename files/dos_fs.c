@@ -1779,3 +1779,9 @@ BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 #endif
     return TRUE; 
 }
+
+BOOL32 WINAPI DefineDosDevice32A(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
+	FIXME(dosfs,"(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}

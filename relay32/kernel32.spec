@@ -196,7 +196,7 @@ type	win32
 # FIXME
 #181 register DebugBreak() DebugBreak
 181 stub DebugBreak
-182 stub DefineDosDeviceA
+182 stdcall DefineDosDeviceA(long str str) DefineDosDevice32A
 183 stub DefineDosDeviceW
 184 stdcall DeleteAtom(long) DeleteAtom32
 185 stdcall DeleteCriticalSection(ptr) DeleteCriticalSection
