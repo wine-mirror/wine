@@ -122,6 +122,8 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       (dwRenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)) {
     ERR(ddraw, "Unhandled stipple !\n");
   } else {
+    ENTER_GL();
+    
     /* All others state variables */
     switch (dwRenderStateType) {
 
@@ -338,6 +340,8 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       ERR(ddraw, "Unhandled Render State\n");
       break;
     }
+
+    LEAVE_GL();
   }
 }
 

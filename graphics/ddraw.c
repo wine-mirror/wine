@@ -554,9 +554,9 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
 		FIXME(ddraw,"	lprect: %dx%d-%dx%d\n",
 			lprect->top,lprect->left,lprect->bottom,lprect->right
 		);
-		lpddsd->y.lpSurface = (char *) This->s.surface_desc.y.lpSurface +
+		lpddsd->y.lpSurface = (LPVOID) ((char *) This->s.surface_desc.y.lpSurface +
 			(lprect->top*This->s.surface_desc.lPitch) +
-			(lprect->left*(This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8));
+						(lprect->left*(This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8)));
 	} else {
 		assert(This->s.surface_desc.y.lpSurface);
 	}
@@ -666,6 +666,20 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
+
+#ifdef HAVE_MESAGL
+	if ((This->s.d3d_device != NULL) ||
+	    ((This->s.backbuffer != NULL) && (This->s.backbuffer->s.d3d_device != NULL))) {
+	  TRACE(ddraw," - OpenGL flip\n");
+	  ENTER_GL();
+	  glXSwapBuffers(display,
+			 This->s.ddraw->d.drawable);
+	  LEAVE_GL();
+
+	  return DD_OK;
+	}
+#endif /* defined(HAVE_MESAGL) */
+	
 	if (!This->s.ddraw->d.paintable)
 		return DD_OK;
 
@@ -2933,6 +2947,12 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
             WND *tmpWnd = WIN_FindWndPtr(hwnd);
             This->d.drawable  = X11DRV_WND_GetXWindow(tmpWnd);
             WIN_ReleaseWndPtr(tmpWnd);
+
+	    if( !This->d.drawable ) {
+	      This->d.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
+	      WIN_ReleaseDesktop();
+        }
+	    TRACE(ddraw, "Setting drawable to %ld\n", This->d.drawable);
         }
 
 	return DD_OK;
@@ -3330,14 +3350,16 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
         tmpWnd = WIN_FindWndPtr(This->d.window);
 	This->d.paintable = 1;
         This->d.drawable  = ((X11DRV_WND_DATA *) tmpWnd->pDriverData)->window;
-        /* We don't have a context for this window. Host off the desktop */
+        WIN_ReleaseWndPtr(tmpWnd);
 
+        /* We don't have a context for this window. Host off the desktop */
         if( !This->d.drawable )
         {
            This->d.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
             WIN_ReleaseDesktop();
         }
-        WIN_ReleaseWndPtr(tmpWnd);
+	TRACE(ddraw, "Setting drawable to %ld\n", This->d.drawable);
+
 	return DD_OK;
 }
 

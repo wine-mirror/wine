@@ -148,6 +148,9 @@ struct _common_directdrawsurface
     /* Callback for loaded textures */
     IDirect3DTexture2Impl*      texture;
     HRESULT WINAPI            (*SetColorKey_cb)(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
+
+    /* Storage for attached device (void * as it can be either a Device or a Device2) */
+    void                       *d3d_device;
 };
 
 struct _dga_directdrawsurface

@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 /* Define this variable if you have an unpatched Mesa 3.0 (patches are available
    on Mesa's home page) or version 3.1b.
 
-   Version 3.2b should correct this bug */
+   Version 3.1b2 should correct this bug */
 #undef HAVE_BUGGY_MESAGL
 
 #ifdef HAVE_MESAGL
@@ -50,19 +50,36 @@ static ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;
 static void set_context(IDirect3DDevice2Impl* This) {
   OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
 
+#ifdef USE_OSMESA
   OSMesaMakeCurrent(odev->ctx, odev->buffer,
 		    GL_UNSIGNED_BYTE,
 		    This->surface->s.surface_desc.dwWidth,
 		    This->surface->s.surface_desc.dwHeight);
+#else
+  if (glXMakeCurrent(display,
+		     odev->common.surface->s.ddraw->d.drawable,
+		     odev->ctx) == False) {
+    ERR(ddraw, "Error in setting current context (context %p drawable %d)!\n",
+	odev->ctx, odev->common.surface->s.ddraw->d.drawable);
+}
+#endif
 }
 
 static void set_context_dx3(IDirect3DDeviceImpl* This) {
   OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This;
 
+#ifdef USE_OSMESA
   OSMesaMakeCurrent(odev->ctx, odev->buffer,
 		    GL_UNSIGNED_BYTE,
 		    This->surface->s.surface_desc.dwWidth,
 		    This->surface->s.surface_desc.dwHeight);
+#else
+  if (glXMakeCurrent(display,
+		     odev->common.surface->s.ddraw->d.drawable,
+		     odev->ctx) == False) {
+    ERR(ddraw, "Error in setting current context !\n");
+  }
+#endif
 }
 
 static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
@@ -150,6 +167,10 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
       0.0, 0.0, 1.0, 0.0,
       0.0, 0.0, 0.0, 1.0
     };
+#ifndef USE_OSMESA
+    int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
+    XVisualInfo *xvis;
+#endif
     
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OpenGL_IDirect3DDevice2));
     odev = (OpenGL_IDirect3DDevice2 *) (*device);
@@ -163,12 +184,41 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
     
     (*device)->set_context = set_context;
     
-    TRACE(ddraw, "OpenGL device created \n");
+    TRACE(ddraw, "Creating OpenGL device for surface %p\n", surface);
     
     /* Create the OpenGL context */
+#ifdef USE_OSMESA
     odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
     odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
+#else
+    /* First get the correct visual */
+    TRACE(ddraw, "Backbuffer : %d\n", surface->s.backbuffer == NULL);
+    /* if (surface->s.backbuffer == NULL)
+       attributeList[3] = None; */
+    ENTER_GL();
+    xvis = glXChooseVisual(display,
+			   DefaultScreen(display),
+			   attributeList);
+    if (xvis == NULL)
+      ERR(ddraw, "No visual found !\n");
+    else
+      TRACE(ddraw, "Visual found\n");
+    /* Create the context */
+    odev->ctx = glXCreateContext(display,
+				 xvis,
+				 NULL,
+				 GL_TRUE);
+    if (odev->ctx == NULL)
+      ERR(ddraw, "Error in context creation !\n");
+    else
+      TRACE(ddraw, "Context created (%p)\n", odev->ctx);
+    
+    /* Now override the surface's Flip method (if in double buffering) */
+    surface->s.d3d_device = (void *) odev;
+    if (surface->s.backbuffer != NULL)
+      surface->s.backbuffer->s.d3d_device = (void *) odev;
+#endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
     odev->rs.mag = GL_NEAREST;
@@ -180,9 +230,14 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
     memcpy(odev->proj_mat , id_mat, 16 * sizeof(float));
 
     /* Initialisation */
+    TRACE(ddraw, "Setting current context\n");
     (*device)->set_context(*device);
+    TRACE(ddraw, "Current context set\n");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
+    LEAVE_GL();
+    
+    TRACE(ddraw, "OpenGL device created \n");
     
     return 1;
   }
@@ -226,6 +281,17 @@ static ULONG WINAPI IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
   FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
+    OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
+
+#ifdef USE_OSMESA
+    OSMesaDestroyContext(odev->ctx);
+#else
+    ENTER_GL();
+    glXDestroyContext(display,
+		      odev->ctx);
+    LEAVE_GL();
+#endif
+    
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
@@ -473,15 +539,18 @@ static HRESULT WINAPI IDirect3DDevice2Impl_BeginScene(LPDIRECT3DDEVICE2 iface)
 static HRESULT WINAPI IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface)
 {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
+#ifdef USE_OSMESA
   OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
   LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
   DDSURFACEDESC sdesc;
   int x,y;
   unsigned char *src;
   unsigned short *dest;
+#endif
   
   FIXME(ddraw, "(%p)->(): stub\n", This);
 
+#ifdef USE_OSMESA
   /* Here we copy back the OpenGL scene to the the DDraw surface */
   /* First, lock the surface */
   IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
@@ -512,6 +581,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface)
 
   /* Unlock the surface */
   IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
+#else
+  /* No need to do anything here... */
+#endif
   
   return DD_OK;
 }
@@ -707,7 +779,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_SetLightState(LPDIRECT3DDEVICE2 iface
     IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) dwLightState;
     
     if (mat != NULL) {
+      ENTER_GL();
       mat->activate(mat);
+      LEAVE_GL();
     } else {
       TRACE(ddraw, "Zoups !!!\n");
     }
@@ -720,7 +794,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_SetLightState(LPDIRECT3DDEVICE2 iface
     light[1] = ((dwLightState >>  8) & 0xFF) / 255.0;
     light[2] = ((dwLightState >>  0) & 0xFF) / 255.0;
     light[3] = 1.0;
+    ENTER_GL();
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
+    LEAVE_GL();
   } break;
     
   case D3DLIGHTSTATE_COLORMODEL:  /* 3 */
@@ -756,6 +832,8 @@ static HRESULT WINAPI IDirect3DDevice2Impl_SetTransform(LPDIRECT3DDEVICE2 iface,
   OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
   
   FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3dts, lpmatrix);
+  
+  ENTER_GL();
   
   /* Using a trial and failure approach, I found that the order of 
      Direct3D transformations that works best is :
@@ -812,6 +890,8 @@ static HRESULT WINAPI IDirect3DDevice2Impl_SetTransform(LPDIRECT3DDEVICE2 iface,
   default:
     break;
   }
+  
+  LEAVE_GL();
   
   return DD_OK;
 }
@@ -1014,7 +1094,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_DrawPrimitive(LPDIRECT3DDEVICE2 iface
   
   TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
+  ENTER_GL();
   DRAW_PRIMITIVE(vertcount, vx_index);
+  LEAVE_GL();
     
   return D3D_OK;
       }
@@ -1036,7 +1118,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE
   
   TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
   
+  ENTER_GL();
   DRAW_PRIMITIVE(indexcount, lpindexes[vx_index]);
+  LEAVE_GL();
   
   return D3D_OK;
 }
@@ -1141,6 +1225,10 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 {
   if (!memcmp(&IID_D3DDEVICE_OpenGL,rguid,sizeof(IID_D3DDEVICE_OpenGL))) {
     OpenGL_IDirect3DDevice *odev;
+#ifndef USE_OSMESA
+    int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
+    XVisualInfo *xvis;
+#endif
        
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OpenGL_IDirect3DDevice));
     odev = (OpenGL_IDirect3DDevice *) (*device);
@@ -1157,9 +1245,35 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     TRACE(ddraw, "OpenGL device created \n");
     
     /* Create the OpenGL context */
+#ifdef USE_OSMESA
     odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
     odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
+#else
+    /* First get the correct visual */
+    TRACE(ddraw, "Backbuffer : %d\n", surface->s.backbuffer == NULL);
+    /* if (surface->s.backbuffer == NULL)
+       attributeList[3] = None; */
+    ENTER_GL();
+    xvis = glXChooseVisual(display,
+			   DefaultScreen(display),
+			   attributeList);
+    if (xvis == NULL)
+      ERR(ddraw, "No visual found !\n");
+    else
+      TRACE(ddraw, "Visual found\n");
+    /* Create the context */
+    odev->ctx = glXCreateContext(display,
+				 xvis,
+				 NULL,
+				 GL_TRUE);
+    TRACE(ddraw, "Context created\n");
+    
+    /* Now override the surface's Flip method (if in double buffering) */
+    surface->s.d3d_device = (void *) odev;
+    if (surface->s.backbuffer != NULL)
+      surface->s.backbuffer->s.d3d_device = (void *) odev;
+#endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
     odev->rs.mag = GL_NEAREST;
@@ -1216,6 +1330,17 @@ static ULONG WINAPI IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
   FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
+    OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This;
+
+#ifdef USE_OSMESA
+    OSMesaDestroyContext(odev->ctx);
+#else
+    ENTER_GL();
+    glXDestroyContext(display,
+		      odev->ctx);
+    LEAVE_GL();
+#endif    
+    
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
@@ -1484,15 +1609,18 @@ static HRESULT WINAPI IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface)
 static HRESULT WINAPI IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
+#ifdef USE_OSMESA
   OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This;
   LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
   DDSURFACEDESC sdesc;
   int x,y;
   unsigned char *src;
   unsigned short *dest;
+#endif
   
   FIXME(ddraw, "(%p)->(): stub\n", This);
 
+#ifdef USE_OSMESA
   /* Here we copy back the OpenGL scene to the the DDraw surface */
   /* First, lock the surface */
   IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
@@ -1524,6 +1652,9 @@ static HRESULT WINAPI IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 
   /* Unlock the surface */
   IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
+#else
+  /* No need to do anything here... */
+#endif
   
   return DD_OK;  
 }

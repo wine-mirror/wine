@@ -10,6 +10,10 @@
 #include "wine_gl.h"
 #include "d3d.h"
 
+#include "x11drv.h"
+
+#undef USE_OSMESA
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
@@ -228,6 +232,13 @@ struct IDirect3DDevice2Impl
 
 #ifdef HAVE_MESAGL
 
+#ifdef USE_OSMESA
+#define LEAVE_GL() ;
+#define ENTER_GL() ;
+#else
+#define LEAVE_GL() LeaveCriticalSection( &X11DRV_CritSection )
+#define ENTER_GL() EnterCriticalSection( &X11DRV_CritSection )
+#endif
 
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\
@@ -281,8 +292,12 @@ typedef struct OpenGL_IDirect3DDevice2 {
   IDirect3DDevice2Impl common;
   
   /* These are the OpenGL-specific variables */
+#ifdef USE_OSMESA
   OSMesaContext ctx;
   unsigned char *buffer;
+#else
+  GLXContext ctx;
+#endif
   
   /* The current render state */
   RenderState rs;
@@ -299,8 +314,12 @@ typedef struct OpenGL_IDirect3DDevice {
   IDirect3DDeviceImpl common;
   
   /* These are the OpenGL-specific variables */
+#ifdef USE_OSMESA
   OSMesaContext ctx;
   unsigned char *buffer;
+#else
+  GLXContext ctx;
+#endif
   
   /* The current render state */
   RenderState rs;

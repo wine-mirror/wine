@@ -4,34 +4,36 @@ Introduction
 This file contains information about Wine's implementation of
 Direct3D. 
 
-The current version requires :
- * Mesa (tested with version 3.1 beta)
- * a display in 16bpp
+The current version has been tested using Mesa. For optimal
+performances, you need at least Mesa 3.1 beta 2.
 
-To minimize the impact on DirectDraw (i.e. to reuse most of the code
-already done for DirectDraw), I decided not to start with an
-implementation based on GLX, but on OSMesa. This way, all the OpenGL
-rendering are done in a 'private' memory buffer, buffer that will
-copied back to the DirectDraw Surface each time a 3D scene
-finishes. It is not optimal for execution speed (on each frame, the
-OpenGL buffer is converted from 32 to 16 bpp and copied onto the
-screen) but is for development (I had almost nothing to change in
-DirectDraw). Moreover, 99 % of the code in the Direct3D implementation
-is 'device independant' (i.e. GLX / OSMesa / whatever), so that
-changing to GLX will have only a minor impact on Direct3D's code.
 
 Where to find Mesa :
 --------------------
 
 The home of Mesa should soon be http://www.mesa3d.org/
-But for now, check http://www.ssec.wisc.edu/~brianp/Mesa.html
 
 For precompiled RPMs, use AltaVista or FTPSearch, but I prefer to 'Use
 the Source' :-)
 
 WARNING : if you experience crashes in D3DTexture2_Load, see file
 d3dtexture.c for a 'cure'. You could also patch your version of Mesa
-or wait for version 3.2b (that should have the bug corrected).
+or get version 3.1 beta 2 or the latest CVS version.
+
+How to configure Mesa :
+-----------------------
+
+For Mesa version > 3.1b2, you can configure the Voodoo driver to not
+override the signal handlers (something that Wine does really not
+like).
+
+For that add the following lines to the /etc/mesa.conf file :
+
+;; Profile for Wine
+(config-mesa wine
+	     ((fx-catch-signals false)))
+
+And do a 'export MESA_CONFIG=wine' before starting Wine.
 
 Code structure
 --------------
@@ -50,10 +52,15 @@ Some programs with which I tested the code :
  * TWIST.EXE (DX3.0) : vertex transformation works as it
    should. Texturing and lighting still off.
 
- * Tomb Raider II (DX5.0) : works perfectly (but slowly). All the
-   calls needed to make TR2 work have been written.
+ * Tomb Raider II (DX5.0) : works perfectly (but slowly) in software
+   mode. All the calls needed to make TR2 work have been written.  In
+   3D accelerated mode with a Voodoo board, it works fine except for
+   color keying (no transparent textures :/). This is being
+   investigated with the Mesa authors.
 
- * Jedi Knight (DX3.0) : does not start
+ * Jedi Knight Demo (DX3.0) : works well with the old OSMesa
+   code. Works for the new GLX code but without the 'head-up' display
+   (because it is blitted directly on the frame-buffer :/)
 
  * Shadow of the Empire demo (DX3.0) : displays a mangled intro screen
    (only blue squares on the screen)
@@ -61,13 +68,12 @@ Some programs with which I tested the code :
  * Forsaken Demo : starts to work. Texturing is missing and it is
    really really slow.
 
- * Grim Fandango (DX ?, seems to be 3.0 !!) : does not start.
+ * Grim Fandango (DX 3.0 !!) : works in DDraw mode. Some problems in
+   D3D mode as it does direct Z Buffer writing.
 
 TODO
 ----
  * work on optimizing Execute Buffers (i.e. Direct3D 3.0)
- * real GLX implementation (will need a complete rewrite of DirectDraw
-   also) to have 3DFx support
  * restructuration of all the DDRAW.DLL (put that in the dll
    directory, better separation of 'drivers, ...)
  * start looking into DirectX 6.0
@@ -78,4 +84,4 @@ TODO
 
 -- 
 Lionel Ulmer - ulmer@directprovider.net
-Last updated : Tue Jan 19 1999
+Last updated : Sat May 08 1999

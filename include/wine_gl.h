@@ -21,6 +21,7 @@
 /* These will need to have some #ifdef / #endif added to support
    more than the X11 using OSMesa target */
 #include <GL/osmesa.h>
+#include <GL/glx.h>
 
 #undef APIENTRY
 #undef CALLBACK

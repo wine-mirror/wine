@@ -11,11 +11,11 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "debug.h"
+#include "x11drv.h"
 
 #include "d3d_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
-
 
 #ifdef HAVE_MESAGL
 
@@ -249,10 +249,12 @@ static HRESULT WINAPI IDirect3DViewport2Impl_Clear(LPDIRECT3DVIEWPORT2 iface,
   }
 
     /* Clears the screen */
+    ENTER_GL();
     glGetBooleanv(GL_DEPTH_TEST, &ztest);
     glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDepthMask(ztest);
+    LEAVE_GL();
   
   return DD_OK;
 }

@@ -142,11 +142,13 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
 	 tex_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
   
   /* Now, save the current texture */
+  ENTER_GL();
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
 
   /* If the GetHandle was not done yet, it's an error */
   if (texture->tex_name == 0) {
     ERR(ddraw, "Unloaded texture !\n");
+    LEAVE_GL();
     return DD_OK;
   }
   glBindTexture(GL_TEXTURE_2D, texture->tex_name);
@@ -206,6 +208,7 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
   } else {
     ERR(ddraw, "Unhandled texture format (neither RGB nor INDEX)\n");
   }
+  LEAVE_GL();
 
   return DD_OK;
 }
@@ -246,7 +249,9 @@ static ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
   
   if (!--(This->ref)) {
     /* Delete texture from OpenGL */
+    ENTER_GL();
     glDeleteTextures(1, &(This->tex_name));
+    LEAVE_GL();
     
     /* Release surface */
     IDirectDrawSurface4_Release((IDirectDrawSurface4*)This->surface);
@@ -270,10 +275,12 @@ static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
   *lpHandle = (D3DTEXTUREHANDLE) This;
   
   /* Now, bind a new texture */
+  ENTER_GL();
   ilpD3DDevice->set_context(ilpD3DDevice);
   This->D3Ddevice = (void *) ilpD3DDevice;
   if (This->tex_name == 0)
     glGenTextures(1, &(This->tex_name));
+  LEAVE_GL();
 
   TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
   
@@ -311,10 +318,12 @@ static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
   *lpHandle = (D3DTEXTUREHANDLE) This;
   
   /* Now, bind a new texture */
+  ENTER_GL();
   ilpD3DDevice2->set_context(ilpD3DDevice2);
   This->D3Ddevice = (void *) ilpD3DDevice2;
   if (This->tex_name == 0)
   glGenTextures(1, &(This->tex_name));
+  LEAVE_GL();
 
   TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
   
@@ -371,6 +380,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
        texture object. */
     memcpy(dst_d->y.lpSurface, src_d->y.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
 
+    ENTER_GL();
+    
     /* Now, load the texture */
     /* d3dd->set_context(d3dd); We need to set the context somehow.... */
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
@@ -390,6 +401,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
       
       if (pal == NULL) {
 	ERR(ddraw, "Palettized texture Loading with a NULL palette !\n");
+	LEAVE_GL();
 	return D3DERR_TEXTURE_LOAD_FAILED;
       }
 
@@ -505,6 +517,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
     }
 
     glBindTexture(GL_TEXTURE_2D, current_texture);
+
+    LEAVE_GL();
   }
   
   return D3D_OK;

@@ -27,6 +27,7 @@ static ICOM_VTABLE(IDirect3DMaterial) material_vtable;
 static void activate(IDirect3DMaterial2Impl* This) {
   TRACE(ddraw, "Activating material %p\n", This);
   
+  ENTER_GL();
   /* First, set the rendering context */
   if (This->use_d3d2)
     This->device.active_device2->set_context(This->device.active_device2);
@@ -55,6 +56,7 @@ static void activate(IDirect3DMaterial2Impl* This) {
   TRACE(ddraw, "Power : %f\n", This->mat.e.power);
 
   TRACE(ddraw, "Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
+  LEAVE_GL();
   
   return ;
 }

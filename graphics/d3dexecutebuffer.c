@@ -186,6 +186,8 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
   if (TRACE_ON(ddraw))
   _dump_executedata(&(ilpBuff->data));
   
+  ENTER_GL();
+  
   while (1) {
     LPD3DINSTRUCTION current = (LPD3DINSTRUCTION) instr;
     BYTE size;
@@ -657,6 +659,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
   }
 
  end_of_buffer:
+  LEAVE_GL();
 }
 
 /*******************************************************************************

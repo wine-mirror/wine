@@ -81,6 +81,7 @@ static void update(IDirect3DLightImpl* This) {
 }
 
 static void activate(IDirect3DLightImpl* This) {
+  ENTER_GL();
   update(This);
 
   /* If was not active, activate it */
@@ -89,6 +90,7 @@ static void activate(IDirect3DLightImpl* This) {
 
     This->is_active = 1;
   }
+  LEAVE_GL();
 
   return ;
 }
@@ -220,8 +222,10 @@ static HRESULT WINAPI IDirect3DLightImpl_SetLight(LPDIRECT3DLIGHT iface,
     break;
   }
   
+  ENTER_GL();
   if (This->is_active)
     update(This);
+  LEAVE_GL();
   
   return DD_OK;
 }
