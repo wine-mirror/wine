@@ -21,12 +21,6 @@
 #endif
 #include <unistd.h>
 #include <time.h>
-#ifdef HAVE_NETINET_IN_SYSTM_H
-# include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-# include <netinet/ip.h>
-#endif
 
 #include "winbase.h"
 #include "wingdi.h"
