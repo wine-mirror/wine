@@ -343,6 +343,8 @@ typedef struct {
     WORD	wBitsPerSample;
 } PCMWAVEFORMAT, *LPPCMWAVEFORMAT;
 
+#ifndef _WAVEFORMATEX_
+#define _WAVEFORMATEX_
 /* dito same for Win16 / Win32 */
 typedef struct {
     WORD	wFormatTag;	/* format type */
@@ -353,7 +355,8 @@ typedef struct {
     WORD	wBitsPerSample;	/* number of bits per sample of mono data */
     WORD	cbSize;		/* the count in bytes of the size of */
 				/* extra information (after cbSize) */
-} WAVEFORMATEX,*LPWAVEFORMATEX;
+} WAVEFORMATEX, *LPWAVEFORMATEX, *NPWAVEFORMATEX, *PWAVEFORMATEX;
+#endif
 
 UINT16 WINAPI waveOutGetNumDevs16(void);
 UINT32 WINAPI waveOutGetNumDevs32(void);

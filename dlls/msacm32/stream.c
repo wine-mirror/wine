@@ -51,8 +51,8 @@ MMRESULT32 WINAPI acmStreamMessage32(
  *           acmStreamOpen (MSACM32.40)
  */
 MMRESULT32 WINAPI acmStreamOpen32(
-  PHACMSTREAM32 phas, HACMDRIVER32 had, PWAVEFORMATEX32 pwfxSrc,
-  PWAVEFORMATEX32 pwfxDst, PWAVEFILTER32 pwfltr, DWORD dwCallback,
+  PHACMSTREAM32 phas, HACMDRIVER32 had, PWAVEFORMATEX pwfxSrc,
+  PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,
   DWORD dwInstance, DWORD fdwOpen)
 {
   FIXME(msacm, "(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld): stub\n",

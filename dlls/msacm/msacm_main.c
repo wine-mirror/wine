@@ -207,8 +207,8 @@ MMRESULT16 WINAPI acmFormatEnum16(
  *           ACMFORMATSUGGEST (MSACM.45)
  */
 MMRESULT16 WINAPI acmFormatSuggest16(
-  HACMDRIVER16 had, LPWAVEFORMATEX16 pwfxSrc, 
-  LPWAVEFORMATEX16 pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest)
+  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc, 
+  LPWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest)
 {
   FIXME(msacm, "(0x%04x, %p, %p, %ld, %ld): stub\n",
     had, pwfxSrc, pwfxDst, cbwfxDst, fdwSuggest
@@ -283,8 +283,8 @@ MMRESULT16 WINAPI acmFilterEnum16(
  */
 MMRESULT16 WINAPI acmStreamOpen16(
   LPHACMSTREAM16 phas, HACMDRIVER16 had,
-  LPWAVEFORMATEX16 pwfxSrc, LPWAVEFORMATEX16 pwfxDst,
-  LPWAVEFILTER16 pwfltr, DWORD dwCallback,
+  LPWAVEFORMATEX pwfxSrc, LPWAVEFORMATEX pwfxDst,
+  LPWAVEFILTER pwfltr, DWORD dwCallback,
   DWORD dwInstance, DWORD fdwOpen)
 {
   FIXME(msacm, "(%p, 0x%04x, %p, %p, %p, %ld, %ld, %ld): stub\n",

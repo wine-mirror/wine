@@ -97,7 +97,7 @@ MMRESULT32 WINAPI acmFormatEnum32W(
  *           acmFormatSuggest (MSACM32.29)
  */
 MMRESULT32 WINAPI acmFormatSuggest32(
-  HACMDRIVER32 had, PWAVEFORMATEX32 pwfxSrc, PWAVEFORMATEX32 pwfxDst,
+  HACMDRIVER32 had, PWAVEFORMATEX pwfxSrc, PWAVEFORMATEX pwfxDst,
   DWORD cbwfxDst, DWORD fdwSuggest)
 {
   FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",

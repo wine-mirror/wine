@@ -89,9 +89,9 @@ typedef struct _ACMDRVOPENDESC16
 typedef struct _ACMDRVSTREAMINSTANCE16
 {
   DWORD            cbStruct;
-  LPWAVEFORMATEX16 pwfxSrc;
-  LPWAVEFORMATEX16 pwfxDst;
-  LPWAVEFILTER16   pwfltr;
+  LPWAVEFORMATEX   pwfxSrc;
+  LPWAVEFORMATEX   pwfxDst;
+  LPWAVEFILTER     pwfltr;
   DWORD            dwCallback;
   DWORD            dwInstance;
   DWORD            fdwOpen;
@@ -103,9 +103,9 @@ typedef struct _ACMDRVSTREAMINSTANCE16
 typedef struct _ACMDRVSTREAMINSTANCE32
 {
   DWORD           cbStruct;
-  PWAVEFORMATEX32 pwfxSrc;
-  PWAVEFORMATEX32 pwfxDst;
-  PWAVEFILTER32   pwfltr;
+  PWAVEFORMATEX   pwfxSrc;
+  PWAVEFORMATEX   pwfxDst;
+  PWAVEFILTER     pwfltr;
   DWORD           dwCallback;
   DWORD           dwInstance;
   DWORD           fdwOpen;
@@ -184,9 +184,9 @@ typedef struct _ACMDRVFORMATSUGGEST16
 {
   DWORD            cbStruct;
   DWORD            fdwSuggest;
-  LPWAVEFORMATEX16 pwfxSrc;
+  LPWAVEFORMATEX   pwfxSrc;
   DWORD            cbwfxSrc;
-  LPWAVEFORMATEX16 pwfxDst;
+  LPWAVEFORMATEX   pwfxDst;
   DWORD            cbwfxDst;
 } ACMDRVFORMATSUGGEST16, *NPACMDRVFORMATSUGGEST, *LPACMDRVFORMATSUGGEST;
 
@@ -194,9 +194,9 @@ typedef struct _ACMDRVFORMATSUGGEST32
 {
   DWORD           cbStruct;
   DWORD           fdwSuggest;
-  PWAVEFORMATEX32 pwfxSrc;
+  PWAVEFORMATEX   pwfxSrc;
   DWORD           cbwfxSrc;
-  PWAVEFORMATEX32 pwfxDst;
+  PWAVEFORMATEX   pwfxDst;
   DWORD           cbwfxDst;
 } ACMDRVFORMATSUGGEST32, *PACMDRVFORMATSUGGEST32;
 

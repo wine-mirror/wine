@@ -1397,6 +1397,8 @@ BOOL32      WINAPI FlushFileBuffers(HFILE32);
 BOOL32      WINAPI FlushViewOfFile(LPCVOID, DWORD);
 DWORD       WINAPI FormatMessage32A(DWORD,LPCVOID,DWORD,DWORD,LPSTR,
 				    DWORD,LPDWORD);
+DWORD       WINAPI FormatMessage32W(DWORD,LPCVOID,DWORD,DWORD,LPWSTR,
+				    DWORD,LPDWORD);
 #define     FormatMessage WINELIB_NAME_AW(FormatMessage)
 BOOL32      WINAPI FreeConsole(void);
 BOOL32      WINAPI FreeEnvironmentStrings32A(LPSTR);

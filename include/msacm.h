@@ -329,7 +329,7 @@ typedef struct _ACMFILTERCHOOSE32A
 
   HWND32        hwndOwner;
 
-  PWAVEFILTER32 pwfltr;
+  PWAVEFILTER   pwfltr;
   DWORD         cbwfltr;
 
   LPCSTR        pszTitle;
@@ -340,7 +340,7 @@ typedef struct _ACMFILTERCHOOSE32A
   DWORD         cchName;
 
   DWORD         fdwEnum;
-  PWAVEFILTER32 pwfltrEnum;
+  PWAVEFILTER   pwfltrEnum;
     
   HINSTANCE32   hInstance;
   LPCSTR        pszTemplateName;
@@ -355,7 +355,7 @@ typedef struct _ACMFILTERCHOOSE32W
 
   HWND32        hwndOwner;
 
-  PWAVEFILTER32 pwfltr;
+  PWAVEFILTER   pwfltr;
   DWORD         cbwfltr;
 
   LPCWSTR       pszTitle;
@@ -366,7 +366,7 @@ typedef struct _ACMFILTERCHOOSE32W
   DWORD         cchName;
 
   DWORD         fdwEnum;
-  PWAVEFILTER32 pwfltrEnum;
+  PWAVEFILTER   pwfltrEnum;
     
   HINSTANCE32   hInstance;
   LPCWSTR       pszTemplateName;
@@ -381,7 +381,7 @@ typedef struct _ACMFILTERCHOOSE16
 
   HWND16         hwndOwner;
 
-  LPWAVEFILTER16 pwfltr;
+  LPWAVEFILTER   pwfltr;
   DWORD          cbwfltr;
 
   LPCSTR         pszTitle;
@@ -392,7 +392,7 @@ typedef struct _ACMFILTERCHOOSE16
   DWORD          cchName;
 
   DWORD          fdwEnum;
-  LPWAVEFILTER16 pwfltrEnum;
+  LPWAVEFILTER   pwfltrEnum;
     
   HINSTANCE16    hInstance;
   LPCSTR         pszTemplateName;
@@ -406,7 +406,7 @@ typedef struct _ACMFILTERDETAILS32A
   DWORD           dwFilterIndex;
   DWORD           dwFilterTag;
   DWORD           fdwSupport;
-  PWAVEFILTER32   pwfltr;
+  PWAVEFILTER     pwfltr;
   DWORD           cbwfltr;
   CHAR            szFilter[ACMFILTERDETAILS_FILTER_CHARS];
 } ACMFILTERDETAILS32A, *PACMFILTERDETAILS32A;
@@ -417,7 +417,7 @@ typedef struct _ACMFILTERDETAILS32W
   DWORD          dwFilterIndex;
   DWORD          dwFilterTag;
   DWORD          fdwSupport;
-  PWAVEFILTER32  pwfltr;
+  PWAVEFILTER    pwfltr;
   DWORD          cbwfltr;
   WCHAR          szFilter[ACMFILTERDETAILS_FILTER_CHARS];
 } ACMFILTERDETAILS32W, *PACMFILTERDETAILS32W;
@@ -428,7 +428,7 @@ typedef struct _ACMFILTERDETAILS16
   DWORD          dwFilterIndex;
   DWORD          dwFilterTag;
   DWORD          fdwSupport;
-  LPWAVEFILTER16 pwfltr;
+  LPWAVEFILTER   pwfltr;
   DWORD          cbwfltr;
   CHAR           szFilter[ACMFILTERDETAILS_FILTER_CHARS];
 } ACMFILTERDETAILS16, *NPACMFILTERDETAILS16, *LPACMFILTERDETAILS16;
@@ -473,7 +473,7 @@ typedef struct _ACMFORMATCHOOSE32A
  
   HWND32          hwndOwner;
 
-  PWAVEFORMATEX32 pwfx;
+  PWAVEFORMATEX   pwfx;
   DWORD           cbwfx;
   LPCSTR          pszTitle;
     
@@ -484,7 +484,7 @@ typedef struct _ACMFORMATCHOOSE32A
   DWORD           cchName;
 
   DWORD           fdwEnum;
-  PWAVEFORMATEX32 pwfxEnum;
+  PWAVEFORMATEX   pwfxEnum;
     
   HINSTANCE32     hInstance;
   LPCSTR          pszTemplateName;
@@ -499,7 +499,7 @@ typedef struct _ACMFORMATCHOOSE32W
     
   HWND32          hwndOwner;
 
-  PWAVEFORMATEX32 pwfx;
+  PWAVEFORMATEX   pwfx;
   DWORD           cbwfx;
   LPCWSTR         pszTitle;
     
@@ -525,7 +525,7 @@ typedef struct _ACMFORMATCHOOSE16
     
   HWND16           hwndOwner;
 
-  LPWAVEFORMATEX16 pwfx;
+  LPWAVEFORMATEX   pwfx;
   DWORD            cbwfx;
   LPCSTR           pszTitle;
     
@@ -536,7 +536,7 @@ typedef struct _ACMFORMATCHOOSE16
   DWORD            cchName;
 
   DWORD            fdwEnum;
-  LPWAVEFORMATEX16 pwfxEnum;
+  LPWAVEFORMATEX   pwfxEnum;
     
   HINSTANCE16      hInstance;
   LPCSTR           pszTemplateName;
@@ -550,7 +550,7 @@ typedef struct _ACMFORMATDETAILS32A
   DWORD           dwFormatIndex;
   DWORD           dwFormatTag;
   DWORD           fdwSupport;
-  PWAVEFORMATEX32 pwfx;
+  PWAVEFORMATEX   pwfx;
   DWORD           cbwfx;
   CHAR            szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 } ACMFORMATDETAILS32A, *PACMFORMATDETAILS32A;
@@ -561,7 +561,7 @@ typedef struct _ACMFORMATDETAILS32W
     DWORD           dwFormatIndex;
     DWORD           dwFormatTag;
     DWORD           fdwSupport;
-    PWAVEFORMATEX32 pwfx;
+    PWAVEFORMATEX   pwfx;
     DWORD           cbwfx;
     WCHAR           szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 } ACMFORMATDETAILS32W, *PACMFORMATDETAILS32W;
@@ -572,7 +572,7 @@ typedef struct _ACMFORMATDETAILS16
     DWORD            dwFormatIndex;
     DWORD            dwFormatTag;
     DWORD            fdwSupport;
-    LPWAVEFORMATEX16 pwfx;
+    LPWAVEFORMATEX   pwfx;
     DWORD            cbwfx;
     CHAR             szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 } ACMFORMATDETAILS16, *NPACMFORMATDETAILS16, *LPACMFORMATDETAILS16;
@@ -746,8 +746,8 @@ MMRESULT16 WINAPI acmFormatEnum16(
   ACMFORMATENUMCB16 fnCallback, DWORD dwInstance, DWORD fdwEnum
 );
 MMRESULT16 WINAPI acmFormatSuggest16(
-  HACMDRIVER16 had, LPWAVEFORMATEX16 pwfxSrc, 
-  LPWAVEFORMATEX16 pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest
+  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc, 
+  LPWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest
 );
 MMRESULT16 WINAPI acmFilterTagDetails16(
   HACMDRIVER16 had, LPACMFILTERTAGDETAILS16 paftd, DWORD fdwDetails
@@ -768,8 +768,8 @@ MMRESULT16 WINAPI acmFilterEnum16(
 );
 MMRESULT16 WINAPI acmStreamOpen16(
   LPHACMSTREAM16 phas, HACMDRIVER16 had,
-  LPWAVEFORMATEX16 pwfxSrc, LPWAVEFORMATEX16 pwfxDst,
-  LPWAVEFILTER16 pwfltr, DWORD dwCallback,
+  LPWAVEFORMATEX pwfxSrc, LPWAVEFORMATEX pwfxDst,
+  LPWAVEFILTER pwfltr, DWORD dwCallback,
   DWORD dwInstance, DWORD fdwOpen
 );
 MMRESULT16 WINAPI acmStreamClose16(
@@ -886,7 +886,7 @@ MMRESULT32 WINAPI acmFormatEnum32W(
   ACMFORMATENUMCB32W fnCallback, DWORD dwInstance,  DWORD fdwEnum
 );
 MMRESULT32 WINAPI acmFormatSuggest32(
-  HACMDRIVER32 had, PWAVEFORMATEX32 pwfxSrc, PWAVEFORMATEX32 pwfxDst,
+  HACMDRIVER32 had, PWAVEFORMATEX pwfxSrc, PWAVEFORMATEX pwfxDst,
   DWORD cbwfxDst, DWORD fdwSuggest
 );
 MMRESULT32 WINAPI acmFormatTagDetails32A(
@@ -918,8 +918,8 @@ MMRESULT32 WINAPI acmStreamMessage32(
   HACMSTREAM32 has, UINT32 uMsg, LPARAM lParam1, LPARAM lParam2
 );
 MMRESULT32 WINAPI acmStreamOpen32(
-  PHACMSTREAM32 phas, HACMDRIVER32 had, PWAVEFORMATEX32 pwfxSrc,
-  PWAVEFORMATEX32 pwfxDst, PWAVEFILTER32 pwfltr, DWORD dwCallback,
+  PHACMSTREAM32 phas, HACMDRIVER32 had, PWAVEFORMATEX pwfxSrc,
+  PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,
   DWORD dwInstance, DWORD fdwOpen
 );
 MMRESULT32 WINAPI acmStreamPrepareHeader32(
