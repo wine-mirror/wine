@@ -17,12 +17,9 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "wine/undocshell.h"
+#include "shpolicy.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
-
-/* shell policy data */
-#define SHELL_MAX_POLICIES 57         /* number in Win98 */
-unsigned long shell_policies[SHELL_MAX_POLICIES];
 
 /*************************************************************************
  * SHChangeNotifyRegister			[SHELL32.2]
@@ -329,46 +326,74 @@ ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
  * SHRestricted				[SHELL32.100]
  *
  * walks through policy table, queries <app> key, <type> value, returns 
- * queried (DWORD) value.
- * {0x00001,Explorer,NoRun}
- * {0x00002,Explorer,NoClose}
- * {0x00004,Explorer,NoSaveSettings}
- * {0x00008,Explorer,NoFileMenu}
- * {0x00010,Explorer,NoSetFolders}
- * {0x00020,Explorer,NoSetTaskbar}
- * {0x00040,Explorer,NoDesktop}
- * {0x00080,Explorer,NoFind}
- * {0x00100,Explorer,NoDrives}
- * {0x00200,Explorer,NoDriveAutoRun}
- * {0x00400,Explorer,NoDriveTypeAutoRun}
- * {0x00800,Explorer,NoNetHood}
- * {0x01000,Explorer,NoStartBanner}
- * {0x02000,Explorer,RestrictRun}
- * {0x04000,Explorer,NoPrinterTabs}
- * {0x08000,Explorer,NoDeletePrinter}
- * {0x10000,Explorer,NoAddPrinter}
- * {0x20000,Explorer,NoStartMenuSubFolders}
- * {0x40000,Explorer,MyDocsOnNet}
- * {0x80000,WinOldApp,NoRealMode}
+ * queried (DWORD) value, and caches it between called to SHInitRestricted
+ * to prevent unnecessary registry access.
  *
  * NOTES
  *     exported by ordinal
+ *
+ * REFERENCES: 
+ *     MS System Policy Editor
+ *     98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
+ *     "The Windows 95 Registry", by John Woram, 1996 MIS: Press
  */
 DWORD WINAPI SHRestricted (DWORD pol) {
+        char regstr[256];
 	HKEY	xhkey;
+	DWORD   retval, polidx, i, datsize = 4;
 
-	FIXME("(%08lx):stub.\n",pol);
-	if (RegOpenKeyA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies",&xhkey))
+	TRACE("(%08lx)\n",pol);
+
+	polidx = -1;
+
+	/* scan to see if we know this policy ID */
+	for (i = 0; i < SHELL_MAX_POLICIES; i++)
+	{
+	     if (pol == sh32_policy_table[i].polflags)
+	     {
+	         polidx = i;
+		 break;
+	     }
+	}
+
+	if (polidx == -1)
+	{
+	    /* we don't know this policy, return 0 */
+	    TRACE("unknown policy: (%08lx)\n", pol);
 		return 0;
-	/* FIXME: do nothing for now, just return 0 (== "allowed") */
+	}
+
+	/* we have a known policy */
+      	lstrcpyA(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
+	lstrcatA(regstr, sh32_policy_table[polidx].appstr);
+
+	/* first check if this policy has been cached, return it if so */
+	if (sh32_policy_table[polidx].cache != SHELL_NO_POLICY)
+	{
+	    return sh32_policy_table[polidx].cache;
+	}
+
+	/* return 0 and don't set the cache if any registry errors occur */
+	retval = 0;
+	if (RegOpenKeyA(HKEY_CURRENT_USER, regstr, &xhkey) == ERROR_SUCCESS)
+	{
+	    if (RegQueryValueExA(xhkey, sh32_policy_table[polidx].keystr, NULL, NULL, (LPBYTE)&retval, &datsize) == ERROR_SUCCESS)
+	    {
+	        sh32_policy_table[polidx].cache = retval;
+	    }
+
 	RegCloseKey(xhkey);
-	return 0;
+}
+
+	return retval;
 }
 
 /*************************************************************************
  *      SHInitRestricted                         [SHELL32.244]
  *
  * Win98+ by-ordinal only routine called by Explorer and MSIE 4 and 5.
+ * Inits the policy cache used by SHRestricted to avoid excess
+ * registry access.
  *
  * INPUTS
  * Two inputs: one is a string or NULL.  If non-NULL the pointer
@@ -381,7 +406,7 @@ DWORD WINAPI SHRestricted (DWORD pol) {
  * that exact text the routine will do nothing.
  *
  * If the text does match or the pointer is NULL, then the routine
- * will init SHRestricted()'s policy table to all 0xffffffff and
+ * will init SHRestricted()'s policy cache to all 0xffffffff and
  * returns 0xffffffff as well.
  *
  * I haven't yet run into anything calling this with inputs other than
@@ -407,13 +432,13 @@ BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
 	 }
      }                               
 
-     /* check passed, init all policy table entries with 0xffffffff */
+     /* check passed, init all policy cache entries with SHELL_NO_POLICY */
      for (i = 0; i < SHELL_MAX_POLICIES; i++)
      {
-          shell_policies[i] = 0xffffffff;
+          sh32_policy_table[i].cache = SHELL_NO_POLICY;
      }
 
-     return 0xffffffff;
+     return SHELL_NO_POLICY;
 }
 
 /*************************************************************************

@@ -32,6 +32,7 @@ C_SRCS = \
 	shellpath.c \
 	shlfolder.c \
 	shlview.c \
+	shpolicy.c \
 	shv_bg_cmenu.c
 
 RC_SRCS= \
