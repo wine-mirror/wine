@@ -24,11 +24,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-void CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
+HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
 {
     memcpy(pDest, pSrc, sizeof(AM_MEDIA_TYPE));
-    pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat);
+    if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
+        return E_OUTOFMEMORY;
     memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
+    return S_OK;
+}
+
+void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
+{
+    if (pMediaType->pbFormat)
+    {
+        CoTaskMemFree(pMediaType->pbFormat);
+        pMediaType->pbFormat = NULL;
+    }
+    if (pMediaType->pUnk)
+    {
+        IUnknown_Release(pMediaType->pUnk);
+        pMediaType->pUnk = NULL;
+    }
 }
 
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards)

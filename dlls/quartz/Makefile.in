@@ -17,6 +17,7 @@ C_SRCS = \
 	filtergraph.c \
 	filtermapper.c \
 	main.c \
+	memallocator.c \
 	pin.c \
 	regsvr.c
 

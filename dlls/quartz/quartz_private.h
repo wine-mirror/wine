@@ -35,6 +35,7 @@
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
 HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
+HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
@@ -56,7 +57,8 @@ HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMe
 extern const char * qzdebugstr_guid(const GUID * id);
 extern const char * qzdebugstr_State(FILTER_STATE state);
 
-void CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
+HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
+void DeleteMediaType(AM_MEDIA_TYPE * pmt);
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
 
