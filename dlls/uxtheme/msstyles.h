@@ -25,16 +25,29 @@
 
 #define MAX_THEME_APP_NAME 60
 #define MAX_THEME_CLASS_NAME 60
+#define MAX_THEME_VALUE_NAME 60
+
+typedef struct _THEME_PROPERTY {
+    int iPrimitiveType;
+    int iPropertyId;
+    PROPERTYORIGIN origin;
+
+    LPCWSTR lpValue;
+    DWORD dwValueLen;
+
+    struct _THEME_PROPERTY *next;
+} THEME_PROPERTY, *PTHEME_PROPERTY;
 
 typedef struct _THEME_PARTSTATE {
     int iPartId;
     int iStateId;
-    /* TODO: define part/state properties */
+    PTHEME_PROPERTY properties;
 
     struct _THEME_PARTSTATE *next;
 } THEME_PARTSTATE, *PTHEME_PARTSTATE;
 
 typedef struct _THEME_CLASS {
+    HMODULE hTheme;
     WCHAR szAppName[MAX_THEME_APP_NAME];
     WCHAR szClassName[MAX_THEME_CLASS_NAME];
     PTHEME_PARTSTATE partstate;
@@ -55,25 +68,22 @@ typedef struct _THEME_FILE {
     PTHEME_CLASS classes;
 } THEME_FILE, *PTHEME_FILE;
 
-typedef struct _UXINI_FILE {
-    LPCWSTR lpIni;
-    LPCWSTR lpCurLoc;
-    LPCWSTR lpEnd;
-} UXINI_FILE, *PUXINI_FILE;
+typedef void* PUXINI_FILE;
 
 HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWSTR pszSizeName, PTHEME_FILE *tf);
 void MSSTYLES_CloseThemeFile(PTHEME_FILE tf);
 HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf);
 PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList);
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc);
-BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, DWORD *dwPrimitive, DWORD *dwId);
-BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, DWORD dwEnum, DWORD *dwValue);
+BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, int *dwPrimitive, int *dwId);
+BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, int dwEnum, int *dwValue);
 BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszState, int *iPartId, int *iStateId);
 PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf);
-PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId);
+PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext);
 PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName);
+PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId);
 
-PUXINI_FILE UXINI_LoadINI(PTHEME_FILE tf, LPCWSTR lpName);
+PUXINI_FILE UXINI_LoadINI(HMODULE hTheme, LPCWSTR lpName);
 void UXINI_CloseINI(PUXINI_FILE uf);
 void UXINI_ResetINI(PUXINI_FILE uf);
 LPCWSTR UXINI_GetNextSection(PUXINI_FILE uf, DWORD *dwLen);

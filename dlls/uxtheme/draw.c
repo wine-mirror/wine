@@ -27,7 +27,9 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "uxtheme.h"
+#include "tmschema.h"
 
+#include "msstyles.h"
 #include "uxthemedll.h"
 
 #include "wine/debug.h"
@@ -133,10 +135,26 @@ HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME hTheme, HDC hdc, int iPartId
                                              const RECT *pBoundingRect,
                                              RECT *pContentRect)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
+    MARGINS margin;
+    HRESULT hr;
+
+    TRACE("(%d,%d)\n", iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_CONTENTMARGINS, NULL, &margin);
+    if(FAILED(hr)) {
+        TRACE("Margins not found\n");
+        return hr;
+    }
+    pContentRect->left = pBoundingRect->left + margin.cxLeftWidth;
+    pContentRect->top  = pBoundingRect->top + margin.cyTopHeight;
+    pContentRect->right = pBoundingRect->right - margin.cxRightWidth;
+    pContentRect->bottom = pBoundingRect->bottom - margin.cyBottomHeight;
+
+    TRACE("left:%ld,top:%ld,right:%ld,bottom:%ld\n", pContentRect->left, pContentRect->top, pContentRect->right, pContentRect->bottom);
+
+    return S_OK;
 }
 
 /***********************************************************************

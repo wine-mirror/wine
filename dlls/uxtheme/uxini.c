@@ -26,8 +26,6 @@
 #include "winbase.h"
 #include "winnls.h"
 
-#include "msstyles.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
@@ -39,6 +37,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 static const WCHAR szTextFileResource[] = {
     'T','E','X','T','F','I','L','E','\0'
 };
+
+typedef struct _UXINI_FILE {
+    LPCWSTR lpIni;
+    LPCWSTR lpCurLoc;
+    LPCWSTR lpEnd;
+} UXINI_FILE, *PUXINI_FILE;
 
 /***********************************************************************/
 
@@ -55,7 +59,7 @@ static const WCHAR szTextFileResource[] = {
  * RETURNS
  *     INI file, or NULL if not found
  */
-PUXINI_FILE UXINI_LoadINI(PTHEME_FILE tf, LPCWSTR lpName) {
+PUXINI_FILE UXINI_LoadINI(HMODULE hTheme, LPCWSTR lpName) {
     HRSRC hrsc;
     LPCWSTR lpThemesIni = NULL;
     PUXINI_FILE uf;
@@ -63,14 +67,14 @@ PUXINI_FILE UXINI_LoadINI(PTHEME_FILE tf, LPCWSTR lpName) {
 
     TRACE("Loading resource INI %s\n", debugstr_w(lpName));
 
-    if((hrsc = FindResourceW(tf->hTheme, lpName, szTextFileResource))) {
-        if(!(lpThemesIni = (LPCWSTR)LoadResource(tf->hTheme, hrsc))) {
+    if((hrsc = FindResourceW(hTheme, lpName, szTextFileResource))) {
+        if(!(lpThemesIni = (LPCWSTR)LoadResource(hTheme, hrsc))) {
             TRACE("%s resource not found\n", debugstr_w(lpName));
             return NULL;
         }
     }
 
-    dwIniSize = SizeofResource(tf->hTheme, hrsc) / sizeof(WCHAR);
+    dwIniSize = SizeofResource(hTheme, hrsc) / sizeof(WCHAR);
     uf = HeapAlloc(GetProcessHeap(), 0, sizeof(UXINI_FILE));
     uf->lpIni = lpThemesIni;
     uf->lpCurLoc = lpThemesIni;
@@ -156,8 +160,7 @@ LPCWSTR UXINI_GetNextLine(PUXINI_FILE uf, DWORD *dwLen)
         while(!UXINI_eof(uf) && (UXINI_isspace(*uf->lpCurLoc) || *uf->lpCurLoc == '\n')) uf->lpCurLoc++;
         lpLineStart = uf->lpCurLoc;
         lpLineEnd = uf->lpCurLoc;
-        while(!UXINI_eof(uf) && *uf->lpCurLoc != '\n' && *uf->lpCurLoc != ';') lpLineEnd = uf->lpCurLoc++;
-        if(*uf->lpCurLoc == ';') lpLineEnd = uf->lpCurLoc++;
+        while(!UXINI_eof(uf) && *uf->lpCurLoc != '\n' && *uf->lpCurLoc != ';') lpLineEnd = ++uf->lpCurLoc;
         /* If comment was found, skip the rest of the line */
         if(*uf->lpCurLoc == ';')
             while(!UXINI_eof(uf) && *uf->lpCurLoc != '\n') uf->lpCurLoc++;

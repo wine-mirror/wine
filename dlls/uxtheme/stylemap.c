@@ -27,7 +27,7 @@
 #include "winuser.h"
 #include "tmschema.h"
 
-#include "msstyles.h"
+#define TMT_ENUM 200
 
 #include "wine/debug.h"
 
@@ -1111,7 +1111,7 @@ BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszStat
  * RETURNS
  *     FALSE if value is not found, TRUE otherwise
  */
-BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, DWORD *dwPrimitive, DWORD *dwId)
+BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, int *dwPrimitive, int *dwId)
 {
     DWORD item = 0;
     do {
@@ -1137,7 +1137,7 @@ BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, DWORD *dwPrimitive, DWORD 
  * RETURNS
  *     FALSE if value is not found, TRUE otherwise
  */
-BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, DWORD dwEnum, DWORD *dwValue)
+BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, int dwEnum, int *dwValue)
 {
     DWORD item = 0;
     /* Locate the enum block */

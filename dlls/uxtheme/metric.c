@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "uxtheme.h"
 
+#include "msstyles.h"
 #include "uxthemedll.h"
 
 #include "wine/debug.h"

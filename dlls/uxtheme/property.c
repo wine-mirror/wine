@@ -27,12 +27,38 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "uxtheme.h"
+#include "tmschema.h"
 
+#include "msstyles.h"
 #include "uxthemedll.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
+
+BOOL UXTHEME_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
+{
+    LPCWSTR cur = lpStringStart;
+    int total = 0;
+    BOOL gotNeg = FALSE;
+
+    while(cur < lpStringEnd && (*cur < '0' || *cur > '9' || *cur == '-')) cur++;
+    if(cur >= lpStringEnd) {
+        return FALSE;
+    }
+    if(*cur == '-') {
+        cur++;
+        gotNeg = TRUE;
+    }
+    while(cur < lpStringEnd && (*cur >= '0' && *cur <= '9')) {
+        total = total * 10 + (*cur - '0');
+        cur++;
+    }
+    if(gotNeg) total = -total;
+    *value = total;
+    if(lpValEnd) *lpValEnd = cur;
+    return TRUE;
+}
 
 /***********************************************************************
  *      GetThemeBool                                        (UXTHEME.@)
@@ -40,10 +66,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 HRESULT WINAPI GetThemeBool(HTHEME hTheme, int iPartId, int iStateId,
                             int iPropId, BOOL *pfVal)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_BOOL, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    *pfVal = FALSE;
+    if(*tp->lpValue == 't' || *tp->lpValue == 'T')
+        *pfVal = TRUE;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -52,10 +86,28 @@ HRESULT WINAPI GetThemeBool(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeColor(HTHEME hTheme, int iPartId, int iStateId,
                              int iPropId, COLORREF *pColor)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpEnd;
+    LPCWSTR lpCur;
+    int red, green, blue;
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_COLOR, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &red);
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &green);
+    if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &blue)) {
+        TRACE("Could not parse color property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    *pColor = RGB(red,green,blue);
+    return S_OK;
 }
 
 /***********************************************************************
@@ -64,10 +116,19 @@ HRESULT WINAPI GetThemeColor(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeEnumValue(HTHEME hTheme, int iPartId, int iStateId,
                                  int iPropId, int *piVal)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    WCHAR val[60];
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_ENUM, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lstrcpynW(val, tp->lpValue, min(tp->dwValueLen+1, sizeof(val)/sizeof(val[0])));
+    if(!MSSTYLES_LookupEnum(val, iPropId, piVal))
+        return E_PROP_ID_UNSUPPORTED;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -77,10 +138,16 @@ HRESULT WINAPI GetThemeFilename(HTHEME hTheme, int iPartId, int iStateId,
                                 int iPropId, LPWSTR pszThemeFilename,
                                 int cchMaxBuffChars)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lstrcpynW(pszThemeFilename, tp->lpValue, min(tp->dwValueLen+1, cchMaxBuffChars));
+    return S_OK;
 }
 
 /***********************************************************************
@@ -101,10 +168,19 @@ HRESULT WINAPI GetThemeFont(HTHEME hTheme, HDC hdc, int iPartId,
 HRESULT WINAPI GetThemeInt(HTHEME hTheme, int iPartId, int iStateId,
                            int iPropId, int *piVal)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_INT, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    if(!UXTHEME_GetNextInteger(tp->lpValue, (tp->lpValue + tp->dwValueLen), NULL, piVal)) {
+        TRACE("Could not parse int property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
 }
 
 /***********************************************************************
@@ -125,10 +201,28 @@ HRESULT WINAPI GetThemeIntList(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemePosition(HTHEME hTheme, int iPartId, int iStateId,
                                 int iPropId, POINT *pPoint)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpEnd;
+    LPCWSTR lpCur;
+    PTHEME_PROPERTY tp;
+    int x,y;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_POSITION, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &x);
+    if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &y)) {
+        TRACE("Could not parse position property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    pPoint->x = x;
+    pPoint->y = y;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -137,10 +231,27 @@ HRESULT WINAPI GetThemePosition(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeRect(HTHEME hTheme, int iPartId, int iStateId,
                             int iPropId, RECT *pRect)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpEnd;
+    LPCWSTR lpCur;
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_RECT, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->left);
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->top);
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->right);
+    if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->bottom)) {
+        TRACE("Could not parse rect property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
 }
 
 /***********************************************************************
@@ -149,10 +260,16 @@ HRESULT WINAPI GetThemeRect(HTHEME hTheme, int iPartId, int iStateId,
 HRESULT WINAPI GetThemeString(HTHEME hTheme, int iPartId, int iStateId,
                               int iPropId, LPWSTR pszBuff, int cchMaxBuffChars)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lstrcpynW(pszBuff, tp->lpValue, min(tp->dwValueLen+1, cchMaxBuffChars));
+    return S_OK;
 }
 
 /***********************************************************************
@@ -162,10 +279,27 @@ HRESULT WINAPI GetThemeMargins(HTHEME hTheme, HDC hdc, int iPartId,
                                int iStateId, int iPropId, RECT *prc,
                                MARGINS *pMargins)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    LPCWSTR lpEnd;
+    LPCWSTR lpCur;
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_MARGINS, iPropId)))
+        return E_PROP_ID_UNSUPPORTED;
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cxLeftWidth);
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cxRightWidth);
+    UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cyTopHeight);
+    if(!UXTHEME_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cyBottomHeight)) {
+        TRACE("Could not parse margins property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
 }
 
 /***********************************************************************
@@ -186,8 +320,16 @@ HRESULT WINAPI GetThemeMetric(HTHEME hTheme, HDC hdc, int iPartId,
 HRESULT WINAPI GetThemePropertyOrigin(HTHEME hTheme, int iPartId, int iStateId,
                                       int iPropId, PROPERTYORIGIN *pOrigin)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, iPropId);
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%d, %d, %d)\n", iPartId, iStateId, iPropId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if(!(tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, 0, iPropId))) {
+        *pOrigin = PO_NOTFOUND;
+        return S_OK;
+    }
+    *pOrigin = tp->origin;
+    return S_OK;
 }

@@ -398,7 +398,7 @@ HRESULT WINAPI HitTestThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
 BOOL WINAPI IsThemePartDefined(HTHEME hTheme, int iPartId, int iStateId)
 {
     TRACE("(%p,%d,%d)\n", hTheme, iPartId, iStateId);
-    if(MSSTYLES_FindPartState(hTheme, iPartId, iStateId))
+    if(MSSTYLES_FindPartState(hTheme, iPartId, iStateId, NULL))
         return TRUE;
     return FALSE;
 }
@@ -428,7 +428,7 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
     PTHEME_FILE pt;
     HRESULT hr;
     int i;
-    DWORD dwDocId;
+    int iDocId;
     TRACE("(%s,%s,%p,%d)\n", debugstr_w(pszThemeName), debugstr_w(pszPropertyName),
           pszValueBuff, cchMaxValChars);
 
@@ -437,9 +437,9 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
 
     /* Try to load from string resources */
     hr = E_PROP_ID_UNSUPPORTED;
-    if(MSSTYLES_LookupProperty(pszPropertyName, NULL, &dwDocId)) {
+    if(MSSTYLES_LookupProperty(pszPropertyName, NULL, &iDocId)) {
         for(i=0; i<sizeof(wDocToRes)/sizeof(wDocToRes[0]); i+=2) {
-            if(wDocToRes[i] == dwDocId) {
+            if(wDocToRes[i] == iDocId) {
                 if(LoadStringW(pt->hTheme, wDocToRes[i+1], pszValueBuff, cchMaxValChars)) {
                     hr = S_OK;
                     break;

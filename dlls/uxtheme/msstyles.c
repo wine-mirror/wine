@@ -30,6 +30,7 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "uxtheme.h"
+#include "tmschema.h"
 
 #include "uxthemedll.h"
 #include "msstyles.h"
@@ -215,7 +216,6 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
         MSSTYLES_CloseThemeFile(tfActiveTheme);
     tfActiveTheme = tf;
     tfActiveTheme->dwRefCount++;
-    FIXME("Process theme resources\n");
     return S_OK;
 }
 
@@ -226,7 +226,7 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
  */
 PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
 {
-    return UXINI_LoadINI(tf, szThemesIniResource);
+    return UXINI_LoadINI(tf->hTheme, szThemesIniResource);
 }
 
 /***********************************************************************
@@ -275,7 +275,7 @@ PUXINI_FILE MSSTYLES_GetActiveThemeIni(PTHEME_FILE tf)
     for(i=0; i < dwResourceIndex; i++) {
         tmp += lstrlenW(tmp)+1;
     }
-    return UXINI_LoadINI(tf, tmp);
+    return UXINI_LoadINI(tf->hTheme, tmp);
 }
 
 
@@ -378,8 +378,14 @@ PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszC
 {
     PTHEME_CLASS cur = tf->classes;
     while(cur) {
-        if(!lstrcmpiW(pszAppName, cur->szAppName) && !lstrcmpiW(pszClassName, cur->szClassName))
-            return cur;
+        if(!pszAppName) {
+            if(!*cur->szAppName && !lstrcmpiW(pszClassName, cur->szClassName))
+                return cur;
+        }
+        else {
+            if(!lstrcmpiW(pszAppName, cur->szAppName) && !lstrcmpiW(pszClassName, cur->szClassName))
+                return cur;
+        }
         cur = cur->next;
     }
     return NULL;
@@ -404,6 +410,7 @@ PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszCl
     if(cur) return cur;
 
     cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_CLASS));
+    cur->hTheme = tf->hTheme;
     lstrcpyW(cur->szAppName, pszAppName);
     lstrcpyW(cur->szClassName, pszClassName);
     cur->next = tf->classes;
@@ -422,19 +429,22 @@ PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszCl
  *     tc                  Class to search
  *     iPartId             Part ID to find
  *     iStateId            State ID to find
+ *     tcNext              Receives the next class in the override chain
  *
  * RETURNS
  *  The part/state found, or NULL
  */
-PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId)
+PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext)
 {
     PTHEME_PARTSTATE cur = tc->partstate;
     while(cur) {
-        if(cur->iPartId == iPartId && cur->iStateId == iStateId)
+        if(cur->iPartId == iPartId && cur->iStateId == iStateId) {
+            if(tcNext) *tcNext = tc->overrides;
             return cur;
+        }
         cur = cur->next;
     }
-    if(tc->overrides) return MSSTYLES_FindPartState(tc->overrides, iPartId, iStateId);
+    if(tc->overrides) return MSSTYLES_FindPartState(tc->overrides, iPartId, iStateId, tcNext);
     return NULL;
 }
 
@@ -453,14 +463,88 @@ PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iState
  */
 PTHEME_PARTSTATE MSSTYLES_AddPartState(PTHEME_CLASS tc, int iPartId, int iStateId)
 {
-    PTHEME_PARTSTATE cur = MSSTYLES_FindPartState(tc, iPartId, iStateId);
+    PTHEME_PARTSTATE cur = MSSTYLES_FindPartState(tc, iPartId, iStateId, NULL);
     if(cur) return cur;
 
     cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_PARTSTATE));
     cur->iPartId = iPartId;
     cur->iStateId = iStateId;
+    cur->properties = NULL;
     cur->next = tc->partstate;
     tc->partstate = cur;
+    return cur;
+}
+
+/***********************************************************************
+ *      MSSTYLES_PSFindProperty
+ *
+ * Find a value within a part/state
+ *
+ * PARAMS
+ *     ps                  Part/state to search
+ *     iPropertyPrimitive  Type of value expected
+ *     iPropertyId         ID of the required value
+ *
+ * RETURNS
+ *  The property found, or NULL
+ */
+PTHEME_PROPERTY MSSTYLES_PSFindProperty(PTHEME_PARTSTATE ps, int iPropertyPrimitive, int iPropertyId)
+{
+    PTHEME_PROPERTY cur = ps->properties;
+    while(cur) {
+        if(cur->iPropertyId == iPropertyId) {
+            if(cur->iPrimitiveType == iPropertyPrimitive) {
+                return cur;
+            }
+            else {
+                if(!iPropertyPrimitive)
+                    return cur;
+                return NULL;
+            }
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *      MSSTYLES_AddProperty
+ *
+ * Add a property to a part/state
+ *
+ * PARAMS
+ *     ps                  Part/state
+ *     iPropertyPrimitive  Primitive type of the property
+ *     iPropertyId         ID of the property
+ *     lpValue             Raw value (non-NULL terminated)
+ *     dwValueLen          Length of the value
+ *
+ * RETURNS
+ *  The property added, or a property previously added with the same IDs
+ */
+PTHEME_PROPERTY MSSTYLES_AddProperty(PTHEME_PARTSTATE ps, int iPropertyPrimitive, int iPropertyId, LPCWSTR lpValue, DWORD dwValueLen, BOOL isGlobal)
+{
+    PTHEME_PROPERTY cur = MSSTYLES_PSFindProperty(ps, iPropertyPrimitive, iPropertyId);
+    /* Should duplicate properties overwrite the original, or be ignored? */
+    if(cur) return cur;
+
+    cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_PROPERTY));
+    cur->iPrimitiveType = iPropertyPrimitive;
+    cur->iPropertyId = iPropertyId;
+    cur->lpValue = lpValue;
+    cur->dwValueLen = dwValueLen;
+
+    if(ps->iStateId)
+        cur->origin = PO_STATE;
+    else if(ps->iPartId)
+        cur->origin = PO_PART;
+    else if(isGlobal)
+        cur->origin = PO_GLOBAL;
+    else
+        cur->origin = PO_CLASS;
+
+    cur->next = ps->properties;
+    ps->properties = cur;
     return cur;
 }
 
@@ -475,15 +559,22 @@ PTHEME_PARTSTATE MSSTYLES_AddPartState(PTHEME_CLASS tc, int iPartId, int iStateI
 void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
 {
     WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
+    WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
     PTHEME_CLASS cls;
+    PTHEME_CLASS globals;
     PTHEME_PARTSTATE ps;
     PUXINI_FILE ini;
     WCHAR szAppName[MAX_THEME_APP_NAME];
     WCHAR szClassName[MAX_THEME_CLASS_NAME];
+    WCHAR szPropertyName[MAX_THEME_VALUE_NAME];
     int iPartId;
     int iStateId;
+    int iPropertyPrimitive;
+    int iPropertyId;
     DWORD dwLen;
     LPCWSTR lpName;
+    DWORD dwValueLen;
+    LPCWSTR lpValue;
 
     ini = MSSTYLES_GetActiveThemeIni(tf);
 
@@ -493,13 +584,27 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
             continue;
         }
         if(MSSTYLES_ParseIniSectionName(lpName, dwLen, szAppName, szClassName, &iPartId, &iStateId)) {
+            BOOL isGlobal = FALSE;
+            if(!lstrcmpiW(szClassName, szGlobals)) {
+                isGlobal = TRUE;
+            }
             cls = MSSTYLES_AddClass(tf, szAppName, szClassName);
             ps = MSSTYLES_AddPartState(cls, iPartId, iStateId);
-            FIXME("Parse properties\n");
+
+            while((lpName=UXINI_GetNextValue(ini, &dwLen, &lpValue, &dwValueLen))) {
+                lstrcpynW(szPropertyName, lpName, min(dwLen+1, sizeof(szPropertyName)/sizeof(szPropertyName[0])));
+                if(MSSTYLES_LookupProperty(szPropertyName, &iPropertyPrimitive, &iPropertyId)) {
+                    MSSTYLES_AddProperty(ps, iPropertyPrimitive, iPropertyId, lpValue, dwValueLen, isGlobal);
+                }
+                else {
+                    TRACE("Unknown property %s\n", debugstr_w(szPropertyName));
+                }
+            }
         }
     }
 
     /* App/Class combos override values defined by the base class, map these overrides */
+    globals = MSSTYLES_FindClass(tf, NULL, szGlobals);
     cls = tf->classes;
     while(cls) {
         if(*cls->szAppName) {
@@ -507,6 +612,13 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
             if(!cls->overrides) {
                 TRACE("No overrides found for app %s class %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName));
             }
+            else {
+                cls->overrides = globals;
+            }
+        }
+        else {
+            /* Everything overrides globals..except globals */
+            if(cls != globals) cls->overrides = globals;
         }
         cls = cls->next;
     }
@@ -534,6 +646,7 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
     LPCWSTR start;
     LPCWSTR end;
     DWORD len;
+
     if(!tfActiveTheme) {
         TRACE("there is no active theme\n");
         return NULL;
@@ -557,7 +670,7 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
         cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
     }
     if(cls) {
-        TRACE("Opened class %s from list %s\n", debugstr_w(cls->szClassName), debugstr_w(pszClassList));
+        TRACE("Opened app %s, class %s from list %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName), debugstr_w(pszClassList));
     }
     return cls;
 }
@@ -577,4 +690,38 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
 {
     return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_FindProperty
+ *
+ * Locate a property in a class. Part and state IDs will be used as a
+ * preference, but may be ignored in the attempt to locate the property.
+ * Will scan the entire chain of overrides for this class.
+ */
+PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId)
+{
+    PTHEME_CLASS next = tc;
+    PTHEME_PARTSTATE ps;
+    PTHEME_PROPERTY tp;
+
+    TRACE("(%p, %d, %d, %d)\n", tc, iPartId, iStateId, iPropertyId);
+     /* Try and find an exact match on part & state */
+    while(next && (ps = MSSTYLES_FindPartState(next, iPartId, iStateId, &next))) {
+        if((tp = MSSTYLES_PSFindProperty(ps, iPropertyPrimitive, iPropertyId))) {
+            return tp;
+        }
+    }
+    /* If that fails, and we didn't already try it, search for just part */
+    if(iStateId != 0)
+        iStateId = 0;
+    /* As a last ditch attempt..go for just class */
+    else if(iPartId != 0)
+        iPartId = 0;
+    else
+        return NULL;
+
+    if((tp = MSSTYLES_FindProperty(tc, iPartId, iStateId, iPropertyPrimitive, iPropertyId)))
+        return tp;
+    return NULL;
 }
