@@ -52,7 +52,7 @@ static VOID TABLET_Register()
     wndClass.lpfnWndProc = TABLET_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 0;
-    wndClass.hCursor = (HCURSOR)NULL;
+    wndClass.hCursor = NULL;
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
     wndClass.lpszClassName = WC_TABLETCLASSNAME;
     RegisterClassW(&wndClass);
@@ -60,7 +60,7 @@ static VOID TABLET_Register()
 
 static VOID TABLET_Unregister()
 {
-    UnregisterClassW(WC_TABLETCLASSNAME, (HINSTANCE)NULL);
+    UnregisterClassW(WC_TABLETCLASSNAME, NULL);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)

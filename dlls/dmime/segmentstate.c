@@ -116,7 +116,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentStateImpl (LPCGUID lpcGUID, LPVOID
 	
 	obj = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegmentState8Impl));
 	if (NULL == obj) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicSegmentState8_Vtbl;

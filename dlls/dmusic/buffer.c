@@ -155,7 +155,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl (LPCGUID lpcGUID, LPVOID* ppob
 	
 	dmbuff = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBufferImpl));
 	if (NULL == dmbuff) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	dmbuff->lpVtbl = &DirectMusicBuffer_Vtbl;

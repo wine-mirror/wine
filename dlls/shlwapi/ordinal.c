@@ -1936,7 +1936,7 @@ HMENU WINAPI SHGetMenuFromID(HMENU hMenu, UINT uID)
   mi.fMask = MIIM_SUBMENU;
 
   if (!GetMenuItemInfoA(hMenu, uID, 0, &mi))
-    return (HMENU)NULL;
+    return NULL;
 
   return mi.hSubMenu;
 }
@@ -2418,8 +2418,8 @@ HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   wc.cbClsExtra    = 0;
   wc.cbWndExtra    = 4;
   wc.hInstance     = shlwapi_hInstance;
-  wc.hIcon         = (HICON)0;
-  wc.hCursor       = LoadCursorA((HINSTANCE)0, (LPSTR)IDC_ARROW);
+  wc.hIcon         = NULL;
+  wc.hCursor       = LoadCursorA(NULL, (LPSTR)IDC_ARROW);
   wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;
@@ -2705,8 +2705,8 @@ HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   wc.cbClsExtra    = 0;
   wc.cbWndExtra    = 4;
   wc.hInstance     = shlwapi_hInstance;
-  wc.hIcon         = (HICON)0;
-  wc.hCursor       = LoadCursorA((HINSTANCE)0, (LPSTR)IDC_ARROW);
+  wc.hIcon         = NULL;
+  wc.hCursor       = LoadCursorA(NULL, (LPSTR)IDC_ARROW);
   wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;

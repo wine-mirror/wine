@@ -438,7 +438,7 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
 
     whic->driverId = (DWORD)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD)&icopen);
     /* FIXME: What should we put here? */
-    whic->hdrv = (HDRVR)0;
+    whic->hdrv = NULL;
     
     if (whic->driverId == 0) 
     {

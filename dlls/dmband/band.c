@@ -682,7 +682,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBandImpl (LPCGUID lpcGUID, LPVOID* ppobj,
 	
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBandImpl));
   if (NULL == obj) {
-    *ppobj = (LPVOID) NULL;
+    *ppobj = NULL;
     return E_OUTOFMEMORY;
   }
   obj->UnknownVtbl = &DirectMusicBand_Unknown_Vtbl;

@@ -432,7 +432,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID *ppob
   
   track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicStyleTrack));
   if (NULL == track) {
-    *ppobj = (LPVOID) NULL;
+    *ppobj = NULL;
     return E_OUTOFMEMORY;
   }
   track->UnknownVtbl = &DirectMusicStyleTrack_Unknown_Vtbl;

@@ -67,7 +67,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicDownloadedInstrumentImpl (LPCGUID lpcGUID
 	
 	dmdlinst = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicDownloadedInstrumentImpl));
 	if (NULL == dmdlinst) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	dmdlinst->lpVtbl = &DirectMusicDownloadedInstrument_Vtbl;

@@ -286,7 +286,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID* ppobj) {
 	TRACE("(%p)\n", ppobj);
 	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderFileStream));
 	if (NULL == obj) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->StreamVtbl = &DirectMusicLoaderFileStream_Stream_Vtbl;
@@ -552,7 +552,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID* ppobj) {
 	TRACE("(%p)\n", ppobj);
 	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderResourceStream));
 	if (NULL == obj) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->StreamVtbl = &DirectMusicLoaderResourceStream_Stream_Vtbl;
@@ -810,7 +810,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID* ppobj) {
 	TRACE("(%p)\n", ppobj);
 	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderGenericStream));
 	if (NULL == obj) {
-		*ppobj = (LPVOID) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->StreamVtbl = &DirectMusicLoaderGenericStream_Stream_Vtbl;

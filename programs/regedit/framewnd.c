@@ -573,7 +573,7 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_CREATE:
         CreateWindowEx(0, szChildClass, _T("regedit child window"), WS_CHILD | WS_VISIBLE,
                        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                       hWnd, (HMENU)0, hInst, 0);
+                       hWnd, NULL, hInst, 0);
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam))

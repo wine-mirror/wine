@@ -181,7 +181,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     hAccel = LoadAccelerators(hInstance, (LPCTSTR)IDC_REGEDIT);
 
     /* Main message loop */
-    while (GetMessage(&msg, (HWND)NULL, 0, 0)) {
+    while (GetMessage(&msg, NULL, 0, 0)) {
         if (!TranslateAccelerator(hFrameWnd, hAccel, &msg)
            && !TranslateChildTabMessage(&msg)) {
             TranslateMessage(&msg);
