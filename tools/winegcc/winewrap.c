@@ -215,7 +215,7 @@ static const char *wrapper_code =
     "}\n"
 ;
 
-static char *output_name = "a.out";
+static const char *output_name = "a.out";
 static strarray *arh_files, *dll_files, *lib_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
@@ -345,7 +345,8 @@ static void add_lib_file(const char* library)
 static void create_the_wrapper(char* base_file, char* base_name, char* app_name, int gui_mode)
 {
     char *wrp_temp_name, *wspec_name, *wspec_c_name, *wspec_o_name;
-    char *wrap_c_name, *wrap_o_name, *dlls = "";
+    char *wrap_c_name, *wrap_o_name;
+    const char *dlls = "";
     strarray *wwrap_args, *wspec_args, *wcomp_args, *wlink_args;
     int i;
 

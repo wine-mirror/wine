@@ -2398,7 +2398,7 @@ void MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
 char *MSVCRT_tmpnam(char *s)
 {
   char tmpbuf[MAX_PATH];
-  char* prefix = "TMP";
+  const char* prefix = "TMP";
   if (!GetTempPathA(MAX_PATH,tmpbuf) ||
       !GetTempFileNameA(tmpbuf,prefix,0,MSVCRT_tmpname))
   {

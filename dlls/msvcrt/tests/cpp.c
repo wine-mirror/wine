@@ -335,12 +335,13 @@ static void test_exception(void)
   if (pe)
   {
     /* vector dtor, multiple elements */
+    char name[] = "a constant";
     *((int*)pe) = 3;
     pe = (exception*)((int*)pe + 1);
     call_func2(pexception_ctor, &pe[0], &e_name);
     call_func2(pexception_ctor, &pe[1], &e_name);
     call_func2(pexception_ctor, &pe[2], &e_name);
-    pe[3].name = "a constant";
+    pe[3].name = name;
     pe[3].do_free = 1; /* Crash if we try to free this */
     call_func2(pexception_vector_dtor, pe, 3); /* Should delete all 3 and then pe block */
   }

@@ -578,7 +578,7 @@ static int fork_and_wait( char *linker, char *link_name, char *path,
                           char *workdir, char *description )
 {
     int pos = 0;
-    char *argv[20];
+    const char *argv[20];
 
     WINE_TRACE( "linker app='%s' link='%s' mode=%s "
         "path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",

@@ -99,7 +99,7 @@ void strarray_free(strarray* arr)
     free(arr);
 }
 
-void strarray_add(strarray* arr, char* str)
+void strarray_add(strarray* arr, const char* str)
 {
     if (arr->size == arr->maximum)
     {
@@ -109,10 +109,10 @@ void strarray_add(strarray* arr, char* str)
     arr->base[arr->size++] = str;
 }
 
-void spawn(strarray* arr)
+void spawn(const strarray* arr)
 {
     int i, status;
-    char **argv = arr->base;
+    const char **argv = arr->base;
 
     if (verbose)
     {

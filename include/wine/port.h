@@ -280,7 +280,7 @@ extern int mkstemps(char *template, int suffix_len);
 # define _P_DETACH  4
 #endif
 #ifndef HAVE_SPAWNVP
-extern int spawnvp(int mode, const char *cmdname, char *const argv[]);
+extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 #endif
 
 /* Interlocked functions */

@@ -32,7 +32,7 @@
 #endif
 
 #ifndef HAVE_SPAWNVP
-int spawnvp(int mode, const char *cmdname, char *const argv[])
+int spawnvp(int mode, const char *cmdname, const char *const argv[])
 {
 #ifndef HAVE__SPAWNVP
     int pid = 0, status, wret;
@@ -40,7 +40,7 @@ int spawnvp(int mode, const char *cmdname, char *const argv[])
 
     if (mode == _P_OVERLAY)
     {
-        execvp(cmdname, argv);
+        execvp(cmdname, (char **)argv);
         return -1;  /* if we get here it failed */
     }
 
@@ -54,7 +54,7 @@ int spawnvp(int mode, const char *cmdname, char *const argv[])
     if (pid == 0)
     {
         sigaction( SIGPIPE, &dfl_act, NULL );
-        execvp(cmdname, argv);
+        execvp(cmdname, (char **)argv);
         _exit(1);
     }
 

@@ -30,13 +30,13 @@ char *strmake(const char *fmt, ...);
 typedef struct {
     size_t maximum;
     size_t size;
-    char** base;
+    const char** base;
 } strarray;
 
 strarray *strarray_alloc(void);
 void strarray_free(strarray* arr);
-void strarray_add(strarray* arr, char* str);
+void strarray_add(strarray* arr, const char* str);
 
-void spawn(strarray* arr);
+void spawn(const strarray* arr);
 
 extern int verbose;
