@@ -55,13 +55,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
      *((pchar)+1) = HIBYTE(LOWORD(word32)), \
      *((pchar)+2) = LOBYTE(HIWORD(word32)), \
      *((pchar)+3) = HIBYTE(HIWORD(word32)), \
-     (word32))
+     (word32)) /* allow as r-value */
 
   #define LITTLE_ENDIAN_32_READ(pchar) \
     (MAKELONG( \
       MAKEWORD(*(pchar), *((pchar)+1)) \
       MAKEWORD(*((pchar)+2), *((pchar)+3)))
 #endif
+
+/*
+ * NdrConformantString:
+ * 
+ * What MS calls a ConformantString is, in DCE terminology,
+ * a Varying Conformant String.
+ * [
+ *   maxlen: DWORD (max # of CHARTYPE characters, inclusive of '\0')
+ *   offset: DWORD (actual elements begin at (offset) CHARTYPE's into (data))
+ *   length: DWORD (# of CHARTYPE characters, inclusive of '\0')
+ *   [ 
+ *     data: CHARTYPE[maxlen]
+ *   ] 
+ * ], where CHARTYPE is the appropriate character type (specified externally)
+ *
+ */
 
 /***********************************************************************
  *            NdrConformantStringMarshall [RPCRT4.@]
@@ -78,7 +94,6 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
   if (*pFormat == RPC_FC_C_CSTRING) {
     len = strlen(pszMessage);
     assert( (pStubMsg->BufferLength > (len + 13)) && (pStubMsg->Buffer != NULL) );
-    /* in DCE terminology this is a Conformant Varying String */
     c = pStubMsg->Buffer;
     memset(c, 0, 12);
     LITTLE_ENDIAN_32_WRITE(c, len + 1); /* max length: strlen + 1 (for '\0') */
@@ -86,7 +101,7 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
     LITTLE_ENDIAN_32_WRITE(c, len + 1); /* actual length: (same) */
     c += 4;
     for (i = 0; i <= len; i++)
-      *(c++) = *(pszMessage++); /* copy the string itself into the remaining space */
+      *(c++) = *(pszMessage++);         /* the string itself */
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
     /* FIXME: raise an exception. */
@@ -120,8 +135,21 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
  */
 unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
 {
-  FIXME("(pStubMsg == ^%p, pFormat == ^%p): stub.\n", pStubMsg, pFormat);
-  return 0;
+  unsigned long rslt = 0;
+
+  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
+   
+  assert(pStubMsg && pFormat);
+
+  if (*pFormat == RPC_FC_C_CSTRING) {
+    rslt = LITTLE_ENDIAN_32_READ(pStubMsg->Buffer); /* maxlen */
+  } else {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    /* FIXME: raise an exception */
+  }
+
+  TRACE("  --> %lu\n", rslt);
+  return rslt;
 }
 
 /************************************************************************
@@ -130,42 +158,14 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char** ppMemory,
   PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
-  UINT32 len;
+  unsigned long len, ofs;
 
   TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
 
   assert(pFormat && ppMemory && pStubMsg);
 
-  /* get the length and check that we handle the format string...
-     FIXME: this is probably what NdrConformantStringMemorySize is for... so move code there? */
-
-  if (*pFormat == RPC_FC_C_CSTRING) {
-    /* What we should have here is a varying conformant string (of single-octet-chars):
-     * [
-     *   maxlen: DWORD
-     *   offset: DWORD
-     *   length: DWORD
-     *   [ 
-     *     data: char[], null terminated.
-     *   ] 
-     * ]
-     * I think what we want to do is advance the buffer pointer in the pStubMsg
-     * up to the point of the char after the last marshalled char.
-     * FIXME: it is probably supposed to really advance either length or maxlength
-     *        chars... but which?  For now I have ignored the issue and just positioned
-     *        after the terminating '\0'; this is (probably) wrong and will (probably)
-     *        cause problems until its fixed.
-     */
-
-     pStubMsg->Buffer += 8; /* FIXME: do we care about maxlen? */
-     len = LITTLE_ENDIAN_32_READ(pStubMsg->Buffer);
-     pStubMsg->Buffer += 4;
-  } else {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    /* FIXME: raise an exception. */
-    return NULL;
-  }
+  len = NdrConformantStringMemorySize(pStubMsg, pFormat);
 
   /* now the actual length (in bytes) that we need to store
      the unmarshalled string is in len, including terminating '\0' */
@@ -177,7 +177,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
        way... but then how do they do it?  AFAICS the Memory is never deallocated by
        the stub code so where does it go?... anyhow, I guess we'll just do it
        our own way for now... */
-    pStubMsg->MemorySize = len;
+    pStubMsg->MemorySize = len + BUFFER_PARANOIA;
     pStubMsg->Memory = *ppMemory;
     /* FIXME: pfnAllocate? or does that not apply to these "Memory" parts? */
     *ppMemory = pStubMsg->Memory = HeapReAlloc(GetProcessHeap(), 0, pStubMsg->Memory, pStubMsg->MemorySize);   
@@ -193,14 +193,22 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   if (*pFormat == RPC_FC_C_CSTRING) {
     char *c = *ppMemory;
 
-    while (*c != '\0')
-      *c++ = *(pStubMsg->Buffer++);
-    pStubMsg->Buffer++; /* advance past the '\0' */
+    pStubMsg->Buffer += 4;
+    ofs = LITTLE_ENDIAN_32_READ(pStubMsg->Buffer);
+    pStubMsg->Buffer += 4;
+    len = LITTLE_ENDIAN_32_READ(pStubMsg->Buffer);
+    pStubMsg->Buffer += 4;
 
-  } else 
-    assert(FALSE);
+    pStubMsg->Buffer += ofs;
 
-  return NULL; /*is this always right? */
+    while ((*c++ = *(pStubMsg->Buffer++)) != '\0') 
+      ;
+  } else {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    /* FIXME: raise an exception */
+  }
+
+  return NULL; /* FIXME: is this always right? */
 }
 
 /***********************************************************************
