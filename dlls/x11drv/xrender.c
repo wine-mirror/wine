@@ -130,6 +130,9 @@ MAKE_FUNCPTR(XRenderFindVisualFormat)
 MAKE_FUNCPTR(XRenderFreeGlyphSet)
 MAKE_FUNCPTR(XRenderFreePicture)
 MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+MAKE_FUNCPTR(XRenderSetPictureTransform)
+#endif
 MAKE_FUNCPTR(XRenderQueryExtension)
 #undef MAKE_FUNCPTR
 
@@ -177,6 +180,12 @@ LOAD_FUNCPTR(XRenderFreePicture)
 LOAD_FUNCPTR(XRenderSetPictureClipRectangles)
 LOAD_FUNCPTR(XRenderQueryExtension)
 #undef LOAD_FUNCPTR
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0);
+LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
+#undef LOAD_OPTIONAL_FUNCPTR
+#endif
+
 
         wine_tsx11_lock();
         if(pXRenderQueryExtension(gdi_display, &event_base, &error_base)) {
@@ -1561,9 +1570,13 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     widthSrc  = pts[1].x - pts[0].x;
     heightSrc = pts[1].y - pts[0].y;
 
-
-    if(widthDst != widthSrc || heightDst != heightSrc) {
-        FIXME("Unable to Stretch\n");
+#ifndef HAVE_XRENDERSETPICTURETRANSFORM
+    if(widthDst != widthSrc || heightDst != heightSrc)
+#else
+    if(!pXRenderSetPictureTransform)
+#endif
+    {
+        FIXME("Unable to Stretch, XRenderSetPictureTransform is currently required\n");
         return FALSE;
     }
 
@@ -1624,6 +1637,18 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
                                      CPSubwindowMode, &pa);
     TRACE("src_pict %08lx\n", src_pict);
 
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+    if(widthDst != widthSrc || heightDst != heightSrc) {
+        double xscale = widthSrc/(double)widthDst;
+        double yscale = heightSrc/(double)heightDst;
+        XTransform xform = {{
+            { XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(0) },
+            { XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(0) },
+            { XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1) }
+        }};
+        pXRenderSetPictureTransform(gdi_display, src_pict, &xform);
+    }
+#endif
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       xSrc, ySrc, 0, 0,
                       xDst + devDst->org.x, yDst + devDst->org.y, widthSrc, heightSrc);

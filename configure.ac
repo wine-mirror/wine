@@ -257,6 +257,15 @@ then
                   ],,
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
+
+        dnl *** Check for Transform functions in Xrender
+        if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes"
+        then
+              AC_CHECK_LIB(Xrender, XRenderSetPictureTransform,
+                [AC_DEFINE(HAVE_XRENDERSETPICTURETRANSFORM, 1,
+                 [Define if Xrender has the XRenderSetPictureTransform function])],,
+                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+        fi
       ]
     ) dnl *** End of X11/Xlib.h check
 

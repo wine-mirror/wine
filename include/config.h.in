@@ -830,6 +830,9 @@
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
 
+/* Define if Xrender has the XRenderSetPictureTransform function */
+#undef HAVE_XRENDERSETPICTURETRANSFORM
+
 /* Define if the X libraries support XVideo */
 #undef HAVE_XVIDEO
 
