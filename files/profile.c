@@ -8,8 +8,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
 
 #include "winbase.h"
 #include "winerror.h"
@@ -19,6 +21,7 @@
 #include "file.h"
 #include "heap.h"
 #include "debugtools.h"
+#include "xmalloc.h"
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(profile)
@@ -71,10 +74,42 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
 #define WINE_INI_GLOBAL ETCDIR "/wine.conf"
+#define WINE_CONFIG_DIR "/.wine"   /* config dir inside $HOME */
 
 static LPCWSTR wininiW = NULL;
 
 static CRITICAL_SECTION PROFILE_CritSect;
+
+
+/***********************************************************************
+ *           PROFILE_GetConfigDir
+ *
+ * Return the name of the configuration directory ($HOME/.wine)
+ */
+const char *PROFILE_GetConfigDir(void)
+{
+    static char *confdir;
+    if (!confdir)
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (!pwd)
+            {
+                fprintf( stderr, "wine: could not find your home directory\n" );
+                exit(1);
+            }
+            home = pwd->pw_dir;
+        }
+        confdir = xmalloc( strlen(home) + strlen(WINE_CONFIG_DIR) + 1 );
+        strcpy( confdir, home );
+        strcat( confdir, WINE_CONFIG_DIR );
+        mkdir( confdir, 0755 );  /* create it just in case */
+    }
+    return confdir;
+}
+
 
 /***********************************************************************
  *           PROFILE_CopyEntry
@@ -379,16 +414,13 @@ static BOOL PROFILE_FlushFile(void)
     {
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
-        if ((p = getenv( "HOME" )) != NULL)
-        {
-            strcpy( buffer, p );
-            strcat( buffer, "/.wine/" );
-            p = buffer + strlen(buffer);
-            strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
-            CharLowerA( p );
-            file = fopen( buffer, "w" );
-            unix_name = buffer;
-        }
+        strcpy( buffer, PROFILE_GetConfigDir() );
+        p = buffer + strlen(buffer);
+        *p++ = '/';
+        strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
+        CharLowerA( p );
+        file = fopen( buffer, "w" );
+        unix_name = buffer;
     }
     
     if (!file)
@@ -516,19 +548,16 @@ static BOOL PROFILE_Open( LPCSTR filename )
     /* Try to open the profile file, first in $HOME/.wine */
 
     /* FIXME: this will need a more general solution */
-    if ((p = getenv( "HOME" )) != NULL)
+    strcpy( buffer, PROFILE_GetConfigDir() );
+    p = buffer + strlen(buffer);
+    *p++ = '/';
+    strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
+    CharLowerA( p );
+    if ((file = fopen( buffer, "r" )))
     {
-        strcpy( buffer, p );
-        strcat( buffer, "/.wine/" );
-        p = buffer + strlen(buffer);
-        strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
-        CharLowerA( p );
-        if ((file = fopen( buffer, "r" )))
-        {
-            TRACE("(%s): found it in %s\n",
-                             filename, buffer );
-            CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
-        }
+        TRACE("(%s): found it in %s\n",
+              filename, buffer );
+        CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
     }
 
     if (!file)
