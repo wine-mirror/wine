@@ -848,6 +848,10 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_NCMBUTTONUP      0x00a8
 #define WM_NCMBUTTONDBLCLK  0x00a9
 
+#define WM_NCXBUTTONDOWN    0x00ab
+#define WM_NCXBUTTONUP      0x00ac
+#define WM_NCXBUTTONDBLCLK  0x00ad
+
   /* Keyboard messages */
 #define WM_KEYDOWN          0x0100
 #define WM_KEYUP            0x0101
@@ -907,10 +911,12 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_MBUTTONUP	    0x0208
 #define WM_MBUTTONDBLCLK    0x0209
 #define WM_MOUSEWHEEL       0x020A
-#define WM_MOUSEFIRST	    WM_MOUSEMOVE
+#define WM_XBUTTONDOWN      0x020B
+#define WM_XBUTTONUP        0x020C
+#define WM_XBUTTONDBLCLK    0x020D
 
-
-#define WM_MOUSELAST	    WM_MOUSEWHEEL
+#define WM_MOUSEFIRST       0x0200
+#define WM_MOUSELAST        0x020D
  
 #define WHEEL_DELTA      120
 #define WHEEL_PAGESCROLL  (UINT_MAX)
@@ -2977,7 +2983,9 @@ typedef struct
 #define VK_RBUTTON          0x02
 #define VK_CANCEL           0x03
 #define VK_MBUTTON          0x04
-/*                          0x05-0x07  Undefined */
+#define VK_XBUTTON1         0x05
+#define VK_XBUTTON2         0x06
+/*                          0x07  Undefined */
 #define VK_BACK             0x08
 #define VK_TAB              0x09
 /*                          0x0A-0x0B  Undefined */
@@ -3146,6 +3154,8 @@ typedef struct
 #define MK_SHIFT	    0x0004
 #define MK_CONTROL	    0x0008
 #define MK_MBUTTON	    0x0010
+#define MK_XBUTTON1         0x0020
+#define MK_XBUTTON2         0x0040
 
   /* Queue status flags */
 #define QS_KEY		0x0001
