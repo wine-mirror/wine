@@ -75,7 +75,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN95 */
     {
-        0x07005F03,
+        0x07000304,
         0xC0000004,
 	{
             sizeof(OSVERSIONINFOA), 4, 0, 0x40003B6,
