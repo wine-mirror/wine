@@ -492,7 +492,8 @@ static LRESULT COMBO_WindowPosChanging(
 /***********************************************************************
  *           COMBO_Create
  */
-static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG style )
+static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG style,
+                             BOOL unicode )
 {
   static const WCHAR clbName[] = {'C','o','m','b','o','L','B','o','x',0};
   static const WCHAR editName[] = {'E','d','i','t',0};
@@ -574,16 +575,22 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	}
       }
 
-      lphc->hWndLBox = CreateWindowExW(lbeExStyle,
-				       clbName,
-				       NULL,
-				       lbeStyle,
-				       lphc->droppedRect.left,
-				       lphc->droppedRect.top,
-				       lphc->droppedRect.right - lphc->droppedRect.left,
-				       lphc->droppedRect.bottom - lphc->droppedRect.top,
-                                       hwnd, (HMENU)ID_CB_LISTBOX,
-                                       GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+      if (unicode)
+          lphc->hWndLBox = CreateWindowExW(lbeExStyle, clbName, NULL, lbeStyle,
+                                           lphc->droppedRect.left,
+                                           lphc->droppedRect.top,
+                                           lphc->droppedRect.right - lphc->droppedRect.left,
+                                           lphc->droppedRect.bottom - lphc->droppedRect.top,
+                                           hwnd, (HMENU)ID_CB_LISTBOX,
+                                           GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+      else
+          lphc->hWndLBox = CreateWindowExA(lbeExStyle, "ComboLBox", NULL, lbeStyle,
+                                           lphc->droppedRect.left,
+                                           lphc->droppedRect.top,
+                                           lphc->droppedRect.right - lphc->droppedRect.left,
+                                           lphc->droppedRect.bottom - lphc->droppedRect.top,
+                                           hwnd, (HMENU)ID_CB_LISTBOX,
+                                           GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
 
       if( lphc->hWndLBox )
       {
@@ -610,15 +617,20 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 
               if (!IsWindowEnabled(hwnd)) lbeStyle |= WS_DISABLED;
 
-	      lphc->hWndEdit = CreateWindowExW(0,
-					       editName,
-					       NULL,
-					       lbeStyle,
-					       lphc->textRect.left, lphc->textRect.top,
-					       lphc->textRect.right - lphc->textRect.left,
-					       lphc->textRect.bottom - lphc->textRect.top,
-                                               hwnd, (HMENU)ID_CB_EDIT,
-                                               GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+              if (unicode)
+                  lphc->hWndEdit = CreateWindowExW(0, editName, NULL, lbeStyle,
+                                                   lphc->textRect.left, lphc->textRect.top,
+                                                   lphc->textRect.right - lphc->textRect.left,
+                                                   lphc->textRect.bottom - lphc->textRect.top,
+                                                   hwnd, (HMENU)ID_CB_EDIT,
+                                                   GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+              else
+                  lphc->hWndEdit = CreateWindowExA(0, "Edit", NULL, lbeStyle,
+                                                   lphc->textRect.left, lphc->textRect.top,
+                                                   lphc->textRect.right - lphc->textRect.left,
+                                                   lphc->textRect.bottom - lphc->textRect.top,
+                                                   hwnd, (HMENU)ID_CB_EDIT,
+                                                   GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
 
 	      if( !lphc->hWndEdit )
 		bEdit = FALSE;
@@ -1907,7 +1919,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		    hwndParent = ((LPCREATESTRUCTA)lParam)->hwndParent;
 		    style = ((LPCREATESTRUCTA)lParam)->style;
 		}
-                return COMBO_Create(hwnd, lphc, hwndParent, style);
+                return COMBO_Create(hwnd, lphc, hwndParent, style, unicode);
 	}
 
         case WM_PRINTCLIENT:
@@ -1973,9 +1985,10 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 	case WM_CLEAR:
                 if ((message == WM_GETTEXTLENGTH) && !ISWIN31 && !(lphc->wState & CBF_EDIT))
                 {
-                int j = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
-                if (j == -1) return 0;
-                return SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, j, 0);
+                    int j = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
+                    if (j == -1) return 0;
+                    return unicode ? SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, j, 0) :
+                                     SendMessageA(lphc->hWndLBox, LB_GETTEXTLEN, j, 0);
                 }
 		else if( lphc->wState & CBF_EDIT )
 		{
@@ -2218,7 +2231,8 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		wParam = (INT)(INT16)wParam;
 		/* fall through */
 	case CB_GETLBTEXTLEN:
-		return SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0);
+                return unicode ? SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0) :
+                                 SendMessageA(lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0);
 	case CB_GETITEMDATA16:
 		wParam = (INT)(INT16)wParam;
 		/* fall through */

@@ -2608,8 +2608,10 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     case LB_GETTEXTLEN:
         if ((INT)wParam >= descr->nb_items || (INT)wParam < 0)
             return LB_ERR;
-        return (HAS_STRINGS(descr) ? strlenW(descr->items[wParam].str)
-                                   : sizeof(DWORD));
+        if (!HAS_STRINGS(descr)) return sizeof(DWORD);
+        if (unicode) return strlenW( descr->items[wParam].str );
+        return WideCharToMultiByte( CP_ACP, 0, descr->items[wParam].str,
+                                    strlenW(descr->items[wParam].str), NULL, 0, NULL, NULL );
 
     case LB_GETCURSEL16:
     case LB_GETCURSEL:

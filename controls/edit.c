@@ -969,7 +969,9 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
 	case WM_GETTEXTLENGTH:
 		DPRINTF_EDIT_MSG32("WM_GETTEXTLENGTH");
-		result = strlenW(es->text);
+                if (unicode) result = strlenW(es->text);
+                else result = WideCharToMultiByte( CP_ACP, 0, es->text, strlenW(es->text),
+                                                   NULL, 0, NULL, NULL );
 		break;
 
 	case WM_HSCROLL:
