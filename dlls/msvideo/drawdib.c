@@ -311,7 +311,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
     whdd = MSVIDEO_GetHddPtr(hdd);
     if (!whdd) return FALSE;
 
-    if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | DDF_UPDATE | DDF_DONTDRAW))
+    if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | DDF_UPDATE | DDF_DONTDRAW | DDF_BACKGROUNDPAL))
         FIXME("wFlags == 0x%08lx not handled\n", (DWORD)wFlags);
 
     if (!lpBits) 
@@ -362,7 +362,12 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
         }
     }
     if (!(wFlags & DDF_DONTDRAW) && whdd->hpal)
-        SelectPalette(hdc, whdd->hpal, FALSE);
+    {
+        if ((wFlags & DDF_BACKGROUNDPAL) && ! (wFlags & DDF_SAME_HDC))
+         SelectPalette(hdc, whdd->hpal, TRUE);
+        else
+         SelectPalette(hdc, whdd->hpal, FALSE);
+    }
 
     if (!(StretchBlt(whdd->hdc, xDst, yDst, dxDst, dyDst, whdd->hMemDC, xSrc, ySrc, dxSrc, dySrc, SRCCOPY)))
         ret = FALSE;
