@@ -62,7 +62,6 @@ LIBSUBDIRS = \
 	dlls/sound \
 	dlls/stress \
 	dlls/tapi32 \
-	dlls/ver \
 	dlls/version \
 	dlls/win32s \
 	dlls/win87em \
@@ -177,7 +176,6 @@ LIBOBJS = \
 	dlls/sound/sound.o \
 	dlls/stress/stress.o \
 	dlls/tapi32/tapi32.o \
-	dlls/ver/ver.o \
 	dlls/version/version.o \
 	dlls/win32s/win32s.o \
 	dlls/win87em/win87em.o \

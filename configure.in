@@ -934,7 +934,6 @@ dlls/shell32/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
 dlls/tapi32/Makefile
-dlls/ver/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/win87em/Makefile

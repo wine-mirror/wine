@@ -30,7 +30,6 @@ SUBDIRS = \
 	sound \
 	stress \
 	tapi32 \
-	ver \
 	version \
 	win32s \
 	win87em \

@@ -5,12 +5,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = version
 
-SPEC_SRCS = version.spec
+SPEC_SRCS = ver.spec version.spec
 
 C_SRCS = \
 	info.c \
 	install.c \
-	resource.c
+	resource.c \
+	ver16.c
 
 all: $(MODULE).o
 
