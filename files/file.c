@@ -55,6 +55,9 @@
 #ifdef HAVE_UTIME_H
 # include <utime.h>
 #endif
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -458,7 +461,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
