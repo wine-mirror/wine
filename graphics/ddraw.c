@@ -840,8 +840,6 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     if (!This->s.ddraw->d.paintable)
 	    return DD_OK;
 
-    Xlib_copy_surface_on_screen(iflipto);
-
     /* We need to switch the lowlevel surfaces, for xlib this is: */
     /* The surface pointer */
     surf				= This->s.surface_desc.y.lpSurface;
@@ -851,6 +849,8 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     image				= This->t.xlib.image;
     This->t.xlib.image			= iflipto->t.xlib.image;
     iflipto->t.xlib.image		= image;
+
+    Xlib_copy_surface_on_screen(This);
 
     if (iflipto->s.palette && iflipto->s.palette->cm)
 	TSXSetWindowColormap(display,This->s.ddraw->d.drawable,iflipto->s.palette->cm);
