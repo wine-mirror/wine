@@ -87,7 +87,7 @@ sub read_spec_file {
     }
 }
 
-my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv dlls/gdi/win16drv graphics objects);
+my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv graphics objects);
 my @ntdll_dirs = qw(files if1632 loader/ne loader memory misc msdos ole relay32 scheduler win32);
 my @user32_dirs = qw(controls dlls/user/dde windows);
 
@@ -921,7 +921,7 @@ sub _generate_dsp {
 		print OUT "InputPath=$source_file\r\n";
 		print OUT "\r\n";
 		print OUT "\"\$(OutDir)\\wine\\$h_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
-		print OUT "\tcopy \$(InputPath) \$(OutDir)\\wine\r\n";
+		print OUT "\tcopy \"\$(InputPath)\" \"\$(OutDir)\\wine\"\r\n";
 		print OUT "\r\n";
 		print OUT "# End Custom Build\r\n";
 	    }
