@@ -26,6 +26,7 @@ SUBDIRS = \
 	oledlg \
 	olesvr \
 	psapi \
+	setupx \
 	shell32 \
 	sound \
 	stress \

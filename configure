@@ -6115,6 +6115,7 @@ dlls/oledlg/Makefile
 dlls/olesvr/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
+dlls/setupx/Makefile
 dlls/shell32/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
@@ -6327,6 +6328,7 @@ dlls/oledlg/Makefile
 dlls/olesvr/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
+dlls/setupx/Makefile
 dlls/shell32/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
