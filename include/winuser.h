@@ -1680,21 +1680,6 @@ typedef struct
 #define MB_RIGHT		0x00080000
 #define MB_RTLREADING		0x00100000
 
-typedef struct _PRINTER_DEFAULTS32A {
-    LPSTR        pDatatype;
-    LPDEVMODE32A pDevMode;
-    ACCESS_MASK  DesiredAccess;
-} PRINTER_DEFAULTS32A, *LPPRINTER_DEFAULTS32A;
-
-typedef struct _PRINTER_DEFAULTS32W {
-    LPWSTR       pDatatype;
-    LPDEVMODE32W pDevMode;
-    ACCESS_MASK  DesiredAccess;
-} PRINTER_DEFAULTS32W, *LPPRINTER_DEFAULTS32W;
-
-DECL_WINELIB_TYPE_AW(PRINTER_DEFAULTS)
-DECL_WINELIB_TYPE_AW(LPPRINTER_DEFAULTS)
-
 #define	HELPINFO_WINDOW		0x0001
 #define	HELPINFO_MENUITEM	0x0002
 typedef struct			/* Structure pointed to by lParam of WM_HELP */

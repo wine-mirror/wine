@@ -226,6 +226,7 @@ extern int WIN32_LastError;
 #define ERROR_NOACCESS              998
 #define ERROR_SWAPERROR             999
 #define ERROR_CAN_NOT_COMPLETE      1003
+#define ERROR_INVALID_FLAGS         1004
 #define ERROR_BADKEY                1010 /* Config reg key invalid */
 #define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */
 #define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
@@ -255,7 +256,9 @@ extern int WIN32_LastError;
 #define DISP_E_TYPEMISMATCH 0x80020005L
 #define DISP_E_ARRAYISLOCKED  0x8002000D
 #define DISP_E_BADINDEX       0x8002000B
+#define DISP_E_MEMBERNOTFOUND            0x80020003L
 
+#define TYPE_E_ELEMENTNOTFOUND           0x8002802BL
 
 
 /* Drag and Drop */
@@ -283,6 +286,7 @@ extern int WIN32_LastError;
 #define CO_E_INIT_SCM_MAP_VIEW_OF_FILE	0x80004010
 #define CO_E_INIT_SCM_EXEC_FAILURE	0x80004011
 #define CO_E_INIT_ONLY_SINGLE_THREADED	0x80004012 */
+#define CO_E_ERRORINDLL                 0x800401F9L
 
 #define CO_E_OBJISREG                   0x800401FB
 #define	OLE_E_ENUM_NOMORE		      0x80040002

@@ -32,17 +32,31 @@ typedef BSTR16		*LPBSTR16;
 typedef BSTR32		*LPBSTR32;
 DECL_WINELIB_TYPE(LPBSTR)
 
-struct _GUID
+#ifndef GUID_DEFINED
+#define GUID_DEFINED
+typedef struct _GUID
 {
     DWORD Data1;
     WORD  Data2;
     WORD  Data3;
     BYTE  Data4[8];
-};
+} GUID;
+#endif
 
-typedef struct _GUID	GUID,*LPGUID,*REFGUID;
-typedef struct _GUID	CLSID,*LPCLSID,*REFCLSID;
-typedef struct _GUID	IID,*REFIID,*LPIID;
+typedef GUID	*LPGUID;
+typedef GUID	CLSID,*LPCLSID;
+typedef GUID	IID,*LPIID;
+
+#ifdef __cplusplus
+#define REFGUID             const GUID &
+#define REFIID              const IID &
+#define REFCLSID            const CLSID &
+#else // !__cplusplus
+#define REFGUID             GUID * 
+#define REFIID              IID *
+#define REFCLSID            CLSID *
+#endif // !__cplusplus
+
 
 #define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE32 a##32
 DECLARE_HANDLE(HMETAFILEPICT);

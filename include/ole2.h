@@ -19,7 +19,9 @@ typedef LPVOID LPDROPTARGET;
 /* FIXME: should be in oleidl.h */
 typedef struct  tagOleMenuGroupWidths
 { LONG width[ 6 ];
-} OLEMENUGROUPWIDTHS32;
+} OLEMENUGROUPWIDTHS32, OLEMENUGROUPWIDTHS;
+
+
 
 typedef struct tagOleMenuGroupWidths *LPOLEMENUGROUPWIDTHS32;
 

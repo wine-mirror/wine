@@ -1,6 +1,11 @@
 #ifndef __WINE_TCHAR_H
 #define __WINE_TCHAR_H
 
+#include "wintypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* FIXME: this should be in direct.h but since it's a standard C library include (on some systems)... */
 #define _chdir chdir
@@ -34,21 +39,24 @@
 
 /* FIXME: this should be in string.h but since it's a standard C library include... */
 #define _stricmp strcasecmp
+#define _strcmpi strcasecmp
+#define strcmpi strcasecmp
 #define _strnicmp strncasecmp
+#define strnicmp strncasecmp
 #define _strdup strdup
 /* FIXME: stricoll is not implemented but strcasecmp is probably close enough in most cases */
 #define _stricoll strcasecmp
 #define stricoll _stricoll
 #define strlwr _strlwr
-/* FIXME: _strlwr is not implemented */
+char *_strlwr(char *string);
 #define strnset _strnset
 /* FIXME: _strnset is not implemented */
 #define strrev _strrev
-/* FIXME: _strrev is not implemented */
+char *_strrev(char *string);
 #define strset _strset
 /* FIXME: _strset is not implemented */
 #define strupr _strupr
-/* FIXME: _strupr is not implemented */
+char *_strupr(char *string);
 #define ultoa _ultoa
 /* FIXME: _ultoa is not implemented */
 
@@ -124,6 +132,7 @@
 #define _putts        WINE_tchar_routine(puts,            puts,        putws)
 #define _tmain        WINE_tchar_routine(main,            main,        wmain)
 #define _sntprintf    WINE_tchar_routine(sprintf,         sprintf,     swprintf)
+#define _stprintf     WINE_tchar_routine(sprintf,         sprintf,     swprintf)
 #define _stscanf      WINE_tchar_routine(sscanf,          sscanf,      swscanf)
 #define _taccess      WINE_tchar_routine(_access,         _access,     _waccess)
 #define _tasctime     WINE_tchar_routine(asctime,         asctime,     _wasctime)
@@ -247,5 +256,17 @@ DECL_WINELIB_TYPE_AW (_TCHAR)
 typedef UCHAR  _TUCHAR32A;
 typedef WCHAR _TUCHAR32W;
 DECL_WINELIB_TYPE_AW (_TUCHAR)
+typedef CHAR TCHAR32A, *PTCHAR32A;
+typedef WCHAR TCHAR32W, *PTCHAR32W;
+DECL_WINELIB_TYPE_AW (TCHAR)
+DECL_WINELIB_TYPE_AW (PTCHAR)
+typedef LPWSTR PTSTR32W, LPTSTR32W;
+typedef LPSTR PTSTR32A, LPTSTR32A;
+DECL_WINELIB_TYPE_AW (PTSTR)
+DECL_WINELIB_TYPE_AW (LPTSTR)
+	 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 				 
 #endif /* __WINE_TCHAR_H */

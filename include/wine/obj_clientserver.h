@@ -42,6 +42,12 @@ HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
  * IMessageFilter interface
  */
 /* FIXME: not implemented */
+#define ICOM_INTERFACE IMessageFilter
+ICOM_BEGIN(IMessageFilter, IUnknown)
+ICOM_END(IMessageFilter)
+#undef ICOM_INTERFACE
+
+
 
 HRESULT WINAPI CoRegisterMessageFilter16(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
 HRESULT WINAPI CoRegisterMessageFilter32(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);

@@ -229,7 +229,32 @@ ICOM_END(IPersistFile)
 /*****************************************************************************
  * IPersistStorage interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IPersistStorage
+ICOM_BEGIN(IPersistStorage, IPersist)
+		ICOM_METHOD (HRESULT,IsDirty)
+		ICOM_METHOD1(HRESULT,InitNew,         IStorage32*,pStg)
+		ICOM_METHOD1(HRESULT,Load,            IStorage32*,pStg)
+		ICOM_METHOD2(HRESULT,Save,            IStorage32*,pStgSave,  BOOL32,fSameAsLoad)
+		ICOM_METHOD1(HRESULT,SaveCompleted,   IStorage32*,pStgNew);
+		ICOM_METHOD (HRESULT,HandsOffStorage)
+ICOM_END(IPersistStorage)
+#undef ICOM_INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IPersistStorage_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
+#define IPersistStorage_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
+#define IPersistStorage_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+/*** IPersist methods ***/
+#define IPersistStorage_GetClassID(p,a)    ICOM_ICALL1(IPersist,GetClassID,p,a)
+/*** IPersistFile methods ***/
+#define IPersistStorage_IsDirty(p)         ICOM_CALL (IsDirty,p)
+#define IPersistStorage_InitNew(p,a)			 ICOM_CALL1(InitNew,p,a)
+#define IPersistStorage_Load(p,a)          ICOM_CALL1(Load,p,a)
+#define IPersistStorage_Save(p,a,b)        ICOM_CALL2(Save,p,a,b)
+#define IPersistStorage_SaveCompleted(p,a) ICOM_CALL1(SaveCompleted,p,a)
+#define IPersistStorage_HandsOffStorage(p) ICOM_CALL (HandsOffStorage,p)
+#endif
 
 
 /*****************************************************************************

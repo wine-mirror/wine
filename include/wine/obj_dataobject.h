@@ -11,10 +11,12 @@
 /*****************************************************************************
  * Predeclare the structures
  */
+typedef struct DVTARGETDEVICE16 DVTARGETDEVICE16, *LPDVTARGETDEVICE16;
 typedef struct DVTARGETDEVICE32 DVTARGETDEVICE32, *LPDVTARGETDEVICE32;
 DECL_WINELIB_TYPE(DVTARGETDEVICE)
 DECL_WINELIB_TYPE(LPDVTARGETDEVICE)
 
+typedef struct FORMATETC16 FORMATETC16, *LPFORMATETC16;
 typedef struct FORMATETC32 FORMATETC32, *LPFORMATETC32;
 DECL_WINELIB_TYPE(FORMATETC)
 DECL_WINELIB_TYPE(LPFORMATETC)
@@ -109,6 +111,10 @@ struct STGMEDIUM32
  * IAdviseSink interface
  */
 /* FIXME: not implemented */
+#define ICOM_INTERFACE IAdviseSink
+ICOM_BEGIN(IAdviseSink,IUnknown)
+ICOM_END(IAdviseSink)
+#undef ICOM_INTERFACE
 
 
 /*****************************************************************************
