@@ -36,6 +36,7 @@ my %bin_install =
   "uninstaller" => 1,
   "wcmd" => 1,
   "wineboot" => 1,
+  "winebrowser" => 1,
   "winecfg" => 1,
   "wineconsole" => 1,
   "winedbg" => 1,

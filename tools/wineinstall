@@ -145,6 +145,7 @@ function configure_wine_applications {
   link_app uninstaller  "$CROOT/windows/uninstall.exe"
   link_app winhelp      "$CROOT/windows/winhelp.exe"
   link_app winhelp      "$CROOT/windows/winhlp32.exe"
+  link_app winebrowser  "$CROOT/windows/winebrowser.exe"
 }
 
 # startup...

@@ -22,6 +22,7 @@ SUBDIRS = \
 	view \
 	wcmd \
 	wineboot \
+	winebrowser \
 	winecfg \
 	wineconsole \
 	winedbg \
@@ -50,6 +51,7 @@ INSTALLSUBDIRS = \
 	uninstaller \
 	wcmd \
 	wineboot \
+	winebrowser \
 	winecfg \
 	wineconsole \
 	winedbg \
@@ -71,6 +73,7 @@ INSTALLPROGS = \
 	uninstaller \
 	wcmd \
 	wineboot \
+	winebrowser \
 	winecfg \
 	wineconsole \
 	winedbg \
@@ -99,6 +102,7 @@ SYMLINKS = \
 	view.exe \
 	wcmd.exe \
 	wineboot.exe \
+	winebrowser.exe \
 	winecfg.exe \
 	wineconsole.exe \
 	winedbg.exe \
@@ -208,6 +212,9 @@ wcmd.exe$(DLLEXT): wcmd/wcmd.exe$(DLLEXT)
 wineboot.exe$(DLLEXT): wineboot/wineboot.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) wineboot/wineboot.exe$(DLLEXT) $@
 
+winebrowser.exe$(DLLEXT): winebrowser/winebrowser.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winebrowser/winebrowser.exe$(DLLEXT) $@
+
 winecfg.exe$(DLLEXT): winecfg/winecfg.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winecfg/winecfg.exe$(DLLEXT) $@
 
@@ -259,6 +266,7 @@ uninstaller/uninstaller.exe$(DLLEXT): uninstaller
 view/view.exe$(DLLEXT): view
 wcmd/wcmd.exe$(DLLEXT): wcmd
 wineboot/wineboot.exe$(DLLEXT): wineboot
+winebrowser/winebrowser.exe$(DLLEXT): winebrowser
 winecfg/winecfg.exe$(DLLEXT): winecfg
 wineconsole/wineconsole.exe$(DLLEXT): wineconsole
 winedbg/winedbg.exe$(DLLEXT): winedbg
