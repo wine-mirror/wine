@@ -190,7 +190,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     file_set_error();
 }
 
-#elif defined(__sun__)
+#elif defined(__sun) || defined(__sun__)
 
 /* retrieve a thread context */
 static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
