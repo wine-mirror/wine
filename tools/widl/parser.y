@@ -590,6 +590,7 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr)
       expr->u.lval = -expr->u.lval;
       return expr;
     default:
+      break;
     }
   }
   e = xmalloc(sizeof(expr_t));
@@ -639,6 +640,7 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
       free(expr2);
       return expr1;
     default:
+      break;
     }
   }
   e = xmalloc(sizeof(expr_t));
