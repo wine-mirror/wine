@@ -79,8 +79,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(listview);
 typedef struct tagCOLUMN_INFO
 {
   RECT rcHeader;	/* tracks the header's rectangle */
-  UINT align;		/* one of DT_{LEFT,CENTER,RIGHT} */
-  BOOL hasImage;        /* on/off switch for column images */
+  int fmt;		/* same as LVCOLUMN.fmt */
 } COLUMN_INFO;
 
 typedef struct tagITEMHDR
@@ -303,7 +302,6 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *, LPCWSTR, BOOL);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
 static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
 static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
-static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *, INT, LPLVCOLUMNW, BOOL);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
@@ -1734,7 +1732,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	    if (!IsRectEmpty(&State)) Icon.left += IMAGE_PADDING;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
-	    if (infoPtr->himlSmall && (!lpColumnInfo || lpColumnInfo->hasImage)) 
+	    if (infoPtr->himlSmall && (!lpColumnInfo || lpLVItem->iSubItem == 0 || (lpColumnInfo->fmt & LVCFMT_IMAGE)))
 		Icon.right += infoPtr->iconSize.cx;
 	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
 	}
@@ -3386,7 +3384,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     else if (nSubItem)
     {
 	COLUMN_INFO *lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
-	if (lpColumnInfo) uFormat |= lpColumnInfo->align;
+	if (lpColumnInfo)
+	{
+            if (lpColumnInfo->fmt & LVCFMT_LEFT) uFormat |= DT_LEFT;
+            else if (lpColumnInfo->fmt & LVCFMT_RIGHT) uFormat |= DT_RIGHT;
+            else if (lpColumnInfo->fmt & LVCFMT_CENTER) uFormat |= DT_CENTER;
+	}
     }
     if (!(uFormat & (DT_RIGHT | DT_CENTER))) rcLabel.left += 2;
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
@@ -4471,7 +4474,7 @@ static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] nItem :  column index
+ * [I] nColumn :  column index
  * [IO] lpColumn : column information
  * [I] isW : if TRUE, then lpColumn is a LPLVCOLUMNW
  *           otherwise it is in fact a LPLVCOLUMNA
@@ -4480,77 +4483,45 @@ static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVCOLUMNW lpColumn, BOOL isW)
+static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLUMNW lpColumn, BOOL isW)
 {
-  HDITEMW hdi;
-  BOOL bResult = FALSE;
+    COLUMN_INFO *lpColumnInfo;
+    HDITEMW hdi;
 
-  if (lpColumn != NULL)
-  {
+    if (!lpColumn || nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn))) return FALSE;
 
     /* initialize memory */
     ZeroMemory(&hdi, sizeof(hdi));
 
-    if (lpColumn->mask & LVCF_FMT)
-      hdi.mask |= HDI_FORMAT;
-
-    if (lpColumn->mask & LVCF_WIDTH)
-      hdi.mask |= HDI_WIDTH;
-
     if (lpColumn->mask & LVCF_TEXT)
     {
-      hdi.mask |= HDI_TEXT;
-      hdi.cchTextMax = lpColumn->cchTextMax;
-      hdi.pszText    = lpColumn->pszText;
+        hdi.mask |= HDI_TEXT;
+        hdi.pszText = lpColumn->pszText;
+        hdi.cchTextMax = lpColumn->cchTextMax;
     }
 
     if (lpColumn->mask & LVCF_IMAGE)
-      hdi.mask |= HDI_IMAGE;
+        hdi.mask |= HDI_IMAGE;
 
     if (lpColumn->mask & LVCF_ORDER)
-      hdi.mask |= HDI_ORDER;
+        hdi.mask |= HDI_ORDER;
 
-    if (isW)
-      bResult = Header_GetItemW(infoPtr->hwndHeader, nItem, &hdi);
-    else
-      bResult = Header_GetItemA(infoPtr->hwndHeader, nItem, &hdi);
+    if (!SendMessageW(infoPtr->hwndHeader, isW ? HDM_GETITEMW : HDM_GETITEMA, nColumn, (LPARAM)&hdi)) return FALSE;
 
-    if (bResult)
-    {
-      if (lpColumn->mask & LVCF_FMT)
-      {
-        lpColumn->fmt = 0;
+    if (lpColumn->mask & LVCF_FMT)
+	lpColumn->fmt = lpColumnInfo->fmt;
 
-        if (hdi.fmt & HDF_LEFT)
-          lpColumn->fmt |= LVCFMT_LEFT;
-        else if (hdi.fmt & HDF_RIGHT)
-          lpColumn->fmt |= LVCFMT_RIGHT;
-        else if (hdi.fmt & HDF_CENTER)
-          lpColumn->fmt |= LVCFMT_CENTER;
+    if (lpColumn->mask & LVCF_WIDTH)
+        lpColumn->cx = lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left;
 
-        if (hdi.fmt & HDF_IMAGE)
-          lpColumn->fmt |= LVCFMT_COL_HAS_IMAGES;
+    if (lpColumn->mask & LVCF_IMAGE)
+	lpColumn->iImage = hdi.iImage;
 
-	if (hdi.fmt & HDF_BITMAP_ON_RIGHT)
-	  lpColumn->fmt |= LVCFMT_BITMAP_ON_RIGHT;
-      }
+    if (lpColumn->mask & LVCF_ORDER)
+	lpColumn->iOrder = hdi.iOrder;
 
-      if (lpColumn->mask & LVCF_WIDTH)
-        lpColumn->cx = hdi.cxy;
-
-      if (lpColumn->mask & LVCF_IMAGE)
-        lpColumn->iImage = hdi.iImage;
-
-      if (lpColumn->mask & LVCF_ORDER)
-        lpColumn->iOrder = hdi.iOrder;
-
-      TRACE("(col=%d, lpColumn=%s, isW=%d)\n",
-	    nItem, debuglvcolumn_t(lpColumn, isW), isW);
-
-    }
-  }
-
-  return bResult;
+    return TRUE;
 }
 
 
@@ -5961,18 +5932,7 @@ static BOOL column_fill_info(LISTVIEW_INFO *infoPtr, COLUMN_INFO *lpColumnInfo, 
     if (!Header_GetItemRect(infoPtr->hwndHeader, nColumn, &rcCol)) return FALSE;
     lpColumnInfo->rcHeader = rcCol;
     if (lpColumn->mask & LVCF_FMT)
-    {
-        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT) lpColumnInfo->align = DT_LEFT;
-        else if (lpColumn->fmt & LVCFMT_RIGHT) lpColumnInfo->align = DT_RIGHT;
-        else if (lpColumn->fmt & LVCFMT_CENTER) lpColumnInfo->align = DT_CENTER;
-	
-        if (nColumn == 0 || (lpColumn->fmt & LVCFMT_IMAGE)) lpColumnInfo->hasImage = TRUE;
-    } 
-    else
-    {
-	lpColumnInfo->align = DT_LEFT;
-	lpColumnInfo->hasImage = (nColumn == 0);
-    }
+	lpColumnInfo->fmt = lpColumn->fmt;
 
     return TRUE;
 }
