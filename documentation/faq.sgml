@@ -43,24 +43,27 @@
           Wine is a program which allows the operation of DOS and MS
           Windows programs (Windows 3.x and Win32 executables) on UNIX. 
           It consists of a program loader, which loads and executes a Windows
-          binary, and a library that implements Windows API calls using
-          their UNIX or X11 equivalents. The library may also be used 
+          binary, and a set of libraries that implements Windows API calls
+          using their UNIX or X11 equivalents. The libraries may also be used
           for porting Win32 code into native UNIX executables, often
           without many changes in the source. Wine is free software, 
           and its license (contained in the file LICENSE
-          in each distribution) is LGPL style.
+          in each distribution) is LGPL.
         </para>
       </answer>
       </qandaentry>
 
      <qandaentry>
       <question id="Is-Wine-an-emulator">
-        <para> Is Wine an emulator?</para>
+        <para>Is Wine an emulator?</para>
       </question>
       <answer>
         <para>
-          Fortunately, no. Wine provides low-level binary compatibility, 
-          but currently only for OSes running on Intel-compatible chips.
+          No, as the name says, Wine Is Not a (CPU) Emulator. Wine just
+          provides the Windows API. This means that you will need an
+          x86-compatible processor to run an x86 Windows application. The
+          advantage is that, unlike solutions that rely on emulation, Wine
+          runs applications run at full speed.
        </para>
       </answer>
       </qandaentry
@@ -112,9 +115,13 @@
 
        <para>
           Both are licensed under the GPL. Bochs is older than plex86, seems to be 
-          easier to install, but plex86 will run faster because plex86 uses a real 
-          time binary compiler. The drawback of all emulators is that you need a version 
-          of Windows in order to run Windows.
+          easier to install, but plex86 will run faster because plex86 uses a just in
+          time binary compiler.
+       </para>
+       <para>
+          The drawback of all emulators is that you need a version
+          of Windows in order to run Windows, and that they all have an
+          impact on performance.
        </para>
 
       </answer>
@@ -192,7 +199,7 @@
            <listitem>
            <para>
               This is the "standard" source distribution of Wine. Its license is 
-              LGPL, it can be downloaded for free. 
+              the LGPL, it can be downloaded for free.
             </para>
            </listitem>
           </varlistentry>
@@ -215,44 +222,50 @@
             <para>
               This is TransGaming's Wine version specially suited for games. 
               It includes Direct3D support (thus its DirectX support is much
-              more complete than Wine's) and copyprotection support. Its license
-              is AFPL, the source distribution can be downloaded for free, but 
-              the binary pack ages that include copy protection support and good
-              support are only for subscribed customers ($5/month). 
+              more complete than Wine's). Most of the code is under the AFPL
+              and can be downloaded for free.
+            </para>
+            <para>
+              However Transgaming also distributes binaries that contain
+              improved copy protection support (needed for many
+              games), support, and other enhancements. These packages are
+              only available in binary form to subscribed customers
+              ($5/month).
             </para>
          </listitem>
           </varlistentry>
  
 	  <varlistentry>
-          <term><ulink url="http://wine.codeweavers.com">Codeweavers' Wine preview</ulink></term>
+          <term><ulink url="http://wine.codeweavers.com">CodeWeavers' Wine preview</ulink></term>
           <listitem>
             <para>
-              This is a specially packaged and more stable/older version of Wine
-              which has a nice setup for easy installation. License X11, free 
+              This is a special packaged version of the standard Wine tree
+              which has a nice setup for easy installation. License LGPL, free
               download. 
             </para>
          </listitem>
           </varlistentry>
  
 	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/crossover/">Codeweavers' Crossover Plugin</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/products/crossover/">CodeWeavers' Crossover Plugin</ulink></term>
           <listitem>
             <para>
-              Special Wine installation to be used for running win32 browser 
-              plugins such as e.g. Quicktime in Linux browsers. Costs $24.95. 
+              Special Wine installation to be used for running Windows
+              Netscape browser plugins such as e.g. QuickTime in Linux
+              browsers. Costs $24.95.
               Well worth it (very stable and useful packaging). 
             </para>
           </listitem>
           </varlistentry>
 
 	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/office/">Codeweavers' Crossover Office</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/products/office/">CodeWeavers' Crossover Office</ulink></term>
           <listitem>
             <para>
               Wine version with special packaging to make sure almost all 
               important Office type programs work pretty well. Costs $54.95. 
               Seems to be well worth it so far according to some comments. 
-              (note: you're supporting a company actively contributing to wine
+              (note: you're supporting a company actively contributing to Wine
               if you decide to buy either Plugin or Office.
             </para>
           </listitem>
@@ -262,9 +275,9 @@
           <term><ulink url="http://www.winehq.org/download/">Other packaged versions of Wine</ulink></term>
           <listitem>
             <para>
-              Various wine packages can be downloaded for free, to be found at 
-              Wine HQ. They're not officially packaged by Wine HQ, and as such 
-              may have some configuration inconsistencies.
+              Various Wine packages can be downloaded for free from
+              Wine HQ. They are not officially packaged by Wine HQ, and as
+              such may have some configuration inconsistencies.
             </para>
           </listitem>
           </varlistentry>
@@ -347,28 +360,28 @@
         <para>
           Large software projects are never finished, only released. In any
           case Wine is chasing a moving target since every new release of 
-          Windows contains new API calls or variations to the existing ones.
+          Windows contains new API calls or variations on the existing ones.
         </para>
         <para>
           Because Wine is being developed by volunteers, it is difficult to
           predict when it will be ready for general release. But due to the
           much increased interest by companies in porting apps via Wine, Wine
           development is constantly getting more and more active. Right now
-          we are working on releasing Wine 0.9 during 2003
+          we are working on releasing Wine 0.9 in 2003.
         </para>
       </answer>
       </qandaentry>
 
       <qandaentry>
       <question id="Who-is-responsible-for-Wine">
-        <para>Who's responsible for Wine?</para>
+        <para>Who is responsible for Wine?</para>
       </question>
       <answer>
         <para>
           Wine is available thanks to the work of many people. Please see the
           <ulink url="http://www.winehq.com/source/AUTHORS">AUTHORS</ulink>
           file in the distribution for the complete list. Some companies that
-          are or have been involved with Wine development are Codeweavers,
+          are or have been involved with Wine development are CodeWeavers,
           TransGaming, Corel, and Macadamian.
         </para>
       </answer>
@@ -431,7 +444,7 @@
           code might make it harder to prove that no copyright violations have
           taken place. That said, the documentation is often bad, nonexistent,
           and even misleading where it exists, so a fair amount of reverse
-          engineering have been necessary, particularly in the shell (Explorer)
+          engineering has been necessary, particularly in the shell (Explorer)
           interface.
         </para>
       </answer>
@@ -446,9 +459,14 @@
           No, it's not.
         </para>
         <para>
-          TransGaming make money via a subscription service. Thus they 
-          submitted their DirectDraw and some DirectSound work, but they will
-          not submit their OpenGL wrapper based Direct3D support.
+          TransGaming makes money via a subscription service and the license
+          of their WineX tree is incompatible with the Wine license. Thus
+          WineX patches cannot be integrated into the Wine tree without
+          express permission by TransGaming. They have submitted some
+          of their work for integration into Wine, most notably DirectDraw
+          and some DirectSound work, and such work has been integrated into
+          Wine tree. However it seems unlikely they will submit their Direct3D
+          work.
         </para>
       </answer>
       </qandaentry>
@@ -509,7 +527,7 @@
         <para>
           NetBSD, OpenBSD, Unixware, and SCO OpenServer 5 worked at one time,
           but Wine now requires kernel-level threads which are not currently 
-          available (or understood by the Wine team) in those platforms.
+          available (or understood by the Wine team) on those platforms.
         </para>
         <para>
           The Wine development team hopes to attract the interest of other
@@ -522,12 +540,12 @@
         </para>
         <para>
           FreeBSD: Should work, with limitations in specific areas (mainly 
-          missing device/hardware support)
+          missing device/hardware support).
         </para>
         <para>
-          Linux/x86: WORKS. If it doesn't, You may also want to see the 
+          Linux/x86: WORKS. If it doesn't, you may also want to see the
           <ulink url="http://www.winehq.org/fom-meta/cache/19.html">Wine
-          Troubleshooting Guide</ulink>
+          Troubleshooting Guide</ulink>.
         </para>
       </answer>
       </qandaentry>
@@ -560,7 +578,9 @@
         <para>
           Depending on your application you may find that faster speeds are
           required for sensible use. We can't give specific advice on that due
-          to the vast range of applications out there.
+          to the vast range of applications out there. However the rule of
+          thumb is that if your application runs fine on Windows, it should
+          run fine on the same platform in Wine.
         </para>
       </answer>
       </qandaentry>
@@ -578,19 +598,23 @@
           store and compile the source code. Wine also needs about 18 megs in
           your /tmp directory. And about 50 MB are needed to do a make install.
         </para>
+        <para>
+          Binary packages, especially those not containing debug information,
+          have much lower disk space requirements, usually in the 20MB range.
+        </para>
       </answer>
       </qandaentry>
 
       <qandaentry>
       <question id="What-other-software-do-I-need-to-compile">
         <para>
-          What other software do I need to have installed to compile and run 
+          What other software do I need to install, compile and run
           Wine?
         </para>
       </question>
       <answer>
         <para>
-          Many development tools need to be installed in order to compile Wine.
+          Many development tools are needed in order to compile Wine.
           A list of required packages for several distributions is included in
           the README (<ulink url="http://www.winehq.com/source/README">
           http://www.winehq.com/source/README</ulink>).
@@ -668,8 +692,8 @@
       <answer>
         <para>
           Yes, but only if the operating system supports mounting those types
-          of drives.There is a Linux file system driver called dmsdos that will
-          allow read/write access through Doublespaced and Drivespace 1.0 
+          of drives. There is a Linux file system driver called dmsdos that
+          will allow read/write access to Doublespaced and Drivespace 1.0
           drives. More specifically, it supports mounting DOS 6.0 and 6.2 
           Doublespaced, DOS 6.22 Drivespaced, and Windows 95 Doublespaced 
           compressed partitions (read and write access works fine, but write 
@@ -799,7 +823,7 @@
  
       <qandaentry>
       <question id="Will-Wine-run-only-under-X">
-        <para> Will Wine run only under X, or can it run in character mode?</para>
+        <para>Will Wine run only under X, or can it run in character mode?</para>
       </question>
       <answer>
         <para>
@@ -811,7 +835,7 @@
         <para>
           Wine's infrastructure is already somewhat prepared for supporting
           other graphics drivers than x11drv, but no real "alternative" 
-          graphics driver has been used yet.
+          graphics driver has been developped yet.
         </para>
       </answer>
       </qandaentry>
