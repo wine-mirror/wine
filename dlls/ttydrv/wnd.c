@@ -645,3 +645,162 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
+
+
+/***********************************************************************
+ *              WINPOS_MinMaximize   (internal)
+ *
+ *Lifted from x11 driver	
+ */
+static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
+{
+    WND *wndPtr;
+    UINT swpFlags = 0;
+    WINDOWPLACEMENT wpl;
+
+    TRACE("0x%04x %u\n", hwnd, cmd );
+    FIXME("(%x): stub\n", hwnd);
+
+    wpl.length = sizeof(wpl);
+    GetWindowPlacement( hwnd, &wpl );
+
+    /* If I glark this right, yields an immutable window*/
+    swpFlags = SWP_NOSIZE | SWP_NOMOVE;
+
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+
+    /*cmd handling goes here.  see dlls/x1drv/winpos.c*/
+
+    WIN_ReleaseWndPtr( wndPtr );
+    return swpFlags;
+}
+
+/***********************************************************************
+ *              ShowWindow   (TTYDRV.@)
+ *
+ *Lifted from x11 driver
+ *Sets the specified windows' show state.	
+ */
+BOOL TTYDRV_ShowWindow( HWND hwnd, INT cmd )
+{
+    WND* 	wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL 	wasVisible, showFlag;
+    RECT 	newPos = {0, 0, 0, 0};
+    UINT 	swp = 0;
+
+    if (!wndPtr) return FALSE;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
+
+    TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
+
+    wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
+
+    switch(cmd)
+    {
+        case SW_HIDE:
+            if (!wasVisible) goto END;;
+	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE |
+		        SWP_NOACTIVATE | SWP_NOZORDER;
+	    break;
+
+	case SW_SHOWMINNOACTIVE:
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            /* fall through */
+	case SW_SHOWMINIMIZED:
+            swp |= SWP_SHOWWINDOW;
+            /* fall through */
+	case SW_MINIMIZE:
+            swp |= SWP_FRAMECHANGED;
+            if( !(wndPtr->dwStyle & WS_MINIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_MINIMIZE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+	    break;
+
+	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
+            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+            if( !(wndPtr->dwStyle & WS_MAXIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+            break;
+
+	case SW_SHOWNA:
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            /* fall through */
+	case SW_SHOW:
+	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+
+	    /*
+	     * ShowWindow has a little peculiar behavior that if the
+	     * window is already the topmost window, it will not
+	     * activate it.
+	     */
+	    if (GetTopWindow((HWND)0)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
+	      swp |= SWP_NOACTIVATE;
+
+	    break;
+
+	case SW_SHOWNOACTIVATE:
+            swp |= SWP_NOZORDER;
+            if (GetActiveWindow()) swp |= SWP_NOACTIVATE;
+            /* fall through */
+	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
+	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
+	case SW_RESTORE:
+	    swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+
+            if( wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+	    break;
+    }
+
+    showFlag = (cmd != SW_HIDE);
+    if (showFlag != wasVisible)
+    {
+        SendMessageA( hwnd, WM_SHOWWINDOW, showFlag, 0 );
+        if (!IsWindow( hwnd )) goto END;
+    }
+
+    /* We can't activate a child window */
+    if ((wndPtr->dwStyle & WS_CHILD) &&
+        !(wndPtr->dwExStyle & WS_EX_MDICHILD))
+        swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+
+    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
+                  newPos.right, newPos.bottom, LOWORD(swp) );
+    if (cmd == SW_HIDE)
+    {
+        /* FIXME: This will cause the window to be activated irrespective
+         * of whether it is owned by the same thread. Has to be done
+         * asynchronously.
+         */
+
+        if (hwnd == GetActiveWindow())
+            WINPOS_ActivateOtherWindow(hwnd);
+
+        /* Revert focus to parent */
+        if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
+            SetFocus( GetParent(hwnd) );
+    }
+    if (!IsWindow( hwnd )) goto END;
+    else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( hwnd, TRUE );
+
+    if (wndPtr->flags & WIN_NEED_SIZE)
+    {
+        /* should happen only in CreateWindowEx() */
+	int wParam = SIZE_RESTORED;
+
+	wndPtr->flags &= ~WIN_NEED_SIZE;
+	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
+	else if (wndPtr->dwStyle & WS_MINIMIZE) wParam = SIZE_MINIMIZED;
+	SendMessageA( hwnd, WM_SIZE, wParam,
+		     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+			    wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+	SendMessageA( hwnd, WM_MOVE, 0,
+		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
+    }
+
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return wasVisible;
+}
