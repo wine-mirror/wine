@@ -3248,17 +3248,12 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
     }
 
-    /* Button size can only be set before adding any button to the toolbar
-       according to the documentation.  */
-    /* this appears to be wrong. WINZIP32.EXE (ver 8) calls this on
-       one of its buttons after adding it to the toolbar, and it
-       checks that the return value is nonzero - mjm */
-    if( infoPtr->nNumButtons != 0 )
-    {
-        WARN("Button size set after button in toolbar\n");
-        return TRUE;
-    }
-
+    /* The documentation claims you can only change the button size before
+     * any button has been added. But this is wrong. 
+     * WINZIP32.EXE (ver 8) calls this on one of its buttons after adding 
+     * it to the toolbar, and it checks that the return value is nonzero - mjm
+     * Further testing shows that we must actually perform the change too.
+     */
     infoPtr->nButtonWidth = (INT)LOWORD(lParam);
     infoPtr->nButtonHeight = (INT)HIWORD(lParam);
     return TRUE;
