@@ -20,4 +20,10 @@ $(MODULE): $(OBJS) Makefile.in
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
+man:
+
+doc-html:
+
+doc-sgml:
+
 ### Dependencies:
