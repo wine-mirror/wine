@@ -148,6 +148,7 @@ extern void abandon_mutexes( struct thread *thread );
 
 extern struct file *get_file_obj( struct process *process, handle_t handle,
                                   unsigned int access );
+extern int is_same_file( struct file *file1, struct file *file2 );
 extern int grow_file( struct file *file, int size_high, int size_low );
 extern int create_anonymous_file(void);
 extern struct file *create_temp_file( int access );

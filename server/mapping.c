@@ -19,15 +19,17 @@
 
 struct mapping
 {
-    struct object  obj;             /* object header */
-    int            size_high;       /* mapping size */
-    int            size_low;        /* mapping size */
-    int            protect;         /* protection flags */
-    struct file   *file;            /* file mapped */
-    int            header_size;     /* size of headers (for PE image mapping) */
-    void          *base;            /* default base addr (for PE image mapping) */
-    struct file   *shared_file;     /* temp file for shared PE mapping */
-    int            shared_size;     /* shared mapping total size */
+    struct object   obj;             /* object header */
+    int             size_high;       /* mapping size */
+    int             size_low;        /* mapping size */
+    int             protect;         /* protection flags */
+    struct file    *file;            /* file mapped */
+    int             header_size;     /* size of headers (for PE image mapping) */
+    void           *base;            /* default base addr (for PE image mapping) */
+    struct file    *shared_file;     /* temp file for shared PE mapping */
+    int             shared_size;     /* shared mapping total size */
+    struct mapping *shared_next;     /* next in shared PE mapping list */
+    struct mapping *shared_prev;     /* prev in shared PE mapping list */
 };
 
 static int mapping_get_fd( struct object *obj );
@@ -49,6 +51,8 @@ static const struct object_ops mapping_ops =
     no_get_file_info,            /* get_file_info */
     mapping_destroy              /* destroy */
 };
+
+static struct mapping *shared_first;
 
 #ifdef __i386__
 
@@ -99,6 +103,17 @@ inline static int get_mmap_fd( struct file *file )
     return obj->ops->get_fd( obj );
 }
 
+/* find the shared PE mapping for a given mapping */
+static struct file *get_shared_file( struct mapping *mapping )
+{
+    struct mapping *ptr;
+
+    for (ptr = shared_first; ptr; ptr = ptr->shared_next)
+        if (is_same_file( ptr->file, mapping->file ))
+            return (struct file *)grab_object( ptr->shared_file );
+    return NULL;
+}
+
 /* allocate and fill the temp file for a shared PE image mapping */
 static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, int nb_sec )
@@ -122,6 +137,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         }
     }
     if (!(mapping->shared_size = total_size)) return 1;  /* nothing to do */
+
+    if ((mapping->shared_file = get_shared_file( mapping ))) return 1;
 
     /* create a temp file for the mapping */
 
@@ -184,6 +201,13 @@ static int get_image_params( struct mapping *mapping )
     if (read( fd, sec, size ) != size) goto error;
 
     if (!build_shared_mapping( mapping, fd, sec, nt.FileHeader.NumberOfSections )) goto error;
+
+    if (mapping->shared_file)  /* link it in the list */
+    {
+        if ((mapping->shared_next = shared_first)) shared_first->shared_prev = mapping;
+        mapping->shared_prev = NULL;
+        shared_first = mapping;
+    }
 
     mapping->size_low    = ROUND_SIZE( 0, nt.OptionalHeader.SizeOfImage );
     mapping->size_high   = 0;
@@ -290,7 +314,13 @@ static void mapping_destroy( struct object *obj )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     if (mapping->file) release_object( mapping->file );
-    if (mapping->shared_file) release_object( mapping->shared_file );
+    if (mapping->shared_file)
+    {
+        release_object( mapping->shared_file );
+        if (mapping->shared_next) mapping->shared_next->shared_prev = mapping->shared_prev;
+        if (mapping->shared_prev) mapping->shared_prev->shared_next = mapping->shared_next;
+        else shared_first = mapping->shared_next;
+    }
 }
 
 int get_page_size(void)

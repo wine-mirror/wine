@@ -181,6 +181,12 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     return NULL;
 }
 
+/* check if two file objects point to the same file */
+int is_same_file( struct file *file1, struct file *file2 )
+{
+    return !strcmp( file1->name, file2->name );
+}
+
 /* Create an anonymous Unix file */
 int create_anonymous_file(void)
 {
