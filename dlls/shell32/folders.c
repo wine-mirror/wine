@@ -84,7 +84,7 @@ static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 {
 	ICOM_THIS(IExtractIconAImpl,iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
+	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref );
 
 	shell32_ObjCount++;
 

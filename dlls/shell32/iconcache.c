@@ -610,7 +610,24 @@ BOOL SIC_Initialize(void)
 
 	return TRUE;
 }
+/*************************************************************************
+ * SIC_Destroy
+ *
+ * frees the cache
+ */
+void SIC_Destroy(void)
+{
+	LPSIC_ENTRY lpsice;
+	int i;
 
+	if (hdpa && NULL != pDPA_GetPtr (hdpa, 0))
+	{ for (i=0; i < DPA_GetPtrCount(hdpa); ++i)
+	  { lpsice = DPA_GetPtr(hdpa, i); 
+	    SHFree(lpsice);
+	  }
+	  pDPA_Destroy(hdpa);
+	}
+}
 /*************************************************************************
  * Shell_GetImageList			[SHELL32.71]
  *
@@ -637,7 +654,8 @@ DWORD WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList
  * x  pointer to an instance of IShellFolder 
  * 
  * NOTES
- *     first hack
+ *	calls Release on the ShellFolder
+ *	FIXME: should get the icon by calling GetUIObjectOf(sh)
  *
  */
 DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z)
@@ -645,9 +663,12 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 	DWORD	dwNr, ret = INVALID_INDEX;
 	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
 
- 	WARN(shell,"(SF=%p,pidl=%p,0x%08lx)\n",sh,pidl,z);
+	WARN(shell,"(SF=%p,pidl=%p,0x%08lx)\n",sh,pidl,z);
 	pdump(pidl);
 
+/*	if (sh)
+	  IShellFolder_Release(sh);
+*/	
 	if (_ILIsDesktop(pidltemp))
 	{ return 34;
 	}

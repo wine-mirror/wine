@@ -99,7 +99,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPENUMFORMATETC iface, REF
 static ULONG WINAPI IEnumFORMATETC_fnAddRef(LPENUMFORMATETC iface)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
+	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref);
 	shell32_ObjCount++;
 	return ++(This->ref);
 }
@@ -277,7 +277,7 @@ static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
+	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);

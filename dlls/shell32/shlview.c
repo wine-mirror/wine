@@ -31,7 +31,6 @@
 typedef struct 
 {	ICOM_VTABLE(IShellView)* lpvtbl;
 	DWORD		ref;
-	LPITEMIDLIST	mpidl;
 	IShellFolder*	pSFParent;
 	IShellBrowser*	pShellBrowser;
 	ICommDlgBrowser*	pCommDlgBrowser;
@@ -127,7 +126,6 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder, LPCITEMIDLIST pidl)
 	sv->ref=1;
 	sv->lpvtbl=&svvt;
 
-	sv->mpidl	= ILClone(pidl);
 	sv->hMenu	= 0;
 	sv->pSFParent	= pFolder;
 	sv->uSelected = 0;
@@ -1237,7 +1235,7 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 {
 	ICOM_THIS(IShellViewImpl, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);

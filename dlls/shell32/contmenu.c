@@ -182,7 +182,7 @@ static ULONG WINAPI IContextMenu_fnAddRef(IContextMenu *iface)
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
+	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);

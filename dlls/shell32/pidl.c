@@ -171,7 +171,7 @@ HRESULT WINAPI SHILCreateFromPathW (LPWSTR path, LPITEMIDLIST * ppidl, DWORD att
 }
 HRESULT WINAPI SHILCreateFromPathAW (LPVOID path, LPITEMIDLIST * ppidl, DWORD attributes)
 {
-	if ( !VERSION_OsIsUnicode())
+	if ( VERSION_OsIsUnicode())
 	  return SHILCreateFromPathW (path, ppidl, attributes);
 	return SHILCreateFromPathA (path, ppidl, attributes);
 }
@@ -528,7 +528,7 @@ LPITEMIDLIST WINAPI ILCreateFromPathW (LPWSTR path)
 }
 LPITEMIDLIST WINAPI ILCreateFromPathAW (LPVOID path) 
 {
-	if ( !VERSION_OsIsUnicode())
+	if ( VERSION_OsIsUnicode())
 	  return ILCreateFromPathW (path);
 	return ILCreateFromPathA (path);
 }

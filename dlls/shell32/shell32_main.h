@@ -5,6 +5,17 @@
 #ifndef __WINE_SHELL_MAIN_H
 #define __WINE_SHELL_MAIN_H
 
+#include "imagelist.h"
+#include "commctrl.h"
+#include "shell.h"
+
+#include "wine/obj_shellfolder.h"
+#include "wine/obj_dataobject.h"
+#include "wine/obj_contextmenu.h"
+#include "wine/obj_shellview.h"
+#include "wine/obj_shelllink.h"
+#include "wine/obj_extracticon.h"
+
 /*******************************************
 *  global SHELL32.DLL variables
 */
@@ -57,6 +68,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 /* Iconcache */
 #define INVALID_INDEX -1
 BOOL SIC_Initialize(void);
+void SIC_Destroy(void);
 /*INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex );*/
 
 /* Classes Root */
