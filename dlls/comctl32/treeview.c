@@ -4242,9 +4242,12 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 	break;
 
     case TVGN_FIRSTVISIBLE:
-	TREEVIEW_EnsureVisible(infoPtr, newSelect, FALSE);
-	TREEVIEW_SetFirstVisible(infoPtr, newSelect, TRUE);
-	TREEVIEW_Invalidate(infoPtr, NULL);
+	if (newSelect != NULL)
+	{
+	    TREEVIEW_EnsureVisible(infoPtr, newSelect, FALSE);
+	    TREEVIEW_SetFirstVisible(infoPtr, newSelect, TRUE);
+	    TREEVIEW_Invalidate(infoPtr, NULL);
+	}
 	break;
     }
 
