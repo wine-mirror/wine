@@ -50,6 +50,7 @@ WINDOWS_INCLUDES = \
 	aviriff.h \
 	basetsd.h \
 	cderr.h \
+	cfgmgr32.h \
 	cguid.h \
 	commctrl.h \
 	commdlg.h \
