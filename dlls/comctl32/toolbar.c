@@ -75,8 +75,9 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
 /*
  * Draw the text string for this button.
  * note: himl is not used, except to determine whether this button has
- *       an associated bitmap. If so, the text is drawn below it, otherwise
- *	 the text is drawn within the rectangle of the button itself.
+ *       an associated bitmap.  If himl and infoPtr->himlDef are non-zero
+ *       the text is drawn below it, otherwise the text is drawn within
+ *       the rectangle of the button itself.
  */
 static void
 TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
@@ -105,7 +106,8 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 	InflateRect (&rcText, -3, -3);
 
-	if (himl && TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
+	if ((himl || infoPtr->himlDef) &&
+		TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
 		if ((dwStyle & TBSTYLE_LIST) &&
 		    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
 		    (btnPtr->iBitmap != I_IMAGENONE)) {
