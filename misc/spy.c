@@ -661,7 +661,37 @@ const char *SPY_GetWndName( HWND hwnd )
     else lstrcpyA( wnd_buffer, "\"NULL\"" );
     return wnd_buffer;
 }
-
+/***********************************************************************
+ *           SPY_DumpStructure
+ */
+void SPY_DumpStructure (UINT msg, LPARAM structure)
+{
+	switch (msg)
+	{
+	    case WM_DRAWITEM:
+		{   DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
+		    TRACE(message, "DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpdis->CtlType, lpdis->CtlID);
+		    TRACE(message, "itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", lpdis->itemID, lpdis->itemAction, lpdis->itemState);
+		    TRACE(message, "hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+		    lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, lpdis->rcItem.right, lpdis->rcItem.bottom, lpdis->itemData);
+		}
+		break;
+	    case WM_MEASUREITEM:
+		{   MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) structure;
+		    TRACE(message, "MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpmis->CtlType, lpmis->CtlID);
+		    TRACE(message, "itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
+		    TRACE(message, "itemData=0x%08lx\n", lpmis->itemData);
+		}
+		break;
+	    case WM_NOTIFY:
+		{   NMHDR * pnmh = (NMHDR*) structure;
+		    TRACE(message, "NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n", pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
+		}
+	    default:
+		break;
+	}
+	
+}
 /***********************************************************************
  *           SPY_EnterMessage
  */
@@ -709,9 +739,11 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 			     taskName, wParam, lParam );
             else
-                TRACE(message, "%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
+            {   TRACE(message, "%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
 			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 			     taskName, wParam, lParam );
+		SPY_DumpStructure(msg, lParam);
+	    }
         }
         break;   
 
