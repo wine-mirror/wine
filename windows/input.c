@@ -965,8 +965,6 @@ static int iTrackMax = 0;
 static UINT_PTR timer;
 static const INT iTimerInterval = 50; /* msec for timer interval */
 
-/* FIXME: need to implement WM_NCMOUSELEAVE and WM_NCMOUSEHOVER for */
-/* TrackMouseEventProc and _TrackMouseEvent */
 static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR idEvent,
     DWORD dwTime)
 {
@@ -974,7 +972,9 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
     POINT pos;
     POINT posClient;
     HWND hwnd;
+    INT nonclient;
     INT hoverwidth = 0, hoverheight = 0;
+    RECT client;
 
     GetCursorPos(&pos);
     hwnd = WindowFromPoint(pos);
@@ -984,14 +984,45 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
 
     /* loop through tracking events we are processing */
     while (i < iTrackMax) {
+        if (TrackingList[i].tme.dwFlags & TME_NONCLIENT) {
+            nonclient = 1;
+        }
+        else {
+            nonclient = 0;
+        }
+
         /* see if this tracking event is looking for TME_LEAVE and that the */
         /* mouse has left the window */
-        if ((TrackingList[i].tme.dwFlags & TME_LEAVE) &&
-             (TrackingList[i].tme.hwndTrack != hwnd)) {
-            PostMessageA(TrackingList[i].tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
+        if (TrackingList[i].tme.dwFlags & TME_LEAVE) {
+            if (TrackingList[i].tme.hwndTrack != hwnd) {
+                if (nonclient) {
+                    PostMessageA(TrackingList[i].tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+                }
+                else {
+                    PostMessageA(TrackingList[i].tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
+                }
 
-            /* remove the TME_LEAVE flag */
-            TrackingList[i].tme.dwFlags ^= TME_LEAVE;
+                /* remove the TME_LEAVE flag */
+                TrackingList[i].tme.dwFlags ^= TME_LEAVE;
+            }
+            else {
+                GetClientRect(hwnd, &client);
+                MapWindowPoints(hwnd, NULL, (LPPOINT)&client, 2);
+                if(PtInRect(&client, pos)) {
+                    if (nonclient) {
+                        PostMessageA(TrackingList[i].tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+                        /* remove the TME_LEAVE flag */
+                        TrackingList[i].tme.dwFlags ^= TME_LEAVE;
+                    }
+                }
+                else {
+                    if (!nonclient) {
+                        PostMessageA(TrackingList[i].tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
+                        /* remove the TME_LEAVE flag */
+                        TrackingList[i].tme.dwFlags ^= TME_LEAVE;
+                    }
+                }
+            }
         }
 
         /* see if we are tracking hovering for this hwnd */
@@ -1011,12 +1042,18 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
 
             /* has the mouse hovered long enough? */
             if(TrackingList[i].iHoverTime <= TrackingList[i].tme.dwHoverTime)
-             {
+            {
 		posClient.x = pos.x;
 		posClient.y = pos.y;
 		ScreenToClient(hwnd, &posClient);
-                PostMessageW(TrackingList[i].tme.hwndTrack, WM_MOUSEHOVER,
-                             get_key_state(), MAKELPARAM( posClient.x, posClient.y ));
+                if (nonclient) {
+                    PostMessageW(TrackingList[i].tme.hwndTrack, WM_NCMOUSEHOVER,
+                                get_key_state(), MAKELPARAM( posClient.x, posClient.y ));
+                }
+                else {
+                    PostMessageW(TrackingList[i].tme.hwndTrack, WM_MOUSEHOVER,
+                                get_key_state(), MAKELPARAM( posClient.x, posClient.y ));
+                }
 
                 /* stop tracking mouse hover */
                 TrackingList[i].tme.dwFlags ^= TME_HOVER;
@@ -1067,12 +1104,15 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 {
     DWORD flags = 0;
     int i = 0;
-    BOOL cancel = 0, hover = 0, leave = 0, query = 0;
+    BOOL cancel = 0, hover = 0, leave = 0, query = 0, nonclient = 0, inclient = 0;
     HWND hwnd;
     POINT pos;
+    RECT client;
+
 
     pos.x = 0;
     pos.y = 0;
+    SetRectEmpty(&client);
 
     TRACE("%lx, %lx, %p, %lx\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
 
@@ -1104,6 +1144,11 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     if ( flags & TME_LEAVE ) {
         flags &= ~ TME_LEAVE;
         leave = 1;
+    }
+
+    if ( flags & TME_NONCLIENT ) {
+        flags &= ~ TME_NONCLIENT;
+        nonclient = 1;
     }
 
     /* fill the TRACKMOUSEEVENT struct with the current tracking for the given hwnd */
@@ -1156,12 +1201,33 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
         /* see if hwndTrack isn't the current window */
         if(ptme->hwndTrack != hwnd) {
             if(leave) {
-                PostMessageA(ptme->hwndTrack, WM_MOUSELEAVE, 0, 0);
+                if(nonclient) {
+                    PostMessageA(ptme->hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+                }
+                else {
+                    PostMessageA(ptme->hwndTrack, WM_MOUSELEAVE, 0, 0);
+                }
             }
         } else {
+            GetClientRect(ptme->hwndTrack, &client);
+            MapWindowPoints(ptme->hwndTrack, NULL, (LPPOINT)&client, 2);
+            if(PtInRect(&client, pos)) {
+                inclient = 1;
+            }
+            if(nonclient && inclient) {
+                PostMessageA(ptme->hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+                return TRUE;
+            }
+            else if(!nonclient && !inclient) {
+                PostMessageA(ptme->hwndTrack, WM_MOUSELEAVE, 0, 0);
+                return TRUE;
+            }
+
             /* See if this hwnd is already being tracked and update the tracking flags */
             for(i = 0; i < iTrackMax; i++) {
                 if(TrackingList[i].tme.hwndTrack == ptme->hwndTrack) {
+                    TrackingList[i].tme.dwFlags = 0;
+
                     if(hover) {
                         TrackingList[i].tme.dwFlags |= TME_HOVER;
                         TrackingList[i].tme.dwHoverTime = ptme->dwHoverTime;
@@ -1169,6 +1235,9 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 
                     if(leave)
                         TrackingList[i].tme.dwFlags |= TME_LEAVE;
+
+                    if(nonclient)
+                        TrackingList[i].tme.dwFlags |= TME_NONCLIENT;
 
                     /* reset iHoverTime as per winapi specs */
                     TrackingList[i].iHoverTime = 0;
