@@ -299,7 +299,7 @@ void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(EDX_reg(context));
-    IP_reg(&context16)  = LOWORD(EDX_reg(context));
+    EIP_reg(&context16) = LOWORD(EDX_reg(context));
     EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
@@ -416,7 +416,7 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(callTarget);
-    IP_reg(&context16)  = LOWORD(callTarget);
+    EIP_reg(&context16) = LOWORD(callTarget);
     EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
@@ -609,7 +609,7 @@ void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
 
     DI_reg(&context16)  = CX_reg(context);
     CS_reg(&context16)  = HIWORD(EAX_reg(context));
-    IP_reg(&context16)  = LOWORD(EAX_reg(context));
+    EIP_reg(&context16) = LOWORD(EAX_reg(context));
     EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
@@ -665,7 +665,7 @@ void WINAPI REGS_FUNC(OT_32ThkLSF)( CONTEXT *context )
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(EDX_reg(context));
-    IP_reg(&context16)  = LOWORD(EDX_reg(context));
+    EIP_reg(&context16) = LOWORD(EDX_reg(context));
     EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
