@@ -103,3 +103,4 @@
 #define IDC_ENABLE_DESKTOP              1074
 #define IDS_DRIVE_NO_C                  1075
 #define IDC_ENABLE_MANAGED              1076
+#define IDC_SCREEN_DEPTH                1077

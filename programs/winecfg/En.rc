@@ -68,14 +68,11 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
  */
 
+    LTEXT	    "Screen color depth: ",IDC_STATIC,8,10,60,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,70,8,180,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+ 
     EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        " Render Settings ",IDC_STATIC,8,4,244,60
-    LTEXT           "The driver color and render settings are used to optimise the way in which colors and applications are displayed.",
-                    IDC_STATIC,15,17,228,22
-		    
-    LTEXT           "Allocated system colors:",IDC_STATIC,15,43,76,8
-    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
     
     GROUPBOX        " Window settings ",IDC_STATIC,8,65,244,170
 

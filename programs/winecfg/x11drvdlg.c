@@ -73,7 +73,7 @@ void updateGUIForDesktopMode(HWND hDlg) {
 void initX11DrvDlg (HWND hDlg)
 {
     char *buf;
-    char *i;
+    char *bufindex;
 
     updatingUI = TRUE;
     
@@ -81,19 +81,33 @@ void initX11DrvDlg (HWND hDlg)
     
     /* desktop size */
     buf = getConfigValue("x11drv", "Desktop", "640x480");
-    i = strchr(buf, 'x');
-    *i = '\0';
-    i++;
+    bufindex = strchr(buf, 'x');
+    *bufindex = '\0';
+    bufindex++;
     SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), buf);
-    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), i);
+    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), bufindex);
+    free(buf);
+    
+    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "8 bit");
+    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "16 bit");
+    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
+    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
+
+    buf = getConfigValue("x11drv", "ScreenDepth", "24");
+    if (strcmp(buf, "8") == 0)
+	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
+    else if (strcmp(buf, "16") == 0)
+	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 1, 0);
+    else if (strcmp(buf, "24") == 0)
+	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 2, 0);
+    else if (strcmp(buf, "32") == 0)
+	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 3, 0);
+    else
+	WINE_ERR("Invalid screen depth read from registry (%s)\n", buf);
     free(buf);
 
     SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
-
-    buf = getConfigValue("x11drv", "AllocSysColors", "100");
-    SetWindowText(GetDlgItem(hDlg, IDC_SYSCOLORS), buf);
-    free(buf);
 
     buf = getConfigValue("x11drv", "Managed", "Y");
     if (IS_OPTION_TRUE(*buf))
@@ -141,14 +155,15 @@ void onEnableDesktopClicked(HWND hDlg) {
     updateGUIForDesktopMode(hDlg);
 }
 
-void onSysColorsChange(HWND hDlg) {
-    char *newvalue = getDialogItemText(hDlg, IDC_SYSCOLORS);
+void onScreenDepthChanged(HWND hDlg) {
+    char *newvalue = getDialogItemText(hDlg, IDC_SCREEN_DEPTH);
+    char *spaceIndex = strchr(newvalue, ' ');
     
-    WINE_TRACE("\n");
+    WINE_TRACE("newvalue=%s\n", newvalue);
     if (updatingUI) return;
-    if (!newvalue) return;
 
-    addTransaction("x11drv", "AllocSystemColors", ACTION_SET, newvalue);
+    *spaceIndex = '\0';
+    addTransaction("x11drv", "ScreenDepth", ACTION_SET, newvalue);
     free(newvalue);
 }
 
@@ -171,7 +186,6 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case EN_CHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 		    if ( (LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT) ) setFromDesktopSizeEdits(hDlg);
-		    if (LOWORD(wParam) == IDC_SYSCOLORS) onSysColorsChange(hDlg);
 		    break;
 		}
 		case BN_CLICKED: {
@@ -180,6 +194,10 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
 			case IDC_ENABLE_MANAGED: onEnableManagedClicked(hDlg); break;
 		    };
+		    break;
+		}
+		case CBN_SELCHANGE: {
+		    if (LOWORD(wParam) == IDC_SCREEN_DEPTH) onScreenDepthChanged(hDlg);
 		    break;
 		}
 		    
