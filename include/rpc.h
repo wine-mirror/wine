@@ -49,4 +49,14 @@ typedef void* I_RPC_HANDLE;
 #include "excpt.h"
 #include "winerror.h"
 
+/* ignore exception handling for now */
+#define RpcTryExcept if (1) {
+#define RpcExcept(expr) } else {
+#define RpcEndExcept }
+#define RpcTryFinally
+#define RpcFinally
+#define RpcEndFinally
+#define RpcExceptionCode() 0
+/* #define RpcAbnormalTermination() abort() */
+
 #endif /*__WINE_RPC_H */
