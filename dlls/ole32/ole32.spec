@@ -10,7 +10,7 @@ import rpcrt4.dll
 import kernel32.dll
 import ntdll.dll
 
-debug_channels (ole relay storage)
+debug_channels (accel ole relay storage)
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID

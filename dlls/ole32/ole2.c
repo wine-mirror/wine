@@ -21,12 +21,14 @@
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
+#include "wine/winuser16.h"
 #include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"
 #include "ole32_main.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
+DECLARE_DEBUG_CHANNEL(accel);
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the 
@@ -1394,6 +1396,80 @@ HRESULT WINAPI OleSetMenuDescriptor(
   }
       
   return S_OK;
+}
+
+/******************************************************************************
+ *              IsAccelerator        [OLE32.75]
+ * Mostly copied from controls/menu.c TranslateAccelerator implementation
+ */
+BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)
+{
+    /* YES, Accel16! */
+    LPACCEL16 lpAccelTbl;
+    int i;
+
+    if(!lpMsg) return FALSE;
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16)LockResource16(hAccel)))
+    {
+	WARN_(accel)("invalid accel handle=%04x\n", hAccel);
+	return FALSE;
+    }
+    if((lpMsg->message != WM_KEYDOWN &&
+	lpMsg->message != WM_KEYUP &&
+	lpMsg->message != WM_SYSKEYDOWN &&
+	lpMsg->message != WM_SYSKEYUP &&
+	lpMsg->message != WM_CHAR)) return FALSE;
+
+    TRACE_(accel)("hAccel=%04x, cAccelEntries=%d,"
+		"msg->hwnd=%04x, msg->message=%04x, wParam=%08x, lParam=%08lx\n",
+		hAccel, cAccelEntries,
+		lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+    for(i = 0; i < cAccelEntries; i++)
+    {
+	if(lpAccelTbl[i].key != lpMsg->wParam)
+	    continue;
+
+	if(lpMsg->message == WM_CHAR)
+	{
+	    if(!(lpAccelTbl[i].fVirt & FALT) && !(lpAccelTbl[i].fVirt & FVIRTKEY))
+	    {
+		TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", lpMsg->wParam & 0xff);
+		goto found;
+	    }
+	}
+	else
+	{
+	    if(lpAccelTbl[i].fVirt & FVIRTKEY)
+	    {
+		INT mask = 0;
+		TRACE_(accel)("found accel for virt_key %04x (scan %04x)\n",
+				lpMsg->wParam, HIWORD(lpMsg->lParam) & 0xff);
+		if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
+		if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+		if(GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
+		if(mask == (lpAccelTbl[i].fVirt & (FSHIFT | FCONTROL | FALT))) goto found;
+		TRACE_(accel)("incorrect SHIFT/CTRL/ALT-state\n");
+	    }
+	    else
+	    {
+		if(!(lpMsg->lParam & 0x01000000))  /* no special_key */
+		{
+		    if((lpAccelTbl[i].fVirt & FALT) && (lpMsg->lParam & 0x20000000))
+		    {						       /* ^^ ALT pressed */
+			TRACE_(accel)("found accel for Alt-%c\n", lpMsg->wParam & 0xff);
+			goto found;
+		    }
+		}
+	    }
+	}
+    }	
+
+    WARN_(accel)("couldn't translate accelerator key\n");
+    return FALSE;
+
+found:
+    if(lpwCmd) *lpwCmd = lpAccelTbl[i].cmd;
+    return TRUE;
 }
 
 /***********************************************************************
