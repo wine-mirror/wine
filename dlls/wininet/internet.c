@@ -997,8 +997,8 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     }
 
     SendAsyncCallback(lpwh, lpwh->dwContext,
-                      INTERNET_STATUS_HANDLE_CLOSING, hInternet,
-                      sizeof(HINTERNET));
+                      INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
+                      sizeof(HINTERNET*));
 
     if( lpwh->lpwhparent )
         WININET_Release( lpwh->lpwhparent );
