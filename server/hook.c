@@ -227,7 +227,8 @@ DECL_HANDLER(set_hook)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!(thread = get_thread_from_id( req->tid ))) return;
+    if (!req->tid) thread = (struct thread *)grab_object( current );
+    else if (!(thread = get_thread_from_id( req->tid ))) return;
 
     if ((hook = add_hook( thread, req->id - WH_MINHOOK )))
     {
