@@ -3,13 +3,13 @@
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stdcall AccessCheckAndAuditAlarmA(str ptr str str ptr long ptr long ptr ptr ptr)
 @ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
-@ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
+@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr)
 @ stdcall AddAccessAllowedAce (ptr long long ptr)
 @ stdcall AddAccessAllowedAceEx (ptr long long long ptr)
 @ stdcall AddAccessDeniedAce(ptr long long ptr)
 @ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
 @ stdcall AddAce(ptr long long ptr long)
-@ stub AddAuditAccessAce
+@ stdcall AddAuditAccessAce(ptr long long ptr long long)
 @ stub AdjustTokenGroups
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
@@ -31,7 +31,7 @@
 @ stub ConvertSidToStringSidA #(ptr str) ConvertSidToStringSidA
 @ stub ConvertSidToStringSidW #(ptr wstr) ConvertSidToStringSidW
 @ stub ConvertStringSecurityDescriptorToSecurityDescriptorA #(str long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorA
-@ stub ConvertStringSecurityDescriptorToSecurityDescriptorW #(wstr long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorW
+@ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall CopySid(long ptr ptr)
 @ stub CreatePrivateObjectSecurity
 @ stub CreateProcessAsUserA
@@ -78,7 +78,7 @@
 @ stdcall CryptSetProvParam(long long ptr long)
 @ stdcall CryptVerifySignatureA(long ptr long long ptr long)
 @ stdcall CryptVerifySignatureW(long ptr long long ptr long) CryptVerifySignatureA
-@ stub DeleteAce
+@ stdcall DeleteAce(ptr long)
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
 @ stub DestroyPrivateObjectSecurity
@@ -103,8 +103,8 @@
 @ stub GetKernelObjectSecurity
 @ stdcall GetLengthSid(ptr)
 @ stub GetMangledSiteSid
-@ stub GetNamedSecurityInfoA #(str long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoA
-@ stub GetNamedSecurityInfoW #(wstr long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoW
+@ stdcall GetNamedSecurityInfoA (str long long ptr ptr ptr ptr ptr)
+@ stdcall GetNamedSecurityInfoW (wstr long long ptr ptr ptr ptr ptr)
 @ stdcall GetNumberOfEventLogRecords (long ptr)
 @ stdcall GetOldestEventLogRecord (long ptr)
 @ stub GetPrivateObjectSecurity
@@ -158,7 +158,7 @@
 @ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
-@ stub MakeAbsoluteSD
+@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stub MapGenericMask
 @ stdcall NotifyBootConfigStatus(long)

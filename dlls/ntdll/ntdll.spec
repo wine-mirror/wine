@@ -340,7 +340,7 @@
 @ stub RtlDecompressBuffer
 @ stub RtlDecompressFragment
 @ stub RtlDelete
-@ stub RtlDeleteAce
+@ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteRegistryValue
@@ -488,7 +488,7 @@
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlProtectHeap
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
-@ stub RtlQueryInformationAcl
+@ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stub RtlQueryProcessBackTraceInformation
 @ stub RtlQueryProcessDebugInformation
 @ stub RtlQueryProcessHeapInformation

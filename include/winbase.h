@@ -1182,6 +1182,7 @@ BOOL        WINAPI DebugActiveProcessStop(DWORD);
 void        WINAPI DebugBreak(void);
 BOOL        WINAPI DebugBreakProcess(HANDLE);
 BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
+BOOL        WINAPI DeleteAce(PACL,DWORD);
 void        WINAPI DeleteFiber(LPVOID);
 BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
 BOOL        WINAPI DeleteTimerQueueTimer(HANDLE,HANDLE,HANDLE);
@@ -1353,6 +1354,8 @@ BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);
 BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,PLUID);
 BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,PLUID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)
+BOOL        WINAPI MakeAbsoluteSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD,
+                                  PACL,LPDWORD,PACL,LPDWORD,PSID,LPDWORD,PSID,LPDWORD);
 BOOL        WINAPI MakeSelfRelativeSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
 HMODULE     WINAPI MapHModuleSL(WORD);
 WORD        WINAPI MapHModuleLS(HMODULE);

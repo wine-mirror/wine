@@ -2861,6 +2861,18 @@ typedef enum _ACL_INFORMATION_CLASS
   AclSizeInformation
 } ACL_INFORMATION_CLASS;
 
+typedef struct _ACL_REVISION_INFORMATION
+{
+    DWORD AclRevision;
+} ACL_REVISION_INFORMATION, *PACL_REVISION_INFORMATION;
+
+typedef struct _ACL_SIZE_INFORMATION
+{
+    DWORD AceCount;
+    DWORD AclBytesInUse;
+    DWORD AclBytesFree;
+} ACL_SIZE_INFORMATION, *PACL_SIZE_INFORMATION;
+
 /* SECURITY_DESCRIPTOR */
 #define	SECURITY_DESCRIPTOR_REVISION	1
 #define	SECURITY_DESCRIPTOR_REVISION1	1
@@ -3207,6 +3219,7 @@ typedef struct _ACE_HEADER {
 #define	CONTAINER_INHERIT_ACE		0x02
 #define	NO_PROPAGATE_INHERIT_ACE	0x04
 #define	INHERIT_ONLY_ACE		0x08
+#define	INHERITED_ACE		        0x10
 #define	VALID_INHERIT_FLAGS		0x0F
 
 /* AceFlags mask for what events we (should) audit */
@@ -3578,6 +3591,12 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
 
 #include <guiddef.h>
+
+typedef struct _OBJECT_TYPE_LIST {
+    WORD   Level;
+    WORD   Sbz;
+    GUID *ObjectType;
+} OBJECT_TYPE_LIST, *POBJECT_TYPE_LIST;
 
 typedef struct _RTL_CRITICAL_SECTION_DEBUG
 {

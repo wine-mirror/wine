@@ -2,6 +2,7 @@
  *	Security functions
  *
  *	Copyright 1996-1998 Marcus Meissner
+ * 	Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -897,6 +898,35 @@ NTSTATUS WINAPI RtlAddAce(
 	return STATUS_SUCCESS;
 }
 
+/**************************************************************************
+ *                 RtlDeleteAce				[NTDLL.@]
+ */
+NTSTATUS  WINAPI RtlDeleteAce(PACL pAcl, DWORD dwAceIndex)
+{
+	NTSTATUS status;
+	PACE_HEADER pAce;
+
+	status = RtlGetAce(pAcl,dwAceIndex,(LPVOID*)&pAce);
+
+	if (STATUS_SUCCESS == status)
+	{
+		PACE_HEADER pcAce;
+		DWORD len = 0;
+
+		pcAce = (PACE_HEADER)(((BYTE*)pAce)+pAce->AceSize);
+		for (; dwAceIndex < pAcl->AceCount; dwAceIndex++)
+		{
+			len += pcAce->AceSize;
+			pcAce = (PACE_HEADER)(((BYTE*)pcAce) + pcAce->AceSize);
+		}
+
+		memcpy(pAce, ((BYTE*)pAce)+pAce->AceSize, len);
+                pAcl->AceCount--;
+	}
+
+	return status;
+}
+
 /******************************************************************************
  *  RtlAddAccessAllowedAce		[NTDLL.@]
  */
@@ -1160,4 +1190,75 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
 
         TRACE("%s (%u %u)\n",debugstr_w(String->Buffer),String->Length,String->MaximumLength);
         return status;
+}
+
+/******************************************************************************
+ * RtlQueryInformationAcl (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlQueryInformationAcl(
+    PACL pAcl,
+    LPVOID pAclInformation,
+    DWORD nAclInformationLength,
+    ACL_INFORMATION_CLASS dwAclInformationClass)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    TRACE("pAcl=%p pAclInfo=%p len=%ld, class=%d\n", 
+        pAcl, pAclInformation, nAclInformationLength, dwAclInformationClass);
+
+    switch (dwAclInformationClass)
+    {
+        case AclRevisionInformation:
+        {
+            PACL_REVISION_INFORMATION paclrev = (PACL_REVISION_INFORMATION) pAclInformation;
+
+            if (nAclInformationLength < sizeof(ACL_REVISION_INFORMATION))
+                status = STATUS_INVALID_PARAMETER;
+            else
+                paclrev->AclRevision = pAcl->AclRevision;
+
+            break;
+        }
+
+        case AclSizeInformation:
+        {
+            PACL_SIZE_INFORMATION paclsize = (PACL_SIZE_INFORMATION) pAclInformation;
+
+            if (nAclInformationLength < sizeof(ACL_SIZE_INFORMATION))
+                status = STATUS_INVALID_PARAMETER;
+            else
+            {
+                INT i;
+                PACE_HEADER ace;
+
+                paclsize->AceCount = pAcl->AceCount;
+
+                paclsize->AclBytesInUse = 0;
+		ace = (PACE_HEADER) (pAcl + 1);
+
+                for (i = 0; i < pAcl->AceCount; i++)
+                {
+                    paclsize->AclBytesInUse += ace->AceSize;
+		    ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+                }
+
+		if (pAcl->AclSize < paclsize->AclBytesInUse)
+                {
+                    WARN("Acl has %ld bytes free\n", pAcl->AclSize - paclsize->AclBytesInUse);
+                    paclsize->AclBytesFree = 0;
+                    paclsize->AclBytesInUse = pAcl->AclSize;
+                }
+                else
+                    paclsize->AclBytesFree = pAcl->AclSize - paclsize->AclBytesInUse;
+            }
+
+            break;
+        }
+
+        default:
+            WARN("Unknown AclInformationClass value: %d\n", dwAclInformationClass);
+            status = STATUS_INVALID_PARAMETER;
+    }
+
+    return status;
 }
