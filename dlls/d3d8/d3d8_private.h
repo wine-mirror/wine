@@ -358,6 +358,8 @@ struct IDirect3DDevice8Impl
     /* OpenGL Extension related */
     BOOL                          isMultiTexture;
     UINT                          TextureUnits;
+    UINT                          clipPlanes;
+    UINT                          maxLights;
 
     UINT                          dummyTextureName[8];
 };

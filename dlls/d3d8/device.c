@@ -1727,14 +1727,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf");
 
-    /* If we are changing the View matrix, reset the light information to the new view */
+    /* If we are changing the View matrix, reset the light and clipping planes to the new view */
     if (d3dts == D3DTS_VIEW) {
-        for (k = 0; k < MAX_ACTIVE_LIGHTS; k++) {
+
+        /* NOTE: We have to reset the positions even if the light/plane is not currently
+           enabled, since the call to enable it will not reset the position.             */
+
+        /* Reset lights */
+        for (k = 0; k < This->maxLights; k++) {
             glLightfv(GL_LIGHT0 + k, GL_POSITION,       &This->lightPosn[k][0]);
             checkGLcall("glLightfv posn");
             glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, &This->lightDirn[k][0]);
             checkGLcall("glLightfv dirn");
         }
+
+        /* Reset Clipping Planes if clipping is enabled */
+        for (k = 0; k < This->clipPlanes; k++) {
+            glClipPlane(GL_CLIP_PLANE0+k, This->StateBlock.clipplane[k]);
+            checkGLcall("glClipPlane");
+        }
+
     }
 
     /**
@@ -1895,6 +1907,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
 
+    if (Index > This->maxLights) {
+        FIXME("Cannot handle more lights than device supports\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     TRACE("Light %ld setting to type %d, Diffuse(%f,%f,%f,%f), Specular(%f,%f,%f,%f), Ambient(%f,%f,%f,%f)\n", Index, pLight->Type,
           pLight->Diffuse.r, pLight->Diffuse.g, pLight->Diffuse.b, pLight->Diffuse.a,
           pLight->Specular.r, pLight->Specular.g, pLight->Specular.b, pLight->Specular.a,
@@ -2030,12 +2047,23 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
+    
+    if (Index > This->maxLights) {
+        FIXME("Cannot handle more lights than device supports\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     memcpy(pLight, &This->StateBlock.lights[Index], sizeof(D3DLIGHT8));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL Enable) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), enable? %d\n", This, Index, Enable);
+
+    if (Index > This->maxLights) {
+        FIXME("Cannot handle more lights than device supports\n");
+        return D3DERR_INVALIDCALL;
+    }
 
     This->UpdateStateBlock->Changed.lightEnable[Index] = TRUE;
     This->UpdateStateBlock->Set.lightEnable[Index] = TRUE;
@@ -2059,12 +2087,24 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : for idx(%ld)\n", This, Index);
+
+    if (Index > This->maxLights) {
+        FIXME("Cannot handle more lights than device supports\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     *pEnable = This->StateBlock.lightEnable[Index];
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST float* pPlane) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : for idx %ld, %p\n", This, Index, pPlane);
+
+    /* Validate Index */
+    if (Index >= This->clipPlanes ) {
+        TRACE("Application has requested clipplane this device doesnt support\n");
+        return D3DERR_INVALIDCALL;
+    }
 
     This->UpdateStateBlock->Changed.clipplane[Index] = TRUE;
     This->UpdateStateBlock->Set.clipplane[Index] = TRUE;
@@ -2081,10 +2121,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     /* Apply it */
 
-    /* Clip Plane settings are affected by the model view in OpenGL, the World transform in direct3d, I think?*/
+    /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLD].u.m[0][0]);
+    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
 
     TRACE("Clipplane [%f,%f,%f,%f]\n", This->UpdateStateBlock->clipplane[Index][0], This->UpdateStateBlock->clipplane[Index][1],
           This->UpdateStateBlock->clipplane[Index][2], This->UpdateStateBlock->clipplane[Index][3]);
@@ -2098,6 +2138,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,float* pPlane) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : for idx %ld\n", This, Index);
+
+    /* Validate Index */
+    if (Index >= This->clipPlanes ) {
+        TRACE("Application has requested clipplane this device doesnt support\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     pPlane[0] = This->StateBlock.clipplane[Index][0];
     pPlane[1] = This->StateBlock.clipplane[Index][0];
     pPlane[2] = This->StateBlock.clipplane[Index][0];
@@ -2774,7 +2821,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
 
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL || pSB->blockType == D3DSBT_VERTEXSTATE) {
 
-        for (i=0; i<MAX_ACTIVE_LIGHTS; i++) {
+        for (i=0; i<This->maxLights; i++) {
 
             if (pSB->Set.lightEnable[i] && pSB->Changed.lightEnable[i])
                 IDirect3DDevice8Impl_LightEnable(iface, i, pSB->lightEnable[i]);
@@ -2817,7 +2864,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
                 IDirect3DDevice8Impl_SetStreamSource(iface, i, pSB->stream_source[i], pSB->stream_stride[i]);
         }
 
-        for (i=0; i<MAX_CLIPPLANES; i++) {
+        for (i=0; i<This->clipPlanes; i++) {
             if (pSB->Set.clipplane[i] && pSB->Changed.clipplane[i]) {
                 float clip[4];
 
@@ -2924,7 +2971,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
 
         /* TODO: Vertex Shader Constants */
 
-        for (i=0; i<MAX_ACTIVE_LIGHTS; i++) {
+        for (i=0; i<This->maxLights; i++) {
           if (updateBlock->Set.lightEnable[i] && This->StateBlock.lightEnable[i] != updateBlock->lightEnable[i]) {
               TRACE("Updating light enable for light %d to %d\n", i, This->StateBlock.lightEnable[i]);
               updateBlock->lightEnable[i] = This->StateBlock.lightEnable[i];
@@ -2989,7 +3036,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
            }
        }
 
-       for (i=0; i<MAX_CLIPPLANES; i++) {
+       for (i=0; i<This->clipPlanes; i++) {
            if (updateBlock->Set.clipplane[i] && memcmp(&This->StateBlock.clipplane[i], 
                                                        &updateBlock->clipplane[i], 
                                                        sizeof(updateBlock->clipplane)) != 0) {
@@ -3098,7 +3145,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
             }
         }
 
-        for (i=0; i<MAX_ACTIVE_LIGHTS; i++) {
+        for (i=0; i<This->maxLights; i++) {
             s->Changed.lightEnable[i] = TRUE;
             s->Changed.lights[i] = TRUE;
         }

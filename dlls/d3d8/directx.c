@@ -349,17 +349,24 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     pCaps->TextureOpCaps = 0xFFFFFFFF;
 
     {
-        GLint gl_max_texture_units_arb;
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
-        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
-        pCaps->MaxTextureBlendStages = min(8, gl_max_texture_units_arb);
-        pCaps->MaxSimultaneousTextures = min(8, gl_max_texture_units_arb);
+        GLint gl_max;
+
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
+        pCaps->MaxTextureBlendStages = min(8, gl_max);
+        pCaps->MaxSimultaneousTextures = min(8, gl_max);
+
+        glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
+        pCaps->MaxUserClipPlanes = min(MAX_CLIPPLANES, gl_max);
+        TRACE("GLCaps: GL_MAX_CLIP_PLANES=%d\n", gl_max);
+
+        glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
+        pCaps->MaxActiveLights = min(MAX_ACTIVE_LIGHTS, gl_max);
+        TRACE("GLCaps: GL_MAX_LIGHTS=%d\n", gl_max);
     }
 
     pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_TEXGEN;
 
-    pCaps->MaxActiveLights = 8;
-    pCaps->MaxUserClipPlanes = 1;
     pCaps->MaxVertexBlendMatrices = 1;
     pCaps->MaxVertexBlendMatrixIndex = 1;
 
@@ -396,6 +403,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     XVisualInfo template;
     const char *GL_Extensions = NULL;
     const char *GLX_Extensions = NULL;
+    GLint gl_max;
 
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
@@ -555,6 +563,15 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->isMultiTexture = FALSE;
     object->TextureUnits   = 1;
 
+    /* Retrieve opengl defaults */
+    glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
+    object->clipPlanes   = min(MAX_CLIPPLANES, gl_max);
+    TRACE("ClipPlanes support - num Planes=%d\n", gl_max);
+
+    glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
+    object->maxLights = min(MAX_ACTIVE_LIGHTS, gl_max);
+    TRACE("Lights support - max lights =%d\n", gl_max);
+
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
     TRACE("GL_Extensions reported:\n");  
@@ -574,11 +591,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         TRACE ("   %s\n", ThisExtn);
 
         if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
-	  GLint gl_max_texture_units_arb;
-	  glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
-	  object->isMultiTexture = TRUE;
-	  object->TextureUnits   = min(8, gl_max_texture_units_arb);
-	  TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
+            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+            object->isMultiTexture = TRUE;
+            object->TextureUnits   = min(8, gl_max);
+            TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
         }
 
         if (*GL_Extensions == ' ') GL_Extensions++;
