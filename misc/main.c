@@ -98,6 +98,7 @@ struct options Options =
 #endif
     FALSE,          /* Managed windows */
     FALSE,          /* Perfect graphics */
+    FALSE,          /* No DGA */
     NULL            /* Alternate config file name */
 };
 
@@ -122,7 +123,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL }
+    { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
+    { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"}
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -148,6 +150,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
+  "    -nodga          Disable XFree86 DGA extensions\n" \
   "    -perfect        Favor correctness over speed for graphical operations\n" \
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
@@ -871,6 +874,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
           VERSION_ParseVersion( (char*)value.addr );
       if (MAIN_GetResource( db, ".config", &value))
          Options.configFileName = xstrdup((char *)value.addr);
+      if (MAIN_GetResource( db, ".nodga", &value))
+	 Options.noDGA = TRUE;
 }
 
 

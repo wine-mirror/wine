@@ -68,6 +68,7 @@ struct options
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     int    perfectGraphics; /* Favor correctness over speed for graphics */
+    int    noDGA;           /* Disable XFree86 DGA extensions */
     char * configFileName;  /* Command line config file */
 };
 

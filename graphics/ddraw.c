@@ -37,6 +37,7 @@
 #include "spy.h"
 #include "message.h"
 #include "x11drv.h"
+#include "options.h"
 
 #ifdef HAVE_LIBXXF86DGA
 #include "ts_xf86dga.h"
@@ -89,13 +90,16 @@ DDRAW_DGA_Available()
 #ifdef HAVE_LIBXXF86DGA
 	int evbase, evret, fd;
 	
+   	if (Options.noDGA)
+     	  return 0;
+   
 	/* You don't have to be root to use DGA extensions. Simply having access to /dev/mem will do the trick */
         /* This can be achieved by adding the user to the "kmem" group on Debian 2.x systems, don't know about */
         /* others. --stephenc */
         if ((fd = open("/dev/mem", O_RDWR)) != -1)
           close(fd);
 
-	return (fd != -1)&&TSXF86DGAQueryExtension(display,&evbase,&evret);
+	return (fd != -1) && TSXF86DGAQueryExtension(display,&evbase,&evret);
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return 0;
 #endif /* defined(HAVE_LIBXXF86DGA) */
