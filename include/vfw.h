@@ -1,6 +1,8 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
+#include "config.h"	/* for inline */
+
 #include "windef.h"
 #include "mmsystem.h"
 #include "wingdi.h"
@@ -443,7 +445,7 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
 LRESULT VFWAPI	ICSendMessage16(HIC16 hic, UINT16 msg, DWORD dw1, DWORD dw2);
 
-static LRESULT VFWAPI inline ICDecompressEx(HIC hic, DWORD dwFlags, 
+inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags, 
 					    LPBITMAPINFOHEADER lpbiSrc, LPVOID lpSrc,
 					    int xSrc, int ySrc, int dxSrc, int dySrc,
 					    LPBITMAPINFOHEADER lpbiDst, LPVOID lpDst,
@@ -467,7 +469,7 @@ static LRESULT VFWAPI inline ICDecompressEx(HIC hic, DWORD dwFlags,
     return ICSendMessage(hic, ICM_DECOMPRESSEX, (DWORD)&ic, sizeof(ic));
 }
 
-static LRESULT VFWAPI inline ICDecompressExBegin(HIC hic, DWORD dwFlags,
+inline static LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
 						 LPBITMAPINFOHEADER lpbiSrc,
 						 LPVOID lpSrc,
 						 int xSrc, int ySrc, int dxSrc, int dySrc,
@@ -495,7 +497,7 @@ static LRESULT VFWAPI inline ICDecompressExBegin(HIC hic, DWORD dwFlags,
     ic.dyDst = dyDst;
     return ICSendMessage(hic, ICM_DECOMPRESSEX_BEGIN, (DWORD)&ic, sizeof(ic));
 }
-static LRESULT VFWAPI inline ICDecompressExQuery(HIC hic, DWORD dwFlags,
+inline static LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
 						 LPBITMAPINFOHEADER lpbiSrc,
 						 LPVOID lpSrc,
 						 int xSrc, int ySrc, int dxSrc, int dySrc,
@@ -577,14 +579,14 @@ HIC	VFWAPI	ICGetDisplayFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHE
 #define ICGetStateSize(hic) \
     ICGetState(hic, NULL, 0)
 
-static DWORD inline ICGetDefaultQuality(HIC hic)
+inline static DWORD ICGetDefaultQuality(HIC hic)
 {
    DWORD dwICValue;
    ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD)(LPVOID)&dwICValue, sizeof(DWORD));
    return dwICValue;
 }
 
-static DWORD inline ICGetDefaultKeyFrameRate(HIC hic)
+inline static DWORD ICGetDefaultKeyFrameRate(HIC hic)
 {
    DWORD dwICValue;
    ICSendMessage(hic, ICM_GETDEFAULTKEYFRAMERATE, (DWORD)(LPVOID)&dwICValue, sizeof(DWORD));
@@ -719,7 +721,7 @@ typedef struct {
 
 DWORD VFWAPIV ICDraw(HIC hic,DWORD dwFlags,LPVOID lpFormat,LPVOID lpData,DWORD cbData,LONG lTime);
 
-static LRESULT VFWAPI inline ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn,
+inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn,
 						 LPBITMAPINFOHEADER lpbiOut,
 						 int dxSrc, int dySrc, 
 						 int dxDst, int dyDst,
@@ -776,7 +778,7 @@ static LRESULT VFWAPI inline ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
 #define ICDrawRenderBuffer(hic) \
     ICSendMessage(hic, ICM_DRAW_RENDERBUFFER, 0, 0)
 
-static LRESULT VFWAPI inline ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
+inline static LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
 					     LONG (CALLBACK *fpfnStatus)(LPARAM, UINT, LONG))
 {
     ICSETSTATUSPROC ic;
