@@ -201,7 +201,7 @@ DWORD /* NTSTATUS */ WINAPI RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR
  */
 LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 {
-    fprintf(stdnimp,"RtlNormalizeProcessParams(%p), stub.\n",x);
+    FIXME(ntdll,"(%p), stub.\n",x);
     return x;
 }
 
@@ -490,9 +490,7 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
 {
 	LPSTR	fromA = HEAP_strdupWtoA(GetProcessHeap(),0,from);
 
-	fprintf(stderr,"RtlDosPathNameToNtPathName_U(%s,%p,%08lx,%08lx)\n",
-		fromA,us,x2,x3
-	);
+	FIXME(ntdll,"(%s,%p,%08lx,%08lx)\n",fromA,us,x2,x3);
 	if (us)
 		RtlInitUnicodeString(us,HEAP_strdupW(GetProcessHeap(),0,from));
 	return TRUE;
@@ -503,9 +501,8 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
  */
 DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6)
 {
-	fprintf(stderr,"NtOpenFile(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx)\n",
-		x1,flags,x3,x4,alignment,x6
-	);
+	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx)\n",
+	      x1,flags,x3,x4,alignment,x6);
 	/* returns file io completion status */
 	return 0;
 }

@@ -213,14 +213,12 @@ static void INT_DoRealModeInt( CONTEXT *context )
     }
 
     if (EFL_reg(context)&1)
-        fprintf(stdnimp,
-                "RealModeInt %02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                "                ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
-                BL_reg(context), EAX_reg(&realmode_ctx),
-                EBX_reg(&realmode_ctx), ECX_reg(&realmode_ctx),
-                EDX_reg(&realmode_ctx), ESI_reg(&realmode_ctx),
-                EDI_reg(&realmode_ctx), DS_reg(&realmode_ctx),
-                ES_reg(&realmode_ctx) );
+      FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+	    BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 
+	    ECX_reg(&realmode_ctx), EDX_reg(&realmode_ctx));
+      FIXME(int31,"      ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
+	    ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
+	    DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
     INT_SetRealModeContext( call, &realmode_ctx );
 }
 
@@ -359,17 +357,12 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         SET_CFLAG(context);
         break;
     case 0x0200: /* get real mode interrupt vector */
-	fprintf(stdnimp,
-		"int31: get realmode interupt vector(0x%02x) unimplemented.\n",
-		BL_reg(context)
-	);
+	FIXME(int31,"get realmode interupt vector(0x%02x) unimplemented.\n",
+	      BL_reg(context));
     	SET_CFLAG(context);
         break;
     case 0x0201: /* set real mode interrupt vector */
-	fprintf(stdnimp,
-		"int31: set realmode interupt vector(0x%02x,0x%04x:0x%04x) unimplemented\n",
-		BL_reg(context),CX_reg(context),DX_reg(context)
-	);
+	FIXME(int31, "set realmode interupt vector(0x%02x,0x%04x:0x%04x) unimplemented\n", BL_reg(context),CX_reg(context),DX_reg(context));
     	SET_CFLAG(context);
         break;
     case 0x0204:  /* Get protected mode interrupt vector */
@@ -391,11 +384,10 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     case 0x0301:  /* Call real mode procedure with far return */
         {
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            fprintf(stdnimp,
-                    "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                    "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
-                    p->eax, p->ebx, p->ecx, p->edx,
-                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+            FIXME(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+		p->eax, p->ebx, p->ecx, p->edx);
+            FIXME(int31, "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
+		p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
             SET_CFLAG(context);
         }
         break;
@@ -403,11 +395,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     case 0x0302:  /* Call real mode procedure with interrupt return */
         {
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            fprintf(stdnimp,
-                    "RealModeCallIret: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                    "                  ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
-                    p->eax, p->ebx, p->ecx, p->edx,
-                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+            FIXME(int31, "RealModeCallIret: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
+            FIXME(int31, "                  ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
             SET_CFLAG(context);
         }
         break;
@@ -415,22 +404,18 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     case 0x0303:  /* Allocate Real Mode Callback Address */
         {
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            fprintf(stdnimp,
-                    "AllocRMCB: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                    "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n"
-		    "	Function to call: %04x:%04x\n",
-                    p->eax, p->ebx, p->ecx, p->edx,
-                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip,
-		    (WORD)DS_reg(context), SI_reg(context) );
+            FIXME(int31, "AllocRMCB: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
+	    FIXME(int31, "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip);
+	    FIXME(int31, "           Function to call: %04x:%04x\n",
+		(WORD)DS_reg(context), SI_reg(context) );
             SET_CFLAG(context);
         }
         break;
 
     case 0x0304:  /* Free Real Mode Callback Address */
 	{
-	    fprintf(stdnimp,
-		    "FreeRMCB: callback address: %04x:%04x\n",
-		    CX_reg(context), DX_reg(context));
+	    FIXME(int31, "FreeRMCB: callback address: %04x:%04x\n",
+		  CX_reg(context), DX_reg(context));
 	    SET_CFLAG(context);
 	}
 	break;

@@ -481,6 +481,8 @@ typedef WORD *LPKEYARRAY;
 #define MOM_CLOSE       MM_MOM_CLOSE
 #define MOM_DONE        MM_MOM_DONE
 
+/* device ID for MIDI mapper */
+
 #define MIDIMAPPER     (-1)
 #define MIDI_MAPPER    (-1)
 

@@ -455,8 +455,7 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc,
 				 fccIOProc, pIOProc, dwFlags);
 
 	if (dwFlags & MMIO_GLOBALPROC) {
-		fprintf(stdnimp, "mmioInstallIOProc: global procedures not "
-				"implemented\n");
+		FIXME(mmio, " global procedures not implemented\n");
 	}
 
 	/* just handle the known procedures for now */

@@ -174,7 +174,8 @@ typedef FINDREPLACE *LPFINDREPLACE;
 
 #pragma pack(1)
 
-typedef struct {
+typedef struct 
+{
 	DWORD			lStructSize;
 	HWND16			hwndOwner;          /* caller's window handle   */
 	HDC16          	        hDC;                /* printer DC/IC or NULL    */
@@ -195,8 +196,27 @@ typedef struct {
 	short			nSizeMin WINE_PACKED;   /* minimum pt size allowed & */
 	short			nSizeMax WINE_PACKED;   /* max pt size allowed if    */
 							/* CF_LIMITSIZE is used      */
-	} CHOOSEFONT;
-typedef CHOOSEFONT *LPCHOOSEFONT;
+} CHOOSEFONT, *LPCHOOSEFONT;
+
+typedef struct
+{
+	UINT32  	lStructSize; 
+	HWND32 		hwndOwner; 
+	HDC32  		hDC; 
+	LPLOGFONT32A    lpLogFont; 
+	INT32		iPointSize; 
+	UINT32		Flags; 
+	COLORREF	rgbColors; 
+	LPARAM		lCustData; 
+	WNDPROC32 	lpfnHook; 
+	LPCSTR		lpTemplateName; 
+	HINSTANCE32	hInstance; 
+	LPSTR		lpszStyle; 
+	UINT16		nFontType; 
+	UINT16	___MISSING_ALIGNMENT__; 
+	INT32   	nSizeMin; 
+	INT32		nSizeMax; 
+} CHOOSEFONT32A, *PCHOOSEFONT32A;
 
 #pragma pack(4)
 

@@ -12,4 +12,4 @@ type win16
 10 stub REGISTERTYPELIB              
 11 stub LOADREGTYPELIB               
 14 pascal QueryPathOfRegTypeLib(ptr word word word ptr) QueryPathOfRegTypeLib
-15 stub OABUILDVERSION               
+15 pascal OABuildVersion() OABuildVersion               

@@ -12,6 +12,7 @@
 #endif
 #include "winhelp.h"
 #include "macro.h"
+#include "debug.h"
 
 VOID MACRO_About(VOID)
 {
@@ -460,7 +461,31 @@ VOID MACRO_Prev(VOID)
 
 VOID MACRO_Print(VOID)
 {
-  fprintf(stderr, "Print()\n");
+    PRINTDLG printer;
+    
+    printer.lStructSize         = sizeof(printer);
+    printer.hwndOwner           = Globals.active_win->hMainWnd;
+    printer.hInstance           = Globals.hInstance;
+    printer.hDevMode            = 0;
+    printer.hDevNames           = 0;
+    printer.hDC                 = 0;
+    printer.Flags               = 0;
+    printer.nFromPage           = 0;
+    printer.nToPage             = 0;
+    printer.nMinPage            = 0;
+    printer.nMaxPage            = 0;
+    printer.nCopies             = 0;
+    printer.lCustData           = 0;
+    printer.lpfnPrintHook       = 0;
+    printer.lpfnSetupHook       = 0;
+    printer.lpPrintTemplateName = 0;
+    printer.lpSetupTemplateName = 0;
+    printer.hPrintTemplate      = 0;
+    printer.hSetupTemplate      = 0;
+        
+    if (PrintDlg16(&printer)) {
+        fprintf(stderr, "Print()\n");
+    };
 }
 
 VOID MACRO_PrinterSetup(VOID)

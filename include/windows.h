@@ -817,6 +817,8 @@ DECL_WINELIB_TYPE(LPDEBUGHOOKINFO);
 #define IDIGNORE            5
 #define IDYES               6
 #define IDNO                7
+#define IDCLOSE             8
+#define IDHELP              9      
 
 
 typedef struct
@@ -2495,6 +2497,9 @@ typedef struct tagCOMSTAT
 #define IDC_SIZENESW     MAKEINTRESOURCE(32643)
 #define IDC_SIZEWE       MAKEINTRESOURCE(32644)
 #define IDC_SIZENS       MAKEINTRESOURCE(32645)
+#define IDC_NO           MAKEINTRESOURCE(32648)
+#define IDC_APPSTARTING  MAKEINTRESOURCE(32650)
+#define IDC_HELP         MAKEINTRESOURCE(32651)
 
 /* OEM Resource Ordinal Numbers */
 #define OBM_CLOSE           32754
@@ -2559,6 +2564,9 @@ typedef struct tagCOMSTAT
 #define OCR_SIZENS          32645
 #define OCR_SIZEALL         32646
 #define OCR_ICOCUR          32647
+#define OCR_NO              32648
+#define OCR_APPSTARTING     32650
+#define OCR_HELP            32651  /* only defined in wine */
 
 #define OIC_SAMPLE          32512
 #define OIC_HAND            32513

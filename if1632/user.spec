@@ -399,8 +399,8 @@ file	user.exe
 434 pascal16 IsCharAlphaNumeric(word) IsCharAlphaNumeric16
 435 pascal16 IsCharUpper(word) IsCharUpper16
 436 pascal16 IsCharLower(word) IsCharLower16
-437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff16
-438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff16
+437 pascal16 AnsiUpperBuff(str word) AnsiUpperBuff16
+438 pascal16 AnsiLowerBuff(str word) AnsiLowerBuff16
 441 pascal16 InsertMenuItem(word word word ptr) InsertMenuItem16
 443 stub GetMenuItemInfo
 445 pascal   DefFrameProc(word word word word long) DefFrameProc16

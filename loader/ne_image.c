@@ -289,7 +289,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 		else
                     *(unsigned char*)sp = (unsigned char)((int)address & 0xFF);
             }
-            while (offset != 0xffff && !additive);
+            while (offset && offset != 0xffff && !additive);
             break;
 
 	  case NE_RADDR_OFFSET16:
@@ -301,7 +301,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 		*sp = LOWORD(address);
 		if (additive) *sp += offset;
 	    } 
-	    while (offset != 0xffff && !additive);
+	    while (offset && offset != 0xffff && !additive);
 	    break;
 	    
 	  case NE_RADDR_POINTER32:
@@ -314,7 +314,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 		if (additive) *sp += offset;
 		*(sp+1) = HIWORD(address);
 	    } 
-	    while (offset != 0xffff && !additive);
+	    while (offset && offset != 0xffff && !additive);
 	    break;
 	    
 	  case NE_RADDR_SELECTOR:
@@ -328,7 +328,6 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 		if(additive && offset)
         	fprintf(stderr,"Additive selector to %4.4x.Please report\n",offset);
 	    } 
-            /* FIXME: Quicken 5 has a zero offset fixup.  This seems to work */
 	    while (offset && offset != 0xffff && !additive);
 	    break;
 	    

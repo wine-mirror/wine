@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "class.h"
 #include "module.h"
@@ -436,7 +437,12 @@ static void DEBUG_Main( int signal )
 	fprintf(stderr,"Loading symbols: ");
 	if( DEBUG_ReadExecutableDbgInfo() == FALSE )
         {
-	    PROFILE_GetWineIniString( "wine", "SymbolTableFile", "wine.sym",
+	    char *symfilename = "wine.sym";
+	    struct stat statbuf;
+	    if (-1 == stat(symfilename, &statbuf) )
+                symfilename = LIBDIR "wine.sym";
+
+	    PROFILE_GetWineIniString( "wine", "SymbolTableFile", symfilename,
                                      SymbolTableFile, sizeof(SymbolTableFile));
 	    DEBUG_ReadSymbolTable( SymbolTableFile );
         }

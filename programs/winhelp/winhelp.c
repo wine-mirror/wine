@@ -17,9 +17,10 @@ VOID LIBWINE_Register_De(void);
 VOID LIBWINE_Register_En(void);
 VOID LIBWINE_Register_Fi(void);
 VOID LIBWINE_Register_Fr(void);
+VOID LIBWINE_Register_Hu(void);
 VOID LIBWINE_Register_It(void);
 VOID LIBWINE_Register_Ko(void);
-VOID LIBWINE_Register_Hu(void);
+VOID LIBWINE_Register_Sw(void);
 VOID LIBWINE_Register_Va(void);
 
 static BOOL    WINHELP_RegisterWinClasses();

@@ -43,12 +43,13 @@ static void DCE_DumpCache(void)
 {
     DCE* dce = firstDCE;
     
-    printf("DCE:\n");
+    DUMP("DCE:\n");
     while( dce )
     {
-	printf("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
-	(unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags, (dce->DCXflags & DCX_CACHE) ?
-	"Cache" : "Owned", (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
+	DUMP("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
+	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags, 
+	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned", 
+	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
 	dce = dce->next;
     }
 }
@@ -143,7 +144,8 @@ void DCE_FreeWindowDCE( WND* pWnd )
 		}
 		else if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
-		    fprintf(stderr,"[%04x] GetDC() without ReleaseDC()!\n", pWnd->hwndSelf);
+		    ERR(cd,"[%04x] GetDC() without ReleaseDC()!\n", 
+			pWnd->hwndSelf);
 		    DCE_ReleaseDC( pDCE );
 		}
 
@@ -709,8 +711,8 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 
 		if( dce->hClipRgn != hrgnClip )
 		{
-		    fprintf(stdnimp,"GetDCEx: new hrgnClip [%04x] smashes the previous [%04x]!\n",
-				     hrgnClip, dce->hClipRgn );
+		    FIXME(dc,"new hrgnClip[%04x] smashes the previous[%04x]\n",
+			  hrgnClip, dce->hClipRgn );
 		    DCE_DeleteClipRgn( dce );
 		}
 		else 
@@ -928,7 +930,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	   break;
 
       default:
-	   fprintf(stdnimp,"DCHook: unknown code\n");
+	   FIXME(dc,"unknown code\n");
     }
   return 0;
 }

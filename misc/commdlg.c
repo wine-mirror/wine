@@ -1156,7 +1156,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
  */
 BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
 {
-    fprintf( stdnimp, "PrintDlg32A: empty stub\n" );
+    FIXME(commdlg, "empty stub\n" );
     return FALSE;
 }
 
@@ -1166,7 +1166,7 @@ BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
  */
 BOOL32 WINAPI PrintDlg32W( LPPRINTDLG32W printdlg )
 {
-    fprintf( stdnimp, "PrintDlg32A: empty stub\n" );
+    FIXME(commdlg, "empty stub\n" );
     return FALSE;
 }
 
@@ -3231,7 +3231,10 @@ GET_XXX_FILENAME(GetSaveFileName)
 /***********************************************************************
  *           ChooseFontA   (COMDLG32.3)
  */
-DWORD WINAPI ChooseFont32A(CHOOSEFONT pChoosefont)
+DWORD WINAPI ChooseFont32A(PCHOOSEFONT32A pChoosefont)
 {
+	FIXME(commdlg,"empty stub!\n");
+
+	CommDlgLastError = CDERR_DIALOGFAILURE;
 	return NULL;
 }

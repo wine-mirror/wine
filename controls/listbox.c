@@ -100,14 +100,14 @@ void LISTBOX_Dump( WND *wnd )
     LB_ITEMDATA *item;
     LB_DESCR *descr = *(LB_DESCR **)wnd->wExtra;
 
-    printf( "Listbox:\n" );
-    printf( "hwnd=%04x descr=%08x heap=%08x items=%d top=%d\n",
-            wnd->hwndSelf, (UINT32)descr, descr->heap, descr->nb_items,
-            descr->top_item );
+    DUMP( "Listbox:\n" );
+    DUMP( "hwnd=%04x descr=%08x heap=%08x items=%d top=%d\n",
+	  wnd->hwndSelf, (UINT32)descr, descr->heap, descr->nb_items,
+	  descr->top_item );
     for (i = 0, item = descr->items; i < descr->nb_items; i++, item++)
     {
-        printf( "%4d: %-40s %d %08lx %3d\n",
-                i, item->str, item->selected, item->data, item->height );
+        DUMP( "%4d: %-40s %d %08lx %3d\n",
+	      i, item->str, item->selected, item->data, item->height );
     }
 }
 

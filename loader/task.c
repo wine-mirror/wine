@@ -486,7 +486,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     pTask->pdb.environment    = hEnvironment;
     pTask->pdb.nbFiles        = 20;
-    lstrcpyn32A( pTask->pdb.cmdLine, cmdLine, 127 );
+    lstrcpyn32A( pTask->pdb.cmdLine, cmdLine, sizeof(pTask->pdb.cmdLine) );
 
       /* Get the compatibility flags */
 
@@ -839,7 +839,7 @@ void WINAPI InitTask( CONTEXT *context )
          * es:bx  pointer to command-line inside PSP
          */
         EAX_reg(context) = 1;
-        EBX_reg(context) = 0x81;
+        EBX_reg(context) = pTask->pdb.cmdLine[0] ? 0x81 : 0x80;
         ECX_reg(context) = pModule->stack_size;
         EDX_reg(context) = pTask->nCmdShow;
         ESI_reg(context) = (DWORD)pTask->hPrevInstance;
@@ -1005,7 +1005,8 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
     BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
-    
+
+    if (!hInstance) return 0;
     if (__winelib) return func; /* func can be called directly in Winelib */
     thunkaddr = TASK_AllocThunk( hCurrentTask );
     if (!thunkaddr) return (FARPROC16)0;
@@ -1358,8 +1359,8 @@ FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 WORD WINAPI SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
                            UINT16 *oldmode, UINT16 newmode, UINT16 flag )
 {
-    fprintf(stdnimp,"SetSigHandler(%p,%p,%p,%d,%d), unimplemented.\n",
-            newhandler,oldhandler,oldmode,newmode,flag );
+    FIXME(task,"(%p,%p,%p,%d,%d), unimplemented.\n",
+	  newhandler,oldhandler,oldmode,newmode,flag );
 
     if (flag != 1) return 0;
     if (!newmode) newhandler = NULL;  /* Default handler */

@@ -31,7 +31,6 @@
 #include "winproc.h"
 #include "thread.h"
 #include "debug.h"
-#include "debugstr.h"
 
 /* Desktop window */
 static WND *pWndDesktop = NULL;
@@ -705,15 +704,19 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                        LoadMenu(cs->hInstance,(SEGPTR)classPtr->menuNameA);
 #else
 	    SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
-	    /* hInstance is still 16-bit in 980215 winelib */
-	    if (HIWORD(cs->hInstance) || __winelib)
-	    	cs->hMenu = LoadMenu32A(cs->hInstance,PTR_SEG_TO_LIN(menuName));
-	    else
-	      /* doesn't work for winelib, since resources are unicode */
-	    	cs->hMenu = LoadMenu16(cs->hInstance,menuName);
+            if (menuName)
+            {
+                /* hInstance is still 16-bit in 980215 winelib */
+                if (HIWORD(cs->hInstance) || __winelib)
+                    cs->hMenu = LoadMenu32A(cs->hInstance,PTR_SEG_TO_LIN(menuName));
+                else
+                    /* doesn't work for winelib, since resources are unicode */
+                    cs->hMenu = LoadMenu16(cs->hInstance,menuName);
+
+                if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );
+            }
 #endif
         }
-        if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );
     }
     else wndPtr->wIDmenu = (UINT32)cs->hMenu;
 
@@ -1740,7 +1743,7 @@ HWND16 WINAPI GetParent16( HWND16 hwnd )
 HWND32 WINAPI GetParent32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (!wndPtr) return 0;
+    if ((!wndPtr) || (!(wndPtr->dwStyle & (WS_POPUP|WS_CHILD)))) return 0;
     wndPtr = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->parent : wndPtr->owner;
     return wndPtr ? wndPtr->hwndSelf : 0;
 }

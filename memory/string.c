@@ -11,7 +11,6 @@
 #include "winerror.h"
 #include "ldt.h"
 #include "debug.h"
-#include "debugstr.h"
 
 static const BYTE STRING_Oem2Ansi[256] =
 "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\244"

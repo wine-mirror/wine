@@ -327,7 +327,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         if (!strcmp( argv[i], "-display" )) display_name = argv[i+1];
         if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
         {
-            printf( "%s\n", WINE_RELEASE_INFO );
+            MSG( "%s\n", WINE_RELEASE_INFO );
             exit(0);
         }
     }
@@ -683,6 +683,9 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 			*(BOOL32 *) lpvParam = FALSE;
 		break;
 
+	case SPI_GETDRAGFULLWINDOWS:
+	  *(BOOL32 *) lpvParam = FALSE;
+		
 	case SPI_GETGRIDGRANULARITY:
 		*(INT32*)lpvParam=GetProfileInt32A("desktop","GridGranularity",1);
 		break;
@@ -1067,5 +1070,5 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 */
 void WINAPI FileCDR(FARPROC16 x)
 {
-	printf("FileCDR(%8x)\n", (int) x);
+	FIXME(file,"(%8x): stub\n", (int) x);
 }

@@ -11,6 +11,8 @@
 #include "metafile.h"
 #include "debug.h"
 
+#include <string.h>
+
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     MFDRV_Arc,                       /* pArc */
@@ -179,22 +181,19 @@ HDC16 WINAPI CreateMetaFile16(
     return dc->hSelf;
 }
 
-
-/******************************************************************
- *	     CloseMetaFile16   (GDI.126)
- *
- *  Stop recording graphics operations in metafile associated with
- *  hdc and retrieve metafile.
- *
- * RETURNS
- *  Handle of newly created metafile on success, NULL on failure.
+/**********************************************************************
+ *	     CreateMetaFile32A   (GDI32.51)
  */
-HMETAFILE16 WINAPI CloseMetaFile16( 
-				   HDC16 hdc /* Metafile DC to close */
+HDC32 WINAPI CreateMetaFile32A( 
+			      LPCSTR filename /* Filename of disk metafile */
 )
 {
+  return CreateMetaFile16( filename );
+}
+
+static DC *METAFILE_CloseMetaFile( HDC32 hdc ) 
+{
     DC *dc;
-    HMETAFILE16 hmf;
     HFILE32 hFile;
     METAFILEDRV_PDEVICE *physDev;
     
@@ -231,6 +230,22 @@ HMETAFILE16 WINAPI CloseMetaFile16(
         _lclose32(hFile);
     }
 
+    return dc;
+}
+
+/******************************************************************
+ *	     CloseMetaFile16   (GDI.126)
+ */
+HMETAFILE16 WINAPI CloseMetaFile16( 
+				   HDC16 hdc /* Metafile DC to close */
+)
+{
+    HMETAFILE16 hmf;
+    METAFILEDRV_PDEVICE *physDev;
+    DC *dc = METAFILE_CloseMetaFile(hdc);
+    if (!dc) return 0;
+    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+
     /* Now allocate a global handle for the metafile */
 
     hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, physDev->mh,
@@ -241,12 +256,25 @@ HMETAFILE16 WINAPI CloseMetaFile16(
     return hmf;
 }
 
+/******************************************************************
+ *	     CloseMetaFile32   (GDI32.17)
+ *
+ *  Stop recording graphics operations in metafile associated with
+ *  hdc and retrieve metafile.
+ *
+ * RETURNS
+ *  Handle of newly created metafile on success, NULL on failure.
+ */
+HMETAFILE32 WINAPI CloseMetaFile32( 
+				   HDC32 hdc /* Metafile DC to close */
+)
+{
+  return CloseMetaFile32(hdc);
+}
+
 
 /******************************************************************
  *	     DeleteMetaFile16   (GDI.127)
- *
- *  Delete a memory-based metafile.
- *
  */
 BOOL16 WINAPI DeleteMetaFile16( 
 			       HMETAFILE16 hmf 
@@ -255,4 +283,78 @@ BOOL16 WINAPI DeleteMetaFile16(
 {
     return !GlobalFree16( hmf );
 }
+
+/******************************************************************
+ *          DeleteMetaFile32  (GDI32.69)
+ *
+ *  Delete a memory-based metafile.
+ */
+
+BOOL32 WINAPI DeleteMetaFile32(
+	      HMETAFILE32 hmf
+) {
+  return !GlobalFree16( hmf );
+}
+
+/********************************************************************
+
+       Enhanced Metafile driver initializations
+
+       This possibly  should be moved to their own file/directory
+       at some point.
+
+**********************************************************************/
+
+/*
+  need wide version as well
+*/
+HDC32 CreateEnhMetaFile32A( 
+    HDC32 hdc, /* optional reference DC */
+    LPCSTR filename, /* optional filename for disk metafiles */
+    const RECT32 *rect, /* optional bounding rectangle */
+    LPCSTR description /* optional description */ 
+    )
+{
+#if 0
+    DC *dc;
+    METAFILEDRV_PDEVICE *physDev;
+    HFILE32 hFile;
+
+    if (!(dc = MFDRV_AllocMetaFile())) return 0;
+    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    
+    if (filename)  /* disk based metafile */
+    {
+        physDev->mh->mtType = METAFILE_DISK;
+        if ((hFile = _lcreat32( filename, 0 )) == HFILE_ERROR32)
+        {
+            MFDRV_DeleteDC( dc );
+            return 0;
+        }
+        if (_lwrite32( hFile, (LPSTR)physDev->mh,
+                       sizeof(*physDev->mh)) == HFILE_ERROR32)
+	{
+            MFDRV_DeleteDC( dc );
+            return 0;
+	}
+	physDev->mh->mtNoParameters = hFile; /* store file descriptor here */
+	                            /* windows probably uses this too*/
+    }
+    else  /* memory based metafile */
+	physDev->mh->mtType = METAFILE_MEMORY;
+
+    TRACE(metafile, "returning %04x\n", dc->hSelf);
+    return dc->hSelf;
+#endif
+    return 0;
+}
+
+HENHMETAFILE32 CloseEnhMetaFile32( 
+               HDC32 hdc  /* metafile DC */
+	       )
+{
+  /* write EMR_EOF(0x0, 0x10, 0x14) */
+  return 0;
+}
+
 

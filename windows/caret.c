@@ -131,7 +131,7 @@ void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
 }
 
 /*****************************************************************
- *           CreateCaret32   (USER32.65)
+ *           CreateCaret32   (USER32.66)
  */
 BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
                              INT32 width, INT32 height )
@@ -182,7 +182,7 @@ void WINAPI DestroyCaret16(void)
 
 
 /*****************************************************************
- *           DestroyCaret32   (USER32.130)
+ *           DestroyCaret32   (USER32.131)
  */
 BOOL32 WINAPI DestroyCaret32(void)
 {
@@ -209,7 +209,7 @@ void WINAPI SetCaretPos16( INT16 x, INT16 y )
 
 
 /*****************************************************************
- *           SetCaretPos32   (USER32.465)
+ *           SetCaretPos32   (USER32.466)
  */
 BOOL32 WINAPI SetCaretPos32( INT32 x, INT32 y)
 {
@@ -241,7 +241,7 @@ void WINAPI HideCaret16( HWND16 hwnd )
 
 
 /*****************************************************************
- *           HideCaret32   (USER32.316)
+ *           HideCaret32   (USER32.317)
  */
 BOOL32 WINAPI HideCaret32( HWND32 hwnd )
 {
@@ -268,7 +268,7 @@ void WINAPI ShowCaret16( HWND16 hwnd )
 
 
 /*****************************************************************
- *           ShowCaret32   (USER32.528)
+ *           ShowCaret32   (USER32.529)
  */
 BOOL32 WINAPI ShowCaret32( HWND32 hwnd )
 {
@@ -300,7 +300,7 @@ void WINAPI SetCaretBlinkTime16( UINT16 msecs )
 }
 
 /*****************************************************************
- *           SetCaretBlinkTime32   (USER32.464)
+ *           SetCaretBlinkTime32   (USER32.465)
  */
 BOOL32 WINAPI SetCaretBlinkTime32( UINT32 msecs )
 {
@@ -325,7 +325,7 @@ UINT16 WINAPI GetCaretBlinkTime16(void)
 
 
 /*****************************************************************
- *           GetCaretBlinkTime32   (USER32.208)
+ *           GetCaretBlinkTime32   (USER32.209)
  */
 UINT32 WINAPI GetCaretBlinkTime32(void)
 {
@@ -348,7 +348,7 @@ VOID WINAPI GetCaretPos16( LPPOINT16 pt )
 
 
 /*****************************************************************
- *           GetCaretPos32   (USER32.209)
+ *           GetCaretPos32   (USER32.210)
  */
 BOOL32 WINAPI GetCaretPos32( LPPOINT32 pt )
 {

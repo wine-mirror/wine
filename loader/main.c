@@ -82,6 +82,7 @@ BOOL32 MAIN_KernelInit(void)
 BOOL32 MAIN_UserInit(void)
 {
     extern BOOL32 WIDGETS_Init(void);
+    extern BOOL32 MULTIMEDIA_Init(void);
 
     int queueSize;
 
@@ -133,6 +134,9 @@ BOOL32 MAIN_UserInit(void)
 
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
+
+    /* Initialize multimedia */
+    if (!MULTIMEDIA_Init()) return FALSE;
 
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;

@@ -13,6 +13,9 @@ C_SRCS = \
 	view.c \
 	winmain.c
 
+RC_SRCS = \
+	viewrc.rc
+
 all: check_winerc $(PROGRAMS)
 
 depend:: $(RC_SRCS:.rc=.h)

@@ -44,4 +44,26 @@ extern LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str );
 /* Use this one only when you own the lock! */
 #define SYSTEM_LOCK_COUNT() (HEAP_SystemLock->RecursionCount)
 
+
+typedef struct
+{
+    LPVOID lpData;
+    DWORD cbData;
+    BYTE cbOverhead;
+    BYTE iRegionIndex;
+    WORD wFlags;
+    union {
+        struct {
+            HANDLE32 hMem;
+            DWORD dwReserved[3];
+        } Block;
+        struct {
+            DWORD dwCommittedSize;
+            DWORD dwUnCommittedSize;
+            LPVOID lpFirstBlock;
+            LPVOID lpLastBlock;
+        } Region;
+    } Foo;
+} PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
+
 #endif  /* __WINE_HEAP_H */

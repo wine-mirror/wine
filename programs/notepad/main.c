@@ -114,17 +114,6 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  *           WinMain
  */
 
-void DumpGlobals(void) {
-
-    printf("DumpGlobals()\n");
-    printf(" Globals.lpszIniFile: %s\n", Globals.lpszIniFile); 
-    printf(" Globals.lpszIcoFile: %s\n", Globals.lpszIcoFile);
-    printf("Globals.lpszLanguage: %s\n", Globals.lpszLanguage);
-    printf("   Globals.hInstance: %i\n", Globals.hInstance);
-    printf("   Globals.hMainMenu: %i\n", Globals.hMainMenu);
-    
-}
- 
 int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
@@ -139,14 +128,12 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
       LIBWINE_Register_Sw();
     #endif
 
-    printf("WinMain()\n");
-    
     /* Setup Globals */
 
     Globals.lpszIniFile   = "notepad.ini";
     Globals.lpszIcoFile   = "notepad.ico";
 
-  /* Select Language */
+    /* Select Language */
     LANGUAGE_Init();
 
     Globals.hInstance     = hInstance;
@@ -155,20 +142,22 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     if (!Globals.hMainIcon) Globals.hMainIcon = 
                                   LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
-    DumpGlobals();				  
-				  
+    lstrcpyn(Globals.szFindText, "\0", 1);
+    lstrcpyn(Globals.szFileName, "\0", 1);
+
     if (!prev){
-	class.style = CS_HREDRAW | CS_VREDRAW;
-	class.lpfnWndProc = NOTEPAD_WndProc;
-	class.cbClsExtra = 0;
-	class.cbWndExtra = 0;
-	class.hInstance  = Globals.hInstance;
-	class.hIcon      = LoadIcon (0, IDI_APPLICATION);
-	class.hCursor    = LoadCursor (0, IDC_ARROW);
+	class.style         = CS_HREDRAW | CS_VREDRAW;
+	class.lpfnWndProc   = NOTEPAD_WndProc;
+	class.cbClsExtra    = 0;
+	class.cbWndExtra    = 0;
+	class.hInstance     = Globals.hInstance;
+	class.hIcon         = LoadIcon (0, IDI_APPLICATION);
+	class.hCursor       = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (WHITE_BRUSH);
-	class.lpszMenuName = "bla\0";
+	class.lpszMenuName  = 0;
 	class.lpszClassName = (SEGPTR)className;
     }
+
     if (!RegisterClass (&class))
 	return FALSE;
 

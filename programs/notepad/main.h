@@ -31,6 +31,8 @@ typedef struct
   LPCSTR  lpszLanguage;
   UINT    wStringTableOffset;
   BOOL    bWrapLongLines;
+  CHAR    szFindText[MAX_PATHNAME_LEN];
+  CHAR    szFileName[MAX_PATHNAME_LEN];
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;

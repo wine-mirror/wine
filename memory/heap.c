@@ -106,42 +106,42 @@ void HEAP_Dump( HEAP *heap )
     SUBHEAP *subheap;
     char *ptr;
 
-    printf( "Heap: %08lx\n", (DWORD)heap );
-    printf( "Next: %08lx  Sub-heaps: %08lx",
-            (DWORD)heap->next, (DWORD)&heap->subheap );
+    DUMP( "Heap: %08lx\n", (DWORD)heap );
+    DUMP( "Next: %08lx  Sub-heaps: %08lx",
+	  (DWORD)heap->next, (DWORD)&heap->subheap );
     subheap = &heap->subheap;
     while (subheap->next)
     {
-        printf( " -> %08lx", (DWORD)subheap->next );
+        DUMP( " -> %08lx", (DWORD)subheap->next );
         subheap = subheap->next;
     }
 
-    printf( "\nFree lists:\n Block   Stat   Size    Id\n" );
+    DUMP( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        printf( "%08lx free %08lx %04x prev=%08lx next=%08lx\n",
-                (DWORD)&heap->freeList[i].arena, heap->freeList[i].arena.size,
-                heap->freeList[i].arena.threadId,
-                (DWORD)heap->freeList[i].arena.prev,
-                (DWORD)heap->freeList[i].arena.next );
+        DUMP( "%08lx free %08lx %04x prev=%08lx next=%08lx\n",
+	      (DWORD)&heap->freeList[i].arena, heap->freeList[i].arena.size,
+	      heap->freeList[i].arena.threadId,
+	      (DWORD)heap->freeList[i].arena.prev,
+	      (DWORD)heap->freeList[i].arena.next );
 
     subheap = &heap->subheap;
     while (subheap)
     {
         DWORD freeSize = 0, usedSize = 0, arenaSize = subheap->headerSize;
-        printf( "\n\nSub-heap %08lx: size=%08lx committed=%08lx\n",
-                (DWORD)subheap, subheap->size, subheap->commitSize );
-
-        printf( "\n Block   Stat   Size    Id\n" );
+        DUMP( "\n\nSub-heap %08lx: size=%08lx committed=%08lx\n",
+	      (DWORD)subheap, subheap->size, subheap->commitSize );
+	
+        DUMP( "\n Block   Stat   Size    Id\n" );
         ptr = (char*)subheap + subheap->headerSize;
         while (ptr < (char *)subheap + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
                 ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-                printf( "%08lx free %08lx %04x prev=%08lx next=%08lx\n",
-                        (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
-                        pArena->threadId, (DWORD)pArena->prev,
-                        (DWORD)pArena->next);
+                DUMP( "%08lx free %08lx %04x prev=%08lx next=%08lx\n",
+		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
+		      pArena->threadId, (DWORD)pArena->prev,
+		      (DWORD)pArena->next);
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_FREE);
                 freeSize += pArena->size & ARENA_SIZE_MASK;
@@ -149,10 +149,10 @@ void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                printf( "%08lx Used %08lx %04x back=%08lx EIP=%08lx\n",
-                        (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
-                        pArena->threadId, *((DWORD *)pArena - 1),
-                        pArena->callerEIP );
+                DUMP( "%08lx Used %08lx %04x back=%08lx EIP=%08lx\n",
+		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
+		      pArena->threadId, *((DWORD *)pArena - 1),
+		      pArena->callerEIP );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -160,17 +160,17 @@ void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                printf( "%08lx used %08lx %04x EIP=%08lx\n",
-                        (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
-                        pArena->threadId, pArena->callerEIP );
+                DUMP( "%08lx used %08lx %04x EIP=%08lx\n",
+		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
+		      pArena->threadId, pArena->callerEIP );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
             }
         }
-        printf( "\nTotal: Size=%08lx Committed=%08lx Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
-                subheap->size, subheap->commitSize, freeSize, usedSize,
-                arenaSize, (arenaSize * 100) / subheap->size );
+        DUMP( "\nTotal: Size=%08lx Committed=%08lx Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
+	      subheap->size, subheap->commitSize, freeSize, usedSize,
+	      arenaSize, (arenaSize * 100) / subheap->size );
         subheap = subheap->next;
     }
 }
@@ -178,9 +178,13 @@ void HEAP_Dump( HEAP *heap )
 
 /***********************************************************************
  *           HEAP_GetPtr
+ * RETURNS
+ *	Pointer to the heap
+ *	NULL: Failure
  */
-static HEAP *HEAP_GetPtr( HANDLE32 heap )
-{
+static HEAP *HEAP_GetPtr(
+             HANDLE32 heap /* [in] Handle to the heap */
+) {
     HEAP *heapPtr = (HEAP *)heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
@@ -218,11 +222,16 @@ static void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena )
 
 /***********************************************************************
  *           HEAP_FindSubHeap
- *
  * Find the sub-heap containing a given address.
+ *
+ * RETURNS
+ *	Pointer: Success
+ *	NULL: Failure
  */
-static SUBHEAP *HEAP_FindSubHeap( HEAP *heap, LPCVOID ptr )
-{
+static SUBHEAP *HEAP_FindSubHeap(
+                HEAP *heap, /* [in] Heap pointer */
+                LPCVOID ptr /* [in] Address */
+) {
     SUBHEAP *sub = &heap->subheap;
     while (sub)
     {
@@ -717,11 +726,20 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
 
 /***********************************************************************
  *           HEAP_IsInsideHeap
+ * Checks whether the pointer points to a block inside a given heap.
  *
- * Check whether the pointer is to a block inside a given heap.
+ * NOTES
+ *	Should this return BOOL32?
+ *
+ * RETURNS
+ *	!0: Success
+ *	0: Failure
  */
-int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr )
-{
+int HEAP_IsInsideHeap(
+    HANDLE32 heap, /* [in] Heap */
+    DWORD flags,   /* [in] Flags */
+    LPCVOID ptr    /* [in] Pointer */
+) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
     int ret;
@@ -783,9 +801,15 @@ SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
 
 /***********************************************************************
  *           HeapCreate   (KERNEL32.336)
+ * RETURNS
+ *	Handle of heap: Success
+ *	NULL: Failure
  */
-HANDLE32 WINAPI HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
-{
+HANDLE32 WINAPI HeapCreate(
+                DWORD flags,       /* [in] Heap allocation flag */
+                DWORD initialSize, /* [in] Initial heap size */
+                DWORD maxSize      /* [in] Maximum heap size */
+) {
     int i;
     HEAP *heap;
     SUBHEAP *subheap;
@@ -844,9 +868,13 @@ HANDLE32 WINAPI HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
 
 /***********************************************************************
  *           HeapDestroy   (KERNEL32.337)
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapDestroy( HANDLE32 heap )
-{
+BOOL32 WINAPI HeapDestroy(
+              HANDLE32 heap /* [in] Handle of heap */
+) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
@@ -868,9 +896,15 @@ BOOL32 WINAPI HeapDestroy( HANDLE32 heap )
 
 /***********************************************************************
  *           HeapAlloc   (KERNEL32.334)
+ * RETURNS
+ *	Pointer to allocated memory block
+ *	NULL: Failure
  */
-LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
-{
+LPVOID WINAPI HeapAlloc(
+              HANDLE32 heap, /* [in] Handle of private heap block */
+              DWORD flags,   /* [in] Heap allocation control flags */
+              DWORD size     /* [in] Number of bytes to allocate */
+) {
     ARENA_FREE *pArena;
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
@@ -927,9 +961,15 @@ LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 
 /***********************************************************************
  *           HeapFree   (KERNEL32.338)
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
-{
+BOOL32 WINAPI HeapFree(
+              HANDLE32 heap, /* [in] Handle of heap */
+              DWORD flags,   /* [in] Heap freeing flags */
+              LPVOID ptr     /* [in] Address of memory to free */
+) {
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
     HEAP *heapPtr = HEAP_GetPtr( heap );
@@ -966,9 +1006,16 @@ BOOL32 WINAPI HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
 
 /***********************************************************************
  *           HeapReAlloc   (KERNEL32.340)
+ * RETURNS
+ *	Pointer to reallocated memory block
+ *	NULL: Failure
  */
-LPVOID WINAPI HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
-{
+LPVOID WINAPI HeapReAlloc(
+              HANDLE32 heap, /* [in] Handle of heap block */
+              DWORD flags,   /* [in] Heap reallocation flags */
+              LPVOID ptr,    /* [in] Address of memory to reallocate */
+              DWORD size     /* [in] Number of bytes to reallocate */
+) {
     ARENA_INUSE *pArena;
     DWORD oldSize;
     HEAP *heapPtr;
@@ -1091,9 +1138,15 @@ DWORD WINAPI HeapCompact( HANDLE32 heap, DWORD flags )
 
 /***********************************************************************
  *           HeapLock   (KERNEL32.339)
+ * Attempts to acquire the critical section object for a specified heap.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapLock( HANDLE32 heap )
-{
+BOOL32 WINAPI HeapLock(
+              HANDLE32 heap /* [in] Handle of heap to lock for exclusive access */
+) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
     EnterCriticalSection( &heapPtr->critSection );
@@ -1103,9 +1156,15 @@ BOOL32 WINAPI HeapLock( HANDLE32 heap )
 
 /***********************************************************************
  *           HeapUnlock   (KERNEL32.342)
+ * Releases ownership of the critical section object.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapUnlock( HANDLE32 heap )
-{
+BOOL32 WINAPI HeapUnlock(
+              HANDLE32 heap /* [in] Handle to the heap to unlock */
+) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
     LeaveCriticalSection( &heapPtr->critSection );
@@ -1115,9 +1174,15 @@ BOOL32 WINAPI HeapUnlock( HANDLE32 heap )
 
 /***********************************************************************
  *           HeapSize   (KERNEL32.341)
+ * RETURNS
+ *	Size in bytes of allocated memory
+ *	0: Failure
  */
-DWORD WINAPI HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
-{
+DWORD WINAPI HeapSize(
+             HANDLE32 heap, /* [in] Handle of heap */
+             DWORD flags,   /* [in] Heap size control flags */
+             LPVOID ptr     /* [in] Address of memory to return size for */
+) {
     DWORD ret;
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
@@ -1145,11 +1210,22 @@ DWORD WINAPI HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
 
 /***********************************************************************
  *           HeapValidate   (KERNEL32.343)
+ * Validates a specified heap.
+ *
+ * NOTES
+ *	Flags is ignored.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPCVOID block )
-{
+BOOL32 WINAPI HeapValidate(
+              HANDLE32 heap, /* [in] Handle to the heap */
+              DWORD flags,   /* [in] Bit flags that control access during operation */
+              LPCVOID block  /* [in] Optional pointer to memory block to validate */
+) {
     SUBHEAP *subheap;
-    HEAP *heapPtr = (HEAP *)heap;
+    HEAP *heapPtr = HEAP_GetPtr(heap);
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
@@ -1159,6 +1235,7 @@ BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPCVOID block )
 
     if (block)
     {
+        /* Only check this single memory block */
         if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
             ((char *)block < (char *)subheap + subheap->headerSize
                               + sizeof(ARENA_INUSE)))
@@ -1197,9 +1274,16 @@ BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPCVOID block )
 
 /***********************************************************************
  *           HeapWalk   (KERNEL32.344)
+ * Enumerates the memory blocks in a specified heap.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
  */
-BOOL32 WINAPI HeapWalk( HANDLE32 heap, void *entry )
-{
+BOOL32 WINAPI HeapWalk(
+              HANDLE32 heap,               /* [in]  Handle to heap to enumerate */
+              LPPROCESS_HEAP_ENTRY *entry  /* [out] Pointer to structure of enumeration info */
+) {
     fprintf( stderr, "HeapWalk(%08x): not implemented\n", heap );
     return FALSE;
 }

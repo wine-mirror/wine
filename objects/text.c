@@ -320,10 +320,8 @@ INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
 INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
 {
-    fprintf(stderr,"DrawTextEx32A(%d,'%s',%d,%p,0x%08x,%p)\n",
-    	hdc,str,count,rect,flags,dtp
-    );
-    /*FIXME: ignores extended functionality ... */
+    TRACE(text,"(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
+    FIXME(text,"ignores extended functionality\n");
     return DrawText32A(hdc,str,count,rect,flags);
 }
 
@@ -333,10 +331,8 @@ INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
 INT32 DrawTextEx32W( HDC32 hdc, LPCWSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
 {
-    fprintf(stderr,"DrawTextEx32A(%d,%p,%d,%p,0x%08x,%p)\n",
-    	hdc,str,count,rect,flags,dtp
-    );
-    /*FIXME: ignores extended functionality ... */
+    TRACE(text,"(%d,%p,%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
+    FIXME(text,"ignores extended functionality\n");
     return DrawText32W(hdc,str,count,rect,flags);
 }
 
@@ -719,8 +715,8 @@ DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
  */
 INT32 WINAPI GetTextCharset32(HDC32 hdc)
 {
-    fprintf(stdnimp,"GetTextCharset(0x%x)\n",hdc);
-    return DEFAULT_CHARSET; /* FIXME */
+    FIXME(text,"(0x%x): stub\n",hdc);
+    return DEFAULT_CHARSET; 
 }
 
 INT16 WINAPI GetTextCharset16(HDC16 hdc)
@@ -733,7 +729,7 @@ INT16 WINAPI GetTextCharset16(HDC16 hdc)
  */
 INT32 WINAPI GetTextCharsetInfo(HDC32 hdc,LPCHARSETINFO csi,DWORD flags)
 {
-    fprintf(stdnimp,"GetTextCharsetInfo(0x%x,%p,%08lx), stub!\n",hdc,csi,flags);
+    FIXME(text,"(0x%x,%p,%08lx): stub!\n",hdc,csi,flags);
     if (csi) {
 	csi->ciCharset = DEFAULT_CHARSET;
 	csi->ciACP = GetACP();

@@ -14,74 +14,28 @@
 #include <sys/ioctl.h>
 #include "windows.h"
 #include "ldt.h"
+#include "multimedia.h"
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
 #include "xmalloc.h"
 #include "debug.h"
 
-#ifdef linux
-#include <linux/soundcard.h>
-#elif __FreeBSD__
-#include <machine/soundcard.h>
-#include <sys/errno.h>
-#endif
-
-#if defined(linux) || defined(__FreeBSD__)
-#define MIDI_DEV "/dev/sequencer"
-
-#ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
-#else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
-#endif
-
-#define MAX_MIDIINDRV 	(1)
-#define MAX_MIDIOUTDRV 	(1)
-#define MAX_MCIMIDIDRV 	(1)
-
-typedef struct {
-	int		unixdev;
-	int		state;
-	DWORD		bufsize;
-	MIDIOPENDESC	midiDesc;
-	WORD		wFlags;
-	LPMIDIHDR 	lpQueueHdr;
-	DWORD		dwTotalPlayed;
-} LINUX_MIDIIN;
-
-typedef struct {
-	int		unixdev;
-	int		state;
-	DWORD		bufsize;
-	MIDIOPENDESC	midiDesc;
-	WORD		wFlags;
-	LPMIDIHDR 	lpQueueHdr;
-	DWORD		dwTotalPlayed;
-} LINUX_MIDIOUT;
-
-typedef struct {
-	int	nUseCount;          /* Incremented for each shared open */
-	BOOL16	fShareable;         /* TRUE if first open was shareable */
-	WORD	wNotifyDeviceID;    /* MCI device ID with a pending notification */
-	HANDLE16 hCallback;         /* Callback handle for pending notification */
-	HMMIO16	hFile;				/* mmio file handle open as Element		*/
-	DWORD	dwBeginData;
-	DWORD	dwTotalLen;
-	WORD	wFormat;
-	WORD	nTracks;
-	WORD	nTempo;
-	MCI_OPEN_PARMS16 openParms;
-/* 	MIDIHDR	MidiHdr; */
-	HLOCAL16	hMidiHdr;
-	WORD	dwStatus;
-} LINUX_MCIMIDI;
+#if defined (__HAS_SOUNDCARD_H__)
 
 static LINUX_MIDIIN	MidiInDev[MAX_MIDIINDRV];
 static LINUX_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
 static LINUX_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
+
 #endif
 
+/* this is the total number of MIDI devices found */
+int MODM_NUMDEVS = 0;
+
+/* this structure holds pointers with information for each MIDI
+ * device found.
+ */
+LPMIDIOUTCAPS16 midiDevices[MAX_MIDIOUTDRV];
 
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
@@ -835,12 +789,13 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 #endif
 }
 
+
 /**************************************************************************
  * 				MIDI_mciInfo			[internal]
  */
 static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+# if defined(__FreeBSD__) || defined (linux)
 	TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
@@ -1047,34 +1002,41 @@ DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	return MMSYSERR_NOTSUPPORTED;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
-
 
 /**************************************************************************
  * 				modGetDevCaps			[internal]
  */
 static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS16 lpCaps, DWORD dwSize)
 {
+  LPMIDIOUTCAPS16 tmplpCaps;
+
 	TRACE(midi, "(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
+  if (wDevID == (WORD) MIDI_MAPPER) { 
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
 	lpCaps->vDriverVersion = 0x001; /* Product Version */
-	strcpy(lpCaps->szPname, "Linux MIDIOUT Driver v0.01");
-/* FIXME
-   Values are the same as I get with Borland TC 4.5
+    strcpy(lpCaps->szPname, "MIDI Maper (not functional yet)");
+    lpCaps->wTechnology = MOD_FMSYNTH; /* FIXME Does it make any difference ? */
+    lpCaps->wVoices     = 14;       /* FIXME */
+    lpCaps->wNotes      = 14;       /* FIXME */
+    lpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME; /* FIXME Does it make any difference ? */
+  } else {
+    /* FIXME There is a way to do it so easily, but I'm too
+     * sleepy to think and I want to test
 */
-
-	lpCaps->wTechnology = MOD_FMSYNTH;
-	lpCaps->wVoices     = 14;       /* make it ioctl */
-	lpCaps->wNotes      = 14;       /* make it ioctl */
-	lpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	TRACE(midi,"techn = %d voices=%d notes = %d support = %ld\n",lpCaps->wTechnology,lpCaps->wVoices,lpCaps->wNotes,lpCaps->dwSupport);
-
+    tmplpCaps = midiDevices [wDevID];
+    lpCaps->wMid = tmplpCaps->wMid;  
+    lpCaps->wPid = tmplpCaps->wPid;  
+    lpCaps->vDriverVersion = tmplpCaps->vDriverVersion;  
+    strcpy(lpCaps->szPname, tmplpCaps->szPname);    
+    lpCaps->wTechnology = tmplpCaps->wTechnology;
+    lpCaps->wVoices = tmplpCaps->wVoices;  
+    lpCaps->wNotes = tmplpCaps->wNotes;  
+    lpCaps->dwSupport = tmplpCaps->dwSupport;  
+  }
 	return MMSYSERR_NOERROR;
 }
-
 
 /**************************************************************************
  * 			modOpen					[internal]
@@ -1091,7 +1053,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	}
 	if (wDevID>= MAX_MIDIOUTDRV) {
 		TRACE(midi,"MAX_MIDIOUTDRV reached !\n");
-		return MMSYSERR_ALLOCATED;
+		return MMSYSERR_ALLOCATED; /* FIXME isn't MMSYSERR_BADDEVICEID the right answer ? */
 	}
 	MidiOutDev[wDevID].unixdev = 0;
 	midi = open (MIDI_DEV, O_WRONLY, 0);
@@ -1311,7 +1273,7 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	case MODM_GETDEVCAPS:
 		return modGetDevCaps(wDevID,(LPMIDIOUTCAPS16)dwParam1,dwParam2);
 	case MODM_GETNUMDEVS:
-		return 1;
+		return MODM_NUMDEVS;
 	case MODM_GETVOLUME:
 		return 0;
 	case MODM_SETVOLUME:

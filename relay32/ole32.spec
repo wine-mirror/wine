@@ -152,7 +152,7 @@ type	win32
 149 stub StgOpenStorageOnILockBytes
 150 stub StgSetTimes
 151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID32
-152 stub StringFromGUID2
+152 stdcall StringFromGUID2(ptr ptr long) StringFromGUID2
 153 stub StringFromIID
 154 stub UtConvertDvtd16toDvtd32
 155 stub UtConvertDvtd32toDvtd16

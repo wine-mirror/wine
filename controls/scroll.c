@@ -81,18 +81,18 @@ static BOOL32 SCROLL_MovingThumb = FALSE;
  */
 static void SCROLL_LoadBitmaps(void)
 {
-    hUpArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROW) );
-    hDnArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROW) );
-    hLfArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROW) );
-    hRgArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROW) );
-    hUpArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROWD) );
-    hDnArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROWD) );
-    hLfArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROWD) );
-    hRgArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROWD) );
-    hUpArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROWI) );
-    hDnArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROWI) );
-    hLfArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROWI) );
-    hRgArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROWI) );
+    hUpArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROW) );
+    hDnArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROW) );
+    hLfArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROW) );
+    hRgArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROW) );
+    hUpArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROWD) );
+    hDnArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROWD) );
+    hLfArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROWD) );
+    hRgArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROWD) );
+    hUpArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROWI) );
+    hDnArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROWI) );
+    hLfArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROWI) );
+    hRgArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROWI) );
 }
 
 

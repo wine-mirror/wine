@@ -9,14 +9,14 @@
 #include "winerror.h"
 #include "drive.h"
 #include "wnet.h"
+#include "debug.h"
 
 /**************************************************************************
  *              WNetErrorText       [USER.499]
  */
 int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
 {
-	printf("EMPTY STUB !!! WNetErrorText(%x,%p,%x)\n",
-		nError,lpszText,cbText);
+        FIXME(wnet, "(%x,%p,%x): stub\n",nError,lpszText,cbText);
 	return FALSE;
 }
 
@@ -25,8 +25,8 @@ int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
  */
 int WINAPI WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
 {
-	printf("EMPTY STUB !!! WNetOpenJob('%s','%s',%x,%p)\n",
-		szQueue,szJobTitle,nCopies,pfh);
+	FIXME(wnet, "('%s','%s',%x,%p): stub\n",
+	      szQueue,szJobTitle,nCopies,pfh);
 	return WN_NET_ERROR;
 }
 
@@ -35,8 +35,7 @@ int WINAPI WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
  */
 int WINAPI WNetCloseJob(WORD fh,LPWORD pidJob,LPSTR szQueue)
 {
-	printf("EMPTY STUB !!! WNetCloseJob(%x,%p,'%s')\n",
-		fh,pidJob,szQueue);
+	FIXME(wnet, "(%x,%p,'%s'): stub\n",fh,pidJob,szQueue);
 	return WN_NET_ERROR;
 }
 
@@ -45,8 +44,7 @@ int WINAPI WNetCloseJob(WORD fh,LPWORD pidJob,LPSTR szQueue)
  */
 int WINAPI WNetAbortJob(LPSTR szQueue,WORD wJobId)
 {
-	printf("EMPTY STUB !!! WNetAbortJob('%s',%x)\n",
-		szQueue,wJobId);
+	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
 }
 
@@ -55,8 +53,7 @@ int WINAPI WNetAbortJob(LPSTR szQueue,WORD wJobId)
  */
 int WINAPI WNetHoldJob(LPSTR szQueue,WORD wJobId)
 {
-	printf("EMPTY STUB !!! WNetHoldJob('%s',%x)\n",
-		szQueue,wJobId);
+	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
 }
 
@@ -65,8 +62,7 @@ int WINAPI WNetHoldJob(LPSTR szQueue,WORD wJobId)
  */
 int WINAPI WNetReleaseJob(LPSTR szQueue,WORD wJobId)
 {
-	printf("EMPTY STUB !!! WNetReleaseJob('%s',%x)\n",
-		szQueue,wJobId);
+	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
 }
 
@@ -75,8 +71,7 @@ int WINAPI WNetReleaseJob(LPSTR szQueue,WORD wJobId)
  */
 int WINAPI WNetCancelJob(LPSTR szQueue,WORD wJobId)
 {
-	printf("EMPTY STUB !!! WNetCancelJob('%s',%x)\n",
-		szQueue,wJobId);
+	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
 }
 
@@ -85,8 +80,7 @@ int WINAPI WNetCancelJob(LPSTR szQueue,WORD wJobId)
  */
 int WINAPI WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
 {
-	printf("EMPTY STUB !!! WNetSetJobCopies('%s',%x,%x)\n",
-		szQueue,wJobId,nCopies);
+	FIXME(wnet, "('%s',%x,%x): stub\n",szQueue,wJobId,nCopies);
 	return WN_NET_ERROR;
 }
 
@@ -95,8 +89,7 @@ int WINAPI WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
  */
 int WINAPI WNetWatchQueue(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
 {
-	printf("EMPTY STUB !!! WNetWatchQueue(%04x,'%s','%s',%x)\n",
-		hWnd,szLocal,szUser,nQueue);
+	FIXME(wnet, "(%04x,'%s','%s',%x): stub\n",hWnd,szLocal,szUser,nQueue);
 	return WN_NET_ERROR;
 }
 
@@ -105,7 +98,7 @@ int WINAPI WNetWatchQueue(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
  */
 int WINAPI WNetUnwatchQueue(LPSTR szQueue)
 {
-	printf("EMPTY STUB !!! WNetUnwatchQueue('%s')\n", szQueue);
+	FIXME(wnet, "('%s'): stub\n", szQueue);
 	return WN_NET_ERROR;
 }
 
@@ -114,8 +107,7 @@ int WINAPI WNetUnwatchQueue(LPSTR szQueue)
  */
 int WINAPI WNetLockQueueData(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
 {
-	printf("EMPTY STUB !!! WNetLockQueueData('%s','%s',%p)\n",
-		szQueue,szUser,lplpQueueStruct);
+	FIXME(wnet, "('%s','%s',%p): stub\n",szQueue,szUser,lplpQueueStruct);
 	return WN_NET_ERROR;
 }
 
@@ -124,7 +116,7 @@ int WINAPI WNetLockQueueData(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
  */
 int WINAPI WNetUnlockQueueData(LPSTR szQueue)
 {
-	printf("EMPTY STUB !!! WNetUnlockQueueData('%s')\n",szQueue);
+	FIXME(wnet, "('%s'): stub\n",szQueue);
 	return WN_NET_ERROR;
 }
 
@@ -170,10 +162,11 @@ int WINAPI WNetGetCaps(WORD capability)
 	switch (capability) {
 		case WNNC_SPEC_VERSION:
 		{
-			return 0x30a; /* WfW 3.11 (and apparently other 3.1x) */
+			return 0x30a; /* WfW 3.11(and apparently other 3.1x) */
 		}
 		case WNNC_NET_TYPE:
-		/* hi byte = network type, lo byte = network vendor (Netware = 0x03) [15 types] */
+		/* hi byte = network type, 
+                   lo byte = network vendor (Netware = 0x03) [15 types] */
 		return WNNC_NET_MultiNet | WNNC_SUBNET_WinWorkgroups;
 
 		case WNNC_DRIVER_VERSION:
@@ -219,7 +212,8 @@ int WINAPI WNetGetCaps(WORD capability)
 		return	WNNC_ERR_GetError|WNNC_ERR_GetErrorText;
 
 		case WNNC_PRINTMGREXT:
-		/* returns the Print Manager version in major and minor format if Print Manager functions are available */
+		/* returns the Print Manager version in major and 
+                   minor format if Print Manager functions are available */
 		return 0x30e; /* printman version of WfW 3.11 */
 
 		case 0xffff:
@@ -238,7 +232,7 @@ int WINAPI WNetGetCaps(WORD capability)
  */
 int WINAPI WNetDeviceMode(HWND16 hWndOwner)
 {
-	printf("EMPTY STUB !!! WNetDeviceMode(%04x)\n",hWndOwner);
+	FIXME(wnet, "(%04x): stub\n",hWndOwner);
 	return WN_NO_NETWORK;
 }
 
@@ -247,8 +241,7 @@ int WINAPI WNetDeviceMode(HWND16 hWndOwner)
  */
 int WINAPI WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
 {
-	printf("EMPTY STUB !!! WNetBrowseDialog(%04x,%x,'%s')\n",
-		hParent,nType,szPath);
+	FIXME(wnet, "(%04x,%x,'%s'): stub\n",hParent,nType,szPath);
 	return WN_NO_NETWORK;
 }
 
@@ -257,8 +250,7 @@ int WINAPI WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
  */
 UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
-	printf("EMPTY STUB !!! WNetGetUser(%p, %p, %p);\n", 
-							lpLocalName, lpUserName, lpSize);
+	FIXME(wnet, "(%p, %p, %p): stub\n", lpLocalName, lpUserName, lpSize);
 	return WN_NO_NETWORK;
 }
 
@@ -268,8 +260,8 @@ UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 UINT16 WINAPI WNetAddConnection(LPSTR lpNetPath, LPSTR lpPassWord,
                                 LPSTR lpLocalName)
 {
-	printf("EMPTY STUB !!! WNetAddConnection('%s', %p, '%s');\n",
-							lpNetPath, lpPassWord, lpLocalName);
+	FIXME(wnet, "('%s', %p, '%s'): stub\n",
+	      lpNetPath,lpPassWord,lpLocalName);
 	return WN_NO_NETWORK;
 }
 
@@ -279,8 +271,7 @@ UINT16 WINAPI WNetAddConnection(LPSTR lpNetPath, LPSTR lpPassWord,
  */
 UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
 {
-    printf("EMPTY STUB !!! WNetCancelConnection('%s', %04X);\n",
-           lpName, bForce);
+    FIXME(wnet, "('%s', %04X): stub\n", lpName, bForce);
     return WN_NO_NETWORK;
 }
 
@@ -289,7 +280,7 @@ UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
  */
 int WINAPI WNetGetError(LPWORD nError)
 {
-	printf("EMPTY STUB !!! WNetGetError(%p)\n",nError);
+	FIXME(wnet, "(%p): stub\n",nError);
 	return WN_NO_NETWORK;
 }
 
@@ -298,8 +289,7 @@ int WINAPI WNetGetError(LPWORD nError)
  */
 int WINAPI WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
 {
-	printf("EMPTY STUB !!! WNetGetErrorText(%x,%p,%p)\n",
-		nError,lpBuffer,nBufferSize);
+	FIXME(wnet, "(%x,%p,%p): stub\n",nError,lpBuffer,nBufferSize);
 	return WN_NET_ERROR;
 }
 
@@ -308,8 +298,7 @@ int WINAPI WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
  */
 int WINAPI WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
 {
-	printf("EMPTY STUB !!! WNetRestoreConnection(%04x,'%s')\n",
-		hwndOwner,lpszDevice);
+	FIXME(wnet, "(%04x,'%s'): stub\n",hwndOwner,lpszDevice);
 	return WN_NO_NETWORK;
 }
 
@@ -318,8 +307,7 @@ int WINAPI WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
  */
 int WINAPI WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 {
-	printf("EMPTY STUB !!! WNetWriteJob(%04x,%p,%p)\n",
-		hJob,lpData,lpcbData);
+	FIXME(wnet, "(%04x,%p,%p): stub\n",hJob,lpData,lpcbData);
 	return WN_NO_NETWORK;
 }
 
@@ -328,7 +316,7 @@ int WINAPI WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
  */
 UINT16 WINAPI WNetConnectDialog(HWND16 hWndParent, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetConnectDialog(%04x, %4X)\n", hWndParent, iType);
+	FIXME(wnet, "(%04x, %4X): stub\n", hWndParent, iType);
 	return WN_SUCCESS;
 }
 
@@ -337,8 +325,7 @@ UINT16 WINAPI WNetConnectDialog(HWND16 hWndParent, WORD iType)
  */
 int WINAPI WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetDisconnectDialog(%04x,%x)\n",
-		hwndOwner,iType);
+	FIXME(wnet, "(%04x,%x): stub\n",hwndOwner,iType);
 	return WN_NO_NETWORK;
 }
 
@@ -347,8 +334,7 @@ int WINAPI WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
  */
 UINT16 WINAPI WNetConnectionDialog(HWND16 hWndParent, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetConnectionDialog(%04x, %4X)\n", 
-		hWndParent, iType);
+	FIXME(wnet, "(%04x, %4X): stub\n", hWndParent, iType);
 	return WN_SUCCESS;
 }
 
@@ -357,8 +343,7 @@ UINT16 WINAPI WNetConnectionDialog(HWND16 hWndParent, WORD iType)
  */
 int WINAPI WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
 {
-	printf("EMPTY STUB !!! WNetViewQueueDialog(%04x,'%s')\n",
-		hwndOwner,lpszQueue);
+	FIXME(wnet, "(%04x,'%s'): stub\n",hwndOwner,lpszQueue);
 	return WN_NO_NETWORK;
 }
 
@@ -368,8 +353,8 @@ int WINAPI WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
 int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
                               WORD nPropSel,LPSTR lpszName,WORD nType)
 {
-	printf("EMPTY STUB !!! WNetPropertyDialog(%04x,%x,%x,'%s',%x)\n",
-		hwndParent,iButton,nPropSel,lpszName,nType);
+	FIXME(wnet, "(%04x,%x,%x,'%s',%x): stub\n",
+	      hwndParent,iButton,nPropSel,lpszName,nType);
 	return WN_NO_NETWORK;
 }
 
@@ -378,8 +363,7 @@ int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
  */
 int WINAPI WNetGetDirectoryType(LPSTR lpName,void *lpType)
 {
-	printf("EMPTY STUB !!! WNetGetDirectoryType('%s',%p)\n",
-		lpName,lpType);
+	FIXME(wnet, "('%s',%p): stub\n",lpName,lpType);
 	return WN_NO_NETWORK;
 }
 
@@ -388,8 +372,7 @@ int WINAPI WNetGetDirectoryType(LPSTR lpName,void *lpType)
  */
 int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 {
-	printf("EMPTY STUB !!! WNetDirectoryNotify(%04x,%p,%x)\n",
-		hwndOwner,lpDir,wOper);
+	FIXME(wnet, "(%04x,%p,%x): stub\n",hwndOwner,lpDir,wOper);
 	return WN_NO_NETWORK;
 }
 
@@ -399,8 +382,8 @@ int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 int WINAPI WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
                                LPSTR lpszName,WORD nType)
 {
-	printf("EMPTY STUB !!! WNetGetPropertyText(%04x,%x,%x,'%s',%x)\n",
-		hwndParent,iButton,nPropSel,lpszName,nType);
+	FIXME(wnet, "(%04x,%x,%x,'%s',%x): stub\n",
+	      hwndParent,iButton,nPropSel,lpszName,nType);
 	return WN_NO_NETWORK;
 }
 
@@ -410,8 +393,8 @@ int WINAPI WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
 UINT16 WINAPI WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord, 
                                  LPSTR lpLocalName, LPSTR lpUserName)
 {
-	printf("EMPTY STUB !!! WNetAddConnection2('%s', %p, '%s', '%s');\n",
-					lpNetPath, lpPassWord, lpLocalName, lpUserName);
+	FIXME(wnet, "('%s', %p, '%s', '%s'): stub\n",
+	      lpNetPath, lpPassWord, lpLocalName, lpUserName);
 	return WN_NO_NETWORK;
 }
 
@@ -420,7 +403,7 @@ UINT16 WINAPI WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord,
  */
 UINT16 WINAPI WNetCloseEnum(HANDLE16 hEnum)
 {
-	printf("EMPTY STUB !!! WNetCloseEnum(%04x);\n", hEnum);
+	FIXME(wnet, "(%04x): stub\n", hEnum);
 	return WN_NO_NETWORK;
 }
 
@@ -430,8 +413,8 @@ UINT16 WINAPI WNetCloseEnum(HANDLE16 hEnum)
 UINT16 WINAPI WNetEnumResource(HANDLE16 hEnum, DWORD cRequ, 
                                DWORD *lpCount, LPVOID lpBuf)
 {
-	printf("EMPTY STUB !!! WNetEnumResource(%04x, %08lX, %p, %p);\n", 
-							hEnum, cRequ, lpCount, lpBuf);
+	FIXME(wnet, "(%04x, %08lX, %p, %p): stub\n", 
+	      hEnum, cRequ, lpCount, lpBuf);
 	return WN_NO_NETWORK;
 }
 
@@ -441,8 +424,8 @@ UINT16 WINAPI WNetEnumResource(HANDLE16 hEnum, DWORD cRequ,
 UINT16 WINAPI WNetOpenEnum16(DWORD dwScope, DWORD dwType, 
                              LPNETRESOURCE16 lpNet, HANDLE16 *lphEnum)
 {
-	printf("EMPTY STUB !!! WNetOpenEnum(%08lX, %08lX, %p, %p);\n",
-               dwScope, dwType, lpNet, lphEnum);
+	FIXME(wnet, "(%08lX, %08lX, %p, %p): stub\n",
+	      dwScope, dwType, lpNet, lphEnum);
 	return WN_NO_NETWORK;
 }
 
@@ -452,8 +435,8 @@ UINT16 WINAPI WNetOpenEnum16(DWORD dwScope, DWORD dwType,
 UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, 
                               LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
 {
-	printf("EMPTY STUB !!! WNetOpenEnumA(%08lX, %08lX, %p, %p);\n",
-               dwScope, dwType, lpNet, lphEnum);
+	FIXME(wnet, "(%08lX, %08lX, %p, %p): stub\n",
+	      dwScope, dwType, lpNet, lphEnum);
 	return WN_NO_NETWORK;
 }
 
@@ -473,8 +456,6 @@ DWORD WINAPI
 WNetGetResourceInformation32A(
 	LPNETRESOURCE32A netres,LPVOID buf,LPDWORD buflen,LPSTR systemstr
 ) {
-	fprintf(stderr,"WNetGetResourceInformationA(%p,%p,%p,%p),stub!\n",
-		netres,buf,buflen,systemstr
-	);
+	FIXME(wnet,"(%p,%p,%p,%p): stub!\n",netres,buf,buflen,systemstr);
 	return WN_NO_NETWORK;
 }

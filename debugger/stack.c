@@ -119,6 +119,7 @@ void DEBUG_BackTrace(void)
 							frame->bp, TRUE );
 	    frameno++;
             fprintf( stderr, "\n" );
+            if (addr.off == frame->bp) break;
             addr.off = frame->bp;
         }
     }

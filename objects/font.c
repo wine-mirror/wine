@@ -13,7 +13,6 @@
 #include "metafile.h"
 #include "options.h"
 #include "debug.h"
-#include "debugstr.h"
 
 #define ENUM_UNICODE	0x00000001
 
@@ -231,7 +230,7 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 	    GDI_HEAP_UNLOCK( hFont );
 	}
     }
-    else fprintf(stderr,"CreateFontIndirect(NULL) => NULL\n");
+    else WARN(font,"(NULL) => NULL\n");
 
     return hFont;
 }
@@ -1025,8 +1024,7 @@ BOOL32 WINAPI GetCharABCWidths32A(HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
                                   LPABC32 abc )
 {
     /* No TrueType fonts in Wine so far */
-    fprintf( stdnimp, "STUB: GetCharABCWidths(%04x,%04x,%04x,%p)\n",
-             hdc, firstChar, lastChar, abc );
+    FIXME(font, "(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc );
     return FALSE;
 }
 
@@ -1048,8 +1046,8 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
                                 LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
                                 LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    fprintf( stdnimp,"GetGlyphOutLine16(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
-             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
 
@@ -1061,8 +1059,8 @@ DWORD WINAPI GetGlyphOutline32A( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
                                  LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    fprintf( stdnimp,"GetGlyphOutLine32A(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
-             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
 
@@ -1073,8 +1071,8 @@ DWORD WINAPI GetGlyphOutline32W( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
                                  LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    fprintf( stdnimp,"GetGlyphOutLine32W(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
-             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
 
@@ -1101,8 +1099,8 @@ BOOL32 WINAPI CreateScalableFontResource32A( DWORD fHidden,
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
-    fprintf(stdnimp,"CreateScalableFontResource(%ld,%s,%s,%s) // empty stub\n",
-            fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+    FIXME(font,"(%ld,%s,%s,%s): empty stub\n",
+	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
 
@@ -1114,8 +1112,8 @@ BOOL32 WINAPI CreateScalableFontResource32W( DWORD fHidden,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
 {
-    fprintf(stdnimp,"CreateScalableFontResource32W(%ld,%p,%p,%p) // empty stub\n",
-            fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+    FIXME(font,"(%ld,%p,%p,%p): empty stub\n",
+	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
 
@@ -1149,8 +1147,10 @@ INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
 {
     /* At this time kerning is ignored (set to 0) */
     int i;
-    fprintf(stdnimp,"GetKerningPairs16: almost empty stub!\n");
-    for (i = 0; i < cPairs; i++) lpKerningPairs[i].iKernAmount = 0;
+    FIXME(font,"(%x,%d,%p): almost empty stub!\n",
+	  hDC, cPairs, lpKerningPairs);
+    for (i = 0; i < cPairs; i++) 
+        lpKerningPairs[i].iKernAmount = 0;
     return 0;
 }
 
@@ -1163,8 +1163,10 @@ DWORD WINAPI GetKerningPairs32A( HDC32 hDC, DWORD cPairs,
                                  LPKERNINGPAIR32 lpKerningPairs )
 {
     int i;
-    fprintf(stdnimp,"GetKerningPairs32: almost empty stub!\n");
-    for (i = 0; i < cPairs; i++) lpKerningPairs[i].iKernAmount = 0;
+    FIXME(font,"(%x,%ld,%p): almost empty stub!\n",
+	  hDC, cPairs, lpKerningPairs);
+    for (i = 0; i < cPairs; i++) 
+        lpKerningPairs[i].iKernAmount = 0;
     return 0;
 }
 
@@ -1179,9 +1181,7 @@ DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
 }
 
 BOOL32 WINAPI TranslateCharSetInfo(LPDWORD lpSrc,LPCHARSETINFO lpCs,DWORD dwFlags) {
-    fprintf(stderr,"TranslateCharSetInfo(%p,%p,0x%08lx), stub.\n",
-    	lpSrc,lpCs,dwFlags
-    );
+    FIXME(font,"(%p,%p,0x%08lx), stub.\n",lpSrc,lpCs,dwFlags);
     return TRUE;
 }
 
@@ -1191,7 +1191,7 @@ BOOL32 WINAPI TranslateCharSetInfo(LPDWORD lpSrc,LPCHARSETINFO lpCs,DWORD dwFlag
  */
 DWORD WINAPI GetFontLanguageInfo32(HDC32 hdc) {
 	/* return value 0 is correct for most cases anyway */
-	fprintf(stderr,"GetFontLanguageInfo:stub!\n");
+        FIXME(font,"(%x):stub!\n", hdc);
 	return 0;
 }
 
@@ -1200,6 +1200,6 @@ DWORD WINAPI GetFontLanguageInfo32(HDC32 hdc) {
  */
 DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
 	/* return value 0 is correct for most cases anyway */
-	fprintf(stderr,"GetFontLanguageInfo:stub!\n");
+	FIXME(font,"(%x):stub!\n",hdc);
 	return 0;
 }

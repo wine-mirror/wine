@@ -1704,7 +1704,7 @@ HANDLE32 WINAPI WSAAsyncGetHostByAddr32(HWND32 hWnd, UINT32 uMsg, LPCSTR addr,
 
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, type, addr, len,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYADDR | WSMSG_ASYNC_WIN32);
+                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYADDR | WSMSG_WIN32_AOP);
   return 0;
 }
 
@@ -1738,7 +1738,7 @@ HANDLE32 WINAPI WSAAsyncGetHostByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 	       (name)?name:NULL_STRING, (int)buflen );
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
- 			    NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYNAME | WSMSG_ASYNC_WIN32);
+ 			    NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYNAME | WSMSG_WIN32_AOP);
   return 0;
 }                     
 
@@ -1773,7 +1773,7 @@ HANDLE32 WINAPI WSAAsyncGetProtoByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNAME | WSMSG_ASYNC_WIN32);
+                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNAME | WSMSG_WIN32_AOP);
   return 0;
 }
 
@@ -1808,7 +1808,7 @@ HANDLE32 WINAPI WSAAsyncGetProtoByNumber32(HWND32 hWnd, UINT32 uMsg, INT32 numbe
 
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, number, NULL, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNUM | WSMSG_ASYNC_WIN32);
+                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNUM | WSMSG_WIN32_AOP);
   return 0;
 }
 
@@ -1853,7 +1853,7 @@ HANDLE32 WINAPI WSAAsyncGetServByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
 
       if( i )
           return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, pwsi->buffer, 0,
-                 pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME | WSMSG_ASYNC_WIN32);
+                 pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME | WSMSG_WIN32_AOP);
   }
   return 0;
 }
@@ -1898,7 +1898,7 @@ HANDLE32 WINAPI WSAAsyncGetServByPort32(HWND32 hWnd, UINT32 uMsg, INT32 port,
 
       if( i )
 	  return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, pwsi->buffer, 0,
-		 NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT | WSMSG_ASYNC_WIN32);
+		 NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT | WSMSG_WIN32_AOP);
   }
   return 0;
 }
@@ -2377,13 +2377,12 @@ DWORD WINAPI WsControl(DWORD protocoll,DWORD action,
       char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
 #endif      
       
-      fprintf(stdnimp,"WsControl(ICMP_ECHO) to 0x%08x stub \n",
-	      addr);
+      FIXME(winsock,"(ICMP_ECHO) to 0x%08x stub \n", addr);
       break;
     }
   default:
-    fprintf(stdnimp,"WsControl(%lx,%lx,%p,%p,%p,%p) stub\n",
-	    protocoll,action,inbuf,inbuflen,outbuf,outbuflen);
+    FIXME(winsock,"(%lx,%lx,%p,%p,%p,%p) stub\n",
+	  protocoll,action,inbuf,inbuflen,outbuf,outbuflen);
   }
   return FALSE;
 }
@@ -2392,8 +2391,8 @@ DWORD WINAPI WsControl(DWORD protocoll,DWORD action,
  */
 void WINAPI WS_s_perror(LPCSTR message)
 {
-    fprintf(stdnimp,"s_perror %s stub\n",message);
-	return;
+    FIXME(winsock,"(%s): stub\n",message);
+    return;
 }
 
 
@@ -2607,6 +2606,7 @@ UINT16 wsaErrno(void)
 	case ENETUNREACH:	return WSAENETUNREACH;
 	case ENETRESET:		return WSAENETRESET;
 	case ECONNABORTED:	return WSAECONNABORTED;
+	case EPIPE:
 	case ECONNRESET:	return WSAECONNRESET;
 	case ENOBUFS:		return WSAENOBUFS;
 	case EISCONN:		return WSAEISCONN;

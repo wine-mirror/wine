@@ -31,9 +31,7 @@ typedef struct
     WORD  e_oemid;      /* 24: OEM identifier (for e_oeminfo) */
     WORD  e_oeminfo;    /* 26: OEM information; e_oemid specific */
     WORD  e_res2[10];   /* 28: Reserved words */
-    WORD  e_lfanew;     /* 3c: Offset to extended header */
-    WORD  e_xxx;        /* 3e: Wine internal pad (some programs expect
-                         *     this to be 0) */
+    DWORD e_lfanew;     /* 3c: Offset to extended header */
 } IMAGE_DOS_HEADER,*LPIMAGE_DOS_HEADER;
 
 #define	IMAGE_DOS_SIGNATURE	0x5A4D		/* MZ */

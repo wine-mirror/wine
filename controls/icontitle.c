@@ -24,11 +24,11 @@ static  LPCSTR	emptyTitleText = "<...>";
  */
 BOOL32 ICONTITLE_Init(void)
 {
-    LOGFONT16 logFont;
+    LOGFONT32A logFont;
 
-    SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
-    SystemParametersInfo16( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
-    hIconTitleFont = CreateFontIndirect16( &logFont );
+    SystemParametersInfo32A( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+    SystemParametersInfo32A( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
+    hIconTitleFont = CreateFontIndirect32A( &logFont );
     return (hIconTitleFont) ? TRUE : FALSE;
 }
 
@@ -161,7 +161,7 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
     hPrevFont = SelectObject32( hDC, hIconTitleFont );
     if( hPrevFont )
     {
-        RECT16  rect;
+        RECT32  rect;
 	INT32	length;
 	char	buffer[80];
 
@@ -173,8 +173,8 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
         SetTextColor32( hDC, textColor );
         SetBkMode32( hDC, TRANSPARENT );
 	
-	DrawText16( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
-		    DT_WORDBREAK | ((bMultiLineTitle) ? 0 : DT_SINGLELINE) ); 
+	DrawText32A( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
+		     DT_WORDBREAK | ((bMultiLineTitle) ? 0 : DT_SINGLELINE) ); 
 
 	SelectObject32( hDC, hPrevFont );
     }

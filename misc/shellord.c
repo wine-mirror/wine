@@ -365,7 +365,7 @@ void WINAPI SHELL32_119(LPVOID x) {
  * unknown
  */
 void WINAPI SHELL32_175(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    fprintf(stdnimp,"SHELL32_175(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",
+    fprintf(stderr,"SHELL32_175(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",
     	x1,x2,x3,x4
     );
 }

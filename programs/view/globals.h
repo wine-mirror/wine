@@ -16,7 +16,7 @@ extern char      szAppName[];    /* The name of this application */
 extern char      szTitle[];      /* The title bar text */
 
 
-
+#ifdef WINELIB
 typedef struct
 {
 	DWORD	key WINE_PACKED;
@@ -26,6 +26,18 @@ typedef struct
 	DWORD	reserved WINE_PACKED;
 	WORD	checksum WINE_PACKED;
 } APMFILEHEADER WINE_PACKED;
+#else
+#pragma pack( 2 )
+typedef struct
+{
+	DWORD		key;
+	WORD		hmf;
+	SMALL_RECT	bbox;
+	WORD		inch;
+	DWORD		reserved;
+	WORD		checksum;
+} APMFILEHEADER;
+#endif
 
 #define APMHEADER_KEY	0x9AC6CDD7l
 

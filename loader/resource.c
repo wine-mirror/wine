@@ -20,9 +20,9 @@
 #include "task.h"
 #include "module.h"
 #include "resource.h"
-#include "debugstr.h"
 #include "debug.h"
 #include "libres.h"
+#include "winerror.h"
 
 extern WORD WINE_LanguageId;
 
@@ -414,6 +414,7 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 {
     HRSRC16	hRsrc;
+    HACCEL16    hAccel;
 
     if (HIWORD(lpTableName))
         TRACE(accel, "%04x '%s'\n",
@@ -422,8 +423,12 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
         TRACE(accel, "%04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR )))
+    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR ))) {
+      WARN(accel, "couldn't find accelerator table resource\n");
       return 0;
+    }
+
+    TRACE(accel, "returning HACCEL 0x%x\n", hRsrc);
     return LoadResource16(instance,hRsrc);
 }
 
@@ -439,18 +444,26 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
 {
     HRSRC32 hRsrc;
+    HACCEL32 hRetval;
 
     if (HIWORD(lpTableName))
-        TRACE(accel, "%04x '%s'\n",
-                      instance, (char *)( lpTableName ) );
+        TRACE(accel, "%p '%s'\n",
+                      (LPVOID)instance, (char *)( lpTableName ) );
     else
-        TRACE(accel, "%04x %04x\n",
-                       instance, LOWORD(lpTableName) );
+        TRACE(accel, "%p 0x%04x\n",
+                       (LPVOID)instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource32W( instance, lpTableName, 
-		(LPCWSTR)RT_ACCELERATOR )))
-      return 0;
-    return LoadResource32( instance, hRsrc );
+				   (LPCWSTR)RT_ACCELERATOR ))) {
+      WARN(accel, "couldn't find accelerator table resource\n");
+      hRetval = 0;
+    }
+    else {
+      hRetval = LoadResource32( instance, hRsrc );
+    }
+
+    TRACE(accel, "returning HACCEL 0x%x\n", hRsrc);
+    return hRetval;
 }
 
 HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
@@ -471,25 +484,129 @@ HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
  */
 INT32 WINAPI CopyAcceleratorTable32A(HACCEL32 src, LPACCEL32 dst, INT32 entries)
 {
-  fprintf(stderr,"CopyAcceleratorTable32A: not implemented: %d\n", entries);
-  return 0;
+  return CopyAcceleratorTable32W(src, dst, entries);
 }
 
 /**********************************************************************
  *             CopyAcceleratorTable32W   (USER32.59)
+ *
+ * By mortene@pvv.org 980321
  */
-INT32 WINAPI CopyAcceleratorTable32W(HACCEL32 src, LPACCEL32 dst, INT32 entries)
+INT32 WINAPI CopyAcceleratorTable32W(HACCEL32 src, LPACCEL32 dst,
+				     INT32 entries)
 {
-  fprintf(stderr,"CopyAcceleratorTable32W: not implemented: %d\n", entries);
-  return 0;
+  int i;
+  LPACCEL32 accel = (LPACCEL32)src;
+  BOOL32 done = FALSE;
+
+  /* Do parameter checking to avoid the explosions and the screaming
+     as far as possible. */
+  if((dst && (entries < 1)) || (src == (HACCEL32)NULL)) {
+    WARN(accel, "Application sent invalid parameters (%p %p %d).\n",
+	 (LPVOID)src, (LPVOID)dst, entries);
+    return 0;
+  }
+
+
+  i=0;
+  while(!done) {
+    /* Spit out some debugging information. */
+    TRACE(accel, "accel %d: type 0x%02x, event '%c', IDval 0x%04x.\n",
+	  i, accel[i].fVirt, accel[i].key, accel[i].cmd);
+
+    /* Copy data to the destination structure array (if dst == NULL,
+       we're just supposed to count the number of entries). */
+    if(dst) {
+      memcpy(&dst[i], &accel[i], sizeof(ACCEL32));
+
+      /* Check if we've reached the end of the application supplied
+         accelerator table. */
+      if(i+1 == entries) {
+	/* Turn off the high order bit, just in case. */
+	dst[i].fVirt &= 0x7f;
+	done = TRUE;
+      }
+    }
+
+    /* The highest order bit seems to mark the end of the accelerator
+       resource table. (?) */
+    if((accel[i].fVirt & 0x80) != 0) done = TRUE;
+
+    i++;
+  }
+
+  return i;
+}
+
+/*********************************************************************
+ *                    CreateAcceleratorTable   (USER32.64)
+ *
+ * By mortene@pvv.org 980321
+ */
+HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
+{
+  HACCEL32 hAccel;
+
+  /* Do parameter checking just in case someone's trying to be
+     funny. */
+  if(cEntries < 1) {
+    WARN(accel, "Application sent invalid parameters (%p %d).\n",
+	 lpaccel, cEntries);
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return (HACCEL32)NULL;
+  }
+  FIXME(accel, "should check that the accelerator descriptions are valid,"
+	" return NULL and SetLastError() if not.\n");
+
+
+  /* Allocate memory and copy the table. */
+  hAccel = (HACCEL32)HeapAlloc(GetProcessHeap(), 0,
+			       cEntries * sizeof(ACCEL32));
+  TRACE(accel, "handle %p\n", (LPVOID)hAccel);
+  if(!hAccel) {
+    WARN(accel, "Out of memory.\n");
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return (HACCEL32)NULL;
+  }
+  memcpy((LPACCEL32)hAccel, lpaccel, cEntries * sizeof(ACCEL32));
+
+  /* Set the end-of-table terminator. */
+  ((LPACCEL32)hAccel)[cEntries-1].fVirt |= 0x80;
+
+  TRACE(accel, "Allocated accelerator handle %x\n", hAccel);
+  return hAccel;
 }
 
 /**********************************************************************
  *             DestroyAcceleratorTable   (USER32.130)
+ *
+ * By mortene@pvv.org 980321
  */
 BOOL32 WINAPI DestroyAcceleratorTable( HACCEL32 handle )
 {
-  fprintf(stderr,"DestroyAcceleratorTable: not implemented\n");
+  FIXME(accel, "stub (handle 0x%x)\n", handle);
+
+
+  /* Weird.. I thought this should work. According to the API
+     specification, DestroyAcceleratorTable() should only be called on
+     HACCEL32's made by CreateAcceleratorTable(), but Microsoft Visual
+     Studio 97 calls this function with a series of different handle
+     values without ever calling CreateAcceleratorTable(). Something
+     is very fishy in Denmark... */
+  /* Update: looks like the calls to this function matches the calls
+     to LoadAccelerators() in M$ Visual Studio, except that the handle
+     values are off by some variable size from the HACCEL's returned
+     from LoadAccelerators(). WTH? */
+  
+  /* Parameter checking to avoid any embarassing situations. */
+/*   if(!handle) { */
+/*     WARN(accel, "Application sent NULL ptr.\n"); */
+/*     SetLastError(ERROR_INVALID_PARAMETER); */
+/*     return FALSE; */
+/*   } */
+  
+/*   HeapFree(GetProcessHeap(), 0, (LPACCEL32)handle); */
+
   return TRUE;
 }
   
@@ -586,9 +703,8 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 	fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
 #endif
     }
-#if 0
-    TRACE(resource,"'%s' copied !\n", buffer);
-#endif
+
+    TRACE(resource,"'%s' copied !\n", (char *)buffer);
     return i;
 }
 

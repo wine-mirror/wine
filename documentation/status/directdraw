@@ -1,0 +1,74 @@
+This file contains information on the current implementation of the DirectDraw
+API.
+
+The DirectDraw API is being used in a lot of current computergames. Its API
+layer is represented by the functions in the Win32 DLL ddraw.dll and the
+IDirectDraw* interfaces (that can be created using the API functions). 
+
+WINE currently implements a very basic set of the DirectDraw functionality
+in graphics/ddraw.c. This implementation uses the XFree86-DGA extension 
+to get very fast access to the graphics card framebuffer and doublebuffering
+features. It is as fast as the MS equivalent for the stuff that is implemented.
+Several applications already work, see below.
+Problems of the implementation using XFree86-DGA:
+
+	- XFree86 cannot switch resolution nor depth on the fly.
+	  This is a problem with X and unavoidable.
+	  Current solution is to pop up a MessageBox with an error for 
+	  mismatched parameters and advice the user to restart the X server
+	  with the specified depth and/or screensize.
+	- The rest of the functionality that has to be implemented will have
+	  to be done in software and will be very slow.
+	- This requires WINE to be run as root user so XF86DGA can mmap the
+	  framebuffer into the addressspace of the process.
+	- Blocks all other X windowed applications.
+
+TODO:
+	- Add more implementations of the DirectDraw API.
+	  Primary candidate is a raw Xlib implementation (one with/one without
+	  XShm extension).
+	  An additional layer (basically a HAL) will be required to decide on 
+	  case-by-case basis which implementation to use.
+
+Status:
+   - Diablo [640x480x8]:
+     The movies play with speed comparable to the MS DDRAW one.
+     The game doesn't work, it somehow tries to write into 2 lines _BEFORE_
+     the start of the surface. I have tried to investigate this, but it is
+     in code that is automatically generated.
+  
+   - WingCommander 4 / Win95 Patch [640x480x8]:
+     The intromovie plays, in 8 bit mode (to reconfigure wc4, run wine
+     "wc4w.exe -I"). The 16bit mode looks broken on Mystique, but I think
+     this is due to the unusual colorweight (565 rgb) of the Mystique in 16bit
+     mode. [Specifying it in DDPIXELFORMAT didn't help.]
+
+     Requires to be run in 640x480xdepth mode (doesn't seem to heed
+     DDSURFACEDESC.lPitch).
+     You can even fly the first mission with Maniac (ignore the weird sounds),
+     but it crashes as soon as you arrive at Blue Point Station...
+  
+   - Monkey Island 3 [640x480x8]:
+     Goes to the easy/hard selection screen, then hangs due to multithreaded
+     windows-messagehandling problems.
+   
+   - DiscWorld 2 [640x480x8]:
+     [Crashes with 'cli' in WINE released version. Yes. Privileged instructions
+      in 32bit code. Will they ever learn...]
+     Plays through nearly all intro movies. Sound and animation skip a lot of
+     stuff (possible DirectSound asynchronization problem).
+   
+   - XvT [640x480x16]:
+     Shows the splash screen, then fails with missing Joystick. I have
+     investigated but failed to find a reason for this.
+  
+   - Tomb Raider 2 Demo (using 8 bit renderer) [640x480x8]:
+     I have played nearly all of the DEMO level using Keyboard Controls.
+     Sound is a bit weird. Keyboard/Mouse handling too due to incomplete
+     DirectInput.
+  
+   - WingCommander Prophecy Demo (using software renderer) [640x480x16]:
+     [Crashes with an invalid opcode (outb, probably to test for 3dFX) in the
+      WINE release version.]
+     Plays trailer, hangs in selection screen (no keyboard input, DirectInput
+     problem).

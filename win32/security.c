@@ -125,7 +125,7 @@ VOID* WINAPI FreeSid(LPSID pSid)
 BOOL32 WINAPI InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
                                             DWORD revision )
 {
-    fprintf( stdnimp, "InitializeSecurityDescriptor: empty stub\n" );
+    FIXME(security, "(%p,%#lx): empty stub\n", pDescr, revision);
     return TRUE;
 }
 
@@ -208,8 +208,8 @@ BOOL32 WINAPI LookupAccountSid32A(LPCSTR system,PSID sid,
 				  LPCSTR domain, LPDWORD domainSize,
 				  PSID_NAME_USE name_use)
 {
-	fprintf(stdnimp,"LookupAccountSid32A(%s,%p,%p,%p,%p,%p,%p),stub\n",
-		system,sid,account,accountSize,domain,domainSize,name_use);
+	FIXME(security,"(%s,%p,%p,%p,%p,%p,%p): stub\n",
+	      system,sid,account,accountSize,domain,domainSize,name_use);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -222,8 +222,8 @@ BOOL32 WINAPI LookupAccountSid32W(LPCWSTR system,PSID sid,
 				  LPCWSTR domain, LPDWORD domainSize,
 				  PSID_NAME_USE name_use)
 {
-	fprintf(stdnimp,"LookupAccountSid32W(%p,%p,%p,%p,%p,%p,%p),stub\n",
-		system,sid,account,accountSize,domain,domainSize,name_use);
+	FIXME(security,"(%p,%p,%p,%p,%p,%p,%p): stub\n",
+	      system,sid,account,accountSize,domain,domainSize,name_use);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }

@@ -74,7 +74,7 @@ BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRea
 /***********************************************************************
  *              ReadFileEx                (KERNEL32.)
  */
-typedef /* from winbase.h */
+typedef
 VOID
 (WINAPI *LPOVERLAPPED_COMPLETION_ROUTINE)(
     DWORD dwErrorCode,
@@ -87,8 +87,8 @@ BOOL32 WINAPI ReadFileEx(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 
-    fprintf(stdnimp,"ReadFileEx file %d to buf %p num %ld %p func %p stub\n",
-	    hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
+    FIXME(file, "file %d to buf %p num %ld %p func %p stub\n",
+	  hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -229,8 +229,8 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
     if (attributes & FILE_ATTRIBUTE_NORMAL) {
       attributes &= ~FILE_ATTRIBUTE_NORMAL;
       if (attributes)
-        fprintf(stdnimp,"SetFileAttributesA(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
-		lpFileName,attributes);
+        FIXME(file,"(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
+	      lpFileName,attributes);
     }
     if(stat(full_name.long_name,&buf)==-1)
     {
@@ -244,7 +244,8 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
     }
     attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
-        fprintf(stdnimp,"SetFileAttributesA(%s):%lx attribute(s) not implemented.\n",lpFileName,attributes);
+        FIXME(file,"(%s):%lx attribute(s) not implemented.\n",
+	      lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
         SetLastError(ErrnoToLastError(errno));
@@ -271,7 +272,7 @@ BOOL32 WINAPI SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
  */
 VOID WINAPI SetFileApisToOEM(void)
 {
-    /*fprintf(stdnimp,"SetFileApisToOEM(),stub!\n");*/
+  /*FIXME(file,"(): stub!\n");*/
 }
 
 
@@ -280,7 +281,7 @@ VOID WINAPI SetFileApisToOEM(void)
  */
 VOID WINAPI SetFileApisToANSI(void)
 {
-    /*fprintf(stdnimp,"SetFileApisToANSI(),stub!\n");*/
+    /*FIXME(file,"(): stub!\n");*/
 }
 
 
@@ -289,7 +290,7 @@ VOID WINAPI SetFileApisToANSI(void)
  */
 BOOL32 WINAPI AreFileApisANSI(void)
 {
-    fprintf(stdnimp,"AreFileApisANSI(),stub!\n");
+    FIXME(file,"(): stub!\n");
     return TRUE;
 }
 

@@ -173,11 +173,12 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
                              printerEnabled, sizeof(printerEnabled) );
     if (lstrcmpi32A(printerEnabled,"on"))
     {
-        printf("WIN16DRV_CreateDC disabled in wine.conf file\n");
+        MSG("WIN16DRV_CreateDC disabled in wine.conf file\n");
         return FALSE;
     }
 
-    TRACE(win16drv, "In creatdc for (%s,%s,%s) initData 0x%p\n",driver, device, output, initData);
+    TRACE(win16drv, "In creatdc for (%s,%s,%s) initData 0x%p\n",
+	  driver, device, output, initData);
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( SystemHeap, 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
@@ -205,11 +206,9 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
     dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
     
-    printf("Got devcaps width %d height %d bits %d planes %d\n",
-           dc->w.devCaps->horzRes,
-           dc->w.devCaps->vertRes, 
-           dc->w.devCaps->bitsPixel,
-           dc->w.devCaps->planes);
+    TRACE(win16drv, "Got devcaps width %d height %d bits %d planes %d\n",
+	  dc->w.devCaps->horzRes, dc->w.devCaps->vertRes, 
+	  dc->w.devCaps->bitsPixel, dc->w.devCaps->planes);
 
     /* Now we allocate enough memory for the PDEVICE structure */
     /* The size of this varies between printer drivers */
@@ -276,15 +275,15 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	switch(nEscape)
           {
 	  case ENABLEPAIRKERNING:
-	    fprintf(stderr,"Escape: ENABLEPAIRKERNING ignored.\n");
+	    FIXME(win16drv,"Escape: ENABLEPAIRKERNING ignored.\n");
             nRet = 1;
 	    break;
 	  case GETPAIRKERNTABLE:
-	    fprintf(stderr,"Escape: GETPAIRKERNTABLE ignored.\n");
+	    FIXME(win16drv,"Escape: GETPAIRKERNTABLE ignored.\n");
             nRet = 0;
 	    break;
           case SETABORTPROC:
-	    printf("Escape: SetAbortProc ignored should be stored in dc somewhere\n");
+	    FIXME(win16drv,"Escape: SetAbortProc ignored should be stored in dc somewhere\n");
             /* Make calling application believe this worked */
             nRet = 1;
 	    break;
@@ -335,7 +334,7 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	}
     }
     else
-	fprintf(stderr, "Escape(nEscape = %04x)\n", nEscape);      
+	WARN(win16drv, "Escape(nEscape = %04x) - ???\n", nEscape);      
     return nRet;
 }
 
@@ -361,12 +360,12 @@ static struct hpq *hpqueue;
 
 HPQ WINAPI CreatePQ(int size) 
 {
-    printf("CreatePQ: %d\n",size);
+    FIXME(win16drv, "(%d): stub\n",size);
     return 1;
 }
 int WINAPI DeletePQ(HPQ hPQ) 
 {
-    printf("DeletePQ: %x\n", hPQ);
+    FIXME(win16drv, "(%x): stub\n", hPQ);
     return 0;
 }
 int WINAPI ExtractPQ(HPQ hPQ) 
@@ -402,7 +401,7 @@ int WINAPI ExtractPQ(HPQ hPQ)
         free(queue);
     }
     
-    printf("ExtractPQ: %x got tag %d key %d\n", hPQ, tag, key); 
+    TRACE(win16drv, "%x got tag %d key %d\n", hPQ, tag, key); 
 
     return tag;
 }
@@ -415,17 +414,17 @@ int WINAPI InsertPQ(HPQ hPQ, int tag, int key)
     queueItem->key = key;
     queueItem->tag = tag;
     
-    printf("InsertPQ: %x %d %d\n", hPQ, tag, key);
+    FIXME(win16drv, "(%x %d %d): stub???\n", hPQ, tag, key);
     return TRUE;
 }
 int WINAPI MinPQ(HPQ hPQ) 
 {
-    printf("MinPQ: %x\n", hPQ); 
+    FIXME(win16drv, "(%x): stub\n", hPQ); 
     return 0;
 }
 int WINAPI SizePQ(HPQ hPQ, int sizechange) 
 {  
-    printf("SizePQ: %x %d\n", hPQ, sizechange); 
+    FIXME(win16drv, "(%x %d): stub\n", hPQ, sizechange); 
     return -1; 
 }
 
@@ -468,9 +467,9 @@ static int CreateSpoolFile(LPSTR pszOutput)
     if (pszOutput == NULL || *pszOutput == '\0')
       return -1;
 
-    PROFILE_GetWineIniString( "spooler", pszOutput, "",
-                              psCmd, sizeof(psCmd) );
-    printf("Got printerSpoolCommand \"%s\" for output device \"%s\"\n",psCmd, pszOutput);
+    PROFILE_GetWineIniString( "spooler", pszOutput, "", psCmd, sizeof(psCmd) );
+    TRACE(win16drv, "Got printerSpoolCommand '%s' for output device '%s'\n",
+	  psCmd, pszOutput);
     if (!*psCmd)
         psCmdP = pszOutput;
     else
@@ -491,7 +490,7 @@ static int CreateSpoolFile(LPSTR pszOutput)
         {
             psCmdP++;
 
-            printf("In child need to exec %s\n",psCmdP);
+            TRACE(win16drv, "In child need to exec %s\n",psCmdP);
             close(0);
             dup2(fds[0],0);
             close (fds[1]);
@@ -501,15 +500,16 @@ static int CreateSpoolFile(LPSTR pszOutput)
         }
         close (fds[0]);
         fd = fds[1];
-        printf("Need to execute a command and pipe the output to it\n");
+        TRACE(win16drv,"Need to execute a cmnd and pipe the output to it\n");
     }
     else
     {
-        printf("Just assume its a file\n");
+        TRACE(win16drv, "Just assume its a file\n");
 
         if ((fd = open(psCmdP, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
-            printf("Failed to create spool file %s, errno = %d\n", psCmdP, errno);
+            ERR(win16drv, "Failed to create spool file %s, errno = %d\n", 
+		psCmdP, errno);
         }
     }
     return fd;
@@ -538,7 +538,7 @@ HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
     HANDLE16 hHandle = (HANDLE16)SP_ERROR;
     PPRINTJOB pPrintJob;
 
-    TRACE(win16drv, "\"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);
+    TRACE(win16drv, "'%s' '%s' %04x\n", lpOutput, lpTitle, hDC);
 
     pPrintJob = gPrintJobsTable[0];
     if (pPrintJob == NULL)

@@ -465,7 +465,7 @@ static void WINPOS_GetWinOffset( HWND32 hwndFrom, HWND32 hwndTo,
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
         {
-            fprintf(stderr,"MapWindowPoints: bad hwndFrom = %04x\n",hwndFrom);
+            ERR(win,"bad hwndFrom = %04x\n",hwndFrom);
             return;
         }
         while (wndPtr->parent)
@@ -481,7 +481,7 @@ static void WINPOS_GetWinOffset( HWND32 hwndFrom, HWND32 hwndTo,
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
         {
-            fprintf(stderr,"MapWindowPoints: bad hwndTo = %04x\n", hwndTo );
+            ERR(win,"bad hwndTo = %04x\n", hwndTo );
             return;
         }
         while (wndPtr->parent)
@@ -672,7 +672,7 @@ HWND16 WINAPI GetShellWindow16(void)
  */
 HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
 {
-    fprintf( stdnimp, "SetShellWindow(%08x): empty stub\n",hwndshell );
+    FIXME(win, "(%08x): empty stub\n",hwndshell );
     return 0;
 }
 
@@ -682,7 +682,7 @@ HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
  */
 HWND32 WINAPI GetShellWindow32(void)
 {
-    fprintf( stdnimp, "GetShellWindow: empty stub\n" );
+    FIXME(win, "(void): empty stub\n" );
     return 0;
 }
 
@@ -2564,7 +2564,7 @@ BOOL32 WINAPI EndDeferWindowPos32( HDWP32 hdwp )
  */
 void WINAPI TileChildWindows( HWND16 parent, WORD action )
 {
-    printf("STUB TileChildWindows(%04x, %d)\n", parent, action);
+    FIXME(win, "(%04x, %d): stub\n", parent, action);
 }
 
 /***********************************************************************
@@ -2572,5 +2572,5 @@ void WINAPI TileChildWindows( HWND16 parent, WORD action )
  */
 void WINAPI CascadeChildWindows( HWND16 parent, WORD action )
 {
-    printf("STUB CascadeChildWindows(%04x, %d)\n", parent, action);
+    FIXME(win, "(%04x, %d): stub\n", parent, action);
 }

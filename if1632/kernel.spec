@@ -299,7 +299,7 @@ file	krnl386.exe
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
-431 pascal16 KERNEL_431(str word) KERNEL_431
+431 pascal16 IsPeFormat(str word) IsPeFormat
 432 stub FileTimeToLocalFileTime
 434 stub KERNEL_434
 435 stub KERNEL_435
@@ -356,6 +356,6 @@ file	krnl386.exe
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
 630 stub KERNEL_630
-631 pascal FUNC004(word word word) FUNC004	#C16ThkSl01?
+631 register FUNC004(word word word) FUNC004	#C16ThkSl01?
 651 stub KERNEL_651				#ThunkConnect16?
 700 pascal KERNEL_700() stub_KERNEL_700

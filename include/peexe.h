@@ -59,41 +59,42 @@ typedef struct _IMAGE_OPTIONAL_HEADER
 	 * Standard fields.
 	 */
 
-	WORD	Magic;
-	BYTE	MajorLinkerVersion;
-	BYTE	MinorLinkerVersion;
-	DWORD	SizeOfCode;
-	DWORD	SizeOfInitializedData;
-	DWORD	SizeOfUninitializedData;
-	DWORD	AddressOfEntryPoint;
-	DWORD	BaseOfCode;
-	DWORD	BaseOfData;
+	WORD	Magic;				/* 00 */
+	BYTE	MajorLinkerVersion;		/* 02 */
+	BYTE	MinorLinkerVersion;		/* 03 */
+	DWORD	SizeOfCode;			/* 04 */
+	DWORD	SizeOfInitializedData;		/* 08 */
+	DWORD	SizeOfUninitializedData;	/* 0C */
+	DWORD	AddressOfEntryPoint;		/* 10 */
+	DWORD	BaseOfCode;			/* 14 */
+	DWORD	BaseOfData;			/* 18 */
 
 	/*
 	 * NT additional fields.
 	 */
 
-	DWORD	ImageBase;
-	DWORD	SectionAlignment;
-	DWORD	FileAlignment;
-	WORD	MajorOperatingSystemVersion;
-	WORD	MinorOperatingSystemVersion;
-	WORD	MajorImageVersion;
-	WORD	MinorImageVersion;
-	WORD	MajorSubsystemVersion;
-	WORD	MinorSubsystemVersion;
-	DWORD	Reserved1;
-	DWORD	SizeOfImage;
-	DWORD	SizeOfHeaders;
-	DWORD	CheckSum;
-	WORD	Subsystem;
-	WORD	DllCharacteristics;
-	DWORD	SizeOfStackReserve;
-	DWORD	SizeOfStackCommit;
-	DWORD	SizeOfHeapReserve;
-	DWORD	SizeOfHeapCommit;
-	DWORD	LoaderFlags;
-	DWORD	NumberOfRvaAndSizes;
+	DWORD	ImageBase;			/* 1C */
+	DWORD	SectionAlignment;		/* 20 */
+	DWORD	FileAlignment;			/* 24 */
+	WORD	MajorOperatingSystemVersion;	/* 28 */
+	WORD	MinorOperatingSystemVersion;	/* 2A */
+	WORD	MajorImageVersion;		/* 2C */
+	WORD	MinorImageVersion;		/* 2E */
+	WORD	MajorSubsystemVersion;		/* 30 */
+	WORD	MinorSubsystemVersion;		/* 32 */
+	DWORD	Reserved1;			/* 34 */
+	DWORD	SizeOfImage;			/* 38 */
+	DWORD	SizeOfHeaders;			/* 3C */
+	DWORD	CheckSum;			/* 40 */
+	WORD	Subsystem;			/* 44 */
+	WORD	DllCharacteristics;		/* 46 */
+	DWORD	SizeOfStackReserve;		/* 48 */
+	DWORD	SizeOfStackCommit;		/* 4C */
+	DWORD	SizeOfHeapReserve;		/* 50 */
+	DWORD	SizeOfHeapCommit;		/* 54 */
+	DWORD	LoaderFlags;			/* 58 */
+	DWORD	NumberOfRvaAndSizes;		/* 5C */
+						/* 60: */
 	IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 } IMAGE_OPTIONAL_HEADER,*LPIMAGE_OPTIONAL_HEADER;
 
@@ -140,9 +141,9 @@ typedef struct _IMAGE_OPTIONAL_HEADER
 #define	IMAGE_SUBSYSTEM_POSIX_CUI	7
 
 typedef struct _IMAGE_NT_HEADERS {
-	DWORD			Signature;
-	IMAGE_FILE_HEADER	FileHeader;
-	IMAGE_OPTIONAL_HEADER	OptionalHeader;
+	DWORD			Signature;	/* 00: PE\0\0 */
+	IMAGE_FILE_HEADER	FileHeader;	/* 04: Fileheader */
+	IMAGE_OPTIONAL_HEADER	OptionalHeader;	/* 18: Optional Header */
 } IMAGE_NT_HEADERS,*LPIMAGE_NT_HEADERS;
 
 
@@ -161,19 +162,20 @@ typedef struct _IMAGE_NT_HEADERS {
 #define	IMAGE_SIZEOF_SHORT_NAME	8
 
 typedef struct _IMAGE_SECTION_HEADER {
-	BYTE	Name[IMAGE_SIZEOF_SHORT_NAME];
+	BYTE	Name[IMAGE_SIZEOF_SHORT_NAME];	/* 00: */
 	union {
-		DWORD	PhysicalAddress;
-		DWORD	VirtualSize;
+		DWORD	PhysicalAddress;	/* 04: */
+		DWORD	VirtualSize;		/* 04: */
 	} Misc;
-	DWORD	VirtualAddress;
-	DWORD	SizeOfRawData;
-	DWORD	PointerToRawData;
-	DWORD	PointerToRelocations;
-	DWORD	PointerToLinenumbers;
-	WORD	NumberOfRelocations;
-	WORD	NumberOfLinenumbers;
-	DWORD	Characteristics;
+	DWORD	VirtualAddress;			/* 08: */
+	DWORD	SizeOfRawData;			/* 0C: */
+	DWORD	PointerToRawData;		/* 10: */
+	DWORD	PointerToRelocations;		/* 14: */
+	DWORD	PointerToLinenumbers;		/* 18: */
+	WORD	NumberOfRelocations;		/* 1C: */
+	WORD	NumberOfLinenumbers;		/* 1E: */
+	DWORD	Characteristics;		/* 20: */
+						/* 24: */
 } IMAGE_SECTION_HEADER,*LPIMAGE_SECTION_HEADER;
 
 #define	IMAGE_SIZEOF_SECTION_HEADER 40

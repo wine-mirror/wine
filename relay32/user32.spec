@@ -579,7 +579,7 @@ type	win32
 574 stub VkKeyScanExA
 575 stub VkKeyScanExW
 576 stdcall VkKeyScanW(long) VkKeyScan32W
-577 stub WaitForInputIdle
+577 stdcall WaitForInputIdle(long long) WaitForInputIdle
 578 stdcall WaitMessage() WaitMessage
 579 stdcall WinHelpA(long str long long) WinHelp32A
 580 stdcall WinHelpW(long wstr long long) WinHelp32W

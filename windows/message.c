@@ -1090,7 +1090,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        fprintf( stderr, "SendMessage16: invalid hwnd %04x\n", hwnd );
+        WARN(msg, "invalid hwnd %04x\n", hwnd );
         return 0;
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
@@ -1136,7 +1136,7 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
 BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
                                    WPARAM32 wParam, LPARAM lParam )
 {
-   fprintf(stderr, "PostThreadMessage32A Stub\n");
+   FIXME(sendmsg, "(...): Stub\n");
    return FALSE;
 }
 
@@ -1170,7 +1170,7 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        fprintf( stderr, "SendMessage32A: invalid hwnd %08x\n", hwnd );
+        WARN(msg, "invalid hwnd %08x\n", hwnd );
         return 0;
     }
 
@@ -1221,7 +1221,7 @@ LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        fprintf( stderr, "SendMessage32W: invalid hwnd %08x\n", hwnd );
+        WARN(msg, "invalid hwnd %08x\n", hwnd );
         return 0;
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
@@ -1248,7 +1248,7 @@ LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 				     LPARAM lParam, UINT16 flags,
 				     UINT16 timeout, LPWORD resultp)
 {
-  fprintf (stdnimp, "SendMessageTimeout16 -- semistub\n");
+  FIXME(sendmsg, "(...): semistub\n");
   return SendMessage16 (hwnd, msg, wParam, lParam);
 }
 
@@ -1260,7 +1260,7 @@ LRESULT WINAPI SendMessageTimeout32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 				      LPARAM lParam, UINT32 flags,
 				      UINT32 timeout, LPDWORD resultp)
 {
-  fprintf (stdnimp, "SendMessageTimeout32A -- semistub\n");
+  FIXME(sendmsg, "(...): semistub\n");
   return SendMessage32A (hwnd, msg, wParam, lParam);
 }
 
@@ -1272,7 +1272,7 @@ LRESULT WINAPI SendMessageTimeout32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 				      LPARAM lParam, UINT32 flags,
 				      UINT32 timeout, LPDWORD resultp)
 {
-  fprintf (stdnimp, "SendMessageTimeout32W -- semistub\n");
+  FIXME(sendmsg, "(...): semistub\n");
   return SendMessage32W (hwnd, msg, wParam, lParam);
 }
 
@@ -1533,8 +1533,8 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-		msg->hwnd);
+	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect32( msg->hwnd, NULL );
@@ -1580,8 +1580,8 @@ LONG WINAPI DispatchMessage32A( const MSG32* msg )
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-		msg->hwnd);
+	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect32( msg->hwnd, NULL );
@@ -1627,8 +1627,8 @@ LONG WINAPI DispatchMessage32W( const MSG32* msg )
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-		msg->hwnd);
+	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect32( msg->hwnd, NULL );
@@ -1717,8 +1717,8 @@ LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT32 uMessage,WPARAM32 wParam,
 	LPARAM lParam
 ) {
-	fprintf(stdnimp,"BroadcastSystemMessage(%08lx,%08lx,%08x,%08x,%08lx),stub!\n",
-		dwFlags,*recipients,uMessage,wParam,lParam
+	FIXME(sendmsg,"(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
+	      dwFlags,*recipients,uMessage,wParam,lParam
 	);
 	return 0;
 }
@@ -1728,8 +1728,8 @@ LONG WINAPI BroadcastSystemMessage(
  */
 LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
 {
-	fprintf(stderr,"SendNotifyMessage32A(%04x,%08lx,%08lx,%08lx),stub!\n",
-		hwnd,(long)msg,(long)wParam,lParam
+	FIXME(msg,"(%04x,%08lx,%08lx,%08lx): stub!\n",
+	      hwnd,(long)msg,(long)wParam,lParam
 	);
 	return 0;
 }

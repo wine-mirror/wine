@@ -42,9 +42,18 @@
 
 /***********************************************************************
  *           ATOM_InitTable
+ *
+ * NOTES
+ *	Should this validate the value of entries to be 0 < x < 0x3fff?
+ *
+ * RETURNS
+ *	Handle: Success
+ *	0: Failure
  */
-static HANDLE16 ATOM_InitTable( WORD selector, WORD entries )
-{
+static HANDLE16 ATOM_InitTable(
+                WORD selector, /* [in] Segment */
+                WORD entries   /* [in] Size of atom table */
+) {
     int i;
     HANDLE16 handle;
     ATOMTABLE *table;
@@ -81,9 +90,15 @@ BOOL32 ATOM_Init(void)
  *
  * Return a pointer to the atom table of a given segment, creating
  * it if necessary.
+ *
+ * RETURNS
+ *	Pointer to table: Success
+ *	NULL: Failure
  */
-static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL32 create )
-{
+static ATOMTABLE *ATOM_GetTable(
+                  WORD selector, /* [in] Segment */
+                  BOOL32 create  /* [in] Create */
+) {
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
     if (!ptr->atomtable)
     {
@@ -101,17 +116,24 @@ static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL32 create )
  *
  * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
  */
-static ATOMENTRY * ATOM_MakePtr( WORD selector, HANDLE16 handle )
-{
+static ATOMENTRY *ATOM_MakePtr(
+                  WORD selector,  /* [in] Segment */
+                  HANDLE16 handle /* [in] Handle */
+) {
     return (ATOMENTRY *)PTR_SEG_OFF_TO_LIN( selector, handle );
 }
 
 
 /***********************************************************************
  *           ATOM_Hash
+ * RETURNS
+ *	The hash value for the input string
  */
-static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
-{
+static WORD ATOM_Hash(
+            WORD entries, /* [in] Total number of entries */
+            LPCSTR str,   /* [in] Pointer to string to hash */
+            WORD len      /* [in] Length of string */
+) {
     WORD i, hash = 0;
 
     for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
@@ -121,9 +143,15 @@ static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
 
 /***********************************************************************
  *           ATOM_AddAtom
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
-{
+static ATOM ATOM_AddAtom(
+            WORD selector, /* [in] Segment */
+            LPCSTR str     /* [in] Pointer to the string to add */
+) {
     WORD hash;
     HANDLE16 entry;
     ATOMENTRY * entryPtr;
@@ -163,9 +191,14 @@ static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
 
 /***********************************************************************
  *           ATOM_DeleteAtom
+ * RETURNS
+ *	0: Success
+ *	Atom: Failure
  */
-static ATOM ATOM_DeleteAtom( WORD selector, ATOM atom )
-{
+static ATOM ATOM_DeleteAtom(
+            WORD selector, /* [in] Segment */
+            ATOM atom      /* [in] Atom to delete */
+) {
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
     HANDLE16 entry, *prevEntry;
@@ -199,9 +232,14 @@ static ATOM ATOM_DeleteAtom( WORD selector, ATOM atom )
 
 /***********************************************************************
  *           ATOM_FindAtom
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
-{
+static ATOM ATOM_FindAtom(
+            WORD selector, /* [in] Segment */
+            LPCSTR str     /* [in] Pointer to string to find */
+) {
     ATOMTABLE * table;
     WORD hash;
     HANDLE16 entry;
@@ -226,10 +264,16 @@ static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
 
 /***********************************************************************
  *           ATOM_GetAtomName
+ * RETURNS
+ *	Length of string copied to buffer: Success
+ *	0: Failure
  */
-static UINT32 ATOM_GetAtomName( WORD selector, ATOM atom,
-                                LPSTR buffer, INT32 count )
-{
+static UINT32 ATOM_GetAtomName(
+              WORD selector, /* [in]  Segment */
+              ATOM atom,     /* [in]  Atom identifier */
+              LPSTR buffer,  /* [out] Pointer to buffer for atom string */
+              INT32 count    /* [in]  Size of buffer */
+) {
     ATOMTABLE * table;
     ATOMENTRY * entryPtr;
     HANDLE16 entry;
@@ -302,15 +346,23 @@ ATOM WINAPI AddAtom16( SEGPTR str )
 
 /***********************************************************************
  *           AddAtom32A   (KERNEL32.0)
+ * Adds a string to the atom table and returns the atom identifying the
+ * string.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-ATOM WINAPI AddAtom32A( LPCSTR str )
-{
+ATOM WINAPI AddAtom32A(
+            LPCSTR str /* [in] Pointer to string to add */
+) {
     return GlobalAddAtom32A( str );  /* FIXME */
 }
 
 
 /***********************************************************************
  *           AddAtom32W   (KERNEL32.1)
+ * See AddAtom32A
  */
 ATOM WINAPI AddAtom32W( LPCWSTR str )
 {
@@ -329,9 +381,16 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
 
 /***********************************************************************
  *           DeleteAtom32   (KERNEL32.69)
+ * Decrements the reference count of a string atom.  If count becomes
+ * zero, the string associated with the atom is removed from the table.
+ *
+ * RETURNS
+ *	0: Success
+ *	Atom: Failure
  */
-ATOM WINAPI DeleteAtom32( ATOM atom )
-{
+ATOM WINAPI DeleteAtom32(
+            ATOM atom /* [in] Atom to delete */
+) {
     return GlobalDeleteAtom( atom );  /* FIXME */
 }
 
@@ -348,15 +407,23 @@ ATOM WINAPI FindAtom16( SEGPTR str )
 
 /***********************************************************************
  *           FindAtom32A   (KERNEL32.117)
+ * Searches the local atom table for the string and returns the atom
+ * associated with that string.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-ATOM WINAPI FindAtom32A( LPCSTR str )
-{
+ATOM WINAPI FindAtom32A(
+            LPCSTR str /* [in] Pointer to string to find */
+) {
     return GlobalFindAtom32A( str );  /* FIXME */
 }
 
 
 /***********************************************************************
  *           FindAtom32W   (KERNEL32.118)
+ * See FindAtom32A
  */
 ATOM WINAPI FindAtom32W( LPCWSTR str )
 {
@@ -375,15 +442,24 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 
 /***********************************************************************
  *           GetAtomName32A   (KERNEL32.149)
+ * Retrieves a copy of the string associated with the atom.
+ *
+ * RETURNS
+ *	Length of string: Success
+ *	0: Failure
  */
-UINT32 WINAPI GetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
-{
+UINT32 WINAPI GetAtomName32A(
+              ATOM atom,    /* [in]  Atom */
+              LPSTR buffer, /* [out] Pointer to string for atom string */
+              INT32 count   /* [in]  Size of buffer */
+) {
     return GlobalGetAtomName32A( atom, buffer, count );  /* FIXME */
 }
 
 
 /***********************************************************************
  *           GetAtomName32W   (KERNEL32.150)
+ * See GetAtomName32A
  */
 UINT32 WINAPI GetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {
@@ -407,9 +483,16 @@ ATOM WINAPI GlobalAddAtom16( SEGPTR str )
 
 /***********************************************************************
  *           GlobalAddAtom32A   (KERNEL32.313)
+ * Adds a character string to the global atom table and returns a unique
+ * value identifying the string.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-ATOM WINAPI GlobalAddAtom32A( LPCSTR str )
-{
+ATOM WINAPI GlobalAddAtom32A(
+            LPCSTR str /* [in] Pointer to string to add */
+) {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_AddAtom( USER_HeapSel, str );
 }
@@ -417,6 +500,7 @@ ATOM WINAPI GlobalAddAtom32A( LPCSTR str )
 
 /***********************************************************************
  *           GlobalAddAtom32W   (KERNEL32.314)
+ * See GlobalAddAtom32A
  */
 ATOM WINAPI GlobalAddAtom32W( LPCWSTR str )
 {
@@ -429,9 +513,16 @@ ATOM WINAPI GlobalAddAtom32W( LPCWSTR str )
 
 /***********************************************************************
  *           GlobalDeleteAtom   (USER.269) (KERNEL32.317)
+ * Decrements the reference count of a string atom.  If the count is
+ * zero, the string associated with the atom is removed from the table.
+ *
+ * RETURNS
+ *	0: Success
+ *	Atom: Failure
  */
-ATOM WINAPI GlobalDeleteAtom( ATOM atom )
-{
+ATOM WINAPI GlobalDeleteAtom(
+            ATOM atom /* [in] Atom to delete */
+) {
 #ifdef CONFIG_IPC
     return DDE_GlobalDeleteAtom( atom );
 #else
@@ -456,9 +547,16 @@ ATOM WINAPI GlobalFindAtom16( SEGPTR str )
 
 /***********************************************************************
  *           GlobalFindAtom32A   (KERNEL32.318)
+ * Searches the atom table for the string and returns the atom
+ * associated with it.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-ATOM WINAPI GlobalFindAtom32A( LPCSTR str )
-{
+ATOM WINAPI GlobalFindAtom32A(
+            LPCSTR str /* [in] Pointer to string to search for */
+) {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_FindAtom( USER_HeapSel, str );
 }
@@ -466,6 +564,7 @@ ATOM WINAPI GlobalFindAtom32A( LPCSTR str )
 
 /***********************************************************************
  *           GlobalFindAtom32W   (KERNEL32.319)
+ * See GlobalFindAtom32A
  */
 ATOM WINAPI GlobalFindAtom32W( LPCWSTR str )
 {
@@ -491,14 +590,24 @@ UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 
 /***********************************************************************
  *           GlobalGetAtomName32A   (KERNEL32.323)
+ * Retrieves a copy of the string associated with an atom.
+ *
+ * RETURNS
+ *	Length of string in characters: Success
+ *	0: Failure
  */
-UINT32 WINAPI GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
-{
+UINT32 WINAPI GlobalGetAtomName32A(
+              ATOM atom,    /* [in]  Atom identifier */
+              LPSTR buffer, /* [out] Pointer to buffer for atom string */
+              INT32 count   /* [in]  Size of buffer */
+) {
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }
 
+
 /***********************************************************************
  *           GlobalGetAtomName32W   (KERNEL32.324)
+ * See GlobalGetAtomName32A
  */
 UINT32 WINAPI GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {

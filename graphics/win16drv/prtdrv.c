@@ -573,7 +573,7 @@ DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
                                                 lP11, lP12, lP13,
                                                 SEGPTR_GET(lP14));
         SEGPTR_FREE(lP14);
-        printf("Called StretchBlt ret %d\n",wRet);
+        TRACE(win16drv, "Called StretchBlt ret %d\n",wRet);
     }
     return wRet;
 }

@@ -149,7 +149,7 @@ LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
 	infoPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
 	SetDeskWallPaper32( (LPSTR)-1 );
-	break;
+	return 1;
 	
     case WM_ERASEBKGND:
 	if (rootWindow == DefaultRootWindow(display)) return 1;

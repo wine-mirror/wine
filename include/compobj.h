@@ -24,6 +24,10 @@ OLESTATUS WINAPI CLSIDFromString32(LPCOLESTR32, CLSID *);
 
 OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR);
 
+OLESTATUS WINAPI StringFromGUID2(const REFGUID *id, LPOLESTR32 *str, INT32 cmax);
+// #define StringFromGUID2 WINELIB_NAME(StringFromGUID2)
+
+
 #ifdef INITGUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
         const GUID name =\

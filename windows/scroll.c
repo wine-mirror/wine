@@ -164,10 +164,10 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     if ( !dc || !hdc ) return FALSE;
 
 /*
-    printf(stddeb,"\t[wndOrgX=%i, wndExtX=%i, vportOrgX=%i, vportExtX=%i]\n",
-		  dc->wndOrgX, dc->wndExtX, dc->vportOrgX, dc->vportExtX );
-    printf(stddeb,"\t[wndOrgY=%i, wndExtY=%i, vportOrgY=%i, vportExtY=%i]\n",
-                  dc->wndOrgY, dc->wndExtY, dc->vportOrgY, dc->vportExtY );
+    TRACE(scroll,"\t[wndOrgX=%i, wndExtX=%i, vportOrgX=%i, vportExtX=%i]\n",
+          dc->wndOrgX, dc->wndExtX, dc->vportOrgX, dc->vportExtX );
+    TRACE(scroll,"\t[wndOrgY=%i, wndExtY=%i, vportOrgY=%i, vportExtY=%i]\n",
+	  dc->wndOrgY, dc->wndExtY, dc->vportOrgY, dc->vportExtY );
 */
 
     /* compute device clipping region */

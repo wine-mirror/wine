@@ -2607,15 +2607,18 @@ LRESULT WINAPI PopupMenuWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 	/* zero out global pointer in case resident popup window
 	 * was somehow destroyed. */
 
-	if( hwnd == pTopPopupWnd->hwndSelf )
-	{	
-	    ERR(menu, "resident popup destroyed!\n");
+	if( pTopPopupWnd )
+	{
+	    if( hwnd == pTopPopupWnd->hwndSelf )
+	    {
+		ERR(menu, "resident popup destroyed!\n");
 
-	    pTopPopupWnd = NULL; 
-	    uSubPWndLevel = 0; 
+		pTopPopupWnd = NULL;
+		uSubPWndLevel = 0;
+	    }
+	    else
+		uSubPWndLevel--;
 	}
-	else
-	    uSubPWndLevel--;
 	break;
 
     case WM_SHOWWINDOW:

@@ -1,4 +1,132 @@
 ----------------------------------------------------------------------
+Sun Mar 29 15:18:57 1998  Uwe Bonnes <elektron.ikp.physik.tu-darmstadt.de>
+
+	* [msdos/int21.c]
+	More verbose Trace messages
+
+Sun Mar 29 15:03:30 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/ne_image.c]
+	Terminate relocation chains on 0 offset.
+
+Sun Mar 29 02:35:45 1998  James Juran  <jrj120@psu.edu>
+
+	* [windows/caret.c] [windows/class.c] [windows/clipboard.c]
+	Fixed more USER32 ordinal numbers in function documentation.
+
+Sat Mar 28 22:40:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [controls/desktop.c]
+	Return 1 for WM_NCCREATE in DesktopWndProc.
+
+	* [controls/menu.c]
+	Fixed crash when destroying a top popup win that was only created
+	but not shown.
+
+	* [ole/typelib.c] [if1632/typelib.spec]
+	Implemented OABuildVersion.
+
+	* [windows/win.c]
+	Finally fixed ugly bug in GetParent32 that affected window placement:
+	Didn't return 0 for windows that have neither WS_POPUP nor
+	WS_CHILD set. Now it acts exactly like Windows (at least I hope so ;)
+
+Sat Mar 28 02:26:43 1998  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
+
+	* [DEVELOPERS-HINTS] [documentation/debug-msgs]
+	Updated documentation on debug messages
+
+	* [include/button.h] [controls/button.c] [include/windows.h]
+	[include/combo.h] [controls/combo.c] [controls/commctrl.c]
+	[controls/icontitle.c] [controls/listbox.c]	[controls/menu.c]
+	[controls/scroll.c] [controls/widgets.c] 
+	Changed some 16-bit code to 32-bit code. I am positive this will
+	not break anything.
+
+	* [controls/uitools.c] 
+	Renamed the prefix of some functions from UITOOLS_ to UITOOLS95_
+	to reflect the fact that they implement Win95 look. Maybe we will
+	have a UITOOLS31_ in the future. Anyhow, the change is completely
+	internal to this file.
+
+	* [*/*.c]
+	Changed a lot of [f]printf into appropriate debug messages.
+
+Fri Mar 27 19:56:12 1998  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+	* [documentation/status/]
+	Added directdraw and directsound status.
+
+	* [if1632/thunk.c][ole/*.c][win32/kernel32.c]
+	Added some documentation.
+	Moved FUNC004 to thunk.c since it seems to be a 16->32 thunk
+	(calling conventions and the like still unknown).
+
+Fri Mar 27 09:59:32 1998  Morten Eriksen  <mortene@pvv.org>
+
+	* [loader/resource.c][windows/keyboard.c]
+	Implemented CopyAcceleratorTable() and CreateAcceleratorTable().
+	
+	* [include/compobj.h][ole/compobj.c][relay32/ole32.spec]
+	Added implementation of StringFromGUID2(). 
+
+Tue Mar 26 23:12:05 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [misc/imagelist.c][relay32/comctl32.spec]
+	Implemented new debugging interface.
+	Added missing functions (some are empty stubs).
+	Changed ordinals in comctl32.spec (now dll version 4.72 comatible).
+
+	* [objects/oembitmaps.c][include/windows.h]
+	  [include/bitmaps/*]
+	Added missing restore bitmaps for Win95 look.
+	Added missing Win95 cursors.
+
+Thu Mar 26 10:18:20 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [programs/view/Makefile.in] [programs/view/view.c]
+	Fix compilation, Aldus placeable metafile loading.
+
+	* [graphics/metafiledrv/init.c] [relay32/gdi32.spec] 
+	  [objects/metafile.c]
+	Implemented various 32 bit versions of regular metafile API.
+
+	* [objects/enhmetafile.c]
+	Implemented rendering of a couple of dozen records.
+
+Tue Mar 24 20:06:39 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [memory/*.c]
+	Updated documentation for API manpages.
+
+Mon Mar 23 09:09:00 1998  Alex Korobka <alex@pharm.sunysb.edu>
+
+	* [misc/winsock.c]
+	Fixed 32-bit DNS lookup.
+
+Mon Mar 23 23:54:47 1998  Luiz Otavio L. Zorzella  <zorzella@nr.conexware.com>
+
+	* [multimedia/init.c]
+	New code for the initialization and gathering of information about
+	the MIDI devices, for future use.
+
+Thu Mar 19 00:59:29 1998  Jim Peterson <jspeter@nospam.birch.ee.vt.edu>
+
+	* [windows/win.c]
+	Eliminated inaccurate setting of cs->hMenu in
+	WIN_CreateWindowEx, along with superfluous SetMenu32 call.
+
+Mon Mar 16 17:40:53 1998  Petter Reinholdtsen <pere@td.org.uit.no>
+
+	* [debugger/dbg.y] [debugger/Makefile.in] [Makefile.in]
+	Install wine.sym in $(exec_prefix)/lib and make sure the debugger
+	finds it.
+
+Sun Mar 15 22:36:35 1998  Michael Veksler <mveksler@tx.technion.ac.il>
+
+	* [dummy.c] [if1632/gdi.spec]
+	Fixed stub declaration of GDI_532, so Hebrew-Word2 kind of works.
+
+----------------------------------------------------------------------
 Sun Mar 15 03:46:50 1998  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
 
 	* [*/*]

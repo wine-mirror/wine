@@ -31,11 +31,11 @@ typedef struct
    UINT32  	dwStyle;
    HWND32  	hWndEdit;
    HWND32  	hWndLBox;
-   UINT16  	wState;
-   HFONT16 	hFont;
-   RECT16  	RectCombo;
-   RECT16  	RectEdit;
-   RECT16  	RectButton;
+   UINT32  	wState;
+   HFONT32 	hFont;
+   RECT32  	RectCombo;
+   RECT32  	RectEdit;
+   RECT32  	RectButton;
    INT32   	droppedWidth;		/* last two are not used unless set */
    INT32   	editHeight;		/* explicitly */
 } HEADCOMBO,*LPHEADCOMBO;

@@ -9,6 +9,7 @@
 #include "gdi.h"
 
 /* FIXME: SDK docs says these should be 1 and 2 */
+/*  DR 980322: most wmf's have 1, so I think 0 and 1 is correct */
 #define METAFILE_MEMORY 0
 #define METAFILE_DISK   1
 

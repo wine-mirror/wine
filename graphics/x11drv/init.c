@@ -116,9 +116,9 @@ BOOL32 X11DRV_Init(void)
     /* Finish up device caps */
 
 #if 0
-    printf("Display:\nHeight = %-4i pxl, %-4i mm\nWidth  = %-4i pxl, %-4i mm\n",
-	    HeightOfScreen(screen), HeightMMOfScreen(screen),
-	    WidthOfScreen(screen), WidthMMOfScreen(screen) );
+    TRACE(x11drv, "Height = %-4i pxl, %-4i mm, Width  = %-4i pxl, %-4i mm\n",
+	  HeightOfScreen(screen), HeightMMOfScreen(screen),
+	  WidthOfScreen(screen), WidthMMOfScreen(screen) );
 #endif
 
     X11DRV_DevCaps.version = 0x300;

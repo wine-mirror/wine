@@ -23,7 +23,6 @@
 #include "sysmetrics.h"
 #include "shlobj.h"
 #include "debug.h"
-#include "debugstr.h"
 #include "winreg.h"
 
 static const char * const SHELL_People[] =
@@ -1406,12 +1405,6 @@ LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
     return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
 }
 
-LRESULT WINAPI FUNC004(INT16 code, WPARAM16 wParam, /*LPARAM*/WORD lParam)
-{
-	FIXME(reg,"(%d,%d,%d),STUB!\n",code,wParam,lParam);
-	return ShellHookProc(code,wParam,(DWORD)lParam);
-}
-
 /*************************************************************************
  *				RegisterShellHook	[SHELL.102]
  */
@@ -1460,9 +1453,8 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
                               UINT32 flags )
 {
-	fprintf(stdnimp,"SHGetFileInfo32A(%s,0x%08lx,%p,%d,0x%08x)\n",
-		path,dwFileAttributes,psfi,sizeofpsfi,flags
-	);
+	FIXME(shell,"(%s,0x%08lx,%p,%d,0x%08x): stub\n",
+	      path,dwFileAttributes,psfi,sizeofpsfi,flags);
 	return TRUE;
 }
 
@@ -1471,7 +1463,7 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
  */
 UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
 {
-    fprintf(stdnimp,"SHAppBarMessage32(0x%08lx,%p)\n", msg, data);
+    FIXME(shell,"(0x%08lx,%p): stub\n", msg, data);
 #if 0
     switch (msg) {
         case ABM_ACTIVATE:
@@ -1549,8 +1541,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 {
   TRACE(exec, "(%08x, %p, \"%s\", %08lx)\n",
-		hwnd, code ? code : "(null)",
-		cmd ? cmd : "(null)", arg4);
+	hwnd, code ? code : "(null)", cmd ? cmd : "(null)", arg4);
 }
 
 /*************************************************************************
@@ -1558,7 +1549,7 @@ void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 
 void WINAPI FreeIconList( DWORD dw )
 {
-    fprintf( stdnimp, "FreeIconList: empty stub\n" );
+    FIXME(reg, "empty stub\n" );
 }
 
 /*************************************************************************
@@ -1574,7 +1565,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
     WINE_StringFromCLSID((LPCLSID)iid,xiid);
-    fprintf(stderr,"SHELL32_DllGetClassObject(%s,%s,%p)\n",xclsid,xiid,ppv);
+    TRACE(shell,"(%s,%s,%p)\n",xclsid,xiid,ppv);
 
     *ppv = NULL;
 /* SDK example code looks like this:
@@ -1595,13 +1586,13 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
  */
   
     if (!memcmp(rclsid,&CLSID_ShellDesktop,sizeof(CLSID_ShellDesktop))) {
-    	fprintf(stderr,"	requested CLSID_ShellDesktop, creating it.\n");
+    	TRACE(shell,"   requested CLSID_ShellDesktop, creating it.\n");
 	*ppv = IShellFolder_Constructor();
-	/* FIXME: Initialize this folder to be the shell desktop folder */
+	FIXME(shell,"Initialize this folder to be the shell desktop folder\n");
 	return 0;
     }
 
-    fprintf (stdnimp, "	-> clsid not found. returning E_OUTOFMEMORY.\n");
+    FIXME(shell, "   -> clsid not found. returning E_OUTOFMEMORY.\n");
     return hres;
 }
 
@@ -1633,7 +1624,7 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder) {
  * heap (ProcessHeap).
  */
 DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal) {
-	fprintf(stderr,"SHGetMalloc()\n");
+	TRACE(shell,"(%p)\n", lpmal);
 	return CoGetMalloc32(0,lpmal);
 }
 
@@ -1644,11 +1635,9 @@ DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal) {
  * nFolder is a CSIDL_xxxxx.
  */
 HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl) {
-	fprintf(stderr,"SHGetSpecialFolderLocation(%04x,%d,%p),stub!\n",
-		hwndOwner,nFolder,ppidl
-	);
+	FIXME(shell,"(%04x,%d,%p),stub!\n", hwndOwner,nFolder,ppidl);
 	*ppidl = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,2*sizeof(ITEMIDLIST));
-	/* FIXME: we return only the empty ITEMIDLIST currently. */
+	FIXME(shell, "we return only the empty ITEMIDLIST currently.\n");
 	(*ppidl)->mkid.cb = 0;
 	return NOERROR;
 }
@@ -1658,8 +1647,12 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
  * returns the path from a passed PIDL.
  */
 BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) {
-	fprintf(stderr,"SHGetPathFromIDList(%p,%p),stub!\n",pidl,pszPath);
+	FIXME(shell,"(%p,%p),stub!\n",pidl,pszPath);
 	lstrcpy32A(pszPath,"E:\\"); /* FIXME */
 	return NOERROR;
 }
+
+
+
+
 

@@ -156,7 +156,7 @@ void WINAPI InitCommonControls(void)
         old_name = class32->lpszClassName;
         strcpy( name, (char *)class32->lpszClassName );
         class32->lpszClassName = name;
-        class32->hCursor = LoadCursor16( 0, IDC_ARROW );
+        class32->hCursor = LoadCursor32A( 0, (LPCSTR)IDC_ARROW );
         RegisterClass32A( class32 );
         class32->lpszClassName = old_name;	
     }

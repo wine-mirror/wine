@@ -354,7 +354,7 @@ file	gdi.exe
 # Stubs for Hebrew version
 530 pascal16 GDI_530() stub_GDI_530
 531 pascal16 GDI_531() stub_GDI_531
-532 pascal16 GDI_532() stub_GDI_532
+532 pascal16 GDI_532(ptr word) stub_GDI_532
 536 pascal16 GDI_536() stub_GDI_536
 538 pascal16 GDI_538() stub_GDI_538
 540 pascal16 GDI_540() stub_GDI_540

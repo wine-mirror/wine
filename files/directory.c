@@ -351,6 +351,7 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
     if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
     if ((mkdir( full_name.long_name, 0777 ) == -1) && (errno != EEXIST))
     {
+      WARN (file, "Errno %i trying to create directory %s.\n", errno, full_name.long_name);
         FILE_SetDosError();
         return FALSE;
     }

@@ -266,43 +266,43 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 
     if (!pInfo)
     {
-        printf( "Local Heap corrupted!  ds=%04x\n", ds );
+        DUMP( "Local Heap corrupted!  ds=%04x\n", ds );
         return;
     }
-    printf( "Local Heap  ds=%04x first=%04x last=%04x items=%d\n",
-            ds, pInfo->first, pInfo->last, pInfo->items );
+    DUMP( "Local Heap  ds=%04x first=%04x last=%04x items=%d\n",
+	  ds, pInfo->first, pInfo->last, pInfo->items );
 
     arena = pInfo->first;
     for (;;)
     {
         LOCALARENA *pArena = ARENA_PTR(ptr,arena);
-        printf( "  %04x: prev=%04x next=%04x type=%d\n", arena,
-                pArena->prev & ~3, pArena->next, pArena->prev & 3 );
+        DUMP( "  %04x: prev=%04x next=%04x type=%d\n", arena,
+	      pArena->prev & ~3, pArena->next, pArena->prev & 3 );
         if (arena == pInfo->first)
 	{
-            printf( "        size=%d free_prev=%04x free_next=%04x\n",
-                    pArena->size, pArena->free_prev, pArena->free_next );
+            DUMP( "        size=%d free_prev=%04x free_next=%04x\n",
+		  pArena->size, pArena->free_prev, pArena->free_next );
 	}
         if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
         {
-            printf( "        size=%d free_prev=%04x free_next=%04x\n",
-                    pArena->size, pArena->free_prev, pArena->free_next );
+            DUMP( "        size=%d free_prev=%04x free_next=%04x\n",
+		  pArena->size, pArena->free_prev, pArena->free_next );
             if (pArena->next == arena) break;  /* last one */
             if (ARENA_PTR(ptr,pArena->free_next)->free_prev != arena)
             {
-                printf( "*** arena->free_next->free_prev != arena\n" );
+                DUMP( "*** arena->free_next->free_prev != arena\n" );
                 break;
             }
         }
         if (pArena->next == arena)
         {
-            printf( "*** last block is not marked free\n" );
+	    DUMP( "*** last block is not marked free\n" );
             break;
         }
         if ((ARENA_PTR(ptr,pArena->next)->prev & ~3) != arena)
         {
-            printf( "*** arena->next->prev != arena (%04x, %04x)\n",
-		   pArena->next, ARENA_PTR(ptr,pArena->next)->prev);
+            DUMP( "*** arena->next->prev != arena (%04x, %04x)\n",
+		  pArena->next, ARENA_PTR(ptr,pArena->next)->prev);
             break;
         }
         arena = pArena->next;
@@ -717,7 +717,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     /* Free the old location */  
                     LOCAL_FreeArena(ds, movearena);
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE;
+                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
                 }
                 else if((ARENA_PTR(ptr, pMoveArena->prev & ~3)->prev & 3)
 			       == LOCAL_ARENA_FREE)
@@ -727,7 +727,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     finalarena = pMoveArena->prev & ~3;
                     LOCAL_GrowArenaDownward( ds, movearena, movesize );
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE;
+                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
                 }
             }
         }
@@ -1246,7 +1246,12 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     }
     if(HANDLE_MOVEABLE(handle)) size += sizeof(HLOCAL16);
     hmem = LOCAL_GetBlock( ds, size, flags );
-    ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
+    ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr                             */
+    if(HANDLE_MOVEABLE(handle))         /* LOCAL_GetBlock might have triggered    */
+    {                                   /* a compaction, which might in turn have */
+      blockhandle = pEntry->addr ;      /* moved the very block we are resizing   */
+      arena = ARENA_HEADER( blockhandle );   /* thus, we reload arena, too        */
+    }
     if (!hmem)
     {
         /* Remove the block from the heap and try again */
@@ -1569,12 +1574,12 @@ FARPROC16 WINAPI LocalNotify( FARPROC16 func )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "LOCAL_Notify(%04x): Local heap not found\n", ds );
+        ERR(local, "(%04x): Local heap not found\n", ds );
 	LOCAL_PrintHeap( ds );
 	return 0;
     }
     TRACE(local, "(%04x): %08lx\n", ds, (DWORD)func );
-    fprintf(stdnimp, "LocalNotify(): Half implemented\n");
+    FIXME(local, "Half implemented\n");
     oldNotify = pInfo->notify;
     pInfo->notify = func;
     return oldNotify;
@@ -1633,7 +1638,7 @@ WORD WINAPI LocalHandleDelta( WORD delta )
 
     if (!(pInfo = LOCAL_GetHeap( CURRENT_DS )))
     {
-        fprintf( stderr, "LocalHandleDelta: Local heap not found\n");
+        ERR(local, "Local heap not found\n");
 	LOCAL_PrintHeap( CURRENT_DS );
 	return 0;
     }
@@ -1707,9 +1712,14 @@ BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry )
 
 /***********************************************************************
  *           LocalAlloc32   (KERNEL32.371)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalAlloc32( UINT32 flags, DWORD size )
-{
+HLOCAL32 WINAPI LocalAlloc32(
+                UINT32 flags, /* [in] Allocation attributes */
+                DWORD size    /* [in] Number of bytes to allocate */
+) {
     return (HLOCAL32)GlobalAlloc32( flags, size );
 }
 
@@ -1725,45 +1735,70 @@ UINT32 WINAPI LocalCompact32( UINT32 minfree )
 
 /***********************************************************************
  *           LocalFlags32   (KERNEL32.374)
+ * RETURNS
+ *	Value specifying allocation flags and lock count.
+ *	LMEM_INVALID_HANDLE: Failure
  */
-UINT32 WINAPI LocalFlags32( HLOCAL32 handle )
-{
+UINT32 WINAPI LocalFlags32(
+              HLOCAL32 handle /* [in] Handle of memory object */
+) {
     return GlobalFlags32( (HGLOBAL32)handle );
 }
 
 
 /***********************************************************************
  *           LocalFree32   (KERNEL32.375)
+ * RETURNS
+ *	NULL: Success
+ *	Handle: Failure
  */
-HLOCAL32 WINAPI LocalFree32( HLOCAL32 handle )
-{
+HLOCAL32 WINAPI LocalFree32(
+                HLOCAL32 handle /* [in] Handle of memory object */
+) {
     return (HLOCAL32)GlobalFree32( (HGLOBAL32)handle );
 }
 
 
 /***********************************************************************
  *           LocalHandle32   (KERNEL32.376)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalHandle32( LPCVOID ptr )
-{
+HLOCAL32 WINAPI LocalHandle32(
+                LPCVOID ptr /* [in] Address of local memory object */
+) {
     return (HLOCAL32)GlobalHandle32( ptr );
 }
 
 
 /***********************************************************************
  *           LocalLock32   (KERNEL32.377)
+ * Locks a local memory object and returns pointer to the first byte
+ * of the memory block.
+ *
+ * RETURNS
+ *	Pointer: Success
+ *	NULL: Failure
  */
-LPVOID WINAPI LocalLock32( HLOCAL32 handle )
-{
+LPVOID WINAPI LocalLock32(
+              HLOCAL32 handle /* [in] Address of local memory object */
+) {
     return GlobalLock32( (HGLOBAL32)handle );
 }
 
 
 /***********************************************************************
  *           LocalReAlloc32   (KERNEL32.378)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalReAlloc32( HLOCAL32 handle, DWORD size, UINT32 flags )
-{
+HLOCAL32 WINAPI LocalReAlloc32(
+                HLOCAL32 handle, /* [in] Handle of memory object */
+                DWORD size,      /* [in] New size of block */
+                UINT32 flags     /* [in] How to reallocate object */
+) {
     return (HLOCAL32)GlobalReAlloc32( (HGLOBAL32)handle, size, flags );
 }
 
@@ -1779,17 +1814,25 @@ UINT32 WINAPI LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
 
 /***********************************************************************
  *           LocalSize32   (KERNEL32.380)
+ * RETURNS
+ *	Size: Success
+ *	0: Failure
  */
-UINT32 WINAPI LocalSize32( HLOCAL32 handle )
-{
+UINT32 WINAPI LocalSize32(
+              HLOCAL32 handle /* [in] Handle of memory object */
+) {
     return GlobalSize32( (HGLOBAL32)handle );
 }
 
 
 /***********************************************************************
  *           LocalUnlock32   (KERNEL32.381)
+ * RETURNS
+ *	TRUE: Object is still locked
+ *	FALSE: Object is unlocked
  */
-BOOL32 WINAPI LocalUnlock32( HLOCAL32 handle )
-{
+BOOL32 WINAPI LocalUnlock32(
+              HLOCAL32 handle /* [in] Handle of memory object */
+) {
     return GlobalUnlock32( (HGLOBAL32)handle );
 }

@@ -30,6 +30,9 @@ LPMALLOC32 currentMalloc32=NULL;
 
 /***********************************************************************
  *           CoBuildVersion [COMPOBJ.1]
+ *
+ * RETURNS
+ *	Current built version, hiword is majornumber, loword is minornumber
  */
 DWORD WINAPI CoBuildVersion()
 {
@@ -39,7 +42,7 @@ DWORD WINAPI CoBuildVersion()
 
 /***********************************************************************
  *           CoInitialize	[COMPOBJ.2]
- * lpReserved is an IMalloc pointer in 16bit OLE.
+ * Set the win16 IMalloc used for memory management
  */
 HRESULT WINAPI CoInitialize16(
 	LPMALLOC16 lpReserved	/* [in] pointer to win16 malloc interface */
@@ -50,7 +53,7 @@ HRESULT WINAPI CoInitialize16(
 
 /***********************************************************************
  *           CoInitialize	(OLE32.26)
- * lpReserved is an IMalloc pointer in 32bit OLE.
+ * Set the win32 IMalloc used for memorymanagement
  */
 HRESULT WINAPI CoInitialize32(
 	LPMALLOC32 lpReserved	/* [in] pointer to win32 malloc interface */
@@ -61,6 +64,7 @@ HRESULT WINAPI CoInitialize32(
 
 /***********************************************************************
  *           CoUnitialize   [COMPOBJ.3]
+ * Don't know what it does.
  */
 void WINAPI CoUnitialize()
 {
@@ -69,6 +73,8 @@ void WINAPI CoUnitialize()
 
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
+ * RETURNS
+ *	The current win16 IMalloc
  */
 HRESULT WINAPI CoGetMalloc16(
 	DWORD dwMemContext,	/* [in] unknown */
@@ -82,6 +88,8 @@ HRESULT WINAPI CoGetMalloc16(
 
 /***********************************************************************
  *           CoGetMalloc    (OLE32.4]
+ * RETURNS
+ *	The current win32 IMalloc
  */
 HRESULT WINAPI CoGetMalloc32(
 	DWORD dwMemContext,	/* [in] unknown */
@@ -104,20 +112,31 @@ OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 
 /***********************************************************************
  *           IsEqualGUID [COMPOBJ.18]
+ * Compares two Unique Identifiers
+ * RETURNS
+ *	TRUE if equal
  */
-BOOL16 WINAPI IsEqualGUID(GUID* g1, GUID* g2)
-{
+BOOL16 WINAPI IsEqualGUID(
+	GUID* g1,	/* [in] unique id 1 */
+	GUID* g2	/* [in] unique id 2 */
+) {
     return !memcmp( g1, g2, sizeof(GUID) );
 }
 
 /***********************************************************************
  *           CLSIDFromString [COMPOBJ.20]
+ * Converts a unique identifier from it's string representation into 
+ * the GUID struct.
+ * RETURNS
+ *	the converted GUID
  */
 
 /* Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] */
 
-OLESTATUS WINAPI CLSIDFromString16(const LPCOLESTR16 idstr, CLSID *id)
-{
+OLESTATUS WINAPI CLSIDFromString16(
+	LPCOLESTR16 idstr,	/* [in] string representation of guid */
+	CLSID *id		/* [out] GUID converted from string */
+) {
   BYTE *s = (BYTE *) idstr;
   BYTE *p;
   int	i;
@@ -182,9 +201,15 @@ OLESTATUS WINAPI CLSIDFromString16(const LPCOLESTR16 idstr, CLSID *id)
 
 /***********************************************************************
  *           CLSIDFromString (OLE32.3)
+ * Converts a unique identifier from it's string representation into 
+ * the GUID struct.
+ * RETURNS
+ *	the converted GUID
  */
-OLESTATUS WINAPI CLSIDFromString32(const LPCOLESTR32 idstr, CLSID *id)
-{
+OLESTATUS WINAPI CLSIDFromString32(
+	LPCOLESTR32 idstr,	/* [in] string representation of GUID */
+	CLSID *id		/* [out] GUID represented by above string */
+) {
     LPOLESTR16      xid = HEAP_strdupWtoA(GetProcessHeap(),0,idstr);
     OLESTATUS       ret = CLSIDFromString16(xid,id);
 
@@ -193,10 +218,15 @@ OLESTATUS WINAPI CLSIDFromString32(const LPCOLESTR32 idstr, CLSID *id)
 }
 
 /***********************************************************************
- *           StringFromCLSID [COMPOBJ.19]
+ *           WINE_StringFromCLSID 				[internal]
+ * Converts a GUID into the respective string representation.
+ * RETURNS
+ *	the string representation and OLESTATUS
  */
-OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR idstr)
-{
+OLESTATUS WINAPI WINE_StringFromCLSID(
+	const CLSID *id,	/* [in] GUID to be converted */
+	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
+) {
   static const char *hex = "0123456789ABCDEF";
   char *s;
   int	i;
@@ -224,8 +254,18 @@ OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR idstr)
   return OLE_OK;
 }
 
-OLESTATUS WINAPI StringFromCLSID16(const CLSID *id, LPOLESTR16 *idstr)
-{
+/***********************************************************************
+ *           StringFromCLSID 	[COMPOBJ.19]
+ * Converts a GUID into the respective string representation.
+ * The target string is allocated using the OLE IMalloc.
+ * RETURNS
+ *	the string representation and OLESTATUS
+ */
+OLESTATUS WINAPI StringFromCLSID16(
+	const CLSID *id,	/* [in] the GUID to be converted */
+	LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
+
+) {
     LPMALLOC16	mllc;
     OLESTATUS	ret;
     DWORD	args[2];
@@ -254,8 +294,17 @@ OLESTATUS WINAPI StringFromCLSID16(const CLSID *id, LPOLESTR16 *idstr)
     return WINE_StringFromCLSID(id,PTR_SEG_TO_LIN(*idstr));
 }
 
-OLESTATUS WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32 *idstr)
-{
+/***********************************************************************
+ *           StringFromCLSID 	[OLE32.151]
+ * Converts a GUID into the respective string representation.
+ * The target string is allocated using the OLE IMalloc.
+ * RETURNS
+ *	the string representation and OLESTATUS
+ */
+OLESTATUS WINAPI StringFromCLSID32(
+	const CLSID *id,	/* [in] the GUID to be converted */
+	LPOLESTR32 *idstr	/* [out] a pointer to a to-be-allocated pointer pointing to the resulting string */
+) {
 	char            buf[80];
 	OLESTATUS       ret;
 	LPMALLOC32	mllc;
@@ -271,23 +320,50 @@ OLESTATUS WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32 *idstr)
 	return ret;
 }
 
-OLESTATUS WINAPI StringFromGUID2(
-	const CLSID *id, LPOLESTR16 idstr, INT16 max
-) {
-	char		buf[80];
-	OLESTATUS	ret = WINE_StringFromCLSID(id,buf);
+/***********************************************************************
+ *           StringFromGUID2 (OLE32.152)
+ *
+ * Converts a global unique identifier into a string of an API-
+ * specified fixed format.
+ *
+ * mortene@pvv.org 980318
+ */
+OLESTATUS WINAPI
+StringFromGUID2(const REFGUID *id, LPOLESTR32 *str, INT32 cmax)
+{
+  int chars_in_string = strlen("[DDDDDDDD-WWWW-WWWW-WWWW-WWWWDDDDDDDD]")+1;
+  DWORD dwtmp[2];
+  WORD wtmp[4];
 
-	if (!ret)
-		lstrcpyn32A(idstr,buf,max);
-	return ret;
+  if(cmax >= chars_in_string) {
+    dwtmp[0] = *(DWORD *)id;
+    wtmp[0] = *(WORD *)(id + sizeof(DWORD));
+    wtmp[1] = *(WORD *)(id + sizeof(DWORD) + sizeof(WORD));
+    wtmp[2] = *(WORD *)(id + sizeof(DWORD) + 2*sizeof(WORD));
+    wtmp[3] = *(WORD *)(id + sizeof(DWORD) + 3*sizeof(WORD));
+    dwtmp[1] = *(DWORD *)(id + sizeof(DWORD) + 4*sizeof(WORD));
+    sprintf(*(char **)str, "[%08lx-%04x-%04x-%04x-%04x%08lx]",
+	    dwtmp[0], wtmp[0], wtmp[1], wtmp[2], wtmp[3], dwtmp[1]);
+    TRACE(ole, "'%s'\n", *str);
+    return chars_in_string;
+  }
+  else {
+    WARN(ole, "Too little space in the string: need %d chars, got: %d\n",
+	 chars_in_string, cmax);
+    return 0;
+  }
 }
 
 /***********************************************************************
  *           CLSIDFromProgID [COMPOBJ.61]
+ * Converts a program id into the respective GUID. (By using a registry lookup)
+ * RETURNS
+ *	riid associated with the progid
  */
-
-OLESTATUS WINAPI CLSIDFromProgID16(LPCSTR progid,LPCLSID riid)
-{
+OLESTATUS WINAPI CLSIDFromProgID16(
+	LPCOLESTR16 progid,	/* [in] program id as found in registry */
+	LPCLSID riid		/* [out] associated CLSID */
+) {
 	char	*buf,buf2[80];
 	DWORD	buf2len;
 	HRESULT	err;
@@ -311,9 +387,14 @@ OLESTATUS WINAPI CLSIDFromProgID16(LPCSTR progid,LPCLSID riid)
 
 /***********************************************************************
  *           CLSIDFromProgID (OLE32.2)
+ * Converts a program id into the respective GUID. (By using a registry lookup)
+ * RETURNS
+ *	riid associated with the progid
  */
-OLESTATUS WINAPI CLSIDFromProgID32(LPCOLESTR32 progid,LPCLSID riid)
-{
+OLESTATUS WINAPI CLSIDFromProgID32(
+	LPCOLESTR32 progid,	/* [in] program id as found in registry */
+	LPCLSID riid		/* [out] associated CLSID */
+) {
 	LPOLESTR16 pid = HEAP_strdupWtoA(GetProcessHeap(),0,progid);
 	OLESTATUS       ret = CLSIDFromProgID16(pid,riid);
 
@@ -321,11 +402,17 @@ OLESTATUS WINAPI CLSIDFromProgID32(LPCOLESTR32 progid,LPCLSID riid)
 	return ret;
 }
 
+/***********************************************************************
+ *           LookupETask (COMPOBJ.94)
+ */
 OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
 	fprintf(stderr,"LookupETask(%p,%p),stub!\n",p1,p2);
 	return 0;
 }
 
+/***********************************************************************
+ *           LookupETask (COMPOBJ.201)
+ */
 OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 	fprintf(stderr,"CallObjectInWOW(%p,%p),stub!\n",p1,p2);
 	return 0;
@@ -333,16 +420,20 @@ OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 
 /***********************************************************************
  *		CoRegisterClassObject [COMPOBJ.5]
+ * Don't know where it registers it ...
  */
 OLESTATUS WINAPI CoRegisterClassObject16(
-	REFCLSID rclsid, LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,
+	REFCLSID rclsid,
+	LPUNKNOWN pUnk,
+	DWORD dwClsContext,
+	DWORD flags,
 	LPDWORD lpdwRegister
 ) {
 	char	buf[80];
 
 	WINE_StringFromCLSID(rclsid,buf);
 
-	fprintf(stderr,"CoRegisterClassObject(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
+	FIXME(ole,"(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
 		buf,pUnk,dwClsContext,flags,lpdwRegister
 	);
 	return 0;
@@ -350,16 +441,20 @@ OLESTATUS WINAPI CoRegisterClassObject16(
 
 /***********************************************************************
  *		CoRegisterClassObject (OLE32.36)
+ * Don't know where it registers it ...
  */
 OLESTATUS WINAPI CoRegisterClassObject32(
-	REFCLSID rclsid, LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,
+	REFCLSID rclsid,
+	LPUNKNOWN pUnk,
+	DWORD dwClsContext,
+	DWORD flags,
 	LPDWORD lpdwRegister
 ) {
     char buf[80];
 
     WINE_StringFromCLSID(rclsid,buf);
 
-    fprintf(stderr,"CoRegisterClassObject(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
+    FIXME(ole,"(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
 	    buf,pUnk,dwClsContext,flags,lpdwRegister
     );
     return 0;
@@ -369,21 +464,35 @@ OLESTATUS WINAPI CoRegisterClassObject32(
  *		CoRegisterMessageFilter [COMPOBJ.27]
  */
 OLESTATUS WINAPI CoRegisterMessageFilter16(
-	LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter
+	LPMESSAGEFILTER lpMessageFilter,
+	LPMESSAGEFILTER *lplpMessageFilter
 ) {
-	fprintf(stderr,"CoRegisterMessageFilter(%p,%p),stub!\n",
-		lpMessageFilter,lplpMessageFilter
-	);
+	FIXME(ole,"(%p,%p),stub!\n",lpMessageFilter,lplpMessageFilter);
 	return 0;
 }
 
 /***********************************************************************
  *           CoCreateInstance [COMPOBJ.13, OLE32.7]
  */
-HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
-				DWORD dwClsContext, REFIID riid, LPVOID *ppv)
-{
-	fprintf(stderr, "CoCreateInstance(): stub !\n");
+HRESULT WINAPI CoCreateInstance(
+	REFCLSID rclsid,
+	LPUNKNOWN pUnkOuter,
+	DWORD dwClsContext,
+	REFIID riid,
+	LPVOID *ppv
+) {
+	char buf[80],xbuf[80];
+
+	if (rclsid)
+		WINE_StringFromCLSID(rclsid,buf);
+	else
+		sprintf(buf,"<rclsid-0x%08lx>",(DWORD)rclsid);
+	if (riid)
+		WINE_StringFromCLSID(riid,xbuf);
+	else
+		sprintf(xbuf,"<riid-0x%08lx>",(DWORD)riid);
+
+	FIXME(ole,"(%s,%p,0x%08lx,%s,%p): stub !\n",buf,pUnkOuter,dwClsContext,xbuf,ppv);
 	*ppv = NULL;
 	return S_OK;
 }
@@ -393,16 +502,17 @@ HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
  */
 void WINAPI CoFreeUnusedLibraries()
 {
-	fprintf(stderr, "CoFreeUnusedLibraries(): stub !\n");
+	FIXME(ole,"(), stub !\n");
 }
 
 /***********************************************************************
  *           CoFileTimeNow [COMPOBJ.82, OLE32.10]
- *
- *	stores the current system time in lpFileTime
+ * RETURNS
+ *	the current system time in lpFileTime
  */
-HRESULT WINAPI CoFileTimeNow(FILETIME *lpFileTime)
-{
+HRESULT WINAPI CoFileTimeNow(
+	FILETIME *lpFileTime	/* [out] the current time */
+) {
 	DOSFS_UnixTimeToFileTime(time(NULL), lpFileTime, 0);
 	return S_OK;
 }
@@ -410,7 +520,7 @@ HRESULT WINAPI CoFileTimeNow(FILETIME *lpFileTime)
 /***********************************************************************
  *           CoTaskMemAlloc (OLE32.43)
  * RETURNS
- *  pointer to newly allocated block
+ * 	pointer to newly allocated block
  */
 LPVOID WINAPI CoTaskMemAlloc(
 	ULONG size	/* [in] size of memoryblock to be allocated */

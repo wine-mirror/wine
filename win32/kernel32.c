@@ -50,20 +50,27 @@ static void _write_ftprolog(LPBYTE thunk,DWORD thunkstart) {
 /***********************************************************************
  *			FT_PrologPrime			(KERNEL32.89)
  */
-void WINAPI FT_PrologPrime(DWORD startind,LPBYTE thunk) {
+void WINAPI FT_PrologPrime(
+	DWORD startind,		/* [in] start of thunktable */
+	LPBYTE thunk		/* [in] thunk codestart */
+) {
 	_write_ftprolog(thunk,*(DWORD*)(startind+thunk));
 }
 
 /***********************************************************************
+ *	_write_qtthunk					(internal)
  * Generates a QT_Thunk style call.
- *	
+ *
  *  33C9                    xor ecx, ecx
  *  8A4DFC                  mov cl , [ebp-04]
  *  8B148Dxxxxxxxx          mov edx, [4*ecx + (EAX+EDX)]
  *  B8yyyyyyyy              mov eax, QT_Thunk
  *  FFE0                    jmp eax
  */
-static void _write_qtthunk(LPBYTE start,DWORD thunkstart) {
+static void _write_qtthunk(
+	LPBYTE start,		/* [in] start of QT_Thunk stub */
+	DWORD thunkstart	/* [in] start of thunk (for index lookup) */
+) {
 	LPBYTE	x;
 
 	x	= start;
@@ -77,10 +84,6 @@ static void _write_qtthunk(LPBYTE start,DWORD thunkstart) {
 	/* should fill the rest of the 32 bytes with 0xCC */
 }
 
-/***********************************************************************
- *		ThunkConnect32		(KERNEL32)
- * Connects a 32bit and a 16bit thunkbuffer.
- */
 struct thunkstruct
 {
 	char	magic[4];
@@ -95,10 +98,18 @@ struct thunkstruct
 	DWORD	x20;
 };
 
-UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
-                              LPSTR module16, LPSTR module32, HMODULE32 hmod32,
-                              DWORD dllinitarg1 )
-{
+/***********************************************************************
+ *		ThunkConnect32		(KERNEL32)
+ * Connects a 32bit and a 16bit thunkbuffer.
+ */
+UINT32 WINAPI ThunkConnect32( 
+	struct thunkstruct *ths,	/* [in/out] thunkbuffer */
+	LPCSTR thunkfun16,		/* [in] win16 thunkfunction */
+	LPCSTR module16,		/* [in] name of win16 dll */
+	LPCSTR module32,		/* [in] name of win32 dll */
+	HMODULE32 hmod32,		/* [in] hmodule of win32 dll (used?) */
+	DWORD dllinitarg1		/* [in] initialisation argument */
+) {
 	HINSTANCE16	hmm;
 	SEGPTR		thkbuf;
 	struct	thunkstruct	*ths16;
@@ -183,9 +194,14 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 
 /**********************************************************************
  *           WOWCallback16 (KERNEL32.62)(WOW32.2)
+ * Calls a win16 function with a single DWORD argument.
+ * RETURNS
+ *	the return value
  */
-DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
-{
+DWORD WINAPI WOWCallback16(
+	FARPROC16 fproc,	/* [in] win16 function to call */
+	DWORD arg		/* [in] single DWORD argument to function */
+) {
 	DWORD	ret;
 	TRACE(thunk,"(%p,0x%08lx)...\n",fproc,arg);
 	ret =  Callbacks->CallWOWCallbackProc(fproc,arg);
@@ -195,10 +211,16 @@ DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 
 /**********************************************************************
  *           WOWCallback16Ex (KERNEL32.55)(WOW32.3)
+ * Calls a function in 16bit code.
+ * RETURNS
+ *	TRUE for success
  */
 BOOL32 WINAPI WOWCallback16Ex(
-	FARPROC16 vpfn16,DWORD dwFlags,DWORD cbArgs,LPVOID pArgs,
-	LPDWORD pdwRetCode
+	FARPROC16 vpfn16,	/* [in] win16 function to call */
+	DWORD dwFlags,		/* [in] flags */
+	DWORD cbArgs,		/* [in] nr of arguments */
+	LPVOID pArgs,		/* [in] pointer to arguments (LPDWORD) */
+	LPDWORD pdwRetCode	/* [out] return value of win16 function */
 ) {
 	return Callbacks->CallWOWCallback16Ex(vpfn16,dwFlags,cbArgs,pArgs,pdwRetCode);
 }
@@ -229,10 +251,16 @@ LPVOID WINAPI _KERNEL32_52()
  * The pointer ptr is written into the first DWORD of 'thunk'.
  * (probably correct implemented)
  * [ok probably]
+ * RETURNS
+ *	segmented pointer to thunk?
  */
-DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
-                           LPCSTR dll16,LPCSTR dll32)
-{
+DWORD WINAPI _KERNEL32_43(
+	LPDWORD thunk,	/* [in] win32 thunk */
+	LPCSTR thkbuf,	/* [in] thkbuffer name in win16 dll */
+	DWORD len,	/* [in] thkbuffer length */
+	LPCSTR dll16,	/* [in] name of win16 dll */
+	LPCSTR dll32	/* [in] name of win32 dll (FIXME: not used?) */
+) {
 	HINSTANCE16	hmod;
 	LPDWORD		addr;
 	SEGPTR		segaddr;
@@ -270,7 +298,7 @@ DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
  * uses 0x66 lret, and that we have to pass CX in DI.
  * (there seems to be some kind of BL/BX return magic too...)
  *
- * [doesn't crash anymore]
+ * [crashes]
  */
 VOID WINAPI _KERNEL32_45(CONTEXT *context)
 {
@@ -303,7 +331,7 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 /***********************************************************************
  * 		_KERNEL32_40 	(KERNEL32.40)
  * YET Another 32->16 thunk, the difference to the others is still mysterious
- * target address is EDX
+ * Target address is in EDX.
  *
  * [crashes]
  */
@@ -370,11 +398,16 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
  *	04: SEGPTR	ptr		? where does it point to?
  * The segpointer ptr is written into the first DWORD of 'thunk'.
  * [ok probably]
+ * RETURNS
+ *	unclear, pointer to win16 thkbuffer?
  */
-
-LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
-                           LPCSTR dll32)
-{
+LPVOID WINAPI _KERNEL32_41(
+	LPBYTE thunk,	/* [in] win32 thunk */
+	LPCSTR thkbuf,	/* [in] thkbuffer name in win16 dll */
+	DWORD len,	/* [in] length of thkbuffer */
+	LPCSTR dll16,	/* [in] name of win16 dll */
+	LPCSTR dll32	/* [in] name of win32 dll */
+) {
 	HMODULE32	hkrnl32 = GetModuleHandle32A("KERNEL32");
 	HMODULE16	hmod;
 	LPDWORD		addr,addr2;
@@ -388,18 +421,18 @@ LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
 	
 	hmod = LoadLibrary16(dll16);
 	if (hmod<32) {
-		WARN(thunk,"failed to load 16bit DLL %s, error %d\n",
+		ERR(thunk,"failed to load 16bit DLL %s, error %d\n",
 			     dll16,hmod);
 		return NULL;
 	}
 	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
 	if (!segaddr) {
-		WARN(thunk,"no %s exported from %s!\n",thkbuf,dll16);
+		ERR(thunk,"no %s exported from %s!\n",thkbuf,dll16);
 		return NULL;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
-		WARN(thunk,"thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
+		ERR(thunk,"thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
 		return NULL;
 	}
 	addr2 = PTR_SEG_TO_LIN(addr[1]);
@@ -440,26 +473,30 @@ VOID WINAPI _KERNEL32_90(CONTEXT *context)
  *	04: SEGPTR	address for thunkbuffer pointer
  * [ok probably]
  */
-VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
-                         LPSTR dll32)
-{
+VOID WINAPI _KERNEL32_46(
+	LPBYTE thunk,		/* [in] start of thunkbuffer */
+	LPCSTR thkbuf,		/* [in] name/ordinal of thunkbuffer in win16 dll */
+	DWORD len,		/* [in] length of thunkbuffer */
+	LPCSTR dll16,		/* [in] name of win16 dll containing the thkbuf */
+	LPCSTR dll32		/* [in] win32 dll. FIXME: strange, unused */
+) {
 	LPDWORD		addr;
 	HMODULE16	hmod;
 	SEGPTR		segaddr;
 
 	hmod = LoadLibrary16(dll16);
 	if (hmod < 32) {
-		WARN(thunk,"couldn't load %s, error %d\n",dll16,hmod);
+		ERR(thunk,"couldn't load %s, error %d\n",dll16,hmod);
 		return;
 	}
 	segaddr = (SEGPTR)WIN32_GetProcAddress16(hmod,thkbuf);
 	if (!segaddr) {
-		WARN(thunk,"haven't found %s in %s!\n",thkbuf,dll16);
+		ERR(thunk,"haven't found %s in %s!\n",thkbuf,dll16);
 		return;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
-	        WARN(thunk,"length of thkbuf differs from expected length! "
+	        ERR(thunk,"length of thkbuf differs from expected length! "
 			     "(%ld vs %ld)\n",addr[0],len);
 		return;
 	}
@@ -475,6 +512,8 @@ VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
  * Check if thunking is initialized (ss selector set up etc.)
  * We do that differently, so just return TRUE.
  * [ok]
+ * RETURNS
+ *	TRUE for success.
  */
 BOOL32 WINAPI _KERNEL32_87()
 {
@@ -490,8 +529,12 @@ BOOL32 WINAPI _KERNEL32_87()
  * And YES, I've seen nr=48 (somewhere in the Win95 32<->16 OLE coupling)
  * [ok]
  */
-DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
-{
+DWORD WINAPIV _KERNEL32_88(
+	DWORD nr,	/* [in] number of argument bytes */
+	DWORD flags,	/* [in] FIXME: flags ? */
+	FARPROC32 fun,	/* [in] function to call */
+	...		/* [in/out] arguments */
+) {
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
@@ -578,9 +621,14 @@ WORD WINAPI _KERNEL_619(WORD x,DWORD y,DWORD z)
  * returns the startaddress of this thunk.
  *
  * Note, that they look very similair to the ones allocates by THUNK_Alloc.
+ * RETURNS
+ *	segmented pointer to the start of the thunk
  */
 DWORD WINAPI
-AllocSLCallback(DWORD finalizer,DWORD callback) {
+AllocSLCallback(
+	DWORD finalizer,	/* [in] finalizer function */
+	DWORD callback		/* [in] callback function */
+) {
 	LPBYTE	x,thunk = HeapAlloc( GetProcessHeap(), 0, 32 );
 	WORD	sel;
 
@@ -596,8 +644,14 @@ AllocSLCallback(DWORD finalizer,DWORD callback) {
 	return (sel<<16)|0;
 }
 
+/**********************************************************************
+ * 		FreeSLCallback		(KERNEL32.274)
+ * Frees the specified 16->32 callback
+ */
 void WINAPI
-FreeSLCallback(DWORD x) {
+FreeSLCallback(
+	DWORD x	/* [in] 16 bit callback (segmented pointer?) */
+) {
 	fprintf(stderr,"FreeSLCallback(0x%08lx)\n",x);
 }
 
@@ -605,6 +659,8 @@ FreeSLCallback(DWORD x) {
  * 		KERNEL_358		(KERNEL)
  * Allocates a code segment which starts at the address passed in x. limit
  * 0xfffff, and returns the pointer to the start.
+ * RETURNS
+ *	a segmented pointer 
  */
 DWORD WINAPI
 _KERNEL_358(DWORD x) {
@@ -624,7 +680,9 @@ _KERNEL_358(DWORD x) {
  * been allocated by _KERNEL_358).
  */
 VOID WINAPI
-_KERNEL_359(DWORD x) {
+_KERNEL_359(
+	DWORD x	/* [in] segmented pointer? */
+) {
 	fprintf(stderr,"_KERNEL_359(0x%08lx),stub\n",x);
 	if ((HIWORD(x) & 7)!=7)
 		return;
@@ -633,8 +691,9 @@ _KERNEL_359(DWORD x) {
 }
 
 /**********************************************************************
- * 		KERNEL_471		(KERNEL)
- * Seems to return the uncrypted current process pointer. [Not 100% sure].
+ * 		KERNEL_471		(KERNEL.471)
+ * RETURNS
+ * 	Seems to return the uncrypted current process pointer. [Not 100% sure].
  */
 LPVOID WINAPI
 _KERNEL_471() {
@@ -642,8 +701,10 @@ _KERNEL_471() {
 }
 
 /**********************************************************************
- * 		KERNEL_472		(KERNEL)
+ * 		KERNEL_472		(KERNEL.472)
  * something like GetCurrenthInstance.
+ * RETURNS
+ *	the hInstance
  */
 VOID WINAPI
 _KERNEL_472(CONTEXT *context) {
@@ -660,17 +721,27 @@ _KERNEL_472(CONTEXT *context) {
 
 /**********************************************************************
  * 		KERNEL_431		(KERNEL.431)
- * IsPeFile
+ *		IsPeFormat		(W32SYS.2)
+ * Checks the passed filename if it is a PE format executeable
+ * RETURNS
+ *  TRUE, if it is.
+ *  FALSE if not.
  */
-BOOL16 WINAPI KERNEL_431(LPSTR fn,WORD x) {
+BOOL16 WINAPI IsPeFormat(
+	LPSTR	fn,	/* [in] filename to executeable */
+	HFILE16 hf16	/* [in] open file, if filename is NULL */
+) {
 	IMAGE_DOS_HEADER	mzh;
-	HFILE32			hf;
+	HFILE32			hf=hf16;
 	OFSTRUCT		ofs;
 	DWORD			xmagic;
 
-	hf = OpenFile32(fn,&ofs,OF_READ);
-	if (hf==HFILE_ERROR32)
-		return FALSE;
+	if (fn) {
+		hf = OpenFile32(fn,&ofs,OF_READ);
+		if (hf==HFILE_ERROR32)
+			return FALSE;
+	}
+	_llseek32(hf,0,SEEK_SET);
 	if (sizeof(mzh)!=_lread32(hf,&mzh,sizeof(mzh))) {
 		_lclose32(hf);
 		return FALSE;
@@ -689,7 +760,61 @@ BOOL16 WINAPI KERNEL_431(LPSTR fn,WORD x) {
 	return (xmagic == IMAGE_NT_SIGNATURE);
 }
 
-HANDLE32 WINAPI WOWHandle32(WORD handle,WOW_HANDLE_TYPE type) {
+/***********************************************************************
+ *           WOWHandle32			(KERNEL32.57)(WOW32.16)
+ * Converts a win16 handle of type into the respective win32 handle.
+ * We currently just return this handle, since most handles are the same
+ * for win16 and win32.
+ * RETURNS
+ *	The new handle
+ */
+HANDLE32 WINAPI WOWHandle32(
+	WORD handle,		/* [in] win16 handle */
+	WOW_HANDLE_TYPE type	/* [in] handle type */
+) {
 	fprintf(stderr,"WOWHandle32(0x%04x,%d)\n",handle,type);
 	return (HANDLE32)handle;
 }
+
+/***********************************************************************
+ *           FUNC004				(KERNEL.631)
+ * A 16->32 thunk setup function.
+ * Gets called from a thunkbuffer (value of EAX). It overwrites the start
+ * with a jmp to a kernel32 function. The kernel32 function gets passed EDX.
+ * (and possibly CX).
+ */
+void WINAPI FUNC004(
+	CONTEXT *context	/* [in/out] register context from 1632-relay */
+) {
+
+	FIXME(reg,",STUB (edx is 0x%08lx, eax is 0x%08lx,edx[0x10] is 0x%08lx)!\n",
+		EDX_reg(context),
+		EAX_reg(context),
+		((DWORD*)PTR_SEG_TO_LIN(EDX_reg(context)))[0x10/4]
+	);
+
+#if 0
+{
+	LPBYTE	x,target = (LPBYTE)PTR_SEG_TO_LIN(EAX_reg(context));
+	WORD	ds,cs;
+
+	GET_DS(ds);
+	GET_CS(cs);
+/* Won't work anyway since we don't know the function called in KERNEL32 -Marcus*/
+	x = target;
+	*x++= 0xb8; *(WORD*)x= ds;x+=2;		/* mov ax,KERNEL32_DS */
+	*x++= 0x8e; *x++ = 0xc0; 		/* mov es,ax */
+	*x++= 0x66; *x++ = 0xba; *(DWORD*)x=EDX_reg(context);x+=4;
+						/* mov edx, $EDX */
+	*x++= 0x66; *x++ = 0xea;	/* jmp KERNEL32_CS:kernel32fun */
+		*(DWORD*)x=0;x+=4;/* FIXME: _what_ function does it call? */
+		*(WORD*)x=cs;x+=2;
+					
+
+	IP_reg(context) = LOWORD(EAX_reg(context));
+	CS_reg(context) = HIWORD(EAX_reg(context));
+}
+#endif
+	return;
+}
+

@@ -24,7 +24,9 @@
 #include "keyboard.h"
 #include "message.h"
 #include "debug.h"
+#include "debugtools.h"
 #include "struct32.h"
+#include "winerror.h"
 
 BOOL32 MouseButtonsStates[3];
 BOOL32 AsyncMouseButtonsStates[3];
@@ -611,14 +613,6 @@ WORD WINAPI GetAsyncKeyState16(INT16 nKey)
     return GetAsyncKeyState32(nKey);
 }
 
-/*********************************************************************
- *                    CreateAcceleratorTable   (USER.64)
- */
-HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries) {
-   fprintf(stderr, "CreateAcceleratorTable32A Stub\n");
-   return NULL;
-}
-
 /**********************************************************************
  *			TranslateAccelerator 	[USER.178][USER32.551..]
  *
@@ -745,20 +739,26 @@ INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
     LPACCEL32	lpAccelTbl = (LPACCEL32)LockResource32(hAccel);
     int 	i;
     
-    if (hAccel == 0 || msg == NULL) return 0;
-    if (msg->message != WM_KEYDOWN &&
-    	msg->message != WM_KEYUP &&
-	msg->message != WM_SYSKEYDOWN &&
-	msg->message != WM_SYSKEYUP &&
-    	msg->message != WM_CHAR) return 0;
+    if (hAccel == 0 || msg == NULL ||
+	(msg->message != WM_KEYDOWN &&
+	 msg->message != WM_KEYUP &&
+	 msg->message != WM_SYSKEYDOWN &&
+	 msg->message != WM_SYSKEYUP &&
+	 msg->message != WM_CHAR)) {
+      WARN(accel, "erraneous input parameters\n");
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
 
-    TRACE(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
-msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
+    TRACE(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,"
+	  "msg->hwnd=%04x, msg->message=%04x\n",
+	  hAccel,hWnd,msg->hwnd,msg->message);
 
     for (i = 0; lpAccelTbl[i].key ; i++)
     	if (KBD_translate_accelerator(hWnd,msg,lpAccelTbl[i].fVirt,
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
+    WARN(accel, "couldn't translate accelerator key");
     return 0;
 }
 	
@@ -768,12 +768,16 @@ INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
     int 	i;
     MSG32	msg32;
     
-    if (hAccel == 0 || msg == NULL) return 0;
-    if (msg->message != WM_KEYDOWN &&
-    	msg->message != WM_KEYUP &&
-	msg->message != WM_SYSKEYDOWN &&
-	msg->message != WM_SYSKEYUP &&
-    	msg->message != WM_CHAR) return 0;
+    if (hAccel == 0 || msg == NULL ||
+	(msg->message != WM_KEYDOWN &&
+	 msg->message != WM_KEYUP &&
+	 msg->message != WM_SYSKEYDOWN &&
+	 msg->message != WM_SYSKEYUP &&
+	 msg->message != WM_CHAR)) {
+      WARN(accel, "erraneous input parameters\n");
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
 
     TRACE(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
 msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
@@ -784,6 +788,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
     	if (KBD_translate_accelerator(hWnd,&msg32,lpAccelTbl[i].fVirt,
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
+    WARN(accel, "couldn't translate accelerator key");
     return 0;
 }
 

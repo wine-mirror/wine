@@ -12,6 +12,8 @@
 #include "win.h"
 #include "resource.h"
 #include "task.h"
+#include "debug.h"
+#include "debugstr.h"
 
 /**************************************************************************
  *           MSGBOX_DlgProc
@@ -168,6 +170,9 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
       EndDialog32(hwnd, wParam);
       break;
     }
+   default:
+     /* Ok. Ignore all the other messages */
+     TRACE (dialog, "Message number %i is being ignored.\n", message);
     break;
   }
   return 0;
@@ -191,7 +196,8 @@ INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
     MSGBOXPARAMS32A mbox;
 
     if (!text) text="<WINE-NULL>";
-    if (!title) title="<WINE-NULL>";
+    if (!title)
+      title="Error";
     mbox.lpszCaption = title;
     mbox.lpszText  = text;
     mbox.dwStyle  = type;

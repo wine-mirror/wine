@@ -6,7 +6,10 @@ long WINAPI stub_GDI_381(HDC16 hdc, SEGPTR proc) { fprintf(stderr, "Warning: GDI
 long WINAPI stub_GDI_382(void) { fprintf(stderr, "Warning: GDI_382:ABORTPROC unimplemented stub\n"); return 1; }
 long WINAPI stub_GDI_530(void) { fprintf(stderr, "Warning: GDI_530: unimplemented stub\n"); return 0; }
 long WINAPI stub_GDI_531(void) { fprintf(stderr, "Warning: GDI_531: unimplemented stub\n"); return 0; }
-long WINAPI stub_GDI_532(void) { fprintf(stderr, "Warning: GDI_532: unimplemented stub\n"); return 0; }
+long WINAPI stub_GDI_532(LPINT16 buffer, INT16 xx) { 
+      fprintf(stderr, "STUB GDI_532(%p, %hd)\n",buffer,xx); 
+      return 0; 
+}
 long WINAPI stub_GDI_536(void) { fprintf(stderr, "Warning: GDI_536: unimplemented stub\n"); return 0; }
 long WINAPI stub_GDI_538(void) { fprintf(stderr, "Warning: GDI_538: unimplemented stub\n"); return 0; }
 long WINAPI stub_GDI_540(void) { fprintf(stderr, "Warning: GDI_540: unimplemented stub\n"); return 0; }

@@ -26,7 +26,7 @@ BOOL32 WINAPI UTRegister(HMODULE32 hModule,
                       /*FARPROC*/ LPVOID pfnUT32CallBack,
                       LPVOID lpBuff)
 {
-    fprintf(stdnimp, "UTRegister Stub called!\n");
+    fprintf(stderr, "UTRegister(%#x,...): stub!\n",hModule);
     return TRUE;
 }
 
@@ -35,7 +35,7 @@ BOOL32 WINAPI UTRegister(HMODULE32 hModule,
  */
 BOOL32 WINAPI UTUnRegister(HMODULE32 hModule)
 {
-    fprintf(stdnimp, "UTUnRegister Stub called!\n");
+    fprintf(stderr, "UTUnRegister(%#x: stub!\n", hModule);
     return TRUE;
 }
 
@@ -54,14 +54,13 @@ BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
 }
 
 HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
-	fprintf(stderr,"FindFirstChangeNotification(%s,%d,%08lx),stub\n",
-		lpPathName,bWatchSubtree,dwNotifyFilter
-	);
+	FIXME(file,"(%s,%d,%08lx): stub\n",
+	      lpPathName,bWatchSubtree,dwNotifyFilter);
 	return 0xcafebabe;
 }
 
 BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
-	fprintf(stderr,"FindNextChangeNotification(%08x),stub!\n",fcnhandle);
+	FIXME(file,"(%08x): stub!\n",fcnhandle);
 	return FALSE;
 }
 
@@ -85,7 +84,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 			      LPOVERLAPPED lpoPverlapped)
 {
 
-        fprintf(stdnimp, "DeviceIoControl Stub called!\n");
+        FIXME(comm, "(...): stub!\n");
 	/* FIXME: Set appropriate error */
 	return FALSE;
 
@@ -95,6 +94,40 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
  *		FlushInstructionCache (KERNEL32.261)
  */
 BOOL32 WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
-	fprintf(stderr,"FlushInstructionCache(0x%08lx,0x%08lx,0x%08lx)\n",x,y,z);
+	FIXME(debug,"(0x%08lx,0x%08lx,0x%08lx): stub\n",x,y,z);
 	return TRUE;
+}
+
+/***********************************************************************
+ *           CreateNamedPipeA   (KERNEL32.168)
+ */
+HANDLE32 WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
+				  DWORD dwPipeMode, DWORD nMaxInstances,
+				  DWORD nOutBufferSize, DWORD nInBufferSize,
+				  DWORD nDafaultTimeOut,
+				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+  FIXME (win32, "CreateNamedPipeA: stub\n");
+  /* if (nMaxInstances > PIPE_UNLIMITED_INSTANCES) {
+    SetLastError (ERROR_INVALID_PARAMETER);
+    return INVALID_HANDLE_VALUE;
+  } */
+
+  SetLastError (ERROR_UNKNOWN);
+  return INVALID_HANDLE_VALUE32;
+}
+
+/***********************************************************************
+ *           CreateNamedPipeW   (KERNEL32.169)
+ */
+HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
+				  DWORD dwPipeMode, DWORD nMaxInstances,
+				  DWORD nOutBufferSize, DWORD nInBufferSize,
+				  DWORD nDafaultTimeOut,
+				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+  FIXME (win32, "CreateNamedPipeW: stub\n");
+
+  SetLastError (ERROR_UNKNOWN);
+  return INVALID_HANDLE_VALUE32;
 }

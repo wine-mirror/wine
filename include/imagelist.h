@@ -9,20 +9,24 @@
  
 struct _IMAGELIST
 {
-    HANDLE32  hHeap;
     HBITMAP32 hbmImage;
     HBITMAP32 hbmMask;
+    HBRUSH32  hbrushBlend25;
+    HBRUSH32  hbrushBlend50;
     COLORREF  clrBk;
+    INT32     cInitial;
     INT32     cGrow;
     INT32     cMaxImage;
     INT32     cCurImage;
     INT32     cx;
     INT32     cy;
     UINT32    flags;
-    INT32     nOvlIdx[4];
+    UINT32    uBitsPixel;
+    INT32     nOvlIdx[15];
 };
  
 typedef struct _IMAGELIST *HIMAGELIST;
  
  
 #endif  /* __WINE_IMAGELIST_H */
+

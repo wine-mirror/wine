@@ -157,8 +157,8 @@ type	win32
 165 stub CreateMailslotW
 166 stdcall CreateMutexA(ptr long str) CreateMutex32A
 167 stdcall CreateMutexW(ptr long wstr) CreateMutex32W
-168 stub CreateNamedPipeA
-169 stub CreateNamedPipeW
+168 stdcall CreateNamedPipeA(str long long long long long long ptr) CreateNamedPipeA
+169 stdcall CreateNamedPipeW(wstr long long long long long long ptr) CreateNamedPipeW
 170 stub CreatePipe
 171 stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) CreateProcess32A
 172 stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) CreateProcess32W

@@ -81,11 +81,11 @@ void debug_handles()
     for (i = globalArenaSize-1 ; i>=0 ; i--) {
 	if (pGlobalArena[i].size!=0 && (pGlobalArena[i].handle & 0x8000)){
 	    printed=1;
-	    printf("0x%08x, ",pGlobalArena[i].handle);
+	    DUMP("0x%08x, ",pGlobalArena[i].handle);
 	}
     }
     if (printed)
-	printf("\n");
+	DUMP("\n");
 }
 
 
@@ -271,9 +271,14 @@ WORD DDE_GlobalHandleToSel( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalAlloc16   (KERNEL.15)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HGLOBAL16 WINAPI GlobalAlloc16( UINT16 flags, DWORD size )
-{
+HGLOBAL16 WINAPI GlobalAlloc16(
+                 UINT16 flags, /* [in] Object allocation attributes */
+                 DWORD size    /* [in] Number of bytes to allocate */
+) {
     HANDLE16 owner = GetCurrentPDB();
 
     if (flags & GMEM_DDESHARE)
@@ -284,9 +289,15 @@ HGLOBAL16 WINAPI GlobalAlloc16( UINT16 flags, DWORD size )
 
 /***********************************************************************
  *           GlobalReAlloc16   (KERNEL.16)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
-{
+HGLOBAL16 WINAPI GlobalReAlloc16(
+                 HGLOBAL16 handle, /* [in] Handle of global memory object */
+                 DWORD size,       /* [in] New size of block */
+                 UINT16 flags      /* [in] How to reallocate object */
+) {
     WORD selcount;
     DWORD oldsize;
     void *ptr;
@@ -300,14 +311,13 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
 #ifdef CONFIG_IPC
     if (flags & GMEM_DDESHARE || is_dde_handle(handle))
     {
-	fprintf(stdnimp,
-               "GlobalReAlloc16: shared memory reallocating unimplemented\n"); 
+	FIXME(global, "shared memory reallocating unimplemented\n"); 
 	return 0;
     }
 #endif  /* CONFIG_IPC */
 
     if (!VALID_HANDLE(handle)) {
-    	fprintf(stderr," Invalid handle 0x%04x passed to GlobalReAlloc16!\n",handle);
+    	WARN(global, "Invalid handle 0x%04x!\n", handle);
     	return 0;
     }
     pArena = GET_ARENA_PTR( handle );
@@ -398,9 +408,13 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
 
 /***********************************************************************
  *           GlobalFree16   (KERNEL.17)
+ * RETURNS
+ *	NULL: Success
+ *	Handle: Failure
  */
-HGLOBAL16 WINAPI GlobalFree16( HGLOBAL16 handle )
-{
+HGLOBAL16 WINAPI GlobalFree16(
+                 HGLOBAL16 handle /* [in] Handle of global memory object */
+) {
     void *ptr;
 
     if (!VALID_HANDLE(handle)) {
@@ -454,9 +468,14 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
  *           GlobalLock16   (KERNEL.18)
  *
  * This is the GlobalLock16() function used by 32-bit code.
+ * 
+ * RETURNS
+ *	Pointer to first byte of memory block
+ *	NULL: Failure
  */
-LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
-{
+LPVOID WINAPI GlobalLock16(
+              HGLOBAL16 handle /* [in] Handle of global memory object */
+) {
     if (!handle) return 0;
     if (!VALID_HANDLE(handle))
 	return (LPVOID)0;
@@ -470,9 +489,16 @@ LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalUnlock16   (KERNEL.19)
+ * NOTES
+ *	Should the return values be cast to booleans?
+ *
+ * RETURNS
+ *	TRUE: Object is still locked
+ *	FALSE: Object is unlocked
  */
-BOOL16 WINAPI GlobalUnlock16( HGLOBAL16 handle )
-{
+BOOL16 WINAPI GlobalUnlock16(
+              HGLOBAL16 handle /* [in] Handle of global memory object */
+) {
     GLOBALARENA *pArena = GET_ARENA_PTR(handle);
     if (!VALID_HANDLE(handle)) {
 	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
@@ -486,9 +512,13 @@ BOOL16 WINAPI GlobalUnlock16( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalSize16   (KERNEL.20)
+ * RETURNS
+ *	Size in bytes of object
+ *	0: Failure
  */
-DWORD WINAPI GlobalSize16( HGLOBAL16 handle )
-{
+DWORD WINAPI GlobalSize16(
+             HGLOBAL16 handle /* [in] Handle of global memory object */
+) {
     TRACE(global, "%04x\n", handle );
     if (!handle) return 0;
     if (!VALID_HANDLE(handle))
@@ -499,9 +529,16 @@ DWORD WINAPI GlobalSize16( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalHandle16   (KERNEL.21)
+ * NOTES
+ *	Why is GlobalHandleToSel used here with the sel as input?
+ *
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-DWORD WINAPI GlobalHandle16( WORD sel )
-{
+DWORD WINAPI GlobalHandle16(
+             WORD sel /* [in] Address of global memory block */
+) {
     TRACE(global, "%04x\n", sel );
     if (!VALID_HANDLE(sel)) {
 	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
@@ -523,11 +560,20 @@ DWORD WINAPI GlobalHandleNoRIP( WORD sel )
     return 0;
 }
 
+
 /***********************************************************************
  *           GlobalFlags16   (KERNEL.22)
+ * NOTES
+ *	Should this return GMEM_INVALID_HANDLE instead of 0 on invalid
+ *	handle?
+ *
+ * RETURNS
+ *	Value specifying flags and lock count
+ *	GMEM_INVALID_HANDLE: Invalid handle
  */
-UINT16 WINAPI GlobalFlags16( HGLOBAL16 handle )
-{
+UINT16 WINAPI GlobalFlags16(
+              HGLOBAL16 handle /* [in] Handle of global memory object */
+) {
     GLOBALARENA *pArena;
 
     TRACE(global, "%04x\n", handle );
@@ -662,12 +708,15 @@ DWORD WINAPI GetFreeSpace16( UINT16 wFlags )
 
 /***********************************************************************
  *           GlobalDOSAlloc   (KERNEL.184)
+ * RETURNS
+ *	Address (HW=Paragraph segment; LW=Selector)
  */
-DWORD WINAPI GlobalDOSAlloc(DWORD size)
-{
+DWORD WINAPI GlobalDOSAlloc(
+             DWORD size /* [in] Number of bytes to be allocated */
+) {
    UINT16    uParagraph;
    LPVOID    lpBlock = DOSMEM_GetBlock( size, &uParagraph );
-   
+
    if( lpBlock )
    {
        HMODULE16 hModule = GetModuleHandle16("KERNEL");
@@ -680,11 +729,16 @@ DWORD WINAPI GlobalDOSAlloc(DWORD size)
    return 0;
 }
 
+
 /***********************************************************************
  *           GlobalDOSFree      (KERNEL.185)
+ * RETURNS
+ *	NULL: Success
+ *	sel: Failure
  */
-WORD WINAPI GlobalDOSFree(WORD sel)
-{
+WORD WINAPI GlobalDOSFree(
+            WORD sel /* [in] Selector */
+) {
    DWORD   block = GetSelectorBase(sel);
 
    if( block && block < 0x100000 ) 
@@ -696,6 +750,7 @@ WORD WINAPI GlobalDOSFree(WORD sel)
    }
    return sel;
 }
+
 
 /***********************************************************************
  *           GlobalPageLock   (KERNEL.191)
@@ -966,9 +1021,14 @@ typedef struct __GLOBAL32_INTERN
 
 /***********************************************************************
  *           GlobalAlloc32   (KERNEL32.315)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalAlloc32(UINT32 flags, DWORD size)
-{
+HGLOBAL32 WINAPI GlobalAlloc32(
+                 UINT32 flags, /* [in] Object allocation attributes */
+                 DWORD size    /* [in] Number of bytes to allocate */
+) {
    PGLOBAL32_INTERN     pintern;
    DWORD		hpflags;
    LPVOID               palloc;
@@ -1009,9 +1069,13 @@ HGLOBAL32 WINAPI GlobalAlloc32(UINT32 flags, DWORD size)
 
 /***********************************************************************
  *           GlobalLock32   (KERNEL32.326)
+ * RETURNS
+ *	Pointer to first byte of block
+ *	NULL: Failure
  */
-LPVOID WINAPI GlobalLock32(HGLOBAL32 hmem)
-{
+LPVOID WINAPI GlobalLock32(
+              HGLOBAL32 hmem /* [in] Handle of global memory object */
+) {
    PGLOBAL32_INTERN pintern;
    LPVOID           palloc;
 
@@ -1039,9 +1103,13 @@ LPVOID WINAPI GlobalLock32(HGLOBAL32 hmem)
 
 /***********************************************************************
  *           GlobalUnlock32   (KERNEL32.332)
+ * RETURNS
+ *	TRUE: Object is still locked
+ *	FALSE: Object is unlocked
  */
-BOOL32 WINAPI GlobalUnlock32(HGLOBAL32 hmem)
-{
+BOOL32 WINAPI GlobalUnlock32(
+              HGLOBAL32 hmem /* [in] Handle of global memory object */
+) {
    PGLOBAL32_INTERN       pintern;
    BOOL32                 locked;
 
@@ -1070,9 +1138,19 @@ BOOL32 WINAPI GlobalUnlock32(HGLOBAL32 hmem)
 
 /***********************************************************************
  *           GlobalHandle32   (KERNEL32.325)
+ * Returns the handle associated with the specified pointer.
+ *
+ * NOTES
+ *	Since there in only one goto, can it be removed and the return
+ *	be put 'inline'?
+ *
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalHandle32(LPCVOID pmem)
-{
+HGLOBAL32 WINAPI GlobalHandle32(
+                 LPCVOID pmem /* [in] Pointer to global memory block */
+) {
     HGLOBAL32 handle;
 
     if (!HEAP_IsInsideHeap( GetProcessHeap(), 0, pmem )) goto error;
@@ -1094,9 +1172,15 @@ error:
 
 /***********************************************************************
  *           GlobalReAlloc32   (KERNEL32.328)
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
-{
+HGLOBAL32 WINAPI GlobalReAlloc32(
+                 HGLOBAL32 hmem, /* [in] Handle of global memory object */
+                 DWORD size,     /* [in] New size of block */
+                 UINT32 flags    /* [in] How to reallocate object */
+) {
    LPVOID               palloc;
    HGLOBAL32            hnew;
    PGLOBAL32_INTERN     pintern;
@@ -1177,9 +1261,13 @@ HGLOBAL32 WINAPI GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
 
 /***********************************************************************
  *           GlobalFree32   (KERNEL32.322)
+ * RETURNS
+ *	NULL: Success
+ *	Handle: Failure
  */
-HGLOBAL32 WINAPI GlobalFree32(HGLOBAL32 hmem)
-{
+HGLOBAL32 WINAPI GlobalFree32(
+                 HGLOBAL32 hmem /* [in] Handle of global memory object */
+) {
    PGLOBAL32_INTERN pintern;
    HGLOBAL32        hreturned = 0;
    
@@ -1211,9 +1299,13 @@ HGLOBAL32 WINAPI GlobalFree32(HGLOBAL32 hmem)
 
 /***********************************************************************
  *           GlobalSize32   (KERNEL32.329)
+ * RETURNS
+ *	Size in bytes of the global memory object
+ *	0: Failure
  */
-DWORD WINAPI GlobalSize32(HGLOBAL32 hmem)
-{
+DWORD WINAPI GlobalSize32(
+             HGLOBAL32 hmem /* [in] Handle of global memory object */
+) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
 
@@ -1280,9 +1372,18 @@ VOID WINAPI GlobalUnfix32(HGLOBAL32 hmem)
 
 /***********************************************************************
  *           GlobalFlags32   (KERNEL32.321)
+ * Returns information about the specified global memory object
+ *
+ * NOTES
+ *	Should this return GMEM_INVALID_HANDLE on invalid handle?
+ *
+ * RETURNS
+ *	Value specifying allocation flags and lock count
+ *	GMEM_INVALID_HANDLE: Failure
  */
-UINT32 WINAPI GlobalFlags32(HGLOBAL32 hmem)
-{
+UINT32 WINAPI GlobalFlags32(
+              HGLOBAL32 hmem /* [in] Handle to global memory object */
+) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
    
@@ -1302,7 +1403,7 @@ UINT32 WINAPI GlobalFlags32(HGLOBAL32 hmem)
       }
       else
       {
-	 WARN(global,"invalid handle\n");
+	 WARN(global,"Invalid handle: %04x", hmem);
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */
@@ -1322,9 +1423,12 @@ DWORD WINAPI GlobalCompact32( DWORD minfree )
 
 /***********************************************************************
  *           GlobalMemoryStatus   (KERNEL32.327)
+ * RETURNS
+ *	None
  */
-VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpmem )
-{
+VOID WINAPI GlobalMemoryStatus(
+            LPMEMORYSTATUS lpmem
+) {
 #ifdef linux
     FILE *f = fopen( "/proc/meminfo", "r" );
     if (f)
@@ -1380,6 +1484,7 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpmem )
     lpmem->dwAvailVirtual  = 32*1024*1024;
 }
 
+
 /**********************************************************************
  *           WOWGlobalAllocLock (KERNEL32.62)
  *
@@ -1392,6 +1497,7 @@ SEGPTR WINAPI WOWGlobalAllocLock16(DWORD flags,DWORD cb,HGLOBAL16 *hmem)
     if (hmem) *hmem = xhmem;
     return WIN16_GlobalLock16(xhmem);
 }
+
 
 /**********************************************************************
  *           WOWGlobalUnlockFree (KERNEL32.64)

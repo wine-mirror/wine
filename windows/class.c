@@ -337,7 +337,7 @@ bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 
 
 /***********************************************************************
- *           RegisterClass32A      (USER32.426)
+ *           RegisterClass32A      (USER32.427)
  * RETURNS
  *	>0: Unique identifier
  *	0: Failure
@@ -375,7 +375,7 @@ hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 
 
 /***********************************************************************
- *           RegisterClass32W      (USER32.429)
+ *           RegisterClass32W      (USER32.430)
  */
 ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
 {
@@ -441,7 +441,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 
 
 /***********************************************************************
- *           RegisterClassEx32A      (USER32.427)
+ *           RegisterClassEx32A      (USER32.428)
  */
 ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
 {
@@ -473,7 +473,7 @@ ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
 
 
 /***********************************************************************
- *           RegisterClassEx32W      (USER32.428)
+ *           RegisterClassEx32W      (USER32.429)
  */
 ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
 {
@@ -521,7 +521,7 @@ BOOL16 WINAPI UnregisterClass16( SEGPTR className, HINSTANCE16 hInstance )
 
 
 /***********************************************************************
- *           UnregisterClass32A    (USER32.562)
+ *           UnregisterClass32A    (USER32.563)
  */
 BOOL32 WINAPI UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
 {
@@ -536,7 +536,7 @@ BOOL32 WINAPI UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
 
 
 /***********************************************************************
- *           UnregisterClass32W    (USER32.563)
+ *           UnregisterClass32W    (USER32.564)
  */
 BOOL32 WINAPI UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
 {
@@ -560,7 +560,7 @@ WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
 
 
 /***********************************************************************
- *           GetClassWord32    (USER32.218)
+ *           GetClassWord32    (USER32.219)
  */
 WORD WINAPI GetClassWord32( HWND32 hwnd, INT32 offset )
 {
@@ -613,7 +613,7 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
 
 
 /***********************************************************************
- *           GetClassLong32A    (USER32.214)
+ *           GetClassLong32A    (USER32.215)
  */
 LONG WINAPI GetClassLong32A( HWND32 hwnd, INT32 offset )
 {
@@ -647,7 +647,7 @@ LONG WINAPI GetClassLong32A( HWND32 hwnd, INT32 offset )
 
 
 /***********************************************************************
- *           GetClassLong32W    (USER32.215)
+ *           GetClassLong32W    (USER32.216)
  */
 LONG WINAPI GetClassLong32W( HWND32 hwnd, INT32 offset )
 {
@@ -677,7 +677,7 @@ WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 
 
 /***********************************************************************
- *           SetClassWord32    (USER32.468)
+ *           SetClassWord32    (USER32.469)
  */
 WORD WINAPI SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
 {
@@ -745,7 +745,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 
 
 /***********************************************************************
- *           SetClassLong32A    (USER32.466)
+ *           SetClassLong32A    (USER32.467)
  */
 LONG WINAPI SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 {
@@ -797,7 +797,7 @@ LONG WINAPI SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 
 
 /***********************************************************************
- *           SetClassLong32W    (USER32.467)
+ *           SetClassLong32W    (USER32.468)
  */
 LONG WINAPI SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 {
@@ -834,7 +834,7 @@ INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 
 
 /***********************************************************************
- *           GetClassName32A      (USER32.216)
+ *           GetClassName32A      (USER32.217)
  */
 INT32 WINAPI GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
 {
@@ -845,7 +845,7 @@ INT32 WINAPI GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
 
 
 /***********************************************************************
- *           GetClassName32W      (USER32.217)
+ *           GetClassName32W      (USER32.218)
  */
 INT32 WINAPI GetClassName32W( HWND32 hwnd, LPWSTR buffer, INT32 count )
 {
@@ -888,7 +888,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name,
 
 
 /***********************************************************************
- *           GetClassInfo32A      (USER32.210)
+ *           GetClassInfo32A      (USER32.211)
  */
 BOOL32 WINAPI GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name,
                                WNDCLASS32A *wc )
@@ -917,7 +917,7 @@ BOOL32 WINAPI GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name,
 
 
 /***********************************************************************
- *           GetClassInfo32W      (USER32.213)
+ *           GetClassInfo32W      (USER32.214)
  */
 BOOL32 WINAPI GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name,
                                WNDCLASS32W *wc )
@@ -979,7 +979,7 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name,
 
 
 /***********************************************************************
- *           GetClassInfoEx32A      (USER32.211)
+ *           GetClassInfoEx32A      (USER32.212)
  */
 BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
                                  WNDCLASSEX32A *wc )
@@ -1007,7 +1007,7 @@ BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
 
 
 /***********************************************************************
- *           GetClassInfoEx32W      (USER32.212)
+ *           GetClassInfoEx32W      (USER32.213)
  */
 BOOL32 WINAPI GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
                                  WNDCLASSEX32W *wc )

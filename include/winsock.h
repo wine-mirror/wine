@@ -518,7 +518,9 @@ typedef struct  __aop
 #define WSMSG_ASYNC_PROTOBYNUM  0x0020
 #define WSMSG_ASYNC_SERVBYNAME  0x0100
 #define WSMSG_ASYNC_SERVBYPORT  0x0200
-#define WSMSG_ASYNC_WIN32	0x1000
+#define WSMSG_ASYNC_RQMASK	0x0fff
+
+#define WSMSG_WIN32_AOP		0x1000
 #define WSMSG_DEAD_AOP		0x8000
 
 typedef struct __sop	/* WSAAsyncSelect() control struct */

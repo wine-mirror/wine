@@ -221,7 +221,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_HARDWARE: 
 	case WH_FOREGROUNDIDLE: 
 	case WH_CALLWNDPROCRET:
-	    fprintf(stderr, "\t[%i] 16to32 translation unimplemented\n", id);
+	    FIXME(hook, "\t[%i] 16to32 translation unimplemented\n", id);
     }
 }
 
@@ -325,7 +325,7 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
         case WH_HARDWARE:
 	case WH_FOREGROUNDIDLE:
 	case WH_CALLWNDPROCRET:
-	    fprintf(stderr, "\t[%i] skipping unmap\n", id);
+	    FIXME(hook, "\t[%i] skipping unmap\n", id);
   	    break;
     }
 }
@@ -489,7 +489,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
-	fprintf(stderr,"\t[%i] 32to16 translation unimplemented\n", id);
+	FIXME(hook,"\t[%i] 32to16 translation unimplemented\n", id);
     }
 }
 
@@ -635,7 +635,7 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
-	fprintf(stderr, "\t[%i] skipping unmap\n", id);
+	FIXME(hook, "\t[%i] skipping unmap\n", id);
     }
 }
 
@@ -1175,7 +1175,7 @@ FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 
     if (id == WH_DEBUG)
     {
-	fprintf( stdnimp, "WH_DEBUG is broken in 16-bit Windows.\n");
+	FIXME(hook, "WH_DEBUG is broken in 16-bit Windows.\n");
 	return 0;
     }
 
@@ -1363,7 +1363,7 @@ LRESULT WINAPI CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
     fromtype = oldhook->flags & HOOK_MAPTYPE;
 
     if (fromtype == HOOK_WIN16)
-      fprintf(stderr, "CallNextHookEx32: called from 16bit hook!\n");
+      ERR(hook, "called from 16bit hook!\n");
 
     return HOOK_CallHook( next, fromtype, code, wParam, lParam );
 }

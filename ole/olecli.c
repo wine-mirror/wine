@@ -20,7 +20,7 @@ extern LONG	OLE_current_handle;
 OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR classname, LPCSTR docname,
                                         LONG reserved, LHCLIENTDOC *hRet )
 {
-    fprintf(stdnimp,"OleRegisterClientDoc:%s %s\n",classname,docname);
+    FIXME(ole,"(%s,%s,...): stub\n",classname,docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -31,7 +31,7 @@ OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR classname, LPCSTR docname,
 OLESTATUS WINAPI OleRegisterClientDoc32(LPCSTR classname, LPCSTR docname,
                                         LONG reserved, LHCLIENTDOC *hRet )
 {
-    fprintf(stdnimp,"OleRegisterClientDoc:%s %s\n",classname,docname);
+    FIXME(ole,"(%s,%s,...): stub\n",classname,docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -41,7 +41,7 @@ OLESTATUS WINAPI OleRegisterClientDoc32(LPCSTR classname, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC hDoc, LPCSTR newName)
 {
-    fprintf(stdnimp,"OleRenameClientDoc: %ld %s\n",hDoc, newName);
+    FIXME(ole,"(%ld,%s,...): stub\n",hDoc, newName);
     return OLE_OK;
 }
 
@@ -50,7 +50,7 @@ OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRenameClientDoc32(LHCLIENTDOC hDoc, LPCSTR newName)
 {
-    fprintf(stdnimp,"OleRenameClientDoc: %ld %s\n",hDoc, newName);
+    FIXME(ole,"(%ld,%s,...): stub\n",hDoc, newName);
     return OLE_OK;
 }
 
@@ -59,7 +59,7 @@ OLESTATUS WINAPI OleRenameClientDoc32(LHCLIENTDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC hServerDoc)
 {
-    fprintf(stdnimp,"OleRevokeClientDoc:%ld\n",hServerDoc);
+    FIXME(ole,"(%ld): stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -68,7 +68,7 @@ OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeClientDoc32(LHCLIENTDOC hServerDoc)
 {
-    fprintf(stdnimp,"OleRevokeClientDoc:%ld\n",hServerDoc);
+    FIXME(ole,"(%ld): stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -79,9 +79,8 @@ OLESTATUS WINAPI OleCreateLinkFromClip32(
 	LPCSTR name,LPOLECLIENT olecli,LHCLIENTDOC hclientdoc,LPCSTR xname,
 	LPOLEOBJECT *lpoleob,OLEOPT_RENDER render,OLECLIPFORMAT clipformat
 ) {
-	fprintf(stdnimp,"OleCreateLinkFromClip(%s,%p,%08lx,%s,%p,%d,%ld),stub!\n",
-		name,olecli,hclientdoc,xname,lpoleob,render,clipformat
-	);
+	FIXME(ole,"(%s,%p,%08lx,%s,%p,%d,%ld): stub!\n",
+	      name,olecli,hclientdoc,xname,lpoleob,render,clipformat);
 	return OLE_OK;
 }
 
@@ -89,18 +88,14 @@ OLESTATUS WINAPI OleCreateLinkFromClip32(
  *           OleQueryLinkFromClip32
  */
 OLESTATUS WINAPI OleQueryLinkFromClip32(LPCSTR name,OLEOPT_RENDER render,OLECLIPFORMAT clipformat) {
-	fprintf(stdnimp,"OleQueryLinkFromClip(%s,%d,%ld),stub!\n",
-		name,render,clipformat
-	);
+	FIXME(ole,"(%s,%d,%ld): stub!\n",name,render,clipformat);
 	return OLE_OK;
 }
 /***********************************************************************
  *           OleQueryCreateFromClip32
  */
 OLESTATUS WINAPI OleQueryCreateFromClip32(LPCSTR name,OLEOPT_RENDER render,OLECLIPFORMAT clipformat) {
-	fprintf(stdnimp,"OleQueryCreateFromClip(%s,%d,%ld),stub!\n",
-		name,render,clipformat
-	);
+	FIXME(ole,"(%s,%d,%ld): stub!\n",name,render,clipformat);
 	return OLE_OK;
 }
 
@@ -129,7 +124,7 @@ BOOL32 WINAPI OleIsDcMeta32(HDC32 hdc)
  *           OleSetHostNames
  */
 OLESTATUS WINAPI OleSetHostNames32(LPOLEOBJECT oleob,LPCSTR name1,LPCSTR name2) {
-	fprintf(stdnimp,"OleSetHostNames(%p,%s,%s),stub\n",oleob,name1,name2);
+	FIXME(ole,"(%p,%s,%s): stub\n",oleob,name1,name2);
 	return OLE_OK;
 }
 
@@ -137,12 +132,11 @@ OLESTATUS WINAPI OleSetHostNames32(LPOLEOBJECT oleob,LPCSTR name1,LPCSTR name2) 
  *           OleQueryType32
  */
 OLESTATUS WINAPI OleQueryType32(LPOLEOBJECT oleob,LONG*xlong) {
-	fprintf(stdnimp,"OleQueryType(%p,%p),stub!\n",oleob,xlong);
+	FIXME(ole,"(%p,%p): stub!\n",oleob,xlong);
 	if (!oleob)
 		return 0x10;
-	fprintf(stddeb,"Calling OLEOBJECT.QueryType (%p) (%p,%p)\n",
-		oleob->lpvtbl->QueryType,oleob,xlong
-	);
+	TRACE(ole,"Calling OLEOBJECT.QueryType (%p) (%p,%p)\n",
+	      oleob->lpvtbl->QueryType,oleob,xlong);
 	return oleob->lpvtbl->QueryType(oleob,xlong);
 }
 
@@ -153,9 +147,8 @@ OLESTATUS WINAPI OleCreateFromClip32(
 	LPCSTR name,LPOLECLIENT olecli,LHCLIENTDOC hclientdoc,LPCSTR xname,
 	LPOLEOBJECT *lpoleob,OLEOPT_RENDER render, OLECLIPFORMAT clipformat
 ) {
-	fprintf(stdnimp,"OleCreateLinkFromClip(%s,%p,%08lx,%s,%p,%d,%ld),stub!\n",
-		name,olecli,hclientdoc,xname,lpoleob,render,clipformat
-	);
+	FIXME(ole,"(%s,%p,%08lx,%s,%p,%d,%ld): stub!\n",
+	      name,olecli,hclientdoc,xname,lpoleob,render,clipformat);
 	/* clipb type, object kreieren entsprechend etc. */
 	return OLE_OK;
 }

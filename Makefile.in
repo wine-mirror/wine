@@ -121,6 +121,7 @@ libwine.so.1.0: $(LIBOBJS)
 
 install_emu: install_lib
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
+	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 
 install_lib: install_includes
 	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)

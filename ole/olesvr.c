@@ -20,7 +20,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
                                       LHSERVER *hRet, HINSTANCE16 hServer,
                                       OLE_SERVER_USE use )
 {
-    FIXME(ole,"%s - stub\n",name);
+    FIXME(ole,"(%s,...): stub\n",name);
     *hRet=++OLE_current_handle;
     /* return OLE_ERROR_MEMORY, OLE_ERROR_PROTECT_ONLY if you want it fail*/
     return OLE_OK;
@@ -31,7 +31,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
  */
 OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
-    fprintf(stdnimp,"OleBlockServer:%ld\n",hServer);
+    FIXME(ole,"(%ld): stub\n",hServer);
     return OLE_OK;
 }
 
@@ -40,7 +40,7 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleBlockServer32(LHSERVER hServer)
 {
-    fprintf(stdnimp,"OleBlockServer:%ld\n",hServer);
+    FIXME(ole,"(%ld): stub\n",hServer);
     return OLE_OK;
 }
 
@@ -49,7 +49,7 @@ OLESTATUS WINAPI OleBlockServer32(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
-    fprintf(stdnimp,"OleUnblockServer:%ld\n",hServer);
+    FIXME(ole,"(%ld): stub\n",hServer);
     /* no more blocked messages :) */
     *block=FALSE;
     return OLE_OK;
@@ -60,7 +60,7 @@ OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
  */
 OLESTATUS WINAPI OleUnblockServer32(LHSERVER hServer, BOOL32 *block)
 {
-    fprintf(stdnimp,"OleUnblockServer:%ld\n",hServer);
+    FIXME(ole,"(%ld): stub\n",hServer);
     /* no more blocked messages :) */
     *block=FALSE;
     return OLE_OK;
@@ -73,8 +73,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    FIXME(ole,"%ld,%s - stub\n", 
-		hServer, docname);
+    FIXME(ole,"(%ld,%s): stub\n",hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -93,7 +92,7 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
 {
-    fprintf(stdnimp,"OleRevokeServerDoc:%ld\n",hServerDoc);
+    FIXME(ole,"(%ld): stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -107,9 +106,7 @@ OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
 }
 
 OLESTATUS WINAPI OleRegisterServer32(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE32 hinst,OLE_SERVER_USE osu) {
-	fprintf(stderr,"OleRegisterServer(%s,%p,%p,%08x,%d),stub!\n",
-		svrname,olesvr,hRet,hinst,osu
-	);
+	FIXME(ole,"(%s,%p,%p,%08x,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
     	*hRet=++OLE_current_handle;
 	return OLE_OK;
 }
@@ -118,7 +115,7 @@ OLESTATUS WINAPI OleRegisterServerDoc32( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    fprintf(stdnimp,"OleRegisterServerDoc:%ld,%s\n", hServer, docname);
+    FIXME(ole,"(%ld,%s): stub\n", hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -129,6 +126,6 @@ OLESTATUS WINAPI OleRegisterServerDoc32( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRenameServerDoc32(LHSERVERDOC hDoc, LPCSTR newName)
 {
-    fprintf(stderr,"OleRenameServerDoc: %ld %s; stub.\n",hDoc, newName);
+    FIXME(ole,"(%ld,%s): stub.\n",hDoc, newName);
     return OLE_OK;
 }

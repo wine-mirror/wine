@@ -94,7 +94,7 @@ BOOL32 WIDGETS_Init(void)
         /* Just to make sure the string is > 0x10000 */
         strcpy( name, (char *)cls->lpszClassName );
         cls->lpszClassName = name;
-        cls->hCursor = LoadCursor16( 0, cls->hCursor );
+        cls->hCursor = LoadCursor32A( 0, (LPCSTR)cls->hCursor );
         if (!(bicAtomTable[i] = RegisterClass32A( cls ))) return FALSE;
     }
 

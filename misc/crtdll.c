@@ -197,7 +197,7 @@ void __cdecl CRTDLL__local_unwind2( CONTEXT *context )
     DWORD *args = (DWORD *)ESP_reg(context);
     PEXCEPTION_FRAME endframe = (PEXCEPTION_FRAME)args[1];
     DWORD nr = args[2];
-    fprintf(stderr,"(%p,%ld)\n",endframe,nr);
+    TRACE(crtdll,"(%p,%ld)\n",endframe,nr);
 }
 
 /*********************************************************************
@@ -1111,7 +1111,7 @@ LPSTR __cdecl CRTDLL_setlocale(INT32 category,LPCSTR locale)
 	case CRTDLL_LC_TIME: categorystr="LC_TIME";break;
 	default: categorystr = "UNKNOWN?";break;
 	}
-	fprintf(stderr,"CRTDLL_setlocale(%s,%s),stub!\n",categorystr,locale);
+	FIXME(crtdll,"(%s,%s),stub!\n",categorystr,locale);
 	return "C";
 }
 
@@ -1348,8 +1348,7 @@ INT32 __cdecl CRTDLL__setmode( INT32 fh,INT32 mode)
  */
 INT32 __cdecl CRTDLL_atexit(LPVOID x)
 {
-	/* FIXME */
-	fprintf(stdnimp,"CRTDLL.atexit(%p), STUB.\n",x);
+	FIXME(crtdll,"(%p), STUB.\n",x);
 	return 0; /* successful */
 }
 

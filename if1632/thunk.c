@@ -618,9 +618,17 @@ FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FAR
 
 /***********************************************************************
  *           THUNK_WOWCallback16Ex	(WOW32.3)(KERNEL32.55)
+ * Generic thunking routine to call 16 bit functions from 32bit code.
+ * 
+ * RETURNS
+ * 	TRUE if the call was done
  */
 static BOOL32 WINAPI THUNK_WOWCallback16Ex(
-	FARPROC16 proc,DWORD dwFlags,DWORD cbArgs,LPVOID xargs,LPDWORD pdwret
+	FARPROC16 proc,		/* [in] 16bit function to call */
+	DWORD dwFlags,		/* [in] flags (WCB_*) */
+	DWORD cbArgs,		/* [in] number of arguments */
+	LPVOID xargs,		/* [in/out] arguments */
+	LPDWORD pdwret		/* [out] return value of the 16bit call */
 ) {
     LPDWORD     args = (LPDWORD)xargs;
     DWORD       ret,i;

@@ -43,8 +43,6 @@ extern int h_errno;
 #define FASYNC FIOASYNC
 #endif
 
-#define __WS_ASYNC_DEBUG	0
-
 typedef struct          /* async DNS op control struct */
 {
   ws_async_op*  ws_aop;
@@ -135,7 +133,7 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
 {
     /* SIGIO safe, hTask == 0 cancels all outstanding async ops */
 
-    int num = 0;
+    int num = 0, num_dead = 0;
     ws_async_op*   p, *next;
 
     TRACE(winsock," cancelling async DNS requests... \n");
@@ -149,13 +147,16 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
 	next = p->next;
 	if(!hTask || !hWndTask || (hTask == hWndTask))
 	{
+	    num++;
+	    if( p->flags & WSMSG_DEAD_AOP )
+		num_dead++;
+
 	    WINSOCK_cancel_async_op(p);
 	    if( __opfree ) __opfree(p);
-	    num++;
 	}
     }
     SIGNAL_MaskAsyncEvents( FALSE );
-    TRACE(winsock," -> %i total\n", num );
+    TRACE(winsock," -> %i total (%i active)\n", num, num - num_dead );
 }
 
 void WINSOCK_link_async_op(ws_async_op* p_aop)
@@ -278,11 +279,11 @@ static int aop_control(ws_async_op* p_aop, int flag )
     {
 	if( (int)LOWORD(lLength) <= p_aop->buflen )
 	{
-            char* buffer = (p_aop->flags & WSMSG_ASYNC_WIN32)
+            char* buffer = (p_aop->flags & WSMSG_WIN32_AOP)
 		  ? p_aop->b.lin_base : (char*)PTR_SEG_TO_LIN(p_aop->b.seg_base);
 
             read(p_aop->fd[0], buffer, LOWORD(lLength));
-            switch( p_aop->flags )
+            switch( p_aop->flags & WSMSG_ASYNC_RQMASK )
             {
 		case WSMSG_ASYNC_HOSTBYNAME:
 		case WSMSG_ASYNC_HOSTBYADDR:
@@ -301,10 +302,10 @@ static int aop_control(ws_async_op* p_aop, int flag )
         else lLength =  ((UINT32)LOWORD(lLength)) | ((unsigned)WSAENOBUFS << 16);
     } /* failure */
 
-#if __WS_ASYNC_DEBUG
-    printf("DNS aop completed: hWnd [%04x], uMsg [%04x], aop [%04x], event [%08x]\n",
-         p_aop->hWnd, p_aop->uMsg, __ws_gethandle(p_aop), (LPARAM)lLength);
-#endif
+     /* was a __WS_ASYNC_DEBUG statement */
+     TRACE(winsock, "DNS aop completed: hWnd [%04x], uMsg [%04x], "
+ 	  "aop [%04x], event [%08lx]\n",
+ 	  p_aop->hWnd, p_aop->uMsg, __ws_gethandle(p_aop), (LPARAM)lLength);
 
     /* FIXME: update num_async_rq */
     EVENT_DeleteIO( p_aop->fd[0], EVENT_IO_READ );
@@ -366,7 +367,7 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 		/* child process */
 
 		close(async_ctl.ws_aop->fd[0]);  /* read endpoint */
-		switch( flag )
+		switch( flag & WSMSG_ASYNC_RQMASK )
 		{
 		    case WSMSG_ASYNC_HOSTBYADDR:
 		    case WSMSG_ASYNC_HOSTBYNAME:
@@ -403,9 +404,9 @@ static int _async_notify()
     kill(getppid(), SIGIO);    /* simulate async I/O */
 #endif
 
-#if __WS_ASYNC_DEBUG
-    printf("handler - notify aop [%d, buf %d]\n", async_ctl.ilength, async_ctl.ws_aop->buflen);
-#endif
+    /* was a __WS_ASYNC_DEBUG statement */
+    TRACE(winsock, "handler - notify aop [%d, buf %d]\n", 
+	  async_ctl.ilength, async_ctl.ws_aop->buflen);
     return 1;
 }
 
@@ -421,9 +422,9 @@ static void _async_fail()
      kill(getppid(), SIGIO);    /* simulate async I/O */
 #endif
 
-#if __WS_ASYNC_DEBUG
-    printf("handler - failed aop [%d, buf %d]\n", async_ctl.ilength, async_ctl.ws_aop->buflen);
-#endif
+    /* was a __WS_ASYNC_DEBUG statement */
+    TRACE(winsock, "handler - failed aop [%d, buf %d]\n", 
+	  async_ctl.ilength, async_ctl.ws_aop->buflen);
 }
 
 void dump_ws_hostent_offset(struct ws_hostent* wshe)
@@ -432,16 +433,16 @@ void dump_ws_hostent_offset(struct ws_hostent* wshe)
   char*		base = (char*)wshe;
   unsigned*	ptr;
 
-  printf("h_name = %08x\t[%s]\n", (unsigned)wshe->h_name, base + (unsigned)wshe->h_name);
-  printf("h_aliases = %08x\t[%08x]\n", (unsigned)wshe->h_aliases, 
-				       (unsigned)(base + (unsigned)wshe->h_aliases));
+  DUMP("h_name = %08x\t[%s]\n", 
+       (unsigned)wshe->h_name, base + (unsigned)wshe->h_name);
+  DUMP("h_aliases = %08x\t[%08x]\n", 
+       (unsigned)wshe->h_aliases, (unsigned)(base+(unsigned)wshe->h_aliases));
   ptr = (unsigned*)(base + (unsigned)wshe->h_aliases);
   for(i = 0; ptr[i]; i++ )
   {
-	printf("%i - %08x ", i + 1, ptr[i]);
-	printf(" [%s]\n", ((char*)base) + ptr[i]);
+	DUMP("%i - %08x [%s]\n", i + 1, ptr[i], ((char*)base) + ptr[i]);
   }
-  printf("h_length = %i\n", wshe->h_length);
+  DUMP("h_length = %i\n", wshe->h_length);
 }
 
 void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
@@ -460,7 +461,7 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
 
   if( p_he ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_he(pwsi, p_he, WS_DUP_OFFSET | 
-		     ((flag & WSMSG_ASYNC_WIN32) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
+		     ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
       async_ctl.buffer = pwsi->buffer;
@@ -484,7 +485,7 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
 
   if( p_pe ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_pe(pwsi, p_pe, WS_DUP_OFFSET |
-		     ((flag & WSMSG_ASYNC_WIN32) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
+		     ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
       async_ctl.buffer = pwsi->buffer;
@@ -506,7 +507,7 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
 
   if( p_se ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_se(pwsi, p_se, WS_DUP_OFFSET |
-		      ((flag & WSMSG_ASYNC_WIN32) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
+		      ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
       async_ctl.buffer = pwsi->buffer;
@@ -518,14 +519,14 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
 
 /* ----------------------------------- helper functions -
  *
- * Raw results from pipe contain internal pointers stored as
+ * Raw results from the pipe contain internal pointers stored as
  * offsets relative to the beginning of the buffer and we need
  * to apply a fixup before passing them to applications.
  *
  * NOTE: It is possible to exploit the fact that fork() doesn't 
  * change the buffer address by storing fixed up pointers right 
  * in the handler. However, this will get in the way if we ever 
- * get around to implementing DNS helper daemon a-la Netscape.
+ * get around to implementing DNS helper daemon a-la Netscape 4.x.
  */
 
 void fixup_wshe(struct ws_hostent* p_wshe, void* base)

@@ -11,6 +11,7 @@
 #include "winbase.h"
 #include "process.h"
 #include "options.h"
+#include "debug.h"
 
 typedef enum
 {
@@ -98,11 +99,11 @@ void VERSION_ParseVersion( char *arg )
             return;
         }
     }
-    fprintf( stderr, "Invalid winver value '%s' specified.\n", arg );
-    fprintf( stderr, "Valid versions are:" );
+    MSG("Invalid winver value '%s' specified.\n", arg );
+    MSG("Valid versions are:" );
     for (i = 0; i < NB_VERSIONS; i++)
-        fprintf( stderr, " '%s'%c", VersionNames[i],
-                 (i == NB_VERSIONS - 1) ? '\n' : ',' );
+        MSG(" '%s'%c", VersionNames[i],
+	    (i == NB_VERSIONS - 1) ? '\n' : ',' );
 }
 
 
@@ -134,9 +135,9 @@ static VERSION VERSION_GetVersion(void)
         /* NT 3.51 */
         if (peheader->OptionalHeader.MinorSubsystemVersion == 51) return NT351;
     }
-    fprintf(stderr,"VERSION_GetVersion: unknown subsystem version: %04x.%04x, please report.\n",
-            peheader->OptionalHeader.MajorSubsystemVersion,
-            peheader->OptionalHeader.MinorSubsystemVersion );
+    ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
+	peheader->OptionalHeader.MajorSubsystemVersion,
+	peheader->OptionalHeader.MinorSubsystemVersion );
     return defaultVersion;
 }
 
@@ -169,7 +170,7 @@ BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
     VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO32A))
     {
-        fprintf(stderr,"wrong OSVERSIONINFO size from app");
+        WARN(ver,"wrong OSVERSIONINFO size from app");
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -189,7 +190,7 @@ BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
     VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
     {
-        fprintf(stderr,"wrong OSVERSIONINFO size from app");
+        WARN(ver,"wrong OSVERSIONINFO size from app");
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -228,7 +229,7 @@ DWORD WINAPI GetWinFlags(void)
       break;
 
   default:
-      fprintf(stderr, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
+      ERR(ver, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
       break;
   }
   if (si.wProcessorLevel >= 4) result |= WF_HASCPUID;
@@ -245,8 +246,8 @@ DWORD WINAPI GetWinFlags(void)
  */
 BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
 {
-    printf("GetWinDebugInfo(%8lx,%d) stub returning 0\n",
-           (unsigned long)lpwdi, flags);
+    FIXME(ver, "(%8lx,%d): stub returning 0\n",
+	  (unsigned long)lpwdi, flags);
     /* 0 means not in debugging mode/version */
     /* Can this type of debugging be used in wine ? */
     /* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
@@ -259,7 +260,7 @@ BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
  */
 BOOL16 WINAPI SetWinDebugInfo(WINDEBUGINFO *lpwdi)
 {
-    printf("SetWinDebugInfo(%8lx) stub returning 0\n", (unsigned long)lpwdi);
+    FIXME(ver, "(%8lx): stub returning 0\n", (unsigned long)lpwdi);
     /* 0 means not in debugging mode/version */
     /* Can this type of debugging be used in wine ? */
     /* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
@@ -296,5 +297,6 @@ BOOL16 WINAPI DiagQuery()
  */
 void WINAPI DiagOutput(LPCSTR str)
 {
-	fprintf(stderr,"DIAGOUTPUT:%s\n",str);
+        /* FIXME */
+	DPRINTF("DIAGOUTPUT:%s\n",str);
 }

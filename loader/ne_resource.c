@@ -459,8 +459,8 @@ BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
         pTypeInfo = (NE_TYPEINFO *)pNameInfo;
     }
 
-    TRACE(resource, "[%04x]: no intrinsic resource for %04x\n", 
+    TRACE(resource, "[%04x]: no intrinsic resource for %04x, assuming DirectResAlloc()!\n", 
 		 hModule, handle );
-    GlobalFree16( handle ); /* it could have been DirectResAlloc()'ed */
+    GlobalFree16( handle ); 
     return handle;
 }

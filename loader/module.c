@@ -115,86 +115,86 @@ void MODULE_DumpModule( HMODULE32 hModule )
     }
 
       /* Dump the module info */
-
-    printf( "Module %04x:\n", hModule );
-    printf( "count=%d flags=%04x heap=%d stack=%d\n",
-            pModule->count, pModule->flags,
-            pModule->heap_size, pModule->stack_size );
-    printf( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
-           pModule->cs, pModule->ip, pModule->ss, pModule->sp, pModule->dgroup,
-           pModule->seg_count, pModule->modref_count );
-    printf( "os_flags=%d swap_area=%d version=%04x\n",
-            pModule->os_flags, pModule->min_swap_area,
-            pModule->expected_version );
+    DUMP( "---\n" );
+    DUMP( "Module %04x:\n", hModule );
+    DUMP( "count=%d flags=%04x heap=%d stack=%d\n",
+	  pModule->count, pModule->flags,
+	  pModule->heap_size, pModule->stack_size );
+    DUMP( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
+	  pModule->cs, pModule->ip, pModule->ss, pModule->sp, pModule->dgroup,
+	  pModule->seg_count, pModule->modref_count );
+    DUMP( "os_flags=%d swap_area=%d version=%04x\n",
+	  pModule->os_flags, pModule->min_swap_area,
+	  pModule->expected_version );
     if (pModule->flags & NE_FFLAGS_WIN32)
-        printf( "PE module=%08x\n", pModule->module32 );
+        DUMP( "PE module=%08x\n", pModule->module32 );
 
       /* Dump the file info */
-
-    printf( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
+    DUMP( "---\n" );
+    DUMP( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
 
       /* Dump the segment table */
-
-    printf( "\nSegment table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Segment table:\n" );
     pSeg = NE_SEG_TABLE( pModule );
     for (i = 0; i < pModule->seg_count; i++, pSeg++)
-        printf( "%02x: pos=%d size=%d flags=%04x minsize=%d sel=%04x\n",
-                i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
-                pSeg->minsize, pSeg->selector );
+        DUMP( "%02x: pos=%d size=%d flags=%04x minsize=%d sel=%04x\n",
+	      i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
+	      pSeg->minsize, pSeg->selector );
 
       /* Dump the resource table */
-
-    printf( "\nResource table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Resource table:\n" );
     if (pModule->res_table)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->res_table);
-        printf( "Alignment: %d\n", *pword++ );
+        DUMP( "Alignment: %d\n", *pword++ );
         while (*pword)
         {
             struct resource_typeinfo_s *ptr = (struct resource_typeinfo_s *)pword;
             struct resource_nameinfo_s *pname = (struct resource_nameinfo_s *)(ptr + 1);
-            printf( "id=%04x count=%d\n", ptr->type_id, ptr->count );
+            DUMP( "id=%04x count=%d\n", ptr->type_id, ptr->count );
             for (i = 0; i < ptr->count; i++, pname++)
-                printf( "offset=%d len=%d id=%04x\n",
-                       pname->offset, pname->length, pname->id );
+                DUMP( "offset=%d len=%d id=%04x\n",
+		      pname->offset, pname->length, pname->id );
             pword = (WORD *)pname;
         }
     }
-    else printf( "None\n" );
+    else DUMP( "None\n" );
 
       /* Dump the resident name table */
-
-    printf( "\nResident-name table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Resident-name table:\n" );
     pstr = (char *)pModule + pModule->name_table;
     while (*pstr)
     {
-        printf( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
-                *(WORD *)(pstr + *pstr + 1) );
+        DUMP( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+	      *(WORD *)(pstr + *pstr + 1) );
         pstr += *pstr + 1 + sizeof(WORD);
     }
 
       /* Dump the module reference table */
-
-    printf( "\nModule ref table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Module ref table:\n" );
     if (pModule->modref_table)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->modref_table);
         for (i = 0; i < pModule->modref_count; i++, pword++)
         {
-	    printf( "%d: %04x -> '%s'\n", i, *pword,
+	    DUMP( "%d: %04x -> '%s'\n", i, *pword,
 		    MODULE_GetModuleName(*pword));
         }
     }
-    else printf( "None\n" );
+    else DUMP( "None\n" );
 
       /* Dump the entry table */
-
-    printf( "\nEntry table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Entry table:\n" );
     pstr = (char *)pModule + pModule->entry_table;
     ordinal = 1;
     while (*pstr)
     {
-        printf( "Bundle %d-%d: %02x\n", ordinal, ordinal + *pstr - 1, pstr[1]);
+        DUMP( "Bundle %d-%d: %02x\n", ordinal, ordinal + *pstr - 1, pstr[1]);
         if (!pstr[1])
         {
             ordinal += *pstr;
@@ -204,34 +204,34 @@ void MODULE_DumpModule( HMODULE32 hModule )
         {
             struct entry_tab_movable_s *pe = (struct entry_tab_movable_s*)(pstr+2);
             for (i = 0; i < *pstr; i++, pe++)
-                printf( "%d: %02x:%04x (moveable)\n",
-                        ordinal++, pe->seg_number, pe->offset );
+                DUMP( "%d: %02x:%04x (moveable)\n",
+		      ordinal++, pe->seg_number, pe->offset );
             pstr = (char *)pe;
         }
         else  /* fixed */
         {
             struct entry_tab_fixed_s *pe = (struct entry_tab_fixed_s*)(pstr+2);
             for (i = 0; i < *pstr; i++, pe++)
-                printf( "%d: %04x (fixed)\n",
-                        ordinal++, pe->offset[0] + (pe->offset[1] << 8) );
+                DUMP( "%d: %04x (fixed)\n",
+		      ordinal++, pe->offset[0] + (pe->offset[1] << 8) );
             pstr = (char *)pe;
         }
     }
 
     /* Dump the non-resident names table */
-
-    printf( "\nNon-resident names table:\n" );
+    DUMP( "---\n" );
+    DUMP( "Non-resident names table:\n" );
     if (pModule->nrname_handle)
     {
         pstr = (char *)GlobalLock16( pModule->nrname_handle );
         while (*pstr)
         {
-            printf( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+            DUMP( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
                    *(WORD *)(pstr + *pstr + 1) );
             pstr += *pstr + 1 + sizeof(WORD);
         }
     }
-    printf( "\n" );
+    DUMP( "\n" );
 }
 
 

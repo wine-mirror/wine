@@ -18,7 +18,7 @@ type	win32
  14 stdcall Chord(long long long long long long long long long) Chord32
  15 stdcall CloseEnhMetaFile(long) CloseEnhMetaFile32
  16 stdcall CloseFigure(long) CloseFigure32
- 17 stub CloseMetaFile
+ 17 stdcall CloseMetaFile(long) CloseMetaFile32
  18 stub ColorMatchToTarget
  19 stdcall CombineRgn(long long long long) CombineRgn32
  20 stub CombineTransform
@@ -54,7 +54,7 @@ type	win32
  48 stdcall CreateHatchBrush(long long) CreateHatchBrush32
  49 stdcall CreateICA(str str str ptr) CreateIC32A
  50 stdcall CreateICW(wstr wstr wstr ptr) CreateIC32W
- 51 stub CreateMetaFileA
+ 51 stdcall CreateMetaFileA(str) CreateMetaFile32A
  52 stub CreateMetaFileW
  53 stdcall CreatePalette(ptr) CreatePalette32
  54 stdcall CreatePatternBrush(long) CreatePatternBrush32
@@ -73,7 +73,7 @@ type	win32
  66 stub DeleteColorSpace
  67 stdcall DeleteDC(long) DeleteDC32
  68 stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile32
- 69 stub DeleteMetaFile
+ 69 stdcall DeleteMetaFile(long) DeleteMetaFile32
  70 stdcall DeleteObject(long)	DeleteObject32
  71 stub DescribePixelFormat
  72 stub DeviceCapabilitiesExA
@@ -270,7 +270,7 @@ type	win32
 263 stdcall PlayEnhMetaFile(long long ptr) PlayEnhMetaFile32
 264 stdcall PlayEnhMetaFileRecord(long ptr ptr long) PlayEnhMetaFileRecord32
 265 stdcall PlayMetaFile(long long) PlayMetaFile32
-266 stub PlayMetaFileRecord
+266 stdcall PlayMetaFileRecord(long ptr ptr long) PlayMetaFileRecord32
 267 stub PlgBlt
 268 stub PolyBezier
 269 stub PolyBezierTo
@@ -328,7 +328,7 @@ type	win32
 320 stub SetICMProfileW
 321 stdcall SetMapMode(long long) SetMapMode32
 322 stdcall SetMapperFlags(long long) SetMapperFlags32
-323 stub SetMetaFileBitsEx
+323 stdcall SetMetaFileBitsEx(long ptr) SetMetaFileBitsEx
 324 stub SetMetaRgn
 325 stub SetMiterLimit
 326 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries32

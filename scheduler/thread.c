@@ -550,7 +550,7 @@ BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
  */
 BOOL32 WINAPI TerminateThread(HANDLE32 handle,DWORD exitcode)
 {
-    fprintf(stdnimp,"TerminateThread(0x%08x,%ld), STUB!\n",handle,exitcode);
+    FIXME(thread,"(0x%08x,%ld): STUB!\n",handle,exitcode);
     return TRUE;
 }
 
@@ -573,7 +573,7 @@ BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
  */
 BOOL32 WINAPI ResumeThread( HANDLE32 handle )
 {
-    fprintf(stdnimp,"ResumeThread(0x%08x), STUB!\n",handle);
+    FIXME(thread,"(0x%08x): STUB!\n",handle);
     return TRUE;
 }
 
@@ -582,7 +582,7 @@ BOOL32 WINAPI ResumeThread( HANDLE32 handle )
  */
 BOOL32 WINAPI SuspendThread( HANDLE32 handle )
 {
-    fprintf(stdnimp,"SuspendThread(0x%08x), STUB!\n",handle);
+    FIXME(thread,"(0x%08x): STUB!\n",handle);
     return TRUE;
 }
 

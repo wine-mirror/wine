@@ -24,8 +24,6 @@
 #include "font.h"
 #include "debug.h"
 
-#define DEBUG_FONT_INIT		1
-
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
 
@@ -824,9 +822,8 @@ static void XFONT_WindowsNames( char* buffer )
 		fi->df.dfPitchAndFamily |= bFamilyStyle;
 	}
 
-#ifdef DEBUG_FONT_INIT
 	TRACE(font,"typeface \'%s\'\n", fr->lfFaceName);
-#endif
+
 	fr->fr_flags |= FR_NAMESET;
     }
 
@@ -865,9 +862,8 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
 	/* check if we already got one */
 	if( !lstrcmpi32A( pfa->faTypeFace, lpAlias ) )
 	{
-#ifdef DEBUG_FONT_INIT
-	    TRACE(font,"\tredundant alias '%s' -> '%s'\n", lpAlias, lpTypeFace );
-#endif
+	    TRACE(font,"\tredundant alias '%s' -> '%s'\n", 
+		  lpAlias, lpTypeFace );
 	    return NULL;
 	} 
 	if( pfa->next ) pfa = pfa->next;
@@ -885,9 +881,8 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
         pfa->faAlias = pfa->faTypeFace + j;
         lstrcpy32A( pfa->faAlias, lpAlias );
 
-#ifdef DEBUG_FONT_INIT
         TRACE(font, "\tadded alias '%s' for %s\n", lpAlias, lpTypeFace );
-#endif
+
 	return pfa;
     }
     return NULL;
@@ -987,10 +982,9 @@ static void XFONT_LoadAliases( char** buffer, int buf_size )
 			    prev = pfa;
 			}
 						
-#ifdef DEBUG_FONT_INIT
                         TRACE(font, "\tsubstituted '%s' with %s\n",
 						frMatch->lfFaceName, lpAlias );
-#endif
+
 			lstrcpyn32A( frMatch->lfFaceName, lpAlias, LF_FACESIZE );
 			frMatch->fr_flags |= FR_NAMESET;
 		    }
@@ -1001,7 +995,7 @@ static void XFONT_LoadAliases( char** buffer, int buf_size )
 		    }
 		}
 	    }
-	    else fprintf(stderr, "XFONT_Init: malformed font alias '%s'\n", *buffer );
+	    else ERR(font, " malformed font alias '%s'\n", *buffer );
 	}
 	else break;
     } while(TRUE);
@@ -1395,9 +1389,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 	   fr->resource = (char*) HeapAlloc(SystemHeap, 0, j + 1 );
 	   lstrcpyn32A( fr->resource, typeface, j + 1 );
 
-#ifdef DEBUG_FONT_INIT
 	   TRACE(font,"    family: %s\n", fr->resource );
-#endif
 
 	   if( pfr ) pfr->next = fr;
 	   else fontList = fr;
@@ -1439,15 +1431,14 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 	   XFONT_SetFontMetric( fi, fr, x_fs );
            TSXFreeFont( display, x_fs );
 
-#ifdef DEBUG_FONT_INIT
 	   TRACE(font,"\t[% 2ipt] '%s'\n", fi->df.dfPoints, typeface );
-#endif
+
 	   XFONT_CheckFIList( fr, fi, REMOVE_SUBSETS );
 	   fi = NULL;	/* preventing reuse */
         }
         else
         {
-           fprintf(stderr, "FONT_Init: failed to load %s\n", lpstr );
+           ERR(font, "failed to load %s\n", lpstr );
 
            XFONT_CheckFIList( fr, fi, UNMARK_SUBSETS );
         }
@@ -1484,9 +1475,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   fontCache = (fontObject*) HeapAlloc(SystemHeap, 0, fontCacheSize * sizeof(fontObject));
   XFONT_GrowFreeList(0, fontCacheSize - 1);
 
-#ifdef DEBUG_FONT_INIT
-        TRACE(font,"done!\n");
-#endif
+  TRACE(font,"done!\n");
 
   /* update text caps parameter */
 
@@ -1716,9 +1705,7 @@ static void XFONT_CheckFIList( fontResource* fr, fontInfo* fi, int action)
     fr->count++;
   }
 
-#ifdef DEBUG_FONT_INIT
   if( i ) TRACE(font,"\t    purged %i subsets [%i]\n", i , fr->count);
-#endif
 }
 
 /***********************************************************************
@@ -2226,10 +2213,7 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
  */
 INT32 WINAPI AddFontResource32A( LPCSTR str )
 {
-    if (HIWORD(str))	/* font file */
-        fprintf( stdnimp, "STUB: AddFontResource('%s')\n", str );
-    else		/* font resource handle */
-        fprintf( stdnimp, "STUB: AddFontResource(%04x)\n", LOWORD(str) );
+    FIXME(font, "(%s): stub\n", debugres(str));
     return 1;
 }
 
@@ -2239,7 +2223,7 @@ INT32 WINAPI AddFontResource32A( LPCSTR str )
  */
 INT32 WINAPI AddFontResource32W( LPCWSTR str )
 {
-    fprintf( stdnimp, "STUB: AddFontResource32W(%p)\n", str );
+    FIXME(font, "(%p): stub\n", str );
     return 1;
 }
 
@@ -2248,11 +2232,7 @@ INT32 WINAPI AddFontResource32W( LPCWSTR str )
  */
 BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
 {
-    if (HIWORD(str))
-        fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n",
-		(char *)PTR_SEG_TO_LIN( str) );
-    else
-        fprintf( stdnimp, "STUB: RemoveFontResource(%04x)\n", LOWORD(str) );
+    FIXME(font, "(%s): stub\n",	debugres(PTR_SEG_TO_LIN(str)));
     return TRUE;
 }
 
@@ -2262,10 +2242,7 @@ BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
  */
 BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
 {
-    if (HIWORD(str))
-        fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n", str );
-    else
-        fprintf( stdnimp, "STUB: RemoveFontResource(%04x)\n", LOWORD(str) );
+    FIXME(font, "(%s): stub\n", debugres(str));
     return TRUE;
 }
 
@@ -2275,7 +2252,7 @@ BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
  */
 BOOL32 WINAPI RemoveFontResource32W( LPCWSTR str )
 {
-    fprintf( stdnimp, "STUB: RemoveFontResource32W(%p)\n", str );
+    FIXME(font, "(%p): stub\n", str );
     return TRUE;
 }
 

@@ -109,7 +109,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &STORAGE_Descriptor,  DLL_FLAG_NOT_USED },
     { &STRESS_Descriptor,   0 },
     { &TOOLHELP_Descriptor, 0 },
-    { &TYPELIB_Descriptor,  0 },
+    { &TYPELIB_Descriptor,  DLL_FLAG_NOT_USED },
     { &VER_Descriptor,      0 },
     { &W32SYS_Descriptor,   0 },
     { &WIN32S16_Descriptor, 0 },

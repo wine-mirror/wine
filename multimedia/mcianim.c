@@ -542,8 +542,7 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	TRACE(mcianim,"(%u, %08lX, %p);\n", 
-		wDevID, dwFlags, lpParms);
+	TRACE(mcianim,"(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
 	printf("ANIM_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);

@@ -57,7 +57,7 @@ static void __initWinG(void)
 	return;
       }
     } 
-    fprintf(stdnimp,"WinG: no joy.\n");
+    FIXME(wing,"WinG: no joy.\n");
     __WinGOK = False;
   }
 }
@@ -79,7 +79,7 @@ HDC16 WINAPI WinGCreateDC16(void)
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *fmt)
 {
-  fprintf(stdnimp,"WinGRecommendDIBFormat()\n");
+  FIXME(wing,"(%p): stub\n", fmt);
 
   if( __WinGOK > 0 && fmt )
   {
@@ -95,14 +95,16 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *fmt)
 HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
                                     void **bits)
 {
-  fprintf(stdnimp,"WinGCreateBitmap: empty stub! (expect failure)\n");
+  FIXME(wing,"(%x,%p,%p): empty stub! (expect failure)\n", 
+	winDC, header, bits);
   if( __WinGOK > 0 && header )
   {
     BITMAPINFOHEADER* bmpi = &header->bmiHeader;
 
-    fprintf(stdnimp,"bytes\t=%i\nplanes\t=%i\nbpp\t=%i\nx\t=%i\ny\t=%i\nrle\t=0x%08x\nsize\t=%i\n",
-     (int)bmpi->biSize, bmpi->biPlanes, bmpi->biBitCount,
-     (int)bmpi->biWidth, (int)bmpi->biHeight, (unsigned)bmpi->biCompression, (int)bmpi->biSizeImage);
+     FIXME(wing,"bytes=%i,planes=%i,bpp=%i,x=%i,y=%i,rle=0x%08x,size=%i\n",
+	   (int)bmpi->biSize, bmpi->biPlanes, bmpi->biBitCount,
+	   (int)bmpi->biWidth, (int)bmpi->biHeight, 
+	   (unsigned)bmpi->biCompression, (int)bmpi->biSizeImage);
 
 #ifdef PRELIMINARY_WING16_SUPPORT
     if( bmpi->biPlanes == __bmpiWinG.biPlanes && bmpi->biBitCount == __bmpiWinG.biBitCount &&
@@ -207,7 +209,7 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num,
                                      RGBQUAD* pColor)
 {
-        fprintf(stdnimp,"WinGSetDIBColorTable: empty stub!\n");
+        FIXME(wing,"(%x,%d,%d,%p): empty stub!\n",hWinGDC,start,num,pColor);
         return num;
 }
 
@@ -215,9 +217,9 @@ UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num,
  *  WinGGetDIBColorTable16   (WING.1005)
  */
 UINT16 WINAPI WinGGetDIBColorTable16(HDC16 winDC, UINT16 start,
-                                     UINT16 numentry, RGBQUAD* colors)
+                                     UINT16 num, RGBQUAD* colors)
 {
-	fprintf(stdnimp,"WinGGetDIBColorTable: empty stub!\n");
+        FIXME(wing,"(%x,%d,%d,%p): empty stub!\n",winDC,start,num,colors);
 	return 0;
 }
 
@@ -226,7 +228,7 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 winDC, UINT16 start,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
-        fprintf(stdnimp,"WinGCreateHalfTonePalette: empty stub!\n");
+        FIXME(wing,"(void): empty stub!\n");
 	return 0;
 }
 
@@ -236,7 +238,7 @@ HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 HPALETTE16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
 {
-        fprintf(stdnimp,"WinGCreateHalfToneBrush: empty stub!\n");
+        FIXME(wing,"(...): empty stub!\n");
 	return 0;
 }
 
@@ -250,8 +252,6 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
 {
 
         return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC, xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
-/*        fprintf(stdnimp,"WinGStretchBlt16: empty stub!\n");*/
-/*      return 0; */
 }
 
 /***********************************************************************

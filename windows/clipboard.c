@@ -258,7 +258,7 @@ BOOL16 WINAPI OpenClipboard16( HWND16 hWnd )
 
 
 /**************************************************************************
- *            OpenClipboard32   (USER32.406)
+ *            OpenClipboard32   (USER32.407)
  *
  * Note: Netscape uses NULL hWnd to open the clipboard.
  */
@@ -292,7 +292,7 @@ BOOL16 WINAPI CloseClipboard16(void)
 
 
 /**************************************************************************
- *            CloseClipboard32   (USER32.53)
+ *            CloseClipboard32   (USER32.54)
  */
 BOOL32 WINAPI CloseClipboard32(void)
 {
@@ -320,7 +320,7 @@ BOOL16 WINAPI EmptyClipboard16(void)
 
 
 /**************************************************************************
- *            EmptyClipboard32   (USER32.168)
+ *            EmptyClipboard32   (USER32.169)
  */
 BOOL32 WINAPI EmptyClipboard32(void)
 {
@@ -370,7 +370,7 @@ HWND16 WINAPI GetClipboardOwner16(void)
 
 
 /**************************************************************************
- *            GetClipboardOwner32   (USER32.224)
+ *            GetClipboardOwner32   (USER32.225)
  */
 HWND32 WINAPI GetClipboardOwner32(void)
 {
@@ -438,7 +438,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 
 
 /**************************************************************************
- *            SetClipboardData32   (USER32.469)
+ *            SetClipboardData32   (USER32.470)
  */
 HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
 {
@@ -543,7 +543,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 
 
 /**************************************************************************
- *             GetClipboardData32   (USER32.221)
+ *             GetClipboardData32   (USER32.222)
  */
 HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
 {
@@ -561,7 +561,7 @@ INT16 WINAPI CountClipboardFormats16(void)
 
 
 /**************************************************************************
- *           CountClipboardFormats32   (USER32.62)
+ *           CountClipboardFormats32   (USER32.63)
  */
 INT32 WINAPI CountClipboardFormats32(void)
 {
@@ -601,7 +601,7 @@ UINT16 WINAPI EnumClipboardFormats16( UINT16 wFormat )
 
 
 /**************************************************************************
- *            EnumClipboardFormats32   (USER32.178)
+ *            EnumClipboardFormats32   (USER32.179)
  */
 UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
 {
@@ -688,7 +688,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
 
 /**************************************************************************
- *            RegisterClipboardFormat32A   (USER32.430)
+ *            RegisterClipboardFormat32A   (USER32.431)
  */
 UINT32 WINAPI RegisterClipboardFormat32A( LPCSTR formatName )
 {
@@ -697,7 +697,7 @@ UINT32 WINAPI RegisterClipboardFormat32A( LPCSTR formatName )
 
 
 /**************************************************************************
- *            RegisterClipboardFormat32W   (USER32.431)
+ *            RegisterClipboardFormat32W   (USER32.432)
  */
 UINT32 WINAPI RegisterClipboardFormat32W( LPCWSTR formatName )
 {
@@ -717,7 +717,7 @@ INT16 WINAPI GetClipboardFormatName16( UINT16 wFormat, LPSTR retStr, INT16 maxle
 
 
 /**************************************************************************
- *            GetClipboardFormatName32A   (USER32.222)
+ *            GetClipboardFormatName32A   (USER32.223)
  */
 INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxlen )
 {
@@ -736,7 +736,7 @@ INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxl
 
 
 /**************************************************************************
- *            GetClipboardFormatName32W   (USER32.223)
+ *            GetClipboardFormatName32W   (USER32.224)
  */
 INT32 WINAPI GetClipboardFormatName32W( UINT32 wFormat, LPWSTR retStr, INT32 maxlen )
 {
@@ -758,7 +758,7 @@ HWND16 WINAPI SetClipboardViewer16( HWND16 hWnd )
 
 
 /**************************************************************************
- *            SetClipboardViewer32   (USER32.470)
+ *            SetClipboardViewer32   (USER32.471)
  */
 HWND32 WINAPI SetClipboardViewer32( HWND32 hWnd )
 {
@@ -781,7 +781,7 @@ HWND16 WINAPI GetClipboardViewer16(void)
 
 
 /**************************************************************************
- *           GetClipboardViewer32   (USER32.225)
+ *           GetClipboardViewer32   (USER32.226)
  */
 HWND32 WINAPI GetClipboardViewer32(void)
 {
@@ -798,7 +798,7 @@ BOOL16 WINAPI ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 }
 
 /**************************************************************************
- *           ChangeClipboardChain32   (USER32.21)
+ *           ChangeClipboardChain32   (USER32.22)
  */
 BOOL32 WINAPI ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
 {
@@ -830,7 +830,7 @@ BOOL16 WINAPI IsClipboardFormatAvailable16( UINT16 wFormat )
 
 
 /**************************************************************************
- *           IsClipboardFormatAvailable32   (USER32.339)
+ *           IsClipboardFormatAvailable32   (USER32.340)
  */
 BOOL32 WINAPI IsClipboardFormatAvailable32( UINT32 wFormat )
 {
@@ -853,7 +853,7 @@ HWND16 WINAPI GetOpenClipboardWindow16(void)
 
 
 /**************************************************************************
- *             GetOpenClipboardWindow32   (USER32.276)
+ *             GetOpenClipboardWindow32   (USER32.277)
  */
 HWND32 WINAPI GetOpenClipboardWindow32(void)
 {

@@ -11,7 +11,7 @@
 #include "module.h"
 
 /***********************************************************************
- *           WinNotify       (WINDEBUG.1)
+ *           WinNotify       (WINDEBUG.3)
  *  written without _any_ docu
  */
 void WinNotify(CONTEXT *context)

@@ -1,0 +1,37 @@
+This file contains information on the current implementation of the DirectSound
+API.
+
+The DirectSound API can be found in the Win32 DLL dsound.dll and in the
+IDirectSound* interfaces. It is implemented in multimedia/dsound.c.
+
+The current implementation uses the Linux/FreeBSD OpenSoundSystem. Some
+applications already work. There is only the basic part of the interfaces 
+implemented, but it is the stuff used by 90% of the applications.
+It also uses multithreading, so it will only work on systems with working
+CreateThread.
+
+Tested with SoundBlaster(16) clone and Gravis UltraSound Classic.
+
+TODO:
+	- Add support for other audiosystems.
+		+ Sun Audio. (Solaris and probably the *BSDs except FreeBSD.)
+		+ remote audio support (No clue as to what systems there are.
+		  Use some audio xextensions?)
+	- Add support for mixing of different frequency and panning.
+	- Fix all the multithread pending race conditions and the like.
+	- Share filedescriptors and other stuff with mciwave/waveoutdevice code.
+
+
+Gamestatus:
+	- Wing Commander 4/W95:
+	  The intromovie plays without problems. Nearly lipsynchron.
+	- DiscWorld 2
+	  The sound works, but noticeable chunks are left out (from the sound
+	  and the animation). Don't know why yet.
+	- Diablo:
+	  Sound works, but slows down the movieplayer. In the (hacked version)
+	  game the sound is positively weird.
+	- Monkey Island 3:
+	  The background sound of the startscreen works.
+	- WingCommander Prophecy Demo:
+	  Sound works for the intromovie.

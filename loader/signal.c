@@ -74,11 +74,10 @@ static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
 }
 #endif /* linux && __i386__ */
 
-
 /* Signal stack */
 
 static char SIGNAL_Stack[16384];
-
+static sigset_t async_signal_set;
 
 /**********************************************************************
  *              SIGNAL_child
@@ -155,6 +154,8 @@ BOOL32 SIGNAL_Init(void)
 {
     extern void SYNC_SetupSignals(void);
 
+    sigemptyset(&async_signal_set);
+
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__svr4__) || defined(_SCO_DS)
     struct sigaltstack ss;
     ss.ss_sp    = SIGNAL_Stack;
@@ -169,11 +170,19 @@ BOOL32 SIGNAL_Init(void)
     
     SIGNAL_SetHandler( SIGCHLD, (void (*)())SIGNAL_child, 1);
 #ifdef CONFIG_IPC
+    sigaddset(&async_signal_set, SIGUSR2);
     SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait, 1); 	/* For IPC */
 #endif
 #ifdef SIGIO
+    sigaddset(&async_signal_set, SIGIO);
     SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0); 
 #endif
+
+    sigaddset(&async_signal_set, SIGALRM);
+
+    /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
+    signal (SIGPIPE, SIG_IGN);
+
     SYNC_SetupSignals();
     return TRUE;
 }
@@ -184,13 +193,6 @@ BOOL32 SIGNAL_Init(void)
  */
 void SIGNAL_MaskAsyncEvents( BOOL32 flag )
 {
-  sigset_t 	set;
-  sigemptyset(&set);
-#ifdef SIGIO
-  sigaddset(&set, SIGIO);
-#endif
-#ifdef CONFIG_IPC
-  sigaddset(&set, SIGUSR2);
-#endif
-  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &set, NULL);
+  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &async_signal_set, NULL);
 }
+

@@ -3,10 +3,10 @@
 #define __WINE_DEBUGTOOLS_H
 
 #include <stdio.h>
+#include "debugstr.h"
 
 #define DEBUG_RUNTIME
-#define stddeb  stdout
-#define stdnimp stdout
+#define stddeb  stderr
 
 #define DEBUG_CLASS_COUNT 4
 
@@ -31,8 +31,7 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
   (dbg_ch_index(ch) >=0 && dbg_cl_index(cl) >= 0 && \
    debug_msg_enabled[dbg_ch_index(ch)][dbg_cl_index(cl)])
 
-#define DPRINTF(format, args...) \
-  fprintf(stddeb, format, ## args)
+#define DPRINTF(format, args...) fprintf(stddeb, format, ## args)
 
 #define DPRINTF_(cl, ch, format, args...) \
   if(!DEBUGGING(cl, ch)) ; \
@@ -42,6 +41,9 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #define WARN(ch, fmt, args...)  DPRINTF_(warn,  ch, fmt, ## args)
 #define FIXME(ch, fmt, args...) DPRINTF_(fixme, ch, fmt, ## args)
 #define ERR(ch, fmt, args...)   DPRINTF_(err, ch, fmt, ## args)
+
+#define DUMP(format, args...)   DPRINTF(format, ## args)
+#define MSG(format, args...)    fprintf(stderr, format, ## args)
 
 #define FIXME_ON(ch)  DEBUGGING(fixme, ch)
 #define ERR_ON(ch)    DEBUGGING(err, ch)

@@ -115,7 +115,7 @@ HPALETTE32 WINAPI CreatePalette32( const LOGPALETTE* palette )
  */
 HPALETTE32 WINAPI CreateHalftonePalette(HDC32 hdc)
 {
-  fprintf(stdnimp,"CreateHalftonePalette: empty stub!\n");
+  FIXME(palette,"(%x): empty stub!\n", hdc);
   return NULL;
 }
 
@@ -312,8 +312,7 @@ UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
 UINT32 WINAPI SetSystemPaletteUse32( HDC32 hdc, UINT32 use )
 {
     UINT32 old = SystemPaletteUse;
-    fprintf( stdnimp,"SetSystemPaletteUse(%04x,%04x) // empty stub !!!\n",
-             hdc, use );
+    FIXME(palette,"(%04x,%04x): empty stub !!!\n", hdc, use );
     SystemPaletteUse = use;
     return old;
 }
@@ -536,9 +535,9 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
     }
     else TRACE(palette, "  skipping (hLastRealizedPalette = %04x)\n",
 			 hLastRealizedPalette);
-    
     GDI_HEAP_UNLOCK( hdc );
-    FIXME(palette, "   realized %i colors - not impmenented?\n", realized );
+
+    TRACE(palette, "   realized %i colors.\n", realized );
     return (UINT16)realized;
 }
 

@@ -933,8 +933,7 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
 static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	TRACE(cdaudio,"(%04X, %08lX, %p);\n", 
-		wDevID, dwFlags, lpParms);
+    	TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
 	printf("CDAUDIO_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);

@@ -1,0 +1,23 @@
+/* XPM */
+static char * obm_restored_95[] = {
+"16 14 6 1",
+" 	s button_highlight	c white",
+"+	s button_edge	c grey85",
+"X	s button_face	c grey75",
+"o	s button_shadow	c grey50",
+".	s button_text	c black",
+"O	s window_frame	c black",
+"OOOOOOOOOOOOOOO ",
+"Oooooooooooooo+ ",
+"OoXXXXXXXXXXXX+ ",
+"OoXXXX......XX+ ",
+"OoXXXX......XX+ ",
+"OoXXXX.XXXX.XX+ ",
+"OoXX......X.XX+ ",
+"OoXX......X.XX+ ",
+"OoXX.XXXX...XX+ ",
+"OoXX.XXXX.XXXX+ ",
+"OoXX.XXXX.XXXX+ ",
+"OoXX......XXXX+ ",
+"O++++++++++++++ ",
+"                "};

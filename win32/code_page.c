@@ -118,10 +118,10 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
     int eos = 0;
     int dont_copy= (dstlen==0);
     if (page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
-	fprintf(stdnimp,"Conversion in CP %d not supported\n",page);
+	FIXME(win32,"Conversion in CP %d not supported\n",page);
 #if 0
     if (flags)
-	fprintf(stdnimp,"WideCharToMultiByte flags %lx not supported\n",flags);
+	FIXME(win32,"flags %lx not supported\n",flags);
 #endif
     if(used)
 	*used=0;
@@ -207,9 +207,7 @@ BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
  */
 BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags)
 {
-	TRACE(win32,"(%p,%08lx)\n",
-		lpfnCodePageEnum,flags
-	);
+	TRACE(win32,"(%p,%08lx)\n",lpfnCodePageEnum,flags);
 	lpfnCodePageEnum("437");
 	return TRUE;
 }
@@ -221,8 +219,7 @@ BOOL32 WINAPI EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum,
                                       DWORD flags)
 {
     WCHAR	*cp;
-    TRACE(win32,"(%p,%08lx)\n",
-                  lpfnCodePageEnum,flags );
+    TRACE(win32,"(%p,%08lx)\n",lpfnCodePageEnum,flags );
 
     cp = HEAP_strdupAtoW( GetProcessHeap(), 0, "437" );
     lpfnCodePageEnum(cp);

@@ -18,7 +18,7 @@ void WINAPI NetBIOSCall( CONTEXT *context )
 {
     BYTE* ptr;
     ptr = (BYTE*) PTR_SEG_OFF_TO_LIN(ES_reg(context),BX_reg(context));
-    fprintf(stdnimp,"NetBIOSCall: command code %02x (ignored)\n",*ptr);
+    FIXME(int,"(%p): command code %02x (ignored)\n",context, *ptr);
     AL_reg(context) = *(ptr+0x01) = 0xFB; /* NetBIOS emulator not found */
 }
 

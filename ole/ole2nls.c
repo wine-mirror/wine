@@ -282,7 +282,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 		i++;
 	}
 	if (!retString) {
-		fprintf(stderr,"Unkown LC type %lX\n",LCType);
+		WARN(ole,"Unkown LC type %lX\n",LCType);
 		return 0;
 	}
 
@@ -1787,7 +1787,7 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
     }  /* switch */
 
 	if(!found) {
-		fprintf(stderr,"'%s' not supported for your language.\n",
+		ERR(ole,"'%s' not supported for your language.\n",
 			retString);
 		retString = "<WINE-NLS-unknown>";
 		/*return 0;*/
@@ -1831,11 +1831,9 @@ UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle,
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
-	{
-		fprintf(stdnimp, "CompareStringA: IGNORENONSPACE not supprted\n");
-	}
+		FIXME(ole, "IGNORENONSPACE not supprted\n");
 	if(fdwStyle & NORM_IGNORESYMBOLS)
-		fprintf(stdnimp, "CompareStringA: IGNORESYMBOLS not supported\n");
+		FIXME(ole, "IGNORESYMBOLS not supported\n");
 	/* Is strcmp defaulting to string sort or to word sort?? */
 	/* FIXME: Handle NORM_STRINGSORT */
 	l1 = (l1==-1)?strlen(s1):l1;
@@ -1861,9 +1859,9 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
-		fprintf(stdnimp,"CompareStringW:IGNORENONSPACE not supprted\n");
+		FIXME(ole,"IGNORENONSPACE not supprted\n");
 	if(fdwStyle & NORM_IGNORESYMBOLS)
-		fprintf(stdnimp,"CompareStringW:IGNORESYMBOLS not supported\n");
+		FIXME(ole,"IGNORESYMBOLS not supported\n");
 
 	/* Is strcmp defaulting to string sort or to word sort?? */
 	/* FIXME: Handle NORM_STRINGSORT */
@@ -1885,7 +1883,7 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
  */
 BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
-    fprintf(stdnimp,"SetLocaleInfoA(%ld,%ld,%s)\n",lcid,lctype,data);
+    FIXME(ole,"(%ld,%ld,%s): stub\n",lcid,lctype,data);
     return TRUE;
 }
 
@@ -1909,8 +1907,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 	WCHAR	buffer[200];
 	HKEY	xhkey;
 
-	TRACE(win32,"(%p,%08lx)\n",
-                      lpfnLocaleEnum,flags );
+	TRACE(win32,"(%p,%08lx)\n",lpfnLocaleEnum,flags );
 	/* see if we can reuse the Win95 registry entries.... */
 	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
 		i=0;
@@ -2003,10 +2000,10 @@ BOOL32 WINAPI GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,
 
 	switch (dwInfoType) {
 	case CT_CTYPE2:
-		fprintf(stderr,"GetStringType32A:CT_CTYPE2 not supported.\n");
+		FIXME(ole,"CT_CTYPE2 not supported.\n");
 		return FALSE;
 	case CT_CTYPE3:
-		fprintf(stderr,"GetStringType32A:CT_CTYPE3 not supported.\n");
+		FIXME(ole,"CT_CTYPE3 not supported.\n");
 		return FALSE;
 	default:break;
 	}
@@ -2050,10 +2047,10 @@ BOOL32 WINAPI GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,
 
 	switch (dwInfoType) {
 	case CT_CTYPE2:
-		fprintf(stderr,"GetStringType32W:CT_CTYPE2 not supported.\n");
+		FIXME(ole,"CT_CTYPE2 not supported.\n");
 		return FALSE;
 	case CT_CTYPE3:
-		fprintf(stderr,"GetStringType32W:CT_CTYPE3 not supported.\n");
+		FIXME(ole,"CT_CTYPE3 not supported.\n");
 		return FALSE;
 	default:break;
 	}
@@ -2163,10 +2160,9 @@ INT32 WINAPI LCMapString32A(
 	}
 	if (mapflags)
 	  {
-	    fprintf(stderr,
-		    "LCMapStringA(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
-		    lcid,mapflags,srcstr,srclen,dststr,dstlen);
-		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	    FIXME(ole,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
+		  "unimplemented flags: 0x%08lx\n",
+		  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
 	  }
 	return len;
 }
@@ -2202,10 +2198,9 @@ INT32 WINAPI LCMapString32W(
 	}
 	if (mapflags)
 	  {
-	    fprintf(stderr,
-		    "LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
-		    lcid,mapflags,srcstr,srclen,dststr,dstlen);
-		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	    FIXME(ole,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
+		  "unimplemented flags: 0x%08lx\n",
+		  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
 	  }
 	return len;
 }
@@ -2255,16 +2250,16 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
 {
    INT32 inpos, outpos;
    int count, type, inquote, Overflow;
-  char buf[40];
-  int buflen;
+   char buf[40];
+   int buflen;
 
    const char * _dgfmt[] = { "%d", "%02d" };
    const char ** dgfmt = _dgfmt - 1; 
 
    /* report, for debugging */
-   TRACE(ole, "func(%8x,%8x, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%9s), len=%ld)\n", locale, flags,
-		xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
-		format, format, date, date, datelen);
+   TRACE(ole, "func(%#lx,%#lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%9s), len=%d)\n", locale, flags,
+	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
+	 format, format, date, date, datelen);
   
    /* initalize state variables and output buffer */
    inpos = outpos = 0;
@@ -2571,13 +2566,11 @@ INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,
 			      LPCSTR format, 
 			      LPSTR timestr,INT32 timelen) 
 {
-   INT32 ret;
    LPCSTR realformat;
    char fmt_buf[40];
    
    TRACE(ole,"GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
-		locale,flags,xtime,format,timestr,timelen
-	);
+	 locale,flags,xtime,format,timestr,timelen);
    
    if (format) {
       realformat = format;

@@ -129,7 +129,7 @@ _MCISTR_printtf(char *buf,UINT16 uDevType,DWORD timef,DWORD val) {
 		);
 		break;
 	default:
-		fprintf(stdnimp,__FILE__":MCISTR_Status:missing timeformat for %ld, report.\n",timef);
+		FIXME(mci, "missing timeformat for %ld, report.\n",timef);
 		strcpy(buf,"0"); /* hmm */
 		break;
 	}
@@ -165,7 +165,7 @@ _MCISTR_convreturn(int type,DWORD dwReturn,LPSTR lpstrReturnString,
 		case MCI_SEQ_SMPTE:_MCI_STR("smpte");break;
 		case MCI_SEQ_FILE:_MCI_STR("file");break;
 		case MCI_SEQ_MIDI:_MCI_STR("midi");break;
-		default:fprintf(stdnimp,__FILE__":MCISTR_Status:missing sequencer mode %ld\n",dwReturn);
+		default:FIXME(mci,"missing sequencer mode %ld\n",dwReturn);
 		}
 		break;
 	case _MCISTR_mode:
@@ -208,7 +208,7 @@ _MCISTR_convreturn(int type,DWORD dwReturn,LPSTR lpstrReturnString,
 		case MCI_FORMAT_MSF:_MCI_STR("msf");break;
 		case MCI_FORMAT_TMSF:_MCI_STR("tmsf");break;
 		default:
-			fprintf(stdnimp,__FILE__":MCISTR_Status:missing timeformat for %d, report.\n",timef);
+			FIXME(mci,"missing timefmt for %d, report.\n",timef);
 			break;
 		}
 		break;
@@ -233,11 +233,12 @@ _MCISTR_convreturn(int type,DWORD dwReturn,LPSTR lpstrReturnString,
 		case MCI_DEVTYPE_OTHER:_MCI_STR("other");break;
 		case MCI_DEVTYPE_WAVEFORM_AUDIO:_MCI_STR("waveform audio");break;
 		case MCI_DEVTYPE_SEQUENCER:_MCI_STR("sequencer");break;
-		default:fprintf(stdnimp,__FILE__":_MCISTR_convreturn:unknown device type %ld, report.\n",dwReturn);break;
+		default:FIXME(mci,"unknown device type %ld, report.\n",
+			      dwReturn);break;
 		}
 		break;
 	default:
-		fprintf(stdnimp,__FILE__":_MCISTR_convreturn:unknown resulttype %d, report.\n",type);
+		FIXME(mci,"unknown resulttype %d, report.\n",type);
 		break;
 	}
 }
@@ -388,7 +389,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 				} else if (sscanf(keywords[i+1],"%ld",&st)) {
 					pU->animopenParams.dwStyle |= st; 
 				} else
-					fprintf(stdnimp,__FILE__":MCISTR_Open:unknown 'style' keyword %s, please report.\n",keywords[i+1]);
+					FIXME(mci,"unknown 'style' keyword %s, please report.\n",keywords[i+1]);
 				i+=2;
 				continue;
 			}
@@ -420,13 +421,14 @@ MCISTR_Open(_MCISTR_PROTO_) {
 				} else if (sscanf(keywords[i+1],"%ld",&st)) {
 					pU->ovlyopenParams.dwStyle |= st; 
 				} else
-					fprintf(stdnimp,__FILE__":MCISTR_Open:unknown 'style' keyword %s, please report.\n",keywords[i+1]);
+					FIXME(mci,"unknown 'style' keyword %s, please report.\n",keywords[i+1]);
 				i+=2;
 				continue;
 			}
 			break;
 		}
-		fprintf(stdnimp,__FILE__":MCISTR_Open:unknown parameter passed %s, please report.\n",keywords[i]);
+		FIXME(mci,"unknown parameter passed %s, please report.\n",
+		      keywords[i]);
 		i++;
 	}
 	_MCI_CALL_DRIVER( MCI_OPEN, SEGPTR_GET(pU) );
@@ -619,7 +621,7 @@ MCISTR_Status(_MCISTR_PROTO_) {
 			ITEM1("level",MCI_WAVE_STATUS_LEVEL,_MCISTR_int);
 			break;
 		}
-		fprintf(stdnimp,__FILE__":MCISTR_Status:unknown keyword '%s'\n",keywords[i]);
+		FIXME(mci,"unknown keyword '%s'\n",keywords[i]);
 		i++;
 	}
 	if (!statusParams->dwItem) 
@@ -1058,7 +1060,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 		parsestr="%d:%d:%d:%d";
 		nrargs=4;
 		break;
-	default:fprintf(stdnimp,"mciSendString:PLAY:unknown timeformat %d, please report.\n",timef);
+	default:FIXME(mci,"unknown timeformat %d, please report.\n",timef);
 		parsestr="%d";
 		nrargs=1;
 		break;
@@ -1147,7 +1149,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 		parsestr="%d:%d:%d:%d";
 		nrargs=4;
 		break;
-	default:fprintf(stdnimp,"mciSendString:PLAY:unknown timeformat %d, please report.\n",timef);
+	default:FIXME(mci,"unknown timeformat %d, please report.\n",timef);
 		parsestr="%d";
 		nrargs=1;
 		break;
@@ -1244,7 +1246,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 		parsestr="%d:%d:%d:%d";
 		nrargs=4;
 		break;
-	default:fprintf(stdnimp,"mciSendString:SEEK:unknown timeformat %d, please report.\n",timef);
+	default:FIXME(mci,"unknown timeformat %d, please report.\n",timef);
 		parsestr="%d";
 		nrargs=1;
 		break;
@@ -1529,7 +1531,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 		parsestr="%d:%d:%d:%d";
 		nrargs=4;
 		break;
-	default:fprintf(stdnimp,"mciSendString:DELETE:unknown timeformat %d, please report.\n",timef);
+	default:FIXME(mci,"unknown timeformat %d, please report.\n",timef);
 		parsestr="%d";
 		nrargs=1;
 		break;
@@ -2204,9 +2206,8 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
  		free(keywords);free(cmd);
  		return	res;
  	}
-	fprintf(stdnimp,"mciSendString('%s', %p, %u, %X) // unimplemented, please report.\n", lpstrCommand, 
-		lpstrReturnString, uReturnLength, hwndCallback
-	);
+	FIXME(mci,"('%s', %p, %u, %X): unimplemented, please report.\n", 
+	      lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
 	free(keywords);free(cmd);
 	return MCIERR_MISSING_COMMAND_STRING;
 }

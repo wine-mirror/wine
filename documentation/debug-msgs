@@ -1,5 +1,4 @@
-Note: The new debugging interface is starting to take shape.
-      In general, I think it can be considered to be stable,
+Note: The new debugging interface can be considered to be stable,
       with the exception of the in-memory message construction functions.
       However, there is still a lot of work to be done to polish
       things up and to convert the remaining fprintf. To make my life 
@@ -8,9 +7,13 @@ Note: The new debugging interface is starting to take shape.
       Read this document before writing new code.
       Also, DO NOT USE fprintf (or printf) to output things. All these
       will have to be translated to the new interface and there are already
-      about 3000 of them! Also, instead of writing FIXMEs in the source,
-      output a FIXME message if you can. But read on...
-14 Mar 1998, Dimitrie O. Paun <dimi@cs.toronto.edu>
+      about 1000 of them! Also, instead of writing FIXMEs in the source,
+      output a FIXME message if you can. 
+
+      IMPORTANT: at the end of the document, there is a "Style Guide"
+      for debugging messages. Please read it.
+
+28 Mar 1998, Dimitrie O. Paun <dimi@cs.toronto.edu>
 
 
 Debugging classes
@@ -25,8 +28,9 @@ FIXME -- Messages in this class relate to behavior of Wine that does
 
 ERR   -- Messages in this class relate to serious errors in Wine.
          This sort of messages are close to asserts -- that is,
-         you should output a error message when the code detects a
-         condition which should not happen.
+         you should output an error message when the code detects a
+         condition which should not happen. In other words, important
+         things that are not warnings (see below), are errors.
 	 Examples: unexpected change in internal state, etc.
 
 WARN  -- These are warning messages. You should report a warning when
@@ -67,8 +71,8 @@ size of Wine.
 Debugging channels
 ------------------
 
-Also, we divide the debugging messages per component. Each component
-is assigned a debugging channel. The identifier of the
+Also, we divide the debugging messages on a component basis. Each
+component is assigned a debugging channel. The identifier of the
 channel must be a valid C identifier but note that it may also be a
 reserve word like int or static.
 
@@ -80,7 +84,7 @@ We will refer to a generic channel as xxx.
 Note: for those who know the old interface, the channel/type is
       what followed the _ in the dprintf_xxx statements.
       For example, to output a message on the debugging channel
-      reg in the old interface you would have to write:
+      reg in the old interface you would had to write:
 
       dprintf_reg(stddeb, "Could not access key!\n");
 
@@ -88,15 +92,12 @@ Note: for those who know the old interface, the channel/type is
       However, we add an orthogonal piece of information to the
       message: its class. This is very important as it will allow
       us to selectively turn on or off certain messages based on the
-      type of information they report. For this reason it is VERY
-      important to choose the right class for the message. 
+      type of information they report. For this reason it is essential
+      to choose the right class for the message. 
       Anyhow, suppose we figured that this message should belong
       in the WARN class, so in the new interface, you write:
 
-      WARN(reg, "Could not access key!");
-
-      Notice the \n is no longer required.
-
+      WARN(reg, "Could not access key!\n");
 ---
 
 How to use it
@@ -117,8 +118,7 @@ Some examples from the code:
 
 ...
 
-  TRACE(crtdll, "CRTDLL_setbuf(file %p buf %p)",
-	       file, buf);
+  TRACE(crtdll, "CRTDLL_setbuf(file %p buf %p)", file, buf);
 
   WARN(aspi, "Error opening device errno=%d", save_error);
 
@@ -142,10 +142,9 @@ Notes:
       he will most likely miss those because usually the TRACE class
       is turned off. A similar argument can be made if you mix any
       other two classes.
-   2. All lines end by default with a newline. So you should not
-      add one more.  If you can NOT output everything that you want in 
-      the line with only one statement, then you need to build the string
-      in memory.
+   2. All lines should end with a newline.If you can NOT output 
+      everything that you want in the line with only one statement, 
+      then you need to build the string in memory.
       Please read the section below "In-memory messages" on the
       preferred way to do it. PLEASE USE THAT INTERFACE TO BUILD
       MESSAGES IN MEMORY. The reason is that we are not sure that
@@ -160,19 +159,19 @@ Are we debugging?
 To test whether the debugging output of class yyy on channel xxx is
 enabled, use:
 
-TRACING  to test if TRACE is enabled
-WARNING  to test if WARN is enabled
-FIXMING  to test if FIXME is enabled
-ERRING   to test if ERR is enabled
+TRACE_ON  to test if TRACE is enabled
+WARN_ON   to test if WARN is enabled
+FIXME_ON  to test if FIXME is enabled
+ERR_ON    to test if ERR is enabled
 
 Examples:
 
-if(TRACING(atom)){
+if(TRACE_ON(atom)){
   ...blah...
 }
 
-Note that you should normaly need to test only if TRACING. At present,
-none of the other 3 tests (except for ERRING which is used only once!)
+Note that you should normally need to test only if TRACE_ON. At present,
+none of the other 3 tests (except for ERR_ON which is used only once!)
 are used in Wine.
 
 In-memory messages
@@ -299,7 +298,7 @@ identifier is a string and thus returns a string of the form:
 
 Thus, to use it, do something on the following lines:
 
-#include "debugstr.h"
+#include "debug.h"
 
 ...
 
@@ -351,6 +350,108 @@ Also, note that at the moment:
    - the fixme and err classes are enabled by default
    - the trace and warn  classes are disabled by default
    - there is no way to compile out the messages. All are 
-     runtime configurable. This will come next release.
+     runtime configurable. This will (hopefully) come next 
+     release.
 
 
+A Few Notes on Style
+--------------------
+
+This new scheme makes certain things more consistent but there is still
+room for improvement by using a common style of debug messages. Before
+I continue, let me note that the output format is the following:
+
+yyy:xxx:fff <message>
+
+where: 
+  yyy = the class (fixme, err, warn, trace)
+  xxx = the channel (atom, win, font, etc)
+  fff = the function name
+these fields are output automatically. All you have to provide is
+the <message> part.
+
+So here are some ideas:
+
+* do NOT include the name of the function: it is included automatically
+
+* if you want to output the parameters of the function, do it as the first
+thing and include them in parenthesis, like this:
+
+   YYY(xxx, "(%d,%p,etc)...\n", par1, par2, ...);
+
+* for stubs, you should output a FIXME message. I suggest this style:
+
+   FIXME(xxx, "(%x,%d...): stub\n", par1, par2, ...);
+
+  That is, you output the parameters, then a : and then a string
+containing the word "stub". I've seen "empty stub", and others, but I
+think that just "stub" suffices.
+
+* output 1 and ONLY 1 line per message. That is, the format string should
+contain only 1 \n and it should always appear at the end of the string.
+(there are many reasons  for this requirement, one of them is that each
+debug macro adds things to the beginning of the line)
+
+* if you want to name a value, use = and NOT :. That is, instead of
+saying:
+  FIXME(xxx, "(fd: %d, file: %s): stub\n", fd, name);
+say:
+  FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
+
+use : to separate categories.
+
+* try to avoid the style:
+
+   FIXME(xxx,
+         "(fd: %d, file: %s): stub\n", fd, name);
+but use:
+
+  FIXME(xxx, "(fd: %d, file: %s): stub\n", fd, name);
+
+The reason is that if you want to grep for things, you would search for
+FIXME but in the first case there is no additional information available,
+where in the second one, there is (e.g. the word stub)
+
+* if you output a string s that might contain control characters,
+  or if s may be null, use debugstr_a (for ASCII strings, or
+  debugstr_w for Unicode strings) to convert s to a C string, like 
+  this:
+
+   HANDLE32 WINAPI YourFunc(LPCSTR s)
+{
+   FIXME(xxx, "(%s): stub\n", debugstr_a(s));
+}
+
+* if you want to output a resource identifier, use debugres to
+  convert it to a string first, like this:
+
+   HANDLE32 WINAPI YourFunc(LPCSTR res)
+{
+   FIXME(xxx, "(res=%s): stub\n", debugres(s));
+}
+
+if the resource identifier is a SEGPTR, use PTR_SEG_TO_LIN to get a
+liner pointer first:
+
+HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
+{
+[...]
+    TRACE(resource, "module=%04x name=%s type=%s\n", 
+		 hModule, debugres(PTR_SEG_TO_LIN(name)), 
+		 debugres(PTR_SEG_TO_LIN(type)) );
+[...]
+}
+
+* for messages intended for the user (specifically those that report
+  errors in wine.conf), use the MSG macro. Use it like a printf:
+
+           MSG( "Definition of drive %d is incorrect!\n", drive ); 
+
+  However, note that there are _very_ few valid uses of this macro.
+  Most messages are debugging messages, so chances are you will not
+  need to use this macro. Grep the source to get an idea where it
+  is appropriate to use it.
+
+* for structure dumps, use the DUMP macro. Use it like a printf,
+  just like the MSG macro. Similarly, there are only a few valid
+  uses of this macro. Grep the source to see when to use it.

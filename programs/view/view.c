@@ -11,6 +11,7 @@
 
 #include "globals.h"        
 #include "resource.h"
+#include <stdio.h>
 
 BOOL FileIsPlaceable( LPCSTR szFileName );
 HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName );
@@ -67,12 +68,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    if (FileOpen(hwnd, filename)) {
 	      isAldus = FileIsPlaceable(filename);
 	      if (isAldus) {
-#if 1
 		hmf = GetPlaceableMetaFile(filename);
-#else
-		MessageBox(hwnd, "This is an Aldus placeable metafile: I can't deal with those!",
-			   "Aldus", MB_OK);
-#endif
 	      } else {
 		RECT r;
 		hmf = GetMetaFile(filename);
@@ -142,54 +138,58 @@ BOOL FileIsPlaceable( LPCSTR szFileName )
   return (apmh.key == APMHEADER_KEY);
 }
 
-/* this code doesn't work */
-#if 1
 HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
 {
-  HANDLE hData;
   LPSTR	lpData;
   METAHEADER mfHeader;
   APMFILEHEADER	APMHeader;
-  HMETAFILE hmf = NULL;
   HFILE	fh;
+  HMETAFILE hmf;
   OFSTRUCT inof;
+  WORD checksum, *p;
+  int i;
 
-  if( (fh = OpenFile( szFileName, &inof, OF_READ ) ) == HFILE_ERROR ) return NULL;
+  if( (fh = OpenFile( szFileName, &inof, OF_READ ) ) == HFILE_ERROR ) return 0;
   _llseek(fh, 0, 0);
-  if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return NULL;
+  if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return 0;
   _llseek(fh, sizeof(APMFILEHEADER), 0);
-  printf("sizeof(APMFILEHEADER) %d\n", sizeof(APMFILEHEADER));
-  if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return NULL;
+  checksum = 0;
+  p = (WORD *) &APMHeader;
 
-  if (!(hData = GlobalAlloc(GHND, (mfHeader.mtSize * 2L)))) return NULL;
-
-  if (!(lpData = GlobalLock(hData)))
-  {
-    GlobalFree(hData);
-    return NULL;
+  for(i=0; i<10; i++) 
+    checksum ^= *p++;
+  if (checksum != APMHeader.checksum) {
+    char msg[128];
+    sprintf(msg, "Computed checksum %04x != stored checksum %04x\n", 
+	   checksum, APMHeader.checksum);
+    /*    MessageBox(hwnd, msg, "Checksum failed", MB_OK); */
+    return 0;
   }
+
+  if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
+
+  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
 
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
   {
-    GlobalUnlock(hData);
-    GlobalFree(hData);
+    GlobalFree(lpData);
+    _lclose(fh);
     return NULL;
   }
   _lclose(fh);
-  GlobalUnlock(hData);
 
-  if (!(hmf = (HMETAFILE) SetMetaFileBits(hData))) return NULL;
+  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData))) 
+    return NULL;
 
   
   width = APMHeader.bbox.right - APMHeader.bbox.left;
   height = APMHeader.bbox.bottom - APMHeader.bbox.top;
 
-  printf("Ok! width %d height %d\n", width, height);
+  /*  printf("Ok! width %d height %d\n", width, height); */
   deltax = 0;
   deltay = 0 ;
   return hmf;
 }
-#endif
 
 

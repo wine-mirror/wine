@@ -164,7 +164,7 @@ HANDLE32 WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
                                            DWORD dwFlags,
                                            LPVOID lpScreenBufferData)
 {
-	fprintf(stderr, "CreateConsoleScreenBuffer(): stub !\n");
+	FIXME(console, "(...): stub !\n");
 	return INVALID_HANDLE_VALUE32;
 }
 
@@ -193,7 +193,7 @@ BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
  */
 BOOL32 WINAPI SetConsoleActiveScreenBuffer(HANDLE32 hConsoleOutput)
 {
-	fprintf(stderr, "SetConsoleActiveScreenBuffer(): stub !\n");
+	FIXME(console, "(%x): stub!\n", hConsoleOutput);
 	return 0;
 }
 
@@ -294,7 +294,7 @@ static BOOL32 wine_createConsole(int *master, int *slave, int *pid)
 		tcsetattr(*slave, TCSADRAIN, &term);
 		sprintf(buf, "-Sxx%d", *master);
 		execlp("xterm", "xterm", buf, NULL);
-		fprintf(stderr, "error creating AllocConsole xterm\n");
+		ERR(console, "error creating AllocConsole xterm\n");
 		exit(1);
 	}
 
@@ -310,7 +310,7 @@ static BOOL32 wine_createConsole(int *master, int *slave, int *pid)
 			usleep(100);
 		}
 		if (i > 10000) {
-			fprintf(stderr, "can't read xterm WID\n");
+			WARN(console, "can't read xterm WID\n");
 			kill(*pid, SIGKILL);
 			return FALSE;
 		}
@@ -461,11 +461,11 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
 }
 
 /***********************************************************************
- *            SetConsoleMode   (KERNEL32.188)
+ *            SetConsoleMode   (KERNEL32.628)
  */
 BOOL32 WINAPI SetConsoleMode(HANDLE32 hcon,DWORD mode)
 {
-	fprintf(stdnimp,"SetConsoleMode(%08x,%08lx)\n",hcon,mode);
+	FIXME(console,"(%08x,%08lx): stub\n",hcon,mode);
 	return TRUE;
 }
 
@@ -477,7 +477,7 @@ DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console= (CONSOLE *)pdb->console;
 
-	if(console->title) 
+	if(console && console->title) 
 	  {
 	    lstrcpyn32A(title,console->title,size);
 	    return strlen(title);
@@ -492,7 +492,7 @@ DWORD WINAPI GetConsoleTitle32W(LPWSTR title,DWORD size)
 {
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console= (CONSOLE *)pdb->console;
-	if(console->title) 
+	if(console && console->title) 
 	  {
 	    lstrcpynAtoW(title,console->title,size);
 	    return (lstrlen32W(title));
@@ -663,7 +663,7 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
  */
 BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
 {
-    fprintf(stderr,"FlushConsoleInputBuffer(%d)\n",hConsoleInput);
+    FIXME(console,"(%d): stub\n",hConsoleInput);
     return TRUE;
 }
 
@@ -695,7 +695,7 @@ BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 {
     *nrofbuttons = 2;
-    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning 2\n");
+    FIXME(console,"(%p): STUB returning 2\n", nrofbuttons);
     return TRUE;
 }
 
@@ -710,7 +710,7 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    fprintf(stderr,"PeekConsoleInput32A: STUB returning TRUE\n");
+    FIXME(console,"(...): STUB returning TRUE\n");
 	return TRUE;
 }
 
@@ -725,7 +725,7 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    fprintf(stderr,"PeekConsoleInput32W: STUB returning TRUE\n");
+    FIXME(console,"(...): STUB returning TRUE\n");
     return TRUE;
 }
 
@@ -736,7 +736,7 @@ BOOL32 WINAPI GetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
 {
   cinfo[0] = 10; /* 10% of character box is cursor.  */
   cinfo[1] = TRUE;  /* Cursor is visible.  */
-  fprintf (stdnimp, "GetConsoleCursorInfo32 -- STUB!\n");
+  FIXME(console, "(%x,%p): STUB!\n", hcon, cinfo);
   return TRUE;
 }
 
@@ -745,7 +745,7 @@ BOOL32 WINAPI GetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
  */
 BOOL32 WINAPI SetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
 {
-  fprintf (stdnimp, "SetConsoleCursorInfo32 -- STUB!\n");
+  FIXME(console, "(%#x,%p): STUB!\n", hcon, cinfo);
   return TRUE;
 }
 
@@ -754,7 +754,7 @@ BOOL32 WINAPI SetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
  */
 BOOL32 WINAPI SetConsoleWindowInfo32(HANDLE32 hcon, BOOL32 flag, LPSMALL_RECT window)
 {
-  fprintf (stdnimp, "SetConsoleWindowInfo32-- STUB!\n");
+  FIXME(console, "(%x,%d,%p): STUB!\n", hcon, flag, window);
   return TRUE;
 }
 
@@ -763,7 +763,7 @@ BOOL32 WINAPI SetConsoleWindowInfo32(HANDLE32 hcon, BOOL32 flag, LPSMALL_RECT wi
  */
 BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hcon, DWORD attributes)
 {
-  fprintf (stdnimp, "SetConsoleTextAttribute32-- STUB!\n");
+  FIXME(console, "(%#x,%#lx): STUB!\n", hcon, attributes);
   return TRUE;
 }
 

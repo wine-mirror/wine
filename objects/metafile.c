@@ -728,7 +728,7 @@ void WINAPI PlayMetaFileRecord16(
 	  {
 	   TRACE(metafile,"%s  len: %ld\n",
              sot,mr->rdSize);
-           fprintf(stderr,
+           WARN(metafile,
 	     "Please report: PlayMetaFile/ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
 		   len,s1,mr->rdSize,mr->rdParam[3]);
            dxx = NULL; /* should't happen -- but if, we continue with NULL [for workaround] */
@@ -860,7 +860,7 @@ void WINAPI PlayMetaFileRecord16(
        	SetTextJustification32(hdc, *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
-#define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
+#define META_UNIMP(x) case x: FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n");break;
     META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_SETDIBTODEV)
@@ -880,11 +880,22 @@ void WINAPI PlayMetaFileRecord16(
 #undef META_UNIMP
 
     default:
-	fprintf(stddeb,"PlayMetaFileRecord: Unknown record type %x\n",
+	WARN(metafile, "PlayMetaFileRecord: Unknown record type %x\n",
 	                                      mr->rdFunction);
     }
 }
 
+
+BOOL32 WINAPI PlayMetaFileRecord32( 
+     HDC32 hdc, 
+     HANDLETABLE32 *handletable, 
+     METARECORD *metarecord, 
+     UINT32 handles  
+    )
+{
+  PlayMetaFileRecord16(hdc, handletable, metarecord, handles);
+  return TRUE;
+}
 
 /******************************************************************
  *         GetMetaFileBits   (GDI.159)
@@ -938,6 +949,21 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
 }
 
 /******************************************************************
+ *         SetMetaFileBitsEx    (GDI32.323)
+ */
+HMETAFILE32 WINAPI SetMetaFileBitsEx( 
+     UINT32 size, /* size of metafile, in bytes */
+     const BYTE *lpData /* pointer to metafile data */  
+    )
+{
+  HMETAFILE32 hmf = GlobalAlloc16(GHND, size);
+  BYTE *p = GlobalLock16(hmf) ;
+  memcpy(p, lpData, size);
+  GlobalUnlock16(hmf);
+  return hmf;
+}
+
+/******************************************************************
  *         MF_Meta_CreateRegion
  *
  *  Handles META_CREATEREGION for PlayMetaFileRecord().
@@ -986,13 +1012,13 @@ static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
 
 	end = start + *start + 3;
 	if(end > (WORD *)mr + mr->rdSize) {
-	    fprintf(stderr, "META_CREATEREGION: end points outside record.\n");
+	    WARN(metafile, "META_CREATEREGION: end points outside record.\n");
 	    DeleteObject32( hrgn2 );
 	    return FALSE;
         }
 
 	if(*start != *end) {
-	    fprintf(stderr, "META_CREATEREGION: mismatched delimiters.\n");
+	    WARN(metafile, "META_CREATEREGION: mismatched delimiters.\n");
 	    DeleteObject32( hrgn2 );
 	    return FALSE;
 	}
@@ -1037,7 +1063,7 @@ static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
 	    return FALSE;
         break;
     default:
-        fprintf( stderr, "Unknown metafile type %d\n", physDev->mh->mtType );
+        ERR(metafile, "Unknown metafile type %d\n", physDev->mh->mtType );
         return FALSE;
     }
 
@@ -1554,7 +1580,7 @@ INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
 
     len = GetRegionData( hrgn, 0, NULL );
     if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
-        fprintf(stderr, "MF_CreateRegion: can't alloc rgndata buffer\n");
+        WARN(metafile, "MF_CreateRegion: can't alloc rgndata buffer\n");
 	return -1;
     }
     GetRegionData( hrgn, len, rgndata );
@@ -1564,7 +1590,7 @@ INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
      */
     len = sizeof(METARECORD) + 20 + (rgndata->rdh.nCount * 12);
     if( !(mr = HeapAlloc( SystemHeap, 0, len )) ) {
-        fprintf(stderr, "MF_CreateRegion: can't alloc METARECORD buffer\n");
+        WARN(metafile, "MF_CreateRegion: can't alloc METARECORD buffer\n");
 	HeapFree( SystemHeap, 0, rgndata );
 	return -1;
     }
@@ -1619,7 +1645,7 @@ INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
     HeapFree( SystemHeap, 0, rgndata );
     if(!ret) 
     {
-        fprintf(stderr, "MF_CreateRegion: MF_WriteRecord failed\n");
+        WARN(metafile, "MF_CreateRegion: MF_WriteRecord failed\n");
 	return -1;
     }
     return MF_AddHandleDC( dc );

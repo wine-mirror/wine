@@ -8,6 +8,7 @@ MODULE    = multimedia
 C_SRCS = \
 	audio.c \
 	dsound.c \
+	init.c \
 	joystick.c \
 	mcianim.c \
 	mcicda.c \

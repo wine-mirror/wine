@@ -8,16 +8,30 @@
 #include "windows.h"
 #include "w32sys.h"
 
-
 /***********************************************************************
  *           GetWin32sInfo   (W32SYS.12)
+ * RETURNS
+ *  0 on success, 1 on failure
  */
-WORD WINAPI GetWin32sInfo( LPWIN32SINFO lpInfo)
-{
+WORD WINAPI GetWin32sInfo(
+	LPWIN32SINFO lpInfo	/* [out] Win32S special information */
+) {
     lpInfo->bMajor = 1;
     lpInfo->bMinor = 3;
     lpInfo->wBuildNumber = 0;
     lpInfo->fDebug = FALSE;
 
     return 0;
+}
+
+/***********************************************************************
+ *           GetPEResourceTable   (W32SYS.7)
+ * retrieves the resourcetable from the passed filedescriptor
+ * RETURNS
+ *	dunno what.
+ */
+WORD WINAPI GetPEResourceTable(
+	HFILE16 hf		/* [in] filedescriptor to opened executeable */
+) {
+	return 0;
 }

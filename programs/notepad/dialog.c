@@ -15,12 +15,14 @@
 #include "license.h"
 #include "dialog.h"
 #include "version.h"
+#include "debug.h"
 
 static LRESULT DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 VOID DIALOG_FileNew(VOID)
 {
-  fprintf(stderr, "FileNew()\n");
+//  dprintf_fixme(Global, "FileNew() not yet implemented\n");
+  printf("FileNew()\n");
 }
 
 VOID DIALOG_FileOpen(VOID)
@@ -65,7 +67,9 @@ VOID DIALOG_FileOpen(VOID)
  	  openfilename.lpTemplateName    = 0;
 
   	  if (GetOpenFileName(&openfilename)) {
-	  printf("Openfile: %s\n", openfilename.lpstrFile);
+            lstrcpyn(Globals.szFileName, openfilename.lpstrFile, 
+                     strlen(openfilename.lpstrFile)+1);
+          printf("OpenFile: %s\n", Globals.szFileName);
 	  }
 }
 
@@ -76,7 +80,7 @@ VOID DIALOG_FileSave(VOID)
 
 VOID DIALOG_FileSaveAs(VOID)
 {
-          OPENFILENAME savefilename;
+          OPENFILENAME saveas;
           CHAR szPath[MAX_PATHNAME_LEN];
           CHAR szDir[MAX_PATHNAME_LEN];
           CHAR szzFilter[2 * MAX_STRING_LEN + 100];
@@ -94,34 +98,38 @@ VOID DIALOG_FileSaveAs(VOID)
 
           GetWindowsDirectory(szDir, sizeof(szDir));
 
-          savefilename.lStructSize       = 0;
-          savefilename.hwndOwner         = Globals.hMainWnd;
-          savefilename.hInstance         = Globals.hInstance;
-          savefilename.lpstrFilter       = szzFilter;
-          savefilename.lpstrCustomFilter = 0;
-          savefilename.nMaxCustFilter    = 0;
-          savefilename.nFilterIndex      = 0;
-          savefilename.lpstrFile         = szPath;
-          savefilename.nMaxFile          = sizeof(szPath);
-          savefilename.lpstrFileTitle    = 0;
-          savefilename.nMaxFileTitle     = 0;
-          savefilename.lpstrInitialDir   = szDir;
-          savefilename.lpstrTitle        = 0;
-          savefilename.Flags             = 0;
-          savefilename.nFileOffset       = 0;
-          savefilename.nFileExtension    = 0;
-          savefilename.lpstrDefExt       = 0;
-          savefilename.lCustData         = 0;
-          savefilename.lpfnHook          = 0;
-          savefilename.lpTemplateName    = 0;
+          saveas.lStructSize       = 0;
+          saveas.hwndOwner         = Globals.hMainWnd;
+          saveas.hInstance         = Globals.hInstance;
+          saveas.lpstrFilter       = szzFilter;
+          saveas.lpstrCustomFilter = 0;
+          saveas.nMaxCustFilter    = 0;
+          saveas.nFilterIndex      = 0;
+          saveas.lpstrFile         = szPath;
+          saveas.nMaxFile          = sizeof(szPath);
+          saveas.lpstrFileTitle    = 0;
+          saveas.nMaxFileTitle     = 0;
+          saveas.lpstrInitialDir   = szDir;
+          saveas.lpstrTitle        = 0;
+          saveas.Flags             = 0;
+          saveas.nFileOffset       = 0;
+          saveas.nFileExtension    = 0;
+          saveas.lpstrDefExt       = 0;
+          saveas.lCustData         = 0;
+          saveas.lpfnHook          = 0;
+          saveas.lpTemplateName    = 0;
 
-          if (GetSaveFileName(&savefilename));
+          if (GetSaveFileName(&saveas)) {
+            lstrcpyn(Globals.szFileName, saveas.lpstrFile, 
+                     strlen(saveas.lpstrFile)+1);
+            printf("SaveAs(%s)\n", Globals.szFileName);
+          }
 }
 
 VOID DIALOG_FilePrint(VOID)
 {
 	PRINTDLG printer;
-	printer.lStructSize           = 0;
+	printer.lStructSize           = sizeof(printer);
         printer.hwndOwner             = Globals.hMainWnd;
         printer.hInstance             = Globals.hInstance;
         printer.hDevMode              = 0;
@@ -141,7 +149,9 @@ VOID DIALOG_FilePrint(VOID)
 	printer.hPrintTemplate        = 0;
 	printer.hSetupTemplate        = 0;
 	
-	if(PrintDlg16(&printer));
+	if(PrintDlg16(&printer)) {
+          /* do nothing */
+        };
 }
 
 VOID DIALOG_FilePageSetup(VOID)
@@ -205,6 +215,9 @@ VOID DIALOG_Search(VOID)
 {
           FINDREPLACE find;
 	  CHAR szFind[MAX_PATHNAME_LEN];
+          
+          lstrcpyn(szFind, Globals.szFindText, strlen(Globals.szFindText)+1);
+          
 	  find.lStructSize               = 0;
           find.hwndOwner                 = Globals.hMainWnd;
           find.hInstance                 = Globals.hInstance;
@@ -214,7 +227,14 @@ VOID DIALOG_Search(VOID)
           find.lCustData                 = 0;
           find.lpfnHook                  = 0;
           find.lpTemplateName            = 0;
-	  FindText(&find);
+
+	  if (FindText(&find)) {
+             lstrcpyn(Globals.szFindText, szFind, strlen(szFind)+1);
+          } 
+             else 
+          { 
+             /* do nothing */ 
+          };
 }
 
 VOID DIALOG_SearchNext(VOID)

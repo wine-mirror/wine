@@ -294,7 +294,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE32 hInstance, HGLOBAL16
                                   bIcon ? "icon" : "cursor", cFlag ? "mono" : "" );
     if (dwVersion == 0x00020000)
     {
-	fprintf(stdnimp,"\t2.xx resources are not supported\n");
+	FIXME(cursor,"\t2.xx resources are not supported\n");
 	return 0;
     }
 
@@ -313,7 +313,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE32 hInstance, HGLOBAL16
 	 (bmi->bmiHeader.biSize != sizeof(BITMAPINFOHEADER)  ||
 	  bmi->bmiHeader.biCompression != BI_RGB) )
     {
-          fprintf(stderr,"\tinvalid resource bitmap header.\n");
+          WARN(cursor,"\tinvalid resource bitmap header.\n");
           return 0;
     }
 
@@ -380,7 +380,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE32 hInstance, HGLOBAL16
 
     if( !hXorBits || !hAndBits ) 
     {
-	fprintf(stderr,"\tunable to create an icon bitmap.\n");
+	WARN(cursor,"\tunable to create an icon bitmap.\n");
 	return 0;
     }
 
@@ -996,7 +996,7 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         if (!(ptr = (CURSORICONINFO*)GlobalLock16( hCursor ))) return FALSE;
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
-            fprintf( stderr, "Cursor %04x has more than 1 bpp!\n", hCursor );
+            WARN(cursor, "Cursor %04x has more than 1 bpp!\n", hCursor );
             return FALSE;
         }
 
@@ -1374,7 +1374,7 @@ WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
 			  SYSMETRICS_CXICON, SYSMETRICS_CYICON, 0 );
 	default:
-	     fprintf( stderr, "GetIconID: invalid res type %ld\n", resType );
+	     WARN(cursor, "invalid res type %ld\n", resType );
     }
     return 0;
 }
@@ -1386,7 +1386,8 @@ WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
  */
 HGLOBAL16 WINAPI LoadCursorIconHandler( HGLOBAL16 hResource, HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    fprintf(stderr,"hModule[%04x]: old 2.x resources are not supported!\n", hModule);
+    FIXME(cursor,"(%04x,%04x,%04x): old 2.x resources are not supported!\n", 
+	  hResource, hModule, hRsrc);
     return (HGLOBAL16)0;
 }
 

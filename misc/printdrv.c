@@ -11,20 +11,20 @@
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
-
+#include "debug.h"
 
 INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 {
   INT16 retVal;
-  printf("In startdoc16(%p)\n", lpdoc );
-  printf("In StartDoc16 %d 0x%lx:0x%p 0x%lx:0x%p\n",lpdoc->cbSize,
-	 lpdoc->lpszDocName,PTR_SEG_TO_LIN(lpdoc->lpszDocName),
-	 lpdoc->lpszOutput,PTR_SEG_TO_LIN(lpdoc->lpszOutput));
-  printf("In StartDoc16 %d %s %s\n",lpdoc->cbSize,
-	 (LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszDocName),
-	 (LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszOutput));
+  TRACE(print,"(%p)\n", lpdoc );
+  TRACE(print,"%d 0x%lx:0x%p 0x%lx:0x%p\n",lpdoc->cbSize,
+	lpdoc->lpszDocName,PTR_SEG_TO_LIN(lpdoc->lpszDocName),
+	lpdoc->lpszOutput,PTR_SEG_TO_LIN(lpdoc->lpszOutput));
+  TRACE(print, "%d %s %s\n",lpdoc->cbSize,
+	(LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszDocName),
+	(LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszOutput));
   retVal =  Escape16(hdc, STARTDOC, sizeof(DOCINFO16), lpdoc->lpszDocName, 0);
-  printf("Escape16 returned %d\n",retVal);
+  TRACE(print,"Escape16 returned %d\n",retVal);
   return retVal;
 }
 

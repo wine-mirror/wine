@@ -36,10 +36,10 @@ static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT32 flags )
 {
     WPARAM16 wp = SIZE_RESTORED;
 
-    if (!(flags & SWP_NOMOVE))
+    if (!(flags & SWP_NOCLIENTMOVE))
         SendMessage16( wndPtr->hwndSelf, WM_MOVE, 0,
                     MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top));
-    if (!(flags & SWP_NOSIZE))
+    if (!(flags & SWP_NOCLIENTSIZE))
     {
         if (wndPtr->dwStyle & WS_MAXIMIZE) wp = SIZE_MAXIMIZED;
         else if (wndPtr->dwStyle & WS_MINIMIZE) wp = SIZE_MINIMIZED;
