@@ -349,6 +349,7 @@ file	user.exe
 371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement16
 372 stub GetInternalIconHeader
 373 pascal16 SubtractRect(ptr ptr ptr) SubtractRect16
+374 pascal DllEntryPoint(long word word word long word) USER_DllEntryPoint
 375 stub DrawTextEx
 376 stub SetMessageExtraInfo
 378 stub SetPropEx

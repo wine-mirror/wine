@@ -258,6 +258,28 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     return 0;
 }
 
+/***********************************************************************
+ *           USER_DllEntryPoint  (USER.374)
+ */
+BOOL WINAPI USER_DllEntryPoint( DWORD dwReason, HINSTANCE hInstDLL, WORD ds,
+                                WORD wHeapSize, DWORD dwReserved1, WORD wReserved2 )
+{
+    switch ( dwReason )
+    {
+    case DLL_PROCESS_ATTACH:
+        /* 
+         * We need to load the 32-bit library so as to be able
+         * to access the system resources stored there!
+         */
+        if ( !LoadLibraryA("USER32.DLL") )
+        {
+            ERR_(win)( "Could not load USER32.DLL\n" );
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
 
 
 /***********************************************************************
