@@ -2184,6 +2184,35 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         curRect = NULL;
     }
 
+    /* Only set the values up once, as they are not changing */
+    if (Flags & D3DCLEAR_STENCIL) {	
+        glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
+        glClearStencil(Stencil);
+        checkGLcall("glClearStencil");
+        glMask = glMask | GL_STENCIL_BUFFER_BIT;
+    }
+
+    if (Flags & D3DCLEAR_ZBUFFER) {
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
+        glDepthMask(GL_TRUE); 
+        glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
+        glClearDepth(Z);
+        checkGLcall("glClearDepth");
+        glMask = glMask | GL_DEPTH_BUFFER_BIT;
+    }
+
+    if (Flags & D3DCLEAR_TARGET) {
+        TRACE("Clearing screen with glClear to color %lx\n", Color);
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
+        glClearColor(((Color >> 16) & 0xFF) / 255.0, 
+         ((Color >>  8) & 0xFF) / 255.0,
+                     ((Color >>  0) & 0xFF) / 255.0, 
+         ((Color >> 24) & 0xFF) / 255.0);
+        checkGLcall("glClearColor");
+        glMask = glMask | GL_COLOR_BUFFER_BIT;
+    }
+
+    /* Now process each rect in turn */
     for (i = 0; i < Count || i == 0; i++) {
 
         if (curRect) {
@@ -2197,52 +2226,27 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
             checkGLcall("glScissor");
         }
 
-        /* Clear the whole screen */
-        if (Flags & D3DCLEAR_STENCIL) {	
-            glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
-            glClearStencil(Stencil);
-            checkGLcall("glClearStencil");
-            glMask = glMask | GL_STENCIL_BUFFER_BIT;
-        }
-
-        if (Flags & D3DCLEAR_ZBUFFER) {
-            glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
-            glDepthMask(GL_TRUE); 
-            glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
-            glClearDepth(Z);
-            checkGLcall("glClearDepth");
-            glMask = glMask | GL_DEPTH_BUFFER_BIT;
-        }
-
-        if (Flags & D3DCLEAR_TARGET) {
-            TRACE("Clearing screen with glClear to color %lx\n", Color);
-            glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
-            glClearColor(((Color >> 16) & 0xFF) / 255.0, 
-			 ((Color >>  8) & 0xFF) / 255.0,
-                         ((Color >>  0) & 0xFF) / 255.0, 
-			 ((Color >> 24) & 0xFF) / 255.0);
-            checkGLcall("glClearColor");
-            glMask = glMask | GL_COLOR_BUFFER_BIT;
-        }
-
+        /* Clear the selected rectangle (or full screen) */
         glClear(glMask);
         checkGLcall("glClear");
 
-        if (Flags & D3DCLEAR_STENCIL) {
-            glClearStencil(old_stencil_clear_value);
-        }    
-        if (Flags & D3DCLEAR_ZBUFFER) {
-            glDepthMask(old_ztest);
-            glClearDepth(old_z_clear_value);
-        }
-        if (Flags & D3DCLEAR_TARGET) {
-            glClearColor(old_color_clear_value[0], 
-                         old_color_clear_value[1],
-                         old_color_clear_value[2], 
-                         old_color_clear_value[3]);
-        }
-
+        /* Step to the next rectangle */
         if (curRect) curRect = curRect + sizeof(D3DRECT);
+    }
+
+    /* Restore the old values (why..?) */
+    if (Flags & D3DCLEAR_STENCIL) {
+        glClearStencil(old_stencil_clear_value);
+    }    
+    if (Flags & D3DCLEAR_ZBUFFER) {
+        glDepthMask(old_ztest);
+        glClearDepth(old_z_clear_value);
+    }
+    if (Flags & D3DCLEAR_TARGET) {
+        glClearColor(old_color_clear_value[0], 
+                     old_color_clear_value[1],
+                     old_color_clear_value[2], 
+                     old_color_clear_value[3]);
     }
 
     if (Count > 0 && pRects) {
