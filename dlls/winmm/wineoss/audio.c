@@ -8,10 +8,9 @@
  */
 /*
  * FIXME:
- *	pause in waveOut does not work correctly
- *	full duplex (in/out) is not working (device is opened twice for Out 
- *	and In) (OSS is known for its poor duplex capabilities, alsa is
- *	better)
+ *	pause in waveOut does not work correctly in loop mode
+ *      experimental full duples mode
+ *      only one sound card is currently supported
  */
 
 /*#define EMULATE_SB16*/
@@ -174,6 +173,72 @@ static const char *wodPlayerCmdString[] = {
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
+#define USE_FULLDUPLEX
+#ifdef USE_FULLDUPLEX
+static unsigned OSS_OpenCount /* = 0 */;  /* number of times fd has been opened */
+static unsigned OSS_OpenAccess /* = 0 */; /* access used for opening... used to handle compat */
+static int      OSS_OpenFD;
+static BOOL     OSS_FullDuplex;           /* set to non-zero if the device supports full duplex */
+#endif
+
+/******************************************************************
+ *		OSS_OpenDevice
+ *
+ * since OSS has poor capabilities in full duplex, we try here to let a program
+ * open the device for both waveout and wavein streams...
+ * this is hackish, but it's the way OSS interface is done...
+ */
+static int	OSS_OpenDevice(unsigned req_access)
+{
+#ifdef USE_FULLDUPLEX
+    if (OSS_OpenCount == 0)
+    {
+	if (access(SOUND_DEV, 0) != 0 || 
+            (OSS_OpenFD = open(SOUND_DEV, req_access|O_NDELAY, 0)) == -1) 
+	{
+	    WARN("Couldn't open out %s (%s)\n", SOUND_DEV, strerror(errno));
+	    return -1;
+	}
+	/* turn full duplex on if it has been requested */
+	if (req_access == O_RDWR && OSS_FullDuplex)
+	    ioctl(OSS_OpenFD, SNDCTL_DSP_SETDUPLEX, 0);
+	OSS_OpenAccess = req_access;
+    }
+    else if (OSS_OpenAccess != req_access)
+    {
+	WARN("Mismatch in access...\n");
+	return -1;
+    }
+    OSS_OpenCount++;
+    return OSS_OpenFD;
+#else
+    int fd;
+    if (access(SOUND_DEV, 0) != 0 || (fd = open(SOUND_DEV, req_access|O_NDELAY, 0)) == -1) 
+    {
+        WARN("Couldn't open out %s (%s)\n", SOUND_DEV, strerror(errno));
+        return -1;
+    }
+    return fd;
+#endif
+}
+
+/******************************************************************
+ *		OSS_CloseDevice
+ *
+ *
+ */
+static void	OSS_CloseDevice(int fd)
+{
+#ifdef USE_FULLDUPLEX
+    if (fd != OSS_OpenFD) FIXME("What the heck????\n");
+    if (--OSS_OpenCount == 0)
+    {
+	close(OSS_OpenFD);
+    }
+#else
+    close(fd);
+#endif
+}
 
 /******************************************************************
  *		OSS_WaveInit
@@ -203,11 +268,7 @@ LONG OSS_WaveInit(void)
     /* FIXME: only one device is supported */
     memset(&WOutDev[0].caps, 0, sizeof(WOutDev[0].caps));
 
-    if (access(SOUND_DEV,0) != 0 ||
-	(audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0)) == -1) {
-	WARN("Couldn't open out %s (%s)\n", SOUND_DEV, strerror(errno));
-	return -1;
-    }
+    if ((audio = OSS_OpenDevice(O_WRONLY)) == -1) return -1;
 
     ioctl(audio, SNDCTL_DSP_RESET, 0);
 
@@ -287,7 +348,7 @@ LONG OSS_WaveInit(void)
 	    !(caps & DSP_CAP_BATCH))
 	    WOutDev[0].caps.dwSupport |= WAVECAPS_DIRECTSOUND;
     }
-    close(audio);
+    OSS_CloseDevice(audio);
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
 	  WOutDev[0].caps.dwFormats, WOutDev[0].caps.dwSupport);
 
@@ -295,18 +356,14 @@ LONG OSS_WaveInit(void)
     samplesize = 16;
     dsp_stereo = 1;
    
-	for (i = 0; i < MAX_WAVEINDRV; ++i)
-	{
-		WInDev[i].unixdev = -1;
-	}
-
-	memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
-
-    if (access(SOUND_DEV,0) != 0 ||
-	(audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0)) == -1) {
-	WARN("Couldn't open in %s (%s)\n", SOUND_DEV, strerror(errno));
-	return -1;
+    for (i = 0; i < MAX_WAVEINDRV; ++i)
+    {
+        WInDev[i].unixdev = -1;
     }
+    
+    memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
+
+    if ((audio = OSS_OpenDevice(O_RDONLY)) == -1) return -1;
 
     ioctl(audio, SNDCTL_DSP_RESET, 0);
 
@@ -372,8 +429,16 @@ LONG OSS_WaveInit(void)
 		WInDev[0].caps.dwFormats |= WAVE_FORMAT_1S16;
 	}
     }
-    close(audio);
+    OSS_CloseDevice(audio);
     TRACE("in dwFormats = %08lX\n", WInDev[0].caps.dwFormats);
+
+#ifdef USE_FULLDUPLEX
+    if ((audio = OSS_OpenDevice(O_RDWR)) == -1) return -1;
+    if (IOCTL(audio, SNDCTL_DSP_GETCAPS, caps) == 0) {
+	OSS_FullDuplex = (caps & DSP_CAP_DUPLEX);
+    }
+    OSS_CloseDevice(audio);
+#endif
 
     return 0;
 }
@@ -391,6 +456,17 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
     omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     memset(omr->messages, 0, sizeof(OSS_MSG) * OSS_RING_BUFFER_SIZE);
     InitializeCriticalSection(&omr->msg_crst);
+    return 0;
+}
+
+/******************************************************************
+ *		OSS_DestroyRingMessage
+ *
+ */
+static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
+{
+    CloseHandle(omr->msg_event);
+    DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
 
@@ -426,8 +502,8 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
     SetEvent(omr->msg_event);
     if (wait)
     {
-	    WaitForSingleObject(hEvent, INFINITE);
-	    CloseHandle(hEvent);
+        WaitForSingleObject(hEvent, INFINITE);
+        CloseHandle(hEvent);
     }
     return 1;
 }
@@ -482,7 +558,7 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
 	}
 	break;
     default:
-	FIXME("Unknown CB message %u\n", wMsg);
+	FIXME("Unknown callback message %u\n", wMsg);
         return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -492,9 +568,17 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
  * 				wodUpdatePlayedTotal	[internal]
  *
  */
-static void wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, DWORD availInQ)
+static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, audio_buf_info* info)
 {
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal - (wwo->dwBufferSize - availInQ);
+    audio_buf_info dspspace;
+    if (!info) info = &dspspace;
+
+    if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, info) < 0) {
+        ERR("IOCTL can't 'SNDCTL_DSP_GETOSPACE' !\n");
+        return FALSE;
+    }
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal - (wwo->dwBufferSize - info->bytes);
+    return TRUE;
 }
 
 /**************************************************************************
@@ -669,6 +753,8 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
  */
 static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 {
+    wodUpdatePlayedTotal(wwo, NULL);
+
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
@@ -680,20 +766,37 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 	ExitThread(-1);
     }
 
-    /* Clear partial wavehdr */
-    wwo->dwPartialOffset = 0;
-
     if (reset) {
 	/* empty notify list */
 	wodPlayer_NotifyCompletions(wwo, TRUE);
 
 	wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
 	wwo->state = WINE_WS_STOPPED;
-	wwo->dwPlayedTotal = 0;
-        wwo->dwWrittenTotal = 0;
+	wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+        /* Clear partial wavehdr */
+        wwo->dwPartialOffset = 0;
     } else {
-	/* FIXME: this is not accurate when looping, but can we do better ? */
-	wwo->lpPlayPtr = (wwo->lpLoopPtr) ? wwo->lpLoopPtr : wwo->lpQueuePtr;
+        if (wwo->lpLoopPtr) {
+            /* complicated case, not handled yet (could imply modifying the loop counter */
+            FIXME("Pausing while in loop isn't correctly handled yet, except strange results\n");
+            wwo->lpPlayPtr = wwo->lpLoopPtr;
+            wwo->dwPartialOffset = 0;
+            wwo->dwWrittenTotal = wwo->dwPlayedTotal; /* this is wrong !!! */
+        } else {
+            LPWAVEHDR   ptr;
+            DWORD       sz = wwo->dwPartialOffset;
+
+            /* reset all the data as if we had written only up to lpPlayedTotal bytes */
+            /* compute the max size playable from lpQueuePtr */
+            for (ptr = wwo->lpQueuePtr; ptr != wwo->lpPlayPtr; ptr = ptr->lpNext) {
+                sz += ptr->dwBufferLength;
+            }
+            /* because the reset lpPlayPtr will be lpQueuePtr */
+            if (wwo->dwWrittenTotal > wwo->dwPlayedTotal + sz) ERR("grin\n");
+            wwo->dwPartialOffset = sz - (wwo->dwWrittenTotal - wwo->dwPlayedTotal);
+            wwo->dwWrittenTotal = wwo->dwPlayedTotal;
+            wwo->lpPlayPtr = wwo->lpQueuePtr;
+        }
 	wwo->state = WINE_WS_PAUSED;
     }
 }
@@ -713,7 +816,6 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
-	    wwo->state = WINE_WS_PAUSED;
 	    SetEvent(ev);
 	    break;
 	case WINE_WM_RESTARTING:
@@ -739,15 +841,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 	    SetEvent(ev);
 	    break;
         case WINE_WM_UPDATE:
-            {
-                audio_buf_info      info;
-
-                if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, &info) < 0) {
-                    ERR("ioctl failed (%s)\n", strerror(errno));
-                } else {
-                    wodUpdatePlayedTotal(wwo, info.bytes);
-                }
-            }
+            wodUpdatePlayedTotal(wwo, NULL);
 	    SetEvent(ev);
             break;
         case WINE_WM_BREAKLOOP:
@@ -782,21 +876,16 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     audio_buf_info dspspace;
     DWORD       availInQ;
 
-    if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, &dspspace) < 0) {
-        ERR("IOCTL can't 'SNDCTL_DSP_GETOSPACE' !\n");
-        return INFINITE;
-    }
+    wodUpdatePlayedTotal(wwo, &dspspace);
+    availInQ = dspspace.bytes;
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
           dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
-
-    availInQ = dspspace.bytes;
-    wodUpdatePlayedTotal(wwo, availInQ);
 
     /* input queue empty and output buffer with less than one fragment to play */
     if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize) {
         TRACE("Run out of wavehdr:s... flushing\n");
         ioctl(wwo->unixdev, SNDCTL_DSP_SYNC, 0);
-        wodUpdatePlayedTotal(wwo, wwo->dwBufferSize);
+        wwo->dwPlayedTotal = wwo->dwWrittenTotal;
         return INFINITE;
     }
 
@@ -873,7 +962,6 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
  */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    int 	 	audio;
     int			format;
     int			sample_rate;
     int			dsp_stereo;
@@ -916,18 +1004,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (access(SOUND_DEV, 0) != 0)
 	return MMSYSERR_NOTENABLED;
-    if (dwFlags & WAVE_DIRECTSOUND)
-	/* we want to be able to mmap() the device, which means it must be opened readable,
-	 * otherwise mmap() will fail (at least under Linux) */
-	audio = open(SOUND_DEV, O_RDWR|O_NDELAY, 0);
-    else
-	audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
-    if (audio == -1) {
-	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
-	return MMSYSERR_ALLOCATED;
-    }
-    fcntl(audio, F_SETFD, 1); /* set close on exec flag */
-    wwo->unixdev = audio;
+    /* we want to be able to mmap() the device, which means it must be opened readable,
+     * otherwise mmap() will fail (at least under Linux) */
+    wwo->unixdev = OSS_OpenDevice(((dwFlags & WAVE_DIRECTSOUND) || OSS_FullDuplex) ? 
+				  O_RDWR : O_WRONLY);
+    if (wwo->unixdev == -1) return MMSYSERR_ALLOCATED;
+
+    fcntl(wwo->unixdev, F_SETFD, 1); /* set close on exec flag */
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
     memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
@@ -961,11 +1044,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dsp_stereo = (wwo->format.wf.nChannels > 1) ? 1 : 0;
     format = (wwo->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8;
 
-    IOCTL(audio, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
+    IOCTL(wwo->unixdev, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
     /* First size and stereo then samplerate */
-    IOCTL(audio, SNDCTL_DSP_SETFMT, format);
-    IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
-    IOCTL(audio, SNDCTL_DSP_SPEED, sample_rate);
+    IOCTL(wwo->unixdev, SNDCTL_DSP_SETFMT, format);
+    IOCTL(wwo->unixdev, SNDCTL_DSP_STEREO, dsp_stereo);
+    IOCTL(wwo->unixdev, SNDCTL_DSP_SPEED, sample_rate);
 
     /* paranoid checks */
     if (format != ((wwo->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8))
@@ -981,7 +1064,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* Read output space info for future reference */
     if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, &info) < 0) {
 	ERR("IOCTL can't 'SNDCTL_DSP_GETOSPACE' !\n");
-	close(audio);
+        OSS_CloseDevice(wwo->unixdev);
 	wwo->unixdev = -1;
 	return MMSYSERR_NOTENABLED;
     }
@@ -1057,7 +1140,9 @@ static DWORD wodClose(WORD wDevID)
 	    wwo->mapping = NULL;
 	}
 
-	close(wwo->unixdev);
+        OSS_DestroyRingMessage(&wwo->msgRing);
+
+        OSS_CloseDevice(wwo->unixdev);
 	wwo->unixdev = -1;
 	wwo->dwFragmentSize = 0;
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
@@ -1338,15 +1423,14 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 static	DWORD	wodGetNumDevs(void)
 {
     DWORD	ret = 1;
-    
     /* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
-    int audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
+    int audio = OSS_OpenDevice(O_WRONLY);
     
     if (audio == -1) {
 	if (errno != EBUSY)
 	    ret = 0;
     } else {
-	close(audio);
+        OSS_CloseDevice(audio);
     }
     return ret;
 }
@@ -1858,7 +1942,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
 	}
 	break;
     default:
-	FIXME("Unknown CB message %u\n", wMsg);
+	FIXME("Unknown callback message %u\n", wMsg);
 	return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -2097,7 +2181,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    int 		audio;
     int			fragment_size;
     int			sample_rate;
     int			format;
@@ -2129,20 +2212,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
-    if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
-    audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0);
-    if (audio == -1) {
-	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
-	return MMSYSERR_ALLOCATED;
-    }
-    fcntl(audio, F_SETFD, 1); /* set close on exec flag */
-
     wwi = &WInDev[wDevID];
+    if ((wwi->unixdev = OSS_OpenDevice(OSS_FullDuplex ? O_RDWR : O_RDONLY)) == -1) 
+	return MMSYSERR_ALLOCATED;
+    fcntl(wwi->unixdev, F_SETFD, 1); /* set close on exec flag */
     if (wwi->lpQueuePtr) {
 	WARN("Should have an empty queue (%p)\n", wwi->lpQueuePtr);
 	wwi->lpQueuePtr = NULL;
     }
-    wwi->unixdev = audio;
     wwi->dwTotalRecorded = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
@@ -2161,11 +2238,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dsp_stereo = (wwi->format.wf.nChannels > 1) ? TRUE : FALSE;
     format = (wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8;
 
-
-    IOCTL(audio, SNDCTL_DSP_SETFMT, format);
-    IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
-    IOCTL(audio, SNDCTL_DSP_SPEED,  sample_rate);
-
+    IOCTL(wwi->unixdev, SNDCTL_DSP_SETFMT, format);
+    IOCTL(wwi->unixdev, SNDCTL_DSP_STEREO, dsp_stereo);
+    IOCTL(wwi->unixdev, SNDCTL_DSP_SPEED,  sample_rate);
 
     /* This is actually hand tuned to work so that my SB Live:
      * - does not skip
@@ -2174,7 +2249,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
      */
     /* 7 fragments max, 2^10 = 1024 bytes per fragment */
     audio_fragment = 0x0007000A;
-    IOCTL(audio, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
+    IOCTL(wwi->unixdev, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
 
     /* paranoid checks */
     if (format != ((wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8))
@@ -2187,10 +2262,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ERR("Can't set sample_rate to %lu (%d)\n", 
 	    wwi->format.wf.nSamplesPerSec, sample_rate);
 
-    IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
+    IOCTL(wwi->unixdev, SNDCTL_DSP_GETBLKSIZE, fragment_size);
     if (fragment_size == -1) {
 	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
-	close(audio);
+        OSS_CloseDevice(wwi->unixdev);
 	wwi->unixdev = -1;
 	return MMSYSERR_NOTENABLED;
     }
@@ -2200,6 +2275,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec, 
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
 	  wwi->format.wf.nBlockAlign);
+
+    OSS_InitRingMessage(&wwi->msgRing);
 
     wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
@@ -2231,9 +2308,10 @@ static DWORD widClose(WORD wDevID)
     }
 
     OSS_AddRingMessage(&wwi->msgRing, WINE_WM_CLOSING, 0, TRUE);
-    close(wwi->unixdev);
+    OSS_CloseDevice(wwi->unixdev);
     wwi->unixdev = -1;
     wwi->dwFragmentSize = 0;
+    OSS_DestroyRingMessage(&wwi->msgRing);
     return widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
 }
 
