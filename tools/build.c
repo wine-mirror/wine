@@ -749,8 +749,17 @@ static int ParseTopLevel(void)
         else if (strcmp(token, "init") == 0)
         {
             strcpy(DLLInitFunc, GetToken());
+	    if (SpecType == SPEC_WIN16)
+            {
+		fprintf(stderr, "%s:%d: init cannot be used for Win16 spec files\n",
+                        SpecName, Line);
+                return -1;
+            }
             if (!DLLInitFunc[0])
+            {
                 fprintf(stderr, "%s:%d: Expected function name after init\n", SpecName, Line);
+                return -1;
+            }
         }
         else if (strcmp(token, "import") == 0)
         {

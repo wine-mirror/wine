@@ -1,8 +1,12 @@
+			Spec file format
+			----------------
+
 name	NAME
 type    win16|win32
 [file   WINFILENAME]
 [base   ORDINAL]
 [heap   SIZE]
+[init	FUNCTION]
 [import DLL]
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
@@ -35,6 +39,9 @@ modules); default is no local heap.
 "file" gives the name of the Windows file that is replaced by the
 builtin. <name>.DLL is assumed if none is given. (This is important
 for kernel, which lives in the Windows file KRNL386.EXE).
+
+"init" specifies a function which will be called when this dll
+is loaded. This is only valid for Win32 modules.
 
 "import" names a module that this one depends on (only for Win32
 modules at the present). The import declaration can be present several
