@@ -89,7 +89,7 @@ init	RPCRT4_LibMain
 @ stub RpcMgmtSetServerStackSize
 @ stub RpcMgmtStatsVectorFree
 @ stub RpcMgmtStopServerListening
-@ stub RpcMgmtWaitServerListen
+@ stdcall RpcMgmtWaitServerListen() RpcMgmtWaitServerListen
 @ stub RpcNetworkInqProtseqsA
 @ stub RpcNetworkInqProtseqsW
 @ stub RpcNetworkIsProtseqValidA

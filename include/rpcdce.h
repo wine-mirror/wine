@@ -170,6 +170,9 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcMgmtWaitServerListen( void );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -201,9 +204,6 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                               LPVOID Arg );
 #define RpcServerRegisterAuthInfo WINELIB_NAME_AW(RpcServerRegisterAuthInfo)
-
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,

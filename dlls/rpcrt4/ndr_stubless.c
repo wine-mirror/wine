@@ -41,7 +41,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, va_list args)
 {
-  FIXME("(%p,%p,...)\n", pStubDesc, pFormat);
+
+  RPC_CLIENT_INTERFACE *rpc_cli_if = (RPC_CLIENT_INTERFACE *)(pStubDesc->RpcInterfaceInformation);
+
+  FIXME("(pStubDec == ^%p,pFormat = \"%s\",...): stub\n", pStubDesc, pFormat);
+  TRACE("rpc_cli_if == ^%p\n", rpc_cli_if);
+  if (rpc_cli_if) /* for objects this is NULL */
+    TRACE("rpc_cli_if: Length == %d; InterfaceID == <%s,<%d.%d>>; TransferSyntax == <%s,<%d.%d>>; DispatchTable == ^%p; RpcProtseqEndpointCount == %d; RpcProtseqEndpoint == ^%p; Flags == %d\n",
+     rpc_cli_if->Length,
+     debugstr_guid(&rpc_cli_if->InterfaceId.SyntaxGUID), rpc_cli_if->InterfaceId.SyntaxVersion.MajorVersion, rpc_cli_if->InterfaceId.SyntaxVersion.MinorVersion,
+     debugstr_guid(&rpc_cli_if->TransferSyntax.SyntaxGUID), rpc_cli_if->TransferSyntax.SyntaxVersion.MajorVersion, rpc_cli_if->TransferSyntax.SyntaxVersion.MinorVersion,
+     rpc_cli_if->DispatchTable, 
+     rpc_cli_if->RpcProtseqEndpointCount, 
+     rpc_cli_if->RpcProtseqEndpoint, 
+     rpc_cli_if->Flags);
+
   return 0;
 }
 

@@ -272,6 +272,7 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
 
 static void RPCRT4_start_listen(void)
 {
+  TRACE("\n");
   if (!InterlockedIncrement(&listen_count)) {
     mgr_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
@@ -314,6 +315,11 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   DWORD count;
   RpcServerProtseq* ps;
   RpcBinding* bind;
+
+  if (BindingVector)
+    TRACE("(*BindingVector == ^%p)\n", *BindingVector);
+  else
+    ERR("(BindingVector == ^null!!?)\n");
 
   EnterCriticalSection(&server_cs);
   /* count bindings */
@@ -544,8 +550,21 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
 
   if (DontWait) return RPC_S_OK;
 
-  /* RpcMgmtWaitServerListen(); */
-  FIXME("can't wait yet\n");
+  return RpcMgmtWaitServerListen();
+}
+
+/***********************************************************************
+ *             RpcMgmtServerWaitListen (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
+{
+  TRACE("\n");
+
+  RPCRT4_start_listen();
+  while (listen_count > -1) {
+    WaitForSingleObject(mgr_event, 1000);
+  }
+
   return RPC_S_OK;
 }
 
