@@ -581,6 +581,7 @@ static int fork_and_wait( char *linker, char *link_name, char *path,
 {
     int pos = 0;
     const char *argv[20];
+    int retcode;
 
     WINE_TRACE( "linker app='%s' link='%s' mode=%s "
         "path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
@@ -615,7 +616,10 @@ static int fork_and_wait( char *linker, char *link_name, char *path,
     }
     argv[pos] = NULL;
 
-    return spawnvp( _P_WAIT, linker, argv );
+    retcode=spawnvp( _P_WAIT, linker, argv );
+    if (retcode!=0)
+        WINE_ERR("%s returned %d\n",linker,retcode);
+    return retcode;
 }
 
 /* write the name of the ShellLinker into the buffer provided */
@@ -854,7 +858,10 @@ static BOOL Process_Link( LPWSTR linkname, BOOL bAgain )
 
     r = CoInitialize( NULL );
     if( FAILED( r ) )
+    {
+        WINE_ERR("CoInitialize failed\n");
         return 1;
+    }
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                       &IID_IShellLink, (LPVOID *) &sl );
