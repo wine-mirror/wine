@@ -482,6 +482,38 @@ WCHAR towlower(WCHAR);
 #define	C3_ALPHA		0x8000
 #define	C3_NOTAPPLICABLE	0x0000
 
+/* Code page information.
+ */
+#define MAX_LEADBYTES     12
+#define MAX_DEFAULTCHAR   2
+
+typedef struct
+{
+    UINT MaxCharSize;
+    BYTE   DefaultChar[MAX_DEFAULTCHAR];
+    BYTE   LeadByte[MAX_LEADBYTES];
+} CPINFO, *LPCPINFO;
+
+typedef struct
+{
+    UINT MaxCharSize;
+    BYTE DefaultChar[MAX_DEFAULTCHAR];
+    BYTE LeadByte[MAX_LEADBYTES];
+    WCHAR UnicodeDefaultChar;
+    UINT CodePage;
+    CHAR CodePageName[MAX_PATH];
+} CPINFOEXA, *LPCPINFOEXA;
+
+typedef struct
+{
+    UINT MaxCharSize;
+    BYTE DefaultChar[MAX_DEFAULTCHAR];
+    BYTE LeadByte[MAX_LEADBYTES];
+    WCHAR UnicodeDefaultChar;
+    UINT CodePage;
+    WCHAR CodePageName[MAX_PATH];
+} CPINFOEXW, *LPCPINFOEXW;
+
 typedef DWORD CALTYPE;
 typedef DWORD CALID;
 
@@ -498,7 +530,11 @@ UINT16      WINAPI CompareString16(DWORD,DWORD,LPCSTR,DWORD,LPCSTR,DWORD);
 INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
 BOOL16      WINAPI GetStringType16(LCID,DWORD,LPCSTR,INT16,LPWORD);
 
-
 LCID WINAPI ConvertDefaultLocale(LCID   Locale);
+
+BOOL        WINAPI GetCPInfo(UINT,LPCPINFO);
+BOOL        WINAPI GetCPInfoExA(UINT,DWORD,LPCPINFOEXA);
+BOOL        WINAPI GetCPInfoExW(UINT,DWORD,LPCPINFOEXW);
+#define     GetCPInfoEx WINELIB_NAME_AW(GetCPInfoEx)
 
 #endif  /* __WINE_WINNLS_H */

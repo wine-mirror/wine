@@ -594,19 +594,6 @@ typedef struct {
         WORD wMilliseconds;
 } SYSTEMTIME, *LPSYSTEMTIME;
 
-
-/* Code page information.
- */
-#define MAX_LEADBYTES     12
-#define MAX_DEFAULTCHAR   2
-
-typedef struct
-{
-    UINT MaxCharSize;
-    BYTE   DefaultChar[MAX_DEFAULTCHAR];
-    BYTE   LeadByte[MAX_LEADBYTES];
-} CPINFO, *LPCPINFO;
-
 /* The 'overlapped' data structure used by async I/O functions.
  */
 typedef struct {
@@ -1278,7 +1265,6 @@ UINT      WINAPI GetConsoleOutputCP(void);
 DWORD       WINAPI GetConsoleTitleA(LPSTR,DWORD);
 DWORD       WINAPI GetConsoleTitleW(LPWSTR,DWORD);
 #define     GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
-BOOL      WINAPI GetCPInfo(UINT,LPCPINFO);
 BOOL      WINAPI GetCommMask(HANDLE, LPDWORD);
 BOOL      WINAPI GetCommModemStatus(HANDLE, LPDWORD);
 HANDLE    WINAPI GetCurrentProcess(void);
