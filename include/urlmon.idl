@@ -1,0 +1,539 @@
+/*
+ * Copyright (C) 2000 Ulrich Czekalla
+ * Copyright (C) 2003 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+import "objidl.idl";
+import "oleidl.idl";
+import "servprov.idl";
+/*import "msxml.idl";*/
+
+
+/*****************************************************************************
+ * IBinding interface
+ */
+[
+    object,
+    uuid(79eac9c0-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IBinding : IUnknown
+{
+    typedef [unique] IBinding *LPBINDING;
+
+    HRESULT Abort();
+    HRESULT Suspend();
+    HRESULT Resume();
+
+    HRESULT SetPriority(
+        [in] LONG nPriority);
+
+    HRESULT GetPriority(
+        [out] LONG * pnPriority);
+
+    [local]
+    HRESULT GetBindResult(
+        [out] CLSID *pclsidProtocol,
+        [out] DWORD *pdwResult,
+        [out] LPOLESTR *pszResult,
+        [in, out] DWORD *pdwReserved);
+
+    [call_as(GetBindResult)]
+    HRESULT RemoteGetBindResult(
+        [out] CLSID *pclsidProtocol,
+        [out] DWORD *pdwResult,
+        [out] LPOLESTR *pszResult,
+        [in] DWORD dwReserved);
+}
+
+
+/*****************************************************************************
+ * IBindStatusCallback interface
+ */
+[
+    object,
+    uuid(79eac9c1-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IBindStatusCallback : IUnknown
+{
+    typedef [unique] IBindStatusCallback *LPBINDSTATUSCALLBACK;
+
+
+    typedef enum
+    {
+        BINDF_ASYNCHRONOUS = 0x00000001,
+        BINDF_ASYNCSTORAGE = 0x00000002,
+        BINDF_NOPROGRESSIVERENDERING = 0x00000004,
+        BINDF_OFFLINEOPERATION = 0x00000008,
+        BINDF_GETNEWESTVERSION = 0x00000010,
+        BINDF_NOWRITECACHE = 0x00000020,
+        BINDF_NEEDFILE = 0x00000040,
+        BINDF_PULLDATA = 0x00000080,
+        BINDF_IGNORESECURITYPROBLEM = 0x00000100,
+        BINDF_RESYNCHRONIZE = 0x00000200,
+        BINDF_HYPERLINK = 0x00000400,
+        BINDF_NO_UI = 0x00000800,
+        BINDF_SILENTOPERATION = 0x00001000,
+        BINDF_PRAGMA_NO_CACHE = 0x00002000,
+        BINDF_GETCLASSOBJECT = 0x00004000,
+        BINDF_RESERVED_1 = 0x00008000,
+        BINDF_FREE_THREADED = 0x00010000,
+        BINDF_DIRECT_READ = 0x00020000,
+        BINDF_FORMS_SUBMIT = 0x00040000,
+        BINDF_GETFROMCACHE_IF_NET_FAIL = 0x00080000,
+        BINDF_FROMURLMON = 0x00100000,
+        BINDF_FWD_BACK = 0x00200000,
+        BINDF_PREFERDEFAULTHANDLER = 0x00400000,
+        BINDF_ENFORCERESTRICTED = 0x00800000
+    } BINDF;
+
+    typedef struct _tagBINDINFO
+    {
+        ULONG cbSize;
+        LPWSTR szExtraInfo;
+        STGMEDIUM stgmedData;
+        DWORD grfBindInfoF;
+        DWORD dwBindVerb;
+        LPWSTR szCustomVerb;
+        DWORD cbStgmedData;
+        DWORD dwOptions;
+        DWORD dwOptionsFlags;
+        DWORD dwCodePage;
+        SECURITY_ATTRIBUTES securityAttributes;
+        IID iid;
+        IUnknown *pUnk;
+        DWORD dwReserved;
+    } BINDINFO;
+
+    typedef struct _REMSECURITY_ATTRIBUTES
+    {
+        DWORD nLength;
+        DWORD lpSecurityDescriptor;
+        BOOL bInheritHandle;
+    } REMSECURITY_ATTRIBUTES, *PREMSECURITY_ATTRIBUTES, *LPREMSECURITY_ATTRIBUTES;
+
+    typedef struct _tagRemBINDINFO
+    {
+        ULONG cbSize;
+        LPWSTR szExtraInfo;
+        DWORD grfBindInfoF;
+        DWORD dwBindVerb;
+        LPWSTR szCustomVerb;
+        DWORD cbstgmedData;
+        DWORD dwOptions;
+        DWORD dwOptionsFlags;
+        DWORD dwCodePage;
+        REMSECURITY_ATTRIBUTES securityAttributes;
+        IID iid;
+        IUnknown *pUnk;
+        DWORD dwReserved;
+    } RemBINDINFO;
+
+    typedef struct tagRemFORMATETC
+    {
+        DWORD cfFormat;
+        DWORD ptd;
+        DWORD dwAspect;
+        LONG lindex;
+        DWORD tymed;
+    } RemFORMATETC, *LPREMFORMATETC;
+
+    typedef enum
+    {
+        BSCF_FIRSTDATANOTIFICATION = 0x01,
+        BSCF_INTERMEDIATEDATANOTIFICATION = 0x02,
+        BSCF_LASTDATANOTIFICATION = 0x04,
+        BSCF_DATAFULLYAVAILABLE = 0x08,
+        BSCF_AVAILABLEDATASIZEUNKNOWN = 0x10
+    } BSCF;
+
+    typedef enum BINDSTATUS
+    {
+	BINDSTATUS_FINDINGRESOURCE = 1,
+	BINDSTATUS_CONNECTING,
+	BINDSTATUS_REDIRECTING,
+	BINDSTATUS_BEGINDOWNLOADDATA,
+	BINDSTATUS_DOWNLOADINGDATA,
+	BINDSTATUS_ENDDOWNLOADDATA,
+	BINDSTATUS_BEGINDOWNLOADCOMPONENTS,
+	BINDSTATUS_INSTALLINGCOMPONENTS,
+	BINDSTATUS_ENDDOWNLOADCOMPONENTS,
+	BINDSTATUS_USINGCACHEDCOPY,
+	BINDSTATUS_SENDINGREQUEST,
+	BINDSTATUS_CLASSIDAVAILABLE,
+	BINDSTATUS_MIMETYPEAVAILABLE,
+	BINDSTATUS_CACHEFILENAMEAVAILABLE,
+	BINDSTATUS_BEGINSYNCOPERATION,
+	BINDSTATUS_ENDSYNCOPERATION,
+	BINDSTATUS_BEGINUPLOADDATA,
+	BINDSTATUS_UPLOADINGDATA,
+	BINDSTATUS_ENDUPLOADINGDATA,
+	BINDSTATUS_PROTOCOLCLASSID,
+	BINDSTATUS_ENCODING,
+	BINDSTATUS_VERFIEDMIMETYPEAVAILABLE,
+	BINDSTATUS_CLASSINSTALLLOCATION,
+	BINDSTATUS_DECODING,
+	BINDSTATUS_LOADINGMIMEHANDLER,
+	BINDSTATUS_CONTENTDISPOSITIONATTACH,
+	BINDSTATUS_FILTERREPORTMIMETYPE,
+	BINDSTATUS_CLSIDCANINSTANTIATE,
+	BINDSTATUS_IUNKNOWNAVAILABLE,
+	BINDSTATUS_DIRECTBIND,
+	BINDSTATUS_RAWMIMETYPE,
+	BINDSTATUS_PROXYDETECTING,
+	BINDSTATUS_ACCEPTRANGES,
+        BINDSTATUS_COOKIE_SENT,
+        BINDSTATUS_COMPACT_POLICY_RECEIVED,
+        BINDSTATUS_COOKIE_SUPPRESSED,
+        BINDSTATUS_COOKIE_STATE_UNKNOWN,
+        BINDSTATUS_COOKIE_STATE_ACCEPT,
+        BINDSTATUS_COOKIE_STATE_REJECT,
+        BINDSTATUS_COOKIE_STATE_PROMPT,
+        BINDSTATUS_COOKIE_STATE_LEASH,
+        BINDSTATUS_COOKIE_STATE_DOWNGRADE,
+        BINDSTATUS_POLICY_HREF,
+        BINDSTATUS_P3P_HEADER,
+        BINDSTATUS_SESSION_COOKIE_RECEIVED,
+        BINDSTATUS_PERSISTENT_COOKIE_RECEIVED,
+        BINDSTATUS_SESSION_COOKIES_ALLOWED,
+        BINDSTATUS_CACHECONTROL
+    } BINDSTATUS;
+
+
+    HRESULT OnStartBinding(
+        [in] DWORD dwReserved,
+        [in] IBinding * pib);
+
+    HRESULT GetPriority(
+        [out] LONG * pnPriority);
+
+    HRESULT OnLowResource(
+        [in] DWORD reserved);
+
+    HRESULT OnProgress(
+        [in] ULONG ulProgress,
+        [in] ULONG ulProgressMax,
+        [in] ULONG ulStatusCode,
+        [in] LPCWSTR szStatusText);
+
+    HRESULT OnStopBinding(
+        [in] HRESULT hresult,
+        [in, unique] LPCWSTR szError);
+
+    [local]
+    HRESULT GetBindInfo(
+        [out] DWORD *grfBINDF,
+        [in, out, unique] BINDINFO * pbindinfo);
+
+    [call_as(GetBindInfo)]
+    HRESULT RemoteGetBindInfo(
+        [out] DWORD *grfBINDF,
+        [in, out, unique] RemBINDINFO * pbindinfo,
+        [in, out, unique] RemSTGMEDIUM* pstgmed);
+
+    [local]
+    HRESULT OnDataAvailable(
+        [in] DWORD grfBSCF,
+        [in] DWORD dwSize,
+        [in] FORMATETC* pformatetc,
+        [in] STGMEDIUM* pstgmed);
+
+    [call_as(OnDataAvailable)]
+    HRESULT RemoteOnDataAvailable(
+        [in] DWORD grfBSCF,
+        [in] DWORD dwSize,
+        [in] RemFORMATETC *pformatetc,
+        [in] RemSTGMEDIUM* pstgmed);
+
+    HRESULT OnObjectAvailable(
+        [in] REFIID riid,
+        [in, iid_is(riid)] IUnknown* punk);
+}
+
+
+/*****************************************************************************
+ * IBindHost interface
+ */
+[
+    object,
+    uuid(fc4801a1-2ba9-11cf-a229-00aa003d7352),
+    pointer_default(unique)
+]
+interface IBindHost : IUnknown
+{
+    typedef [unique] IBindHost *LPBINDHOST;
+
+    HRESULT CreateMoniker(
+        [in] LPOLESTR szName,
+        [in] IBindCtx *pBC,
+        [out] IMoniker** ppmk,
+        [in] DWORD dwReserved);
+
+    [local]
+    HRESULT MonikerBindToStorage(
+        [in] IMoniker *pMk,
+        [in] IBindCtx *pBC,
+        [in] IBindStatusCallback *pBSC,
+        [in] REFIID riid,
+        [out] void **ppvObj);
+
+    [call_as(MonikerBindToStorage)]
+    HRESULT RemoteMonikerBindToStorage(
+        [in, unique] IMoniker *pMk,
+        [in, unique] IBindCtx *pBC,
+        [in, unique] IBindStatusCallback *pBSC,
+        [in] REFIID riid,
+        [out, iid_is(riid)] IUnknown **ppvObj);
+
+    [local]
+    HRESULT MonikerBindToObject(
+        [in] IMoniker *pMk,
+        [in] IBindCtx *pBC,
+        [in] IBindStatusCallback *pBSC,
+        [in] REFIID riid,
+        [out] void **ppvObj);
+
+    [call_as(MonikerBindToObject)]
+    HRESULT RemoteMonikerBindToObject(
+        [in, unique] IMoniker *pMk,
+        [in, unique] IBindCtx *pBC,
+        [in, unique] IBindStatusCallback *pBSC,
+        [in] REFIID riid,
+        [out, iid_is(riid)] IUnknown **ppvObj);
+}
+
+
+/*****************************************************************************
+ * IWinInetInfo interface
+ */
+[
+    object,
+    uuid(79eac9d6-bafa-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IWinInetInfo : IUnknown
+{
+    typedef [unique] IWinInetInfo *LPWININETINFO;
+
+    [local]
+    HRESULT QueryOption(
+        [in] DWORD dwOption,
+        [in, out, size_is(*pcbBuf)] LPVOID pBuffer,
+        [in, out] DWORD *pcbBuf);
+
+    [call_as(QueryOption)]
+    HRESULT RemoteQueryOption(
+        [in] DWORD  dwOption,
+        [in, out, size_is(*pcbBuf)] BYTE *pBuffer,
+        [in, out] DWORD *pcbBuf);
+}
+
+
+
+/*****************************************************************************
+ * IWinInetHttpInfo interface
+ */
+[
+    object,
+    uuid(79eac9d8-bafa-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IWinInetHttpInfo : IWinInetInfo
+{
+    typedef [unique] IWinInetHttpInfo *LPWININETHTTPINFO;
+
+    [local]
+    HRESULT QueryInfo(
+        [in] DWORD dwOption,
+        [in, out,size_is(*pcbBuf)] LPVOID pBuffer,
+        [in, out] DWORD *pcbBuf,
+        [in, out] DWORD *pdwFlags,
+        [in, out] DWORD *pdwReserved);
+
+    [call_as(QueryInfo)]
+    HRESULT RemoteQueryInfo(
+        [in] DWORD dwOption,
+        [in,out,size_is(*pcbBuf)] BYTE *pBuffer,
+        [in, out] DWORD *pcbBuf,
+        [in, out] DWORD *pdwFlags,
+        [in, out] DWORD *pdwReserved);
+}
+
+
+
+/*****************************************************************************
+ * IPersistMoniker interface
+ */
+[
+    object,
+    uuid(79eac9c9-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IPersistMoniker : IUnknown
+{
+    typedef [unique] IPersistMoniker *LPPERSISTMONIKER;
+
+    HRESULT GetClassID(
+        [out] CLSID *pClassID);
+
+    HRESULT IsDirty();
+
+    HRESULT Load(
+        [in] BOOL fFullyAvailable,
+        [in] IMoniker *pimkName,
+        [in] LPBC pibc,
+        [in] DWORD grfMode);
+
+    HRESULT Save(
+        [in] IMoniker *pimkName,
+        [in] LPBC pbc,
+        [in] BOOL fRemember);
+
+    HRESULT SaveCompleted(
+        [in] IMoniker *pimkName,
+        [in] LPBC pibc);
+
+    HRESULT GetCurMoniker(
+        [out] IMoniker **ppimkName);
+}
+
+
+/*****************************************************************************
+ * IInternetProtocolInfo interface
+ */
+[
+    local,
+    object,
+    uuid(79eac9ec-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IInternetProtocolInfo : IUnknown
+{
+    typedef [unique] IInternetProtocolInfo *LPIINTERNETPROTOCOLINFO;
+
+    typedef enum _tagPARSEACTION
+    {
+        PARSE_CANONICALIZE = 1,
+        PARSE_FRIENDLY,
+        PARSE_SECURITY_URL,
+        PARSE_ROOTDOCUMENT,
+        PARSE_DOCUMENT,
+        PARSE_ANCHOR,
+        PARSE_ENCODE,
+        PARSE_DECODE,
+        PARSE_PATH_FROM_URL,
+        PARSE_URL_FROM_PATH,
+        PARSE_MIME,
+        PARSE_SERVER,
+        PARSE_SCHEMA,
+        PARSE_SITE,
+        PARSE_DOMAIN,
+        PARSE_LOCATION,
+        PARSE_SECURITY_DOMAIN,
+        PARSE_ESCAPE,
+        PARSE_UNESCAPE
+    } PARSEACTION;
+
+    typedef enum _tagPSUACTION
+    {
+        PSU_DEFAULT = 1,
+        PSU_SECURITY_URL_ONLY
+    } PSUACTION;
+
+    typedef enum _tagQUERYOPTION
+    {
+        QUERY_EXPIRATION_DATE = 1,
+        QUERY_TIME_OF_LAST_CHANGE,
+        QUERY_CONTENT_ENCODING,
+        QUERY_CONTENT_TYPE,
+        QUERY_REFRESH,
+        QUERY_RECOMBINE,
+        QUERY_CAN_NAVIGATE,
+        QUERY_USES_NETWORK,
+        QUERY_IS_CACHED,
+        QUERY_IS_INSTALLEDENTRY,
+        QUERY_IS_CACHED_OR_MAPPED,
+        QUERY_USES_CACHE,
+        QUERY_IS_SECURE,
+        QUERY_IS_SAFE
+    } QUERYOPTION;
+
+    HRESULT ParseUrl(
+        [in] LPCWSTR pwzUrl,
+        [in] PARSEACTION ParseAction,
+        [in] DWORD dwParseFlags,
+        [out] LPWSTR pwzResult,
+        [in] DWORD cchResult,
+        [out] DWORD *pcchResult,
+        [in] DWORD dwReserved);
+
+    HRESULT CombineUrl(
+        [in] LPCWSTR pwzBaseUrl,
+        [in] LPCWSTR pwzRelativeUrl,
+        [in] DWORD dwCombineFlags,
+        [out] LPWSTR pwzResult,
+        [in] DWORD cchResult,
+        [out] DWORD *pcchResult,
+        [in] DWORD dwReserved);
+
+    HRESULT CompareUrl(
+        [in] LPCWSTR pwzUrl1,
+        [in] LPCWSTR pwzUrl2,
+        [in] DWORD dwCompareFlags);
+
+    HRESULT QueryInfo(
+        [in] LPCWSTR pwzUrl,
+        [in] QUERYOPTION OueryOption,
+        [in] DWORD dwQueryFlags,
+        [in, out,size_is(*pcbBuf)] LPVOID pBuffer,
+        [in] DWORD cbBuffer,
+        [in, out] DWORD *pcbBuf,
+        [in] DWORD dwReserved);
+}
+
+
+cpp_quote("#define MK_S_ASYNCHRONOUS                0x000401E8")
+cpp_quote("#define S_ASYNCHRONOUS                   MK_S_ASYNCHRONOUS")
+
+cpp_quote("#define INET_E_ERROR_FIRST               0x800C0002L")
+cpp_quote("#define INET_E_INVALID_URL               0x800C0002L")
+cpp_quote("#define INET_E_NO_SESSION                0x800C0003L")
+cpp_quote("#define INET_E_CANNOT_CONNECT            0x800C0004L")
+cpp_quote("#define INET_E_RESOURCE_NOT_FOUND        0x800C0005L")
+cpp_quote("#define INET_E_OBJECT_NOT_FOUND          0x800C0006L")
+cpp_quote("#define INET_E_DATA_NOT_AVAILABLE        0x800C0007L")
+cpp_quote("#define INET_E_DOWNLOAD_FAILURE          0x800C0008L")
+cpp_quote("#define INET_E_AUTHENTICATION_REQUIRED   0x800C0009L")
+cpp_quote("#define INET_E_NO_VALID_MEDIA            0x800C000AL")
+cpp_quote("#define INET_E_CONNECTION_TIMEOUT        0x800C000BL")
+cpp_quote("#define INET_E_INVALID_REQUEST           0x800C000CL")
+cpp_quote("#define INET_E_UNKNOWN_PROTOCOL          0x800C000DL")
+cpp_quote("#define INET_E_SECURITY_PROBLEM          0x800C000EL")
+cpp_quote("#define INET_E_CANNOT_LOAD_DATA          0x800C000FL")
+cpp_quote("#define INET_E_CANNOT_INSTANTIATE_OBJECT 0x800C0010L")
+cpp_quote("#define INET_E_QUERYOPTION_UNKNOWN       0x800C0013L")
+cpp_quote("#define INET_E_REDIRECT_FAILED           0x800C0014L")
+cpp_quote("#define INET_E_REDIRECT_TO_DIR           0x800C0015L")
+cpp_quote("#define INET_E_CANNOT_LOCK_REQUEST       0x800C0016L")
+cpp_quote("#define INET_E_ERROR_LAST                INET_E_REDIRECT_TO_DIR")
+
+cpp_quote("HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk);")
+cpp_quote("HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);")
+cpp_quote("HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);")
+cpp_quote("HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL,  LPCSTR  szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);")
+cpp_quote("HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);")

@@ -12,6 +12,7 @@ IDL_SRCS = \
 	servprov.idl \
 	strmif.idl \
 	unknwn.idl \
+	urlmon.idl \
 	wtypes.idl
 
 IDL_INCLUDES = \
@@ -160,7 +161,6 @@ WINDOWS_INCLUDES = \
 	tapi.h \
 	tchar.h \
 	tlhelp32.h \
-	urlmon.h \
 	uuids.h \
 	ver.h \
 	vfw.h \
