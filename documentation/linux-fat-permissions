@@ -1,0 +1,137 @@
+This document describes how FAT and VFAT file system permissions work
+in Linux with a focus on configuring them for Wine.
+
+Introduction
+------------
+Linux is able to access DOS and Windows file systems using either the
+FAT (older 8.3 DOS filesystems) or VFAT (newer Windows 95 or later
+long filename filesystems) modules.  Mounted FAT or VFAT filesystems
+provide the primary means for which existing applications and their
+data are accessed through Wine for dual boot (Linux + Windows)
+systems.
+
+Wine maps mounted FAT filesystems, such as "/c", to driver letters,
+such as "c:", as indicated by the wine.conf file.  The following
+excerpt from a wine.conf file does this:
+    [Drive C]
+    Path=/c
+    Type=hd
+
+Although VFAT filesystems are preferable to FAT filesystems for their
+long filename support the term "FAT" will be used throughout the
+remainder of this document to refer to FAT filesystems and their
+derivatives.  Also, "/c" will be used as the FAT mount point in
+examples throughout this document.
+
+Most modern Linux distributions either detect or allow existing FAT
+file systems to be configured so that can be mounted, in a location
+such as /c, either persistently (on bootup) or on an as needed basis.
+In either case, by default, the permissions will probably be configured
+so that they look something like:
+    ~>cd /c
+    /c>ls -l
+    -rwxr-xr-x   1 root     root           91 Oct 10 17:58 autoexec.bat
+    -rwxr-xr-x   1 root     root          245 Oct 10 17:58 config.sys
+    drwxr-xr-x  41 root     root        16384 Dec 30  1998 windows
+where all the files are owned by "root", are in the "root" group and
+are only writable by "root" (755 permissions).  This is restrictive in
+that it requires that Wine be run as root in order for applications to
+be able to write to any part of the filesystem.
+
+There three major approaches to overcoming the restrictive permissions
+mentioned in the previous paragraph:
+    1) Run Wine as root
+    2) Mount the FAT filesystem with less restrictive permissions
+    3) Shadow the FAT filesystem by completely or partially copying it
+Each approach will be discusses in the following "Running Wine as
+root", "Mounting FAT filesystems" and "Shadowing FAT filesystems"
+sections.
+
+Running Wine as root
+--------------------
+Running Wine as root is the easiest and most thorough way of giving
+applications that Wine runs unrestricted access to FAT files systems.
+Running wine as root also allows applications to do things unrelated
+to FAT filesystems, such as listening to ports that are less than
+1024.  Running Wine as root is dangerous since there is no limit to
+what the application can do to the system.
+
+Mounting FAT filesystems
+------------------------
+The FAT filesystem can be mounted with permissions less restrictive
+than the default.  This can be done by either changing the user that
+mounts the FAT filesystem or by explicitly changing the permissions
+that the FAT filesystem is mounted with.  The permissions are
+inherited from the process that mounts the FAT filesystem.  Since the
+process that mounts the FAT filesystem is usually a startup script
+running as root the FAT filesystem inherits root's permissions.  This
+results in the files on the FAT filesystem having permissions similar
+to files created by root.  For example:
+    ~>whoami
+    root
+    ~>touch root_file
+    ~>ls -l root_file
+    -rw-r--r--   1 root     root            0 Dec 10 00:20 root_file
+
+which matches the owner, group and permissions of files seen on the
+FAT filesystem except for the missing 'x's.  The permissions on the
+FAT filesystem can be changed by changing root's umask (unset
+permissions bits).  For example:
+    ~>umount /c
+    ~>umask
+    022
+    ~>umask 073
+    ~>mount /c
+    ~>cd /c
+    /c>ls -l
+    -rwx---r--   1 root     root           91 Oct 10 17:58 autoexec.bat
+    -rwx---r--   1 root     root          245 Oct 10 17:58 config.sys
+    drwx---r--  41 root     root        16384 Dec 30  1998 windows
+Mounting the FAT filesystem with a umask of 000 gives all users
+complete control over the it.
+Explicitly specifying the permissions of the FAT filesystem when it is
+mounted provides additional control.  There are three mount options
+that are relevant to FAT permissions: "uid", "gid" and "umask".  They
+can each be specified when the filesystem is manually mounted.  For
+example:
+    ~>umount /c
+    ~>mount -o uid=500 -o gid=500 -o umask=002 /c
+    ~>cd /c
+    /c>ls -l
+    -rwxrwxr-x   1 sle      sle            91 Oct 10 17:58 autoexec.bat
+    -rwxrwxr-x   1 sle      sle           245 Oct 10 17:58 config.sys
+    drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows
+which gives "sle" complete control over /c.  The options listed above
+can be made permanent by adding them to the /etc/fstab file:
+    ~>grep /c /etc/fstab
+    /dev/hda1  /c  vfat  uid=500,gid=500,umask=002,exec,dev,suid,rw 1 1
+Note that the umask of 002 is common in the user private group file
+permission scheme.  On FAT file systems this umask assures that all
+files are fully accessible by all users in the specified group (gid).
+
+Shadowing FAT filesystems
+-------------------------
+Shadowing provides a finer granularity of control.  Parts of the
+original FAT filesystem can be copied so that the application can
+safely work with those copied parts while the application continue to
+directly read the remaining parts.  This is done with symbolic links.
+For example, consider a system where an application named "AnApp" must
+be able to read and write to the c:\windows and c:\AnApp directories
+as well as have read access to the entire FAT filesystem.  On this
+system the FAT filesystem has default permissions which should not be
+changed for security reasons or can not be changed due to lack of root
+access.  On this system a shadow directory might be set up in the
+following manner:
+    ~>cd /
+    />mkdir c_shadow
+    />cd c_shadow
+    /c_shadow>ln -s /c_/* .
+    /c_shadow>rm windows AnApp
+    /c_shadow>cp -R /c_/{windows,AnApp} .
+    /c_shadow>chmod -R 777 windows AnApp
+    /c_shadow>perl -p -i -e 's|/c$|/c_shadow|g' /usr/local/etc/wine.conf
+The above gives everyone complete read and write access to the
+"windows" and "AnApp" directories while only root has write access to
+all other directories.
+---
+Steven Elliott (elliotsl@mindspring.com)
