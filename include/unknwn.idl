@@ -18,11 +18,6 @@
 
 import "wtypes.idl";
 
-/* need this until objidl.h and objbase.h is complete */
-cpp_quote("#define __WINE_INCLUDE_UNKNWN")
-cpp_quote("#include \"wine/obj_base.h\"")
-cpp_quote("#undef __WINE_INCLUDE_UNKNWN")
-
 /* COM vtable compatibility macros for g++ */
 /* Included here because the generated header needs them */
 

@@ -203,7 +203,6 @@ WINE_INCLUDES = \
 	debug.h \
 	exception.h \
 	library.h \
-	obj_base.h \
 	obj_cache.h \
 	obj_comcat.h \
 	obj_commdlgbrowser.h \

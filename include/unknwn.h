@@ -8,9 +8,6 @@
 extern "C" {
 #endif
 #include "wtypes.h"
-#define __WINE_INCLUDE_UNKNWN
-#include "wine/obj_base.h"
-#undef __WINE_INCLUDE_UNKNWN
 #if defined(__cplusplus) && !defined(CINTERFACE)
  #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
   #define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
