@@ -1474,14 +1474,14 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     else if (lpChCol->Flags & CC_ENABLETEMPLATE)
     {
 	HRSRC hResInfo;
-        if (!(hResInfo = FindResourceW(lpChCol->hInstance,
+        if (!(hResInfo = FindResourceW((HINSTANCE)lpChCol->hInstance,
                                         lpChCol->lpTemplateName,
                                         RT_DIALOGW)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
-        if (!(hDlgTmpl = LoadResource(lpChCol->hInstance, hResInfo)) ||
+        if (!(hDlgTmpl = LoadResource((HINSTANCE)lpChCol->hInstance, hResInfo)) ||
             !(template = LockResource(hDlgTmpl)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);

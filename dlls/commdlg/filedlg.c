@@ -1148,7 +1148,7 @@ void FILEDLG_MapOfnStruct16(LPOPENFILENAME16 ofn16, LPOPENFILENAMEW ofnW, BOOL o
     memset(&ofnA, 0, sizeof(OPENFILENAMEA));
     ofnA.lStructSize = sizeof(OPENFILENAMEA);
     ofnA.hwndOwner = HWND_32(ofn16->hwndOwner);
-    ofnA.hInstance = ofn16->hInstance;
+    ofnA.hInstance = HINSTANCE_32(ofn16->hInstance);
     if (ofn16->lpstrFilter)
         ofnA.lpstrFilter = MapSL(ofn16->lpstrFilter);
     if (ofn16->lpstrCustomFilter)
@@ -1299,7 +1299,7 @@ BOOL WINAPI GetFileName31A(
     lfs = FILEDLG_AllocPrivate((LPARAM) lpofn, LFS32A, dlgType);
     if (lfs)
     {
-        hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
+        hInst = (HINSTANCE)GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner,
                                         FileOpenDlgProc, (LPARAM)lfs);
         FILEDLG_DestroyPrivate(lfs);
@@ -1329,7 +1329,7 @@ BOOL WINAPI GetFileName31W(
     lfs = FILEDLG_AllocPrivate((LPARAM) lpofn, LFS32W, dlgType);
     if (lfs)
     {
-        hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
+        hInst = (HINSTANCE)GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         bRet = DialogBoxIndirectParamW( hInst, lfs->template, lpofn->hwndOwner,
                                         FileOpenDlgProc, (LPARAM)lfs);
         FILEDLG_DestroyPrivate(lfs);
@@ -1508,7 +1508,7 @@ BOOL16 WINAPI GetOpenFileName16(
 				SEGPTR ofn /* [in/out] address of structure with data*/
 				)
 {
-    HINSTANCE hInst;
+    HINSTANCE16 hInst;
     BOOL bRet = FALSE;
     LPOPENFILENAME16 lpofn = MapSL(ofn);
     LFSPRIVATE lfs;
@@ -1519,7 +1519,7 @@ BOOL16 WINAPI GetOpenFileName16(
     lfs = FILEDLG_AllocPrivate((LPARAM) ofn, LFS16, OPEN_DIALOG);
     if (lfs)
     {
-        hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
+        hInst = GetWindowWord( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
                                          (DLGPROC16) ptr, (LPARAM) lfs);
@@ -1546,7 +1546,7 @@ BOOL16 WINAPI GetSaveFileName16(
 				SEGPTR ofn /* [in/out] addess of structure with data*/
 				)
 {
-    HINSTANCE hInst;
+    HINSTANCE16 hInst;
     BOOL bRet = FALSE;
     LPOPENFILENAME16 lpofn = MapSL(ofn);
     LFSPRIVATE lfs;
@@ -1557,7 +1557,7 @@ BOOL16 WINAPI GetSaveFileName16(
     lfs = FILEDLG_AllocPrivate((LPARAM) ofn, LFS16, SAVE_DIALOG);
     if (lfs)
     {
-        hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
+        hInst = GetWindowWord( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
                                          (DLGPROC16) ptr, (LPARAM) lfs);

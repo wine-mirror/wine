@@ -70,7 +70,7 @@ static char * GPA_string = "Failed to get entry point %s for hinst = 0x%08x\n";
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
-	TRACE("(%08x, %08lx, %p)\n", hInstance, Reason, Reserved);
+	TRACE("(%p, %08lx, %p)\n", hInstance, Reason, Reserved);
 
 	switch(Reason)
 	{

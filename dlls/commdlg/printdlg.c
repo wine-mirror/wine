@@ -2014,7 +2014,7 @@ INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
-	SetPropA(hDlg,"__WINE_PRINTDLGDATA",lParam);
+	SetPropA(hDlg,"__WINE_PRINTDLGDATA",PrintStructures);
 	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
@@ -2352,8 +2352,8 @@ BOOL WINAPI PrintDlgA(
 	    if(lppd->Flags & pflag->flag)
 	        strcat(flagstr, pflag->name);
 	}
-	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
-	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %08x\n"
+	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
 	      "flags %08lx (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
@@ -2508,8 +2508,8 @@ BOOL WINAPI PrintDlgW(
 	    if(lppd->Flags & pflag->flag)
 	        strcat(flagstr, pflag->name);
 	}
-	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
-	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %08x\n"
+	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
 	      "flags %08lx (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
@@ -2666,7 +2666,7 @@ BOOL16 WINAPI PrintDlg16(
 ) {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = (HINSTANCE)GetWindowLongA( HWND_32(lppd->hwndOwner), GWL_HINSTANCE );
+    HINSTANCE16 hInst = GetWindowWord( HWND_32(lppd->hwndOwner), GWL_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -2732,7 +2732,7 @@ BOOL16 WINAPI PrintDlg16(
 	HeapFree(GetProcessHeap(), 0, dbuf);
 	bRet = TRUE;
     } else {
-	HGLOBAL hDlgTmpl;
+	HGLOBAL16 hDlgTmpl;
 	PRINT_PTRA *PrintStructures;
 
     /* load Dialog resources,
@@ -2751,9 +2751,11 @@ BOOL16 WINAPI PrintDlg16(
 #define MVAL(x)	PrintStructures->dlg.lpPrintDlg->x = MapSL(lppd->x);
 	CVAL(Flags);
 	PrintStructures->dlg.lpPrintDlg->hwndOwner = HWND_32(lppd->hwndOwner);
-	CVAL(hDC);
+	PrintStructures->dlg.lpPrintDlg->hDC = HDC_32(lppd->hDC);
 	CVAL(nFromPage);CVAL(nToPage);CVAL(nMinPage);CVAL(nMaxPage);
-	CVAL(nCopies);CVAL(hInstance);CVAL(lCustData);
+	CVAL(nCopies);
+	PrintStructures->dlg.lpPrintDlg->hInstance = HINSTANCE_32(lppd->hInstance);
+	CVAL(lCustData);
 	MVAL(lpPrintTemplateName);MVAL(lpSetupTemplateName);
 	/* Don't copy rest, it is 16 bit specific */
 #undef MVAL
@@ -3172,7 +3174,7 @@ PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg==WM_INITDIALOG) {
 	res = TRUE;
         pda = (PageSetupDataA*)lParam;
-	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",lParam);
+	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",pda);
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
 	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,lParam);
 	    if (!res) {
@@ -3254,7 +3256,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg==WM_INITDIALOG) {
 	res = TRUE;
         pda = (PageSetupDataW*)lParam;
-	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",lParam);
+	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",pda);
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
 	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,lParam);
 	    if (!res) {
@@ -3346,8 +3348,8 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	        strcat(flagstr, "|");
 	    }
 	}
-	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
-	      "hinst %08x, flags %08lx (%s)\n",
+	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+	      "hinst %p, flags %08lx (%s)\n",
 	      setupdlg, setupdlg->hwndOwner, setupdlg->hDevMode,
 	      setupdlg->hDevNames,
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
@@ -3412,8 +3414,8 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 	        strcat(flagstr, "|");
 	    }
 	}
-	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
-	      "hinst %08x, flags %08lx (%s)\n",
+	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+	      "hinst %p, flags %08lx (%s)\n",
 	      setupdlg, setupdlg->hwndOwner, setupdlg->hDevMode,
 	      setupdlg->hDevNames,
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
@@ -3482,7 +3484,7 @@ BOOL16 CALLBACK PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam,
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
-	SetPropA(hDlg,"__WINE_PRINTDLGDATA",lParam);
+	SetPropA(hDlg,"__WINE_PRINTDLGDATA",PrintStructures);
 	res = PRINTDLG_WMInitDialog16(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {

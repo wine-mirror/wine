@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-static HBITMAP16 hBitmapTT = 0;
+static HBITMAP hBitmapTT = 0;
 
 
 INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -71,14 +71,14 @@ static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
   chf32a->lStructSize=sizeof(CHOOSEFONTA);
   chf32a->hwndOwner=HWND_32(chf16->hwndOwner);
-  chf32a->hDC=chf16->hDC;
+  chf32a->hDC=HDC_32(chf16->hDC);
   chf32a->iPointSize=chf16->iPointSize;
   chf32a->Flags=chf16->Flags;
   chf32a->rgbColors=chf16->rgbColors;
   chf32a->lCustData=chf16->lCustData;
   chf32a->lpfnHook=NULL;
   chf32a->lpTemplateName=MapSL(chf16->lpTemplateName);
-  chf32a->hInstance=chf16->hInstance;
+  chf32a->hInstance=HINSTANCE_32(chf16->hInstance);
   chf32a->lpszStyle=MapSL(chf16->lpszStyle);
   chf32a->nFontType=chf16->nFontType;
   chf32a->nSizeMax=chf16->nSizeMax;
