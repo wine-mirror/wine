@@ -639,9 +639,9 @@ BOOL WINAPI MZ_Current( void )
 #else /* !MZ_SUPPORTED */
 
 /***********************************************************************
- *		LoadDosExe (WINEDOS.@)
+ *		wine_load_dos_exe (WINEDOS.@)
  */
-void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
+void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
   WARN("DOS executables not supported on this platform\n");
   SetLastError(ERROR_BAD_FORMAT);
