@@ -16,6 +16,7 @@ C_SRCS = \
 	format_msg.c \
 	kernel_main.c \
 	locale.c \
+	registry16.c \
 	stress.c \
 	string.c \
 	sync.c \
