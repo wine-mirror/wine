@@ -526,20 +526,46 @@ int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder )
 
     if (zorder)
     {
-        /* find window that this one must be after */
-        HWND prev = GetWindow( win->hwndSelf, GW_HWNDPREV );
-        while (prev && !(GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE))
-            prev = GetWindow( prev, GW_HWNDPREV );
-        if (!prev)  /* top child */
+        if (is_window_top_level( win ))
         {
-            changes.stack_mode = Above;
-            mask |= CWStackMode;
+            /* find window that this one must be after */
+            HWND prev = GetWindow( win->hwndSelf, GW_HWNDPREV );
+            while (prev && !(GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE))
+                prev = GetWindow( prev, GW_HWNDPREV );
+            if (!prev)  /* top child */
+            {
+                changes.stack_mode = Above;
+                mask |= CWStackMode;
+            }
+            else
+            {
+                /* should use stack_mode Below but most window managers don't get it right */
+                /* so move it above the next one in Z order */
+                HWND next = GetWindow( win->hwndSelf, GW_HWNDNEXT );
+                while (next && !(GetWindowLongW( next, GWL_STYLE ) & WS_VISIBLE))
+                    next = GetWindow( next, GW_HWNDNEXT );
+                if (next)
+                {
+                    changes.stack_mode = Above;
+                    changes.sibling = X11DRV_get_whole_window(next);
+                    mask |= CWStackMode | CWSibling;
+                }
+            }
         }
         else
         {
-            changes.stack_mode = Below;
-            changes.sibling = X11DRV_get_whole_window(prev);
-            mask |= CWStackMode | CWSibling;
+            HWND next = GetWindow( win->hwndSelf, GW_HWNDNEXT );
+            if (!next)  /* bottom child */
+            {
+                changes.stack_mode = Below;
+                mask |= CWStackMode;
+            }
+            else
+            {
+                changes.stack_mode = Above;
+                changes.sibling = X11DRV_get_whole_window(next);
+                mask |= CWStackMode | CWSibling;
+            }
         }
     }
 
