@@ -6,10 +6,10 @@
    2 stdcall -noname SHChangeNotifyRegister(long long long long long ptr)
    4 stdcall -noname SHChangeNotifyDeregister(long)
    5 stdcall -noname SHChangeNotifyUpdateEntryList(long long long long)
-   9 stub PifMgr_OpenProperties
-  10 stub PifMgr_GetProperties
-  11 stub PifMgr_SetProperties
-  13 stub PifMgr_CloseProperties
+   9 stub -noname PifMgr_OpenProperties
+  10 stub -noname PifMgr_GetProperties
+  11 stub -noname PifMgr_SetProperties
+  13 stub -noname PifMgr_CloseProperties
   15 stdcall -noname ILGetDisplayName(ptr ptr)
   16 stdcall -noname ILFindLastID(ptr)
   17 stdcall -noname ILRemoveLastID(ptr)
@@ -46,8 +46,8 @@
   50 stdcall -noname PathStripToRoot(ptr) PathStripToRootAW
   51 stdcall -noname PathResolve(str long long) PathResolveAW
   52 stdcall -noname PathGetArgs(str) PathGetArgsAW
-  53 stdcall -noname DoEnvironmentSubst(long long) DoEnvironmentSubstAW
-  54 stdcall -noname DragAcceptFiles(long long)
+  53 stdcall DoEnvironmentSubst(long long) DoEnvironmentSubstAW
+  54 stdcall DragAcceptFiles(long long)
   55 stdcall -noname PathQuoteSpaces(ptr) PathQuoteSpacesAW
   56 stdcall -noname PathUnquoteSpaces(str) PathUnquoteSpacesAW
   57 stdcall -noname PathGetDriveNumber(str) PathGetDriveNumberAW
@@ -58,11 +58,11 @@
   62 stdcall -noname PickIconDlg(long long long long)
   63 stdcall -noname GetFileNameFromBrowse(long long long long str str str)
   64 stdcall -noname DriveType(long)
-  65 stub InvalidateDriveType
+  65 stub -noname InvalidateDriveType
   66 stdcall -noname IsNetDrive(long)
   67 stdcall -noname Shell_MergeMenus(long long long long long long)
   68 stdcall -noname SHGetSetSettings(ptr long long)
-  69 stub SHGetNetResource
+  69 stub -noname SHGetNetResource
   70 stdcall -noname SHCreateDefClassObject(long long long long long)
   71 stdcall -noname Shell_GetImageList(ptr ptr)
   72 stdcall -noname Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
@@ -73,9 +73,9 @@
   77 stdcall -noname SHMapPIDLToSystemImageListIndex(ptr ptr ptr)
   78 stdcall -noname OleStrToStrN(str long wstr long) OleStrToStrNAW
   79 stdcall -noname StrToOleStrN(wstr long str long) StrToOleStrNAW
-  80 stdcall -noname DragFinish(long)
-  81 stdcall -noname DragQueryFile(long long ptr long) DragQueryFileA
-  82 stdcall -noname DragQueryFileA(long long ptr long)
+  80 stdcall DragFinish(long)
+  81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
+  82 stdcall DragQueryFileA(long long ptr long)
   83 stdcall -noname CIDLData_CreateFromIDArray(ptr long ptr ptr)
   84 stub SHIsBadInterfacePtr
   85 stdcall -noname OpenRegStream(long str str long) shlwapi.SHOpenRegStreamA
@@ -126,9 +126,9 @@
  130 stdcall -noname DAD_DragEnter(long)
  131 stdcall -noname DAD_DragEnterEx(long long long)
  132 stdcall -noname DAD_DragLeave()
- 133 stdcall -noname DragQueryFileW(long long ptr long)
+ 133 stdcall DragQueryFileW(long long ptr long)
  134 stdcall -noname DAD_DragMove(long long)
- 135 stdcall -noname DragQueryPoint(long ptr)
+ 135 stdcall DragQueryPoint(long ptr)
  136 stdcall -noname DAD_SetDragImage(long long)
  137 stdcall -noname DAD_ShowDragImage(long)
  139 stub Desktop_UpdateBriefcaseOnEvent
@@ -170,8 +170,8 @@
  176 stdcall -noname SHSetInstanceExplorer(long)
  177 stub DAD_SetDragImageFromListView
  178 stdcall -noname SHObjectProperties(long long wstr wstr)
- 179 stdcall -noname SHGetNewLinkInfoA(str str ptr long long)
- 180 stdcall -noname SHGetNewLinkInfoW(wstr wstr ptr long long)
+ 179 stdcall SHGetNewLinkInfoA(str str ptr long long)
+ 180 stdcall SHGetNewLinkInfoW(wstr wstr ptr long long)
  181 stdcall -noname RegisterShellHook(long long)
  182 varargs -noname ShellMessageBoxW(long long long str long)
  183 varargs -noname ShellMessageBoxA(long long long str long)
@@ -215,7 +215,7 @@
  250 stdcall -noname PathRemoveExtension(ptr) PathRemoveExtensionAW
  251 stdcall -noname PathRemoveArgs(ptr) PathRemoveArgsAW
  256 stdcall @(ptr ptr) SHELL32_256
- 271 stub SheChangeDirA
+ 271 stdcall SheChangeDirA(str)
  272 stub SheChangeDirExA
  273 stub SheChangeDirExW
  274 stdcall SheChangeDirW(wstr)
@@ -223,7 +223,7 @@
  276 stub SheFullPathA
  277 stub SheFullPathW
  278 stub SheGetCurDrive
- 279 stub SheGetDirA
+ 279 stdcall SheGetDirA(long long)
  280 stub SheGetDirExW
  281 stdcall SheGetDirW (long long)
  282 stub SheGetPathOffsetW
@@ -329,6 +329,7 @@
 @ stdcall Control_FillCache_RunDLLW(long long long long)
 @ stdcall Control_RunDLL(ptr ptr str long) Control_RunDLLA
 @ stdcall Control_RunDLLA(ptr ptr str long)
+@ stub Control_RunDLLAsUserW
 @ stdcall Control_RunDLLW(ptr ptr wstr long)
 @ stdcall -private DllCanUnloadNow() SHELL32_DllCanUnloadNow
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
@@ -353,9 +354,11 @@
 @ stub FindExeDlgProc
 @ stdcall FindExecutableA(ptr ptr ptr)
 @ stdcall FindExecutableW(wstr wstr wstr)
+@ stub FixupOptionalComponents
 @ stdcall FreeIconList(long)
 @ stub InternalExtractIconListA
 @ stub InternalExtractIconListW
+@ stub OCInstall
 @ stub OpenAs_RunDLL
 @ stub OpenAs_RunDLLA
 @ stub OpenAs_RunDLLW
@@ -373,11 +376,14 @@
 @ stdcall SHBrowseForFolderA(ptr)
 @ stdcall SHBrowseForFolderW(ptr)
 @ stdcall SHChangeNotify (long long ptr ptr)
+@ stub SHChangeNotifySuspendResume
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
+@ stub SHCreateProcessAsUserW
 @ stub ShellHookProc
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
+@ stub SHExtractIconsW
 @ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)
 @ stdcall SHFileOperationW(ptr)
@@ -395,10 +401,16 @@
 @ stdcall SHGetPathFromIDListW(ptr ptr)
 @ stdcall SHGetSettings(ptr long)
 @ stdcall SHGetSpecialFolderLocation(long long ptr)
-@ stdcall SHHelpShortcuts_RunDLL(long long long long)
-@ stub SHHelpShortcuts_RunDLLA
-@ stub SHHelpShortcuts_RunDLLW
+@ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLLA
+@ stdcall SHHelpShortcuts_RunDLLA(long long long long)
+@ stdcall SHHelpShortcuts_RunDLLW(long long long long)
+@ stub SHInvokePrinterCommandA
+@ stub SHInvokePrinterCommandW
+@ stub SHIsFileAvailableOffline
 @ stdcall SHLoadInProc(long)
+@ stub SHLoadNonloadedIconOverlayIdentifiers
+@ stub SHPathPrepareForWriteA
+@ stub SHPathPrepareForWriteW
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stub SHUpdateRecycleBinIcon
@@ -427,6 +439,9 @@
 # version 5.00 (Win2K)
 # _WIN32_IE >= 0x0500
 #
+@ stub ShellExec_RunDLL
+@ stub ShellExec_RunDLLA
+@ stub ShellExec_RunDLLW
 @ stdcall SHBindToParent(ptr ptr ptr ptr)
 @ stdcall SHGetDiskFreeSpaceA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall SHGetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
@@ -434,6 +449,8 @@
 @ stdcall SHGetFolderPathA(long long long long ptr)
 @ stdcall SHGetFolderPathW(long long long long ptr)
 @ stdcall SHGetFolderLocation(long long long long ptr)
+@ stub SHGetIconOverlayIndexA
+@ stub SHGetIconOverlayIndexW
 
 # version 6.0 (WinXP)
 # _WIN32_IE >= 0x600

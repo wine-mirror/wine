@@ -794,10 +794,20 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 }
 
 /*************************************************************************
- * SHHelpShortcuts_RunDLL        [SHELL32.@]
+ * SHHelpShortcuts_RunDLLA        [SHELL32.@]
  *
  */
-DWORD WINAPI SHHelpShortcuts_RunDLL(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
+DWORD WINAPI SHHelpShortcuts_RunDLLA(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
+{
+    FIXME("(%lx, %lx, %lx, %lx) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
+    return 0;
+}
+
+/*************************************************************************
+ * SHHelpShortcuts_RunDLLA        [SHELL32.@]
+ *
+ */
+DWORD WINAPI SHHelpShortcuts_RunDLLW(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
 {
     FIXME("(%lx, %lx, %lx, %lx) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
     return 0;

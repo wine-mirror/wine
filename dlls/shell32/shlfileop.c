@@ -1411,7 +1411,16 @@ void WINAPI SHFreeNameMappings(HANDLE hNameMapping)
 }
 
 /*************************************************************************
- * SheGetDirW [SHELL32.281]
+ * SheGetDirA [SHELL32.@]
+ *
+ */
+HRESULT WINAPI SheGetDirA(LPSTR u, LPSTR v)
+{   FIXME("%p %p stub\n",u,v);
+    return 0;
+}
+
+/*************************************************************************
+ * SheGetDirW [SHELL32.@]
  *
  */
 HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
@@ -1420,7 +1429,16 @@ HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
 }
 
 /*************************************************************************
- * SheChangeDirW [SHELL32.274]
+ * SheChangeDirA [SHELL32.@]
+ *
+ */
+HRESULT WINAPI SheChangeDirA(LPSTR u)
+{   FIXME("(%s),stub\n",debugstr_a(u));
+    return 0;
+}
+
+/*************************************************************************
+ * SheChangeDirW [SHELL32.@]
  *
  */
 HRESULT WINAPI SheChangeDirW(LPWSTR u)
