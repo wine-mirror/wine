@@ -20,6 +20,7 @@
 #endif
 #include <sys/stat.h>
 #include <unistd.h>
+#include <netinet/ip.h>
 
 #include "winbase.h"
 #include "wingdi.h"
@@ -167,6 +168,7 @@ BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     BOOL bSuccess = FALSE;
     LPWININETAPPINFOA hIC = NULL;
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
+    INT nResCode;
 
     TRACE(" lpszLocalFile(%s) lpszNewRemoteFile(%s)\n", lpszLocalFile, lpszNewRemoteFile);
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
@@ -198,8 +200,16 @@ BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
         if (FTP_InitDataSocket(lpwfs, &nDataSocket)) 
         {
             FTP_SendData(lpwfs, nDataSocket, hFile);
-            bSuccess = TRUE;
             close(nDataSocket);
+	    nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
+					   MAX_REPLY_LEN,0, 0, 0);
+	    if (nResCode)
+	    {
+	        if (nResCode == 226)
+		    bSuccess = TRUE;
+		else
+		    FTP_SetResponseError(nResCode);
+	    }
         }
     }
 
@@ -1234,7 +1244,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 {
     struct sockaddr_in socketAddr;
     struct hostent *phe = NULL;
-    INT nsocket = INVALID_SOCKET;
+    INT nsocket = INVALID_SOCKET, sock_namelen;
     LPWININETAPPINFOA hIC = NULL;
     BOOL bSuccess = FALSE;
     LPWININETFTPSESSIONA lpwfs = NULL;
@@ -1305,7 +1315,8 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         lpwfs->hdr.dwContext = dwContext;
         lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
         lpwfs->sndSocket = nsocket;
-        memcpy(&lpwfs->socketAddress, &socketAddr, sizeof(socketAddr));
+	sock_namelen = sizeof(lpwfs->socketAddress);
+	getsockname(nsocket, &lpwfs->socketAddress, &sock_namelen);
         lpwfs->phostent = phe;
 
         if (NULL == lpszUserName)
@@ -1473,6 +1484,9 @@ INT FTP_ReceiveResponse(INT nSocket, LPSTR lpszResponse, DWORD dwResponse,
 {
     DWORD nRecv;
     INT rc = 0;
+    char firstprefix[5];
+    BOOL multiline = FALSE;
+
 
     TRACE("socket(%d) \n", nSocket);
 
@@ -1485,8 +1499,26 @@ INT FTP_ReceiveResponse(INT nSocket, LPSTR lpszResponse, DWORD dwResponse,
 	if (!INTERNET_GetNextLine(nSocket, lpszResponse, &nRecv))
 	    goto lerror;
 
-        if (nRecv >= 3 && lpszResponse[3] != '-')
-            break;
+        if (nRecv >= 3)
+	{
+	    if(!multiline)
+	    {
+	        if(lpszResponse[3] != '-')
+		    break;
+		else
+		{  /* Start of multiline repsonse.  Loop until we get "nnn " */
+		    multiline = TRUE;
+		    memcpy(firstprefix, lpszResponse, 3);
+		    firstprefix[3] = ' ';
+		    firstprefix[4] = '\0';
+		}
+	    }
+	    else
+	    {
+	        if(!memcmp(firstprefix, lpszResponse, 4))
+		    break;
+	    }
+	}
     }
 		   
     if (nRecv >= 3)
@@ -1649,9 +1681,12 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
             goto lend;
     }
 
-    lpwfs->lstnSocketAddress.sin_family = AF_INET;
+    /* We obtain our ip addr from the name of the command channel socket */
+    lpwfs->lstnSocketAddress = lpwfs->socketAddress;
+
+    /* and get the system to assign us a port */
     lpwfs->lstnSocketAddress.sin_port = htons((u_short) 0);
-    lpwfs->lstnSocketAddress.sin_addr.s_addr = htonl(INADDR_ANY); 
+
     if (SOCKET_ERROR == bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)))
     {
         TRACE("Unable to bind socket\n");
@@ -1731,14 +1766,13 @@ BOOL FTP_SendPort(LPWININETFTPSESSIONA lpwfs)
     INT nResCode;
     CHAR szIPAddress[64];
     BOOL bSuccess = FALSE;
-
     TRACE("\n");
 
     sprintf(szIPAddress, "%d,%d,%d,%d,%d,%d",
-        lpwfs->socketAddress.sin_addr.s_addr&0x000000FF,
-        (lpwfs->socketAddress.sin_addr.s_addr&0x0000FF00)>>8,
-        (lpwfs->socketAddress.sin_addr.s_addr&0x00FF0000)>>16,
-        (lpwfs->socketAddress.sin_addr.s_addr&0xFF000000)>>24,
+	 lpwfs->lstnSocketAddress.sin_addr.s_addr&0x000000FF,
+        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0x0000FF00)>>8,
+        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0x00FF0000)>>16,
+        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0xFF000000)>>24,
         lpwfs->lstnSocketAddress.sin_port & 0xFF,
         (lpwfs->lstnSocketAddress.sin_port & 0xFF00)>>8);
 
@@ -1845,13 +1879,13 @@ BOOL FTP_SendData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, HANDLE hFile)
         nSeconds = e_long_time - s_long_time;
         if( nSeconds / 60 > 0 )
         {
-            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld min %ld sec estimated remainig time %ld sec\t\t\r",
+            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld min %ld sec estimated remainig time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds / 60, 
             nSeconds % 60, (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent );
         }
         else
         {
-            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld sec estimated remainig time %ld sec\t\t\r",
+            TRACE( "%ld bytes of %d bytes (%ld%%) in %ld sec estimated remainig time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds,
             (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent);
         }
