@@ -185,5 +185,5 @@ STRINGTABLE DISCARDABLE
        IDS_RESTART_TITLE       "Reiniciar"
        IDS_RESTART_PROMPT      "Você quer simular a reinicialização do Windows?"
        IDS_SHUTDOWN_TITLE      "Desligar"
-       IDS_SHUTDOWN_PROMPT     "Você quer terminar sua sessão Wine?"
+       IDS_SHUTDOWN_PROMPT     "Você quer finalizar a sessão no Wine?"
 }

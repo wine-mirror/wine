@@ -29,6 +29,7 @@ MAIN_MENU MENU
   MENUITEM "Ö&ffnen...",        CMD_OPEN
   MENUITEM "&Speichern",        CMD_SAVE
   MENUITEM "Speichern &unter...",       CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Drucken",          CMD_PRINT
   MENUITEM "Seite ein&richten...",      CMD_PAGE_SETUP
   MENUITEM "Drucker&einrichtung...",    CMD_PRINTER_SETUP
