@@ -1,0 +1,3 @@
+#include "locale_rc.rc"
+
+#include "messages/winerr_enu.rc"

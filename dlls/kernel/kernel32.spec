@@ -1,7 +1,7 @@
 name	kernel32
 type	win32
 init	MAIN_KernelInit
-rsrc	locale_rc
+rsrc	kernel
 
 import  ntdll.dll
 

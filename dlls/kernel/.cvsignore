@@ -1,4 +1,4 @@
 *.spec.c
 Makefile
+kernel.s
 libkernel32.so.1.0
-locale_rc.s

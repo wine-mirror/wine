@@ -7,6 +7,7 @@ SOVERSION = 1.0
 ALTNAMES  = comm kernel system toolhelp windebug win87em wprocs
 
 C_SRCS = \
+	format_msg.c \
 	kernel_main.c \
 	thunk.c \
 	utthunk.c \
@@ -15,8 +16,13 @@ C_SRCS = \
 	wowthunk.c
 
 RC_SRCS = \
-	locale_rc.rc
+	kernel.rc
+
+MC_SRCS = \
+	messages/winerr_enu.mc
 
 @MAKE_DLL_RULES@
+
+depend: $(MC_SRCS:.mc=.rc)
 
 ### Dependencies:
