@@ -722,6 +722,8 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
                 len -= strlen(buffer) + 1;
                 buffer += strlen(buffer) + 1;
+		if (len < 2)
+		    break;
 		if (return_values && key->value) {
 			buffer[-1] = '=';
 			PROFILE_CopyEntry ( buffer,
