@@ -1,9 +1,9 @@
 /*
- * Very basic unit test for locale functions
- * Test run on win2K (French)
+ * Unit tests for locale functions
  *
- * Copyright (c) 2002 YASAR Mehmet
+ * Copyright 2002 YASAR Mehmet
  * Copyright 2003 Dmitry Timoshkov
+ * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,714 +18,710 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *  We must pass LOCALE_NOUSEROVERRIDE (NUO) to formatting functions so that
+ *  even when the user has overridden their default i8n settings (e.g. in
+ *  the control panel i8n page), we will still get the expected results.
  */
-
 #include <stdarg.h>
 
 #include "wine/test.h"
 #include "windef.h"
+#include "wine/unicode.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
 
 #define eq(received, expected, label, type) \
-        ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
+        ok((received) == (expected), "%s: got " type " instead of " type "\n", \
+           (label), (received), (expected))
 
-#define BUFFER_SIZE		128
-/* Buffer used by callback function */
-char GlobalBuffer[BUFFER_SIZE];
+#define BUFFER_SIZE    128
+char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
 #define COUNTOF(x) (sizeof(x)/sizeof(x)[0])
 
-/* TODO :
- * Unicode versions
- * EnumTimeFormatsA
- * EnumDateFormatsA
- * LCMapStringA
- * GetUserDefaultLangID
- * ...
- */
+#define EXPECT_LEN(len) ok(ret == len, "Expected Len %d, got %d\n", len, ret)
+#define EXPECT_INVALID  ok(GetLastError() == ERROR_INVALID_PARAMETER, \
+ "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError())
+#define EXPECT_BUFFER  ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, \
+ "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError())
+#define EXPECT_FLAGS  ok(GetLastError() == ERROR_INVALID_FLAGS, \
+ "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError())
+#define EXPECT_INVALIDFLAGS ok(GetLastError() == ERROR_INVALID_FLAGS || \
+  GetLastError() == ERROR_INVALID_PARAMETER, \
+ "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError())
+#define EXPECT_VALID    ok(GetLastError() == 0, \
+ "Expected GetLastError() == 0, got %ld\n", GetLastError())
 
-void TestGetLocaleInfoA()
+#define STRINGSA(x,y) strcpy(input, x); strcpy(Expected, y); SetLastError(0); buffer[0] = '\0'
+#define EXPECT_LENA EXPECT_LEN(strlen(Expected)+1)
+#define EXPECT_EQA ok(strncmp(buffer, Expected, strlen(Expected)) == 0, \
+  "Expected '%s', got '%s'", Expected, buffer)
+
+#define STRINGSW(x,y) MultiByteToWideChar(CP_ACP,0,x,-1,input,COUNTOF(input)); \
+   MultiByteToWideChar(CP_ACP,0,y,-1,Expected,COUNTOF(Expected)); \
+   SetLastError(0); buffer[0] = '\0'
+#define EXPECT_LENW EXPECT_LEN(strlenW(Expected)+1)
+#define EXPECT_EQW  ok(strncmpW(buffer, Expected, strlenW(Expected)) == 0, "Bad conversion\n")
+
+#define NUO LOCALE_NOUSEROVERRIDE
+
+static void test_GetLocaleInfoA()
 {
-	int ret, cmp;
-  	LCID lcid;
-  	char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  int ret;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  char buffer[BUFFER_SIZE];
 
-	strcpy(Expected, "Monday");
-	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-	ok (lcid == 0x409, "wrong LCID calculated");
+  ok(lcid == 0x409, "wrong LCID calculated - %ld\n", lcid);
 
-	/* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
-	* partially fill the buffer even if it is too short. See bug 637.
-	*/
-	strcpy(Expected, "xxxxx");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 0);
-	cmp = strncmp (buffer, Expected, strlen(Expected));
-	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
-	eq (ret, lstrlenA("Monday") + 1, "GetLocaleInfoA with len=0", "%d");
+  /* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
+   * partially fill the buffer even if it is too short. See bug 637.
+   */
+  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 0);
+  ok(ret == 7 && !buffer[0], "Expected len=7, got %d\n", ret);
 
-	strcpy(Expected, "Monxx");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 3);
-	cmp = strncmp (buffer, Expected, strlen(Expected));
-	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
-	eq (ret, 0, "GetLocaleInfoA with len = 3", "%d");
+  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 3);
+  EXPECT_BUFFER; EXPECT_LEN(0);
+  ok(!strcmp(buffer, "Mon"), "Expected 'Mon', got '%s'\n", buffer);
 
-	strcpy(Expected, "Monday");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 10);
-	/* We check also presence of '\0' */
-	cmp = strncmp (buffer, Expected, strlen(Expected) + 1);
-	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
-	eq (ret, lstrlenA(Expected)+1, "GetLocaleInfoA with len = 10", "%d" );
-
-	/* We check the whole buffer with strncmp */
-	memset( Expected, 'x', sizeof(Expected) );
-	strcpy(Expected, "Monday");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, BUFFER_SIZE);
-	cmp = strncmp (buffer, Expected, BUFFER_SIZE);
-	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
-	eq (ret, lstrlenA(Expected)+1, "GetLocaleInfoA with len = 10", "%d" );
-
+  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 10);
+  EXPECT_VALID; EXPECT_LEN(7);
+  ok(!strcmp(buffer, "Monday"), "Expected 'Monday', got '%s'\n", buffer);
 }
 
-
-void TestGetTimeFormatA()
+static void test_GetTimeFormatA()
 {
-  int ret, error, cmp;
+  int ret;
   SYSTEMTIME  curtime;
-  char buffer[BUFFER_SIZE], format[BUFFER_SIZE], Expected[BUFFER_SIZE];
-  LCID lcid;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
 
-  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-  strcpy(format, "tt HH':'mm'@'ss");
-
-  /* fill curtime with dummy data */
   memset(&curtime, 2, sizeof(SYSTEMTIME));
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, COUNTOF(buffer));
-  error = GetLastError ();
-  ok (ret == 0, "GetTimeFormat should fail on dummy data");
-  eq (error, ERROR_INVALID_PARAMETER, "GetTimeFormat GetLastError()", "%d");
-  SetLastError(NO_ERROR);   /* clear out the last error */
+  STRINGSA("tt HH':'mm'@'ss", ""); /* Invalid time */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-  /* test that we can correctly produce the expected output, not a very */
-  /* demanding test ;-) */
-  strcpy(Expected, "AM 08:56@13");
-  curtime.wHour = 8;  curtime.wMinute = 56;
-  curtime.wSecond = 13; curtime.wMilliseconds = 22;
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, COUNTOF(buffer));
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok (cmp == 0, "GetTimeFormat got %s instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  curtime.wHour = 8;
+  curtime.wMinute = 56;
+  curtime.wSecond = 13;
+  curtime.wMilliseconds = 22;
+  STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Valid time */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* check that the size reported by the above call is accuate */
-  memset(buffer, 'x', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, ret);
-  ok(ret==lstrlenA(Expected)+1 && GetLastError()==0,
-           "GetTimeFormat(right size): ret=%d error=%ld\n",ret,GetLastError());
-  ok(buffer[0] != 'x',"GetTimeFormat(right size): buffer=[%s]\n",buffer);
+  STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficent buffer */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
+  EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;
 
-  /* test failure due to insufficent buffer */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, 2);
-  ok(ret==0 && GetLastError()==ERROR_INSUFFICIENT_BUFFER,
-           "GetTimeFormat(len=2): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Calculate length only */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, NULL, 0);
+  EXPECT_VALID; EXPECT_LENA;
 
-  /* test with too small buffers */
-  SetLastError(0);
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, NULL, 0);
-  ok(ret==lstrlenA(Expected)+1 && GetLastError()==0,
-           "GetTimeFormat(len=0): ret=%d error=%ld\n",ret,GetLastError());
+  STRINGSA("", "8 AM"); /* TIME_NOMINUTESORSECONDS, default format */
+  ret = GetTimeFormatA(lcid, NUO|TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /************************************/
-  /* test out TIME_NOMINUTESORSECONDS */
-  strcpy(Expected, "8 AM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
+  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test out TIME_NOMINUTESORSECONDS with complex format strings */
-  strcpy(Expected, "4");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, "m1s2m3s4", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
+  ret = GetTimeFormatA(lcid, NUO|TIME_NOSECONDS, &curtime, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-
-  /************************************/
-  /* test out TIME_NOSECONDS */
+  STRINGSA("h:m:s tt", "8:56 AM"); /* TIME_NOSECONDS */
   strcpy(Expected, "8:56 AM");
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, NULL, buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test out TIME_NOSECONDS with a format string of "h:m:s tt" */
-  strcpy(Expected, "8:56 AM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h:m:s tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h.@:m.@:s.@:tt", "8.@:56AM"); /* Multiple delimiters */
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test out TIME_NOSECONDS a strange format string of multiple delimiters "h@:m@:s tt" */
-  /* expected behavior is to turn "hD1D2...mD3D4...sD5D6...tt" and turn this into */
-  /* "hD1D2...mD3D4...tt" */
-  strcpy(Expected, "8.@:56.@:AM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h.@:m.@:s.@:tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("s1s2s3", ""); /* Duplicate tokens */
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test out TIME_NOSECONDS with an string of "1s2s3s4" */
-  /* expect to see only "3" */
-  strcpy(Expected, "3");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "s1s2s3", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("t/tt", "A/AM"); /* AM time marker */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /************************/
-  /* Test out time marker */
-  /* test out time marker(AM/PM) behavior */
-  strcpy(Expected, "A/AM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
-
-  /* time marker testing part 2 */
   curtime.wHour = 13;
-  strcpy(Expected, "P/PM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("t/tt", "P/PM"); /* PM time marker */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /******************************/
-  /* test out TIME_NOTIMEMARKER */
-  /* NOTE: TIME_NOTIMEMARKER elminates all text around any time marker */
-  /*      formatting character until the previous or next formatting character */
-  strcpy(Expected, "156");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "h1t2tt3m", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h1t2tt3m", "156"); /* TIME_NOTIMEMARKER: removes text around time marker token */
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /***********************************/
-  /* test out TIME_FORCE24HOURFORMAT */
-  strcpy(Expected, "13:56:13 PM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h:m:s tt", "13:56:13 PM"); /* TIME_FORCE24HOURFORMAT */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* check to confirm that unlike what msdn documentation suggests, the time marker */
-  /* is not added under TIME_FORCE24HOURFORMAT */
-  strcpy(Expected, "13:56:13");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h:m:s", "13:56:13"); /* TIME_FORCE24HOURFORMAT doesn't add time marker */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-
-  /*********************************************/
-  /* test advanced formatting of GetTimeFormat */
-
-  /* test for 24 hour conversion and for leading zero */
-  /* NOTE: we do not test the "hh or HH" case since hours is two digits */
-  /* "h hh H HH m mm s ss t tt" */
   curtime.wHour = 14; /* change this to 14 or 2pm */
   curtime.wMinute = 5;
   curtime.wSecond = 3;
-  strcpy(Expected, "2 02 14 14 5 05 3 03 P PM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h hh H HH m mm s ss t tt", 
-buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h hh H HH m mm s ss t tt", "2 02 14 14 5 05 3 03 P PM"); /* 24 hrs, leading 0 */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* complete testing on the advanced formatting by testing "hh" and "HH" */
-  /* 0 hour is 12 o'clock or 00 hundred hours */
   curtime.wHour = 0;
-  strcpy(Expected, "12/0/12/00");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h/H/hh/HH", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h/H/hh/HH", "12/0/12/00"); /* "hh" and "HH" */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for LOCALE_NOUSEROVERRIDE set, lpFormat must be NULL */
-  strcpy(Expected, "0:5:3 AM");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, LOCALE_NOUSEROVERRIDE, &curtime, "h:m:s tt", buffer, sizeof(buffer));
-  /* NOTE: we expect this to FAIL */
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (ret == 0, "GetTimeFormat succeeded instead of failing for LOCALE_NOUSEROVERRIDE and a non-null lpFormat\n");
+  STRINGSA("h:m:s tt", "12:5:3 AM"); /* non-zero flags should fail with format, doesn't */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* try to convert formatting strings with more than two letters */
-  /* "h:hh:hhh:H:HH:HHH:m:mm:mmm:M:MM:MMM:s:ss:sss:S:SS:SSS" */
-  /* NOTE: we expect any letter for which there is an upper case value */
-  /*    we should expect to see a replacement.  For letters that DO NOT */
-  /*    have upper case values we expect to see NO REPLACEMENT */
-  curtime.wHour = 8;  curtime.wMinute = 56;
-  curtime.wSecond = 13; curtime.wMilliseconds = 22;
-  strcpy(Expected, "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  /* try to convert formatting strings with more than two letters
+   * "h:hh:hhh:H:HH:HHH:m:mm:mmm:M:MM:MMM:s:ss:sss:S:SS:SSS"
+   * NOTE: We expect any letter for which there is an upper case value
+   *       we should see a replacement.  For letters that DO NOT have
+   *       upper case values we should see NO REPLACEMENT.
+   */
+  curtime.wHour = 8;
+  curtime.wMinute = 56;
+  curtime.wSecond = 13;
+  curtime.wMilliseconds = 22;
+  STRINGSA("h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS",
+           "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test that if the size of the buffer is zero that the buffer is not modified */
-  /* and that the number of necessary characters is returned */
-  /* NOTE: The count includes the terminating null. */
-  strcpy(buffer, "THIS SHOULD NOT BE MODIFIED");
-  strcpy(Expected, "THIS SHOULD NOT BE MODIFIED");
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h", buffer, 0);
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, 2, "GetTimeFormat", "%d"); /* we expect to require two characters of space from "h" */
+  STRINGSA("h", "text"); /* Dont write to buffer if len is 0*/
+  strcpy(buffer, "text");
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, 0);
+  EXPECT_VALID; EXPECT_LEN(2); EXPECT_EQA;
 
-  /* test that characters in single quotation marks are ignored and left in */
-  /* the same location in the output string */
-  strcpy(Expected, "8 h 8 H 08 HH 56 m 13 s A t AM tt");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'",
+           "8 h 8 H 08 HH 56 m 13 s A t AM tt"); /* "'" preserves tokens */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test the printing of the single quotation marks when */
-  /* we use an invalid formatting string of "'''" instead of "''''" */
-  strcpy(Expected, "'");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "'''", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("'''", "'"); /* invalid quoted string */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   /* test that msdn suggested single quotation usage works as expected */
-  strcpy(Expected, "'");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "''''", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("''''", "'"); /* single quote mark */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for more normal use of single quotation mark */
-  strcpy(Expected, "08");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "''HHHHHH", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("''HHHHHH", "08"); /* Normal use */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   /* and test for normal use of the single quotation mark */
-  strcpy(Expected, "'HHHHHH");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH'", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("'''HHHHHH'", "'HHHHHH"); /* Normal use */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for more odd use of the single quotation mark */
-  strcpy(Expected, "'HHHHHH");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("'''HHHHHH", "'HHHHHH"); /* Odd use */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test that with TIME_NOTIMEMARKER that even if something is defined */
-  /* as a literal we drop it before and after the markers until the next */
-  /* formatting character */
-  strcpy(Expected, "");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "'123'tt", buffer, sizeof(buffer));
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
+  STRINGSA("'123'tt", ""); /* TIME_NOTIMEMARKER drops literals too */
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for expected return and error value when we have a */
-  /* non-null format and LOCALE_NOUSEROVERRIDE for flags */
-  SetLastError(NO_ERROR); /* reset last error value */
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, LOCALE_NOUSEROVERRIDE, &curtime, "'123'tt", buffer, sizeof(buffer));
-  error = GetLastError();
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok ((ret == 0) && (error == ERROR_INVALID_FLAGS), "GetTimeFormat got ret of '%d' and error of '%d'", ret, error);
-
-  /* test that invalid time values result in ERROR_INVALID_PARAMETER */
-  /* and a return value of 0 */
   curtime.wHour = 25;
-  SetLastError(NO_ERROR); /* reset last error value */
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(lcid, 0, &curtime, "'123'tt", buffer, sizeof(buffer));
-  error = GetLastError();
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok ((ret == 0) && (error == ERROR_INVALID_PARAMETER), "GetTimeFormat got ret of '%d' and error of '%d'", ret, error);
+  STRINGSA("'123'tt", ""); /* Invalid time */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-  /* test that invalid information in the date section of the current time */
-  /* doesn't result in an error since GetTimeFormat() should ignore this information */
-  curtime.wHour = 12; /* valid wHour */
-  curtime.wMonth = 60; /* very invalid wMonth */
-  strcpy(Expected, "12:56:13");
-  SetLastError(NO_ERROR); /* reset last error value */
-  ret = GetTimeFormatA(lcid, 0, &curtime, "h:m:s", buffer, sizeof(buffer));
-  error = GetLastError();
-  cmp = strncmp(buffer, Expected, BUFFER_SIZE);
-  ok ((ret == lstrlenA(Expected)+1) && (error == NO_ERROR), "GetTimeFormat got ret of '%d' and error of '%d' and a buffer of '%s'", ret, error, buffer);
+  curtime.wHour = 12;
+  curtime.wMonth = 60; /* Invalid */
+  STRINGSA("h:m:s", "12:56:13"); /* Invalid date */
+  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 }
 
-void TestGetDateFormatA()
+static void test_GetDateFormatA()
 {
-  int ret, error, cmp;
+  int ret;
   SYSTEMTIME  curtime;
-  char buffer[BUFFER_SIZE], format[BUFFER_SIZE], Expected[BUFFER_SIZE];
-  LCID lcid;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
 
-  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-  strcpy(format, "ddd',' MMM dd yy");
+  memset(&curtime, 2, sizeof(SYSTEMTIME)); /* Invalid time */
+  STRINGSA("ddd',' MMM dd yy","");
+  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-  /* test for failure on dummy data */
-  memset(&curtime, 2, sizeof(SYSTEMTIME));
-  memset(buffer, '0', sizeof(buffer));
-  SetLastError(NO_ERROR);
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-  error = GetLastError ();
-  ok(ret == 0, "GetDateFormat should fail on dummy data");
-  eq(error, ERROR_INVALID_PARAMETER, "GetDateFormat", "%d");
-
-  /* test for a simple case of date conversion */
-  strcpy(Expected, "Sat, May 04 02");
   curtime.wYear = 2002;
   curtime.wMonth = 5;
   curtime.wDay = 4;
   curtime.wDayOfWeek = 3;
-  memset(buffer, 0, sizeof(buffer));
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
+  STRINGSA("ddd',' MMM dd yy","Sat, May 04 02"); /* Simple case */
+  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test format with "'" */
-  strcpy(format, "ddd',' MMM dd ''''yy");
-  strcpy(Expected, "Sat, May 04 '02");
-  memset(buffer, 0, sizeof(buffer));
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
+  STRINGSA("ddd',' MMM dd yy","Sat, May 04 02"); /* Format containing "'" */
+  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for success with dummy time data */
-  curtime.wHour = 36;
-  memset(buffer, 0, sizeof(buffer));
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
+  curtime.wHour = 36; /* Invalid */
+  STRINGSA("ddd',' MMM dd ''''yy","Sat, May 04 '02"); /* Invalid time */
+  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test that we retrieve the expected size for the necessary output of this string */
-  SetLastError(NO_ERROR);
-  memset(buffer, 0, sizeof(buffer));
-  ret = GetDateFormatA(lcid, 0, &curtime, format, NULL, 0);
-  ok(ret==lstrlenA(Expected)+1 && GetLastError() == 0,
-          "GetDateFormat(len=0): ret=%d error=%ld buffer='%s', expected NO_ERROR(0)\n",ret,GetLastError(), buffer);
+  STRINGSA("ddd',' MMM dd ''''yy",""); /* Get size only */
+  ret = GetDateFormatA(lcid, 0, &curtime, input, NULL, 0);
+  EXPECT_VALID; EXPECT_LEN(16); EXPECT_EQA;
 
-  /* test that the expected size matches the actual required size by passing */
-  /* in the expected size */
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, ret);
-  ok(ret==lstrlenA(Expected)+1 && GetLastError()==0,
-           "GetDateFormat(right size): ret=%d error=%ld, buffer = '%s'\n",ret,GetLastError(), buffer);
-  ok(buffer[0]!='x',"GetDateFormat(right size): buffer=[%s]\n",buffer);
+  STRINGSA("ddd',' MMM dd ''''yy",""); /* Buffer too small */
+  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, 2);
+  EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;
 
-  /* test that a buffer shorter than the necessary size results in ERROR_INSUFFICIENT_BUFFER */
-  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, 2);
-  ok(ret==0 && GetLastError()==ERROR_INSUFFICIENT_BUFFER,
-           "GetDateFormat(len=2): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA("ddd',' MMM dd ''''yy","5/4/2002"); /* Default to DATE_SHORTDATE */
+  ret = GetDateFormat(lcid, NUO, &curtime, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  /* test for default behavior being DATE_SHORTDATE */
-  todo_wine {
-    strcpy(Expected, "5/4/02");
-    memset(buffer, '0', sizeof(buffer));
-    ret = GetDateFormat(lcid, 0, &curtime, NULL, buffer, sizeof(buffer));
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (cmp == 0, "GetDateFormat got '%s' instead of '%s'", buffer, Expected);
-    eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
-  }
-
-
-  /* test for expected DATE_LONGDATE behavior with null format */
-  strcpy(Expected, "Saturday, May 04, 2002");
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetDateFormat(lcid, DATE_LONGDATE, &curtime, NULL, buffer, sizeof(buffer));
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok (cmp == 0, "GetDateFormat got '%s' instead of '%s'", buffer, Expected);
-  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
+  STRINGSA("ddd',' MMM dd ''''yy", "Saturday, May 04, 2002"); /* DATE_LONGDATE */
+  ret = GetDateFormat(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   /* test for expected DATE_YEARMONTH behavior with null format */
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
-  todo_wine {
-    strcpy(Expected, "");
-    buffer[0] = 0;
-    SetLastError(NO_ERROR);
-    memset(buffer, '0', sizeof(buffer));
-    ret = GetDateFormat(lcid, DATE_YEARMONTH, &curtime, NULL, buffer, sizeof(buffer));
-    error = GetLastError();
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (ret == 0 && (error == ERROR_INVALID_FLAGS), "GetDateFormat check DATE_YEARMONTH with null format expected ERROR_INVALID_FLAGS got return of '%d' and error of '%d'", ret, error);
-  }
+  STRINGSA("ddd',' MMM dd ''''yy", ""); /* DATE_YEARMONTH */
+  ret = GetDateFormat(lcid, NUO|DATE_YEARMONTH, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
 
   /* Test that using invalid DATE_* flags results in the correct error */
   /* and return values */
-  strcpy(format, "m/d/y");
-  strcpy(Expected, "Saturday May 2002");
-  SetLastError(NO_ERROR);
-  memset(buffer, '0', sizeof(buffer));
-  ret = GetDateFormat(lcid, DATE_YEARMONTH | DATE_SHORTDATE | DATE_LONGDATE, &curtime, format, buffer, sizeof(buffer));
-  error = GetLastError();
-  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-  ok ((ret == 0) && (error == ERROR_INVALID_FLAGS), "GetDateFormat checking for mutually exclusive flags got '%s' instead of '%s', got error of %d, expected ERROR_INVALID_FLAGS", buffer, Expected, error);
+  STRINGSA("m/d/y", ""); /* Invalid flags */
+  ret = GetDateFormat(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE,
+                      &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
 }
 
-void TestGetDateFormatW()
+static void test_GetDateFormatW()
 {
-    int ret, error, cmp;
-    SYSTEMTIME  curtime;
-    WCHAR buffer[BUFFER_SIZE], format[BUFFER_SIZE], Expected[BUFFER_SIZE];
-    LCID lcid;
+  int ret;
+  SYSTEMTIME  curtime;
+  WCHAR buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
+  STRINGSW("",""); /* If flags is not zero then format must be NULL */
+  ret = GetDateFormatW(LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL,
+                       input, buffer, COUNTOF(buffer));
+  if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+      return;
+  EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQW;
 
-    /* 1. Error cases */
+  STRINGSW("",""); /* NULL buffer, len > 0 */
+  ret = GetDateFormatW (lcid, 0, NULL, input, NULL, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQW;
 
-    /* 1a If flags is not zero then format must be null. */
-    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL, format, buffer, COUNTOF(buffer));
-    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-        return;
-    error = ret ? 0 : GetLastError();
-    ok (ret == 0 && error == ERROR_INVALID_FLAGS, "GetDateFormatW allowed flags and format");
+  STRINGSW("",""); /* NULL buffer, len == 0 */
+  ret = GetDateFormatW (lcid, 0, NULL, input, NULL, 0);
+  EXPECT_VALID; EXPECT_LENW; EXPECT_EQW;
 
-    /* 1b The buffer can only be null if the count is zero */
-    /* For the record other bad pointers result in a page fault (Win98) */
-    ret = GetDateFormatW (lcid, 0, NULL, format, NULL, COUNTOF(buffer));
-    error = ret ? 0 : GetLastError();
-    ok (ret == 0 && error == ERROR_INVALID_PARAMETER, "GetDateFormatW did not detect null buffer pointer.");
-    ret = GetDateFormatW (lcid, 0, NULL, format, NULL, 0);
-    error = ret ? 0 : GetLastError();
-    ok (ret != 0 && error == 0, "GetDateFormatW did not permit null buffer pointer when counting.");
-
-    /* 1c An incorrect day of week is corrected. */
-    /* 1d The incorrect day of week can even be out of range. */
-    /* 1e The time doesn't matter */
-    curtime.wYear = 2002;
-    curtime.wMonth = 10;
-    curtime.wDay = 23;
-    curtime.wDayOfWeek = 45612; /* should be 3 - Wednesday */
-    curtime.wHour = 65432;
-    curtime.wMinute = 34512;
-    curtime.wSecond = 65535;
-    curtime.wMilliseconds = 12345;
-    MultiByteToWideChar (CP_ACP, 0, "dddd d MMMM yyyy", -1, format, COUNTOF(format));
-    ret = GetDateFormatW (lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-    error = ret ? 0 : GetLastError();
-    MultiByteToWideChar (CP_ACP, 0, "Wednesday 23 October 2002", -1, Expected, COUNTOF(Expected));
-    cmp = ret ? lstrcmpW (buffer, Expected) : 2;
-    ok (ret == lstrlenW(Expected)+1 && error == 0 && cmp == 0, "Day of week correction failed\n");
+  curtime.wYear = 2002;
+  curtime.wMonth = 10;
+  curtime.wDay = 23;
+  curtime.wDayOfWeek = 45612; /* Should be 3 - Wednesday */
+  curtime.wHour = 65432; /* Invalid */
+  curtime.wMinute = 34512; /* Invalid */
+  curtime.wSecond = 65535; /* Invalid */
+  curtime.wMilliseconds = 12345;
+  STRINGSW("dddd d MMMM yyyy","Wednesday 23 October 2002"); /* Incorrect DOW and time */
+  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENW; EXPECT_EQW;
 }
 
 
-void TestGetCurrencyFormat()
+#define CY_POS_LEFT  0
+#define CY_POS_RIGHT 1
+#define CY_POS_LEFT_SPACE  2
+#define CY_POS_RIGHT_SPACE 3
+
+static void test_GetCurrencyFormatA()
 {
-int ret, error, cmp;
-char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], format[BUFFER_SIZE];
-LCID lcid;
+  static char szDot[] = { '.', '\0' };
+  static char szComma[] = { ',', '\0' };
+  static char szDollar[] = { '$', '\0' };
+  int ret;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], input[BUFFER_SIZE];
+  CURRENCYFMTA format;
 
-	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-#if 0
-	lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT );
-#endif
+  memset(&format, 0, sizeof(format));
 
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetCurrencyFormatA(lcid, 0, "23,65", NULL, buffer, COUNTOF(buffer));
-	error = GetLastError ();
-	cmp = strncmp ("xxxx", buffer, 4);
+  STRINGSA("23",""); /* NULL output, length > 0 --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, NULL, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	ok (cmp == 0, "GetCurrencyFormat should fail with ','");
-	eq (ret, 0, "GetCurrencyFormat with ','", "%d");
-	eq (error, ERROR_INVALID_PARAMETER, "GetCurrencyFormat", "%d");
+  STRINGSA("23,53",""); /* Invalid character --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	/* We check the whole buffer with strncmp */
-	strcpy (Expected, "$23.53");
-	strcpy (format, "23.53");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetCurrencyFormatA(lcid, 0, format, NULL, buffer, COUNTOF(buffer));
-	cmp = strncmp (Expected, buffer, BUFFER_SIZE);
-	ok (cmp == 0, "GetCurrencyFormatA got %s instead of %s", buffer, Expected);
-	eq (ret, lstrlenA(Expected)+1, "GetCurrencyFormatA","%d");
+  STRINGSA("--",""); /* Double '-' --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-        /* Test too small buffers */
-        SetLastError(0);
-	ret = GetCurrencyFormatA(lcid, 0, format, NULL, NULL, 0);
-	ok(ret==lstrlenA(Expected)+1 && GetLastError()==0,
-       "GetCurrencyFormatA(size=0): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA("0-",""); /* Trailing '-' --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetCurrencyFormatA(lcid, 0, format, NULL, buffer, ret);
-	ok(strcmp(buffer,Expected)==0,
-           "GetCurrencyFormatA(right size): got [%s] instead of [%s]", buffer, Expected);
-	eq (ret, lstrlenA(Expected)+1, "GetCurrencyFormatA(right size)", "%d");
+  STRINGSA("0..",""); /* Double '.' --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	ret = GetCurrencyFormatA(lcid, 0, format, NULL, buffer, 2);
-	ok(ret==0 && GetLastError()==ERROR_INSUFFICIENT_BUFFER,
-           "GetCurrencyFormatA(size=2): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA(" 0.1",""); /* Leading space --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("1234","$"); /* Length too small --> Write up to length chars */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, 2);
+  EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353",""); /* Format and flags given --> Error */
+  ret = GetCurrencyFormatA(lcid, NUO, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_INVALIDFLAGS; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353",""); /* Invalid format --> Error */
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353","$2,353.00"); /* Valid number */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("-2353","($2,353.00)"); /* Valid negative number */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.1","$2,353.10"); /* Valid real number */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.111","$2,353.11"); /* Too many DP --> Truncated */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.119","$2,353.12");  /* Too many DP --> Rounded */
+  ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NumDigits = 0; /* No decimal seperator */
+  format.LeadingZero = 0;
+  format.Grouping = 0;  /* No grouping char */
+  format.NegativeOrder = 0;
+  format.PositiveOrder = CY_POS_LEFT;
+  format.lpDecimalSep = szDot;
+  format.lpThousandSep = szComma;
+  format.lpCurrencySymbol = szDollar;
+
+  STRINGSA("2353","$2353"); /* No decimal or grouping chars expected */
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NumDigits = 1; /* 1 DP --> Expect decimal seperator */
+  STRINGSA("2353","$2353.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.Grouping = 2; /* Group by 100's */
+  STRINGSA("2353","$23,53.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.LeadingZero = 1; /* Always provide leading zero */
+  STRINGSA(".5","$0.5");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.PositiveOrder = CY_POS_RIGHT;
+  STRINGSA("1","1.0$");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.PositiveOrder = CY_POS_LEFT_SPACE;
+  STRINGSA("1","$ 1.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.PositiveOrder = CY_POS_RIGHT_SPACE;
+  STRINGSA("1","1.0 $");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 0;
+  STRINGSA("-1","($1.0)");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 1;
+  STRINGSA("-1","-$1.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 2;
+  STRINGSA("-1","$-1.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 3;
+  STRINGSA("-1","$1.0-");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 4;
+  STRINGSA("-1","(1.0$)");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 5;
+  STRINGSA("-1","-1.0$");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 6;
+  STRINGSA("-1","1.0-$");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 7;
+  STRINGSA("-1","1.0$-");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 8;
+  STRINGSA("-1","-1.0 $");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 9;
+  STRINGSA("-1","-$ 1.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 10;
+  STRINGSA("-1","1.0 $-");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 11;
+  STRINGSA("-1","$ 1.0-");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 12;
+  STRINGSA("-1","$ -1.0");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 13;
+  STRINGSA("-1","1.0- $");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 14;
+  STRINGSA("-1","($ 1.0)");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = 15;
+  STRINGSA("-1","(1.0 $)");
+  ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 }
 
+#define NEG_PARENS      0 /* "(1.1)" */
+#define NEG_LEFT        1 /* "-1.1"  */
+#define NEG_LEFT_SPACE  2 /* "- 1.1" */
+#define NEG_RIGHT       3 /* "1.1-"  */
+#define NEG_RIGHT_SPACE 4 /* "1.1 -" */
 
-void TestGetNumberFormat()
+static void test_GetNumberFormatA()
 {
-int ret, error, cmp;
-char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], input[BUFFER_SIZE];
-LCID lcid;
-NUMBERFMTA format;
+  static char szDot[] = { '.', '\0' };
+  static char szComma[] = { ',', '\0' };
+  int ret;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], input[BUFFER_SIZE];
+  NUMBERFMTA format;
 
-	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
+  memset(&format, 0, sizeof(format));
 
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetNumberFormatA(lcid, 0, "23,65", NULL, buffer, COUNTOF(buffer));
-	error = GetLastError ();
-	cmp = strncmp ("xxx", buffer, 3);
-	ok (cmp == 0, "GetNumberFormat");
-	ok (ret == 0, "GetNumberFormat should return 0");
-	eq (error, ERROR_INVALID_PARAMETER, "GetNumberFormat", "%d");
+  STRINGSA("23",""); /* NULL output, length > 0 --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, NULL, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	strcpy(input, "2353");
-	strcpy(Expected, "2,353.00");
-        SetLastError(0);
-	ret = GetNumberFormatA(lcid, 0, input, NULL, NULL, 0);
-	ok(ret==lstrlenA(Expected)+1 && GetLastError()==0,
-       "GetNumberFormatA(size=0): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA("23,53",""); /* Invalid character --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-        memset( buffer, 'x', sizeof(buffer) );
-	ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ret);
-	ok(strcmp(buffer,Expected)==0,
-           "GetNumberFormatA(right size): got [%s] instead of [%s]", buffer, Expected);
-	eq(ret, lstrlenA(Expected)+1, "GetNumberFormat", "%d");
+  STRINGSA("--",""); /* Double '-' --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, 2);
-	ok(ret==0 && GetLastError()==ERROR_INSUFFICIENT_BUFFER,
-           "GetNumberFormatA(size=2): ret=%d error=%ld", ret, GetLastError());
+  STRINGSA("0-",""); /* Trailing '-' --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-	/* We check the whole buffer with strncmp */
-	memset(Expected, 'x', sizeof(Expected) );
-	strcpy(Expected, "2,353.00");
-	memset( buffer, 'x', sizeof(buffer) );
-	ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
-	cmp = strncmp (Expected, buffer, BUFFER_SIZE);
-	ok (cmp == 0, "GetNumberFormat got %s instead of %s", buffer, Expected);
-	eq (ret, lstrlenA(Expected)+1, "GetNumberFormat", "%d");
+  STRINGSA("0..",""); /* Double '.' --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
-        /* If the number of decimals is zero there should be no decimal
-         * separator.
-         * If the grouping size is zero there should be no grouping symbol
-         */
-        format.NumDigits = 0;
-        format.LeadingZero = 0;
-        format.Grouping = 0;
-        format.NegativeOrder = 0;
-        format.lpDecimalSep = ".";
-        format.lpThousandSep = ",";
-        strcpy (Expected, "123456789");
-	memset( buffer, 'x', sizeof(buffer) );
-        ret = GetNumberFormatA (0, 0, "123456789.0", &format, buffer, COUNTOF(buffer));
-        cmp = strncmp (Expected, buffer, sizeof(buffer));
-	ok (cmp == 0, "GetNumberFormat got %s instead of %s", buffer, Expected);
+  STRINGSA(" 0.1",""); /* Leading space --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
 
+  STRINGSA("1234","1"); /* Length too small --> Write up to length chars */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, 2);
+  EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353",""); /* Format and flags given --> Error */
+  ret = GetNumberFormatA(lcid, NUO, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_INVALIDFLAGS; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353",""); /* Invalid format --> Error */
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_INVALID; EXPECT_LEN(0); EXPECT_EQA;
+
+  STRINGSA("2353","2,353.00"); /* Valid number */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("-2353","-2,353.00"); /* Valid negative number */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.1","2,353.10"); /* Valid real number */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.111","2,353.11"); /* Too many DP --> Truncated */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  STRINGSA("2353.119","2,353.12");  /* Too many DP --> Rounded */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NumDigits = 0; /* No decimal seperator */
+  format.LeadingZero = 0;
+  format.Grouping = 0;  /* No grouping char */
+  format.NegativeOrder = 0;
+  format.lpDecimalSep = szDot;
+  format.lpThousandSep = szComma;
+
+  STRINGSA("2353","2353"); /* No decimal or grouping chars expected */
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NumDigits = 1; /* 1 DP --> Expect decimal seperator */
+  STRINGSA("2353","2353.0");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.Grouping = 2; /* Group by 100's */
+  STRINGSA("2353","23,53.0");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.LeadingZero = 1; /* Always provide leading zero */
+  STRINGSA(".5","0.5");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = NEG_PARENS;
+  STRINGSA("-1","(1.0)");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = NEG_LEFT;
+  STRINGSA("-1","-1.0");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = NEG_LEFT_SPACE;
+  STRINGSA("-1","- 1.0");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = NEG_RIGHT;
+  STRINGSA("-1","1.0-");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  format.NegativeOrder = NEG_RIGHT_SPACE;
+  STRINGSA("-1","1.0 -");
+  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
+  lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
+
+  if (IsValidLocale(lcid, 0))
+  {
+    STRINGSA("-12345","-12 345,00"); /* Try French formatting */
+    Expected[3] = 160; /* Non breaking space */
+    ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+    EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+  }
 }
 
 
 /* Callback function used by TestEnumTimeFormats */
-BOOL CALLBACK EnumTimeFormatsProc(char * lpTimeFormatString)
+static BOOL CALLBACK EnumTimeFormatsProc(char * lpTimeFormatString)
 {
-	trace("%s\n", lpTimeFormatString);
-	strcpy(GlobalBuffer, lpTimeFormatString);
+  trace("%s\n", lpTimeFormatString);
+  strcpy(GlobalBuffer, lpTimeFormatString);
 #if 0
-	return TRUE;
+  return TRUE;
 #endif
-	return FALSE;
+  return FALSE;
 }
 
-void TestEnumTimeFormats()
+void test_EnumTimeFormats()
 {
-int ret;
-LCID lcid;
-char Expected[BUFFER_SIZE];
+  int ret;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-	memset( GlobalBuffer, 'x', sizeof(GlobalBuffer) );
-	strcpy(Expected, "h:mm:ss tt");
-	ret = EnumTimeFormatsA(EnumTimeFormatsProc, lcid, 0);
-
-	eq (ret, 1, "EnumTimeFormats should return 1", "%d");
-	ok (strncmp (GlobalBuffer, Expected, strlen(Expected)) == 0,
-				"EnumTimeFormats failed");
-	ok (ret == 1, "EnumTimeFormats should return 1");
+  GlobalBuffer[0] = '\0';
+  ret = EnumTimeFormatsA(EnumTimeFormatsProc, lcid, 0);
+  ok (ret == 1 && !strcmp(GlobalBuffer,"h:mm:ss tt"), "Expected %d '%s'\n", ret, GlobalBuffer);
 }
 
-
-void TestCompareStringA()
+static void test_CompareStringA()
 {
-int ret;
-LCID lcid;
-char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
+  int ret;
+  LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
 
-	lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT );
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "Salute", -1);
+  ok (ret== 1, "(Salut/Salute) Expected 1, got %d\n", ret);
 
-	strcpy(buffer1, "Salut"); strcpy(buffer2, "Salute");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok(ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "SaLuT", -1);
+  ok (ret== 2, "(Salut/SaLuT) Expected 2, got %d\n", ret);
 
-	strcpy(buffer1, "Salut"); strcpy(buffer2, "saLuT");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok(ret == 2, "CompareStringA (st1=%s str2=%s) expected result=2, got %d", buffer1, buffer2, ret);
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "hola", -1);
+  ok (ret== 3, "(Salut/hola) Expected 3, got %d\n", ret);
 
-	strcpy(buffer1, "Salut"); strcpy(buffer2, "hola");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok(ret == 3, "CompareStringA (st1=%s str2=%s) expected result=3, got %d", buffer1, buffer2, ret);
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", -1);
+  ok (ret== 1, "(haha/hoho) Expected 1, got %d\n", ret);
 
-	strcpy(buffer1, "haha"); strcpy(buffer2, "hoho");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", -1);
+  ok (ret== 1, "(haha/hoho) Expected 1, got %d\n", ret);
 
-	strcpy(buffer1, "haha"); strcpy(buffer2, "hoho");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", 0);
+  ok (ret== 3, "(haha/hoho) Expected 3, got %d\n", ret);
 
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, 0);
-	ok (ret == 3, "CompareStringA (st1=%s str2=%s) expected result=3, got %d", buffer1, buffer2, ret);
-
-	strcpy(buffer1, "Salut"); strcpy(buffer2, "saLuT");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, 5, buffer2, -1);
-	ok (ret == 2, "CompareStringA (st1=%s str2=%s) expected result=2, got %d", buffer1, buffer2, ret);
+  ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "SaLuT", -1);
+  ok (ret== 2, "(Salut/SaLuT) Expected 2, got %d\n", ret);
 }
 
 void test_LCMapStringA(void)
@@ -954,7 +950,7 @@ void test_LCMapStringW(void)
        "ret %d, error %ld, expected value %d\n",
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, lower_case), "string compare mismatch\n");
- 
+
     /* otherwise src == dst should fail */
     SetLastError(0xdeadbeef);
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | LCMAP_UPPERCASE,
@@ -1024,16 +1020,15 @@ void test_LCMapStringW(void)
 START_TEST(locale)
 {
 #if 0
-	TestEnumTimeFormats();
+  test_EnumTimeFormats();
 #endif
-	TestGetLocaleInfoA();
-	TestGetTimeFormatA();
-	TestGetDateFormatA();
-	TestGetDateFormatW();
-	TestGetNumberFormat();
-	TestGetCurrencyFormat();
-	TestCompareStringA();
-
-    test_LCMapStringW();
-    test_LCMapStringA();
+  test_GetLocaleInfoA();
+  test_GetTimeFormatA();
+  test_GetDateFormatA();
+  test_GetDateFormatW();
+  test_GetCurrencyFormatA(); /* Also tests the W version */
+  test_GetNumberFormatA();   /* Also tests the W version */
+  test_CompareStringA();
+  test_LCMapStringA();
+  test_LCMapStringW();
 }
