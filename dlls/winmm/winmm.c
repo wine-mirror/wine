@@ -148,7 +148,7 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
 	if (!WINMM_CreateIData(hInstDLL))
 	    return FALSE;
-        if (!MULTIMEDIA_MciInit() || !MMDRV_Init()) {
+        if (!MCI_Init() || !MMDRV_Init()) {
             WINMM_DeleteIData();
             return FALSE;
 	}
@@ -781,7 +781,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
     dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, TRUE);
-    dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, TRUE);
+    dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2);
     TRACE("=> %08lx\n", dwRet);
     return dwRet;
 }

@@ -32,9 +32,8 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "winnls.h"
 
-#include "wine/mmsystem16.h"
-#include "wine/winbase16.h"
 #include "digitalv.h"
 #include "winemm.h"
 
@@ -43,7 +42,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mci);
 
 static	int			MCI_InstalledCount;
-static	LPSTR			MCI_lpInstallNames = NULL;
+static  LPSTR                   MCI_lpInstallNames /* = NULL */;
+
+WINMM_MapType  (*pFnMciMapMsg16To32A)  (WORD,WORD,DWORD*) /* = NULL */;
+WINMM_MapType  (*pFnMciUnMapMsg16To32A)(WORD,WORD,DWORD) /* = NULL */;
+WINMM_MapType  (*pFnMciMapMsg32ATo16)  (WORD,WORD,DWORD,DWORD*) /* = NULL */;
+WINMM_MapType  (*pFnMciUnMapMsg32ATo16)(WORD,WORD,DWORD,DWORD) /* = NULL */;
 
 /* First MCI valid device ID (0 means error) */
 #define MCI_MAGIC 0x0001
@@ -450,10 +454,10 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
     /* First load driver */
     if ((wmd->hDriver = (HDRVR)DRIVER_TryOpenDriver32(libName, lp))) {
 	wmd->bIs32 = TRUE;
-    } else {
+    } else if (WINMM_CheckForMMSystem() && pFnMciMapMsg32ATo16) {
 	WINMM_MapType 	res;
 
-	switch (res = MCI_MapMsg32ATo16(0, DRV_OPEN, 0, &lp)) {
+	switch (res = pFnMciMapMsg32ATo16(0, DRV_OPEN, 0, &lp)) {
 	case WINMM_MAP_MSGERROR:
 	    TRACE("Not handled yet (DRV_OPEN)\n");
 	    break;
@@ -465,7 +469,7 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
 	    if ((wmd->hDriver = OpenDriverA(drvTyp, "mci", lp)))
 		wmd->bIs32 = FALSE;
 	    if (res == WINMM_MAP_OKMEM)
-		MCI_UnMapMsg32ATo16(0, DRV_OPEN, 0, lp);
+		pFnMciUnMapMsg32ATo16(0, DRV_OPEN, 0, lp);
 	    break;
 	}
     }
@@ -1151,10 +1155,10 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
     if (wmd) {
 	if (wmd->bIs32) {
 	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
-	} else {
+	} else if (pFnMciMapMsg32ATo16) {
 	    WINMM_MapType	res;
 
-	    switch (res = MCI_MapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
+	    switch (res = pFnMciMapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
 	    case WINMM_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
 		dwRet = MCIERR_DRIVER_INTERNAL;
@@ -1167,7 +1171,7 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 	    case WINMM_MAP_OKMEM:
 		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
 		if (res == WINMM_MAP_OKMEM)
-		    MCI_UnMapMsg32ATo16(wmd->wType, wMsg, dwParam1, dwParam2);
+		    pFnMciUnMapMsg32ATo16(wmd->wType, wMsg, dwParam1, dwParam2);
 		break;
 	    }
 	}
@@ -1186,10 +1190,10 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
     if (wmd) {
 	dwRet = MCIERR_INVALID_DEVICE_ID;
 
-	if (wmd->bIs32) {
+	if (wmd->bIs32 && pFnMciMapMsg16To32A) {
 	    WINMM_MapType		res;
 
-	    switch (res = MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
+	    switch (res = pFnMciMapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
 	    case WINMM_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
 		dwRet = MCIERR_DRIVER_INTERNAL;
@@ -1202,7 +1206,7 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 	    case WINMM_MAP_OKMEM:
 		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
 		if (res == WINMM_MAP_OKMEM)
-		    MCI_UnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
+		    pFnMciUnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
 		break;
 	    }
 	} else {
@@ -1517,12 +1521,12 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
     case MCI_OPEN:
 	if (bFrom32) {
 	    dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
-	} else {
-	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
+	} else if (pFnMciMapMsg16To32A) {
+	    switch (pFnMciMapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
 		dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
-		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
+		pFnMciUnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc does not bark */
 	    }
@@ -1531,12 +1535,12 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
     case MCI_CLOSE:
 	if (bFrom32) {
 	    dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-	} else {
-	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
+	} else if (pFnMciMapMsg16To32A) {
+	    switch (pFnMciMapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
 		dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
+		pFnMciUnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc does not bark */
 	    }
@@ -1545,12 +1549,12 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
     case MCI_SYSINFO:
 	if (bFrom32) {
 	    dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
-	} else {
-	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
+	} else if (pFnMciMapMsg16To32A) {
+	    switch (pFnMciMapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
 		dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
-		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
+		pFnMciUnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc doesnot  bark */
 	    }
@@ -1559,12 +1563,12 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
     case MCI_BREAK:
 	if (bFrom32) {
 	    dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
-	} else {
-	    switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
+	} else if (pFnMciMapMsg16To32A) {
+	    switch (pFnMciMapMsg16To32A(0, wMsg, &dwParam2)) {
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
 		dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
-		MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
+		pFnMciUnMapMsg16To32A(0, wMsg, dwParam2);
 		break;
 	    default: break; /* so that gcc does not bark */
 	    }
@@ -1596,7 +1600,7 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
  * mciSendString), because MCI drivers return extra information for string
  * transformation. This function gets rid of them.
  */
-LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
+LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
 {
     if (LOWORD(dwRet))
 	return LOWORD(dwRet);
@@ -1615,7 +1619,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 	    {
 		LPMCI_GETDEVCAPS_PARMS	lmgp;
 
-		lmgp = (LPMCI_GETDEVCAPS_PARMS)(bIs32 ? (void*)dwParam2 : MapSL(dwParam2));
+		lmgp = (LPMCI_GETDEVCAPS_PARMS)(void*)dwParam2;
 		TRACE("Changing %08lx to %08lx\n", lmgp->dwReturn, (DWORD)LOWORD(lmgp->dwReturn));
 		lmgp->dwReturn = LOWORD(lmgp->dwReturn);
 	    }
@@ -1638,7 +1642,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 	    {
 		LPMCI_STATUS_PARMS	lsp;
 
-		lsp = (LPMCI_STATUS_PARMS)(bIs32 ? (void*)dwParam2 : MapSL(dwParam2));
+		lsp = (LPMCI_STATUS_PARMS)(void*)dwParam2;
 		TRACE("Changing %08lx to %08lx\n", lsp->dwReturn, (DWORD)LOWORD(lsp->dwReturn));
 		lsp->dwReturn = LOWORD(lsp->dwReturn);
 	    }
@@ -1669,12 +1673,12 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 }
 
 /**************************************************************************
- * 			MULTIMEDIA_MciInit			[internal]
+ * 			MCI_Init			[internal]
  *
  * Initializes the MCI internal variables.
  *
  */
-BOOL MULTIMEDIA_MciInit(void)
+BOOL MCI_Init(void)
 {
     LPSTR	ptr1, ptr2;
     HKEY	hWineConf;

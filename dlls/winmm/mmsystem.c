@@ -88,6 +88,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnCloseDriver16  = DRIVER_CloseDriver16;
         pFnSendMessage16  = DRIVER_SendMessage16;
         pFnMmioCallback16 = MMIO_Callback16;
+        MMDRV_Init16();
 	break;
     case DLL_PROCESS_DETACH:
 	WINMM_IData->hWinMM16Instance = 0;
@@ -96,6 +97,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnCloseDriver16  = NULL;
         pFnSendMessage16  = NULL;
         pFnMmioCallback16 = NULL;
+        /* FIXME: add equivalent for MMDRV_Init16() */
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -555,7 +557,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
     dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, FALSE);
-    dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, FALSE);
+    dwRet = MCI_CleanUp(dwRet, wMsg, (DWORD)MapSL(dwParam2));
     TRACE("=> %ld\n", dwRet);
     return dwRet;
 }

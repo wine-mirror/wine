@@ -244,12 +244,13 @@ DWORD		MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1, DWORD dwParam2, 
 UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
 BOOL            MMDRV_Is32(unsigned int);
 
+BOOL    	MCI_Init(void);
 WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
 UINT		MCI_GetDriverFromString(LPCSTR str);
 DWORD		MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
 const char* 	MCI_MessageToString(UINT16 wMsg);
 UINT	WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
-LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
+LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2);
 DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
 DWORD		MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
@@ -283,17 +284,12 @@ LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1,
                                  LPARAM lParam2, enum mmioProcType type);
 LPWINE_MMIO     MMIO_Get(HMMIO h);
 
-BOOL    	MULTIMEDIA_MciInit(void);
 BOOL            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
 void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
 /* temporary definitions */
-WINMM_MapType	MCI_MapMsg16To32A  (WORD uDevType, WORD wMsg,                DWORD* lParam);
-WINMM_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg,                DWORD  lParam);
-WINMM_MapType	MCI_MapMsg32ATo16  (WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam);
-WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD  lParam);
 void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
 
 WINMM_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
@@ -340,11 +336,18 @@ extern LPWINE_MM_IDATA  WINMM_IData;
 /* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
  * NULL otherwise
  */
-extern LRESULT          (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
+extern  WINE_MMTHREAD*  (*pFnGetMMThread16)(HANDLE16);
 extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCSTR,LPCSTR,LPARAM);
 extern  LRESULT         (*pFnCloseDriver16)(HDRVR16,LPARAM,LPARAM);
 extern  LRESULT         (*pFnSendMessage16)(HDRVR16,UINT,LPARAM,LPARAM);
-extern WINE_MMTHREAD*   (*pFnGetMMThread16)(HANDLE16);
+extern  WINMM_MapType   (*pFnMciMapMsg16To32A)(WORD,WORD,DWORD*);
+extern  WINMM_MapType   (*pFnMciUnMapMsg16To32A)(WORD,WORD,DWORD);
+extern  WINMM_MapType   (*pFnMciMapMsg32ATo16)(WORD,WORD,DWORD,DWORD*);
+extern  WINMM_MapType   (*pFnMciUnMapMsg32ATo16)(WORD,WORD,DWORD,DWORD);
+extern  LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
+
+/* mmsystem only functions */
+void            MMDRV_Init16(void);
 
 /* HANDLE16 -> HANDLE conversions */
 #define HDRVR_32(h16)		((HDRVR)(ULONG_PTR)(h16))

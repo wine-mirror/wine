@@ -1765,7 +1765,7 @@ theEnd:
 /**************************************************************************
  * 			MCI_MapMsg16To32A			[internal]
  */
-WINMM_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
+static WINMM_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 {
     if (*lParam == 0)
 	return WINMM_MAP_OK;
@@ -1933,7 +1933,7 @@ WINMM_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 /**************************************************************************
  * 			MCI_UnMapMsg16To32A			[internal]
  */
-WINMM_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
+static  WINMM_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 {
     switch (wMsg) {
 	/* case MCI_CAPTURE */
@@ -2180,7 +2180,7 @@ static	WINMM_MapType	MCI_MsgMapper32To16_Destroy(void* ptr, int size16, DWORD ma
  *
  * Map a 32-A bit MCI message to a 16 bit MCI message.
  */
-WINMM_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam)
+static  WINMM_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam)
 {
     int		size;
     BOOLEAN     keep = FALSE;
@@ -2487,7 +2487,7 @@ WINMM_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* 
 /**************************************************************************
  * 			MCI_UnMapMsg32ATo16			[internal]
  */
-WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD lParam)
+static  WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD lParam)
 {
     int		size = 0;
     BOOLEAN     kept = FALSE;	/* there is no need to compute size when kept is FALSE */
@@ -2667,3 +2667,10 @@ WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD
     return MCI_MsgMapper32To16_Destroy((void*)lParam, size, map, kept);
 }
 
+void    MMDRV_Init16(void)
+{
+    pFnMciMapMsg16To32A   = MCI_MapMsg16To32A;
+    pFnMciUnMapMsg16To32A = MCI_UnMapMsg16To32A;
+    pFnMciMapMsg32ATo16   = MCI_MapMsg32ATo16;
+    pFnMciUnMapMsg32ATo16 = MCI_UnMapMsg32ATo16;
+}
