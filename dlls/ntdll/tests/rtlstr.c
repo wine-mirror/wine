@@ -21,9 +21,12 @@
  * windows.
  */
 
+#include <stdlib.h>
+
 #include "winbase.h"
 #include "wine/test.h"
 #include "winnt.h"
+#include "winnls.h"
 #include "winternl.h"
 
 static UNICODE_STRING uni;
@@ -67,6 +70,15 @@ static BOOLEAN (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING,LPCWSTR);
 
 /*static DWORD (WINAPI *pRtlIsTextUnicode)(LPVOID, DWORD, DWORD *);*/
 static NTSTATUS (WINAPI *pRtlUnicodeStringToInteger)(const UNICODE_STRING *, int, int *);
+
+static WCHAR* AtoW( char* p )
+{
+    WCHAR* buffer;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
+    buffer = malloc( len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, p, -1, buffer, len );
+    return buffer;
+}
 
 static void InitFunctionPtrs()
 {
@@ -121,68 +133,67 @@ static void test_RtlCopyString(void)
 	ok(strncmp(str.Buffer, deststring, str.Length) == 0, "String not copied");
 }
 
+typedef struct {
+    char* str;
+    int value;
+} str2int_t;
+
+static const str2int_t int_strings[] = {
+    {"1011101100",1011101100},
+    {"1234567",1234567},
+    {"2147483648",0x80000000L},
+    {"-2147483648",0x80000000L},
+    {"-214",-214},
+    {" \n \r214",214},
+    {"+214 0",214},
+    {" 214.01",214},
+    {"f81",0},
+    {"0x12345",0x12345},
+    {"1x34",1}
+};
+#define NB_INT_STRINGS (sizeof(int_strings)/sizeof(*int_strings))
+
+/* these are for int_strings[0]: */
+static const int expectedresultsbase[] = {
+    748, /* base 2 */
+    136610368, /* base 8 */
+    1011101100, /* base 10 */
+    286265600, /* base 16 */
+};
+
 static void test_RtlUnicodeStringToInteger(void)
 {
 	int dest = 0;
 	int i;
 	DWORD result;
-
-	/* keep these next two arrays in sync. or they'll be trouble! */
-	static const WCHAR stringwithint[][12] = {
-		{'1','0','1','1','1','0','1','1','0','0',0},
-		{'1','2','3','4','5','6','7',0},
-		{'2','1','4','7','4','8','3','6','4','8',0},
-		{'-','2','1','4','7','4','8','3','6','4','8',0},
-		{'-','2','1','4',0},
-		{' ','\n',' ','\r','2','1','4',0},
-		{'+','2','1','4',' ','0',0},
-		{' ','2','1','4','.','0','1',0},
-		{'f','8','1',0},
-		{'0','x','1','2','3','4','5',0},
-		{'1','x','3','4',0}
-	};
-	static const int expectedresults[] = {
-		1011101100,
-		1234567,
-		2147483648,
-		2147483648,
-		-214,
-		214,
-		214,
-		214,
-		0,
-		0x12345,
-		1
-	};
-	/* these are for stringwithint[0]: */
-	static const int expectedresultsbase[] = {
-		748, /* base 2 */
-		136610368, /* base 8 */
-		1011101100, /* base 10 */
-		286265600, /* base 16 */
-	};
+	WCHAR* wstr;
 	
-	for (i = 0; i < sizeof(expectedresults) / sizeof(int); i++)
+	for (i = 0; i < NB_INT_STRINGS; i++)
 	{
+		wstr=AtoW(int_strings[i].str);
 		dest = 0xdeadbeef;
-		pRtlInitUnicodeString(&uni, stringwithint[i]);
+		pRtlInitUnicodeString(&uni, wstr);
 		result = pRtlUnicodeStringToInteger(&uni, 0, &dest);
-		ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%S\", %d, [out])", uni.Buffer, 0);
-		ok(dest == expectedresults[i], "didn't return expected value (test %d): expected: %d, got: %d}", i, expectedresults[i], dest);
+		ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%s\", %d, [out])", int_strings[i].str, 0);
+		ok(dest == int_strings[i].value, "didn't return expected value (test %d): expected: %d, got: %d}", i, int_strings[i].value, dest);
+		free(wstr);
 	}
-	pRtlInitUnicodeString(&uni, stringwithint[0]);
+
+	wstr=AtoW(int_strings[0].str);
+	pRtlInitUnicodeString(&uni, wstr);
 	result = pRtlUnicodeStringToInteger(&uni, 2, &dest);
-	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%S\", %d, [out])", uni.Buffer, 2);
-	ok(dest == expectedresultsbase[0], "didn't return expected value: \"%S\"; expected: %d, got: %d}", uni.Buffer, expectedresultsbase[0], dest);
+	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%s\", %d, [out])", int_strings[0].str, 2);
+	ok(dest == expectedresultsbase[0], "didn't return expected value: \"%s\"; expected: %d, got: %d}", int_strings[0].str, expectedresultsbase[0], dest);
 	result = pRtlUnicodeStringToInteger(&uni, 8, &dest);
-	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%S\", %d, [out])", uni.Buffer, 8);
-	ok(dest == expectedresultsbase[1], "didn't return expected value: \"%S\"; expected: %d, got: %d}", uni.Buffer, expectedresultsbase[1], dest);
+	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%s\", %d, [out])", int_strings[0].str, 8);
+	ok(dest == expectedresultsbase[1], "didn't return expected value: \"%s\"; expected: %d, got: %d}", int_strings[0].str, expectedresultsbase[1], dest);
 	result = pRtlUnicodeStringToInteger(&uni, 10, &dest);
-	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%S\", %d, [out])", uni.Buffer, 10);
-	ok(dest == expectedresultsbase[2], "didn't return expected value: \"%S\"; expected: %d, got: %d}", uni.Buffer, expectedresultsbase[2], dest);
+	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%s\", %d, [out])", int_strings[0].str, 10);
+	ok(dest == expectedresultsbase[2], "didn't return expected value: \"%s\"; expected: %d, got: %d}", int_strings[0].str, expectedresultsbase[2], dest);
 	result = pRtlUnicodeStringToInteger(&uni, 16, &dest);
-	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%S\", %d, [out])", uni.Buffer, 16);
-	ok(dest == expectedresultsbase[3], "didn't return expected value: \"%S\"; expected: %d, got: %d}", uni.Buffer, expectedresultsbase[3], dest);
+	ok(result == 0, "call failed: RtlUnicodeStringToInteger(\"%s\", %d, [out])", int_strings[0].str, 16);
+	ok(dest == expectedresultsbase[3], "didn't return expected value: \"%s\"; expected: %d, got: %d}", int_strings[0].str, expectedresultsbase[3], dest);
+	free(wstr);
 }
 
 START_TEST(rtlstr)
