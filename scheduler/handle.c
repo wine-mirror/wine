@@ -89,7 +89,7 @@ HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
     req->dst_process = -1;
     req->access      = 0;
     req->inherit     = FALSE;
-    req->options     = DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS;
+    req->options     = DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE;
 
     server_call( REQ_DUP_HANDLE );
     return req->handle;
