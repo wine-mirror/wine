@@ -1,8 +1,8 @@
 This file documents the necessary procedure for adding a new language
 to the list of languages that Wine can display system menus and forms
-in. Currently at least the following languages are still missing: 
-Bulgarian, Chinese, Greek, Icelandic, Japanese, Dutch, Polish, Portuguese,
-Romanian, Russian, Croatian, Slovak, Turkish, and Slovanian.
+in. Currently at least the following languages are still missing:
+Bulgarian, Chinese, Greek, Icelandic, Japanese, Dutch, Romanian,
+Russian, Croatian, Slovak, Turkish, and Slovanian.
 
 To add a new language you need to be able to translate the relatively
 few texts, of course.  You will need very little knowledge of

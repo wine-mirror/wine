@@ -28,6 +28,7 @@
    void LIBWINE_Register_Es();
    void LIBWINE_Register_Fr();
    void LIBWINE_Register_Sw();
+   void LIBWINE_Register_Fi();
 #endif
 
 CLOCK_GLOBALS Globals;
@@ -217,6 +218,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
       LIBWINE_Register_Es();
       LIBWINE_Register_Fr();
       LIBWINE_Register_Sw();
+      LIBWINE_Register_Fi();
     #endif
 
     /* Setup Globals */

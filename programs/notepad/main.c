@@ -21,6 +21,7 @@ void LIBWINE_Register_Da();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();
 void LIBWINE_Register_Sw();
+void LIBWINE_Register_Fi();
 #endif
 
 NOTEPAD_GLOBALS Globals;
@@ -135,6 +136,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
       LIBWINE_Register_De();
       LIBWINE_Register_En();
       LIBWINE_Register_Sw();
+      LIBWINE_Register_Fi();
     #endif
 
     /* Select Language */

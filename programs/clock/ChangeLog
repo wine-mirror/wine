@@ -1,3 +1,8 @@
+Thu Jan 28 17:17:28 1999  Jukka Iivonen  <iivonen@iki.fi>
+
+	* [Fi.rc] [main.c] [Makefile.in]
+	Added Finnish language support.
+
 Mon Nov  2 19:52:22 1998  Robert Pouliot <krynos@clic.net>
        * [Fr.rc] [main.c] [Makefile.in]
          Added French language support.

@@ -1,3 +1,8 @@
+Thu Jan 28 18:17:08 1999  Jukka Iivonen  <iivonen@iki.fi>
+
+	* [Fi.rc] [main.c] [Makefile.in]
+	Added Finnish language support.
+
 Sun Oct 18 14:11:42 1998  Alexandre Julliard  <julliard@winehq.com>
 
 	* Da.rc, De.rc, En.rc, Fr.rc, Sw.rc, TODO, dialog.c, dialog.h, language.c, language.h, license.c, license.h, main.c, main.h, notepad.rc:

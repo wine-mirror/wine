@@ -1,0 +1,38 @@
+/*
+ * Clock (Finnish resources)
+ *
+ * Copyright 1999 Jukka Iivonen
+ */
+
+#define LANGUAGE_ID                  Fi
+#define LANGUAGE_NUMBER              b
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Aina p‰‰llimm‰isen‰"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Ominaisuudet"
+#define MENU_ANALOG                  "&Analoginen"
+#define MENU_DIGITAL                 "Di&gitaalinen"
+#define MENU_FONT                    "&Fontti..."
+#define MENU_WITHOUT_TITLE           "&Ilman otsikkopalkkia"
+
+#define MENU_SECONDS                 "&Sekunnit"
+#define MENU_DATE                    "&P‰iv‰m‰‰r‰"
+
+#define MENU_LANGUAGE                "&Kieli"
+#define LANGUAGE_MENU_ITEM           "&Finnish"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Lisenssi"
+#define MENU_INFO_NO_WARRANTY        "&EI TAKUUTA"
+#define MENU_INFO_ABOUT_WINE         "&Kellosta..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Kello"
+
+
+#include "clock.rc"
