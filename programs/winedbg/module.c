@@ -31,8 +31,8 @@
  * Creates and links a new module to the current process
  *
  */
-DBG_MODULE*	DEBUG_AddModule(const char* name, enum DbgModuleType type,
-				void* mod_addr, u_long size, HMODULE hmodule)
+static DBG_MODULE* DEBUG_AddModule(const char* name, enum DbgModuleType type,
+                                   void* mod_addr, unsigned long size, HMODULE hmodule)
 {
     DBG_MODULE*	wmod;
 
@@ -88,8 +88,8 @@ DBG_MODULE*	DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type)
 
      for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	 if ((type == DMT_UNKNOWN || type == amod[i]->type) &&
-	     (u_long)addr >= (u_long)amod[i]->load_addr &&
-	     (u_long)addr < (u_long)amod[i]->load_addr + (u_long)amod[i]->size) {
+	     (char *)addr >= (char *)amod[i]->load_addr &&
+	     (char *)addr < (char *)amod[i]->load_addr + amod[i]->size) {
 	     /* amod[i] contains it... check against res now */
 	     if (!res || res->load_addr < amod[i]->load_addr)
 		 res = amod[i];
@@ -133,9 +133,9 @@ DBG_MODULE*	DEBUG_GetProcessMainModule(DBG_PROCESS* process)
  * ELF modules are also entered into the list - this is so that we
  * can make 'info shared' types of displays possible.
  */
-DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, u_long size, const char* name)
+DBG_MODULE* DEBUG_RegisterELFModule(void *load_addr, unsigned long size, const char* name)
 {
-    DBG_MODULE*	wmod = DEBUG_AddModule(name, DMT_ELF, (void*)load_addr, size, 0);
+    DBG_MODULE*	wmod = DEBUG_AddModule(name, DMT_ELF, load_addr, size, 0);
 
     if (!wmod) return NULL;
 
@@ -148,9 +148,10 @@ DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, u_long size, const char* n
  *			DEBUG_RegisterPEModule
  *
  */
-DBG_MODULE* DEBUG_RegisterPEModule(HMODULE hModule, u_long load_addr, u_long size, const char *module_name)
+static DBG_MODULE* DEBUG_RegisterPEModule(HMODULE hModule, void *load_addr,
+                                          unsigned long size, const char *module_name)
 {
-    DBG_MODULE*	wmod = DEBUG_AddModule(module_name, DMT_PE, (void*)load_addr, size, hModule);
+    DBG_MODULE*	wmod = DEBUG_AddModule(module_name, DMT_PE, load_addr, size, hModule);
 
     if (!wmod) return NULL;
 
@@ -159,11 +160,13 @@ DBG_MODULE* DEBUG_RegisterPEModule(HMODULE hModule, u_long load_addr, u_long siz
     return wmod;
 }
 
+#if 0
 /***********************************************************************
  *			DEBUG_RegisterNEModule
  *
  */
-DBG_MODULE* DEBUG_RegisterNEModule(HMODULE hModule, void* load_addr, u_long size, const char *module_name)
+static DBG_MODULE* DEBUG_RegisterNEModule(HMODULE hModule, void* load_addr,
+                                          unsigned long size, const char *module_name)
 {
     DBG_MODULE*	wmod = DEBUG_AddModule(module_name, DMT_NE, load_addr, size, hModule);
 
@@ -173,7 +176,6 @@ DBG_MODULE* DEBUG_RegisterNEModule(HMODULE hModule, void* load_addr, u_long size
     return wmod;
 }
 
-#if 0
 /***********************************************************************
  *           DEBUG_GetEP16
  *
@@ -270,7 +272,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
 /***********************************************************************
  *			DEBUG_LoadModule32
  */
-void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
+void	DEBUG_LoadModule32(const char* name, HANDLE hFile, void *base)
 {
      IMAGE_NT_HEADERS		pe_header;
      DWORD			nth_ofs;
@@ -282,16 +284,16 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
      enum DbgInfoLoad		dil = DIL_ERROR;
 
      /* grab PE Header */
-     if (!DEBUG_READ_MEM_VERBOSE((void*)(base + OFFSET_OF(IMAGE_DOS_HEADER, e_lfanew)),
+     if (!DEBUG_READ_MEM_VERBOSE( (char *)base + OFFSET_OF(IMAGE_DOS_HEADER, e_lfanew),
 				 &nth_ofs, sizeof(nth_ofs)) ||
-	 !DEBUG_READ_MEM_VERBOSE((void*)(base + nth_ofs), &pe_header, sizeof(pe_header)))
+	 !DEBUG_READ_MEM_VERBOSE( (char *)base + nth_ofs, &pe_header, sizeof(pe_header)))
 	 return;
 
      pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 	 pe_header.FileHeader.SizeOfOptionalHeader;
 
      for (i = 0; i < pe_header.FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
+	 if (!DEBUG_READ_MEM_VERBOSE( (char *)base + pe_seg_ofs, &pe_seg, sizeof(pe_seg)))
 	     continue;
 	 if (size < pe_seg.VirtualAddress + pe_seg.SizeOfRawData)
 	     size = pe_seg.VirtualAddress + pe_seg.SizeOfRawData;
@@ -327,7 +329,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     DWORD			dir_ofs;
     const char*			prefix;
     IMAGE_NT_HEADERS*		nth = (PIMAGE_NT_HEADERS)_nth;
-    DWORD			base = (u_long)wmod->load_addr;
+    void *			base = wmod->load_addr;
 
     value.type = NULL;
     value.cookie = DV_TARGET;
@@ -335,7 +337,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     value.addr.off = 0;
 
     /* Add start of DLL */
-    value.addr.off = base;
+    value.addr.off = (unsigned long)base;
     if ((prefix = strrchr(wmod->module_name, '\\' ))) prefix++;
     else prefix = wmod->module_name;
 
@@ -343,7 +345,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 
     /* Add entry point */
     snprintf(buffer, sizeof(buffer), "%s.EntryPoint", prefix);
-    value.addr.off = base + nth->OptionalHeader.AddressOfEntryPoint;
+    value.addr.off = (unsigned long)base + nth->OptionalHeader.AddressOfEntryPoint;
     DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 
     /* Add start of sections */
@@ -351,10 +353,10 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 	nth->FileHeader.SizeOfOptionalHeader;
 
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
-	if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
+	if (!DEBUG_READ_MEM_VERBOSE( (char *)base + pe_seg_ofs, &pe_seg, sizeof(pe_seg)))
 	    continue;
 	snprintf(buffer, sizeof(buffer), "%s.%s", prefix, pe_seg.Name);
-	value.addr.off = base + pe_seg.VirtualAddress;
+	value.addr.off = (unsigned long)base + pe_seg.VirtualAddress;
 	DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
     }
 
@@ -362,35 +364,35 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     dir_ofs = nth_ofs +
 	OFFSET_OF(IMAGE_NT_HEADERS,
 		  OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
-    if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir_ofs), &dir, sizeof(dir)) && dir.Size) {
+    if (DEBUG_READ_MEM_VERBOSE( (char *)base + dir_ofs, &dir, sizeof(dir)) && dir.Size) {
 	IMAGE_EXPORT_DIRECTORY 	exports;
 	WORD*			ordinals = NULL;
 	void**			functions = NULL;
 	DWORD*			names = NULL;
 	unsigned int		j;
 
-	if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir.VirtualAddress),
+	if (DEBUG_READ_MEM_VERBOSE( (char *)base + dir.VirtualAddress,
 				   &exports, sizeof(exports)) &&
 
 	    ((functions = DBG_alloc(sizeof(functions[0]) * exports.NumberOfFunctions))) &&
-	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfFunctions),
+	    DEBUG_READ_MEM_VERBOSE( (char *)base + exports.AddressOfFunctions,
 				   functions, sizeof(functions[0]) * exports.NumberOfFunctions) &&
 
 	    ((ordinals = DBG_alloc(sizeof(ordinals[0]) * exports.NumberOfNames))) &&
-	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfNameOrdinals),
+	    DEBUG_READ_MEM_VERBOSE( (char *)base + (DWORD)exports.AddressOfNameOrdinals,
 				   ordinals, sizeof(ordinals[0]) * exports.NumberOfNames) &&
 
 	    ((names = DBG_alloc(sizeof(names[0]) * exports.NumberOfNames))) &&
-	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfNames),
+	    DEBUG_READ_MEM_VERBOSE( (char *)base + (DWORD)exports.AddressOfNames,
 				   names, sizeof(names[0]) * exports.NumberOfNames)) {
 
 	    for (i = 0; i < exports.NumberOfNames; i++) {
 		if (!names[i] ||
-		    !DEBUG_READ_MEM_VERBOSE((void*)(base + names[i]), bufstr, sizeof(bufstr)))
+		    !DEBUG_READ_MEM_VERBOSE( (char *)base + names[i], bufstr, sizeof(bufstr)))
 		    continue;
 		bufstr[sizeof(bufstr) - 1] = 0;
 		snprintf(buffer, sizeof(buffer), "%s.%s", prefix, bufstr);
-		value.addr.off = base + (DWORD)functions[ordinals[i]];
+		value.addr.off = (unsigned long)base + (DWORD)functions[ordinals[i]];
 		DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	    }
 
@@ -401,7 +403,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 		    if ((ordinals[j] == i) && names[j]) break;
 		if (j < exports.NumberOfNames) continue;
 		snprintf(buffer, sizeof(buffer), "%s.%ld", prefix, i + exports.Base);
-		value.addr.off = base + (DWORD)functions[i];
+		value.addr.off = (unsigned long)base + (DWORD)functions[i];
 		DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	    }
 	}
@@ -465,22 +467,22 @@ int DEBUG_LoadEntryPoints(const char* pfx)
     return first;
 }
 
-void	DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx, const char* filename, DWORD load_addr)
+void	DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx, const char* filename, void *load_addr)
 {
     const char*	fmt;
 
     switch (dil) {
     case DIL_DEFERRED:
-	fmt = "Deferring debug information loading for %s '%s' (0x%08x)\n";
+	fmt = "Deferring debug information loading for %s '%s' (%p)\n";
 	break;
     case DIL_LOADED:
-	fmt = "Loaded debug information from %s '%s' (0x%08x)\n";
+	fmt = "Loaded debug information from %s '%s' (%p)\n";
 	break;
     case DIL_NOINFO:
-	fmt = "No debug information in %s '%s' (0x%08x)\n";
+	fmt = "No debug information in %s '%s' (%p)\n";
 	break;
     case DIL_ERROR:
-	fmt = "Can't find file for %s '%s' (0x%08x)\n";
+	fmt = "Can't find file for %s '%s' (%p)\n";
 	break;
     default:
 	DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", dil);

@@ -95,7 +95,7 @@
 
 typedef struct tagELF_DBG_INFO
 {
-    unsigned long	elf_addr;
+    void *elf_addr;
 } ELF_DBG_INFO;
 
 struct stab_nlist {
@@ -862,7 +862,7 @@ DEBUG_ParseStabType(const char * stab)
     return *DEBUG_ReadTypeEnum((char**)&c);
 }
 
-enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
+enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
 				  unsigned int staboff, int stablen,
 				  unsigned int strtaboff, int strtablen)
 {
@@ -957,7 +957,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           new_value.addr.seg = 0;
           new_value.type = DEBUG_ParseStabType(ptr);
-          new_value.addr.off = load_offset + stab_ptr->n_value;
+          new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
 	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, sizeof(symname), ptr);
@@ -986,7 +986,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           new_value.addr.seg = 0;
           new_value.type = DEBUG_ParseStabType(ptr);
-          new_value.addr.off = load_offset + stab_ptr->n_value;
+          new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
 	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, sizeof(symname), ptr);
@@ -1064,7 +1064,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 		{
 		  new_value.addr.seg = 0;
 		  new_value.type = DEBUG_ParseStabType(ptr);
-		  new_value.addr.off = load_offset + stab_ptr->n_value;
+		  new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
 		  new_value.cookie = DV_TARGET;
 		  /*
 		   * Copy the string to a temp buffer so we
@@ -1199,7 +1199,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
  * numbers or local data variables.
  */
 static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
-				  u_long load_addr, Elf32_Shdr* symtab,
+				  void *load_addr, Elf32_Shdr* symtab,
 				  Elf32_Shdr* strtab)
 {
   char		* curfile = NULL;
@@ -1242,7 +1242,7 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
 
       new_value.type = NULL;
       new_value.addr.seg = 0;
-      new_value.addr.off = load_addr + symp->st_value;
+      new_value.addr.off = (unsigned long)load_addr + symp->st_value;
       new_value.cookie = DV_TARGET;
       flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC)
 			  ? SYM_FUNC : SYM_DATA);
@@ -1375,7 +1375,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
  *	1 on success
  */
 static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
-					     unsigned int load_offset,
+					     void *load_offset,
 					     unsigned int* dyn_addr)
 {
     static const unsigned char elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
@@ -1406,7 +1406,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
      * Now mmap() the file.
      */
     addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (addr == (char*)0xffffffff) goto leave;
+    if (addr == (char*)-1) goto leave;
 
     dil = DIL_NOINFO;
 
@@ -1450,7 +1450,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 	}
     }
 
-    module = DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset,
+    module = DEBUG_RegisterELFModule((load_offset == 0) ? (void *)ehptr->e_entry : load_offset,
 				     size, filename);
     if (!module) {
 	dil = DIL_ERROR;
@@ -1474,7 +1474,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 }
 
 static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename,
-						     unsigned int load_offset,
+						     void *load_offset,
 						     unsigned int* dyn_addr,
 						     const char* path)
 {
@@ -1503,7 +1503,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename,
 }
 
 static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
-					       unsigned int load_offset,
+					       void *load_offset,
 					       unsigned int* dyn_addr)
 {
    enum DbgInfoLoad	dil = DIL_ERROR;
@@ -1530,7 +1530,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
 
 static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 {
-    u_long		lm_addr;
+    void *lm_addr;
     struct link_map     lm;
     Elf32_Ehdr	        ehdr;
     char		bufstr[256];
@@ -1541,8 +1541,8 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
      * cases the first entry doesn't appear with a name, in other cases it
      * does.
      */
-    for (lm_addr = (u_long)dbg_hdr->r_map; lm_addr; lm_addr = (u_long)lm.l_next) {
-	if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
+    for (lm_addr = (void *)dbg_hdr->r_map; lm_addr; lm_addr = (void *)lm.l_next) {
+	if (!DEBUG_READ_MEM_VERBOSE(lm_addr, &lm, sizeof(lm)))
 	    return FALSE;
 
 	if (lm.l_addr != 0 &&
@@ -1551,7 +1551,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 	    lm.l_name != NULL &&
 	    DEBUG_READ_MEM_VERBOSE((void*)lm.l_name, bufstr, sizeof(bufstr))) {
 	    bufstr[sizeof(bufstr) - 1] = '\0';
-	    DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr, NULL);
+	    DEBUG_ProcessElfObject(bufstr, (void *)lm.l_addr, NULL);
 	}
     }
 
@@ -1607,7 +1607,7 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 	goto leave;
 
     assert(!DEBUG_CurrProcess->dbg_hdr_addr);
-    DEBUG_CurrProcess->dbg_hdr_addr = (u_long)dyn.d_un.d_ptr;
+    DEBUG_CurrProcess->dbg_hdr_addr = (unsigned long)dyn.d_un.d_ptr;
 
     if (dbg_hdr.r_brk) {
 	DBG_VALUE	value;

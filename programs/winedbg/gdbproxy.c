@@ -597,7 +597,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                         de->u.CreateProcessInfo.lpThreadLocalBase);
 #if 0
         DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile,
-                           (DWORD)de->u.CreateProcessInfo.lpBaseOfImage);
+                           de->u.CreateProcessInfo.lpBaseOfImage);
 
         if (buffer[0])  /* we got a process name */
         {
@@ -635,7 +635,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->u.LoadDll.nDebugInfoSize);
 #if 0
         _strupr(buffer);
-        DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
+        DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, de->u.LoadDll.lpBaseOfDll);
         DEBUG_CheckDelayedBP();
         if (DBG_IVAR(BreakOnDllLoad))
         {

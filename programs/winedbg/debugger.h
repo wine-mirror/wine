@@ -21,7 +21,6 @@
 #ifndef __WINE_DEBUGGER_H
 #define __WINE_DEBUGGER_H
 
-#include <sys/types.h> /* u_long ... */
 #include <assert.h>
 #include "windef.h"
 #include "winbase.h"
@@ -430,21 +429,17 @@ extern int  DEBUG_PrintStringW( int chnl, const DBG_ADDR* address, int len );
 
   /* debugger/module.c */
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
-extern void DEBUG_LoadModule32( const char* name, HANDLE hFile, DWORD base );
-extern DBG_MODULE* DEBUG_AddModule(const char* name, enum DbgModuleType type,
-				   void* mod_addr, u_long size, HMODULE hmod);
+extern void DEBUG_LoadModule32( const char* name, HANDLE hFile, void *base );
 extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_GetProcessMainModule(DBG_PROCESS* process);
-extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, u_long size,
-					  const char* name);
-extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, u_long size,
+extern DBG_MODULE* DEBUG_RegisterELFModule(void *load_addr, unsigned long size,
 					   const char* name);
 extern enum DbgInfoLoad DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 						  void* _nth, unsigned long nth_ofs);
 extern void DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx,
-			    const char* filename, DWORD load_addr);
+			    const char* filename, void *load_addr);
 extern void DEBUG_InfoShare(void);
 
   /* debugger/msc.c */
@@ -479,7 +474,7 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 
   /* debugger/stabs.c */
 extern enum DbgInfoLoad DEBUG_ReadExecutableDbgInfo(const char* exe_name);
-extern enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
+extern enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
 					 unsigned int staboff, int stablen,
 					 unsigned int strtaboff, int strtablen);
 

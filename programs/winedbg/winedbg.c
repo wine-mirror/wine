@@ -761,7 +761,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         } while (0);
 
         DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile,
-                           (DWORD)de->u.CreateProcessInfo.lpBaseOfImage);
+                           de->u.CreateProcessInfo.lpBaseOfImage);
 
         break;
 
@@ -813,7 +813,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                      de->u.LoadDll.dwDebugInfoFileOffset,
                      de->u.LoadDll.nDebugInfoSize);
         _strupr(buffer);
-        DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
+        DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, de->u.LoadDll.lpBaseOfDll);
         DEBUG_CheckDelayedBP();
         if (DBG_IVAR(BreakOnDllLoad))
         {
