@@ -3690,7 +3690,7 @@ static const WCHAR *INT21_FindPath; /* will point to current dta->fullPath searc
  */
 static int INT21_FindFirst( CONTEXT86 *context )
 {
-    WCHAR *p;
+    WCHAR *p, *q;
     const char *path;
     FINDFILE_DTA *dta = (FINDFILE_DTA *)INT21_GetCurrentDTA(context);
     WCHAR maskW[12], pathW[MAX_PATH];
@@ -3700,6 +3700,8 @@ static int INT21_FindFirst( CONTEXT86 *context )
     MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
 
     p = strrchrW( pathW, '\\');
+    q = strrchrW( pathW, '/');
+    if (q>p) p = q;
     if (!p)
     {
         if (pathW[0] && pathW[1] == ':') p = pathW + 2;
