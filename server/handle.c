@@ -53,11 +53,11 @@ static struct handle_table *global_table;
 /* handle to table index conversion */
 
 /* handles are a multiple of 4 under NT; handle  0 is not used */
-static int inline index_to_handle( int index )
+inline static int index_to_handle( int index )
 {
     return (index + 1) << 2;
 }
-static int inline handle_to_index( int handle )
+inline static int handle_to_index( int handle )
 {
     return (handle >> 2) - 1;
 }

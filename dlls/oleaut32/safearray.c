@@ -50,7 +50,7 @@ duplicateData(SAFEARRAY *psa, SAFEARRAY **ppsaOut);
    A size of zero is defined for the unsupported types.  */
 
 #define VARTYPE_NOT_SUPPORTED 0
-const static ULONG VARTYPE_SIZE[] =
+static const ULONG VARTYPE_SIZE[] =
 {
   /* this is taken from wtypes.h.  Only [S]es are supported by the SafeArray */
 VARTYPE_NOT_SUPPORTED,	/* VT_EMPTY    [V]   [P]    nothing			*/
@@ -99,7 +99,7 @@ VARTYPE_NOT_SUPPORTED,	/* VT_ARRAY    [V]          SAFEARRAY*			*/
 VARTYPE_NOT_SUPPORTED 	/* VT_BYREF    [V]          void* for local use	*/
 };
 
-const static int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(ULONG);
+static const int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(ULONG);
 
 
 /*************************************************************************

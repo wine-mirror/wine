@@ -9,7 +9,7 @@
 		   number on the next write() on this file descriptor */
 
 /* This is what the linux kernel thinks.... */
-const static unsigned char scsi_command_size[8] =
+static const unsigned char scsi_command_size[8] =
 {
 	6, 10, 10, 12,
 	12, 12, 10, 10

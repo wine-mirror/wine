@@ -528,7 +528,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
  *
  * Set the FPU context from a sigcontext. 
  */
-static void inline save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
 #ifdef FPU_sig
     if (FPU_sig(sigcontext))
@@ -548,7 +548,7 @@ static void inline save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Restore the FPU context to a sigcontext. 
  */
-static void inline restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
     /* reset the current interrupt status */
     context->FloatSave.StatusWord &= context->FloatSave.ControlWord | 0xffffff80;
