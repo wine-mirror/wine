@@ -134,11 +134,7 @@ typedef struct
 /* offset of DIALOGINFO ptr in dialog extra bytes */
 #define DWL_WINE_DIALOGINFO (DWL_USER+sizeof(ULONG_PTR))
 
-inline static DIALOGINFO *DIALOG_get_info( HWND hwnd )
-{
-    return (DIALOGINFO *)GetWindowLongW( hwnd, DWL_WINE_DIALOGINFO );
-}
-
+extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
 extern BOOL DIALOG_GetCharSize( HDC hdc, HFONT hFont, SIZE * pSize );
 extern void DIALOG_EnableOwner( HWND hOwner );
 extern BOOL DIALOG_DisableOwner( HWND hOwner );

@@ -288,7 +288,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
 static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPLATE *dlgTemplate,
                                      HINSTANCE hInst, BOOL unicode )
 {
-    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd );
+    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd, TRUE );
     DLG_CONTROL_INFO info;
     HWND hwndCtrl, hwndDefButton = 0;
     INT items = dlgTemplate->nbItems;
@@ -633,7 +633,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     /* moved this from the top of the method to here as DIALOGINFO structure
     will be valid only after WM_CREATE message has been handled in DefDlgProc
     All the members of the structure get filled here using temp variables */
-    dlgInfo = DIALOG_get_info(hwnd);
+    dlgInfo = DIALOG_get_info( hwnd, TRUE );
     dlgInfo->hwndFocus   = 0;
     dlgInfo->hUserFont   = hUserFont;
     dlgInfo->hMenu       = hMenu;
@@ -764,7 +764,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     INT retval;
     HWND ownerMsg = GetAncestor( owner, GA_ROOT );
 
-    if (!(dlgInfo = DIALOG_get_info( hwnd ))) return -1;
+    if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE ))) return -1;
 
     if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
     {
@@ -876,7 +876,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 
     TRACE("%p %d\n", hwnd, retval );
 
-    if (!(dlgInfo = DIALOG_get_info( hwnd )))
+    if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE )))
     {
         ERR("got invalid window handle (%p); buggy app !?\n", hwnd);
         return FALSE;
@@ -1455,7 +1455,7 @@ DWORD WINAPI GetDialogBaseUnits(void)
 BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
 {
     DIALOGINFO * dlgInfo;
-    if (!(dlgInfo = DIALOG_get_info( hwnd ))) return FALSE;
+    if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE ))) return FALSE;
     rect->left   = MulDiv(rect->left, dlgInfo->xBaseUnit, 4);
     rect->right  = MulDiv(rect->right, dlgInfo->xBaseUnit, 4);
     rect->top    = MulDiv(rect->top, dlgInfo->yBaseUnit, 8);

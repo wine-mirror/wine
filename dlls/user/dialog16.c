@@ -139,7 +139,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
                                      const DLG_TEMPLATE *dlgTemplate, HINSTANCE16 hInst )
 {
-    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd );
+    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd, TRUE );
     DLG_CONTROL_INFO info;
     HWND hwndCtrl, hwndDefButton = 0;
     INT items = dlgTemplate->nbItems;

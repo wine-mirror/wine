@@ -81,7 +81,7 @@ static void DEFDLG_SaveFocus( HWND hwnd )
     HWND hwndFocus = GetFocus();
 
     if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return;
-    if (!(infoPtr = DIALOG_get_info( hwnd ))) return;
+    if (!(infoPtr = DIALOG_get_info( hwnd, FALSE ))) return;
     infoPtr->hwndFocus = hwndFocus;
     /* Remove default button */
 }
@@ -95,7 +95,7 @@ static void DEFDLG_RestoreFocus( HWND hwnd )
     DIALOGINFO *infoPtr;
 
     if (IsIconic( hwnd )) return;
-    if (!(infoPtr = DIALOG_get_info( hwnd ))) return;
+    if (!(infoPtr = DIALOG_get_info( hwnd, FALSE ))) return;
     if (!IsWindow( infoPtr->hwndFocus )) return;
     /* Don't set the focus back to controls if EndDialog is already called.*/
     if (!(infoPtr->flags & DF_END))
@@ -284,16 +284,17 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
 }
 
 /***********************************************************************
-*               DEFDLG_InitDlgInfo
+*               DIALOG_get_info
 *
-* Allocate memory for DIALOGINFO structure and store in DWL_DIALOGINFO
-* structure. Also flag the window as a dialog type.
+* Get the DIALOGINFO structure of a window, allocating it if needed
+* and 'create' is TRUE.
 */
-static DIALOGINFO* DEFDLG_InitDlgInfo(HWND hwnd)
+DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
 {
     WND* wndPtr;
-    DIALOGINFO* dlgInfo = DIALOG_get_info( hwnd );
-    if(!dlgInfo)
+    DIALOGINFO* dlgInfo = (DIALOGINFO *)GetWindowLongW( hwnd, DWL_WINE_DIALOGINFO );
+
+    if(!dlgInfo && create)
     {
         if (!(dlgInfo = HeapAlloc( GetProcessHeap(), 0, sizeof(*dlgInfo) ))) return NULL;
         dlgInfo->hwndFocus   = 0;
@@ -332,7 +333,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     BOOL result = FALSE;
 
     /* Perform DIALOGINFO intialization if not done */
-    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd32))) return -1;
+    if(!(dlgInfo = DIALOG_get_info(hwnd32, TRUE))) return -1;
 
     SetWindowLongW( hwnd32, DWL_MSGRESULT, 0 );
 
@@ -389,7 +390,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     BOOL result = FALSE;
 
     /* Perform DIALOGINFO initialization if not done */
-    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd))) return -1;
+    if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
     SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
 
@@ -446,7 +447,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     WNDPROC dlgproc;
 
     /* Perform DIALOGINFO intialization if not done */
-    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd))) return -1;
+    if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
     SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
 
