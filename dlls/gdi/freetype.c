@@ -2607,8 +2607,8 @@ static BOOL get_bitmap_text_metrics(GdiFont font)
         TM.tmDigitizedAspectY = winfnt_header.vertical_resolution;
         TM.tmFirstChar = winfnt_header.first_char;
         TM.tmLastChar = winfnt_header.last_char;
-        TM.tmDefaultChar = winfnt_header.default_char;
-        TM.tmBreakChar = winfnt_header.break_char;
+        TM.tmDefaultChar = winfnt_header.default_char + winfnt_header.first_char;
+        TM.tmBreakChar = winfnt_header.break_char + winfnt_header.first_char;
         TM.tmItalic = winfnt_header.italic;
         TM.tmUnderlined = font->underline;
         TM.tmStruckOut = font->strikeout;
