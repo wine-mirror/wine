@@ -38,16 +38,18 @@
 #define NONDIR_SHORT "notadir"
 #define NONDIR_LONG "Non Existant Directory"
 
-OSVERSIONINFOA version;
+static OSVERSIONINFOA version;
 /* the following characters don't work well with GetFullPathNameA
    in Win98.  I don't know if this is a FAT thing, or if it is an OS thing
    but I don't test these characters now.
    NOTE: Win2k allows GetFullPathNameA to work with them though
       |<>
 */
-const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`\"";
-const CHAR is_char_ok[] ="111111101111111110110";
-const CHAR wine_todo[]  ="111111101100110000110";
+static const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`\"";
+static const CHAR is_char_ok[] ="111111101111111110110";
+static const CHAR wine_todo[]  ="111111101100110000110";
+
+static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR,LPSTR,DWORD);
 
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
@@ -84,8 +86,8 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
     passfail->shorterror=0;passfail->s2lerror=0;passfail->longerror=0;
   }
 /* GetLongPathNameA is only supported on Win2k+ and Win98+ */
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
-    ok((len=GetLongPathNameA(curdir,curdirlong,MAX_PATH)),
+  if(pGetLongPathNameA) {
+    ok((len=pGetLongPathNameA(curdir,curdirlong,MAX_PATH)),
        "%s: GetLongPathNameA failed",errstr);
 /*GetLongPathNameA can return a trailing '\\' but shouldn't do so here */
     ok(! HAS_TRAIL_SLASH_A(curdirlong),
@@ -137,10 +139,10 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
 /* Test GetLongPathNameA functionality 
    We test both conversion from GetFullPathNameA and from GetShortPathNameA
 */
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     if(len==0) {
       SetLastError(0);
-      len=GetLongPathNameA(shortstr,tmpstr,MAX_PATH);
+      len=pGetLongPathNameA(shortstr,tmpstr,MAX_PATH);
       if(passfail==NULL) {
         ok(len, 
           "%s: GetLongPathNameA failed during Short->Long conversion", errstr);
@@ -153,7 +155,7 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
       }
     }
     SetLastError(0);
-    len=GetLongPathNameA(fullpath,tmpstr,MAX_PATH);
+    len=pGetLongPathNameA(fullpath,tmpstr,MAX_PATH);
     if(passfail==NULL) {
       ok(len, "%s: GetLongPathNameA failed",errstr);
       if(HAS_TRAIL_SLASH_A(fullpath)) {
@@ -274,7 +276,7 @@ static void test_FunnyChars(CHAR *curdir,CHAR *filename,
          errstr,passfail.shorterror,ERROR_INVALID_NAME,ERROR_FILE_NOT_FOUND);
     }
   }
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     if(valid) {
       ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -525,7 +527,7 @@ static void test_PathNameA(CHAR *curdir)
     ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
        "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   }
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
        "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'");
@@ -535,7 +537,7 @@ static void test_PathNameA(CHAR *curdir)
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
        "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'");
@@ -547,7 +549,7 @@ static void test_PathNameA(CHAR *curdir)
     ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
        "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   }
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
       "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'");
@@ -557,7 +559,7 @@ static void test_PathNameA(CHAR *curdir)
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
        "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'");
@@ -572,7 +574,7 @@ static void test_PathNameA(CHAR *curdir)
        "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
         passfail.shorterror);
   }
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
        passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -586,7 +588,7 @@ static void test_PathNameA(CHAR *curdir)
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
        passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -600,7 +602,7 @@ static void test_PathNameA(CHAR *curdir)
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
        passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -614,7 +616,7 @@ static void test_PathNameA(CHAR *curdir)
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
        passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -636,7 +638,7 @@ static void test_PathNameA(CHAR *curdir)
      "GetShortPathA returned %d and not 'ERROR_FILE_NOT_FOUND'",
       passfail.shorterror);
   }
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
        "GetLongPathA returned %d and not 'ERROR_FILE_NOT_FOUND'",
@@ -648,7 +650,7 @@ static void test_PathNameA(CHAR *curdir)
   ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_FILE_NOT_FOUND'",
       passfail.shorterror);
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
+  if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
        "GetLongPathA returned %d and not 'ERROR_FILE_NOT_FOUND'",
@@ -657,8 +659,8 @@ static void test_PathNameA(CHAR *curdir)
 /* Now try some relative paths */
   ok(GetShortPathNameA(LONGDIR,tmpstr,MAX_PATH),"GetShortPathNameA failed");
   test_SplitShortPathA(tmpstr,dir,eight,three);
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
-    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
+  if(pGetLongPathNameA) {
+    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
     todo_wine {
       ok(lstrcmpiA(tmpstr1,LONGDIR)==0,
          "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,LONGDIR);
@@ -668,8 +670,8 @@ static void test_PathNameA(CHAR *curdir)
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
   test_SplitShortPathA(tmpstr1,dir,eight,three);
   ok(lstrcmpiA(dir,".")==0,"GetShortPathNameA did not keep relative directory");
-  if(WIN2K_PLUS(version) || WIN98_PLUS(version)) {
-    ok(GetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
+  if(pGetLongPathNameA) {
+    ok(pGetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
     todo_wine {
       ok(lstrcmpiA(tmpstr1,tmpstr)==0,
          "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
@@ -717,6 +719,8 @@ START_TEST(path)
     CHAR origdir[MAX_PATH],curdir[MAX_PATH];
     version.dwOSVersionInfoSize=sizeof(OSVERSIONINFOA);
     ok(GetVersionExA(&version),"GetVersionEx failed: %d",GetLastError());
+    pGetLongPathNameA = (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
+                                               "GetLongPathNameA" );
     test_InitPathA(curdir);
     test_CurrentDirectoryA(origdir,curdir);
     test_PathNameA(curdir);
