@@ -2712,6 +2712,8 @@ typedef struct
 #define SPI_SETACTIVEWNDTRKTIMEOUT     0x2003
 #define SPI_GETFOREGROUNDFLASHCOUNT    0x2004
 #define SPI_SETFOREGROUNDFLASHCOUNT    0x2005
+#define SPI_GETCARETWIDTH              0x2006
+#define SPI_SETCARETWIDTH              0x2007
 
 /* defines below are for all win versions _WIN32_WINNT >= 0x0501 */
 #define SPI_GETMOUSESONAR              0x101C
