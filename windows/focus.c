@@ -10,9 +10,7 @@
 #include "win.h"
 #include "winpos.h"
 #include "hook.h"
-#include "color.h"
 #include "message.h"
-#include "options.h"
 
 static HWND32 hwndFocus = 0;
 
