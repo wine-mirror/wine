@@ -1165,7 +1165,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if (fState & ILS_SATURATE) FIXME("ILS_SATURATE: unimplemented!\n");
     if (fState & ILS_GLOW) FIXME("ILS_GLOW: unimplemented!\n");
     if (fState & ILS_SHADOW) FIXME("ILS_SHADOW: unimplemented!\n");
-    if (fState & ILS_ALPHA) FIXME("ILS_SHADOW: unimplemented!\n");
+    if (fState & ILS_ALPHA) FIXME("ILS_ALPHA: unimplemented!\n");
 
     if (fStyle & ILD_PRESERVEALPHA) FIXME("ILD_PRESERVEALPHA: unimplemented!\n");
     if (fStyle & ILD_SCALE) FIXME("ILD_SCALE: unimplemented!\n");
