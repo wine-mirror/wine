@@ -1512,7 +1512,12 @@ static HRESULT WINAPI IShellLinkW_fnSetShowCmd(IShellLinkW * iface, INT iShowCmd
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
-	FIXME("(%p)->(showcmd=%x)\n",This, iShowCmd);
+	/* SW_SHOWNORMAL is the default ... The others would have 
+	 * to be somehow passed through the link file ... We can't 
+	 * do that currently.
+	 */
+	if (iShowCmd != SW_SHOWNORMAL)
+		FIXME("(%p)->(showcmd=%x)\n",This, iShowCmd);
 	return NOERROR;
 }
 
