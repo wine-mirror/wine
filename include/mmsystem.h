@@ -66,8 +66,6 @@ typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 #define MAXERRORLENGTH   128    /* max error text length (including NULL) */
 #define MAX_JOYSTICKOEMVXDNAME	260
 
-typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
-
 #ifndef _MCIERROR_
 #define _MCIERROR_
 typedef DWORD   MCIERROR;
