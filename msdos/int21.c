@@ -1020,28 +1020,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
 
-    case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-        TRACE("MKDIR %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = (!CreateDirectory16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                           context->Edx ), NULL));
-	/* FIXME: CreateDirectory's LastErrors will clash with the ones
-	 * used by dos. AH=39 only returns 3 (path not found) and 5 (access
-	 * denied), while CreateDirectory return several ones. remap some of
-	 * them. -Marcus
-	 */
-	if (bSetDOSExtendedError) {
-		switch (GetLastError()) {
-		case ERROR_ALREADY_EXISTS:
-		case ERROR_FILENAME_EXCED_RANGE:
-		case ERROR_DISK_FULL:
-			SetLastError(ERROR_ACCESS_DENIED);
-			break;
-		default: break;
-		}
-	}
-        break;
-
     case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
         TRACE("CHDIR %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -1058,69 +1036,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         TRACE("OPEN mode 0x%02x %s\n",AL_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
         OpenExistingFile(context);
-        break;
-
-    case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
-        TRACE("READ from %d to %04lX:%04X for %d byte\n",BX_reg(context),
-	      context->SegDs,DX_reg(context),CX_reg(context) );
-        {
-            LONG result;
-            if (ISV86(context))
-                result = _hread16( BX_reg(context),
-                                   CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-                                                               context->Edx ),
-                                   CX_reg(context) );
-            else
-                result = WIN16_hread( BX_reg(context),
-                                      MAKESEGPTR( context->SegDs, context->Edx ),
-                                      CX_reg(context) );
-            if (result == -1) bSetDOSExtendedError = TRUE;
-            else SET_AX( context, (WORD)result );
-        }
-        break;
-
-    case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
-        TRACE("LSEEK handle %d offset %ld from %s\n",
-	      BX_reg(context), MAKELONG(DX_reg(context),CX_reg(context)),
-	      (AL_reg(context)==0)?"start of file":(AL_reg(context)==1)?
-	      "current file position":"end of file");
-        {
-            LONG status = _llseek16( BX_reg(context),
-                                     MAKELONG(DX_reg(context),CX_reg(context)),
-                                     AL_reg(context) );
-            if (status == -1) bSetDOSExtendedError = TRUE;
-	    else
-	    {
-            	SET_AX( context, LOWORD(status) );
-           	SET_DX( context, HIWORD(status) );
-	    }
-        }
-        break;
-
-    case 0x43: /* FILE ATTRIBUTES */
-        switch (AL_reg(context))
-        {
-        case 0x00:
-            TRACE("GET FILE ATTRIBUTES for %s\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-            SET_AX( context, GetFileAttributesA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-                                                                    context->Edx)));
-            if (AX_reg(context) == 0xffff) bSetDOSExtendedError = TRUE;
-            else SET_CX( context, AX_reg(context) );
-            break;
-
-        case 0x01:
-            TRACE("SET FILE ATTRIBUTES 0x%02x for %s\n", CX_reg(context),
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-            bSetDOSExtendedError =
-		(!SetFileAttributesA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-							   context->Edx),
-                                       			   CX_reg(context) ));
-            break;
-        case 0x02:
-            FIXME("GET COMPRESSED FILE SIZE for %s stub\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        }
         break;
 
     case 0x44: /* IOCTL */
@@ -1334,55 +1249,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
     case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
         switch(AL_reg(context))
         {
-        case 0x39:  /* Create directory */
-	    TRACE("LONG FILENAME - MAKE DIRECTORY %s\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
-            bSetDOSExtendedError = (!CreateDirectoryA(
-					CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                  context->Edx ), NULL));
-	    /* FIXME: CreateDirectory's LastErrors will clash with the ones
-	     * used by dos. AH=39 only returns 3 (path not found) and 5 (access
-	     * denied), while CreateDirectory return several ones. remap some of
-	     * them. -Marcus
-	     */
-	    if (bSetDOSExtendedError) {
-		    switch (GetLastError()) {
-		    case ERROR_ALREADY_EXISTS:
-		    case ERROR_FILENAME_EXCED_RANGE:
-		    case ERROR_DISK_FULL:
-			    SetLastError(ERROR_ACCESS_DENIED);
-			    break;
-		    default: break;
-		    }
-	    }
-            break;
-
-        case 0x43:  /* Get/Set file attributes */
-	  TRACE("LONG FILENAME -EXTENDED GET/SET FILE ATTRIBUTES %s\n",
-		(LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
-        switch (BL_reg(context))
-        {
-        case 0x00: /* Get file attributes */
-            TRACE("\tretrieve attributes\n");
-            SET_CX( context, GetFileAttributesA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-                                                                    context->Edx)));
-            if (CX_reg(context) == 0xffff) bSetDOSExtendedError = TRUE;
-            break;
-        case 0x01:
-            TRACE("\tset attributes 0x%04x\n",CX_reg(context));
-            bSetDOSExtendedError = (!SetFileAttributesA(
-				  	CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-                                                           context->Edx),
-                                        CX_reg(context)  ) );
-            break;
-	default:
-	  FIXME("Unimplemented long file name function:\n");
-	  INT_BARF( context, 0x21 );
-	  SET_CFLAG(context);
-	  SET_AL( context, 0 );
-	  break;
-	}
-	break;
         case 0x47:  /* Get current directory */
 	    TRACE(" LONG FILENAME - GET CURRENT DIRECTORY for drive %s\n",
 		  INT21_DriveName(DL_reg(context)));

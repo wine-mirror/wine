@@ -43,6 +43,11 @@
  */
 extern void WINAPI INT_Int21Handler( CONTEXT86 *context );
 
+/*
+ * Forward declarations.
+ */
+static BOOL INT21_RenameFile( CONTEXT86 *context );
+
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 
@@ -358,6 +363,49 @@ static void INT21_BufferedInput( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_CreateDirectory
+ *
+ * Handler for:
+ * - function 0x39
+ * - subfunction 0x39 of function 0x71
+ * - subfunction 0xff of function 0x43 (CL == 0x39)
+ */
+static BOOL INT21_CreateDirectory( CONTEXT86 *context )
+{
+    WCHAR dirW[MAX_PATH];
+    char *dirA = CTX_SEG_OFF_TO_LIN(context,
+                                    context->SegDs, 
+                                    context->Edx);
+
+    TRACE( "CREATE DIRECTORY %s\n", dirA );
+
+    MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
+
+    if (CreateDirectoryW(dirW, NULL))
+        return TRUE;
+
+    /*
+     * FIXME: CreateDirectory's LastErrors will clash with the ones
+     *        used by DOS. AH=39 only returns 3 (path not found) and 
+     *        5 (access denied), while CreateDirectory return several
+     *        ones. Remap some of them. -Marcus
+     */
+    switch (GetLastError()) 
+    {
+    case ERROR_ALREADY_EXISTS:
+    case ERROR_FILENAME_EXCED_RANGE:
+    case ERROR_DISK_FULL:
+        SetLastError(ERROR_ACCESS_DENIED);
+        break;
+    default: 
+        break;
+    }
+
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           INT21_ExtendedCountryInformation
  *
  * Handler for function 0x65.
@@ -475,6 +523,257 @@ static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
         SET_CFLAG(context);
         break;
     }
+}
+
+
+/***********************************************************************
+ *           INT21_FileAttributes
+ *
+ * Handler for:
+ * - function 0x43
+ * - subfunction 0x43 of function 0x71
+ */
+static BOOL INT21_FileAttributes( CONTEXT86 *context, 
+                                  BYTE       subfunction,
+                                  BOOL       islong )
+{
+    WCHAR fileW[MAX_PATH];
+    char *fileA = CTX_SEG_OFF_TO_LIN(context, 
+                                     context->SegDs, 
+                                     context->Edx);
+    HANDLE   handle;
+    BOOL     status;
+    FILETIME filetime;
+    DWORD    result;
+    WORD     date, time;
+
+    switch (subfunction)
+    {
+    case 0x00: /* GET FILE ATTRIBUTES */
+        TRACE( "GET FILE ATTRIBUTES for %s\n", fileA );
+        MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+        result = GetFileAttributesW( fileW );
+        if (result == -1)
+            return FALSE;
+        else
+        {
+            SET_CX( context, (WORD)result );
+            if (!islong)
+                SET_AX( context, (WORD)result ); /* DR DOS */
+        }
+        break;
+
+    case 0x01: /* SET FILE ATTRIBUTES */
+        TRACE( "SET FILE ATTRIBUTES 0x%02x for %s\n", 
+               CX_reg(context), fileA );
+        MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+        if (!SetFileAttributesW( fileW, CX_reg(context) ))
+            return FALSE;
+        break;
+
+    case 0x02: /* GET COMPRESSED FILE SIZE */
+        TRACE( "GET COMPRESSED FILE SIZE for %s\n", fileA );
+        MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+        result = GetCompressedFileSizeW( fileW, NULL );
+        if (result == INVALID_FILE_SIZE)
+            return FALSE;
+        else
+        {
+            SET_AX( context, LOWORD(result) );
+            SET_DX( context, HIWORD(result) );
+        }
+        break;
+
+    case 0x03: /* SET FILE LAST-WRITTEN DATE AND TIME */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "SET FILE LAST-WRITTEN DATE AND TIME, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            handle = CreateFileW( fileW, GENERIC_WRITE, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+
+            DosDateTimeToFileTime( DI_reg(context), 
+                                   CX_reg(context),
+                                   &filetime );
+            status = SetFileTime( handle, NULL, NULL, &filetime );
+
+            CloseHandle( handle );
+            return status;
+        }
+        break;
+
+    case 0x04: /* GET FILE LAST-WRITTEN DATE AND TIME */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "GET FILE LAST-WRITTEN DATE AND TIME, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            handle = CreateFileW( fileW, GENERIC_READ, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+
+            status = GetFileTime( handle, NULL, NULL, &filetime );
+            if (status)
+            {
+                FileTimeToDosDateTime( &filetime, &date, &time );
+                SET_DI( context, date );
+                SET_CX( context, time );
+            }
+
+            CloseHandle( handle );
+            return status;
+        }
+        break;
+
+    case 0x05: /* SET FILE LAST ACCESS DATE */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "SET FILE LAST ACCESS DATE, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            handle = CreateFileW( fileW, GENERIC_WRITE, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+
+            DosDateTimeToFileTime( DI_reg(context), 
+                                   0,
+                                   &filetime );
+            status = SetFileTime( handle, NULL, &filetime, NULL );
+
+            CloseHandle( handle );
+            return status;
+        }
+        break;
+
+    case 0x06: /* GET FILE LAST ACCESS DATE */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "GET FILE LAST ACCESS DATE, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            handle = CreateFileW( fileW, GENERIC_READ, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+
+            status = GetFileTime( handle, NULL, &filetime, NULL );
+            if (status)
+            {
+                FileTimeToDosDateTime( &filetime, &date, NULL );
+                SET_DI( context, date );
+            }
+
+            CloseHandle( handle );
+            return status;
+        }
+        break;
+
+    case 0x07: /* SET FILE CREATION DATE AND TIME */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "SET FILE CREATION DATE AND TIME, file %s\n", fileA );
+
+            handle = CreateFileW( fileW, GENERIC_WRITE,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+            
+            /*
+             * FIXME: SI has number of 10-millisecond units past time in CX.
+             */
+            DosDateTimeToFileTime( DI_reg(context),
+                                   CX_reg(context),
+                                   &filetime );
+            status = SetFileTime( handle, &filetime, NULL, NULL );
+
+            CloseHandle( handle );
+            return status;
+        }
+        break;
+
+    case 0x08: /* GET FILE CREATION DATE AND TIME */
+        if (!islong)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            TRACE( "GET FILE CREATION DATE AND TIME, handle %d\n",
+                   BX_reg(context) );
+
+            handle = CreateFileW( fileW, GENERIC_READ, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
+                return FALSE;
+
+            status = GetFileTime( handle, &filetime, NULL, NULL );
+            if (status)
+            {            
+                FileTimeToDosDateTime( &filetime, &date, &time );
+                SET_DI( context, date );
+                SET_CX( context, time );
+                /*
+                 * FIXME: SI has number of 10-millisecond units past 
+                 *        time in CX.
+                 */
+                SET_SI( context, 0 );
+            }
+
+            CloseHandle(handle);
+            return status;
+        }
+        break;
+
+    case 0xff: /* EXTENDED-LENGTH FILENAME OPERATIONS */
+        if (islong || context->Ebp != 0x5053)
+            INT_BARF( context, 0x21 );
+        else
+        {
+            switch(CL_reg(context))
+            {
+            case 0x39:
+                if (!INT21_CreateDirectory( context ))
+                    return FALSE;
+                break;
+
+            case 0x56:
+                if (!INT21_RenameFile( context ))
+                    return FALSE;
+                break;
+
+            default:
+                INT_BARF( context, 0x21 );
+            }
+        }
+        break;
+
+    default:
+        INT_BARF( context, 0x21 );
+    }
+
+    return TRUE;
 }
 
 
@@ -751,8 +1050,12 @@ static void INT21_LongFilename( CONTEXT86 *context )
     switch (AL_reg(context))
     {
     case 0x0d: /* RESET DRIVE */
-    case 0x39: /* LONG FILENAME - MAKE DIRECTORY */
         INT_Int21Handler( context );
+        break;
+
+    case 0x39: /* LONG FILENAME - MAKE DIRECTORY */
+        if (!INT21_CreateDirectory( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x3a: /* LONG FILENAME - REMOVE DIRECTORY */
@@ -788,6 +1091,10 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x43: /* LONG FILENAME - EXTENDED GET/SET FILE ATTRIBUTES */
+        if (!INT21_FileAttributes( context, BL_reg(context), TRUE ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x47: /* LONG FILENAME - GET CURRENT DIRECTORY */
     case 0x4e: /* LONG FILENAME - FIND FIRST MATCHING FILE */
     case 0x4f: /* LONG FILENAME - FIND NEXT MATCHING FILE */
@@ -795,21 +1102,8 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x56: /* LONG FILENAME - RENAME FILE */
-        {
-            WCHAR fromW[MAX_PATH];
-            WCHAR toW[MAX_PATH];
-            char *fromA = CTX_SEG_OFF_TO_LIN(context, 
-                                             context->SegDs,context->Edx);
-            char *toA = CTX_SEG_OFF_TO_LIN(context, 
-                                           context->SegEs,context->Edi);
-
-            TRACE( "LONG FILENAME - RENAME FILE %s to %s\n", fromA, toA );
-            MultiByteToWideChar(CP_OEMCP, 0, fromA, -1, fromW, MAX_PATH);
-            MultiByteToWideChar(CP_OEMCP, 0, toA, -1, toW, MAX_PATH);
-
-            if (!MoveFileW( fromW, toW ))
-                bSetDOSExtendedError = TRUE;
-        }
+        if (!INT21_RenameFile(context))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x60: /* LONG FILENAME - CONVERT PATH */
@@ -833,6 +1127,31 @@ static void INT21_LongFilename( CONTEXT86 *context )
         SET_AX( context, GetLastError() );
         SET_CFLAG( context );
     }
+}
+
+
+/***********************************************************************
+ *           INT21_RenameFile
+ *
+ * Handler for:
+ * - function 0x56
+ * - subfunction 0x56 of function 0x71
+ * - subfunction 0xff of function 0x43 (CL == 0x56)
+ */
+static BOOL INT21_RenameFile( CONTEXT86 *context )
+{
+    WCHAR fromW[MAX_PATH];
+    WCHAR toW[MAX_PATH];
+    char *fromA = CTX_SEG_OFF_TO_LIN(context, 
+                                     context->SegDs,context->Edx);
+    char *toA = CTX_SEG_OFF_TO_LIN(context, 
+                                   context->SegEs,context->Edi);
+
+    TRACE( "RENAME FILE %s to %s\n", fromA, toA );
+    MultiByteToWideChar(CP_OEMCP, 0, fromA, -1, fromW, MAX_PATH);
+    MultiByteToWideChar(CP_OEMCP, 0, toA, -1, toW, MAX_PATH);
+
+    return MoveFileW( fromW, toW );
 }
 
 
@@ -1349,7 +1668,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-        INT_Int21Handler( context );
+        if (!INT21_CreateDirectory( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x3a: /* "RMDIR" - REMOVE DIRECTORY */
@@ -1380,7 +1700,38 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
-        INT_Int21Handler( context );
+        TRACE( "READ from %d to %04lX:%04X for %d bytes\n",
+               BX_reg(context),
+               context->SegDs,
+               DX_reg(context),
+               CX_reg(context) );
+        {
+            DWORD result;
+            WORD  count  = CX_reg(context);
+            BYTE *buffer = CTX_SEG_OFF_TO_LIN( context, 
+                                               context->SegDs,
+                                               context->Edx );
+
+            /* Some programs pass a count larger than the allocated buffer */
+            if (DOSVM_IsWin16())
+            {
+                WORD maxcount = GetSelectorLimit16( context->SegDs )
+                    - DX_reg(context) + 1;
+                if (count > maxcount)
+                    count = maxcount;
+            }
+
+            /*
+             * FIXME: Reading from console (BX=1) in DOS mode
+             *        does not work as it is supposed to work.
+             */
+
+            if (ReadFile( DosFileHandleToWin32Handle(BX_reg(context)),
+                          buffer, count, &result, NULL ))
+                SET_AX( context, (WORD)result );
+            else
+                bSetDOSExtendedError = TRUE;
+        }
         break;
 
     case 0x40:  /* "WRITE" - WRITE TO FILE OR DEVICE */
@@ -1425,8 +1776,30 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
+        TRACE( "LSEEK handle %d offset %ld from %s\n",
+               BX_reg(context), 
+               MAKELONG( DX_reg(context), CX_reg(context) ),
+               (AL_reg(context) == 0) ? 
+               "start of file" : ((AL_reg(context) == 1) ? 
+                                  "current file position" : "end of file") );
+        {
+            HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
+            LONG   offset = MAKELONG( DX_reg(context), CX_reg(context) );
+            DWORD  status = SetFilePointer( handle, offset, 
+                                            NULL, AL_reg(context) );
+            if (status == INVALID_SET_FILE_POINTER)
+                bSetDOSExtendedError = TRUE;
+            else
+            {
+                SET_AX( context, LOWORD(status) );
+                SET_DX( context, HIWORD(status) );
+            }
+        }
+        break;
+
     case 0x43: /* FILE ATTRIBUTES */
-        INT_Int21Handler( context );
+        if (!INT21_FileAttributes( context, AL_reg(context), FALSE ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x44: /* IOCTL */
@@ -1617,21 +1990,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
-        {
-            WCHAR fromW[MAX_PATH];
-            WCHAR toW[MAX_PATH];
-            char *fromA = CTX_SEG_OFF_TO_LIN(context, 
-                                             context->SegDs,context->Edx);
-            char *toA = CTX_SEG_OFF_TO_LIN(context, 
-                                           context->SegEs,context->Edi);
-
-            TRACE( "RENAME %s to %s\n", fromA, toA );
-            MultiByteToWideChar(CP_OEMCP, 0, fromA, -1, fromW, MAX_PATH);
-            MultiByteToWideChar(CP_OEMCP, 0, toA, -1, toW, MAX_PATH);
-
-            if (!MoveFileW( fromW, toW ))
-                bSetDOSExtendedError = TRUE;
-        }
+        if (!INT21_RenameFile( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x57: /* FILE DATE AND TIME */

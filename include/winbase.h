@@ -1300,6 +1300,9 @@ BOOL        WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 LPSTR       WINAPI GetCommandLineA(void);
 LPWSTR      WINAPI GetCommandLineW(void);
 #define     GetCommandLine WINELIB_NAME_AW(GetCommandLine)
+DWORD       WINAPI GetCompressedFileSizeA(LPCSTR,LPDWORD);
+DWORD       WINAPI GetCompressedFileSizeW(LPCWSTR,LPDWORD);
+#define     GetCompressedFileSize WINELIB_NAME_AW(GetCompressedFileSize)
 BOOL        WINAPI GetComputerNameA(LPSTR,LPDWORD);
 BOOL        WINAPI GetComputerNameW(LPWSTR,LPDWORD);
 #define     GetComputerName WINELIB_NAME_AW(GetComputerName)
