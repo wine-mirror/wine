@@ -244,13 +244,10 @@ DWORD WINAPI FormatMessageA(
 						if (NULL!=(x=strchr(f,'!'))) {
 							*x='\0';
 							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
-							/* %ls ? */
-							if (!strcmp(f,"ls")) f++;
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						} else {
 							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
-							if (!strcmp(f,"ls")) f++;
 							sprintf(fmtstr,"%%%s",f);
 							f+=strlen(f); /*at \0*/
 						}
@@ -261,17 +258,25 @@ DWORD WINAPI FormatMessageA(
 						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
 					if (args) {
 						int	sz;
-					        LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
+					        LPSTR	b;
 
 						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 						        argliststart=args+insertnr-1;
 						else
 						        argliststart=(*(DWORD**)args)+insertnr-1;
 
-						/* CMF - This makes a BIG assumption about va_list */
-						while (vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) {
-						        b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
-						}
+						/* FIXME: precision and width components are not handled correctly */
+						if (strcmp(fmtstr, "%ls") == 0) {
+						   sz = WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, NULL, 0, NULL, NULL);
+						   b = HeapAlloc(GetProcessHeap(), 0, sz);
+						   WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, b, sz, NULL, NULL);
+						} else {
+						   b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
+						   /* CMF - This makes a BIG assumption about va_list */
+						   while (vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) {
+						      b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
+						   }
+						}        
 						for (x=b; *x; x++) ADD_TO_T(*x);
 
 						HeapFree(GetProcessHeap(),0,b);
