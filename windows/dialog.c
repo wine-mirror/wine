@@ -1065,6 +1065,21 @@ INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
     return -1;
 }
 
+/***********************************************************************
+ *           DialogBoxIndirectParamAorW   (USER32.138)
+ */
+INT WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
+                                       HWND owner, DLGPROC dlgProc,
+                                       LPARAM param, DWORD x )
+{
+    HWND hwnd;
+    FIXME("0x%08x %p 0x%08x %p 0x%08lx 0x%08lx\n",
+      hInstance, template, owner, dlgProc, param, x);
+    hwnd = CreateDialogIndirectParamW( hInstance, template,
+                                                owner, dlgProc, param );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
+}
 
 /***********************************************************************
  *           EndDialog16   (USER.88)

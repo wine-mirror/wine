@@ -138,7 +138,7 @@ init	MAIN_UserInit
 134 stdcall DestroyMenu(long) DestroyMenu
 135 stdcall DestroyWindow(long) DestroyWindow
 136 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParamA
-137 stdcall DialogBoxIndirectParamAorW(long ptr long ptr long) DialogBoxIndirectParamA
+137 stdcall DialogBoxIndirectParamAorW(long ptr long ptr long long) DialogBoxIndirectParamAorW
 138 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParamW
 139 stdcall DialogBoxParamA(long str long ptr long) DialogBoxParamA
 140 stdcall DialogBoxParamW(long wstr long ptr long) DialogBoxParamW
