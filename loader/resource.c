@@ -139,7 +139,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
     TRACE_(resource)("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
-           hModule, NE_MODULE_NAME(pModule),
+           hModule, pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
            (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
            (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
            lang,
