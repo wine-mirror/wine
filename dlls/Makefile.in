@@ -218,6 +218,7 @@ WIN16_FILES = \
 	stress.dll.so \
 	system.drv.so \
 	toolhelp.dll.so \
+	twain.dll.so \
 	typelib.dll.so \
 	user.exe.so \
 	ver.dll.so \
@@ -795,6 +796,9 @@ ttydrv.dll.so: ttydrv/ttydrv.dll.so
 
 twain_32.dll.so: twain/twain_32.dll.so
 	$(RM) $@ && $(LN_S) twain/twain_32.dll.so $@
+
+twain.dll.so : twain_32.dll.so
+	$(RM) $@ && $(LN_S) twain_32.dll.so $@
 
 unicows.dll.so: unicows/unicows.dll.so
 	$(RM) $@ && $(LN_S) unicows/unicows.dll.so $@
