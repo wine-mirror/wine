@@ -54,6 +54,45 @@ void pdump (LPCITEMIDLIST pidl)
 	  TRACE(pidl,"empty pidl (Desktop)\n");	
 }
 
+BOOL pcheck (LPCITEMIDLIST pidl)
+{       DWORD type, ret=TRUE;
+
+        LPITEMIDLIST pidltemp = pidl;
+
+        if (pidltemp && pidltemp->mkid.cb)
+        { do
+          { type   = _ILGetDataPointer(pidltemp)->type;
+            switch (type)
+	    { case PT_DESKTOP:
+	      case PT_MYCOMP:
+	      case PT_SPECIAL:
+	      case PT_DRIVE:
+	      case PT_FOLDER:
+	      case PT_VALUE:
+		break;
+	      default:
+	      {
+		char szTemp[100];      /* 3*32 + 3 + 1 */
+		int i;
+		for ( i = 0; i < pidltemp->mkid.cb; i++)
+		{
+		  sprintf (&(szTemp[i*3]),"%02x ", ((LPBYTE)pidltemp)[i]);
+		  if (i>=31)
+		  {
+		    sprintf (&(szTemp[i*3+3]),"...");
+		    break;
+		  }
+		}
+	        ERR (pidl,"unknown IDLIST type size=%u type=%lx\n%s\n",pidltemp->mkid.cb,type, szTemp);
+	        ret = FALSE;
+	      }
+	    }
+            pidltemp = ILGetNext(pidltemp);
+          } while (pidltemp->mkid.cb);
+        }
+	return ret;
+}
+
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
  */
@@ -169,6 +208,13 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 	    *ppPidl = NULL;
 	  }
 	}
+	
+	/* we are not jet fully compatible */
+	if (!pcheck(*ppPidl))
+	{ SHFree(*ppPidl);
+	  *ppPidl = NULL;
+	}
+	
 
 	IStream_Release (pStream);
 
@@ -273,6 +319,11 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 	LPITEMIDLIST pidltemp2 = pidl2;
 
 	TRACE(pidl,"pidl1=%p pidl2=%p\n",pidl1, pidl2);
+
+	/* explorer reads from registry directly (StreamMRU),
+	   so we can only check here */
+	if ((!pcheck (pidl1)) || (!pcheck (pidl2)))
+	  return FALSE;
 
 	pdump (pidl1);
 	pdump (pidl2);

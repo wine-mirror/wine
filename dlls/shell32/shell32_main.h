@@ -74,7 +74,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 #define INVALID_INDEX -1
 BOOL SIC_Initialize(void);
 void SIC_Destroy(void);
-/*INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex );*/
+BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT * pIndex);
 
 /* Classes Root */
 BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len);

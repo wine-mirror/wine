@@ -209,11 +209,14 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
 	  pdump (&pImage->Pidl);
 	}
 
+	if (!pcheck (&pImage->Pidl))
+	  goto end_3;
+	
 	This->pPidl = ILClone (&pImage->Pidl);
 
 	_ILGetPidlPath(&pImage->Pidl, sTemp, 512);
 	This->sPath = HEAP_strdupA ( GetProcessHeap(), 0, sTemp);
-		
+			
 	hRet = NOERROR;
 end_3:	UnmapViewOfFile(pImage);
 end_2:	CloseHandle(hMapping);

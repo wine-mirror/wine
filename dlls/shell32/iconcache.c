@@ -694,11 +694,13 @@ BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT *
 	BOOL		ret = FALSE;
 	UINT		dwFlags = 0;
 	
+	TRACE(shell,"sf=%p pidl=%p\n", sh, pidl);
+
 	if (SUCCEEDED (IShellFolder_GetUIObjectOf(sh, 0, 1, &pidl, &IID_IExtractIconA, 0, (void **)&ei)))
 	{
-	  if (SUCCEEDED (IExtractIconA_GetIconLocation(ei, 0, szIconFile, MAX_PATH, &iSourceIndex, &dwFlags)))
-	  {  *pIndex = SIC_GetIconIndex(szIconFile, iSourceIndex);
-	     ret = TRUE;
+	  if (NOERROR==IExtractIconA_GetIconLocation(ei, 0, szIconFile, MAX_PATH, &iSourceIndex, &dwFlags))
+	  { *pIndex = SIC_GetIconIndex(szIconFile, iSourceIndex);
+	    ret = TRUE;
 	  }
 	  IExtractIconA_Release(ei);
 	}

@@ -121,4 +121,5 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
 LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
 
 void pdump (LPCITEMIDLIST pidl);
+BOOL pcheck (LPCITEMIDLIST pidl);
 #endif
