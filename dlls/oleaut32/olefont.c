@@ -11,10 +11,12 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "wine/unicode.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
 #include "wine/obj_olefont.h"
 #include "wine/obj_storage.h"
+#include "ole2.h"
 #include "olectl.h"
 #include "debugtools.h"
 #include "heap.h"

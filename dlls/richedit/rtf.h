@@ -2,8 +2,12 @@
 #define _RTF
 
 #include <stdio.h>
-#include <windows.h>
-#include <richedit.h>
+
+#include "windef.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "richedit.h"
+
 void RTFSetEditStream(EDITSTREAM *es);
 
 

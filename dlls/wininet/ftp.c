@@ -10,7 +10,9 @@
 #include "config.h"
 
 #include <errno.h>
-#include <netdb.h>
+#ifdef HAVE_NETDB_H
+# include <netdb.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +23,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <netinet/in_systm.h>
-#include <netinet/in.h>
+#ifdef HAVE_NETINET_IH_H
+# include <netinet/in.h>
+#endif
 #include <netinet/ip.h>
 
 #include "winbase.h"

@@ -72,8 +72,10 @@
 #include "text_map.h"
 
 #include <stdlib.h>
+
 #include "charlist.h"
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
 #include "debugtools.h"
 
 extern HANDLE RICHED32_hHeap;

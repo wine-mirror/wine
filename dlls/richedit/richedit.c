@@ -9,7 +9,7 @@
  * 
  */
  
-#include "windows.h"
+#include "windef.h"
 #include "winbase.h"
 #include "heap.h"
 #include "debugtools.h"

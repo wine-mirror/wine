@@ -9,6 +9,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "wine/windef16.h"
+#include "ole2.h"
 #include "olectl.h"
 #include "oleauto.h"
 #include "heap.h"

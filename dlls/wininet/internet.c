@@ -19,7 +19,8 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"

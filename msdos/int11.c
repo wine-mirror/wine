@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "windows.h"
+#include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"
 #include "drive.h"

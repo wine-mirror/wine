@@ -1,6 +1,10 @@
 #ifndef __WINE_WINDOWS_H
 #define __WINE_WINDOWS_H
 
+#ifdef __WINE__
+#error Wine should not include windows.h internally
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

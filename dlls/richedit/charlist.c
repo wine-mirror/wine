@@ -11,8 +11,10 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <stdlib.h>
+
 #include "charlist.h"
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
 
 extern HANDLE RICHED32_hHeap;
 

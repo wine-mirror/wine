@@ -5,6 +5,10 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
+#if !defined(RPC_NO_WINDOWS_H) && !defined(__WINE__)
+#include "windows.h"
+#endif
+
 #define __RPC_FAR
 #define __RPC_API  WINAPI
 #define __RPC_USER WINAPI

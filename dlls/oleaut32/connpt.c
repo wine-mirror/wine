@@ -11,6 +11,8 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
+#include "ole2.h"
 #include "olectl.h"
 #include "wine/obj_base.h"
 #include "wine/obj_connection.h"

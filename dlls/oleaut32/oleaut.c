@@ -14,6 +14,7 @@
 
 #include "initguid.h"
 #include "oleauto.h"
+#include "ole2.h"
 #include "olectl.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

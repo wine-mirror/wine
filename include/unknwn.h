@@ -4,11 +4,11 @@
 #include "rpc.h"
 #include "rpcndr.h"
 
-#include "wine/obj_base.h"
-
-#ifndef COM_NO_WINDOWS_H
+#if !defined(COM_NO_WINDOWS_H) && !defined(__WINE__)
 #include "windows.h"
 #include "ole2.h"
 #endif
+
+#include "wine/obj_base.h"
 
 #endif /* __WINE_UNKNWN_H */

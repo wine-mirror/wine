@@ -9,7 +9,8 @@
 
 #include "config.h"
 
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"
@@ -19,7 +20,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
-#include <netdb.h>
+#ifdef HAVE_NETDB_H
+# include <netdb.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
