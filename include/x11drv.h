@@ -254,9 +254,9 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 extern void X11DRV_DIB_UpdateDIBSection(struct tagDC *dc, BOOL toDIB);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage,
-					   LPVOID *bits, HANDLE section, DWORD offset);
+					   LPVOID *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
 extern HBITMAP16 X11DRV_DIB_CreateDIBSection16(struct tagDC *dc, BITMAPINFO *bmi, UINT16 usage,
-					       SEGPTR *bits, HANDLE section, DWORD offset);
+					       SEGPTR *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
 
 extern struct tagBITMAP_DRIVER X11DRV_BITMAP_Driver;
 

@@ -3167,10 +3167,10 @@ void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
 HBITMAP16 X11DRV_DIB_CreateDIBSection16(
   DC *dc, BITMAPINFO *bmi, UINT16 usage,
   SEGPTR *bits, HANDLE section,
-  DWORD offset)
+  DWORD offset, DWORD ovr_pitch)
 {
   HBITMAP res = X11DRV_DIB_CreateDIBSection(dc, bmi, usage, NULL, 
-					    section, offset);
+					    section, offset, ovr_pitch);
   if ( res )
     {
       BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
@@ -3272,7 +3272,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
 HBITMAP X11DRV_DIB_CreateDIBSection(
   DC *dc, BITMAPINFO *bmi, UINT usage,
   LPVOID *bits, HANDLE section,
-  DWORD offset)
+  DWORD offset, DWORD ovr_pitch)
 {
   HBITMAP res = 0;
   BITMAPOBJ *bmp = NULL;
@@ -3293,7 +3293,8 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   bm.bmType = 0;
   bm.bmWidth = bi->biWidth;
   bm.bmHeight = effHeight;
-  bm.bmWidthBytes = DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
+  bm.bmWidthBytes = ovr_pitch ? ovr_pitch
+			      : DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
   bm.bmPlanes = bi->biPlanes;
   bm.bmBitsPixel = bi->biBitCount;
   bm.bmBits = NULL;
@@ -3304,9 +3305,13 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   if (section)
     bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
 			      0L, offset, totalSize);
-  else
+  else if (ovr_pitch && offset)
+    bm.bmBits = offset;
+  else {
+    offset = 0;
     bm.bmBits = VirtualAlloc(NULL, totalSize, 
 			     MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+  }
   
   /* Create Color Map */
   if (bm.bmBits && bm.bmBitsPixel <= 8)
@@ -3396,7 +3401,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
         {
 	  if (section)
 	    UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
-	  else
+	  else if (!offset)
 	    VirtualFree(bm.bmBits, 0L, MEM_RELEASE), bm.bmBits = NULL;
         }
       
@@ -3411,8 +3416,16 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     {
       if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, (LPVOID)res))
         {
-	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-	  if (dib) dib->status = X11DRV_DIB_InSync;
+          if (section || offset)
+            {
+              X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+              if (dib) dib->status = X11DRV_DIB_AppMod;
+            }
+          else
+            {
+	      X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+	      if (dib) dib->status = X11DRV_DIB_InSync;
+	    }
         }
     }
 

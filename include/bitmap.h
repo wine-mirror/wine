@@ -52,6 +52,8 @@ extern int DIB_GetDIBImageBytes( int width, int height, int depth );
 extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr );
+extern HBITMAP DIB_CreateDIBSection( HDC hdc, BITMAPINFO *bmi, UINT usage, LPVOID *bits,
+                                     HANDLE section, DWORD offset, DWORD ovr_pitch );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );
 extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );

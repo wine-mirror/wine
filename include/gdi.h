@@ -181,9 +181,9 @@ typedef struct tagDC_FUNCS
     BOOL     (*pCreateBitmap)(HBITMAP); 
     BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
     HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,
-				  DWORD);
+				  DWORD,DWORD);
     HBITMAP16 (*pCreateDIBSection16)(DC *,BITMAPINFO *,UINT16,SEGPTR *,HANDLE,
-				     DWORD);
+				     DWORD,DWORD);
     BOOL     (*pDeleteDC)(DC*);
     BOOL     (*pDeleteObject)(HGDIOBJ);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);

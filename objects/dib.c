@@ -870,7 +870,26 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
     if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
     if(!dc) return (HBITMAP16) NULL;
 
-    hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset);
+    hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset, 0);
+
+    GDI_HEAP_UNLOCK(hdc);
+
+    return hbitmap;
+}
+
+/***********************************************************************
+ *           DIB_CreateDIBSection
+ */
+HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
+			     LPVOID *bits, HANDLE section,
+			     DWORD offset, DWORD ovr_pitch)
+{
+    HBITMAP hbitmap;
+    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+    if(!dc) return (HBITMAP) NULL;
+
+    hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset, ovr_pitch);
 
     GDI_HEAP_UNLOCK(hdc);
 
@@ -884,16 +903,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 				LPVOID *bits, HANDLE section,
 				DWORD offset)
 {
-    HBITMAP hbitmap;
-    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-    if(!dc) return (HBITMAP) NULL;
-
-    hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset);
-
-    GDI_HEAP_UNLOCK(hdc);
-
-    return hbitmap;
+    return DIB_CreateDIBSection(hdc, bmi, usage, bits, section, offset, 0);
 }
 
 /***********************************************************************
@@ -909,7 +919,7 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
         {
             if (dib->dshSection)
                 UnmapViewOfFile(dib->dsBm.bmBits);
-            else
+            else if (!dib->dsOffset)
                 VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
         }
 
