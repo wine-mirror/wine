@@ -756,8 +756,10 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
  */
 static void called_at_exit(void)
 {
-    GDI_Driver->pFinalize();
-    USER_Driver->pFinalize();
+    if (GDI_Driver)
+	GDI_Driver->pFinalize();
+    if (USER_Driver)
+	USER_Driver->pFinalize();
 
     WINSOCK_Shutdown();
     CONSOLE_Close();
