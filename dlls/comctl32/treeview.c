@@ -924,6 +924,8 @@ TREEVIEW_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		}
    }
 
+  wineItem->mask |= tvItem->mask;
+
   return TRUE;
 }
 
@@ -2433,6 +2435,7 @@ TREEVIEW_SendDispInfoNotify (HWND hwnd, TREEVIEW_ITEM *wineItem,
   tvdi.item.state	= wineItem->state;
   tvdi.item.lParam	= wineItem->lParam;
   tvdi.item.pszText = COMCTL32_Alloc (128*sizeof(char));
+  tvdi.item.cchTextMax  = 128;
   buf = tvdi.item.pszText;
 
   retval=(BOOL)SendMessageA (
