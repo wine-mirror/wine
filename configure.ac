@@ -935,6 +935,7 @@ then
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(cups,cupsGetDefault)
   WINE_GET_SONAME(jack,jack_client_new)
+  WINE_GET_SONAME(fontconfig, FcInit);
   WINE_GET_SONAME(ssl,SSL_library_init)
   WINE_GET_SONAME(crypto,BIO_new_socket)
   WINE_GET_SONAME(ncurses,waddch)
@@ -1008,6 +1009,7 @@ AC_CHECK_HEADERS(\
 	direct.h \
 	elf.h \
 	float.h \
+	fontconfig/fontconfig.h \
 	getopt.h \
 	ieeefp.h \
 	io.h \

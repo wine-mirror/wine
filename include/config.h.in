@@ -80,6 +80,9 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
+/* Define to 1 if you have the <fontconfig/fontconfig.h> header file. */
+#undef HAVE_FONTCONFIG_FONTCONFIG_H
+
 /* Define to 1 if you have the `fpclass' function. */
 #undef HAVE_FPCLASS
 
@@ -790,6 +793,9 @@
 
 /* Define to the soname of the libcurses library. */
 #undef SONAME_LIBCURSES
+
+/* Define to the soname of the libfontconfig library. */
+#undef SONAME_LIBFONTCONFIG
 
 /* Define to the soname of the libfreetype library. */
 #undef SONAME_LIBFREETYPE

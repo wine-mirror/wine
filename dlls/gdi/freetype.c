@@ -105,9 +105,28 @@ MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Select_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
-#undef MAKE_FUNCPTR
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
+
+#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
+#include <fontconfig/fontconfig.h>
+MAKE_FUNCPTR(FcConfigGetCurrent);
+MAKE_FUNCPTR(FcFontList);
+MAKE_FUNCPTR(FcFontSetDestroy);
+MAKE_FUNCPTR(FcInit);
+MAKE_FUNCPTR(FcObjectSetAdd);
+MAKE_FUNCPTR(FcObjectSetCreate);
+MAKE_FUNCPTR(FcObjectSetDestroy);
+MAKE_FUNCPTR(FcPatternCreate);
+MAKE_FUNCPTR(FcPatternDestroy);
+MAKE_FUNCPTR(FcPatternGet);
+#ifndef SONAME_LIBFONTCONFIG
+#define SONAME_LIBFONTCONFIG "libfontconfig.so"
+#endif
+#endif
+
+#undef MAKE_FUNCPTR
+
 
 #define GET_BE_WORD(ptr) MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
 
@@ -248,7 +267,7 @@ static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
 	return (FT_Fixed)((long)f.value << 16 | (unsigned long)f.fract);
 }
 
-static BOOL AddFontFileToList(char *file, char *fake_family)
+static BOOL AddFontFileToList(const char *file, char *fake_family)
 {
     FT_Face ft_face;
     TT_OS2 *pOS2;
@@ -622,6 +641,67 @@ static BOOL ReadFontDir(char *dirname)
     return TRUE;
 }
 
+static void load_fontconfig_fonts(void)
+{
+#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
+    void *fc_handle = NULL;
+    FcConfig *config;
+    FcPattern *pat;
+    FcObjectSet *os;
+    FcFontSet *fontset;
+    FcValue v;
+    int i, len;
+    const char *ext;
+
+    fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
+    if(!fc_handle) {
+        TRACE("Wine cannot find the fontconfig library (%s).\n",
+              SONAME_LIBFONTCONFIG);
+	return;
+    }
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fc_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+LOAD_FUNCPTR(FcConfigGetCurrent);
+LOAD_FUNCPTR(FcFontList);
+LOAD_FUNCPTR(FcFontSetDestroy);
+LOAD_FUNCPTR(FcInit);
+LOAD_FUNCPTR(FcObjectSetAdd);
+LOAD_FUNCPTR(FcObjectSetCreate);
+LOAD_FUNCPTR(FcObjectSetDestroy);
+LOAD_FUNCPTR(FcPatternCreate);
+LOAD_FUNCPTR(FcPatternDestroy);
+LOAD_FUNCPTR(FcPatternGet);
+#undef LOAD_FUNCPTR
+
+    if(!pFcInit()) return;
+    
+    config = pFcConfigGetCurrent();
+    pat = pFcPatternCreate();
+    os = pFcObjectSetCreate();
+    pFcObjectSetAdd(os, FC_FILE);
+    fontset = pFcFontList(config, pat, os);
+    if(!fontset) return;
+    for(i = 0; i < fontset->nfont; i++) {
+        if(pFcPatternGet(fontset->fonts[i], FC_FILE, 0, &v) != FcResultMatch)
+            continue;
+        if(v.type != FcTypeString) continue;
+        TRACE("fontconfig: %s\n", v.u.s);
+
+        /* We're just interested in OT/TT fonts for now, so this hack just
+           picks up the standard extensions to save time loading every other
+           font */
+        len = strlen(v.u.s);
+        if(len < 4) continue;
+        ext = v.u.s + len - 3;
+        if(!strcasecmp(ext, "ttf") || !strcasecmp(ext, "ttc") || !strcasecmp(ext, "otf"))
+            AddFontFileToList(v.u.s, NULL);
+    }
+    pFcFontSetDestroy(fontset);
+    pFcObjectSetDestroy(os);
+    pFcPatternDestroy(pat);
+ sym_not_found:
+#endif
+    return;
+}
 /*************************************************************
  *    WineEngAddFontResourceEx
  *
@@ -766,6 +846,7 @@ BOOL WineEngInit(void)
 	RegCloseKey(hkey);
     }
 
+    load_fontconfig_fonts();
 
     /* then look in any directories that we've specified in the config file */
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
