@@ -19,6 +19,7 @@ DLLFILES = \
 	crtdll/libcrtdll.@LIBEXT@ \
 	dciman32/libdciman32.@LIBEXT@ \
 	dinput/libdinput.@LIBEXT@ \
+	dplay/libdplay.@LIBEXT@ \
 	dplayx/libdplayx.@LIBEXT@ \
 	dsound/libdsound.@LIBEXT@ \
 	gdi/libgdi32.@LIBEXT@ \
@@ -45,6 +46,8 @@ DLLFILES = \
 	setupx/libsetupx.@LIBEXT@ \
 	setupapi/libsetupapi.@LIBEXT@ \
 	shell32/libshell32.@LIBEXT@ \
+	shfolder/libshfolder.@LIBEXT@ \
+	shlwapi/libshlwapi.@LIBEXT@ \
 	sound/libsound.@LIBEXT@ \
 	stress/libstress.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
@@ -69,8 +72,10 @@ DLLFILES = \
 	winmm/midimap/libmidimap.drv.@LIBEXT@ \
 	winmm/wavemap/libmsacm.drv.@LIBEXT@ \
 	winmm/wineoss/libwineoss.drv.@LIBEXT@ \
-	winsock/libwsock32.@LIBEXT@ \
-	winspool/libwinspool.drv.@LIBEXT@
+	winsock/libws2_32.@LIBEXT@ \
+	winspool/libwinspool.drv.@LIBEXT@ \
+	wow32/libwow32.@LIBEXT@ \
+	wsock32/libwsock32.@LIBEXT@
 
 # extra names for dlls containing multiple spec files
 EXTRADLLNAMES = \
@@ -81,7 +86,6 @@ EXTRADLLNAMES = \
 	ddeml \
 	dispdib \
 	display \
-	dplay \
 	gdi \
 	kernel \
 	keyboard \
@@ -99,8 +103,6 @@ EXTRADLLNAMES = \
 	olesvr \
 	rasapi16 \
 	shell \
-	shfolder \
-	shlwapi \
 	storage \
 	system \
 	toolhelp \
@@ -111,8 +113,6 @@ EXTRADLLNAMES = \
 	win32s16 \
 	winaspi \
 	winsock \
-	ws2_32 \
-	wow32 \
 	wprocs
 
 SUBDIRS = \
@@ -123,6 +123,7 @@ SUBDIRS = \
 	dciman32 \
 	ddraw \
 	dinput \
+	dplay \
 	dplayx \
 	dsound \
 	gdi \
@@ -149,6 +150,8 @@ SUBDIRS = \
 	richedit \
 	setupx \
 	shell32 \
+	shfolder \
+	shlwapi \
 	sound \
 	stress \
 	tapi32 \
@@ -166,6 +169,8 @@ SUBDIRS = \
 	winmm \
 	winsock \
 	winspool \
+	wow32 \
+	wsock32 \
 	x11drv
 
 @MAKE_RULES@
@@ -195,7 +200,10 @@ libddraw.@LIBEXT@: ddraw/libddraw.@LIBEXT@
 libdinput.@LIBEXT@: dinput/libdinput.@LIBEXT@
 	$(RM) $@ && $(LN_S) dinput/libdinput.@LIBEXT@ $@
 
-libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
+libdplay.@LIBEXT@: dplay/libdplay.@LIBEXT@
+	$(RM) $@ && $(LN_S) dplay/libdplay.@LIBEXT@ $@
+
+libdplayx.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 	$(RM) $@ && $(LN_S) dplayx/libdplayx.@LIBEXT@ $@
 
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
@@ -213,7 +221,7 @@ libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
 libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
 
-libkernel32.@LIBEXT@ libwow32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ libtoolhelp.@LIBEXT@ libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
+libkernel32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ libtoolhelp.@LIBEXT@ libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
 	$(RM) $@ && $(LN_S) kernel/libkernel32.@LIBEXT@ $@
 
 libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
@@ -297,8 +305,14 @@ libsetupapi.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
 libsetupx.@LIBEXT@: setupx/libsetupx.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupx/libsetupx.@LIBEXT@ $@
 
-libshell32.@LIBEXT@ libshell.@LIBEXT@ libshlwapi.@LIBEXT@ libshfolder.@LIBEXT@: shell32/libshell32.@LIBEXT@
+libshell32.@LIBEXT@ libshell.@LIBEXT@: shell32/libshell32.@LIBEXT@
 	$(RM) $@ && $(LN_S) shell32/libshell32.@LIBEXT@ $@
+
+libshfolder.@LIBEXT@: shfolder/libshfolder.@LIBEXT@
+	$(RM) $@ && $(LN_S) shfolder/libshfolder.@LIBEXT@ $@
+
+libshlwapi.@LIBEXT@: shlwapi/libshlwapi.@LIBEXT@
+	$(RM) $@ && $(LN_S) shlwapi/libshlwapi.@LIBEXT@ $@
 
 libsound.@LIBEXT@: sound/libsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) sound/libsound.@LIBEXT@ $@
@@ -351,8 +365,14 @@ libwinspool.drv.@LIBEXT@: winspool/libwinspool.drv.@LIBEXT@
 libwnaspi32.@LIBEXT@ libwinaspi.@LIBEXT@: winaspi/libwnaspi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.@LIBEXT@ $@
 
-libwsock32.@LIBEXT@ libwinsock.@LIBEXT@ libws2_32.@LIBEXT@: winsock/libwsock32.@LIBEXT@
-	$(RM) $@ && $(LN_S) winsock/libwsock32.@LIBEXT@ $@
+libwow32.@LIBEXT@: wow32/libwow32.@LIBEXT@
+	$(RM) $@ && $(LN_S) wow32/libwow32.@LIBEXT@ $@
+
+libws2_32.@LIBEXT@ libwinsock.@LIBEXT@: winsock/libws2_32.@LIBEXT@
+	$(RM) $@ && $(LN_S) winsock/libws2_32.@LIBEXT@ $@
+
+libwsock32.@LIBEXT@: wsock32/libwsock32.@LIBEXT@
+	$(RM) $@ && $(LN_S) wsock32/libwsock32.@LIBEXT@ $@
 
 libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) x11drv/libx11drv.@LIBEXT@ $@
@@ -364,12 +384,15 @@ commdlg/libcomdlg32.so: libwinspool.drv.so
 dinput/libdinput.so: libuser32.so
 ddraw/libddraw.so: libx11drv.so
 dplayx/libdplayx.so: libole32.so
+dsound/libdsound.so: libwinmm.so
 msvideo/libmsvfw32.so: libwinmm.so
 oleaut32/liboleaut32.so: libole32.so libcomctl32.so
 olecli/libolecli32.so: libolesvr32.so libole32.so
 olepro32/libolepro32.so: liboleaut32.so libole32.so
 opengl32/libopengl32.so: libx11drv.so libgdi32.so
 shell32/libshell32.so: libole32.so
+shfolder/libshfolder.so: libshell32.so
+shlwapi/libshlwapi.so: libshell32.so
 urlmon/liburlmon.so: libole32.so
 version/libversion.so: liblz32.so
 winmm/joystick/libjoystick.drv.so: libwinmm.so
@@ -381,7 +404,7 @@ winmm/mciwave/libmciwave.drv.so: libwinmm.so
 winmm/midimap/libmidimap.drv.so: libwinmm.so
 winmm/wavemap/libmsacm.drv.so: libwinmm.so
 winmm/wineoss/libwineoss.drv.so: libwinmm.so
-
+wsock32/libwsock32.so: libws2_32.so
 
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)

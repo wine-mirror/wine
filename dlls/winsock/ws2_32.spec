@@ -115,8 +115,8 @@ init WSOCK32_LibMain
 112 stdcall WSASetLastError(long) WSASetLastError
 113 stdcall WSACancelBlockingCall() WSACancelBlockingCall
 114 stdcall WSAIsBlocking() WSAIsBlocking
-115 stdcall WSAStartup (long ptr)  WS2_WSAStartup
-116 stdcall WSACleanup ()          WSACleanup
+115 stdcall WSAStartup(long ptr) WSAStartup
+116 stdcall WSACleanup() WSACleanup
 
 #  117 ~ 150  UNKNOWN
 

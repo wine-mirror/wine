@@ -5,5 +5,4 @@ kernel32.spec.c
 libkernel32.so.1.0
 system.spec.c
 toolhelp.spec.c
-wow32.spec.c
 wprocs.spec.c

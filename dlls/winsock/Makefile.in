@@ -2,9 +2,9 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wsock32
+MODULE    = ws2_32
 SOVERSION = 1.0
-ALTNAMES  = winsock ws2_32
+ALTNAMES  = winsock
 
 C_SRCS = \
 	async.c \

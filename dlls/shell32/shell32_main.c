@@ -819,36 +819,10 @@ static INT		shell32_RefCount = 0;
 
 LONG		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance = 0; 
-HINSTANCE	shlwapi_hInstance = 0; 
 HMODULE		huser32 = 0;
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
 
-/*************************************************************************
- * SHELL32 LibMain
- *
- * NOTES
- *  calling oleinitialize here breaks sone apps.
- */
-
-BOOL WINAPI ShlwapiLibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
-{
-	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
-	switch (fdwReason)
-	{
-	  case DLL_PROCESS_ATTACH:
-	    shlwapi_hInstance = hinstDLL;
-	    if(!huser32) huser32 = GetModuleHandleA("USER32.DLL");
-
-	    if (!huser32)
-	    {
-	      ERR("hModule of USER32 is 0\n");
-	      return FALSE;
-	    }
-	    break;
-	}
-	return TRUE;
-}
 
 /*************************************************************************
  * SHELL32 LibMain

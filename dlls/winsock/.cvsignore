@@ -1,4 +1,4 @@
 *.spec.c
 *.spec.glue.s
 Makefile
-libwsock32.so.1.0
+libws2_32.so.1.0

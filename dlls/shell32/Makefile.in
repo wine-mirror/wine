@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
 SOVERSION = 1.0
-ALTNAMES  = shell shlwapi shfolder
+ALTNAMES  = shell
 IMPORTS   = ole32
 
 C_SRCS = \

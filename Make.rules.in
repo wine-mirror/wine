@@ -99,6 +99,7 @@ DLLS = \
 	crtdll \
 	dciman32 \
 	dinput \
+	dplay \
 	dplayx \
 	dsound \
 	gdi32 \
@@ -133,6 +134,8 @@ DLLS = \
 	setupapi \
 	setupx \
 	shell32 \
+	shfolder \
+	shlwapi \
 	sound \
 	stress \
 	tapi32 \
@@ -150,6 +153,8 @@ DLLS = \
 	winmm \
 	winspool.drv \
 	wnaspi32 \
+	wow32 \
+	ws2_32 \
 	wsock32
 
 # Implicit rules

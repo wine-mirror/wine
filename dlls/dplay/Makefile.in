@@ -2,13 +2,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = kernel32
+MODULE    = dplay
 SOVERSION = 1.0
-ALTNAMES  = comm kernel system toolhelp wprocs
-
-C_SRCS = \
-	kernel_main.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
+

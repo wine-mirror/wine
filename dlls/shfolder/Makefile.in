@@ -2,13 +2,11 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = kernel32
+MODULE    = shfolder
 SOVERSION = 1.0
-ALTNAMES  = comm kernel system toolhelp wprocs
-
-C_SRCS = \
-	kernel_main.c
+IMPORTS   = shell32
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
+

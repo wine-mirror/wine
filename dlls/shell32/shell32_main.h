@@ -28,11 +28,6 @@ extern HIMAGELIST	ShellBigIconList;
 extern HDPA		sic_hdpa;
 
 /*******************************************
-*  global SHLWAPI.DLL variables
-*/
-extern HINSTANCE shlwapi_hInstance;
-
-/*******************************************
 * pointer to functions dynamically loaded
 */
 extern void	(WINAPI* pDLLInitComctl)(LPVOID);

@@ -981,6 +981,7 @@ dlls/crtdll/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/dinput/Makefile
+dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/gdi/Makefile
@@ -1009,9 +1010,12 @@ dlls/richedit/Makefile
 dlls/setupapi/Makefile
 dlls/setupx/Makefile
 dlls/shell32/Makefile
+dlls/shfolder/Makefile
+dlls/shlwapi/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
 dlls/tapi32/Makefile
+dlls/ttydrv/Makefile
 dlls/ttydrv/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile
@@ -1035,7 +1039,8 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
-dlls/ttydrv/Makefile
+dlls/wow32/Makefile
+dlls/wsock32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
 documentation/wine.conf.man

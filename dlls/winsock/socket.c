@@ -604,17 +604,9 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 }
 
 /***********************************************************************
- *      WSAStartup()			(WSOCK32.115)
+ *      WSAStartup()		(WS2_32.115)	
  */
 INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
-{
-    return WSAStartup16( wVersionRequested, lpWSAData );
-}
-
-/***********************************************************************
- *      WS2_WSAStartup()		(WS2_32.115)	
- */
-INT WINAPI WS2_WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 {
     WSADATA WINSOCK_data = { 0x0202, 0x0202,
                           "WINE Sockets 2.0",
@@ -637,7 +629,7 @@ INT WINAPI WS2_WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 
     TRACE("verReq=%x\n", wVersionRequested);
 
-    if (LOBYTE(wVersionRequested) < 2)
+    if (LOBYTE(wVersionRequested) < 1)
         return WSAVERNOTSUPPORTED;
 
     if (!lpWSAData) return WSAEINVAL;
@@ -2565,65 +2557,6 @@ INT WINAPI WSAUnhookBlockingHook(void)
 	return 0;
     }
     return SOCKET_ERROR;
-}
-
-/*
- *      TCP/IP action codes.
- */
-
-
-#define WSCNTL_TCPIP_QUERY_INFO             0x00000000
-#define WSCNTL_TCPIP_SET_INFO               0x00000001
-#define WSCNTL_TCPIP_ICMP_ECHO              0x00000002
-#define WSCNTL_TCPIP_TEST                   0x00000003
-
-
-/***********************************************************************
- *      WsControl()
- *
- * WsControl seems to be an undocumented Win95 function. A lot of 
- * discussion about WsControl can be found on the net, e.g.
- * Subject:      Re: WSOCK32.DLL WsControl Exported Function
- * From:         "Peter Rindfuss" <rindfuss-s@medea.wz-berlin.de>
- * Date:         1997/08/17
- */
-
-DWORD WINAPI WsControl(DWORD protocoll,DWORD action,
-		      LPVOID inbuf,LPDWORD inbuflen,
-                      LPVOID outbuf,LPDWORD outbuflen) 
-{
-
-  switch (action) {
-  case WSCNTL_TCPIP_ICMP_ECHO:
-    {
-      unsigned int addr = *(unsigned int*)inbuf;
-#if 0
-      int timeout= *(unsigned int*)(inbuf+4);
-      short x1 = *(unsigned short*)(inbuf+8);
-      short sendbufsize = *(unsigned short*)(inbuf+10);
-      char x2 = *(unsigned char*)(inbuf+12);
-      char ttl = *(unsigned char*)(inbuf+13);
-      char service = *(unsigned char*)(inbuf+14);
-      char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
-#endif      
-      
-      FIXME("(ICMP_ECHO) to 0x%08x stub \n", addr);
-      break;
-    }
-  default:
-    FIXME("(%lx,%lx,%p,%p,%p,%p) stub\n",
-	  protocoll,action,inbuf,inbuflen,outbuf,outbuflen);
-  }
-  return FALSE;
-}
-
-/***********************************************************************
- *       WS_s_perror         WSOCK32.1108 
- */
-void WINAPI WS_s_perror(LPCSTR message)
-{
-    FIXME("(%s): stub\n",message);
-    return;
 }
 
 

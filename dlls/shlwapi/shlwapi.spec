@@ -1,8 +1,8 @@
 name shlwapi
 type win32
-init ShlwapiLibMain
+init SHLWAPI_LibMain
 
-1   stdcall SHLWAPI_1(ptr ptr)SHLWAPI_1
+1   stdcall @(ptr ptr) SHLWAPI_1
 2   stub @
 3   stub @
 4   stub @
@@ -17,15 +17,15 @@ init ShlwapiLibMain
 13  stub @
 14  stub @
 15  stub @
-16  stdcall SHLWAPI_16(long long long long)SHLWAPI_16
+16  stdcall @(long long long long) SHLWAPI_16
 17  stub @
 18  stub @
 19  stub @
 20  stub @
 21  stub @
 22  stub @
-23  stdcall SHLWAPI_23(ptr ptr long)SHLWAPI_23
-24  stdcall SHLWAPI_24(ptr ptr long)SHLWAPI_24
+23  stdcall @(ptr ptr long) SHLWAPI_23
+24  stdcall @(ptr ptr long) SHLWAPI_24
 25  stub @
 26  stub @
 27  stub @
@@ -55,9 +55,9 @@ init ShlwapiLibMain
 51  stub @
 52  stub @
 53  stub @
-54  forward SHLWAPI_54 user32.CreateICW
-55  forward SHLWAPI_55 user32.CreateWindowExW
-56  forward SHLWAPI_56 user32.DefWindowProcW
+54  forward @ user32.CreateICW
+55  forward @ user32.CreateWindowExW
+56  forward @ user32.DefWindowProcW
 57  stub @
 58  stub @
 59  stub @
@@ -68,9 +68,9 @@ init ShlwapiLibMain
 64  stub @
 65  stub @
 66  stub @
-67 forward SHLWAPI_67 user32.FindWindowW
-68 forward SHLWAPI_68 kernel32.FormatMessageW
-69 forward SHLWAPI_69 user32.GetClassInfoW
+67 forward @ user32.FindWindowW
+68 forward @ kernel32.FormatMessageW
+69 forward @ user32.GetClassInfoW
 70  stub @
 71  stub @
 72  stub @
@@ -81,10 +81,10 @@ init ShlwapiLibMain
 77  stub @
 78  stub @
 79  stub @
-80  forward SHLWAPI_80 kernel32.GetModuleFileNameW
-81  forward SHLWAPI_81 kernel32.GetSystemDirectoryW
-82  forward SHLWAPI_82 kernel32.SearchPathW
-83  forward SHLWAPI_83 kernel32.GetModuleHandleW
+80  forward @ kernel32.GetModuleFileNameW
+81  forward @ kernel32.GetSystemDirectoryW
+82  forward @ kernel32.SearchPathW
+83  forward @ kernel32.GetModuleHandleW
 84  stub @
 85  stub @
 86  stub @
@@ -95,7 +95,7 @@ init ShlwapiLibMain
 91  stub @
 92  stub @
 93  stub @
-94  forward SHLWAPI_94 user32.GetWindowLongW
+94  forward @ user32.GetWindowLongW
 95  stub @
 96  stub @
 97  stub @
@@ -103,12 +103,12 @@ init ShlwapiLibMain
 99  stub @
 100 stub @
 101 stub @
-102 forward SHLWAPI_102 user32.LoadCursorW
+102 forward @ user32.LoadCursorW
 103 stub @
 104 stub @
 105 stub @
 106 stub @
-107 forward SHLWAPI_107 user32.LoadStringW
+107 forward @ user32.LoadStringW
 108 stub @
 109 stub @
 110 stub @
@@ -121,18 +121,18 @@ init ShlwapiLibMain
 117 stub @
 118 stub @
 119 stub @
-120 forward SHLWAPI_120 advapi32.RegCreateKeyExW
+120 forward @ advapi32.RegCreateKeyExW
 121 stub @
 122 stub @
 123 stub @
 124 stub @
-125 forward SHLWAPI_125 advapi32.RegOpenKeyExW
+125 forward @ advapi32.RegOpenKeyExW
 126 stub @
 127 stub @
-128 forward SHLWAPI_128 advapi32.RegQueryValueExW
+128 forward @ advapi32.RegQueryValueExW
 129 stub @
 130 stub @
-131 forward SHLWAPI_131 user32.RegisterClassW
+131 forward @ user32.RegisterClassW
 132 stub @
 133 stub @
 134 stub @
@@ -148,7 +148,7 @@ init ShlwapiLibMain
 144 stub @
 145 stub @
 146 stub @
-147 forward SHLWAPI_147 user32.UnregisterClassW
+147 forward @ user32.UnregisterClassW
 148 stub @
 149 stub @
 150 stub @
@@ -157,7 +157,7 @@ init ShlwapiLibMain
 153 stub @
 154 stub @
 155 stub @
-156 stdcall SHLWAPI_156 (wstr wstr) SHLWAPI_156
+156 stdcall @(wstr wstr) SHLWAPI_156
 157 stub @
 158 stub @
 159 stub @
@@ -170,7 +170,7 @@ init ShlwapiLibMain
 166 stub @
 167 stub @
 168 stub @
-169 stdcall SHLWAPI_169(long)SHLWAPI_169
+169 stdcall @(long) SHLWAPI_169
 170 stub @
 171 stub @
 172 stub @
@@ -194,7 +194,7 @@ init ShlwapiLibMain
 190 stub @
 191 stub @
 192 stub @
-193 stdcall SHLWAPI_193()SHLWAPI_193
+193 stdcall @() SHLWAPI_193
 194 stub @
 195 stub @
 196 stub @
@@ -216,15 +216,15 @@ init ShlwapiLibMain
 212 stub @
 213 stub @
 214 stub @
-215 stdcall SHLWAPI_215(long long long)SHLWAPI_215
+215 stdcall @(long long long) SHLWAPI_215
 216 stub @
 217 stub @
 218 stub @
-219 stdcall SHLWAPI_219(long long long long)SHLWAPI_219
+219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
 221 stub @
-222 stdcall SHLWAPI_222(long)SHLWAPI_222
-223 stdcall SHLWAPI_223(long)SHLWAPI_223
+222 stdcall @(long) SHLWAPI_222
+223 stdcall @(long) SHLWAPI_223
 224 stub @
 225 stub @
 226 stub @
@@ -238,11 +238,11 @@ init ShlwapiLibMain
 234 stub @
 235 stub @
 236 stub @
-237 stdcall SHLWAPI_237(ptr)SHLWAPI_237
+237 stdcall @(ptr) SHLWAPI_237
 238 stub @
 239 stub @
 240 stub @
-241 stdcall SHLWAPI_241()SHLWAPI_241
+241 stdcall @() SHLWAPI_241
 242 stub @
 243 stub @
 244 stub @
@@ -267,9 +267,9 @@ init ShlwapiLibMain
 263 stub @
 264 stub @
 265 stub @
-266 stdcall SHLWAPI_266(long long long long)SHLWAPI_266
-267 stdcall SHLWAPI_267(long long long long)SHLWAPI_267
-268 stdcall SHLWAPI_268(long long)SHLWAPI_268
+266 stdcall @(long long long long) SHLWAPI_266
+267 stdcall @(long long long long) SHLWAPI_267
+268 stdcall @(long long) SHLWAPI_268
 269 stub @
 270 stub @
 271 stub @
@@ -277,9 +277,9 @@ init ShlwapiLibMain
 273 stub @
 274 stub @
 275 stub @
-276 stdcall SHLWAPI_276()SHLWAPI_276
+276 stdcall @() SHLWAPI_276
 277 stub @
-278 stdcall SHLWAPI_278(long long long long long long)SHLWAPI_278
+278 stdcall @(long long long long long long) SHLWAPI_278
 279 stub @
 280 stub @
 281 stub @
@@ -310,7 +310,7 @@ init ShlwapiLibMain
 306 stub @
 307 stub @
 308 stub @
-309 forward SHLWAPI_309 kernel32.LoadLibraryW
+309 forward @ kernel32.LoadLibraryW
 310 stub @
 311 stub @
 312 stub @
@@ -343,11 +343,11 @@ init ShlwapiLibMain
 339 stub @
 340 stub @
 341 stub @
-342 stdcall SHLWAPI_342(long long long long)SHLWAPI_342
+342 stdcall @(long long long long) SHLWAPI_342
 343 stub @
 344 stub @
 345 stub @
-346 stdcall SHLWAPI_346(wstr ptr long)SHLWAPI_346
+346 stdcall @(wstr ptr long) SHLWAPI_346
 347 stub @
 348 stub @
 349 stub @
@@ -378,8 +378,8 @@ init ShlwapiLibMain
 374 stub @
 375 stub @
 376 stub @
-377 stdcall SHLWAPI_377(long long long)SHLWAPI_377
-378 stdcall SHLWAPI_378(long long long)SHLWAPI_378
+377 stdcall @(long long long) SHLWAPI_377
+378 stdcall @(long long long) SHLWAPI_378
 379 stub @
 380 stub @
 381 stub AssocQueryStringA
@@ -432,13 +432,13 @@ init ShlwapiLibMain
 428 stub @
 429 stub @
 430 stub @
-431 stdcall SHLWAPI_431(long)SHLWAPI_431
+431 stdcall @(long) SHLWAPI_431
 432 stub @
 433 stub @
 434 stub @
 435 stub @
 436 stub @
-437 stdcall SHLWAPI_437(long) SHLWAPI_437
+437 stdcall @(long) SHLWAPI_437
 438 stub @
 439 stub @
 440 stub @
