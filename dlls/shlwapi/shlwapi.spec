@@ -445,7 +445,7 @@
 445 stdcall -noname PathFileExistsAndAttributesA(str ptr)
 446 stdcall -noname PathFileExistsAndAttributesW(wstr ptr)
 447 stub -noname FixSlashesAndColonA
-448 stub -noname FixSlashesAndColonW
+448 stdcall -noname FixSlashesAndColonW(wstr)
 449 stub -noname NextPathA
 450 stub -noname NextPathW
 451 stub -noname CharUpperNoDBCSA
@@ -458,7 +458,7 @@
 458 stub -noname GetLongPathNameWrapA
 459 stub -noname SHExpandEnvironmentStringsA
 460 stub -noname SHExpandEnvironmentStringsW
-461 stub -noname SHGetAppCompatFlags
+461 stdcall -noname SHGetAppCompatFlags()
 462 stub -noname UrlFixupW
 463 stub -noname SHExpandEnvironmentStringsForUserA
 464 stub -noname SHExpandEnvironmentStringsForUserW

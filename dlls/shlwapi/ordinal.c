@@ -3837,6 +3837,31 @@ DWORD WINAPI SHMenuIndexFromID(HMENU hMenu, UINT uID)
     return GetMenuPosFromID(hMenu, uID);
 }
 
+
+/*************************************************************************
+ *      @	[SHLWAPI.448]
+ */
+VOID WINAPI FixSlashesAndColonW(LPWSTR lpwstr)
+{
+    while (*lpwstr)
+    {
+        if (*lpwstr == '/')
+            *lpwstr = '\\';
+        lpwstr++;
+    }
+}
+
+
+/*************************************************************************
+ *      @	[SHLWAPI.461]
+ */
+DWORD WINAPI SHGetAppCompatFlags()
+{
+  FIXME("stub\n");
+  return 0;
+}
+
+
 /*************************************************************************
  *      @	[SHLWAPI.549]
  */
