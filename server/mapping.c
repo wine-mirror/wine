@@ -51,6 +51,7 @@ static const struct object_ops mapping_ops =
     mapping_get_fd,              /* get_fd */
     no_flush,                    /* flush */
     mapping_get_info,            /* get_file_info */
+    NULL,                        /* queue_async */
     mapping_destroy              /* destroy */
 };
 

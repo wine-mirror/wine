@@ -77,6 +77,7 @@ static const struct object_ops sock_ops =
     sock_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     sock_get_info,                /* get_file_info */
+    NULL,                         /* queue_async */
     sock_destroy                  /* destroy */
 };
 

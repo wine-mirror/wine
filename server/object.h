@@ -22,6 +22,7 @@ struct process;
 struct file;
 struct wait_queue_entry;
 struct async;
+struct async_queue;
 
 /* operations valid on all objects */
 struct object_ops
@@ -48,6 +49,8 @@ struct object_ops
     int  (*flush)(struct object *);
     /* get file information */
     int  (*get_file_info)(struct object *,struct get_file_info_reply *);
+    /* queue an async operation */
+    struct async_queue* (*queue_async)(struct object *, struct async *async, int type, int count);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };

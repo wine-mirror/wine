@@ -44,6 +44,7 @@ static const struct object_ops device_ops =
     no_get_fd,                /* get_fd */
     no_flush,                 /* flush */
     device_get_info,          /* get_file_info */
+    NULL,                     /* queue_async */
     no_destroy                /* destroy */
 };
 

@@ -33,21 +33,22 @@ typedef struct
 
 /* overlapped private structure */
 struct async_private;
-typedef void (*async_handler)(struct async_private *ovp, int revents);
+typedef void (*async_handler)(struct async_private *ovp);
 typedef struct async_private
 {
      LPOVERLAPPED  lpOverlapped;
+     HANDLE        handle;
      int           fd;
-     int           timeout;
-     struct timeval tv;
-     int           event;
      char         *buffer;
      async_handler func;
      int           count;
+     int           type;
      LPOVERLAPPED_COMPLETION_ROUTINE completion_func;
      struct async_private *next;
      struct async_private *prev;
 } async_private;
+
+extern void check_async_list(LPOVERLAPPED ov, DWORD status);
 
 /* locale-independent case conversion */
 inline static char FILE_tolower( char c )
@@ -80,6 +81,7 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                DWORD attributes, HANDLE template, BOOL fail_read_only,
                                UINT drive_type );
 extern HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa );
+extern BOOL FILE_StartAsync(HANDLE handle, LPOVERLAPPED lpOverlapped, DWORD type, DWORD count, DWORD status);
 
 extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 

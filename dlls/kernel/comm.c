@@ -1512,25 +1512,17 @@ BOOL WINAPI GetCommModemStatus(
  *  This function is called while the client is waiting on the
  *  server, so we can't make any server calls here.
  */
-static void COMM_WaitCommEventService(async_private *ovp, int events)
+static void COMM_WaitCommEventService(async_private *ovp)
 {
     LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
 
-    TRACE("overlapped %p wait complete %p <- %x\n",lpOverlapped,ovp->buffer,events);
-    if(events&POLLNVAL)
-    {
-        lpOverlapped->Internal = STATUS_HANDLES_CLOSED;
-        return;
-    }
-    if(ovp->buffer)
-    {
-        if(events&POLLIN)
+    TRACE("overlapped %p\n",lpOverlapped);
+
+    /* FIXME: detect other events */
             *ovp->buffer = EV_RXCHAR;
-    }
  
     lpOverlapped->Internal = STATUS_SUCCESS;
 }
-
 
 
 /***********************************************************************
@@ -1560,20 +1552,6 @@ static BOOL COMM_WaitCommEvent(
     lpOverlapped->Offset = 0;
     lpOverlapped->OffsetHigh = 0;
 
-    /* start an ASYNCHRONOUS WaitCommEvent */
-    SERVER_START_REQ( create_async )
-    {
-        req->file_handle = hFile;
-        req->count = 0;
-        req->type = ASYNC_TYPE_WAIT;
-
-        ret=wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    if (ret)
-        return FALSE;
-  
     fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if(fd<0)
 	return FALSE;
@@ -1585,15 +1563,13 @@ static BOOL COMM_WaitCommEvent(
         return FALSE;
     }
     ovp->lpOverlapped = lpOverlapped;
-    ovp->timeout = 0;
-    ovp->tv.tv_sec = 0;
-    ovp->tv.tv_usec = 0;
-    ovp->event = POLLIN;
     ovp->func = COMM_WaitCommEventService;
     ovp->buffer = (char *)lpdwEvents;
     ovp->fd = fd;
     ovp->count = 0;
     ovp->completion_func = 0;                                                  
+    ovp->type = ASYNC_TYPE_WAIT;
+    ovp->handle = hFile;
   
     ovp->next = NtCurrentTeb()->pending_list;
     ovp->prev = NULL;
@@ -1601,6 +1577,21 @@ static BOOL COMM_WaitCommEvent(
         ovp->next->prev=ovp;
     NtCurrentTeb()->pending_list = ovp;
   
+    /* start an ASYNCHRONOUS WaitCommEvent */
+    SERVER_START_REQ( register_async )
+    {
+        req->handle = hFile;
+        req->overlapped = lpOverlapped;
+        req->type = ASYNC_TYPE_WAIT;
+        req->count = 0;
+        req->func = check_async_list;
+        req->status = STATUS_PENDING;
+
+        ret=wine_server_call_err(req);
+    }
+    SERVER_END_REQ;
+
+    if (!ret)
     SetLastError(ERROR_IO_PENDING);
 
     return FALSE;

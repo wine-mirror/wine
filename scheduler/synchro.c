@@ -36,14 +36,6 @@ inline static void get_timeout( struct timeval *when, int timeout )
     }
 }
 
-#define MAX_NUMBER_OF_FDS 20
-
-static inline int time_before( struct timeval *t1, struct timeval *t2 )
-{
-    return ((t1->tv_sec < t2->tv_sec) ||
-            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
-}
-
 static void CALLBACK call_completion_routine(ULONG_PTR data)
 {
     async_private* ovp = (async_private*)data;
@@ -85,90 +77,32 @@ static void finish_async(async_private *ovp, DWORD status)
 /***********************************************************************
  *           check_async_list
  *
- *  Create a list of fds for poll to check while waiting on the server
- *  FIXME: this loop is too large, cut into smaller functions
- *         perhaps we could share/steal some of the code in server/select.c?
+ * Process a status event from the server.
  */
-static void check_async_list(void)
-{
-    /* FIXME: should really malloc these two arrays */
-    struct pollfd fds[MAX_NUMBER_OF_FDS];
-    async_private *user[MAX_NUMBER_OF_FDS], *tmp;
-    int i, n, r, timeout;
-    async_private *ovp, *timeout_user;
-    struct timeval now;
-
-    while(1)
-    {
-        /* the first fd belongs to the server connection */
-        fds[0].events=POLLIN;
-        fds[0].revents=0;
-        fds[0].fd = NtCurrentTeb()->wait_fd[0];
-
-        ovp = NtCurrentTeb()->pending_list;
-        timeout = -1;
-        timeout_user = NULL;
-        gettimeofday(&now,NULL);
-        for(n=1; ovp && (n<MAX_NUMBER_OF_FDS); ovp = tmp)
-        {
-            tmp = ovp->next;
-
-            if(ovp->lpOverlapped->Internal!=STATUS_PENDING)
+void check_async_list(LPOVERLAPPED overlapped, DWORD status)
             {
-                finish_async(ovp,STATUS_UNSUCCESSFUL);
-                continue;
-            }
+    async_private *ovp;
 
-            if(ovp->timeout && time_before(&ovp->tv,&now))
-            {
-                finish_async(ovp,STATUS_TIMEOUT);
-                continue;
-            }
+    /* fprintf(stderr,"overlapped %p status %x\n",overlapped,status); */
 
-            fds[n].fd=ovp->fd;
-            fds[n].events=ovp->event;
-            fds[n].revents=0;
-            user[n] = ovp;
+    for(ovp = NtCurrentTeb()->pending_list; ovp; ovp = ovp->next)
+        if(ovp->lpOverlapped == overlapped)
+            break;
 
-            if(ovp->timeout && ( (!timeout_user) || time_before(&ovp->tv,&timeout_user->tv)))
-            {
-                timeout = (ovp->tv.tv_sec - now.tv_sec) * 1000
-                        + (ovp->tv.tv_usec - now.tv_usec) / 1000;
-                timeout_user = ovp;
-            }
-
-            n++;
-        }
-
-        /* if there aren't any active asyncs return */
-        if(n==1)
+    if(!ovp)
             return;
 
-        r = poll(fds, n, timeout);
+    if(status != STATUS_ALERTED)
+        ovp->lpOverlapped->Internal = status;
 
-        /* if there were any errors, return immediately */
-        if( (r<0) || (fds[0].revents==POLLNVAL) )
-            return;
-
-        if( r==0 )
+    if(ovp->lpOverlapped->Internal==STATUS_PENDING)
         {
-            finish_async(timeout_user, STATUS_TIMEOUT);
-            continue;
+        ovp->func(ovp);
+        FILE_StartAsync(ovp->handle, ovp->lpOverlapped, ovp->type, 0, ovp->lpOverlapped->Internal);
         }
 
-        /* search for async operations that are ready */
-        for( i=1; i<n; i++)
-        {
-            if (fds[i].revents)
-                user[i]->func(user[i],fds[i].revents);
-
-            if(user[i]->lpOverlapped->Internal!=STATUS_PENDING)
-                finish_async(user[i],user[i]->lpOverlapped->Internal);
-        }
-
-        if(fds[0].revents == POLLIN)
-            return;
-    }
+    if(ovp->lpOverlapped->Internal!=STATUS_PENDING)
+        finish_async(ovp,ovp->lpOverlapped->Internal);
 }
 
 
@@ -184,7 +118,6 @@ static int wait_reply( void *cookie )
     for (;;)
     {
         int ret;
-        if (NtCurrentTeb()->pending_list) check_async_list();
         ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {

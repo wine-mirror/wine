@@ -2,10 +2,7 @@
  * Server-side serial port communications management
  *
  * Copyright (C) 1998 Alexandre Julliard
- * Copyright (C) 2000 Mike McCormack
- *
- * TODO:
- *  Add async read, write and WaitCommEvent handling.
+ * Copyright (C) 2000,2001 Mike McCormack
  *
  */
 
@@ -34,11 +31,15 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "async.h"
 
 static void serial_dump( struct object *obj, int verbose );
 static int serial_get_fd( struct object *obj );
 static int serial_get_info( struct object *obj, struct get_file_info_reply *reply );
 static int serial_get_poll_events( struct object *obj );
+static struct async_queue * serial_queue_async(struct object *obj, struct async* async, int type, int count);
+static void destroy_serial(struct object *obj);
+static void serial_poll_event( struct object *obj, int event );
 
 struct serial
 {
@@ -58,6 +59,10 @@ struct serial
 
     struct termios      original;
 
+    struct async_queue  read_q;
+    struct async_queue  write_q;
+    struct async_queue  wait_q;
+
     /* FIXME: add dcb, comm status, handler module, sharing */
 };
 
@@ -70,14 +75,13 @@ static const struct object_ops serial_ops =
     default_poll_signaled,        /* signaled */
     no_satisfied,                 /* satisfied */
     serial_get_poll_events,       /* get_poll_events */
-    default_poll_event,           /* poll_event */
+    serial_poll_event,            /* poll_event */
     serial_get_fd,                /* get_fd */
     no_flush,                     /* flush */
     serial_get_info,              /* get_file_info */
-    no_destroy                    /* destroy */
+    serial_queue_async,           /* queue_async */
+    destroy_serial                /* destroy */
 };
-
-/* SERIAL PORT functions */
 
 static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access, int attributes )
 {
@@ -132,8 +136,20 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
         serial->writeconst   = 0;
         serial->eventmask    = 0;
         serial->commerror    = 0;
+        init_async_queue(&serial->read_q);
+        init_async_queue(&serial->write_q);
+        init_async_queue(&serial->wait_q);
     }
     return serial;
+}
+
+static void destroy_serial( struct object *obj)
+{
+    struct serial *serial = (struct serial *)obj;
+
+    destroy_async_queue(&serial->read_q);
+    destroy_async_queue(&serial->write_q);
+    destroy_async_queue(&serial->wait_q);
 }
 
 static void serial_dump( struct object *obj, int verbose )
@@ -153,8 +169,16 @@ static int serial_get_poll_events( struct object *obj )
     struct serial *serial = (struct serial *)obj;
     int events = 0;
     assert( obj->ops == &serial_ops );
-    if (serial->access & GENERIC_READ) events |= POLLIN;
-    if (serial->access & GENERIC_WRITE) events |= POLLOUT;
+
+    if(IS_READY(serial->read_q))
+        events |= POLLIN;
+    if(IS_READY(serial->write_q))
+        events |= POLLOUT;
+    if(IS_READY(serial->wait_q))
+        events |= POLLIN;
+
+    /* fprintf(stderr,"poll events are %04x\n",events); */
+
     return events;
 }
 
@@ -190,25 +214,76 @@ static int serial_get_info( struct object *obj, struct get_file_info_reply *repl
     return FD_TYPE_TIMEOUT;
 }
 
-/* these function calculates the timeout for an async operation
-   on a serial port */
-int get_serial_async_timeout(struct object *obj, int type, int count)
+static void serial_poll_event(struct object *obj, int event)
 {
     struct serial *serial = (struct serial *)obj;
 
-    if(obj->ops != &serial_ops)
-        return 0;
+    /* fprintf(stderr,"Poll event %02x\n",event); */
+
+    if(IS_READY(serial->read_q) && (POLLIN & event) )
+        async_notify(serial->read_q.head,STATUS_ALERTED);
+
+    if(IS_READY(serial->write_q) && (POLLOUT & event) )
+        async_notify(serial->write_q.head,STATUS_ALERTED);
+
+    if(IS_READY(serial->wait_q) && (POLLIN & event) )
+        async_notify(serial->wait_q.head,STATUS_ALERTED);
+
+    set_select_events(obj,obj->ops->get_poll_events(obj));
+}
+
+/* 
+ * This function is an abuse of overloading that deserves some explanation.
+ *
+ * It has three purposes:
+ *
+ * 1. get the queue for a type of async operation
+ * 2. requeue an async operation
+ * 3. queue a new async operation
+ *
+ * It is overloaded so that these three functions only take one function pointer
+ *  in the object operations list.
+ *
+ * In all cases, it returns the async queue.
+ */
+static struct async_queue *serial_queue_async(struct object *obj, struct async *async, int type, int count)
+{
+    struct serial *serial = (struct serial *)obj;
+    struct async_queue *q;
+    int timeout;
+
+    assert(obj->ops == &serial_ops);
 
     switch(type)
     {
     case ASYNC_TYPE_READ:
-        return serial->readconst + serial->readmult*count;
+        q = &serial->read_q;
+        timeout = serial->readconst + serial->readmult*count;
+        break;
+    case ASYNC_TYPE_WAIT:
+        q = &serial->wait_q;
+        timeout = 0;
+        break;
     case ASYNC_TYPE_WRITE:
-        return serial->writeconst + serial->writemult*count;
+        q = &serial->write_q;
+        timeout = serial->writeconst + serial->writemult*count;
+        break;
+    default:
+        set_error(STATUS_INVALID_PARAMETER);
+        return NULL;
     }
-    return 0;
+
+    if(async)
+    {
+        if(!async->q)
+        {
+            async_add_timeout(async,timeout);
+            async_insert(q, async);
+    }
 }
 
+    return q;
+}
 
 /* create a serial */
 DECL_HANDLER(create_serial)

@@ -1529,14 +1529,16 @@ enum message_type
 #define SERIALINFO_SET_ERROR     0x04
 
 
-/* Create an async I/O */
-@REQ(create_async)
-    handle_t     file_handle;  /* handle to comm port, socket or file */
-    int          count;
+/* Create/Destroy an async I/O */
+@REQ(register_async)
+    handle_t     handle;  /* handle to comm port, socket or file */
+    void*        func;
     int          type;
-@REPLY
-    int          timeout;
+    void*        overlapped;
+    int          count;
+    unsigned int status;
 @END
+#define ASYNC_TYPE_NONE  0x00
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
 #define ASYNC_TYPE_WAIT  0x03

@@ -53,6 +53,7 @@ static const struct object_ops process_ops =
     no_get_fd,                   /* get_fd */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
+    NULL,                        /* queue_async */
     process_destroy              /* destroy */
 };
 
@@ -92,6 +93,7 @@ static const struct object_ops startup_info_ops =
     no_get_fd,                     /* get_fd */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
+    NULL,                        /* queue_async */
     startup_info_destroy           /* destroy */
 };
 

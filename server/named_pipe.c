@@ -80,6 +80,7 @@ static const struct object_ops named_pipe_ops =
     no_get_fd,                    /* get_fd */
     no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
+    NULL,                         /* queue_async */
     named_pipe_destroy            /* destroy */
 };
 
@@ -101,6 +102,7 @@ static const struct object_ops pipe_user_ops =
     pipe_user_get_fd,             /* get_fd */
     no_flush,                     /* flush */
     pipe_user_get_info,           /* get_file_info */
+    NULL,                         /* queue_async */
     pipe_user_destroy             /* destroy */
 };
 

@@ -2181,18 +2181,21 @@ struct set_serial_info_reply
 
 
 
-struct create_async_request
+struct register_async_request
 {
     struct request_header __header;
-    handle_t     file_handle;
-    int          count;
+    handle_t     handle;
+    void*        func;
     int          type;
+    void*        overlapped;
+    int          count;
+    unsigned int status;
 };
-struct create_async_reply
+struct register_async_reply
 {
     struct reply_header __header;
-    int          timeout;
 };
+#define ASYNC_TYPE_NONE  0x00
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
 #define ASYNC_TYPE_WAIT  0x03
@@ -2699,7 +2702,7 @@ enum request
     REQ_create_serial,
     REQ_get_serial_info,
     REQ_set_serial_info,
-    REQ_create_async,
+    REQ_register_async,
     REQ_create_named_pipe,
     REQ_open_named_pipe,
     REQ_connect_named_pipe,
@@ -2854,7 +2857,7 @@ union generic_request
     struct create_serial_request create_serial_request;
     struct get_serial_info_request get_serial_info_request;
     struct set_serial_info_request set_serial_info_request;
-    struct create_async_request create_async_request;
+    struct register_async_request register_async_request;
     struct create_named_pipe_request create_named_pipe_request;
     struct open_named_pipe_request open_named_pipe_request;
     struct connect_named_pipe_request connect_named_pipe_request;
@@ -3007,7 +3010,7 @@ union generic_reply
     struct create_serial_reply create_serial_reply;
     struct get_serial_info_reply get_serial_info_reply;
     struct set_serial_info_reply set_serial_info_reply;
-    struct create_async_reply create_async_reply;
+    struct register_async_reply register_async_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
     struct open_named_pipe_reply open_named_pipe_reply;
     struct connect_named_pipe_reply connect_named_pipe_reply;
@@ -3035,6 +3038,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 66
+#define SERVER_PROTOCOL_VERSION 67
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

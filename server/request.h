@@ -209,7 +209,7 @@ DECL_HANDLER(kill_win_timer);
 DECL_HANDLER(create_serial);
 DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
-DECL_HANDLER(create_async);
+DECL_HANDLER(register_async);
 DECL_HANDLER(create_named_pipe);
 DECL_HANDLER(open_named_pipe);
 DECL_HANDLER(connect_named_pipe);
@@ -363,7 +363,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_serial,
     (req_handler)req_get_serial_info,
     (req_handler)req_set_serial_info,
-    (req_handler)req_create_async,
+    (req_handler)req_register_async,
     (req_handler)req_create_named_pipe,
     (req_handler)req_open_named_pipe,
     (req_handler)req_connect_named_pipe,

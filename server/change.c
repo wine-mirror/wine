@@ -37,6 +37,7 @@ static const struct object_ops change_ops =
     no_get_fd,                /* get_fd */
     no_flush,                 /* flush */
     no_get_file_info,         /* get_file_info */
+    NULL,                     /* queue_async */
     no_destroy                /* destroy */
 };
 

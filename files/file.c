@@ -1248,12 +1248,34 @@ BOOL WINAPI GetOverlappedResult(
 
 
 /***********************************************************************
+ *              FILE_StartAsync                (INTERNAL)
+ *
+ * type==ASYNC_TYPE_NONE means cancel the indicated overlapped operation
+ * lpOverlapped==NULL means all overlappeds match
+ */
+BOOL FILE_StartAsync(HANDLE hFile, LPOVERLAPPED lpOverlapped, DWORD type, DWORD count, DWORD status)
+{
+    BOOL ret;
+    SERVER_START_REQ(register_async)
+    {
+        req->handle = hFile;
+        req->overlapped = lpOverlapped;
+        req->type = type;
+        req->count = count;
+        req->func = check_async_list;
+        req->status = status;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return !ret;
+}
+
+/***********************************************************************
  *             CancelIo                   (KERNEL32.@)
  */
 BOOL WINAPI CancelIo(HANDLE handle)
 {
-    FIXME("(%d) stub\n",handle);
-    return FALSE;
+    return FILE_StartAsync(handle, NULL, ASYNC_TYPE_NONE, 0, STATUS_CANCELLED);
 }
 
 /***********************************************************************
@@ -1262,28 +1284,12 @@ BOOL WINAPI CancelIo(HANDLE handle)
  *  This function is called while the client is waiting on the
  *  server, so we can't make any server calls here.
  */
-static void FILE_AsyncReadService(async_private *ovp, int events)
+static void FILE_AsyncReadService(async_private *ovp)
 {
     LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
     int result, r;
 
-    TRACE("%p %p %08x\n", lpOverlapped, ovp->buffer, events );
-
-    /* if POLLNVAL, then our fd was closed or we have the wrong fd */
-    if(events&POLLNVAL)
-    {
-        ERR("fd %d invalid for %p\n",ovp->fd,ovp);
-        r = STATUS_UNSUCCESSFUL;
-        goto async_end;
-    }
-
-    /* if there are no events, it must be a timeout */
-    if(events==0)
-    {
-        TRACE("read timed out\n");
-        r = STATUS_TIMEOUT;
-        goto async_end;
-    }
+    TRACE("%p %p\n", lpOverlapped, ovp->buffer );
 
     /* check to see if the data is ready (non-blocking) */
     result = read(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
@@ -1316,41 +1322,6 @@ async_end:
     lpOverlapped->Internal = r;
 }
 
-/* flogged from wineserver */
-/* add a timeout in milliseconds to an absolute time */
-static void add_timeout( struct timeval *when, int timeout )
-{
-    if (timeout)
-    {
-        long sec = timeout / 1000;
-        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
-        {
-            when->tv_usec -= 1000000;
-            when->tv_sec++;
-        }
-        when->tv_sec += sec;
-    }
-}
-
-/***********************************************************************
- *              FILE_GetTimeout                (INTERNAL)
- */
-static BOOL FILE_GetTimeout(HANDLE hFile, DWORD txcount, DWORD type, int *timeout)
-{
-    BOOL ret;
-    SERVER_START_REQ(create_async)
-    {
-        req->count = txcount;
-        req->type = type;
-        req->file_handle = hFile;
-        ret = wine_server_call( req );
-        if(timeout)
-            *timeout = reply->timeout;
-    }
-    SERVER_END_REQ;
-    return !ret;
-}
-
 /***********************************************************************
  *              FILE_ReadFileEx                (INTERNAL)
  */
@@ -1359,7 +1330,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
-    int fd, timeout=0;
+    int fd;
 
     TRACE("file %d to buf %p num %ld %p func %p\n",
 	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
@@ -1369,12 +1340,6 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     {
         TRACE("Overlapped not specified or invalid event flag\n");
         SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if ( !FILE_GetTimeout(hFile, bytesToRead, ASYNC_TYPE_READ, &timeout ) )
-    {
-        TRACE("FILE_GetTimeout failed\n");
         return FALSE;
     }
 
@@ -1396,13 +1361,11 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     ovp->lpOverlapped = overlapped;
     ovp->count = bytesToRead;
     ovp->completion_func = lpCompletionRoutine;
-    ovp->timeout = timeout;
-    gettimeofday(&ovp->tv,NULL);
-    add_timeout(&ovp->tv,timeout);
-    ovp->event = POLLIN;
     ovp->func = FILE_AsyncReadService;
     ovp->buffer = buffer;
     ovp->fd = fd;
+    ovp->type = ASYNC_TYPE_READ;
+    ovp->handle = hFile;
 
     /* hook this overlap into the pending async operation list */
     ovp->next = NtCurrentTeb()->pending_list;
@@ -1410,6 +1373,13 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if(ovp->next)
         ovp->next->prev = ovp;
     NtCurrentTeb()->pending_list = ovp;
+
+    if ( !FILE_StartAsync(hFile, overlapped, ASYNC_TYPE_READ, bytesToRead, STATUS_PENDING) )
+    {
+        /* FIXME: remove async_private and release memory */
+        ERR("FILE_StartAsync failed\n");
+        return FALSE;
+    }
 
     return TRUE;
 }
@@ -1548,28 +1518,12 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
  *  This function is called while the client is waiting on the
  *  server, so we can't make any server calls here.
  */
-static void FILE_AsyncWriteService(struct async_private *ovp, int events)
+static void FILE_AsyncWriteService(struct async_private *ovp)
 {
     LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
     int result, r;
 
-    TRACE("(%p %p %08x)\n",lpOverlapped,ovp->buffer,events);
-
-    /* if POLLNVAL, then our fd was closed or we have the wrong fd */
-    if(events&POLLNVAL)
-    {
-        ERR("fd %d invalid for %p\n",ovp->fd,ovp);
-        r = STATUS_UNSUCCESSFUL;
-        goto async_end;
-    }
-
-    /* if there are no events, it must be a timeout */
-    if(events==0)
-    {
-        TRACE("write timed out\n");
-        r = STATUS_TIMEOUT;
-        goto async_end;
-    }
+    TRACE("(%p %p)\n",lpOverlapped,ovp->buffer);
 
     /* write some data (non-blocking) */
     result = write(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
@@ -1609,7 +1563,6 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
-    int timeout=0;
 
     TRACE("file %d to buf %p num %ld %p func %p stub\n",
 	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
@@ -1623,9 +1576,9 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
-    if (!FILE_GetTimeout(hFile, bytesToWrite, ASYNC_TYPE_WRITE, &timeout))
+    if (!FILE_StartAsync(hFile, overlapped, ASYNC_TYPE_WRITE, bytesToWrite, STATUS_PENDING ))
     {
-        TRACE("FILE_GetTimeout failed\n");
+        TRACE("FILE_StartAsync failed\n");
         return FALSE;
     }
 
@@ -1637,15 +1590,14 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         return FALSE;
     }
     ovp->lpOverlapped = overlapped;
-    ovp->timeout = timeout;
-    gettimeofday(&ovp->tv,NULL);
-    add_timeout(&ovp->tv,timeout);
-    ovp->event = POLLOUT;
     ovp->func = FILE_AsyncWriteService;
     ovp->buffer = (LPVOID) buffer;
     ovp->count = bytesToWrite;
     ovp->completion_func = lpCompletionRoutine;
     ovp->fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    ovp->type = ASYNC_TYPE_WRITE;
+    ovp->handle = hFile;
+
     if(ovp->fd <0)
     {
         HeapFree(GetProcessHeap(), 0, ovp);

@@ -40,6 +40,7 @@ static const struct object_ops console_input_ops =
     no_get_fd,                        /* get_fd */
     no_flush,                         /* flush */
     console_get_file_info,            /* get_file_info */
+    NULL,                             /* queue_async */
     console_input_destroy             /* destroy */
 };
 
@@ -68,6 +69,7 @@ static const struct object_ops console_input_events_ops =
     no_get_fd,                        /* get_fd */
     no_flush,                         /* flush */
     no_get_file_info,                 /* get_file_info */
+    NULL,                             /* queue_async */
     console_input_events_destroy      /* destroy */
 };
 
@@ -108,6 +110,7 @@ static const struct object_ops screen_buffer_ops =
     no_get_fd,                        /* get_fd */
     no_flush,                         /* flush */
     console_get_file_info,            /* get_file_info */
+    NULL,                             /* queue_async */
     screen_buffer_destroy             /* destroy */
 };
 

@@ -58,6 +58,7 @@ static const struct object_ops debug_event_ops =
     no_get_fd,                     /* get_fd */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
+    NULL,                          /* queue_async */
     debug_event_destroy            /* destroy */
 };
 
@@ -78,6 +79,7 @@ static const struct object_ops debug_ctx_ops =
     no_get_fd,                     /* get_fd */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
+    NULL,                          /* queue_async */
     debug_ctx_destroy              /* destroy */
 };
 

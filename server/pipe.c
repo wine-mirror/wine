@@ -53,6 +53,7 @@ static const struct object_ops pipe_ops =
     pipe_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     pipe_get_info,                /* get_file_info */
+    NULL,                         /* queue_async */
     pipe_destroy                  /* destroy */
 };
 

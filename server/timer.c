@@ -45,6 +45,7 @@ static const struct object_ops timer_ops =
     no_get_fd,                 /* get_fd */
     no_flush,                  /* flush */
     no_get_file_info,          /* get_file_info */
+    NULL,                      /* queue_async */
     timer_destroy              /* destroy */
 };
 

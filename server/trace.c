@@ -1738,16 +1738,14 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
     fprintf( stderr, " commerror=%08x", req->commerror );
 }
 
-static void dump_create_async_request( const struct create_async_request *req )
+static void dump_register_async_request( const struct register_async_request *req )
 {
-    fprintf( stderr, " file_handle=%d,", req->file_handle );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " func=%p,", req->func );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " overlapped=%p,", req->overlapped );
     fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " type=%d", req->type );
-}
-
-static void dump_create_async_reply( const struct create_async_reply *req )
-{
-    fprintf( stderr, " timeout=%d", req->timeout );
+    fprintf( stderr, " status=%08x", req->status );
 }
 
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
@@ -2154,7 +2152,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_serial_request,
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
-    (dump_func)dump_create_async_request,
+    (dump_func)dump_register_async_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_open_named_pipe_request,
     (dump_func)dump_connect_named_pipe_request,
@@ -2305,7 +2303,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_serial_reply,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
-    (dump_func)dump_create_async_reply,
+    (dump_func)0,
     (dump_func)dump_create_named_pipe_reply,
     (dump_func)dump_open_named_pipe_reply,
     (dump_func)0,
@@ -2456,7 +2454,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_serial",
     "get_serial_info",
     "set_serial_info",
-    "create_async",
+    "register_async",
     "create_named_pipe",
     "open_named_pipe",
     "connect_named_pipe",

@@ -65,6 +65,7 @@ static const struct object_ops file_ops =
     file_get_fd,                  /* get_fd */
     file_flush,                   /* flush */
     file_get_info,                /* get_file_info */
+    NULL,                         /* queue_async */
     file_destroy                  /* destroy */
 };
 
