@@ -830,7 +830,7 @@ BYTE VGA_ioport_in( WORD port )
         case 0x3da:
             /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
                we need to fake the occurrence of the vertical refresh */
-            ret=vga_refresh?0x00:0x08;
+            ret=vga_refresh?0x00:0x0b; /* toggle video RAM and lightpen and VGA refresh bits ! */
             if (vga_mode_initialized)
                 vga_refresh=0;
             else
