@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "winuser.h"
 #include "stackframe.h"
 #include "builtin16.h"
@@ -20,6 +21,7 @@
 #include "commctrl.h"
 #include "task.h"
 #include "thread.h"
+#include "menu.h"
 
 DECLARE_DEBUG_CHANNEL(msg)
 DECLARE_DEBUG_CHANNEL(relay)
@@ -1097,8 +1099,18 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
         *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
         return 0;
     case WM_MENUCHAR:
-    case WM_MENUSELECT:
         *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
+        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
+        return 0;
+    case WM_MENUSELECT:
+        if((LOWORD(*plparam) & MF_POPUP) && (LOWORD(*plparam) != 0xFFFF))
+        {
+            HMENU hmenu=(HMENU)HIWORD(*plparam);
+            UINT Pos=MENU_FindSubMenu( &hmenu, wParam16);
+            if(Pos==0xFFFF) Pos=0; /* NO_SELECTED_ITEM */
+            *pwparam32 = MAKEWPARAM( Pos, LOWORD(*plparam) );
+        }
+        else *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
         *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
         return 0;
     case WM_MDIACTIVATE:
@@ -1780,8 +1792,14 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
                                  (HMENU16)LOWORD(*plparam) );
         *pwparam16 = (*plparam == 0);
         return 0;
-    case WM_MENUCHAR:
     case WM_MENUSELECT:
+        if(HIWORD(wParam32) & MF_POPUP)
+        {
+            UINT16 hmenu;
+            if((hmenu = GetSubMenu((HMENU16)*plparam, *pwparam16))) *pwparam16=hmenu;
+        }
+        /* fall through */
+    case WM_MENUCHAR:
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
     case WM_MDIACTIVATE:

@@ -579,6 +579,39 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 }
 
 /***********************************************************************
+ *           MENU_FindSubMenu
+ *
+ * Find a Sub menu. Return the position of the submenu, and modifies 
+ * *hmenu in case it is found in another sub-menu.
+ * If the submenu cannot be found, NO_SELECTED_ITEM is returned.
+ */
+UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget )
+{
+    POPUPMENU *menu;
+    UINT i;
+    MENUITEM *item;
+    if (((*hmenu)==0xffff) || 
+            (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(*hmenu)))) 
+        return NO_SELECTED_ITEM;
+    item = menu->items;
+    for (i = 0; i < menu->nItems; i++, item++) {
+        if(!(item->fType & MF_POPUP)) continue;
+        if (item->hSubMenu == hSubTarget) {
+            return i;
+        }
+        else  {
+            HMENU hsubmenu = item->hSubMenu;
+            UINT pos = MENU_FindSubMenu( &hsubmenu, hSubTarget );
+            if (pos != NO_SELECTED_ITEM) {
+                *hmenu = hsubmenu;
+                return pos;
+            }
+        }
+    }
+    return NO_SELECTED_ITEM;
+}
+
+/***********************************************************************
  *           MENU_FreeItemData
  */
 static void MENU_FreeItemData( MENUITEM* item )
@@ -1589,7 +1622,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
  *           MENU_SelectItem
  */
 static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
-                             BOOL sendMenuSelect )
+                             BOOL sendMenuSelect, HMENU topmenu )
 {
     LPPOPUPMENU lppop;
     HDC hdc;
@@ -1598,10 +1631,6 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
 
     lppop = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
     if (!lppop->nItems) return;
-
-    if ((wIndex != NO_SELECTED_ITEM) && 
-	(lppop->items[wIndex].fType & MF_SEPARATOR))
-	wIndex = NO_SELECTED_ITEM;
 
     if (lppop->FocusedItem == wIndex) return;
     if (lppop->wFlags & MF_POPUP) hdc = GetDC( lppop->hWnd );
@@ -1622,20 +1651,32 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     lppop->FocusedItem = wIndex;
     if (lppop->FocusedItem != NO_SELECTED_ITEM) 
     {
-	lppop->items[lppop->FocusedItem].fState |= MF_HILITE;
-	MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, &lppop->items[lppop->FocusedItem],
-                           lppop->Height, !(lppop->wFlags & MF_POPUP),
-			   ODA_SELECT );
+        if(!(lppop->items[wIndex].fType & MF_SEPARATOR)) {
+            lppop->items[wIndex].fState |= MF_HILITE;
+            MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, 
+                    &lppop->items[wIndex], lppop->Height,
+                    !(lppop->wFlags & MF_POPUP), ODA_SELECT );
+        }
         if (sendMenuSelect)
         {
             MENUITEM *ip = &lppop->items[lppop->FocusedItem];
 	    SendMessageA( hwndOwner, WM_MENUSELECT, 
-	                 MAKELONG(ip->wID,ip->fType | (ip->fState | MF_MOUSESELECT)), hmenu);
+                     MAKELONG(ip->fType & MF_POPUP ? wIndex: ip->wID,
+                     ip->fType | ip->fState | MF_MOUSESELECT |
+                     (lppop->wFlags & MF_SYSMENU)), hmenu);
         }
     }
     else if (sendMenuSelect) {
-        SendMessageA( hwndOwner, WM_MENUSELECT, 
-                     MAKELONG( hmenu, lppop->wFlags | MF_MOUSESELECT), hmenu ); 
+        if(topmenu){
+            int pos;
+            if((pos=MENU_FindSubMenu(&topmenu, hmenu))!=NO_SELECTED_ITEM){
+                POPUPMENU *ptm = (POPUPMENU *) USER_HEAP_LIN_ADDR( topmenu );
+                MENUITEM *ip = &ptm->items[pos];
+                SendMessageA( hwndOwner, WM_MENUSELECT, MAKELONG(pos, 
+                         ip->fType | ip->fState | MF_MOUSESELECT |
+                         (ptm->wFlags & MF_SYSMENU)), topmenu);
+            }
+        }
     }
     ReleaseDC( lppop->hWnd, hdc );
 }
@@ -1665,7 +1706,7 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
 					    ; i += offset)
 	    if (!(menu->items[i].fType & MF_SEPARATOR))
 	    {
-		MENU_SelectItem( hwndOwner, hmenu, i, TRUE );
+		MENU_SelectItem( hwndOwner, hmenu, i, TRUE, 0 );
 		return;
 	    }
     }
@@ -1674,7 +1715,7 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
 		  i >= 0 && i < menu->nItems ; i += offset)
 	if (!(menu->items[i].fType & MF_SEPARATOR))
 	{
-	    MENU_SelectItem( hwndOwner, hmenu, i, TRUE );
+	    MENU_SelectItem( hwndOwner, hmenu, i, TRUE, 0 );
 	    return;
 	}
 }
@@ -1979,7 +2020,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
 
 	submenu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hsubmenu );
 	MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE );
-	MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect );
+	MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect, 0 );
 
 	if (submenu->hWnd == MENU_GetTopPopupWnd()->hwndSelf )
 	{
@@ -2192,11 +2233,11 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
     {
 	/* both are top level menus (system and menu-bar) */
 	MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
-	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, FALSE );
+	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
         pmt->hTopMenu = hPtMenu;
     }
     else MENU_HideSubPopups( pmt->hOwnerWnd, hPtMenu, FALSE );
-    MENU_SelectItem( pmt->hOwnerWnd, hPtMenu, id, TRUE );
+    MENU_SelectItem( pmt->hOwnerWnd, hPtMenu, id, TRUE, 0 );
 }
 
 
@@ -2304,7 +2345,8 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
     if( id == NO_SELECTED_ITEM )
     {
 	MENU_SelectItem( pmt->hOwnerWnd, pmt->hCurrentMenu, 
-			 NO_SELECTED_ITEM, TRUE );
+			 NO_SELECTED_ITEM, TRUE, pmt->hTopMenu);
+        
     }
     else if( ptmenu->FocusedItem != id )
     {
@@ -2401,7 +2443,8 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 
 	if( hNewMenu != pmt->hTopMenu )
 	{
-	    MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, FALSE );
+	    MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, 
+                    FALSE, 0 );
 	    if( pmt->hCurrentMenu != pmt->hTopMenu ) 
 		MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
 	}
@@ -2414,7 +2457,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	}
 
 	pmt->hTopMenu = pmt->hCurrentMenu = hNewMenu; /* all subpopups are hidden */
-	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, id, TRUE ); 
+	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, id, TRUE, 0 ); 
 
 	return TRUE;
     }
@@ -2478,7 +2521,7 @@ static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
 	NO_SELECTED_ITEM ) {
 	
 	MENU_SelectItem( pmt->hOwnerWnd, pmt->hCurrentMenu,
-			 prevcol, TRUE );
+			 prevcol, TRUE, 0 );
 	return;
     }
 
@@ -2545,7 +2588,7 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
 	NO_SELECTED_ITEM ) {
 	TRACE("Going to %d.\n", nextcol );
 	MENU_SelectItem( pmt->hOwnerWnd, pmt->hCurrentMenu,
-			 nextcol, TRUE );
+			 nextcol, TRUE, 0 );
 	return;
     }
 
@@ -2686,7 +2729,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		case VK_HOME:
 		case VK_END:
 		    MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, 
-				     NO_SELECTED_ITEM, FALSE );
+				     NO_SELECTED_ITEM, FALSE, 0 );
 		/* fall through */
 		case VK_UP:
 		    MENU_MoveSelection( mt.hOwnerWnd, mt.hCurrentMenu, 
@@ -2751,7 +2794,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    else if (pos == (UINT)-1) MessageBeep(0);
 		    else
 		    {
-			MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, pos, TRUE );
+			MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, pos,
+                                TRUE, 0 );
                         executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu, wFlags);
                         fEndMenu = (executedMenuId != -1);
 		    }
@@ -2786,7 +2830,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	    ShowWindow( menu->hWnd, SW_HIDE );
 	    uSubPWndLevel = 0;
 	}
-	MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE );
+	MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
 	SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
     }
 
@@ -2897,7 +2941,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 
 	if( hTrackMenu )
 	{
- 	    MENU_SelectItem( wndPtr->hwndSelf, hTrackMenu, uItem, TRUE );
+ 	    MENU_SelectItem( wndPtr->hwndSelf, hTrackMenu, uItem, TRUE, 0 );
 
 	    if( uItem == NO_SELECTED_ITEM )
 		MENU_MoveSelection( wndPtr->hwndSelf, hTrackMenu, ITEM_NEXT );
@@ -3315,7 +3359,7 @@ BOOL WINAPI HiliteMenuItem( HWND hWnd, HMENU hMenu, UINT wItemID,
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return FALSE;
     if (menu->FocusedItem == wItemID) return TRUE;
     MENU_HideSubPopups( hWnd, hMenu, FALSE );
-    MENU_SelectItem( hWnd, hMenu, wItemID, TRUE );
+    MENU_SelectItem( hWnd, hMenu, wItemID, TRUE, 0 );
     return TRUE;
 }
 

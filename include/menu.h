@@ -19,5 +19,6 @@ extern void MENU_TrackMouseMenuBar( WND *wnd, INT ht, POINT pt );
 extern void MENU_TrackKbdMenuBar( WND *wnd, UINT wParam, INT vkey );
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
                                 HWND hwnd, BOOL suppress_draw );
+extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
 
 #endif /* __WINE_MENU_H */
