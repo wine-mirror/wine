@@ -2716,6 +2716,19 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
 
+    if (nCode == HCBT_SYSCOMMAND)
+    {
+	struct message msg;
+
+	msg.message = nCode;
+	msg.flags = hook;
+	msg.wParam = wParam;
+	msg.lParam = lParam;
+	add_message(&msg);
+
+	return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
+    }
+
     /* Log also SetFocus(0) calls */
     if (!wParam) wParam = lParam;
 

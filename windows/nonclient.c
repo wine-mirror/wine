@@ -1467,6 +1467,9 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     TRACE("Handling WM_SYSCOMMAND %x %lx\n", wParam, lParam );
 
+    if (HOOK_CallHooks( WH_CBT, HCBT_SYSCOMMAND, wParam, lParam, TRUE ))
+        return 0;
+
     switch (wParam & 0xfff0)
     {
     case SC_SIZE:
