@@ -23,7 +23,7 @@
 
 START_TEST(environ)
 {
-    ok( _putenv("cat=") == 0, "_putenv failed on deletion of non-existent environment variable\n" );
+    ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
     ok( strcmp(getenv("cat"), "dog") == 0, "getenv did not return 'dog'\n" );
     ok( _putenv("cat=") == 0, "failed deleting cat\n" );

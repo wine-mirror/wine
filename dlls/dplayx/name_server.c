@@ -267,7 +267,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
 
   if( lpCache == NULL )
   {
-    ERR( ": invalidate non existent cache\n" );
+    ERR( ": invalidate nonexistent cache\n" );
     return;
   }
 

@@ -636,7 +636,7 @@ static void test_PpropFindProp(void)
            ptTypes[i]);
 
         pRet = pPpropFindProp(&pvProp, 1u, i ? ptTypes[i-1] : ptTypes[i+1]);
-        ok(pRet == NULL, "PpropFindProp[%ld]: Found non-existent propery\n",
+        ok(pRet == NULL, "PpropFindProp[%ld]: Found nonexistent propery\n",
            ptTypes[i]);
     }
 
@@ -868,11 +868,11 @@ static void test_LpValFindProp(void)
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(ptTypes[i], 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existent propery id\n",
+        ok(pRet == NULL, "LpValFindProp[%ld]: Found nonexistent propery id\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existent propery id/type\n",
+        ok(pRet == NULL, "LpValFindProp[%ld]: Found nonexistent propery id/type\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 1u), 1u, &pvProp);
@@ -1257,19 +1257,19 @@ static void test_IProp(void)
     tags.aulPropTag[0] = PR_RESPONSE_REQUESTED;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
     ok(sc == E_ACCESSDENIED && !lpProbs,
-       "DeleteProps(non-existent): Expected E_ACCESSDENIED null got 0x%08lX %p\n",
+       "DeleteProps(nonexistent): Expected E_ACCESSDENIED null got 0x%08lX %p\n",
        sc, lpProbs);
 
     /* Set access to read and write */
     sc = IPropData_HrSetObjAccess(lpIProp, IPROP_READWRITE);
     ok(sc == S_OK, "SetObjAcess(WRITE): Expected S_OK got 0x%08lX\n", sc);
 
-    /* Delete non-existent item - No error */
+    /* Delete nonexistent item - No error */
     lpProbs = NULL;
     tags.aulPropTag[0] = PR_RESPONSE_REQUESTED;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
     ok(sc == S_OK && !lpProbs,
-       "DeleteProps(non-existent): Expected S_OK null got 0x%08lX %p\n",
+       "DeleteProps(nonexistent): Expected S_OK null got 0x%08lX %p\n",
        sc, lpProbs);
 
     /* Delete existing item (r/o) - No error, but lpProbs populated */

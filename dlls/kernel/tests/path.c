@@ -34,9 +34,9 @@
 #define SHORTDIR "shortdir"
 #define LONGDIR "Long Directory"
 #define NONFILE_SHORT "noexist.pth"
-#define NONFILE_LONG "Non Existent File"
+#define NONFILE_LONG "NonExistent File"
 #define NONDIR_SHORT "notadir"
-#define NONDIR_LONG "Non Existent Directory"
+#define NONDIR_LONG "NonExistent Directory"
 
 #define NOT_A_VALID_DRIVE '@'
 
@@ -223,7 +223,7 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
    characters in the filename.
      'valid' indicates whether this would be an allowed filename
      'todo' indicates that wine doesn't get this right yet.
-   NOTE: We always call this routine with a non-existent filename, so
+   NOTE: We always call this routine with a nonexistent filename, so
          Get(Short|Long)PathNameA should never pass, but GetFullPathNameA
          should.
 */
@@ -413,10 +413,10 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
    so why check it again.
 */
   SetCurrentDirectoryA(newdir);
-/* Check that SetCurrentDirectory fails when a non-existent dir is specified */
+/* Check that SetCurrentDirectory fails when a nonexistent dir is specified */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_SHORT);
   test_setdir(newdir,tmpstr,NULL,0,"check 3");
-/* Check that SetCurrentDirectory fails for a non-existent lond directory */
+/* Check that SetCurrentDirectory fails for a nonexistent lond directory */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_LONG);
   test_setdir(newdir,tmpstr,NULL,0,"check 4");
 /* Check that SetCurrentDirectory passes with a long directory */
@@ -640,7 +640,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,NULL,"test13");
   sprintf(tmpstr,"%s\\",LONGDIR);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,NULL,"test14");
-/* Non-existent directories */
+/* Nonexistent directories */
   sprintf(tmpstr,"%s\\",NONDIR_SHORT);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test15");
   sprintf(tmpstr2,"%s\\%s",curdir_short,tmpstr);

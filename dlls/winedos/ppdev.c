@@ -147,7 +147,7 @@ char IO_pp_init(void)
 	if (ioctl (fd,PPCLAIM,0))
 	  {
 	    ERR("PPCLAIM rejected %s\n",buffer);
-	    ERR("Perhaps the device is already in use or non-existent\n");
+	    ERR("Perhaps the device is already in use or nonexistent\n");
 	    continue;
 	  }
 	if (nports > 0)
@@ -176,7 +176,7 @@ char IO_pp_init(void)
 	if (ioctl (fd,PPRELEASE,0))
 	  {
 	    ERR("PPRELEASE rejected %s\n",buffer);
-	    ERR("Perhaps the device is already in use or non-existent\n");
+	    ERR("Perhaps the device is already in use or nonexistent\n");
 	    continue;
 	  }
 	PPDeviceList[nports].devicename = malloc(sizeof(buffer)+1);

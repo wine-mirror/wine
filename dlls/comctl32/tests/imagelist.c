@@ -307,9 +307,9 @@ static BOOL DoTest1(void)
     ok(hicon3 != 0, "no hicon3\n");
 
     /* remove when nothing exists */
-    ok(!ImageList_Remove(himl,0),"removed non-existent icon\n");
+    ok(!ImageList_Remove(himl,0),"removed nonexistent icon\n");
     /* removing everything from an empty imagelist should succeed */
-    ok(ImageList_RemoveAll(himl),"removed non-existent icon\n");
+    ok(ImageList_RemoveAll(himl),"removed nonexistent icon\n");
 
     /* add three */
     ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1\n");
@@ -317,7 +317,7 @@ static BOOL DoTest1(void)
     ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3\n");
 
     /* remove an index out of range */
-    ok(!ImageList_Remove(himl,4711),"removed non-existent icon\n");
+    ok(!ImageList_Remove(himl,4711),"removed nonexistent icon\n");
 
     /* remove three */
     ok(ImageList_Remove(himl,0),"can't remove 0\n");
@@ -325,7 +325,7 @@ static BOOL DoTest1(void)
     ok(ImageList_Remove(himl,0),"can't remove 0\n");
 
     /* remove one extra */
-    ok(!ImageList_Remove(himl,0),"removed non-existent icon\n");
+    ok(!ImageList_Remove(himl,0),"removed nonexistent icon\n");
 
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");

@@ -197,7 +197,7 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
             This->has = drv;
 
 	    if ((res = acmStreamSize(drv, OUTPUT_BUFFER_SIZE, &This->max_size, ACM_STREAMSIZEF_DESTINATION))) {
-		ERR("Cannot retreive input buffer size error %d!\n", res);
+		ERR("Cannot retrieve input buffer size error %d!\n", res);
 		This->max_size = INPUT_BUFFER_SIZE;
 	    }
 

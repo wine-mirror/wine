@@ -1296,7 +1296,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
-        FIXME("Caps support for directx9 is non-existent at the moment!\n");
+        FIXME("Caps support for directx9 is nonexistent at the moment!\n");
         pCaps->DevCaps2 = 0;
         pCaps->MaxNpatchTessellationLevel = 0;
         pCaps->MasterAdapterOrdinal = 0;

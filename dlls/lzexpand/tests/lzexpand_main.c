@@ -80,7 +80,7 @@ static void test_lzopenfile(void)
   DWORD retval;
   INT file;
 
-  /* Check for non-existent file. */
+  /* Check for nonexistent file. */
   file = LZOpenFile("badfilename_", &test, OF_READ);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFile succeeded on nonexistent file\n");

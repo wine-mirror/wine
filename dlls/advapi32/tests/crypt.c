@@ -29,7 +29,7 @@
 #include "wine/test.h"
 
 static const char szRsaBaseProv[] = MS_DEF_PROV_A;
-static const char szNonExistentProv[] = "Wine Non Existent Cryptographic Provider v11.2";
+static const char szNonExistentProv[] = "Wine Nonexistent Cryptographic Provider v11.2";
 static const char szKeySet[] = "wine_test_keyset";
 static const char szBadKeySet[] = "wine_test_bad_keyset";
 #define NON_DEF_PROV_TYPE 999

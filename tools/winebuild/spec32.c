@@ -262,7 +262,7 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
             unsigned int j, args, mask = 0;
             const char *name;
 
-            /* skip non-existent entry points */
+            /* skip nonexistent entry points */
             if (!odp) goto ignore;
             /* skip non-functions */
             if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_CDECL)) goto ignore;

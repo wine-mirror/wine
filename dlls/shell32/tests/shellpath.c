@@ -700,7 +700,7 @@ static int init(void)
 }
 
 /* Subprocess helper 1: test what happens when CSIDL_FAVORITES is set to a
- * non-existent directory.
+ * nonexistent directory.
  */
 static void testNonExistentPath1(void)
 {

@@ -381,9 +381,9 @@ static void test_CList(void)
 
   item = SHLWAPI_CLIST_items;
 
-  /* Look for non-existing item in populated list */
+  /* Look for nonexistent item in populated list */
   inserted = pSHLWAPI_22(list, 99999999);
-  ok(inserted == NULL, "found a non-existing item\n");
+  ok(inserted == NULL, "found a nonexistent item\n");
 
   while (item->ulSize)
   {
@@ -393,7 +393,7 @@ static void test_CList(void)
     item++;
   }
 
-  /* Look for non-existing item in empty list */
+  /* Look for nonexistent item in empty list */
   inserted = pSHLWAPI_22(list, 99999999);
   ok(inserted == NULL, "found an item in empty list\n");
 

@@ -3076,7 +3076,7 @@ BOOL WINAPI RSAENH_CPGetUserKey(HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *ph
 
     if (*phUserKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
-        /* MSDN: dwKeySpec parameter specifies non existent key */
+        /* MSDN: dwKeySpec parameter specifies nonexistent key */
         SetLastError(NTE_NO_KEY);
         return FALSE;
     }

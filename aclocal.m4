@@ -111,7 +111,7 @@ else
 fi
 rm -f conf$$ conf$$.file])
 
-dnl **** Create non-existent directories from config.status ****
+dnl **** Create nonexistent directories from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
 dnl

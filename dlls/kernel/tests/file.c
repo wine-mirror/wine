@@ -690,7 +690,7 @@ static void test_CreateFileW(void)
     ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
        "CreateFileW(\"\") returned ret=%p error=%ld\n",hFile,GetLastError());
 
-    /* test the result of opening a non-existent driver name */
+    /* test the result of opening a nonexistent driver name */
     hFile = CreateFileW(bogus, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,

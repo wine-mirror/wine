@@ -51,7 +51,7 @@ static int mailslot_test()
     /* open a mailslot that doesn't exist */
     hWriter = CreateFile(szmspath, GENERIC_READ|GENERIC_WRITE,
                              FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter == INVALID_HANDLE_VALUE, "non-existing mailslot\n");
+    ok( hWriter == INVALID_HANDLE_VALUE, "nonexistent mailslot\n");
 
     /* open a mailslot without the right name */
     hSlot = CreateMailslot( "blah", 0, 0, NULL );

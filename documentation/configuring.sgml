@@ -65,7 +65,7 @@
               is able to load its own internal DLLs
               (<filename>.so</filename> files) when the program
               asks for a DLL, Wine does not simulate the presence of
-              non-existent files.
+              nonexistent files.
             </para>
           </listitem>
         </itemizedlist>

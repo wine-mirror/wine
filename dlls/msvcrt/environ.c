@@ -93,7 +93,7 @@ int _putenv(const char *str)
 
  ret = SetEnvironmentVariableA(name, value[0] ? value : NULL) ? 0 : -1;
 
- /* _putenv returns success on deletion of non-existent variable, unlike [Rtl]SetEnvironmentVariable */
+ /* _putenv returns success on deletion of nonexistent variable, unlike [Rtl]SetEnvironmentVariable */
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
  /* Update the __p__environ array only when already initialized */
@@ -129,7 +129,7 @@ int _wputenv(const MSVCRT_wchar_t *str)
 
  ret = SetEnvironmentVariableW(name, value[0] ? value : NULL) ? 0 : -1;
 
- /* _putenv returns success on deletion of non-existent variable, unlike [Rtl]SetEnvironmentVariable */
+ /* _putenv returns success on deletion of nonexistent variable, unlike [Rtl]SetEnvironmentVariable */
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
  /* Update the __p__environ array only when already initialized */
