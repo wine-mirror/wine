@@ -1,0 +1,88 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winetest.exe
+APPMODE   = gui
+IMPORTS   = user32 wsock32
+
+C_SRCS = \
+	main.c \
+	send.c \
+	util.c
+
+RC_SRCS = winetest.rc
+
+TESTS = \
+	advapi32 \
+	comctl32 \
+	gdi32 \
+	kernel32 \
+	msvcrt \
+	netapi32 \
+	ntdll \
+	oleaut32 \
+	rpcrt4 \
+	shell32 \
+	shlwapi \
+	urlmon \
+	user32 \
+	wininet \
+	winmm \
+	winspool.drv \
+	ws2_32
+
+@MAKE_PROG_RULES@
+
+# Special rules
+
+TESTBINS = $(TESTS:%=%_test.exe$(DLLEXT))
+
+winetest.rc: maketest Makefile.in
+	$(SRCDIR)/maketest $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )
+
+winetest.res: $(TESTBINS)
+
+clean::
+	$(RM) winetest.rc $(TESTBINS)
+
+depend: winetest.rc
+
+# rules for stripping the test executables
+
+advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+kernel32_test.exe$(DLLEXT): $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+msvcrt_test.exe$(DLLEXT): $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
+	cp $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+netapi32_test.exe$(DLLEXT): $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+ntdll_test.exe$(DLLEXT): $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT)
+	cp $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+oleaut32_test.exe$(DLLEXT): $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+rpcrt4_test.exe$(DLLEXT): $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT)
+	cp $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+shell32_test.exe$(DLLEXT): $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+shlwapi_test.exe$(DLLEXT): $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
+	cp $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+urlmon_test.exe$(DLLEXT): $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT)
+	cp $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+user32_test.exe$(DLLEXT): $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+wininet_test.exe$(DLLEXT): $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT)
+	cp $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+winmm_test.exe$(DLLEXT): $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT)
+	cp $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+winspool.drv_test.exe$(DLLEXT): $(DLLDIR)/winspool/tests/winspool.drv_test.exe$(DLLEXT)
+	cp $(DLLDIR)/winspool/tests/winspool.drv_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+ws2_32_test.exe$(DLLEXT): $(DLLDIR)/winsock/tests/ws2_32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/winsock/tests/ws2_32_test.exe$(DLLEXT) $@ && $(STRIP) -s $@
+
+### Dependencies:

@@ -29,6 +29,7 @@ SUBDIRS = \
 	winemenubuilder \
 	winemine \
 	winepath \
+	winetest \
 	winevdm \
 	winhelp \
 	winver
@@ -56,6 +57,7 @@ INSTALLSUBDIRS = \
 	winemenubuilder \
 	winemine \
 	winepath \
+	winetest \
 	winevdm \
 	winhelp \
 	winver
@@ -104,6 +106,7 @@ SYMLINKS = \
 	winemenubuilder.exe \
 	winemine.exe \
 	winepath.exe \
+	winetest.exe \
 	winevdm.exe \
 	winhelp.exe \
 	winver.exe
@@ -226,6 +229,9 @@ winemine.exe$(DLLEXT): winemine/winemine.exe$(DLLEXT)
 winepath.exe$(DLLEXT): winepath/winepath.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winepath/winepath.exe$(DLLEXT) $@
 
+winetest.exe$(DLLEXT): winetest/winetest.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winetest/winetest.exe$(DLLEXT) $@
+
 winevdm.exe$(DLLEXT): winevdm/winevdm.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winevdm/winevdm.exe$(DLLEXT) $@
 
@@ -260,6 +266,7 @@ winefile/winefile.exe$(DLLEXT): winefile
 winemenubuilder/winemenubuilder.exe$(DLLEXT): winemenubuilder
 winemine/winemine.exe$(DLLEXT): winemine
 winepath/winepath.exe$(DLLEXT): winepath
+winetest/winetest.exe$(DLLEXT): winetest
 winevdm/winevdm.exe$(DLLEXT): winevdm
 winhelp/winhelp.exe$(DLLEXT): winhelp
 winver/winver.exe$(DLLEXT): winver

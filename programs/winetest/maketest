@@ -1,0 +1,25 @@
+#!/bin/sh
+
+if [ -z "$WINE_BUILD" ]; then
+    WINE_BUILD="`date`"
+    echo "warning: using automatically generated BUILD tag: $WINE_BUILD" 1>&2
+fi
+
+echo "/* Automatically generated -- do not edit! */"
+echo "STRINGTABLE {"
+echo "0 \"$WINE_BUILD\""
+
+i=0
+for test
+do
+    i=$(($i+1))
+    echo "$i \"$test\""
+done
+echo "}"
+
+i=0
+for test
+do
+    i=$(($i+1))
+    echo "$i USERDATA \"$test\""
+done

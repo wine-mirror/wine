@@ -1657,6 +1657,7 @@ programs/winefile/Makefile
 programs/winemenubuilder/Makefile
 programs/winemine/Makefile
 programs/winepath/Makefile
+programs/winetest/Makefile
 programs/winevdm/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
