@@ -75,7 +75,7 @@ static int handle_child_status( struct thread *thread, int pid, int status )
     {
         int sig = WSTOPSIG(status);
         if (debug_level && thread)
-            fprintf( stderr, "%08x: *signal* signal=%d\n", (unsigned int)thread, sig );
+            fprintf( stderr, "%04x: *signal* signal=%d\n", thread->id, sig );
         switch(sig)
         {
         case SIGSTOP:  /* continue at once if not suspended */
@@ -97,11 +97,11 @@ static int handle_child_status( struct thread *thread, int pid, int status )
         if (debug_level)
         {
             if (WIFSIGNALED(status))
-                fprintf( stderr, "%08x: *exited* signal=%d\n",
-                         (unsigned int)thread, WTERMSIG(status) );
+                fprintf( stderr, "%04x: *exited* signal=%d\n",
+                         thread->id, WTERMSIG(status) );
             else
-                fprintf( stderr, "%08x: *exited* status=%d\n",
-                         (unsigned int)thread, WEXITSTATUS(status) );
+                fprintf( stderr, "%04x: *exited* status=%d\n",
+                         thread->id, WEXITSTATUS(status) );
         }
     }
     return 0;
@@ -146,7 +146,7 @@ static int attach_thread( struct thread *thread )
         if (errno == ESRCH) thread->unix_pid = 0;  /* process got killed */
         return 0;
     }
-    if (debug_level) fprintf( stderr, "%08x: *attached*\n", (unsigned int)thread );
+    if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
     thread->attached = 1;
     wait4_thread( thread, SIGSTOP );
     return 1;
@@ -161,7 +161,7 @@ void detach_thread( struct thread *thread, int sig )
         /* make sure it is stopped */
         suspend_thread( thread, 0 );
         if (sig) kill( thread->unix_pid, sig );
-        if (debug_level) fprintf( stderr, "%08x: *detached*\n", (unsigned int)thread );
+        if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
         ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
         thread->suspend = 0;  /* detach makes it continue */
         thread->attached = 0;

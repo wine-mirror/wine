@@ -372,9 +372,9 @@ static void dump_get_new_process_info_request( const struct get_new_process_info
 
 static void dump_get_new_process_info_reply( const struct get_new_process_info_reply *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " phandle=%p,", req->phandle );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " thandle=%p,", req->thandle );
     fprintf( stderr, " success=%d", req->success );
 }
@@ -388,7 +388,7 @@ static void dump_new_thread_request( const struct new_thread_request *req )
 
 static void dump_new_thread_reply( const struct new_thread_reply *req )
 {
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " handle=%p", req->handle );
 }
 
@@ -452,8 +452,8 @@ static void dump_init_thread_request( const struct init_thread_request *req )
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " boot=%d,", req->boot );
     fprintf( stderr, " version=%d", req->version );
 }
@@ -488,7 +488,7 @@ static void dump_get_process_info_request( const struct get_process_info_request
 
 static void dump_get_process_info_reply( const struct get_process_info_reply *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " debugged=%d,", req->debugged );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
@@ -507,12 +507,12 @@ static void dump_set_process_info_request( const struct set_process_info_request
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " tid_in=%08x", req->tid_in );
+    fprintf( stderr, " tid_in=%04x", req->tid_in );
 }
 
 static void dump_get_thread_info_reply( const struct get_thread_info_reply *req )
 {
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
@@ -642,7 +642,7 @@ static void dump_dup_handle_reply( const struct dup_handle_reply *req )
 
 static void dump_open_process_request( const struct open_process_request *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d", req->inherit );
 }
@@ -654,7 +654,7 @@ static void dump_open_process_reply( const struct open_process_reply *req )
 
 static void dump_open_thread_request( const struct open_thread_request *req )
 {
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d", req->inherit );
 }
@@ -967,7 +967,7 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " pid=%08x", req->pid );
+    fprintf( stderr, " pid=%04x", req->pid );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )
@@ -1212,7 +1212,7 @@ static void dump_move_console_output_request( const struct move_console_output_r
 static void dump_send_console_signal_request( const struct send_console_signal_request *req )
 {
     fprintf( stderr, " signal=%d,", req->signal );
-    fprintf( stderr, " group_id=%08x", req->group_id );
+    fprintf( stderr, " group_id=%04x", req->group_id );
 }
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
@@ -1289,7 +1289,7 @@ static void dump_create_snapshot_request( const struct create_snapshot_request *
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " pid=%08x", req->pid );
+    fprintf( stderr, " pid=%04x", req->pid );
 }
 
 static void dump_create_snapshot_reply( const struct create_snapshot_reply *req )
@@ -1306,8 +1306,8 @@ static void dump_next_process_request( const struct next_process_request *req )
 static void dump_next_process_reply( const struct next_process_reply *req )
 {
     fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " ppid=%08x,", req->ppid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " ppid=%04x,", req->ppid );
     fprintf( stderr, " heap=%p,", req->heap );
     fprintf( stderr, " module=%p,", req->module );
     fprintf( stderr, " threads=%d,", req->threads );
@@ -1325,8 +1325,8 @@ static void dump_next_thread_request( const struct next_thread_request *req )
 static void dump_next_thread_reply( const struct next_thread_reply *req )
 {
     fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " base_pri=%d,", req->base_pri );
     fprintf( stderr, " delta_pri=%d", req->delta_pri );
 }
@@ -1339,7 +1339,7 @@ static void dump_next_module_request( const struct next_module_request *req )
 
 static void dump_next_module_reply( const struct next_module_reply *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " base=%p,", req->base );
     fprintf( stderr, " size=%d,", req->size );
     fprintf( stderr, " filename=" );
@@ -1353,8 +1353,8 @@ static void dump_wait_debug_event_request( const struct wait_debug_event_request
 
 static void dump_wait_debug_event_reply( const struct wait_debug_event_reply *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " wait=%p,", req->wait );
     fprintf( stderr, " event=" );
     dump_varargs_debug_event( cur_size );
@@ -1393,14 +1393,14 @@ static void dump_output_debug_string_request( const struct output_debug_string_r
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " status=%d", req->status );
 }
 
 static void dump_debug_process_request( const struct debug_process_request *req )
 {
-    fprintf( stderr, " pid=%08x,", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " attach=%d", req->attach );
 }
 
@@ -1761,7 +1761,7 @@ static void dump_wait_input_idle_reply( const struct wait_input_idle_reply *req 
 
 static void dump_send_message_request( const struct send_message_request *req )
 {
-    fprintf( stderr, " id=%08x,", req->id );
+    fprintf( stderr, " id=%04x,", req->id );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
@@ -2032,8 +2032,8 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
 {
     fprintf( stderr, " full_handle=%p,", req->full_handle );
     fprintf( stderr, " last_active=%p,", req->last_active );
-    fprintf( stderr, " pid=%08x,", req->pid );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " atom=%04x", req->atom );
 }
 
@@ -2073,7 +2073,7 @@ static void dump_get_window_children_request( const struct get_window_children_r
 {
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " tid=%08x", req->tid );
+    fprintf( stderr, " tid=%04x", req->tid );
 }
 
 static void dump_get_window_children_reply( const struct get_window_children_reply *req )
@@ -2204,14 +2204,14 @@ static void dump_get_window_properties_reply( const struct get_window_properties
 
 static void dump_attach_thread_input_request( const struct attach_thread_input_request *req )
 {
-    fprintf( stderr, " tid_from=%08x,", req->tid_from );
-    fprintf( stderr, " tid_to=%08x,", req->tid_to );
+    fprintf( stderr, " tid_from=%04x,", req->tid_from );
+    fprintf( stderr, " tid_to=%04x,", req->tid_to );
     fprintf( stderr, " attach=%d", req->attach );
 }
 
 static void dump_get_thread_input_request( const struct get_thread_input_request *req )
 {
-    fprintf( stderr, " tid=%08x", req->tid );
+    fprintf( stderr, " tid=%04x", req->tid );
 }
 
 static void dump_get_thread_input_reply( const struct get_thread_input_reply *req )
@@ -2229,7 +2229,7 @@ static void dump_get_thread_input_reply( const struct get_thread_input_reply *re
 
 static void dump_get_key_state_request( const struct get_key_state_request *req )
 {
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " key=%d", req->key );
 }
 
@@ -2242,7 +2242,7 @@ static void dump_get_key_state_reply( const struct get_key_state_reply *req )
 
 static void dump_set_key_state_request( const struct set_key_state_request *req )
 {
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " keystate=" );
     dump_varargs_bytes( cur_size );
 }
@@ -2331,7 +2331,7 @@ static void dump_set_caret_info_reply( const struct set_caret_info_reply *req )
 static void dump_set_hook_request( const struct set_hook_request *req )
 {
     fprintf( stderr, " id=%d,", req->id );
-    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
@@ -2978,7 +2978,7 @@ void trace_request(void)
     enum request req = current->req.request_header.req;
     if (req < REQ_NB_REQUESTS)
     {
-        fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
+        fprintf( stderr, "%04x: %s(", current->id, req_names[req] );
         if (req_dumpers[req])
         {
             cur_pos = 0;
@@ -2988,15 +2988,15 @@ void trace_request(void)
         }
         fprintf( stderr, " )\n" );
     }
-    else fprintf( stderr, "%08x: %d(?)\n", (unsigned int)current, req );
+    else fprintf( stderr, "%04x: %d(?)\n", current->id, req );
 }
 
 void trace_reply( enum request req, const union generic_reply *reply )
 {
     if (req < REQ_NB_REQUESTS)
     {
-        fprintf( stderr, "%08x: %s() = %s",
-                 (unsigned int)current, req_names[req], get_status_name(current->error) );
+        fprintf( stderr, "%04x: %s() = %s",
+                 current->id, req_names[req], get_status_name(current->error) );
         if (reply_dumpers[req])
         {
             fprintf( stderr, " {" );
@@ -3008,6 +3008,6 @@ void trace_reply( enum request req, const union generic_reply *reply )
         }
         fputc( '\n', stderr );
     }
-    else fprintf( stderr, "%08x: %d() = %s\n",
-                  (unsigned int)current, req, get_status_name(current->error) );
+    else fprintf( stderr, "%04x: %d() = %s\n",
+                  current->id, req, get_status_name(current->error) );
 }

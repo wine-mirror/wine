@@ -114,6 +114,79 @@ static const struct object_ops startup_info_ops =
 };
 
 
+struct ptid_entry
+{
+    void        *ptr;   /* entry ptr */
+    unsigned int next;  /* next free entry */
+};
+
+static struct ptid_entry *ptid_entries;     /* array of ptid entries */
+static unsigned int used_ptid_entries;      /* number of entries in use */
+static unsigned int alloc_ptid_entries;     /* number of allocated entries */
+static unsigned int next_free_ptid;         /* next free entry */
+static unsigned int last_free_ptid;         /* last free entry */
+
+#define PTID_OFFSET 8  /* offset for first ptid value */
+
+/* allocate a new process or thread id */
+unsigned int alloc_ptid( void *ptr )
+{
+    struct ptid_entry *entry;
+    unsigned int id;
+
+    if (used_ptid_entries < alloc_ptid_entries)
+    {
+        id = used_ptid_entries + PTID_OFFSET;
+        entry = &ptid_entries[used_ptid_entries++];
+    }
+    else if (next_free_ptid)
+    {
+        id = next_free_ptid;
+        entry = &ptid_entries[id - PTID_OFFSET];
+        if (!(next_free_ptid = entry->next)) last_free_ptid = 0;
+    }
+    else  /* need to grow the array */
+    {
+        unsigned int count = alloc_ptid_entries + (alloc_ptid_entries / 2);
+        if (!count) count = 64;
+        if (!(entry = realloc( ptid_entries, count * sizeof(*entry) )))
+        {
+            set_error( STATUS_NO_MEMORY );
+            return 0;
+        }
+        ptid_entries = entry;
+        alloc_ptid_entries = count;
+        id = used_ptid_entries + PTID_OFFSET;
+        entry = &ptid_entries[used_ptid_entries++];
+    }
+
+    entry->ptr = ptr;
+    return id;
+}
+
+/* free a process or thread id */
+void free_ptid( unsigned int id )
+{
+    struct ptid_entry *entry = &ptid_entries[id - PTID_OFFSET];
+
+    entry->ptr  = NULL;
+    entry->next = 0;
+
+    /* append to end of free list so that we don't reuse it too early */
+    if (last_free_ptid) ptid_entries[last_free_ptid - PTID_OFFSET].next = id;
+    else next_free_ptid = id;
+
+    last_free_ptid = id;
+}
+
+/* retrieve the pointer corresponding to a process or thread id */
+void *get_ptid_entry( unsigned int id )
+{
+    if (id < PTID_OFFSET) return NULL;
+    if (id - PTID_OFFSET >= used_ptid_entries) return NULL;
+    return ptid_entries[id - PTID_OFFSET].ptr;
+}
+
 /* set the state of the process startup info */
 static void set_process_startup_state( struct process *process, enum startup_state state )
 {
@@ -224,6 +297,8 @@ struct thread *create_process( int fd )
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
+
+    if (!(process->id = alloc_ptid( process ))) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)
@@ -339,6 +414,7 @@ static void process_destroy( struct object *obj )
     if (process->atom_table) release_object( process->atom_table );
     if (process->exe.file) release_object( process->exe.file );
     if (process->exe.filename) free( process->exe.filename );
+    if (process->id) free_ptid( process->id );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -347,8 +423,8 @@ static void process_dump( struct object *obj, int verbose )
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
 
-    fprintf( stderr, "Process next=%p prev=%p handles=%p\n",
-             process->next, process->prev, process->handles );
+    fprintf( stderr, "Process id=%04x next=%p prev=%p handles=%p\n",
+             process->id, process->next, process->prev, process->handles );
 }
 
 static int process_signaled( struct object *obj, struct thread *thread )
@@ -400,11 +476,11 @@ static int startup_info_signaled( struct object *obj, struct thread *thread )
 /* get a process from an id (and increment the refcount) */
 struct process *get_process_from_id( process_id_t id )
 {
-    struct process *p = first_process;
-    while (p && (get_process_id(p) != id)) p = p->next;
-    if (p) grab_object( p );
-    else set_error( STATUS_INVALID_PARAMETER );
-    return p;
+    struct object *obj = get_ptid_entry( id );
+
+    if (obj && obj->ops == &process_ops) return (struct process *)grab_object( obj );
+    set_error( STATUS_INVALID_PARAMETER );
+    return NULL;
 }
 
 /* get a process from a handle (and increment the refcount) */

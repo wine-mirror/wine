@@ -351,15 +351,15 @@ int receive_fd( struct process *process )
         if (!thread || thread->process != process || thread->state == TERMINATED)
         {
             if (debug_level)
-                fprintf( stderr, "%08x: *fd* %d <- %d bad thread id\n",
-                         (unsigned int)data.tid, data.fd, fd );
+                fprintf( stderr, "%04x: *fd* %d <- %d bad thread id\n",
+                         data.tid, data.fd, fd );
             close( fd );
         }
         else
         {
             if (debug_level)
-                fprintf( stderr, "%08x: *fd* %d <- %d\n",
-                         (unsigned int)thread, data.fd, fd );
+                fprintf( stderr, "%04x: *fd* %d <- %d\n",
+                         thread->id, data.fd, fd );
             thread_add_inflight_fd( thread, data.fd, fd );
         }
         if (thread) release_object( thread );
@@ -391,7 +391,8 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     int ret;
 
     if (debug_level)
-        fprintf( stderr, "%08x: *fd* %p -> %d\n", (unsigned int)current, handle, fd );
+        fprintf( stderr, "%04x: *fd* %p -> %d\n",
+                 current ? current->id : process->id, handle, fd );
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);

@@ -34,8 +34,8 @@
     "obj_handle_t"  => "%p",
     "atom_t"        => "%04x",
     "user_handle_t" => "%p",
-    "process_id_t"  => "%08x",
-    "thread_id_t"   => "%08x",
+    "process_id_t"  => "%04x",
+    "thread_id_t"   => "%04x",
     "rectangle_t"   => "&dump_rectangle",
     "char_info_t"   => "&dump_char_info",
 );

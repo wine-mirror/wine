@@ -63,6 +63,7 @@ struct thread
     struct thread         *proc_next;     /* per-process thread list */
     struct thread         *proc_prev;
     struct process        *process;
+    thread_id_t            id;            /* thread id */
     struct mutex          *mutex;         /* list of currently owned mutexes */
     struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
@@ -143,6 +144,6 @@ static inline unsigned int get_error(void)       { return current ? current->err
 static inline void set_error( unsigned int err ) { global_error = err; if (current) current->error = err; }
 static inline void clear_error(void)    { set_error(0); }
 
-static inline thread_id_t get_thread_id( struct thread *thread ) { return (thread_id_t)thread; }
+static inline thread_id_t get_thread_id( struct thread *thread ) { return thread->id; }
 
 #endif  /* __WINE_SERVER_THREAD_H */

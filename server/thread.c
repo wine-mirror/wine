@@ -167,6 +167,12 @@ struct thread *create_thread( int fd, struct process *process )
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
 
+    if (!(thread->id = alloc_ptid( thread )))
+    {
+        release_object( thread );
+        return NULL;
+    }
+
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
     return thread;
@@ -236,6 +242,7 @@ static void destroy_thread( struct object *obj )
     if (thread->info) release_object( thread->info );
     cleanup_thread( thread );
     release_object( thread->process );
+    if (thread->id) free_ptid( thread->id );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -244,8 +251,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread pid=%d teb=%p state=%d\n",
-             thread->unix_pid, thread->teb, thread->state );
+    fprintf( stderr, "Thread id=%04x unix pid=%d teb=%p state=%d\n",
+             thread->id, thread->unix_pid, thread->teb, thread->state );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )
@@ -257,11 +264,11 @@ static int thread_signaled( struct object *obj, struct thread *thread )
 /* get a thread pointer from a thread id (and increment the refcount) */
 struct thread *get_thread_from_id( thread_id_t id )
 {
-    struct thread *t = first_thread;
-    while (t && (get_thread_id(t) != id)) t = t->next;
-    if (t) grab_object( t );
-    else set_error( STATUS_INVALID_PARAMETER );
-    return t;
+    struct object *obj = get_ptid_entry( id );
+
+    if (obj && obj->ops == &thread_ops) return (struct thread *)grab_object( obj );
+    set_error( STATUS_INVALID_PARAMETER );
+    return NULL;
 }
 
 /* get a thread from a handle (and increment the refcount) */
@@ -465,8 +472,8 @@ static int wake_thread( struct thread *thread )
         if ((signaled = check_wait( thread )) == -1) break;
 
         cookie = thread->wait->cookie;
-        if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
-                                  (unsigned int)thread, signaled, cookie );
+        if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
+                                  thread->id, signaled, cookie );
         end_wait( thread );
         if (send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
 	    break;
@@ -484,8 +491,8 @@ static void thread_timeout( void *ptr )
     wait->user = NULL;
     if (thread->wait != wait) return; /* not the top-level wait, ignore it */
 
-    if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
-                              (unsigned int)thread, STATUS_TIMEOUT, cookie );
+    if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
+                              thread->id, STATUS_TIMEOUT, cookie );
     end_wait( thread );
     if (send_thread_wakeup( thread, cookie, STATUS_TIMEOUT ) == -1) return;
     /* check if other objects have become signaled in the meantime */
@@ -717,8 +724,8 @@ void kill_thread( struct thread *thread, int violent_death )
     thread->exit_time = time(NULL);
     if (current == thread) current = NULL;
     if (debug_level)
-        fprintf( stderr,"%08x: *killed* exit_code=%d\n",
-                 (unsigned int)thread, thread->exit_code );
+        fprintf( stderr,"%04x: *killed* exit_code=%d\n",
+                 thread->id, thread->exit_code );
     if (thread->wait)
     {
         while (thread->wait) end_wait( thread );

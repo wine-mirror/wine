@@ -56,6 +56,8 @@ struct process
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
     struct handle_table *handles;         /* handle entries */
+    process_id_t         id;              /* id of the process */
+    process_id_t         group_id;        /* group id of the process */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */
     struct timeval       start_time;      /* absolute time at process start */
@@ -73,7 +75,6 @@ struct process
     struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
-    process_id_t         group_id;        /* group ID of the process */
 };
 
 struct process_snapshot
@@ -94,6 +95,9 @@ struct module_snapshot
 
 /* process functions */
 
+extern unsigned int alloc_ptid( void *ptr );
+extern void free_ptid( unsigned int id );
+extern void *get_ptid_entry( unsigned int id );
 extern struct thread *create_process( int fd );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
@@ -115,7 +119,8 @@ extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
-inline static process_id_t get_process_id( struct process *process ) { return (process_id_t)process; }
+inline static process_id_t get_process_id( struct process *process ) { return process->id; }
+
 inline static int is_process_init_done( struct process *process )
 {
     return process->startup_state == STARTUP_DONE;
