@@ -91,6 +91,7 @@ static void test_GetAcceptLanguagesA(void)
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     ok(retval == S_OK, "function result wrong: got %08lx, expected S_OK\n", retval);
     ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+    trace("GetAcceptLanguagesA: size %08lx, buffer %s\n", buffersize, buffer);
 
     buffersize = buffersize2 = strlen(buffer);
     memset(buffer, 0, sizeof(buffer));
