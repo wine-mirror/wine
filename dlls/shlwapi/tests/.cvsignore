@@ -2,6 +2,7 @@ Makefile
 clist.ok
 clsid.ok
 generated.ok
+ordinal.ok
 path.ok
 shreg.ok
 string.ok

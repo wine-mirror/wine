@@ -9,6 +9,7 @@ CTESTS = \
 	clist.c \
 	clsid.c \
 	generated.c \
+	ordinal.c \
 	path.c \
 	shreg.c \
 	string.c
