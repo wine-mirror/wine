@@ -29,8 +29,10 @@ install:: $(PROGRAMS)
 	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
 	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
 	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
+	cd $(bindir) && $(RM) winecpp && $(LN_S) winegcc winecpp
 
 uninstall::
-	$(RM) $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winewrap
+	$(RM) $(bindir)/winegcc $(bindir)/wineg++ \
+	      $(bindir)/winecpp $(bindir)/winewrap
 
 ### Dependencies:

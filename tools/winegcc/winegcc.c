@@ -102,13 +102,14 @@ int main(int argc, char **argv)
 {
     strarray *gcc_argv;
     int i, j;
-    int linking = 1, cpp = 0, use_static_linking = 0;
+    int linking = 1, cpp = 0, preprocessor = 0, use_static_linking = 0;
     int use_stdinc = 1, use_stdlib = 1, use_msvcrt = 0, gui_app = 0;
 
     tmp_files = strarray_alloc();
     atexit(clean_temp_files);
     
-    if (strendswith(argv[0], "++")) cpp = 1;
+    if (strendswith(argv[0], "winecpp")) preprocessor = 1;
+    else if (strendswith(argv[0], "++")) cpp = 1;
     
     for ( i = 1 ; i < argc ; i++ ) 
     {
@@ -161,6 +162,7 @@ int main(int argc, char **argv)
         } 
     }
 
+    if (preprocessor) linking = 0;
     if (use_static_linking) error("Static linking is not supported.");
 
     gcc_argv = strarray_alloc();
@@ -241,10 +243,13 @@ int main(int argc, char **argv)
     }
     else
     {
-        strarray_add(gcc_argv, cpp ? "g++" : "gcc");
+        strarray_add(gcc_argv, preprocessor ? "cpp" : cpp ? "g++" : "gcc");
 
-        strarray_add(gcc_argv, "-fshort-wchar");
-        strarray_add(gcc_argv, "-fPIC");
+        if (!preprocessor)
+        {
+            strarray_add(gcc_argv, "-fshort-wchar");
+            strarray_add(gcc_argv, "-fPIC");
+        }
         if (use_stdinc)
         {
             if (use_msvcrt)
