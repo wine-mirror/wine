@@ -3116,8 +3116,6 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 
 /******************************************************************************
  *		GetDefaultPrinterA   (WINSPOOL.@)
- *
- * Based on PRINTDLG_GetDefaultPrinterName in dlls/commdlg/printdlg.c
  */
 BOOL WINAPI GetDefaultPrinterA(LPSTR name, LPDWORD namesize)
 {

@@ -56,6 +56,7 @@ static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, char* DeviceDriverName,
     char*   pTempPtr;
     LPDEVNAMES lpDevNames;
     char buf[260];
+    DWORD dwBufLen = sizeof(buf);
 
     size = strlen(DeviceDriverName) + 1
             + strlen(DeviceName) + 1
@@ -84,7 +85,7 @@ static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, char* DeviceDriverName,
     strcpy(pTempPtr, OutputPort);
     lpDevNames->wOutputOffset = pTempPtr - pDevNamesSpace;
 
-    PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf));
+    GetDefaultPrinterA(buf, &dwBufLen);
     lpDevNames->wDefault = (strcmp(buf, DeviceName) == 0) ? 1 : 0;
     GlobalUnlock16(*hmem);
     return TRUE;
@@ -195,7 +196,8 @@ static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam,
     } else {
 	/* else just use default printer */
 	char name[200];
-	BOOL ret = PRINTDLG_GetDefaultPrinterNameA(name, sizeof(name));
+        DWORD dwBufLen = sizeof(name);
+	BOOL ret = GetDefaultPrinterA(name, &dwBufLen);
 
 	if (ret)
 	    PRINTDLG_ChangePrinterA(hDlg, name, PrintStructures);

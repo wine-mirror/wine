@@ -99,7 +99,6 @@ static struct pd_flags {
  * Do not Export to other applications or dlls
  */
 
-BOOL PRINTDLG_GetDefaultPrinterNameA(LPSTR buf, DWORD len);
 INT PRINTDLG_SetUpPrinterListComboA(HWND hDlg, UINT id, LPCSTR name);
 BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 				   PRINT_PTRA *PrintStructures);

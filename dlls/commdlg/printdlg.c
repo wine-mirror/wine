@@ -72,52 +72,6 @@ static struct pd_flags psd_flags[] = {
 };
 
 /***********************************************************************
- *    PRINTDLG_GetDefaultPrinterName
- *
- * Returns the default printer name in buf.
- * Even under WinNT/2000 default printer is retrieved via GetProfileString -
- * these entries are mapped somewhere in the registry rather than win.ini.
- *
- * Returns TRUE on success else FALSE
- */
-BOOL PRINTDLG_GetDefaultPrinterNameA(LPSTR buf, DWORD len)
-{
-    char *ptr;
-
-    if(!GetProfileStringA("windows", "device", "", buf, len)) {
-	TRACE("No profile entry for default printer found.\n");
-	return FALSE;
-    }
-    if((ptr = strchr(buf, ',')) == NULL) {
-	FIXME("bad format for default printer (%s)!\n",buf);
-	return FALSE;
-    }
-    *ptr = '\0';
-    return TRUE;
-}
-
-static BOOL PRINTDLG_GetDefaultPrinterNameW(LPWSTR buf, DWORD len)
-{
-    LPSTR ptr, bufA = (LPSTR)HeapAlloc(GetProcessHeap(),0,len+1);
-
-
-    if(!GetProfileStringA("windows", "device", "", bufA, len)) {
-	TRACE("No profile entry for default printer found.\n");
-        HeapFree(GetProcessHeap(),0,bufA);
-	return FALSE;
-    }
-    if((ptr = strchr(bufA, ',')) == NULL) {
-	FIXME("bad format for default printer (%s)!\n",bufA);
-        HeapFree(GetProcessHeap(),0,bufA);
-	return FALSE;
-    }
-    *ptr = '\0';
-    MultiByteToWideChar( CP_ACP, 0, bufA, -1, buf, len );
-    HeapFree(GetProcessHeap(),0,bufA);
-    return TRUE;
-}
-
-/***********************************************************************
  *    PRINTDLG_OpenDefaultPrinter
  *
  * Returns a winspool printer handle to the default printer in *hprn
@@ -128,8 +82,9 @@ static BOOL PRINTDLG_GetDefaultPrinterNameW(LPWSTR buf, DWORD len)
 BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
 {
     char buf[260];
+    DWORD dwBufLen = sizeof(buf);
     BOOL res;
-    if(!PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf)))
+    if(!GetDefaultPrinterA(buf, &dwBufLen))
         return FALSE;
     res = OpenPrinterA(buf, hprn, NULL);
     if (!res)
@@ -170,9 +125,10 @@ INT PRINTDLG_SetUpPrinterListComboA(HWND hDlg, UINT id, LPCSTR name)
 				(LPARAM)name)) == CB_ERR) {
 
         char buf[260];
+        DWORD dwBufLen = sizeof(buf);
         FIXME("Can't find '%s' in printer list so trying to find default\n",
 	      name);
-	if(!PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf)))
+	if(!GetDefaultPrinterA(buf, &dwBufLen))
 	    return num;
 	i = SendDlgItemMessageA(hDlg, id, CB_FINDSTRINGEXACT, -1, (LPARAM)buf);
 	if(i == CB_ERR)
@@ -203,9 +159,10 @@ static INT PRINTDLG_SetUpPrinterListComboW(HWND hDlg, UINT id, LPCWSTR name)
 
 	/* ansi is ok */
         char buf[260];
+        DWORD dwBufLen = sizeof(buf);
         FIXME("Can't find '%s' in printer list so trying to find default\n",
 	      debugstr_w(name));
-	if(!PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf)))
+	if(!GetDefaultPrinterA(buf, &dwBufLen))
 	    return num;
 	i = SendDlgItemMessageA(hDlg, id, CB_FINDSTRINGEXACT, -1, (LPARAM)buf);
 	if(i == CB_ERR)
@@ -231,6 +188,7 @@ static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, char* DeviceDriverName,
     char*   pTempPtr;
     LPDEVNAMES lpDevNames;
     char buf[260];
+    DWORD dwBufLen = sizeof(buf);
 
     size = strlen(DeviceDriverName) + 1
             + strlen(DeviceName) + 1
@@ -259,7 +217,7 @@ static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, char* DeviceDriverName,
     strcpy(pTempPtr, OutputPort);
     lpDevNames->wOutputOffset = pTempPtr - pDevNamesSpace;
 
-    PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf));
+    GetDefaultPrinterA(buf, &dwBufLen);
     lpDevNames->wDefault = (strcmp(buf, DeviceName) == 0) ? 1 : 0;
     GlobalUnlock(*hmem);
     return TRUE;
@@ -273,7 +231,7 @@ static BOOL PRINTDLG_CreateDevNamesW(HGLOBAL *hmem, LPCWSTR DeviceDriverName,
     LPWSTR   pTempPtr;
     LPDEVNAMES lpDevNames;
     WCHAR bufW[260];
-    char buf[260];
+    DWORD dwBufLen = sizeof(bufW) / sizeof(WCHAR);
 
     size = sizeof(WCHAR)*lstrlenW(DeviceDriverName) + 2
             + sizeof(WCHAR)*lstrlenW(DeviceName) + 2
@@ -302,8 +260,7 @@ static BOOL PRINTDLG_CreateDevNamesW(HGLOBAL *hmem, LPCWSTR DeviceDriverName,
     lstrcpyW(pTempPtr, OutputPort);
     lpDevNames->wOutputOffset = pTempPtr - pDevNamesSpace;
 
-    PRINTDLG_GetDefaultPrinterNameA(buf, sizeof(buf));
-    MultiByteToWideChar(CP_ACP, 0, buf, -1, bufW, -1);
+    GetDefaultPrinterW(bufW, &dwBufLen);
     lpDevNames->wDefault = (lstrcmpW(bufW, DeviceName) == 0) ? 1 : 0;
     GlobalUnlock(*hmem);
     return TRUE;
@@ -1317,7 +1274,8 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
     } else {
 	/* else use default printer */
 	char name[200];
-	BOOL ret = PRINTDLG_GetDefaultPrinterNameA(name, sizeof(name));
+        DWORD dwBufLen = sizeof(name);
+	BOOL ret = GetDefaultPrinterA(name, &dwBufLen);
 
 	if (ret)
 	    PRINTDLG_ChangePrinterA(hDlg, name, PrintStructures);
@@ -1421,7 +1379,8 @@ static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
     } else {
 	/* else use default printer */
 	WCHAR name[200];
-	BOOL ret = PRINTDLG_GetDefaultPrinterNameW(name, sizeof(name));
+        DWORD dwBufLen = sizeof(name) / sizeof(WCHAR);
+	BOOL ret = GetDefaultPrinterW(name, &dwBufLen);
 
 	if (ret)
 	    PRINTDLG_ChangePrinterW(hDlg, name, PrintStructures);
