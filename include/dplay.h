@@ -14,7 +14,7 @@ typedef LPVOID (*LPRGLPVOID)[];
 typedef LPRGLPVOID PRGPVOID, LPRGPVOID, PRGLPVOID, PAPVOID, LPAPVOID, PALPVOID, LPALPVOID;
 
 #define VOL volatile
-typedef VOID *VOL LPVOIDV;
+typedef VOID * volatile LPVOIDV;
 
 
 /*****************************************************************************
