@@ -3986,6 +3986,8 @@ TOOLBAR_MarkButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
+    DWORD oldState;
+    TBUTTON_INFO *btnPtr;
 
     TRACE("hwnd = %p, wParam = %d, lParam = 0x%08lx\n", hwnd, wParam, lParam);
 
@@ -3993,10 +3995,16 @@ TOOLBAR_MarkButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nIndex == -1)
         return FALSE;
 
+    btnPtr = &infoPtr->buttons[nIndex];
+    oldState = btnPtr->fsState;
+
     if (LOWORD(lParam))
-        infoPtr->buttons[nIndex].fsState |= TBSTATE_MARKED;
+        btnPtr->fsState |= TBSTATE_MARKED;
     else
-        infoPtr->buttons[nIndex].fsState &= ~TBSTATE_MARKED;
+        btnPtr->fsState &= ~TBSTATE_MARKED;
+
+    if(oldState != btnPtr->fsState)
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
