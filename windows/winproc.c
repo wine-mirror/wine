@@ -19,88 +19,96 @@
 
 typedef struct
 {
-    WNDPROC32       func;        /* 32-bit function, or 0 if free */
-    unsigned int    count : 30;  /* Reference count, or next free if func==0 */
-    WINDOWPROCTYPE  type : 2;    /* Function type */
+    UINT32          magic;    /* Magic number */
+    WINDOWPROCTYPE  type;     /* Function type */
+    UINT32          count;    /* Reference count */
+    UINT32          func;     /* 16- or 32-bit function */
 } WINDOWPROC;
 
-#define NB_WINPROCS    1024  /* Must be < 64K; 1024 should be enough for now */
+#define WINPROC_MAGIC  ('W' | ('P' << 8) | ('R' << 16) | ('C' << 24))
 
-static WINDOWPROC winProcs[NB_WINPROCS];
-static int lastWinProc = 0;
-static int freeWinProc = NB_WINPROCS;
 
-/* Check if a win proc was created by WINPROC_AllocWinProc */
-#define IS_ALLOCATED_WINPROC(func)  (HIWORD(func) == 0xffff)
+static HANDLE32 WinProcHeap = 0;
+
+
+/**********************************************************************
+ *	     WINPROC_GetPtr
+ *
+ * Return a pointer to the win proc.
+ */
+static WINDOWPROC *WINPROC_GetPtr( HANDLE32 handle )
+{
+    WINDOWPROC *proc;
+
+    /* Check for a linear pointer */
+
+    if (HEAP_IsInsideHeap( WinProcHeap, 0, (LPVOID)handle ))
+    {
+        proc = (WINDOWPROC *)handle;
+        if (proc->magic == WINPROC_MAGIC) return proc;
+    }
+
+    /* Check for a segmented pointer */
+
+    if (!IsBadReadPtr( (SEGPTR)handle, sizeof(WINDOWPROC) ))
+    {
+        proc = (WINDOWPROC *)PTR_SEG_TO_LIN(handle);
+        if (proc->magic == WINPROC_MAGIC) return proc;
+    }
+
+    return NULL;
+}
+
 
 /**********************************************************************
  *	     WINPROC_AllocWinProc
  *
  * Allocate a new window procedure.
  */
-WNDPROC16 WINPROC_AllocWinProc( WNDPROC32 func, WINDOWPROCTYPE type )
+HANDLE32 WINPROC_AllocWinProc( UINT32 func, WINDOWPROCTYPE type )
 {
     WINDOWPROC *proc;
-    if (!func) return (WNDPROC16)0;  /* Null win proc remains null */
-    if (IS_ALLOCATED_WINPROC(func))  /* Already allocated? */
+
+    /* Create the heap if necessary */
+
+    if (!WinProcHeap)
     {
-        if (LOWORD(func) >= NB_WINPROCS) return (WNDPROC16)0;
-        proc = &winProcs[LOWORD(func)];
-        if (!proc->func) return (WNDPROC16)0;
+        if (!(WinProcHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return 0;
+    }
+
+    /* Check if function is already a win proc */
+
+    if ((proc = WINPROC_GetPtr( (HANDLE32)func )))
+    {
         proc->count++;
-        return (WNDPROC16)func;
+        return (HANDLE32)func;
     }
-    if (freeWinProc < NB_WINPROCS)  /* There is a free entry */
-    {
-        proc = &winProcs[freeWinProc];
-        proc->func = func;
-        func = (WNDPROC32)MAKELONG( freeWinProc, 0xffff );
-        freeWinProc = proc->count;  /* Next free entry */
-        proc->count = 1;
-        proc->type  = type;
-        return (WNDPROC16)func;
-    }
-    if (lastWinProc < NB_WINPROCS)  /* There's a free entry at the end */
-    {
-        proc = &winProcs[lastWinProc];
-        proc->func = func;
-        func = (WNDPROC32)MAKELONG( lastWinProc, 0xffff );
-        lastWinProc++;
-        proc->count = 1;
-        proc->type  = type;
-        return (WNDPROC16)func;
-    }
-    fprintf( stderr, "WINPROC_AllocWinProc: out of window procedures.\n"
-                     "Please augment NB_WINPROCS in winproc.c\n" );
-    return (WNDPROC16)0;
+
+    /* Now allocate a new one */
+
+    if (!(proc = HeapAlloc( WinProcHeap, 0, sizeof(WINDOWPROC) ))) return 0;
+    proc->magic = WINPROC_MAGIC;
+    proc->type  = type;
+    proc->count = 1;
+    proc->func  = func;
+    return (HANDLE32)proc;
 }
 
 
 /**********************************************************************
- *	     WINPROC_GetWinProcType
+ *	     WINPROC_CopyWinProc
  *
- * Return the type of a window procedure.
+ * Copy a window procedure.
  */
-WINDOWPROCTYPE WINPROC_GetWinProcType( WNDPROC16 func )
+HANDLE32 WINPROC_CopyWinProc( HANDLE32 handle )
 {
-    WORD id = LOWORD(func);
-    if (!IS_ALLOCATED_WINPROC(func)) return WIN_PROC_16;
-    if ((id >= NB_WINPROCS) || !winProcs[id].func) return WIN_PROC_INVALID;
-    return winProcs[id].type;
-}
-
-
-/**********************************************************************
- *	     WINPROC_GetWinProcFunc
- *
- * Return the 32-bit window procedure for a winproc.
- */
-WNDPROC32 WINPROC_GetWinProcFunc( WNDPROC16 func )
-{
-    WORD id = LOWORD(func);
-    if (!IS_ALLOCATED_WINPROC(func)) return NULL;
-    if (id >= NB_WINPROCS) return NULL;
-    return winProcs[id].func;
+    WINDOWPROC *proc;
+    if ((proc = WINPROC_GetPtr( (HANDLE32)handle )))
+    {
+        proc->count++;
+        return handle;
+    }
+    return (HANDLE32)0;
 }
 
 
@@ -109,22 +117,59 @@ WNDPROC32 WINPROC_GetWinProcFunc( WNDPROC16 func )
  *
  * Free a window procedure.
  */
-void WINPROC_FreeWinProc( WNDPROC16 func )
+void WINPROC_FreeWinProc( HANDLE32 handle )
 {
-    WORD id = LOWORD(func);
-    if (!IS_ALLOCATED_WINPROC(func)) return;
-    if ((id >= NB_WINPROCS) || !winProcs[id].func)
+    WINDOWPROC *proc;
+
+    if (!(proc = WINPROC_GetPtr( handle )))
     {
-        fprintf( stderr, "WINPROC_FreeWinProc: invalid proc %08x\n",
-                 (UINT32)func );
+        fprintf( stderr, "WINPROC_FreeWinProc: invalid proc %08x\n", handle );
         return;
     }
-    if (--winProcs[id].count == 0)
+    if (--proc->count == 0)
     {
-        winProcs[id].func = 0;
-        winProcs[id].count = freeWinProc;
-        freeWinProc = id;
+        proc->magic = 0;  /* Just in case */
+        HeapFree( WinProcHeap, 0, proc );
     }
+}
+
+
+/**********************************************************************
+ *	     WINPROC_GetWinProcType
+ *
+ * Return the window procedure type.
+ */
+WINDOWPROCTYPE WINPROC_GetWinProcType( HANDLE32 handle )
+{
+    WINDOWPROC *proc = WINPROC_GetPtr( handle );
+    if (!proc) return WIN_PROC_INVALID;
+    return proc->type;
+}
+
+
+/**********************************************************************
+ *	     WINPROC_GetFunc16
+ *
+ * Return the 16-bit function pointer, or NULL if none.
+ */
+WNDPROC16 WINPROC_GetFunc16( HANDLE32 handle )
+{
+    WINDOWPROC *proc = WINPROC_GetPtr( handle );
+    if (!proc) return (WNDPROC16)0;
+    return (WNDPROC16)HEAP_GetSegptr( WinProcHeap, 0, proc );
+}
+
+
+/**********************************************************************
+ *	     WINPROC_GetFunc32
+ *
+ * Return the 32-bit function pointer, or NULL if none.
+ */
+WNDPROC32 WINPROC_GetFunc32( HANDLE32 handle )
+{
+    WINDOWPROC *proc = WINPROC_GetPtr( handle );
+    if (!proc) return (WNDPROC32)0;
+    return (WNDPROC32)proc;
 }
 
 
@@ -148,8 +193,8 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC32 func, HWND32 hwnd,
             result = CallWndProc32( func, hwnd, msg, wParam, (LPARAM)str );
             STRING32_UniToAnsi( (LPSTR)lParam, str );
             HeapFree( SystemHeap, 0, str );
-            return strlen( (LPSTR)lParam ) + 1;
         }
+        return result;  /* FIXME? */
 
     case WM_SETTEXT:
         {
@@ -198,8 +243,8 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC32 func, HWND32 hwnd,
             result = CallWndProc32( func, hwnd, msg, wParam, (LPARAM)str );
             STRING32_AnsiToUni( (LPWSTR)lParam, str );
             HeapFree( SystemHeap, 0, str );
-            return STRING32_lstrlenW( (LPWSTR)lParam ) + 1;  /* FIXME? */
         }
+        return result;  /* FIXME? */
 
     case WM_SETTEXT:
         {
@@ -214,11 +259,13 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC32 func, HWND32 hwnd,
     case WM_CREATE:
         {
             CREATESTRUCT32A cs = *(CREATESTRUCT32A *)lParam;
-            cs.lpszName  = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
-            cs.lpszClass = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
+            if (HIWORD(cs.lpszName))
+                cs.lpszName  = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
+            if (HIWORD(cs.lpszClass))
+                cs.lpszClass = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
             result = CallWndProc32( func, hwnd, msg, wParam, (LPARAM)&cs );
-            free( (LPVOID)cs.lpszName );
-            free( (LPVOID)cs.lpszClass );
+            if (HIWORD(cs.lpszName)) free( (LPVOID)cs.lpszName );
+            if (HIWORD(cs.lpszClass)) free( (LPVOID)cs.lpszClass );
         }
         return result;
 	
@@ -563,13 +610,21 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, WORD ds, HWND32 hwnd,
             cls  = SEGPTR_STRDUP( cs32->lpszClass );
             cs->lpszName  = SEGPTR_GET(name);
             cs->lpszClass = SEGPTR_GET(cls);
+#ifdef WINELIB
             result = CallWndProc16( func, ds, hwnd, msg, (WPARAM16)wParam,
                                     (LPARAM)SEGPTR_GET(cs) );
-            STRUCT32_CREATESTRUCT16to32A( cs, cs32 );
-            if (PTR_SEG_TO_LIN(cs->lpszName) != name)
-                cs32->lpszName  = (LPCSTR)PTR_SEG_TO_LIN( cs->lpszName );
-            if (PTR_SEG_TO_LIN(cs->lpszClass) != cls)
-                cs32->lpszClass = (LPCSTR)PTR_SEG_TO_LIN( cs->lpszClass );
+#else
+            /* Build the CREATESTRUCT on the 16-bit stack. */
+            /* This is really ugly, but some programs (notably the */
+            /* "Undocumented Windows" examples) want it that way.  */
+            result = CallWndProcNCCREATE16( func, ds, cs->dwExStyle,
+                      cs->lpszClass, cs->lpszName, cs->style, cs->x, cs->y,
+                      cs->cx, cs->cy, cs->hwndParent, cs->hMenu, cs->hInstance,
+                      (LONG)cs->lpCreateParams, hwnd, msg, (WPARAM16)wParam,
+                      MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
+                                IF1632_Saved16_ss ) );
+#endif  /* WINELIB */
+            /* We don't bother to translate the structure back */
             SEGPTR_FREE(name);
             SEGPTR_FREE(cls);
             SEGPTR_FREE(cs);
@@ -580,6 +635,10 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, WORD ds, HWND32 hwnd,
         if ((wParam == WM_CREATE) || (wParam == WM_DESTROY))
             return CallWndProc16( func, ds, hwnd, msg, (WPARAM16)wParam,
                                   MAKELPARAM( (HWND16)lParam, LOWORD(wParam)));
+        else
+            return CallWndProc16( func, ds, hwnd, msg,
+                                  (WPARAM16)wParam, lParam );
+
     case WM_SETTEXT:
         {
             LPSTR str = SEGPTR_STRDUP( (LPSTR)lParam );
@@ -650,12 +709,14 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, WORD ds, HWND32 hwnd,
     case WM_CREATE:
         {
             CREATESTRUCT32A cs = *(CREATESTRUCT32A *)lParam;
-            cs.lpszName  = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
-            cs.lpszClass = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
+            if (HIWORD(cs.lpszName))
+                cs.lpszName  = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
+            if (HIWORD(cs.lpszClass))
+                cs.lpszClass = STRING32_DupUniToAnsi( (LPCWSTR)cs.lpszName );
             result = WINPROC_CallProc32ATo16( func, ds, hwnd, msg, wParam,
                                               (LPARAM)&cs );
-            free( (LPVOID)cs.lpszName );
-            free( (LPVOID)cs.lpszClass );
+            if (HIWORD(cs.lpszName)) free( (LPVOID)cs.lpszName );
+            if (HIWORD(cs.lpszClass)) free( (LPVOID)cs.lpszClass );
         }
         return result;
 	
@@ -683,22 +744,31 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
                           WPARAM16 wParam, LPARAM lParam )
 {
     WND *wndPtr;
+    WINDOWPROC *proc = WINPROC_GetPtr( (HANDLE32)func );
 
-    switch(WINPROC_GetWinProcType(func))
+    if (!proc)
     {
-    case WIN_PROC_16:
         wndPtr = WIN_FindWndPtr( hwnd );
         return CallWndProc16( (FARPROC)func,
                               wndPtr ? wndPtr->hInstance : CURRENT_DS,
                               hwnd, msg, wParam, lParam );
+    }
+
+    switch(proc->type)
+    {
+    case WIN_PROC_16:
+        wndPtr = WIN_FindWndPtr( hwnd );
+        return CallWndProc16( (FARPROC)proc->func,
+                              wndPtr ? wndPtr->hInstance : CURRENT_DS,
+                              hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return WINPROC_CallProc16To32A( WINPROC_GetWinProcFunc(func),
+        return WINPROC_CallProc16To32A( (WNDPROC32)proc->func,
                                         hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallProc16To32W( WINPROC_GetWinProcFunc(func),
+        return WINPROC_CallProc16To32W( (WNDPROC32)proc->func,
                                         hwnd, msg, wParam, lParam );
     default:
-        fprintf(stderr, "CallWindowProc16: invalid func %08x\n", (UINT32)func);
+        fprintf( stderr, "CallWindowProc16: invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -711,22 +781,25 @@ LRESULT CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                            WPARAM32 wParam, LPARAM lParam )
 {
     WND *wndPtr;
+    WINDOWPROC *proc = WINPROC_GetPtr( (HANDLE32)func );
 
-    switch(WINPROC_GetWinProcType( (WNDPROC16)func ))
+    if (!proc) return CallWndProc32( func, hwnd, msg, wParam, lParam );
+
+    switch(proc->type)
     {
     case WIN_PROC_16:
         wndPtr = WIN_FindWndPtr( hwnd );
-        return WINPROC_CallProc32ATo16( (FARPROC)func,
+        return WINPROC_CallProc32ATo16( (FARPROC)proc->func,
                                        wndPtr ? wndPtr->hInstance : CURRENT_DS,
                                        hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return CallWndProc32( WINPROC_GetWinProcFunc( (WNDPROC16)func ),
+        return CallWndProc32( (WNDPROC32)proc->func,
                               hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallProc32ATo32W(WINPROC_GetWinProcFunc((WNDPROC16)func),
-                                        hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo32W( (WNDPROC32)proc->func,
+                                         hwnd, msg, wParam, lParam );
     default:
-        fprintf(stderr,"CallWindowProc32A: invalid func %08x\n",(UINT32)func);
+        fprintf( stderr, "CallWindowProc32A: invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -739,22 +812,25 @@ LRESULT CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                            WPARAM32 wParam, LPARAM lParam )
 {
     WND *wndPtr;
+    WINDOWPROC *proc = WINPROC_GetPtr( (HANDLE32)func );
 
-    switch(WINPROC_GetWinProcType( (WNDPROC16)func ))
+    if (!proc) return CallWndProc32( func, hwnd, msg, wParam, lParam );
+
+    switch(proc->type)
     {
     case WIN_PROC_16:
         wndPtr = WIN_FindWndPtr( hwnd );
-        return WINPROC_CallProc32WTo16( (FARPROC)func,
+        return WINPROC_CallProc32WTo16( (FARPROC)proc->func,
                                        wndPtr ? wndPtr->hInstance : CURRENT_DS,
                                        hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return WINPROC_CallProc32WTo32A(WINPROC_GetWinProcFunc((WNDPROC16)func),
-                                        hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo32A( (WNDPROC32)proc->func,
+                                         hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return CallWndProc32( WINPROC_GetWinProcFunc( (WNDPROC16)func ),
+        return CallWndProc32( (WNDPROC32)proc->func,
                               hwnd, msg, wParam, lParam );
     default:
-        fprintf(stderr,"CallWindowProc32W: invalid func %08x\n",(UINT32)func);
+        fprintf( stderr, "CallWindowProc32W: invalid proc %p\n", proc );
         return 0;
     }
 }

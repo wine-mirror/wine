@@ -1,3 +1,7 @@
+Sun Jun  2 13:14:55 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* Program icons: repaint on WM_NCPAINT or WM_PAINTICON
+
 Sun Apr 14 20:09:19 1996  Pablo Saratxaga <srtxg@linux.chanae.stben.be>
 
 	* [Fr.rc] (new)

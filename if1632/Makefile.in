@@ -42,7 +42,6 @@ DLLS	= \
 	winsock.spec \
 	winspool.spec \
 	wprocs.spec \
-	wprocs32.spec \
 	wsock32.spec
 
 SPEC_FILES = $(DLLS:.spec=.S)

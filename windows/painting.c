@@ -10,6 +10,7 @@
 #include "win.h"
 #include "queue.h"
 #include "gdi.h"
+#include "dce.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN */
 #include "debug.h"
@@ -104,8 +105,14 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     HideCaret( hwnd );
 
-    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
-    if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
+    dprintf_win(stddeb,"hrgnUpdate = %04x, ", hrgnUpdate);
+
+    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT | DCX_USESTYLE );
+
+    dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
+
+    /* pseudocode from "Internals" doesn't delete hrgnUpdate - yet another clue
+       that ReleaseDC should take care of it (hence DCX_KEEPCLIPRGN) */
 
     if (!lps->hdc)
     {
@@ -348,7 +355,7 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
         if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
         {
             HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
-                               DCX_INTERSECTRGN | DCX_USESTYLE );
+                               DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT);
             if (hdc)
             {
               /* Don't send WM_ERASEBKGND to icons */

@@ -334,14 +334,14 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 /***********************************************************************
  *           BRUSH_SelectObject
  */
-HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
+HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 {
     HBITMAP hBitmap;
     BITMAPINFO * bmpInfo;
     HBRUSH prevHandle = dc->w.hBrush;
 
     dprintf_gdi(stddeb, "Brush_SelectObject: hdc=%04x hbrush=%04x\n",
-                hdc,hbrush);
+                dc->hSelf,hbrush);
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
     {
 	switch (brush->logbrush.lbStyle)
@@ -400,7 +400,7 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HANDLE)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
-	    hBitmap = CreateDIBitmap( hdc, &bmpInfo->bmiHeader, CBM_INIT,
+	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader, CBM_INIT,
 				      ((char *)bmpInfo) + size, bmpInfo,
 				      (WORD) brush->logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );

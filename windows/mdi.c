@@ -356,10 +356,11 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
         style |= (WS_VISIBLE | WS_OVERLAPPEDWINDOW);
       }
  
-    hwnd = CreateWindow16( cs->szClass, cs->szTitle, style, 
+    hwnd = CreateWindow16( (LPCSTR)PTR_SEG_TO_LIN(cs->szClass),
+                           (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle), style, 
 			  cs->x, cs->y, cs->cx, cs->cy, parent, 
                          (HMENU)(DWORD)(WORD)wIDmenu, w->hInstance, 
-			 (SEGPTR)lParam);
+			 (LPVOID)lParam);
 
     if (hwnd)
     {

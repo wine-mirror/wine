@@ -519,5 +519,6 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.hDC        = hDC;
     dis.itemData   = 0;
     GetClientRect32( wndPtr->hwndSelf, &dis.rcItem );
-    SendMessage32A( GetParent(wndPtr->hwndSelf), WM_DRAWITEM, 1, (LPARAM)&dis);
+    SendMessage32A( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
+                    wndPtr->wIDmenu, (LPARAM)&dis );
 }

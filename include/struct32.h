@@ -35,16 +35,6 @@ typedef struct {
 	WORD cy WINE_PACKED;
 } DLGTEMPLATE32;
 
-typedef struct {
-	DWORD style;
-	DWORD dwExtendedStyle;
-	short x WINE_PACKED;
-	short y WINE_PACKED;
-	short cx WINE_PACKED;
-	short cy WINE_PACKED;
-	WORD id WINE_PACKED;
-} DLGITEMTEMPLATE32;
-
 typedef struct tagMSG32
 {
 	DWORD hwnd;

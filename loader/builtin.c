@@ -103,7 +103,6 @@ extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
 extern const DLL_DESCRIPTOR NTDLL_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
-extern const DLL_DESCRIPTOR WPROCS32_Descriptor;
 extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
 extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
 
@@ -151,7 +150,6 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &NTDLL_Descriptor,    0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },
-    { &WPROCS32_Descriptor, DLL_FLAG_ALWAYS_USED },
     { &WINSPOOL_Descriptor, 0 },
     { &WSOCK32_Descriptor,  0 },
     /* Last entry */

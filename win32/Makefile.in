@@ -21,8 +21,7 @@ C_SRCS = \
 	struct32.c \
 	thread.c \
 	time.c \
-	user32.c \
-	winprocs.c
+	user32.c
 
 all: $(MODULE).o
 

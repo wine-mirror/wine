@@ -1,8 +1,7 @@
 /*
  * Dialog functions
  *
- * Copyright 1993, 1994 Alexandre Julliard
- *
+ * Copyright 1993, 1994, 1996 Alexandre Julliard
  */
 
 #include <stdlib.h>
@@ -13,15 +12,50 @@
 #include "heap.h"
 #include "win.h"
 #include "ldt.h"
+#include "resource32.h"
 #include "stackframe.h"
+#include "string32.h"
 #include "user.h"
+#include "winproc.h"
 #include "message.h"
 #include "stddebug.h"
-/* #define DEBUG_DIALOG */
 #include "debug.h"
 
+
+  /* Dialog control information */
+typedef struct
+{
+    DWORD      style;
+    DWORD      exStyle;
+    INT16      x;
+    INT16      y;
+    INT16      cx;
+    INT16      cy;
+    UINT16     id;
+    LPCSTR     className;
+    LPCSTR     windowName;
+    LPVOID     data;
+} DLG_CONTROL_INFO;
+
+  /* Dialog template */
+typedef struct
+{
+    DWORD      style;
+    DWORD      exStyle;
+    UINT16     nbItems;
+    INT16      x;
+    INT16      y;
+    INT16      cx;
+    INT16      cy;
+    LPCSTR     menuName;
+    LPCSTR     className;
+    LPCSTR     caption;
+    WORD       pointSize;
+    LPCSTR     faceName;
+} DLG_TEMPLATE;
+
   /* Dialog base units */
-WORD xBaseUnit = 0, yBaseUnit = 0;
+static WORD xBaseUnit = 0, yBaseUnit = 0;
 
 
 /***********************************************************************
@@ -36,9 +70,9 @@ BOOL DIALOG_Init()
     
       /* Calculate the dialog base units */
 
-    if (!(hdc = GetDC( 0 ))) return FALSE;
+    if (!(hdc = CreateDC( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
     GetTextMetrics( hdc, &tm );
-    ReleaseDC( 0, hdc );
+    DeleteDC( hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
 
@@ -67,96 +101,278 @@ HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
 
 
 /***********************************************************************
- *           DIALOG_GetControl
+ *           DIALOG_GetControl16
  *
  * Return the class and text of the control pointed to by ptr,
  * fill the header structure and return a pointer to the next control.
  */
-static SEGPTR DIALOG_GetControl( SEGPTR ptr, DLGCONTROLHEADER *header,
-                                 SEGPTR *class, SEGPTR *text )
+static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 {
-    unsigned char *base = (unsigned char *)PTR_SEG_TO_LIN( ptr );
-    unsigned char *p = base;
+    static char buffer[10];
 
-    header->x  = GET_WORD(p); p += sizeof(WORD);
-    header->y  = GET_WORD(p); p += sizeof(WORD);
-    header->cx = GET_WORD(p); p += sizeof(WORD);
-    header->cy = GET_WORD(p); p += sizeof(WORD);
-    header->id = GET_WORD(p); p += sizeof(WORD);
-    header->style = GET_DWORD(p); p += sizeof(DWORD);
+    info->x       = GET_WORD(p);  p += sizeof(WORD);
+    info->y       = GET_WORD(p);  p += sizeof(WORD);
+    info->cx      = GET_WORD(p);  p += sizeof(WORD);
+    info->cy      = GET_WORD(p);  p += sizeof(WORD);
+    info->id      = GET_WORD(p);  p += sizeof(WORD);
+    info->style   = GET_DWORD(p); p += sizeof(DWORD);
+    info->exStyle = 0;
 
     if (*p & 0x80)
     {
-        *class = MAKEINTRESOURCE( *p );
+        switch((BYTE)*p)
+        {
+            case 0x80: strcpy( buffer, "BUTTON" ); break;
+            case 0x81: strcpy( buffer, "EDIT" ); break;
+            case 0x82: strcpy( buffer, "STATIC" ); break;
+            case 0x83: strcpy( buffer, "LISTBOX" ); break;
+            case 0x84: strcpy( buffer, "SCROLLBAR" ); break;
+            case 0x85: strcpy( buffer, "COMBOBOX" ); break;
+            default:   buffer[0] = '\0'; break;
+        }
+        info->className = buffer;
         p++;
     }
     else 
     {
-	*class = ptr + (WORD)(p - base);
+	info->className = p;
 	p += strlen(p) + 1;
     }
+    dprintf_dialog(stddeb, "   %s ", info->className );
 
-    if (*p == 0xff)
+    if ((BYTE)*p == 0xff)
     {
 	  /* Integer id, not documented (?). Only works for SS_ICON controls */
-	*text = MAKEINTRESOURCE( GET_WORD(p+1) );
-	p += 4;
+	info->windowName = (LPCSTR)(UINT32)GET_WORD(p+1);
+	p += 3;
+        dprintf_dialog( stddeb,"%04x", LOWORD(info->windowName) );
     }
     else
     {
-	*text = ptr + (WORD)(p - base);
-	p += strlen(p) + 2;
+	info->windowName = p;
+	p += strlen(p) + 1;
+        dprintf_dialog(stddeb,"'%s'", info->windowName );
     }
-    return ptr + (WORD)(p - base);
+
+    info->data = (LPVOID)(*p ? p + 1 : NULL);  /* FIXME: is this right? */
+    p += *p + 1;
+
+    dprintf_dialog( stddeb," %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+                    info->id, info->x, info->y, info->cx, info->cy,
+                    info->style, (DWORD)info->data);
+    return p;
 }
 
 
 /***********************************************************************
- *           DIALOG_ParseTemplate
+ *           DIALOG_GetControl32
  *
- * Fill a DLGTEMPLATE structure from the dialog template, and return
- * a pointer to the first control.
+ * Return the class and text of the control pointed to by ptr,
+ * fill the header structure and return a pointer to the next control.
  */
-static SEGPTR DIALOG_ParseTemplate( SEGPTR template, DLGTEMPLATE * result )
+static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
 {
-    unsigned char *base = (unsigned char *)PTR_SEG_TO_LIN(template);
-    unsigned char * p = base;
- 
-    result->style = GET_DWORD(p); p += sizeof(DWORD);
-    result->nbItems = *p++;
-    result->x  = GET_WORD(p); p += sizeof(WORD);
-    result->y  = GET_WORD(p); p += sizeof(WORD);
-    result->cx = GET_WORD(p); p += sizeof(WORD);
-    result->cy = GET_WORD(p); p += sizeof(WORD);
+    static WCHAR buffer[10];
 
-    /* Get the menu name */
+    info->style   = GET_DWORD(p); p += 2;
+    info->exStyle = GET_DWORD(p); p += 2;
+    info->x       = GET_WORD(p); p++;
+    info->y       = GET_WORD(p); p++;
+    info->cx      = GET_WORD(p); p++;
+    info->cy      = GET_WORD(p); p++;
+    info->id      = GET_WORD(p); p++;
 
-    if (*p == 0xff)
+    if (GET_WORD(p) == 0xffff)
     {
-        result->menuName = MAKEINTRESOURCE( GET_WORD(p+1) );
-        p += 3;
-    }
-    else if (*p)
-    {
-        result->menuName = template + (WORD)(p - base);
-        p += strlen(p) + 1;
+        switch(GET_WORD(p+1))
+        {
+            case 0x80: STRING32_AnsiToUni( buffer, "BUTTON" ); break;
+            case 0x81: STRING32_AnsiToUni( buffer, "EDIT" ); break;
+            case 0x82: STRING32_AnsiToUni( buffer, "STATIC" ); break;
+            case 0x83: STRING32_AnsiToUni( buffer, "LISTBOX" ); break;
+            case 0x84: STRING32_AnsiToUni( buffer, "SCROLLBAR" ); break;
+            case 0x85: STRING32_AnsiToUni( buffer, "COMBOBOX" ); break;
+            default:   buffer[0] = '\0'; break;
+        }
+        info->className = (LPCSTR)buffer;
+        p += 2;
     }
     else
     {
+        info->className = (LPCSTR)p;
+        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+    }
+    dprintf_dialog(stddeb, "   %p ", info->className );
+
+    if (GET_WORD(p) == 0xffff)
+    {
+	info->windowName = (LPCSTR)(p + 1);
+	p += 2;
+        dprintf_dialog( stddeb,"%04x", LOWORD(info->windowName) );
+    }
+    else
+    {
+	info->windowName = (LPCSTR)p;
+        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        dprintf_dialog(stddeb,"'%p'", info->windowName );
+    }
+
+    if (GET_WORD(p))
+    {
+        info->data = (LPVOID)(p + 1);
+        p += GET_WORD(p) / sizeof(WORD);
+    }
+    else info->data = NULL;
+    p++;
+
+    dprintf_dialog( stddeb," %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+                    info->id, info->x, info->y, info->cx, info->cy,
+                    info->style, info->exStyle, (DWORD)info->data);
+    /* Next control is on dword boundary */
+    return (const WORD *)((((int)p) + 3) & ~3);
+}
+
+
+/***********************************************************************
+ *           DIALOG_CreateControls
+ *
+ * Create the control windows for a dialog.
+ */
+static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
+                                     HINSTANCE32 hInst, BOOL win32 )
+{
+    DIALOGINFO *dlgInfo = (DIALOGINFO *)pWnd->wExtra;
+    DLG_CONTROL_INFO info;
+    HWND32 hwndCtrl, hwndDefButton = 0;
+
+    dprintf_dialog(stddeb, " BEGIN\n" );
+    while (items--)
+    {
+        if (!win32)
+        {
+            HINSTANCE16 instance;
+            template = DIALOG_GetControl16( template, &info );
+            if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
+                ((info.style & DS_LOCALEDIT) != DS_LOCALEDIT))
+            {
+                if (!dlgInfo->hDialogHeap)
+                {
+                    dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
+                    if (!dlgInfo->hDialogHeap)
+                    {
+                        fprintf( stderr, "CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n" );
+                        continue;
+                    }
+                    LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
+                }
+                instance = dlgInfo->hDialogHeap;
+            }
+            else instance = (HINSTANCE16)hInst;
+
+            hwndCtrl = CreateWindowEx16( info.exStyle | WS_EX_NOPARENTNOTIFY,
+                                         info.className, info.windowName,
+                                         info.style | WS_CHILD,
+                                         info.x * dlgInfo->xBaseUnit / 4,
+                                         info.y * dlgInfo->yBaseUnit / 8,
+                                         info.cx * dlgInfo->xBaseUnit / 4,
+                                         info.cy * dlgInfo->yBaseUnit / 8,
+                                         pWnd->hwndSelf, (HMENU)info.id,
+                                         instance, info.data );
+        }
+        else
+        {
+            template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info );
+            hwndCtrl = CreateWindowEx32W( info.exStyle | WS_EX_NOPARENTNOTIFY,
+                                          (LPCWSTR)info.className,
+                                          (LPCWSTR)info.windowName,
+                                          info.style | WS_CHILD,
+                                          info.x * dlgInfo->xBaseUnit / 4,
+                                          info.y * dlgInfo->yBaseUnit / 8,
+                                          info.cx * dlgInfo->xBaseUnit / 4,
+                                          info.cy * dlgInfo->yBaseUnit / 8,
+                                          pWnd->hwndSelf, (HMENU)info.id,
+                                          hInst, info.data );
+        }
+        if (!hwndCtrl) return FALSE;
+
+        /* Make the control last one in Z-order, so that controls remain
+           in the order in which they were created */
+	SetWindowPos( hwndCtrl, HWND_BOTTOM, 0, 0, 0, 0,
+                      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+
+            /* Send initialisation messages to the control */
+        if (dlgInfo->hUserFont) SendMessage32A( hwndCtrl, WM_SETFONT,
+                                               (WPARAM)dlgInfo->hUserFont, 0 );
+        if (SendMessage32A(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
+        {
+              /* If there's already a default push-button, set it back */
+              /* to normal and use this one instead. */
+            if (hwndDefButton)
+                SendMessage32A( hwndDefButton, BM_SETSTYLE32,
+                                BS_PUSHBUTTON,FALSE );
+            hwndDefButton = hwndCtrl;
+            dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
+        }
+    }    
+    dprintf_dialog(stddeb, " END\n" );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DIALOG_ParseTemplate16
+ *
+ * Fill a DLG_TEMPLATE structure from the dialog template, and return
+ * a pointer to the first control.
+ */
+static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
+{
+    result->style   = GET_DWORD(p); p += sizeof(DWORD);
+    result->exStyle = 0;
+    result->nbItems = *p++;
+    result->x       = GET_WORD(p);  p += sizeof(WORD);
+    result->y       = GET_WORD(p);  p += sizeof(WORD);
+    result->cx      = GET_WORD(p);  p += sizeof(WORD);
+    result->cy      = GET_WORD(p);  p += sizeof(WORD);
+    dprintf_dialog( stddeb, "DIALOG %d, %d, %d, %d\n",
+                    result->x, result->y, result->cx, result->cy );
+    dprintf_dialog( stddeb, " STYLE %08lx\n", result->style );
+
+    /* Get the menu name */
+
+    switch( (BYTE)*p )
+    {
+    case 0:
         result->menuName = 0;
         p++;
+        break;
+    case 0xff:
+        result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        p += 3;
+	dprintf_dialog(stddeb, " MENU %04x\n", LOWORD(result->menuName) );
+        break;
+    default:
+        result->menuName = p;
+        dprintf_dialog( stddeb, " MENU '%s'\n", p );
+        p += strlen(p) + 1;
+        break;
     }
 
     /* Get the class name */
 
-    if (*p) result->className = template + (WORD)(p - base);
+    if (*p)
+    {
+        result->className = p;
+        dprintf_dialog( stddeb, " CLASS '%s'\n", result->className );
+    }
     else result->className = DIALOG_CLASS_ATOM;
     p += strlen(p) + 1;
 
     /* Get the window caption */
 
-    result->caption = template + (WORD)(p - base);
+    result->caption = p;
     p += strlen(p) + 1;
+    dprintf_dialog( stddeb, " CAPTION '%s'\n", result->caption );
 
     /* Get the font name */
 
@@ -164,114 +380,130 @@ static SEGPTR DIALOG_ParseTemplate( SEGPTR template, DLGTEMPLATE * result )
     {
 	result->pointSize = GET_WORD(p);
         p += sizeof(WORD);
-	result->faceName = template + (WORD)(p - base);
+	result->faceName = p;
         p += strlen(p) + 1;
+	dprintf_dialog( stddeb, " FONT %d,'%s'\n",
+                        result->pointSize, result->faceName );
+    }
+    return p;
+}
+
+
+/***********************************************************************
+ *           DIALOG_ParseTemplate32
+ *
+ * Fill a DLG_TEMPLATE structure from the dialog template, and return
+ * a pointer to the first control.
+ */
+static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
+{
+    const WORD *p = (const WORD *)template;
+
+    result->style   = GET_DWORD(p); p += 2;
+    result->exStyle = GET_DWORD(p); p += 2;
+    result->nbItems = GET_WORD(p); p++;
+    result->x       = GET_WORD(p); p++;
+    result->y       = GET_WORD(p); p++;
+    result->cx      = GET_WORD(p); p++;
+    result->cy      = GET_WORD(p); p++;
+    dprintf_dialog( stddeb, "DIALOG %d, %d, %d, %d\n",
+                    result->x, result->y, result->cx, result->cy );
+    dprintf_dialog( stddeb, " STYLE %08lx\n", result->style );
+    dprintf_dialog( stddeb, " EXSTYLE %08lx\n", result->exStyle );
+
+    /* Get the menu name */
+
+    switch(GET_WORD(p))
+    {
+    case 0x0000:
+        result->menuName = NULL;
+        p++;
+        break;
+    case 0xffff:
+        result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        p += 2;
+	dprintf_dialog(stddeb, " MENU %04x\n", LOWORD(result->menuName) );
+        break;
+    default:
+        result->menuName = (LPCSTR)p;
+        dprintf_dialog( stddeb, " MENU '%p'\n", p );
+        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        break;
     }
 
-    return template + (WORD)(p - base);
-}
+    /* Get the class name */
 
+    switch(GET_WORD(p))
+    {
+    case 0x0000:
+        result->className = DIALOG_CLASS_ATOM;
+        p++;
+        break;
+    case 0xffff:
+        result->className = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        p += 2;
+	dprintf_dialog(stddeb, " CLASS %04x\n", LOWORD(result->className) );
+        break;
+    default:
+        result->className = (LPCSTR)p;
+        dprintf_dialog( stddeb, " CLASS '%p'\n", p );
+        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        break;
+    }
 
-/***********************************************************************
- *           DIALOG_DisplayTemplate
- */
-static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
-{
-    dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->x, result->y,
-                   result->cx, result->cy );
-    dprintf_dialog(stddeb, " STYLE %08lx\n", result->style );
-    dprintf_dialog( stddeb, " CAPTION '%s'\n",
-                    (char *)PTR_SEG_TO_LIN(result->caption) );
+    /* Get the window caption */
 
-    if (HIWORD(result->className))
-        dprintf_dialog( stddeb, " CLASS '%s'\n",
-                        (char *)PTR_SEG_TO_LIN(result->className) );
-    else
-        dprintf_dialog( stddeb, " CLASS #%d\n", LOWORD(result->className) );
+    result->caption = (LPCSTR)p;
+    p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+    dprintf_dialog( stddeb, " CAPTION '%p'\n", result->caption );
 
-    if (HIWORD(result->menuName))
-        dprintf_dialog( stddeb, " MENU '%s'\n",
-                        (char *)PTR_SEG_TO_LIN(result->menuName) );
-    else if (LOWORD(result->menuName))
-	dprintf_dialog(stddeb, " MENU %04x\n", LOWORD(result->menuName) );
+    /* Get the font name */
 
     if (result->style & DS_SETFONT)
-	dprintf_dialog( stddeb, " FONT %d,'%s'\n", result->pointSize,
-                        (char *)PTR_SEG_TO_LIN(result->faceName) );
+    {
+	result->pointSize = GET_WORD(p);
+        p++;
+	result->faceName = (LPCSTR)p;
+        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+	dprintf_dialog( stddeb, " FONT %d,'%p'\n",
+                        result->pointSize, result->faceName );
+    }
+    /* First control is on dword boundary */
+    return (LPCSTR)((((int)p) + 3) & ~3);
 }
 
 
 /***********************************************************************
- *           CreateDialog   (USER.89)
+ *           DIALOG_CreateIndirect
  */
-HWND CreateDialog( HINSTANCE hInst, SEGPTR dlgTemplate,
-		   HWND owner, DLGPROC dlgProc )
-{
-    return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
-}
-
-
-/***********************************************************************
- *           CreateDialogParam   (USER.241)
- */
-HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-		        HWND owner, DLGPROC dlgProc, LPARAM param )
-{
-    HWND hwnd = 0;
-    HRSRC hRsrc;
-    HGLOBAL hmem;
-    SEGPTR data;
-
-    dprintf_dialog(stddeb, "CreateDialogParam: %04x,%08lx,%04x,%08lx,%ld\n",
-                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
-     
-    if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
-    if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
-    if (!(data = WIN16_LockResource( hmem ))) hwnd = 0;
-    else hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
-    FreeResource( hmem );
-    return hwnd;
-}
-
-
-/***********************************************************************
- *           CreateDialogIndirect   (USER.219)
- */
-HWND CreateDialogIndirect( HINSTANCE hInst, SEGPTR dlgTemplate,
-			   HWND owner, DLGPROC dlgProc )
-{
-    return CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
-}
-
-
-/***********************************************************************
- *           CreateDialogIndirectParam   (USER.242)
- */
-HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-			        HWND owner, DLGPROC dlgProc, LPARAM param )
+static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
+                                   HWND owner, HANDLE32 dlgProc,
+                                   LPARAM param, BOOL win32 )
 {
     HMENU hMenu = 0;
     HFONT hFont = 0;
-    HWND hwnd, hwndCtrl;
+    HWND hwnd;
     RECT16 rect;
     WND * wndPtr;
-    int i;
-    DLGTEMPLATE template;
-    SEGPTR headerPtr;
+    DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
-    DWORD exStyle = 0;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
 
       /* Parse dialog template */
 
     if (!dlgTemplate) return 0;
-    headerPtr = DIALOG_ParseTemplate( dlgTemplate, &template );
-    if (debugging_dialog) DIALOG_DisplayTemplate( &template );
+    if (win32) dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
+    else dlgTemplate = DIALOG_ParseTemplate16( dlgTemplate, &template );
 
       /* Load menu */
 
-    if (template.menuName) hMenu = LoadMenu( hInst, template.menuName );
+    if (template.menuName)
+    {
+        LPSTR str = SEGPTR_STRDUP( template.menuName );  /* FIXME: win32 */
+        hMenu = LoadMenu( hInst, SEGPTR_GET(str) );
+        SEGPTR_FREE( str );
+    }
 
       /* Create custom font if needed */
 
@@ -282,7 +514,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	hFont = CreateFont( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    DEFAULT_QUALITY, FF_DONTCARE,
-                            (LPSTR)PTR_SEG_TO_LIN(template.faceName) );
+                            template.faceName );  /* FIXME: win32 */
 	if (hFont)
 	{
 	    TEXTMETRIC tm;
@@ -301,14 +533,15 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	}
     }
     
-      /* Create dialog main window */
+    /* Create dialog main window */
 
     rect.left = rect.top = 0;
     rect.right = template.cx * xUnit / 4;
     rect.bottom = template.cy * yUnit / 8;
-    if (template.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
+    if (template.style & DS_MODALFRAME)
+        template.exStyle |= WS_EX_DLGMODALFRAME;
     AdjustWindowRectEx16( &rect, template.style, 
-                          hMenu ? TRUE : FALSE , exStyle );
+                          hMenu ? TRUE : FALSE , template.exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
@@ -322,10 +555,17 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
             ClientToScreen16( owner, (POINT16 *)&rect );
     }
 
-    hwnd = CreateWindowEx16( exStyle, template.className, template.caption, 
-			   template.style & ~WS_VISIBLE,
-			   rect.left, rect.top, rect.right, rect.bottom,
-			   owner, hMenu, hInst, (SEGPTR)0 );
+    if (win32)
+        hwnd = CreateWindowEx32W(template.exStyle, (LPCWSTR)template.className,
+                                 (LPCWSTR)template.caption,
+                                 template.style & ~WS_VISIBLE,
+                                 rect.left, rect.top, rect.right, rect.bottom,
+                                 owner, hMenu, hInst, NULL );
+    else
+        hwnd = CreateWindowEx16(template.exStyle, template.className,
+                                template.caption, template.style & ~WS_VISIBLE,
+                                rect.left, rect.top, rect.right, rect.bottom,
+                                owner, hMenu, hInst, NULL );
     if (!hwnd)
     {
 	if (hFont) DeleteObject( hFont );
@@ -334,137 +574,161 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     }
     wndPtr = WIN_FindWndPtr( hwnd );
 
-      /* Create control windows */
-
-    dprintf_dialog(stddeb, " BEGIN\n" );
-
-    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    dlgInfo->msgResult = 0;  /* This is used to store the default button id */
-    dlgInfo->hDialogHeap = 0;
-
-    for (i = 0; i < template.nbItems; i++)
-    {
-	DLGCONTROLHEADER header;
-	SEGPTR className, winName;
-        HWND hwndDefButton = 0;
-        char buffer[10];
-
-	headerPtr = DIALOG_GetControl( headerPtr, &header,
-                                       &className, &winName );
-
-        if (!HIWORD(className))
-        {
-            switch(LOWORD(className))
-            {
-            case 0x80: strcpy( buffer, "BUTTON" ); break;
-            case 0x81: strcpy( buffer, "EDIT" ); break;
-            case 0x82: strcpy( buffer, "STATIC" ); break;
-            case 0x83: strcpy( buffer, "LISTBOX" ); break;
-            case 0x84: strcpy( buffer, "SCROLLBAR" ); break;
-            case 0x85: strcpy( buffer, "COMBOBOX" ); break;
-            default:   buffer[0] = '\0'; break;
-            }
-            className = MAKE_SEGPTR(buffer);
-        }
-
-        if (HIWORD(className))
-            dprintf_dialog(stddeb, "   %s ", (char*)PTR_SEG_TO_LIN(className));
-        else dprintf_dialog(stddeb, "   %04x ", LOWORD(className) );
-	if (HIWORD(winName))
-            dprintf_dialog(stddeb,"'%s'", (char *)PTR_SEG_TO_LIN(winName) );
-	else dprintf_dialog(stddeb,"%04x", LOWORD(winName) );
-
-	dprintf_dialog(stddeb," %d, %d, %d, %d, %d, %08lx\n", 
-                       header.id, header.x, header.y, 
-                       header.cx, header.cy, header.style );
-
-	if (HIWORD(className) &&
-            !strcmp( (char *)PTR_SEG_TO_LIN(className), "EDIT") &&
-            ((header.style & DS_LOCALEDIT) != DS_LOCALEDIT))
-        {
-	    if (!dlgInfo->hDialogHeap)
-            {
-		dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
-		if (!dlgInfo->hDialogHeap)
-                {
-		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n");
-		    continue;
-		}
-		LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
-	    }
-	    hwndCtrl = CreateWindowEx16(WS_EX_NOPARENTNOTIFY, className, winName,
-                                      header.style | WS_CHILD,
-                                      header.x * xUnit / 4,
-                                      header.y * yUnit / 8,
-                                      header.cx * xUnit / 4,
-                                      header.cy * yUnit / 8,
-                                      hwnd, (HMENU)header.id,
-                                      dlgInfo->hDialogHeap, (SEGPTR)0 );
-	}
-	else
-        {
-	    hwndCtrl = CreateWindowEx16( WS_EX_NOPARENTNOTIFY, className,
-                                         winName,
-                                         header.style | WS_CHILD,
-                                         header.x * xUnit / 4,
-                                         header.y * yUnit / 8,
-                                         header.cx * xUnit / 4,
-                                         header.cy * yUnit / 8,
-                                         hwnd, (HMENU)header.id,
-                                         hInst, (SEGPTR)0 );
-	}
-
-        /* Make the control last one in Z-order, so that controls remain
-           in the order in which they were created */
-	SetWindowPos( hwndCtrl, HWND_BOTTOM, 0, 0, 0, 0,
-                      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-
-            /* Send initialisation messages to the control */
-        if (hFont) SendMessage16( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
-        if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
-        {
-              /* If there's already a default push-button, set it back */
-              /* to normal and use this one instead. */
-            if (hwndDefButton)
-                SendMessage32A( hwndDefButton, BM_SETSTYLE32,
-                                BS_PUSHBUTTON,FALSE );
-            hwndDefButton = hwndCtrl;
-            dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
-        }
-    }    
-
-    dprintf_dialog(stddeb, " END\n" );
-    
       /* Initialise dialog extra data */
 
+    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->dlgProc   = dlgProc;
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
     dlgInfo->yBaseUnit = yUnit;
+    dlgInfo->msgResult = 0;  /* This is used to store the default button id */
+    dlgInfo->hDialogHeap = 0;
+
+    /* Create controls */
+
+    if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
+                                hInst, win32 ))
+    {
+        DestroyWindow( hwnd );
+        return 0;
+    }
+
+    /* Send initialisation messages and set focus */
+
     dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
-
-      /* Send initialisation messages and set focus */
-
     if (dlgInfo->hUserFont)
-	SendMessage16( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
-    if (SendMessage16( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
+	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+    if (SendMessage32A(hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param))
 	SetFocus( dlgInfo->hwndFocus );
-    if (template.style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
+    if (template.style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
     return hwnd;
+}
+
+
+/***********************************************************************
+ *           CreateDialog16   (USER.89)
+ */
+HWND16 CreateDialog16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+                       HWND16 owner, DLGPROC dlgProc )
+{
+    return CreateDialogParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
+}
+
+
+/***********************************************************************
+ *           CreateDialogParam16   (USER.241)
+ */
+HWND16 CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+                            HWND16 owner, DLGPROC dlgProc, LPARAM param )
+{
+    HWND16 hwnd = 0;
+    HRSRC hRsrc;
+    HGLOBAL16 hmem;
+    LPCVOID data;
+
+    dprintf_dialog(stddeb, "CreateDialogParam16: %04x,%08lx,%04x,%08lx,%ld\n",
+                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
+
+    if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
+    if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
+    if (!(data = LockResource( hmem ))) hwnd = 0;
+    else hwnd = CreateDialogIndirectParam16( hInst, data, owner,
+                                             dlgProc, param );
+    FreeResource( hmem );
+    return hwnd;
+}
+
+
+/***********************************************************************
+ *           CreateDialogParam32A   (USER32.72)
+ */
+HWND32 CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
+                             HWND32 owner, DLGPROC dlgProc, LPARAM param )
+{
+    if (HIWORD(name))
+    {
+        LPWSTR str = STRING32_DupAnsiToUni( name );
+        HWND32 hwnd = CreateDialogParam32W( hInst, str, owner, dlgProc, param);
+        free( str );
+        return hwnd;
+    }
+    return CreateDialogParam32W( hInst, (LPCWSTR)name, owner, dlgProc, param );
+}
+
+
+/***********************************************************************
+ *           CreateDialogParam32W   (USER32.73)
+ */
+HWND32 CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
+                             HWND32 owner, DLGPROC dlgProc, LPARAM param )
+{
+    HANDLE32 hrsrc = FindResource32( hInst, name, (LPWSTR)RT_DIALOG );
+    if (!hrsrc) return 0;
+    return CreateDialogIndirectParam32W( hInst, LoadResource32( hInst, hrsrc ),
+                                         owner, dlgProc, param );
+}
+
+
+/***********************************************************************
+ *           CreateDialogIndirect16   (USER.219)
+ */
+HWND16 CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
+                               HWND16 owner, DLGPROC dlgProc )
+{
+    return CreateDialogIndirectParam16( hInst, dlgTemplate, owner, dlgProc, 0);
+}
+
+
+/***********************************************************************
+ *           CreateDialogIndirectParam16   (USER.242)
+ */
+HWND16 CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
+                                    HWND16 owner, DLGPROC dlgProc,
+                                    LPARAM param )
+{
+    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_16 );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate,
+                                  owner, proc, param, FALSE );
+}
+
+
+/***********************************************************************
+ *           CreateDialogIndirectParam32A   (USER32.69)
+ */
+HWND32 CreateDialogIndirectParam32A( HINSTANCE32 hInst, LPCVOID dlgTemplate,
+                                     HWND32 owner, DLGPROC dlgProc,
+                                     LPARAM param )
+{
+    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32A );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate,
+                                  owner, proc, param, TRUE );
+}
+
+
+/***********************************************************************
+ *           CreateDialogIndirectParam32W   (USER32.71)
+ */
+HWND32 CreateDialogIndirectParam32W( HINSTANCE32 hInst, LPCVOID dlgTemplate,
+                                     HWND32 owner, DLGPROC dlgProc,
+                                     LPARAM param )
+{
+    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32W );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate,
+                                  owner, proc, param, TRUE );
 }
 
 
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
+static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
     HANDLE msgHandle;
     MSG* lpmsg;
-    int retval;
+    INT32 retval;
 
       /* Owner must be a top-level window */
     owner = WIN_GetTopParent( owner );
@@ -495,62 +759,108 @@ int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 
 
 /***********************************************************************
- *           DialogBox   (USER.87)
+ *           DialogBox16   (USER.87)
  */
-INT DialogBox( HINSTANCE hInst, SEGPTR dlgTemplate,
-	       HWND owner, DLGPROC dlgProc )
+INT16 DialogBox16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+                   HWND16 owner, DLGPROC dlgProc )
 {
-    return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
+    return DialogBoxParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
 
 /***********************************************************************
- *           DialogBoxParam   (USER.239)
+ *           DialogBoxParam16   (USER.239)
  */
-INT DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-		    HWND owner, DLGPROC dlgProc, LPARAM param )
+INT16 DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
+                        HWND16 owner, DLGPROC dlgProc, LPARAM param )
 {
-    HWND hwnd;
-    
-    dprintf_dialog(stddeb, "DialogBoxParam: %04x,%08lx,%04x,%08lx,%ld\n",
-                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
-    hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
+    HWND16 hwnd = CreateDialogParam16( hInst, template, owner, dlgProc, param);
+    if (hwnd) return (INT16)DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           DialogBoxParam32A   (USER32.138)
+ */
+INT32 DialogBoxParam32A( HINSTANCE32 hInst, LPCSTR name,
+                         HWND32 owner, DLGPROC dlgProc, LPARAM param )
+{
+    HWND32 hwnd = CreateDialogParam32A( hInst, name, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
 
 
 /***********************************************************************
- *           DialogBoxIndirect   (USER.218)
+ *           DialogBoxParam32W   (USER32.139)
  */
-INT DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
-		       HWND owner, DLGPROC dlgProc )
+INT32 DialogBoxParam32W( HINSTANCE32 hInst, LPCWSTR name,
+                         HWND32 owner, DLGPROC dlgProc, LPARAM param )
 {
-    return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
+    HWND32 hwnd = CreateDialogParam32W( hInst, name, owner, dlgProc, param );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
 }
 
 
 /***********************************************************************
- *           DialogBoxIndirectParam   (USER.240)
+ *           DialogBoxIndirect16   (USER.218)
  */
-INT DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
-			    HWND owner, DLGPROC dlgProc, LPARAM param )
+INT16 DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
+                           HWND16 owner, DLGPROC dlgProc )
 {
-    HWND hwnd;
-    SEGPTR ptr;
+    return DialogBoxIndirectParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
+}
 
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( dlgTemplate ))) return -1;
-    hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
+
+/***********************************************************************
+ *           DialogBoxIndirectParam16   (USER.240)
+ */
+INT16 DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
+                                HWND16 owner, DLGPROC dlgProc, LPARAM param )
+{
+    HWND16 hwnd;
+    LPCVOID ptr;
+
+    if (!(ptr = GlobalLock16( dlgTemplate ))) return -1;
+    hwnd = CreateDialogIndirectParam16( hInst, ptr, owner, dlgProc, param );
     GlobalUnlock16( dlgTemplate );
+    if (hwnd) return (INT16)DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           DialogBoxIndirectParam32A   (USER32.135)
+ */
+INT32 DialogBoxIndirectParam32A( HINSTANCE32 hInstance, LPCVOID template,
+                                 HWND32 owner, DLGPROC dlgProc ,LPARAM param )
+{
+    HWND32 hwnd = CreateDialogIndirectParam32A( hInstance, template,
+                                                owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
 
 
 /***********************************************************************
- *           EndDialog   (USER.88)
+ *           DialogBoxIndirectParam32W   (USER32.137)
  */
-BOOL EndDialog( HWND hwnd, INT retval )
+INT32 DialogBoxIndirectParam32W( HINSTANCE32 hInstance, LPCVOID template,
+                                 HWND32 owner, DLGPROC dlgProc ,LPARAM param )
+{
+    HWND32 hwnd = CreateDialogIndirectParam32W( hInstance, template,
+                                                owner, dlgProc, param );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           EndDialog   (USER.88) (USER32.173)
+ */
+BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;

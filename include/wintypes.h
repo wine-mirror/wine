@@ -345,6 +345,7 @@ typedef FARPROC HOOKPROC;
                                        (((DWORD)((WORD)(high))) << 16)))
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
 #define MAKEWPARAM(low,high)   ((WPARAM32)MAKELONG(low,high))
+#define MAKEINTATOM(atom)      ((LPCSTR)MAKELONG((atom),0))
 
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))

@@ -774,11 +774,12 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 
     if (!pTopPWnd)
     {
-	pTopPWnd = WIN_FindWndPtr(CreateWindow16( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
-				   		WS_POPUP | WS_BORDER, x, y, 
-				   		menu->Width + 2*SYSMETRICS_CXBORDER,
-				   		menu->Height + 2*SYSMETRICS_CYBORDER,
-				   		0, 0, wndPtr->hInstance, (SEGPTR)hmenu ));
+	pTopPWnd = WIN_FindWndPtr(CreateWindow16( POPUPMENU_CLASS_ATOM, NULL,
+                                          WS_POPUP | WS_BORDER, x, y,
+                                          menu->Width + 2*SYSMETRICS_CXBORDER,
+                                          menu->Height + 2*SYSMETRICS_CYBORDER,
+                                          0, 0, wndPtr->hInstance,
+                                          (LPVOID)(HMENU32)hmenu ));
 	if (!pTopPWnd) return FALSE;
 	skip_init = TRUE;
     }
@@ -786,11 +787,12 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
     if( uSubPWndLevel )
     {
 	/* create new window for the submenu */
-	HWND  hWnd = CreateWindow16( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
+	HWND  hWnd = CreateWindow16( POPUPMENU_CLASS_ATOM, NULL,
                                    WS_POPUP | WS_BORDER, x, y,
                                    menu->Width + 2*SYSMETRICS_CXBORDER,
                                    menu->Height + 2*SYSMETRICS_CYBORDER,
-                                   menu->hWnd, 0, wndPtr->hInstance, (SEGPTR)hmenu );
+                                   menu->hWnd, 0, wndPtr->hInstance,
+                                   (LPVOID)(HMENU32)hmenu );
 	if( !hWnd ) return FALSE;
 	menu->hWnd = hWnd;
     }
@@ -1832,13 +1834,7 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     case WM_CREATE:
 	{
 	    CREATESTRUCT16 *cs = (CREATESTRUCT16*)PTR_SEG_TO_LIN(lParam);
-#ifdef WINELIB32
-	    HMENU hmenu = (HMENU) (cs->lpCreateParams);
-	    SetWindowLong( hwnd, 0, hmenu );
-#else
-	    HMENU hmenu = (HMENU) ((int)cs->lpCreateParams & 0xffff);
-	    SetWindowWord( hwnd, 0, hmenu );
-#endif
+	    SetWindowLong32A( hwnd, 0, (LONG)cs->lpCreateParams );
 	    return 0;
 	}
 
@@ -1850,12 +1846,7 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 	    PAINTSTRUCT16 ps;
 	    BeginPaint16( hwnd, &ps );
 	    MENU_DrawPopupMenu( hwnd, ps.hdc,
-#ifdef WINELIB32
-			        (HMENU)GetWindowLong( hwnd, 0 )
-#else
-			        (HMENU)GetWindowWord( hwnd, 0 )
-#endif
- 			       );
+                                (HMENU)GetWindowLong32A( hwnd, 0 ) );
 	    EndPaint16( hwnd, &ps );
 	    return 0;
 	}
@@ -1872,12 +1863,7 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 	    break;
 
     case WM_USER:
-	if( wParam )
-#ifdef WINELIB32
-            SetWindowLong( hwnd, 0, (HMENU)wParam );
-#else
-            SetWindowWord( hwnd, 0, (HMENU)wParam );
-#endif
+	if (wParam) SetWindowLong32A( hwnd, 0, (HMENU)wParam );
         break;
     default:
 	return DefWindowProc16(hwnd, message, wParam, lParam);

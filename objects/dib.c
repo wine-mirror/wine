@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+extern void CLIPPING_UpdateGCRegion(DC* );
 
 /***********************************************************************
  *           DIB_GetImageWidthBytes
@@ -574,6 +575,8 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
     else
         if (!(colorMapping = DIB_BuildColorMap( dc, coloruse, depth, info )))
             return 0;
+
+    if( dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(dc);
 
       /* Transfer the pixels */
     XCREATEIMAGE(bmpImage, infoWidth, lines, depth );

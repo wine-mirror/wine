@@ -15,6 +15,7 @@
 #include "queue.h"
 #include "stackframe.h"
 #include "winpos.h"
+#include "dce.h"
 #include "nonclient.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN */
@@ -27,6 +28,7 @@
 extern void 	FOCUS_SwitchFocus( HWND , HWND );
 extern HRGN 	DCE_GetVisRgn( HWND, WORD );
 extern HWND	CARET_GetHwnd();
+extern BOOL     DCE_InvalidateDCE(WND*, RECT16* );
 
 /* ----- internal variables ----- */
 
@@ -1346,10 +1348,10 @@ static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
 	     OffsetRgn( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top);
 	     CombineRgn( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
 
-             hDC = GetDCEx( Wnd->parent->hwndSelf, oldVisRgn, DCX_INTERSECTRGN | DCX_CACHE | DCX_CLIPSIBLINGS);
+             hDC = GetDCEx( Wnd->parent->hwndSelf, oldVisRgn, DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CACHE | DCX_CLIPSIBLINGS);
 
-             BitBlt(hDC, xto, yto, lpOldClientRect->right - lpOldClientRect->left + 1, 
-				   lpOldClientRect->bottom - lpOldClientRect->top + 1,
+             BitBlt(hDC, xto, yto, lpOldClientRect->right - lpOldClientRect->left, 
+				   lpOldClientRect->bottom - lpOldClientRect->top,
 				   hDC, xfrom, yfrom, SRCCOPY );
     
              ReleaseDC( Wnd->parent->hwndSelf, hDC); 
@@ -1563,6 +1565,18 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 				    newClientRect.top != wndPtr->rectClient.top) )
 	    winpos.flags &= ~SWP_NOCLIENTMOVE;
 
+    /* Update active DCEs */
+
+    if( !(flags & SWP_NOZORDER) || (flags & SWP_HIDEWINDOW) || (flags & SWP_SHOWWINDOW)
+                                || (memcmp(&newWindowRect,&wndPtr->rectWindow,sizeof(RECT16))
+                                    && wndPtr->dwStyle & WS_VISIBLE ) )
+      {
+        RECT16 rect;
+
+        UnionRect16(&rect,&newWindowRect,&wndPtr->rectWindow);
+        DCE_InvalidateDCE(wndPtr->parent, &rect);
+      }
+
     /* Perform the moving and resizing */
 
     if (wndPtr->window)
@@ -1628,12 +1642,9 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 			   (result >= WVR_HREDRAW && result < WVR_VALIDRECTS);
 
 	    if( (winpos.flags & SWP_NOPOSCHANGE) != SWP_NOPOSCHANGE )
-	      {
 	        /* optimize cleanup by BitBlt'ing where possible */
 
 	        WINPOS_SizeMoveClean(wndPtr, visRgn, &oldWindowRect, &oldClientRect, bNoCopy);
-	        DeleteObject(visRgn);
-	      }
 	    else
 	       if( winpos.flags & SWP_FRAMECHANGED )
         	  RedrawWindow32( winpos.hwnd, NULL, 0, RDW_NOCHILDREN | RDW_FRAME ); 

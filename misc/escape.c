@@ -13,6 +13,6 @@ static char Copyright[] = "Copyright  Bob Amstadt, 1994";
 INT Escape(HDC hdc, INT nEscape, INT cbInput, 
 	   LPCSTR lpszInData, LPVOID lpvOutData)
 {
-    fprintf(stderr, "Escape(nEscape = %04x)\n", nEscape);
+/*     fprintf(stderr, "Escape(nEscape = %04x)\n", nEscape); */
     return 0;
 }

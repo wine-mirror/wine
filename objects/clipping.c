@@ -50,6 +50,13 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         fprintf( stderr, "UpdateGCRegion: hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
+
+    if (dc->w.flags & DC_DIRTY)
+    {
+        UpdateDirtyDC(dc);
+        dc->w.flags &= ~DC_DIRTY;
+    }
+
     if (!dc->w.hClipRgn)
         CombineRgn( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
     else
@@ -80,6 +87,7 @@ int SelectClipRgn( HDC hdc, HRGN hrgn )
 	dc->w.hClipRgn = 0;
 	retval = SIMPLEREGION; /* Clip region == whole DC */
     }
+
     CLIPPING_UpdateGCRegion( dc );
     return retval;
 }
@@ -95,6 +103,8 @@ int SelectVisRgn( HDC hdc, HRGN hrgn )
     if (!dc || !hrgn) return ERROR;
 
     dprintf_clipping(stddeb, "SelectVisRgn: %04x %04x\n", hdc, hrgn );
+
+    dc->w.flags &= ~DC_DIRTY;
 
     retval = CombineRgn( dc->w.hVisRgn, hrgn, 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
@@ -271,6 +281,7 @@ int ExcludeVisRect( HDC hdc, short left, short top, short right, short bottom )
     if (!dc) return ERROR;    
     dprintf_clipping(stddeb, "ExcludeVisRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
+
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, TRUE );
 }
 
@@ -285,6 +296,7 @@ int IntersectVisRect( HDC hdc, short left, short top,
     if (!dc) return ERROR;    
     dprintf_clipping(stddeb, "IntersectVisRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
+
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, FALSE );
 }
 
@@ -299,6 +311,10 @@ BOOL PtVisible( HDC hdc, short x, short y )
 
     dprintf_clipping(stddeb, "PtVisible: %04x %d,%d\n", hdc, x, y );
     if (!dc->w.hGCClipRgn) return FALSE;
+
+    if( dc->w.flags & DC_DIRTY ) UpdateDirtyDC(dc);
+    dc->w.flags &= ~DC_DIRTY;
+
     return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
 }
 
@@ -375,6 +391,9 @@ HRGN SaveVisRgn( HDC hdc )
         fprintf( stderr, "SaveVisRgn: hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
+    if( dc->w.flags & DC_DIRTY ) UpdateDirtyDC(dc);
+    dc->w.flags &= ~DC_DIRTY;
+
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
 	return 0;
     if (!(copy = CreateRectRgn( 0, 0, 0, 0 ))) return 0;

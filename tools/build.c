@@ -1016,21 +1016,18 @@ static void BuildSpec16Files(void)
             break;
 
           case TYPE_BYTE:
-            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
-            data_offset += StoreVariableCode( data, 1, odp);
+            data_offset += StoreVariableCode( data + data_offset, 1, odp);
             break;
 
           case TYPE_WORD:
-            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
-            data_offset += StoreVariableCode( data, 2, odp);
+            data_offset += StoreVariableCode( data + data_offset, 2, odp);
             break;
 
           case TYPE_LONG:
-            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
-            data_offset += StoreVariableCode( data, 4, odp);
+            data_offset += StoreVariableCode( data + data_offset, 4, odp);
             break;
 
           case TYPE_RETURN:

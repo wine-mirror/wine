@@ -84,7 +84,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
+    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
                                    MODULE_GetWndProcEntry16("FileOpenDlgProc"),
                                    (DWORD)lpofn );
 
@@ -126,7 +126,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
     else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_SAVE_FILE );
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
+    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
                                    MODULE_GetWndProcEntry16("FileSaveDlgProc"),
                                    (DWORD)lpofn); 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
@@ -416,7 +416,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
   notification = HIWORD(lParam);
 #endif
     
-  lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
+  lpofn = (LPOPENFILENAME)GetWindowLong32A(hWnd, DWL_USER);
   switch (control)
     {
     case lst1: /* file list */
@@ -591,7 +591,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
  */
 LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {  
- LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
+ LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong32A(hWnd, DWL_USER);
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
@@ -634,7 +634,7 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
- LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
+ LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong32A(hWnd, DWL_USER);
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
@@ -677,31 +677,13 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           ChooseColor   (COMMDLG.5)
- */
-BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
-{
-    HANDLE hInst, hDlgTmpl;
-    BOOL bRet;
-
-    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
-    hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChCol->hwndOwner,
-                                   MODULE_GetWndProcEntry16("ColorDlgProc"), 
-                                   (DWORD)lpChCol );
-    SYSRES_FreeResource( hDlgTmpl );
-    return bRet;
-}
-
-
-/***********************************************************************
  *           FindTextDlg   (COMMDLG.11)
  */
 BOOL FindText(LPFINDREPLACE lpFind)
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
-    SEGPTR ptr;
+    LPCVOID ptr;
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -713,10 +695,10 @@ BOOL FindText(LPFINDREPLACE lpFind)
      */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( hDlgTmpl ))) return -1;
-    bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
-                                      MODULE_GetWndProcEntry16("FindTextDlgProc"),
-                                      (DWORD)lpFind );
+    if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
+    bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
+                                        MODULE_GetWndProcEntry16("FindTextDlgProc"),
+                                        (DWORD)lpFind );
     GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
@@ -730,7 +712,7 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
-    SEGPTR ptr;
+    LPCVOID ptr;
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -742,10 +724,10 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
      */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( hDlgTmpl ))) return -1;
-    bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
-                                      MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
-                                      (DWORD)lpFind );
+    if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
+    bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
+                                        MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
+                                        (DWORD)lpFind );
     GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
@@ -806,7 +788,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
     int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
-    lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
+    lpfr = (LPFINDREPLACE)GetWindowLong32A(hWnd, DWL_USER);
     switch (wParam) {
 	case IDOK:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
@@ -898,7 +880,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
     int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
-    lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
+    lpfr = (LPFINDREPLACE)GetWindowLong32A(hWnd, DWL_USER);
     switch (wParam) {
 	case IDOK:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
@@ -989,7 +971,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
 	hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_PRINT );
 
     hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpPrint->hwndOwner,
+    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpPrint->hwndOwner,
                                    (lpPrint->Flags & PD_PRINTSETUP) ?
                                      MODULE_GetWndProcEntry16("PrintSetupDlgProc") :
                                      MODULE_GetWndProcEntry16("PrintDlgProc"),
@@ -1095,7 +1077,48 @@ short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 }
 
 
-/* --------------------------- Choose Color Dialog ------------------------------ */
+/* ------------------------ Choose Color Dialog --------------------------- */
+
+/***********************************************************************
+ *           ChooseColor   (COMMDLG.5)
+ */
+BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
+{
+    HINSTANCE hInst;
+    HANDLE hDlgTmpl, hResInfo;
+    BOOL bRet;
+
+    dprintf_commdlg(stddeb,"ChooseColor\n");
+    if (!lpChCol) return FALSE;    
+    if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChCol->hInstance;
+    else if (lpChCol->Flags & CC_ENABLETEMPLATE)
+    {
+        if (!(hResInfo = FindResource( lpChCol->hInstance,
+                                       lpChCol->lpTemplateName, RT_DIALOG)))
+        {
+            CommDlgLastError = CDERR_FINDRESFAILURE;
+            return FALSE;
+        }
+        hDlgTmpl = LoadResource( lpChCol->hInstance, hResInfo );
+    }
+    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
+    if (!hDlgTmpl)
+    {
+        CommDlgLastError = CDERR_LOADRESFAILURE;
+        return FALSE;
+    }
+    hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
+    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChCol->hwndOwner,
+                                     MODULE_GetWndProcEntry16("ColorDlgProc"), 
+                                     (DWORD)lpChCol );
+    if (!(lpChCol->Flags & CC_ENABLETEMPLATEHANDLE))
+    {
+        if (lpChCol->Flags & CC_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        else SYSRES_FreeResource( hDlgTmpl );
+    }
+    return bRet;
+}
+
 
 static const COLORREF predefcolors[6][8]=
 {
@@ -1456,7 +1479,7 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  int oben;
  RECT16 rect;
  HWND hwnd=GetDlgItem(hDlg,0x2be);
- struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
 
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
@@ -1496,7 +1519,7 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
  HDC hDC;
  int w=GetDialogBaseUnits();
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  RECT16 rect;
  POINT16 point;
  HPEN16 hPen;
@@ -1541,7 +1564,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
 {
  int sdif,hdif,xdif,ydif,r,g,b,hue,sat;
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER);  
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER);  
  HBRUSH hbrush;
  HDC hdc ;
  RECT16 rect,client;
@@ -1584,7 +1607,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
 static void CC_PaintColorGraph(HWND hDlg)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  HDC  hDC;
  RECT16 rect;
  if (IsWindowVisible(hwnd))   /* if full size */
@@ -1643,7 +1666,7 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
 static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
 {
  char buffer[10];
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  int r=GetRValue(cr);
  int g=GetGValue(cr);
  int b=GetBValue(cr);
@@ -1666,7 +1689,7 @@ static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
 static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
 {
  char buffer[10];
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  lpp->updating=TRUE;
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
@@ -1688,7 +1711,7 @@ static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
 static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
 {
  int i;
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  
  EnableWindow(GetDlgItem(hDlg,0x2cf),FALSE);
  CC_PrepareColorGraph(hDlg);
@@ -1885,7 +1908,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
     UINT cokmsg;
     HDC hdc;
     COLORREF *cr;
-    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
     dprintf_commdlg(stddeb,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
     switch (wParam)
     {
@@ -2008,7 +2031,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT CC_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam) 
 {
-    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
     /* we have to paint dialog children except text and buttons */
  
     CC_PaintPredefColorArray(hDlg,6,8);
@@ -2035,7 +2058,7 @@ static LRESULT CC_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM wParam, LPARAM lParam) 
 {
-   struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+   struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
    int r,g,b,i;
    i=0;
    if (CC_MouseCheckPredefColorArray(hDlg,0x2d0,6,8,lParam,&lpp->lpcc->rgbResult))
@@ -2085,7 +2108,7 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
 			 UINT wParam, LONG lParam)
 {
  int res;
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  if (message!=WM_INITDIALOG)
  {
   if (!lpp)
@@ -2142,15 +2165,38 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
  */
 BOOL ChooseFont(LPCHOOSEFONT lpChFont)
 {
-    HANDLE hInst, hDlgTmpl;
+    HINSTANCE hInst;
+    HANDLE hDlgTmpl, hResInfo;
     BOOL bRet;
+
     dprintf_commdlg(stddeb,"ChooseFont\n");
-    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
+    if (!lpChFont) return FALSE;    
+    if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChFont->hInstance;
+    else if (lpChFont->Flags & CF_ENABLETEMPLATE)
+    {
+        if (!(hResInfo = FindResource( lpChFont->hInstance,
+                                       lpChFont->lpTemplateName, RT_DIALOG)))
+        {
+            CommDlgLastError = CDERR_FINDRESFAILURE;
+            return FALSE;
+        }
+        hDlgTmpl = LoadResource( lpChFont->hInstance, hResInfo );
+    }
+    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
+    if (!hDlgTmpl)
+    {
+        CommDlgLastError = CDERR_LOADRESFAILURE;
+        return FALSE;
+    }
     hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChFont->hwndOwner,
+    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChFont->hwndOwner,
                                    MODULE_GetWndProcEntry16("FormatCharDlgProc"), 
                                    (DWORD)lpChFont );
-    SYSRES_FreeResource( hDlgTmpl );
+    if (!(lpChFont->Flags & CF_ENABLETEMPLATEHANDLE))
+    {
+        if (lpChFont->Flags & CF_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        else SYSRES_FreeResource( hDlgTmpl );
+    }
     return bRet;
 }
 
@@ -2188,7 +2234,7 @@ int FontFamilyEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM 
   WORD w;
   HWND hwnd=LOWORD(lParam);
   HWND hDlg=GetParent(hwnd);
-  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
 
   dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s (nFontType=%d)\n",
      			lplf->lfFaceName,nFontType);
@@ -2294,7 +2340,7 @@ int FontStyleEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM l
   HWND hcmb2=LOWORD(lParam);
   HWND hcmb3=HIWORD(lParam);
   HWND hDlg=GetParent(hcmb3);
-  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   int i;
   
   dprintf_commdlg(stddeb,"FontStyleEnumProc: (nFontType=%d)\n",nFontType);
@@ -2544,7 +2590,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
 
   if (lpcf->Flags & CF_EFFECTS)
    if (HIWORD(lParam)==CTLCOLOR_STATIC && GetDlgCtrlID(LOWORD(lParam))==stc6)
@@ -2566,7 +2612,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
   int i,j;
   long l;
   HDC hdc;
-  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LPLOGFONT lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
   
   dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_COMMAND lParam=%08lX\n", lParam);
@@ -2642,6 +2688,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		    lpxx->lfOutPrecision=OUT_DEFAULT_PRECIS;
 		    lpxx->lfClipPrecision=CLIP_DEFAULT_PRECIS;
 		    lpxx->lfQuality=DEFAULT_QUALITY;
+                    lpcf->iPointSize= -10*lpxx->lfHeight;
 
 		    hFont=CreateFontIndirect(lpxx);
 		    if (hFont)
@@ -2665,7 +2712,16 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		    CallWindowProc16(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);
 		  break;
 
-	case IDOK:EndDialog(hDlg, TRUE);
+	case IDOK:if (  (!(lpcf->Flags & CF_LIMITSIZE))  ||
+                     ( (lpcf->Flags & CF_LIMITSIZE) && 
+                      (-lpxx->lfHeight >= lpcf->nSizeMin) && 
+                      (-lpxx->lfHeight <= lpcf->nSizeMax)))
+	             EndDialog(hDlg, TRUE);
+	          else
+	          {
+	           sprintf(buffer,"Select a font size among %d and %d points.",lpcf->nSizeMin,lpcf->nSizeMax);
+	           MessageBox(hDlg,buffer,NULL,MB_OK);
+	          } 
 		  return(TRUE);
 	case IDCANCEL:EndDialog(hDlg, FALSE);
 		  return(TRUE);
@@ -2682,7 +2738,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER);  
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER);  
   if (message!=WM_INITDIALOG)
   {
    int res=0;

@@ -185,6 +185,9 @@ typedef struct tagDC
 {
     GDIOBJHDR     header;
     WORD          saveLevel;
+    DWORD         dwHookData;
+    FARPROC16     hookProc;
+    HDC           hSelf;
     WIN_DC_INFO   w;
     union
     {
@@ -193,9 +196,18 @@ typedef struct tagDC
     } u;
 } DC;
 
+  /* DC hook codes */
+#define DCHC_INVALIDVISRGN      0x0001
+#define DCHC_DELETEDC           0x0002
+
+#define DCHF_INVALIDATEVISRGN   0x0001
+#define DCHF_VALIDATEVISRGN     0x0002
+
   /* DC flags */
-#define DC_MEMORY     1   /* It is a memory DC */
-#define DC_SAVED      2   /* It is a saved DC */
+#define DC_MEMORY     0x0001   /* It is a memory DC */
+#define DC_SAVED      0x0002   /* It is a saved DC */
+#define DC_DIRTY      0x0004   /* hVisRgn has to be updated */
+#define DC_THUNKHOOK  0x0008   /* DC hook is in the 16-bit code */ 
 
   /* Last 32 bytes are reserved for stock object handles */
 #define GDI_HEAP_SIZE               0xffe0
@@ -267,6 +279,10 @@ extern BOOL GDI_Init(void);
 extern HANDLE GDI_AllocObject( WORD, WORD );
 extern BOOL GDI_FreeObject( HANDLE );
 extern GDIOBJHDR * GDI_GetObjPtr( HANDLE, WORD );
+extern FARPROC16 GDI_GetDefDCHook(void);
+
+#define UpdateDirtyDC(dc) \
+	    DC_CallHookProc(dc, DCHC_INVALIDVISRGN, 0)
 
 extern Display * display;
 extern Screen * screen;

@@ -2,8 +2,12 @@
  * COMMDLG - Common Wine Dialog ... :-)
  */
 
-#ifndef COMMDLG_H
-#define COMMDLG_H
+#ifndef __WINE_COMMDLG_H
+#define __WINE_COMMDLG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "wintypes.h"		/* needed for CHOOSEFONT structure */
 
@@ -87,7 +91,7 @@ typedef struct {
 	DWORD 		Flags;
 	LPARAM		lCustData;
 	UINT		(*lpfnHook)(HWND, UINT, WPARAM, LPARAM);
-	LPCSTR 		lpTemplateName;
+	SEGPTR 		lpTemplateName;
 	} CHOOSECOLOR;
 typedef CHOOSECOLOR *LPCHOOSECOLOR;
 
@@ -306,6 +310,8 @@ LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 #pragma pack(4)
 #endif
 
-#endif 		/* #ifdef COMMDLG_H */
+#ifdef __cplusplus
+}
+#endif
 
-
+#endif  /* __WINE_COMMDLG_H */

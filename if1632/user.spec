@@ -40,7 +40,7 @@ heap	65520
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength
 39  pascal16 BeginPaint(word ptr) BeginPaint16
 40  pascal16 EndPaint(word ptr) EndPaint16
-41  pascal16 CreateWindow(segptr segptr long s_word s_word s_word s_word
+41  pascal16 CreateWindow(ptr ptr long s_word s_word s_word s_word
 	                  word word word segptr) CreateWindow16
 42  pascal16 ShowWindow(word word) ShowWindow
 43  pascal16 CloseWindow(word) CloseWindow
@@ -86,9 +86,9 @@ heap	65520
 83  pascal16 FrameRect(word ptr word) FrameRect16
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon
 85  pascal16 DrawText(word ptr s_word ptr word) DrawText16
-87  pascal16 DialogBox(word segptr word segptr) DialogBox
+87  pascal16 DialogBox(word segptr word segptr) DialogBox16
 88  pascal16 EndDialog(word s_word) EndDialog
-89  pascal16 CreateDialog(word segptr word segptr) CreateDialog
+89  pascal16 CreateDialog(word segptr word segptr) CreateDialog16
 90  pascal16 IsDialogMessage(word ptr) IsDialogMessage
 91  pascal16 GetDlgItem(word word) GetDlgItem
 92  pascal16 SetDlgItemText(word word segptr) SetDlgItemText16
@@ -134,7 +134,7 @@ heap	65520
 132 pascal   SetClassLong(word s_word long) SetClassLong16
 133 pascal16 GetWindowWord(word s_word) GetWindowWord
 134 pascal16 SetWindowWord(word s_word word) SetWindowWord
-135 pascal   GetWindowLong(word s_word) GetWindowLong
+135 pascal   GetWindowLong(word s_word) GetWindowLong16
 136 pascal   SetWindowLong(word s_word long) SetWindowLong16
 137 pascal16 OpenClipboard(word) OpenClipboard
 138 pascal16 CloseClipboard() CloseClipboard
@@ -218,8 +218,8 @@ heap	65520
 215 pascal16 FlushComm(word word) FlushComm
 #216 USERSEEUSERDO
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
-218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect
-219 pascal16 CreateDialogIndirect(word segptr word segptr) CreateDialogIndirect
+218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
+219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
 220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect16
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
@@ -239,12 +239,12 @@ heap	65520
 236 pascal16 GetCapture() GetCapture
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn
 238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn
-239 pascal16 DialogBoxParam(word segptr word segptr long) DialogBoxParam
+239 pascal16 DialogBoxParam(word segptr word segptr long) DialogBoxParam16
 240 pascal16 DialogBoxIndirectParam(word word word segptr long)
-             DialogBoxIndirectParam
-241 pascal16 CreateDialogParam(word segptr word segptr long) CreateDialogParam
-242 pascal16 CreateDialogIndirectParam(word segptr word segptr long)
-             CreateDialogIndirectParam
+             DialogBoxIndirectParam16
+241 pascal16 CreateDialogParam(word segptr word segptr long) CreateDialogParam16
+242 pascal16 CreateDialogIndirectParam(word ptr word segptr long)
+             CreateDialogIndirectParam16
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal16 EqualRect(ptr ptr) EqualRect16
 245 stub EnableCommNotification
@@ -302,7 +302,7 @@ heap	65520
 300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
 #306 BEAR306
-308 pascal   DefDlgProc(word word word long) DefDlgProc
+308 pascal   DefDlgProc(word word word long) DefDlgProc16
 309 pascal16 GetClipCursor(ptr) GetClipCursor16
 314 stub SignalProc
 319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word)
@@ -327,7 +327,7 @@ heap	65520
 357 stub LoadDIBIconHandler
 358 pascal16 IsMenu(word) IsMenu
 359 pascal16 GetDCEx(word word long) GetDCEx
-362 stub DCHook
+362 pascal16 DCHook(word word long long) DCHook
 364 stub LookupIconIDFromDirectoryEx
 368 pascal16 CopyIcon(word word) CopyIcon
 369 pascal16 CopyCursor(word word) CopyCursor
@@ -397,7 +397,7 @@ heap	65520
 449 stub DrawState
 450 stub CreateIconFromResourceEx
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel
-452 pascal16 CreateWindowEx(long segptr segptr long s_word s_word s_word s_word
+452 pascal16 CreateWindowEx(long ptr ptr long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx16
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx16
 455 pascal16 GetIconID(word long) GetIconID

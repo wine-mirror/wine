@@ -17,7 +17,7 @@ typedef struct tagCLASS
     UINT32           magic;         /* Magic number */
     UINT32           cWindows;      /* Count of existing windows */
     UINT32           style;         /* Class style */
-    WNDPROC16        lpfnWndProc;   /* Window procedure */ 
+    HANDLE32         winproc;       /* Window procedure */ 
     INT32            cbClsExtra;    /* Class extra bytes */
     INT32            cbWndExtra;    /* Window extra bytes */
     LPSTR            menuNameA;     /* Default menu name (ASCII string) */

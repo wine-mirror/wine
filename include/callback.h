@@ -34,6 +34,7 @@ extern LONG CallTo16_long_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
 extern WORD CallTo16_word_llwl ( FARPROC, WORD, LONG, LONG, WORD, LONG );
 extern LONG CallTo16_long_wwwl ( FARPROC, WORD, WORD, WORD, WORD, LONG );
 extern WORD CallTo16_word_lwww ( FARPROC, WORD, LONG, WORD, WORD, WORD );
+extern WORD CallTo16_word_wwll ( FARPROC, WORD, WORD, WORD, LONG, LONG);
 extern WORD CallTo16_word_wllwl( FARPROC, WORD, WORD, LONG, LONG, WORD, LONG );
 extern WORD CallTo16_word_wwlll( FARPROC, WORD, WORD, WORD, LONG, LONG, LONG );
 extern LONG CallTo16_long_lllllllwlwwwl( FARPROC, WORD, LONG, LONG, LONG,
@@ -71,6 +72,8 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
+#define CallDCHookProc( func, hdc, code, data, lparam) \
+    CallTo16_word_wwll( func, CURRENT_DS, hdc, code, data, lparam )
 #define CallWndProcNCCREATE16( func, ds, exStyle, clsName, winName, style, \
                                x, y, cx, cy, hparent, hmenu, instance, \
                                params, hwnd, msg, wParam, lParam ) \
@@ -124,6 +127,8 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
+#define CallDCHookProc( func, hdc, code, data, lparam ) \
+    (*func)( hdc, code, data, lparam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
 

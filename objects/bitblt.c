@@ -35,6 +35,8 @@
 
 #define MAX_OP_LEN  6  /* Longest opcode + 1 for the terminating 0 */
 
+extern void CLIPPING_UpdateGCRegion(DC* );
+
 static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
 {
     { OP(PAT,DST,GXclear) },                         /* 0x00  0              */
@@ -1031,6 +1033,9 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
     if (!dcSrc && useSrc) return FALSE;
 
+    if (dcDst->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dcDst );
+    if (dcSrc && (dcSrc->w.flags & DC_DIRTY)) CLIPPING_UpdateGCRegion( dcSrc );
+
       /* Map the coordinates to device coords */
 
     xDst      = dcDst->w.DCOrgX + XLPTODP( dcDst, xDst );
@@ -1270,7 +1275,7 @@ BOOL BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width, INT height,
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
 
     dprintf_bitblt(stddeb,
-                "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+                "BitBlt: hdcSrc=%04x %d,%d %d bpp -> hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
 

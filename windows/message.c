@@ -699,7 +699,8 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     }
 
     SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc16( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
+    ret = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                            hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
     return ret;
 }
@@ -738,7 +739,7 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     }
 
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc32A( (WNDPROC32)wndPtr->lpfnWndProc,
+    ret = CallWindowProc32A( (WNDPROC32)wndPtr->winproc,
                              hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
@@ -778,7 +779,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     }
 
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc32W( (WNDPROC32)wndPtr->lpfnWndProc,
+    ret = CallWindowProc32W( (WNDPROC32)wndPtr->winproc,
                              hwnd, msg, wParam, lParam );
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
@@ -869,14 +870,14 @@ LONG DispatchMessage( const MSG* msg )
 
     if (!msg->hwnd) return 0;
     if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->lpfnWndProc) return 0;
+    if (!wndPtr->winproc) return 0;
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 /*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProc16( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
+    retval = CallWindowProc16( wndPtr->winproc, msg->hwnd, msg->message,
                                msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval );
 

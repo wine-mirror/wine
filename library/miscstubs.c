@@ -103,16 +103,6 @@ WNDPROC MODULE_GetWndProcEntry16( char *name )
   return ErrorProc;
 }
 
-/***********************************************************************
- *           MODULE_GetWndProcEntry32 (not a Windows API function)
- *
- * Return an entry point from the WPROCS32 dll.
- */
-WNDPROC MODULE_GetWndProcEntry32( char *name )
-{
-    return MODULE_GetWndProcEntry16( name );
-}
-
 void DEBUG_EnterDebugger(void)
 {
 }

@@ -95,9 +95,9 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   lphl->hSelf          = hwnd;  
   if (CtlType==ODT_COMBOBOX)              /* use the "faked" style for COMBOLBOX */
                                           /* LBS_SORT instead CBS_SORT e.g.      */
-    lphl->dwStyle   = MAKELONG(LOWORD(styles),HIWORD(GetWindowLong(hwnd,GWL_STYLE)));
+    lphl->dwStyle   = MAKELONG(LOWORD(styles),HIWORD(GetWindowLong32A(hwnd,GWL_STYLE)));
   else
-    lphl->dwStyle   = GetWindowLong(hwnd,GWL_STYLE); /* use original style dword */
+    lphl->dwStyle   = GetWindowLong32A(hwnd,GWL_STYLE); /* use original style dword */
   lphl->hParent        = parent;
   lphl->StdItemHeight  = 15; /* FIXME: should get the font height */
   lphl->OwnerDrawn     = styles & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE);
@@ -146,7 +146,7 @@ void DestroyListBoxStruct(LPHEADLIST lphl)
 
 static LPHEADLIST ListBoxGetStorageHeader(HWND hwnd)
 {
-    return (LPHEADLIST)GetWindowLong(hwnd,0);
+    return (LPHEADLIST)GetWindowLong32A(hwnd,0);
 }
 
 /* Send notification "code" as part of a WM_COMMAND-message if hwnd
@@ -245,7 +245,7 @@ void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls,
         dis.itemAction = itemAction;
         dis.itemState  = itemState;
         CONV_RECT16TO32( rect, &dis.rcItem );
-        SendMessage32A( lphl->hParent, WM_DRAWITEM, 0, (LPARAM)&dis );
+        SendMessage32A( lphl->hParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis );
         return;
     }
     if (itemAction == ODA_DRAWENTIRE || itemAction == ODA_SELECT) {
@@ -315,7 +315,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
  
   *lpmeasure = lpls->mis;
   lpmeasure->itemHeight = lphl->StdItemHeight;
-  SendMessage16(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
+  SendMessage16(lphl->hParent, WM_MEASUREITEM, lphl->CtlID, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     if (lpmeasure->itemHeight > lphl->StdItemHeight)
@@ -765,7 +765,7 @@ int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar)
 static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl;
-  LONG	       dwStyle = GetWindowLong(hwnd,GWL_STYLE);
+  LONG	       dwStyle = GetWindowLong32A(hwnd,GWL_STYLE);
   RECT16 rect;
 
   CreateListBoxStruct(hwnd, ODT_LISTBOX, dwStyle, GetParent(hwnd));
@@ -978,7 +978,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
    }
 
 #ifndef WINELIB
-  if (GetWindowLong(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
+  if (GetWindowLong32A(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
      if( DragDetect(lphl->hSelf,MAKEPOINT16(lParam)) )
          SendMessage16(lphl->hParent, WM_BEGINDRAG,0,0L);
 #endif

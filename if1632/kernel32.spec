@@ -510,7 +510,7 @@ base	1
 0504 stub SetProcessShutdownParameters
 0505 stub SetProcessWorkingSetSize
 0506 stub SetStdHandle
-0507 stub SetSystemTime
+0507    stdcall SetSystemTime(ptr) SetSystemTime
 0508 stub SetSystemTimeAdjustment
 0509 stub SetTapeParameters
 0510 stub SetTapePosition
@@ -518,7 +518,7 @@ base	1
 0512 stub SetThreadContext
 0513 stub SetThreadLocale
 0514 stub SetThreadPriority
-0515 stub SetTimeZoneInformation
+0515    stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
 0516    stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
 0517 stub SetVDMCurrentDirectories
 0518 stub SetVolumeLabelA
@@ -601,22 +601,22 @@ base	1
 0595 stub _lopen
 0596 stub _lread
 0597 stub _lwrite
-0598 stub lstrcat
-0599 stub lstrcatA
+0598    stdcall lstrcat(ptr ptr) strcat
+0599    stdcall lstrcatA(ptr ptr) strcat
 0600 stub lstrcatW
-0601 stub lstrcmp
-0602 stub lstrcmpA
+0601    stdcall lstrcmp(ptr ptr) strcmp
+0602    stdcall lstrcmpA(ptr ptr) strcmp
 0603 stub lstrcmpW
 0604 stub lstrcmpi
 0605 stub lstrcmpiA
 0606 stub lstrcmpiW
-0607 stub lstrcpy
+0607    stdcall lstrcpy(ptr ptr) strcpy
 0608 	stdcall lstrcpyA(ptr ptr) strcpy
 0609 stub lstrcpyW
 0610 stub lstrcpyn
 0611 stub lstrcpynA
 0612 stub lstrcpynW
-0613 stub lstrlen
+0613    stdcall lstrlen(ptr) strlen
 0614 	stdcall lstrlenA(ptr) strlen
 0615 stub lstrlenW
 #late additions
@@ -625,7 +625,7 @@ base	1
 0618 stub GetPrivateProfileStructA
 0619 stub GetPrivateProfileStructW
 0620 stub GetProcessVersion
-0621 stub GetSystemPowerStatus
+0621    stdcall GetSystemPowerStatus(ptr) GetSystemPowerStatus
 0622 stub GetSystemTimeAsFileTime
 0623 stub HeapCreateTagsW
 0624 stub HeapExtend
@@ -634,7 +634,7 @@ base	1
 0627 stub HeapUsage
 0628 stub IsDebuggerPresent
 0629 stub PostQueuedCompletionStatus
-0630 stub SetSystemPowerState
+0630    stdcall SetSystemPowerState(byte byte) SetSystemPowerState
 0631 stub WritePrivateProfileStructA
 0632 stub WritePrivateProfileStructW
 0633 stub MakeCriticalSectionGlobal

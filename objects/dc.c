@@ -14,11 +14,13 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
+#include "callback.h"
 #include "xmalloc.h"
 
 static DeviceCaps * displayDevCaps = NULL;
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
+extern BOOL DCHook( HDC, WORD, DWORD, DWORD );      /* windows/dce.c */
 
   /* Default DC values */
 static const WIN_DC_INFO DC_defaultValues =
@@ -142,15 +144,14 @@ void DC_FillDevCaps( DeviceCaps * caps )
  *
  * Setup device-specific DC values for a newly created DC.
  */
-void DC_InitDC( HDC hdc )
+void DC_InitDC( DC* dc )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    RealizeDefaultPalette( hdc );
-    SetTextColor( hdc, dc->w.textColor );
-    SetBkColor( hdc, dc->w.backgroundColor );
-    SelectObject( hdc, dc->w.hPen );
-    SelectObject( hdc, dc->w.hBrush );
-    SelectObject( hdc, dc->w.hFont );
+    RealizeDefaultPalette( dc->hSelf );
+    SetTextColor( dc->hSelf, dc->w.textColor );
+    SetBkColor( dc->hSelf, dc->w.backgroundColor );
+    SelectObject( dc->hSelf, dc->w.hPen );
+    SelectObject( dc->hSelf, dc->w.hBrush );
+    SelectObject( dc->hSelf, dc->w.hFont );
     XSetGraphicsExposures( display, dc->u.x.gc, False );
     XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     CLIPPING_UpdateGCRegion( dc );
@@ -190,6 +191,8 @@ BOOL DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
         val.foreground = COLOR_PixelToPalette[val.foreground];
         val.background = COLOR_PixelToPalette[val.background];
     }
+
+    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
 
     val.function = DC_XROPfunction[dc->w.ROPmode-1];
     val.fill_style = dc->u.x.brush.fillStyle;
@@ -262,6 +265,8 @@ BOOL DC_SetupGCForPen( DC * dc )
 
     if (dc->u.x.pen.style == PS_NULL) return FALSE;
 
+    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc); 
+
     if ((screenDepth <= 8) &&  /* FIXME: Should check for palette instead */
         ((dc->w.ROPmode == R2_BLACK) || (dc->w.ROPmode == R2_WHITE)))
     {
@@ -309,6 +314,9 @@ BOOL DC_SetupGCForText( DC * dc )
         fprintf( stderr, "DC_SetupGCForText: fstruct is NULL. Please report this\n" );
         return FALSE;
     }
+   
+    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
+
     val.function   = GXcopy;  /* Text is always GXcopy */
     val.foreground = dc->w.textPixel;
     val.background = dc->w.backgroundPixel;
@@ -320,6 +328,26 @@ BOOL DC_SetupGCForText( DC * dc )
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           DC_CallHookProc
+ */
+BOOL DC_CallHookProc(DC* dc, WORD code, LPARAM lParam)
+{
+  BOOL   bRet = 0;
+  FARPROC ptr = GDI_GetDefDCHook();
+
+  dprintf_dc(stddeb,"CallDCHook: code %04x\n", code);
+
+  /* if 16-bit callback is, in fact, a thunk to DCHook simply call DCHook */
+
+  if( dc->hookProc && !(dc->w.flags & (DC_SAVED | DC_MEMORY)) )
+    bRet = (dc->hookProc == ptr) ?
+          DCHook(dc->hSelf, code, dc->dwHookData, lParam):
+          CallDCHookProc(dc->hookProc, dc->hSelf, code, dc->dwHookData, lParam);
+
+  return bRet;
+}
 
 /***********************************************************************
  *           GetDCState    (GDI.179)
@@ -338,6 +366,8 @@ HDC GetDCState( HDC hdc )
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
     memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
+
+    newdc->hSelf = (HDC)handle;
     newdc->saveLevel = 0;
     newdc->w.flags |= DC_SAVED;
 
@@ -474,7 +504,11 @@ HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
 	DC_FillDevCaps( displayDevCaps );
     }
 
+    dc->hSelf = (HDC)handle;
     dc->saveLevel = 0;
+    dc->dwHookData = 0L;
+    dc->hookProc = (SEGPTR)NULL;
+
     memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
@@ -491,7 +525,7 @@ HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
         return 0;
     }
 
-    DC_InitDC( handle );
+    DC_InitDC( dc );
 
     return handle;
 }
@@ -530,8 +564,12 @@ HDC CreateCompatibleDC( HDC hdc )
 	return 0;
     }
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    
+
+    dc->hSelf = (HDC)handle;    
     dc->saveLevel = 0;
+    dc->dwHookData = 0L; 
+    dc->hookProc = (SEGPTR)NULL;
+
     memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
@@ -551,7 +589,7 @@ HDC CreateCompatibleDC( HDC hdc )
         return 0;
     }
 
-    DC_InitDC( handle );
+    DC_InitDC( dc );
 
     return handle;
 }
@@ -713,3 +751,60 @@ DWORD SetDCOrg( HDC hdc, short x, short y )
     dc->w.DCOrgY = y;
     return prevOrg;
 }
+
+
+/***********************************************************************
+ *           SetDCHook   (GDI.190)
+ */
+BOOL SetDCHook( HDC hDC, FARPROC16 hookProc, DWORD dwHookData )
+{
+    DC *dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+
+    dprintf_dc( stddeb, "SetDCHook: hookProc %08x, default is %08x\n",
+                (unsigned)hookProc,(unsigned)GDI_GetDefDCHook() );
+
+    if (!dc) return FALSE;
+    dc->hookProc = hookProc;
+    dc->dwHookData = dwHookData;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDCHook   (GDI.191)
+ */
+DWORD GetDCHook( HDC hDC, FARPROC16 *phookProc )
+{
+    DC *dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+    if (!dc) return 0;
+    *phookProc = dc->hookProc;
+    return dc->dwHookData;
+}
+
+
+/***********************************************************************
+ *           SetHookFlags       (GDI.192)
+ */
+WORD SetHookFlags(HDC hDC, WORD flags)
+{
+  DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
+
+  if( dc )
+    {
+        WORD wRet = dc->w.flags & DC_DIRTY;
+
+        /* "Undocumented Windows" info is slightly
+         *  confusing
+         */
+
+        dprintf_dc(stddeb,"SetHookFlags: hDC %04x, flags %04x\n",hDC,flags);
+
+        if( flags & DCHF_INVALIDATEVISRGN )
+            dc->w.flags |= DC_DIRTY;
+        else if( flags & DCHF_VALIDATEVISRGN || !flags )
+            dc->w.flags &= ~DC_DIRTY;
+        return wRet;
+    }
+  return 0;
+}
+

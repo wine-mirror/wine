@@ -32,7 +32,8 @@ static LRESULT PROGRAM_ProgramWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARA
 	return(0);
       }
 
-    case WM_PAINT:
+    case WM_PAINTICON:
+    case WM_NCPAINT:
       {
 	PROGRAM *program;
 	PAINTSTRUCT      ps;
@@ -205,6 +206,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
   SetWindowLong(program->hWnd, 0, (LONG) hProgram);
 
   ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
+  SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
   UpdateWindow (program->hWnd);
 
   return hProgram;

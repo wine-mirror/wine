@@ -1,4 +1,96 @@
 ----------------------------------------------------------------------
+Wed Jun  5 20:13:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/button.c] [controls/listbox.c]
+	Fixed wParam of WM_DRAWITEM message.
+
+	* [if1632/Makefile.in] [loader/builtin.c]
+	Remove WPROCS32 DLL, as the relay code can call Wine routines
+	directly.
+
+	* [loader/module.c] [loader/ne_image.c]
+	Fixed initial stack layout for self-loading modules.
+
+	* [tools/build.c]
+	Fixed data segment building for Win16 modules.
+
+	* [windows/defdlg.c]
+	Implemented Win32 versions of DefDlgProc().
+
+	* [windows/dialog.c]
+	Merged Win16 and Win32 dialog code.
+	Added support for control extra data in dialog item template.
+
+	* [windows/win.c]
+	Unified Win16 and Win32 versions of CreateWindow().
+	Implemented Win32 version of GetWindowLong().
+
+	* [windows/winproc.c]
+	Changed the implementation of window procedures, so that 16-bit
+	winprocs are valid segmented pointers.
+
+Sun Jun  2 16:39:46 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [misc/registry.c]
+	Fixed another bug in the w95 loader. Quietened some debug output.
+
+Sun Jun  2 10:00:22 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [windows/winproc.c]
+	Bug fix: WM_PARENTNOTIFY: don't fall through to WM_SETTEXT.
+
+Sat Jun  1 12:37:22 1996  Tristan Tarrant <tst@sthinc.demon.co.uk>
+
+	* [resources/TODO] [resources/sysres_It.rc]
+	Updated font dialog box.
+
+Thu May 30 21:05:19 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [include/commdlg.h] [misc/commdlg.c]
+	ChooseFont() and ChooseColor(): 
+	Bugfixes and added more support for some CF_* and CC_* flags: 
+	dialog templates and font size control.
+	Bugfix in structure definition of CHOOSECOLOR definition.
+
+	* [ipc/dde_proc.c] [windows/event.c]
+	Replaced SendMessage with SendMessage16 and added inclusion of
+ 	dde_proc.h for error-free compilation of ipc module.
+
+Thu May 30 19:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/scroll.c]
+	Made ScrollDC to save/restore current clipping region.
+
+	* [misc/clipboard.c] [windows/event.c]
+	Implemented most of the previously missing features (not tested), 
+	improved text pasting from/to X. 
+
+	* [if1632/user.spec] [if1632/gdi.spec] [objects/dc.c]
+	  [objects/gdiobj.c] [objects/clipping.c] [windows/dce.c]
+	  [windows/winpos.c] [windows/painting.c]
+	Updated DCE code, implemented dynamic invalidation of owned DCs.
+	This fixes a lot of problems with scrolling in WinWord. Not
+	sure about the effect on -desktop.
+
+Wed May 29 23:35:44 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [win32/time.c] [if1632/kernel32.spec]
+	Added SetSystemTime and SetTimeZoneInformation.
+
+	* [if1632/kernel32.spec]
+	Added lstrcat, lstrcatA, lstrcmp, lstrcmpA, lstrcpy, lstrlen.
+
+	* [include/windows.h]
+	Added SYSTEM_POWER_STATUS structure and prototypes for
+	GetSystemPowerStatus, SetSystemPowerState, SetSystemTime.
+
+	* [include/kernel32.h]
+	Added a prototype for SetTimeZoneInformation.
+
+	* [win32/environment.c] [if1632/kernel32.spec]
+	Added GetSystemPowerStatus and SetSystemPowerState stubs.
+
+----------------------------------------------------------------------
 Tue May 28 19:36:36 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/combo.c]

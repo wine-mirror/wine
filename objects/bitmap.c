@@ -122,11 +122,17 @@ HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits 
  */
 HBITMAP CreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
-    DC * dc;
-    dprintf_gdi(stddeb, "CreateCompatibleBitmap: %04x %dx%d\n", 
+    HBITMAP	hbmpRet = 0;
+    DC * 	dc;
+    dprintf_gdi(stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
 		hdc, width, height );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    return CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
+    
+    hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
+
+    dprintf_gdi(stddeb,"\t\t%04x\n", hbmpRet);
+
+    return hbmpRet;
 }
 
 
@@ -278,7 +284,7 @@ int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
 /***********************************************************************
  *           BITMAP_SelectObject
  */
-HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
+HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 			     BITMAPOBJ * bmp )
 {
     HRGN hrgn;
@@ -300,7 +306,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 	XFreeGC( display, dc->u.x.gc );
 	dc->u.x.gc = XCreateGC( display, dc->u.x.drawable, 0, NULL );
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
-        DC_InitDC( hdc );
+        DC_InitDC( dc );
     }
     else CLIPPING_UpdateGCRegion( dc );  /* Just update GC clip region */
     return prevHandle;

@@ -191,9 +191,16 @@ static const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0130 */
-    NULL, "wm_lbtrackpoint", 
-    NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,
+    "wm_lbtrackpoint",          /* 0x0131 */
+    "WM_CTLCOLORMSGBOX",        /* 0x0132 */
+    "WM_CTLCOLOREDIT",          /* 0x0133 */
+    "WM_CTLCOLORLISTBOX",       /* 0x0134 */
+    "WM_CTLCOLORBTN",           /* 0x0135 */
+    "WM_CTLCOLORDLG",           /* 0x0136 */
+    "WM_CTLCOLORSCROLLBAR",     /* 0x0137 */
+    "WM_CTLCOLORSTATIC",        /* 0x0138 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0140 - Win32 Comboboxes */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,

@@ -338,9 +338,9 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     if (!DC_SetupGCForText( dc )) return TRUE;
     font = dc->u.x.font.fstruct;
 
-    dprintf_text(stddeb,"ExtTextOut: %d,%d '%*.*s', %d  flags=%d\n",
-            x, y, count, count, str, count, flags);
-    if (lprect != NULL) dprintf_text(stddeb, "rect %d %d %d %d\n",
+    dprintf_text(stddeb,"ExtTextOut: hdc=%04x %d,%d '%*.*s', %d  flags=%d\n",
+            hdc, x, y, count, count, str, count, flags);
+    if (lprect != NULL) dprintf_text(stddeb, "\trect=(%d,%d- %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
 
@@ -362,6 +362,9 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
         if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
         if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
     }
+
+    dprintf_text(stddeb,"\treal coord: x=%i, y=%i, rect=(%d,%d-%d,%d)\n",
+			  x, y, rect.left, rect.top, rect.right, rect.bottom);
 
       /* Draw the rectangle */
 
@@ -394,6 +397,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 	  x -= info.width / 2;
 	  break;
     }
+
     switch( dc->w.textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
     {
       case TA_TOP:

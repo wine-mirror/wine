@@ -65,6 +65,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 #ifndef WINELIB
  	/* Implement self loading segments */
  	SELFLOADHEADER *selfloadheader;
+        STACK16FRAME *stack16Top;
  	WORD oldss, oldsp, oldselector, newselector;
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
@@ -72,7 +73,17 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  	oldsp = IF1632_Saved16_sp;
  	oldselector = pSeg->selector;
  	IF1632_Saved16_ss = pModule->self_loading_sel;
- 	IF1632_Saved16_sp = 0xFF00;
+ 	IF1632_Saved16_sp = 0xFF00 - sizeof(*stack16Top);
+        stack16Top = CURRENT_STACK16;
+        stack16Top->saved_ss = 0;
+        stack16Top->saved_sp = 0;
+        stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
+        stack16Top->entry_point = 0;
+        stack16Top->entry_ip = 0;
+        stack16Top->entry_cs = 0;
+        stack16Top->bp = 0;
+        stack16Top->ip = 0;
+        stack16Top->cs = 0;
         /* FIXME: we probably need to pass a DOS file handle here */
  	newselector =  CallTo16_word_www(selfloadheader->LoadAppSeg,
  		pModule->self_loading_sel, hModule, fd, segnum);

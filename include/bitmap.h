@@ -39,7 +39,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 extern BOOL BITMAP_Init(void);
 extern int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer );
 extern BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap );
-extern HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
+extern HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                     BITMAPOBJ * bmp );
 
   /* objects/dib.c */

@@ -99,11 +99,10 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     bwidth = rect.left;
     GetWindowRect16(GetDlgItem(hwnd, 1), &rect);
     bwidth -= rect.left;
-    for (buttons = 0, i = 1; i < 8; i++) {
+    for (buttons = 0, i = 1; i < 8; i++)
+    {
       hItem = GetDlgItem(hwnd, i);
-      if (GetWindowLong(hItem, GWL_STYLE) & WS_VISIBLE) {
-	buttons++;
-      }
+      if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) buttons++;
     }
     
     /* Get the text size */
@@ -141,7 +140,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     for (buttons = i = 0; i < 7; i++) {
       /* some arithmetic to get the right order for YesNoCancel windows */
       hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
-      if (GetWindowLong(hItem, GWL_STYLE) & WS_VISIBLE) {
+      if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) {
 	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
 	  SetFocus(hItem);
 	  SendMessage32A( hItem, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
@@ -187,7 +186,7 @@ int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
 
     handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
     if (!handle) return 0;
-    ret = DialogBoxIndirectParam( WIN_GetWindowInstance(hWnd),
+    ret = DialogBoxIndirectParam16( WIN_GetWindowInstance(hWnd),
                                   handle, hWnd,
                                   MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
                                   (LONG)&mbox );

@@ -32,6 +32,7 @@
 #include "registers.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "dde_proc.h"
 
 
 #ifdef ndef
@@ -628,14 +629,18 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  */
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 {
-    if (hwnd == GetDesktopWindow())
+    /* FIXME: with -desktop xxx we get this event _before_ desktop 
+     * window structure is created. WIN_GetDesktop() check is a hack.
+     */
+
+    if ( !WIN_GetDesktop() || hwnd == GetDesktopWindow())
     {
         desktopX = event->x;
 	desktopY = event->y;
     }
     else
     {
-      /* A managed window; most of this code is shamelessly
+      /* Managed window; most of this code is shamelessly
        * stolen from SetWindowPos - FIXME: outdated
        */
       
@@ -710,17 +715,20 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
 {
     XSelectionEvent result;
-    Atom rprop;
-    Window request=event->requestor;
-    rprop=None;
+    Atom 	    rprop = None;
+    Window 	    request = event->requestor;
+
     if(event->target == XA_STRING)
     {
 	HANDLE hText;
 	LPSTR text;
-        rprop=event->property;
-	if(rprop == None)rprop=event->target;
-        if(event->selection!=XA_PRIMARY)rprop=None;
-        else if(!IsClipboardFormatAvailable(CF_TEXT))rprop=None;
+
+        rprop = event->property;
+
+	if(rprop == None) rprop = event->target;
+
+        if(event->selection!=XA_PRIMARY) rprop = None;
+        else if(!CLIPBOARD_IsPresent(CF_TEXT)) rprop = None;
 	else{
             /* Don't worry if we can't open */
 	    BOOL couldOpen=OpenClipboard(hwnd);
@@ -733,8 +741,10 @@ static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
 	    if(couldOpen)CloseClipboard();
 	}
     }
-    if(rprop==None) dprintf_event(stddeb,"Request for %s ignored\n",
-	XGetAtomName(display,event->target));
+
+    if(rprop==None) 
+       dprintf_event(stddeb,"Request for %s ignored\n", XGetAtomName(display,event->target));
+
     result.type=SelectionNotify;
     result.display=display;
     result.requestor=request;

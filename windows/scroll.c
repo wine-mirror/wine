@@ -17,10 +17,9 @@
 /* #define DEBUG_SCROLL */
 #include "debug.h"
 
-
-
-extern HRGN DCE_GetVisRgn(HWND, WORD);
-extern HWND CARET_GetHwnd();
+extern HRGN DCE_GetVisRgn(HWND, WORD);		/* windows/dce.c */
+extern HWND CARET_GetHwnd();			/* windows/caret.c */
+extern void CLIPPING_UpdateGCRegion(DC* );	/* objects/clipping.c */
 
 static int RgnType;
 
@@ -112,9 +111,7 @@ BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
 /*************************************************************************
  *             ScrollWindow         (USER.61)
  *
- * FIXME: a bit broken
  */
-
 void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect)
 {
     HDC  hdc;
@@ -131,7 +128,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     /* if rect is NULL children have to be moved */
     if ( !rect )
        {
-	GetClientRect16(hwnd, &rc);
+	  GetClientRect16(hwnd, &rc);
 	  hrgnClip = CreateRectRgnIndirect16( &rc );
 
           if ((hCaretWnd == hwnd) || IsChild(hwnd,hCaretWnd))
@@ -192,14 +189,14 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
 /*************************************************************************
  *             ScrollDC         (USER.221)
  *
- * FIXME: half-broken
  */
-
 BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 	      HRGN hrgnUpdate, LPRECT16 rcUpdate)
 {
-    HRGN hrgnClip;
-    POINT16 src, dest;
+    HRGN        hrgnClip 	= 0;
+    HRGN 	hrgnScrollClip  = 0;
+    RECT16	rectClip;
+    POINT16 	src, dest;
     short width, height;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
@@ -207,20 +204,37 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
                    dx, dy, hrgnUpdate, rcUpdate, cliprc, rc ? rc->left : 0,
                    rc ? rc->top : 0, rc ? rc->right : 0, rc ? rc->bottom : 0 );
 
-    if (rc == NULL)
+    if (rc == NULL || !hdc || !dc)
 	return FALSE;
 
-    if (!dc) 
-    { 
-        fprintf(stdnimp,"ScrollDC: Invalid HDC\n");
-        return FALSE;
-    }
+    /* set clipping region */
 
     if (cliprc)
-    {
-	hrgnClip = CreateRectRgnIndirect16(cliprc);
-	SelectClipRgn(hdc, hrgnClip);
-    }
+	IntersectRect16(&rectClip,rc,cliprc);
+    else
+	rectClip = *rc;
+
+    if( rectClip.left >= rectClip.right || rectClip.top >= rectClip.bottom )
+	return FALSE;
+    
+    hrgnClip = GetClipRgn(hdc);
+    hrgnScrollClip = CreateRectRgnIndirect16(&rectClip);
+
+    if( hrgnClip )
+      {
+        /* call UpdateGCRegion directly to avoid
+         * one more temporary region
+	 */ 
+
+        CombineRgn( hrgnScrollClip, hrgnClip, 0, RGN_COPY );
+        SetRectRgn( hrgnClip, rectClip.left, rectClip.top, rectClip.right, rectClip.bottom );
+
+	CLIPPING_UpdateGCRegion( dc );
+      }
+    else
+        SelectClipRgn( hdc, hrgnScrollClip ); 
+
+    /* translate coordinates */
 
     if (dx > 0)
     {
@@ -246,9 +260,13 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
     width = rc->right - rc->left - abs(dx);
     height = rc->bottom - rc->top - abs(dy);
 
+    /* copy bits */
+
     if (!BitBlt(hdc, dest.x, dest.y, width, height, hdc, src.x, src.y, 
 		SRCCOPY))
 	return FALSE;
+
+    /* compute update areas */
 
     if (hrgnUpdate)
     {
@@ -290,6 +308,11 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 
 	UnionRect16( rcUpdate, &rx, &ry );
     }
+
+    /* restore clipping region */
+
+    SelectClipRgn( hdc, (hrgnClip)?hrgnScrollClip:0 );
+    DeleteObject( hrgnScrollClip );     
 
     return TRUE;
 }

@@ -452,7 +452,7 @@ int DDE_GetRemoteMessage()
 		    remote_message->wParam, (int)remote_message->lParam);
 
 	/* execute the recieved message */
-	passed= SendMessage(dde_window, remote_message->message,
+	passed= SendMessage16(dde_window, remote_message->message,
 			    remote_message->wParam, remote_message->lParam);
 
 	/* Tell the sended, that the message is here */
@@ -481,7 +481,7 @@ int DDE_GetRemoteMessage()
   {
      if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
 	if (was_sent)
-	   SendMessage( wndPtr->hwndSelf, remote_message->message,
+	   SendMessage16( wndPtr->hwndSelf, remote_message->message,
 			remote_message->wParam, remote_message->lParam );
 	else
 	   PostMessage( wndPtr->hwndSelf, remote_message->message,
@@ -528,7 +528,7 @@ void DDE_TestDDE(HWND hwnd)
   if (hwnd==0)
       hwnd=-1;
   /* just send a message to see how things are going */
-  SendMessage( hwnd, WM_DDE_INITIATE, 0, 0);
+  SendMessage16( hwnd, WM_DDE_INITIATE, 0, 0);
 }
 
 void dde_proc_delete(int proc_idx)
@@ -553,7 +553,7 @@ void stop_wait(int a)
 
 static void print_dde_message(char *desc, MSG *msg)
 {
-    extern const char *MessageTypeNames[];
+/*    extern const char *MessageTypeNames[];*/
     extern int debug_last_handle_size;
     WORD wStatus,hWord;
     void *ptr;
@@ -571,7 +571,7 @@ static void print_dde_message(char *desc, MSG *msg)
 
     fprintf(stddeb,"%s", desc);
     fprintf(stddeb,"%04x %04x==%s %04x %08lx ",
-	    msg->hwnd, msg->message,MessageTypeNames[msg->message],
+	    msg->hwnd, msg->message,"",/*MessageTypeNames[msg->message],*/
 	    msg->wParam, msg->lParam);
     switch(msg->message) {
       case WM_DDE_INITIATE:

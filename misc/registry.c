@@ -880,11 +880,10 @@ _w95_walk_tree(LPKEYSTRUCT lpkey,struct _w95key *key) {
 
 	while (key) {
 		if (key->name == NULL) {
-			fprintf(stderr,"key with dkeaddr %lx not loaded, skipping hierarchy\n",
+			fprintf(stderr,"_w95_walk_tree:Please report: key with dkeaddr %lx not loaded, skipping hierarchy\n",
 				key->dkeaddr
 			);
-			key = key->next;
-			continue;
+			return;
 		}
 		lpxkey=_find_or_add_key(lpkey,strdupA2W(key->name));
 
@@ -963,7 +962,9 @@ _w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key
 	for (i=0;i<n;i++)
 		if (nr2da[(i+off)%n].dkeaddr == dkeaddr)
 			return keys+nr2da[(i+off)%n].nr;
-	fprintf(stderr,"search didn't found dkeaddr %lx?\n",dkeaddr);
+	/* 0x3C happens often, just report unusual values */
+	if (dkeaddr!=0x3c)
+		dprintf_reg(stddeb,"search hasn't found dkeaddr %lx?\n",dkeaddr);
 	return NULL;
 }
 
@@ -1043,7 +1044,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	where	= 0x40;
 	end	= rgdbsection;
 
-	nrofdkes = (end-where)/sizeof(struct dke);
+	nrofdkes = (end-where)/sizeof(struct dke)+100;
 	data = (char*)xmalloc(end-where);
 	if ((end-where)!=read(fd,data,end-where))
 		return;
@@ -1052,6 +1053,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	keys = (struct _w95key*)xmalloc(nrofdkes * sizeof(struct _w95key));
 	memset(keys,'\0',nrofdkes*sizeof(struct _w95key));
 	nr2da= (struct _w95nr2da*)xmalloc(nrofdkes * sizeof(struct _w95nr2da));
+	memset(nr2da,'\0',nrofdkes*sizeof(struct _w95nr2da));
 
 	for (i=0;i<nrofdkes;i++) {
 		struct	dke	dke;
@@ -1080,7 +1082,9 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 				dkeaddr = dkeaddr & ~0xFFF;
 		}
 		if (nr>nrofdkes) {
-			dprintf_reg(stddeb,"nr %ld exceeds nrofdkes %d, skipping.\n",nr,nrofdkes);
+			/* 0xFFFFFFFF happens often, just report unusual values */
+			if (nr!=0xFFFFFFFF)
+				dprintf_reg(stddeb,"nr %ld exceeds nrofdkes %d, skipping.\n",nr,nrofdkes);
 			continue;
 		}
 		if (keys[nr].dkeaddr) {
@@ -1091,8 +1095,13 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 					break;
 			if (x==-1)
 				break; /* finished reading if we got only 0 */
-			if (nr)
-				dprintf_reg(stddeb,"key doubled? nr=%ld,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,keys[nr].dkeaddr,dkeaddr);
+			if (nr) {
+				if (	(dke.next!=(long)keys[nr].next)	||
+					(dke.nextsub!=(long)keys[nr].nextsub)	||
+					(dke.prevlvl!=(long)keys[nr].prevlvl) 
+				)
+					dprintf_reg(stddeb,"key doubled? nr=%ld,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,keys[nr].dkeaddr,dkeaddr);
+			}
 			continue;
 		}
 		nr2da[i].nr	 = nr;
@@ -1144,7 +1153,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 				nextrgdb = curdata+off_next_rgdb;
 				curdata+=0x20;
 			} else {
-				dprintf_reg(stddeb,"at end of RGDB section, but no next header. Breaking.\n");
+				dprintf_reg(stddeb,"at end of RGDB section, but no next header (%x of %lx). Breaking.\n",curdata-data,end-rgdbsection);
 				break;
 			}
 		}
@@ -1157,21 +1166,11 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 
 		XREAD(&dkh,sizeof(dkh));
 		nr = dkh.nrLS + (dkh.nrMS<<8);
-		if (nr>nrofdkes) {
+		if ((nr>nrofdkes) || (dkh.nrLS == 0xFFFF)) {
 			if (dkh.nrLS == 0xFFFF) {
-				curdata+= dkh.nextkeyoff - bytesread;
-				XREAD(magic,4);
-				if (strcmp(magic,"RGDB")) {
-					if ((curdata-data)<end)
-						dprintf_reg(stddeb,"while skipping to next RGDB block found magic %s\n",magic);
-					break;
-				}
-				curdata+=0x1c;
+				/* skip over key using nextkeyoff */
+ 				curdata+=dkh.nextkeyoff-sizeof(struct dkh);
 				continue;
-			}
-			if (dkh.nrLS == 0xFFFE) {
-				dprintf_reg(stddeb,"0xFFFE at %x\n",curdata-data);
-				break;
 			}
 			dprintf_reg(stddeb,"haven't found nr %ld.\n",nr);
 			key = &xkey;

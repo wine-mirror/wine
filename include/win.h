@@ -34,10 +34,10 @@ typedef struct tagWND
     struct tagWND *parent;        /* Window parent (from CreateWindow) */
     struct tagWND *owner;         /* Window owner */
     CLASS         *class;         /* Window class */
+    HANDLE32       winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND16         hwndSelf;      /* Handle of this window */
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
-    WNDPROC16      lpfnWndProc;   /* Window procedure */
     RECT16         rectClient;    /* Client area rel. to parent client area */
     RECT16         rectWindow;    /* Whole window rel. to parent client area */
     RECT16         rectNormal;    /* Window rect. when in normal state */
@@ -57,6 +57,7 @@ typedef struct tagWND
     Window         window;        /* X window (only for top-level windows) */
     HMENU          hSysMenu;      /* window's copy of System Menu */
     HANDLE         hProp;         /* Handle of Properties List */
+    DWORD          userdata;      /* User private data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 

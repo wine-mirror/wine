@@ -1,7 +1,11 @@
 /* Initial draft attempt of windows.h, by Peter MacDonald, pmacdona@sanjuan.uvic.ca */
 
-#ifndef WINDOWS_H
-#define WINDOWS_H
+#ifndef __WINE_WINDOWS_H
+#define __WINE_WINDOWS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "wintypes.h"
 #include "winuser.h"
@@ -544,8 +548,6 @@ typedef struct tagMSG
   POINT16   pt WINE_PACKED;
 } MSG, *LPMSG;
 	
-#define MAKEINTATOM(i)   ((SEGPTR)MAKELONG((i),0))
-
   /* Raster operations */
 
 #define R2_BLACK         1
@@ -2795,6 +2797,17 @@ typedef struct {
         DWORD  dmDisplayFrequency;
 } DEVMODE;
 
+typedef struct _SYSTEM_POWER_STATUS
+{
+  BOOL    ACLineStatus;
+  BYTE    BatteryFlag;
+  BYTE    BatteryLifePercent;
+  BYTE    reserved;
+  DWORD   BatteryLifeTime;
+  DWORD   BatteryFullLifeTime;
+} SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
+
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif
@@ -2863,10 +2876,6 @@ HANDLE     CreateCursorIconIndirect(HANDLE,CURSORICONINFO*,const BYTE*,const BYT
 HDC        CreateDC(LPCSTR,LPCSTR,LPCSTR,const DEVMODE*);
 HBRUSH     CreateDIBPatternBrush(HGLOBAL,UINT);
 HBITMAP    CreateDIBitmap(HDC,BITMAPINFOHEADER*,DWORD,LPVOID,BITMAPINFO*,UINT);
-HWND       CreateDialog(HINSTANCE,SEGPTR,HWND,DLGPROC);
-HWND       CreateDialogIndirect(HINSTANCE,SEGPTR,HWND,DLGPROC);
-HWND       CreateDialogIndirectParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LPARAM);
-HWND       CreateDialogParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LPARAM);
 HBITMAP    CreateDiscardableBitmap(HDC,INT,INT);
 HRGN       CreateEllipticRgn(INT32,INT32,INT32,INT32);
 HFONT      CreateFont(INT,INT,INT,INT,INT,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,LPCSTR);
@@ -2885,7 +2894,6 @@ HRGN       CreateRectRgn(INT32,INT32,INT32,INT32);
 HRGN       CreateRoundRectRgn(INT32,INT32,INT32,INT32,INT32,INT32);
 HBRUSH     CreateSolidBrush(COLORREF);
 void       DebugBreak(void);
-LRESULT    DefDlgProc(HWND,UINT,WPARAM,LPARAM);
 DWORD      DefHookProc(short,WORD,DWORD,HHOOK*);
 HDWP16     DeferWindowPos(HDWP16,HWND,HWND,INT,INT,INT,INT,UINT);
 ATOM       DeleteAtom(ATOM);
@@ -2898,10 +2906,6 @@ BOOL       DestroyCursor(HCURSOR);
 BOOL       DestroyIcon(HICON);
 BOOL       DestroyMenu(HMENU);
 BOOL       DestroyWindow(HWND);
-INT        DialogBox(HINSTANCE,SEGPTR,HWND,DLGPROC);
-INT        DialogBoxIndirect(HINSTANCE,HANDLE,HWND,DLGPROC);
-INT        DialogBoxIndirectParam(HINSTANCE,HANDLE,HWND,DLGPROC,LONG);
-INT        DialogBoxParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LONG);
 HANDLE     DirectResAlloc(HANDLE,WORD,WORD);
 void       DirectedYield(HTASK);
 LONG       DispatchMessage(const MSG*);
@@ -2920,7 +2924,6 @@ BOOL       EnableMenuItem(HMENU,UINT,UINT);
 BOOL       EnableScrollBar(HWND,UINT,UINT);
 BOOL       EnableWindow(HWND,BOOL);
 BOOL       EndDeferWindowPos(HDWP16);
-BOOL       EndDialog(HWND,INT);
 BOOL       EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
 UINT       EnumClipboardFormats(UINT);
 INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC,LPARAM);
@@ -2989,6 +2992,7 @@ DWORD      GetCurrentTime(void);
 HCURSOR    GetCursor(void);
 HDC        GetDC(HWND);
 HDC        GetDCEx(HWND,HRGN,DWORD);
+DWORD      GetDCHook(HDC,FARPROC16*);
 DWORD      GetDCOrg(HDC);
 HDC        GetDCState(HDC);
 int        GetDIBits(HDC,HANDLE,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
@@ -3071,6 +3075,7 @@ HMENU      GetSystemMenu(HWND,BOOL);
 int        GetSystemMetrics(WORD);
 WORD       GetSystemPaletteEntries(HDC,WORD,WORD,LPPALETTEENTRY);
 WORD       GetSystemPaletteUse(HDC);
+BOOL       GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID       GetSystemTime(LPSYSTEMTIME); /* Win32 */
 DWORD      GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT16);
 HINSTANCE  GetTaskDS(void);
@@ -3247,6 +3252,7 @@ BOOL       SetConvertParams(int,int);
 BOOL32     SetCurrentDirectory(LPCSTR);
 HCURSOR    SetCursor(HCURSOR);
 void       SetCursorPos(short,short);
+BOOL       SetDCHook(HDC,FARPROC16,DWORD);
 void       SetDCState(HDC,HDC);
 int        SetDIBits(HDC,HANDLE,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
 int        SetDIBitsToDevice(HDC,short,short,WORD,WORD,WORD,WORD,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
@@ -3257,6 +3263,7 @@ int        SetEnvironment(LPSTR,LPSTR,WORD);
 UINT       SetErrorMode(UINT);
 HWND       SetFocus(HWND);
 WORD       SetHandleCount(WORD);
+WORD       SetHookFlags(HDC,WORD);
 void       SetKeyboardState(BYTE*);
 WORD       SetMapMode(HDC,WORD);
 DWORD      SetMapperFlags(HDC,DWORD);
@@ -3283,6 +3290,8 @@ LONG       SetSwapAreaSize(WORD);
 void       SetSysColors(int,LPINT16,COLORREF*);
 HWND       SetSysModalWindow(HWND);
 WORD       SetSystemPaletteUse(HDC,WORD);
+BOOL       SetSystemPowerState(BOOL, BOOL);
+BOOL       SetSystemTime(const SYSTEMTIME*);
 WORD       SetSystemTimer(HWND,WORD,WORD,FARPROC);
 HQUEUE     SetTaskQueue(HTASK,HQUEUE);
 WORD       SetTextAlign(HDC,WORD);
@@ -3332,6 +3341,7 @@ void       UnlockSegment(HGLOBAL);
 BOOL       UnrealizeObject(HBRUSH);
 int        UpdateColors(HDC);
 void       UpdateWindow(HWND32);
+void       UserYield(void);
 void       ValidateCodeSegments(void);
 LPSTR      ValidateFreeSpaces(void);
 void       ValidateRgn(HWND32,HRGN32);
@@ -3370,13 +3380,13 @@ int        wvsprintf(LPSTR,LPCSTR,LPCSTR);
 
 /* Declarations for functions that are the same in Win16 and Win32 */
 
+BOOL16     EndDialog(HWND32,INT32);
 INT16      ExcludeUpdateRgn(HDC32,HWND32);
 void       FillWindow(HWND16,HWND16,HDC16,HBRUSH16);
 DWORD      GetBitmapDimension(HBITMAP16);
 WORD       GetClassWord(HWND32,INT32);
 DWORD      GetLogicalDrives(void);
 INT16      GetUpdateRgn(HWND32,HRGN32,BOOL32);
-LONG       GetWindowLong(HWND32,INT32);
 WORD       GetWindowWord(HWND32,INT32);
 INT16      OffsetRgn(HRGN32,INT32,INT32);
 DWORD      OffsetViewportOrg(HDC16,INT16,INT16);
@@ -3429,6 +3439,26 @@ BOOL32     ClipCursor32(const RECT32*);
 BOOL16     CopyRect16(RECT16*,const RECT16*);
 BOOL32     CopyRect32(RECT32*,const RECT32*);
 #define    CopyRect WINELIB_NAME(CopyRect)
+HWND16     CreateDialog16(HINSTANCE16,SEGPTR,HWND16,DLGPROC);
+#define    CreateDialog32A(inst,ptr,hwnd,dlg) \
+           CreateDialogParam32A(inst,ptr,hwnd,dlg,0)
+#define    CreateDialog32W(inst,ptr,hwnd,dlg) \
+           CreateDialogParam32W(inst,ptr,hwnd,dlg,0)
+#define    CreateDialog WINELIB_NAME_AW(CreateDialog)
+HWND16     CreateDialogIndirect16(HINSTANCE16,LPCVOID,HWND16,DLGPROC);
+#define    CreateDialogIndirect32A(inst,ptr,hwnd,dlg) \
+           CreateDialogIndirectParam32A(inst,ptr,hwnd,dlg,0)
+#define    CreateDialogIndirect32W(inst,ptr,hwnd,dlg) \
+           CreateDialogIndirectParam32W(inst,ptr,hwnd,dlg,0)
+#define    CreateDialogIndirect WINELIB_NAME_AW(CreateDialogIndirect)
+HWND16     CreateDialogIndirectParam16(HINSTANCE16,LPCVOID,HWND16,DLGPROC,LPARAM);
+HWND32     CreateDialogIndirectParam32A(HINSTANCE32,LPCVOID,HWND32,DLGPROC,LPARAM);
+HWND32     CreateDialogIndirectParam32W(HINSTANCE32,LPCVOID,HWND32,DLGPROC,LPARAM);
+#define    CreateDialogIndirectParam WINELIB_NAME_AW(CreateDialogIndirectParam)
+HWND16     CreateDialogParam16(HINSTANCE16,SEGPTR,HWND16,DLGPROC,LPARAM);
+HWND32     CreateDialogParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC,LPARAM);
+HWND32     CreateDialogParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC,LPARAM);
+#define    CreateDialogParam WINELIB_NAME_AW(CreateDialogParam)
 HRGN16     CreateEllipticRgnIndirect16(const RECT16 *);
 HRGN32     CreateEllipticRgnIndirect32(const RECT32 *);
 #define    CreateEllipticRgnIndirect WINELIB_NAME(CreateEllipticRgnIndirect)
@@ -3441,7 +3471,7 @@ HRGN32     CreatePolygonRgn32(const POINT32*,INT32,INT32);
 HRGN16     CreateRectRgnIndirect16(const RECT16*);
 HRGN32     CreateRectRgnIndirect32(const RECT32*);
 #define    CreateRectRgnIndirect WINELIB_NAME(CreateRectRgnIndirect)
-HWND16     CreateWindow16(SEGPTR,SEGPTR,DWORD,INT16,INT16,INT16,INT16,HWND16,HMENU16,HINSTANCE16,SEGPTR);
+HWND16     CreateWindow16(LPCSTR,LPCSTR,DWORD,INT16,INT16,INT16,INT16,HWND16,HMENU16,HINSTANCE16,LPVOID);
 #define    CreateWindow32A(className,titleName,style,x,y,width,height,\
                            parent,menu,instance,param) \
            CreateWindowEx32A(0,className,titleName,style,x,y,width,height,\
@@ -3451,10 +3481,14 @@ HWND16     CreateWindow16(SEGPTR,SEGPTR,DWORD,INT16,INT16,INT16,INT16,HWND16,HME
            CreateWindowEx32W(0,className,titleName,style,x,y,width,height,\
                            parent,menu,instance,param)
 #define    CreateWindow WINELIB_NAME_AW(CreateWindow)
-HWND16     CreateWindowEx16(DWORD,SEGPTR,SEGPTR,DWORD,INT16,INT16,INT16,INT16,HWND16,HMENU16,HINSTANCE16,SEGPTR);
+HWND16     CreateWindowEx16(DWORD,LPCSTR,LPCSTR,DWORD,INT16,INT16,INT16,INT16,HWND16,HMENU16,HINSTANCE16,LPVOID);
 HWND32     CreateWindowEx32A(DWORD,LPCSTR,LPCSTR,DWORD,INT32,INT32,INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
 HWND32     CreateWindowEx32W(DWORD,LPCWSTR,LPCWSTR,DWORD,INT32,INT32,INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
 #define    CreateWindowEx WINELIB_NAME_AW(CreateWindowEx)
+LRESULT    DefDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+LRESULT    DefDlgProc32A(HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT    DefDlgProc32W(HWND32,UINT32,WPARAM32,LPARAM);
+#define    DefDlgProc WINELIB_NAME_AW(DefDlgProc)
 LRESULT    DefFrameProc16(HWND16,HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    DefFrameProc32A(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    DefFrameProc32W(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
@@ -3467,6 +3501,26 @@ LRESULT    DefWindowProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    DefWindowProc32A(HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    DefWindowProc32W(HWND32,UINT32,WPARAM32,LPARAM);
 #define    DefWindowProc WINELIB_NAME_AW(DefWindowProc)
+INT16      DialogBox16(HINSTANCE16,SEGPTR,HWND16,DLGPROC);
+#define    DialogBox32A(inst,template,owner,func) \
+           DialogBoxParam32A(inst,template,owner,func,0)
+#define    DialogBox32W(inst,template,owner,func) \
+           DialogBoxParam32W(inst,template,owner,func,0)
+#define    DialogBox WINELIB_NAME_AW(DialogBox)
+INT16      DialogBoxIndirect16(HINSTANCE16,HANDLE16,HWND16,DLGPROC);
+#define    DialogBoxIndirect32A(inst,template,owner,func) \
+           DialogBoxIndirectParam32A(inst,template,owner,func,0)
+#define    DialogBoxIndirect32W(inst,template,owner,func) \
+           DialogBoxIndirectParam32W(inst,template,owner,func,0)
+#define    DialogBoxIndirect WINELIB_NAME_AW(DialogBoxIndirect)
+INT16      DialogBoxIndirectParam16(HINSTANCE16,HANDLE16,HWND16,DLGPROC,LPARAM);
+INT32      DialogBoxIndirectParam32A(HINSTANCE32,LPCVOID,HWND32,DLGPROC,LPARAM);
+INT32      DialogBoxIndirectParam32W(HINSTANCE32,LPCVOID,HWND32,DLGPROC,LPARAM);
+#define    DialogBoxIndirectParam WINELIB_NAME_AW(DialogBoxIndirectParam)
+INT16      DialogBoxParam16(HINSTANCE16,SEGPTR,HWND16,DLGPROC,LPARAM);
+INT32      DialogBoxParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC,LPARAM);
+INT32      DialogBoxParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC,LPARAM);
+#define    DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
 INT16      DlgDirListComboBox16(HWND16,LPCSTR,INT16,INT16,UINT16);
 INT32      DlgDirListComboBox32A(HWND32,LPCSTR,INT32,INT32,UINT32);
 INT32      DlgDirListComboBox32W(HWND32,LPCWSTR,INT32,INT32,UINT32);
@@ -3574,6 +3628,10 @@ BOOL32     GetViewportOrgEx32(HDC32,LPPOINT32);
 BOOL16     GetWindowExtEx16(HDC16,LPPOINT16);
 BOOL32     GetWindowExtEx32(HDC32,LPPOINT32);
 #define    GetWindowExtEx WINELIB_NAME(GetWindowExtEx)
+LONG       GetWindowLong16(HWND16,INT16);
+LONG       GetWindowLong32A(HWND32,INT32);
+LONG       GetWindowLong32W(HWND32,INT32);
+#define    GetWindowLong WINELIB_NAME_AW(GetWindowLong)
 BOOL16     GetWindowOrgEx16(HDC16,LPPOINT16);
 BOOL32     GetWindowOrgEx32(HDC32,LPPOINT32);
 #define    GetWindowOrgEx WINELIB_NAME(GetWindowOrgEx)
@@ -3890,4 +3948,9 @@ HWND32     WindowFromPoint32(POINT32);
 #ifdef WINELIB
 #define WINELIB_UNIMP(x) fprintf (stderr, "WineLib: Unimplemented %s\n", x)
 #endif
-#endif  /* WINDOWS_H */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* __WINE_WINDOWS_H */

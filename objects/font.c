@@ -785,7 +785,12 @@ DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
  */
 BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC lpABC)
 {
-    /* No TrueType fonts in Wine */
+
+    /* No TrueType fonts in Wine so far */
+
+    fprintf(stdnimp,"STUB: GetCharABCWidths(%04x,%04x,%04x,%08x)\n",
+			   hdc,wFirstChar,wLastChar,(unsigned)lpABC);
+  
     return FALSE;
 }
 

@@ -127,7 +127,6 @@ extern WORD MODULE_GetOrdinal( HMODULE hModule, const char *name );
 extern SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal );
 extern BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
-extern FARPROC32 MODULE_GetWndProcEntry32( const char *name );
 
 /* builtin.c */
 extern BOOL BUILTIN_Init(void);

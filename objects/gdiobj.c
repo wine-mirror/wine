@@ -12,6 +12,7 @@
 #include "brush.h"
 #include "font.h"
 #include "heap.h"
+#include "module.h"
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
@@ -152,15 +153,22 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &SystemFixedFont
 };
 
+static FARPROC16 defDCHookCallback;
+
 
 /***********************************************************************
  *           GDI_Init
  *
- * GDI initialisation.
+ * GDI initialization.
  */
 BOOL GDI_Init(void)
 {
     HPALETTE16 hpalette;
+
+    defDCHookCallback = (FARPROC16)MODULE_GetEntryPoint(GetModuleHandle("USER"),
+                                                        362  /* DCHook */ );
+    dprintf_gdi( stddeb, "DCHook: 16-bit callback is %08x\n",
+                 (unsigned)defDCHookCallback );
 
       /* Create default palette */
 
@@ -171,15 +179,24 @@ BOOL GDI_Init(void)
 
     if (!BITMAP_Init()) return FALSE;
 
-      /* Initialise brush dithering */
+      /* Initialize brush dithering */
 
     if (!BRUSH_Init()) return FALSE;
 
-      /* Initialise fonts */
+      /* Initialize fonts */
 
     if (!FONT_Init()) return FALSE;
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GDI_GetDefDCHook
+ */
+FARPROC16 GDI_GetDefDCHook(void)
+{
+    return defDCHookCallback;
 }
 
 
@@ -321,7 +338,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
     GDIOBJHDR * ptr = NULL;
     DC * dc;
     
-    dprintf_gdi(stddeb, "SelectObject: %04x %04x\n", hdc, handle );
+    dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", hdc, handle );
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else 
@@ -340,9 +357,9 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
       case PEN_MAGIC:
 	  return PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
       case BRUSH_MAGIC:
-	  return BRUSH_SelectObject( hdc, dc, handle, (BRUSHOBJ *)ptr );
+	  return BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
       case BITMAP_MAGIC:
-	  return BITMAP_SelectObject( hdc, dc, handle, (BITMAPOBJ *)ptr );
+	  return BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
       case FONT_MAGIC:
 	  return FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
       case REGION_MAGIC:

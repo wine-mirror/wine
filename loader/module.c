@@ -775,25 +775,6 @@ FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 
 
 /***********************************************************************
- *           MODULE_GetWndProcEntry32  (not a Windows API function)
- *
- * Return an entry point from the WPROCS32 dll.
- */
-#ifndef WINELIB
-FARPROC32 MODULE_GetWndProcEntry32( const char *name )
-{
-    FARPROC32 ret;
-    static HMODULE hModule = 0;
-
-    if (!hModule) hModule = GetModuleHandle( "WPROCS32" );
-    if (!(ret = PE_GetProcAddress( hModule, name )))
-        fprintf( stderr, "GetWndProc32: %s not found, please report\n", name );
-    return ret;
-}
-#endif
-
-
-/***********************************************************************
  *           MODULE_GetModuleName
  */
 LPSTR MODULE_GetModuleName( HMODULE hModule )
@@ -1003,7 +984,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
                     char *p;
 
                     /* Try with prepending the path of the current module */
-                    GetModuleFileName( hModule, buffer, 256 );
+                    GetModuleFileName( hModule, buffer, sizeof(buffer) );
                     if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                     memcpy( p + 1, pstr + 1, *pstr );
                     strcpy( p + 1 + *pstr, ".dll" );
@@ -1033,6 +1014,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
+                STACK16FRAME *stack16Top;
 		HMODULE hselfload = GetModuleHandle("WPROCS");
 		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
@@ -1054,7 +1036,18 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		oldss = IF1632_Saved16_ss;
 		oldsp = IF1632_Saved16_sp;
 		IF1632_Saved16_ss = pModule->self_loading_sel;
-		IF1632_Saved16_sp = 0xFF00;
+		IF1632_Saved16_sp = 0xFF00 - sizeof(*stack16Top);
+                stack16Top = CURRENT_STACK16;
+                stack16Top->saved_ss = 0;
+                stack16Top->saved_sp = 0;
+                stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
+                stack16Top->entry_point = 0;
+                stack16Top->entry_ip = 0;
+                stack16Top->entry_cs = 0;
+                stack16Top->bp = 0;
+                stack16Top->ip = 0;
+                stack16Top->cs = 0;
+
 		if (!IF1632_Stack32_base) {
 		  STACK32FRAME* frame32;
 		  char *stack32Top;

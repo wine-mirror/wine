@@ -119,4 +119,6 @@ typedef struct
 #define FILE_ATTRIBUTE_ATOMIC_WRITE     0x0200
 #define FILE_ATTRIBUTE_XACTION_WRITE    0x0400
 
+BOOL       SetTimeZoneInformation(const TIME_ZONE_INFORMATION*);
+
 #endif  /* __WINE_KERNEL32_H */

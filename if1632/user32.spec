@@ -71,15 +71,11 @@ base	1
 0066 stub CreateCursor
 0067 stub CreateDesktopA
 0068 stub CreateDesktopW
-0069 stdcall CreateDialogIndirectParamA(long ptr long ptr long)	
-	USER32_CreateDialogIndirectParamA
+0069 stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParam32A
 0070 stub CreateDialogIndirectParamAorW
-0071 stdcall CreateDialogIndirectParamW(long ptr long ptr long)	
-	USER32_CreateDialogIndirectParamW
-0072 stdcall CreateDialogParamA(long ptr long ptr long)	
-	USER32_CreateDialogParamA
-0073 stdcall CreateDialogParamW(long ptr long ptr long)	
-	USER32_CreateDialogParamW
+0071 stdcall CreateDialogIndirectParamW(long ptr long ptr long) CreateDialogIndirectParam32W
+0072 stdcall CreateDialogParamA(long ptr long ptr long) CreateDialogParam32A
+0073 stdcall CreateDialogParamW(long ptr long ptr long) CreateDialogParam32W
 0074 stub CreateIcon
 0075 stub CreateIconFromResource
 0076 stub CreateIconFromResourceEx
@@ -127,8 +123,8 @@ base	1
 0116 stub DdeSetUserHandle
 0117 stub DdeUnaccessData
 0118 stub DdeUninitialize
-0119 stub DefDlgProcA
-0120 stub DefDlgProcW
+0119 stdcall DefDlgProcA(long long long long) DefDlgProc32A
+0120 stdcall DefDlgProcW(long long long long) DefDlgProc32W
 0121 stdcall DefFrameProcA(long long long long long) DefFrameProc32A
 0122 stdcall DefFrameProcW(long long long long long) DefFrameProc32W
 0123 stdcall DefMDIChildProcA(long long long long) DefMDIChildProc32A
@@ -143,13 +139,11 @@ base	1
 0132 stub DestroyIcon
 0133 stub DestroyMenu
 0134 stub DestroyWindow
-0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long)	
-			USER32_DialogBoxIndirectParamA
+0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
 0136 stub DialogBoxIndirectParamAorW
-0137 stdcall DialogBoxIndirectParamW(long ptr long ptr long)	
-			USER32_DialogBoxIndirectParamW
-0138 stdcall DialogBoxParamA(long ptr long ptr long)	USER32_DialogBoxParamA
-0139 stdcall DialogBoxParamW(long ptr long ptr long)	USER32_DialogBoxParamW
+0137 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParam32W
+0138 stdcall DialogBoxParamA(long ptr long ptr long) DialogBoxParam32A
+0139 stdcall DialogBoxParamW(long ptr long ptr long) DialogBoxParam32W
 0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
 0141 stub DispatchMessageW
 0142 stub DlgDirListA
@@ -314,8 +308,8 @@ base	1
 0301 stdcall GetWindow(long long) GetWindow
 0302 stub GetWindowContextHelpId
 0303 stdcall GetWindowDC(long) GetWindowDC
-0304 stub GetWindowLongA
-0305 stub GetWindowLongW
+0304 stdcall GetWindowLongA(long long) GetWindowLong32A
+0305 stdcall GetWindowLongW(long long) GetWindowLong32W
 0306 stdcall GetWindowPlacement(long ptr) GetWindowPlacement32
 0307 stdcall GetWindowRect(long ptr) GetWindowRect32
 0308 stdcall GetWindowTextA(long ptr long) GetWindowText32A

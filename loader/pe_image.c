@@ -170,6 +170,16 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
   	char *name = (char*)load_addr+pe_imp->ModuleName;
 	mod_ptr[i] = LoadModule(name,(LPVOID)-1);
 	if(mod_ptr[i]<=(HMODULE)32)
+        {
+            char *p, buffer[256];
+
+            /* Try with prepending the path of the current module */
+            GetModuleFileName( hModule, buffer, sizeof(buffer) );
+            if (!(p = strrchr( buffer, '\\' ))) p = buffer;
+            strcpy( p + 1, name );
+            mod_ptr[i] = LoadModule( buffer, (LPVOID)-1 );
+        }
+	if(mod_ptr[i]<=(HMODULE)32)
 	{
 		fprintf(stderr,"Module %s not found\n",name);
 		exit(0);

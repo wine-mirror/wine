@@ -156,9 +156,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 180 pascal16 SetDCState(word word) SetDCState
 181 pascal16 RectInRegionOld(word ptr) RectInRegion16
 188 stub GetTextExtentEx
-190 stub SetDCHook
-191 stub GetDCHook
-192 stub SetHookFlags
+190 pascal16 SetDCHook(word segptr long) SetDCHook
+191 pascal   GetDCHook(word ptr) GetDCHook
+192 pascal16 SetHookFlags(word word) SetHookFlags
 193 stub SetBoundsRect
 194 stub GetBoundsRect
 195 stub SelectBitmap

@@ -60,12 +60,12 @@ static int COMBO_Init()
 
 LPHEADCOMBO ComboGetStorageHeader(HWND hwnd)
 {
-  return (LPHEADCOMBO)GetWindowLong(hwnd,4);
+  return (LPHEADCOMBO)GetWindowLong32A(hwnd,4);
 }
 
 LPHEADLIST ComboGetListHeader(HWND hwnd)
 {
-  return (LPHEADLIST)GetWindowLong(hwnd,0);
+  return (LPHEADLIST)GetWindowLong32A(hwnd,0);
 }
 
 int CreateComboStruct(HWND hwnd, LONG style)
@@ -118,7 +118,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADLIST   lphl;
   LPHEADCOMBO  lphc;
   LONG         style = 0;
-  LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
+  LONG         cstyle = GetWindowLong32A(hwnd,GWL_STYLE);
   RECT16       rect,lboxrect;
   WND*         wndPtr = WIN_FindWndPtr(hwnd);
   char className[] = "COMBOLBOX";  /* Hack so that class names are > 0x10000 */
@@ -172,21 +172,21 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   }
 
   if ((cstyle & 3) != CBS_DROPDOWNLIST)
-      lphc->hWndEdit = CreateWindow16(MAKE_SEGPTR(editName), (SEGPTR)0,
+      lphc->hWndEdit = CreateWindow16( editName, NULL,
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | ES_LEFT,
 				  0, 0, rect.right-6-CBitWidth,
 				  lphl->StdItemHeight+2*SYSMETRICS_CYBORDER,
-				  hwnd, (HMENU)ID_EDIT, WIN_GetWindowInstance(hwnd), 0L);
+				  hwnd, (HMENU)ID_EDIT, WIN_GetWindowInstance(hwnd), NULL );
 				  
   lboxrect.top+=lphc->LBoxTop;
-  lphc->hWndLBox = CreateWindow16(MAKE_SEGPTR(className), (SEGPTR)0, style |
+  lphc->hWndLBox = CreateWindow16( className, NULL, style |
  				((cstyle & WS_HSCROLL)? WS_HSCROLL : 0) |
  				((cstyle & WS_VSCROLL)? WS_VSCROLL : 0),
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 
 				lboxrect.bottom - lboxrect.top,
 				hwndp,(HMENU)ID_CLB, WIN_GetWindowInstance(hwnd),
-				(SEGPTR)hwnd );
+				(LPVOID)(HWND32)hwnd );
 
    wndPtr->dwStyle &= ~(WS_VSCROLL | WS_HSCROLL);
 
@@ -628,7 +628,7 @@ static BOOL CBCheckSize(HWND hwnd)
 {
   LPHEADCOMBO  lphc = ComboGetStorageHeader(hwnd);
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
-  LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
+  LONG         cstyle = GetWindowLong32A(hwnd,GWL_STYLE);
   RECT16       cRect,wRect;
 
   if (lphc->hWndLBox == 0) return FALSE;
@@ -781,11 +781,7 @@ LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 HWND CLBoxGetCombo(HWND hwnd)
 {
-#ifdef WINELIB32
-  return (HWND)GetWindowLong(hwnd,0);
-#else
-  return (HWND)GetWindowWord(hwnd,0);
-#endif
+  return (HWND)GetWindowLong32A(hwnd,0);
 }
 
 LPHEADLIST CLBoxGetListHeader(HWND hwnd)
@@ -799,11 +795,7 @@ LPHEADLIST CLBoxGetListHeader(HWND hwnd)
 static LRESULT CBLCreate( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   CREATESTRUCT16 *createStruct = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
-#ifdef WINELIB32
-  SetWindowLong(hwnd,0,(LONG)createStruct->lpCreateParams);
-#else
-  SetWindowWord(hwnd,0,LOWORD(createStruct->lpCreateParams));
-#endif
+  SetWindowLong32A(hwnd,0,(LONG)createStruct->lpCreateParams);
   return 0;
 }
 
