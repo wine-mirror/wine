@@ -923,7 +923,11 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
                 }
                 total_size = len + info_size;
             }
-            else if (data) memcpy( data, buf_ptr + info_size, total_size - info_size );
+            else if (data)
+            {
+                if (total_size - info_size > *count) status = STATUS_BUFFER_OVERFLOW;
+                else memcpy( data, buf_ptr + info_size, total_size - info_size );
+            }
         }
         else if (status != STATUS_BUFFER_OVERFLOW) goto done;
     }
