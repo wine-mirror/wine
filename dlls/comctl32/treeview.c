@@ -4436,8 +4436,7 @@ TREEVIEW_SetFirstVisible(TREEVIEW_INFO *infoPtr,
 		SetScrollPos(infoPtr->hwnd, SB_VERT,
 		              newFirstVisible->visibleOrder, TRUE);
 
-	    ScrollWindow(infoPtr->hwnd, 0, scroll, NULL, NULL);
-	    UpdateWindow(infoPtr->hwnd);
+	    ScrollWindowEx(infoPtr->hwnd, 0, scroll, NULL, NULL, NULL, NULL, SW_ERASE | SW_INVALIDATE);
 	}
     }
 }
