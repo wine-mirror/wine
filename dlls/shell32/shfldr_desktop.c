@@ -524,8 +524,10 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
 
     if (IsEqualIID (riid, &IID_IContextMenu))
     {
-        pObj = (LPUNKNOWN) ISvItemCm_Constructor( (IShellFolder *) iface,
-                                                  This->pidlRoot, apidl, cidl);
+        if (cidl > 0)
+            pObj = (LPUNKNOWN) ISvItemCm_Constructor( (IShellFolder *) iface, This->pidlRoot, apidl, cidl);
+        else
+            pObj = (LPUNKNOWN) ISvBgCm_Constructor( (IShellFolder *) iface, TRUE);
         hr = S_OK;
     }
     else if (IsEqualIID (riid, &IID_IDataObject) && (cidl >= 1))
