@@ -2769,7 +2769,15 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
-            ShellAboutA(hwnd,"Wine", WINE_RELEASE_INFO, 0);
+        {
+            HMODULE hmodule = LoadLibraryA( "shell32.dll" );
+            if (hmodule)
+            {
+                FARPROC aboutproc = GetProcAddress( hmodule, "ShellAboutA" );
+                if (aboutproc) aboutproc( hwnd, "Wine", WINE_RELEASE_INFO, 0 );
+                FreeLibrary( hmodule );
+            }
+        }
 	else 
 	  if (wParam == SC_PUTMARK)
             TRACE_(shell)("Mark requested by user\n");
