@@ -76,6 +76,32 @@ static const char * dumpCooperativeLevel(DWORD level)
     return unknown;
 }
 
+static void _dump_DSCAPS(DWORD xmask) {
+    struct {
+        DWORD   mask;
+        char    *name;
+    } flags[] = {
+#define FE(x) { x, #x },
+        FE(DSCAPS_PRIMARYMONO)
+        FE(DSCAPS_PRIMARYSTEREO)
+        FE(DSCAPS_PRIMARY8BIT)
+        FE(DSCAPS_PRIMARY16BIT)
+        FE(DSCAPS_CONTINUOUSRATE)
+        FE(DSCAPS_EMULDRIVER)
+        FE(DSCAPS_CERTIFIED)
+        FE(DSCAPS_SECONDARYMONO)
+        FE(DSCAPS_SECONDARYSTEREO)
+        FE(DSCAPS_SECONDARY8BIT)
+        FE(DSCAPS_SECONDARY16BIT)
+#undef FE
+    };
+    int     i;
+
+    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+        if ((flags[i].mask & xmask) == flags[i].mask)
+            DPRINTF("%s ",flags[i].name);
+}
+
 static void _dump_DSBCAPS(DWORD xmask) {
     struct {
         DWORD   mask;
@@ -401,8 +427,12 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(
         return DSERR_INVALIDPARAM;
     }
 
-    TRACE("(flags=0x%08lx)\n",lpDSCaps->dwFlags);
     lpDSCaps->dwFlags                           = This->drvcaps.dwFlags;
+    if (TRACE_ON(dsound)) {
+        TRACE("(flags=0x%08lx:\n",lpDSCaps->dwFlags);
+        _dump_DSCAPS(lpDSCaps->dwFlags);
+        DPRINTF(")\n");
+    }
     lpDSCaps->dwMinSecondarySampleRate          = This->drvcaps.dwMinSecondarySampleRate;
     lpDSCaps->dwMaxSecondarySampleRate          = This->drvcaps.dwMaxSecondarySampleRate;
     lpDSCaps->dwPrimaryBuffers                  = This->drvcaps.dwPrimaryBuffers;
