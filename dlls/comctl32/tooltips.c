@@ -2187,8 +2187,11 @@ static LRESULT
 TOOLTIPS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    LOGFONTW lf;
 
-    infoPtr->hFont = (HFONT)wParam;
+    if(!GetObjectW((HFONT)wParam, sizeof lf, &lf))
+        return 0;
+    infoPtr->hFont = CreateFontIndirectW(&lf);
 
     if ((LOWORD(lParam)) & (infoPtr->nCurrentTool != -1)) {
 	FIXME("full redraw needed!\n");
