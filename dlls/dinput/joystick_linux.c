@@ -685,7 +685,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     LPDIDATAFORMAT new_df = 0;
     LPDIOBJECTDATAFORMAT new_rgodf = 0;
     ObjProps * new_props = 0;
-    int * new_offsets = 0;
 
     TRACE("(%p,%p)\n",This,df);
 
@@ -710,14 +709,9 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     if (new_props == 0)
         goto FAILED;
 
-    new_offsets = HeapAlloc(GetProcessHeap(),0,df->dwNumObjs*sizeof(int));
-    if (new_offsets == 0)
-        goto FAILED;
-
     HeapFree(GetProcessHeap(),0,This->user_df);
     HeapFree(GetProcessHeap(),0,This->user_df->rgodf);
     HeapFree(GetProcessHeap(),0,This->props);
-    HeapFree(GetProcessHeap(),0,This->offsets);
     release_DataFormat(This->transform);
 
     This->user_df = new_df;
@@ -731,7 +725,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
         This->props[i].lDeadZone = 1000;
         This->props[i].lSaturation = 0;
     }
-    This->offsets = new_offsets;
     This->transform = create_DataFormat(&c_dfDIJoystick2, This->user_df, This->offsets);
 
     calculate_ids(This);
@@ -740,8 +733,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
 FAILED:
     WARN("out of memory\n");
-    if (new_offsets)
-        HeapFree(GetProcessHeap(),0,new_offsets);
     if (new_props)
         HeapFree(GetProcessHeap(),0,new_props);
     if (new_rgodf)
