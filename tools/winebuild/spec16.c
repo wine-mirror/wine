@@ -36,9 +36,13 @@
 #include "build.h"
 
 #ifdef __i386__
+#ifdef _MSC_VER
+extern unsigned short __get_cs(void) { unsigned short res; __asm { mov res, cs } return res; }
+#else
 extern unsigned short __get_cs(void);
 __ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
-#endif /* __i386__ */
+#endif /* defined(_MSC_VER) */
+#endif /* defined(__i386__) */
 
 
 /*******************************************************************

@@ -938,12 +938,26 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
 }
 
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __get_ds, "movw %ds,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __get_es, "movw %es,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __get_fs, "movw %fs,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __get_gs, "movw %gs,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __get_ss, "movw %ss,%ax\n\tret" )
-__ASM_GLOBAL_FUNC( __set_fs, "movl 4(%esp),%eax\n\tmovw %ax,%fs\n\tret" )
-__ASM_GLOBAL_FUNC( __set_gs, "movl 4(%esp),%eax\n\tmovw %ax,%gs\n\tret" )
-#endif
+#ifdef _MSC_VER
+/* Nothing needs to be done. MS C make do with inline versions from the winnt.h */
+#else /* defined(_MSC_VER) */
+
+#define __DEFINE_GET_SEG(seg) \
+    __ASM_GLOBAL_FUNC( __get_##seg, "movw %" #seg ",%ax\n\tret" )
+#define __DEFINE_SET_SEG(seg) \
+    __ASM_GLOBAL_FUNC( __set_##seg, "movl 4(%esp),%eax\n\tmovw %ax,%" #seg "\n\tret" )
+
+__DEFINE_GET_SEG(cs)
+__DEFINE_GET_SEG(ds)
+__DEFINE_GET_SEG(es)
+__DEFINE_GET_SEG(fs)
+__DEFINE_GET_SEG(gs)
+__DEFINE_GET_SEG(ss)
+__DEFINE_SET_SEG(fs)
+__DEFINE_SET_SEG(gs)
+
+#undef __DEFINE_GET_SEG
+#undef __DEFINE_SET_SEG
+
+#endif /* defined(_MSC_VER) */
+#endif /* defined(__i386__) */

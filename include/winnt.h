@@ -1244,7 +1244,7 @@ typedef CONTEXT *PCONTEXT;
     extern inline void __set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
 # elif defined(_MSC_VER)
 #  define __DEFINE_GET_SEG(seg) \
-    extern inline unsigned short __get_##seg(void) { unsigned short res; __asm { mov res, fs } return res; }
+    extern inline unsigned short __get_##seg(void) { unsigned short res; __asm { mov res, seg } return res; }
 #  define __DEFINE_SET_SEG(seg) \
     extern inline void __set_##seg(unsigned short val) { __asm { mov seg, val } }
 # else  /* __GNUC__ || _MSC_VER */
@@ -2359,6 +2359,14 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void)
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
+}
+#elif defined(__i386__) && defined(_MSC_VER)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+{
+  struct _TEB *teb;
+  __asm mov eax, fs:[0x18];
+  __asm mov teb, eax;
+  return teb;
 }
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);

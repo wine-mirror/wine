@@ -31,7 +31,7 @@
 struct async_private;
 
 typedef void (*async_handler)(struct async_private *ovp);
-typedef void CALLBACK (*async_call_completion_func)(ULONG_PTR data);
+typedef void (CALLBACK *async_call_completion_func)(ULONG_PTR data);
 typedef DWORD (*async_get_status)(const struct async_private *ovp);
 typedef DWORD (*async_get_count)(const struct async_private *ovp);
 typedef void (*async_set_status)(struct async_private *ovp, const DWORD status);

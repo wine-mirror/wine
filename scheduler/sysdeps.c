@@ -228,6 +228,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg ) WINE_NORETURN;
 #ifdef __i386__
+#ifdef __GNUC__
 __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "movl 4(%esp),%ecx\n\t"  /* func */
                    "movl 8(%esp),%edx\n\t"  /* arg */
@@ -236,13 +237,25 @@ __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "xorl %ebp,%ebp\n\t"
                    "call *%ecx\n\t"
                    "int $3" /* we never return here */ );
-#else
+#elif defined(_MSC_VER)
+__declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
+{
+  __asm mov ecx, 4[esp];
+  __asm mov edx, 8[esp];
+  __asm mov fs:[0x04], esp;
+  __asm push edx;
+  __asm xor ebp, ebp;
+  __asm call [ecx];
+  __asm int 3;
+}
+#endif /* defined(__GNUC__) || defined(_MSC_VER) */
+#else /* defined(__i386__) */
 void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 {
     func( arg );
     while(1); /* avoid warning */
 }
-#endif
+#endif /* defined(__i386__) */
 
 
 /***********************************************************************
@@ -279,7 +292,7 @@ void SYSDEPS_ExitThread( int status )
     close( teb->reply_fd );
     close( teb->request_fd );
     teb->stack_low = get_temp_stack();
-    teb->stack_top = teb->stack_low + TEMP_STACK_SIZE;
+    teb->stack_top = (char *) teb->stack_low + TEMP_STACK_SIZE;
     SYSDEPS_CallOnStack( cleanup_thread, &info );
 }
 
@@ -312,11 +325,7 @@ void SYSDEPS_AbortThread( int status )
 #if defined(__i386__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
 #elif defined(__i386__) && defined(_MSC_VER)
-__declspec(naked) struct _TEB * WINAPI NtCurrentTeb(void)
-{
-    __asm mov eax, fs:[0x18];
-    __asm ret;
-}
+/* Nothing needs to be done. MS C "magically" exports the inline version from winnt.h */
 #elif defined(HAVE__LWP_CREATE)
 /***********************************************************************
  *		NtCurrentTeb (NTDLL.@)
