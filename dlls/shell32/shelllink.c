@@ -241,7 +241,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
             r = IPersistStream_Load(StreamThis, stm);
             ShellLink_UpdatePath(This->sPathRel, pszFileName, This->sWorkDir, &This->sPath);
             IStream_Release( stm );
-            This->bDirty = TRUE;
+            This->bDirty = FALSE;
         }
 
         return r;
@@ -301,7 +301,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
 	{
             StartLinkProcessor( pszFileName );
 
-            This->bDirty = TRUE;
+            This->bDirty = FALSE;
         }
 	else
         {
@@ -1240,7 +1240,7 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR 
     This->sPathRel = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
     This->bDirty = TRUE;
 
-    return S_OK;
+    return ShellLink_UpdatePath(This->sPathRel, This->sPath, This->sWorkDir, &This->sPath);
 }
 
 static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWORD fFlags)
@@ -1569,7 +1569,7 @@ static HRESULT WINAPI IShellLinkW_fnSetRelativePath(IShellLinkW * iface, LPCWSTR
     lstrcpyW( This->sPathRel, pszPathRel );
     This->bDirty = TRUE;
 
-    return S_OK;
+    return ShellLink_UpdatePath(This->sPathRel, This->sPath, This->sWorkDir, &This->sPath);
 }
 
 static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWORD fFlags)
