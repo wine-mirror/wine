@@ -593,6 +593,7 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
   TRACE_VECTOR(vshader->data->C[6]);
   TRACE_VECTOR(vshader->data->C[7]);
   TRACE_VECTOR(vshader->data->C[8]);
+  TRACE_VECTOR(vshader->data->C[64]);
   TRACE_VECTOR(input->V[D3DVSDE_POSITION]);
   TRACE_VECTOR(input->V[D3DVSDE_BLENDWEIGHT]);
   TRACE_VECTOR(input->V[D3DVSDE_BLENDINDICES]);

@@ -153,8 +153,61 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
     } \
 }
 
-#define checkGLSupport(ExtName)  FALSE/*(TRUE == This->direct3d8->glInfo.supported[ExtName])*/
-#define GLExtCall(FuncName)      /*(This->direct3d8->glInfo.FuncName)*/
+typedef enum _GL_SupportedExt {
+  /* ARB */
+  ARB_MULTISAMPLE,
+  ARB_MULTITEXTURE,
+  ARB_POINT_PARAMETERS,
+  ARB_TEXTURE_COMPRESSION,
+  ARB_TEXTURE_CUBE_MAP,
+  ARB_TEXTURE_ENV_DOT3,
+  ARB_VERTEX_PROGRAM,
+  ARB_VERTEX_BLEND,
+  /* EXT */
+  EXT_FOG_COORD,
+  EXT_PALETTED_TEXTURE,
+  EXT_SECONDARY_COLOR,
+  EXT_TEXTURE_COMPRESSION_S3TC,
+  EXT_TEXTURE_LOD,
+  EXT_TEXTURE_LOD_BIAS,
+  EXT_VERTEX_WEIGHTING,
+  /* NVIDIA */
+  NV_VERTEX_PROGRAM,
+  /* ATI */
+  EXT_VERTEX_SHADER,
+
+  OPENGL_SUPPORTED_EXT_END
+} GL_SupportedExt;
+
+typedef enum _GL_VSVersion {
+  VS_VERSION_NOT_SUPPORTED = 0x0,
+  VS_VERSION_10 = 0x10,
+  VS_VERSION_11 = 0x11,
+  VS_VERSION_20 = 0x20,
+  VS_VERSION_30 = 0x30,
+  /*Force 32-bits*/
+  VS_VERSION_FORCE_DWORD = 0x7FFFFFFF
+} GL_VSVersion;
+
+typedef struct _GL_Info {
+  /** 
+   * CAPS Constants 
+   */
+  UINT   max_lights;
+  UINT   max_textures;
+  UINT   max_clipplanes;
+
+  GL_VSVersion vs_arb_version;
+  GL_VSVersion vs_nv_version;
+  GL_VSVersion vs_ati_version;
+  
+  BOOL supported[25];
+} GL_Info;
+
+#define GL_LIMITS(ExtName)     (This->direct3d8->gl_info.max_##ExtName)
+#define GL_SUPPORT(ExtName)    (TRUE == This->direct3d8->gl_info.supported[ExtName])
+#define GL_SUPPORT_DEV(ExtName, dev)    (TRUE == (dev)->direct3d8->gl_info.supported[ExtName])
+#define GLExtCall(FuncName)    /*(This->direct3d8->glInfo.FuncName)*/
 
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
@@ -204,6 +257,7 @@ struct IDirect3D8Impl
     DWORD                   ref;
 
     /* IDirect3D8 fields */
+    GL_Info                 gl_info;
 };
 
 /* IUnknown: */
@@ -252,9 +306,14 @@ struct IDirect3DDevice8Impl
 
     /* IDirect3DDevice8 fields */
     IDirect3D8Impl               *direct3d8;
+
     IDirect3DSurface8Impl        *frontBuffer;
     IDirect3DSurface8Impl        *backBuffer;
     IDirect3DSurface8Impl        *depthStencilBuffer;
+
+    IDirect3DSurface8Impl        *renderTarget;
+    IDirect3DSurface8Impl        *stencilBufferTarget;
+
     D3DPRESENT_PARAMETERS         PresentParms;
     D3DDEVICE_CREATION_PARAMETERS CreateParms;
 
@@ -288,19 +347,31 @@ struct IDirect3DDevice8Impl
     XVisualInfo                  *visInfo;
     Display                      *display;
     Window                        win;
+    GLXContext                    render_ctx;
+    Drawable                      drawable;
 
     /* OpenGL Extension related */
+#if 0
     BOOL                          isMultiTexture;
     BOOL                          isDot3;
     UINT                          TextureUnits;
     UINT                          clipPlanes;
     UINT                          maxLights;
+#endif
+
+    /* Cursor management */
+    BOOL                          bCursorVisible;
+    UINT                          xHotSpot;
+    UINT                          yHotSpot;
+    UINT                          xScreenSpace;
+    UINT                          yScreenSpace;
+    GLint                         cursor;
 
     UINT                          dummyTextureName[8];
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI   IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID refiid,LPVOID *obj);
+extern HRESULT WINAPI   IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface, REFIID refiid, LPVOID *obj);
 extern ULONG WINAPI     IDirect3DDevice8Impl_AddRef(LPDIRECT3DDEVICE8 iface);
 extern ULONG WINAPI     IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface);
 
@@ -313,47 +384,47 @@ extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetDeviceCaps(LPDIRECT3DDEVICE8 ifa
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3DDISPLAYMODE* pMode);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetCreationParameters(LPDIRECT3DDEVICE8 iface, D3DDEVICE_CREATION_PARAMETERS* pParameters);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface8* pCursorBitmap);
-extern void     WINAPI  IDirect3DDevice8Impl_SetCursorPosition(LPDIRECT3DDEVICE8 iface, UINT XScreenSpace, UINT YScreenSpace,DWORD Flags);
+extern void     WINAPI  IDirect3DDevice8Impl_SetCursorPosition(LPDIRECT3DDEVICE8 iface, UINT XScreenSpace, UINT YScreenSpace, DWORD Flags);
 extern BOOL     WINAPI  IDirect3DDevice8Impl_ShowCursor(LPDIRECT3DDEVICE8 iface, BOOL bShow);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain8** pSwapChain);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT BackBuffer,D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetRasterStatus(LPDIRECT3DDEVICE8 iface, D3DRASTER_STATUS* pRasterStatus);
-extern void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Flags,CONST D3DGAMMARAMP* pRamp);
+extern void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Flags, CONST D3DGAMMARAMP* pRamp);
 extern void     WINAPI  IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DGAMMARAMP* pRamp);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DTexture8** ppTexture);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,UINT Depth,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DVolumeTexture8** ppVolumeTexture);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, UINT EdgeLength,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DCubeTexture8** ppCubeTexture);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length,DWORD Usage,DWORD FVF,D3DPOOL Pool,IDirect3DVertexBuffer8** ppVertexBuffer);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DIndexBuffer8** ppIndexBuffer);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,BOOL Lockable,IDirect3DSurface8** ppSurface);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,IDirect3DSurface8** ppSurface);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,IDirect3DSurface8** ppSurface);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pSourceSurface,CONST RECT* pSourceRectsArray,UINT cRects,IDirect3DSurface8* pDestinationSurface,CONST POINT* pDestPointsArray);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture,IDirect3DBaseTexture8* pDestinationTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DTexture8** ppTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DVolumeTexture8** ppVolumeTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DCubeTexture8** ppCubeTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer8** ppIndexBuffer);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, IDirect3DSurface8** ppSurface);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8** ppSurface);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, IDirect3DSurface8* pDestinationSurface, CONST POINT* pDestPointsArray);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture, IDirect3DBaseTexture8* pDestinationTexture);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pDestSurface);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget,IDirect3DSurface8* pNewZStencil);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget, IDirect3DSurface8* pNewZStencil);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppRenderTarget);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppZStencilSurface);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count,CONST D3DRECT* pRects,DWORD Flags,D3DCOLOR Color,float Z,DWORD Stencil);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State,CONST D3DMATRIX* pMatrix);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State,D3DMATRIX* pMatrix);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_MultiplyTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST D3DVIEWPORT8* pViewport);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetViewport(LPDIRECT3DDEVICE8 iface, D3DVIEWPORT8* pViewport);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST D3DMATERIAL8* pMaterial);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetMaterial(LPDIRECT3DDEVICE8 iface, D3DMATERIAL8* pMaterial);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST D3DLIGHT8* pLight);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL Enable);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST float* pPlane);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,float* pPlane);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD Value);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD* pValue);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index, CONST D3DLIGHT8* pLight);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index, D3DLIGHT8* pLight);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index, BOOL Enable);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index, BOOL* pEnable);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index, CONST float* pPlane);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index, float* pPlane);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State, DWORD Value);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State, DWORD* pValue);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_BeginStateBlock(LPDIRECT3DDEVICE8 iface);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface, DWORD* pToken);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token);
@@ -362,20 +433,20 @@ extern HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, D3DSTATEBLOCKTYPE Type,DWORD* pToken);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipStatus(LPDIRECT3DDEVICE8 iface, CONST D3DCLIPSTATUS8* pClipStatus);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipStatus(LPDIRECT3DDEVICE8 iface, D3DCLIPSTATUS8* pClipStatus);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8** ppTexture);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8* pTexture);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD* pValue);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD Value);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage, IDirect3DBaseTexture8** ppTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage, IDirect3DBaseTexture8* pTexture);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD* pValue);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_ValidateDevice(LPDIRECT3DDEVICE8 iface, DWORD* pNumPasses);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID,void* pDevInfoStruct,DWORD DevInfoStructSize);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber,CONST PALETTEENTRY* pEntries);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber,PALETTEENTRY* pEntries);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID, void* pDevInfoStruct, DWORD DevInfoStructSize);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, PALETTEENTRY* pEntries);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT *PaletteNumber);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT StartVertex,UINT PrimitiveCount);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT minIndex,UINT NumVertices,UINT startIndex,UINT primCount);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT PrimitiveCount,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride);
-extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT MinVertexIndex,UINT NumVertexIndices,UINT PrimitiveCount,CONST void* pIndexData,D3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
+extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 iface, UINT SrcStartIndex,UINT DestIndex,UINT VertexCount,IDirect3DVertexBuffer8* pDestBuffer,DWORD Flags);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration,CONST DWORD* pFunction,DWORD* pHandle,DWORD Usage);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle);
@@ -399,6 +470,11 @@ extern HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDE
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawTriPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DTRIPATCH_INFO* pTriPatchInfo);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePatch(LPDIRECT3DDEVICE8 iface, UINT Handle);
+
+/* internal Interfaces */
+extern HRESULT WINAPI   IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface);
+extern HRESULT WINAPI   IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* RenderSurface, IDirect3DSurface8* StencilSurface);
+
 
 /* ---------------- */
 /* IDirect3DVolume8 */
@@ -444,6 +520,7 @@ extern HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DV
 extern HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox, DWORD Flags);
 extern HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface);
 
+
 /* ------------------- */
 /* IDirect3DSwapChain8 */
 /* ------------------- */
@@ -477,6 +554,7 @@ extern ULONG WINAPI   IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion);
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer);
 
+
 /* ----------------- */
 /* IDirect3DSurface8 */
 /* ----------------- */
@@ -500,15 +578,16 @@ struct IDirect3DSurface8Impl
     D3DRESOURCETYPE         ResourceType;
 
     IUnknown               *Container;
-
     D3DSURFACE_DESC         myDesc;
     BYTE                   *allocatedMemory;
     UINT                    textureName;
     UINT                    bytesPerPixel;
+
     BOOL                    lockable;
     BOOL                    locked;
     RECT                    lockedRect;
     BOOL                    Dirty;
+
 };
 
 /* IUnknown: */
@@ -525,6 +604,10 @@ extern HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 ifac
 extern HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc);
 extern HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect,DWORD Flags);
 extern HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface);
+
+/* internal Interfaces */
+extern HRESULT WINAPI IDirect3DSurface8Impl_CreateGLTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level);
+
 
 /* ------------------ */
 /* IDirect3DResource8 */
@@ -563,6 +646,10 @@ extern DWORD    WINAPI        IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOU
 extern DWORD    WINAPI        IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface);
 extern void     WINAPI        IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface);
+
+/* internal Interfaces */
+extern D3DPOOL WINAPI         IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface);
+
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer8 */
@@ -611,6 +698,7 @@ extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Lock(LPDIRECT3DVERTEXBU
 extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Unlock(LPDIRECT3DVERTEXBUFFER8 iface);
 extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8 iface, D3DVERTEXBUFFER_DESC *pDesc);
 
+
 /* --------------------- */
 /* IDirect3DIndexBuffer8 */
 /* --------------------- */
@@ -658,6 +746,7 @@ extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFF
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Unlock(LPDIRECT3DINDEXBUFFER8 iface);
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 iface, D3DINDEXBUFFER_DESC *pDesc);
 
+
 /* --------------------- */
 /* IDirect3DBaseTexture8 */
 /* --------------------- */
@@ -682,7 +771,8 @@ struct IDirect3DBaseTexture8Impl
 
     /* IDirect3DBaseTexture8 fields */
     BOOL                    Dirty;
-
+    D3DFORMAT               format;
+    UINT                    levels;
     /*
      *BOOL                    isManaged;
      *DWORD                   lod;
@@ -709,6 +799,11 @@ extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEX
 extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface);
 extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface);
 
+/* internal Interfaces */
+extern BOOL     WINAPI        IDirect3DBaseTexture8Impl_IsDirty(LPDIRECT3DBASETEXTURE8 iface);
+extern BOOL     WINAPI        IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASETEXTURE8 iface, BOOL dirty);
+
+
 /* --------------------- */
 /* IDirect3DCubeTexture8 */
 /* --------------------- */
@@ -733,12 +828,12 @@ struct IDirect3DCubeTexture8Impl
 
     /* IDirect3DBaseTexture8 fields */
     BOOL                    Dirty;
+    D3DFORMAT               format;
+    UINT                    levels;
 
     /* IDirect3DCubeTexture8 fields */
     UINT                    edgeLength;
     DWORD                   usage;
-    UINT                    levels;
-    D3DFORMAT               format;
 
     IDirect3DSurface8Impl  *surfaces[6][MAX_LEVELS];
 };
@@ -764,11 +859,12 @@ extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLOD(LPDIRECT3DCUBETEX
 extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLevelCount(LPDIRECT3DCUBETEXTURE8 iface);
 
 /* IDirect3DCubeTexture8 */
-extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE8 iface,UINT Level,D3DSURFACE_DESC *pDesc);
-extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level,IDirect3DSurface8** ppCubeMapSurface);
-extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level);
-extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,CONST RECT* pDirtyRect);
+extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE8 iface, UINT Level, D3DSURFACE_DESC* pDesc);
+extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level, IDirect3DSurface8** ppCubeMapSurface);
+extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level);
+extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect);
+
 
 /* ----------------- */
 /* IDirect3DTexture8 */
@@ -794,13 +890,13 @@ struct IDirect3DTexture8Impl
 
     /* IDirect3DBaseTexture8 fields */
     BOOL                    Dirty;
+    D3DFORMAT               format;
+    UINT                    levels;
 
     /* IDirect3DTexture8 fields */
     UINT                    width;
     UINT                    height;
-    UINT                    levels;
     DWORD                   usage;
-    D3DFORMAT               format;
 
     IDirect3DSurface8Impl  *surfaces[MAX_LEVELS];
 };
@@ -826,11 +922,12 @@ extern DWORD    WINAPI        IDirect3DTexture8Impl_GetLOD(LPDIRECT3DTEXTURE8 if
 extern DWORD    WINAPI        IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 iface);
 
 /* IDirect3DTexture8: */
-extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DSURFACE_DESC* pDesc);
-extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level,IDirect3DSurface8** ppSurfaceLevel);
-extern HRESULT  WINAPI        IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level, D3DSURFACE_DESC* pDesc);
+extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level, IDirect3DSurface8** ppSurfaceLevel);
+extern HRESULT  WINAPI        IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface, UINT Level);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 iface, CONST RECT* pDirtyRect);
+
 
 /* ----------------------- */
 /* IDirect3DVolumeTexture8 */
@@ -856,14 +953,14 @@ struct IDirect3DVolumeTexture8Impl
 
     /* IDirect3DBaseTexture8 fields */
     BOOL                    Dirty;
+    D3DFORMAT               format;
+    UINT                    levels;
 
     /* IDirect3DVolumeTexture8 fields */
     UINT                    width;
     UINT                    height;
     UINT                    depth;
-    UINT                    levels;
     DWORD                   usage;
-    D3DFORMAT               format;
 
     IDirect3DVolume8Impl   *volumes[MAX_LEVELS];
 };
@@ -889,11 +986,12 @@ extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLOD(LPDIRECT3DVOLUM
 extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE8 iface);
 
 /* IDirect3DVolumeTexture8: */
-extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DVOLUME_DESC *pDesc);
-extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,IDirect3DVolume8** ppVolumeLevel);
-extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox,DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DVOLUME_DESC *pDesc);
+extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, IDirect3DVolume8** ppVolumeLevel);
+extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX* pDirtyBox);
+
 
 /* ==============================================================================
     Private interfactes: beginning of cleaning/splitting for HAL and d3d9 support
@@ -1127,11 +1225,29 @@ extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl
  *
  * to see how not defined it here
  */ 
-void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
-SHORT bytesPerPixel(D3DFORMAT fmt);
-GLint fmt2glintFmt(D3DFORMAT fmt);
+void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
+SHORT  bytesPerPixel(D3DFORMAT fmt);
+GLint  fmt2glintFmt(D3DFORMAT fmt);
 GLenum fmt2glFmt(D3DFORMAT fmt);
-DWORD fmt2glType(D3DFORMAT fmt);
+GLenum fmt2glType(D3DFORMAT fmt);
+
+SHORT  D3DFmtGetBpp(D3DFORMAT fmt);
+GLint  D3DFmt2GLIntFmt(D3DFORMAT fmt);
+GLenum D3DFmt2GLFmt(D3DFORMAT fmt);
+GLenum D3DFmt2GLType(D3DFORMAT fmt);
+
+GLenum D3DFmt2GLDepthFmt(D3DFORMAT fmt);
+GLenum D3DFmt2GLDepthType(D3DFORMAT fmt);
+
+int D3DPrimitiveListGetVertexSize(D3DPRIMITIVETYPE PrimitiveType, int iNumPrim);
+int D3DPrimitive2GLenum(D3DPRIMITIVETYPE PrimitiveType);
+int D3DFVFGetSize(D3DFORMAT fvf);
+
+int SOURCEx_RGB_EXT(DWORD arg);
+int OPERANDx_RGB_EXT(DWORD arg);
+int SOURCEx_ALPHA_EXT(DWORD arg);
+int OPERANDx_ALPHA_EXT(DWORD arg);
+GLenum StencilOp(DWORD op);
 
 /**
  * Internals debug functions
@@ -1140,5 +1256,6 @@ const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
 const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
+const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

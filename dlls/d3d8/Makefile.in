@@ -23,6 +23,7 @@ C_SRCS = \
 	surface.c \
 	swapchain.c \
 	texture.c \
+	utils.c \
 	vertexbuffer.c \
 	volume.c \
 	volumetexture.c \

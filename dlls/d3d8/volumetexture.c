@@ -136,12 +136,17 @@ void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTU
 	  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1); 
 	  checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
 	}
-	
-	TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
-	      GL_TEXTURE_3D, i, fmt2glintFmt(This->format), 
-	      This->volumes[i]->myDesc.Width, This->volumes[i]->myDesc.Height, 
+
+	TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+	      GL_TEXTURE_3D, 
+	      i, 
+	      fmt2glintFmt(This->format), 
+	      This->volumes[i]->myDesc.Width, 
+	      This->volumes[i]->myDesc.Height, 
 	      This->volumes[i]->myDesc.Depth,
-	      0, fmt2glFmt(This->format), fmt2glType(This->format),
+	      0, 
+	      fmt2glFmt(This->format), 
+	      fmt2glType(This->format),
 	      This->volumes[i]->allocatedMemory);
 	glTexImage3D(GL_TEXTURE_3D, 
 		     i,
@@ -154,7 +159,7 @@ void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTU
 		     fmt2glType(This->format),
 		     This->volumes[i]->allocatedMemory);
 	checkGLcall("glTexImage3D");
-	
+
 	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
 	This->Dirty = FALSE;
       }

@@ -154,7 +154,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
     /* Texture Stage States - Put directly into state block, we will call function below */
-    for (i = 0; i < This->TextureUnits; i++) {
+    for (i = 0; i < GL_LIMITS(textures); i++) {
         memcpy(&This->StateBlock->transforms[D3DTS_TEXTURE0 + i], &idmatrix, sizeof(idmatrix));
         This->StateBlock->texture_state[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
         This->StateBlock->texture_state[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
@@ -191,7 +191,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
 
-    for (i = 0; i < This->TextureUnits; i++) {
+    for (i = 0; i < GL_LIMITS(textures); i++) {
         GLubyte white = 255;
 
         /* Note this avoids calling settexture, so pretend it has been called */
@@ -200,7 +200,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         This->StateBlock->textures[i] = NULL;
 
         /* Make appropriate texture active */
-        if (This->isMultiTexture) {
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
 #if defined(GL_VERSION_1_3)
             glActiveTexture(GL_TEXTURE0 + i);
 #else
@@ -289,7 +289,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
     for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
       object->Changed.renderstate[SavedPixelStates_R[i]] = TRUE;
     }
-    for (j = 0; j < This->TextureUnits; i++) {
+    for (j = 0; j < GL_LIMITS(textures); i++) {
       for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
 	object->Changed.texture_state[j][SavedPixelStates_T[i]] = TRUE;
       }
@@ -304,12 +304,12 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
     for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
       object->Changed.renderstate[SavedVertexStates_R[i]] = TRUE;
     }
-    for (j = 0; j < This->TextureUnits; i++) {
+    for (j = 0; j < GL_LIMITS(textures); i++) {
       for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
 	object->Changed.texture_state[j][SavedVertexStates_T[i]] = TRUE;
       }
     }
-    for (i = 0; i < This->maxLights; i++) {
+    for (i = 0; i < GL_LIMITS(lights); i++) {
       object->Changed.lightEnable[i] = TRUE;
       object->Changed.lights[i] = TRUE;
     }
@@ -385,7 +385,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL || pSB->blockType == D3DSBT_VERTEXSTATE) {
 
-        for (i = 0; i < This->maxLights; i++) {
+        for (i = 0; i < GL_LIMITS(lights); i++) {
 
             if (pSB->Set.lightEnable[i] && pSB->Changed.lightEnable[i])
                 IDirect3DDevice8Impl_LightEnable(iface, i, pSB->lightEnable[i]);
@@ -428,7 +428,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
                 IDirect3DDevice8Impl_SetStreamSource(iface, i, pSB->stream_source[i], pSB->stream_stride[i]);
         }
 
-        for (i = 0; i < This->clipPlanes; i++) {
+        for (i = 0; i < GL_LIMITS(clipplanes); i++) {
             if (pSB->Set.clipplane[i] && pSB->Changed.clipplane[i]) {
                 float clip[4];
 
@@ -447,7 +447,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
         }
 
         /* Texture */
-        for (j = 0; j < This->TextureUnits; j++) {
+        for (j = 0; j < GL_LIMITS(textures); j++) {
 	  for (i = 0; i < HIGHEST_TEXTURE_STATE; i++) {
 	    if (pSB->Set.texture_state[j][i] && pSB->Changed.texture_state[j][i]) {
 	      IDirect3DDevice8Impl_SetTextureStageState(iface, j, i, pSB->texture_state[j][i]);
@@ -467,7 +467,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
         }
 
-        for (j = 0; j < This->TextureUnits; i++) {
+        for (j = 0; j < GL_LIMITS(textures); i++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 if (pSB->Set.texture_state[j][SavedPixelStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedPixelStates_T[i]])
@@ -482,7 +482,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
                 IDirect3DDevice8Impl_SetRenderState(iface, SavedVertexStates_R[i], pSB->renderstate[SavedVertexStates_R[i]]);
         }
 
-        for (j = 0; j < This->TextureUnits; i++) {
+        for (j = 0; j < GL_LIMITS(textures); i++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
                 if (pSB->Set.texture_state[j][SavedVertexStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedVertexStates_T[i]])
@@ -526,7 +526,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
 
         /* TODO: Vertex Shader Constants */
 
-        for (i = 0; i < This->maxLights; i++) {
+        for (i = 0; i < GL_LIMITS(lights); i++) {
           if (updateBlock->Set.lightEnable[i] && This->StateBlock->lightEnable[i] != updateBlock->lightEnable[i]) {
               TRACE("Updating light enable for light %d to %d\n", i, This->StateBlock->lightEnable[i]);
               updateBlock->lightEnable[i] = This->StateBlock->lightEnable[i];
@@ -591,7 +591,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
            }
        }
 
-       for (i = 0; i < This->clipPlanes; i++) {
+       for (i = 0; i < GL_LIMITS(clipplanes); i++) {
            if (updateBlock->Set.clipplane[i] && memcmp(&This->StateBlock->clipplane[i], 
                                                        &updateBlock->clipplane[i], 
                                                        sizeof(updateBlock->clipplane)) != 0) {
@@ -613,7 +613,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
        }
 
        /* Texture */
-       for (j = 0; j < This->TextureUnits; j++) {
+       for (j = 0; j < GL_LIMITS(textures); j++) {
            for (i = 0; i < HIGHEST_TEXTURE_STATE; i++) {
 
                if (updateBlock->Set.texture_state[j][i] && (updateBlock->texture_state[j][i] != 

@@ -74,7 +74,6 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface,
     return D3D_OK;
 }
 
-
 ICOM_VTABLE(IDirect3DSwapChain8) Direct3DSwapChain8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE

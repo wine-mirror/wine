@@ -131,11 +131,13 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       return D3DERR_INVALIDCALL;
     }
 
-    if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {
+    if (This == This->Device->backBuffer || This == This->Device->renderTarget || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {
       if (This == This->Device->backBuffer) {
 	TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
       } else if (This == This->Device->frontBuffer) {
 	TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+      } else if (This == This->Device->renderTarget) {
+	TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
       } else if (This == This->Device->depthStencilBuffer) {
 	TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
       }
@@ -167,7 +169,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
     } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage) { /* render surfaces */
       
-      if (This == This->Device->backBuffer || This == This->Device->frontBuffer) {
+      if (This == This->Device->backBuffer || This == This->Device->renderTarget || This == This->Device->frontBuffer) {
 	GLint  prev_store;
 	GLenum prev_read;
 	
@@ -188,83 +190,12 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
 	if (This == This->Device->backBuffer) {
 	  glReadBuffer(GL_BACK);
-	} else if (This == This->Device->frontBuffer) {
+	} else if (This == This->Device->frontBuffer || This == This->Device->renderTarget) {
 	  glReadBuffer(GL_FRONT);
+	} else if (This == This->Device->depthStencilBuffer) {
+	  ERR("Stencil Buffer lock unsupported for now\n");
 	}
 	vcheckGLcall("glReadBuffer");
-
-	/** TODO: use an enhanced version of fmt2glintFmt here instad this switch */
-#if 0
-	switch (This->myDesc.Format) { 
-	case D3DFMT_R5G6B5:
-	  { 
-	    /*
-	      glReadPixels(This->lockedRect.left, This->lockedRect.top, 
-	                   This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
-	                   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pLockedRect->pBits);
-	      vcheckGLcall("glReadPixels");
-	    */
-	    long j;
-	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-	      glReadPixels(This->lockedRect.left, 
-			   This->lockedRect.bottom - j - 1, 
-			   This->lockedRect.right - This->lockedRect.left, 
-			   1,
-			   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pLockedRect->pBits);
-	      vcheckGLcall("glReadPixels");
-	    }
-	  }
-	  break;
-	case D3DFMT_R8G8B8:
-	  {
-	    /*
-	    glReadPixels(This->lockedRect.left, This->lockedRect.top, 
-			 This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
-			 GL_RGB, GL_UNSIGNED_BYTE, pLockedRect->pBits);
-	    vcheckGLcall("glReadPixels");
-	    */
-	    long j;
-	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-	      glReadPixels(This->lockedRect.left, 
-			   This->lockedRect.bottom - j - 1, 
-			   This->lockedRect.right - This->lockedRect.left, 
-			   1,
-			   GL_RGB, GL_UNSIGNED_BYTE, pLockedRect->pBits);
-	      vcheckGLcall("glReadPixels");
-	    }
-	  }
-	  break;
-	case D3DFMT_A8R8G8B8:
-	  {
-	    /*
-	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-	    vcheckGLcall("glPixelStorei");
-	    glReadPixels(This->lockedRect.left, This->lockedRect.top, 
-			 This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
-			 GL_BGRA, GL_UNSIGNED_BYTE, pLockedRect->pBits);
-	    vcheckGLcall("glReadPixels");
-	    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
-	    vcheckGLcall("glPixelStorei");
-	    */
-	    long j;
-	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-	    vcheckGLcall("glPixelStorei");
-	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-	      glReadPixels(This->lockedRect.left, 
-			   This->lockedRect.bottom - j - 1, 
-			   This->lockedRect.right - This->lockedRect.left, 
-			   1,
-			   GL_BGRA, GL_UNSIGNED_BYTE, pLockedRect->pBits);
-	    vcheckGLcall("glReadPixels");
-	    }
-	    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
-	    vcheckGLcall("glPixelStorei");
-	  }
-	  break;
-	default:
-	  FIXME("Unsupported Format %u in locking func\n", This->myDesc.Format);
-	}
-#endif
 
 	{
 	  long j;
@@ -273,7 +204,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 			 This->lockedRect.bottom - j - 1, 
 			 This->lockedRect.right - This->lockedRect.left, 
 			 1,
-			 fmt2glFmt(This->myDesc.Format), fmt2glType(This->myDesc.Format), pLockedRect->pBits);
+			 D3DFmt2GLFmt(This->myDesc.Format), 
+                         D3DFmt2GLType(This->myDesc.Format), 
+                         pLockedRect->pBits);
 	    vcheckGLcall("glReadPixels");
 	  }
 	}
@@ -307,6 +240,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**) &cont);
 	
 	if (SUCCEEDED(hr) && NULL != cont) {
+	  IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
+#if 0
 	  /* Now setup the texture appropraitly */
 	  D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType(cont);
 	  if (containerType == D3DRTYPE_TEXTURE) {
@@ -318,6 +253,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 	  } else {
             FIXME("Set dirty on container type %d\n", containerType);
 	  }
+#endif
 	  IDirect3DBaseTexture8_Release(cont);
 	  cont = NULL;
 	}
@@ -356,29 +292,10 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     }
 
     if (0 == This->myDesc.Usage) { /* classic surface */
-#if 0
-      if (This->Container) {
-	HRESULT hr;
-	IDirect3DBaseTexture8* cont = NULL;
-	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**) &cont);
-	
-	if (SUCCEEDED(hr) && NULL != cont) {
-	  /* Now setup the texture appropraitly */
-	  int containerType = IDirect3DBaseTexture8Impl_GetType(cont);
-	  if (containerType == D3DRTYPE_TEXTURE) {
-	    IDirect3DTexture8Impl *pTexture = (IDirect3DTexture8Impl *)cont;
-	    pTexture->Dirty = TRUE;
-	  } else if (containerType == D3DRTYPE_CUBETEXTURE) {
-	    IDirect3DCubeTexture8Impl *pTexture = (IDirect3DCubeTexture8Impl *)cont;
-	    pTexture->Dirty = TRUE;
-	  } else {
-	    FIXME("Set dirty on container type %d\n", containerType);
-	  }
-	  IDirect3DBaseTexture8_Release(cont);
-	  cont = NULL;
-	}
-      }
-#endif
+      /**
+       * nothing to do
+       * waiting to reload the surface via IDirect3DDevice8::UpdateTexture
+       */
     } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage) { /* render surfaces */
 
       if (This == This->Device->backBuffer || This == This->Device->frontBuffer) {
@@ -441,6 +358,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	glRasterPos3iv(&prev_rasterpos[0]);
 	vcheckGLcall("glRasterPos3iv");
 	LEAVE_GL();
+
+	This->Dirty = FALSE;
+
       } else {
 	FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);
       }
@@ -462,7 +382,6 @@ unlock_end:
     return D3D_OK;
 }
 
-
 ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -478,3 +397,80 @@ ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
     IDirect3DSurface8Impl_LockRect,
     IDirect3DSurface8Impl_UnlockRect,
 };
+
+HRESULT WINAPI IDirect3DSurface8Impl_CreateGLTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
+  ICOM_THIS(IDirect3DSurface8Impl,iface);
+
+
+  if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) && 
+      !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)) {
+    /**
+     * wanted a paletted texture and not really support it in HW 
+     * so software emulation code begin
+     */
+    UINT i;
+    PALETTEENTRY* pal = This->Device->palettes[This->Device->currentPalette];
+    VOID* surface = (VOID*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->myDesc.Width * This->myDesc.Height * sizeof(DWORD));
+    BYTE* dst = (BYTE*) surface;
+    BYTE* src = (BYTE*) This->allocatedMemory;
+          
+    for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+      BYTE color = *src++;
+      *dst++ = pal[color].peRed;
+      *dst++ = pal[color].peGreen;
+      *dst++ = pal[color].peBlue;
+      if (This->myDesc.Format == D3DFMT_A8P8)
+	*dst++ = pal[color].peFlags; 
+      else
+	*dst++ = 0xFF; 
+    }
+    
+    TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+	  gl_target,
+	  gl_level, 
+	  GL_RGBA,
+	  This->myDesc.Width, 
+	  This->myDesc.Height, 
+	  0, 
+	  GL_RGBA,
+	  GL_UNSIGNED_BYTE,
+	  surface);
+    glTexImage2D(gl_target,
+		 gl_level, 
+		 GL_RGBA,
+		 This->myDesc.Width,
+		 This->myDesc.Height,
+		 0,
+		 GL_RGBA,
+		 GL_UNSIGNED_BYTE,
+		 surface);
+    checkGLcall("glTexImage2D");
+    HeapFree(GetProcessHeap(), 0, surface);
+
+    return D3D_OK;    
+  }
+
+  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+	gl_target, 
+	gl_level, 
+	D3DFmt2GLIntFmt(This->myDesc.Format), 
+	This->myDesc.Width, 
+	This->myDesc.Height, 
+	0, 
+	D3DFmt2GLFmt(This->myDesc.Format), 
+	D3DFmt2GLType(This->myDesc.Format),
+	This->allocatedMemory);
+  glTexImage2D(gl_target,
+	       gl_level,
+	       D3DFmt2GLIntFmt(This->myDesc.Format),
+	       This->myDesc.Width,
+	       This->myDesc.Height,
+	       0,
+	       D3DFmt2GLFmt(This->myDesc.Format),
+	       D3DFmt2GLType(This->myDesc.Format),
+	       This->allocatedMemory);
+  checkGLcall("glTexImage2D");
+  
+
+  return D3D_OK;
+}

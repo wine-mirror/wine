@@ -85,18 +85,6 @@ static const D3DFORMAT device_formats[NUM_FORMATS] = {
   D3DFMT_X8R8G8B8
 };
 
-inline static int get_bpp_from_format(D3DFORMAT fmt) {
-  switch (fmt) {
-  case D3DFMT_P8:        return  8;
-  case D3DFMT_R3G3B2:    return  8;
-  case D3DFMT_R5G6B5:    return 16;
-  case D3DFMT_X1R5G5B5:  return 16;
-  case D3DFMT_X4R4G4B4:  return 16;
-  case D3DFMT_R8G8B8:    return 24;
-  case D3DFMT_X8R8G8B8:  return 32;
-  default:               return 16;
-  }
-}
 
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
@@ -415,33 +403,91 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->CursorCaps = 0;
 
-    pCaps->DevCaps = D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_PUREDEVICE;
+    pCaps->DevCaps = D3DDEVCAPS_DRAWPRIMTLVERTEX    | 
+                     D3DDEVCAPS_HWTRANSFORMANDLIGHT |
+                     D3DDEVCAPS_PUREDEVICE;
 
-    pCaps->PrimitiveMiscCaps = D3DPMISCCAPS_CULLCCW | D3DPMISCCAPS_CULLCW | D3DPMISCCAPS_COLORWRITEENABLE | D3DPMISCCAPS_CLIPTLVERTS  |
-                               D3DPMISCCAPS_CLIPPLANESCALEDPOINTS | D3DPMISCCAPS_MASKZ; /*NOT: D3DPMISCCAPS_TSSARGTEMP*/
-    pCaps->RasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_PAT;
-    pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
-                      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
+    pCaps->PrimitiveMiscCaps = D3DPMISCCAPS_CULLCCW               | 
+                               D3DPMISCCAPS_CULLCW                | 
+                               D3DPMISCCAPS_COLORWRITEENABLE      |
+                               D3DPMISCCAPS_CLIPTLVERTS           |
+                               D3DPMISCCAPS_CLIPPLANESCALEDPOINTS | 
+                               D3DPMISCCAPS_MASKZ; 
+                               /*NOT: D3DPMISCCAPS_TSSARGTEMP*/
+
+    pCaps->RasterCaps = D3DPRASTERCAPS_DITHER   | 
+                        D3DPRASTERCAPS_PAT      | 
+                        D3DPRASTERCAPS_FOGRANGE;
+                        /* FIXME Add:
+			   D3DPRASTERCAPS_FOGVERTEX
+			   D3DPRASTERCAPS_FOGTABLE
+			   D3DPRASTERCAPS_MIPMAPLODBIAS
+			   D3DPRASTERCAPS_ZBIAS
+			   D3DPRASTERCAPS_ANISOTROPY
+			   D3DPRASTERCAPS_WFOG
+			   D3DPRASTERCAPS_ZFOG 
+			   D3DPRASTERCAPS_COLORPERSPECTIVE
+			   D3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
+			   D3DPRASTERCAPS_ANTIALIASEDGES
+			   D3DPRASTERCAPS_ZBUFFERLESSHSR
+			   D3DPRASTERCAPS_WBUFFER */
+
+    pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS       | 
+                      D3DPCMPCAPS_EQUAL        | 
+                      D3DPCMPCAPS_GREATER      | 
+                      D3DPCMPCAPS_GREATEREQUAL |
+                      D3DPCMPCAPS_LESS         | 
+                      D3DPCMPCAPS_LESSEQUAL    | 
+                      D3DPCMPCAPS_NEVER        |
+                      D3DPCMPCAPS_NOTEQUAL;
 
     pCaps->SrcBlendCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
     pCaps->DestBlendCaps = 0xFFFFFFFF;   /*FIXME: Tidy up later */
     pCaps->AlphaCmpCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
-    pCaps->ShadeCaps = D3DPSHADECAPS_SPECULARGOURAUDRGB | D3DPSHADECAPS_COLORGOURAUDRGB ;
-    pCaps->TextureCaps = D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_ALPHAPALETTE | D3DPTEXTURECAPS_CUBEMAP | D3DPTEXTURECAPS_MIPCUBEMAP | D3DPTEXTURECAPS_CUBEMAP_POW2 | D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_VOLUMEMAP | D3DPTEXTURECAPS_MIPMAP;
-    pCaps->TextureFilterCaps = D3DPTFILTERCAPS_MAGFLINEAR  | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MINFLINEAR | D3DPTFILTERCAPS_MINFPOINT |
-                               D3DPTFILTERCAPS_MIPFLINEAR  | D3DPTFILTERCAPS_MIPFPOINT ;
+
+    pCaps->ShadeCaps = D3DPSHADECAPS_SPECULARGOURAUDRGB | 
+                       D3DPSHADECAPS_COLORGOURAUDRGB;
+
+    pCaps->TextureCaps =  D3DPTEXTURECAPS_ALPHA        | 
+                          D3DPTEXTURECAPS_ALPHAPALETTE | 
+                          D3DPTEXTURECAPS_POW2         | 
+                          D3DPTEXTURECAPS_VOLUMEMAP    | 
+                          D3DPTEXTURECAPS_MIPMAP;
+#if defined(GL_VERSION_1_3) || defined(GL_ARB_texture_cube_map)
+    pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP      | 
+                          D3DPTEXTURECAPS_MIPCUBEMAP   | 
+                          D3DPTEXTURECAPS_CUBEMAP_POW2;
+#endif
+
+    pCaps->TextureFilterCaps = D3DPTFILTERCAPS_MAGFLINEAR | 
+                               D3DPTFILTERCAPS_MAGFPOINT  | 
+                               D3DPTFILTERCAPS_MINFLINEAR | 
+                               D3DPTFILTERCAPS_MINFPOINT  |
+                               D3DPTFILTERCAPS_MIPFLINEAR | 
+                               D3DPTFILTERCAPS_MIPFPOINT;
+
     pCaps->CubeTextureFilterCaps = 0;
     pCaps->VolumeTextureFilterCaps = 0;
-    pCaps->TextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP;
+
+    pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_BORDER | 
+                                 D3DPTADDRESSCAPS_CLAMP  | 
+                                 D3DPTADDRESSCAPS_WRAP;
 #if defined(GL_VERSION_1_3)
     pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
 #endif
+                                 /* FIXME: Add 
+				    D3DPTADDRESSCAPS_BORDER
+				    D3DPTADDRESSCAPS_MIRRORONCE */
+
     pCaps->VolumeTextureAddressCaps = 0;
 
-    pCaps->LineCaps = D3DLINECAPS_TEXTURE | D3DLINECAPS_ZTEST;
+    pCaps->LineCaps = D3DLINECAPS_TEXTURE | 
+                      D3DLINECAPS_ZTEST;
+                      /* FIXME: Add 
+			 D3DLINECAPS_BLEND
+			 D3DLINECAPS_ALPHACMP
+			 D3DLINECAPS_FOG */
 
-    /*pCaps->MaxTextureWidth = 16384;
-    pCaps->MaxTextureHeight = 16384;*/
     {
       GLint gl_tex_size;    
       glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
@@ -453,7 +499,6 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->MaxTextureRepeat = 32768;
     pCaps->MaxTextureAspectRatio = 32768;
-    pCaps->MaxAnisotropy = 0;
     pCaps->MaxVertexW = 1.0;
 
     pCaps->GuardBandLeft = 0;
@@ -463,26 +508,52 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->ExtentsAdjust = 0;
 
-    pCaps->StencilCaps = D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INCRSAT | 
-                         D3DSTENCILCAPS_INVERT  | D3DSTENCILCAPS_KEEP    | 
-                         D3DSTENCILCAPS_REPLACE | D3DSTENCILCAPS_ZERO /* | D3DSTENCILCAPS_DECR | D3DSTENCILCAPS_INCR */;
+    pCaps->StencilCaps = D3DSTENCILCAPS_DECRSAT | 
+                         D3DSTENCILCAPS_INCRSAT | 
+                         D3DSTENCILCAPS_INVERT  | 
+                         D3DSTENCILCAPS_KEEP    | 
+                         D3DSTENCILCAPS_REPLACE | 
+                         D3DSTENCILCAPS_ZERO;
+                         /* FIXME: Add
+                             D3DSTENCILCAPS_DECR
+                             D3DSTENCILCAPS_INCR */
 
     pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
 
-    pCaps->TextureOpCaps = D3DTEXOPCAPS_ADD | D3DTEXOPCAPS_ADDSIGNED | D3DTEXOPCAPS_ADDSIGNED2X |
-                           D3DTEXOPCAPS_MODULATE | D3DTEXOPCAPS_MODULATE2X | D3DTEXOPCAPS_MODULATE4X |
-                           D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_SELECTARG2 | D3DTEXOPCAPS_DISABLE;
+    pCaps->TextureOpCaps =  D3DTEXOPCAPS_ADD         | 
+                            D3DTEXOPCAPS_ADDSIGNED   | 
+                            D3DTEXOPCAPS_ADDSIGNED2X |
+                            D3DTEXOPCAPS_MODULATE    | 
+                            D3DTEXOPCAPS_MODULATE2X  | 
+                            D3DTEXOPCAPS_MODULATE4X  |
+                            D3DTEXOPCAPS_SELECTARG1  | 
+                            D3DTEXOPCAPS_SELECTARG2  | 
+                            D3DTEXOPCAPS_DISABLE;
 #if defined(GL_VERSION_1_3)
-    pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 | D3DTEXOPCAPS_SUBTRACT;
+    pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 | 
+                            D3DTEXOPCAPS_SUBTRACT;
 #endif
-              /* FIXME: Add D3DTEXOPCAPS_ADDSMOOTH D3DTEXOPCAPS_BLENDCURRENTALPHA D3DTEXOPCAPS_BLENDDIFFUSEALPHA D3DTEXOPCAPS_BLENDFACTORALPHA 
-                            D3DTEXOPCAPS_BLENDTEXTUREALPHA D3DTEXOPCAPS_BLENDTEXTUREALPHAPM D3DTEXOPCAPS_BUMPENVMAP D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
-                            D3DTEXOPCAPS_LERP D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA 
-                            D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA D3DTEXOPCAPS_MULTIPLYADD 
-                            D3DTEXOPCAPS_PREMODULATE */
+                            /* FIXME: Add 
+			      D3DTEXOPCAPS_ADDSMOOTH
+			      D3DTEXOPCAPS_BLENDCURRENTALPHA 
+			      D3DTEXOPCAPS_BLENDDIFFUSEALPHA 
+			      D3DTEXOPCAPS_BLENDFACTORALPHA 
+			      D3DTEXOPCAPS_BLENDTEXTUREALPHA 
+			      D3DTEXOPCAPS_BLENDTEXTUREALPHAPM 
+			      D3DTEXOPCAPS_BUMPENVMAP
+			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
+			      D3DTEXOPCAPS_LERP 
+			      D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR 
+			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA 
+			      D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR 
+			      D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA
+			      D3DTEXOPCAPS_MULTIPLYADD 
+			      D3DTEXOPCAPS_PREMODULATE */
 
     {
         GLint gl_max;
+	GLfloat gl_float;
+
 #if defined(GL_VERSION_1_3)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
 #else
@@ -499,14 +570,34 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
         glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
         pCaps->MaxActiveLights = min(MAX_ACTIVE_LIGHTS, gl_max);
         TRACE("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
+
+#if defined(GL_ARB_vertex_blend)
+	glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+	pCaps->MaxVertexBlendMatrices = gl_max;
+	pCaps->MaxVertexBlendMatrixIndex = 1;
+#else
+	pCaps->MaxVertexBlendMatrices = 0;
+	pCaps->MaxVertexBlendMatrixIndex = 1;
+#endif
+
+#if defined(GL_EXT_texture_filter_anisotropic)
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+        pCaps->MaxAnisotropy = gl_max;
+#else
+        pCaps->MaxAnisotropy = 0;
+#endif
+
+	glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
+	pCaps->MaxPointSize = gl_float;
     }
 
-    pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_TEXGEN;
-
-    pCaps->MaxVertexBlendMatrices = 1;
-    pCaps->MaxVertexBlendMatrixIndex = 1;
-
-    pCaps->MaxPointSize = 128.0;
+    pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | 
+                                  D3DVTXPCAPS_MATERIALSOURCE7   | 
+                                  D3DVTXPCAPS_POSITIONALLIGHTS  | 
+                                  D3DVTXPCAPS_TEXGEN;
+                                  /* FIXME: Add 
+				     D3DVTXPCAPS_LOCALVIEWER 
+				     D3DVTXPCAPS_TWEENING */
 
     pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
     pCaps->MaxVertexIndex = 0xFFFFFFFF;
@@ -718,24 +809,39 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                             pPresentationParameters->BackBufferWidth,
                                             pPresentationParameters->BackBufferHeight,
                                             pPresentationParameters->BackBufferFormat,
-					    D3DMULTISAMPLE_NONE, TRUE,
+					    pPresentationParameters->MultiSampleType,
+					    TRUE,
                                             (LPDIRECT3DSURFACE8*) &object->frontBuffer);
 
     IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
                                             pPresentationParameters->BackBufferWidth,
                                             pPresentationParameters->BackBufferHeight,
                                             pPresentationParameters->BackBufferFormat,
-					    D3DMULTISAMPLE_NONE, TRUE,
+					    pPresentationParameters->MultiSampleType,
+					    TRUE,
                                             (LPDIRECT3DSURFACE8*) &object->backBuffer);
 
-    if (pPresentationParameters->EnableAutoDepthStencil)
-        IDirect3DDevice8Impl_CreateDepthStencilSurface((LPDIRECT3DDEVICE8) object,
-						       pPresentationParameters->BackBufferWidth,
-						       pPresentationParameters->BackBufferHeight,
-						       pPresentationParameters->AutoDepthStencilFormat,
-						       D3DMULTISAMPLE_NONE,
-						       (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
-    
+    if (pPresentationParameters->EnableAutoDepthStencil) {
+       IDirect3DDevice8Impl_CreateDepthStencilSurface((LPDIRECT3DDEVICE8) object,
+	  					      pPresentationParameters->BackBufferWidth,
+						      pPresentationParameters->BackBufferHeight,
+						      pPresentationParameters->AutoDepthStencilFormat,
+						      D3DMULTISAMPLE_NONE,
+						      (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
+    } else {
+      object->depthStencilBuffer = NULL;
+    }
+
+    /* init the default renderTarget management */
+    object->drawable = object->win;
+    object->render_ctx = object->glCtx;
+    object->renderTarget = object->frontBuffer;
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->renderTarget);
+    object->stencilBufferTarget = object->depthStencilBuffer;
+    if (NULL != object->stencilBufferTarget)
+      IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->stencilBufferTarget);
+
+
     /* Now override the surface's Flip method (if in double buffering) ?COPIED from DDRAW!?
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
@@ -768,25 +874,29 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
 
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-    checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
+    checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
-    /* Initialize openGL extension related variables */
-    object->isMultiTexture = FALSE;
-    object->isDot3         = FALSE;
-    object->TextureUnits   = 1;
+    /* 
+     * Initialize openGL extension related variables
+     *  with Default values 
+     */
+    memset(&This->gl_info.supported, 0, sizeof(This->gl_info.supported));
+    This->gl_info.max_textures   = 1;
+    This->gl_info.vs_arb_version = VS_VERSION_NOT_SUPPORTED;
+    This->gl_info.vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
 
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
-    object->clipPlanes   = min(MAX_CLIPPLANES, gl_max);
+    This->gl_info.max_clipplanes = min(MAX_CLIPPLANES, gl_max);
     TRACE("ClipPlanes support - num Planes=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-    object->maxLights = min(MAX_ACTIVE_LIGHTS, gl_max);
+    This->gl_info.max_lights = min(MAX_ACTIVE_LIGHTS, gl_max);
     TRACE("Lights support - max lights=%d\n", gl_max);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
-    TRACE("GL_Extensions reported:\n");  
+    FIXME("GL_Extensions reported:\n");  
     
     if (NULL == GL_Extensions) {
       ERR("   GL_Extensions returns NULL\n");      
@@ -800,17 +910,78 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	  GL_Extensions++;
         }
         memcpy(ThisExtn, Start, (GL_Extensions - Start));
-        TRACE ("   %s\n", ThisExtn);
+        FIXME("- %s\n", ThisExtn);
 
-        if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
-            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-            object->isMultiTexture = TRUE;
-            object->TextureUnits   = min(8, gl_max);
-            TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
-        } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
-            object->isDot3 = TRUE;
-            TRACE("FOUND: Dot3 support\n");
-        }
+	/**
+	 * ARB 
+	 */
+        if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
+	  FIXME(" FOUND: ARB Multisample support\n");
+	  This->gl_info.supported[ARB_MULTISAMPLE] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
+	  glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+	  FIXME(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
+	  This->gl_info.supported[ARB_MULTITEXTURE] = TRUE;
+	  This->gl_info.max_textures = min(8, gl_max);
+        } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
+	  FIXME(" FOUND: ARB Texture Cube Map support\n");
+	  This->gl_info.supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
+	  FIXME(" FOUND: ARB Texture Compression support\n");
+	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
+	  FIXME(" FOUND: EXT Dot3 support\n");
+	  This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
+	  This->gl_info.vs_arb_version = VS_VERSION_11;
+	  FIXME(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
+	  This->gl_info.supported[ARB_VERTEX_PROGRAM] = TRUE;
+
+	/**
+	 * EXT
+	 */
+        } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
+	  FIXME(" FOUND: EXT Fog coord support\n");
+	  This->gl_info.supported[EXT_FOG_COORD] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) {
+	  /* handle paletted texture extensions */
+	  FIXME(" FOUND: EXT Paletted texture support\n");
+	  This->gl_info.supported[EXT_PALETTED_TEXTURE] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
+	  FIXME(" FOUND: EXT Secondary coord support\n");
+	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
+	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
+	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
+	  FIXME(" FOUND: EXT Texture LOD support\n");
+	  This->gl_info.supported[EXT_TEXTURE_LOD] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod_bias") == 0) {
+	  FIXME(" FOUND: EXT Texture LOD bias support\n");
+	  This->gl_info.supported[EXT_TEXTURE_LOD_BIAS] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_vertex_weighting") == 0) {
+	  FIXME(" FOUND: EXT Vertex weighting support\n");
+	  This->gl_info.supported[EXT_VERTEX_WEIGHTING] = TRUE;
+
+	/**
+	 * NVIDIA 
+	 */
+	} else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
+	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
+	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);
+	  FIXME(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", This->gl_info.vs_nv_version);
+	  This->gl_info.supported[NV_VERTEX_PROGRAM] = TRUE;
+
+	/**
+	 * ATI
+	 */
+	/** TODO */
+	} else if (strcmp(ThisExtn, "GL_EXT_vertex_shader") == 0) {
+	  This->gl_info.vs_ati_version = VS_VERSION_11;
+	  FIXME(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
+	  This->gl_info.supported[EXT_VERTEX_SHADER] = TRUE;
+	}
+
 
         if (*GL_Extensions == ' ') GL_Extensions++;
       }
@@ -831,7 +1002,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	  GLX_Extensions++;
         }
         memcpy(ThisExtn, Start, (GLX_Extensions - Start));
-        TRACE ("   %s\n", ThisExtn);
+        TRACE ("- %s\n", ThisExtn);
         if (*GLX_Extensions == ' ') GLX_Extensions++;
       }
     }

@@ -123,6 +123,21 @@ DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEX
     return 0;
 }
 
+BOOL WINAPI IDirect3DBaseTexture8Impl_IsDirty(LPDIRECT3DBASETEXTURE8 iface) {
+    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    return This->Dirty;
+}
+
+BOOL WINAPI IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASETEXTURE8 iface, BOOL dirty) {
+    BOOL old;
+    ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
+    
+    old = This->Dirty;
+    This->Dirty = dirty;
+    return old;
+}
+
+
 ICOM_VTABLE(IDirect3DBaseTexture8) Direct3DBaseTexture8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE

@@ -101,6 +101,30 @@ D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface)
     return This->ResourceType;
 }
 
+D3DPOOL WINAPI IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface) {    
+    ICOM_THIS(IDirect3DResource8Impl,iface);
+
+    switch (This->ResourceType) { 
+    case D3DRTYPE_SURFACE:
+      return ((IDirect3DSurface8Impl*) This)->myDesc.Pool;
+    case D3DRTYPE_TEXTURE:
+      return ((IDirect3DTexture8Impl*) This)->surfaces[0]->myDesc.Pool;
+    case D3DRTYPE_VOLUME:
+      return ((IDirect3DVolume8Impl*) This)->myDesc.Pool;
+    case D3DRTYPE_VOLUMETEXTURE:
+      return ((IDirect3DVolumeTexture8Impl*) This)->volumes[0]->myDesc.Pool;
+    case D3DRTYPE_CUBETEXTURE:
+      return ((IDirect3DCubeTexture8Impl*) This)->surfaces[0][0]->myDesc.Pool;
+    case D3DRTYPE_VERTEXBUFFER:
+      return ((IDirect3DVertexBuffer8Impl*) This)->currentDesc.Pool;
+    case D3DRTYPE_INDEXBUFFER:
+      return ((IDirect3DIndexBuffer8Impl*) This)->currentDesc.Pool;
+    default:
+      FIXME("(%p) Unrecognized type(%d,%s)\n", This, This->ResourceType, debug_d3dressourcetype(This->ResourceType));
+      return D3DPOOL_DEFAULT;
+    }
+}
+
 ICOM_VTABLE(IDirect3DResource8) Direct3DResource8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE

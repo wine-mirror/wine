@@ -140,7 +140,7 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
       if (i == 0 && This->surfaces[0][i]->textureName != 0 && This->Dirty == FALSE) {
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 #if defined(GL_VERSION_1_3)
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][i]->textureName);
 #else
         glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
 #endif
@@ -173,10 +173,17 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 	}
 	
 	for (j = 0; j < 6; j++) {
-	  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, glFmt=%x, glType=%lx, Mem=%p\n",
-		cube_targets[j], i, fmt2glintFmt(This->format), 
-		This->surfaces[j][i]->myDesc.Width, This->surfaces[j][i]->myDesc.Height, 
-		0, fmt2glFmt(This->format), fmt2glType(This->format),
+	  IDirect3DSurface8Impl_CreateGLTexture((LPDIRECT3DSURFACE8) This->surfaces[j][i], cube_targets[j], i); 
+#if 0
+	  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, glFmt=%x, glType=%x, Mem=%p\n",
+		cube_targets[j], 
+		i, 
+		fmt2glintFmt(This->format), 
+		This->surfaces[j][i]->myDesc.Width, 
+		This->surfaces[j][i]->myDesc.Height, 
+		0, 
+		fmt2glFmt(This->format), 
+		fmt2glType(This->format),
 		This->surfaces[j][i]->allocatedMemory);
 	  glTexImage2D(cube_targets[j],
 		       i,
@@ -188,6 +195,7 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 		       fmt2glType(This->format),
 		       This->surfaces[j][i]->allocatedMemory);
 	  checkGLcall("glTexImage2D");
+#endif
 	}
 	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
 	This->Dirty = FALSE;
