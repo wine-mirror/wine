@@ -281,8 +281,11 @@ UINT WINAPI mixerGetDevCapsA(UINT_PTR uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize
 UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
 {
     MIXERCAPSA	micA;
-    UINT	ret = mixerGetDevCapsA(uDeviceID, &micA, sizeof(micA));
+    UINT	ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = mixerGetDevCapsA(uDeviceID, &micA, sizeof(micA));
     if (ret == MMSYSERR_NOERROR) {
 	MIXERCAPSW micW;
 	micW.wMid           = micA.wMid;
@@ -662,8 +665,11 @@ UINT WINAPI auxGetNumDevs(void)
 UINT WINAPI auxGetDevCapsW(UINT_PTR uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
     AUXCAPSA	acA;
-    UINT	ret = auxGetDevCapsA(uDeviceID, &acA, sizeof(acA));
+    UINT	ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = auxGetDevCapsA(uDeviceID, &acA, sizeof(acA));
     if (ret == MMSYSERR_NOERROR) {
 	AUXCAPSW acW;
 	acW.wMid           = acA.wMid;
@@ -1214,8 +1220,11 @@ UINT WINAPI midiOutGetDevCapsW(UINT_PTR uDeviceID, LPMIDIOUTCAPSW lpCaps,
 			       UINT uSize)
 {
     MIDIOUTCAPSA	mocA;
-    UINT		ret = midiOutGetDevCapsA(uDeviceID, &mocA, sizeof(mocA));
+    UINT		ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = midiOutGetDevCapsA(uDeviceID, &mocA, sizeof(mocA));
     if (ret == MMSYSERR_NOERROR) {
 	MIDIOUTCAPSW mocW;
 	mocW.wMid		= mocA.wMid;
@@ -1591,8 +1600,11 @@ UINT WINAPI midiInGetNumDevs(void)
 UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
     MIDIINCAPSA		micA;
-    UINT		ret = midiInGetDevCapsA(uDeviceID, &micA, sizeof(micA));
+    UINT		ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = midiInGetDevCapsA(uDeviceID, &micA, sizeof(micA));
     if (ret == MMSYSERR_NOERROR) {
 	MIDIINCAPSW micW;
 	micW.wMid           = micA.wMid;
@@ -2556,8 +2568,11 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
 			       UINT uSize)
 {
     WAVEOUTCAPSA	wocA;
-    UINT 		ret = waveOutGetDevCapsA(uDeviceID, &wocA, sizeof(wocA));
+    UINT 		ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = waveOutGetDevCapsA(uDeviceID, &wocA, sizeof(wocA));
     if (ret == MMSYSERR_NOERROR) {
 	WAVEOUTCAPSW wocW;
 	wocW.wMid           = wocA.wMid;
@@ -2948,8 +2963,11 @@ UINT WINAPI waveInGetNumDevs(void)
 UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
     WAVEINCAPSA		wicA;
-    UINT		ret = waveInGetDevCapsA(uDeviceID, &wicA, sizeof(wicA));
+    UINT		ret;
 
+    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+
+    ret = waveInGetDevCapsA(uDeviceID, &wicA, sizeof(wicA));
     if (ret == MMSYSERR_NOERROR) {
 	WAVEINCAPSW wicW;
 	wicW.wMid           = wicA.wMid;

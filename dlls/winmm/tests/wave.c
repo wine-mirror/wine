@@ -379,13 +379,14 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
 
 static void wave_out_test_device(int device)
 {
-    WAVEOUTCAPS caps;
+    WAVEOUTCAPSA capsA;
+    WAVEOUTCAPSW capsW;
     WAVEFORMATEX format, oformat;
     HWAVEOUT wout;
     MMRESULT rc;
     UINT f;
-    WCHAR * wname;
-    CHAR * name;
+    WCHAR * nameW;
+    CHAR * nameA;
     DWORD size;
     DWORD dwPageSize;
     BYTE * twoPages;
@@ -396,51 +397,67 @@ static void wave_out_test_device(int device)
     GetSystemInfo(&sSysInfo);
     dwPageSize = sSysInfo.dwPageSize;
 
-    rc=waveOutGetDevCapsA(device,&caps,sizeof(caps));
+    rc=waveOutGetDevCapsA(device,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
        "waveOutGetDevCapsA: failed to get capabilities of device %s: rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
 
-    rc=waveOutGetDevCapsA(device,0,sizeof(caps));
+    rc=waveOutGetDevCapsW(device,&capsW,sizeof(capsW));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsW: failed to get capabilities of device %s: rc=%s\n",dev_name(device),wave_out_error(rc));
+
+    rc=waveOutGetDevCapsA(device,0,sizeof(capsA));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+
+    rc=waveOutGetDevCapsW(device,0,sizeof(capsW));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
 
 #if 0 /* FIXME: this works on windows but crashes wine */
-    rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPS)1,sizeof(caps));
+    rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPSA)1,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+
+    rc=waveOutGetDevCapsW(device,(LPWAVEOUTCAPSW)1,sizeof(capsW));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveOutGetDevCapsW: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
 #endif
 
-    rc=waveOutGetDevCapsA(device,&caps,4);
+    rc=waveOutGetDevCapsA(device,&capsA,4);
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",wave_out_error(rc));
 
-    name=NULL;
+    rc=waveOutGetDevCapsW(device,&capsW,4);
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsW: MMSYSERR_NOERROR expected, got %s\n",wave_out_error(rc));
+
+    nameA=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
        "waveOutMessage: failed to get interface size for device: %s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        wname = (WCHAR *)malloc(size);
-        rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
+        nameW = (WCHAR *)malloc(size);
+        rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)nameW, size);
         ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %s rc=%s\n",dev_name(device),wave_out_error(rc));
-        ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
+        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
         if (rc==MMSYSERR_NOERROR) {
-            name = malloc(size/sizeof(WCHAR));
-            WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
+            nameA = malloc(size/sizeof(WCHAR));
+            WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA, size/sizeof(WCHAR), NULL, NULL);
         }
-        free(wname);
+        free(nameW);
     }
     else if (rc==MMSYSERR_NOTSUPPORTED) {
-        name=strdup("not supported");
+        nameA=strdup("not supported");
     }
 
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx(%s)\n",
-          dev_name(device),caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
-          caps.vDriverVersion & 0xff,
-          caps.wMid,caps.wPid,
-          caps.wChannels,caps.dwFormats,caps.dwSupport,wave_out_caps(caps.dwSupport));
-    free(name);
+          dev_name(device),capsA.szPname,(nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
+          capsA.vDriverVersion & 0xff,
+          capsA.wMid,capsA.wPid,
+          capsA.wChannels,capsA.dwFormats,capsA.dwSupport,wave_out_caps(capsA.dwSupport));
+    free(nameA);
 
     if (winetest_interactive && (device != WAVE_MAPPER))
     {
@@ -454,7 +471,7 @@ static void wave_out_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,5.0,&format,WAVE_FORMAT_2M08,0,&caps);
+        wave_out_test_deviceOut(device,5.0,&format,WAVE_FORMAT_2M08,0,&capsA);
     }
 
     for (f=0;f<NB_WIN_FORMATS;f++) {
@@ -465,10 +482,10 @@ static void wave_out_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],0,&caps);
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_FORMAT_DIRECT,&caps);
+        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],0,&capsA);
+        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_FORMAT_DIRECT,&capsA);
         if (device != WAVE_MAPPER)
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_MAPPED,&caps);
+            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_MAPPED,&capsA);
     }
 
     /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds checking */
@@ -485,10 +502,10 @@ static void wave_out_test_device(int device)
             pwfx->nSamplesPerSec=22050;
             pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
-            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,0,&caps);
-            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT,&caps);
+            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,0,&capsA);
+            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT,&capsA);
             if (device != WAVE_MAPPER)
-                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED,&caps);
+                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED,&capsA);
         }
         VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
     }
