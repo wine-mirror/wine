@@ -20,7 +20,6 @@ extern void (*wine_tsx11_lock)(void);
 extern void (*wine_tsx11_unlock)(void);
 
 extern XFontStruct * TSXLoadQueryFont(Display*, const  char*);
-extern XModifierKeymap	* TSXGetModifierMapping(Display*);
 extern XImage * TSXGetImage(Display*, Drawable, int, int, unsigned int, unsigned int, unsigned long, int);
 extern Display * TSXOpenDisplay(const  char*);
 extern char * TSXGetAtomName(Display*, Atom);
@@ -32,8 +31,6 @@ extern Pixmap  TSXCreateBitmapFromData(Display*, Drawable, const  char*, unsigne
 extern Window  TSXGetSelectionOwner(Display*, Atom);
 extern char ** TSXListFonts(Display*, const  char*, int, int*);
 extern KeySym  TSXKeycodeToKeysym(Display*, unsigned int, int);
-extern KeySym  TSXLookupKeysym(XKeyEvent*, int);
-extern KeySym * TSXGetKeyboardMapping(Display*, unsigned int, int, int*);
 extern int * TSXListDepths(Display*, int, int*);
 extern int   TSXReconfigureWMWindow(Display*, Window, int, unsigned int, XWindowChanges*);
 extern int   TSXAllocColor(Display*, Colormap, XColor*);
@@ -46,7 +43,6 @@ extern int  TSXCopyArea(Display*, Drawable, Drawable, GC, int, int, unsigned int
 extern int  TSXCopyPlane(Display*, Drawable, Drawable, GC, int, int, unsigned int, unsigned int, int, int, unsigned long);
 extern int  TSXDefineCursor(Display*, Window, Cursor);
 extern int  TSXDeleteProperty(Display*, Window, Atom);
-extern int  TSXDisplayKeycodes(Display*, int*, int*);
 extern int  TSXDrawArc(Display*, Drawable, GC, int, int, unsigned int, unsigned int, int, int);
 extern int  TSXDrawLine(Display*, Drawable, GC, int, int, int, int);
 extern int  TSXDrawLines(Display*, Drawable, GC, XPoint*, int, int);
@@ -62,11 +58,9 @@ extern int  TSXFreeColormap(Display*, Colormap);
 extern int  TSXFreeColors(Display*, Colormap, unsigned long*, int, unsigned long);
 extern int  TSXFreeFont(Display*, XFontStruct*);
 extern int  TSXFreeFontNames(char**);
-extern int  TSXFreeModifiermap(XModifierKeymap*);
 extern int  TSXFreePixmap(Display*, Pixmap);
 extern int   TSXGetFontProperty(XFontStruct*, Atom, unsigned long*);
 extern int   TSXGetGeometry(Display*, Drawable, Window*, int*, int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*);
-extern int  TSXGetInputFocus(Display*, Window*, int*);
 extern int  TSXGetScreenSaver(Display*, int*, int*, int*, int*);
 extern int  TSXGetWindowProperty(Display*, Window, Atom, long, long, int, Atom, Atom*, int*, unsigned long*, unsigned long*, unsigned char**);
 extern int   TSXGetWindowAttributes(Display*, Window, XWindowAttributes*);
@@ -98,7 +92,6 @@ extern int  TSXUngrabPointer(Display*, Time);
 extern int  TSXUngrabServer(Display*);
 extern int  TSXUninstallColormap(Display*, Colormap);
 extern int  TSXUnmapWindow(Display*, Window);
-extern int  TSXWarpPointer(Display*, Window, Window, int, int, unsigned int, unsigned int, int, int);
 extern XIM  TSXOpenIM(Display*, struct _XrmHashBucketRec*, char*, char*);
 
 #endif /* defined(HAVE_X11_XLIB_H) */

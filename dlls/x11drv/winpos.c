@@ -22,7 +22,6 @@
 #include "config.h"
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
 #ifdef HAVE_LIBXSHAPE
 #include <X11/IntrinsicP.h>
 #include <X11/extensions/shape.h>

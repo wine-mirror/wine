@@ -25,7 +25,8 @@
 #include <stdlib.h>
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
 
 #include "winbase.h"
 #include "wingdi.h"
@@ -398,10 +399,11 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
                          PropModeReplace, (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
     }
 
+    wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
 
     /* wm hints */
-    if ((wm_hints = TSXAllocWMHints()))
+    if (wm_hints)
     {
         wm_hints->flags = InputHint | StateHint | WindowGroupHint;
         wm_hints->input = !(win->dwStyle & WS_DISABLED);
@@ -1214,14 +1216,18 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
     if (wndPtr->dwExStyle & WS_EX_MANAGED)
     {
         Window win = get_whole_window(wndPtr);
-        XWMHints* wm_hints = TSXGetWMHints( display, win );
+        XWMHints* wm_hints;
 
-        if (!wm_hints) wm_hints = TSXAllocWMHints();
+        wine_tsx11_lock();
+        if (!(wm_hints = XGetWMHints( display, win ))) wm_hints = XAllocWMHints();
+        wine_tsx11_unlock();
         if (wm_hints)
         {
             set_icon_hints( display, wndPtr, wm_hints );
-            TSXSetWMHints( display, win, wm_hints );
-            TSXFree( wm_hints );
+            wine_tsx11_lock();
+            XSetWMHints( display, win, wm_hints );
+            XFree( wm_hints );
+            wine_tsx11_unlock();
         }
     }
     WIN_ReleasePtr( wndPtr );

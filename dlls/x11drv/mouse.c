@@ -22,7 +22,7 @@
 
 #include "ts_xlib.h"
 #ifdef HAVE_LIBXXF86DGA2
-#include "ts_xf86dga2.h"
+#include <X11/extensions/xf86dga.h>
 #endif
 
 #include "windef.h"

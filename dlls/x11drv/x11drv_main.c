@@ -33,7 +33,6 @@
 #endif
 #include <X11/cursorfont.h>
 #include "ts_xlib.h"
-#include "ts_xutil.h"
 
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -276,13 +275,13 @@ static void setup_opengl_visual( Display *display )
 
     /* In order to support OpenGL or D3D, we require a double-buffered
      * visual */
+    wine_tsx11_lock();
     if (glXQueryExtension(display, &err_base, &evt_base) == True) {
 	  int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
 
-	  ENTER_GL();
 	  desktop_vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
-	  LEAVE_GL();
     }
+    wine_tsx11_unlock();
 
     if (desktop_vi != NULL) {
       visual       = desktop_vi->visual;

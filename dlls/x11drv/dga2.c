@@ -23,7 +23,8 @@
 #ifdef HAVE_LIBXXF86DGA2
 
 #include "ts_xlib.h"
-#include "ts_xf86dga2.h"
+#include <X11/extensions/xf86dga.h>
+
 #include "x11drv.h"
 #include "x11ddraw.h"
 #include "dga2.h"
@@ -75,25 +76,31 @@ void X11DRV_XF86DGA2_Init(void)
 
   if (!usedga) return;
 
-  if (!TSXDGAQueryExtension(gdi_display, &dga_event, &dga_error)) return;
-
-  X11DRV_expect_error(gdi_display, DGA2ErrorHandler, NULL);
-  ok = TSXDGAQueryVersion(gdi_display, &major, &minor);
-  if (X11DRV_check_error()) ok = FALSE;
+  wine_tsx11_lock();
+  ok = XDGAQueryExtension(gdi_display, &dga_event, &dga_error);
+  if (ok)
+  {
+      X11DRV_expect_error(gdi_display, DGA2ErrorHandler, NULL);
+      ok = XDGAQueryVersion(gdi_display, &major, &minor);
+      if (X11DRV_check_error()) ok = FALSE;
+  }
+  wine_tsx11_unlock();
   if (!ok) return;
 
   if (major < 2) return; /* only bother with DGA 2+ */
 
   /* test that it works */
-  if (!TSXDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display))) {
-    WARN("disabling XF86DGA2 (insufficient permissions?)\n");
-    return;
+  wine_tsx11_lock();
+  if ((ok = XDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display))))
+  {
+      XDGACloseFramebuffer(gdi_display, DefaultScreen(gdi_display));
+      /* retrieve modes */
+      modes = XDGAQueryModes(gdi_display, DefaultScreen(gdi_display), &nmodes);
+      if (!modes) ok = FALSE;
   }
-  TSXDGACloseFramebuffer(gdi_display, DefaultScreen(gdi_display));
-
-  /* retrieve modes */
-  modes = TSXDGAQueryModes(gdi_display, DefaultScreen(gdi_display), &nmodes);
-  if (!modes) return;
+  else WARN("disabling XF86DGA2 (insufficient permissions?)\n");
+  wine_tsx11_unlock();
+  if (!ok) return;
 
   TRACE("DGA modes: count=%d\n", nmodes);
 
@@ -128,18 +135,19 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
   Display *display = gdi_display;
 
   data->ddRVal = DD_OK;
+  wine_tsx11_lock();
   if (data->dwModeIndex) {
     /* enter DGA */
     XDGADevice *new_dev = NULL;
-    if (dga_dev || TSXDGAOpenFramebuffer(display, DefaultScreen(display)))
-      new_dev = TSXDGASetMode(display, DefaultScreen(display), modes[data->dwModeIndex-1].num);
+    if (dga_dev || XDGAOpenFramebuffer(display, DefaultScreen(display)))
+      new_dev = XDGASetMode(display, DefaultScreen(display), modes[data->dwModeIndex-1].num);
     if (new_dev) {
-      TSXDGASetViewport(display, DefaultScreen(display), 0, 0, XDGAFlipImmediate);
+      XDGASetViewport(display, DefaultScreen(display), 0, 0, XDGAFlipImmediate);
       if (dga_dev) {
 	VirtualFree(dga_dev->data, 0, MEM_RELEASE);
-	TSXFree(dga_dev);
+	XFree(dga_dev);
       } else {
-	TSXDGASelectInput(display, DefaultScreen(display),
+	XDGASelectInput(display, DefaultScreen(display),
 			  KeyPressMask|KeyReleaseMask|
 			  ButtonPressMask|ButtonReleaseMask|
 			  PointerMotionMask);
@@ -157,7 +165,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
     }
     else {
       ERR("failed\n");
-      if (!dga_dev) TSXDGACloseFramebuffer(display, DefaultScreen(display));
+      if (!dga_dev) XDGACloseFramebuffer(display, DefaultScreen(display));
       data->ddRVal = DDERR_GENERIC;
     }
   }
@@ -165,14 +173,15 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
     /* exit DGA */
     X11DRV_DD_IsDirect = FALSE;
     X11DRV_DDHAL_SwitchMode(0, NULL, NULL);
-    TSXDGASetMode(display, DefaultScreen(display), 0);
+    XDGASetMode(display, DefaultScreen(display), 0);
     VirtualFree(dga_dev->data, 0, MEM_RELEASE);
     X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
     X11DRV_EVENT_SetDGAStatus(0, -1);
-    TSXFree(dga_dev);
-    TSXDGACloseFramebuffer(display, DefaultScreen(display));
+    XFree(dga_dev);
+    XDGACloseFramebuffer(display, DefaultScreen(display));
     dga_dev = NULL;
   }
+  wine_tsx11_unlock();
   return DDHAL_DRIVER_HANDLED;
 }
 
@@ -198,7 +207,10 @@ static DWORD PASCAL X11DRV_XF86DGA2_CreateSurface(LPDDHAL_CREATESURFACEDATA data
 static DWORD PASCAL X11DRV_XF86DGA2_CreatePalette(LPDDHAL_CREATEPALETTEDATA data)
 {
   Display *display = gdi_display;
-  data->lpDDPalette->u1.dwReserved1 = TSXDGACreateColormap(display, DefaultScreen(display), dga_dev, AllocAll);
+  wine_tsx11_lock();
+  data->lpDDPalette->u1.dwReserved1 = XDGACreateColormap(display, DefaultScreen(display),
+                                                         dga_dev, AllocAll);
+  wine_tsx11_unlock();
   if (data->lpColorTable)
     X11DRV_DDHAL_SetPalEntries(data->lpDDPalette->u1.dwReserved1, 0, 256,
 			       data->lpColorTable);
@@ -211,10 +223,12 @@ static DWORD PASCAL X11DRV_XF86DGA2_Flip(LPDDHAL_FLIPDATA data)
   Display *display = gdi_display;
   if (data->lpSurfCurr == X11DRV_DD_Primary) {
     DWORD ofs = data->lpSurfCurr->lpGbl->fpVidMem - dga_mem.fpStart;
-    TSXDGASetViewport(display, DefaultScreen(display),
-                      (ofs % dga_dev->mode.bytesPerScanline)*8/dga_dev->mode.bitsPerPixel,
-                      ofs / dga_dev->mode.bytesPerScanline,
-                      XDGAFlipImmediate);
+    wine_tsx11_lock();
+    XDGASetViewport(display, DefaultScreen(display),
+                    (ofs % dga_dev->mode.bytesPerScanline)*8/dga_dev->mode.bitsPerPixel,
+                    ofs / dga_dev->mode.bytesPerScanline,
+                    XDGAFlipImmediate);
+    wine_tsx11_unlock();
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;
@@ -224,8 +238,11 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetPalette(LPDDHAL_SETPALETTEDATA data)
 {
   Display *display = gdi_display;
   if ((data->lpDDSurface == X11DRV_DD_Primary) &&
-      data->lpDDPalette && data->lpDDPalette->u1.dwReserved1) {
-    TSXDGAInstallColormap(display, DefaultScreen(display), data->lpDDPalette->u1.dwReserved1);
+      data->lpDDPalette && data->lpDDPalette->u1.dwReserved1)
+  {
+      wine_tsx11_lock();
+      XDGAInstallColormap(display, DefaultScreen(display), data->lpDDPalette->u1.dwReserved1);
+      wine_tsx11_unlock();
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;

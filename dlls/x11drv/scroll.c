@@ -23,7 +23,6 @@
 #include "config.h"
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
 
 #include "winbase.h"
 #include "wingdi.h"

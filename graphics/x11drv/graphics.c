@@ -28,7 +28,8 @@
 #include <X11/Intrinsic.h>
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
 
 #include <math.h>
 #ifdef HAVE_FLOAT_H
@@ -1271,7 +1272,9 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
         X11DRV_UnlockDIBSection(physDev, TRUE);
     }
 
-    TSXDestroyImage( image );
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
     return TRUE;
 }
 

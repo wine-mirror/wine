@@ -22,7 +22,6 @@
 #include "config.h"
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -561,4 +560,3 @@ Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
     }
     return pixmap;
 }
-

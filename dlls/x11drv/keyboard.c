@@ -29,7 +29,8 @@
 #include <X11/keysym.h>
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
 #ifdef HAVE_XKB
 #include <X11/XKBlib.h>
 #endif
@@ -779,11 +780,12 @@ static const WORD nonchar_key_scan[256] =
 
 
 /* Returns the Windows virtual key code associated with the X event <e> */
+/* x11 lock must be held */
 static WORD EVENT_event_to_vkey( XKeyEvent *e)
 {
     KeySym keysym;
 
-    TSXLookupString(e, NULL, 0, &keysym, NULL);
+    XLookupString(e, NULL, 0, &keysym, NULL);
 
     if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF)
 	&& (e->state & NumLockMask))
@@ -934,7 +936,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     if ((event->keycode >> 8) == 0x10)
 	event->keycode=(event->keycode & 0xff);
 
-    ascii_chars = TSXLookupString(event, Str, sizeof(Str), &keysym, NULL);
+    wine_tsx11_lock();
+    ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
+    wine_tsx11_unlock();
 
     /* Ignore some unwanted events */
     if (keysym == XK_ISO_Prev_Group ||
@@ -970,7 +974,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
                     keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
     }
 
+    wine_tsx11_lock();
     vkey = EVENT_event_to_vkey(event);
+    wine_tsx11_unlock();
 
     TRACE_(key)("keycode 0x%x converted to vkey 0x%x\n",
                 event->keycode, vkey);
@@ -1024,6 +1030,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
  * Called from X11DRV_InitKeyboard
  *  This routine walks through the defined keyboard layouts and selects
  *  whichever matches most closely.
+ * X11 lock must be held.
  */
 static void
 X11DRV_KEYBOARD_DetectLayout (void)
@@ -1054,7 +1061,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
     for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
       /* get data for keycode from X server */
       for (i = 0; i < syms; i++) {
-	keysym = TSXKeycodeToKeysym (display, keyc, i);
+	keysym = XKeycodeToKeysym (display, keyc, i);
 	/* Allow both one-byte and two-byte national keysyms */
 	if ((keysym < 0x8000) && (keysym != ' '))
 	  ckey[i] = keysym & 0xFF;
@@ -1140,8 +1147,8 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 
     pKeyStateTable = key_state_table;
 
-#ifdef HAVE_XKB
     wine_tsx11_lock();
+#ifdef HAVE_XKB
     is_xkb = XkbQueryExtension(display,
                                &xkb_opcode, &xkb_event, &xkb_error,
                                &xkb_major, &xkb_minor);
@@ -1149,15 +1156,15 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
         /* we have XKB, approximate Windows behaviour */
         XkbSetDetectableAutoRepeat(display, True, NULL);
     }
-    wine_tsx11_unlock();
 #endif
-    TSXDisplayKeycodes(display, &min_keycode, &max_keycode);
-    ksp = TSXGetKeyboardMapping(display, min_keycode,
+    XDisplayKeycodes(display, &min_keycode, &max_keycode);
+    ksp = XGetKeyboardMapping(display, min_keycode,
                               max_keycode + 1 - min_keycode, &keysyms_per_keycode);
     /* We are only interested in keysyms_per_keycode.
        There is no need to hold a local copy of the keysyms table */
-    TSXFree(ksp);
-    mmp = TSXGetModifierMapping(display);
+    XFree(ksp);
+
+    mmp = XGetModifierMapping(display);
     kcp = mmp->modifiermap;
     for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
     {
@@ -1169,14 +1176,14 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 		int k;
 
 		for (k = 0; k < keysyms_per_keycode; k += 1)
-                    if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
+                    if (XKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
 		    {
                         NumLockMask = 1 << i;
                         TRACE_(key)("NumLockMask is %x\n", NumLockMask);
 		    }
             }
     }
-    TSXFreeModifiermap(mmp);
+    XFreeModifiermap(mmp);
 
     /* Detect the keyboard layout */
     X11DRV_KEYBOARD_DetectLayout();
@@ -1194,7 +1201,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
         e2.keycode = (KeyCode)keyc;
-        TSXLookupString(&e2, NULL, 0, &keysym, NULL);
+        XLookupString(&e2, NULL, 0, &keysym, NULL);
         vkey = 0; scan = 0;
         if (keysym)  /* otherwise, keycode not used */
         {
@@ -1211,7 +1218,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 	      /* we seem to need to search the layout-dependent scancodes */
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
-		keysym = TSXKeycodeToKeysym(display, keyc, i);
+		keysym = XKeycodeToKeysym(display, keyc, i);
 		if ((keysym<0x800) && (keysym!=' ')) {
 		  ckey[i] = keysym & 0xFF;
 		} else {
@@ -1240,7 +1247,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 	    /* (most Winelib apps ought to be able to work without layout tables!) */
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
             {
-                keysym = TSXLookupKeysym(&e2, i);
+                keysym = XLookupKeysym(&e2, i);
                 if ((keysym >= VK_0 && keysym <= VK_9)
                     || (keysym >= VK_A && keysym <= VK_Z)) {
 		    vkey = keysym;
@@ -1249,7 +1256,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
             {
-                keysym = TSXLookupKeysym(&e2, i);
+                keysym = XLookupKeysym(&e2, i);
 		switch (keysym)
 		{
 		case ';':             vkey = VK_OEM_1; break;
@@ -1288,8 +1295,8 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                     {
                         char	*ksname;
 
-                        keysym = TSXLookupKeysym(&e2, i);
-                        ksname = TSXKeysymToString(keysym);
+                        keysym = XLookupKeysym(&e2, i);
+                        ksname = XKeysymToString(keysym);
                         if (!ksname)
 			    ksname = "NoSymbol";
                         DPRINTF( "%lX (%s) ", keysym, ksname);
@@ -1306,8 +1313,8 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
       if (keyc2vkey[keyc]&&!keyc2scan[keyc]) {
 	char *ksname;
-	keysym = TSXKeycodeToKeysym(display, keyc, 0);
-	ksname = TSXKeysymToString(keysym);
+	keysym = XKeycodeToKeysym(display, keyc, 0);
+	ksname = XKeysymToString(keysym);
 	if (!ksname) ksname = "NoSymbol";
 
 	/* should make sure the scancode is unassigned here, but >=0x60 currently always is */
@@ -1317,12 +1324,13 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
       }
 
     /* Now store one keycode for each modifier. Used to simulate keypresses. */
-    kcControl = TSXKeysymToKeycode(display, XK_Control_L);
-    kcAlt = TSXKeysymToKeycode(display, XK_Alt_L);
-    if (!kcAlt) kcAlt = TSXKeysymToKeycode(display, XK_Meta_L);
-    kcShift = TSXKeysymToKeycode(display, XK_Shift_L);
-    kcNumLock = TSXKeysymToKeycode(display, XK_Num_Lock);
-    kcCapsLock = TSXKeysymToKeycode(display, XK_Caps_Lock);
+    kcControl = XKeysymToKeycode(display, XK_Control_L);
+    kcAlt = XKeysymToKeycode(display, XK_Alt_L);
+    if (!kcAlt) kcAlt = XKeysymToKeycode(display, XK_Meta_L);
+    kcShift = XKeysymToKeycode(display, XK_Shift_L);
+    kcNumLock = XKeysymToKeycode(display, XK_Num_Lock);
+    kcCapsLock = XKeysymToKeycode(display, XK_Caps_Lock);
+    wine_tsx11_unlock();
 }
 
 
@@ -1432,6 +1440,8 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 			/* LockMask should behave exactly like caps lock - upercase
 			 * the letter keys and thats about it. */
 
+                        wine_tsx11_lock();
+
 			e.keycode = 0;
 			/* We exit on the first keycode found, to speed up the thing. */
 			for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
@@ -1447,22 +1457,27 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 			}
 
 			if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
-			  e.keycode = TSXKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
+			  e.keycode = XKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
 
 			if (wCode==VK_DECIMAL)
-			  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
+			  e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
 
 			if (!e.keycode)
 			{
 			  WARN("Unknown virtual key %X !!! \n", wCode);
+                          wine_tsx11_unlock();
 			  return 0; /* whatever */
 			}
 			TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
-			if (TSXLookupString(&e, s, 2, &keysym, NULL))
-			  returnMVK (*s);
+			if (XLookupString(&e, s, 2, &keysym, NULL))
+                        {
+                            wine_tsx11_unlock();
+                            returnMVK (*s);
+                        }
 
 			TRACE("returning no ANSI.\n");
+                        wine_tsx11_unlock();
 			return 0;
 			}
 
@@ -1715,6 +1730,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
     TRACE_(key)("(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
+    wine_tsx11_lock();
     /* We exit on the first keycode found, to speed up the thing. */
     for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
       { /* Find a keycode that could have generated this virtual key */
@@ -1729,19 +1745,22 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
       }
 
     if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
-        e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
+        e.keycode = XKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
 
     if (virtKey==VK_DECIMAL)
-        e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
+        e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
 
     if (!e.keycode)
       {
 	WARN("Unknown virtual key %X !!! \n",virtKey);
+        wine_tsx11_unlock();
 	return virtKey; /* whatever */
       }
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
-    ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, NULL);
+    ret = XLookupString(&e, (LPVOID)lpChar, 2, &keysym, NULL);
+    wine_tsx11_unlock();
+
     if (ret == 0)
 	{
 	BYTE dead_char;

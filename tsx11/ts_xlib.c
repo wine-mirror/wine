@@ -22,15 +22,6 @@ XFontStruct * TSXLoadQueryFont(Display* a0, const  char* a1)
   return r;
 }
 
-XModifierKeymap	* TSXGetModifierMapping(Display* a0)
-{
-  XModifierKeymap	* r;
-  wine_tsx11_lock();
-  r = XGetModifierMapping(a0);
-  wine_tsx11_unlock();
-  return r;
-}
-
 XImage * TSXGetImage(Display* a0, Drawable a1, int a2, int a3, unsigned int a4, unsigned int a5, unsigned long a6, int a7)
 {
   XImage * r;
@@ -126,24 +117,6 @@ KeySym  TSXKeycodeToKeysym(Display* a0, unsigned int a1, int a2)
   KeySym  r;
   wine_tsx11_lock();
   r = XKeycodeToKeysym(a0, a1, a2);
-  wine_tsx11_unlock();
-  return r;
-}
-
-KeySym  TSXLookupKeysym(XKeyEvent* a0, int a1)
-{
-  KeySym  r;
-  wine_tsx11_lock();
-  r = XLookupKeysym(a0, a1);
-  wine_tsx11_unlock();
-  return r;
-}
-
-KeySym * TSXGetKeyboardMapping(Display* a0, unsigned int a1, int a2, int* a3)
-{
-  KeySym * r;
-  wine_tsx11_lock();
-  r = XGetKeyboardMapping(a0, a1, a2, a3);
   wine_tsx11_unlock();
   return r;
 }
@@ -252,15 +225,6 @@ int  TSXDeleteProperty(Display* a0, Window a1, Atom a2)
   int  r;
   wine_tsx11_lock();
   r = XDeleteProperty(a0, a1, a2);
-  wine_tsx11_unlock();
-  return r;
-}
-
-int  TSXDisplayKeycodes(Display* a0, int* a1, int* a2)
-{
-  int  r;
-  wine_tsx11_lock();
-  r = XDisplayKeycodes(a0, a1, a2);
   wine_tsx11_unlock();
   return r;
 }
@@ -400,15 +364,6 @@ int  TSXFreeFontNames(char** a0)
   return r;
 }
 
-int  TSXFreeModifiermap(XModifierKeymap* a0)
-{
-  int  r;
-  wine_tsx11_lock();
-  r = XFreeModifiermap(a0);
-  wine_tsx11_unlock();
-  return r;
-}
-
 int  TSXFreePixmap(Display* a0, Pixmap a1)
 {
   int  r;
@@ -432,15 +387,6 @@ int   TSXGetGeometry(Display* a0, Drawable a1, Window* a2, int* a3, int* a4, uns
   int   r;
   wine_tsx11_lock();
   r = XGetGeometry(a0, a1, a2, a3, a4, a5, a6, a7, a8);
-  wine_tsx11_unlock();
-  return r;
-}
-
-int  TSXGetInputFocus(Display* a0, Window* a1, int* a2)
-{
-  int  r;
-  wine_tsx11_lock();
-  r = XGetInputFocus(a0, a1, a2);
   wine_tsx11_unlock();
   return r;
 }
@@ -720,15 +666,6 @@ int  TSXUnmapWindow(Display* a0, Window a1)
   int  r;
   wine_tsx11_lock();
   r = XUnmapWindow(a0, a1);
-  wine_tsx11_unlock();
-  return r;
-}
-
-int  TSXWarpPointer(Display* a0, Window a1, Window a2, int a3, int a4, unsigned int a5, unsigned int a6, int a7, int a8)
-{
-  int  r;
-  wine_tsx11_lock();
-  r = XWarpPointer(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   wine_tsx11_unlock();
   return r;
 }

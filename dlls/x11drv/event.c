@@ -25,9 +25,10 @@
 #include <X11/keysym.h>
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
 #ifdef HAVE_LIBXXF86DGA2
-#include "ts_xf86dga2.h"
+#include <X11/extensions/xf86dga.h>
 #endif
 
 #include <assert.h>
@@ -261,8 +262,10 @@ static void EVENT_ProcessEvent( XEvent *event )
   }
 #endif
 
-  if (TSXFindContext( display, event->xany.window, winContext, (char **)&hWnd ) != 0)
+  wine_tsx11_lock();
+  if (XFindContext( display, event->xany.window, winContext, (char **)&hWnd ) != 0)
       hWnd = 0;  /* Not for a registered window */
+  wine_tsx11_unlock();
 
   if ( !hWnd && event->xany.window != root_window
              && event->type != PropertyNotify
@@ -506,8 +509,16 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     /* don't reset the foreground window, if the window which is
        getting the focus is a Wine window */
 
-    TSXGetInputFocus( thread_display(), &focus_win, &revert );
-    if (!focus_win || TSXFindContext( thread_display(), focus_win, winContext, (char **)&hwnd_tmp ))
+    wine_tsx11_lock();
+    XGetInputFocus( thread_display(), &focus_win, &revert );
+    if (focus_win)
+    {
+        if (XFindContext( thread_display(), focus_win, winContext, (char **)&hwnd_tmp ) != 0)
+            focus_win = 0;
+    }
+    wine_tsx11_unlock();
+
+    if (!focus_win)
     {
         /* Abey : 6-Oct-99. Check again if the focus out window is the
            Foreground window, because in most cases the messages sent
@@ -1389,9 +1400,13 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
         Window root, child;
         int root_x, root_y, child_x, child_y;
         unsigned int u;
-        TSXQueryPointer( event->display, root_window, &root, &child,
-                         &root_x, &root_y, &child_x, &child_y, &u);
-        if (TSXFindContext( event->display, child, winContext, (char **)&hWnd ) != 0) return;
+
+        wine_tsx11_lock();
+        XQueryPointer( event->display, root_window, &root, &child,
+                       &root_x, &root_y, &child_x, &child_y, &u);
+        if (XFindContext( event->display, child, winContext, (char **)&hWnd ) != 0) hWnd = 0;
+        wine_tsx11_unlock();
+        if (!hWnd) return;
         if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
             EVENT_DropFromOffiX(hWnd, event);
         else if (event->data.l[0] == DndURL)

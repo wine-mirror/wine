@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "ts_xlib.h"
-#include "ts_xutil.h"
 #ifdef HAVE_LIBXXSHM
 #include <X11/extensions/XShm.h>
 # ifdef HAVE_SYS_SHM_H
