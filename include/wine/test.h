@@ -44,18 +44,18 @@ extern int winetest_get_mainargs( char*** pargv );
 extern int winetest_ok( int condition, const char *msg, ... ) __attribute__((format (printf,2,3) ));
 extern void winetest_trace( const char *msg, ... ) __attribute__((format (printf,1,2)));
 
-#define ok(cond,args...) (winetest_set_ok_location(__FILE__, __LINE__), winetest_ok((cond),args))
-#define trace(args...)   (winetest_set_trace_location(__FILE__, __LINE__), winetest_trace(args))
-
 #else /* __GNUC__ */
 
 extern int winetest_ok( int condition, const char *msg, ... );
 extern void winetest_trace( const char *msg, ... );
 
-#define ok     (winetest_set_ok_location(__FILE__, __LINE__), 0) ? 0 : winetest_ok
-#define trace  (winetest_set_trace_location(__FILE__, __LINE__), 0) ? (void)0 : winetest_trace
-
 #endif /* __GNUC__ */
+
+#define ok_(file, line)     (winetest_set_ok_location(file, line), 0) ? 0 : winetest_ok
+#define trace_(file, line)  (winetest_set_trace_location(file, line), 0) ? (void)0 : winetest_trace
+
+#define ok     ok_(__FILE__, __LINE__)
+#define trace  trace_(__FILE__, __LINE__)
 
 #define todo(platform) for (winetest_start_todo(platform); \
                             winetest_loop_todo(); \
