@@ -273,7 +273,7 @@
 @ stdcall GetTextFaceW(long long ptr)
 @ stdcall GetTextMetricsA(long ptr)
 @ stdcall GetTextMetricsW(long ptr)
-@ stub GetTransform
+@ stdcall GetTransform(long long ptr)
 @ stdcall GetViewportExtEx(long ptr)
 @ stdcall GetViewportOrgEx(long ptr)
 @ stdcall GetWinMetaFileBits(long long ptr long long)

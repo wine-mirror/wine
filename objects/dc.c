@@ -989,6 +989,17 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 
 
 /***********************************************************************
+ *           GetTransform    (GDI32.@)
+ */
+BOOL WINAPI GetTransform( HDC hdc, DWORD unknown, LPXFORM xform )
+{
+    if (unknown == 0x0203) return GetWorldTransform( hdc, xform );
+    ERR("stub: don't know what to do for code %lx\n", unknown );
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           SetWorldTransform    (GDI32.@)
  */
 BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
