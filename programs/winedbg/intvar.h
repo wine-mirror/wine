@@ -27,10 +27,9 @@ INTERNAL_VAR(BreakOnFirstChance,	TRUE,		NULL,			DT_BASIC_CONST_INT)
 INTERNAL_VAR(BreakOnDllLoad,		FALSE, 		NULL, 			DT_BASIC_CONST_INT)
 INTERNAL_VAR(CanDeferOnBPByAddr,        FALSE,          NULL,                   DT_BASIC_CONST_INT)
 
-   /* output handling */
+   /* console handling */
 INTERNAL_VAR(ConChannelMask,		DBG_CHN_MESG,	NULL,  			DT_BASIC_CONST_INT)
 INTERNAL_VAR(StdChannelMask,		0,		NULL,  			DT_BASIC_CONST_INT)
-INTERNAL_VAR(UseXTerm,			TRUE,		NULL,  			DT_BASIC_CONST_INT)
 
    /* debugging debugger */
 INTERNAL_VAR(ExtDbgOnInvalidAddress,	FALSE,		NULL,  			DT_BASIC_CONST_INT)

@@ -1003,15 +1003,6 @@ static BOOL WINAPI DEBUG_CtrlCHandler(DWORD dwCtrlType)
 
 static void DEBUG_InitConsole(void)
 {
-    /* keep it as a cuiexe for now, so that Wine won't touch the Unix stdin,
-     * stdout and stderr streams
-     */
-    if (DBG_IVAR(UseXTerm))
-    {
-	FreeConsole();
-	AllocConsole();
-    }
-
     /* set our control-C handler */
     SetConsoleCtrlHandler(DEBUG_CtrlCHandler, TRUE);
 
@@ -1045,7 +1036,6 @@ int main(int argc, char** argv)
             if (local_mode != none_mode) return DEBUG_Usage();
             local_mode = automatic_mode;
             /* force some internal variables */
-            DBG_IVAR(UseXTerm) = 0;
             DBG_IVAR(BreakOnDllLoad) = 0;
             DBG_IVAR(ConChannelMask) = 0;
             DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;

@@ -1176,22 +1176,10 @@ set $BreakAllThreadsStartup = 1
                 </para>
               </listitem>
             </varlistentry>
-            <varlistentry>
-              <term><varname>UseXTerm</varname></term>
-              <listitem>
-                <para>
-                  Set to <literal>TRUE</literal> if the debugger uses
-                  its own <command>xterm</command> window for console
-                  input/output.  Set to <literal>FALSE</literal> if
-                  the debugger uses the current Unix console for
-                  input/output
-                </para>
-              </listitem>
-            </varlistentry>
           </variablelist>
 
           <para>
-            Those last 3 variables are jointly used in two generic ways:
+            Those last 2 variables are jointly used in two generic ways:
           </para>
 
           <orderedlist>
@@ -1200,11 +1188,13 @@ set $BreakAllThreadsStartup = 1
               <programlisting>
 ConChannelMask = DBG_CHN_MESG (1)
 StdChannelMask = 0
-UseXTerm = 1
               </programlisting>
               <para>
-                In this case, all input/output goes into a specific
-                <command>xterm</command> window (but all debug
+                In this case, all input/output goes into the
+                debugger's console (either the standard unix console
+                if winedbg is started from the command line, or a
+                specific windowed-console if the debugger is started
+                upon an exception in a running program. All debug
                 messages <function>TRACE</function>,
                 <function>WARN</function>... still goes to tty where
                 wine is run from).
@@ -1212,38 +1202,16 @@ UseXTerm = 1
             </listitem>
             <listitem>
               <para>
-                to have all input/output go into the tty where Wine
+                To have all input/output go into the tty where Wine
                 was started from (to be used in a X11-free
                 environment)
               </para>
               <screen>
 ConChannelMask = 0
 StdChannelMask = DBG_CHN_MESG (1)
-UseXTerm = 1
               </screen>
             </listitem>
           </orderedlist>
-          <para>
-            Those variables also allow, for example for debugging
-            purposes, to use:
-          </para>
-          <screen>
-ConChannelMask = 0xfff
-StdChannelMask = 0xfff
-UseXTerm = 1
-          </screen>
-          <para>
-            This allows to redirect all <function>WineDbg</function>
-            output to both tty Wine was started from, and
-            <command>xterm</command> debugging window. If Wine (or
-            <command>WineDbg</command>) was started with a redirection
-            of <filename>stdout</filename> and/or
-            <filename>stderr</filename> to a file (with for
-            example &gt;& shell redirect command), you'll get in that
-            file both outputs. It may be interesting to look in the
-            relay trace for specific values which the process segv'ed
-            on.
-          </para>
         </sect3>
 
         <sect3>
