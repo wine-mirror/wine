@@ -620,7 +620,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    	    "ignoring\n", font->Name);
 	}
 	else {
-	    if (PSDRV_AddAFMtoList(&pi->Fonts, afm) == FALSE) {
+	    BOOL added;
+	    if (PSDRV_AddAFMtoList(&pi->Fonts, afm, &added) == FALSE) {
 	    	PSDRV_FreeAFMList(pi->Fonts);
 		goto cleanup;
 	    }

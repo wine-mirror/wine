@@ -112,8 +112,10 @@ static char psrrectangle[] = /* x, y, width, height, -width */
 "%d 0 rlineto\n"
 "closepath\n";
 
+#if 0
 static char psshow[] = /* string */
 "(%s) show\n";
+#endif
 
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";

@@ -298,7 +298,8 @@ extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
 extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
 extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
-extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm);
+extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
+    	BOOL *p_added);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);

@@ -497,10 +497,13 @@ const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
  *
  *	PSDRV_AddAFMtoList
  *
- * Adds an afm to the list whose head is pointed to by head. Creates new
- * family node if necessary and always creates a new AFMLISTENTRY.
+ *  Adds an afm to the list whose head is pointed to by head. Creates new
+ *  family node if necessary and always creates a new AFMLISTENTRY.
+ *
+ *  Returns FALSE for memory allocation error; returns TRUE, but sets *p_added
+ *  to FALSE, for duplicate.
  */
-BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
+BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
 {
     FONTFAMILY *family = *head;
     FONTFAMILY **insert = head;
@@ -535,6 +538,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
 	}
 	strcpy( family->FamilyName, afm->FamilyName );
 	family->afmlist = newafmle;
+	*p_added = TRUE;
 	return TRUE;
     }
     else {
@@ -543,6 +547,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
 	    if (!strcmp(tmpafmle->afm->FontName, afm->FontName)) {
 	    	WARN("Ignoring duplicate FontName '%s'\n", afm->FontName);
 		HeapFree(PSDRV_Heap, 0, newafmle);
+		*p_added = FALSE;
 		return TRUE;	    	    	    /* not a fatal error */
 	    }
 	    tmpafmle = tmpafmle->next;
@@ -555,6 +560,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
 
     tmpafmle->next = newafmle;
 
+    *p_added = TRUE;
     return TRUE;
 }
 
@@ -834,14 +840,19 @@ static VOID CalcWindowsMetrics(AFM *afm)
  
 static BOOL AddBuiltinAFMs()
 {
-    int i = 0;
+    const AFM *const	*afm = PSDRV_BuiltinAFMs;
     
-    while (PSDRV_BuiltinAFMs[i] != NULL)
+    while (*afm != NULL)
     {
-    	if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, PSDRV_BuiltinAFMs[i])
-	    	== FALSE)
+    	BOOL	added;
+    
+    	if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, *afm, &added) == FALSE)
 	    return FALSE;
-	++i;
+	    
+	if (added == FALSE)
+	    TRACE("Ignoring built-in font %s\n", (*afm)->FontName);
+	    
+	++afm;
     }
     
     return TRUE;
@@ -861,6 +872,7 @@ static BOOL AddBuiltinAFMs()
 static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
     DIR *dir;
     const AFM	*afm;
+    BOOL added;
 
     dir = opendir(afmdir);
     if (dir) {
@@ -881,7 +893,7 @@ static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
 		TRACE("loading AFM %s\n",afmfn);
 		afm = PSDRV_AFMParse(afmfn);
 		if (afm) {
-		    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
+		    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm, &added) == FALSE) {
 		    	closedir(dir);
 			return FALSE;
 		    }
@@ -908,6 +920,7 @@ BOOL PSDRV_GetFontMetrics(void)
     char value[256];
     HKEY hkey;
     DWORD type, key_len, value_len;
+    BOOL added;
 
     if (PSDRV_GlyphListInit() != 0)
 	return FALSE;
@@ -924,7 +937,7 @@ BOOL PSDRV_GetFontMetrics(void)
         const AFM* afm = PSDRV_AFMParse(value);
 	
         if (afm) {
-            if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
+            if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm, &added) == FALSE) {
 		RegCloseKey(hkey);
 	    	return FALSE;
 	    }
