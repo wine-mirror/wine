@@ -9,58 +9,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bitmap.h"
-#include "brush.h"
-#include "font.h"
-#include "pen.h"
 #include "x11drv.h"
-
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
-
-extern HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
-                                             BITMAPOBJ * bmp );
-extern HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
-                                           BRUSHOBJ * brush );
-extern HFONT X11DRV_FONT_SelectObject( DC * dc, HFONT hfont,
-                                         FONTOBJ * font );
-extern HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
-
-extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ *bmp );
 
 /***********************************************************************
  *           X11DRV_SelectObject
  */
 HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
-    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ ret = 0;
-
-    if (!ptr) return 0;
     TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
-    
-    switch(GDIMAGIC(ptr->wMagic))
+
+    switch(GetObjectType( handle ))
     {
-      case PEN_MAGIC:
-	  ret = X11DRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
-	  break;
-      case BRUSH_MAGIC:
-	  ret = X11DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
-	  break;
-      case BITMAP_MAGIC:
-	  ret = X11DRV_BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
-	  break;
-      case FONT_MAGIC:
-	  ret = X11DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
-	  break;
-      case REGION_MAGIC:
-	  ret = (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
-	  break;
+    case OBJ_PEN:    return X11DRV_PEN_SelectObject( dc, handle );
+    case OBJ_BRUSH:  return X11DRV_BRUSH_SelectObject( dc, handle );
+    case OBJ_BITMAP: return X11DRV_BITMAP_SelectObject( dc, handle );
+    case OBJ_FONT:   return X11DRV_FONT_SelectObject( dc, handle );
+    case OBJ_REGION: return (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
     }
-    GDI_ReleaseObj( handle );
-    return ret;
+    return 0;
 }
 
 
@@ -69,22 +39,13 @@ HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
  */
 BOOL X11DRV_DeleteObject( HGDIOBJ handle )
 {
-    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    BOOL ret = 0;
-
-    if (!ptr) return FALSE;
-     
-    switch(GDIMAGIC(ptr->wMagic)) {
-    case BITMAP_MAGIC:
-        ret = X11DRV_BITMAP_DeleteObject( handle, (BITMAPOBJ *)ptr );
-	break;
-
+    switch(GetObjectType( handle ))
+    {
+    case OBJ_BITMAP:
+        return X11DRV_BITMAP_DeleteObject( handle );
     default:
         ERR("Shouldn't be here!\n");
-	ret = FALSE;
-	break;
+        break;
     }
-    GDI_ReleaseObj( handle );
-    return ret;
+    return FALSE;
 }
-

@@ -344,6 +344,16 @@ static Atom RAW_DESCENT;
 #define CI_GET_DEFAULT_INFO(fs,cs) \
   CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
 
+
+/***********************************************************************
+ *           is_stock_font
+ */
+inline static BOOL is_stock_font( HFONT font )
+{
+    return (font >= FIRST_STOCK_FONT && font <= LAST_STOCK_FONT);
+}
+
+
 /***********************************************************************
  *           Checksums
  */
@@ -3129,37 +3139,45 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
 /***********************************************************************
  *           X11DRV_FONT_SelectObject
  */
-HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
+HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
 {
     HFONT hPrevFont = 0;
+    LOGFONTW logfont;
     LOGFONT16 lf;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return 0;
 
     EnterCriticalSection( &crtsc_fonts_X11 );
 
     if( CHECK_PFONT(physDev->font) ) 
         XFONT_ReleaseCacheEntry( __PFONT(physDev->font) );
 
-    FONT_LogFontWTo16(&font->logfont, &lf);
+    FONT_LogFontWTo16(&logfont, &lf);
 
-    /* Make sure we don't change the sign when converting to device coords */
-    /* FIXME - check that the other drivers do this correctly */
-    if (lf.lfWidth)
+    /* stock fonts ignore the mapping mode */
+    if (!is_stock_font( hfont ))
     {
-	lf.lfWidth = GDI_ROUND((FLOAT)lf.lfWidth * fabs(dc->xformWorld2Vport.eM11));
-	if (lf.lfWidth == 0)
-	    lf.lfWidth = 1; /* Minimum width */
-    }
-    if (lf.lfHeight)
-    {
-	lf.lfHeight = GDI_ROUND((FLOAT)lf.lfHeight * fabs(dc->xformWorld2Vport.eM22));
+        /* Make sure we don't change the sign when converting to device coords */
+        /* FIXME - check that the other drivers do this correctly */
+        if (lf.lfWidth)
+        {
+            lf.lfWidth = GDI_ROUND((FLOAT)lf.lfWidth * fabs(dc->xformWorld2Vport.eM11));
+            if (lf.lfWidth == 0)
+                lf.lfWidth = 1; /* Minimum width */
+        }
+        if (lf.lfHeight)
+        {
+            lf.lfHeight = GDI_ROUND((FLOAT)lf.lfHeight * fabs(dc->xformWorld2Vport.eM22));
 
-	if (lf.lfHeight == 0)
-	    lf.lfHeight = MIN_FONT_SIZE;
+            if (lf.lfHeight == 0)
+                lf.lfHeight = MIN_FONT_SIZE;
+        }
     }
-    else
-	lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(dc->hSelf,LOGPIXELSY) + (72>>1)) / 72;
-    
+
+    if (!lf.lfHeight)
+        lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(dc->hSelf,LOGPIXELSY) + (72>>1)) / 72;
+
     {
 	/* Fixup aliases before passing to RealizeFont */
         /* alias = Windows name in the alias table */
@@ -3177,10 +3195,10 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	 */
 	if (alias && !strcmp(faceMatched, lf.lfFaceName))
 	    MultiByteToWideChar(CP_ACP, 0, alias, -1,
-				font->logfont.lfFaceName, LF_FACESIZE);
+				logfont.lfFaceName, LF_FACESIZE);
 	else
 	    MultiByteToWideChar(CP_ACP, 0, faceMatched, -1,
-			      font->logfont.lfFaceName, LF_FACESIZE);
+			      logfont.lfFaceName, LF_FACESIZE);
 
 	/*
 	 * In X, some encodings may have the same lfFaceName.
@@ -3189,7 +3207,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	 *   -misc-fixed-*-jisx0208.1990-0
 	 * so charset should be saved...
 	 */
-	font->logfont.lfCharSet = charsetMatched;
+	logfont.lfCharSet = charsetMatched;
     }
 
     hPrevFont = dc->hFont;

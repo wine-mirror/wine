@@ -9,13 +9,14 @@
 #include "ts_xlib.h"
 
 #include <stdlib.h>
-#include "brush.h"
 #include "bitmap.h"
 #include "color.h"
 #include "x11drv.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
+
+#define NB_HATCH_STYLES  (HS_DIAGCROSS+1)
 
 static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
 {
@@ -216,15 +217,17 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 /***********************************************************************
  *           BRUSH_SelectObject
  */
-HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
+HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 {
+    LOGBRUSH logbrush;
     HBITMAP16 hBitmap;
     BITMAPINFO * bmpInfo;
     HBRUSH16 prevHandle = dc->hBrush;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    
-    TRACE("hdc=%04x hbrush=%04x\n",
-                dc->hSelf,hbrush);
+
+    if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
+
+    TRACE("hdc=%04x hbrush=%04x\n", dc->hSelf,hbrush);
 
     dc->hBrush = hbrush;
 
@@ -233,9 +236,9 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	TSXFreePixmap( gdi_display, physDev->brush.pixmap );
 	physDev->brush.pixmap = 0;
     }
-    physDev->brush.style = brush->logbrush.lbStyle;
+    physDev->brush.style = logbrush.lbStyle;
     
-    switch(brush->logbrush.lbStyle)
+    switch(logbrush.lbStyle)
     {
       case BS_NULL:
 	TRACE("BS_NULL\n" );
@@ -243,34 +246,34 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 
       case BS_SOLID:
         TRACE("BS_SOLID\n" );
-	BRUSH_SelectSolidBrush( dc, brush->logbrush.lbColor );
+	BRUSH_SelectSolidBrush( dc, logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
-	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, brush->logbrush.lbColor );
+	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, logbrush.lbColor );
 	physDev->brush.pixmap = TSXCreateBitmapFromData( gdi_display, root_window,
-				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
+				 HatchBrushes[logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;
 	break;
 	
       case BS_PATTERN:
 	TRACE("BS_PATTERN\n");
-	BRUSH_SelectPatternBrush( dc, (HBRUSH16)brush->logbrush.lbHatch );
+	BRUSH_SelectPatternBrush( dc, (HBRUSH16)logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
 	TRACE("BS_DIBPATTERN\n");
-	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
+	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch )))
 	{
-	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
+	    int size = DIB_BitmapInfoSize( bmpInfo, logbrush.lbColor );
 	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader,
                                         CBM_INIT, ((char *)bmpInfo) + size,
                                         bmpInfo,
-                                        (WORD)brush->logbrush.lbColor );
+                                        (WORD)logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );
 	    DeleteObject( hBitmap );
-	    GlobalUnlock16( (HGLOBAL16)brush->logbrush.lbHatch );	    
+	    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );	    
 	}
 	
 	break;

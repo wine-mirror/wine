@@ -271,82 +271,6 @@ static void  ReadFontInformation(
     RegCloseKey(hkey);
 }
 
-static int stock_font_height[STOCK_LAST+1];
-static int stock_font_width[STOCK_LAST+1];
-
-/***********************************************************************
- * Because the stock fonts have their structure initialized with
- * a height of 0 to keep them independent of mapping mode, simply
- * returning the LOGFONT as is will not work correctly.
- * These "FixStockFontSizeXXX()" methods will get the correct
- * size for the fonts.
- */
-static void init_stock_fonts_metrics(void)
-{
-    int i;
-    TEXTMETRICA tm;
-    HDC hdc;
-    static int done;
-
-    if (done) return;
-    done = 1;
-    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-
-    for (i = 0; i <= STOCK_LAST; i++)
-    {
-        if (GetObjectType( GetStockObject(i) ) != OBJ_FONT) continue;
-        SelectObject( hdc, GetStockObject(i) );
-        GetTextMetricsA( hdc, &tm );
-        stock_font_height[i] = tm.tmHeight;
-        stock_font_width[i] = tm.tmAveCharWidth;
-    }
-    DeleteDC(hdc);
-}
-
-static inline void FixStockFontSize16(
-  HFONT  handle, 
-  INT16  count, 
-  LPVOID buffer)
-{
-  LOGFONT16*  pLogFont = (LOGFONT16*)buffer;
-
-  /*
-   * Was the lfHeight field copied (it's the first field)?
-   * If it was and it was null, replace the height.
-   */
-  if ( (count >= 2*sizeof(INT16)) &&
-       (pLogFont->lfHeight == 0) )
-  {
-      pLogFont->lfHeight = stock_font_height[handle-FIRST_STOCK_HANDLE];
-      pLogFont->lfWidth  = stock_font_width[handle-FIRST_STOCK_HANDLE];
-  }
-}
-
-static inline void FixStockFontSizeA(
-  HFONT  handle, 
-  INT    count, 
-  LPVOID buffer)
-{
-  LOGFONTA*  pLogFont = (LOGFONTA*)buffer;
-
-  /*
-   * Was the lfHeight field copied (it's the first field)?
-   * If it was and it was null, replace the height.
-   */
-  if ( (count >= 2*sizeof(INT)) &&
-       (pLogFont->lfHeight == 0) )
-  {
-      pLogFont->lfHeight = stock_font_height[handle-FIRST_STOCK_HANDLE];
-      pLogFont->lfWidth  = stock_font_width[handle-FIRST_STOCK_HANDLE];
-  }
-}
-
-/**
- * Since the LOGFONTA and LOGFONTW structures are identical up to the 
- * lfHeight member (the one of interest in this case) we simply define
- * the W version as the A version. 
- */
-#define FixStockFontSizeW FixStockFontSizeA
 
 #define TRACE_SEC(handle,text) \
    TRACE("(%04x): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
@@ -366,13 +290,13 @@ BOOL GDI_Init(void)
     GDI_HeapSel = instance | 7;
 
     /* TWEAK: Initialize font hints */
-    ReadFontInformation("OEMFixed", &OEMFixedFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("AnsiVar", &AnsiVarFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("System", &SystemFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("DeviceDefault", &DeviceDefaultFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("SystemFixed", &SystemFixedFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("DefaultGui", &DefaultGuiFont, 0, 0, 0, 0, 0);
+    ReadFontInformation("OEMFixed", &OEMFixedFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("AnsiVar", &AnsiVarFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("System", &SystemFont, 16, 0, 0, 0, 0);
+    ReadFontInformation("DeviceDefault", &DeviceDefaultFont, 16, 0, 0, 0, 0);
+    ReadFontInformation("SystemFixed", &SystemFixedFont, 16, 0, 0, 0, 0);
+    ReadFontInformation("DefaultGui", &DefaultGuiFont, -11, 0, 0, 0, 0);
 
     /* Create default palette */
 
@@ -680,8 +604,6 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
     TRACE("%04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
-
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
     switch(GDIMAGIC(ptr->wMagic))
@@ -697,13 +619,6 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 	break;
       case FONT_MAGIC:
 	result = FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
-	
-	/*
-	 * Fix the LOGFONT structure for the stock fonts
-	 */
-	if ( (handle >= FIRST_STOCK_HANDLE) && 
-	     (handle <= LAST_STOCK_HANDLE) )
-	  FixStockFontSize16(handle, count, buffer);	
 	break;
       case PALETTE_MAGIC:
 	result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -724,8 +639,6 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
-
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
     switch(GDIMAGIC(ptr->wMagic))
@@ -741,13 +654,6 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 	  break;
       case FONT_MAGIC:
 	  result = FONT_GetObjectA( (FONTOBJ *)ptr, count, buffer );
-	  
-	  /*
-	   * Fix the LOGFONT structure for the stock fonts
-	   */
-	  if ( (handle >= FIRST_STOCK_HANDLE) && 
-	       (handle <= LAST_STOCK_HANDLE) )
-	    FixStockFontSizeA(handle, count, buffer);
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -782,8 +688,6 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
-
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
     switch(GDIMAGIC(ptr->wMagic))
@@ -799,13 +703,6 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 	  break;
       case FONT_MAGIC:
 	  result = FONT_GetObjectW( (FONTOBJ *)ptr, count, buffer );
-
-	  /*
-	   * Fix the LOGFONT structure for the stock fonts
-	   */
-	  if ( (handle >= FIRST_STOCK_HANDLE) && 
-	       (handle <= LAST_STOCK_HANDLE) )
-	    FixStockFontSizeW(handle, count, buffer);
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );

@@ -168,6 +168,11 @@ extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 extern BOOL X11DRV_BITMAP_Init(void);
 extern int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
 extern BOOL X11DRV_OBM_Init(void);
+extern HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush );
+extern HFONT X11DRV_FONT_SelectObject( DC * dc, HFONT hfont );
+extern HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen );
+extern HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap );
+extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap );
 
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );

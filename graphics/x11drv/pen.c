@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#include "pen.h"
-#include "color.h"
 #include "x11drv.h"
 #include "debugtools.h"
 
@@ -22,23 +20,26 @@ static const char PEN_alternate[]  = { 1,1 };
 /***********************************************************************
  *           PEN_SelectObject
  */
-HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
+HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen )
 {
+    LOGPEN logpen;
     HPEN prevHandle = dc->hPen;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    dc->hPen = hpen;
-    physDev->pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
-    physDev->pen.type = pen->logpen.lopnStyle & PS_TYPE_MASK;
-    physDev->pen.endcap = pen->logpen.lopnStyle & PS_ENDCAP_MASK;
-    physDev->pen.linejoin = pen->logpen.lopnStyle & PS_JOIN_MASK;
+    if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
 
-    physDev->pen.width = GDI_ROUND((FLOAT)pen->logpen.lopnWidth.x *
+    dc->hPen = hpen;
+    physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
+    physDev->pen.type = logpen.lopnStyle & PS_TYPE_MASK;
+    physDev->pen.endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
+    physDev->pen.linejoin = logpen.lopnStyle & PS_JOIN_MASK;
+
+    physDev->pen.width = GDI_ROUND((FLOAT)logpen.lopnWidth.x *
                                    dc->xformWorld2Vport.eM11 * 0.5);
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
-    physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( dc, pen->logpen.lopnColor );    
-    switch(pen->logpen.lopnStyle & PS_STYLE_MASK)
+    physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( dc, logpen.lopnColor );
+    switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
 	physDev->pen.dashes = (char *)PEN_dash;

@@ -13,6 +13,14 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
+/***********************************************************************
+ *           is_stock_font
+ */
+inline static BOOL is_stock_font( HFONT font )
+{
+    return (font >= FIRST_STOCK_FONT && font <= LAST_STOCK_FONT);
+}
+
 /*******************************************************************************
  *  ScaleFont
  *
@@ -232,7 +240,9 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     TRACE("Got font '%s'\n", afmle->afm->FontName);
     
     physDev->font.afm = afmle->afm;
-    ScaleFont(physDev->font.afm, INTERNAL_YWSTODS(dc, lf.lfHeight),
+    /* stock fonts ignore the mapping mode */
+    if (!is_stock_font( hfont )) lf.lfHeight = INTERNAL_YWSTODS(dc, lf.lfHeight);
+    ScaleFont(physDev->font.afm, lf.lfHeight,
     	    &(physDev->font), &(physDev->font.tm));
     
     physDev->font.escapement = lf.lfEscapement;

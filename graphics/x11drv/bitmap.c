@@ -62,27 +62,37 @@ BOOL X11DRV_BITMAP_Init(void)
 /***********************************************************************
  *           X11DRV_BITMAP_SelectObject
  */
-HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
-                                      BITMAPOBJ * bmp )
+HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
 {
+    BITMAPOBJ *bmp;
     HRGN hrgn;
     HBITMAP prevHandle = dc->hBitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-
     if (!(dc->flags & DC_MEMORY)) return 0;
 
+    if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
+
     if(!bmp->physBitmap)
+    {
         if(!X11DRV_CreateBitmap(hbitmap))
-	    return 0;
+        {
+            GDI_ReleaseObj( hbitmap );
+            return 0;
+        }
+    }
 
     if(bmp->funcs != dc->funcs) {
         WARN("Trying to select non-X11 DDB into an X11 dc\n");
+        GDI_ReleaseObj( hbitmap );
 	return 0;
     }
 
-    hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
-    if (!hrgn) return 0;
+    if (!(hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight)))
+    {
+        GDI_ReleaseObj( hbitmap );
+        return 0;
+    }
 
     dc->totalExtent.left   = 0;
     dc->totalExtent.top    = 0;
@@ -109,6 +119,7 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 	dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
+    GDI_ReleaseObj( hbitmap );
     return prevHandle;
 }
 
@@ -441,11 +452,16 @@ LONG X11DRV_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
 /***********************************************************************
  *           X11DRV_BITMAP_DeleteObject
  */
-BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bmp )
+BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap )
 {
-    TSXFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
-    bmp->physBitmap = NULL;
-    bmp->funcs = NULL;
+    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (bmp)
+    {
+        TSXFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
+        bmp->physBitmap = NULL;
+        bmp->funcs = NULL;
+        GDI_ReleaseObj( hbitmap );
+    }
     return TRUE;
 }
 
