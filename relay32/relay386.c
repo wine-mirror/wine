@@ -11,6 +11,7 @@
 #include "builtin32.h"
 #include "selectors.h"
 #include "stackframe.h"
+#include "syslevel.h"
 #include "debugstr.h"
 #include "main.h"
 #include "debugtools.h"
@@ -113,6 +114,8 @@ int RELAY_CallFrom32( int ret_addr, ... )
     GET_FS( fs );
     DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
 
+    SYSLEVEL_CheckNotLevel( 1 );
+
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;
@@ -200,6 +203,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
     }
     DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
              buffer, ret, ret_addr, fs );
+
+    SYSLEVEL_CheckNotLevel( 1 );
+
     return ret;
 }
 
@@ -250,6 +256,8 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
             EBP_reg(context), ESP_reg(context), DS_reg(context),
             ES_reg(context), GS_reg(context), EFL_reg(context) );
 
+    SYSLEVEL_CheckNotLevel( 1 );
+
     /* Now call the real function */
     switch(nb_args)
     {
@@ -291,6 +299,8 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
     DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
             EBP_reg(context), ESP_reg(context), DS_reg(context),
             ES_reg(context), GS_reg(context), EFL_reg(context) );
+
+    SYSLEVEL_CheckNotLevel( 1 );
 }
 
 #else  /* __i386__ */

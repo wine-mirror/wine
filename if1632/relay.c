@@ -189,6 +189,8 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
                  AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), SI_reg(context), DI_reg(context),
                  (WORD)ES_reg(context), EFL_reg(context) );
+
+    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 
@@ -226,6 +228,8 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
                 (WORD)ES_reg(context), EFL_reg(context) );
         break;
     }
+
+    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 
@@ -294,6 +298,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
     }
+
+    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 
@@ -309,6 +315,8 @@ void RELAY_DebugCallTo16Ret( int ret_val )
 
     DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
             SELECTOROF(thdb->cur_stack), OFFSETOF(thdb->cur_stack), ret_val);
+
+    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 
