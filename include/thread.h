@@ -161,7 +161,6 @@ extern void DECLSPEC_NORETURN SYSDEPS_AbortThread( int status );
 /* signal handling */
 extern BOOL SIGNAL_Init(void);
 extern void SIGNAL_Block(void);
-extern void SIGNAL_Unblock(void);
 extern void SIGNAL_Reset(void);
 
 #endif  /* __WINE_THREAD_H */

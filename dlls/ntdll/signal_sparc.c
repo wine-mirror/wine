@@ -466,20 +466,6 @@ void SIGNAL_Block(void)
 }
 
 
-/***********************************************************************
- *           SIGNAL_Unblock
- *
- * Unblock signals. Called from EXC_RtlRaiseException.
- */
-void SIGNAL_Unblock(void)
-{
-    sigset_t all_sigs;
-
-    sigfillset( &all_sigs );
-    sigprocmask( SIG_UNBLOCK, &all_sigs, NULL );
-}
-
-
 /**********************************************************************
  *		SIGNAL_Reset
  *

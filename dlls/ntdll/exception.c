@@ -241,8 +241,6 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
-    SIGNAL_Unblock(); /* we may be in a signal handler, and exception handlers may jump out */
-
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) return;
 
     frame = NtCurrentTeb()->Tib.ExceptionList;
