@@ -123,6 +123,7 @@ extern "C" {
 #define _pascal     __stdcall
 #define _stdcall    __stdcall
 #define _fastcall   __stdcall
+#define __fastcall  __stdcall
 #define __export    __stdcall
 #define CDECL       __cdecl
 #define _CDECL      __cdecl
