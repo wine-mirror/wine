@@ -22,8 +22,8 @@
 #include <stdlib.h>
 
 #include "wine/test.h"
+#include "wine/debug.h"
 #include "dsound.h"
-
 
 /* The time slice determines how often we will service the buffer and the
  * buffer will be four time slices long
@@ -369,7 +369,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     WAVEFORMATEX wfx;
     DSCAPS dscaps;
 
-    trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
+    trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
     if (rc!=DS_OK)
@@ -388,6 +388,12 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
               dscaps.dwMaxSecondarySampleRate);
     }
 
+    /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
+    rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
+    ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        goto EXIT;
+
     /* Testing the primary buffer */
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
@@ -401,6 +407,12 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_buffer(dso,dsbo,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER));
         IDirectSoundBuffer_Release(dsbo);
     }
+
+    /* Set the CooperativeLevel back to normal */
+    rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
+    ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        goto EXIT;
 
     /* Testing secondary buffers */
     init_format(&wfx,11025,8,1);
@@ -446,7 +458,344 @@ static void dsound_out_tests()
     ok(rc==DS_OK,"DirectSoundEnumerate failed: %ld\n",rc);
 }
 
+#define NOTIFICATIONS    5
+
+typedef struct {
+    char* wave;
+    DWORD wave_len;
+
+    LPDIRECTSOUNDCAPTUREBUFFER dscbo;
+    LPWAVEFORMATEX wfx;
+    DSBPOSITIONNOTIFY posnotify[NOTIFICATIONS];
+    HANDLE event;
+    LPDIRECTSOUNDNOTIFY notify;
+
+    DWORD buffer_size;
+    DWORD read;
+    DWORD offset;
+
+    DWORD last_pos;
+} capture_state_t;
+
+static int capture_buffer_service(capture_state_t* state)
+{
+    HRESULT rc;
+    LPVOID ptr1,ptr2;
+    DWORD len1,len2;
+    DWORD capture_pos,read_pos;
+    LONG size;
+
+    rc=IDirectSoundCaptureBuffer_GetCurrentPosition(state->dscbo,&capture_pos,&read_pos);
+    ok(rc==DS_OK,"GetCurrentPosition failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return 0;
+
+    size = state->wfx->nAvgBytesPerSec/NOTIFICATIONS;
+
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,size,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DS_OK,"Lock failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return 0;
+
+    rc=IDirectSoundCaptureBuffer_Unlock(state->dscbo,ptr1,len1,ptr2,len2);
+    ok(rc==DS_OK,"Unlock failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return 0;
+
+    state->offset = (state->offset + size) % state->wfx->nAvgBytesPerSec;
+
+    return 1;
+}
+
+static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, LPDIRECTSOUNDCAPTUREBUFFER dscbo)
+{
+    HRESULT rc;
+    DSCBCAPS dscbcaps;
+    WAVEFORMATEX wfx;
+    DWORD size,status;
+    capture_state_t state;
+    int i;
+
+    /* Private dsound.dll: Error: Invalid caps pointer */
+    rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,0);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+
+    /* Private dsound.dll: Error: Invalid caps pointer */
+    dscbcaps.dwSize=0;
+    rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,&dscbcaps);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+
+    dscbcaps.dwSize=sizeof(dscbcaps);
+    rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,&dscbcaps);
+    ok(rc==DS_OK,"GetCaps failed: 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        trace("    Caps: size = %ld flags=0x%08lx buffer size=%ld\n",
+            dscbcaps.dwSize,dscbcaps.dwFlags,dscbcaps.dwBufferBytes);
+    }
+
+    /* Query the format size. Note that it may not match sizeof(wfx) */
+    /* Private dsound.dll: Error: Either pwfxFormat or pdwSizeWritten must be non-NULL */
+    rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,NULL);
+    ok(rc==DSERR_INVALIDPARAM,
+       "GetFormat should have returned an error: rc=0x%lx\n",rc);
+
+    size=0;
+    rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,&size);
+    ok(rc==DS_OK && size!=0,
+       "GetFormat should have returned the needed size: rc=0x%lx size=%ld\n",
+       rc,size);
+
+    rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,&wfx,sizeof(wfx),NULL);
+    ok(rc==DS_OK,"GetFormat failed: 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        trace("    tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+              wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
+              wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
+    }
+
+    /* Private dsound.dll: Error: Invalid status pointer */
+    rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,0);
+    ok(rc==DSERR_INVALIDPARAM,"GetStatus should have failed: 0x%lx\n",rc);
+
+    rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
+    ok(rc==DS_OK,"GetStatus failed: 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        trace("    status=0x%04lx\n",status);
+    }
+
+    ZeroMemory(&state, sizeof(state));
+    state.dscbo=dscbo;
+    state.wfx=&wfx;
+    state.buffer_size=dscbcaps.dwBufferBytes;
+    state.event = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+    /* FIXME: I couldn't get this to work in vc6. */
+{
+    GUID IID_IDirectSoundNotifyX = { 0xb0210783, 0x89cd, 0x11d0,{ 0xaf, 0x8, 0x0, 0xa0, 0xc9, 0x25, 0xcd, 0x16 } };
+    rc=IDirectSoundCapture_QueryInterface(dscbo,&IID_IDirectSoundNotifyX,(void **)&(state.notify));
+}
+    ok(rc==DS_OK,"QueryInterface failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return;
+
+    for (i = 0; i < NOTIFICATIONS; i++) {
+        state.posnotify[i].dwOffset = (i * (dscbcaps.dwBufferBytes / NOTIFICATIONS)) + (dscbcaps.dwBufferBytes / NOTIFICATIONS) - 1;
+        state.posnotify[i].hEventNotify = state.event;
+    }
+
+    rc=IDirectSoundNotify_SetNotificationPositions(state.notify,NOTIFICATIONS,state.posnotify);
+    ok(rc==DS_OK,"SetNotificationPositions failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return;
+
+    rc=IDirectSoundCaptureBuffer_Start(dscbo,DSCBSTART_LOOPING);
+    ok(rc==DS_OK,"Start: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return;
+
+    rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
+    ok(rc==DS_OK,"GetStatus failed: 0x%lx\n",rc);
+    ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
+       "GetStatus: bad status: %lx",status);
+    if (rc!=DS_OK)
+        return;
+
+    /* wait for the notifications */
+    for (i = 0; i < (NOTIFICATIONS * 2); i++) {
+        rc=MsgWaitForMultipleObjects( 1, &(state.event), FALSE, 100, QS_ALLEVENTS );
+        ok(rc==WAIT_OBJECT_0,"MsgWaitForMultipleObjects failed: 0x%lx\n",rc);
+        if (rc!=WAIT_OBJECT_0)
+            break;
+        if (!capture_buffer_service(&state))
+            break;
+    }
+
+    rc=IDirectSoundCaptureBuffer_Stop(dscbo);
+    ok(rc==DS_OK,"Stop: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return;
+    rc=IDirectSoundCaptureBuffer_Release(dscbo);
+    ok(rc==DS_OK,"Release: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        return;
+}
+
+static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
+                                    LPCSTR lpcstrModule, LPVOID lpContext)
+{
+    HRESULT rc;
+    LPDIRECTSOUNDCAPTURE dsco=NULL;
+    LPDIRECTSOUNDCAPTUREBUFFER dscbo=NULL;
+    DSCBUFFERDESC bufdesc;
+    WAVEFORMATEX wfx;
+    DSCCAPS dsccaps;
+
+    /* Private dsound.dll: Error: Invalid interface buffer */
+    trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
+    rc=DirectSoundCaptureCreate(lpGuid,NULL,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate didn't fail: 0x%lx\n",rc);
+    if (rc==DS_OK)
+        IDirectSoundCapture_Release(dsco);
+
+    rc=DirectSoundCaptureCreate(lpGuid,&dsco,NULL);
+    ok(rc==DS_OK,"DirectSoundCaptureCreate failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        goto EXIT;
+
+    /* Private dsound.dll: Error: Invalid caps buffer */
+    rc=IDirectSoundCapture_GetCaps(dsco,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+
+    /* Private dsound.dll: Error: Invalid caps buffer */
+    dsccaps.dwSize=0;
+    rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+
+    dsccaps.dwSize=sizeof(dsccaps);
+    rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
+    ok(rc==DS_OK,"GetCaps failed: 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        trace("  DirectSoundCapture Caps: size=%ld flags=0x%08lx formats=%ld channels=%ld\n",
+              dsccaps.dwSize,dsccaps.dwFlags,dsccaps.dwFormats,dsccaps.dwChannels);
+    }
+
+    /* Private dsound.dll: Error: Invalid size */
+    /* Private dsound.dll: Error: Invalid capture buffer description */
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=0;
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=0;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=NULL;
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    /* Private dsound.dll: Error: Invalid buffer size */
+    /* Private dsound.dll: Error: Invalid capture buffer description */
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=0;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=NULL;
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    /* Private dsound.dll: Error: Invalid buffer size */
+    /* Private dsound.dll: Error: Invalid capture buffer description */
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    ZeroMemory(&wfx, sizeof(wfx));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=0;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    /* Private dsound.dll: Error: Invalid buffer size */
+    /* Private dsound.dll: Error: Invalid capture buffer description */
+    init_format(&wfx,11025,8,1);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=0;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    init_format(&wfx,11025,8,1);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    trace("  Testing the capture buffer at %ldx%dx%d\n",
+        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        test_capture_buffer(dsco, dscbo);
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    init_format(&wfx,11025,8,1);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    trace("  Testing the capture buffer at %ldx%dx%d\n",
+        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        test_capture_buffer(dsco, dscbo);
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    init_format(&wfx,11025,16,2);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    trace("  Testing the capture buffer at %ldx%dx%d\n",
+        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        test_capture_buffer(dsco, dscbo);
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+    init_format(&wfx,11025,16,2);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    trace("  Testing the capture buffer at %ldx%dx%d\n",
+        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        test_capture_buffer(dsco, dscbo);
+        IDirectSoundCaptureBuffer_Release(dscbo);
+    }
+
+EXIT:
+    if (dsco!=NULL)
+        IDirectSoundCapture_Release(dsco);
+    return TRUE;
+}
+
+static void dsound_in_tests()
+{
+    HRESULT rc;
+    rc=DirectSoundCaptureEnumerateA(&dscenum_callback,NULL);
+    ok(rc==DS_OK,"DirectSoundCaptureEnumerate failed: %ld\n",rc);
+}
+
 START_TEST(dsound)
 {
     dsound_out_tests();
+    dsound_in_tests();
 }

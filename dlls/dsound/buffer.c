@@ -56,7 +56,11 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
 
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-	return IDirectSoundBuffer8_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
+	if (This->dsb)
+		return IDirectSoundBuffer8_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
+	else if (This->dscb)
+		return IDirectSoundCaptureBuffer8_QueryInterface((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb, riid, ppobj);
+	return DSERR_GENERIC;
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
@@ -77,7 +81,10 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 
 	ref = InterlockedDecrement(&(This->ref));
 	if (!ref) {
-		IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
+		if (This->dsb)
+			IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
+		else if (This->dscb)
+			IDirectSoundCaptureBuffer_Release((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb);
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -96,17 +103,30 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 		    TRACE("notify at %ld to 0x%08lx\n",
                             notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
 	}
-	This->dsb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->dsb->notifies,(This->dsb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
-	memcpy(	This->dsb->notifies+This->dsb->nrofnotifies,
-		notify,
-		howmuch*sizeof(DSBPOSITIONNOTIFY)
-	);
-	This->dsb->nrofnotifies+=howmuch;
+	if (This->dsb) {
+		This->dsb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->dsb->notifies,(This->dsb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
+		memcpy(	This->dsb->notifies+This->dsb->nrofnotifies,
+			notify,
+			howmuch*sizeof(DSBPOSITIONNOTIFY)
+		);
+		This->dsb->nrofnotifies+=howmuch;
+	} else if (This->dscb) {
+		TRACE("notifies = %p, nrofnotifies = %d\n", This->dscb->notifies, This->dscb->nrofnotifies);
+		This->dscb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->dscb->notifies,(This->dscb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
+		memcpy(	This->dscb->notifies+This->dscb->nrofnotifies,
+			notify,
+			howmuch*sizeof(DSBPOSITIONNOTIFY)
+		);
+		This->dscb->nrofnotifies+=howmuch;
+		TRACE("notifies = %p, nrofnotifies = %d\n", This->dscb->notifies, This->dscb->nrofnotifies);
+	}
+	else
+		return DSERR_INVALIDPARAM;
 
 	return S_OK;
 }
 
-static ICOM_VTABLE(IDirectSoundNotify) dsnvt =
+ICOM_VTABLE(IDirectSoundNotify) dsnvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundNotifyImpl_QueryInterface,
@@ -798,6 +818,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsn));
 		dsn->ref = 1;
 		dsn->dsb = This;
+		dsn->dscb = 0;
 		IDirectSoundBuffer8_AddRef(iface);
 		ICOM_VTBL(dsn) = &dsnvt;
 		*ppobj = (LPVOID)dsn;
@@ -815,7 +836,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		return E_FAIL;
 	}
 
-        if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
+	if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
 		ERR("app requested IDirectSound3DListener on secondary buffer\n");
 		*ppobj = NULL;
 		return E_FAIL;
@@ -850,7 +871,7 @@ static ICOM_VTABLE(IDirectSoundBuffer8) dsbvt =
 	IDirectSoundBufferImpl_GetFormat,
 	IDirectSoundBufferImpl_GetVolume,
 	IDirectSoundBufferImpl_GetPan,
-        IDirectSoundBufferImpl_GetFrequency,
+	IDirectSoundBufferImpl_GetFrequency,
 	IDirectSoundBufferImpl_GetStatus,
 	IDirectSoundBufferImpl_Initialize,
 	IDirectSoundBufferImpl_Lock,

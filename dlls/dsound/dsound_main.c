@@ -83,7 +83,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 IDirectSoundImpl*	dsound = NULL;
 
-static HRESULT mmErr(UINT err)
+HRESULT mmErr(UINT err)
 {
 	switch(err) {
 	case MMSYSERR_NOERROR:
@@ -91,13 +91,18 @@ static HRESULT mmErr(UINT err)
 	case MMSYSERR_ALLOCATED:
 		return DSERR_ALLOCATED;
 	case MMSYSERR_INVALHANDLE:
+	case WAVERR_STILLPLAYING:
 		return DSERR_GENERIC; /* FIXME */
 	case MMSYSERR_NODRIVER:
 		return DSERR_NODRIVER;
 	case MMSYSERR_NOMEM:
 		return DSERR_OUTOFMEMORY;
 	case MMSYSERR_INVALPARAM:
+	case WAVERR_BADFORMAT:
+	case WAVERR_UNPREPARED:
 		return DSERR_INVALIDPARAM;
+	case MMSYSERR_NOTSUPPORTED:
+		return DSERR_UNSUPPORTED;
 	default:
 		FIXME("Unknown MMSYS error %d\n",err);
 		return DSERR_GENERIC;

@@ -37,6 +37,8 @@ extern int ds_snd_queue_min;
  */
 typedef struct IDirectSoundImpl IDirectSoundImpl;
 typedef struct IDirectSoundBufferImpl IDirectSoundBufferImpl;
+typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
+typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
 typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
@@ -68,9 +70,9 @@ struct IDirectSoundImpl
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
     IDirectSound3DListenerImpl*	listener;
-    RTL_RWLOCK			lock;
-    CRITICAL_SECTION		mixlock;
-    DSVOLUMEPAN			volpan;
+    RTL_RWLOCK                  lock;
+    CRITICAL_SECTION            mixlock;
+    DSVOLUMEPAN                 volpan;
 };
 
 /*****************************************************************************
@@ -126,6 +128,64 @@ HRESULT WINAPI PrimaryBuffer_Create(
 	LPDSBUFFERDESC dsbd);
 
 /*****************************************************************************
+ * IDirectSoundCapture implementation structure
+ */
+struct IDirectSoundCaptureImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundCapture);
+    DWORD                              ref;
+
+    /* IDirectSoundCaptureImpl fields */
+	GUID                               guid;
+	BOOL                               initialized;
+
+	/* DirectSound driver stuff */
+	PIDSCDRIVER                        driver;
+	DSDRIVERDESC                       drvdesc;
+	DSDRIVERCAPS                       drvcaps;
+    PIDSDRIVERBUFFER                   hwbuf;
+
+	/* wave driver info */
+	HWAVEIN                            hwi;
+
+	/* more stuff */
+    LPBYTE                             buffer;
+    DWORD                              buflen;
+	DWORD                              read_position;
+
+	/* FIXME: this should be a pointer because it can be bigger */
+	WAVEFORMATEX                       wfx;
+
+	DWORD                              formats;
+	DWORD                              channels;
+	IDirectSoundCaptureBufferImpl*     capture_buffer;
+	DWORD                              state;
+    LPWAVEHDR                          pwave;
+	int                                index;
+    CRITICAL_SECTION                   lock;
+};
+
+/*****************************************************************************
+ * IDirectSoundCaptureBuffer implementation structure
+ */
+struct IDirectSoundCaptureBufferImpl
+{
+	/* IUnknown fields */
+	ICOM_VFIELD(IDirectSoundCaptureBuffer8);
+	DWORD                              ref;
+
+	/* IDirectSoundCaptureBufferImpl fields */
+	IDirectSoundCaptureImpl*           dsound;
+	CRITICAL_SECTION                   lock;
+	/* FIXME: don't need this */
+	LPDSCBUFFERDESC                    pdscbd;
+	LPDSBPOSITIONNOTIFY                notifies;
+	int                                nrofnotifies;
+	DWORD                              flags;
+};
+
+/*****************************************************************************
  * IDirectSoundNotify implementation structure
  */
 struct IDirectSoundNotifyImpl
@@ -134,7 +194,8 @@ struct IDirectSoundNotifyImpl
     ICOM_VFIELD(IDirectSoundNotify);
     DWORD                            ref;
     /* IDirectSoundNotifyImpl fields */
-    IDirectSoundBufferImpl* dsb;
+    IDirectSoundBufferImpl*          dsb;
+	IDirectSoundCaptureBufferImpl*   dscb;
 };
 
 /*****************************************************************************
@@ -218,10 +279,11 @@ void DSOUND_PerformMix(void);
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 
-#define STATE_STOPPED  0
-#define STATE_STARTING 1
-#define STATE_PLAYING  2
-#define STATE_STOPPING 3
+#define STATE_STOPPED   0
+#define STATE_STARTING  1
+#define STATE_PLAYING   2
+#define STATE_CAPTURING 2
+#define STATE_STOPPING  3
 
 #define DSOUND_FREQSHIFT (14)
 
@@ -232,3 +294,6 @@ struct PrimaryBuffer {
 	PIDSDRIVERBUFFER hwbuf;
 	DWORD state;
 };
+
+extern ICOM_VTABLE(IDirectSoundNotify) dsnvt;
+extern HRESULT mmErr(UINT err);
