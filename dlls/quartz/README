@@ -1,0 +1,15 @@
+
+TODO
+
+  - merge some C sources.
+  - implements all filters.
+  - handles plug-in distributor.
+  - implements some interfaces as plug-ins(???)
+  - implements ICM
+  - implements mciqtz(mci driver for quartz)
+
+known BUGS
+
+  - all FIXMEs.
+  - some filters crash at CoCreateInstance. (ole???)
+

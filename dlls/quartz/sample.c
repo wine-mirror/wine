@@ -20,8 +20,14 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "sample.h"
+#include "mtype.h"
 
 
+/***************************************************************************
+ *
+ *	CMemMediaSample::IMediaSample2
+ *
+ */
 
 static HRESULT WINAPI
 IMediaSample2_fnQueryInterface(IMediaSample2* iface,REFIID riid,void** ppobj)
@@ -66,6 +72,16 @@ IMediaSample2_fnRelease(IMediaSample2* iface)
 	ref = InterlockedExchangeAdd(&(This->ref),-1) - 1;
 	if ( ref > 0 )
 		return (ULONG)ref;
+
+	/* this class would be reused.. */
+	if ( This->prop.pMediaType != NULL )
+	{
+		QUARTZ_MediaType_Destroy( This->prop.pMediaType );
+		This->prop.pMediaType = NULL;
+	}
+	This->prop.dwTypeSpecificFlags = 0;
+	This->prop.dwSampleFlags = 0;
+	This->prop.lActual = This->prop.cbBuffer;
 
 	IMemAllocator_ReleaseBuffer(This->pOwner,(IMediaSample*)iface);
 
@@ -226,28 +242,47 @@ IMediaSample2_fnGetMediaType(IMediaSample2* iface,AM_MEDIA_TYPE** ppmt)
 
 	if ( ppmt == NULL )
 		return E_POINTER;
+	*ppmt = NULL;
 	if ( !(This->prop.dwSampleFlags & AM_SAMPLE_TYPECHANGED) )
 		return S_FALSE;
 
-	/* FIXME - not implemented! */
+	*ppmt = QUARTZ_MediaType_Duplicate( This->prop.pMediaType );
+	if ( *ppmt == NULL )
+		return E_OUTOFMEMORY;
 
-	FIXME("(%p)->(%p) not implemented!\n",This,ppmt);
-
-	/* return CoTaskMemAlloc-ed memory. */
-
-	return E_NOTIMPL;
+	return NOERROR;
 }
 
 static HRESULT WINAPI
 IMediaSample2_fnSetMediaType(IMediaSample2* iface,AM_MEDIA_TYPE* pmt)
 {
 	ICOM_THIS(CMemMediaSample,iface);
+	AM_MEDIA_TYPE* pmtDup;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pmt);
 
-	/* FIXME - not implemented! */
+	if ( pmt == NULL )
+	{
+		/* FIXME? */
+		if ( This->prop.pMediaType != NULL )
+		{
+			QUARTZ_MediaType_Destroy( This->prop.pMediaType );
+			This->prop.pMediaType = NULL;
+		}
+		This->prop.dwSampleFlags &= ~AM_SAMPLE_TYPECHANGED;
+		return NOERROR;
+	}
 
-	return E_NOTIMPL;
+	pmtDup = QUARTZ_MediaType_Duplicate( pmt );
+	if ( pmtDup == NULL )
+		return E_OUTOFMEMORY;
+
+	if ( This->prop.pMediaType != NULL )
+		QUARTZ_MediaType_Destroy( This->prop.pMediaType );
+	This->prop.dwSampleFlags |= AM_SAMPLE_TYPECHANGED;
+	This->prop.pMediaType = pmtDup;
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -281,7 +316,7 @@ IMediaSample2_fnGetMediaTime(IMediaSample2* iface,LONGLONG* pTimeStart,LONGLONG*
 {
 	ICOM_THIS(CMemMediaSample,iface);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p,%p)\n",This,pTimeStart,pTimeEnd);
 
 	if ( pTimeStart == NULL || pTimeEnd == NULL )
 		return E_POINTER;
@@ -336,12 +371,54 @@ static HRESULT WINAPI
 IMediaSample2_fnSetProperties(IMediaSample2* iface,DWORD cbProp,const BYTE* pbProp)
 {
 	ICOM_THIS(CMemMediaSample,iface);
+	const AM_SAMPLE2_PROPERTIES* pProp;
+	AM_SAMPLE2_PROPERTIES propNew;
+	AM_MEDIA_TYPE* pmtDup = NULL;
+	HRESULT hr = E_INVALIDARG;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%lu,%p)\n",This,cbProp,pbProp);
 
-	return E_NOTIMPL;
+	if ( pbProp == NULL )
+		return E_POINTER;
+	pProp = (const AM_SAMPLE2_PROPERTIES*)pbProp;
+	if ( cbProp != sizeof(AM_SAMPLE2_PROPERTIES) )
+		goto err;
+
+	CopyMemory( &propNew, pProp, sizeof(AM_SAMPLE2_PROPERTIES) );
+	if ( propNew.cbData != sizeof(AM_SAMPLE2_PROPERTIES) )
+		goto err;
+
+	if ( This->prop.cbBuffer < propNew.lActual )
+		goto err;
+
+	if ( propNew.dwSampleFlags & AM_SAMPLE_TYPECHANGED )
+	{
+		pmtDup = QUARTZ_MediaType_Duplicate( propNew.pMediaType );
+		if ( pmtDup == NULL )
+		{
+			hr = E_OUTOFMEMORY;
+			goto err;
+		}
+	}
+
+	if ( propNew.pbBuffer != NULL && propNew.pbBuffer != This->prop.pbBuffer )
+		goto err;
+	if ( propNew.cbBuffer != 0 && propNew.cbBuffer != This->prop.cbBuffer )
+		goto err;
+
+	if ( This->prop.pMediaType != NULL )
+		QUARTZ_MediaType_Destroy( This->prop.pMediaType );
+	CopyMemory( &This->prop, &propNew, sizeof(AM_SAMPLE2_PROPERTIES) );
+	This->prop.pMediaType = pmtDup;
+	pmtDup = NULL;
+
+	hr= NOERROR;
+err:
+	if ( pmtDup != NULL )
+		QUARTZ_MediaType_Destroy( pmtDup );
+
+	return hr;
 }
-
 
 
 static ICOM_VTABLE(IMediaSample2) imediasample2 =
@@ -374,6 +451,11 @@ static ICOM_VTABLE(IMediaSample2) imediasample2 =
 };
 
 
+/***************************************************************************
+ *
+ *	new/delete for CMemMediaSample
+ *
+ */
 
 HRESULT QUARTZ_CreateMemMediaSample(
 	BYTE* pbData, DWORD dwDataLength,
@@ -388,7 +470,7 @@ HRESULT QUARTZ_CreateMemMediaSample(
 		return E_OUTOFMEMORY;
 
 	ICOM_VTBL(pms) = &imediasample2;
-	pms->ref = 1;
+	pms->ref = 0;
 	pms->pOwner = pOwner;
 	pms->fMediaTimeIsValid = FALSE;
 	pms->llMediaTimeStart = 0;

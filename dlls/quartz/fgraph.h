@@ -11,6 +11,7 @@
 		+ IDispatch
 		+ IFilterGraph - IGraphBuilder - IFilterGraph2
 		+ IGraphVersion
+		+ IGraphConfig
 		+ IDispatch - IMediaControl
 		+ IPersist - IMediaFilter
 		+ IDispatch - IMediaEvent - IMediaEventEx
@@ -49,6 +50,11 @@ typedef struct FG_IGraphVersionImpl
 {
 	ICOM_VFIELD(IGraphVersion);
 } FG_IGraphVersionImpl;
+
+typedef struct FG_IGraphConfigImpl
+{
+	ICOM_VFIELD(IGraphConfig);
+} FG_IGraphConfigImpl;
 
 typedef struct FG_IMediaControlImpl
 {
@@ -95,6 +101,7 @@ typedef struct FG_IVideoWindowImpl
 	ICOM_VFIELD(IVideoWindow);
 } FG_IVideoWindowImpl;
 
+typedef struct FilterGraph_MEDIAEVENT	FilterGraph_MEDIAEVENT;
 
 typedef struct CFilterGraph
 {
@@ -103,6 +110,7 @@ typedef struct CFilterGraph
 	FG_IDispatchImpl	disp;
 	FG_IFilterGraph2Impl	fgraph;
 	FG_IGraphVersionImpl	graphversion;
+	FG_IGraphConfigImpl	grphconf;
 	FG_IMediaControlImpl	mediacontrol;
 	FG_IMediaFilterImpl	mediafilter;
 	FG_IMediaEventImpl	mediaevent;
@@ -123,8 +131,15 @@ typedef struct CFilterGraph
 	/* IMediaFilter fields. */
 	CRITICAL_SECTION	m_csGraphState;
 	FILTER_STATE	m_stateGraph; /* must NOT accessed directly! */
+	CRITICAL_SECTION	m_csClock;
+	IReferenceClock*	m_pClock;
 	/* IMediaEvent fields. */
 	HANDLE	m_hMediaEvent;
+	CRITICAL_SECTION	m_csMediaEvents;
+	FilterGraph_MEDIAEVENT*	m_pMediaEvents;
+	ULONG	m_cbMediaEventsPut;
+	ULONG	m_cbMediaEventsGet;
+	ULONG	m_cbMediaEventsMax;
 	/* IMediaEventSink fields. */
 	/* IMediaPosition fields. */
 	/* IMediaSeeking fields. */
@@ -137,8 +152,10 @@ typedef struct CFilterGraph
 #define	CFilterGraph_IPersist(th)		((IPersist*)&((th)->persist))
 #define	CFilterGraph_IDispatch(th)		((IDispatch*)&((th)->disp))
 #define	CFilterGraph_IFilterGraph2(th)		((IFilterGraph2*)&((th)->fgraph))
-#define	CFilterGraph_IMediaFilter(th)		((IMediaFilter*)&((th)->mediafilter))
 #define	CFilterGraph_IMediaControl(th)		((IMediaControl*)&((th)->mediacontrol))
+#define	CFilterGraph_IMediaFilter(th)		((IMediaFilter*)&((th)->mediafilter))
+#define	CFilterGraph_IMediaEventEx(th)		((IMediaEventEx*)&((th)->mediaevent))
+#define	CFilterGraph_IMediaEventSink(th)		((IMediaEventSink*)&((th)->mediaeventsink))
 
 HRESULT QUARTZ_CreateFilterGraph(IUnknown* punkOuter,void** ppobj);
 
@@ -150,6 +167,8 @@ HRESULT CFilterGraph_InitIFilterGraph2( CFilterGraph* pfg );
 void CFilterGraph_UninitIFilterGraph2( CFilterGraph* pfg );
 HRESULT CFilterGraph_InitIGraphVersion( CFilterGraph* pfg );
 void CFilterGraph_UninitIGraphVersion( CFilterGraph* pfg );
+HRESULT CFilterGraph_InitIGraphConfig( CFilterGraph* pfg );
+void CFilterGraph_UninitIGraphConfig( CFilterGraph* pfg );
 HRESULT CFilterGraph_InitIMediaControl( CFilterGraph* pfg );
 void CFilterGraph_UninitIMediaControl( CFilterGraph* pfg );
 HRESULT CFilterGraph_InitIMediaFilter( CFilterGraph* pfg );

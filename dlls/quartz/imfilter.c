@@ -19,6 +19,7 @@
 #include "control.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
+#include "evcode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -127,6 +128,8 @@ IMediaFilter_fnStop(IMediaFilter* iface)
 
 	if ( This->m_stateGraph != State_Stopped )
 	{
+		/* IDistributorNotify_Stop() */
+
 		QUARTZ_CompList_Lock( This->m_pFilterList );
 
 		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
@@ -171,6 +174,8 @@ IMediaFilter_fnPause(IMediaFilter* iface)
 
 	if ( This->m_stateGraph != State_Paused )
 	{
+		/* IDistributorNotify_Pause() */
+
 		QUARTZ_CompList_Lock( This->m_pFilterList );
 
 		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
@@ -210,23 +215,32 @@ IMediaFilter_fnRun(IMediaFilter* iface,REFERENCE_TIME rtStart)
 
 	TRACE("(%p)->()\n",This);
 
-	/* handle the special time. */
-	if ( rtStart == (REFERENCE_TIME)0 )
+	EnterCriticalSection( &This->m_csGraphState );
+
+	if ( This->m_stateGraph == State_Stopped )
 	{
-		hr = IMediaFilter_GetSyncSource(iface,&pClock);
-		if ( hr == S_OK && pClock != NULL )
-		{
-			IReferenceClock_GetTime(pClock,&rtStart);
-			IReferenceClock_Release(pClock);
-		}
+		hr = IMediaFilter_Pause(iface);
+		if ( FAILED(hr) )
+			goto end;
 	}
 
-	hr = S_OK;
+        /* handle the special time. */
+        if ( rtStart == (REFERENCE_TIME)0 )
+        {
+                hr = IMediaFilter_GetSyncSource(iface,&pClock);
+                if ( hr == S_OK && pClock != NULL )
+                {
+                        IReferenceClock_GetTime(pClock,&rtStart);
+                        IReferenceClock_Release(pClock);
+                }
+        }
 
-	EnterCriticalSection( &This->m_csGraphState );
+	hr = NOERROR;
 
 	if ( This->m_stateGraph != State_Running )
 	{
+		/* IDistributorNotify_Run() */
+
 		QUARTZ_CompList_Lock( This->m_pFilterList );
 
 		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
@@ -249,6 +263,7 @@ IMediaFilter_fnRun(IMediaFilter* iface,REFERENCE_TIME rtStart)
 		This->m_stateGraph = State_Running;
 	}
 
+end:
 	LeaveCriticalSection( &This->m_csGraphState );
 
 	return hr;
@@ -265,10 +280,6 @@ IMediaFilter_fnGetState(IMediaFilter* iface,DWORD dwTimeOut,FILTER_STATE* pState
 	TRACE("(%p)->(%p)\n",This,pState);
 	if ( pState == NULL )
 		return E_POINTER;
-
-	EnterCriticalSection( &This->m_csGraphState );
-	*pState = This->m_stateGraph;
-	LeaveCriticalSection( &This->m_csGraphState );
 
 	dwTickStart = GetTickCount();
 
@@ -292,6 +303,10 @@ IMediaFilter_fnGetState(IMediaFilter* iface,DWORD dwTimeOut,FILTER_STATE* pState
 			dwTimeOut -= dwTickUsed;
 	}
 
+	EnterCriticalSection( &This->m_csGraphState );
+	*pState = This->m_stateGraph;
+	LeaveCriticalSection( &This->m_csGraphState );
+
 	return hr;
 }
 
@@ -299,20 +314,77 @@ static HRESULT WINAPI
 IMediaFilter_fnSetSyncSource(IMediaFilter* iface,IReferenceClock* pobjClock)
 {
 	CFilterGraph_THIS(iface,mediafilter);
+	QUARTZ_CompListItem*	pItem;
+	IBaseFilter*	pFilter;
+	HRESULT hr = NOERROR;
+	HRESULT hrCur;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pobjClock);
 
-	return E_NOTIMPL;
+	/* IDistributorNotify_SetSyncSource() */
+
+	EnterCriticalSection( &This->m_csClock );
+	QUARTZ_CompList_Lock( This->m_pFilterList );
+
+	if ( This->m_pClock != NULL )
+	{
+		IReferenceClock_Release(This->m_pClock);
+		This->m_pClock = NULL;
+	}
+
+	This->m_pClock = pobjClock;
+	if ( pobjClock != NULL )
+		IReferenceClock_AddRef( pobjClock );
+
+	pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
+	while ( pItem != NULL )
+	{
+		pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
+		hrCur = IBaseFilter_SetSyncSource(pFilter,pobjClock);
+		if ( FAILED(hrCur) )
+			hr = hrCur;
+		pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
+	}
+
+	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	if ( This->m_pClock != NULL )
+		IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_CLOCK_CHANGED, 0, 0);
+	else
+		IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_CLOCK_UNSET, 0, 0);
+
+	LeaveCriticalSection( &This->m_csClock );
+
+	TRACE( "hr = %08lx\n", hr );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaFilter_fnGetSyncSource(IMediaFilter* iface,IReferenceClock** ppobjClock)
 {
 	CFilterGraph_THIS(iface,mediafilter);
+	HRESULT hr = VFW_E_NO_CLOCK;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,ppobjClock);
 
-	return E_NOTIMPL;
+	if ( ppobjClock == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->m_csClock );
+	*ppobjClock = This->m_pClock;
+	if ( This->m_pClock != NULL )
+	{
+		hr = NOERROR;
+		IReferenceClock_AddRef( This->m_pClock );
+	}
+	LeaveCriticalSection( &This->m_csClock );
+
+	TRACE( "hr = %08lx\n", hr );
+
+	return hr;
 }
 
 
@@ -342,7 +414,9 @@ HRESULT CFilterGraph_InitIMediaFilter( CFilterGraph* pfg )
 	ICOM_VTBL(&pfg->mediafilter) = &imediafilter;
 
 	InitializeCriticalSection( &pfg->m_csGraphState );
+	InitializeCriticalSection( &pfg->m_csClock );
 	pfg->m_stateGraph = State_Stopped;
+	pfg->m_pClock = NULL;
 
 	return NOERROR;
 }
@@ -351,5 +425,12 @@ void CFilterGraph_UninitIMediaFilter( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 
+	if ( pfg->m_pClock != NULL )
+	{
+		IReferenceClock_Release( pfg->m_pClock );
+		pfg->m_pClock = NULL;
+	}
+
 	DeleteCriticalSection( &pfg->m_csGraphState );
+	DeleteCriticalSection( &pfg->m_csClock );
 }

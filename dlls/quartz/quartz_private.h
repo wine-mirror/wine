@@ -7,6 +7,7 @@ void* QUARTZ_AllocObj( DWORD dwSize );
 void QUARTZ_FreeObj( void* pobj );
 void* QUARTZ_AllocMem( DWORD dwSize );
 void QUARTZ_FreeMem( void* pMem );
+void* QUARTZ_ReallocMem( void* pMem, DWORD dwSize );
 
 #endif	/* QUARTZ_PRIVATE_H */
 

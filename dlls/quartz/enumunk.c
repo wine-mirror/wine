@@ -177,6 +177,7 @@ IEnumUnknown_fnClone(IEnumUnknown* iface,IEnumUnknown** ppunk)
 		This->IFEntries[0].piid,
 		(void**)ppunk,
 		This->pCompList );
+	FIXME( "current pointer must be seeked correctly\n" );
 
 	QUARTZ_CompList_Unlock( This->pCompList );
 

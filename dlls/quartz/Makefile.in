@@ -9,40 +9,30 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	amerror.c \
 	amundoc.c \
+	basefilt.c \
+	basepin.c \
 	complist.c \
 	devenum.c \
 	devmon.c \
 	enumunk.c \
-	fgclsid.c \
+	fgevent.c \
 	fgidisp.c \
+	fgpass.c \
 	fgraph.c \
 	fmap.c \
 	fmap2.c \
-	ibasaud.c \
-	ibasvid.c \
-	idevenum.c \
 	ifgraph.c \
-	ifmap.c \
-	ifmap3.c \
+	igconfig.c \
 	igrver.c \
 	imcntl.c \
-	imem.c \
-	imesink.c \
-	imevent.c \
 	imfilter.c \
 	impos.c \
 	imseek.c \
-	irclock.c \
 	iunk.c \
-	ividwin.c \
 	main.c \
 	memalloc.c \
-	monprop.c \
-	ptimpl.c \
-	ptmpos.c \
-	ptmseek.c \
+	mtype.c \
 	regsvr.c \
 	sample.c \
 	seekpass.c \

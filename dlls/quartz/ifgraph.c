@@ -1,8 +1,11 @@
 /*
  * Implementation of IFilterGraph.
  *
- * FIXME - stub.
- * FIXME - implement IGraphBuilder / IFilterGraph2.
+ * FIXME - create a thread to process some methods correctly.
+ *
+ * FIXME - ReconnectEx
+ * FIXME - process Pause/Stop asynchronously and notify when completed.
+ *
  *
  * hidenori@a2.ctktv.ne.jp
  */
@@ -21,6 +24,7 @@
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include "wine/unicode.h"
+#include "evcode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -28,6 +32,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "quartz_private.h"
 #include "fgraph.h"
 #include "enumunk.h"
+#include "sysclock.h"
 
 
 static HRESULT CFilterGraph_DisconnectAllPins( IBaseFilter* pFilter )
@@ -111,6 +116,7 @@ static HRESULT WINAPI
 IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pName)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	FILTER_STATE fs;
 	FILTER_INFO	info;
 	HRESULT	hr;
 	HRESULT	hrSucceeded = S_OK;
@@ -120,6 +126,16 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 	TRACE( "(%p)->(%p,%s)\n",This,pFilter,debugstr_w(pName) );
 
 	QUARTZ_CompList_Lock( This->m_pFilterList );
+
+	hr = IMediaFilter_GetState(CFilterGraph_IMediaFilter(This),0,&fs);
+	if ( hr == VFW_S_STATE_INTERMEDIATE )
+		hr = VFW_E_STATE_CHANGED;
+	if ( fs != State_Stopped )
+		hr = VFW_E_NOT_STOPPED;
+	if ( FAILED(hr) )
+		goto end;
+
+	TRACE( "(%p) search the specified name.\n",This );
 
 	if ( pName != NULL )
 	{
@@ -180,6 +196,8 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 	goto end;
 
 name_ok:
+	TRACE( "(%p) add this filter.\n",This );
+
 	/* register this filter. */
 	hr = QUARTZ_CompList_AddComp(
 		This->m_pFilterList, (IUnknown*)pFilter,
@@ -188,13 +206,23 @@ name_ok:
 		goto end;
 
 	hr = IBaseFilter_JoinFilterGraph(pFilter,(IFilterGraph*)iface,pName);
+	if ( SUCCEEDED(hr) )
+	{
+		EnterCriticalSection( &This->m_csClock );
+		hr = IBaseFilter_SetSyncSource( pFilter, This->m_pClock );
+		LeaveCriticalSection( &This->m_csClock );
+	}
 	if ( FAILED(hr) )
 	{
+		IBaseFilter_JoinFilterGraph(pFilter,NULL,pName);
 		QUARTZ_CompList_RemoveComp(
 			This->m_pFilterList,(IUnknown*)pFilter);
 		goto end;
 	}
 
+	/* IDistributorNotify_NotifyGraphChange() */
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
 	EnterCriticalSection( &This->m_csGraphVersion );
 	This->m_lGraphVersion ++;
 	LeaveCriticalSection( &This->m_csGraphVersion );
@@ -202,6 +230,8 @@ name_ok:
 	hr = hrSucceeded;
 end:
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	TRACE( "(%p) return %08lx\n", This, hr );
 
 	return hr;
 }
@@ -211,27 +241,42 @@ IFilterGraph2_fnRemoveFilter(IFilterGraph2* iface,IBaseFilter* pFilter)
 {
 	CFilterGraph_THIS(iface,fgraph);
 	QUARTZ_CompListItem*	pItem;
+	FILTER_STATE fs;
 	HRESULT	hr = NOERROR;
 
 	TRACE( "(%p)->(%p)\n",This,pFilter );
 
 	QUARTZ_CompList_Lock( This->m_pFilterList );
 
+	hr = IMediaFilter_GetState(CFilterGraph_IMediaFilter(This),0,&fs);
+	if ( hr == VFW_S_STATE_INTERMEDIATE )
+		hr = VFW_E_STATE_CHANGED;
+	if ( fs != State_Stopped )
+		hr = VFW_E_NOT_STOPPED;
+	if ( FAILED(hr) )
+		goto end;
+
+	hr = S_FALSE; /* FIXME? */
 	pItem = QUARTZ_CompList_SearchComp(
 		This->m_pFilterList, (IUnknown*)pFilter );
 	if ( pItem != NULL )
 	{
 		CFilterGraph_DisconnectAllPins(pFilter);
+		IBaseFilter_SetSyncSource( pFilter, NULL );
 		hr = IBaseFilter_JoinFilterGraph(
 			pFilter, NULL, QUARTZ_CompList_GetDataPtr(pItem) );
 		QUARTZ_CompList_RemoveComp(
 			This->m_pFilterList, (IUnknown*)pFilter );
 	}
 
+	/* IDistributorNotify_NotifyGraphChange() */
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
 	EnterCriticalSection( &This->m_csGraphVersion );
 	This->m_lGraphVersion ++;
 	LeaveCriticalSection( &This->m_csGraphVersion );
 
+end:;
 	QUARTZ_CompList_Unlock( This->m_pFilterList );
 
 	return hr;
@@ -332,34 +377,35 @@ IFilterGraph2_fnConnectDirect(IFilterGraph2* iface,IPin* pOut,IPin* pIn,const AM
 
 	pConnTo = NULL;
 	hr = IPin_ConnectedTo(pIn,&pConnTo);
-	if ( FAILED(hr) )
-		goto end;
-	if ( pConnTo != NULL )
+	if ( hr == NOERROR && pConnTo != NULL )
 	{
 		IPin_Release(pConnTo);
+		hr = VFW_E_ALREADY_CONNECTED;
 		goto end;
 	}
 
 	pConnTo = NULL;
 	hr = IPin_ConnectedTo(pOut,&pConnTo);
-	if ( FAILED(hr) )
-		goto end;
-	if ( pConnTo != NULL )
+	if ( hr == NOERROR && pConnTo != NULL )
 	{
 		IPin_Release(pConnTo);
+		hr = VFW_E_ALREADY_CONNECTED;
 		goto end;
 	}
 
-	hr = IPin_Connect(pIn,pOut,pmt);
-	if ( FAILED(hr) )
-		goto end;
+	TRACE("(%p) try to connect %p<->%p\n",This,pIn,pOut);
 	hr = IPin_Connect(pOut,pIn,pmt);
 	if ( FAILED(hr) )
 	{
+		TRACE("(%p)->Connect(%p,%p) hr = %08lx\n",pOut,pIn,pmt,hr);
+		IPin_Disconnect(pOut);
 		IPin_Disconnect(pIn);
 		goto end;
 	}
 
+	/* IDistributorNotify_NotifyGraphChange() */
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
 	EnterCriticalSection( &This->m_csGraphVersion );
 	This->m_lGraphVersion ++;
 	LeaveCriticalSection( &This->m_csGraphVersion );
@@ -384,36 +430,67 @@ IFilterGraph2_fnReconnect(IFilterGraph2* iface,IPin* pPin)
 {
 	CFilterGraph_THIS(iface,fgraph);
 
-	FIXME( "(%p)->(%p) stub!\n",This,pPin );
+	TRACE( "(%p)->(%p)\n",This,pPin );
 
-	EnterCriticalSection( &This->m_csGraphVersion );
-	This->m_lGraphVersion ++;
-	LeaveCriticalSection( &This->m_csGraphVersion );
-
-	return E_NOTIMPL;
+	return IFilterGraph2_ReconnectEx(iface,pPin,NULL);
 }
 
 static HRESULT WINAPI
 IFilterGraph2_fnDisconnect(IFilterGraph2* iface,IPin* pPin)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	IPin* pConnTo;
+	HRESULT hr;
 
-	FIXME( "(%p)->(%p) stub!\n",This,pPin );
+	TRACE( "(%p)->(%p)\n",This,pPin );
 
+	QUARTZ_CompList_Lock( This->m_pFilterList );
+
+	pConnTo = NULL;
+	hr = IPin_ConnectedTo(pPin,&pConnTo);
+	if ( hr == NOERROR && pConnTo != NULL )
+	{
+		IPin_Disconnect(pConnTo);
+		IPin_Release(pConnTo);
+	}
+	hr = IPin_Disconnect(pPin);
+
+	/* IDistributorNotify_NotifyGraphChange() */
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
 	EnterCriticalSection( &This->m_csGraphVersion );
 	This->m_lGraphVersion ++;
 	LeaveCriticalSection( &This->m_csGraphVersion );
 
-	return E_NOTIMPL;
+	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IFilterGraph2_fnSetDefaultSyncSource(IFilterGraph2* iface)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	IUnknown* punk;
+	IReferenceClock* pClock;
+	HRESULT hr;
 
 	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+
+	/* FIXME - search all filters. */
+
+	hr = QUARTZ_CreateSystemClock( NULL, (void**)&punk );
+	if ( FAILED(hr) )
+		return hr;
+	hr = IUnknown_QueryInterface( punk, &IID_IReferenceClock, (void**)&pClock );	IUnknown_Release( punk );
+	if ( FAILED(hr) )
+		return hr;
+
+	hr = IMediaFilter_SetSyncSource(
+		CFilterGraph_IMediaFilter(This), pClock );
+	IReferenceClock_Release( pClock );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -583,6 +660,11 @@ IFilterGraph2_fnReconnectEx(IFilterGraph2* iface,IPin* pPin,const AM_MEDIA_TYPE*
 
 	FIXME( "(%p)->(%p,%p) stub!\n",This,pPin,pmt );
 
+	/* reconnect asynchronously. */
+
+	/* IDistributorNotify_NotifyGraphChange() */
+	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_GRAPH_CHANGED, 0, 0);
 	EnterCriticalSection( &This->m_csGraphVersion );
 	This->m_lGraphVersion ++;
 	LeaveCriticalSection( &This->m_csGraphVersion );
@@ -657,7 +739,7 @@ void CFilterGraph_UninitIFilterGraph2( CFilterGraph* pfg )
 		pItem = QUARTZ_CompList_GetFirst( pfg->m_pFilterList );
 		if ( pItem == NULL )
 			break;
-		IFilterGraph2_fnRemoveFilter(
+		IFilterGraph2_RemoveFilter(
 			(IFilterGraph2*)(&pfg->fgraph),
 			(IBaseFilter*)QUARTZ_CompList_GetItemPtr(pItem) );
 	}

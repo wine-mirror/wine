@@ -1,5 +1,6 @@
 /*
  * Implements IMoniker for CLSID_CDeviceMoniker.
+ * Implements IPropertyBag. (internal)
  *
  * hidenori@a2.ctktv.ne.jp
  */
@@ -26,9 +27,14 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "devmon.h"
-#include "monprop.h"
 #include "regsvr.h"
 
+
+/***************************************************************************
+ *
+ *	CDeviceMoniker::IMoniker
+ *
+ */
 
 static HRESULT WINAPI
 IMoniker_fnQueryInterface(IMoniker* iface,REFIID riid,void** ppobj)
@@ -149,8 +155,11 @@ static HRESULT WINAPI IMoniker_fnBindToObject(IMoniker* iface,IBindCtx* pbc, IMo
 	if ( FAILED(hr) )
 		return hr;
 
-	return CoCreateInstance(
+	hr = CoCreateInstance(
 		&clsid, NULL, CLSCTX_INPROC_SERVER, riid, ppvResult );
+	TRACE( "hr = %08lx\n", hr );
+
+	return hr;
 }
 
 static HRESULT WINAPI IMoniker_fnBindToStorage(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult)
@@ -373,6 +382,11 @@ static void CDeviceMoniker_UninitIMoniker(
 		QUARTZ_FreeMem( pdm->m_pwszPath );
 }
 
+/***************************************************************************
+ *
+ *	new/delete for CDeviceMoniker
+ *
+ */
 
 static void QUARTZ_DestroyDeviceMoniker(IUnknown* punk)
 {
@@ -382,7 +396,7 @@ static void QUARTZ_DestroyDeviceMoniker(IUnknown* punk)
 }
 
 /* can I use offsetof safely? - FIXME? */
-static QUARTZ_IFEntry IFEntries[] =
+static QUARTZ_IFEntry CDeviceMoniker_IFEntries[] =
 {
   { &IID_IPersist, offsetof(CDeviceMoniker,moniker)-offsetof(CDeviceMoniker,unk) },
   { &IID_IPersistStream, offsetof(CDeviceMoniker,moniker)-offsetof(CDeviceMoniker,unk) },
@@ -410,13 +424,215 @@ HRESULT QUARTZ_CreateDeviceMoniker(
 		return hr;
 	}
 
-	pdm->unk.pEntries = IFEntries;
-	pdm->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
+	pdm->unk.pEntries = CDeviceMoniker_IFEntries;
+	pdm->unk.dwEntries = sizeof(CDeviceMoniker_IFEntries)/sizeof(CDeviceMoniker_IFEntries[0]);
 	pdm->unk.pOnFinalRelease = &QUARTZ_DestroyDeviceMoniker;
 
 	*ppMoniker = (IMoniker*)(&pdm->moniker);
 
 	return S_OK;
 }
+
+
+/***************************************************************************
+ *
+ *	CRegPropertyBag::IPropertyBag
+ *
+ */
+
+static HRESULT WINAPI
+IPropertyBag_fnQueryInterface(IPropertyBag* iface,REFIID riid,void** ppobj)
+{
+	CRegPropertyBag_THIS(iface,propbag);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
+}
+
+static ULONG WINAPI
+IPropertyBag_fnAddRef(IPropertyBag* iface)
+{
+	CRegPropertyBag_THIS(iface,propbag);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_AddRef(This->unk.punkControl);
+}
+
+static ULONG WINAPI
+IPropertyBag_fnRelease(IPropertyBag* iface)
+{
+	CRegPropertyBag_THIS(iface,propbag);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_Release(This->unk.punkControl);
+}
+
+static HRESULT WINAPI
+IPropertyBag_fnRead(IPropertyBag* iface,LPCOLESTR lpszPropName,VARIANT* pVar,IErrorLog* pLog)
+{
+	CRegPropertyBag_THIS(iface,propbag);
+	LONG	lr;
+	DWORD	dwSize;
+	DWORD	dwValueType;
+
+	TRACE("(%p)->(%s,%p,%p)\n",This,
+		debugstr_w(lpszPropName),pVar,pLog);
+
+	if ( lpszPropName == NULL || pVar == NULL )
+		return E_POINTER;
+
+	dwSize = 0;
+	lr = RegQueryValueExW(
+		This->m_hKey, lpszPropName, NULL,
+		&dwValueType, NULL, &dwSize );
+	if ( lr != ERROR_SUCCESS )
+	{
+		TRACE( "RegQueryValueExW failed.\n" );
+		return E_INVALIDARG;
+	}
+
+	switch ( dwValueType )
+	{
+	case REG_SZ:
+		TRACE( "REG_SZ / length = %lu\n", dwSize );
+		if ( pVar->n1.n2.vt == VT_EMPTY )
+			pVar->n1.n2.vt = VT_BSTR;
+		if ( pVar->n1.n2.vt != VT_BSTR )
+		{
+			TRACE( "type of VARIANT is not BSTR\n" );
+			return E_FAIL;
+		}
+
+		pVar->n1.n2.n3.bstrVal = SysAllocStringByteLen(
+			NULL, dwSize );
+		if ( pVar->n1.n2.n3.bstrVal == NULL )
+		{
+			TRACE( "out of memory.\n" );
+			return E_OUTOFMEMORY;
+		}
+		lr = RegQueryValueExW(
+			This->m_hKey, lpszPropName, NULL,
+			&dwValueType,
+			(BYTE*)pVar->n1.n2.n3.bstrVal, &dwSize );
+		if ( lr != ERROR_SUCCESS )
+		{
+			TRACE( "failed to query value\n" );
+			SysFreeString(pVar->n1.n2.n3.bstrVal);
+			return E_FAIL;
+		}
+		TRACE( "value is BSTR; %s\n", debugstr_w(pVar->n1.n2.n3.bstrVal) );
+		break;
+	default:
+		FIXME("(%p)->(%s,%p,%p) - unsupported value type.\n",This,
+			debugstr_w(lpszPropName),pVar,pLog);
+		return E_FAIL;
+	}
+
+	TRACE( "returned successfully.\n" );
+	return NOERROR;
+}
+
+static HRESULT WINAPI
+IPropertyBag_fnWrite(IPropertyBag* iface,LPCOLESTR lpszPropName,VARIANT* pVar)
+{
+	CRegPropertyBag_THIS(iface,propbag);
+
+	FIXME("(%p)->(%s,%p) stub!\n",This,
+		debugstr_w(lpszPropName),pVar);
+
+	if ( lpszPropName == NULL || pVar == NULL )
+		return E_POINTER;
+
+	return E_NOTIMPL;
+}
+
+
+
+
+static ICOM_VTABLE(IPropertyBag) ipropbag =
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	/* IUnknown fields */
+	IPropertyBag_fnQueryInterface,
+	IPropertyBag_fnAddRef,
+	IPropertyBag_fnRelease,
+	/* IPropertyBag fields */
+	IPropertyBag_fnRead,
+	IPropertyBag_fnWrite,
+};
+
+static HRESULT CRegPropertyBag_InitIPropertyBag(
+	CRegPropertyBag* prpb, HKEY hkRoot, LPCWSTR lpKeyPath )
+{
+	ICOM_VTBL(&prpb->propbag) = &ipropbag;
+
+	if ( RegOpenKeyExW(
+		hkRoot, lpKeyPath, 0,
+		KEY_ALL_ACCESS, &prpb->m_hKey ) != ERROR_SUCCESS )
+		return E_FAIL;
+
+	return NOERROR;
+}
+
+static void CRegPropertyBag_UninitIPropertyBag(
+	CRegPropertyBag* prpb )
+{
+	RegCloseKey( prpb->m_hKey );
+}
+
+
+/***************************************************************************
+ *
+ *	new/delete for CRegPropertyBag
+ *
+ */
+
+static void QUARTZ_DestroyRegPropertyBag(IUnknown* punk)
+{
+	CRegPropertyBag_THIS(punk,unk);
+
+	CRegPropertyBag_UninitIPropertyBag(This);
+}
+
+
+/* can I use offsetof safely? - FIXME? */
+static QUARTZ_IFEntry CRegPropertyBag_IFEntries[] =
+{
+  { &IID_IPropertyBag, offsetof(CRegPropertyBag,propbag)-offsetof(CRegPropertyBag,unk) },
+};
+
+HRESULT QUARTZ_CreateRegPropertyBag(
+	HKEY hkRoot, LPCWSTR lpKeyPath,
+	IPropertyBag** ppPropBag )
+{
+	CRegPropertyBag*	prpb;
+	HRESULT	hr;
+
+	TRACE("(%08x,%s,%p)\n",hkRoot,debugstr_w(lpKeyPath),ppPropBag );
+
+	prpb = (CRegPropertyBag*)QUARTZ_AllocObj( sizeof(CRegPropertyBag) );
+	if ( prpb == NULL )
+		return E_OUTOFMEMORY;
+
+	QUARTZ_IUnkInit( &prpb->unk, NULL );
+	hr = CRegPropertyBag_InitIPropertyBag( prpb, hkRoot, lpKeyPath );
+	if ( FAILED(hr) )
+	{
+		QUARTZ_FreeObj( prpb );
+		return hr;
+	}
+
+	prpb->unk.pEntries = CRegPropertyBag_IFEntries;
+	prpb->unk.dwEntries = sizeof(CRegPropertyBag_IFEntries)/sizeof(CRegPropertyBag_IFEntries[0]);
+	prpb->unk.pOnFinalRelease = &QUARTZ_DestroyRegPropertyBag;
+
+	*ppPropBag = (IPropertyBag*)(&prpb->propbag);
+
+	return S_OK;
+}
+
 
 
