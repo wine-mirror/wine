@@ -21,6 +21,7 @@
  * This app handles the various "hooks" windows allows for applications to perform
  * as part of the bootstrap process. Theses are roughly devided into three types.
  * Knowledge base articles that explain this are 137367, 179365, 232487 and 232509.
+ * Also, 119941 has some info on grpconv.exe
  * The operations performed are (by order of execution):
  *
  * Preboot (prior to fully loading the Windows kernel):
@@ -29,18 +30,17 @@
  *
  * Startup (before the user logs in)
  * - Services (NT, ?semi-synchronous?, not implemented yet)
- * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce (9x, asynch, not inmplemented)
- * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices (9x, asynch, no imp)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce (9x, asynch)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices (9x, asynch)
  * 
  * After log in
- * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, synch, no imp)
- * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch, no imp)
- * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch, no imp)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, synch)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch)
+ * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch)
  * - Startup folders (all, ?asynch?, no imp)
- * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, asynch, no imp)
+ * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, asynch)
  *   
  * Somewhere in there is processing the RunOnceEx entries (also no imp)
- * 
  * 
  * Bugs:
  * - If a pending rename registry does not start with \??\ the entry is
@@ -332,6 +332,192 @@ end:
     return res;
 }
 
+enum runkeys {
+    RUNKEY_RUN, RUNKEY_RUNONCE, RUNKEY_RUNSERVICES, RUNKEY_RUNSERVICESONCE
+};
+
+const WCHAR runkeys_names[][30]=
+{
+    {'R','u','n',0},
+    {'R','u','n','O','n','c','e',0},
+    {'R','u','n','S','e','r','v','i','c','e','s',0},
+    {'R','u','n','S','e','r','v','i','c','e','s','O','n','c','e',0}
+};
+
+#define INVALID_RUNCMD_RETURN -1
+/*
+ * This function runs the specified command in the specified dir.
+ * [in,out] cmdline - the command line to run. The function may change the passed buffer.
+ * [in] dir - the dir to run the command in. If it is NULL, then the current dir is used.
+ * [in] wait - whether to wait for the run program to finish before returning.
+ * [in] minimized - Whether to ask the program to run minimized.
+ *
+ * Returns:
+ * If running the process failed, returns INVALID_RUNCMD_RETURN. Use GetLastError to get the error code.
+ * If wait is FALSE - returns 0 if successful.
+ * If wait is TRUE - returns the program's return value.
+ */
+static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
+{
+    STARTUPINFOW si;
+    PROCESS_INFORMATION info;
+    DWORD exit_code=0;
+
+    memset(&si, 0, sizeof(si));
+    si.cb=sizeof(si);
+    if( minimized )
+    {
+        si.dwFlags=STARTF_USESHOWWINDOW;
+        si.wShowWindow=SW_MINIMIZE;
+    }
+    memset(&info, 0, sizeof(info));
+
+    if( !CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dir, &si, &info) )
+    {
+        WINE_ERR("Failed to run command (%ld)\n", GetLastError() );
+
+        return INVALID_RUNCMD_RETURN;
+    }
+
+    WINE_TRACE("Successfully ran command - Created process handle %p\n", info.hProcess );
+
+    if(wait)
+    {   /* wait for the process to exit */
+        WaitForSingleObject(info.hProcess, INFINITE);
+        GetExitCodeProcess(info.hProcess, &exit_code);
+    }
+
+    CloseHandle( info.hProcess );
+
+    return exit_code;
+}
+
+/*
+ * Process a "Run" type registry key.
+ * hkRoot is the HKEY from which "Software\Microsoft\Windows\CurrentVersion" is
+ *      opened.
+ * szKeyName is the key holding the actual entries.
+ * bDelete tells whether we should delete each value right before executing it.
+ * bSynchronous tells whether we should wait for the prog to complete before
+ *      going on to the next prog.
+ */
+static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
+        BOOL bSynchronous )
+{
+    static const WCHAR WINKEY_NAME[]={'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    HKEY hkWin=NULL, hkRun=NULL;
+    DWORD res=ERROR_SUCCESS;
+    DWORD i, nMaxCmdLine=0, nMaxValue=0;
+    WCHAR *szCmdLine=NULL;
+    WCHAR *szValue=NULL;
+
+    WINE_TRACE("entered\n");
+
+    if( (res=RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ))!=ERROR_SUCCESS )
+    {
+        WINE_ERR("RegOpenKey failed on Software\\Microsoft\\Windows\\CurrentVersion (%ld)\n",
+                res);
+
+        goto end;
+    }
+
+    if( (res=RegOpenKeyExW( hkWin, szKeyName, 0, bDelete?KEY_ALL_ACCESS:KEY_READ, &hkRun ))!=
+            ERROR_SUCCESS)
+    {
+        if( res==ERROR_FILE_NOT_FOUND )
+        {
+            WINE_TRACE("Key doesn't exist - nothing to be done\n");
+
+            res=ERROR_SUCCESS;
+        }
+        else
+            WINE_ERR("RegOpenKey failed on run key (%ld)\n", res);
+
+        goto end;
+    }
+    
+    if( (res=RegQueryInfoKeyW( hkRun, NULL, NULL, NULL, NULL, NULL, NULL, &i, &nMaxValue,
+                    &nMaxCmdLine, NULL, NULL ))!=ERROR_SUCCESS )
+    {
+        WINE_ERR("Couldn't query key info (%ld)\n", res );
+
+        goto end;
+    }
+
+    if( i==0 )
+    {
+        WINE_TRACE("No commands to execute.\n");
+
+        res=ERROR_SUCCESS;
+        goto end;
+    }
+    
+    if( (szCmdLine=malloc(nMaxCmdLine))==NULL )
+    {
+        WINE_ERR("Couldn't allocate memory for the commands to be executed\n");
+
+        res=ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
+
+    if( (szValue=malloc((++nMaxValue)*sizeof(*szValue)))==NULL )
+    {
+        WINE_ERR("Couldn't allocate memory for the value names\n");
+
+        res=ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
+    
+    while( i>0 )
+    {
+        DWORD nValLength=nMaxValue, nDataLength=nMaxCmdLine;
+        DWORD type;
+
+        --i;
+
+        if( (res=RegEnumValueW( hkRun, i, szValue, &nValLength, 0, &type,
+                        (LPBYTE)szCmdLine, &nDataLength ))!=ERROR_SUCCESS )
+        {
+            WINE_ERR("Couldn't read in value %ld - %ld\n", i, res );
+
+            continue;
+        }
+
+        if( bDelete && (res=RegDeleteValueW( hkRun, szValue ))!=ERROR_SUCCESS )
+        {
+            WINE_ERR("Couldn't delete value - %ld, %ld. Running command anyways.\n", i, res );
+        }
+        
+        if( type!=REG_SZ )
+        {
+            WINE_ERR("Incorrect type of value #%ld (%ld)\n", i, type );
+
+            continue;
+        }
+
+        if( (res=runCmd(szCmdLine, NULL, bSynchronous, FALSE ))==INVALID_RUNCMD_RETURN )
+        {
+            WINE_ERR("Error running cmd #%ld (%ld)\n", i, GetLastError() );
+        }
+
+        WINE_TRACE("Done processing cmd #%ld\n", i);
+    }
+
+    res=ERROR_SUCCESS;
+
+end:
+    if( hkRun!=NULL )
+        RegCloseKey( hkRun );
+    if( hkWin!=NULL )
+        RegCloseKey( hkWin );
+
+    WINE_TRACE("done\n");
+
+    return res==ERROR_SUCCESS?TRUE:FALSE;
+}
+
 int main( int argc, char *argv[] )
 {
     /* First, set the current directory to SystemRoot */
@@ -364,7 +550,17 @@ int main( int argc, char *argv[] )
 
     /* Perform the operations by order, stopping if one fails */
     res=wininit()&&
-        pendingRename();
+        pendingRename() &&
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE],
+                TRUE, FALSE ) &&
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES],
+                FALSE, FALSE ) &&
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE],
+                TRUE, TRUE ) &&
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN],
+                FALSE, FALSE ) &&
+        ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN],
+                FALSE, FALSE );
 
     WINE_TRACE("Operation done\n");
 
