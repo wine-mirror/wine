@@ -44,6 +44,7 @@ typedef struct
   HICON             hNoCollateIcon;  /* PrintDlg only */
   HICON             hPortraitIcon;   /* PrintSetupDlg only */
   HICON             hLandscapeIcon;  /* PrintSetupDlg only */
+  HWND              hwndUpDown;
 } PRINT_PTRA;
 
 /* Debugiging info */
@@ -76,6 +77,9 @@ static struct pd_flags {
   {-1, NULL}
 };
 
+/* Yes these constants are the same, but we're just copying win98 */
+#define UPDOWN_ID 0x270f
+#define MAX_COPIES 9999
 
 /***********************************************************************
  *    PRINTDLG_GetDefaultPrinterName
@@ -473,7 +477,8 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, LPPRINTER_INFO_2A pi)
         SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pLocation);
     else
         SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pPortName);
-    SendDlgItemMessageA(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)pi->pComment);
+    SendDlgItemMessageA(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)(pi->pComment ?
+			pi->pComment : ""));
     return;
 }
 
@@ -584,10 +589,16 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
 	}
 
 	/* nCopies */
-	if (lppd->hDevMode == 0)
-	    SetDlgItemInt(hDlg, edt3, lppd->nCopies, FALSE);
-	else
-	    SetDlgItemInt(hDlg, edt3, lpdm->dmCopies, FALSE);
+	{
+	  INT copies;
+	  if (lppd->hDevMode == 0)
+	      copies = lppd->nCopies;
+	  else
+	      copies = lpdm->dmCopies;
+	  if(copies == 0) copies = 1;
+	  else if(copies < 0) copies = MAX_COPIES;
+	  SetDlgItemInt(hDlg, edt3, copies, FALSE);
+	}
 
 	if (lppd->Flags & PD_USEDEVMODECOPIESANDCOLLATE) {
 	  /* if printer doesn't support it: no nCopies */
@@ -605,6 +616,8 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
             ShowWindow(GetDlgItem(hDlg, chx1), SW_HIDE);
 
     } else { /* PD_PRINTSETUP */
+      BOOL bPortrait = (lpdm->u1.s1.dmOrientation == DMORIENT_PORTRAIT);
+
       PRINTDLG_SetUpPaperComboBox(hDlg, cmb2,
 				  PrintStructures->lpPrinterInfo->pPrinterName,
 				  PrintStructures->lpPrinterInfo->pPortName,
@@ -613,9 +626,11 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
 				  PrintStructures->lpPrinterInfo->pPrinterName,
 				  PrintStructures->lpPrinterInfo->pPortName,
 				  lpdm);
-      CheckRadioButton(hDlg, rad1, rad2,
-		       (lpdm->u1.s1.dmOrientation == DMORIENT_PORTRAIT) ?
-		       rad1: rad2);
+      CheckRadioButton(hDlg, rad1, rad2, bPortrait ? rad1: rad2);
+      SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE, (WPARAM) IMAGE_ICON,
+                          (LPARAM)(bPortrait ? PrintStructures->hPortraitIcon :
+                                   PrintStructures->hLandscapeIcon));
+      
     }
 
     /* help button */
@@ -645,15 +660,21 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
       LoadImageA(COMDLG32_hInstance, "PD32_COLLATE", IMAGE_ICON, 0, 0, 0);
     PrintStructures->hNoCollateIcon = 
       LoadImageA(COMDLG32_hInstance, "PD32_NOCOLLATE", IMAGE_ICON, 0, 0, 0);
+
+    /* These can be done with LoadIcon */
+    PrintStructures->hPortraitIcon =
+      LoadIconA(COMDLG32_hInstance, "PD32_PORTRAIT");
+    PrintStructures->hLandscapeIcon =
+      LoadIconA(COMDLG32_hInstance, "PD32_LANDSCAPE");
+
     if(PrintStructures->hCollateIcon == 0 ||
-       PrintStructures->hNoCollateIcon == 0) {
+       PrintStructures->hNoCollateIcon == 0 ||
+       PrintStructures->hPortraitIcon == 0 ||
+       PrintStructures->hLandscapeIcon == 0) {
         ERR("no icon in resourcefile\n");
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	EndDialog(hDlg, FALSE);
     }
-
-    /* load Paper Orientation ICON */
-    /* FIXME: not implemented yet */
 
     /*
      * if lppd->Flags PD_SHOWHELP is specified, a HELPMESGSTRING message
@@ -667,6 +688,15 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 	}
     } else
         PrintStructures->HelpMessageID = 0;
+
+    if(!(lppd->Flags &PD_PRINTSETUP)) {
+        PrintStructures->hwndUpDown =
+	  CreateUpDownControl(WS_CHILD | WS_VISIBLE | WS_BORDER |
+			      UDS_NOTHOUSANDS | UDS_ARROWKEYS |
+			      UDS_ALIGNRIGHT | UDS_SETBUDDYINT, 0, 0, 0, 0,
+			      hDlg, UPDOWN_ID, COMDLG32_hInstance,
+			      GetDlgItem(hDlg, edt3), MAX_COPIES, 1, 1);
+    }
 
     /* FIXME: I allow more freedom than either Win95 or WinNT,
      *        which do not agree to what errors should be thrown or not
@@ -857,6 +887,17 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 	        CheckRadioButton(hDlg, rad1, rad3, rad3);
 	}
         break;
+
+    case edt3:
+        if(HIWORD(wParam) == EN_CHANGE) {
+	    INT copies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	    if(copies <= 1)
+	        EnableWindow(GetDlgItem(hDlg, chx2), FALSE);
+	    else
+	        EnableWindow(GetDlgItem(hDlg, chx2), TRUE);
+	}
+	break;
+
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
@@ -904,6 +945,28 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
       }
       break; 
     }
+    if(lppd->Flags & PD_PRINTSETUP) {
+        switch (LOWORD(wParam)) {
+	case rad1:                         /* orientation */
+	case rad2:
+	    if (IsDlgButtonChecked(hDlg, rad1) == BST_CHECKED) {
+	        if(lpdm->u1.s1.dmOrientation != DMORIENT_PORTRAIT) {
+		    lpdm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+		    SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE,
+					(WPARAM)IMAGE_ICON,
+					(LPARAM)PrintStructures->hPortraitIcon);
+		}
+	    } else {
+	        if(lpdm->u1.s1.dmOrientation != DMORIENT_LANDSCAPE) {
+	            lpdm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+		    SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE,
+					(WPARAM)IMAGE_ICON,
+					(LPARAM)PrintStructures->hLandscapeIcon);
+		}
+	    }
+	    break;
+	}
+    }
     return FALSE;
 }    
 
@@ -945,8 +1008,10 @@ BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     case WM_DESTROY:
 	DestroyIcon(PrintStructures->hCollateIcon);
 	DestroyIcon(PrintStructures->hNoCollateIcon);
-    /* FIXME: don't forget to delete the paper orientation icons here! */
-
+        DestroyIcon(PrintStructures->hPortraitIcon);
+        DestroyIcon(PrintStructures->hLandscapeIcon);
+	if(PrintStructures->hwndUpDown)
+	    DestroyWindow(PrintStructures->hwndUpDown);
         return FALSE;
     }    
     return res;

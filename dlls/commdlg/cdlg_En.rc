@@ -335,24 +335,25 @@ STRINGTABLE DISCARDABLE
     PD32_PRINT_TITLE       "Print"
 
     PD32_VALUE_UREADABLE                  "Unreadable Entry"
-    PD32_INVALID_PAGE_RANGE "This value lies not within Page range\n\
-Please enter a value between %d and %d"
-    PD32_FROM_NOT_ABOVE_TO                "The FROM entry cannot exceed TO:"
+    PD32_INVALID_PAGE_RANGE "This value does not lie within the page range.\n\
+Please enter a value between %d and %d."
+    PD32_FROM_NOT_ABOVE_TO                "The 'from' entry cannot exceed the \
+'to' entry."
     PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
-Paper boundaries.\nPlease reenter margins"
-    PD32_NR_OF_COPIES_EMPTY               "The NumberOfCopies entry cannot \
-be empty"
-    PD32_TOO_LARGE_COPIES                 "This large amount of prints is not \
-supported by your printer.\nPlease enter a value between 1 and %d"
-    PD32_PRINT_ERROR                      "A printer error occurred"
-    PD32_NO_DEFAULT_PRINTER               "There is not default printer"
-    PD32_CANT_FIND_PRINTER                "Cannot find the printer"
-    PD32_OUT_OF_MEMORY                    "Out of memory"
-    PD32_GENERIC_ERROR                    "Some error occurred"
-    PD32_DRIVER_UNKNOWN                   "Unknown printer driver"
+Paper boundaries.\nPlease reenter margins."
+    PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
+value cannot be empty."
+    PD32_TOO_LARGE_COPIES                 "This large nmuber of copies is not \
+supported by your printer.\nPlease enter a value between 1 and %d."
+    PD32_PRINT_ERROR                      "A printer error occurred."
+    PD32_NO_DEFAULT_PRINTER               "There is not default printer."
+    PD32_CANT_FIND_PRINTER                "Cannot find the printer."
+    PD32_OUT_OF_MEMORY                    "Out of memory."
+    PD32_GENERIC_ERROR                    "Some error occurred."
+    PD32_DRIVER_UNKNOWN                   "Unknown printer driver."
 
     PD32_DEFAULT_PRINTER                  "Default Printer; "
-    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in queue"
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in the queue"
     PD32_PRINT_ALL_X_PAGES                "&All %d pages"
     PD32_MARGINS_IN_INCHES                "Margins [inches]"
     PD32_MARGINS_IN_MILIMETERS            "Margins [mm]"
