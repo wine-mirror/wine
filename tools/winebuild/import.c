@@ -689,14 +689,15 @@ static int output_immediate_imports( FILE *outfile )
     /* thunks for imported functions */
 
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
-    pos = 20 * (nb_imm + 1);  /* offset of imports.data from start of imports */
+    pos = (sizeof(void *) + 2*sizeof(unsigned int) + sizeof(const char *) + sizeof(void *)) *
+            (nb_imm + 1);  /* offset of imports.data from start of imports */
     fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", import_thunks);
 
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
+        for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += sizeof(const char *))
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             const char *name = odp->name ? odp->name : odp->export_name;
