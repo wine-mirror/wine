@@ -90,12 +90,13 @@ static FT_Version_t FT_Version;
 static void *ft_handle = NULL;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
-MAKE_FUNCPTR(FT_Cos);
+MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
+MAKE_FUNCPTR(FT_Matrix_Multiply);
 MAKE_FUNCPTR(FT_MulFix);
 MAKE_FUNCPTR(FT_New_Face);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
@@ -103,8 +104,7 @@ MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Select_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
-MAKE_FUNCPTR(FT_Sin);
-MAKE_FUNCPTR(FT_Vector_Rotate);
+MAKE_FUNCPTR(FT_Vector_Transform);
 #undef MAKE_FUNCPTR
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
@@ -148,6 +148,7 @@ struct tagGdiFont {
     GM *gm;
     DWORD gmsize;
     HFONT hfont;
+    LONG aveWidth;
     SHORT yMax;
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
@@ -225,6 +226,27 @@ typedef struct tagFontSubst {
 
 static FontSubst *substlist = NULL;
 static BOOL have_installed_roman_font = FALSE; /* CreateFontInstance will fail if this is still FALSE */
+
+/* 
+   This function builds an FT_Fixed from a float. It puts the integer part
+   in the highest 16 bits and the decimal part in the lowest 16 bits of the FT_Fixed.
+   It fails if the integer part of the float number is greater than SHORT_MAX.
+*/
+static inline FT_Fixed FT_FixedFromFloat(float f)
+{
+	short value = f;
+	unsigned short fract = (f - value) * 0xFFFF;
+	return (FT_Fixed)((long)value << 16 | (unsigned long)fract);
+}
+
+/* 
+   This function builds an FT_Fixed from a FIXED. It simply put f.value 
+   in the highest 16 bits and f.fract in the lowest 16 bits of the FT_Fixed.
+*/
+static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
+{
+	return (FT_Fixed)((long)f.value << 16 | (unsigned long)f.fract);
+}
 
 static BOOL AddFontFileToList(char *file, char *fake_family)
 {
@@ -661,12 +683,13 @@ BOOL WineEngInit(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
 
-    LOAD_FUNCPTR(FT_Cos)
+    LOAD_FUNCPTR(FT_Vector_Unit)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
+    LOAD_FUNCPTR(FT_Matrix_Multiply)
     LOAD_FUNCPTR(FT_MulFix)
     LOAD_FUNCPTR(FT_New_Face)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
@@ -674,8 +697,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FT_Select_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
-    LOAD_FUNCPTR(FT_Sin)
-    LOAD_FUNCPTR(FT_Vector_Rotate)
+    LOAD_FUNCPTR(FT_Vector_Transform)
 
 #undef LOAD_FUNCPTR
     /* Don't warn if this one is missing */
@@ -1235,6 +1257,7 @@ not_found:
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
     ret->hfont = hfont;
+    ret->aveWidth= lf.lfWidth;
     ret->next = GdiFontList;
     GdiFontList = ret;
 
@@ -1517,6 +1540,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
 			     const MAT2* lpmat)
 {
+    static const FT_Matrix identityMat = {(1 << 16), 0, 0, (1 << 16)};
     FT_Face ft_face = font->ft_face;
     FT_UInt glyph_index;
     DWORD width, height, pitch, needed = 0;
@@ -1525,6 +1549,10 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     INT left, right, top = 0, bottom = 0;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT;
+    float widthRatio = 1.0;	
+    FT_Matrix transMat = identityMat;
+    BOOL needsTransform = FALSE;
+
 
     TRACE("%p, %04x, %08x, %p, %08lx, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
@@ -1546,7 +1574,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	}
     }
 
-    if(font->orientation || (format != GGO_METRICS && format != GGO_BITMAP))
+    if(font->orientation || (format != GGO_METRICS && format != GGO_BITMAP) || font->aveWidth || lpmat)
         load_flags |= FT_LOAD_NO_BITMAP;
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
@@ -1555,16 +1583,58 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
         FIXME("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
 	return GDI_ERROR;
     }
+	
+    /* Scaling factor */
+    if (font->aveWidth && font->potm) {
+	     widthRatio = (float)font->aveWidth * font->xform.eM11 / (float) font->potm->otmTextMetrics.tmAveCharWidth;
+    }
 
-    left = ft_face->glyph->metrics.horiBearingX & -64;
-    right = ((ft_face->glyph->metrics.horiBearingX +
-		  ft_face->glyph->metrics.width) + 63) & -64;
+    left = (INT)(ft_face->glyph->metrics.horiBearingX * widthRatio) & -64;
+    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) * widthRatio + 63) & -64;
 
-    font->gm[glyph_index].adv = (ft_face->glyph->metrics.horiAdvance + 63) >> 6;
+    font->gm[glyph_index].adv = (INT)((ft_face->glyph->metrics.horiAdvance * widthRatio) + 63) >> 6;
     font->gm[glyph_index].lsb = left >> 6;
     font->gm[glyph_index].bbx = (right - left) >> 6;
 
-    if(font->orientation == 0) {
+    /* Scaling transform */
+    if(font->aveWidth) {
+        FT_Matrix scaleMat;
+        scaleMat.xx = FT_FixedFromFloat(widthRatio);
+        scaleMat.xy = 0;
+        scaleMat.yx = 0;
+        scaleMat.yy = (1 << 16);
+
+        pFT_Matrix_Multiply(&scaleMat, &transMat);
+        needsTransform = TRUE;
+    }
+
+    /* Rotation transform */
+    if(font->orientation) {
+        FT_Matrix rotationMat;
+        FT_Vector vecAngle;
+        angle = FT_FixedFromFloat((float)font->orientation / 10.0);
+        pFT_Vector_Unit(&vecAngle, angle);
+        rotationMat.xx = vecAngle.x;
+        rotationMat.xy = -vecAngle.y;
+        rotationMat.yx = -rotationMat.xy;
+        rotationMat.yy = rotationMat.xx;
+        
+        pFT_Matrix_Multiply(&rotationMat, &transMat);
+        needsTransform = TRUE;
+    }
+
+    /* Extra transformation specified by caller */
+    if (lpmat) {
+        FT_Matrix extraMat;
+        extraMat.xx = FT_FixedFromFIXED(lpmat->eM11);
+        extraMat.xy = FT_FixedFromFIXED(lpmat->eM21);
+        extraMat.yx = FT_FixedFromFIXED(lpmat->eM12);
+        extraMat.yy = FT_FixedFromFIXED(lpmat->eM22);
+        pFT_Matrix_Multiply(&extraMat, &transMat);
+        needsTransform = TRUE;
+    }
+
+    if(!needsTransform) {
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
 		  ft_face->glyph->metrics.height) & -64;
@@ -1573,17 +1643,14 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     } else {
         INT xc, yc;
 	FT_Vector vec;
-	angle = font->orientation / 10 << 16;
-	angle |= ((font->orientation % 10) * (1 << 16)) / 10;
-	TRACE("angle %ld\n", angle >> 16);
 	for(xc = 0; xc < 2; xc++) {
 	    for(yc = 0; yc < 2; yc++) {
-	        vec.x = ft_face->glyph->metrics.horiBearingX +
-		  xc * ft_face->glyph->metrics.width;
+	        vec.x = (ft_face->glyph->metrics.horiBearingX +
+		  xc * ft_face->glyph->metrics.width);
 		vec.y = ft_face->glyph->metrics.horiBearingY -
 		  yc * ft_face->glyph->metrics.height;
 		TRACE("Vec %ld,%ld\n", vec.x, vec.y);
-		pFT_Vector_Rotate(&vec, angle);
+		pFT_Vector_Transform(&vec, &transMat);
 		if(xc == 0 && yc == 0) {
 		    left = right = vec.x;
 		    top = bottom = vec.y;
@@ -1603,9 +1670,9 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
 	vec.x = ft_face->glyph->metrics.horiAdvance;
 	vec.y = 0;
-	pFT_Vector_Rotate(&vec, angle);
+	pFT_Vector_Transform(&vec, &transMat);
 	lpgm->gmCellIncX = (vec.x+63) >> 6;
-	lpgm->gmCellIncY = -(vec.y+63) >> 6;
+	lpgm->gmCellIncY = -((vec.y+63) >> 6);
     }
     lpgm->gmBlackBoxX = (right - left) >> 6;
     lpgm->gmBlackBoxY = (top - bottom) >> 6;
@@ -1618,6 +1685,10 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     if(format == GGO_METRICS)
         return 1; /* FIXME */
 
+    if (buf && !buflen){
+        return GDI_ERROR;
+    }
+
     if(ft_face->glyph->format != ft_glyph_format_outline && format != GGO_BITMAP) {
         FIXME("loaded a bitmap\n");
 	return GDI_ERROR;
@@ -1627,7 +1698,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     case GGO_BITMAP:
         width = lpgm->gmBlackBoxX;
 	height = lpgm->gmBlackBoxY;
-	pitch = (width + 31) / 32 * 4;
+	pitch = ((width + 31) >> 5) << 2;
         needed = pitch * height;
 
 	if(!buf || !buflen) break;
@@ -1653,16 +1724,10 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	    ft_bitmap.pixel_mode = ft_pixel_mode_mono;
 	    ft_bitmap.buffer = buf;
 
-	    if(font->orientation) {
-	        FT_Matrix matrix;
-		matrix.xx = matrix.yy = pFT_Cos(angle);
-		matrix.xy = -pFT_Sin(angle);
-		matrix.yx = -matrix.xy;
-
-		pFT_Outline_Transform(&ft_face->glyph->outline, &matrix);
+		if(needsTransform) {
+			pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
 	    }
 
-            if (lpmat) pFT_Outline_Transform(&ft_face->glyph->outline, (FT_Matrix *)lpmat);
 	    pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
 	    /* Note: FreeType will only set 'black' bits for us. */
@@ -1696,15 +1761,10 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	ft_bitmap.pixel_mode = ft_pixel_mode_grays;
 	ft_bitmap.buffer = buf;
 
-	if(font->orientation) {
-	    FT_Matrix matrix;
-	    matrix.xx = matrix.yy = pFT_Cos(angle);
-	    matrix.xy = -pFT_Sin(angle);
-	    matrix.yx = -matrix.xy;
-	    pFT_Outline_Transform(&ft_face->glyph->outline, &matrix);
+	if(needsTransform) {
+		pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
 	}
 
-        if (lpmat) pFT_Outline_Transform(&ft_face->glyph->outline, (FT_Matrix *)lpmat);
 	pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
 	pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
@@ -1743,7 +1803,9 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
 	if(buflen == 0) buf = NULL;
 
-        if (lpmat) pFT_Outline_Transform(outline, (FT_Matrix *)lpmat);
+	if (needsTransform && buf) {
+		pFT_Outline_Transform(outline, &transMat);
+	}
 
         for(contour = 0; contour < outline->n_contours; contour++) {
 	    pph_start = needed;
@@ -1821,7 +1883,9 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	FT_Vector cubic_control[4];
 	if(buflen == 0) buf = NULL;
 
-        if (lpmat) pFT_Outline_Transform(outline, (FT_Matrix *)lpmat);
+	if (needsTransform && buf) {
+		pFT_Outline_Transform(outline, &transMat);
+	}
 
         for(contour = 0; contour < outline->n_contours; contour++) {
 	    pph_start = needed;
@@ -1928,6 +1992,10 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     }
     if(!font->potm) return FALSE;
     memcpy(ptm, &font->potm->otmTextMetrics, sizeof(*ptm));
+
+    if (font->aveWidth) {
+	     ptm->tmAveCharWidth = font->aveWidth * font->xform.eM11;
+    }
     return TRUE;
 }
 
@@ -2039,6 +2107,9 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
 		  (pHori->Ascender - pHori->Descender)), y_scale) + 32) >> 6);
 
     TM.tmAveCharWidth = (pFT_MulFix(pOS2->xAvgCharWidth, x_scale) + 32) >> 6;
+    if (TM.tmAveCharWidth == 0) {
+        TM.tmAveCharWidth = 1; 
+    }
     TM.tmMaxCharWidth = (pFT_MulFix(ft_face->bbox.xMax - ft_face->bbox.xMin, x_scale) + 32) >> 6;
     TM.tmWeight = font->fake_bold ? FW_BOLD : pOS2->usWeightClass;
     TM.tmOverhang = 0;
