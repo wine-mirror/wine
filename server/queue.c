@@ -1121,7 +1121,7 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
 }
 
 /* find a hardware message for the given queue */
-static int get_hardware_message( struct thread *thread, struct message *first,
+static int get_hardware_message( struct thread *thread, int get_next_hw, struct message *first,
                                  user_handle_t filter_win, struct get_message_reply *reply )
 {
     struct thread_input *input = thread->queue->input;
@@ -1131,8 +1131,8 @@ static int get_hardware_message( struct thread *thread, struct message *first,
     int clear_bits, got_one = 0;
     unsigned int msg_code;
 
-    if (input->msg_thread && input->msg_thread != thread)
-        return 0;  /* locked by another thread */
+    if (input->msg_thread && ((input->msg_thread != thread) || !get_next_hw))
+        return 0;  /* locked by another thread, or another recursion level of the same thread */
 
     if (!first)
     {
@@ -1492,7 +1492,7 @@ DECL_HANDLER(get_message)
 
     /* first of all release the hardware input lock if we own it */
     /* we'll grab it again if we find a hardware message */
-    if (queue->input->msg_thread == current)
+    if (queue->input->msg_thread == current && req->get_next_hw)
     {
         first_hw_msg = queue->input->msg;
         release_hardware_message( current, 0 );
@@ -1515,7 +1515,7 @@ DECL_HANDLER(get_message)
         return;
 
     /* then check for any raw hardware message */
-    if (get_hardware_message( current, first_hw_msg, get_win, reply ))
+    if (get_hardware_message( current, req->get_next_hw, first_hw_msg, get_win, reply ))
         return;
 
     /* now check for WM_PAINT */

@@ -1585,6 +1585,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
     ULONG_PTR extra_info = 0;
     MESSAGEQUEUE *queue = QUEUE_Current();
     struct received_message_info info, *old_info;
+    int get_next_hw = 0;  /* set when the previous message was a rejected hardware message */
 
     if (!first && !last) last = ~0;
 
@@ -1604,6 +1605,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                 req->get_win   = hwnd;
                 req->get_first = first;
                 req->get_last  = last;
+                req->get_next_hw = get_next_hw;
                 if (buffer_size) wine_server_set_reply( req, buffer, buffer_size );
                 if (!(res = wine_server_call( req )))
                 {
@@ -1630,6 +1632,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         } while (res == STATUS_BUFFER_OVERFLOW);
 
         if (res) return FALSE;
+        get_next_hw = 0;
 
         TRACE( "got type %d msg %x (%s) hwnd %p wp %x lp %lx\n",
                info.type, info.msg.message,
@@ -1694,6 +1697,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
             }
             break;
         case MSG_HARDWARE:
+            get_next_hw = 1;
             if (!process_hardware_message( &info.msg, extra_info,
                                            hwnd, first, last, flags & GET_MSG_REMOVE ))
             {

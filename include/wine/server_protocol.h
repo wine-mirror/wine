@@ -2156,6 +2156,7 @@ struct get_message_request
     user_handle_t   get_win;
     unsigned int    get_first;
     unsigned int    get_last;
+    int             get_next_hw;
 };
 struct get_message_reply
 {
@@ -3781,6 +3782,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 158
+#define SERVER_PROTOCOL_VERSION 159
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

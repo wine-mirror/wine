@@ -1531,6 +1531,7 @@ enum message_type
     user_handle_t   get_win;   /* window handle to get */
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
+    int             get_next_hw; /* do we want the get the next hardware msg? */
 @REPLY
     int             type;      /* message type */
     user_handle_t   win;       /* window handle */

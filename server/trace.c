@@ -1871,7 +1871,8 @@ static void dump_get_message_request( const struct get_message_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " get_win=%p,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
-    fprintf( stderr, " get_last=%08x", req->get_last );
+    fprintf( stderr, " get_last=%08x,", req->get_last );
+    fprintf( stderr, " get_next_hw=%d", req->get_next_hw );
 }
 
 static void dump_get_message_reply( const struct get_message_reply *req )
