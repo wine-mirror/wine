@@ -103,6 +103,12 @@ static const enum loadorder_type default_loadorder[LOADORDER_NTYPES] =
     LOADORDER_BI, LOADORDER_DLL, 0, 0
 };
 
+/* default for modules with an explicit path */
+static const enum loadorder_type default_path_loadorder[LOADORDER_NTYPES] =
+{
+    LOADORDER_DLL, LOADORDER_BI, 0, 0
+};
+
 static struct loadorder_list cmdline_list;
 
 
@@ -674,13 +680,18 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
                    debugstr_loadorder(loadorder), debugstr_a(path) );
             goto done;
         }
+
+        /* and last the hard-coded default */
+        memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
+        TRACE( "got hardcoded default %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
     }
-
-    /* and last the hard-coded default */
-    memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
-    TRACE( "got hardcoded default %s for %s\n",
-           debugstr_loadorder(loadorder), debugstr_a(path) );
-
+    else  /* module contains an explicit path */
+    {
+        memcpy( loadorder, default_path_loadorder, sizeof(default_path_loadorder) );
+        TRACE( "got hardcoded path default %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+    }
 
  done:
     if (app_key) NtClose( app_key );
