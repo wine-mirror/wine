@@ -664,7 +664,9 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_NCCREATE:
 	{
 	    CREATESTRUCT16 *cs = MapSL(lParam);
-	    if (cs->lpszName)
+	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+	     * may have child window IDs instead of window name */
+	    if (HIWORD(cs->lpszName))
 		DEFWND_SetTextA( wndPtr, MapSL(cs->lpszName) );
 	    result = 1;
 	}
@@ -736,7 +738,10 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_NCCREATE:
 	{
 	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-	    if (cs->lpszName) DEFWND_SetTextA( wndPtr, cs->lpszName );
+	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+	     * may have child window IDs instead of window name */
+	    if (HIWORD(cs->lpszName))
+	        DEFWND_SetTextA( wndPtr, cs->lpszName );
 	    result = 1;
 	}
         break;
@@ -851,7 +856,10 @@ LRESULT WINAPI DefWindowProcW(
     case WM_NCCREATE:
 	{
 	    CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-	    if (cs->lpszName) DEFWND_SetTextW( wndPtr, cs->lpszName );
+	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+	     * may have child window IDs instead of window name */
+	    if (HIWORD(cs->lpszName))
+	        DEFWND_SetTextW( wndPtr, cs->lpszName );
 	    result = 1;
 	}
         break;
