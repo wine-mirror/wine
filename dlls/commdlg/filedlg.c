@@ -293,7 +293,7 @@ static BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
 {
     if (lfs->ofn16)
     {
-        return (BOOL) CallWindowProc16(
+        return (BOOL16) CallWindowProc16(
           (WNDPROC16)lfs->ofn16->lpfnHook, lfs->hwnd,
           (UINT16)wMsg, (WPARAM16)wParam, lParam);
     }
@@ -338,6 +338,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
 	while (filter) {
 	    scptr = strchrW(filter, ';');
 	    if (scptr)	*scptr = 0;
+            while (*filter == ' ') filter++; 
 	    TRACE("Using file spec %s\n", debugstr_w(filter));
 	    if (SendMessageW(hdlg, LB_DIR, 0, (LPARAM)filter) == LB_ERR)
 	        return FALSE;
