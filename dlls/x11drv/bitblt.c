@@ -867,8 +867,6 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
                                       RECT *visRectSrc, RECT *visRectDst )
 {
     XImage *imageSrc, *imageDst;
-    DC *dcDst = physDevDst->dc;
-
     RECT rectSrc = *visRectSrc;
     RECT rectDst = *visRectDst;
 
@@ -893,13 +891,13 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
                           visRectSrc->bottom - visRectSrc->top,
                           AllPlanes, ZPixmap );
     imageDst = X11DRV_DIB_CreateXImage( rectDst.right - rectDst.left,
-                                        rectDst.bottom - rectDst.top, dcDst->bitsPerPixel );
+                                        rectDst.bottom - rectDst.top, physDevDst->depth );
     BITBLT_StretchImage( imageSrc, imageDst, widthSrc, heightSrc,
                          widthDst, heightDst, &rectSrc, &rectDst,
-                         physDevDst->textPixel, dcDst->bitsPerPixel != 1 ?
+                         physDevDst->textPixel, physDevDst->depth != 1 ?
                          physDevDst->backgroundPixel :
 			 physDevSrc->backgroundPixel,
-                         dcDst->stretchBltMode );
+                         GetStretchBltMode(physDevDst->hdc) );
     XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
     XDestroyImage( imageSrc );
@@ -922,15 +920,13 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     int exposures = 0;
     INT width  = visRectSrc->right - visRectSrc->left;
     INT height = visRectSrc->bottom - visRectSrc->top;
-    DC *dcSrc = physDevSrc->dc;
-    DC *dcDst = physDevDst->dc;
 
-    if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
+    if (physDevSrc->depth == physDevDst->depth)
     {
         if (!X11DRV_PALETTE_XPixelToPalette ||
-            (dcDst->bitsPerPixel == 1))  /* monochrome -> monochrome */
+            (physDevDst->depth == 1))  /* monochrome -> monochrome */
         {
-            if (dcDst->bitsPerPixel == 1)
+            if (physDevDst->depth == 1)
             {
                 /* MSDN says if StretchBlt must convert a bitmap from monochrome
                    to color or vice versa, the forground and background color of
@@ -979,7 +975,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     }
     else
     {
-        if (dcSrc->bitsPerPixel == 1)  /* monochrome -> color */
+        if (physDevSrc->depth == 1)  /* monochrome -> color */
         {
             if (X11DRV_PALETTE_XPixelToPalette)
             {
@@ -1010,7 +1006,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
             {
                 return exposures;
             }
-            imageDst = X11DRV_DIB_CreateXImage( width, height, dcDst->bitsPerPixel );
+            imageDst = X11DRV_DIB_CreateXImage( width, height, physDevDst->depth );
             if (!imageDst) 
             {
                 XDestroyImage(imageSrc);
@@ -1042,7 +1038,7 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
     INT width  = visRectDst->right - visRectDst->left;
     INT height = visRectDst->bottom - visRectDst->top;
 
-    if (!X11DRV_PALETTE_XPixelToPalette || (physDev->dc->bitsPerPixel == 1) ||
+    if (!X11DRV_PALETTE_XPixelToPalette || (physDev->depth == 1) ||
 	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( gdi_display, physDev->drawable, pixmap, gc,
@@ -1096,7 +1092,7 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRe
 
     /* !X11DRV_PALETTE_PaletteToXPixel is _NOT_ enough */
 
-    if (!X11DRV_PALETTE_PaletteToXPixel || (physDev->dc->bitsPerPixel == 1) ||
+    if (!X11DRV_PALETTE_PaletteToXPixel || (physDev->depth == 1) ||
         (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( gdi_display, pixmap, physDev->drawable, physDev->gc, 0, 0, width, height,
@@ -1321,7 +1317,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     {
     case BLACKNESS:  /* 0x00 */
         wine_tsx11_lock();
-        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
+        if ((physDevDst->depth == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( gdi_display, physDevDst->gc, GXclear );
         else
         {
@@ -1337,7 +1333,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         return TRUE;
 
     case DSTINVERT:  /* 0x55 */
-        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
+        if ((physDevDst->depth == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
             !perfect_graphics())
         {
             wine_tsx11_lock();
@@ -1394,7 +1390,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 	return TRUE;
 
     case SRCCOPY:  /* 0xcc */
-        if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
+        if (physDevSrc->depth == physDevDst->depth)
         {
             wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
@@ -1409,7 +1405,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             wine_tsx11_unlock();
             return TRUE;
         }
-        if (dcSrc->bitsPerPixel == 1)
+        if (physDevSrc->depth == 1)
         {
             wine_tsx11_lock();
             XSetBackground( gdi_display, physDevDst->gc, physDevDst->textPixel );
@@ -1441,7 +1437,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
     case WHITENESS:  /* 0xff */
         wine_tsx11_lock();
-        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
+        if ((physDevDst->depth == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( gdi_display, physDevDst->gc, GXset );
         else
         {
@@ -1464,11 +1460,11 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
     XSetGraphicsExposures( gdi_display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height,
-                                  dcDst->bitsPerPixel );
+                                  physDevDst->depth );
     if (useSrc)
     {
         pixmaps[SRC] = XCreatePixmap( gdi_display, root_window, width, height,
-                                      dcDst->bitsPerPixel );
+                                      physDevDst->depth );
         if (fStretch)
             BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC,
                                       xSrc, ySrc, widthSrc, heightSrc,
@@ -1494,8 +1490,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         case OP_ARGS(SRC,TMP):
             if (!pixmaps[TMP])
                 pixmaps[TMP] = XCreatePixmap( gdi_display, root_window,
-                                              width, height,
-                                              dcDst->bitsPerPixel );
+                                              width, height, physDevDst->depth );
             /* fall through */
         case OP_ARGS(DST,SRC):
         case OP_ARGS(SRC,DST):
@@ -1510,8 +1505,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         case OP_ARGS(PAT,TMP):
             if (!pixmaps[TMP] && !fNullBrush)
                 pixmaps[TMP] = XCreatePixmap( gdi_display, root_window,
-                                              width, height,
-                                              dcDst->bitsPerPixel );
+                                              width, height, physDevDst->depth );
             /* fall through */
         case OP_ARGS(PAT,DST):
         case OP_ARGS(PAT,SRC):
@@ -1570,7 +1564,7 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None, FALSE );
 
     if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY) &&
-        (dcSrc->bitsPerPixel == dcDst->bitsPerPixel))
+        (physDevSrc->depth == physDevDst->depth))
     {
       POINT pts[2];
       /* do everything ourselves; map coordinates */

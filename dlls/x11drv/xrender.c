@@ -1009,7 +1009,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
 
-    if(dc->bitsPerPixel == 1) {
+    if(physDev->depth == 1) {
         if((dc->textColor & 0xffffff) == 0) {
 	    textPixel = 0;
 	    backgroundPixel = 1;
@@ -1136,7 +1136,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    wine_tsx11_lock();
 	    physDev->xrender->pict = pXRenderCreatePicture(gdi_display,
 							   physDev->drawable,
-							   (dc->bitsPerPixel == 1) ?
+							   (physDev->depth == 1) ?
 							   mono_format : screen_format,
 							   CPSubwindowMode, &pa);
 	    wine_tsx11_unlock();
@@ -1176,7 +1176,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         if(!physDev->xrender->tile_xpm) {
 	    XRenderPictureAttributes pa;
 
-	    XRenderPictFormat *format = (dc->bitsPerPixel == 1) ? mono_format : screen_format;
+	    XRenderPictFormat *format = (physDev->depth == 1) ? mono_format : screen_format;
 	    wine_tsx11_lock();
 	    physDev->xrender->tile_xpm = XCreatePixmap(gdi_display,
 						       physDev->drawable,
@@ -1195,7 +1195,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	}
 
 	if(dc->textColor != physDev->xrender->lastTextColor) {
-	    if(dc->bitsPerPixel != 1) {
+	    if(physDev->depth != 1) {
 	      /* Map 0 -- 0xff onto 0 -- 0xffff */
 	        col.red = GetRValue(dc->textColor);
 		col.red |= col.red << 8;
@@ -1218,7 +1218,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
-	if((dc->bitsPerPixel == 1) && (textPixel == 0))
+	if((physDev->depth == 1) && (textPixel == 0))
 	    render_op = PictOpOutReverse; /* This gives us 'black' text */
     }
 
@@ -1320,7 +1320,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		    yoff += entry->gis[glyphs[idx]].yOff;
 		}
 	    }
-	} else if(dc->bitsPerPixel == 1) {
+	} else if(physDev->depth == 1) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphGray(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
@@ -1406,10 +1406,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    TRACE("XGetImage(%p, %x, %d, %d, %d, %d, %lx, %x) depth = %d rets %p\n",
 		  gdi_display, (int)physDev->drawable, image_x, image_y,
 		  image_w, image_h, AllPlanes, ZPixmap,
-		  dc->bitsPerPixel, image);
+		  physDev->depth, image);
 	    if(!image) {
 	        Pixmap xpm = XCreatePixmap(gdi_display, physDev->drawable, image_w, image_h,
-					   dc->bitsPerPixel);
+					   physDev->depth);
 		GC gc;
 		XGCValues gcv;
 

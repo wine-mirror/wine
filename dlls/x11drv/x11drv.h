@@ -97,6 +97,7 @@ typedef struct
     X_PHYSBRUSH   brush;
     int           backgroundPixel;
     int           textPixel;
+    int           depth;       /* bit depth of the DC */
     int           exposures;   /* count of graphics exposures operations */
     XVisualInfo  *visuals[MAX_PIXELFORMATS];
     int           used_visuals;

@@ -65,8 +65,6 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR d
     physDev->window = root_window;
     physDev->cellWidth = cell_width;
     physDev->cellHeight = cell_height;
-
-    dc->bitsPerPixel = 1;
   }
 
   return TRUE;

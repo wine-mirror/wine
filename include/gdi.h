@@ -146,7 +146,6 @@ typedef struct tagDC
     short         breakRem;          /* breakTotalExtra % breakCount */
 
     RECT          totalExtent;
-    BYTE          bitsPerPixel;
 
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */

@@ -3585,7 +3585,6 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     int height;
     BOOL top_down;
     POINT pt;
-    DC *dc = physDev->dc;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
@@ -3634,7 +3633,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     wine_tsx11_lock();
-    XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
+    XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
     wine_tsx11_unlock();
 
     switch (descr.infoBpp)
@@ -3644,7 +3643,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
        case 8:
                descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap(
                                             coloruse == DIB_PAL_COLORS ? physDev : NULL, coloruse,
-                                            dc->bitsPerPixel, info, &descr.nColorMap );
+                                            physDev->depth, info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
                descr.rMask = descr.gMask = descr.bMask = 0;
                break;
@@ -3671,7 +3670,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     descr.palentry  = NULL;
     descr.lines     = top_down ? -lines : lines;
     descr.infoWidth = width;
-    descr.depth     = dc->bitsPerPixel;
+    descr.depth     = physDev->depth;
     descr.drawable  = physDev->drawable;
     descr.gc        = physDev->gc;
     descr.xSrc      = xSrc;

@@ -105,11 +105,12 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR dev
     if (GetObjectType( dc->hSelf ) == OBJ_MEMDC)
     {
         physDev->drawable  = BITMAP_stock_pixmap;
+        physDev->depth     = 1;
     }
     else
     {
         physDev->drawable  = root_window;
-        dc->bitsPerPixel   = screen_depth;
+        physDev->depth     = screen_depth;
     }
     physDev->org.x = physDev->org.y = 0;
     physDev->drawable_org.x = physDev->drawable_org.y = 0;

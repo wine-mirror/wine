@@ -60,9 +60,8 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
     if ((dcDst = DC_GetDCUpdate( hdcDst )))
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
-        TRACE("hdcSrc=%p %d,%d %d bpp->hdcDest=%p %d,%d %dx%dx%d rop=%06lx\n",
-              hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->bitsPerPixel : 0,
-              hdcDst, xDst, yDst, width, height, dcDst->bitsPerPixel, rop);
+        TRACE("hdcSrc=%p %d,%d -> hdcDest=%p %d,%d %dx%d rop=%06lx\n",
+              hdcSrc, xSrc, ySrc, hdcDst, xDst, yDst, width, height, rop);
         if (dcDst->funcs->pBitBlt)
             ret = dcDst->funcs->pBitBlt( dcDst->physDev, xDst, yDst, width, height,
                                          dcSrc ? dcSrc->physDev : NULL, xSrc, ySrc, rop );
@@ -91,10 +90,9 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
 
-        TRACE("%p %d,%d %dx%dx%d -> %p %d,%d %dx%dx%d rop=%06lx\n",
+        TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d rop=%06lx\n",
               hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-              dcSrc ? dcSrc->bitsPerPixel : 0, hdcDst, xDst, yDst,
-              widthDst, heightDst, dcDst->bitsPerPixel, rop );
+              hdcDst, xDst, yDst, widthDst, heightDst, rop );
 
 	if (dcSrc) {
 	    if (dcDst->funcs->pStretchBlt)

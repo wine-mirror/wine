@@ -173,12 +173,24 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
     if ((width >= 0x10000) || (height >= 0x10000)) {
 	FIXME("got bad width %d or height %d, please look for reason\n",
 	      width, height );
-    } else {
-        /* MS doc says if width or height is 0, return 1-by-1 pixel, monochrome bitmap */
-        if (!width || !height)
-	   hbmpRet = CreateBitmap( 1, 1, 1, 1, NULL );
-	else
-	   hbmpRet = CreateBitmap( width, height, 1, dc->bitsPerPixel, NULL );
+    }
+    else
+    {
+        INT planes, bpp;
+
+        if (GDIMAGIC( dc->header.wMagic ) != MEMORY_DC_MAGIC)
+        {
+            planes = GetDeviceCaps( hdc, PLANES );
+            bpp = GetDeviceCaps( hdc, BITSPIXEL );
+        }
+        else  /* memory DC, get the depth of the bitmap */
+        {
+            BITMAPOBJ *bmp = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+            planes = bmp->bitmap.bmPlanes;
+            bpp = bmp->bitmap.bmBitsPixel;
+            GDI_ReleaseObj( dc->hBitmap );
+        }
+        hbmpRet = CreateBitmap( width, height, planes, bpp, NULL );
     }
     TRACE("\t\t%p\n", hbmpRet);
     GDI_ReleaseObj(hdc);
@@ -433,14 +445,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
         dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
         dc->flags &= ~DC_DIRTY;
         SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
-        CLIPPING_UpdateGCRegion( dc );
-
-        if (dc->bitsPerPixel != bitmap->bitmap.bmBitsPixel)
-        {
-            /* depth changed, reinitialize the DC */
-            dc->bitsPerPixel = bitmap->bitmap.bmBitsPixel;
-            DC_InitDC( dc );
-        }
+        DC_InitDC( dc );
     }
     else ret = 0;
 

@@ -358,8 +358,6 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devic
 
     PSDRV_UpdateDevCaps(physDev);
     dc->hFont = PSDRV_DefaultFont;
-    if (GetObjectType(dc->hSelf) != OBJ_MEMDC)
-        dc->bitsPerPixel = physDev->pi->ppd->ColorDevice ? 8 : 1;
     return TRUE;
 }
 

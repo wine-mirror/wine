@@ -74,7 +74,6 @@ BOOL X11DRV_BITMAP_Init(void)
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BITMAPOBJ *bmp;
-    DC *dc = physDev->dc;
 
     if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
@@ -88,8 +87,9 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
       /* Change GC depth if needed */
 
-    if (dc->bitsPerPixel != bmp->bitmap.bmBitsPixel)
+    if (physDev->depth != bmp->bitmap.bmBitsPixel)
     {
+        physDev->depth = bmp->bitmap.bmBitsPixel;
         wine_tsx11_lock();
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );

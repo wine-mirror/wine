@@ -107,7 +107,6 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->totalExtent.top     = 0;
     dc->totalExtent.right   = 0;
     dc->totalExtent.bottom  = 0;
-    dc->bitsPerPixel        = 1;
     dc->MapMode             = MM_TEXT;
     dc->GraphicsMode        = GM_COMPATIBLE;
     dc->pAbortProc          = NULL;
@@ -297,7 +296,6 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->hDevice          = dc->hDevice;
     newdc->hPalette         = dc->hPalette;
     newdc->totalExtent      = dc->totalExtent;
-    newdc->bitsPerPixel     = dc->bitsPerPixel;
     newdc->ROPmode          = dc->ROPmode;
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
@@ -423,8 +421,6 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->vportOrgY        = dcs->vportOrgY;
     dc->vportExtX        = dcs->vportExtX;
     dc->vportExtY        = dcs->vportExtY;
-
-    if (GDIMAGIC(dc->header.wMagic) != MEMORY_DC_MAGIC) dc->bitsPerPixel = dcs->bitsPerPixel;
 
     if (dcs->hClipRgn)
     {
@@ -723,8 +719,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
-    dc->bitsPerPixel = 1;
-    dc->hBitmap      = GetStockObject( DEFAULT_BITMAP );
+    dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info

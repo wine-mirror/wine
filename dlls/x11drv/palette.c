@@ -891,7 +891,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	    /* fall through to RGB */
 
 	  case 0: /* RGB */
-	    if( dc && (dc->bitsPerPixel == 1) )
+	    if (physDev && (physDev->depth == 1) )
 	    {
 		GDI_ReleaseObj( hPal );
 		return (((color >> 16) & 0xff) +
@@ -944,7 +944,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 		/* fall through to RGB */
 
        	    case 0:  /* RGB */
-		if( dc && (dc->bitsPerPixel == 1) )
+		if (physDev && (physDev->depth == 1) )
 		{
 		    GDI_ReleaseObj( hPal );
 		    return (((color >> 16) & 0xff) +

@@ -107,7 +107,7 @@ static XImage *ditherImage = NULL;
 /***********************************************************************
  *           BRUSH_DitherColor
  */
-static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
+static Pixmap BRUSH_DitherColor( COLORREF color )
 {
     static COLORREF prevColor = 0xffffffff;
     unsigned int x, y;
@@ -154,12 +154,10 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
  */
 static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    DC *dc = physDev->dc;
-
-    if ((dc->bitsPerPixel > 1) && (screen_depth <= 8) && !X11DRV_IsSolidColor( color ))
+    if ((physDev->depth > 1) && (screen_depth <= 8) && !X11DRV_IsSolidColor( color ))
     {
 	  /* Dithered brush */
-	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );
+	physDev->brush.pixmap = BRUSH_DitherColor( color );
 	physDev->brush.fillStyle = FillTiled;
 	physDev->brush.pixel = 0;
     }
@@ -178,14 +176,13 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BOOL ret = FALSE;
-    DC *dc = physDev->dc;
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
     if(!bmp->physBitmap) goto done;
 
     wine_tsx11_lock();
-    if ((dc->bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
+    if ((physDev->depth == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, 1);
@@ -241,7 +238,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
     }
     physDev->brush.style = logbrush.lbStyle;
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = physDev->dc->dcBrushColor;
+        logbrush.lbColor = GetDCBrushColor( physDev->hdc );
 
     switch(logbrush.lbStyle)
     {

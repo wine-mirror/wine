@@ -946,7 +946,6 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
     int pixel;
     POINT pt;
     BOOL memdc = (GetObjectType(physDev->hdc) == OBJ_MEMDC);
-    DC *dc = physDev->dc;
 
     pt.x = x;
     pt.y = y;
@@ -967,7 +966,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
         /* If we are reading from the screen, use a temporary copy */
         /* to avoid a BadMatch error */
         if (!pixmap) pixmap = XCreatePixmap( gdi_display, root_window,
-                                             1, 1, dc->bitsPerPixel );
+                                             1, 1, physDev->depth );
         XCopyArea( gdi_display, physDev->drawable, pixmap, BITMAP_colorGC,
                    physDev->org.x + pt.x, physDev->org.y + pt.y, 1, 1, 0, 0 );
         image = XGetImage( gdi_display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
