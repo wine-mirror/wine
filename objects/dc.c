@@ -586,6 +586,9 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     const DC_FUNCTIONS *funcs;
     char buf[300];
 
+    if ((!driver) && (!device))
+	return 0;
+
     GDI_CheckNotLock();
 
     if (!device || !DRIVER_GetDriverName( device, buf, sizeof(buf) ))
