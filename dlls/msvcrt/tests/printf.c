@@ -71,6 +71,11 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"  0X00000039"),"Pointer formatted incorrectly\n");
     ok( r==12, "return count wrong\n");
 
+    format = "%Fp";
+    r = sprintf(buffer,format,(void *)57);
+    ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+    ok( r==8, "return count wrong\n");
+
     format = "%04s";
     r = sprintf(buffer,format,"foo");
     ok(!strcmp(buffer,"0foo"),"String not zero-prefixed \"%s\"\n",buffer);
@@ -238,6 +243,16 @@ static void test_sprintf( void )
     format = "%j";
     r = sprintf(buffer, format,-1);
     ok(!strcmp(buffer,"j"), "failed\n");
+    ok( r==1, "return count wrong\n");
+
+    format = "%F";
+    r = sprintf(buffer, format,-1);
+    ok(!strcmp(buffer,""), "failed\n");
+    ok( r==0, "return count wrong\n");
+
+    format = "%H";
+    r = sprintf(buffer, format,-1);
+    ok(!strcmp(buffer,"H"), "failed\n");
     ok( r==1, "return count wrong\n");
 
     format = "x%cx";

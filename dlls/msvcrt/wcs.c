@@ -491,6 +491,8 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
             }
             else if( *p == 'w' )
                 flags.WideString = *p++;
+            else if( *p == 'F' )
+                p++; /* ignore */
             else
                 break;
         }
