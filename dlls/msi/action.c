@@ -3726,7 +3726,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         deformat_string(package, key , &deformated);
         deformat_string(package, name, &deformated_name);
 
-        len = strlenW(deformated) + 5;
+        len = strlenW(deformated) + 6;
         if (deformated_name)
             len+=strlenW(deformated_name);
 
