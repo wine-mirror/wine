@@ -584,7 +584,7 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define IMalloc_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMalloc_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IMalloc_Release(p)            ICOM_CALL (Release,p)
-/*** IMalloc32 methods ***/
+/*** IMalloc methods ***/
 #define IMalloc_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
 #define IMalloc_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
 #define IMalloc_Free(p,a)       ICOM_CALL1(Free,p,a)

@@ -141,7 +141,7 @@ struct tagVARIANT {
 		DATE date;
 		BSTR bstrVal;
 		CY cyVal;
-		/* DECIMAL decVal; */
+		DECIMAL decVal;
 		IUnknown* punkVal;
 		IDispatch* pdispVal;
 	        SAFEARRAY* parray;
@@ -164,7 +164,7 @@ struct tagVARIANT {
 		VARIANT* pvarVal;
 		PVOID byref;
 		CY* pcyVal;
-	  /* DECIMAL* pdecVal; */
+		DECIMAL* pdecVal;
 		IUnknown** ppunkVal;
 		IDispatch** ppdispVal;
 	        SAFEARRAY** pparray;

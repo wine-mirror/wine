@@ -163,6 +163,39 @@ typedef union tagCY {
 
 #endif /* _tagCY_DEFINED */
 
+typedef struct tagDEC {
+    USHORT wReserved;
+    union {
+        struct {
+            BYTE scale;
+            BYTE sign;
+        } DUMMYSTRUCTNAME1;
+        USHORT signscale;
+    } DUMMYUNIONNAME1;
+    ULONG Hi32;
+    union {
+        struct {
+#ifdef BIG_ENDIAN
+            ULONG Mid32;
+            ULONG Lo32;
+#else /* defined(BIG_ENDIAN) */
+            ULONG Lo32;
+            ULONG Mid32;
+#endif /* defined(BIG_ENDIAN) */
+        } DUMMYSTRUCTNAME2;
+        ULONGLONG Lo64;
+    } DUMMYUNIONNAME2;
+} DECIMAL;
+
+#define DECIMAL_NEG ((BYTE)0x80)
+#ifndef NONAMELESSUNION
+#define DECIMAL_SETZERO(d) \
+        do {(d).Lo64 = 0; (d).Hi32 = 0; (d).signscale = 0;} while (0)
+#else
+#define DECIMAL_SETZERO(d) \
+        do {(d).u2.Lo64 = 0; (d).Hi32 = 0; (d).u1.signscale = 0;} while (0)
+#endif
+
 /*
  * 0 == FALSE and -1 == TRUE
  */

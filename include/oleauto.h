@@ -223,11 +223,8 @@ HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE*pbOut);
 HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE*pbOut);
 HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut);
 HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut);
-
-/*
-HRESULT WINAPI VarUI1FromDec32(DECIMAL*pdecIn, BYTE*pbOut);
-HRESULT WINAPI VarUI1FromDisp32(IDispatch* pdispIn, LCID lcid, BYTE* pbOut);
-*/
+HRESULT WINAPI VarUI1FromDec(DECIMAL* pdecIn, BYTE* pbOut);
+HRESULT WINAPI VarUI1FromDisp(IDispatch* pdispIn, LCID lcid, BYTE* pbOut);
 
 HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut);
 HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut);
@@ -240,10 +237,8 @@ HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short*psOut);
 HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short*psOut);
 HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psOut);
 HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut);
-/*
-HRESULT WINAPI VarI2FromDec32(DECIMAL*pdecIn, short*psOut);
-HRESULT WINAPI VarI2FromDisp32(IDispatch* pdispIn, LCID lcid, short* psOut);
-*/
+HRESULT WINAPI VarI2FromDec(DECIMAL* pdecIn, short* psOut);
+HRESULT WINAPI VarI2FromDisp(IDispatch* pdispIn, LCID lcid, short* psOut);
 
 HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut);
 HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut);
@@ -256,10 +251,8 @@ HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG*plOut);
 HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG*plOut);
 HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOut);
 HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut);
-/*
-HRESULT WINAPI VarI4FromDec32(DECIMAL*pdecIn, LONG*plOut);
-HRESULT WINAPI VarI4FromDisp32(IDispatch* pdispIn, LCID lcid, LONG* plOut);
-*/
+HRESULT WINAPI VarI4FromDec(DECIMAL* pdecIn, LONG* plOut);
+HRESULT WINAPI VarI4FromDisp(IDispatch* pdispIn, LCID lcid, LONG* plOut);
 
 HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut);
 HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut);
@@ -272,10 +265,8 @@ HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT*pfltOut);
 HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT*pfltOut);
 HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT*pfltOut);
 HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut);
-/*
-HRESULT WINAPI VarR4FromDec32(DECIMAL*pdecIn, FLOAT*pfltOut);
-HRESULT WINAPI VarR4FromDisp32(IDispatch* pdispIn, LCID lcid, FLOAT* pfltOut);
-*/
+HRESULT WINAPI VarR4FromDec(DECIMAL* pdecIn, FLOAT* pfltOut);
+HRESULT WINAPI VarR4FromDisp(IDispatch* pdispIn, LCID lcid, FLOAT* pfltOut);
 
 HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut);
 HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut);
@@ -288,10 +279,8 @@ HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double*pdblOut);
 HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double*pdblOut);
 HRESULT WINAPI VarR8FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, double*pdblOut);
 HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut);
-/*
-HRESULT WINAPI VarR8FromDec32(DECIMAL*pdecIn, double*pdblOut);
-HRESULT WINAPI VarR8FromDisp32(IDispatch* pdispIn, LCID lcid, double* pdblOut);
-*/
+HRESULT WINAPI VarR8FromDec(DECIMAL* pdecIn, double* pdblOut);
+HRESULT WINAPI VarR8FromDisp(IDispatch* pdispIn, LCID lcid, double* pdblOut);
 
 HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut);
 HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut);
@@ -304,10 +293,9 @@ HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE*pdateOut);
 HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE*pdateOut);
 HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut);
 HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut);
-/*
-HRESULT WINAPI VarDateFromDec32(DECIMAL*pdecIn, DATE*pdateOut);
-HRESULT WINAPI VarDateFromDisp32(IDispatch* pdispIn, LCID lcid, DATE* pdateOut);
-*/
+HRESULT WINAPI VarDateFromDec(DECIMAL* pdecIn, DATE* pdateOut);
+HRESULT WINAPI VarDateFromDisp(IDispatch* pdispIn, LCID lcid, DATE* pdateOut);
+
 HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut);
@@ -319,11 +307,9 @@ HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromI1(signed char cIn, CY*pcyOut);
 HRESULT WINAPI VarCyFromUI2(USHORT uiIn, CY*pcyOut);
 HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY*pcyOut);
-/*
-HRESULT WINAPI VarCyFromDec32(DECIMAL*pdecIn, CY*pcyOut);
-HRESULT WINAPI VarCyFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CY* pcyOut);
-HRESULT WINAPI VarCyFromDisp32(IDispatch* pdispIn, LCID lcid, CY* pcyOut);
-*/
+HRESULT WINAPI VarCyFromDec(DECIMAL*pdecIn, CY*pcyOut);
+HRESULT WINAPI VarCyFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CY* pcyOut);
+HRESULT WINAPI VarCyFromDisp(IDispatch* pdispIn, LCID lcid, CY* pcyOut);
 
 HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
@@ -337,10 +323,8 @@ HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
 HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
 HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
 HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-/*
-HRESULT WINAPI VarBstrFromDec32(DECIMAL*pdecIn, LCID lcid, ULONG dwFlags, BSTR32*pbstrOut);
-HRESULT WINAPI VarBstrFromDisp32(IDispatch* pdispIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut);
-*/
+HRESULT WINAPI VarBstrFromDec(DECIMAL* pdecIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
+HRESULT WINAPI VarBstrFromDisp(IDispatch* pdispIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 
 HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut);
 HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut);
@@ -353,10 +337,8 @@ HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL*pboolOut);
 HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL*pboolOut);
 HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL*pboolOut);
 HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut);
-/*
-HRESULT WINAPI VarBoolFromDec32(DECIMAL*pdecIn, VARIANT_BOOL*pboolOut);
-HRESULT WINAPI VarBoolFromDisp32(IDispatch* pdispIn, LCID lcid, VARIANT_BOOL* pboolOut);
-*/
+HRESULT WINAPI VarBoolFromDec(DECIMAL* pdecIn, VARIANT_BOOL* pboolOut);
+HRESULT WINAPI VarBoolFromDisp(IDispatch* pdispIn, LCID lcid, VARIANT_BOOL* pboolOut);
 
 HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR*pcOut);
 HRESULT WINAPI VarI1FromI2(short uiIn, CHAR*pcOut);
@@ -369,10 +351,8 @@ HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR*pcOut);
 HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR*pcOut);
 HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR*pcOut);
 HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR*pcOut);
-/*
-HRESULT WINAPI VarI1FromDec32(DECIMAL*pdecIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromDisp32(IDispatch*pdispIn, LCID lcid, CHAR*pcOut);
-*/
+HRESULT WINAPI VarI1FromDec(DECIMAL* pdecIn, CHAR* pcOut);
+HRESULT WINAPI VarI1FromDisp(IDispatch* pdispIn, LCID lcid, CHAR* pcOut);
 
 HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT*puiOut);
 HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT*puiOut);
@@ -385,10 +365,8 @@ HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT*puiOut);
 HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT*puiOut);
 HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT*puiOut);
 HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT*puiOut);
-/*
-HRESULT WINAPI VarUI2FromDec32(DECIMAL*pdecIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromDisp32(IDispatch*pdispIn, LCID lcid, USHORT*puiOut);
-*/
+HRESULT WINAPI VarUI2FromDec(DECIMAL* pdecIn, USHORT* puiOut);
+HRESULT WINAPI VarUI2FromDisp(IDispatch* pdispIn, LCID lcid, USHORT* puiOut);
 
 HRESULT WINAPI VarUI4FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, ULONG*pulOut);
 HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG*pulOut);
@@ -401,24 +379,22 @@ HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG*pulOut);
 HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG*pulOut);
 HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG*pulOut);
 HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG*pulOut);
-/*
-HRESULT WINAPI VarUI4FromDec32(DECIMAL*pdecIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromDisp32(IDispatch*pdispIn, LCID lcid, ULONG*pulOut);
+HRESULT WINAPI VarUI4FromDec(DECIMAL* pdecIn, ULONG* pulOut);
+HRESULT WINAPI VarUI4FromDisp(IDispatch* pdispIn, LCID lcid, ULONG* pulOut);
 
-HRESULT WINAPI VarDecFromUI132(BYTE bIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromI232(short uiIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromI432(LONG lIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromR432(FLOAT fltIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromR832(double dblIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromDate32(DATE dateIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromStr32(OLECHAR32*strIn, LCID lcid, ULONG dwFlags, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromBool32(VARIANT_BOOL boolIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromI132(CHAR cIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromUI232(USHORT uiIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromUI432(ULONG ulIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromCy32(CY cyIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
-*/
+HRESULT WINAPI VarDecFromUI1(BYTE bIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromI2(short uiIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromI4(LONG lIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromR4(FLOAT fltIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromR8(double dblIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromDate(DATE dateIn, DECIMAL*pdecOut);
+HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromBool(VARIANT_BOOL boolIn, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromI1(CHAR cIn, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromUI2(USHORT uiIn, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromUI4(ULONG ulIn, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromCy(CY cyIn, DECIMAL* pdecOut);
+HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 
 
 
@@ -429,7 +405,7 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #define VarUI1FromUint	VarUI1FromUI4
 #define VarI2FromInt		VarI2FromI4
 #define VarI2FromUint		VarI2FromUI4
-#define VarI4FromInt		VarI4FromI432
+#define VarI4FromInt		VarI4FromI4
 #define VarI4FromUint		VarI4FromUI4
 #define VarR4FromInt		VarR4FromI4
 #define VarR4FromUint		VarR4FromUI4
@@ -448,23 +424,23 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #define VarUI2FromInt		VarUI2FromI4
 #define VarUI2FromUint	VarUI2FromUI4
 #define VarUI4FromInt		VarUI4FromI4
-#define VarUI4FromUint	VarUI4FromUI432
-#define VarDecFromInt		VarDecFromI432
-#define VarDecFromUint	VarDecFromUI432
+#define VarUI4FromUint	VarUI4FromUI4
+#define VarDecFromInt		VarDecFromI4
+#define VarDecFromUint	VarDecFromUI4
 #define VarIntFromUI1		VarI4FromUI1
 #define VarIntFromI2		VarI4FromI2
-#define VarIntFromI4		VarI4FromI432
+#define VarIntFromI4		VarI4FromI4
 #define VarIntFromR4		VarI4FromR4
 #define VarIntFromR8		VarI4FromR8
 #define VarIntFromDate	VarI4FromDate
 #define VarIntFromCy		VarI4FromCy
 #define VarIntFromStr		VarI4FromStr
-#define VarIntFromDisp	VarI4FromDisp32
+#define VarIntFromDisp	VarI4FromDisp
 #define VarIntFromBool	VarI4FromBool
 #define VarIntFromI1		VarI4FromI1
 #define VarIntFromUI2		VarI4FromUI2
 #define VarIntFromUI4		VarI4FromUI4
-#define VarIntFromDec		VarI4FromDec32
+#define VarIntFromDec		VarI4FromDec
 #define VarIntFromUint	VarI4FromUI4
 #define VarUintFromUI1	VarUI4FromUI1
 #define VarUintFromI2		VarUI4FromI2
@@ -474,12 +450,12 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #define VarUintFromDate	VarUI4FromDate
 #define VarUintFromCy		VarUI4FromCy
 #define VarUintFromStr	VarUI4FromStr
-#define VarUintFromDisp	VarUI4FromDisp32
+#define VarUintFromDisp	VarUI4FromDisp
 #define VarUintFromBool	VarUI4FromBool
 #define VarUintFromI1		VarUI4FromI1
 #define VarUintFromUI2	VarUI4FromUI2
-#define VarUintFromUI4	VarUI4FromUI432
-#define VarUintFromDec	VarUI4FromDec32
+#define VarUintFromUI4	VarUI4FromUI4
+#define VarUintFromDec	VarUI4FromDec
 #define VarUintFromInt	VarUI4FromI4
 
 /*
