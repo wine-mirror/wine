@@ -205,7 +205,8 @@ TRACKBAR_CalcThumb (HWND hwnd, TRACKBAR_INFO *infoPtr)
           thumb-> left =2; 
         thumb->right = thumb -> left + infoPtr->uThumbLen;
         thumb->top = infoPtr->rcChannel.top +
-                     (width*infoPtr->nPos)/range - thumbdepth/2;
+                     (width*(infoPtr->nPos - infoPtr->nRangeMin))/range - 
+                     thumbdepth/2;
         thumb->bottom = thumb->top + thumbdepth;
     } 
     else 
@@ -213,7 +214,8 @@ TRACKBAR_CalcThumb (HWND hwnd, TRACKBAR_INFO *infoPtr)
     	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
 
         thumb->left = infoPtr->rcChannel.left +
-                      (width*infoPtr->nPos)/range - thumbdepth/2;
+                      (width*(infoPtr->nPos - infoPtr->nRangeMin))/range - 
+                      thumbdepth/2;
         thumb->right = thumb->left + thumbdepth;
         if (dwStyle & (TBS_BOTH | TBS_TOP))
           thumb->top = 10;
@@ -277,9 +279,9 @@ TRACKBAR_DrawHorizTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
 
     if (flags & TIC_SELECTIONMARK) {
   	if (flags & TIC_SELECTIONMARKMIN) 
-            x=rcChannel.left + (width*ticPos)/range - 1;
+            x=rcChannel.left + (width*(ticPos - infoPtr->nRangeMin))/range - 1;
 	else 
-            x=rcChannel.left + (width*ticPos)/range + 1;
+            x=rcChannel.left + (width*(ticPos - infoPtr->nRangeMin))/range + 1;
 
    	SetPixel (hdc, x,y+6*side, clrTic);
    	SetPixel (hdc, x,y+7*side, clrTic);
@@ -287,7 +289,7 @@ TRACKBAR_DrawHorizTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
     }
 
     if ((ticPos>infoPtr->nRangeMin) && (ticPos<infoPtr->nRangeMax)) {
-   	x=rcChannel.left + (width*ticPos)/range;
+   	x=rcChannel.left + (width*(ticPos - infoPtr->nRangeMin))/range;
    	SetPixel (hdc, x,y+5*side, clrTic);
    	SetPixel (hdc, x,y+6*side, clrTic);
    	SetPixel (hdc, x,y+7*side, clrTic);
@@ -328,9 +330,9 @@ TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
 
     if (flags & TIC_SELECTIONMARK) {
   	if (flags & TIC_SELECTIONMARKMIN) 
-            y=rcChannel.top + (width*ticPos)/range - 1;
+            y=rcChannel.top + (width*(ticPos - infoPtr->nRangeMin))/range - 1;
 	else 
-            y=rcChannel.top + (width*ticPos)/range + 1;
+            y=rcChannel.top + (width*(ticPos - infoPtr->nRangeMin))/range + 1;
 
    	SetPixel (hdc, x+6*side, y, clrTic);
    	SetPixel (hdc, x+7*side, y, clrTic);
@@ -338,7 +340,7 @@ TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
     }
 
     if ((ticPos>infoPtr->nRangeMin) && (ticPos<infoPtr->nRangeMax)) {
-   	y=rcChannel.top + (width*ticPos)/range;
+   	y=rcChannel.top + (width*(ticPos - infoPtr->nRangeMin))/range;
    	SetPixel (hdc, x+5*side, y, clrTic);
    	SetPixel (hdc, x+6*side, y, clrTic);
    	SetPixel (hdc, x+7*side, y, clrTic);
