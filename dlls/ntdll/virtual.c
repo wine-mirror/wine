@@ -238,6 +238,27 @@ static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
 
 
 /***********************************************************************
+ *           VIRTUAL_DeleteView
+ * Deletes a view.
+ *
+ * RETURNS
+ *	None
+ */
+static void VIRTUAL_DeleteView( FILE_VIEW *view ) /* [in] View */
+{
+    RtlEnterCriticalSection(&csVirtual);
+    if (!(view->flags & VFLAG_SYSTEM))
+        munmap( (void *)view->base, view->size );
+    if (view->next) view->next->prev = view->prev;
+    if (view->prev) view->prev->next = view->next;
+    else VIRTUAL_FirstView = view->next;
+    RtlLeaveCriticalSection(&csVirtual);
+    if (view->mapping) NtClose( view->mapping );
+    free( view );
+}
+
+
+/***********************************************************************
  *           VIRTUAL_CreateView
  *
  * Create a new view and add it in the linked list.
@@ -290,31 +311,31 @@ static FILE_VIEW *VIRTUAL_CreateView( void *base, UINT size, UINT flags,
         view->prev = prev;
         if (view->next) view->next->prev = view;
         prev->next  = view;
+
+        /* Check for overlapping views. This can happen if the previous view
+         * was a system view that got unmapped behind our back. In that case
+         * we recover by simply deleting it. */
+        if ((char *)prev->base + prev->size > (char *)base)
+        {
+            TRACE( "overlapping prev view %p-%p for %p-%p\n",
+                   prev->base, (char *)prev->base + prev->size,
+                   base, (char *)base + view->size );
+            assert( view->prev->flags & VFLAG_SYSTEM );
+            VIRTUAL_DeleteView( view->prev );
+        }
+    }
+    /* check for overlap with next too */
+    if (view->next && (char *)base + view->size > (char *)view->next->base)
+    {
+        TRACE( "overlapping next view %p-%p for %p-%p\n",
+               view->next->base, (char *)view->next->base + view->next->size,
+               base, (char *)base + view->size );
+        assert( view->next->flags & VFLAG_SYSTEM );
+        VIRTUAL_DeleteView( view->next );
     }
     RtlLeaveCriticalSection(&csVirtual);
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return view;
-}
-
-
-/***********************************************************************
- *           VIRTUAL_DeleteView
- * Deletes a view.
- *
- * RETURNS
- *	None
- */
-static void VIRTUAL_DeleteView( FILE_VIEW *view ) /* [in] View */
-{
-    if (!(view->flags & VFLAG_SYSTEM))
-        munmap( (void *)view->base, view->size );
-    RtlEnterCriticalSection(&csVirtual);
-    if (view->next) view->next->prev = view->prev;
-    if (view->prev) view->prev->next = view->next;
-    else VIRTUAL_FirstView = view->next;
-    RtlLeaveCriticalSection(&csVirtual);
-    if (view->mapping) NtClose( view->mapping );
-    free( view );
 }
 
 
