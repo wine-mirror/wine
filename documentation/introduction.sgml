@@ -5,105 +5,53 @@
       <title>Overview / About</title>
       
       <sect2>
-      <title>Purpose of this document and intended audience</title>
-      <para>
-        This document, called the Wine User Guide, is supposed to
-	be both an easy installation guide and an extensive reference guide.
-	Thus while it completely explains how to install and configure Wine,
-	it also tries to document all configuration features and support areas
-	of the Wine environment as a whole.
-      </para>
-      <para>
-        It tries to target both the new Wine user, by offering a step by 
-	step approach, and the experienced Wine	user, by offering the reference 
-	material mentioned above.
-      </para>
+        <title>Purpose of this document and intended audience</title>
+        <para>
+          This document, called the Wine User Guide, is both an easy
+          installation guide and an extensive reference guide.  This guide
+          is for both the new Wine user and the experienced Wine user,
+          offering full step-by-step installation and configuration
+          instructions, as well as featuring extensive reference material
+          by documenting all configuration features and support areas.
+        </para>
       </sect2>
 
       <sect2>
-        <title>Burning questions and comments</title>
+        <title>Further questions and comments</title>
         <para>
-          If during reading this document there is something you
-          can't figure out, or think could be explained better, or
-          that should have been included, please immediately mail to the 
-	  <ulink url="mailto:wine-devel@winehq.org">wine-devel</ulink>, or
-          post a bug report to
-          <ulink url="http://bugs.winehq.org/">Wine's Bugzilla</ulink> to
-          let us know how this document can be improved.  Remember, Open
-          Source is "free as in free speech, not as in free beer": it can
-          only work in the case of very active involvement of its users!
-	</para>
-	<para>
-	  <emphasis>
-	  Note that I can't say that I'm too impressed with the amount
-	  of feedback about this Guide that we have received so far
-	  since I added this paragraph many months ago...
-	  </emphasis>
+          If, after examining this guide, the FAQ, and other relevant
+          documentation there's still something you can't figure out,
+          we'd love to hear from you.  The <ulink
+          url="http://www.winehq.org/site/forums">mailing lists</ulink>
+          section contains several mailing lists and an IRC channel, all
+          of which are great places to seek help and offer suggestions.
+          If you're particularly savvy, and believe that something can be
+          explained better, you can file a <ulink
+          url="http://bugs.winehq.org/">bug report</ulink> or <ulink
+          url="http://www.winehq.org/site/sending_patches">post a
+          patch</ulink> on Wine's documentation itself.
         </para>
       </sect2>
 
       <sect2>
         <title>Content overview / Steps to take</title>
-	<para>
-	  This section will try to give you a complete overview of
-	  how to go all the way to a fully working Wine installation
-	  by following this Guide.
-	  We <emphasis>strongly recommend</emphasis> following every
-	  single relevant step of this Guide, since you might miss important
-	  information otherwise.
-	</para>
-	<para>
-	  First, we start by explaining what Wine is and mentioning
-	  everything else that's useful to know about it (that's
-	  covered in this very chapter that you're reading a part of right now).
-	</para>
-	<para>
-	  In order to be able to use Wine, you need to obtain a copy of
-	  its files first. That's the purpose of the next chapter, <link
-	  linkend="getting-wine">Getting Wine</link>: it tries to show
-	  you how Wine can be installed on your particular system
-	  (i.e. which installation methods are available in your case),
-	  and then it explains the various methods: either getting Wine
-	  via a binary package file suited for your particular system,
-	  or getting it via a Wine <glossterm>source code</glossterm>
-	  archive file, or getting the most current Wine development
-	  source code via <glossterm>CVS</glossterm>.
-	</para>
-	<para>
-	  Once you got your copy of Wine, you might need to follow the
-	  next chapter <link linkend="compiling">Compiling</link> if you
-	  decided to get Wine source code.
-	  Otherwise, the next chapter <link
-	  linkend="installing">Installing Wine</link> will explain the
-	  methods to use to install the Wine binary files to some location
-	  on your system.
-	</para>
-	<para>
-	  Once Wine is installed on your system, the next chapter <link
-	  linkend="config-wine-main">Configuring Wine</link> will
-	  focus on the available configuration methods for Wine to set up
-	  a proper Wine/Windows environment with all its requirements:
-	  there are either graphical (e.g. WineSetupTk) or text mode
-	  (wineinstall) configuration helper applications available that will
-	  fully configure the Wine environment for you.
-	  And for those people who dislike a fully automated
-	  installation (maybe because they really want to know what they're
-	  doing), we'll describe how to manually set up a complete Wine
-	  environment configuration.
-	</para>
-	<para>
-	  Once the configuration of the Wine environment is done, the
-	  next chapter <link linkend="running">Running Wine</link>
-	  will show you how to run Windows programs with Wine and
-	  how to satisfy the more specific requirements of certain
-	  Windows programs.
-	</para>
-	<para>
-	  In case you run into trouble, the chapter <link
-	  linkend="bugs">Troubleshooting / Reporting bugs</link>
-	  will list and explain some common troubleshooting and debugging
-	  methods.
-	</para>
+        <para>
+          In order to be able to use Wine, you must first have a working
+          installation.  This guide will help you to move your system
+          from an empty, Wineless void to one boasting a fresh, up to
+          date Wine install.  The first step, <link
+          linkend="getting-wine">Getting Wine</link>, illustrates the
+          various methods of getting Wine's files onto your computer.
+          The second step, <link linkend="installing">Installing
+          Wine</link>, details the various install processes available to
+          you.  The third step, <link linkend="config-wine-main">Configuring
+          Wine</link>, shows how to customize a Wine installation depending
+          on your individual needs.  The final step, <link
+          linkend="running">Running Wine</link>, covers the specific
+          steps you can take to get a particular application to run
+          better under Wine, and provides useful links in case you need
+          further help.
+        </para>
       </sect2>
 
     </sect1>
@@ -113,157 +61,138 @@
 
       <sect2>
         <title>Windows and Linux</title>
-        <!-- general description of wine, what does it do? -->
         <para>
-          Many people have faced the frustration of owning software that
-          won't run on their computer.  With the recent popularity of
-          <ulink url="http://www.tldp.org/FAQ/Linux-FAQ/index.html">
-          Linux</ulink>, this is happening more and more often because
-          of differing operating systems.  Your Windows software won't
-          run on Linux, and your Linux software won't run in Windows.
+          Different software programs are designed for different
+          operating systems, and most won't work on systems that they
+          weren't designed for.  Windows programs, for example, won't run
+          in Linux because they contain instructions that the system can't
+          understand until they're translated by the Windows environment.
+          Linux programs, likewise, won't run under the Windows operating
+          system because Windows is unable to interpret all of their
+          instructions.
         </para>
         <para>
-          A common solution to this problem is to install both operating
-          systems on the same computer, as a <quote>dual boot</quote>
-          system.  If you want to write a document in MS Word, you can
-          boot up in Windows; if you want to run GnuCash, the GNOME
-          financial application, you can shut down your Windows session
-          and reboot into Linux.  The problem with this is that you
-          can't do both at the same time.  Each time you switch back and
-          forth between MS Word and GnuCash, you have to reboot again.
-          This can get tiresome quickly.
-        </para>
-        <para>
-          Life would be so much easier if you could run all your
-          applications on the same system, regardless of whether they
-          are written for Windows or for Linux.  On Windows, this isn't
-          really possible, yet.
-          <footnote>
-            <para>
-              Technically, if you have two networked computers, one
-              running Windows and the other running Linux, and if you
-              have some sort of X server software running on the Windows
-              system, you can export Linux applications onto the Windows
-              system. A free X server is available at
-	      <ulink url="http://xfree86.cygwin.com/">http://xfree86.cygwin.com/</ulink>.
-              However, this doesn't solve the problem if you only own
-              one computer system.
-            </para>
-          </footnote>
-          However, Wine makes it possible to run native Windows
-          applications alongside native Linux applications on any Unix-like
-          system.  You can share desktop space between MS Word and GnuCash,
-          overlapping their windows, iconizing them, and even running them
-          from the same launcher.
+          This situation presents a fundamental problem for anyone who
+          wants to run software for both Windows and Linux.  A common
+          solution to this problem is to install both operating systems on
+          the same computer, known as "dual booting."  When a Windows
+          program is needed, the user boots the machine into Windows to
+          run it; when a Linux program is then needed, the user then
+          reboots the machine into Linux.  This option presents great
+          difficulty: not only must the user endure the frustration of
+          frequent rebooting, but programs for both platforms can't be
+          run simultaneously.  Having Windows on a system also creates
+          an added burden: the software is expensive, requires a seperate
+          disk partition, and is unable to read most filesystem formats,
+          making the sharing of data between operating systems difficult.
         </para>
       </sect2>
 
       <sect2>
         <title>What is Wine, and how can it help me?</title>
-        <!-- emulator vs. Winelib -->
         <para>
-          Wine is a UNIX implementation of the win32 Windows libraries,
-          written from scratch by hundreds of volunteer developers and
-          released under an Open Source license (think of it as a
-	  Windows compatibility layer for Linux and other similar
-	  operating systems).  Anyone can download
-          and read through the source code, and fix bugs that arise.
-          The Wine community is full of richly talented programmers
-          who have spent thousands of hours of personal time on
-          improving Wine so that it works well with the win32
-          <glossterm>Application Programming Interface</glossterm>
-          (API), and keeps pace with new developments from Microsoft.
+          Wine makes it possible to run Windows programs alongside any
+          Unix-like operating system, particularly Linux.  At its heart,
+          wine is an implementation of the Windows Application
+          Programing Interface (API) library, acting as a bridge between
+          the Windows program and Linux.  Think of Wine as a compatibility
+          layer, when a Windows program tries to preform a function that
+          Linux doesn't normally understand, Wine will translate that
+          program's instruction into one supported by the system.  For
+          example, if a program asks the system to create a Windows
+          pushbutton or text-edit field, Wine will convert that
+          instruction into its Linux equivalent in the form of a command
+          to the window manager using the standard X11 protocol.
         </para>
         <para>
-          Wine can run Windows applications in two discrete ways: as
-          pre-compiled Windows binaries (your average off-the-shelf
-	  program package e.g. available on CD), or as natively compiled
-          <ulink url="http://www.xfree86.org/#whatis">X11 (X-Window
-          System)</ulink> applications (via the part of Wine that's called
-	  Winelib). If you're interested in compiling the source code of a
-	  Windows program you wrote, then please refer to the
-	  Winelib User's Guide instead, which explains this particular topic.
-          This Wine Users Guide however will focus on running standard
-          Windows applications using Wine.
-        </para>
-
-        <!-- the development model -->
-        <para>
+          If you have access to the Windows program's source code, wine
+          can also be used to recompile a program into a format that Linux
+          can understand more easily.  Wine is still needed to launch the
+          program in its recompiled form, however there are many advantages
+          to compiling a Windows program natively within linux.  For more
+          information, see the Winelib User Guide.
         </para>
       </sect2>
 
-      <sect2 id="wine-capabilities">
-        <title>Wine capabilities</title>
+      <sect2 id="wine-features">
+        <title>Wine features</title>
 
         <para>
-          Now that we're done with the boring introductory babble,
-	  let us tell you what Wine is able to do/support:
+          Throughout the course of its development, Wine has continually
+          grown in the features it carries and the programs it can run.
+          A partial list of these features follows: 
         </para>
         <para>
           <itemizedlist>
             <listitem>
               <para>
-                Support for running Win32 (Win 95/98, NT/2000/XP), Win16 (Win 3.1) and DOS programs
+                Support for running Win32 (Win 95/98, NT/2000/XP), Win16
+                (Win 3.1) and DOS programs
               </para>
             </listitem>
             <listitem>
               <para>
-                Optional use of external vendor
-		<glossterm>DLLs</glossterm> (e.g. original
-                Windows DLLs)
+                Optional use of external vendor DLL files (such as those
+                included with Windows)
               </para>
             </listitem>
             <listitem>
               <para>
-                X11-based graphics display (remote display to any X
-                terminal possible), text mode console
+                X11-based graphics display, allowing remote display to any
+                X terminal, as well as a text mode console
               </para>
             </listitem>
             <listitem>
               <para>
-                Desktop-in-a-box or mixable windows
+                Desktop-in-a-box or mixable windows 
               </para>
             </listitem>
             <listitem>
               <para>
-                Pretty advanced DirectX support for games
+                DirectX support for games
               </para>
             </listitem>
             <listitem>
               <para>
-                Good support for sound, alternative input devices
+                Good support for various sound drivers including OSS and ALSA
               </para>
             </listitem>
             <listitem>
               <para>
-		Printing: PostScript interface driver (psdrv) to
-		standard Unix PostScript print services
+                Support for alternative input devices 
               </para>
             </listitem>
             <listitem>
               <para>
-                Modems, serial devices are supported
+                Printing: PostScript interface driver (psdrv) to standard
+                Unix PostScript print services 
               </para>
             </listitem>
             <listitem>
               <para>
-                Winsock TCP/IP networking
+                Modem, serial device support
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Winsock TCP/IP networking support
               </para>
             </listitem>
             <listitem>
               <para>
                 ASPI interface (SCSI) support for scanners, CD writers,
-                ...
+                and other devices
               </para>
             </listitem>
             <listitem>
               <para>
-                Unicode support, relatively advanced language support
+                Advanced unicode and foreign language support
               </para>
             </listitem>
             <listitem>
               <para>
-                Wine debugger and configurable trace logging messages
+                Full-featured Wine debugger and configurable trace
+                logging messages for easier troubleshooting
               </para>
             </listitem>
           </itemizedlist>
@@ -271,237 +200,197 @@
       </sect2>
     </sect1>
 
-    <sect1 id="other-wines">
-      <title>Other, often "Enhanced" Wine offerings</title>
+    <sect1 id="wine-versions">
+      <title>Versions of Wine</title>
+        <sect2>
+          <title>Wine from Wine HQ</title>
 
-      <para>
-        There are a number of offerings that are derived from the standard Wine
-	codebase in some way or another.
-      </para>
-      <para>
-        Some of these are commercial products from companies that actively contribute to Wine.
-      </para>
-      <para>
-        These products often try to stand out or distinguish themselves
-	from Wine, e.g. by offering greater compatibility or much easier
-	and flexible configuration than your average standard Wine
-	release. As such it is often a good idea to shell out some bucks
-	for the commercial versions, especially since these companies
-	contribute a lot of code to Wine, and plus, I'm sure they'll be happy about your support...
-      </para>
+          <para>
+             Wine is an open source project, and there are accordingly
+             many different versions of Wine for you to choose from.  The
+             standard version of Wine comes in intermittant releases
+             (roughly every 90 days), and can be downloaded over the
+             internet in both prepackaged binary form and ready to compile
+             source code form.  Alternatively, you can install a prerelease
+             version of Wine by using the latest available source code on
+             the CVS server.  See the next chapter, Getting Wine (link:
+             getting wine), for further details.
+          </para>
+        </sect2>
+        <sect2>
+          <title>Other Versions of Wine</title>
+          <para>
+            There are a number of programs that are derived from the
+            standard Wine codebase in some way or another.  Some of these
+            are commercial products from companies that actively contribute
+            to the Wine project.
+          </para>
+          <para>
+            These products try to stand out or distinguish themselves
+            from the standard version of Wine by offering greater
+            compatibility, easier configuration, and commercial support.
+            If you require such things, it is a good idea to consider
+            purchasing these products.
+          </para>
       <table><title>Various Wine offerings</title>
         <tgroup cols=3 align="left">
-	  <thead>
-	    <row>
-	      <entry>Product</entry>
-	      <entry>Description</entry>
-	      <entry>Distribution form</entry>
-	    </row>
-	  </thead>
-	  <tbody>
+          <thead>
+            <row>
+              <entry>Product</entry>
+              <entry>Description</entry>
+              <entry>Distribution Form</entry>
+            </row>
+          </thead>
+          <tbody>
             <row>
               <entry>
                 <ulink
-		url="http://sourceforge.net/projects/rewind">ReWind</ulink>
+                url="http://www.codeweavers.com/products/office">CodeWeavers CrossOver Office</ulink>
               </entry>
               <entry>
-                ReWind is a Wine version derived from the old BSD
-		licensed Wine tree (it's the "completely free" BSD license fork of the currently LGPL'ed Wine).
-		Due to its BSD license it can't incorporate some Wine
-		patches that get licensed under the more restrictive
-		(or: protective) LGPL license by their authors.
+                CrossOver Office allows you to install your favorite
+                Windows productivity applications in Linux, without
+                needing a Microsoft Operating System license. CrossOver
+                includes an easy to use, single click interface, which
+                makes installing a Windows application simple and fast.
               </entry>
               <entry>
-                Free, Open Source: BSD license
+                Commercial; 30-day fully-functional demo available.
               </entry>
             </row>
-	    <row>
-	      <entry>
-		<ulink
-		url="http://www.codeweavers.com/products/office">CodeWeavers CrossOver Office</ulink>
-	      </entry>
-	      <entry>
-	        CrossOver Office allows you to install your favorite
-		Windows productivity applications in Linux, without
-		needing a Microsoft Operating System license. CrossOver
-		includes an easy to use, single click interface, which
-		makes installing a Windows application simple and fast.
-	      </entry>
-	      <entry>
-	        Commercial
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<ulink
-		url="http://www.codeweavers.com/products/cxofficeserver">CodeWeavers CrossOver Office Server Edition</ulink>
-	      </entry>
-	      <entry>
-	        CrossOver Office Server Edition allows you to run your
-	        favorite Windows productivity applications in a
-	        distributed thin-client environment under Linux, without
-	        needing Microsoft Operating System licenses for each
-	        client machine. CrossOver OfficeServer Edition allows you
-	        to satisfy the needs of literally hundreds of concurrent
-	        users, all from a single server.
-	      </entry>
-	      <entry>
-	        Commercial
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<ulink
-		url="http://www.codeweavers.com/products/crossover">CodeWeavers
-		CrossOver Plugin</ulink>
-	      </entry>
-	      <entry>
-                CrossOver Plugin lets you use many Windows plugins
-                directly from your Linux browser. In particular CrossOver
-                fully supports QuickTime, Shockwave Director,
-                Windows Media Player 6.4, Word Viewer, Excel Viewer,
-                PowerPoint Viewer, and more...
-              </entry>
-              <entry>
-                Commercial; Demo version available
-              </entry>
-            </row>
-	    <row>
-	      <entry>
-	        <ulink
-		url="http://www.codeweavers.com/technology/wine/">CodeWeavers
-		Wine preview</ulink>
-	      </entry>
-	      <entry>
-	        The Wine preview is a usually slightly older Wine release
-		that's been tested as extra stable.
-		It includes the graphical installer winesetuptk,
-		allowing for easy configuration.
-              </entry>
-	      <entry>
-	        Free, Open Source: LGPL license
-	      </entry>
-	    </row>
             <row>
               <entry>
-                <ulink url="http://www.transgaming.com">TransGaming Technologies WineX</ulink>
+                <ulink
+                url="http://www.codeweavers.com/products/cxofficeserver">CodeWeavers CrossOver Office Server Edition</ulink>
               </entry>
               <entry>
-                WineX is a Wine version derived from the old BSD licensed Wine tree, with currently better support for Direct3D and DirectX software than standard Wine, and with added copy protection support for multiple types of copy protection e.g. used in games.
+                CrossOver Office Server Edition allows you to run your
+                favorite Windows productivity applications in a
+                distributed thin-client environment under Linux, without
+                needing Microsoft Operating System licenses for each
+                client machine. CrossOver OfficeServer Edition allows you
+                to satisfy the needs of literally hundreds of concurrent
+                users, all from a single server.
               </entry>
               <entry>
-                Commercial; <ulink
-		url="http://sourceforge.net/projects/winex">free CVS
-		download</ulink> of reduced version (no copy protection
-		support etc.)
+                Commercial
               </entry>
             </row>
-	  </tbody>
-	</tgroup>
+            <row>
+              <entry>
+                <ulink url="http://www.transgaming.com">TransGaming Technologies Cedega</ulink>
+              </entry>
+              <entry>
+                Cedega, formerly known as WineX, is a Wine version derived
+                from the old BSD licensed Wine tree.  It is designed
+                specifically to function with games, and so development
+                is centered around ensuring compatibility with technologies
+                like Direct3D, DirectX, and various methods of copy protection.
+              </entry>
+              <entry>
+                Commercial; free CVS download of reduced version (no copy
+                protection support etc.)
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <ulink
+                url="http://sourceforge.net/projects/rewind">ReWind</ulink>
+              </entry>
+              <entry>
+                ReWind is a Wine version derived from the old BSD licensed
+                Wine tree.  Due to its BSD license it can't incorporate
+                most recent Wine patches, however its code can be used by
+                any software project without restriction.  Although code
+                is occasionally contributed to ReWind alongside the main
+                Wine project, there has never been an official release of
+                ReWind.
+              </entry>
+              <entry>
+                Free, Open Source: BSD license 
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
       </table>
     </sect1>
 
-    <sect1 id="competition">
+    <sect1 id="alternatives">
       <title>Alternatives to Wine you might want to consider</title>
-
       <para>
-        We'll mention some alternatives (or we could also say:
-	competitors) to Wine here that might come in handy if Wine is
-	not usable for the program or job you want it to do, since
-	these alternatives usually provide better Windows compatibility.
+          There are many ways to run software other than through Wine.  If
+          you are considering using Wine to run an application you might
+          want to think about the viability of these approaches if you
+          encounter difficulty.
       </para>
 
       <sect2>
-        <title>VMWare</title>
+        <title>Native Applications</title>
         <para>
-	  <ulink url="http://www.vmware.com">VMWare</ulink> is a
-	  software package to emulate an additional machine on your PC.
-	  In other words, it establishes a virtual machine that can be
-	  used to run any kind of Intel x86 compatible operating system
-	  in parallel to your currently running operating system.
-	  Thus you could use Linux and at the same time run Windows 98
-	  in a virtual machine on the same screen.
+          Instead of running a particular Windows application with Wine,
+          one frequently viable alternative is to simply run a different
+          application.  Many Windows applications, particularly more
+          commonly used ones such as media players, instant messengers,
+          and filesharing programs have very good open source equivalents.
+          Furthermore, a sizable number of Windows programs have been
+          ported to Linux directly, eliminating the need for Wine (or
+          Windows) entirely.
         </para>
-	<para>
-	  Sounds nice, doesn't it? Well, there are some drawbacks, of
-	  course... First, VMWare is pretty expensive, and second, you
-	  need a licensed copy of the operating system you want to run.
-	  Third, since VMWare is a virtual machine, it's quite slow.
-	  Wine doesn't have any of these limitations, but unfortunately
-	  this also means that you will not have the relatively good
-	  compatibility of a real original Windows system if you use
-	  Wine.
-	</para>
       </sect2>
       <sect2>
-        <title>Win4Lin</title>
-	<para>
-	  <ulink url="http://www.win4lin.com">Win4Lin</ulink> by
-	  NeTraverse allows you to run a special version of Win98 in
-	  Linux. Compared to VMWare, this has the advantage that it's
-	  faster, but you still have the license fees.
-	</para>
-      </sect2>
-    </sect1>
-    <sect1 id="wine-stats">
-      <title>Basic Wine Requirements</title>
-
-      <para>
-        This section only mentions the most basic system requirements of
-	Wine, in order to ease your Wine "purchasing decision" ;-)
-	For an up-to-date much more detailed list of requirements for
-	compiling and/or installing Wine,
-	please read the REQUIREMENTS section of the <ulink
-	url="http://www.winehq.org/source/README">README</ulink> file,
-	which is also available in the main directory of a Wine source code tree.
-      </para>
-      <para>
-	In case of a binary Wine package, these Wine requirements will
-	probably be fulfilled automatically by the package installation
-	process; if you want to have a look at the detailed requirements
-	nevertheless (which definitely can't hurt!), then I'd like to
-	mention that the README file can also frequently be found in the
-	documentation files directory of a Wine package.
-      </para>
-
-      <sect2 id="system-requirements">
-        <title>System requirements</title>
+        <title>Another Operating System</title>
         <para>
-          In order to run Wine, you generally need the following:
+          Probably the most obvious method of getting a Windows
+          application to run is to simply run it on Windows.  However,
+          security, license cost, backward-compatibility, and machine
+          efficiency issues can make this a difficult proposition, which
+          is why Wine is so useful in the first place.
         </para>
         <para>
-          <itemizedlist>
-            <listitem>
-	      <para>
-	        A computer ;-)
-                <literallayout>  Wine: only PCs >= i386 are supported at the moment.</literallayout>
-                <literallayout>  Winelib: selected other platforms are supported, but can be tricky.</literallayout>
-	      </para>
-            </listitem>
-            <listitem>
-	      <para>
-                A UNIX-like operating system such as Linux, *BSD,
-                Solaris x86, ReactOS, Cygwin
-	      </para>
-            </listitem>
-            <listitem>
-	      <para>
-                >= 32MB of RAM.  Everything below is pretty much
-                unusable.  >= 96 MB is needed for "good" execution.
-	      </para>
-            </listitem>
-            <listitem>
-	      <para>
-                An X11 window system (XFree86 etc.).  Wine is prepared
-                for other graphics display drivers, but writing
-                support is not too easy.  The text console display
-                driver (ttydrv) is nearly usable, so you don't
-		necessarily have to install X11 if you don't need it for
-		the programs you intend to run (in other words: mainly
-		for text mode programs).
-	      </para>
-            </listitem>
-          </itemizedlist>
+          Another alternative is to use <ulink
+          url="http://www.reactos.com">ReactOS</ulink>, which is a fully
+          open source alternative to Windows.  ReactOS shares code
+          heavily with the Wine project, but rather than running Windows
+          applications on top of Linux they are instead run on top of the
+          ReactOS kernel.  ReactOS also offers compatibility with Windows
+          driver files, allowing the use of hardware without functional
+          Linux drivers.
+        </para>
+      </sect2>
+      <sect2>
+        <title>Virtual Operating System</title>
+        <para>
+          Rather than installing an entirely new operating system on your
+          machine, you can instead run a virtual machine at the software
+          level and install a different operating system on it.  Thus, you
+          could run a Linux system and at the same time run Windows along
+          with your application in a virtual machine simultaneously on the
+          same hardware.  Virtual machines allow you to install and run
+          not only different versions of Windows on the same hardware, but
+          also other operating systems, including ReactOS.
+        </para>
+        <para>
+          There are several different virtual machine offerings out there,
+          and some are also able to emulate x86 hardware on different
+          platforms.  The open source <ulink
+          url="http://bochs.sourceforge.net/">Bochs</ulink> and <ulink
+          url="http://fabrice.bellard.free.fr/qemu/">QEMU</ulink> can run
+          both Windows and ReactOS virtually.  Other, commercial virtual
+          machine offerings include <ulink
+          url="http://www.vmware.com/">VMware</ulink> and Microsoft's
+          <ulink url="http://www.microsoft.com/windowsxp/virtualpc/">VirtualPC</ulink>.
+        </para>
+        <para>
+          There are significant drawbacks to using virtual machines,
+          however.  Unlike Wine, such programs <emphasis>are</emphasis>
+          emulators, so there is an inevitable speed decrease which can
+          be quite substantial.  Furthermore, running an application
+          inside a virtual machine prevents fully integrating the
+          application within the current environment.  You won't, for
+          example, be able to have windows system tray icons or program
+          shortcuts sitting alongside your desktop Linux ones, since
+          instead the Windows applications must reside completely within
+          the virtual machine.
         </para>
       </sect2>
     </sect1>
