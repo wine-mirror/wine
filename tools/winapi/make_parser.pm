@@ -153,6 +153,8 @@ sub line {
 	ld_output("collect2", $_);
     } elsif($tool eq "gcc" && s/^(.+?\.[chly]):\s*//) {
 	gcc_output($1, $_);
+    } elsif($tool eq "ld" && s/^(.+?\.c):(?:\d+:)?\s*//) {
+	ld_output($1, $_);
     } elsif($tool eq "winebuild" && s/^(.+?\.spec):\s*//) {
 	winebuild_output($1, $_);
     } elsif($tool eq "wmc" && s/^(.+?\.mc):\s*//) {
@@ -166,7 +168,7 @@ sub line {
     } else {
 	error("line");
     }
-    
+
     $file =~ s/^\.\///;
 
     return 1;

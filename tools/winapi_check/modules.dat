@@ -146,6 +146,10 @@ dlls/msrle32
 
 dlls/msvcrt
 
+% dlls/msvcrt20/msvcrt20.spec
+
+dlls/msvcrt20
+
 % dlls/kernel/stress.spec
 
 dlls/kernel

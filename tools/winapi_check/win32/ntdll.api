@@ -113,7 +113,7 @@ WCHAR *
 WCHAR ***
 char *
 char ***
-enum __DEBUG_CLASS
+enum __WINE_DEBUG_CLASS
 va_list
 
 %str

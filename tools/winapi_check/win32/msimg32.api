@@ -1,1 +1,10 @@
+%long
+
+BOOL
+HDC
+ULONG
+
+%ptr
+
+void *
 

@@ -10,10 +10,15 @@ ULONG
 %ptr
 
 CLSID *
+CStdPSFactoryBuffer *
 LPSTR *
 LPVOID
+LPVOID *
 LPWSTR *
 PRPC_POLICY
+ProxyFileInfo **
+REFCLSID
+REFIID
 RPC_AUTH_KEY_RETRIEVAL_FN
 RPC_BINDING_HANDLE *
 RPC_IF_CALLBACK_FN *
@@ -22,7 +27,7 @@ RPC_STATUS *
 UUID *
 unsigned char **
 unsigned short
-void **
+void *
 
 %str
 
