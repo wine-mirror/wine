@@ -132,22 +132,22 @@ extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS
     TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
     TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
     TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
-    (gl_mat)[ 0] = (mat)->_11;			\
-    (gl_mat)[ 1] = (mat)->_21;			\
-    (gl_mat)[ 2] = (mat)->_31;			\
-    (gl_mat)[ 3] = (mat)->_41;			\
-    (gl_mat)[ 4] = (mat)->_12;			\
-    (gl_mat)[ 5] = (mat)->_22;			\
-    (gl_mat)[ 6] = (mat)->_32;			\
-    (gl_mat)[ 7] = (mat)->_42;			\
-    (gl_mat)[ 8] = (mat)->_13;			\
-    (gl_mat)[ 9] = (mat)->_23;			\
-    (gl_mat)[10] = (mat)->_33;			\
-    (gl_mat)[11] = (mat)->_43;			\
-    (gl_mat)[12] = (mat)->_14;			\
-    (gl_mat)[13] = (mat)->_24;			\
-    (gl_mat)[14] = (mat)->_34;			\
-    (gl_mat)[15] = (mat)->_44;			\
+    (gl_mat)->_11 = (mat)->_11;			\
+    (gl_mat)->_12 = (mat)->_21;			\
+    (gl_mat)->_13 = (mat)->_31;			\
+    (gl_mat)->_14 = (mat)->_41;			\
+    (gl_mat)->_21 = (mat)->_12;			\
+    (gl_mat)->_22 = (mat)->_22;			\
+    (gl_mat)->_23 = (mat)->_32;			\
+    (gl_mat)->_24 = (mat)->_42;			\
+    (gl_mat)->_31 = (mat)->_13;			\
+    (gl_mat)->_32 = (mat)->_23;			\
+    (gl_mat)->_33 = (mat)->_33;			\
+    (gl_mat)->_34 = (mat)->_43;			\
+    (gl_mat)->_41 = (mat)->_14;			\
+    (gl_mat)->_42 = (mat)->_24;			\
+    (gl_mat)->_43 = (mat)->_34;			\
+    (gl_mat)->_44 = (mat)->_44;			\
 };
 
 /* Matrix copy WITHOUT transposition */

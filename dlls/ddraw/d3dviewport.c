@@ -141,7 +141,7 @@ Main_IDirect3DViewportImpl_3_2_1_GetViewport(LPDIRECT3DVIEWPORT3 iface,
     memcpy(lpData, &(This->viewports.vp1), dwSize);
 
     if (TRACE_ON(ddraw)) {
-        TRACE("  returning D3DVIEWPORT :");
+        TRACE("  returning D3DVIEWPORT :\n");
 	_dump_D3DVIEWPORT(lpData);
     }
     
@@ -308,7 +308,7 @@ Main_IDirect3DViewportImpl_3_2_GetViewport2(LPDIRECT3DVIEWPORT3 iface,
     memcpy(lpData, &(This->viewports.vp2), dwSize);
 
     if (TRACE_ON(ddraw)) {
-        TRACE("  returning D3DVIEWPORT2 :");
+        TRACE("  returning D3DVIEWPORT2 :\n");
 	_dump_D3DVIEWPORT2(lpData);
     }
     

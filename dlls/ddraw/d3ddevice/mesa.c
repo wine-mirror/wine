@@ -579,23 +579,26 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
 
     switch (dtstTransformStateType) {
         case D3DTRANSFORMSTATE_WORLD: {
+	    TRACE(" D3DTRANSFORMSTATE_WORLD :\n");
 	    conv_mat(lpD3DMatrix, glThis->world_mat);
 	    glMatrixMode(GL_MODELVIEW);
-	    glLoadMatrixf((float *) glThis->world_mat);
+	    glLoadMatrixf((float *) glThis->view_mat);
+	    glMultMatrixf((float *) glThis->world_mat);
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
+	    TRACE(" D3DTRANSFORMSTATE_VIEW :\n");
 	    conv_mat(lpD3DMatrix, glThis->view_mat);
-	    glMatrixMode(GL_PROJECTION);
-	    glLoadMatrixf((float *) glThis->proj_mat);
-	    glMultMatrixf((float *) glThis->view_mat);
+	    glMatrixMode(GL_MODELVIEW);
+	    glLoadMatrixf((float *) glThis->view_mat);
+	    glMultMatrixf((float *) glThis->world_mat);
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
+	    TRACE(" D3DTRANSFORMSTATE_PROJECTION :\n");
 	    conv_mat(lpD3DMatrix, glThis->proj_mat);
 	    glMatrixMode(GL_PROJECTION);
 	    glLoadMatrixf((float *) glThis->proj_mat);
-	    glMultMatrixf((float *) glThis->view_mat);
 	} break;
 
 	default:
@@ -656,13 +659,13 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
         if ((glThis->vertex_type == D3DVT_TLVERTEX) &&
 	     (d3dvt != D3DVT_TLVERTEX)) {
 	    /* Need to put the correct transformation again if we go from Transformed / Lighted
-	       vertices to non-transfromed ones.
+	       vertices to non-transformed ones.
 	    */
 	    glMatrixMode(GL_MODELVIEW);
-	    glLoadMatrixf((float *) glThis->world_mat);
+	    glLoadMatrixf((float *) glThis->view_mat);
+	    glMultMatrixf((float *) glThis->world_mat);
 	    glMatrixMode(GL_PROJECTION);
 	    glLoadMatrixf((float *) glThis->proj_mat);
-	    glMultMatrixf((float *) glThis->view_mat);
 	}
 
 	switch (d3dvt) {
@@ -880,7 +883,6 @@ static void dump_flexible_vertex(DWORD d3dvtVertexType)
 typedef struct {
     float x, y, z;
     float nx, ny, nz;
-    DWORD dwDiffuseRGBA;
     float tu1, tv1;
 } D3DFVF_VERTEX_1;
 
@@ -905,23 +907,17 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
         D3DFVF_VERTEX_1 *vertices = (D3DFVF_VERTEX_1 *) lpvVertices;
 	int index;
 
+	glEnable(GL_LIGHTING);
+	
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 	  
 	    glNormal3f(vertices[i].nx, vertices[i].ny, vertices[i].nz);
 	    glTexCoord2f(vertices[i].tu1, vertices[i].tv1);
-	    glColor4ub((vertices[i].dwDiffuseRGBA >> 24) & 0xFF,
-		       (vertices[i].dwDiffuseRGBA >> 16) & 0xFF,
-		       (vertices[i].dwDiffuseRGBA >>  8) & 0xFF,
-		       (vertices[i].dwDiffuseRGBA >>  0) & 0xFF);
 	    glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-	    TRACE(" %f %f %f / %f %f %f (%02lx %02lx %02lx %02lx) (%f %f)\n",
+	    TRACE(" %f %f %f / %f %f %f (%f %f)\n",
 		  vertices[i].x, vertices[i].y, vertices[i].z,
 		  vertices[i].nx, vertices[i].ny, vertices[i].nz,
-		  (vertices[i].dwDiffuseRGBA >> 24) & 0xFF,
-		  (vertices[i].dwDiffuseRGBA >> 16) & 0xFF,
-		  (vertices[i].dwDiffuseRGBA >>  8) & 0xFF,
-		  (vertices[i].dwDiffuseRGBA >>  0) & 0xFF,
 		  vertices[i].tu1, vertices[i].tv1);
 	}
     }
@@ -1248,7 +1244,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	    /* Application wants to lock the back buffer */
 	    glDrawBuffer(GL_BACK);
 	} else {
-	    WARN(" do not support 3D surface locking for this surface type - trying to use default buffer.\n");
+	    WARN(" do not support 3D surface unlocking for this surface type - trying to use default buffer.\n");
 	}
 
 	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
