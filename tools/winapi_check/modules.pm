@@ -52,6 +52,11 @@ sub new {
 
 	if(/^%\s+(.*?)$/) {
 	    $spec_file = $1;
+	   
+	    if(!-f "$wine_dir/$spec_file") {
+		$$output->write("$module_file: $spec_file: file ($spec_file) doesn't exist or is no file\n");
+	    } 
+
 	    if($wine_dir eq ".") {
 		$all_spec_files{$spec_file}--;
 	    } else {

@@ -13,23 +13,23 @@ sub check_function {
     my @argument_types = @$refargument_types;
     my $winapi = shift;
 
-    my $module = $winapi->function_module($external_name);
+    my $module = $winapi->function_module($internal_name);
        
     if($winapi->name eq "win16") {
-	my $name16 = $external_name;
+	my $name16 = $internal_name;
 	$name16 =~ s/16$//;
-	if($name16 ne $external_name && $winapi->function_stub($name16)) {
+	if($name16 ne $internal_name && $winapi->function_stub($name16)) {
 	    if($options->implemented) {
 		&$output("function implemented but declared as stub in .spec file");
 	    }
 	    return;
-	} elsif($winapi->function_stub($external_name)) {
+	} elsif($winapi->function_stub($internal_name)) {
 	    if($options->implemented_win32) {
 		&$output("32-bit variant of function implemented but declared as stub in .spec file");
 	    }
 	    return;
 	}
-    } elsif($winapi->function_stub($external_name)) {
+    } elsif($winapi->function_stub($internal_name)) {
 	if($options->implemented) {
 	    &$output("function implemented but declared as stub in .spec file");
 	}
@@ -80,8 +80,8 @@ sub check_function {
 	}
     }
 
-    my $declared_calling_convention = $winapi->function_calling_convention($external_name);
-    my @declared_argument_kinds = split(/\s+/, $winapi->function_arguments($external_name));
+    my $declared_calling_convention = $winapi->function_calling_convention($internal_name);
+    my @declared_argument_kinds = split(/\s+/, $winapi->function_arguments($internal_name));
 
     if($declared_calling_convention =~ /^register|interrupt$/) {
 	push @declared_argument_kinds, "ptr";
@@ -112,7 +112,7 @@ sub check_function {
     }
 
     if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&
-       $external_name !~ /^(Get|Set)ThreadContext$/) # FIXME: Kludge
+       $internal_name !~ /^(Get|Set)ThreadContext$/) # FIXME: Kludge
     {
 	$#argument_types--;
     }

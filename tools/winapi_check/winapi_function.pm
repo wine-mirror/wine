@@ -66,15 +66,26 @@ sub calling_convention {
     return $$calling_convention;
 }
 
-sub external_name {
+sub external_name16 {
     my $self = shift;
-    my $external_name = \${$self->{EXTERNAL_NAME}};
+    my $external_name16 = \${$self->{EXTERNAL_NAME16}};
 
     local $_ = shift;
 
-    if(defined($_)) { $$external_name = $_; }
+    if(defined($_)) { $$external_name16 = $_; }
     
-    return $$external_name;
+    return $$external_name16;
+}
+
+sub external_name32 {
+    my $self = shift;
+    my $external_name32 = \${$self->{EXTERNAL_NAME32}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$external_name32 = $_; }
+    
+    return $$external_name32;
 }
 
 sub internal_name {

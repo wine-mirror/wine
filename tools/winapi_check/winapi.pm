@@ -215,6 +215,7 @@ sub parse_spec_file {
     my $output = \${$self->{OUTPUT}};
     my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
     my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_module = \%{$self->{FUNCTION_MODULE}};
     my $modules = \%{$self->{MODULES}};
@@ -256,6 +257,7 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    # FIXME: Internal name existing more than once not handled properly
+	    $$function_external_name{$internal_name} = $external_name;
 	    $$function_arguments{$internal_name} = $arguments;
 	    $$function_calling_convention{$internal_name} = $calling_convention;
 	    if(!$$function_module{$internal_name}) {
@@ -569,6 +571,15 @@ sub function_calling_convention {
     my $name = shift;
 
     return $$function_calling_convention{$name};
+}
+
+sub function_external_name {
+    my $self = shift;
+    my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
+
+    my $name = shift;
+
+    return $$function_external_name{$name};
 }
 
 sub is_function {

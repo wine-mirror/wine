@@ -1,3 +1,8 @@
+%double
+
+GLclampd
+GLdouble
+
 %long
 
 BOOL
@@ -6,9 +11,7 @@ FLOAT
 GLbitfield
 GLboolean
 GLbyte
-GLclampd
 GLclampf
-GLdouble
 GLenum
 GLfloat
 GLint

@@ -145,13 +145,20 @@ files
 
 dlls/ole32
 
-% dlls/ole32/ole2nls.spec
-
-dlls/ole32
-
 % dlls/ole32/ole32.spec
 
 dlls/ole32
+
+% dlls/ole32/ole2conv.spec
+
+% dlls/ole32/ole2nls.spec
+
+dlls/ole32
+ole
+
+% dlls/ole32/ole2prox.spec
+
+% dlls/ole32/ole2thk.spec
 
 % dlls/ole32/storage.spec
 
@@ -257,6 +264,11 @@ dlls/urlmon
 dlls/user
 memory
 windows
+
+% dlls/user/ddeml.spec
+
+dlls/user
+misc
 
 % dlls/user/user.spec
 
@@ -393,10 +405,6 @@ dlls/x11drv
 
 % if1632/comm.spec
 
-% if1632/ddeml.spec
-
-misc
-
 % if1632/dispdib.spec
 
 graphics
@@ -413,16 +421,6 @@ msdos
 relay32
 scheduler
 win32
-
-% if1632/ole2conv.spec
-
-% if1632/ole2nls.spec
-
-ole
-
-% if1632/ole2prox.spec
-
-% if1632/ole2thk.spec
 
 % if1632/system.spec
 

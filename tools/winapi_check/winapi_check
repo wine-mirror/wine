@@ -1,6 +1,16 @@
 #!/usr/bin/perl -w
 
-# Copyright 1999 Patrik Stridvall
+# Copyright 1999-2000 Patrik Stridvall
+
+# Note that winapi_check are using heuristics quite heavily.
+# So always remember that:
+#
+# "Heuristics are bug ridden by definition. 
+#  If they didn't have bugs, then they'd be algorithms."
+#
+# In other words, reported bugs are only potential bugs not
+# real bugs, so they are called issues rather than bugs.
+#
 
 use strict;
 
@@ -92,6 +102,7 @@ my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_
 
 my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
 my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
+my @winapis = ($win16api, $win32api);
 
 if($options->global) {
     'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
@@ -176,12 +187,49 @@ if($options->headers) {
 	    my $linkage = shift;
 	    my $return_type = shift;
 	    my $calling_convention = shift;
-	    my $name = shift;
-	    my $refarguments = shift;
-	    my @arguments = @$refarguments;
+	    my $internal_name = shift;
+	    my $refargument_types = shift;
+	    my @argument_types = @$refargument_types;
+	    my $refargument_names = shift;
+	    my @argument_names = @$refargument_names;
 	    my $statements = shift;
-	    
-	    $declared_functions{$name}++;
+
+	    foreach my $winapi (@winapis) {
+		my $module = $winapi->function_module($internal_name);
+		if(!defined($module)) { next }
+
+		my $external_name = $winapi->function_external_name($internal_name);
+		# FIXME: Kludge because of the THUNK variants
+		if(!defined($external_name)) {
+		    next;
+		}
+
+		my $output_function = sub {
+		    my $message = shift;
+
+		    $output->write("$file: $module: $return_type ");
+		    $output->write("$calling_convention ") if $calling_convention;
+		    $output->write("$internal_name(" . join(",", @argument_types) . "): $message\n");
+		};
+		
+		if(!defined($declared_functions{$winapi->name}{$external_name})) {
+		    $declared_functions{$winapi->name}{$external_name} = "$file";
+		} elsif($options->headers_duplicated) {
+		    my $message = "declared more than once";
+		    if($file ne $declared_functions{$winapi->name}{$external_name}) {
+			$message .= ", first declaration in '" . $declared_functions{$winapi->name}{$external_name} . "'";
+		    }
+	            &$output_function("$message");
+		}
+
+		if($options->headers_misplaced) {
+		    if($file =~ /^include\/[^\/]*$/ && $winapi->name eq "win16") {
+			&$output_function("declaration misplaced");
+		    } elsif($file =~ /^include\/wine\/[^\/]*$/ && $winapi->name eq "win32") {
+			&$output_function("declaration misplaced");
+		    }
+		}
+	    }
 	};
 	
 	my $found_preprocessor = sub {
@@ -221,12 +269,14 @@ foreach my $file ($options->c_files) {
 	my $return_type = shift;
 	my $calling_convention = shift;
 	my $internal_name = shift;
-	my $external_name = $internal_name;
 	my $refargument_types = shift;
 	my @argument_types = @$refargument_types;
 	my $refargument_names = shift;
 	my @argument_names = @$refargument_names;
 	my $statements = shift;
+
+	my $external_name16 = $win16api->function_external_name($internal_name);
+	my $external_name32 = $win32api->function_external_name($internal_name);
 
 	if($options->global) {
 	    $win16api->found_type($return_type) if $options->win16;
@@ -242,40 +292,7 @@ foreach my $file ($options->c_files) {
 	
 	if($file_type ne "application") {
 	    my $module16 = $win16api->function_module($internal_name);
-	    if(!defined($module16)) {
-		if($internal_name =~ /^(.*?)_(.*?)$/) {
-		    my $module2 = lc($1);
-		    my $name2 = $2;
-		    if($win16api->is_module($module2)) {
-			$module16 = $win16api->function_module($name2);
-			if(defined($module16)) {
-			    if(uc($module16) !~ /\U$module2\E/) {
-				$external_name = $name2;
-			    } else {
-				$module16 = undef;
-			    }
-			}
-		    }
-		}
-	    }
-
 	    my $module32 = $win32api->function_module($internal_name);
-	    if(!defined($module32)) {
-		if($internal_name =~ /^(.*?)_(.*?)$/) {
-		    my $module2 = lc($1);
-		    my $name2 = $2;
-		    if($win32api->is_module($module2)) {
-			$module32 = $win32api->function_module($name2);
-			if(defined($module32)) {
-			    if(uc($module32) =~ /\U$module2\E/) {
-				$external_name = $name2;
-			    } else {
-				$module32 = undef;
-			    }
-			}
-		    }
-		}
-	    }
 
 	    my $function = 'winapi_function'->new;
 	    $functions{$internal_name} = $function;
@@ -285,7 +302,8 @@ foreach my $file ($options->c_files) {
 	    $function->file($file);
 	    $function->return_type($return_type); 
 	    $function->calling_convention($calling_convention);
-	    $function->external_name($external_name);
+	    $function->external_name16($external_name16);
+	    $function->external_name32($external_name32);
 	    $function->internal_name($internal_name);
 	    $function->argument_types([@argument_types]);
 	    $function->argument_names([@argument_names]);
@@ -337,25 +355,43 @@ foreach my $file ($options->c_files) {
 		}
 	    }
 
-	    if($options->local && $options->headers) {
-		if(!$declared_functions{$internal_name}) {
-		    if($options->win16 && $options->report_module($module16)) {
-			&$output16("no prototype");
+	    if($options->local && $options->headers && $options->prototype) {
+		if($options->win16 && $options->report_module($module16)) {
+		    if(!defined($external_name16) || (!$nativeapi->is_function($external_name16) && 
+		       !defined($declared_functions{$win16api->name}{$external_name16})))
+		    {
+			if(!defined($external_name16) || ($external_name16 !~ /^DllEntryPoint$/ &&
+			    $internal_name !~ /^I(?:Malloc|Storage)16_fn/ &&
+			    $internal_name !~ /^(?:\Q$module16\E|THUNK|WIN16)_\Q$external_name16\E(?:16)?$/))
+			{
+			    &$output16("no prototype");
+			}
 		    }
-		    if($options->win32 && $options->report_module($module32)) {
-			&$output32("no prototype");
+		}
+
+		if($options->win32 && $options->report_module($module32)) {
+		    if(!defined($external_name32) || (!$nativeapi->is_function($external_name32) && 						          !defined($declared_functions{$win32api->name}{$external_name32})))
+		    {
+			if(!defined($external_name32) || ($external_name32 !~ /^Dll(?:
+			   Install|CanUnloadNow|GetClassObject|GetVersion|
+			   RegisterServer|RegisterServerEx|UnregisterServer)|DriverProc$/x && 
+			   $internal_name !~ /^COMCTL32_Str/ &&
+			   $internal_name !~ /^(?:\Q$module32\E|wine)_(?:\Q$external_name32\E|\d+)$/))
+			{
+			    &$output32("no prototype");
+			}
 		    }
-		} 
+		}
 	    }
 
 	    if($options->local && $options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_function $options, $output16,
-		    $return_type, $calling_convention, $external_name, $internal_name, [@argument_types], $win16api;
+		    $return_type, $calling_convention, $external_name16, $internal_name, [@argument_types], $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
 		  winapi_local::check_function $options, $output32,
-		    $return_type, $calling_convention, $external_name, $internal_name, [@argument_types], $win32api;
+		    $return_type, $calling_convention, $external_name32, $internal_name, [@argument_types], $win32api;
 		}
 	    }
 

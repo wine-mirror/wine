@@ -61,7 +61,7 @@ my %options = (
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
-    "cross-call" => { default => 0, parent => "statements", description => "check for cross calling functions" },
+    "cross-call" => { default => 0, parent => "statements",  description => "check for cross calling functions" },
     "cross-call-win32-win16" => { 
 	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
      },
@@ -71,13 +71,16 @@ my %options = (
     "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
     "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
+    "prototype" => { default => 0, parent => ["local", "headers"], description => "prototype checking" },
 
     "global" => { default => 1, description => "global checking" },
-    "declared" => { default => 1, parent => "global", description => "declared checking" }, 
+    "declared" => { default => 1, parent => "global", description => "declared checking" },
     "implemented" => { default => 1, parent => "global", description => "implemented checking" },
     "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
     "include" => { default => 1, parent => "global", description => "include checking" },
     "headers" => { default => 0, parent => "global", description => "headers checking" },
+    "headers-duplicated" => { default => 0, parent => "headers", description => "duplicated function declarations checking" },
+    "headers-misplaced" => { default => 0, parent => "headers", description => "misplaced function declarations checking" },
     "stubs" => { default => 0, parent => "global", description => "stubs checking" }
 );
 
@@ -105,6 +108,8 @@ sub new {
     my $h_files = \@{$self->{H_FILES}};
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
+
+    my @files;
 
     if($wine_dir eq ".") {
 	$$global = 1;
@@ -151,8 +156,16 @@ sub new {
 	    if(defined($option)) {
 		my $key = $$option{key};
 		my $parser = $$option{parser};
-		my $parent = $$option{parent};
 		my $refvalue = \${$self->{$key}};
+		my @parents = ();
+		
+		if(defined($$option{parent})) {
+		    if(ref($$option{parent}) eq "ARRAY") {
+			@parents = @{$$option{parent}};
+		    } else {
+			@parents = $$option{parent};
+		    }
+		}
 
 		if(defined($parser)) { 
 		    $$refvalue = &$parser($prefix,$value);
@@ -167,12 +180,23 @@ sub new {
 		}
 
 		if((ref($$refvalue) eq "HASH" && $$refvalue->{active}) || $$refvalue) {
-		    while(defined($parent)) {
-			my $parentkey = $options{$parent}{key};
-			my $refparentvalue = \${$self->{$parentkey}};
-			
-			$$refparentvalue = 1;
-			$parent = $options{$parent}{parent};
+		    while($#parents >= 0) {
+			my @old_parents = @parents;
+			@parents = ();
+			foreach my $parent (@old_parents) {
+			    my $parentkey = $options{$parent}{key};
+			    my $refparentvalue = \${$self->{$parentkey}};
+			    
+			    $$refparentvalue = 1;
+
+			    if(defined($options{$parent}{parent})) {
+				if(ref($options{$parent}{parent}) eq "ARRAY") {
+				    push @parents, @{$options{$parent}{parent}};
+				} else {
+				    push @parents, $options{$parent}{parent};
+				}
+			    }
+			}
 		    }
 		}
 		next;
@@ -201,7 +225,7 @@ sub new {
 		return undef;
 	    }
 
-	    push @$c_files, $_;
+	    push @files, $_;
 	}
     }
 
@@ -209,30 +233,56 @@ sub new {
 	return $self;
     }
 
-    my $c_paths;
-    if($#$c_files == -1 || ($#$c_files == 0 && $$c_files[0] eq $wine_dir)) {
-	$c_paths = ".";
+    my @paths = ();
+    my @c_files = ();
+    my @h_files = ();
+    foreach my $file (@files) {
+	if($file =~ /\.c$/) {
+	    push @c_files, $file;
+	} elsif($file =~ /\.h$/) {
+	    push @h_files, $file;
+	} else {
+	    push @paths, $file;
+	}
+    }
+
+    if($#c_files == -1 && $#h_files == -1 &&
+       ($#paths == -1 || ($#paths == 0 && $paths[0] eq $wine_dir)))
+    {
+	@paths = ".";
+	push @h_files, "$wine_dir/include";
     } else {
-	$c_paths = join(" ", @$c_files);
 	$$global = 0;
     }
 
-    my $h_paths = "$wine_dir/include $wine_dir/include/wine";
+    if($#paths != -1 || $#c_files != -1) {
+	my $c_command = "find " . join(" ", @paths, @c_files) . " -name \\*.c";
+	my %found;
+	@$c_files = sort(map {
+	    s/^\.\/(.*)$/$1/;
+	    if(defined($found{$_}) || /glue\.c|spec\.c$/) {
+		();
+	    } else {
+		$found{$_}++;
+		$_;
+	    }
+	} split(/\n/, `$c_command`));
+    }
 
-    @$c_files = sort(map {
-	s/^.\/(.*)$/$1/;
-	if(/glue\.c|spec\.c$/) {
-	    ();
-	} else {
-	    $_;
-	}
-    } split(/\n/, `find $c_paths -name \\*.c`));
+    if($#h_files != -1) {
+	my $h_command = "find " . join(" ", @h_files) . " -name \\*.h";
+	my %found;
 
-    @$h_files = sort(map {
-	s/^.\/(.*)$/$1/;
-	$_;
-    } split(/\n/, `find $h_paths -name \\*.h`));
-
+	@$h_files = sort(map {
+	    s/^\.\/(.*)$/$1/;
+	    if(defined($found{$_})) {
+		();
+	    } else {
+		$found{$_}++;
+		$_;
+	    }
+	} split(/\n/, `$h_command`));
+    }
     return $self;
 }
 
