@@ -931,8 +931,8 @@ int PROFILE_LoadWineIni(void)
     FILE *f;
     HKEY hKeySW;
 
-    /* make sure HKLM\\Software exists as non-volatile key */
-    if (RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software", &hKeySW ))
+    /* make sure HKLM\\Software\\Wine\\Wine exists as non-volatile key */
+    if (RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine", &hKeySW ))
     {
         ERR("Cannot create config registry key\n" );
         return 0;
