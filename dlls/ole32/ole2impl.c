@@ -4,6 +4,7 @@
  * Copyright (C) 1999-2000 Abey George
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"

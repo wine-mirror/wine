@@ -23,6 +23,7 @@
  *      limited in functionality too.
  */
 
+#include <string.h>
 #include "winerror.h"
 #include "winbase.h"
 #include "wine/obj_base.h"

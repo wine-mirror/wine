@@ -10,6 +10,7 @@
  * 2) Tooltip support (almost done).
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "wine/unicode.h"
 #include "commctrl.h"

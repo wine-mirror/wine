@@ -7,6 +7,7 @@
  *		  2000	Eric Pouech
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"

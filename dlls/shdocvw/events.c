@@ -7,6 +7,7 @@
  * 2001 John R. Sheets (for CodeWeavers)
  */
 
+#include <string.h>
 #include "debugtools.h"
 #include "shdocvw.h"
 

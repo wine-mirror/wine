@@ -4,11 +4,12 @@
  */
 
 #include "config.h"
-#include "winerror.h"
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "winerror.h"
 #include "debugtools.h"
 #include "ddraw_private.h"
 #include "dsurface/main.h"

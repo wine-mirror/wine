@@ -32,6 +32,7 @@
  *   in place but no notifications are sent to the sinks yet.
  */
 #include <assert.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "winerror.h"

@@ -45,6 +45,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"

@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"

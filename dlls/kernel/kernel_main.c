@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "wine/winbase16.h"

@@ -3,6 +3,7 @@
  * Right now, most of these functions do nothing.
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"

@@ -8,6 +8,7 @@
  
 /* NOTE: Methods with the NS_ prefix are name server methods */
 
+#include <string.h>
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"

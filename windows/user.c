@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "wine/winbase16.h"
 #include "windef.h"
 #include "wingdi.h"

@@ -6,6 +6,7 @@
  *
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "debugtools.h"
 

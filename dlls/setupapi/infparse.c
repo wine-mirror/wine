@@ -9,6 +9,7 @@
  *   (IpSaveRestorePosition, IpFindNextMatchLine, ...).
  */
 
+#include <string.h>
 #include "debugtools.h"
 #include "windef.h"
 #include "winbase.h"

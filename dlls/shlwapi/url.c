@@ -4,6 +4,7 @@
  * Copyright 2000 Huw D M Davies for CodeWeavers.
  */
 
+#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"

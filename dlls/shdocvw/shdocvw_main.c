@@ -4,8 +4,8 @@
  * 2001 John R. Sheets (for CodeWeavers)
  */
 
+#include <string.h>
 #include "debugtools.h"
-
 #include "initguid.h"
 #include "ole2.h"
 #include "shlwapi.h"

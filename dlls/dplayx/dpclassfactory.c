@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "windef.h"
 #include "wine/obj_base.h"
 #include "winerror.h"

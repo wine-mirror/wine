@@ -12,6 +12,7 @@
 */
 #include "config.h"
 
+#include <string.h>
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"

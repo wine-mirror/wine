@@ -5,6 +5,7 @@
  * Copyright 1994 Martin Ayotte
  */
 
+#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

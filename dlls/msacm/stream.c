@@ -14,6 +14,7 @@
  *	+ properly close ACM streams
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"

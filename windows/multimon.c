@@ -4,6 +4,7 @@
  * Copyright 1998 Turchanov Sergey
  */
 
+#include <string.h>
 #include "windef.h"
 #include "wingdi.h"
 #include "winbase.h"

@@ -11,6 +11,7 @@
   *	HKEY_CLASSES		\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES
  */
 
+#include <string.h>
 #include "debugtools.h"
 #include "winreg.h"
 #include "winerror.h"

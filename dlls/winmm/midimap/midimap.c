@@ -5,6 +5,7 @@
  * Copyright 	1999 Eric Pouech
  */
 
+#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -8,6 +8,7 @@
 #include "ddraw.h"
 
 #include <assert.h>
+#include <string.h>
 
 #include "ddraw_private.h"
 #include "ddraw/main.h"

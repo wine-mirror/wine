@@ -10,6 +10,7 @@
  *       dplayx.dll data which is accessible from all processes.
  */ 
 
+#include <string.h>
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"

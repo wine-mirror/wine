@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <string.h>
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"

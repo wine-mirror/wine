@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <string.h>
 #include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/winaspi.h"

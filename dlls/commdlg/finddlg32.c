@@ -5,6 +5,7 @@
  * Copyright 1998,1999 Bertho A. Stultiens
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "windef.h"
 #include "winnls.h"

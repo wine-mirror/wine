@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <string.h>
 #include <sys/types.h>
 #include "windef.h"
 #include "winbase.h"

@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <string.h>
 #include "wine/winbase16.h"
 #include "dosexe.h"
 #include "miscemu.h"

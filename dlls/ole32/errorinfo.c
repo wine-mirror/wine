@@ -8,6 +8,7 @@
  * TEB at offset 0xf80
  */
 
+#include <string.h>
 #include "debugtools.h"
 #include "windef.h"
 #include "heap.h"

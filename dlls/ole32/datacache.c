@@ -30,6 +30,7 @@
  *     was stored and the aspect, but that's about it.
  */
 #include <assert.h>
+#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

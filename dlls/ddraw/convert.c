@@ -1,3 +1,4 @@
+#include <string.h>
 #include "ddraw_private.h"
 #include "debugtools.h"
 

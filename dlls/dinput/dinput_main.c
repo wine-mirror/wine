@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <assert.h>
+#include <string.h>
 
 #include "debugtools.h"
 #include "winbase.h"

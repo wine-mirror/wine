@@ -22,6 +22,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "commctrl.h"

@@ -4,6 +4,7 @@
  * Copyright 1995 Sven Verdoolaege
  */
 
+#include <string.h>
 #include <time.h>
 
 #include "windef.h"

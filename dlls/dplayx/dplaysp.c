@@ -4,6 +4,7 @@
  * Copyright 2000 Peter Hunnisett <hunnise@nortelnetworks.com>
  */
 
+#include <string.h>
 #include "heap.h"
 #include "winerror.h"
 #include "debugtools.h"

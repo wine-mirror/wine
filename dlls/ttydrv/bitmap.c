@@ -4,6 +4,7 @@
  * Copyright 1999 Patrik Stridvall
  */
 
+#include <string.h>
 #include "bitmap.h"
 #include "gdi.h"
 #include "ttydrv.h"

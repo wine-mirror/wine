@@ -14,7 +14,7 @@
  *   - concurrent access to infoPtr
  */
 
-
+#include <string.h>
 #include "winbase.h"
 #include "commctrl.h"
 #include "vfw.h"
