@@ -32,6 +32,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wincrypt.h"
 
 #ifdef HAVE_OPENSSL_SSL_H
@@ -291,12 +292,41 @@ BOOL WINAPI RSA_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE
     return FALSE;
 }
 
+static const WCHAR szRSAKey[] = { 'S','o','f','t','w','a','r','e','\\',
+ 'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
+ 'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
+ 'i','d','e','r','\\','M','i','c','r','o','s','o','f','t',' ','B','a','s',
+ 'e',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
+ 'o','v','i','d','e','r',' ','v','1','.','0',0 };
+
 /***********************************************************************
  *		DllRegisterServer (RSABASE.@)
  */
 HRESULT WINAPI RSABASE_DllRegisterServer()
 {
-    FIXME("\n");
+    HKEY key;
+    DWORD dp;
+    long apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szRSAKey, 0, NULL,
+     REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
+
+    if (apiRet == ERROR_SUCCESS)
+    {
+        if (dp == REG_CREATED_NEW_KEY)
+        {
+            static const WCHAR szImagePath[] = { 'I','m','a','g','e','P','a',
+             't','h',0 };
+            static const WCHAR szRSABase[] = { 'r','s','a','b','a','s','e','.',
+             'd','l','l',0 };
+             static const WCHAR szType[] = { 'T','y','p','e',0 };
+             DWORD type = 1;
+
+            RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase,
+             (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
+            RegSetValueExW(key, szType, 0, REG_DWORD, (LPBYTE)&type,
+             sizeof(type));
+        }
+        RegCloseKey(key);
+    }
     return S_OK;
 }
 
@@ -305,6 +335,6 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
  */
 HRESULT WINAPI RSABASE_DllUnregisterServer()
 {
-    FIXME("\n");
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szRSAKey);
     return S_OK;
 }

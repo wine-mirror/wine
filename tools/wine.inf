@@ -30,7 +30,6 @@ RegisterDlls=RegisterDllsSection
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
-    Crypto,\
     CurrentVersion,\
     Debugger,\
     Desktop,\
@@ -75,10 +74,6 @@ HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\1.0\FLAGS,,,"1"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0,,,"OLE Automation"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0\0\win32,,,"stdole2.tlb"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0\FLAGS,,,"0"
-
-[Crypto]
-HKLM,Software\Microsoft\Cryptography\Defaults\Provider\Microsoft Base Cryptographic Provider v1.0,Image Path,,rsabase.dll
-HKLM,Software\Microsoft\Cryptography\Defaults\Provider\Microsoft Base Cryptographic Provider v1.0,Type,0x10001,1
 
 [CurrentVersion]
 HKLM,%CurrentVersion%,"CommonFilesDir",,"c:\Program Files\Common Files"
@@ -1991,6 +1986,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,ole32.dll,1
 11,,oleaut32.dll,1
 11,,quartz.dll,1
+11,,rsabase.dll,1
 11,,shdocvw.dll,1
 11,,shell32.dll,1
 11,,urlmon.dll,1
