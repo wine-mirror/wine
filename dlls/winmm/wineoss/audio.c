@@ -375,7 +375,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 error:
     close(fd);
     return WAVERR_BADFORMAT;
- error2:
+error2:
     close(fd);
     return MMSYSERR_ERROR;
 }
@@ -1534,12 +1534,21 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	     * let's try to fragment the above 64KB (256 * 2^8) */
 	    audio_fragment = 0x01000008;
     } else {
-	/* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
-	 * thus leading to 46ms per fragment, and a turnaround time of 185ms
+	/* A wave device must have a worst case latency of 10 ms so calculate
+	 * the largest fragment size less than 10 ms long.
 	 */
-	/* 16 fragments max, 2^10=1024 bytes per fragment */
-	audio_fragment = 0x000F000A;
+	int	fsize = lpDesc->lpFormat->nAvgBytesPerSec / 100;	/* 10 ms chunk */
+	int	shift = 0;
+	while ((1 << shift) <= fsize)
+	    shift++;
+	shift--;
+	audio_fragment = 0x00100000 + shift;	/* 16 fragments of 2^shift */
     }
+
+    TRACE("using %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
+	1 << (audio_fragment & 0xffff), 
+	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
+
     if (wwo->state != WINE_WS_CLOSED) return MMSYSERR_ALLOCATED;
     /* we want to be able to mmap() the device, which means it must be opened readable,
      * otherwise mmap() will fail (at least under Linux) */
@@ -2794,6 +2803,34 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		}
 		break;
 	    case WINE_WM_STOPPING:
+		wwi->state = WINE_WS_STOPPED;
+    		wwi->dwTotalRecorded = 0;
+		if (wwi->state != WINE_WS_STOPPED)
+		{
+                    if (wwi->ossdev->bTriggerSupport)
+                    {
+                        /* stop the recording */
+		        wwi->ossdev->bInputEnabled = FALSE;
+                        enable = getEnables(wwi->ossdev);
+                        if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+		            wwi->ossdev->bInputEnabled = FALSE;
+                            ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", wwi->ossdev->dev_name, strerror(errno));
+		        }
+                    }
+		    /* return current buffer to app */
+		    lpWaveHdr = wwi->lpQueuePtr;
+		    if (lpWaveHdr)
+		    {
+		        LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+		        TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+		        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+		        lpWaveHdr->dwFlags |= WHDR_DONE;
+		        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+		        wwi->lpQueuePtr = lpNext;
+		    }
+		}
+		SetEvent(ev);
+		break;
 	    case WINE_WM_RESETTING:
 		wwi->state = WINE_WS_STOPPED;
     		wwi->dwTotalRecorded = 0;
@@ -2888,18 +2925,21 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	     * to do hardware playback without hardware capture. */
 	    audio_fragment = wwi->ossdev->audio_fragment;
 	} else {
-            /* This is actually hand tuned to work so that my SB Live:
-             * - does not skip
-             * - does not buffer too much
-             * when sending with the Shoutcast winamp plugin
-             */
-            /* 15 fragments max, 2^10 = 1024 bytes per fragment */
-        audio_fragment = 0x000F000A;
+	    /* A wave device must have a worst case latency of 10 ms so calculate
+	     * the largest fragment size less than 10 ms long.
+	     */
+	    int	fsize = lpDesc->lpFormat->nAvgBytesPerSec / 100;	/* 10 ms chunk */
+	    int	shift = 0;
+	    while ((1 << shift) <= fsize)
+		shift++;
+	    shift--;
+	    audio_fragment = 0x00100000 + shift;	/* 16 fragments of 2^shift */
 	}
     }
 
-    TRACE("using %d %d byte fragments\n", audio_fragment >> 16,
-	1 << (audio_fragment & 0xffff));
+    TRACE("using %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
+	1 << (audio_fragment & 0xffff), 
+	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
     ret = OSS_OpenDevice(wwi->ossdev, O_RDONLY, &audio_fragment,
                          1,
