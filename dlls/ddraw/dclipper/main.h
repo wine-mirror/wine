@@ -30,11 +30,11 @@ Main_DirectDrawClipper_SetHwnd(LPDIRECTDRAWCLIPPER iface, DWORD dwFlags,
 			       HWND hWnd);
 ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface);
 HRESULT WINAPI
-Main_DirectDrawClipper_GetClipList(LPDIRECTDRAWCLIPPER iface,LPRECT prcClip,
-				   LPRGNDATA lprgn,LPDWORD pdwSize);
+Main_DirectDrawClipper_GetClipList(LPDIRECTDRAWCLIPPER iface, LPRECT lpRect,
+				   LPRGNDATA lpClipList, LPDWORD lpdwSize);
 HRESULT WINAPI
 Main_DirectDrawClipper_SetClipList(LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,
-				   DWORD pdwSize);
+				   DWORD dwFlag);
 HRESULT WINAPI
 Main_DirectDrawClipper_QueryInterface(LPDIRECTDRAWCLIPPER iface, REFIID riid,
 				      LPVOID* ppvObj);

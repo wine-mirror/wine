@@ -124,22 +124,53 @@ ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface) {
     else return This->ref;
 }
 
+/***********************************************************************
+*           IDirectDrawClipper::GetClipList
+*
+* Retrieve a copy of the clip list
+*
+* PARAMS
+*  lpRect  Rectangle to be used to clip the clip list or NULL for the
+*          entire clip list
+*  lpClipList structure for the resulting copy of the clip list.
+           If NULL, fills lpdwSize up to the number of bytes necessary to hold
+           the entire clip.
+*  lpdwSize Size of resulting clip list; size of the buffer at lpClipList
+           or, if lpClipList is NULL, receives the required size of the buffer
+           in bytes
+* RETURNS
+*  Either DD_OK or DDERR_*
+*/
 HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
-    LPDIRECTDRAWCLIPPER iface,LPRECT prcClip,LPRGNDATA lprgn,LPDWORD pdwSize
+    LPDIRECTDRAWCLIPPER iface, LPRECT lpRect, LPRGNDATA lpClipList,
+    LPDWORD lpdwSize
 ) {
     ICOM_THIS(IDirectDrawClipperImpl,iface);
     static int warned = 0;
     if (warned++ < 10)
-	FIXME("(%p,%p,%p,%p),stub!\n",This,prcClip,lprgn,pdwSize);
-    if (pdwSize) *pdwSize=0;
+	FIXME("(%p,%p,%p,%p),stub!\n",This,lpRect,lpClipList,lpdwSize);
+    if (lpdwSize) *lpdwSize=0;
     return DDERR_NOCLIPLIST;
 }
 
+/***********************************************************************
+*           IDirectDrawClipper::SetClipList
+*
+* Sets or deletes (if lprgn is NULL) the clip list
+*
+* PARAMS
+*  lprgn   Pointer to a LRGNDATA structure or NULL
+*  dwFlags not used, must be 0
+* RETURNS
+*  Either DD_OK or DDERR_*
+*/
 HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
-    LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,DWORD pdwSize
+    LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,DWORD dwFlag
 ) {
     ICOM_THIS(IDirectDrawClipperImpl,iface);
-    FIXME("(%p,%p,%ld),stub!\n",This,lprgn,pdwSize);
+    static int warned = 0;
+    if (warned++ < 10 || lprgn == NULL)
+        FIXME("(%p,%p,%ld),stub!\n",This,lprgn,dwFlag);
     return DD_OK;
 }
 
