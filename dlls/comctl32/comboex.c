@@ -1923,8 +1923,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    rect.bottom = rect.top + SendMessageW(infoPtr->hwndSelf,
 			                          CB_GETITEMHEIGHT, -1, 0);
 	    rect.left = rect.right - GetSystemMetrics(SM_CXVSCROLL);
-	    pt.x = LOWORD(lParam);
-	    pt.y = HIWORD(lParam);
+	    POINTSTOPOINT(pt, MAKEPOINTS(lParam));
 	    if (PtInRect(&rect, pt))
 		return CallWindowProcW (infoPtr->prevComboWndProc,
 				        hwnd, uMsg, wParam, lParam);

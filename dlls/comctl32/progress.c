@@ -42,10 +42,6 @@ typedef struct
 
 #define LED_GAP    2
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(       \
-   "Unknown parameter(s) for message " #msg            \
-   "(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
-
 /***********************************************************************
  * PROGRESS_Invalidate
  *
@@ -313,7 +309,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case PBM_DELTAPOS:
     {
 	INT oldVal;
-        if(lParam) UNKNOWN_PARAM(PBM_DELTAPOS, wParam, lParam);
         oldVal = infoPtr->CurVal;
         if(wParam != 0) {
 	    infoPtr->CurVal += (INT)wParam;
@@ -327,7 +322,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case PBM_SETPOS:
     {
 	INT oldVal;
-        if (lParam) UNKNOWN_PARAM(PBM_SETPOS, wParam, lParam);
         oldVal = infoPtr->CurVal;
         if(oldVal != wParam) {
 	    infoPtr->CurVal = (INT)wParam;
@@ -339,13 +333,11 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     }
 
     case PBM_SETRANGE:
-        if (wParam) UNKNOWN_PARAM(PBM_SETRANGE, wParam, lParam);
         return PROGRESS_SetRange (infoPtr, (int)LOWORD(lParam), (int)HIWORD(lParam));
 
     case PBM_SETSTEP:
     {
 	INT oldStep;
-        if (lParam) UNKNOWN_PARAM(PBM_SETSTEP, wParam, lParam);
         oldStep = infoPtr->Step;
         infoPtr->Step = (INT)wParam;
         return oldStep;
@@ -354,7 +346,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case PBM_STEPIT:
     {
 	INT oldVal;
-        if (wParam || lParam) UNKNOWN_PARAM(PBM_STEPIT, wParam, lParam);
         oldVal = infoPtr->CurVal;
         infoPtr->CurVal += infoPtr->Step;
         if(infoPtr->CurVal > infoPtr->MaxVal)
@@ -378,17 +369,14 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return wParam ? infoPtr->MinVal : infoPtr->MaxVal;
 
     case PBM_GETPOS:
-        if (wParam || lParam) UNKNOWN_PARAM(PBM_STEPIT, wParam, lParam);
         return infoPtr->CurVal;
 
     case PBM_SETBARCOLOR:
-        if (wParam) UNKNOWN_PARAM(PBM_SETBARCOLOR, wParam, lParam);
         infoPtr->ColorBar = (COLORREF)lParam;
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
 
     case PBM_SETBKCOLOR:
-        if (wParam) UNKNOWN_PARAM(PBM_SETBKCOLOR, wParam, lParam);
         infoPtr->ColorBk = (COLORREF)lParam;
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;

@@ -83,10 +83,6 @@ typedef struct
 #define BUDDY_UPDOWN_HWND        "buddyUpDownHWND"
 #define BUDDY_SUPERCLASS_WNDPROC "buddySupperClassWndProc"
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(\
-        "Unknown parameter(s) for message " #msg \
-	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
-
 #define UPDOWN_GetInfoPtr(hwnd) ((UPDOWN_INFO *)GetWindowLongA (hwnd,0))
 #define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
 
@@ -626,9 +622,10 @@ static BOOL UPDOWN_CancelMode (UPDOWN_INFO *infoPtr)
  * 'pt' is the location of the mouse event in client or
  * windows coordinates.
  */
-static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, POINT pt)
+static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, POINTS pts)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
+    POINT pt = { pts.x, pts.y };
     RECT rect;
     int temp, arrow;
 
@@ -802,18 +799,13 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
 	case WM_LBUTTONDOWN:
 	case WM_MOUSEMOVE:
-	    if(UPDOWN_IsEnabled(infoPtr)){
-		POINT pt;
-		pt.x = SLOWORD(lParam);
-		pt.y = SHIWORD(lParam);
-		UPDOWN_HandleMouseEvent (infoPtr, message, pt );
-	    }
+	    if(UPDOWN_IsEnabled(infoPtr))
+		UPDOWN_HandleMouseEvent (infoPtr, message, MAKEPOINTS(lParam));
 	    break;
 
 	case WM_KEYDOWN:
-	    if((dwStyle & UDS_ARROWKEYS) && UPDOWN_IsEnabled(infoPtr)) {
+	    if((dwStyle & UDS_ARROWKEYS) && UPDOWN_IsEnabled(infoPtr))
 		return UPDOWN_KeyPressed(infoPtr, (int)wParam);
-	    }
 	    break;
 
 	case WM_PAINT:
@@ -826,7 +818,6 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	        memcpy((void *)lParam, infoPtr->AccelVect, temp*sizeof(UDACCEL));
 	        return temp;
       	    }
-	    UNKNOWN_PARAM(UDM_GETACCEL, wParam, lParam);
 	    return 0;
 
 	case UDM_SETACCEL:
@@ -843,13 +834,10 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
     	    return TRUE;
 
 	case UDM_GETBASE:
-	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETBASE, wParam, lParam);
 	    return infoPtr->Base;
 
 	case UDM_SETBASE:
 	    TRACE("UpDown Ctrl new base(%d), hwnd=%04x\n", wParam, hwnd);
-	    if ( !(wParam==10 || wParam==16) || lParam)
-		UNKNOWN_PARAM(UDM_SETBASE, wParam, lParam);
 	    if (wParam==10 || wParam==16) {
 		temp = infoPtr->Base;
 		infoPtr->Base = wParam;
@@ -858,22 +846,18 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    break;
 
 	case UDM_GETBUDDY:
-	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETBUDDY, wParam, lParam);
 	    return (LRESULT)infoPtr->Buddy;
 
 	case UDM_SETBUDDY:
-	    if (lParam) UNKNOWN_PARAM(UDM_SETBUDDY, wParam, lParam);
 	    temp = (int)infoPtr->Buddy;
 	    UPDOWN_SetBuddy (infoPtr, (HWND)wParam);
 	    return temp;
 
 	case UDM_GETPOS:
-	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETPOS, wParam, lParam);
 	    temp = UPDOWN_GetBuddyInt (infoPtr);
 	    return MAKELONG(infoPtr->CurVal, temp ? 0 : 1);
 
 	case UDM_SETPOS:
-	    if (wParam || HIWORD(lParam)) UNKNOWN_PARAM(UDM_GETPOS, wParam, lParam);
 	    temp = SLOWORD(lParam);
 	    TRACE("UpDown Ctrl new value(%d), hwnd=%04x\n", temp, hwnd);
 	    if(!UPDOWN_InBounds(infoPtr, temp)) {
@@ -886,11 +870,9 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return wParam;            /* return prev value */
 
 	case UDM_GETRANGE:
-	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETRANGE, wParam, lParam);
 	    return MAKELONG(infoPtr->MaxVal, infoPtr->MinVal);
 
 	case UDM_SETRANGE:
-	    if (wParam) UNKNOWN_PARAM(UDM_SETRANGE, wParam, lParam);
 		                               /* we must have:     */
 	    infoPtr->MaxVal = SLOWORD(lParam); /* UD_MINVAL <= Max <= UD_MAXVAL */
 	    infoPtr->MinVal = SHIWORD(lParam); /* UD_MINVAL <= Min <= UD_MAXVAL */
@@ -928,12 +910,10 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return temp;                    /* return prev value */
 
 	case UDM_GETUNICODEFORMAT:
-	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETUNICODEFORMAT, wParam, lParam);
 	    /* we lie a bit here, we're always using Unicode internally */
 	    return infoPtr->UnicodeFormat;
 
 	case UDM_SETUNICODEFORMAT:
-	    if (lParam) UNKNOWN_PARAM(UDM_SETUNICODEFORMAT, wParam, lParam);
 	    /* do we really need to honour this flag? */
 	    temp = infoPtr->UnicodeFormat;
 	    infoPtr->UnicodeFormat = (BOOL)wParam;
