@@ -17,6 +17,7 @@ EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 
 BASEDIRS = \
 	advapi32 \
+	amstream \
 	avicap32 \
 	avifil32 \
 	cabinet \
@@ -225,6 +226,7 @@ SYMLINKS = \
 	$(EXTRADIRS:%=%.dll$(DLLEXT)) \
 	@WIN16_FILES@ \
 	advapi32.dll$(DLLEXT) \
+	amstream.dll$(DLLEXT) \
 	avicap32.dll$(DLLEXT) \
 	avifil32.dll$(DLLEXT) \
 	cabinet.dll$(DLLEXT) \
@@ -367,6 +369,9 @@ all: $(SYMLINKS)
 
 advapi32.dll$(DLLEXT): advapi32/advapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) advapi32/advapi32.dll$(DLLEXT) $@
+
+amstream.dll$(DLLEXT): amstream/amstream.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) amstream/amstream.dll$(DLLEXT) $@
 
 avicap32.dll$(DLLEXT): avicap32/avicap32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) avicap32/avicap32.dll$(DLLEXT) $@
@@ -882,6 +887,7 @@ libuuid.a: uuid/libuuid.a
 
 IMPORT_LIBS = \
 	libadvapi32 \
+	libamstream \
 	libavicap32 \
 	libavifil32 \
 	libcabinet \
@@ -1004,6 +1010,11 @@ libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
 libadvapi32.a: advapi32/advapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d advapi32/advapi32.spec.def
+
+libamstream.def: amstream/amstream.spec.def
+	$(RM) $@ && $(LN_S) amstream/amstream.spec.def $@
+libamstream.a: amstream/amstream.spec.def
+	$(DLLTOOL) -k -l $@ -d amstream/amstream.spec.def
 
 libavicap32.def: avicap32/avicap32.spec.def
 	$(RM) $@ && $(LN_S) avicap32/avicap32.spec.def $@
@@ -1566,6 +1577,7 @@ libx11drv.a: x11drv/x11drv.spec.def
 	$(DLLTOOL) -k -l $@ -d x11drv/x11drv.spec.def
 
 advapi32/advapi32.spec.def: $(WINEBUILD)
+amstream/amstream.spec.def: $(WINEBUILD)
 avicap32/avicap32.spec.def: $(WINEBUILD)
 avifil32/avifil32.spec.def: $(WINEBUILD)
 cabinet/cabinet.spec.def: $(WINEBUILD)
@@ -1685,6 +1697,7 @@ $(INSTALLSUBDIRS:%=%/__install__): $(ALL_IMPORT_LIBS)
 # Map library name to the corresponding directory
 
 advapi32/advapi32.dll$(DLLEXT): advapi32
+amstream/amstream.dll$(DLLEXT): amstream
 avicap32/avicap32.dll$(DLLEXT): avicap32
 avifil32/avifil32.dll$(DLLEXT): avifil32
 cabinet/cabinet.dll$(DLLEXT): cabinet

@@ -64,6 +64,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #define __IKsPropertySet_INTERFACE_DEFINED__
 #include "strmif.h"
 #include "control.h"
+#define __DDRAW_GUID_DEFINED__
+#include "amstream.h"
 
 /* GUIDs not declared in an exported header file */
 DEFINE_GUID(IID_IDirectPlaySP,0xc9f6360,0xcc61,0x11cf,0xac,0xec,0x00,0xaa,0x00,0x68,0x86,0xe3);

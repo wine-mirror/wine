@@ -5,10 +5,14 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	amstream.idl \
 	amvideo.idl \
+	austream.idl \
 	comcat.idl \
+	ddstream.idl \
 	docobj.idl \
 	exdisp.idl \
+	mmstream.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \
