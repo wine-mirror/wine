@@ -877,7 +877,7 @@ INT32 __cdecl CRTDLL__strnicmp( LPCSTR s1, LPCSTR s2, INT32 n )
  *
  * convert a string in place to lowercase 
  */
-LPSTR CRTDLL__strlwr(LPSTR x)
+LPSTR __cdecl CRTDLL__strlwr(LPSTR x)
 {
   unsigned char *y =x;
   
@@ -895,7 +895,7 @@ LPSTR CRTDLL__strlwr(LPSTR x)
 /*********************************************************************
  *                  system       (CRTDLL.485)
  */
-INT32 CRTDLL_system(LPSTR x)
+INT32 __cdecl CRTDLL_system(LPSTR x)
 {
 #define SYSBUF_LENGTH 1500
   char buffer[SYSBUF_LENGTH];

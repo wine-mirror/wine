@@ -366,10 +366,14 @@ BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
+      case 0 :
+        WARN(gdi, "Already deleted\n");
+        break;
+      default:
+        WARN(gdi, "Unknown magic number (%d)\n",header->wMagic);
     }
     return FALSE;
 }
-
 
 /***********************************************************************
  *           GetStockObject16    (GDI.87)

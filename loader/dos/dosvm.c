@@ -6,8 +6,6 @@
  * This code hasn't been completely cleaned up yet.
  */
 
-#ifdef linux
- 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +25,8 @@
 #include "task.h"
 #include "ldt.h"
 #include "dosexe.h"
+
+#ifdef MZ_SUPPORTED
 
 static void DOSVM_Dump( LPDOSTASK lpDosTask)
 {
@@ -64,24 +64,10 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask)
  exit(0);
 }
 
-static int DOSVM_Int(int vect, LPDOSTASK lpDosTask, PCONTEXT context )
+static int DOSVM_Int(int vect, PCONTEXT context )
 {
- /* we should really map to if1632/wprocs.spec, but not all
-    interrupt handlers are adapted to support our VM yet */
- switch (vect) {
-  case 0x20:
-   return -1;
-  case 0x21:
-   if (AH_reg(context)==0x4c) return -1;
-   DOS3Call(context);
-   break;
-  case 0x1a:
-   INT_Int1aHandler(context);
-   break;
-  case 0x2f:
-   INT_Int2fHandler(context);
-   break;
- }
+ /* moved to INT_RealModeInterrupt in msdos/interrupts.c */
+ INT_RealModeInterrupt(vect,context);
  return 0;
 }
 
@@ -109,8 +95,8 @@ int DOSVM_Process( LPDOSTASK lpDosTask )
    DOSVM_Dump(lpDosTask);
    break;
   case VM86_INTx:
-   TRACE(int,"DOS EXE calls INT %02x\n",VM86_ARG(lpDosTask->fn));
-   ret=DOSVM_Int(VM86_ARG(lpDosTask->fn),lpDosTask,&context); break;
+   TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(lpDosTask->fn),context.Eax);
+   ret=DOSVM_Int(VM86_ARG(lpDosTask->fn),&context); break;
   case VM86_STI:
    break;
   case VM86_PICRETURN:
@@ -144,9 +130,9 @@ int DOSVM_Enter( PCONTEXT context )
   /* no VM86 (dosmod) task is currently running, start one */
   if ((lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
     return 0;
-  lpDosTask->img=DOSMEM_MemoryBase(pModule->self);
   lpDosTask->hModule=pModule->self;
-  stat=MZ_InitTask(lpDosTask);
+  stat=MZ_InitMemory(lpDosTask,pModule);
+  if (stat>=32) stat=MZ_InitTask(lpDosTask);
   if (stat<32) {
    free(lpDosTask);
    return -1;
@@ -177,7 +163,7 @@ int DOSVM_Enter( PCONTEXT context )
  return 0;
 }
 
-#else /* !linux */
+#else /* !MZ_SUPPORTED */
 
 int DOSVM_Enter( PCONTEXT context )
 {
@@ -185,4 +171,4 @@ int DOSVM_Enter( PCONTEXT context )
  return -1;
 }
 
-#endif /* linux */
+#endif

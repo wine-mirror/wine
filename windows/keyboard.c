@@ -773,6 +773,8 @@ INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
 {
     LPACCEL32	lpAccelTbl = (LPACCEL32)LockResource32(hAccel);
     int 	i;
+
+    TRACE(accel,"hwnd=0x%x hacc=0x%x msg=0x%x wp=0x%x lp=0x%lx\n", hWnd, hAccel, msg->message, msg->wParam, msg->lParam);
     
     if (hAccel == 0 || msg == NULL ||
 	(msg->message != WM_KEYDOWN &&

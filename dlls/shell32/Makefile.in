@@ -17,8 +17,8 @@ C_SRCS = \
 	shlfolder.c \
 	shlview.c
 
-RC_SRCS = \
-	shres.rc
+# RC_SRCS = \
+#	shres.rc
 
 all: check_wrc $(MODULE).o
 

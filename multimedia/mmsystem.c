@@ -118,46 +118,55 @@ MMSYSTEM_MMTIME16to32(LPMMTIME32 mmt32,LPMMTIME16 mmt16) {
 	memcpy(&(mmt16->u),&(mmt32->u),sizeof(mmt16->u));
 }
 
-/**************************************************************************
- * 				PlaySoundA		[WINMM.1]
- */
-BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+HANDLE32	PlaySound_hThread = 0;
+HANDLE32	PlaySound_hPlayEvent = 0;
+HANDLE32	PlaySound_hReadyEvent = 0;
+HANDLE32	PlaySound_hMiddleEvent = 0;
+BOOL32		PlaySound_Result = FALSE;
+int		PlaySound_Stop = FALSE;
+int		PlaySound_Playing = FALSE;
+
+LPCSTR		PlaySound_pszSound = NULL;
+HMODULE32	PlaySound_hmod = 0;
+DWORD		PlaySound_fdwSound = 0;
+int		PlaySound_Loop = FALSE;
+int		PlaySound_SearchMode = 0; /* 1 - sndPlaySound search order
+                                             2 - PlaySound order */
+
+HMMIO16	get_mmioFromFile(LPCSTR lpszName)
 {
-  TRACE(mmsys, "pszSound='%p' hmod=%04X fdwSound=%08lX\n",
-	pszSound, hmod, fdwSound);
-  if(hmod != 0 || !(fdwSound & SND_FILENAME)) {
-    FIXME(mmsys, "only disk sound files are supported. Type: %08lx\n",fdwSound);
-    return FALSE;
-  } else
-    return  sndPlaySound(pszSound, (UINT16) fdwSound);
+  return mmioOpen16((LPSTR)lpszName, NULL,
+    MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 }
 
-/**************************************************************************
- * 				PlaySoundW		[WINMM.18]
- */
-BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+HMMIO16 get_mmioFromProfile(UINT32 uFlags, LPCSTR lpszName) 
 {
-  LPSTR pszSoundA = HEAP_strdupWtoA(GetProcessHeap(),0,pszSound);
-  BOOL32 bSound;
-
-  bSound = PlaySound32A(pszSoundA, hmod, fdwSound);
-  HeapFree(GetProcessHeap(),0,pszSoundA);
-  return bSound;
+  char	   str[128];
+  LPSTR	   ptr;
+  HMMIO16  hmmio;
+  TRACE(mmsys, "searching in SystemSound List !\n");
+  GetProfileString32A("Sounds", (LPSTR)lpszName, "", str, sizeof(str));
+  if (strlen(str) == 0) {
+    if (uFlags & SND_NODEFAULT) return 0;
+    GetProfileString32A("Sounds", "Default", "", str, sizeof(str));
+    if (strlen(str) == 0) return 0;
+  }
+  if ( (ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
+  hmmio = get_mmioFromFile(str);
+  if (hmmio == 0) {
+    WARN(mmsys, "can't find SystemSound='%s' !\n", str);
+    return 0;
+  }
+  return hmmio;
 }
 
-/**************************************************************************
-* 				sndPlaySound		[MMSYSTEM.2]
-*/
-BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
+BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT32 uFlags)
 {
 	BOOL16			bRet = FALSE;
 	HMMIO16			hmmio;
 	MMCKINFO                ckMainRIFF;
-	char			str[128];
-	LPSTR			ptr;
 
-	TRACE(mmsys, "SoundName='%s' uFlags=%04X !\n", 
-									lpszSoundName, uFlags);
+	TRACE(mmsys, "SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
 	if (lpszSoundName == NULL) {
 		TRACE(mmsys, "Stop !\n");
 		return FALSE;
@@ -170,26 +179,32 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 		mminfo.cchBuffer = -1;
 		TRACE(mmsys, "Memory sound %p\n",lpszSoundName);
 		hmmio = mmioOpen16(NULL, &mminfo, MMIO_READ);
-	} else
-		hmmio = mmioOpen16((LPSTR)lpszSoundName, NULL, 
-			MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
+	} else {
+          hmmio = 0;
+	  if (uFlags & SND_ALIAS)
+	    if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
+	      return FALSE;
 
-	if (hmmio == 0) 
-	{
-		TRACE(mmsys, "searching in SystemSound List !\n");
-		GetProfileString32A("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
-		if (strlen(str) == 0) return FALSE;
-		if ( (ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
-		hmmio = mmioOpen16(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
-		if (hmmio == 0) 
-		{
-			WARN(mmsys, "can't find SystemSound='%s' !\n", str);
-			return FALSE;
-		}
+	  if (uFlags & SND_FILENAME)
+	    if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0) return FALSE;
+
+	  if (PlaySound_SearchMode == 1) {
+	    PlaySound_SearchMode = 0;
+	    if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0) 
+	      if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
+	        return FALSE;
+          }
+	
+	  if (PlaySound_SearchMode == 2) {
+	    PlaySound_SearchMode = 0;
+	    if ((hmmio=get_mmioFromProfile(uFlags | SND_NODEFAULT, lpszSoundName)) == 0) 
+	      if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0)	
+	        if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) return FALSE;
+	  }
 	}
-
+	
 	if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) == 0) 
-        {
+        do {
 	    TRACE(mmsys, "ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
@@ -252,6 +267,11 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 				{
 				    while( left )
 				    {
+                                        if (PlaySound_Stop) {
+					  PlaySound_Stop = FALSE;
+					  PlaySound_Loop = FALSE;
+					  break;
+					}
 					if (bufsize > left) bufsize = left;
 					count = mmioRead32(hmmio,waveHdr.lpData,bufsize);
 					if (count < 1) break;
@@ -275,10 +295,148 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 		    }
 		}
 	    }
-	}
+	} while (PlaySound_Loop);
 
 	if (hmmio != 0) mmioClose32(hmmio, 0);
 	return bRet;
+}
+
+static DWORD PlaySound_Thread(LPVOID arg) 
+{
+    DWORD     res;
+    HRSRC32   hRES;
+    HGLOBAL32 hGLOB;
+    void      *ptr;
+
+    while (TRUE) {
+      PlaySound_Playing=FALSE;
+      SetEvent(PlaySound_hReadyEvent);
+      res=WaitForSingleObject(PlaySound_hPlayEvent, INFINITE32);
+      ResetEvent(PlaySound_hReadyEvent);
+      SetEvent(PlaySound_hMiddleEvent);
+      if (res==WAIT_FAILED) ExitThread(2);
+      if (res!=WAIT_OBJECT_0) continue;
+      PlaySound_Playing=TRUE;
+      
+      if ((PlaySound_fdwSound & SND_RESOURCE) == SND_RESOURCE) {
+        if ((hRES=FindResource32A(PlaySound_hmod, PlaySound_pszSound,
+	  "WAVE"))==0) {
+          PlaySound_Result=FALSE;
+	  continue;
+	}
+        if ((hGLOB=LoadResource32(PlaySound_hmod, hRES))==0) {
+          PlaySound_Result=FALSE;
+	  continue;
+	}
+        if ( (ptr=LockResource32(hGLOB)) == NULL ) {
+          FreeResource32(hGLOB);
+          PlaySound_Result=FALSE;
+	  continue;
+        }
+        PlaySound_Result=proc_PlaySound(ptr, 
+	  ((UINT16) PlaySound_fdwSound ^ SND_RESOURCE) | SND_MEMORY);
+        FreeResource32(hGLOB);
+        continue;
+      }
+      PlaySound_Result=proc_PlaySound(PlaySound_pszSound, 
+        (UINT16) PlaySound_fdwSound);
+  }
+}
+
+/**************************************************************************
+ * 				PlaySoundA		[WINMM.1]
+ */
+BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+{
+  static LPSTR StrDup = NULL;
+
+  TRACE(mmsys, "pszSound='%p' hmod=%04X fdwSound=%08lX\n",
+	pszSound, hmod, fdwSound);
+
+  if (PlaySound_hThread == 0) { /* This is the first time they called us */
+    DWORD	id;
+    if ((PlaySound_hThread = CreateThread(NULL, 0, PlaySound_Thread, 
+      0, 0, &id)) == 0) return FALSE;
+    if ((PlaySound_hReadyEvent=CreateEvent32A(NULL, TRUE, FALSE, NULL)) == 0)
+      return FALSE;
+    if ((PlaySound_hMiddleEvent=CreateEvent32A(NULL, FALSE, FALSE, NULL)) == 0)
+      return FALSE;
+    if ((PlaySound_hPlayEvent=CreateEvent32A(NULL, FALSE, FALSE, NULL)) == 0)
+      return FALSE;
+  }
+
+/* FIXME? I see no difference between SND_WAIT and SND_NOSTOP ! */ 
+  if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && PlaySound_Playing) return FALSE;
+
+ /* Trying to stop if playing */
+  if (PlaySound_Playing) PlaySound_Stop = TRUE;
+
+/* Waiting playing thread to get ready. I think 10 secs is ok & if not then leave*/
+  if (WaitForSingleObject(PlaySound_hReadyEvent, 1000*10) != WAIT_OBJECT_0)
+    return FALSE;
+
+  if (!pszSound || (fdwSound & SND_PURGE)) return FALSE; /* We stoped playing so leaving */
+
+  if (PlaySound_SearchMode != 1) PlaySound_SearchMode = 2;
+  if (!(fdwSound & SND_ASYNC)) {
+    if (fdwSound & SND_LOOP) return FALSE;
+    PlaySound_pszSound = pszSound;
+    PlaySound_hmod = hmod;
+    PlaySound_fdwSound = fdwSound;
+    PlaySound_Result = FALSE;
+    SetEvent(PlaySound_hPlayEvent);
+    if (WaitForSingleObject(PlaySound_hMiddleEvent, INFINITE32) != 
+      WAIT_OBJECT_0) return FALSE;
+    if (WaitForSingleObject(PlaySound_hReadyEvent, INFINITE32) != 
+      WAIT_OBJECT_0) return FALSE;
+    return PlaySound_Result;
+  } else {
+    PlaySound_hmod = hmod;
+    PlaySound_fdwSound = fdwSound;
+    PlaySound_Result = FALSE;
+    if (StrDup) {
+      HeapFree(GetProcessHeap(), 0, StrDup);
+      StrDup = NULL;
+    }
+    if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
+      !((DWORD)pszSound >> 16)) || !pszSound)) {
+      StrDup = HEAP_strdupA(GetProcessHeap(),0,pszSound);
+      PlaySound_pszSound = StrDup;
+    } else PlaySound_pszSound = pszSound;
+    PlaySound_Loop = fdwSound & SND_LOOP;
+    SetEvent(PlaySound_hPlayEvent);
+    ResetEvent(PlaySound_hMiddleEvent);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**************************************************************************
+ * 				PlaySoundW		[WINMM.18]
+ */
+BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+{
+  LPSTR pszSoundA;
+  BOOL32 bSound;
+
+  if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
+    !((DWORD)pszSound >> 16)) || !pszSound)) {
+    pszSoundA = HEAP_strdupWtoA(GetProcessHeap(),0,pszSound);
+    bSound = PlaySound32A(pszSoundA, hmod, fdwSound);
+    HeapFree(GetProcessHeap(),0,pszSoundA);
+  } else  
+    bSound = PlaySound32A((LPCSTR)pszSound, hmod, fdwSound);
+
+  return bSound;
+}
+
+/**************************************************************************
+* 				sndPlaySound		[MMSYSTEM.2]
+*/
+BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
+{
+    PlaySound_SearchMode = 1;
+    return PlaySound32A(lpszSoundName, 0, uFlags);
 }
 
 /**************************************************************************
@@ -1416,9 +1574,9 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS16 lpParms)
 }
 
 /**************************************************************************
- *                    	mciLoadCommandResource
+ *                    	mciLoadCommandResource16
  */
-UINT16 mciLoadCommandResource16(HANDLE16 hinst,LPCSTR resname,UINT16 type)
+UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst,LPCSTR resname,UINT16 type)
 {
       char            buf[200];
       OFSTRUCT        ofs;

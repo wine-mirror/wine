@@ -44,11 +44,12 @@ extern HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
                                      LPCSTR env, LPSTARTUPINFO32A startup,
                                      LPPROCESS_INFORMATION info );
 
-struct _PDB32; /* forward definition */
 struct _THDB; /* forward definition */
 extern void PE_InitializeDLLs(struct _PDB32*,DWORD,LPVOID);
 extern void PE_InitTls(struct _THDB*);
 
 extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
+
+typedef DWORD (CALLBACK*DLLENTRYPROC32)(HMODULE32,DWORD,LPVOID);
 
 #endif /* __WINE_PE_IMAGE_H */

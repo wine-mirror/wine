@@ -114,16 +114,16 @@ init	Shell32LibMain
  106 stub FileMenu_FindSubMenuByPidl
  107 stub FileMenu_GetLastSelectedItemPidls
  108 stub FileMenu_HandleMenuChar
- 109 stub FileMenu_InitMenuPopup
+ 109 stdcall FileMenu_InitMenuPopup (long) FileMenu_InitMenuPopup
  110 stub FileMenu_InsertUsingPidl
  111 stub FileMenu_Invalidate
  112 stub FileMenu_MeasureItem
  113 stub FileMenu_ReplaceUsingPidl
  114 stdcall FileMenu_Create (long long long long long) FileMenu_Create
  115 stub FileMenu_AppendItem
- 116 stub FileMenu_TrackPopupMenuEx
+ 116 stdcall FileMenu_TrackPopupMenuEx (long long long long long long) FileMenu_TrackPopupMenuEx
  117 stub FileMenu_DeleteItemByCmd
- 118 stub FileMenu_Destroy
+ 118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
  119 stdcall IsLFNDrive(str) IsLFNDrive
  120 stub FileMenu_AbortInitMenu
  121 stub SHFlushClipboard
@@ -132,7 +132,7 @@ init	Shell32LibMain
  124 stub FileMenu_AppendFilesForPidl
  125 stub FileMenu_AddFilesForPidl
  126 stub SHOutOfMemoryMessageBox
- 127 stub SHWinHelp
+ 127 stdcall SHWinHelp (long long long long) SHWinHelp
  128 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
  129 stub DAD_AutoScroll
  130 stub DAD_DragEnter
@@ -142,7 +142,7 @@ init	Shell32LibMain
  134 stub DAD_DragMove
  135 stub DragQueryPoint   # exported by name
  136 stub DAD_SetDragImage
- 137 stub DAD_ShowDragImage
+ 137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
  138 stub DuplicateIcon   # exported by name
  139 stub Desktop_UpdateBriefcaseOnEvent
  140 stub FileMenu_DeleteItemByIndex
@@ -166,7 +166,7 @@ init	Shell32LibMain
  158 stdcall PathGetExtension(str long long) PathGetExtension
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
- 161 stub SHRunConrolPanel
+ 161 stdcall SHRunConrolPanel (long long)SHRunConrolPanel
  162 stub SHSimpleIDListFromPath
  163 stub StrToOleStr
  164 stub Win32DeleteFile
@@ -247,12 +247,12 @@ init	Shell32LibMain
  239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify32  # exported by name
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
- 242 stdcall SHFileOperation(ptr) SHFileOperation32   # exported by name
- 243 stub SHFileOperationA@4   # exported by name
+ 242 stdcall SHFileOperation (ptr) SHFileOperation32   # exported by name
+ 243 stdcall SHFileOperationA (long) SHFileOperationA  # exported by name
  244 stub SHFileOperationW@4   # exported by name
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
- 247 stub SHGetDataFromIDListA@20   # exported by name
+ 247 stdcall SHGetDataFromIDListA (long long long long long) SHGetDataFromIDListA  # exported by name
  248 stub SHGetDataFromIDListW@20   # exported by name
  249 stub PathParseIconLocation@4
  250 stub PathRemoveExtension@4

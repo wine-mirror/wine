@@ -202,3 +202,23 @@ MFDRV_PaintRgn( DC *dc, HRGN32 hrgn )
     return MF_MetaParam1( dc, META_PAINTREGION, index );
 }
 
+
+/**********************************************************************
+ *          MFDRV_SetBkColor
+ */
+COLORREF
+MFDRV_SetBkColor( DC *dc, COLORREF color )
+{
+    return MF_MetaParam2(dc, META_SETBKCOLOR, HIWORD(color), LOWORD(color));
+}
+
+
+/**********************************************************************
+ *          MFDRV_SetTextColor
+ */
+COLORREF
+MFDRV_SetTextColor( DC *dc, COLORREF color )
+{
+    return MF_MetaParam2(dc, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color));
+}
+

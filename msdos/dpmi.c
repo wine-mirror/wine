@@ -143,7 +143,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
     ESI_reg(context) = call->esi;
     EDI_reg(context) = call->edi;
     EBP_reg(context) = call->ebp;
-    EFL_reg(context) = call->fl;
+    EFL_reg(context) = call->fl | 0x00020000; /* V86 */
     EIP_reg(context) = call->ip;
     ESP_reg(context) = call->sp;
     CS_reg(context)  = call->cs;
@@ -151,6 +151,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
     ES_reg(context)  = call->es;
     FS_reg(context)  = call->fs;
     GS_reg(context)  = call->gs;
+    (char*)V86BASE(context) = DOSMEM_MemoryBase(0);
 }
 
 
@@ -188,160 +189,8 @@ static void INT_DoRealModeInt( CONTEXT *context )
     INT_GetRealModeContext( call, &realmode_ctx );
 
     RESET_CFLAG(context);
-    switch (BL_reg(context))
-    {
-    case 0x2f:	/* int2f */
-        switch (AH_reg(&realmode_ctx))
-        {
-        case 0x15:
-            /* MSCDEX hook */
-            do_mscdex( &realmode_ctx, 1 );
-            break;
-        case 0x7a:
-            /* NOVELL NetWare */
-            switch (AL_reg(&realmode_ctx))
-	    {
-                case 0x20:  /* Get VLM Call Address */
-                    /* return nothing -> NetWare not installed */
-                    break;
-                default:
-                    SET_CFLAG(context);
-                    break;
-            }
-	    break;
-        default:
-            SET_CFLAG(context);
-            break;
-        }
-        break;
-    case 0x21:	/* int21 */
-        switch (AH_reg(&realmode_ctx))
-        {
-        case 0x52:
-            ES_reg(&realmode_ctx) = 0;
-            EBX_reg(&realmode_ctx) = 0;
-            break;
-        case 0x65:
-            switch (AL_reg(&realmode_ctx))
-            {
-            case 0x06:
-                {/* get collate table */
-                    /* ES:DI is a REALMODE pointer to 5 byte dosmem 
-                     * we fill that with 0x6, realmode pointer to collateTB
-                     */
-                    char *table = DOSMEM_MapRealToLinear(
-                       MAKELONG(EDI_reg(&realmode_ctx),ES_reg(&realmode_ctx)));
-                    *(BYTE*)table      = 0x06;
-                    *(DWORD*)(table+1) = DOSMEM_CollateTable;
-                    CX_reg(&realmode_ctx) = 258;/*FIXME: size of table?*/
-                    break;
-                }
-            default:
-                SET_CFLAG(context);
-                break;
-            }
-            break;
-        case 0x44:
-            switch (AL_reg(&realmode_ctx))
-            {
-            case 0x0D:
-                {/* generic block device request */
-                    BYTE *dataptr = DOSMEM_MapRealToLinear(
-                       MAKELONG(EDX_reg(&realmode_ctx),DS_reg(&realmode_ctx)));
-                    int drive = DOS_GET_DRIVE(BL_reg(&realmode_ctx));
-                    if (CH_reg(&realmode_ctx) != 0x08)
-                    {
-                        SET_CFLAG(context);
-                        break;
-                    }
-                    switch (CL_reg(&realmode_ctx))
-                    {
-                    case 0x66:
-                        {
-			    char    label[12],fsname[9],path[4];
-			    DWORD   serial;
-
-			    strcpy(path,"x:\\");path[0]=drive+'A';
-			    GetVolumeInformation32A(path,label,12,&serial,NULL,NULL,fsname,9);
-			    *(WORD*)dataptr         = 0;
-			    memcpy(dataptr+2,&serial,4);
-			    memcpy(dataptr+6,label  ,11);
-			    memcpy(dataptr+17,fsname,8);
-			    break;
-                        }
-                    case 0x60:	/* get device parameters */
-                                /* used by defrag.exe of win95 */
-                        memset(dataptr, 0, 0x26);
-                        dataptr[0] = 0x04;
-                        dataptr[6] = 0; /* media type */
-                        if (drive > 1)
-                        {
-                            dataptr[1] = 0x05; /* fixed disk */
-                            setword(&dataptr[2], 0x01); /* non removable */
-                            setword(&dataptr[4], 0x300); /* # of cylinders */
-                        }
-                        else
-                        {
-                            dataptr[1] = 0x07; /* block dev, floppy */
-                            setword(&dataptr[2], 0x02); /* removable */
-                            setword(&dataptr[4], 80); /* # of cylinders */
-                        }
-                        CreateBPB(drive, &dataptr[7], FALSE);
-                        break;
-                    default:
-                        SET_CFLAG(context);
-                        break;
-                    }
-                }
-                break;
-            default:
-                SET_CFLAG(context);
-                break;
-            }
-            break;
-        case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
-            TRACE(int31,"GET OR SET MEMORY/UMB ALLOCATION STRATEGY subfunction %d\n",
-                  AL_reg(context));
-            switch (AL_reg(context))
-            {
-            case 0x00:
-                AX_reg(context) = 1;
-                break;
-            case 0x02:
-                AX_reg(context) = 0;
-                break;
-            case 0x01:
-            case 0x03:
-                break;
-            }
-            RESET_CFLAG(context);
-            break;
-	case 0x60: {/* CANONICALIZE PATH */
-		LPCSTR path = (LPCSTR)DOSMEM_MapRealToLinear((DS_reg(&realmode_ctx)<<16)+SI_reg(&realmode_ctx));
-
-		TRACE(int31,"TRUENAME %s\n",path);
-		if (!GetFullPathName32A( 
-		    path,
-		    128,
-		    (LPSTR)DOSMEM_MapRealToLinear(
-		    (ES_reg(&realmode_ctx)<<16)+DI_reg(&realmode_ctx)),
-		    NULL
-		))
-		    SET_CFLAG(context);
-		else
-		    AX_reg(&realmode_ctx) = 0;
-	    }
-	    break;
-        default:
-            SET_CFLAG(context);
-            break;
-        }
-        break;
-    default:
-        SET_CFLAG(context);
-        break;
-    }
-
+    if (INT_RealModeInterrupt( BL_reg(context), context ))
+      SET_CFLAG(context);
     if (EFL_reg(context)&1) {
       FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
 	    BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 

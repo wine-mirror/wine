@@ -26,19 +26,61 @@ static void do_int2f_16( CONTEXT *context );
  */
 void WINAPI INT_Int2fHandler( CONTEXT *context )
 {
+    TRACE(int,"Subfunction 0x%X\n", AH_reg(context));
+
     switch(AH_reg(context))
     {
     case 0x10:
         AL_reg(context) = 0xff; /* share is installed */
         break;
 
+    case 0x12:
+        switch (AL_reg(context))
+        {
+        case 0x2e: /* get or set DOS error table address */
+            switch (DL_reg(context))
+            {
+            /* Four tables: even commands are 'get', odd are 'set' */
+            /* DOS 5.0+ ignores "set" commands */
+            case 0x01:
+            case 0x03:
+            case 0x05:
+            case 0x07:
+            case 0x09:
+                break; 
+            /* Instead of having a message table in DOS-space, */
+            /* we can use a special case for MS-DOS to force   */
+            /* the secondary interface.			       */
+            case 0x00:
+            case 0x02:
+            case 0x04:
+            case 0x06: 
+                ES_reg(context) = 0x0001;
+                DI_reg(context) = 0x0000;
+                break;
+            case 0x08:
+                FIXME(int, "No real-mode handler for errors yet! (bye!)");
+                break;
+            default:
+                INT_BARF(context, 0x2f);
+            }
+            break;
+        default:
+           INT_BARF(context, 0x2f);
+        }  
+        break;
+   
     case 0x15: /* mscdex */
-        do_mscdex(context, FALSE );
+        do_mscdex(context);
         break;
 
     case 0x16:
         do_int2f_16( context );
         break;
+    case 0x43:
+    	FIXME(int,"check for XMS (not supported)\n");
+	AL_reg(context) = 0x42; /* != 0x80 */
+    	break;
 
     case 0x45:
        switch (AL_reg(context)) 
@@ -82,6 +124,17 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
 	    INT_BARF( context, 0x2f );
 	}
 	break;
+    case 0x7a:  /* NOVELL NetWare */
+        switch (AL_reg(context))
+        {
+        case 0x20:  /* Get VLM Call Address */
+            /* return nothing -> NetWare not installed */
+            break;
+        default:
+            SET_CFLAG(context);
+            break;
+        }
+        break;
     case 0xb7:  /* append */
         AL_reg(context) = 0; /* not installed */
         break;
@@ -162,7 +215,9 @@ static void do_int2f_16( CONTEXT *context )
 
     /* FIXME: is this right?  Specs say that this should only be callable
        in real (v86) mode which we never enter.  */
+    /* FIXME: we do now, and this breaks pkunzip */
     case 0x87: /* DPMI installation check */
+        if (ISV86(context)) break; /* so bail out for now if in v86 mode */
         {
 	    SYSTEM_INFO si;
 
@@ -185,7 +240,7 @@ static void do_int2f_16( CONTEXT *context )
     }
 }
 
-void do_mscdex( CONTEXT *context, int dorealmode )
+void do_mscdex( CONTEXT *context )
 {
     int drive, count;
     char *p;
@@ -218,10 +273,7 @@ void do_mscdex( CONTEXT *context, int dorealmode )
             break;
 
         case 0x0D: /* get drive letters */
-	    if (dorealmode)
-	    	p = DOSMEM_MapRealToLinear(MAKELONG(BX_reg(context),ES_reg(context)));
-	    else
-		p = PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
+	    p = CTX_SEG_OFF_TO_LIN(context, ES_reg(context), BX_reg(context));
             memset( p, 0, MAX_DOS_DRIVES );
             for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {
@@ -230,8 +282,11 @@ void do_mscdex( CONTEXT *context, int dorealmode )
             break;
 
 #ifdef linux
+        /* FIXME: why a new linux-only CDROM drive access, for crying out loud?
+         * There are pretty complete routines in multimedia/mcicda.c already! */
 	case 0x10: /* direct driver acces */
-	    do_mscdex_dd(context,dorealmode);
+            FIXME(cdaudio,"mscdex should use multimedia/mcicda.c");
+	    do_mscdex_dd(context,ISV86(context));
 	    break;
 
 #endif

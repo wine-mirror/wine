@@ -690,7 +690,9 @@ static LPKEYSTRUCT _find_or_add_key( LPKEYSTRUCT lpkey, LPWSTR keyname )
 	lplpkey= &(lpkey->nextsub);
 	lpxkey	= *lplpkey;
 	while (lpxkey) {
-		if (!lstrcmpi32W(lpxkey->keyname,keyname))
+		if (	(lpxkey->keyname[0]==keyname[0]) && 
+			!lstrcmpi32W(lpxkey->keyname,keyname)
+		)
 			break;
 		lplpkey	= &(lpxkey->next);
 		lpxkey	= *lplpkey;
@@ -726,6 +728,7 @@ static void _find_or_add_value( LPKEYSTRUCT lpkey, LPWSTR name, DWORD type,
 				break;
 		} else {
 			if (	val->name!=NULL && 
+				val->name[0]==name[0] &&
 				!lstrcmpi32W(val->name,name)
 			)
 				break;
@@ -1080,7 +1083,7 @@ static void _copy_registry( LPKEYSTRUCT from, LPKEYSTRUCT to )
  *   header:
  * 	0 :		"RGKN"	- magic
  *      4 : DWORD	offset to first RGDB section
- *      8 : DWORD	offset to ?
+ *      8 : DWORD	offset to the root record
  * 	C..0x1B: 	? (fill in)
  *      0x20 ... offset_of_RGDB_part: Disk Key Entry structures
  *
@@ -1239,18 +1242,22 @@ static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey,
 		bytesread+=len;\
 	}
 
-	do {
-	  XREAD(&dkh, sizeof (dkh));
-	  if (dkh.nrLS == nrLS) break;
+	while (curdata < next) {
+	  struct	dkh *xdkh = curdata;
 
-	  curdata += dkh.nextkeyoff - sizeof(dkh);
-	} while (curdata < next);
+	  bytesread += sizeof(dkh); /* FIXME... nextkeyoff? */
+	  if (xdkh->nrLS == nrLS) {
+	  	memcpy(&dkh,xdkh,sizeof(dkh));
+	  	curdata += sizeof(dkh);
+	  	break;
+	  }
+	  curdata += xdkh->nextkeyoff;
+	};
 
 	if (dkh.nrLS != nrLS) return (NULL);
 
-	if (nrgdb != dkh.nrMS) {
+	if (nrgdb != dkh.nrMS)
 	  return (NULL);
-	}
 
         assert((dkh.keynamelen<2) || curdata[0]);
 	lpxkey=_find_or_add_key(lpkey,strcvtA2W(curdata, dkh.keynamelen));
@@ -1287,9 +1294,7 @@ static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey,
 			     len,
 			     info->lastmodified
 			     );
-
 	}
-
 	return (lpxkey);
 }
 
@@ -2797,10 +2802,6 @@ DWORD WINAPI RegEnumValue32W( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
     lpkey = lookup_hkey( hkey );
     if (!lpkey)
         return ERROR_INVALID_HANDLE;
-
-    /* None asked for */
-    if (!iValue)
-        return ERROR_SUCCESS;
 
     if (lpkey->nrofvalues <= iValue)
         return ERROR_NO_MORE_ITEMS;

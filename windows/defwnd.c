@@ -164,9 +164,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CONTEXTMENU:
 	if( wndPtr->dwStyle & WS_CHILD )
 	    SendMessage32A( wndPtr->parent->hwndSelf, msg, wParam, lParam );
-
-     /* else 
-      *     FIXME: Track system popup if click was in the caption area. */
+	else
+	  if (wndPtr->hSysMenu)
+	  { /*
+	    TrackPopupMenu32(wndPtr->hSysMenu,TPM_LEFTALIGN | TPM_RETURNCMD,LOWORD(lParam),HIWORD(lParam),0,wndPtr->hwndSelf,NULL);
+	    DestroyMenu32(wndPtr->hSysMenu);
+	    */
+	    FIXME(win,"Display default popup menu\n");
+	  /* Track system popup if click was in the caption area. */
+	  }
 	break;
 
     case WM_NCACTIVATE:

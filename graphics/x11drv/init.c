@@ -61,7 +61,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSelectClipRgn */
     X11DRV_SelectObject,             /* pSelectObject */
     NULL,                            /* pSelectPalette */
-    NULL,                            /* pSetBkColor */
+    X11DRV_SetBkColor,               /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
@@ -74,7 +74,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetStretchBltMode */
     NULL,                            /* pSetTextAlign */
     NULL,                            /* pSetTextCharacterExtra */
-    NULL,                            /* pSetTextColor */
+    X11DRV_SetTextColor,             /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
     NULL,                            /* pSetViewportExt (optional) */
     NULL,                            /* pSetViewportOrg (optional) */

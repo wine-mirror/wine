@@ -57,7 +57,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSelectClipRgn */
     MFDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
-    NULL,                            /* pSetBkColor */
+    MFDRV_SetBkColor,                /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
@@ -70,7 +70,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetStretchBltMode */
     NULL,                            /* pSetTextAlign */
     NULL,                            /* pSetTextCharacterExtra */
-    NULL,                            /* pSetTextColor */
+    MFDRV_SetTextColor,              /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
     MFDRV_SetViewportExt,            /* pSetViewportExt */
     MFDRV_SetViewportOrg,            /* pSetViewportOrg */
@@ -310,7 +310,7 @@ BOOL32 WINAPI DeleteMetaFile32(
 /*
   need wide version as well
 */
-HDC32 CreateEnhMetaFile32A( 
+HDC32 WINAPI CreateEnhMetaFile32A( 
     HDC32 hdc, /* optional reference DC */
     LPCSTR filename, /* optional filename for disk metafiles */
     const RECT32 *rect, /* optional bounding rectangle */
@@ -351,7 +351,7 @@ HDC32 CreateEnhMetaFile32A(
     return 0;
 }
 
-HENHMETAFILE32 CloseEnhMetaFile32( 
+HENHMETAFILE32 WINAPI CloseEnhMetaFile32( 
                HDC32 hdc  /* metafile DC */
 	       )
 {

@@ -22,9 +22,6 @@
 #include "server.h"
 #include "debug.h"
 
-/* Process self-handle */
-#define PROCESS_SELF ((HANDLE32)0x7fffffff)
-
 static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
 static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id );
@@ -59,16 +56,8 @@ PDB32 *PROCESS_Current(void)
  */
 PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
 {
-    PDB32 *pdb = PROCESS_Current();
-
-    if (handle == PROCESS_SELF)
-    {
-        if (server_handle) *server_handle = PROCESS_SELF;
-        K32OBJ_IncCount( &pdb->header );
-        return pdb;
-    }
-    return (PDB32 *)HANDLE_GetObjPtr( pdb, handle, K32OBJ_PROCESS, access,
-                                      server_handle );
+    return (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                     K32OBJ_PROCESS, access, server_handle );
 }
 
 
@@ -451,7 +440,7 @@ BOOL32 WINAPI TerminateProcess( HANDLE32 handle, DWORD exit_code )
  */
 HANDLE32 WINAPI GetCurrentProcess(void)
 {
-    return 0x7fffffff;
+    return CURRENT_PROCESS_PSEUDOHANDLE;
 }
 
 
@@ -735,7 +724,7 @@ HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 h)
  * A service process calls this function to ensure that it continues to run
  * even after a user logged off.
  */
-DWORD RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
+DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
 	/* I don't think that Wine needs to do anything in that function */
 	return 1; /* success */

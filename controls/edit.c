@@ -514,6 +514,7 @@ LRESULT WINAPI EditWndProc( HWND32 hwnd, UINT32 msg,
 	case EM_REPLACESEL32:
 		DPRINTF_EDIT_MSG32("EM_REPLACESEL");
 		EDIT_EM_ReplaceSel(wnd, es, (BOOL32)wParam, (LPCSTR)lParam);
+		result = 1;
 		break;
 
 	/* message 0x00c3 missing from specs */

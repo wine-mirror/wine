@@ -660,9 +660,8 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
 	  nRet = cch;
 	if (pPrintJob->hDC == 0) {
 	    ERR(print, "hDC == 0 !\n");
-	    return SP_ERROR;
 	}
-	if (!(QueryAbort(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
+        else if (!(QueryAbort(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
 	{
 	    CloseJob(hJob); /* printing aborted */
 	    nRet = SP_APPABORT;

@@ -106,10 +106,11 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         stack16Top->ip = 0;
         stack16Top->cs = 0;
 	TRACE(dll,"CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
-		pModule->self,hf,segnum
-	);
+		pModule->self,hf,segnum );
  	newselector = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
-                                                   pModule->self, hf, segnum );
+                                                    pModule->self,
+                                                    HFILE32_TO_HFILE16(hf),
+                                                    segnum );
 	TRACE(dll,"Ret CallLoadAppSegProc: selector = 0x%04x\n",newselector);
         _lclose32( hf );
  	if (newselector != oldselector) {
@@ -218,7 +219,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
-                    address = 0xdeadbeef;
+                    address = (FARPROC16)0xdeadbeef;
                 }
             }
             if (TRACE_ON(fixup))
@@ -248,7 +249,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
-            if (!address) address = 0xdeadbeef;
+            if (!address) address = (FARPROC16) 0xdeadbeef;
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = NE_GetPtr( module );
@@ -418,8 +419,10 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         stack16Top->cs = 0;
 
         hf = FILE_DupUnixHandle( NE_OpenFile( pModule ) );
-	TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",pModule->self,hf);
-        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self, hf);
+        TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",pModule->self,
+              HFILE32_TO_HFILE16(hf));
+        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,
+                                   HFILE32_TO_HFILE16(hf));
 	TRACE(dll,"Return from CallBootAppProc\n");
         _lclose32(hf);
         /* some BootApp procs overwrite the selector of dgroup */

@@ -85,7 +85,7 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
 	case MODULE32_PE:
 	    ret =  PE_FindResourceEx32W(wm,name,type,lang);
         if ( ret==0 )
-          ERR(resource,"%s not found!\n",debugres_w (name));
+          ERR(resource,"(0x%08lx(%s),%s not found!\n",hModule,wm->modname,debugres_w (name));
 	    return ret;
 	default:
 	    ERR(module,"unknown module type %d\n",wm->type);

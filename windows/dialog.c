@@ -1583,7 +1583,7 @@ HWND32 WINAPI GetNextDlgTabItem32( HWND32 hwndDlg, HWND32 hwndCtrl,
     {
         /* No ctrl specified -> start from the beginning */
         if (!(pWndCtrl = pWndDlg->child)) return 0;
-        if (fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
+        if (!fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
     }
 
     pWndLast = pWndCtrl;

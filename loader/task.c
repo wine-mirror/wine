@@ -1032,6 +1032,10 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
 
+    if (!func) {
+      ERR(task, "Ouch ! MakeProcInstance called with func == NULL !\n");
+      return (FARPROC16)0; /* Windows seems to do the same */
+    }
     if (!hInstance) hInstance = CURRENT_DS;
     thunkaddr = TASK_AllocThunk( GetCurrentTask() );
     if (!thunkaddr) return (FARPROC16)0;

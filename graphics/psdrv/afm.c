@@ -30,66 +30,81 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
  */
 static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 {
-    char buf[256];
-    char *cp, *item, *value;
-    int i, charno;
+    char line[256], valbuf[256];
+    char *cp, *item, *value, *curpos, *endpos;
+    int i;
+    AFMMETRICS **insert = &afm->Metrics, *metric;
 
     for(i = 0; i < afm->NumofMetrics; i++) {
-        char *name = NULL;
 
-        if(!fgets(buf, sizeof(buf), fp)) {
+        if(!fgets(line, sizeof(line), fp)) {
 	   ERR(psdrv, "Unexpected EOF\n");
 	   return;
 	}
-	cp = buf + strlen(buf);
+
+	metric = *insert = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, 
+				      sizeof(AFMMETRICS) );
+	insert = &metric->next;
+
+	cp = line + strlen(line);
 	do {
 	    *cp = '\0';
 	    cp--;
-	} while(cp > buf && isspace(*cp));
+	} while(cp > line && isspace(*cp));
 
-        item = strtok(buf, ";");
-	if(!strncmp(item, "C ", 2)) {
-	    value = strchr(item, ' ');
-	    sscanf(value, " %d", &charno);
-	} else if(!strncmp(item, "CH ", 3)) {
-	    value = strrchr(item, ' ');
-	    sscanf(value, " %x", &charno);
-	} else {
-	    WARN(psdrv, "Don't understand '%s'\n", item);
-	    return;
-	}
-
-	while((item = strtok(NULL, ";"))) {
+	curpos = line;
+	while(*curpos) {
+	    item = curpos;
 	    while(isspace(*item))
 	        item++;
-	    value = strchr(item, ' ');
-	    if(!value) /* last char maybe a ';' but no white space after it */
-	        break;
-	    value++;
+	    value = strpbrk(item, " \t");
+	    while(isspace(*value))
+	        value++;
+	    cp = endpos = strchr(value, ';');
+	    while(isspace(*--cp))
+	        ;
+	    memcpy(valbuf, value, cp - value + 1);
+	    valbuf[cp - value + 1] = '\0';
+	    value = valbuf;
 
-	    if(!strncmp("WX ", item, 3) || !strncmp("W0X ", item, 4)) {
-	        if(charno >= 0 && charno <= 0xff)
-		    sscanf(value, "%f", &(afm->CharWidths[charno]));
+	    if(!strncmp(item, "C ", 2)) {
+	        value = strchr(item, ' ');
+		sscanf(value, " %d", &metric->C);
+
+	    } else if(!strncmp(item, "CH ", 3)) {
+	        value = strrchr(item, ' ');
+		sscanf(value, " %x", &metric->C);
 	    }
-	    /* would carry on here to scan in BBox, name and ligs */
 
-	    /* Carry on to find BBox (or actually just ascent) of Aring. This
-	       will provide something like the lfHeight value */
+	    else if(!strncmp("WX ", item, 3) || !strncmp("W0X ", item, 4)) {
+	        sscanf(value, "%f", &metric->WX);
+	        if(metric->C >= 0 && metric->C <= 0xff)
+		    afm->CharWidths[metric->C] = metric->WX;
+	    }
 
 	    else if(!strncmp("N ", item, 2)) {
-	        name = value; /* may end in space */
+	        metric->N = HEAP_strdupA( PSDRV_Heap, 0, value);
 	    }
 
 	    else if(!strncmp("B ", item, 2)) {
-	        if(name && !strncmp("Aring", name, 5)) {
-		    float llx, lly, urx, ury;
-		    llx = lly = urx = ury = 0.0;
-		    sscanf(value, "%f%f%f%f", &llx, &lly, &urx, &ury);
-		    afm->FullAscender = ury;
-		}
+	        sscanf(value, "%f%f%f%f", &metric->B.llx, &metric->B.lly,
+				          &metric->B.urx, &metric->B.ury);
+
+		/* Store height of Aring to use as lfHeight */
+		if(metric->N && !strncmp(metric->N, "Aring", 5))
+		    afm->FullAscender = metric->B.ury;
 	    }
 
+	    /* Ligatures go here... */
+
+	    curpos = endpos + 1;
 	}
+
+#if 0	
+	TRACE(psdrv, "Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
+	      metric->N, metric->WX, metric->B.llx, metric->B.lly,
+	      metric->B.urx, metric->B.ury);
+#endif
     }
 
     return;
@@ -113,6 +128,8 @@ static AFM *PSDRV_AFMParse(char const *file)
     AFM *afm;
     char *cp;
 
+    TRACE(psdrv, "parsing '%s'\n", file);
+
     if((fp = fopen(file, "r")) == NULL) {
         MSG("Can't open AFM file '%s'. Please check wine.conf .\n", file);
         return NULL;
@@ -133,7 +150,8 @@ static AFM *PSDRV_AFMParse(char const *file)
 
         value = strchr(buf, ' ');
 	if(value)
-	    value++;
+	    while(isspace(*value))
+	        value++;
 
 	if(!strncmp("FontName", buf, 8)) {
 	    afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, value);
@@ -223,8 +241,10 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    continue;
 	}
 
-
-
+	if(!strncmp("EncodingScheme", buf, 14)) {
+	    afm->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    continue;
+	}
 
     }
     fclose(fp);
@@ -324,12 +344,49 @@ void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 
     return;
 }
-    
+
+/**********************************************************
+ *
+ *	PSDRV_ReencodeCharWidths
+ *
+ * Re map the CharWidths field of the afm to correspond to an ANSI encoding
+ *
+ */
+static void PSDRV_ReencodeCharWidths(AFM *afm)
+{
+    int i;
+    AFMMETRICS *metric;
+
+    for(i = 0; i < 256; i++) {
+        if(isalnum(i))
+	    continue;
+	if(PSDRV_ANSIVector[i] == NULL) {
+	    afm->CharWidths[i] = 0.0;
+	    continue;
+	}
+        for(metric = afm->Metrics; metric; metric = metric->next) {
+	    if(!strcmp(metric->N, PSDRV_ANSIVector[i])) {
+	        afm->CharWidths[i] = metric->WX;
+		break;
+	    }
+	}
+	if(!metric) {
+	    WARN(psdrv, "Couldn't find glyph '%s' in font '%s'\n",
+		 PSDRV_ANSIVector[i], afm->FontName);
+	    afm->CharWidths[i] = 0.0;
+	}
+    }
+    return;
+}
+
 /***********************************************************
  *
  *	PSDRV_afmfilesCallback
  *
  * Callback for PROFILE_EnumerateWineIniSection
+ * Try to parse AFM file `value', alter the CharWidths field of afm struct if
+ * the font is using AdobeStandardEncoding to correspond to WinANSI, then add
+ * afm to system font list.
  */
 static void PSDRV_afmfilesCallback(char const *key, char const *value,
 void *user)
@@ -337,8 +394,13 @@ void *user)
     AFM *afm;
 
     afm = PSDRV_AFMParse(value);
-    if(afm)
+    if(afm) {
+        if(afm->EncodingScheme && 
+	   !strcmp(afm->EncodingScheme, "AdobeStandardEncoding")) {
+	    PSDRV_ReencodeCharWidths(afm);
+	}
         PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
+    }
     return;
 }
 

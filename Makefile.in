@@ -27,6 +27,7 @@ LIBSUBDIRS = \
 	tools \
 	tools/wrc \
 	controls \
+	dlls/comctl32 \
 	dlls/shell32 \
 	files \
 	graphics \
@@ -77,6 +78,7 @@ INSTALLSUBDIRS = $(DOCSUBDIRS)
 
 LIBOBJS = \
 	controls/controls.o \
+	dlls/comctl32/comctl32.o \
 	dlls/shell32/shell32.o \
 	files/files.o \
 	graphics/graphics.o \

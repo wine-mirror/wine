@@ -18,7 +18,7 @@ General:
 
  * Very alpha printing code using win16 drivers.
 
- * Very alpha internal Postscript driver. [h.davies1@physics.ox.ac.uk]
+ * Very alpha internal PostScript driver. [h.davies1@physics.ox.ac.uk]
 
  * Extremely alpha Win95 interface code.		
  * No OLE2 and OLE32 support (including OLE2 interfaces etc.).

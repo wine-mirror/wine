@@ -1190,6 +1190,12 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
 	 /* make a fixed block moveable
 	  * actually only NT is able to do this. But it's soo simple
 	  */
+         if (hmem == 0)
+         {
+	     ERR(global, "GlobalReAlloc32 with null handle!\n");
+             SetLastError( ERROR_INVALID_ACCESS_TO_MEM );
+    	     return 0;
+         }
 	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
 	 hnew=GlobalAlloc32( flags, size);
 	 palloc=GlobalLock32(hnew);
@@ -1501,7 +1507,7 @@ SEGPTR WINAPI WOWGlobalAllocLock16(DWORD flags,DWORD cb,HGLOBAL16 *hmem)
  *
  * Combined GlobalUnlock and GlobalFree.
  */
-WORD WOWGlobalUnlockFree16(DWORD vpmem) {
+WORD WINAPI WOWGlobalUnlockFree16(DWORD vpmem) {
     if (!GlobalUnlock16(HIWORD(vpmem)))
     	return 0;
     return GlobalFree16(HIWORD(vpmem));

@@ -27,7 +27,7 @@ typedef struct tagREBAR_BAND
     UINT32    cxHeader;
 
     LPSTR     lpText;
-
+    HWND32    hwndPrevParent;
 } REBAR_BAND;
 
 

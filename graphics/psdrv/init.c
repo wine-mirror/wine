@@ -5,14 +5,14 @@
  *
  */
 
-#include <windows.h>
-#include <gdi.h>
-#include <psdrv.h>
-#include <debug.h>
-#include <heap.h>
-#include <winreg.h>
-#include <print.h>
-#include <winerror.h>
+#include "windows.h"
+#include "gdi.h"
+#include "psdrv.h"
+#include "debug.h"
+#include "heap.h"
+#include "winreg.h"
+#include "print.h"
+#include "winerror.h"
 
 static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -62,7 +62,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSelectClipRgn */
     PSDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
-    NULL,                            /* pSetBkColor */
+    PSDRV_SetBkColor,                /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
@@ -75,7 +75,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetStretchBltMode */
     NULL,                            /* pSetTextAlign */
     NULL,                            /* pSetTextCharacterExtra */
-    NULL,                            /* pSetTextColor */
+    PSDRV_SetTextColor,              /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
     NULL,                            /* pSetViewportExt (optional) */
     NULL,                            /* pSetViewportOrg (optional) */
@@ -202,6 +202,8 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     TRACE(psdrv, "(%s %s %s %p)\n", driver, device, output, initData);
 
+    if(!pi) return FALSE;
+
     if(!pi->Fonts) {
         MSG("To use WINEPS you need to install some AFM files.\n");
 	return FALSE;
@@ -252,6 +254,13 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 				physDev->pi->ppd->DefaultResolution;
     devCaps->aspectXY = (int)hypot( (double)devCaps->aspectX, 
 				    (double)devCaps->aspectY );
+
+    if(physDev->pi->ppd->ColorDevice) {
+        devCaps->bitsPixel = 8;
+	devCaps->numColors = 256;
+	/* FIXME are these values OK? */
+    }
+
     /* etc */
 
     dc->w.devCaps = devCaps;
@@ -324,6 +333,14 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     }
 
     pi->ppd = PSDRV_ParsePPD(pi->Devmode->dmDrvPrivate.ppdFileName);
+    if(!pi->ppd) {
+        HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
+        HeapFree(PSDRV_Heap, 0, pi->Devmode);
+        HeapFree(PSDRV_Heap, 0, pi);
+	*last = NULL;
+	return NULL;
+    }
+
     pi->next = NULL;
     pi->Fonts = NULL;
 

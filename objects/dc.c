@@ -117,8 +117,6 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->backgroundMode      = OPAQUE;
     win_dc_info->backgroundColor     = RGB( 255, 255, 255 );
     win_dc_info->textColor           = RGB( 0, 0, 0 );
-    win_dc_info->backgroundPixel     = 0;
-    win_dc_info->textPixel           = 0;
     win_dc_info->brushOrgX           = 0;
     win_dc_info->brushOrgY           = 0;
     win_dc_info->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
@@ -234,13 +232,13 @@ BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
 	 * We need to swap foreground and background because
 	 * Windows does it the wrong way...
 	 */
-	val.foreground = dc->w.backgroundPixel;
-	val.background = dc->w.textPixel;
+	val.foreground = dc->u.x.backgroundPixel;
+	val.background = dc->u.x.textPixel;
     }
     else
     {
 	val.foreground = dc->u.x.brush.pixel;
-	val.background = dc->w.backgroundPixel;
+	val.background = dc->u.x.backgroundPixel;
     }
     if (fMapColors && COLOR_PixelToPalette)
     {
@@ -358,7 +356,7 @@ BOOL32 DC_SetupGCForPen( DC * dc )
 	val.foreground = dc->u.x.pen.pixel;
 	val.function   = DC_XROPfunction[dc->w.ROPmode-1];
     }
-    val.background = dc->w.backgroundPixel;
+    val.background = dc->u.x.backgroundPixel;
     val.fill_style = FillSolid;
     if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))
     {
@@ -421,8 +419,8 @@ BOOL32 DC_SetupGCForText( DC * dc )
 	if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
 
 	val.function   = GXcopy;  /* Text is always GXcopy */
-	val.foreground = dc->w.textPixel;
-	val.background = dc->w.backgroundPixel;
+	val.foreground = dc->u.x.textPixel;
+	val.background = dc->u.x.backgroundPixel;
 	val.fill_style = FillSolid;
 	val.font       = xfs->fid;
 
@@ -538,8 +536,6 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->w.backgroundMode   = dc->w.backgroundMode;
     newdc->w.backgroundColor  = dc->w.backgroundColor;
     newdc->w.textColor        = dc->w.textColor;
-    newdc->w.backgroundPixel  = dc->w.backgroundPixel;
-    newdc->w.textPixel        = dc->w.textPixel;
     newdc->w.brushOrgX        = dc->w.brushOrgX;
     newdc->w.brushOrgY        = dc->w.brushOrgY;
     newdc->w.textAlign        = dc->w.textAlign;
@@ -621,8 +617,6 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->w.backgroundMode   = dcs->w.backgroundMode;
     dc->w.backgroundColor  = dcs->w.backgroundColor;
     dc->w.textColor        = dcs->w.textColor;
-    dc->w.backgroundPixel  = dcs->w.backgroundPixel;
-    dc->w.textPixel        = dcs->w.textPixel;
     dc->w.brushOrgX        = dcs->w.brushOrgX;
     dc->w.brushOrgY        = dcs->w.brushOrgY;
     dc->w.textAlign        = dcs->w.textAlign;
@@ -659,6 +653,8 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     SelectObject32( hdc, dcs->w.hBrush );
     SelectObject32( hdc, dcs->w.hFont );
     SelectObject32( hdc, dcs->w.hPen );
+    SetBkColor32( hdc, dcs->w.backgroundColor);
+    SetTextColor32( hdc, dcs->w.textColor);
     GDISelectPalette( hdc, dcs->w.hPalette, FALSE );
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hdcs );
@@ -800,8 +796,8 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (!(dc = DC_AllocDC( funcs ))) return 0;
     dc->w.flags = 0;
 
-    TRACE(dc, "(%s %s %s): returning %04x\n",
-               driver, device, output, dc->hSelf );
+    TRACE(dc, "(driver=%s, device=%s, output=%s): returning %04x\n",
+               debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
@@ -1057,19 +1053,15 @@ COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 COLORREF WINAPI SetBkColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0x80000000;
-	MF_MetaParam2(dc, META_SETBKCOLOR, HIWORD(color), LOWORD(color));
-	GDI_HEAP_UNLOCK( hdc );
-	return 0;  /* ?? */
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    if (!dc) return 0x80000000;
+    if (dc->funcs->pSetBkColor)
+        oldColor = dc->funcs->pSetBkColor(dc, color);
+    else {
+	oldColor = dc->w.backgroundColor;
+	dc->w.backgroundColor = color;
     }
-
-    oldColor = dc->w.backgroundColor;
-    dc->w.backgroundColor = color;
-    dc->w.backgroundPixel = COLOR_ToPhysical( dc, color );
     GDI_HEAP_UNLOCK( hdc );
     return oldColor;
 }
@@ -1090,19 +1082,15 @@ COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 COLORREF WINAPI SetTextColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0x80000000;
-	MF_MetaParam2(dc, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color));
-	GDI_HEAP_UNLOCK( hdc );
-	return 0;  /* ?? */
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    if (!dc) return 0x80000000;
+    if (dc->funcs->pSetTextColor)
+        oldColor = dc->funcs->pSetTextColor(dc, color);
+    else {
+	oldColor = dc->w.textColor;
+	dc->w.textColor = color;
     }
-
-    oldColor = dc->w.textColor;
-    dc->w.textColor = color;
-    dc->w.textPixel = COLOR_ToPhysical( dc, color );
     GDI_HEAP_UNLOCK( hdc );
     return oldColor;
 }

@@ -306,20 +306,22 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
     else
     {
         hInstance = NE_LoadModule( name, &hPrevInstance, FALSE, FALSE );
-        pModule = hInstance >= 32 ? NE_GetPtr( hInstance ) : NULL;
+        if (hInstance < 32) return hInstance;
+
+        if (   !(pModule = NE_GetPtr(hInstance)) 
+            ||  (pModule->flags & NE_FFLAGS_LIBMODULE))
+        {
+            /* FIXME: cleanup */
+            return 11;
+        }
     }
 
     /* Create a task for this instance */
 
-    if (pModule && !(pModule->flags & NE_FFLAGS_LIBMODULE))
-    {
-        PDB32 *pdb;
+    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
 
-	pModule->flags |= NE_FFLAGS_GUI;
-
-        pdb = PROCESS_Create( pModule, cmd_line, env, hInstance,
-                              hPrevInstance, startup, info );
-    }
+    PROCESS_Create( pModule, cmd_line, env, hInstance,
+                    hPrevInstance, startup, info );
 
     return hInstance;
 }
@@ -331,39 +333,63 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
     LOADPARAMS *params;
-    LOADPARAMS32 params32;
-    HINSTANCE16 hInstance;
-    LPSTR cmd_line;
+    LPSTR cmd_line, new_cmd_line;
+    LPCVOID env = NULL;
+    STARTUPINFO32A startup;
+    PROCESS_INFORMATION info;
+    HINSTANCE16 hInstance, hPrevInstance;
+    NE_MODULE *pModule;
+    PDB32 *pdb;
+
+    /* Load module */
 
     if (!paramBlock || (paramBlock == (LPVOID)-1))
         return LoadLibrary16( name );
 
-    /* Transfer arguments to 32-bit param-block */
-    params = (LOADPARAMS *)paramBlock;
-    memset( &params32, '\0', sizeof(params32) );
+    hInstance = NE_LoadModule( name, &hPrevInstance, FALSE, FALSE );
+    if (   hInstance < 32 || !(pModule = NE_GetPtr(hInstance))
+        || (pModule->flags & NE_FFLAGS_LIBMODULE)) 
+        return hInstance;
 
+    /* Create a task for this instance */
+
+    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
+
+    params = (LOADPARAMS *)paramBlock;
     cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
     if (!cmd_line) cmd_line = "";
     else if (*cmd_line) cmd_line++;  /* skip the length byte */
 
-    if (!(params32.lpCmdLine = HeapAlloc( GetProcessHeap(), 0,
-                                          strlen(cmd_line)+strlen(name)+2 )))
+    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
+                                    strlen(cmd_line)+strlen(name)+2 )))
         return 0;
-    strcpy( params32.lpCmdLine, name );
-    strcat( params32.lpCmdLine, " " );
-    strcat( params32.lpCmdLine, cmd_line );
+    strcpy( new_cmd_line, name );
+    strcat( new_cmd_line, " " );
+    strcat( new_cmd_line, cmd_line );
 
-    if (params->hEnvironment)
-        params32.lpEnvAddress = GlobalLock16( params->hEnvironment );
+    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
+
+    memset( &info, '\0', sizeof(info) );
+    memset( &startup, '\0', sizeof(startup) );
+    startup.cb = sizeof(startup);
     if (params->showCmd)
-        params32.lpCmdShow = PTR_SEG_TO_LIN( params->showCmd );
+    {
+        startup.dwFlags = STARTF_USESHOWWINDOW;
+        startup.wShowWindow = ((UINT16 *)PTR_SEG_TO_LIN(params->showCmd))[1];
+    }
 
-    /* Call LoadModule32 */
-    hInstance = LoadModule32( name, &params32 );
+    pdb = PROCESS_Create( pModule, new_cmd_line, env, 
+                          hInstance, hPrevInstance, &startup, &info );
 
-    /* Clean up */
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+
     if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
-    HeapFree( GetProcessHeap(), 0, params32.lpCmdLine );
+    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+
+    /* Start task */
+
+    if (pdb) TASK_StartTask( pdb->task );
 
     return hInstance;
 }
@@ -521,11 +547,9 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
                                       lpStartupInfo, lpProcessInfo );
 
     /* Try DOS module */
-#ifdef linux
     if (hInstance == 11)
         hInstance = MZ_CreateProcess( name, cmdline, lpEnvironment, 
                                       lpStartupInfo, lpProcessInfo );
-#endif
 
     if (hInstance < 32)
     {

@@ -105,3 +105,23 @@ HRESULT WINAPI RegisterDragDrop32(
 	FIXME(ole,"(0x%04x,%p),stub!\n",hwnd,pDropTarget);
 	return S_OK;
 }
+
+/***********************************************************************
+ *           RevokeDragDrop16 (OLE2.36)
+ */
+HRESULT WINAPI RevokeDragDrop16(
+	HWND16 hwnd
+) {
+	FIXME(ole,"(0x%04x),stub!\n",hwnd);
+	return S_OK;
+}
+
+/***********************************************************************
+ *           RevokeDragDrop32 (OLE32.141)
+ */
+HRESULT WINAPI RevokeDragDrop32(
+	HWND32 hwnd
+) {
+	FIXME(ole,"(0x%04x),stub!\n",hwnd);
+	return S_OK;
+}

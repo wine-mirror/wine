@@ -3,12 +3,15 @@
 
 void Write (HDC dc, int x, int y, char *s)
 {
+    SetBkMode(dc, TRANSPARENT);
     TextOut (dc, x, y, s, strlen (s));
 }
 
 LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     static short xChar, yChar;
+    static RECT  rectHola;
+    static char* strHola = "Hola";
     HDC dc;
     PAINTSTRUCT ps;
     TEXTMETRIC tm;
@@ -19,12 +22,20 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 	GetTextMetrics (dc, &tm);
 	xChar = tm.tmAveCharWidth;
 	yChar = tm.tmHeight;
+	GetTextExtentPoint32( dc, strHola, strlen(strHola), ((LPSIZE)&rectHola) + 1 );
+	OffsetRect( &rectHola, xChar, yChar );
 	ReleaseDC (wnd, dc);
 	break;
 
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+	InvalidateRect(wnd, &rectHola, TRUE );
+        ScrollChildren32(wnd, msg, w, l);
+        return 0;
+
     case WM_PAINT:
 	dc = BeginPaint (wnd, &ps);
-	Write (dc, xChar, yChar, "Hola");
+	Write (dc, xChar, yChar, strHola);
 	EndPaint (wnd, &ps);
 	break;
 
@@ -41,6 +52,7 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 LRESULT WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     static short xChar, yChar;
+    static RECT  rectInfo;
     char buf[128];
     HDC dc;
     PAINTSTRUCT ps;
@@ -59,8 +71,17 @@ LRESULT WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 	dc = BeginPaint (wnd, &ps);
         sprintf(buf,"ps.rcPaint = {left = %d, top = %d, right = %d, bottom = %d}",
                 ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right,ps.rcPaint.bottom);
+	rectInfo.left = rectInfo.top = 0;
+	GetTextExtentPoint32 (dc, buf, strlen(buf), ((LPSIZE)&rectInfo) + 1 );
+	OffsetRect (&rectInfo, xChar, yChar );
 	Write (dc, xChar, yChar, buf);
 	EndPaint (wnd, &ps);
+	break;
+
+    case WM_MOVE:
+    case WM_SIZE:
+	InvalidateRect( wnd, &rectInfo, TRUE );
+	CalcChildScroll( (UINT16)GetParent(wnd), SB_BOTH );
 	break;
 
     case WM_DESTROY:
@@ -97,19 +118,20 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	    return FALSE;
     }
 
-    wnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
+    wnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
 			0, inst, 0);
 
     if (!prev){
         class.lpfnWndProc = WndProc2;
 	class.lpszClassName = class2Name;
+	class.hbrBackground = GetStockObject(GRAY_BRUSH);
         if (!RegisterClass (&class))
 	    return FALSE;
     }
 
-    wnd2= CreateWindow (class2Name,"Test app", WS_BORDER | WS_CHILD, 
-                        50, 50, 350, 50, wnd, 0, inst, 0);
+    wnd2= CreateWindow (class2Name,"Child window", WS_CAPTION | WS_CHILD | WS_THICKFRAME, 
+                        50, 50, 350, 100, wnd, 0, inst, 0);
 
     ShowWindow (wnd, show);
     UpdateWindow (wnd);

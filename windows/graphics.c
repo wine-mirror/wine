@@ -84,8 +84,8 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
     TSXSetFunction( display, dc->u.x.gc, GXcopy );
     if (bmp->bitmap.bmBitsPixel == 1)
     {
-        TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-        TSXSetBackground( display, dc->u.x.gc, dc->w.textPixel );
+        TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
+        TSXSetBackground( display, dc->u.x.gc, dc->u.x.textPixel );
         TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
                     xsrc, ysrc, width, height, xdest, ydest, 1 );
     }
@@ -97,13 +97,13 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 
 	    if( COLOR_GetMonoPlane(&plane) )
 	    {
-		TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-		TSXSetBackground( display, dc->u.x.gc, dc->w.textPixel );
+		TSXSetForeground(display, dc->u.x.gc, dc->u.x.backgroundPixel);
+		TSXSetBackground(display, dc->u.x.gc, dc->u.x.textPixel);
 	    }
 	    else
 	    {
-		TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
-		TSXSetBackground( display, dc->u.x.gc, dc->w.backgroundPixel );
+		TSXSetForeground(display, dc->u.x.gc, dc->u.x.textPixel);
+		TSXSetBackground(display, dc->u.x.gc, dc->u.x.backgroundPixel);
 	    }
 	    TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
 			xsrc, ysrc, width, height, xdest, ydest, plane );

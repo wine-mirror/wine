@@ -191,6 +191,7 @@ BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound);
 #define SND_ALIAS_ID	0x00110000L /* alias is a predefined ID */
 #define SND_FILENAME    0x00020000L /* name is file name */
 #define SND_RESOURCE    0x00040004L /* name is resource name or atom */
+#define SND_PURGE	0x00000040L /* purge all sounds */
 
 /* waveform audio error return values */
 #define WAVERR_BADFORMAT      (WAVERR_BASE + 0)    /* unsupported wave format */

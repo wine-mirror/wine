@@ -402,6 +402,7 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
         }
         return 1;
     case WM_SETTEXT:
+    case LB_ADDSTRING32:
         *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
     case WM_NCCREATE:
@@ -464,6 +465,7 @@ void WINPROC_UnmapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
+    case LB_ADDSTRING32:
     case WM_SETTEXT:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
@@ -512,6 +514,7 @@ INT32 WINPROC_MapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
         }
         return 1;
     case WM_SETTEXT:
+    case LB_ADDSTRING32:
         *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
     case WM_NCCREATE:
@@ -574,6 +577,7 @@ void WINPROC_UnmapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
+    case LB_ADDSTRING32:
     case WM_SETTEXT:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;

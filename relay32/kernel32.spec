@@ -379,13 +379,13 @@ type	win32
 362 stdcall GetPrivateProfileIntA(str str long str) GetPrivateProfileInt32A
 363 stdcall GetPrivateProfileIntW(wstr wstr long wstr) GetPrivateProfileInt32W
 364 stdcall GetPrivateProfileSectionA(str str long str) GetPrivateProfileSection32A
-365 stub GetPrivateProfileSectionNamesA
-366 stub GetPrivateProfileSectionNamesW
-367 stub GetPrivateProfileSectionW
+365 stdcall GetPrivateProfileSectionNamesA(ptr long str) GetPrivateProfileSectionNames32A
+366 stdcall GetPrivateProfileSectionNamesW(ptr long wstr) GetPrivateProfileSectionNames32W
+367 stdcall GetPrivateProfileSectionW(wstr wstr long wstr) GetPrivateProfileSection32W
 368 stdcall GetPrivateProfileStringA(str str str ptr long str) GetPrivateProfileString32A
 369 stdcall GetPrivateProfileStringW(wstr wstr wstr ptr long wstr) GetPrivateProfileString32W
 370 stdcall GetPrivateProfileStructA (str str ptr long str) GetPrivateProfileStruct32A
-371 stub GetPrivateProfileStructW
+371 stdcall GetPrivateProfileStructW(wstr wstr ptr long wstr) GetPrivateProfileStruct32W
 372 stdcall GetProcAddress(long str) GetProcAddress32
 373 stdcall GetProcessAffinityMask(long ptr ptr) GetProcessAffinityMask
 374 stdcall GetProcessFlags(long) GetProcessFlags
@@ -399,7 +399,7 @@ type	win32
 382 stdcall GetProfileIntA(str str long) GetProfileInt32A
 383 stdcall GetProfileIntW(wstr wstr long) GetProfileInt32W
 384 stdcall GetProfileSectionA(str str long) GetProfileSection32A
-385 stub GetProfileSectionW
+385 stdcall GetProfileSectionW(wstr wstr long) GetProfileSection32W
 386 stdcall GetProfileStringA(str str str ptr long) GetProfileString32A
 387 stdcall GetProfileStringW(wstr wstr wstr ptr long) GetProfileString32W
 388 stub GetQueuedCompletionStatus
@@ -689,7 +689,7 @@ type	win32
 672 stdcall SetThreadPriority(long long) SetThreadPriority
 673 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
 674 stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
-675 stub SetVolumeLabelA
+675 stdcall SetVolumeLabelA(str str) SetVolumeLabel32A
 676 stub SetVolumeLabelW
 677 stdcall SetupComm(long long long) SetupComm
 678 stdcall SizeofResource(long long) SizeofResource32
@@ -755,14 +755,14 @@ type	win32
 738 stdcall WriteFile(long ptr long ptr ptr) WriteFile
 739 stub WriteFileEx
 740 stdcall WritePrivateProfileSectionA(str str str) WritePrivateProfileSection32A
-741 stub WritePrivateProfileSectionW
+741 stdcall WritePrivateProfileSectionW(wstr wstr wstr) WritePrivateProfileSection32W
 742 stdcall WritePrivateProfileStringA(str str str str) WritePrivateProfileString32A
 743 stdcall WritePrivateProfileStringW(wstr wstr wstr wstr) WritePrivateProfileString32W
 744 stdcall WritePrivateProfileStructA (str str ptr long str) WritePrivateProfileStruct32A
-745 stub WritePrivateProfileStructW
+745 stdcall WritePrivateProfileStructW(wstr wstr ptr long wstr) WritePrivateProfileStruct32W
 746 stdcall WriteProcessMemory(long ptr ptr long ptr) WriteProcessMemory
-747 stub WriteProfileSectionA
-748 stub WriteProfileSectionW
+747 stdcall WriteProfileSectionA(str str) WriteProfileSection32A
+748 stdcall WriteProfileSectionW(str str) WriteProfileSection32W
 749 stdcall WriteProfileStringA(str str str) WriteProfileString32A
 750 stdcall WriteProfileStringW(wstr wstr wstr) WriteProfileString32W
 751 stub WriteTapemark

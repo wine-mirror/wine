@@ -193,7 +193,7 @@ extern BYTE DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus;
 #define EL_Memory            0x05
 
 void WINAPI DOS3Call( CONTEXT *context );
-void do_mscdex( CONTEXT *context, int dorealmode );
+void do_mscdex( CONTEXT *context );
 void do_mscdex_dd (CONTEXT * context, int dorealmode);
 
 #endif /* __WINE_MSDOS_H */

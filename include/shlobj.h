@@ -26,15 +26,15 @@ DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
 typedef LPVOID	LPBC; /* *IBindCtx really */
 
 /* foreward declaration of the objects*/
-
-typedef struct IContextMenu		IContextMenu,	*LPCONTEXTMENU;
-typedef struct IShellExtInit	IShellExtInit, 	*LPSHELLEXTINIT;
-typedef struct IEnumIDList		IEnumIDList,	*LPENUMIDLIST;
+typedef struct tagCONTEXTMENU	*LPCONTEXTMENU,	IContextMenu;
+typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
+typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
 typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
 typedef struct tagSHELLVIEW		*LPSHELLVIEW,	IShellView;
 typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
 
 typedef struct IDataObject		IDataObject,	*LPDATAOBJECT;
+
 /****************************************************************************
 *  SHELL ID
 */
@@ -48,7 +48,7 @@ DEFINE_SHLGUID(FMTID_InternetSite,      0x000214A1L, 0, 0);
 DEFINE_SHLGUID(CGID_Explorer,           0x000214D0L, 0, 0);
 DEFINE_SHLGUID(CGID_ShellDocView,       0x000214D1L, 0, 0);
 
- /* shell32 Interface ids */
+ /* shell32interface ids */
 DEFINE_SHLGUID(IID_INewShortcutHookA,   0x000214E1L, 0, 0);
 DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
 DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0);
@@ -85,75 +85,11 @@ typedef struct _STRRET
 { UINT32 uType;		/* STRRET_xxx */
   union
   { LPWSTR	pOleStr;	/* OLESTR that will be freed */
-    UINT32	uOffset;	/* Offset into SHITEMID (ANSI) */
+    UINT32	uOffset;	/* OffsetINT32o SHITEMID (ANSI) */
     char	cStr[MAX_PATH];	/* Buffer to fill in */
   }u;
 } STRRET,*LPSTRRET;
 
-/****************************************************************************
- * INTERNAL CLASS: PIDL-Manager
- * Source: HOWTO extend the explorer namespace
- * ftp.microsoft.com/ ... softlib ... regview.exe
- */
-#define THIS LPPIDLMGR this
-typedef enum tagPIDLTYPE
-{ PT_DESKTOP = 0x00000000,
-  PT_MYCOMP =  0x00000001,
-  PT_CONTROL = 0x00000002,
-  PT_RECYCLER =0x00000004,
-  PT_DRIVE =   0x00000008,
-  PT_FOLDER =  0x00000010,
-  PT_VALUE =   0x00000020,
-  PT_TEXT = PT_FOLDER | PT_VALUE
-} PIDLTYPE;
-
-typedef struct tagPIDLDATA
-{ PIDLTYPE type;
-  CHAR    szText[1];
-} PIDLDATA, FAR *LPPIDLDATA;
-
-typedef struct pidlmgr pidlmgr,*LPPIDLMGR;
-typedef struct PidlMgr_VTable
-{  STDMETHOD_(LPITEMIDLIST, CreateDesktop) (THIS);
-   STDMETHOD_(LPITEMIDLIST, CreateMyComputer) (THIS);
-   STDMETHOD_(LPITEMIDLIST, CreateDrive) (THIS_ LPCSTR);
-   STDMETHOD_(LPITEMIDLIST, CreateFolder) (THIS_ LPCSTR);
-   STDMETHOD_(LPITEMIDLIST, CreateValue) (THIS_ LPCSTR);
-
-   STDMETHOD_(BOOL32, GetDesktop) (THIS_ LPCITEMIDLIST, LPSTR);
-   STDMETHOD_(BOOL32, GetDrive) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
-   STDMETHOD_(LPITEMIDLIST, GetLastItem) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(DWORD, GetItemText) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
-
-   STDMETHOD_(BOOL32, IsDesktop) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(BOOL32, IsMyComputer) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(BOOL32, IsDrive) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(BOOL32, IsFolder) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(BOOL32, IsValue) (THIS_ LPCITEMIDLIST);
-
-   STDMETHOD_(BOOL32, HasFolders) (THIS_ LPSTR, LPCITEMIDLIST);
-   STDMETHOD_(DWORD, GetFolderText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
-   STDMETHOD_(DWORD, GetValueText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
-   STDMETHOD_(BOOL32, GetValueType) (THIS_ LPCITEMIDLIST, LPCITEMIDLIST, LPDWORD);
-   STDMETHOD_(DWORD, GetDataText) (THIS_ LPCITEMIDLIST, LPCITEMIDLIST, LPSTR, DWORD);
-   STDMETHOD_(DWORD, GetPidlPath) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
-   STDMETHOD_(LPITEMIDLIST, Create) (THIS_ PIDLTYPE, LPVOID, UINT16);
-   STDMETHOD_(DWORD, GetData) (THIS_ PIDLTYPE, LPCITEMIDLIST, LPVOID, UINT16);
-   STDMETHOD_(LPPIDLDATA, GetDataPointer) (THIS_ LPCITEMIDLIST);
-   STDMETHOD_(BOOL32, SeparatePathAndValue) (THIS_ LPCITEMIDLIST, LPITEMIDLIST*, LPITEMIDLIST*);
-
-} *LPPIDLMGR_VTABLE,PidlMgr_VTable;
-
-struct pidlmgr 
-{ LPPIDLMGR_VTABLE	lpvtbl;
-};
-
-#ifdef __WINE__
-extern LPPIDLMGR PidlMgr_Constructor();
-extern void PidlMgr_Destructor(THIS);
-#endif
-
-#undef THIS
 /*****************************************************************************
  * IContextMenu interface
  */
@@ -207,27 +143,27 @@ extern void PidlMgr_Destructor(THIS);
 #define CMIC_MASK_PTINVOKE      0x20000000
 
 /*NOTE: When SEE_MASK_HMONITOR is set, hIcon is treated as hMonitor */
-typedef struct _CMINVOKECOMMANDINFO 
+typedef struct tagCMINVOKECOMMANDINFO 
 {   DWORD cbSize;        // sizeof(CMINVOKECOMMANDINFO)
     DWORD fMask;         // any combination of CMIC_MASK_*
     HWND32 hwnd;         // might be NULL (indicating no owner window)
     LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
     LPCSTR lpParameters; // might be NULL (indicating no parameter)
     LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
-    int nShow;           // one of SW_ values for ShowWindow() API
+   INT32 nShow;           // one of SW_ values for ShowWindow() API
 
     DWORD dwHotKey;
     HANDLE32 hIcon;
-} CMINVOKECOMMANDINFO,  *LPCMINVOKECOMMANDINFO;
+} CMINVOKECOMMANDINFO32,  *LPCMINVOKECOMMANDINFO32;
 
-typedef struct _CMInvokeCommandInfoEx 
+typedef struct tagCMInvokeCommandInfoEx 
 {   DWORD cbSize;        // must be sizeof(CMINVOKECOMMANDINFOEX)
     DWORD fMask;         // any combination of CMIC_MASK_*
     HWND32 hwnd;         // might be NULL (indicating no owner window)
     LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
     LPCSTR lpParameters; // might be NULL (indicating no parameter)
     LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
-    int nShow;           // one of SW_ values for ShowWindow() API
+	INT32 nShow;           // one of SW_ values for ShowWindow() API
 
     DWORD dwHotKey;
     
@@ -239,7 +175,7 @@ typedef struct _CMInvokeCommandInfoEx
     LPCWSTR lpTitleW;      // Unicode title (for those who can use it)
     POINT32 ptInvoke;      // Point where it's invoked
 
-} CMINVOKECOMMANDINFOEX,  *LPCMINVOKECOMMANDINFOEX;
+} CMINVOKECOMMANDINFOEX32,  *LPCMINVOKECOMMANDINFOEX32;
 
 
 typedef struct IContextMenu_VTable
@@ -249,16 +185,21 @@ typedef struct IContextMenu_VTable
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
     STDMETHOD(QueryContextMenu)(THIS_ HMENU32 hmenu,UINT32 indexMenu,UINT32 idCmdFirst, UINT32 idCmdLast,UINT32 uFlags) PURE;
-    STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO lpici) PURE;
+    STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO32 lpici) PURE;
     STDMETHOD(GetCommandString)(THIS_ UINT32 idCmd,UINT32 uType,UINT32 * pwReserved,LPSTR pszName,UINT32 cchMax) PURE;
+
+    /* undocumented not only in ContextMenu2 */
+    STDMETHOD(HandleMenuMsg)(THIS_  UINT32 uMsg,WPARAM32 wParam,LPARAM lParam) PURE;
+
+    /* possibly another nasty entry from ContextMenu3 ?*/    
+    void * guard;
 } IContextMenu_VTable,*LPCONTEXTMENU_VTABLE;
 
-struct IContextMenu
+struct tagCONTEXTMENU
 { LPCONTEXTMENU_VTABLE	lpvtbl;
   DWORD			ref;
   LPSHELLFOLDER	pSFParent;
   LPITEMIDLIST	*aPidls;
-  LPPIDLMGR		pPidlMgr;
   BOOL32		bAllValues;
 };
 
@@ -278,7 +219,7 @@ typedef struct IShellExtInit_VTable
     STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidlFolder, LPDATAOBJECT lpdobj, HKEY hkeyProgID) PURE;
 } IShellExtInit_VTable,*LPSHELLEXTINIT_VTABLE;
 
-struct IShellExtInit
+struct tagSHELLEXTINIT
 { LPSHELLEXTINIT_VTABLE	lpvtbl;
   DWORD			 ref;
 };
@@ -316,10 +257,9 @@ typedef struct IEnumIDList_VTable
 		
 } IEnumIDList_VTable,*LPENUMIDLIST_VTABLE;
 
-struct IEnumIDList
+struct tagENUMIDLIST
 { LPENUMIDLIST_VTABLE	lpvtbl;
-  DWORD			 ref;
-  LPPIDLMGR  mpPidlMgr;
+  DWORD		 ref;
   LPENUMLIST mpFirst;
   LPENUMLIST mpLast;
   LPENUMLIST mpCurrent;
@@ -456,7 +396,6 @@ struct tagSHELLFOLDER {
 	LPSHELLFOLDER_VTABLE	lpvtbl;
 	DWORD			ref;
 	LPSTR			mlpszFolder;
-    LPPIDLMGR		pPidlMgr;
 	LPITEMIDLIST	mpidl;
 	LPITEMIDLIST	mpidlNSRoot;
 	LPSHELLFOLDER	mpSFParent;
@@ -466,7 +405,7 @@ extern LPSHELLFOLDER pdesktopfolder;
 #undef THIS
 
 /************************************************************************
-* IShellBrowser Inteface
+* IShellBrowser interface
 */
 #define THIS LPSHELLBROWSER this
 
@@ -512,7 +451,7 @@ struct tagSHELLBROWSER
 #undef THIS
 
 /************************************************************************
-* IShellView Inteface
+* IShellView interface
 */
 #define THIS LPSHELLVIEW this
 
@@ -646,18 +585,18 @@ typedef struct IShellLink_VTable
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
-    STDMETHOD(GetPath)(THIS_ LPSTR pszFile, INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags) PURE;
+    STDMETHOD(GetPath)(THIS_ LPSTR pszFile,INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags) PURE;
 
     STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST * ppidl) PURE;
     STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST pidl) PURE;
 
-    STDMETHOD(GetDescription)(THIS_ LPSTR pszName, int cchMaxName) PURE;
+    STDMETHOD(GetDescription)(THIS_ LPSTR pszName,INT32 cchMaxName) PURE;
     STDMETHOD(SetDescription)(THIS_ LPCSTR pszName) PURE;
 
-    STDMETHOD(GetWorkingDirectory)(THIS_ LPSTR pszDir, int cchMaxPath) PURE;
+    STDMETHOD(GetWorkingDirectory)(THIS_ LPSTR pszDir,INT32 cchMaxPath) PURE;
     STDMETHOD(SetWorkingDirectory)(THIS_ LPCSTR pszDir) PURE;
 
-    STDMETHOD(GetArguments)(THIS_ LPSTR pszArgs, int cchMaxPath) PURE;
+    STDMETHOD(GetArguments)(THIS_ LPSTR pszArgs,INT32 cchMaxPath) PURE;
     STDMETHOD(SetArguments)(THIS_ LPCSTR pszArgs) PURE;
 
     STDMETHOD(GetHotkey)(THIS_ WORD *pwHotkey) PURE;
@@ -666,8 +605,8 @@ typedef struct IShellLink_VTable
     STDMETHOD(GetShowCmd)(THIS_ INT32 *piShowCmd) PURE;
     STDMETHOD(SetShowCmd)(THIS_ INT32 iShowCmd) PURE;
 
-    STDMETHOD(GetIconLocation)(THIS_ LPSTR pszIconPath, INT32 cchIconPath, INT32 *piIcon) PURE;
-    STDMETHOD(SetIconLocation)(THIS_ LPCSTR pszIconPath, INT32 iIcon) PURE;
+    STDMETHOD(GetIconLocation)(THIS_ LPSTR pszIconPath,INT32 cchIconPath,INT32 *piIcon) PURE;
+    STDMETHOD(SetIconLocation)(THIS_ LPCSTR pszIconPath,INT32 iIcon) PURE;
 
     STDMETHOD(SetRelativePath)(THIS_ LPCSTR pszPathRel, DWORD dwReserved) PURE;
 
@@ -684,7 +623,7 @@ struct IShellLink {
 #undef THIS
 
 /****************************************************************************
- * IExtractIcon interface
+ * IExtractIconinterface
  *
  * FIXME
  *  Is the ExtractIconA interface
@@ -711,7 +650,7 @@ typedef struct IExtractIcon_VTable
   STDMETHOD_(ULONG,Release) (THIS) PURE;
 
   /*** IExtractIcon methods ***/
-  STDMETHOD(GetIconLocation)(THIS_ UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags) PURE;
+  STDMETHOD(GetIconLocation)(THIS_ UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax,INT32 * piIndex, UINT32 * pwFlags) PURE;
   STDMETHOD(Extract)(THIS_ LPCSTR pszFile, UINT32 nIconIndex, HICON32 *phiconLarge, HICON32 *phiconSmall, UINT32 nIconSize) PURE;
 }IExtractIccon_VTable,*LPEXTRACTICON_VTABLE;
 
@@ -796,7 +735,7 @@ typedef struct _SHELLEXECUTEINFOA
         LPCSTR   lpFile;
         LPCSTR   lpParameters;
         LPCSTR   lpDirectory;
-        int nShow;
+       INT32 nShow;
         HINSTANCE32 hInstApp;
         /* Optional fields */
         LPVOID lpIDList;
@@ -808,7 +747,7 @@ typedef struct _SHELLEXECUTEINFOA
           HANDLE32 hMonitor;
         } u;
         HANDLE32 hProcess;
-} SHELLEXECUTEINFOA, *LPSHELLEXECUTEINFOA;
+} SHELLEXECUTEINFO32A, *LPSHELLEXECUTEINFO32A;
 
 typedef struct _SHELLEXECUTEINFOW
 {       DWORD cbSize;
@@ -818,7 +757,7 @@ typedef struct _SHELLEXECUTEINFOW
         LPCWSTR  lpFile;
         LPCWSTR  lpParameters;
         LPCWSTR  lpDirectory;
-        int nShow;
+       INT32 nShow;
         HINSTANCE32 hInstApp;
         /* Optional fields*/
         LPVOID lpIDList;
@@ -830,19 +769,17 @@ typedef struct _SHELLEXECUTEINFOW
           HANDLE32 hMonitor;
         } u;
         HANDLE32 hProcess;
-} SHELLEXECUTEINFOW, *LPSHELLEXECUTEINFOW;
+} SHELLEXECUTEINFO32W, *LPSHELLEXECUTEINFO32W;
 
-DECL_WINELIB_TYPE_AW(SHELLEXECUTEINFO)
+#define SHELLEXECUTEINFO   WINELIB_NAME_AW(SHELLEXECUTEINFO)
+#define LPSHELLEXECUTEINFO WINELIB_NAME_AW(LPSHELLEXECUTEINFO)
 
-typedef SHELLEXECUTEINFOA SHELLEXECUTEINFO;
-typedef LPSHELLEXECUTEINFOA LPSHELLEXECUTEINFO;
-
-BOOL32 WINAPI ShellExecuteEx32A(LPSHELLEXECUTEINFOA lpExecInfo);
-BOOL32 WINAPI ShellExecuteEx32W(LPSHELLEXECUTEINFOW lpExecInfo);
+BOOL32 WINAPI ShellExecuteEx32A(LPSHELLEXECUTEINFO32A lpExecInfo);
+BOOL32 WINAPI ShellExecuteEx32W(LPSHELLEXECUTEINFO32W lpExecInfo);
 #define ShellExecuteEx  WINELIB_NAME_AW(ShellExecuteEx)
 
-void WINAPI WinExecErrorA(HWND32 hwnd, int error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
-void WINAPI WinExecErrorW(HWND32 hwnd, int error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
+void WINAPI WinExecError32A(HWND32 hwnd,INT32 error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
+void WINAPI WinExecError32W(HWND32 hwnd,INT32 error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
 #define WinExecError  WINELIB_NAME_AW(WinExecError)
 
 
@@ -850,7 +787,7 @@ void WINAPI WinExecErrorW(HWND32 hwnd, int error, LPCWSTR lpstrFileName, LPCWSTR
 /****************************************************************************
  * SHBrowseForFolder API
  */
-typedef int (CALLBACK* BFFCALLBACK)(HWND32 hwnd, UINT32 uMsg, LPARAM lParam, LPARAM lpData);
+typedef INT32 (CALLBACK* BFFCALLBACK)(HWND32 hwnd, UINT32 uMsg, LPARAM lParam, LPARAM lpData);
 
 typedef struct tagBROWSEINFO32A {
     HWND32        hwndOwner;
@@ -860,7 +797,7 @@ typedef struct tagBROWSEINFO32A {
     UINT32        ulFlags;
     BFFCALLBACK   lpfn;
     LPARAM        lParam;
-    int           iImage;
+	INT32         iImage;
 } BROWSEINFO32A, *PBROWSEINFO32A, *LPBROWSEINFO32A;
 
 typedef struct tagBROWSEINFO32W {
@@ -871,7 +808,7 @@ typedef struct tagBROWSEINFO32W {
     UINT32        ulFlags;
     BFFCALLBACK   lpfn;
     LPARAM        lParam;
-    int           iImage;
+	INT32         iImage;
 } BROWSEINFO32W, *PBROWSEINFO32W, *LPBROWSEINFO32W; 
 
 #define BROWSEINFO   WINELIB_NAME_AW(BROWSEINFO)
@@ -961,7 +898,7 @@ typedef struct _SHELLVIEWDATA   // idl
 
 /*
  The shell keeps track of some per-user state to handle display
- options that is of major interest to ISVs.
+ options that is of majorinterest to ISVs.
  The key one requested right now is "DoubleClickInWebView".
 */
 typedef struct 

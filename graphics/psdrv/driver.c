@@ -9,13 +9,13 @@
  *
  */
 
-#include <windows.h>
-#include <psdrv.h>
-#include <debug.h>
-#include <resource.h>
 #include <string.h>
-#include <win.h>
-#include <print.h>
+#include "windows.h"
+#include "psdrv.h"
+#include "debug.h"
+#include "resource.h"
+#include "win.h"
+#include "print.h"
 
 static LONG Resolutions[][2] = { {600,600} };
 

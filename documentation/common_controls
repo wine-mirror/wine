@@ -29,19 +29,29 @@
 -----------
   This paragraph describes the development status of the common controls.
 
-  
-
 
 3.1 Animation Control
 ---------------------
+  Author:
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+
   Status:
-      - Nothing done at all.
+      - Dummy control. No functionality.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.2 Combo Box Ex Control
 ------------------------
+  Author:
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+
   Status:
-      - Nothing done at all.
+      - Dummy control. No functionality.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.3 Date and Time Picker Control
@@ -49,17 +59,26 @@
   Status:
       - Nothing done at all.
 
+  Notes:
+      Author needed!! Any volunteers??
+
 
 3.4 Drag List Box Control
 -------------------------
   Status:
       - Nothing done at all.
 
+  Notes:
+      Author needed!! Any volunteers??
+
 
 3.5 Flat Scroll Bar Control
 ---------------------------
   Status:
       - Nothing done at all.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.6 Header Control
@@ -73,8 +92,14 @@
 
 3.7 Hot Key Control
 -------------------
+  Author:
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+
   Status:
-      - Nothing done at all.
+      Dummy control. No functionality.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.8 Image List (no control)
@@ -96,20 +121,29 @@
   Status:
       - Nothing done at all.
 
+  Notes:
+      Author needed!! Any volunteers??
+
 
 3.10 List View Control
 ----------------------
   Author:
-      James Michael Mastros <root@jennifer-unix.dyn.ml.org>
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
 
   Status:
       - Development in progress.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.11 Month Calendar Control
 ---------------------------
   Status:
       - Nothing done at all.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.12 Pager Control
@@ -217,13 +251,11 @@
 3.20 Trackbar Control
 ---------------------
   Author:
-      Dummy written by Eric Kohl.
+      Dummy written by Eric Kohl <ekohl@abo.rhein-zeitung.de>
+      Alex Priem (alexp@sci.kun.nl)
 
   Status:
-      - Dummy control. No functionality.
-
-  Notes:
-      Author needed!! Any volunteers??
+      Under construction.
 
 
 3.21 Tree View Control
@@ -233,7 +265,7 @@
       Alex Priem (alexp@sci.kun.nl)
 
   Status:
-      - Dummy control. No functionality.
+      Under contstruction.
 
 
 3.22 Updown Control
@@ -266,16 +298,16 @@
 ------------------------
 
   There are quite a lot of undocumented functions like:
-     - DSA (Dynnamic Structure Array) functions.
-     - DPA (Dymnamic Pointer Array?) functions.
+     - DSA (Dynnamic Storage Array) functions.
+     - DPA (Dymnamic Pointer Array) functions.
      - MRU ("Most Recently Used" List) functions.
      - other unknown functions.
 
   Have a look at relay32/comctl32.spec.
 
 
-5.1 Dymnamic Structure Arrays (DSA)
-------------------------------------
+5.1 Dymnamic Storage Arrays (DSA)
+---------------------------------
   Most of the DSA functions are implemented. I used TASKMAN.EXE to write them.
   Since TASKMAN.EXE doesn't bail out or crash I think I've done it right.
 

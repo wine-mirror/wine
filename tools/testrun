@@ -29,7 +29,7 @@ $changelog = '/home/marcus/wine/ChangeLog';
 # How long before automatically killing all subprocesses
 # 30 is good for automatic testing, 300 or more for interactive testing.
 #
-$waittime = 30;
+$waittime = 50;
 #
 #diff command
 #
@@ -132,7 +132,7 @@ sub kill_subprocesses {
 	# kill all subprocesses called 'wine'. Do not kill find, diff, sh
 	# and friends, which are also subprocesses of us.
 	foreach (keys %kids) {
-		next unless ($cmdline{$_} =~ /wine/);
+		next unless ($cmdline{$_} =~ /(wine|dosmod)/);
 		# if we have already killed it using -TERM, use -KILL
 		if ($killedalready{$_}) {
 			kill(9,$_);	# FIXME: use correct number?
@@ -195,18 +195,7 @@ while ($exe=<FIND>) {
 
 	# Skip all mssetup, acmsetup , installshield whatever exes. 
 	# they seem to work, mostly and starting them is just annoying.
-	next if ($exe =~ /acmsetup/);
-	next if ($exe =~ /unwise/);
-	next if ($exe =~ /testexit/);
-	next if ($exe =~ /_msset/);
-	next if ($exe =~ /isun/i);
-	next if ($exe =~ /st4u/);
-	next if ($exe =~ /st5u/);
-	next if ($exe =~ /_mstest/);
-	next if ($exe =~ /_isdel/);
-	next if ($exe =~ /ms-setup/);
-	next if ($exe =~ /~mss/);
-	next if ($exe =~ /unin/);
+	next if ($exe =~ /acmsetup|unwise|testexit|_msset|isun|st4u|st5u|_mstest|_isdel|ms-setup|~ms|unin/io);
 
 	$runfile = $exe;
 	$runfile =~ s/[\/ ]/_/g;

@@ -1,5 +1,5 @@
 /*
- * WingG support
+ * WinG support
  *
  * Started by Robert Pouliot <krynos@clic.net>
  */
@@ -55,7 +55,7 @@ static void __initWinG(void)
 	return;
       }
     } 
-    FIXME(wing,"WinG: no joy.\n");
+    FIXME(wing,"WinG: incorrect depth or unsupported card.\n");
     __WinGOK = False;
   }
 }

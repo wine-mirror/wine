@@ -10,7 +10,7 @@
 #include "windows.h"
 #include "debug.h"
 
-void BootTask()
+void WINAPI BootTask()
 {
 	MSG("BootTask(): should only be used by WIN32S.EXE.\n");
 }

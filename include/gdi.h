@@ -112,8 +112,6 @@ typedef struct
     WORD          backgroundMode;
     COLORREF      backgroundColor;
     COLORREF      textColor;
-    int           backgroundPixel;
-    int           textPixel;
     short         brushOrgX;
     short         brushOrgY;
 

@@ -898,3 +898,18 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         }
     }
 }
+
+DWORD WINAPI 
+WOW16Call(WORD x,WORD y,WORD z) {
+	int	i;
+	DWORD	calladdr;
+	FIXME(thunk,"(0x%04x,0x%04x,%d),calling (",x,y,z);
+
+	for (i=0;i<x/2;i++) {
+		WORD	a = STACK16_POP(THREAD_Current(),2);
+		DPRINTF("%04x ",a);
+	}
+	calladdr = STACK16_POP(THREAD_Current(),4);
+	DPRINTF(") calling address was 0x%08lx\n",calladdr);
+	return 0;
+}

@@ -142,7 +142,7 @@ file	krnl386.exe
 139 stub DoSignal
 140 pascal16 SetSigHandler(segptr ptr ptr word word) SetSigHandler
 141 stub InitTask1
-142 stub GetProfileSectionNames
+142 pascal16 GetProfileSectionNames(ptr word) GetProfileSectionNames16
 143 pascal16 GetPrivateProfileSectionNames(ptr word str) GetPrivateProfileSectionNames16
 144 pascal16 CreateDirectory(ptr ptr) CreateDirectory16
 145 pascal16 RemoveDirectory(ptr) RemoveDirectory16
@@ -325,25 +325,46 @@ file	krnl386.exe
 485 pascal GetProcessDWORD(long s_word) GetProcessDword
 486 stub KERNEL_486
 491 stub RegisterServiceProcess
-500 stub KERNEL_500
-502 stub KERNEL_502
-503 stub KERNEL_503
-511 stub KERNEL_511
+
+# Those stubs can be found in WindowNT3.51 krnl386.exe. Some are used by Win95
+# too, some seem to specify different functions in Win95... Ugh.
+500 pascal WOW16Call(word word word) WOW16Call
+501 stub KDDBGOUT
+502 stub WOWGETNEXTVDMCOMMAND
+503 stub WOWREGISTERSHELLWINDOWHANDLE
+504 stub WOWLOADMODULE
+505 stub WOWQUERYPERFORMANCECOUNTER
+506 stub WOWCURSORICONOP
+507 stub WOWFAILEDEXEC
+508 stub WOWCLOSECOMPORT
+509 stub WOWKILLREMOTETASK
+511 stub WOWKILLREMOTETASK
+512 stub WOWQUERYDEBUG
 513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
 514 pascal16 FreeLibrary32W(long) FreeLibrary32
 515 pascal   GetProcAddress32W(long str) GetProcAddress32
 516 pascal GetVDMPointer32W(segptr long) GetVDMPointer32W
 517 pascal CallProc32W() WIN16_CallProc32W
 518 pascal CallProcEx32W() WIN16_CallProcEx32W 
-519 stub KERNEL_519
-522 stub KERNEL_522
-523 stub KERNEL_523
-525 stub KERNEL_525
-531 stub KERNEL_531
-532 stub KERNEL_532
+519 stub EXITKERNELTHUNK
+# the __MOD_ variables are WORD datareferences.
+520 equate __MOD_KERNEL 4200
+521 equate __MOD_DKERNEL 4201
+522 equate __MOD_USER 4203
+523 equate __MOD_DUSER 4204
+524 equate __MOD_GDI 4205
+525 equate __MOD_DGDI 4206
+526 equate __MOD_KEYBOARD 4207
+527 equate __MOD_SOUND 4208
+528 equate __MOD_SHELL 4209
+529 equate __MOD_WINSOCK 4210
+530 equate __MOD_TOOLHELP 4211
+531 equate __MOD_MMEDIA 4212
+532 equate __MOD_COMMDLG 4213
 540 stub KERNEL_540
-541 stub KERNEL_541
-544 stub KERNEL_544
+541 stub WOWSETEXITONLASTAPP
+544 stub WOWSETCOMPATHANDLE
+
 600 stub KERNEL_600
 601 stub KERNEL_601
 604 stub KERNEL_604

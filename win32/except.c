@@ -161,11 +161,13 @@ REGS_ENTRYPOINT(RaiseException)
     
     while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
     {
+       PEXCEPTION_FRAME    prevframe; 
        TRACE(win32,"calling exception handler at 0x%x\n",
                                                 (int) pframe->Handler);
        dispatch=0;  
        TRACE(relay,"(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
                      pframe->Handler, &record, pframe, context, &dispatch );
+       prevframe = pframe->Prev;
        retval=pframe->Handler(&record,pframe,context,&dispatch);
  
        TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
@@ -173,7 +175,7 @@ REGS_ENTRYPOINT(RaiseException)
                               
        if(retval==ExceptionContinueExecution)
           break;
-       pframe=pframe->Prev;
+       pframe=prevframe;
    }
 
    if (retval!=ExceptionContinueExecution)

@@ -26,23 +26,43 @@
 
 
 static LRESULT
+TREEVIEW_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
+
+    switch ((INT32)wParam) {
+	case TVSIL_NORMAL:
+	    return (LRESULT)infoPtr->himlNormal;
+
+	case TVSIL_STATE:
+	    return (LRESULT)infoPtr->himlState;
+    }
+
+    return (LRESULT)NULL;
+}
+
+
+
+
+static LRESULT
 TREEVIEW_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
     HIMAGELIST himlTemp;
 
-    if ((INT32)wParam == TVSIL_NORMAL) {
-	himlTemp = infoPtr->himlNormal;
-	infoPtr->himlNormal = (HIMAGELIST)lParam;
-    }
-    else if ((INT32)wParam == TVSIL_STATE) {
-	himlTemp = infoPtr->himlState;
-	infoPtr->himlState = (HIMAGELIST)lParam;
-    }
-    else
-	return 0;
+    switch ((INT32)wParam) {
+	case TVSIL_NORMAL:
+	    himlTemp = infoPtr->himlNormal;
+	    infoPtr->himlNormal = (HIMAGELIST)lParam;
+	    return (LRESULT)himlTemp;
 
-    return (LRESULT)himlTemp;
+	case TVSIL_STATE:
+	    himlTemp = infoPtr->himlState;
+	    infoPtr->himlState = (HIMAGELIST)lParam;
+	    return (LRESULT)himlTemp;
+    }
+
+    return (LRESULT)NULL;
 }
 
 
@@ -116,12 +136,12 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     switch (uMsg)
     {
 
-    case TVM_INSERTITEMA:
-      FIXME (treeview, "Unimplemented msg TVM_INSERTITEMA\n");
+    case TVM_INSERTITEM32A:
+      FIXME (treeview, "Unimplemented msg TVM_INSERTITEM32A\n");
       return 0;
 
-    case TVM_INSERTITEMW:
-      FIXME (treeview, "Unimplemented msg TVM_INSERTITEMW\n");
+    case TVM_INSERTITEM32W:
+      FIXME (treeview, "Unimplemented msg TVM_INSERTITEM32W\n");
       return 0;
 
     case TVM_DELETEITEM:
@@ -148,10 +168,8 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
       FIXME (treeview, "Unimplemented msg TVM_SETINDENT\n");
       return 0;
 
-    case TVM_GETIMAGELIST:
-      FIXME (treeview, "Unimplemented msg TVM_GETIMAGELIST\n");
-      return 0;
-      //return TREEVIEW_GetImageList (wndPtr, wParam, lParam);
+	case TVM_GETIMAGELIST:
+	    return TREEVIEW_GetImageList (wndPtr, wParam, lParam);
 
 	case TVM_SETIMAGELIST:
 	    return TREEVIEW_SetImageList (wndPtr, wParam, lParam);
@@ -164,28 +182,28 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
       FIXME (treeview, "Unimplemented msg TVM_SELECTITEM \n");
       return 0;
 
-    case TVM_GETITEMA:
-      FIXME (treeview, "Unimplemented msg TVM_GETITEMA\n");
+    case TVM_GETITEM32A:
+      FIXME (treeview, "Unimplemented msg TVM_GETITEM32A\n");
       return 0;
 
-    case TVM_GETITEMW:
-      FIXME (treeview, "Unimplemented msg TVM_GETITEMW\n");
+    case TVM_GETITEM32W:
+      FIXME (treeview, "Unimplemented msg TVM_GETITEM32W\n");
       return 0;
 
-    case TVM_SETITEMA:
-      FIXME (treeview, "Unimplemented msg TVM_SETITEMA\n");
+    case TVM_SETITEM32A:
+      FIXME (treeview, "Unimplemented msg TVM_SETITEM32A\n");
       return 0;
 
-    case TVM_SETITEMW:
-      FIXME (treeview, "Unimplemented msg TVM_SETITEMW\n");
+    case TVM_SETITEM32W:
+      FIXME (treeview, "Unimplemented msg TVM_SETITEM32W\n");
       return 0;
 
-    case TVM_EDITLABELA:
-      FIXME (treeview, "Unimplemented msg TVM_EDITLABELA \n");
+    case TVM_EDITLABEL32A:
+      FIXME (treeview, "Unimplemented msg TVM_EDITLABEL32A\n");
       return 0;
 
-    case TVM_EDITLABELW:
-      FIXME (treeview, "Unimplemented msg TVM_EDITLABELW \n");
+    case TVM_EDITLABEL32W:
+      FIXME (treeview, "Unimplemented msg TVM_EDITLABEL32W\n");
       return 0;
 
     case TVM_GETEDITCONTROL:
@@ -220,12 +238,12 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
       FIXME (treeview, "Unimplemented msg TVM_ENDEDITLABELNOW\n");
       return 0;
 
-    case TVM_GETISEARCHSTRINGA:
-      FIXME (treeview, "Unimplemented msg TVM_GETISEARCHSTRINGA\n");
+    case TVM_GETISEARCHSTRING32A:
+      FIXME (treeview, "Unimplemented msg TVM_GETISEARCHSTRING32A\n");
       return 0;
 
-    case TVM_GETISEARCHSTRINGW:
-      FIXME (treeview, "Unimplemented msg TVM_GETISEARCHSTRINGW\n");
+    case TVM_GETISEARCHSTRING32W:
+      FIXME (treeview, "Unimplemented msg TVM_GETISEARCHSTRING32W\n");
       return 0;
 
     case TVM_SETTOOLTIPS:
@@ -261,8 +279,8 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-	FIXME (treeview, "Unknown msg %04x wp=%08x lp=%08lx\n",
-		     uMsg, wParam, lParam);
+		FIXME (treeview, "Unknown msg %04x wp=%08x lp=%08lx\n",
+		       uMsg, wParam, lParam);
 	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
     }
     return 0;

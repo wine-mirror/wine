@@ -1099,3 +1099,37 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, POINT32 *BezierPoints, DWORD count)
     free(xpoints);
     return TRUE;
 }
+
+/**********************************************************************
+ *          X11DRV_SetBkColor
+ */
+COLORREF
+X11DRV_SetBkColor( DC *dc, COLORREF color )
+{
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    COLORREF oldColor;
+
+    oldColor = dc->w.backgroundColor;
+    dc->w.backgroundColor = color;
+
+    physDev->backgroundPixel = COLOR_ToPhysical( dc, color );
+
+    return oldColor;
+}
+
+/**********************************************************************
+ *          X11DRV_SetTextColor
+ */
+COLORREF
+X11DRV_SetTextColor( DC *dc, COLORREF color )
+{
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    COLORREF oldColor;
+
+    oldColor = dc->w.textColor;
+    dc->w.textColor = color;
+
+    physDev->textPixel = COLOR_ToPhysical( dc, color );
+
+    return oldColor;
+}

@@ -144,7 +144,7 @@ void DCE_FreeWindowDCE( WND* pWnd )
 		}
 		else if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
-		    ERR(cd,"[%04x] GetDC() without ReleaseDC()!\n", 
+		    ERR(dc,"[%04x] GetDC() without ReleaseDC()!\n", 
 			pWnd->hwndSelf);
 		    DCE_ReleaseDC( pDCE );
 		}

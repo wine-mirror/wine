@@ -39,8 +39,10 @@ DWORD INT1A_GetTicksSinceMidnight(void)
 /**********************************************************************
  *	    INT_Int1aHandler
  *
- * Handler for int 1ah (date and time).
- */
+ * Handler for int 1ah 
+ *     0x00 - 0x07 - date and time
+ *     0x?? - 0x?? - Microsoft Real Time Compression Interface
+ */ 
 void WINAPI INT_Int1aHandler( CONTEXT *context )
 {
     time_t ltime;
@@ -49,7 +51,7 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
 
     switch(AH_reg(context))
     {
-	case 0:
+	case 0x00:
             ticks = INT1A_GetTicksSinceMidnight();
             CX_reg(context) = HIWORD(ticks);
             DX_reg(context) = LOWORD(ticks);
@@ -57,7 +59,7 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
             TRACE(int,"int1a: AH=00 -- ticks=%ld\n", ticks);
             break;
 		
-	case 2: 
+	case 0x02: 
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 		
@@ -65,7 +67,7 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
                                    BIN_TO_BCD(bdtime->tm_min);
 		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
 
-	case 4:
+	case 0x04:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
@@ -75,18 +77,29 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
 		break;
 
 		/* setting the time,date or RTC is not allow -EB */
-	case 1:
+	case 0x01:
 		/* set system time */
-	case 3: 
+	case 0x03: 
 		/* set RTC time */
-	case 5:
+	case 0x05:
 		/* set RTC date */
-	case 6:
+	case 0x06:
 		/* set ALARM */
-	case 7:
+	case 0x07:
 		/* cancel ALARM */
 		break;
 
+        case 0xb0: /* Microsoft Real Time Compression */
+                switch AL_reg(context)
+                {
+                    case 0x01:
+                        /* not present */
+                        break;
+                    default:
+                        INT_BARF(context, 0x1a);
+                }
+                break;
+                
 	default:
 		INT_BARF( context, 0x1a );
     }

@@ -1,15 +1,14 @@
-This is release 980822 of Wine, the MS Windows emulator.  This is still a
+This is release 980913 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-980822: (see ChangeLog for details)
-	- Improved mmio support.
-	- VxDCall support.
-	- More common controls and shell32 stuff.
-	- Better DOS executables support.
+WHAT'S NEW with Wine-980913: (see ChangeLog for details)
+	- Even more common controls stuff.
+	- Many PostScript driver improvements.
+	- More DOS executables support.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -18,10 +17,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980822.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980822.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980822.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980822.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980913.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980913.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980913.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980913.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

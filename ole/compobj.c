@@ -28,6 +28,9 @@
 LPMALLOC16 currentMalloc16=NULL;
 LPMALLOC32 currentMalloc32=NULL;
 
+HTASK16 hETask = 0;
+WORD Table_ETask[62];
+
 /***********************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  *
@@ -98,6 +101,18 @@ HRESULT WINAPI CoGetMalloc32(
     if(!currentMalloc32)
 	currentMalloc32 = IMalloc32_Constructor();
     *lpMalloc = currentMalloc32;
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoCreateStandardMalloc16 [COMPOBJ.71]
+ */
+OLESTATUS WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
+					  LPMALLOC16 *lpMalloc)
+{
+    /* FIXME: docu says we shouldn't return the same allocator as in
+     * CoGetMalloc16 */
+    *lpMalloc = IMalloc16_Constructor();
     return S_OK;
 }
 
@@ -400,13 +415,25 @@ OLESTATUS WINAPI CLSIDFromProgID32(
 /***********************************************************************
  *           LookupETask (COMPOBJ.94)
  */
-OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
-	FIXME(ole,"(%p,%p),stub!\n",p1,p2);
+OLESTATUS WINAPI LookupETask(HTASK16 *hTask,LPVOID p) {
+	FIXME(ole,"(%p,%p),stub!\n",hTask,p);
+	if ((*hTask = GetCurrentTask()) == hETask) {
+		memcpy(p, Table_ETask, sizeof(Table_ETask));
+	}
 	return 0;
 }
 
 /***********************************************************************
- *           LookupETask (COMPOBJ.201)
+ *           SetETask (COMPOBJ.95)
+ */
+OLESTATUS WINAPI SetETask(HTASK16 hTask, LPVOID p) {
+        FIXME(ole,"(%04x,%p),stub!\n",hTask,p);
+	hETask = hTask;
+	return 0;
+}
+
+/***********************************************************************
+ *           CallObjectInWOW (COMPOBJ.201)
  */
 OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 	FIXME(ole,"(%p,%p),stub!\n",p1,p2);
@@ -456,6 +483,30 @@ OLESTATUS WINAPI CoRegisterClassObject32(
 }
 
 /***********************************************************************
+ *           CoGetClassObject [COMPOBJ.7]
+ */
+HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
+                        LPVOID pvReserved, REFIID iid, LPVOID *ppv)
+{
+    char xclsid[50],xiid[50];
+    LPCLASSFACTORY lpclf;
+    HRESULT hres = E_UNEXPECTED;
+
+    WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
+    WINE_StringFromCLSID((LPCLSID)iid,xiid);
+    TRACE(ole,"\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
+
+    *ppv = NULL;
+    lpclf = IClassFactory_Constructor();
+    if (lpclf)
+    {
+        hres = lpclf->lpvtbl->fnQueryInterface(lpclf,iid, ppv);
+        lpclf->lpvtbl->fnRelease(lpclf);
+    }
+    return hres;
+}
+
+/***********************************************************************
  *		CoRegisterMessageFilter [COMPOBJ.27]
  */
 OLESTATUS WINAPI CoRegisterMessageFilter16(
@@ -473,23 +524,32 @@ HRESULT WINAPI CoCreateInstance(
 	REFCLSID rclsid,
 	LPUNKNOWN pUnkOuter,
 	DWORD dwClsContext,
-	REFIID riid,
+	REFIID iid,
 	LPVOID *ppv
 ) {
+#if 0
 	char buf[80],xbuf[80];
 
 	if (rclsid)
 		WINE_StringFromCLSID(rclsid,buf);
 	else
 		sprintf(buf,"<rclsid-0x%08lx>",(DWORD)rclsid);
-	if (riid)
-		WINE_StringFromCLSID(riid,xbuf);
+	if (iid)
+		WINE_StringFromCLSID(iid,xbuf);
 	else
-		sprintf(xbuf,"<riid-0x%08lx>",(DWORD)riid);
+		sprintf(xbuf,"<iid-0x%08lx>",(DWORD)iid);
 
 	FIXME(ole,"(%s,%p,0x%08lx,%s,%p): stub !\n",buf,pUnkOuter,dwClsContext,xbuf,ppv);
 	*ppv = NULL;
-	return S_OK;
+#else	
+	HRESULT hres;
+	LPCLASSFACTORY lpclf = 0;
+
+	CoGetClassObject(rclsid, dwClsContext, NULL, &IID_IClassFactory, (LPVOID)&lpclf);
+	hres = lpclf->lpvtbl->fnCreateInstance(lpclf, pUnkOuter, iid, ppv);
+	lpclf->lpvtbl->fnRelease(lpclf);
+	return hres;
+#endif
 }
 
 /***********************************************************************
@@ -569,5 +629,15 @@ HRESULT WINAPI CoLockObjectExternal32(
     BOOL32 fLastUnlockReleases	/* [in] ? */
 ) {
     FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoGetState16 [COMPOBJ.115]
+ */
+HRESULT WINAPI CoGetState16(LPDWORD state)
+{
+    FIXME(ole, "(%p),stub!\n", state);
+    *state = 0;
     return S_OK;
 }

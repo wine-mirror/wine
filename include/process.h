@@ -31,6 +31,9 @@ typedef struct
     HANDLE_ENTRY  entries[1];
 } HANDLE_TABLE;
 
+/* Current Process pseudo-handle - Returned by GetCurrentProcess*/
+#define CURRENT_PROCESS_PSEUDOHANDLE ((HANDLE32)0x7fffffff)
+
 /* Win32 process environment database */
 typedef struct
 {

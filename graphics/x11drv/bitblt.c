@@ -837,8 +837,9 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                   rectDst.bottom - rectDst.top, dcDst->w.bitsPerPixel );
     BITBLT_StretchImage( imageSrc, imageDst, widthSrc, heightSrc,
                          widthDst, heightDst, &rectSrc, &rectDst,
-                         dcDst->w.textPixel, dcDst->w.bitsPerPixel != 1 ?
-                           dcDst->w.backgroundPixel : dcSrc->w.backgroundPixel,
+                         dcDst->u.x.textPixel, dcDst->w.bitsPerPixel != 1 ?
+                         dcDst->u.x.backgroundPixel :
+			 dcSrc->u.x.backgroundPixel,
                          dcDst->w.stretchBltMode );
     XPutImage( display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
@@ -900,14 +901,14 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
             if (COLOR_PixelToPalette)
             {
                 XSetBackground( display, gc, 
-                               COLOR_PixelToPalette[dcDst->w.textPixel] );
+                             COLOR_PixelToPalette[dcDst->u.x.textPixel] );
                 XSetForeground( display, gc,
-                               COLOR_PixelToPalette[dcDst->w.backgroundPixel]);
+                             COLOR_PixelToPalette[dcDst->u.x.backgroundPixel]);
             }
             else
             {
-                XSetBackground( display, gc, dcDst->w.textPixel );
-                XSetForeground( display, gc, dcDst->w.backgroundPixel );
+                XSetBackground( display, gc, dcDst->u.x.textPixel );
+                XSetForeground( display, gc, dcDst->u.x.backgroundPixel );
             }
             XCopyPlane( display, dcSrc->u.x.drawable, pixmap, gc,
                         visRectSrc->left, visRectSrc->top,
@@ -923,7 +924,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
-                                               dcSrc->w.backgroundPixel) );
+                                               dcSrc->u.x.backgroundPixel) );
             XPutImage( display, pixmap, gc, imageDst,
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
@@ -1239,8 +1240,8 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         }
         if (dcSrc->w.bitsPerPixel == 1)
         {
-            XSetBackground( display, dcDst->u.x.gc, dcDst->w.textPixel );
-            XSetForeground( display, dcDst->u.x.gc, dcDst->w.backgroundPixel );
+            XSetBackground( display, dcDst->u.x.gc, dcDst->u.x.textPixel );
+            XSetForeground( display, dcDst->u.x.gc, dcDst->u.x.backgroundPixel );
             XSetFunction( display, dcDst->u.x.gc, GXcopy );
             XSetGraphicsExposures( display, dcDst->u.x.gc, True );
 	    XCopyPlane( display, dcSrc->u.x.drawable,

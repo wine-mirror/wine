@@ -93,6 +93,7 @@ XMapWindow
 XNextEvent
 XOffsetRegion
 XOpenDisplay
+XOpenIM
 XParseGeometry
 XPending
 XPointInRegion

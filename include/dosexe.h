@@ -28,6 +28,7 @@ typedef struct _DOSTASK {
 #define MZ_SUPPORTED
 
 extern int MZ_InitTask( LPDOSTASK lpDosTask );
+extern int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule );
 extern int MZ_RunModule( LPDOSTASK lpDosTask );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
 extern int DOSVM_Process( LPDOSTASK lpDosTask );

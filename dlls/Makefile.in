@@ -1,4 +1,5 @@
 SUBDIRS = \
+	comctl32 \
 	shell32
 
 all: $(SUBDIRS)

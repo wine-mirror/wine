@@ -1,0 +1,49 @@
+#!/bin/sh
+# This quick and dirty script prints the names of functions that don't have a
+# WINAPI in its header declaration or don't appear in any .c file at all.
+# I don't think it's very intelligent to use it when having < 64 MB ;)
+# FIXME: This script skips .spec function entries that occupy two or more
+# .spec lines !
+
+if [ ! -e ./ChangeLog ] ; then
+  echo You are not in Wine main directory !
+  exit
+fi
+echo crtdll.spec, ntdll.spec and wsock32.spec will be mentioned many times,
+echo as they use original UNIX functions that don\'t exist in Wine .c code.
+echo
+FIND_LIST="`find . -name "*.c"`"
+for i in if1632/*.spec relay32/*.spec
+do
+# skip wprocs.spec, as it contains many funcs that don't need a WINAPI
+  if [ $i = "if1632/wprocs.spec" ] ; then
+    continue
+  fi
+  LINE="`egrep "stdcall|cdecl|pascal|register" $i|grep -v "^#"|tr -d " "|tr "\n" " "`"
+  for j in $LINE
+  do
+    if [ -n "`echo "$j"|grep \)`" ] ; then
+      FUNC="`echo $j|cut -f2 -d\)|cut -f1 -d'#'`"
+      if [ -n "$FUNC" ] ; then
+        if [ -z "`grep -B 1 $FUNC $FIND_LIST|egrep "WINAPI|__cdecl|DC_GET_VAL|DC_SET_MODE|REGS_ENTRYPOINT"`" ] ; then
+	  case $FUNC in		# "black list"
+	   "GetBrushOrgEx16" ) ;;
+	   "GetCurrentPositionEx16" ) ;;
+	   "GetViewportExtEx16" ) ;;
+	   "GetViewportOrgEx16" ) ;;
+	   "GetWindowExtEx16" ) ;;
+	   "GetWindowOrgEx16" ) ;;
+
+	   "GetBrushOrgEx32" ) ;;
+           "GetCurrentPositionEx32" ) ;;
+           "GetViewportExtEx32" ) ;;
+           "GetViewportOrgEx32" ) ;;
+           "GetWindowExtEx32" ) ;;
+           "GetWindowOrgEx32" ) ;;
+	   * ) echo "$i: $FUNC" ;;
+	  esac
+	fi
+      fi
+    fi 
+  done
+done

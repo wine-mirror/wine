@@ -911,8 +911,7 @@ static void PE_InitDLL(WINE_MODREF *wm, DWORD type,LPVOID lpReserved)
     if ((PE_HEADER(wm->module)->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
         (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
     ) {
-        DWORD (CALLBACK *entry)(HMODULE32,DWORD,LPVOID) = (void*)RVA_PTR( wm->module,
-                                          OptionalHeader.AddressOfEntryPoint );
+        DLLENTRYPROC32 entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
         TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );
         entry( wm->module, type, lpReserved );

@@ -21,6 +21,7 @@ typedef struct
     int       mode;
     char     *unix_name;
     DWORD     type;         /* Type for win32 apps */
+    DWORD     pos;	    /* workaround to emulate weird DOS error handling */
 } FILE_OBJECT;
 
 /* Definition of a full DOS file name */
@@ -41,14 +42,17 @@ typedef struct
 } DOS_DEVICE;
 
 /* Macros to convert 16 bit to 32 bit file handles and back */
+/* LZW handles are exempt as if not, could go below 0x400 */
 #define HFILE16_TO_HFILE32(handle) \
 (((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
  ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
  ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ ((handle)>=0x400) ? handle : \
  (handle)-5)
 
 #define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
       ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
+      ((hnd)>=0x400) ? hnd : \
        (HFILE16)hnd+5); })
 
 

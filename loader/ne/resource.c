@@ -383,7 +383,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 
     assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
 
-    if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != -1)
+    if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != HFILE_ERROR16)
     {
         WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
         NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);

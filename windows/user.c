@@ -351,7 +351,7 @@ BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
  *
  *	Used by Turbo Debugger for Windows
  */
-FARPROC16 SetEventHook(FARPROC16 lpfnEventHook)
+FARPROC16 WINAPI SetEventHook(FARPROC16 lpfnEventHook)
 {
 	FIXME(hook, "(lpfnEventHook=%08x): stub\n", (UINT32)lpfnEventHook);
 	return NULL;

@@ -129,6 +129,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
    return 0;
 }
 
+
 /***********************************************************************
  *           CBCalcPlacement
  *
@@ -142,22 +143,6 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
 
    /* get combo height and width */
 
-   if( lphc->editHeight )
-       size.cy = lphc->editHeight;
-   else
-   {
-       HDC32	hDC = GetDC32( lphc->self->hwndSelf );
-       HFONT32	hPrevFont = 0;
-
-       if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
-   
-       GetTextExtentPoint32A( hDC, "0", 1, &size);
-
-       size.cy += size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
-
-       if( hPrevFont ) SelectObject32( hDC, hPrevFont );
-       ReleaseDC32( lphc->self->hwndSelf, hDC );
-   }
    size.cx = rect.right - rect.left;
 
    if( CB_OWNERDRAWN(lphc) )
@@ -181,6 +166,23 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
        }
        size.cy = u;
    }
+   else if( lphc->editHeight ) /* explicitly set height */
+	size.cy = lphc->editHeight;
+   else
+   {
+       HDC32    hDC = GetDC32( lphc->self->hwndSelf );
+       HFONT32  hPrevFont = 0;
+
+       if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
+
+       GetTextExtentPoint32A( hDC, "0", 1, &size);
+
+       size.cy += size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
+
+       if( hPrevFont ) SelectObject32( hDC, hPrevFont );
+       ReleaseDC32( lphc->self->hwndSelf, hDC );
+   }
+
 
    /* calculate text and button placement */
 
@@ -1419,9 +1421,16 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return SendMessage32A( lphc->hWndLBox, LB_FINDSTRINGEXACT32, 
 						       wParam, lParam );
 	case CB_SETITEMHEIGHT16:
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT32)(INT16)wParam; /* signed integer */
 	case CB_SETITEMHEIGHT32:
 		return COMBO_SetItemHeight( lphc, (INT32)wParam, (INT32)lParam);
+
+	case CB_GETITEMHEIGHT16:
+		wParam = (INT32)(INT16)wParam;
+	case CB_GETITEMHEIGHT32:
+		if( (INT32)wParam >= 0 )
+		    return SendMessage32A( lphc->hWndLBox, LB_GETITEMHEIGHT32, wParam, 0);
+		return (lphc->RectEdit.bottom - lphc->RectEdit.top);
 
 	case CB_RESETCONTENT16: 
 	case CB_RESETCONTENT32:

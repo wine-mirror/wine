@@ -204,7 +204,7 @@ type	win32
 201 stdcall FindWindowW(wstr wstr) FindWindow32W
 202 stdcall FlashWindow(long long) FlashWindow32
 203 stdcall FrameRect(long ptr long) FrameRect32
-204 stub FreeDDElParam
+204 stdcall FreeDDElParam(long long) FreeDDElParam32
 205 stdcall GetActiveWindow() GetActiveWindow32
 206 stdcall GetAppCompatFlags(long) GetAppCompatFlags32
 207 stdcall GetAsyncKeyState(long) GetAsyncKeyState32
@@ -414,7 +414,7 @@ type	win32
 411 stub OpenInputDesktop
 412 stub OpenWindowStationA
 413 stub OpenWindowStationW
-414 stub PackDDElParam
+414 stdcall PackDDElParam(long long long) PackDDElParam32
 415 stdcall PaintDesktop(long) PaintDesktop
 416 stdcall PeekMessageA(ptr long long long long) PeekMessage32A
 417 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
@@ -562,7 +562,7 @@ type	win32
 559 stdcall UnionRect(ptr ptr ptr) UnionRect32
 560 stub UnloadKeyboardLayout
 561 stub UnlockWindowStation
-562 stub UnpackDDElParam
+562 stdcall UnpackDDElParam(long long ptr ptr) UnpackDDElParam32
 563 stdcall UnregisterClassA(str long) UnregisterClass32A
 564 stdcall UnregisterClassW(wstr long) UnregisterClass32W
 565 stdcall UnregisterHotKey(long long) UnregisterHotKey
@@ -608,3 +608,7 @@ type	win32
 604 stub ChangeDisplaySettingsA
 605 stub ChangeDisplaySettingsW
 606 stdcall SetWindowText(long str) SetWindowText32A
+607 stub GetMonitorInfoA
+608 stub MonitorFromWindow
+609 stub MonitorFromRect
+610 stub MonitorFromPoint

@@ -5,91 +5,196 @@
  *
  */
 
-#include <windows.h>
-#include <psdrv.h>
-#include <print.h>
-#include <debug.h>
 #include <ctype.h>
+#include <string.h>
+#include "windows.h"
+#include "psdrv.h"
+#include "print.h"
+#include "debug.h"
 
-char psheader[] = /* title llx lly urx ury */
-"%%!PS-Adobe-3.0 (not quite)\n"
+static char psheader[] = /* title llx lly urx ury orientation */
+"%%!PS-Adobe-3.0\n"
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
 "%%%%BoundingBox: %d %d %d %d\n"
 "%%%%Pages: (atend)\n"
-"%%%%EndComments\n"
-"%%%%BeginProlog\n"
+"%%%%Orientation: %s\n"
+"%%%%EndComments\n";
+
+static char psbeginprolog[] = 
+"%%BeginProlog\n";
+
+static char psendprolog[] =
+"%%EndProlog\n";
+
+static char psvectorstart[] =
+"/ANSIEncoding [\n";
+
+static char psvectorend[] =
+"] def\n";
+
+static char psprolog[] = /* output ANSIEncoding vector first */
 "/reencodefont {\n"
 "findfont\n"
 "dup length dict begin\n"
 "{1 index /FID ne {def} {pop pop} ifelse} forall\n"
-"/Encoding ISOLatin1Encoding def\n"
+"/Encoding ANSIEncoding def\n"
 "currentdict\n"
 "end\n"
 "definefont pop\n"
 "} bind def\n"
-"%%%%EndProlog\n";
+"/tmpmtrx matrix def\n";
 
-char psbeginsetup[] =
+static char psbeginsetup[] =
 "%%BeginSetup\n";
 
-char psendsetup[] =
+static char psendsetup[] =
 "%%EndSetup\n";
 
-char psbeginfeature[] = /* feature, value */
+static char psbeginfeature[] = /* feature, value */
 "mark {\n"
 "%%%%BeginFeature: %s %s\n";
 
-char psendfeature[] =
+static char psendfeature[] =
 "\n%%EndFeature\n"
 "} stopped cleartomark\n";
 
-char psnewpage[] = /* name, number */
+static char psnewpage[] = /* name, number, xres, yres, xtrans, ytrans, rot */
 "%%%%Page: %s %d\n"
 "%%%%BeginPageSetup\n"
 "/pgsave save def\n"
-"72 600 div dup scale\n"
-"0 7014 translate\n"
+"72 %d div 72 %d div scale\n"
+"%d %d translate\n"
 "1 -1 scale\n"
+"%d rotate\n"
 "%%%%EndPageSetup\n";
 
-char psendpage[] =
+static char psendpage[] =
 "pgsave restore\n"
 "showpage\n";
 
-char psfooter[] = /* pages */
+static char psfooter[] = /* pages */
 "%%%%Trailer\n"
 "%%%%Pages: %d\n"
 "%%%%EOF\n";
 
-char psmoveto[] = /* x, y */
+static char psmoveto[] = /* x, y */
 "%d %d moveto\n";
 
-char pslineto[] = /* x, y */
+static char pslineto[] = /* x, y */
 "%d %d lineto\n";
 
-char psrlineto[] = /* dx, dy */
-"%d %d rlineto\n";
-
-char psstroke[] = 
+static char psstroke[] = 
 "stroke\n";
 
-char psrectangle[] = /* x, y, width, height, -width */
+static char psrectangle[] = /* x, y, width, height, -width */
 "%d %d moveto\n"
 "%d 0 rlineto\n"
 "0 %d rlineto\n"
 "%d 0 rlineto\n"
 "closepath\n";
 
-char psshow[] = /* string */
+static char psshow[] = /* string */
 "(%s) show\n";
 
-char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
+static char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
 "/%s findfont\n"
 "[%d 0 0 %d 0 0]\n"
 "%d 10 div matrix rotate\n"
 "matrix concatmatrix\n"
 "makefont setfont\n";
+
+static char pssetlinewidth[] = /* width */
+"%d setlinewidth\n";
+
+static char pssetdash[] = /* dash, offset */
+"[%s] %d setdash\n";
+
+static char pssetgray[] = /* gray */
+"%.2f setgray\n";
+
+static char pssetrgbcolor[] = /* r, g, b */
+"%.2f %.2f %.2f setrgbcolor\n";
+
+static char psellipse[] = /* x, y, a, b */
+"tmpmtrx currentmatrix pop\n"
+"%d %d translate\n"
+"%d %d scale\n"
+"0 0 1 0 360 arc\n"
+"tmpmtrx setmatrix\n";
+
+static char psgsave[] =
+"gsave\n";
+
+static char psgrestore[] =
+"grestore\n";
+
+static char psfill[] =
+"fill\n";
+
+char *PSDRV_ANSIVector[256] = {
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+"space",	"exclam",	"quotedbl",	"numbersign",
+"dollar",	"percent",	"ampersand",	"quotesingle",
+"parenleft",	"parenright",	"asterisk",	"plus",
+"comma",	"hyphen",	"period",	"slash",
+"zero",		"one",		"two",		"three",
+"four",		"five",		"six",		"seven",
+"eight",	"nine",		"colon",	"semicolon",
+"less",		"equal",	"greater",	"question",
+"at",		"A",		"B",		"C",
+"D",		"E",		"F",		"G",
+"H",		"I",		"J",		"K",
+"L",		"M",		"N",		"O",
+"P",		"Q",		"R",		"S",
+"T",		"U",		"V",		"W",
+"X",		"Y",		"Z",		"bracketleft",
+"backslash",	"bracketright",	"asciicircum",	"underscore",
+"grave",	"a",		"b",		"c",
+"d",		"e",		"f",		"g",
+"h",		"i",		"j",		"k",
+"l",		"m",		"n",		"o",
+"p",		"q",		"r",		"s",
+"t",		"u",		"v",		"w",
+"x",		"y",		"z",		"braceleft",
+"bar",		"braceright",	"asciitilde",	NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		"quoteleft",	"quoteright",	NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		NULL,		NULL,		NULL,
+NULL,		"exclamdown",	"cent",		"sterling",
+"currency",	"yen",		"brokenbar",	"section",
+"dieresis",	"copyright",	"ordfeminine",	"guillemotleft",
+"logicalnot",	"hyphen",	"registered",	"macron",
+"degree",	"plusminus",	"twosuperior",	"threesuperior",
+"acute",	"mu",		"paragraph",	"periodcentered",
+"cedilla",	"onesuperior",	"ordmasculine",	"guillemotright",
+"onequarter",	"onehalf",	"threequarters","questiondown",
+"Agrave",	"Aacute",	"Acircumflex",	"Atilde",
+"Adieresis",	"Aring",	"AE",		"Ccedilla",
+"Egrave",	"Eacute",	"Ecircumflex",	"Edieresis",
+"Igrave",	"Iacute",	"Icircumflex",	"Idieresis",
+"Eth",		"Ntilde",	"Ograve",	"Oacute",
+"Ocircumflex",	"Otilde",	"Odieresis",	"multiply",
+"Oslash",	"Ugrave",	"Uacute",	"Ucircumflex",
+"Udieresis",	"Yacute",	"Thorn",	"germandbls",
+"agrave",	"aacute",	"acircumflex",	"atilde",
+"adieresis",	"aring",	"ae",		"ccedilla",
+"egrave",	"eacute",	"ecircumflex",	"edieresis",
+"igrave",	"iacute",	"icircumflex",	"idieresis",
+"eth",		"ntilde",	"ograve",	"oacute",
+"ocircumflex",	"otilde",	"odieresis",	"divide",
+"oslash",	"ugrave",	"uacute",	"ucircumflex",
+"udieresis",	"yacute",	"thorn",	"ydieresis"
+};
+
 
 char psreencodefont[] = /* newfontname basefontname*/
 "/%s /%s reencodefont\n";
@@ -117,7 +222,7 @@ INT32 PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 			     strlen(feature) + strlen(value));
 
 
-    wsprintf32A(buf, psbeginfeature, feature, value);
+    sprintf(buf, psbeginfeature, feature, value);
     WriteSpool( hJob, buf, strlen(buf) );
 
     WriteSpool( hJob, invocation, strlen(invocation) );
@@ -133,9 +238,10 @@ INT32 PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *buf, *titlebuf;
+    char *buf, *titlebuf, *orient, vectbuf[256];
     INPUTSLOT *slot;
     PAGESIZE *page;
+    int urx, ury, i, j;
 
     titlebuf = (char *)HeapAlloc( PSDRV_Heap, 0, len+1 );
     if(!titlebuf) {
@@ -145,16 +251,28 @@ INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
     memcpy(titlebuf, title, len);
     titlebuf[len] = '\0';
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) + len + 20);
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) + len + 30);
     if(!buf) {
         WARN(psdrv, "HeapAlloc failed\n");
 	HeapFree( PSDRV_Heap, 0, titlebuf );
         return 0;
     }
 
-    wsprintf32A(buf, psheader, title, 0, 0, 
-		(int) (dc->w.devCaps->horzSize * 72.0 / 25.4),
-		(int) (dc->w.devCaps->vertSize * 72.0 / 25.4) );
+    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
+      /* BBox co-ords are in default user co-ord system so urx < ury even in
+	 landscape mode */
+	urx = (int) (dc->w.devCaps->vertSize * 72.0 / 25.4);
+        ury = (int) (dc->w.devCaps->horzSize * 72.0 / 25.4);
+	orient = "Landscape";
+    } else {
+        urx = (int) (dc->w.devCaps->horzSize * 72.0 / 25.4);
+	ury = (int) (dc->w.devCaps->vertSize * 72.0 / 25.4);
+	orient = "Portrait";
+    }
+
+    /* FIXME should do something better with BBox */
+
+    sprintf(buf, psheader, title, 0, 0, urx, ury, orient);		
 
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
@@ -165,6 +283,28 @@ INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
     }
     HeapFree( PSDRV_Heap, 0, titlebuf );
     HeapFree( PSDRV_Heap, 0, buf );
+
+    WriteSpool( physDev->job.hJob, psbeginprolog, strlen(psbeginprolog) );
+    WriteSpool( physDev->job.hJob, psvectorstart, strlen(psvectorstart) );
+    
+    for(i = 0; i < 256; i += 8) {
+        vectbuf[0] = '\0';
+        for(j = 0; j < 8; j++) {
+	    strcat(vectbuf, "/");
+	    if(PSDRV_ANSIVector[i+j]) {
+	        strcat(vectbuf, PSDRV_ANSIVector[i+j]);
+		strcat(vectbuf, " ");
+	    } else {
+	        strcat(vectbuf, ".notdef ");
+	    }
+	}
+	strcat(vectbuf, "\n");
+	WriteSpool( physDev->job.hJob, vectbuf, strlen(vectbuf) );
+    }
+
+    WriteSpool( physDev->job.hJob, psvectorend, strlen(psvectorend) );
+    WriteSpool( physDev->job.hJob, psprolog, strlen(psprolog) );
+    WriteSpool( physDev->job.hJob, psendprolog, strlen(psendprolog) );
 
 
     WriteSpool( physDev->job.hJob, psbeginsetup, strlen(psbeginsetup) );
@@ -189,7 +329,6 @@ INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
 	}
     }
 
-
     WriteSpool( physDev->job.hJob, psendsetup, strlen(psendsetup) );
 
 
@@ -208,7 +347,7 @@ INT32 PSDRV_WriteFooter( DC *dc )
         return 0;
     }
 
-    wsprintf32A(buf, psfooter, physDev->job.PageNo);
+    sprintf(buf, psfooter, physDev->job.PageNo);
 
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
@@ -242,16 +381,35 @@ INT32 PSDRV_WriteNewPage( DC *dc )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf;
     char name[100];
-    
-    wsprintf32A(name, "%d", physDev->job.PageNo);
+    signed int xtrans, ytrans, rotation;
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 100 );
+    sprintf(name, "%d", physDev->job.PageNo);
+
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 200 );
     if(!buf) {
         WARN(psdrv, "HeapAlloc failed\n");
         return 0;
     }
 
-    wsprintf32A(buf, psnewpage, name, physDev->job.PageNo); 
+    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
+        if(physDev->pi->ppd->LandscapeOrientation == -90) {
+	    xtrans = dc->w.devCaps->vertRes;
+	    ytrans = dc->w.devCaps->horzRes;
+	    rotation = 90;
+	} else {
+	    xtrans = ytrans = 0;
+	    rotation = -90;
+	}
+    } else {
+        xtrans = 0;
+	ytrans = dc->w.devCaps->vertRes;
+	rotation = 0;
+    }
+
+    sprintf(buf, psnewpage, name, physDev->job.PageNo,
+	    dc->w.devCaps->logPixelsX, dc->w.devCaps->logPixelsY,
+	    xtrans, ytrans, rotation);
+
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
         WARN(psdrv, "WriteSpool error\n");
@@ -267,7 +425,7 @@ BOOL32 PSDRV_WriteMoveTo(DC *dc, INT32 x, INT32 y)
 {
     char buf[100];
 
-    wsprintf32A(buf, psmoveto, x, y);
+    sprintf(buf, psmoveto, x, y);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
@@ -275,7 +433,7 @@ BOOL32 PSDRV_WriteLineTo(DC *dc, INT32 x, INT32 y)
 {
     char buf[100];
 
-    wsprintf32A(buf, pslineto, x, y);
+    sprintf(buf, pslineto, x, y);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
@@ -292,13 +450,21 @@ BOOL32 PSDRV_WriteRectangle(DC *dc, INT32 x, INT32 y, INT32 width,
 {
     char buf[100];
 
-    wsprintf32A(buf, psrectangle, x, y, width, height, -width);
+    sprintf(buf, psrectangle, x, y, width, height, -width);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
-static char encodingext[] = "-ISOLatin1";
+BOOL32 PSDRV_WriteEllispe(DC *dc, INT32 x, INT32 y, INT32 a, INT32 b)
+{
+    char buf[256];
 
-BOOL32 PSDRV_WriteSetFont(DC *dc)
+    sprintf(buf, psellipse, x, y, a, b);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
+
+static char encodingext[] = "-ANSI";
+
+BOOL32 PSDRV_WriteSetFont(DC *dc, BOOL32 UseANSI)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf, *newbuf;
@@ -320,9 +486,12 @@ BOOL32 PSDRV_WriteSetFont(DC *dc)
         return FALSE;
     }
 
-    wsprintf32A(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
+    if(UseANSI)
+        sprintf(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
+    else
+        strcpy(newbuf, physDev->font.afm->FontName);
 
-    wsprintf32A(buf, pssetfont, newbuf, 
+    sprintf(buf, pssetfont, newbuf, 
 		physDev->font.size, -physDev->font.size,
 	        -physDev->font.escapement);
 
@@ -330,6 +499,49 @@ BOOL32 PSDRV_WriteSetFont(DC *dc)
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }    
+
+BOOL32 PSDRV_WriteSetColor(DC *dc, PSCOLOR *color)
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    char buf[256];
+
+    if(PSDRV_CmpColor(&physDev->inkColor, color))
+        return TRUE;
+
+    PSDRV_CopyColor(&physDev->inkColor, color);
+    switch(color->type) {
+    case PSCOLOR_RGB:
+        sprintf(buf, pssetrgbcolor, color->value.rgb.r, color->value.rgb.g,
+		color->value.rgb.b);
+	return PSDRV_WriteSpool(dc, buf, strlen(buf));
+
+    case PSCOLOR_GRAY:	
+        sprintf(buf, pssetgray, color->value.gray.i);
+	return PSDRV_WriteSpool(dc, buf, strlen(buf));
+	
+    default:
+        ERR(psdrv, "Unkonwn colour type %d\n", color->type);
+	break;
+    }
+
+    return FALSE;
+}
+
+BOOL32 PSDRV_WriteSetPen(DC *dc)
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    char buf[256];
+
+    sprintf(buf, pssetlinewidth, physDev->pen.width);
+    PSDRV_WriteSpool(dc, buf, strlen(buf));
+
+    if(physDev->pen.dash) {
+        sprintf(buf, pssetdash, physDev->pen.dash, 0);
+	PSDRV_WriteSpool(dc, buf, strlen(buf));
+    }
+
+    return TRUE;
+}
 
 BOOL32 PSDRV_WriteReencodeFont(DC *dc)
 {
@@ -354,8 +566,8 @@ BOOL32 PSDRV_WriteReencodeFont(DC *dc)
         return FALSE;
     }
 
-    wsprintf32A(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
-    wsprintf32A(buf, psreencodefont, newbuf, physDev->font.afm->FontName);
+    sprintf(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
+    sprintf(buf, psreencodefont, newbuf, physDev->font.afm->FontName);
 
     PSDRV_WriteSpool(dc, buf, strlen(buf));
 
@@ -392,7 +604,7 @@ BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count)
 
     buf1 = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psshow) + done);
 
-    wsprintf32A(buf1, psshow, buf);
+    sprintf(buf1, psshow, buf);
 
     PSDRV_WriteSpool(dc, buf1, strlen(buf1));
     HeapFree(PSDRV_Heap, 0, buf);
@@ -400,6 +612,21 @@ BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count)
 
     return TRUE;
 }    
+
+BOOL32 PSDRV_WriteFill(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psfill, sizeof(psfill)-1);
+}
+
+BOOL32 PSDRV_Writegsave(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psgsave, sizeof(psgsave)-1);
+}
+
+BOOL32 PSDRV_Writegrestore(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psgrestore, sizeof(psgrestore)-1);
+}
 
 
 

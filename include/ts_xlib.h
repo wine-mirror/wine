@@ -124,6 +124,7 @@ extern int  TSXUngrabServer(Display*);
 extern int  TSXUninstallColormap(Display*, Colormap);
 extern int  TSXUnmapWindow(Display*, Window);
 extern int  TSXWarpPointer(Display*, Window, Window, int, int, unsigned int, unsigned int, int, int);
+extern XIM  TSXOpenIM(Display*, struct _XrmHashBucketRec*, char*, char*);
 extern int (*TSXSynchronize(Display *, Bool))(Display *);
 extern void TS_XInitImageFuncPtrs(XImage *);
 

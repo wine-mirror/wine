@@ -1,0 +1,32 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = comctl32
+
+C_SRCS = \
+	animate.c \
+	comboex.c \
+	comctl32undoc.c \
+	commctrl.c \
+	header.c \
+	hotkey.c \
+	imagelist.c \
+	listview.c \
+	pager.c \
+	progress.c \
+	rebar.c \
+	status.c \
+	tab.c \
+	toolbar.c \
+	tooltips.c \
+	trackbar.c \
+	treeview.c \
+	updown.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

@@ -122,16 +122,17 @@ static WINEREGION *REGION_AllocWineRegion( void )
 {
     WINEREGION *pReg;
 
-    if (!(pReg = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ))))
-	return NULL;
-    if (!(pReg->rects = HeapAlloc(SystemHeap, 0, sizeof( RECT32 ))))
+    if ((pReg = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ))))
     {
+	if ((pReg->rects = HeapAlloc(SystemHeap, 0, sizeof( RECT32 ))))
+	{
+	    pReg->size = 1;
+	    EMPTY_REGION(pReg);
+	    return pReg;
+	}
 	HeapFree(SystemHeap, 0, pReg);
-	return NULL;
     }
-    pReg->size = 1;
-    EMPTY_REGION(pReg);
-    return pReg;
+    return NULL;
 }
 
 /***********************************************************************
@@ -2517,9 +2518,8 @@ HRGN32 WINAPI CreatePolygonRgn32( const POINT32 *points, INT32 count,
  */
 HRGN32 WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
 {
-    FIXME (region, "(0x%08x 0x%08x 0x%08x): empty stub!\n",
+    FIXME (region, "(0x%08lx 0x%08lx 0x%08lx): empty stub!\n",
 	   dwArg1, dwArg2, dwArg3);
 
-    return NULL;
+    return 0;
 }
-

@@ -137,7 +137,7 @@ INT32 WINAPI LZStart32(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    return LZInit32( HFILE16_TO_HFILE32(hfSrc) );
+    return HFILE32_TO_HFILE16( LZInit32( HFILE16_TO_HFILE32(hfSrc) ) );
 }
 
 
@@ -307,7 +307,7 @@ INT32 WINAPI GetExpandedName32W( LPCWSTR in, LPWSTR out )
  */
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
-    return LZRead32(fd,buf,toread);
+    return LZRead32(HFILE16_TO_HFILE32(fd),buf,toread);
 }
 
 
@@ -412,7 +412,7 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
  */
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
-    return LZSeek32( fd, off, type );
+    return LZSeek32( HFILE16_TO_HFILE32(fd), off, type );
 }
 
 
@@ -456,10 +456,11 @@ LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
 
 /***********************************************************************
  *           LZCopy16   (LZEXPAND.1)
+ *
  */
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
-    return LZCopy32( src, dest );
+    return LZCopy32( HFILE16_TO_HFILE32(src), HFILE16_TO_HFILE32(dest) );
 }
 
 
@@ -541,7 +542,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
-    return LZOpenFile32A( fn, ofs, mode );
+    return HFILE32_TO_HFILE16 ( LZOpenFile32A( fn, ofs, mode ) );
 }
 
 
@@ -601,7 +602,7 @@ HFILE32 WINAPI LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
  */
 void WINAPI LZClose16( HFILE16 fd )
 {
-    return LZClose32( fd );
+    return LZClose32( HFILE16_TO_HFILE32 (fd) );
 }
 
 
@@ -636,7 +637,7 @@ void WINAPI LZClose32( HFILE32 fd )
 LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {
     TRACE(file,"(%d,%d)\n",src,dest);
-    return LZCopy32(src,dest);
+    return LZCopy32(HFILE16_TO_HFILE32(src),HFILE16_TO_HFILE32(dest));
 }
 
 

@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "process.h"
 #include "server.h"
+#include "thread.h"
 
 #define HTABLE_SIZE  0x30  /* Handle table initial size */
 #define HTABLE_INC   0x10  /* Handle table increment */
@@ -166,6 +167,18 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
             K32OBJ_IncCount( ptr );
         else
             ptr = NULL;
+    }
+    else if (handle == CURRENT_THREAD_PSEUDOHANDLE)
+    {
+       ptr = (K32OBJ *)THREAD_Current();
+       if (server_handle) *server_handle = CURRENT_THREAD_PSEUDOHANDLE;
+       K32OBJ_IncCount( ptr );
+    }
+    else if (handle == CURRENT_PROCESS_PSEUDOHANDLE)
+    {
+       ptr = (K32OBJ *)PROCESS_Current();
+       if (server_handle) *server_handle = CURRENT_PROCESS_PSEUDOHANDLE;
+       K32OBJ_IncCount( ptr );
     }
     SYSTEM_UNLOCK();
     if (!ptr) SetLastError( ERROR_INVALID_HANDLE );

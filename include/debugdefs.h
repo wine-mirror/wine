@@ -4,9 +4,13 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 135
+#define DEBUG_CHANNEL_COUNT 139
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -152,17 +156,18 @@ const char* debug_ch_name[] = {
 "6",
 "accel",
 "advapi",
+"animate",
 "aspi",
 "atom",
 "bitblt",
 "bitmap",
 "caret",
-"cd",
 "cdaudio",
 "class",
 "clipboard",
 "clipping",
 "combo",
+"comboex",
 "comm",
 "commctrl",
 "commdlg",
@@ -194,9 +199,11 @@ const char* debug_ch_name[] = {
 "header",
 "heap",
 "hook",
+"hotkey",
 "icon",
 "imagelist",
 "int",
+"int10",
 "int21",
 "int31",
 "key",
@@ -255,6 +262,7 @@ const char* debug_ch_name[] = {
 "string",
 "syscolor",
 "system",
+"tab",
 "task",
 "text",
 "thread",

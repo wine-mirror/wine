@@ -30,6 +30,7 @@
 #include "commctrl.h"
 #include "authors.h"
 
+#include "pidl.h"
 #include "shell32_main.h"
 
 /*************************************************************************
@@ -108,16 +109,16 @@ BOOL32 WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
 {	WARN(shell,"(%p,%p):semi-stub.\n",imglist1,imglist2);
 	if (imglist1)
 	{ *imglist1=ShellBigIconList;
-    }
-    if (imglist2)
-    { *imglist2=ShellSmallIconList;
-    }
+	}
+	if (imglist2)
+	{ *imglist2=ShellSmallIconList;
+	}
 
 	return TRUE;
 }
 
 /*************************************************************************
- *				SHGetFileInfoA		[SHELL32.218]
+ *  SHGetFileInfoA		[SHELL32.218]
  *
  * FIXME
  *   
@@ -128,43 +129,51 @@ HIMAGELIST ShellBigIconList = 0;
 DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
                               UINT32 flags )
-{ CHAR szTemp[MAX_PATH];
-  DWORD ret=0;
+{	CHAR szTemp[MAX_PATH];
+	LPPIDLDATA 	pData;
+	DWORD ret=0;
   
-  TRACE(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
+	TRACE(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      path,dwFileAttributes,psfi,sizeofpsfi,flags);
 
-  /* translate the pidl to a path*/
-  if (flags & SHGFI_PIDL)
-  { SHGetPathFromIDList32A ((LPCITEMIDLIST)path,szTemp);
-    TRACE(shell,"pidl=%p is %s\n",path,szTemp);
-  }
-  else
-  { TRACE(shell,"path=%p\n",path);
-  }
+	/* translate the pidl to a path*/
+	if (flags & SHGFI_PIDL)
+	{ SHGetPathFromIDList32A ((LPCITEMIDLIST)path,szTemp);
+	  TRACE(shell,"pidl=%p is %s\n",path,szTemp);
+	}
+	else
+	{ TRACE(shell,"path=%p\n",path);
+	}
 
-  if (flags & SHGFI_ATTRIBUTES)
-  { FIXME(shell,"file attributes, stub\n");
-    psfi->dwAttributes=SFGAO_FILESYSTEM;
-    ret=TRUE;    
-  }
+	if (flags & SHGFI_ATTRIBUTES)
+	{ if (flags & SHGFI_PIDL)
+	  { pData = _ILGetDataPointer((LPCITEMIDLIST)path);
+	    psfi->dwAttributes = pData->u.generic.dwSFGAO; /* fixme: no direct access*/
+	    ret=TRUE;
+	  }
+	  else
+	  { psfi->dwAttributes=SFGAO_FILESYSTEM;
+	    ret=TRUE;
+	  }
+	  FIXME(shell,"file attributes, stub\n");	    
+	}
 
-  if (flags & SHGFI_DISPLAYNAME)
-  { if (flags & SHGFI_PIDL)
-    { strcpy(psfi->szDisplayName,szTemp);
-    }
-    else
-    { strcpy(psfi->szDisplayName,path);
-      TRACE(shell,"displayname=%s\n", szTemp);
-    }
-    ret=TRUE;
-  }
+	if (flags & SHGFI_DISPLAYNAME)
+	{ if (flags & SHGFI_PIDL)
+	  { strcpy(psfi->szDisplayName,szTemp);
+	  }
+	  else
+	  { strcpy(psfi->szDisplayName,path);
+	  }
+	  TRACE(shell,"displayname=%s\n", psfi->szDisplayName);	  
+	  ret=TRUE;
+	}
   
-  if (flags & SHGFI_TYPENAME)
-  { FIXME(shell,"get the file type, stub\n");
-    strcpy(psfi->szTypeName,"");
-    ret=TRUE;
-  }
+	if (flags & SHGFI_TYPENAME)
+ 	{ FIXME(shell,"get the file type, stub\n");
+	  strcpy(psfi->szTypeName,"FIXME: Type");
+	  ret=TRUE;
+	}
   
   if (flags & SHGFI_ICONLOCATION)
   { FIXME(shell,"location of icon, stub\n");
@@ -422,17 +431,17 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
   LPWSTR lpszDisplayName = (LPWSTR)&pszTemp[0];
   HKEY key;
 
-  enum 
-	{	FT_UNKNOWN= 0x00000000,
+	enum 
+	{ FT_UNKNOWN= 0x00000000,
 	  FT_DIR=     0x00000001, 
 	  FT_DESKTOP= 0x00000002
 	} tFolder; 
 
-  TRACE(shell,"(%04x,%d,%p)\n", hwndOwner,nFolder,ppidl);
+	TRACE(shell,"(%04x,%d,%p)\n", hwndOwner,nFolder,ppidl);
 
-  strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
+	strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
 
-  res=RegCreateKeyEx32A(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp);
+	res=RegCreateKeyEx32A(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp);
 	if (res)
 	{ ERR(shell,"Could not create key %s %08lx \n",buffer,res);
 	  return E_OUTOFMEMORY;
@@ -440,151 +449,152 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 
 	tFolder=FT_DIR;	
 	switch (nFolder)
-	{	case CSIDL_BITBUCKET:
-			strcpy (buffer,"xxx");			/*not in the registry*/
-			TRACE (shell,"looking for Recycler\n");
-			tFolder=FT_UNKNOWN;
-      break;
-		case CSIDL_CONTROLS:
-			strcpy (buffer,"xxx");			/*virtual folder*/
-      TRACE (shell,"looking for Control\n");
-			tFolder=FT_UNKNOWN;
-      break;
-		case CSIDL_DESKTOP:
-			strcpy (buffer,"xxx");			/*virtual folder*/
-			TRACE (shell,"looking for Desktop\n");
-			tFolder=FT_DESKTOP;			
-      break;
-		case CSIDL_DESKTOPDIRECTORY:
-			strcpy (buffer,"Desktop");
-      break;
-		case CSIDL_DRIVES:
-			strcpy (buffer,"xxx");			/*virtual folder*/
-      TRACE (shell,"looking for Drives\n");
-			tFolder=FT_UNKNOWN;
-      break;
-		case CSIDL_FONTS:
-			strcpy (buffer,"Fonts");			
-      break;
-		case CSIDL_NETHOOD:
-			strcpy (buffer,"NetHood");			
-      break;
-		case CSIDL_NETWORK:
-			strcpy (buffer,"xxx");				/*virtual folder*/
-			TRACE (shell,"looking for Network\n");
-			tFolder=FT_UNKNOWN;
-      break;
-		case CSIDL_PERSONAL:
-			strcpy (buffer,"Personal");			
-      break;
-		case CSIDL_FAVORITES:
-			strcpy (buffer,"Favorites");			
-      break;
-		case CSIDL_PRINTERS:
-			strcpy (buffer,"PrintHood");			
-      break;
-		case CSIDL_PROGRAMS:
-			strcpy (buffer,"Programs");			
-      break;
-		case CSIDL_RECENT:
-			strcpy (buffer,"Recent");
-      break;
-		case CSIDL_SENDTO:
-			strcpy (buffer,"SendTo");
- 		  break;
-		case CSIDL_STARTMENU:
-			strcpy (buffer,"Start Menu");
-      break;
-		case CSIDL_STARTUP:
-			strcpy (buffer,"Startup");			
-      break;
-		case CSIDL_TEMPLATES:
-			strcpy (buffer,"Templates");			
-      break;
-		default:
-      ERR (shell,"unknown CSIDL\n");
-			tFolder=FT_UNKNOWN;			
-      break;
+	{ case CSIDL_BITBUCKET:
+		strcpy (buffer,"xxx");			/*not in the registry*/
+		TRACE (shell,"looking for Recycler\n");
+		tFolder=FT_UNKNOWN;
+        break;
+	  case CSIDL_CONTROLS:
+		strcpy (buffer,"xxx");			/*virtual folder*/
+        TRACE (shell,"looking for Control\n");
+	    tFolder=FT_UNKNOWN;
+        break;
+	  case CSIDL_DESKTOP:
+	    strcpy (buffer,"xxx");			/*virtual folder*/
+	    TRACE (shell,"looking for Desktop\n");
+	    tFolder=FT_DESKTOP;			
+	    break;
+	  case CSIDL_DESKTOPDIRECTORY:
+	    strcpy (buffer,"Desktop");
+	    break;
+	  case CSIDL_DRIVES:
+	    strcpy (buffer,"xxx");			/*virtual folder*/
+	    TRACE (shell,"looking for Drives\n");
+	    tFolder=FT_UNKNOWN;
+	    break;
+	  case CSIDL_FONTS:
+	    strcpy (buffer,"Fonts");			
+	    break;
+	  case CSIDL_NETHOOD:
+	    strcpy (buffer,"NetHood");			
+	    break;
+	  case CSIDL_NETWORK:
+	    strcpy (buffer,"xxx");				/*virtual folder*/
+	    TRACE (shell,"looking for Network\n");
+	    tFolder=FT_UNKNOWN;
+	    break;
+	  case CSIDL_PERSONAL:
+	    strcpy (buffer,"Personal");			
+	    break;
+	  case CSIDL_FAVORITES:
+	    strcpy (buffer,"Favorites");			
+	    break;
+	  case CSIDL_PRINTERS:
+	    strcpy (buffer,"PrintHood");
+	    break;
+	  case CSIDL_PROGRAMS:
+	    strcpy (buffer,"Programs");			
+	    break;
+	  case CSIDL_RECENT:
+	    strcpy (buffer,"Recent");
+	    break;
+	  case CSIDL_SENDTO:
+	    strcpy (buffer,"SendTo");
+	    break;
+	  case CSIDL_STARTMENU:
+	    strcpy (buffer,"Start Menu");
+	    break;
+	  case CSIDL_STARTUP:
+	    strcpy (buffer,"Startup");			
+	    break;
+	  case CSIDL_TEMPLATES:
+	    strcpy (buffer,"Templates");			
+	    break;
+	  default:
+	    ERR (shell,"unknown CSIDL\n");
+	    tFolder=FT_UNKNOWN;			
+	    break;
 	}
 
-  TRACE(shell,"Key=%s\n",buffer);
+	TRACE(shell,"Key=%s\n",buffer);
 
-  type=REG_SZ;
+	type=REG_SZ;
 
-  switch (tFolder)
+	switch (tFolder)
 	{ case FT_DIR:
 	    /* Directory: get the value from the registry, if its not there 
 			create it and the directory*/
-    	if (RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
-  	  { GetWindowsDirectory32A(npath,MAX_PATH);
+	    if (RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
+  	    { GetWindowsDirectory32A(npath,MAX_PATH);
 	      PathAddBackslash(npath);
-  			switch (nFolder)
-  			{	case CSIDL_DESKTOPDIRECTORY:
-      			strcat (npath,"Desktop");
-            break;
+	      switch (nFolder)
+  		  { case CSIDL_DESKTOPDIRECTORY:
+      		  strcat (npath,"Desktop");
+         	  break;
       		case CSIDL_FONTS:
-      			strcat (npath,"Fonts");			
-            break;
+         	  strcat (npath,"Fonts");			
+         	  break;
       		case CSIDL_NETHOOD:
-      			strcat (npath,"NetHood");			
-            break;
+         	  strcat (npath,"NetHood");			
+         	  break;
   		    case CSIDL_PERSONAL:
-      			strcpy (npath,"C:\\Personal");			
-            break;
+         	  strcpy (npath,"C:\\Personal");			
+         	  break;
       		case CSIDL_FAVORITES:
-      			strcat (npath,"Favorites");			
-            break;
+         	  strcat (npath,"Favorites");			
+         	  break;
   		    case CSIDL_PRINTERS:
-      			strcat (npath,"PrintHood");			
-            break;
+         	  strcat (npath,"PrintHood");			
+         	  break;
       		case CSIDL_PROGRAMS:
-      			strcat (npath,"Start Menu");			
-  					CreateDirectory32A(npath,NULL);
-      			strcat (npath,"\\Programs");			
-            break;
+         	  strcat (npath,"Start Menu");			
+         	  CreateDirectory32A(npath,NULL);
+         	  strcat (npath,"\\Programs");			
+         	  break;
       		case CSIDL_RECENT:
-      			strcat (npath,"Recent");
-            break;
+         	  strcat (npath,"Recent");
+         	  break;
       		case CSIDL_SENDTO:
-      			strcat (npath,"SendTo");
-      			break;
+         	  strcat (npath,"SendTo");
+         	  break;
       		case CSIDL_STARTMENU:
-      			strcat (npath,"Start Menu");
-            break;
+         	  strcat (npath,"Start Menu");
+         	  break;
       		case CSIDL_STARTUP:
-      			strcat (npath,"Start Menu");			
-  					CreateDirectory32A(npath,NULL);
-      			strcat (npath,"\\Startup");			
-            break;
+         	  strcat (npath,"Start Menu");			
+         	  CreateDirectory32A(npath,NULL);
+         	  strcat (npath,"\\Startup");			
+         	  break;
       		case CSIDL_TEMPLATES:
-      			strcat (npath,"Templates");			
-            break;
-  				default:
+         	  strcat (npath,"Templates");			
+         	  break;
+         	default:
          	  RegCloseKey(key);
         	  return E_OUTOFMEMORY;
-  			}
-    		if (RegSetValueEx32A(key,buffer,0,REG_SZ,npath,sizeof(npath)+1))
-        {	ERR(shell,"could not create value %s\n",buffer);
-      	  RegCloseKey(key);
-      	  return E_OUTOFMEMORY;
-    		}
-    		TRACE(shell,"value %s=%s created\n",buffer,npath);
-    	  CreateDirectory32A(npath,NULL);
-      }
-			break;
-		case FT_DESKTOP:
-			strcpy (tpath,"Desktop");			
-		  break;
+	      }
+	      if (RegSetValueEx32A(key,buffer,0,REG_SZ,npath,sizeof(npath)+1))
+	      { ERR(shell,"could not create value %s\n",buffer);
+	        RegCloseKey(key);
+	        return E_OUTOFMEMORY;
+	      }
+	      TRACE(shell,"value %s=%s created\n",buffer,npath);
+	      CreateDirectory32A(npath,NULL);
+          strcpy(tpath,npath);
+	    }
+	    break;
+	  case FT_DESKTOP:
+	    strcpy (tpath,"Desktop");			
+		break;
 	  default:
-      RegCloseKey(key);
-      return E_OUTOFMEMORY;
-		  break;
-  }
+        RegCloseKey(key);
+	    return E_OUTOFMEMORY;
+	    break;
+	}
 
 	RegCloseKey(key);
 
-  TRACE(shell,"Value=%s\n",tpath);
-  LocalToWideChar32(lpszDisplayName, tpath, 256);
+	TRACE(shell,"Value=%s\n",tpath);
+	LocalToWideChar32(lpszDisplayName, tpath, 256);
   
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,hwndOwner, NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
@@ -935,7 +945,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       exit (1);
     }
     if ( ! ShellSmallIconList )
-    { if ( (ShellSmallIconList = pImageList_Create(sysMetrics[SM_CXSMICON],sysMetrics[SM_CYSMICON],0x101,0,0x20)) )
+    { if ( (ShellSmallIconList = pImageList_Create(sysMetrics[SM_CXSMICON],sysMetrics[SM_CYSMICON],ILC_COLORDDB | ILC_MASK,0,0x20)) )
       { for (index=0;index < 40; index++)
         { if ( ! ( htmpIcon = ExtractIcon32A(hinstDLL, szShellPath, index))
           || ( -1 == (iiconindex = pImageList_AddIcon (ShellSmallIconList, htmpIcon))) )
@@ -946,7 +956,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       }
     }
     if ( ! ShellBigIconList )
-    { if ( (ShellBigIconList = pImageList_Create(SYSMETRICS_CXSMICON, SYSMETRICS_CYSMICON,0x101,0,0x20)) )
+    { if ( (ShellBigIconList = pImageList_Create(SYSMETRICS_CXSMICON, SYSMETRICS_CYSMICON,ILC_COLORDDB | ILC_MASK,0,0x20)) )
       { for (index=0;index < 40; index++)
         { if ( ! (htmpIcon = ExtractIcon32A( hinstDLL, szShellPath, index)) 
            || (-1 == (iiconindex = pImageList_AddIcon (ShellBigIconList, htmpIcon))) )

@@ -1249,6 +1249,17 @@ int  TSXWarpPointer(Display* a0, Window a1, Window a2, int a3, int a4, unsigned 
   return r;
 }
 
+XIM  TSXOpenIM(Display* a0, struct _XrmHashBucketRec* a1, char* a2, char* a3)
+{
+  XIM  r;
+  TRACE(x11, "Call XOpenIM\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XOpenIM(a0, a1, a2, a3);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XOpenIM\n");
+  return r;
+}
+
 int (*TSXSynchronize(Display *a0, Bool a1))(Display *)
 {
   int (*r)(Display *);

@@ -6,6 +6,8 @@
  */
 #include "windows.h"
 #include "font.h"
+#include "pen.h"
+#include "brush.h"
 
 typedef struct {
     float	llx, lly, urx, ury;
@@ -30,6 +32,7 @@ typedef struct _tagAFM {
     char		*FontName;
     char		*FullName;
     char		*FamilyName;
+    char		*EncodingScheme;
     int			Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL32		IsFixedPitch;
@@ -124,7 +127,7 @@ typedef struct {
     int			LanguageLevel;
     BOOL32		ColorDevice;
     int			DefaultResolution;
-    int			LandscapeOrientation;
+    signed int		LandscapeOrientation;
     char		*JCLBegin;
     char		*JCLToPSInterpreter;
     char		*JCLEnd;
@@ -162,13 +165,48 @@ typedef struct _tagPI {
 } PRINTERINFO;
 
 typedef struct {
+    float		r, g, b;
+} PSRGB;
+
+typedef struct {
+    float		i;
+} PSGRAY;
+
+
+/* def's for PSCOLOR.type */
+#define PSCOLOR_GRAY	0
+#define PSCOLOR_RGB	1
+
+typedef struct {
+    int			type;
+    union {
+        PSRGB  rgb;
+        PSGRAY gray;
+    }                   value;
+} PSCOLOR;
+
+typedef struct {
     AFM			*afm;
     TEXTMETRIC32A	tm;
     INT32		size;
     float		scale;
     INT32		escapement;
+    PSCOLOR		color;
     BOOL32		set;		/* Have we done a setfont yet */
 } PSFONT;
+
+typedef struct {
+    PSCOLOR		color;
+    UINT32		style;
+    BOOL32		set;
+} PSBRUSH;
+
+typedef struct {
+    INT32		width;
+    char		*dash;
+    PSCOLOR		color;
+    BOOL32		set;
+} PSPEN;
 
 typedef struct {
     HANDLE16		hJob;
@@ -178,15 +216,19 @@ typedef struct {
     INT32		PageNo;
 } JOB;
 
-typedef struct
-{
+typedef struct {
     PSFONT		font;		/* Current PS font */
+    PSPEN		pen;
+    PSBRUSH		brush;
+    PSCOLOR		bkColor;
+    PSCOLOR		inkColor;	/* Last colour set */
     JOB			job;
     PSDRV_DEVMODE16	*Devmode;
     PRINTERINFO		*pi;
 } PSDRV_PDEVICE;
 
 extern HANDLE32 PSDRV_Heap;
+extern char *PSDRV_ANSIVector[256];
 
 extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
 			 PRINTERINFO *pi);
@@ -199,7 +241,19 @@ extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL32 PSDRV_Init(void);
 extern HFONT16 PSDRV_FONT_SelectObject( DC *dc, HFONT16 hfont, FONTOBJ *font);
+extern HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
+extern HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+					  BRUSHOBJ * brush );
+
+extern BOOL32 PSDRV_SetBrush(DC *dc);
 extern BOOL32 PSDRV_SetFont( DC *dc );
+extern BOOL32 PSDRV_SetPen( DC *dc );
+
+extern BOOL32 PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
+extern BOOL32 PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
+extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
+		     COLORREF wincolor );
+
 
 extern INT32 PSDRV_WriteHeader( DC *dc, char *title, int len );
 extern INT32 PSDRV_WriteFooter( DC *dc );
@@ -210,17 +264,24 @@ extern BOOL32 PSDRV_WriteLineTo(DC *dc, INT32 x, INT32 y);
 extern BOOL32 PSDRV_WriteStroke(DC *dc);
 extern BOOL32 PSDRV_WriteRectangle(DC *dc, INT32 x, INT32 y, INT32 width, 
 			INT32 height);
-extern BOOL32 PSDRV_WriteSetFont(DC *dc);
+extern BOOL32 PSDRV_WriteSetFont(DC *dc, BOOL32 UseANSI);
 extern BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count);
 extern BOOL32 PSDRV_WriteReencodeFont(DC *dc);
+extern BOOL32 PSDRV_WriteSetPen(DC *dc);
+extern BOOL32 PSDRV_WriteEllispe(DC *dc, INT32 x, INT32 y, INT32 a, INT32 b);
+extern BOOL32 PSDRV_WriteSetColor(DC *dc, PSCOLOR *color);
+extern BOOL32 PSDRV_WriteSetBrush(DC *dc);
+extern BOOL32 PSDRV_WriteFill(DC *dc);
+extern BOOL32 PSDRV_Writegsave(DC *dc);
+extern BOOL32 PSDRV_Writegrestore(DC *dc);
 
 
 
 
 
 
-
-
+extern BOOL32 PSDRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right,
+		       INT32 bottom);
 extern BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp );
 extern INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
@@ -233,11 +294,13 @@ extern BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 extern BOOL32 PSDRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 extern BOOL32 PSDRV_LineTo( DC *dc, INT32 x, INT32 y );
 extern BOOL32 PSDRV_MoveToEx( DC *dc, INT32 x, INT32 y, LPPOINT32 pt );
-extern BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count );
 extern BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count );
-extern HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
-
+extern BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count );
 extern BOOL32 PSDRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right,
 		       INT32 bottom);
-extern BOOL32 PSDRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right,
-		       INT32 bottom);
+extern HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
+extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
+
+
+

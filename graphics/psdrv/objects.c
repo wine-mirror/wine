@@ -25,27 +25,6 @@ static HBITMAP16 PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
 
 
 /***********************************************************************
- *           PSDRV_BRUSH_SelectObject
- */
-static HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
-                                          BRUSHOBJ * brush )
-{
-    FIXME(psdrv, "stub\n");
-    return 0;
-}
-
-
-/***********************************************************************
- *           PSDRV_PEN_SelectObject
- */
-static HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
-{
-    FIXME(psdrv, "stub\n");
-    return 0;
-}
-
-
-/***********************************************************************
  *           PSDRV_SelectObject
  */
 HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle )

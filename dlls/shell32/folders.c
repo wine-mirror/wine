@@ -35,8 +35,8 @@ static HRESULT WINAPI IExtractIcon_QueryInterface(LPEXTRACTICON, REFIID, LPVOID 
 static ULONG WINAPI IExtractIcon_AddRef(LPEXTRACTICON);
 static ULONG WINAPI IExtractIcon_AddRef(LPEXTRACTICON);
 static ULONG WINAPI IExtractIcon_Release(LPEXTRACTICON);
-static HRESULT IExtractIcon_GetIconLocation(LPEXTRACTICON, UINT32, LPSTR, UINT32, int *, UINT32 *);
-static HRESULT IExtractIcon_Extract(LPEXTRACTICON, LPCSTR, UINT32, HICON32 *, HICON32 *, UINT32);
+static HRESULT WINAPI IExtractIcon_GetIconLocation(LPEXTRACTICON, UINT32, LPSTR, UINT32, int *, UINT32 *);
+static HRESULT WINAPI IExtractIcon_Extract(LPEXTRACTICON, LPCSTR, UINT32, HICON32 *, HICON32 *, UINT32);
 
 /* IShellLink Implementation */
 static HRESULT WINAPI IShellLink_QueryInterface(LPSHELLLINK,REFIID,LPVOID*);
@@ -118,16 +118,22 @@ static ULONG WINAPI IExtractIcon_Release(LPEXTRACTICON this)
 * NOTE
 *  FIXME returns allways the icon no. 3 (closed Folder)
 */
-static HRESULT IExtractIcon_GetIconLocation(LPEXTRACTICON this, UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags)
+static HRESULT WINAPI IExtractIcon_GetIconLocation(LPEXTRACTICON this, UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags)
 { FIXME (shell,"(%p) (flags=%u file=%s max=%u %p %p) semi-stub\n", this, uFlags, szIconFile, cchMax, piIndex, pwFlags);
-  *pwFlags = GIL_NOTFILENAME;
-  *piIndex = 3;
-  return NOERROR;
+	if (!szIconFile)
+	{ *piIndex = 20;
+	}
+	else
+	{ *piIndex = 3;
+	}
+	*pwFlags = GIL_NOTFILENAME;
+
+	return NOERROR;
 }
 /**************************************************************************
 *  IExtractIcon_Extract
 */
-static HRESULT IExtractIcon_Extract(LPEXTRACTICON this, LPCSTR pszFile, UINT32 nIconIndex, HICON32 *phiconLarge, HICON32 *phiconSmall, UINT32 nIconSize)
+static HRESULT WINAPI IExtractIcon_Extract(LPEXTRACTICON this, LPCSTR pszFile, UINT32 nIconIndex, HICON32 *phiconLarge, HICON32 *phiconSmall, UINT32 nIconSize)
 { FIXME (shell,"(%p) (file=%s index=%u %p %p size=%u) semi-stub\n", this, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
   *phiconLarge = pImageList_GetIcon(ShellBigIconList, nIconIndex, ILD_TRANSPARENT);
   *phiconSmall = pImageList_GetIcon(ShellSmallIconList, nIconIndex, ILD_TRANSPARENT);

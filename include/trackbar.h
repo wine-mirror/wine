@@ -16,10 +16,17 @@ typedef struct tagTRACKBAR_INFO
     INT32  nSelMin;
     INT32  nSelMax;
     INT32  nPos;
-    INT32  nThumbLen;
+    UINT32 uThumbLen;
+    UINT32 uNumTics;
+    HWND32 hwndToolTip;
+    HWND32 hwndBuddyLA;
+    HWND32 hwndBuddyRB;
+    INT32  fLocation;
 
     BOOL32 bFocus;
     RECT32 rcChannel;
+    RECT32 rcThumb;
+    LPLONG tics;
 } TRACKBAR_INFO;
 
 

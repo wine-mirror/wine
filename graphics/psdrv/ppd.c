@@ -5,14 +5,14 @@
  *	Copyright 1998  Huw D M Davies
  */
 
-#include <windows.h>
-#include <winnt.h> /* HEAP_ZERO_MEMORY */
-#include <heap.h>
-#include <debug.h>
-#include <psdrv.h>
 #include <string.h>
 #include <ctype.h>
-#include <print.h>
+#include "windows.h"
+#include "winnt.h" /* HEAP_ZERO_MEMORY */
+#include "heap.h"
+#include "debug.h"
+#include "psdrv.h"
+#include "print.h"
 
 typedef struct {
 char	*key;
@@ -400,8 +400,10 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     TRACE(psdrv, "%s\n", fname);
 
-    if((fp = fopen(fname, "r")) == NULL)
+    if((fp = fopen(fname, "r")) == NULL) {
+        WARN(psdrv, "Couldn't open ppd file '%s'\n", fname);
         return NULL;
+    }
 
     ppd = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*ppd));
     if(!ppd) {
@@ -551,7 +553,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    if(!strcmp(tuple.value, "Plus90"))
 	        ppd->LandscapeOrientation = 90;
 	    else if(!strcmp(tuple.value, "Minus90"))
-	        ppd->LandscapeOrientation = 270;
+	        ppd->LandscapeOrientation = -90;
 
 	    /* anything else, namely 'any', leaves value at 0 */
 

@@ -369,6 +369,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				this->t.xlib.image->width,
 				this->t.xlib.image->height
 	);
+	TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
 	return 0;
 }
 
@@ -995,13 +996,67 @@ static struct IDirectDrawPalette_VTable xlib_ddpalvt = {
 	Xlib_IDirectDrawPalette_SetEntries
 };
 
+static HRESULT WINAPI IDirect3D_QueryInterface(
+        LPDIRECT3D this,REFIID refiid,LPVOID *obj
+) {
+	/* FIXME: Not sure if this is correct */
+        char    xrefiid[50];
+
+        WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
+        TRACE(ddraw,"(%p)->(%s,%p)\n",this,xrefiid,obj);
+        if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
+                *obj = this;
+                this->lpvtbl->fnAddRef(this);
+                return 0;
+        }
+        if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
+                LPDIRECT3D      d3d;
+
+                d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
+                d3d->ref = 1;
+                d3d->ddraw = (LPDIRECTDRAW)this;
+                this->lpvtbl->fnAddRef(this);
+                d3d->lpvtbl = &d3dvt;
+                *obj = d3d;
+                return 0;
+        }
+        if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
+                LPDIRECT3D2     d3d;
+
+                d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
+                d3d->ref = 1;
+                d3d->ddraw = (LPDIRECTDRAW)this;
+                this->lpvtbl->fnAddRef(this);
+                d3d->lpvtbl = &d3d2vt;
+                *obj = d3d;
+                return 0;
+        }
+        FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",this,xrefiid);
+        return OLE_E_ENUM_NOMORE;
+}
+
+static ULONG WINAPI IDirect3D_AddRef(LPDIRECT3D this) {
+        return ++(this->ref);
+}
+
+static ULONG WINAPI IDirect3D_Release(LPDIRECT3D this)
+{
+        TRACE(ddraw,"(%p)->Release()\n",this);
+        if (!--(this->ref)) {
+                this->ddraw->lpvtbl->fnRelease(this->ddraw);
+                HeapFree(GetProcessHeap(),0,this);
+                return 0;
+        }
+        return this->ref;
+}
+
 /*******************************************************************************
  *				IDirect3D
  */
 static struct IDirect3D_VTable d3dvt = {
-	(void*)1,
-	(void*)2,
-	(void*)3,
+	(void*)IDirect3D_QueryInterface,
+	(void*)IDirect3D_AddRef,
+	(void*)IDirect3D_Release,
 	(void*)4,
 	(void*)5,
 	(void*)6,
@@ -1014,8 +1069,7 @@ static struct IDirect3D_VTable d3dvt = {
  *				IDirect3D2
  */
 static ULONG WINAPI IDirect3D2_Release(LPDIRECT3D2 this) {
-	this->ref--;
-	if (!this->ref) {
+	if (!--(this->ref)) {
 		this->ddraw->lpvtbl->fnRelease(this->ddraw);
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;

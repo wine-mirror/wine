@@ -6,8 +6,6 @@
  * This code hasn't been completely cleaned up yet.
  */
 
-#ifdef linux
- 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,17 +15,21 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/vm86.h>
 #include "windows.h"
 #include "winbase.h"
 #include "module.h"
 #include "task.h"
+#include "file.h"
 #include "ldt.h"
 #include "process.h"
 #include "miscemu.h"
 #include "debug.h"
 #include "dosexe.h"
+
+#ifdef MZ_SUPPORTED
+
+#include <sys/mman.h>
+#include <sys/vm86.h>
 
 /* define this to try mapping through /proc/pid/mem instead of a temp file,
    but Linus doesn't like mmapping /proc/pid/mem, so it doesn't work for me */
@@ -85,25 +87,11 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, LPCSTR env )
  /* FIXME: integrate the PDB stuff from Wine (loader/task.c) */
 }
 
-static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
-                         LPDOSTASK lpDosTask, NE_MODULE *pModule )
+int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
- IMAGE_DOS_HEADER mz_header;
- DWORD image_start,image_size,min_size,max_size,avail;
- BYTE*psp_start,*load_start;
  int x;
- SEGPTR reloc;
 
- if ((_hread16(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-     (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
-     return 11; /* invalid exe */
- /* calculate load size */
- image_start=mz_header.e_cparhdr<<4;
- image_size=mz_header.e_cp<<9; /* pages are 512 bytes */
- if ((mz_header.e_cblp!=0)&&(mz_header.e_cblp!=4)) image_size-=512-mz_header.e_cblp;
- image_size-=image_start;
- min_size=image_size+((DWORD)mz_header.e_minalloc<<4)+(PSP_SIZE<<4);
- max_size=image_size+((DWORD)mz_header.e_maxalloc<<4)+(PSP_SIZE<<4);
+ if (lpDosTask->img_ofs) return 32; /* already allocated */
 
  /* allocate 1MB+64K shared memory */
  lpDosTask->img_ofs=START_OFFSET;
@@ -132,7 +120,43 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
  /* initialize the memory */
  MZ_InitSystem(lpDosTask->img);
  TRACE(module,"Initializing DOS memory structures\n");
+ /* FIXME: make DOSMEM_Init copy static dosmem memory into newly allocated shared memory */
  DOSMEM_Init(lpDosTask->hModule);
+ return 32;
+}
+
+static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
+                         LPDOSTASK lpDosTask, NE_MODULE *pModule )
+{
+ IMAGE_DOS_HEADER mz_header;
+ DWORD image_start,image_size,min_size,max_size,avail;
+ BYTE*psp_start,*load_start;
+ int x,old_com=0;
+ SEGPTR reloc;
+
+ if ((_hread16(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+     (mz_header.e_magic != IMAGE_DOS_SIGNATURE)) {
+#if 0
+     return 11; /* invalid exe */
+#endif
+  old_com=1; /* assume .COM file */
+  image_start=0;
+  image_size=GetFileSize(HFILE16_TO_HFILE32(hFile),NULL);
+  min_size=0x10000; max_size=0x100000;
+  mz_header.e_crlc=0;
+  mz_header.e_ss=0; mz_header.e_sp=0xFFFE;
+  mz_header.e_cs=0; mz_header.e_ip=0x100;
+ } else {
+  /* calculate load size */
+  image_start=mz_header.e_cparhdr<<4;
+  image_size=mz_header.e_cp<<9; /* pages are 512 bytes */
+  if ((mz_header.e_cblp!=0)&&(mz_header.e_cblp!=4)) image_size-=512-mz_header.e_cblp;
+  image_size-=image_start;
+  min_size=image_size+((DWORD)mz_header.e_minalloc<<4)+(PSP_SIZE<<4);
+  max_size=image_size+((DWORD)mz_header.e_maxalloc<<4)+(PSP_SIZE<<4);
+ }
+
+ MZ_InitMemory(lpDosTask,pModule);
 
  /* FIXME: allocate memory for environment variables */
 
@@ -149,24 +173,26 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
   ERR(module, "error allocating DOS memory\n");
   return 0;
  }
- lpDosTask->load_seg=lpDosTask->psp_seg+PSP_SIZE;
+ lpDosTask->load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
  load_start=psp_start+(PSP_SIZE<<4);
  MZ_InitPSP(psp_start, cmdline, env);
 
  /* load executable image */
- TRACE(module,"loading DOS EXE image size, %08lx bytes\n",image_size);
+ TRACE(module,"loading DOS %s image size, %08lx bytes\n",old_com?"COM":"EXE",image_size);
  _llseek16(hFile,image_start,FILE_BEGIN);
  if ((_hread16(hFile,load_start,image_size)) != image_size)
   return 11; /* invalid exe */
 
- /* load relocation table */
- TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_lfarlc);
- /* FIXME: is this too slow without read buffering? */
- _llseek16(hFile,mz_header.e_lfarlc,FILE_BEGIN);
- for (x=0; x<mz_header.e_crlc; x++) {
-  if (_lread16(hFile,&reloc,sizeof(reloc)) != sizeof(reloc))
-   return 11; /* invalid exe */
-  *(WORD*)SEGPTR16(load_start,reloc)+=lpDosTask->load_seg;
+ if (mz_header.e_crlc) {
+  /* load relocation table */
+  TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_lfarlc);
+  /* FIXME: is this too slow without read buffering? */
+  _llseek16(hFile,mz_header.e_lfarlc,FILE_BEGIN);
+  for (x=0; x<mz_header.e_crlc; x++) {
+   if (_lread16(hFile,&reloc,sizeof(reloc)) != sizeof(reloc))
+    return 11; /* invalid exe */
+   *(WORD*)SEGPTR16(load_start,reloc)+=lpDosTask->load_seg;
+  }
  }
 
  /* initialize vm86 struct */
@@ -184,9 +210,10 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
 
 int MZ_InitTask( LPDOSTASK lpDosTask )
 {
+ extern char * DEBUG_argv0;
  int read_fd[2],write_fd[2];
  pid_t child;
- char *fname,*farg,arg[16],fproc[64];
+ char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
 
  /* create read pipe */
  if (pipe(read_fd)<0) return 0;
@@ -236,7 +263,14 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   /* now load dosmod */
   execlp("dosmod",fname,farg,NULL);
   execl("dosmod",fname,farg,NULL);
+  /* hmm, they didn't install properly */
   execl("loader/dos/dosmod",fname,farg,NULL);
+  /* last resort, try to find it through argv[0] */
+  fpath=strrchr(strcpy(path,DEBUG_argv0),'/');
+  if (fpath) {
+   strcpy(fpath,"/loader/dos/dosmod");
+   execl(path,fname,farg,NULL);
+  }
   /* if failure, exit */
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
@@ -247,56 +281,65 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
 HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
                               LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
 {
- LPDOSTASK lpDosTask;
+ LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
  HMODULE16 hModule;
  HINSTANCE16 hInstance;
- NE_MODULE *pModule;
+ TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+ NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
  HFILE16 hFile;
  OFSTRUCT ofs;
- int err;
+ int err, alloc = !(pModule && pModule->dos_image);
 
- if ((lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
+ GlobalUnlock16( GetCurrentTask() );
+
+ if (alloc && (lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
   return 0;
 
  if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
   return 2; /* File not found */
 
- if ((hModule = MODULE_CreateDummyModule(&ofs)) < 32)
-  return hModule;
+ if (alloc) {
+  if ((hModule = MODULE_CreateDummyModule(&ofs)) < 32)
+   return hModule;
 
- lpDosTask->hModule = hModule;
+  lpDosTask->hModule = hModule;
 
- pModule = (NE_MODULE *)GlobalLock16(hModule);
- pModule->lpDosTask = lpDosTask;
+  pModule = (NE_MODULE *)GlobalLock16(hModule);
+  pModule->lpDosTask = lpDosTask;
  
- lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
+  lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
+ } else lpDosTask=pModule->lpDosTask;
  err = MZ_LoadImage( hFile, cmdline, env, lpDosTask, pModule );
  _lclose16(hFile);
- pModule->dos_image = lpDosTask->img;
- if (err<32) {
+ if (alloc) {
+  pModule->dos_image = lpDosTask->img;
+  if (err<32) {
+   if (lpDosTask->mm_name[0]!=0) {
+    if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
+    if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
+    unlink(lpDosTask->mm_name);
+   } else
+    if (lpDosTask->img!=NULL) VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
+   return err;
+  }
+  err = MZ_InitTask( lpDosTask );
   if (lpDosTask->mm_name[0]!=0) {
-   if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
-   if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
+   /* we unlink the temp file here to avoid leaving a mess in /tmp
+      if/when Wine crashes; the mapping still remains open, though */
    unlink(lpDosTask->mm_name);
-  } else
-   if (lpDosTask->img!=NULL) VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
-  return err;
- }
- err = MZ_InitTask( lpDosTask );
- if (lpDosTask->mm_name[0]!=0) {
-  /* we unlink the temp file here to avoid leaving a mess in /tmp
-     if/when Wine crashes; the mapping still remains open, though */
-  unlink(lpDosTask->mm_name);
- }
- if (err<32) {
-  MZ_KillModule( lpDosTask );
-  /* FIXME: cleanup hModule */
-  return err;
- }
+  }
+  if (err<32) {
+   MZ_KillModule( lpDosTask );
+   /* FIXME: cleanup hModule */
+   return err;
+  }
 
- hInstance = NE_CreateInstance(pModule, NULL, (cmdline == NULL));
- PROCESS_Create( pModule, cmdline, env, hInstance, 0, startup, info );
- return hInstance;
+  hInstance = NE_CreateInstance(pModule, NULL, (cmdline == NULL));
+  PROCESS_Create( pModule, cmdline, env, hInstance, 0, startup, info );
+  return hInstance;
+ } else {
+  return (err<32) ? err : pTask->hInstance;
+ }
 }
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
@@ -340,7 +383,7 @@ int MZ_RunModule( LPDOSTASK lpDosTask )
  return 0;
 }
 
-#else /* !linux */
+#else /* !MZ_SUPPORTED */
 
 HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
                               LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )

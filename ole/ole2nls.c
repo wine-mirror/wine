@@ -236,7 +236,7 @@ LCID WINAPI GetSystemDefaultLCID()
  */
 LANGID WINAPI GetUserDefaultLangID()
 {
-	return (WORD)GetUserDefaultLCID();
+	return 0x400|(WORD)GetUserDefaultLCID();
 }
 
 /***********************************************************************
@@ -244,7 +244,7 @@ LANGID WINAPI GetUserDefaultLangID()
  */
 LANGID WINAPI GetSystemDefaultLangID()
 {
-	return GetUserDefaultLangID();
+	return 0x400|GetUserDefaultLangID();
 }
 
 /***********************************************************************
@@ -261,7 +261,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	char	*retString;
 	int	found,i;
 
-	TRACE(ole,"(%8lX,%8lX,%p,%4X)\n",
+	TRACE(ole,"(0x%lx,0x%lx,%p,%x)\n",
 			lcid,LCType,buf,len);
 
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
@@ -2046,20 +2046,24 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
 
 INT32 WINAPI OLE_GetFormatA(LCID locale,
 			    DWORD flags,
+			    DWORD tflags,
 			    LPSYSTEMTIME xtime,
-			    LPCSTR format, 
+			    LPCSTR _format, 
 			    LPSTR date, INT32 datelen)
 {
    INT32 inpos, outpos;
    int count, type, inquote, Overflow;
    char buf[40];
+   char format[40];
+   char * pos;
    int buflen;
 
    const char * _dgfmt[] = { "%d", "%02d" };
    const char ** dgfmt = _dgfmt - 1; 
 
    /* report, for debugging */
-   TRACE(ole, "func(%8lx,%8lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%9s), len=%d)\n", locale, flags,
+   TRACE(ole, "(0x%lx,0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%s), len=%d)\n",
+   	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 format, format, date, date, datelen);
   
@@ -2069,6 +2073,21 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
    type = '\0';
    date[0] = buf[0] = '\0';
       
+   strcpy(format,_format);
+
+   /* alter the formatstring, while it works for all languages now in wine
+   its possible that it fails when the time looks like ss:mm:hh as example*/   
+   if (tflags & (TIME_NOMINUTESORSECONDS))
+   { if ((pos = strstr ( format, ":mm")))
+     { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
+     }
+   }
+   if (tflags & (TIME_NOSECONDS))
+   { if ((pos = strstr ( format, ":ss")))
+     { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
+     }
+   }
+   
    for (inpos = 0;; inpos++) {
       /* TRACE(ole, "STATE inpos=%2d outpos=%2d count=%d inquote=%d type=%c buf,date = %c,%c\n", inpos, outpos, count, inquote, type, buf[inpos], date[outpos]); */
       if (inquote) {
@@ -2130,9 +2149,7 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
 		      sprintf(buf, "%d", xtime->wYear);
 	       } else if (count == 3) {
 		  strcpy(buf, "yyy");
-		  WARN(ole,
-			      "unknown format,\
-c=%c, n=%d\n",  type, count);
+		  WARN(ole, "unknown format, c=%c, n=%d\n",  type, count);
 		 } else {
 		  sprintf(buf, dgfmt[count], xtime->wYear % 100);
 	       }
@@ -2142,9 +2159,7 @@ c=%c, n=%d\n",  type, count);
 		  strcpy(buf, "AD");
 	    } else {
 		  strcpy(buf, "g");
-		  WARN(ole,
-			       "unknown format, \
-c=%c, n=%d\n", type, count);
+		  WARN(ole, "unknown format, c=%c, n=%d\n", type, count);
 	       }
 	    } else if (type == 'h') {
 	       /* gives us hours 1:00 -- 12:00 */
@@ -2152,9 +2167,9 @@ c=%c, n=%d\n", type, count);
 	    } else if (type == 'H') {
 	       /* 24-hour time */
 	       sprintf(buf, dgfmt[count], xtime->wHour);
-	    } else if (type == 'm') {
+	    } else if ( type == 'm') {
 	       sprintf(buf, dgfmt[count], xtime->wMinute);
-	    } else if (type == 's') {
+	    } else if ( type == 's') {
 	       sprintf(buf, dgfmt[count], xtime->wSecond);
 	    } else if (type == 't') {
 	       if        (count == 1) {
@@ -2235,7 +2250,7 @@ c=%c, n=%d\n", type, count);
 /**************************************************************
  * OLE_GetFormatW  [internal]  
  */
-INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags,
+INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    LPSYSTEMTIME xtime,
 			    LPCWSTR format,
 			    LPWSTR output, INT32 outlen)
@@ -2254,8 +2269,8 @@ INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags,
 
    /* make a debug report */
    lstrcpynWtoA(abuf, format, sizeof(format));
-   TRACE(ole, "args: %8lx, %8lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p with max len %d\n",
-	 locale, flags, 
+   TRACE(ole, "args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p with max len %d\n",
+	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 abuf, format, output, outlen);
    
@@ -2354,10 +2369,10 @@ INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags,
 	 } else if (type == 'H') {
 	    wsnprintf32W(buf, 5, argarr[count], 
 			 xtime->wHour);
-	 } else if (type == 'm') {
+	 } else if (type == 'm' ) {
 	    wsnprintf32W(buf, 5, argarr[count],
 			 xtime->wMinute);
-	 } else if (type == 's') {
+	 } else if (type == 's' ) {
 	    wsnprintf32W(buf, 5, argarr[count],
 			 xtime->wSecond);
 	 } else if (type == 't') {
@@ -2507,7 +2522,7 @@ INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,
   };
 
   
-  ret = OLE_GetFormatA(thislocale, flags, thistime, thisformat, 
+  ret = OLE_GetFormatA(thislocale, flags, 0, thistime, thisformat, 
 		       date, datelen);
   
 
@@ -2599,6 +2614,7 @@ GetTimeFormat32A(LCID locale,        /* in  */
   DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */;
   
   TRACE(ole,"GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
+
   if (!locale) 
   { locale = LOCALE_SYSTEM_DEFAULT;
   }
@@ -2608,32 +2624,27 @@ GetTimeFormat32A(LCID locale,        /* in  */
   } 
   else if (locale == LOCALE_USER_DEFAULT) 
   { thislocale = GetUserDefaultLCID();
-	}
+  }
   else
   { thislocale = locale;
   }
+
+  if ( flags & (TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT ))
+  { FIXME(ole,"TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
+  }
+  flags &= (TIME_NOSECONDS | TIME_NOMINUTESORSECONDS); /* mask for OLE_GetFormatA*/
+
   if (format == NULL) 
-  { if (flags&LOCALE_NOUSEROVERRIDE)  /*use system default*/
+  { if (flags & LOCALE_NOUSEROVERRIDE)  /*use system default*/
     { thislocale = GetSystemDefaultLCID();
     }
-    switch (flags)
-    { case TIME_NOSECONDS:
-        FIXME(ole,"TIME_NOSECONDS not yet implemented");
-        break;
-      case TIME_NOMINUTESORSECONDS:
-        FIXME(ole,"TIME_NOMINUTESORSECONDS not yet implemented");
-       break;
-    }   
-    GetLocaleInfo32A(thislocale, thisflags, format_buf,sizeof(format_buf));
+    GetLocaleInfo32A(thislocale, thisflags, format_buf, sizeof(format_buf));
     thisformat = format_buf;
   }
   else 
   { thisformat = format;
   }
   
-  if (!locale) 
-  {  locale = GetSystemDefaultLCID();
-  }
   if (xtime == NULL) /* NULL means use the current local time*/
   { GetSystemTime(&t);
     thistime = &t;
@@ -2641,7 +2652,7 @@ GetTimeFormat32A(LCID locale,        /* in  */
   else
   { thistime = xtime;
   }
-  return OLE_GetFormatA(thislocale, thisflags, thistime, thisformat,timestr, timelen);
+  return OLE_GetFormatA(thislocale, thisflags, flags, thistime, thisformat, timestr, timelen);
 }
 
 
@@ -2706,7 +2717,7 @@ GetTimeFormat32W(LCID locale,DWORD flags,
       GetSystemTime(realtime);
    }
 
-   retval = OLE_GetFormatW(locale, flags, realtime, realformat, timestr,  timelen);
+   retval = OLE_GetFormatW(locale, flags, 0, realtime, realformat, timestr,  timelen);
    if (fmt_buf)
 	free(fmt_buf);
    return retval;

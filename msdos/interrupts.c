@@ -39,3 +39,35 @@ void INT_SetHandler( BYTE intnum, FARPROC16 handler )
                  intnum, HIWORD(handler), LOWORD(handler) );
     INT_Vectors[intnum] = handler;
 }
+
+
+/**********************************************************************
+ *	    INT_RealModeInterrupt
+ *
+ * Handle real mode interrupts
+ */
+int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
+{
+    /* we should really map to if1632/wprocs.spec, but not all
+     * interrupt handlers are adapted to support real mode yet */
+    switch (intnum) {
+        case 0x10:
+            INT_Int10Handler(context);
+            break;
+        case 0x1a:
+            INT_Int1aHandler(context);
+            break;
+        case 0x20:
+            INT_Int20Handler(context);
+            break;
+        case 0x21:
+            DOS3Call(context);
+            break;
+        case 0x2f:
+            INT_Int2fHandler(context);
+            break;
+        default:
+            return 1;
+    }
+    return 0;
+}

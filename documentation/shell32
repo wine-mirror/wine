@@ -27,6 +27,12 @@ implemented the classes and filled function stubs.
 ----------------
     Status:
 	- development started
+
+    Undocumented:
+    word95 gets a IContextMenu Interface and calls HandleMenuMsg()
+    whitch should only a member of IContextMenu2. 
+    I suppose IContextMenu and IContextMenu2/3 are using the same vtable
+    and are in effect the same.
  
 4.2 IShellExtInit
 -----------------
@@ -60,8 +66,15 @@ implemented the classes and filled function stubs.
 4.7. PIDL Manager
 -----------------
   Status:
-	- roughly complete will be migrated to a set of functions because it's
+    - roughly complete will be migrated to a set of functions because it's
     not holding any instance data,
+
+  Undocumented:
+  MS says: the abID of SHITEMID should be treated as binary data and not
+  be interpreted by applications. Applys to everyone but MS itself.
+  Word95 interprets the contents of abID (Filesize/Date) so we have to go
+  for binary compatibility here.
+  I expect the file open/close dialog in comctl32 does so also.
 
 
 5. Structures
@@ -69,3 +82,4 @@ implemented the classes and filled function stubs.
 
 5.1 PIDL
 --------
+

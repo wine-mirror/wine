@@ -141,7 +141,7 @@ type	win32
 138 stub ReadStringStream
 139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop32
 140 stub ReleaseStgMedium
-141 stub RevokeDragDrop
+141 stdcall RevokeDragDrop(long) RevokeDragDrop32
 142 stub SetConvertStg
 143 stub SetDocumentBitStg
 144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocFile32

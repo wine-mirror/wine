@@ -760,7 +760,7 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
 
     if ((lprect == NULL) || (lppop == NULL)) return;
     if (lppop->nItems == 0) return;
-    TRACE(menu,"MENU_MenuBarCalcSize left=%d top=%d right=%d bottom=%d\n", 
+    TRACE(menu,"left=%d top=%d right=%d bottom=%d\n", 
                  lprect->left, lprect->top, lprect->right, lprect->bottom);
     lppop->Width  = lprect->right - lprect->left;
     lppop->Height = 0;
@@ -1102,7 +1102,7 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 		SetROP232( hdc, ropPrev );
 	    }
 	    else
-		TWEAK_DrawReliefRect95(hdc, &rect);
+		DrawEdge32 (hdc, &rect, EDGE_RAISED, BF_RECT);
 
 	    /* draw menu items */
 
@@ -2968,6 +2968,7 @@ UINT32 WINAPI GetMenuItemID32( HMENU32 hMenu, INT32 nPos )
 
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return -1;
     if ((nPos < 0) || (nPos >= menu->nItems)) return -1;
+    if (menu->items[nPos].fType & MF_POPUP) return -1; 
     return menu->items[nPos].wID;
 }
 
@@ -3814,8 +3815,21 @@ static BOOL32 SetMenuItemInfo32_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_ID)
 	menu->wID = lpmii->wID;
 
-    if (lpmii->fMask & MIIM_SUBMENU)
+    if (lpmii->fMask & MIIM_SUBMENU) {
 	menu->hSubMenu = lpmii->hSubMenu;
+	if (menu->hSubMenu) {
+	    POPUPMENU *subMenu = (POPUPMENU *)USER_HEAP_LIN_ADDR((UINT16)menu->hSubMenu);
+	    if (IS_A_MENU(subMenu)) {
+		subMenu->wFlags |= MF_POPUP;
+		menu->fType |= MF_POPUP;
+	    }
+	    else
+		/* FIXME: Return an error ? */
+		menu->fType &= ~MF_POPUP;
+	}
+	else
+	    menu->fType &= ~MF_POPUP;
+    }
 
     if (lpmii->fMask & MIIM_CHECKMARKS)
     {

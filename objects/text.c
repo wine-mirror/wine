@@ -319,7 +319,7 @@ INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
 /***********************************************************************
  *           DrawTextEx32A    (USER32.165)
  */
-INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
+INT32 WINAPI DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
 {
     TRACE(text,"(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
@@ -330,7 +330,7 @@ INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           DrawTextEx32W    (USER32.166)
  */
-INT32 DrawTextEx32W( HDC32 hdc, LPCWSTR str, INT32 count,
+INT32 WINAPI DrawTextEx32W( HDC32 hdc, LPCWSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
 {
     TRACE(text,"(%d,%p,%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);

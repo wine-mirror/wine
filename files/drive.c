@@ -784,7 +784,7 @@ UINT32 WINAPI GetDriveType32A( LPCSTR root )
     case TYPE_HD:      return DRIVE_FIXED;
     case TYPE_CDROM:   return DRIVE_CDROM;
     case TYPE_NETWORK: return DRIVE_REMOTE;
-    case TYPE_INVALID:
+    case TYPE_INVALID: return DRIVE_DOESNOTEXIST;
     default:           return DRIVE_CANNOTDETERMINE;
     }
 }
@@ -1039,4 +1039,9 @@ BOOL32 WINAPI GetVolumeInformation32W( LPCWSTR root, LPWSTR label,
     HeapFree( GetProcessHeap(), 0, xvolname );
     HeapFree( GetProcessHeap(), 0, xfsname );
     return ret;
+}
+
+BOOL32 WINAPI SetVolumeLabel32A(LPCSTR rootpath,LPCSTR volname) {
+	FIXME(dosfs,"(%s,%s),stub!\n",rootpath,volname);
+	return TRUE;
 }

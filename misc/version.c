@@ -323,62 +323,6 @@ void WINAPI DiagOutput(LPCSTR str)
 }
 
 /***********************************************************************
- * DllGetVersion [COMCTL32.25]
- *
- *
- *
- */
-HRESULT WINAPI COMCTL32_DllGetVersion(DLLVERSIONINFO *pdvi)
-{
-    VERSION ver = VERSION_GetVersion();
-
-    if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
-    {
-        WARN(ver, "wrong DLLVERSIONINFO size from app");
-        return OLE_ERROR_SIZE; /* FIXME: is this error correct ? */
-    }
-
-    pdvi->dwPlatformID = VersionData[ver].getVersionEx.dwPlatformId;
-    switch(VersionData[ver].getVersion32)
-    {
-        case 0x80000a03: /* Win 3.1 */
-        {
-            pdvi->dwMajorVersion = 3;
-            pdvi->dwMinorVersion = 51;
-            pdvi->dwBuildNumber = 0;
-        }
-        break;
-        case 0xc0000004: /* Win 95 */
-        {
-            pdvi->dwMajorVersion = 4;
-            pdvi->dwMinorVersion = 0;
-            pdvi->dwBuildNumber = 950;
-        }
-        break;
-        case 0x04213303: /* NT 3.51 FIXME: correct ? */
-        {
-            pdvi->dwMajorVersion = 3;
-            pdvi->dwMinorVersion = 51;
-            pdvi->dwBuildNumber = 0x421;
-        }
-        break;
-        case 0x05650004: /* NT 4.0 FIXME: correct ? */
-        {
-            pdvi->dwMajorVersion = 4;
-            pdvi->dwMinorVersion = 0;
-            pdvi->dwBuildNumber = 0x565;
-        }
-        break;
-        default:
-        {
-            ERR(ver, "Unknown Windows version, please add it to the list !\n");
-        }
-        break;
-    }
-    return 0; /* winerror.h: NOERROR */
-}
-
-/***********************************************************************
  *           OaBuildVersion           [OLEAUT32.170]
  */
 UINT32 WINAPI OaBuildVersion()

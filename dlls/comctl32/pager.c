@@ -16,7 +16,6 @@
 #include "windows.h"
 #include "commctrl.h"
 #include "pager.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
@@ -49,7 +48,7 @@ PAGER_GetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    return (LRESULT)infoPtr->iBorder;
+    return (LRESULT)infoPtr->nBorder;
 }
 
 
@@ -58,11 +57,21 @@ PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    return (LRESULT)infoPtr->iButtonSize;
+    return (LRESULT)infoPtr->nButtonSize;
 }
 
 
-// << PAGER_GetButtonState >>
+static LRESULT
+PAGER_GetButtonState (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    FIXME (pager, "empty stub!\n");
+
+    return PGF_INVISIBLE;
+}
+
+
 // << PAGER_GetDropTarget >>
 
 
@@ -71,16 +80,33 @@ PAGER_GetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    return infoPtr->iPos;
+    return infoPtr->nPos;
 }
 
 
 static LRESULT
 PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    NMPGCALCSIZE nmpgcs;
 
-    FIXME (pager, "empty stub!\n");
+    if (infoPtr->hwndChild) {
+	nmpgcs.hdr.hwndFrom = wndPtr->hwndSelf;
+	nmpgcs.hdr.idFrom = wndPtr->wIDmenu;
+	nmpgcs.hdr.code = PGN_CALCSIZE;
+	nmpgcs.dwFlag =
+	     (wndPtr->dwStyle & PGS_HORZ) ? PGF_CALCWIDTH : PGF_CALCHEIGHT;
+	SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
+			(WPARAM32)wndPtr->wIDmenu, (LPARAM)&nmpgcs);
+
+	infoPtr->nChildSize =
+	     (wndPtr->dwStyle & PGS_HORZ) ? nmpgcs.iWidth : nmpgcs.iHeight;
+
+
+        FIXME (pager, "Child size %d\n", infoPtr->nChildSize);
+
+
+    }
 
     return 0;
 }
@@ -104,9 +130,9 @@ static __inline__ LRESULT
 PAGER_SetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    INT32 nTemp = infoPtr->iBorder;
+    INT32 nTemp = infoPtr->nBorder;
 
-    infoPtr->iBorder = (INT32)lParam;
+    infoPtr->nBorder = (INT32)lParam;
 
     /* FIXME: redraw */
 
@@ -118,9 +144,11 @@ static __inline__ LRESULT
 PAGER_SetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    INT32 nTemp = infoPtr->iButtonSize;
+    INT32 nTemp = infoPtr->nButtonSize;
 
-    infoPtr->iButtonSize = (INT32)lParam;
+    infoPtr->nButtonSize = (INT32)lParam;
+
+    FIXME (pager, "size=%d\n", infoPtr->nButtonSize);
 
     /* FIXME: redraw */
 
@@ -133,9 +161,15 @@ PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    infoPtr->hwndChild = (HWND32)lParam;
+    infoPtr->hwndChild = IsWindow32 ((HWND32)lParam) ? (HWND32)lParam : 0;
+
+    FIXME (pager, "hwnd=%x\n", infoPtr->hwndChild);
 
     /* FIXME: redraw */
+    SetParent32 (infoPtr->hwndChild, wndPtr->hwndSelf);
+    SetWindowPos32 (infoPtr->hwndChild, wndPtr->hwndSelf,
+		    0, 0, 40, 40, SWP_SHOWWINDOW);
+    RedrawWindow32 (wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE);
 
     return 0;
 }
@@ -146,9 +180,13 @@ PAGER_SetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    infoPtr->iPos = (INT32)lParam;
+    infoPtr->nPos = (INT32)lParam;
+
+    FIXME (pager, "pos=%d\n", infoPtr->nPos);
 
     /* FIXME: redraw */
+    SetWindowPos32 (infoPtr->hwndChild, wndPtr->hwndSelf,
+		    0, 0, 0, 0, SWP_NOSIZE);
 
     return 0;
 }
@@ -160,8 +198,7 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     PAGER_INFO *infoPtr;
 
     /* allocate memory for info structure */
-    infoPtr = (PAGER_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-                                   sizeof(PAGER_INFO));
+    infoPtr = (PAGER_INFO *)COMCTL32_Alloc (sizeof(PAGER_INFO));
     wndPtr->wExtra[0] = (DWORD)infoPtr;
 
     if (infoPtr == NULL) {
@@ -177,9 +214,9 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     /* set default settings */
     infoPtr->hwndChild = 0;
     infoPtr->clrBk = GetSysColor32 (COLOR_BTNFACE);
-    infoPtr->iBorder = 0;
-    infoPtr->iButtonSize = 0;
-    infoPtr->iPos = 0;
+    infoPtr->nBorder = 0;
+    infoPtr->nButtonSize = 0;
+    infoPtr->nPos = 0;
 
 
     return 0;
@@ -195,7 +232,7 @@ PAGER_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
     /* free pager info data */
-    HeapFree (GetProcessHeap (), 0, infoPtr);
+    COMCTL32_Free (infoPtr);
 
     return 0;
 }
@@ -208,9 +245,9 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     HBRUSH32 hBrush = CreateSolidBrush32 (infoPtr->clrBk);
     RECT32 rect;
 
-    GetClientRect32 (wndPtr->hwndSelf, &rect);
-    FillRect32 ((HDC32)wParam, &rect, hBrush);
-    DeleteObject32 (hBrush);
+//    GetClientRect32 (wndPtr->hwndSelf, &rect);
+//    FillRect32 ((HDC32)wParam, &rect, hBrush);
+//    DeleteObject32 (hBrush);
     return TRUE;
 }
 
@@ -238,7 +275,9 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case PGM_GETBUTTONSIZE:
 	    return PAGER_GetButtonSize (wndPtr, wParam, lParam);
 
-//	case PGM_GETBUTTONSTATE:
+	case PGM_GETBUTTONSTATE:
+	    return PAGER_GetButtonState (wndPtr, wParam, lParam);
+
 //	case PGM_GETDROPTARGET:
 
 	case PGM_GETPOS:

@@ -87,6 +87,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->unix_handle = -1;
     (*file)->unix_name = NULL;
     (*file)->type = FILE_TYPE_DISK;
+    (*file)->pos = 0;
 
     handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
                            FILE_ALL_ACCESS | GENERIC_READ |
@@ -112,7 +113,8 @@ static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 		return TRUE;
 	}
 
-	if ((result = read(file->unix_handle, lpBuffer, nNumberOfChars)) == -1)
+        if ( (file->pos < 0) || /* workaround, see SetFilePointer */
+        ((result = read(file->unix_handle, lpBuffer, nNumberOfChars)) == -1) )
         {
             FILE_SetDosError();
             return FALSE;
@@ -143,6 +145,11 @@ static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
 	 * I assume this loop around EAGAIN is here because
 	 * win32 doesn't have interrupted system calls 
 	 */
+
+        if (file->pos < 0) { /* workaround, see SetFilePointer */
+            FILE_SetDosError();
+            return FALSE;
+        }
 
 	for (;;)
         {
@@ -871,6 +878,7 @@ error:  /* We get here if there was an error opening the file */
  */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
+    TRACE(file,"OpenFile16(%s,%i)\n", name, mode);
     return HFILE32_TO_HFILE16(FILE_DoOpenFile( name, ofs, mode, FALSE ));
 }
 
@@ -999,7 +1007,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
     FILE_OBJECT *file;
-    int origin, result;
+    DWORD result = 0xffffffff;
 
     if (highword && *highword)
     {
@@ -1008,28 +1016,56 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
         return 0xffffffff;
     }
     TRACE(file, "handle %d offset %ld origin %ld\n",
-	  hFile, distance, method );
+          hFile, distance, method );
 
     if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
+
+
+    /* the pointer may be positioned before the start of the file;
+        no error is returned in that case,
+        but subsequent attempts at I/O will produce errors.
+        This is not allowed with Unix lseek(),
+        so we'll need some emulation here */
     switch(method)
     {
-        case FILE_CURRENT: origin = SEEK_CUR; break;
-        case FILE_END:     origin = SEEK_END; break;
-        default:           origin = SEEK_SET; break;
+        case FILE_CURRENT:
+            distance += file->pos; /* fall through */
+        case FILE_BEGIN:
+            if ((result = lseek(file->unix_handle, distance, SEEK_SET)) == -1)
+            {
+                if ((INT32)distance < 0)
+                    file->pos = result = distance;
+            }
+            else
+            file->pos = result;
+            break;
+        case FILE_END:
+            if ((result = lseek(file->unix_handle, distance, SEEK_END)) == -1)
+            {
+                if ((INT32)distance < 0)
+                {
+                    /* get EOF */
+                    result = lseek(file->unix_handle, 0, SEEK_END);
+
+                    /* return to the old pos, as the first lseek failed */
+                    lseek(file->unix_handle, file->pos, SEEK_END);
+
+                    file->pos = (result += distance);
+                }
+                else
+                ERR(file, "lseek: unknown error. Please report.\n");
+            }
+            else file->pos = result;
+            break;
+        default:
+            ERR(file, "Unknown origin %ld !\n", method);
     }
 
-    if ((result = lseek( file->unix_handle, distance, origin )) == -1)
-      {
-	/* care for this pathological case:
-	   SetFilePointer(00000006,ffffffff,00000000,00000002)
-	   ret=0062ab4a fs=01c7 */
-	if ((distance != -1))
+    if (result == -1)
         FILE_SetDosError();
-	else
-	  result = 0;
-      }
+
     FILE_ReleaseFile( file );
-    return (DWORD)result;
+    return result;
 }
 
 
@@ -1665,7 +1701,7 @@ BOOL32 WINAPI CopyFile32W( LPCWSTR source, LPCWSTR dest, BOOL32 fail_if_exists)
 
 
 /***********************************************************************
- *              SetFileTime   (KERNEL32.493)
+ *              SetFileTime   (KERNEL32.650)
  */
 BOOL32 WINAPI SetFileTime( HFILE32 hFile,
                            const FILETIME *lpCreationTime,
@@ -1676,7 +1712,7 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
     struct utimbuf utimbuf;
     
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
-    TRACE(file,"(%s,%p,%p,%p)\n",
+    TRACE(file,"('%s',%p,%p,%p)\n",
 	file->unix_name,
 	lpCreationTime,
 	lpLastAccessTime,
@@ -1692,6 +1728,7 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
 	utimbuf.modtime	= 0; /* FIXME */
     if (-1==utime(file->unix_name,&utimbuf))
     {
+	MSG("Couldn't set the time for file '%s'. Insufficient permissions !?\n", file->unix_name);
         FILE_ReleaseFile( file );
 	FILE_SetDosError();
 	return FALSE;

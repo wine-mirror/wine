@@ -260,11 +260,22 @@ BOOL32 WINAPI GetWindowRgn32 ( HWND32 hwnd, HRGN32 hrgn )
 /***********************************************************************
  *           SetWindowRgn32 
  */
-BOOL32 WINAPI SetWindowRgn32 ( HWND32 hwnd, HRGN32 hrgn,BOOL32 bRedraw)
+INT32 WINAPI SetWindowRgn32( HWND32 hwnd, HRGN32 hrgn,BOOL32 bRedraw)
 
 {
 
   FIXME (win, "SetWindowRgn32: stub\n"); 
+  return TRUE;
+}
+
+/***********************************************************************
+ *           SetWindowRgn16 
+ */
+INT16 WINAPI SetWindowRgn16( HWND16 hwnd, HRGN16 hrgn,BOOL16 bRedraw)
+
+{
+
+  FIXME (win, "SetWindowRgn16: stub\n"); 
   return TRUE;
 }
 
@@ -349,8 +360,15 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
     INT16 hittest = HTERROR;
     POINT16 xy = pt;
 
-    *ppWnd = NULL;
+   *ppWnd = NULL;
     wndPtr = wndScope->child;
+    if( wndScope->flags & WIN_MANAGED )
+    {
+	/* this prevents mouse clicks from going "through" scrollbars in managed mode */
+	if( pt.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
+	    pt.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom )
+	    goto hittest;
+    }
     MapWindowPoints16( GetDesktopWindow16(), wndScope->hwndSelf, &xy, 1 );
 
     for (;;)
@@ -388,6 +406,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
             else wndPtr = wndPtr->next;
         }
 
+hittest:
         /* If nothing found, try the scope window */
         if (!*ppWnd) *ppWnd = wndScope;
 
@@ -1801,7 +1820,7 @@ static void WINPOS_MoveWindowZOrder( HWND32 hwnd, HWND32 hwndAfter )
  *           WINPOS_ReorderOwnedPopups
  *
  * fix Z order taking into account owned popups -
- * basically we need to maintain them above owner window
+ * basically we need to maintain them above the window that owns them
  */
 HWND32 WINPOS_ReorderOwnedPopups(HWND32 hwndInsertAfter,WND* wndPtr,WORD flags)
 {
@@ -2303,37 +2322,47 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	       newClientRect.left - newWindowRect.left) ||
 	      (oldClientRect.top - oldWindowRect.top !=
 	       newClientRect.top - newWindowRect.top) ||
-              winpos.flags & SWP_NOCOPYBITS )
+              (winpos.flags & SWP_NOCOPYBITS) )
+	  {
+	      /* if the client area moved as a result of WM_NCCALCSIZE returning 
+	       * obscure WVR_ALIGNxxx flags then we simply redraw the whole thing
+	       *
+	       * TODO: use WINPOS_SizeMoveClean() if there is no SWP_NOCOPYBITS 
+	       */
 
 	      PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE |
                               RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE, 0 );
+	  }
 	  else
 	      if( winpos.flags & SWP_FRAMECHANGED )
 	      {
 		WORD wErase = 0;
 		RECT32 rect;
 
-	        if( oldClientRect.right > newClientRect.right ) 
+	        if( newClientRect.right > oldClientRect.right ) /* redraw exposed client area on the right */
                 {
-		    rect.left = newClientRect.right; rect.top = newClientRect.top;
-		    rect.right = oldClientRect.right; rect.bottom = newClientRect.bottom;
+		    rect.top = 0; rect.bottom = newClientRect.bottom - newClientRect.top;
+		    rect.left = oldClientRect.right - newClientRect.left;
+		    rect.right = newClientRect.right - newClientRect.left;
 		    wErase = 1;
 		    PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0,
-                                      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
+                                      RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW | RDW_ALLCHILDREN, 0 );
                 }
-		if( oldClientRect.bottom > newClientRect.bottom )
+		if( newClientRect.bottom > oldClientRect.bottom ) /* redraw exposed client area on the bottom */
                 {
-		    rect.left = newClientRect.left; rect.top = newClientRect.bottom;
-		    rect.right = (wErase)?oldClientRect.right:newClientRect.right;
-		    rect.bottom = oldClientRect.bottom;
+		    rect.left = 0; rect.right = ((wErase)?oldClientRect.right:newClientRect.right) - newClientRect.left;
+		    rect.top = oldClientRect.bottom - newClientRect.top;
+		    rect.bottom = newClientRect.bottom - newClientRect.top;
 		    wErase = 1;
 		    PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0,
-                                      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
+                                      RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW | RDW_ALLCHILDREN, 0 );
                 }
-		if( !wErase ) wndPtr->flags |= WIN_NEEDS_NCPAINT;
+		if( !wErase ) /* just update the nonclient area */
+		    wndPtr->flags |= WIN_NEEDS_NCPAINT; 
 	      }
+	uFlags |= SMC_NOPARENTERASE; /* X windows do not have eraseable parents */
     }
-    else
+    else /* not an X window */
     {
 	RECT32 oldClientRect = wndPtr->rectClient;
 
@@ -2347,7 +2376,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	    newClientRect.right - newClientRect.left ) result &= ~WVR_HREDRAW;
 
         if( !(flags & (SWP_NOREDRAW | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) )
-	  {
+	{
 	    uFlags |=  ((winpos.flags & SWP_NOCOPYBITS) || 
 			(result >= WVR_HREDRAW && result < WVR_VALIDRECTS)) ? SMC_NOCOPY : 0;
 	    uFlags |=  (winpos.flags & SWP_FRAMECHANGED) ? SMC_DRAWFRAME : 0;
@@ -2356,13 +2385,13 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 		uFlags = WINPOS_SizeMoveClean(wndPtr, visRgn, &oldWindowRect, 
 							      &oldClientRect, uFlags);
 	    else
-	      { 
-		/* adjust frame and do not erase parent */
+	    { 
+		/* adjust the frame and do not erase the parent */
 
 		if( winpos.flags & SWP_FRAMECHANGED ) wndPtr->flags |= WIN_NEEDS_NCPAINT;
 		if( winpos.flags & SWP_NOZORDER ) uFlags |= SMC_NOPARENTERASE;
-	      }
-	  }
+	    }
+	}
         DeleteObject32(visRgn);
     }
 

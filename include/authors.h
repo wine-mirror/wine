@@ -111,6 +111,7 @@ static const char * const SHELL_People[] =
     "Rick Sladkey",
     "William Smith",
     "Dominik Strasser",
+    "Patrik Stridvall",
     "Vadim Strizhevsky",
     "Bertho Stultiens",
     "Erik Svendsen",

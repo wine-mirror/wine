@@ -213,7 +213,11 @@ INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
     }
     while (*str1)
     {
-        if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
+        if ((*str1<0x100 ) && (*str2<0x100)) {
+	    if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+	} else {
+	    if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
+	}
         str1++;
         str2++;
     }

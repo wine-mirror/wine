@@ -1,4 +1,320 @@
 ----------------------------------------------------------------------
+Fri Sep 11 13:14:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [files/file.c] [include/file.h]
+	Fixed SetFilePointer to allow negative positions as in DOS.
+
+	* [graphics/ddraw.c]
+	Added some methods to IDirect3D.
+
+	* [ole/compobj.c] [if1632/compobj.spec]
+	Added/implemented CoCreateStandardMalloc16,
+	CoGetClassObject, CoCreateInstance,
+	LookupETask, SetETask, CoGetState16.
+
+	* [loader/task.c]
+	MakeProcInstance: return 0 if func == NULL.
+
+	* [*/*] [tools/winapi-check]
+	Added zillions of missing WINAPI's and __cdecl's.
+	(oops, several caused by myself)
+	Wrote script for automated checking.
+
+	* [if1632/compobj.spec]
+	Many stub names.
+
+	* [misc/ddeml.c] [ole/compobj.c]
+	Some stubs.
+
+Tue Sep  9 21:36:48 1998  Anders Carlsson <anders.carlsson@linux.nu>
+
+	* [dlls/comctl32/Makefile.in] [dlls/comctl32/commctrl.c]
+	  [dlls/comctl32/tab.c] [include/commctrl.h] [include/tab.h]
+        Added preliminary tab control support.
+
+Sat Sep  5 16:27:20 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [graphics/psdrv/*]
+	More changes to the PostScript driver:
+	Implemented pens and solid brushes.
+	Colour/greyscale for fonts, pens and brushes.
+	To get coloured output you need to have *ColorDevice set to true
+	in your PPD, otherwise you'll get greyscale.
+	Landscape mode now works, as does non-A4 page sizes.
+	Encoding of fonts to ANSI is better, Symbol works again.
+
+	* [objects/dc.c] [include/gdi.h] [*/*]
+	Moved dc->w.{text,background}Pixel to X11DRV_PDEVICE where they
+	belong.
+
+Sat Sep  5 05:12:09 1998  Ove Kaaven <ovek@arcticnet.no>
+
+	* [include/dosexe.h] [include/miscemu.h] [include/msdos.h]
+	  [loader/dos/dosvm.c] [loader/dos/module.c] [msdos/dpmi.c]
+	  [msdos/int2f.c] [msdos/interrupts.c]
+	Fixed portability. Adapted some code to make it easier to
+	integrate the DOS subsystem with the DPMI subsystem, made
+	the DPMI simulated real-mode interrupts be handled the V86
+	way. Added support for .COM files. Made int2f DPMI check
+	fail, to avoid pkunzip crashing in attempting to use DPMI.
+	Generally moved stuff around a little.
+	It is now technically possible to load several DOS programs
+	into the same memory space. Not tested, though.
+
+Fri Sep  4 21:40:45 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [if1632/kernel.spec]
+	Changed 500-53x stubnames accordingly to nt3.51 krnl386.exe.
+
+	* [win32/except.c]
+	Fixed one bad program behaviour, (deleting SEH while in 
+	first walk). RtlUnwind is broken too I think (it should unwind
+	on success, not while walking the exception chain).
+
+	* [ole/ole2nls.c]
+	Get*DefaultLCID  returns 0x400|id. expected by one application.
+
+	* [if1632/snoop.c]
+	Handle non-standard SP returns more graceful.
+
+	* [windows/class.c]
+	hinstances are mostly irrelevant for win32.
+
+	* [memory/string.c] [misc/registry.c]
+	lstrcmpi32W: use toupper for characters < 0x100. (speedup hack
+	for registry.c)
+	Some small speedup hacks for registry.c
+
+Thu Sep  3 20:40:16 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [Makefile.in][configure][configure.in][dlls/Makefile.in]
+	  [dlls/comctl32/Makefile.in]
+	Created dlls/comctl32 and moved the common controls stuff to it.
+
+	* [misc/version.c]
+	Removed COMCTL32_DllGetVersion. The fixed function is part
+	of the common controls stuff.
+
+	* [dlls/comctl32/*.c][include/commctrl.h]
+	Added structure size tests.
+
+	* [dlls/comctl32/toolbar.c]
+	Fixed a bug in TOOLBAR_GetMaxWidth().
+
+	* [dlls/comctl32/animate.c][include/animate.h]
+	  [dlls/comctl32/comboex.c][include/comboex.h]
+	  [dlls/comctl32/hotkey.c][include/hotkey.h]
+	  [dlls/comctl32/listview.c][include/listview.h]
+	  [dlls/comctl32/commctrl.c][include/commctrl.h]
+	New files. Added Animation, ComboBoxEx, Hotkey and
+	Listview control dummies.
+
+	* [dlls/comctl32/tooltips.c]
+	Fixed a display bug and font selection.
+
+	* [dlls/comctl32/comctl32undoc.c][include/commctrl.h]
+	Added missing DPA functions. Fixed bugs and published the
+	function prototypes.
+
+	* [documentation/common_controls]
+	Updated.
+
+Wed Sep  2 15:43:45 1998  Patrik Stridvall <ps@leissner.se>
+
+	* [AUTHORS] [include/authors.h]
+	Added myself as a Wine author.
+
+	* [memory/virtual.c] [objects/dc.c]
+	Fixed runtime errors for Solaris.
+
+	* [misc/ddeml.c] [objects/gdiobj.c]
+	Minor fixes.
+
+	* [win32/device.c]
+	Added stubs for IFSMgr VxDCall and
+	a partial implementation of IFSMgr DeviceIo.
+
+	* [relay32/Makefile.in] [relay32/builtin32.c] [relay32/imm32.spec] 
+	  [relay32/msnet32.spec] [relay32/oledlg.spec]
+	Added new spec files for IMM32.DLL, MSNET32.DLL, OLEDLG.DLL.
+
+	* [misc/Makefile.in] [misc/imm.c] [include/imm.h]
+	Added news files for implementation of IMM32.DLL. 
+	All functions return 0 as is correct for all Western Languages.
+
+	* [ole/Makefile.in] [ole/oledlg.c] [include/oledlg.h]
+	Added new files for implementation of OLEDLG.DLL.
+	Added stubs with FIXME:s for all functions.
+
+Wed Sep  2 10:50:00 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [dlls/shell32/contmenu.c][dlls/shell32/shellole.c]
+	  [dlls/shell32/shlfolder.c][dlls/shell32/shlview.c]
+	  [documentation/shell32][include/shell.h]
+	Clean up, bugfixes.
+	
+	* [dlls/shell32/enumidlist.c]
+	Fileattributes implemented.
+	
+	* [dlls/shell32/pidl.c]
+	Class pidlmgr splited into functions, structures changed, 
+	some functions rewritten.
+
+	* [dlls/shell32/shell32_main.c]
+	Small changes and bugfixes SHGetFileInfoA, SHGetSpecialFolderLocation.
+	
+	* [dlls/shell32/shellord.c][relay32/shell32.spec]
+	Parameter documented, implemented SHCloneSpecialIDList.
+	Stub improved ShellExecuteEx32A.
+	New stubs SHFind_InitMenuPopup, FileMenu_InitMenuPopup, 
+	FileMenu_Create, FileMenu_TrackPopupMenuEx, SHWinHelp,
+	SHRunConrolPanel, DAD_ShowDragImage, FileMenu_Destroy,
+	SHGetDataFromIDListA, SHFileOperationA.
+	
+	* [include/winnls.h][include/ole2nls.c]
+	TIME_FORCE24HOURFORMAT, TIME_NOTIMEMARKER implemented
+	in OLE_GetFormatA, GetTimeFormat32A.
+	
+	* [win32/code_page.c]
+	WideCharToMultiByte: parameter checking and returning of strlen
+	implemented.
+	
+	* [windows/keyboard.c][windows/defwnd.c]
+	Debug messages added.
+	
+	* [windows/win.c]
+	WIN_SetWindowLong GWL_STYLE and GWL_EXSTYLE implemented.
+
+	* [controls/menu.c]
+	Missing line added.
+
+	* [include/winerror.h]
+	Macros for SUCCEEDED and FAILED added.
+
+Mon Aug 31 00:55:31 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [loader/module.c]
+	Bugfix: LoadModule16 should *not* call LoadModule32.
+
+	* [files/dos_fs.c]
+	Bugfix: don't crash if given directory doesn't exist.
+
+Sat Aug 29 15:00:49 1998  Turchanov Sergey <turchanov@usa.net>
+
+	* [include/mmsystem.h][multimedia/mmsystem.c][relay32/winmm.spec]
+	Almost completed implementation of [snd]PlaySound (except
+	flags SND_ALIAS_ID and SND_APPLICATION).
+
+	* [if1632/user.spec][windows/winpos.c]
+	Added SetWindowRgn16 stub.
+
+Sat Aug 29 02:53:31 1998  Alexander Lukyanov <lav@long.yar.ru>
+
+	* [files/drive.c]
+	GetDriveType32A: return DRIVE_DOESNOTEXIST in case of non
+	existent drive.
+
+	* [msdos/int21.c]
+	INT21_FindFirstFCB: check drive validity to prevent oops.
+
+	* [win32/file.c]
+	CreateFile32A: duplicate STD_{INPUT,OUTPUT}_HANDLE.
+
+	* [files/dos_fs.c]
+	Make DOSFS_OpenDir treat "" as "/".
+	DOSFS_OpenDevice: duplicate STD_{INPUT,OUTPUT}_HANDLE.
+
+	* [windows/dialog.c]
+	GetNextDlgTabItem32: use last/first item instead of first/last
+	when hwndCtrl==0. This fixes initial focus.
+
+Sat Aug 29 02:46:32 1998  Adrian Harvey <adrian@select.com.au>
+
+	* [include/process.h] [include/process.c]
+	Renamed PROCESS_SELF to CURRENT_PROCESS_PSEUDOHANDLE in line
+	with thread constant, and Win32 documentation (which calls it
+	a pseudohandle.)  Made GetCurrentProcess actually use this
+	constant instead of the value.
+
+	* [include/process.h] [include/thread.h] [scheduler/thread.c]
+	  [scheduler/process.c] [scheduler/handle.c]
+	Modify HANDLE_GetObjPtr to understand about
+	CURRENT_THREAD_PSEUDOHANDLE and CURRENT_PROCESS_PSEUDOHANDLE.
+	This allows DuplicateHandle to do the correct thing with these
+	handles.  Removed now duplicate functionality from THREAD_GetPtr
+	and PROCESS_GetPtr.
+
+	* [loader/ne/segment.c]
+	Fixed two places where HFILE32s were being created and passed to
+	16-bit code. This should unbreak NE self-loading code.
+	Added two casts to remove compile time warnings.
+
+Fri Aug 28 21:04:13 1998  Joseph Pranevich <knight@baltimore.wwaves.com>
+
+	* [msdos/dosmem.c] [msdos/int2f.c]
+	Added beginnings of DOS error table.
+
+	* [msdos/int1a.c]
+	Stub for subfunction 0xb0.
+
+	* [msdos/int10.c] [loader/dos/dosvm.c]
+	INT 10 support completely rewritten and lots of debugging
+	added. Now, DOS apps that use INT 10 to write to the screen will
+	work. (Beyond Zork does, at least. Somewhat.)
+
+	* [include/miscemu.h] [msdos/dosmem.c] [msdos/int21.c]
+	Another shot at getting MS's generic error message facility
+	right.
+
+	* [msdos/int21.c]
+	Command.Com wanted to set its own PSP address. I let it.
+
+Wed Aug 26 12:26:20 1998  Matthew Toseland <Matthew.Toseland@btinternet.com>
+
+	* [include/file.h] [misc/lzexpand.c]
+	Fixed LZCopy16 by fixing HFILE16/HFILE32 convertor macros so don't
+	convert lzw handles.
+
+Tue Aug 25 22:22:55 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [misc/registry.c]
+	In RegEnumvalue, ivalue == 0 is a legal request and should
+	return the first entry.
+
+	* [msdos/int21.c]
+	Add handling for Int21-48/49 in Win16. Makes blinker demo work.
+
+	* [windows/winproc.c]
+	Add Msg32A<->Msg32W translation for LB_ADDSTRING.
+
+Tue Aug 25 21:03:31 1998  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [windows/win.c]
+	Fix for SetParent(): MS Windows 3.11 does not clear the WS_CHILD
+	flag when a child window is reparented to the desktop window.
+
+Mon Aug 24 20:55:22 1998  Berend Reitsma <berend at asset-control dot com>
+
+	* [controls/menu.c]
+	Menus created with SetMenuItemInfo and InsertMenuItem should
+	work now.
+
+Sun Aug 23 23:23:23 1998  Alex Korobka <korobka@ams.sunysb.edu>
+
+	* [controls/combo.c]
+	Added CB_GETITEMHEIGHT.
+
+	* [windows/winpos.c] 
+	WM_NCHITTEST, SWP_FRAMECHANGED bugfixes.
+
+Sat Aug 22 21:15:29 1998 Alex Priem <alexp@sci.kun.nl>
+
+	* [files/profile.c] [include/windows.h]
+	Added GetPrivateProfileSectionNames[AW],GetPrivateProfileSectionW,
+	GetPrivateProfileStructW, GetProfileSectionW,
+	WriteProfileSection[AW], WritePrivateProfileStructW. 
+
+----------------------------------------------------------------------
 Sat Aug 22 17:46:19 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
 
 	* [include/dosexe.h] [include/module.h] [include/pe_image.h] 

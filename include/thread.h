@@ -114,6 +114,9 @@ typedef THREAD_ENTRY *THREAD_QUEUE;
 #define THREAD_ID_TO_THDB(id)   ((THDB *)((id) ^ THREAD_OBFUSCATOR))
 #define THDB_TO_THREAD_ID(thdb) ((DWORD)(thdb) ^ THREAD_OBFUSCATOR)
 
+/* The pseudo handle value returned by GetCurrentThread */
+#define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe
+
 #ifdef __i386__
 /* On the i386, the current thread is in the %fs register */
 # define SET_CUR_THREAD(thdb) SET_FS((thdb)->teb_sel)

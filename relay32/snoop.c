@@ -283,6 +283,11 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 		FIXME(snoop,"entrypoint 0x%08lx not found\n",entry);
 		return; /* oops */
 	}
+	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name)) {
+		/* we don't display, so we don't need returndisplay either */
+		EIP_reg(context)= (DWORD)fun->origfun;
+		return;
+	}
 	/* guess cdecl ... */
 	if (fun->nrofargs<0) {
 		/* Typical cdecl return frame is:
@@ -296,6 +301,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 				fun->nrofargs=reteip[2]/4;
 		}
 	}
+
 
 	while (*rets) {
 		for (i=0;i<sizeof((*rets)->entry)/sizeof((*rets)->entry[0]);i++)
@@ -323,7 +329,6 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 
 	EIP_reg(context)= (DWORD)fun->origfun;
 
-	ret->show = SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name);
 	if(!ret->show) return;
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {

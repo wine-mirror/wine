@@ -166,7 +166,6 @@ INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
  * ERRORS
  *   ERROR_INSUFFICIENT_BUFFER
  *   ERROR_INVALID_FLAGS (not yet implemented)
- *   ERROR_INVALID_PARAMETER (not yet implemented)
  *
  * BUGS
  *   Does not properly handle codepage conversions.
@@ -180,6 +179,12 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
     int count = 0;
     int eos = 0;
     int dont_copy= (dstlen==0);
+
+    if ((!src) | ((!dst) && (!dont_copy)) )
+    {	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+    
     if (page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
 	FIXME(win32,"Conversion in CP %d not supported\n",page);
 #if 0

@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -1111,7 +1112,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     /* Check parameters */
 
     TRACE(virtual,"(%x,%p,%08lx,%08lx%08lx,%s)\n",
-          hFile, sa, protect, size_high, size_low, name );
+          hFile, sa, protect, size_high, size_low, debugstr_a(name) );
 
     vprot = VIRTUAL_GetProt( protect );
     if (protect & SEC_RESERVE)
@@ -1359,9 +1360,17 @@ LPVOID WINAPI MapViewOfFileEx(
     ptr = (UINT32)FILE_dommap( mapping->file, addr, 0, size, 0, offset_low,
                                VIRTUAL_GetUnixProt( mapping->protect ),
                                flags );
-    if (ptr == (UINT32)-1)
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
+    if (ptr == (UINT32)-1) {
+        /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
+	 * Platform Differences": 
+	 * Windows NT: ERROR_INVALID_PARAMETER
+	 * Windows 95: ERROR_INVALID_ADDRESS.
+	 * FIXME: So should we add a module dependend check here? -MM
+	 */
+	if (errno==ENOMEM)
+	    SetLastError( ERROR_OUTOFMEMORY );
+	else
+	    SetLastError( ERROR_INVALID_PARAMETER );
         goto error;
     }
 

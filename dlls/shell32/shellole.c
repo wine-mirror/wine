@@ -29,29 +29,30 @@
 typedef DWORD (* WINAPI GetClassPtr)(REFCLSID,REFIID,LPVOID);
 
 static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name)
-{ HMODULE32  hmod;
-	FARPROC32	dllunload,nameproc;
+{	HMODULE32 hmod;
+	FARPROC32 dllunload,nameproc;
 
+	TRACE(shell,"dll=%s, hmodule=%p, name=%s\n",dllname, xhmod, name);
 	if (xhmod)
-    { *xhmod = 0;
-    }
+	{ *xhmod = 0;
+	}
 	if (!strcasecmp(PathFindFilename(dllname),"shell32.dll"))
 	{ return (GetClassPtr)SHELL32_DllGetClassObject;
-    }
+	}
 
 	hmod = LoadLibraryEx32A(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!hmod)
 	{ return NULL;
-    }
+	}
 	dllunload = GetProcAddress32(hmod,"DllCanUnloadNow");
 	if (!dllunload)
 	{ if (xhmod)
-      { *xhmod = hmod;
-      }
-    }
+	  { *xhmod = hmod;
+	  }
+	}
 	nameproc = GetProcAddress32(hmod,name);
 	if (!nameproc)
-    { FreeLibrary32(hmod);
+	{ FreeLibrary32(hmod);
 	  return NULL;
 	}
 	/* register unloadable dll with unloadproc ... */
@@ -73,21 +74,14 @@ static DWORD SH_get_instance(REFCLSID clsid,LPSTR dllname,LPVOID unknownouter,RE
 	dllgetclassob = SH_find_moduleproc(dllname,NULL,"DllGetClassObject");
 	if (!dllgetclassob)
 	{ return 0x80070000|GetLastError();
-    }
+	}
 
-/* FIXME */
-/*
-	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,inst);
-	if (hres<0)
-		return hres;
-
- */
 	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
 	if (hres<0 || (hres>=0x80000000))
 	{ return hres;
-    }
+	}
 	if (!classfac)
-    { FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
+	{ FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
 	  return E_FAIL;
 	}
 	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
@@ -111,11 +105,11 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 
 	if (clsid)
 	{ WINE_StringFromCLSID(clsid,xclsid);
-    }
+	}
 	else
 	{ if (!aclsid)
 	  {	return 0x80040154;
-      }
+	  }
 	  strcpy(xclsid,aclsid);
 	}
 	TRACE(shell,"(%p,\n\tSID:\t%s,%p,\n\tIID:\t%s,%p)\n",aclsid,xclsid,unknownouter,xiid,inst);
@@ -124,11 +118,11 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 
 	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,buffer,0,0x02000000,&inprockey))
 	{ return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-    }
+	}
 	pathlen=sizeof(path);
 
 	if (RegQueryValue32A(inprockey,NULL,path,&pathlen))
-    { RegCloseKey(inprockey);
+	{ RegCloseKey(inprockey);
 	  return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
 
@@ -136,7 +130,7 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 	tmodellen=sizeof(tmodel);
 	type=REG_SZ;
 	if (RegQueryValueEx32A(inprockey,"ThreadingModel",NULL,&type,tmodel,&tmodellen))
-    { RegCloseKey(inprockey);
+	{ RegCloseKey(inprockey);
 	  return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
 
@@ -144,8 +138,8 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 
 	hres=SH_get_instance(clsid,path,unknownouter,refiid,inst);
 	if (hres<0)
-    { hres=SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-    }
+	{ hres=SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
+	}
 	RegCloseKey(inprockey);
 	return hres;
 }
@@ -178,11 +172,11 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop)|| 
 	   IsEqualCLSID(rclsid, &CLSID_ShellLink))
 	{ if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop))      /*debug*/
-	  { TRACE(shell,"requested CLSID_ShellDesktop\n");
-      }
+	  { TRACE(shell,"-- requested CLSID_ShellDesktop\n");
+	  }
 	  if(IsEqualCLSID(rclsid, &CLSID_ShellLink))         /*debug*/
-	  { TRACE(shell,"requested CLSID_ShellLink\n");
-      }
+	  { TRACE(shell,"-- requested CLSID_ShellLink\n");
+	  }
 	  lpclf = IClassFactory_Constructor();
 	  if(lpclf)
 	  { hres = lpclf->lpvtbl->fnQueryInterface(lpclf,iid, ppv);
@@ -190,10 +184,10 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	  }
 	}
 	else
-	{ WARN(shell, "clsid(%s) not in buildin SHELL32\n",xclsid);
+	{ WARN(shell, "-- CLSID not found\n");
 	  hres = CLASS_E_CLASSNOTAVAILABLE;
 	}
-	TRACE(shell,"RETURN pointer to interface: %p\n",ppv);
+	TRACE(shell,"-- return pointer to interface: %p\n",*ppv);
 	return hres;
 }
 
@@ -249,26 +243,26 @@ LPCLASSFACTORY IClassFactory_Constructor()
  */
 static HRESULT WINAPI IClassFactory_QueryInterface(
   LPCLASSFACTORY this, REFIID riid, LPVOID *ppvObj)
-{  char	xriid[50];
-   WINE_StringFromCLSID((LPCLSID)riid,xriid);
-   TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
+{	char	xriid[50];
+	WINE_StringFromCLSID((LPCLSID)riid,xriid);
+	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
 
-  *ppvObj = NULL;
+	*ppvObj = NULL;
 
-  if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-  { *ppvObj = this; 
-  }
-  else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
-  {    *ppvObj = (IClassFactory*)this;
-  }   
+	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
+	{ *ppvObj = this; 
+	}
+	else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
+	{ *ppvObj = (IClassFactory*)this;
+	}   
 
-  if(*ppvObj)
-  { (*(LPCLASSFACTORY*)ppvObj)->lpvtbl->fnAddRef(this);  	
-    TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
-    return S_OK;
-  }
+	if(*ppvObj)
+	{ (*(LPCLASSFACTORY*)ppvObj)->lpvtbl->fnAddRef(this);  	
+	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  return S_OK;
+	}
 	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
-  return E_NOINTERFACE;
+	return E_NOINTERFACE;
 }  
 /******************************************************************************
  * IClassFactory_AddRef
@@ -294,12 +288,12 @@ static ULONG WINAPI IClassFactory_Release(LPCLASSFACTORY this)
  */
 static HRESULT WINAPI IClassFactory_CreateInstance(
   LPCLASSFACTORY this, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
-{ IUnknown *pObj = NULL;
+{	IUnknown *pObj = NULL;
 	HRESULT hres;
 	char	xriid[50];
 
-  WINE_StringFromCLSID((LPCLSID)riid,xriid);
-  TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",this,pUnknown,xriid,ppObject);
+	WINE_StringFromCLSID((LPCLSID)riid,xriid);
+	TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",this,pUnknown,xriid,ppObject);
 
 	*ppObject = NULL;
 		
@@ -308,39 +302,39 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 	}
 
 	if (IsEqualIID(riid, &IID_IShellFolder))
-  { pObj = (IUnknown *)IShellFolder_Constructor(NULL,NULL);
-  } 
-  else if (IsEqualIID(riid, &IID_IShellView))
-  { pObj = (IUnknown *)IShellView_Constructor();
-  } 
-  else if (IsEqualIID(riid, &IID_IShellLink))
-  { pObj = (IUnknown *)IShellLink_Constructor();
-  } 
-  else if (IsEqualIID(riid, &IID_IExtractIcon))
-  { pObj = (IUnknown *)IExtractIcon_Constructor(NULL);
-  } 
-  else if (IsEqualIID(riid, &IID_IContextMenu))
-  { pObj = (IUnknown *)IContextMenu_Constructor(NULL, NULL, 0);
-  } 
-  else
-  { ERR(shell,"unknown IID requested\n\tIID:\t%s\n",xriid);
-    return(E_NOINTERFACE);
-  }
+	{ pObj = (IUnknown *)IShellFolder_Constructor(NULL,NULL);
+	} 
+	else if (IsEqualIID(riid, &IID_IShellView))
+	{ pObj = (IUnknown *)IShellView_Constructor();
+ 	} 
+	else if (IsEqualIID(riid, &IID_IShellLink))
+	{ pObj = (IUnknown *)IShellLink_Constructor();
+	} 
+	else if (IsEqualIID(riid, &IID_IExtractIcon))
+	{ pObj = (IUnknown *)IExtractIcon_Constructor(NULL);
+	} 
+	else if (IsEqualIID(riid, &IID_IContextMenu))
+	{ pObj = (IUnknown *)IContextMenu_Constructor(NULL, NULL, 0);
+ 	} 
+	else
+	{ ERR(shell,"unknown IID requested\n\tIID:\t%s\n",xriid);
+	  return(E_NOINTERFACE);
+	}
 	
-  if (!pObj)
-  { return(E_OUTOFMEMORY);
-  }
+	if (!pObj)
+	{ return(E_OUTOFMEMORY);
+	}
 	 
 	hres = pObj->lpvtbl->fnQueryInterface(pObj,riid, ppObject);
-  pObj->lpvtbl->fnRelease(pObj);
-  TRACE(shell,"-- Object created: (%p)->%p\n",this,*ppObject);
+	pObj->lpvtbl->fnRelease(pObj);
+	TRACE(shell,"-- Object created: (%p)->%p\n",this,*ppObject);
 
-  return hres;
+	return hres;
 }
 /******************************************************************************
  * IClassFactory_LockServer
  */
 static HRESULT WINAPI IClassFactory_LockServer(LPCLASSFACTORY this, BOOL32 fLock)
-{ TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
-  return E_NOTIMPL;
+{	TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
+	return E_NOTIMPL;
 }

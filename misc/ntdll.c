@@ -570,11 +570,8 @@ DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,D
 
 /**************************************************************************
  *                 NTDLL_chkstk   (NTDLL.862)
- *
- * NOTES
- *    Should this be WINAPI?
  */
-void NTDLL_chkstk(void)
+void WINAPI NTDLL_chkstk(void)
 {
     /* FIXME: should subtract %eax bytes from stack pointer */
     FIXME(ntdll, "(void): stub\n");

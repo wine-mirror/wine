@@ -271,7 +271,6 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
     case WM_GETDLGCODE:
         return DLGC_STATIC;
 
-    	return infoPtr->hIcon;
     case STM_GETIMAGE:
     case STM_GETICON16:
     case STM_GETICON32:
@@ -283,6 +282,7 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
         InvalidateRect32( hWnd, NULL, FALSE );
         UpdateWindow32( hWnd );
 	break;
+
     case STM_SETICON16:
     case STM_SETICON32:
         lResult = STATIC_SetIcon( wndPtr, (HICON16)wParam );

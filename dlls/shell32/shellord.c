@@ -416,8 +416,8 @@ BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
  *
  */
 DWORD WINAPI
-SHMapPIDLToSystemImageListIndex(DWORD x,DWORD y,DWORD z)
-{ FIXME(shell,"(%08lx,%08lx,%08lx):stub.\n",x,y,z);
+SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,DWORD y,DWORD z)
+{ FIXME(shell,"(folder=%p,%08lx,%08lx):stub.\n",sh,y,z);
   return 0;
 }
 
@@ -452,15 +452,22 @@ StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
  * SHCloneSpecialIDList [SHELL32.89]
  * 
  * PARAMETERS
- *  hwnd 
+ *  hwndOwner 	[in] 
+ *  nFolder 	[in]	CSIDL_xxxxx ??
+ *
+ * RETURNS
+ *  pidl ??
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHCloneSpecialIDList(HWND32 hwnd,DWORD x2,DWORD x3) {
-  FIXME(shell,"(hwnd=0x%x,0x%lx,0x%lx):stub.\n",
-    hwnd,x2,x3
-  );
-  return S_OK;
+LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND32 hwndOwner,DWORD nFolder,DWORD x3)
+{	LPITEMIDLIST ppidl;
+	WARN(shell,"(hwnd=0x%x,csidl=0x%lx,0x%lx):semi-stub.\n",
+					 hwndOwner,nFolder,x3);
+
+	SHGetSpecialFolderLocation(hwndOwner, nFolder, &ppidl);
+
+	return ppidl;
 }
 
 /*************************************************************************
@@ -484,7 +491,7 @@ BOOL32 WINAPI IsLFNDrive(LPCSTR path) {
  *     exported by ordinal
  */
 void WINAPI SHGetSpecialFolderPath(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
+    FIXME(shell,"(0x%04lx,0x%04lx,csidl=0x%04lx,0x%04lx):stub.\n",
       x1,x2,x3,x4
     );
 }
@@ -513,8 +520,8 @@ void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
  */
 void __cdecl
 ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID arglist) {
-	char	buf[100],buf2[100],*buf3;
-	LPVOID	args = &arglist;
+	char	buf[100],buf2[100]/*,*buf3*/;
+/*	LPVOID	args = &arglist;*/
 
 	if (!LoadString32A(hmod,x,buf,100))
 		strcpy(buf,"Desktop");
@@ -584,11 +591,12 @@ LPSTR WINAPI PathGetExtension(LPSTR path,DWORD y,DWORD z)
  * SHCreateDirectory [SHELL32.165]
  *
  * NOTES
- *     exported by ordinal
+ *  exported by ordinal
+ *  not sure about LPSECURITY_ATTRIBUTES
  */
-DWORD WINAPI SHCreateDirectory(DWORD x,LPCSTR path) {
-	TRACE(shell,"(%08lx,%s):stub.\n",x,path);
-	if (CreateDirectory32A(path,x))
+DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
+	TRACE(shell,"(%p,%s):stub.\n",sec,path);
+	if (CreateDirectory32A(path,sec))
 		return TRUE;
 	/* SHChangeNotify(8,1,path,0); */
 	return FALSE;
@@ -760,7 +768,7 @@ DWORD WINAPI SHAddToRecentDocs32 (UINT32 uFlags,LPCVOID pv)
  *     exported by name
  */
 DWORD WINAPI SHFileOperation32 (
-    LPSHFILEOPSTRUCT32 lpFileOp)   
+    LPSHFILEOPSTRUCT32A lpFileOp)   
 { FIXME (shell,"(%p):stub.\n", lpFileOp);
   return 1;
 }
@@ -794,34 +802,100 @@ HRESULT WINAPI SHCreateShellFolderViewEx32(
 /*************************************************************************
  * SHFind_InitMenuPopup [SHELL32.149]
  *
+ * NOTES
+ *  Registers the menu behind the "Start" button
+ *
+ * PARAMETERS
+ *  hMenu		[in] handel of menu previously created
+ *  hWndParent	[in] parent window
+ *  w			[in] no pointer
+ *  x			[in] no pointer
  */
-HRESULT WINAPI SHFind_InitMenuPopup (DWORD u, DWORD v, DWORD w, DWORD x)
-{ FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x);
-  return 0;
+HRESULT WINAPI SHFind_InitMenuPopup (HMENU32 hMenu, HWND32 hWndParent, DWORD w, DWORD x)
+{	FIXME(shell,"hmenu=0x%08x hwnd=0x%08x 0x%08lx 0x%08lx stub\n",
+		hMenu,hWndParent,w,x);
+	return 0;
+}
+/*************************************************************************
+ * FileMenu_InitMenuPopup [SHELL32.109]
+ *
+ */
+HRESULT WINAPI FileMenu_InitMenuPopup (DWORD hmenu)
+{	FIXME(shell,"hmenu=0x%lx stub\n",hmenu);
+	return 0;
 }
 /*************************************************************************
  * FileMenu_Create [SHELL32.114]
  *
+ * w retval from LoadBitmapA
+ *
+ *
  */
 HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
-{ FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,z);
+{ FIXME(shell,"0x%08lx 0x%08lx hbmp=0x%lx 0x%08lx 0x%08lx stub\n",u,v,w,x,z);
   return 0;
+}
+/*************************************************************************
+ * FileMenu_TrackPopupMenuEx [SHELL32.116]
+ *
+ * PARAMETERS
+ *  uFlags		[in]	according to TrackPopupMenuEx
+ *  posX		[in]
+ *  posY		[in]
+ *  hWndParent		[in]
+ *  z	could be rect (trace) or TPMPARAMS (TrackPopupMenuEx)
+ */
+HRESULT WINAPI FileMenu_TrackPopupMenuEx (DWORD t, DWORD uFlags, DWORD posX, DWORD posY, HWND32 hWndParent, DWORD z)
+{	FIXME(shell,"0x%lx flags=0x%lx posx=0x%lx posy=0x%lx hwndp=0x%x 0x%lx stub\n",
+		t,uFlags,posX,posY, hWndParent,z);
+	return 0;
+}
+/*************************************************************************
+ *  SHWinHelp [SHELL32.127]
+ *
+ */
+HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
+{	FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",v,w,x,z);
+	return 0;
+}
+/*************************************************************************
+ *  SHRunConrolPanel [SHELL32.161]
+ *
+ */
+HRESULT WINAPI SHRunConrolPanel (DWORD x, DWORD z)
+{	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,z);
+	return 0;
 }
 /*************************************************************************
  * ShellExecuteEx [SHELL32.291]
  *
  */
-BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFOA u)
-{ FIXME(shell,"%p stub\n",u);
-  return 0;
+BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
+{ 	CHAR szTemp[MAX_PATH];
+  	FIXME(shell,"%p stub\n",sei);
+
+	if (sei->fMask & SEE_MASK_IDLIST)
+	{ SHGetPathFromIDList32A (sei->lpIDList,szTemp);
+	  TRACE (shell,"-- idlist=%p (%s)\n", sei->lpIDList, szTemp);
+	}
+
+	if (sei->fMask & SEE_MASK_CLASSNAME)
+	{ TRACE (shell,"-- classname= %s\n", sei->lpClass);
+	}
+    
+	if (sei->lpVerb)
+	{ TRACE (shell,"-- action=%s\n", sei->lpVerb);
+	}
+	
+	return 0;
 }
 /*************************************************************************
  * SHSetInstanceExplorer [SHELL32.176]
  *
  */
 HRESULT WINAPI SHSetInstanceExplorer (DWORD u)
-{ FIXME(shell,"0x%08lx stub\n",u);
-  return 0;
+{	FIXME(shell,"0x%08lx stub\n",u);
+	return 0;
 }
 /*************************************************************************
  * SHGetInstanceExplorer [SHELL32.256]
@@ -830,8 +904,8 @@ HRESULT WINAPI SHSetInstanceExplorer (DWORD u)
  *  exported by name
  */
 HRESULT WINAPI SHGetInstanceExplorer (DWORD u)
-{ FIXME(shell,"0x%08lx stub\n",u);
-  return 0;
+{	FIXME(shell,"0x%08lx stub\n",u);
+	return 0;
 }
 /*************************************************************************
  * SHFreeUnusedLibraries [SHELL32.123]
@@ -840,6 +914,43 @@ HRESULT WINAPI SHGetInstanceExplorer (DWORD u)
  *  exported by name
  */
 HRESULT WINAPI SHFreeUnusedLibraries (DWORD u)
+{	FIXME(shell,"0x%08lx stub\n",u);
+	return 0;
+}
+/*************************************************************************
+ * DAD_ShowDragImage [SHELL32.137]
+ *
+ * NOTES
+ *  exported by name
+ */
+HRESULT WINAPI DAD_ShowDragImage (DWORD u)
 { FIXME(shell,"0x%08lx stub\n",u);
   return 0;
+}
+/*************************************************************************
+ * FileMenu_Destroy [SHELL32.118]
+ *
+ * NOTES
+ *  exported by name
+ */
+HRESULT WINAPI FileMenu_Destroy (DWORD u)
+{ FIXME(shell,"0x%08lx stub\n",u);
+  return 0;
+}
+/*************************************************************************
+ * SHGetDataFromIDListA [SHELL32.247]
+ *
+ */
+HRESULT WINAPI SHGetDataFromIDListA(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x,y);
+	return 0;
+}
+/*************************************************************************
+ * SHFileOperationA [SHELL32.243]
+ *
+ */
+HRESULT WINAPI SHFileOperationA(DWORD x)
+{	FIXME(shell,"0x%08lx stub\n",x);
+	return 0;
+
 }

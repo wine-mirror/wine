@@ -36,7 +36,7 @@ type	win16
 33 stub READSTRINGSTREAM
 34 stub WRITESTRINGSTREAM
 35 pascal RegisterDragDrop(word segptr) RegisterDragDrop16
-36 stub REVOKEDRAGDROP
+36 pascal RevokeDragDrop(word) RevokeDragDrop16
 37 stub DODRAGDROP
 38 stub CREATEOLEADVISEHOLDER
 39 stub CREATEDATAADVISEHOLDER

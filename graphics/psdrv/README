@@ -1,8 +1,8 @@
-Wine Postscript Driver
+Wine PostScript Driver
 ======================
 
-When complete this will allow Wine to generate Postscript files without needing
-an external printer driver. It should be possible to print to a non Postscript
+When complete this will allow Wine to generate PostScript files without needing
+an external printer driver. It should be possible to print to a non PostScript
 printer by filtering the output through ghostscript.
 
 
@@ -14,15 +14,15 @@ should be quite easy, I'd just like to improve it first. The driver behaves as
 if it were a DRV file called WINEPS.DRV . To install it as the default printer
 driver add
 
-device=Wine Postscript Driver,WINEPS,LPT1:
+device=Wine PostScript Driver,WINEPS,LPT1:
 
 to the [windows] section of win.ini . You may prefer to add
 
-Wine Postscript Driver=WINEPS,LPT1:
+Wine PostScript Driver=WINEPS,LPT1:
 
 to the [devices] section of win.ini instead.
 
-You will need Adobe Font Metric (AFM) files for the (type 1 Postscript) fonts
+You will need Adobe Font Metric (AFM) files for the (type 1 PostScript) fonts
 that you wish to use. You can get these from
 
 ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles . The directories base17 or
@@ -39,12 +39,15 @@ file=/unix/path/name/filename.afm
 
 for each AFM file that you wish to use. [This might change in the future]
 
-You also require a ppd file for your printer. This describes certain
+You also require a PPD file for your printer. This describes certain
 characteristics of the printer such as which fonts are installed, how to select
 manual feed etc. Adobe also has many of these on its website, have a look in
 ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/
-Put the ppd in the directory from which you start wine and call it default.ppd
+Put the PPD in the directory from which you start wine and call it default.ppd
 [this will definitely change soon].
+
+To enable colour printing you need to have the *ColorDevice entry in the PPD
+set to true, otherwise the driver will generate greyscale.
 
 Note that you need not set printer=on in the [wine] section of wine.conf, this
 enables printing via external printer drivers and does not affect wineps.
@@ -63,20 +66,20 @@ specify whether you have optional extras such as envelope feeders. You will
 therefore find a larger than normal selection of input bins in the print setup
 dialog box. I've only really tested ppd parsing on the hp4m6_v1.ppd file.
 
-Landscape mode probably doesn't quite work yet (this is easy to fix).
-
-Graphics are basically non-existent. Only MoveTo/LineTo/Rectangle with a thin
-black pen.
-
-No colour.
-
-AFM parsing is not finished (or ideal).
+Many graphics functions to do.
 
 No TrueType download.
+
+AdvancedSetup dialog box.
 
 Many partially implemented functions.
 
 ps.c is becoming messy.
+
+No clipping.
+
+Notepad often starts text too far to the left depending on the margin
+settings. However the win3.1 pscript.drv (under wine) also does this.
 
 Probably many more...
 

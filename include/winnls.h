@@ -289,6 +289,9 @@
 #define DATE_LONGDATE          0x00000002  /* use long date picture */
 #define DATE_USE_ALT_CALENDAR  0x00000004  /* use alternate calendar */
                           /* alt. calendar support is broken anyway */
+
+#define TIME_FORCE24HOURFORMAT 0x00000008  /* force 24 hour format*/
+#define TIME_NOTIMEMARKER      0x00000004  /* show no AM/PM */
 #define TIME_NOSECONDS         0x00000002  /* show no seconds */
 #define TIME_NOMINUTESORSECONDS 0x0000001  /* show no minutes either */
 

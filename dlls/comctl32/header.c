@@ -447,7 +447,7 @@ HEADER_SendHeaderNotify (WND *wndPtr, UINT32 code, INT32 iItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(wndPtr);   
     NMHEADERA nmhdr;
-    HD_ITEMA  nmitem;
+    HDITEM32A nmitem;
 
     nmhdr.hdr.hwndFrom = wndPtr->hwndSelf;
     nmhdr.hdr.idFrom = wndPtr->wIDmenu;
@@ -565,13 +565,15 @@ static LRESULT
 HEADER_GetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(wndPtr);
-    HD_ITEMA *phdi;
-    INT32    iItem;
-    UINT32   uMask;
+    HDITEM32A *phdi;
+    INT32     iItem;
+    UINT32    uMask;
 
-    phdi = (HD_ITEMA*)lParam;
+    phdi = (HDITEM32A*)lParam;
     iItem = (INT32)wParam;
 
+    if (phdi == NULL)
+	return FALSE;
     if ((iItem < 0) || (iItem > infoPtr->uNumItem - 1))
         return FALSE;
 
@@ -668,13 +670,12 @@ static LRESULT
 HEADER_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(wndPtr);
-    HD_ITEMA *phdi;
-    HDC32    hdc;
-    INT32    iItem, len;
+    HDITEM32A *phdi = (HDITEM32A*)lParam;
+    INT32     iItem = (INT32)wParam;
+    HDC32     hdc;
+    INT32     len;
 
-    phdi = (HD_ITEMA*)lParam;
-    iItem = (INT32)wParam;
-    
+    if (phdi == NULL) return -1;
     if (iItem < 0) return -1;
     if (iItem > infoPtr->uNumItem)
         iItem = infoPtr->uNumItem;
@@ -796,13 +797,12 @@ static LRESULT
 HEADER_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(wndPtr);
-    HD_ITEMA *phdi;
-    INT32    iItem;
-    HDC32    hdc;
+    HDITEM32A *phdi = (HDITEM32A*)lParam;
+    INT32 iItem = (INT32)wParam;
+    HDC32 hdc;
 
-    phdi = (HD_ITEMA*)lParam;
-    iItem = (INT32)wParam;
-
+    if (phdi == NULL)
+	return FALSE;
     if ((iItem < 0) || (iItem > infoPtr->uNumItem - 1))
         return FALSE;
 
@@ -1221,7 +1221,7 @@ HEADER_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-HeaderWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+HEADER_WindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -1317,7 +1317,7 @@ void HEADER_Register( void )
 
     ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
-    wndClass.lpfnWndProc   = (WNDPROC32)HeaderWindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC32)HEADER_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEADER_INFO *);
     wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);

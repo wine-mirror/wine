@@ -1560,7 +1560,9 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
 {
     LONG *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-
+    STYLESTRUCT style;
+    
+    TRACE(win,"%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
     if (!wndPtr) return 0;
     if (offset >= 0)
     {
@@ -1581,27 +1583,41 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
     }
     else switch(offset)
     {
-        case GWL_ID:
-	    ptr = (DWORD*)&wndPtr->wIDmenu;
-	    break;
-        case GWL_HINSTANCE:
-            return SetWindowWord32( hwnd, offset, newval );
+	case GWL_ID:
+		ptr = (DWORD*)&wndPtr->wIDmenu;
+		break;
+	case GWL_HINSTANCE:
+		return SetWindowWord32( hwnd, offset, newval );
 	case GWL_WNDPROC:
-            retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
-            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
+					retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
+		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
 						type, WIN_PROC_WINDOW );
-            return retval;
+		return retval;
 	case GWL_STYLE:
+		if (wndPtr->flags & WIN_ISWIN32)
+		{	style.styleOld = wndPtr->dwStyle;
+			newval &= ~(WS_VISIBLE | WS_CHILD);	/* Some bits can't be changed this way */
+			style.styleNew = newval | (style.styleOld & (WS_VISIBLE | WS_CHILD));
 
-	    /* FIXME: WM_STYLE... messages for WIN_ISWIN32 windows */
-
-            ptr = &wndPtr->dwStyle;
-            /* Some bits can't be changed this way */
-            newval &= ~(WS_VISIBLE | WS_CHILD);
-            newval |= (*ptr & (WS_VISIBLE | WS_CHILD));
-            break;
-        case GWL_USERDATA: ptr = &wndPtr->userdata; break;
-        case GWL_EXSTYLE:  ptr = &wndPtr->dwExStyle; break;
+			SendMessage32A(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
+			wndPtr->dwStyle = style.styleNew;
+			SendMessage32A(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
+			UpdateWindow32(hwnd);
+			return style.styleOld;
+		}
+        case GWL_USERDATA: 
+		ptr = &wndPtr->userdata; 
+		break;
+        case GWL_EXSTYLE:  
+		if (wndPtr->flags & WIN_ISWIN32)
+		{	style.styleOld = wndPtr->dwExStyle;
+			style.styleNew = newval;
+			SendMessage32A(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
+			wndPtr->dwExStyle = newval;
+			SendMessage32A(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
+			UpdateWindow32(hwnd);
+			return style.styleOld;
+		}
 	default:
             WARN( win, "Invalid offset %d\n", offset );
             return 0;
@@ -1939,9 +1955,7 @@ HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 	    /* FIXME: Create an X counterpart for reparented top-level windows
 	     * when not in the desktop mode. */
      
-	    if ( pWndParent == pWndDesktop ) 
-		 wndPtr->dwStyle &= ~WS_CHILD;
-	    else wndPtr->dwStyle |= WS_CHILD;
+	    if ( pWndParent != pWndDesktop ) wndPtr->dwStyle |= WS_CHILD;
 	    WIN_LinkWindow(hwndChild, HWND_BOTTOM);
 
 	    if( bFixupDCE )

@@ -30,25 +30,25 @@ typedef struct tagTTTOOL_INFO
 
 typedef struct tagTOOLTIPS_INFO
 {
-    CHAR       szTipText[INFOTIPSIZE];
-    BOOL32     bActive;
-    BOOL32     bTrackActive;
-    UINT32     uNumTools;
-    COLORREF   clrBk;
-    COLORREF   clrText;
-    HFONT32    hFont;
-    INT32      xTrackPos;
-    INT32      yTrackPos;
-    INT32      nMaxTipWidth;
-    INT32      nTool;
-    INT32      nOldTool;
-    INT32      nCurrentTool;
-    INT32      nTrackTool;
-    INT32      nAutomaticTime;
-    INT32      nReshowTime;
-    INT32      nAutoPopTime;
-    INT32      nInitialTime;
-    RECT32     rcMargin;
+    CHAR        szTipText[INFOTIPSIZE];
+    BOOL32      bActive;
+    BOOL32      bTrackActive;
+    UINT32      uNumTools;
+    COLORREF    clrBk;
+    COLORREF    clrText;
+    HFONT32     hFont;
+    INT32       xTrackPos;
+    INT32       yTrackPos;
+    INT32       nMaxTipWidth;
+    INT32       nTool;
+    INT32       nOldTool;
+    INT32       nCurrentTool;
+    INT32       nTrackTool;
+    INT32       nAutomaticTime;
+    INT32       nReshowTime;
+    INT32       nAutoPopTime;
+    INT32       nInitialTime;
+    RECT32      rcMargin;
     TTTOOL_INFO *tools;
 } TOOLTIPS_INFO;
 

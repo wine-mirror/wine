@@ -129,6 +129,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
                              DWORD attributes, HANDLE32 template)
 {
     int access_flags, create_flags;
+    HFILE32 to_dup = HFILE_ERROR32; /* handle to dup */
 
     /* Translate the various flags to Unix-style.
      */
@@ -165,12 +166,22 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
         return HFILE_ERROR32;
     }
 
-    /* If the name is either CONIN$ or CONOUT$, give them stdin
+    /* If the name is either CONIN$ or CONOUT$, give them duplicated stdin
      * or stdout, respectively.
      */
-    if(!strcmp(filename, "CONIN$")) return GetStdHandle( STD_INPUT_HANDLE );
-    if(!strcmp(filename, "CONOUT$")) return GetStdHandle( STD_OUTPUT_HANDLE );
+    if(!strcmp(filename, "CONIN$"))
+	to_dup = GetStdHandle( STD_INPUT_HANDLE );
+    else if(!strcmp(filename, "CONOUT$"))
+	to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
 
+    if(to_dup != HFILE_ERROR32)
+    {
+	HFILE32 handle;
+	if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
+			      &handle, access, FALSE, 0 ))
+	    handle = HFILE_ERROR32;
+	return handle;
+    }
     return FILE_Open( filename, access_flags | create_flags );
 }
 

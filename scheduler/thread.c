@@ -42,9 +42,6 @@ const K32OBJ_OPS THREAD_Ops =
     THREAD_Destroy      /* destroy */
 };
 
-/* The pseudohandle used for the current thread, see GetCurrentThread */
-#define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe
-
 /* Is threading code initialized? */
 BOOL32 THREAD_InitDone = FALSE;
 
@@ -56,17 +53,8 @@ BOOL32 THREAD_InitDone = FALSE;
  */
 THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
 {
-    THDB *thread;
-
-    if (handle == CURRENT_THREAD_PSEUDOHANDLE)  /* Self-thread handle */
-    {
-        thread = THREAD_Current();
-        if (server_handle) *server_handle = CURRENT_THREAD_PSEUDOHANDLE;
-        K32OBJ_IncCount( &thread->header );
-    }
-    else thread = (THDB *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                            K32OBJ_THREAD, access, server_handle );
-    return thread;
+    return (THDB *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                    K32OBJ_THREAD, access, server_handle );
 }
 
 

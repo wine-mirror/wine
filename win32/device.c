@@ -3,6 +3,7 @@
  *
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Ulrich Weigand
+ * Copyright 1998 Patrik Stridvall
  *
  */
 
@@ -26,6 +27,9 @@
 #include "debug.h"
 #include "winioctl.h"
 #include "stackframe.h"
+#include "winnt.h"
+#include "msdos.h"
+#include "miscemu.h"
 
 static void DEVICE_Destroy(K32OBJ *dev);
 const K32OBJ_OPS DEVICE_Ops =
@@ -58,6 +62,14 @@ static BOOL32 DeviceIo_VTDAPI(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 			      LPOVERLAPPED lpOverlapped);
 
 static BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
+
+static BOOL32 VxDCall_IFSMgr( DWORD *retv, DWORD service, CONTEXT *context );
+
+static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
 
 /*
  * VxD names are taken from the Win95 DDK
@@ -137,7 +149,7 @@ struct VxDInfo
     { "WINSOCK",  0x003E, NULL, NULL },
     { "WSOCK",    0x003E, NULL, NULL },
     { "WSIPX",    0x003F, NULL, NULL },
-    { "IFSMgr",   0x0040, NULL, NULL },
+    { "IFSMgr",   0x0040, VxDCall_IFSMgr, DeviceIo_IFSMgr },
     { "VCDFSD",   0x0041, NULL, NULL },
     { "MRCI2",    0x0042, NULL, NULL },
     { "PCI",      0x0043, NULL, NULL },
@@ -253,6 +265,143 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
 };
 
 
+/*
+ * IFSMgr VxDCall service
+ */
+
+#define N_IFSMGR_SERVICE 118
+
+LPCSTR IFSMgr_Service_Name[N_IFSMGR_SERVICE] =
+{ 
+    "Get_Version",                 /* 0x0000 */
+    "RegisterMount",               /* 0x0001 */
+    "RegisterNet",                 /* 0x0002 */
+    "RegisterMailSlot",            /* 0x0003 */
+    "Attach",                      /* 0x0004 */
+    "Detach",                      /* 0x0005 */
+    "Get_NetTime",                 /* 0x0006 */
+    "Get_DOSTime",                 /* 0x0007 */
+    "SetupConnection",             /* 0x0008 */
+    "DerefConnection",             /* 0x0009 */
+    "ServerDOSCall",               /* 0x000A */
+    "CompleteAsync",               /* 0x000B */
+    "RegisterHeap",                /* 0x000C */
+    "GetHeap",                     /* 0x000D */
+    "RetHeap",                     /* 0x000E */
+    "CheckHeap",                   /* 0x000F */
+    "CheckHeapItem",               /* 0x0010 */
+    "FillHeapSpare",               /* 0x0011 */
+    "Block",                       /* 0x0012 */
+    "Wakeup",                      /* 0x0013 */
+    "Yield",                       /* 0x0014 */
+    "SchedEvent",                  /* 0x0015 */
+    "QueueEvent",                  /* 0x0016 */
+    "KillEvent",                   /* 0x0017 */
+    "FreeIOReq",                   /* 0x0018 */
+    "MakeMailSlot",                /* 0x0019 */
+    "DeleteMailSlot",              /* 0x001A */
+    "WriteMailSlot",               /* 0x001B */
+    "PopUp",                       /* 0x001C */
+    "printf",                      /* 0x001D */
+    "AssertFailed",                /* 0x001E */
+    "LogEntry",                    /* 0x001F */
+    "DebugMenu",                   /* 0x0020 */
+    "DebugVars",                   /* 0x0021 */
+    "GetDebugString",              /* 0x0022 */
+    "GetDebugHexNum",              /* 0x0023 */
+    "NetFunction",                 /* 0x0024 */
+    "DoDelAllUses",                /* 0x0025 */
+    "SetErrString",                /* 0x0026 */
+    "GetErrString",                /* 0x0027 */
+    "SetReqHook",                  /* 0x0028 */
+    "SetPathHook",                 /* 0x0029 */
+    "UseAdd",                      /* 0x002A */
+    "UseDel",                      /* 0x002B */
+    "InitUseAdd",                  /* 0x002C */
+    "ChangeDir",                   /* 0x002D */
+    "DelAllUses",                  /* 0x002E */
+    "CDROM_Attach",                /* 0x002F */
+    "CDROM_Detach",                /* 0x0030 */
+    "Win32DupHandle",              /* 0x0031 */
+    "Ring0_FileIO",                /* 0x0032 */
+    "Win32_Get_Ring0_Handle",      /* 0x0033 */
+    "Get_Drive_Info",              /* 0x0034 */
+    "Ring0GetDriveInfo",           /* 0x0035 */
+    "BlockNoEvents",               /* 0x0036 */
+    "NetToDosTime",                /* 0x0037 */
+    "DosToNetTime",                /* 0x0038 */
+    "DosToWin32Time",              /* 0x0039 */
+    "Win32ToDosTime",              /* 0x003A */
+    "NetToWin32Time",              /* 0x003B */
+    "Win32ToNetTime",              /* 0x003C */
+    "MetaMatch",                   /* 0x003D */
+    "TransMatch",                  /* 0x003E */
+    "CallProvider",                /* 0x003F */
+    "UniToBCS",                    /* 0x0040 */
+    "UniToBCSPath",                /* 0x0041 */
+    "BCSToUni",                    /* 0x0042 */
+    "UniToUpper",                  /* 0x0043 */
+    "UniCharToOEM",                /* 0x0044 */
+    "CreateBasis",                 /* 0x0045 */
+    "MatchBasisName",              /* 0x0046 */
+    "AppendBasisTail",             /* 0x0047 */
+    "FcbToShort",                  /* 0x0048 */
+    "ShortToFcb",                  /* 0x0049 */
+    "ParsePath",                   /* 0x004A */
+    "Query_PhysLock",              /* 0x004B */
+    "_VolFlush",                   /* 0x004C */
+    "NotifyVolumeArrival",         /* 0x004D */
+    "NotifyVolumeRemoval",         /* 0x004E */
+    "QueryVolumeRemoval",          /* 0x004F */
+    "FSDUnmountCFSD",              /* 0x0050 */
+    "GetConversionTablePtrs",      /* 0x0051 */
+    "CheckAccessConflict",         /* 0x0052 */
+    "LockFile",                    /* 0x0053 */
+    "UnlockFile",                  /* 0x0054 */
+    "RemoveLocks",                 /* 0x0055 */
+    "CheckLocks",                  /* 0x0056 */
+    "CountLocks",                  /* 0x0057 */
+    "ReassignLockFileInst",        /* 0x0058 */
+    "UnassignLockList",            /* 0x0059 */
+    "MountChildVolume",            /* 0x005A */
+    "UnmountChildVolume",          /* 0x005B */
+    "SwapDrives",                  /* 0x005C */
+    "FSDMapFHtoIOREQ",             /* 0x005D */
+    "FSDParsePath",                /* 0x005E */
+    "FSDAttachSFT",                /* 0x005F */
+    "GetTimeZoneBias",             /* 0x0060 */
+    "PNPEvent",                    /* 0x0061 */
+    "RegisterCFSD",                /* 0x0062 */
+    "Win32MapExtendedHandleToSFT", /* 0x0063 */
+    "DbgSetFileHandleLimit",       /* 0x0064 */
+    "Win32MapSFTToExtendedHandle", /* 0x0065 */
+    "FSDGetCurrentDrive",          /* 0x0066 */
+    "InstallFileSystemApiHook",    /* 0x0067 */
+    "RemoveFileSystemApiHook",     /* 0x0068 */
+    "RunScheduledEvents",          /* 0x0069 */
+    "CheckDelResource",            /* 0x006A */
+    "Win32GetVMCurdir",            /* 0x006B */
+    "SetupFailedConnection",       /* 0x006C */
+    "_GetMappedErr",               /* 0x006D */
+    "ShortToLossyFcb",             /* 0x006F */
+    "GetLockState",                /* 0x0070 */
+    "BcsToBcs",                    /* 0x0071 */
+    "SetLoopback",                 /* 0x0072 */
+    "ClearLoopback",               /* 0x0073 */
+    "ParseOneElement",             /* 0x0074 */
+    "BcsToBcsUpper"                /* 0x0075 */
+};
+
+
+/*
+ * IFSMgr DeviceIO service
+ */
+
+#define IFS_IOCTL_21				100
+#define IFS_IOCTL_2F				101
+#define	IFS_IOCTL_GET_RES			102
+#define IFS_IOCTL_GET_NETPRO_NAME_A	103
+
 
 HANDLE32 DEVICE_Open(LPCSTR filename, DWORD access) 
 {
@@ -273,7 +422,7 @@ HANDLE32 DEVICE_Open(LPCSTR filename, DWORD access)
 	    if (!lstrcmpi32A(VxDList[i].name, filename))
 	        break;
 	if (VxDList[i].name)
-	    dev->info = VxDList + i;
+	    dev->info = &VxDList[i];
 	else
 	    FIXME(win32, "Unknown VxD %s\n", filename);
 
@@ -331,17 +480,21 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 	}
 
 	/* Check if this is a user defined control code for a VxD */
-        if( HIWORD( dwIoControlCode ) == 0 )
-        {
-	    if ( dev->info && dev->info->deviceio )
-	        return dev->info->deviceio( dev, dwIoControlCode, 
-                                            lpvInBuffer, cbInBuffer, 
-                                            lpvOutBuffer, cbOutBuffer, 
-                                            lpcbBytesReturned, lpOverlapped );
-
-	    /* FIXME: Set appropriate error */
-	    FIXME( win32, "Unimplemented control %ld for VxD device %s\n", 
-	                  dwIoControlCode, dev->devname );
+	if( HIWORD( dwIoControlCode ) == 0 )
+	{
+		if ( dev->info && dev->info->deviceio )
+		{
+			return dev->info->deviceio( dev, dwIoControlCode, 
+                                        lpvInBuffer, cbInBuffer, 
+                                        lpvOutBuffer, cbOutBuffer, 
+                                        lpcbBytesReturned, lpOverlapped );
+		}
+		else
+		{
+			/* FIXME: Set appropriate error */
+			FIXME( win32, "Unimplemented control %ld for VxD device %s\n", 
+				          dwIoControlCode, dev->devname );
+		}
 	}
 	else
 	{
@@ -685,3 +838,144 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
     return ok;
 }
 
+
+/***********************************************************************
+ *           VxDCall_IFSMgr
+ */
+BOOL32 VxDCall_IFSMgr( DWORD *retv, DWORD service, CONTEXT *context )
+{
+    if (LOWORD(service) < N_IFSMGR_SERVICE)
+        FIXME(win32, "Unimplemented service %s (%08lx)\n",
+                      IFSMgr_Service_Name[LOWORD(service)], service);
+    else
+        FIXME(win32, "Unknown service %08lx\n", service);
+
+	return FALSE;
+}
+
+
+
+/***********************************************************************
+ *           DeviceIo_IFSMgr
+ * NOTES
+ *   The ioctls is used by 'MSNET32.DLL'.
+ *
+ *   I have been unable to uncover any documentation about the ioctls so 
+ *   the implementation of the cases IFS_IOCTL_21 and IFS_IOCTL_2F are
+ *   based on a resonable guesses on information found in the Windows 95 DDK.
+ *   
+ */
+
+struct win32apireq {
+	unsigned long 	ar_proid;
+	unsigned long  	ar_eax;		
+	unsigned long  	ar_ebx;	
+	unsigned long  	ar_ecx;	
+	unsigned long  	ar_edx;	
+	unsigned long  	ar_esi;	
+	unsigned long  	ar_edi;
+	unsigned long  	ar_ebp;		
+	unsigned short 	ar_error;
+	unsigned short  ar_pad;
+};
+
+static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT *pCxt)
+{
+	memset(pCxt,0,sizeof(CONTEXT));
+
+	pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
+	pCxt->Eax = pIn->ar_eax;
+	pCxt->Ebx = pIn->ar_ebx;
+	pCxt->Ecx = pIn->ar_ecx;
+	pCxt->Edx = pIn->ar_edx;
+	pCxt->Esi = pIn->ar_esi;
+	pCxt->Edi = pIn->ar_edi;
+
+	/* FIXME: Only partial CONTEXT_CONTROL */
+	pCxt->Ebp = pIn->ar_ebp;
+
+	/* FIXME: pIn->ar_proid ignored */
+	/* FIXME: pIn->ar_error ignored */
+	/* FIXME: pIn->ar_pad ignored */
+}
+
+static void CONTEXT_2_win32apieq(CONTEXT *pCxt,struct win32apireq *pOut)
+{
+	memset(pOut,0,sizeof(struct win32apireq));
+
+	pOut->ar_eax = pCxt->Eax;
+	pOut->ar_ebx = pCxt->Ebx;
+	pOut->ar_ecx = pCxt->Ecx;
+	pOut->ar_edx = pCxt->Edx;
+	pOut->ar_esi = pCxt->Esi;
+	pOut->ar_edi = pCxt->Edi;
+
+	/* FIXME: Only partial CONTEXT_CONTROL */
+	pOut->ar_ebp = pCxt->Ebp;
+
+	/* FIXME: pOut->ar_proid ignored */
+	/* FIXME: pOut->ar_error ignored */
+	/* FIXME: pOut->ar_pad ignored */
+}
+
+static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+    BOOL32 retv = TRUE;
+	TRACE(win32,"(%p,%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+			dev,dwIoControlCode,
+			lpvInBuffer,cbInBuffer,
+			lpvOutBuffer,cbOutBuffer,
+			lpcbBytesReturned,
+			lpOverlapped);
+
+    switch (dwIoControlCode)
+    {
+	case IFS_IOCTL_21:
+	case IFS_IOCTL_2F:{
+		CONTEXT cxt;
+		struct win32apireq *pIn=(struct win32apireq *) lpvInBuffer;
+		struct win32apireq *pOut=(struct win32apireq *) lpvOutBuffer;
+
+		TRACE(win32,
+			"Control '%s': "
+			"proid=0x%08lx, eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
+			"edx=0x%08lx, esi=0x%08lx, edi=0x%08lx, ebp=0x%08lx, "
+			"error=0x%04x, pad=0x%04x\n",
+			(dwIoControlCode==IFS_IOCTL_21)?"IFS_IOCTL_21":"IFS_IOCTL_2F",
+			pIn->ar_proid, pIn->ar_eax, pIn->ar_ebx, pIn->ar_ecx,
+			pIn->ar_edx, pIn->ar_esi, pIn->ar_edi, pIn->ar_ebp,
+			pIn->ar_error, pIn->ar_pad
+		);				
+		
+		win32apieq_2_CONTEXT(pIn,&cxt);
+
+		if(dwIoControlCode==IFS_IOCTL_21)
+		{
+			DOS3Call(&cxt); /* Call int 21h */
+		} else {
+			INT_Int2fHandler(&cxt); /* Call int 2Fh */
+		}
+		
+		CONTEXT_2_win32apieq(&cxt,pOut);
+			
+        retv = TRUE;
+	} break;
+	case IFS_IOCTL_GET_RES:{
+        FIXME(win32, "Control 'IFS_IOCTL_GET_RES' not implemented\n");
+        retv = FALSE;
+	} break;
+	case IFS_IOCTL_GET_NETPRO_NAME_A:{
+        FIXME(win32, "Control 'IFS_IOCTL_GET_NETPRO_NAME_A' not implemented\n");
+        retv = FALSE;
+	} break;	 
+    default:
+        FIXME(win32, "Control %ld not implemented\n", dwIoControlCode);
+        retv = FALSE;
+    }
+
+    return retv;
+}

@@ -384,11 +384,3 @@ extern BOOL32 REGION_LPTODP( HDC32 hdc, HRGN32 hDest, HRGN32 hSrc );
 #endif  /* __WINE_REGION_H */
 
 
-
-
-
-
-
-
-
-

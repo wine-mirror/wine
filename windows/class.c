@@ -1102,8 +1102,8 @@ BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
     TRACE(class,"%x %p %p\n",hInstance, name, wc);
     
     if (!(atom = GlobalFindAtom32A( name )) ||
-        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (hInstance != classPtr->hInstance)) return FALSE;
+        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) 
+	/*|| (hInstance != classPtr->hInstance) */ ) return FALSE;
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC32)WINPROC_GetProc( classPtr->winproc,
                                                     WIN_PROC_32A );

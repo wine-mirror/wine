@@ -39,14 +39,17 @@ extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DPLAYX_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MSNET32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR NTDLL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLE32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLEAUT32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLECLI32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR OLEDLG_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLESVR32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR RASAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR SHELL32_Descriptor;
@@ -73,14 +76,17 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &DPLAYX_Descriptor,   TRUE  },
     { &DSOUND_Descriptor,   TRUE  },
     { &GDI32_Descriptor,    TRUE  },
+    { &IMM32_Descriptor,    FALSE },
     { &KERNEL32_Descriptor, TRUE  },
     { &LZ32_Descriptor,     TRUE  },
     { &MPR_Descriptor,      TRUE  },
+    { &MSNET32_Descriptor,  FALSE },
     { &MSVFW32_Descriptor,  FALSE },
     { &NTDLL_Descriptor,    TRUE  },
     { &OLE32_Descriptor,    FALSE },
     { &OLEAUT32_Descriptor, FALSE },
     { &OLECLI32_Descriptor, FALSE },
+    { &OLEDLG_Descriptor,   FALSE },
     { &OLESVR32_Descriptor, FALSE },
     { &RASAPI32_Descriptor, FALSE },
     { &SHELL32_Descriptor,  TRUE  },

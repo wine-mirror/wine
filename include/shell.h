@@ -93,6 +93,7 @@ typedef struct _NOTIFYICONDATA {
 /****************************************************************************
 * SHITEMID, ITEMIDLIST, PIDL API 
 */
+#pragma pack(1)
 typedef struct 
 { WORD		cb;	/* nr of bytes in this item */
   BYTE		abID[1];/* first byte in this item */
@@ -101,10 +102,12 @@ typedef struct
 typedef struct 
 { SHITEMID mkid; /* first itemid in list */
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
+#pragma pack(4)
 
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST iil1,LPCITEMIDLIST iil2);
+LPITEMIDLIST WINAPI ILFindLastID(LPITEMIDLIST pidl);
 DWORD WINAPI ILGetSize(LPITEMIDLIST pidl);
 
 DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath);
@@ -161,12 +164,10 @@ typedef struct _SHFILEOPSTRUCTW
   LPCWSTR         lpszProgressTitle;
 } SHFILEOPSTRUCT32W, *LPSHFILEOPSTRUCT32W;
 
-typedef SHFILEOPSTRUCT32A SHFILEOPSTRUCT32;
-typedef LPSHFILEOPSTRUCT32A LPSHFILEOPSTRUCT32;
+#define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
+#define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
 
-DECL_WINELIB_TYPE_AW(SHFILEOPSTRUCT)
-
-DWORD WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32 lpFileOp);
+DWORD WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32A lpFileOp);
 
 /****************************************************************************
 * APPBARDATA 
@@ -216,6 +217,10 @@ DWORD WINAPI SHChangeNotifyDeregister(LONG x1,LONG x2);
 DWORD WINAPI SHAddToRecentDocs(UINT32 uFlags, LPCVOID pv);
 
 /****************************************************************************
+* SHGetSpecialFolderLocation API
+*/
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
+/****************************************************************************
 *  string and path functions
 */
 LPSTR WINAPI PathAddBackslash(LPSTR path);	
@@ -252,5 +257,6 @@ DWORD WINAPI SHFree(LPVOID x);
 #define	CSIDL_NETHOOD		0x0013
 #define	CSIDL_FONTS		0x0014
 #define	CSIDL_TEMPLATES		0x0015
+
 
 #endif  /* __WINE_SHELL_H */

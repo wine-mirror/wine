@@ -7,7 +7,6 @@
 #include <assert.h>
 
 #include "win.h"
-#include "commctrl.h"
 #include "button.h"
 #include "static.h"
 #include "scroll.h"

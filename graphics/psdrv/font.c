@@ -37,7 +37,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
         it = TRUE;
     if(lf->lfWeight > 550)
         bd = TRUE;
-    lstrcpy32A(FaceName, lf->lfFaceName);
+    strcpy(FaceName, lf->lfFaceName);
     
     if(FaceName[0] == '\0') {
         switch(lf->lfPitchAndFamily & 0xf0) {
@@ -45,16 +45,16 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 	    break;
 	case FF_ROMAN:
 	case FF_SCRIPT:
-	    lstrcpy32A(FaceName, "Times");
+	    strcpy(FaceName, "Times");
 	    break;
 	case FF_SWISS:
-	    lstrcpy32A(FaceName, "Helvetica");
+	    strcpy(FaceName, "Helvetica");
 	    break;
 	case FF_MODERN:
-	    lstrcpy32A(FaceName, "Courier");
+	    strcpy(FaceName, "Courier");
 	    break;
 	case FF_DECORATIVE:
-	    lstrcpy32A(FaceName, "Symbol");
+	    strcpy(FaceName, "Symbol");
 	    break;
 	}
     }
@@ -62,23 +62,25 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     if(FaceName[0] == '\0') {
         switch(lf->lfPitchAndFamily & 0x0f) {
 	case VARIABLE_PITCH:
-	    lstrcpy32A(FaceName, "Times");
+	    strcpy(FaceName, "Times");
 	    break;
 	default:
-	    lstrcpy32A(FaceName, "Courier");
+	    strcpy(FaceName, "Courier");
 	    break;
 	}
     }
 
+    TRACE(psdrv, "Trying to find facename '%s'\n", FaceName);
+
     for(family = physDev->pi->Fonts; family; family = family->next) {
-        if(!lstrncmp32A(FaceName, family->FamilyName, 
-			                         strlen(family->FamilyName)))
+        if(!strcmp(FaceName, family->FamilyName))
 	    break;
     }
     if(!family)
         family = physDev->pi->Fonts;
 
-    
+    TRACE(psdrv, "Got family '%s'\n", family->FamilyName);
+
     for(afmle = family->afmlist; afmle; afmle = afmle->next) {
         if( (bd == (afmle->afm->Weight == FW_BOLD)) && 
 	    (it == (afmle->afm->ItalicAngle != 0.0)) )
@@ -165,8 +167,8 @@ BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
     width = 0.0;
 
     for(i = 0; i < count && str[i]; i++) {
-        width += physDev->font.afm->CharWidths[ (UINT32)str[i] ];
-	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);
+        width += physDev->font.afm->CharWidths[ *((unsigned char *)str + i) ];
+/*	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);*/
     }
     width *= physDev->font.scale;
     TRACE(psdrv, "Width after scale (%f) is %f\n", physDev->font.scale, width);
@@ -182,11 +184,17 @@ BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 BOOL32 PSDRV_SetFont( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    BOOL32 ReEncode = FALSE;
 
+    PSDRV_WriteSetColor(dc, &physDev->font.color);
     if(physDev->font.set) return TRUE;
 
-    PSDRV_WriteReencodeFont(dc);
-    PSDRV_WriteSetFont(dc);
+    if(physDev->font.afm->EncodingScheme && 
+       !strcmp(physDev->font.afm->EncodingScheme, "AdobeStandardEncoding"))
+        ReEncode = TRUE;
+    if(ReEncode)
+        PSDRV_WriteReencodeFont(dc);
+    PSDRV_WriteSetFont(dc, ReEncode);
     physDev->font.set = TRUE;
     return TRUE;
 }
@@ -218,7 +226,7 @@ static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     pTM->tmPitchAndFamily |= TMPF_DEVICE;
     plf->lfPitchAndFamily = 0;
 
-    lstrcpyn32A( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
+    strncpy( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
 #undef plf
 
     pTM->tmAscent = pafm->FullAscender * scale;
@@ -252,7 +260,7 @@ BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     if( plf->lfFaceName[0] ) {
         TRACE(psdrv, "lfFaceName = '%s'\n", plf->lfFaceName);
         for(family = physDev->pi->Fonts; family; family = family->next) {
-            if(!lstrncmp32A(plf->lfFaceName, family->FamilyName, 
+            if(!strncmp(plf->lfFaceName, family->FamilyName, 
 			strlen(family->FamilyName)))
 	        break;
 	}

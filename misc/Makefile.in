@@ -15,7 +15,7 @@ C_SRCS = \
 	ddeml.c \
 	debugstr.c \
 	error.c \
-	imagelist.c \
+	imm.c \
 	lstr.c \
 	lzexpand.c \
 	main.c \

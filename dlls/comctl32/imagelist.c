@@ -1921,8 +1921,10 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     if (hdcImage)
 	DeleteDC32 (hdcImage);
 
+//    FIXME (imagelist, "deleting hbmColor!\n");
     if (ii.hbmColor)
 	DeleteObject32 (ii.hbmColor);
+//    FIXME (imagelist, "deleted hbmColor!\n");
     if (ii.hbmMask)
 	DeleteObject32 (ii.hbmMask);
 

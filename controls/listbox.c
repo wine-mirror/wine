@@ -312,7 +312,7 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
     GetClientRect32( wnd->hwndSelf, &rect );
     descr->width  = rect.right - rect.left;
     descr->height = rect.bottom - rect.top;
-    if (!(descr->style & LBS_NOINTEGRALHEIGHT))
+    if (!(descr->style & LBS_NOINTEGRALHEIGHT) && !IS_OWNERDRAW(descr))
     {
         if ((descr->height > descr->item_height) &&
             (descr->height % descr->item_height))

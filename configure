@@ -3397,6 +3397,7 @@ Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile
+dlls/comctl32/Makefile
 dlls/shell32/Makefile
 documentation/Makefile
 files/Makefile
@@ -3534,6 +3535,7 @@ Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile
+dlls/comctl32/Makefile
 dlls/shell32/Makefile
 documentation/Makefile
 files/Makefile

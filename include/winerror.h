@@ -13,7 +13,8 @@ extern int WIN32_LastError;
     ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #define MAKE_SCODE(sev,fac,code) \
         ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
-
+#define SUCCEEDED(stat) ((HRESULT)(stat)>=0)
+#define FAILED(stat) ((HRESULT)(stat)<0)
 
 /* ERROR_UNKNOWN is a placeholder for error conditions which haven't
  * been tested yet so we're not exactly sure what will be returned.
@@ -59,6 +60,7 @@ extern int WIN32_LastError;
 #define ERROR_NOT_OWNER             288
 #define ERROR_TOO_MANY_POSTS        298
 #define ERROR_INVALID_ADDRESS       487
+#define ERROR_INVALID_ACCESS_TO_MEM 998 
 #define ERROR_CAN_NOT_COMPLETE      1003
 #define ERROR_BADKEY                1010 /* Config reg key invalid */
 #define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */

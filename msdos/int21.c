@@ -732,6 +732,7 @@ static int INT21_FindFirstFCB( CONTEXT *context )
     if (*fcb == 0xff) pFCB = (FINDFILE_FCB *)(fcb + 7);
     else pFCB = (FINDFILE_FCB *)fcb;
     drive = DOS_GET_DRIVE( pFCB->drive );
+    if (!DRIVE_IsValid( drive )) return 0;
     root = DRIVE_GetRoot( drive );
     cwd  = DRIVE_GetUnixCwd( drive );
     pFCB->unixPath = HeapAlloc( GetProcessHeap(), 0,
@@ -894,6 +895,21 @@ INT21_networkfunc (CONTEXT *context)
      }
 }
 
+static void INT21_SetCurrentPSP(CONTEXT *context)
+{
+/* FIXME - What is this MZ stuff and what if it isn't supported?? */
+#ifdef MZ_SUPPORTED
+    TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
+    
+    GlobalUnlock16( GetCurrentTask() );
+    if (pModule->lpDosTask)
+        pModule->lpDosTask->psp_seg = BX_reg(context);
+#else
+    FIXME(int21, "MZ Not Supported.\n");
+#endif
+}
+    
 static WORD INT21_GetCurrentPSP()
 {
 #ifdef MZ_SUPPORTED
@@ -1189,8 +1205,13 @@ void WINAPI DOS3Call( CONTEXT *context )
 	      (AL_reg(context) == 0x00)?"OEM number":"version flag");
         AX_reg(context) = (HIWORD(GetVersion16()) >> 8) |
                           (HIWORD(GetVersion16()) << 8);
-        BX_reg(context) = 0x0012;     /* 0x123456 is Wine's serial # */
-        CX_reg(context) = 0x3456;
+#if 0
+        AH_reg(context) = 0x7;
+        AL_reg(context) = 0xA;
+#endif
+
+        BX_reg(context) = 0x00FF;     /* 0x123456 is Wine's serial # */
+        CX_reg(context) = 0x0000;
         break;
 
     case 0x31: /* TERMINATE AND STAY RESIDENT */
@@ -1554,10 +1575,21 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x48: /* ALLOCATE MEMORY */
         TRACE(int21,"ALLOCATE MEMORY for %d paragraphs\n", BX_reg(context));
         {
-            LPVOID *mem = DOSMEM_GetBlock(0,BX_reg(context)<<4,NULL);
+            LPVOID *mem; 
+	    if (ISV86(context))
+	      {
+		mem= DOSMEM_GetBlock(0,(DWORD)BX_reg(context)<<4,NULL);
             if (mem)
                 AX_reg(context) = DOSMEM_MapLinearToDos(mem)>>4;
-            else {
+	      }
+	    else
+	      {
+		mem = (LPVOID)GlobalDOSAlloc(BX_reg(context)<<4);
+		if (mem)
+		  AX_reg(context) = (DWORD)mem&0xffff;
+	      }
+	    if (!mem)
+	      {
                 SET_CFLAG(context);
                 AX_reg(context) = 0x0008; /* insufficient memory */
                 BX_reg(context) = DOSMEM_Available(0)>>4;
@@ -1567,15 +1599,29 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     case 0x49: /* FREE MEMORY */
         TRACE(int21,"FREE MEMORY segment %04lX\n", ES_reg(context));
-        if (!DOSMEM_FreeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4)))
         {
+	  BOOL32 ret;
+	  if (ISV86(context))
+	    ret= DOSMEM_FreeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4));
+	  else
+	    {
+	      ret = !GlobalDOSFree(ES_reg(context));
+	      /* If we don't reset ES_reg, we will fail in the relay code */
+	      ES_reg(context)=ret;
+	    }
+	  if (!ret)
+	    {
+	      TRACE(int21,"FREE MEMORY failed\n");
             SET_CFLAG(context);
             AX_reg(context) = 0x0009; /* memory block address invalid */
         }
+	}
         break;
 
     case 0x4a: /* RESIZE MEMORY BLOCK */
         TRACE(int21,"RESIZE MEMORY segment %04lX to %d paragraphs\n", ES_reg(context), BX_reg(context));
+	if (!ISV86(context))
+	  FIXME(int21,"RESIZE MEMORY probably insufficent implementation. Expect crash soon\n");
 	{
 	    LPVOID *mem = DOSMEM_ResizeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4),
 					       BX_reg(context)<<4,NULL);
@@ -1624,7 +1670,11 @@ void WINAPI DOS3Call( CONTEXT *context )
         }
         else AX_reg(context) = 0;  /* OK */
         break;
-
+    case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
+        TRACE(int21, "SET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
+        /* FIXME: Is this right? */
+        INT21_SetCurrentPSP(context);
+        break;
     case 0x51: /* GET PSP ADDRESS */
         TRACE(int21,"GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
         /* FIXME: should we return the original DOS PSP upon */

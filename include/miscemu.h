@@ -14,6 +14,9 @@
 extern HANDLE16 DOSMEM_BiosSeg;
 extern DWORD DOSMEM_CollateTable;
 
+extern DWORD DOSMEM_ErrorCall;
+extern DWORD DOSMEM_ErrorBuffer;
+
 extern BOOL32 DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(void);
 extern WORD   DOSMEM_AllocSelector(WORD);
@@ -29,6 +32,7 @@ extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 /* msdos/interrupts.c */
 extern FARPROC16 INT_GetHandler( BYTE intnum );
 extern void INT_SetHandler( BYTE intnum, FARPROC16 handler );
+extern int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context );
 
 /* msdos/ioports.c */
 extern void IO_port_init (void);
@@ -38,6 +42,9 @@ extern void IO_outport( int port, int count, DWORD value );
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
 extern void WINAPI INT_Int1aHandler(CONTEXT*);
+
+/* msdos/int20.c */
+extern void WINAPI INT_Int20Handler(CONTEXT*);
 
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT*);

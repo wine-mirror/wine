@@ -229,18 +229,6 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 		FIXME(snoop,"entrypoint 0x%08lx not found\n",entry);
 		return; /* oops */
 	}
-	/* guess cdecl ... */
-	if (fun->nrofargs<0) {
-		/* Typical cdecl return frame is:
-		 * 	add esp, xxxxxxxx 
-		 * which has (for xxxxxxxx up to 255 the opcode "83 C4 xx".
-		 */
-		LPBYTE	reteip = (LPBYTE)PTR_SEG_TO_LIN(CALLER1REF);
-
-		if ((reteip[0]==0x83)&&(reteip[1]==0xc4))
-			fun->nrofargs=reteip[2]/2;
-	}
-
 	while (*rets) {
 		for (i=0;i<sizeof((*rets)->entry)/sizeof((*rets)->entry[0]);i++)
 			if (!(*rets)->entry[i].origreturn)
@@ -273,7 +261,8 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	if(!ret->show) return;
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
-		max = fun->nrofargs; if (max>16) max=16;
+		max = fun->nrofargs;
+		if (max>16) max=16;
 		for (i=max;i--;)
 			DPRINTF("%04x%s",*(WORD*)(PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8+sizeof(WORD)*i),i?",":"");
 		if (max!=fun->nrofargs)
@@ -294,8 +283,9 @@ void WINAPI SNOOP16_Return(CONTEXT *context) {
 	 * will be the difference between orig and current SP
 	 * If pascal -> everything ok.
 	 */
-	if (ret->dll->funs[ret->ordinal].nrofargs<0)
+	if (ret->dll->funs[ret->ordinal].nrofargs<0) {
 		ret->dll->funs[ret->ordinal].nrofargs=(SP_reg(context)-ret->origSP-4)/2;
+	}
 	IP_reg(context) = LOWORD(ret->origreturn);
 	CS_reg(context) = HIWORD(ret->origreturn);
 	if(!ret->show) {
@@ -305,10 +295,15 @@ void WINAPI SNOOP16_Return(CONTEXT *context) {
 
 		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
-		if (max>16) max=16;
+		if (max>16)
+			max=16;
+		if (max<0) 
+			max=0;
 
 		for (i=max;i--;)
 			DPRINTF("%04x%s",ret->args[i],i?",":"");
+		if (max!=ret->dll->funs[ret->ordinal].nrofargs)
+			DPRINTF(" ...");
 		DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
 			DX_reg(context),AX_reg(context),HIWORD(ret->origreturn),LOWORD(ret->origreturn)
 		);

@@ -22,12 +22,14 @@ asm(".org 0x110000");
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/vm86.h>
-#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
-/* FIXME: hack because libc vm86 may be the old syscall version */
+ /* FIXME: hack because libc vm86 may be the old syscall version */
+
+#define SYS_vm86   166
+
 static __inline__ int vm86plus( int func, struct vm86plus_struct *ptr )
 {
     int res;

@@ -77,9 +77,9 @@ init	ComCtl32LibMain
  69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
  70 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
  71 stdcall Alloc(long) COMCTL32_Alloc
- 72 stdcall ReAlloc(long long) COMCTL32_ReAlloc
- 73 stdcall Free(long) COMCTL32_Free
- 74 stdcall GetSize(long) COMCTL32_GetSize
+ 72 stdcall ReAlloc(ptr long) COMCTL32_ReAlloc
+ 73 stdcall Free(ptr) COMCTL32_Free
+ 74 stdcall GetSize(ptr) COMCTL32_GetSize
  75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
  76 stdcall ImageList_SetFilter(ptr long long) ImageList_SetFilter
  77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
@@ -94,19 +94,19 @@ init	ComCtl32LibMain
  86 stub UninitializeFlatSB
  87 stub _TrackMouseEvent
 
-151 stub CreateMRUList
-152 stub FreeMRUList
-153 stub AddMRUStringA
-154 stub EnumMRUListA
-155 stub FindMRUStringA
-156 stub DelMRUString
+151 stdcall CreateMRUListA(long) CreateMRUList32A
+152 stub FreeMRUList@4
+153 stub AddMRUStringA@8
+154 stub EnumMRUListA@16
+155 stub FindMRUStringA@12
+156 stub DelMRUString@8
 157 stub COMCTL32_157
 
 163 stub CreatePage
 164 stub CreateProxyPage
 
-167 stub AddMRUData
-169 stub FindMRUData
+167 stub AddMRUData@12
+169 stub FindMRUData@16
 
 233 stub Str_GetPtrA
 234 stdcall Str_SetPtrA(long long) COMCTL32_Str_SetPtrA
@@ -116,24 +116,23 @@ init	ComCtl32LibMain
 320 stdcall DSA_Create(long long) DSA_Create
 321 stdcall DSA_Destroy(ptr) DSA_Destroy
 322 stdcall DSA_GetItem(ptr long long) DSA_GetItem
-323 stdcall DSA_GetItemPtr(long long) DSA_GetItemPtr
-324 stdcall DSA_InsertItem(long long long) DSA_InsertItem
-325 stdcall DSA_SetItem (long long long) DSA_SetItem
-326 stdcall DSA_DeleteItem(long long) DSA_DeleteItem
-327 stub DSA_DeleteAllItems
-
+323 stdcall DSA_GetItemPtr(ptr long) DSA_GetItemPtr
+324 stdcall DSA_InsertItem(ptr long long) DSA_InsertItem
+325 stdcall DSA_SetItem (ptr long long) DSA_SetItem
+326 stdcall DSA_DeleteItem(ptr long) DSA_DeleteItem
+327 stdcall DSA_DeleteAllItems(ptr) DSA_DeleteAllItems
 328 stdcall DPA_Create(long) DPA_Create
-329 stub DPA_Destroy
-330 stub DPA_Grow
-331 stub DPA_Clone
-332 stdcall DPA_GetPtr(long long) DPA_GetPtr
-333 stub DPA_GetPtrIndex
-334 stdcall DPA_InsertPtr(long long long) DPA_InsertPtr
-335 stub DPA_SetPtr
-336 stub DPA_DeletePtr
-337 stub DPA_DeleteAllPtrs
-338 stub DPA_Sort
-339 stub DPA_Search
+329 stdcall DPA_Destroy(ptr) DPA_Destroy
+330 stdcall DPA_Grow(ptr long) DPA_Grow
+331 stdcall DPA_Clone(ptr ptr) DPA_Clone
+332 stdcall DPA_GetPtr(ptr long) DPA_GetPtr
+333 stdcall DPA_GetPtrIndex(ptr ptr) DPA_GetPtrIndex
+334 stdcall DPA_InsertPtr(ptr long ptr) DPA_InsertPtr
+335 stdcall DPA_SetPtr(ptr long ptr) DPA_SetPtr
+336 stdcall DPA_DeletePtr(ptr long) DPA_DeletePtr
+337 stdcall DPA_DeleteAllPtrs(ptr) DPA_DeleteAllPtrs
+338 stdcall DPA_Sort(ptr ptr long) DPA_Sort
+339 stdcall DPA_Search(ptr ptr long ptr long long) DPA_Search
 340 stdcall DPA_CreateEx(long long) DPA_CreateEx
 341 stdcall SendNotify(long long long long) COMCTL32_SendNotify
 342 stub SendNotifyEx
@@ -163,12 +162,12 @@ init	ComCtl32LibMain
 373 stub StrRStrIW
 374 stub StrCSpnIA
 375 stub StrCSpnIW
-376 stub IntlStrEqWorkerA
-377 stub IntlStrEqWorkerW
+376 stub IntlStrEqWorkerA@16
+377 stub IntlStrEqWorkerW@16
 
-382 stub SmoothScrollWindow
-383 stub DoReaderMode
-384 stub SetPathWordBreakProc
+382 stub SmoothScrollWindow@4
+383 stub DoReaderMode@4
+384 stub SetPathWordBreakProc@8
 385 stub COMCTL32_385
 386 stub COMCTL32_386
 387 stub COMCTL32_387
@@ -176,10 +175,10 @@ init	ComCtl32LibMain
 389 stub COMCTL32_389
 390 stub COMCTL32_390
 
-400 stub COMCTL32_400
-401 stub COMCTL32_401
-402 stub COMCTL32_402
-403 stub COMCTL32_403
+400 stub CreateMRUListW@4
+401 stub AddMRUStringW@8
+402 stub FindMRUStringW@12
+403 stub EnumMRUListW@16
 404 stub COMCTL32_404
 
 410 stub COMCTL32_410

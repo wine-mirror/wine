@@ -79,6 +79,9 @@ static char	*DOSMEM_dosmem;
 
        DWORD 	 DOSMEM_CollateTable;
 
+       DWORD	 DOSMEM_ErrorCall;
+       DWORD	 DOSMEM_ErrorBuffer;
+
 /* use 2 low bits of 'size' for the housekeeping */
 
 #define DM_BLOCK_DEBUG		0xABE00000
@@ -186,6 +189,60 @@ static void DOSMEM_InitCollateTable()
 }
 
 /***********************************************************************
+ *           DOSMEM_InitErrorTable
+ *
+ * Initialises the error tables (DOS 5+)
+ */
+static void DOSMEM_InitErrorTable()
+{
+	DWORD		x;
+	char 		*call;
+
+        /* We will use a snippet of real mode code that calls */
+        /* a WINE-only interrupt to handle moving the requested */
+        /* message into the buffer... */
+
+        /* FIXME - There is still something wrong... */
+
+        /* FIXME - Find hex values for opcodes...
+           
+           (On call, AX contains message number
+                     DI contains 'offset' (??)
+            Resturn, ES:DI points to counted string )
+
+           PUSH BX
+           MOV BX, AX
+           MOV AX, (arbitrary subfunction number)
+           INT (WINE-only interrupt)
+           POP BX
+           RET
+
+        */
+           
+        const int	code = 4;	
+        const int	buffer = 80; 
+        const int 	SIZE_TO_ALLOCATE = code + buffer;
+
+        /* FIXME - Complete rewrite of the table system to save */
+        /* precious DOS space. Now, we return the 0001:???? as */
+        /* DOS 4+ (??, it seems to be the case in MS 7.10) treats that */
+        /* as a special case and programs will use the alternate */
+        /* interface (a farcall returned with INT 24 (AX = 0x122e, DL = */
+        /* 0x08) which lets us have a smaller memory footprint anyway. */
+ 
+ 	x = GlobalDOSAlloc(SIZE_TO_ALLOCATE);  
+
+	DOSMEM_ErrorCall = MAKELONG(0,(x>>16));
+        DOSMEM_ErrorBuffer = DOSMEM_ErrorCall + code;
+
+	call = DOSMEM_MapRealToLinear(DOSMEM_ErrorCall);
+
+        memset(call, 0, SIZE_TO_ALLOCATE);
+
+        /* Fixme - Copy assembly into buffer here */        
+}
+
+/***********************************************************************
  *           DOSMEM_InitMemory
  *
  * Initialises the DOS memory structures.
@@ -245,6 +302,7 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_FillBiosSegment();
         DOSMEM_InitMemory(0);
         DOSMEM_InitCollateTable();
+        DOSMEM_InitErrorTable();
     }
     else
         DOSMEM_InitMemory(hModule);

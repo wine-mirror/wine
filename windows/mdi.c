@@ -259,7 +259,7 @@ static LRESULT MDIRefreshMenu( HWND32 hwnd, HMENU32 hmenuFrame,
     TRACE(mdi, "%04x %04x %04x\n",
                 hwnd, hmenuFrame, hmenuWindow);
 
-    FIXME(mdi,"partially function stub");
+    FIXME(mdi,"partial function stub\n");
 
     return oldFrameMenu;
 }
@@ -1600,7 +1600,6 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
 {
     RECT32 childRect, clientRect;
     INT32  vmin, vmax, hmin, hmax, vpos, hpos;
-    BOOL32 noscroll = FALSE;
     WND *pWnd, *Wnd;
 
     if (!(Wnd = pWnd = WIN_FindWndPtr( hwnd ))) return;
@@ -1608,11 +1607,14 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
     SetRectEmpty32( &childRect );
 
     for ( pWnd = pWnd->child; pWnd; pWnd = pWnd->next )
-	{
-          UnionRect32( &childRect, &pWnd->rectWindow, &childRect );
+    {
 	  if( pWnd->dwStyle & WS_MAXIMIZE )
-	      noscroll = TRUE;
-	} 
+	  {
+	      ShowScrollBar32(hwnd, SB_BOTH, FALSE);
+	      return;
+	  }
+	  UnionRect32( &childRect, &pWnd->rectWindow, &childRect );
+    } 
     UnionRect32( &childRect, &clientRect, &childRect );
 
     /* jump through the hoops to prevent excessive flashing 
@@ -1623,11 +1625,8 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
     vmin = childRect.top; vmax = childRect.bottom - clientRect.bottom;
     vpos = clientRect.top - childRect.top;
 
-    if( noscroll )
-	ShowScrollBar32(hwnd, SB_BOTH, FALSE);
-    else
     switch( scroll )
-      {
+    {
 	case SB_HORZ:
 			vpos = hpos; vmin = hmin; vmax = hmax;
 	case SB_VERT:
@@ -1639,7 +1638,7 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
 						  hmin, hmax, hpos);
 			SetWindowPos32(hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                                        | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-      }    
+    }    
 }
 
 

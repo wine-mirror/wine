@@ -1585,7 +1585,7 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
         TRACE(key, "(%s, %04X, %08lX)\n",
 		     SPY_GetMsgName(message), wParam, lParam );
 
-    if ((message != WM_KEYDOWN) && (message != WM_SYSKEYDOWN)) return FALSE;
+    if ((message != WM_KEYDOWN) && (message != WM_SYSKEYDOWN))	return FALSE;
 
     TRACE(key, "Translating key %04X, scancode %04X\n",
                  wParam, HIWORD(lParam) );
@@ -1912,7 +1912,7 @@ BOOL32 WINAPI SendMessageCallBack32A(
 	HWND32 hWnd,UINT32 Msg,WPARAM32 wParam,LPARAM lParam,
 	/*SENDASYNCPROC*/FARPROC32 lpResultCallBack,DWORD dwData
 ) {
-	FIXME(msg,"(0x%04x,0x%04x,0x%08lx,0x%08lx,%p,0x%08lx),stub!\n",
+	FIXME(msg,"(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
 		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData
 	);
 	return FALSE;

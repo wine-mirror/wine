@@ -14,13 +14,18 @@ The macros are defined in file.h as follows.:
 (((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
  ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
  ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ ((handle)>0x400) ? handle : \
  (handle)-5)
 
 #define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
       ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
+      ((handle>0x400) ? handle : \
        (HFILE16)hnd+5); })
 
 WARNING: be careful not to use the macro HFILE16_TO_HFILE32 on
 functions with side-effects, as it will cause them to be evaluated
 several times.  This could be considered a bug, but the use of this
 macro is limited enough not to need a rewrite.
+
+NOTE: The 0x400 special case above deals with LZW filehandles (see 
+misc/lzexpand.c).

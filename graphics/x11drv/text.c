@@ -103,7 +103,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     if (flags & ETO_OPAQUE)
     {
-        TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+        TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
         TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                         dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
                         rect.right-rect.left, rect.bottom-rect.top );
@@ -196,7 +196,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                 (y - ascent < rect.top) ||
                 (y + descent >= rect.bottom))
             {
-                TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+                TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
                 TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                                 dc->w.DCOrgX + x,
                                 dc->w.DCOrgY + y - ascent,
@@ -208,7 +208,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     
     /* Draw the text (count > 0 verified) */
 
-    TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
+    TSXSetForeground( display, dc->u.x.gc, dc->u.x.textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
     {
       if(!rotated)

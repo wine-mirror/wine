@@ -1597,7 +1597,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     /* Save 16-bit fs and leave room for Win16Mutex recursion count */
 
-    fprintf( outfile, "\tpushw %%fs\n" );
+    fprintf( outfile, "\t.byte 0x66\n\tpushl %%fs\n" );
     fprintf( outfile, "\tpushw $0\n" );
 
     /* Setup bp to point to its copy on the stack */

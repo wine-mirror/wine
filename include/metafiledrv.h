@@ -68,6 +68,8 @@ extern BOOL32 MFDRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
 extern BOOL32 MFDRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt, LPINT32 counts,
 				 UINT32 polygons);
 extern HGDIOBJ32 MFDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+extern COLORREF MFDRV_SetBkColor( DC *dc, COLORREF color );
+extern COLORREF MFDRV_SetTextColor( DC *dc, COLORREF color );
 extern BOOL32 MFDRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
 				  COLORREF color, UINT32 fillType );
 extern BOOL32 MFDRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,

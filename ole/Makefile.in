@@ -13,6 +13,7 @@ C_SRCS = \
 	ole2disp.c \
 	ole2nls.c \
 	olecli.c \
+	oledlg.c \
 	olesvr.c \
 	storage.c \
 	typelib.c

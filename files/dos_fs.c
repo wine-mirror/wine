@@ -320,6 +320,10 @@ static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
         return NULL;
     }
 
+    /* Treat empty path as root directory. This simplifies path split into
+       directory and mask in several other places */
+    if (!*path) path = "/";
+
 #ifdef VFAT_IOCTL_READDIR_BOTH
 
     /* Check if the VFAT ioctl is supported on this directory */
@@ -609,7 +613,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
     FILE_OBJECT *file;
     HFILE32 handle;
 
-    if (!name) return NULL; /* if FILE_DupUnixHandle was used */
+    if (!name) return (HFILE32)NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
@@ -624,18 +628,24 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
 			return FILE_OpenUnixFile("/dev/null",unixmode);
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
+			HFILE32 to_dup;
+			HFILE32 handle;
 			switch (unixmode) {
 			case O_RDONLY:
-				return GetStdHandle( STD_INPUT_HANDLE );
+				to_dup = GetStdHandle( STD_INPUT_HANDLE );
 				break;
 			case O_WRONLY:
-				return GetStdHandle( STD_OUTPUT_HANDLE );
+				to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
 				break;
 			default:
 				FIXME(dosfs,"can't open CON read/write\n");
 				return HFILE_ERROR32;
 				break;
 			}
+			if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
+					      &handle, 0, FALSE, DUPLICATE_SAME_ACCESS ))
+			    handle = HFILE_ERROR32;
+			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$")) {
 		        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
@@ -1166,19 +1176,19 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 
     /* Skip to desired position */
     while (info.cur_pos < skip)
-        if (DOSFS_ReadDir( info.dir, &long_name, &short_name ))
+        if (info.dir && DOSFS_ReadDir( info.dir, &long_name, &short_name ))
             info.cur_pos++;
         else
             break;
 
-    if (info.cur_pos == skip && DOSFS_FindNextEx( &info, entry ))
+    if (info.dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, entry ))
         count = info.cur_pos - skip;
     else
         count = 0;
 
     if (!count)
     {
-        DOSFS_CloseDir( info.dir );
+        if (info.dir) DOSFS_CloseDir( info.dir );
         memset( &info, '\0', sizeof(info) );
     }
 

@@ -402,6 +402,14 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	exit(1);
     }
 
+    /* tell the libX11 that we will do input method handling ourselves
+     * that keep libX11 from doing anything whith dead keys, allowing Wine
+     * to have total control over dead keys, that is this line allows
+     * them to work in Wine, even whith a libX11 including the dead key
+     * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
+     */
+    TSXOpenIM(display,NULL,NULL,NULL);
+
       /* Merge file and screen databases */
     if ((xrm_string = TSXResourceManagerString( display )) != NULL)
     {

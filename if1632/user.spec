@@ -509,7 +509,7 @@ file	user.exe
 665 pascal16 GetMenuItemRect(word word word ptr) GetMenuItemRect16
 666 stub CheckMenuRadioItem
 667 stub TrackPopupMenuEx
-668 stub SetWindowRgn
+668 pascal16 SetWindowRgn(word word word) SetWindowRgn16
 669 stub GetWindowRgn
 800 stub CHOOSEFONT_CALLBACK16
 801 stub FINDREPLACE_CALLBACK16

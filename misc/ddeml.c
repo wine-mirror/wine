@@ -56,6 +56,10 @@ UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
     FIXME(ddeml, "(%p,%p,%ld,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+
+    if(pidInst)
+      *pidInst = 0;
+
     return DMLERR_NO_ERROR;
 }
 
@@ -528,3 +532,45 @@ int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
      return 0;
 }
 
+
+/*****************************************************************
+ *            PackDDElParam (USER32.414)
+ *
+ * RETURNS
+ *   success: nonzero
+ *   failure: zero
+ */
+UINT32 WINAPI PackDDElParam32(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
+{
+    FIXME(ddeml, "stub.\n");
+    return 0;
+}
+
+
+/*****************************************************************
+ *            UnpackDDElParam (USER32.562)
+ *
+ * RETURNS
+ *   success: nonzero
+ *   failure: zero
+ */
+UINT32 WINAPI UnpackDDElParam32(UINT32 msg, UINT32 lParam,
+				UINT32 *uiLo, UINT32 *uiHi)
+{
+    FIXME(ddeml, "stub.\n");
+    return 0;
+}
+
+
+/*****************************************************************
+ *            FreeDDElParam (USER32.204)
+ *
+ * RETURNS
+ *   success: nonzero
+ *   failure: zero
+ */
+UINT32 WINAPI FreeDDElParam32(UINT32 msg, UINT32 lParam)
+{
+    FIXME(ddeml, "stub.\n");
+    return 0;
+}

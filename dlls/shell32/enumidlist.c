@@ -18,7 +18,7 @@
 #include "winnls.h"
 #include "winproc.h"
 #include "commctrl.h"
-
+#include "pidl.h"
 #include "shell32_main.h"
 
 /* IEnumIDList Implementation */
@@ -63,27 +63,17 @@ LPENUMIDLIST IEnumIDList_Constructor( LPCSTR lpszPath, DWORD dwFlags, HRESULT* p
 	lpeidl->mpLast=NULL;
 	lpeidl->mpCurrent=NULL;
 
-  TRACE(shell,"(%p)->(%s 0x%08lx %p)\n",lpeidl,debugstr_a(lpszPath),dwFlags,pResult);
-
-	lpeidl->mpPidlMgr=PidlMgr_Constructor();
-  if (!lpeidl->mpPidlMgr)
-	{ if (pResult)
-	  { *pResult=E_OUTOFMEMORY;
-			HeapFree(GetProcessHeap(),0,lpeidl);
-			return NULL;
-		}
-	}
+	TRACE(shell,"(%p)->(%s 0x%08lx %p)\n",lpeidl,debugstr_a(lpszPath),dwFlags,pResult);
 
 	if(!IEnumIDList_CreateEnumList(lpeidl, lpszPath, dwFlags))
-  { if(pResult)
-    { *pResult = E_OUTOFMEMORY;
-			HeapFree(GetProcessHeap(),0,lpeidl->mpPidlMgr);
-			HeapFree(GetProcessHeap(),0,lpeidl);
-			return NULL;
-		}
-  }
+	{ if(pResult)
+	  { *pResult = E_OUTOFMEMORY;
+	    HeapFree(GetProcessHeap(),0,lpeidl);
+	    return NULL;
+	  }
+	}
 
-  TRACE(shell,"-- (%p)->()\n",lpeidl);
+	TRACE(shell,"-- (%p)->()\n",lpeidl);
 	return lpeidl;
 }
 
@@ -128,8 +118,9 @@ static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this)
 {	TRACE(shell,"(%p)->()\n",this);
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IEnumIDList(%p)\n",this);
-		HeapFree(GetProcessHeap(),0,this);
-		return 0;
+	  IEnumIDList_DeleteList(this);
+	  HeapFree(GetProcessHeap(),0,this);
+	  return 0;
 	}
 	return this->ref;
 }
@@ -140,38 +131,38 @@ static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this)
 
 static HRESULT WINAPI IEnumIDList_Next(
 	LPENUMIDLIST this,ULONG celt,LPITEMIDLIST * rgelt,ULONG *pceltFetched) 
-{ ULONG    i;
-  HRESULT  hr = S_OK;
-  LPITEMIDLIST  temp;
+{	ULONG    i;
+	HRESULT  hr = S_OK;
+	LPITEMIDLIST  temp;
 
 	TRACE(shell,"(%p)->(%ld,%p, %p)\n",this,celt,rgelt,pceltFetched);
 
-  /* It is valid to leave pceltFetched NULL when celt is 1. Some of explorer's
-     subsystems actually use it (and so may a third party browser)
-   */
-  if(pceltFetched)
-    *pceltFetched = 0;
+/* It is valid to leave pceltFetched NULL when celt is 1. Some of explorer's
+ * subsystems actually use it (and so may a third party browser)
+ */
+	if(pceltFetched)
+	  *pceltFetched = 0;
 
 	*rgelt=0;
 	
-  if(celt > 1 && !pceltFetched)
-  { return E_INVALIDARG;
+	if(celt > 1 && !pceltFetched)
+	{ return E_INVALIDARG;
 	}
 
-  for(i = 0; i < celt; i++)
-  { if(!(this->mpCurrent))
-    { hr =  S_FALSE;
-      break;
-    }
-    temp = ILClone(this->mpCurrent->pidl);
-    rgelt[i] = temp;
-    this->mpCurrent = this->mpCurrent->pNext;
-  }
-  if(pceltFetched)
-  {  *pceltFetched = i;
+	for(i = 0; i < celt; i++)
+	{ if(!(this->mpCurrent))
+	  { hr =  S_FALSE;
+	    break;
+	  }
+	  temp = ILClone(this->mpCurrent->pidl);
+	  rgelt[i] = temp;
+	  this->mpCurrent = this->mpCurrent->pNext;
+	}
+	if(pceltFetched)
+	{  *pceltFetched = i;
 	}
 
-  return hr;
+	return hr;
 }
 
 /**************************************************************************
@@ -215,96 +206,123 @@ static HRESULT WINAPI IEnumIDList_Clone(
  *  fixme: add wildcards to path
  */
 static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPath, DWORD dwFlags)
-{ LPITEMIDLIST   pidl=NULL;
-  WIN32_FIND_DATA32A stffile;	
-  HANDLE32 hFile;
-  DWORD dwDrivemap;
-  CHAR  szDriveName[4];
-  CHAR  szPath[MAX_PATH];
+{	LPITEMIDLIST	pidl=NULL;
+	LPPIDLDATA 	pData=NULL;
+	WIN32_FIND_DATA32A stffile;	
+	HANDLE32 hFile;
+	DWORD dwDrivemap;
+	CHAR  szDriveName[4];
+	CHAR  szPath[MAX_PATH];
     
-  TRACE(shell,"(%p)->(%s 0x%08lx) \n",this,debugstr_a(lpszPath),dwFlags);
+	TRACE(shell,"(%p)->(%s 0x%08lx) \n",this,debugstr_a(lpszPath),dwFlags);
 
-  if (lpszPath && lpszPath[0]!='\0')
-  { strcpy(szPath, lpszPath);
-    PathAddBackslash(szPath);
-    strcat(szPath,"*.*");
-  }
+	if (lpszPath && lpszPath[0]!='\0')
+	{ strcpy(szPath, lpszPath);
+	  PathAddBackslash(szPath);
+	  strcat(szPath,"*.*");
+	}
 
-  /*enumerate the folders*/
-  if(dwFlags & SHCONTF_FOLDERS)
-  {	/* special case - we can't enumerate the Desktop level Objects (MyComputer,Nethood...
-    so we need to fake an enumeration of those.*/
+	/*enumerate the folders*/
+	if(dwFlags & SHCONTF_FOLDERS)
+	{ /* special case - we can't enumerate the Desktop level Objects (MyComputer,Nethood...
+	  so we need to fake an enumeration of those.*/
 	  if(!lpszPath)
-    { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",this);
+	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",this);
   		//create the pidl for this item
-      pidl = this->mpPidlMgr->lpvtbl->fnCreateMyComputer(this->mpPidlMgr);
-      if(pidl)
-      { if(!IEnumIDList_AddToEnumList(this, pidl))
-        return FALSE;
-      }
-    }   
-    else if (lpszPath[0]=='\0') /* enumerate the drives*/
-    { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (drives)\n",this);
-      dwDrivemap = GetLogicalDrives();
-      strcpy (szDriveName,"A:\\");
-      while (szDriveName[0]<='Z')
-      { if(dwDrivemap & 0x00000001L)
-        { pidl = this->mpPidlMgr->lpvtbl->fnCreateDrive(this->mpPidlMgr,szDriveName );
-      if(pidl)
-      { if(!IEnumIDList_AddToEnumList(this, pidl))
-          return FALSE;
-      }
-      }
-        szDriveName[0]++;
-        dwDrivemap = dwDrivemap >> 1;
-     }   
-    }
-    
-     else
-    { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",this,debugstr_a(szPath));
-      hFile = FindFirstFile32A(szPath,&stffile);
-      if ( hFile != INVALID_HANDLE_VALUE32 )
-      { do
-        { if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
-          { pidl = this->mpPidlMgr->lpvtbl->fnCreateFolder(this->mpPidlMgr, stffile.cFileName);
-         if(pidl)
-         { if(!IEnumIDList_AddToEnumList(this, pidl))
-               {  return FALSE;
-               }
-         }
-         else
-         { return FALSE;
-         }   
-           }
-      } while( FindNextFile32A(hFile,&stffile));
+	    pidl = _ILCreateMyComputer();
+	    if(pidl)
+	    { pData = _ILGetDataPointer(pidl);
+	      pData->u.generic.dwSFGAO = SFGAO_HASPROPSHEET | SFGAO_READONLY | SFGAO_HASSUBFOLDER;
+	      if(!IEnumIDList_AddToEnumList(this, pidl))
+	        return FALSE;
+	    }
+	  }   
+	  else if (lpszPath[0]=='\0') /* enumerate the drives*/
+	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (drives)\n",this);
+	    dwDrivemap = GetLogicalDrives();
+	    strcpy (szDriveName,"A:\\");
+	    while (szDriveName[0]<='Z')
+	    { if(dwDrivemap & 0x00000001L)
+	      { pidl = _ILCreateDrive(szDriveName);
+	        pData = _ILGetDataPointer(pidl);
+	        pData->u.drive.dwSFGAO = SFGAO_HASPROPSHEET | SFGAO_READONLY | SFGAO_CANLINK | 
+		                 SFGAO_HASSUBFOLDER | SFGAO_DROPTARGET | SFGAO_FILESYSTEM;
+	        if(pidl)
+	        { if(!IEnumIDList_AddToEnumList(this, pidl))
+	          return FALSE;
+	        }
+	      }
+	      szDriveName[0]++;
+	      dwDrivemap = dwDrivemap >> 1;
+	    }   
+	  }
+    	  else
+	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",this,debugstr_a(szPath));
+	    hFile = FindFirstFile32A(szPath,&stffile);
+	    if ( hFile != INVALID_HANDLE_VALUE32 )
+	    { do
+	      { if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
+	        { pidl = _ILCreateFolder( stffile.cFileName);
+	          if(pidl)
+	          { pData = _ILGetDataPointer(pidl);
+		    pData->u.folder.dwSFGAO = SFGAO_CANCOPY | SFGAO_CANDELETE | SFGAO_CANLINK  |
+		                     SFGAO_CANMOVE | SFGAO_CANRENAME | SFGAO_DROPTARGET |
+				     SFGAO_HASPROPSHEET | SFGAO_FILESYSTEM | SFGAO_FOLDER;
+		    if ( stffile.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+		    { pData->u.folder.dwSFGAO |= SFGAO_READONLY;
+		    }
+		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
+		    pData->u.folder.dwFileSize = stffile.nFileSizeLow;
+		    pData->u.folder.uFileAttribs=stffile.dwFileAttributes;
+		    strncpy (pData->u.folder.szAlternateName, stffile.cAlternateFileName,14);
+	            if(!IEnumIDList_AddToEnumList(this, pidl))
+	            {  return FALSE;
+	            }
+	          }
+	          else
+	          { return FALSE;
+	          }   
+	        }
+	      } while( FindNextFile32A(hFile,&stffile));
 			FindClose32 (hFile);
-    }
-  }   
-  }   
-  //enumerate the non-folder items (values)
-  if(dwFlags & SHCONTF_NONFOLDERS)
-  { if(lpszPath)
-    { TRACE (shell,"-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",this,debugstr_a(szPath));
-      hFile = FindFirstFile32A(szPath,&stffile);
-      if ( hFile != INVALID_HANDLE_VALUE32 )
-      { do
-    { if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
-          { pidl = this->mpPidlMgr->lpvtbl->fnCreateValue(this->mpPidlMgr, stffile.cFileName);
-      if(pidl)
-      { if(!IEnumIDList_AddToEnumList(this, pidl))
-        { return FALSE;
-			  }
-      }
-      else
-      { return FALSE;
-      }   
-          }
-    } while( FindNextFile32A(hFile,&stffile));
-	  FindClose32 (hFile);
-  } 
-    }
-  } 
-  return TRUE;
+	    }
+	  }   
+	}   
+	//enumerate the non-folder items (values)
+	if(dwFlags & SHCONTF_NONFOLDERS)
+	{ if(lpszPath)
+	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",this,debugstr_a(szPath));
+	    hFile = FindFirstFile32A(szPath,&stffile);
+	    if ( hFile != INVALID_HANDLE_VALUE32 )
+	    { do
+	      { if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+	        { pidl = _ILCreateValue( stffile.cFileName);
+	          if(pidl)
+	          { pData = _ILGetDataPointer(pidl);
+		    pData->u.file.dwSFGAO = SFGAO_CANCOPY | SFGAO_CANDELETE | SFGAO_CANLINK  |
+		                     SFGAO_CANMOVE | SFGAO_CANRENAME | SFGAO_DROPTARGET |
+				     SFGAO_HASPROPSHEET | SFGAO_FILESYSTEM;
+		    if ( stffile.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+		    { pData->u.file.dwSFGAO |= SFGAO_READONLY;
+		    }
+		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.file.uFileDate,&pData->u.file.uFileTime);
+		    pData->u.file.dwFileSize = stffile.nFileSizeLow;
+		    pData->u.file.uFileAttribs=stffile.dwFileAttributes;
+		    strncpy (pData->u.file.szAlternateName, stffile.cAlternateFileName,14);
+	            if(!IEnumIDList_AddToEnumList(this, pidl))
+	            { return FALSE;
+	            }
+	          }
+	          else
+	          { return FALSE;
+	          }   
+	        }
+	      } while( FindNextFile32A(hFile,&stffile));
+	      FindClose32 (hFile);
+	    } 
+	  }
+	} 
+	return TRUE;
 }
 
 /**************************************************************************
@@ -314,7 +332,7 @@ static BOOL32 WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST this,LPITEMIDLIST pi
 { LPENUMLIST  pNew;
 
   TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
-  pNew = (LPENUMLIST)HeapAlloc(GetProcessHeap(),0,sizeof(ENUMLIST));
+  pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
   if(pNew)
   { //set the next pointer
     pNew->pNext = NULL;

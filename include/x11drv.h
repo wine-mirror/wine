@@ -43,6 +43,8 @@ typedef struct
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
+    int           backgroundPixel;
+    int           textPixel;
 } X11DRV_PDEVICE;
 
 typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
@@ -102,6 +104,8 @@ extern BOOL32 X11DRV_PolyPolyline( struct tagDC *dc, LPPOINT32 pt,
 
 extern HGDIOBJ32 X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ32 handle );
 
+extern COLORREF X11DRV_SetBkColor( struct tagDC *dc, COLORREF color );
+extern COLORREF X11DRV_SetTextColor( struct tagDC *dc, COLORREF color );
 extern BOOL32 X11DRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
 				   COLORREF color, UINT32 fillType );
 extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,

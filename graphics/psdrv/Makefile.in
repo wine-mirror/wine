@@ -7,12 +7,15 @@ MODULE    = psdrv
 
 C_SRCS = \
 	afm.c \
+	brush.c \
+	color.c \
 	driver.c \
 	escape.c \
 	font.c \
 	graphics.c \
 	init.c \
 	objects.c \
+	pen.c \
 	ppd.c \
 	ps.c \
 	text.c
