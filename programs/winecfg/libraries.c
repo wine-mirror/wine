@@ -273,7 +273,9 @@ static void set_dllmode(HWND dialog, DWORD id)
         CONVERT( NATIVE_BUILTIN );
         CONVERT( DISABLE );
 
-        default: assert( FALSE ); /* should not be reached  */
+        default:
+            assert( FALSE ); /* should not be reached  */
+            return;
     }
 
 #undef CONVERT
@@ -290,7 +292,9 @@ static void set_dllmode(HWND dialog, DWORD id)
         case BUILTIN_NATIVE: str = "builtin, native"; break;
         case NATIVE_BUILTIN: str = "native, builtin"; break;
         case DISABLE: str = ""; break;
-        default: assert( FALSE ); /* unreachable  */
+        default:
+            assert( FALSE ); /* unreachable  */
+            return;
     }
     WINE_TRACE("Setting %s to %s\n", dll->name, str);
     
