@@ -636,10 +636,10 @@ sub _generate_dsp($$) {
 	} else {
 	    if($lib || $exe) {
 		print OUT "# ADD BASE CPP /nologo /W3 /GX /O2";
-		@defines = (qw(WIN32 NDEBUG _MBCS _LIB));
+		@defines = (qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 WIN32 NDEBUG _MBCS _LIB));
 	    } else {
 		print OUT "# ADD BASE CPP /nologo /MT /W3 /GX /O2";
-		@defines = (qw(WIN32 NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		@defines = (qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 WIN32 NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
 	}
 
@@ -657,18 +657,18 @@ sub _generate_dsp($$) {
 	if($debug) {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
-		@defines2 = qw(WIN32 _DEBUG _WINDOWS _MBCS _LIB);
+		@defines2 = qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 WIN32 _DEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
-		@defines2 = qw(_DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		@defines2 = qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 _DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	} else {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MT /W3 /GX /O2";
-		@defines2 = qw(WIN32 NDEBUG _WINDOWS _MBCS _LIB);
+		@defines2 = qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 WIN32 NDEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MT /W3 /GX /O2";
-		@defines2 = qw(NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		@defines2 = qw(WINVER=0x0501 _WIN32_WINNT=0x0501 _WIN32_IE=0x0600 NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	}
 
