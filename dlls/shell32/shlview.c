@@ -1457,6 +1457,9 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper,
 		 	(LPVOID*)&psfhlp);
 
+		if (psfhlp == NULL)
+		  break;
+
 		if(!(i = ListView_GetSelectedCount(This->hWndList)))
 		  break;
 
