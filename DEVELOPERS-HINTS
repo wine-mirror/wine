@@ -35,18 +35,18 @@ DLLs (under dlls/):
 	devenum/		- Device enumeration (part of DirectShow)
 	dinput/			- DirectInput (device input)
 	dinput8/		- DirectInput (device input)
-	dmband/			- DirectMusic
-	dmcompos/		- DirectMusic
-	dmime/			- DirectMusic
-	dmloader/		- DirectMusic
-	dmscript/		- DirectMusic
-	dmstyle/		- DirectMusic
-	dmsynth/		- DirectMusic
-	dmusic/			- DirectMusic
-	dmusic32/		- DirectMusic
+	dmband/			- DirectMusic Band
+	dmcompos/		- DirectMusic Composer
+	dmime/			- DirectMusic Interactive Engine
+	dmloader/		- DirectMusic Loader
+	dmscript/		- DirectMusic Scripting
+	dmstyle/		- DirectMusic Style Engine
+	dmsynth/		- DirectMusic Software Synthesizer
+	dmusic/			- DirectMusic Core Services
+	dmusic32/		- DirectMusic Legacy Port
 	dplay/			- DirectPlay (networking)
 	dplayx/			- DirectPlay (networking)
-	dpnhpast/		- DirectPlay NAT Helper
+	dpnhpast/		- DirectPlay NAT Helper PAST
 	dsound/			- DirectSound (audio)
 	gdi/			- GDI (graphics)
 	glu32/			- OpenGL Utility library (graphics)
@@ -77,6 +77,7 @@ DLLs (under dlls/):
 	msvideo/msrle32/	- Video codecs
 	mswsock/		- Misc networking
 	netapi32/		- Network interface
+	newdev/			- New Hardware Device Library
 	ntdll/			- NT implementation of kernel calls
 	odbc32/			- Open DataBase Connectivity driver manager
 	ole32/			- 32 bit OLE 2.0 libraries
