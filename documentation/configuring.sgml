@@ -222,6 +222,13 @@
 	  of your user's home directory
 	  (directory <filename>/home/user/</filename>). In other words, the Wine
 	  configuration file is <filename>~/.wine/config</filename>.
+	  Note that since the Wine configuration file is a part of the
+	  Wine registry file system, this file also
+	  <emphasis>requires</emphasis> a correct "WINE REGISTRY
+	  Version 2" header line to be recognized properly, just like
+	  all other Wine registry text files (just in case you decided
+	  to write your own registry file from scratch and wonder why
+	  Wine keeps rejecting it).
         </para>
         <para>
           The settings available in the configuration file include:
