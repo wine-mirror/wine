@@ -27,38 +27,18 @@
 
 #define MAX_PATHNAME_LEN   1024
 
-/* Definition of a full DOS file name */
-typedef struct
-{
-    char  long_name[MAX_PATHNAME_LEN];  /* Long pathname in Unix format */
-    WCHAR short_name[MAX_PATHNAME_LEN]; /* Short pathname in DOS 8.3 format */
-    int   drive;
-} DOS_FULL_NAME;
-
 /* files/file.c */
 extern void FILE_SetDosError(void);
-extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink );
-extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
-                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                               DWORD attributes, HANDLE template );
 
 /* files/directory.c */
 extern int DIR_Init(void);
 
-/* files/dos_fs.c */
-extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full );
-
 /* drive.c */
 extern int DRIVE_Init(void);
-extern int DRIVE_IsValid( int drive );
-extern int DRIVE_GetCurrentDrive(void);
 extern int DRIVE_FindDriveRoot( const char **path );
 extern int DRIVE_FindDriveRootW( LPCWSTR *path );
 extern const char * DRIVE_GetRoot( int drive );
-extern LPCWSTR DRIVE_GetDosCwd( int drive );
-extern const char * DRIVE_GetUnixCwd( int drive );
 extern const char * DRIVE_GetDevice( int drive );
-extern int DRIVE_Chdir( int drive, LPCWSTR path );
 
 /* vxd.c */
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );

@@ -223,8 +223,6 @@ int DIR_Init(void)
     TRACE("SystemDir  = %s\n", debugstr_w(DIR_System) );
     TRACE("TempDir    = %s\n", debugstr_w(tmp_dir) );
     TRACE("SYSTEMROOT = %s\n", debugstr_w(DIR_Windows) );
-    TRACE("Cwd        = %c:\\%s\n",
-          'A' + drive, debugstr_w(DRIVE_GetDosCwd(drive)) );
 
     HeapFree( GetProcessHeap(), 0, tmp_dir );
 

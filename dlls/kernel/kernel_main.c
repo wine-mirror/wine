@@ -244,3 +244,34 @@ BOOL WINAPI SwitchToThread(void)
     Sleep(0);
     return 1;
 }
+
+
+/***********************************************************************
+ *           MulDiv   (KERNEL32.@)
+ * RETURNS
+ *	Result of multiplication and division
+ *	-1: Overflow occurred or Divisor was 0
+ */
+INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
+{
+    LONGLONG ret;
+
+    if (!nDivisor) return -1;
+
+    /* We want to deal with a positive divisor to simplify the logic. */
+    if (nDivisor < 0)
+    {
+      nMultiplicand = - nMultiplicand;
+      nDivisor = -nDivisor;
+    }
+
+    /* If the result is positive, we "add" to round. else, we subtract to round. */
+    if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
+         ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
+      ret = (((LONGLONG)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
+    else
+      ret = (((LONGLONG)nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
+
+    if ((ret > 2147483647) || (ret < -2147483647)) return -1;
+    return ret;
+}

@@ -64,8 +64,6 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 typedef struct
 {
     char     *root;      /* root dir in Unix format without trailing / */
-    LPWSTR    dos_cwd;   /* cwd in DOS format without leading or trailing \ */
-    char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
@@ -75,9 +73,6 @@ typedef struct
 #define MAX_DOS_DRIVES  26
 
 static DOSDRIVE DOSDrives[MAX_DOS_DRIVES];
-static int DRIVE_CurDrive = -1;
-
-static HTASK16 DRIVE_LastTask = 0;
 
 /* strdup on the process heap */
 inline static char *heap_strdup( const char *str )
@@ -97,7 +92,6 @@ int DRIVE_Init(void)
     WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
                       'W','i','n','e','\\','W','i','n','e','\\',
                       'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
-    WCHAR drive_env[] = {'=','A',':',0};
     WCHAR path[MAX_PATHNAME_LEN];
     char tmp[MAX_PATHNAME_LEN*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
     struct stat drive_stat_buffer;
@@ -145,8 +139,6 @@ int DRIVE_Init(void)
             continue;
         }
         drive->root     = root;
-        drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
-        drive->unix_cwd = heap_strdup( "" );
         drive->device   = NULL;
         drive->dev      = drive_stat_buffer.st_dev;
         drive->ino      = drive_stat_buffer.st_ino;
@@ -210,8 +202,6 @@ int DRIVE_Init(void)
                     goto next;
                 }
 
-                drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
-                drive->unix_cwd = heap_strdup( "" );
                 drive->device   = NULL;
                 drive->dev      = drive_stat_buffer.st_dev;
                 drive->ino      = drive_stat_buffer.st_ino;
@@ -238,39 +228,6 @@ int DRIVE_Init(void)
     next:
         NtClose( hkey );
     }
-
-    if (!count && !symlink_count)
-    {
-        MESSAGE("Warning: no valid DOS drive found, check your configuration file.\n" );
-        /* Create a C drive pointing to Unix root dir */
-        DOSDrives[2].root     = heap_strdup( "/" );
-        DOSDrives[2].dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSDrives[2].dos_cwd[0]));
-        DOSDrives[2].unix_cwd = heap_strdup( "" );
-        DOSDrives[2].device   = NULL;
-        DRIVE_CurDrive = 2;
-    }
-
-    /* Make sure the current drive is valid */
-    if (DRIVE_CurDrive == -1)
-    {
-        for (i = 2, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
-        {
-            if (drive->root)
-            {
-                DRIVE_CurDrive = i;
-                break;
-            }
-        }
-    }
-
-    /* get current working directory info for all drives */
-    for (i = 0; i < MAX_DOS_DRIVES; i++, drive_env[1]++)
-    {
-        if (!GetEnvironmentVariableW(drive_env, path, MAX_PATHNAME_LEN)) continue;
-        /* sanity check */
-        if (toupperW(path[0]) != drive_env[1] || path[1] != ':') continue;
-        DRIVE_Chdir( i, path + 2 );
-    }
     return 1;
 }
 
@@ -282,17 +239,6 @@ int DRIVE_IsValid( int drive )
 {
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
     return (DOSDrives[drive].root != NULL);
-}
-
-
-/***********************************************************************
- *           DRIVE_GetCurrentDrive
- */
-int DRIVE_GetCurrentDrive(void)
-{
-    TDB *pTask = GlobalLock16(GetCurrentTask());
-    if (pTask && (pTask->curdrive & 0x80)) return pTask->curdrive & ~0x80;
-    return DRIVE_CurDrive;
 }
 
 
@@ -443,112 +389,9 @@ const char * DRIVE_GetRoot( int drive )
 
 
 /***********************************************************************
- *           DRIVE_GetDosCwd
- */
-LPCWSTR DRIVE_GetDosCwd( int drive )
-{
-    TDB *pTask = GlobalLock16(GetCurrentTask());
-    if (!DRIVE_IsValid( drive )) return NULL;
-
-    /* Check if we need to change the directory to the new task. */
-    if (pTask && (pTask->curdrive & 0x80) &&    /* The task drive is valid */
-        ((pTask->curdrive & ~0x80) == drive) && /* and it's the one we want */
-        (DRIVE_LastTask != GetCurrentTask()))   /* and the task changed */
-    {
-        static const WCHAR rootW[] = {'\\',0};
-        WCHAR curdirW[MAX_PATH];
-        MultiByteToWideChar(CP_ACP, 0, pTask->curdir, -1, curdirW, MAX_PATH);
-        /* Perform the task-switch */
-        if (!DRIVE_Chdir( drive, curdirW )) DRIVE_Chdir( drive, rootW );
-        DRIVE_LastTask = GetCurrentTask();
-    }
-    return DOSDrives[drive].dos_cwd;
-}
-
-
-/***********************************************************************
- *           DRIVE_GetUnixCwd
- */
-const char * DRIVE_GetUnixCwd( int drive )
-{
-    TDB *pTask = GlobalLock16(GetCurrentTask());
-    if (!DRIVE_IsValid( drive )) return NULL;
-
-    /* Check if we need to change the directory to the new task. */
-    if (pTask && (pTask->curdrive & 0x80) &&    /* The task drive is valid */
-        ((pTask->curdrive & ~0x80) == drive) && /* and it's the one we want */
-        (DRIVE_LastTask != GetCurrentTask()))   /* and the task changed */
-    {
-        static const WCHAR rootW[] = {'\\',0};
-        WCHAR curdirW[MAX_PATH];
-        MultiByteToWideChar(CP_ACP, 0, pTask->curdir, -1, curdirW, MAX_PATH);
-        /* Perform the task-switch */
-        if (!DRIVE_Chdir( drive, curdirW )) DRIVE_Chdir( drive, rootW );
-        DRIVE_LastTask = GetCurrentTask();
-    }
-    return DOSDrives[drive].unix_cwd;
-}
-
-
-/***********************************************************************
  *           DRIVE_GetDevice
  */
 const char * DRIVE_GetDevice( int drive )
 {
     return (DRIVE_IsValid( drive )) ? DOSDrives[drive].device : NULL;
-}
-
-/***********************************************************************
- *           DRIVE_Chdir
- */
-int DRIVE_Chdir( int drive, LPCWSTR path )
-{
-    DOS_FULL_NAME full_name;
-    WCHAR buffer[MAX_PATHNAME_LEN];
-    LPSTR unix_cwd;
-    BY_HANDLE_FILE_INFORMATION info;
-    TDB *pTask = GlobalLock16(GetCurrentTask());
-
-    buffer[0] = 'A' + drive;
-    buffer[1] = ':';
-    buffer[2] = 0;
-    TRACE("(%s,%s)\n", debugstr_w(buffer), debugstr_w(path) );
-    strncpyW( buffer + 2, path, MAX_PATHNAME_LEN - 2 );
-    buffer[MAX_PATHNAME_LEN - 1] = 0; /* ensure 0 termination */
-
-    if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
-    if (!FILE_Stat( full_name.long_name, &info, NULL )) return 0;
-    if (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return 0;
-    }
-    unix_cwd = full_name.long_name + strlen( DOSDrives[drive].root );
-    while (*unix_cwd == '/') unix_cwd++;
-
-    TRACE("(%c:): unix_cwd=%s dos_cwd=%s\n",
-            'A' + drive, unix_cwd, debugstr_w(full_name.short_name + 3) );
-
-    HeapFree( GetProcessHeap(), 0, DOSDrives[drive].dos_cwd );
-    HeapFree( GetProcessHeap(), 0, DOSDrives[drive].unix_cwd );
-    DOSDrives[drive].dos_cwd  = HeapAlloc(GetProcessHeap(), 0, (strlenW(full_name.short_name) - 2) * sizeof(WCHAR));
-    strcpyW(DOSDrives[drive].dos_cwd, full_name.short_name + 3);
-    DOSDrives[drive].unix_cwd = heap_strdup( unix_cwd );
-
-    if (drive == DRIVE_CurDrive)
-    {
-        UNICODE_STRING dirW;
-
-        RtlInitUnicodeString( &dirW, full_name.short_name );
-        RtlSetCurrentDirectory_U( &dirW );
-    }
-
-    if (pTask && (pTask->curdrive & 0x80) &&
-        ((pTask->curdrive & ~0x80) == drive))
-    {
-        WideCharToMultiByte(CP_ACP, 0, full_name.short_name + 2, -1,
-                            pTask->curdir, sizeof(pTask->curdir), NULL, NULL);
-        DRIVE_LastTask = GetCurrentTask();
-    }
-    return 1;
 }

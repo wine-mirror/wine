@@ -80,14 +80,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-#if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
-#define MAP_ANON MAP_ANONYMOUS
-#endif
-
-#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
-
-#define SECSPERDAY         86400
-#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
 
 /***********************************************************************
  *              FILE_ConvertOFMode
@@ -548,93 +540,6 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     }
     info->nFileIndexHigh = st->st_ino >> 32;
     info->nFileIndexLow  = (DWORD)st->st_ino;
-}
-
-
-/***********************************************************************
- *           get_show_dot_files_option
- */
-static BOOL get_show_dot_files_option(void)
-{
-    static const WCHAR WineW[] = {'M','a','c','h','i','n','e','\\',
-                                  'S','o','f','t','w','a','r','e','\\',
-                                  'W','i','n','e','\\','W','i','n','e','\\',
-                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
-    static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
-
-    char tmp[80];
-    HKEY hkey;
-    DWORD dummy;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    BOOL ret = FALSE;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, WineW );
-
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-    {
-        RtlInitUnicodeString( &nameW, ShowDotFilesW );
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-        {
-            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            ret = IS_OPTION_TRUE( str[0] );
-        }
-        NtClose( hkey );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           FILE_Stat
- *
- * Stat a Unix path name. Return TRUE if OK.
- */
-BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink_ptr )
-{
-    struct stat st;
-    int is_symlink;
-    LPCSTR p;
-
-    if (lstat( unixName, &st ) == -1)
-    {
-        FILE_SetDosError();
-        return FALSE;
-    }
-    is_symlink = S_ISLNK(st.st_mode);
-    if (is_symlink)
-    {
-        /* do a "real" stat to find out
-	   about the type of the symlink destination */
-        if (stat( unixName, &st ) == -1)
-        {
-            FILE_SetDosError();
-            return FALSE;
-        }
-    }
-
-    /* fill in the information we gathered so far */
-    FILE_FillInfo( &st, info );
-
-    /* and now see if this is a hidden file, based on the name */
-    p = strrchr( unixName, '/');
-    p = p ? p + 1 : unixName;
-    if (*p == '.' && *(p+1)  && (*(p+1) != '.' || *(p+2)))
-    {
-	static int show_dot_files = -1;
-	if (show_dot_files == -1)
-	    show_dot_files = get_show_dot_files_option();
-	if (!show_dot_files)
-	    info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-    }
-    if (is_symlink_ptr) *is_symlink_ptr = is_symlink;
-    return TRUE;
 }
 
 
