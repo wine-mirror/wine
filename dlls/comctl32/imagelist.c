@@ -41,12 +41,14 @@ DEFAULT_DEBUG_CHANNEL(imagelist);
 /* internal image list data used for Drag & Drop operations */
 
 static HIMAGELIST himlInternalDrag = NULL;
+/* offset of the Hotspot to the origin of the himlInternalDrag image */
 static INT      nInternalDragHotspotX = 0;
 static INT      nInternalDragHotspotY = 0;
 
 static HWND     hwndInternalDrag = 0;
-static INT      xInternalPos = 0;
-static INT      yInternalPos = 0;
+/* coordinates of the Hotspot relative to the window origin */
+static INT      nInternalDragPosX = 0;
+static INT      nInternalDragPosY = 0;
 
 static HDC      hdcBackBuffer = 0;
 static HBITMAP  hbmBackBuffer = 0;
@@ -703,18 +705,22 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
 	             INT dxHotspot, INT dyHotspot)
 {
     HDC hdcSrc, hdcDst;
+    INT cx, cy;
 
     FIXME("partially implemented!\n");
+    TRACE("(himlTrack=%p iTrack=%d dx=%d dy=%d)\n", himlTrack, iTrack,
+	  dxHotspot, dyHotspot);
 
     if (himlTrack == NULL)
 	return FALSE;
 
+    cx = himlTrack->cx;
+    cy = himlTrack->cy;
+
     if (himlInternalDrag)
         ImageList_EndDrag ();
 
-    himlInternalDrag =
-	ImageList_Create (himlTrack->cx, himlTrack->cy,
-			  himlTrack->flags, 1, 1);
+    himlInternalDrag = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
     if (himlInternalDrag == NULL) {
         ERR("Error creating drag image list!\n");
         return FALSE;
@@ -729,14 +735,12 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
     /* copy image */
     SelectObject (hdcSrc, himlTrack->hbmImage);
     SelectObject (hdcDst, himlInternalDrag->hbmImage);
-    StretchBlt (hdcDst, 0, 0, himlInternalDrag->cx, himlInternalDrag->cy, hdcSrc,
-                  iTrack * himlTrack->cx, 0, himlTrack->cx, himlTrack->cy, SRCCOPY);
+    BitBlt (hdcDst, 0, 0, cx, cy, hdcSrc, iTrack * cx, 0, SRCCOPY);
 
     /* copy mask */
     SelectObject (hdcSrc, himlTrack->hbmMask);
     SelectObject (hdcDst, himlInternalDrag->hbmMask);
-    StretchBlt (hdcDst, 0, 0, himlInternalDrag->cx, himlInternalDrag->cy, hdcSrc,
-                  iTrack * himlTrack->cx, 0, himlTrack->cx, himlTrack->cy, SRCCOPY);
+    BitBlt (hdcDst, 0, 0, cx, cy, hdcSrc, iTrack * cx, 0, SRCCOPY);
 
     DeleteDC (hdcSrc);
     DeleteDC (hdcDst);
@@ -1028,6 +1032,8 @@ ImageList_Destroy (HIMAGELIST himl)
 BOOL WINAPI
 ImageList_DragEnter (HWND hwndLock, INT x, INT y)
 {
+    TRACE("(hwnd=%#x x=%d y=%d)\n", hwndLock, x, y);
+
     if (himlInternalDrag == NULL)
 	return FALSE;
 
@@ -1036,8 +1042,8 @@ ImageList_DragEnter (HWND hwndLock, INT x, INT y)
     else
 	hwndInternalDrag = GetDesktopWindow ();
 
-    xInternalPos = x;
-    yInternalPos = y;
+    nInternalDragPosX = x;
+    nInternalDragPosY = y;
 
     hdcBackBuffer = CreateCompatibleDC (0);
     hbmBackBuffer = CreateCompatibleBitmap (hdcBackBuffer,
@@ -1100,10 +1106,12 @@ ImageList_DragLeave (HWND hwndLock)
 BOOL WINAPI
 ImageList_DragMove (INT x, INT y)
 {
+    TRACE("(x=%d y=%d)\n", x, y);
+
     ImageList_DragShowNolock (FALSE);
 
-    xInternalPos = x;
-    yInternalPos = y;
+    nInternalDragPosX = x;
+    nInternalDragPosY = y;
 
     ImageList_DragShowNolock (TRUE);
 
@@ -1457,10 +1465,17 @@ ImageList_GetBkColor (HIMAGELIST himl)
 HIMAGELIST WINAPI
 ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 {
-    FIXME("semi-stub!\n");
-
-    if (himlInternalDrag)
+    if (himlInternalDrag) {
+	if (ppt) {
+	    ppt->x = nInternalDragPosX;
+	    ppt->y = nInternalDragPosY;
+	}
+	if (pptHotspot) {
+	    pptHotspot->x = nInternalDragHotspotX;
+	    pptHotspot->y = nInternalDragHotspotY;
+	}
         return (himlInternalDrag);
+    }
 
     return NULL;
 }
@@ -1834,6 +1849,9 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
     INT      xOff1, yOff1, xOff2, yOff2;
     INT      nX1, nX2;
 
+    TRACE("(himl1=%p i1=%d himl2=%p i2=%d dx=%d dy=%d)\n", himl1, i1, himl2,
+	   i2, dx, dy);
+
     if ((himl1 == NULL) || (himl2 == NULL))
 	return NULL;
 
@@ -1918,6 +1936,7 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
         DeleteDC (hdcSrcImage);
         DeleteDC (hdcDstImage);
+	himlDst->cCurImage = 1;
     }
    
     return himlDst;
@@ -2479,8 +2498,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 			      INT dxHotspot, INT dyHotspot)
 {
     HIMAGELIST himlTemp;
-
-    FIXME("semi-stub!\n");
+    INT dx, dy;
 
     if (himlInternalDrag == NULL)
 	return FALSE;
@@ -2488,16 +2506,28 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
     TRACE(" dxH=%d dyH=%d nX=%d nY=%d\n",
 	   dxHotspot, dyHotspot, nInternalDragHotspotX, nInternalDragHotspotY);
 
-    himlTemp = ImageList_Merge (himlInternalDrag, 0, himlDrag, iDrag,
-				dxHotspot, dyHotspot);
+    /* Calculate the offset between the origin of the old image and the
+     * origin of the second image.
+     * dxHotspot, dyHotspot is the offset of THE Hotspot (there is only one
+     * hotspot) to the origin of the second image (himlDrag).
+     * See M$DN for details */
+    dx = nInternalDragHotspotX - dxHotspot;
+    dy = nInternalDragHotspotY - dyHotspot;
 
+    himlTemp = ImageList_Merge (himlInternalDrag, 0, himlDrag, iDrag, dx, dy);
     ImageList_Destroy (himlInternalDrag);
     himlInternalDrag = himlTemp;
 
-    nInternalDragHotspotX = dxHotspot;
-    nInternalDragHotspotY = dyHotspot;
+    /* update the InternalDragOffset, if the origin of the origin of the
+     * DragImage was changed by ImageList_Merge. */
+    if (dx > nInternalDragHotspotX) {
+	nInternalDragHotspotX = dx;
+    }
+    if (dy > nInternalDragHotspotY) {
+	nInternalDragHotspotY = dy;
+    }
 
-    return FALSE;
+    return TRUE;
 }
 
 
