@@ -2744,7 +2744,12 @@ static void test_interthread_messages(void)
     int len, expected_len;
     struct wnd_event wnd_event;
 
-    wnd_event.event = CreateEvent(NULL, 0, 0, NULL);
+    wnd_event.event = CreateEventW(NULL, 0, 0, NULL);
+    if (!wnd_event.event)
+    {
+        trace("skipping interthread message test under win9x\n");
+        return;
+    }
 
     hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
     ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
@@ -2777,10 +2782,11 @@ static void test_interthread_messages(void)
     ok(!len && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
        "DispatchMessageA(WM_GETTEXT) succeded on another thread window: ret %d, error %ld\n", len, GetLastError());
 
+    /* the following test causes an exception in user.exe under win9x */
     msg.hwnd = wnd_event.hwnd;
     msg.message = WM_TIMER;
     msg.wParam = 0;
-    msg.lParam = GetWindowLongW(wnd_event.hwnd,GWL_WNDPROC);
+    msg.lParam = GetWindowLongPtrA(wnd_event.hwnd, GWLP_WNDPROC);
     SetLastError(0xdeadbeef);
     len = DispatchMessageA(&msg);
     ok(!len && GetLastError() == 0xdeadbeef,
