@@ -1252,11 +1252,11 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
  * Retrieves the data associated with the default or unnamed value of a key.
  *
  * PARAMS
- *  hKey      [I] Handle to an open key.
- *  lpSubKey  [I] Name of the subkey of hKey.
- *  lpValue   [O] Receives the string associated with the default value
+ *  hkey      [I] Handle to an open key.
+ *  name      [I] Name of the subkey of hKey.
+ *  data      [O] Receives the string associated with the default value
  *                of the key.
- *  lpcbValue [I/O] Size of lpValue.
+ *  count     [I/O] Size of lpValue in bytes.
  *
  *  RETURNS
  *   Success: ERROR_SUCCESS
@@ -1279,7 +1279,7 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count 
     {
         /* return empty string if default value not found */
         if (data) *data = 0;
-        if (count) *count = 1;
+        if (count) *count = sizeof(WCHAR);
         ret = ERROR_SUCCESS;
     }
     return ret;
