@@ -478,6 +478,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
             /* its children. Otherwise, go to the next window.       */
 
 	     if ((wndPtr->dwStyle & WS_VISIBLE) &&
+	        ((wndPtr->dwExStyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) != (WS_EX_LAYERED | WS_EX_TRANSPARENT)) &&
                 (!(wndPtr->dwStyle & WS_DISABLED) ||
                  ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
 		(wndPtr->hrgnWnd ?
