@@ -81,14 +81,15 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 
     if (sizeof(XRectangle) > sizeof(RECT))
     {
+        int j;
         /* need to start from the end */
-        for (i = data->rdh.nCount-1; i >=0; i--)
+        for (j = data->rdh.nCount-1; j >= 0; j--)
         {
-            tmp = rect[i];
-            xrect[i].x      = tmp.left;
-            xrect[i].y      = tmp.top;
-            xrect[i].width  = tmp.right - tmp.left;
-            xrect[i].height = tmp.bottom - tmp.top;
+            tmp = rect[j];
+            xrect[j].x      = tmp.left;
+            xrect[j].y      = tmp.top;
+            xrect[j].width  = tmp.right - tmp.left;
+            xrect[j].height = tmp.bottom - tmp.top;
         }
     }
     else
