@@ -1384,7 +1384,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	        return REGDB_E_READREGDB;
 	TRACE("found InprocServer32 dll %s\n", debugstr_w(dllName));
 
-	/* open dll, call DllGetClassFactory */
+	/* open dll, call DllGetClassObject */
 	hLibrary = CoLoadLibrary(dllName, TRUE);
 	if (hLibrary == 0) {
 	    FIXME("couldn't load InprocServer32 dll %s\n", debugstr_w(dllName));
