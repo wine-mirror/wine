@@ -196,16 +196,28 @@ DWORD WINAPI GetVersion16(void)
 
 /***********************************************************************
  *         GetVersion   (KERNEL32.@)
+ *
+ * Win31   0x80000a03
+ * Win95   0xc0000004
+ * Win98   0xc0000a04
+ * WinME   0xc0005a04
+ * NT351   0x04213303
+ * NT4     0x05650004
+ * Win2000 0x08930005
+ * WinXP   0x0a280105
  */
 DWORD WINAPI GetVersion(void)
 {
     RTL_OSVERSIONINFOEXW info;
+    DWORD result;
 
     info.dwOSVersionInfoSize = sizeof(info);
     if (RtlGetVersion( &info ) != STATUS_SUCCESS) return 0;
 
-    return MAKELONG( MAKEWORD( info.dwMajorVersion, info.dwMinorVersion ),
-                     LOWORD(info.dwBuildNumber) | ((info.dwPlatformId ^ 2) << 14) );
+    result = MAKELONG( MAKEWORD( info.dwMajorVersion, info.dwMinorVersion ),
+                       (info.dwPlatformId ^ 2) << 14 );
+    if (info.dwPlatformId == VER_PLATFORM_WIN32_NT) result |= LOWORD(info.dwBuildNumber) << 16;
+    return result;
 }
 
 
