@@ -337,11 +337,11 @@ init	Shell32LibMain
  328 stub StrStrW # proper ordinal unknown 
  329 stub WOWShellExecute # proper ordinal unknown
 
- 505 stub SHRegCloseKey@4
- 506 stub SHRegOpenKeyA@12
- 507 stub SHRegOpenKeyW@12
+ 505 stdcall SHRegCloseKey (long) SHRegCloseKey
+ 506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKey32A
+ 507 stdcall SHRegOpenKeyW (long wstr long) SHRegOpenKey32W
  508 stub SHRegQueryValueA@16
- 509 stub SHRegQueryValueExA@24
+ 509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueEx32A
  510 stub SHRegQueryValueW@16
  511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueEx32W
  512 stub SHRegDeleteKeyW@8
@@ -368,7 +368,7 @@ init	Shell32LibMain
  652 stdcall WriteCabinetState (long) WriteCabinetState
  653 stub PathProcessCommand
 
- 660 stub FileIconInit
+ 660 stdcall FileIconInit (long) FileIconInit
 
  680 stdcall IsUserAdmin () IsUserAdmin
 

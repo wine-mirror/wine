@@ -990,6 +990,48 @@ HRESULT WINAPI SHGetDataFromIDListA(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y)
 	return 0;
 }
 /*************************************************************************
+ * SHRegCloseKey [SHELL32.505]
+ *
+ * XXX I am not sure if the given param is correct. :-)
+ */
+HRESULT WINAPI SHRegCloseKey(HKEY key)
+{	FIXME(shell,"(0x%08lx)\n", key);
+	/* XXX Is this correct? */ 
+	return RegCloseKey(key);
+}
+/*************************************************************************
+ * SHRegOpenKey32A [SHELL32.506]
+ *
+ * XXX I am not sure if the given param is correct. :-)
+ */
+HRESULT WINAPI SHRegOpenKey32A(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
+{	FIXME(shell,"(0x%08lx, %s, 0x%08lx)\n", hKey, debugstr_a(lpSubKey),
+	      phkResult);
+	/* XXX Is this correct? */ 
+	return RegOpenKey32A(hKey, lpSubKey, phkResult);
+}
+/*************************************************************************
+ * SHRegOpenKey32W [SHELL32.507]
+ *
+ * XXX I am not sure if the given param is correct. :-)
+ */
+HRESULT WINAPI SHRegOpenKey32W(HKEY hKey, LPWSTR lpSubKey, LPHKEY phkResult)
+{	FIXME(shell,"(0x%08lx, %s, 0x%08lx)\n", hKey, debugstr_w(lpSubKey),
+	      phkResult);
+	/* XXX Is this correct? */ 
+	return RegOpenKey32W(hKey, lpSubKey, phkResult);
+}
+/*************************************************************************
+ * SHRegQueryValueExA [SHELL32.509]
+ *
+ * XXX I know this is not the correct parameter. Check with documentation.
+ */
+HRESULT WINAPI SHRegQueryValueEx32A(DWORD u, LPSTR v, DWORD w, DWORD x,
+				  DWORD y, DWORD z)
+{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",u,debugstr_a(v),w,x,y,z);
+	return 0;
+}
+/*************************************************************************
  * SHRegQueryValueEx32W [NT4.0:SHELL32.511]
  *
  */
@@ -1012,6 +1054,14 @@ HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
  */
 HRESULT WINAPI WriteCabinetState(DWORD u)
 {	FIXME(shell,"0x%04lx stub\n",u);
+	return 0;
+}
+/*************************************************************************
+ * FileIconInit [SHELL32.660]
+ *
+ */
+BOOL32 WINAPI FileIconInit(BOOL32 bFullInit)
+{	FIXME(shell,"(%s)\n", bFullInit ? "true" : "false");
 	return 0;
 }
 /*************************************************************************
