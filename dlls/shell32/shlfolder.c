@@ -119,7 +119,7 @@ static HRESULT SHELL32_ParseNextElement(
 	DWORD *pdwAttributes)
 {
 	HRESULT		hr = E_OUTOFMEMORY;
-	LPITEMIDLIST	pidlOut, pidlTemp = NULL;
+	LPITEMIDLIST	pidlOut = NULL, pidlTemp = NULL;
 	IShellFolder	*psfChild;
 
 	TRACE("(%p, %p, %s)\n",psf, pidlInOut ? *pidlInOut : NULL, debugstr_w(szNext));
