@@ -5624,6 +5624,7 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
+dlls/dplayx/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/lzexpand/Makefile
@@ -5819,6 +5820,7 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
+dlls/dplayx/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/lzexpand/Makefile

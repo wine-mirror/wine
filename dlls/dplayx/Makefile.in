@@ -1,0 +1,19 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dplayx
+
+SPEC_SRCS = dplay.spec dplayx.spec 
+
+C_SRCS = dplay.c \
+         dplobby.c \
+         dpclassfactory.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -36,6 +36,7 @@ LIBSUBDIRS = \
 	dlls/commdlg \
 	dlls/crtdll \
 	dlls/dciman32 \
+	dlls/dplayx \
 	dlls/imagehlp \
 	dlls/imm32 \
 	dlls/lzexpand \
@@ -135,6 +136,7 @@ LIBOBJS = \
 	dlls/commdlg/commdlg.o \
 	dlls/crtdll/crtdll.o \
 	dlls/dciman32/dciman32.o \
+	dlls/dplayx/dplayx.o \
 	dlls/imagehlp/imagehlp.o \
 	dlls/imm32/imm32.o \
 	dlls/lzexpand/lzexpand.o \

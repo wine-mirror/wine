@@ -2,8 +2,6 @@ Makefile
 call32.s
 ddraw.spec.c
 dinput.spec.c
-dplay.spec.c
-dplayx.spec.c
 dsound.spec.c
 gdi32.spec.c
 kernel32.spec.c

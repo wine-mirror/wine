@@ -5,6 +5,7 @@ SUBDIRS = \
 	commdlg \
 	crtdll \
 	dciman32 \
+	dplayx \
 	imagehlp \
 	imm32 \
 	lzexpand \

@@ -8,7 +8,6 @@ WRCEXTRA  = -s -pwinmm
 
 C_SRCS = \
 	audio.c \
-	dplay.c \
 	dsound.c \
 	joystick.c \
 	lolvldrv.c \

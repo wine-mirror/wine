@@ -5,18 +5,74 @@ Most methods and APIs are not implemented at this point. Examine the code
 to see what has been implemented.  Stay tuned for some information here once
 there is more implementation (and I figure out what the heck I'm doing).
 
-The files are include/dplay.h and multimedia/dplay.c. They're getting a 
-little cumbersome at present perhaps they will be broken out in a later
-version.
+The files are include/dplay.h, include/dplobby.h, multimedia/dplobby.c and multimedia/dplay.c. 
+The .c files will be moved to appropriate dll directories at some later time.
 
 I think I can safely say that any application which requires direct play
 or direct play lobby will not work at this point. Priority will be to get
-lserver.exe from the sdk running.
+examples from the sdk running. Once they're at least partially working, I can
+get down to trying to get some of the games working.
 
+A small issue will be the fact that DirectX 6.1(ie. DirectPlay4) introduces a layer of functionality
+inside the DP objects which provide guaranteed protocol delivery. This is
+even if the native protocol, IPX or modem for instance, doesn't guarantee it. I'm going to leave
+this kind of implementation to as close to the end as possible. However, I
+will implement an abstraction layer, where possible, for this functionality. 
+It will do nothing to start, but will require only the implementation of the 
+guaranteness to give final implementation.
 
 
 TODO:
-  - Just about everything
+  - (done) Header files for DP4 and DPL3 
+  - (done) Add stub functions for all DP4 and DPL3 interfaces
+  - (done) Correct naming of the parameters for DP3 and DPL2
+  - (done) Seperate out DP and DPL into multiple .c files
+  - (done) Allow CoCreateInstance to create the new interfaces
+  - (started)Implement mutual exclusion on object data for existing functions
+  - (done) Create and move to correct dll directories (dplay and dplayx)
+  - (done) Implement dplay in terms of dplayx
+  - (started) Need a better internal implementation for the objects which scales and 
+    preferably doesn't involve casting structures
+  - (started) More generic initialization and destruction helper methods based off
+    the chosen internal implementation
+  - How to deal with all the incorrect interfaces for IUnknown methods. The standard
+    wine macros are incorrect in that they always give IUnknown* rather than DirectPlayLobby2A
+    for instance. Are we forced to cast?
+  - Implement a lib main for the dplayx dll
+  - Ensure that all dll stubs are present and the ordinals are correct
+  - Implementation of functionality
+  - bug fixes ;)
 
+Programs to make work:
+  - lserver.exe (from sdk)
+  - override.exe (from sdk)
+  - dpchat.exe (from sdk)
+  - duel.exe (from sdk)
 
-Peter Hunnisett  -  hunnise@nortel.ca
+Next API to implement on a per program basis:
+  override.exe
+  - IDirectPlay3AImp_EnumConnections
+  - ?
+
+  dplaunch.exe
+  - IDirectPlayLobbyAImpl_EnumLocalApplications
+  - ?
+
+  lserver.exe
+  - IDirectPlayLobby2WImpl_Connect 
+  - IDirectPlay3WImpl_CreatePlayer 
+  - IDirectPlay3WImpl_CreateGroup
+  - IDirectPlay3WImpl_SetGroupData
+  - IDirectPlay3WImpl_Send
+  - ?
+ 
+  bellhop.exe
+  - DirectPlay3AImpl_EnumConnections
+  - ?
+
+  dpslots.exe
+  - IDirectPlayLobbyAImpl_SetConnectionSettings
+  - IDirectPlayAImpl_EnumConnections 
+  - ?
+   
+Peter Hunnisett  -  hunnise@nortelnetworks.com

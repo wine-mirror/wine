@@ -8,8 +8,6 @@ MODULE    = relay32
 SPEC_SRCS = \
 	ddraw.spec \
 	dinput.spec \
-	dplay.spec \
-	dplayx.spec \
 	dsound.spec \
 	gdi32.spec \
 	kernel32.spec \
