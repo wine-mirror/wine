@@ -516,12 +516,14 @@ BOOL        WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
 #define     GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
 LANGID      WINAPI GetSystemDefaultLangID(void);
 LCID        WINAPI GetSystemDefaultLCID(void);
+LANGID      WINAPI GetSystemDefaultUILanguage(void);
 LCID        WINAPI GetThreadLocale(void);
 INT         WINAPI GetTimeFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR,LPSTR,INT);
 INT         WINAPI GetTimeFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
 #define     GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
 LANGID      WINAPI GetUserDefaultLangID(void);
 LCID        WINAPI GetUserDefaultLCID(void);
+LANGID      WINAPI GetUserDefaultUILanguage(void);
 BOOL        WINAPI IsDBCSLeadByte(BYTE);
 BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
 BOOL        WINAPI IsValidCodePage(UINT);

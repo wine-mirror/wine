@@ -439,6 +439,7 @@ init	MAIN_KernelInit
 @ stdcall GetStringTypeW(long wstr long ptr) GetStringTypeW
 @ stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
 @ stdcall GetSystemDefaultLangID() GetSystemDefaultLangID
+@ stdcall GetSystemDefaultUILanguage() GetSystemDefaultUILanguage
 @ stdcall GetSystemDirectoryA(ptr long) GetSystemDirectoryA
 @ stdcall GetSystemDirectoryW(ptr long) GetSystemDirectoryW
 @ stdcall GetSystemInfo(ptr) GetSystemInfo
@@ -464,6 +465,7 @@ init	MAIN_KernelInit
 @ stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
 @ stdcall GetUserDefaultLCID() GetUserDefaultLCID
 @ stdcall GetUserDefaultLangID() GetUserDefaultLangID
+@ stdcall GetUserDefaultUILanguage() GetUserDefaultUILanguage
 @ stdcall GetVersion() GetVersion
 @ stdcall GetVersionExA(ptr) GetVersionExA
 @ stdcall GetVersionExW(ptr) GetVersionExW

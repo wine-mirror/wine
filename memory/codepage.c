@@ -177,6 +177,24 @@ LCID WINAPI GetSystemDefaultLCID(void)
 
 
 /***********************************************************************
+ *		GetUserDefaultUILanguage (KERNEL32.@)
+ */
+LANGID WINAPI GetUserDefaultUILanguage(void)
+{
+    return GetUserDefaultLangID();
+}
+
+
+/***********************************************************************
+ *		GetSystemDefaultUILanguage (KERNEL32.@)
+ */
+LANGID WINAPI GetSystemDefaultUILanguage(void)
+{
+    return GetSystemDefaultLangID();
+}
+
+
+/***********************************************************************
  *           IsDBCSLeadByteEx   (KERNEL32.@)
  */
 BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
