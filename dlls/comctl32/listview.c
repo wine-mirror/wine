@@ -1757,7 +1757,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   /* small icons */
   if (infoPtr->himlSmall != NULL)
   {
-    if (lvItem.state & LVIS_SELECTED)
+    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
     {
       ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
       ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcItem.left, 
@@ -3585,7 +3585,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
   POINT ptItem;
   HDC hdc;
   HFONT hOldFont;
-  INT nMaxWidth;
+  INT nLeftPos;
   INT nLabelWidth;
   TEXTMETRICA tm;
 
@@ -3691,7 +3691,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           if (LISTVIEW_GetOrigin(hwnd, &ptOrigin) != FALSE)
           {
             bResult = TRUE;
-            nMaxWidth = lprc->left = ptItem.x + ptOrigin.x; 
+            nLeftPos = lprc->left = ptItem.x + ptOrigin.x; 
             lprc->top = ptItem.y + ptOrigin.y;
             lprc->bottom = lprc->top + infoPtr->nItemHeight;
             
@@ -3706,20 +3706,20 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             }
             
             nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
-            if (lprc->left + nLabelWidth < nMaxWidth + infoPtr->nItemWidth)
+            if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
             {
               lprc->right = lprc->left + nLabelWidth;
             }
             else
             {
-              lprc->right = nMaxWidth + infoPtr->nItemWidth;
+              lprc->right = nLeftPos + infoPtr->nItemWidth;
             }
           }
         }
         else
         {
           bResult = TRUE;
-          lprc->left = ptItem.x; 
+          nLeftPos = lprc->left = ptItem.x; 
           lprc->top = ptItem.y;
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
@@ -3733,7 +3733,15 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             lprc->left += infoPtr->iconSize.cx;
           }
 
-          lprc->right = lprc->left + LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
+	  {
+	    lprc->right = lprc->left + nLabelWidth;
+	  }
+	  else
+	  {
+	    lprc->right = nLeftPos + infoPtr->nItemWidth;
+	  }
         }
         break;
 
@@ -3765,7 +3773,16 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
               lprc->right += infoPtr->iconSize.cx;
             if (infoPtr->himlSmall != NULL)
               lprc->right += infoPtr->iconSize.cx;
-            lprc->right += LISTVIEW_GetLabelWidth(hwnd, nItem);
+
+	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+	    if (lprc->right + nLabelWidth < lprc->left + infoPtr->nItemWidth)
+	    {
+	      lprc->right += nLabelWidth;
+	    }
+	    else
+	    {
+	      lprc->right = lprc->left + infoPtr->nItemWidth;
+	    }
           }
         }
         else
@@ -3786,7 +3803,15 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             lprc->right += infoPtr->iconSize.cx;
           }
 
-          lprc->right += LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  if (lprc->right + nLabelWidth < lprc->left + infoPtr->nItemWidth)
+	  {
+	    lprc->right += nLabelWidth;
+	  }
+	  else
+	  {
+	    lprc->right = lprc->left + infoPtr->nItemWidth;
+	  }
         }
         break;
         
@@ -3810,7 +3835,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           if (LISTVIEW_GetOrigin(hwnd, &ptOrigin) != FALSE)
           {
             bResult = TRUE;
-            lprc->left = ptItem.x + ptOrigin.x;  
+            nLeftPos= lprc->left = ptItem.x + ptOrigin.x;  
             lprc->top = ptItem.y + ptOrigin.y;
             lprc->bottom = lprc->top + infoPtr->nItemHeight;
             
@@ -3826,13 +3851,21 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
               lprc->right += infoPtr->iconSize.cx;
             }
             
-            lprc->right += LISTVIEW_GetLabelWidth(hwnd, nItem);
+	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+	    if (lprc->right + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
+	    {
+	      lprc->right += nLabelWidth;
+	    }
+	    else
+	    {
+	      lprc->right = nLeftPos + infoPtr->nItemWidth;
+	    }
           }
         }
         else
         {
           bResult = TRUE;
-          lprc->left = ptItem.x; 
+          nLeftPos = lprc->left = ptItem.x; 
           lprc->top = ptItem.y;
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
@@ -3848,7 +3881,15 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             lprc->right += infoPtr->iconSize.cx;
           }
 
-          lprc->right += LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+	  if (lprc->right + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
+	  {
+	    lprc->right += nLabelWidth;
+	  }
+	  else
+	  {
+	    lprc->right = nLeftPos + infoPtr->nItemWidth;
+	  }
         }
         break;
       }
@@ -5890,6 +5931,8 @@ static LRESULT LISTVIEW_KillFocus(HWND hwnd)
   INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
   NMHDR nmh;
 
+  TRACE("(hwnd=%x)\n", hwnd);
+
   /* send NM_KILLFOCUS notification */
   nmh.hwndFrom = hwnd;
   nmh.idFrom = nCtrlId;
@@ -6373,6 +6416,8 @@ static LRESULT LISTVIEW_SetFocus(HWND hwnd, HWND hwndLoseFocus)
   INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
   NMHDR nmh;
 
+  TRACE("(hwnd=%x, hwndLoseFocus=%x)\n", hwnd, hwndLoseFocus);
+
   /* send NM_SETFOCUS notification */
   nmh.hwndFrom = hwnd;
   nmh.idFrom = nCtrlId;
@@ -6381,6 +6426,9 @@ static LRESULT LISTVIEW_SetFocus(HWND hwnd, HWND hwndLoseFocus)
 
   /* set window focus flag */
   infoPtr->bFocus = TRUE;
+
+  InvalidateRect(hwnd, NULL, TRUE);
+  UpdateWindow(hwnd);
 
   return 0;
 }
@@ -6887,7 +6935,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_EraseBackground(hwnd, wParam, lParam);
 
   case WM_GETDLGCODE:
-    return DLGC_WANTTAB | DLGC_WANTARROWS;
+    return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
   case WM_GETFONT:
     return LISTVIEW_GetFont(hwnd);
