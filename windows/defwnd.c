@@ -618,7 +618,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     }
 
     WIN_ReleaseWndPtr(wndPtr);
-    SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result );
+    SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result, wParam, lParam );
     return result;
 }
 
@@ -682,7 +682,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     }
 
     WIN_ReleaseWndPtr(wndPtr);
-    SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result );
+    SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result, wParam, lParam );
     return result;
 }
 
@@ -737,6 +737,6 @@ LRESULT WINAPI DefWindowProcW(
         break;
     }
     WIN_ReleaseWndPtr(wndPtr);
-    SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result );
+    SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result, wParam, lParam );
     return result;
 }

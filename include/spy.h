@@ -26,7 +26,7 @@ extern const char *SPY_GetMsgName( UINT msg );
 extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg,
                               WPARAM wParam, LPARAM lParam );
 extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
-                             LRESULT lReturn );
+                             LRESULT lReturn, WPARAM wParam, LPARAM lParam );
 extern int SPY_Init(void);
 
 #endif /* __WINE_SPY_H */

@@ -838,11 +838,12 @@ const char *SPY_GetWndName( HWND hwnd )
 /***********************************************************************
  *           SPY_DumpStructure
  */
-void SPY_DumpStructure (UINT msg, LPARAM structure)
+void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 {
 	switch (msg)
 	{
 	    case WM_DRAWITEM:
+	        if (!enter) break;
 		{   DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
 		    TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpdis->CtlType, lpdis->CtlID);
 		    TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", lpdis->itemID, lpdis->itemAction, lpdis->itemState);
@@ -857,7 +858,16 @@ void SPY_DumpStructure (UINT msg, LPARAM structure)
 		    TRACE("itemData=0x%08lx\n", lpmis->itemData);
 		}
 		break;
+	    case WM_STYLECHANGED:
+		if (!enter) break;
+	    case WM_STYLECHANGING:
+	        {   LPSTYLESTRUCT ss = (LPSTYLESTRUCT) structure;
+		    TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
+		          ss->styleOld, ss->styleNew); 
+	        }
+	        break;
 	    case WM_NOTIFY:
+	        if (!enter) break;
 		{   NMHDR * pnmh = (NMHDR*) structure;
 		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n", pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
 		}
@@ -916,7 +926,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
 			     SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ), 
 			     taskName, wParam, lParam );
-		SPY_DumpStructure(msg, lParam);
+		SPY_DumpStructure(msg, TRUE, lParam);
 	    }
         }
         break;   
@@ -942,7 +952,8 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 /***********************************************************************
  *           SPY_ExitMessage
  */
-void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
+void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
+                       WPARAM wParam, LPARAM lParam )
 {
     LPCSTR pname;
 
@@ -976,6 +987,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
         TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
+	SPY_DumpStructure(msg, FALSE, lParam);
         break; 
 
     case SPY_RESULT_INVALIDHWND16:

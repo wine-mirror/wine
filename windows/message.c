@@ -1803,9 +1803,9 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
     }
 
     if (flags & SMSG_WIN32)
-        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, *pRes );
+        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, *pRes, wParam, lParam );
     else
-    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, *pRes );
+    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, *pRes, wParam, lParam );
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return ret;
@@ -2309,7 +2309,8 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     retval = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
                                msg->hwnd, msg->message,
                                msg->wParam, msg->lParam );
-    SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval );
+    SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval, 
+		     msg->wParam, msg->lParam );
 
     WIN_ReleaseWndPtr(wndPtr);
     wndPtr = WIN_FindWndPtr(msg->hwnd);
@@ -2393,7 +2394,8 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     retval = CallWindowProcA( (WNDPROC)wndPtr->winproc,
                                 msg->hwnd, msg->message,
                                 msg->wParam, msg->lParam );
-    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval );
+    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
+		     msg->wParam, msg->lParam );
 
     WIN_ReleaseWndPtr(wndPtr);
     wndPtr = WIN_FindWndPtr(msg->hwnd);
@@ -2475,7 +2477,8 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     retval = CallWindowProcW( (WNDPROC)wndPtr->winproc,
                                 msg->hwnd, msg->message,
                                 msg->wParam, msg->lParam );
-    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval );
+    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
+		     msg->wParam, msg->lParam );
 
     WIN_ReleaseWndPtr(wndPtr);
     wndPtr = WIN_FindWndPtr(msg->hwnd);
