@@ -1073,7 +1073,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     wc->lpfnWndProc   = CLASS_GetProc( classPtr, WIN_PROC_16 );
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
     wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
-    wc->hInstance     = (HINSTANCE16)classPtr->hInstance;
+    wc->hInstance     = classPtr->style & CS_GLOBALCLASS ? GetModuleHandle16("USER") : (HINSTANCE16)classPtr->hInstance;
     wc->hIcon         = classPtr->hIcon;
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
