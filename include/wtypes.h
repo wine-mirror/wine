@@ -8,6 +8,13 @@
 
 #include "wintypes.h"
 
+/* FIXME: this line should be in rpcndr.h */
+typedef unsigned char byte;
+
+/* FIXME: and the following group should be in rpcdce.h */
+typedef void* RPC_AUTH_IDENTITY_HANDLE;
+typedef void* RPC_AUTHZ_HANDLE;
+
 
 typedef WORD CLIPFORMAT32, *LPCLIPFORMAT32;
 DECL_WINELIB_TYPE(CLIPFORMAT)
@@ -64,6 +71,36 @@ typedef struct _GUID	FMTID,*LPFMTID;
 DECLARE_HANDLE(HMETAFILEPICT);
 #undef DECLARE_HANDLE
 
+typedef struct _COAUTHIDENTITY
+{
+    USHORT* User;
+    ULONG UserLength;
+    USHORT* Domain;
+    ULONG DomainLength;
+    USHORT* Password;
+    ULONG PasswordLength;
+    ULONG Flags;
+} COAUTHIDENTITY;
+
+typedef struct _COAUTHINFO
+{
+    DWORD dwAuthnSvc;
+    DWORD dwAuthzSvc;
+    LPWSTR pwszServerPrincName;
+    DWORD dwAuthnLevel;
+    DWORD dwImpersonationLevel;
+    COAUTHIDENTITY* pAuthIdentityData;
+    DWORD dwCapabilities;
+} COAUTHINFO;
+
+typedef struct _COSERVERINFO
+{
+    DWORD dwReserved1;
+    LPWSTR pwszName;
+    COAUTHINFO* pAuthInfo;
+    DWORD dwReserved2;
+} COSERVERINFO;
+
 typedef enum tagCLSCTX
 {
     CLSCTX_INPROC_SERVER     = 0x1,
@@ -79,6 +116,103 @@ typedef enum tagCLSCTX
 #define CLSCTX_INPROC           (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER)
 #define CLSCTX_ALL              (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)
 #define CLSCTX_SERVER           (CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)
+
+typedef unsigned short VARTYPE;
+
+typedef ULONG PROPID;
+
+typedef struct tagBLOB
+{
+    ULONG cbSize;
+    BYTE *pBlobData;
+} BLOB;
+
+#ifndef _tagCY_DEFINED
+#define _tagCY_DEFINED
+typedef union tagCY
+{
+    struct {
+#ifdef BIG_ENDIAN
+        long Hi;
+        long Lo;
+#else
+        unsigned long Lo;
+        long Hi;
+#endif
+    } u;
+    LONGLONG int64;
+} CY;
+#endif /* _tagCY_DEFINED */
+
+/*
+ * 0 == FALSE and -1 == TRUE
+ */
+#define VARIANT_TRUE     ((VARIANT_BOOL)0xFFFF)
+#define VARIANT_FALSE    ((VARIANT_BOOL)0x0000)
+typedef short VARIANT_BOOL,_VARIANT_BOOL;
+
+typedef struct tagCLIPDATA
+{
+    ULONG cbSize;
+    long ulClipFmt;
+    BYTE *pClipData;
+} CLIPDATA;
+
+// Macro to calculate the size of the above pClipData
+#define CBPCLIPDATA(clipdata)    ( (clipdata).cbSize - sizeof((clipdata).ulClipFmt) )
+
+typedef LONG SCODE;
+
+#ifndef _FILETIME_
+#define _FILETIME_
+/* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
+typedef struct
+{
+  DWORD  dwLowDateTime;
+  DWORD  dwHighDateTime;
+} FILETIME, *LPFILETIME;
+#endif /* _FILETIME_ */
+
+#ifndef _SECURITY_DEFINED
+#define _SECURITY_DEFINED
+
+typedef struct {
+    BYTE Value[6];
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
+
+typedef struct _SID {
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[1];
+} SID,*PSID;
+
+/*
+ * ACL 
+ */
+
+typedef struct _ACL {
+    BYTE AclRevision;
+    BYTE Sbz1;
+    WORD AclSize;
+    WORD AceCount;
+    WORD Sbz2;
+} ACL, *PACL;
+
+typedef WORD SECURITY_DESCRIPTOR_CONTROL;
+
+/* The security descriptor structure */
+typedef struct {
+    BYTE Revision;
+    BYTE Sbz1;
+    SECURITY_DESCRIPTOR_CONTROL Control;
+    PSID Owner;
+    PSID Group;
+    PACL Sacl;
+    PACL Dacl;
+} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+
+#endif /* _SECURITY_DEFINED */
 
 
 #endif /* __WINE_WTYPES_H */

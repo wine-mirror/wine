@@ -106,7 +106,6 @@ typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
 typedef int             BOOL32;
 typedef double          DATE;
-typedef long		SCODE;
 typedef long            LONG_PTR;
 typedef unsigned long   ULONG_PTR;
 typedef double          DOUBLE;

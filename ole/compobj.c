@@ -43,7 +43,9 @@
 #include "ldt.h"
 #include "winreg.h"
 
-#include "objbase.h"
+#include "wine/obj_base.h"
+#include "wine/obj_misc.h"
+#include "wine/obj_clientserver.h"
 
 #include "ifs.h"
 

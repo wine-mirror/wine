@@ -315,17 +315,6 @@ typedef struct _EXCEPTION_POINTERS
   PCONTEXT           ContextRecord;
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
-typedef struct {
-    BYTE Value[6];
-} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
-
-typedef struct _SID {
-    BYTE Revision;
-    BYTE SubAuthorityCount;
-    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-    DWORD SubAuthority[1];
-} SID,*PSID;
-
 
 #pragma pack(4)
 /*
@@ -365,6 +354,47 @@ typedef enum _TOKEN_INFORMATION_CLASS {
   TokenImpersonationLevel, 
   TokenStatistics 
 } TOKEN_INFORMATION_CLASS; 
+
+#ifndef _SECURITY_DEFINED
+#define _SECURITY_DEFINED
+
+typedef struct {
+    BYTE Value[6];
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
+
+typedef struct _SID {
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[1];
+} SID,*PSID;
+
+/* 
+ * ACL 
+ */
+
+typedef struct _ACL {
+    BYTE AclRevision;
+    BYTE Sbz1;
+    WORD AclSize;
+    WORD AceCount;
+    WORD Sbz2;
+} ACL, *PACL;
+
+typedef WORD SECURITY_DESCRIPTOR_CONTROL;
+
+/* The security descriptor structure */
+typedef struct {
+    BYTE Revision;
+    BYTE Sbz1;
+    SECURITY_DESCRIPTOR_CONTROL Control;
+    PSID Owner;
+    PSID Group;
+    PACL Sacl;
+    PACL Dacl;
+} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+
+#endif /* _SECURITY_DEFINED */
 
 /* 
  * SID_AND_ATTRIBUTES
@@ -441,18 +471,6 @@ typedef struct _TOKEN_PRIMARY_GROUP {
 } TOKEN_PRIMARY_GROUP; 
 
 /*
- * ACL 
- */
-
-typedef struct _ACL {
-    BYTE AclRevision;
-    BYTE Sbz1;
-    WORD AclSize;
-    WORD AceCount;
-    WORD Sbz2;
-} ACL, *PACL;
-
-/*
  * TOKEN_DEFAULT_DACL
  */
 
@@ -488,6 +506,7 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL {
   SecurityImpersonation, 
   SecurityDelegation 
 } SECURITY_IMPERSONATION_LEVEL; 
+
 
 
 /*

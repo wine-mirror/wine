@@ -164,28 +164,18 @@ typedef struct
     BOOL32  bInheritHandle;
 } SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
-typedef WORD SECURITY_DESCRIPTOR_CONTROL;
-
-/* The security descriptor structure */
-typedef struct {
-    BYTE Revision;
-    BYTE Sbz1;
-    SECURITY_DESCRIPTOR_CONTROL Control;
-    PSID Owner;
-    PSID Group;
-    PACL Sacl;
-    PACL Dacl;
-} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
-
 typedef DWORD SECURITY_INFORMATION;
 
 
+#ifndef _FILETIME_
+#define _FILETIME_
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
 typedef struct
 {
   DWORD  dwLowDateTime;
   DWORD  dwHighDateTime;
 } FILETIME, *LPFILETIME;
+#endif /* _FILETIME_ */
 
 /* Find* structures */
 typedef struct

@@ -150,14 +150,6 @@ SafeArrayRedim32(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
  * Data types for Variants.
  */
 
-/*
- * 0 == FALSE and -1 == TRUE
- */
-typedef short VARIANT_BOOL;
-
-#define VARIANT_TRUE	 ((VARIANT_BOOL)0xFFFF)
-#define VARIANT_FALSE	 ((VARIANT_BOOL)0x0000)
-
 enum VARENUM {
 	VT_EMPTY = 0,
 	VT_NULL = 1,
@@ -829,5 +821,40 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #define VarUintFromUI432	VarUI4FromUI432
 #define VarUintFromDec32	VarUI4FromDec32
 #define VarUintFromInt32	VarUI4FromI432
+
+
+typedef enum tagCALLCONV {
+    CC_CDECL		= 1,
+    CC_MSCPASCAL	= CC_CDECL + 1,
+    CC_PASCAL		= CC_MSCPASCAL,
+    CC_MACPASCAL	= CC_PASCAL + 1,
+    CC_STDCALL		= CC_MACPASCAL + 1,
+    CC_RESERVED		= CC_STDCALL + 1,
+    CC_SYSCALL		= CC_RESERVED + 1,
+    CC_MPWCDECL		= CC_SYSCALL + 1,
+    CC_MPWPASCAL	= CC_MPWCDECL + 1,
+    CC_MAX 		= CC_MPWPASCAL + 1
+} CALLCONV;
+
+typedef struct tagPARAMDATA {
+    OLECHAR16 * szName;    /* parameter name */
+    VARTYPE vt;         /* parameter type */
+} PARAMDATA, * LPPARAMDATA;
+
+typedef struct tagMETHODDATA {
+    OLECHAR16 * szName;    /* method name */
+    PARAMDATA * ppdata;  /* pointer to an array of PARAMDATAs */
+    DISPID dispid;      /* method ID */
+    UINT16 iMeth;         /* method index */
+    CALLCONV cc;        /* calling convention */
+    UINT16 cArgs;         /* count of arguments */
+    WORD wFlags;        /* same wFlags as on IDispatch::Invoke() */
+    VARTYPE vtReturn;
+} METHODDATA, * LPMETHODDATA;
+
+typedef struct tagINTERFACEDATA {
+    METHODDATA * pmethdata;  /* pointer to an array of METHODDATAs */
+    UINT16 cMembers;      /* count of members */
+} INTERFACEDATA, * LPINTERFACEDATA;
 
 #endif /*__WINE_OLEAUTO_H*/

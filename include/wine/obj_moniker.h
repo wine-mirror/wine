@@ -35,7 +35,6 @@ typedef struct IRunnableObject IRunnableObject,*LPRUNNABLEOBJECT;
 DEFINE_OLEGUID(IID_IRunningObjectTable,	0x00000010L, 0, 0);
 typedef struct IRunningObjectTable IRunningObjectTable,*LPRUNNINGOBJECTTABLE;
 
-typedef struct  COSERVERINFO COSERVERINFO; // must be defined !
 
 
 /*********************************************************************************
