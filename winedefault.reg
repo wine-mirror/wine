@@ -66,11 +66,12 @@
 #
 
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
-"ProgramFilesDir"="C:\\Program Files"
 "CommonFilesDir"="C:\\Program Files\\Common Files"
+"FirstInstallDateTime"=hex:21,81,7c,23
+"ProductId"="12345-oem-0000001-54321"
+"ProgramFilesDir"="C:\\Program Files"
 "RegisteredOrganization"="Change preferred organization in ~/.wine/system.reg"
 "RegisteredOwner"="Change preferred owner in ~/.wine/system.reg"
-"FirstInstallDateTime"=hex:21,81,7c,23
 
 # Font name to font file mappings
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Fonts]
@@ -99,6 +100,9 @@
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Nls\Codepage]
 "ACP"="1252"
 "OEMCP"="437"
+
+[HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM]
+"Serial0"="COM1"
 
 #
 # This configures Wine's PostScript printer driver
@@ -872,6 +876,8 @@
 #
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\DirectX]
+# left here in case a program needs the DX 7.0 string
+#"Version"="4.07.00.0700"
 "Version"="4.08.01.0810"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D7B70EE0-4340-11CF-B063-0020AFC2CD35}]
