@@ -1844,7 +1844,6 @@ typedef struct
 typedef struct
 {
     BYTE   fVirt;
-    BYTE   pad0;
     WORD   key;
     WORD   cmd;
 } ACCEL, *LPACCEL;
@@ -2380,21 +2379,21 @@ DECL_WINELIB_TYPE_AW(LPMSGBOXPARAMS)
 
 typedef struct tagMONITORINFO
 {
-    DWORD   cbSize;
+    DWORD cbSize;
     RECT  rcMonitor;
     RECT  rcWork;
-    DWORD   dwFlags;
+    DWORD dwFlags;
 } MONITORINFO, *LPMONITORINFO;
 
 typedef struct tagMONITORINFOEXA
 {
-    MONITORINFO dummy;
+    MONITORINFO DUMMYSTRUCTNAME;
     CHAR        szDevice[CCHDEVICENAME];
 } MONITORINFOEXA, *LPMONITORINFOEXA;
 
 typedef struct tagMONITORINFOEXW
 {
-    MONITORINFO dummy;
+    MONITORINFO DUMMYSTRUCTNAME;
     WCHAR       szDevice[CCHDEVICENAME];
 } MONITORINFOEXW, *LPMONITORINFOEXW;
 

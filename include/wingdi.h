@@ -2395,7 +2395,7 @@ typedef struct {
     DWORD iUsageSrc;
     DWORD iStartScan;
     DWORD cScans;
-} EMRSETDIBITSTODEIVCE, *PEMRSETDIBITSTODEVICE;
+} EMRSETDIBITSTODEVICE, *PEMRSETDIBITSTODEVICE;
 
 typedef struct {
     EMR   emr;
