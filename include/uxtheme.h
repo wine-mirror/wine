@@ -28,6 +28,13 @@ typedef HANDLE HTHEME;
 HRESULT WINAPI CloseThemeData(HTHEME hTheme);
 HRESULT WINAPI DrawThemeBackground(HTHEME,HDC,int,int,const RECT*,const RECT*);
 
+#define DTBG_CLIPRECT        0x00000001
+#define DTBG_DRAWSOLID       0x00000002
+#define DTBG_OMITBORDER      0x00000004
+#define DTBG_OMITCONTENT     0x00000008
+#define DTBG_COMPUTINGREGION 0x00000010
+#define DTBG_MIRRORDC        0x00000020
+
 typedef struct _DTBGOPTS {
     DWORD dwSize;
     DWORD dwFlags;
