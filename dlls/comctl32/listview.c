@@ -9830,14 +9830,14 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
         
 	if (!cancel)
 	{
-	    DWORD len = 1 + isW ? GetWindowTextLengthW(hwnd) : GetWindowTextLengthA(hwnd);
+	    DWORD len = isW ? GetWindowTextLengthW(hwnd) : GetWindowTextLengthA(hwnd);
 
 	    if (len)
 	    {
 		if ( (buffer = COMCTL32_Alloc((len+1) * (isW ? sizeof(WCHAR) : sizeof(CHAR)))) )
 		{
-		    if (isW) GetWindowTextW(hwnd, buffer, len);
-		    else GetWindowTextA(hwnd, (CHAR*)buffer, len);
+		    if (isW) GetWindowTextW(hwnd, buffer, len+1);
+		    else GetWindowTextA(hwnd, (CHAR*)buffer, len+1);
 		}
 	    }
 	}
