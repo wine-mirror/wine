@@ -252,7 +252,7 @@ void QUEUE_Signal( HTASK16 hTask )
         }
     SYSTEM_UNLOCK();
 
-    if ( !wakeup && THREAD_IsWin16( THREAD_Current() ) )
+    if ( !wakeup )
         PostEvent( hTask );
 }
 
