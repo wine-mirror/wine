@@ -34,34 +34,33 @@
  "winsock2.h" => [ "WSAEVENT", "LPWSAEVENT", "WSAOVERLAPPED", "WS_.*" ]
 );
 
-@header_list =
+%header_list =
 (
- "windef.h",
- "winnt.h",
- "winbase.h",
- "wingdi.h",
- "winuser.h",
- "winerror.h",
- "winnls.h",
- "winreg.h",
- "winsock2.h",
- "winspool.h",
- "winver.h",
- "wincon.h",
+ "windef.h" => "windef.pm",
+ "winnt.h" => "winnt.pm",
+ "winbase.h" => "winbase.pm",
+ "wingdi.h" => "wingdi.pm",
+ "winuser.h" => "winuser.pm",
+ "winerror.h" => "winerror.pm",
+ "winnls.h" => "winnls.pm",
+ "winreg.h" => "winreg.pm",
+ "winsock2.h" => "winsock2.pm",
+ "winspool.h" => "winspool.pm",
+ "winver.h" => "winver.pm",
+ "wincon.h" => "wincon.pm",
+ "setupapi.h" => "setupapi_h.pm",
 );
 
 $include_dir = "../../include";
 
-@list = ($#ARGV >= 0) ? @ARGV : @header_list;
+@list = ($#ARGV >= 0) ? @ARGV : keys %header_list;
 
 foreach $basename (@list)
 {
     my $skip = $skip_list{$basename};
-    my $result = "include/" . $basename;
-    $result =~ s!\.h$!.pm!;
-
-    my $package = $basename;
-    $package =~ s/\.h$//;
+    my $result = "include/" . $header_list{$basename};
+    my $package = $header_list{$basename};
+    $package =~ s/\.pm$//;
 
     open INPUT, "$include_dir/$basename" or die "Cannot open $include_dir/$basename";
     open OUTPUT, ">sym.c" or die "Cannot create sym.c";
@@ -71,8 +70,20 @@ foreach $basename (@list)
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "windef.h"
+#include "winnt.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winerror.h"
+#include "winnls.h"
+#include "winreg.h"
+#include "winsock2.h"
+#include "winspool.h"
+#include "winver.h"
+#include "wincon.h"
+#include "setupapi.h"
 EOF
-    foreach $inc (@header_list) { print OUTPUT "#include <$inc>\n"; }
 
     print OUTPUT <<EOF;
 int main()
@@ -132,3 +143,6 @@ EOF
     if (system( "./sym >$result" )) { die "Could not run ./sym\n"; }
     unlink "sym","sym.c";
 }
+
+chdir "../..";
+exec "tools/winapi/winapi_extract", "--no-progress", "--no-verbose";
