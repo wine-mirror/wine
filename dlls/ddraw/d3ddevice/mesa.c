@@ -1532,6 +1532,24 @@ convert_mag_filter_to_GL(D3DTEXTUREMAGFILTER dwState)
     return gl_state;
 }
 
+static GLenum
+convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
+{
+    GLenum gl_state;
+    switch (dwState) {
+        case D3DTADDRESS_WRAP:   gl_state = GL_REPEAT; break;
+	case D3DTADDRESS_CLAMP:  gl_state = GL_CLAMP; break;
+	case D3DTADDRESS_BORDER: gl_state = GL_CLAMP_TO_EDGE; break;
+#if defined(GL_VERSION_1_4)
+	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT; break;
+#elif defined(GL_ARB_texture_mirrored_repeat)
+	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT_ARB; break;
+#endif
+	default:                 gl_state = GL_REPEAT; break;
+    }
+    return gl_state;
+}
+
 /* We need a static function for that to handle the 'special' case of 'SELECT_ARG2' */
 static BOOLEAN
 handle_color_alpha_args(IDirect3DDeviceImpl *This, DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageStateType, DWORD dwState, D3DTEXTUREOP tex_op)
@@ -1705,18 +1723,20 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         case D3DTSS_ADDRESS:
         case D3DTSS_ADDRESSU:
         case D3DTSS_ADDRESSV: {
-	    GLenum arg = GL_REPEAT; /* Default value */
+	    GLenum arg = convert_tex_address_to_GL(dwState);
+	    
 	    switch ((D3DTEXTUREADDRESS) dwState) {
-	        case D3DTADDRESS_WRAP:   TRACE(" Stage type is : %s => D3DTADDRESS_WRAP\n", type); arg = GL_REPEAT; break;
-	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); arg = GL_CLAMP; break;
-	        case D3DTADDRESS_BORDER: TRACE(" Stage type is : %s => D3DTADDRESS_BORDER\n", type); arg = GL_CLAMP_TO_EDGE; break;
+	        case D3DTADDRESS_WRAP:   TRACE(" Stage type is : %s => D3DTADDRESS_WRAP\n", type); break;
+	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); break;
+	        case D3DTADDRESS_BORDER: TRACE(" Stage type is : %s => D3DTADDRESS_BORDER\n", type); break;
 #if defined(GL_VERSION_1_4)
-		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); arg = GL_MIRRORED_REPEAT; break;
+		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); break;
 #elif defined(GL_ARB_texture_mirrored_repeat)
-		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); arg = GL_MIRRORED_REPEAT_ARB; break;
+		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); break;
 #endif
 	        default: FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState); break;
 	    }
+	    
 	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
 		(d3dTexStageStateType == D3DTSS_ADDRESSU))
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, arg);
@@ -2034,10 +2054,16 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
     } else {
         IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpTexture2);
 	GLint max_mip_level;
+	GLfloat color[4];
 	
-	This->current_texture[dwStage] = tex_impl;
 	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
 
+	if (This->current_texture[dwStage] == tex_impl) {
+	    /* No need to do anything as the texture did not change. */
+	    return DD_OK;
+	}
+	This->current_texture[dwStage] = tex_impl;
+	
 	if (This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
 	    /* Do not re-enable texturing if it was disabled due to the COLOROP code */
 	    glEnable(GL_TEXTURE_2D);
@@ -2050,13 +2076,23 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
 	} else {
 	    max_mip_level = tex_impl->surface_desc.u2.dwMipMapCount - 1;
 	}
-	
+
+	/* Now we need to reset all glTexParameter calls for this particular texture... */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
 			convert_mag_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MAGFILTER - 1]));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 			convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1],
 						  This->state_block.texture_stage_state[dwStage][D3DTSS_MIPFILTER - 1]));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			convert_tex_address_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSU - 1]));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			convert_tex_address_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSV - 1]));	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_mip_level);
+	color[0] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >> 16) & 0xFF) / 255.0;
+	color[1] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >>  8) & 0xFF) / 255.0;
+	color[2] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >>  0) & 0xFF) / 255.0;
+	color[3] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >> 24) & 0xFF) / 255.0;
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
     }
     LEAVE_GL();
     
@@ -2956,6 +2992,8 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
 		     UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE, 0,
 		     GL_RGB, buffer_type, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     } else {
         glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
     }
@@ -2968,8 +3006,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_FOG);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     for (x = loc_rect.left; x < loc_rect.right; x += UNLOCK_TEX_SIZE) {
         for (y = loc_rect.top; y < loc_rect.bottom; y += UNLOCK_TEX_SIZE) {
@@ -3011,8 +3047,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_SCISSOR_TEST);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glPixelStorei(GL_UNPACK_SWAP_BYTES, FALSE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
     glDepthRange(d3d_dev->active_viewport.dvMinZ, d3d_dev->active_viewport.dvMaxZ);
     glViewport(d3d_dev->active_viewport.dwX,
