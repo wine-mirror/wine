@@ -151,8 +151,10 @@ static BOOL in_transition = FALSE; /* This is not used as for today */
 /***********************************************************************
  *           EVENT_Init
  */
-BOOL X11DRV_EVENT_Init(void)
+void X11DRV_EVENT_Init(void)
 {
+    HANDLE service;
+
 #ifdef HAVE_LIBXXSHM
     ShmAvailable = XShmQueryExtension( display );
     if (ShmAvailable) {
@@ -161,17 +163,18 @@ BOOL X11DRV_EVENT_Init(void)
 #endif
 
     /* Install the X event processing callback */
-    SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), 
-                                           GENERIC_READ | SYNCHRONIZE ),
-                       EVENT_ProcessAllEvents, 0 );
+    if (SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ|SYNCHRONIZE ),
+                           EVENT_ProcessAllEvents, 0 ) == INVALID_HANDLE_VALUE)
+    {
+        ERR("cannot add service object\n");
+        ExitProcess(1);
+    }
 
     /* Install the XFlush timer callback */
     if ( Options.synchronous ) 
         TSXSynchronize( display, True );
     else
         SERVICE_AddTimer( 200, EVENT_Flush, 0 );
-
-    return TRUE;
 }
 
 /***********************************************************************

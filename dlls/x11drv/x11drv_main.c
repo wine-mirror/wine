@@ -369,7 +369,12 @@ static void process_attach(void)
     }
 
     /* initialize GDI */
-    X11DRV_GDI_Initialize();
+    if(!X11DRV_GDI_Initialize())
+    {
+        MESSAGE( "%s: X11DRV Couldn't Initialize GDI.\n", argv0 );
+        ExitProcess(1);
+    }
+
 
     /* save keyboard setup */
     TSXGetKeyboardControl(display, &keyboard_state);
@@ -425,15 +430,13 @@ static void process_detach(void)
  */
 BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    static int process_count;
-
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        if (!process_count++) process_attach();
+        process_attach();
         break;
     case DLL_PROCESS_DETACH:
-        if (!--process_count) process_detach();
+        process_detach();
         break;
     }
     return TRUE;
