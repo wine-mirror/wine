@@ -15,7 +15,7 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGFONT16   logfont WINE_PACKED;
+    LOGFONTW    logfont;
 } FONTOBJ;
 
 typedef struct {
@@ -59,16 +59,18 @@ extern BOOL FONT_Init( UINT16* pTextCaps );
 extern INT16  FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer );
 extern INT  FONT_GetObjectA( FONTOBJ * font, INT count, LPSTR buffer );
 extern INT  FONT_GetObjectW( FONTOBJ * font, INT count, LPSTR buffer );
-extern void FONT_LogFont32ATo16( const LOGFONTA* font32, LPLOGFONT16 font16 );
-extern void FONT_LogFont32WTo16( const LOGFONTW* font32, LPLOGFONT16 font16 );
-extern void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 );
-extern void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 );
-extern void FONT_TextMetric32Ato16(const LPTEXTMETRICA ptm32, LPTEXTMETRIC16 ptm16 );
-extern void FONT_TextMetric32Wto16(const LPTEXTMETRICW ptm32, LPTEXTMETRIC16 ptm16 );
-extern void FONT_TextMetric16to32A(const LPTEXTMETRIC16 ptm16, LPTEXTMETRICA ptm32 );
-extern void FONT_TextMetric16to32W(const LPTEXTMETRIC16 ptm16, LPTEXTMETRICW ptm32 );
-extern void FONT_TextMetric32Ato32W(const LPTEXTMETRICA ptm32A, LPTEXTMETRICW ptm32W );
-
+extern void FONT_LogFontATo16( const LOGFONTA* font32, LPLOGFONT16 font16 );
+extern void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 );
+extern void FONT_LogFont16ToA( const LOGFONT16* font16, LPLOGFONTA font32 );
+extern void FONT_LogFont16ToW( const LOGFONT16* font16, LPLOGFONTW font32 );
+extern void FONT_TextMetricATo16(const TEXTMETRICA *ptm32, LPTEXTMETRIC16 ptm16 );
+extern void FONT_TextMetricWTo16(const TEXTMETRICW *ptm32, LPTEXTMETRIC16 ptm16 );
+extern void FONT_TextMetric16ToA(const TEXTMETRIC16 *ptm16, LPTEXTMETRICA ptm32 );
+extern void FONT_TextMetric16ToW(const TEXTMETRIC16 *ptm16, LPTEXTMETRICW ptm32 );
+extern void FONT_TextMetricAToW(const TEXTMETRICA *ptm32A, LPTEXTMETRICW ptm32W );
+extern void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16*, LPNEWTEXTMETRICEXW);
+extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
+extern BOOL ENGINE_InitFonts(void);
 
 
 #endif /* __WINE_FONT_H */

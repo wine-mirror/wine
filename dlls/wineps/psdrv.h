@@ -36,7 +36,7 @@ typedef struct _tagAFM {
     char		*FullName;
     char		*FamilyName;
     char		*EncodingScheme;
-    int			Weight;			/* FW_NORMAL etc. */
+    LONG		Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL		IsFixedPitch;
     float		UnderlinePosition;
@@ -271,7 +271,6 @@ extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
 extern char PSDRV_UnicodeToANSI(int u);
 
-
 extern INT PSDRV_WriteHeader( DC *dc, LPCSTR title );
 extern INT PSDRV_WriteFooter( DC *dc );
 extern INT PSDRV_WriteNewPage( DC *dc );
@@ -329,8 +328,8 @@ extern BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right,
 			     INT bottom );
 extern INT PSDRV_EndDoc( DC *dc );
 extern INT PSDRV_EndPage( DC *dc );
-extern BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
-				     DEVICEFONTENUMPROC proc, LPARAM lp );
+extern BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+				   DEVICEFONTENUMPROC proc, LPARAM lp );
 extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
 			   SEGPTR lpInData, SEGPTR lpOutData );
 extern BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,

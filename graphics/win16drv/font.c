@@ -56,7 +56,7 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics )
 
     TRACE("%04x \n", dc->hSelf);
 
-    FONT_TextMetric16to32A( &physDev->tm, metrics );
+    FONT_TextMetric16ToA( &physDev->tm, metrics );
 
     TRACE(
 	  "H %ld, A %ld, D %ld, Int %ld, Ext %ld, AW %ld, MW %ld, W %ld\n",
@@ -80,8 +80,8 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 
     dc->hFont = hfont;
 
-    TRACE("WIN16DRV_FONT_SelectObject '%s' h=%d\n",
-		     font->logfont.lfFaceName, font->logfont.lfHeight);
+    TRACE("WIN16DRV_FONT_SelectObject '%s' h=%ld\n",
+	  debugstr_w(font->logfont.lfFaceName), font->logfont.lfHeight);
 
 
     if( physDev->FontInfo )
@@ -92,7 +92,7 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 				      physDev->FontInfo, 0);
     }
 
-    memcpy(&physDev->lf, &font->logfont, sizeof(LOGFONT16));
+    FONT_LogFontWTo16(&font->logfont, &physDev->lf);
     nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_FONT,
                                   &physDev->lf, 0, 0); 
 
@@ -150,7 +150,7 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 }
 
 /***********************************************************************
- *           GetCharWidth32A    (GDI32.155)
+ *           GetCharWidth32A    (GDI32.@)
  */
 BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 			    LPINT buffer )
@@ -181,14 +181,15 @@ BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
  *           WIN16DRV_EnumDeviceFonts
  */
 
-BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
-				        DEVICEFONTENUMPROC proc, LPARAM lp )
+BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+				  DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     WIN16DRV_PDEVICE *physDev;
     WORD wRet;
     WEPFC wepfc;
     DC *dc;
-    /* EnumDFontCallback is GDI.158 */
+    char *FaceNameA = NULL;
+   /* EnumDFontCallback is GDI.158 */
     FARPROC16 pfnCallback = GetProcAddress16( GetModuleHandle16("GDI"), (LPCSTR)158 );
 
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
@@ -196,11 +197,20 @@ BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
     /* FIXME!! */
     GDI_ReleaseObj( hdc );
 
-    wepfc.proc = (int (*)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM))proc;
+    wepfc.proc = proc;
     wepfc.lp = lp;
 
-    wRet = PRTDRV_EnumDFonts(physDev->segptrPDEVICE, plf->lfFaceName[0] ?
-			     plf->lfFaceName : NULL , pfnCallback , &wepfc );
+    if(plf->lfFaceName[0]) {
+        INT len;
+        len = WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1, NULL, 0,
+				  NULL, NULL);
+	FaceNameA = HeapAlloc(GetProcessHeap(), 0, len);
+	WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1, FaceNameA, len,
+			    NULL, NULL);
+    }
+    wRet = PRTDRV_EnumDFonts(physDev->segptrPDEVICE, FaceNameA, pfnCallback,
+			     &wepfc );
+    if(FaceNameA) HeapFree(GetProcessHeap(), 0, FaceNameA);
     return wRet;
 }
 
@@ -218,8 +228,27 @@ WORD WINAPI EnumCallback16(LPENUMLOGFONT16 lpLogFont,
                            LPNEWTEXTMETRIC16 lpTextMetrics,
                            WORD wFontType, LONG lpClientData) 
 {
+    ENUMLOGFONTEXW lfW;
+    ENUMLOGFONTEX16 lf16;
+
+    NEWTEXTMETRICEXW tmW;
+    NEWTEXTMETRICEX16 tm16;
+
     TRACE("In EnumCallback16 plf=%p\n", lpLogFont);
-    return (*(((WEPFC *)lpClientData)->proc))( lpLogFont, lpTextMetrics, 
-				     wFontType, ((WEPFC *)lpClientData)->lp );
+
+    /* we have a ENUMLOGFONT16 which is a subset of ENUMLOGFONTEX16,
+       so we copy it into one of these and then convert to ENUMLOGFONTEXW */
+
+    memset(&lf16, 0, sizeof(lf16));
+    memcpy(&lf16, lpLogFont, sizeof(*lpLogFont));
+    FONT_EnumLogFontEx16ToW(&lf16, &lfW);
+
+    /* and a similar idea for NEWTEXTMETRIC16 */
+    memset(&tm16, 0, sizeof(tm16));
+    memcpy(&tm16, lpTextMetrics, sizeof(*lpTextMetrics));
+    FONT_NewTextMetricEx16ToW(&tm16, &tmW);
+
+    return (*(((WEPFC *)lpClientData)->proc))( &lfW, &tmW, wFontType,
+					       ((WEPFC *)lpClientData)->lp );
 }
 

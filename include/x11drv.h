@@ -92,8 +92,8 @@ extern const DC_FUNCTIONS X11DRV_DC_Funcs;
 extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
                              INT width, INT height, struct tagDC *dcSrc,
                              INT xSrc, INT ySrc, DWORD rop );
-extern BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
-				      DEVICEFONTENUMPROC dfeproc, LPARAM lp );
+extern BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
+				    DEVICEFONTENUMPROC dfeproc, LPARAM lp );
 extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
 extern BOOL X11DRV_GetDCOrgEx( struct tagDC *dc, LPPOINT lpp );

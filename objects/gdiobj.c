@@ -96,61 +96,54 @@ static FONTOBJ OEMFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
+      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
 };
-/* Filler to make the location counter dword aligned again.  This is necessary
-   since (a) FONTOBJ is packed, (b) gcc places initialised variables in the code
-   segment, and (c) Solaris assembler is stupid.  */
-static UINT16 align_OEMFixedFont = 1;
 
 static FONTOBJ AnsiFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
+      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
 };
-static UINT16 align_AnsiFixedFont = 1;
 
 static FONTOBJ AnsiVarFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+      {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} }
 };
-static UINT16 align_AnsiVarFont = 1;
 
 static FONTOBJ SystemFont =
 {
     { 0, FONT_MAGIC, 1 },
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "System" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+      {'S','y','s','t','e','m','\0'} }
 };
-static UINT16 align_SystemFont = 1;
 
 static FONTOBJ DeviceDefaultFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, {'\0'} }
 };
-static UINT16 align_DeviceDefaultFont = 1;
 
 static FONTOBJ SystemFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
+      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
 };
-static UINT16 align_SystemFixedFont = 1;
 
 /* FIXME: Is this correct? */
 static FONTOBJ DefaultGuiFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+      {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} }
 };
-static UINT16 align_DefaultGuiFont = 1;
 
 
 static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
@@ -328,15 +321,6 @@ BOOL GDI_Init(void)
     /* create GDI heap */
     if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
     GDI_HeapSel = GlobalHandleToSel16( instance );
-
-    /* Kill some warnings.  */
-    (void)align_OEMFixedFont;
-    (void)align_AnsiFixedFont;
-    (void)align_AnsiVarFont;
-    (void)align_SystemFont;
-    (void)align_DeviceDefaultFont;
-    (void)align_SystemFixedFont;
-    (void)align_DefaultGuiFont;
 
     /* TWEAK: Initialize font hints */
     ReadFontInformation("OEMFixed", &OEMFixedFont, 0, 0, 0, 0, 0);
@@ -551,7 +535,7 @@ void GDI_ReleaseObj( HGDIOBJ handle )
 
 
 /***********************************************************************
- *           DeleteObject16    (GDI.69)
+ *           DeleteObject16    (GDI.605)
  */
 BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
@@ -560,7 +544,7 @@ BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 
 
 /***********************************************************************
- *           DeleteObject    (GDI32.70)
+ *           DeleteObject    (GDI32.@)
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
@@ -619,7 +603,7 @@ HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
 
 
 /***********************************************************************
- *           GetStockObject    (GDI32.220)
+ *           GetStockObject    (GDI32.@)
  */
 HGDIOBJ WINAPI GetStockObject( INT obj )
 {
@@ -675,7 +659,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 
 
 /***********************************************************************
- *           GetObjectA    (GDI32.204)
+ *           GetObjectA    (GDI32.@)
  */
 INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
@@ -731,7 +715,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 }
 
 /***********************************************************************
- *           GetObjectW    (GDI32.206)
+ *           GetObjectW    (GDI32.@)
  */
 INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
@@ -775,7 +759,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 }
 
 /***********************************************************************
- *           GetObjectType    (GDI32.205)
+ *           GetObjectType    (GDI32.@)
  */
 DWORD WINAPI GetObjectType( HANDLE handle )
 {
@@ -832,7 +816,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 }
 
 /***********************************************************************
- *           GetCurrentObject    	(GDI32.166)
+ *           GetCurrentObject    	(GDI32.@)
  */
 HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
@@ -868,7 +852,7 @@ HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 
 
 /***********************************************************************
- *           SelectObject    (GDI32.299)
+ *           SelectObject    (GDI32.@)
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
@@ -893,7 +877,7 @@ BOOL16 WINAPI UnrealizeObject16( HGDIOBJ16 obj )
 
 
 /***********************************************************************
- *           UnrealizeObject    (GDI32.358)
+ *           UnrealizeObject    (GDI32.@)
  */
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
@@ -1002,7 +986,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
 
 
 /***********************************************************************
- *           EnumObjects    (GDI32.89)
+ *           EnumObjects    (GDI32.@)
  */
 INT WINAPI EnumObjects( HDC hdc, INT nObjType,
                             GOBJENUMPROC lpEnumFunc, LPARAM lParam )
@@ -1106,7 +1090,7 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 
 
 /***********************************************************************
- *           SetObjectOwner    (GDI32.386)
+ *           SetObjectOwner    (GDI32.@)
  */
 void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
 {
@@ -1138,7 +1122,7 @@ void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle, BOOL16 private )
 
 
 /***********************************************************************
- *           GdiFlush    (GDI32.128)
+ *           GdiFlush    (GDI32.@)
  */
 BOOL WINAPI GdiFlush(void)
 {
@@ -1147,7 +1131,7 @@ BOOL WINAPI GdiFlush(void)
 
 
 /***********************************************************************
- *           GdiGetBatchLimit    (GDI32.129)
+ *           GdiGetBatchLimit    (GDI32.@)
  */
 DWORD WINAPI GdiGetBatchLimit(void)
 {
@@ -1156,7 +1140,7 @@ DWORD WINAPI GdiGetBatchLimit(void)
 
 
 /***********************************************************************
- *           GdiSetBatchLimit    (GDI32.139)
+ *           GdiSetBatchLimit    (GDI32.@)
  */
 DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 {
@@ -1240,7 +1224,7 @@ INT16 WINAPI MulDiv16(
 
 
 /*******************************************************************
- *      GetColorAdjustment [GDI32.164]
+ *      GetColorAdjustment [GDI32.@]
  *
  *
  */
@@ -1251,7 +1235,7 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 }
 
 /*******************************************************************
- *      GetMiterLimit [GDI32.201]
+ *      GetMiterLimit [GDI32.@]
  *
  *
  */
@@ -1262,7 +1246,7 @@ BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
 }
 
 /*******************************************************************
- *      SetMiterLimit [GDI32.325]
+ *      SetMiterLimit [GDI32.@]
  *
  *
  */
@@ -1273,7 +1257,7 @@ BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
 }
 
 /*******************************************************************
- *      GdiComment [GDI32.109]
+ *      GdiComment [GDI32.@]
  *
  *
  */
@@ -1283,7 +1267,7 @@ BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
         return 0;
 }
 /*******************************************************************
- *      SetColorAdjustment [GDI32.309]
+ *      SetColorAdjustment [GDI32.@]
  *
  *
  */

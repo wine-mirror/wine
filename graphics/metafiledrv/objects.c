@@ -185,7 +185,9 @@ static HFONT16 MFDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
                                         FONTOBJ * font )
 {
     HFONT16 prevHandle = dc->hFont;
-    if (MFDRV_CreateFontIndirect(dc, hfont, &(font->logfont)))
+    LOGFONT16 lf16;
+    FONT_LogFontWTo16(&(font->logfont), &lf16);
+    if (MFDRV_CreateFontIndirect(dc, hfont, &lf16))
         return prevHandle;
     return 0;
 }

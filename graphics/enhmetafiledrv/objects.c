@@ -147,7 +147,7 @@ static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
     emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
     emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
     emr.ihFont = index = EMFDRV_AddHandleDC( dc );
-    FONT_LogFont16To32W( &(fontObj->logfont), &(emr.elfw.elfLogFont) );
+    memcpy( &(emr.elfw.elfLogFont), &(fontObj->logfont), sizeof(LOGFONTW) );
     emr.elfw.elfFullName[0] = '\0';
     emr.elfw.elfStyle[0]    = '\0';
     emr.elfw.elfVersion     = 0;

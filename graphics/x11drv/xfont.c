@@ -1156,50 +1156,61 @@ static void XFONT_SetFontMetric(fontInfo* fi, const fontResource* fr, XFontStruc
  *
  * Retrieve font metric info (enumeration).
  */
-static UINT XFONT_GetFontMetric( const fontInfo* pfi, const LPENUMLOGFONTEX16 pLF,
-                                                  const LPNEWTEXTMETRIC16 pTM )
+static UINT XFONT_GetFontMetric( const fontInfo* pfi,
+				 const LPENUMLOGFONTEXW pLF,
+				 const LPNEWTEXTMETRICEXW pTM )
 {
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );
 
-#define plf ((LPLOGFONT16)pLF)
-    plf->lfHeight    = pTM->tmHeight       = pfi->df.dfPixHeight;
-    plf->lfWidth     = pTM->tmAveCharWidth = pfi->df.dfAvgWidth;
-    plf->lfWeight    = pTM->tmWeight       = pfi->df.dfWeight;
-    plf->lfItalic    = pTM->tmItalic       = pfi->df.dfItalic;
-    plf->lfUnderline = pTM->tmUnderlined   = pfi->df.dfUnderline;
-    plf->lfStrikeOut = pTM->tmStruckOut    = pfi->df.dfStrikeOut;
-    plf->lfCharSet   = pTM->tmCharSet      = pfi->df.dfCharSet;
+#define plf ((LPLOGFONTW)pLF)
+#define ptm ((LPNEWTEXTMETRICW)pTM)
+    plf->lfHeight    = ptm->tmHeight       = pfi->df.dfPixHeight;
+    plf->lfWidth     = ptm->tmAveCharWidth = pfi->df.dfAvgWidth;
+    plf->lfWeight    = ptm->tmWeight       = pfi->df.dfWeight;
+    plf->lfItalic    = ptm->tmItalic       = pfi->df.dfItalic;
+    plf->lfUnderline = ptm->tmUnderlined   = pfi->df.dfUnderline;
+    plf->lfStrikeOut = ptm->tmStruckOut    = pfi->df.dfStrikeOut;
+    plf->lfCharSet   = ptm->tmCharSet      = pfi->df.dfCharSet;
 
     /* convert pitch values */
 
-    pTM->tmPitchAndFamily = pfi->df.dfPitchAndFamily;
+    ptm->tmPitchAndFamily = pfi->df.dfPitchAndFamily;
     plf->lfPitchAndFamily = (pfi->df.dfPitchAndFamily & 0xF1) + 1;
 
-    lstrcpynA( plf->lfFaceName, pfi->df.dfFace, LF_FACESIZE );
+    MultiByteToWideChar(CP_ACP, 0, pfi->df.dfFace, -1,
+			plf->lfFaceName, LF_FACESIZE);
+
+    /* FIXME: fill in rest of plF values */
+    strcpyW(pLF->elfFullName, plf->lfFaceName);
+    MultiByteToWideChar(CP_ACP, 0, "Regular", -1,
+			pLF->elfStyle, LF_FACESIZE);
+    MultiByteToWideChar(CP_ACP, 0, plf->lfCharSet == SYMBOL_CHARSET ?
+			"Symbol" : "Roman", -1,
+			pLF->elfScript, LF_FACESIZE);
+
 #undef plf
 
-    /* FIXME: fill in rest of plF values
-    lstrcpynA(plF->elfFullName, , LF_FULLFACESIZE);
-    lstrcpynA(plF->elfStyle, , LF_FACESIZE);
-    lstrcpynA(plF->elfScript, , LF_FACESIZE);
-    */
+    ptm->tmAscent = pfi->df.dfAscent;
+    ptm->tmDescent = ptm->tmHeight - ptm->tmAscent;
+    ptm->tmInternalLeading = pfi->df.dfInternalLeading;
+    ptm->tmMaxCharWidth = pfi->df.dfMaxWidth;
+    ptm->tmDigitizedAspectX = pfi->df.dfHorizRes;
+    ptm->tmDigitizedAspectY = pfi->df.dfVertRes;
 
-    pTM->tmAscent = pfi->df.dfAscent;
-    pTM->tmDescent = pTM->tmHeight - pTM->tmAscent;
-    pTM->tmInternalLeading = pfi->df.dfInternalLeading;
-    pTM->tmMaxCharWidth = pfi->df.dfMaxWidth;
-    pTM->tmDigitizedAspectX = pfi->df.dfHorizRes;
-    pTM->tmDigitizedAspectY = pfi->df.dfVertRes;
+    ptm->tmFirstChar = pfi->df.dfFirstChar;
+    ptm->tmLastChar = pfi->df.dfLastChar;
+    ptm->tmDefaultChar = pfi->df.dfDefaultChar;
+    ptm->tmBreakChar = pfi->df.dfBreakChar;
+ 
+    TRACE("Calling Enum proc with FaceName '%s' FullName '%s'\n",
+	  debugstr_w(pLF->elfLogFont.lfFaceName),
+	  debugstr_w(pLF->elfFullName));
 
-    pTM->tmFirstChar = pfi->df.dfFirstChar;
-    pTM->tmLastChar = pfi->df.dfLastChar;
-    pTM->tmDefaultChar = pfi->df.dfDefaultChar;
-    pTM->tmBreakChar = pfi->df.dfBreakChar;
-
+   TRACE("CharSet = %d type = %d\n", ptm->tmCharSet, pfi->df.dfType);
     /* return font type */
-
     return pfi->df.dfType;
+#undef ptm
 }
 
 
@@ -3049,7 +3060,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
     if( CHECK_PFONT(physDev->font) ) 
         XFONT_ReleaseCacheEntry( __PFONT(physDev->font) );
 
-    lf = font->logfont;
+    FONT_LogFontWTo16(&font->logfont, &lf);
 
     /* Make sure we don't change the sign when converting to device coords */
     /* FIXME - check that the other drivers do this correctly */
@@ -3085,9 +3096,11 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	 * so that GetTextFace can get the correct face name
 	 */
 	if (alias && !strcmp(faceMatched, lf.lfFaceName))
-	    strcpy( font->logfont.lfFaceName, alias );
+	    MultiByteToWideChar(CP_ACP, 0, alias, -1,
+				font->logfont.lfFaceName, LF_FACESIZE);
 	else
-	    strcpy( font->logfont.lfFaceName, faceMatched );
+	    MultiByteToWideChar(CP_ACP, 0, faceMatched, -1,
+			      font->logfont.lfFaceName, LF_FACESIZE);
 
 	/*
 	 * In X, some encodings may have the same lfFaceName.
@@ -3112,18 +3125,22 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
  *
  *           X11DRV_EnumDeviceFonts
  */
-BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
-				        DEVICEFONTENUMPROC proc, LPARAM lp )
+BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+			     DEVICEFONTENUMPROC proc, LPARAM lp )
 {
-    ENUMLOGFONTEX16	lf;
-    NEWTEXTMETRIC16	tm;
+    ENUMLOGFONTEXW	lf;
+    NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
     BOOL	  	b, bRet = 0;
+    LOGFONT16           lf16;
 
-    if( plf->lfFaceName[0] )
+
+    FONT_LogFontWTo16(plf, &lf16);
+
+    if( lf16.lfFaceName[0] )
     {
 	/* enum all entries in this resource */
-	pfr = XFONT_FindFIList( pfr, plf->lfFaceName );
+	pfr = XFONT_FindFIList( pfr, lf16.lfFaceName );
 	if( pfr )
 	{
 	    fontInfo*	pfi;
@@ -3133,10 +3150,13 @@ BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
 		   release the crit section, font list will
 		   have to be retraversed on return */
 
-		if( (b = (*proc)( &lf, &tm, 
-			XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
-		     bRet = b;
-		else break;
+	        if(lf16.lfCharSet == DEFAULT_CHARSET ||
+		   lf16.lfCharSet == pfi->df.dfCharSet) {
+		    if( (b = (*proc)( &lf, &tm, 
+			       XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
+		        bRet = b;
+		    else break;
+		}
 	    }
 	}
     }
@@ -3145,9 +3165,9 @@ BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
 	{
             if(pfr->fi)
             {
-		if( (b = (*proc)( &lf, &tm, 
-			XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
-		     bRet = b;
+	        if( (b = (*proc)( &lf, &tm, 
+			   XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
+		    bRet = b;
 		else break;
             }
 	}

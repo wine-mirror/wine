@@ -18,11 +18,11 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
  *           PSDRV_FONT_SelectObject
  */
 HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
-                                        FONTOBJ *font )
+				 FONTOBJ *font )
 {
     HFONT16 prevfont = dc->hFont;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    LOGFONT16 *lf = &(font->logfont);
+    LOGFONTW *lf = &(font->logfont);
     BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
     AFM *afm;
@@ -30,8 +30,9 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     char FaceName[LF_FACESIZE];
 
 
-    TRACE("FaceName = '%s' Height = %d Italic = %d Weight = %d\n",
-	  lf->lfFaceName, lf->lfHeight, lf->lfItalic, lf->lfWeight);
+    TRACE("FaceName = '%s' Height = %ld Italic = %d Weight = %ld\n",
+	  debugstr_w(lf->lfFaceName), lf->lfHeight, lf->lfItalic,
+	  lf->lfWeight);
 
     dc->hFont = hfont;
 
@@ -39,7 +40,8 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
         it = TRUE;
     if(lf->lfWeight > 550)
         bd = TRUE;
-    strcpy(FaceName, lf->lfFaceName);
+    WideCharToMultiByte(CP_ACP, 0, lf->lfFaceName, -1,
+			FaceName, sizeof(FaceName), NULL, NULL);
     
     if(FaceName[0] == '\0') {
         switch(lf->lfPitchAndFamily & 0xf0) {
@@ -270,8 +272,8 @@ BOOL PSDRV_SetFont( DC *dc )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRIC16 *pTM, 
-              ENUMLOGFONTEX16 *pLF, INT16 size)
+static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRICEXW *pTM, 
+				ENUMLOGFONTEXW *pLF, INT16 size)
 
 {
     DC *dc = DC_GetDCPtr( hdc );
@@ -282,52 +284,55 @@ static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );
 
-#define plf ((LPLOGFONT16)pLF)
-    plf->lfHeight    = pTM->tmHeight       = size;
-    plf->lfWidth     = pTM->tmAveCharWidth = pafm->CharWidths[120] * scale;
-    plf->lfWeight    = pTM->tmWeight       = pafm->Weight;
-    plf->lfItalic    = pTM->tmItalic       = pafm->ItalicAngle != 0.0;
-    plf->lfUnderline = pTM->tmUnderlined   = 0;
-    plf->lfStrikeOut = pTM->tmStruckOut    = 0;
-    plf->lfCharSet   = pTM->tmCharSet      = ANSI_CHARSET;
+#define plf ((LPLOGFONTW)pLF)
+#define ptm ((LPNEWTEXTMETRICW)pTM)
+    plf->lfHeight    = ptm->tmHeight       = size;
+    plf->lfWidth     = ptm->tmAveCharWidth = pafm->CharWidths[120] * scale;
+    plf->lfWeight    = ptm->tmWeight       = pafm->Weight;
+    plf->lfItalic    = ptm->tmItalic       = pafm->ItalicAngle != 0.0;
+    plf->lfUnderline = ptm->tmUnderlined   = 0;
+    plf->lfStrikeOut = ptm->tmStruckOut    = 0;
+    plf->lfCharSet   = ptm->tmCharSet      = ANSI_CHARSET;
 
     /* convert pitch values */
 
-    pTM->tmPitchAndFamily = pafm->IsFixedPitch ? 0 : TMPF_FIXED_PITCH;
-    pTM->tmPitchAndFamily |= TMPF_DEVICE;
+    ptm->tmPitchAndFamily = pafm->IsFixedPitch ? 0 : TMPF_FIXED_PITCH;
+    ptm->tmPitchAndFamily |= TMPF_DEVICE;
     plf->lfPitchAndFamily = 0;
 
-    lstrcpynA( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
+    MultiByteToWideChar(CP_ACP, 0, pafm->FamilyName, -1,
+			plf->lfFaceName, LF_FACESIZE);
 #undef plf
 
-    pTM->tmAscent = pafm->FullAscender * scale;
-    pTM->tmDescent = -pafm->Descender * scale;
-    pTM->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
-    pTM->tmMaxCharWidth = pafm->CharWidths[77] * scale;
-    pTM->tmDigitizedAspectX = dc->devCaps->logPixelsY;
-    pTM->tmDigitizedAspectY = dc->devCaps->logPixelsX;
+    ptm->tmAscent = pafm->FullAscender * scale;
+    ptm->tmDescent = -pafm->Descender * scale;
+    ptm->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
+    ptm->tmMaxCharWidth = pafm->CharWidths[77] * scale;
+    ptm->tmDigitizedAspectX = dc->devCaps->logPixelsY;
+    ptm->tmDigitizedAspectY = dc->devCaps->logPixelsX;
 
-    *(INT*)&pTM->tmFirstChar = 32;
+    *(INT*)&ptm->tmFirstChar = 32;
 
     GDI_ReleaseObj( hdc );
     /* return font type */
-    return DEVICE_FONTTYPE;
 
+    return DEVICE_FONTTYPE;
+#undef ptm
 }
 
 /***********************************************************************
  *           PSDRV_EnumDeviceFonts
  */
-BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
-				        DEVICEFONTENUMPROC proc, LPARAM lp )
+BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+			    DEVICEFONTENUMPROC proc, LPARAM lp )
 {
-    ENUMLOGFONTEX16	lf;
-    NEWTEXTMETRIC16	tm;
+    ENUMLOGFONTEXW	lf;
+    NEWTEXTMETRICEXW	tm;
     BOOL	  	b, bRet = 0;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
     PSDRV_PDEVICE	*physDev;
-
+    char                FaceName[LF_FACESIZE];
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
@@ -336,9 +341,11 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf,
     GDI_ReleaseObj( hdc );
 
     if( plf->lfFaceName[0] ) {
-        TRACE("lfFaceName = '%s'\n", plf->lfFaceName);
+        WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1,
+			  FaceName, sizeof(FaceName), NULL, NULL);
+        TRACE("lfFaceName = '%s'\n", FaceName);
         for(family = physDev->pi->Fonts; family; family = family->next) {
-            if(!strncmp(plf->lfFaceName, family->FamilyName, 
+            if(!strncmp(FaceName, family->FamilyName, 
 			strlen(family->FamilyName)))
 	        break;
 	}
