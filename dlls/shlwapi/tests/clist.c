@@ -367,8 +367,12 @@ static void test_CList(void)
   inserted->ulSize = sizeof(SHLWAPI_CLIST) -1;
   inserted->ulId = 33;
   hRet = pSHLWAPI_20(&list, inserted);
-  /* The call succeeds but the item is not inserted */
+  /* The call succeeds but the item is not inserted, except on some early
+   * versions which return failure. Wine behaves like later versions.
+   */
+#if 0
   ok(hRet == S_OK, "failed bad element size\n");
+#endif
   inserted = pSHLWAPI_22(list, 33);
   ok(inserted == NULL, "inserted bad element size\n");
 
@@ -376,9 +380,10 @@ static void test_CList(void)
   inserted->ulSize = 44;
   inserted->ulId = ~0UL;
   hRet = pSHLWAPI_20(&list, inserted);
-  /* The call succeeds but the item is not inserted */
+  /* See comment above, some early versions fail this call */
+#if 0
   ok(hRet == S_OK, "failed adding a container\n");
-
+#endif
   item = SHLWAPI_CLIST_items;
 
   /* Look for nonexistent item in populated list */
@@ -474,18 +479,20 @@ static void test_CList(void)
   pSHLWAPI_19(list);
 }
 
-static void test_SHLWAPI_166(void)
+static BOOL test_SHLWAPI_166(void)
 {
   _IDummyStream streamobj;
   BOOL bRet;
 
   if (!pSHLWAPI_166)
-    return;
+    return FALSE;
 
   InitDummyStream(&streamobj);
   bRet = pSHLWAPI_166(&streamobj);
 
-  ok(bRet == TRUE, "failed before seek adjusted\n");
+  if (bRet != TRUE)
+    return FALSE; /* This version doesn't support stream ops on clists */
+
   ok(streamobj.readcalls == 0, "called Read()\n");
   ok(streamobj.writecalls == 0, "called Write()\n");
   ok(streamobj.seekcalls == 0, "called Seek()\n");
@@ -525,6 +532,7 @@ static void test_SHLWAPI_166(void)
   ok(streamobj.seekcalls == 0, "Called Seek()\n");
   ok(streamobj.statcalls == 1, "wrong call count\n");
   ok(streamobj.pos.QuadPart == 50001, "called Seek() after read failed\n");
+  return TRUE;
 }
 
 static void test_SHLWAPI_184(void)
@@ -621,11 +629,14 @@ START_TEST(clist)
 
   test_CList();
 
-  test_SHLWAPI_166();
-  test_SHLWAPI_184();
-  test_SHLWAPI_212();
-  test_SHLWAPI_213();
-  test_SHLWAPI_214();
+  /* Test streaming if this version supports it */
+  if (test_SHLWAPI_166())
+  {
+    test_SHLWAPI_184();
+    test_SHLWAPI_212();
+    test_SHLWAPI_213();
+    test_SHLWAPI_214();
+  }
 
   if (SHLWAPI_hshlwapi)
     FreeLibrary(SHLWAPI_hshlwapi);
