@@ -140,6 +140,10 @@ sub _module {
 	return undef;
     }
 
+    if(!defined($file)) {
+	return undef;
+    }
+
     my @modules;
     foreach my $module (split(/\s*&\s*/, $module)) {
 	if($modules->is_allowed_module_in_file($module, "$current_dir/$file")) {

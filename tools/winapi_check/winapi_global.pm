@@ -20,52 +20,66 @@ package winapi_global;
 
 use strict;
 
+use modules qw($modules);
 use nativeapi qw($nativeapi);
 use options qw($options);
 use output qw($output);
-use winapi qw($win16api $win32api @winapis);
+use winapi qw(@winapis);
 
-sub check {
-    my $type_found = shift;
+sub check_modules {
+    my $complete_module = shift;
+    my $module2functions = shift;
 
-    if($options->win16) {
-	_check($win16api, $type_found);
-    }
+    my @complete_modules = sort(keys(%$complete_module));
 
-    if($options->win32) {
-	_check($win32api, $type_found);
-    }
-}
-
-sub _check {
-    my $winapi = shift;
-    my $type_found = shift;
-
-    my $winver = $winapi->name;
-
-    if($options->argument) {
-	foreach my $type ($winapi->all_declared_types) {
-	    if(!$$type_found{$type} && !$winapi->is_limited_type($type) && $type ne "CONTEXT86 *") {
-		$output->write("*.c: $winver: ");
-		$output->write("type ($type) not used\n");
+    if($options->declared) {
+	foreach my $module (@complete_modules) {
+	    foreach my $winapi (@winapis) {
+		if(!$winapi->is_module($module)) { next; }
+		my $functions = $$module2functions{$module};
+		foreach my $internal_name ($winapi->all_internal_functions_in_module($module)) {
+		    my $function = $functions->{$internal_name};
+		    if(!defined($function) && !$nativeapi->is_function($internal_name) &&
+		       !($module eq "user" && $internal_name =~
+			 /^(?:GlobalAddAtomA|GlobalDeleteAtom|GlobalFindAtomA|
+			    GlobalGetAtomNameA|lstrcmpiA)$/x))
+		    {
+			$output->write("*.c: $module: $internal_name: " .
+				       "function declared but not implemented or declared external\n");
+		    }
+		}
 	    }
 	}
     }
 
     if($options->argument && $options->argument_forbidden) {
-	my $types_used = $winapi->types_unlimited_used_in_modules;
-
-	foreach my $type (sort(keys(%$types_used))) {
-	    $output->write("*.c: type ($type) only used in module[s] (");
-	    my $count = 0;
-	    foreach my $module (sort(keys(%{$$types_used{$type}}))) {
-		if($count++) { $output->write(", "); }
-		$output->write("$module");
+	foreach my $winapi (@winapis) {
+	    my $types_not_used = $winapi->types_not_used;
+	    foreach my $module (sort(keys(%$types_not_used))) {
+		if(!$$complete_module{$module}) { next; }
+		foreach my $type (sort(keys(%{$$types_not_used{$module}}))) {
+		    $output->write("*.c: $module: type ($type) not used\n");
+		}
 	    }
-	    $output->write(")\n");
 	}
     }
 }
 
-1;
+sub check_all_modules {
+    my $include2info = shift;
 
+    &winapi_documentation::report_documentation;
+    
+    if($options->headers_unused && $options->include) {
+	foreach my $name (sort(keys(%$include2info))) {
+	    if(!$$include2info{$name}{used}) {
+		$output->write("*.c: $name: include file is never used\n");
+	    }
+	}
+    }
+    
+    $modules->global_report;
+    $nativeapi->global_report;
+}
+
+1;

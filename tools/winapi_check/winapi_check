@@ -252,7 +252,6 @@ if($options->headers) {
 }
 
 my %module2functions = ();
-my %type_found = ();
 
 foreach my $file (@c_files) {
     my %functions = ();
@@ -349,10 +348,6 @@ foreach my $file (@c_files) {
 	    my $refargument_types = $function->argument_types;
 	    if(defined($refargument_types)) {
 		push @types, @$refargument_types;
-	    }
-
-	    for my $type (@types) {
-		$type_found{$module}{$type}++;
 	    }
 	}
 
@@ -663,56 +658,9 @@ foreach my $file (@c_files) {
 }
 
 if($options->global) {
-    my @complete_modules = sort(keys(%complete_module));
-
-    if($options->declared) {
-	foreach my $module (@complete_modules) {
-	    foreach my $winapi (@winapis) {
-		if(!$winapi->is_module($module)) { next; }
-		my $functions = $module2functions{$module};
-		foreach my $internal_name ($winapi->all_internal_functions_in_module($module)) {
-		    my $function = $functions->{$internal_name};
-		    if(!defined($function) && !$nativeapi->is_function($internal_name) &&
-		       !($module eq "user" && $internal_name =~
-			 /^(?:GlobalAddAtomA|GlobalDeleteAtom|GlobalFindAtomA|
-			    GlobalGetAtomNameA|lstrcmpiA)$/x))
-		    {
-			$output->write("*.c: $module: $internal_name: " .
-				       "function declared but not implemented or declared external\n");
-		    }
-		}
-	    }
-	}
-    }
-
-    if($options->argument && $options->argument_forbidden) {
-	foreach my $winapi (@winapis) {
-	    my $types_not_used = $winapi->types_not_used;
-	    foreach my $module (sort(keys(%$types_not_used))) {
-		if(!$complete_module{$module}) { next; }
-		foreach my $type (sort(keys(%{$$types_not_used{$module}}))) {
-		    $output->write("*.c: $module: type ($type) not used\n");
-		}
-	    }
-	}
-    }
+    &winapi_global::check_modules(\%complete_module, \%module2functions);
 
     if($all_modules) {
-	&winapi_documentation::report_documentation;
-
-	if($options->headers_unused) {
-	    foreach my $name (sort(keys(%include2info))) {
-		if(!$include2info{$name}{used}) {
-		    if($options->include) {
-			$output->write("*.c: $name: include file is never used\n");
-		    }
-		}
-	    }
-	}
-
-	&winapi_global::check(\%type_found);
-
-	$modules->global_report;
-	$nativeapi->global_report;
+	&winapi_global::check_all_modules(\%include2info);
     }
 }
