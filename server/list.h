@@ -80,6 +80,12 @@ inline static struct list *list_tail( struct list *list )
     return list_prev( list, list );
 }
 
+/* check if a list is empty */
+inline static int list_empty( struct list *list )
+{
+    return list->next == list;
+}
+
 /* initialize a list */
 inline static void list_init( struct list *list )
 {

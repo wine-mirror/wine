@@ -2995,20 +2995,22 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
 /**************************************************************************
  *           LockFile   (KERNEL32.@)
  */
-BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
-                        DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
+BOOL WINAPI LockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
+                      DWORD count_low, DWORD count_high )
 {
     BOOL ret;
 
-    FIXME("not implemented in server\n");
+    TRACE( "%p %lx%08lx %lx%08lx\n", hFile, offset_high, offset_low, count_high, count_low );
 
     SERVER_START_REQ( lock_file )
     {
         req->handle      = hFile;
-        req->offset_low  = dwFileOffsetLow;
-        req->offset_high = dwFileOffsetHigh;
-        req->count_low   = nNumberOfBytesToLockLow;
-        req->count_high  = nNumberOfBytesToLockHigh;
+        req->offset_low  = offset_low;
+        req->offset_high = offset_high;
+        req->count_low   = count_low;
+        req->count_high  = count_high;
+        req->shared      = FALSE;
+        req->wait        = FALSE;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -3028,41 +3030,76 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
  * Per Microsoft docs, the third parameter (reserved) must be set to 0.
  */
 BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
-		      DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
-		      LPOVERLAPPED pOverlapped )
+                        DWORD count_low, DWORD count_high, LPOVERLAPPED overlapped )
 {
-    FIXME("hFile=%p,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
-	  hFile, flags, reserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh,
-	  pOverlapped);
-    if (reserved == 0)
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    else
+    NTSTATUS err;
+    BOOL async;
+    HANDLE handle;
+
+    if (reserved)
     {
-	ERR("reserved == %ld: Supposed to be 0??\n", reserved);
-	SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
 
-    return FALSE;
+    TRACE( "%p %lx%08lx %lx%08lx flags %lx\n",
+           hFile, overlapped->OffsetHigh, overlapped->Offset, count_high, count_low, flags );
+
+    for (;;)
+    {
+        SERVER_START_REQ( lock_file )
+        {
+            req->handle      = hFile;
+            req->offset_low  = overlapped->Offset;
+            req->offset_high = overlapped->OffsetHigh;
+            req->count_low   = count_low;
+            req->count_high  = count_high;
+            req->shared      = !(flags & LOCKFILE_EXCLUSIVE_LOCK);
+            req->wait        = !(flags & LOCKFILE_FAIL_IMMEDIATELY);
+            err = wine_server_call( req );
+            handle = reply->handle;
+            async  = reply->overlapped;
+        }
+        SERVER_END_REQ;
+        if (err != STATUS_PENDING)
+        {
+            if (err) SetLastError( RtlNtStatusToDosError(err) );
+            return !err;
+        }
+        if (async)
+        {
+            FIXME( "Async I/O lock wait not implemented, might deadlock\n" );
+            if (handle) CloseHandle( handle );
+            SetLastError( ERROR_IO_PENDING );
+            return FALSE;
+        }
+        if (handle)
+        {
+            WaitForSingleObject( handle, INFINITE );
+            CloseHandle( handle );
+        }
+        else Sleep(100);  /* Unix lock conflict, sleep a bit and retry */
+    }
 }
 
 
 /**************************************************************************
  *           UnlockFile   (KERNEL32.@)
  */
-BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
-                          DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
+BOOL WINAPI UnlockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
+                        DWORD count_low, DWORD count_high )
 {
     BOOL ret;
 
-    FIXME("not implemented in server\n");
+    TRACE( "%p %lx%08lx %lx%08lx\n", hFile, offset_high, offset_low, count_high, count_low );
 
     SERVER_START_REQ( unlock_file )
     {
         req->handle      = hFile;
-        req->offset_low  = dwFileOffsetLow;
-        req->offset_high = dwFileOffsetHigh;
-        req->count_low   = nNumberOfBytesToUnlockLow;
-        req->count_high  = nNumberOfBytesToUnlockHigh;
+        req->offset_low  = offset_low;
+        req->offset_high = offset_high;
+        req->count_low   = count_low;
+        req->count_high  = count_high;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -3073,221 +3110,17 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetH
 /**************************************************************************
  *           UnlockFileEx   (KERNEL32.@)
  */
-BOOL WINAPI UnlockFileEx(
-		HANDLE hFile,
-		DWORD dwReserved,
-		DWORD nNumberOfBytesToUnlockLow,
-		DWORD nNumberOfBytesToUnlockHigh,
-		LPOVERLAPPED lpOverlapped
-)
+BOOL WINAPI UnlockFileEx( HANDLE hFile, DWORD reserved, DWORD count_low, DWORD count_high,
+                          LPOVERLAPPED overlapped )
 {
-	FIXME("hFile=%p,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
-	  hFile, dwReserved, nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh,
-	  lpOverlapped);
-	if (dwReserved == 0)
-		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	else
-	{
-		ERR("reserved == %ld: Supposed to be 0??\n", dwReserved);
-		SetLastError(ERROR_INVALID_PARAMETER);
-	}
-
-	return FALSE;
-}
-
-
-#if 0
-
-struct DOS_FILE_LOCK {
-  struct DOS_FILE_LOCK *	next;
-  DWORD				base;
-  DWORD				len;
-  DWORD				processId;
-  FILE_OBJECT *			dos_file;
-/*  char *			unix_name;*/
-};
-
-typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
-
-static DOS_FILE_LOCK *locks = NULL;
-static void DOS_RemoveFileLocks(FILE_OBJECT *file);
-
-
-/* Locks need to be mirrored because unix file locking is based
- * on the pid. Inside of wine there can be multiple WINE processes
- * that share the same unix pid.
- * Read's and writes should check these locks also - not sure
- * how critical that is at this point (FIXME).
- */
-
-static BOOL DOS_AddLock(FILE_OBJECT *file, struct flock *f)
-{
-  DOS_FILE_LOCK *curr;
-  DWORD		processId;
-
-  processId = GetCurrentProcessId();
-
-  /* check if lock overlaps a current lock for the same file */
-#if 0
-  for (curr = locks; curr; curr = curr->next) {
-    if (strcmp(curr->unix_name, file->unix_name) == 0) {
-      if ((f->l_start == curr->base) && (f->l_len == curr->len))
-	return TRUE;/* region is identic */
-      if ((f->l_start < (curr->base + curr->len)) &&
-	  ((f->l_start + f->l_len) > curr->base)) {
-	/* region overlaps */
-	return FALSE;
-      }
+    if (reserved)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
-  }
-#endif
-
-  curr = HeapAlloc( GetProcessHeap(), 0, sizeof(DOS_FILE_LOCK) );
-  curr->processId = GetCurrentProcessId();
-  curr->base = f->l_start;
-  curr->len = f->l_len;
-/*  curr->unix_name = HEAP_strdupA( GetProcessHeap(), 0, file->unix_name);*/
-  curr->next = locks;
-  curr->dos_file = file;
-  locks = curr;
-  return TRUE;
+    return UnlockFile( hFile, overlapped->Offset, overlapped->OffsetHigh, count_low, count_high );
 }
 
-static void DOS_RemoveFileLocks(FILE_OBJECT *file)
-{
-  DWORD		processId;
-  DOS_FILE_LOCK **curr;
-  DOS_FILE_LOCK *rem;
-
-  processId = GetCurrentProcessId();
-  curr = &locks;
-  while (*curr) {
-    if ((*curr)->dos_file == file) {
-      rem = *curr;
-      *curr = (*curr)->next;
-/*      HeapFree( GetProcessHeap(), 0, rem->unix_name );*/
-      HeapFree( GetProcessHeap(), 0, rem );
-    }
-    else
-      curr = &(*curr)->next;
-  }
-}
-
-static BOOL DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
-{
-  DWORD		processId;
-  DOS_FILE_LOCK **curr;
-  DOS_FILE_LOCK *rem;
-
-  processId = GetCurrentProcessId();
-  for (curr = &locks; *curr; curr = &(*curr)->next) {
-    if ((*curr)->processId == processId &&
-	(*curr)->dos_file == file &&
-	(*curr)->base == f->l_start &&
-	(*curr)->len == f->l_len) {
-      /* this is the same lock */
-      rem = *curr;
-      *curr = (*curr)->next;
-/*      HeapFree( GetProcessHeap(), 0, rem->unix_name );*/
-      HeapFree( GetProcessHeap(), 0, rem );
-      return TRUE;
-    }
-  }
-  /* no matching lock found */
-  return FALSE;
-}
-
-
-/**************************************************************************
- *           LockFile   (KERNEL32.@)
- */
-BOOL WINAPI LockFile(
-	HANDLE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
-	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
-{
-  struct flock f;
-  FILE_OBJECT *file;
-
-  TRACE("handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
-	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
-	       nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
-
-  if (dwFileOffsetHigh || nNumberOfBytesToLockHigh) {
-    FIXME("Unimplemented bytes > 32bits\n");
-    return FALSE;
-  }
-
-  f.l_start = dwFileOffsetLow;
-  f.l_len = nNumberOfBytesToLockLow;
-  f.l_whence = SEEK_SET;
-  f.l_pid = 0;
-  f.l_type = F_WRLCK;
-
-  if (!(file = FILE_GetFile(hFile,0,NULL))) return FALSE;
-
-  /* shadow locks internally */
-  if (!DOS_AddLock(file, &f)) {
-    SetLastError( ERROR_LOCK_VIOLATION );
-    return FALSE;
-  }
-
-  /* FIXME: Unix locking commented out for now, doesn't work with Excel */
-#ifdef USE_UNIX_LOCKS
-  if (fcntl(file->unix_handle, F_SETLK, &f) == -1) {
-    if (errno == EACCES || errno == EAGAIN) {
-      SetLastError( ERROR_LOCK_VIOLATION );
-    }
-    else {
-      FILE_SetDosError();
-    }
-    /* remove our internal copy of the lock */
-    DOS_RemoveLock(file, &f);
-    return FALSE;
-  }
-#endif
-  return TRUE;
-}
-
-
-/**************************************************************************
- *           UnlockFile   (KERNEL32.@)
- */
-BOOL WINAPI UnlockFile(
-	HANDLE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
-	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
-{
-  FILE_OBJECT *file;
-  struct flock f;
-
-  TRACE("handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
-	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
-	       nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh);
-
-  if (dwFileOffsetHigh || nNumberOfBytesToUnlockHigh) {
-    WARN("Unimplemented bytes > 32bits\n");
-    return FALSE;
-  }
-
-  f.l_start = dwFileOffsetLow;
-  f.l_len = nNumberOfBytesToUnlockLow;
-  f.l_whence = SEEK_SET;
-  f.l_pid = 0;
-  f.l_type = F_UNLCK;
-
-  if (!(file = FILE_GetFile(hFile,0,NULL))) return FALSE;
-
-  DOS_RemoveLock(file, &f);	/* ok if fails - may be another wine */
-
-  /* FIXME: Unix locking commented out for now, doesn't work with Excel */
-#ifdef USE_UNIX_LOCKS
-  if (fcntl(file->unix_handle, F_SETLK, &f) == -1) {
-    FILE_SetDosError();
-    return FALSE;
-  }
-#endif
-  return TRUE;
-}
-#endif
 
 /**************************************************************************
  *           GetFileAttributesExW   (KERNEL32.@)

@@ -453,6 +453,7 @@ void file_set_error(void)
     case ESPIPE:    set_error( 0xc0010000 | ERROR_SEEK /* FIXME */ ); break;
     case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
+    case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
     default:        perror("file_set_error"); set_error( ERROR_UNKNOWN /* FIXME */ ); break;
     }
 }
@@ -581,20 +582,6 @@ static int set_file_time( obj_handle_t handle, time_t access_time, time_t write_
     return 0;
 }
 
-static int file_lock( struct file *file, int offset_high, int offset_low,
-                      int count_high, int count_low )
-{
-    /* FIXME: implement this */
-    return 1;
-}
-
-static int file_unlock( struct file *file, int offset_high, int offset_low,
-                        int count_high, int count_low )
-{
-    /* FIXME: implement this */
-    return 1;
-}
-
 /* create a file */
 DECL_HANDLER(create_file)
 {
@@ -661,11 +648,13 @@ DECL_HANDLER(set_file_time)
 DECL_HANDLER(lock_file)
 {
     struct file *file;
+    file_pos_t offset = ((file_pos_t)req->offset_high << 32) | req->offset_low;
+    file_pos_t count = ((file_pos_t)req->count_high << 32) | req->count_low;
 
     if ((file = get_file_obj( current->process, req->handle, 0 )))
     {
-        file_lock( file, req->offset_high, req->offset_low,
-                   req->count_high, req->count_low );
+        reply->handle = lock_fd( file->fd, offset, count, req->shared, req->wait );
+        reply->overlapped = (file->flags & FILE_FLAG_OVERLAPPED) != 0;
         release_object( file );
     }
 }
@@ -674,11 +663,12 @@ DECL_HANDLER(lock_file)
 DECL_HANDLER(unlock_file)
 {
     struct file *file;
+    file_pos_t offset = ((file_pos_t)req->offset_high << 32) | req->offset_low;
+    file_pos_t count = ((file_pos_t)req->count_high << 32) | req->count_low;
 
     if ((file = get_file_obj( current->process, req->handle, 0 )))
     {
-        file_unlock( file, req->offset_high, req->offset_low,
-                     req->count_high, req->count_low );
+        unlock_fd( file->fd, offset, count );
         release_object( file );
     }
 }

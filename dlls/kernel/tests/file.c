@@ -674,6 +674,79 @@ void test_offset_in_overlapped_structure(void)
     ok(DeleteFileA(temp_fname), "DeleteFileA error %ld\n", GetLastError());
 }
 
+static void test_LockFile(void)
+{
+    HANDLE handle;
+    DWORD written;
+    OVERLAPPED overlapped;
+
+    handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                          CREATE_ALWAYS, 0, 0 );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
+        return;
+    }
+    ok( WriteFile( handle, sillytext, strlen(sillytext), &written, NULL ), "write failed" );
+
+    ok( LockFile( handle, 0, 0, 0, 0 ), "LockFile failed" );
+    ok( UnlockFile( handle, 0, 0, 0, 0 ), "UnlockFile failed" );
+    ok( !UnlockFile( handle, 0, 0, 0, 0 ), "UnlockFile succeeded" );
+
+    ok( LockFile( handle, 10, 0, 20, 0 ), "LockFile 10,20 failed" );
+    /* overlapping locks must fail */
+    ok( !LockFile( handle, 12, 0, 10, 0 ), "LockFile 12,10 succeeded" );
+    ok( !LockFile( handle, 5, 0, 6, 0 ), "LockFile 5,6 succeeded" );
+    /* non-overlapping locks must succeed */
+    ok( LockFile( handle, 5, 0, 5, 0 ), "LockFile 5,5 failed" );
+
+    ok( !UnlockFile( handle, 10, 0, 10, 0 ), "UnlockFile 10,10 succeeded" );
+    ok( UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 failed" );
+    ok( !UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 again succeeded" );
+    ok( UnlockFile( handle, 5, 0, 5, 0 ), "UnlockFile 5,5 failed" );
+
+    overlapped.Offset = 100;
+    overlapped.OffsetHigh = 0;
+    overlapped.hEvent = 0;
+    ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ), "LockFileEx 100,100 failed" );
+    /* overlapping shared locks are OK */
+    overlapped.Offset = 150;
+    ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ), "LockFileEx 150,100 failed" );
+    /* but exclusive is not */
+    ok( !LockFileEx( handle, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY, 0, 50, 0, &overlapped ),
+        "LockFileEx exclusive 150,50 succeeded" );
+    ok( UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 150,100 failed" );
+    ok( !UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 150,100 again succeeded" );
+    overlapped.Offset = 100;
+    ok( UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 100,100 failed" );
+    ok( !UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 100,100 again succeeded" );
+
+    ok( LockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "LockFile failed" );
+    ok( !LockFile( handle, ~0, ~0, 1, 0 ), "LockFile ~0,1 succeeded" );
+    ok( !LockFile( handle, 0, 0x20000000, 20, 0 ), "LockFile 0x20000000,20 succeeded" );
+    ok( UnlockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "UnlockFile failed" );
+
+    /* wrap-around lock should not do anything */
+    /* (but still succeeds on NT4 so we don't check result) */
+    LockFile( handle, 0, 0x10000000, 0, 0xf0000001 );
+    ok( LockFile( handle, ~0, ~0, 1, 0 ), "LockFile ~0,1 failed" );
+    ok( UnlockFile( handle, ~0, ~0, 1, 0 ), "Unlockfile ~0,1 failed" );
+
+    /* zero-byte lock */
+    ok( LockFile( handle, 100, 0, 0, 0 ), "LockFile 100,0 failed" );
+    ok( !LockFile( handle, 98, 0, 4, 0 ), "LockFile 98,4 succeeded" );
+    ok( LockFile( handle, 90, 0, 10, 0 ), "LockFile 90,10 failed" );
+    ok( LockFile( handle, 100, 0, 10, 0 ), "LockFile 100,10 failed" );
+    ok( UnlockFile( handle, 90, 0, 10, 0 ), "UnlockFile 90,10 failed" );
+    ok( UnlockFile( handle, 100, 0, 10, 0 ), "UnlockFile 100,10 failed" );
+    ok( UnlockFile( handle, 100, 0, 0, 0 ), "UnlockFile 100,0 failed" );
+
+    CloseHandle( handle );
+    DeleteFileA( filename );
+}
+
+
 START_TEST(file)
 {
     test__hread(  );
@@ -690,5 +763,6 @@ START_TEST(file)
     test_CreateFileW();
     test_DeleteFileA();
     test_DeleteFileW();
+    test_LockFile();
     test_offset_in_overlapped_structure();
 }

@@ -889,7 +889,15 @@ static void dump_lock_file_request( const struct lock_file_request *req )
     fprintf( stderr, " offset_low=%08x,", req->offset_low );
     fprintf( stderr, " offset_high=%08x,", req->offset_high );
     fprintf( stderr, " count_low=%08x,", req->count_low );
-    fprintf( stderr, " count_high=%08x", req->count_high );
+    fprintf( stderr, " count_high=%08x,", req->count_high );
+    fprintf( stderr, " shared=%d,", req->shared );
+    fprintf( stderr, " wait=%d", req->wait );
+}
+
+static void dump_lock_file_reply( const struct lock_file_reply *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " overlapped=%d", req->overlapped );
 }
 
 static void dump_unlock_file_request( const struct unlock_file_request *req )
@@ -2632,7 +2640,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_file_info_reply,
-    (dump_func)0,
+    (dump_func)dump_lock_file_reply,
     (dump_func)0,
     (dump_func)dump_create_pipe_reply,
     (dump_func)dump_create_socket_reply,

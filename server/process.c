@@ -296,6 +296,7 @@ struct thread *create_process( int fd )
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
     process->group_id        = 0;
+    list_init( &process->locks );
 
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;

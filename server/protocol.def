@@ -681,6 +681,11 @@ enum fd_type
     unsigned int offset_high;   /* offset of start of lock */
     unsigned int count_low;     /* count of bytes to lock */
     unsigned int count_high;    /* count of bytes to lock */
+    int          shared;        /* shared or exclusive lock? */
+    int          wait;          /* do we want to wait? */
+@REPLY
+    obj_handle_t handle;        /* handle to wait on */
+    int          overlapped;    /* is it an overlapped I/O handle? */
 @END
 
 

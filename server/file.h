@@ -25,6 +25,8 @@
 
 struct fd;
 
+typedef unsigned __int64 file_pos_t;
+
 /* operations valid on file descriptor objects */
 struct fd_ops
 {
@@ -51,6 +53,8 @@ extern int get_unix_fd( struct fd *fd );
 extern void fd_poll_event( struct fd *fd, int event );
 extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
+extern obj_handle_t lock_fd( struct fd *fd, file_pos_t offset, file_pos_t count, int shared, int wait );
+extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
 
 extern int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry );

@@ -899,10 +899,14 @@ struct lock_file_request
     unsigned int offset_high;
     unsigned int count_low;
     unsigned int count_high;
+    int          shared;
+    int          wait;
 };
 struct lock_file_reply
 {
     struct reply_header __header;
+    obj_handle_t handle;
+    int          overlapped;
 };
 
 
@@ -3551,6 +3555,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 99
+#define SERVER_PROTOCOL_VERSION 100
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
