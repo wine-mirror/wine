@@ -34,8 +34,6 @@ DECLARE_DEBUG_CHANNEL(msg);
 /* Desktop window */
 static WND *pWndDesktop = NULL;
 
-static HWND hwndSysModal = 0;
-
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
@@ -80,7 +78,7 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
 static WND *create_window_handle( BOOL desktop, INT size )
 {
     BOOL res;
-    unsigned int handle = 0;
+    user_handle_t handle = 0;
     WND *win = HeapAlloc( GetProcessHeap(), 0, size );
 
     if (!win) return NULL;
@@ -111,7 +109,7 @@ static WND *create_window_handle( BOOL desktop, INT size )
         return NULL;
     }
     user_handles[LOWORD(handle)] = win;
-    win->hwndSelf = (HWND)handle;
+    win->hwndSelf = handle;
     win->dwMagic = WND_MAGIC;
     win->irefCount = 1;
     return win;
@@ -177,9 +175,11 @@ static WND *get_wnd_ptr( HWND hwnd )
 HWND WIN_Handle32( HWND16 hwnd16 )
 {
     WND *ptr;
-    HWND hwnd = (HWND)hwnd16;
+    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;
 
-    if (!hwnd || hwnd == HWND_BROADCAST) return hwnd;
+    if (hwnd16 <= 1 || hwnd16 == 0xffff) return hwnd;
+    /* do sign extension for -2 and -3 */
+    if (hwnd16 >= (HWND16)-3) return (HWND)(LONG_PTR)(INT16)hwnd16;
 
     if ((ptr = get_wnd_ptr( hwnd )))
     {
@@ -190,7 +190,7 @@ HWND WIN_Handle32( HWND16 hwnd16 )
     {
         SERVER_START_REQ( get_window_info )
         {
-            req->handle = (user_handle_t)hwnd16;
+            req->handle = hwnd;
             if (!SERVER_CALL_ERR()) hwnd = req->full_handle;
         }
         SERVER_END_REQ;
@@ -804,8 +804,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
 	cbtc.lpcs = cs;
 	cbtc.hwndInsertAfter = hwndLinkAfter;
-        ret = (type == WIN_PROC_32W) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc)
-                      : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc);
+        ret = (type == WIN_PROC_32W) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND,
+                                                       (WPARAM)hwnd, (LPARAM)&cbtc)
+                                     : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND,
+                                                       (WPARAM)hwnd, (LPARAM)&cbtc);
         if (ret)
 	{
 	    TRACE("CBT-hook returned 0\n");
@@ -915,7 +917,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Call WH_SHELL hook */
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
-        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
+        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0 );
 
     TRACE("created window %04x\n", hwnd);
  end:
@@ -983,13 +985,13 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpCreateParams = data;
     cs.hInstance      = (HINSTANCE)instance;
     cs.hMenu          = (HMENU)menu;
-    cs.hwndParent     = (HWND)parent;
+    cs.hwndParent     = WIN_Handle32( parent );
     cs.style          = style;
     cs.lpszName       = windowName;
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 );
+    return WIN_Handle16( WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 ));
 }
 
 
@@ -1153,15 +1155,6 @@ static void WIN_SendDestroyMsg( HWND hwnd )
 
 
 /***********************************************************************
- *		DestroyWindow (USER.53)
- */
-BOOL16 WINAPI DestroyWindow16( HWND16 hwnd )
-{
-    return DestroyWindow(hwnd);
-}
-
-
-/***********************************************************************
  *		DestroyWindow (USER32.@)
  */
 BOOL WINAPI DestroyWindow( HWND hwnd )
@@ -1190,12 +1183,12 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Call hooks */
 
-    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) ) return FALSE;
+    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0L) ) return FALSE;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
-        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
+        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
@@ -1293,15 +1286,6 @@ end:
 
 
 /***********************************************************************
- *		CloseWindow (USER.43)
- */
-BOOL16 WINAPI CloseWindow16( HWND16 hwnd )
-{
-    return CloseWindow( hwnd );
-}
-
-
-/***********************************************************************
  *		CloseWindow (USER32.@)
  */
 BOOL WINAPI CloseWindow( HWND hwnd )
@@ -1320,15 +1304,6 @@ end:
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 
-}
-
-
-/***********************************************************************
- *		OpenIcon (USER.44)
- */
-BOOL16 WINAPI OpenIcon16( HWND16 hwnd )
-{
-    return OpenIcon( hwnd );
 }
 
 
@@ -1396,24 +1371,6 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR tit
     return retvalue;
 }
 
-
-
-/***********************************************************************
- *		FindWindow (USER.50)
- */
-HWND16 WINAPI FindWindow16( LPCSTR className, LPCSTR title )
-{
-    return FindWindowA( className, title );
-}
-
-
-/***********************************************************************
- *		FindWindowEx (USER.427)
- */
-HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child, LPCSTR className, LPCSTR title )
-{
-    return FindWindowExA( parent, child, className, title );
-}
 
 
 /***********************************************************************
@@ -1487,15 +1444,6 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
 
 
 /**********************************************************************
- *		GetDesktopWindow (USER.286)
- */
-HWND16 WINAPI GetDesktopWindow16(void)
-{
-    return (HWND16)pWndDesktop->hwndSelf;
-}
-
-
-/**********************************************************************
  *		GetDesktopWindow (USER32.@)
  */
 HWND WINAPI GetDesktopWindow(void)
@@ -1504,27 +1452,6 @@ HWND WINAPI GetDesktopWindow(void)
     ERR( "You need the -desktop option when running with native USER\n" );
     ExitProcess(1);
     return 0;
-}
-
-
-/**********************************************************************
- *		GetDesktopHwnd (USER.278)
- *
- * Exactly the same thing as GetDesktopWindow(), but not documented.
- * Don't ask me why...
- */
-HWND16 WINAPI GetDesktopHwnd16(void)
-{
-    return (HWND16)pWndDesktop->hwndSelf;
-}
-
-
-/*******************************************************************
- *		EnableWindow (USER.34)
- */
-BOOL16 WINAPI EnableWindow16( HWND16 hwnd, BOOL16 enable )
-{
-    return EnableWindow( hwnd, enable );
 }
 
 
@@ -1571,15 +1498,6 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
 
 /***********************************************************************
- *		IsWindowEnabled (USER.35)
- */
-BOOL16 WINAPI IsWindowEnabled16(HWND16 hWnd)
-{
-    return IsWindowEnabled(hWnd);
-}
-
-
-/***********************************************************************
  *		IsWindowEnabled (USER32.@)
  */
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
@@ -1611,15 +1529,6 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
 
 
 /**********************************************************************
- *		GetWindowWord (USER.133)
- */
-WORD WINAPI GetWindowWord16( HWND16 hwnd, INT16 offset )
-{
-    return GetWindowWord( hwnd, offset );
-}
-
-
-/**********************************************************************
  *		GetWindowWord (USER32.@)
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
@@ -1633,44 +1542,29 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
         {
             WARN("Invalid offset %d\n", offset );
             retvalue = 0;
-            goto end;
         }
-        retvalue = *(WORD *)(((char *)wndPtr->wExtra) + offset);
-        goto end;
+        else retvalue = *(WORD *)(((char *)wndPtr->wExtra) + offset);
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
     }
+
+    WIN_ReleaseWndPtr(wndPtr);
     switch(offset)
     {
-    case GWW_ID:
-    	if (HIWORD(wndPtr->wIDmenu))
-    		WARN("GWW_ID: discards high bits of 0x%08x!\n",
-                    wndPtr->wIDmenu);
-        retvalue = (WORD)wndPtr->wIDmenu;
-        goto end;
-    case GWW_HWNDPARENT:
-    	retvalue =  GetParent(hwnd);
-        goto end;
-    case GWW_HINSTANCE:
-    	if (HIWORD(wndPtr->hInstance))
-    		WARN("GWW_HINSTANCE: discards high bits of 0x%08x!\n",
-                    wndPtr->hInstance);
-        retvalue = (WORD)wndPtr->hInstance;
-        goto end;
+    case GWL_HWNDPARENT:
+        return GetWindowLongW( hwnd, offset );
+    case GWL_ID:
+    case GWL_HINSTANCE:
+        {
+            LONG ret = GetWindowLongW( hwnd, offset );
+            if (HIWORD(ret))
+                WARN("%d: discards high bits of 0x%08lx!\n", offset, ret );
+            return LOWORD(ret);
+        }
     default:
         WARN("Invalid offset %d\n", offset );
-        retvalue = 0;
-        goto end;
+        return 0;
     }
-end:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
-}
-
-/**********************************************************************
- *		SetWindowWord (USER.134)
- */
-WORD WINAPI SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
-{
-    return SetWindowWord( hwnd, offset, newval );
 }
 
 
@@ -1687,27 +1581,27 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
         if (offset + sizeof(WORD) > wndPtr->cbWndExtra)
         {
             WARN("Invalid offset %d\n", offset );
-            retval = 0;
-            goto end;
+            WIN_ReleaseWndPtr(wndPtr);
+            return 0;
         }
         ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
+        retval = *ptr;
+        *ptr = newval;
+        WIN_ReleaseWndPtr(wndPtr);
+        return retval;
     }
-    else switch(offset)
-    {
-	case GWW_ID:        ptr = (WORD *)&wndPtr->wIDmenu; break;
-	case GWW_HINSTANCE: ptr = (WORD *)&wndPtr->hInstance; break;
-        case GWW_HWNDPARENT: retval = SetParent( hwnd, newval );
-                             goto end;
-	default:
-            WARN("Invalid offset %d\n", offset );
-            retval = 0;
-            goto end;
-    }
-    retval = *ptr;
-    *ptr = newval;
-end:
+
     WIN_ReleaseWndPtr(wndPtr);
-    return retval;
+    switch(offset)
+    {
+    case GWL_ID:
+    case GWL_HINSTANCE:
+    case GWL_HWNDPARENT:
+        return SetWindowLongW( hwnd, offset, (UINT)newval );
+    default:
+        WARN("Invalid offset %d\n", offset );
+        return 0;
+    }
 }
 
 
@@ -1751,7 +1645,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc,
                                                            type );
                              goto end;
-        case GWL_HWNDPARENT: retvalue = GetParent(hwnd);
+        case GWL_HWNDPARENT: retvalue = (LONG)GetParent(hwnd);
                              goto end;
         case GWL_HINSTANCE:  retvalue = wndPtr->hInstance;
                              goto end;
@@ -1870,7 +1764,7 @@ end:
  */
 LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
 {
-    return WIN_GetWindowLong( (HWND)hwnd, offset, WIN_PROC_16 );
+    return WIN_GetWindowLong( WIN_Handle32(hwnd), offset, WIN_PROC_16 );
 }
 
 
@@ -1897,7 +1791,7 @@ LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
  */
 LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 {
-    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_16 );
+    return WIN_SetWindowLong( WIN_Handle32(hwnd), offset, newval, WIN_PROC_16 );
 }
 
 
@@ -1995,15 +1889,6 @@ LONG WINAPI SetWindowLongW(
 
 
 /*******************************************************************
- *		GetWindowText (USER.36)
- */
-INT16 WINAPI GetWindowText16( HWND16 hwnd, SEGPTR lpString, INT16 nMaxCount )
-{
-    return (INT16)SendMessage16(hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString);
-}
-
-
-/*******************************************************************
  *		GetWindowTextA (USER32.@)
  */
 INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
@@ -2037,15 +1922,6 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 
 
 /*******************************************************************
- *		SetWindowText (USER.37)
- */
-BOOL16 WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
-{
-    return (BOOL16)SendMessage16( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
-}
-
-
-/*******************************************************************
  *		SetWindowText  (USER32.@)
  *		SetWindowTextA (USER32.@)
  */
@@ -2065,15 +1941,6 @@ BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
 
 
 /*******************************************************************
- *		GetWindowTextLength (USER.38)
- */
-INT16 WINAPI GetWindowTextLength16( HWND16 hwnd )
-{
-    return (INT16)GetWindowTextLengthA( hwnd );
-}
-
-
-/*******************************************************************
  *		GetWindowTextLengthA (USER32.@)
  */
 INT WINAPI GetWindowTextLengthA( HWND hwnd )
@@ -2087,16 +1954,6 @@ INT WINAPI GetWindowTextLengthA( HWND hwnd )
 INT WINAPI GetWindowTextLengthW( HWND hwnd )
 {
     return SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 );
-}
-
-
-/*******************************************************************
- *		IsWindow (USER.47)
- */
-BOOL16 WINAPI IsWindow16( HWND16 hwnd )
-{
-    CURRENT_STACK16->es = USER_HeapSel;
-    return IsWindow( hwnd );
 }
 
 
@@ -2167,15 +2024,6 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 
 
 /*****************************************************************
- *		GetParent (USER.46)
- */
-HWND16 WINAPI GetParent16( HWND16 hwnd )
-{
-    return (HWND16)GetParent( hwnd );
-}
-
-
-/*****************************************************************
  *		GetParent (USER32.@)
  */
 HWND WINAPI GetParent( HWND hwnd )
@@ -2230,15 +2078,6 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
  done:
     WIN_ReleaseWndPtr( wndPtr );
     return ret;
-}
-
-
-/*****************************************************************
- *		SetParent (USER.233)
- */
-HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
-{
-    return SetParent( hwndChild, hwndNewParent );
 }
 
 
@@ -2302,15 +2141,6 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
 
 /*******************************************************************
- *		IsChild (USER.48)
- */
-BOOL16 WINAPI IsChild16( HWND16 parent, HWND16 child )
-{
-    return IsChild(parent,child);
-}
-
-
-/*******************************************************************
  *		IsChild (USER32.@)
  */
 BOOL WINAPI IsChild( HWND parent, HWND child )
@@ -2325,15 +2155,6 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
     ret = (list[i] != 0);
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
-}
-
-
-/***********************************************************************
- *		IsWindowVisible (USER.49)
- */
-BOOL16 WINAPI IsWindowVisible16( HWND16 hwnd )
-{
-    return IsWindowVisible(hwnd);
 }
 
 
@@ -2384,30 +2205,12 @@ BOOL WIN_IsWindowDrawable( WND* wnd, BOOL icon )
 
 
 /*******************************************************************
- *		GetTopWindow (USER.229)
- */
-HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
-{
-    return GetTopWindow(hwnd);
-}
-
-
-/*******************************************************************
  *		GetTopWindow (USER32.@)
  */
 HWND WINAPI GetTopWindow( HWND hwnd )
 {
     if (!hwnd) hwnd = GetDesktopWindow();
     return GetWindow( hwnd, GW_CHILD );
-}
-
-
-/*******************************************************************
- *		GetWindow (USER.262)
- */
-HWND16 WINAPI GetWindow16( HWND16 hwnd, WORD rel )
-{
-    return GetWindow( hwnd,rel );
 }
 
 
@@ -2484,15 +2287,6 @@ end:
 }
 
 
-/*******************************************************************
- *		GetNextWindow (USER.230)
- */
-HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
-{
-    if ((flag != GW_HWNDNEXT) && (flag != GW_HWNDPREV)) return 0;
-    return GetWindow16( hwnd, flag );
-}
-
 /***********************************************************************
  *           WIN_InternalShowOwnedPopups
  *
@@ -2558,15 +2352,6 @@ BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
 }
 
 /*******************************************************************
- *		ShowOwnedPopups (USER.265)
- */
-void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
-{
-    ShowOwnedPopups( owner, fShow );
-}
-
-
-/*******************************************************************
  *		ShowOwnedPopups (USER32.@)
  */
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
@@ -2616,14 +2401,6 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
     return TRUE;
 }
 
-
-/*******************************************************************
- *		GetLastActivePopup (USER.287)
- */
-HWND16 WINAPI GetLastActivePopup16( HWND16 hwnd )
-{
-    return GetLastActivePopup( hwnd );
-}
 
 /*******************************************************************
  *		GetLastActivePopup (USER32.@)
@@ -2873,15 +2650,6 @@ BOOL WINAPI AnyPopup(void)
 
 
 /*******************************************************************
- *		FlashWindow (USER.105)
- */
-BOOL16 WINAPI FlashWindow16( HWND16 hWnd, BOOL16 bInvert )
-{
-    return FlashWindow( hWnd, bInvert );
-}
-
-
-/*******************************************************************
  *		FlashWindow (USER32.@)
  */
 BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
@@ -2923,27 +2691,6 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         return wparam;
     }
-}
-
-
-/*******************************************************************
- *		SetSysModalWindow (USER.188)
- */
-HWND16 WINAPI SetSysModalWindow16( HWND16 hWnd )
-{
-    HWND hWndOldModal = hwndSysModal;
-    hwndSysModal = hWnd;
-    FIXME("EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
-    return hWndOldModal;
-}
-
-
-/*******************************************************************
- *		GetSysModalWindow (USER.189)
- */
-HWND16 WINAPI GetSysModalWindow16(void)
-{
-    return hwndSysModal;
 }
 
 
@@ -3042,16 +2789,6 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
     return bResult;
 }
 
-
-/*******************************************************************
- *		DragDetect (USER.465)
- */
-BOOL16 WINAPI DragDetect16( HWND16 hWnd, POINT16 pt )
-{
-    POINT pt32;
-    CONV_POINT16TO32( &pt, &pt32 );
-    return DragDetect( hWnd, pt32 );
-}
 
 /*******************************************************************
  *		DragDetect (USER32.@)

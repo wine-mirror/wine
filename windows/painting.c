@@ -42,9 +42,6 @@ DECLARE_DEBUG_CHANNEL(nonclient);
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
 
-  /* Last CTLCOLOR id */
-#define CTLCOLOR_MAX   CTLCOLOR_STATIC
-
 
 /***********************************************************************
  *           add_paint_count
@@ -284,11 +281,11 @@ copyrgn:
 /***********************************************************************
  *		BeginPaint (USER.39)
  */
-HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
+HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 {
     PAINTSTRUCT ps;
 
-    BeginPaint( hwnd, &ps );
+    BeginPaint( WIN_Handle32(hwnd), &ps );
     lps->hdc            = ps.hdc;
     lps->fErase         = ps.fErase;
     lps->rcPaint.top    = ps.rcPaint.top;
@@ -401,7 +398,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
     ReleaseDC16( hwnd, lps->hdc );
-    ShowCaret( hwnd );
+    ShowCaret16( hwnd );
     return TRUE;
 }
 
@@ -414,66 +411,6 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );
     return TRUE;
-}
-
-
-/***********************************************************************
- *		FillWindow (USER.324)
- */
-void WINAPI FillWindow16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
-{
-    RECT rect;
-    RECT16 rc16;
-    GetClientRect( hwnd, &rect );
-    DPtoLP( hdc, (LPPOINT)&rect, 2 );
-    CONV_RECT32TO16( &rect, &rc16 );
-    PaintRect16( hwndParent, hwnd, hdc, hbrush, &rc16 );
-}
-
-
-/***********************************************************************
- *	     PAINT_GetControlBrush
- */
-static HBRUSH16 PAINT_GetControlBrush( HWND hParent, HWND hWnd, HDC16 hDC, UINT16 ctlType )
-{
-    HBRUSH16 bkgBrush = (HBRUSH16)SendMessageA( hParent, WM_CTLCOLORMSGBOX + ctlType, 
-							     (WPARAM)hDC, (LPARAM)hWnd );
-    if( !IsGDIObject16(bkgBrush) )
-	bkgBrush = DEFWND_ControlColor( hDC, ctlType );
-    return bkgBrush;
-}
-
-
-/***********************************************************************
- *		PaintRect (USER.325)
- */
-void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
-                       HBRUSH16 hbrush, const RECT16 *rect)
-{
-    if( hbrush <= CTLCOLOR_MAX ) 
-    {
-	if( hwndParent )
-	    hbrush = PAINT_GetControlBrush( hwndParent, hwnd, hdc, (UINT16)hbrush );
-	else 
-	    return;
-    }
-    if( hbrush ) 
-	FillRect16( hdc, rect, hbrush );
-}
-
-
-/***********************************************************************
- *		GetControlBrush (USER.326)
- */
-HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
-{
-    if (ctlType <= CTLCOLOR_MAX)
-    {
-        HWND16 parent = GetParent16( hwnd );
-        if (!parent) parent = hwnd;
-        return PAINT_GetControlBrush( parent, hwnd, hdc, ctlType );
-    }
-    return 0;
 }
 
 
@@ -975,43 +912,11 @@ END:
 
 
 /***********************************************************************
- *		RedrawWindow (USER.290)
- */
-BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
-                              HRGN16 hrgnUpdate, UINT16 flags )
-{
-    if (rectUpdate)
-    {
-        RECT r;
-        CONV_RECT16TO32( rectUpdate, &r );
-        return (BOOL16)RedrawWindow( (HWND)hwnd, &r, hrgnUpdate, flags );
-    }
-    return RedrawWindow( hwnd, NULL, hrgnUpdate, flags );
-}
-
-
-/***********************************************************************
- *		UpdateWindow (USER.124)
- */
-void WINAPI UpdateWindow16( HWND16 hwnd )
-{
-    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
-}
-
-/***********************************************************************
  *		UpdateWindow (USER32.@)
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
-}
-
-/***********************************************************************
- *		InvalidateRgn (USER.126)
- */
-void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
-{
-    RedrawWindow((HWND)hwnd, NULL, (HRGN)hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
@@ -1025,29 +930,11 @@ BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 
 
 /***********************************************************************
- *		InvalidateRect (USER.125)
- */
-void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
-{
-    RedrawWindow16( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
-}
-
-
-/***********************************************************************
  *		InvalidateRect (USER32.@)
  */
 BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 {
     return RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
-}
-
-
-/***********************************************************************
- *		ValidateRgn (USER.128)
- */
-void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
-{
-    RedrawWindow( (HWND)hwnd, NULL, (HRGN)hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 
@@ -1061,35 +948,11 @@ void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 
 
 /***********************************************************************
- *		ValidateRect (USER.127)
- */
-void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
-{
-    RedrawWindow16( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
-}
-
-
-/***********************************************************************
  *		ValidateRect (USER32.@)
  */
 void WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 {
     RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
-}
-
-
-/***********************************************************************
- *		GetUpdateRect (USER.190)
- */
-BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
-{
-    RECT r;
-    BOOL16 ret;
-
-    if (!rect) return GetUpdateRect( hwnd, NULL, erase );
-    ret = GetUpdateRect( hwnd, &r, erase );
-    CONV_RECT32TO16( &r, rect );
-    return ret;
 }
 
 
@@ -1139,15 +1002,6 @@ END:
 
 
 /***********************************************************************
- *		GetUpdateRgn (USER.237)
- */
-INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
-{
-    return GetUpdateRgn( hwnd, hrgn, erase );
-}
-
-
-/***********************************************************************
  *		GetUpdateRgn (USER32.@)
  */
 INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
@@ -1179,15 +1033,6 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return retval;
-}
-
-
-/***********************************************************************
- *		ExcludeUpdateRgn (USER.238)
- */
-INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
-{
-    return ExcludeUpdateRgn( hdc, hwnd );
 }
 
 
@@ -1364,28 +1209,6 @@ BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
     SelectObject(hdc, hOldBrush);
 
     return TRUE;
-}
-
-/**********************************************************************
- *		DrawAnimatedRects (USER.448)
- */
-BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
-                                   const RECT16* lprcFrom,
-                                   const RECT16* lprcTo )
-{
-    RECT rcFrom32, rcTo32;
-
-    rcFrom32.left	= (INT)lprcFrom->left;
-    rcFrom32.top	= (INT)lprcFrom->top;
-    rcFrom32.right	= (INT)lprcFrom->right;
-    rcFrom32.bottom	= (INT)lprcFrom->bottom;
-
-    rcTo32.left		= (INT)lprcTo->left;
-    rcTo32.top		= (INT)lprcTo->top;
-    rcTo32.right	= (INT)lprcTo->right;
-    rcTo32.bottom	= (INT)lprcTo->bottom;
-
-    return DrawAnimatedRects((HWND)hwnd, (INT)idAni, &rcFrom32, &rcTo32);
 }
 
 
@@ -1681,7 +1504,7 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
     {
         /* send palette change notification */
         HWND hWnd = WindowFromDC( hDC );
-        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
+        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0L);
     }
     return realized;
 }

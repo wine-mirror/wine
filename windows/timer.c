@@ -300,32 +300,12 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
 
 
 /***********************************************************************
- *		KillTimer (USER.12)
- */
-BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
-{
-    TRACE("%04x %d\n", hwnd, id );
-    return TIMER_KillTimer( hwnd, id, FALSE );
-}
-
-
-/***********************************************************************
  *		KillTimer (USER32.@)
  */
 BOOL WINAPI KillTimer( HWND hwnd, UINT id )
 {
     TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
-}
-
-
-/***********************************************************************
- *		KillSystemTimer (USER.182)
- */
-BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
-{
-    TRACE("%04x %d\n", hwnd, id );
-    return TIMER_KillTimer( hwnd, id, TRUE );
 }
 
 

@@ -27,6 +27,7 @@ C_SRCS = \
 	text.c \
 	thunk.c \
 	user_main.c \
+	wnd16.c \
 	wsprintf.c
 
 RC_SRCS = \

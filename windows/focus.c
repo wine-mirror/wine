@@ -29,7 +29,7 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 {
     PERQDATA_SetFocusWnd( pMsgQ->pQData, hFocusTo );
 
-    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
+    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0 );
 
     if( !hFocusTo || hFocusTo != PERQDATA_GetFocusWnd( pMsgQ->pQData ) )
     {
@@ -40,16 +40,7 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
        has received the keyboard focus. */
     if (USER_Driver.pSetFocus) USER_Driver.pSetFocus(hFocusTo);
 
-    SendMessageA( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
-}
-
-
-/*****************************************************************
- *		SetFocus (USER.22)
- */
-HWND16 WINAPI SetFocus16( HWND16 hwnd )
-{
-    return (HWND16)SetFocus( hwnd );
+    SendMessageA( hFocusTo, WM_SETFOCUS, (WPARAM)hFocusFrom, 0 );
 }
 
 
@@ -153,15 +144,6 @@ CLEANUP:
         QUEUE_Unlock( pMsgQ );
 
     return bRet ? hWndFocus : 0;
-}
-
-
-/*****************************************************************
- *		GetFocus (USER.23)
- */
-HWND16 WINAPI GetFocus16(void)
-{
-    return (HWND16)GetFocus();
 }
 
 

@@ -123,6 +123,7 @@ static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
  */
 static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 {
+    RECT rect;
     HFONT hPrevFont;
     HBRUSH hBrush = 0;
     COLORREF textColor = 0;
@@ -158,18 +159,16 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 	}
     }
 
-    FillWindow16( GetParent(hwnd), hwnd, hDC, hBrush );
+    GetClientRect( hwnd, &rect );
+    DPtoLP( hDC, (LPPOINT)&rect, 2 );
+    FillRect( hDC, &rect, hBrush );
 
     hPrevFont = SelectObject( hDC, hIconTitleFont );
     if( hPrevFont )
     {
-        RECT  rect;
-	INT	length;
 	WCHAR buffer[80];
 
-        GetClientRect( hwnd, &rect );
-
-	length = GetWindowTextW( owner, buffer, 80 );
+        INT length = GetWindowTextW( owner, buffer, sizeof(buffer) );
         SetTextColor( hDC, textColor );
         SetBkMode( hDC, TRANSPARENT );
 
@@ -178,7 +177,7 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 
 	SelectObject( hDC, hPrevFont );
     }
-    return ( hPrevFont ) ? TRUE : FALSE;
+    return (hPrevFont != 0);
 }
 
 /***********************************************************************
@@ -187,12 +186,9 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
                                  WPARAM wParam, LPARAM lParam )
 {
-    LRESULT retvalue;
     HWND owner = GetWindow( hWnd, GW_OWNER );
-    WND *wnd = WIN_FindWndPtr( hWnd );
 
-    if( !wnd )
-      return 0;
+    if (!IsWindow(hWnd)) return 0;
 
     switch( msg )
     {
@@ -204,44 +200,30 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
                 SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
                 hIconTitleFont = CreateFontIndirectA( &logFont );
             }
-            retvalue = (hIconTitleFont) ? 0 : -1;
-            goto END;
+            return (hIconTitleFont ? 0 : -1);
 	case WM_NCHITTEST:
-	     retvalue = HTCAPTION;
-             goto END;
+	     return HTCAPTION;
 	case WM_NCMOUSEMOVE:
 	case WM_NCLBUTTONDBLCLK:
-	     retvalue = SendMessageW( owner, msg, wParam, lParam );
-             goto END;
+	     return SendMessageW( owner, msg, wParam, lParam );
 	case WM_ACTIVATE:
 	     if( wParam ) SetActiveWindow( owner );
-	     /* fall through */
-
+             return 0;
 	case WM_CLOSE:
-	     retvalue = 0;
-             goto END;
+	     return 0;
 	case WM_SHOWWINDOW:
-	     if( wnd && wParam ) ICONTITLE_SetTitlePos( hWnd, owner );
-	     retvalue = 0;
-             goto END;
+            if (wParam) ICONTITLE_SetTitlePos( hWnd, owner );
+	     return 0;
 	case WM_ERASEBKGND:
-	     if( wnd )
-	     {
-		 if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
-		     lParam = SendMessageA( owner, WM_ISACTIVEICON, 0, 0 );
-		 else
-		     lParam = (owner == GetActiveWindow());
-		 if( ICONTITLE_Paint( hWnd, owner, (HDC)wParam, (BOOL)lParam ) )
-		     ValidateRect( hWnd, NULL );
-                 retvalue = 1;
-                 goto END;
-	     }
+            if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
+                lParam = SendMessageA( owner, WM_ISACTIVEICON, 0, 0 );
+            else
+                lParam = (owner == GetActiveWindow());
+            if( ICONTITLE_Paint( hWnd, owner, (HDC)wParam, (BOOL)lParam ) )
+                ValidateRect( hWnd, NULL );
+            return 1;
     }
-
-    retvalue = DefWindowProcW( hWnd, msg, wParam, lParam );
-END:
-    WIN_ReleaseWndPtr(wnd);
-    return retvalue;
+    return DefWindowProcW( hWnd, msg, wParam, lParam );
 }
 
 

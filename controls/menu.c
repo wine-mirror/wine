@@ -1068,7 +1068,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED;
         if (lpitem->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
         dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
-        dis.hwndItem   = hmenu;
+        dis.hwndItem   = (HWND)hmenu;
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
         TRACE("Ownerdraw: owner=%04x itemID=%d, itemState=%d, itemAction=%d, "
@@ -2901,7 +2901,7 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
     if (!(wFlags & TPM_NONOTIFY))
        SendMessageA( hWnd, WM_ENTERMENULOOP, bPopup, 0 );
 
-    SendMessageA( hWnd, WM_SETCURSOR, hWnd, HTCAPTION );
+    SendMessageA( hWnd, WM_SETCURSOR, (WPARAM)hWnd, HTCAPTION );
 
     if (!(wFlags & TPM_NONOTIFY))
     {
@@ -3003,20 +3003,6 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey)
         MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
     }
     MENU_ExitTracking( hwnd );
-}
-
-
-/**********************************************************************
- *           TrackPopupMenu   (USER.416)
- */
-BOOL16 WINAPI TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
-                           INT16 nReserved, HWND16 hWnd, const RECT16 *lpRect )
-{
-    RECT r;
-    if (lpRect)
-   	 CONV_RECT16TO32( lpRect, &r );
-    return TrackPopupMenu( hMenu, wFlags, x, y, nReserved, hWnd,
-                             lpRect ? &r : NULL );
 }
 
 
@@ -3346,16 +3332,6 @@ INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
     str[0] = '\0';
     lstrcpynW( str, item->text, nMaxSiz );
     return strlenW(str);
-}
-
-
-/**********************************************************************
- *         HiliteMenuItem    (USER.162)
- */
-BOOL16 WINAPI HiliteMenuItem16( HWND16 hWnd, HMENU16 hMenu, UINT16 wItemID,
-                                UINT16 wHilite )
-{
-    return HiliteMenuItem( hWnd, hMenu, wItemID, wHilite );
 }
 
 
@@ -3836,15 +3812,6 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 
 
 /**********************************************************************
- *         GetSystemMenu    (USER.156)
- */
-HMENU16 WINAPI GetSystemMenu16( HWND16 hWnd, BOOL16 bRevert )
-{
-    return GetSystemMenu( hWnd, bRevert );
-}
-
-
-/**********************************************************************
  *         GetSystemMenu    (USER32.@)
  */
 HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
@@ -3899,15 +3866,6 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 
 
 /*******************************************************************
- *         SetSystemMenu    (USER.280)
- */
-BOOL16 WINAPI SetSystemMenu16( HWND16 hwnd, HMENU16 hMenu )
-{
-    return SetSystemMenu( hwnd, hMenu );
-}
-
-
-/*******************************************************************
  *         SetSystemMenu    (USER32.@)
  */
 BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
@@ -3926,15 +3884,6 @@ BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
 
 
 /**********************************************************************
- *         GetMenu    (USER.157)
- */
-HMENU16 WINAPI GetMenu16( HWND16 hWnd ) 
-{
-    return (HMENU16)GetMenu(hWnd);
-}
-
-
-/**********************************************************************
  *         GetMenu    (USER32.@)
  */
 HMENU WINAPI GetMenu( HWND hWnd ) 
@@ -3942,15 +3891,6 @@ HMENU WINAPI GetMenu( HWND hWnd )
     HMENU retvalue = (HMENU)GetWindowLongA( hWnd, GWL_ID );
     TRACE("for %04x returning %04x\n", hWnd, retvalue);
     return retvalue;
-}
-
-
-/**********************************************************************
- *         SetMenu    (USER.158)
- */
-BOOL16 WINAPI SetMenu16( HWND16 hWnd, HMENU16 hMenu )
-{
-    return SetMenu( hWnd, hMenu );
 }
 
 
@@ -4009,15 +3949,6 @@ HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
     if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return 0;
     if (!(lpmi->fType & MF_POPUP)) return 0;
     return lpmi->hSubMenu;
-}
-
-
-/**********************************************************************
- *         DrawMenuBar    (USER.160)
- */
-void WINAPI DrawMenuBar16( HWND16 hWnd )
-{
-    DrawMenuBar( hWnd );
 }
 
 
@@ -4702,21 +4633,6 @@ BOOL WINAPI GetMenuItemRect (HWND hwnd, HMENU hMenu, UINT uItem,
      return TRUE;
 }
 
-/**********************************************************************
- *		GetMenuItemRect    (USER.665)
- */
-
-BOOL16 WINAPI GetMenuItemRect16 (HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
-				 LPRECT16 rect)
-{
-     RECT r32;
-     BOOL res;
-
-     if (!rect) return FALSE;
-     res = GetMenuItemRect (hwnd, hMenu, uItem, &r32);
-     CONV_RECT32TO16 (&r32, rect);
-     return res;
-}
 
 /**********************************************************************
  *		SetMenuInfo    (USER32.@)
@@ -5032,46 +4948,6 @@ INT WINAPI TranslateAccelerator( HWND hWnd, HACCEL hAccel, LPMSG msg )
     {
         if (translate_accelerator( hWnd, msg->message, msg->wParam, msg->lParam,
                                    lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd))
-            return 1;
-    } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN_(accel)("couldn't translate accelerator key\n");
-    return 0;
-}
-
-
-/**********************************************************************
- *           TranslateAccelerator      (USER.178)
- */
-INT16 WINAPI TranslateAccelerator16( HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg )
-{
-    LPACCEL16 lpAccelTbl;
-    int i;
-
-    if (msg == NULL)
-    {
-        WARN_(accel)("msg null; should hang here to be win compatible\n");
-        return 0;
-    }
-    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
-    {
-        WARN_(accel)("invalid accel handle=%x\n", hAccel);
-        return 0;
-    }
-    if ((msg->message != WM_KEYDOWN &&
-         msg->message != WM_KEYUP &&
-         msg->message != WM_SYSKEYDOWN &&
-         msg->message != WM_SYSKEYUP &&
-         msg->message != WM_CHAR)) return 0;
-
-    TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,"
-                  "msg->hwnd=%04x, msg->message=%04x, wParam=%04x, lParam=%lx\n",
-                  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
-
-    i = 0;
-    do
-    {
-        if (translate_accelerator( hWnd, msg->message, msg->wParam, msg->lParam,
-                                   lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd ))
             return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
     WARN_(accel)("couldn't translate accelerator key\n");

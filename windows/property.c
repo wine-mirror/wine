@@ -68,15 +68,6 @@ END:
 
 
 /***********************************************************************
- *		GetProp (USER.25)
- */
-HANDLE16 WINAPI GetProp16( HWND16 hwnd, LPCSTR str )
-{
-    return (HANDLE16)GetPropA( hwnd, str );
-}
-
-
-/***********************************************************************
  *		GetPropA (USER32.@)
  */
 HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
@@ -107,15 +98,6 @@ HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
     ret = GetPropA( hwnd, strA );
     HeapFree( GetProcessHeap(), 0, strA );
     return ret;
-}
-
-
-/***********************************************************************
- *		SetProp (USER.26)
- */
-BOOL16 WINAPI SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
-{
-    return (BOOL16)SetPropA( hwnd, str, handle );
 }
 
 
@@ -172,15 +154,6 @@ BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
     ret = SetPropA( hwnd, strA, handle );
     HeapFree( GetProcessHeap(), 0, strA );
     return ret;
-}
-
-
-/***********************************************************************
- *		RemoveProp (USER.24)
- */
-HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
-{
-    return (HANDLE16)RemovePropA( hwnd, str );
 }
 
 
@@ -282,7 +255,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
     INT16 ret = -1;
 
     TRACE("%04x %08x\n", hwnd, (UINT)func );
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    if (!(pWnd = WIN_FindWndPtr16( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
         /* Already get the next in case the callback */

@@ -19,20 +19,6 @@
 DEFAULT_DEBUG_CHANNEL(scroll);
 
 /*************************************************************************
- *		ScrollWindow (USER.61)
- */
-void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
-                           const RECT16 *clipRect )
-{
-    RECT rect32, clipRect32;
-
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (clipRect) CONV_RECT16TO32( clipRect, &clipRect32 );
-    ScrollWindow( hwnd, dx, dy, rect ? &rect32 : NULL,
-                    clipRect ? &clipRect32 : NULL );
-}
-
-/*************************************************************************
  *		ScrollWindow (USER32.@)
  *
  */
@@ -78,27 +64,6 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     if (USER_Driver.pScrollDC)
         return USER_Driver.pScrollDC( hdc, dx, dy, rc, prLClip, hrgnUpdate, rcUpdate );
     return FALSE;
-}
-
-
-/*************************************************************************
- *		ScrollWindowEx (USER.319)
- */
-INT16 WINAPI ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy,
-                               const RECT16 *rect, const RECT16 *clipRect,
-                               HRGN16 hrgnUpdate, LPRECT16 rcUpdate,
-                               UINT16 flags )
-{
-    RECT rect32, clipRect32, rcUpdate32;
-    BOOL16 ret;
-
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (clipRect) CONV_RECT16TO32( clipRect, &clipRect32 );
-    ret = ScrollWindowEx( hwnd, dx, dy, rect ? &rect32 : NULL,
-                            clipRect ? &clipRect32 : NULL, hrgnUpdate,
-                            (rcUpdate) ? &rcUpdate32 : NULL, flags );
-    if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
-    return ret;
 }
 
 

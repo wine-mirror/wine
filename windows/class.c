@@ -697,14 +697,6 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
     return CLASS_FreeClass( classPtr );
 }
 
-/***********************************************************************
- *		GetClassWord (USER.129)
- */
-WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
-{
-    return GetClassWord( hwnd, offset );
-}
-
 
 /***********************************************************************
  *		GetClassWord (USER32.@)
@@ -762,15 +754,15 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
     switch( offset )
     {
     case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+        if (!(wndPtr = WIN_FindWndPtr16( hwnd ))) return 0;
         ret = (LONG)CLASS_GetProc( wndPtr->class, WIN_PROC_16 );
         WIN_ReleaseWndPtr(wndPtr);
         return ret;
     case GCL_MENUNAME:
-        ret = GetClassLongA( hwnd, offset );
+        ret = GetClassLongA( WIN_Handle32(hwnd), offset );
         return (LONG)SEGPTR_GET( (void *)ret );
     default:
-        return GetClassLongA( hwnd, offset );
+        return GetClassLongA( WIN_Handle32(hwnd), offset );
     }
 }
 
@@ -868,15 +860,6 @@ LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *		SetClassWord (USER.130)
- */
-WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
-{
-    return SetClassWord( hwnd, offset, newval );
-}
-
-
-/***********************************************************************
  *		SetClassWord (USER32.@)
  */
 WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
@@ -939,14 +922,15 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
     switch(offset)
     {
     case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+        if (!(wndPtr = WIN_FindWndPtr16(hwnd))) return 0;
         retval = (LONG)CLASS_SetProc( wndPtr->class, (WNDPROC)newval, WIN_PROC_16 );
         WIN_ReleaseWndPtr(wndPtr);
         return retval;
     case GCL_MENUNAME:
-        return SetClassLongA( hwnd, offset, (LONG)MapSL(newval) );
+        newval = (LONG)MapSL( newval );
+        /* fall through */
     default:
-        return SetClassLongA( hwnd, offset, newval );
+        return SetClassLongA( WIN_Handle32(hwnd), offset, newval );
     }
 }
 
@@ -1048,15 +1032,6 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
     default:
         return SetClassLongA( hwnd, offset, newval );
     }
-}
-
-
-/***********************************************************************
- *		GetClassName (USER.58)
- */
-INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
-{
-    return GetClassNameA( hwnd, buffer, count );
 }
 
 

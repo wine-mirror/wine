@@ -99,13 +99,13 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
 	    LPCWPSTRUCT16   lpcwp16 = MapSL(*plParam);
 	    LPCWPSTRUCT   lpcwp32 = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpcwp32) );
 	    
-	    lpcwp32->hwnd = lpcwp16->hwnd;
+	    lpcwp32->hwnd = WIN_Handle32(lpcwp16->hwnd);
 	    lpcwp32->lParam = lpcwp16->lParam;
 	    
-            if (bA) WINPROC_MapMsg16To32A( lpcwp16->message, lpcwp16->wParam, 
+            if (bA) WINPROC_MapMsg16To32A( lpcwp32->hwnd, lpcwp16->message, lpcwp16->wParam,
                                            &lpcwp32->message, &lpcwp32->wParam,
                                            &lpcwp32->lParam );
-            else WINPROC_MapMsg16To32W( lpcwp16->hwnd,lpcwp16->message, lpcwp16->wParam, 
+            else WINPROC_MapMsg16To32W( lpcwp32->hwnd,lpcwp16->message, lpcwp16->wParam,
                                         &lpcwp32->message, &lpcwp32->wParam,
                                         &lpcwp32->lParam );
 	    *plParam = (LPARAM)lpcwp32;
@@ -143,7 +143,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
 		else
 		    lpcbtcw32->lpcs->lpszClass = (LPCSTR)lpcs16->lpszClass;
 
-		lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
+		lpcbtcw32->hwndInsertAfter = WIN_Handle32( lpcbtcw16->hwndInsertAfter );
 
 		*plParam = (LPARAM)lpcbtcw32;
 		break;
@@ -154,7 +154,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
                 LPCBTACTIVATESTRUCT lpcas32 = HeapAlloc( GetProcessHeap(), 0,
                                                            sizeof(*lpcas32) );
                 lpcas32->fMouse = lpcas16->fMouse;
-                lpcas32->hWndActive = lpcas16->hWndActive;
+                lpcas32->hWndActive = WIN_Handle32(lpcas16->hWndActive);
                 *plParam = (LPARAM)lpcas32;
                 break;
             }
@@ -171,7 +171,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
                 lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
 
                 lpms32->dwExtraInfo = lpms16->dwExtraInfo;
-                lpms32->hwnd = lpms16->hwnd;
+                lpms32->hwnd = WIN_Handle32( lpms16->hwnd );
                 *plParam = (LPARAM)lpms32;
                 break;
             }
@@ -200,7 +200,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
                correct sign extension. Yay. :| */
             lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
             lpms32->dwExtraInfo = lpms16->dwExtraInfo;
-            lpms32->hwnd = lpms16->hwnd;
+            lpms32->hwnd = WIN_Handle32(lpms16->hwnd);
             *plParam = (LPARAM)lpms32;
 	    break;
         } 
@@ -314,7 +314,7 @@ static void HOOK_UnMap16To32Common(INT id, INT code, WPARAM wParamOrig,
                        HeapFree( GetProcessHeap(), 0, (LPWSTR)lpcbtcw32->lpcs->lpszClass );
 		}
 
-		lpcbtcw16->hwndInsertAfter = lpcbtcw32->hwndInsertAfter;
+		lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
 
 		HeapFree( GetProcessHeap(), 0, lpcbtcw32->lpcs );
 	      } /* fall through */
@@ -406,7 +406,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
           LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)*plParam;
 	  LPCWPSTRUCT16   lpcwp16 = SEGPTR_NEW( CWPSTRUCT16 );
 
-          lpcwp16->hwnd = lpcwp32->hwnd;
+          lpcwp16->hwnd = WIN_Handle16(lpcwp32->hwnd);
           lpcwp16->lParam = lpcwp32->lParam;
 
           if (bA) WINPROC_MapMsg32ATo16( lpcwp32->hwnd, lpcwp32->message,
@@ -428,7 +428,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
 	      LPCBTACTIVATESTRUCT16 lpcas16 =SEGPTR_NEW( CBTACTIVATESTRUCT16 );
 
 	      lpcas16->fMouse     = lpcas32->fMouse;
-	      lpcas16->hWndActive = lpcas32->hWndActive;
+	      lpcas16->hWndActive = WIN_Handle16( lpcas32->hWndActive );
 
 	      *plParam = (LPARAM)SEGPTR_GET( lpcas16 );
 	      break;
@@ -441,7 +441,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
 
 	      CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
 
-	      lpms16->hwnd         = lpms32->hwnd;
+	      lpms16->hwnd         = WIN_Handle16( lpms32->hwnd );
 	      lpms16->wHitTestCode = lpms32->wHitTestCode;
 	      lpms16->dwExtraInfo  = lpms32->dwExtraInfo;
 
@@ -469,7 +469,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
 
 	  CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
 
-	  lpms16->hwnd = lpms32->hwnd;
+	  lpms16->hwnd = WIN_Handle16( lpms32->hwnd );
 	  lpms16->wHitTestCode = lpms32->wHitTestCode;
 	  lpms16->dwExtraInfo = lpms32->dwExtraInfo;
 
@@ -531,7 +531,7 @@ static void HOOK_Map32ATo16(INT id, INT code, WPARAM *pwParam,
 	else
 	  lpcs16->lpszClass = (SEGPTR)lpcbtcw32->lpcs->lpszClass;
 
-	lpcbtcw16->hwndInsertAfter = lpcbtcw32->hwndInsertAfter;
+	lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
 
 	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
     }
@@ -560,7 +560,7 @@ static void HOOK_Map32WTo16(INT id, INT code, WPARAM *pwParam,
         cls  = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszClass );
         lpcs16->lpszName  = SEGPTR_GET( name );
         lpcs16->lpszClass = SEGPTR_GET( cls );
-	lpcbtcw16->hwndInsertAfter = lpcbtcw32->hwndInsertAfter;
+        lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
 
 	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
     }
@@ -628,7 +628,7 @@ static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
                if (HIWORD(lpcs16->lpszClass))
                    SEGPTR_FREE( MapSL(lpcs16->lpszClass) );
 
-	       lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
+               lpcbtcw32->hwndInsertAfter = WIN_Handle32( lpcbtcw16->hwndInsertAfter );
 
                SEGPTR_FREE( lpcs16 );
 	  } /* fall through */
@@ -1372,24 +1372,23 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
         MSG msg32;
         BOOL16 ret;
 
-        msg32.hwnd		= lpmsg16_32->msg.hwnd;
-        msg32.message	= lpmsg16_32->msg.message;
-        msg32.wParam	=
-                     MAKELONG(lpmsg16_32->msg.wParam, lpmsg16_32->wParamHigh);
-        msg32.lParam	= lpmsg16_32->msg.lParam;
-        msg32.time		= lpmsg16_32->msg.time;
-        msg32.pt.x		= (INT)lpmsg16_32->msg.pt.x;
-        msg32.pt.y      = (INT)lpmsg16_32->msg.pt.y;
-        
+        msg32.hwnd      = WIN_Handle32( lpmsg16_32->msg.hwnd );
+        msg32.message   = lpmsg16_32->msg.message;
+        msg32.wParam    = MAKELONG(lpmsg16_32->msg.wParam, lpmsg16_32->wParamHigh);
+        msg32.lParam    = lpmsg16_32->msg.lParam;
+        msg32.time      = lpmsg16_32->msg.time;
+        msg32.pt.x      = lpmsg16_32->msg.pt.x;
+        msg32.pt.y      = lpmsg16_32->msg.pt.y;
+
         ret = (BOOL16)CallMsgFilterA(&msg32, (INT)code);
 
-        lpmsg16_32->msg.hwnd    = msg32.hwnd;
+        lpmsg16_32->msg.hwnd    = WIN_Handle16( msg32.hwnd );
         lpmsg16_32->msg.message = msg32.message;
         lpmsg16_32->msg.wParam  = LOWORD(msg32.wParam);
         lpmsg16_32->msg.lParam  = msg32.lParam;
         lpmsg16_32->msg.time    = msg32.time;
-        lpmsg16_32->msg.pt.x    = (INT16)msg32.pt.x;
-        lpmsg16_32->msg.pt.y    = (INT16)msg32.pt.y;
+        lpmsg16_32->msg.pt.x    = msg32.pt.x;
+        lpmsg16_32->msg.pt.y    = msg32.pt.y;
         lpmsg16_32->wParamHigh  = HIWORD(msg32.wParam);
 
         return ret;

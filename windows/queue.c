@@ -463,7 +463,7 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
     HTASK16 retvalue;
     MESSAGEQUEUE *queue;
 
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_FindWndPtr16( hwnd );
     if (!wndPtr) return 0;
 
     queue = QUEUE_Lock( wndPtr->hmemTaskQ );

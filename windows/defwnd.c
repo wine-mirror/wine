@@ -333,7 +333,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    pt.x = SLOWORD(lParam);
 	    pt.y = SHIWORD(lParam);
             ClientToScreen(hwnd, &pt);
-            SendMessageW( hwnd, WM_CONTEXTMENU, hwnd, MAKELPARAM(pt.x, pt.y) );
+            SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(pt.x, pt.y) );
         }
         break;
 
@@ -651,10 +651,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 /***********************************************************************
  *		DefWindowProc (USER.107)
  */
-LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
                                 LPARAM lParam )
 {
     LRESULT result = 0;
+    HWND hwnd = WIN_Handle32( hwnd16 );
 
     if (!IsWindow( hwnd )) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );

@@ -1070,12 +1070,9 @@ typedef struct {
 #define GWL_USERDATA        (-21)
 #define GWL_EXSTYLE         (-20)
 #define GWL_STYLE           (-16)
-#define GWW_ID              (-12)
-#define GWL_ID              GWW_ID
-#define GWW_HWNDPARENT      (-8)
-#define GWL_HWNDPARENT      GWW_HWNDPARENT
-#define GWW_HINSTANCE       (-6)
-#define GWL_HINSTANCE       GWW_HINSTANCE
+#define GWL_ID              (-12)
+#define GWL_HWNDPARENT      (-8)
+#define GWL_HINSTANCE       (-6)
 #define GWL_WNDPROC         (-4)
 #define DWL_MSGRESULT	    0
 #define DWL_DLGPROC	    4

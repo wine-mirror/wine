@@ -8,6 +8,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "win.h"
 #include "callback.h"
 
 /* ### start build ### */
@@ -33,7 +34,7 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
-    return EnumChildWindows( parent, (WNDENUMPROC)&thunk, lParam );
+    return EnumChildWindows( WIN_Handle32(parent), (WNDENUMPROC)&thunk, lParam );
 }
 
 

@@ -265,16 +265,6 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 
 
 /**************************************************************************
- *		MessageBox (USER.1)
- */
-INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
-{
-    WARN("Messagebox\n");
-    return MessageBoxA( hwnd, text, title, type );
-}
-
-
-/**************************************************************************
  *		MessageBoxA (USER32.@)
  *
  * NOTES
@@ -344,38 +334,6 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
     WARN("Messagebox\n");
     /* ignore language id for now */
     return MessageBoxW(hWnd,text,title,type);
-}
-
-/**************************************************************************
- *		MessageBoxIndirect (USER.827)
- */
-INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
-{
-    LPVOID template;
-    HRSRC hRes;
-    MSGBOXPARAMSA msgbox32;
-
-    WARN("Messagebox\n");    
-    
-    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
-        return 0;
-    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
-        return 0;
-
-    msgbox32.cbSize		= msgbox->cbSize;
-    msgbox32.hwndOwner		= msgbox->hwndOwner;
-    msgbox32.hInstance		= msgbox->hInstance;
-    msgbox32.lpszText		= MapSL(msgbox->lpszText);
-    msgbox32.lpszCaption	= MapSL(msgbox->lpszCaption);
-    msgbox32.dwStyle		= msgbox->dwStyle;
-    msgbox32.lpszIcon		= MapSL(msgbox->lpszIcon);
-    msgbox32.dwContextHelpId	= msgbox->dwContextHelpId;
-    msgbox32.lpfnMsgBoxCallback	= msgbox->lpfnMsgBoxCallback;
-    msgbox32.dwLanguageId	= msgbox->dwLanguageId;
-
-    return DialogBoxIndirectParamA( msgbox32.hInstance, template,
-                                      msgbox32.hwndOwner, (DLGPROC)MSGBOX_DlgProc,
-                                      (LPARAM)&msgbox32 );
 }
 
 /**************************************************************************

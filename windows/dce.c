@@ -368,15 +368,6 @@ INT DCE_ExcludeRgn( HDC hDC, HWND hwnd, HRGN hRgn )
 
 
 /***********************************************************************
- *		GetDCEx (USER.359)
- */
-HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
-{
-    return (HDC16)GetDCEx( hwnd, hrgnClip, flags );
-}
-
-
-/***********************************************************************
  *		GetDCEx (USER32.@)
  *
  * Unimplemented flags: DCX_LOCKWINDOWUPDATE
@@ -532,15 +523,6 @@ END:
 
 
 /***********************************************************************
- *		GetDC (USER.66)
- */
-HDC16 WINAPI GetDC16( HWND16 hwnd )
-{
-    return (HDC16)GetDC( hwnd );
-}
-
-
-/***********************************************************************
  *		GetDC (USER32.@)
  * RETURNS
  *	:Handle to DC
@@ -556,29 +538,11 @@ HDC WINAPI GetDC(
 
 
 /***********************************************************************
- *		GetWindowDC (USER.67)
- */
-HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
-{
-    return GetDCEx16( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
-}
-
-
-/***********************************************************************
  *		GetWindowDC (USER32.@)
  */
 HDC WINAPI GetWindowDC( HWND hwnd )
 {
     return GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
-}
-
-
-/***********************************************************************
- *		ReleaseDC (USER.68)
- */
-INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
-{
-    return (INT16)ReleaseDC( hwnd, hdc );
 }
 
 
@@ -671,15 +635,6 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
 
 /**********************************************************************
- *		WindowFromDC (USER.117)
- */
-HWND16 WINAPI WindowFromDC16( HDC16 hDC )
-{
-    return (HWND16)WindowFromDC( hDC );
-}
-
-
-/**********************************************************************
  *		WindowFromDC (USER32.@)
  */
 HWND WINAPI WindowFromDC( HDC hDC )
@@ -698,14 +653,6 @@ HWND WINAPI WindowFromDC( HDC hDC )
     return hwnd;
 }
 
-
-/***********************************************************************
- *		LockWindowUpdate (USER.294)
- */
-BOOL16 WINAPI LockWindowUpdate16( HWND16 hwnd )
-{
-    return LockWindowUpdate( hwnd );
-}
 
 /***********************************************************************
  *		LockWindowUpdate (USER32.@)

@@ -62,7 +62,7 @@ typedef struct
     RECT16	   rectNormal;
     POINT16	   ptIconPos;
     POINT16	   ptMaxPos;
-    HWND16	   hwndIconTitle;
+    HWND           hwndIconTitle;
 } INTERNALPOS, *LPINTERNALPOS;
 
   /* WND flags values */
@@ -105,6 +105,12 @@ inline static HWND WIN_GetFullHandle( HWND hwnd )
 inline static HWND16 WIN_Handle16( HWND hwnd )
 {
     return LOWORD(hwnd);
+}
+
+inline static WND *WIN_FindWndPtr16( HWND16 hwnd )
+{
+    /* don't bother with full conversion */
+    return WIN_FindWndPtr( (HWND)(ULONG_PTR)hwnd );
 }
 
 extern HWND CARET_GetHwnd(void);

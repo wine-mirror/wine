@@ -651,6 +651,10 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
     /* Check hwndInsertAfter */
 
+    /* fix sign extension */
+    if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
+    else if (winpos->hwndInsertAfter == (HWND)0xfffe) winpos->hwndInsertAfter = HWND_NOTOPMOST;
+
       /* FIXME: TOPMOST not supported yet */
     if ((winpos->hwndInsertAfter == HWND_TOPMOST) ||
         (winpos->hwndInsertAfter == HWND_NOTOPMOST)) winpos->hwndInsertAfter = HWND_TOP;
@@ -928,7 +932,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     size.x = wndPtr->rectWindow.left;
     size.y = wndPtr->rectWindow.top;
 
-    if (!HOOK_CallHooksA(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
+    if (!HOOK_CallHooksA(WH_CBT, HCBT_MINMAX, (WPARAM)wndPtr->hwndSelf, cmd))
     {
         if( wndPtr->dwStyle & WS_MINIMIZE )
         {
@@ -1649,7 +1653,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
         *capturePoint = pt;
     }
     SetCursorPos( pt.x, pt.y );
-    NC_HandleSetCursor( hwnd, hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    NC_HandleSetCursor( hwnd, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
 
@@ -1901,7 +1905,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     }
     wine_tsx11_unlock();
 
-    if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, hwnd, (LPARAM)&sizingRect )) moved = FALSE;
+    if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect )) moved = FALSE;
 
     SendMessageA( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessageA( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);

@@ -711,15 +711,6 @@ static UINT CLIPBOARD_EnumClipboardFormats( UINT wFormat )
  **************************************************************************/
 
 /**************************************************************************
- *		OpenClipboard (USER.137)
- */
-BOOL16 WINAPI OpenClipboard16( HWND16 hWnd )
-{
-    return OpenClipboard( hWnd );
-}
-
-
-/**************************************************************************
  *		OpenClipboard (USER32.@)
  *
  * Note: Netscape uses NULL hWnd to open the clipboard.
@@ -813,17 +804,6 @@ BOOL WINAPI EmptyClipboard(void)
     USER_Driver.pAcquireClipboard();
 
     return TRUE;
-}
-
-
-/**************************************************************************
- *		GetClipboardOwner (USER.140)
- *  FIXME: Can't return the owner if the clipbard is owned by an external app
- */
-HWND16 WINAPI GetClipboardOwner16(void)
-{
-    TRACE("()\n");
-    return hWndClipOwner;
 }
 
 
@@ -1300,16 +1280,6 @@ INT WINAPI GetClipboardFormatNameW( UINT wFormat, LPWSTR retStr, INT maxlen )
 
 
 /**************************************************************************
- *		SetClipboardViewer (USER.147)
- */
-HWND16 WINAPI SetClipboardViewer16( HWND16 hWnd )
-{
-    TRACE("(%04x)\n", hWnd);
-    return SetClipboardViewer( hWnd );
-}
-
-
-/**************************************************************************
  *		SetClipboardViewer (USER32.@)
  */
 HWND WINAPI SetClipboardViewer( HWND hWnd )
@@ -1324,31 +1294,12 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
 
 
 /**************************************************************************
- *		GetClipboardViewer (USER.148)
- */
-HWND16 WINAPI GetClipboardViewer16(void)
-{
-    TRACE("()\n");
-    return hWndViewer;
-}
-
-
-/**************************************************************************
  *		GetClipboardViewer (USER32.@)
  */
 HWND WINAPI GetClipboardViewer(void)
 {
     TRACE("()\n");
     return hWndViewer;
-}
-
-
-/**************************************************************************
- *		ChangeClipboardChain (USER.149)
- */
-BOOL16 WINAPI ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
-{
-    return ChangeClipboardChain(hWnd, hWndNext);
 }
 
 
@@ -1404,17 +1355,6 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
 
 
 /**************************************************************************
- *		GetOpenClipboardWindow (USER.248)
- *  FIXME: This wont work if an external app owns the selection
- */
-HWND16 WINAPI GetOpenClipboardWindow16(void)
-{
-    TRACE("()\n");
-    return hWndClipWindow;
-}
-
-
-/**************************************************************************
  *		GetOpenClipboardWindow (USER32.@)
  *  FIXME: This wont work if an external app owns the selection
  */
@@ -1426,34 +1366,17 @@ HWND WINAPI GetOpenClipboardWindow(void)
 
 
 /**************************************************************************
- *		GetPriorityClipboardFormat (USER.402)
- */
-INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
-{
-    FIXME("(%p,%d): stub\n", lpPriorityList, nCount );
-    return 0;
-}
-
-
-/**************************************************************************
  *		GetPriorityClipboardFormat (USER32.@)
  */
-INT WINAPI GetPriorityClipboardFormat( UINT *lpPriorityList, INT nCount )
+INT WINAPI GetPriorityClipboardFormat( UINT *list, INT nCount )
 {
-    int Counter;
+    int i;
     TRACE("()\n");
 
-    if(CountClipboardFormats() == 0) 
-    { 
-        return 0;
-    }
+    if(CountClipboardFormats() == 0) return 0;
 
-    for(Counter = 0; Counter <= nCount; Counter++)
-    {
-        if(IsClipboardFormatAvailable(*(lpPriorityList+sizeof(INT)*Counter)))
-            return *(lpPriorityList+sizeof(INT)*Counter);
-    }
-
+    for (i = 0; i < nCount; i++)
+        if (IsClipboardFormatAvailable( list[i] )) return list[i];
     return -1;
 }
 

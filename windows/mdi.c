@@ -550,10 +550,10 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
         cs16->szTitle = SEGPTR_GET(title);
         cs16->szClass = SEGPTR_GET(cls);
 
-	hwnd = CreateWindow16( cs->szClass, cs->szTitle, style, 
-			       cs16->x, cs16->y, cs16->cx, cs16->cy, parent,
-			       (HMENU)wIDmenu, cs16->hOwner,
-                               (LPVOID)SEGPTR_GET(cs16) );
+        hwnd = WIN_Handle32( CreateWindow16( cs->szClass, cs->szTitle, style,
+                                             cs16->x, cs16->y, cs16->cx, cs16->cy,
+                                             WIN_Handle16(parent), (HMENU)wIDmenu,
+                                             cs16->hOwner, (LPVOID)SEGPTR_GET(cs16) ));
         SEGPTR_FREE( title );
         SEGPTR_FREE( cls );
         SEGPTR_FREE( cs16 );
@@ -1287,16 +1287,16 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return MDICascade(hwnd, ci);
 
       case WM_MDICREATE:
-        if (lParam) return MDICreateChild( hwnd, ci,
-                                           (MDICREATESTRUCTA *)lParam, unicode );
-        else return 0;
+        if (lParam)
+            return (LRESULT)MDICreateChild( hwnd, ci, (MDICREATESTRUCTA *)lParam, unicode );
+        return 0;
 
       case WM_MDIDESTROY:
           return MDIDestroyChild( hwnd, ci, WIN_GetFullHandle( (HWND)wParam ), TRUE );
 
       case WM_MDIGETACTIVE:
           if (lParam) *(BOOL *)lParam = (ci->hwndChildMaximized != 0);
-          return ci->hwndActiveChild;
+          return (LRESULT)ci->hwndActiveChild;
 
       case WM_MDIICONARRANGE:
 	ci->mdiFlags |= MDIF_NEEDUPDATE;
@@ -1423,19 +1423,21 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
     switch (message)
     {
     case WM_SETTEXT:
-        return DefFrameProcA( hwnd, hwndMDIClient, message, wParam, (LPARAM)MapSL(lParam) );
-
+        lParam = (LPARAM)MapSL(lParam);
+        /* fall through */
     case WM_COMMAND:
     case WM_NCACTIVATE:
     case WM_SETFOCUS:
     case WM_SIZE:
-        return DefFrameProcW( hwnd, hwndMDIClient, message, wParam, lParam );
+        return DefFrameProcA( WIN_Handle32(hwnd), WIN_Handle32(hwndMDIClient),
+                              message, wParam, lParam );
 
     case WM_NEXTMENU:
         {
             MDINEXTMENU next_menu;
-            DefFrameProcW( hwnd, hwndMDIClient, message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( next_menu.hmenuNext, next_menu.hwndNext );
+            DefFrameProcW( WIN_Handle32(hwnd), WIN_Handle32(hwndMDIClient),
+                           message, wParam, (LPARAM)&next_menu );
+            return MAKELONG( next_menu.hmenuNext, WIN_Handle16(next_menu.hwndNext) );
         }
     default:
         return DefWindowProc16(hwnd, message, wParam, lParam);
@@ -1600,7 +1602,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
         {
             MDINEXTMENU next_menu;
             DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( next_menu.hmenuNext, next_menu.hwndNext );
+            return MAKELONG( next_menu.hmenuNext, WIN_Handle16(next_menu.hwndNext) );
         }
     default:
         return DefWindowProc16(hwnd, message, wParam, lParam);
@@ -1875,24 +1877,6 @@ HWND WINAPI CreateMDIWindowW(
 }
 
 /**********************************************************************
- *		TranslateMDISysAccel (USER.451)
- */
-BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
-{
-    if (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
-    {
-        MSG msg32;
-        msg32.hwnd    = msg->hwnd;
-        msg32.message = msg->message;
-        msg32.wParam  = msg->wParam;
-        msg32.lParam  = msg->lParam;
-        /* MDICLIENTINFO is still the same for win32 and win16 ... */
-        return TranslateMDISysAccel(hwndClient, &msg32);
-    }
-    return 0;
-}
-
-/**********************************************************************
  *		TranslateMDISysAccel (USER32.@)
  */
 BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
@@ -1927,14 +1911,6 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
         }
     }
     return 0; /* failure */
-}
-
-/***********************************************************************
- *		CalcChildScroll (USER.462)
- */
-void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
-{
-    return CalcChildScroll( hwnd, scroll );
 }
 
 /***********************************************************************
@@ -1994,15 +1970,6 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
 			SCROLL_SetNCSbState( hwnd, vmin, vmax, vpos,
                                              hmin, hmax, hpos);
     }    
-}
-
-
-/***********************************************************************
- *		ScrollChildren (USER.463)
- */
-void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
-{
-    ScrollChildren( hWnd, uMsg, wParam, lParam );
 }
 
 
@@ -2196,9 +2163,8 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
                      */
                     HWND hListBox     = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
                     UINT index        = SendMessageW(hListBox, LB_GETCURSEL, 0, 0);
-                    HWND hwnd         = SendMessageW(hListBox, LB_GETITEMDATA, index, 0);
-
-                    EndDialog(hDlg, hwnd);
+                    LRESULT res = SendMessageW(hListBox, LB_GETITEMDATA, index, 0);
+                    EndDialog(hDlg, res);
                     return TRUE;
                 }
                 case IDCANCEL:

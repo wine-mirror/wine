@@ -31,8 +31,8 @@ DEFAULT_DEBUG_CHANNEL(combo);
  */
 
 #define CB_NOTIFY( lphc, code ) \
-	(SendMessageW((lphc)->owner, WM_COMMAND, \
-                      MAKEWPARAM(GetWindowLongA((lphc)->self,GWL_ID), (code)), (lphc)->self))
+    (SendMessageW((lphc)->owner, WM_COMMAND, \
+                  MAKEWPARAM(GetWindowLongA((lphc)->self,GWL_ID), (code)), (LPARAM)(lphc)->self))
 
 #define CB_DISABLED( lphc )   (!IsWindowEnabled((lphc)->self))
 #define CB_OWNERDRAWN( lphc ) ((lphc)->dwStyle & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))
@@ -626,7 +626,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	    }
 
 	    TRACE("init done\n");
-	    return hwnd;
+	    return 0;
 	  }
 	  ERR("edit control failure.\n");
       } else ERR("listbox failure.\n");
@@ -898,7 +898,7 @@ static HBRUSH COMBO_PrepareColors(
    */
   if (CB_DISABLED(lphc))
   {
-    hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORSTATIC, hDC, lphc->self );
+    hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORSTATIC, hDC, (LPARAM)lphc->self );
 
     /*
      * We have to change the text color since WM_CTLCOLORSTATIC will
@@ -911,11 +911,11 @@ static HBRUSH COMBO_PrepareColors(
   {
     if (lphc->wState & CBF_EDIT)
     {
-      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLOREDIT, hDC, lphc->self );
+      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLOREDIT, hDC, (LPARAM)lphc->self );
     }
     else
     {
-      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORLISTBOX, hDC, lphc->self );
+      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORLISTBOX, hDC, (LPARAM)lphc->self );
     }
   }
 

@@ -129,15 +129,6 @@ static void CARET_KillTimer(void)
 
 
 /*****************************************************************
- *		CreateCaret (USER.163)
- */
-void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
-                           INT16 width, INT16 height )
-{
-    CreateCaret( hwnd, bitmap, width, height );
-}
-
-/*****************************************************************
  *		CreateCaret (USER32.@)
  */
 BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
@@ -239,15 +230,6 @@ BOOL WINAPI SetCaretPos( INT x, INT y)
 
 
 /*****************************************************************
- *		HideCaret (USER.166)
- */
-void WINAPI HideCaret16( HWND16 hwnd )
-{
-    HideCaret( hwnd );
-}
-
-
-/*****************************************************************
  *		HideCaret (USER32.@)
  */
 BOOL WINAPI HideCaret( HWND hwnd )
@@ -262,15 +244,6 @@ BOOL WINAPI HideCaret( HWND hwnd )
     CARET_DisplayCaret(CARET_OFF);
     Caret.hidden++;
     return TRUE;
-}
-
-
-/*****************************************************************
- *		ShowCaret (USER.167)
- */
-void WINAPI ShowCaret16( HWND16 hwnd )
-{
-    ShowCaret( hwnd );
 }
 
 

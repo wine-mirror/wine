@@ -11,6 +11,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "win.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -39,13 +40,13 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
   /* We might call WinExec() */
   ReleaseThunkLock( &mutex_count );
 
-  if (!(ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)MapSL(dwData) )))
+  if (!(ret = WinHelpA( WIN_Handle32(hWnd), lpHelpFile, wCommand, (DWORD)MapSL(dwData) )))
   {
       /* try to start the 16-bit winhelp */
       if (WinExec( "winhelp.exe -x", SW_SHOWNORMAL ) >= 32)
       {
           K32WOWYield16();
-          ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)MapSL(dwData) );
+          ret = WinHelpA( WIN_Handle32(hWnd), lpHelpFile, wCommand, (DWORD)MapSL(dwData) );
       }
   }
 

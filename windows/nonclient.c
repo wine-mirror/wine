@@ -237,33 +237,6 @@ static HICON NC_IconForWindow( HWND hwnd )
 }
 
 /***********************************************************************
- *		DrawCaption (USER.660) Draws a caption bar
- *
- * PARAMS
- *     hwnd   [I]
- *     hdc    [I]
- *     lpRect [I]
- *     uFlags [I]
- *
- * RETURNS
- *     Success:
- *     Failure:
- */
-
-BOOL16 WINAPI
-DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
-{
-    RECT rect32;
-
-    if (rect)
-	CONV_RECT16TO32 (rect, &rect32);
-
-    return (BOOL16)DrawCaptionTempA (hwnd, hdc, rect ? &rect32 : NULL,
-				       0, 0, NULL, uFlags & 0x1F);
-}
-
-
-/***********************************************************************
  *		DrawCaption (USER32.@) Draws a caption bar
  *
  * PARAMS
@@ -281,30 +254,6 @@ BOOL WINAPI
 DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
 {
     return DrawCaptionTempA (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
-}
-
-
-/***********************************************************************
- *		DrawCaptionTemp (USER.657)
- *
- * PARAMS
- *
- * RETURNS
- *     Success:
- *     Failure:
- */
-
-BOOL16 WINAPI
-DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
-		   HICON16 hIcon, LPCSTR str, UINT16 uFlags)
-{
-    RECT rect32;
-
-    if (rect)
-	CONV_RECT16TO32(rect,&rect32);
-
-    return (BOOL16)DrawCaptionTempA (hwnd, hdc, rect?&rect32:NULL, hFont,
-				       hIcon, str, uFlags & 0x1F);
 }
 
 

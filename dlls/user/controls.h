@@ -99,34 +99,29 @@ typedef struct
 
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
 
-/* Dialog info structure.
- * This structure is stored into the window extra bytes (cbWndExtra).
- * sizeof(DIALOGINFO) must be <= DLGWINDOWEXTRA (=30).
- */
-#include "pshpack1.h"
-
+/* Dialog info structure */
 typedef struct
 {
-    INT         msgResult;   /* 00 Last message result */
-    HWINDOWPROC dlgProc;     /* 04 Dialog procedure */
-    LONG        userInfo;    /* 08 User information (for DWL_USER) */
-
-    /* implementation-dependent part */
-
-    HWND16      hwndFocus;   /* 0c Current control with focus */
-    HFONT16     hUserFont;   /* 0e Dialog font */
-    HMENU16     hMenu;       /* 10 Dialog menu */
-    WORD        xBaseUnit;   /* 12 Dialog units (depends on the font) */
-    WORD        yBaseUnit;   /* 14 */
-    INT         idResult;    /* 16 EndDialog() result / default pushbutton ID */
-    UINT16      flags;       /* 1a EndDialog() called for this dialog */
-    HGLOBAL16   hDialogHeap; /* 1c */
+    HWND      hwndFocus;   /* Current control with focus */
+    HFONT     hUserFont;   /* Dialog font */
+    HMENU     hMenu;       /* Dialog menu */
+    UINT      xBaseUnit;   /* Dialog units (depends on the font) */
+    UINT      yBaseUnit;
+    INT       idResult;    /* EndDialog() result / default pushbutton ID */
+    UINT      flags;       /* EndDialog() called for this dialog */
+    HGLOBAL16 hDialogHeap;
 } DIALOGINFO;
-
-#include "poppack.h"
 
 #define DF_END  0x0001
 #define DF_OWNERENABLED 0x0002
+
+/* offset of DIALOGINFO ptr in dialog extra bytes */
+#define DWL_WINE_DIALOGINFO (DWL_USER+sizeof(ULONG_PTR))
+
+inline static DIALOGINFO *DIALOG_get_info( HWND hwnd )
+{
+    return (DIALOGINFO *)GetWindowLongW( hwnd, DWL_WINE_DIALOGINFO );
+}
 
 extern BOOL DIALOG_Init(void);
 

@@ -22,7 +22,7 @@ rsrc	resources/version16.res
 16  pascal16 ClipCursor(ptr) ClipCursor16
 17  pascal16 GetCursorPos(ptr) GetCursorPos16
 18  pascal16 SetCapture(word) SetCapture16
-19  pascal16 ReleaseCapture() ReleaseCapture
+19  pascal16 ReleaseCapture() ReleaseCapture16
 20  pascal16 SetDoubleClickTime(word) SetDoubleClickTime16
 21  pascal16 GetDoubleClickTime() GetDoubleClickTime16
 22  pascal16 SetFocus(word) SetFocus16

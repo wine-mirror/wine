@@ -20,9 +20,10 @@ DEFAULT_DEBUG_CHANNEL(msg);
 /***********************************************************************
  *		SendMessage  (USER.111)
  */
-LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
+LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {
     LRESULT result;
+    HWND hwnd = WIN_Handle32( hwnd16 );
 
     if (hwnd != HWND_BROADCAST &&
         GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
@@ -37,12 +38,16 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM l
 
             if ((cwp = SEGPTR_NEW(CWPSTRUCT16)))
             {
-                cwp->hwnd    = hwnd;
+                cwp->hwnd    = hwnd16;
                 cwp->message = msg;
                 cwp->wParam  = wparam;
                 cwp->lParam  = lparam;
                 HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1, SEGPTR_GET(cwp) );
-                hwnd   = cwp->hwnd;
+                if (cwp->hwnd != hwnd16)
+                {
+                    hwnd16 = cwp->hwnd;
+                    hwnd = WIN_Handle32( hwnd16 );
+                }
                 msg    = cwp->message;
                 wparam = cwp->wParam;
                 lparam = cwp->lParam;
@@ -50,10 +55,10 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM l
             }
         }
 
-        if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd, GWL_WNDPROC ))) return 0;
+        if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWL_WNDPROC ))) return 0;
 
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wparam, lparam );
-        result = CallWindowProc16( (WNDPROC16)winproc, hwnd, msg, wparam, lparam );
+        result = CallWindowProc16( (WNDPROC16)winproc, hwnd16, msg, wparam, lparam );
         SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, result, wparam, lparam );
     }
     else  /* map to 32-bit unicode for inter-thread/process message */
@@ -73,10 +78,11 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM l
 /***********************************************************************
  *		PostMessage  (USER.110)
  */
-BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
+BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {
     WPARAM wparam32;
     UINT msg32;
+    HWND hwnd = WIN_Handle32( hwnd16 );
 
     switch (WINPROC_MapMsg16To32W( hwnd, msg, wparam, &msg32, &wparam32, &lparam ))
     {
@@ -136,15 +142,16 @@ void WINAPI ReplyMessage16( LRESULT result )
 /***********************************************************************
  *		PeekMessage32 (USER.819)
  */
-BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd,
+BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
                                 UINT16 first, UINT16 last, UINT16 flags,
                                 BOOL16 wHaveParamHigh )
 {
     MSG msg;
+    HWND hwnd = WIN_Handle32( hwnd16 );
 
     if (!PeekMessageW( &msg, hwnd, first, last, flags )) return FALSE;
 
-    msg16->msg.hwnd    = msg.hwnd;
+    msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
     msg16->msg.lParam  = msg.lParam;
     msg16->msg.time    = msg.time;
     msg16->msg.pt.x    = (INT16)msg.pt.x;
@@ -170,15 +177,16 @@ BOOL16 WINAPI PeekMessage16( MSG16 *msg, HWND16 hwnd,
 /***********************************************************************
  *		GetMessage32  (USER.820)
  */
-BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd, UINT16 first,
+BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
                                UINT16 last, BOOL16 wHaveParamHigh )
 {
     MSG msg;
+    HWND hwnd = WIN_Handle32( hwnd16 );
 
     do
     {
         GetMessageW( &msg, hwnd, first, last );
-        msg16->msg.hwnd    = msg.hwnd;
+        msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
         msg16->msg.lParam  = msg.lParam;
         msg16->msg.time    = msg.time;
         msg16->msg.pt.x    = (INT16)msg.pt.x;
@@ -212,7 +220,7 @@ BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh 
 {
     MSG msg32;
 
-    msg32.hwnd    = msg->msg.hwnd;
+    msg32.hwnd    = WIN_Handle32( msg->msg.hwnd );
     msg32.message = msg->msg.message;
     msg32.wParam  = MAKEWPARAM( msg->msg.wParam, wHaveParamHigh ? msg->wParamHigh : 0 );
     msg32.lParam  = msg->msg.lParam;
@@ -238,6 +246,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     WNDPROC16 winproc;
     LONG retval;
     int painting;
+    HWND hwnd = WIN_Handle32( msg->hwnd );
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
@@ -247,7 +256,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
             /* before calling window proc, verify whether timer is still valid;
                there's a slim chance that the application kills the timer
 	       between GetMessage and DispatchMessage API calls */
-            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+            if (!TIMER_IsTimerValid(hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
                 return 0; /* invalid winproc */
 
             return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
@@ -255,7 +264,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         }
     }
 
-    if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     if (!wndPtr->winproc)
     {
         WIN_ReleaseWndPtr( wndPtr );
@@ -266,23 +275,24 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
     WIN_ReleaseWndPtr( wndPtr );
 
-    SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+    SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
     retval = CallWindowProc16( winproc, msg->hwnd, msg->message, msg->wParam, msg->lParam );
-    SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval, msg->wParam, msg->lParam );
+    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg->message, retval, msg->wParam, msg->lParam );
 
     if (!painting) return retval;
 
-    if ((wndPtr = WIN_FindWndPtr( msg->hwnd )))
+    if ((wndPtr = WIN_FindWndPtr( hwnd )))
     {
         if ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
         {
             ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
             wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+            WIN_ReleaseWndPtr( wndPtr );
             /* Validate the update region to avoid infinite WM_PAINT loop */
-            RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+            RedrawWindow( hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
         }
-        WIN_ReleaseWndPtr( wndPtr );
+        else WIN_ReleaseWndPtr( wndPtr );
     }
     return retval;
 }
@@ -299,7 +309,7 @@ LONG WINAPI DispatchMessage32_16( const MSG32_16 *msg16, BOOL16 wHaveParamHigh )
     {
         MSG msg;
 
-        msg.hwnd    = msg16->msg.hwnd;
+        msg.hwnd    = WIN_Handle32( msg16->msg.hwnd );
         msg.message = msg16->msg.message;
         msg.wParam  = MAKEWPARAM( msg16->msg.wParam, msg16->wParamHigh );
         msg.lParam  = msg16->msg.lParam;
@@ -373,4 +383,39 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
 BOOL16 WINAPI GetInputState16(void)
 {
     return GetInputState();
+}
+
+
+/**********************************************************************
+ *           TranslateAccelerator      (USER.178)
+ */
+INT16 WINAPI TranslateAccelerator16( HWND16 hwnd, HACCEL16 hAccel, LPMSG16 msg )
+{
+    MSG msg32;
+
+    if (!msg) return 0;
+    msg32.message = msg->message;
+    /* msg32.hwnd not used */
+    msg32.wParam  = msg->wParam;
+    msg32.lParam  = msg->lParam;
+    return TranslateAccelerator( WIN_Handle32(hwnd), hAccel, &msg32 );
+}
+
+
+/**********************************************************************
+ *		TranslateMDISysAccel (USER.451)
+ */
+BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
+{
+    if (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
+    {
+        MSG msg32;
+        msg32.hwnd    = WIN_Handle32(msg->hwnd);
+        msg32.message = msg->message;
+        msg32.wParam  = msg->wParam;
+        msg32.lParam  = msg->lParam;
+        /* MDICLIENTINFO is still the same for win32 and win16 ... */
+        return TranslateMDISysAccel( WIN_Handle32(hwndClient), &msg32 );
+    }
+    return 0;
 }

@@ -351,7 +351,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
             InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
         }
         input.u.mi.time = wme->time;
-        input.u.mi.dwExtraInfo = wme->hWnd;
+        input.u.mi.dwExtraInfo = (ULONG_PTR)wme->hWnd;
         queue_mouse_event( &input.u.mi, keyState );
     }
     else
@@ -526,7 +526,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
         }
 
         PERQDATA_SetCaptureWnd( captureWnd, captureHT );
-        if (capturePrev) SendMessageA( capturePrev, WM_CAPTURECHANGED, 0, hwnd );
+        if (capturePrev) SendMessageA( capturePrev, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
     }
 
 CLEANUP:
@@ -540,15 +540,6 @@ CLEANUP:
 
 
 /**********************************************************************
- *		SetCapture (USER.18)
- */
-HWND16 WINAPI SetCapture16( HWND16 hwnd )
-{
-    return (HWND16)EVENT_Capture( hwnd, HTCLIENT );
-}
-
-
-/**********************************************************************
  *		SetCapture (USER32.@)
  */
 HWND WINAPI SetCapture( HWND hwnd )
@@ -558,7 +549,6 @@ HWND WINAPI SetCapture( HWND hwnd )
 
 
 /**********************************************************************
- *		ReleaseCapture (USER.19)
  *		ReleaseCapture (USER32.@)
  */
 BOOL WINAPI ReleaseCapture(void)
@@ -566,14 +556,6 @@ BOOL WINAPI ReleaseCapture(void)
     return (EVENT_Capture( 0, 0 ) != 0);
 }
 
-
-/**********************************************************************
- *		GetCapture (USER.236)
- */
-HWND16 WINAPI GetCapture16(void)
-{
-    return (HWND16)GetCapture();
-}
 
 /**********************************************************************
  *		GetCapture (USER32.@)
