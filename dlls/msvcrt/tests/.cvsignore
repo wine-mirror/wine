@@ -1,4 +1,5 @@
 Makefile
+cpp.ok
 file.ok
 msvcrt_test.exe.spec.c
 scanf.ok
