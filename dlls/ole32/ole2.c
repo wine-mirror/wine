@@ -541,7 +541,7 @@ HRESULT WINAPI DoDragDrop (
     while (!trackerInfo.trackingDone && GetMessageA(&msg, 0, 0, 0) )
     {
       if ( (msg.message >= WM_KEYFIRST) && 
-	   (msg.message <= WM_KEYFIRST) )
+	   (msg.message <= WM_KEYLAST) )
       {
 	/*
 	 * When keyboard messages are sent to windows on this thread, we
