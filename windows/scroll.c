@@ -182,7 +182,7 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
     return
         (ERROR != ScrollWindowEx( hwnd, dx, dy, rect, clipRect, 0, NULL,
                                     (rect ? 0 : SW_SCROLLCHILDREN) |
-                                    SW_INVALIDATE ));
+                                    SW_INVALIDATE | SW_ERASE ));
 }
 
 /*************************************************************************

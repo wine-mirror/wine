@@ -5471,6 +5471,14 @@ static void test_scrollwindowex(void)
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
 
+    /* now scroll with ScrollWindow() */
+    trace("start scroll with ScrollWindow\n");
+    ScrollWindow( hwnd, 5, 5, NULL, NULL);
+    trace("end scroll\n");
+    flush_sequence();
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(ScrollWindowPaint1, "ScrollWindow", 0);
+
     ok(DestroyWindow(hchild), "failed to destroy window\n");
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
     flush_sequence();
