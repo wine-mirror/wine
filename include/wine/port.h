@@ -104,6 +104,10 @@ struct statfs;
 #define RTLD_GLOBAL  0x100
 #endif
 
+#if !defined(HAVE_FTRUNCATE) && defined(HAVE_CHSIZE)
+#define ftruncate chsize
+#endif
+
 #if !defined(HAVE_POPEN) && defined(HAVE__POPEN)
 #define popen _popen
 #endif

@@ -861,10 +861,12 @@ AC_CHECK_FUNCS(\
 	_popen \
 	_stricmp \
 	_strnicmp \
+	chsize \
 	clone \
 	ecvt \
 	finite \
 	fpclass \
+	ftruncate \
 	ftruncate64 \
 	getnetbyaddr \
 	getnetbyname \
@@ -879,8 +881,8 @@ AC_CHECK_FUNCS(\
 	memmove \
 	mmap \
 	pclose \
-	pread \
 	popen \
+	pread \
 	pwrite \
 	rfork \
 	select \

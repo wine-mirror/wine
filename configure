@@ -10287,6 +10287,8 @@ fi
 
 
 
+
+
 for ac_func in \
 	__libc_fork \
 	_lwp_create \
@@ -10294,10 +10296,12 @@ for ac_func in \
 	_popen \
 	_stricmp \
 	_strnicmp \
+	chsize \
 	clone \
 	ecvt \
 	finite \
 	fpclass \
+	ftruncate \
 	ftruncate64 \
 	getnetbyaddr \
 	getnetbyname \
@@ -10312,8 +10316,8 @@ for ac_func in \
 	memmove \
 	mmap \
 	pclose \
-	pread \
 	popen \
+	pread \
 	pwrite \
 	rfork \
 	select \

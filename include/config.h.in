@@ -32,6 +32,9 @@
 /* Define to use .string instead of .ascii */
 #undef HAVE_ASM_STRING
 
+/* Define to 1 if you have the `chsize' function. */
+#undef HAVE_CHSIZE
+
 /* Define to 1 if you have the `clone' function. */
 #undef HAVE_CLONE
 
@@ -100,6 +103,9 @@
 
 /* Define to 1 if you have the <freetype/tttables.h> header file. */
 #undef HAVE_FREETYPE_TTTABLES_H
+
+/* Define to 1 if you have the `ftruncate' function. */
+#undef HAVE_FTRUNCATE
 
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
