@@ -42,6 +42,8 @@ ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface) {
 
 	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
+	DMSYNTH_LockModule();
+
 	return refCount;
 }
 
@@ -54,6 +56,9 @@ ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface) {
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMSYNTH_UnlockModule();
+
 	return refCount;
 }
 

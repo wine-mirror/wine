@@ -23,41 +23,48 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
+LONG DMSYNTH_refCount = 0;
+
 typedef struct {
-    /* IUnknown fields */
     IClassFactoryVtbl          *lpVtbl;
-    DWORD                       ref;
 } IClassFactoryImpl;
 
 /******************************************************************
  *		DirectMusicSynth ClassFactory
  */
 static HRESULT WINAPI SynthCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n", This, debugstr_dmguid(riid), ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI SynthCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMSYNTH_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI SynthCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMSYNTH_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI SynthCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
 	return DMUSIC_CreateDirectMusicSynthImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI SynthCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMSYNTH_LockModule();
+	else
+		DMSYNTH_UnlockModule();
+
 	return S_OK;
 }
 
@@ -69,37 +76,44 @@ static IClassFactoryVtbl SynthCF_Vtbl = {
 	SynthCF_LockServer
 };
 
-static IClassFactoryImpl Synth_CF = {&SynthCF_Vtbl, 1 };
+static IClassFactoryImpl Synth_CF = {&SynthCF_Vtbl};
 
 /******************************************************************
  *		DirectMusicSynthSink ClassFactory
  */
 static HRESULT WINAPI SynthSinkCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n", This, debugstr_dmguid(riid), ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI SynthSinkCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMSYNTH_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI SynthSinkCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMSYNTH_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI SynthSinkCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
 	return DMUSIC_CreateDirectMusicSynthSinkImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI SynthSinkCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMSYNTH_LockModule();
+	else
+		DMSYNTH_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -111,7 +125,7 @@ static IClassFactoryVtbl SynthSinkCF_Vtbl = {
 	SynthSinkCF_LockServer
 };
 
-static IClassFactoryImpl SynthSink_CF = {&SynthSinkCF_Vtbl, 1 };
+static IClassFactoryImpl SynthSink_CF = {&SynthSinkCF_Vtbl};
 	
 /******************************************************************
  *		DllMain
@@ -136,8 +150,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  */
 HRESULT WINAPI DMSYNTH_DllCanUnloadNow(void) {
-    FIXME("(void): stub\n");
-    return S_FALSE;
+	return DMSYNTH_refCount != 0 ? S_FALSE : S_OK;
 }
 
 

@@ -192,6 +192,12 @@ extern HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_Load (LPPERSISTSTREAM
 extern HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmband.dll
+ */
+extern LONG DMBAND_refCount;
+static inline void DMBAND_LockModule() { InterlockedIncrement( &DMBAND_refCount ); }
+static inline void DMBAND_UnlockModule() { InterlockedDecrement( &DMBAND_refCount ); }
 
 /*****************************************************************************
  * Misc.

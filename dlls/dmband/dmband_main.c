@@ -21,10 +21,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
+LONG DMBAND_refCount = 0;
+
 typedef struct {
-    /* IUnknown fields */
     IClassFactoryVtbl          *lpVtbl;
-    DWORD                       ref;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -32,31 +32,39 @@ typedef struct {
  */
  
 static HRESULT WINAPI BandCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n",This, debugstr_dmguid(riid), ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI BandCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMBAND_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI BandCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMBAND_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI BandCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
+	
 	return DMUSIC_CreateDirectMusicBandImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI BandCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMBAND_LockModule();
+	else
+		DMBAND_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -68,7 +76,7 @@ static IClassFactoryVtbl BandCF_Vtbl = {
 	BandCF_LockServer
 };
 
-static IClassFactoryImpl Band_CF = {&BandCF_Vtbl, 1 };
+static IClassFactoryImpl Band_CF = {&BandCF_Vtbl};
 
 
 /******************************************************************
@@ -76,32 +84,39 @@ static IClassFactoryImpl Band_CF = {&BandCF_Vtbl, 1 };
  */
  
 static HRESULT WINAPI BandTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-	FIXME("(%p, %s, %p): stub\n", This, debugstr_dmguid(riid), ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI BandTrackCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMBAND_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI BandTrackCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMBAND_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI BandTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
+	
 	return DMUSIC_CreateDirectMusicBandTrack (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI BandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMBAND_LockModule();
+	else
+		DMBAND_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -113,7 +128,7 @@ static IClassFactoryVtbl BandTrackCF_Vtbl = {
 	BandTrackCF_LockServer
 };
 
-static IClassFactoryImpl BandTrack_CF = {&BandTrackCF_Vtbl, 1 };
+static IClassFactoryImpl BandTrack_CF = {&BandTrackCF_Vtbl};
 
 /******************************************************************
  *		DllMain
@@ -138,8 +153,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  */
 HRESULT WINAPI DMBAND_DllCanUnloadNow(void) {
-    FIXME("(void): stub\n");
-    return S_FALSE;
+	return DMBAND_refCount != 0 ? S_FALSE : S_OK;
 }
 
 

@@ -127,6 +127,12 @@ extern HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSY
 extern HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer);
 extern HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmsynth.dll
+ */
+extern LONG DMSYNTH_refCount;
+static inline void DMSYNTH_LockModule() { InterlockedIncrement( &DMSYNTH_refCount ); }
+static inline void DMSYNTH_UnlockModule() { InterlockedDecrement( &DMSYNTH_refCount ); }
 
 /*****************************************************************************
  * Misc.
