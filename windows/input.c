@@ -40,6 +40,7 @@
 #include "input.h"
 #include "message.h"
 #include "queue.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "winerror.h"
 
@@ -887,26 +888,30 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
 }
 
 /***********************************************************************
- *		LoadKeyboardLayoutA (USER32.@)
+ *		LoadKeyboardLayoutW (USER32.@)
  * Call ignored. WINE supports only system default keyboard layout.
  */
-HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
+HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
-    TRACE_(keyboard)("(%s, %d)\n", pwszKLID, Flags);
+    TRACE_(keyboard)("(%s, %d)\n", debugstr_w(pwszKLID), Flags);
     ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
   return 0;
 }
 
 /***********************************************************************
- *		LoadKeyboardLayoutW (USER32.@)
+ *		LoadKeyboardLayoutA (USER32.@)
  */
-HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
+HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 {
-    char buf[9];
+    HKL ret;
+    UNICODE_STRING pwszKLIDW;
 
-    WideCharToMultiByte( CP_ACP, 0, pwszKLID, -1, buf, sizeof(buf), NULL, NULL );
-    buf[8] = 0;
-    return LoadKeyboardLayoutA(buf, Flags);
+    if (pwszKLID) RtlCreateUnicodeStringFromAsciiz(&pwszKLIDW, pwszKLID);
+    else pwszKLIDW.Buffer = NULL;
+
+    ret = LoadKeyboardLayoutW(pwszKLIDW.Buffer, Flags);
+    RtlFreeUnicodeString(&pwszKLIDW);
+    return ret;
 }
 
 
