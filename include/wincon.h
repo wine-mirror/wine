@@ -169,6 +169,12 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput,
 				  LPDWORD lpNumberOfEventsRead);
 #define ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
 
+BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
+					   LPCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
+BOOL WINAPI SetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition);
+BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput,
+					   COORD dwSize);
+
 #ifdef __WINE__
 extern HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa );
 #endif
