@@ -739,6 +739,233 @@ static void ok_sequence(const struct message *expected, const char *context)
     flush_sequence();
 }
 
+/******************************** MDI test **********************************/
+
+/* CreateWindow for MDI frame window, initially visible */
+static const struct message WmCreateMDIframeSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_GETMINMAXINFO, sent },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
+/* CreateWindow for MDI client window, initially visible */
+static const struct message WmCreateMDIclientSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent }, /*|wparam, 8 },*/
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { WM_PARENTNOTIFY, sent|wparam, WM_CREATE }, /* in MDI frame */
+    { WM_SHOWWINDOW, sent }, /*|wparam, 8 },*/
+    { WM_WINDOWPOSCHANGING, sent }, /*|wparam, 8 },*/
+    { WM_WINDOWPOSCHANGED, sent }, /*|wparam, 8 },*/
+    { 0 }
+};
+/* CreateWindow for MDI child window, initially visible */
+static const struct message WmCreateMDIchildSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_GETMINMAXINFO, sent },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { WM_PARENTNOTIFY, sent|wparam, WM_KILLFOCUS }, /* in MDI client */
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_MDIREFRESHMENU, sent/*|wparam|lparam, 0, 0*/ },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, 0 },
+    { WM_NCACTIVATE, sent|wparam|defwinproc, 1 },
+    { HCBT_SETFOCUS, hook }, /* in MDI client */
+    { WM_KILLFOCUS, sent }, /* in MDI frame */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI frame */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 8 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 8 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_MDIACTIVATE, sent|defwinproc },
+    { 0 }
+};
+
+static HWND mdi_client;
+static WNDPROC old_mdi_client_proc;
+
+static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_GETTEXT)
+    {
+        trace("mdi client: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        msg.wParam = wparam;
+        msg.lParam = lparam;
+        add_message(&msg);
+    }
+
+    return CallWindowProcA(old_mdi_client_proc, hwnd, message, wParam, lParam);
+}
+
+static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_GETTEXT)
+    {
+        trace("mdi child: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefMDIChildProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_GETTEXT)
+    {
+        trace("mdi frame: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefFrameProcA(hwnd, mdi_client, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static BOOL mdi_RegisterWindowClasses(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = mdi_frame_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "MDI_frame_class";
+    if (!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = mdi_child_wnd_proc;
+    cls.lpszClassName = "MDI_child_class";
+    if (!RegisterClassA(&cls)) return FALSE;
+
+    if (!GetClassInfoA(0, "MDIClient", &cls)) assert(0);
+    old_mdi_client_proc = cls.lpfnWndProc;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.lpfnWndProc = mdi_client_hook_proc;
+    cls.lpszClassName = "MDI_client_class";
+    if (!RegisterClassA(&cls)) assert(0);
+
+    return TRUE;
+}
+
+static void test_mdi_messages(void)
+{
+    CLIENTCREATESTRUCT client_cs;
+    HWND mdi_frame, mdi_child;
+
+    assert(mdi_RegisterWindowClasses());
+
+    flush_sequence();
+
+    trace("creating MDI frame window\n");
+    mdi_frame = CreateWindowExA(0, "MDI_frame_class", "MDI frame window",
+                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                                WS_MAXIMIZEBOX | WS_VISIBLE,
+                                100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                GetDesktopWindow(), 0,
+                                GetModuleHandleA(0), NULL);
+    assert(mdi_frame);
+    ok_sequence(WmCreateMDIframeSeq, "Create MDI frame window");
+
+    trace("creating MDI client window\n");
+    client_cs.hWindowMenu = 0;
+    client_cs.idFirstChild = 1;
+    mdi_client = CreateWindowExA(0, "MDI_client_class",
+                                 NULL,
+                                 WS_CHILD | WS_VISIBLE,
+                                 0, 0, 0, 0,
+                                 mdi_frame, 0, GetModuleHandleA(0), &client_cs);
+    assert(mdi_client);
+    ok_sequence(WmCreateMDIclientSeq, "Create MDI client window");
+
+    trace("creating MDI child window\n");
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
+                                WS_CHILD | WS_VISIBLE,
+                                0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandleA(0), NULL);
+    assert(mdi_child);
+    ok_sequence(WmCreateMDIchildSeq, "Create MDI child window");
+
+    DestroyWindow(mdi_child);
+    DestroyWindow(mdi_frame);
+}
+/************************* End of MDI test **********************************/
+
 static void test_WM_SETREDRAW(HWND hwnd)
 {
     DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -1180,6 +1407,9 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !strcmp(buf, "TestPopupClass") ||
 	    !strcmp(buf, "SimpleWindowClass") ||
 	    !strcmp(buf, "TestDialogClass") ||
+	    !strcmp(buf, "MDI_frame_class") ||
+	    !strcmp(buf, "MDI_client_class") ||
+	    !strcmp(buf, "MDI_child_class") ||
 	    !strcmp(buf, "#32770"))
 	{
 	    struct message msg;
@@ -1202,6 +1432,7 @@ START_TEST(msg)
     assert(hCBT_hook);
 
     test_messages();
+    test_mdi_messages();
 
     UnhookWindowsHookEx(hCBT_hook);
 }
