@@ -253,23 +253,24 @@ int main (int argc, char *argv[])
  */
 
 
-void WCMD_process_command (char *command) {
-
-char cmd[1024];
-char *p;
-int status, i;
-DWORD count;
-HANDLE old_stdin = 0, old_stdout = 0, h;
-char *whichcmd;
+void WCMD_process_command (char *command)
+{
+    char *cmd, *p;
+    int status, i, len;
+    DWORD count;
+    HANDLE old_stdin = 0, old_stdout = 0, h;
+    char *whichcmd;
 
 
 /*
  *	Expand up environment variables.
  */
-
-    status = ExpandEnvironmentStrings (command, cmd, sizeof(cmd));
+    len = ExpandEnvironmentStrings (command, NULL, 0);
+    cmd = HeapAlloc( GetProcessHeap(), 0, len );
+    status = ExpandEnvironmentStrings (command, cmd, len);
     if (!status) {
       WCMD_print_error ();
+      HeapFree( GetProcessHeap(), 0, cmd );
       return;
     }
 
@@ -280,6 +281,7 @@ char *whichcmd;
     if ((cmd[1] == ':') && IsCharAlpha (cmd[0]) && (strlen(cmd) == 2)) {
       status = SetCurrentDirectory (cmd);
       if (!status) WCMD_print_error ();
+      HeapFree( GetProcessHeap(), 0, cmd );
       return;
     }
 
@@ -294,6 +296,7 @@ char *whichcmd;
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
+        HeapFree( GetProcessHeap(), 0, cmd );
 	return;
       }
       old_stdin = GetStdHandle (STD_INPUT_HANDLE);
@@ -304,6 +307,7 @@ char *whichcmd;
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
+        HeapFree( GetProcessHeap(), 0, cmd );
 	return;
       }
       old_stdout = GetStdHandle (STD_OUTPUT_HANDLE);
@@ -442,7 +446,8 @@ char *whichcmd;
         ExitProcess (0);
       default:
         WCMD_run_program (whichcmd);
-    };
+    }
+    HeapFree( GetProcessHeap(), 0, cmd );
     if (old_stdin) {
       CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
       SetStdHandle (STD_INPUT_HANDLE, old_stdin);
@@ -451,7 +456,7 @@ char *whichcmd;
       CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
       SetStdHandle (STD_OUTPUT_HANDLE, old_stdout);
     }
-  }
+}
 
 /******************************************************************************
  * WCMD_run_program
