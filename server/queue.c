@@ -83,8 +83,7 @@ struct message_list
 
 struct timer
 {
-    struct timer   *next;      /* next timer in list */
-    struct timer   *prev;      /* prev timer in list */
+    struct list     entry;     /* entry in timer list */
     struct timeval  when;      /* next expiration */
     unsigned int    rate;      /* timer rate in ms */
     user_handle_t   win;       /* window handle */
@@ -123,9 +122,9 @@ struct msg_queue
     struct list            send_result;     /* stack of sent messages waiting for result */
     struct list            callback_result; /* list of callback messages waiting for result */
     struct message_result *recv_result;     /* stack of received messages waiting for result */
-    struct timer          *first_timer;     /* head of timer list */
-    struct timer          *last_timer;      /* tail of timer list */
-    struct timer          *next_timer;      /* next timer to expire */
+    struct list            pending_timers;  /* list of pending timers */
+    struct list            expired_timers;  /* list of expired timers */
+    unsigned int           next_timer_id;   /* id for the next timer with a 0 window */
     struct timeout_user   *timeout;         /* timeout for next timer to expire */
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
@@ -235,15 +234,15 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->changed_mask    = 0;
         queue->paint_count     = 0;
         queue->recv_result     = NULL;
-        queue->first_timer     = NULL;
-        queue->last_timer      = NULL;
-        queue->next_timer      = NULL;
+        queue->next_timer_id   = 1;
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
         gettimeofday( &queue->last_get_msg, NULL );
         list_init( &queue->send_result );
         list_init( &queue->callback_result );
+        list_init( &queue->pending_timers );
+        list_init( &queue->expired_timers );
         for (i = 0; i < NB_MSG_KINDS; i++)
             queue->msg_list[i].first = queue->msg_list[i].last = NULL;
 
@@ -749,17 +748,23 @@ static int msg_queue_satisfied( struct object *obj, struct thread *thread )
 static void msg_queue_destroy( struct object *obj )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    struct timer *timer = queue->first_timer;
+    struct list *ptr;
     int i;
 
     cleanup_results( queue );
     for (i = 0; i < NB_MSG_KINDS; i++) empty_msg_list( &queue->msg_list[i] );
 
-    while (timer)
+    while ((ptr = list_head( &queue->pending_timers )))
     {
-        struct timer *next = timer->next;
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        list_remove( &timer->entry );
         free( timer );
-        timer = next;
+    }
+    while ((ptr = list_head( &queue->expired_timers )))
+    {
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        list_remove( &timer->entry );
+        free( timer );
     }
     if (queue->timeout) remove_timeout_user( queue->timeout );
     if (queue->input) release_object( queue->input );
@@ -855,79 +860,93 @@ static void detach_thread_input( struct thread *thread_from, struct thread *thre
 
 
 /* set the next timer to expire */
-static void set_next_timer( struct msg_queue *queue, struct timer *timer )
+static void set_next_timer( struct msg_queue *queue )
 {
+    struct list *ptr;
+
     if (queue->timeout)
     {
         remove_timeout_user( queue->timeout );
         queue->timeout = NULL;
     }
-    if ((queue->next_timer = timer))
+    if ((ptr = list_head( &queue->pending_timers )))
+    {
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
         queue->timeout = add_timeout_user( &timer->when, timer_callback, queue );
-
+    }
     /* set/clear QS_TIMER bit */
-    if (queue->next_timer == queue->first_timer)
+    if (list_empty( &queue->expired_timers ))
         clear_queue_bits( queue, QS_TIMER );
     else
         set_queue_bits( queue, QS_TIMER );
+}
+
+/* find a timer from its window and id */
+static struct timer *find_timer( struct msg_queue *queue, user_handle_t win,
+                                 unsigned int msg, unsigned int id )
+{
+    struct list *ptr;
+
+    /* we need to search both lists */
+
+    LIST_FOR_EACH( ptr, &queue->pending_timers )
+    {
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        if (timer->win == win && timer->msg == msg && timer->id == id) return timer;
+    }
+    LIST_FOR_EACH( ptr, &queue->expired_timers )
+    {
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        if (timer->win == win && timer->msg == msg && timer->id == id) return timer;
+    }
+    return NULL;
 }
 
 /* callback for the next timer expiration */
 static void timer_callback( void *private )
 {
     struct msg_queue *queue = private;
+    struct list *ptr;
 
     queue->timeout = NULL;
     /* move on to the next timer */
-    set_next_timer( queue, queue->next_timer->next );
+    ptr = list_head( &queue->pending_timers );
+    list_remove( ptr );
+    list_add_tail( &queue->expired_timers, ptr );
+    set_next_timer( queue );
 }
 
 /* link a timer at its rightful place in the queue list */
 static void link_timer( struct msg_queue *queue, struct timer *timer )
 {
-    struct timer *pos = queue->next_timer;
+    struct list *ptr;
 
-    while (pos && time_before( &pos->when, &timer->when )) pos = pos->next;
-
-    if (pos) /* insert before pos */
+    for (ptr = queue->pending_timers.next; ptr != &queue->pending_timers; ptr = ptr->next)
     {
-        if ((timer->prev = pos->prev)) timer->prev->next = timer;
-        else queue->first_timer = timer;
-        timer->next = pos;
-        pos->prev = timer;
+        struct timer *t = LIST_ENTRY( ptr, struct timer, entry );
+        if (!time_before( &t->when, &timer->when )) break;
     }
-    else  /* insert at end */
-    {
-        timer->next = NULL;
-        timer->prev = queue->last_timer;
-        if (queue->last_timer) queue->last_timer->next = timer;
-        else queue->first_timer = timer;
-        queue->last_timer = timer;
-    }
-    /* check if we replaced the next timer */
-    if (pos == queue->next_timer) set_next_timer( queue, timer );
+    list_add_before( ptr, &timer->entry );
 }
 
-/* remove a timer from the queue timer list */
-static void unlink_timer( struct msg_queue *queue, struct timer *timer )
+/* remove a timer from the queue timer list and free it */
+static void free_timer( struct msg_queue *queue, struct timer *timer )
 {
-    if (timer->next) timer->next->prev = timer->prev;
-    else queue->last_timer = timer->prev;
-    if (timer->prev) timer->prev->next = timer->next;
-    else queue->first_timer = timer->next;
-    /* check if we removed the next timer */
-    if (queue->next_timer == timer) set_next_timer( queue, timer->next );
-    else if (queue->next_timer == queue->first_timer) clear_queue_bits( queue, QS_TIMER );
+    list_remove( &timer->entry );
+    free( timer );
+    set_next_timer( queue );
 }
 
 /* restart an expired timer */
 static void restart_timer( struct msg_queue *queue, struct timer *timer )
 {
     struct timeval now;
-    unlink_timer( queue, timer );
+
+    list_remove( &timer->entry );
     gettimeofday( &now, 0 );
     while (!time_before( &now, &timer->when )) add_timeout( &timer->when, timer->rate );
     link_timer( queue, timer );
+    set_next_timer( queue );
 }
 
 /* find an expired timer matching the filtering parameters */
@@ -935,9 +954,11 @@ static struct timer *find_expired_timer( struct msg_queue *queue, user_handle_t 
                                          unsigned int get_first, unsigned int get_last,
                                          int remove )
 {
-    struct timer *timer;
-    for (timer = queue->first_timer; (timer && timer != queue->next_timer); timer = timer->next)
+    struct list *ptr;
+
+    LIST_FOR_EACH( ptr, &queue->expired_timers )
     {
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
         if (win && timer->win != win) continue;
         if (timer->msg >= get_first && timer->msg <= get_last)
         {
@@ -948,32 +969,18 @@ static struct timer *find_expired_timer( struct msg_queue *queue, user_handle_t 
     return NULL;
 }
 
-/* kill a timer */
-static int kill_timer( struct msg_queue *queue, user_handle_t win,
-                       unsigned int msg, unsigned int id )
-{
-    struct timer *timer;
-
-    for (timer = queue->first_timer; timer; timer = timer->next)
-    {
-        if (timer->win != win || timer->msg != msg || timer->id != id) continue;
-        unlink_timer( queue, timer );
-        free( timer );
-        return 1;
-    }
-    return 0;
-}
-
 /* add a timer */
 static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
 {
     struct timer *timer = mem_alloc( sizeof(*timer) );
     if (timer)
     {
-        timer->rate  = rate;
+        timer->rate  = max( rate, 1 );
         gettimeofday( &timer->when, 0 );
         add_timeout( &timer->when, rate );
         link_timer( queue, timer );
+        /* check if we replaced the next timer */
+        if (list_head( &queue->pending_timers ) == &timer->entry) set_next_timer( queue );
     }
     return timer;
 }
@@ -1219,23 +1226,29 @@ void inc_queue_paint_count( struct thread *thread, int incr )
 void queue_cleanup_window( struct thread *thread, user_handle_t win )
 {
     struct msg_queue *queue = thread->queue;
-    struct timer *timer;
+    struct list *ptr;
     struct message *msg;
     int i;
 
     if (!queue) return;
 
     /* remove timers */
-    timer = queue->first_timer;
-    while (timer)
+
+    ptr = list_head( &queue->pending_timers );
+    while (ptr)
     {
-        struct timer *next = timer->next;
-        if (timer->win == win)
-        {
-            unlink_timer( queue, timer );
-            free( timer );
-        }
-        timer = next;
+        struct list *next = list_next( &queue->pending_timers, ptr );
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        if (timer->win == win) free_timer( queue, timer );
+        ptr = next;
+    }
+    ptr = list_head( &queue->expired_timers );
+    while (ptr)
+    {
+        struct list *next = list_next( &queue->expired_timers, ptr );
+        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+        if (timer->win == win) free_timer( queue, timer );
+        ptr = next;
     }
 
     /* remove messages */
@@ -1569,30 +1582,80 @@ DECL_HANDLER(get_message_reply)
 DECL_HANDLER(set_win_timer)
 {
     struct timer *timer;
-    struct msg_queue *queue = get_current_queue();
-    user_handle_t win = get_user_full_handle( req->win );
+    struct msg_queue *queue;
+    struct thread *thread = NULL;
+    user_handle_t win = 0;
+    unsigned int id = req->id;
 
-    if (!queue) return;
-
-    /* remove it if it existed already */
-    if (win) kill_timer( queue, win, req->msg, req->id );
+    if (req->win)
+    {
+        if (!(win = get_user_full_handle( req->win )) || !(thread = get_window_thread( win )))
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return;
+        }
+        if (thread->process != current->process)
+        {
+            release_object( thread );
+            set_error( STATUS_ACCESS_DENIED );
+            return;
+        }
+        queue = thread->queue;
+        /* remove it if it existed already */
+        if ((timer = find_timer( queue, win, req->msg, id ))) free_timer( queue, timer );
+    }
+    else
+    {
+        queue = get_current_queue();
+        /* find a free id for it */
+        do
+        {
+            id = queue->next_timer_id;
+            if (++queue->next_timer_id >= 0x10000) queue->next_timer_id = 1;
+        }
+        while (find_timer( queue, 0, req->msg, id ));
+    }
 
     if ((timer = set_timer( queue, req->rate )))
     {
         timer->win    = win;
         timer->msg    = req->msg;
-        timer->id     = req->id;
+        timer->id     = id;
         timer->lparam = req->lparam;
+        reply->id     = id;
     }
+    if (thread) release_object( thread );
 }
 
 /* kill a window timer */
 DECL_HANDLER(kill_win_timer)
 {
-    struct msg_queue *queue = current->queue;
+    struct timer *timer;
+    struct thread *thread;
+    user_handle_t win = 0;
 
-    if (!queue || !kill_timer( queue, get_user_full_handle(req->win), req->msg, req->id ))
+    if (req->win)
+    {
+        if (!(win = get_user_full_handle( req->win )) || !(thread = get_window_thread( win )))
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return;
+        }
+        if (thread->process != current->process)
+        {
+            release_object( thread );
+            set_error( STATUS_ACCESS_DENIED );
+            return;
+        }
+    }
+    else thread = (struct thread *)grab_object( current );
+
+    if (thread->queue && (timer = find_timer( thread->queue, win, req->msg, req->id )))
+        free_timer( thread->queue, timer );
+    else
         set_error( STATUS_INVALID_PARAMETER );
+
+    release_object( thread );
 }
 
 

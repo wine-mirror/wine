@@ -1557,6 +1557,8 @@ enum message_type
     unsigned int    id;        /* timer id */
     unsigned int    rate;      /* timer rate in ms */
     unsigned int    lparam;    /* message lparam (callback proc) */
+@REPLY
+    unsigned int    id;        /* timer id */
 @END
 
 

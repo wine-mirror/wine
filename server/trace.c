@@ -1881,6 +1881,11 @@ static void dump_set_win_timer_request( const struct set_win_timer_request *req 
     fprintf( stderr, " lparam=%08x", req->lparam );
 }
 
+static void dump_set_win_timer_reply( const struct set_win_timer_reply *req )
+{
+    fprintf( stderr, " id=%08x", req->id );
+}
+
 static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
 {
     fprintf( stderr, " win=%p,", req->win );
@@ -2851,7 +2856,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply,
     (dump_func)0,
     (dump_func)dump_get_message_reply_reply,
-    (dump_func)0,
+    (dump_func)dump_set_win_timer_reply,
     (dump_func)0,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,

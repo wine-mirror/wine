@@ -2198,6 +2198,7 @@ struct set_win_timer_request
 struct set_win_timer_reply
 {
     struct reply_header __header;
+    unsigned int    id;
 };
 
 
@@ -3642,6 +3643,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 149
+#define SERVER_PROTOCOL_VERSION 150
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
