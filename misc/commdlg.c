@@ -2649,7 +2649,12 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
  */
 static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
+    HDC32 hdc;
+    PAINTSTRUCT32 ps;
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+
+    hdc=BeginPaint32(hDlg,&ps);
+    EndPaint32(hDlg,&ps);
     /* we have to paint dialog children except text and buttons */
  
     CC_PaintPredefColorArray(hDlg,6,8);
@@ -2667,7 +2672,7 @@ static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
     ValidateRect32(GetDlgItem32(hDlg,0x2be),NULL);
     ValidateRect32(GetDlgItem32(hDlg,0x2c5),NULL);
     /* hope we can remove it later -->FIXME */
- return 0;
+ return TRUE;
 }
 
 
@@ -2758,7 +2763,8 @@ LRESULT WINAPI ColorDlgProc(HWND16 hDlg, UINT16 message,
 	                   return TRUE;
 	                break;     
 	  case WM_PAINT:
-	                CC_WMPaint(hDlg, wParam, lParam);
+	                if (CC_WMPaint(hDlg, wParam, lParam))
+	                   return TRUE;
 	                break;
 	  case WM_LBUTTONDBLCLK:
 	                if (CC_MouseCheckResultWindow(hDlg,lParam))
