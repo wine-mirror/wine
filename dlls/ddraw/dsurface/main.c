@@ -1094,6 +1094,12 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 	}
     }
 
+    /* If the surface is already locked, return busy */
+    if (This->locked) {
+        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+        return DDERR_SURFACEBUSY;
+    }
+
     /* First, copy the Surface description */
     DD_STRUCT_COPY_BYSIZE(pDDSD,&(This->surface_desc));
 
@@ -1141,6 +1147,8 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     } else {
 	This->lock_update(This, NULL, flags);
     }
+
+    This->locked = TRUE;
 
     TRACE("locked surface returning description : \n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
@@ -1417,6 +1425,12 @@ Main_DirectDrawSurface_Unlock(LPDIRECTDRAWSURFACE7 iface, LPRECT pRect)
 
     TRACE("(%p)->Unlock(%p)\n",This,pRect);
 
+    if (!This->locked) {
+        WARN("Surface not locked - returing DDERR_NOTLOCKED\n");
+        return DDERR_NOTLOCKED;
+    }
+
+    This->locked = FALSE;
     This->unlock_update(This, pRect);
     if (This->aux_unlock)
 	This->aux_unlock(This->aux_ctx, This->aux_data, pRect);

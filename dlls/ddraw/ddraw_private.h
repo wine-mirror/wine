@@ -277,6 +277,7 @@ struct IDirectDrawSurfaceImpl
     RECT lastlockrect;
     DWORD lastlocktype;
     BOOL dc_in_use;
+    BOOL locked;
 
     HRESULT (*duplicate_surface)(IDirectDrawSurfaceImpl* src,
 				 LPDIRECTDRAWSURFACE7* dst);
