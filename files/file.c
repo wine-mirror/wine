@@ -1640,80 +1640,86 @@ DWORD WINAPI GetFileType( HANDLE hFile )
 
 
 /**************************************************************************
- *           MoveFileEx32A   (KERNEL32.???)
+ *           MoveFileExA   (KERNEL32.???)
  */
 BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {
     DOS_FULL_NAME full_name1, full_name2;
-    int mode=0; /* mode == 1: use copy */
 
     TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
-    if (fn2) { /* !fn2 means delete fn1 */
-      if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
-      /* Source name and target path are valid */
-      if ( full_name1.drive != full_name2.drive)
-      {
-	/* use copy, if allowed */
-	if (!(flag & MOVEFILE_COPY_ALLOWED)) {
-	  /* FIXME: Use right error code */
-	  SetLastError( ERROR_FILE_EXISTS );
-	  return FALSE;
+
+    if (fn2)  /* !fn2 means delete fn1 */
+    {
+        if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
+        {
+            /* target exists, check if we may overwrite */
+            if (!(flag & MOVEFILE_REPLACE_EXISTING))
+            {
+                /* FIXME: Use right error code */
+                SetLastError( ERROR_ACCESS_DENIED );
+                return FALSE;
+            }
+        }
+        else if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
+
+        /* Source name and target path are valid */
+
+        if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
+        {
+            /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
+               Perhaps we should queue these command and execute it 
+               when exiting... What about using on_exit(2)
+            */
+            FIXME("Please move existing file '%s' to file '%s' when Wine has finished\n",
+                  full_name1.long_name, full_name2.long_name);
+            return TRUE;
+        }
+
+        if (full_name1.drive != full_name2.drive)
+        {
+            /* use copy, if allowed */
+            if (!(flag & MOVEFILE_COPY_ALLOWED))
+            {
+                /* FIXME: Use right error code */
+                SetLastError( ERROR_FILE_EXISTS );
+                return FALSE;
+            }
+            return CopyFileA( fn1, fn2, !(flag & MOVEFILE_REPLACE_EXISTING) );
+        }
+        if (rename( full_name1.long_name, full_name2.long_name ) == -1)
+	{
+            FILE_SetDosError();
+            return FALSE;
 	}
-	else mode =1;
-      }
-      if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
-	/* target exists, check if we may overwrite */
-	if (!(flag & MOVEFILE_REPLACE_EXISTING)) {
-	  /* FIXME: Use right error code */
-	  SetLastError( ERROR_ACCESS_DENIED );
-	  return FALSE;
-	}
+        return TRUE;
     }
     else /* fn2 == NULL means delete source */
-      if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
-	if (flag & MOVEFILE_COPY_ALLOWED) {  
-	  WARN("Illegal flag\n");
-	  SetLastError( ERROR_GEN_FAILURE );
-	  return FALSE;
-	}
-	/* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-	   Perhaps we should queue these command and execute it 
-	   when exiting... What about using on_exit(2)
-	   */
-	FIXME("Please delete file '%s' when Wine has finished\n",
-	      full_name1.long_name);
-	return TRUE;
-      }
-      else if (unlink( full_name1.long_name ) == -1)
-      {
-        FILE_SetDosError();
-        return FALSE;
-      }
-      else  return TRUE; /* successfully deleted */
+    {
+        if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
+        {
+            if (flag & MOVEFILE_COPY_ALLOWED) {  
+                WARN("Illegal flag\n");
+                SetLastError( ERROR_GEN_FAILURE );
+                return FALSE;
+            }
+            /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
+               Perhaps we should queue these command and execute it 
+               when exiting... What about using on_exit(2)
+            */
+            FIXME("Please delete file '%s' when Wine has finished\n",
+                  full_name1.long_name);
+            return TRUE;
+        }
 
-    if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
-	/* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-	   Perhaps we should queue these command and execute it 
-	   when exiting... What about using on_exit(2)
-	   */
-	FIXME("Please move existing file '%s' to file '%s'"
-	      "when Wine has finished\n", 
-	      full_name1.long_name, full_name2.long_name);
-	return TRUE;
+        if (unlink( full_name1.long_name ) == -1)
+        {
+            FILE_SetDosError();
+            return FALSE;
+        }
+        return TRUE; /* successfully deleted */
     }
-
-    if (!mode) /* move the file */
-      if (rename( full_name1.long_name, full_name2.long_name ) == -1)
-	{
-	  FILE_SetDosError();
-	  return FALSE;
-	}
-      else return TRUE;
-    else /* copy File */
-      return CopyFileA(fn1, fn2, (!(flag & MOVEFILE_REPLACE_EXISTING))); 
-    
 }
 
 /**************************************************************************
