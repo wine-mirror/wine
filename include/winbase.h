@@ -288,15 +288,15 @@ typedef struct _PROCESS_HEAP_ENTRY
 #define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
 #define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
 
-#define INVALID_HANDLE_VALUE     ((HANDLE) -1)
-#define INVALID_FILE_SIZE        ((DWORD)0xFFFFFFFF)
-#define INVALID_SET_FILE_POINTER ((DWORD)-1)
-#define INVALID_FILE_ATTRIBUTES  ((DWORD)-1)
+#define INVALID_HANDLE_VALUE     ((HANDLE)~0UL)
+#define INVALID_FILE_SIZE        ((DWORD)~0UL)
+#define INVALID_SET_FILE_POINTER ((DWORD)~0UL)
+#define INVALID_FILE_ATTRIBUTES  ((DWORD)~0UL)
 
 #define LOCKFILE_FAIL_IMMEDIATELY   1
 #define LOCKFILE_EXCLUSIVE_LOCK     2
 
-#define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
+#define TLS_OUT_OF_INDEXES ((DWORD)~0UL)
 
 #define SHUTDOWN_NORETRY 1
 
@@ -1116,7 +1116,57 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA*);
 BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 #define GetVersionEx WINELIB_NAME_AW(GetVersionEx)
 
-/*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
+#define HW_PROFILE_GUIDLEN	39
+#define MAX_PROFILE_LEN		80
+
+#define DOCKINFO_UNDOCKED	0x1
+#define DOCKINFO_DOCKED		0x2
+#define DOCKINFO_USER_SUPPLIED	0x4
+#define DOCKINFO_USER_UNDOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_UNDOCKED)
+#define DOCKINFO_USER_DOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_DOCKED)
+
+typedef struct tagHW_PROFILE_INFOA {
+    DWORD dwDockInfo;
+    CHAR  szHwProfileGuid[HW_PROFILE_GUIDLEN];
+    CHAR  szHwProfileName[MAX_PROFILE_LEN];
+} HW_PROFILE_INFOA, *LPHW_PROFILE_INFOA;
+
+typedef struct tagHW_PROFILE_INFOW {
+    DWORD dwDockInfo;
+    WCHAR szHwProfileGuid[HW_PROFILE_GUIDLEN];
+    WCHAR szHwProfileName[MAX_PROFILE_LEN];
+} HW_PROFILE_INFOW, *LPHW_PROFILE_INFOW;
+
+DECL_WINELIB_TYPE_AW(HW_PROFILE_INFO)
+DECL_WINELIB_TYPE_AW(LPHW_PROFILE_INFO)
+
+/* Stream data structures and defines */
+/*the types of backup data -- WIN32_STREAM_ID.dwStreamId below*/
+#define BACKUP_INVALID        0
+#define BACKUP_DATA           1
+#define BACKUP_EA_DATA        2
+#define BACKUP_SECURITY_DATA  3
+#define BACKUP_ALTERNATE_DATA 4
+#define BACKUP_LINK           5
+#define BACKUP_PROPERTY_DATA  6
+#define BACKUP_OBJECT_ID      7
+#define BACKUP_REPARSE_DATA   8
+#define BACKUP_SPARSE_BLOCK   9
+
+/*flags for WIN32_STREAM_ID.dwStreamAttributes below*/
+#define STREAM_NORMAL_ATTRIBUTE    0
+#define STREAM_MODIFIED_WHEN_READ  1
+#define STREAM_CONTAINS_SECURITY   2
+#define STREAM_CONTAINS_PROPERTIES 4
+#define STREAM_SPARSE_ATTRIBUTE    8
+
+typedef struct _WIN32_STREAM_ID {
+	DWORD   dwStreamId;
+	DWORD   dwStreamAttributes;
+	LARGE_INTEGER Size;
+	DWORD   dwStreamNameSize;
+	WCHAR   cStreamName[ANYSIZE_ARRAY];
+} WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
 
 void        WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
@@ -1607,6 +1657,9 @@ UINT        WINAPI GetAtomNameW(ATOM,LPWSTR,INT);
 UINT        WINAPI GetCurrentDirectoryA(UINT,LPSTR);
 UINT        WINAPI GetCurrentDirectoryW(UINT,LPWSTR);
 #define     GetCurrentDirectory WINELIB_NAME_AW(GetCurrentDirectory)
+BOOL        WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA);
+BOOL        WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW);
+#define     GetCurrentHwProfile WINELIB_NAME_AW(GetCurrentHwProfile)
 #define     GetCurrentTime() GetTickCount()
 BOOL        WINAPI GetDiskFreeSpaceA(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI GetDiskFreeSpaceW(LPCWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
@@ -1663,6 +1716,9 @@ VOID        WINAPI GetStartupInfoW(LPSTARTUPINFOW);
 UINT        WINAPI GetSystemDirectoryA(LPSTR,UINT);
 UINT        WINAPI GetSystemDirectoryW(LPWSTR,UINT);
 #define     GetSystemDirectory WINELIB_NAME_AW(GetSystemDirectory)
+UINT        WINAPI GetSystemWindowsDirectoryA(LPSTR,UINT);
+UINT        WINAPI GetSystemWindowsDirectoryW(LPWSTR,UINT);
+#define     GetSystemWindowsDirectory WINELIB_NAME_AW(GetSystemWindowsDirectory)
 DWORD       WINAPI GetTickCount(void);
 UINT        WINAPI GetTempFileNameA(LPCSTR,LPCSTR,UINT,LPSTR);
 UINT        WINAPI GetTempFileNameW(LPCWSTR,LPCWSTR,UINT,LPWSTR);
@@ -2041,58 +2097,6 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
 /* WinMain(entry point) must be declared in winbase.h. */
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
-
-#define HW_PROFILE_GUIDLEN	39
-#define MAX_PROFILE_LEN		80
-
-#define DOCKINFO_UNDOCKED	0x1
-#define DOCKINFO_DOCKED		0x2
-#define DOCKINFO_USER_SUPPLIED	0x4
-#define DOCKINFO_USER_UNDOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_UNDOCKED)
-#define DOCKINFO_USER_DOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_DOCKED)
-
-typedef struct tagHW_PROFILE_INFOA {
-    DWORD dwDockInfo;
-    CHAR  szHwProfileGuid[HW_PROFILE_GUIDLEN];
-    CHAR  szHwProfileName[MAX_PROFILE_LEN];
-} HW_PROFILE_INFOA, *LPHW_PROFILE_INFOA;
-
-typedef struct tagHW_PROFILE_INFOW {
-    DWORD dwDockInfo;
-    WCHAR szHwProfileGuid[HW_PROFILE_GUIDLEN];
-    WCHAR szHwProfileName[MAX_PROFILE_LEN];
-} HW_PROFILE_INFOW, *LPHW_PROFILE_INFOW;
-
-DECL_WINELIB_TYPE_AW(HW_PROFILE_INFO)
-DECL_WINELIB_TYPE_AW(LPHW_PROFILE_INFO)
-
-/* Stream data structures and defines */
-/*the types of backup data -- WIN32_STREAM_ID.dwStreamId below*/
-#define BACKUP_INVALID        0
-#define BACKUP_DATA           1
-#define BACKUP_EA_DATA        2
-#define BACKUP_SECURITY_DATA  3
-#define BACKUP_ALTERNATE_DATA 4
-#define BACKUP_LINK           5
-#define BACKUP_PROPERTY_DATA  6
-#define BACKUP_OBJECT_ID      7
-#define BACKUP_REPARSE_DATA   8
-#define BACKUP_SPARSE_BLOCK   9
-
-/*flags for WIN32_STREAM_ID.dwStreamAttributes below*/
-#define STREAM_NORMAL_ATTRIBUTE    0
-#define STREAM_MODIFIED_WHEN_READ  1
-#define STREAM_CONTAINS_SECURITY   2
-#define STREAM_CONTAINS_PROPERTIES 4
-#define STREAM_SPARSE_ATTRIBUTE    8
-
-typedef struct _WIN32_STREAM_ID {
-	DWORD   dwStreamId;
-	DWORD   dwStreamAttributes;
-	LARGE_INTEGER Size;
-	DWORD   dwStreamNameSize;
-	WCHAR   cStreamName[ANYSIZE_ARRAY];
-} WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
 
 #ifdef __cplusplus
 }
