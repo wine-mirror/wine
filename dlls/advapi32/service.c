@@ -613,6 +613,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     if( r == WAIT_FAILED)
         return FALSE;
 
+    FIXME("problematic because of address space separation.\n");
     start_dwNumServiceArgs    = dwNumServiceArgs;
     start_lpServiceArgVectors = (LPWSTR *)lpServiceArgVectors;
 

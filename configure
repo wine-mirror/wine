@@ -15,7 +15,7 @@ ac_default_prefix=/usr/local
 ac_help="$ac_help
   --disable-debug         compile out all debugging messages"
 ac_help="$ac_help
-  --enable-opengl         force usage of OpenGL even if the latter is thread-safe"
+  --enable-opengl         force usage of OpenGL even if the latter is thread-safe via pthread"
 ac_help="$ac_help
   --disable-trace         compile out TRACE messages"
 ac_help="$ac_help
@@ -7394,7 +7394,7 @@ then
   echo
   echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
   echo "*** thread-safety. To prevent crashes, OpenGL support has been removed."
-  echo "*** A fix for glibc 2.1.3 that seem to work is included in this version of Wine,"
+  echo "*** A fix for glibc 2.1.3 that seems to work is included in this version of Wine,"
   echo "*** start configure with '--enable-opengl' to force OpenGL support."
 fi
 

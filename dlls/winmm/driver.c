@@ -419,7 +419,7 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 	goto the_end;
 
     if (!(lpDrv = DRIVER_TryOpenDriver16(lpDriverName, lpSectionName, lParam2)))
-	TRACE("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
+	TRACE("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
  the_end:
     if (lpDrv)	TRACE("=> %08lx\n", (DWORD)lpDrv);
     return (DWORD)lpDrv;
