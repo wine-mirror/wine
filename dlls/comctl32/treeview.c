@@ -67,6 +67,7 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
 typedef struct tagTREEVIEW_INFO
 {
   HWND          hwnd;
+  HWND          hwndNotify;     /* Owner window to send notifications to */
   DWORD         dwStyle;
   HTREEITEM     root;
   UINT          uInternalStatus;
@@ -397,7 +398,7 @@ TREEVIEW_SendSimpleNotify(TREEVIEW_INFO *infoPtr, UINT code)
     nmhdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
     nmhdr.code = code;
 
-    return (BOOL)SendMessageA(GetParent(hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
 			      (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
 }
 
@@ -443,7 +444,7 @@ TREEVIEW_SendTreeviewNotify(TREEVIEW_INFO *infoPtr, UINT code, UINT action,
     nmhdr.ptDrag.x = 0;
     nmhdr.ptDrag.y = 0;
 
-    return (BOOL)SendMessageA(GetParent(hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
 			      (WPARAM)GetWindowLongA(hwnd, GWL_ID),
 			      (LPARAM)&nmhdr);
 }
@@ -469,7 +470,7 @@ TREEVIEW_SendTreeviewDnDNotify(TREEVIEW_INFO *infoPtr, UINT code,
     nmhdr.ptDrag.x = pt.x;
     nmhdr.ptDrag.y = pt.y;
 
-    return (BOOL)SendMessageA(GetParent(hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
 			      (WPARAM)GetWindowLongA(hwnd, GWL_ID),
 			      (LPARAM)&nmhdr);
 }
@@ -499,7 +500,7 @@ TREEVIEW_SendCustomDrawNotify(TREEVIEW_INFO *infoPtr, DWORD dwDrawStage,
     nmcdhdr.clrTextBk = infoPtr->clrBk;
     nmcdhdr.iLevel = 0;
 
-    return (BOOL)SendMessageA(GetParent(hwnd), WM_NOTIFY,
+    return (BOOL)SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
 			      (WPARAM)GetWindowLongA(hwnd, GWL_ID),
 			      (LPARAM)&nmcdhdr);
 }
@@ -547,7 +548,7 @@ TREEVIEW_SendCustomDrawItemNotify(TREEVIEW_INFO *infoPtr, HDC hdc,
 	  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
 	  nmcd->uItemState, nmcd->lItemlParam);
 
-    retval = SendMessageA(GetParent(hwnd), WM_NOTIFY,
+    retval = SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
 			  (WPARAM)GetWindowLongA(hwnd, GWL_ID),
 			  (LPARAM)&nmcdhdr);
 
@@ -573,7 +574,7 @@ TREEVIEW_BeginLabelEditNotify(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
     tvdi.item.pszText = editItem->pszText;
     tvdi.item.cchTextMax = editItem->cchTextMax;
 
-    return SendMessageA(GetParent(hwnd), WM_NOTIFY, tvdi.hdr.idFrom,
+    return SendMessageA(infoPtr->hwndNotify, WM_NOTIFY, tvdi.hdr.idFrom,
 			(LPARAM)&tvdi);
 }
 
@@ -606,7 +607,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     if (mask & TVIF_TEXT)
        wineItem->textWidth = 0;
 
-    SendMessageA(GetParent(hwnd), WM_NOTIFY, callback.hdr.idFrom, (LPARAM)&callback);
+    SendMessageA(infoPtr->hwndNotify, WM_NOTIFY, callback.hdr.idFrom, (LPARAM)&callback);
 
     /* It may have changed due to a call to SetItem. */ 
     mask &= wineItem->callbackMask;
@@ -3452,7 +3453,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 	tvdi.item.cchTextMax = 0;
     }
 
-    bCommit = (BOOL)SendMessageA(GetParent(hwnd),
+    bCommit = (BOOL)SendMessageA(infoPtr->hwndNotify,
 				 WM_NOTIFY,
 				 (WPARAM)tvdi.hdr.idFrom, (LPARAM)&tvdi);
 
@@ -4408,8 +4409,8 @@ TREEVIEW_Create(HWND hwnd)
     infoPtr->root->iLevel = -1;
     infoPtr->root->visibleOrder = -1;
 
+    infoPtr->hwndNotify = GetParent(hwnd);
 #if 0
-    infoPtr->hwndNotify = GetParent32 (hwnd);
     infoPtr->bTransparent = ( GetWindowLongA( hwnd, GWL_STYLE) & TBSTYLE_FLAT);
 #endif
 
