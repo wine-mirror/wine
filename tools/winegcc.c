@@ -137,6 +137,9 @@ int main(int argc, char **argv)
 		gcc_argv[i++] = argv[j];
 	}
 	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
+	if (gui_app) gcc_argv[i++] = "-lcomdlg32";
+	if (gui_app) gcc_argv[i++] = "-lshell32";
+	gcc_argv[i++] = "-ladvapi32";
     }
     else
     {
