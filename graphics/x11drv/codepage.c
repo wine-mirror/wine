@@ -318,32 +318,18 @@ static void X11DRV_GetTextMetricsA_normal( fontObject* pfo, LPTEXTMETRICA pTM )
 
 
 static
-void X11DRV_DrawString_cp932( fontObject* pfo, Display* pdisp,
-                              Drawable d, GC gc, int x, int y,
-                              XChar2b* pstr, int count )
+void X11DRV_DrawString_dbcs( fontObject* pfo, Display* pdisp,
+                             Drawable d, GC gc, int x, int y,
+                             XChar2b* pstr, int count )
 {
-    int i;
-    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+    XTextItem16 item;
 
-    for ( i = 0; i < count; i++ )
-    {
-	if ( pstr->byte1 != (BYTE)0 )
-	{
-	    TSXSetFont( pdisp, gc, pfo->fs->fid );
-	    TSXDrawString16( pdisp, d, gc, x, y, pstr, 1 );
-	    x += TSXTextWidth16( pfo->fs, pstr, 1 );
-	}
-	else
-	{
-	    if ( pfo_ansi != NULL )
-	    {
-		TSXSetFont( pdisp, gc, pfo_ansi->fs->fid );
-		TSXDrawString16( pdisp, d, gc, x, y, pstr, 1 );
-		x += TSXTextWidth16( pfo_ansi->fs, pstr, 1 );
-	    }
-	}
-	pstr ++;
-    }
+    item.chars = pstr;
+    item.delta = 0;
+    item.nchars = count;
+    item.font = None;
+    X11DRV_cptable[pfo->fi->cptable].pDrawText(
+		pfo, pdisp, d, gc, x, y, &item, 1 );
 }
 
 static
@@ -378,8 +364,49 @@ void X11DRV_DrawText_cp932( fontObject* pfo, Display* pdisp, Drawable d,
                             GC gc, int x, int y, XTextItem16* pitems,
                             int count )
 {
-    FIXME( "ignore SBCS\n" );
-    TSXDrawText16( pdisp, d, gc, x, y, pitems, count );
+    int i, nitems, prevfont = -1, curfont;
+    XChar2b* pstr;
+    XTextItem16* ptibuf;
+    XTextItem16* pti;
+    fontObject* pfos[X11FONT_REFOBJS_MAX+1];
+
+    pfos[0] = XFONT_GetFontObject( pfo->prefobjs[0] );
+    pfos[1] = pfo;
+
+    nitems = 0;
+    for ( i = 0; i < count; i++ )
+	nitems += pitems->nchars;
+    ptibuf = HeapAlloc( GetProcessHeap(), 0, sizeof(XTextItem16) * nitems );
+    if ( ptibuf == NULL )
+	return; /* out of memory */
+
+    pti = ptibuf;
+    while ( count-- > 0 )
+    {
+	pti->chars = pstr = pitems->chars;
+	pti->delta = pitems->delta;
+	pti->font = None;
+	for ( i = 0; i < pitems->nchars; i++, pstr++ )
+	{
+	    curfont = ( pstr->byte1 != 0 ) ? 1 : 0;
+	    if ( curfont != prevfont )
+	    {
+		if ( pstr != pti->chars )
+		{
+		    pti->nchars = pstr - pti->chars;
+		    pti ++;
+		    pti->chars = pstr;
+		    pti->delta = 0;
+		}
+		pti->font = pfos[curfont]->fs->fid;
+		prevfont = curfont;
+	    }
+	}
+	pti->nchars = pstr - pti->chars;
+	pitems ++; pti ++;
+    }
+    TSXDrawText16( pdisp, d, gc, x, y, ptibuf, pti - ptibuf );
+    HeapFree( GetProcessHeap(), 0, ptibuf );
 }
 
 static
@@ -516,7 +543,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
     { /* CP932 */
 	X11DRV_enum_subfont_charset_cp932,
 	X11DRV_unicode_to_char2b_cp932,
-	X11DRV_DrawString_cp932,
+	X11DRV_DrawString_dbcs,
 	X11DRV_TextWidth_cp932,
 	X11DRV_DrawText_cp932,
 	X11DRV_TextExtents_cp932,
