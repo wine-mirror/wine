@@ -1788,11 +1788,15 @@ raw_data: opt_lvc tBEGIN raw_elements tEND {
 raw_elements
 	: tRAWDATA			{ $$ = $1; }
 	| tNUMBER			{ $$ = int2raw_data($1); }
+	| '-' tNUMBER	           	{ $$ = int2raw_data(-($2)); }
 	| tLNUMBER			{ $$ = long2raw_data($1); }
+	| '-' tLNUMBER	           	{ $$ = long2raw_data(-($2)); }
 	| tSTRING			{ $$ = str2raw_data($1); }
 	| raw_elements opt_comma tRAWDATA { $$ = merge_raw_data($1, $3); free($3->data); free($3); }
 	| raw_elements opt_comma tNUMBER  { $$ = merge_raw_data_int($1, $3); }
+	| raw_elements opt_comma '-' tNUMBER  { $$ = merge_raw_data_int($1, -($4)); }
 	| raw_elements opt_comma tLNUMBER { $$ = merge_raw_data_long($1, $3); }
+	| raw_elements opt_comma '-' tLNUMBER { $$ = merge_raw_data_long($1, -($4)); }
 	| raw_elements opt_comma tSTRING  { $$ = merge_raw_data_str($1, $3); }
 	;
 
@@ -2314,7 +2318,8 @@ static raw_data_t *int2raw_data(int i)
 {
 	raw_data_t *rd;
 
-	if((int)((short)i) != i)
+	if( ( i >= 0 && (int)((unsigned short)i) != i) ||
+            ( i < 0  && (int)((short)i) != i) )
 		yywarning("Integer constant out of 16bit range (%d), truncated to %d\n", i, (short)i);
 
 	rd = new_raw_data();
