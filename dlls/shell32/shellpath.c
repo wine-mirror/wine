@@ -917,11 +917,12 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	DWORD csidl,
 	BOOL bCreate)
 {
-	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH];
+	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH], szBuildPath[MAX_PATH];
 	HKEY	hRootKey, hKey;
 	DWORD	dwFlags;
 	DWORD	dwType, dwDisp, dwPathLen = MAX_PATH;
 	DWORD	folder = csidl & CSIDL_FOLDER_MASK;
+	CHAR	*p;
 
 	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
@@ -1023,11 +1024,23 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 
 	/* not existing but we are not allowed to create it */
 	if (!bCreate) return FALSE;
-	
-	if (!CreateDirectoryA(szPath,NULL))
+
+	/* create directory/directories */
+	strcpy(szBuildPath, szPath);
+	p = strchr(szBuildPath, '\\');
+	while (p)
 	{
-	  ERR("Failed to create directory '%s'.\n", szPath);
-	  return FALSE;
+	    *p = 0;
+	    if (!PathFileExistsA(szBuildPath))
+	    {
+		if (!CreateDirectoryA(szBuildPath,NULL))
+		{
+		    ERR("Failed to create directory '%s'.\n", szPath);
+		    return FALSE;
+		}
+	    }
+	    *p = '\\';
+	    p = strchr(p+1, '\\');
 	}
 
 	MESSAGE("Created not existing system directory '%s'\n", szPath);
