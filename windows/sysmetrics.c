@@ -231,14 +231,10 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYMINIMIZED] = 24;
 
     /* FIXME: How do I calculate these? */
-    sysMetrics[SM_CXMAXTRACK] =
-	sysMetrics[SM_CXSCREEN] + 4 + 2 * sysMetrics[SM_CXFRAME];
-    sysMetrics[SM_CYMAXTRACK] =
-	sysMetrics[SM_CYSCREEN] + 4 + 2 * sysMetrics[SM_CYFRAME];
-    sysMetrics[SM_CXMAXIMIZED] =
-	sysMetrics[SM_CXSCREEN] + 2 * sysMetrics[SM_CXFRAME];
-    sysMetrics[SM_CYMAXIMIZED] =
-	sysMetrics[SM_CYSCREEN] - 45;
+    sysMetrics[SM_CXMAXTRACK] = sysMetrics[SM_CXSCREEN] + 4 + 2 * sysMetrics[SM_CXFRAME];
+    sysMetrics[SM_CYMAXTRACK] = sysMetrics[SM_CYSCREEN] + 4 + 2 * sysMetrics[SM_CYFRAME];
+    sysMetrics[SM_CXMAXIMIZED] = sysMetrics[SM_CXSCREEN] + 2 * sysMetrics[SM_CXFRAME];
+    sysMetrics[SM_CYMAXIMIZED] = sysMetrics[SM_CYSCREEN] + 2 * sysMetrics[SM_CXFRAME];
     sysMetrics[SM_NETWORK] = 3;
 
     /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
