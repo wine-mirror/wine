@@ -725,7 +725,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
     HKEY hkeyPrinters, hkeyPrinter;
 
     if (!lpPrinterName) {
-       WARN("(printerName: NULL, pDefault %p Ret: False\n", pDefault);
+       FIXME("(printerName: NULL, pDefault %p Ret: False\n", pDefault);
        SetLastError(ERROR_INVALID_PARAMETER);
        return FALSE;
     }
@@ -741,11 +741,13 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 	return FALSE;
     }
 
-    if(RegOpenKeyW(hkeyPrinters, lpPrinterName, &hkeyPrinter)
+    if(lpPrinterName[0] == '\0' || /* explicitly exclude "" */
+       RegOpenKeyW(hkeyPrinters, lpPrinterName, &hkeyPrinter)
        != ERROR_SUCCESS) {
-        ERR("Can't find printer %s in registry\n", debugstr_w(lpPrinterName));
+        TRACE("Can't find printer %s in registry\n",
+	      debugstr_w(lpPrinterName));
 	RegCloseKey(hkeyPrinters);
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
 	return FALSE;
     }
     RegCloseKey(hkeyPrinter);
