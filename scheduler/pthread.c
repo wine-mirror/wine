@@ -33,16 +33,31 @@
 # define PREFIX
 #endif
 
+#define PSTR(str) PREFIX #str
+
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
- asm(".globl " PREFIX #alias "\n\t.set " PREFIX #alias "," PREFIX #orig)
+ asm(".globl " PSTR(alias) "\n\t.set " PSTR(alias) "," PSTR(orig))
 
 /* strong_alias does not work on external symbols (.o format limitation?),
  * so for those, we need to use the pogo stick */
 #ifdef __i386__
 #define jump_alias(orig, alias) \
- asm(".globl " PREFIX #alias "\n\t" PREFIX #alias ":\n\tjmp " PREFIX #orig)
+ asm(".globl " PSTR(alias) "\n\t" PSTR(alias) ":\n\tjmp " PSTR(orig))
 #endif
+
+/* get necessary libc symbols */
+#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1)
+#define LIBC_FORK __libc_fork
+#define PTHREAD_FORK __fork
+#define ALIAS_FORK
+#else
+#define LIBC_FORK __fork
+#define PTHREAD_FORK fork
+#endif
+extern pid_t LIBC_FORK(void);
+
+#define LIBC_SIGACTION __sigaction
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
@@ -102,6 +117,21 @@ int __pthread_atfork(void (*prepare)(void),
 }
 strong_alias(__pthread_atfork, pthread_atfork);
 
+pid_t PTHREAD_FORK(void)
+{
+  pid_t pid;
+  /* call prepare handlers */
+  pid = LIBC_FORK();
+  if (pid == 0) {
+    /* call child handlers */
+  } else {
+    /* call parent handlers */
+  }
+  return pid;
+}
+#ifdef ALIAS_FORK
+strong_alias(PTHREAD_FORK, fork);
+#endif
 
 /***** MUTEXES *****/
 
@@ -354,6 +384,7 @@ int pthread_equal(pthread_t thread1, pthread_t thread2)
 
 void pthread_exit(void *retval)
 {
+  /* FIXME: pthread cleanup */
   ExitThread((DWORD)retval);
 }
 
@@ -367,11 +398,11 @@ int pthread_setcanceltype(int type, int *oldtype)
 /* pthreads tries to override these, point them back to libc */
 
 #ifdef jump_alias
-jump_alias(__sigaction, sigaction);
+jump_alias(LIBC_SIGACTION, sigaction);
 #else
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
-  return __sigaction(signum, act, oldact);
+  return LIBC_SIGACTION(signum, act, oldact);
 }
 #endif
 
