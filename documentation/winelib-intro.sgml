@@ -141,6 +141,41 @@
         </para>
       </sect2>
 
+      <sect2 id="winemaker-test">
+        <title id="winemaker-test.title">Test Drive</title>
+
+        <para>
+          Before starting to work on a big project you may want to try to port a
+          small application. The winemine application from the Wine source tree
+          suits well for testing purposes. It can be found in the programs
+          subdirectory. winemine is a simple application, but has a few C,
+          header and resource files.
+        </para>
+        <para>
+          Run <command>make clean</command> in the
+          winemine source directory if it contains results of previous builds.
+          Create a separate directory with name winemine2, so it won't conflict
+          with the Wine copy of the application. Copy the sources of winemine
+          (files *.c, *.h, *.rc) to this directory. Now run the commands,
+          mentioned above from the winemine2 directory:
+        </para>
+        <programlisting>
+          $ winemaker --lower-uppercase .
+          $ ./configure --with-wine=/usr/local/wine
+          $ make
+        </programlisting>
+
+        <para>
+          You are done! Now you can start the application as
+          <command>./winemine2</command>.
+        </para>
+        <para>
+          If you come across problems preparing and building this application
+          this probably means that winemaker utility is broken by some changes
+          in Wine. Try asking for help on <email>wine-devel@winehq.com</email>
+        </para>
+      </sect2>
+
       <sect2 id="winemaker-guide">
         <title id="winemaker-guide.title">Step by step guide</title>
 
