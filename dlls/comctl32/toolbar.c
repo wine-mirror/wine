@@ -4527,23 +4527,33 @@ TOOLBAR_SaveRestoreW (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSW lpSave)
 static LRESULT
 TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSA lpSave)
 {
+    LPWSTR pszValueName = 0, pszSubKey = 0;
     TBSAVEPARAMSW SaveW;
+    LRESULT result = 0;
     int len;
 
     if (lpSave == NULL) return 0;
 
-    SaveW.hkr = lpSave->hkr;
-
     len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, NULL, 0);
-    SaveW.pszSubKey = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, (LPWSTR)SaveW.pszSubKey, len);
+    pszSubKey = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (pszSubKey) goto exit;
+    MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, pszSubKey, len);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, NULL, 0);
-    SaveW.pszValueName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, (LPWSTR)SaveW.pszValueName, len);
+    pszValueName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!pszValueName) goto exit;
+    MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, pszValueName, len);
 
-    /* FIXME: shoudn't we free the HeapAlloc()ed memory? */
-    return TOOLBAR_SaveRestoreW(hwnd, wParam, &SaveW);
+    SaveW.pszValueName = pszValueName;
+    SaveW.pszSubKey = pszSubKey;
+    SaveW.hkr = lpSave->hkr;
+    result = TOOLBAR_SaveRestoreW(hwnd, wParam, &SaveW);
+
+exit:
+    HeapFree(GetProcessHeap(), 0, pszValueName);
+    HeapFree(GetProcessHeap(), 0, pszSubKey);
+
+    return result;
 }
 
 
