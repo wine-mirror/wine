@@ -23,7 +23,6 @@ IMPORTS   = ntdll
 
 # Stand-alone programs
 PROGRAMS = \
-	loader/dos/dosmod \
 	server/wineserver
 
 # Programs that link with libwine
@@ -86,11 +85,10 @@ wine: dlls $(EMUOBJS)
 install:: all $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 	-$(LDCONFIG)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
-	cd $(bindir) && $(RM) wine dosmod
+	cd $(bindir) && $(RM) wine
 
 $(EMUOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`

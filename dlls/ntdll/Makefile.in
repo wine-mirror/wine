@@ -48,7 +48,6 @@ SUBDIRS = \
 	$(TOPOBJDIR)/if1632 \
 	$(TOPOBJDIR)/loader \
 	$(TOPOBJDIR)/loader/ne \
-	$(TOPOBJDIR)/loader/dos \
 	$(TOPOBJDIR)/memory \
 	$(TOPOBJDIR)/misc \
 	$(TOPOBJDIR)/msdos \

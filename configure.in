@@ -1303,7 +1303,6 @@ include/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile
-loader/dos/Makefile
 loader/ne/Makefile
 memory/Makefile
 misc/Makefile
