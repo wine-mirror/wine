@@ -157,6 +157,7 @@ typedef struct tagOSS_DEVICE {
     unsigned                    format;
     unsigned                    audio_fragment;
     BOOL                        full_duplex;
+    BOOL                        bTriggerSupport;
 } OSS_DEVICE;
 
 static OSS_DEVICE   OSS_Devices[MAX_WAVEDRV];
@@ -202,7 +203,6 @@ typedef struct {
     PCMWAVEFORMAT		format;
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwTotalRecorded;
-    BOOL                        bTriggerSupport;
 
     /* synchronization stuff */
     HANDLE			hThread;
@@ -238,14 +238,14 @@ static const char *wodPlayerCmdString[] = {
  *
  * Low level device opening (from values stored in ossdev)
  */
-static int      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
+static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
 {
     int fd, val;
 
     if ((fd = open(ossdev->dev_name, ossdev->open_access|O_NDELAY, 0)) == -1)
     {
-        WARN("Couldn't open out %s (%s)\n", ossdev->dev_name, strerror(errno));
-        return -1;
+        WARN("Couldn't open %s (%s)\n", ossdev->dev_name, strerror(errno));
+        return (errno == EBUSY) ? MMSYSERR_ALLOCATED : MMSYSERR_ERROR;
     }
     fcntl(fd, F_SETFD, 1); /* set close on exec flag */
     /* turn full duplex on if it has been requested */
@@ -279,7 +279,8 @@ static int      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
         if (!NEAR_MATCH(val, ossdev->sample_rate))
             ERR("Can't set sample_rate to %u (%d)\n", ossdev->sample_rate, val);
     }
-    return fd;
+    ossdev->fd = fd;
+    return MMSYSERR_NOERROR;
 }
 
 /******************************************************************
@@ -292,6 +293,8 @@ static int      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
 static DWORD	OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
                                int* frag, int sample_rate, int stereo, int fmt)
 {
+    DWORD       ret;
+
     if (ossdev->full_duplex && (req_access == O_RDONLY || req_access == O_WRONLY))
         req_access = O_RDWR;
 
@@ -307,8 +310,7 @@ static DWORD	OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
         ossdev->open_access = req_access;
         ossdev->owner_tid = GetCurrentThreadId();
 
-        if ((ossdev->fd = OSS_RawOpenDevice(ossdev, frag)) == -1)
-            return MMSYSERR_ERROR;
+        if ((ret = OSS_RawOpenDevice(ossdev, frag)) != MMSYSERR_NOERROR) return ret;
     }
     else
     {
@@ -364,8 +366,10 @@ static void	OSS_CloseDevice(OSS_DEVICE* ossdev)
  * after a SNDCTL_DSP_RESET ioctl call... this function implements
  * this behavior...
  */
-static int     OSS_ResetDevice(OSS_DEVICE* ossdev)
+static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
 {
+    DWORD       ret;
+
     if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1) 
     {
 	perror("ioctl SNDCTL_DSP_RESET");
@@ -373,9 +377,9 @@ static int     OSS_ResetDevice(OSS_DEVICE* ossdev)
     }
     TRACE("Changing fd from %d to ", ossdev->fd);
     close(ossdev->fd);
-    ossdev->fd = OSS_RawOpenDevice(ossdev, &ossdev->audio_fragment);
+    ret = OSS_RawOpenDevice(ossdev, &ossdev->audio_fragment);
     TRACE("%d\n", ossdev->fd);
-    return ossdev->fd;
+    return ret;
 }
 
 /******************************************************************
@@ -383,7 +387,7 @@ static int     OSS_ResetDevice(OSS_DEVICE* ossdev)
  *
  *
  */
-static void     OSS_WaveOutInit(unsigned devID, OSS_DEVICE* ossdev)
+static BOOL     OSS_WaveOutInit(OSS_DEVICE* ossdev)
 {
     int	                smplrate;
     int	                samplesize = 16;
@@ -392,12 +396,9 @@ static void     OSS_WaveOutInit(unsigned devID, OSS_DEVICE* ossdev)
     int                 caps;
     int                 mask;
 
-    WOutDev[devID].state = WINE_WS_CLOSED;
-    WOutDev[devID].ossdev = ossdev;
-    memset(&ossdev->out_caps, 0, sizeof(ossdev->out_caps));
+    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0, 0, 0) != 0) return FALSE;
 
-    if (OSS_OpenDevice(WOutDev[devID].ossdev, O_WRONLY, NULL, 0, 0, 0) != 0) return;
-    numOutDev++;
+    memset(&ossdev->out_caps, 0, sizeof(ossdev->out_caps));
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
@@ -480,7 +481,7 @@ static void     OSS_WaveOutInit(unsigned devID, OSS_DEVICE* ossdev)
     OSS_CloseDevice(ossdev);
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
 	  ossdev->out_caps.dwFormats, ossdev->out_caps.dwSupport);
-
+    return TRUE;
 }
 
 /******************************************************************
@@ -488,7 +489,7 @@ static void     OSS_WaveOutInit(unsigned devID, OSS_DEVICE* ossdev)
  *
  *
  */
-static void OSS_WaveInInit(unsigned devID, OSS_DEVICE* ossdev)
+static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 {
     int	                smplrate;
     int	                samplesize = 16;
@@ -497,16 +498,9 @@ static void OSS_WaveInInit(unsigned devID, OSS_DEVICE* ossdev)
     int                 caps;
     int                 mask;
 
-    samplesize = 16;
-    dsp_stereo = 1;
-
-    WInDev[devID].state = WINE_WS_CLOSED;
-    WInDev[devID].ossdev = ossdev;
+    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0, 0, 0) != 0) return FALSE;
 
     memset(&ossdev->in_caps, 0, sizeof(ossdev->in_caps));
-
-    if (OSS_OpenDevice(WInDev[devID].ossdev, O_RDONLY, NULL, 0, 0, 0) != 0) return;
-    numInDev++;
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
@@ -522,11 +516,11 @@ static void OSS_WaveInInit(unsigned devID, OSS_DEVICE* ossdev)
     ossdev->in_caps.dwFormats = 0x00000000;
     ossdev->in_caps.wChannels = (ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &dsp_stereo) != 0) ? 1 : 2;
 
-    WInDev[devID].bTriggerSupport = FALSE;
+    ossdev->bTriggerSupport = FALSE;
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0) {
 	TRACE("OSS dsp in caps=%08X\n", caps);
 	if (caps & DSP_CAP_TRIGGER)
-            WInDev[devID].bTriggerSupport = TRUE;
+            ossdev->bTriggerSupport = TRUE;
     }
 
     ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &mask);
@@ -574,6 +568,7 @@ static void OSS_WaveInInit(unsigned devID, OSS_DEVICE* ossdev)
     }
     OSS_CloseDevice(ossdev);
     TRACE("in dwFormats = %08lX\n", ossdev->in_caps.dwFormats);
+    return TRUE;
 }
 
 /******************************************************************
@@ -617,11 +612,25 @@ LONG OSS_WaveInit(void)
 
     /* start with output device */
     for (i = 0; i < MAX_WAVEDRV; ++i)
-        OSS_WaveOutInit(i, &OSS_Devices[i]);
+    {
+        if (OSS_WaveOutInit(&OSS_Devices[i]))
+        {
+            WOutDev[numOutDev].state = WINE_WS_CLOSED;
+            WOutDev[numOutDev].ossdev = &OSS_Devices[i];
+            numOutDev++;
+        }
+    }
 
     /* then do input device */
     for (i = 0; i < MAX_WAVEDRV; ++i)
-        OSS_WaveInInit(i, &OSS_Devices[i]);
+    {
+        if (OSS_WaveInInit(&OSS_Devices[i]))
+        {
+            WInDev[numInDev].state = WINE_WS_CLOSED;
+            WInDev[numInDev].ossdev = &OSS_Devices[i];
+            numInDev++;
+        }
+    }
 
     /* finish with the full duplex bits */
     for (i = 0; i < MAX_WAVEDRV; i++)
@@ -977,7 +986,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
     /* flush all possible output */
-    if (OSS_ResetDevice(wwo->ossdev) == -1)
+    if (OSS_ResetDevice(wwo->ossdev) != MMSYSERR_NOERROR)
     {
 	wwo->hThread = 0;
 	wwo->state = WINE_WS_STOPPED;
@@ -1215,12 +1224,12 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
-    if (wDevID >= MAX_WAVEDRV) {
-	TRACE("MAX_WAVDRV reached !\n");
+    if (wDevID >= numOutDev) {
+	TRACE("numOutDev reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
 
-    memcpy(lpCaps, &OSS_Devices[wDevID].out_caps, min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &WOutDev[wDevID].ossdev->out_caps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
 
@@ -1239,7 +1248,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= MAX_WAVEDRV) {
+    if (wDevID >= numOutDev) {
 	TRACE("MAX_WAVOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1263,12 +1272,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo = &WOutDev[wDevID];
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && !(OSS_Devices[wDevID].out_caps.dwSupport & WAVECAPS_DIRECTSOUND))
+    if ((dwFlags & WAVE_DIRECTSOUND) && 
+        !(wwo->ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
     if (dwFlags & WAVE_DIRECTSOUND) {
-        if (OSS_Devices[wDevID].out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+        if (wwo->ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
 	    /* we have realtime DirectSound, fragments just waste our time,
 	     * but a large buffer is good, so choose 64KB (32 * 2^11) */
 	    audio_fragment = 0x0020000B;
@@ -1366,7 +1376,7 @@ static DWORD wodClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1403,7 +1413,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1436,7 +1446,7 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    if (wDevID >= MAX_WAVEDRV) {
+    if (wDevID >= numOutDev) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1456,7 +1466,7 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    if (wDevID >= MAX_WAVEDRV) {
+    if (wDevID >= numOutDev) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1477,7 +1487,7 @@ static DWORD wodPause(WORD wDevID)
 {
     TRACE("(%u);!\n", wDevID);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1494,7 +1504,7 @@ static DWORD wodRestart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1516,7 +1526,7 @@ static DWORD wodReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1537,7 +1547,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1597,7 +1607,7 @@ static DWORD wodBreakLoop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEDRV || WOutDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1618,9 +1628,9 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     if (lpdwVol == NULL)
 	return MMSYSERR_NOTENABLED;
-    if (wDevID >= MAX_WAVEDRV) return MMSYSERR_INVALPARAM;
+    if (wDevID >= numOutDev) return MMSYSERR_INVALPARAM;
 
-    if ((mixer = open(OSS_Devices[wDevID].mixer_name, O_RDONLY|O_NDELAY)) < 0) {
+    if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_RDONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
@@ -1651,9 +1661,9 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
     volume = left + (right << 8);
 
-    if (wDevID >= MAX_WAVEDRV) return MMSYSERR_INVALPARAM;
+    if (wDevID >= numOutDev) return MMSYSERR_INVALPARAM;
 
-    if ((mixer = open(OSS_Devices[wDevID].mixer_name, O_WRONLY|O_NDELAY)) < 0) {
+    if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_WRONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
@@ -1896,7 +1906,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     if (lpdwPlay) *lpdwPlay = ptr;
     if (lpdwWrite) {
 	/* add some safety margin (not strictly necessary, but...) */
-	if (OSS_Devices[This->drv->wDevID].out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	if (WOutDev[This->drv->wDevID].ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
 	    *lpdwWrite = ptr + 32;
 	else
 	    *lpdwWrite = ptr + WOutDev[This->drv->wDevID].dwFragmentSize;
@@ -2133,7 +2143,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     IDsDriverImpl** idrv = (IDsDriverImpl**)drv;
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(OSS_Devices[wDevID].out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
+    if (!(WOutDev[wDevID].ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
 	ERR("DirectSound flag not set\n");
 	MESSAGE("This sound card's driver does not support direct access\n");
 	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
@@ -2190,12 +2200,12 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
-    if (wDevID >= MAX_WAVEDRV) {
-	TRACE("MAX_WAVDRV reached !\n");
+    if (wDevID >= numInDev) {
+	TRACE("numOutDev reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
 
-    memcpy(lpCaps, &OSS_Devices[wDevID].in_caps, min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &WInDev[wDevID].ossdev->in_caps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
 
@@ -2348,7 +2358,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                 int enable = PCM_ENABLE_INPUT;
 		wwi->state = WINE_WS_PLAYING;
 
-                if (wwi->bTriggerSupport)
+                if (wwi->ossdev->bTriggerSupport)
                 {
                     /* start the recording */
                     if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0)
@@ -2424,7 +2434,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= MAX_WAVEDRV) return MMSYSERR_BADDEVICEID;
+    if (wDevID >= numInDev) return MMSYSERR_BADDEVICEID;
 
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
@@ -2512,7 +2522,7 @@ static DWORD widClose(WORD wDevID)
     WINE_WAVEIN*	wwi;
 
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't close !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2539,7 +2549,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't do it !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2568,7 +2578,7 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    if (wDevID >= MAX_WAVEDRV) return MMSYSERR_INVALHANDLE;
+    if (wDevID >= numInDev) return MMSYSERR_INVALHANDLE;
 
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
 	return WAVERR_STILLPLAYING;
@@ -2586,7 +2596,7 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-    if (wDevID >= MAX_WAVEDRV) return MMSYSERR_INVALHANDLE;
+    if (wDevID >= numInDev) return MMSYSERR_INVALHANDLE;
 
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
 	return WAVERR_STILLPLAYING;
@@ -2603,7 +2613,7 @@ static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 static DWORD widStart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't start recording !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2618,7 +2628,7 @@ static DWORD widStart(WORD wDevID)
 static DWORD widStop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't stop !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2634,7 +2644,7 @@ static DWORD widStop(WORD wDevID)
 static DWORD widReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't reset !\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2652,7 +2662,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
+    if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't get pos !\n");
 	return MMSYSERR_INVALHANDLE;
     }
