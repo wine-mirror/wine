@@ -323,21 +323,21 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	/* get the type name */
 	if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
-	{
-        if (!flags & SHGFI_USEFILEATTRIBUTES)
-	        _ILGetFileType(pidlLast, psfi->szTypeName, 80);
-        else
         {
-	        char sTemp[64];
-            strcpy(sTemp,PathFindExtensionA(path));
-	        if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
-	        && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
-	        {
-	            lstrcpynA (psfi->szTypeName, sTemp, 80 - 6);
-	            strcat (psfi->szTypeName, "-file");
-	        }
+            if (!(flags & SHGFI_USEFILEATTRIBUTES))
+                _ILGetFileType(pidlLast, psfi->szTypeName, 80);
+            else
+            {
+                char sTemp[64];
+                strcpy(sTemp,PathFindExtensionA(path));
+                if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
+                       && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+                {
+                    lstrcpynA (psfi->szTypeName, sTemp, 80 - 6);
+                    strcat (psfi->szTypeName, "-file");
+                }
+            }
         }
-	}
 
 	/* ### icons ###*/
 	if (flags & SHGFI_LINKOVERLAY)
