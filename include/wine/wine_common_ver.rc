@@ -80,7 +80,7 @@ FILESUBTYPE    VFT2_UNKNOWN
 	    VALUE "FileDescription", WINE_FILEDESCRIPTION_STR
 	    VALUE "FileVersion", WINE_FILEVERSION_STR
 	    VALUE "InternalName", WINE_FILENAME
-	    VALUE "LegalCopyright", "Copyright (c) 1993-2004 the Wine project authors (see the file AUTHORS for a complete list)"
+	    VALUE "LegalCopyright", "Copyright (c) 1993-2005 the Wine project authors (see the file AUTHORS for a complete list)"
 	    VALUE "OriginalFilename", WINE_FILENAME_STR
 	    VALUE "ProductName", WINE_PRODUCTNAME_STR
 	    VALUE "ProductVersion", WINE_PRODUCTVERSION_STR
