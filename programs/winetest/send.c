@@ -99,7 +99,7 @@ send_file (const char *name)
 
     /* RFC 2068 */
 #define SEP "-"
-    const char head[] = "POST /~wferi/cgi-bin/winetest.cgi HTTP/1.0\r\n"
+    const char head[] = "POST /submit HTTP/1.0\r\n"
         "Host: afavant\r\n"
         "User-Agent: Winetests Shell\r\n"
         "Content-Type: multipart/form-data; boundary=" SEP "\r\n"
@@ -113,7 +113,7 @@ send_file (const char *name)
         "--" SEP "--\r\n";
 
     buffer = xmalloc (BUFLEN + 1);
-    s = open_http ("157.181.170.47");
+    s = open_http ("198.144.15.226");
     if (s == INVALID_SOCKET) {
         report (R_WARNING, "Can't open network connection: %d",
                 WSAGetLastError ());
