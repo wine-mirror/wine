@@ -228,8 +228,13 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpe
 	wmcda->fShareable = dwFlags & MCI_OPEN_SHAREABLE;
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
-	TRACE("MCI_OPEN_ELEMENT !\n");
-	return MCIERR_NO_ELEMENT_ALLOWED;
+        if (dwFlags & MCI_OPEN_ELEMENT_ID) {
+            WARN("MCI_OPEN_ELEMENT_ID %8lx ! Abort", (DWORD)lpOpenParms->lpstrElementName);
+            return MCIERR_NO_ELEMENT_ALLOWED;
+        }
+        WARN("MCI_OPEN_ELEMENT %s ignored\n",lpOpenParms->lpstrElementName);
+        /*return MCIERR_NO_ELEMENT_ALLOWED; 
+          bon 19991106 allows cdplayer.exe to run*/
     }
 
     wmcda->wNotifyDeviceID = dwDeviceID;
