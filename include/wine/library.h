@@ -114,7 +114,7 @@ WINE_LDT_EXTERN struct __wine_ldt_copy
 #define WINE_LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
 #define WINE_LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
 
-#define WINE_LDT_FIRST_ENTRY     17
+#define WINE_LDT_FIRST_ENTRY     512
 
 /* helper functions to manipulate the LDT_ENTRY structure */
 inline static void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
