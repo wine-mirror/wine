@@ -468,9 +468,9 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             org.x = win->rectWindow.left - win->rectClient.left;
             org.y = win->rectWindow.top - win->rectClient.top;
         }
-        drawable_org = org;
         MapWindowPoints( hwnd, parent, &org, 1 );
-        MapWindowPoints( hwnd, 0, &drawable_org, 1 );
+        drawable_org.x = drawable_org.y = 0;
+        MapWindowPoints( parent, 0, &drawable_org, 1 );
         /* have to use the parent so that we include siblings */
         if (parent) drawable = X11DRV_get_client_window( parent );
         else drawable = root_window;
