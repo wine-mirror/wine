@@ -17,6 +17,8 @@ extern "C" {
 
 /* Misc. constants. */
 
+#define WINVER 0x0500
+
 #ifdef FALSE
 #undef FALSE
 #endif
