@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winver.h"
+#include "winnls.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
@@ -95,4 +97,78 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
     SetupCloseInfFile(hinf);
 
     return ret;
+}
+
+/***********************************************************************
+ *             NeedRebootInit  (ADVPACK.@)
+ */
+DWORD WINAPI NeedRebootInit(VOID)
+{
+    FIXME("() stub!\n");
+    return 0;
+}
+
+/***********************************************************************
+ *             NeedReboot      (ADVPACK.@)
+ */
+BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
+{
+    FIXME("(0x%08lx) stub!\n", dwRebootCheck);
+    return FALSE;
+}
+
+/***********************************************************************
+ *             GetVersionFromFile      (ADVPACK.@)
+ */
+HRESULT WINAPI GetVersionFromFile( LPSTR Filename, LPDWORD MajorVer,
+                                   LPDWORD MinorVer, BOOL Version )
+{
+    TRACE("(%s, %p, %p, %d)\n", Filename, MajorVer, MinorVer, Version);
+    return GetVersionFromFileEx(Filename, MajorVer, MinorVer, Version);
+}
+
+/***********************************************************************
+ *             GetVersionFromFileEx    (ADVPACK.@)
+ */
+HRESULT WINAPI GetVersionFromFileEx( LPSTR lpszFilename, LPDWORD pdwMSVer,
+                                     LPDWORD pdwLSVer, BOOL bVersion )
+{
+    DWORD hdl, retval;
+    LPVOID pVersionInfo;
+    BOOL boolret;
+    VS_FIXEDFILEINFO *pFixedVersionInfo;
+    UINT uiLength;
+    TRACE("(%s, %p, %p, %d)\n", lpszFilename, pdwMSVer, pdwLSVer, bVersion);
+
+    if (bVersion)
+    {
+        retval = GetFileVersionInfoSizeA(lpszFilename, &hdl);
+        if (retval == 0 || hdl != 0)
+            return E_FAIL;
+
+        pVersionInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
+        if (pVersionInfo == NULL)
+             return E_FAIL;
+        GetFileVersionInfoA( lpszFilename, 0, retval, pVersionInfo);
+
+        boolret = VerQueryValueA(pVersionInfo, "\\",
+                                 (LPVOID) &pFixedVersionInfo, &uiLength);
+
+        HeapFree(GetProcessHeap(), 0, pVersionInfo);
+
+        if (boolret)
+        {
+            *pdwMSVer = pFixedVersionInfo->dwFileVersionMS;
+            *pdwLSVer = pFixedVersionInfo->dwFileVersionLS;
+        }
+        else
+            return E_FAIL;
+    }
+    else
+    {
+        *pdwMSVer = GetUserDefaultUILanguage();
+        *pdwLSVer = GetACP();
+    }
+
+    return S_OK;
 }

@@ -38,7 +38,11 @@ typedef struct _StrTable {
 typedef const STRTABLE CSTRTABLE;
 typedef CSTRTABLE *LPCSTRTABLE;
 
+DWORD WINAPI NeedRebootInit(VOID);
+BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
+HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
 
 #ifdef __cplusplus
 }

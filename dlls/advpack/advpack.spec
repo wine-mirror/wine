@@ -10,13 +10,13 @@
 @ stub FileSaveMarkNotExist
 @ stub FileSaveRestore
 @ stub FileSaveRestoreOnINF
-@ stub GetVersionFromFile
-@ stub GetVersionFromFileEx
+@ stdcall GetVersionFromFile(str ptr ptr long)
+@ stdcall GetVersionFromFileEx(str ptr ptr long)
 @ stub IsNTAdmin
 @ stdcall LaunchINFSection(ptr ptr str long)
 @ stdcall LaunchINFSectionEx(ptr ptr str long)
-@ stub NeedReboot
-@ stub NeedRebootInit
+@ stdcall NeedReboot(long)
+@ stdcall NeedRebootInit()
 @ stub OpenINFEngine
 @ stub RebootCheckOnInstall
 @ stdcall RegInstall(ptr str ptr)
