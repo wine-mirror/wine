@@ -12,6 +12,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
@@ -224,12 +225,12 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
         if ((*str1<0x100 ) && (*str2<0x100)) {
 	    if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
 	} else {
-	    if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
+	    if ((res = NTDLL_towupper(*str1) - NTDLL_towupper(*str2)) != 0) return res;
 	}
         str1++;
         str2++;
     }
-    return towupper(*str1) - towupper(*str2);
+    return NTDLL_towupper(*str1) - NTDLL_towupper(*str2);
 }
 
 

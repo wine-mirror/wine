@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "winnls.h"
@@ -40,37 +41,7 @@ DEFAULT_DEBUG_CHANNEL(resource);
 
 extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 
-
 /* Funny to divide them between user and kernel. */
-
-/* be careful: always use functions from wctype.h if character > 255 */
-
-/*
- * Unicode case conversion routines ... these should be used where
- * toupper/tolower are used for ASCII.
- */
-#ifndef HAVE_WCTYPE_H
-/* FIXME: should probably get rid of wctype.h altogether */
-#include "casemap.h"
-
-/***********************************************************************
- *		towupper
- */
-WCHAR towupper(WCHAR code)
-{
-    const WCHAR * ptr = uprtable[HIBYTE(code)];
-    return ptr ? ptr[LOBYTE(code)] : code;
-}
-
-/***********************************************************************
- *		towlower
- */
-WCHAR towlower(WCHAR code)
-{
-    const WCHAR * ptr = lwrtable[HIBYTE(code)];
-    return ptr ? ptr[LOBYTE(code)] : code;
-}
-#endif  /* HAVE_WCTYPE_H */
 
 /***********************************************************************
  *		IsCharAlpha (USER.433)
@@ -321,7 +292,7 @@ DWORD WINAPI CharLowerBuffW(LPWSTR x,DWORD buflen)
     if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=towlower(*x);
+        *x=NTDLL_towlower(*x);
         x++;
         done++;
     }
@@ -339,12 +310,12 @@ LPWSTR WINAPI CharLowerW(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=towlower(*s);
+            *s=NTDLL_towlower(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)((UINT)towlower(LOWORD(x)));
+    else return (LPWSTR)((UINT)NTDLL_towlower(LOWORD(x)));
 }
 
 /***********************************************************************
@@ -395,7 +366,7 @@ DWORD WINAPI CharUpperBuffW(LPWSTR x,DWORD buflen)
     if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=towupper(*x);
+        *x=NTDLL_towupper(*x);
         x++;
         done++;
     }
@@ -413,12 +384,12 @@ LPWSTR WINAPI CharUpperW(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=towupper(*s);
+            *s=NTDLL_towupper(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)((UINT)towupper(LOWORD(x)));
+    else return (LPWSTR)((UINT)NTDLL_towupper(LOWORD(x)));
 }
 
 /***********************************************************************

@@ -9,9 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_WCTYPE_H
-# include <wctype.h>
-#endif
 #include "wine/winestring.h"
 #include "crtdll.h"
 #include "heap.h"
@@ -20,9 +17,29 @@
 #include "ntdll_misc.h"
 #include "ntddk.h"
 
+#include "casemap.h"
+
 DEFAULT_DEBUG_CHANNEL(ntdll)
 
 /*	STRING FUNCTIONS	*/
+
+/**************************************************************************
+ *		NTDLL.towupper
+ */
+WCHAR CDECL NTDLL_towupper(WCHAR code)
+{
+    const WCHAR * ptr = uprtable[HIBYTE(code)];
+    return ptr ? ptr[LOBYTE(code)] : code;
+}
+
+/**************************************************************************
+ *		NTDLL.towlower
+ */
+WCHAR CDECL NTDLL_towlower(WCHAR code)
+{
+    const WCHAR * ptr = lwrtable[HIBYTE(code)];
+    return ptr ? ptr[LOBYTE(code)] : code;
+}
 
 /**************************************************************************
  *	RtlInitString
@@ -242,7 +259,7 @@ DWORD WINAPI RtlUpcaseUnicodeString(
 
 	for (i=0; i < len/sizeof(WCHAR); i++)
 	{
-	  dest->Buffer[i] = towupper(src->Buffer[i]);
+	  dest->Buffer[i] = NTDLL_towupper(src->Buffer[i]);
 	}
 	dest->Length = len;
 	return STATUS_SUCCESS;
@@ -346,7 +363,7 @@ WINAPI RtlUpcaseUnicodeStringToOemString(
 
 	for (i=0; i < len; i++)
 	{
-	  oem->Buffer[i] = towupper((char)(uni->Buffer[i]));
+	  oem->Buffer[i] = NTDLL_towupper((char)(uni->Buffer[i]));
 	}
 	oem->Buffer[i] = 0;
 	return STATUS_SUCCESS;

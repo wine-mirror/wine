@@ -18,6 +18,7 @@
 #endif
 
 #include "windef.h"
+#include "ntddk.h"
 #include "crtdll.h"
 #include "debugtools.h"
 
@@ -144,12 +145,7 @@ LPWSTR __cdecl CRTDLL__wcsupr( LPWSTR str )
  */
 WCHAR __cdecl CRTDLL_towlower( WCHAR ch )
 {
-#ifdef HAVE_WCTYPE_H
-    ch = (WCHAR)towlower( (wchar_t)ch );
-#else
-    if (!HIBYTE(ch)) ch = (WCHAR)tolower( LOBYTE(ch) );  /* FIXME */
-#endif
-    return ch;
+    return NTDLL_towlower(ch);
 }
 
 
@@ -158,12 +154,7 @@ WCHAR __cdecl CRTDLL_towlower( WCHAR ch )
  */
 WCHAR __cdecl CRTDLL_towupper( WCHAR ch )
 {
-#ifdef HAVE_WCTYPE_H
-    ch = (WCHAR)towupper( (wchar_t)ch );
-#else
-    if (!HIBYTE(ch)) ch = (WCHAR)toupper( LOBYTE(ch) );  /* FIXME */
-#endif
-    return ch;
+    return NTDLL_towupper(ch);
 }
 
 

@@ -468,7 +468,7 @@ int WINAPI PathGetDriveNumberA(LPCSTR lpszPath)
  */
 int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath)
 {
-	int chr = towlower(lpszPath[0]);
+	int chr = CRTDLL_towlower(lpszPath[0]);
 	
 	TRACE ("%s\n",debugstr_w(lpszPath));
 
@@ -1313,7 +1313,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
 	    } while (*name++);
 	    return 0;
 	  }
-	  if (towupper(*mask)!=towupper(*name) && *mask!='?') return 0;
+	  if (CRTDLL_towupper(*mask)!=CRTDLL_towupper(*name) && *mask!='?') return 0;
 	  name++;
 	  mask++;
 	}
@@ -1428,7 +1428,7 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
 	if (PathIsRelativeW(lpszPath1) || PathIsRelativeW(lpszPath2)) return FALSE;
 
 	/* usual path */
-	if ( towupper(lpszPath1[0])==towupper(lpszPath2[0]) &&
+	if ( CRTDLL_towupper(lpszPath1[0])==CRTDLL_towupper(lpszPath2[0]) &&
 	     lpszPath1[1]==':' && lpszPath2[1]==':' &&
 	     lpszPath1[2]=='\\' && lpszPath2[2]=='\\')
 	  return TRUE;

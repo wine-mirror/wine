@@ -7,7 +7,6 @@
 #ifdef __WINE__ 
 # undef wsprintf
 #endif
-#include <wctype.h> /* needed for towupper */
 #endif
 #include "windef.h"
 
@@ -416,12 +415,6 @@
 #define TIME_TIMEVARSONLY      0x00000200  /* only time stuff: hHmst */
 /* use this in a WineLib program if you really want all types */
 #define LOCALE_TIMEDATEBOTH    0x00000300  /* full set */
-
-#ifndef HAVE_WCTYPE_H /* fight native wctype.h */
-/* Prototypes for Unicode case conversion routines */
-WCHAR towupper(WCHAR);
-WCHAR towlower(WCHAR);
-#endif
 
 /* Definitions for IsTextUnicode() function */
 #define IS_TEXT_UNICODE_ASCII16		0x0001

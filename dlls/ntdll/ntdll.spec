@@ -935,8 +935,8 @@ type	win32
 @ stub tan
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper
-@ cdecl towlower(long) towlower
-@ cdecl towupper(long) towupper
+@ cdecl towlower(long) NTDLL_towlower
+@ cdecl towupper(long) NTDLL_towupper
 @ cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
 @ cdecl wcscat(wstr wstr) CRTDLL_wcscat
 @ cdecl wcschr(wstr long) CRTDLL_wcschr

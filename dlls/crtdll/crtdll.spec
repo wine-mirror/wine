@@ -495,8 +495,8 @@ init    CRTDLL_Init
 @ cdecl tmpnam(str) CRTDLL_tmpnam
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper
-@ cdecl towlower(long) towlower
-@ cdecl towupper(long) towupper
+@ cdecl towlower(long) CRTDLL_towlower
+@ cdecl towupper(long) CRTDLL_towupper
 @ stub ungetc
 @ stub ungetwc
 @ cdecl vfprintf(ptr str ptr) CRTDLL_vfprintf
