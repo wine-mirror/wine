@@ -7,6 +7,7 @@ SOVERSION = 1.0
 ALTNAMES  = gdi dispdib
 
 C_SRCS = \
+	bidi16.c \
 	gdi_main.c \
 	thunk.c
 

@@ -3,118 +3,22 @@
  * Right now, most of these functions do nothing.
  */
 
-#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winerror.h"
 #include "debugtools.h"
-#include "windows.h"
 
-DEFAULT_DEBUG_CHANNEL(relay)
-
-/***********************************************************************
- *		RawTextOut16
- */
-LONG WINAPI RawTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
+DEFAULT_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
- *		RawExtTextOut16
- */
-LONG WINAPI RawExtTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		RawGetTextExtent16
- */
-LONG WINAPI RawGetTextExtent16(HDC16 hdc, LPCSTR lpszString, INT16 cbString ) { 
-      FIXME("(%04hx, %p, %hd): stub\n", hdc, lpszString, cbString); 
-      return 0; 
-}
-
-/***********************************************************************
- *		BiDiLayout16
- */
-LONG WINAPI BiDiLayout16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiCreateTabString16
- */
-LONG WINAPI BiDiCreateTabString16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiGlyphOut16
- */
-LONG WINAPI BiDiGlyphOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiGetStringExtent16
- */
-LONG WINAPI BiDiGetStringExtent16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiDeleteString16
- */
-LONG WINAPI BiDiDeleteString16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiSetDefaults16
- */
-LONG WINAPI BiDiSetDefaults16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiGetDefaults16
- */
-LONG WINAPI BiDiGetDefaults16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiShape16
- */
-LONG WINAPI BiDiShape16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiFontComplement16
- */
-LONG WINAPI BiDiFontComplement16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiSetKashida16
- */
-LONG WINAPI BiDiSetKashida16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiKExtTextOut16
- */
-LONG WINAPI BiDiKExtTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiShapeEx16
- */
-LONG WINAPI BiDiShapeEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiCreateStringEx16
- */
-LONG WINAPI BiDiCreateStringEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		GetTextExtentRtoL16
- */
-LONG WINAPI GetTextExtentRtoL16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		GetHDCCharSet16
- */
-LONG WINAPI GetHDCCharSet16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		BiDiLayoutEx16
- */
-LONG WINAPI BiDiLayoutEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *		ChangeDialogTemplate16
+ *		ChangeDialogTemplate16   (USER.905)
  * FIXME: The prototypes of this function have not been found yet.
  */
 LONG WINAPI ChangeDialogTemplate16(void) { FIXME("stub (no prototype)\n"); return 0; }
 
 /***********************************************************************
- *		BiDiMessageBoxEx16
+ *		BiDiMessageBoxEx16   (USER.910)
  * FIXME: The prototypes of this function have not been found yet.
  */
 LONG WINAPI BiDiMessageBoxEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
@@ -348,7 +252,6 @@ LRESULT WINAPI QueryCodePage16( UINT16 idxLang, UINT16 msg,
     return 0;
 }
 
-
 /***********************************************************************
  *           SetAppCodePage16   [USER.920]
  * Set the code page and language of the window to new values.
@@ -364,8 +267,6 @@ DWORD WINAPI SetAppCodePage16( HWND16 hwnd, UINT16 iCodePage, UINT16 iLang,
     return 0;
 }
 
-
-
 /***********************************************************************
  *           SetDlgItemTextEx16   [USER.911]
  * Sets the title or text of a control in a dialog box.
@@ -376,21 +277,6 @@ void WINAPI SetDlgItemTextEx16( HWND16 hwnd, INT16 id,
 {
     FIXME( "( %04hx, %hd, %p, %hu ): stub\n", hwnd, id, lpszText, iLang );
 }
-
-
-
-/***********************************************************************
- *           SetLayout16   [GDI.1000]
- *
- * Sets left->right or right->left text layout flags of a dc.
- */
-BOOL16 WINAPI SetLayout16( HDC16 hdc, DWORD layout )
-{
-    FIXME( "( %04hx, %08lx ): No BiDi16\n", hdc, layout );
-    return SetLayout( hdc, layout );
-}
-
-
 
 /******************************************************************************
  *                    SetProcessDefaultLayout16 [USER.1000]
@@ -408,7 +294,6 @@ BOOL16 WINAPI SetProcessDefaultLayout16( DWORD dwDefaultLayout )
     return SetProcessDefaultLayout( dwDefaultLayout );
 }
 
-
 /******************************************************************************
  *                    SetWindowTextEx16 [USER.909]
  * Sets the given window's title to the specified text in the specified language.
@@ -417,4 +302,3 @@ void WINAPI SetWindowTextEx16( HWND16 hwnd, LPCSTR lpsz, UINT16 iLang )
 {
     FIXME( "( %04hx, %p, %hu ): stub\n", hwnd, lpsz, iLang );
 }
-

@@ -8,10 +8,12 @@ WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
 
 C_SRCS = \
+	bidi16.c \
 	ddeml.c \
 	display.c \
 	exticon.c \
 	mouse.c \
+	network.c \
 	user_main.c \
 	thunk.c
 
