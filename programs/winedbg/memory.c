@@ -374,7 +374,7 @@ int  DEBUG_PrintStringA(const DBG_ADDR* address, int len)
 
 int  DEBUG_PrintStringW(const DBG_ADDR* address, int len)
 {
-    char*       lin = (void*)DEBUG_ToLinear(address);
+    WCHAR*      lin = (void*)DEBUG_ToLinear(address);
     WCHAR       ch[CHARBUFSIZE+1];
     int         written = 0;
 
