@@ -120,7 +120,11 @@ extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* __i386__ */
 
 /* local copy of the LDT */
+#ifdef __APPLE__
+struct __wine_ldt_copy wine_ldt_copy = { { 0, 0, 0 } };
+#else
 struct __wine_ldt_copy wine_ldt_copy;
+#endif
 
 static const LDT_ENTRY null_entry;  /* all-zeros, used to clear LDT entries */
 
