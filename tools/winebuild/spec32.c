@@ -8,12 +8,13 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "config.h"
 #include "winbase.h"
 #include "wine/exception.h"
 #include "build.h"

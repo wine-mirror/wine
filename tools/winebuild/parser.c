@@ -8,6 +8,8 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -15,7 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "winbase.h"
 #include "build.h"
 

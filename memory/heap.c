@@ -5,11 +5,13 @@
  * Copyright 1998 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "config.h"
+
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "selectors.h"

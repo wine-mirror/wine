@@ -5,11 +5,12 @@
  */
 
 
+#include "config.h"
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "config.h"
 #include "winnt.h"
 #include "stackframe.h"
 #include "module.h"

@@ -4,11 +4,12 @@
  * Copyright 1999 Bertho Stultiens
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "config.h"
 #include "windef.h"
 #include "winreg.h"
 #include "winerror.h"

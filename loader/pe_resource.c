@@ -10,10 +10,10 @@
  * Copyright 1997 Marcus Meissner
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <sys/types.h>
-
-#include "config.h"
 
 #include "wine/unicode.h"
 #include "windef.h"

@@ -4,8 +4,10 @@
    This files contains the implementation of interface Direct3DTexture2. */
 
 
-#include <string.h>
 #include "config.h"
+
+#include <string.h>
+
 #include "windef.h"
 #include "winerror.h"
 #include "wine/obj_base.h"

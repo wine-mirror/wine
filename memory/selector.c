@@ -4,9 +4,10 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <string.h>
 
-#include "config.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "miscemu.h"

@@ -4,13 +4,14 @@
  * Copyright 2000 Bertho A. Stultiens (BS)
  *
  */
+
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
-
-#include "config.h"
 
 #include "utils.h"
 #include "wmc.h"

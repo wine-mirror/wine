@@ -8,13 +8,14 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
-#include "config.h"
 #include "winnt.h"
 #include "build.h"
 

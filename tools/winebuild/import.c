@@ -5,12 +5,13 @@
  *           2000 Eric Pouech
  */
 
+#include "config.h"
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "config.h"
 #include "winnt.h"
 #include "build.h"
 

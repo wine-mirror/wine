@@ -10,10 +10,11 @@
    that driver supports into the driver struct. If it is a supplementary
    driver, it should make sure to preserve the old values. */
 
+#include "config.h"
+
 #include <stdio.h>
 
 #include "console.h"
-#include "config.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(console);

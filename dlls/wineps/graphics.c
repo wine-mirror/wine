@@ -4,9 +4,11 @@
  *	Copyright 1998  Huw D M Davies
  *
  */
+
+#include "config.h"
+
 #include <string.h>
 #include <math.h>
-#include "config.h"
 #if defined(HAVE_FLOAT_H)
  #include <float.h>
 #endif

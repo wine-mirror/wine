@@ -5,9 +5,10 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <string.h>
 
-#include "config.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

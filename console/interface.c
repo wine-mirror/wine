@@ -6,11 +6,12 @@
    This could be done using a macro, but additional functionality
    may be provided here in the future. */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "windef.h"
 #include "console.h"
 #include "options.h"

@@ -4,12 +4,13 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "winnt.h"
 #include "winbase.h"
 

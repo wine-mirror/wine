@@ -1,8 +1,10 @@
 /* ncurses.c */
 /* Copyright 1999 - Joseph Pranevich */
 
-#include <stdio.h>
 #include "config.h"
+
+#include <stdio.h>
+
 #include "console.h"	/* Must define WINE_NCURSES */
 
 #ifdef WINE_NCURSES

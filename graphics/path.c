@@ -5,10 +5,11 @@
  *                 1999 Huw D M Davies
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "config.h"
 #if defined(HAVE_FLOAT_H)
 #include <float.h>
 #endif

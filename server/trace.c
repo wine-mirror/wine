@@ -4,12 +4,13 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "config.h"
 #include "winsock2.h"
 #include "winnt.h"
 #include "winbase.h"

@@ -4,12 +4,13 @@
  * Copyright 2000 Bertho A. Stultiens (BS)
  *
  */
+
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-
-#include "config.h"
 
 #include "wmc.h"
 #include "utils.h"

@@ -6,9 +6,12 @@
  * Copyright 1997 Marcus Meissner
  * Copyright 1998 Andreas Mohr
  */
+
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
-#include "config.h"
+
 #include "gdi.h"
 #include "debugtools.h"
 

@@ -4,8 +4,10 @@
    This files contains all the common stuff for D3D devices.
  */
 
-#include <string.h>
 #include "config.h"
+
+#include <string.h>
+
 #include "windef.h"
 #include "winerror.h"
 #include "wine/obj_base.h"

@@ -9,6 +9,8 @@
  *
  */
 
+#include "config.h"
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +21,6 @@
 #include "shell32_main.h"
 #include "commctrl.h"
 #include "debugtools.h"
-#include "config.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

@@ -2,11 +2,12 @@
  * BIOS interrupt 11h handler
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"

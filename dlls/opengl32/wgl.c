@@ -3,12 +3,13 @@
      Copyright (c) 1999 Lionel Ulmer
 */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "wine/exception.h"
 
-#include "config.h"
 #include "debugtools.h"
 #include "gdi.h"
 #include "windef.h"

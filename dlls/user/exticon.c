@@ -5,11 +5,14 @@
  * this should replace the icon extraction code in shell32 and shell16 once
  * it needs a serious test for compliance with the native API 
  */
+
+#include "config.h"
+
 #include <string.h>
 #include <stdlib.h>	/* abs() */
 #include <sys/types.h>
 #include <unistd.h>
-#include "config.h"
+
 #include "winbase.h"
 #include "windef.h"
 #include "winerror.h"

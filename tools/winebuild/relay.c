@@ -8,10 +8,11 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "winnt.h"
 #include "thread.h"
 #include "stackframe.h"

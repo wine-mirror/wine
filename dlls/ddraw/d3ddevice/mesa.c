@@ -4,8 +4,10 @@
    This files contains the MESA implementation of all the D3D devices that
    Wine supports. */
 
-#include <string.h>
 #include "config.h"
+
+#include <string.h>
+
 #include "windef.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
