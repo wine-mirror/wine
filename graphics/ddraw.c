@@ -1401,12 +1401,15 @@ static HRESULT WINAPI IDirect3D2_EnumDevices(
 	D3DDEVICEDESC	d1,d2;
 
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,cb,context);
+#if 0
 	d1.dwSize	= sizeof(d1);
 	d1.dwFlags	= 0;
 
 	d2.dwSize	= sizeof(d2);
 	d2.dwFlags	= 0;
+
 	cb((void*)&IID_IDirect3DHALDevice,"WINE Direct3D HAL","direct3d",&d1,&d2,context);
+#endif
 	return 0;
 }
 
@@ -2070,22 +2073,44 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		ddsfd.ddpfPixelFormat.dwFourCC	= 0;
 		ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
 		ddsfd.ddpfPixelFormat.x.dwRGBBitCount	= depths[i];
-		/* FIXME: those masks would have to be set in depth > 8 */
+		if (depths[i]==8) {
 		ddsfd.ddpfPixelFormat.y.dwRBitMask  	= 0;
 		ddsfd.ddpfPixelFormat.z.dwGBitMask  	= 0;
 		ddsfd.ddpfPixelFormat.xx.dwBBitMask 	= 0;
 		ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
-		if (depths[i]==8) {
 			ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
 			ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
+		} else {
+			ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+
+			/* FIXME: We should query those from X itself */
+			switch (depths[i]) {
+			case 16:
+				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000f;
+				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x00f0;
+				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x0f00;
+				break;
+			case 24:
+				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
+				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
+				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+				break;
+			case 32:
+				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
+				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
+				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+				break;
+			}
 		}
 		ddsfd.dwWidth = screenWidth;
 		ddsfd.dwHeight = screenHeight;
+		TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
 		if (!modescb(&ddsfd,context)) return 0;
 
 		for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
 			ddsfd.dwWidth	= modes[i].w;
 			ddsfd.dwHeight	= modes[i].h;
+			TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
 			if (!modescb(&ddsfd,context)) return 0;
 		}
 
@@ -2094,6 +2119,7 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 
 			ddsfd.dwHeight = 200;
 			ddsfd.dwWidth = 320;
+			TRACE(ddraw," enumerating (320x200x%d)\n",depths[i]);
 			if (!modescb(&ddsfd,context)) return 0;
 		}
 	}
