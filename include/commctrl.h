@@ -367,7 +367,17 @@ typedef struct tagDRAGLISTINFO
 #define DL_COPYCURSOR           2
 #define DL_MOVECURSOR           3
 
-#define DRAGLISTMSGSTRING       TEXT("commctrl_DragListMsg")
+#define DRAGLISTMSGSTRINGA      "commctrl_DragListMsg"
+#if defined(__GNUC__)
+# define DRAGLISTMSGSTRINGW (const WCHAR []){ 'c','o','m','m','c','t','r','l', \
+  '_','D','r','a','g','L','i','s','t','M','s','g',0 }
+#elif defined(_MSC_VER)
+# define DRAGLISTMSGSTRINGW     L"commctrl_DragListMsg"
+#else
+static const WCHAR DRAGLISTMSGSTRINGW[] = { 'c','o','m','m','c','t','r','l', \
+  '_','D','r','a','g','L','i','s','t','M','s','g',0 };
+#endif
+#define DRAGLISTMSGSTRING       WINELIB_NAME_AW(DRAGLISTMSGSTRING)
 
 BOOL WINAPI MakeDragList (HWND);
 VOID   WINAPI DrawInsert (HWND, HWND, INT);
