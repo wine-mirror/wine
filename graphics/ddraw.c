@@ -521,7 +521,24 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
+	int i;
 	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
+
+	if (!(pal->cm) && (this->s.ddraw->d.depth<=8)) {
+		pal->cm = TSXCreateColormap(display,this->s.ddraw->e.xlib.drawable,DefaultVisualOfScreen(screen),AllocAll);
+		/* FIXME: this is not correct, when using -managed */
+		TSXInstallColormap(display,pal->cm);
+		for (i=0;i<256;i++) {
+			XColor xc;
+
+			xc.red = pal->palents[i].peRed<<8;
+			xc.blue = pal->palents[i].peBlue<<8;
+			xc.green = pal->palents[i].peGreen<<8;
+			xc.flags = DoRed|DoBlue|DoGreen;
+			xc.pixel = i;
+			TSXStoreColor(display,pal->cm,&xc);
+		}
+        }
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -542,11 +559,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
              if( pal )
                 pal->lpvtbl->fnAddRef( pal );
            }
-      
           /* Perform the refresh */
           TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
         }
-
 	return 0;
 }
 
@@ -703,9 +718,9 @@ static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 	    TRACE(ddraw,"	trans:");_dump_DDBLTFAST(trans);fprintf(stderr,"\n");
 	    TRACE(ddraw,"	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	}
-	/* We need to lock the surfaces, or we won't get refreshes when done */
-	src ->lpvtbl->fnLock(src, NULL,&sdesc,0,0);
-	this->lpvtbl->fnLock(this,NULL,&ddesc,0,0);
+	/* We need to lock the surfaces, or we won't get refreshes when done. */
+	src ->lpvtbl->fnLock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
+	this->lpvtbl->fnLock(this,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 	bpp = this->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
 	for (i=0;i<rsrc->bottom-rsrc->top;i++) {
 		memcpy(	ddesc.y.lpSurface+(dsty     +i)*ddesc.lPitch+dstx*bpp,
@@ -731,7 +746,7 @@ static HRESULT WINAPI IDirectDrawSurface3_GetCaps(
 	LPDIRECTDRAWSURFACE3 this,LPDDSCAPS caps
 ) {
 	TRACE(ddraw,"(%p)->GetCaps(%p)\n",this,caps);
-	caps->dwCaps = DDCAPS_PALETTE; /* probably more */
+	caps->dwCaps = DDSCAPS_PALETTE; /* probably more */
 	return 0;
 }
 
@@ -1288,12 +1303,6 @@ static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
 	TRACE(ddraw,"(%p)->SetEntries(%08lx,%ld,%ld,%p)\n",
 		this,x,start,count,palent
 	);
-	if (!this->cm) /* should not happen */ {
-		FIXME(ddraw,"app tried to set colormap in non-palettized mode\n");
-		return DDERR_GENERIC;
-	}
-	if (!this->ddraw->e.xlib.paintable)
-		return 0;
 	for (i=0;i<count;i++) {
 		xc.red = palent[i].peRed<<8;
 		xc.blue = palent[i].peBlue<<8;
@@ -1301,12 +1310,15 @@ static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
 		xc.flags = DoRed|DoBlue|DoGreen;
 		xc.pixel = start+i;
 
-		TSXStoreColor(display,this->cm,&xc);
+		if (this->cm)
+		    TSXStoreColor(display,this->cm,&xc);
 
 		this->palents[start+i].peRed = palent[i].peRed;
 		this->palents[start+i].peBlue = palent[i].peBlue;
 		this->palents[start+i].peGreen = palent[i].peGreen;
                 this->palents[start+i].peFlags = palent[i].peFlags;
+	}
+	if (!this->cm) /* should not happen */ {
 	}
 	return 0;
 }
@@ -2107,20 +2119,12 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 	if (*lpddpal == NULL) return E_OUTOFMEMORY;
 	(*lpddpal)->ref = 1;
 	(*lpddpal)->installed = 0;
+	if (palent)
+		FIXME(ddraw,"needs to handle palent (%p)\n",palent);
 
 	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
         this->lpvtbl->fnAddRef(this);
-
-	if (this->d.depth<=8) {
-		(*lpddpal)->cm = TSXCreateColormap(display,this->e.xlib.drawable,DefaultVisualOfScreen(screen),AllocAll);
-		/* FIXME: this is not correct, when using -managed */
-		TSXInstallColormap(display,(*lpddpal)->cm);
-	} 
-        else
-        {
-		/* we don't want palettes in hicolor or truecolor */
-		(*lpddpal)->cm = 0;
-        }
+	(*lpddpal)->cm = 0;
 
 	(*lpddpal)->lpvtbl = &xlib_ddpalvt;
 	return 0;
