@@ -95,6 +95,7 @@ typedef struct
 	EDITWORDBREAKPROCA word_break_proc32A;
 	INT line_count;		/* number of lines */
 	INT y_offset;			/* scroll offset in number of lines */
+	BOOL bCaptureState; /* flag indicating whether mouse was captured */
 	/*
 	 *	only for multi line controls
 	 */
@@ -3487,6 +3488,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT x, I
 	if (!(es->flags & EF_FOCUSED))
 		return 0;
 
+	es->bCaptureState = TRUE;
 	SetCapture(wnd->hwndSelf);
 	EDIT_ConfinePoint(wnd, es, &x, &y);
 	e = EDIT_CharFromPos(wnd, es, x, y, &after_wrap);
@@ -3505,10 +3507,11 @@ static LRESULT EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT x, I
  */
 static LRESULT EDIT_WM_LButtonUp(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y)
 {
-	if (GetCapture() == wnd->hwndSelf) {
+	if (es->bCaptureState && GetCapture() == wnd->hwndSelf) {
 		KillTimer(wnd->hwndSelf, 0);
 		ReleaseCapture();
 	}
+	es->bCaptureState = FALSE;
 	return 0;
 }
 
