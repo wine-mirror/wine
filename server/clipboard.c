@@ -30,10 +30,10 @@
 #include "object.h"
 #include "user.h"
 
-struct thread *cbthread;        /* thread id that has clipboard open */
+static struct thread *cbthread; /* thread id that has clipboard open */
 static user_handle_t clipboard; /* window that has clipboard open */
 
-struct thread *cbowner;         /* thread id that owns the clipboard */
+static struct thread *cbowner;  /* thread id that owns the clipboard */
 static user_handle_t owner;     /* window that owns the clipboard data */
 
 static user_handle_t viewer;    /* first window in clipboard viewer list */
