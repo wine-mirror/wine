@@ -1307,6 +1307,8 @@ void Main_DirectDraw_AddPalette(IDirectDrawImpl* This,
 void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
 				   IDirectDrawPaletteImpl* palette)
 {
+    IDirectDrawSurfaceImpl *surf;
+
     assert(palette->ddraw_owner == This);
 
     if (This->palettes == palette)
@@ -1316,6 +1318,17 @@ void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
 	palette->next_ddraw->prev_ddraw = palette->prev_ddraw;
     if (palette->prev_ddraw)
 	palette->prev_ddraw->next_ddraw = palette->next_ddraw;
+
+    /* Here we need also to remove tha palette from any surface which has it as the
+     * current palette (checked on Windows)
+     */
+    for (surf = This->surfaces; surf != NULL; surf = surf->next_ddraw) {
+	if (surf->palette == palette) {
+	    TRACE("Palette %p attached to surface %p.\n", palette, surf);
+	    surf->palette = NULL;
+	    surf->set_palette(surf, NULL);
+	}
+    }
 }
 
 static void Main_DirectDraw_DeletePalettes(IDirectDrawImpl* This)

@@ -1211,6 +1211,7 @@ Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
 				  LPDIRECTDRAWPALETTE pPalette)
 {
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
+    IDirectDrawPalette *pal_to_rel = NULL;
 
     TRACE("(%p)->(%p)\n",This,pPalette);
     if (pPalette == ICOM_INTERFACE(This->palette, IDirectDrawPalette))
@@ -1219,8 +1220,7 @@ Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
     if (This->palette != NULL) {
 	if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
 	    This->palette->global.dwFlags &= ~DDPCAPS_PRIMARYSURFACE;
-	IDirectDrawPalette_Release(ICOM_INTERFACE(This->palette,
-						  IDirectDrawPalette));
+	pal_to_rel = ICOM_INTERFACE(This->palette, IDirectDrawPalette);
     }
 
     This->palette = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette,
@@ -1232,6 +1232,12 @@ Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
     }
 
     This->set_palette(This, This->palette);
+
+    /* Do the palette release at the end to prevent doing some 'loop' when removing
+     * the surface maintaining the last reference on a palette.
+     */
+    if (pal_to_rel != NULL)
+	IDirectDrawPalette_Release(pal_to_rel);
 
     return DD_OK;
 }
