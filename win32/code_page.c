@@ -178,6 +178,7 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
 {
     int count = 0;
     int eos = 0;
+    int care_for_eos=0;
     int dont_copy= (dstlen==0);
 
     if ((!src) | ((!dst) && (!dont_copy)) )
@@ -194,7 +195,10 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
     if(used)
 	*used=0;
     if (srclen == -1)
+      {
 	srclen = lstrlen32W(src)+1;
+	 care_for_eos=1;
+      }
     while(srclen && (dont_copy || dstlen))
     {
 	if(!dont_copy){
@@ -215,7 +219,7 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
 	}
 	count++;
 	srclen--;
-	if(!*src) {
+	if((!*src) && care_for_eos) {
 	    eos = 1;
 	    break;
 	}
