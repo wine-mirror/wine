@@ -42,15 +42,15 @@
 #endif /* WIDE_SCANF */
 
 #ifdef CONSOLE
-#define _GETC_(file) _getch()
-#define _UNGETC_(nch, file) _ungetch(nch)
+#define _GETC_(file) (consumed++, _getch())
+#define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
 #define _FUNCTION_ _cscanf(const _CHAR_ *format, ...)
 #else
 #ifdef STRING
 #undef _EOF_
 #define _EOF_ 0
-#define _GETC_(file) *file++
-#define _UNGETC_(nch, file) file--
+#define _GETC_(file) (consumed++, *file++)
+#define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #ifdef WIDE_SCANF
 #define _FUNCTION_ MSVCRT_swscanf(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, ...)
 #else /* WIDE_SCANF */
@@ -58,12 +58,12 @@
 #endif /* WIDE_SCANF */
 #else /* STRING */
 #ifdef WIDE_SCANF
-#define _GETC_(file) MSVCRT_fgetwc(file)
-#define _UNGETC_(nch, file) MSVCRT_ungetwc(nch, file)
+#define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
+#define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
 #define _FUNCTION_ MSVCRT_fwscanf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 #else /* WIDE_SCANF */
-#define _GETC_(file) MSVCRT_fgetc(file)
-#define _UNGETC_(nch, file) MSVCRT_ungetc(nch, file)
+#define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
+#define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
 #define _FUNCTION_ MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
 #endif /* WIDE_SCANF */
 #endif /* STRING */
@@ -76,7 +76,7 @@
  * more types of format spec.
  */
 int _FUNCTION_ {
-    int rd = 0;
+    int rd = 0, consumed = 0;
     int nch;
     va_list ap;
     if (!*format) return 0;
@@ -430,7 +430,7 @@ int _FUNCTION_ {
 	    case 'n': {
  		    if (!suppress) {
 			int*n = va_arg(ap, int*);
-			*n = rd;
+			*n = consumed - (nch!=_EOF_);
 		    }
 	        }
 		break;
