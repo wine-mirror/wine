@@ -134,10 +134,14 @@ XSetWMProperties
 XSetWMProtocols
 XSetWMSizeHints
 XShmAttach
+XShmCreateImage
+XShmCreatePixmap
 XShmDetach
+XShmGetImage
 XShmPixmapFormat
 XShmPutImage
 XShmQueryExtension
+XShmQueryVersion
 XShrinkRegion
 XStoreColor
 XStoreName

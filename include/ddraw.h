@@ -884,6 +884,12 @@ struct _common_directdrawdata {
     DWORD			depth;
     DWORD			height,width;	/* SetDisplayMode */
     HWND32                      mainWindow;     /* SetCooperativeLevel */
+
+    /* This is for Wine's fake mainWindow.
+       We need it also in DGA mode to make some games (for example Monkey Island III work) */
+    ATOM		winclass;
+    HWND32		window;
+    PAINTSTRUCT32	ps;
 };
 
 struct _dga_directdrawdata {
@@ -894,16 +900,15 @@ struct _dga_directdrawdata {
 
 struct _xlib_directdrawdata {
     Window		drawable;
-    int			use_xshm;
+    int			paintable;
+
+#ifdef HAVE_LIBXXSHM
+    int xshm_active;
+#endif
+    
     /* are these needed for anything? (draw_surf is the active surface)
     IDirectDrawSurface	*surfs;
     DWORD		num_surfs, alloc_surfs, draw_surf; */
-    int			paintable;
-
-/* current window implementation */
-    ATOM		winclass;
-    HWND32		window;
-    PAINTSTRUCT32	ps;
 };
 
 struct IDirectDraw {

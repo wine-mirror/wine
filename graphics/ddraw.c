@@ -11,8 +11,6 @@
  *   (This is the method I am using.)
  * - Another machine connected over some kind of network.
  *
- * FIXME: The Xshm implementation has been temporarily removed. It will be
- * later reintegrated into the Xlib implementation.
  */
 
 #include "config.h"
@@ -39,6 +37,13 @@
 
 #ifdef HAVE_LIBXXF86DGA
 #include "ts_xf86dga.h"
+#endif
+
+#ifdef HAVE_LIBXXSHM
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include "ts_xshm.h"
 #endif
 
 /* define this if you want to play Diablo using XF86DGA. (bug workaround) */
@@ -346,13 +351,25 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 
   /* Only redraw the screen when unlocking the buffer that is on screen */
   if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen))
+#ifdef HAVE_LIBXXSHM
+    if (this->s.ddraw->e.xlib.xshm_active)
+      TSXShmPutImage(display,
+		     this->s.ddraw->e.xlib.drawable,
+		     DefaultGCOfScreen(screen),
+		     this->t.xlib.image,
+		     0, 0, 0, 0,
+		     this->t.xlib.image->width,
+		     this->t.xlib.image->height,
+		     False);
+    else
+#endif
 	TSXPutImage(		display,
 				this->s.ddraw->e.xlib.drawable,
 				DefaultGCOfScreen(screen),
 				this->t.xlib.image,
 				0, 0, 0, 0,
 				this->t.xlib.image->width,
-		this->t.xlib.image->height);
+		  this->t.xlib.image->height);
   
 	if (this->s.palette && this->s.palette->cm)
 		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
@@ -410,6 +427,18 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 			flipto = this;
 	}
   
+#ifdef HAVE_LIBXXSHM
+	if (this->s.ddraw->e.xlib.xshm_active)
+	  TSXShmPutImage(display,
+			 this->s.ddraw->e.xlib.drawable,
+			 DefaultGCOfScreen(screen),
+			 flipto->t.xlib.image,
+			 0, 0, 0, 0,
+			 flipto->t.xlib.image->width,
+			 flipto->t.xlib.image->height,
+			 False);
+	else
+#endif
 	TSXPutImage(display,
 				this->s.ddraw->e.xlib.drawable,
 				DefaultGCOfScreen(screen),
@@ -417,7 +446,10 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 				0, 0, 0, 0,
 				flipto->t.xlib.image->width,
 				flipto->t.xlib.image->height);
-	TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+	
+	if (flipto->s.palette && flipto->s.palette->cm) {
+	  TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,flipto->s.palette->cm);
+	}
 	if (flipto!=this) {
 		XImage *tmp;
 		LPVOID	*surf;
@@ -427,12 +459,11 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		surf = this->s.surface;
 		this->s.surface = flipto->s.surface;
 		flipto->s.surface = surf;
-
-		flipto->t.xlib.on_screen = TRUE;
-		this->t.xlib.on_screen = FALSE;
 	}
+
 	return 0;
 }
+
 
 /* The IDirectDrawSurface3::SetPalette method attaches the specified
  * DirectDrawPalette object to a surface. The surface uses this palette for all
@@ -509,13 +540,15 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	RECT32	xdst,xsrc;
 	int	i,j;
 
-	TRACE(ddraw,"(%p)->(%p,%p,%p,%08lx,%p)\n",
-	      this,rdst,src,rsrc,dwFlags,lpbltfx);
-	if (rdst) TRACE(ddraw,"	destrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
-	if (rsrc) TRACE(ddraw,"	srcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
-	TRACE(ddraw,"\tflags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
-	if (dwFlags & DDBLT_DDFX) {
-	  TRACE(ddraw,"	blitfx: \n");_dump_DDBLTFX(lpbltfx->dwDDFX);
+	if (TRACE_ON(ddraw)) {
+	  TRACE(ddraw,"(%p)->(%p,%p,%p,%08lx,%p)\n",
+		this,rdst,src,rsrc,dwFlags,lpbltfx);
+	  if (rdst) TRACE(ddraw,"	destrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
+	  if (rsrc) TRACE(ddraw,"	srcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	  TRACE(ddraw,"\tflags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
+	  if (dwFlags & DDBLT_DDFX) {
+	    TRACE(ddraw,"	blitfx: \n");_dump_DDBLTFX(lpbltfx->dwDDFX);
+	  }
 	}
 		
 	if (rdst) {
@@ -536,6 +569,8 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		xsrc.right	= src->s.width;
 	}
 
+	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
+	
 	if (dwFlags & DDBLT_COLORFILL) {
 		int	bpp = this->s.ddraw->d.depth/8;
 		LPBYTE	xline,xpixel;
@@ -555,8 +590,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 			xline += this->s.lpitch;
 		}
 		dwFlags &= ~(DDBLT_COLORFILL);
-	}
-	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
+	} else { 	  /* Once we have done colorfill, we do not do anything else... */
 	if (	(xsrc.top ==0) && (xsrc.bottom ==this->s.height) &&
 		(xsrc.left==0) && (xsrc.right  ==this->s.width) &&
 		(xdst.top ==0) && (xdst.bottom ==this->s.height) &&
@@ -580,6 +614,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		   width);
 	  }
 	}
+	}
 	
 	if (dwFlags) {
 	  TRACE(ddraw,"\tUnsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
@@ -601,13 +636,25 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Blt(
     return ret;
 
   if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen))
-    TSXPutImage(display,
-		this->s.ddraw->e.xlib.drawable,
-		DefaultGCOfScreen(screen),
-		this->t.xlib.image,
-		0, 0, 0, 0,
-		this->t.xlib.image->width,
-		this->t.xlib.image->height);
+#ifdef HAVE_LIBXXSHM
+    if (this->s.ddraw->e.xlib.xshm_active)
+      TSXShmPutImage(display,
+		     this->s.ddraw->e.xlib.drawable,
+		     DefaultGCOfScreen(screen),
+		     this->t.xlib.image,
+		     0, 0, 0, 0,
+		     this->t.xlib.image->width,
+		     this->t.xlib.image->height,
+		     False);
+    else
+#endif
+      TSXPutImage(display,
+		  this->s.ddraw->e.xlib.drawable,
+		  DefaultGCOfScreen(screen),
+		  this->t.xlib.image,
+		  0, 0, 0, 0,
+		  this->t.xlib.image->width,
+		  this->t.xlib.image->height);
   if (this->s.palette && this->s.palette->cm)
     TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
 
@@ -706,26 +753,39 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 
 	if (!--(this->ref)) {
 		this->s.ddraw->lpvtbl->fnRelease(this->s.ddraw);
-		HeapFree(GetProcessHeap(),0,this->s.surface);
 
-                if( this->s.backbuffer )
- 		{
+    if( this->s.backbuffer ) {
 		  this->s.backbuffer->lpvtbl->fnRelease(this->s.backbuffer);
  		}
 
-		if (this->t.xlib.image != NULL) {
+    if (this->t.xlib.image != NULL) {
 		this->t.xlib.image->data = NULL;
+      
+#ifdef HAVE_LIBXXSHM
+      if (this->s.ddraw->e.xlib.xshm_active) {
+	TSXShmDetach(display, &(this->t.xlib.shminfo));
 		TSXDestroyImage(this->t.xlib.image);
+	shmdt(this->t.xlib.shminfo.shmaddr);
+      } else {
+#endif
+	HeapFree(GetProcessHeap(),0,this->s.surface);
+	TSXDestroyImage(this->t.xlib.image);
+#ifdef HAVE_LIBXXSHM	
+      }
+#endif
+      
 		this->t.xlib.image = 0;
-		}
+    } else {
+      HeapFree(GetProcessHeap(),0,this->s.surface);
+    }
 
 		if (this->s.palette)
                 	this->s.palette->lpvtbl->fnRelease(this->s.palette);
 
-
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
+  
 	return this->ref;
 }
 
@@ -798,13 +858,13 @@ static HRESULT WINAPI IDirectDrawSurface3_AddAttachedSurface(
 
 static HRESULT WINAPI IDirectDrawSurface3_GetDC(LPDIRECTDRAWSURFACE3 this,HDC32* lphdc) {
 	FIXME(ddraw,"(%p)->GetDC(%p)\n",this,lphdc);
-	*lphdc = BeginPaint32(this->s.ddraw->e.xlib.window,&this->s.ddraw->e.xlib.ps);
+	*lphdc = BeginPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
 	return 0;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_ReleaseDC(LPDIRECTDRAWSURFACE3 this,HDC32 hdc) {
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",this,(long)hdc);
-	EndPaint32(this->s.ddraw->e.xlib.window,&this->s.ddraw->e.xlib.ps);
+	EndPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
 	return 0;
 }
 
@@ -1091,6 +1151,7 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	IDirectDrawSurface3_PageUnlock,
 	IDirectDrawSurface3_SetSurfaceDesc,
 };
+
 
 /******************************************************************************
  *			IDirectDrawClipper
@@ -1407,7 +1468,6 @@ static HRESULT WINAPI IDirect3D2_EnumDevices(
 
 	d2.dwSize	= sizeof(d2);
 	d2.dwFlags	= 0;
-
 	cb((void*)&IID_IDirect3DHALDevice,"WINE Direct3D HAL","direct3d",&d1,&d2,context);
 #endif
 	return 0;
@@ -1514,6 +1574,71 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
+static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
+  XImage *img;
+
+#ifdef HAVE_LIBXXSHM
+  if (this->e.xlib.xshm_active) {
+    img = TSXShmCreateImage(display,
+			    DefaultVisualOfScreen(screen),
+			    this->d.depth,
+			    ZPixmap,
+			    NULL,
+			    &(lpdsf->t.xlib.shminfo),
+			    lpdsf->s.width,
+			    lpdsf->s.height);
+    
+    if (img == NULL)
+      return NULL;
+
+    lpdsf->t.xlib.shminfo.shmid = shmget( IPC_PRIVATE, img->bytes_per_line * img->height, IPC_CREAT|0777 );
+    if (lpdsf->t.xlib.shminfo.shmid < 0) {
+      TSXDestroyImage(img);
+      return NULL;
+    }
+
+    lpdsf->t.xlib.shminfo.shmaddr = img->data = (char*)shmat(lpdsf->t.xlib.shminfo.shmid, 0, 0);
+      
+    if (img->data == (char *) -1) {
+      TSXDestroyImage(img);
+      shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
+      return NULL;
+    }
+    lpdsf->t.xlib.shminfo.readOnly = False;
+      
+    TSXShmAttach(display, &(lpdsf->t.xlib.shminfo));
+    TSXSync(display, False);
+
+    shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
+
+    lpdsf->s.surface = img->data;
+  } else {
+#endif
+    /* Allocate surface memory */
+    lpdsf->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpdsf->s.width * lpdsf->s.height *this->d.depth/8);
+    
+    /* In this case, create an XImage */
+    img =
+      TSXCreateImage(display,
+		     DefaultVisualOfScreen(screen),
+		     this->d.depth,
+		     ZPixmap,
+		     0,
+		     lpdsf->s.surface,
+		     lpdsf->s.width,
+		     lpdsf->s.height,
+		     32,
+		     lpdsf->s.width * (this->d.depth / 8)
+		     );
+    
+#ifdef HAVE_LIBXXSHM
+  }
+#endif
+  lpdsf->s.lpitch = img->bytes_per_line;
+  
+  return img;
+}
+
 static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	LPDIRECTDRAW2 this,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk
 ) {
@@ -1539,7 +1664,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 			lpddsd->dwWidth	 = this->d.width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
 			lpddsd->dwHeight = this->d.height;
-  (*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
 
 	(*lpdsf)->s.width	= lpddsd->dwWidth;
 	(*lpdsf)->s.height	= lpddsd->dwHeight;
@@ -1547,67 +1671,57 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
   if ((lpddsd->dwFlags & DDSD_CAPS) && 
       (lpddsd->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)) {
 
+    /* Allocate surface memory */
+    (*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
+    
     /* No XImage for a offscreen buffer */
     (*lpdsf)->t.xlib.image = NULL;
     (*lpdsf)->t.xlib.on_screen = FALSE;
     (*lpdsf)->s.lpitch = lpddsd->dwWidth * (this->d.depth / 8);
     
-    TRACE(ddraw,"using system memory for a primary surface\n");
+    TRACE(ddraw,"using system memory for a primary surface (%p)\n", *lpdsf);
   } else {
     XImage *img;
       
-    TRACE(ddraw,"using standard XImage for a primary surface\n");
+    TRACE(ddraw,"using standard XImage for a primary surface (%p)\n", *lpdsf);
 
-    /* In this case, create an XImage */
-    img =
-		TSXCreateImage(	display,
-				DefaultVisualOfScreen(screen),
-		     this->d.depth,
-				ZPixmap,
-				0,
-				(*lpdsf)->s.surface,
-				(*lpdsf)->s.width,
-				(*lpdsf)->s.height,
-				32,
-		     (*lpdsf)->s.width * (this->d.depth / 8)
-		);
+    /* Create the XImage */
+    img = create_ximage(this, (LPDIRECTDRAWSURFACE3) *lpdsf);
+    if (img == NULL)
+      return DDERR_OUTOFMEMORY;
+    
     (*lpdsf)->t.xlib.image = img;
     (*lpdsf)->t.xlib.on_screen = TRUE;
-	(*lpdsf)->s.lpitch = img->bytes_per_line;
     
     /* Check for backbuffers */
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
 		LPDIRECTDRAWSURFACE3	back;
+      XImage *img;
 
 		if (lpddsd->dwBackBufferCount>1)
 			FIXME(ddraw,"urks, wants to have more than one backbuffer (%ld)!\n",lpddsd->dwBackBufferCount);
 
-		(*lpdsf)->s.backbuffer = back = (LPDIRECTDRAWSURFACE3)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface3));
+      (*lpdsf)->s.backbuffer = back =
+	(LPDIRECTDRAWSURFACE3)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface3));
 
+      TRACE(ddraw,"allocated back-buffer (%p)\n", back);
+      
 		this->lpvtbl->fnAddRef(this);
 		back->s.ddraw = this;
 
 		back->ref = 1;
 		back->lpvtbl = (LPDIRECTDRAWSURFACE3_VTABLE)&xlib_dds3vt;
-		/* FIXME: !8 bit images */
-		back->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-				  img->width*img->height*(this->d.depth / 8)
-		);
-      back->t.xlib.image = TSXCreateImage(display,
-			DefaultVisualOfScreen(screen),
-					  this->d.depth,
-			ZPixmap,
-			0,
-			back->s.surface,
-			this->d.width,
-			this->d.height,
-			32,
-					  this->d.width*(this->d.depth / 8)
-		);
+
+      back->s.width = lpddsd->dwWidth;
+      back->s.height = lpddsd->dwHeight;
+
+      /* Create the XImage */
+      img = create_ximage(this, back);
+      if (img == NULL)
+	return DDERR_OUTOFMEMORY;
+      back->t.xlib.image = img;
+      
       back->t.xlib.on_screen = FALSE;
-		back->s.width = this->d.width;
-		back->s.height = this->d.height;
-		back->s.lpitch = back->t.xlib.image->bytes_per_line;
 		back->s.backbuffer = NULL; /* does not have a backbuffer, it is
 					    * one! */
 	}
@@ -1661,6 +1775,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 ) {
 #ifdef HAVE_LIBXXF86DGA
 	int	i,*depths,depcount;
+	HWND32 window;
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n", this, width, height, depth);
 
@@ -1684,6 +1799,26 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 		this->e.dga.fb_height = height;
 	this->d.depth	= depth;
 
+	/* First, create a window for this mode. Apparently, some games
+	   (such as Monkey Island III) do not do this properly for themselves. */
+	window = CreateWindowEx32A(
+		0,
+		"WINE_DirectDraw",
+		"WINE_DirectDraw",
+		WS_VISIBLE|WS_SYSMENU|WS_THICKFRAME,
+		0,0,
+		width,
+		height,
+		0,
+		0,
+		0,
+		NULL
+	);
+	SetWindowLong32A(window,ddrawXlibThisOffset,(LONG)this);
+	ShowWindow32(window,TRUE);
+	UpdateWindow32(window);
+	assert(window);
+	
 	/* FIXME: this function OVERWRITES several signal handlers. 
 	 * can we save them? and restore them later? In a way that
 	 * it works for the library too?
@@ -1721,16 +1856,10 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 		return DDERR_UNSUPPORTEDMODE;
 	}
-	/*
-	if (this->d.width < width) {
-		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), width %ld exceeds framebuffer width %ld",width,height,depth,width,this->d.width);
-		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
-		return DDERR_UNSUPPORTEDMODE;
-	}
-	*/
-	if (this->e.xlib.window)
-		DestroyWindow32(this->e.xlib.window);
-	this->e.xlib.window = CreateWindowEx32A(
+	
+	if (this->d.window)
+		DestroyWindow32(this->d.window);
+	this->d.window = CreateWindowEx32A(
 		0,
 		"WINE_DirectDraw",
 		"WINE_DirectDraw",
@@ -1745,16 +1874,16 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	);
 
         /* Store this with the window. We'll use it for the window procedure */
-	SetWindowLong32A(this->e.xlib.window,ddrawXlibThisOffset,(LONG)this);
+	SetWindowLong32A(this->d.window,ddrawXlibThisOffset,(LONG)this);
 
 	this->e.xlib.paintable = 1;
 
-	ShowWindow32(this->e.xlib.window,TRUE);
-	UpdateWindow32(this->e.xlib.window);
+	ShowWindow32(this->d.window,TRUE);
+	UpdateWindow32(this->d.window);
 
-	assert(this->e.xlib.window);
+	assert(this->d.window);
 
-        this->e.xlib.drawable  = WIN_FindWndPtr(this->e.xlib.window)->window;  
+        this->e.xlib.drawable  = WIN_FindWndPtr(this->d.window)->window;  
 
         /* We don't have a context for this window. Host off the desktop */
         if( !this->e.xlib.drawable )
@@ -1764,11 +1893,6 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	this->d.width	= width;
 	this->d.height	= height;
-
-	/* adjust fb_height, so we don't overlap */
-	/*
-	if (this->e.dga.fb_height < height)
-		this->e.dga.fb_height = height;*/
 	this->d.depth	= depth;
 	return 0;
 }
@@ -2073,6 +2197,7 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		ddsfd.ddpfPixelFormat.dwFourCC	= 0;
 		ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
 		ddsfd.ddpfPixelFormat.x.dwRGBBitCount	= depths[i];
+		/* FIXME: those masks would have to be set in depth > 8 */
 		if (depths[i]==8) {
 		ddsfd.ddpfPixelFormat.y.dwRBitMask  	= 0;
 		ddsfd.ddpfPixelFormat.z.dwGBitMask  	= 0;
@@ -2081,35 +2206,36 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 			ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
 			ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
 		} else {
-			ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
-
-			/* FIXME: We should query those from X itself */
-			switch (depths[i]) {
-			case 16:
-				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000f;
-				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x00f0;
-				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x0f00;
-				break;
-			case 24:
-				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
-				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
-				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
-				break;
-			case 32:
-				ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
-				ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
-				ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
-				break;
-			}
+		  ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		  
+		  /* FIXME: We should query those from X itself */
+		  switch (depths[i]) {
+		  case 16:
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000f;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x00f0;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x0f00;
+		    break;
+		  case 24:
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+		    break;
+		  case 32:
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+		    break;
+		  }
 		}
+
 		ddsfd.dwWidth = screenWidth;
 		ddsfd.dwHeight = screenHeight;
 		TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
 		if (!modescb(&ddsfd,context)) return 0;
 
 		for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
-			ddsfd.dwWidth	= modes[i].w;
-			ddsfd.dwHeight	= modes[i].h;
+			ddsfd.dwWidth	= modes[j].w;
+			ddsfd.dwHeight	= modes[j].h;
 			TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
 			if (!modescb(&ddsfd,context)) return 0;
 		}
@@ -2356,6 +2482,67 @@ static struct IDirectDraw2_VTable xlib_dd2vt = {
  * 				DirectDrawCreate
  */
 
+LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
+{
+   LRESULT ret;
+   LPDIRECTDRAW ddraw = NULL;
+   DWORD lastError;
+
+   /* FIXME(ddraw,"(0x%04x,%s,0x%08lx,0x%08lx),stub!\n",(int)hwnd,SPY_GetMsgName(msg),(long)wParam,(long)lParam); */
+
+   SetLastError( ERROR_SUCCESS );
+   ddraw  = (LPDIRECTDRAW)GetWindowLong32A( hwnd, ddrawXlibThisOffset );
+   if( (!ddraw)  &&
+       ( ( lastError = GetLastError() ) != ERROR_SUCCESS )
+     ) 
+   {
+     ERR( ddraw, "Unable to retrieve this ptr from window. Error %08lx\n", lastError );
+   }
+
+   if( ddraw )
+   {
+      /* Perform any special direct draw functions */
+      if (msg==WM_PAINT)
+        ddraw->e.xlib.paintable = 1;
+
+      /* Now let the application deal with the rest of this */
+      if( ddraw->d.mainWindow )
+      {
+    
+        /* Don't think that we actually need to call this but... 
+           might as well be on the safe side of things... */
+
+	/* I changed hwnd to ddraw->d.mainWindow as I did not see why
+	   it should be the procedures of our fake window that gets called
+	   instead of those of the window provided by the application.
+	   And with this patch, mouse clicks work with Monkey Island III
+	     - Lionel */
+	ret = DefWindowProc32A( ddraw->d.mainWindow, msg, wParam, lParam );
+
+        if( !ret )
+        {
+          /* We didn't handle the message - give it to the application */
+	  if (ddraw && ddraw->d.mainWindow && WIN_FindWndPtr(ddraw->d.mainWindow)) {
+          	ret = CallWindowProc32A( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
+               	                   ddraw->d.mainWindow, msg, wParam, lParam );
+	  }
+        }
+        
+      }
+      else
+      {
+        ret = DefWindowProc32A(hwnd, msg, wParam, lParam );
+      } 
+
+    }
+    else
+    {
+	ret = DefWindowProc32A(hwnd,msg,wParam,lParam);
+    }
+
+    return ret;
+}
+
 HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
 #ifdef HAVE_LIBXXF86DGA
 	int	memsize,banksize,width,major,minor,flags,height;
@@ -2402,103 +2589,60 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #ifdef RESTORE_SIGNALS
 	SIGNAL_InitEmulator();
 #endif
+
 	return 0;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return DDERR_INVALIDDIRECTDRAWGUID;
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
-LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
-{
-   LRESULT ret;
-   LPDIRECTDRAW ddraw = NULL;
-   DWORD lastError;
-
-   /*FIXME(ddraw,"(0x%04x,%s,0x%08lx,0x%08lx),stub!\n",(int)hwnd,SPY_GetMsgName(msg),(long)wParam,(long)lParam); */
-
-   SetLastError( ERROR_SUCCESS );
-   ddraw  = (LPDIRECTDRAW)GetWindowLong32A( hwnd, ddrawXlibThisOffset );
-   if( (!ddraw)  &&
-       ( ( lastError = GetLastError() ) != ERROR_SUCCESS )
-     ) 
+BOOL32
+DDRAW_XSHM_Available()
    {
-     ERR( ddraw, "Unable to retrieve this ptr from window. Error %08lx\n", lastError );
-   }
-
-   if( ddraw )
-   {
-      /* Perform any special direct draw functions */
-      if (msg==WM_PAINT)
-        ddraw->e.xlib.paintable = 1;
-
-      /* Now let the application deal with the rest of this */
-      if( ddraw->d.mainWindow )
+#ifdef HAVE_LIBXXSHM
+  if (TSXShmQueryExtension(display))
       {
-    
-        /* Don't think that we actually need to call this but... 
-           might as well be on the safe side of things... */
-        ret = DefWindowProc32A( hwnd, msg, wParam, lParam );
+      int major, minor;
+      Bool shpix;
 
-        if( !ret )
-        {
-          /* We didn't handle the message - give it to the application */
-	  if (ddraw && ddraw->d.mainWindow && WIN_FindWndPtr(ddraw->d.mainWindow))
-          	ret = CallWindowProc32A( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
-               	                   ddraw->d.mainWindow, msg, wParam, lParam );
-        }
-        
-      }
+      if (TSXShmQueryVersion(display, &major, &minor, &shpix))
+	return 1;
       else
-      {
-        ret = DefWindowProc32A( ddraw->d.mainWindow, msg, wParam, lParam );
-      } 
-
+	return 0;
     }
     else
-    {
-	ret = DefWindowProc32A(hwnd,msg,wParam,lParam);
-    }
-
-    return ret;
+    return 0;
+#else
+  return 0;
+#endif
 }
 
 HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
-	WNDCLASS32A	wc;
-	int		have_xshm = 0;
-        WND*            pParentWindow; 
 
 	*lplpDD = (LPDIRECTDRAW)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDraw));
 	(*lplpDD)->lpvtbl = &xlib_ddvt;
 	(*lplpDD)->ref = 1;
 	(*lplpDD)->e.xlib.drawable = 0; /* in SetDisplayMode */
-	(*lplpDD)->e.xlib.use_xshm = have_xshm;
-	wc.style	= CS_GLOBALCLASS;
-	wc.lpfnWndProc	= Xlib_DDWndProc;
-	wc.cbClsExtra	= 0;
-	wc.cbWndExtra	= /* Defines extra mem for window. This is used for storing this */
-                          sizeof( LPDIRECTDRAW ); /*  ddrawXlibThisOffset */
-
-        /* We can be a child of the desktop since we're really important */
-        pParentWindow   = WIN_GetDesktop();
-	wc.hInstance	= pParentWindow ? pParentWindow->hwndSelf : 0;
-        wc.hInstance    = 0; 
-
-	wc.hIcon	= 0;
-	wc.hCursor	= (HCURSOR32)IDC_ARROW32A;
-	wc.hbrBackground= NULL_BRUSH;
-	wc.lpszMenuName	= 0;
-	wc.lpszClassName= "WINE_DirectDraw";
-
-	(*lplpDD)->e.xlib.winclass = RegisterClass32A(&wc);
 
 	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
 	(*lplpDD)->d.height = screenHeight;
 	(*lplpDD)->d.width = screenWidth;
+
+#ifdef HAVE_LIBXXSHM
+	/* Test if XShm is available.
+	   As XShm is not ready yet for 'prime-time', it is disabled for now */
+	if (((*lplpDD)->e.xlib.xshm_active = 0 /* DDRAW_XSHM_Available() */))
+	  TRACE(ddraw, "Using XShm extesion.\n");
+#endif
+	
 	return 0;
 }
 
 HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter ) {
 	char	xclsid[50];
+	WNDCLASS32A	wc;
+        WND*            pParentWindow; 
+	HRESULT ret;
 
 	if (HIWORD(lpGUID))
 		WINE_StringFromCLSID(lpGUID,xclsid);
@@ -2518,11 +2662,35 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 			lpGUID = &XLIB_DirectDraw_GUID;
 	}
 
-	if (!memcmp(lpGUID, &DGA_DirectDraw_GUID, sizeof(GUID)))
-		return DGA_DirectDrawCreate(lplpDD, pUnkOuter);
-	else if (!memcmp(lpGUID, &XLIB_DirectDraw_GUID, sizeof(GUID)))
-		return Xlib_DirectDrawCreate(lplpDD, pUnkOuter);
+	wc.style	= CS_GLOBALCLASS;
+	wc.lpfnWndProc	= Xlib_DDWndProc;
+	wc.cbClsExtra	= 0;
+	wc.cbWndExtra	= /* Defines extra mem for window. This is used for storing this */
+                          sizeof( LPDIRECTDRAW ); /*  ddrawXlibThisOffset */
 
+        /* We can be a child of the desktop since we're really important */
+        pParentWindow   = WIN_GetDesktop();
+	wc.hInstance	= pParentWindow ? pParentWindow->hwndSelf : 0;
+        wc.hInstance    = 0; 
+
+	wc.hIcon	= 0;
+	wc.hCursor	= (HCURSOR32)IDC_ARROW32A;
+	wc.hbrBackground= NULL_BRUSH;
+	wc.lpszMenuName	= 0;
+	wc.lpszClassName= "WINE_DirectDraw";
+	RegisterClass32A(&wc);
+
+	if (!memcmp(lpGUID, &DGA_DirectDraw_GUID, sizeof(GUID)))
+		ret = DGA_DirectDrawCreate(lplpDD, pUnkOuter);
+	else if (!memcmp(lpGUID, &XLIB_DirectDraw_GUID, sizeof(GUID)))
+		ret = Xlib_DirectDrawCreate(lplpDD, pUnkOuter);
+	else
+	  goto err;
+
+	(*lplpDD)->d.winclass = RegisterClass32A(&wc);
+	return ret;
+
+      err:
 	fprintf(stderr,"DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",xclsid,lplpDD,pUnkOuter);
 	return DDERR_INVALIDDIRECTDRAWGUID;
 }

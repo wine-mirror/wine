@@ -98,17 +98,32 @@ END
     } elsif($name eq "XShm") {
 	output_fn("XShmQueryExtension", "Bool",
 		  "Display *", "Display *a0", "a0");
+	output_fn("XShmQueryVersion", "Bool",
+		  "Display *, int *, int *, Bool *", 
+		  "Display *a0, int *a1, int *a2, Bool *a3", "a0, a1, a2, a3");
 	output_fn("XShmPixmapFormat", "int",
 		  "Display *", "Display *a0", "a0");
-	output_fn("XShmDetach", Status,
+	output_fn("XShmAttach", Status,
 		  "Display *, XShmSegmentInfo *",
 		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
-	output_fn("XShmAttach", Status,
+	output_fn("XShmDetach", Status,
 		  "Display *, XShmSegmentInfo *",
 		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
 	output_fn("XShmPutImage", Status,
 		  "Display *, Drawable, GC, XImage *, int, int, int, int, unsigned int, unsigned int, Bool",
 		  "Display *a0, Drawable a1, GC a2, XImage *a3, int a4, int a5, int a6, int a7, unsigned int a8, unsigned int a9, Bool a10", "a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10");
+	output_fn("XShmGetImage", Status,
+		  "Display *, Drawable, XImage *, int, int, unsigned long",
+		  "Display *a0, Drawable a1, XImage *a2, int a3, int a4, unsigned long a5", 
+		  "a0, a1, a2, a3, a4, a5");
+	output_fn("XShmCreateImage", "XImage *",
+		  "Display *, Visual *, unsigned int, int, char *, XShmSegmentInfo *, unsigned int, unsigned int",
+		  "Display *a0, Visual *a1, unsigned int a2, int a3, char *a4, XShmSegmentInfo *a5, unsigned int a6, unsigned int a7",
+		  "a0, a1, a2, a3, a4, a5, a6, a7");
+	output_fn("XShmCreatePixmap", "Pixmap",
+		  "Display *, Drawable, char *, XShmSegmentInfo *, unsigned int, unsigned int, unsigned int",
+		  "Display *a0, Drawable a1, char *a2, XShmSegmentInfo *a3, unsigned int a4, unsigned int a5, unsigned int a6",
+		  "a0, a1, a2, a3, a4, a5, a6");
     } elsif($name eq "xf86dga") {
     	output_fn("XF86DGAQueryVersion",Bool,
 		"Display*,int*,int*",
