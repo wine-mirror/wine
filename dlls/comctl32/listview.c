@@ -1637,6 +1637,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     BOOL doState = FALSE, doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
     RECT Box, State, Icon, Label;
+    COLUMN_INFO *lpColumnInfo = NULL;
 
     TRACE("(lpLVItem=%s)\n", debuglvitem_t(lpLVItem, TRUE));
 	
@@ -1654,9 +1655,15 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     /************************************************************/
     /* compute the box rectangle (it should be cheap to do)     */
     /************************************************************/
-    if (lpLVItem->iSubItem)
+    if (lpLVItem->iSubItem || uView == LVS_REPORT)
     {
-        if (!LISTVIEW_GetHeaderRect(infoPtr, lpLVItem->iSubItem, &Box)) return FALSE;
+	lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, lpLVItem->iSubItem);
+	assert(lpColumnInfo);
+    }
+
+    if (lpLVItem->iSubItem)    
+    {
+	Box = lpColumnInfo->rcHeader;
     }
     else
     {
@@ -1729,8 +1736,8 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	    if (!IsRectEmpty(&State)) Icon.left += IMAGE_PADDING;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
-	    /* FIXME: add suport for icons for subitems */
-	    if (infoPtr->himlSmall && lpLVItem->iSubItem == 0) Icon.right += infoPtr->iconSize.cx;
+	    if (infoPtr->himlSmall && (!lpColumnInfo || lpColumnInfo->hasImage)) 
+		Icon.right += infoPtr->iconSize.cx;
 	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
 	}
 	if(lprcIcon) *lprcIcon = Icon;
@@ -1748,7 +1755,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	Label.right = Box.right;
 	if (uView == LVS_REPORT)
 	{
-	    if (lpLVItem->iSubItem == 0 && !LISTVIEW_GetHeaderRect(infoPtr, 0, &Label)) return FALSE;
+	    if (lpLVItem->iSubItem == 0) Label = lpColumnInfo->rcHeader;
 	    Label.right -= REPORT_MARGINX;
 	}
 
@@ -3379,20 +3386,10 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     uFormat = (uView == LVS_ICON ? (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS) : LV_SL_DT_FLAGS);
     if (uView == LVS_ICON)
 	uFormat = (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS);
-    else 
+    else if (nSubItem)
     {
-	INT align = DT_LEFT;
-	
-	if (nSubItem)
-	{
-    	    LVCOLUMNW lvColumn;
-	    lvColumn.mask = LVCF_FMT;
-	    LISTVIEW_GetColumnT(infoPtr, nSubItem, &lvColumn, TRUE);
-	    TRACE("lvColumn=%s\n", debuglvcolumn_t(&lvColumn, TRUE));
-	    if (lvColumn.fmt & LVCFMT_RIGHT) align = DT_RIGHT;
-	    else if (lvColumn.fmt & LVCFMT_CENTER) align = DT_CENTER;
-	}
-	uFormat |= align;
+	COLUMN_INFO *lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
+	if (lpColumnInfo) uFormat |= lpColumnInfo->align;
     }
     if (!(uFormat & (DT_RIGHT | DT_CENTER))) rcLabel.left += 2;
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
