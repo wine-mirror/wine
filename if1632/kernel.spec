@@ -480,12 +480,12 @@ file	krnl386.exe
 610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
 611 return FreeThunklet 8 0
 612 pascal16 IsSLThunklet(ptr) IsSLThunklet
-613 stub KERNEL_613  # (cbclient)
-614 stub KERNEL_614  # (cbclient)
-615 stub KERNEL_615  # (cbclient)
-616 stub KERNEL_616  # (cbclient)
-617 stub KERNEL_617  # (cbclient)
-618 stub KERNEL_618  # (cbclient)
+613 stub KERNEL_613
+614 stub KERNEL_614
+615 pascal16 ConvertDialog32To16(long long long) ConvertDialog32To16
+616 pascal16 ConvertMenu32To16(long long long) ConvertMenu32To16
+617 pascal16 GetMenu32Size(ptr) GetMenu32Size
+618 pascal16 GetDialog32Size(ptr) GetDialog32Size
 619 pascal16 RegisterCBClient(word ptr long) RegisterCBClient
 620 register CBClientThunkSL() CBClientThunkSL
 621 stub KERNEL_621  # (cbclient)

@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = ne
 
 C_SRCS = \
+	convert.c \
 	module.c \
 	resource.c \
 	segment.c
