@@ -114,7 +114,7 @@ STRINGTABLE LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
    MCIERR_CREATEWINDOW, "No puede crearse o usar una ventana."
    MCIERR_FILE_READ, "No puede leerse el fichero especificado. Asegúrese de que el fichero aún está presente, o revise su disco o conexión de red."
    MCIERR_FILE_WRITE, "No puede grabarse el fichero especificado. Asegúrese de tener suficiente espacio en disco o de que permanece conectado a la red."
-   MCIERR_SEQ_DIV_INCOMPATIBLE, "Los formatos de tiempo de \"song pointer\" y SMPTE son mutuamente exclusivos. No pueden utilizarse a la vez."
+   MCIERR_SEQ_DIV_INCOMPATIBLE, "Los formatos de tiempo de ""song pointer"" y SMPTE son mutuamente exclusivos. No pueden utilizarse a la vez."
    MCIERR_SEQ_NOMIDIPRESENT, "El sistema no tiene dispositivos MIDI instalados. Use la opción Controladores en el Panel de Control para instalar el dispositivo."
    MCIERR_SEQ_PORT_INUSE, "El puerto MIDI especificado ya está en uso. Espere hasta que esté libre e intente nuevamente."
    MCIERR_SEQ_PORT_MAPNODEVICE, "La configuración actual del mapeador MIDI refiere a un dispositivo MIDI que no está instalado en el sistema. Use el la opción del mapeador MIDI en el Panel de Control para editar la configuración."
