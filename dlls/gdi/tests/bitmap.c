@@ -155,7 +155,96 @@ static void test_createdibitmap(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_dibsections(void)
+{
+    HDC hdc, hdcmem;
+    HBITMAP hdib, oldbm;
+    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
+    BYTE *bits;
+    RGBQUAD rgb[256];
+    int ret;
+    char logpalbuf[sizeof(LOGPALETTE) + 256 * sizeof(PALETTEENTRY)];
+    LOGPALETTE *plogpal = (LOGPALETTE*)logpalbuf;
+    WORD *index;
+    HPALETTE hpal, oldpal;
+
+    hdc = GetDC(0);
+    memset(pbmi, 0, sizeof(bmibuf));
+    pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
+    pbmi->bmiHeader.biHeight = 16;
+    pbmi->bmiHeader.biWidth = 16;
+    pbmi->bmiHeader.biBitCount = 1;
+    pbmi->bmiHeader.biPlanes = 1;
+    pbmi->bmiHeader.biCompression = BI_RGB;
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0;
+    pbmi->bmiColors[0].rgbBlue = 0;
+    pbmi->bmiColors[1].rgbRed = 0;
+    pbmi->bmiColors[1].rgbGreen = 0;
+    pbmi->bmiColors[1].rgbBlue = 0xff;
+
+    hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+
+    hdcmem = CreateCompatibleDC(hdc);
+    oldbm = SelectObject(hdcmem, hdib);
+
+    ret = GetDIBColorTable(hdcmem, 0, 2, rgb);
+    ok(ret == 2, "GetDIBColorTable returned %d\n", ret);
+    ok(!memcmp(rgb, pbmi->bmiColors, 2 * sizeof(RGBQUAD)),
+       "GetDIBColorTable returns table 0: r%02x g%02x b%02x res%02x 1: r%02x g%02x b%02x res%02x\n",
+       rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
+       rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
+
+    ret = GetDIBColorTable(hdc, 0, 2, rgb);
+    ok(ret == 0, "GetDIBColorTable returned %d\n", ret);
+
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+
+    /* Now create a palette and a palette indexed dib section */
+    memset(plogpal, 0, sizeof(logpalbuf));
+    plogpal->palVersion = 0x300;
+    plogpal->palNumEntries = 2;
+    plogpal->palPalEntry[0].peRed = 0xff;
+    plogpal->palPalEntry[0].peBlue = 0xff;
+    plogpal->palPalEntry[1].peGreen = 0xff;
+
+    index = (WORD*)pbmi->bmiColors;
+    *index++ = 0;
+    *index = 1;
+    hpal = CreatePalette(plogpal);
+    ok(hpal != NULL, "CreatePalette failed\n");
+    oldpal = SelectPalette(hdc, hpal, TRUE);
+    hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+
+    /* The colour table has already been grabbed from the dc, so we select back the
+       old palette */
+
+    SelectPalette(hdc, oldpal, TRUE);
+    oldbm = SelectObject(hdcmem, hdib);
+
+    ret = GetDIBColorTable(hdcmem, 0, 2, rgb);
+    ok(ret == 2, "GetDIBColorTable returned %d\n", ret);
+    ok(rgb[0].rgbRed == 0xff && rgb[0].rgbBlue == 0xff && rgb[0].rgbGreen == 0 &&
+       rgb[1].rgbRed == 0    && rgb[1].rgbBlue == 0    && rgb[1].rgbGreen == 0xff,
+       "GetDIBColorTable returns table 0: r%02x g%02x b%02x res%02x 1: r%02x g%02x b%02x res%02x\n",
+       rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
+       rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
+
+
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+
+
+    DeleteDC(hdcmem);
+    ReleaseDC(0, hdc);
+}    
+
 START_TEST(bitmap)
 {
     test_createdibitmap();
+    test_dibsections();
 }

@@ -261,6 +261,10 @@ typedef struct
     int         nColorMap;
     int        *colorMap;
 
+    /* Original dib color table converted to
+       rgb values if usage was DIB_PAL_COLORS */
+    RGBQUAD    *colorTable;
+
     /* Cached XImage */
     XImage     *image;
 

@@ -324,7 +324,50 @@ int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD dept
                                    isInfo, colorPtr, 0, colors);
 }
 
+/***********************************************************************
+ *           X11DRV_DIB_BuildColorTable
+ *
+ * Build the dib color table. This either keeps a copy of the bmiColors array if
+ * usage is DIB_RGB_COLORS, or looks up the palette indicies if usage is
+ * DIB_PAL_COLORS.
+ * Should not be called for a >8-bit deep bitmap.
+ */
+static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
+                                            const BITMAPINFO *info )
+{
+    RGBQUAD *colorTable;
+    int colors, i;
 
+    colors = info->bmiHeader.biClrUsed;
+    if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+
+    if (colors > 256) {
+        ERR("called with >256 colors!\n");
+        return NULL;
+    }
+
+    if (!(colorTable = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) )))
+	return NULL;
+
+    if(coloruse == DIB_RGB_COLORS)
+        memcpy(colorTable, info->bmiColors, colors * sizeof(RGBQUAD));
+    else {
+        HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
+        PALETTEENTRY pal_ents[256];
+        WORD *index;
+
+        GetPaletteEntries(hpal, 0, 256, pal_ents);
+        for(i = 0, index = (WORD*)info->bmiColors; i < colors; i++, index++) {
+            colorTable[i].rgbRed = pal_ents[*index].peRed;
+            colorTable[i].rgbGreen = pal_ents[*index].peGreen;
+            colorTable[i].rgbBlue = pal_ents[*index].peBlue;
+            colorTable[i].rgbReserved = 0;
+        }
+    }
+    return colorTable;
+}
+        
+    
 /***********************************************************************
  *           X11DRV_DIB_MapColor
  */
@@ -3972,6 +4015,7 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
 {
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
+  int identity[2] = {0,1};
 
   if (DIB_GetBitmapInfo( &dib->dibSection.dsBmih, &descr.infoWidth, &descr.lines,
 			 &descr.infoBpp, &descr.compression ) == -1)
@@ -3984,6 +4028,9 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
   descr.nColorMap = nColorMap;
   descr.bits      = dib->dibSection.dsBm.bmBits;
   descr.depth     = bmp->bitmap.bmBitsPixel;
+
+  if(descr.infoBpp == 1)
+      descr.colorMap = (void*)identity;
 
   switch (descr.infoBpp)
   {
@@ -4550,6 +4597,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   X11DRV_DIBSECTION *dib = NULL;
   int *colorMap = NULL;
   int nColorMap;
+  RGBQUAD *colorTable = NULL;
 
   /* Fill BITMAP32 structure with DIB data */
   const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
@@ -4602,10 +4650,11 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   }
 
   /* Create Color Map */
-  if (bm.bmBits && bm.bmBitsPixel <= 8)
+  if (bm.bmBits && bm.bmBitsPixel <= 8) {
       colorMap = X11DRV_DIB_BuildColorMap( usage == DIB_PAL_COLORS? physDev : NULL,
                                            usage, bm.bmBitsPixel, bmi, &nColorMap );
-
+      colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, bm.bmBitsPixel, bmi );
+  }
   /* Allocate Memory for DIB and fill structure */
   if (bm.bmBits)
     dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(X11DRV_DIBSECTION));
@@ -4642,6 +4691,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       dib->status    = DIB_Status_None;
       dib->nColorMap = nColorMap;
       dib->colorMap  = colorMap;
+      dib->colorTable = colorTable;
     }
 
   /* Create Device Dependent Bitmap and add DIB pointer */
@@ -4692,6 +4742,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 
       if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
       if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
+      if (colorTable) { HeapFree(GetProcessHeap(), 0, colorTable); colorTable = NULL; }
       if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
       if (bmp) { GDI_ReleaseObj(res); bmp = NULL; }
       if (res) { DeleteObject(res); res = 0; }
@@ -4740,6 +4791,8 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 
   if (dib->colorMap)
     HeapFree(GetProcessHeap(), 0, dib->colorMap);
+  if (dib->colorTable)
+    HeapFree(GetProcessHeap(), 0, dib->colorTable);
 
   DeleteCriticalSection(&(dib->lock));
 }
@@ -4757,7 +4810,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
     if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC ))) return 0;
     dib = (X11DRV_DIBSECTION *) bmp->dib;
 
-    if (dib && dib->colorMap) {
+    if (dib && dib->colorMap && start < dib->nColorMap) {
         UINT end = count + start;
         if (end > dib->nColorMap) end = dib->nColorMap;
         /*
@@ -4766,6 +4819,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
          * of the bitmap object.
          */
         X11DRV_DIB_Lock(bmp, DIB_Status_AppMod, FALSE);
+        memcpy(dib->colorTable + start, colors, (end - start) * sizeof(RGBQUAD));
         X11DRV_DIB_GenColorMap( physDev, dib->colorMap, DIB_RGB_COLORS,
                                 dib->dibSection.dsBm.bmBitsPixel,
                                 TRUE, colors, start, end );
@@ -4789,17 +4843,10 @@ UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, R
     if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC ))) return 0;
     dib = (X11DRV_DIBSECTION *) bmp->dib;
 
-    if (dib && dib->colorMap) {
-        UINT i, end = count + start;
-        if (end > dib->nColorMap) end = dib->nColorMap;
-        for (i = start; i < end; i++,colors++) {
-            COLORREF col = X11DRV_PALETTE_ToLogical( dib->colorMap[i] );
-            colors->rgbBlue  = GetBValue(col);
-            colors->rgbGreen = GetGValue(col);
-            colors->rgbRed   = GetRValue(col);
-            colors->rgbReserved = 0;
-        }
-        ret = end-start;
+    if (dib && dib->colorTable && start < dib->nColorMap) {
+        if (start + count > dib->nColorMap) count = dib->nColorMap - start;
+        memcpy(colors, dib->colorTable + start, count * sizeof(RGBQUAD));
+        ret = count;
     }
     GDI_ReleaseObj( hBitmap );
     return ret;
