@@ -110,7 +110,7 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, const char* addr,
          * interest.
          */
         if (ELF32_ST_TYPE(symp->st_info) == STT_SECTION || 
-            symp->st_shndx == STN_UNDEF)
+            symp->st_shndx == SHN_UNDEF)
         {
             continue;
         }
