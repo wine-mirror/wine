@@ -41,7 +41,6 @@
 #include "wingdi.h"
 #include "shlobj.h"  /* DROPFILES */
 
-#include "clipboard.h"
 #include "win.h"
 #include "winpos.h"
 #include "winreg.h"

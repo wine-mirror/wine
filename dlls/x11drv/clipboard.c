@@ -77,7 +77,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "clipboard.h"
 #include "win.h"
 #include "x11drv.h"
 #include "wine/debug.h"
@@ -98,6 +97,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define S_NOSELECTION    0
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
+
+typedef struct
+{
+    HWND hWndOpen;
+    HWND hWndOwner;
+    HWND hWndViewer;
+    UINT seqno;
+    UINT flags;
+} CLIPBOARDINFO, *LPCLIPBOARDINFO;
 
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
@@ -742,25 +750,25 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
     }
     else
     {
-            CLIPBOARDINFO cbInfo;
+        CLIPBOARDINFO cbInfo;
 
         if (X11DRV_CLIPBOARD_GetClipboardInfo(&cbInfo) && cbInfo.hWndOwner)
-            {
-                /* Send a WM_RENDERFORMAT message to notify the owner to render the
-                 * data requested into the clipboard.
-                 */
-                TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", cbInfo.hWndOwner);
-                SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, (WPARAM)lpData->wFormatID, 0);
+        {
+            /* Send a WM_RENDERFORMAT message to notify the owner to render the
+             * data requested into the clipboard.
+             */
+            TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", cbInfo.hWndOwner);
+            SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, (WPARAM)lpData->wFormatID, 0);
 
-	        if (!lpData->hData32 && !lpData->hData16)
-                    bret = FALSE;
-            }
-            else
-            {
-                ERR("hWndClipOwner is lost!\n");
+            if (!lpData->hData32 && !lpData->hData16)
                 bret = FALSE;
-            }
         }
+        else
+        {
+            ERR("hWndClipOwner is lost!\n");
+            bret = FALSE;
+        }
+    }
 
     return bret;
 }
