@@ -49,12 +49,6 @@
 
 #define PIPENAME "\\\\.\\PiPe\\tests_" __FILE__
 
-static void msg(const char *s)
-{
-    DWORD cbWritten;
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), s, strlen(s), &cbWritten, NULL);
-}
-
 void test_CreateNamedPipe(void)
 {
     HANDLE hnp;
@@ -64,7 +58,7 @@ void test_CreateNamedPipe(void)
     DWORD written;
     DWORD readden;
 
-    msg("test_CreateNamedPipe starting\n");
+    trace("test_CreateNamedPipe starting\n");
     /* Bad parameter checks */
     hnp = CreateNamedPipe("not a named pipe", PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
@@ -165,7 +159,7 @@ void test_CreateNamedPipe(void)
 
     ok(CloseHandle(hnp), "CloseHandle");
 
-    msg("test_CreateNamedPipe returning\n");
+    trace("test_CreateNamedPipe returning\n");
 }
 
 void test_CreateNamedPipe_instances_must_match(void)
@@ -239,7 +233,7 @@ void test_CreateNamedPipe_instances_must_match(void)
 static DWORD CALLBACK alarmThreadMain(LPVOID arg)
 {
     DWORD timeout = (DWORD) arg;
-    msg("alarmThreadMain\n");
+    trace("alarmThreadMain\n");
     Sleep(timeout);
     ok(FALSE, "alarm");
     ExitProcess(1);
@@ -253,7 +247,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
 {
     int i;
 
-    msg("serverThreadMain1 start\n");
+    trace("serverThreadMain1 start\n");
     /* Set up a simple echo server */
     hnp = CreateNamedPipe(PIPENAME "serverThreadMain1", PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -271,30 +265,30 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         DWORD success;
 
         /* Wait for client to connect */
-        msg("Server calling ConnectNamedPipe...\n");
+        trace("Server calling ConnectNamedPipe...\n");
         ok(ConnectNamedPipe(hnp, NULL)
             || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe");
-        msg("ConnectNamedPipe returned.\n");
+        trace("ConnectNamedPipe returned.\n");
 
         /* Echo bytes once */
         memset(buf, 0, sizeof(buf));
 
-        msg("Server reading...\n");
+        trace("Server reading...\n");
         success = ReadFile(hnp, buf, sizeof(buf), &readden, NULL);
-        msg("Server done reading.\n");
+        trace("Server done reading.\n");
         ok(success, "ReadFile");
 		ok(readden, "short read");
 
-        msg("Server writing...\n");
+        trace("Server writing...\n");
         ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile");
-        msg("Server done writing.\n");
+        trace("Server done writing.\n");
         ok(written == readden, "write file len");
 
         /* finish this connection, wait for next one */
         ok(FlushFileBuffers(hnp), "FlushFileBuffers");
-        msg("Server done flushing.\n");
+        trace("Server done flushing.\n");
         ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
-        msg("Server done disconnecting.\n");
+        trace("Server done disconnecting.\n");
     }
 }
 
@@ -304,7 +298,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
     int i;
     HANDLE hnpNext = 0;
 
-    msg("serverThreadMain2\n");
+    trace("serverThreadMain2\n");
     /* Set up a simple echo server */
     hnp = CreateNamedPipe(PIPENAME "serverThreadMain2", PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -322,22 +316,22 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         DWORD success;
 
         /* Wait for client to connect */
-        msg("Server calling ConnectNamedPipe...\n");
+        trace("Server calling ConnectNamedPipe...\n");
         ok(ConnectNamedPipe(hnp, NULL)
             || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe");
-        msg("ConnectNamedPipe returned.\n");
+        trace("ConnectNamedPipe returned.\n");
 
         /* Echo bytes once */
         memset(buf, 0, sizeof(buf));
 
-        msg("Server reading...\n");
+        trace("Server reading...\n");
         success = ReadFile(hnp, buf, sizeof(buf), &readden, NULL);
-        msg("Server done reading.\n");
+        trace("Server done reading.\n");
         ok(success, "ReadFile");
 
-        msg("Server writing...\n");
+        trace("Server writing...\n");
         ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile");
-        msg("Server done writing.\n");
+        trace("Server done writing.\n");
         ok(written == readden, "write file len");
 
         /* finish this connection, wait for next one */
@@ -367,7 +361,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
     int i;
     HANDLE hEvent;
 
-    msg("serverThreadMain3\n");
+    trace("serverThreadMain3\n");
     /* Set up a simple echo server */
     hnp = CreateNamedPipe(PIPENAME "serverThreadMain3", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
         PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -399,12 +393,12 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         oOverlap.hEvent = hEvent;
 
         /* Wait for client to connect */
-        msg("Server calling overlapped ConnectNamedPipe...\n");
+        trace("Server calling overlapped ConnectNamedPipe...\n");
         success = ConnectNamedPipe(hnp, &oOverlap);
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING
             || err == ERROR_PIPE_CONNECTED, "overlapped ConnectNamedPipe");
-        msg("overlapped ConnectNamedPipe returned.\n");
+        trace("overlapped ConnectNamedPipe returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
             ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ConnectNamedPipe");
         success = GetOverlappedResult(hnp, &oOverlap, &dummy, letGORwait);
@@ -413,17 +407,17 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
 	    success = GetOverlappedResult(hnp, &oOverlap, &dummy, TRUE);
 	}
 	ok(success, "GetOverlappedResult ConnectNamedPipe");
-        msg("overlapped ConnectNamedPipe operation complete.\n");
+        trace("overlapped ConnectNamedPipe operation complete.\n");
 
         /* Echo bytes once */
         memset(buf, 0, sizeof(buf));
 
-        msg("Server reading...\n");
+        trace("Server reading...\n");
         success = ReadFile(hnp, buf, sizeof(buf), NULL, &oOverlap);
-        msg("Server ReadFile returned...\n");
+        trace("Server ReadFile returned...\n");
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING, "overlapped ReadFile");
-        msg("overlapped ReadFile returned.\n");
+        trace("overlapped ReadFile returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
             ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ReadFile");
         success = GetOverlappedResult(hnp, &oOverlap, &readden, letGORwait);
@@ -431,15 +425,15 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
 	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult");
 	    success = GetOverlappedResult(hnp, &oOverlap, &readden, TRUE);
 	}
-        msg("Server done reading.\n");
+        trace("Server done reading.\n");
         ok(success, "overlapped ReadFile");
 
-        msg("Server writing...\n");
+        trace("Server writing...\n");
         success = WriteFile(hnp, buf, readden, NULL, &oOverlap);
-        msg("Server WriteFile returned...\n");
+        trace("Server WriteFile returned...\n");
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile");
-        msg("overlapped WriteFile returned.\n");
+        trace("overlapped WriteFile returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
             ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait WriteFile");
         success = GetOverlappedResult(hnp, &oOverlap, &written, letGORwait);
@@ -447,7 +441,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
 	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult");
 	    success = GetOverlappedResult(hnp, &oOverlap, &written, TRUE);
 	}
-        msg("Server done writing.\n");
+        trace("Server done writing.\n");
         ok(success, "overlapped WriteFile");
         ok(written == readden, "write file len");
 
@@ -461,7 +455,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
 {
     int i;
 
-    msg("exercizeServer starting\n");
+    trace("exercizeServer starting\n");
     for (i = 0; i < 8; i++) {
         HANDLE hFile;
         const char obuf[] = "Bit Bucket";
@@ -472,7 +466,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
 
         for (loop = 0; loop < 3; loop++) {
 	    DWORD err;
-            msg("Client connecting...\n");
+            trace("Client connecting...\n");
             /* Connect to the server */
             hFile = CreateFileA(pipename, GENERIC_READ | GENERIC_WRITE, 0,
                 NULL, OPEN_EXISTING, 0, 0);
@@ -483,28 +477,28 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
 	        ok(err == ERROR_PIPE_BUSY || err == ERROR_FILE_NOT_FOUND, "connecting to pipe");
 	    else
 	        ok(err == ERROR_PIPE_BUSY, "connecting to pipe");
-            msg("connect failed, retrying\n");
+            trace("connect failed, retrying\n");
             Sleep(200);
         }
         ok(hFile != INVALID_HANDLE_VALUE, "client opening named pipe");
 
         /* Make sure it can echo */
         memset(ibuf, 0, sizeof(ibuf));
-        msg("Client writing...\n");
+        trace("Client writing...\n");
         ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile to client end of pipe");
         ok(written == sizeof(obuf), "write file len");
-        msg("Client reading...\n");
+        trace("Client reading...\n");
         ok(ReadFile(hFile, ibuf, sizeof(obuf), &readden, NULL), "ReadFile from client end of pipe");
         ok(readden == sizeof(obuf), "read file len");
         ok(memcmp(obuf, ibuf, written) == 0, "content check");
 
-        msg("Client closing...\n");
+        trace("Client closing...\n");
         ok(CloseHandle(hFile), "CloseHandle");
     }
 
     ok(TerminateThread(serverThread, 0), "TerminateThread");
     CloseHandle(hnp);
-    msg("exercizeServer returning\n");
+    trace("exercizeServer returning\n");
 }
 
 void test_NamedPipe_2(void)
@@ -514,7 +508,7 @@ void test_NamedPipe_2(void)
     HANDLE alarmThread;
     DWORD alarmThreadId;
 
-    msg("test_NamedPipe_2 starting\n");
+    trace("test_NamedPipe_2 starting\n");
     /* Set up a ten second timeout */
     alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 10000, 0, &alarmThreadId);
 
@@ -542,7 +536,7 @@ void test_NamedPipe_2(void)
     }
 
     ok(TerminateThread(alarmThread, 0), "TerminateThread");
-    msg("test_NamedPipe_2 returning\n");
+    trace("test_NamedPipe_2 returning\n");
 }
 
 void test_DisconnectNamedPipe(void)
@@ -594,13 +588,13 @@ void test_DisconnectNamedPipe(void)
 
 START_TEST(pipe)
 {
-    msg("test 1 of 4:\n");
+    trace("test 1 of 4:\n");
     test_DisconnectNamedPipe();
-    msg("test 2 of 4:\n");
+    trace("test 2 of 4:\n");
     test_CreateNamedPipe_instances_must_match();
-    msg("test 3 of 4:\n");
+    trace("test 3 of 4:\n");
     test_NamedPipe_2();
-    msg("test 4 of 4:\n");
+    trace("test 4 of 4:\n");
     test_CreateNamedPipe();
-    msg("all tests done\n");
+    trace("all tests done\n");
 }
