@@ -21,9 +21,7 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -363,12 +361,12 @@ static void add_message(const struct message *msg)
     if (!sequence) 
     {
 	sequence_size = 10;
-	sequence = malloc ( sequence_size * sizeof (struct message) );
+	sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof (struct message) );
     }
     if (sequence_cnt == sequence_size) 
     {
 	sequence_size *= 2;
-	sequence = realloc ( sequence, sequence_size * sizeof (struct message) );
+	sequence = HeapReAlloc( GetProcessHeap(), 0, sequence, sequence_size * sizeof (struct message) );
     }
     assert(sequence);
 
@@ -382,7 +380,7 @@ static void add_message(const struct message *msg)
 
 static void flush_sequence()
 {
-    free(sequence);
+    HeapFree(GetProcessHeap(), 0, sequence);
     sequence = 0;
     sequence_cnt = sequence_size = 0;
 }
@@ -390,9 +388,11 @@ static void flush_sequence()
 static void ok_sequence(const struct message *expected, const char *context)
 {
     static const struct message end_of_sequence = { 0, 0, 0, 0 };
-    const struct message *actual = sequence;
+    const struct message *actual;
     
     add_message(&end_of_sequence);
+
+    actual = sequence;
 
     while (expected->message && actual->message)
     {
@@ -416,7 +416,7 @@ static void ok_sequence(const struct message *expected, const char *context)
 		"%s: the msg 0x%04x was expected in %s\n",
 		context, expected->message, (expected->flags & parent) ? "parent" : "child");
 	    ok ((expected->flags & hook) == (actual->flags & hook),
-		"%s: the msg 0x%04x should have been hooked\n",
+		"%s: the msg 0x%04x should have been sent by a hook\n",
 		context, expected->message);
 	    expected++;
 	    actual++;
