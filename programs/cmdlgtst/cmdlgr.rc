@@ -24,6 +24,7 @@
 #include "En.rc"
 #include "It.rc"
 #include "Pt.rc"
+#include "Si.rc"
 
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
 

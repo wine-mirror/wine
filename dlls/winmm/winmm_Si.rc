@@ -15,16 +15,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO:
- *	translate following strings:
- *		MIDIERR_NOMAP
- *		MIDIERR_NODEVICE
- *		MIDIERR_INVALIDSETUP
- *		MCIERR_EXTENSION_NOT_FOUND
- *		MCIERR_SEQ_NOMIDIPRESENT
- *		MCIERR_SEQ_PORT_MISCERROR
- *		MCIERR_SEQ_PORTUNSPECIFIED
- *		MCIERR_SEQ_TIMER
  */
 
 STRINGTABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT

@@ -1,7 +1,7 @@
 /*
  * Program Manager (Slovenian Resources)
  *
- * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2002-2003 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,7 +63,7 @@ POPUP "&Pomoè" {
 
 /* Dialog `New' */
 
-DIALOG_NEW_ DIALOG 0, 0, 170, 65
+DIALOG_NEW DIALOG 0, 0, 170, 65
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Nov programski predmet"
@@ -79,7 +79,7 @@ PUSHBUTTON    "&Pomoè",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 
 /* Dialog `Move' */
 
-DIALOG_MOVE_ DIALOG 0, 0, 250, 65
+DIALOG_MOVE DIALOG 0, 0, 250, 65
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Premik programa"
@@ -97,7 +97,7 @@ PUSHBUTTON    "&Pomoè",            PM_HELP,           185, 45,  60, 15, WS_TABST
 
 /* Dialog `Copy' */
 
-DIALOG_COPY_ DIALOG 0, 0, 250, 65
+DIALOG_COPY DIALOG 0, 0, 250, 65
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Kopiranje programa"
@@ -115,7 +115,7 @@ PUSHBUTTON    "&Pomoè",            PM_HELP,           185, 45,  60, 15, WS_TABST
 
 /* Dialog `Group attributes' */
 
-DIALOG_GROUP_ DIALOG 0, 0, 230, 65
+DIALOG_GROUP DIALOG 0, 0, 230, 65
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Lastnosti programske skupine"
@@ -131,7 +131,7 @@ PUSHBUTTON    "&Pomoè",          PM_HELP,             155, 45,  60, 15, WS_TABST
 
 /* Dialog `Program attributes' */
 
-DIALOG_PROGRAM_ DIALOG 0, 0, 250, 105
+DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Lastnosti programa"
@@ -156,7 +156,7 @@ PUSHBUTTON    "&Pomoè",                 PM_HELP,             185, 85,  60, 15, W
 
 /* Dialog `Symbol' */
 
-DIALOG_SYMBOL_ DIALOG 0, 0, 200, 85
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Zamenjava ikone"
@@ -174,7 +174,7 @@ PUSHBUTTON    "&Pomoè",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 
 /* Dialog `Execute' */
 
-DIALOG_EXECUTE_ DIALOG 0, 0, 200, 85
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME
 CAPTION "Zagon programa"
