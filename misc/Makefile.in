@@ -15,7 +15,6 @@ C_SRCS = \
 	options.c \
 	registry.c \
 	system.c \
-	tweak.c \
 	version.c
 
 all: $(MODULE).o

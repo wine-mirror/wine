@@ -12,8 +12,8 @@
 #include "cursoricon.h"
 #include "controls.h"
 #include "heap.h"
+#include "user.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(static);
 

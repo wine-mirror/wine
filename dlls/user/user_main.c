@@ -27,6 +27,8 @@ DEFAULT_DEBUG_CHANNEL(graphics);
 
 USER_DRIVER USER_Driver;
 
+WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
+
 static HMODULE graphics_driver;
 
 #define GET_USER_FUNC(name) \
@@ -151,6 +153,38 @@ static void palette_init(void)
 
 
 /***********************************************************************
+ *           tweak_init
+ */
+static void tweak_init(void)
+{
+    static const char *OS = "Win3.1";
+    char buffer[80];
+    HKEY hkey;
+    DWORD type, count = sizeof(buffer);
+
+    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Layout", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        return;
+    if (RegQueryValueExA( hkey, "WineLook", 0, &type, buffer, &count ))
+        strcpy( buffer, "Win31" );  /* default value */
+    RegCloseKey( hkey );
+
+    /* WIN31_LOOK is default */
+    if (!strncasecmp( buffer, "Win95", 5 ))
+    {
+        TWEAK_WineLook = WIN95_LOOK;
+        OS = "Win95";
+    }
+    else if (!strncasecmp( buffer, "Win98", 5 ))
+    {
+        TWEAK_WineLook = WIN98_LOOK;
+        OS = "Win98";
+    }
+    TRACE("Using %s look and feel.\n", OS);
+}
+
+
+/***********************************************************************
  *           USER initialisation routine
  */
 BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -168,6 +202,7 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (!ATOM_Init( USER_HeapSel )) return FALSE;
 
     /* Load the graphics driver */
+    tweak_init();
     if (!load_driver()) return FALSE;
 
     /* Initialize system colors and metrics*/

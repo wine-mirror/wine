@@ -12,8 +12,8 @@
 #include "wine/winuser16.h"
 #include "dlgs.h"
 #include "heap.h"
+#include "user.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(dialog);
 

@@ -9,8 +9,8 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
+#include "user.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics);
 

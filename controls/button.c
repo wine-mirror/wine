@@ -13,7 +13,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "controls.h"
-#include "tweak.h"
+#include "user.h"
 
 /* Note: under MS-Windows, state is a BYTE and this structure is
  * only 3 bytes long. I don't think there are programs out there

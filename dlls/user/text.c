@@ -14,7 +14,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "cache.h"
+#include "user.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text);

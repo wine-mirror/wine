@@ -14,8 +14,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "options.h"
+#include "user.h"
 #include "sysmetrics.h"
-#include "tweak.h"
 
 static int sysMetrics[SM_WINE_CMETRICS+1];
 

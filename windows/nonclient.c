@@ -20,11 +20,9 @@
 #include "hook.h"
 #include "nonclient.h"
 #include "queue.h"
-#include "tweak.h"
 #include "debugtools.h"
 #include "options.h"
 #include "shellapi.h"
-#include "cache.h"
 #include "bitmap.h"
 
 DEFAULT_DEBUG_CHANNEL(nonclient);

@@ -88,4 +88,18 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
 VOID WINAPI MOUSE_Disable(VOID);
 
+/* Wine look */
+
+typedef enum
+{
+    WIN31_LOOK,
+    WIN95_LOOK,
+    WIN98_LOOK
+} WINE_LOOK;
+
+extern WINE_LOOK TWEAK_WineLook;
+
+/* gray brush cache */
+extern HBRUSH CACHE_GetPattern55AABrush(void);
+
 #endif  /* __WINE_USER_H */

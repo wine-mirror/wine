@@ -8,7 +8,7 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "cache.h"
+#include "user.h"
 
 static const WORD wPattern55AA[] =
 { 
@@ -26,17 +26,9 @@ static HBITMAP hPattern55AABitmap = 0;
 HBRUSH CACHE_GetPattern55AABrush(void)
 {
     if (!hPattern55AABrush)
-        hPattern55AABrush = CreatePatternBrush(CACHE_GetPattern55AABitmap());
-    return hPattern55AABrush;
-}
-
-
-/*********************************************************************
- *	CACHE_GetPattern55AABitmap
- */
-HBITMAP CACHE_GetPattern55AABitmap(void)
-{
-    if (!hPattern55AABitmap)
+    {
         hPattern55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
-    return hPattern55AABitmap;
+        hPattern55AABrush = CreatePatternBrush( hPattern55AABitmap );
+    }
+    return hPattern55AABrush;
 }

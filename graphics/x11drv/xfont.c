@@ -31,7 +31,7 @@
 #include "options.h"
 #include "font.h"
 #include "debugtools.h"
-#include "tweak.h"
+#include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11font.h"
 #include "server.h"
 

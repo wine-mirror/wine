@@ -18,9 +18,9 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "debugtools.h"
-#include "tweak.h"
 #include "winreg.h"
 #include "local.h"
+#include "user.h"
 #include "gdi.h" /* sic */
 
 DEFAULT_DEBUG_CHANNEL(syscolor);

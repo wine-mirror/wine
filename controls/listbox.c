@@ -16,9 +16,9 @@
 #include "winerror.h"
 #include "spy.h"
 #include "win.h"
+#include "user.h"
 #include "controls.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(listbox);
 DECLARE_DEBUG_CHANNEL(combo);

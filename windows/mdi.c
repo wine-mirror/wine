@@ -82,7 +82,6 @@
 #include "controls.h"
 #include "user.h"
 #include "struct32.h"
-#include "tweak.h"
 #include "debugtools.h"
 #include "dlgs.h"
 

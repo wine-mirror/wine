@@ -15,8 +15,6 @@
 #include "dce.h"
 #include "debugtools.h"
 #include "spy.h"
-#include "tweak.h"
-#include "cache.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winnls.h"

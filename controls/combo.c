@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "controls.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(combo);
 

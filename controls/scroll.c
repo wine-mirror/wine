@@ -12,8 +12,7 @@
 #include "heap.h"
 #include "win.h"
 #include "debugtools.h"
-#include "cache.h"
-#include "tweak.h"
+#include "user.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll);
 
@@ -673,16 +672,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
     if (TWEAK_WineLook == WIN31_LOOK && (flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
     {
         /* This ought to be the color of the parent window */
-        if (TWEAK_WineLook == WIN31_LOOK) {
-            hBrush = GetSysColorBrush(COLOR_WINDOW);
-        } else { 
-            /* Under Win9x look & feel, scrollbars don't have a solid border.
-             * To make scrollbar's background different from the window 
-             * background, we need to apply a gray 0x55aa pattern brush. 
-             * Otherwise it won't look good.
-             */ 
-            hBrush = CACHE_GetPattern55AABrush();
-       }
+        hBrush = GetSysColorBrush(COLOR_WINDOW);
     }
     else
     {

@@ -26,7 +26,6 @@
 #include "region.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -323,7 +322,6 @@ static inline void FixStockFontSizeA(
  */
 BOOL GDI_Init(void)
 {
-    BOOL systemIsBold = (TWEAK_WineLook == WIN31_LOOK);
     HPALETTE16 hpalette;
     HINSTANCE16 instance;
 
@@ -344,9 +342,9 @@ BOOL GDI_Init(void)
     ReadFontInformation("OEMFixed", &OEMFixedFont, 0, 0, 0, 0, 0);
     ReadFontInformation("AnsiFixed", &AnsiFixedFont, 0, 0, 0, 0, 0);
     ReadFontInformation("AnsiVar", &AnsiVarFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("System", &SystemFont, 0, systemIsBold, 0, 0, 0);
+    ReadFontInformation("System", &SystemFont, 0, 0, 0, 0, 0);
     ReadFontInformation("DeviceDefault", &DeviceDefaultFont, 0, 0, 0, 0, 0);
-    ReadFontInformation("SystemFixed", &SystemFixedFont, 0, systemIsBold, 0, 0, 0);
+    ReadFontInformation("SystemFixed", &SystemFixedFont, 0, 0, 0, 0, 0);
     ReadFontInformation("DefaultGui", &DefaultGuiFont, 0, 0, 0, 0, 0);
 
     /* Create default palette */

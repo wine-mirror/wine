@@ -7,7 +7,6 @@
 #include "wine/winbase16.h"
 
 #include "gdi.h"
-#include "tweak.h"
 #include "win16drv.h"
 #include "winbase.h"
 
@@ -17,8 +16,6 @@
 BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
 {
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
-
-    if (!TWEAK_Init()) return FALSE;
 
     /* GDI initialisation */
     if(!GDI_Init()) return FALSE;

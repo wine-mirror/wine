@@ -10,12 +10,12 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "region.h"
+#include "user.h"
 #include "win.h"
 #include "queue.h"
 #include "dce.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "cache.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 DECLARE_DEBUG_CHANNEL(nonclient);

@@ -26,7 +26,7 @@ typedef unsigned long Pixel;
 #include "debugtools.h"
 #include "gdi.h"
 #include "heap.h"
-#include "tweak.h"
+#include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11drv.h"
 
   /* Include OEM pixmaps */

@@ -32,7 +32,6 @@
 #include "user.h"
 #include "message.h"
 #include "queue.h"
-#include "tweak.h"
 
 #include "debugtools.h"
 

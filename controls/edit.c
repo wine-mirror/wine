@@ -24,8 +24,8 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "local.h"
+#include "user.h"
 #include "debugtools.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(edit);
 DECLARE_DEBUG_CHANNEL(combo);

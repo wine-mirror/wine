@@ -17,7 +17,6 @@
 
 #include "controls.h"
 #include "keyboard.h"
-#include "tweak.h"
 #include "user.h"
 #include "debugtools.h"
 
