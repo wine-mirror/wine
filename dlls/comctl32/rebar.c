@@ -91,6 +91,8 @@
  * rev 8b
  * 17. Fix determination of whether Gripper is needed in _ValidateBand.
  * 18. Fix _AdjustBand processing of RBBS_FIXEDSIZE.
+ * rev 8c
+ * 19. Fix problem in _Layout when all lengths are 0.
  *
  *
  *    Still to do:
@@ -1328,7 +1330,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     RECT rcClient, rcAdj;
     INT initx, inity, x, y, cx, cxsep, mmcy, mcy, clientcx, clientcy;
     INT adjcx, adjcy, row, rightx, bottomy, origheight;
-    UINT i, j, rowstart, origrows;
+    UINT i, j, rowstart, origrows, cntonrow;
     BOOL dobreak;
 
     if (!(infoPtr->fStatus & BAND_NEEDS_LAYOUT)) {
@@ -1389,6 +1391,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     mcy = 0;
     rowstart = 0;
     prevBand = NULL;
+    cntonrow = 0;
 
     for (i = 0; i < infoPtr->uNumBands; i++) {
 	lpBand = &infoPtr->bands[i];
@@ -1407,8 +1410,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	lpBand->offChild.cy = ((lpBand->fStyle & RBBS_CHILDEDGE) ? 2 : 0);
 
 	/* separator from previous band */
-	cxsep = ( ((infoPtr->dwStyle & CCS_VERT) ? y==inity : x==initx)) ? 
-	    0 : SEP_WIDTH;  
+	cxsep = (cntonrow == 0) ? 0 : SEP_WIDTH;  
 
 	/* Header: includes gripper, text, image */
 	cx = lpBand->cxHeader;   
@@ -1450,6 +1452,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    lpBand->iRow = row;
 	    prevBand = NULL;
 	    rowstart = i;
+	    cntonrow = 0;
 	}
 
 	if (mcy < lpBand->lcy + REBARSPACE(lpBand)) 
@@ -1505,6 +1508,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	      lpBand->rcBand.left, lpBand->rcBand.top,
 	      lpBand->rcBand.right, lpBand->rcBand.bottom);
 	prevBand = lpBand;
+	cntonrow++;
 
     } /* for (i = 0; i < infoPtr->uNumBands... */
 
