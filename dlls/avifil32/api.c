@@ -1918,7 +1918,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	  AVIStreamSetFormat(pOutStreams[curStream], sInfo.dwStart,
 			     lpBuffer, lBufferSize);
 
-	  /* try to read block and resize buffer if neccessary */
+	  /* try to read block and resize buffer if necessary */
 	  do {
 	    lReadSamples = 0;
 	    lReadBytes   = cbBuffer;

@@ -1295,7 +1295,7 @@ static LONG propertyNameCmp(
   if (diff == 0)
   {
     /*
-     * We compare the string themselves only when they are of the same lenght
+     * We compare the string themselves only when they are of the same length
      */
     diff = lstrcmpiW( newProperty, currentProperty);
   }
@@ -6177,7 +6177,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 	{
 		if(pData->dwTypeID != 0)
 		{
-			/* Get the lenght of the OleTypeName */
+			/* Get the length of the OleTypeName */
 			dwSize = pOleStream->lpstbl->Get(pOleStream, (void *) &(pData->dwOleTypeNameLength), sizeof(pData->dwOleTypeNameLength));
 			if(dwSize != sizeof(pData->dwOleTypeNameLength))
 			{
@@ -6240,7 +6240,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 			}
 			if(hRes == S_OK)
 			{
-				/* Get the Lenght of the Data */
+				/* Get the Length of the Data */
 				dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwDataLength), sizeof(pData->dwDataLength));
 				if(dwSize != sizeof(pData->dwDataLength))
 				{
@@ -6328,7 +6328,7 @@ HRESULT OLECONVERT_SaveOLE10(OLECONVERT_OLESTREAM_DATA *pData, LPOLESTREAM pOleS
 
     if(pData->dwOleID == OLESTREAM_ID && pData->dwTypeID != 0 && hRes == S_OK)
     {
-        /* Set the Lenght of the OleTypeName */
+        /* Set the Length of the OleTypeName */
         dwSize = pOleStream->lpstbl->Put(pOleStream, (void *)&(pData->dwOleTypeNameLength), sizeof(pData->dwOleTypeNameLength));
         if(dwSize != sizeof(pData->dwOleTypeNameLength))
         {
@@ -6370,7 +6370,7 @@ HRESULT OLECONVERT_SaveOLE10(OLECONVERT_OLESTREAM_DATA *pData, LPOLESTREAM pOleS
 
         if(hRes == S_OK)
         {
-            /* Set the lenght of the Data */
+            /* Set the length of the Data */
             dwSize = pOleStream->lpstbl->Put(pOleStream, (void *)&(pData->dwDataLength), sizeof(pData->dwDataLength));
             if(dwSize != sizeof(pData->dwDataLength))
             {
@@ -6992,7 +6992,7 @@ void OLECONVERT_CreateOlePresStream(LPSTORAGE pStorage, DWORD dwExtentX, DWORD d
         OlePres.dwExtentX = dwExtentX;
         OlePres.dwExtentY = -dwExtentY;
 
-        /* Set Data and Lenght */
+        /* Set Data and Length */
         if(dwDataLength > sizeof(METAFILEPICT16))
         {
             OlePres.dwSize = dwDataLength - sizeof(METAFILEPICT16);

@@ -418,7 +418,7 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
         *pDateOut += pTm->tm_mday;
 
         /* Add the number of seconds, minutes, and hours
-         * to the DATE. Note these are the fracionnal part
+         * to the DATE. Note these are the fractional part
          * of the DATE so seconds / number of seconds in a day.
          */
     } else {

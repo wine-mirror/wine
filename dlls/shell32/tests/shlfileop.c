@@ -288,7 +288,7 @@ void test_copy(void)
     ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not copied yet");
     retval = SHFileOperationA(&shfo);
     if (!retval)
-      /* Win 95/NT returns success but copies only the files up to the nonexisting source */
+      /* Win 95/NT returns success but copies only the files up to the non-existent source */
       ok(file_exists(".\\testdir2\\test1.txt"), "The file is not copied");
     else
     {

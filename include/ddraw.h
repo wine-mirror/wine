@@ -395,7 +395,7 @@ typedef struct _DDCAPS_DX7		/* DirectX 7 version of caps struct */
     DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
     DWORD	dwAlignStrideAlign;     /* stride alignment */
     DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
-    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superseded for DirectX6+ */
     DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
     DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
     DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
@@ -456,7 +456,7 @@ typedef struct _DDCAPS_DX6		/* DirectX 6 version of caps struct */
     DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
     DWORD	dwAlignStrideAlign;     /* stride alignment */
     DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
-    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superseded for DirectX6+ */
     DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
     DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
     DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */

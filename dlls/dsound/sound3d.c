@@ -98,7 +98,7 @@ static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 	return c;
 }
 
-/* magnitude (lenght) of vector */
+/* magnitude (length) of vector */
 static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
 {
 	D3DVALUE l;
@@ -313,11 +313,11 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	}
 	else
 	{
-		/* calculate lenght of ds3db.vVelocity component which causes Doppler Effect
+		/* calculate length of ds3db.vVelocity component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
 		         if buffer moves AWAY from listener, it's velocity component is POSITIVE */
 		flBufferVel = ProjectVector(&dsb->ds3db_ds3db.vVelocity, &vDistance);
-		/* calculate lenght of ds3dl.vVelocity component which causes Doppler Effect
+		/* calculate length of ds3dl.vVelocity component which causes Doppler Effect
 		   NOTE: if listener moves TOWARDS the buffer, it's velocity component is POSITIVE
 		         if listener moves AWAY from buffer, it's velocity component is NEGATIVE */
 		flListenerVel = ProjectVector(&dsb->dsound->ds3dl.vVelocity, &vDistance);

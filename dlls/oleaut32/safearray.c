@@ -720,7 +720,7 @@ HRESULT WINAPI SafeArrayCopyData(
 
   ulWholeArraySize = getArraySize(psaSource);
 
-  /* The two arrays boundaries must be of same lenght */
+  /* The two arrays boundaries must be of same length */
   for(cDimCount=0;cDimCount < psaSource->cDims; cDimCount++)
     if( psaSource->rgsabound[cDimCount].cElements !=
       psaTarget->rgsabound[cDimCount].cElements)

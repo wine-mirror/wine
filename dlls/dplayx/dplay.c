@@ -5173,7 +5173,7 @@ HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
  *  services.
  *
  *  This API is useful only for applications written using DirectX3 or
- *  worse. It is superceeded by IDirectPlay3::EnumConnections which also
+ *  worse. It is superseded by IDirectPlay3::EnumConnections which also
  *  gives information on the actual connections.
  *
  * defn of a service provider:

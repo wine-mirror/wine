@@ -69,8 +69,8 @@
               directories before attempting to load them. While Wine
               is able to load its own internal DLLs
               (<filename>.so</filename> files) when the program
-              asks for a DLL, Wine does not simulate the existence of
-              nonexisting files.
+              asks for a DLL, Wine does not simulate the presence of
+              non-existent files.
             </para>
           </listitem>
         </itemizedlist>

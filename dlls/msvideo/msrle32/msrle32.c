@@ -157,7 +157,7 @@ static BOOL  isSupportedDIB(LPCBITMAPINFOHEADER lpbi)
   if (DIBWIDTHBYTES(*lpbi) * (DWORD)lpbi->biHeight >= (1UL << 31) - 1)
     return FALSE; /* image too big ! */
 
-  /* check for non existing colortable for hi- and true-color DIB's */
+  /* check for non-existent colortable for hi- and true-color DIB's */
   if (lpbi->biBitCount >= 15 && lpbi->biClrUsed > 0)
     return FALSE;
 

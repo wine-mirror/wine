@@ -959,8 +959,8 @@ HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegment8Impl *segme
 					case DMUS_FOURCC_SEGMENT_CHUNK: {
 						TRACE("segh: segment header\n");
 						ReadFile (fd, &header, chunk.size, &BytesRead, NULL);
-						TRACE_(dmfiledat)("=> dwRepeats = %ld; mtLength = %li; mtPlayStart = %li; mtLoopStart = %li; mtLoopEnd = %li; dwResolution = %ld; rtLenght = FIXME; dwFlags = %ld; dwReserved = %ld\n", \
-							header.dwRepeats, header.mtLength, header.mtPlayStart, header.mtLoopStart, header.mtLoopEnd, header.dwResolution/*, header.rtLenght*/, header.dwFlags, header.dwReserved);
+						TRACE_(dmfiledat)("=> dwRepeats = %ld; mtLength = %li; mtPlayStart = %li; mtLoopStart = %li; mtLoopEnd = %li; dwResolution = %ld; rtLength = FIXME; dwFlags = %ld; dwReserved = %ld\n", \
+							header.dwRepeats, header.mtLength, header.mtPlayStart, header.mtLoopStart, header.mtLoopEnd, header.dwResolution/*, header.rtLength*/, header.dwFlags, header.dwReserved);
 						break;
 					} case DMUS_FOURCC_GUID_CHUNK: {
 						TRACE("'guid': GUID\n");

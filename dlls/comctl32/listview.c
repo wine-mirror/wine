@@ -9183,7 +9183,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
     if(infoPtr->hFont != 0)
         hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-    /*Get String Lenght in pixels */
+    /*Get String Length in pixels */
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &sz);
 
     /*Add Extra spacing for the next character */

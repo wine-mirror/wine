@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  *
  * This dll is the 16 bit version of the Typelib API, part the original
  * implementation of Ole automation. It and its companion ole2disp.dll were
- * superceeded by oleaut32.dll which provides 32 bit implementations of these
+ * superseded by oleaut32.dll which provides 32 bit implementations of these
  * functions and greatly extends the Ole Api.
  *
  * Winelib developers cannot use these functions directly, they are implemented
