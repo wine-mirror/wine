@@ -348,7 +348,7 @@ static void build(struct options* opts)
     strarray *spec_args, *comp_args, *link_args;
     char *output_file;
     const char *spec_c_name, *spec_o_name;
-    const char *output_name, *spec_file, *def_ext;
+    const char *output_name, *spec_file;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
     int j;
@@ -378,11 +378,17 @@ static void build(struct options* opts)
 	generate_app_loader = 0;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
-    def_ext = opts->shared ? ".dll" : ".exe";
     if (strendswith(output_file, ".so")) 
 	output_file[strlen(output_file) - 3] = 0;
-    if(!strendswith(output_file, def_ext))
-	output_file = strmake("%s%s", output_file, def_ext);
+    if (opts->shared)
+    {
+	if ((output_name = strrchr(output_file, '/'))) output_name++;
+	else output_name = output_file;
+	if (!strchr(output_name, '.'))
+	    output_file = strmake("%s.dll", output_file);
+    }
+    else if (!strendswith(output_file, ".exe"))
+	output_file = strmake("%s.exe", output_file);
 
     /* get the filename by the path, if present */
     if ((output_name = strrchr(output_file, '/'))) output_name++;
