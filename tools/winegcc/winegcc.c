@@ -152,7 +152,7 @@ static strarray *tmp_files;
 
 struct options 
 {
-    enum { proc_cc = 0, proc_cpp = 1, proc_pp = 2} processor;
+    enum { proc_cc = 0, proc_cxx = 1, proc_cpp = 2} processor;
     int use_msvcrt;
     int nostdinc;
     int nostdlib;
@@ -196,13 +196,23 @@ char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static const char* get_translator(struct options* opts)
+static const strarray* get_translator(struct options* opts)
 {
+    static strarray* cpp = 0;
+    static strarray* cc = 0;
+    static strarray* cxx = 0;
+
     switch(opts->processor)
     {
-        case proc_pp:  return CPP;
-        case proc_cc:  return CC;
-        case proc_cpp: return CXX;
+        case proc_cpp: 
+	    if (!cpp) cpp = strarray_fromstring(CPP, " ");
+	    return cpp;
+        case proc_cc:  
+	    if (!cc) cc = strarray_fromstring(CC, " ");
+	    return cc;
+        case proc_cxx: 
+	    if (!cxx) cxx = strarray_fromstring(CXX, " ");
+	    return cxx;
     }
     error("Unknown processor");
 }
@@ -214,20 +224,20 @@ static void compile(struct options* opts)
 
     switch(opts->processor)
     {
-	case proc_pp:  gcc_defs = 1; break;
+	case proc_cpp:  gcc_defs = 1; break;
 #ifdef __GNUC__
 	/* Note: if the C compiler is gcc we assume the C++ compiler is too */
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:  gcc_defs = 1; break;
-	case proc_cpp: gcc_defs = 1; break;
+	case proc_cxx: gcc_defs = 1; break;
 #else
 	case proc_cc:  gcc_defs = 0; break;
-	case proc_cpp: gcc_defs = 0; break;
+	case proc_cxx: gcc_defs = 0; break;
 #endif
     }
-    strarray_add(comp_args, get_translator(opts));
+    strarray_addall(comp_args, get_translator(opts));
 
-    if (opts->processor != proc_pp)
+    if (opts->processor != proc_cpp)
     {
 #ifdef CC_FLAG_SHORT_WCHAR
 	if (!opts->noshortwchar)
@@ -363,6 +373,7 @@ static void build(struct options* opts)
     if ((base_name = strrchr(base_file, '/'))) base_name++;
     else base_name = base_file;
 
+    /* 'winegcc -o app xxx.exe.so' only creates the load script */
     if (opts->files->size == 1 && strendswith(opts->files->base[0], ".exe.so"))
     {
 	create_file(base_file, 0755, app_loader_template, opts->files->base[0]);
@@ -492,7 +503,7 @@ static void build(struct options* opts)
     
     /* link everything together now */
     link_args = strarray_alloc();
-    strarray_add(link_args, get_translator(opts));
+    strarray_addall(link_args, get_translator(opts));
     strarray_addall(link_args, strarray_fromstring(LDDLLFLAGS, " "));
 
     strarray_add(link_args, "-o");
@@ -541,7 +552,7 @@ static void forward(int argc, char **argv, struct options* opts)
     strarray *args = strarray_alloc();
     int j;
 
-    strarray_add(args, get_translator(opts));
+    strarray_addall(args, get_translator(opts));
 
     for( j = 1; j < argc; j++ ) 
 	strarray_add(args, argv[j]);
@@ -640,8 +651,8 @@ int main(int argc, char **argv)
     opts.winebuild_args = strarray_alloc();
 
     /* determine the processor type */
-    if (strendswith(argv[0], "winecpp")) opts.processor = proc_pp;
-    else if (strendswith(argv[0], "++")) opts.processor = proc_cpp;
+    if (strendswith(argv[0], "winecpp")) opts.processor = proc_cpp;
+    else if (strendswith(argv[0], "++")) opts.processor = proc_cxx;
     
     /* parse options */
     for ( i = 1 ; i < argc ; i++ ) 
@@ -795,7 +806,7 @@ int main(int argc, char **argv)
 	} 
     }
 
-    if (opts.processor == proc_pp) linking = 0;
+    if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported.");
 
     if (opts.files->size == 0) forward(argc, argv, &opts);
