@@ -5870,7 +5870,8 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 		           is_sorted ? infoPtr->nItemCount + 1 : lpLVItem->iItem, 
 			   hdpaSubItems );
     if (nItem == -1) goto fail;
-    infoPtr->nItemCount++;
+    /* the array may be sparsly populated, we can't just increment the count here */
+    infoPtr->nItemCount = infoPtr->hdpaItems->nItemCount;
    
     if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW))
 	goto undo;
@@ -5880,13 +5881,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     {
 	DPA_Sort( infoPtr->hdpaItems, LISTVIEW_InsertCompare, (LPARAM)infoPtr );
 	nItem = DPA_GetPtrIndex( infoPtr->hdpaItems, hdpaSubItems );
-	if (nItem == -1)
-	{
-	    ERR("We can't find the item we just inserted, possible memory corruption.");
-	    /* we can't remove it from the list if we can't find it, so just fail */
-	    /* we don't deallocate memory here, as it will probably cause more problems */
-	    return -1;
-	}
+	assert(nItem != -1);
     }
 
     /* make room for the position, if we are in the right mode */
