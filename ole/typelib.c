@@ -1068,6 +1068,8 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
 		tlbSegDir.pImpInfo.res0c != 0x0F
     ) {
         ERR( typelib,"cannot find the table directory, ptr=0x%lx\n",lPSegDir);
+	CloseHandle(cx.hFile);
+        return E_FAIL;
     }
     /* now fill our internal data */
     /* TLIBATTR fields */
