@@ -620,6 +620,8 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
     switch (uFlags & DCB_TYPEMASK) {
     case DCB_NULL:
 	TRACE("Null !\n");
+	if (dwCallBack)
+	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08lX is not null !\n");
 	break;
     case DCB_WINDOW:
 	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);

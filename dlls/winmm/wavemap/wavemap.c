@@ -71,7 +71,7 @@ static void	CALLBACK WAVEMAP_DstCallback(HDRVR hDev, UINT uMsg, DWORD dwInstance
 	ERR("Unknown msg %u\n", uMsg);
     }
 
-    DriverCallback(wom->dwCallback, wom->dwFlags, hDev, uMsg, 
+    DriverCallback(wom->dwCallback, HIWORD(wom->dwFlags), hDev, uMsg, 
 		   wom->dwClientInstance, dwParam1, dwParam2);
 }
 
