@@ -891,7 +891,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (lpText) {
         rcText.left += GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
         rcText.right -= GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
-        if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
+        if (GETDEFIMAGELIST(infoPtr, GETHIMLID(infoPtr,btnPtr->iBitmap)) &&
+            TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
         {
             if (dwStyle & TBSTYLE_LIST)
                 rcText.left += infoPtr->nBitmapWidth + TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap);
@@ -4539,6 +4540,8 @@ TOOLBAR_SetDrawTextFlags (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwTemp;
 
+    TRACE("hwnd = %p, dwMask = 0x%08lx, dwDTFlags = 0x%08lx\n", hwnd, (DWORD)wParam, (DWORD)lParam);
+
     dwTemp = infoPtr->dwDTFlags;
     infoPtr->dwDTFlags =
 	(infoPtr->dwDTFlags & (DWORD)wParam) | (DWORD)lParam;
@@ -5339,7 +5342,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    case CDRF_SKIPDEFAULT:
 		return TRUE;
 	    default:
-		FIXME("[%p] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		FIXME("[%p] response %ld not handled to NM_CUSTOMDRAW (CDDS_POSTERASE)\n",
 		      hwnd, ntfret);
 	    }
     }
