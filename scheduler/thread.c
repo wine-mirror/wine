@@ -825,3 +825,19 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT32 boost )
     FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
 }
 
+/**********************************************************************
+ * SetThreadLocale [KERNEL32.671]  Sets the calling threads current locale.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ *
+ * NOTES
+ *  Implemented in NT only (3.1 and above according to MS
+ */
+BOOL32 WINAPI SetThreadLocale(
+    LCID lcid)     /* [in] Locale identifier */
+{
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

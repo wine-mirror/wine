@@ -687,7 +687,7 @@ init	MAIN_KernelInit
 668 stub SetTapePosition
 669 stdcall SetThreadAffinityMask(long long) SetThreadAffinityMask
 670 stub SetThreadContext
-671 stub SetThreadLocale
+671 stdcall SetThreadLocale(long) SetThreadLocale
 672 stdcall SetThreadPriority(long long) SetThreadPriority
 673 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
 674 stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
