@@ -53,6 +53,7 @@ typedef struct IDirectSoundBuffer8 IDirectSoundBuffer8,*LPDIRECTSOUNDBUFFER8,**L
 
 DEFINE_GUID(IID_IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
+#define	IID_IDirectSoundNotify8		IID_IDirectSoundNotify
 
 DEFINE_GUID(IID_IDirectSound3DListener,	0x279AFA84,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSound3DListener IDirectSound3DListener,*LPDIRECTSOUND3DLISTENER;
@@ -62,6 +63,8 @@ typedef struct IDirectSound3DBuffer IDirectSound3DBuffer,*LPDIRECTSOUND3DBUFFER;
 
 DEFINE_GUID(IID_IDirectSoundCapture,	0xB0210781,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundCapture IDirectSoundCapture,*LPDIRECTSOUNDCAPTURE;
+#define	IID_IDirectSoundCapture8	IID_IDirectSoundCapture
+typedef struct IDirectSoundCapture IDirectSoundCapture8,*LPDIRECTSOUNDCAPTURE8;
 
 DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
@@ -71,6 +74,7 @@ typedef struct IDirectSoundCaptureBuffer8 IDirectSoundCaptureBuffer8,*LPDIRECTSO
 
 DEFINE_GUID(IID_IDirectSoundFullDuplex,	0xEDCB4C7A,0xDAAB,0x4216,0xA4,0x2E,0x6C,0x50,0x59,0x6D,0xDC,0x1D);
 typedef struct IDirectSoundFullDuplex IDirectSoundFullDuplex,*LPDIRECTSOUNDFULLDUPLEX;
+#define	IID_IDirectSoundFullDuplex8	IID_IDirectSoundFullDuplex
 
 DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
 typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
