@@ -461,10 +461,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
             HBRUSH hbr = GetClassLongW( wndPtr->hwndSelf, GCL_HBRBACKGROUND );
             if (!hbr) return 0;
 
-            /* GetClientRect used to be GetClipBox, but it is not what
-             * Windows does, and it breaks badly with CS_PARENTDC */
-            GetClientRect( wndPtr->hwndSelf, &rect );
-            DPtoLP( hdc, (LPPOINT)&rect, 2 );
+            if (GetClassLongW( wndPtr->hwndSelf, GCL_STYLE ) & CS_PARENTDC)
+            {
+                /* can't use GetClipBox with a parent DC or we fill the whole parent */
+                GetClientRect( wndPtr->hwndSelf, &rect );
+                DPtoLP( hdc, (LPPOINT)&rect, 2 );
+            }
+            else GetClipBox( hdc, &rect );
             FillRect( hdc, &rect, hbr );
 	    return 1;
 	}
