@@ -305,14 +305,14 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     BOOL hasDropDownArrow = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
 	                    (btnPtr->fsStyle & TBSTYLE_DROPDOWN);
-    RECT rc, rcArrow;
-    INT xOffset = (infoPtr->nButtonWidth / 2) - (infoPtr->nBitmapWidth / 2);
+    RECT rc, rcArrow, rcBitmap;
 
     if (btnPtr->fsState & TBSTATE_HIDDEN)
 	return;
 
     rc = btnPtr->rect;
     CopyRect (&rcArrow, &rc);
+    CopyRect(&rcBitmap, &rc);
 
     FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
 
@@ -324,6 +324,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             rc.right = max(rc.left, rc.right - DDARROW_WIDTH - 2);
 	rcArrow.left = rc.right; 
     }
+
+    /* Take the border into account and center the bitmap horizontally */
+    rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth - 1-2) / 2;
+    rcBitmap.top+=1;
 
     TRACE("iBitmap: %d\n", btnPtr->iBitmap);
 
@@ -359,9 +363,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	if (infoPtr->himlDis && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
-			rc.left + xOffset + 1, rc.top + 1, ILD_NORMAL);
+			rcBitmap.left, rcBitmap.top, ILD_NORMAL);
 	else
-	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left + xOffset + 1, rc.top + 1);
+	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
 
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
@@ -387,7 +391,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
+			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
 
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
@@ -407,8 +411,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left + xOffset, rc.top + 2, ILD_NORMAL);
-
+			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
@@ -419,7 +422,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
 	TOOLBAR_DrawPattern (hdc, &rc);
-	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left + xOffset + 1, rc.top + 1);
+	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
@@ -446,10 +449,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	if (btnPtr->bHot && infoPtr->himlHot && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
-			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
+			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
 	else if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
+			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
     }
     else
     {
@@ -465,7 +468,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left + xOffset + 1, rc.top + 1, ILD_NORMAL);
+			rcBitmap.left, rcBitmap.top, ILD_NORMAL);
     }
 
     TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
