@@ -32,6 +32,7 @@
 #include "winuser.h"
 #include "excpt.h"
 #include "wine/library.h"
+#include "winnls.h"
 
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
@@ -58,12 +59,43 @@ void	DEBUG_OutputA(int chn, const char* buffer, int len)
 
 void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len)
 {
-    /* FIXME: this won't work is std output isn't attached to a console */
-    if (DBG_IVAR(ConChannelMask) & chn)
-	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
-    /* simplistic Unicode to ANSI conversion */
-    if (DBG_IVAR(StdChannelMask) & chn)
-        while (len--) fputc((char)*buffer++, stderr);
+	char* ansi = NULL;
+	int newlen;
+	
+	/* do a serious Unicode to ANSI conversion
+	   FIXME: should CP_ACP be GetConsoleCP()? */
+	newlen = WideCharToMultiByte(CP_ACP, 0, buffer, len, NULL, 0, NULL, NULL);
+	if(newlen)
+	{
+		ansi = (char*)DBG_alloc(newlen);
+		if(ansi)
+		{
+			WideCharToMultiByte(CP_ACP, 0, buffer, len, ansi, newlen, NULL, NULL);
+		}
+	}
+	
+	/* fall back to a simple Unicode to ANSI conversion in case WC2MB failed */
+	if(!ansi)
+	{
+		ansi = DBG_alloc(len);
+		if(ansi)
+		{
+			int i;
+			for(i = 0; i < len; i++)
+			{
+				ansi[i] = (char)buffer[i];
+			}
+			
+			newlen = len;
+		}
+		/* else we are having REALLY bad luck today */
+	}	
+	
+	if(ansi)
+	{
+		DEBUG_OutputA(chn, ansi, newlen);
+		DBG_free(ansi);
+	}
 }
 
 int	DEBUG_Printf(int chn, const char* format, ...)
