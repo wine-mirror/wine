@@ -205,6 +205,13 @@ BOOL SIC_Initialize(void)
 {
 	HICON		hSm, hLg;
 	UINT		index;
+	int		cx_small, cy_small;
+	int		cx_large, cy_large;
+
+	cx_small = GetSystemMetrics(SM_CXSMICON);
+	cy_small = GetSystemMetrics(SM_CYSMICON);
+	cx_large = GetSystemMetrics(SM_CXICON);
+	cy_large = GetSystemMetrics(SM_CYICON);
 
 	TRACE("\n");
 
@@ -226,13 +233,13 @@ BOOL SIC_Initialize(void)
 
 	for (index=1; index<39; index++)
 	{
-	  hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, 16, 16,LR_SHARED);
-	  hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, 32, 32,LR_SHARED);
+	  hSm = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_small, cy_small, LR_SHARED);
+	  hLg = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_large, cy_large, LR_SHARED);
 
 	  if(!hSm)
 	  {
-	    hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 16, 16,LR_SHARED);
-	    hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 32, 32,LR_SHARED);
+	    hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(1), IMAGE_ICON, cx_small, cy_small, LR_SHARED);
+	    hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(1), IMAGE_ICON, cx_large, cy_large, LR_SHARED);
 	  }
          SIC_IconAppend (swShell32Name, index, hSm, hLg);
 	}
@@ -326,7 +333,7 @@ BOOL PidlToSicIndex (
 	}
 
 	if (INVALID_INDEX == *pIndex)	/* default icon when failed */
-	  *pIndex = 1;
+	  *pIndex = 0;
 
 	return ret;
 
