@@ -92,6 +92,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   UUID* act;
   RPC_STATUS status;
   RpcPktHdr hdr;
+  DWORD count;
 
   TRACE("(%p)\n", pMsg);
   if (!bind) return RPC_S_INVALID_BINDING;
@@ -131,7 +132,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   hdr.len = pMsg->BufferLength;
 
   /* transmit packet */
-  if (!WriteFile(conn->conn, &hdr, sizeof(hdr), NULL, NULL)) {
+  if (!WriteFile(conn->conn, &hdr, sizeof(hdr), &count, NULL)) {
     WARN("WriteFile failed with error %ld\n", GetLastError());
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
@@ -143,7 +144,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
     goto fail;
   }
  
-  if (!WriteFile(conn->conn, pMsg->Buffer, pMsg->BufferLength, NULL, NULL)) {
+  if (!WriteFile(conn->conn, pMsg->Buffer, pMsg->BufferLength, &count, NULL)) {
     WARN("WriteFile failed with error %ld\n", GetLastError());
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
