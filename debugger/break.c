@@ -332,27 +332,25 @@ void DEBUG_InfoBreakpoints(void)
 
 
 /***********************************************************************
- *           DEBUG_AddModuleBreakpoints
+ *           DEBUG_AddTaskEntryBreakpoint
  *
- * Add a breakpoint at the start of every loaded module.
+ * Add a breakpoint at the entry point of the given task
  */
-void DEBUG_AddModuleBreakpoints(void)
+void DEBUG_AddTaskEntryBreakpoint( HTASK16 hTask )
 {
-    MODULEENTRY entry;
+    TDB *pTask = (TDB *)GlobalLock16( hTask );
     NE_MODULE *pModule;
-    BOOL32 ok;
     DBG_ADDR addr = { NULL, 0, 0 };
-    WINE_MODREF *wm;
 
-    for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
+    if ( pTask )
     {
-        if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
-        if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
+        if (!(pModule = NE_GetPtr( pTask->hModule ))) return;
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) return;  /* Library */
 
         if (pModule->lpDosTask) { /* DOS module */
             addr.seg = pModule->lpDosTask->init_cs | ((DWORD)pModule->self << 16);
             addr.off = pModule->lpDosTask->init_ip;
-            fprintf( stderr, "DOS task '%s': ", entry.szModule );
+            fprintf( stderr, "DOS task '%s': ", NE_MODULE_NAME( pModule ) );
             DEBUG_AddBreakpoint( &addr );
         } else
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
@@ -360,31 +358,15 @@ void DEBUG_AddModuleBreakpoints(void)
             addr.seg =
 		GlobalHandleToSel(NE_SEG_TABLE(pModule)[pModule->cs-1].hSeg);
             addr.off = pModule->ip;
-            fprintf( stderr, "Win16 task '%s': ", entry.szModule );
+            fprintf( stderr, "Win16 task '%s': ", NE_MODULE_NAME( pModule ) );
             DEBUG_AddBreakpoint( &addr );
 	}
 	else /* PE module */
 	{
-    
-	    if (!(wm = PROCESS_Current()->modref_list))
-	    {
-		addr.seg = 0;
-		addr.off = (DWORD)RVA_PTR( pModule->module32,
+	    addr.seg = 0;
+	    addr.off = (DWORD)RVA_PTR( pModule->module32,
 			   OptionalHeader.AddressOfEntryPoint);
-	    }
-	    else
-	    {
-		while (wm)
-		{
-		    if (wm->module == pModule->module32) break;
-		    wm = wm->next;
-		}
-		if (!wm) continue;
-		addr.seg = 0;
-		addr.off = (DWORD)RVA_PTR( wm->module,
-			   OptionalHeader.AddressOfEntryPoint);
-	    }
-	    fprintf( stderr, "Win32 task '%s': ", entry.szModule );
+	    fprintf( stderr, "Win32 task '%s': ", NE_MODULE_NAME( pModule ) );
 	    DEBUG_AddBreakpoint( &addr );
 	}
     }

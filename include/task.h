@@ -144,6 +144,7 @@ typedef struct _THHOOK
 #pragma pack(4)
 
 extern THHOOK *pThhook;
+extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );
 
 extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
                             HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
