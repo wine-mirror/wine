@@ -52,9 +52,9 @@ struct string_table
     msistring *strings; /* an array of strings (in the tree) */
 };
 
-static int msistring_makehash( const WCHAR *str )
+static UINT msistring_makehash( const WCHAR *str )
 {
-    int hash = 0;
+    UINT hash = 0;
 
     if (str==NULL)
         return hash;
@@ -106,7 +106,7 @@ VOID msi_destroy_stringtable( string_table *st )
 
 static int st_find_free_entry( string_table *st )
 {
-    int i, sz;
+    UINT i, sz;
     msistring *p;
 
     TRACE("%p\n", st);
@@ -135,7 +135,7 @@ static int st_find_free_entry( string_table *st )
     return st->freeslot;
 }
 
-static void st_mark_entry_used( string_table *st, int n )
+static void st_mark_entry_used( string_table *st, UINT n )
 {
     if( n >= st->maxcount )
         return;
@@ -351,7 +351,7 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
  */
 UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
 {
-    int hash;
+    UINT hash;
     UINT i, r = ERROR_INVALID_PARAMETER;
 
     hash = msistring_makehash( str );

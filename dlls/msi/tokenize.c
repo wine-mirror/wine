@@ -159,7 +159,7 @@ static const Keyword aKeywordTable[] = {
 ** returned.  If the input is not a keyword, TK_ID is returned.
 */
 int sqliteKeywordCode(const WCHAR *z, int n){
-  int i, len;
+  UINT i, len;
   char buffer[0x10];
 
   len = WideCharToMultiByte( CP_ACP, 0, z, n, buffer, sizeof buffer, NULL, NULL );

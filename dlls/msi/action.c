@@ -158,7 +158,7 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data);
 static UINT resolve_folder(MSIPACKAGE *package, LPCWSTR name, LPWSTR path, 
                            BOOL source, BOOL set_prop, MSIFOLDER **folder);
 
-static UINT track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
+static int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
  
 /*
  * consts and values used
@@ -264,8 +264,8 @@ inline static WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)
 
 inline static int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
 {
-    INT rc = -1;
-    INT i;
+    int rc = -1;
+    DWORD i;
 
     for (i = 0; i < package->loaded_components; i++)
     {
@@ -280,8 +280,8 @@ inline static int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
 
 inline static int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
 {
-    INT rc = -1;
-    INT i;
+    int rc = -1;
+    DWORD i;
 
     for (i = 0; i < package->loaded_features; i++)
     {
@@ -296,8 +296,8 @@ inline static int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
 
 inline static int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
 {
-    INT rc = -1;
-    INT i;
+    int rc = -1;
+    DWORD i;
 
     for (i = 0; i < package->loaded_files; i++)
     {
@@ -310,10 +310,10 @@ inline static int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
     return rc;
 }
 
-static UINT track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
+static int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
 {
-    int i;
-    int index;
+    DWORD i;
+    DWORD index;
 
     if (!package)
         return -2;
@@ -343,7 +343,7 @@ static UINT track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
 
 void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
 {
-    int i;
+    DWORD i;
 
     if (!package)
         return;
@@ -1625,10 +1625,10 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static int load_file(MSIPACKAGE* package, MSIRECORD * row)
+static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
 {
-    int index = package->loaded_files;
-    int i;
+    DWORD index = package->loaded_files;
+    DWORD i;
     WCHAR buffer[0x100];
     DWORD sz;
 
@@ -1745,7 +1745,8 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     WCHAR parent[0x100];
     DWORD sz=0x100;
     MSIRECORD * row = 0;
-    INT i,index = -1;
+    INT index = -1;
+    DWORD i;
 
     TRACE("Looking for dir %s\n",debugstr_w(dir));
 
@@ -1753,7 +1754,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     {
         if (strcmpW(package->folders[i].Directory,dir)==0)
         {
-            TRACE(" %s retuning on index %i\n",debugstr_w(dir),i);
+            TRACE(" %s retuning on index %lu\n",debugstr_w(dir),i);
             return i;
         }
     }
@@ -1877,7 +1878,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 static UINT resolve_folder(MSIPACKAGE *package, LPCWSTR name, LPWSTR path, 
                            BOOL source, BOOL set_prop, MSIFOLDER **folder)
 {
-    INT i;
+    DWORD i;
     UINT rc = ERROR_SUCCESS;
     DWORD sz;
 
@@ -2012,7 +2013,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR szOne[] = { '1', 0 };
     UINT rc;
     MSIQUERY * view;
-    INT i;
+    DWORD i;
 
     TRACE("Building Directory properties\n");
 
@@ -2345,11 +2346,11 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
     WCHAR cab[0x100];
     DWORD sz=0x100;
     INT seq;
-    static INT last_sequence = 0; 
+    static UINT last_sequence = 0; 
 
     if (sequence <= last_sequence)
     {
-        TRACE("Media already ready (%i, %i)\n",sequence,last_sequence);
+        TRACE("Media already ready (%u, %u)\n",sequence,last_sequence);
         return ERROR_SUCCESS;
     }
 
@@ -2441,7 +2442,7 @@ inline static UINT create_component_directory ( MSIPACKAGE* package, INT compone
 static UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
     UINT rc = ERROR_SUCCESS;
-    INT index;
+    DWORD index;
     MSIRECORD * uirow;
     WCHAR uipath[MAX_PATH];
 
@@ -2523,7 +2524,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
 inline static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key, 
                                    LPWSTR file_source)
 {
-    INT index;
+    DWORD index;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3000,7 +3001,8 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
     WCHAR level[10000];
     INT install_level;
     DWORD sz;
-    INT i,j;
+    DWORD i;
+    INT j;
     DWORD rc;
     LPWSTR override = NULL;
     static const WCHAR addlocal[]={'A','D','D','L','O','C','A','L',0};
@@ -3200,7 +3202,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     WCHAR squished_cc[0x100];
     DWORD sz;
     UINT rc;
-    INT i;
+    DWORD i;
     HKEY hkey=0,hkey2=0,hkey3=0;
     static const WCHAR szProductCode[]=
 {'P','r','o','d','u','c','t','C','o','d','e',0};
@@ -4377,7 +4379,7 @@ UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder,
 UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder, 
                              LPCWSTR szFolderPath)
 {
-    INT i;
+    DWORD i;
     WCHAR path[MAX_PATH];
     MSIFOLDER *folder;
 
