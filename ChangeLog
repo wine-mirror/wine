@@ -1,4 +1,289 @@
 ----------------------------------------------------------------
+Sun Aug 15 18:52:32 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* objects/cursoricon.c: Steve Tibbett <stevet@corel.com>
+	Fixed cursor stretch code.
+
+	* memory/selector.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Inhibit wraparound in comparison.
+
+	* dlls/shell32/.cvsignore, dlls/shell32/Makefile.in, dlls/shell32/shellord.c, dlls/shell32/shlwapi.spec, loader/loadorder.c, relay32/builtin32.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	New internal dll, exporting already existing path functions.
+
+	* include/message.h, windows/dialog.c, windows/message.c, windows/nonclient.c, controls/menu.c:
+	Francis Beaudet <francis@macadamian.com>
+	Ensure that the WM_ENTERIDLE message is not sent if the wake-up event
+	for the MSG_InternalGetMessage() call is a WM_TIMER.
+
+	* rc/winerc.c, include/resource.h, include/windef.h:
+	Patrik Stridvall <ps@leissner.se>
+	GCC 3.0 has not been released yet, but it is good to be prepared.
+
+	* misc/spy.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Added resolution of LVM messages.
+
+	* objects/dib.c: Gerard Patel <g.patel@wanadoo.fr>
+	Added protection against possible memory corruption.
+
+	* objects/cursoricon.c: Steve Tibbett <stevet@corel.com>
+	Fixed cursor selection to find the correct cursor when more than one
+	available.
+
+	* dlls/winspool/Makefile.in, dlls/winspool/info.c, dlls/winspool/winspool.spec, dlls/winspool/wspool.c:
+	Thuy Nguyen <thuy@macadamian.com>
+	Replaced a static ten element array with a dynamic pointer array.
+
+	* dlls/commdlg/printdlg.c: Gerard Patel <g.patel@wanadoo.fr>
+	Fix special case when no printer installed.
+
+	* dlls/shell32/shell.c, dlls/shell32/shell.spec:
+	James Juran <jrj120@psu.edu>
+	New routine DllEntryPoint for shell.dll.  Loads shell32.dll,
+	since most shell.dll functions call their 32-bit counterparts.
+
+	* dlls/version/info.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Fixed alignment.
+
+	* controls/edit.c: Pascal Lessard <pascal@macadamian.com>
+	EM_SETSEL scrolls if outside of the visible range.
+	"shift+home" selection improved in the edit control.
+
+	* ole/parsedt.c: Removed RCS keyword.
+
+	* dlls/shell32/folders.c, dlls/shell32/pidl.c, dlls/shell32/shell32.spec, dlls/shell32/shell32_main.h, dlls/shell32/shelllink.c, dlls/shell32/shellole.c, dlls/shell32/shellord.c, dlls/shell32/shellpath.c, dlls/shell32/shres.rc, dlls/shell32/shresdef.h, dlls/shell32/shv_bg_cmenu.c, include/shell.h, include/wine/undocshell.h:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	More use of rc files for strings and menus, fixes. First internal
+	icons.
+
+	* dlls/shell32/shlview.c: Juergen Schmied <juergen.schmied@metronet.de>
+	New interface: DropSource.
+
+	* dlls/shell32/shlfolder.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Better DropTarget.
+
+	* dlls/shell32/shell32_main.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Implemented SHGetFileInfo better.
+
+	* dlls/shell32/iconcache.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Protect cache with critical section.
+	Removed hack to load icons from external shell32.dll.
+
+	* dlls/shell32/dataobject.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	QueryGetData, EnumFormatEtc implemented.
+
+	* dlls/shell32/classes.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Fixed mapping of file extensions to text.
+
+	* misc/ddeml.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Fixed ascii/unicode issue for naming of the mutexes.
+	Made mutex handles global.
+	Fixed incorrect interpretation of return values of WaitForSingleObject.
+
+	* objects/font.c: Juergen Schmied <juergen.schmied@metronet.de>
+	First implementation of GetCharacterPlacementA.
+
+	* windows/defwnd.c, include/winuser.h:
+	Thuy Nguyen <thuy@macadamian.com>
+	Implemented the WM_SETICON and WM_GETICON messages.
+
+	* files/drive.c: Morten Eriksen <mortene@sim.no>
+	FIXME on unimplemented feature made less obtrusive.
+
+	* graphics/x11drv/bitblt.c: Pascal Lessard <pascal@macadamian.com>
+	Now the conversion in the blt functions round up the result.
+
+	* tools/build-spec.txt, tools/build.c: James Juran <jrj120@psu.edu>
+	Document use of "init" in build-spec.txt, and make build.c print a
+	warning if someone tries to use "init" in a Win16 spec file.
+
+	* loader/ne/segment.c: Michael Karcher <karcher@dpk.berlin.fido.de>
+	Make sure we have a dgroup before patching prologs.
+
+	* */Makefile.in, */.cvsignore:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to glue code generation changes.
+
+	* loader/ne/module.c, loader/ne/segment.c, windows/winproc.c, if1632/builtin.c, if1632/relay.c, if1632/snoop.c, if1632/thunk.c, include/callback.h, include/module.h, include/snoop.h, loader/module.c, loader/task.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to new-style Wine thunks.
+	Removed some now unnecessary function pointers.
+
+	* include/builtin16.h, include/stackframe.h, tools/build.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	CallTo16... / CallFrom16... Wine thunks reorganized:
+	- Cleaner separation between core and glue code.
+	- Argument conversion glue code now in C.
+	- Glue code needed for 16-bit .spec files inlined.
+
+Sat Aug 14 15:53:50 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* misc/comm.c: Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	- implemented GetCommModemStatus
+	- fixed the DTR, CTS and COMMBREAK related subfunctions of EscapeCommFunction
+	- added more verbose TRACEing
+
+	* misc/version.c: Morten Eriksen <mortene@sim.no>
+	Made GetVersionEx() behave in accordance with the specification with
+	regard to error handling.
+
+	* dlls/msvideo/msvfw32.spec, dlls/msvideo/msvideo_main.c:
+	Mark G. Adams <madams@livepage.com>
+	Added stub for DrawDibClose.
+
+	* controls/combo.c: Francis Beaudet <francis@macadamian.com>
+	Fixed the look of the combobox's drop down button when in Win95 look.
+
+	* dlls/comctl32/propsheet.c: Thuy Nguyen <thuy@macadamian.com>
+	Added support for icons in property sheet tabs.
+
+	* include/commctrl.h, tools/wrc/CHANGES, tools/wrc/genres.c, tools/wrc/parser.l, tools/wrc/wrc.h:
+	Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Version 1.0.14 of wrc.
+
+Sun Aug  8 18:56:04 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/winbase.h, win32/time.c: Fixed SetLocalTime prototype.
+
+	* ole/ole2nls.c, win32/kernel32.c, dlls/commdlg/printdlg.c, dlls/ntdll/rtlstr.c, dlls/shell32/shell32_main.c, dlls/shell32/shellpath.c, dlls/version/info.c, files/dos_fs.c, if1632/thunk.c, include/wine/winestring.h, loader/libres.c, loader/pe_resource.c, dlls/comctl32/comctl32undoc.c:
+	Replaced a few calls to lstr* functions by their CRTDLL or libc
+	equivalent.
+
+	* memory/string.c:
+	Added an exception handler around a few lstr* functions.
+
+	* dlls/crtdll/Makefile.in, dlls/crtdll/crtdll.spec, dlls/crtdll/crtdll_main.c, dlls/crtdll/mbstring.c, dlls/crtdll/wcstring.c, dlls/ntdll/ntdll.spec, include/crtdll.h:
+	Reimplemented multi-byte and wide-chars functions to not depend on
+	lstr* functions; added a few missing ones; fixed a couple of bugs.
+
+Sat Aug  7 14:32:34 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/Attic/wnet.h, include/wine/winnet16.h, include/winerror.h, include/winnetwk.h, include/winuser.h, misc/network.c, relay32/.cvsignore, relay32/Attic/mpr.spec, relay32/Makefile.in, Makefile.in, configure, configure.in, dlls/Makefile.in, dlls/mpr/.cvsignore, dlls/mpr/Makefile.in, dlls/mpr/auth.c, dlls/mpr/mpr.spec, dlls/mpr/mpr_main.c, dlls/mpr/multinet.c, dlls/mpr/nps.c, dlls/mpr/pwcache.c, dlls/mpr/wnet.c, include/netspi.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Separated Win16 (USER) and Win32 (MPR) network routines.
+	Moved implementation of MPR to dlls/mpr/.
+	Added proper headers and stubs for missing MPR routines.
+
+	* misc/registry.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Improved (sort of) RegFlushKey.
+
+	* windows/winpos.c: Francis Beaudet <francis@macadamian.com>
+	If the window is already the topmost window in ShowWindow(SW_SHOW), it
+	must not be activated.
+
+	* windows/x11drv/event.c: Stephane Lussier <stephane@macadamian.com>
+	WM_SYSCOMMAND message (for SC_CLOSE) should be posted not sent.
+
+	* windows/dce.c, windows/x11drv/wnd.c:
+	Stephane Lussier <stephane@macadamian.com>
+	X11drv SetDrawable function modifies the DC origin, this translation
+	should be reflected for the dc clipping region for CS_OWNDC and CS_CLASSDC.
+
+	* windows/defdlg.c, windows/dialog.c: Abey George <abey@macadamian.com>
+	Set focus to the dialog in EndDialog.
+
+	* libtest/Makefile.in: James Juran <jrj120@psu.edu>
+	Make sure we compile winestub.o before trying to build a Winelib test
+	program.
+
+	* files/directory.c: Andreas Mohr <amohr@student.ei.uni-stuttgart.de>
+	Fixed case sensitivity flag.
+
+	* include/commdlg.h, dlls/commdlg/printdlg.c:
+	Klaas van Gend <klaas@vangend.demon.nl>
+	Implemented the return of hDevModes and hDevNames in the PRINTDLG
+	structure of PrintDlgA().
+
+	* windows/queue.c, include/queue.h: Ove Kaaven <ovek@arcticnet.no>
+	Made hardware_event use win32-conformant parameters.
+
+	* dlls/commdlg/cdlg32.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Explicitly load shell32.dll.
+
+	* dlls/comctl32/tab.c: Thuy Nguyen <thuy@macadamian.com>
+	Take into account icons when determining tab size.
+
+	* files/drive.c: Morten Eriksen <mortene@sim.no>
+	Improved GetDiskFreeSpaceEx() implementation a little bit.
+
+	* misc/comm.c: Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	- added some more Baudrates
+	- fixed a hang in tcsetattr when the input buffer isn't empty
+	- added more verbosity for debugging
+
+	* controls/uitools.c: Francis Beaudet <francis@macadamian.com>
+	Handle the case when the button is really small.
+
+	* windows/nonclient.c: Thuy Nguyen <thuy@macadamian.com>
+	WS_EX_DLGMODALFRAME alone does not mean title bar, you still have to
+	specify WS_CAPTION.
+
+Wed Aug  4 15:07:57 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* configure.in, include/acconfig.h, include/config.h.in, include/dinput.h, windows/dinput.c, configure:
+	Marcus Meissner <marcus@jet.franken.de>
+	Implemented DirectInput Joystick support (tested with WC:Prophecy).
+
+	* relay32/kernel32.spec, win32/time.c:
+	Andreas Mohr <amohr@student.ei.uni-stuttgart.de>
+	Implemented SetLocalTime.
+
+	* windows/x11drv/keyboard.c: Ivan De Saedeleer <Ivands@sympatico.ca>
+	Minor fix to the French Canadian keyboard.
+
+	* graphics/ddraw.c: Marcus Meissner <marcus@jet.franken.de>
+	When flipping backbuffer -> frontbuffer, first exchange surfaces, then
+	copy XImage, since the palette might only be defined in the frontbuffer.
+
+	* tools/wineinstall: Joerg Mayer <jmayer@telesun2.telemation.de>
+	Create sysconfdir on install.
+
+	* dlls/stress/.cvsignore: Fixed typo.
+
+	* dlls/wnaspi32/winaspi32.c, if1632/relay.c, include/debugtools.h, loader/pe_image.c, win32/kernel32.c, windows/x11drv/keyboard.c, controls/listbox.c, controls/menu.c, controls/scroll.c, dlls/version/info.c, dlls/winaspi/winaspi16.c:
+	Got rid of dsprintf and related macros.
+
+	* server/mutex.c:
+	Remove the mutex from the thread list when destroying it.
+
+	* */*:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Moved various DLLs to dlls/
+
+Sun Aug  1 14:58:02 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/winaspi/winaspi16.c, if1632/snoop.c, include/winnt.h, loader/ne/segment.c, misc/error.c, msdos/devices.c, msdos/dpmi.c, msdos/int21.c, msdos/int33.c, debugger/registers.c, debugger/stack.c:
+	Removed IP_reg, SP_reg and FL_reg definitions to avoid potential
+	aliasing optimization problems.
+
+	* dlls/ntdll/exception.c, include/miscemu.h, loader/dos/module.c, loader/signal.c:
+	Removed SIGNAL_MaskAsyncEvents and cleaned up signal handling.
+
+	* include/Attic/async.h, win32/console.c, files/Attic/async.c, files/Makefile.in, files/file.c:
+	Removed async I/O support.
+
+	* include/comm.h, misc/comm.c:
+	Use the service thread for comm notifications.
+
+	* include/sig_context.h, include/stackframe.h, loader/task.c, msdos/dpmi.c, relay32/relay386.c, win32/kernel32.c, if1632/relay.c, if1632/thunk.c:
+	Made stack manipulation macros into inline functions.
+	Changed a few accesses to context registers to avoid potential
+	aliasing optimization problems.
+
+	* include/miscemu.h, include/sig_context.h, include/windef.h, loader/dos/dosvm.c, memory/instr.c, dlls/ntdll/exception.c:
+	Changed INSTR_EmulateInstruction to use a CONTEXT86 instead of a
+	SIGCONTEXT.
+
+	* Makefile.in: Remove wine.conf.man on distclean
+
+----------------------------------------------------------------
 Sat Jul 31 19:35:58 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* windows/nonclient.c: Noomen Hamza <noomen@macadamian.com>
