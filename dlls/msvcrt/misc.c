@@ -18,11 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 
 #include "msvcrt.h"
 #include "msvcrt/stdlib.h"
-
 
 #include "wine/debug.h"
 
@@ -97,8 +99,51 @@ void* _lsearch(const void* match, void* start,
 
 /*********************************************************************
  *		_chkesp (MSVCRT.@)
+ *
+ * Trap to a debugger if the value of the stack pointer has changed.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Does not return.
+ *
+ * NOTES
+ *  This function is available for iX86 only.
+ *
+ *  When VC++ generates debug code, it stores the value of the stack pointer
+ *  before calling any external function, and checks the value following
+ *  the call. It then calls this function, which will trap if the values are
+ *  not the same. Usually this means that the prototype used to call
+ *  the function is incorrect.  It can also mean that the .spec entry has
+ *  the wrong calling convention or parameters.
  */
-void _chkesp(void)
-{
+#ifdef __i386__
 
+# ifdef __GNUC__
+__ASM_GLOBAL_FUNC(_chkesp,
+                  "jnz 1f\n\t"
+                  "ret\n"
+                  "1:\tpushl %ebp\n\t"
+                  "movl %esp,%ebp\n\t"
+                  "pushl %eax\n\t"
+                  "pushl %ecx\n\t"
+                  "pushl %edx\n\t"
+                  "call " __ASM_NAME("MSVCRT_chkesp_fail") "\n\t"
+                  "popl %edx\n\t"
+                  "popl %ecx\n\t"
+                  "popl %eax\n\t"
+                  "popl %ebp\n\t"
+                  "ret");
+
+void MSVCRT_chkesp_fail(void)
+{
+  ERR("Stack pointer incorrect after last function call - Bad prototype/spec entry?\n");
+  DebugBreak();
 }
+
+# else  /* __GNUC__ */
+void _chkesp(void) { }
+# endif  /* __GNUC__ */
+
+#endif  /* __i386__ */
