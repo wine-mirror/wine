@@ -1546,7 +1546,7 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	wwo->mapping = mmap(NULL, wwo->maplen, PROT_WRITE, MAP_SHARED,
 			    wwo->unixdev, 0);
 	if (wwo->mapping == (LPBYTE)-1) {
-	    ERR("(%p): Could not map sound device for direct access (errno=%d)\n", dsdb, errno);
+	    ERR("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
 	    return DSERR_GENERIC;
 	}
 	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
