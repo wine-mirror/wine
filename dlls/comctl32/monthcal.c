@@ -1324,15 +1324,13 @@ MONTHCAL_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
     MONTHCAL_CopyTime(&ht.st, &selArray[1]);
     MONTHCAL_SetSelRange(hwnd,0,(LPARAM) &selArray); 
 
-    /* FIXME: for some reason if RedrawWindow has a NULL instead of zero it gives */
-    /* a compiler warning */
     /* redraw both old and new days if the selected day changed */
     if(infoPtr->curSelDay != ht.st.wDay) {
       MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &rcDay);
-      RedrawWindow(hwnd, &rcDay, 0, RDW_ERASE|RDW_INVALIDATE);
+      InvalidateRect(hwnd, &rcDay, TRUE);
 
       MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->curSelDay, infoPtr->currentMonth, &rcDay);
-      RedrawWindow(hwnd, &rcDay, 0, RDW_ERASE|RDW_INVALIDATE);
+      InvalidateRect(hwnd, &rcDay, TRUE);
     }
 
     infoPtr->firstSelDay = ht.st.wDay;
@@ -1487,7 +1485,7 @@ done:
 
   /* only redraw if the currently selected day changed */
   /* FIXME: this should specify a rectangle containing only the days that changed */
-  /* using RedrawWindow */
+  /* using InvalidateRect */
   if(oldselday != infoPtr->curSelDay)
     InvalidateRect(hwnd, NULL, FALSE);
 

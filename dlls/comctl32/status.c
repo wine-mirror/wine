@@ -8,8 +8,6 @@
  * FIXME/TODO
  * 1) Don't hard code bar to bottom of window, allow CCS_TOP also.
  * 2) Tooltip support (almost done).
- * 3) I think RedrawWindow() is rather wrong, we should use InvalidateRect
- *    probably.
  */
 
 #include "winbase.h"
@@ -217,7 +215,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
     if (infoPtr->simple) {
-	STATUSBAR_RefreshPart (hwnd, &infoPtr->part0,hdc,0);
+	STATUSBAR_RefreshPart (hwnd, &infoPtr->part0, hdc, 0);
     } else {
 	for (i = 0; i < infoPtr->numParts; i++) {
 	    if (infoPtr->parts[i].style & SBT_OWNERDRAW) {
@@ -232,7 +230,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
 		SendMessageA (GetParent (hwnd), WM_DRAWITEM,
 			(WPARAM)dis.CtlID, (LPARAM)&dis);
 	    } else
-		STATUSBAR_RefreshPart (hwnd, &infoPtr->parts[i], hdc,i);
+		STATUSBAR_RefreshPart (hwnd, &infoPtr->parts[i], hdc, i);
 	}
     }
 
@@ -518,7 +516,7 @@ STATUSBAR_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     oldBkColor = self->clrBk;
     self->clrBk = (COLORREF)lParam;
-    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return oldBkColor;
 }
@@ -540,16 +538,14 @@ STATUSBAR_SetIcon (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    return TRUE;
 	self->part0.hIcon = (HICON)lParam;
 	if (self->simple)
-            RedrawWindow(hwnd, &self->part0.bound,(HRGN)NULL,
-                         RDW_INVALIDATE|RDW_UPDATENOW);
+            InvalidateRect(hwnd, &self->part0.bound, FALSE);
     } else {
 	if (self->parts[nPart].hIcon == (HICON)lParam) /* same as - no redraw */
 	    return TRUE;
 
 	self->parts[nPart].hIcon = (HICON)lParam;
 	if (!(self->simple))
-            RedrawWindow(hwnd,&self->parts[nPart].bound,(HRGN)NULL,
-                         RDW_INVALIDATE|RDW_UPDATENOW);
+            InvalidateRect(hwnd, &self->parts[nPart].bound, FALSE);
     }
     return TRUE;
 }
@@ -652,7 +648,7 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
     STATUSBAR_SetPartBounds (hwnd);
-    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, NULL, FALSE);
     return TRUE;
 }
 
@@ -710,7 +706,7 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    COMCTL32_Free (part->text);
 	part->text = ntext;
     }
-    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &part->bound, FALSE);
 
     return TRUE;
 }
@@ -723,6 +719,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     STATUSWINDOWPART *part;
     INT  part_num, style, len;
     LPWSTR text;
+    BOOL bRedraw = FALSE;
 
     text = (LPWSTR) lParam;
     part_num = ((INT) wParam) & 0x00ff;
@@ -734,23 +731,36 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	part = &self->parts[part_num];
     if (!part) return FALSE;
 
-    if (!(part->style & SBT_OWNERDRAW) && part->text)
-	COMCTL32_Free (part->text);
-    part->text = 0;
+    if(part->style != style)
+        bRedraw = TRUE;
 
-    /* FIXME: add "no need to redraw logic" */
-    if (style & SBT_OWNERDRAW) {
-	part->text = text;
-    } else {
-	/* duplicate string */
-	if (text && (len = lstrlenW(text))) {
-	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    strcpyW(part->text, text);
-	}
-    }
     part->style = style;
 
-    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    /* FIXME: not sure how/if we can check for change in string with ownerdraw(remove this if we can't)... */
+    if (style & SBT_OWNERDRAW)
+    {
+	part->text = text;
+        bRedraw = TRUE;
+    } else if(!text)
+    {
+        if(part->text)
+        {
+            COMCTL32_Free(part->text);
+            bRedraw = TRUE;
+        }
+        part->text = 0;
+    } else if(!part->text || strcmpW(part->text, text)) /* see if the new string differs from the existing string */
+    {
+	if(part->text) COMCTL32_Free(part->text);
+
+        len = lstrlenW(text);
+        part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
+	strcpyW(part->text, text);
+        bRedraw = TRUE;
+    }
+
+    if(bRedraw)
+        InvalidateRect(hwnd, &part->bound, FALSE);
 
     return TRUE;
 }
@@ -827,7 +837,7 @@ STATUSBAR_Simple (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nmhdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
     nmhdr.code = SBN_SIMPLEMODECHANGE;
     SendMessageA (GetParent (hwnd), WM_NOTIFY, 0, (LPARAM)&nmhdr);
-    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, NULL, FALSE);
     return TRUE;
 }
 
@@ -922,7 +932,7 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     GetClientRect (GetParent (hwnd), &rect);
     width = rect.right - rect.left;
     self->height = self->textHeight + 4 + VERT_BORDER;
-    MoveWindow (hwnd, lpCreate->x, lpCreate->y-1,
+    MoveWindow (hwnd, lpCreate->x, lpCreate->y - 1,
 		  width, self->height, FALSE);
     STATUSBAR_SetPartBounds (hwnd);
 
@@ -1061,8 +1071,7 @@ STATUSBAR_WMSetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->hFont = (HFONT)wParam;
     if (LOWORD(lParam) == TRUE)
-        RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,
-                     RDW_INVALIDATE|RDW_UPDATENOW);
+        InvalidateRect(hwnd, NULL, FALSE);
 
     return 0;
 }
@@ -1096,7 +1105,7 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
-    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &part->bound, FALSE);
 
     return TRUE;
 }

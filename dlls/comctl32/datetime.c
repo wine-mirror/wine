@@ -845,7 +845,7 @@ DATETIME_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
   if(infoPtr->bCalDepressed == TRUE) {
     infoPtr->bCalDepressed = FALSE;
-    RedrawWindow(hwnd, &(infoPtr->calbutton), 0, RDW_ERASE|RDW_INVALIDATE);
+    InvalidateRect(hwnd, &(infoPtr->calbutton), TRUE);
   }
 
   return 0;
