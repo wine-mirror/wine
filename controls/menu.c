@@ -2861,7 +2861,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 
     /* find window that has a menu */
  
-    while( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwStyle & WS_SYSMENU) )
+    while( wndPtr->dwStyle & WS_CHILD)
 	if( !(wndPtr = wndPtr->parent) ) return;
 
     /* check if we have to track a system menu */

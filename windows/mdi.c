@@ -1611,8 +1611,6 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
       case WM_MENUCHAR:
 
 	/* MDI children don't have menu bars */
-	PostMessage16( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
-                       (WPARAM16)SC_KEYMENU, (LPARAM)wParam);
         retvalue = 0x00010000L;
         goto END;
 
@@ -1689,8 +1687,6 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
       case WM_MENUCHAR:
 
 	/* MDI children don't have menu bars */
-	PostMessage16( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
-                       (WPARAM16)SC_KEYMENU, (LPARAM)LOWORD(wParam) );
         retvalue = 0x00010000L;
         goto END;
 
