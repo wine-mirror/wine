@@ -1,45 +1,45 @@
 INTRODUCTION
 ~~~~~~~~~~~~
 
-This document attempts to establish guidelines for people making binary 
+This document attempts to establish guidelines for people making binary
 packages of Wine.
 
-It expresses the basic principles that the Wine developers have agreed 
+It expresses the basic principles that the Wine developers have agreed
 should be used when building Wine. It also attempts to highlight the areas
 where there are different approaches to packaging Wine, so that the packager
-can understand the different alternatives that have been considered and their 
+can understand the different alternatives that have been considered and their
 rationales.
 
 TERMS
 ~~~~~
 
-There are several terms and paths used in this document as place holders 
+There are several terms and paths used in this document as place holders
 for configurable values. Those terms are described here.
     * WINEPREFIX: is the user's Wine configuration directory.
 	This is almost always ~/.wine, but can be overridden by
         the user by setting the WINEPREFIX environment variable.
 
     * PREFIX: is the prefix used when selecting an installation target.
-	The current default is /usr/local. This results in binary 
-	installation into /usr/local/bin,  library installation into 
+	The current default is /usr/local. This results in binary
+	installation into /usr/local/bin,  library installation into
 	/usr/local/wine/lib, and so forth.
         This value can be overridden by the packager. In fact, FHS 2.2
 	(http://www.pathname.com/fhs/) specifications suggest that a better
-        prefix is /opt/wine.  Ideally, a packager would also allow the 
+        prefix is /opt/wine.  Ideally, a packager would also allow the
 	installer to override this value.
 
-    * ETCDIR: is the prefix that Wine uses to find the global 
-	configuration directory. This can be changed by the configure 
+    * ETCDIR: is the prefix that Wine uses to find the global
+	configuration directory. This can be changed by the configure
 	option sysconfdir.  The current default is $PREFIX/etc.
 
     * WINDOWSDIR: is an important concept to Wine.  This directory specifies
 	what directory corresponds to the root Windows directory
         (e.g. C:\WINDOWS). This directory is specified by the user, in
-        the user's configuration file.  Generally speaking, this directory 
-	is either set to point at an empty directory, or it is set to point 
+        the user's configuration file.  Generally speaking, this directory
+	is either set to point at an empty directory, or it is set to point
 	at a Windows partition that has been mounted through the vfat driver.
-        NOTE:   It is extremely important that the packager understand the 
-		importance of WINDOWSDIR and convey this information and 
+        NOTE:   It is extremely important that the packager understand the
+		importance of WINDOWSDIR and convey this information and
 		choice to the end user.
 
 DEPENDENCIES
@@ -54,18 +54,18 @@ Ideally, we should eliminate all hard dependencies in favor of
 soft dependencies.
 
 To enable a soft dependency, it must be available at compile time.
-As a packager, please do your best to make sure that as many soft 
-dependencies  are available during compilation. Failing to have a 
+As a packager, please do your best to make sure that as many soft
+dependencies  are available during compilation. Failing to have a
 soft dependency available means that users cannot benefit
 from a Wine capability.
 
 Here is a list of the soft dependencies. We suggest packagers
-install each and every last of those before building the package. 
-These libraries are not dependencies in the RPM sense. In DEB packages, 
+install each and every last of those before building the package.
+These libraries are not dependencies in the RPM sense. In DEB packages,
 they should appear as "Suggests" or "Recommends", as the case may be.
     * FreeType: http://www.freetype.org
-      This library is used for direct rendering of fonts. It provides 
-      better support of fonts than using the X11 fonts engine. It is 
+      This library is used for direct rendering of fonts. It provides
+      better support of fonts than using the X11 fonts engine. It is
       only needed for the X11 back end engine. Used from GDI.
 
     * fontconfig
@@ -83,19 +83,19 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       by WINEPS and WINSPOOL.
 
     * OpenGL
-      This is used for both OpenGL and Direct3D (and some other 
-      DirectX functions as well) support in Wine. There are many many 
+      This is used for both OpenGL and Direct3D (and some other
+      DirectX functions as well) support in Wine. There are many many
       libraries for providing this functionality. It is enough for one
-      of them to be available when compiling Wine. Wine can work with 
+      of them to be available when compiling Wine. Wine can work with
       any other library during runtime.
-      If no library is available, packagers are encouraged to compile 
-      Wine with Mesa3D (http://www.mesa3d.org), which requires no 
+      If no library is available, packagers are encouraged to compile
+      Wine with Mesa3D (http://www.mesa3d.org), which requires no
       hardware support to install.
 
     * LittleCMS: http://www.littlecms.com
       This library is used to implement MSCMS (Color Management System)
       which is needed by an increasing number of graphics applications.
-    
+
     * libjpeg
       This library is used to load JPEG files within OLE automation.
 
@@ -112,7 +112,7 @@ they should appear as "Suggests" or "Recommends", as the case may be.
 
     * openssl
       Used for some cryptographic support in ADVAPI32.
- 
+
     * Xrandr, Xrender, Xi, Xext
       X11 extension libraries used by the x11drv.
       Xrandr - resolution switching
@@ -125,18 +125,18 @@ GOALS
 
 An installation from a Wine package should:
     * Install quickly and simply:
-	The initial installation should require no user input.  An 
+	The initial installation should require no user input.  An
 		'rpm -i wine.rpm' or 'apt-get install wine'
         should suffice for initial installation.
-                
+
     * Work quickly and simply:
         The user should be able to launch Solitaire within seconds
 	of downloading the Wine package.
-              
+
     * Comply with File system Hierarchy Standard
         A Wine installation should, as much as possible, comply
         with the FHS standard (http://www.pathname.com/fhs/).
-                
+
     * Preserve flexibility
         None of the flexibility built into Wine should
         be hidden from the end user.
@@ -150,7 +150,7 @@ An installation from a Wine package should:
 
     * Reduce support requirements.
         A packaged version of Wine should be sufficiently easy to use and
-	have quick and easy access to FAQs and documentation such that 
+	have quick and easy access to FAQs and documentation such that
 	requests to the newsgroup and development group go down.
         Further, it should be easy for users to capture good bug reports.
 
@@ -167,7 +167,7 @@ Successfully installing Wine requires:
 	provides a sample config file and it can be found in
 	documentation/samples.
 
-        Some packagers may attempt to provide (or dynamically generate) a 
+        Some packagers may attempt to provide (or dynamically generate) a
 	default configuration file. Some packagers may copy this on
 	startup, but it is no longer necessary.
 
@@ -186,48 +186,48 @@ WINE COMPONENTS
    * Executable Files
 	- notepad : The windows Notepad replacement.
 	- progman : A Program Manager replacement.
-	- regedit : A graphical tool to edit your registry or for 
+	- regedit : A graphical tool to edit your registry or for
 		importing a windows registry to Wine.
-	- regsvr32 : A program to register/unregister .DLL's and .OCX files. 
+	- regsvr32 : A program to register/unregister .DLL's and .OCX files.
 		Only works on those dlls that can self-register.
 	- taskmgr : A clone of the windows taskmgr, used for debugging and
 		managing running Windows and Winlib processes.
-	- uninstaller: A program to uninstall installed Windows programs. 
+	- uninstaller: A program to uninstall installed Windows programs.
 		Like the Add/Remove Program in the windows control panel.
 	- wcmd :  Wine's command line interpreter, a cmd.exe replacement.
-	- widl : Wine IDL compiler compiles (MS-RPC and DCOM) Interface 
+	- widl : Wine IDL compiler compiles (MS-RPC and DCOM) Interface
 		Definition Language files.
-	- wine :  The main Wine executable. This program will load a Windows 
+	- wine :  The main Wine executable. This program will load a Windows
 		binary and run it, relying upon the Wine shared object libraries.
-	- wineboot : This program is executed on startup of the first wine 
-		process of a particular user.wineboot won't automatically run 
-		when needed.  Currently you have to manually run it after you 
+	- wineboot : This program is executed on startup of the first wine
+		process of a particular user.wineboot won't automatically run
+		when needed.  Currently you have to manually run it after you
 		install something.
-	- winebuild : Winebuild is a tool used for building Winelib applications 
-		(and by Wine itself) to allow a developer to compile a .spec file 
+	- winebuild : Winebuild is a tool used for building Winelib applications
+		(and by Wine itself) to allow a developer to compile a .spec file
 		into a .spec.c file.
 	- wineconsole : Render the output of CUI programs.
-	- winedbg : A application making use of the debugging API to allow 
-		debugging of Wine or Winelib applications as well as Wine itself 
+	- winedbg : A application making use of the debugging API to allow
+		debugging of Wine or Winelib applications as well as Wine itself
 		(kernel and all DLLs).
 	- winedump : Dumps the imports and exports of NE and PE files.
 	- winefile : A clone of the win3x file manager.
-	- winegcc/wineg++: Wrappers for gcc/g++ respectively, to make them behave 
+	- winegcc/wineg++: Wrappers for gcc/g++ respectively, to make them behave
 		as MinGW's gcc. Used for porting apps over to Winelib.
-	- winemaker : Winemaker is a perl script which is designed to help you 
-		bootstrap the conversion of your Windows projects to Winelib. 
+	- winemaker : Winemaker is a perl script which is designed to help you
+		bootstrap the conversion of your Windows projects to Winelib.
 	- winemine :  A clone of "Windows Minesweeper" a demo WineLib app.
-	- winepath :  A tool for converting between Windows paths and Unix paths 
-	- wineserver : The Wine server is the process that manages resources, 
-		coordinates threads, and provides synchronization and interprocess 
+	- winepath :  A tool for converting between Windows paths and Unix paths
+	- wineserver : The Wine server is the process that manages resources,
+		coordinates threads, and provides synchronization and interprocess
 		communication primitives to Wine processes.
-	- wineshelllink : This shell script can be called by Wine in order to 
-		propagate Desktop icon and menu creation requests out to a 
+	- wineshelllink : This shell script can be called by Wine in order to
+		propagate Desktop icon and menu creation requests out to a
 		GNOME or KDE (or other Window Managers).
-	- winewrap : Takes care of linking winelib applications. Linking with 
+	- winewrap : Takes care of linking winelib applications. Linking with
 		Winelib is a complex process, winewrap makes it simple.
 	- winhelp : A Windows Help replacement.
-	- wmc : Wine Message Compiler it allows Windows message files to be 
+	- wmc : Wine Message Compiler it allows Windows message files to be
 		compiled into a format usable by Wine.
 	- wrc : the Wine Resource Compiler. A clone of Microsoft's rc.
 
@@ -296,37 +296,37 @@ WINE COMPONENTS
             registry entries to files in the WINEPREFIX.
 
 	    - WINEPREFIX/system.reg
-                This file contains the user's local copy of the 
+                This file contains the user's local copy of the
 		HKEY_LOCAL_MACHINE registry hive.  In general use, it will
 		contain only changes made to the default registry values.
 
 	    - WINEPREFIX/user.reg
-                This file contains the user's local copy of the 
+                This file contains the user's local copy of the
 		HKEY_CURRENT_MACHINE registry hive.  In general use, it will
 		contain only changes made to the default registry values.
 
 	    - WINEPREFIX/userdef.reg
-                This file contains the user's local copy of the 
+                This file contains the user's local copy of the
 		HKEY_USERS\.Default registry hive.  In general use, it will
 		contain only changes made to the default registry values.
 
 	    - WINEPREFIX/cachedmetrics.[display]
                 This file contains font metrics for the given X display.
                 Generally, this cache is generated once at Wine start time.
-                cachedmetrics can be generated if absent. 
+                cachedmetrics can be generated if absent.
 		You should note this can take a long time.
 
-	    - ETCDIR/wine.systemreg 
-                This file contains the global values for HKEY_LOCAL_MACHINE. 
-		The values in this file can be overridden by the user's 
-		local settings. The location of this directory is hard coded 
-		within wine, generally to /etc. 
+	    - ETCDIR/wine.systemreg
+                This file contains the global values for HKEY_LOCAL_MACHINE.
+		The values in this file can be overridden by the user's
+		local settings. The location of this directory is hard coded
+		within wine, generally to /etc.
 
 	    - ETCDIR/wine.userreg
-                This file contains the global values for HKEY_USERS.  
-		The values in this file can be overridden by the user's 
+                This file contains the global values for HKEY_USERS.
+		The values in this file can be overridden by the user's
 		local settings.  This file is likely to be deprecated in
-                favor of a global wine.userdef.reg that will only contain 
+                favor of a global wine.userdef.reg that will only contain
 		HKEY_USERS/.Default.
 
     * Important Files from a Windows Partition
@@ -335,8 +335,8 @@ WINE COMPONENTS
         files are loaded on a VFAT partition that is mounted under Linux.
 
         This is probably the most important configuration detail.
-        The use of Windows registry and DLL files dramatically alters the 
-	behavior of Wine. If nothing else, packagers have to make this 
+        The use of Windows registry and DLL files dramatically alters the
+	behavior of Wine. If nothing else, packagers have to make this
 	distinction clear to the end user, so that they can intelligently
         choose their configuration.
 
@@ -392,7 +392,7 @@ the mailing list.
 
     * The question of /opt/wine
         The FHS 2.2 specification suggests that Wine as a package
-        should be installed to /opt/wine.  None of the existing packages 
+        should be installed to /opt/wine.  None of the existing packages
 	follow this guideline (today; check again tomorrow).
 
 	(Since most are upgrades of the distro packages, this is still
@@ -410,10 +410,10 @@ the mailing list.
 
         - Setup a fake windows setup automatically.
 		
-		This is done by simply calling wineprefixcreate, 
+		This is done by simply calling wineprefixcreate,
 		which will setup a fake windows root for the user.
 
-		If no arguments are passed, defaults will be 
+		If no arguments are passed, defaults will be
 		assumed for WINEPREFIX (~/.wine) and similar
 		variables.
 
@@ -430,7 +430,7 @@ For a current .spec file, please refer to any one of the existing SRPMs.
 
 1. Building the package
 
-Wine is configured the usual way (depending on your build environment). 
+Wine is configured the usual way (depending on your build environment).
 The PREFIX is chosen using your application placement policy
 (/usr/, /usr/X11R6/, /opt/wine/, or similar).  The configuration files
 (wine.conf, wine.userreg, wine.systemreg) are targeted for /etc/wine/
@@ -465,14 +465,14 @@ You will need to package the files:
 	%config /etc/wine/*
 	%doc ... choose from the top level directory and documentation/
 
-2. Creating a good default configuration file. 
+2. Creating a good default configuration file.
 
 This is no longer necessary, most of this work is now done
 by wineprefixcreate itself.
 
 
 3. Installing Wine for the system administrator
-                
+
 Install the package using the usual packager 'rpm -i wine.rpm'.
 
 Adapting the $prefix/share/wine/wine.inf file used by wineprefixcreate is not
@@ -480,26 +480,24 @@ necessary.
 
 Note that on Linux you should somehow try to add the unhide mount option
 (see 'man mount') to the CD-ROM entry in /etc/fstab during package install,
-as several stupid Windows programs mark some setup (!) files as hidden 
-(ISO9660) on CD-ROMs, which will greatly confuse users as they won't find 
+as several stupid Windows programs mark some setup (!) files as hidden
+(ISO9660) on CD-ROMs, which will greatly confuse users as they won't find
 their setup files on the CD-ROMs as they were used on Windows systems when
 unhide is not set ;-\ And of course the setup program will complain
-that setup.ins or some other mess is missing... If you choose to do so, 
+that setup.ins or some other mess is missing... If you choose to do so,
 then please make this change verbose to the admin.
 
-Also make sure that the kernel you use includes the Joliet CD-ROM support, 
-for the very same reasons as given above (no long filenames due to missing 
+Also make sure that the kernel you use includes the Joliet CD-ROM support,
+for the very same reasons as given above (no long filenames due to missing
 Joliet, files not found).
-              
+
 4. Installing Wine for the user
 
-The user will need to run a wineprefixcreate before the first invocation
-of Wine.
+If no standard wine prefix was setup, the first call to wine will
+create one for the user.
 
-A packager might provide a wrapper for wine to do that automatically,
-like if the WINEPREFIX directory (~/.wine) is not present.
-
-Thats it.
+So the user can just click on any setup.exe file and it will work
+out of the box.
 
 AUTHORS
 ~~~~~~~
@@ -509,4 +507,4 @@ Updated in 2000 by Jeremy White <jwhite@codeweavers.com>
 Updated in 2002 by Andreas Mohr <andi@rhlx01.fht-esslingen.de>
 Updated in 2003 by Tom Wickline <twickline2@triad.rr.com>
 Updated in 2003 by Dimitrie O. Paun <dpaun@rogers.com>
-Updated in 2004 by Marcus Meissner <marcus@jet.franken.de>
+Updated in 2004,2005 by Marcus Meissner <marcus@jet.franken.de>
