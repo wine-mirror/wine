@@ -632,35 +632,6 @@ NTSTATUS PE_LoadLibraryExA (LPCSTR name, DWORD flags, WINE_MODREF** pwm)
 }
 
 
-/* Called if the library is loaded or freed.
- * NOTE: if a thread attaches a DLL, the current thread will only do
- * DLL_PROCESS_ATTACH. Only newly created threads do DLL_THREAD_ATTACH
- * (SDK)
- */
-typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
-
-BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved )
-{
-    BOOL retv = TRUE;
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader(module);
-
-    /* Is this a library? And has it got an entrypoint? */
-    if (nt && (nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
-        (nt->OptionalHeader.AddressOfEntryPoint))
-    {
-        DLLENTRYPROC entry = (void*)((char*)module + nt->OptionalHeader.AddressOfEntryPoint);
-        if (TRACE_ON(relay))
-            DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p,type=%ld,res=%p)\n",
-                    GetCurrentThreadId(), entry, module, type, lpReserved );
-        retv = entry( module, type, lpReserved );
-        if (TRACE_ON(relay))
-            DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p,type=%ld,res=%p) retval=%x\n",
-                    GetCurrentThreadId(), entry, module, type, lpReserved, retv );
-    }
-
-    return retv;
-}
-
 /************************************************************************
  *	PE_InitTls			(internal)
  *

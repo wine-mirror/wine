@@ -33,10 +33,11 @@
 #include "wine/server.h"
 #include "ntdll_misc.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
-WINE_DECLARE_DEBUG_CHANNEL(module);
-WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DEFAULT_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
+
+typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
 WINE_MODREF *MODULE_modref_list = NULL;
 
@@ -144,20 +145,30 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
     static const char * const typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH",
                                              "THREAD_ATTACH", "THREAD_DETACH" };
     BOOL retv = TRUE;
+    DLLENTRYPROC entry = wm->ldr.EntryPoint;
+    void *module = wm->ldr.BaseAddress;
 
     /* Skip calls for modules loaded with special load flags */
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
+    if (!entry || !(wm->ldr.Flags & LDR_IMAGE_IS_DLL)) return TRUE;
 
-    TRACE("(%s,%s,%p) - CALL\n", wm->modname, typeName[type], lpReserved );
+    TRACE("(%p (%s),%s,%p) - CALL\n", module, wm->modname, typeName[type], lpReserved );
 
-    /* Call the initialization routine */
-    retv = PE_InitDLL( wm->ldr.BaseAddress, type, lpReserved );
+    if (TRACE_ON(relay))
+        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p,type=%ld,res=%p)\n",
+                GetCurrentThreadId(), entry, module, type, lpReserved );
+
+    retv = entry( module, type, lpReserved );
+
+    if (TRACE_ON(relay))
+        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p,type=%ld,res=%p) retval=%x\n",
+                GetCurrentThreadId(), entry, module, type, lpReserved, retv );
 
     /* The state of the module list may have changed due to the call
-       to PE_InitDLL. We cannot assume that this module has not been
+       to the dll. We cannot assume that this module has not been
        deleted.  */
-    TRACE("(%p,%s,%p) - RETURN %d\n", wm, typeName[type], lpReserved, retv );
+    TRACE("(%p,%s,%p) - RETURN %d\n", module, typeName[type], lpReserved, retv );
 
     return retv;
 }
@@ -445,9 +456,6 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE 
 {
     WINE_MODREF *wm;
 
-    TRACE("%08lx %08lx %s %p\n",
-          x, y, name ? debugstr_wn(name->Buffer, name->Length) : NULL, base);
-
     if (x != 0 || y != 0)
         FIXME("Unknown behavior, please report\n");
 
@@ -471,6 +479,10 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE 
     }
 
     *base = wm->ldr.BaseAddress;
+
+    TRACE("%lx %lx %s -> %p\n",
+          x, y, name ? debugstr_wn(name->Buffer, name->Length/sizeof(WCHAR)) : "(null)", *base);
+
     return STATUS_SUCCESS;
 }
 
@@ -486,11 +498,6 @@ FARPROC MODULE_GetProcAddress(
     WINE_MODREF	*wm;
     FARPROC	retproc = 0;
 
-    if (HIWORD(function))
-	TRACE("(%p,%s (%d))\n",hModule,function,hint);
-    else
-	TRACE("(%p,%p)\n",hModule,function);
-
     RtlEnterCriticalSection( &loader_section );
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
@@ -503,15 +510,10 @@ FARPROC MODULE_GetProcAddress(
 
 /******************************************************************
  *		LdrGetProcedureAddress (NTDLL.@)
- *
- *
  */
 NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG ord, PVOID *address)
 {
-    WARN("%p %s %ld %p\n", base, name ? debugstr_an(name->Buffer, name->Length) : NULL, ord, address);
-
     *address = MODULE_GetProcAddress( base, name ? name->Buffer : (LPSTR)ord, -1, TRUE );
-
     return (*address) ? STATUS_SUCCESS : STATUS_PROCEDURE_NOT_FOUND;
 }
 
@@ -678,7 +680,7 @@ NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
         if (nts == STATUS_SUCCESS)
         {
             /* Initialize DLL just loaded */
-            TRACE("Loaded module '%s' at %p\n", filename, (*pwm)->ldr.BaseAddress);
+            TRACE("Loaded module '%s' (%s) at %p\n", filename, filetype, (*pwm)->ldr.BaseAddress);
             if (!TRACE_ON(module))
                 TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
             /* Set the ldr.LoadCount here so that an attach failure will */
@@ -733,7 +735,7 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
     case STATUS_SUCCESS:
         if ( !MODULE_DllProcessAttach( wm, NULL ) )
         {
-            WARN_(module)("Attach failed for module '%s'.\n", str.Buffer);
+            WARN("Attach failed for module '%s'.\n", str.Buffer);
             LdrUnloadDll(wm->ldr.BaseAddress);
             nts = STATUS_DLL_INIT_FAILED;
             wm = NULL;
