@@ -31,15 +31,18 @@
 #define MSVCRT(x)    x
 #endif
 
+struct _EXCEPTION_POINTERS;
 
 typedef void (*terminate_handler)();
 typedef void (*terminate_function)();
 typedef void (*unexpected_handler)();
 typedef void (*unexpected_function)();
-
+typedef void (*_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 
 terminate_function MSVCRT(set_terminate)(terminate_function func);
 unexpected_function MSVCRT(set_unexpected)(unexpected_function func);
+_se_translator_function MSVCRT(_set_se_translator)(_se_translator_function func);
+
 void        MSVCRT(terminate)();
 void        MSVCRT(unexpected)();
 

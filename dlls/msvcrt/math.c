@@ -129,7 +129,7 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 double _CIacos(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return acos(x);
 }
 
@@ -139,7 +139,7 @@ double _CIacos(void)
 double _CIasin(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return asin(x);
 }
 
@@ -149,7 +149,7 @@ double _CIasin(void)
 double _CIatan(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan(x);
 }
 
@@ -159,7 +159,7 @@ double _CIatan(void)
 double _CIatan2(void)
 {
   FPU_DOUBLES(x,y);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2(x,y);
 }
 
@@ -169,7 +169,7 @@ double _CIatan2(void)
 double _CIcos(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cos(x);
 }
 
@@ -179,7 +179,7 @@ double _CIcos(void)
 double _CIcosh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cosh(x);
 }
 
@@ -189,7 +189,7 @@ double _CIcosh(void)
 double _CIexp(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return exp(x);
 }
 
@@ -199,7 +199,7 @@ double _CIexp(void)
 double _CIfmod(void)
 {
   FPU_DOUBLES(x,y);
-  if (!finite(x) || !finite(y)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x) || !finite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
   return fmod(x,y);
 }
 
@@ -209,8 +209,8 @@ double _CIfmod(void)
 double _CIlog(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
-  if (x == 0.0) SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log(x);
 }
 
@@ -220,8 +220,8 @@ double _CIlog(void)
 double _CIlog10(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
-  if (x == 0.0) SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log10(x);
 }
 
@@ -234,7 +234,7 @@ double _CIpow(void)
   FPU_DOUBLES(x,y);
   /* FIXME: If x < 0 and y is not integral, set EDOM */
   z = pow(x,y);
-  if (!finite(z)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(z)) *MSVCRT__errno() = MSVCRT_EDOM;
   return z;
 }
 
@@ -244,7 +244,7 @@ double _CIpow(void)
 double _CIsin(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sin(x);
 }
 
@@ -254,7 +254,7 @@ double _CIsin(void)
 double _CIsinh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sinh(x);
 }
 
@@ -264,7 +264,7 @@ double _CIsinh(void)
 double _CIsqrt(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sqrt(x);
 }
 
@@ -274,7 +274,7 @@ double _CIsqrt(void)
 double _CItan(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tan(x);
 }
 
@@ -284,7 +284,7 @@ double _CItan(void)
 double _CItanh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tanh(x);
 }
 
@@ -363,7 +363,7 @@ unsigned int _rotl(unsigned int num, int shift)
  */
 double _logb(double num)
 {
-  if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return logb(num);
 }
 
@@ -401,7 +401,7 @@ double _scalb(double num, long power)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double dblpower = (double)power;
-  if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return scalb(num, dblpower);
 }
 
@@ -474,7 +474,7 @@ double MSVCRT_ldexp(double num, long exp)
   double z = ldexp(num,exp);
 
   if (!finite(z))
-    SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+    *MSVCRT__errno() = MSVCRT_ERANGE;
   else if (z == 0 && signbit(z))
     z = 0.0; /* Convert -0 -> +0 */
   return z;
@@ -628,11 +628,11 @@ INT  _isnan(double num)
 double _y0(double num)
 {
   double retval;
-  if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y0(num);
   if (_fpclass(retval) == _FPCLASS_NINF)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EDOM);
+    *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
   }
   return retval;
@@ -644,11 +644,11 @@ double _y0(double num)
 double _y1(double num)
 {
   double retval;
-  if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y1(num);
   if (_fpclass(retval) == _FPCLASS_NINF)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EDOM);
+    *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
   }
   return retval;
@@ -660,11 +660,11 @@ double _y1(double num)
 double _yn(int order, double num)
 {
   double retval;
-  if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = yn(order,num);
   if (_fpclass(retval) == _FPCLASS_NINF)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EDOM);
+    *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
   }
   return retval;
@@ -676,7 +676,7 @@ double _yn(int order, double num)
 double _nextafter(double num, double next)
 {
   double retval;
-  if (!finite(num) || !finite(next)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (!finite(num) || !finite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval = nextafter(num,next);
   return retval;
 }
@@ -995,5 +995,3 @@ void _safe_fprem1(void)
 {
   TRACE("(): stub\n");
 }
-
-

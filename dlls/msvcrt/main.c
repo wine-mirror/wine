@@ -60,18 +60,8 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_args();
     MSVCRT_setlocale(0, "C");
     TRACE("finished process init\n");
-    /* FALL THROUGH for Initial TLS allocation!! */
+    break;
   case DLL_THREAD_ATTACH:
-    TRACE("starting thread init\n");
-    /* Create TLS */
-    tls = (MSVCRT_thread_data*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof(MSVCRT_thread_data));
-    if (!tls || !TlsSetValue(MSVCRT_tls_index, tls))
-    {
-      ERR("TLS init failed! error = %ld\n", GetLastError());
-      return FALSE;
-    }
-    TRACE("finished thread init\n");
     break;
   case DLL_PROCESS_DETACH:
     msvcrt_free_mt_locks();
@@ -85,13 +75,7 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   case DLL_THREAD_DETACH:
     /* Free TLS */
     tls = TlsGetValue(MSVCRT_tls_index);
-
-    if (!tls)
-    {
-      ERR("TLS free failed! error = %ld\n", GetLastError());
-      return FALSE;
-    }
-    HeapFree(GetProcessHeap(), 0, tls);
+    if (tls) HeapFree(GetProcessHeap(), 0, tls);
     TRACE("finished thread free\n");
     break;
   }

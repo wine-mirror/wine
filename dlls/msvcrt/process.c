@@ -53,7 +53,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
 
   if ((unsigned)flags > _P_DETACH)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EINVAL);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
 
@@ -203,8 +203,8 @@ int _cwait(int *status, int pid, int action)
 
   if (doserrno == ERROR_INVALID_HANDLE)
   {
-    SET_THREAD_VAR(errno, MSVCRT_ECHILD);
-    SET_THREAD_VAR(doserrno,doserrno);
+    *MSVCRT__errno() =  MSVCRT_ECHILD;
+    *__doserrno() = doserrno;
   }
   else
     MSVCRT__set_errno(doserrno);
@@ -456,4 +456,3 @@ int _unloaddll(int dll)
     return err;
   }
 }
-

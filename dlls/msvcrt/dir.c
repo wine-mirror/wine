@@ -118,7 +118,7 @@ int _chdrive(int newdrive)
   {
     MSVCRT__set_errno(GetLastError());
     if (newdrive <= 0)
-      SET_THREAD_VAR(errno,MSVCRT_EACCES);
+      *MSVCRT__errno() = MSVCRT_EACCES;
     return -1;
   }
   return 0;
@@ -185,7 +185,7 @@ int _findnext(long hand, struct _finddata_t * ft)
 
   if (!FindNextFileA(hand, &find_data))
   {
-    SET_THREAD_VAR(errno,MSVCRT_ENOENT);
+    *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;
   }
 
@@ -202,7 +202,7 @@ int _wfindnext(long hand, struct _wfinddata_t * ft)
 
   if (!FindNextFileW(hand, &find_data))
   {
-    SET_THREAD_VAR(errno,MSVCRT_ENOENT);
+    *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;
   }
 
@@ -229,7 +229,7 @@ char* _getcwd(char * buf, int size)
   }
   if (dir_len >= size)
   {
-    SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+    *MSVCRT__errno() = MSVCRT_ERANGE;
     return NULL; /* buf too small */
   }
   strcpy(buf,dir);
@@ -255,7 +255,7 @@ WCHAR* _wgetcwd(WCHAR * buf, int size)
   }
   if (dir_len >= size)
   {
-    SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+    *MSVCRT__errno() = MSVCRT_ERANGE;
     return NULL; /* buf too small */
   }
   strcpyW(buf,dir);
@@ -293,14 +293,14 @@ char* _getdcwd(int drive, char * buf, int size)
     drivespec[0] += drive - 1;
     if (GetDriveTypeA(drivespec) < DRIVE_REMOVABLE)
     {
-      SET_THREAD_VAR(errno,MSVCRT_EACCES);
+      *MSVCRT__errno() = MSVCRT_EACCES;
       return NULL;
     }
 
     dir_len = GetFullPathNameA(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
-      SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+      *MSVCRT__errno() = MSVCRT_ERANGE;
       return NULL; /* buf too small */
     }
 
@@ -333,14 +333,14 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
     drivespec[0] += drive - 1;
     if (GetDriveTypeW(drivespec) < DRIVE_REMOVABLE)
     {
-      SET_THREAD_VAR(errno,MSVCRT_EACCES);
+      *MSVCRT__errno() = MSVCRT_EACCES;
       return NULL;
     }
 
     dir_len = GetFullPathNameW(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
-      SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+      *MSVCRT__errno() = MSVCRT_ERANGE;
       return NULL; /* buf too small */
     }
 
@@ -629,7 +629,7 @@ char *_fullpath(char * absPath, const char* relPath, unsigned int size)
 
   if (size < 4)
   {
-    SET_THREAD_VAR(errno,MSVCRT_ERANGE);
+    *MSVCRT__errno() = MSVCRT_ERANGE;
     return NULL;
   }
 
@@ -818,4 +818,3 @@ void _searchenv(const char* file, const char* env, char *buf)
     penv = *end ? end + 1 : end;
   } while(1);
 }
-

@@ -42,7 +42,7 @@ init    MSVCRT_Init
 @ cdecl ?_query_new_mode@@YAHXZ() MSVCRT__query_new_mode
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) MSVCRT__set_new_handler
 @ cdecl ?_set_new_mode@@YAHH@Z(long) MSVCRT__set_new_mode
-@ stub ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
+@ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) MSVCRT__set_se_translator
 @ stub ?before@type_info@@QBEHABV1@@Z #(ptr ptr) stdcall
 @ stdcall ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
 @ stdcall ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name

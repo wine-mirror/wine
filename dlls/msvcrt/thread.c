@@ -34,6 +34,27 @@ typedef struct {
 } _beginthread_trampoline_t;
 
 /*********************************************************************
+ *		msvcrt_get_thread_data
+ *
+ * Return the thread local storage structure.
+ */
+MSVCRT_thread_data *msvcrt_get_thread_data(void)
+{
+    MSVCRT_thread_data *ptr;
+    DWORD err = GetLastError();  /* need to preserve last error */
+
+    if (!(ptr = TlsGetValue( MSVCRT_tls_index )))
+    {
+        if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) )))
+            MSVCRT__amsg_exit(16);
+        if (!TlsSetValue( MSVCRT_tls_index, ptr )) MSVCRT__amsg_exit(16);
+    }
+    SetLastError( err );
+    return ptr;
+}
+
+
+/*********************************************************************
  *		_beginthread_trampoline
  */
 static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
@@ -114,4 +135,3 @@ void _endthreadex(
   /* FIXME */
   ExitThread(retval);
 }
-

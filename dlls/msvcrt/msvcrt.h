@@ -28,23 +28,21 @@
 #include "winerror.h"
 #include "winnls.h"
 
+#include "msvcrt/eh.h"
+
 /* TLS data */
 extern DWORD MSVCRT_tls_index;
 
 typedef struct __MSVCRT_thread_data
 {
-  int errno;
-  unsigned long doserrno;
+    int                      errno;
+    unsigned long            doserrno;
+    terminate_function       terminate_handler;
+    unexpected_function      unexpected_handler;
+    _se_translator_function  se_translator;
 } MSVCRT_thread_data;
 
-#define GET_THREAD_DATA(x) \
-  x = TlsGetValue(MSVCRT_tls_index)
-#define GET_THREAD_VAR(x) \
-  ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x
-#define GET_THREAD_VAR_PTR(x) \
-  (&((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x)
-#define SET_THREAD_VAR(x,y) \
-  ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x = y
+extern MSVCRT_thread_data *msvcrt_get_thread_data(void);
 
 extern int MSVCRT_current_lc_all_cp;
 
@@ -52,6 +50,8 @@ void _purecall(void);
 void   MSVCRT__set_errno(int);
 char*  msvcrt_strndup(const char*,unsigned int);
 LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
+
+void MSVCRT__amsg_exit(int errnum);
 
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.

@@ -25,6 +25,7 @@
 #include "ms_errno.h"
 
 #include "msvcrt/malloc.h"
+#include "msvcrt/stdlib.h"
 #include "mtdll.h"
 
 #include "wine/debug.h"
@@ -230,7 +231,7 @@ int _heapset(unsigned int value)
 int _heapadd(void* mem, MSVCRT_size_t size)
 {
   TRACE("(%p,%d) unsupported in Win32\n", mem,size);
-  SET_THREAD_VAR(errno,MSVCRT_ENOSYS);
+  *MSVCRT__errno() = MSVCRT_ENOSYS;
   return -1;
 }
 

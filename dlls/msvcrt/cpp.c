@@ -20,7 +20,7 @@
 
 #include "msvcrt.h"
 #include "msvcrt/eh.h"
-#include "msvcrt/malloc.h"
+#include "msvcrt/stdlib.h"
 
 #include "wine/debug.h"
 
@@ -177,18 +177,16 @@ const char * MSVCRT_what_exception(exception * _this)
 }
 
 
-static terminate_function func_terminate=NULL;
-static unexpected_function func_unexpected=NULL;
-
 /******************************************************************
  *		?set_terminate@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
  */
 terminate_function MSVCRT_set_terminate(terminate_function func)
 {
-  terminate_function previous=func_terminate;
-  TRACE("(%p) returning %p\n",func,previous);
-  func_terminate=func;
-  return previous;
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    terminate_function previous = data->terminate_handler;
+    TRACE("(%p) returning %p\n",func,previous);
+    data->terminate_handler = func;
+    return previous;
 }
 
 /******************************************************************
@@ -196,26 +194,43 @@ terminate_function MSVCRT_set_terminate(terminate_function func)
  */
 unexpected_function MSVCRT_set_unexpected(unexpected_function func)
 {
-  unexpected_function previous=func_unexpected;
-  TRACE("(%p) returning %p\n",func,previous);
-  func_unexpected=func;
-  return previous;
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    unexpected_function previous = data->unexpected_handler;
+    TRACE("(%p) returning %p\n",func,previous);
+    data->unexpected_handler = func;
+    return previous;
+}
+
+/******************************************************************
+ *              ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z  (MSVCRT.@)
+ */
+_se_translator_function MSVCRT__set_se_translator(_se_translator_function func)
+{
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    _se_translator_function previous = data->se_translator;
+    TRACE("(%p) returning %p\n",func,previous);
+    data->se_translator = func;
+    return previous;
 }
 
 /******************************************************************
  *		?terminate@@YAXXZ (MSVCRT.@)
  */
-void MSVCRT_terminate()
+void MSVCRT_terminate(void)
 {
-  (*func_terminate)();
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    if (data->terminate_handler) data->terminate_handler();
+    MSVCRT_abort();
 }
 
 /******************************************************************
  *		?unexpected@@YAXXZ (MSVCRT.@)
  */
-void MSVCRT_unexpected()
+void MSVCRT_unexpected(void)
 {
-  (*func_unexpected)();
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    if (data->unexpected_handler) data->unexpected_handler();
+    MSVCRT_terminate();
 }
 
 
@@ -523,4 +538,3 @@ void msvcrt_init_vtables(void)
   type_info_vtable[0] = MSVCRT_type_info_dtor;
 
 }
-

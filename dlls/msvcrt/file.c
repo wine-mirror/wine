@@ -102,8 +102,8 @@ static HANDLE msvcrt_fdtoh(int fd)
       MSVCRT_handles[fd] == INVALID_HANDLE_VALUE)
   {
     WARN(":fd (%d) - no handle!\n",fd);
-    SET_THREAD_VAR(doserrno,0);
-    SET_THREAD_VAR(errno,MSVCRT_EBADF);
+    *__doserrno() = 0;
+    *MSVCRT__errno() = MSVCRT_EBADF;
    return INVALID_HANDLE_VALUE;
   }
   return MSVCRT_handles[fd];
@@ -160,8 +160,8 @@ static MSVCRT_FILE* msvcrt_alloc_fp(int fd)
       MSVCRT_handles[fd] == INVALID_HANDLE_VALUE)
   {
     WARN(":invalid fd %d\n",fd);
-    SET_THREAD_VAR(doserrno,0);
-    SET_THREAD_VAR(errno,MSVCRT_EBADF);
+    *__doserrno() = 0;
+    *MSVCRT__errno() = MSVCRT_EBADF;
     return NULL;
   }
   if (!MSVCRT_files[fd])
@@ -490,7 +490,7 @@ LONG _lseek(int fd, LONG offset, int whence)
 
   if (whence < 0 || whence > 2)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EINVAL);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
 
@@ -538,7 +538,7 @@ int _locking(int fd, int mode, LONG nbytes)
 
   if (mode < 0 || mode > 4)
   {
-    SET_THREAD_VAR(errno,MSVCRT_EINVAL);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
 
@@ -553,7 +553,7 @@ int _locking(int fd, int mode, LONG nbytes)
   if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == 0xffffffff)
   {
     FIXME ("Seek failed\n");
-    SET_THREAD_VAR(errno,MSVCRT_EINVAL); /* FIXME */
+    *MSVCRT__errno() = MSVCRT_EINVAL; /* FIXME */
     return -1;
   }
   if (mode == _LK_LOCK || mode == _LK_RLCK)
