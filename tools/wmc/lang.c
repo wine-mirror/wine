@@ -74,7 +74,7 @@ static const language_t languages[] = {
 	{0x043C, 437, 1252, "Irish", "Ireland"},
 	{0x043E, 850, 1252, "Malay", "Malaysia"},
 /*	{0x048F,   ?,    ?, "Esperanto", "<none>"},*/
-/*	{0x0804,   ?,    ?, "Chinese (People's replublic of China)", People's republic of China"},*/
+	{0x0804, 936,  936, "Chinese (People's republic of China)", "People's republic of China"},
 	{0x0807, 850, 1252, "German", "Switzerland"},
 	{0x0809, 850, 1252, "English", "United Kingdom"},
 	{0x080A, 850, 1252, "Spanish", "Mexico"},
@@ -162,4 +162,3 @@ const union cptable *find_codepage(int id)
 {
 	return cp_get_table(id);
 }
-

@@ -41,6 +41,7 @@
  * get localized bitmaps for example.
  */
 #include "cdlg_Ca.rc"
+#include "cdlg_Cn.rc"
 #include "cdlg_Cs.rc"
 #include "cdlg_Da.rc"
 #include "cdlg_De.rc"

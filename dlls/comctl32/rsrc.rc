@@ -1053,6 +1053,7 @@ IDI_DRAGARROW ICON LOADONCALL DISCARDABLE
  * get localized bitmaps for example.
  */
 
+#include "comctl_Cn.rc"
 #include "comctl_De.rc"
 #include "comctl_En.rc"
 #include "comctl_Ko.rc"

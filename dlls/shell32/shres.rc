@@ -1329,6 +1329,7 @@ END
  * get localized bitmaps for example.
  */
 #include "shell32_Ca.rc"
+#include "shell32_Cn.rc"
 #include "shell32_Cs.rc"
 #include "shell32_Da.rc"
 #include "shell32_De.rc"
