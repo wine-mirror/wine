@@ -274,13 +274,13 @@ NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INF
     const void *res;
     NTSTATUS status;
 
-    if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
+    __TRY
+    {
+	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );
 
-    __TRY
-    {
         status = find_entry( hmod, info, level, &res, TRUE );
         if (status == STATUS_SUCCESS) *dir = res;
     }
@@ -302,13 +302,13 @@ NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
     const void *res;
     NTSTATUS status;
 
-    if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
+    __TRY
+    {
+	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );
 
-    __TRY
-    {
         status = find_entry( hmod, info, level, &res, FALSE );
         if (status == STATUS_SUCCESS) *entry = res;
     }
