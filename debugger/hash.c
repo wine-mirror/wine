@@ -402,7 +402,12 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 	 ptr = readline("=> ");
 	 if (!*ptr) return FALSE;
 	 i = atoi(ptr);
-      } while (i < 0 || i >= num);
+	 if (i < 1 || i > num)
+	     DEBUG_Printf(DBG_CHN_MESG, "Invalid choice %d\n", i);
+      } while (i < 1 || i > num);
+
+      /* The array is 0-based, but the choices are 1..n, so we have to subtract one before returning. */
+      i--;
    }
    *rtn = value[i];
    return TRUE;
