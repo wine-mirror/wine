@@ -1,3 +1,13 @@
+Sun Oct 18 14:11:42 1998  Alexandre Julliard  <julliard@winehq.com>
+
+	* Da.rc, De.rc, En.rc, Fr.rc, Sw.rc, TODO, dialog.c, dialog.h, language.c, language.h, license.c, license.h, main.c, main.h, notepad.rc:
+	Marcel Baur <mbaur@g26.ethz.ch>
+	Fixed GetOpenFileName and GetSaveFileName dialogs.
+	Fixed Print dialog and introduced PrinterSetup dialog.
+	Fixed PageSetup dialog: values are now correctly initialized (had to
+	change all *.rc files)
+	Preliminary file drag and drop support.
+
 Fri Jun 12 23:29:44 1998  Marcel Baur  <mbaur@g26.ethz.ch>
         * Fixed GetDateFormat()->GetTimeFormat() for locale time.
 
