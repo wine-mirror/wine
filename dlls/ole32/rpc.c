@@ -47,6 +47,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+#define PIPEPREF "\\\\.\\pipe\\"
+#define OLESTUBMGR PIPEPREF"WINE_OLE_StubMgr"
+
 #define REQTYPE_REQUEST		0
 typedef struct _wine_rpc_request_header {
     DWORD		reqid;

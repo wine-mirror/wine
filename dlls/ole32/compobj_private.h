@@ -123,9 +123,6 @@ extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
 extern void* StdGlobalInterfaceTableInstance;
 
-#define PIPEPREF "\\\\.\\pipe\\"
-#define OLESTUBMGR PIPEPREF"WINE_OLE_StubMgr"
-
 /* Standard Marshalling definitions */
 typedef struct _wine_marshal_id {
     OXID    oxid;       /* id of apartment */
@@ -139,15 +136,6 @@ MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
 	(mid1->oxid == mid2->oxid)	&&
 	(mid1->oid == mid2->oid)	&&
 	IsEqualIID(&(mid1->iid),&(mid2->iid))
-    ;
-}
-
-/* compare without interface compare */
-inline static BOOL
-MARSHAL_Compare_Mids_NoInterface(wine_marshal_id *mid1, wine_marshal_id *mid2) {
-    return
-	(mid1->oxid == mid2->oxid)	&&
-	(mid1->oid == mid2->oid)
     ;
 }
 
