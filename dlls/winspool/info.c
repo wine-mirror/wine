@@ -1039,12 +1039,17 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     DWORD sz = buflen, type;
     LONG ret;
 
+    if (ptr) memset(ptr, 0, sizeof(DEVMODEA));
     ret = RegQueryValueExW(hkey, ValueName, 0, &type, ptr, &sz);
-    if(ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
-        WARN("Got ret = %ld\n", ret);
-	*needed = 0;
-	return FALSE;
+    if ((ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)) sz = 0;
+    if (sz < sizeof(DEVMODEA))
+    {
+        ERR("corrupted registry for %s\n", debugstr_w(ValueName));
+        sz = sizeof(DEVMODEA);
     }
+    /* ensures that dmSize is not erratically bogus if registry is invalid */
+    if (ptr && ((DEVMODEA*)ptr)->dmSize < sizeof(DEVMODEA))
+        ((DEVMODEA*)ptr)->dmSize = sizeof(DEVMODEA);
     if(unicode) {
 	sz += (CCHDEVICENAME + CCHFORMNAME);
 	if(buflen >= sz) {
