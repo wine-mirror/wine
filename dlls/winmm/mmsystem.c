@@ -1988,7 +1988,7 @@ HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 
     if ((wmd = MCI_GetDriver(uDeviceID))) ret = (HTASK)wmd->CreatorThread;
 
-    TRACE("(%u) => %08lx\n", uDeviceID, ret);
+    TRACE("(%u) => %08x\n", uDeviceID, ret);
     return ret;
 }
 
