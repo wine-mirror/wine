@@ -23,7 +23,7 @@
 
 extern int is_attr(attr_t *a, enum attr_type t);
 extern void *get_attrp(attr_t *a, enum attr_type t);
-extern DWORD get_attrv(attr_t *a, enum attr_type t);
+extern unsigned long get_attrv(attr_t *a, enum attr_type t);
 extern int is_void(type_t *t, var_t *v);
 extern void write_name(FILE *h, var_t *v);
 extern char* get_name(var_t *v);

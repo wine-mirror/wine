@@ -64,7 +64,7 @@
 #endif
 
 static attr_t *make_attr(enum attr_type type);
-static attr_t *make_attrv(enum attr_type type, DWORD val);
+static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_t *make_expr(enum expr_type type);
 static expr_t *make_exprl(enum expr_type type, long val);
@@ -72,8 +72,8 @@ static expr_t *make_exprs(enum expr_type type, char *val);
 static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr);
 static expr_t *make_expr1(enum expr_type type, expr_t *expr);
 static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
-static expr_t *make_expr3(enum expr_type type, expr_t *exp1, expr_t *exp2, expr_t *exp3);
-static type_t *make_type(BYTE type, type_t *ref);
+static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3);
+static type_t *make_type(unsigned char type, type_t *ref);
 static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
 static type_t *type_ref(typeref_t *ref);
@@ -87,8 +87,8 @@ static type_t *reg_type(type_t *type, char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
 static type_t *find_type(char *name, int t);
 static type_t *find_type2(char *name, int t);
-static type_t *get_type(BYTE type, char *name, int t);
-static type_t *get_typev(BYTE type, var_t *name, int t);
+static type_t *get_type(unsigned char type, char *name, int t);
+static type_t *get_typev(unsigned char type, var_t *name, int t);
 
 static var_t *reg_const(var_t *var);
 static var_t *find_const(char *name, int f);
@@ -732,7 +732,7 @@ static attr_t *make_attr(enum attr_type type)
   return a;
 }
 
-static attr_t *make_attrv(enum attr_type type, DWORD val)
+static attr_t *make_attrv(enum attr_type type, unsigned long val)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
@@ -913,7 +913,7 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
   return e;
 }
 
-static type_t *make_type(BYTE type, type_t *ref)
+static type_t *make_type(unsigned char type, type_t *ref)
 {
   type_t *t = xmalloc(sizeof(type_t));
   t->name = NULL;
@@ -1116,7 +1116,7 @@ int is_type(const char *name)
   return FALSE;
 }
 
-static type_t *get_type(BYTE type, char *name, int t)
+static type_t *get_type(unsigned char type, char *name, int t)
 {
   struct rtype *cur = NULL;
   type_t *tp;
@@ -1135,7 +1135,7 @@ static type_t *get_type(BYTE type, char *name, int t)
   return reg_type(tp, name, t);
 }
 
-static type_t *get_typev(BYTE type, var_t *name, int t)
+static type_t *get_typev(unsigned char type, var_t *name, int t)
 {
   char *sname = NULL;
   if (name) {

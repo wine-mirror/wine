@@ -22,8 +22,6 @@
 #define __WIDL_WIDLTYPES_H
 
 #include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
 #include "guiddef.h"
 #include "wine/rpcfc.h"
 
@@ -31,6 +29,13 @@
 #define UUID_DEFINED
 typedef GUID UUID;
 #endif
+
+#define TRUE 1
+#define FALSE 0
+
+#define LOWORD(l) ((unsigned short)(l))
+#define HIWORD(l) ((unsigned short)((unsigned long)(l) >> 16))
+#define MAKELONG(low,high) ((unsigned long)(((unsigned short)(low)) | (((unsigned long)((unsigned short)(high))) << 16)))
 
 typedef struct _attr_t attr_t;
 typedef struct _expr_t expr_t;
@@ -116,7 +121,7 @@ enum expr_type
 struct _attr_t {
   enum attr_type type;
   union {
-    DWORD ival;
+    unsigned long ival;
     void *pval;
   } u;
   /* parser-internal */
@@ -141,7 +146,7 @@ struct _expr_t {
 
 struct _type_t {
   char *name;
-  BYTE type;
+  unsigned char type;
   struct _type_t *ref;
   char *rname;
   attr_t *attrs;

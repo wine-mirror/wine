@@ -63,7 +63,7 @@ void *get_attrp(attr_t *a, enum attr_type t)
   return NULL;
 }
 
-DWORD get_attrv(attr_t *a, enum attr_type t)
+unsigned long get_attrv(attr_t *a, enum attr_type t)
 {
   while (a) {
     if (a->type == t) return a->u.ival;
@@ -789,7 +789,7 @@ void write_com_interface(type_t *iface)
 
 void write_rpc_interface(type_t *iface)
 {
-  DWORD ver = get_attrv(iface->attrs, ATTR_VERSION);
+  unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
 
   if (!iface->funcs) return;
 
