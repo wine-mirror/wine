@@ -29,7 +29,8 @@ typedef HANDLE HTRANSFORM;
 
 typedef DWORD TAGTYPE, *PTAGTYPE, *LPTAGTYPE;
 
-typedef enum {
+typedef enum
+{
     BM_x555RGB     = 0x00,
     BM_565RGB      = 0x01,
     BM_RGBTRIPLETS = 0x02,
@@ -72,7 +73,8 @@ typedef enum {
 typedef BOOL (CALLBACK *PBMCALLBACKFN)(ULONG,ULONG,LPARAM);
 typedef PBMCALLBACKFN LPPBMCALLBACKFN;
 
-typedef struct tagPROFILEHEADER {
+typedef struct tagPROFILEHEADER
+{
     DWORD phSize;
     DWORD phCMMType;
     DWORD phVersion;
@@ -92,29 +94,84 @@ typedef struct tagPROFILEHEADER {
     BYTE phReserved[44];
 } PROFILEHEADER, *PPROFILEHEADER, *LPPROFILEHEADER;
 
-typedef struct tagPROFILE {
+typedef struct tagPROFILE
+{
     DWORD dwType;
     PVOID pProfileData;
     DWORD cbDataSize;
 } PROFILE, *PPROFILE, *LPPROFILE;
 
+
+struct _tagCOLORMATCHSETUPA;
+struct _tagCOLORMATCHSETUPW;
+
+typedef BOOL (WINAPI *PCMSCALLBACKA)(struct _tagCOLORMATCHSETUPA*,LPARAM);
+typedef BOOL (WINAPI *PCMSCALLBACKW)(struct _tagCOLORMATCHSETUPW*,LPARAM);
+
+typedef struct _tagCOLORMATCHSETUPA
+{
+    DWORD dwSize;
+    DWORD dwVersion;
+    DWORD dwFlags;
+    HWND  hwndOwner;
+    PCSTR pSourceName;
+    PCSTR pDisplayName;
+    PCSTR pPrinterName;
+    DWORD dwRenderIntent;
+    DWORD dwProofingIntent;
+    PSTR  pMonitorProfile;
+    DWORD ccMonitorProfile;
+    PSTR  pPrinterProfile;
+    DWORD ccPrinterProfile;
+    PSTR  pTargetProfile;
+    DWORD ccTargetProfile;
+    DLGPROC lpfnHook;
+    LPARAM lParam;
+    PCMSCALLBACKA lpfnApplyCallback;
+    LPARAM lParamApplyCallback;
+} COLORMATCHSETUPA, *PCOLORMATCHSETUPA, *LPCOLORMATCHSETUPA;
+
+typedef struct _tagCOLORMATCHSETUPW
+{
+    DWORD dwSize;
+    DWORD dwVersion;
+    DWORD dwFlags;
+    HWND  hwndOwner;
+    PCWSTR pSourceName;
+    PCWSTR pDisplayName;
+    PCWSTR pPrinterName;
+    DWORD dwRenderIntent;
+    DWORD dwProofingIntent;
+    PWSTR  pMonitorProfile;
+    DWORD ccMonitorProfile;
+    PWSTR  pPrinterProfile;
+    DWORD ccPrinterProfile;
+    PWSTR  pTargetProfile;
+    DWORD ccTargetProfile;
+    DLGPROC lpfnHook;
+    LPARAM lParam;
+    PCMSCALLBACKW lpfnApplyCallback;
+    LPARAM lParamApplyCallback;
+} COLORMATCHSETUPW, *PCOLORMATCHSETUPW, *LPCOLORMATCHSETUPW;
+
+
+BOOL       WINAPI CloseColorProfile(HPROFILE);
 BOOL       WINAPI GetColorDirectoryA(PCSTR,PSTR,PDWORD);
 BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
 #define    GetColorDirectory WINELIB_NAME_AW(GetColorDirectory)
-
 BOOL       WINAPI InstallColorProfileA(PCSTR,PCSTR);
 BOOL       WINAPI InstallColorProfileW(PCWSTR,PCWSTR);
 #define    InstallColorProfile WINELIB_NAME_AW(InstallColorProfile)
-
+HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
+HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
+#define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
+BOOL       WINAPI SetupColorMatchingA(PCOLORMATCHSETUPA);
+BOOL       WINAPI SetupColorMatchingW(PCOLORMATCHSETUPW);
+#define    SetupColorMatching WINELIB_NAME_AW(SetupColorMatching)
 BOOL       WINAPI UninstallColorProfileA(PCSTR,PCSTR,BOOL);
 BOOL       WINAPI UninstallColorProfileW(PCWSTR,PCWSTR,BOOL);
 #define    UninstallColorProfile WINELIB_NAME_AW(UninstallColorProfile)
 
-HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
-HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
-#define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
-
-BOOL       WINAPI CloseColorProfile(HPROFILE);
 
 #define PROFILE_FILENAME    1
 #define PROFILE_MEMBUFFER   2

@@ -23,8 +23,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-
 #include "wingdi.h"
+#include "winuser.h"
 #include "icm.h"
 
 #include "wine/test.h"

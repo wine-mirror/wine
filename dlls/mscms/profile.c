@@ -26,8 +26,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-
 #include "wingdi.h"
+#include "winuser.h"
 #include "icm.h"
 
 #define LCMS_API_FUNCTION(f) extern typeof(f) * p##f;
