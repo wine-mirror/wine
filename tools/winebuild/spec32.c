@@ -372,6 +372,7 @@ static void output_register_funcs( FILE *outfile )
         ORDDEF *odp = EntryPoints[i];
         if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL) continue;
         if (!(odp->flags & FLAG_REGISTER)) continue;
+        if (odp->flags & FLAG_FORWARD) continue;
         name = make_internal_name( odp, "regs" );
         fprintf( outfile,
                  "asm(\".align %d\\n\\t\"\n"
