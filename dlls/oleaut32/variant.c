@@ -871,12 +871,16 @@ static BOOL IsValidRealString( LPSTR strRealString )
  *
  * This function dispatches execution to the proper conversion API
  * to do the necessary coercion.
+ *
+ * FIXME: Passing down dwFlags to the conversion functions is wrong, this
+ * 	  is a different flagmask. Check MSDN.
  */
 static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps, VARTYPE vt )
 {
 	HRESULT res = S_OK;
 	unsigned short vtFrom = 0;
 	vtFrom = ps->vt & VT_TYPEMASK;
+
 	
 	/* Note: Since "long" and "int" values both have 4 bytes and are
 	 * both signed integers "int" will be treated as "long" in the
@@ -941,7 +945,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI1FromBool( ps->u.boolVal, &(pd->u.cVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
+			res = VarI1FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.cVal) );
 			break;
 		case( VT_CY ):
 			res = VarI1FromCy( ps->u.cyVal, &(pd->u.cVal) );
@@ -994,7 +998,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI2FromBool( ps->u.boolVal, &(pd->u.iVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
+			res = VarI2FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.iVal) );
 			break;
 		case( VT_CY ):
 			res = VarI2FromCy( ps->u.cyVal, &(pd->u.iVal) );
@@ -1048,7 +1052,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI4FromBool( ps->u.boolVal, &(pd->u.lVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
+			res = VarI4FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.lVal) );
 			break;
 		case( VT_CY ):
 			res = VarI4FromCy( ps->u.cyVal, &(pd->u.lVal) );
@@ -1101,7 +1105,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI1FromBool( ps->u.boolVal, &(pd->u.bVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
+			res = VarUI1FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.bVal) );
 			break;
 		case( VT_CY ):
 			res = VarUI1FromCy( ps->u.cyVal, &(pd->u.bVal) );
@@ -1154,7 +1158,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI2FromBool( ps->u.boolVal, &(pd->u.uiVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
+			res = VarUI2FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.uiVal) );
 			break;
 		case( VT_CY ):
 			res = VarUI2FromCy( ps->u.cyVal, &(pd->u.uiVal) );
@@ -1207,7 +1211,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI4FromBool( ps->u.boolVal, &(pd->u.ulVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
+			res = VarUI4FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.ulVal) );
 			break;
 		case( VT_CY ):
 			res = VarUI4FromCy( ps->u.cyVal, &(pd->u.ulVal) );
@@ -1260,7 +1264,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR4FromBool( ps->u.boolVal, &(pd->u.fltVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarR4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
+			res = VarR4FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.fltVal) );
 			break;
 		case( VT_CY ):
 			res = VarR4FromCy( ps->u.cyVal, &(pd->u.fltVal) );
@@ -1313,7 +1317,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR8FromBool( ps->u.boolVal, &(pd->u.dblVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarR8FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
+			res = VarR8FromStr( ps->u.bstrVal, lcid, 0, &(pd->u.dblVal) );
 			break;
 		case( VT_CY ):
 			res = VarR8FromCy( ps->u.cyVal, &(pd->u.dblVal) );
@@ -1370,7 +1374,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarDateFromBool( ps->u.boolVal, &(pd->u.date) );
 			break;
 		case( VT_BSTR ):
-			res = VarDateFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
+			res = VarDateFromStr( ps->u.bstrVal, lcid, 0, &(pd->u.date) );
 			break;
 		case( VT_CY ):
 			res = VarDateFromCy( ps->u.cyVal, &(pd->u.date) );
@@ -1427,7 +1431,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
             res = VariantCopy( pd, ps );
             break;
 		case( VT_BSTR ):
-			res = VarBoolFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
+			res = VarBoolFromStr( ps->u.bstrVal, lcid, 0, &(pd->u.boolVal) );
 			break;
 		case( VT_CY ):
 			res = VarBoolFromCy( ps->u.cyVal, &(pd->u.boolVal) );
@@ -1454,51 +1458,51 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 				res = E_OUTOFMEMORY;
 			break;
 		case( VT_I1 ):
-			res = VarBstrFromI1( ps->u.cVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI1( ps->u.cVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_I2 ):
-			res = VarBstrFromI2( ps->u.iVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI2( ps->u.iVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_INT ):
-			res = VarBstrFromInt( ps->u.intVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromInt( ps->u.intVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_I4 ):
-			res = VarBstrFromI4( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI4( ps->u.lVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarBstrFromUI1( ps->u.bVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI1( ps->u.bVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarBstrFromUI2( ps->u.uiVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI2( ps->u.uiVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_UINT ):
-			res = VarBstrFromUint( ps->u.uintVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUint( ps->u.uintVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI4 ):
-			res = VarBstrFromUI4( ps->u.ulVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI4( ps->u.ulVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_R4 ):
-			res = VarBstrFromR4( ps->u.fltVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromR4( ps->u.fltVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_R8 ):
-			res = VarBstrFromR8( ps->u.dblVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromR8( ps->u.dblVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_DATE ):
-			res = VarBstrFromDate( ps->u.date, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromDate( ps->u.date, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarBstrFromBool( ps->u.boolVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromBool( ps->u.boolVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_BSTR ):
 			res = VariantCopy( pd, ps );
 			break;
 		case( VT_CY ):
-			res = VarBstrFromCy( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromCy( ps->u.cyVal, lcid, 0, &(pd->u.bstrVal) );
 			break;
 		case( VT_DISPATCH ):
-			/*res = VarBstrFromDisp( ps->u.pdispVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+			/*res = VarBstrFromDisp( ps->u.pdispVal, lcid, 0, &(pd->u.bstrVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarBstrFromDec( ps->u.deiVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+			/*res = VarBstrFromDec( ps->u.deiVal, lcid, 0, &(pd->u.bstrVal) );*/
 		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
@@ -1550,7 +1554,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	     res = VariantCopy( pd, ps );
 	     break;
 	  case( VT_BSTR ):
-	     res = VarCyFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cyVal) );
+	     res = VarCyFromStr( ps->u.bstrVal, lcid, 0, &(pd->u.cyVal) );
 	     break;
 	  case( VT_DISPATCH ):
 	     /*res = VarCyFromDisp( ps->u.pdispVal, lcid, &(pd->u.cyVal) );*/
