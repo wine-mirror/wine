@@ -61,6 +61,7 @@ ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 WINETEST     = $(TOPOBJDIR)/programs/winetest/winetest
 RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
+RUNTESTFLAGS = -q -P wine -T $(TOPOBJDIR)
 TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
 WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
@@ -127,7 +128,7 @@ LINTS = $(C_SRCS:.c=.ln)
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
 .pl.ok:
-	$(RUNTEST) $(TOPOBJDIR) $< $(RUNTESTFLAGS) && touch $@
+	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 .PHONY: all install uninstall clean distclean depend dummy test testclean
 
