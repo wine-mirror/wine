@@ -83,8 +83,8 @@ extern INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32,
                                     WPARAM16 *pwparam16, LPARAM *plparam );
 extern LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam,
                                          LPARAM lParam, LRESULT result );
-extern void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam,
-                                      LPARAM lParam );
+extern LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam,
+                                         LPARAM lParam, LRESULT result );
 extern LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam,
                                         LPARAM lParam, LRESULT result );
 extern LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam,
