@@ -98,6 +98,7 @@ DLLs (under dlls/):
 	rasapi32/		- Remote Access Server interface
 	richedit/		- Rich text editing control
 	rpcrt4/			- Remote Procedure Call runtime
+	rsabase/		- RSA encryption
 	serialui/		- Serial port property pages
 	setupapi/		- Setup interface
 	shdocvw/		- Shell document object and control
