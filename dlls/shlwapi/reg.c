@@ -1046,3 +1046,15 @@ BOOL WINAPI SHLWAPI_323(LPCWSTR lpszSubKey)
   return ret ? FALSE : TRUE;
 }
 
+
+/*************************************************************************
+ * SHRegDuplicateHKey   [SHLWAPI.@]
+ */
+HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
+{
+    HKEY newKey = 0;
+
+    RegOpenKeyExA(hKey, 0, 0, MAXIMUM_ALLOWED, &newKey);
+    TRACE("new key is %08x\n", newKey);
+    return newKey;
+}

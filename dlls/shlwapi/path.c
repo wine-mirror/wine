@@ -13,7 +13,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "debugtools.h"
-
+#include "ordinal.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1152,27 +1152,15 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
  */
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
-	LPSTR lpstrRes;
-	int iSize, i=0;
-	static LPSTR SupportedProtocol[] = 
-	  {"http","https","ftp","gopher","file","mailto",NULL};
+    UNKNOWN_SHLWAPI_1 base;
+    DWORD res1;
 
-	if(!lpstrPath) return FALSE;
+    if(!lpstrPath) return FALSE;
 
-	/* get protocol        */
-	lpstrRes = strchr(lpstrPath,':');
-	if(!lpstrRes) return FALSE;
-	iSize = lpstrRes - lpstrPath;
-
-	while(SupportedProtocol[i])
-	{
-	  if (iSize == strlen(SupportedProtocol[i]))
-	    if(!strncasecmp(lpstrPath, SupportedProtocol[i], iSize))
-	      return TRUE;
-	  i++;
-	}
-
-	return FALSE;
+    /* get protocol        */
+    base.size = 24;
+    res1 = SHLWAPI_1(lpstrPath, &base);
+    return (base.fcncde) ? TRUE : FALSE;
 }  
 
 /*************************************************************************
@@ -1180,29 +1168,15 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
  */
 BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {
-	LPWSTR lpstrRes;
-	int iSize, i=0;
-	static WCHAR SupportedProtocol[7][7] = 
-	  {{'h','t','t','p','\0'},{'h','t','t','p','s','\0'},{'f','t','p','\0'},
-	  {'g','o','p','h','e','r','\0'},{'f','i','l','e','\0'},
-	  {'m','a','i','l','t','o','\0'},{0}};
+    UNKNOWN_SHLWAPI_2 base;
+    DWORD res1;
 
-	if(!lpstrPath) return FALSE;
+    if(!lpstrPath) return FALSE;
 
-	/* get protocol        */
-	lpstrRes = strchrW(lpstrPath,':');
-	if(!lpstrRes) return FALSE;
-	iSize = lpstrRes - lpstrPath;
-
-	while(SupportedProtocol[i])
-	{
-	  if (iSize == strlenW(SupportedProtocol[i]))
-	    if(!strncmpiW(lpstrPath, SupportedProtocol[i], iSize))
-	      return TRUE;
-	  i++;
-	}
-
-	return FALSE;
+    /* get protocol        */
+    base.size = 24;
+    res1 = SHLWAPI_2(lpstrPath, &base);
+    return (base.fcncde) ? TRUE : FALSE;
 }  
 
 
@@ -1721,8 +1695,14 @@ BOOL WINAPI PathMakeSystemFolderW(LPCWSTR pszPath)
  */
 BOOL WINAPI PathRenameExtensionA(LPSTR pszPath, LPCSTR pszExt)
 {
-	FIXME("%s %s\n", pszPath, pszExt);
-	return FALSE;
+	LPSTR pszExtension = PathFindExtensionA(pszPath);
+
+	if (!pszExtension) return FALSE;
+	if (pszExtension-pszPath + strlen(pszExt) > MAX_PATH) return FALSE;
+
+	strcpy(pszExtension, pszExt);
+	TRACE("%s\n", pszPath);
+	return TRUE;
 }
 
 /*************************************************************************
@@ -1730,8 +1710,14 @@ BOOL WINAPI PathRenameExtensionA(LPSTR pszPath, LPCSTR pszExt)
  */
 BOOL WINAPI PathRenameExtensionW(LPWSTR pszPath, LPCWSTR pszExt)
 {
-	FIXME("%s %s\n", debugstr_w(pszPath), debugstr_w(pszExt));
-	return FALSE;
+	LPWSTR pszExtension = PathFindExtensionW(pszPath);
+
+	if (!pszExtension) return FALSE;
+	if (pszExtension-pszPath + strlenW(pszExt) > MAX_PATH) return FALSE;
+
+	strcpyW(pszExtension, pszExt);
+	TRACE("%s\n", debugstr_w(pszPath));
+	return TRUE;
 }
 
 /*************************************************************************

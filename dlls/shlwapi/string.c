@@ -17,6 +17,28 @@
 DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
+ * ChrCmpIA					[SHLWAPI.385]
+ *
+ * Note: Returns 0 (FALSE) if characters are equal (insensitive).
+ */
+BOOL WINAPI ChrCmpIA (WORD w1, WORD w2)
+{
+	TRACE("%c ? %c\n", w1, w2);
+	return (toupper(w1) != toupper(w2));
+}
+
+/*************************************************************************
+ * ChrCmpIW					[SHLWAPI.386]
+ *
+ * Note: Returns 0 (FALSE) if characters are equal (insensitive).
+ */
+BOOL WINAPI ChrCmpIW (WCHAR w1, WCHAR w2)
+{
+	TRACE("%c ? %c\n", w1, w2);
+	return (toupperW(w1) != toupperW(w2));
+}
+
+/*************************************************************************
  * StrChrA					[SHLWAPI.@]
  */
 LPSTR WINAPI StrChrA (LPCSTR str, WORD c)

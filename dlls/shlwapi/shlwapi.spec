@@ -58,7 +58,7 @@ debug_channels (shell)
 46  forward @ user32.CopyAcceleratorTableW
 47  forward @ user32.CreateAcceleratorTableW
 48  forward @ gdi32.CreateDCW
-49  stub @
+49  forward @ user32.CreateDialogParamA
 50  forward @ kernel32.CreateDirectoryW
 51  forward @ kernel32.CreateEventW
 52  forward @ kernel32.CreateFileW
@@ -70,7 +70,7 @@ debug_channels (shell)
 58  stub @
 59  stub @
 60  forward @ user32.DispatchMessageW
-61  stub @
+61  forward @ user32.DrawTextW
 62  forward @ gdi32.EnumFontFamiliesW
 63  forward @ gdi32.EnumFontFamiliesExW
 64  forward @ kernel32.EnumResourceNamesW
@@ -173,7 +173,7 @@ debug_channels (shell)
 161 stub @
 162 stdcall @(str long) SHLWAPI_162
 163 stub @
-164 stub @
+164 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_164
 165 stdcall @(long long long long) SHLWAPI_165
 166 stub @
 167 stub @
@@ -181,11 +181,11 @@ debug_channels (shell)
 169 stdcall @(long) SHLWAPI_169
 170 stdcall @(str) SHLWAPI_170
 171 stub @
-172 stub @
+172 stdcall @(ptr ptr) SHLWAPI_172
 173 stub @
-174 stub @
+174 stdcall @(ptr ptr) SHLWAPI_174
 175 stub @
-176 stub @
+176 stdcall @(ptr ptr ptr ptr) SHLWAPI_176
 177 stub @
 178 stub @
 179 stub @
@@ -208,7 +208,7 @@ debug_channels (shell)
 196 stub @
 197 stub @
 198 stub @
-199 stub @
+199 stdcall @(ptr ptr) SHLWAPI_199
 200 stub @
 201 stub @
 202 stub @
@@ -217,10 +217,10 @@ debug_channels (shell)
 205 stdcall @(long str str ptr ptr ptr) SHLWAPI_205
 206 stdcall @(long wstr wstr ptr ptr ptr) SHLWAPI_206
 207 stub @
-208 stub @
+208 stdcall @(long long ptr ptr long) SHLWAPI_208
 209 stub @
-210 stub @
-211 stub @
+210 stdcall @(ptr long ptr) SHLWAPI_210
+211 stdcall @(ptr long) SHLWAPI_211
 212 stub @
 213 stub @
 214 stub @
@@ -245,10 +245,10 @@ debug_channels (shell)
 233 stub @
 234 stub @
 235 stub @
-236 stub @
+236 stdcall @(ptr) SHLWAPI_236
 237 stdcall @(ptr) SHLWAPI_237
 238 stub @
-239 stub @
+239 stdcall @(long str long) SHLWAPI_239
 240 stdcall @(long long long long) SHLWAPI_240
 241 stdcall @() SHLWAPI_241
 242 stub @
@@ -309,8 +309,8 @@ debug_channels (shell)
 297 stub @
 298 forward @ kernel32.WritePrivateProfileStringW
 299 stub @
-300 stub @
-301 forward @ gdi32.DrawTextExW # FIXME CreateFontW
+300 forward @ gdi32.CreateFontW
+301 forward @ user32.DrawTextExW
 302 forward @ user32.GetMenuItemInfoW
 303 forward @ user32.InsertMenuItemW
 304 forward @ gdi32.CreateMetaFileW
@@ -351,7 +351,7 @@ debug_channels (shell)
 339 forward @ kernel32.GetNumberFormatW
 340 forward @ user32.MessageBoxW
 341 forward @ kernel32.FindNextFileW
-342 stdcall @(long long long long) SHLWAPI_342
+342 stdcall @(long long long) SHLWAPI_342
 343 stub @
 344 stub @
 345 stub @
@@ -365,7 +365,7 @@ debug_channels (shell)
 353 stub @
 354 stub @
 355 stub @
-356 stub @
+356 stdcall @(long long long) SHLWAPI_356
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_358
 359 forward @ kernel32.OpenEventW
@@ -385,17 +385,17 @@ debug_channels (shell)
 373 stub @
 374 stub @
 375 stub @
-376 stdcall @(long) SHLWAPI_376  # kernel32.GetUserDefaultUILanguage
-377 stdcall @(long long long) SHLWAPI_377
-378 stdcall @(long long long) SHLWAPI_378
+376 stdcall @() SHLWAPI_376  # kernel32.GetUserDefaultUILanguage
+377 stdcall @(str long long) SHLWAPI_377
+378 stdcall @(wstr long long) SHLWAPI_378
 379 stub @
 380 stub @
 381 stub AssocQueryStringA
 382 stub AssocQueryStringByKeyA
 383 stub AssocQueryStringByKeyW
 384 stub AssocQueryStringW
-385 stub ChrCmpIA
-386 stub ChrCmpIW
+385 stdcall ChrCmpIA(long long) ChrCmpIA
+386 stdcall ChrCmpIW(long long) ChrCmpIW
 387 stub ColorAdjustLuma
 388 stub @
 389 stdcall @(ptr) SHLWAPI_389
@@ -422,7 +422,7 @@ debug_channels (shell)
 410 stub @
 411 stub @
 412 stub @
-413 stub @
+413 stdcall @(long) SHLWAPI_413
 414 stub @
 415 stub @
 416 stub @
@@ -437,7 +437,7 @@ debug_channels (shell)
 425 stub @
 426 stub @
 427 stub @
-428 stub @
+428 forward @ user32.TrackPopupMenuEx
 429 stub @
 430 stub @
 431 stdcall @(long) SHLWAPI_431
@@ -454,7 +454,7 @@ debug_channels (shell)
 442 forward @ kernel32.GetEnvironmentVariableW
 443 forward @ kernel32.GetSystemWindowsDirectoryA
 444 forward @ kernel32.GetSystemWindowsDirectoryW
-445 stub ColorRGBToHLS
+445 stdcall ColorRGBToHLS(long ptr ptr ptr) ColorRGBToHLS
 446 stub @
 
 @ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
@@ -661,14 +661,14 @@ debug_channels (shell)
 @ stdcall StrToIntW(wstr)StrToIntW
 @ stdcall StrTrimA(str str) StrTrimA
 @ stub    StrTrimW
-@ stub    UrlApplySchemeA
-@ stdcall UrlApplySchemeW(str ptr ptr long) UrlApplySchemeW
+@ stdcall UrlApplySchemeA(str ptr ptr long) UrlApplySchemeA
+@ stdcall UrlApplySchemeW(wstr ptr ptr long) UrlApplySchemeW
 @ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
 @ stdcall UrlCanonicalizeW(wstr ptr ptr long) UrlCanonicalizeW
 @ stdcall UrlCombineA(str str str ptr long) UrlCombineA
 @ stdcall UrlCombineW(wstr wstr wstr ptr long) UrlCombineW
-@ stub    UrlCompareA
-@ stub    UrlCompareW
+@ stdcall UrlCompareA(str str long) UrlCompareA
+@ stdcall UrlCompareW(wstr wstr long) UrlCompareW
 @ stub    UrlCreateFromPathA
 @ stub    UrlCreateFromPathW
 @ stdcall UrlEscapeA(str ptr ptr long)UrlEscapeA
@@ -721,7 +721,7 @@ debug_channels (shell)
 @ stub    SHCreateStreamWrapper
 @ stub    SHCreateThread
 @ stub    SHGetThreadRef
-@ stub    SHRegDuplicateHKey
+@ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
 @ stub    SHRegSetPathA
 @ stub    SHRegSetPathW
 @ stub    SHRegisterValidateTemplate
