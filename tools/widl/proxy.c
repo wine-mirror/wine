@@ -293,6 +293,48 @@ static void gen_unmarshall( var_t *arg )
   }
 }
 
+static void proxy_free_variables( var_t *arg )
+{
+  if (arg) {
+    while (NEXT_LINK(arg))
+      arg = NEXT_LINK(arg);
+  }
+  while (arg) {
+    if (is_attr(arg->attrs, ATTR_OUT)) {
+      var_t *constraint;
+      int index = 0; /* FIXME */
+      type_t *type = get_base_type(arg->type);
+
+      switch( type->type )
+      {
+      case RPC_FC_BYTE:
+      case RPC_FC_CHAR:
+      case RPC_FC_SHORT:
+      case RPC_FC_USHORT:
+      case RPC_FC_ENUM16:
+      case RPC_FC_LONG:
+      case RPC_FC_ULONG:
+      case RPC_FC_ENUM32:
+      case RPC_FC_STRUCT:
+        break;
+
+      case RPC_FC_IP:
+        constraint = get_attrp( arg->attrs, ATTR_IIDIS );
+        if( constraint )
+          print_proxy( "_StubMsg.MaxCount = (unsigned long) ( %s );\n",constraint->name);
+        print_proxy( "NdrClearOutParameters( &_StubMsg, ");
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], ", index );
+        fprintf(proxy, "(void*)%s );\n", arg->name );
+        break;
+
+      default:
+        printf("FIXME: arg %s has unknown type %d\n", arg->name, type->type );
+      }
+    }
+    arg = PREV_LINK(arg);
+  }
+}
+
 static void gen_proxy(type_t *iface, func_t *cur, int idx)
 {
   var_t *def = cur->def;
@@ -311,7 +353,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   if (has_ret) {
     print_proxy( "" );
     write_type(proxy, def->type, def, def->tname);
-    print_proxy( " _Ret;\n");
+    print_proxy( " _RetVal;\n");
   }
   print_proxy( "RPC_MESSAGE _Msg;\n" );
   print_proxy( "MIDL_STUB_MESSAGE _StubMsg;\n" );
@@ -332,7 +374,12 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   gen_marshall( cur->args );
 
   print_proxy( "NdrProxySendReceive(This, &_StubMsg);\n" );
-  print_proxy( "\n");
+  fprintf(proxy, "\n");
+  print_proxy("if ((_Msg.DataRepresentation&0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
+  indent++;
+  print_proxy("NdrConvert( &_StubMsg, &__MIDL_ProcFormatString.Format[0]);\n" );
+  indent--;
+  fprintf(proxy, "\n");
 
   gen_unmarshall( cur->args );
   if (has_ret) {
@@ -343,7 +390,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
      */
     print_proxy( "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + 3) & ~ 0x3);\n");
 
-    print_proxy( "_Ret = *((" );
+    print_proxy( "_RetVal = *((" );
     write_type(proxy, def->type, def, def->tname);
     fprintf(proxy, "*)_StubMsg.Buffer)++;\n");
   }
@@ -363,14 +410,15 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   print_proxy( "{\n" );
   if (has_ret) {
     indent++;
-    print_proxy( "_Ret = NdrProxyErrorHandler(RpcExceptionCode());\n" );
+    proxy_free_variables( cur->args );
+    print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
   print_proxy( "}\n" );
   print_proxy( "RpcEndExcept\n" );
 
   if (has_ret) {
-    print_proxy( "return _Ret;\n" );
+    print_proxy( "return _RetVal;\n" );
   }
   indent--;
   print_proxy( "}\n");
@@ -460,6 +508,7 @@ static void stub_gen_marshall_size( var_t *arg )
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT)) {
       int index = 0;
+      var_t *constraint;
       type_t *type = get_base_type(arg->type);
 
       switch( type->type )
@@ -487,6 +536,9 @@ static void stub_gen_marshall_size( var_t *arg )
         break;
 
       case RPC_FC_IP:
+        constraint = get_attrp( arg->attrs, ATTR_IIDIS );
+        if( constraint )
+          print_proxy( "_StubMsg.MaxCount = (unsigned long) ( %s );\n",constraint->name);
         print_proxy( "NdrPointerBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
         break;
@@ -507,6 +559,7 @@ static void stub_gen_marshall_copydata( var_t *arg )
   }
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT)) {
+      var_t *constraint;
       int index = 0;
       type_t *type = get_base_type(arg->type);
 
@@ -532,6 +585,9 @@ static void stub_gen_marshall_copydata( var_t *arg )
         break;
 
       case RPC_FC_IP:
+        constraint = get_attrp( arg->attrs, ATTR_IIDIS );
+        if( constraint )
+          print_proxy( "_StubMsg.MaxCount = (unsigned long) ( %s );\n",constraint->name);
         print_proxy( "NdrPointerMarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
         break;
@@ -567,7 +623,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   indent++;
   print_proxy( "IRpcStubBuffer* This,\n");
   print_proxy( "IRpcChannelBuffer* pRpcChannelBuffer,\n");
-  print_proxy( "PRPC_MESSAGE pRpcMessage,\n");
+  print_proxy( "PRPC_MESSAGE _Msg,\n");
   print_proxy( "DWORD* _pdwStubPhase)\n");
   indent--;
   print_proxy( "{\n");
@@ -576,7 +632,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   if (has_ret) {
     print_proxy("");
     write_type(proxy, def->type, def, def->tname);
-    fprintf(proxy, " _Ret;\n");
+    fprintf(proxy, " _RetVal;\n");
   }
   print_proxy("%s* _This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n", iface->name, iface->name);
   print_proxy("MIDL_STUB_MESSAGE _StubMsg;\n");
@@ -585,12 +641,17 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
 
   /* FIXME: trace */
 
-  print_proxy("NdrStubInitialize(pRpcMessage, &_StubMsg, &Object_StubDesc, pRpcChannelBuffer);\n");
+  print_proxy("NdrStubInitialize(_Msg, &_StubMsg, &Object_StubDesc, pRpcChannelBuffer);\n");
   fprintf(proxy, "\n");
 
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
   indent++;
+  print_proxy("if ((_Msg->DataRepresentation&0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
+  indent++;
+  print_proxy("NdrConvert( &_StubMsg, &__MIDL_ProcFormatString.Format[0]);\n" );
+  indent--;
+  fprintf(proxy, "\n");
 
   stub_unmarshall( cur->args );
   fprintf(proxy, "\n");
@@ -598,7 +659,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   print_proxy("*_pdwStubPhase = STUB_CALL_SERVER;\n");
   fprintf(proxy, "\n");
   print_proxy("");
-  if (has_ret) fprintf(proxy, "_Ret = ");
+  if (has_ret) fprintf(proxy, "_RetVal = ");
   fprintf(proxy, "%s_", iface->name);
   if (cas) fprintf(proxy, "%s_Stub", cas);
   else write_name(proxy, def);
@@ -630,7 +691,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
 
     print_proxy( "*((" );
     write_type(proxy, def->type, def, def->tname);
-    fprintf(proxy, "*)_StubMsg.Buffer)++ = _Ret;\n");
+    fprintf(proxy, "*)_StubMsg.Buffer)++ = _RetVal;\n");
   }
 
   indent--;
@@ -640,7 +701,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   print_proxy("}\n");
   print_proxy("RpcEndFinally\n");
 
-  /* FIXME: marshall */
+  print_proxy("_Msg->BufferLength = ((long)_StubMsg.Buffer - (long)_Msg->Buffer);\n");
   indent--;
 
   print_proxy("}\n");
@@ -657,8 +718,8 @@ static int write_proxy_methods(type_t *iface)
   while (cur) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
-      if (i) fprintf(proxy, ",\n     ");
-      fprintf(proxy, "%s_", iface->name);
+      if (i) fprintf(proxy, ",\n");
+      print_proxy( "%s_", iface->name);
       write_name(proxy, def);
       fprintf(proxy, "_Proxy");
       i++;
@@ -679,8 +740,8 @@ static int write_stub_methods(type_t *iface)
   while (cur) {
     var_t *def = cur->def;
     if (!is_local(def->attrs)) {
-      if (i) fprintf(proxy, ",\n");
-      fprintf(proxy, "    %s_", iface->name);
+      if (i) fprintf(proxy,",\n");
+      print_proxy( "%s_", iface->name);
       write_name(proxy, def);
       fprintf(proxy, "_Stub");
       i++;
@@ -731,30 +792,39 @@ static void write_proxy(type_t *iface)
   write_stubdesc();
 
   /* proxy vtable */
-  fprintf(proxy, "const CINTERFACE_PROXY_VTABLE(%d) %sProxyVtbl =\n", midx, iface->name);
-  fprintf(proxy, "{\n");
-  fprintf(proxy, "    {&IID_%s},\n", iface->name);
-  fprintf(proxy, "    {");
+  print_proxy( "const CINTERFACE_PROXY_VTABLE(%d) %sProxyVtbl =\n", midx, iface->name);
+  print_proxy( "{\n");
+  indent++;
+  print_proxy( "{&IID_%s},{\n", iface->name);
   write_proxy_methods(iface);
   fprintf(proxy, "}\n");
-  fprintf(proxy, "};\n");
-  fprintf(proxy, "\n");
+  indent--;
+  print_proxy( "};\n");
+  print_proxy( "\n");
 
   /* stub vtable */
-  fprintf(proxy, "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
-  fprintf(proxy, "{\n");
+  print_proxy( "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
+  print_proxy( "{\n");
+  indent++;
   stubs = write_stub_methods(iface);
   fprintf(proxy, "\n");
+  indent--;
   fprintf(proxy, "};\n");
-  fprintf(proxy, "\n");
-  fprintf(proxy, "const CInterfaceStubVtbl %sStubVtbl = {\n", iface->name);
-  fprintf(proxy, "    {&IID_%s,\n", iface->name);
-  fprintf(proxy, "     0,\n");
-  fprintf(proxy, "     %d,\n", stubs+3);
-  fprintf(proxy, "     &%s_table[-3]},\n", iface->name);
-  fprintf(proxy, "    {CStdStubBuffer_METHODS}\n");
-  fprintf(proxy, "};\n");
-  fprintf(proxy, "\n");
+  print_proxy( "\n");
+  print_proxy( "const CInterfaceStubVtbl %sStubVtbl = {\n", iface->name);
+  indent++;
+  print_proxy( "{&IID_%s,\n", iface->name);
+  print_proxy( " 0,\n");
+  print_proxy( " %d,\n", stubs+3);
+  print_proxy( " &%s_table[-3]},\n", iface->name);
+  print_proxy( "{CStdStubBuffer_METHODS}\n");
+  indent--;
+  print_proxy( "};\n");
+  print_proxy( "\n");
+  print_proxy( "#if !defined(__RPC_WIN32__)\n");
+  print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
+  print_proxy( "#endif\n");
+  print_proxy( "\n");
   write_formatstring( 1 );
   write_formatstring( 0 );
 }
