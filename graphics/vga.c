@@ -31,20 +31,20 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             ERR(ddraw,"DirectDraw is not available\n");
             return 1;
         }
-        if (lpddraw->lpvtbl->fnSetDisplayMode(lpddraw,Xres,Yres,Depth)) {
+        if (IDirectDraw_SetDisplayMode(lpddraw,Xres,Yres,Depth)) {
             ERR(ddraw,"DirectDraw does not support requested display mode\n");
-            lpddraw->lpvtbl->fnRelease(lpddraw);
+            IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return 1;
         }
-        lpddraw->lpvtbl->fnCreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
+        IDirectDraw_CreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
 	sdesc.dwFlags = DDSD_CAPS;
 	sdesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-        if (lpddraw->lpvtbl->fnCreateSurface(lpddraw,&sdesc,&lpddsurf,NULL)||(!lpddsurf)) {
+        if (IDirectDraw_CreateSurface(lpddraw,&sdesc,&lpddsurf,NULL)||(!lpddsurf)) {
             ERR(ddraw,"DirectDraw surface is not available\n");
-            lpddraw->lpvtbl->fnRelease(lpddraw);
+            IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return 1;
         }
@@ -72,9 +72,9 @@ void VGA_Exit(void)
     if (lpddraw) {
         SYSTEM_KillSystemTimer(poll_timer);
         DeleteCriticalSection(&vga_crit);
-        lpddsurf->lpvtbl->fnRelease(lpddsurf);
+        IDirectDrawSurface_Release(lpddsurf);
         lpddsurf=NULL;
-        lpddraw->lpvtbl->fnRelease(lpddraw);
+        IDirectDraw_Release(lpddraw);
         lpddraw=NULL;
     }
 }
@@ -82,8 +82,8 @@ void VGA_Exit(void)
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
 {
     if (!lpddraw) return;
-    lpddpal->lpvtbl->fnSetEntries(lpddpal,0,start,len,pal);
-    lpddsurf->lpvtbl->fnSetPalette(lpddsurf,lpddpal);
+    IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
+    IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
 }
 
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)
@@ -98,15 +98,15 @@ void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)
         pal[c].peBlue =color[c].rgbBlue;
         pal[c].peFlags=0;
     }
-    lpddpal->lpvtbl->fnSetEntries(lpddpal,0,start,len,pal);
-    lpddsurf->lpvtbl->fnSetPalette(lpddsurf,lpddpal);
+    IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
+    IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
 }
 
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
 {
     if (!lpddraw) return NULL;
     if (!lpddsurf) return NULL;
-    if (lpddsurf->lpvtbl->fnLock(lpddsurf,NULL,&sdesc,0,0)) {
+    if (IDirectDrawSurface_Lock(lpddsurf,NULL,&sdesc,0,0)) {
         ERR(ddraw,"could not lock surface!\n");
         return NULL;
     }
@@ -119,7 +119,7 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
 
 void VGA_Unlock(void)
 {
-    lpddsurf->lpvtbl->fnUnlock(lpddsurf,sdesc.y.lpSurface);
+    IDirectDrawSurface_Unlock(lpddsurf,sdesc.y.lpSurface);
 }
 
 /* We are called from SIGALRM, aren't we? We should _NOT_ do synchronization
