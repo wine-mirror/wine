@@ -1247,6 +1247,7 @@ BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 {
 	HKEY hKey;
 	PSTR keyname;
+	DWORD result;
 
 	if (pdwReserved || !pcbProvName)
 		CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
@@ -1262,12 +1263,18 @@ BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 		CRYPT_ReturnLastError(NTE_PROV_TYPE_NOT_DEF);
 	}
 	CRYPT_Free(keyname);
-	if (RegQueryValueExA(hKey, "Name", NULL, NULL, pszProvName, pcbProvName))
+	
+	result = RegQueryValueExA(hKey, "Name", NULL, NULL, pszProvName, pcbProvName); 
+	if (result)
 	{
-		if (GetLastError() != ERROR_MORE_DATA)
+		if (result != ERROR_MORE_DATA)
 			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		else
+			SetLastError(result);
+		
 		return FALSE;
 	}
+	
 	RegCloseKey(hKey);
 	return TRUE;
 }
