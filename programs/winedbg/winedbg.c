@@ -1083,15 +1083,26 @@ static int dbg_winedbg_usage(void)
 }
 
 struct backend_cpu* be_cpu;
+#ifdef __i386__
 extern struct backend_cpu be_i386;
+#elif __powerpc__
+extern struct backend_cpu be_ppc;
+#else
+# error CPU unknown
+#endif
 
 int main(int argc, char** argv)
 {
     DWORD	retv = 0;
     unsigned    gdb_flags = 0;
 
-    /* FIXME: correctly setup the CPU backend */
+#ifdef __i386__
     be_cpu = &be_i386;
+#elif __powerpc__
+    be_cpu = &be_ppc;
+#else
+# error CPU unknown
+#endif
     /* Initialize the output */
     dbg_houtput = GetStdHandle(STD_OUTPUT_HANDLE);
 
