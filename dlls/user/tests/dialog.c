@@ -769,11 +769,11 @@ static void InitialFocusTest (void)
         "Expected NULL focus, got %s (%p).\n",
         GetHwndString(g_hwndInitialFocusT1), g_hwndInitialFocusT1);
 
-    todo_wine ok ((g_hwndInitialFocusT2 == g_hwndButton2),
-                  "Error after first SetFocus() when WM_INITDIALOG returned FALSE: "
-                     "Expected the second button (%p), got %s (%p).\n",
-                  g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
-                 g_hwndInitialFocusT2);
+    ok ((g_hwndInitialFocusT2 == g_hwndButton2),
+        "Error after first SetFocus() when WM_INITDIALOG returned FALSE: "
+        "Expected the second button (%p), got %s (%p).\n",
+        g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
+        g_hwndInitialFocusT2);
 
     /* Test 2:
      * This is the same as above, except WM_INITDIALOG is made to return TRUE.

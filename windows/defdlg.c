@@ -96,13 +96,16 @@ static void DEFDLG_RestoreFocus( HWND hwnd )
 
     if (IsIconic( hwnd )) return;
     if (!(infoPtr = DIALOG_get_info( hwnd, FALSE ))) return;
-    if (!IsWindow( infoPtr->hwndFocus )) return;
     /* Don't set the focus back to controls if EndDialog is already called.*/
-    if (!(infoPtr->flags & DF_END))
-    {
-        DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
-        return;
+    if (infoPtr->flags & DF_END) return;
+    if (!IsWindow(infoPtr->hwndFocus) || infoPtr->hwndFocus == hwnd) {
+        /* If no saved focus control exists, set focus to the first visible,
+           non-disabled, WS_TABSTOP control in the dialog */
+        infoPtr->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
+       if (!IsWindow( infoPtr->hwndFocus )) return;
     }
+    DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
+
     /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
        sometimes losing focus when receiving WM_SETFOCUS messages. */
 }
