@@ -21,8 +21,8 @@ struct debug_info
 {
     char *str_pos;       /* current position in strings buffer */
     char *out_pos;       /* current position in output buffer */
-    char  strings[504];  /* buffer for temporary strings */
-    char  output[504];   /* current output line */
+    char  strings[1024]; /* buffer for temporary strings */
+    char  output[1024];  /* current output line */
 };
 
 static struct debug_info tmp;
