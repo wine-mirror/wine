@@ -444,6 +444,74 @@ NET_API_STATUS WINAPI NetpGetComputerName(LPWSTR *Buffer)
 NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
                                        LPBYTE* bufptr)
 {
-    FIXME("%p %ld %p\n", debugstr_w( servername ), level, bufptr );
-    return ERROR_ACCESS_DENIED;
+    NET_API_STATUS ret;
+
+    TRACE("%p %ld %p\n", debugstr_w( servername ), level, bufptr );
+    if (servername)
+    {
+        FIXME("remote computers not supported\n");
+        return ERROR_INVALID_LEVEL;
+    }
+    if (!bufptr) return ERROR_INVALID_PARAMETER;
+
+    switch (level)
+    {
+        case 100:
+        {
+            DWORD computerNameLen, domainNameLen, size;
+            WCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+            LSA_OBJECT_ATTRIBUTES ObjectAttributes;
+            LSA_HANDLE PolicyHandle;
+            NTSTATUS NtStatus;
+           
+            computerNameLen = MAX_COMPUTERNAME_LENGTH + 1;
+            GetComputerNameW(computerName, &computerNameLen);
+            computerNameLen++; /* include NULL terminator */
+
+            ZeroMemory(&ObjectAttributes, sizeof(ObjectAttributes));
+            NtStatus = LsaOpenPolicy(NULL, &ObjectAttributes,
+             POLICY_VIEW_LOCAL_INFORMATION, &PolicyHandle);
+            if (NtStatus != STATUS_SUCCESS)
+                ret = LsaNtStatusToWinError(NtStatus);
+            else
+            {
+                PPOLICY_ACCOUNT_DOMAIN_INFO DomainInfo;
+
+                LsaQueryInformationPolicy(PolicyHandle,
+                 PolicyAccountDomainInformation, (PVOID*)&DomainInfo);
+                domainNameLen = lstrlenW(DomainInfo->DomainName.Buffer) + 1;
+                size = sizeof(WKSTA_INFO_100) + computerNameLen * sizeof(WCHAR)
+                 + domainNameLen * sizeof(WCHAR);
+                ret = NetApiBufferAllocate(size, (LPVOID *)bufptr);
+                if (ret == NERR_Success)
+                {
+                    PWKSTA_INFO_100 info = (PWKSTA_INFO_100)*bufptr;
+                    OSVERSIONINFOW verInfo;
+
+                    info->wki100_platform_id = PLATFORM_ID_NT;
+                    info->wki100_computername = (LPWSTR)(*bufptr +
+                     sizeof(WKSTA_INFO_100));
+                    memcpy(info->wki100_computername, computerName,
+                     computerNameLen * sizeof(WCHAR));
+                    info->wki100_langroup = (LPWSTR)(*bufptr +
+                     sizeof(WKSTA_INFO_100) + computerNameLen * sizeof(WCHAR));
+                    memcpy(info->wki100_langroup, DomainInfo->DomainName.Buffer,
+                     domainNameLen * sizeof(WCHAR));
+                    memset(&verInfo, 0, sizeof(verInfo));
+                    verInfo.dwOSVersionInfoSize = sizeof(verInfo);
+                    GetVersionExW(&verInfo);
+                    info->wki100_ver_major = verInfo.dwMajorVersion;
+                    info->wki100_ver_minor = verInfo.dwMinorVersion;
+                }
+                LsaFreeMemory(DomainInfo);
+                LsaClose(PolicyHandle);
+            }
+            break;
+        }
+
+        default:
+            FIXME("level %ld unimplemented\n", level);
+            ret = ERROR_INVALID_LEVEL;
+    }
+    return ret;
 }

@@ -32,4 +32,10 @@
 #define CNLEN       15                  /* Computer name length  */
 #define DNLEN       CNLEN               /* Maximum domain name length */
 
+/* platform IDs */
+#define PLATFORM_ID_DOS 300
+#define PLATFORM_ID_OS2 400
+#define PLATFORM_ID_NT  500
+#define PLATFORM_ID_OSF 600
+#define PLATFORM_ID_VMS 700
 #endif

@@ -48,8 +48,36 @@ typedef struct _WKSTA_USER_INFO_1101 {
     LPWSTR  wkui1101_oth_domains;
 } WKSTA_USER_INFO_1101, *PWKSTA_USER_INFO_1101, *LPWKSTA_USER_INFO_1101;
 
+typedef struct _WKSTA_INFO_100 {
+    DWORD   wki100_platform_id;
+    LPWSTR  wki100_computername;
+    LPWSTR  wki100_langroup;
+    DWORD   wki100_ver_major;
+    DWORD   wki100_ver_minor;
+} WKSTA_INFO_100, *PWKSTA_INFO_100, *LPWKSTA_INFO_100;
+
+typedef struct _WKSTA_INFO_101 {
+    DWORD   wki101_platform_id;
+    LPWSTR  wki101_computername;
+    LPWSTR  wki101_langroup;
+    DWORD   wki101_ver_major;
+    DWORD   wki101_ver_minor;
+    LPWSTR  wki101_lanroot;
+} WKSTA_INFO_101, *PWKSTA_INFO_101, *LPWKSTA_INFO_101;
+
+typedef struct _WKSTA_INFO_102 {
+    DWORD   wki102_platform_id;
+    LPWSTR  wki102_computername;
+    LPWSTR  wki102_langroup;
+    DWORD   wki102_ver_major;
+    DWORD   wki102_ver_minor;
+    LPWSTR  wki102_lanroot;
+    DWORD   wki102_logged_on_users;
+} WKSTA_INFO_102, *PWKSTA_INFO_102, *LPWKSTA_INFO_102;
+
 /* workstation */
 NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level, PBYTE* bufptr);
+NET_API_STATUS WINAPI NetWkstaGetInfo(LPWSTR servername, DWORD level, PBYTE *bufptr);
 
 #ifdef __cplusplus
 }
