@@ -21,6 +21,8 @@
 #include "config.h"
 
 #include "windef.h"
+#include "winbase.h"
+#include "winerror.h"
 #include "fdi.h"
 
 #include "wine/debug.h"
@@ -41,23 +43,37 @@ HFDI __cdecl FDICreate(
 	int      cpuType,
 	PERF     perf)
 {
+    FIXME("(%p, %p, %p, %p, %p, %p, %p, %d, %p): stub\n", 
+	  pfnalloc, pfnfree, pfnopen, pfnread, pfnwrite, pfnclose, pfnseek,
+	  cpuType, perf);
+
+    perf->erfOper = FDIERROR_NONE;
+    perf->erfType = 0;
+    perf->fError = TRUE;
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return NULL;
 }
 
 
 /***********************************************************************
- *		FDICreate (CABINET.20)
+ *		FDIIsCabinet (CABINET.21)
  */
 BOOL __cdecl FDIIsCabinet(
 	HFDI            hfdi,
 	INT_PTR         hf,
 	PFDICABINETINFO pfdici)
 {
+    FIXME("(%p, %d, %p): stub\n", hfdi, hf, pfdici);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return FALSE;
 }
 
 /***********************************************************************
- *		FDICreate (CABINET.20)
+ *		FDICopy (CABINET.22)
  */
 BOOL __cdecl FDICopy(
 	HFDI           hfdi,
@@ -68,14 +84,23 @@ BOOL __cdecl FDICopy(
 	PFNFDIDECRYPT  pfnfdid,
 	void          *pvUser)
 {
+    FIXME("(%p, %p, %p, %d, %p, %p, %p): stub\n",
+	  hfdi, pszCabinet, pszCabPath, flags, pfnfdin, pfnfdid, pvUser);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return FALSE;
 }
 
 /***********************************************************************
- *		FDICreate (CABINET.20)
+ *		FDIDestroy (CABINET.23)
  */
 BOOL __cdecl FDIDestroy(HFDI hfdi)
 {
+    FIXME("(%p): stub\n", hfdi);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return FALSE;
 }
 
@@ -87,5 +112,9 @@ BOOL __cdecl FDITruncateCabinet(
 	char   *pszCabinetName,
 	USHORT  iFolderToDelete)
 {
+    FIXME("(%p, %p, %hu): stub\n", hfdi, pszCabinetName, iFolderToDelete);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return FALSE;
 }

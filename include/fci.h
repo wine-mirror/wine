@@ -43,7 +43,7 @@ typedef struct {
     int   erfOper;  /* FCI/FDI error code - see {FCI,FDI}ERROR_XXX for details. */
     int   erfType;  /* Optional error value filled in by FCI/FDI. */
     BOOL  fError;   /* TRUE => error present */
-} ERF, PERF;
+} ERF, *PERF;
 
 /**********************************************************************/
 

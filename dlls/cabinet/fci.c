@@ -21,6 +21,8 @@
 #include "config.h"
 
 #include "windef.h"
+#include "winbase.h"
+#include "winerror.h"
 #include "fci.h"
 
 #include "wine/debug.h"
@@ -45,6 +47,16 @@ HFCI __cdecl FCICreate(
 	PCCAB              pccab,
 	void *pv)
 {
+    FIXME("(%p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p): stub\n",
+	  perf, pfnfcifp, pfna, pfnf, pfnopen, pfnread, pfnwrite, pfnclose,
+	  pfnseek, pfndelete, pfnfcigtf, pccab, pv);
+
+    perf->erfOper = FCIERR_NONE;
+    perf->erfType = 0;
+    perf->fError = TRUE;
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return NULL;
 }
 
@@ -61,6 +73,11 @@ BOOL __cdecl FCIAddFile(
 	PFNFCIGETOPENINFO     pfnfcigoi,
 	TCOMP                 typeCompress)
 {
+    FIXME("(%p, %p, %p, %d, %p, %p, %p, %hu): stub\n", hfci, pszSourceFile,
+	  pszFileName, fExecute, pfnfcignc, pfnfcis, pfnfcigoi, typeCompress);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
     return FALSE;
 }
 
@@ -73,7 +90,11 @@ BOOL __cdecl FCIFlushCabinet(
 	PFNFCIGETNEXTCABINET  pfnfcignc,
 	PFNFCISTATUS          pfnfcis)
 {
-  return FALSE;
+    FIXME("(%p, %d, %p, %p): stub\n", hfci, fGetNextCab, pfnfcignc, pfnfcis);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -84,7 +105,11 @@ BOOL __cdecl FCIFlushFolder(
 	PFNFCIGETNEXTCABINET  pfnfcignc,
 	PFNFCISTATUS          pfnfcis)
 {
-  return FALSE;
+    FIXME("(%p, %p, %p): stub\n", hfci, pfnfcignc, pfnfcis);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -92,5 +117,9 @@ BOOL __cdecl FCIFlushFolder(
  */
 BOOL __cdecl FCIDestroy(HFCI hfci)
 {
-  return FALSE;
+    FIXME("(%p): stub\n", hfci);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
 }
