@@ -151,7 +151,6 @@ typedef struct tagLISTVIEW_INFO
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
-  RECT rcLargeFocus;            /* non-empty when a large item in ICON mode has focus */
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
   HDPA hdpaItems;
@@ -729,6 +728,7 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
     InvalidateRect(infoPtr->hwndSelf, rect, TRUE); \
 } while (0)
 
+/* FIXME: what if we show the focus on a large item in ICON mode? */
 #define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
     RECT rcItem; \
     rcItem.left = LVIR_BOUNDS; \
@@ -1140,19 +1140,29 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
 
 /***
- * Toggles (draws/erase) the focus rectangle. 
+ * DESCRIPTION:
+ * Shows/hides the focus rectangle. 
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] fShow : TRUE to show the focus, FALSE to hide it.
+ *
+ * RETURN:
+ * None
  */
-static inline void LISTVIEW_ToggleFocusRect(LISTVIEW_INFO *infoPtr)
+static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, INT nItem, BOOL fShow)
 {
-    TRACE("rcFocus=%s\n", debugrect(&infoPtr->rcFocus));
+    TRACE("fShow=%d, nItem=%d\n", fShow, nItem);
 
-    /* if we have a focus rectagle, draw it */
-    if (!IsRectEmpty(&infoPtr->rcFocus))
-    {
-	HDC hdc = GetDC(infoPtr->hwndSelf);
-	DrawFocusRect(hdc, &infoPtr->rcFocus);
-	ReleaseDC(infoPtr->hwndSelf, hdc);
-    }
+    /* Here we are inneficient. We could, in theory, simply DrawFocusRect
+     * to erase/show the focus, without all this heavy duty redraw. However,
+     * note that there are cases where we can not do that: when the list is
+     * in ICON mode, and the item is large, we must to invalidate it.
+     * Moreover, in the vast majority of cases, the selection status of
+     * the item changes anyway, and so the item is invalidated already,
+     * so not too much harm is done. If we do notice any flicker, we should
+     * refine this method. */
+    LISTVIEW_InvalidateItem(infoPtr, nItem);
 }
 
 /***
@@ -2810,18 +2820,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (bResult && !infoPtr->bIsDrawing && lpLVItem->iSubItem == 0)
     {
 	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
-	{
-	    LISTVIEW_ToggleFocusRect(infoPtr);
-	    /* Note that ->rcLargeFocus is normally all zero, so
-	     * no second InvalidateRect is issued.
-	     *
-	     * However, when a large icon style is drawn (LVS_ICON),
-	     * the rectangle drawn is saved in rcLastDraw. That way
-	     * the InvalidateRect will invalidate the entire area drawn
-	     */
-	   if (!IsRectEmpty(&infoPtr->rcLargeFocus))
-		LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcLargeFocus);
-	}
+	    LISTVIEW_ShowFocusRect(infoPtr, oldFocus, FALSE);
 	LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
     }
     /* restore text */
@@ -3236,7 +3235,6 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    * that the background is complete
    */
   rcFocus = rcLabel;  /* save for focus */
-  SetRectEmpty(&infoPtr->rcLargeFocus);
   if ((uFormat & DT_NOCLIP) || (lvItem.state & LVIS_SELECTED))
   {
       /* FIXME: why do we need this??? */
@@ -3247,7 +3245,6 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
       DeleteObject(hBrush);
 
       /* Save size of item drawing for next InvalidateRect */
-      infoPtr->rcLargeFocus = rcFullText;
       TRACE("focused/selected, rcFocus=%s\n", debugrect(&rcFocus));
   }
   /* else ? What if we are losing the focus? will we not get a complete
@@ -3378,7 +3375,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             dis.itemID = nItem;
             dis.itemAction = ODA_DRAWENTIRE;
             if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
-            if (item.state & LVIS_FOCUSED) dis.itemState |= ODS_FOCUS;
+            if (infoPtr->bFocus && (item.state & LVIS_FOCUSED)) dis.itemState |= ODS_FOCUS;
             dis.hwndItem = infoPtr->hwndSelf;
             dis.hDC = hdc;
             dis.rcItem.left = lpCols[0].rc.left;
@@ -3675,7 +3672,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 	LISTVIEW_RefreshIcon(infoPtr, hdc, uView == LVS_SMALLICON, cdmode);
 
     /* if we have a focus rect, draw it */
-    if (infoPtr->bFocus && !IsRectEmpty(&infoPtr->rcFocus))
+    if (infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
 	DrawFocusRect(hdc, &infoPtr->rcFocus);
 
     /* unselect objects */
@@ -5405,6 +5402,8 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
     LVFINDINFOW lvFindInfo;
     INT nCountPerColumn;
     INT i;
+
+    TRACE("nItem=%d, uFlags=%x\n", nItem, uFlags);
 
     if ((nItem < -1) || (nItem >= GETITEMCOUNT(infoPtr))) return -1;
 
@@ -7277,8 +7276,7 @@ static void scroll_list(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
     ScrollWindowEx(infoPtr->hwndSelf, dx, dy, &infoPtr->rcList, 
 		   &infoPtr->rcList, 0, 0, SW_ERASE | SW_INVALIDATE);
     /* if we have focus, adjust rect */
-    if (infoPtr->bFocus && !IsRectEmpty(&infoPtr->rcFocus))
-	OffsetRect(&infoPtr->rcFocus, dx, dy);
+    OffsetRect(&infoPtr->rcFocus, dx, dy);
     UpdateWindow(infoPtr->hwndSelf);
 }
 
@@ -7646,7 +7644,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     notify_killfocus(infoPtr);
 
     /* if we have a focus rectagle, get rid of it */
-    LISTVIEW_ToggleFocusRect(infoPtr);
+    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
     
     /* invalidate the selected items before reseting focus flag */
     LISTVIEW_InvalidateSelectedItems(infoPtr);
@@ -8175,7 +8173,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
     notify_setfocus(infoPtr);
 
     /* put the focus rect back on */
-    LISTVIEW_ToggleFocusRect(infoPtr);
+    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
 
     /* set window focus flag */
     infoPtr->bFocus = TRUE;
