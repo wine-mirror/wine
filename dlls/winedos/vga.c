@@ -43,6 +43,16 @@ static BOOL vga_retrace_vertical;
 static BOOL vga_retrace_horizontal;
 
 /*
+ * Size and location of VGA controller window to framebuffer.
+ *
+ * Note: We support only single window even though some
+ *       controllers support two. This should not be changed unless
+ *       there are programs that depend on having two windows.
+ */
+#define VGA_WINDOW_SIZE  (64 * 1024)
+#define VGA_WINDOW_START ((char *)0xa0000)
+
+/*
  * VGA controller memory is emulated using linear framebuffer.
  * This frambuffer also acts as an interface
  * between VGA controller emulation and DirectDraw.
@@ -593,15 +603,17 @@ void VGA_SetWindowStart(int start)
 
     if(vga_fb_window == -1)
         FIXME("Remove VGA memory emulation.\n");
-    else
-        memmove(vga_fb_data + vga_fb_window, (char *)0xa0000, 64 * 1024);
+    else if(vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
+        memmove(vga_fb_data + vga_fb_window, VGA_WINDOW_START,
+                VGA_WINDOW_SIZE);
 
     vga_fb_window = start;
 
     if(vga_fb_window == -1)
         FIXME("Install VGA memory emulation.\n");
-    else
-        memmove( (char *)0xa0000, vga_fb_data + vga_fb_window, 64 * 1024);
+    else if(vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
+        memmove( VGA_WINDOW_START, vga_fb_data + vga_fb_window, 
+                 VGA_WINDOW_SIZE);
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -913,8 +925,9 @@ static void VGA_Poll_Graphics(void)
   /*
    * Synchronize framebuffer contents.
    */
-  if(vga_fb_window != -1)
-    memmove(vga_fb_data + vga_fb_window, (char *)0xa0000, 64 * 1024);
+  if(vga_fb_window != -1 && vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
+    memmove(vga_fb_data + vga_fb_window, VGA_WINDOW_START,
+            VGA_WINDOW_SIZE);
 
   /*
    * Double VGA framebuffer (320x200 -> 640x400), if needed.
