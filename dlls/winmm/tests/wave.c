@@ -55,11 +55,9 @@ void wave_out_tests()
     ndev=waveOutGetNumDevs();
     trace("found %d WaveOut devices\n",ndev);
 
-    todo_wine {
-        rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
-        ok(rc==MMSYSERR_BADDEVICEID,
-           "waveOutGetDevCa psA: MMSYSERR_BADDEVICEID expected, got %d",rc);
-    }
+    rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
+    ok(rc==MMSYSERR_BADDEVICEID,
+       "waveOutGetDevCa psA: MMSYSERR_BADDEVICEID expected, got %d",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;

@@ -2225,7 +2225,7 @@ UINT WINAPI waveOutGetDevCapsA(UINT uDeviceID, LPWAVEOUTCAPSA lpCaps,
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_WAVEOUT, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+        return MMSYSERR_BADDEVICEID;
 
     return MMDRV_Message(wmld, WODM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
 
