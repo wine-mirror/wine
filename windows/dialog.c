@@ -815,7 +815,6 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	if (template.style & WS_VISIBLE && !(wndPtr->dwStyle & WS_VISIBLE)) 
 	{
 	   ShowWindow( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
-	   UpdateWindow( hwnd );
 	}
         WIN_ReleaseWndPtr(wndPtr);
 	return hwnd;

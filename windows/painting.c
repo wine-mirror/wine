@@ -995,7 +995,7 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
  */
 void WINAPI UpdateWindow16( HWND16 hwnd )
 {
-    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
+    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN, 0 );
 }
 
 /***********************************************************************
@@ -1003,7 +1003,7 @@ void WINAPI UpdateWindow16( HWND16 hwnd )
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
-    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
+    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN, 0 );
 }
 
 /***********************************************************************
