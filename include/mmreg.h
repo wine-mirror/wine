@@ -1,5 +1,5 @@
 /*
- *      mmreg.h   -       Declarations for ???
+ *      mmreg.h   -       Declarations for MultiMedia-REGistration
  */
 
 #ifndef __WINE_MMREG_H
@@ -89,6 +89,7 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_NMS_VBXADPCM		0x0038	/*  Natural MicroSystems  */
 #define  WAVE_FORMAT_G721_ADPCM			0x0040	/*  Antex Electronics Corporation  */
 #define  WAVE_FORMAT_MPEG			0x0050	/*  Microsoft Corporation  */
+#define  WAVE_FORMAT_MPEGLAYER3			0x0055
 #define  WAVE_FORMAT_CREATIVE_ADPCM		0x0200	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH8	0x0202	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH10	0x0203	/*  Creative Labs, Inc  */
@@ -100,5 +101,53 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_OLIOPR			0x1004	/*  Ing C. Olivetti & C., S.p.A.  */
 
 #define WAVE_FORMAT_DEVELOPMENT         	(0xFFFF)
+
+
+
+typedef struct
+{
+	WAVEFORMATEX	wfx;
+	WORD		fwHeadLayer;
+	DWORD		dwHeadBitrate;
+	WORD		fwHeadMode;
+	WORD		fwHeadModeExt;
+	WORD		wHeadEmphasis;
+	WORD		fwHeadFlags;
+	DWORD		dwPTSLow;
+	DWORD		dwPTSHigh;
+} MPEG1WAVEFORMAT,* PMPEG1WAVEFORMAT;
+
+#define	ACM_MPEG_LAYER1		0x0001
+#define	ACM_MPEG_LAYER2		0x0002
+#define	ACM_MPEG_LAYER3		0x0004
+
+#define	ACM_MPEG_STEREO		0x0001
+#define	ACM_MPEG_JOINTSTEREO	0x0002
+#define	ACM_MPEG_DUALCHANNEL	0x0004
+#define	ACM_MPEG_SINGLECHANNEL	0x0008
+#define	ACM_MPEG_PRIVATEBIT	0x0001
+#define	ACM_MPEG_COPYRIGHT	0x0002
+#define	ACM_MPEG_ORIGINALHOME	0x0004
+#define	ACM_MPEG_PROTECTIONBIT	0x0008
+#define	ACM_MPEG_ID_MPEG1	0x0010
+
+typedef struct
+{
+	WAVEFORMATEX	wfx;
+	WORD		wID;
+	DWORD		fdwFlags;
+	WORD		nBlockSize;
+	WORD		nFramesPerBlock;
+	WORD		nCodecDelay;
+} MPEGLAYER3WAVEFORMAT;
+
+#define MPEGLAYER3_ID_MPEG		1
+#define MPEGLAYER3_ID_CONSTANTFRAMESIZE	2
+
+#define MPEGLAYER3_FLAG_PADDING_ISO	0x00000000
+#define MPEGLAYER3_FLAG_PADDING_ON	0x00000001
+#define MPEGLAYER3_FLAG_PADDING_OFF	0x00000002
+
+
 
 #endif /* __WINE_MMREG_H */
