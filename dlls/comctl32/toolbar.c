@@ -1443,9 +1443,13 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	      /* Fudge amount measured against IE4 "menu" and "Links" */
 	      /* toolbars with native control (v4.71).  -  GA 8/01    */
               cx = sz.cx + 6 + 5 + 5;
-	      if ((dwStyle & TBSTYLE_LIST) &&
-		  (TOOLBAR_TestImageExist (infoPtr, btnPtr, GETDEFIMAGELIST(infoPtr,0))))
-		  cx += infoPtr->nBitmapWidth;
+              if (TOOLBAR_TestImageExist (infoPtr, btnPtr, GETDEFIMAGELIST(infoPtr,0)))
+              {
+                if (dwStyle & TBSTYLE_LIST)
+                  cx += infoPtr->nBitmapWidth;
+                else if (cx < (infoPtr->nBitmapWidth+7))
+                  cx = infoPtr->nBitmapWidth+7;
+              }
             }
             else
 	      cx = infoPtr->nButtonWidth;
