@@ -797,7 +797,7 @@ static void ws2_async_accept(SOCKET s, SOCKET as)
  * start with. Note that the returned pointer may be the original pointer 
  * if no conversion is necessary.
  */
-const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
+static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
 {
     switch (wsaddr->sa_family)
     {
@@ -849,7 +849,7 @@ inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int*
 }
 
 /* Returns 0 if successful, -1 if the buffer is too small */
-int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_sockaddr* wsaddr, int* wsaddrlen)
+static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_sockaddr* wsaddr, int* wsaddrlen)
 {
     int res;
 
@@ -866,6 +866,7 @@ int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_socka
             {
             default:
                 res=0; /* enough */
+                *wsaddrlen=uaddrlen;
                 wsipx->sa_socket=uipx->sipx_port;
                 /* fall through */
             case 13:
@@ -896,9 +897,13 @@ int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_socka
 
     default:
         /* No conversion needed */
-        *wsaddrlen = min(*wsaddrlen,uaddrlen);
         memcpy(wsaddr,uaddr,*wsaddrlen);
-        res=(*wsaddrlen<uaddrlen?-1:0);
+        if (*wsaddrlen<uaddrlen) {
+            res=-1;
+        } else {
+            *wsaddrlen=uaddrlen;
+            res=0;
+        }
     }
     return res;
 }
