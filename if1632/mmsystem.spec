@@ -1,6 +1,5 @@
 name	mmsystem
 type	win16
-init	MMSYSTEM_LibMain
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  sndPlaySound(ptr word) sndPlaySound16
@@ -175,5 +174,6 @@ init	MMSYSTEM_LibMain
 #2005   stub    MCIGETTHUNKTABLE
 #2006   stub    WINMMSL_THUNKDATA16
 
+2046   pascal  DllEntryPoint(long word word word long word) MMSYSTEM_LibMain
 # this is a wine only exported function. Is there another way to do it ?
 2047   pascal  WINE_mmThreadEntryPoint(long) WINE_mmThreadEntryPoint
