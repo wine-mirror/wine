@@ -562,6 +562,8 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
         queue->head = apc;
         wake_thread( thread );
     }
+    else apc->prev->next = apc;
+
     return 1;
 }
 
