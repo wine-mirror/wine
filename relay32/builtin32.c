@@ -134,7 +134,6 @@ static void load_library( void *base, const char *filename )
     }
     TRACE( "loaded %s %p %p\n", fullname, wm, module );
     HeapFree( GetProcessHeap(), 0, fullname );
-    wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
 
     /* setup relay debugging entry points */
     if (TRACE_ON(relay)) RELAY_SetupDLL( (void *)module );

@@ -71,7 +71,7 @@ static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 	return NULL;
     }
     for ( wm = MODULE_modref_list; wm; wm=wm->next )
-	if (wm->module == hmod)
+	if (wm->ldr.BaseAddress == hmod)
 	    return wm;
     return NULL;
 }
@@ -93,8 +93,8 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
     if ((wm = RtlAllocateHeap( ntdll_get_process_heap(), HEAP_ZERO_MEMORY,
                                sizeof(*wm) + long_len + short_len + 1 )))
     {
-        wm->module = hModule;
-        wm->tlsindex = -1;
+        wm->ldr.BaseAddress = hModule;
+        wm->ldr.TlsIndex = -1;
 
         wm->filename = wm->data;
         memcpy( wm->filename, filename, long_len + 1 );
@@ -154,7 +154,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
     TRACE("(%s,%s,%p) - CALL\n", wm->modname, typeName[type], lpReserved );
 
     /* Call the initialization routine */
-    retv = PE_InitDLL( wm->module, type, lpReserved );
+    retv = PE_InitDLL( wm->ldr.BaseAddress, type, lpReserved );
 
     /* The state of the module list may have changed due to the call
        to PE_InitDLL. We cannot assume that this module has not been
@@ -272,7 +272,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
             /* Check whether to detach this DLL */
             if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
                 continue;
-            if ( wm->refCount > 0 && !bForceDetach )
+            if ( wm->ldr.LoadCount > 0 && !bForceDetach )
                 continue;
 
             /* Call detach notification */
@@ -357,8 +357,8 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* mod)
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
     {
-        if ((const void *)wm->module <= addr &&
-            (char *)addr < (char*)wm->module + wm->ldr.SizeOfImage)
+        if ((const void *)wm->ldr.BaseAddress <= addr &&
+            (char *)addr < (char*)wm->ldr.BaseAddress + wm->ldr.SizeOfImage)
         {
             *mod = &wm->ldr;
             return STATUS_SUCCESS;
@@ -471,7 +471,7 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE 
         return STATUS_DLL_NOT_FOUND;
     }
 
-    *base = wm->module;
+    *base = wm->ldr.BaseAddress;
     return STATUS_SUCCESS;
 }
 
@@ -632,7 +632,7 @@ NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
     }
     if (*pwm)
     {
-        (*pwm)->refCount++;
+        (*pwm)->ldr.LoadCount++;
         
         if (((*pwm)->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
             !(flags & DONT_RESOLVE_DLL_REFERENCES))
@@ -640,7 +640,7 @@ NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
             (*pwm)->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
             PE_fixup_imports( *pwm );
         }
-        TRACE("Already loaded module '%s' at %p, count=%d\n", filename, (*pwm)->module, (*pwm)->refCount);
+        TRACE("Already loaded module '%s' at %p, count=%d\n", filename, (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
         if (allocated_libdir)
         {
             RtlFreeHeap( ntdll_get_process_heap(), 0, (LPSTR)libdir );
@@ -679,12 +679,12 @@ NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
         if (nts == STATUS_SUCCESS)
         {
             /* Initialize DLL just loaded */
-            TRACE("Loaded module '%s' at %p\n", filename, (*pwm)->module);
+            TRACE("Loaded module '%s' at %p\n", filename, (*pwm)->ldr.BaseAddress);
             if (!TRACE_ON(module))
                 TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
-            /* Set the refCount here so that an attach failure will */
+            /* Set the ldr.LoadCount here so that an attach failure will */
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
-            (*pwm)->refCount = 1;
+            (*pwm)->ldr.LoadCount = 1;
             
             if (allocated_libdir)
             {
@@ -735,7 +735,7 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
         if ( !MODULE_DllProcessAttach( wm, NULL ) )
         {
             WARN_(module)("Attach failed for module '%s'.\n", str.Buffer);
-            LdrUnloadDll(wm->module);
+            LdrUnloadDll(wm->ldr.BaseAddress);
             nts = STATUS_DLL_INIT_FAILED;
             wm = NULL;
         }
@@ -747,7 +747,7 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
         break;
     }
 
-    *hModule = (wm) ? wm->module : NULL;
+    *hModule = (wm) ? wm->ldr.BaseAddress : NULL;
     
     RtlLeaveCriticalSection( &loader_section );
 
@@ -812,7 +812,7 @@ static void MODULE_FlushModrefs(void)
     {
         next = wm->next;
 
-        if (wm->refCount)
+        if (wm->ldr.LoadCount)
             continue;
 
         /* Unlink this modref from the chain */
@@ -830,13 +830,13 @@ static void MODULE_FlushModrefs(void)
 
         SERVER_START_REQ( unload_dll )
         {
-            req->base = (void *)wm->module;
+            req->base = wm->ldr.BaseAddress;
             wine_server_call( req );
         }
         SERVER_END_REQ;
 
         if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
-        else UnmapViewOfFile( (LPVOID)wm->module );
+        else NtUnmapViewOfSection( GetCurrentProcess(), wm->ldr.BaseAddress );
         FreeLibrary16( wm->hDummyMod );
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm );
@@ -855,13 +855,13 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
     if ( wm->flags & WINE_MODREF_MARKER )
         return;
 
-    if ( wm->refCount <= 0 )
+    if ( wm->ldr.LoadCount <= 0 )
         return;
 
-    --wm->refCount;
-    TRACE("(%s) refCount: %d\n", wm->modname, wm->refCount );
+    --wm->ldr.LoadCount;
+    TRACE("(%s) ldr.LoadCount: %d\n", wm->modname, wm->ldr.LoadCount );
 
-    if ( wm->refCount == 0 )
+    if ( wm->ldr.LoadCount == 0 )
     {
         wm->flags |= WINE_MODREF_MARKER;
 

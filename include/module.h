@@ -130,10 +130,8 @@ typedef struct _wine_modref
 {
 	struct _wine_modref *next;
 	struct _wine_modref *prev;
-	HMODULE              module;
 	HMODULE16            hDummyMod; /* Win16 dummy module */
 	void                *dlhandle;  /* handle returned by dlopen() */
-	int                  tlsindex;  /* TLS index or -1 if none */
         LDR_MODULE           ldr;
 	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func,
                                            int hint, BOOL snoop );
@@ -142,7 +140,6 @@ typedef struct _wine_modref
 	struct _wine_modref	**deps;
 
 	int			flags;
-	int			refCount;
 
 	char			*filename;
 	char			*modname;

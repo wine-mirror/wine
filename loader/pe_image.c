@@ -126,18 +126,18 @@ static FARPROC PE_FindExportedFunction(
         IMAGE_EXPORT_DIRECTORY *exports;
         DWORD exp_size;
 
-        if (!(exports = RtlImageDirectoryEntryToData( wm->module, TRUE,
+        if (!(exports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                       IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
             return NULL;
 
         if (HIWORD(funcName)) TRACE("(%s)\n",funcName);
         else TRACE("(%d)\n",LOWORD(funcName));
 
-	ordinals= get_rva(wm->module, exports->AddressOfNameOrdinals);
-	function= get_rva(wm->module, exports->AddressOfFunctions);
-	name    = get_rva(wm->module, exports->AddressOfNames);
+	ordinals= get_rva(wm->ldr.BaseAddress, exports->AddressOfNameOrdinals);
+	function= get_rva(wm->ldr.BaseAddress, exports->AddressOfFunctions);
+	name    = get_rva(wm->ldr.BaseAddress, exports->AddressOfNames);
 	forward = NULL;
-        rva_start = (char *)exports - (char *)wm->module;
+        rva_start = (char *)exports - (char *)wm->ldr.BaseAddress;
 
 	if (HIWORD(funcName))
         {
@@ -146,7 +146,7 @@ static FARPROC PE_FindExportedFunction(
             /* first check the hint */
             if (hint >= 0 && hint <= max)
             {
-                ename = get_rva(wm->module, name[hint]);
+                ename = get_rva(wm->ldr.BaseAddress, name[hint]);
                 if (!strcmp( ename, funcName ))
                 {
                     ordinal = ordinals[hint];
@@ -158,7 +158,7 @@ static FARPROC PE_FindExportedFunction(
             while (min <= max)
             {
                 int res, pos = (min + max) / 2;
-                ename = get_rva(wm->module, name[pos]);
+                ename = get_rva(wm->ldr.BaseAddress, name[pos]);
                 if (!(res = strcmp( ename, funcName )))
                 {
                     ordinal = ordinals[pos];
@@ -177,7 +177,7 @@ static FARPROC PE_FindExportedFunction(
                 for (i = 0; i < exports->NumberOfNames; i++)
                     if (ordinals[i] == ordinal)
                     {
-                        ename = get_rva(wm->module, name[i]);
+                        ename = get_rva(wm->ldr.BaseAddress, name[i]);
                         break;
                     }
             }
@@ -192,13 +192,13 @@ static FARPROC PE_FindExportedFunction(
         addr = function[ordinal];
         if (!addr) return NULL;
 
-        proc = get_rva(wm->module, addr);
+        proc = get_rva(wm->ldr.BaseAddress, addr);
         if (((char *)proc < (char *)exports) || ((char *)proc >= (char *)exports + exp_size))
         {
             if (snoop)
             {
                 if (!ename) ename = "@";
-                proc = SNOOP_GetProcAddress(wm->module,ename,ordinal,proc);
+                proc = SNOOP_GetProcAddress(wm->ldr.BaseAddress,ename,ordinal,proc);
             }
             return proc;
         }
@@ -218,7 +218,7 @@ static FARPROC PE_FindExportedFunction(
                     ERR("module not found for forward '%s' used by '%s'\n", forward, wm->modname );
                     return NULL;
                 }
-		if (!(proc = MODULE_GetProcAddress( wm_fw->module, end + 1, -1, snoop )))
+		if (!(proc = MODULE_GetProcAddress( wm_fw->ldr.BaseAddress, end + 1, -1, snoop )))
                     ERR("function not found for forward '%s' used by '%s'. If you are using builtin '%s', try using the native one instead.\n", forward, wm->modname, wm->modname );
 		return proc;
 	}
@@ -233,7 +233,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     IMAGE_IMPORT_DESCRIPTOR *imports, *pe_imp;
     DWORD size;
 
-    imports = RtlImageDirectoryEntryToData( wm->module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size );
+    imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size );
 
     /* first, count the number of imported non-internal modules */
     pe_imp = imports;
@@ -267,7 +267,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     	WINE_MODREF		*wmImp;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
- 	char			*name = get_rva(wm->module, pe_imp->Name);
+ 	char			*name = get_rva(wm->ldr.BaseAddress, pe_imp->Name);
         NTSTATUS                nts;
 
 	if (characteristics_detection && !pe_imp->u.Characteristics)
@@ -292,8 +292,8 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
 	    TRACE("Microsoft style imports used\n");
-	    import_list = get_rva(wm->module, (DWORD)pe_imp->u.OriginalFirstThunk);
-	    thunk_list = get_rva(wm->module, (DWORD)pe_imp->FirstThunk);
+	    import_list = get_rva(wm->ldr.BaseAddress, (DWORD)pe_imp->u.OriginalFirstThunk);
+	    thunk_list = get_rva(wm->ldr.BaseAddress, (DWORD)pe_imp->FirstThunk);
 
 	    while (import_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
@@ -301,7 +301,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 		    TRACE("--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, (LPCSTR)ordinal, -1, TRUE
+                        wmImp->ldr.BaseAddress, (LPCSTR)ordinal, -1, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
@@ -309,10 +309,10 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {		/* import by name */
-		    pe_name = get_rva(wm->module, (DWORD)import_list->u1.AddressOfData);
+		    pe_name = get_rva(wm->ldr.BaseAddress, (DWORD)import_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, pe_name->Name, pe_name->Hint, TRUE
+                        wmImp->ldr.BaseAddress, pe_name->Name, pe_name->Hint, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",
@@ -325,7 +325,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 	    }
 	} else {	/* Borland style */
 	    TRACE("Borland style imports used\n");
-	    thunk_list = get_rva(wm->module, (DWORD)pe_imp->FirstThunk);
+	    thunk_list = get_rva(wm->ldr.BaseAddress, (DWORD)pe_imp->FirstThunk);
 	    while (thunk_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
@@ -333,7 +333,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 		    TRACE("--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, (LPCSTR) ordinal, -1, TRUE
+                        wmImp->ldr.BaseAddress, (LPCSTR) ordinal, -1, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
@@ -341,11 +341,11 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {
-		    pe_name=get_rva(wm->module, (DWORD)thunk_list->u1.AddressOfData);
+		    pe_name=get_rva(wm->ldr.BaseAddress, (DWORD)thunk_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, pe_name->Name, pe_name->Hint, TRUE
+                        wmImp->ldr.BaseAddress, pe_name->Name, pe_name->Hint, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",
@@ -672,19 +672,19 @@ void PE_InitTls( void )
         int delta;
 
 	for (wm = MODULE_modref_list;wm;wm=wm->next) {
-                peh = RtlImageNtHeader(wm->module);
-                pdir = RtlImageDirectoryEntryToData( wm->module, TRUE,
+                peh = RtlImageNtHeader(wm->ldr.BaseAddress);
+                pdir = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                      IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
                 if (!pdir) continue;
-                delta = (char *)wm->module - (char *)peh->OptionalHeader.ImageBase;
+                delta = (char *)wm->ldr.BaseAddress - (char *)peh->OptionalHeader.ImageBase;
 
-		if ( wm->tlsindex == -1 ) {
+		if ( wm->ldr.TlsIndex == -1 ) {
 			LPDWORD xaddr;
-			wm->tlsindex = TlsAlloc();
+			wm->ldr.TlsIndex = TlsAlloc();
 			xaddr = _fixup_address(&(peh->OptionalHeader),delta,
 					pdir->AddressOfIndex
 			);
-			*xaddr=wm->tlsindex;
+			*xaddr=wm->ldr.TlsIndex;
 		}
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
@@ -698,6 +698,6 @@ void PE_InitTls( void )
 		       FIXME("TLS Callbacks aren't going to be called\n");
 		}
 
-		TlsSetValue( wm->tlsindex, mem );
+		TlsSetValue( wm->ldr.TlsIndex, mem );
 	}
 }

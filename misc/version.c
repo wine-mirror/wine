@@ -453,7 +453,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
 	from one windows version */
 	for ( wm = MODULE_modref_list; wm; wm=wm->next )
 	{
-          nt = RtlImageNtHeader(wm->module);
+          nt = RtlImageNtHeader(wm->ldr.BaseAddress);
           ophd = &nt->OptionalHeader;
 
 	  TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
@@ -472,7 +472,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
 	      /* test if it is a special dll */
 	      if (!strcasecmp(wm->modname, special_dlls[i]))
 	      {
-	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->module);
+	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->ldr.BaseAddress);
 	        if (WinVersion == NB_WINDOWS_VERSIONS)
 	          WinVersion = DllVersion;
 	        else {

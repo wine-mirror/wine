@@ -239,7 +239,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
     for (wm = MODULE_modref_list; wm; wm = wm->next)
     {
         if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
-        exp = RtlImageDirectoryEntryToData( wm->module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+        exp = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
         if (!exp) continue;
         debug = (DEBUG_ENTRY_POINT *)((char *)exp + size);
         if (debug <= relay && relay < debug + exp->NumberOfFunctions)
@@ -251,7 +251,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* Now find the function */
 
-    base = (char *)wm->module;
+    base = (char *)wm->ldr.BaseAddress;
     strcpy( buffer, base + exp->Name );
     p = buffer + strlen(buffer);
     if (p > buffer + 4 && !strcasecmp( p - 4, ".dll" )) p -= 4;
