@@ -59,16 +59,16 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
  *
  * Clip all children of a given window out of the visible region
  */
-static void clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
+static int clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
 {
     WND *ptr;
     HRGN rectRgn;
-    int x, y;
+    int x, y, ret = SIMPLEREGION;
 
     /* first check if we have anything to do */
     for (ptr = win->child; ptr && ptr != last; ptr = ptr->next)
         if (ptr->dwStyle & WS_VISIBLE) break;
-    if (!ptr || ptr == last) return; /* no children to clip */
+    if (!ptr || ptr == last) return ret; /* no children to clip */
 
     if (whole_window)
     {
@@ -84,12 +84,13 @@ static void clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
         {
             SetRectRgn( rectRgn, ptr->rectWindow.left + x, ptr->rectWindow.top + y,
                         ptr->rectWindow.right + x, ptr->rectWindow.bottom + y );
-            if (CombineRgn( hrgn, hrgn, rectRgn, RGN_DIFF ) == NULLREGION)
+            if ((ret = CombineRgn( hrgn, hrgn, rectRgn, RGN_DIFF )) == NULLREGION)
                 break;  /* no need to go on, region is empty */
         }
         ptr = ptr->next;
     }
     DeleteObject( rectRgn );
+    return ret;
 }
 
 
@@ -131,25 +132,36 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
     if ((flags & DCX_CLIPCHILDREN) && (mode != ClipByChildren))
     {
         /* we need to clip children by hand */
-        clip_children( win, NULL, rgn, (flags & DCX_WINDOW) );
+        if (clip_children( win, NULL, rgn, (flags & DCX_WINDOW) ) == NULLREGION) return rgn;
     }
 
     if (top && top != win)  /* need to clip siblings of ancestors */
     {
         WND *ptr = win;
+        HRGN tmp = 0;
 
         OffsetRgn( rgn, xoffset, yoffset );
         for (;;)
         {
-            if (ptr->dwStyle & WS_CLIPSIBLINGS) clip_children( ptr->parent, ptr, rgn, FALSE );
+            if (ptr->dwStyle & WS_CLIPSIBLINGS)
+            {
+                if (clip_children( ptr->parent, ptr, rgn, FALSE ) == NULLREGION) break;
+            }
             if (ptr == top) break;
             ptr = ptr->parent;
+            /* clip to parent client area */
+            if (tmp) SetRectRgn( tmp, 0, 0, ptr->rectClient.right - ptr->rectClient.left,
+                                 ptr->rectClient.bottom - ptr->rectClient.top );
+            else tmp = CreateRectRgn( 0, 0, ptr->rectClient.right - ptr->rectClient.left,
+                                      ptr->rectClient.bottom - ptr->rectClient.top );
+            CombineRgn( rgn, rgn, tmp, RGN_AND );
             OffsetRgn( rgn, ptr->rectClient.left, ptr->rectClient.top );
             xoffset += ptr->rectClient.left;
             yoffset += ptr->rectClient.top;
         }
         /* make it relative to the target window again */
         OffsetRgn( rgn, -xoffset, -yoffset );
+        if (tmp) DeleteObject( tmp );
     }
 
     return rgn;
