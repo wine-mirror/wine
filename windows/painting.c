@@ -108,7 +108,7 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~WIN_INTERNAL_PAINT;
 
-    HideCaret( hwnd );
+    HideCaret32( hwnd );
 
     dprintf_win(stddeb,"hrgnUpdate = %04x, ", hrgnUpdate);
 
@@ -175,7 +175,7 @@ HDC32 BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
 BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
     ReleaseDC16( hwnd, lps->hdc );
-    ShowCaret( hwnd );
+    ShowCaret32( hwnd );
     return TRUE;
 }
 
@@ -186,7 +186,7 @@ BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 BOOL32 EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
 {
     ReleaseDC32( hwnd, lps->hdc );
-    ShowCaret( hwnd );
+    ShowCaret32( hwnd );
     return TRUE;
 }
 
@@ -225,7 +225,7 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 /***********************************************************************
  *           GetControlBrush    (USER.326)
  */
-HBRUSH16 GetControlBrush( HWND hwnd, HDC16 hdc, WORD control )
+HBRUSH16 GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
 {
     return (HBRUSH16)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
                                      (WPARAM32)hdc, (LPARAM)hwnd );

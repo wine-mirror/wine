@@ -135,7 +135,7 @@ UINT16 COLOR_GetSystemPaletteFlags(void)
     return cSpace.flags;
 }
 
-COLORREF COLOR_GetSystemPaletteEntry(BYTE i)
+COLORREF COLOR_GetSystemPaletteEntry(UINT32 i)
 {
  return *(COLORREF*)(COLOR_sysPal + i) & 0x00ffffff;
 }
@@ -567,7 +567,7 @@ static HPALETTE16 COLOR_InitPalette(void)
         palPtr->palPalEntry[i].peBlue = __sysPalTemplate[i].peBlue;
         palPtr->palPalEntry[i].peFlags = 0;  
     }
-    hpalette = CreatePalette( palPtr );
+    hpalette = CreatePalette16( palPtr );
 
     palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
 

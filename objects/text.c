@@ -390,19 +390,60 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 
 
 /***********************************************************************
- *           GrayString   (USER.185)
+ *           GrayString16   (USER.185)
  */
-BOOL GrayString(HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
-		INT cch, INT x, INT y, INT cx, INT cy)
+BOOL16 GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
+                     LPARAM lParam, INT16 cch, INT16 x, INT16 y,
+                     INT16 cx, INT16 cy )
 {
-    BOOL ret;
+    BOOL16 ret;
     COLORREF current_color;
 
     if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
     if (gsprc) return gsprc( hdc, lParam, cch );
     current_color = GetTextColor32( hdc );
-    SetTextColor( hdc, GetSysColor(COLOR_GRAYTEXT) );
+    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
     ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );
+    SetTextColor( hdc, current_color );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GrayString32A   (USER32.314)
+ */
+BOOL32 GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
+                      LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                      INT32 cx, INT32 cy )
+{
+    BOOL32 ret;
+    COLORREF current_color;
+
+    if (!cch) cch = lstrlen32A( (LPCSTR)lParam );
+    if (gsprc) return gsprc( hdc, lParam, cch );
+    current_color = GetTextColor32( hdc );
+    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
+    ret = TextOut32A( hdc, x, y, (LPCSTR)lParam, cch );
+    SetTextColor( hdc, current_color );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GrayString32W   (USER32.315)
+ */
+BOOL32 GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
+                      LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                      INT32 cx, INT32 cy )
+{
+    BOOL32 ret;
+    COLORREF current_color;
+
+    if (!cch) cch = lstrlen32W( (LPCWSTR)lParam );
+    if (gsprc) return gsprc( hdc, lParam, cch );
+    current_color = GetTextColor32( hdc );
+    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
+    ret = TextOut32W( hdc, x, y, (LPCWSTR)lParam, cch );
     SetTextColor( hdc, current_color );
     return ret;
 }
@@ -415,18 +456,19 @@ BOOL GrayString(HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam,
  * Note: this doesn't work too well for text-alignment modes other
  *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
  */
-LONG TEXT_TabbedTextOut( HDC16 hdc, int x, int y, LPSTR lpstr, int count, 
-                         int cTabStops, LPINT16 lpTabPos, int nTabOrg,
-                         BOOL fDisplayText)
+LONG TEXT_TabbedTextOut( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
+                         INT32 count, INT32 cTabStops, const INT16 *lpTabPos16,
+                         const INT32 *lpTabPos32, INT32 nTabOrg,
+                         BOOL32 fDisplayText )
 {
-    WORD defWidth;
+    INT32 defWidth;
     DWORD extent = 0;
     int i, tabPos = x;
     int start = x;
 
     if (cTabStops == 1)
     {
-        defWidth = *lpTabPos;
+        defWidth = lpTabPos32 ? *lpTabPos32 : *lpTabPos16;
         cTabStops = 0;
     }
     else
@@ -441,24 +483,37 @@ LONG TEXT_TabbedTextOut( HDC16 hdc, int x, int y, LPSTR lpstr, int count,
         for (i = 0; i < count; i++)
             if (lpstr[i] == '\t') break;
         extent = GetTextExtent( hdc, lpstr, i );
-        while ((cTabStops > 0) && (nTabOrg + *lpTabPos <= x + LOWORD(extent)))
+        if (lpTabPos32)
         {
-            lpTabPos++;
-            cTabStops--;
+            while ((cTabStops > 0) &&
+                   (nTabOrg + *lpTabPos32 <= x + LOWORD(extent)))
+            {
+                lpTabPos32++;
+                cTabStops--;
+            }
+        }
+        else
+        {
+            while ((cTabStops > 0) &&
+                   (nTabOrg + *lpTabPos16 <= x + LOWORD(extent)))
+            {
+                lpTabPos16++;
+                cTabStops--;
+            }
         }
         if (i == count)
             tabPos = x + LOWORD(extent);
         else if (cTabStops > 0)
-            tabPos = nTabOrg + *lpTabPos;
+            tabPos = nTabOrg + (lpTabPos32 ? *lpTabPos32 : *lpTabPos16);
         else
             tabPos = nTabOrg + ((x + LOWORD(extent) - nTabOrg) / defWidth + 1) * defWidth;
         if (fDisplayText)
         {
-            RECT16 r;
-            SetRect16( &r, x, y, tabPos, y+HIWORD(extent) );
-            ExtTextOut16( hdc, x, y,
-                          GetBkMode32(hdc) == OPAQUE ? ETO_OPAQUE : 0,
-                          &r, lpstr, i, NULL );
+            RECT32 r;
+            SetRect32( &r, x, y, tabPos, y+HIWORD(extent) );
+            ExtTextOut32A( hdc, x, y,
+                           GetBkMode32(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                           &r, lpstr, i, NULL );
         }
         x = tabPos;
         count -= i+1;
@@ -469,26 +524,83 @@ LONG TEXT_TabbedTextOut( HDC16 hdc, int x, int y, LPSTR lpstr, int count,
 
 
 /***********************************************************************
- *           TabbedTextOut    (USER.196)
+ *           TabbedTextOut16    (USER.196)
  */
-LONG TabbedTextOut( HDC16 hdc, short x, short y, LPSTR lpstr, short count, 
-                    short cTabStops, LPINT16 lpTabPos, short nTabOrg )
+LONG TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr, INT16 count, 
+                      INT16 cTabStops, const INT16 *lpTabPos, INT16 nTabOrg )
 {
-    dprintf_text( stddeb, "TabbedTextOut: %04x %d,%d '%*.*s' %d\n",
-                  hdc, x, y, count, count, lpstr, count );
+    dprintf_text( stddeb, "TabbedTextOut16: %04x %d,%d '%.*s' %d\n",
+                  hdc, x, y, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
-                               lpTabPos, nTabOrg, TRUE );
+                               lpTabPos, NULL, nTabOrg, TRUE );
 }
 
 
 /***********************************************************************
- *           GetTabbedTextExtent    (USER.197)
+ *           TabbedTextOut32A    (USER32.541)
  */
-DWORD GetTabbedTextExtent( HDC16 hdc, LPSTR lpstr, int count, 
-                          int cTabStops, LPINT16 lpTabPos )
+LONG TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr, INT32 count, 
+                       INT32 cTabStops, const INT32 *lpTabPos, INT32 nTabOrg )
 {
-    dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%*.*s' %d\n",
-                  hdc, count, count, lpstr, count );
+    dprintf_text( stddeb, "TabbedTextOut32A: %04x %d,%d '%.*s' %d\n",
+                  hdc, x, y, count, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
+                               NULL, lpTabPos, nTabOrg, TRUE );
+}
+
+
+/***********************************************************************
+ *           TabbedTextOut32W    (USER32.542)
+ */
+LONG TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count, 
+                       INT32 cTabStops, const INT32 *lpTabPos, INT32 nTabOrg )
+{
+    LONG ret;
+    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
+    lstrcpynWtoA( p, str, count + 1 );
+    ret = TabbedTextOut32A( hdc, x, y, p, count, cTabStops,
+                            lpTabPos, nTabOrg );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetTabbedTextExtent16    (USER.197)
+ */
+DWORD GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count, 
+                             INT16 cTabStops, const INT16 *lpTabPos )
+{
+    dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%.*s' %d\n",
+                  hdc, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
-                               lpTabPos, 0, FALSE );
+                               lpTabPos, NULL, 0, FALSE );
+}
+
+
+/***********************************************************************
+ *           GetTabbedTextExtent32A    (USER32.292)
+ */
+DWORD GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count, 
+                              INT32 cTabStops, const INT32 *lpTabPos )
+{
+    dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%.*s' %d\n",
+                  hdc, count, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
+                               NULL, lpTabPos, 0, FALSE );
+}
+
+
+/***********************************************************************
+ *           GetTabbedTextExtent32W    (USER32.293)
+ */
+DWORD GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count, 
+                              INT32 cTabStops, const INT32 *lpTabPos )
+{
+    LONG ret;
+    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
+    lstrcpynWtoA( p, lpstr, count + 1 );
+    ret = GetTabbedTextExtent32A( hdc, p, count, cTabStops, lpTabPos );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
 }

@@ -19,6 +19,7 @@ C_SRCS = \
 	memory.c \
 	newfns.c \
 	process.c \
+	security.c \
 	string32.c \
 	struct32.c \
 	thread.c \

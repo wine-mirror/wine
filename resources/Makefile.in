@@ -15,6 +15,7 @@ SYSRES_SRCS = \
 	sysres_Es.c \
 	sysres_Fi.c \
 	sysres_Fr.c \
+	sysres_Hu.c \
 	sysres_It.c \
 	sysres_Ko.c \
 	sysres_No.c

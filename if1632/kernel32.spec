@@ -2,8 +2,8 @@ name	kernel32
 type	win32
 base	1
 
-0000 stub AddAtomA
-0001 stub AddAtomW
+0000 stdcall AddAtomA(ptr) AddAtom32A
+0001 stdcall AddAtomW(ptr) AddAtom32W
 0002 stub AddConsoleAliasA
 0003 stub AddConsoleAliasW
 0004 stub AllocConsole
@@ -71,7 +71,7 @@ base	1
 0066 stub DebugBreak
 0067 stub DefineDosDeviceA
 0068 stub DefineDosDeviceW
-0069 stub DeleteAtom
+0069 stdcall DeleteAtom(long) DeleteAtom32
 0070 stdcall DeleteCriticalSection(ptr)	DeleteCriticalSection
 0071 stdcall DeleteFileA(ptr) DeleteFile32A
 0072 stdcall DeleteFileW(ptr) DeleteFile32W
@@ -105,8 +105,8 @@ base	1
 0100 stdcall ExitProcess(long) ExitProcess
 0101 stub ExitThread
 0102 stub ExitVDM
-0103 stub ExpandEnvironmentStringsA
-0104 stub ExpandEnvironmentStringsW
+0103 stdcall ExpandEnvironmentStringsA(ptr ptr long) ExpandEnvironmentStrings32A
+0104 stdcall ExpandEnvironmentStringsW(ptr ptr long) ExpandEnvironmentStrings32W
 0105 stub ExpungeConsoleCommandHistoryA
 0106 stub ExpungeConsoleCommandHistoryW
 0107 stub ExtendVirtualBuffer
@@ -119,8 +119,8 @@ base	1
 0114 stub FillConsoleOutputAttribute
 0115 stub FillConsoleOutputCharacterA
 0116 stub FillConsoleOutputCharacterW
-0117 stub FindAtomA
-0118 stub FindAtomW
+0117 stdcall FindAtomA(ptr) FindAtom32A
+0118 stdcall FindAtomW(ptr) FindAtom32W
 0119 stdcall FindClose(long) FindClose32
 0120 stub FindCloseChangeNotification
 0121 stub FindFirstChangeNotificationA
@@ -151,8 +151,8 @@ base	1
 0146 stub FreeVirtualBuffer
 0147 stub GenerateConsoleCtrlEvent
 0148    stdcall GetACP() GetACP
-0149 stub GetAtomNameA
-0150 stub GetAtomNameW
+0149 stdcall GetAtomNameA(long ptr long) GetAtomName32A
+0150 stdcall GetAtomNameW(long ptr long) GetAtomName32W
 0151 stub GetBinaryType
 0152 stub GetBinaryTypeA
 0153 stub GetBinaryTypeW
@@ -322,7 +322,7 @@ base	1
 0317 stdcall GlobalDeleteAtom(long) GlobalDeleteAtom
 0318 stdcall GlobalFindAtomA(ptr) GlobalFindAtom32A
 0319 stdcall GlobalFindAtomW(ptr) GlobalFindAtom32W
-0320 stub GlobalFix
+0320 stdcall GlobalFix(long) GlobalFix32
 0321 stdcall GlobalFlags(long) GlobalFlags32
 0322 stdcall GlobalFree(long) GlobalFree32
 0323 stdcall GlobalGetAtomNameA(long ptr long) GlobalGetAtomName32A
@@ -332,10 +332,10 @@ base	1
 0327 stdcall GlobalMemoryStatus(ptr) GlobalMemoryStatus
 0328 stdcall GlobalReAlloc(long long long) GlobalReAlloc32
 0329 stdcall GlobalSize(long) GlobalSize32
-0330 stub GlobalUnWire
-0331 stub GlobalUnfix
+0330 stdcall GlobalUnWire(long) GlobalUnWire32
+0331 stdcall GlobalUnfix(long) GlobalUnfix32
 0332 stdcall GlobalUnlock(long) GlobalUnlock32
-0333 stub GlobalWire
+0333 stdcall GlobalWire(long) GlobalWire32
 0334 stdcall HeapAlloc(long long long) HeapAlloc
 0335 stdcall HeapCompact(long long) HeapCompact
 0336 stdcall HeapCreate(long long long)	HeapCreate
@@ -554,7 +554,7 @@ base	1
 0549 stub VirtualBufferExceptionHandler
 0550    stdcall VirtualFree(ptr long long) VirtualFree
 0551 stub VirtualLock
-0552 stub VirtualProtect
+0552 stdcall VirtualProtect(ptr long long ptr) VirtualProtect
 0553 stub VirtualProtectEx
 0554 stdcall VirtualQuery(ptr ptr long) VirtualQuery
 0555 stub VirtualQueryEx
@@ -656,3 +656,6 @@ base	1
 0650 stub Process32Next
 0651 stub Thread32First
 0652 stub Thread32Next
+0653 stub RegisterServiceProcess
+0654 stub QueueUserAPC
+0655 stub ConvertToGlobalHandle

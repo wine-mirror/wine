@@ -132,7 +132,7 @@ static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
     int len;
 
     if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
-    if ((len = strlen( str )) > 255) len = 255;
+    if ((len = strlen( str )) > MAX_ATOM_LEN) len = MAX_ATOM_LEN;
     if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
     entry = table->entries[hash];
@@ -261,9 +261,9 @@ static UINT32 ATOM_GetAtomName( WORD selector, ATOM atom,
 
 
 /***********************************************************************
- *           InitAtomTable   (KERNEL.68)
+ *           InitAtomTable16   (KERNEL.68)
  */
-WORD InitAtomTable( WORD entries )
+WORD InitAtomTable16( WORD entries )
 {
     return ATOM_InitTable( CURRENT_DS, entries );
 }
@@ -280,9 +280,9 @@ HANDLE16 GetAtomHandle( ATOM atom )
 
 
 /***********************************************************************
- *           AddAtom   (KERNEL.70)
+ *           AddAtom16   (KERNEL.70)
  */
-ATOM AddAtom( SEGPTR str )
+ATOM AddAtom16( SEGPTR str )
 {
     ATOM atom;
     HANDLE16 ds = CURRENT_DS;
@@ -292,7 +292,7 @@ ATOM AddAtom( SEGPTR str )
     {
         /* If the string is in the same data segment as the atom table, make */
         /* a copy of the string to be sure it doesn't move in linear memory. */
-        char buffer[256];
+        char buffer[MAX_ATOM_LEN+1];
         lstrcpyn32A( buffer, (char *)PTR_SEG_TO_LIN(str), sizeof(buffer) );
         atom = ATOM_AddAtom( ds, buffer );
     }
@@ -302,18 +302,45 @@ ATOM AddAtom( SEGPTR str )
 
 
 /***********************************************************************
- *           DeleteAtom   (KERNEL.71)
+ *           AddAtom32A   (KERNEL32.0)
  */
-ATOM DeleteAtom( ATOM atom )
+ATOM AddAtom32A( LPCSTR str )
+{
+    return GlobalAddAtom32A( str );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           AddAtom32W   (KERNEL32.1)
+ */
+ATOM AddAtom32W( LPCWSTR str )
+{
+    return GlobalAddAtom32W( str );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           DeleteAtom16   (KERNEL.71)
+ */
+ATOM DeleteAtom16( ATOM atom )
 {
     return ATOM_DeleteAtom( CURRENT_DS, atom );
 }
 
 
 /***********************************************************************
- *           FindAtom   (KERNEL.69)
+ *           DeleteAtom32   (KERNEL32.69)
  */
-ATOM FindAtom( SEGPTR str )
+ATOM DeleteAtom32( ATOM atom )
+{
+    return GlobalDeleteAtom( atom );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           FindAtom16   (KERNEL.69)
+ */
+ATOM FindAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_FindAtom( CURRENT_DS, (LPCSTR)PTR_SEG_TO_LIN(str) );
@@ -321,11 +348,47 @@ ATOM FindAtom( SEGPTR str )
 
 
 /***********************************************************************
- *           GetAtomName   (KERNEL.72)
+ *           FindAtom32A   (KERNEL32.117)
  */
-WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
+ATOM FindAtom32A( LPCSTR str )
 {
-    return (WORD)ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
+    return GlobalFindAtom32A( str );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           FindAtom32W   (KERNEL32.118)
+ */
+ATOM FindAtom32W( LPCWSTR str )
+{
+    return GlobalFindAtom32W( str );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           GetAtomName16   (KERNEL.72)
+ */
+UINT16 GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
+{
+    return (UINT16)ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
+}
+
+
+/***********************************************************************
+ *           GetAtomName32A   (KERNEL32.149)
+ */
+UINT32 GetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
+{
+    return GlobalGetAtomName32A( atom, buffer, count );  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           GetAtomName32W   (KERNEL32.150)
+ */
+UINT32 GetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
+{
+    return GlobalGetAtomName32W( atom, buffer, count );  /* FIXME */
 }
 
 

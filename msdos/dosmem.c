@@ -17,9 +17,7 @@
 #include "module.h"
 #include "debug.h"
 
-
 HANDLE16 DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
-
 
 #pragma pack(1)
 
@@ -76,106 +74,45 @@ typedef struct
 
 #pragma pack(4)
 
-
 static BIOSDATA *pBiosData = NULL;
-char	*DOSMEM_dosmem;
-struct dosmem_entry {
-	struct	dosmem_entry	*next;
-	BYTE			isfree;
-};
+static char	*DOSMEM_dosmem;
+static char	*DOSMEM_top;
 
+       DWORD 	 DOSMEM_CollateTable;
 
-/***********************************************************************
- *           DOSMEM_InitCollateTable
- *
- * Initialises the collate table (character sorting, language dependend)
+/* use 2 low bits of 'size' for the housekeeping */
+
+#define DM_BLOCK_DEBUG		0xABE00000
+#define DM_BLOCK_TERMINAL	0x00000001
+#define DM_BLOCK_FREE		0x00000002
+#define DM_BLOCK_MASK		0x001FFFFC
+
+/*
+#define __DOSMEM_DEBUG__
  */
-DWORD DOSMEM_CollateTable;
 
-static void DOSMEM_InitCollateTable()
-{
-	DWORD		x;
-	unsigned char	*tbl;
-	int		i;
+typedef struct {
+   unsigned	size;
+} dosmem_entry;
 
-	x=GlobalDOSAlloc(258);
-	DOSMEM_CollateTable=MAKELONG(0,(x>>16));
-	tbl=DOSMEM_RealMode2Linear(DOSMEM_CollateTable);
-	*(WORD*)tbl	= 0x100;
-	tbl+=2;
-	for (i=0;i<0x100;i++)
-		*tbl++=i;
-}
+typedef struct {
+  unsigned      blocks;
+  unsigned      free;
+} dosmem_info;
 
+static dosmem_entry* 	root_block = NULL;
+static dosmem_info*	info_block = NULL;
 
-/***********************************************************************
- *           DOSMEM_Init
- *
- * Create the dos memory segments, and store them into the KERNEL
- * exported values.
- */
-BOOL32 DOSMEM_Init(void)
-{
-    /* Allocate 1 MB dosmemory */
-    /* Yes, allocating 1 MB of memory, which is usually not even used, is a 
-     * waste of memory. But I (MM) don't see any easy method to use 
-     * GlobalDOS{Alloc,Free} within an area of memory, with protected mode
-     * selectors pointing into it, and the possibilty, that the userprogram
-     * calls SetSelectorBase(,physical_address_in_DOSMEM); that includes 
-     * dynamical enlarging (reallocing) the dosmem area.
-     * Yes, one could walk the ldt_copy on every realloc() on DOSMEM, but
-     * this feels more like a hack to me than this current implementation is.
-     * If you find another, better, method, just change it. -Marcus Meissner
-     */
-    DOSMEM_dosmem = VirtualAlloc(NULL,0x100000,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
-    if (!DOSMEM_dosmem)
-    {
-        fprintf( stderr, "Could not allocate DOS memory.\n" );
-        return FALSE;
-    }
-    DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
-                                        0, FALSE, FALSE, FALSE, NULL );
-    DOSMEM_FillBiosSegment();
-    DOSMEM_InitMemoryHandling();
-    DOSMEM_InitCollateTable();
-    return TRUE;
-}
-
-/***********************************************************************
- *           DOSMEM_InitMemoryHandling
- *
- * Initialises the DOS Memory structures.
- */
-void
-DOSMEM_InitMemoryHandling()
-{
-    struct	dosmem_entry	*dm;
-
-    dm = (struct dosmem_entry*)(DOSMEM_dosmem+0x10000);
-    dm->isfree	=  1;
-    dm->next	=  (struct dosmem_entry*)(DOSMEM_dosmem+0x9FFF0);
-    dm		=  dm->next;
-    dm->isfree	= 0;
-    dm->next	= NULL;
-}
-
-/***********************************************************************
- *           DOSMEM_Tick
- *
- * Increment the BIOS tick counter. Called by timer signal handler.
- */
-void DOSMEM_Tick(void)
-{
-    if (pBiosData) pBiosData->Ticks++;
-}
-
+#define NEXT_BLOCK(block) \
+        (dosmem_entry*)(((char*)(block)) + \
+	 sizeof(dosmem_entry) + ((block)->size & DM_BLOCK_MASK))
 
 /***********************************************************************
  *           DOSMEM_FillBiosSegment
  *
  * Fill the BIOS data segment with dummy values.
  */
-void DOSMEM_FillBiosSegment(void)
+static void DOSMEM_FillBiosSegment(void)
 {
     pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosSeg );
 
@@ -204,104 +141,254 @@ void DOSMEM_FillBiosSegment(void)
 }
 
 /***********************************************************************
- *           GlobalDOSAlloc	(KERNEL.184)
+ *           DOSMEM_InitCollateTable
  *
- * Allocates a piece of DOS Memory, in the first 1 MB physical memory.
- * 
- * operates on the preallocated DOSMEM_dosmem (1MB). The useable area
- * starts at 1000:0000 and ends at 9FFF:FFEF
- * Memory allocation strategy is First Fit. (FIXME: Yes,I know that First Fit
- * is a rather bad strategy. But since those functions are rather seldom
- * called, it's easyness fits the purpose well.)
- * 
+ * Initialises the collate table (character sorting, language dependent)
  */
-
-DWORD GlobalDOSAlloc(DWORD size)
+static void DOSMEM_InitCollateTable()
 {
-	struct	dosmem_entry	*dm,*ndm;
-	DWORD	start,blocksize;
-	WORD	sel;
-	HMODULE16 hModule=GetModuleHandle("KERNEL");
+	DWORD		x;
+	unsigned char	*tbl;
+	int		i;
 
-
-	start	= 0;
-	dm	= (struct dosmem_entry*)(DOSMEM_dosmem+0x10000);
-	size	= (size+0xf)&~0xf;
-	while (dm && dm->next) {
-		blocksize = ((char*)dm->next-(char*)dm)-16;
-		if ((dm->isfree) && (blocksize>=size)) {
-			dm->isfree = 0;
-			start = ((((char*)dm)-DOSMEM_dosmem)+0x10)& ~0xf;
-			if ((blocksize-size) >= 0x20) {
-				/* if enough memory is left for a new block
-				 * split this area into two blocks
-				 */
-				ndm=(struct dosmem_entry*)((char*)dm+0x10+size);
-				ndm->isfree	= 1;
-				ndm->next	= dm->next;
-				dm->next	= ndm;
-			}
-			break;
-		}
-		dm=dm->next;
-	}
-	if (!start)
-		return 0;
-	sel=GLOBAL_CreateBlock(
-		GMEM_FIXED,DOSMEM_dosmem+start,size,
-		hModule,FALSE,FALSE,FALSE,NULL
-	);
-	return MAKELONG(sel,start>>4);
+	x = GlobalDOSAlloc(258);
+	DOSMEM_CollateTable = MAKELONG(0,(x>>16));
+	tbl = DOSMEM_MapRealToLinear(DOSMEM_CollateTable);
+	*(WORD*)tbl	= 0x100;
+	tbl += 2;
+	for ( i = 0; i < 0x100; i++) *tbl++ = i;
 }
 
 /***********************************************************************
- *           GlobalDOSFree	(KERNEL.185)
+ *           DOSMEM_InitMemory
  *
- * Frees allocated dosmemory and corresponding selector.
+ * Initialises the DOS memory structures.
  */
-
-WORD
-GlobalDOSFree(WORD sel)
+static void DOSMEM_InitMemory()
 {
-	DWORD	base;
-	struct	dosmem_entry	*dm;
+   /* Low 64Kb are reserved for DOS/BIOS so the useable area starts at
+    * 1000:0000 and ends at 9FFF:FFEF. */
 
-	base = GetSelectorBase(sel);
-	/* base has already been conversed to a physical address */
-	if (base>=0x100000)
-		return sel;
-	dm	= (struct dosmem_entry*)(DOSMEM_dosmem+base-0x10);
-	if (dm->isfree) {
-		fprintf(stderr,"Freeing already freed DOSMEM.\n");
-		return 0;
-	}
-	dm->isfree = 1;
+    dosmem_entry*       dm;
 
-	/* collapse adjunct free blocks into one */
-	dm = (struct dosmem_entry*)(DOSMEM_dosmem+0x10000);
-	while (dm && dm->next) {
-		if (dm->isfree && dm->next->isfree)
-			dm->next = dm->next->next;
-		dm = dm->next;
-	}
-	GLOBAL_FreeBlock(sel);
-	return 0;
+    DOSMEM_top = DOSMEM_dosmem+0x9FFFC; /* 640K */
+    info_block = (dosmem_info*)( DOSMEM_dosmem + 0x10000 );
+
+    /* first block has to be paragraph-aligned relative to the DOSMEM_dosmem */
+
+    root_block = (dosmem_entry*)( DOSMEM_dosmem + 0x10000 +
+                 ((((sizeof(dosmem_info) + 0xf) & ~0xf) - sizeof(dosmem_entry))));
+    root_block->size = DOSMEM_top - (((char*)root_block) + sizeof(dosmem_entry));
+
+    info_block->blocks = 0;
+    info_block->free = root_block->size;
+
+    dm = NEXT_BLOCK(root_block);
+    dm->size = DM_BLOCK_TERMINAL;
+    root_block->size |= DM_BLOCK_FREE 
+#ifdef __DOSMEM_DEBUG__
+		     | DM_BLOCK_DEBUG;
+#endif
+		     ;
 }
 
 /***********************************************************************
- *           DOSMEM_RealMode2Linear
+ *           DOSMEM_Init
  *
- * Converts a realmode segment:offset address into a linear pointer
+ * Create the dos memory segments, and store them into the KERNEL
+ * exported values.
  */
-LPVOID DOSMEM_RealMode2Linear(DWORD x)
+BOOL32 DOSMEM_Init(void)
 {
-	LPVOID	lin;
+    /* Allocate 1 MB dosmemory 
+     * - it is mostly wasted but we use can some of it to 
+     *   store internal translation tables, etc...
+     */
+    DOSMEM_dosmem = VirtualAlloc(NULL,0x100000,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    if (!DOSMEM_dosmem)
+    {
+        fprintf( stderr, "Could not allocate DOS memory.\n" );
+        return FALSE;
+    }
+    DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
+                                        0, FALSE, FALSE, FALSE, NULL );
+    DOSMEM_FillBiosSegment();
+    DOSMEM_InitMemory();
+    DOSMEM_InitCollateTable();
+    return TRUE;
+}
 
-	lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
-	dprintf_selector(stddeb,"DOSMEM_RealMode2Linear(0x%08lx) returns 0x%p.\n",
-		x,lin
-	);
-	return lin;
+void DOSMEM_InitExports(HMODULE16 hKernel)
+{
+#define SET_ENTRY_POINT(num,addr) \
+    MODULE_SetEntryPoint( hKernel, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
+                                  DOSMEM_dosmem+(addr), 0x10000, hKernel, \
+                                  FALSE, FALSE, FALSE, NULL ))
+
+    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
+    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
+    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
+    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
+    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
+    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
+    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
+    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
+    MODULE_SetEntryPoint(hKernel, 193,DOSMEM_BiosSeg); /* KERNEL.193: __0040H */
+
+#undef SET_ENTRY_POINT
+}
+
+/***********************************************************************
+ *           DOSMEM_Tick
+ *
+ * Increment the BIOS tick counter. Called by timer signal handler.
+ */
+void DOSMEM_Tick(void)
+{
+    if (pBiosData) pBiosData->Ticks++;
+}
+
+/***********************************************************************
+ *           DOSMEM_GetBlock
+ *
+ * Carve a chunk of the DOS memory block (without selector).
+ */
+LPVOID DOSMEM_GetBlock(UINT32 size, UINT16* pseg)
+{
+   UINT32  	 blocksize;
+   char         *block = NULL;
+   dosmem_entry *dm;
+#ifdef __DOSMEM_DEBUG_
+   dosmem_entry *prev = NULL;
+#endif
+ 
+   if( size > info_block->free ) return NULL;
+   dm = root_block;
+
+   while (dm && dm->size != DM_BLOCK_TERMINAL)
+   {
+#ifdef __DOSMEM_DEBUG__
+       if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
+       {
+	    fprintf(stderr,"DOSMEM_GetBlock: MCB overrun! [prev = 0x%08x]\n", 4 + (UINT32)prev);
+	    return NULL;
+       }
+       prev = dm;
+#endif
+       if( dm->size & DM_BLOCK_FREE )
+       {
+	   dosmem_entry  *next = NEXT_BLOCK(dm);
+
+	   while( next->size & DM_BLOCK_FREE ) /* collapse free blocks */
+	   {
+	       dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
+	       next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
+	       next = NEXT_BLOCK(dm);
+	   }
+
+	   blocksize = dm->size & DM_BLOCK_MASK;
+	   if( blocksize >= size )
+           {
+	       block = ((char*)dm) + sizeof(dosmem_entry);
+	       if( blocksize - size > 0x20 )
+	       {
+		   /* split dm so that the next one stays
+		    * paragraph-aligned (and dm loses free bit) */
+
+	           dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
+			         	      sizeof(dosmem_entry));
+	           next = (dosmem_entry*)(((char*)dm) + 
+	 		   sizeof(dosmem_entry) + dm->size);
+	           next->size = (blocksize - (dm->size + 
+			   sizeof(dosmem_entry))) | DM_BLOCK_FREE 
+#ifdef __DOSMEM_DEBUG__
+					          | DM_BLOCK_DEBUG
+#endif
+						  ;
+	       } else dm->size &= DM_BLOCK_MASK;
+
+	       info_block->blocks++;
+	       info_block->free -= dm->size;
+	       if( pseg ) *pseg = (block - DOSMEM_dosmem) >> 4;
+#ifdef __DOSMEM_DEBUG__
+               dm->size |= DM_BLOCK_DEBUG;
+#endif
+	       break;
+	   }
+ 	   dm = next;
+       }
+       else dm = NEXT_BLOCK(dm);
+   }
+   return (LPVOID)block;
+}
+
+/***********************************************************************
+ *           DOSMEM_FreeBlock
+ */
+BOOL32 DOSMEM_FreeBlock(void* ptr)
+{
+   if( ptr >= (void*)(((char*)root_block) + sizeof(dosmem_entry)) &&
+       ptr < (void*)DOSMEM_top && !((((char*)ptr) - DOSMEM_dosmem) & 0xf) )
+   {
+       dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
+
+       if( !(dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL))
+#ifdef __DOSMEM_DEBUG__
+	 && ((dm->size & DM_BLOCK_DEBUG) == DM_BLOCK_DEBUG )
+#endif
+	 )
+       {
+	     info_block->blocks--;
+	     info_block->free += dm->size;
+
+	     dm->size |= DM_BLOCK_FREE;
+	     return TRUE;
+       }
+   }
+   return FALSE;
+}
+
+/***********************************************************************
+ *           DOSMEM_MapLinearToDos
+ *
+ * Linear address to the DOS address space.
+ */
+UINT32 DOSMEM_MapLinearToDos(LPVOID ptr)
+{
+#ifndef WINELIB
+   if (((char*)ptr >= DOSMEM_dosmem) &&
+        ((char*)ptr < DOSMEM_dosmem+0x100000))  
+	  return (UINT32)ptr - (UINT32)DOSMEM_dosmem;
+#endif
+   return (UINT32)ptr;
+}
+
+/***********************************************************************
+ *           DOSMEM_MapDosToLinear
+ *
+ * DOS linear address to the linear address space.
+ */
+LPVOID DOSMEM_MapDosToLinear(UINT32 ptr)
+{
+#ifndef WINELIB
+   if ( ptr < 1000000 ) return (LPVOID)(ptr + (UINT32)DOSMEM_dosmem);
+#endif
+   return (LPVOID)ptr;
+}
+
+/***********************************************************************
+ *           DOSMEM_MapRealToLinear
+ *
+ * Real mode DOS address into a linear pointer
+ */
+LPVOID DOSMEM_MapRealToLinear(DWORD x)
+{
+   LPVOID       lin;
+
+   lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
+   dprintf_selector(stddeb,"DOSMEM_MapR2L(0x%08lx) returns 0x%p.\n",
+                    x,lin );
+   return lin;
 }
 
 /***********************************************************************
@@ -311,7 +398,7 @@ LPVOID DOSMEM_RealMode2Linear(DWORD x)
  */
 WORD DOSMEM_AllocSelector(WORD realsel)
 {
-	HMODULE16 hModule=GetModuleHandle("KERNEL");
+	HMODULE16 hModule = GetModuleHandle("KERNEL");
 	WORD	sel;
 
 	sel=GLOBAL_CreateBlock(
@@ -323,3 +410,4 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 	);
 	return sel;
 }
+

@@ -193,7 +193,7 @@ LPSTR CharPrev32A( LPCSTR start, LPCSTR ptr )
     while (*start && (start < ptr))
     {
         LPCSTR next = CharNext32A( start );
-        if (next > ptr) break;
+        if (next >= ptr) break;
         start = next;
     }
     return (LPSTR)start;

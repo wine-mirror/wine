@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <string.h>
 #include <stdlib.h>
@@ -282,6 +283,15 @@ BOOL32 VirtualQuery(LPCVOID address,LPMEMORY_BASIC_INFORMATION buf,DWORD len)
 	/* FIXME: fill out structure  ... */
 	return TRUE;
 }
+
+/***********************************************************************
+ *           VirtualProtect               (KERNEL32.552)
+ */
+BOOL32 VirtualProtect(LPVOID lpAddress,DWORD dwSize,DWORD flNewProtect,LPDWORD lpflOldProtect) {
+	/* FIXME: do protection ... see mprotect(). */
+	return TRUE;
+}
+
 
 int TranslateProtectionFlags(DWORD protection_flags)
 {

@@ -100,7 +100,7 @@ INT16 InitApp( HINSTANCE16 hInstance )
 
       /* Create task message queue */
     queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
-    if (!SetMessageQueue( queueSize )) return 0;
+    if (!SetMessageQueue32( queueSize )) return 0;
 
     return 1;
 }

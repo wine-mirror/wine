@@ -323,12 +323,12 @@ base	1
 318 stub _vsnprintf
 319 stub _vsnwprintf
 320 stub _wcsdup
-321 stub _wcsicmp
+321 cdecl _wcsicmp(ptr ptr) lstrcmpi32W
 322 cdecl _wcsicoll(ptr ptr) CRTDLL__wcsicoll
 323 cdecl _wcslwr(ptr) CRTDLL__wcslwr
 324 stub _wcsnicmp
 325 stub _wcsnset
-326 stub _wcsrev
+326 cdecl _wcsrev(ptr) CRTDLL__wcsrev
 327 stub _wcsset
 328 cdecl _wcsupr(ptr) CRTDLL__wcsupr
 329 extern _winmajor_dll CRTDLL_winmajor_dll

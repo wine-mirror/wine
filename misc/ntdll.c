@@ -12,6 +12,7 @@
 #include <math.h>
 #include "win.h"
 #include "windows.h"
+#include "ntdll.h"
 #include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -25,6 +26,177 @@ DWORD
 RtlLengthRequiredSid(DWORD nrofsubauths) {
 	return sizeof(DWORD)*nrofsubauths+sizeof(SID);
 }
+
+/**************************************************************************
+ *                 RtlLengthSid				[NTDLL]
+ */
+DWORD
+RtlLengthSid(LPSID sid) {
+	return sizeof(DWORD)*sid->SubAuthorityCount+sizeof(SID);
+}
+
+/**************************************************************************
+ *                 RtlCreateAcl				[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlCreateAcl(LPACL acl,DWORD size,DWORD rev) {
+	if (rev!=ACL_REVISION)
+		return STATUS_INVALID_PARAMETER;
+	if (size<sizeof(ACL))
+		return STATUS_BUFFER_TOO_SMALL;
+	if (size>0xFFFF)
+		return STATUS_INVALID_PARAMETER;
+
+	memset(acl,'\0',sizeof(ACL));
+	acl->AclRevision	= rev;
+	acl->AclSize		= size;
+	acl->AceCount		= 0;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlFirstFreeAce			[NTDLL]
+ * looks for the AceCount+1 ACE, and if it is still within the alloced
+ * ACL, return a pointer to it
+ */
+BOOL32
+RtlFirstFreeAce(LPACL acl,LPACE_HEADER *x) {
+	LPACE_HEADER	ace;
+	int		i;
+
+	*x = 0;
+	ace = (LPACE_HEADER)(acl+1);
+	for (i=0;i<acl->AceCount;i++) {
+		if ((DWORD)ace>=(((DWORD)acl)+acl->AclSize))
+			return 0;
+		ace = (LPACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+	}
+	if ((DWORD)ace>=(((DWORD)acl)+acl->AclSize))
+		return 0;
+	*x = ace;
+	return 1;
+}
+
+/**************************************************************************
+ *                 RtlAddAce				[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,LPACE_HEADER acestart,DWORD acelen){
+	LPACE_HEADER	ace,targetace;
+	int		nrofaces;
+
+	if (acl->AclRevision != ACL_REVISION)
+		return STATUS_INVALID_PARAMETER;
+	if (!RtlFirstFreeAce(acl,&targetace))
+		return STATUS_INVALID_PARAMETER;
+	nrofaces=0;ace=acestart;
+	while (((DWORD)ace-(DWORD)acestart)<acelen) {
+		nrofaces++;
+		ace = (LPACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+	}
+	if ((DWORD)targetace+acelen>(DWORD)acl+acl->AclSize) /* too much aces */
+		return STATUS_INVALID_PARAMETER;
+	memcpy((LPBYTE)targetace,acestart,acelen);
+	acl->AceCount+=nrofaces;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlCreateSecurityDescriptor		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev) {
+	if (rev!=SECURITY_DESCRIPTOR_REVISION)
+		return STATUS_UNKNOWN_REVISION;
+	memset(lpsd,'\0',sizeof(*lpsd));
+	lpsd->Revision = SECURITY_DESCRIPTOR_REVISION;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlSetDaclSecurityDescriptor		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlSetDaclSecurityDescriptor (
+LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted
+) {
+	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
+		return STATUS_UNKNOWN_REVISION;
+	if (lpsd->Control & SE_SELF_RELATIVE)
+		return STATUS_INVALID_SECURITY_DESCR;
+	if (!daclpresent) {
+		lpsd->Control &= ~SE_DACL_PRESENT;
+		return 0;
+	}
+	lpsd->Control |= SE_DACL_PRESENT;
+	lpsd->Dacl = dacl;
+	if (dacldefaulted)
+		lpsd->Control |= SE_DACL_DEFAULTED;
+	else
+		lpsd->Control &= ~SE_DACL_DEFAULTED;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlSetSaclSecurityDescriptor		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlSetSaclSecurityDescriptor (
+LPSECURITY_DESCRIPTOR lpsd,BOOL32 saclpresent,LPACL sacl,BOOL32 sacldefaulted
+) {
+	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
+		return STATUS_UNKNOWN_REVISION;
+	if (lpsd->Control & SE_SELF_RELATIVE)
+		return STATUS_INVALID_SECURITY_DESCR;
+	if (!saclpresent) {
+		lpsd->Control &= ~SE_SACL_PRESENT;
+		return 0;
+	}
+	lpsd->Control |= SE_SACL_PRESENT;
+	lpsd->Sacl = sacl;
+	if (sacldefaulted)
+		lpsd->Control |= SE_SACL_DEFAULTED;
+	else
+		lpsd->Control &= ~SE_SACL_DEFAULTED;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 ownerdefaulted) {
+	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
+		return STATUS_UNKNOWN_REVISION;
+	if (lpsd->Control & SE_SELF_RELATIVE)
+		return STATUS_INVALID_SECURITY_DESCR;
+
+	lpsd->Owner = owner;
+	if (ownerdefaulted)
+		lpsd->Control |= SE_OWNER_DEFAULTED;
+	else
+		lpsd->Control &= ~SE_OWNER_DEFAULTED;
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 groupdefaulted) {
+	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
+		return STATUS_UNKNOWN_REVISION;
+	if (lpsd->Control & SE_SELF_RELATIVE)
+		return STATUS_INVALID_SECURITY_DESCR;
+
+	lpsd->Group = group;
+	if (groupdefaulted)
+		lpsd->Control |= SE_GROUP_DEFAULTED;
+	else
+		lpsd->Control &= ~SE_GROUP_DEFAULTED;
+	return 0;
+}
+
 
 /**************************************************************************
  *                 RtlNormalizeProcessParams		[NTDLL]
@@ -121,6 +293,25 @@ RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc) {
 	lstrcpynAtoW(uni->Buffer,ansi->Buffer,unilen/2);
 	return STATUS_SUCCESS;
 }
+/**************************************************************************
+ *                 RtlMultiByteToUnicodeN		[NTDLL]
+ * FIXME: multibyte support
+ */
+DWORD /* NTSTATUS */
+RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen) {
+	DWORD	len;
+	LPWSTR	x;
+
+	len = oemlen;
+	if (unilen/2 < len)
+		len = unilen/2;
+	x=(LPWSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(len+1)*sizeof(WCHAR));
+	lstrcpynAtoW(x,oemstr,len+1);
+	memcpy(unistr,x,len*2);
+	if (reslen) *reslen = len*2;
+	return 0;
+}
+
 /**************************************************************************
  *                 RtlOemToUnicodeN			[NTDLL]
  */
@@ -269,4 +460,35 @@ RtlxOemStringToUnicodeSize(LPSTRING str) {
 UINT32
 RtlxAnsiStringToUnicodeSize(LPANSI_STRING str) {
 	return str->Length*2+2;
+}
+
+/**************************************************************************
+ *                 RtlDosPathNameToNtPathName_U		[NTDLL]
+ *
+ * FIXME: convert to UNC or whatever is expected here
+ */
+BOOL32 
+RtlDosPathNameToNtPathName_U(
+	LPWSTR from,LPUNICODE_STRING us,DWORD x2,DWORD x3
+) {
+	LPSTR	fromA = HEAP_strdupWtoA(GetProcessHeap(),0,from);
+
+	fprintf(stderr,"RtlDosPathNameToNtPathName_U(%s,%p,%08lx,%08lx)\n",
+		fromA,us,x2,x3
+	);
+	if (us)
+		RtlInitUnicodeString(us,HEAP_strdupW(GetProcessHeap(),0,from));
+	return TRUE;
+}
+
+/**************************************************************************
+ *                 NtOpenFile				[NTDLL]
+ */
+DWORD
+NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6) {
+	fprintf(stderr,"NtOpenFile(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx)\n",
+		x1,flags,x3,x4,alignment,x6
+	);
+	/* returns file io completion status */
+	return 0;
 }

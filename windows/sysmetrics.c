@@ -67,10 +67,20 @@ void SYSMETRICS_Init(void)
 
 
 /***********************************************************************
- *           GetSystemMetrics    (USER.179)
+ *           GetSystemMetrics16    (USER.179)
  */
-int GetSystemMetrics( WORD index )
+INT16 GetSystemMetrics16( INT16 index )
 {
-    if (index > SM_CMETRICS) return 0;
+    if ((index < 0) || (index > SM_CMETRICS)) return 0;
+    else return sysMetrics[index];    
+}
+
+
+/***********************************************************************
+ *           GetSystemMetrics32    (USER32.291)
+ */
+INT32 GetSystemMetrics32( INT32 index )
+{
+    if ((index < 0) || (index > SM_CMETRICS)) return 0;
     else return sysMetrics[index];    
 }

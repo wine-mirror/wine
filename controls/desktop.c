@@ -92,7 +92,7 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
     {
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );
-	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
+	SetTextColor( hdc, GetSysColor32(COLOR_BACKGROUND) );
 	FillRect32( hdc, &rect, infoPtr->hbrushPattern );
     }
 
@@ -159,7 +159,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
-        return (LRESULT)SetCursor( LoadCursor16( 0, IDC_ARROW ) );
+        return (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW ) );
     }
     
     return 0;
@@ -247,7 +247,7 @@ BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 	infoPtr->hbrushPattern = CreatePatternBrush32( hbitmap );
 	DeleteObject32( hbitmap );
     }
-    else infoPtr->hbrushPattern = CreateSolidBrush32( GetSysColor(COLOR_BACKGROUND) );
+    else infoPtr->hbrushPattern = CreateSolidBrush32( GetSysColor32(COLOR_BACKGROUND) );
     return TRUE;
 }
 

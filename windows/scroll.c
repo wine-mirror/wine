@@ -65,7 +65,7 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 	  hrgnClip = CreateRectRgnIndirect32( &rc );
 
           if ((hCaretWnd == hwnd) || IsChild32(hwnd,hCaretWnd))
-              HideCaret(hCaretWnd);
+              HideCaret32(hCaretWnd);
           else hCaretWnd = 0;
  
 	  hdc = GetDCEx32(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
@@ -75,7 +75,7 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
        {
 	  CopyRect32(&rc, rect);
 
-          if (hCaretWnd == hwnd) HideCaret(hCaretWnd);
+          if (hCaretWnd == hwnd) HideCaret32(hCaretWnd);
           else hCaretWnd = 0;
 
 	  hdc = GetDCEx32( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
@@ -114,7 +114,7 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 	GetCaretPos32(&pt);
 	pt.x += dx; pt.y += dy;
 	SetCaretPos(pt.x, pt.y);
-	ShowCaret(hCaretWnd);
+	ShowCaret32(hCaretWnd);
     }
     return TRUE;
 }
@@ -331,7 +331,7 @@ BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
            MapWindowPoints32( hCaret, hWnd, (LPPOINT32)&rc, 2 );
            if( IntersectRect32(lprc, lprc, &rc) )
            {
-               HideCaret(0);
+               HideCaret32(0);
   	       lprc->left = pt.x; lprc->top = pt.y;
 	       return TRUE;
            }
@@ -450,7 +450,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	if( bCaret )
 	{
 	    SetCaretPos( rc.left + dx, rc.top + dy );
-	    ShowCaret(0);
+	    ShowCaret32(0);
 	}
 
 	if( bOwnRgn && hrgnUpdate ) DeleteObject32( hrgnUpdate );

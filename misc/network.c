@@ -115,7 +115,7 @@ int WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
 /**************************************************************************
  *              WNetWatchQueue       [USER.508]
  */
-int WNetWatchQueue(HWND hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
+int WNetWatchQueue(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
 {
 	printf("EMPTY STUB !!! WNetWatchQueue(%04x,'%s','%s',%x)\n",
 		hWnd,szLocal,szUser,nQueue);
@@ -191,7 +191,7 @@ int WNetGetCaps(WORD capability)
 /**************************************************************************
  *              WNetDeviceMode       [USER.514]
  */
-int WNetDeviceMode(HWND hWndOwner)
+int WNetDeviceMode(HWND16 hWndOwner)
 {
 	printf("EMPTY STUB !!! WNetDeviceMode(%04x)\n",hWndOwner);
 	return WN_NET_ERROR;
@@ -200,7 +200,7 @@ int WNetDeviceMode(HWND hWndOwner)
 /**************************************************************************
  *              WNetBrowseDialog       [USER.515]
  */
-int WNetBrowseDialog(HWND hParent,WORD nType,LPSTR szPath)
+int WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
 {
 	printf("EMPTY STUB !!! WNetBrowseDialog(%04x,%x,'%s')\n",
 		hParent,nType,szPath);
@@ -260,7 +260,7 @@ int WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
 /**************************************************************************
  *              WNetRestoreConnection       [USER.523]
  */
-int WNetRestoreConnection(HWND hwndOwner,LPSTR lpszDevice)
+int WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
 {
 	printf("EMPTY STUB !!! WNetRestoreConnection(%04x,'%s')\n",
 		hwndOwner,lpszDevice);
@@ -280,7 +280,7 @@ int WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 /**************************************************************************
  *              WnetConnectDialog       [USER.525]
  */
-UINT WNetConnectDialog(HWND hWndParent, WORD iType)
+UINT WNetConnectDialog(HWND16 hWndParent, WORD iType)
 {
 	printf("EMPTY STUB !!! WNetConnectDialog(%04x, %4X)\n", hWndParent, iType);
 	return WN_SUCCESS;
@@ -289,7 +289,7 @@ UINT WNetConnectDialog(HWND hWndParent, WORD iType)
 /**************************************************************************
  *              WNetDisconnectDialog       [USER.526]
  */
-int WNetDisconnectDialog(HWND hwndOwner, WORD iType)
+int WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
 {
 	printf("EMPTY STUB !!! WNetDisconnectDialog(%04x,%x)\n",
 		hwndOwner,iType);
@@ -299,7 +299,7 @@ int WNetDisconnectDialog(HWND hwndOwner, WORD iType)
 /**************************************************************************
  *              WnetConnectionDialog     [USER.527]
  */
-UINT WNetConnectionDialog(HWND hWndParent, WORD iType)
+UINT WNetConnectionDialog(HWND16 hWndParent, WORD iType)
 {
 	printf("EMPTY STUB !!! WNetConnectionDialog(%04x, %4X)\n", 
 		hWndParent, iType);
@@ -309,7 +309,7 @@ UINT WNetConnectionDialog(HWND hWndParent, WORD iType)
 /**************************************************************************
  *              WNetViewQueueDialog       [USER.528]
  */
-int WNetViewQueueDialog(HWND hwndOwner,LPSTR lpszQueue)
+int WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
 {
 	printf("EMPTY STUB !!! WNetViewQueueDialog(%04x,'%s')\n",
 		hwndOwner,lpszQueue);
@@ -319,7 +319,7 @@ int WNetViewQueueDialog(HWND hwndOwner,LPSTR lpszQueue)
 /**************************************************************************
  *              WNetPropertyDialog       [USER.529]
  */
-int WNetPropertyDialog(HWND hwndParent,WORD iButton,
+int WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
 	WORD nPropSel,LPSTR lpszName,WORD nType)
 {
 	printf("EMPTY STUB !!! WNetPropertyDialog(%04x,%x,%x,'%s',%x)\n",
@@ -340,7 +340,7 @@ int WNetGetDirectoryType(LPSTR lpName,void *lpType)
 /**************************************************************************
  *              WNetDirectoryNotify       [USER.531]
  */
-int WNetDirectoryNotify(HWND hwndOwner,void *lpDir,WORD wOper)
+int WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 {
 	printf("EMPTY STUB !!! WNetDirectoryNotify(%04x,%p,%x)\n",
 		hwndOwner,lpDir,wOper);
@@ -350,7 +350,7 @@ int WNetDirectoryNotify(HWND hwndOwner,void *lpDir,WORD wOper)
 /**************************************************************************
  *              WNetGetPropertyText       [USER.532]
  */
-int WNetGetPropertyText(HWND hwndParent,WORD iButton,WORD nPropSel,
+int WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
 	LPSTR lpszName,WORD nType)
 {
 	printf("EMPTY STUB !!! WNetGetPropertyText(%04x,%x,%x,'%s',%x)\n",

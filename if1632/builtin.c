@@ -199,21 +199,7 @@ BOOL16 BUILTIN_Init(void)
 
     /* Initialize the real-mode selector entry points */
 
-#define SET_ENTRY_POINT(num,addr) \
-    MODULE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
-                                  DOSMEM_dosmem+(addr), 0x10000, hModule, \
-                                  FALSE, FALSE, FALSE, NULL ))
-
-    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
-    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
-    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
-    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
-    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
-    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
-    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
-    MODULE_SetEntryPoint(hModule,193,DOSMEM_BiosSeg); /* KERNEL.193: __0040H */
-#undef SET_ENTRY_POINT
+    DOSMEM_InitExports( hModule );
 
     /* Set interrupt vectors from entry points in WPROCS.DLL */
 

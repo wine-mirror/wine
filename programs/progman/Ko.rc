@@ -5,7 +5,7 @@
  */
 
 #define LANGUAGE_ID                  Ko
-#define LANGUAGE_NUMBER              6
+#define LANGUAGE_NUMBER              A
 #define LANGUAGE_MENU_ITEM           "&Korean"
 
 /* Menu */

@@ -67,7 +67,7 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 /***********************************************************************
  *           StaticWndProc
  */
-LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT StaticWndProc( HWND16 hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 {
     LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -103,14 +103,14 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 		break;
             }
 	    /* initialise colours */
-	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-	    color_background   = GetSysColor(COLOR_BACKGROUND);
-	    color_window       = GetSysColor(COLOR_WINDOW);
+	    color_windowframe  = GetSysColor32(COLOR_WINDOWFRAME);
+	    color_background   = GetSysColor32(COLOR_BACKGROUND);
+	    color_window       = GetSysColor32(COLOR_WINDOW);
 	    break;
 
         case WM_NCDESTROY:
             if (style == SS_ICON)
-                DestroyIcon( STATIC_SetIcon( wndPtr, 0 ) );
+                DestroyIcon32( STATIC_SetIcon( wndPtr, 0 ) );
             else 
                 lResult = DefWindowProc16(hWnd, uMsg, wParam, lParam);
             break;
@@ -126,9 +126,9 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 	    break;
 
 	case WM_SYSCOLORCHANGE:
-	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-	    color_background   = GetSysColor(COLOR_BACKGROUND);
-	    color_window       = GetSysColor(COLOR_WINDOW);
+	    color_windowframe  = GetSysColor32(COLOR_WINDOWFRAME);
+	    color_background   = GetSysColor32(COLOR_BACKGROUND);
+	    color_window       = GetSysColor32(COLOR_WINDOW);
 	    InvalidateRect32( hWnd, NULL, TRUE );
 	    break;
 
@@ -270,13 +270,13 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc )
 
 static void STATIC_PaintIconfn( WND *wndPtr, HDC32 hdc )
 {
-    RECT16 rc;
-    HBRUSH16 hbrush;
+    RECT32 rc;
+    HBRUSH32 hbrush;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    GetClientRect16( wndPtr->hwndSelf, &rc);
+    GetClientRect32( wndPtr->hwndSelf, &rc );
     hbrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
-    FillRect16( hdc, &rc, hbrush );
-    if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
+    FillRect32( hdc, &rc, hbrush );
+    if (infoPtr->hIcon) DrawIcon32( hdc, rc.left, rc.top, infoPtr->hIcon );
 }

@@ -69,6 +69,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Eo",     0},	/* LANG_Eo */ /* FIXME languageid */
     {"It",0x0410},	/* LANG_It */
     {"Ko",0x0412},	/* LANG_Ko */
+    {"Hu",0x0436},	/* LANG_Hu */
     {NULL,0}
 };
 
@@ -161,7 +162,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,Hu)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -682,11 +683,21 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 
 
 /***********************************************************************
- *           MessageBeep    (USER.104)
+ *           MessageBeep16   (USER.104)
  */
-void MessageBeep(WORD i)
+void MessageBeep16( UINT16 i )
 {
-	XBell(display, 100);
+    MessageBeep32( i );
+}
+
+
+/***********************************************************************
+ *           MessageBeep32   (USER32.389)
+ */
+BOOL32 MessageBeep32( UINT32 i )
+{
+    XBell( display, 100 );
+    return TRUE;
 }
 
 
@@ -939,7 +950,7 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 		
 		case SPI_GETBORDER:
-			*(INT *)lpvParam = GetSystemMetrics( SM_CXFRAME );
+			*(INT16 *)lpvParam = GetSystemMetrics16( SM_CXFRAME );
 			break;
 
 		case SPI_GETFASTTASKSWITCH:
@@ -973,7 +984,7 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		case SPI_GETMENUDROPALIGNMENT:
-			*(BOOL *) lpvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT ); /* XXX check this */
+			*(BOOL16 *) lpvParam = GetSystemMetrics16( SM_MENUDROPALIGNMENT ); /* XXX check this */
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
@@ -994,7 +1005,7 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			if (lpvParam == NULL)
                             /*SetSystemMetrics( SM_CXICONSPACING, uParam )*/ ;
                         else
-                            *(INT *) lpvParam = GetSystemMetrics( SM_CXICONSPACING );
+                            *(INT16 *)lpvParam = GetSystemMetrics16( SM_CXICONSPACING );
 			break;
 
 		case SPI_ICONVERTICALSPACING:
@@ -1002,7 +1013,7 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     if (lpvParam == NULL)
                         /*SetSystemMetrics( SM_CYICONSPACING, uParam )*/ ;
 		    else
-                        *(INT *) lpvParam = GetSystemMetrics(SM_CYICONSPACING);
+                        *(INT16 *)lpvParam = GetSystemMetrics16(SM_CYICONSPACING);
                     break;
 
 		case SPI_SETBEEP:
@@ -1071,8 +1082,8 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 
                 case SPI_GETWORKAREA:
                     SetRect16( (RECT16 *)lpvParam, 0, 0,
-                               GetSystemMetrics( SM_CXSCREEN ),
-                               GetSystemMetrics( SM_CYSCREEN ) );
+                               GetSystemMetrics16( SM_CXSCREEN ),
+                               GetSystemMetrics16( SM_CYSCREEN ) );
                     break;
 
 		default:
@@ -1140,14 +1151,6 @@ BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
 
 /***********************************************************************
-*	SWAPMOUSEBUTTON (USER.186)
-*/
-BOOL SwapMouseButton(BOOL fSwap)
-{
-	return 0;	/* don't swap */
-}
-
-/***********************************************************************
 *	FileCDR (KERNEL.130)
 */
 void FileCDR(FARPROC16 x)
@@ -1158,7 +1161,7 @@ void FileCDR(FARPROC16 x)
 /***********************************************************************
 *	GetWinDebugInfo (KERNEL.355)
 */
-BOOL GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT flags)
+BOOL16 GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
 {
 	printf("GetWinDebugInfo(%8lx,%d) stub returning 0\n", (unsigned long)lpwdi, flags);
 	/* 0 means not in debugging mode/version */
@@ -1170,7 +1173,7 @@ BOOL GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT flags)
 /***********************************************************************
 *	GetWinDebugInfo (KERNEL.355)
 */
-BOOL SetWinDebugInfo(WINDEBUGINFO *lpwdi)
+BOOL16 SetWinDebugInfo(WINDEBUGINFO *lpwdi)
 {
 	printf("SetWinDebugInfo(%8lx) stub returning 0\n", (unsigned long)lpwdi);
 	/* 0 means not in debugging mode/version */

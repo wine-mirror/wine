@@ -22,6 +22,7 @@
  * the bits directly :-(
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <string.h>
 #include <stdlib.h>
 #include "windows.h"
@@ -38,9 +39,9 @@
 
 extern UINT16 COLOR_GetSystemPaletteSize();
 
-Cursor CURSORICON_XCursor = None;  /* Current X cursor */
-static HCURSOR16 hActiveCursor = 0;  /* Active cursor */
-static int CURSOR_ShowCount = 0;   /* Cursor display count */
+Cursor CURSORICON_XCursor = None;    /* Current X cursor */
+static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
+static INT32 CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT32 CURSOR_ClipRect;       /* Cursor clipping rect */
 
 /**********************************************************************
@@ -200,9 +201,10 @@ static CURSORDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL CURSORICON_LoadDirEntry(HINSTANCE32 hInstance, SEGPTR name,
-                                    int width, int height, int colors,
-                                    BOOL fCursor, CURSORICONDIRENTRY *dirEntry)
+static BOOL32 CURSORICON_LoadDirEntry( HINSTANCE32 hInstance, SEGPTR name,
+                                       INT32 width, INT32 height,
+                                       INT32 colors, BOOL32 fCursor,
+                                       CURSORICONDIRENTRY *dirEntry )
 {
     HRSRC16 hRsrc;
     HGLOBAL16 hMem;
@@ -234,7 +236,7 @@ static BOOL CURSORICON_LoadDirEntry(HINSTANCE32 hInstance, SEGPTR name,
  * Create a cursor or icon from a resource.
  */
 HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
-                                  BOOL fCursor )
+                                  BOOL32 fCursor )
 {
     HBITMAP32 hAndBits, hXorBits;
     HDC32 hdc;
@@ -294,6 +296,11 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
 
     hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
                                  (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+    if (!hXorBits) {
+        free( pInfo );
+    	ReleaseDC32( 0, hdc );
+    	return 0;
+    }
 
     /* Fix the bitmap header to load the monochrome mask */
 
@@ -325,6 +332,11 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
     hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
                                  bits, pInfo, DIB_RGB_COLORS );
     ReleaseDC32( 0, hdc );
+    if (!hAndBits) {
+        DeleteObject32( hXorBits );
+        free( pInfo );
+    	return 0;
+    }
 
     /* Now create the CURSORICONINFO structure */
 
@@ -369,8 +381,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
  * Load a cursor or icon.
  */
 static HGLOBAL16 CURSORICON_Load( HINSTANCE16 hInstance, SEGPTR name,
-                                  int width, int height, int colors,
-                                  BOOL fCursor )
+                                  INT32 width, INT32 height, INT32 colors,
+                                  BOOL32 fCursor )
 {
     HGLOBAL16 handle, hRet;
     HRSRC16 hRsrc;
@@ -513,8 +525,9 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
  return hRet;
 }
 
+
 /***********************************************************************
- *           LoadCursor    (USER.173)
+ *           LoadCursor16    (USER.173)
  */
 HCURSOR16 LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
 {
@@ -531,9 +544,9 @@ HCURSOR16 LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
 
 
 /***********************************************************************
- *           LoadIcon    (USER.174)
+ *           LoadIcon16    (USER.174)
  */
-HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
+HICON16 LoadIcon16( HINSTANCE16 hInstance, SEGPTR name )
 {
     if (HIWORD(name))
         dprintf_icon( stddeb, "LoadIcon: %04x '%s'\n",
@@ -549,11 +562,11 @@ HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
 
 
 /***********************************************************************
- *           CreateCursor    (USER.406)
+ *           CreateCursor16    (USER.406)
  */
-HCURSOR16 CreateCursor( HINSTANCE16 hInstance, INT xHotSpot, INT yHotSpot,
-                        INT nWidth, INT nHeight,
-                        const BYTE *lpANDbits, const BYTE *lpXORbits )
+HCURSOR16 CreateCursor16(HINSTANCE16 hInstance, INT16 xHotSpot, INT16 yHotSpot,
+                         INT16 nWidth, INT16 nHeight,
+                         LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
     CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
@@ -564,12 +577,43 @@ HCURSOR16 CreateCursor( HINSTANCE16 hInstance, INT xHotSpot, INT yHotSpot,
 
 
 /***********************************************************************
- *           CreateIcon    (USER.407)
+ *           CreateCursor32    (USER32.66)
  */
-HICON16 CreateIcon( HINSTANCE16 hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
-                  BYTE bBitsPixel, const BYTE* lpANDbits, const BYTE* lpXORbits)
+HCURSOR32 CreateCursor32(HINSTANCE32 hInstance, INT32 xHotSpot, INT32 yHotSpot,
+                         INT32 nWidth, INT32 nHeight,
+                         LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel };
+    CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
+
+    dprintf_cursor( stddeb, "CreateCursor: %dx%d spot=%d,%d xor=%p and=%p\n",
+                    nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
+    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+}
+
+
+/***********************************************************************
+ *           CreateIcon16    (USER.407)
+ */
+HICON16 CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth, INT16 nHeight,
+                      BYTE bPlanes, BYTE bBitsPixel,
+                      LPCVOID lpANDbits, LPCVOID lpXORbits )
+{
+    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel};
+
+    dprintf_icon( stddeb, "CreateIcon: %dx%dx%d, xor=%p, and=%p\n",
+                  nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
+    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+}
+
+
+/***********************************************************************
+ *           CreateIcon32    (USER32.74)
+ */
+HICON32 CreateIcon32( HINSTANCE32 hInstance, INT32 nWidth, INT32 nHeight,
+                      BYTE bPlanes, BYTE bBitsPixel,
+                      LPCVOID lpANDbits, LPCVOID lpXORbits )
+{
+    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel};
 
     dprintf_icon( stddeb, "CreateIcon: %dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
@@ -580,10 +624,8 @@ HICON16 CreateIcon( HINSTANCE16 hInstance, INT nWidth, INT nHeight, BYTE bPlanes
 /***********************************************************************
  *           CreateCursorIconIndirect    (USER.408)
  */
-HGLOBAL16 CreateCursorIconIndirect( HINSTANCE16 hInstance,
-                                    CURSORICONINFO *info,
-                                    const BYTE *lpANDbits,
-                                    const BYTE *lpXORbits )
+HGLOBAL16 CreateCursorIconIndirect(HINSTANCE16 hInstance, CURSORICONINFO *info,
+                                   LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
     HGLOBAL16 handle;
     char *ptr;
@@ -637,9 +679,18 @@ HCURSOR16 CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           DestroyIcon    (USER.457)
+ *           DestroyIcon16    (USER.457)
  */
-BOOL DestroyIcon( HICON16 hIcon )
+BOOL16 DestroyIcon16( HICON16 hIcon )
+{
+    return DestroyIcon32( hIcon );
+}
+
+
+/***********************************************************************
+ *           DestroyIcon32    (USER32.132)
+ */
+BOOL32 DestroyIcon32( HICON32 hIcon )
 {
     dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
     /* FIXME: should check for OEM icon here */
@@ -648,9 +699,18 @@ BOOL DestroyIcon( HICON16 hIcon )
 
 
 /***********************************************************************
- *           DestroyCursor    (USER.458)
+ *           DestroyCursor16    (USER.458)
  */
-BOOL DestroyCursor( HCURSOR16 hCursor )
+BOOL16 DestroyCursor16( HCURSOR16 hCursor )
+{
+    return DestroyCursor32( hCursor );
+}
+
+
+/***********************************************************************
+ *           DestroyCursor32    (USER32.131)
+ */
+BOOL32 DestroyCursor32( HCURSOR32 hCursor )
 {
     dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
     /* FIXME: should check for OEM cursor here */
@@ -659,13 +719,22 @@ BOOL DestroyCursor( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           DrawIcon    (USER.84)
+ *           DrawIcon16    (USER.84)
  */
-BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
+BOOL16 DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
+{
+    return DrawIcon32( hdc, x, y, hIcon );
+}
+
+
+/***********************************************************************
+ *           DrawIcon32    (USER32.158)
+ */
+BOOL32 DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
 {
     CURSORICONINFO *ptr;
     HDC32 hMemDC;
-    HBITMAP16 hXorBits, hAndBits;
+    HBITMAP32 hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 
     if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
@@ -719,7 +788,7 @@ DWORD DumpIcon( SEGPTR pInfo, WORD *lpLen,
  *
  * Change the X cursor. Helper function for SetCursor() and ShowCursor().
  */
-static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
+static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
 {
     Pixmap pixmapBits, pixmapMask, pixmapAll;
     XColor fg, bg;
@@ -842,7 +911,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
     else
     {
         /* Set the same cursor for all top-level windows */
-        HWND hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
+        HWND32 hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );
@@ -855,11 +924,20 @@ static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           SetCursor    (USER.69)
+ *           SetCursor16    (USER.69)
  */
-HCURSOR16 SetCursor( HCURSOR16 hCursor )
+HCURSOR16 SetCursor16( HCURSOR16 hCursor )
 {
-    HCURSOR16 hOldCursor;
+    return (HCURSOR16)SetCursor32( hCursor );
+}
+
+
+/***********************************************************************
+ *           SetCursor32    (USER32.471)
+ */
+HCURSOR32 SetCursor32( HCURSOR32 hCursor )
+{
+    HCURSOR32 hOldCursor;
 
     if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
     dprintf_cursor( stddeb, "SetCursor: %04x\n", hCursor );
@@ -872,19 +950,38 @@ HCURSOR16 SetCursor( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           SetCursorPos    (USER.70)
+ *           SetCursorPos16    (USER.70)
  */
-void SetCursorPos( short x, short y )
+void SetCursorPos16( INT16 x, INT16 y )
 {
-    dprintf_cursor( stddeb, "SetCursorPos: x=%d y=%d\n", x, y );
-    XWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
+    SetCursorPos32( x, y );
 }
 
 
 /***********************************************************************
- *           ShowCursor    (USER.71)
+ *           SetCursorPos32    (USER32.473)
  */
-int ShowCursor( BOOL bShow )
+BOOL32 SetCursorPos32( INT32 x, INT32 y )
+{
+    dprintf_cursor( stddeb, "SetCursorPos: x=%d y=%d\n", x, y );
+    XWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           ShowCursor16    (USER.71)
+ */
+INT16 ShowCursor16( BOOL16 bShow )
+{
+    return ShowCursor32( bShow );
+}
+
+
+/***********************************************************************
+ *           ShowCursor32    (USER32.529)
+ */
+INT32 ShowCursor32( BOOL32 bShow )
 {
     dprintf_cursor( stddeb, "ShowCursor: %d, count=%d\n",
                     bShow, CURSOR_ShowCount );
@@ -904,9 +1001,18 @@ int ShowCursor( BOOL bShow )
 
 
 /***********************************************************************
- *           GetCursor    (USER.247)
+ *           GetCursor16    (USER.247)
  */
-HCURSOR16 GetCursor(void)
+HCURSOR16 GetCursor16(void)
+{
+    return hActiveCursor;
+}
+
+
+/***********************************************************************
+ *           GetCursor32    (USER32.226)
+ */
+HCURSOR32 GetCursor32(void)
 {
     return hActiveCursor;
 }
@@ -1027,7 +1133,7 @@ WORD GetIconID( HGLOBAL16 hResource, DWORD resType )
 /**********************************************************************
  *	    LoadIconHandler    (USER.456)
  */
-HICON16 LoadIconHandler( HGLOBAL16 hResource, BOOL bNew )
+HICON16 LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew )
 {
     dprintf_cursor(stddeb,"LoadIconHandler: hRes=%04x\n",hResource);
 

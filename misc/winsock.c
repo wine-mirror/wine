@@ -581,7 +581,7 @@ INT16 WINSOCK_getsockopt(SOCKET16 s, INT16 level,
   return SOCKET_ERROR;
 }
 
-u_long  WINSOCK_htonl(u_long hostlong)   { return( htonl(hostlong) ); }         
+u_long  WINSOCK_htonl(u_long hostlong)   { return( htonl(hostlong) ); }
 u_short WINSOCK_htons(u_short hostshort) { return( htons(hostshort) ); }
 u_long  WINSOCK_inet_addr(char *cp)      { return( inet_addr(cp) ); }
 u_long  WINSOCK_ntohl(u_long netlong)    { return( ntohl(netlong) ); }

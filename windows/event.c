@@ -61,6 +61,7 @@ static XContext winContext = 0;
 static INT16  captureHT = HTCLIENT;
 static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;
+static BOOL32 SwappedButtons = FALSE;
 
 static Atom wmProtocols = None;
 static Atom wmDeleteWindow = None;
@@ -84,23 +85,23 @@ static void EVENT_Key( XKeyEvent *event );
 static void EVENT_ButtonPress( XButtonEvent *event );
 static void EVENT_ButtonRelease( XButtonEvent *event );
 static void EVENT_MotionNotify( XMotionEvent *event );
-static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
-static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
+static void EVENT_FocusIn( HWND32 hwnd, XFocusChangeEvent *event );
+static void EVENT_FocusOut( HWND32 hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
-static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
-static void EVENT_MapNotify( HWND hwnd, XMapEvent *event );
+static void EVENT_MapNotify( HWND32 hwnd, XMapEvent *event );
 
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 */
 
 extern void FOCUS_SetXFocus( HWND32 );
-extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL32 );
+extern BOOL16 DRAG_QueryUpdate( HWND16, SEGPTR, BOOL32 );
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -333,7 +334,8 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
                             (char **)&pWnd ) || (event.type == NoExpose))
               continue;
 
-	  /* check for the "safe" hardware events */
+	  /* Check only for those events which can be processed
+	   * internally. */
 
 	  if( event.type == MotionNotify ||
 	      event.type == ButtonPress || event.type == ButtonRelease ||
@@ -491,6 +493,7 @@ static void EVENT_ButtonPress( XButtonEvent *event )
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;
+    if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
     MouseButtonsStates[buttonNum] = 0x8000;
     AsyncMouseButtonsStates[buttonNum] = 0x8000;
     hardware_event( messages[buttonNum],
@@ -510,6 +513,7 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;    
+    if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
     MouseButtonsStates[buttonNum] = FALSE;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
@@ -521,7 +525,7 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
 /**********************************************************************
  *              EVENT_FocusIn
  */
-static void EVENT_FocusIn (HWND hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusIn( HWND32 hwnd, XFocusChangeEvent *event )
 {
     if (event->detail == NotifyPointer) return;
     if (hwnd != GetActiveWindow32()) WINPOS_ChangeActiveWindow( hwnd, FALSE );
@@ -535,7 +539,7 @@ static void EVENT_FocusIn (HWND hwnd, XFocusChangeEvent *event )
  *
  * Note: only top-level override-redirect windows get FocusOut events.
  */
-static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusOut( HWND32 hwnd, XFocusChangeEvent *event )
 {
     if (event->detail == NotifyPointer) return;
     if (hwnd == GetActiveWindow32()) WINPOS_ChangeActiveWindow( 0, FALSE );
@@ -543,6 +547,21 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
         SetFocus32( 0 );
 }
 
+/**********************************************************************
+ *              EVENT_CheckFocus
+ */
+BOOL32 EVENT_CheckFocus(void)
+{
+    WND*   pWnd;
+    Window xW;
+    int	   state;
+
+    XGetInputFocus(display, &xW, &state);
+    if( xW == None ||
+        XFindContext(display, xW, winContext, (char **)&pWnd) ) 
+        return FALSE;
+    return TRUE;
+}
 
 /**********************************************************************
  *              EVENT_ConfigureNotify
@@ -550,7 +569,7 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  * The ConfigureNotify event is only selected on the desktop window
  * and on top-level windows when the -managed flag is used.
  */
-static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
+static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
 {
     /* FIXME: with -desktop xxx we get this event _before_ desktop 
      * window structure is created. WIN_GetDesktop() check is a hack.
@@ -573,10 +592,6 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	    return;
 	
         if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
-
-/*	XTranslateCoordinates(display, event->window, rootWindow,
-	    event->x, event->y, &event->x, &event->y, &child);
-            */
 
 	/* Fill WINDOWPOS struct */
 	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -652,8 +667,8 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	{
             /* open to make sure that clipboard is available */
 
-	    BOOL 	couldOpen = OpenClipboard( pWnd->hwndSelf );
-	    char*	lpstr = 0;
+	    BOOL32 couldOpen = OpenClipboard32( pWnd->hwndSelf );
+	    char* lpstr = 0;
 
 	    hText = GetClipboardData(CF_TEXT);
 	    text = GlobalLock16(hText);
@@ -677,7 +692,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 
 	    /* close only if we opened before */
 
-	    if(couldOpen) CloseClipboard();
+	    if(couldOpen) CloseClipboard32();
 	}
     }
 
@@ -858,7 +873,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 /**********************************************************************
  *		EVENT_MapNotify
  */
-void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
+void EVENT_MapNotify( HWND32 hWnd, XMapEvent *event )
 {
     HWND32 hwndFocus = GetFocus32();
 
@@ -877,27 +892,36 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 {
     Window win;
-    HWND32 old_capture_wnd = captureWnd;
+    HWND32 capturePrev = captureWnd;
 
     if (!hwnd)
     {
-        ReleaseCapture();
-        return old_capture_wnd;
+        XUngrabPointer(display, CurrentTime );
+        captureWnd = NULL; captureHT = 0; 
     }
-    if ((win = WIN_GetXWindow( hwnd )))
+    else if ((win = WIN_GetXWindow( hwnd )))
     {
-        if (XGrabPointer(display, win, False,
-                     ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
-                     GrabModeAsync, GrabModeAsync,
-                     None, None, CurrentTime ) == GrabSuccess)
+	WND* wndPtr = WIN_FindWndPtr( hwnd );
+
+        if ( wndPtr && 
+	     (XGrabPointer(display, win, False, 
+			   ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                           GrabModeAsync, GrabModeAsync,
+                           None, None, CurrentTime ) == GrabSuccess) )
 	{
-            dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
+            dprintf_win(stddeb, "SetCapture(0x%04x)\n", hwnd );
             captureWnd   = hwnd;
 	    captureHT    = ht;
-            return old_capture_wnd;
         }
     }
-    return 0;
+
+    if( capturePrev && capturePrev != captureWnd )
+    {
+	WND* wndPtr = WIN_FindWndPtr( capturePrev );
+        if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
+            SendMessage32A( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
+    }
+    return capturePrev;
 }
 
 /**********************************************************************
@@ -931,10 +955,8 @@ HWND32 SetCapture32( HWND32 hwnd )
  */
 void ReleaseCapture(void)
 {
-    if (captureWnd == 0) return;
-    XUngrabPointer( display, CurrentTime );
-    captureWnd = 0;
-    dprintf_win(stddeb, "ReleaseCapture\n");
+    dprintf_win(stddeb, "ReleaseCapture() [%04x]\n", captureWnd );
+    if( captureWnd ) EVENT_Capture( 0, 0 );
 }
 
 
@@ -943,7 +965,7 @@ void ReleaseCapture(void)
  */
 HWND16 GetCapture16(void)
 {
-    return (HWND16)captureWnd;
+    return captureWnd;
 }
 
 
@@ -1018,3 +1040,24 @@ BOOL16 EnableHardwareInput(BOOL16 bEnable)
   return bOldState;
 }
 
+
+/***********************************************************************
+ *	     SwapMouseButton16   (USER.186)
+ */
+BOOL16 SwapMouseButton16( BOOL16 fSwap )
+{
+    BOOL16 ret = SwappedButtons;
+    SwappedButtons = fSwap;
+    return ret;
+}
+
+
+/***********************************************************************
+ *	     SwapMouseButton32   (USER32.536)
+ */
+BOOL32 SwapMouseButton32( BOOL32 fSwap )
+{
+    BOOL32 ret = SwappedButtons;
+    SwappedButtons = fSwap;
+    return ret;
+}

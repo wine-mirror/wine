@@ -284,7 +284,7 @@ static BOOL32 OBM_InitColorSymbols()
         OBM_Colors[i].value = NULL;
         if (OBM_SymbolicColors[i].color & 0xff000000)  /* PALETTEINDEX */
             OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
-                              GetSysColor(OBM_SymbolicColors[i].color & 0xff));
+                            GetSysColor32(OBM_SymbolicColors[i].color & 0xff));
         else  /* RGB*/
             OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
                                                  OBM_SymbolicColors[i].color );

@@ -174,7 +174,7 @@ BOOL GetSaveFileName( SEGPTR ofn)
  *                              FILEDLG_StripEditControl        [internal]
  * Strip pathnames off the contents of the edit control.
  */
-static void FILEDLG_StripEditControl(HWND hwnd)
+static void FILEDLG_StripEditControl(HWND16 hwnd)
 {
     char temp[512], *cp;
 
@@ -193,7 +193,7 @@ static void FILEDLG_StripEditControl(HWND hwnd)
 /***********************************************************************
  * 				FILEDLG_ScanDir			[internal]
  */
-static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
+static BOOL FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 {
     int len;
     char str[512];
@@ -235,7 +235,7 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
 /***********************************************************************
  *                              FILEDLG_WMDrawItem              [internal]
  */
-static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int savedlg)
+static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int savedlg)
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char *str;
@@ -255,9 +255,9 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
 
 	if (savedlg)       /* use _gray_ text in FileSaveDlg */
 	  if (!lpdis->itemState)
-	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_GRAYTEXT) );
+	    SetTextColor(lpdis->hDC,GetSysColor32(COLOR_GRAYTEXT) );
 	  else  
-	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_WINDOWTEXT) );
+	    SetTextColor(lpdis->hDC,GetSysColor32(COLOR_WINDOWTEXT) );
 	    /* inversion of gray would be bad readable */	  	  
 
 	TextOut16(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
@@ -327,7 +327,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
 /***********************************************************************
  *                              FILEDLG_WMMeasureItem           [internal]
  */
-static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
+static LONG FILEDLG_WMMeasureItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
     BITMAP16 bm;
     LPMEASUREITEMSTRUCT16 lpmeasure;
@@ -354,7 +354,7 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
  *                              FILEDLG_WMInitDialog            [internal]
  */
 
-static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
+static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   int i, n;
   LPOPENFILENAME lpofn;
@@ -440,7 +440,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
-static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
+static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   LONG lRet;
   LPOPENFILENAME lpofn;
@@ -619,10 +619,10 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
          break;
        }
       }
-      EndDialog(hWnd, TRUE);
+      EndDialog32(hWnd, TRUE);
       return TRUE;
     case IDCANCEL:
-      EndDialog(hWnd, FALSE);
+      EndDialog32(hWnd, FALSE);
       return TRUE;
     }
   return FALSE;
@@ -632,7 +632,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT FileOpenDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {  
  LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -675,7 +675,7 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT FileSaveDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
  LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -772,7 +772,7 @@ HWND16 ReplaceText( SEGPTR find )
 /***********************************************************************
  *                              FINDDLG_WMInitDialog            [internal]
  */
-static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
 
@@ -817,7 +817,7 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FINDDLG_WMCommand               [internal]
  */
-static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
@@ -860,7 +860,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT FindTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -875,7 +875,7 @@ LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
-static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
 
@@ -911,7 +911,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam
 /***********************************************************************
  *                              REPLACEDLG_WMCommand            [internal]
  */
-static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
@@ -980,7 +980,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -1029,7 +1029,7 @@ BOOL PrintDlg( SEGPTR printdlg )
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT PrintDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1041,10 +1041,10 @@ LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
       switch (wParam)
 	{
 	case IDOK:
-	  EndDialog(hWnd, TRUE);
+	  EndDialog32(hWnd, TRUE);
 	  return(TRUE);
 	case IDCANCEL:
-	  EndDialog(hWnd, FALSE);
+	  EndDialog32(hWnd, FALSE);
 	  return(TRUE);
 	}
       return(FALSE);
@@ -1056,7 +1056,7 @@ LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1067,10 +1067,10 @@ LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
     case WM_COMMAND:
       switch (wParam) {
       case IDOK:
-	EndDialog(hWnd, TRUE);
+	EndDialog32(hWnd, TRUE);
 	return(TRUE);
       case IDCANCEL:
-	EndDialog(hWnd, FALSE);
+	EndDialog32(hWnd, FALSE);
 	return(TRUE);
       }
       return(FALSE);
@@ -1330,10 +1330,10 @@ static int CC_RGBtoHSL(char c,int r,int g,int b)
 /***********************************************************************
  *                CC_MouseCheckPredefColorArray               [internal]
  */
-static int CC_MouseCheckPredefColorArray(HWND hDlg,int dlgitem,int rows,int cols,
+static int CC_MouseCheckPredefColorArray(HWND16 hDlg,int dlgitem,int rows,int cols,
 	    LPARAM lParam,COLORREF *cr)
 {
- HWND hwnd;
+ HWND16 hwnd;
  POINT16 point = MAKEPOINT16(lParam);
  RECT16 rect;
  int dx,dy,x,y;
@@ -1362,10 +1362,10 @@ static int CC_MouseCheckPredefColorArray(HWND hDlg,int dlgitem,int rows,int cols
 /***********************************************************************
  *                  CC_MouseCheckUserColorArray               [internal]
  */
-static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
+static int CC_MouseCheckUserColorArray(HWND16 hDlg,int dlgitem,int rows,int cols,
 	    LPARAM lParam,COLORREF *cr,COLORREF*crarr)
 {
- HWND hwnd;
+ HWND16 hwnd;
  POINT16 point = MAKEPOINT16(lParam);
  RECT16 rect;
  int dx,dy,x,y;
@@ -1404,7 +1404,7 @@ static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
 /***********************************************************************
  *                  CC_MouseCheckColorGraph                   [internal]
  */
-static int CC_MouseCheckColorGraph(HWND hDlg,int dlgitem,int *hori,int *vert,LPARAM lParam)
+static int CC_MouseCheckColorGraph(HWND16 hDlg,int dlgitem,int *hori,int *vert,LPARAM lParam)
 {
  HWND32 hwnd;
  POINT16 point = MAKEPOINT16(lParam);
@@ -1436,9 +1436,9 @@ static int CC_MouseCheckColorGraph(HWND hDlg,int dlgitem,int *hori,int *vert,LPA
 /***********************************************************************
  *                  CC_MouseCheckResultWindow                 [internal]
  */
-static int CC_MouseCheckResultWindow(HWND hDlg,LPARAM lParam)
+static int CC_MouseCheckResultWindow(HWND16 hDlg,LPARAM lParam)
 {
- HWND hwnd;
+ HWND16 hwnd;
  POINT16 point = MAKEPOINT16(lParam);
  RECT16 rect;
 
@@ -1456,7 +1456,7 @@ static int CC_MouseCheckResultWindow(HWND hDlg,LPARAM lParam)
 /***********************************************************************
  *                       CC_CheckDigitsInEdit                 [internal]
  */
-static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
+static int CC_CheckDigitsInEdit(HWND16 hwnd,int maxval)
 {
  int i,k,m,result,value;
  long editpos;
@@ -1497,7 +1497,7 @@ static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
 /***********************************************************************
  *                    CC_PaintSelectedColor                   [internal]
  */
-static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
+static void CC_PaintSelectedColor(HWND16 hDlg,COLORREF cr)
 {
  RECT16 rect;
  HDC32  hdc;
@@ -1513,7 +1513,7 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
    hBrush = SelectObject32 (hdc, hBrush) ;
    Rectangle32(hdc, rect.left,rect.top,rect.right/2,rect.bottom);
    DeleteObject32 (SelectObject32 (hdc,hBrush)) ;
-   hBrush=CreateSolidBrush32(GetNearestColor(hdc,cr));
+   hBrush=CreateSolidBrush32(GetNearestColor32(hdc,cr));
    if (hBrush)
    {
     hBrush= SelectObject32 (hdc, hBrush) ;
@@ -1528,7 +1528,7 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
 /***********************************************************************
  *                    CC_PaintTriangle                        [internal]
  */
-static void CC_PaintTriangle(HWND hDlg,int y)
+static void CC_PaintTriangle(HWND16 hDlg,int y)
 {
  HDC32 hDC;
  long temp;
@@ -1537,7 +1537,7 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  int height;
  int oben;
  RECT16 rect;
- HWND hwnd=GetDlgItem32(hDlg,0x2be);
+ HWND16 hwnd=GetDlgItem32(hDlg,0x2be);
  struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
 
  if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
@@ -1573,11 +1573,11 @@ static void CC_PaintTriangle(HWND hDlg,int y)
 /***********************************************************************
  *                    CC_PaintCross                           [internal]
  */
-static void CC_PaintCross(HWND hDlg,int x,int y)
+static void CC_PaintCross(HWND16 hDlg,int x,int y)
 {
  HDC32 hDC;
  int w=GetDialogBaseUnits();
- HWND hwnd=GetDlgItem32(hDlg,0x2c6);
+ HWND16 hwnd=GetDlgItem32(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  RECT16 rect;
  POINT16 point;
@@ -1619,7 +1619,7 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
 /***********************************************************************
  *                    CC_PrepareColorGraph                    [internal]
  */
-static void CC_PrepareColorGraph(HWND hDlg)    
+static void CC_PrepareColorGraph(HWND16 hDlg)    
 {
  int sdif,hdif,xdif,ydif,r,g,b,hue,sat;
  HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
@@ -1627,7 +1627,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
  HBRUSH32 hbrush;
  HDC32 hdc ;
  RECT16 rect,client;
- HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+ HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
 
  GetClientRect16(hwnd,&client);
  hdc=GetDC32(hwnd);
@@ -1657,13 +1657,13 @@ static void CC_PrepareColorGraph(HWND hDlg)
   rect.left=rect.right;
  }
  ReleaseDC32(hwnd,hdc);
- SetCursor(hcursor);
+ SetCursor16(hcursor);
 }
 
 /***********************************************************************
  *                          CC_PaintColorGraph                [internal]
  */
-static void CC_PaintColorGraph(HWND hDlg)
+static void CC_PaintColorGraph(HWND16 hDlg)
 {
  HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -1686,7 +1686,7 @@ static void CC_PaintColorGraph(HWND hDlg)
 /***********************************************************************
  *                           CC_PaintLumBar                   [internal]
  */
-static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
+static void CC_PaintLumBar(HWND16 hDlg,int hue,int sat)
 {
  HWND32 hwnd=GetDlgItem32(hDlg,0x2be);
  RECT16 rect,client;
@@ -1722,7 +1722,7 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
 /***********************************************************************
  *                             CC_EditSetRGB                  [internal]
  */
-static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
+static void CC_EditSetRGB(HWND16 hDlg,COLORREF cr)
 {
  char buffer[10];
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -1745,7 +1745,7 @@ static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
 /***********************************************************************
  *                             CC_EditSetHSL                  [internal]
  */
-static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
+static void CC_EditSetHSL(HWND16 hDlg,int h,int s,int l)
 {
  char buffer[10];
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -1767,7 +1767,7 @@ static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
 /***********************************************************************
  *                       CC_SwitchToFullSize                  [internal]
  */
-static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
+static void CC_SwitchToFullSize(HWND16 hDlg,COLORREF result,LPRECT16 lprect)
 {
  int i;
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -1796,7 +1796,7 @@ static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
 /***********************************************************************
  *                           CC_PaintPredefColorArray         [internal]
  */
-static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
+static void CC_PaintPredefColorArray(HWND16 hDlg,int rows,int cols)
 {
  HWND32 hwnd=GetDlgItem32(hDlg,0x2d0);
  RECT16 rect;
@@ -1835,7 +1835,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
 /***********************************************************************
  *                             CC_PaintUserColorArray         [internal]
  */
-static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
+static void CC_PaintUserColorArray(HWND16 hDlg,int rows,int cols,COLORREF* lpcr)
 {
  HWND32 hwnd=GetDlgItem32(hDlg,0x2d1);
  RECT16 rect;
@@ -1891,10 +1891,10 @@ static BOOL CC_HookCallChk(LPCHOOSECOLOR lpcc)
 /***********************************************************************
  *                            CC_WMInitDialog                 [internal]
  */
-static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
+static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
    int i,res;
-   HWND hwnd;
+   HWND16 hwnd;
    RECT16 rect;
    POINT16 point;
    struct CCPRIVATE * lpp; 
@@ -1904,7 +1904,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
    lpp->lpcc=(LPCHOOSECOLOR)lParam;
    if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR))
    {
-      EndDialog (hDlg, 0) ;
+      EndDialog32 (hDlg, 0) ;
       return FALSE;
    }
    SetWindowLong32A(hDlg, DWL_USER, (LONG)lpp); 
@@ -1942,7 +1942,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       ClientToScreen16(hwnd,&point);
       ScreenToClient16(hDlg,&point);
       GetClientRect16(hDlg,&rect);
-      point.x+=GetSystemMetrics(SM_CXDLGFRAME);
+      point.x+=GetSystemMetrics32(SM_CXDLGFRAME);
       SetWindowPos32(hDlg,NULL,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
 
       ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_HIDE);
@@ -1961,7 +1961,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMCommand                  [internal]
  */
-static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
+static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
     int r,g,b,i,xx;
     UINT cokmsg;
@@ -2044,7 +2044,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 
           case 0x2c9:              /* resulting color */
 	       hdc=GetDC32(hDlg);
-	       lpp->lpcc->rgbResult=GetNearestColor(hdc,lpp->lpcc->rgbResult);
+	       lpp->lpcc->rgbResult=GetNearestColor32(hdc,lpp->lpcc->rgbResult);
 	       ReleaseDC32(hDlg,hdc);
 	       CC_EditSetRGB(hDlg,lpp->lpcc->rgbResult);
 	       CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
@@ -2074,11 +2074,11 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 			if (SendMessage16(lpp->lpcc->hwndOwner,cokmsg,0,(LPARAM)lpp->lpcc))
 			   break;    /* do NOT close */
 
-		EndDialog (hDlg, 1) ;
+		EndDialog32 (hDlg, 1) ;
 		return TRUE ;
 	
 	  case IDCANCEL :
-		EndDialog (hDlg, 0) ;
+		EndDialog32 (hDlg, 0) ;
 		return TRUE ;
 
        }
@@ -2088,7 +2088,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMPaint                    [internal]
  */
-static LRESULT CC_WMPaint(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
+static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
     /* we have to paint dialog children except text and buttons */
@@ -2115,7 +2115,7 @@ static LRESULT CC_WMPaint(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMLButtonDown              [internal]
  */
-static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
+static LRESULT CC_WMLButtonDown(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
    int r,g,b,i;
@@ -2163,7 +2163,7 @@ static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-LRESULT ColorDlgProc(HWND hDlg, UINT message,
+LRESULT ColorDlgProc(HWND16 hDlg, UINT message,
                      WPARAM16 wParam, LONG lParam)
 {
  int res;
@@ -2307,8 +2307,8 @@ INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
 {
   int i;
   WORD w;
-  HWND hwnd=LOWORD(lParam);
-  HWND hDlg=GetParent16(hwnd);
+  HWND16 hwnd=LOWORD(lParam);
+  HWND16 hDlg=GetParent16(hwnd);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
 
@@ -2342,7 +2342,7 @@ INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND hwnd, HDC16 hdc, LPLOGFONT16 lplf,
+static int SetFontStylesToCombo2(HWND16 hwnd, HDC16 hdc, LPLOGFONT16 lplf,
                                  LPTEXTMETRIC16 lptm)
 {
    #define FSTYLES 4
@@ -2384,7 +2384,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC16 hdc, LPLOGFONT16 lplf,
 /*************************************************************************
  *              SetFontSizesToCombo3                           [internal]
  */
-static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
+static int SetFontSizesToCombo3(HWND16 hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
 {
   static const int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};
   int h,i,j;
@@ -2423,9 +2423,9 @@ static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
 INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
                          UINT16 nFontType, LPARAM lParam )
 {
-  HWND hcmb2=LOWORD(lParam);
-  HWND hcmb3=HIWORD(lParam);
-  HWND hDlg=GetParent16(hcmb3);
+  HWND16 hcmb2=LOWORD(lParam);
+  HWND16 hcmb3=HIWORD(lParam);
+  HWND16 hDlg=GetParent16(hcmb3);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
   TEXTMETRIC16 *lptm = (TEXTMETRIC16 *)PTR_SEG_TO_LIN(metrics);
@@ -2456,13 +2456,13 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
 /***********************************************************************
  *           CFn_WMInitDialog                            [internal]
  */
-LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
+LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HDC32 hdc;
   int i,j,res,init=0;
   long l;
   LPLOGFONT16 lpxx;
-  HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+  HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
   LPCHOOSEFONT lpcf;
 
   SetWindowLong32A(hDlg, DWL_USER, lParam); 
@@ -2473,7 +2473,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   if (lpcf->lStructSize != sizeof(CHOOSEFONT))
   {
     dprintf_commdlg(stddeb,"WM_INITDIALOG: structure size failure !!!\n");
-    EndDialog (hDlg, 0); 
+    EndDialog32 (hDlg, 0); 
     return FALSE;
   }
   if (!hBitmapTT)
@@ -2559,7 +2559,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   else
   {
     dprintf_commdlg(stddeb,"WM_INITDIALOG: HDC failure !!!\n");
-    EndDialog (hDlg, 0); 
+    EndDialog32 (hDlg, 0); 
     return FALSE;
   }
 
@@ -2568,7 +2568,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   res=TRUE;
   if (CFn_HookCallChk(lpcf))
     res=CallWindowProc16(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
-  SetCursor(hcursor);   
+  SetCursor16(hcursor);   
   return res;
 }
 
@@ -2576,7 +2576,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMMeasureItem                           [internal]
  */
-LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
+LRESULT CFn_WMMeasureItem(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   BITMAP16 bm;
   LPMEASUREITEMSTRUCT16 lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT16)lParam);
@@ -2592,7 +2592,7 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMDrawItem                              [internal]
  */
-LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
+LRESULT CFn_WMDrawItem(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HBRUSH16 hBrush;
   char *buffer;
@@ -2685,7 +2685,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCtlColor                              [internal]
  */
-LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
+LRESULT CFn_WMCtlColor(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
 
@@ -2701,7 +2701,7 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCommand                               [internal]
  */
-LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
+LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HFONT16 hFont;
   int i,j;
@@ -2723,14 +2723,14 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL16,0,0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+		        HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
                         char *str = SEGPTR_ALLOC(256);
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT16,i,
                                              (LPARAM)SEGPTR_GET(str));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",str);
        		        EnumFontFamilies16(hdc,str,FontStyleEnumProc,
 		             MAKELONG(GetDlgItem32(hDlg,cmb2),GetDlgItem32(hDlg,cmb3)));
-		        SetCursor(hcursor);     
+		        SetCursor16(hcursor);
                         SEGPTR_FREE(str);
 		      }
 		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
@@ -2739,7 +2739,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
  		    else
                     {
                       dprintf_commdlg(stddeb,"WM_COMMAND: HDC failure !!!\n");
-                      EndDialog (hDlg, 0); 
+                      EndDialog32 (hDlg, 0); 
                       return TRUE;
                     }
 	          }
@@ -2816,7 +2816,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                      ( (lpcf->Flags & CF_LIMITSIZE) && 
                       (-lpxx->lfHeight >= lpcf->nSizeMin) && 
                       (-lpxx->lfHeight <= lpcf->nSizeMax)))
-	             EndDialog(hDlg, TRUE);
+	             EndDialog32(hDlg, TRUE);
 	          else
 	          {
                    char buffer[80];
@@ -2825,7 +2825,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 	           MessageBox16(hDlg,buffer,NULL,MB_OK);
 	          } 
 		  return(TRUE);
-	case IDCANCEL:EndDialog(hDlg, FALSE);
+	case IDCANCEL:EndDialog32(hDlg, FALSE);
 		  return(TRUE);
 	}
       return(FALSE);
@@ -2838,7 +2838,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                     2. some CF_.. flags are not supported
                     3. some TType extensions
  */
-LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM16 wParam, LPARAM lParam)
+LRESULT FormatCharDlgProc(HWND16 hDlg, UINT message, WPARAM16 wParam, LPARAM lParam)
 {
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER);  
   if (message!=WM_INITDIALOG)

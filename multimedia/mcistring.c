@@ -2095,7 +2095,7 @@ struct	_MCISTR_cmdtable {
  * it is used. (imagine "close all"). Not implemented yet.
  */
 DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
-	UINT uReturnLength, HWND hwndCallback)
+	UINT uReturnLength, HWND16 hwndCallback)
 {
 	char	*cmd,*dev,*args,**keywords;
 	WORD	uDevTyp=0,wDevID=0;

@@ -485,7 +485,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 #if 0
 		exit(1);
@@ -550,7 +550,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_midi(stddeb, "MIDI_mciRecord // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -735,7 +735,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 		}
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_midi(stddeb, "MIDI_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;

@@ -13,7 +13,7 @@ base	1
 0008 stub AddAuditAccessAce
 0009 stub AdjustTokenGroups
 0010 stub AdjustTokenPrivileges
-0011 stub AllocateAndInitializeSid
+0011 stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
 0012 stub AllocateLocallyUniqueId
 0013 stub AreAllAccessesGranted
 0014 stub AreAnyAccessesGranted
@@ -26,7 +26,7 @@ base	1
 0021 stub CloseEventLog
 0022 stub CloseServiceHandle
 0023 stub ControlService
-0024 stub CopySid
+0024 stdcall CopySid(long ptr ptr) CopySid
 0025 stub CreatePrivateObjectSecurity
 0026 stub CreateProcessAsUserA
 0027 stub CreateProcessAsUserW
@@ -41,16 +41,16 @@ base	1
 0036 stub EnumDependentServicesW
 0037 stub EnumServicesStatusA
 0038 stub EnumServicesStatusW
-0039 stub EqualPrefixSid
-0040 stub EqualSid
+0039 stdcall EqualPrefixSid(ptr ptr) EqualPrefixSid
+0040 stdcall EqualSid(ptr ptr) EqualSid
 0041 stub FindFirstFreeAce
-0042 stub FreeSid
+0042 stdcall FreeSid(ptr) FreeSid
 0043 stub GetAce
 0044 stub GetAclInformation
 0045 stub GetFileSecurityA
 0046 stub GetFileSecurityW
 0047 stub GetKernelObjectSecurity
-0048 stub GetLengthSid
+0048 stdcall GetLengthSid(ptr) GetLengthSid
 0049 stub GetNumberOfEventLogRecords
 0050 stub GetOldestEventLogRecord
 0051 stub GetPrivateObjectSecurity
@@ -64,10 +64,10 @@ base	1
 0059 stub GetServiceDisplayNameW
 0060 stub GetServiceKeyNameA
 0061 stub GetServiceKeyNameW
-0062 stub GetSidIdentifierAuthority
-0063 stub GetSidLengthRequired
-0064 stub GetSidSubAuthority
-0065 stub GetSidSubAuthorityCount
+0062 stdcall GetSidIdentifierAuthority(ptr) GetSidIdentifierAuthority
+0063 stdcall GetSidLengthRequired(long) GetSidLengthRequired
+0064 stdcall GetSidSubAuthority(ptr long) GetSidSubAuthority
+0065 stdcall GetSidSubAuthorityCount(ptr) GetSidSubAuthorityCount
 0066 stub GetTokenInformation
 0067 stdcall GetUserNameA(ptr ptr) GetUserName32A
 0068 stdcall GetUserNameW(ptr ptr) GetUserName32W
@@ -76,13 +76,13 @@ base	1
 0071 stub ImpersonateSelf
 0072 stub InitializeAcl
 0073 return InitializeSecurityDescriptor 8 1
-0074 stub InitializeSid
+0074 stdcall InitializeSid(ptr ptr long) InitializeSid
 0075 stub InitiateSystemShutdownA
 0076 stub InitiateSystemShutdownW
 0077 stub IsTextUnicode
 0078 stub IsValidAcl
 0079 stub IsValidSecurityDescriptor
-0080 stub IsValidSid
+0080 stdcall IsValidSid(ptr) IsValidSid
 0081 stub LockServiceDatabase
 0082 stub LogonUserA
 0083 stub LogonUserW

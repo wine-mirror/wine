@@ -145,10 +145,11 @@ BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
     }
     else
     {
-        Caret.width = width ? width : GetSystemMetrics(SM_CXBORDER);
-        Caret.height = height ? height : GetSystemMetrics(SM_CYBORDER);
-        Caret.hBrush = CreateSolidBrush32(bitmap ? GetSysColor(COLOR_GRAYTEXT):
-                                          GetSysColor(COLOR_WINDOW) );
+        Caret.width = width ? width : GetSystemMetrics32(SM_CXBORDER);
+        Caret.height = height ? height : GetSystemMetrics32(SM_CYBORDER);
+        Caret.hBrush = CreateSolidBrush32(bitmap ?
+                                          GetSysColor32(COLOR_GRAYTEXT) :
+                                          GetSysColor32(COLOR_WINDOW) );
     }
 
     Caret.hwnd = hwnd;
@@ -204,9 +205,18 @@ BOOL16 SetCaretPos( INT32 x, INT32 y)
 
 
 /*****************************************************************
- *           HideCaret   (USER.166) (USER32.316)
+ *           HideCaret16   (USER.166)
  */
-BOOL16 HideCaret( HWND32 hwnd )
+BOOL16 HideCaret16( HWND16 hwnd )
+{
+    return HideCaret32( hwnd );
+}
+
+
+/*****************************************************************
+ *           HideCaret32   (USER32.316)
+ */
+BOOL32 HideCaret32( HWND32 hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
@@ -222,9 +232,18 @@ BOOL16 HideCaret( HWND32 hwnd )
 
 
 /*****************************************************************
- *           ShowCaret   (USER.167) (USER32.528)
+ *           ShowCaret16   (USER.167)
  */
-BOOL16 ShowCaret( HWND32 hwnd )
+BOOL16 ShowCaret16( HWND16 hwnd )
+{
+    return ShowCaret32( hwnd );
+}
+
+
+/*****************************************************************
+ *           ShowCaret32   (USER32.528)
+ */
+BOOL32 ShowCaret32( HWND32 hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;

@@ -506,7 +506,7 @@ UINT joyGetNumDevs(void);
 UINT joyGetPos(UINT uJoyID, JOYINFO * lpInfo);
 UINT joyGetThreshold(UINT uJoyID, UINT * lpuThreshold);
 UINT joyReleaseCapture(UINT uJoyID);
-UINT joySetCapture(HWND hwnd, UINT uJoyID, UINT uPeriod,
+UINT joySetCapture(HWND16 hwnd, UINT uJoyID, UINT uPeriod,
     BOOL bChanged);
 UINT joySetThreshold(UINT uJoyID, UINT uThreshold);
 
@@ -652,7 +652,7 @@ typedef UINT (*YIELDPROC) (UINT uDeviceID, DWORD dwYieldData);
 DWORD mciSendCommand (UINT uDeviceID, UINT uMessage,
     DWORD dwParam1, DWORD dwParam2);
 DWORD mciSendString (LPCSTR lpstrCommand,
-    LPSTR lpstrReturnString, UINT uReturnLength, HWND hwndCallback);
+    LPSTR lpstrReturnString, UINT uReturnLength, HWND16 hwndCallback);
 UINT mciGetDeviceID (LPCSTR lpstrName);
 UINT mciGetDeviceIDFromElementID (DWORD dwElementID,
     LPCSTR lpstrType);
@@ -984,7 +984,7 @@ typedef struct {
 	DWORD   dwCallback;
 	int     nVirtKey;
 	UINT    wReserved0;
-	HWND    hwndBreak;
+	HWND16  hwndBreak;
 	UINT    wReserved1;
 } MCI_BREAK_PARMS, *LPMCI_BREAK_PARMS;
 
@@ -1219,7 +1219,7 @@ typedef struct {
 	LPCSTR  lpstrElementName;
 	LPCSTR  lpstrAlias;
 	DWORD   dwStyle;
-	HWND    hWndParent;
+	HWND16  hWndParent;
 	UINT    wReserved1;
 } MCI_ANIM_OPEN_PARMS, *LPMCI_ANIM_OPEN_PARMS;
 
@@ -1237,7 +1237,7 @@ typedef struct {
 
 typedef struct {
 	DWORD   dwCallback;
-	HWND    hWnd;
+	HWND16  hWnd;
 	UINT    wReserved1;
 	UINT    nCmdShow;
 	UINT    wReserved2;
@@ -1299,13 +1299,13 @@ typedef struct {
 	LPCSTR  lpstrElementName;
 	LPCSTR  lpstrAlias;
 	DWORD   dwStyle;
-	HWND    hWndParent;
+	HWND16  hWndParent;
 	UINT    wReserved1;
 } MCI_OVLY_OPEN_PARMS, *LPMCI_OVLY_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
-	HWND    hWnd;
+	HWND16  hWnd;
 	UINT    wReserved1;
 	UINT    nCmdShow;
 	UINT    wReserved2;
@@ -1513,7 +1513,7 @@ typedef struct {
 DWORD mciGetDriverData(UINT uDeviceID);
 BOOL  mciSetDriverData(UINT uDeviceID, DWORD dwData);
 UINT  mciDriverYield(UINT uDeviceID);
-BOOL  mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
+BOOL  mciDriverNotify(HWND16 hwndCallback, UINT uDeviceID,
     UINT uStatus);
 UINT  mciLoadCommandResource(HINSTANCE16 hInstance,
     LPCSTR lpResName, UINT uType);

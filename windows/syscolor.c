@@ -46,7 +46,7 @@ static const char * const DefSysColors[] =
 static COLORREF SysColors[NUM_SYS_COLORS];
 
 #define MAKE_SOLID(color) \
-         (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
+       (PALETTEINDEX(GetNearestPaletteIndex32(STOCK_DEFAULT_PALETTE,(color))))
 
 /*************************************************************************
  *             SYSCOLOR_SetColor
@@ -145,22 +145,28 @@ void SYSCOLOR_Init(void)
 
 
 /*************************************************************************
- *             GetSysColor   (USER.180) (USER32.288)
+ *             GetSysColor16   (USER.180)
  */
-
-COLORREF GetSysColor( INT32 nIndex )
+COLORREF GetSysColor16( INT16 nIndex )
 {
-    dprintf_syscolor(stddeb,"System Color %d = %8lx\n", 
-		    nIndex, SysColors[nIndex]);
     return SysColors[nIndex];
 }
 
 
 /*************************************************************************
- *             SetSysColors          (USER.181)
+ *             GetSysColor32   (USER32.288)
  */
+COLORREF GetSysColor32( INT32 nIndex )
+{
+    return SysColors[nIndex];
+}
 
-void SetSysColors(int nChanges, LPINT16 lpSysColor, COLORREF *lpColorValues)
+
+/*************************************************************************
+ *             SetSysColors16   (USER.181)
+ */
+VOID SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
+                     const COLORREF *lpColorValues )
 {
     int i;
 
@@ -171,9 +177,35 @@ void SetSysColors(int nChanges, LPINT16 lpSysColor, COLORREF *lpColorValues)
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
-    /* ................ */
+    SendMessage32A( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
 
     /* Repaint affected portions of all visible windows */
 
-    /* ................ */
+    RedrawWindow32( GetDesktopWindow32(), NULL, 0,
+                RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
+}
+
+
+/*************************************************************************
+ *             SetSysColors32   (USER32.504)
+ */
+BOOL32 SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
+                       const COLORREF *lpColorValues )
+{
+    int i;
+
+    for (i = 0; i < nChanges; i++)
+    {
+	SYSCOLOR_SetColor( lpSysColor[i], lpColorValues[i] );
+    }
+
+    /* Send WM_SYSCOLORCHANGE message to all windows */
+
+    SendMessage32A( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
+
+    /* Repaint affected portions of all visible windows */
+
+    RedrawWindow32( GetDesktopWindow32(), NULL, 0,
+                RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
+    return TRUE;
 }

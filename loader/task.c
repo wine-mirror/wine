@@ -833,7 +833,8 @@ void TASK_YieldToSystem(TDB* pTask)
   if( pTask )
   {
     pQ = (MESSAGEQUEUE*)GlobalLock16(pTask->hQueue);
-    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT )
+    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT &&
+	    !(pQ->wakeBits & (QS_SENDMESSAGE | QS_SMRESULT)) )
     {
       pQ->flags &= ~QUEUE_FLAG_XEVENT;
       EVENT_WaitXEvent( FALSE, FALSE );

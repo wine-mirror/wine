@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -24,7 +25,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
-
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
 #include "win.h"
 #include "pe_image.h"
 #include "peexe.h"

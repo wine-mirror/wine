@@ -101,7 +101,7 @@ static DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 		dprintf_mcianim(stddeb,
 			"ANIM_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
@@ -330,7 +330,7 @@ static DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 		dprintf_mcianim(stddeb,
 			"ANIM_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	if (dwFlags & MCI_STATUS_ITEM) {
@@ -436,7 +436,7 @@ static DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		dprintf_mcianim(stddeb,
 			"ANIM_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -459,7 +459,7 @@ static DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 		dprintf_mcianim(stddeb,
 			"ANIM_mciStop // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
@@ -482,7 +482,7 @@ static DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 		dprintf_mcianim(stddeb,
 			"ANIM_mciPause // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -505,7 +505,7 @@ static DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 		dprintf_mcianim(stddeb,
 			"ANIM_mciResume // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -544,7 +544,7 @@ static DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 		dprintf_mcianim(stddeb,
 			"ANIM_mciSeek // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return dwRet;
@@ -592,7 +592,7 @@ static DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 		dprintf_mcianim(stddeb,
 			"ANIM_mciSet // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -631,7 +631,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_QUERYCONFIGURE:
 			return 1;
 		case DRV_CONFIGURE:
-			MessageBox16((HWND)NULL, "Sample MultiMedia Linux Driver !", 
+			MessageBox16(0, "Sample MultiMedia Linux Driver !", 
 								"MMLinux Driver", MB_OK);
 			return 1;
 		case DRV_INSTALL:

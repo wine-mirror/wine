@@ -1034,9 +1034,16 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
+#if 0
 	SendMessage32A( hwndPrevActive, WM_ACTIVATE,
                         MAKEWPARAM( WA_INACTIVE, wIconized ),
                         (LPARAM)hWnd );
+#else
+	/* FIXME: must be SendMessage16() because 32A doesn't do
+	 * intertask at this time */
+	SendMessage16( hwndPrevActive, WM_ACTIVATE, WA_INACTIVE,
+				MAKELPARAM( (HWND16)hWnd, wIconized ) );
+#endif
 
 	/* check if something happened during message processing */
 	if( hwndPrevActive != hwndActive ) return 0;
@@ -1120,9 +1127,14 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 
         wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
         SendMessage16( hWnd, WM_NCACTIVATE, TRUE, 0 );
+#if 0
         SendMessage32A( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
 		 (LPARAM)hwndPrevActive );
+#else
+        SendMessage16(hWnd, WM_ACTIVATE, (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE,
+                      MAKELPARAM( (HWND16)hwndPrevActive, wIconized) );
+#endif
 
         if( !IsWindow(hWnd) ) return 0;
     }

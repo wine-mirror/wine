@@ -37,7 +37,7 @@
 
 void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 { 
-  char		*Module;
+  char		*Module,*s;
   int		i;
   u_short	*ordinal;
   u_long	*function,*functions;
@@ -73,6 +73,7 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 	  daddr.off=RVA(*functions);
 	  function++;
       }
+      while ((s=strchr(buffer,'.'))) *s='_';
       DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
   }
 }
@@ -536,6 +537,8 @@ problem needs to be fixed properly at some stage */
 	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
   		
 	if (pe->pe_export) {
+		char	*s;
+
 		/* add start of sections as debugsymbols */
 		for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
 			sprintf(buffer,"%s_%s",
@@ -543,11 +546,13 @@ problem needs to be fixed properly at some stage */
 				pe->pe_seg[i].Name
 			);
 			daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
+      			while ((s=strchr(buffer,'.'))) *s='_';
 			DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		}
 		/* add entry point */
 		sprintf(buffer,"%s_EntryPoint",(char*)RVA(pe->pe_export->Name));
 		daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
+      		while ((s=strchr(buffer,'.'))) *s='_';
 		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		/* add start of DLL */
 		daddr.off=load_addr;

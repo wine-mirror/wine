@@ -57,7 +57,7 @@ static void ListBoxInitialize(LPHEADLIST lphl)
   lphl->PrevFocused    = -1;
 }
 
-void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
+void CreateListBoxStruct(HWND16 hwnd, WORD CtlType, LONG styles, HWND16 parent)
 {
   LPHEADLIST lphl;
   HDC32         hdc;
@@ -173,7 +173,7 @@ LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
 }
 
 
-void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls, 
+void ListBoxDrawItem(HWND16 hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls, 
                      RECT16 *rect, WORD itemAction, WORD itemState)
 {
     if (lphl->OwnerDrawn)
@@ -204,7 +204,7 @@ void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
       }
 
       if (lphl->dwStyle & LBS_USETABSTOPS) {
-	TabbedTextOut(hdc, rect->left + 5, rect->top + 2, 
+	TabbedTextOut16(hdc, rect->left + 5, rect->top + 2, 
 		      (char *)lpls->itemText, strlen((char *)lpls->itemText), 
 		      lphl->iNumStops, lphl->TabStops, 0);
       } else {

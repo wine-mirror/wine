@@ -268,7 +268,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
  * but without the borders (if any).
  * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-static void NC_GetInsideRect( HWND hwnd, RECT32 *rect )
+static void NC_GetInsideRect( HWND32 hwnd, RECT32 *rect )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -457,7 +457,7 @@ void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
 /***********************************************************************
  *           NC_DrawMaxButton
  */
-static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -477,7 +477,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMinButton
  */
-static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -589,7 +589,7 @@ static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
  * Draw the window caption.
  * The correct pen for the window frame must be selected in the DC.
  */
-static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
+static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
 			    DWORD style, BOOL active )
 {
     RECT16 r = *rect;
@@ -647,8 +647,8 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
 
     if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
     {
-	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
-	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
+	if (active) SetTextColor( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
+	else SetTextColor( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode32( hdc, TRANSPARENT );
 	DrawText16( hdc, buffer, -1, &r,
                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
@@ -805,7 +805,7 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 	    WORD msg = HIWORD( lParam );
 	    if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
 		(msg == WM_RBUTTONDOWN))
-		MessageBeep(0);
+		MessageBeep32(0);
 	}
 	break;
 
@@ -815,7 +815,7 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
 	    if (wndPtr->class->hCursor)
 	    {
-		SetCursor( wndPtr->class->hCursor );
+		SetCursor16( wndPtr->class->hCursor );
 		return TRUE;
 	    }
 	    else return FALSE;
@@ -823,23 +823,23 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZEWE ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENS ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENWSE ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENESW ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor( LoadCursor16( 0, IDC_ARROW ) );
+    return (LONG)SetCursor16( LoadCursor16( 0, IDC_ARROW ) );
 }
 
 /***********************************************************************
@@ -870,7 +870,7 @@ BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
  *
  * Track a mouse button press on the system menu.
  */
-static void NC_TrackSysMenu( HWND hwnd, POINT16 pt )
+static void NC_TrackSysMenu( HWND32 hwnd, POINT16 pt )
 {
     WND*	wndPtr = WIN_FindWndPtr( hwnd );
     
@@ -928,7 +928,8 @@ static void NC_TrackSysMenu( HWND hwnd, POINT16 pt )
  * Initialisation of a move or resize, when initiatied from a menu choice.
  * Return hit test code for caption or sizing border.
  */
-static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint )
+static LONG NC_StartSizeMove( HWND32 hwnd, WPARAM16 wParam,
+                              POINT16 *capturePoint )
 {
     LONG hittest = 0;
     POINT16 pt;
@@ -1000,7 +1001,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint 
 	}
     }
     *capturePoint = pt;
-    SetCursorPos( capturePoint->x, capturePoint->y );
+    SetCursorPos32( capturePoint->x, capturePoint->y );
     NC_HandleSetCursor( hwnd, (WPARAM16)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
@@ -1011,7 +1012,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint 
  *
  * Perform SC_MOVE and SC_SIZE commands.
  */
-static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
+static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 {
     MSG16 msg;
     RECT16 sizingRect, mouseRect;
@@ -1099,8 +1100,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
       if( hIcon )
       {
         hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
-        hOldCursor = SetCursor(hDragCursor);
-        ShowCursor(1);
+        hOldCursor = SetCursor32(hDragCursor);
+        ShowCursor32( TRUE );
       } else iconic = FALSE;
     }
 
@@ -1143,7 +1144,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	if (dx || dy)
 	{
             moved = 1;
-	    if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
+	    if (msg.message == WM_KEYDOWN) SetCursorPos32( pt.x, pt.y );
 	    else
 	    {
 		RECT16 newRect = sizingRect;
@@ -1167,9 +1168,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     ReleaseCapture();
     if( iconic )
     {
-      ShowCursor(0);
-      SetCursor(hOldCursor);
-      if( hDragCursor ) DestroyCursor(hDragCursor);
+      ShowCursor32( FALSE );
+      SetCursor32(hOldCursor);
+      if( hDragCursor ) DestroyCursor32( hDragCursor );
     }
     else
       NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
@@ -1225,7 +1226,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
  *
  * Track a mouse button press on the minimize or maximize box.
  */
-static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
+static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 {
     MSG16 msg;
     HDC32 hdc = GetWindowDC32( hwnd );
@@ -1306,8 +1307,8 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
             SCROLL_HandleScrollEvent( hwnd, scrollbar, msg->message, pt );
 	    break;
         default:
-            TranslateMessage( msg );
-            DispatchMessage( msg );
+            TranslateMessage16( msg );
+            DispatchMessage16( msg );
             break;
 	}
         if (!IsWindow( hwnd ))

@@ -1,5 +1,9 @@
 	Running & Compiling WINE in OS/2
 
+If you want to help for the port of WINE to OS/2, 
+send me a message at krynos@clic.net
+I currently don't want beta testers. It must work before we can test it.
+
 Here is what you need to (try to) compile Wine for OS/2:
 EMX 0.9c (fix 2)
 XFree86 3.2 OS/2 (with development libraries)
@@ -7,35 +11,35 @@ bash, gnu make, grep, tar, bison, flex
 sed (a working copy of)
 xpm
 diff and patch are recommended
+Lots of disk space (about 40-50 megs after EMX and XFree installed)
 
 To compile:
 sh 
 tools/make_os2.sh
 make depend
-make (make doesn't work yet... I will need to do some others patch, or
-      you may do it...)
+make
+emxbind wine
 
 Currently:
 - configure and make depend work...
-- make doesn't work well...
-- the selectors numbers (0) are wrong...
+- make compiles (with a modified Linux mman.h), but doesn't link.
 - signal handling is horrible... (if any)
-- EMX doesn't seem to support mmap
-- debugger don't compile at all
-- sigcontext.h isn't right (incomplete structure?).
+- EMX doesn't support mmap (and related), SysV IPC and stafs()
+- XFree86/OS2 3.2 doesn't support XShmQueryExtension() and XShmPixmapFormat()
+  due to the same lack in EMX...
 
 What needs to be redone:
+- LDT (using DosAllocSeg in memory/ldt.c) *
+- implement mmap() and SysV IPC in EMX *
 - File functions, 
 - I/O access (do it!),
 - Communication (modem),
 - Interrupt (if int unknow, call current RealMode one...), 
 - verify that everything is thread safe (how does Win95/NT handle multi-thread?), 
 - move X functions in some files (and make a wrapper, to use PM instead latter), 
-- implement mmap (or find something else), 
-- make debugger work, 
 - return right CPU type, 
 - make winsock work
-
+* Top priority
 
 The good things:
 - OS/2 have DOS interrupts

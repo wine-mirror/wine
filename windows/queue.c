@@ -306,17 +306,20 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         !(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask))) 
 	{ dprintf_msg(stddeb,"\trcm: nothing to do\n"); return; }
 
-    queue->InSendMessageHandle = queue->hSendingTask;
-    if( !(queue->hSendingTask = senderQ->hPrevSendingTask) )
+    if( !senderQ->hPrevSendingTask )
     {
       queue->wakeBits &= ~QS_SENDMESSAGE;	/* no more sent messages */
       queue->changeBits &= ~QS_SENDMESSAGE;
     }
 
-    /* Remove sending queue from the list */
+    /* Save current state on stack */
     prevSender                 = queue->InSendMessageHandle;
     prevCtrlPtr		       = queue->smResultCurrent;
+
+    /* Remove sending queue from the list */
+    queue->InSendMessageHandle = queue->hSendingTask;
     queue->smResultCurrent     = senderQ->smResultInit;
+    queue->hSendingTask	       = senderQ->hPrevSendingTask;
 
     dprintf_msg(stddeb, "\trcm: smResultCurrent = %08x, prevCtrl = %08x\n", 
 				(unsigned)queue->smResultCurrent, (unsigned)prevCtrlPtr );
@@ -488,8 +491,8 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 static void QUEUE_WakeSomeone( UINT message )
 {
     WND*	  wndPtr = NULL;
-    HWND          hwnd;
     WORD          wakeBit;
+    HWND32 hwnd;
     MESSAGEQUEUE *queue = pCursorQueue;
 
     if( (message >= WM_KEYFIRST) && (message <= WM_KEYLAST) )
@@ -561,7 +564,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
     if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
     {
         /* Queue is full, beep (but not on every mouse motion...) */
-        if (message != WM_MOUSEMOVE) MessageBeep(0);
+        if (message != WM_MOUSEMOVE) MessageBeep32(0);
         return;
     }
 
@@ -647,9 +650,18 @@ void QUEUE_DecTimerCount( HQUEUE16 hQueue )
 
 
 /***********************************************************************
- *           PostQuitMessage   (USER.6)
+ *           PostQuitMessage16   (USER.6)
  */
-void PostQuitMessage( INT exitCode )
+void PostQuitMessage16( INT16 exitCode )
+{
+    PostQuitMessage32( exitCode );
+}
+
+
+/***********************************************************************
+ *           PostQuitMessage32   (USER32.420)
+ */
+void PostQuitMessage32( INT32 exitCode )
 {
     MESSAGEQUEUE *queue;
 
@@ -673,8 +685,8 @@ HTASK16 GetWindowTask16( HWND16 hwnd )
 /***********************************************************************
  *           GetWindowThreadProcessId   (USER32.312)
  */
-DWORD
-GetWindowThreadProcessId(HWND32 hwnd,LPDWORD process) {
+DWORD GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
+{
     HTASK16 htask;
     TDB	*tdb;
 
@@ -695,9 +707,18 @@ GetWindowThreadProcessId(HWND32 hwnd,LPDWORD process) {
 
 
 /***********************************************************************
- *           SetMessageQueue   (USER.266)
+ *           SetMessageQueue16   (USER.266)
  */
-BOOL SetMessageQueue( int size )
+BOOL16 SetMessageQueue16( INT16 size )
+{
+    return SetMessageQueue32( size );
+}
+
+
+/***********************************************************************
+ *           SetMessageQueue32   (USER32.493)
+ */
+BOOL32 SetMessageQueue32( INT32 size )
 {
     HQUEUE16 hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
@@ -757,19 +778,29 @@ DWORD GetQueueStatus( UINT flags )
 
 
 /***********************************************************************
- *           GetInputState   (USER.335)
+ *           GetInputState16   (USER.335)
  */
-BOOL GetInputState()
+BOOL16 GetInputState16(void)
+{
+    return GetInputState32();
+}
+
+
+/***********************************************************************
+ *           GetInputState32   (USER32.243)
+ */
+BOOL32 GetInputState32(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return FALSE;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) )))
+        return FALSE;
     return queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
 }
 
 
 /***********************************************************************
- *           GetMessagePos   (USER.119)
+ *           GetMessagePos   (USER.119) (USER32.271)
  */
 DWORD GetMessagePos(void)
 {
@@ -781,7 +812,7 @@ DWORD GetMessagePos(void)
 
 
 /***********************************************************************
- *           GetMessageTime   (USER.120)
+ *           GetMessageTime   (USER.120) (USER32.272)
  */
 LONG GetMessageTime(void)
 {
@@ -793,7 +824,7 @@ LONG GetMessageTime(void)
 
 
 /***********************************************************************
- *           GetMessageExtraInfo   (USER.288)
+ *           GetMessageExtraInfo   (USER.288) (USER32.270)
  */
 LONG GetMessageExtraInfo(void)
 {

@@ -791,14 +791,23 @@ HDC32 ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
 
 
 /***********************************************************************
- *           GetDeviceCaps    (GDI.80)
+ *           GetDeviceCaps16    (GDI.80)
  */
-int GetDeviceCaps( HDC16 hdc, WORD cap )
+INT16 GetDeviceCaps16( HDC16 hdc, INT16 cap )
+{
+    return GetDeviceCaps32( hdc, cap );
+}
+
+
+/***********************************************************************
+ *           GetDeviceCaps32    (GDI32.171)
+ */
+INT32 GetDeviceCaps32( HDC32 hdc, INT32 cap )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
-    if (cap > sizeof(DeviceCaps)-sizeof(WORD)) return 0;
+    if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD))) return 0;
     
     dprintf_dc(stddeb, "GetDeviceCaps(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );

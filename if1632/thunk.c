@@ -418,19 +418,21 @@ BOOL32 THUNK_EnumResourceLanguages32A( HMODULE32 hmod,LPCSTR type,LPCSTR name,EN
 /***********************************************************************
  *           THUNK_EnumResourceNames32A   (KERNEL32.88)
  */
-BOOL32 THUNK_EnumResourceNames32A( HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32A func, LONG lParam )
+BOOL32 THUNK_EnumResourceNames32A( HMODULE32 hmod, LPCSTR type,
+                                   ENUMRESNAMEPROC32A func, LONG lParam )
 {
     DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumResourceNames32A( hmod,type,(ENUMRESNAMEPROC32A)&thunk, lParam );
+    return EnumResourceNames32A( hmod,type,(ENUMRESNAMEPROC32A)&thunk,lParam );
 }
 
 /***********************************************************************
  *           THUNK_EnumResourceNames32W   (KERNEL32.89)
  */
-BOOL32 THUNK_EnumResourceNames32W( HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32W func, LONG lParam )
+BOOL32 THUNK_EnumResourceNames32W( HMODULE32 hmod, LPCWSTR type,
+                                   ENUMRESNAMEPROC32W func, LONG lParam )
 {
     DECL_THUNK( thunk, func, CallTo32_4 );
-    return EnumResourceNames32W( hmod,type,(ENUMRESNAMEPROC32W)&thunk, lParam );
+    return EnumResourceNames32W( hmod,type,(ENUMRESNAMEPROC32W)&thunk, lParam);
 }
 
 /***********************************************************************
@@ -461,10 +463,42 @@ BOOL16 THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 func,
 {
     DECL_THUNK( thunk, func, CallTo16_word_wlw );
     if (!func)
-        return GrayString( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
+        return GrayString16( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
     else
-        return GrayString( hdc, hbr, (GRAYSTRINGPROC16)&thunk, lParam, cch,
-                           x, y, cx, cy );
+        return GrayString16( hdc, hbr, (GRAYSTRINGPROC16)&thunk, lParam, cch,
+                             x, y, cx, cy );
+}
+
+
+/***********************************************************************
+ *           THUNK_GrayString32A   (USER32.314)
+ */
+BOOL32 THUNK_GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 func,
+                            LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                            INT32 cx, INT32 cy )
+{
+    DECL_THUNK( thunk, func, CallTo32_3 );
+    if (!func)
+        return GrayString32A( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
+    else
+        return GrayString32A( hdc, hbr, (GRAYSTRINGPROC32)&thunk, lParam, cch,
+                              x, y, cx, cy );
+}
+
+
+/***********************************************************************
+ *           THUNK_GrayString32W   (USER32.315)
+ */
+BOOL32 THUNK_GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 func,
+                            LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                            INT32 cx, INT32 cy )
+{
+    DECL_THUNK( thunk, func, CallTo32_3 );
+    if (!func)
+        return GrayString32W( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
+    else
+        return GrayString32W( hdc, hbr, (GRAYSTRINGPROC32)&thunk, lParam, cch,
+                              x, y, cx, cy );
 }
 
 

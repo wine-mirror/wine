@@ -317,7 +317,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	USER_HEAP_FREE(hWaveHdr);
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -387,7 +387,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	USER_HEAP_FREE(hWaveHdr);
 	if (dwFlags & MCI_NOTIFY) {
 	  dprintf_mciwave(stddeb,"WAVE_mciRecord // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -590,7 +590,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 		}
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_mciwave(stddeb,"WAVE_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
@@ -1603,7 +1603,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_QUERYCONFIGURE:
 			return 1;
 		case DRV_CONFIGURE:
-			MessageBox16((HWND)NULL, "Sample MultiMedia Linux Driver !", 
+			MessageBox16(0, "Sample MultiMedia Linux Driver !", 
 								"MMLinux Driver", MB_OK);
 			return 1;
 		case DRV_INSTALL:

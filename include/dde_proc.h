@@ -34,7 +34,7 @@ enum stop_wait_op {		/* The action to be taken upon SIGUSR2 */
 
 typedef struct {
     WORD  proc_idx;		/* index into wine's process table  */
-    HWND  wnd;			/* Window on the local proccess */
+    HWND16  wnd;		/* Window on the local proccess */
 } WND_DATA;
 extern enum stop_wait_op stop_wait_op;
 extern int had_SIGUSR2;
@@ -51,12 +51,12 @@ int  dde_reschedule();
 void dde_wnd_setup();		   /* setup Data structure of DDE windows */
 
 /* Send ack. to hnd indicating that posted/sent msg. got to destination*/
-void dde_proc_send_ack(HWND wnd, BOOL val);
+void dde_proc_send_ack(HWND16 wnd, BOOL val);
 BOOL DDE_PostMessage( MSG16 *msg);
 BOOL DDE_SendMessage( MSG16 *msg);
 int DDE_GetRemoteMessage();
-void DDE_DestroyWindow(HWND hwnd); /* delete DDE info regarding hwnd */
-void DDE_TestDDE(HWND hwnd);	   /* do we have dde handling in the window ?*/
+void DDE_DestroyWindow(HWND16 hwnd); /* delete DDE info regarding hwnd */
+void DDE_TestDDE(HWND16 hwnd);	   /* do we have dde handling in the window ?*/
 
 #endif  /* CONFIG_IPC */
 

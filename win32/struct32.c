@@ -13,7 +13,7 @@
 
 void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32)
 {
-	msg32->hwnd=(DWORD)msg16->hwnd;
+	msg32->hwnd=(HWND32)msg16->hwnd;
 	msg32->message=msg16->message;
 	msg32->wParam=msg16->wParam;
 	msg32->lParam=msg16->lParam;
@@ -24,7 +24,7 @@ void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32)
 
 void STRUCT32_MSG32to16(const MSG32 *msg32,MSG16 *msg16)
 {
-	msg16->hwnd=(HWND)msg32->hwnd;
+	msg16->hwnd=(HWND16)msg32->hwnd;
 	msg16->message=msg32->message;
 	msg16->wParam=msg32->wParam;
 	msg16->lParam=msg32->lParam;

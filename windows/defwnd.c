@@ -93,6 +93,25 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
+    case WM_RBUTTONDOWN:
+    case WM_NCRBUTTONDOWN:
+        if( wndPtr->flags & WIN_ISWIN32 ) 
+        {
+	    ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
+            SendMessage32A( wndPtr->hwndSelf, WM_CONTEXTMENU,
+			    wndPtr->hwndSelf, lParam);
+        }
+        break;
+
+    case WM_CONTEXTMENU:
+	if( wndPtr->dwStyle & WS_CHILD )
+	    SendMessage32A( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+
+     /* else 
+      *     FIXME: Track system popup if click was in the caption area. */
+
+	break;
+
     case WM_NCACTIVATE:
 	return NC_HandleNCActivate( wndPtr, wParam );
 
@@ -119,7 +138,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 			SYSMETRICS_CYICON)/2;
 		dprintf_win(stddeb,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
-	        DrawIcon( hdc, x, y, wndPtr->class->hIcon );
+	        DrawIcon32( hdc, x, y, wndPtr->class->hIcon );
 	      }
 	      EndPaint16( wndPtr->hwndSelf, &ps );
 	    }
@@ -172,15 +191,12 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                                (HDC16)wParam, sysColorObjects.hbrushActiveCaption );
 		   return 1;
 		 }
-
-		 /* FIXME: should draw parent' background somehow
-			     (e.g for textured desktop) ? */
 	    }
 
 	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
             {
                 HBRUSH32 hbrush = CreateSolidBrush32( 
-			 GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
+                       GetSysColor32(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC16)wParam, hbrush);
                  DeleteObject32( hbrush );
@@ -199,8 +215,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CTLCOLORBTN:
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-        SetBkColor( (HDC32)wParam, GetSysColor(COLOR_WINDOW) );
-        SetTextColor( (HDC32)wParam, GetSysColor(COLOR_WINDOWTEXT) );
+        SetBkColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
+        SetTextColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
         return (LRESULT)sysColorObjects.hbrushWindow;
 
     case WM_CTLCOLORSCROLLBAR:
@@ -220,8 +236,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    }
 	    else
 	    {
-		SetBkColor( (HDC32)wParam, GetSysColor(COLOR_WINDOW) );
-		SetTextColor( (HDC32)wParam, GetSysColor(COLOR_WINDOWTEXT) );
+		SetBkColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
+		SetTextColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
 		return (LRESULT)sysColorObjects.hbrushWindow;
 	    }
 	}
@@ -293,7 +309,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                                (WPARAM16)SC_KEYMENU, (LPARAM)(DWORD)wParam );
         } 
 	else /* check for Ctrl-Esc */
-            if (wParam != VK_ESCAPE) MessageBeep(0);
+            if (wParam != VK_ESCAPE) MessageBeep32(0);
 	break;
 
     case WM_SHOWWINDOW:

@@ -98,7 +98,7 @@ typedef struct
 	INT32 SelStart;		/* offset of selection start, == SelEnd if no selection */
 	INT32 SelEnd;		/* offset of selection end == current caret position */
 	INT32 NumTabStops;
-	LPINT16 TabStops;
+	LPINT32 TabStops;
 	/*
 	 *	FIXME: The following should probably be a (VOID *) that is
 	 *	typecast to either 16- or 32-bit callback when used,
@@ -667,15 +667,8 @@ LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 		lResult = EDIT_WM_Command(wndPtr, wParam, lParam);
 		break;
 
-/*
- *	FIXME: when this one is added to WINE, change RBUTTONUP to CONTEXTMENU
- *	Furthermore, coordinate conversion should no longer be required
- *
- *	case WM_CONTEXTMENU:
- */
- 	case WM_RBUTTONUP:
-		DPRINTF_EDIT_MSG32("WM_RBUTTONUP");
-		ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
+ 	case WM_CONTEXTMENU:
+		DPRINTF_EDIT_MSG32("WM_CONTEXTMENU");
 		lResult = EDIT_WM_ContextMenu(wndPtr, wParam, lParam);
 		break;
 
@@ -865,7 +858,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 		es->LineDefs[0].offset = 0;
 		es->LineDefs[0].length = EDIT_WM_GetTextLength(wndPtr, 0, 0);
 		es->LineDefs[0].ending = END_0;
-		es->TextWidth = (INT32)LOWORD(GetTabbedTextExtent(hdc, text,
+		es->TextWidth = (INT32)LOWORD(GetTabbedTextExtent32A(hdc, text,
 					es->LineDefs[0].length,
 					es->NumTabStops, es->TabStops));
 	} else {
@@ -882,7 +875,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 				ending = END_HARD;
 				length = cp - start;
 			}
-			width = (INT32)LOWORD(GetTabbedTextExtent(hdc, start, length,
+			width = (INT32)LOWORD(GetTabbedTextExtent32A(hdc, start, length,
 						es->NumTabStops, es->TabStops));
 
 			if (IsWordWrap(wndPtr) && (width > ww)) {
@@ -891,7 +884,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 					prev = next;
 					next = EDIT_CallWordBreakProc(wndPtr, start,
 							prev + 1, length, WB_RIGHT);
-					width = (INT32)LOWORD(GetTabbedTextExtent(hdc, start, next,
+					width = (INT32)LOWORD(GetTabbedTextExtent32A(hdc, start, next,
 							es->NumTabStops, es->TabStops));
 				} while (width <= ww);
 				if (!prev) {
@@ -899,7 +892,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 					do {
 						prev = next;
 						next++;
-						width = (INT32)LOWORD(GetTabbedTextExtent(hdc, start, next,
+						width = (INT32)LOWORD(GetTabbedTextExtent32A(hdc, start, next,
 								es->NumTabStops, es->TabStops));
 					} while (width <= ww);
 					if(!prev) prev = 1;
@@ -911,7 +904,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 					ending = END_DELIMIT;
 				} else
 					ending = END_NONE;
-				width = (INT32)LOWORD(GetTabbedTextExtent(hdc, start, length,
+				width = (INT32)LOWORD(GetTabbedTextExtent32A(hdc, start, length,
 							es->NumTabStops, es->TabStops));
 			}
 
@@ -1786,13 +1779,13 @@ static INT32 EDIT_PaintText(WND *wndPtr, HDC32 hdc, INT32 x, INT32 y, INT32 line
 	BkColor = GetBkColor32(hdc);
 	TextColor = GetTextColor32(hdc);
 	if (rev) {
-		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+		SetBkColor(hdc, GetSysColor32(COLOR_HIGHLIGHT));
+		SetTextColor(hdc, GetSysColor32(COLOR_HIGHLIGHTTEXT));
 	}
 	text = EDIT_GetPasswordPointer(wndPtr);
 	li = (INT32)EDIT_EM_LineIndex(wndPtr, line, 0);
 	xoff = EDIT_GetXOffset(wndPtr);
-	ret = (INT32)LOWORD(TabbedTextOut(hdc, x, y, text + li + col, count,
+	ret = (INT32)LOWORD(TabbedTextOut32A(hdc, x, y, text + li + col, count,
 					es->NumTabStops, es->TabStops, -xoff));
 	free(text);
 	if (rev) {
@@ -1911,7 +1904,7 @@ static INT32 EDIT_WndXFromCol(WND *wndPtr, INT32 line, INT32 col)
 	if (hFont) oldFont = SelectObject32(hdc, hFont);
 	line = MAX(0, MIN(line, lc - 1));
 	col = MIN(col, ll);
-	ret = (INT32)LOWORD(GetTabbedTextExtent(hdc,
+	ret = (INT32)LOWORD(GetTabbedTextExtent32A(hdc,
 			text + li, col,
 			es->NumTabStops, es->TabStops)) - xoff;
 	if (hFont) SelectObject32(hdc, oldFont);
@@ -2910,7 +2903,6 @@ static LRESULT EDIT_EM_SetSel16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT EDIT_EM_SetTabStops(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	INT32 i;
 
 	if (!IsMultiLine(wndPtr))
 		return FALSE;
@@ -2920,9 +2912,9 @@ static LRESULT EDIT_EM_SetTabStops(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (!wParam)
 		es->TabStops = NULL;
 	else {
-		es->TabStops = (LPINT16)xmalloc(wParam * sizeof(INT16));
-		for ( i = 0 ; i < (INT32)wParam ; i++ )
-			es->TabStops[i] = (INT16)((LPINT32)lParam)[i];
+		es->TabStops = (LPINT32)xmalloc(wParam * sizeof(INT32));
+		memcpy( es->TabStops, (LPINT32)lParam,
+                        (INT32)wParam * sizeof(INT32) );
 	}
 	return TRUE;
 }
@@ -2936,6 +2928,7 @@ static LRESULT EDIT_EM_SetTabStops(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT EDIT_EM_SetTabStops16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	INT32 i;
 
 	if (!IsMultiLine(wndPtr))
 		return FALSE;
@@ -2944,10 +2937,11 @@ static LRESULT EDIT_EM_SetTabStops16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam
 	es->NumTabStops = (INT32)wParam;
 	if (!wParam)
 		es->TabStops = NULL;
-	else {
-		es->TabStops = (LPINT16)xmalloc(wParam * sizeof(INT16));
-		memcpy(es->TabStops, (LPINT16)PTR_SEG_TO_LIN(lParam),
-				(INT32)wParam * sizeof(INT16));
+	else
+        {
+            LPINT16 p = (LPINT16)PTR_SEG_TO_LIN(lParam);
+            es->TabStops = (LPINT32)xmalloc(wParam * sizeof(INT32));
+            for ( i = 0 ; i < (INT32)wParam ; i++) es->TabStops[i] = *p++;
 	}
 	return TRUE;
 }
@@ -3126,10 +3120,10 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	text = EDIT_GetPointer(wndPtr);
 	lstrcpyn32A(dst, text + s, e - s + 1);
 	GlobalUnlock16(hdst);
-	OpenClipboard(wndPtr->hwndSelf);
-	EmptyClipboard();
+	OpenClipboard32(wndPtr->hwndSelf);
+	EmptyClipboard32();
 	SetClipboardData(CF_TEXT, hdst);
-	CloseClipboard();
+	CloseClipboard32();
 	return -1;
 }
 
@@ -3423,7 +3417,7 @@ static LRESULT EDIT_WM_InitMenuPopup(WND *wndPtr, WPARAM32 wParam, LPARAM lParam
 		((e - s) && !IsPassword(wndPtr) ? MF_ENABLED : MF_GRAYED));
 	/* paste */
 	EnableMenuItem32(hPopup, 4, MF_BYPOSITION |
-		(IsClipboardFormatAvailable(CF_TEXT) ? MF_ENABLED : MF_GRAYED));
+		(IsClipboardFormatAvailable32(CF_TEXT) ? MF_ENABLED : MF_GRAYED));
 	/* delete */
 	EnableMenuItem32(hPopup, 5, MF_BYPOSITION |
 		((e - s) ? MF_ENABLED : MF_GRAYED));
@@ -3694,7 +3688,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		oldFont = (HFONT32)SelectObject32(hdc, hFont);
 	EDIT_SEND_CTLCOLOR(wndPtr, hdc);
 	if (!IsWindowEnabled32(wndPtr->hwndSelf))
-		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		SetTextColor(hdc, GetSysColor32(COLOR_GRAYTEXT));
 	GetClipBox32(hdc, &rcRgn);
 	for (i = fv ; i <= MIN(fv + vlc, fv + lc - 1) ; i++ ) {
 		EDIT_GetLineRect(wndPtr, i, 0, -1, &rcLine);
@@ -3722,13 +3716,13 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	HGLOBAL16 hsrc;
 	LPSTR src;
 
-	OpenClipboard(wndPtr->hwndSelf);
+	OpenClipboard32(wndPtr->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_TEXT))) {
 		src = (LPSTR)GlobalLock16(hsrc);
 		EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)src);
 		GlobalUnlock16(hsrc);
 	}
-	CloseClipboard();
+	CloseClipboard32();
 	return -1;
 }
 
@@ -3741,7 +3735,7 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT EDIT_WM_SetCursor(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	if (LOWORD(lParam) == HTCLIENT) {
-		SetCursor(LoadCursor16(0, IDC_IBEAM));
+		SetCursor16(LoadCursor16(0, IDC_IBEAM));
 		return -1;
 	} else
 		return 0;
@@ -3763,7 +3757,7 @@ static LRESULT EDIT_WM_SetFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	EDIT_SetSel(wndPtr, s, e);
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL))
 		EDIT_InvalidateText(wndPtr, s, e);
-	ShowCaret(wndPtr->hwndSelf);
+	ShowCaret32(wndPtr->hwndSelf);
 	dprintf_edit(stddeb, "edit: notification EN_SETFOCUS sent\n");
 	EDIT_NOTIFY_PARENT(wndPtr, EN_SETFOCUS);
 	return 0;
@@ -3800,7 +3794,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		DestroyCaret();
 		CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
 		EDIT_SetSel(wndPtr, s, e);
-		ShowCaret(wndPtr->hwndSelf);
+		ShowCaret32(wndPtr->hwndSelf);
 	}
 	return 0;
 }

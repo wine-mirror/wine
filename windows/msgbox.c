@@ -173,7 +173,7 @@ static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
      case IDIGNORE:
      case IDYES:
      case IDNO:
-      EndDialog(hwnd, wParam);
+      EndDialog32(hwnd, wParam);
       break;
     }
     break;

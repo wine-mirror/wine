@@ -4,8 +4,10 @@
  * Copyright (C) 1996, Eric Youngdale.
  */
 
+#include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

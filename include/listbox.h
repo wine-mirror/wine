@@ -24,9 +24,9 @@ typedef struct {
 	WORD    DrawCtlType;
         WORD    CtlID;
 	LPLISTSTRUCT lpFirst;
-	HWND	hSelf;
+	HWND16	hSelf;
 	DWORD   dwStyle;      /* added for COMBOLBOX style faking */
-	HWND    hParent;
+	HWND16  hParent;
 	HFONT16 hFont;
 	BOOL    bRedrawFlag;
         BOOL    HasStrings;
@@ -39,7 +39,7 @@ typedef struct {
 } HEADLIST,*LPHEADLIST;
 
 /* shared code between listbox and combo controls */
-extern void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent);
+extern void CreateListBoxStruct(HWND16 hwnd, WORD CtlType, LONG styles, HWND16 parent);
 extern void DestroyListBoxStruct(LPHEADLIST lphl);
 
 extern void ListBoxSendNotification(LPHEADLIST lphl, WORD code);
@@ -64,7 +64,7 @@ extern int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT16 rect);
 extern int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height);
 extern int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar);
 
-extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC16 hdc,
+extern void ListBoxDrawItem (HWND16 hwnd, LPHEADLIST lphl, HDC16 hdc,
 			     LPLISTSTRUCT lpls, RECT16 *rect, WORD itemAction,
 			     WORD itemState);
 extern int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y);

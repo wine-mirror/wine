@@ -600,18 +600,18 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     if (lpitem->item_flags & MF_HILITE)
     {
 	if (lpitem->item_flags & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+	    SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
 	else
-	    SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
-	SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
+	    SetTextColor( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
+	SetBkColor( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
     }
     else
     {
 	if (lpitem->item_flags & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+	    SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
 	else
-	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
-	SetBkColor( hdc, GetSysColor( COLOR_MENU ) );
+	    SetTextColor( hdc, GetSysColor32( COLOR_MENUTEXT ) );
+	SetBkColor( hdc, GetSysColor32( COLOR_MENU ) );
     }
 
     if (!menuBar)
@@ -1676,7 +1676,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 					      PM_NOREMOVE, TRUE ))
 	    break;
 
-        TranslateMessage( &msg );
+        TranslateMessage16( &msg );
         CONV_POINT16TO32( &msg.pt, &pt );
 
         fRemove = FALSE;
@@ -1790,7 +1790,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    if ((msg.wParam <= 32) || (msg.wParam >= 127)) break;
 		    pos = MENU_FindItemByKey( hwnd, hmenuCurrent, msg.wParam );
 		    if (pos == (UINT32)-2) fClosed = TRUE;
-		    else if (pos == (UINT32)-1) MessageBeep(0);
+		    else if (pos == (UINT32)-1) MessageBeep32(0);
 		    else
 		    {
 			MENU_SelectItem( hwnd, hmenuCurrent, pos, TRUE );
@@ -1804,7 +1804,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	}
 	else
 	{
-	    DispatchMessage( &msg );
+	    DispatchMessage16( &msg );
 	}
 	if (fEndMenuCalled) fClosed = TRUE;
 	if (!fClosed) fRemove = TRUE;
@@ -1873,7 +1873,7 @@ void MENU_TrackMouseMenuBar( WND* wndPtr, INT32 ht, POINT32 pt )
 
     if (IsMenu32(hMenu))
     {
-	HideCaret(0);
+	HideCaret32(0);
 	SendMessage16( hWnd, WM_ENTERMENULOOP, 0, 0 );
 	SendMessage16( hWnd, WM_INITMENU, hMenu, 0 );
 	if( bTrackSys )
@@ -1882,7 +1882,7 @@ void MENU_TrackMouseMenuBar( WND* wndPtr, INT32 ht, POINT32 pt )
 	    MENU_TrackMenu( hMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 			    pt.x, pt.y, hWnd, NULL );
 	SendMessage16( hWnd, WM_EXITMENULOOP, 0, 0 );
-	ShowCaret(0);
+	ShowCaret32(0);
     }
 }
 
@@ -1911,7 +1911,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT32 wParam, INT32 vkey)
 
     if (IsMenu32( hTrackMenu ))
     {
-        HideCaret(0);
+        HideCaret32(0);
         SendMessage16( wndPtr->hwndSelf, WM_ENTERMENULOOP, 0, 0 );
         SendMessage16( wndPtr->hwndSelf, WM_INITMENU, hTrackMenu, 0 );
 
@@ -1926,7 +1926,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT32 wParam, INT32 vkey)
 		    : MENU_FindItemByKey( wndPtr->hwndSelf, wndPtr->wIDmenu, vkey );
 	    if( uItem >= 0xFFFE )
 	    {
-	        if( uItem == 0xFFFF ) MessageBeep(0);
+	        if( uItem == 0xFFFF ) MessageBeep32(0);
 		htMenu = 0;
 	    }
         }
@@ -1946,12 +1946,10 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT32 wParam, INT32 vkey)
 
 	    case HTSYSMENU:
 		MENU_TrackSysPopup( wndPtr );
-
-	    default:
 	}
 
         SendMessage16( wndPtr->hwndSelf, WM_EXITMENULOOP, 0, 0 );
-        ShowCaret(0);
+        ShowCaret32(0);
     }
 }
 
@@ -1978,10 +1976,10 @@ BOOL32 TrackPopupMenu32( HMENU32 hMenu, UINT32 wFlags, INT32 x, INT32 y,
 {
     BOOL32 ret = FALSE;
 
-    HideCaret(0);
+    HideCaret32(0);
     if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 )) 
 	ret = MENU_TrackMenu( hMenu, wFlags, 0, 0, hWnd, lpRect );
-    ShowCaret(0);
+    ShowCaret32(0);
     return ret;
 }
 

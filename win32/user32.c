@@ -22,58 +22,15 @@
 /***********************************************************************
  *          GetMessageA          (USER32.269)
  */
-BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
+BOOL USER32_GetMessageA(MSG32* lpmsg,HWND32 hwnd,DWORD min,DWORD max)
 {
 	BOOL ret;
 	MSG16 *msg = SEGPTR_NEW(MSG16);
         if (!msg) return 0;
-        ret=GetMessage(SEGPTR_GET(msg),(HWND)hwnd,min,max);
+        ret=GetMessage(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
 	STRUCT32_MSG16to32(msg,lpmsg);
         SEGPTR_FREE(msg);
 	return ret;
-}
-
-/***********************************************************************
- *          IsDialogMessageA     (USER32.341)
- */
-BOOL IsDialogMessage32A(DWORD hwnd, MSG32* lpmsg)
-{
-	MSG16 msg;
-	STRUCT32_MSG32to16(lpmsg, &msg);
-	return IsDialogMessage(hwnd, &msg);
-}
-
-/***********************************************************************
- *          IsDialogMessage32W     (USER32.342)
- */
-BOOL IsDialogMessage32W(DWORD hwnd, MSG32* lpmsg)
-{
-	MSG16 msg;
-	STRUCT32_MSG32to16(lpmsg, &msg);
-	return IsDialogMessage(hwnd, &msg);
-}
-
-/***********************************************************************
- *         DispatchMessageA       (USER32.140)
- */
-LONG USER32_DispatchMessageA(MSG32* lpmsg)
-{
-	MSG16 msg;
-	LONG ret;
-	STRUCT32_MSG32to16(lpmsg,&msg);
-	ret=DispatchMessage(&msg);
-	STRUCT32_MSG16to32(&msg,lpmsg);
-	return ret;
-}
-
-/***********************************************************************
- *         TranslateMessage       (USER32.555)
- */
-BOOL USER32_TranslateMessage(MSG32* lpmsg)
-{
-	MSG16 msg;
-	STRUCT32_MSG32to16(lpmsg,&msg);
-	return TranslateMessage(&msg);
 }
 
 /***********************************************************************

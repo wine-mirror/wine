@@ -864,14 +864,26 @@ UINT16 MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 	return 0;
 }
 
+
 /****************************************************************************
- *	GetKbCodePage   (KEYBOARD.132)
+ *	GetKBCodePage16   (KEYBOARD.132)
  */
-INT16 GetKbCodePage(VOID)
+INT16 GetKBCodePage16(void)
 {
-    	dprintf_keyboard(stddeb,"GetKbCodePage()\n");
-	return 850;
+    dprintf_keyboard(stddeb,"GetKBCodePage()\n");
+    return 850;
 }
+
+
+/****************************************************************************
+ *	GetKBCodePage32   (USER32.245)
+ */
+UINT32 GetKBCodePage32(void)
+{
+    dprintf_keyboard(stddeb,"GetKbCodePage()\n");
+    return 850;
+}
+
 
 /****************************************************************************
  *	GetKeyNameText32W   (USER32.247)

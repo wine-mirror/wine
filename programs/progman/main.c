@@ -17,6 +17,9 @@ void LIBWINE_Register_De();
 void LIBWINE_Register_En();
 void LIBWINE_Register_Fi();
 void LIBWINE_Register_Fr();
+void LIBWINE_Register_It();
+void LIBWINE_Register_Ko();
+void LIBWINE_Register_Hu();
 #endif
 
 GLOBALS Globals;
@@ -46,6 +49,9 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   LIBWINE_Register_En();
   LIBWINE_Register_Fi();
   LIBWINE_Register_Fr();
+  LIBWINE_Register_It();
+  LIBWINE_Register_Ko();
+  LIBWINE_Register_Hu();
 #endif
 
 #ifndef WINELIB

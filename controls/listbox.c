@@ -470,16 +470,16 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
         }
         if (item && item->selected)
         {
-            SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
-            SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
+            SetBkColor( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
+            SetTextColor( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
         }
         else
         {
-            SetBkColor( hdc, GetSysColor( COLOR_WINDOW ) );
+            SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
             if (wnd->dwStyle & WS_DISABLED)
-                SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+                SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
             else
-                SetTextColor( hdc, GetSysColor( COLOR_WINDOWTEXT ) );
+                SetTextColor( hdc, GetSysColor32( COLOR_WINDOWTEXT ) );
         }
         dprintf_listbox( stddeb, "Listbox %04x: painting %d (%s) action=%02x "
                          "rect=%d,%d-%d,%d\n",
@@ -856,7 +856,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC32 hdc )
             if (!IS_OWNERDRAW(descr))
             {
                 /* Clear the bottom of the column */
-                SetBkColor( hdc, GetSysColor( COLOR_WINDOW ) );
+                SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
                 if (rect.top < descr->height)
                 {
                     rect.bottom = descr->height;
@@ -881,7 +881,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC32 hdc )
     if (!IS_OWNERDRAW(descr))
     {
         /* Clear the remainder of the client area */
-        SetBkColor( hdc, GetSysColor( COLOR_WINDOW ) );
+        SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
         if (rect.top < descr->height)
         {
             rect.bottom = descr->height;
@@ -1691,8 +1691,8 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                             MAKELPARAM( x, y ) );
         if (wnd->dwExStyle & WS_EX_DRAGDETECT)
         {
-            POINT16 pt = { x, y };
-            if (DragDetect( wnd->hwndSelf, pt ))
+            POINT32 pt = { x, y };
+            if (DragDetect32( wnd->hwndSelf, pt ))
                 SendMessage32A( descr->owner, WM_BEGINDRAG, 0, 0 );
         }
     }

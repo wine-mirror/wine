@@ -831,6 +831,23 @@ DWORD CRTDLL_wcscoll(LPWSTR a1,LPWSTR a2)
 }
 
 /*********************************************************************
+ *                  _wcsrev           (CRTDLL.326)
+ */
+VOID CRTDLL__wcsrev(LPWSTR s) {
+	LPWSTR	e;
+
+	e=s;
+	while (*e)
+		e++;
+	while (s<e) {
+		WCHAR	a;
+
+		a=*s;*s=*e;*e=a;
+		s++;e--;
+	}
+}
+
+/*********************************************************************
  *                  wcsstr           (CRTDLL.517)
  */
 LPWSTR CRTDLL_wcsstr(LPWSTR s,LPWSTR b)

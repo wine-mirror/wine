@@ -67,7 +67,7 @@ WORD JoyReleaseCapture(WORD wID)
 /**************************************************************************
  * 				JoySetCapture		[MMSYSTEM.106]
  */
-WORD JoySetCapture(HWND hWnd, WORD wID, WORD wPeriod, BOOL bChanged)
+WORD JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL bChanged)
 {
     fprintf(stdnimp, "EMPTY STUB !!! JoySetCapture(%04X, %04X, %d, %d);\n",
 	    hWnd, wID, wPeriod, bChanged);

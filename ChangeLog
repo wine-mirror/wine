@@ -1,4 +1,70 @@
 ----------------------------------------------------------------------
+Sat Feb 15 11:59:17 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [*/*]
+	Converted a lot of functions to Win32 types.
+	Removed HWND type.
+
+Fri Feb 14 15:09:19 1997  Onno Hovers <onno@stack.nl>
+
+	* [memory/global.c]
+	Implemented GMEM_MOVEABLE blocks for Win32.
+
+Fri Feb 14 00:24:39 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [loader/task.c] [windows/queue.c]
+	Do not read X events while in the intertask SendMessage().
+
+	* [misc/lstr.c]
+	Fixed CharPrev32A().
+
+	* [windows/hook.c] [include/hook.h]
+	Restored broken WH_CALLWNDPROC functionality for dialogs, etc...
+
+	* [windows/win.c] [windows/defwnd.c] [windows/mdi.c]
+	  [windows/event.c] [controls/edit.c] 
+	Added WIN_ISWIN32 flag to windows created by Win32 calls. 
+	Several new Win32 messages are sent when this flag is on.
+	
+	* [msdos/dosmem.c] [memory/global.c]
+	Some changes in DOS memory allocation.
+
+Fri Feb  7 21:46:03 1997  Andrew Taylor  <andrew@riscan.com>
+
+	* [win32/security.c]
+	Added SID manipulation functions.
+
+	* [include/debug.h]
+	Added debugging class "security".
+
+Fri  Feb 7 20:46:33 1997  Robert Pouliot <krynos@clic.net>
+
+	* [debugger/msc.c] [debugger/source.c] 
+	  [documentation/wine_os2.txt] [loader/signal.c]
+	Some more changes for OS/2. Doesn't work yet.
+
+Fri  Feb 7 09:31:17 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [scheduler/process.c]
+	Added ExpandEnvironmentStrings*.
+
+	* [misc/ntdll.c] [include/ntdll.h]
+	Added some new functions.
+
+	* [objects/cursoricon.c]
+	CURSORICON_LoadHandler: check against some bizarre out of memory
+	conditions.
+	
+	* [windows/mdi.c]
+	Fixed DefFrameProc32*, added TranslateMDISysAccel32.
+
+Wed Feb  5 01:31:05 1997  John Zero <john@globe.graphisoft.hu>
+
+	* [resources/sysres_Hu.rc] [misc/ole2nls.c] [misc/main.c]
+	  [programs/progman/Hu.rc] [programs/winhelp/Hu.rc]
+	Added Hungarian language support.
+
+----------------------------------------------------------------------
 Sun Feb  2 12:31:03 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [files/drive.c]

@@ -41,9 +41,9 @@ typedef struct tagCLIPFORMAT {
  *			internal variables
  */
 
-static HWND hWndClipOwner  = 0;		/* current clipboard owner */
-static HWND hWndClipWindow = 0;		/* window that opened clipboard */
-static HWND hWndViewer     = 0;		/* start of viewers chain */
+static HWND32 hWndClipOwner  = 0;   /* current clipboard owner */
+static HWND32 hWndClipWindow = 0;   /* window that opened clipboard */
+static HWND32 hWndViewer     = 0;   /* start of viewers chain */
 
 static BOOL bClipChanged  = FALSE;
 static WORD LastRegFormat = CF_REGFORMATBASE;
@@ -160,7 +160,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
  */
 BOOL CLIPBOARD_RequestXSelection()
 {
-  HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow16();
+  HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
 
   if( !hWnd ) return FALSE;
 
@@ -197,7 +197,7 @@ BOOL CLIPBOARD_IsPresent(WORD wFormat)
     /* special case */
 
     if( wFormat == CF_TEXT || wFormat == CF_OEMTEXT )
-        return lpFormat[CF_TEXT-1].wDataPresent | 
+        return lpFormat[CF_TEXT-1].wDataPresent ||
                lpFormat[CF_OEMTEXT-1].wDataPresent;
 
     while(TRUE) {
@@ -210,11 +210,20 @@ BOOL CLIPBOARD_IsPresent(WORD wFormat)
 }
 
 /**************************************************************************
- *			OpenClipboard		[USER.137]
+ *            OpenClipboard16   (USER.137)
  */
-BOOL OpenClipboard(HWND hWnd)
+BOOL16 OpenClipboard16( HWND16 hWnd )
 {
-    BOOL bRet = FALSE;
+    return OpenClipboard32( hWnd );
+}
+
+
+/**************************************************************************
+ *            OpenClipboard32   (USER32.406)
+ */
+BOOL32 OpenClipboard32( HWND32 hWnd )
+{
+    BOOL32 bRet = FALSE;
     dprintf_clipboard(stddeb,"OpenClipboard(%04x) = ", hWnd);
 
     if (!hWndClipWindow)
@@ -230,9 +239,18 @@ BOOL OpenClipboard(HWND hWnd)
 
 
 /**************************************************************************
- *			CloseClipboard		[USER.138]
+ *            CloseClipboard16   (USER.138)
  */
-BOOL CloseClipboard()
+BOOL16 CloseClipboard16(void)
+{
+    return CloseClipboard32();
+}
+
+
+/**************************************************************************
+ *            CloseClipboard32   (USER32.53)
+ */
+BOOL32 CloseClipboard32(void)
 {
     dprintf_clipboard(stddeb,"CloseClipboard(); !\n");
 
@@ -246,9 +264,18 @@ BOOL CloseClipboard()
 
 
 /**************************************************************************
- *			EmptyClipboard		[USER.139]
+ *            EmptyClipboard16   (USER.139)
  */
-BOOL EmptyClipboard()
+BOOL16 EmptyClipboard16(void)
+{
+    return EmptyClipboard32();
+}
+
+
+/**************************************************************************
+ *            EmptyClipboard32   (USER32.168)
+ */
+BOOL32 EmptyClipboard32(void)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
 
@@ -287,12 +314,19 @@ BOOL EmptyClipboard()
 
 
 /**************************************************************************
- *			GetClipboardOwner	[USER.140]
+ *            GetClipboardOwner16   (USER.140)
  */
-HWND GetClipboardOwner()
+HWND16 GetClipboardOwner16(void)
 {
-    dprintf_clipboard(stddeb,
-		"GetClipboardOwner() = %04x !\n", hWndClipOwner);
+    return hWndClipOwner;
+}
+
+
+/**************************************************************************
+ *            GetClipboardOwner32   (USER32.224)
+ */
+HWND32 GetClipboardOwner32(void)
+{
     return hWndClipOwner;
 }
 
@@ -452,11 +486,20 @@ HANDLE16 GetClipboardData(WORD wFormat)
 
 
 /**************************************************************************
- *			CountClipboardFormats	[USER.143]
+ *           CountClipboardFormats16   (USER.143)
  */
-INT CountClipboardFormats()
+INT16 CountClipboardFormats16(void)
 {
-    int 	 FormatCount = 0;
+    return CountClipboardFormats32();
+}
+
+
+/**************************************************************************
+ *           CountClipboardFormats32   (USER32.62)
+ */
+INT32 CountClipboardFormats32(void)
+{
+    INT32 FormatCount = 0;
     LPCLIPFORMAT lpFormat = ClipFormats; 
 
     dprintf_clipboard(stddeb,"CountClipboardFormats()\n");
@@ -483,9 +526,18 @@ INT CountClipboardFormats()
 
 
 /**************************************************************************
- *			EnumClipboardFormats	[USER.144]
+ *            EnumClipboardFormats16   (USER.144)
  */
-UINT16 EnumClipboardFormats(UINT16 wFormat)
+UINT16 EnumClipboardFormats16( UINT16 wFormat )
+{
+    return EnumClipboardFormats32( wFormat );
+}
+
+
+/**************************************************************************
+ *            EnumClipboardFormats32   (USER32.178)
+ */
+UINT32 EnumClipboardFormats32( UINT32 wFormat )
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
 
@@ -621,11 +673,20 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
 
 
 /**************************************************************************
- *			SetClipboardViewer	[USER.147]
+ *            SetClipboardViewer16   (USER.147)
  */
-HWND SetClipboardViewer(HWND hWnd)
+HWND16 SetClipboardViewer16( HWND16 hWnd )
 {
-    HWND hwndPrev = hWndViewer;
+    return SetClipboardViewer32( hWnd );
+}
+
+
+/**************************************************************************
+ *            SetClipboardViewer32   (USER32.470)
+ */
+HWND32 SetClipboardViewer32( HWND32 hWnd )
+{
+    HWND32 hwndPrev = hWndViewer;
 
     dprintf_clipboard(stddeb,"SetClipboardViewer(%04x)\n", hWnd);
 
@@ -635,12 +696,19 @@ HWND SetClipboardViewer(HWND hWnd)
 
 
 /**************************************************************************
- *			GetClipboardViewer	[USER.148]
+ *           GetClipboardViewer16   (USER.148)
  */
-HWND GetClipboardViewer()
+HWND16 GetClipboardViewer16(void)
 {
-    dprintf_clipboard(stddeb,"GetClipboardFormat() = %04x\n", hWndViewer);
+    return hWndViewer;
+}
 
+
+/**************************************************************************
+ *           GetClipboardViewer32   (USER32.225)
+ */
+HWND32 GetClipboardViewer32(void)
+{
     return hWndViewer;
 }
 
@@ -676,9 +744,18 @@ BOOL32 ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
 
 
 /**************************************************************************
- *			IsClipboardFormatAvailable	[USER.193]
+ *           IsClipboardFormatAvailable16   (USER.193)
  */
-BOOL IsClipboardFormatAvailable(WORD wFormat)
+BOOL16 IsClipboardFormatAvailable16( UINT16 wFormat )
+{
+    return IsClipboardFormatAvailable32( wFormat );
+}
+
+
+/**************************************************************************
+ *           IsClipboardFormatAvailable32   (USER32.339)
+ */
+BOOL32 IsClipboardFormatAvailable32( UINT32 wFormat )
 {
     dprintf_clipboard(stddeb,"IsClipboardFormatAvailable(%04X) !\n", wFormat);
 
@@ -690,12 +767,19 @@ BOOL IsClipboardFormatAvailable(WORD wFormat)
 
 
 /**************************************************************************
- *			GetOpenClipboardWindow	[USER.248]
+ *             GetOpenClipboardWindow16   (USER.248)
  */
-HWND GetOpenClipboardWindow()
+HWND16 GetOpenClipboardWindow16(void)
 {
-    dprintf_clipboard(stddeb,
-		"GetOpenClipboardWindow() = %04x\n", hWndClipWindow);
+    return hWndClipWindow;
+}
+
+
+/**************************************************************************
+ *             GetOpenClipboardWindow32   (USER32.276)
+ */
+HWND32 GetOpenClipboardWindow32(void)
+{
     return hWndClipWindow;
 }
 
@@ -793,7 +877,7 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
  * Wine might have lost XA_PRIMARY selection because of
  * EmptyClipboard() or other client. 
  */
-void CLIPBOARD_ReleaseSelection(Window w, HWND hwnd)
+void CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
 {
   /* w is the window that lost selection,
    * 

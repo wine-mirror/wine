@@ -754,9 +754,18 @@ BOOL32 GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
 
 
 /***********************************************************************
- *           SetMapperFlags    (GDI.349)
+ *           SetMapperFlags16    (GDI.349)
  */
-DWORD SetMapperFlags(HDC16 hDC, DWORD dwFlag)
+DWORD SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
+{
+    return SetMapperFlags32( hDC, dwFlag );
+}
+
+
+/***********************************************************************
+ *           SetMapperFlags32    (GDI32.322)
+ */
+DWORD SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
 {
     dprintf_font(stdnimp,"SetmapperFlags(%04x, %08lX) // Empty Stub !\n", 
 		 hDC, dwFlag); 

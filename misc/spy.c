@@ -93,10 +93,16 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_WINDOWPOSCHANGED",	/* 0x0047 */
     "WM_POWER", NULL, 
     "WM_COPYDATA", 
-    "WM_CANCELJOURNAL", NULL, NULL, NULL, NULL,
+    "WM_CANCELJOURNAL", NULL, NULL, 
+    "WM_NOTIFY", NULL,
 
-    NULL, 		        /* 0x0050 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+    /* 0x0050 */
+    "WM_INPUTLANGCHANGEREQUEST",
+    "WM_INPUTLANGCHANGE", 
+    "WM_TCARD", 
+    "WM_HELP", 
+    "WM_USERCHANGED", 
+    "WM_NOTIFYFORMAT", NULL, NULL, 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0060 */
@@ -105,9 +111,14 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x0070 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, 
+    "WM_CONTEXTMENU", 
+    "WM_STYLECHANGING", 
+    "WM_STYLECHANGED", 
+    "WM_DISPLAYCHANGE", 
+    "WM_GETICON",
 
-    NULL,			/* 0x0080 */
+    "WM_SETICON",		/* 0x0080 */
     "WM_NCCREATE",		/* 0x0081 */
     "WM_NCDESTROY",		/* 0x0082 */
     "WM_NCCALCSIZE",		/* 0x0083 */
@@ -374,8 +385,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ENTERMENULOOP",         /* 0x0211 */
     "WM_EXITMENULOOP",          /* 0x0212 */
     "wm_nextmenu", 		/* 0x0213 */
-                            NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_SIZING", 
+    "WM_CAPTURECHANGED",
+    "WM_MOVING", NULL,
+    "WM_POWERBROADCAST", 
+    "WM_DEVICECHANGE", NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_MDICREATE",             /* 0x0220 */
     "WM_MDIDESTROY",            /* 0x0221 */
@@ -460,7 +474,9 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PALETTEISCHANGING",
     "WM_PALETTECHANGED",
     "WM_HOTKEY", 		/* 0x0312 */
-	  NULL, NULL, NULL, NULL, NULL, NULL, 
+	  NULL, NULL, NULL, NULL, 
+    "WM_PRINT", 
+    "WM_PRINTCLIENT", 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,

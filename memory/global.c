@@ -14,11 +14,13 @@
 #include "heap.h"
 #include "toolhelp.h"
 #include "selectors.h"
+#include "miscemu.h"
 #include "dde_mem.h"
 #include "stackframe.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "winerror.h"
 
   /* Global arena block */
 typedef struct
@@ -533,18 +535,18 @@ void GlobalFreeAll( HGLOBAL16 owner )
 
 
 /***********************************************************************
- *           GlobalWire   (KERNEL.111)
+ *           GlobalWire16   (KERNEL.111)
  */
-SEGPTR GlobalWire( HGLOBAL16 handle )
+SEGPTR GlobalWire16( HGLOBAL16 handle )
 {
     return WIN16_GlobalLock16( handle );
 }
 
 
 /***********************************************************************
- *           GlobalUnWire   (KERNEL.112)
+ *           GlobalUnWire16   (KERNEL.112)
  */
-BOOL16 GlobalUnWire( HGLOBAL16 handle )
+BOOL16 GlobalUnWire16( HGLOBAL16 handle )
 {
     return GlobalUnlock16( handle );
 }
@@ -583,16 +585,51 @@ HGLOBAL16 GlobalLRUNewest( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GetFreeSpace   (KERNEL.169)
+ *           GetFreeSpace16   (KERNEL.169)
  */
-DWORD GetFreeSpace( UINT16 wFlags )
+DWORD GetFreeSpace16( UINT16 wFlags )
 {
-    MEMORYSTATUS	ms;
-
+    MEMORYSTATUS ms;
     GlobalMemoryStatus( &ms );
     return ms.dwAvailVirtual;
 }
 
+/***********************************************************************
+ *           GlobalDOSAlloc   (KERNEL.184)
+ */
+DWORD GlobalDOSAlloc(DWORD size)
+{
+   UINT16    uParagraph;
+   LPVOID    lpBlock = DOSMEM_GetBlock( size, &uParagraph );
+   
+   if( lpBlock )
+   {
+       HMODULE16 hModule = GetModuleHandle("KERNEL");
+       WORD	 wSelector;
+   
+       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, 
+				      hModule, 0, 0, 0, NULL );
+       return MAKELONG(wSelector,uParagraph);
+   }
+   return 0;
+}
+
+/***********************************************************************
+ *           GlobalDOSFree      (KERNEL.185)
+ */
+WORD GlobalDOSFree(WORD sel)
+{
+   DWORD   block = GetSelectorBase(sel);
+
+   if( block && block < 0x100000 ) 
+   {
+       LPVOID lpBlock = DOSMEM_MapDosToLinear( block );
+       if( DOSMEM_FreeBlock( lpBlock ) )
+	   GLOBAL_FreeBlock( sel );
+       sel = 0;
+   }
+   return sel;
+}
 
 /***********************************************************************
  *           GlobalPageLock   (KERNEL.191)
@@ -615,21 +652,21 @@ WORD GlobalPageUnlock( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalFix   (KERNEL.197)
+ *           GlobalFix16   (KERNEL.197)
  */
-void GlobalFix( HGLOBAL16 handle )
+void GlobalFix16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalFix: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalFix16: %04x\n", handle );
     GET_ARENA_PTR(handle)->lockCount++;
 }
 
 
 /***********************************************************************
- *           GlobalUnfix   (KERNEL.198)
+ *           GlobalUnfix16   (KERNEL.198)
  */
-void GlobalUnfix( HGLOBAL16 handle )
+void GlobalUnfix16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalUnfix: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalUnfix16: %04x\n", handle );
     GET_ARENA_PTR(handle)->lockCount--;
 }
 
@@ -776,19 +813,365 @@ BOOL16 MemManInfo( MEMMANINFO *info )
     return TRUE;
 }
 
+/*
+ * Win32 Global heap functions (GlobalXXX).
+ * These functions included in Win32 for compatibility with 16 bit Windows
+ * Especially the moveable blocks and handles are oldish. 
+ * But the ability to directly allocate memory with GPTR and LPTR is widely
+ * used.
+ *
+ * The handle stuff looks horrible, but it's implemented almost like Win95
+ * does it. 
+ *
+ */
+
+#define MAGIC_GLOBAL_USED 0x5342
+#define GLOBAL_LOCK_MAX   0xFF
+#define HANDLE_TO_INTERN(h)  (PGLOBAL32_INTERN)(((char *)(h))-2)
+#define INTERN_TO_HANDLE(i)  ((HGLOBAL32) &((i)->Pointer))
+#define POINTER_TO_HANDLE(p) (*(((HGLOBAL32 *)(p))-1))
+#define ISHANDLE(h)          (((DWORD)(h)&2)!=0)
+#define ISPOINTER(h)         (((DWORD)(h)&2)==0)
+
+typedef struct __GLOBAL32_INTERN
+{
+   WORD         Magic;
+   LPVOID       Pointer WINE_PACKED;
+   BYTE         Flags;
+   BYTE         LockCount;
+} GLOBAL32_INTERN, *PGLOBAL32_INTERN;
+
 
 /***********************************************************************
  *           GlobalAlloc32   (KERNEL32.315)
  */
-HGLOBAL32 GlobalAlloc32( UINT32 flags, DWORD size )
+HGLOBAL32 GlobalAlloc32(UINT32 flags, DWORD size)
 {
-    DWORD heapFlags = 0;
+   PGLOBAL32_INTERN     pintern;
+   DWORD		hpflags;
+   LPVOID               palloc;
 
-    if (flags & GMEM_MOVEABLE)
-        fprintf( stderr, "GlobalAlloc32: unimplemented flag GMEM_MOVEABLE\n" );
+   if(flags&GMEM_ZEROINIT)
+      hpflags=HEAP_ZERO_MEMORY;
+   else
+      hpflags=0;
+   
+   if((flags & GMEM_MOVEABLE)==0) /* POINTER */
+   {
+      palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
+      return (HGLOBAL32) palloc;
+   }
+   else  /* HANDLE */
+   {
+      /* HeapLock(GetProcessHeap()); */
 
-    if (flags & GMEM_ZEROINIT) heapFlags |= HEAP_ZERO_MEMORY;
-    return (HGLOBAL32)HeapAlloc( GetProcessHeap(), heapFlags, size );
+      pintern=HeapAlloc(GetProcessHeap(), 0,  sizeof(GLOBAL32_INTERN));
+      if(size)
+      {
+	 palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL32));
+	 *(HGLOBAL32 *)palloc=INTERN_TO_HANDLE(pintern);
+	 pintern->Pointer=palloc+sizeof(HGLOBAL32);
+      }
+      else
+	 pintern->Pointer=NULL;
+      pintern->Magic=MAGIC_GLOBAL_USED;
+      pintern->Flags=flags>>8;
+      pintern->LockCount=0;
+      
+      /* HeapUnlock(GetProcessHeap()); */
+       
+      return INTERN_TO_HANDLE(pintern);
+   }
+}
+
+
+/***********************************************************************
+ *           GlobalLock32   (KERNEL32.326)
+ */
+LPVOID  GlobalLock32(HGLOBAL32 hmem)
+{
+   PGLOBAL32_INTERN pintern;
+   LPVOID           palloc;
+
+   if(ISPOINTER(hmem))
+      return (LPVOID) hmem;
+
+   /* HeapLock(GetProcessHeap()); */
+   
+   pintern=HANDLE_TO_INTERN(hmem);
+   if(pintern->Magic==MAGIC_GLOBAL_USED)
+   {
+      if(pintern->LockCount<GLOBAL_LOCK_MAX)
+	 pintern->LockCount++;
+      palloc=pintern->Pointer;
+   }
+   else
+   {
+      dprintf_global(stddeb, "GlobalLock32: invalid handle\n");
+      palloc=(LPVOID) NULL;
+   }
+   /* HeapUnlock(GetProcessHeap()); */;
+   return palloc;
+}
+
+
+/***********************************************************************
+ *           GlobalUnlock32   (KERNEL32.332)
+ */
+BOOL32 GlobalUnlock32(HGLOBAL32 hmem)
+{
+   PGLOBAL32_INTERN       pintern;
+   BOOL32                 locked;
+
+   if(ISPOINTER(hmem))
+      return FALSE;
+
+   /* HeapLock(GetProcessHeap()); */
+   pintern=HANDLE_TO_INTERN(hmem);
+   
+   if(pintern->Magic==MAGIC_GLOBAL_USED)
+   {
+      if((pintern->LockCount<GLOBAL_LOCK_MAX)&&(pintern->LockCount>0))
+	 pintern->LockCount--;
+
+      locked=(pintern->LockCount==0) ? FALSE : TRUE;
+   }
+   else
+   {
+      dprintf_global(stddeb, "GlobalUnlock32: invalid handle\n");
+      locked=FALSE;
+   }
+   /* HeapUnlock(GetProcessHeap()); */
+   return locked;
+}
+
+
+/***********************************************************************
+ *           GlobalHandle32   (KERNEL32.325)
+ */
+HGLOBAL32 GlobalHandle32(LPCVOID pmem)
+{
+   return (HGLOBAL32) POINTER_TO_HANDLE(pmem);
+}
+
+
+/***********************************************************************
+ *           GlobalReAlloc32   (KERNEL32.328)
+ */
+HGLOBAL32 GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
+{
+   LPVOID               palloc;
+   HGLOBAL32            hnew;
+   PGLOBAL32_INTERN     pintern;
+
+   hnew=NULL;
+   /* HeapLock(GetProcessHeap()); */
+   if(flags & GMEM_MODIFY) /* modify flags */
+   {
+      if( ISPOINTER(hmem) && (flags & GMEM_MOVEABLE))
+      {
+	 /* make a fixed block moveable
+	  * actually only NT is able to do this. But it's soo simple
+	  */
+	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
+	 hnew=GlobalAlloc32( flags, size);
+	 palloc=GlobalLock32(hnew);
+	 memcpy(palloc, (LPVOID) hmem, size);
+	 GlobalUnlock32(hnew);
+	 GlobalFree32(hmem);
+      }
+      else if( ISPOINTER(hmem) &&(flags & GMEM_DISCARDABLE))
+      {
+	 /* change the flags to make our block "discardable" */
+	 pintern=HANDLE_TO_INTERN(hmem);
+	 pintern->Flags = pintern->Flags | (GMEM_DISCARDABLE >> 8);
+	 hnew=hmem;
+      }
+      else
+      {
+	 SetLastError(ERROR_INVALID_PARAMETER);
+	 hnew=NULL;
+      }
+   }
+   else
+   {
+      if(ISPOINTER(hmem))
+      {
+	 /* reallocate fixed memory */
+	 hnew=(HGLOBAL32)HeapReAlloc(GetProcessHeap(), 0, (LPVOID) hmem, size);
+      }
+      else
+      {
+	 /* reallocate a moveable block */
+	 pintern=HANDLE_TO_INTERN(hmem);
+	 if(pintern->LockCount!=0)
+	    SetLastError(ERROR_INVALID_HANDLE);
+	 else if(size!=0)
+	 {
+	    hnew=hmem;
+	    if(pintern->Pointer)
+	    {
+	       palloc=HeapReAlloc(GetProcessHeap(), 0,
+				  pintern->Pointer-sizeof(HGLOBAL32),
+				  size+sizeof(HGLOBAL32) );
+	       pintern->Pointer=palloc+sizeof(HGLOBAL32);
+	    }
+	    else
+	    {
+	       palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL32));
+	       *(HGLOBAL32 *)palloc=hmem;
+	       pintern->Pointer=palloc+sizeof(HGLOBAL32);
+	    }
+	 }
+	 else
+	 {
+	    if(pintern->Pointer)
+	    {
+	       HeapFree(GetProcessHeap(), 0, pintern->Pointer-sizeof(HGLOBAL32));
+	       pintern->Pointer=NULL;
+	    }
+	 }
+      }
+   }
+   /* HeapUnlock(GetProcessHeap()); */
+   return hnew;
+}
+
+
+/***********************************************************************
+ *           GlobalFree32   (KERNEL32.322)
+ */
+HGLOBAL32 GlobalFree32(HGLOBAL32 hmem)
+{
+   PGLOBAL32_INTERN pintern;
+   HGLOBAL32        hreturned=NULL;
+   
+   if(ISPOINTER(hmem)) /* POINTER */
+   {
+      if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem))
+         hmem=NULL;
+   }
+   else  /* HANDLE */
+   {
+      /* HeapLock(GetProcessHeap()); */      
+      pintern=HANDLE_TO_INTERN(hmem);
+      
+      if(pintern->Magic==MAGIC_GLOBAL_USED)
+      {	 
+	 if(pintern->LockCount!=0)
+	    SetLastError(ERROR_INVALID_HANDLE);
+	 if(pintern->Pointer)
+	    if(!HeapFree(GetProcessHeap(), 0, 
+	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL32)))
+	       hreturned=hmem;
+	 if(!HeapFree(GetProcessHeap(), 0, pintern)) 
+	    hreturned=hmem;
+      }      
+      /* HeapUnlock(GetProcessHeap()); */
+   }
+   return hreturned;
+}
+
+
+/***********************************************************************
+ *           GlobalSize32   (KERNEL32.329)
+ */
+DWORD  GlobalSize32(HGLOBAL32 hmem)
+{
+   DWORD                retval;
+   PGLOBAL32_INTERN     pintern;
+
+   if(ISPOINTER(hmem)) 
+   {
+      retval=HeapSize(GetProcessHeap(), 0,  (LPVOID) hmem);
+   }
+   else
+   {
+      /* HeapLock(GetProcessHeap()); */
+      pintern=HANDLE_TO_INTERN(hmem);
+      
+      if(pintern->Magic==MAGIC_GLOBAL_USED)
+      {
+	 retval=HeapSize(GetProcessHeap(), 0, 
+	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL32))-4;
+      }
+      else
+      {
+	 dprintf_global(stddeb, "GlobalSize32: invalid handle\n");
+	 retval=0;
+      }
+      /* HeapUnlock(GetProcessHeap()); */
+   }
+   return retval;
+}
+
+
+/***********************************************************************
+ *           GlobalWire32   (KERNEL32.333)
+ */
+LPVOID  GlobalWire32(HGLOBAL32 hmem)
+{
+   return GlobalLock32( hmem );
+}
+
+
+/***********************************************************************
+ *           GlobalUnWire32   (KERNEL32.330)
+ */
+BOOL32  GlobalUnWire32(HGLOBAL32 hmem)
+{
+   return GlobalUnlock32( hmem);
+}
+
+
+/***********************************************************************
+ *           GlobalFix32   (KERNEL32.320)
+ */
+VOID  GlobalFix32(HGLOBAL32 hmem)
+{
+    GlobalLock32( hmem );
+}
+
+
+/***********************************************************************
+ *           GlobalUnfix32   (KERNEL32.331)
+ */
+VOID  GlobalUnfix32(HGLOBAL32 hmem)
+{
+   GlobalUnlock32( hmem);
+}
+
+
+/***********************************************************************
+ *           GlobalFlags32   (KERNEL32.321)
+ */
+UINT32  GlobalFlags32(HGLOBAL32 hmem)
+{
+   DWORD                retval;
+   PGLOBAL32_INTERN     pintern;
+   
+   if(ISPOINTER(hmem))
+   {
+      retval=0;
+   }
+   else
+   {
+      /* HeapLock(GetProcessHeap()); */
+      pintern=HANDLE_TO_INTERN(hmem);
+      if(pintern->Magic==MAGIC_GLOBAL_USED)
+      {               
+	 retval=pintern->LockCount + (pintern->Flags<<8);
+	 if(pintern->Pointer==0)
+	    retval|= GMEM_DISCARDED;
+      }
+      else
+      {
+	 dprintf_global(stddeb,"GlobalFlags32: invalid handle\n");
+	 retval=0;
+      }
+      /* HeapUnlock(GetProcessHeap()); */
+   }
+   return retval;
 }
 
 
@@ -798,75 +1181,6 @@ HGLOBAL32 GlobalAlloc32( UINT32 flags, DWORD size )
 DWORD GlobalCompact32( DWORD minfree )
 {
     return 0;  /* GlobalCompact does nothing in Win32 */
-}
-
-
-/***********************************************************************
- *           GlobalFlags32   (KERNEL32.321)
- */
-UINT32 GlobalFlags32( HGLOBAL32 handle )
-{
-    return 0;
-}
-
-
-/***********************************************************************
- *           GlobalFree32   (KERNEL32.322)
- */
-HGLOBAL32 GlobalFree32( HGLOBAL32 handle )
-{
-    return HeapFree( GetProcessHeap(), 0, (LPVOID)handle ) ? 0 : handle;
-}
-
-
-/***********************************************************************
- *           GlobalHandle32   (KERNEL32.325)
- */
-HGLOBAL32 GlobalHandle32( LPCVOID ptr )
-{
-    return (HGLOBAL32)ptr;
-}
-
-
-/***********************************************************************
- *           GlobalLock32   (KERNEL32.326)
- */
-LPVOID GlobalLock32( HGLOBAL32 handle )
-{
-    return (LPVOID)handle;
-}
-
-
-/***********************************************************************
- *           GlobalReAlloc32   (KERNEL32.328)
- */
-HGLOBAL32 GlobalReAlloc32( HGLOBAL32 handle, DWORD size, UINT32 flags )
-{
-    if (flags & GMEM_MODIFY)
-    {
-        fprintf( stderr, "GlobalReAlloc32: GMEM_MODIFY not supported\n" );
-        return 0;
-    }
-
-    return (HGLOBAL32)HeapReAlloc( GetProcessHeap(), 0, (LPVOID)handle, size );
-}
-
-
-/***********************************************************************
- *           GlobalSize32   (KERNEL32.329)
- */
-DWORD GlobalSize32( HGLOBAL32 handle )
-{
-    return HeapSize( GetProcessHeap(), 0, (LPVOID)handle );
-}
-
-
-/***********************************************************************
- *           GlobalUnlock32   (KERNEL32.332)
- */
-BOOL32 GlobalUnlock32( HGLOBAL32 handle )
-{
-    return TRUE;
 }
 
 

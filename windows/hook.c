@@ -22,6 +22,7 @@
 #include "user.h"
 #include "heap.h"
 #include "struct32.h"
+#include "winproc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -35,8 +36,7 @@ typedef struct
     INT16      id;                 /* 06 Hook id (WH_xxx) */
     HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
     HMODULE16  ownerModule;        /* 0a Owner module */
-    WORD       inHookProc;         /* 0c TRUE if in this->proc */
-    INT32      flags;
+    WORD       flags;              /* 0c flags */
 } HOOKDATA;
 
 #pragma pack(4)
@@ -50,33 +50,29 @@ typedef VOID (*HOOK_MapFunc)(INT32, INT32, WPARAM32 *, LPARAM *);
 typedef VOID (*HOOK_UnMapFunc)(INT32, INT32, WPARAM32, LPARAM, WPARAM32,
 			       LPARAM);
 
-
-/***********************************************************************
- *           Hook Mapping Functions
- */
-
-
 /***********************************************************************
  *           HOOK_Map16To32Common
  */
 static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
-				 LPARAM *plParam)
+				 LPARAM *plParam, BOOL32 bA )
 {
-    switch (id)
-    {
-    case WH_MSGFILTER:
-    case WH_SYSMSGFILTER:
-    case WH_GETMESSAGE:
-    case WH_JOURNALRECORD:
+
+   switch( id )
+   {
+	case WH_MSGFILTER:
+	case WH_SYSMSGFILTER: 
+	case WH_GETMESSAGE: 
+	case WH_JOURNALRECORD:
         {
             LPMSG16 lpmsg16 = PTR_SEG_TO_LIN(*plParam);
             LPMSG32 lpmsg32 = HeapAlloc( SystemHeap, 0, sizeof(*lpmsg32) );
 	
             STRUCT32_MSG16to32( lpmsg16, lpmsg32 );
             *plParam = (LPARAM)lpmsg32;
-            break;
-        }
-    case WH_JOURNALPLAYBACK:
+	    break;
+        } 
+
+	case WH_JOURNALPLAYBACK:
         {
             LPEVENTMSG16 lpem16 = PTR_SEG_TO_LIN(*plParam);
             LPEVENTMSG32 lpem32 = HeapAlloc( SystemHeap, 0, sizeof(*lpem32) );
@@ -88,12 +84,61 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             lpem32->hwnd = 0;	/* FIXME */
 
             *plParam = (LPARAM)lpem32;
-            break;
-        }
-    case WH_CBT:
-	switch (code)
+	    break;
+        } 
+
+	case WH_CALLWNDPROC:
 	{
-        case HCBT_ACTIVATE:
+	    INT32	(*localMap)(UINT16, WPARAM16, UINT32*, WPARAM32*, LPARAM*)
+			  = (bA) ? WINPROC_MapMsg16To32A : WINPROC_MapMsg16To32W;
+	    LPCWPSTRUCT16   lpcwp16 = PTR_SEG_TO_LIN(*plParam);
+	    LPCWPSTRUCT32   lpcwp32 = HeapAlloc( SystemHeap, 0, sizeof(*lpcwp32) );
+	    
+	    lpcwp32->hwnd = lpcwp16->hwnd;
+	    lpcwp32->lParam = lpcwp16->lParam;
+	    
+	    (*localMap)(lpcwp16->message, lpcwp16->wParam, 
+		       &lpcwp32->message, &lpcwp32->wParam, &lpcwp32->lParam );
+	    break;
+	}
+
+	case WH_CBT:
+	  switch (code)
+	  {
+	    case HCBT_CREATEWND:
+	    {
+		LPCBT_CREATEWND16  lpcbtcw16 = PTR_SEG_TO_LIN(*plParam);
+		LPCREATESTRUCT16   lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
+		LPCBT_CREATEWND32A lpcbtcw32 = HeapAlloc( SystemHeap, 0,
+							  sizeof(*lpcbtcw32) );
+		lpcbtcw32->lpcs = HeapAlloc( SystemHeap, 0,
+					     sizeof(*lpcbtcw32->lpcs) );
+
+		STRUCT32_CREATESTRUCT16to32A( lpcs16,
+					     (LPCREATESTRUCT32A)lpcbtcw32->lpcs );
+
+		if (HIWORD(lpcs16->lpszName))
+		    lpcbtcw32->lpcs->lpszName = 
+			(bA) ? PTR_SEG_TO_LIN(lpcs16->lpszName)
+			     : HEAP_strdupAtoW( SystemHeap, 0,
+                                                PTR_SEG_TO_LIN(lpcs16->lpszName) );
+		else
+		    lpcbtcw32->lpcs->lpszName = (LPCSTR)lpcs16->lpszName;
+
+		if (HIWORD(lpcs16->lpszClass))
+		    lpcbtcw32->lpcs->lpszClass =
+			(bA) ? PTR_SEG_TO_LIN(lpcs16->lpszClass)
+			     : HEAP_strdupAtoW( SystemHeap, 0,
+                                                PTR_SEG_TO_LIN(lpcs16->lpszClass) );
+		else
+		    lpcbtcw32->lpcs->lpszClass = (LPCSTR)lpcs16->lpszClass;
+
+		lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
+
+		*plParam = (LPARAM)lpcbtcw32;
+		break;
+	    } 
+	    case HCBT_ACTIVATE:
             {
                 LPCBTACTIVATESTRUCT16 lpcas16 = PTR_SEG_TO_LIN(*plParam);
                 LPCBTACTIVATESTRUCT32 lpcas32 = HeapAlloc( SystemHeap, 0,
@@ -103,7 +148,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 *plParam = (LPARAM)lpcas32;
                 break;
             }
-        case HCBT_CLICKSKIPPED:
+            case HCBT_CLICKSKIPPED:
             {
                 LPMOUSEHOOKSTRUCT16 lpms16 = PTR_SEG_TO_LIN(*plParam);
                 LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
@@ -120,7 +165,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 *plParam = (LPARAM)lpms32;
                 break;
             }
-        case HCBT_MOVESIZE:
+            case HCBT_MOVESIZE:
             {
                 LPRECT16 lprect16 = PTR_SEG_TO_LIN(*plParam);
                 LPRECT32 lprect32 = HeapAlloc( SystemHeap, 0,
@@ -130,9 +175,10 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 *plParam = (LPARAM)lprect32;
                 break;
             }
-	}
-	break;
-    case WH_MOUSE:
+	    break;
+	  } 
+
+	case WH_MOUSE:
         {
             LPMOUSEHOOKSTRUCT16 lpms16 = PTR_SEG_TO_LIN(*plParam);
             LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
@@ -146,9 +192,10 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             lpms32->dwExtraInfo = lpms16->dwExtraInfo;
             lpms32->hwnd = lpms16->hwnd;
             *plParam = (LPARAM)lpms32;
-            break;
-        }
-    case WH_DEBUG:
+	    break;
+        } 
+
+	case WH_DEBUG:
         {
             LPDEBUGHOOKINFO16 lpdh16 = PTR_SEG_TO_LIN(*plParam);
             LPDEBUGHOOKINFO32 lpdh32 = HeapAlloc( SystemHeap, 0,
@@ -164,19 +211,17 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             if (*pwParam == 0xffff) *pwParam = WH_MSGFILTER;
 
             *plParam = (LPARAM)lpdh32;
-            break;
+	    break;
         }
-    case WH_SHELL:
-    case WH_KEYBOARD:
-	break;
 
-    case WH_CALLWNDPROC:
-    case WH_HARDWARE:
-	break;	/* NYI */
+	case WH_SHELL:
+	case WH_KEYBOARD:
+	    break;
 
-    default:
-	fprintf(stderr, "Unknown hook id: %d\n", id);
-	return;
+	case WH_HARDWARE: 
+	case WH_FOREGROUNDIDLE: 
+	case WH_CALLWNDPROCRET:
+	    fprintf(stderr, "\t[%i] 16to32 translation unimplemented\n", id);
     }
 }
 
@@ -187,34 +232,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 static void HOOK_Map16To32A(INT32 id, INT32 code, WPARAM32 *pwParam,
 			    LPARAM *plParam)
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWND16 lpcbtcw16 = PTR_SEG_TO_LIN(*plParam);
-	LPCBT_CREATEWND32A lpcbtcw32 = HeapAlloc( SystemHeap, 0,
-						  sizeof(*lpcbtcw32) );
-	lpcbtcw32->lpcs = HeapAlloc( SystemHeap, 0,
-				     sizeof(*lpcbtcw32->lpcs) );
-
-	STRUCT32_CREATESTRUCT16to32A( lpcbtcw16->lpcs, lpcbtcw32->lpcs );
-
-	if (HIWORD(lpcbtcw16->lpcs->lpszName))
-            lpcbtcw32->lpcs->lpszName
-                = PTR_SEG_TO_LIN(lpcbtcw16->lpcs->lpszName);
-	else
-            lpcbtcw32->lpcs->lpszName = (LPSTR)lpcbtcw16->lpcs->lpszName;
-
-	if (HIWORD(lpcbtcw16->lpcs->lpszClass))
-            lpcbtcw32->lpcs->lpszClass
-                = PTR_SEG_TO_LIN(lpcbtcw16->lpcs->lpszClass);
-	else
-            lpcbtcw32->lpcs->lpszClass = (LPSTR)lpcbtcw16->lpcs->lpszClass;
-
-	lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
-
-	*plParam = (LPARAM)lpcbtcw32;
-    }
-    else
-        HOOK_Map16To32Common( id, code, pwParam, plParam );
+    HOOK_Map16To32Common( id, code, pwParam, plParam, TRUE );
 }
 
 
@@ -224,35 +242,7 @@ static void HOOK_Map16To32A(INT32 id, INT32 code, WPARAM32 *pwParam,
 static void HOOK_Map16To32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 			    LPARAM *plParam)
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWND16 lpcbtcw16 = PTR_SEG_TO_LIN(*plParam);
-	LPCREATESTRUCT16 lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
-	LPCBT_CREATEWND32W lpcbtcw32 = HeapAlloc( SystemHeap, 0,
-						  sizeof(*lpcbtcw32) );
-	lpcbtcw32->lpcs = HeapAlloc( SystemHeap, 0,
-				     sizeof(*lpcbtcw32->lpcs) );
-
-	STRUCT32_CREATESTRUCT16to32A( lpcs16,
-				      (LPCREATESTRUCT32A)lpcbtcw32->lpcs );
-
-	if (HIWORD(lpcs16->lpszName))
-            lpcbtcw32->lpcs->lpszName = HEAP_strdupAtoW( SystemHeap, 0,
-                                            PTR_SEG_TO_LIN(lpcs16->lpszName) );
-	else
-            lpcbtcw32->lpcs->lpszName = (LPWSTR)lpcs16->lpszName;
-
-	if (HIWORD(lpcs16->lpszClass))
-            lpcbtcw32->lpcs->lpszClass = HEAP_strdupAtoW( SystemHeap, 0,
-                                           PTR_SEG_TO_LIN(lpcs16->lpszClass) );
-	else
-            lpcbtcw32->lpcs->lpszClass = (LPWSTR)lpcs16->lpszClass;
-
-	lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
-
-	*plParam = (LPARAM)lpcbtcw32;
-    }
-    else HOOK_Map16To32Common( id, code, pwParam, plParam );
+    HOOK_Map16To32Common( id, code, pwParam, plParam, FALSE );
 }
 
 
@@ -261,56 +251,82 @@ static void HOOK_Map16To32W(INT32 id, INT32 code, WPARAM32 *pwParam,
  */
 static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 				   LPARAM lParamOrig, WPARAM32 wParam,
-				   LPARAM lParam)
+				   LPARAM lParam, BOOL32 bA)
 {
     switch (id)
     {
-      case WH_MSGFILTER:
-      case WH_SYSMSGFILTER:
-      case WH_JOURNALRECORD:
-      case WH_JOURNALPLAYBACK:
-      {
-	  HeapFree( SystemHeap, 0, (LPVOID)lParam );
-	  break;
-      }
-
-      case WH_GETMESSAGE:
-      {
-	  LPMSG16 lpmsg16 = PTR_SEG_TO_LIN(lParamOrig);
-	  STRUCT32_MSG32to16( (LPMSG32)lParam, lpmsg16 );
-	  HeapFree( SystemHeap, 0, (LPVOID)lParam );
-	  break;
-      }
-
-      case WH_MOUSE:
-      case WH_DEBUG:
-	HeapFree( SystemHeap, 0, (LPVOID)lParam );
-	break;
-
-	/* I don't think any of these need to be copied */
-      case WH_CBT:
-	switch (code)
-	{
-	  case HCBT_ACTIVATE:
-	  case HCBT_CLICKSKIPPED:
-	  case HCBT_MOVESIZE:
-	    HeapFree( SystemHeap, 0, (LPVOID)lParam);
+	case WH_MSGFILTER:
+	case WH_SYSMSGFILTER:
+	case WH_JOURNALRECORD:
+	case WH_JOURNALPLAYBACK:
+      
+	    HeapFree( SystemHeap, 0, (LPVOID)lParam );
 	    break;
+
+	case WH_CALLWNDPROC:
+	{
+            void          (*localUnMap)(UINT32, WPARAM32, LPARAM)
+                            = (bA) ? WINPROC_UnmapMsg16To32A : WINPROC_UnmapMsg16To32W;
+            LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParam;
+
+            (*localUnMap)(lpcwp32->message, lpcwp32->wParam, lpcwp32->lParam );
+	    HeapFree( SystemHeap, 0, lpcwp32 );
+            break;
 	}
-	break;
 
-      case WH_SHELL:
-      case WH_KEYBOARD:
-	break;
+	case WH_GETMESSAGE:
+        {
+	    LPMSG16 lpmsg16 = PTR_SEG_TO_LIN(lParamOrig);
+	    STRUCT32_MSG32to16( (LPMSG32)lParam, lpmsg16 );
+	    HeapFree( SystemHeap, 0, (LPVOID)lParam );
+	    break;
+        }
 
-      case WH_CALLWNDPROC:
-      case WH_HARDWARE:
-	fprintf(stderr, "Can't map hook id: %d\n", id);
-	break;
+        case WH_MOUSE:
+        case WH_DEBUG:
 
-      default:
-	fprintf(stderr, "Unknown hook id: %d\n", id);
-	return;
+	    HeapFree( SystemHeap, 0, (LPVOID)lParam );
+	    break;
+
+        case WH_CBT:
+	    switch (code)
+  	    {
+	      case HCBT_CREATEWND:
+	      {
+		LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)lParam;
+		LPCBT_CREATEWND16  lpcbtcw16 = PTR_SEG_TO_LIN(lParamOrig);
+
+		if( !bA )
+		{
+		   if (HIWORD(lpcbtcw32->lpcs->lpszName))
+                       HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszName );
+		   if (HIWORD(lpcbtcw32->lpcs->lpszClass))
+                       HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszClass );
+		}
+
+		lpcbtcw16->hwndInsertAfter = lpcbtcw32->hwndInsertAfter;
+
+		HeapFree( SystemHeap, 0, lpcbtcw32->lpcs );
+	      } /* fall through */
+
+	      case HCBT_ACTIVATE:
+	      case HCBT_CLICKSKIPPED:
+	      case HCBT_MOVESIZE:
+
+	        HeapFree( SystemHeap, 0, (LPVOID)lParam);
+	        break;
+	    }
+  	    break;
+
+        case WH_SHELL:
+        case WH_KEYBOARD:
+	    break;
+
+        case WH_HARDWARE:
+	case WH_FOREGROUNDIDLE:
+	case WH_CALLWNDPROCRET:
+	    fprintf(stderr, "\t[%i] skipping unmap\n", id);
+  	    break;
     }
 }
 
@@ -322,16 +338,8 @@ static void HOOK_UnMap16To32A(INT32 id, INT32 code, WPARAM32 wParamOrig,
 			      LPARAM lParamOrig, WPARAM32 wParam,
 			      LPARAM lParam)
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)lParam;
-	HeapFree( SystemHeap, 0, lpcbtcw32->lpcs );
-	HeapFree( SystemHeap, 0, lpcbtcw32 );
-    }
-    else
-      HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam,
-			      lParam);
-    return;
+    HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam,
+			    lParam, TRUE );
 }
 
 
@@ -342,18 +350,8 @@ static void HOOK_UnMap16To32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
 			      LPARAM lParamOrig, WPARAM32 wParam,
 			      LPARAM lParam)
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWND32W lpcbtcw32 = (LPCBT_CREATEWND32W)lParam;
-	if (HIWORD(lpcbtcw32->lpcs->lpszName))
-            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszName );
-	if (HIWORD(lpcbtcw32->lpcs->lpszClass))
-            HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcw32->lpcs->lpszClass );
-	HeapFree( SystemHeap, 0, lpcbtcw32->lpcs );
-	HeapFree( SystemHeap, 0, lpcbtcw32 );
-    }
-    else
-      HOOK_UnMap16To32Common(id, code, wParamOrig, lParamOrig, wParam, lParam);
+    HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam, 
+			    lParam, FALSE );
 }
 
 
@@ -361,7 +359,7 @@ static void HOOK_UnMap16To32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
  *           HOOK_Map32To16Common
  */
 static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
-				 LPARAM *plParam)
+				 LPARAM *plParam, BOOL32 bA)
 {
     switch (id)
     {
@@ -393,6 +391,22 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	  break;
       }
 
+      case WH_CALLWNDPROC:
+      {
+          INT32       (*localMap)(UINT32, WPARAM32, UINT16*, WPARAM16*, LPARAM*)
+                          = (bA) ? WINPROC_MapMsg32ATo16 : WINPROC_MapMsg32WTo16;
+          LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)*plParam;
+	  LPCWPSTRUCT16   lpcwp16 = SEGPTR_NEW( CWPSTRUCT16 );
+
+          lpcwp16->hwnd = lpcwp32->hwnd;
+          lpcwp16->lParam = lpcwp32->lParam;
+
+         (*localMap)(lpcwp32->message, lpcwp32->wParam,
+                    &lpcwp16->message, &lpcwp16->wParam, &lpcwp16->lParam );
+	  *plParam = (LPARAM)SEGPTR_GET( lpcwp16 );
+          break;
+      }
+
       case WH_CBT:
 	switch (code)
 	{
@@ -402,8 +416,8 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	      LPCBTACTIVATESTRUCT16 lpcas16 =SEGPTR_NEW( CBTACTIVATESTRUCT16 );
 
 	      lpcas16->fMouse     = lpcas32->fMouse;
-	      lpcas16->hWndActive = lpcas32->hWndActive
-;
+	      lpcas16->hWndActive = lpcas32->hWndActive;
+
 	      *plParam = (LPARAM)SEGPTR_GET( lpcas16 );
 	      break;
 	  }
@@ -470,14 +484,10 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
       case WH_KEYBOARD:
 	break;
 
-      case WH_CALLWNDPROC:
       case WH_HARDWARE:
-	fprintf(stderr, "Can't map hook id: %d\n", id);
-	break;
-
-      default:
-	fprintf(stderr, "Unknown hook id: %d\n", id);
-	return;
+      case WH_FOREGROUNDIDLE:
+      case WH_CALLWNDPROCRET:
+	fprintf(stderr,"\t[%i] 32to16 translation unimplemented\n", id);
     }
 }
 
@@ -513,7 +523,7 @@ static void HOOK_Map32ATo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 
 	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
     }
-    else HOOK_Map32To16Common(id, code, pwParam, plParam);
+    else HOOK_Map32To16Common(id, code, pwParam, plParam, TRUE);
 }
 
 
@@ -542,7 +552,7 @@ static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 
 	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
     }
-    else HOOK_Map32To16Common(id, code, pwParam, plParam);
+    else HOOK_Map32To16Common(id, code, pwParam, plParam, FALSE);
 }
 
 
@@ -551,7 +561,7 @@ static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
  */
 static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 				   LPARAM lParamOrig, WPARAM32 wParam,
-				   LPARAM lParam)
+				   LPARAM lParam, BOOL32 bA)
 {
     switch (id)
     {
@@ -563,6 +573,18 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
       case WH_DEBUG:
 	SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
 	break;
+
+      case WH_CALLWNDPROC:
+      {
+          void          (*localUnMap)(UINT32, WPARAM16, LPARAM)
+                          = (bA) ? WINPROC_UnmapMsg32ATo16 : WINPROC_UnmapMsg32WTo16;
+          LPCWPSTRUCT16   lpcwp16 = (LPCWPSTRUCT16)PTR_SEG_TO_LIN(lParam);
+	  LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParamOrig;
+
+          (*localUnMap)(lpcwp32->message, lpcwp16->wParam, lpcwp16->lParam );
+	  SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
+          break;
+      }
 
       case WH_GETMESSAGE:
       {
@@ -576,11 +598,29 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
       case WH_CBT:
 	switch (code)
 	{
+	  case HCBT_CREATEWND:
+	  {
+	       LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)(lParamOrig);
+               LPCBT_CREATEWND16 lpcbtcw16 = PTR_SEG_TO_LIN(lParam);
+               LPCREATESTRUCT16  lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
+
+               if (HIWORD(lpcs16->lpszName))
+                   SEGPTR_FREE( PTR_SEG_TO_LIN(lpcs16->lpszName) );
+
+               if (HIWORD(lpcs16->lpszClass))
+                   SEGPTR_FREE( PTR_SEG_TO_LIN(lpcs16->lpszClass) );
+
+	       lpcbtcw32->hwndInsertAfter = lpcbtcw16->hwndInsertAfter;
+
+               SEGPTR_FREE( lpcs16 );
+	  } /* fall through */
+
 	  case HCBT_ACTIVATE:
 	  case HCBT_CLICKSKIPPED:
 	  case HCBT_MOVESIZE:
-	    SEGPTR_FREE( (LPVOID)lParam );
-	    break;
+
+	       SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
+	       break;
 	}
 	break;
 
@@ -588,14 +628,10 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
       case WH_KEYBOARD:
 	break;
 
-      case WH_CALLWNDPROC:
       case WH_HARDWARE:
-	fprintf(stderr, "Can't map hook id: %d\n", id);
-	break;
-
-      default:
-	fprintf(stderr, "Unknown hook id: %d\n", id);
-	return;
+      case WH_FOREGROUNDIDLE:
+      case WH_CALLWNDPROCRET:
+	fprintf(stderr, "\t[%i] skipping unmap\n", id);
     }
 }
 
@@ -607,24 +643,8 @@ static void HOOK_UnMap32ATo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
 			      LPARAM lParamOrig, WPARAM32 wParam,
 			      LPARAM lParam)
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWND16 lpcbtcw16 = PTR_SEG_TO_LIN(lParam);
-	LPCREATESTRUCT16 lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
-
-	if (HIWORD(lpcs16->lpszName))
-	  SEGPTR_FREE( PTR_SEG_TO_LIN(lpcs16->lpszName) );
-
-	if (HIWORD(lpcs16->lpszClass))
-	  SEGPTR_FREE( PTR_SEG_TO_LIN(lpcs16->lpszClass) );
-
-	SEGPTR_FREE( lpcs16 );
-	SEGPTR_FREE( lpcbtcw16 );
-    }
-    else
-      return HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
-				     lParam );
-    return;
+    HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
+			    lParam, TRUE );
 }
 
 
@@ -635,7 +655,8 @@ static void HOOK_UnMap32WTo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
 			      LPARAM lParamOrig, WPARAM32 wParam,
 			      LPARAM lParam)
 {
-    HOOK_UnMap32ATo16( id, code, wParamOrig, lParamOrig, wParam, lParam );
+    HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
+                            lParam, FALSE );
 }
 
 
@@ -841,7 +862,6 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
     data->id          = id;
     data->ownerQueue  = hQueue;
     data->ownerModule = hInst;
-    data->inHookProc  = 0;
     data->flags       = type;
 
     /* Insert it in the correct linked list */
@@ -876,7 +896,7 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
     dprintf_hook( stddeb, "Removing hook %04x\n", hook );
 
     if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
-    if (data->inHookProc)
+    if (data->flags & HOOK_INUSE)
     {
         /* Mark it for deletion later on */
         dprintf_hook( stddeb, "Hook still running, deletion delayed\n" );
@@ -952,7 +972,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
-    data->inHookProc = TRUE;
+    data->flags |= HOOK_INUSE;
 
     dprintf_hook( stddeb, "Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
@@ -965,7 +985,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     dprintf_hook( stddeb, "Ret hook %04x = %08lx\n", hook, ret );
 
-    data->inHookProc = FALSE;
+    data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
 
     if (UnMapFunc)
@@ -1100,7 +1120,7 @@ void HOOK_FreeModuleHooks( HMODULE16 hModule )
 	      next = hptr->next;
 	      if( hptr->ownerModule == hModule )
                 {
-                  hptr->inHookProc = 0;
+                  hptr->flags &= HOOK_MAPTYPE;
                   HOOK_RemoveHook(hook);
                 }
 	      hook = next;
@@ -1130,7 +1150,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
 	  if( hptr && hptr->ownerQueue == hQueue )
 	    {
-	      hptr->inHookProc = 0;
+	      hptr->flags &= HOOK_MAPTYPE;
 	      HOOK_RemoveHook(hook);
 	    }
 	  hook = next;

@@ -81,3 +81,5 @@ type win32
 0100 stub WNetUseConnectionW
 0101 stub WNetVerifyPasswordA
 0102 stub WNetVerifyPasswordW 
+#additions
+0103 stub WNetRestoreConnection

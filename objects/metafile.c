@@ -55,10 +55,18 @@ static int MF_AddHandleDC( DC *dc )
 
 
 /******************************************************************
- *         GetMetafile         GDI.124 By Kenny MacDonald 30 Nov 94
+ *         GetMetafile16   (GDI.124)
  */
+HMETAFILE16 GetMetaFile16( LPCSTR lpFilename )
+{
+    return GetMetaFile32A( lpFilename );
+}
 
-HMETAFILE16 GetMetaFile(LPSTR lpFilename)
+
+/******************************************************************
+ *         GetMetafile32A   (GDI32.197)
+ */
+HMETAFILE32 GetMetaFile32A( LPCSTR lpFilename )
 {
   HMETAFILE16 hmf;
   METAHEADER *mh;
@@ -73,17 +81,21 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
   hmf = GlobalAlloc16(GMEM_MOVEABLE, MFHEADERSIZE);
   mh = (METAHEADER *)GlobalLock16(hmf);
   
-  if (!mh) {
+  if (!mh)
+  {
     GlobalFree16(hmf);
     return 0;
   }
   
-  if ((hFile = _lopen32(lpFilename, OF_READ)) == HFILE_ERROR32) {
+  if ((hFile = _lopen32(lpFilename, OF_READ)) == HFILE_ERROR32)
+  {
     GlobalFree16(hmf);
     return 0;
   }
   
-  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR32) {
+  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR32)
+  {
+    _lclose32( hFile );
     GlobalFree16(hmf);
     return 0;
   }
@@ -93,20 +105,25 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
   hmf = GlobalReAlloc16(hmf,size,GMEM_MOVEABLE);
   mh = (METAHEADER *)GlobalLock16(hmf);
   
-  if (!mh) {
+  if (!mh)
+  {
+    _lclose32( hFile );
     GlobalFree16(hmf);
     return 0;
   }
   
   if (_lread32(hFile, (char*)mh + mh->mtHeaderSize * 2, 
-	        size - mh->mtHeaderSize * 2) == HFILE_ERROR32) {
+	        size - mh->mtHeaderSize * 2) == HFILE_ERROR32)
+  {
+    _lclose32( hFile );
     GlobalFree16(hmf);
     return 0;
   }
   
   _lclose32(hFile);
 
-  if (mh->mtType != 1) {
+  if (mh->mtType != 1)
+  {
     GlobalFree16(hmf);
     return 0;
   }
@@ -118,10 +135,31 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
 
 
 /******************************************************************
- *         CopyMetafile         GDI.151 Niels de Carpentier, April 1996
+ *         GetMetafile32W   (GDI32.199)
+ */
+HMETAFILE32 GetMetaFile32W( LPCWSTR lpFilename )
+{
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
+    HMETAFILE32 ret = GetMetaFile32A( p );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
+}
+
+
+/******************************************************************
+ *         CopyMetaFile16   (GDI.151)
  */
 
-HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
+HMETAFILE16 CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
+{
+    return CopyMetaFile32A( hSrcMetaFile, lpFilename );
+}
+
+
+/******************************************************************
+ *         CopyMetaFile32A   (GDI32.23)
+ */
+HMETAFILE32 CopyMetaFile32A( HMETAFILE32 hSrcMetaFile, LPCSTR lpFilename )
 {
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
@@ -146,6 +184,7 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
         _lclose32(hFile);
 	if (i == -1)
 	    return 0;
+        /* FIXME: return value */
         }
     else                     /* memory based metafile */
         {
@@ -158,12 +197,25 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     return handle;
 }
 
+
+/******************************************************************
+ *         CopyMetaFile32W   (GDI32.24)
+ */
+HMETAFILE32 CopyMetaFile32W( HMETAFILE32 hSrcMetaFile, LPCWSTR lpFilename )
+{
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
+    HMETAFILE32 ret = CopyMetaFile32A( hSrcMetaFile, p );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
+}
+
+
 /******************************************************************
  *         IsValidMetaFile   (GDI.410)
  *         (This is not exactly what windows does, see "Undoc Win")
  */
 
-BOOL IsValidMetaFile(HMETAFILE16 hmf)
+BOOL16 IsValidMetaFile(HMETAFILE16 hmf)
 {
     BOOL resu=FALSE;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
@@ -179,82 +231,19 @@ BOOL IsValidMetaFile(HMETAFILE16 hmf)
 }
 
 
-#if 0
 /******************************************************************
- *         CloseMetafile         GDI.126
+ *         PlayMetafile16   (GDI.123)
  */
-
-HMETAFILE16 CloseMetaFile(HDC16 hdc)
+BOOL16 PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
-    DC *dc;
-    METAHEADER *mh;
-    HMETAFILE16 hmf;
-    HFILE hFile;
-    METAFILEDRV_PDEVICE *physDev;
-    
-    dprintf_metafile(stddeb,"CloseMetaFile\n");
-
-    if (!(dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC))) return 0;
-
-    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
-    mh = (METAHEADER *)GlobalLock16( physDev->hMetafile );
-
-    /* Construct the end of metafile record - this is documented
-     * in SDK Knowledgebase Q99334.
-     */
-
-    if (!MF_MetaParam0(dc, META_EOF))
-    {
-        DeleteDC32( hdc );
-	return 0;
-    }	
-
-    if (mh->mtType == 1)        /* disk based metafile */
-    {
-        hFile = mh->mtNoParameters;
-	mh->mtNoParameters = 0;
-        if (_llseek(hFile, 0L, 0) == -1)
-        {
-            DeleteDC32( hdc );
-            return 0;
-        }
-        if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
-        {
-            DeleteDC32( hdc );
-            return 0;
-        }
-        _lclose(hFile);
-    }
-
-    hmf = physDev->hMetafile;
-    GlobalUnlock16( hmf );
-    physDev->hMetafile = 0;  /* So it won't be deleted */
-    DeleteDC32( hdc );
-    return hmf;
+    return PlayMetaFile32( hdc, hmf );
 }
 
 
 /******************************************************************
- *         DeleteMetafile         GDI.127
+ *         PlayMetafile32   (GDI32.265)
  */
-
-BOOL DeleteMetaFile(HMETAFILE16 hmf)
-{
-    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
-
-    if (!mh)
-	return FALSE;
-
-    GlobalFree16(hmf);
-    return TRUE;
-}
-#endif
-
-/******************************************************************
- *         PlayMetafile         GDI.123
- */
-
-BOOL PlayMetaFile(HDC16 hdc, HMETAFILE16 hmf)
+BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -592,7 +581,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     /* W. Magro: Some new metafile operations.  Not all debugged. */
     case META_CREATEPALETTE:
 	MF_AddHandle(ht, nHandles, 
-		     CreatePalette((LPLOGPALETTE)mr->rdParam));
+		     CreatePalette16((LPLOGPALETTE)mr->rdParam));
 	break;
 
     case META_SETTEXTALIGN:
@@ -600,15 +589,15 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SELECTPALETTE:
-	SelectPalette(hdc, *(ht->objectHandle + *(mr->rdParam+1)),*(mr->rdParam));
+	SelectPalette16(hdc, *(ht->objectHandle + *(mr->rdParam+1)),*(mr->rdParam));
 	break;
 
     case META_SETMAPPERFLAGS:
-	SetMapperFlags(hdc, *(mr->rdParam));
+	SetMapperFlags16(hdc, *(mr->rdParam));
 	break;
 
     case META_REALIZEPALETTE:
-	RealizePalette(hdc);
+	RealizePalette16(hdc);
 	break;
 
     case META_ESCAPE:
@@ -735,7 +724,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
 
 /******************************************************************
- *         GetMetaFileBits		by William Magro, 19 Sep 1995
+ *         GetMetaFileBits   (GDI.159)
  *
  * Trade in a meta file object handle for a handle to the meta file memory
  */
@@ -748,11 +737,10 @@ HGLOBAL16 GetMetaFileBits(HMETAFILE16 hmf)
 }
 
 /******************************************************************
- *         SetMetaFileBits		by William Magro, 19 Sep 1995
+ *         SetMetaFileBits   (GDI.160)
  *
  * Trade in a meta file memory handle for a handle to a meta file object
  */
-
 HMETAFILE16 SetMetaFileBits( HGLOBAL16 hMem )
 {
     dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hMem);

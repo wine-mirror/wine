@@ -38,7 +38,7 @@
 /* Desktop window */
 static WND *pWndDesktop = NULL;
 
-static HWND hwndSysModal = 0;
+static HWND32 hwndSysModal = 0;
 
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
@@ -47,6 +47,7 @@ extern HCURSOR16 CURSORICON_IconToCursor(HICON16, BOOL32);
 extern HWND32 CARET_GetHwnd(void);
 extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
 extern void   WINPOS_CheckActive(HWND32);
+extern BOOL32 EVENT_CheckFocus(void);
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -224,7 +225,7 @@ BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter )
  */
 HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
 {
-    HWND hwndRet;
+    HWND32 hwndRet;
     WND *pWnd = pWndDesktop;
 
     /* Note: the desktop window never gets WM_PAINT messages 
@@ -306,9 +307,9 @@ void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
  *
  * Destroy storage associated to a window. "Internals" p.358
  */
-static void WIN_DestroyWindow( WND* wndPtr )
+static WND* WIN_DestroyWindow( WND* wndPtr )
 {
-    HWND hwnd = wndPtr->hwndSelf;
+    HWND32 hwnd = wndPtr->hwndSelf;
     WND *pWnd;
 
     dprintf_win( stddeb, "WIN_DestroyWindow: %04x\n", wndPtr->hwndSelf );
@@ -321,11 +322,7 @@ static void WIN_DestroyWindow( WND* wndPtr )
     /* free child windows */
 
     while ((pWnd = wndPtr->child))
-    {
-        /* Make sure the linked list remains coherent */
-        wndPtr->child = pWnd->next;
-        WIN_DestroyWindow( pWnd );
-    }
+        wndPtr->child = WIN_DestroyWindow( pWnd );
 
     SendMessage32A( wndPtr->hwndSelf, WM_NCDESTROY, 0, 0);
 
@@ -370,8 +367,10 @@ static void WIN_DestroyWindow( WND* wndPtr )
 
     wndPtr->class->cWindows--;
     wndPtr->class = NULL;
+    pWnd = wndPtr->next;
 
     USER_HEAP_FREE( hwnd );
+    return pWnd;
 }
 
 /***********************************************************************
@@ -400,7 +399,7 @@ void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
 BOOL32 WIN_CreateDesktopWindow(void)
 {
     CLASS *class;
-    HWND hwndDesktop;
+    HWND32 hwndDesktop;
 
     dprintf_win(stddeb,"Creating desktop window\n");
 
@@ -460,14 +459,14 @@ BOOL32 WIN_CreateDesktopWindow(void)
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
-                                BOOL unicode )
+static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
+                                  BOOL32 win32, BOOL32 unicode )
 {
     CLASS *classPtr;
     WND *wndPtr;
     HWND16 hwnd, hwndLinkAfter;
     POINT16 maxSize, maxPos, minTrack, maxTrack;
-    LRESULT wmcreate;
+    LRESULT (*localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
     dprintf_win( stddeb, "CreateWindowEx: " );
     if (HIWORD(cs->lpszName)) dprintf_win( stddeb, "'%s' ", cs->lpszName );
@@ -566,7 +565,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
-    wndPtr->flags          = 0;
+    wndPtr->flags          = win32 ? WIN_ISWIN32 : 0;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->pProp          = NULL;
@@ -585,9 +584,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
 	cbtc.lpcs = cs;
 	cbtc.hwndInsertAfter = hwndLinkAfter;
-	wmcreate = !HOOK_CallHooks32A( WH_CBT, HCBT_CREATEWND, hwnd,
-				       (LPARAM)&cbtc );
-	if (!wmcreate)
+	if ( HOOK_CallHooks32A(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc) )
 	{
 	    dprintf_win(stddeb, "CreateWindowEx: CBT-hook returned 0\n");
 	    USER_HEAP_FREE( hwnd );
@@ -726,85 +723,70 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
      */
 
     maxPos.x = wndPtr->rectWindow.left; maxPos.y = wndPtr->rectWindow.top;
-    if (unicode)
+
+    localSend32 = unicode ? SendMessage32W : SendMessage32A;
+    if( (*localSend32)( hwnd, WM_NCCREATE, 0, (LPARAM)cs) )
     {
-        if (!SendMessage32W( hwnd, WM_NCCREATE, 0, (LPARAM)cs)) wmcreate = -1;
-        else
-        {
-            WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
-                                   NULL, NULL, 0, &wndPtr->rectClient );
-	    OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
-					    maxPos.y - wndPtr->rectWindow.top);
-            wmcreate = SendMessage32W( hwnd, WM_CREATE, 0, (LPARAM)cs );
-        }
-    }
-    else
-    {
-        if (!SendMessage32A( hwnd, WM_NCCREATE, 0, (LPARAM)cs)) wmcreate = -1;
-        else
-        {
-            WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
-                                   NULL, NULL, 0, &wndPtr->rectClient );
-            OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
+        WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
+                               NULL, NULL, 0, &wndPtr->rectClient );
+        OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
                                             maxPos.y - wndPtr->rectWindow.top);
-            wmcreate = SendMessage32A( hwnd, WM_CREATE, 0, (LPARAM)cs );
+        if( ((*localSend32)( hwnd, WM_CREATE, 0, (LPARAM)cs )) != -1 )
+        {
+            /* Send the size messages */
+
+            if (!(wndPtr->flags & WIN_NEED_SIZE))
+            {
+                /* send it anyway */
+                SendMessage16( hwnd, WM_SIZE, SIZE_RESTORED,
+                        MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+                        wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+                SendMessage16( hwnd, WM_MOVE, 0, MAKELONG( wndPtr->rectClient.left,
+                                                   wndPtr->rectClient.top ));
+            }
+
+            WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
+            if (!IsWindow(hwnd)) return 0;
+
+            /* Show the window, maximizing or minimizing if needed */
+
+            if (wndPtr->dwStyle & WS_MINIMIZE)
+            {
+                /* MinMaximize(hwnd, SW_SHOWMINNOACTIVE, 1) in "Internals" */
+
+                wndPtr->dwStyle &= ~WS_MAXIMIZE;
+                WINPOS_FindIconPos( hwnd );
+                SetWindowPos32( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
+                        SYSMETRICS_CXICON, SYSMETRICS_CYICON,
+                        SWP_FRAMECHANGED | ((GetActiveWindow32())? SWP_NOACTIVATE : 0)  );
+            }
+            else if (wndPtr->dwStyle & WS_MAXIMIZE)
+            {
+                /* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
+
+                NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
+                SetWindowPos32( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
+                    ((GetActiveWindow32())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
+            }
+
+            if (cs->style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
+
+            /* Call WH_SHELL hook */
+
+            if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
+                HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
+
+            dprintf_win(stddeb, "CreateWindowEx: created window %04x\n", hwnd);
+            return hwnd;
         }
     }
-    
-    if (wmcreate == -1)
-    {
-	  /* Abort window creation */
-	dprintf_win(stddeb,"CreateWindowEx: wmcreate==-1, aborting\n");
-        WIN_UnlinkWindow( hwnd );
-        WIN_DestroyWindow( wndPtr );
-	return 0;
-    }
 
-    /* Send the size messages */
+    /* Abort window creation */
 
-    if (!(wndPtr->flags & WIN_NEED_SIZE))
-    {
-	/* send it anyway */
-	SendMessage16( hwnd, WM_SIZE, SIZE_RESTORED,
-                   MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                            wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-        SendMessage16( hwnd, WM_MOVE, 0, MAKELONG( wndPtr->rectClient.left,
-                                                   wndPtr->rectClient.top ));
-    } 
-
-    WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
-    if (!IsWindow(hwnd)) return 0;
-
-    /* Show the window, maximizing or minimizing if needed */
-
-    if (wndPtr->dwStyle & WS_MINIMIZE)
-    {
-	/* MinMaximize(hwnd, SW_SHOWMINNOACTIVE, 1) in "Internals" */
-
-        wndPtr->dwStyle &= ~WS_MAXIMIZE;
-        WINPOS_FindIconPos( hwnd );
-        SetWindowPos32( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
-                        SYSMETRICS_CXICON, SYSMETRICS_CYICON, 
-                        SWP_FRAMECHANGED | ((GetActiveWindow32())? SWP_NOACTIVATE : 0)  );
-    }
-    else if (wndPtr->dwStyle & WS_MAXIMIZE)
-    {
-	/* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
-
-        NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
-        SetWindowPos32( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
-            ((GetActiveWindow32())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
-    }
-    
-    if (cs->style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
-
-    /* Call WH_SHELL hook */
-
-    if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
-        HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
-
-    dprintf_win(stddeb, "CreateWindowEx: returning %04x\n", hwnd);
-    return hwnd;
+    dprintf_win(stddeb,"CreateWindowEx: aborted by WM_xxCREATE!\n");
+    WIN_UnlinkWindow( hwnd );
+    WIN_DestroyWindow( wndPtr );
+    return 0;
 }
 
 
@@ -859,7 +841,7 @@ HWND16 CreateWindowEx16( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     cs.lpszName       = windowName;
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
-    return WIN_CreateWindowEx( &cs, classAtom, FALSE );
+    return WIN_CreateWindowEx( &cs, classAtom, FALSE, FALSE );
 }
 
 
@@ -898,7 +880,7 @@ HWND32 CreateWindowEx32A( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     cs.lpszName       = windowName;
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
-    return WIN_CreateWindowEx( &cs, classAtom, FALSE );
+    return WIN_CreateWindowEx( &cs, classAtom, TRUE, FALSE );
 }
 
 
@@ -944,7 +926,7 @@ HWND32 CreateWindowEx32W( DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
     cs.dwExStyle      = exStyle;
     /* Note: we rely on the fact that CREATESTRUCT32A and */
     /* CREATESTRUCT32W have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCT32A *)&cs, classAtom, TRUE );
+    return WIN_CreateWindowEx( (CREATESTRUCT32A *)&cs, classAtom, TRUE, TRUE );
 }
 
 
@@ -1055,7 +1037,8 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
         else break;
       }
 
-      WINPOS_ActivateOtherWindow(wndPtr);
+      if( !Options.managed || EVENT_CheckFocus() )
+          WINPOS_ActivateOtherWindow(wndPtr);
 
       if( wndPtr->owner &&
 	  wndPtr->owner->hwndLastActive == wndPtr->hwndSelf )
@@ -1079,25 +1062,43 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
 
 
 /***********************************************************************
- *           CloseWindow   (USER.43)
+ *           CloseWindow16   (USER.43)
  */
-BOOL CloseWindow(HWND hWnd)
+BOOL16 CloseWindow16( HWND16 hwnd )
 {
-    WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return TRUE;
-    ShowWindow32(hWnd, SW_MINIMIZE);
+    return CloseWindow32( hwnd );
+}
+
+ 
+/***********************************************************************
+ *           CloseWindow32   (USER32.55)
+ */
+BOOL32 CloseWindow32( HWND32 hwnd )
+{
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return FALSE;
+    ShowWindow32( hwnd, SW_MINIMIZE );
     return TRUE;
 }
 
  
 /***********************************************************************
- *           OpenIcon   (USER.44)
+ *           OpenIcon16   (USER.44)
  */
-BOOL OpenIcon(HWND hWnd)
+BOOL16 OpenIcon16( HWND16 hwnd )
 {
-    if (!IsIconic16(hWnd)) return FALSE;
-    ShowWindow32(hWnd, SW_SHOWNORMAL);
-    return(TRUE);
+    return OpenIcon32( hwnd );
+}
+
+
+/***********************************************************************
+ *           OpenIcon32   (USER32.409)
+ */
+BOOL32 OpenIcon32( HWND32 hwnd )
+{
+    if (!IsIconic32( hwnd )) return FALSE;
+    ShowWindow32( hwnd, SW_SHOWNORMAL );
+    return TRUE;
 }
 
 
@@ -1106,8 +1107,8 @@ BOOL OpenIcon(HWND hWnd)
  *
  * Implementation of FindWindow() and FindWindowEx().
  */
-static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
-                            LPCSTR title )
+static HWND32 WIN_FindWindow( HWND32 parent, HWND32 child, ATOM className,
+                              LPCSTR title )
 {
     WND *pWnd;
     CLASS *pClass = NULL;
@@ -1220,7 +1221,7 @@ HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
 {
     ATOM atom = 0;
     char *buffer;
-    HWND hwnd;
+    HWND32 hwnd;
 
     if (className)
     {
@@ -1415,7 +1416,7 @@ WORD SetWindowWord( HWND32 hwnd, INT32 offset, WORD newval )
     {
 	case GWW_ID:        ptr = (WORD *)&wndPtr->wIDmenu; break;
 	case GWW_HINSTANCE: ptr = (WORD *)&wndPtr->hInstance; break;
-	case GWW_HWNDPARENT: return SetParent( hwnd, newval );
+	case GWW_HWNDPARENT: return SetParent32( hwnd, newval );
 	default:
             fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
             return 0;
@@ -1504,6 +1505,9 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
             WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, type );
             return retval;
 	case GWL_STYLE:
+
+	    /* FIXME: WM_STYLE... messages for WIN_ISWIN32 windows */
+
             ptr = &wndPtr->dwStyle;
             /* Some bits can't be changed this way */
             newval &= ~(WS_VISIBLE | WS_CHILD);
@@ -1701,13 +1705,22 @@ HWND32 WIN_GetTopParent( HWND32 hwnd )
 
 
 /*****************************************************************
- *         SetParent              (USER.233)
+ *         SetParent16   (USER.233)
  */
-HWND SetParent(HWND hwndChild, HWND hwndNewParent)
+HWND16 SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 {
-    HWND oldParent;
+    return SetParent32( hwndChild, hwndNewParent );
+}
 
-    WND *wndPtr = WIN_FindWndPtr(hwndChild);
+
+/*****************************************************************
+ *         SetParent32   (USER32.494)
+ */
+HWND32 SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
+{
+    HWND32 oldParent;
+
+    WND *wndPtr = WIN_FindWndPtr( hwndChild );
     WND *pWndParent = WIN_FindWndPtr( hwndNewParent );
     if (!wndPtr || !pWndParent || !(wndPtr->dwStyle & WS_CHILD)) return 0;
 
@@ -1723,16 +1736,17 @@ HWND SetParent(HWND hwndChild, HWND hwndNewParent)
 }
 
 
-
 /*******************************************************************
- *         IsChild    (USER.48)
+ *         IsChild16    (USER.48)
  */
 BOOL16 IsChild16( HWND16 parent, HWND16 child )
 {
     return IsChild32(parent,child);
 }
+
+
 /*******************************************************************
- *         IsChild    (USER32.338)
+ *         IsChild32    (USER32.338)
  */
 BOOL32 IsChild32( HWND32 parent, HWND32 child )
 {
@@ -1747,14 +1761,16 @@ BOOL32 IsChild32( HWND32 parent, HWND32 child )
 
 
 /***********************************************************************
- *           IsWindowVisible   (USER.49)
+ *           IsWindowVisible16   (USER.49)
  */
 BOOL16 IsWindowVisible16( HWND16 hwnd )
 {
     return IsWindowVisible32(hwnd);
 }
+
+
 /***********************************************************************
- *           IsWindowVisible   (USER32.350)
+ *           IsWindowVisible32   (USER32.350)
  */
 BOOL32 IsWindowVisible32( HWND32 hwnd )
 {
@@ -1767,6 +1783,7 @@ BOOL32 IsWindowVisible32( HWND32 hwnd )
     return (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
 }
 
+
 /***********************************************************************
  *           WIN_IsWindowDrawable
  * 
@@ -1776,7 +1793,7 @@ BOOL32 IsWindowVisible32( HWND32 hwnd )
  */
 BOOL32 WIN_IsWindowDrawable( WND* wnd , BOOL32 icon )
 {
-  HWND   hwnd= wnd->hwndSelf;
+  HWND32 hwnd = wnd->hwndSelf;
   BOOL32 yes = TRUE;
 
   while(wnd && yes)
@@ -1791,14 +1808,16 @@ BOOL32 WIN_IsWindowDrawable( WND* wnd , BOOL32 icon )
 }
 
 /*******************************************************************
- *         GetTopWindow    (USER.229)
+ *         GetTopWindow16    (USER.229)
  */
 HWND16 GetTopWindow16( HWND16 hwnd )
 {
     return GetTopWindow32(hwnd);
 }
+
+
 /*******************************************************************
- *         GetTopWindow    (USER.229)
+ *         GetTopWindow32    (USER.229)
  */
 HWND32 GetTopWindow32( HWND32 hwnd )
 {
@@ -1809,14 +1828,16 @@ HWND32 GetTopWindow32( HWND32 hwnd )
 
 
 /*******************************************************************
- *         GetWindow    (USER.262)
+ *         GetWindow16    (USER.262)
  */
 HWND16 GetWindow16( HWND16 hwnd, WORD rel )
 {
     return GetWindow32( hwnd,rel );
 }
+
+
 /*******************************************************************
- *         GetWindow    (USER32.301)
+ *         GetWindow32    (USER32.301)
  */
 HWND32 GetWindow32( HWND32 hwnd, WORD rel )
 {
@@ -1859,7 +1880,7 @@ HWND32 GetWindow32( HWND32 hwnd, WORD rel )
 
 
 /*******************************************************************
- *         GetNextWindow    (USER.230)
+ *         GetNextWindow16    (USER.230)
  */
 HWND16 GetNextWindow16( HWND16 hwnd, WORD flag )
 {
@@ -1868,9 +1889,18 @@ HWND16 GetNextWindow16( HWND16 hwnd, WORD flag )
 }
 
 /*******************************************************************
- *         ShowOwnedPopups  (USER.265)
+ *         ShowOwnedPopups16  (USER.265)
  */
-void ShowOwnedPopups( HWND owner, BOOL fShow )
+void ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
+{
+    ShowOwnedPopups32( owner, fShow );
+}
+
+
+/*******************************************************************
+ *         ShowOwnedPopups32  (USER32.530)
+ */
+BOOL32 ShowOwnedPopups32( HWND32 owner, BOOL32 fShow )
 {
     WND *pWnd = pWndDesktop->child;
     while (pWnd)
@@ -1880,13 +1910,22 @@ void ShowOwnedPopups( HWND owner, BOOL fShow )
             ShowWindow32( pWnd->hwndSelf, fShow ? SW_SHOW : SW_HIDE );
         pWnd = pWnd->next;
     }
+    return TRUE;
 }
 
 
 /*******************************************************************
- *         GetLastActivePopup    (USER.287)
+ *         GetLastActivePopup16   (USER.287)
  */
-HWND GetLastActivePopup(HWND hwnd)
+HWND16 GetLastActivePopup16( HWND16 hwnd )
+{
+    return GetLastActivePopup32( hwnd );
+}
+
+/*******************************************************************
+ *         GetLastActivePopup32   (USER32.255)
+ */
+HWND32 GetLastActivePopup32( HWND32 hwnd )
 {
     WND *wndPtr;
     wndPtr = WIN_FindWndPtr(hwnd);
@@ -2050,9 +2089,18 @@ BOOL32 EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func, LPARAM lParam )
 
 
 /*******************************************************************
- *           AnyPopup   (USER.52)
+ *           AnyPopup16   (USER.52)
  */
-BOOL AnyPopup(void)
+BOOL16 AnyPopup16(void)
+{
+    return AnyPopup32();
+}
+
+
+/*******************************************************************
+ *           AnyPopup32   (USER32.3)
+ */
+BOOL32 AnyPopup32(void)
 {
     WND *wndPtr;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
@@ -2060,10 +2108,20 @@ BOOL AnyPopup(void)
     return FALSE;
 }
 
+
 /*******************************************************************
- *			FlashWindow		[USER.105]
+ *            FlashWindow16   (USER.105)
  */
-BOOL FlashWindow(HWND hWnd, BOOL bInvert)
+BOOL16 FlashWindow16( HWND16 hWnd, BOOL16 bInvert )
+{
+    return FlashWindow32( hWnd, bInvert );
+}
+
+
+/*******************************************************************
+ *            FlashWindow32   (USER32.201)
+ */
+BOOL32 FlashWindow32( HWND32 hWnd, BOOL32 bInvert )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
@@ -2108,7 +2166,7 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
  */
 HWND16 SetSysModalWindow16( HWND16 hWnd )
 {
-    HWND hWndOldModal = hwndSysModal;
+    HWND32 hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
     dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
     return hWndOldModal;
@@ -2130,7 +2188,7 @@ HWND16 GetSysModalWindow16(void)
  * recursively find a child that contains spDragInfo->pt point 
  * and send WM_QUERYDROPOBJECT
  */
-BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
+BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 {
  BOOL16		wParam,bResult = 0;
  POINT16        pt;
@@ -2196,11 +2254,21 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
  return bResult;
 }
 
+
 /*******************************************************************
- *                      DragDetect ( USER.465 )
- *
+ *             DragDetect   (USER.465)
  */
-BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
+BOOL16 DragDetect16( HWND16 hWnd, POINT16 pt )
+{
+    POINT32 pt32;
+    CONV_POINT16TO32( &pt, &pt32 );
+    return DragDetect32( hWnd, pt32 );
+}
+
+/*******************************************************************
+ *             DragDetect32   (USER32.150)
+ */
+BOOL32 DragDetect32( HWND32 hWnd, POINT32 pt )
 {
   MSG16 msg;
   RECT16  rect;
@@ -2241,7 +2309,7 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
  *                              DragObject ( USER.464 )
  *
  */
-DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
+DWORD DragObject(HWND16 hwndScope, HWND16 hWnd, WORD wObj, HANDLE16 hOfStruct,
                 WORD szList , HCURSOR16 hCursor)
 {
  MSG16	 	msg;
@@ -2253,7 +2321,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
  DWORD		dwRet = 0;
  short	 	dragDone = 0;
  HCURSOR16	hCurrentCursor = 0;
- HWND		hCurrentWnd = 0;
+ HWND16		hCurrentWnd = 0;
  BOOL16		b;
 
  lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
@@ -2280,7 +2348,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
 	if( hDragCursor == hCursor ) hDragCursor = 0;
 	else hCursor = hDragCursor;
 
-	hOldCursor = SetCursor(hDragCursor);
+	hOldCursor = SetCursor32(hDragCursor);
    }
 
  lpDragInfo->hWnd   = hWnd;
@@ -2291,7 +2359,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
  lpDragInfo->l = 0L; 
 
  SetCapture32(hWnd);
- ShowCursor(1);
+ ShowCursor32( TRUE );
 
  while( !dragDone )
   {
@@ -2315,7 +2383,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
          lpDragInfo->hScope = 0;
 	}
     if( hCurrentCursor )
-        SetCursor(hCurrentCursor);
+        SetCursor32(hCurrentCursor);
 
     dprintf_msg(stddeb,"drag: got %04x\n", b);
 
@@ -2344,14 +2412,13 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
   }
 
  ReleaseCapture();
- ShowCursor(0);
+ ShowCursor32( FALSE );
 
  if( hCursor )
-   {
-     SetCursor(hOldCursor);
-     if( hDragCursor )
-	 DestroyCursor(hDragCursor);
-   }
+ {
+     SetCursor32( hOldCursor );
+     if (hDragCursor) DestroyCursor32( hDragCursor );
+ }
 
  if( hCurrentCursor != hBummer ) 
 	dwRet = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT, 

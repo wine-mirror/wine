@@ -18,9 +18,6 @@
 #include <sys/so_ioctl.h>
 #include <sys/param.h>
 #endif
-#ifndef FASYNC
-#define FASYNC FIOASYNC
-#endif
 #ifdef __svr4__
 #include <sys/file.h>
 #include <sys/filio.h>
@@ -31,6 +28,10 @@ extern int h_errno;
 #include "windows.h"
 #include "winsock.h"
 #include "debug.h"
+
+#ifndef FASYNC
+#define FASYNC FIOASYNC
+#endif
 
 #define __WS_ASYNC_DEBUG	0
 

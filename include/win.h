@@ -57,7 +57,7 @@ typedef struct tagWND
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN16         hrgnUpdate;    /* Update region */
-    HWND16         hwndLastActive;/* Last active popup hwnd */
+    HWND32         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     UINT16         wIDmenu;       /* ID or hmenu (from CreateWindow) */
@@ -79,7 +79,8 @@ typedef struct tagWND
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
-#define WIN_SAVEUNDER_OVERRIDE 0x0400
+#define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
+#define WIN_SAVEUNDER_OVERRIDE 0x0800
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND32 hwnd );

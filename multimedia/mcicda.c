@@ -279,7 +279,7 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParm
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
@@ -626,7 +626,7 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	if (dwFlags & MCI_STATUS_ITEM) {
@@ -797,7 +797,7 @@ static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParm
 			"CDAUDIO_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 /*
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 */
 		}
@@ -828,7 +828,7 @@ static DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciStop // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
@@ -858,7 +858,7 @@ static DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
         dprintf_cdaudio(stddeb,
 		"CDAUDIO_mciPause // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 		lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -888,7 +888,7 @@ static DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciResume // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -937,7 +937,7 @@ static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParm
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciSeek // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return dwRet;
@@ -1010,7 +1010,7 @@ static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciSet // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
-		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
@@ -1047,7 +1047,7 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_QUERYCONFIGURE:
 			return 1;
 		case DRV_CONFIGURE:
-			MessageBox16((HWND)NULL, "Sample MultiMedia Linux Driver !", 
+			MessageBox16(0, "Sample MultiMedia Linux Driver !", 
 								"MMLinux Driver", MB_OK);
 			return 1;
 		case DRV_INSTALL:

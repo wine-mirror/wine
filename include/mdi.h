@@ -20,27 +20,27 @@
 
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
-extern LRESULT MDIClientWndProc(HWND hwnd, UINT message, 
+extern LRESULT MDIClientWndProc(HWND16 hwnd, UINT message, 
 				WPARAM16 wParam, LPARAM lParam); /* mdi.c */
 
 typedef struct tagMDIWCL
 {
-  HWND		 	 hChild;
+  HWND16	 	 hChild;
   struct tagMDIWCL	*prev;
 } MDIWCL;
 
 typedef struct 
 {
     WORD   	nActiveChildren;
-    HWND   	hwndChildMaximized;
-    HWND   	hwndActiveChild;
+    HWND16   	hwndChildMaximized;
+    HWND16   	hwndActiveChild;
     HMENU16  	hWindowMenu;
     WORD   	idFirstChild;
     WORD	nTotalCreated;
     LPSTR 	frameTitle;
     WORD   	sbNeedUpdate;
     WORD   	sbRecalc;
-    HWND   	self;
+    HWND16   	self;
 } MDICLIENTINFO;
 
 #endif /* __WINE_MDI_H */

@@ -148,7 +148,7 @@ int MAIN_Init(void)
     if (!QUEUE_CreateSysMsgQueue( queueSize )) return 0;
 
     /* Set double click time */
-    SetDoubleClickTime( GetProfileInt32A("windows","DoubleClickSpeed",452) );
+    SetDoubleClickTime32( GetProfileInt32A("windows","DoubleClickSpeed",452) );
 
     return 1;
 }

@@ -540,6 +540,93 @@ BOOL32 SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
     return ret;
 }
 
+/***********************************************************************
+ *           ExpandEnvironmentVariablesA   (KERNEL32.103)
+ */
+DWORD ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len) {
+	LPCSTR s;
+        LPSTR d;
+	HANDLE32	heap = GetProcessHeap();
+	LPSTR		xdst = HeapAlloc(heap,0,10);
+	DWORD		cursize = 10;
+	DWORD		ret;
+
+	fprintf(stderr,"ExpandEnvironmentStrings32A(%s)\n",src);
+	s=src;
+	d=xdst;
+	memset(dst,'\0',len);
+#define CHECK_FREE(n)  {				\
+	DWORD	_needed = (n);				\
+							\
+	while (cursize-(d-xdst)<_needed) {		\
+		DWORD	ind = d-xdst;			\
+							\
+		cursize+=100;				\
+		xdst=(LPSTR)HeapReAlloc(heap,0,xdst,cursize);\
+		d = xdst+ind;				\
+	}						\
+}
+
+	while (*s) {
+		if (*s=='%') {
+			LPCSTR end;
+
+			end = s;do { end++; } while (*end && *end!='%');
+			if (*end=='%') {
+				LPSTR	x = HeapAlloc(heap,0,end-s+1);
+				char	buf[2];
+
+				lstrcpyn32A(x,s+1,end-s-1);
+				x[end-s-1]=0;
+
+				/* put expanded variable directly into 
+				 * destination string, so we don't have
+				 * to use temporary buffers.
+				 */
+				ret = GetEnvironmentVariable32A(x,buf,2);
+				CHECK_FREE(ret+2);
+				ret = GetEnvironmentVariable32A(x,d,d-xdst);
+				if (ret) {
+					d+=strlen(d);
+				} else {
+					CHECK_FREE(strlen(x)+2);
+					*d++='%';
+					lstrcpy32A(d,x);
+					d+=strlen(x);
+					*d++='%';
+				}
+				HeapFree(heap,0,x);
+			} else
+				*d=*s;
+
+			s++;d++;
+		} else {
+			CHECK_FREE(1);
+			*d++=*s++;
+		}
+	}
+	*d	= '\0';
+	ret	= lstrlen32A(xdst)+1;
+	if (d-xdst<len)
+		lstrcpy32A(dst,xdst);
+	HeapFree(heap,0,xdst);
+	return ret;
+}
+
+/***********************************************************************
+ *           ExpandEnvironmentVariablesA   (KERNEL32.104)
+ */
+DWORD ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len) {
+	HANDLE32	heap = GetProcessHeap();
+	LPSTR		srcA = HEAP_strdupWtoA(heap,0,src);
+	LPSTR		dstA = HeapAlloc(heap,0,len);
+	DWORD		ret = ExpandEnvironmentStrings32A(srcA,dstA,len);
+
+	lstrcpyAtoW(dst,dstA);
+	HeapFree(heap,0,dstA);
+	HeapFree(heap,0,srcA);
+	return ret;
+}
 
 /***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)

@@ -11,15 +11,18 @@
 #include "winnt.h"
 
   /* miscemu/dosmem.c */
-extern BOOL32 DOSMEM_Init(void);
-extern void DOSMEM_Tick(void);
-extern void DOSMEM_FillBiosSegment(void);
-extern void DOSMEM_InitMemoryHandling();
-extern LPVOID DOSMEM_RealMode2Linear(DWORD);
-extern WORD DOSMEM_AllocSelector(WORD);
 extern HANDLE16 DOSMEM_BiosSeg;
-extern char *DOSMEM_dosmem;
 extern DWORD DOSMEM_CollateTable;
+
+extern BOOL32 DOSMEM_Init(void);
+extern void   DOSMEM_InitExports(HMODULE16);
+extern void   DOSMEM_Tick(void);
+extern WORD   DOSMEM_AllocSelector(WORD);
+extern LPVOID DOSMEM_GetBlock(UINT32 size, UINT16* p);
+extern BOOL32 DOSMEM_FreeBlock(void* ptr);
+extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
+extern LPVOID DOSMEM_MapDosToLinear(UINT32); /* linear DOS to Wine */
+extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
 /* miscemu/interrupts.c */
 extern BOOL32 INT_Init(void);

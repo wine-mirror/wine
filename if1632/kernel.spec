@@ -64,11 +64,11 @@ type	win16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource16
 67  pascal SetResourceHandler(word ptr ptr) SetResourceHandler
-68  pascal16 InitAtomTable(word) InitAtomTable
-69  pascal16 FindAtom(segptr) FindAtom
-70  pascal16 AddAtom(segptr) AddAtom
-71  pascal16 DeleteAtom(word) DeleteAtom
-72  pascal16 GetAtomName(word ptr word) GetAtomName
+68  pascal16 InitAtomTable(word) InitAtomTable16
+69  pascal16 FindAtom(segptr) FindAtom16
+70  pascal16 AddAtom(segptr) AddAtom16
+71  pascal16 DeleteAtom(word) DeleteAtom16
+72  pascal16 GetAtomName(word ptr word) GetAtomName16
 73  pascal16 GetAtomHandle(word) GetAtomHandle
 74  pascal16 OpenFile(ptr ptr word) OpenFile16
 75  stub OpenPathName
@@ -107,8 +107,8 @@ type	win16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
 109 register SwitchStackBack() SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle
-111 pascal GlobalWire(word) GlobalWire
-112 pascal16 GlobalUnWire(word) GlobalUnWire
+111 pascal   GlobalWire(word) GlobalWire16
+112 pascal16 GlobalUnWire(word) GlobalUnWire16
 113 equate __AHSHIFT 3
 114 equate __AHINCR 8
 115 pascal16 OutputDebugString(ptr) OutputDebugString
@@ -166,7 +166,7 @@ type	win16
 166 pascal16 WinExec(ptr word) WinExec16
 167 pascal16 GetExpWinVer(word) GetExpWinVer
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc
-169 pascal GetFreeSpace(word) GetFreeSpace
+169 pascal GetFreeSpace(word) GetFreeSpace16
 170 pascal16 AllocCStoDSAlias(word) AllocCStoDSAlias
 171 pascal16 AllocDStoCSAlias(word) AllocDStoCSAlias
 172 pascal16 AllocAlias(word) AllocCStoDSAlias
@@ -194,8 +194,8 @@ type	win16
 194 equate __F000H 0
 195 equate __C000H 0
 196 pascal16 SelectorAccessRights(word word word) SelectorAccessRights
-197 pascal16 GlobalFix(word) GlobalFix
-198 pascal16 GlobalUnfix(word) GlobalUnfix
+197 pascal16 GlobalFix(word) GlobalFix16
+198 pascal16 GlobalUnfix(word) GlobalUnfix16
 199 pascal16 SetHandleCount(word) SetHandleCount16
 200 return ValidateFreeSpaces 0 0
 201 stub ReplaceInst

@@ -1,0 +1,119 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+#define LANGUAGE_ID                  Hu
+#define LANGUAGE_NUMBER              7
+#define LANGUAGE_MENU_ITEM           "&Magyar"
+
+/* Menu */
+
+#define MENU_FILE                    "&File"
+#define MENU_FILE_NEW                "&Új..."
+#define MENU_FILE_OPEN               "&Megnyitás\tEnter"
+#define MENU_FILE_MOVE               "M&ozgatás...\tF7"
+#define MENU_FILE_COPY               "Má&solás...\tF8"
+#define MENU_FILE_DELETE             "&Törlés\tDel"
+#define MENU_FILE_ATTRIBUTES         "&Jellemzõk...\tAlt+Enter"
+#define MENU_FILE_EXECUTE            "&Futtatás..."
+#define MENU_FILE_EXIT               "&Kilépés a Windows-ból..."
+
+#define MENU_OPTIONS                 "&Beállítások"
+#define MENU_OPTIONS_AUTO_ARRANGE    "&Automatikus elrendezés"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Minimalizálás futtatáskor"
+#define MENU_OPTIONS_SAVE_SETTINGS   "&Beállítások mentése kilépéskor"
+
+#define MENU_WINDOWS                 "&Ablakok"
+#define MENU_WINDOWS_OVERLAP         "Á&tlapolás\tShift+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Egymás mellé rakás\tShift+F4"
+#define MENU_WINDOWS_ARRANGE         "&Ikonok rendezése"
+
+#define MENU_LANGUAGE                "&Nyelv"
+
+#define MENU_HELP                    "&Segítség"
+#define MENU_HELP_CONTENTS           "&Tartalom"
+#define MENU_HELP_SEARCH             "&Keresés..."
+#define MENU_HELP_HELP_ON_HELP       "&Segítség a Segítségrõl"
+#define MENU_HELP_TUTORIAL           "T&anító"
+
+#define MENU_INFO                    "&Információ..."
+#define MENU_INFO_LICENSE            "&Licensz"
+#define MENU_INFO_NO_WARRANTY        "&SEMMI GARANCIA"
+#define MENU_INFO_ABOUT_WINE         "&A WINE-ról"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "OK"
+#define DIALOG_CANCEL                "Mégsem"
+#define DIALOG_BROWSE                "&Válogatás"
+#define DIALOG_HELP                  "&Segítség"
+
+#define DIALOG_NEW_CAPTION           "Új program objektum"
+#define DIALOG_NEW_NEW               "Új"
+#define DIALOG_NEW_GROUP             "Program &csoport"
+#define DIALOG_NEW_PROGRAM           "&Program"
+
+#define DIALOG_MOVE_CAPTION          "Program mozgatása"
+#define DIALOG_MOVE_PROGRAM          "Mozgatandó &program:"
+#define DIALOG_MOVE_FROM_GROUP       "&Melyik csoportból:"
+#define DIALOG_MOVE_TO_GROUP         "M&elyik csoportba:"
+
+#define DIALOG_COPY_CAPTION          "Program másolása"
+#define DIALOG_COPY_PROGRAM          "Másolandó program:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "Program csoport jellemzõi"
+#define DIALOG_GROUP_DESCRIPTION     "&Leírás:"
+#define DIALOG_GROUP_FILE            "&Csoport file:"
+
+#define DIALOG_PROGRAM_CAPTION       "Program jellemzõi"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "&Parancssor:"
+#define DIALOG_PROGRAM_DIRECTORY     "&Mûködési könyvtár:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Billentyû kombináció:"
+#define DIALOG_PROGRAM_SYMBOL        "&Ikonként futtat"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Más ikon..."
+
+#define DIALOG_SYMBOL_CAPTION        "Ikon kiválasztása"
+#define DIALOG_SYMBOL_FILE           "&Filenév:"
+#define DIALOG_SYMBOL_CURRENT        "&Jelenlegi ikon:"
+
+#define DIALOG_EXECUTE_CAPTION       "Program végrehajtása"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Programkezelõ"
+#define STRING_ERROR                      "HIBA"
+#define STRING_WARNING                    "FIGYELMEZTETÉS"
+#define STRING_INFO                       "Információ"
+#define STRING_DELETE                     "Törlés"
+#define STRING_DELETE_GROUP_s             "Töröljem a `%s' csoportot ?"
+#define STRING_DELETE_PROGRAM_s           "Töröljem a `%s' programot ?"
+#define STRING_NOT_IMPLEMENTED            "Nincs implementálva"
+#define STRING_FILE_READ_ERROR_s          "Hiba a `%s' olvasásánál"
+#define STRING_FILE_WRITE_ERROR_s         "Hiba a `%s' írásánál"
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+Nem tudom megnyitni a `%s' csoport file-t.\n\
+Továbbá is megpróbáljam majd?"
+
+#define STRING_OUT_OF_MEMORY              "Nincs elég memória"
+#define STRING_WINHELP_ERROR              "Segítség nem elérhetõ"
+#define STRING_UNKNOWN_FEATURE_s          "Ismeretlen feature %s-ben"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "A `%s' már létezik. Nem írtam felül."
+#define STRING_SAVE_GROUP_AS_s            "`%s'-ként ments el a csoportot, hogy megelõzd a file felülírását"
+
+#define STRING_NO_HOT_KEY                 "None"
+
+#define STRING_ALL_FILES                  "Minden file (*.*)"
+#define STRING_PROGRAMS                   "Programok"
+#define STRING_LIBRARIES_DLL              "Library-k (*.dll)"
+#define STRING_SYMBOL_FILES               "Ikon file-ok"
+#define STRING_SYMBOLS_ICO                "Ikonok (*.ico)"
+
+#include "Xx.rc"

@@ -87,10 +87,10 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	lpOpaqueRect->top = y;
 	lpOpaqueRect->right = 0x3a1;
 	lpOpaqueRect->bottom = 0x01;
-        printf("drawmode ropt 0x%x bkMode 0x%x bkColor 0x%x textColor 0x%x tbbreakExtra 0x%x breakextra 0x%x\n",
+        printf("drawmode ropt 0x%x bkMode 0x%x bkColor 0x%lx textColor 0x%lx tbbreakExtra 0x%x breakextra 0x%x\n",
                lpDrawMode->Rop2,    lpDrawMode->bkMode,    lpDrawMode->bkColor,
                lpDrawMode->TextColor,    lpDrawMode->TBreakExtra,    lpDrawMode->BreakExtra);
-        printf("breakerr 0x%x breakrem 0x%x breakcount 0x%x chextra 0x%x lbkcolor 0x%x ltextcolor 0x%x\n",
+        printf("breakerr 0x%x breakrem 0x%x breakcount 0x%x chextra 0x%x lbkcolor 0x%lx ltextcolor 0x%lx\n",
                lpDrawMode->BreakErr,    lpDrawMode->BreakRem,    lpDrawMode->BreakCount,
                lpDrawMode->CharExtra,	   lpDrawMode->LbkColor,    lpDrawMode->LTextColor);
 

@@ -99,7 +99,7 @@ static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
  */
 static void SIGNAL_child(void)
 {
-#ifdef __svr4__
+#if defined(__svr4__) || defined(__EMX__)
     wait(NULL);
 #else
     wait4( 0, NULL, WNOHANG, NULL);
@@ -194,6 +194,15 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
     sig_act.sa_mask = sig_mask;
     ret = sigaction( sig, &sig_act, NULL );
 #endif  /* __svr4__ || _SCO_DS */
+
+#if defined(__EMX__)
+    sigset_t sig_mask;
+    sigemptyset(&sig_mask);
+    sig_act.sa_handler = func;
+    sig_act.sa_flags = 0; /* FIXME: EMX has only SA_ACK and SA_SYSV */
+    sig_act.sa_mask = sig_mask;
+    ret = sigaction( sig, &sig_act, NULL );
+#endif  /* __EMX__ */
 
     if (ret < 0)
     {

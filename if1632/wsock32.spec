@@ -9,14 +9,14 @@ base	0
 005 stub getpeername
 006 stub getsockname
 007 stub getsockopt
-008 stdcall htonl(long) htonl
-009 stdcall htons(long) htons
+008 stdcall htonl(long) WINSOCK_htonl
+009 stdcall htons(long) WINSOCK_htons
 010 stdcall inet_addr(ptr) inet_addr
 011 stdcall inet_ntoa(ptr) inet_ntoa
 012 stub ioctlsocket
 013 stub listen
-014 stub ntohl
-015 stdcall ntohs(long) ntohs
+014 stdcall ntohl(long) WINSOCK_ntohl
+015 stdcall ntohs(long) WINSOCK_ntohs
 016 stub recv
 017 stub recvfrom
 018 stub select
@@ -24,7 +24,7 @@ base	0
 020 stub sendto
 021 stub setsockopt
 022 stub shutdown
-023 stub socket
+023 stdcall socket(long long long) WINSOCK_socket
 051 stdcall gethostbyaddr(ptr long long) gethostbyaddr
 052 stdcall gethostbyname(ptr) gethostbyname
 053 stub getprotobyname

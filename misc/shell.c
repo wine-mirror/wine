@@ -53,7 +53,7 @@ extern WORD 	GetIconID( HGLOBAL16 hResource, DWORD resType );
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
-void DragAcceptFiles(HWND hWnd, BOOL b)
+void DragAcceptFiles(HWND16 hWnd, BOOL b)
 {
     WND* wnd = WIN_FindWndPtr(hWnd);
 
@@ -283,7 +283,7 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 /*************************************************************************
  *				ShellExecute		[SHELL.20]
  */
-HINSTANCE16 ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+HINSTANCE16 ShellExecute(HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
                          LPSTR lpParameters, LPCSTR lpDirectory,
                          INT iShowCmd)
 {
@@ -374,11 +374,11 @@ LRESULT AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
             }
         }
         return 1;
-    
+
     case WM_COMMAND:
         if (wParam == IDOK)
         {
-            EndDialog(hWnd, TRUE);
+            EndDialog32(hWnd, TRUE);
             return TRUE;
         }
         break;

@@ -60,11 +60,21 @@ void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
 {
     hwndFocus = hFocusTo;
 
+#if 0
     if (hFocusFrom) SendMessage32A( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
+#else
+    /* FIXME: must be SendMessage16() because 32A doesn't do
+     * intertask at this time */
+    if (hFocusFrom) SendMessage16( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
+#endif
     if( !hFocusTo || hFocusTo != hwndFocus )
 	return;
 
+#if 0
     SendMessage32A( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
+#else
+    SendMessage16( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
+#endif
     FOCUS_SetXFocus( hFocusTo );
 }
 

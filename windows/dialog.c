@@ -745,10 +745,10 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
     while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, PM_REMOVE,
                                   !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
-	if (!IsDialogMessage( hwnd, &msg))
+	if (!IsDialogMessage16( hwnd, &msg))
 	{
-	    TranslateMessage( &msg );
-	    DispatchMessage( &msg );
+	    TranslateMessage16( &msg );
+	    DispatchMessage16( &msg );
 	}
 	if (dlgInfo->fEnd) break;
     }
@@ -859,9 +859,18 @@ INT32 DialogBoxIndirectParam32W( HINSTANCE32 hInstance, LPCVOID template,
 
 
 /***********************************************************************
- *           EndDialog   (USER.88) (USER32.173)
+ *           EndDialog16   (USER32.173)
  */
-BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
+BOOL16 EndDialog16( HWND16 hwnd, INT16 retval )
+{
+    return EndDialog32( hwnd, retval );
+}
+
+
+/***********************************************************************
+ *           EndDialog32   (USER32.173)
+ */
+BOOL32 EndDialog32( HWND32 hwnd, INT32 retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
@@ -873,40 +882,41 @@ BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
 
 
 /***********************************************************************
- *           IsDialogMessage   (USER.90)
+ *           DIALOG_IsDialogMessage
  */
-BOOL16 IsDialogMessage( HWND16 hwndDlg, LPMSG16 msg )
+static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
+                                      UINT32 message, WPARAM32 wParam,
+                                      LPARAM lParam, BOOL32 *translate,
+                                      BOOL32 *dispatch )
 {
-    WND * wndPtr;
-    int dlgCode;
+    INT32 dlgCode;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwndDlg ))) return FALSE;
-    if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd )) return FALSE;
+    *translate = *dispatch = FALSE;
 
       /* Only the key messages get special processing */
-    if ((msg->message != WM_KEYDOWN) &&
-        (msg->message != WM_SYSCHAR) &&
-	(msg->message != WM_CHAR))
+    if ((message != WM_KEYDOWN) &&
+        (message != WM_SYSCHAR) &&
+	(message != WM_CHAR))
         return FALSE;
 
-    dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, 0 );
+    dlgCode = SendMessage32A( hwnd, WM_GETDLGCODE, 0, 0 );
     if (dlgCode & DLGC_WANTMESSAGE)
     {
-        DispatchMessage( msg );
+        *dispatch = TRUE;
         return TRUE;
     }
 
-    switch(msg->message)
+    switch(message)
     {
     case WM_KEYDOWN:
         if (dlgCode & DLGC_WANTALLKEYS) break;
-        switch(msg->wParam)
+        switch(wParam)
         {
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                SendMessage16( hwndDlg, WM_NEXTDLGCTL,
-                             (GetKeyState32(VK_SHIFT) & 0x8000), 0 );
+                SendMessage32A( hwndDlg, WM_NEXTDLGCTL,
+                                (GetKeyState32(VK_SHIFT) & 0x8000), 0 );
                 return TRUE;
             }
             break;
@@ -949,8 +959,9 @@ BOOL16 IsDialogMessage( HWND16 hwndDlg, LPMSG16 msg )
             }
             break;
 
-	default: 
-	    TranslateMessage( msg );
+	default:
+            *translate = TRUE;
+            break;
         }
         break;  /* case WM_KEYDOWN */
 
@@ -964,10 +975,67 @@ BOOL16 IsDialogMessage( HWND16 hwndDlg, LPMSG16 msg )
         break;
     }
 
-      /* If we get here, the message has not been treated specially */
-      /* and can be sent to its destination window. */
-    DispatchMessage( msg );
+    /* If we get here, the message has not been treated specially */
+    /* and can be sent to its destination window. */
+    *dispatch = TRUE;
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           IsDialogMessage16   (USER.90)
+ */
+BOOL16 IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
+{
+    BOOL32 ret, translate, dispatch;
+
+    if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd ))
+        return FALSE;
+
+    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
+                                  msg->wParam, msg->lParam,
+                                  &translate, &dispatch );
+    if (translate) TranslateMessage16( msg );
+    if (dispatch) DispatchMessage16( msg );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           IsDialogMessage32A   (USER32.341)
+ */
+BOOL32 IsDialogMessage32A( HWND32 hwndDlg, LPMSG32 msg )
+{
+    BOOL32 ret, translate, dispatch;
+
+    if ((hwndDlg != msg->hwnd) && !IsChild32( hwndDlg, msg->hwnd ))
+        return FALSE;
+
+    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
+                                  msg->wParam, msg->lParam,
+                                  &translate, &dispatch );
+    if (translate) TranslateMessage32( msg );
+    if (dispatch) DispatchMessage32A( msg );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           IsDialogMessage32W   (USER32.342)
+ */
+BOOL32 IsDialogMessage32W( HWND32 hwndDlg, LPMSG32 msg )
+{
+    BOOL32 ret, translate, dispatch;
+
+    if ((hwndDlg != msg->hwnd) && !IsChild32( hwndDlg, msg->hwnd ))
+        return FALSE;
+
+    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
+                                  msg->wParam, msg->lParam,
+                                  &translate, &dispatch );
+    if (translate) TranslateMessage32( msg );
+    if (dispatch) DispatchMessage32W( msg );
+    return ret;
 }
 
 

@@ -537,7 +537,7 @@ msg# 543 : tmsf
 /**************************************************************************
 * 				mciDriverNotify			[MMSYSTEM.711]
 */
-BOOL mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
+BOOL mciDriverNotify(HWND16 hWndCallBack, UINT wDevID, UINT wStatus)
 {
 	dprintf_mmsys(stddeb, "mciDriverNotify(%04X, %u, %04X)\n", hWndCallBack, wDevID, wStatus);
 	if (!IsWindow(hWndCallBack)) return FALSE;

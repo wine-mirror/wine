@@ -196,7 +196,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    return dlgInfo->hUserFont;
 
         case WM_CLOSE:
-            EndDialog( hwnd, TRUE );
+            EndDialog32( hwnd, TRUE );
             DestroyWindow32( hwnd );
             return 0;
     }

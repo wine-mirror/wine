@@ -86,7 +86,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 77  pascal16 GetClipBox(word ptr) GetClipBox16
 78  pascal   GetCurrentPosition(word) GetCurrentPosition
 79  pascal   GetDCOrg(word) GetDCOrg
-80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps
+80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps16
 81  pascal16 GetMapMode(word) GetMapMode16
 82  pascal16 GetObject(word s_word ptr) GetObject16
 83  pascal   GetPixel(word s_word s_word) GetPixel16
@@ -118,8 +118,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 119 pascal16 AddFontResource(ptr) AddFontResource
 #121 pascal Death
 #122 pascal ReSurRection
-123 pascal16 PlayMetaFile(word word) PlayMetaFile
-124 pascal16 GetMetaFile(ptr) GetMetaFile
+123 pascal16 PlayMetaFile(word word) PlayMetaFile16
+124 pascal16 GetMetaFile(ptr) GetMetaFile16
 125 pascal16 CreateMetaFile(ptr) CreateMetaFile16
 126 pascal16 CloseMetaFile(word) CloseMetaFile16
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile16
@@ -135,9 +135,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject16
-151 pascal16 CopyMetaFile(word ptr) CopyMetaFile
+151 pascal16 CopyMetaFile(word ptr) CopyMetaFile16
 153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC16
-154 pascal GetNearestColor(word long) GetNearestColor
+154 pascal   GetNearestColor(word long) GetNearestColor16
 155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
 158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
@@ -233,28 +233,27 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 346 pascal16 SetTextAlign(word word) SetTextAlign16
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
                    s_word s_word) Chord16
-349 pascal SetMapperFlags(word long) SetMapperFlags
+349 pascal SetMapperFlags(word long) SetMapperFlags16
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth16
 351 pascal16 ExtTextOut(word s_word s_word word ptr ptr word ptr) ExtTextOut16
 352 stub GetPhysicalFontHandle
 353 stub GetAspectRatioFilter
 354 stub ShrinkGDIHeap
 355 stub FTrapping0
-360 pascal16 CreatePalette(ptr) CreatePalette
+360 pascal16 CreatePalette(ptr) CreatePalette16
 361 pascal16 GDISelectPalette(word word word) GDISelectPalette
 362 pascal16 GDIRealizePalette(word) GDIRealizePalette
-363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries
-364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries
+363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries16
+364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries16
 365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
 366 pascal16 UpdateColors(word) UpdateColors
-367 pascal16 AnimatePalette(word word word ptr) AnimatePalette
-368 pascal16 ResizePalette(word word) ResizePalette
-370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
+367 pascal16 AnimatePalette(word word word ptr) AnimatePalette16
+368 pascal16 ResizePalette(word word) ResizePalette16
+370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex16
 372 pascal16 ExtFloodFill(word s_word s_word long word) ExtFloodFill16
-373 pascal16 SetSystemPaletteUse(word word) SetSystemPaletteUse
-374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse
-375 pascal16 GetSystemPaletteEntries(word word word ptr)
-             GetSystemPaletteEntries
+373 pascal16 SetSystemPaletteUse(word word) SetSystemPaletteUse16
+374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse16
+375 pascal16 GetSystemPaletteEntries(word word word ptr) GetSystemPaletteEntries16
 376 pascal16 ResetDC(word ptr) ResetDC16
 377 stub STARTDOC
 378 stub ENDDOC

@@ -49,7 +49,7 @@ extern "C" {
 
 typedef struct {
 	DWORD		lStructSize;
-	HWND		hwndOwner;
+	HWND16		hwndOwner;
 	HINSTANCE16	hInstance;
 	SEGPTR	        lpstrFilter;
 	SEGPTR          lpstrCustomFilter;
@@ -74,8 +74,8 @@ typedef OPENFILENAME * LPOPENFILENAME;
 
 typedef struct {
 	DWORD		lStructSize;
-	HWND		hwndOwner;
-	HWND		hInstance;
+	HWND16		hwndOwner;
+	HWND16		hInstance;
 	COLORREF	rgbResult;
 	COLORREF       *lpCustColors;
 	DWORD 		Flags;
@@ -95,7 +95,7 @@ typedef CHOOSECOLOR *LPCHOOSECOLOR;
 
 typedef struct {
 	DWORD		lStructSize; 			/* size of this struct 0x20 */
-	HWND		hwndOwner; 				/* handle to owner's window */
+	HWND16		hwndOwner; 				/* handle to owner's window */
 	HINSTANCE16	hInstance; 				/* instance handle of.EXE that  */
 										/*	contains cust. dlg. template */
 	DWORD		Flags;                  /* one or more of the FR_?? */
@@ -132,7 +132,7 @@ typedef FINDREPLACE *LPFINDREPLACE;
 
 typedef struct {
 	DWORD			lStructSize;
-	HWND			hwndOwner;          /* caller's window handle   */
+	HWND16			hwndOwner;          /* caller's window handle   */
 	HDC16          	        hDC;                /* printer DC/IC or NULL    */
 	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
 	short			iPointSize;         /* 10 * size in points of selected font */
@@ -205,7 +205,7 @@ typedef CHOOSEFONT *LPCHOOSEFONT;
 
 typedef struct {
 	DWORD 		lStructSize;
-	HWND 		hwndOwner;
+	HWND16 		hwndOwner;
 	HGLOBAL16       hDevMode;
 	HGLOBAL16       hDevNames;
 	HDC16	       	hDC;
@@ -285,14 +285,14 @@ BOOL  PrintDlg( SEGPTR print);
 HWND16 ReplaceText( SEGPTR find);
 BOOL  ChooseFont(LPCHOOSEFONT lpChFont);
 
-LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FileOpenDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FileSaveDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ColorDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FindTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FormatCharDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
 
 #ifdef __cplusplus
 }

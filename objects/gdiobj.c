@@ -7,10 +7,10 @@
 #define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
-#include "gdi.h"
 #include "color.h"
 #include "bitmap.h"
 #include "brush.h"
+#include "dc.h"
 #include "font.h"
 #include "heap.h"
 #include "palette.h"

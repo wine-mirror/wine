@@ -128,7 +128,7 @@ base	0
 124 stub NtOpenDirectoryObject
 125 stub NtOpenEvent
 126 stub NtOpenEventPair
-127 stub NtOpenFile
+127 stdcall NtOpenFile(ptr long ptr ptr long long) NtOpenFile
 128 stub NtOpenIoCompletion
 129 stub NtOpenKey
 130 stub NtOpenMutant
@@ -261,7 +261,7 @@ base	0
 257 stub RtlAcquireResourceShared
 258 stub RtlAddAccessAllowedAce
 259 stub RtlAddAccessDeniedAce
-260 stub RtlAddAce
+260 stdcall RtlAddAce(ptr long long ptr long) RtlAddAce
 261 stub RtlAddActionToRXact
 262 stub RtlAddAttributeActionToRXact
 263 stub RtlAddAuditAccessAce
@@ -307,14 +307,14 @@ base	0
 303 stub RtlCopySidAndAttributesArray
 304 stub RtlCopyString
 305 stub RtlCopyUnicodeString
-306 stub RtlCreateAcl
+306 stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
 307 stub RtlCreateAndSetSD
 308 stub RtlCreateEnvironment
 309 stdcall RtlCreateHeap(long long long) HeapCreate
 310 stub RtlCreateProcessParameters
 311 stub RtlCreateQueryDebugBuffer
 312 stub RtlCreateRegistryKey
-313 stub RtlCreateSecurityDescriptor
+313 stdcall RtlCreateSecurityDescriptor(ptr long) RtlCreateSecurityDescriptor
 314 stub RtlCreateTagHeap
 315 stub RtlCreateUnicodeString
 316 stub RtlCreateUnicodeStringFromAsciiz
@@ -339,7 +339,7 @@ base	0
 335 stub RtlDestroyQueryDebugBuffer
 336 stub RtlDetermineDosPathNameType_U
 337 stub RtlDoesFileExists_U
-338 stub RtlDosPathNameToNtPathName_U
+338 stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
 339 stub RtlDosSearchPath_U
 340 stub RtlDumpResource
 341 stub RtlEnlargedIntegerMultiply
@@ -371,7 +371,7 @@ base	0
 367 stub RtlFindMessage
 368 stub RtlFindSetBits
 369 stub RtlFindSetBitsAndClear
-370 stub RtlFirstFreeAce
+370 stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
 371 stub RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
 373 stub RtlFreeAnsiString
@@ -400,7 +400,7 @@ base	0
 396 stub RtlImageDirectoryEntryToData
 397 stub RtlImageNtHeader
 398 stub RtlImpersonateSelf
-399 stub RtlInitAnsiString
+399 stdcall RtlInitAnsiString(ptr ptr) RtlInitAnsiString
 400 stub RtlInitCodePageTable
 401 stub RtlInitNlsTables
 402 stdcall RtlInitString(ptr ptr) RtlInitString
@@ -430,14 +430,14 @@ base	0
 426 stdcall RtlLeaveCriticalSection(ptr) LeaveCriticalSection
 427 stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 428 stub RtlLengthSecurityDescriptor
-429 stub RtlLengthSid
+429 stdcall RtlLengthSid(ptr) RtlLengthSid
 430 stub RtlLocalTimeToSystemTime
 431 stub RtlLockHeap
 432 stub RtlLookupElementGenericTable
 433 stub RtlMakeSelfRelativeSD
 434 stub RtlMapGenericMask
 435 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
-436 stub RtlMultiByteToUnicodeN
+436 stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long) RtlMultiByteToUnicodeN
 437 stub RtlMultiByteToUnicodeSize
 438 stub RtlNewInstanceSecurityObject
 439 stub RtlNewSecurityGrantedAccess
@@ -484,12 +484,12 @@ base	0
 480 stub RtlSetBits
 481 stub RtlSetCurrentDirectory_U
 482 stub RtlSetCurrentEnvironment
-483 stub RtlSetDaclSecurityDescriptor
+483 stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long) RtlSetDaclSecurityDescriptor
 484 stub RtlSetEnvironmentVariable
-485 stub RtlSetGroupSecurityDescriptor
+485 stdcall RtlSetGroupSecurityDescriptor(ptr ptr long) RtlSetGroupSecurityDescriptor
 486 stub RtlSetInformationAcl
-487 stub RtlSetOwnerSecurityDescriptor
-488 stub RtlSetSaclSecurityDescriptor
+487 stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long) RtlSetOwnerSecurityDescriptor
+488 stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long) RtlSetSaclSecurityDescriptor
 489 stub RtlSetSecurityObject
 490 stub RtlSetTimeZoneInformation
 491 stub RtlSetUserFlagsHeap

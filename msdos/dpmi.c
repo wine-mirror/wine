@@ -235,7 +235,7 @@ void INT_Int31Handler( CONTEXT *context )
 		        /* ES:DI is a REALMODE pointer to 5 byte dosmem 
 			 * we fill that with 0x6, realmode pointer to collateTB
 			 */
-			table = DOSMEM_RealMode2Linear(MAKELONG(p->edi,p->es));
+			table = DOSMEM_MapRealToLinear(MAKELONG(p->edi,p->es));
 			*(BYTE*)table		= 0x06;
 			*(DWORD*)(table+1)	= DOSMEM_CollateTable;
 
@@ -249,7 +249,7 @@ void INT_Int31Handler( CONTEXT *context )
 		case 0x44:
 		    switch (p->eax & 0xFF) {
 		    case 0x0D:{/* generic block device request */
-		    	BYTE	*dataptr = DOSMEM_RealMode2Linear((p->ds)*0x1000+(p->edx & 0xFFFF));
+		    	BYTE	*dataptr = DOSMEM_MapRealToLinear((p->ds)*0x1000+(p->edx & 0xFFFF));
 			int	drive = DOS_GET_DRIVE(p->ebx&0xFF); 
 
 		    	if ((p->ecx & 0xFF00) != 0x0800) {
