@@ -124,7 +124,7 @@ extern void* StdGlobalInterfaceTableInstance;
 typedef struct _wine_marshal_id {
     OXID    oxid;       /* id of apartment */
     OID     oid;        /* id of stub manager */
-    IID     iid;        /* id of interface (NOT ifptr) */
+    IPID    ipid;       /* id of interface pointer */
 } wine_marshal_id;
 
 inline static BOOL
@@ -132,7 +132,7 @@ MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
     return
 	(mid1->oxid == mid2->oxid)	&&
 	(mid1->oid == mid2->oid)	&&
-	IsEqualIID(&(mid1->iid),&(mid2->iid))
+	IsEqualGUID(&(mid1->ipid),&(mid2->ipid))
     ;
 }
 
@@ -144,7 +144,8 @@ struct ifstub
 {
     struct list       entry;
     IRpcStubBuffer   *stubbuffer;
-    IID               iid;         /* fixme: this should be an IPID not an IID */
+    IID               iid;
+    IPID              ipid;
     IUnknown         *iface;
 
     BOOL              table;
@@ -168,11 +169,11 @@ struct stub_manager
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
 int stub_manager_ref(struct stub_manager *m, int refs);
 int stub_manager_unref(struct stub_manager *m, int refs);
-IRpcStubBuffer *stub_manager_iid_to_stubbuffer(struct stub_manager *m, IID *iid);
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, IID *iid, BOOL tablemarshal);
+IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, IPID *iid);
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
 struct stub_manager *get_stub_manager(OXID oxid, OID oid);
 struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object);
-void stub_manager_delete_ifstub(struct stub_manager *m, IID *iid);   /* fixme: should be ipid */
+void stub_manager_delete_ifstub(struct stub_manager *m, IPID *ipid);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 

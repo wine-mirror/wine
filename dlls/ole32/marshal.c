@@ -91,12 +91,11 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
         return NULL;
     }
 
-    return stub_manager_iid_to_stubbuffer(m, &mid->iid);
+    return stub_manager_ipid_to_stubbuffer(m, &mid->ipid);
 }
 
-/* fixme: this should return an IPID */
 /* creates a new stub manager and sets mid->oid when mid->oid == 0 */
-static HRESULT register_ifstub(wine_marshal_id *mid, IUnknown *obj, IRpcStubBuffer *stub, BOOL tablemarshal)
+static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj, IRpcStubBuffer *stub, BOOL tablemarshal)
 {
     struct stub_manager *manager = NULL;
     struct ifstub       *ifstub;
@@ -123,9 +122,12 @@ static HRESULT register_ifstub(wine_marshal_id *mid, IUnknown *obj, IRpcStubBuff
         mid->oid = manager->oid;
     }
 
-    ifstub = stub_manager_new_ifstub(manager, stub, obj, &mid->iid, tablemarshal);
+    ifstub = stub_manager_new_ifstub(manager, stub, obj, riid, tablemarshal);
+    if (!ifstub)
+        return E_OUTOFMEMORY;
 
-    return ifstub ? S_OK : E_OUTOFMEMORY;
+    mid->ipid = ifstub->ipid;
+    return S_OK;
 }
 
 
@@ -502,7 +504,6 @@ StdMarshalImpl_MarshalInterface(
 
   /* now fill out the MID */
   mid.oxid = COM_CurrentApt()->oxid;
-  memcpy(&mid.iid,riid,sizeof(mid.iid));
  
   IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
  
@@ -515,7 +516,7 @@ StdMarshalImpl_MarshalInterface(
       mid.oid = 0;              /* will be set by register_ifstub */
   }
  
-  hres = register_ifstub(&mid, pUnk, stubbuffer, tablemarshal);
+  hres = register_ifstub(&mid, riid, pUnk, stubbuffer, tablemarshal);
   
   IUnknown_Release(pUnk);
   
@@ -568,7 +569,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
           FIXME("table marshalling unimplemented\n");
       
       /* clean up the stubs */
-      stub_manager_delete_ifstub(stubmgr, &mid.iid);
+      stub_manager_delete_ifstub(stubmgr, &mid.ipid);
       stub_manager_unref(stubmgr, 1);
       return hres;
   }
@@ -587,7 +588,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
     if (hres == S_OK)
       IUnknown_AddRef((IUnknown *)ifproxy->iface);
     else if (hres == E_NOINTERFACE)
-      hres = proxy_manager_create_ifproxy(proxy_manager, mid.iid /* FIXME: ipid */, riid, 1, &ifproxy);
+      hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, riid, 1, &ifproxy);
 
     if (hres == S_OK)
       *ppv = ifproxy->iface; /* AddRef'd above */
@@ -618,7 +619,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
     /* currently, each marshal has its own interface stub.  this might
      * not be correct. but, it means we don't need to refcount anything
      * here. */
-    stub_manager_delete_ifstub(stubmgr, &mid.iid);
+    stub_manager_delete_ifstub(stubmgr, &mid.ipid);
     
     stub_manager_unref(stubmgr, 1);
 

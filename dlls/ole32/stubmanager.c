@@ -192,7 +192,7 @@ int stub_manager_unref(struct stub_manager *m, int refs)
     return refs;
 }
 
-static struct ifstub *stub_manager_iid_to_ifstub(struct stub_manager *m, IID *iid)
+static struct ifstub *stub_manager_ipid_to_ifstub(struct stub_manager *m, IPID *ipid)
 {
     struct list    *cursor;
     struct ifstub  *result = NULL;
@@ -202,7 +202,7 @@ static struct ifstub *stub_manager_iid_to_ifstub(struct stub_manager *m, IID *ii
     {
         struct ifstub *ifstub = LIST_ENTRY( cursor, struct ifstub, entry );
 
-        if (IsEqualIID(iid, &ifstub->iid))
+        if (IsEqualGUID(ipid, &ifstub->ipid))
         {
             result = ifstub;
             break;
@@ -213,15 +213,15 @@ static struct ifstub *stub_manager_iid_to_ifstub(struct stub_manager *m, IID *ii
     return result;
 }
 
-IRpcStubBuffer *stub_manager_iid_to_stubbuffer(struct stub_manager *m, IID *iid)
+IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, IPID *ipid)
 {
-    struct ifstub *ifstub = stub_manager_iid_to_ifstub(m, iid);
+    struct ifstub *ifstub = stub_manager_ipid_to_ifstub(m, ipid);
     
     return ifstub ? ifstub->stubbuffer : NULL;
 }
 
 /* registers a new interface stub COM object with the stub manager and returns registration record */
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, IID *iid, BOOL tablemarshal)
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal)
 {
     struct ifstub *stub;
 
@@ -238,6 +238,7 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
     stub->iface = iptr;
     stub->table = tablemarshal;
     stub->iid = *iid;
+    stub->ipid = *iid; /* FIXME: should be globally unique */
     
     EnterCriticalSection(&m->lock);
     list_add_head(&m->ifstubs, &stub->entry);
@@ -247,15 +248,15 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
 }
 
 /* fixme: should ifstubs be refcounted? iid should be ipid */
-void stub_manager_delete_ifstub(struct stub_manager *m, IID *iid)
+void stub_manager_delete_ifstub(struct stub_manager *m, IPID *ipid)
 {
     struct ifstub *ifstub;
 
-    TRACE("m=%p, m->oid=%s, iid=%s\n", m, wine_dbgstr_longlong(m->oid), debugstr_guid(iid));
+    TRACE("m=%p, m->oid=%s, ipid=%s\n", m, wine_dbgstr_longlong(m->oid), debugstr_guid(ipid));
     
     EnterCriticalSection(&m->lock);
     
-    if ((ifstub = stub_manager_iid_to_ifstub(m, iid)))
+    if ((ifstub = stub_manager_ipid_to_ifstub(m, ipid)))
     {
         list_remove(&ifstub->entry);
         
@@ -266,7 +267,7 @@ void stub_manager_delete_ifstub(struct stub_manager *m, IID *iid)
     }
     else
     {
-        WARN("could not map iid %s to ifstub\n", debugstr_guid(iid));
+        WARN("could not map ipid %s to ifstub\n", debugstr_guid(ipid));
     }
     
     LeaveCriticalSection(&m->lock);
