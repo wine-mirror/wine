@@ -3476,7 +3476,7 @@ UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
 {
     MENUITEM * lpmi;
 
-    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return 0;
+    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return -1;
     if (lpmi->fType & MF_POPUP) return -1;
     return lpmi->wID;
 
