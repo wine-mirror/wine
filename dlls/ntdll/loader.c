@@ -1822,7 +1822,21 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     SERVER_END_REQ;
 
     if (main_file) NtClose( main_file ); /* we no longer need it */
-    if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
+
+    if (TRACE_ON(relay) || TRACE_ON(snoop))
+    {
+        RELAY_InitDebugLists();
+
+        if (TRACE_ON(relay))  /* setup relay for already loaded dlls */
+        {
+            LIST_ENTRY *entry, *mark = &peb->LdrData->InLoadOrderModuleList;
+            for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+            {
+                LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+                if (mod->Flags & LDR_WINE_INTERNAL) RELAY_SetupDLL( mod->BaseAddress );
+            }
+        }
+    }
 
     RtlEnterCriticalSection( &loader_section );
 
