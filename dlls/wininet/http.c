@@ -477,10 +477,10 @@ end:
         }
         HeapFree(GetProcessHeap(), 0, szAcceptTypes);
     }
-    if (szReferrer) HeapFree(GetProcessHeap(), 0, szReferrer);
-    if (szVersion) HeapFree(GetProcessHeap(), 0, szVersion);
-    if (szObjectName) HeapFree(GetProcessHeap(), 0, szObjectName);
-    if (szVerb) HeapFree(GetProcessHeap(), 0, szVerb);
+    HeapFree(GetProcessHeap(), 0, szReferrer);
+    HeapFree(GetProcessHeap(), 0, szVersion);
+    HeapFree(GetProcessHeap(), 0, szObjectName);
+    HeapFree(GetProcessHeap(), 0, szVerb);
 
     return rc;
 }
@@ -1738,7 +1738,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 HeapFree(GetProcessHeap(), 0, buf_url);
                 HeapFree(GetProcessHeap(), 0, buf_cookie);
                 HeapFree(GetProcessHeap(), 0, cookie_name);
-                if (domain) HeapFree(GetProcessHeap(), 0, domain);
+                HeapFree(GetProcessHeap(), 0, domain);
                 nPosStart = nPosEnd;
             }
         }
@@ -1747,8 +1747,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
 lend:
 
-    if (requestString)
-        HeapFree(GetProcessHeap(), 0, requestString);
+    HeapFree(GetProcessHeap(), 0, requestString);
 
     /* TODO: send notification for P3P header */
     

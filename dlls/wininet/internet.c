@@ -299,8 +299,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
 			{
 				LPVOID lpwite = TlsGetValue(g_dwTlsErrIndex);
-				if (lpwite)
-                   HeapFree(GetProcessHeap(), 0, lpwite);
+                                HeapFree(GetProcessHeap(), 0, lpwite);
 			}
 	    break;
 
@@ -587,12 +586,9 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
 
     rc = InternetOpenW(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
 
-    if( szAgent )
-        HeapFree(GetProcessHeap(), 0, szAgent);
-    if( szProxy )
-        HeapFree(GetProcessHeap(), 0, szProxy);
-    if( szBypass )
-        HeapFree(GetProcessHeap(), 0, szBypass);
+    HeapFree(GetProcessHeap(), 0, szAgent);
+    HeapFree(GetProcessHeap(), 0, szProxy);
+    HeapFree(GetProcessHeap(), 0, szBypass);
 
     return rc;
 }
@@ -819,9 +815,9 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
     rc = InternetConnectW(hInternet, szServerName, nServerPort,
         szUserName, szPassword, dwService, dwFlags, dwContext);
 
-    if (szServerName) HeapFree(GetProcessHeap(), 0, szServerName);
-    if (szUserName) HeapFree(GetProcessHeap(), 0, szUserName);
-    if (szPassword) HeapFree(GetProcessHeap(), 0, szPassword);
+    HeapFree(GetProcessHeap(), 0, szServerName);
+    HeapFree(GetProcessHeap(), 0, szUserName);
+    HeapFree(GetProcessHeap(), 0, szPassword);
     return rc;
 }
 
@@ -2349,7 +2345,7 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
         lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, NULL, 0 );
         szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
         if(!szHeaders) {
-            if(szUrl) HeapFree(GetProcessHeap(), 0, szUrl);
+            HeapFree(GetProcessHeap(), 0, szUrl);
             return (HINTERNET)NULL;
         }
         MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, szHeaders, lenHeaders);
@@ -2358,8 +2354,8 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     rc = InternetOpenUrlW(hInternet, szUrl, szHeaders,
         lenHeaders, dwFlags, dwContext);
 
-    if(szUrl) HeapFree(GetProcessHeap(), 0, szUrl);
-    if(szHeaders) HeapFree(GetProcessHeap(), 0, szHeaders);
+    HeapFree(GetProcessHeap(), 0, szUrl);
+    HeapFree(GetProcessHeap(), 0, szHeaders);
 
     return rc;
 }

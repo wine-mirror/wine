@@ -372,12 +372,9 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
                                 lpCookieData, *lpdwSize, NULL, NULL );
     }
 
-    if( szCookieData )
-        HeapFree( GetProcessHeap(), 0, szCookieData );
-    if( szCookieName )
-        HeapFree( GetProcessHeap(), 0, szCookieName );
-    if( szUrl )
-        HeapFree( GetProcessHeap(), 0, szUrl );
+    HeapFree( GetProcessHeap(), 0, szCookieData );
+    HeapFree( GetProcessHeap(), 0, szCookieName );
+    HeapFree( GetProcessHeap(), 0, szUrl );
 
     return r;
 }
@@ -499,12 +496,9 @@ BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
 
     r = InternetSetCookieW( szUrl, szCookieName, szCookieData );
 
-    if( szCookieData )
-        HeapFree( GetProcessHeap(), 0, szCookieData );
-    if( szCookieName )
-        HeapFree( GetProcessHeap(), 0, szCookieName );
-    if( szUrl )
-        HeapFree( GetProcessHeap(), 0, szUrl );
+    HeapFree( GetProcessHeap(), 0, szCookieData );
+    HeapFree( GetProcessHeap(), 0, szCookieName );
+    HeapFree( GetProcessHeap(), 0, szUrl );
 
     return r;
 }

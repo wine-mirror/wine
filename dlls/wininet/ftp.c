@@ -165,8 +165,8 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     lpwzNewRemoteFile = lpszNewRemoteFile?WININET_strdup_AtoW(lpszNewRemoteFile):NULL;
     ret = FtpPutFileW(hConnect, lpwzLocalFile, lpwzNewRemoteFile,
                       dwFlags, dwContext);
-    if(lpwzLocalFile) HeapFree(GetProcessHeap(), 0, lpwzLocalFile);
-    if(lpwzNewRemoteFile) HeapFree(GetProcessHeap(), 0, lpwzNewRemoteFile);
+    HeapFree(GetProcessHeap(), 0, lpwzLocalFile);
+    HeapFree(GetProcessHeap(), 0, lpwzNewRemoteFile);
     return ret;
 }
 
@@ -322,7 +322,7 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
     
     lpwzDirectory = lpszDirectory?WININET_strdup_AtoW(lpszDirectory):NULL;
     ret = FtpSetCurrentDirectoryW(hConnect, lpwzDirectory);
-    if(lpwzDirectory) HeapFree(GetProcessHeap(), 0, lpwzDirectory);
+    HeapFree(GetProcessHeap(), 0, lpwzDirectory);
     return ret;
 }
 
@@ -451,7 +451,7 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
     
     lpwzDirectory = lpszDirectory?WININET_strdup_AtoW(lpszDirectory):NULL;
     ret = FtpCreateDirectoryW(hConnect, lpwzDirectory);
-    if(lpwzDirectory) HeapFree(GetProcessHeap(), 0, lpwzDirectory);
+    HeapFree(GetProcessHeap(), 0, lpwzDirectory);
     return ret;
 }
 
@@ -579,7 +579,7 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
     lpwzSearchFile = lpszSearchFile?WININET_strdup_AtoW(lpszSearchFile):NULL;
     lpFindFileDataW = lpFindFileData?&wfd:NULL;
     ret = FtpFindFirstFileW(hConnect, lpwzSearchFile, lpFindFileDataW, dwFlags, dwContext);
-    if(lpwzSearchFile) HeapFree(GetProcessHeap(), 0, lpwzSearchFile);
+    HeapFree(GetProcessHeap(), 0, lpwzSearchFile);
     
     if(lpFindFileData) {
         WININET_find_data_WtoA(lpFindFileDataW, lpFindFileData);
@@ -907,7 +907,7 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
     
     lpwzFileName = lpszFileName?WININET_strdup_AtoW(lpszFileName):NULL;
     ret = FtpOpenFileW(hFtpSession, lpwzFileName, fdwAccess, dwFlags, dwContext);
-    if(lpwzFileName) HeapFree(GetProcessHeap(), 0, lpwzFileName);
+    HeapFree(GetProcessHeap(), 0, lpwzFileName);
     return ret;
 }
 
@@ -1086,8 +1086,8 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
     lpwzNewFile = lpszNewFile?WININET_strdup_AtoW(lpszNewFile):NULL;
     ret = FtpGetFileW(hInternet, lpwzRemoteFile, lpwzNewFile, fFailIfExists,
         dwLocalFlagsAttribute, dwInternetFlags, dwContext);
-    if(lpwzRemoteFile) HeapFree(GetProcessHeap(), 0, lpwzRemoteFile);
-    if(lpwzNewFile) HeapFree(GetProcessHeap(), 0, lpwzNewFile);
+    HeapFree(GetProcessHeap(), 0, lpwzRemoteFile);
+    HeapFree(GetProcessHeap(), 0, lpwzNewFile);
     return ret;
 }
 
@@ -1251,7 +1251,7 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
     
     lpwzFileName = lpszFileName?WININET_strdup_AtoW(lpszFileName):NULL;
     ret = FtpDeleteFileW(hFtpSession, lpwzFileName);
-    if(lpwzFileName) HeapFree(GetProcessHeap(), 0, lpwzFileName);
+    HeapFree(GetProcessHeap(), 0, lpwzFileName);
     return ret;
 }
 
@@ -1370,7 +1370,7 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
     
     lpwzDirectory = lpszDirectory?WININET_strdup_AtoW(lpszDirectory):NULL;
     ret = FtpRemoveDirectoryW(hFtpSession, lpwzDirectory);
-    if(lpwzDirectory) HeapFree(GetProcessHeap(), 0, lpwzDirectory);
+    HeapFree(GetProcessHeap(), 0, lpwzDirectory);
     return ret;
 }
 
@@ -1492,8 +1492,8 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
     lpwzSrc = lpszSrc?WININET_strdup_AtoW(lpszSrc):NULL;
     lpwzDest = lpszDest?WININET_strdup_AtoW(lpszDest):NULL;
     ret = FtpRenameFileW(hFtpSession, lpwzSrc, lpwzDest);
-    if(lpwzSrc) HeapFree(GetProcessHeap(), 0, lpwzSrc);
-    if(lpwzDest) HeapFree(GetProcessHeap(), 0, lpwzDest);
+    HeapFree(GetProcessHeap(), 0, lpwzSrc);
+    HeapFree(GetProcessHeap(), 0, lpwzDest);
     return ret;
 }
 
