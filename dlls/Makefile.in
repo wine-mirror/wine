@@ -1606,7 +1606,7 @@ $(SUBDIRS:%=%/__doc_sgml__): dummy
 
 doc-sgml: $(SUBDIRS:%=%/__doc_sgml__)
 
-.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
+.PHONY: man doc-html doc-sgml implib $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
@@ -1619,6 +1619,8 @@ install install-lib:: $(INSTALLSUBDIRS:%=%/__install__)
 uninstall::
 	$(RM) $(IMPORT_LIBS:%=$(dlldir)/%.$(IMPLIBEXT))
 	-rmdir $(dlldir)
+
+implib: $(IMPORT_LIBS:%=%.$(IMPLIBEXT))
 
 clean::
 	$(RM) $(IMPORT_LIBS:%=%.a) $(IMPORT_LIBS:%=%.def) $(SYMLINKS)
