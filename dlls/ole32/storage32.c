@@ -6776,61 +6776,6 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
     return r;
 }
 
-/* enumerate HKEY_CLASSES_ROOT\\CLSID looking for a CLSID whose name matches */
-static HRESULT CLSIDFromUserType(LPCWSTR lpszUserType, CLSID *clsid)
-{
-    LONG r, i, len;
-    ULONG count;
-    WCHAR szKey[0x40];
-    HKEY hkey, hkeyclsid;
-    LPWSTR buffer = NULL;
-    BOOL found = FALSE;
-    static const WCHAR szclsid[] = { 'C','L','S','I','D',0 };
-
-    TRACE("Finding CLSID for %s\n", debugstr_w(lpszUserType));
-
-    r = RegOpenKeyW( HKEY_CLASSES_ROOT, szclsid, &hkeyclsid );
-    if( r )
-        return E_INVALIDARG;
-
-    len = lstrlenW( lpszUserType ) + 1;
-    buffer = CoTaskMemAlloc( len * sizeof (WCHAR) );
-    if( !buffer )
-        goto end;
-
-    for(i=0; !found; i++ )
-    {
-        r = RegEnumKeyW( hkeyclsid, i, szKey, sizeof(szKey)/sizeof(WCHAR));
-        if( r != ERROR_SUCCESS )
-            break;
-        hkey = 0;
-        r = RegOpenKeyW( hkeyclsid, szKey, &hkey );
-        if( r != ERROR_SUCCESS )
-            break;
-        count = len * sizeof (WCHAR);
-        r = RegQueryValueW( hkey, NULL, buffer, &count );
-        found = ( r == ERROR_SUCCESS ) &&
-                ( count == len*sizeof(WCHAR) ) && 
-                !lstrcmpW( buffer, lpszUserType ) ;
-        RegCloseKey( hkey );
-    }
-
-end:
-    if( buffer )
-        CoTaskMemFree( buffer );
-    RegCloseKey( hkeyclsid );
-
-    if ( !found )
-        return E_INVALIDARG;
-
-    TRACE("clsid is %s\n", debugstr_w( szKey ) );
-
-    r = CLSIDFromString( szKey, clsid );
-
-    return r;
-}
-
-
 /***********************************************************************
  *               WriteFmtUserTypeStg (OLE32.@)
  */
@@ -6839,17 +6784,11 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 {
     HRESULT r;
     WCHAR szwClipName[0x40];
-    WCHAR szCLSIDName[OLESTREAM_MAX_STR_LEN];
-    CLSID clsid;
-    LPWSTR wstrProgID;
+    CLSID clsid = CLSID_NULL;
+    LPWSTR wstrProgID = NULL;
     DWORD n;
-    LPMALLOC allocator = NULL;
 
     TRACE("(%p,%x,%s)\n",pstg,cf,debugstr_w(lpszUserType));
-
-    r = CoGetMalloc(0, &allocator);
-    if( FAILED( r) )
-        return E_OUTOFMEMORY;
 
     /* get the clipboard format name */
     n = GetClipboardFormatNameW( cf, szwClipName, sizeof(szwClipName) );
@@ -6857,29 +6796,20 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 
     TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
 
-    /* Get the CLSID */
-    szCLSIDName[0]=0;
-    r = CLSIDFromUserType(lpszUserType, &clsid);
-    if( FAILED( r ) )
-        return r;
+    /* FIXME: There's room to save a CLSID and its ProgID, but
+       the CLSID is not looked up in the registry and in all the
+       tests I wrote it was CLSID_NULL.  Where does it come from?
+    */
 
-    TRACE("CLSID is %s\n",debugstr_guid(&clsid));
-
-    /* get the real program ID */
-    r = ProgIDFromCLSID( &clsid, &wstrProgID);
-    if( FAILED( r ) )
-        return r;
+    /* get the real program ID.  This may fail, but that's fine */
+    ProgIDFromCLSID(&clsid, &wstrProgID);
 
     TRACE("progid is %s\n",debugstr_w(wstrProgID));
 
-    /* if we have a good string, write the stream */
-    if( wstrProgID )
-        r = STORAGE_WriteCompObj( pstg, &clsid, 
-                lpszUserType, szwClipName, wstrProgID );
-    else
-        r = E_OUTOFMEMORY;
+    r = STORAGE_WriteCompObj( pstg, &clsid, 
+                              lpszUserType, szwClipName, wstrProgID );
 
-    IMalloc_Free( allocator, wstrProgID);
+    CoTaskMemFree(wstrProgID);
 
     return r;
 }
