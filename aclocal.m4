@@ -38,12 +38,12 @@ AC_CACHE_CHECK([for -l$1 soname], ac_cv_lib_soname_$1,
 [ac_get_soname_save_LIBS=$LIBS
 LIBS="-l$1 $3 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
-  [ac_cv_lib_soname_$1=`$ac_cv_path_LDD conftest$ac_exeext | grep lib$1\\.so | sed 's/^.*\(lib$1\.so[[^	 ]]*\).*$/\1/'`
+  [ac_cv_lib_soname_$1=`$ac_cv_path_LDD conftest$ac_exeext | grep lib$1\\.$LIBEXT | sed "s/^.*\(lib$1\.$LIBEXT[[^	 ]]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_$1" = "x"
   then
-     ac_cv_lib_soname_$1="lib$1.so"
+     ac_cv_lib_soname_$1="lib$1.$LIBEXT"
   fi],
-  [ac_cv_lib_soname_$1="lib$1.so"])
+  [ac_cv_lib_soname_$1="lib$1.$LIBEXT"])
   LIBS=$ac_get_soname_save_LIBS])
 if test "x$ac_cv_lib_soname_$1" != xNONE
 then AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),"$ac_cv_lib_soname_$1",

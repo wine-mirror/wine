@@ -14368,6 +14368,7 @@ echo "${ECHO_T}$ac_cv_c_dll_macho" >&6
             LDDLLFLAGS="-bundle -flat_namespace -undefined suppress"
             LDSHARED="\$(CC) -dynamiclib"
             CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
+            STRIP="$STRIP -u -r"
           fi
         fi
       fi
@@ -14603,7 +14604,7 @@ CFLAGS=$ac_wine_try_cflags_saved
 esac
 
 
-if test "$LIBEXT" = "so"
+if test "$LIBEXT" = "so" -o "$LIBEXT" = "dylib"
 then
   # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
@@ -14697,16 +14698,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.so | sed 's/^.*\(libX11\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.$LIBEXT | sed "s/^.*\(libX11\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_X11" = "x"
   then
-     ac_cv_lib_soname_X11="libX11.so"
+     ac_cv_lib_soname_X11="libX11.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_X11="libX11.so"
+ac_cv_lib_soname_X11="libX11.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -14771,16 +14772,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.so | sed 's/^.*\(libXext\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.$LIBEXT | sed "s/^.*\(libXext\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_Xext" = "x"
   then
-     ac_cv_lib_soname_Xext="libXext.so"
+     ac_cv_lib_soname_Xext="libXext.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_Xext="libXext.so"
+ac_cv_lib_soname_Xext="libXext.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -14845,16 +14846,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xi=`$ac_cv_path_LDD conftest$ac_exeext | grep libXi\\.so | sed 's/^.*\(libXi\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_Xi=`$ac_cv_path_LDD conftest$ac_exeext | grep libXi\\.$LIBEXT | sed "s/^.*\(libXi\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_Xi" = "x"
   then
-     ac_cv_lib_soname_Xi="libXi.so"
+     ac_cv_lib_soname_Xi="libXi.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_Xi="libXi.so"
+ac_cv_lib_soname_Xi="libXi.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -14919,16 +14920,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.so | sed 's/^.*\(libXrender\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.$LIBEXT | sed "s/^.*\(libXrender\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_Xrender" = "x"
   then
-     ac_cv_lib_soname_Xrender="libXrender.so"
+     ac_cv_lib_soname_Xrender="libXrender.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_Xrender="libXrender.so"
+ac_cv_lib_soname_Xrender="libXrender.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -14993,16 +14994,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xrandr=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrandr\\.so | sed 's/^.*\(libXrandr\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_Xrandr=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrandr\\.$LIBEXT | sed "s/^.*\(libXrandr\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_Xrandr" = "x"
   then
-     ac_cv_lib_soname_Xrandr="libXrandr.so"
+     ac_cv_lib_soname_Xrandr="libXrandr.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_Xrandr="libXrandr.so"
+ac_cv_lib_soname_Xrandr="libXrandr.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15067,16 +15068,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.so | sed 's/^.*\(libfreetype\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.$LIBEXT | sed "s/^.*\(libfreetype\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_freetype" = "x"
   then
-     ac_cv_lib_soname_freetype="libfreetype.so"
+     ac_cv_lib_soname_freetype="libfreetype.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_freetype="libfreetype.so"
+ac_cv_lib_soname_freetype="libfreetype.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15141,16 +15142,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.so | sed 's/^.*\(libGL\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.$LIBEXT | sed "s/^.*\(libGL\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_GL" = "x"
   then
-     ac_cv_lib_soname_GL="libGL.so"
+     ac_cv_lib_soname_GL="libGL.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_GL="libGL.so"
+ac_cv_lib_soname_GL="libGL.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15215,16 +15216,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.so | sed 's/^.*\(libcups\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.$LIBEXT | sed "s/^.*\(libcups\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_cups" = "x"
   then
-     ac_cv_lib_soname_cups="libcups.so"
+     ac_cv_lib_soname_cups="libcups.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_cups="libcups.so"
+ac_cv_lib_soname_cups="libcups.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15289,16 +15290,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.so | sed 's/^.*\(libjack\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.$LIBEXT | sed "s/^.*\(libjack\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_jack" = "x"
   then
-     ac_cv_lib_soname_jack="libjack.so"
+     ac_cv_lib_soname_jack="libjack.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_jack="libjack.so"
+ac_cv_lib_soname_jack="libjack.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15363,16 +15364,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_fontconfig=`$ac_cv_path_LDD conftest$ac_exeext | grep libfontconfig\\.so | sed 's/^.*\(libfontconfig\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_fontconfig=`$ac_cv_path_LDD conftest$ac_exeext | grep libfontconfig\\.$LIBEXT | sed "s/^.*\(libfontconfig\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_fontconfig" = "x"
   then
-     ac_cv_lib_soname_fontconfig="libfontconfig.so"
+     ac_cv_lib_soname_fontconfig="libfontconfig.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_fontconfig="libfontconfig.so"
+ac_cv_lib_soname_fontconfig="libfontconfig.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15437,16 +15438,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.so | sed 's/^.*\(libssl\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.$LIBEXT | sed "s/^.*\(libssl\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_ssl" = "x"
   then
-     ac_cv_lib_soname_ssl="libssl.so"
+     ac_cv_lib_soname_ssl="libssl.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_ssl="libssl.so"
+ac_cv_lib_soname_ssl="libssl.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15511,16 +15512,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.so | sed 's/^.*\(libcrypto\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.$LIBEXT | sed "s/^.*\(libcrypto\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_crypto" = "x"
   then
-     ac_cv_lib_soname_crypto="libcrypto.so"
+     ac_cv_lib_soname_crypto="libcrypto.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_crypto="libcrypto.so"
+ac_cv_lib_soname_crypto="libcrypto.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15585,16 +15586,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep libncurses\\.so | sed 's/^.*\(libncurses\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep libncurses\\.$LIBEXT | sed "s/^.*\(libncurses\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_ncurses" = "x"
   then
-     ac_cv_lib_soname_ncurses="libncurses.so"
+     ac_cv_lib_soname_ncurses="libncurses.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_ncurses="libncurses.so"
+ac_cv_lib_soname_ncurses="libncurses.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -15659,16 +15660,16 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep libcurses\\.so | sed 's/^.*\(libcurses\.so[^	 ]*\).*$/\1/'`
+  ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep libcurses\\.$LIBEXT | sed "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"`
   if test "x$ac_cv_lib_soname_curses" = "x"
   then
-     ac_cv_lib_soname_curses="libcurses.so"
+     ac_cv_lib_soname_curses="libcurses.$LIBEXT"
   fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_soname_curses="libcurses.so"
+ac_cv_lib_soname_curses="libcurses.$LIBEXT"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext

@@ -933,6 +933,7 @@ case $host_os in
             LDDLLFLAGS="-bundle -flat_namespace -undefined suppress"
             LDSHARED="\$(CC) -dynamiclib"
             CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
+            STRIP="$STRIP -u -r" 
           fi
         fi
       fi
@@ -988,7 +989,7 @@ esac
 
 dnl **** Get the soname for libraries that we load dynamically ****
 
-if test "$LIBEXT" = "so"
+if test "$LIBEXT" = "so" -o "$LIBEXT" = "dylib"
 then
   WINE_GET_SONAME(X11,XCreateWindow,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
