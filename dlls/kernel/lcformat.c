@@ -4,6 +4,7 @@
  * Copyright 1995 Martin von Loewis
  * Copyright 1998 David Lee Lambert
  * Copyright 2000 Julio César Gázquez
+ * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,515 +33,1552 @@
 #include "winbase.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "winreg.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
+#define DATE_DATEVARSONLY 0x0100  /* only date stuff: yMdg */
+#define TIME_TIMEVARSONLY 0x0200  /* only time stuff: hHmst */
+
+/* Since calculating the formatting data for each locale is time-consuming,
+ * we get the format data for each locale only once and cache it in memory.
+ * We cache both the system default and user overridden data, after converting
+ * them into the formats that the functions here expect. Since these functions
+ * will typically be called with only a small number of the total locales
+ * installed, the memory overhead is minimal while the speedup is significant.
+ *
+ * Our cache takes the form of a singly linked list, whose node is below:
+ */
+#define NLS_NUM_CACHED_STRINGS 45
+
+typedef struct _NLS_FORMAT_NODE
+{
+  LCID  lcid;         /* Locale Id */
+  DWORD dwFlags;      /* 0 or LOCALE_NOUSEROVERRIDE */
+  DWORD dwCodePage;   /* Default code page (if LOCALE_USE_ANSI_CP not given) */
+  NUMBERFMTW   fmt;   /* Default format for numbers */
+  CURRENCYFMTW cyfmt; /* Default format for currencies */
+  LPWSTR lppszStrings[NLS_NUM_CACHED_STRINGS]; /* Default formats,day/month names */
+  WCHAR szShortAM[2]; /* Short 'AM' marker */
+  WCHAR szShortPM[2]; /* Short 'PM' marker */
+  struct _NLS_FORMAT_NODE *next;
+} NLS_FORMAT_NODE;
+
+/* Macros to get particular data strings from a format node */
+#define GetNegative(fmt)  fmt->lppszStrings[0]
+#define GetLongDate(fmt)  fmt->lppszStrings[1]
+#define GetShortDate(fmt) fmt->lppszStrings[2]
+#define GetTime(fmt)      fmt->lppszStrings[3]
+#define GetAM(fmt)        fmt->lppszStrings[42]
+#define GetPM(fmt)        fmt->lppszStrings[43]
+#define GetYearMonth(fmt) fmt->lppszStrings[44]
+
+#define GetLongDay(fmt,day)    fmt->lppszStrings[4 + day]
+#define GetShortDay(fmt,day)   fmt->lppszStrings[11 + day]
+#define GetLongMonth(fmt,mth)  fmt->lppszStrings[18 + mth]
+#define GetShortMonth(fmt,mth) fmt->lppszStrings[30 + mth]
+
+/* Write access to the cache is protected by this critical section */
+static CRITICAL_SECTION NLS_FormatsCS;
+static CRITICAL_SECTION_DEBUG NLS_FormatsCS_debug =
+{
+    0, 0, &NLS_FormatsCS,
+    { &NLS_FormatsCS_debug.ProcessLocksList,
+      &NLS_FormatsCS_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": NLS_Formats") }
+};
+static CRITICAL_SECTION NLS_FormatsCS = { &NLS_FormatsCS_debug, -1, 0, 0, 0, 0 };
+
+/**************************************************************************
+ * NLS_GetLocaleNumber <internal>
+ *
+ * Get a numeric locale format value.
+ */
+static WINAPI DWORD NLS_GetLocaleNumber(LCID lcid, DWORD dwFlags)
+{
+  WCHAR szBuff[80];
+  DWORD dwVal = 0;
+
+  szBuff[0] = '\0';
+  GetLocaleInfoW(lcid, dwFlags, szBuff, sizeof(szBuff) / sizeof(WCHAR));
+
+  if (szBuff[0] && szBuff[1] == ';' && szBuff[2] != '0')
+    dwVal = (szBuff[0] - '0') * 10 + (szBuff[2] - '0');
+  else
+  {
+    const WCHAR* iter = szBuff;
+    dwVal = 0;
+    while(*iter >= '0' && *iter <= '9')
+      dwVal = dwVal * 10 + (*iter++ - '0');
+  }
+  return dwVal;
+}
+
+/**************************************************************************
+ * NLS_GetLocaleString <internal>
+ *
+ * Get a string locale format value.
+ */
+static WINAPI WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
+{
+  WCHAR szBuff[80], *str;
+  DWORD dwLen;
+
+  szBuff[0] = '\0';
+  GetLocaleInfoW(lcid, dwFlags, szBuff, sizeof(szBuff) / sizeof(WCHAR));
+  dwLen = strlenW(szBuff) + 1;
+  str = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
+  if (str)
+    memcpy(str, szBuff, dwLen * sizeof(WCHAR));
+  return str;
+}
+
+#define GET_LOCALE_NUMBER(num, type) num = NLS_GetLocaleNumber(lcid, type|dwFlags); \
+  TRACE( #type ": %ld (%08lx)\n", (DWORD)num, (DWORD)num)
+
+#define GET_LOCALE_STRING(str, type) str = NLS_GetLocaleString(lcid, type|dwFlags); \
+  TRACE( #type ": '%s'\n", debugstr_w(str))
+
+/**************************************************************************
+ * NLS_GetFormats <internal>
+ *
+ * Calculate (and cache) the number formats for a locale.
+ */
+static WINAPI const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
+{
+  /* GetLocaleInfo() identifiers for cached formatting strings */
+  static const USHORT NLS_LocaleIndices[] = {
+    LOCALE_SNEGATIVESIGN,
+    LOCALE_SLONGDATE,   LOCALE_SSHORTDATE,
+    LOCALE_STIMEFORMAT,
+    LOCALE_SDAYNAME1, LOCALE_SDAYNAME2, LOCALE_SDAYNAME3,
+    LOCALE_SDAYNAME4, LOCALE_SDAYNAME5, LOCALE_SDAYNAME6, LOCALE_SDAYNAME7,
+    LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3,
+    LOCALE_SABBREVDAYNAME4, LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6,
+    LOCALE_SABBREVDAYNAME7,
+    LOCALE_SMONTHNAME1, LOCALE_SMONTHNAME2, LOCALE_SMONTHNAME3,
+    LOCALE_SMONTHNAME4, LOCALE_SMONTHNAME5, LOCALE_SMONTHNAME6,
+    LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME8, LOCALE_SMONTHNAME9,
+    LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12,
+    LOCALE_SABBREVMONTHNAME1, LOCALE_SABBREVMONTHNAME2, LOCALE_SABBREVMONTHNAME3,
+    LOCALE_SABBREVMONTHNAME4, LOCALE_SABBREVMONTHNAME5, LOCALE_SABBREVMONTHNAME6,
+    LOCALE_SABBREVMONTHNAME7, LOCALE_SABBREVMONTHNAME8, LOCALE_SABBREVMONTHNAME9,
+    LOCALE_SABBREVMONTHNAME10, LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12,
+    LOCALE_S1159, LOCALE_S2359,
+    LOCALE_SYEARMONTH
+  };
+  static NLS_FORMAT_NODE *NLS_CachedFormats = NULL;
+  NLS_FORMAT_NODE *node = NLS_CachedFormats;
+
+  dwFlags &= LOCALE_NOUSEROVERRIDE;
+
+  TRACE("(0x%04lx,0x%08lx)\n", lcid, dwFlags);
+
+  /* See if we have already cached the locales number format */
+  while (node && (node->lcid != lcid || node->dwFlags != dwFlags) && node->next)
+    node = node->next;
+
+  if (!node || node->lcid != lcid || node->dwFlags != dwFlags)
+  {
+    NLS_FORMAT_NODE *new_node;
+    DWORD i;
+
+    TRACE("Creating new cache entry\n");
+
+    if (!(new_node = HeapAlloc(GetProcessHeap(), 0, sizeof(NLS_FORMAT_NODE))))
+      return NULL;
+
+    GET_LOCALE_NUMBER(new_node->dwCodePage, LOCALE_IDEFAULTANSICODEPAGE);
+
+    /* Number Format */
+    new_node->lcid = lcid;
+    new_node->dwFlags = dwFlags;
+    new_node->next = NULL;
+
+    GET_LOCALE_NUMBER(new_node->fmt.NumDigits, LOCALE_IDIGITS);
+    GET_LOCALE_NUMBER(new_node->fmt.LeadingZero, LOCALE_ILZERO);
+    GET_LOCALE_NUMBER(new_node->fmt.NegativeOrder, LOCALE_INEGNUMBER);
+
+    GET_LOCALE_NUMBER(new_node->fmt.Grouping, LOCALE_SGROUPING);
+    if (new_node->fmt.Grouping > 9 && new_node->fmt.Grouping != 32)
+    {
+      WARN("LOCALE_SGROUPING (%d) unhandled, please report!\n",
+           new_node->fmt.Grouping);
+      new_node->fmt.Grouping = 0;
+    }
+
+    GET_LOCALE_STRING(new_node->fmt.lpDecimalSep, LOCALE_SDECIMAL);
+    GET_LOCALE_STRING(new_node->fmt.lpThousandSep, LOCALE_STHOUSAND);
+
+    /* Currency Format */
+    new_node->cyfmt.NumDigits = new_node->fmt.NumDigits;
+    new_node->cyfmt.LeadingZero = new_node->fmt.LeadingZero;
+
+    GET_LOCALE_NUMBER(new_node->cyfmt.Grouping, LOCALE_SGROUPING);
+
+    if (new_node->cyfmt.Grouping > 9)
+    {
+      WARN("LOCALE_SMONGROUPING (%d) unhandled, please report!\n",
+           new_node->cyfmt.Grouping);
+      new_node->cyfmt.Grouping = 0;
+    }
+
+    GET_LOCALE_NUMBER(new_node->cyfmt.NegativeOrder, LOCALE_INEGCURR);
+    if (new_node->cyfmt.NegativeOrder > 15)
+    {
+      WARN("LOCALE_INEGCURR (%d) unhandled, please report!\n",
+           new_node->cyfmt.NegativeOrder);
+      new_node->cyfmt.NegativeOrder = 0;
+    }
+    GET_LOCALE_NUMBER(new_node->cyfmt.PositiveOrder, LOCALE_ICURRENCY);
+    if (new_node->cyfmt.PositiveOrder > 3)
+    {
+      WARN("LOCALE_IPOSCURR (%d) unhandled,please report!\n",
+           new_node->cyfmt.PositiveOrder);
+      new_node->cyfmt.PositiveOrder = 0;
+    }
+    GET_LOCALE_STRING(new_node->cyfmt.lpDecimalSep, LOCALE_SMONDECIMALSEP);
+    GET_LOCALE_STRING(new_node->cyfmt.lpThousandSep, LOCALE_SMONTHOUSANDSEP);
+    GET_LOCALE_STRING(new_node->cyfmt.lpCurrencySymbol, LOCALE_SCURRENCY);
+
+    /* Date/Time Format info, negative character, etc */
+    for (i = 0; i < sizeof(NLS_LocaleIndices)/sizeof(NLS_LocaleIndices[0]); i++)
+    {
+      GET_LOCALE_STRING(new_node->lppszStrings[i], NLS_LocaleIndices[i]);
+    }
+    new_node->szShortAM[0] = GetAM(new_node)[0]; new_node->szShortAM[1] = '\0';
+    new_node->szShortPM[0] = GetPM(new_node)[0]; new_node->szShortPM[1] = '\0';
+
+    /* Now add the computed format to the cache */
+    RtlEnterCriticalSection(&NLS_FormatsCS);
+
+    /* Search again: We may have raced to add the node */
+    node = NLS_CachedFormats;
+    while (node && (node->lcid != lcid || node->dwFlags != dwFlags) && node->next)
+      node = node->next;
+
+    if (!node)
+    {
+      node = NLS_CachedFormats = new_node; /* Empty list */
+      new_node = NULL;
+    }
+    else if (node->lcid != lcid || node->dwFlags != dwFlags)
+    {
+      node->next = new_node; /* Not in the list, add to end */
+      node = new_node;
+      new_node = NULL;
+    }
+
+    RtlLeaveCriticalSection(&NLS_FormatsCS);
+
+    if (new_node)
+    {
+      /* We raced and lost: The node was already added by another thread.
+       * node points to the currently cached node, so free new_node.
+       */
+      for (i = 0; i < sizeof(NLS_LocaleIndices)/sizeof(NLS_LocaleIndices[0]); i++)
+        HeapFree(GetProcessHeap(), 0, new_node->lppszStrings[i]);
+      HeapFree(GetProcessHeap(), 0, new_node->fmt.lpDecimalSep);
+      HeapFree(GetProcessHeap(), 0, new_node->fmt.lpThousandSep);
+      HeapFree(GetProcessHeap(), 0, new_node->cyfmt.lpDecimalSep);
+      HeapFree(GetProcessHeap(), 0, new_node->cyfmt.lpThousandSep);
+      HeapFree(GetProcessHeap(), 0, new_node->cyfmt.lpCurrencySymbol);
+      HeapFree(GetProcessHeap(), 0, new_node);
+    }
+  }
+  return node;
+}
+
+/**************************************************************************
+ * NLS_IsUnicodeOnlyLcid <internal>
+ *
+ * Determine if a locale is Unicode only, and thus invalid in ASCII calls.
+ */
+BOOL WINAPI NLS_IsUnicodeOnlyLcid(LCID lcid)
+{
+  switch (PRIMARYLANGID(lcid))
+  {
+  case LANG_ARMENIAN:
+  case LANG_DIVEHI:
+  case LANG_GEORGIAN:
+  case LANG_GUJARATI:
+  case LANG_HINDI:
+  case LANG_KANNADA:
+  case LANG_KONKANI:
+  case LANG_MARATHI:
+  case LANG_PUNJABI:
+  case LANG_SANSKRIT:
+    TRACE("lcid 0x%08lx: langid 0x%4x is Unicode Only\n", lcid, PRIMARYLANGID(lcid));
+    return TRUE;
+  default:
+    return FALSE;
+  }
+}
+
+/*
+ * Formatting of dates, times, numbers and currencies.
+ */
+
+#define IsLiteralMarker(p) (p == '\'')
+#define IsDateFmtChar(p)   (p == 'd'||p == 'M'||p == 'y'||p == 'g')
+#define IsTimeFmtChar(p)   (p == 'H'||p == 'h'||p == 'm'||p == 's'||p == 't')
+
+/* Only the following flags can be given if a date/time format is specified */
+#define DATE_FORMAT_FLAGS (DATE_DATEVARSONLY|LOCALE_NOUSEROVERRIDE)
+#define TIME_FORMAT_FLAGS (TIME_TIMEVARSONLY|TIME_FORCE24HOURFORMAT| \
+                           TIME_NOMINUTESORSECONDS|TIME_NOSECONDS| \
+                           TIME_NOTIMEMARKER|LOCALE_NOUSEROVERRIDE)
 
 /******************************************************************************
- *		get_date_time_formatW   [Internal]
+ * NLS_GetDateTimeFormatW <internal>
  *
- * dateformat is set TRUE if being called for a date, false for a time
+ * Performs the formatting for GetDateFormatW/GetTimeFormatW.
  *
- * This function implements stuff for GetDateFormat() and
- * GetTimeFormat().
- *
- *  d    single-digit (no leading zero) day (of month)
- *  dd   two-digit day (of month)
- *  ddd  short day-of-week name
- *  dddd long day-of-week name
- *  M    single-digit month
- *  MM   two-digit month
- *  MMM  short month name
- *  MMMM full month name
- *  y    two-digit year, no leading 0
- *  yy   two-digit year
- *  yyyy four-digit year
- *  gg   era string
- *  h    hours with no leading zero (12-hour)
- *  hh   hours with full two digits
- *  H    hours with no leading zero (24-hour)
- *  HH   hours with full two digits
- *  m    minutes with no leading zero
- *  mm   minutes with full two digits
- *  s    seconds with no leading zero
- *  ss   seconds with full two digits
- *  t    time marker (A or P)
- *  tt   time marker (AM, PM)
- *  ''   used to quote literal characters
- *  ''   (within a quoted string) indicates a literal '
- *
- * If TIME_NOMINUTESORSECONDS or TIME_NOSECONDS is specified, the function
- *  removes the separator(s) preceding the minutes and/or seconds element(s).
- *
- * If TIME_NOTIMEMARKER is specified, the function removes the separator(s)
- *  preceding and following the time marker.
- *
- * If TIME_FORCE24HOURFORMAT is specified, the function displays any existing
- *  time marker, unless the TIME_NOTIMEMARKER flag is also set.
- *
- * These functions REQUIRE valid locale, date,  and format.
- *
- * If the time or date is invalid, return 0 and set ERROR_INVALID_PARAMETER
- *
- * Return value is the number of characters written, or if outlen is zero
- *	it is the number of characters required for the output including
- *	the terminating null.
+ * FIXME
+ * DATE_USE_ALT_CALENDAR           - Requires GetCalendarInfo to work first.
+ * DATE_LTRREADING/DATE_RTLREADING - Not yet implemented.
  */
-static INT get_date_time_formatW(LCID locale, DWORD flags, DWORD tflags,
-                                 const SYSTEMTIME* xtime, LPCWSTR format,
-                                 LPWSTR output, INT outlen, int dateformat)
+static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
+                                  const SYSTEMTIME* lpTime, LPCWSTR lpFormat,
+                                  LPWSTR lpStr, INT cchOut)
 {
-   INT     outpos;
-   INT	   lastFormatPos; /* the position in the output buffer of */
-			  /* the end of the output from the last formatting */
-			  /* character */
-   BOOL	   dropUntilNextFormattingChar = FALSE; /* TIME_NOTIMEMARKER drops
-				all of the text around the dropped marker,
-				eg. "h@!t@!m" becomes "hm" */
+  const NLS_FORMAT_NODE *node;
+  SYSTEMTIME st;
+  INT cchWritten = 0;
+  INT lastFormatPos = 0;
+  BOOL bSkipping = FALSE; /* Skipping text around marker? */
 
-   /* make a debug report */
-   TRACE("args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
-   	      "%p with max len %d\n",
-	 locale, flags, tflags,
-	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
-	 debugstr_w(format), format, output, outlen);
+  /* Verify our arguments */
+  if ((cchOut && !lpStr) || !(node = NLS_GetFormats(lcid, dwFlags)))
+  {
+NLS_GetDateTimeFormatW_InvalidParameter:
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
 
-   /* initialize state variables */
-   outpos = 0;
-   lastFormatPos = 0;
+  if (dwFlags & ~(DATE_DATEVARSONLY|TIME_TIMEVARSONLY))
+  {
+    if (lpFormat &&
+        ((dwFlags & DATE_DATEVARSONLY && dwFlags & ~DATE_FORMAT_FLAGS) ||
+         (dwFlags & TIME_TIMEVARSONLY && dwFlags & ~TIME_FORMAT_FLAGS)))
+    {
+NLS_GetDateTimeFormatW_InvalidFlags:
+      SetLastError(ERROR_INVALID_FLAGS);
+      return 0;
+    }
 
-   while (*format) {
-      /* Literal string: Maybe terminated early by a \0 */
-      if (*format == (WCHAR) '\'')
+    if (dwFlags & DATE_DATEVARSONLY)
+    {
+      if ((dwFlags & (DATE_LTRREADING|DATE_RTLREADING)) == (DATE_LTRREADING|DATE_RTLREADING))
+        goto NLS_GetDateTimeFormatW_InvalidFlags;
+      else if (dwFlags & (DATE_LTRREADING|DATE_RTLREADING))
+        FIXME("Unsupported flags: DATE_LTRREADING/DATE_RTLREADING\n");
+
+      switch (dwFlags & (DATE_SHORTDATE|DATE_LONGDATE|DATE_YEARMONTH))
       {
-         format++;
-
-	 /* We loop while we haven't reached the end of the format string */
-	 /* and until we haven't found another "'" character */
-	 while (*format)
-         {
-	    /* we found what might be the close single quote mark */
-	    /* we need to make sure there isn't another single quote */
-	    /* after it, if there is we need to skip over this quote mark */
-	    /* as the user is trying to put a single quote mark in their output */
-            if (*format == (WCHAR) '\'')
-            {
-               format++;
-               if (*format != '\'')
-               {
-                  break; /* It was a terminating quote */
-               }
-            }
-
-	    /* if outlen is zero then we are couting the number of */
-	    /* characters of space we need to output this text, don't */
-	    /* modify the output buffer */
-            if (!outlen)
-            {
-               outpos++;   /* We are counting */;
-            }  else if (outpos >= outlen)
-            {
-               goto too_short;
-            } else
-            {
-               /* even drop literal strings */
-	       if(!dropUntilNextFormattingChar)
-               {
-                 output[outpos] = *format;
-                 outpos++;
-               }
-            }
-            format++;
-         }
-      } else if ( (dateformat &&  (*format=='d' ||
-				   *format=='M' ||
-				   *format=='y' ||
-				   *format=='g')  ) ||
-		  (!dateformat && (*format=='H' ||
-				   *format=='h' ||
-				   *format=='m' ||
-				   *format=='s' ||
-				   *format=='t') )    )
-     /* if processing a date and we have a date formatting character, OR */
-     /* if we are processing a time and we have a time formatting character */
-     {
-         int type, count;
-         char    tmp[16];
-         WCHAR   buf[40];
-         int     buflen=0;
-         type = *format;
-         format++;
-
-	 /* clear out the drop text flag if we are in here */
-	 dropUntilNextFormattingChar = FALSE;
-
-         /* count up the number of the same letter values in a row that */
-	 /* we get, this lets us distinguish between "s" and "ss" and it */
-	 /* eliminates the duplicate to simplify the below case statement */
-         for (count = 1; *format == type; format++)
-            count++;
-
-	 buf[0] = 0; /* always null terminate the buffer */
-
-         switch(type)
-         {
-          case 'd':
-	    if        (count >= 4) {
-	       GetLocaleInfoW(locale,
-			     LOCALE_SDAYNAME1 + (xtime->wDayOfWeek +6)%7,
-			     buf, sizeof(buf)/sizeof(WCHAR) );
-	    } else if (count == 3) {
-	       GetLocaleInfoW(locale,
-				LOCALE_SABBREVDAYNAME1 +
-				(xtime->wDayOfWeek +6)%7,
-				buf, sizeof(buf)/sizeof(WCHAR) );
-	    } else {
-                sprintf( tmp, "%.*d", count, xtime->wDay );
-                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-	    }
-            break;
-
-          case 'M':
-	    if        (count >= 4) {
-	       GetLocaleInfoW(locale,  LOCALE_SMONTHNAME1 +
-				xtime->wMonth -1, buf,
-				sizeof(buf)/sizeof(WCHAR) );
-	    } else if (count == 3) {
-	       GetLocaleInfoW(locale,  LOCALE_SABBREVMONTHNAME1 +
-				xtime->wMonth -1, buf,
-				sizeof(buf)/sizeof(WCHAR) );
-	    } else {
-                sprintf( tmp, "%.*d", count, xtime->wMonth );
-                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-	    }
-            break;
-          case 'y':
-	    if        (count >= 4) {
-                sprintf( tmp, "%d", xtime->wYear );
-	    } else {
-                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wYear % 100 );
-	    }
-            MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-            break;
-
-          case 'g':
-	    if        (count == 2) {
-	       FIXME("LOCALE_ICALENDARTYPE unimplemented\n");
-               strcpy( tmp, "AD" );
-	    } else {
-	       /* Win API sez we copy it verbatim */
-                strcpy( tmp, "g" );
-	    }
-            MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-            break;
-
-          case 'h':
-	      /* fallthrough if we are forced to output in 24 hour format */
-	      if(!(tflags & TIME_FORCE24HOURFORMAT))
-              {
-                /* hours 1:00-12:00 --- is this right? */
-		/* NOTE: 0000 hours is also 12 midnight */
-                sprintf( tmp, "%.*d", count > 2 ? 2 : count,
-			xtime->wHour == 0 ? 12 : (xtime->wHour-1)%12 +1);
-                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-                break;
-              }
-          case 'H':
-              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wHour );
-              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-              break;
-
-          case 'm':
-	      /* if TIME_NOMINUTESORSECONDS don't display minutes */
-	      if(!(tflags & TIME_NOMINUTESORSECONDS))
-              {
-                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wMinute );
-                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-	      } else
-	      {
-		outpos = lastFormatPos;
-	      }
-              break;
-
-          case 's':
-	      /* if we have a TIME_NOSECONDS or TIME_NOMINUTESORSECONDS
-			flag then don't display seconds */
-	      if(!(tflags & TIME_NOSECONDS) && !(tflags &
-			TIME_NOMINUTESORSECONDS))
-              {
-                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wSecond );
-                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-	      } else
-	      {
-		outpos = lastFormatPos;
-	      }
-              break;
-
-          case 't':
-	    if(!(tflags & TIME_NOTIMEMARKER))
-	    {
-  	      GetLocaleInfoW(locale, (xtime->wHour < 12) ?
-			     LOCALE_S1159 : LOCALE_S2359,
-			     buf, sizeof(buf) );
-  	      if (count == 1)
-	      {
-	         buf[1] = 0;
-	      }
-            } else
-	    {
-		outpos = lastFormatPos; /* remove any prior text up until
-			the output due to formatting characters */
- 		dropUntilNextFormattingChar = TRUE; /* drop everything
-			until we hit the next formatting character */
-	    }
-            break;
-         }
-
-	 /* cat buf onto the output */
-	 buflen = strlenW(buf);
-
-	 /* we are counting how many characters we need for output */
-	 /* don't modify the output buffer... */
-         if (!outlen)
-            /* We are counting */;
-         else if (outpos + buflen < outlen) {
-            strcpyW( output + outpos, buf );
-	 } else {
-            lstrcpynW( output + outpos, buf, outlen - outpos );
-            /* Is this an undocumented feature we are supporting? */
-            goto too_short;
-	 }
-	 outpos += buflen;
-	 lastFormatPos = outpos; /* record the end of the formatting text we just output */
-      } else /* we are processing a NON formatting character */
-      {
-         /* a literal character */
-         if (!outlen)
-         {
-            outpos++;   /* We are counting */;
-         }
-         else if (outpos >= outlen)
-         {
-            goto too_short;
-         }
-         else /* just copy the character into the output buffer */
-         {
-	    /* unless we are dropping characters */
-	    if(!dropUntilNextFormattingChar)
-	    {
-	       output[outpos] = *format;
-               outpos++;
-            }
-         }
-         format++;
+      case 0:
+        break;
+      case DATE_SHORTDATE:
+      case DATE_LONGDATE:
+      case DATE_YEARMONTH:
+        if (lpFormat)
+          goto NLS_GetDateTimeFormatW_InvalidFlags;
+        break;
+      default:
+        goto NLS_GetDateTimeFormatW_InvalidFlags;
       }
-   }
-
-   /* final string terminator and sanity check */
-   if (!outlen)
-      /* We are counting */;
-   else if (outpos >= outlen)
-      goto too_short;
-   else
-      output[outpos] = '\0';
-
-   outpos++; /* add one for the terminating null character */
-
-   TRACE(" returning %d %s\n", outpos, debugstr_w(output));
-   return outpos;
-
-too_short:
-   SetLastError(ERROR_INSUFFICIENT_BUFFER);
-   WARN(" buffer overflow\n");
-   return 0;
-}
-
-
-/******************************************************************************
- *		GetDateFormatA	[KERNEL32.@]
- * Makes an ASCII string of the date
- *
- * Acts the same as GetDateFormatW(),  except that it's ASCII.
- */
-INT WINAPI GetDateFormatA( LCID locale, DWORD flags, const SYSTEMTIME* xtime,
-                           LPCSTR format, LPSTR date, INT datelen )
-{
-  INT ret;
-  LPWSTR wformat = NULL;
-  LPWSTR wdate = NULL;
-
-  if (format)
-  {
-    wformat = HeapAlloc(GetProcessHeap(), 0,
-                        (strlen(format) + 1) * sizeof(wchar_t));
-
-    MultiByteToWideChar(CP_ACP, 0, format, -1, wformat, strlen(format) + 1);
+    }
   }
 
-  if (date && datelen)
+  if (!lpFormat)
   {
-    wdate = HeapAlloc(GetProcessHeap(), 0,
-                      (datelen + 1) * sizeof(wchar_t));
+    /* Use the appropriate default format */
+    if (dwFlags & DATE_DATEVARSONLY)
+    {
+      if (dwFlags & DATE_YEARMONTH)
+        lpFormat = GetYearMonth(node);
+      else if (dwFlags & DATE_LONGDATE)
+        lpFormat = GetLongDate(node);
+      else
+        lpFormat = GetShortDate(node);
+    }
+    else
+      lpFormat = GetTime(node);
   }
 
-  ret = GetDateFormatW(locale, flags, xtime, wformat, wdate, datelen);
-
-  if (wdate)
+  if (!lpTime)
   {
-    WideCharToMultiByte(CP_ACP, 0, wdate, ret, date, datelen, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, wdate);
+    GetSystemTime(&st); /* Default to current time */
+    lpTime = &st;
+  }
+  else
+  {
+    if (dwFlags & DATE_DATEVARSONLY)
+    {
+      FILETIME ftTmp;
+
+      /* Verify the date and correct the D.O.W. if needed */
+      memset(&st, 0, sizeof(st));
+      st.wYear = lpTime->wYear;
+      st.wMonth = lpTime->wMonth;
+      st.wDay = lpTime->wDay;
+
+      if (st.wDay > 31 || st.wMonth > 12 || !SystemTimeToFileTime(&st, &ftTmp))
+        goto NLS_GetDateTimeFormatW_InvalidParameter;
+
+      FileTimeToSystemTime(&ftTmp, &st);
+      lpTime = &st;
+    }
+
+    if (dwFlags & TIME_TIMEVARSONLY)
+    {
+      /* Verify the time */
+      if (lpTime->wHour > 24 || lpTime->wMinute > 59 || lpTime->wSecond > 59)
+        goto NLS_GetDateTimeFormatW_InvalidParameter;
+    }
   }
 
-  if (wformat)
+  /* Format the output */
+  while (*lpFormat)
   {
-    HeapFree(GetProcessHeap(), 0, wformat);
-  }
+    if (IsLiteralMarker(*lpFormat))
+    {
+      /* Start of a literal string */
+      lpFormat++;
 
-  return ret;
-}
-
-
-/******************************************************************************
- *		GetDateFormatW	[KERNEL32.@]
- * Makes a Unicode string of the date
- *
- * This function uses format to format the date,  or,  if format
- * is NULL, uses the default for the locale.  format is a string
- * of literal fields and characters as follows:
- *
- * - d    single-digit (no leading zero) day (of month)
- * - dd   two-digit day (of month)
- * - ddd  short day-of-week name
- * - dddd long day-of-week name
- * - M    single-digit month
- * - MM   two-digit month
- * - MMM  short month name
- * - MMMM full month name
- * - y    two-digit year, no leading 0
- * - yy   two-digit year
- * - yyyy four-digit year
- * - gg   era string
- *
- * Accepts & returns sizes as counts of Unicode characters.
- */
-INT WINAPI GetDateFormatW( LCID locale, DWORD flags, const SYSTEMTIME* xtime,
-                           LPCWSTR format, LPWSTR date, INT datelen)
-{
-    WCHAR format_buf[40];
-    LPCWSTR thisformat;
-    SYSTEMTIME t;
-    LCID thislocale;
-    INT ret;
-    FILETIME ft;
-    BOOL res;
-
-    TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
-	  locale,flags,xtime,debugstr_w(format),date,datelen);
-
-    /* Tests */
-    if (flags && format) /* if lpFormat is non-null then flags must be zero */
-    {
-        SetLastError (ERROR_INVALID_FLAGS);
-	return 0;
-    }
-    if (datelen && !date)
-    {
-        SetLastError (ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    if (!locale)
-    {
-	locale = LOCALE_SYSTEM_DEFAULT;
-    }
-
-    if (locale == LOCALE_SYSTEM_DEFAULT)
-    {
-	thislocale = GetSystemDefaultLCID();
-    } else if (locale == LOCALE_USER_DEFAULT)
-    {
-	thislocale = GetUserDefaultLCID();
-    } else
-    {
-	thislocale = locale;
-    }
-
-    /* check for invalid flag combinations */
-    if((flags & DATE_LTRREADING) && (flags & DATE_RTLREADING))
-    {
-        SetLastError (ERROR_INVALID_FLAGS);
-	return 0;
-    }
-
-    /* DATE_SHORTDATE, DATE_LONGDATE and DATE_YEARMONTH are mutually */
-    /* exclusive */
-    if((flags & (DATE_SHORTDATE|DATE_LONGDATE|DATE_YEARMONTH))
-	 && !((flags & DATE_SHORTDATE) ^ (flags &
-        DATE_LONGDATE) ^ (flags & DATE_YEARMONTH)))
-    {
-        SetLastError (ERROR_INVALID_FLAGS);
-	return 0;
-    }
-
-    /* if the user didn't pass in a pointer to the current time we read it */
-    /* here */
-    if (xtime == NULL)
-    {
-	GetSystemTime(&t);
-    } else
-    {
-        /* NOTE: check here before we perform the SystemTimeToFileTime conversion */
-        /*  because this conversion will fix invalid time values */
-        /* check to see if the time/date is valid */
-        /* set ERROR_INVALID_PARAMETER and return 0 if invalid */
-        if((xtime->wDay > 31) || (xtime->wMonth > 12))
+      /* Loop until the end of the literal marker or end of the string */
+      while (*lpFormat)
+      {
+        if (IsLiteralMarker(*lpFormat))
         {
-          SetLastError(ERROR_INVALID_PARAMETER);
-          return 0;
+          lpFormat++;
+          if (!IsLiteralMarker(*lpFormat))
+            break; /* Terminating literal marker */
         }
-        /* For all we know the day of week and the time may be absolute
-         * rubbish.  Therefore if we are going to use conversion through
-         * FileTime we had better use a clean time (and hopefully we won't
-         * fall over any timezone complications).
-         * If we go with an alternative method of correcting the day of week
-         * (e.g. Zeller's congruence) then we won't need to, but we will need
-         * to check the date.
-         */
-        memset (&t, 0, sizeof(t));
-        t.wYear = xtime->wYear;
-        t.wMonth = xtime->wMonth;
-        t.wDay = xtime->wDay;
 
-	/* Silently correct wDayOfWeek by transforming to FileTime and back again */
-	res=SystemTimeToFileTime(&t,&ft);
-
-	/* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
-	if(!res)
-	{
-	    SetLastError(ERROR_INVALID_PARAMETER);
-	    return 0;
-	}
-	FileTimeToSystemTime(&ft,&t);
+        if (!cchOut)
+          cchWritten++;   /* Count size only */
+        else if (cchWritten >= cchOut)
+          goto NLS_GetDateTimeFormatW_Overrun;
+        else if (!bSkipping)
+        {
+          lpStr[cchWritten] = *lpFormat;
+          cchWritten++;
+        }
+        lpFormat++;
+      }
     }
+    else if ((dwFlags & DATE_DATEVARSONLY && IsDateFmtChar(*lpFormat)) ||
+             (dwFlags & TIME_TIMEVARSONLY && IsTimeFmtChar(*lpFormat)))
+    {
+      char  buffA[32];
+      WCHAR buff[32], fmtChar;
+      LPCWSTR szAdd = NULL;
+      DWORD dwVal = 0;
+      int   count = 0, dwLen;
 
-    if (format == NULL)
-    {
-	GetLocaleInfoW(thislocale, ((flags&DATE_LONGDATE)
-				    ? LOCALE_SLONGDATE
-				    : LOCALE_SSHORTDATE),
-		       format_buf, sizeof(format_buf)/sizeof(*format_buf));
-	thisformat = format_buf;
-    } else
-    {
-	thisformat = format;
+      bSkipping = FALSE;
+
+      fmtChar = *lpFormat;
+      while (*lpFormat == fmtChar)
+      {
+        count++;
+        lpFormat++;
+      }
+      buff[0] = '\0';
+
+      switch(fmtChar)
+      {
+      case 'd':
+        if (count >= 4)
+          szAdd = GetLongDay(node, (lpTime->wDayOfWeek + 6) % 7);
+        else if (count == 3)
+          szAdd = GetShortDay(node, (lpTime->wDayOfWeek + 6) % 7);
+        else
+        {
+          dwVal = lpTime->wDay;
+          szAdd = buff;
+        }
+        break;
+
+      case 'M':
+        if (count >= 4)
+          szAdd = GetLongMonth(node, lpTime->wMonth - 1);
+        else if (count == 3)
+          szAdd = GetShortMonth(node, lpTime->wMonth - 1);
+        else
+        {
+          dwVal = lpTime->wMonth;
+          szAdd = buff;
+        }
+        break;
+
+      case 'y':
+        if (count >= 4)
+        {
+          count = 4;
+          dwVal = lpTime->wYear;
+        }
+        else
+        {
+          count = count > 2 ? 2 : count;
+          dwVal = lpTime->wYear % 100;
+        }
+        szAdd = buff;
+        break;
+
+      case 'g':
+        if (count == 2)
+        {
+          /* FIXME: Our GetCalendarInfo() does not yet support CAL_SERASTRING.
+           *        When it is fixed, this string should be cached in 'node'.
+           */
+          FIXME("Should be using GetCalendarInfo(CAL_SERASTRING), defaulting to 'AD'\n");
+          buff[0] = 'A'; buff[1] = 'D'; buff[2] = '\0';
+        }
+        else
+        {
+          buff[0] = 'g'; buff[1] = '\0'; /* Add a literal 'g' */
+        }
+        szAdd = buff;
+        break;
+
+      case 'h':
+        if (!(dwFlags & TIME_FORCE24HOURFORMAT))
+        {
+          count = count > 2 ? 2 : count;
+          dwVal = lpTime->wHour == 0 ? 12 : (lpTime->wHour - 1) % 12 + 1;
+          szAdd = buff;
+          break;
+        }
+        /* .. fall through if we are forced to output in 24 hour format */
+
+      case 'H':
+        count = count > 2 ? 2 : count;
+        dwVal = lpTime->wHour;
+        szAdd = buff;
+        break;
+
+      case 'm':
+        if (dwFlags & TIME_NOMINUTESORSECONDS)
+        {
+          cchWritten = lastFormatPos; /* Skip */
+          bSkipping = TRUE;
+        }
+        else
+        {
+          count = count > 2 ? 2 : count;
+          dwVal = lpTime->wMinute;
+          szAdd = buff;
+        }
+        break;
+
+      case 's':
+        if (dwFlags & (TIME_NOSECONDS|TIME_NOMINUTESORSECONDS))
+        {
+          cchWritten = lastFormatPos; /* Skip */
+          bSkipping = TRUE;
+        }
+        else
+        {
+          count = count > 2 ? 2 : count;
+          dwVal = lpTime->wSecond;
+          szAdd = buff;
+        }
+        break;
+
+      case 't':
+        if (dwFlags & TIME_NOTIMEMARKER)
+        {
+          cchWritten = lastFormatPos; /* Skip */
+          bSkipping = TRUE;
+        }
+        else
+        {
+          if (count == 1)
+            szAdd = lpTime->wHour < 12 ? node->szShortAM : node->szShortPM;
+          else
+            szAdd = lpTime->wHour < 12 ? GetAM(node) : GetPM(node);
+        }
+        break;
+      }
+
+      if (szAdd == buff && buff[0] == '\0')
+      {
+        /* We have a numeric value to add */
+        sprintf(buffA, "%.*ld", count, dwVal);
+        MultiByteToWideChar(CP_ACP, 0, buffA, -1, buff, sizeof(buff)/sizeof(WCHAR));
+      }
+
+      dwLen = szAdd ? strlenW(szAdd) : 0;
+
+      if (cchOut && dwLen)
+      {
+        if (cchWritten + dwLen < cchOut)
+          memcpy(lpStr + cchWritten, szAdd, dwLen * sizeof(WCHAR));
+        else
+        {
+          memcpy(lpStr + cchWritten, szAdd, (cchOut - cchWritten) * sizeof(WCHAR));
+          goto NLS_GetDateTimeFormatW_Overrun;
+        }
+      }
+      cchWritten += dwLen;
+      lastFormatPos = cchWritten; /* Save position of last output format text */
     }
+    else
+    {
+      /* Literal character */
+      if (!cchOut)
+        cchWritten++;   /* Count size only */
+      else if (cchWritten >= cchOut)
+        goto NLS_GetDateTimeFormatW_Overrun;
+      else if (!bSkipping || *lpFormat == ' ')
+      {
+        lpStr[cchWritten] = *lpFormat;
+        cchWritten++;
+      }
+      lpFormat++;
+    }
+  }
 
-    ret = get_date_time_formatW(thislocale, flags, 0, &t, thisformat, date, datelen, 1);
+  /* Final string terminator and sanity check */
+  if (cchOut)
+  {
+   if (cchWritten >= cchOut)
+     goto NLS_GetDateTimeFormatW_Overrun;
+   else
+     lpStr[cchWritten] = '\0';
+  }
+  cchWritten++; /* Include terminating NUL */
 
-    TRACE("GetDateFormatW() returning %d, with data=%s\n",
-	  ret, debugstr_w(date));
-    return ret;
+  TRACE("returning length=%d, ouput='%s'\n", cchWritten, debugstr_w(lpStr));
+  return cchWritten;
+
+NLS_GetDateTimeFormatW_Overrun:
+  TRACE("returning 0, (ERROR_INSUFFICIENT_BUFFER)\n");
+  SetLastError(ERROR_INSUFFICIENT_BUFFER);
+  return 0;
 }
 
+/******************************************************************************
+ * NLS_GetDateTimeFormatA <internal>
+ *
+ * ASCII wrapper for GetDateFormatA/GetTimeFormatA.
+ */
+static INT WINAPI NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
+                                         const SYSTEMTIME* lpTime,
+                                         LPCSTR lpFormat, LPSTR lpStr, INT cchOut)
+{
+  DWORD cp = CP_ACP;
+  WCHAR szFormat[128], szOut[128];
+  INT iRet;
+
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
+        debugstr_a(lpFormat), lpStr, cchOut);
+
+  if (NLS_IsUnicodeOnlyLcid(lcid))
+  {
+GetDateTimeFormatA_InvalidParameter:
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if (!(dwFlags & LOCALE_USE_CP_ACP))
+  {
+    const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
+    if (!node)
+      goto GetDateTimeFormatA_InvalidParameter;
+    cp = node->dwCodePage;
+  }
+
+  if (lpFormat)
+    MultiByteToWideChar(cp, 0, lpFormat, -1, szFormat, sizeof(szFormat)/sizeof(WCHAR));
+
+  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
+    cchOut = sizeof(szOut)/sizeof(WCHAR);
+
+  szOut[0] = '\0';
+
+  iRet = NLS_GetDateTimeFormatW(lcid, dwFlags, lpTime, lpFormat ? szFormat : NULL,
+                                lpStr ? szOut : NULL, cchOut);
+
+  if (lpStr)
+  {
+    if (szOut[0])
+      WideCharToMultiByte(cp, 0, szOut, -1, lpStr, cchOut, 0, 0);
+    else if (cchOut && iRet)
+      *lpStr = '\0';
+  }
+  return iRet;
+}
+
+/******************************************************************************
+ * GetDateFormatA [KERNEL32.@]
+ *
+ * Format a date for a given locale.
+ *
+ * PARAMS
+ *  lcid      [I] Locale to format for
+ *  dwFlags   [I] LOCALE_ and DATE_ flags from "winnls.h"
+ *  lpTime    [I] Date to format
+ *  lpFormat  [I] Format string, or NULL to use the system defaults
+ *  lpDateStr [O] Destination for formatted string
+ *  cchOut    [I] Size of lpDateStr, or 0 to calculate the resulting size
+ *
+ * NOTES
+ *  - If lpFormat is NULL, lpszValue will be formatted according to the format
+ *    details returned by GetLocaleInfoA() and modified by dwFlags.
+ *  - lpFormat is a string of characters and formatting tokens. Any characters
+ *    in the string are copied verbatim to lpDateStr, with tokens being replaced
+ *    by the date values they represent.
+ *  - The following tokens have special meanings in a date format string:
+ *|  Token  Meaning
+ *|  -----  -------
+ *|  d      Single digit day of the month (no leading 0)
+ *|  dd     Double digit day of the month
+ *|  ddd    Short name for the day of the week
+ *|  dddd   Long name for the day of the week
+ *|  M      Single digit month of the year (no leading 0)
+ *|  MM     Double digit month of the year
+ *|  MMM    Short name for the month of the year
+ *|  MMMM   Long name for the month of the year
+ *|  y      Double digit year number (no leading 0)
+ *|  yy     Double digit year number
+ *|  yyyy   Four digit year number
+ *|  gg     Era string, for example 'AD'.
+ *  - To output any literal character that could be misidentified as a token,
+ *    enclose it in single quotes.
+ *  - The Ascii version of this function fails if lcid is Unicode only.
+ *
+ * RETURNS
+ *  Success: The number of character written to lpDateStr, or that would
+ *           have been written, if cchOut is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetDateFormatA( LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
+                           LPCSTR lpFormat, LPSTR lpDateStr, INT cchOut)
+{
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+        debugstr_a(lpFormat), lpDateStr, cchOut);
+
+  return NLS_GetDateTimeFormatA(lcid, dwFlags | DATE_DATEVARSONLY, lpTime,
+                                lpFormat, lpDateStr, cchOut);
+}
+
+
+/******************************************************************************
+ * GetDateFormatW	[KERNEL32.@]
+ *
+ * See GetDateFormatA.
+ */
+INT WINAPI GetDateFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
+                          LPCWSTR lpFormat, LPWSTR lpDateStr, INT cchOut)
+{
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
+        debugstr_w(lpFormat), lpDateStr, cchOut);
+
+  return NLS_GetDateTimeFormatW(lcid, dwFlags|DATE_DATEVARSONLY, lpTime,
+                                lpFormat, lpDateStr, cchOut);
+}
+
+/******************************************************************************
+ *		GetTimeFormatA	[KERNEL32.@]
+ *
+ * Format a time for a given locale.
+ *
+ * PARAMS
+ *  lcid      [I] Locale to format for
+ *  dwFlags   [I] LOCALE_ and TIME_ flags from "winnls.h"
+ *  lpTime    [I] Time to format
+ *  lpFormat  [I] Formatting overrides
+ *  lpTimeStr [O] Destination for formatted string
+ *  cchOut    [I] Size of lpTimeStr, or 0 to calculate the resulting size
+ *
+ * NOTES
+ *  - If lpFormat is NULL, lpszValue will be formatted according to the format
+ *    details returned by GetLocaleInfoA() and modified by dwFlags.
+ *  - lpFormat is a string of characters and formatting tokens. Any characters
+ *    in the string are copied verbatim to lpTimeStr, with tokens being replaced
+ *    by the time values they represent.
+ *  - The following tokens have special meanings in a time format string:
+ *|  Token  Meaning
+ *|  -----  -------
+ *|  h      Hours with no leading zero (12-hour clock)
+ *|  hh     Hours with full two digits (12-hour clock)
+ *|  H      Hours with no leading zero (24-hour clock)
+ *|  HH     Hours with full two digits (24-hour clock)
+ *|  m      Minutes with no leading zero
+ *|  mm     Minutes with full two digits
+ *|  s      Seconds with no leading zero
+ *|  ss     Seconds with full two digits
+ *|  t      Short time marker (e.g. "A" or "P")
+ *|  tt     Long time marker (e.g. "AM", "PM")
+ *  - To output any literal character that could be misidentified as a token,
+ *    enclose it in single quotes.
+ *  - The Ascii version of this function fails if lcid is Unicode only.
+ *
+ * RETURNS
+ *  Success: The number of character written to lpTimeStr, or that would
+ *           have been written, if cchOut is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetTimeFormatA(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
+                          LPCSTR lpFormat, LPSTR lpTimeStr, INT cchOut)
+{
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+        debugstr_a(lpFormat), lpTimeStr, cchOut);
+
+  return NLS_GetDateTimeFormatA(lcid, dwFlags|TIME_TIMEVARSONLY, lpTime,
+                                lpFormat, lpTimeStr, cchOut);
+}
+
+/******************************************************************************
+ *		GetTimeFormatW	[KERNEL32.@]
+ *
+ * See GetTimeFormatA.
+ */
+INT WINAPI GetTimeFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
+                          LPCWSTR lpFormat, LPWSTR lpTimeStr, INT cchOut)
+{
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+        debugstr_w(lpFormat), lpTimeStr, cchOut);
+
+  return NLS_GetDateTimeFormatW(lcid, dwFlags|TIME_TIMEVARSONLY, lpTime,
+                                lpFormat, lpTimeStr, cchOut);
+}
+
+/**************************************************************************
+ *              GetNumberFormatA	(KERNEL32.@)
+ *
+ * Format a number string for a given locale.
+ *
+ * PARAMS
+ *  lcid        [I] Locale to format for
+ *  dwFlags     [I] LOCALE_ flags from "winnls.h"
+ *  lpszValue   [I] String to format
+ *  lpFormat    [I] Formatting overrides
+ *  lpNumberStr [O] Destination for formatted string
+ *  cchOut      [I] Size of lpNumberStr, or 0 to calculate the resulting size
+ *
+ * NOTES
+ *  - lpszValue can contain only '0' - '9', '-' and '.'.
+ *  - If lpFormat is non-NULL, dwFlags must be 0. In this case lpszValue will
+ *    be formatted according to the format details returned by GetLocaleInfoA().
+ *  - This function rounds the number string if the number of decimals exceeds the
+ *    locales normal number of decimal places.
+ *  - If cchOut is 0, this function does not write to lpNumberStr.
+ *  - The Ascii version of this function fails if lcid is Unicode only.
+ *
+ * RETURNS
+ *  Success: The number of character written to lpNumberStr, or that would
+ *           have been written, if cchOut is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetNumberFormatA(LCID lcid, DWORD dwFlags,
+                            LPCSTR lpszValue,  const NUMBERFMTA *lpFormat,
+                            LPSTR lpNumberStr, int cchOut)
+{
+  DWORD cp = CP_ACP;
+  WCHAR szDec[8], szGrp[8], szIn[128], szOut[128];
+  NUMBERFMTW fmt;
+  const NUMBERFMTW *pfmt = NULL;
+  INT iRet;
+
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
+        lpFormat, lpNumberStr, cchOut);
+
+  if (NLS_IsUnicodeOnlyLcid(lcid))
+  {
+GetNumberFormatA_InvalidParameter:
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if (!(dwFlags & LOCALE_USE_CP_ACP))
+  {
+    const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
+    if (!node)
+      goto GetNumberFormatA_InvalidParameter;
+    cp = node->dwCodePage;
+  }
+
+  if (lpFormat)
+  {
+    memcpy(&fmt, lpFormat, sizeof(fmt));
+    pfmt = &fmt;
+    if (lpFormat->lpDecimalSep)
+    {
+      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, sizeof(szDec)/sizeof(WCHAR));
+      fmt.lpDecimalSep = szDec;
+    }
+    if (lpFormat->lpThousandSep)
+    {
+      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, sizeof(szGrp)/sizeof(WCHAR));
+      fmt.lpThousandSep = szGrp;
+    }
+  }
+
+  if (lpszValue)
+    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, sizeof(szIn)/sizeof(WCHAR));
+
+  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
+    cchOut = sizeof(szOut)/sizeof(WCHAR);
+
+  szOut[0] = '\0';
+
+  iRet = GetNumberFormatW(lcid, dwFlags, lpszValue ? szIn : NULL, pfmt,
+                          lpNumberStr ? szOut : NULL, cchOut);
+
+  if (szOut[0] && lpNumberStr)
+    WideCharToMultiByte(cp, 0, szOut, -1, lpNumberStr, cchOut, 0, 0);
+  return iRet;
+}
+
+/* Number parsing state flags */
+#define NF_ISNEGATIVE 0x1  /* '-' found */
+#define NF_ISREAL     0x2  /* '.' found */
+#define NF_DIGITS     0x4  /* '0'-'9' found */
+#define NF_DIGITS_OUT 0x8  /* Digits before the '.' found */
+#define NF_ROUND      0x10 /* Number needs to be rounded */
+
+/* Formatting options for Numbers */
+#define NLS_NEG_PARENS      0 /* "(1.1)" */
+#define NLS_NEG_LEFT        1 /* "-1.1"  */
+#define NLS_NEG_LEFT_SPACE  2 /* "- 1.1" */
+#define NLS_NEG_RIGHT       3 /* "1.1-"  */
+#define NLS_NEG_RIGHT_SPACE 4 /* "1.1 -" */
+
+/**************************************************************************
+ *              GetNumberFormatW	(KERNEL32.@)
+ *
+ * See GetNumberFormatA.
+ */
+INT WINAPI GetNumberFormatW(LCID lcid, DWORD dwFlags,
+                            LPCWSTR lpszValue,  const NUMBERFMTW *lpFormat,
+                            LPWSTR lpNumberStr, int cchOut)
+{
+  WCHAR szBuff[128], *szOut = szBuff + sizeof(szBuff) / sizeof(WCHAR) - 1;
+  WCHAR szNegBuff[8];
+  const WCHAR *lpszNeg = NULL, *lpszNegStart, *szSrc;
+  DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0;
+  INT iRet;
+
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
+        lpFormat, lpNumberStr, cchOut);
+
+  if (!lpszValue || cchOut < 0 || (cchOut > 0 && !lpNumberStr) ||
+      !IsValidLocale(lcid, 0) ||
+      (lpFormat && (dwFlags || !lpFormat->lpDecimalSep || !lpFormat->lpThousandSep)))
+  {
+GetNumberFormatW_Error:
+    SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if (!lpFormat)
+  {
+    const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
+
+    if (!node)
+      goto GetNumberFormatW_Error;
+    lpFormat = &node->fmt;
+    lpszNegStart = lpszNeg = GetNegative(node);
+  }
+  else
+  {
+    GetLocaleInfoW(lcid, LOCALE_SNEGATIVESIGN|(dwFlags & LOCALE_NOUSEROVERRIDE),
+                   szNegBuff, sizeof(szNegBuff)/sizeof(WCHAR));
+    lpszNegStart = lpszNeg = szNegBuff;
+  }
+  lpszNeg = lpszNeg + strlenW(lpszNeg) - 1;
+
+  dwFlags &= (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
+
+  /* Format the number backwards into a temporary buffer */
+
+  szSrc = lpszValue;
+  *szOut-- = '\0';
+
+  /* Check the number for validity */
+  while (*szSrc)
+  {
+    if (*szSrc >= '0' && *szSrc <= '9')
+    {
+      dwState |= NF_DIGITS;
+      if (dwState & NF_ISREAL)
+        dwDecimals++;
+    }
+    else if (*szSrc == '-')
+    {
+      if (dwState)
+        goto GetNumberFormatW_Error; /* '-' not first character */
+      dwState |= NF_ISNEGATIVE;
+    }
+    else if (*szSrc == '.')
+    {
+      if (dwState & NF_ISREAL)
+        goto GetNumberFormatW_Error; /* More than one '.' */
+      dwState |= NF_ISREAL;
+    }
+    else
+      goto GetNumberFormatW_Error; /* Invalid char */
+    szSrc++;
+  }
+  szSrc--; /* Point to last character */
+
+  if (!(dwState & NF_DIGITS))
+    goto GetNumberFormatW_Error; /* No digits */
+
+  /* Add any trailing negative sign */
+  if (dwState & NF_ISNEGATIVE)
+  {
+    switch (lpFormat->NegativeOrder)
+    {
+    case NLS_NEG_PARENS:
+      *szOut-- = ')';
+      break;
+    case NLS_NEG_RIGHT:
+    case NLS_NEG_RIGHT_SPACE:
+      while (lpszNeg >= lpszNegStart)
+        *szOut-- = *lpszNeg--;
+     if (lpFormat->NegativeOrder == NLS_NEG_RIGHT_SPACE)
+       *szOut-- = ' ';
+      break;
+    }
+  }
+
+  /* Copy all digits up to the decimal point */
+  if (!lpFormat->NumDigits)
+  {
+    if (dwState & NF_ISREAL)
+    {
+      while (*szSrc != '.') /* Don't write any decimals or a seperator */
+      {
+        if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
+          dwState |= NF_ROUND;
+        else
+          dwState &= ~NF_ROUND;
+        szSrc--;
+      }
+      szSrc--;
+    }
+  }
+  else
+  {
+    LPWSTR lpszDec = lpFormat->lpDecimalSep + strlenW(lpFormat->lpDecimalSep) - 1;
+
+    if (dwDecimals <= lpFormat->NumDigits)
+    {
+      dwDecimals = lpFormat->NumDigits - dwDecimals;
+      while (dwDecimals--)
+        *szOut-- = '0'; /* Pad to correct number of dp */
+    }
+    else
+    {
+      dwDecimals -= lpFormat->NumDigits;
+      /* Skip excess decimals, and determine if we have to round the number */
+      while (dwDecimals--)
+      {
+        if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
+          dwState |= NF_ROUND;
+        else
+          dwState &= ~NF_ROUND;
+        szSrc--;
+      }
+    }
+
+    if (dwState & NF_ISREAL)
+    {
+      while (*szSrc != '.')
+      {
+        if (dwState & NF_ROUND)
+        {
+          if (*szSrc == '9')
+            *szOut-- = '0'; /* continue rounding */
+          else
+          {
+            dwState &= ~NF_ROUND;
+            *szOut-- = (*szSrc)+1;
+          }
+          szSrc--;
+        }
+        else
+          *szOut-- = *szSrc--; /* Write existing decimals */
+      }
+      szSrc--; /* Skip '.' */
+    }
+
+    while (lpszDec >= lpFormat->lpDecimalSep)
+      *szOut-- = *lpszDec--; /* Write decimal seperator */
+  }
+
+  dwGroupCount = lpFormat->Grouping == 32 ? 3 : lpFormat->Grouping;
+
+  /* Write the remaining whole number digits, including grouping chars */
+  while (szSrc >= lpszValue && *szSrc >= '0' && *szSrc <= '9')
+  {
+    if (dwState & NF_ROUND)
+    {
+      if (*szSrc == '9')
+        *szOut-- = '0'; /* continue rounding */
+      else
+      {
+        dwState &= ~NF_ROUND;
+        *szOut-- = (*szSrc)+1;
+      }
+      szSrc--;
+    }
+    else
+      *szOut-- = *szSrc--;
+
+    dwState |= NF_DIGITS_OUT;
+    dwCurrentGroupCount++;
+    if (szSrc >= lpszValue && dwCurrentGroupCount == dwGroupCount)
+    {
+      LPWSTR lpszGrp = lpFormat->lpThousandSep + strlenW(lpFormat->lpThousandSep) - 1;
+
+      while (lpszGrp >= lpFormat->lpThousandSep)
+        *szOut-- = *lpszGrp--; /* Write grouping char */
+
+      dwCurrentGroupCount = 0;
+      if (lpFormat->Grouping == 32)
+        dwGroupCount = 2; /* Indic grouping: 3 then 2 */
+    }
+  }
+  if (dwState & NF_ROUND)
+  {
+    *szOut-- = '1'; /* e.g. .6 > 1.0 */
+  }
+  else if (!(dwState & NF_DIGITS_OUT) && lpFormat->LeadingZero)
+    *szOut-- = '0'; /* Add leading 0 if we have no digits before the decimal point */
+
+  /* Add any leading negative sign */
+  if (dwState & NF_ISNEGATIVE)
+  {
+    switch (lpFormat->NegativeOrder)
+    {
+    case NLS_NEG_PARENS:
+      *szOut-- = '(';
+      break;
+    case NLS_NEG_LEFT_SPACE:
+      *szOut-- = ' ';
+      /* Fall through */
+    case NLS_NEG_LEFT:
+      while (lpszNeg >= lpszNegStart)
+        *szOut-- = *lpszNeg--;
+      break;
+    }
+  }
+  szOut++;
+
+  iRet = strlenW(szOut) + 1;
+  if (cchOut)
+  {
+    if (iRet <= cchOut)
+      memcpy(lpNumberStr, szOut, iRet * sizeof(WCHAR));
+    else
+    {
+      memcpy(lpNumberStr, szOut, cchOut * sizeof(WCHAR));
+      lpNumberStr[cchOut - 1] = '\0';
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      iRet = 0;
+    }
+  }
+  return iRet;
+}
+
+/**************************************************************************
+ *              GetCurrencyFormatA	(KERNEL32.@)
+ *
+ * Format a currency string for a given locale.
+ *
+ * PARAMS
+ *  lcid          [I] Locale to format for
+ *  dwFlags       [I] LOCALE_ flags from "winnls.h"
+ *  lpszValue     [I] String to format
+ *  lpFormat      [I] Formatting overrides
+ *  lpCurrencyStr [O] Destination for formatted string
+ *  cchOut        [I] Size of lpCurrencyStr, or 0 to calculate the resulting size
+ *
+ * NOTES
+ *  - lpszValue can contain only '0' - '9', '-' and '.'.
+ *  - If lpFormat is non-NULL, dwFlags must be 0. In this case lpszValue will
+ *    be formatted according to the format details returned by GetLocaleInfoA().
+ *  - This function rounds the currency if the number of decimals exceeds the
+ *    locales number of currency decimal places.
+ *  - If cchOut is 0, this function does not write to lpCurrencyStr.
+ *  - The Ascii version of this function fails if lcid is Unicode only.
+ *
+ * RETURNS
+ *  Success: The number of character written to lpNumberStr, or that would
+ *           have been written, if cchOut is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetCurrencyFormatA(LCID lcid, DWORD dwFlags,
+                              LPCSTR lpszValue,  const CURRENCYFMTA *lpFormat,
+                              LPSTR lpCurrencyStr, int cchOut)
+{
+  DWORD cp = CP_ACP;
+  WCHAR szDec[8], szGrp[8], szCy[8], szIn[128], szOut[128];
+  CURRENCYFMTW fmt;
+  const CURRENCYFMTW *pfmt = NULL;
+  INT iRet;
+
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
+        lpFormat, lpCurrencyStr, cchOut);
+
+  if (NLS_IsUnicodeOnlyLcid(lcid))
+  {
+GetCurrencyFormatA_InvalidParameter:
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if (!(dwFlags & LOCALE_USE_CP_ACP))
+  {
+    const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
+    if (!node)
+      goto GetCurrencyFormatA_InvalidParameter;
+    cp = node->dwCodePage;
+  }
+
+  if (lpFormat)
+  {
+    memcpy(&fmt, lpFormat, sizeof(fmt));
+    pfmt = &fmt;
+    if (lpFormat->lpDecimalSep)
+    {
+      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, sizeof(szDec)/sizeof(WCHAR));
+      fmt.lpDecimalSep = szDec;
+    }
+    if (lpFormat->lpThousandSep)
+    {
+      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, sizeof(szGrp)/sizeof(WCHAR));
+      fmt.lpThousandSep = szGrp;
+    }
+    if (lpFormat->lpCurrencySymbol)
+    {
+      MultiByteToWideChar(cp, 0, lpFormat->lpCurrencySymbol, -1, szCy, sizeof(szCy)/sizeof(WCHAR));
+      fmt.lpCurrencySymbol = szCy;
+    }
+  }
+
+  if (lpszValue)
+    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, sizeof(szIn)/sizeof(WCHAR));
+
+  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
+    cchOut = sizeof(szOut)/sizeof(WCHAR);
+
+  szOut[0] = '\0';
+
+  iRet = GetCurrencyFormatW(lcid, dwFlags, lpszValue ? szIn : NULL, pfmt,
+                            lpCurrencyStr ? szOut : NULL, cchOut);
+
+  if (szOut[0] && lpCurrencyStr)
+    WideCharToMultiByte(cp, 0, szOut, -1, lpCurrencyStr, cchOut, 0, 0);
+  return iRet;
+}
+
+/* Formatting states for Currencies. We use flags to avoid code duplication. */
+#define CF_PARENS       0x1  /* Parentheses      */
+#define CF_MINUS_LEFT   0x2  /* '-' to the left  */
+#define CF_MINUS_RIGHT  0x4  /* '-' to the right */
+#define CF_MINUS_BEFORE 0x8  /* '-' before '$'   */
+#define CF_CY_LEFT      0x10 /* '$' to the left  */
+#define CF_CY_RIGHT     0x20 /* '$' to the right */
+#define CF_CY_SPACE     0x40 /* ' ' by '$'       */
+
+/**************************************************************************
+ *              GetCurrencyFormatW	(KERNEL32.@)
+ *
+ * See GetCurrencyFormatA.
+ */
+INT WINAPI GetCurrencyFormatW(LCID lcid, DWORD dwFlags,
+                              LPCWSTR lpszValue,  const CURRENCYFMTW *lpFormat,
+                              LPWSTR lpCurrencyStr, int cchOut)
+{
+  static const BYTE NLS_NegCyFormats[16] =
+  {
+    CF_PARENS|CF_CY_LEFT,                       /* ($1.1) */
+    CF_MINUS_LEFT|CF_MINUS_BEFORE|CF_CY_LEFT,   /* -$1.1  */
+    CF_MINUS_LEFT|CF_CY_LEFT,                   /* $-1.1  */
+    CF_MINUS_RIGHT|CF_CY_LEFT,                  /* $1.1-  */
+    CF_PARENS|CF_CY_RIGHT,                      /* (1.1$) */
+    CF_MINUS_LEFT|CF_CY_RIGHT,                  /* -1.1$  */
+    CF_MINUS_RIGHT|CF_MINUS_BEFORE|CF_CY_RIGHT, /* 1.1-$  */
+    CF_MINUS_RIGHT|CF_CY_RIGHT,                 /* 1.1$-  */
+    CF_MINUS_LEFT|CF_CY_RIGHT|CF_CY_SPACE,      /* -1.1 $ */
+    CF_MINUS_LEFT|CF_MINUS_BEFORE|CF_CY_LEFT|CF_CY_SPACE,   /* -$ 1.1 */
+    CF_MINUS_RIGHT|CF_CY_RIGHT|CF_CY_SPACE,     /* 1.1 $-  */
+    CF_MINUS_RIGHT|CF_CY_LEFT|CF_CY_SPACE,      /* $ 1.1-  */
+    CF_MINUS_LEFT|CF_CY_LEFT|CF_CY_SPACE,       /* $ -1.1  */
+    CF_MINUS_RIGHT|CF_MINUS_BEFORE|CF_CY_RIGHT|CF_CY_SPACE, /* 1.1- $ */
+    CF_PARENS|CF_CY_LEFT|CF_CY_SPACE,           /* ($ 1.1) */
+    CF_PARENS|CF_CY_RIGHT|CF_CY_SPACE,          /* (1.1 $) */
+  };
+  static const BYTE NLS_PosCyFormats[4] =
+  {
+    CF_CY_LEFT,              /* $1.1  */
+    CF_CY_RIGHT,             /* 1.1$  */
+    CF_CY_LEFT|CF_CY_SPACE,  /* $ 1.1 */
+    CF_CY_RIGHT|CF_CY_SPACE, /* 1.1 $ */
+  };
+  WCHAR szBuff[128], *szOut = szBuff + sizeof(szBuff) / sizeof(WCHAR) - 1;
+  WCHAR szNegBuff[8];
+  const WCHAR *lpszNeg = NULL, *lpszNegStart, *szSrc, *lpszCy, *lpszCyStart;
+  DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0, dwFmt;
+  INT iRet;
+
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
+        lpFormat, lpCurrencyStr, cchOut);
+
+  if (!lpszValue || cchOut < 0 || (cchOut > 0 && !lpCurrencyStr) ||
+      !IsValidLocale(lcid, 0) ||
+      (lpFormat && (dwFlags || !lpFormat->lpDecimalSep || !lpFormat->lpThousandSep ||
+      !lpFormat->lpCurrencySymbol || lpFormat->NegativeOrder > 15 ||
+      lpFormat->PositiveOrder > 3)))
+  {
+GetCurrencyFormatW_Error:
+    SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if (!lpFormat)
+  {
+    const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
+
+    if (!node)
+      goto GetCurrencyFormatW_Error;
+    lpFormat = &node->cyfmt;
+    lpszNegStart = lpszNeg = GetNegative(node);
+  }
+  else
+  {
+    GetLocaleInfoW(lcid, LOCALE_SNEGATIVESIGN|(dwFlags & LOCALE_NOUSEROVERRIDE),
+                   szNegBuff, sizeof(szNegBuff)/sizeof(WCHAR));
+    lpszNegStart = lpszNeg = szNegBuff;
+  }
+  dwFlags &= (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
+
+  lpszNeg = lpszNeg + strlenW(lpszNeg) - 1;
+  lpszCyStart = lpFormat->lpCurrencySymbol;
+  lpszCy = lpszCyStart + strlenW(lpszCyStart) - 1;
+
+  /* Format the currency backwards into a temporary buffer */
+
+  szSrc = lpszValue;
+  *szOut-- = '\0';
+
+  /* Check the number for validity */
+  while (*szSrc)
+  {
+    if (*szSrc >= '0' && *szSrc <= '9')
+    {
+      dwState |= NF_DIGITS;
+      if (dwState & NF_ISREAL)
+        dwDecimals++;
+    }
+    else if (*szSrc == '-')
+    {
+      if (dwState)
+        goto GetCurrencyFormatW_Error; /* '-' not first character */
+      dwState |= NF_ISNEGATIVE;
+    }
+    else if (*szSrc == '.')
+    {
+      if (dwState & NF_ISREAL)
+        goto GetCurrencyFormatW_Error; /* More than one '.' */
+      dwState |= NF_ISREAL;
+    }
+    else
+      goto GetCurrencyFormatW_Error; /* Invalid char */
+    szSrc++;
+  }
+  szSrc--; /* Point to last character */
+
+  if (!(dwState & NF_DIGITS))
+    goto GetCurrencyFormatW_Error; /* No digits */
+
+  if (dwState & NF_ISNEGATIVE)
+    dwFmt = NLS_NegCyFormats[lpFormat->NegativeOrder];
+  else
+    dwFmt = NLS_PosCyFormats[lpFormat->PositiveOrder];
+
+  /* Add any trailing negative or currency signs */
+  if (dwFmt & CF_PARENS)
+    *szOut-- = ')';
+
+  while (dwFmt & (CF_MINUS_RIGHT|CF_CY_RIGHT))
+  {
+    switch (dwFmt & (CF_MINUS_RIGHT|CF_MINUS_BEFORE|CF_CY_RIGHT))
+    {
+    case CF_MINUS_RIGHT:
+    case CF_MINUS_RIGHT|CF_CY_RIGHT:
+      while (lpszNeg >= lpszNegStart)
+        *szOut-- = *lpszNeg--;
+      dwFmt &= ~CF_MINUS_RIGHT;
+      break;
+
+    case CF_CY_RIGHT:
+    case CF_MINUS_BEFORE|CF_CY_RIGHT:
+    case CF_MINUS_RIGHT|CF_MINUS_BEFORE|CF_CY_RIGHT:
+      while (lpszCy >= lpszCyStart)
+        *szOut-- = *lpszCy--;
+      if (dwFmt & CF_CY_SPACE)
+        *szOut-- = ' ';
+      dwFmt &= ~(CF_CY_RIGHT|CF_MINUS_BEFORE);
+      break;
+    }
+  }
+
+  /* Copy all digits up to the decimal point */
+  if (!lpFormat->NumDigits)
+  {
+    if (dwState & NF_ISREAL)
+    {
+      while (*szSrc != '.') /* Don't write any decimals or a seperator */
+      {
+        if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
+          dwState |= NF_ROUND;
+        else
+          dwState &= ~NF_ROUND;
+        szSrc--;
+      }
+      szSrc--;
+    }
+  }
+  else
+  {
+    LPWSTR lpszDec = lpFormat->lpDecimalSep + strlenW(lpFormat->lpDecimalSep) - 1;
+
+    if (dwDecimals <= lpFormat->NumDigits)
+    {
+      dwDecimals = lpFormat->NumDigits - dwDecimals;
+      while (dwDecimals--)
+        *szOut-- = '0'; /* Pad to correct number of dp */
+    }
+    else
+    {
+      dwDecimals -= lpFormat->NumDigits;
+      /* Skip excess decimals, and determine if we have to round the number */
+      while (dwDecimals--)
+      {
+        if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
+          dwState |= NF_ROUND;
+        else
+          dwState &= ~NF_ROUND;
+        szSrc--;
+      }
+    }
+
+    if (dwState & NF_ISREAL)
+    {
+      while (*szSrc != '.')
+      {
+        if (dwState & NF_ROUND)
+        {
+          if (*szSrc == '9')
+            *szOut-- = '0'; /* continue rounding */
+          else
+          {
+            dwState &= ~NF_ROUND;
+            *szOut-- = (*szSrc)+1;
+          }
+          szSrc--;
+        }
+        else
+          *szOut-- = *szSrc--; /* Write existing decimals */
+      }
+      szSrc--; /* Skip '.' */
+    }
+    while (lpszDec >= lpFormat->lpDecimalSep)
+      *szOut-- = *lpszDec--; /* Write decimal seperator */
+  }
+
+  dwGroupCount = lpFormat->Grouping;
+
+  /* Write the remaining whole number digits, including grouping chars */
+  while (szSrc >= lpszValue && *szSrc >= '0' && *szSrc <= '9')
+  {
+    if (dwState & NF_ROUND)
+    {
+      if (*szSrc == '9')
+        *szOut-- = '0'; /* continue rounding */
+      else
+      {
+        dwState &= ~NF_ROUND;
+        *szOut-- = (*szSrc)+1;
+      }
+      szSrc--;
+    }
+    else
+      *szOut-- = *szSrc--;
+
+    dwState |= NF_DIGITS_OUT;
+    dwCurrentGroupCount++;
+    if (szSrc >= lpszValue && dwCurrentGroupCount == dwGroupCount)
+    {
+      LPWSTR lpszGrp = lpFormat->lpThousandSep + strlenW(lpFormat->lpThousandSep) - 1;
+
+      while (lpszGrp >= lpFormat->lpThousandSep)
+        *szOut-- = *lpszGrp--; /* Write grouping char */
+
+      dwCurrentGroupCount = 0;
+    }
+  }
+  if (dwState & NF_ROUND)
+    *szOut-- = '1'; /* e.g. .6 > 1.0 */
+  else if (!(dwState & NF_DIGITS_OUT) && lpFormat->LeadingZero)
+    *szOut-- = '0'; /* Add leading 0 if we have no digits before the decimal point */
+
+  /* Add any leading negative or currency sign */
+  while (dwFmt & (CF_MINUS_LEFT|CF_CY_LEFT))
+  {
+    switch (dwFmt & (CF_MINUS_LEFT|CF_MINUS_BEFORE|CF_CY_LEFT))
+    {
+    case CF_MINUS_LEFT:
+    case CF_MINUS_LEFT|CF_CY_LEFT:
+      while (lpszNeg >= lpszNegStart)
+        *szOut-- = *lpszNeg--;
+      dwFmt &= ~CF_MINUS_LEFT;
+      break;
+
+    case CF_CY_LEFT:
+    case CF_CY_LEFT|CF_MINUS_BEFORE:
+    case CF_MINUS_LEFT|CF_MINUS_BEFORE|CF_CY_LEFT:
+      if (dwFmt & CF_CY_SPACE)
+        *szOut-- = ' ';
+      while (lpszCy >= lpszCyStart)
+        *szOut-- = *lpszCy--;
+      dwFmt &= ~(CF_CY_LEFT|CF_MINUS_BEFORE);
+      break;
+    }
+  }
+  if (dwFmt & CF_PARENS)
+    *szOut-- = '(';
+  szOut++;
+
+  iRet = strlenW(szOut) + 1;
+  if (cchOut)
+  {
+    if (iRet <= cchOut)
+      memcpy(lpCurrencyStr, szOut, iRet * sizeof(WCHAR));
+    else
+    {
+      memcpy(lpCurrencyStr, szOut, cchOut * sizeof(WCHAR));
+      lpCurrencyStr[cchOut - 1] = '\0';
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      iRet = 0;
+    }
+  }
+  return iRet;
+}
+
+/* FIXME: Everything below here needs to move somewhere else along with the
+ *        other EnumXXX functions, when a method for storing resources for
+ *        alternate calendars is determined.
+ */
 
 /**************************************************************************
  *              EnumDateFormatsA	(KERNEL32.@)
@@ -894,772 +1932,6 @@ BOOL WINAPI EnumTimeFormatsW( TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, 
   FIXME("(%p,%ld,%ld): stub\n", lpTimeFmtEnumProc, Locale, dwFlags);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
-}
-
-/**************************************************************************
- *           This function is used just locally !
- *  Description: Inverts a string.
- */
-static void invert_string(char* string)
-{
-    int i, j;
-
-    for (i = 0, j = strlen(string) - 1; i < j; i++, j--)
-    {
-        char ch = string[i];
-        string[i] = string[j];
-        string[j] = ch;
-    }
-}
-
-/***************************************************************************************
- *           This function is used just locally !
- *  Description: Test if the given string (psNumber) is valid or not.
- *               The valid characters are the following:
- *               - Characters '0' through '9'.
- *               - One decimal point (dot) if the number is a floating-point value.
- *               - A minus sign in the first character position if the number is
- *                 a negative value.
- *              If the function succeeds, psBefore/psAfter will point to the string
- *              on the right/left of the decimal symbol. pbNegative indicates if the
- *              number is negative.
- */
-static INT get_number_components(char* pInput, char* psBefore, char* psAfter, BOOL* pbNegative)
-{
-    char sNumberSet[] = "0123456789";
-    BOOL bInDecimal = FALSE;
-
-	/* Test if we do have a minus sign */
-	if ( *pInput == '-' )
-	{
-		*pbNegative = TRUE;
-		pInput++; /* Jump to the next character. */
-	}
-
-	while(*pInput != '\0')
-	{
-		/* Do we have a valid numeric character */
-		if ( strchr(sNumberSet, *pInput) != NULL )
-		{
-			if (bInDecimal == TRUE)
-                *psAfter++ = *pInput;
-			else
-                *psBefore++ = *pInput;
-		}
-		else
-		{
-			/* Is this a decimal point (dot) */
-			if ( *pInput == '.' )
-			{
-				/* Is it the first time we find it */
-				if ((bInDecimal == FALSE))
-					bInDecimal = TRUE;
-				else
-					return -1; /* ERROR: Invalid parameter */
-			}
-			else
-			{
-				/* It's neither a numeric character, nor a decimal point.
-				 * Thus, return an error.
-                 */
-				return -1;
-			}
-		}
-        pInput++;
-	}
-
-	/* Add an End of Line character to the output buffers */
-	*psBefore = '\0';
-	*psAfter = '\0';
-
-	return 0;
-}
-
-/**************************************************************************
- *           This function is used just locally !
- *  Description: A number could be formatted using different numbers
- *               of "digits in group" (example: 4;3;2;0).
- *               The first parameter of this function is an array
- *               containing the rule to be used. Its format is the following:
- *               |NDG|DG1|DG2|...|0|
- *               where NDG is the number of used "digits in group" and DG1, DG2,
- *               are the corresponding "digits in group".
- *               Thus, this function returns the grouping value in the array
- *               pointed by the second parameter.
- */
-static INT get_grouping(char* sRule, INT index)
-{
-    char    sData[2], sRuleSize[2];
-    INT     nData, nRuleSize;
-
-    memcpy(sRuleSize, sRule, 1);
-    memcpy(sRuleSize+1, "\0", 1);
-    nRuleSize = atoi(sRuleSize);
-
-    if (index > 0 && index < nRuleSize)
-    {
-        memcpy(sData, sRule+index, 1);
-        memcpy(sData+1, "\0", 1);
-        nData = atoi(sData);
-    }
-
-    else
-    {
-        memcpy(sData, sRule+nRuleSize-1, 1);
-        memcpy(sData+1, "\0", 1);
-        nData = atoi(sData);
-    }
-
-    return nData;
-}
-
-/**************************************************************************
- *              GetNumberFormatA	(KERNEL32.@)
- */
-INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
-			       LPCSTR lpvalue,   const NUMBERFMTA * lpFormat,
-			       LPSTR lpNumberStr, int cchNumber)
-{
-    char   sNumberDigits[3], sDecimalSymbol[5], sDigitsInGroup[11], sDigitGroupSymbol[5], sILZero[2];
-    INT    nNumberDigits, nNumberDecimal, i, j, nCounter, nStep, nRuleIndex, nGrouping, nDigits, retVal, nLZ;
-    char   sNumber[128], sDestination[128], sDigitsAfterDecimal[10], sDigitsBeforeDecimal[128];
-    char   sRule[10], sSemiColumn[]=";", sBuffer[5], sNegNumber[2];
-    char   *pStr = NULL, *pTmpStr = NULL;
-    LCID   systemDefaultLCID;
-    BOOL   bNegative = FALSE;
-    enum   Operations
-    {
-        USE_PARAMETER,
-        USE_LOCALEINFO,
-        USE_SYSTEMDEFAULT,
-        RETURN_ERROR
-    } used_operation;
-
-    strncpy(sNumber, lpvalue, 128);
-    sNumber[127] = '\0';
-
-    /* Make sure we have a valid input string, get the number
-     * of digits before and after the decimal symbol, and check
-     * if this is a negative number.
-     */
-    if (get_number_components(sNumber, sDigitsBeforeDecimal, sDigitsAfterDecimal, &bNegative) != -1)
-    {
-        nNumberDecimal = strlen(sDigitsBeforeDecimal);
-        nDigits = strlen(sDigitsAfterDecimal);
-    }
-    else
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    /* Which source will we use to format the string */
-    used_operation = RETURN_ERROR;
-    if (lpFormat != NULL)
-    {
-        if (dwflags == 0)
-            used_operation = USE_PARAMETER;
-    }
-    else
-    {
-        if (dwflags & LOCALE_NOUSEROVERRIDE)
-            used_operation = USE_SYSTEMDEFAULT;
-        else
-            used_operation = USE_LOCALEINFO;
-    }
-
-    /* Load the fields we need */
-    switch(used_operation)
-    {
-    case USE_LOCALEINFO:
-        GetLocaleInfoA(locale, LOCALE_IDIGITS, sNumberDigits, sizeof(sNumberDigits));
-        GetLocaleInfoA(locale, LOCALE_SDECIMAL, sDecimalSymbol, sizeof(sDecimalSymbol));
-        GetLocaleInfoA(locale, LOCALE_SGROUPING, sDigitsInGroup, sizeof(sDigitsInGroup));
-        GetLocaleInfoA(locale, LOCALE_STHOUSAND, sDigitGroupSymbol, sizeof(sDigitGroupSymbol));
-        GetLocaleInfoA(locale, LOCALE_ILZERO, sILZero, sizeof(sILZero));
-        GetLocaleInfoA(locale, LOCALE_INEGNUMBER, sNegNumber, sizeof(sNegNumber));
-        break;
-    case USE_PARAMETER:
-        sprintf(sNumberDigits, "%d",lpFormat->NumDigits);
-        strcpy(sDecimalSymbol, lpFormat->lpDecimalSep);
-        sprintf(sDigitsInGroup, "%d;0",lpFormat->Grouping);
-        /* Win95-WinME only allow 0-9 for grouping, no matter what MSDN says. */
-        strcpy(sDigitGroupSymbol, lpFormat->lpThousandSep);
-        sprintf(sILZero, "%d",lpFormat->LeadingZero);
-        sprintf(sNegNumber, "%d",lpFormat->NegativeOrder);
-        break;
-    case USE_SYSTEMDEFAULT:
-        systemDefaultLCID = GetSystemDefaultLCID();
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_IDIGITS, sNumberDigits, sizeof(sNumberDigits));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_SDECIMAL, sDecimalSymbol, sizeof(sDecimalSymbol));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_SGROUPING, sDigitsInGroup, sizeof(sDigitsInGroup));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_STHOUSAND, sDigitGroupSymbol, sizeof(sDigitGroupSymbol));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_ILZERO, sILZero, sizeof(sILZero));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGNUMBER, sNegNumber, sizeof(sNegNumber));
-        break;
-    default:
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    nNumberDigits = atoi(sNumberDigits);
-
-    /* Remove the ";" */
-    i=0;
-    j = 1;
-    for (nCounter=0; nCounter<strlen(sDigitsInGroup); nCounter++)
-    {
-        if ( memcmp(sDigitsInGroup + nCounter, sSemiColumn, 1) != 0 )
-        {
-            memcpy(sRule + j, sDigitsInGroup + nCounter, 1);
-            i++;
-            j++;
-        }
-    }
-    sprintf(sBuffer, "%d", i);
-    memcpy(sRule, sBuffer, 1); /* Number of digits in the groups ( used by get_grouping() ) */
-    memcpy(sRule + j, "\0", 1);
-
-    /* First, format the digits before the decimal. */
-    if ((nNumberDecimal>0) && (atoi(sDigitsBeforeDecimal) != 0))
-    {
-        /* Working on an inverted string is easier ! */
-        invert_string(sDigitsBeforeDecimal);
-
-        nStep = nCounter = i = j = 0;
-        nRuleIndex = 1;
-        nGrouping = get_grouping(sRule, nRuleIndex);
-        if (nGrouping == 0) /* If the first grouping is zero */
-            nGrouping = nNumberDecimal; /* Don't do grouping */
-
-        /* Here, we will loop until we reach the end of the string.
-         * An internal counter (j) is used in order to know when to
-         * insert the "digit group symbol".
-         */
-        while (nNumberDecimal > 0)
-        {
-            i = nCounter + nStep;
-            memcpy(sDestination + i, sDigitsBeforeDecimal + nCounter, 1);
-            nCounter++;
-            j++;
-            if (j >= nGrouping)
-            {
-                j = 0;
-                if (nRuleIndex < sRule[0])
-                    nRuleIndex++;
-                nGrouping = get_grouping(sRule, nRuleIndex);
-                memcpy(sDestination + i+1, sDigitGroupSymbol, strlen(sDigitGroupSymbol));
-                nStep+= strlen(sDigitGroupSymbol);
-            }
-
-            nNumberDecimal--;
-        }
-
-        memcpy(sDestination + i+1, "\0", 1);
-        /* Get the string in the right order ! */
-        invert_string(sDestination);
-     }
-     else
-     {
-        nLZ = atoi(sILZero);
-        if (nLZ != 0)
-        {
-            /* Use 0.xxx instead of .xxx */
-            memcpy(sDestination, "0", 1);
-            memcpy(sDestination+1, "\0", 1);
-        }
-        else
-            memcpy(sDestination, "\0", 1);
-
-     }
-
-    /* Second, format the digits after the decimal. */
-    j = 0;
-    nCounter = nNumberDigits;
-    if ( (nDigits>0) && (pStr = strstr (sNumber, ".")) )
-    {
-        i = strlen(sNumber) - strlen(pStr) + 1;
-        strncpy ( sDigitsAfterDecimal, sNumber + i, nNumberDigits);
-        j = strlen(sDigitsAfterDecimal);
-        if (j < nNumberDigits)
-            nCounter = nNumberDigits-j;
-    }
-    for (i=0;i<nCounter;i++)
-         memcpy(sDigitsAfterDecimal+i+j, "0", 1);
-    memcpy(sDigitsAfterDecimal + nNumberDigits, "\0", 1);
-
-    i = strlen(sDestination);
-    j = strlen(sDigitsAfterDecimal);
-    /* Finally, construct the resulting formatted string. */
-
-    for (nCounter=0; nCounter<i; nCounter++)
-        memcpy(sNumber + nCounter, sDestination + nCounter, 1);
-
-    memcpy(sNumber + nCounter, sDecimalSymbol, strlen(sDecimalSymbol));
-
-    for (i=0; i<j; i++)
-        memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), sDigitsAfterDecimal + i, 1);
-    memcpy(sNumber + nCounter+i+ (i ? strlen(sDecimalSymbol) : 0), "\0", 1);
-
-    /* Is it a negative number */
-    if (bNegative == TRUE)
-    {
-        i = atoi(sNegNumber);
-        pStr = sDestination;
-        pTmpStr = sNumber;
-        switch (i)
-        {
-        case 0:
-            *pStr++ = '(';
-            while (*sNumber != '\0')
-                *pStr++ =  *pTmpStr++;
-            *pStr++ = ')';
-            break;
-        case 1:
-            *pStr++ = '-';
-            while (*pTmpStr != '\0')
-                *pStr++ =  *pTmpStr++;
-            break;
-        case 2:
-            *pStr++ = '-';
-            *pStr++ = ' ';
-            while (*pTmpStr != '\0')
-                *pStr++ =  *pTmpStr++;
-            break;
-        case 3:
-            while (*pTmpStr != '\0')
-                *pStr++ =  *pTmpStr++;
-            *pStr++ = '-';
-            break;
-        case 4:
-            while (*pTmpStr != '\0')
-                *pStr++ =  *pTmpStr++;
-            *pStr++ = ' ';
-            *pStr++ = '-';
-            break;
-        default:
-            while (*pTmpStr != '\0')
-                *pStr++ =  *pTmpStr++;
-            break;
-        }
-    }
-    else
-        strcpy(sDestination, sNumber);
-
-    /* If cchNumber is zero, then returns the number of bytes or characters
-     * required to hold the formatted number string
-     */
-    retVal = strlen(sDestination) + 1;
-    if (cchNumber!=0)
-    {
-        memcpy( lpNumberStr, sDestination, min(cchNumber, retVal) );
-        if (cchNumber < retVal) {
-            retVal = 0;
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        }
-    }
-    return retVal;
-}
-
-/**************************************************************************
- *              GetNumberFormatW	(KERNEL32.@)
- */
-INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
-                            LPCWSTR lpvalue,  const NUMBERFMTW * lpFormat,
-                            LPWSTR lpNumberStr, int cchNumber)
-{
- FIXME("%s: stub, no reformatting done\n",debugstr_w(lpvalue));
-
- lstrcpynW( lpNumberStr, lpvalue, cchNumber );
- return cchNumber? strlenW( lpNumberStr ) : 0;
-}
-
-/**************************************************************************
- *              GetCurrencyFormatA	(KERNEL32.@)
- */
-INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
-                              LPCSTR lpvalue,   const CURRENCYFMTA * lpFormat,
-                              LPSTR lpCurrencyStr, int cchCurrency)
-{
-    UINT   nPosOrder, nNegOrder;
-    INT    retVal;
-    char   sDestination[128], sNegOrder[8], sPosOrder[8], sCurrencySymbol[8];
-    char   *pDestination = sDestination;
-    char   sNumberFormated[128];
-    char   *pNumberFormated = sNumberFormated;
-    LCID   systemDefaultLCID;
-    BOOL   bIsPositive = FALSE, bValidFormat = FALSE;
-    enum   Operations
-    {
-        USE_PARAMETER,
-        USE_LOCALEINFO,
-        USE_SYSTEMDEFAULT,
-        RETURN_ERROR
-    } used_operation;
-
-    NUMBERFMTA  numberFmt;
-
-    /* Which source will we use to format the string */
-    used_operation = RETURN_ERROR;
-    if (lpFormat != NULL)
-    {
-        if (dwflags == 0)
-            used_operation = USE_PARAMETER;
-    }
-    else
-    {
-        if (dwflags & LOCALE_NOUSEROVERRIDE)
-            used_operation = USE_SYSTEMDEFAULT;
-        else
-            used_operation = USE_LOCALEINFO;
-    }
-
-    /* Load the fields we need */
-    switch(used_operation)
-    {
-    case USE_LOCALEINFO:
-        /* Specific to CURRENCYFMTA */
-        GetLocaleInfoA(locale, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
-        GetLocaleInfoA(locale, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
-        GetLocaleInfoA(locale, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
-
-        nPosOrder = atoi(sPosOrder);
-        nNegOrder = atoi(sNegOrder);
-        break;
-    case USE_PARAMETER:
-        /* Specific to CURRENCYFMTA */
-        nNegOrder = lpFormat->NegativeOrder;
-        nPosOrder = lpFormat->PositiveOrder;
-        strcpy(sCurrencySymbol, lpFormat->lpCurrencySymbol);
-        break;
-    case USE_SYSTEMDEFAULT:
-        systemDefaultLCID = GetSystemDefaultLCID();
-        /* Specific to CURRENCYFMTA */
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
-        GetLocaleInfoA(systemDefaultLCID, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
-
-        nPosOrder = atoi(sPosOrder);
-        nNegOrder = atoi(sNegOrder);
-        break;
-    default:
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    /* Construct a temporary number format structure */
-    if (lpFormat != NULL)
-    {
-        numberFmt.NumDigits     = lpFormat->NumDigits;
-        numberFmt.LeadingZero   = lpFormat->LeadingZero;
-        numberFmt.Grouping      = lpFormat->Grouping;
-        numberFmt.NegativeOrder = 0;
-        numberFmt.lpDecimalSep = lpFormat->lpDecimalSep;
-        numberFmt.lpThousandSep = lpFormat->lpThousandSep;
-        bValidFormat = TRUE;
-    }
-
-    /* Make a call to GetNumberFormatA() */
-    if (*lpvalue == '-')
-    {
-        bIsPositive = FALSE;
-        retVal = GetNumberFormatA(locale,0,lpvalue+1,(bValidFormat)?&numberFmt:NULL,pNumberFormated,128);
-    }
-    else
-    {
-        bIsPositive = TRUE;
-        retVal = GetNumberFormatA(locale,0,lpvalue,(bValidFormat)?&numberFmt:NULL,pNumberFormated,128);
-    }
-
-    if (retVal == 0)
-        return 0;
-
-    /* construct the formatted string */
-    if (bIsPositive)
-    {
-        switch (nPosOrder)
-        {
-        case 0:   /* Prefix, no separation */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 1:   /* Suffix, no separation */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        case 2:   /* Prefix, 1 char separation */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, " ");
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 3:   /* Suffix, 1 char separation */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, " ");
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        default:
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
-    }
-    else  /* negative number */
-    {
-        switch (nNegOrder)
-        {
-        case 0:   /* format: ($1.1) */
-            strcpy (pDestination, "(");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, ")");
-            break;
-        case 1:   /* format: -$1.1 */
-            strcpy (pDestination, "-");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 2:   /* format: $-1.1 */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, "-");
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 3:   /* format: $1.1- */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, "-");
-            break;
-        case 4:   /* format: (1.1$) */
-            strcpy (pDestination, "(");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, ")");
-            break;
-        case 5:   /* format: -1.1$ */
-            strcpy (pDestination, "-");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        case 6:   /* format: 1.1-$ */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, "-");
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        case 7:   /* format: 1.1$- */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, "-");
-            break;
-        case 8:   /* format: -1.1 $ */
-            strcpy (pDestination, "-");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, " ");
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        case 9:   /* format: -$ 1.1 */
-            strcpy (pDestination, "-");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, " ");
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 10:   /* format: 1.1 $- */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, " ");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, "-");
-            break;
-        case 11:   /* format: $ 1.1- */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, " ");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, "-");
-            break;
-        case 12:   /* format: $ -1.1 */
-            strcpy (pDestination, sCurrencySymbol);
-            strcat (pDestination, " ");
-            strcat (pDestination, "-");
-            strcat (pDestination, pNumberFormated);
-            break;
-        case 13:   /* format: 1.1- $ */
-            strcpy (pDestination, pNumberFormated);
-            strcat (pDestination, "-");
-            strcat (pDestination, " ");
-            strcat (pDestination, sCurrencySymbol);
-            break;
-        case 14:   /* format: ($ 1.1) */
-            strcpy (pDestination, "(");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, " ");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, ")");
-            break;
-        case 15:   /* format: (1.1 $) */
-            strcpy (pDestination, "(");
-            strcat (pDestination, pNumberFormated);
-            strcat (pDestination, " ");
-            strcat (pDestination, sCurrencySymbol);
-            strcat (pDestination, ")");
-            break;
-        default:
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
-    }
-
-    retVal = strlen(pDestination) + 1;
-
-    if (cchCurrency)
-    {
-        memcpy( lpCurrencyStr, pDestination, min(cchCurrency, retVal) );
-        if (cchCurrency < retVal) {
-            retVal = 0;
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        }
-    }
-    return retVal;
-}
-
-/**************************************************************************
- *              GetCurrencyFormatW	(KERNEL32.@)
- */
-INT WINAPI GetCurrencyFormatW(LCID locale, DWORD dwflags,
-                              LPCWSTR lpvalue,   const CURRENCYFMTW * lpFormat,
-                              LPWSTR lpCurrencyStr, int cchCurrency)
-{
-    FIXME("This API function is NOT implemented !\n");
-    return 0;
-}
-
-
-/******************************************************************************
- *		GetTimeFormatA	[KERNEL32.@]
- * Makes an ASCII string of the time
- *
- * Formats date according to format,  or locale default if format is
- * NULL. The format consists of literal characters and fields as follows:
- *
- * h  hours with no leading zero (12-hour)
- * hh hours with full two digits
- * H  hours with no leading zero (24-hour)
- * HH hours with full two digits
- * m  minutes with no leading zero
- * mm minutes with full two digits
- * s  seconds with no leading zero
- * ss seconds with full two digits
- * t  time marker (A or P)
- * tt time marker (AM, PM)
- *
- */
-INT WINAPI
-GetTimeFormatA(LCID locale,        /* [in]  */
-	       DWORD flags,        /* [in]  */
-	       const SYSTEMTIME* xtime, /* [in]  */
-	       LPCSTR format,      /* [in]  */
-	       LPSTR timestr,      /* [out] */
-	       INT timelen         /* [in]  */)
-{
-  INT ret;
-  LPWSTR wformat = NULL;
-  LPWSTR wtime = NULL;
-
-  if (format)
-  {
-    wformat = HeapAlloc(GetProcessHeap(), 0,
-                        (strlen(format) + 1) * sizeof(wchar_t));
-    MultiByteToWideChar(CP_ACP, 0, format, -1, wformat, strlen(format) + 1);
-  }
-
-  if (timestr && timelen)
-  {
-    wtime = HeapAlloc(GetProcessHeap(), 0,
-                      (timelen + 1) * sizeof(wchar_t));
-  }
-
-  ret = GetTimeFormatW(locale, flags, xtime, wformat, wtime, timelen);
-
-  if (wtime)
-  {
-    WideCharToMultiByte(CP_ACP, 0, wtime, ret, timestr, timelen, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, wtime);
-  }
-
-  if (wformat)
-  {
-    HeapFree(GetProcessHeap(), 0, wformat);
-  }
-
-  return ret;
-}
-
-
-/******************************************************************************
- *		GetTimeFormatW	[KERNEL32.@]
- * Makes a Unicode string of the time
- *
- * NOTE: See get_date_time_formatW() for further documentation
- */
-INT WINAPI
-GetTimeFormatW(LCID locale,        /* [in]  */
-	       DWORD flags,        /* [in]  */
-	       const SYSTEMTIME* xtime, /* [in]  */
-	       LPCWSTR format,     /* [in]  */
-	       LPWSTR timestr,     /* [out] */
-	       INT timelen         /* [in]  */)
-{	WCHAR format_buf[40];
-	LPCWSTR thisformat;
-	SYSTEMTIME t;
-	const SYSTEMTIME* thistime;
-	DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
-	INT ret;
-
-	TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,
-	xtime,debugstr_w(format),timestr,timelen);
-
-        if (!locale) locale = LOCALE_SYSTEM_DEFAULT;
-        locale = ConvertDefaultLocale( locale );
-
-	/* if the user didn't specify a format we use the default */
-        /* format for this locale */
-	if (format == NULL)
-	{
-	  if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
-	  {
-            locale = GetSystemDefaultLCID();
-	  }
-	  GetLocaleInfoW(locale, thisflags, format_buf, 40);
-	  thisformat = format_buf;
-	}
-	else
-	{
-	  /* if non-null format and LOCALE_NOUSEROVERRIDE then fail */
-	  /* NOTE: this could be either invalid flags or invalid parameter */
-	  /*  windows sets it to invalid flags */
-	  if (flags & LOCALE_NOUSEROVERRIDE)
-          {
-	    SetLastError(ERROR_INVALID_FLAGS);
-	    return 0;
-          }
-
-          thisformat = format;
-	}
-
-	if (xtime == NULL) /* NULL means use the current local time */
-	{ GetLocalTime(&t);
-	  thistime = &t;
-	}
-	else
-	{
-          /* check time values */
-          if((xtime->wHour > 24) || (xtime->wMinute >= 60) || (xtime->wSecond >= 60))
-          {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-          }
-
-          thistime = xtime;
-	}
-
-	ret = get_date_time_formatW(locale, thisflags, flags, thistime, thisformat,
-                                    timestr, timelen, 0);
-	return ret;
 }
 
 /******************************************************************************
