@@ -193,6 +193,8 @@ static void test__lcreat( void )
     HFILE filehandle;
     char buffer[10000];
     WIN32_FIND_DATAA search_results;
+    char slashname[] = "testfi/";
+    HANDLE find;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -257,6 +259,48 @@ static void test__lcreat( void )
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file" );
 
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
+
+    filehandle=_lcreat (slashname, 0); /* illegal name */
+    if (HFILE_ERROR==filehandle)
+      ok (0, "couldn't create file \"%s\" (err=%ld)", slashname,
+          GetLastError ());
+    else {
+      _lclose(filehandle);
+      find=FindFirstFileA (slashname, &search_results);
+      if (INVALID_HANDLE_VALUE==find)
+        ok (0, "file \"%s\" not found", slashname);
+      else {
+        ok (0!=FindClose (find), "FindClose complains (%ld)", GetLastError ());
+        slashname[strlen(slashname)-1]=0;
+        ok (!strcmp (slashname, search_results.cFileName),
+            "found unexpected name \"%s\"", search_results.cFileName);
+        ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
+            "attributes of file \"%s\" are 0x%04lx", search_results.cFileName,
+            search_results.dwFileAttributes);
+      }
+      ok (0!=DeleteFileA (slashname), "Can't delete \"%s\" (%ld)", slashname,
+          GetLastError ());
+    }
+
+    filehandle=_lcreat (filename, 8); /* illegal attribute */
+    if (HFILE_ERROR==filehandle)
+      ok (0, "couldn't create volume label \"%s\"", filename);
+    else {
+      _lclose(filehandle);
+      find=FindFirstFileA (filename, &search_results);
+      if (INVALID_HANDLE_VALUE==find)
+        ok (0, "file \"%s\" not found", filename);
+      else {
+        ok (0!=FindClose (find), "FindClose complains (%ld)", GetLastError ());
+        ok (!strcmp (filename, search_results.cFileName),
+            "found unexpected name \"%s\"", search_results.cFileName);
+        ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
+            "attributes of file \"%s\" are 0x%04lx", search_results.cFileName,
+            search_results.dwFileAttributes);
+      }
+      ok (0!=DeleteFileA (filename), "Can't delete \"%s\" (%ld)", slashname,
+          GetLastError ());
+    }
 }
 
 
