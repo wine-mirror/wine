@@ -140,20 +140,111 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
  *
  */
 BOOL32 WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
-{	FIXME(pidl,"pidl1=%p pidl2=%p stub\n",pidl1, pidl2);
+{	LPPIDLDATA ppidldata;
+	CHAR * szData1;
+	CHAR * szData2;
+
+	LPITEMIDLIST pidltemp1 = pidl1;
+	LPITEMIDLIST pidltemp2 = pidl2;
+
+	TRACE(pidl,"pidl1=%p pidl2=%p\n",pidl1, pidl2);
+
 	pdump (pidl1);
 	pdump (pidl2);
+
+	if ( (!pidl1) || (!pidl2) )
+	{ return FALSE;
+	}
+
+	if (pidltemp1->mkid.cb && pidltemp2->mkid.cb)
+	{ do
+	  { ppidldata = _ILGetDataPointer(pidltemp1);
+	    szData1 = _ILGetTextPointer(ppidldata->type, ppidldata);
+	    
+	    ppidldata = _ILGetDataPointer(pidltemp2);    
+	    szData2 = _ILGetTextPointer(ppidldata->type, ppidldata);
+
+	    if (strcmp ( szData1, szData2 )!=0 )
+	      return FALSE;
+
+	    pidltemp1 = ILGetNext(pidltemp1);
+	    pidltemp2 = ILGetNext(pidltemp2);
+
+	  } while (pidltemp1->mkid.cb && pidltemp2->mkid.cb);
+	}	
+	if (!pidltemp1->mkid.cb && !pidltemp2->mkid.cb)
+	{ TRACE(shell, "--- equal\n");
+	  return TRUE;
+	}
+
 	return FALSE;
 }
 /*************************************************************************
- * ILFindChild [SHELL32.24]
+ * ILIsParent [SHELL32.23]
  *
  */
-DWORD WINAPI ILFindChild(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
-{	FIXME(pidl,"%p %p stub\n",pidl1,pidl2);
+DWORD WINAPI ILIsParent( DWORD x, DWORD y, DWORD z)
+{	FIXME(pidl,"0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
+	return 0;
+}
+
+/*************************************************************************
+ * ILFindChild [SHELL32.24]
+ *
+ * NOTES
+ *  Compares elements from pidl1 and pidl2.
+ *  When at least the first element is equal, it gives a pointer
+ *  to the first different element of pidl 2 back.
+ *  Returns 0 if pidl 2 is shorter.
+ */
+LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
+{	LPPIDLDATA ppidldata;
+	CHAR * szData1;
+	CHAR * szData2;
+
+	LPITEMIDLIST pidltemp1 = pidl1;
+	LPITEMIDLIST pidltemp2 = pidl2;
+	LPITEMIDLIST ret=NULL;
+
+	TRACE(pidl,"pidl1=%p pidl2=%p\n",pidl1, pidl2);
+
 	pdump (pidl1);
 	pdump (pidl2);
-	return 0;
+
+	if ( !pidl1 || !pidl1->mkid.cb)		/* pidl 1 is desktop (root) */
+	{ TRACE(shell, "--- %p\n", pidl2);
+	  return pidl2;
+	}
+
+	if (pidltemp1->mkid.cb && pidltemp2->mkid.cb)
+	{ do
+	  { ppidldata = _ILGetDataPointer(pidltemp1);
+	    szData1 = _ILGetTextPointer(ppidldata->type, ppidldata);
+	    
+	    ppidldata = _ILGetDataPointer(pidltemp2);    
+	    szData2 = _ILGetTextPointer(ppidldata->type, ppidldata);
+
+	    pidltemp2 = ILGetNext(pidltemp2);	/* points behind the pidl2 */
+
+	    if (strcmp(szData1,szData2) == 0)
+	    { ret = pidltemp2;	/* found equal element */
+	    }
+	    else
+	    { if (ret)		/* different element after equal -> break */
+	      { ret = NULL;
+	        break;
+	      }
+	    }
+	    pidltemp1 = ILGetNext(pidltemp1);
+	  } while (pidltemp1->mkid.cb && pidltemp2->mkid.cb);
+	}	
+
+	if (!pidltemp2->mkid.cb)
+	{ return NULL; /* complete equal or pidl 2 is shorter */
+	}
+
+	TRACE(shell, "--- %p\n", ret);
+	return ret; /* pidl 1 is shorter */
 }
 
 /*************************************************************************
@@ -213,12 +304,11 @@ LPITEMIDLIST WINAPI SHGetRealIDL(DWORD x, DWORD y, DWORD z)
  *  SHLogILFromFSIL [SHELL32.95]
  *
  * NOTES
- *  might be the prepending of MyComputer to a filesystem pidl (?)
  */
 LPITEMIDLIST WINAPI SHLogILFromFSIL(LPITEMIDLIST pidl)
 {	FIXME(pidl,"(pidl=%p)\n",pidl);
 	pdump(pidl);
-	return ILClone(pidl);
+	return 0;
 }
 
 /*************************************************************************
@@ -262,7 +352,7 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {	LPITEMIDLIST nextpidl;
 
-	TRACE(pidl,"(pidl=%p)\n",pidl);
+	/* TRACE(pidl,"(pidl=%p)\n",pidl);*/
 	if(pidl)
 	{ nextpidl = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
 	  return nextpidl;
@@ -773,7 +863,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
 /**************************************************************************
  *  _ILGetData(PIDLTYPE, LPCITEMIDLIST, LPVOID, UINT16)
  */
-DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT16 uOutSize)
+DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT32 uOutSize)
 {	LPPIDLDATA  pData;
 	DWORD       dwReturn=0; 
 	LPSTR	    pszSrc;
@@ -852,7 +942,44 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	}
 	return NULL;
 }
+BOOL32 WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+{	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+	FILETIME ft;
+	SYSTEMTIME time;
 
+	switch (pdata->type)
+	{ case PT_DRIVE:
+	  case PT_MYCOMP:
+	    return FALSE;
+	  case PT_FOLDER:
+	    DosDateTimeToFileTime(pdata->u.folder.uFileDate, pdata->u.folder.uFileTime, &ft);
+	    break;	    
+	  case PT_VALUE:
+	    DosDateTimeToFileTime(pdata->u.file.uFileDate, pdata->u.file.uFileTime, &ft);
+	    break;
+	  default:
+	    return FALSE;
+	}
+	FileTimeToSystemTime (&ft, &time);
+	return GetDateFormat32A(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
+}
+BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+{	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+	char stemp[20]; /* for filesize */
+	
+	switch (pdata->type)
+	{ case PT_DRIVE:
+	  case PT_MYCOMP:
+	  case PT_FOLDER:
+	    return FALSE;
+	  case PT_VALUE:
+	    break;
+	  default:
+	    return FALSE;
+	}
+	sprintf(stemp,"%lu", pdata->u.file.dwFileSize);
+	return GetNumberFormat32A(LOCALE_USER_DEFAULT, 0, stemp, NULL, pOut, uOutSize);
+}
 /**************************************************************************
  *  IDLList "Item ID List List"
  * 
