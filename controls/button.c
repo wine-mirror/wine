@@ -126,6 +126,7 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
         break;
 
     case WM_LBUTTONDOWN:
+    case WM_LBUTTONDBLCLK:
         SendMessage32A( hWnd, BM_SETSTATE32, TRUE, 0 );
         SetFocus32( hWnd );
         SetCapture32( hWnd );
