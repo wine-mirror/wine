@@ -24,7 +24,18 @@ int persistent_server = 0;
 unsigned int server_start_ticks = 0;
 
 /* parse-line args */
-/* FIXME: should probably use getopt, and add a help option */
+/* FIXME: should probably use getopt, and add a (more complete?) help option */
+
+static void usage(const char *exeName)
+{
+    fprintf(stderr, "\nusage: %s [options]\n\n", exeName);
+    fprintf(stderr, "options:\n");
+    fprintf(stderr, "   -d<n>  set debug level to <n>\n");
+    fprintf(stderr, "   -p     make server persistent\n");
+    fprintf(stderr, "   -h     display this help message\n");
+    fprintf(stderr, "\n");
+}
+
 static void parse_args( int argc, char *argv[] )
 {
     int i;
@@ -38,17 +49,23 @@ static void parse_args( int argc, char *argv[] )
                 if (isdigit(argv[i][2])) debug_level = atoi( argv[i] + 2 );
                 else debug_level++;
                 break;
+            case 'h':
+                usage( argv[0] );
+                exit(0);
+                break;
             case 'p':
                 persistent_server = 1;
                 break;
             default:
                 fprintf( stderr, "Unknown option '%s'\n", argv[i] );
+                usage( argv[0] );
                 exit(1);
             }
         }
         else
         {
             fprintf( stderr, "Unknown argument '%s'. Your version of wine may be too old.\n", argv[i] );
+            usage(argv[0]);
             exit(1);
         }
     }
