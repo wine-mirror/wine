@@ -242,10 +242,13 @@ AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
    [#include <sys/socket.h>
     #include <netipx/ipx.h>],
    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-   [AC_DEFINE(HAVE_IPX_GNU)
-    ac_cv_c_ipx_gnu="yes"],
+   [ac_cv_c_ipx_gnu="yes"],
    [ac_cv_c_ipx_gnu="no"])
  )
+if test "$ac_cv_c_ipx_gnu" = "yes"
+then
+    AC_DEFINE(HAVE_IPX_GNU)
+fi
 
 if test "$ac_cv_c_ipx_gnu" = "no"
 then
@@ -255,10 +258,13 @@ then
      #include <asm/types.h>
      #include <linux/ipx.h>],
     [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-    [AC_DEFINE(HAVE_IPX_LINUX)
-     ac_cv_c_ipx_linux="yes"],
+    [ac_cv_c_ipx_linux="yes"],
     [ac_cv_c_ipx_linux="no"])
   )
+  if test "$ac_cv_c_ipx_linux" = "yes"
+  then
+      AC_DEFINE(HAVE_IPX_LINUX)
+  fi
 fi
 
 dnl **** Check for Open Sound System ****
