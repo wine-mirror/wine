@@ -66,7 +66,7 @@ DWORD WINAPI RasGetEntryDialParamsA( LPCSTR lpszPhoneBook,
  */
 DWORD WINAPI RasHangUpA( HRASCONN hrasconn)
 {
-	FIXME("(%x),stub!\n",hrasconn);
+	FIXME("(%p),stub!\n",hrasconn);
 	return 0;
 }
 

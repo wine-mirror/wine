@@ -33,7 +33,7 @@ HBRUSH PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
-    TRACE("hbrush = %08x\n", hbrush);
+    TRACE("hbrush = %p\n", hbrush);
 
     switch(logbrush.lbStyle) {
 
@@ -207,11 +207,11 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
         {
 	    BITMAP bm;
 	    BYTE *bits;
-	    GetObjectA(logbrush.lbHatch, sizeof(BITMAP), &bm);
+	    GetObjectA( (HBITMAP)logbrush.lbHatch, sizeof(BITMAP), &bm);
 	    TRACE("BS_PATTERN %dx%d %d bpp\n", bm.bmWidth, bm.bmHeight,
 		  bm.bmBitsPixel);
 	    bits = HeapAlloc(PSDRV_Heap, 0, bm.bmWidthBytes * bm.bmHeight);
-	    GetBitmapBits(logbrush.lbHatch, bm.bmWidthBytes * bm.bmHeight, bits);
+	    GetBitmapBits( (HBITMAP)logbrush.lbHatch, bm.bmWidthBytes * bm.bmHeight, bits);
 
 	    if(physDev->pi->ppd->LanguageLevel > 1) {
 	        PSDRV_WriteGSave(physDev);

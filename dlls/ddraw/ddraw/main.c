@@ -906,7 +906,7 @@ Main_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface)
 static void DDRAW_SubclassWindow(IDirectDrawImpl* This)
 {
     /* Well we don't actually subclass the window yet. */
-    SetPropA(This->window, ddProp, (LONG)This);
+    SetPropA(This->window, ddProp, This);
 }
 
 static void DDRAW_UnsubclassWindow(IDirectDrawImpl* This)
@@ -942,7 +942,7 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
     This->window = hwnd;
     This->cooperative_level = cooplevel;
 
-    This->local.hWnd = hwnd;
+    This->local.hWnd = (ULONG_PTR)hwnd;
     This->local.dwLocalFlags |= DDRAWILCL_SETCOOPCALLED;
     /* not entirely sure about these */
     if (cooplevel & DDSCL_EXCLUSIVE)     This->local.dwLocalFlags |= DDRAWILCL_HASEXCLUSIVEMODE;
@@ -1039,7 +1039,7 @@ Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
 				     HANDLE h)
 {
     ICOM_THIS(IDirectDrawImpl,iface);
-    FIXME("(%p)->(flags=0x%08lx,handle=0x%08x)\n",This,dwFlags,h);
+    FIXME("(%p)->(flags=0x%08lx,handle=%p)\n",This,dwFlags,h);
     return DD_OK;
 }
 

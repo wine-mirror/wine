@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 BOOL WINAPI
 TWAIN_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {

@@ -483,7 +483,7 @@ static DWORD CALLBACK User_update_thread(LPVOID arg)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)arg;
     USER_PRIV_VAR(priv, This);
-    volatile DWORD *pActive = (volatile DWORD *)&priv->user.update_event;
+    volatile HANDLE *pActive = (volatile HANDLE *)&priv->user.update_event;
     HANDLE event = *pActive;
 
 #ifdef OWN_WINDOW

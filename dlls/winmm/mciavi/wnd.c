@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
 static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hWnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hWnd, uMsg, wParam, lParam);
 
     if (!(WINE_MCIAVI*)GetWindowLongA(hWnd, 0) && uMsg != WM_CREATE)
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);

@@ -744,7 +744,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 	    wmm->hFile = 0;
 	}
     }
-    TRACE("hFile=%u\n", wmm->hFile);
+    TRACE("hFile=%p\n", wmm->hFile);
 
     /* FIXME: should I get a strdup() of it instead? */
     wmm->lpstrElementName = HeapAlloc( GetProcessHeap(), 0, strlen(lpParms->lpstrElementName)+1 );

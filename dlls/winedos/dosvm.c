@@ -417,8 +417,8 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
                           DOS_SPC *spc = (DOS_SPC *)msg.lParam;
                           TRACE_(int)("calling %p with arg %08lx\n", spc->proc, spc->arg);
                           (spc->proc)(spc->arg);
-                          TRACE_(int)("done, signalling event %d\n", msg.wParam);
-                          SetEvent(msg.wParam);
+                          TRACE_(int)("done, signalling event %x\n", msg.wParam);
+                          SetEvent( (HANDLE)msg.wParam );
                       }
                       break;
                   }
@@ -692,7 +692,7 @@ void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
  */
 BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
-    TRACE_(module)("(0x%08x,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE_(module)("(%p,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {

@@ -174,7 +174,7 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
 	ERR("unexpected error creating DirectDrawSurface DIB section\n");
 
     /* this seems like a good place to put the handle for HAL driver use */
-    This->global_more.hKernelSurface = priv->dib.DIBsection;
+    This->global_more.hKernelSurface = (ULONG_PTR)priv->dib.DIBsection;
 
     return S_OK;
 }

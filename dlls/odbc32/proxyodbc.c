@@ -172,7 +172,7 @@ BOOL WINAPI
 MAIN_OdbcInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     int i;
-    TRACE("Initializing or Finalizing proxy ODBC: %x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("Initializing or Finalizing proxy ODBC: %p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {

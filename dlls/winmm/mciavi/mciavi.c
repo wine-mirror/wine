@@ -936,7 +936,7 @@ static	DWORD	MCIAVI_mciRestore(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PAR
 LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 				  DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",
+    TRACE("(%08lX, %p, %08lX, %08lX, %08lX)\n",
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {

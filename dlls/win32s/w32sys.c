@@ -102,7 +102,7 @@ BOOL16 WINAPI IsPeFormat16( LPSTR fn,      /* [in] filename to executeable */
     HFILE hf;
 
     if (fn) hf = OpenFile(fn,&ofs,OF_READ);
-    else hf = DosFileHandleToWin32Handle( hf16 );
+    else hf = (HFILE)DosFileHandleToWin32Handle( hf16 );
     if (hf == HFILE_ERROR) return FALSE;
     _llseek(hf,0,SEEK_SET);
     if (sizeof(mzh)!=_lread(hf,&mzh,sizeof(mzh))) goto done;

@@ -584,7 +584,7 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
     unsigned	char		buffer[256];
     int				len, idx;
 
-    TRACE("(%04X, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
+    TRACE("(%p, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
 
     len = read(midiSeqFD, buffer, sizeof(buffer));
 

@@ -133,11 +133,11 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   XVisualInfo template;
   Display *display = get_display( hdc );
 
-  TRACE("(%08x)\n", hdc);
+  TRACE("(%p)\n", hdc);
 
   /* First, get the visual in use by the X11DRV */
   if (!display) return 0;
-  template.visualid = GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+  template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
   vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
 
   if (vis == NULL) {
@@ -163,7 +163,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
  */
 HGLRC WINAPI wglCreateLayerContext(HDC hdc,
 				   int iLayerPlane) {
-  FIXME("(%08x,%d): stub !\n", hdc, iLayerPlane);
+  FIXME("(%p,%d): stub !\n", hdc, iLayerPlane);
 
   return NULL;
 }
@@ -216,7 +216,7 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
 				  int iLayerPlane,
 				  UINT nBytes,
 				  LPLAYERPLANEDESCRIPTOR plpd) {
-  FIXME("(%08x,%d,%d,%d,%p)\n", hdc, iPixelFormat, iLayerPlane, nBytes, plpd);
+  FIXME("(%p,%d,%d,%d,%p)\n", hdc, iPixelFormat, iLayerPlane, nBytes, plpd);
 
   return FALSE;
 }
@@ -255,7 +255,7 @@ HDC WINAPI wglGetCurrentDC(void) {
   LEAVE_GL();
 
   if (ret) {
-    TRACE(" returning %08x (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
+    TRACE(" returning %p (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
     return ret->hdc;
   } else {
     TRACE(" no Wine context found for GLX context %p\n", gl_ctx);
@@ -357,7 +357,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 			   HGLRC hglrc) {
   BOOL ret;
 
-  TRACE("(%08x,%p)\n", hdc, hglrc);
+  TRACE("(%p,%p)\n", hdc, hglrc);
 
   ENTER_GL();
   if (hglrc == NULL) {
@@ -437,7 +437,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
  */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 				UINT fuPlanes) {
-  TRACE("(%08x, %08x)\n", hdc, fuPlanes);
+  TRACE("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
     if (!SwapBuffers(hdc)) return FALSE;
@@ -461,7 +461,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 {
   Font fid = get_font( hdc );
 
-  TRACE("(%08x, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+  TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
 
   if (fid == 0) {
     /* We are running using client-side rendering fonts... */

@@ -107,7 +107,7 @@ static LOGFONTA DefaultLogFont = {
  */
 BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("(0x%4x, 0x%08lx, %p)\n", hinst, reason, reserved);
+    TRACE("(%p, 0x%08lx, %p)\n", hinst, reason, reserved);
 
     switch(reason) {
 
@@ -425,7 +425,7 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }

@@ -76,7 +76,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
  */
 DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, PHKEY retkey )
 {
-    FIXME("(%x,%s,%p), semi-stub.\n",hkey,debugstr_a(lpszSubKey),retkey);
+    FIXME("(%p,%s,%p), semi-stub.\n",hkey,debugstr_a(lpszSubKey),retkey);
     return RegOpenKeyA( hkey, lpszSubKey, retkey );
 }
 
@@ -87,7 +87,7 @@ DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
                                 LPBYTE lpbData, LPDWORD lpcbData )
 {
-    FIXME("(%x,%s,%p,%p,%p,%ld), semi-stub.\n",hkey,debugstr_a(lpszValueName),
+    FIXME("(%p,%s,%p,%p,%p,%ld), semi-stub.\n",hkey,debugstr_a(lpszValueName),
           lpdwReserved,lpdwType,lpbData,lpcbData?*lpcbData:0);
     return RegQueryValueExA( hkey, lpszValueName, lpdwReserved, lpdwType,
                                lpbData, lpcbData );

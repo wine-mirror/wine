@@ -152,7 +152,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
   assert(hmmio != (HMMIO)NULL);
   assert(lpck  != NULL);
 
-  TRACE("({%p,%lu},%d,%p,%p,0x%X)\n", extra->lp, extra->cb, hmmio, lpck,
+  TRACE("({%p,%lu},%p,%p,%p,0x%X)\n", extra->lp, extra->cb, hmmio, lpck,
 	lpckParent, flags);
 
   /* what chunk id and form/list type shoiuld we search? */

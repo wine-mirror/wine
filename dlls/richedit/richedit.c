@@ -47,7 +47,7 @@ HANDLE RICHED32_hHeap = (HANDLE)NULL;
 
 #define DPRINTF_EDIT_MSG32(str) \
         TRACE(\
-                     "32 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n"\
+                     "32 bit : " str ": hwnd=%p, wParam=%08x, lParam=%08x\n"\
                      , \
                      hwnd, (UINT)wParam, (UINT)lParam)
 
@@ -112,9 +112,9 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     int rtfBufferSize;
 
     CHARRANGE *cr;
-    TRACE("previous hwndEdit: 0x%x hwndParent 0x%x\n",hwndEdit,hwndParent);
+    TRACE("previous hwndEdit: %p hwndParent %p\n",hwndEdit,hwndParent);
     hwndEdit = GetWindow(hwnd,GW_CHILD);
-    TRACE("uMsg: 0x%x hwnd: 0x%x hwndEdit: 0x%x\n",uMsg,hwnd,hwndEdit);
+    TRACE("uMsg: 0x%x hwnd: %p hwndEdit: %p\n",uMsg,hwnd,hwndEdit);
 
     switch (uMsg)
     {
@@ -131,12 +131,12 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             newstyle &= ~ES_AUTOHSCROLL;
             newstyle &= ~ES_AUTOVSCROLL;
 
-    TRACE("previous hwndEdit: 0x%d\n",hwndEdit);
+    TRACE("previous hwndEdit: %p\n",hwndEdit);
             hwndEdit = CreateWindowA ("edit", ((LPCREATESTRUCTA) lParam)->lpszName,
                                    style, 0, 0, 0, 0,
                                    hwnd, (HMENU) ID_EDIT,
                                    ((LPCREATESTRUCTA) lParam)->hInstance, NULL) ;
-    TRACE("hwndEdit: 0x%x hwnd: 0x%x\n",hwndEdit,hwnd);
+    TRACE("hwndEdit: %p hwnd: %p\n",hwndEdit,hwnd);
 
 	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
             return 0 ;
@@ -715,7 +715,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
     }
 
-    FIXME("Unknown message 0x%x Passed to default hwnd=%08x, wParam=%08x, lParam=%08x\n",
+    FIXME("Unknown message 0x%x Passed to default hwnd=%p, wParam=%08x, lParam=%08x\n",
            uMsg, hwnd, (UINT)wParam, (UINT)lParam);
 
    return DefWindowProcA( hwnd,uMsg,wParam,lParam);

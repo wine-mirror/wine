@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winspool.h"
@@ -267,7 +268,7 @@ INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 	physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(doc->lpszOutput)+1 );
 	strcpy( physDev->job.output, doc->lpszOutput );
     }
-    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName, physDev->hdc );
+    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName, HDC_16(physDev->hdc) );
     if(!physDev->job.hJob) {
         WARN("OpenJob failed\n");
 	return 0;

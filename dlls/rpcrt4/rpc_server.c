@@ -249,7 +249,7 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       if (bind) RPCRT4_SpawnBinding(&cbind, bind);
       LeaveCriticalSection(&server_cs);
       if (!bind) {
-        ERR("failed to locate binding for handle %d\n", b_handle);
+        ERR("failed to locate binding for handle %p\n", b_handle);
       }
       if (cbind) RPCRT4_new_client(cbind);
     }

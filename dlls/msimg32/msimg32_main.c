@@ -43,7 +43,7 @@ BOOL WINAPI AlphaBlend( HDC hdcDest, int xDest, int yDest, int widthDest, int he
                         HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
                         BLENDFUNCTION func )
 {
-    FIXME("stub: AlphaBlend from %x to %x\n", hdcSrc, hdcDest );
+    FIXME("stub: AlphaBlend from %p to %p\n", hdcSrc, hdcDest );
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -56,7 +56,7 @@ BOOL WINAPI TransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest, in
                             HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
                             UINT crTransparent )
 {
-    FIXME("stub: TransparentBlt from %x to %x\n", hdcSrc, hdcDest );
+    FIXME("stub: TransparentBlt from %p to %p\n", hdcSrc, hdcDest );
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

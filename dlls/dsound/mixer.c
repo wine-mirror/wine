@@ -87,7 +87,7 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 	for (i = 0; i < dsb->nrofnotifies ; i++) {
 		event = dsb->notifies + i;
 		offset = event->dwOffset;
-		TRACE("checking %d, position %ld, event = %d\n",
+		TRACE("checking %d, position %ld, event = %p\n",
 			i, offset, event->hEventNotify);
 		/* DSBPN_OFFSETSTOP has to be the last element. So this is */
 		/* OK. [Inside DirectX, p274] */
@@ -97,7 +97,7 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 		if (offset == DSBPN_OFFSETSTOP) {
 			if (dsb->state == STATE_STOPPED) {
 				SetEvent(event->hEventNotify);
-				TRACE("signalled event %d (%d)\n", event->hEventNotify, i);
+				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
 				return;
 			} else
 				return;
@@ -105,12 +105,12 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 		if ((dsb->playpos + len) >= dsb->buflen) {
 			if ((offset < ((dsb->playpos + len) % dsb->buflen)) ||
 			    (offset >= dsb->playpos)) {
-				TRACE("signalled event %d (%d)\n", event->hEventNotify, i);
+				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
 				SetEvent(event->hEventNotify);
 			}
 		} else {
 			if ((offset >= dsb->playpos) && (offset < (dsb->playpos + len))) {
-				TRACE("signalled event %d (%d)\n", event->hEventNotify, i);
+				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
 				SetEvent(event->hEventNotify);
 			}
 		}

@@ -889,7 +889,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStream,
 			   PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *ppOptions)
 {
-  FIXME("(0x%X,0x%X,%d,%p,%p): stub\n", hWnd, uFlags, nStream,
+  FIXME("(%p,0x%X,%d,%p,%p): stub\n", hWnd, uFlags, nStream,
 	ppavi, ppOptions);
 
   return FALSE;

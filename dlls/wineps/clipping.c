@@ -35,7 +35,7 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN ignored )
     HRGN hrgn = CreateRectRgn(0,0,0,0);
     BOOL empty;
 
-    TRACE("hdc=%04x\n", physDev->hdc);
+    TRACE("hdc=%p\n", physDev->hdc);
 
     empty = !GetClipRgn(physDev->hdc, hrgn);
 

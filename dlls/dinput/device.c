@@ -412,7 +412,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	HWND hwndOwner,
 	DWORD dwFlags)
 {
-  FIXME("(this=%p,0x%08x,0x%08lx): stub!\n",
+  FIXME("(this=%p,%p,0x%08lx): stub!\n",
 	iface, hwndOwner, dwFlags);
 
 	return DI_OK;
@@ -424,7 +424,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	DWORD dwVersion,
 	REFGUID rguid)
 {
-	FIXME("(this=%p,%d,%ld,%s): stub!\n",
+	FIXME("(this=%p,%p,%ld,%s): stub!\n",
 	      iface, hinst, dwVersion, debugstr_guid(rguid));
 	return DI_OK;
 }

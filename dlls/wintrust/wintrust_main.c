@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  LPVOID ActionData )
 {
-    FIXME("(hwnd 0x%04x ActionId %p ActionData %p): stub (nothing will be verified)\n",
+    FIXME("(hwnd %p ActionId %p ActionData %p): stub (nothing will be verified)\n",
             hwnd, ActionID,  ActionData);
     return ERROR_SUCCESS;
 }

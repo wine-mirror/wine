@@ -389,7 +389,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     HWND whichHWND;
 
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %x, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
+    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
 
     /* Allocate the storage for the device */
@@ -457,7 +457,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         ERR("Error in context creation !\n");
         return D3DERR_INVALIDCALL;
     } else {
-        TRACE("Context created (HWND=%x, glContext=%p, Window=%ld, VisInfo=%p)\n",
+        TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
 			whichHWND, object->glCtx, object->win, object->visInfo);
     }
 

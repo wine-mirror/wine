@@ -36,7 +36,7 @@ HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
     BOOL subst = FALSE;
     char FaceName[LF_FACESIZE];
 
-    if (!GetObjectW( hfont, sizeof(lf), &lf )) return 0;
+    if (!GetObjectW( hfont, sizeof(lf), &lf )) return HGDI_ERROR;
 
     TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
@@ -107,11 +107,11 @@ HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
 
     if(physDev->dc->gdiFont && !subst) {
         if(PSDRV_SelectDownloadFont(physDev))
-	    return FALSE; /* use gdi font */
+	    return 0; /* use gdi font */
     }
 
     PSDRV_SelectBuiltinFont(physDev, hfont, &lf, FaceName);
-    return TRUE; /* use device font */
+    return (HFONT)1; /* use device font */
 }
 
 /***********************************************************************

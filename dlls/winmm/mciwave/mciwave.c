@@ -461,7 +461,7 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 	}
     }
 
-    TRACE("hFile=%u\n", wmw->hFile);
+    TRACE("hFile=%p\n", wmw->hFile);
 
     memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
 
@@ -1586,7 +1586,7 @@ static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 				   DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",
+    TRACE("(%08lX, %p, %08lX, %08lX, %08lX)\n",
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {

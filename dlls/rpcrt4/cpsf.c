@@ -160,7 +160,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   char keyname[120], module[120];
   HKEY key, subkey;
 
-  TRACE("(%x,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
+  TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
   UuidToStringA((UUID*)pclsid, &clsid);
 
   /* register interfaces to point to clsid */
@@ -220,7 +220,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   LPSTR clsid;
   char keyname[120], module[120];
 
-  TRACE("(%x,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
+  TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
   UuidToStringA((UUID*)pclsid, &clsid);
 
   /* unregister interfaces */

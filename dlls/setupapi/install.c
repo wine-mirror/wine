@@ -393,10 +393,10 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
         }
         else if (RegCreateKeyW( root_key, buffer, &hkey ))
         {
-            ERR( "could not create key %08x %s\n", root_key, debugstr_w(buffer) );
+            ERR( "could not create key %p %s\n", root_key, debugstr_w(buffer) );
             continue;
         }
-        TRACE( "key %08x %s\n", root_key, debugstr_w(buffer) );
+        TRACE( "key %p %s\n", root_key, debugstr_w(buffer) );
 
         /* get value name */
         if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))

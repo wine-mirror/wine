@@ -286,7 +286,7 @@ WNASPI32_DoPosting( SRB_ExecSCSICmd *lpPRB, DWORD status )
 			(*SRB_PostProc)(lpPRB);
 		}
 		else if (SRB_Flags & SRB_EVENT_NOTIFY) {
-			TRACE("Setting event %04x\n", (HANDLE)SRB_PostProc);
+			TRACE("Setting event %p\n", (HANDLE)SRB_PostProc);
 			SetEvent((HANDLE)SRB_PostProc);
 		}
 	}

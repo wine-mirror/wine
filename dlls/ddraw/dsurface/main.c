@@ -735,7 +735,7 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
     hr = This->get_dc(This, &This->hDC);
     if (SUCCEEDED(hr))
     {
-	TRACE("returning %08x\n",This->hDC);
+	TRACE("returning %p\n",This->hDC);
 
 	*phDC = This->hDC;
 	This->dc_in_use = TRUE;
@@ -985,7 +985,7 @@ Main_DirectDrawSurface_ReleaseDC(LPDIRECTDRAWSURFACE7 iface, HDC hDC)
     HRESULT hr;
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
-    TRACE("(%p)->(%08x)\n",This,hDC);
+    TRACE("(%p)->(%p)\n",This,hDC);
 
     if (!This->dc_in_use || This->hDC != hDC)
 	return DDERR_INVALIDPARAMS;

@@ -39,7 +39,7 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 
     if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
 
-    TRACE("hpen = %08x colour = %08lx\n", hpen, logpen.lopnColor);
+    TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
 
     physDev->pen.width = INTERNAL_XWSTODS(physDev->dc, logpen.lopnWidth.x);
     if(physDev->pen.width < 0)

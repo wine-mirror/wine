@@ -35,7 +35,7 @@ BOOL WINAPI OleUIAddVerbMenuA(
   HMENU hMenu, UINT uPos, UINT uIDVerbMin, UINT uIDVerbMax,
   BOOL bAddConvert, UINT idConvert, HMENU *lphMenu)
 {
-  FIXME("(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
+  FIXME("(%p, %s, %p, %d, %d, %d, %d, %d, %p): stub\n",
     lpOleObj, debugstr_a(lpszShortType),
     hMenu, uPos, uIDVerbMin, uIDVerbMax,
     bAddConvert, idConvert, lphMenu
@@ -52,7 +52,7 @@ BOOL WINAPI OleUIAddVerbMenuW(
   HMENU hMenu, UINT uPos, UINT uIDVerbMin, UINT uIDVerbMax,
   BOOL bAddConvert, UINT idConvert, HMENU *lphMenu)
 {
-  FIXME("(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
+  FIXME("(%p, %s, %p, %d, %d, %d, %d, %d, %p): stub\n",
     lpOleObj, debugstr_w(lpszShortType),
     hMenu, uPos, uIDVerbMin, uIDVerbMax,
     bAddConvert, idConvert, lphMenu
@@ -203,7 +203,7 @@ BOOL WINAPI OleUIUpdateLinksA(
   LPOLEUILINKCONTAINERA lpOleUILinkCntr,
   HWND hwndParent, LPSTR lpszTitle, INT cLinks)
 {
-  FIXME("(%p, 0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %p, %s, %d): stub\n",
     lpOleUILinkCntr, hwndParent, debugstr_a(lpszTitle), cLinks
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -217,7 +217,7 @@ BOOL WINAPI OleUIUpdateLinksW(
   LPOLEUILINKCONTAINERW lpOleUILinkCntr,
   HWND hwndParent, LPWSTR lpszTitle, INT cLinks)
 {
-  FIXME("(%p, 0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %p, %s, %d): stub\n",
     lpOleUILinkCntr, hwndParent, debugstr_w(lpszTitle), cLinks
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -230,7 +230,7 @@ BOOL WINAPI OleUIUpdateLinksW(
 INT __cdecl OleUIPromptUserA(
   INT nTemplate, HWND hwndParent, ...)
 {
-  FIXME("(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
+  FIXME("(%d, %p, ...): stub\n", nTemplate, hwndParent);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -241,7 +241,7 @@ INT __cdecl OleUIPromptUserA(
 INT __cdecl OleUIPromptUserW(
   INT nTemplate, HWND hwndParent, ...)
 {
-  FIXME("(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
+  FIXME("(%d, %p, ...): stub\n", nTemplate, hwndParent);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }

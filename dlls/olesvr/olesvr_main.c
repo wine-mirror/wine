@@ -127,7 +127,7 @@ OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
  * OleRegisterServer [OLESVR32.2]
  */
 OLESTATUS WINAPI OleRegisterServer(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE hinst,OLE_SERVER_USE osu) {
-	FIXME("(%s,%p,%p,%08x,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
+	FIXME("(%s,%p,%p,%p,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
     	*hRet=++OLE_current_handle;
 	return OLE_OK;
 }

@@ -251,7 +251,7 @@ is_OpenGL(
     ReleaseDC((*device)->surface->ddraw_owner->window,device_context);
     ENTER_GL();
 
-    template.visualid = GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+    template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
     vis = XGetVisualInfo(odev->gdi_display, VisualIDMask, &template, &num);
     if (vis == NULL)
       ERR("No visual found !\n");

@@ -426,7 +426,7 @@ void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
     spc.proc = proc;
     spc.arg = arg;
     event = CreateEventA(NULL, TRUE, FALSE, NULL);
-    PostThreadMessageA(loop_tid, WM_USER, event, (LPARAM)&spc);
+    PostThreadMessageA(loop_tid, WM_USER, (WPARAM)event, (LPARAM)&spc);
     WaitForSingleObject(event, INFINITE);
     CloseHandle(event);
   } else

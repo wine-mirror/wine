@@ -97,7 +97,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsA(
        HWND parent,
        DWORD flags)
 {
-    FIXME("%s %s %04x %08lx\n",debugstr_guid(class),enumstr,parent,flags);
+    FIXME("%s %s %p %08lx\n",debugstr_guid(class),enumstr,parent,flags);
 
     return (HDEVINFO) INVALID_HANDLE_VALUE;
 }
@@ -111,7 +111,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
        HWND parent,
        DWORD flags)
 {
-    FIXME("%s %s %04x %08lx\n",debugstr_guid(class),debugstr_w(enumstr),parent,flags);
+    FIXME("%s %s %p %08lx\n",debugstr_guid(class),debugstr_w(enumstr),parent,flags);
 
     return (HDEVINFO) INVALID_HANDLE_VALUE;
 }

@@ -173,7 +173,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     INT line;
     POINT pt[2];
 
-    TRACE("%08x (%d,%d %dx%d) -> (%d,%d %dx%d)\n", physDev->hdc,
+    TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", physDev->hdc,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
 
     if (!get_bitmap_info( info, &fullSrcWidth, &fullSrcHeight, &bpp, &compression )) return FALSE;

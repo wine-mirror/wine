@@ -26,7 +26,7 @@
 #include "ole.h"
 #include "winbase.h"
 #include "wingdi.h"
-
+#include "wownt32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -193,7 +193,7 @@ OLESTATUS WINAPI OleQueryCreateFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIP
  */
 BOOL WINAPI OleIsDcMeta(HDC hdc)
 {
-    TRACE("(%04x)\n",hdc);
+    TRACE("(%p)\n",hdc);
     return GetObjectType( hdc ) == OBJ_METADC;
 }
 
@@ -203,7 +203,7 @@ BOOL WINAPI OleIsDcMeta(HDC hdc)
  */
 BOOL16 WINAPI OleIsDcMeta16(HDC16 hdc)
 {
-    return OleIsDcMeta( hdc );
+    return OleIsDcMeta( HDC_32(hdc) );
 }
 
 

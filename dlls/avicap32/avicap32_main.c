@@ -30,7 +30,7 @@ HWND VFWAPI capCreateCaptureWindowW(LPCWSTR lpszWindowName, DWORD dwStyle, INT x
                                     INT y, INT nWidth, INT nHeight, HWND hWnd,
                                     INT nID)
 {
-    FIXME("%s, %08lx, %08x, %08x, %08x, %08x, %x, %08x\n",
+    FIXME("%s, %08lx, %08x, %08x, %08x, %08x, %p, %08x\n",
            debugstr_w(lpszWindowName), dwStyle,
            x, y, nWidth, nHeight, hWnd, nID);
     return 0;
