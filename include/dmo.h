@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002 Hidenori Takeshima
+ * Copyright (C) 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +16,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_DMO_H_
-#define __WINE_DMO_H_
+#ifndef __DMO_H__
+#define __DMO_H__
 
-#include "mediaobj.h"
-#include "dmoreg.h"
-#include "dmort.h"
 #include "mediaerr.h"
 
+#ifdef FIX_LOCK_NAME
+#define Lock DMOLock
+#endif
+#include "mediaobj.h"
+#ifdef FIX_LOCK_NAME
+#undef Lock
+#endif
+#include "dmoreg.h"
+#include "dmort.h"
 
-#endif	/* __WINE_DMO_H_ */
+#endif  /* __DMO_H__ */

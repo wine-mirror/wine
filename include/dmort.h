@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002 Hidenori Takeshima
+ * Copyright (C) 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +16,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_DMORT_H_
-#define __WINE_DMORT_H_
+#ifndef __DMORT_H__
+#define __DMORT_H__
 
+HRESULT WINAPI MoCopyMediaType(DMO_MEDIA_TYPE*,const DMO_MEDIA_TYPE*);
+HRESULT WINAPI MoCreateMediaType(DMO_MEDIA_TYPE**,DWORD);
+HRESULT WINAPI MoDeleteMediaType(DMO_MEDIA_TYPE*);
+HRESULT WINAPI MoDuplicateMediaType(DMO_MEDIA_TYPE**,const DMO_MEDIA_TYPE*);
+HRESULT WINAPI MoFreeMediaType(DMO_MEDIA_TYPE*);
+HRESULT WINAPI MoInitMediaType(DMO_MEDIA_TYPE*,DWORD);
 
-/* exported APIs */
-
-HRESULT WINAPI MoCopyMediaType( DMO_MEDIA_TYPE* pmtDst, const DMO_MEDIA_TYPE* pmtSrc );
-HRESULT WINAPI MoCreateMediaType( DMO_MEDIA_TYPE** ppmt, DWORD cbFormat );
-HRESULT WINAPI MoDeleteMediaType( DMO_MEDIA_TYPE* pmt );
-HRESULT WINAPI MoDuplicateMediaType( DMO_MEDIA_TYPE** ppmtDest, const DMO_MEDIA_TYPE* pmtSrc );
-HRESULT WINAPI MoFreeMediaType( DMO_MEDIA_TYPE* pmt );
-HRESULT WINAPI MoInitMediaType( DMO_MEDIA_TYPE* pmt, DWORD cbFormat );
-
-
-#endif	/* __WINE_DMORT_H_ */
+#endif /* __DMORT_H__ */

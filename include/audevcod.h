@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001 Hidenori Takeshima
+ * Copyright (C) 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,29 +16,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_AUDEVCOD_H_
-#define __WINE_AUDEVCOD_H_
+#ifndef __AUDEVCOD__
+#define __AUDEVCOD__
 
-typedef enum
+typedef enum _tagSND_DEVICE_ERROR
 {
-	SNDDEV_ERROR_Open = 1,
-	SNDDEV_ERROR_Close = 2,
-	SNDDEV_ERROR_GetCaps = 3,
-	SNDDEV_ERROR_PrepareHeader = 4,
-	SNDDEV_ERROR_UnprepareHeader = 5,
-	SNDDEV_ERROR_Reset = 6,
-	SNDDEV_ERROR_Restart = 7,
-	SNDDEV_ERROR_GetPosition = 8,
-	SNDDEV_ERROR_Write = 9,
-	SNDDEV_ERROR_Pause = 10,
-	SNDDEV_ERROR_Stop = 11,
-	SNDDEV_ERROR_Start = 12,
-	SNDDEV_ERROR_AddBuffer = 13,
-	SNDDEV_ERROR_Query = 14,
+    SNDDEV_ERROR_Open=1,
+    SNDDEV_ERROR_Close=2,
+    SNDDEV_ERROR_GetCaps=3,
+    SNDDEV_ERROR_PrepareHeader=4,
+    SNDDEV_ERROR_UnprepareHeader=5,
+    SNDDEV_ERROR_Reset=6,
+    SNDDEV_ERROR_Restart=7,
+    SNDDEV_ERROR_GetPosition=8,
+    SNDDEV_ERROR_Write=9,
+    SNDDEV_ERROR_Pause=10,
+    SNDDEV_ERROR_Stop=11,
+    SNDDEV_ERROR_Start=12,
+    SNDDEV_ERROR_AddBuffer=13,
+    SNDDEV_ERROR_Query=14
 } SNDDEV_ERR;
 
-#define EC_SND_DEVICE_ERROR_BASE	0x0200
-#define EC_SNDDEV_IN_ERROR		(EC_SND_DEVICE_ERROR_BASE + 0x00)
-#define EC_SNDDEV_OUT_ERROR		(EC_SND_DEVICE_ERROR_BASE + 0x01)
+#define EC_SND_DEVICE_ERROR_BASE 0x0200
+#define EC_SNDDEV_IN_ERROR       (EC_SND_DEVICE_ERROR_BASE+0x00)
+#define EC_SNDDEV_OUT_ERROR      (EC_SND_DEVICE_ERROR_BASE+0x01)
 
-#endif  /* __WINE_AUDEVCOD_H_ */
+#endif  /* __AUDEVCOD__ */

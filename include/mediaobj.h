@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002 Hidenori Takeshima
+ * Copyright (C) 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,10 +16,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_MEDIAOBJ_H_
-#define __WINE_MEDIAOBJ_H_
+#ifndef __WINE__
+#include "rpc.h"
+#include "rpcndr.h"
+#ifndef COM_NO_WINDOWS_H
+#include "windows.h"
+#include "ole2.h"
+#endif
+#endif
 
-/* forward decls. */
+#ifndef __mediaobj_h__
+#define __mediaobj_h__
 
 typedef struct IDMOQualityControl IDMOQualityControl;
 typedef struct IDMOVideoOutputOptimizations IDMOVideoOutputOptimizations;
@@ -28,23 +35,20 @@ typedef struct IMediaBuffer IMediaBuffer;
 typedef struct IMediaObject IMediaObject;
 typedef struct IMediaObjectInPlace IMediaObjectInPlace;
 
+#include "unknwn.h"
+#include "objidl.h"
 
-
-/* structs. */
-
-typedef struct
+typedef struct _DMOMediaType
 {
-	GUID	majortype;
-	GUID	subtype;
-	BOOL	bFixedSizeSamples;
-	BOOL	bTemporalCompression;
-	ULONG	lSampleSize;
-	GUID	formattype;
-	IUnknown*	pUnk;
-	ULONG	cbFormat;
-	BYTE*	pbFormat;
+    GUID majortype;
+    GUID subtype;
+    BOOL bFixedSizeSamples;
+    BOOL bTemporalCompression;
+    ULONG lSampleSize;
+    GUID formattype;
+    IUnknown *pUnk;
+    ULONG cbFormat;
+    BYTE *pbFormat;
 } DMO_MEDIA_TYPE;
 
-
-
-#endif	/* __WINE_MEDIAOBJ_H_ */
+#endif /* __mediaobj_h__ */
