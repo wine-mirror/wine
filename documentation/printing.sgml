@@ -158,6 +158,7 @@ printer=on
 		each printer.
 	      </para>
 	    </listitem>
+	    <listitem>
 	      <para>
 		<userinput>regapi setValue &lt; ~/psdrv.reg</userinput>
 	      </para>
