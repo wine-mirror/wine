@@ -2499,6 +2499,14 @@ then
       [has_gxx_permissive="yes"],
       [has_gxx_permissive="no"])
    )
+  CXXFLAGS="-fms-extensions";
+  AC_CACHE_CHECK([for g++ -fms-extensions option], has_gxx_msextensions,
+    AC_TRY_COMPILE(,[
+        ;
+      ],
+      [has_gxx_msextensions="yes"],
+      [has_gxx_msextensions="no"])
+   )
   CXXFLAGS="-fno-for-scope";
   AC_CACHE_CHECK([for g++ -fno-for-scope option], has_gxx_no_for_scope,
     AC_TRY_COMPILE(,[
@@ -2512,6 +2520,10 @@ then
   if test "$has_gxx_permissive" = "yes"
   then
     CXXFLAGS="$CXXFLAGS -fpermissive"
+  fi
+  if test "$has_gxx_msextensions" = "yes"
+  then
+    CXXFLAGS="$CXXFLAGS -fms-extensions"
   fi
   if test "$has_gxx_no_for_scope" = "yes"
   then
