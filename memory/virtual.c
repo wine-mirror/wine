@@ -1576,12 +1576,22 @@ LPVOID WINAPI MapViewOfFileEx(
 	 * Platform Differences": 
 	 * Windows NT: ERROR_INVALID_PARAMETER
 	 * Windows 95: ERROR_INVALID_ADDRESS.
-	 * FIXME: So should we add a module dependend check here? -MM
 	 */
 	if (errno==ENOMEM)
 	    SetLastError( ERROR_OUTOFMEMORY );
 	else
-	    SetLastError( ERROR_INVALID_PARAMETER );
+        {
+            if (GetVersion() & 0x80000000)  /* win95 */
+            {
+                TRACE("setting ERROR_INVALID_ADDRESS for WinXX\n");
+                SetLastError( ERROR_INVALID_ADDRESS );
+            }
+            else
+            {
+                TRACE("setting ERROR_INVALID_PARAMETER for NTXX\n");
+                SetLastError( ERROR_INVALID_PARAMETER );
+            }
+        }
         goto error;
     }
 
