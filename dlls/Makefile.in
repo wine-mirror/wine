@@ -37,6 +37,7 @@ DLLFILES = \
 	win87em/libwin87em.@LIBEXT@ \
 	windebug/libwindebug.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
+	winmm/joystick/libjoystick.drv.@LIBEXT@ \
 	winmm/mcianim/libmcianim.drv.@LIBEXT@ \
 	winmm/mciavi/libmciavi.drv.@LIBEXT@ \
 	winmm/mcicda/libmcicda.drv.@LIBEXT@ \
@@ -92,6 +93,10 @@ libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
 libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@
 	$(LN_S) imm32/libimm32.@LIBEXT@ $@
+
+libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
+	$(RM) $@
+	$(LN_S) winmm/joystick/libjoystick.drv.@LIBEXT@ $@
 
 liblz32.@LIBEXT@: lzexpand/liblz32.@LIBEXT@
 	$(RM) $@

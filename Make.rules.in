@@ -93,6 +93,7 @@ DLLS = \
 	icmp \
 	imagehlp \
 	imm32 \
+	joystick.drv \
 	lz32 \
 	mcianim.drv \
 	mciavi.drv \

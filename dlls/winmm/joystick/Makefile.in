@@ -1,0 +1,23 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
+MODULE    = joystick.drv
+SOVERSION = 1.0
+
+SPEC_SRCS = \
+	joystick.spec
+
+C_SRCS = \
+	joystick.c
+
+all: lib$(MODULE).$(LIBEXT)
+
+@MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+
+### Dependencies:

@@ -42,6 +42,4 @@ extern BOOL EVENT_CheckFocus( void );
 
 extern HWND EVENT_Capture( HWND, INT16 );
 
-extern void joySendMessages(void);
-
 #endif  /* __WINE_MESSAGE_H */

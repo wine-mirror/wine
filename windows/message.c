@@ -577,9 +577,6 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
     QMSG *nextqmsg, *qmsg = 0;
     BOOL bRet = FALSE;
 
-    /* FIXME: there has to be a better way to do this */
-    joySendMessages();
-
     EnterCriticalSection(&sysMsgQueue->cSection);
 
     /* Loop through the Q and translate the message we wish to process

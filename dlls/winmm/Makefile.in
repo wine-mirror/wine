@@ -28,6 +28,7 @@ RC_SRCS= \
 all: check_wrc $ $(MODULE).o
 
 SUBDIRS = \
+	joystick \
 	mcianim \
 	mciavi \
 	mcicda \

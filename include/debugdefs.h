@@ -71,6 +71,7 @@ char dbch_int21[] = "\003int21";
 char dbch_int31[] = "\003int31";
 char dbch_io[] = "\003io";
 char dbch_ipaddress[] = "\003ipaddress";
+char dbch_joystick[] = "\003joystick";
 char dbch_key[] = "\003key";
 char dbch_keyboard[] = "\003keyboard";
 char dbch_ldt[] = "\003ldt";
@@ -169,7 +170,7 @@ char dbch_wnet[] = "\003wnet";
 char dbch_x11[] = "\003x11";
 char dbch_x11drv[] = "\003x11drv";
 
-#define DEBUG_CHANNEL_COUNT 162
+#define DEBUG_CHANNEL_COUNT 163
 
 static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_accel,
@@ -237,6 +238,7 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_int31,
     dbch_io,
     dbch_ipaddress,
+    dbch_joystick,
     dbch_key,
     dbch_keyboard,
     dbch_ldt,
