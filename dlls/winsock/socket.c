@@ -178,17 +178,22 @@ static HANDLE 	_WSHeap = 0;
 static INT         _ws_sock_ops[] =
        { WS_SO_DEBUG, WS_SO_REUSEADDR, WS_SO_KEEPALIVE, WS_SO_DONTROUTE,
          WS_SO_BROADCAST, WS_SO_LINGER, WS_SO_OOBINLINE, WS_SO_SNDBUF,
-         WS_SO_RCVBUF, WS_SO_ERROR, WS_SO_TYPE, WS_SO_DONTLINGER,
+         WS_SO_RCVBUF, WS_SO_ERROR, WS_SO_TYPE,
 #ifdef SO_RCVTIMEO
 	 WS_SO_RCVTIMEO,
+#endif
+#ifdef SO_SNDTIMEO
+	 WS_SO_SNDTIMEO,
 #endif
 	 0 };
 static int           _px_sock_ops[] =
        { SO_DEBUG, SO_REUSEADDR, SO_KEEPALIVE, SO_DONTROUTE, SO_BROADCAST,
          SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
-	 WS_SO_DONTLINGER,  /* no unix equivalent */
 #ifdef SO_RCVTIMEO
 	 SO_RCVTIMEO,
+#endif
+#ifdef SO_SNDTIMEO
+	 SO_SNDTIMEO,
 #endif
 	};
 
@@ -390,8 +395,9 @@ BOOL WINAPI WINSOCK_LibMain(DWORD fdwReason, HINSTANCE hInstDLL, WORD ds,
  *          convert_sockopt()
  *
  * Converts socket flags from Windows format.
+ * Return 1 if converted, 0 if not (error).
  */
-static void convert_sockopt(INT *level, INT *optname)
+static int convert_sockopt(INT *level, INT *optname)
 {
   int i;
   switch (*level)
@@ -400,17 +406,24 @@ static void convert_sockopt(INT *level, INT *optname)
         *level = SOL_SOCKET;
         for(i=0; _ws_sock_ops[i]; i++)
             if( _ws_sock_ops[i] == *optname ) break;
-        if( _ws_sock_ops[i] ) *optname = _px_sock_ops[i];
-        else FIXME("Unknown SOL_SOCKET optname %d\n", *optname);
+        if( _ws_sock_ops[i] ) {
+	    *optname = _px_sock_ops[i];
+	    return 1;
+	}
+        FIXME("Unknown SOL_SOCKET optname 0x%x\n", *optname);
         break;
      case WS_IPPROTO_TCP:
         *level = IPPROTO_TCP;
         for(i=0; _ws_tcp_ops[i]; i++)
 		if ( _ws_tcp_ops[i] == *optname ) break;
-        if( _ws_tcp_ops[i] ) *optname = _px_tcp_ops[i];
-        else FIXME("Unknown IPPROTO_TCP optname %d\n", *optname);
+        if( _ws_tcp_ops[i] ) {
+	    *optname = _px_tcp_ops[i];
+	    return 1;
+	}
+        FIXME("Unknown IPPROTO_TCP optname 0x%x\n", *optname);
 	break;
   }
+  return 0;
 }
 
 /* ----------------------------------- Per-thread info (or per-process?) */
@@ -1224,13 +1237,16 @@ INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level,
     if( _check_ws(pwsi, s) )
     {
 	int fd = _get_sock_fd(s);
-	convert_sockopt(&level, &optname);
-	if (getsockopt(fd, (int) level, optname, optval, optlen) == 0 )
-	{
-	    close(fd);
-	    return 0;
+	if (!convert_sockopt(&level, &optname)) {
+	    SetLastError(WSAENOPROTOOPT);	/* Unknown option */
+        } else {
+	    if (getsockopt(fd, (int) level, optname, optval, optlen) == 0 )
+	    {
+		close(fd);
+		return 0;
+	    }
+	    SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
 	}
-	SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
 	close(fd);
     }
     return SOCKET_ERROR;
@@ -2064,28 +2080,33 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 	int fd = _get_sock_fd(s);
         int woptval;
 
-        convert_sockopt(&level, &optname);
         if(optname == WS_SO_DONTLINGER) {
+	    /* This is unique to WinSock and takes special conversion */
             linger.l_onoff	= *((int*)optval) ? 0: 1;
             linger.l_linger	= 0;
             optname=SO_LINGER;
             optval = (char*)&linger;
             optlen = sizeof(struct linger);
         }else{
-            if (optname == SO_LINGER && optval) {
-		/* yes, uses unsigned short in both win16/win32 */
-		linger.l_onoff	= ((UINT16*)optval)[0];
-		linger.l_linger	= ((UINT16*)optval)[1];
-		/* FIXME: what is documented behavior if SO_LINGER optval
-		   is null?? */
-		optval = (char*)&linger;
-		optlen = sizeof(struct linger);
-            } else if (optlen < sizeof(int)){
-                woptval= *((INT16 *) optval);
-                optval= (char*) &woptval;
-                optlen=sizeof(int);
-            }
-        }
+            if (!convert_sockopt(&level, &optname)) {
+		SetLastError(WSAENOPROTOOPT);
+		close(fd);
+		return SOCKET_ERROR;
+	    }
+	}
+	if (optname == SO_LINGER && optval) {
+	    /* yes, uses unsigned short in both win16/win32 */
+	    linger.l_onoff	= ((UINT16*)optval)[0];
+	    linger.l_linger	= ((UINT16*)optval)[1];
+	    /* FIXME: what is documented behavior if SO_LINGER optval
+	       is null?? */
+	    optval = (char*)&linger;
+	    optlen = sizeof(struct linger);
+	} else if (optlen < sizeof(int)){
+	    woptval= *((INT16 *) optval);
+	    optval= (char*) &woptval;
+	    optlen=sizeof(int);
+	}
 	if (setsockopt(fd, level, optname, optval, optlen) == 0)
 	{
 	    close(fd);
