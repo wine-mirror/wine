@@ -22,7 +22,7 @@ typedef struct __MSVCRT_timeb
 
 
 /* INTERNAL: Return formatted current time/date */
-char * MSVCRT_get_current_time(char * out, const char * format)
+char* msvcrt_get_current_time(char* out, const char* format)
 {
   static const time_t bad_time = (time_t)-1;
   time_t t;
@@ -40,23 +40,23 @@ char * MSVCRT_get_current_time(char * out, const char * format)
 /**********************************************************************
  *		_strdate (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strdate (char * date)
+char* _strdate(char* date)
 {
-  return MSVCRT_get_current_time(date,"%m/%d/%y");
+  return msvcrt_get_current_time(date,"%m/%d/%y");
 }
 
 /*********************************************************************
  *		_strtime (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strtime (char * date)
+char* _strtime(char* date)
 {
-  return MSVCRT_get_current_time(date,"%H:%M:%S");
+  return msvcrt_get_current_time(date,"%H:%M:%S");
 }
 
 /*********************************************************************
  *		clock (MSVCRT.@)
  */
-clock_t __cdecl MSVCRT_clock(void)
+clock_t MSVCRT_clock(void)
 {
   struct tms alltimes;
   clock_t res;
@@ -73,7 +73,7 @@ clock_t __cdecl MSVCRT_clock(void)
 /*********************************************************************
  *		difftime (MSVCRT.@)
  */
-double __cdecl MSVCRT_difftime (time_t time1, time_t time2)
+double MSVCRT_difftime(time_t time1, time_t time2)
 {
     return (double)(time1 - time2);
 }
@@ -81,7 +81,7 @@ double __cdecl MSVCRT_difftime (time_t time1, time_t time2)
 /*********************************************************************
  *		time (MSVCRT.@)
  */
-time_t __cdecl MSVCRT_time(time_t *buf)
+time_t MSVCRT_time(time_t* buf)
 {
   time_t curtime = time(NULL);
   return buf ? *buf = curtime : curtime;
@@ -90,7 +90,7 @@ time_t __cdecl MSVCRT_time(time_t *buf)
 /*********************************************************************
  *		_ftime (MSVCRT.@)
  */
-void __cdecl MSVCRT__ftime (MSVCRT_timeb *buf)
+void _ftime(MSVCRT_timeb* buf)
 {
   buf->time = MSVCRT_time(NULL);
   buf->millitm = 0; /* FIXME */

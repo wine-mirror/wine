@@ -21,7 +21,7 @@ static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;
 static int __MSVCRT_console_buffer = MSVCRT_EOF;
 
 /* INTERNAL: Initialise console handles */
-void MSVCRT_init_console(void)
+void msvcrt_init_console(void)
 {
   TRACE(":Opening console handles\n");
 
@@ -41,7 +41,7 @@ void MSVCRT_init_console(void)
 }
 
 /* INTERNAL: Free console handles */
-void MSVCRT_free_console(void)
+void msvcrt_free_console(void)
 {
   TRACE(":Closing console handles\n");
   CloseHandle(MSVCRT_console_in);
@@ -51,7 +51,7 @@ void MSVCRT_free_console(void)
 /*********************************************************************
  *		_cputs (MSVCRT.@)
  */
-int __cdecl MSVCRT__cputs(const char * str)
+int _cputs(const char* str)
 {
   DWORD count;
   int retval = MSVCRT_EOF;
@@ -67,7 +67,7 @@ int __cdecl MSVCRT__cputs(const char * str)
 /*********************************************************************
  *		_getch (MSVCRT.@)
  */
-int __cdecl MSVCRT__getch(void)
+int _getch(void)
 {
   int retval = MSVCRT_EOF;
 
@@ -112,7 +112,7 @@ int __cdecl MSVCRT__getch(void)
 /*********************************************************************
  *		_putch (MSVCRT.@)
  */
-int __cdecl MSVCRT__putch(int c)
+int _putch(int c)
 {
   int retval = MSVCRT_EOF;
   DWORD count;
@@ -126,13 +126,13 @@ int __cdecl MSVCRT__putch(int c)
 /*********************************************************************
  *		_getche (MSVCRT.@)
  */
-int __cdecl MSVCRT__getche(void)
+int _getche(void)
 {
   int retval;
   LOCK_CONSOLE;
-  retval = MSVCRT__getch();
+  retval = _getch();
   if (retval != MSVCRT_EOF)
-    retval = MSVCRT__putch(retval);
+    retval = _putch(retval);
   UNLOCK_CONSOLE;
   return retval;
 }
@@ -140,7 +140,7 @@ int __cdecl MSVCRT__getche(void)
 /*********************************************************************
  *		_cgets (MSVCRT.@)
  */
-char *__cdecl MSVCRT__cgets(char *str)
+char* _cgets(char* str)
 {
   char *buf = str + 2;
   int c;
@@ -149,7 +149,7 @@ char *__cdecl MSVCRT__cgets(char *str)
   LOCK_CONSOLE;
   do
   {
-    if (str[1] >= str[0] || (str[1]++, c = MSVCRT__getche()) == MSVCRT_EOF || c == '\n')
+    if (str[1] >= str[0] || (str[1]++, c = _getche()) == MSVCRT_EOF || c == '\n')
       break;
     *buf++ = c & 0xff;
   } while (1);
@@ -161,7 +161,7 @@ char *__cdecl MSVCRT__cgets(char *str)
 /*********************************************************************
  *		_ungetch (MSVCRT.@)
  */
-int __cdecl MSVCRT__ungetch(int c)
+int _ungetch(int c)
 {
   int retval = MSVCRT_EOF;
   LOCK_CONSOLE;
@@ -174,7 +174,7 @@ int __cdecl MSVCRT__ungetch(int c)
 /*********************************************************************
  *		_cscanf (MSVCRT.@)
  */
-int __cdecl MSVCRT__cscanf( const char * format, ... )
+int _cscanf(const char* format, ...)
 {
     /* NOTE: If you extend this function, extend MSVCRT_fscanf in file.c too */
     int rd = 0;
@@ -184,12 +184,12 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
     WARN("\"%s\": semi-stub\n", format);
     va_start(ap, format);
   LOCK_CONSOLE;
-    nch = MSVCRT__getch();
+    nch = _getch();
     while (*format) {
         if (*format == ' ') {
             /* skip whitespace */
             while ((nch!=MSVCRT_EOF) && isspace(nch))
-                nch = MSVCRT__getch();
+                nch = _getch();
         }
         else if (*format == '%') {
             int st = 0;
@@ -200,10 +200,10 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
                     int cur = 0;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     /* get sign and first digit */
                     if (nch == '-') {
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                         if (isdigit(nch))
                             cur = -(nch - '0');
                         else break;
@@ -212,11 +212,11 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
                             cur = nch - '0';
                         else break;
                     }
-                    nch = MSVCRT__getch();
+                    nch = _getch();
                     /* read until no more digits */
                     while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
                         cur = cur*10 + (nch - '0');
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     }
                     st = 1;
                     *val = cur;
@@ -227,10 +227,10 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
                     float cur = 0;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     /* get sign and first digit */
                     if (nch == '-') {
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                         if (isdigit(nch))
                             cur = -(nch - '0');
                         else break;
@@ -242,16 +242,16 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
                     /* read until no more digits */
                     while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
                         cur = cur*10 + (nch - '0');
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     }
                     if (nch == '.') {
                         /* handle decimals */
                         float dec = 1;
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                         while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
                             dec /= 10;
                             cur += dec * (nch - '0');
-                            nch = MSVCRT__getch();
+                            nch = _getch();
                         }
                     }
                     st = 1;
@@ -263,11 +263,11 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
                     char*sptr = str;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     /* read until whitespace */
                     while ((nch!=MSVCRT_EOF) && !isspace(nch)) {
                         *sptr++ = nch; st++;
-                        nch = MSVCRT__getch();
+                        nch = _getch();
                     }
                     /* terminate */
                     *sptr = 0;
@@ -282,13 +282,13 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
         else {
             /* check for character match */
             if (nch == *format)
-               nch = MSVCRT__getch();
+               nch = _getch();
             else break;
         }
         format++;
     }
     if (nch != MSVCRT_EOF)
-      MSVCRT__ungetch(nch);
+      _ungetch(nch);
     UNLOCK_CONSOLE;
     va_end(ap);
     TRACE("returning %d\n", rd);
@@ -298,7 +298,7 @@ int __cdecl MSVCRT__cscanf( const char * format, ... )
 /*********************************************************************
  *		_kbhit (MSVCRT.@)
  */
-int __cdecl MSVCRT__kbhit(void)
+int _kbhit(void)
 {
   int retval = 0;
 
@@ -338,7 +338,7 @@ extern int snprintf(char *, int, const char *, ...);
 /*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
-int __cdecl MSVCRT__cprintf( const char * format, ... )
+int _cprintf(const char* format, ...)
 {
   char buf[2048], *mem = buf;
   int written, resize = sizeof(buf), retval;
@@ -362,7 +362,7 @@ int __cdecl MSVCRT__cprintf( const char * format, ... )
   }
   va_end(valist);
   LOCK_CONSOLE;
-  retval = MSVCRT__cputs( mem );
+  retval = _cputs( mem );
   UNLOCK_CONSOLE;
   if (mem != buf)
     MSVCRT_free (mem);

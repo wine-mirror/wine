@@ -11,12 +11,12 @@
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-LPWSTR __cdecl wcsrchr( LPWSTR str, WCHAR ch );
+LPWSTR wcsrchr( LPWSTR str, WCHAR ch );
 
 /*********************************************************************
  *		getenv (MSVCRT.@)
  */
-char *__cdecl MSVCRT_getenv(const char *name)
+char *MSVCRT_getenv(const char *name)
 {
   char *environ = GetEnvironmentStringsA();
   char *pp,*pos = NULL;
@@ -43,7 +43,7 @@ char *__cdecl MSVCRT_getenv(const char *name)
 /*********************************************************************
  *		_wgetenv (MSVCRT.@)
  */
-WCHAR *__cdecl MSVCRT__wgetenv(const WCHAR *name)
+WCHAR *_wgetenv(const WCHAR *name)
 {
   WCHAR* environ = GetEnvironmentStringsW();
   WCHAR* pp,*pos = NULL;
@@ -70,7 +70,7 @@ WCHAR *__cdecl MSVCRT__wgetenv(const WCHAR *name)
 /*********************************************************************
  *		_putenv (MSVCRT.@)
  */
-int __cdecl MSVCRT__putenv(const char *str)
+int _putenv(const char *str)
 {
  char name[256], value[512];
  char *dst = name;
@@ -95,7 +95,7 @@ int __cdecl MSVCRT__putenv(const char *str)
 /*********************************************************************
  *		_wputenv (MSVCRT.@)
  */
-int __cdecl MSVCRT__wputenv(const WCHAR *str)
+int _wputenv(const WCHAR *str)
 {
  WCHAR name[256], value[512];
  WCHAR *dst = name;

@@ -93,7 +93,7 @@ typedef struct __MSVCRT_exception
 } MSVCRT_exception;
 
 
-typedef int (__cdecl *MSVCRT_matherr_func)(MSVCRT_exception *);
+typedef int (*MSVCRT_matherr_func)(MSVCRT_exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
@@ -108,7 +108,7 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 /*********************************************************************
  *		_CIacos (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIacos(void)
+double _CIacos(void)
 {
   FPU_DOUBLE(x);
   if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -118,7 +118,7 @@ double __cdecl MSVCRT__CIacos(void)
 /*********************************************************************
  *		_CIasin (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIasin(void)
+double _CIasin(void)
 {
   FPU_DOUBLE(x);
   if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -128,7 +128,7 @@ double __cdecl MSVCRT__CIasin(void)
 /*********************************************************************
  *		_CIatan (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIatan(void)
+double _CIatan(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -138,7 +138,7 @@ double __cdecl MSVCRT__CIatan(void)
 /*********************************************************************
  *		_CIatan2 (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIatan2(void)
+double _CIatan2(void)
 {
   FPU_DOUBLES(x,y);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -148,7 +148,7 @@ double __cdecl MSVCRT__CIatan2(void)
 /*********************************************************************
  *		_CIcos (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIcos(void)
+double _CIcos(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -158,7 +158,7 @@ double __cdecl MSVCRT__CIcos(void)
 /*********************************************************************
  *		_CIcosh (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIcosh(void)
+double _CIcosh(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -168,7 +168,7 @@ double __cdecl MSVCRT__CIcosh(void)
 /*********************************************************************
  *		_CIexp (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIexp(void)
+double _CIexp(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -178,7 +178,7 @@ double __cdecl MSVCRT__CIexp(void)
 /*********************************************************************
  *		_CIfmod (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIfmod(void)
+double _CIfmod(void)
 {
   FPU_DOUBLES(x,y);
   if (!finite(x) || !finite(y)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -188,7 +188,7 @@ double __cdecl MSVCRT__CIfmod(void)
 /*********************************************************************
  *		_CIlog (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIlog(void)
+double _CIlog(void)
 {
   FPU_DOUBLE(x);
   if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -199,7 +199,7 @@ double __cdecl MSVCRT__CIlog(void)
 /*********************************************************************
  *		_CIlog10 (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIlog10(void)
+double _CIlog10(void)
 {
   FPU_DOUBLE(x);
   if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -210,7 +210,7 @@ double __cdecl MSVCRT__CIlog10(void)
 /*********************************************************************
  *		_CIpow (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIpow(void)
+double _CIpow(void)
 {
   double z;
   FPU_DOUBLES(x,y);
@@ -223,7 +223,7 @@ double __cdecl MSVCRT__CIpow(void)
 /*********************************************************************
  *		_CIsin (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIsin(void)
+double _CIsin(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -233,7 +233,7 @@ double __cdecl MSVCRT__CIsin(void)
 /*********************************************************************
  *		_CIsinh (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIsinh(void)
+double _CIsinh(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -243,7 +243,7 @@ double __cdecl MSVCRT__CIsinh(void)
 /*********************************************************************
  *		_CIsqrt (MSVCRT.@)
  */
-double __cdecl MSVCRT__CIsqrt(void)
+double _CIsqrt(void)
 {
   FPU_DOUBLE(x);
   if (x < 0.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -253,7 +253,7 @@ double __cdecl MSVCRT__CIsqrt(void)
 /*********************************************************************
  *		_CItan (MSVCRT.@)
  */
-double __cdecl MSVCRT__CItan(void)
+double _CItan(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -263,7 +263,7 @@ double __cdecl MSVCRT__CItan(void)
 /*********************************************************************
  *		_CItanh (MSVCRT.@)
  */
-double __cdecl MSVCRT__CItanh(void)
+double _CItanh(void)
 {
   FPU_DOUBLE(x);
   if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -274,7 +274,7 @@ double __cdecl MSVCRT__CItanh(void)
 
 /* The above cannot be called on non x86 platforms, stub them for linking */
 
-#define IX86_ONLY(func) double __cdecl MSVCRT_##func(void) { return 0.0; }
+#define IX86_ONLY(func) double MSVCRT_##func(void) { return 0.0; }
 
 IX86_ONLY(_CIacos)
 IX86_ONLY(_CIasin)
@@ -298,7 +298,7 @@ IX86_ONLY(_CItanh)
 /*********************************************************************
  *		_fpclass (MSVCRT.@)
  */
-int __cdecl MSVCRT__fpclass(double num)
+int _fpclass(double num)
 {
 #if defined(HAVE_FPCLASS) || defined(fpclass)
   switch (fpclass( num ))
@@ -333,7 +333,7 @@ int __cdecl MSVCRT__fpclass(double num)
 /*********************************************************************
  *		_rotl (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__rotl(unsigned int num, int shift)
+unsigned int _rotl(unsigned int num, int shift)
 {
   shift &= 31;
   return (num << shift) | (num >> (32-shift));
@@ -342,7 +342,7 @@ unsigned int __cdecl MSVCRT__rotl(unsigned int num, int shift)
 /*********************************************************************
  *		_logb (MSVCRT.@)
  */
-double __cdecl MSVCRT__logb(double num)
+double _logb(double num)
 {
   if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
   return logb(num);
@@ -351,7 +351,7 @@ double __cdecl MSVCRT__logb(double num)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-unsigned long __cdecl MSVCRT__lrotl(unsigned long num, int shift)
+unsigned long _lrotl(unsigned long num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -360,7 +360,7 @@ unsigned long __cdecl MSVCRT__lrotl(unsigned long num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-unsigned long __cdecl MSVCRT__lrotr(unsigned long num, int shift)
+unsigned long _lrotr(unsigned long num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -369,7 +369,7 @@ unsigned long __cdecl MSVCRT__lrotr(unsigned long num, int shift)
 /*********************************************************************
  *		_rotr (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__rotr(unsigned int num, int shift)
+unsigned int _rotr(unsigned int num, int shift)
 {
     shift &= 0x1f;
     return (num >> shift) | (num << (32-shift));
@@ -378,7 +378,7 @@ unsigned int __cdecl MSVCRT__rotr(unsigned int num, int shift)
 /*********************************************************************
  *		_scalb (MSVCRT.@)
  */
-double __cdecl MSVCRT__scalb(double num, long power)
+double _scalb(double num, long power)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double dblpower = (double)power;
@@ -389,7 +389,7 @@ double __cdecl MSVCRT__scalb(double num, long power)
 /*********************************************************************
  *		_matherr (MSVCRT.@)
  */
-int __cdecl MSVCRT__matherr(MSVCRT_exception *e)
+int _matherr(MSVCRT_exception *e)
 {
   if (e)
     TRACE("(%p = %d, %s, %g %g %g)\n",e, e->type, e->name, e->arg1, e->arg2,
@@ -405,7 +405,7 @@ int __cdecl MSVCRT__matherr(MSVCRT_exception *e)
 /*********************************************************************
  *		__setusermatherr (MSVCRT.@)
  */
-void __cdecl MSVCRT___setusermatherr(MSVCRT_matherr_func func)
+void MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 {
   MSVCRT_default_matherr_func = func;
   TRACE(":new matherr handler %p\n", func);
@@ -414,7 +414,7 @@ void __cdecl MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 /**********************************************************************
  *		_statusfp (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__statusfp(void)
+unsigned int _statusfp(void)
 {
    unsigned int retVal = 0;
 #if defined(__GNUC__) && defined(__i386__)
@@ -436,9 +436,9 @@ unsigned int __cdecl MSVCRT__statusfp(void)
 /*********************************************************************
  *		_clearfp (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__clearfp(void)
+unsigned int _clearfp(void)
 {
-  unsigned int retVal = MSVCRT__statusfp();
+  unsigned int retVal = _statusfp();
 #if defined(__GNUC__) && defined(__i386__)
   __asm__ __volatile__( "fnclex" );
 #else
@@ -450,7 +450,7 @@ unsigned int __cdecl MSVCRT__clearfp(void)
 /*********************************************************************
  *		ldexp (MSVCRT.@)
  */
-double __cdecl MSVCRT_ldexp(double num, long exp)
+double MSVCRT_ldexp(double num, long exp)
 {
   double z = ldexp(num,exp);
 
@@ -464,7 +464,7 @@ double __cdecl MSVCRT_ldexp(double num, long exp)
 /*********************************************************************
  *		_cabs (MSVCRT.@)
  */
-double __cdecl MSVCRT__cabs(MSVCRT_complex num)
+double _cabs(MSVCRT_complex num)
 {
   return sqrt(num.real * num.real + num.imaginary * num.imaginary);
 }
@@ -472,7 +472,7 @@ double __cdecl MSVCRT__cabs(MSVCRT_complex num)
 /*********************************************************************
  *		_chgsign (MSVCRT.@)
  */
-double __cdecl MSVCRT__chgsign(double num)
+double _chgsign(double num)
 {
   /* FIXME: +-infinity,Nan not tested */
   return -num;
@@ -481,7 +481,7 @@ double __cdecl MSVCRT__chgsign(double num)
 /*********************************************************************
  *		_control87 (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__control87(unsigned int newval, unsigned int mask)
+unsigned int _control87(unsigned int newval, unsigned int mask)
 {
 #if defined(__GNUC__) && defined(__i386__)
    unsigned int fpword, flags = 0;
@@ -535,17 +535,17 @@ unsigned int __cdecl MSVCRT__control87(unsigned int newval, unsigned int mask)
   __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
   return fpword;
 #else
-  return  MSVCRT__controlfp( newval, mask );
+  return  _controlfp( newval, mask );
 #endif
 }
 
 /*********************************************************************
  *		_controlfp (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__controlfp(unsigned int newval, unsigned int mask)
+unsigned int _controlfp(unsigned int newval, unsigned int mask)
 {
 #if defined(__GNUC__) && defined(__i386__)
-  return MSVCRT__control87( newval, mask );
+  return _control87( newval, mask );
 #else
   FIXME(":Not Implemented!\n");
   return 0;
@@ -555,7 +555,7 @@ unsigned int __cdecl MSVCRT__controlfp(unsigned int newval, unsigned int mask)
 /*********************************************************************
  *		_copysign (MSVCRT.@)
  */
-double __cdecl MSVCRT__copysign(double num, double sign)
+double _copysign(double num, double sign)
 {
   /* FIXME: Behaviour for Nan/Inf? */
   if (sign < 0.0)
@@ -566,7 +566,7 @@ double __cdecl MSVCRT__copysign(double num, double sign)
 /*********************************************************************
  *		_finite (MSVCRT.@)
  */
-int __cdecl  MSVCRT__finite(double num)
+int  _finite(double num)
 {
   return (finite(num)?1:0); /* See comment for _isnan() */
 }
@@ -574,7 +574,7 @@ int __cdecl  MSVCRT__finite(double num)
 /*********************************************************************
  *		_fpreset (MSVCRT.@)
  */
-void __cdecl MSVCRT__fpreset(void)
+void _fpreset(void)
 {
 #if defined(__GNUC__) && defined(__i386__)
   __asm__ __volatile__( "fninit" );
@@ -586,7 +586,7 @@ void __cdecl MSVCRT__fpreset(void)
 /*********************************************************************
  *		_isnan (MSVCRT.@)
  */
-INT __cdecl  MSVCRT__isnan(double num)
+INT  _isnan(double num)
 {
   /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
    * Do the same, as the result may be used in calculations
@@ -597,12 +597,12 @@ INT __cdecl  MSVCRT__isnan(double num)
 /*********************************************************************
  *		_y0 (MSVCRT.@)
  */
-double __cdecl MSVCRT__y0(double num)
+double _y0(double num)
 {
   double retval;
   if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
   retval  = y0(num);
-  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == _FPCLASS_NINF)
   {
     SET_THREAD_VAR(errno,MSVCRT_EDOM);
     retval = sqrt(-1);
@@ -613,12 +613,12 @@ double __cdecl MSVCRT__y0(double num)
 /*********************************************************************
  *		_y1 (MSVCRT.@)
  */
-double __cdecl MSVCRT__y1(double num)
+double _y1(double num)
 {
   double retval;
   if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
   retval  = y1(num);
-  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == _FPCLASS_NINF)
   {
     SET_THREAD_VAR(errno,MSVCRT_EDOM);
     retval = sqrt(-1);
@@ -629,12 +629,12 @@ double __cdecl MSVCRT__y1(double num)
 /*********************************************************************
  *		_yn (MSVCRT.@)
  */
-double __cdecl MSVCRT__yn(int order, double num)
+double _yn(int order, double num)
 {
   double retval;
   if (!finite(num)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
   retval  = yn(order,num);
-  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == _FPCLASS_NINF)
   {
     SET_THREAD_VAR(errno,MSVCRT_EDOM);
     retval = sqrt(-1);
@@ -645,7 +645,7 @@ double __cdecl MSVCRT__yn(int order, double num)
 /*********************************************************************
  *		_nextafter (MSVCRT.@)
  */
-double __cdecl MSVCRT__nextafter(double num, double next)
+double _nextafter(double num, double next)
 {
   double retval;
   if (!finite(num) || !finite(next)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
@@ -661,7 +661,7 @@ double __cdecl MSVCRT__nextafter(double num, double next)
  *	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-LONGLONG __cdecl MSVCRT_div(int num, int denom)
+LONGLONG MSVCRT_div(int num, int denom)
 {
   LONGLONG retval;
   div_t dt = div(num,denom);
@@ -674,7 +674,7 @@ LONGLONG __cdecl MSVCRT_div(int num, int denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-div_t __cdecl MSVCRT_div(int num, int denom)
+div_t MSVCRT_div(int num, int denom)
 {
   return div(num,denom);
 }
@@ -687,7 +687,7 @@ div_t __cdecl MSVCRT_div(int num, int denom)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-ULONGLONG __cdecl MSVCRT_ldiv(long num, long denom)
+ULONGLONG MSVCRT_ldiv(long num, long denom)
 {
   ULONGLONG retval;
   ldiv_t ldt = ldiv(num,denom);
@@ -700,7 +700,7 @@ ULONGLONG __cdecl MSVCRT_ldiv(long num, long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-ldiv_t __cdecl MSVCRT_ldiv(long num, long denom)
+ldiv_t MSVCRT_ldiv(long num, long denom)
 {
   return ldiv(num,denom);
 }
@@ -715,7 +715,7 @@ ldiv_t __cdecl MSVCRT_ldiv(long num, long denom)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdiv_m16i(void)
+void _adj_fdiv_m16i(void)
 {
   TRACE("(): stub");
 }
@@ -729,7 +729,7 @@ void __cdecl MSVCRT__adj_fdiv_m16i(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdiv_m32(void)
+void _adj_fdiv_m32(void)
 {
   TRACE("(): stub");
 }
@@ -743,7 +743,7 @@ void __cdecl MSVCRT__adj_fdiv_m32(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdiv_m32i(void)
+void _adj_fdiv_m32i(void)
 {
   TRACE("(): stub");
 }
@@ -757,7 +757,7 @@ void __cdecl MSVCRT__adj_fdiv_m32i(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdiv_m64(void)
+void _adj_fdiv_m64(void)
 {
   TRACE("(): stub");
 }
@@ -771,7 +771,7 @@ void __cdecl MSVCRT__adj_fdiv_m64(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdiv_r(void)
+void _adj_fdiv_r(void)
 {
   TRACE("(): stub");
 }
@@ -785,7 +785,7 @@ void __cdecl MSVCRT__adj_fdiv_r(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdivr_m16i(void)
+void _adj_fdivr_m16i(void)
 {
   TRACE("(): stub");
 }
@@ -799,7 +799,7 @@ void __cdecl MSVCRT__adj_fdivr_m16i(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdivr_m32(void)
+void _adj_fdivr_m32(void)
 {
   TRACE("(): stub");
 }
@@ -813,7 +813,7 @@ void __cdecl MSVCRT__adj_fdivr_m32(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdivr_m32i(void)
+void _adj_fdivr_m32i(void)
 {
   TRACE("(): stub");
 }
@@ -827,7 +827,7 @@ void __cdecl MSVCRT__adj_fdivr_m32i(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fdivr_m64(void)
+void _adj_fdivr_m64(void)
 {
   TRACE("(): stub");
 }
@@ -841,7 +841,7 @@ void __cdecl MSVCRT__adj_fdivr_m64(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fpatan(void)
+void _adj_fpatan(void)
 {
   TRACE("(): stub");
 }
@@ -855,7 +855,7 @@ void __cdecl MSVCRT__adj_fpatan(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fprem(void)
+void _adj_fprem(void)
 {
   TRACE("(): stub");
 }
@@ -869,7 +869,7 @@ void __cdecl MSVCRT__adj_fprem(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fprem1(void)
+void _adj_fprem1(void)
 {
   TRACE("(): stub");
 }
@@ -883,7 +883,7 @@ void __cdecl MSVCRT__adj_fprem1(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__adj_fptan(void)
+void _adj_fptan(void)
 {
   TRACE("(): stub");
 }
@@ -894,7 +894,7 @@ void __cdecl MSVCRT__adj_fptan(void)
  *    I _think_ this function should be a variable indicating whether
  *    Pentium fdiv bug safe code should be used.
  */
-void __cdecl MSVCRT__adjust_fdiv(void)
+void _adjust_fdiv(void)
 {
   TRACE("(): stub");
 }
@@ -908,7 +908,7 @@ void __cdecl MSVCRT__adjust_fdiv(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__safe_fdiv(void)
+void _safe_fdiv(void)
 {
   TRACE("(): stub");
 }
@@ -922,7 +922,7 @@ void __cdecl MSVCRT__safe_fdiv(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__safe_fdivr(void)
+void _safe_fdivr(void)
 {
   TRACE("(): stub");
 }
@@ -936,7 +936,7 @@ void __cdecl MSVCRT__safe_fdivr(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__safe_fprem(void)
+void _safe_fprem(void)
 {
   TRACE("(): stub");
 }
@@ -951,7 +951,7 @@ void __cdecl MSVCRT__safe_fprem(void)
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void __cdecl MSVCRT__safe_fprem1(void)
+void _safe_fprem1(void)
 {
   TRACE("(): stub");
 }

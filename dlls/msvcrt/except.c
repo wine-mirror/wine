@@ -21,8 +21,8 @@ typedef void (*MSVCRT_sig_handler_func)(void);
 typedef struct _SCOPETABLE
 {
   DWORD previousTryLevel;
-  int (__cdecl *lpfnFilter)(PEXCEPTION_POINTERS);
-  int (__cdecl *lpfnHandler)(void);
+  int (*lpfnFilter)(PEXCEPTION_POINTERS);
+  int (*lpfnHandler)(void);
 } SCOPETABLE, *PSCOPETABLE;
 
 typedef struct _MSVCRT_EXCEPTION_FRAME
@@ -44,10 +44,10 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
   __asm__ __volatile__ ("movl %0,%%eax; movl %1,%%ebp; call *%%eax" \
                         : : "g" (code_block), "g" (base_ptr))
 
-static DWORD __cdecl MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
-                                           struct __EXCEPTION_FRAME *frame,
-                                           PCONTEXT context WINE_UNUSED,
-                                           struct __EXCEPTION_FRAME **dispatch)
+static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
+                                   struct __EXCEPTION_FRAME* frame,
+                                   PCONTEXT context WINE_UNUSED,
+                                   struct __EXCEPTION_FRAME** dispatch)
 {
   if (rec->ExceptionFlags & 0x6)
     return ExceptionContinueSearch;
@@ -60,7 +60,7 @@ static DWORD __cdecl MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_XcptFilter (MSVCRT.@)
  */
-int __cdecl MSVCRT__XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
+int _XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
 {
   FIXME("(%d,%p)semi-stub\n", ex, ptr);
   return UnhandledExceptionFilter(ptr);
@@ -71,7 +71,7 @@ int __cdecl MSVCRT__XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
  */
 #ifdef __i386__
 /* Provided for VC++ binary compatability only */
-__ASM_GLOBAL_FUNC(MSVCRT__EH_prolog,
+__ASM_GLOBAL_FUNC(_EH_prolog,
                   "pushl $0xff\n\t"
                   "pushl %eax\n\t"
                   "pushl %fs:0\n\t"
@@ -86,7 +86,7 @@ __ASM_GLOBAL_FUNC(MSVCRT__EH_prolog,
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)
  */
-void __cdecl MSVCRT__global_unwind2(PEXCEPTION_FRAME frame)
+void _global_unwind2(PEXCEPTION_FRAME frame)
 {
     TRACE("(%p)\n",frame);
     RtlUnwind( frame, 0, 0, 0 );
@@ -95,8 +95,8 @@ void __cdecl MSVCRT__global_unwind2(PEXCEPTION_FRAME frame)
 /*******************************************************************
  *		_local_unwind2 (MSVCRT.@)
  */
-void __cdecl MSVCRT__local_unwind2(MSVCRT_EXCEPTION_FRAME *frame,
-                                   DWORD trylevel)
+void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame,
+                    DWORD trylevel)
 {
   MSVCRT_EXCEPTION_FRAME *curframe = frame;
   DWORD curtrylevel = 0xfe;
@@ -129,10 +129,10 @@ void __cdecl MSVCRT__local_unwind2(MSVCRT_EXCEPTION_FRAME *frame,
 /*********************************************************************
  *		_except_handler2 (MSVCRT.@)
  */
-int __cdecl MSVCRT__except_handler2(PEXCEPTION_RECORD rec,
-                                    PEXCEPTION_FRAME frame,
-                                    PCONTEXT context,
-                                    PEXCEPTION_FRAME *dispatcher)
+int _except_handler2(PEXCEPTION_RECORD rec,
+                     PEXCEPTION_FRAME frame,
+                     PCONTEXT context,
+                     PEXCEPTION_FRAME* dispatcher)
 {
   FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -143,9 +143,9 @@ int __cdecl MSVCRT__except_handler2(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_except_handler3 (MSVCRT.@)
  */
-int __cdecl MSVCRT__except_handler3(PEXCEPTION_RECORD rec,
-                                    MSVCRT_EXCEPTION_FRAME *frame,
-                                    PCONTEXT context,void *dispatcher)
+int _except_handler3(PEXCEPTION_RECORD rec,
+                     MSVCRT_EXCEPTION_FRAME* frame,
+                     PCONTEXT context, void* dispatcher)
 {
 #if defined(__GNUC__) && defined(__i386__)
   long retval, trylevel;
@@ -161,7 +161,7 @@ int __cdecl MSVCRT__except_handler3(PEXCEPTION_RECORD rec,
   if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
   {
     /* Unwinding the current frame */
-     MSVCRT__local_unwind2(frame, TRYLEVEL_END);
+     _local_unwind2(frame, TRYLEVEL_END);
     return ExceptionContinueSearch;
   }
   else
@@ -191,8 +191,8 @@ int __cdecl MSVCRT__except_handler3(PEXCEPTION_RECORD rec,
         if (retval == EXCEPTION_EXECUTE_HANDLER)
         {
           /* Unwind all higher frames, this one will handle the exception */
-          MSVCRT__global_unwind2((PEXCEPTION_FRAME)frame);
-          MSVCRT__local_unwind2(frame, trylevel);
+          _global_unwind2((PEXCEPTION_FRAME)frame);
+          _local_unwind2(frame, trylevel);
 
           /* Set our trylevel to the enclosing block, and call the __finally
            * code, which won't return
@@ -217,7 +217,7 @@ int __cdecl MSVCRT__except_handler3(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_abnormal_termination (MSVCRT.@)
  */
-int __cdecl MSVCRT__abnormal_termination(void)
+int _abnormal_termination(void)
 {
   FIXME("(void)stub\n");
   return 0;
@@ -226,7 +226,7 @@ int __cdecl MSVCRT__abnormal_termination(void)
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-int __cdecl MSVCRT__setjmp(LPDWORD *jmpbuf)
+int MSVCRT__setjmp(LPDWORD* jmpbuf)
 {
   FIXME(":(%p): stub\n",jmpbuf);
   return 0;
@@ -244,7 +244,7 @@ int __cdecl MSVCRT__setjmp3(LPDWORD *jmpbuf, int x)
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-void __cdecl MSVCRT_longjmp(jmp_buf env, int val)
+void MSVCRT_longjmp(jmp_buf env, int val)
 {
   FIXME("MSVCRT_longjmp semistub, expect crash\n");
   longjmp(env, val);
@@ -253,7 +253,7 @@ void __cdecl MSVCRT_longjmp(jmp_buf env, int val)
 /*********************************************************************
  *		signal (MSVCRT.@)
  */
-void * __cdecl MSVCRT_signal(int sig, MSVCRT_sig_handler_func func)
+void* MSVCRT_signal(int sig, MSVCRT_sig_handler_func func)
 {
   FIXME("(%d %p):stub\n", sig, func);
   return (void*)-1;

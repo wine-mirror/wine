@@ -37,87 +37,87 @@ WCHAR **MSVCRT___winitenv;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
 
-typedef void (__cdecl *MSVCRT__INITTERMFUN)(void);
+typedef void (*_INITTERMFUN)(void);
 
 /***********************************************************************
  *		__p___argc (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p___argc(void) { return &MSVCRT___argc; }
+unsigned int* __p___argc(void) { return &MSVCRT___argc; }
 
 /***********************************************************************
  *		__p__commode (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__commode(void) { return &MSVCRT__commode; }
+unsigned int* __p__commode(void) { return &MSVCRT__commode; }
 
 /***********************************************************************
  *		__p__fmode (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__fmode(void) { return &MSVCRT__fmode; }
+unsigned int* __p__fmode(void) { return &MSVCRT__fmode; }
 
 /***********************************************************************
  *		__p__osver (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__osver(void) { return &MSVCRT__osver; }
+unsigned int* __p__osver(void) { return &MSVCRT__osver; }
 
 /***********************************************************************
  *		__p__winmajor (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__winmajor(void) { return &MSVCRT__winmajor; }
+unsigned int* __p__winmajor(void) { return &MSVCRT__winmajor; }
 
 /***********************************************************************
  *		__p__winminor (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__winminor(void) { return &MSVCRT__winminor; }
+unsigned int* __p__winminor(void) { return &MSVCRT__winminor; }
 
 /***********************************************************************
  *		__p__winver (MSVCRT.@)
  */
-unsigned int *__cdecl MSVCRT___p__winver(void) { return &MSVCRT__winver; }
+unsigned int* __p__winver(void) { return &MSVCRT__winver; }
 
 /*********************************************************************
  *		__p__acmdln (MSVCRT.@)
  */
-char **__cdecl MSVCRT___p__acmdln(void) { return &MSVCRT__acmdln; }
+char** __p__acmdln(void) { return &MSVCRT__acmdln; }
 
 /*********************************************************************
  *		__p__wcmdln (MSVCRT.@)
  */
-WCHAR **__cdecl MSVCRT___p__wcmdln(void) { return &MSVCRT__wcmdln; }
+WCHAR** __p__wcmdln(void) { return &MSVCRT__wcmdln; }
 
 /*********************************************************************
  *		__p___argv (MSVCRT.@)
  */
-char ***__cdecl MSVCRT___p___argv(void) { return &MSVCRT___argv; }
+char*** __p___argv(void) { return &MSVCRT___argv; }
 
 /*********************************************************************
  *		__p___wargv (MSVCRT.@)
  */
-WCHAR ***__cdecl MSVCRT___p___wargv(void) { return &MSVCRT___wargv; }
+WCHAR*** __p___wargv(void) { return &MSVCRT___wargv; }
 
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char **__cdecl MSVCRT___p__environ(void) { return &MSVCRT__environ; }
+char** __p__environ(void) { return &MSVCRT__environ; }
 
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-WCHAR **__cdecl MSVCRT___p__wenviron(void) { return &MSVCRT__wenviron; }
+WCHAR** __p__wenviron(void) { return &MSVCRT__wenviron; }
 
 /*********************************************************************
  *		__p___initenv (MSVCRT.@)
  */
-char ***__cdecl MSVCRT___p___initenv(void) { return &MSVCRT___initenv; }
+char*** __p___initenv(void) { return &MSVCRT___initenv; }
 
 /*********************************************************************
  *		__p___winitenv (MSVCRT.@)
  */
-WCHAR ***__cdecl MSVCRT___p___winitenv(void) { return &MSVCRT___winitenv; }
+WCHAR*** __p___winitenv(void) { return &MSVCRT___winitenv; }
 
 /*********************************************************************
  *		__p__timezone (MSVCRT.@)
  */
-int *__cdecl MSVCRT___p__timezone(void) { return &MSVCRT_timezone; }
+int* __p__timezone(void) { return &MSVCRT_timezone; }
 
 /* INTERNAL: Create a wide string from an ascii string */
 static WCHAR *wstrdupa(const char *str)
@@ -135,19 +135,19 @@ static WCHAR *wstrdupa(const char *str)
  * program we simply return the data we've already initialised. This also means
  * you can call multiple times without leaking
  */
-void MSVCRT_init_args(void)
+void msvcrt_init_args(void)
 {
   char *cmdline, **xargv = NULL;
   WCHAR *wcmdline, **wxargv = NULL;
   int xargc,end,last_arg,afterlastspace;
   DWORD version;
 
-  MSVCRT__acmdln = MSVCRT__strdup( GetCommandLineA() );
+  MSVCRT__acmdln = _strdup( GetCommandLineA() );
   MSVCRT__wcmdln = wcmdline = wstrdupa(MSVCRT__acmdln);
 
   /* Make a copy of MSVCRT__acmdln to be able modify it.
      We will free it at the end of processing. */
-  cmdline = MSVCRT__strdup(MSVCRT__acmdln);
+  cmdline = _strdup(MSVCRT__acmdln);
 
   TRACE("got '%s', wide = '%s'\n", cmdline, debugstr_w(wcmdline));
 
@@ -187,7 +187,7 @@ void MSVCRT_init_args(void)
 
       if (strlen(cmdline+afterlastspace))
       {
-        xargv[xargc] = MSVCRT__strdup(cmdline+afterlastspace);
+        xargv[xargc] = _strdup(cmdline+afterlastspace);
         wxargv[xargc] = wstrdupa(xargv[xargc]);
         xargc++;
         if (!last_arg) /* need to seek to the next arg ? */
@@ -224,7 +224,7 @@ void MSVCRT_init_args(void)
 
 
 /* INTERNAL: free memory used by args */
-void MSVCRT_free_args(void)
+void msvcrt_free_args(void)
 {
   /* FIXME */
 }
@@ -232,7 +232,7 @@ void MSVCRT_free_args(void)
 /*********************************************************************
  *		__getmainargs (MSVCRT.@)
  */
-void __cdecl MSVCRT___getmainargs(int *argc, char ***argv, char **environ,
+void __getmainargs(int *argc, char ***argv, char **environ,
                                   int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, environ, expand_wildcards, new_mode);
@@ -245,7 +245,7 @@ void __cdecl MSVCRT___getmainargs(int *argc, char ***argv, char **environ,
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-void __cdecl MSVCRT___wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
+void __wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
                                    int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenviron, expand_wildcards, new_mode);
@@ -258,9 +258,9 @@ void __cdecl MSVCRT___wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
 /*********************************************************************
  *		_initterm (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__initterm(MSVCRT__INITTERMFUN *start,MSVCRT__INITTERMFUN *end)
+unsigned int _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 {
-  MSVCRT__INITTERMFUN*current = start;
+  _INITTERMFUN* current = start;
 
   TRACE("(%p,%p)\n",start,end);
   while (current<end)
@@ -279,7 +279,7 @@ unsigned int __cdecl MSVCRT__initterm(MSVCRT__INITTERMFUN *start,MSVCRT__INITTER
 /*********************************************************************
  *		__set_app_type (MSVCRT.@)
  */
-void __cdecl MSVCRT___set_app_type(int app_type)
+void MSVCRT___set_app_type(int app_type)
 {
   TRACE("(%d) %s application\n", app_type, app_type == 2 ? "Gui" : "Console");
   MSVCRT_app_type = app_type;

@@ -8,12 +8,12 @@
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-typedef int (__cdecl *MSVCRT_comp_func)(const void*, const void*);
+typedef int (*MSVCRT_comp_func)(const void*, const void*);
 
 /*********************************************************************
  *		_beep (MSVCRT.@)
  */
-void __cdecl MSVCRT__beep( unsigned int freq, unsigned int duration)
+void _beep( unsigned int freq, unsigned int duration)
 {
     TRACE(":Freq %d, Duration %d\n",freq,duration);
     Beep(freq, duration);
@@ -24,7 +24,7 @@ extern int rand(void);
 /*********************************************************************
  *		rand (MSVCRT.@)
  */
-int __cdecl MSVCRT_rand()
+int MSVCRT_rand()
 {
   return (rand() & 0x7fff);
 }
@@ -32,17 +32,18 @@ int __cdecl MSVCRT_rand()
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-void __cdecl MSVCRT__sleep(unsigned long timeout)
+void _sleep(unsigned long timeout)
 {
-  TRACE("MSVCRT__sleep for %ld milliseconds\n",timeout);
+  TRACE("_sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
 }
 
 /*********************************************************************
  *		_lfind (MSVCRT.@)
  */
-void* __cdecl MSVCRT__lfind(const void * match, const void * start,
-unsigned int * array_size,unsigned int elem_size, MSVCRT_comp_func cf)
+void* _lfind(const void* match, const void* start,
+             unsigned int* array_size, unsigned int elem_size,
+             MSVCRT_comp_func cf)
 {
   unsigned int size = *array_size;
   if (size)
@@ -58,8 +59,9 @@ unsigned int * array_size,unsigned int elem_size, MSVCRT_comp_func cf)
 /*********************************************************************
  *		_lsearch (MSVCRT.@)
  */
-void * __cdecl MSVCRT__lsearch(const void * match,void *  start,
-unsigned int * array_size,unsigned int elem_size, MSVCRT_comp_func cf)
+void* _lsearch(const void* match, void* start,
+               unsigned int* array_size, unsigned int elem_size,
+               MSVCRT_comp_func cf)
 {
   unsigned int size = *array_size;
   if (size)
@@ -79,7 +81,7 @@ unsigned int * array_size,unsigned int elem_size, MSVCRT_comp_func cf)
 /*********************************************************************
  *		_chkesp (MSVCRT.@)
  */
-void __cdecl MSVCRT__chkesp(void)
+void _chkesp(void)
 {
 
 }

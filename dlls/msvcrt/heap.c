@@ -41,7 +41,7 @@ static int MSVCRT_new_mode;
 /*********************************************************************
  *		operator_new (MSVCRT.@)
  */
-void *__cdecl MSVCRT_operator_new(unsigned long size)
+void* MSVCRT_operator_new(unsigned long size)
 {
   void *retval = HeapAlloc(GetProcessHeap(), 0, size);
   TRACE("(%ld) returning %p\n", size, retval);
@@ -55,7 +55,7 @@ void *__cdecl MSVCRT_operator_new(unsigned long size)
 /*********************************************************************
  *		operator_delete (MSVCRT.@)
  */
-void __cdecl MSVCRT_operator_delete(void *mem)
+void MSVCRT_operator_delete(void *mem)
 {
   TRACE("(%p)\n", mem);
   HeapFree(GetProcessHeap(), 0, mem);
@@ -65,7 +65,7 @@ void __cdecl MSVCRT_operator_delete(void *mem)
 /*********************************************************************
  *		?_query_new_handler@@YAP6AHI@ZXZ (MSVCRT.@)
  */
-MSVCRT_new_handler_func __cdecl MSVCRT__query_new_handler(void)
+MSVCRT_new_handler_func MSVCRT__query_new_handler(void)
 {
   return MSVCRT_new_handler;
 }
@@ -74,7 +74,7 @@ MSVCRT_new_handler_func __cdecl MSVCRT__query_new_handler(void)
 /*********************************************************************
  *		?_query_new_mode@@YAHXZ (MSVCRT.@)
  */
-int __cdecl MSVCRT__query_new_mode(void)
+int MSVCRT__query_new_mode(void)
 {
   return MSVCRT_new_mode;
 }
@@ -82,7 +82,7 @@ int __cdecl MSVCRT__query_new_mode(void)
 /*********************************************************************
  *		?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z (MSVCRT.@)
  */
-MSVCRT_new_handler_func __cdecl MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
+MSVCRT_new_handler_func MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
 {
   MSVCRT_new_handler_func old_handler;
   LOCK_HEAP;
@@ -95,7 +95,7 @@ MSVCRT_new_handler_func __cdecl MSVCRT__set_new_handler(MSVCRT_new_handler_func 
 /*********************************************************************
  *		?_set_new_mode@@YAHH@Z (MSVCRT.@)
  */
-int __cdecl MSVCRT__set_new_mode(int mode)
+int MSVCRT__set_new_mode(int mode)
 {
   int old_mode;
   LOCK_HEAP;
@@ -108,7 +108,7 @@ int __cdecl MSVCRT__set_new_mode(int mode)
 /*********************************************************************
  *		_expand (MSVCRT.@)
  */
-void *__cdecl MSVCRT__expand(void *mem, unsigned int size)
+void* _expand(void* mem, unsigned int size)
 {
   return HeapReAlloc(GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, mem, size);
 }
@@ -116,7 +116,7 @@ void *__cdecl MSVCRT__expand(void *mem, unsigned int size)
 /*********************************************************************
  *		_heapchk (MSVCRT.@)
  */
-int __cdecl MSVCRT__heapchk(void)
+int _heapchk(void)
 {
   if (!HeapValidate( GetProcessHeap(), 0, NULL))
   {
@@ -129,7 +129,7 @@ int __cdecl MSVCRT__heapchk(void)
 /*********************************************************************
  *		_heapmin (MSVCRT.@)
  */
-int __cdecl MSVCRT__heapmin(void)
+int _heapmin(void)
 {
   if (!HeapCompact( GetProcessHeap(), 0 ))
   {
@@ -143,7 +143,7 @@ int __cdecl MSVCRT__heapmin(void)
 /*********************************************************************
  *		_heapwalk (MSVCRT.@)
  */
-int __cdecl MSVCRT__heapwalk(MSVCRT_HEAPINFO *next)
+int _heapwalk(MSVCRT_HEAPINFO* next)
 {
   PROCESS_HEAP_ENTRY phe;
 
@@ -184,14 +184,14 @@ int __cdecl MSVCRT__heapwalk(MSVCRT_HEAPINFO *next)
 /*********************************************************************
  *		_heapset (MSVCRT.@)
  */
-int __cdecl MSVCRT__heapset(unsigned int value)
+int _heapset(unsigned int value)
 {
   int retval;
   MSVCRT_HEAPINFO heap;
 
   memset( &heap, 0, sizeof(MSVCRT_HEAPINFO) );
   LOCK_HEAP;
-  while ((retval = MSVCRT__heapwalk(&heap)) == MSVCRT_HEAPOK)
+  while ((retval = _heapwalk(&heap)) == MSVCRT_HEAPOK)
   {
     if (heap._useflag == MSVCRT_FREEENTRY)
       memset(heap._pentry, value, heap._size);
@@ -203,7 +203,7 @@ int __cdecl MSVCRT__heapset(unsigned int value)
 /*********************************************************************
  *		_msize (MSVCRT.@)
  */
-long __cdecl MSVCRT__msize(void *mem)
+long _msize(void* mem)
 {
   long size = HeapSize(GetProcessHeap(),0,mem);
   if (size == -1)
@@ -217,7 +217,7 @@ long __cdecl MSVCRT__msize(void *mem)
 /*********************************************************************
  *		calloc (MSVCRT.@)
  */
-void *__cdecl MSVCRT_calloc(unsigned int size, unsigned int count)
+void* MSVCRT_calloc(unsigned int size, unsigned int count)
 {
   return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size * count );
 }
@@ -225,7 +225,7 @@ void *__cdecl MSVCRT_calloc(unsigned int size, unsigned int count)
 /*********************************************************************
  *		free (MSVCRT.@)
  */
-void __cdecl MSVCRT_free(void *ptr)
+void MSVCRT_free(void* ptr)
 {
   HeapFree(GetProcessHeap(),0,ptr);
 }
@@ -233,7 +233,7 @@ void __cdecl MSVCRT_free(void *ptr)
 /*********************************************************************
  *                  malloc (MSVCRT.@)
  */
-void * __cdecl MSVCRT_malloc(unsigned int size)
+void* MSVCRT_malloc(unsigned int size)
 {
   void *ret = HeapAlloc(GetProcessHeap(),0,size);
   if (!ret)
@@ -244,7 +244,7 @@ void * __cdecl MSVCRT_malloc(unsigned int size)
 /*********************************************************************
  *		realloc (MSVCRT.@)
  */
-void *__cdecl MSVCRT_realloc(void *ptr, unsigned int size)
+void* MSVCRT_realloc(void* ptr, unsigned int size)
 {
   return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }

@@ -8,9 +8,9 @@
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
-void __cdecl MSVCRT__purecall(void);
+void _purecall(void);
 
-typedef void (__cdecl *v_table_ptr)();
+typedef void (*v_table_ptr)();
 
 static v_table_ptr exception_vtable[2];
 static v_table_ptr bad_typeid_vtable[3];
@@ -50,7 +50,7 @@ typedef struct __type_info
 /******************************************************************
  *		exception_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_exception_ctor(exception * _this, const char ** name)
+void MSVCRT_exception_ctor(exception * _this, const char ** name)
 {
   TRACE("(%p %s)\n",_this,*name);
   _this->vtable = exception_vtable;
@@ -62,7 +62,7 @@ void __cdecl MSVCRT_exception_ctor(exception * _this, const char ** name)
 /******************************************************************
  *		exception_copy_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs)
+void MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   if (_this != rhs)
@@ -73,7 +73,7 @@ void __cdecl MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs
 /******************************************************************
  *		exception_default_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_exception_default_ctor(exception * _this)
+void MSVCRT_exception_default_ctor(exception * _this)
 {
   TRACE("(%p)\n",_this);
   _this->vtable = exception_vtable;
@@ -84,7 +84,7 @@ void __cdecl MSVCRT_exception_default_ctor(exception * _this)
 /******************************************************************
  *		exception_dtor (MSVCRT.@)
  */
-void __cdecl MSVCRT_exception_dtor(exception * _this)
+void MSVCRT_exception_dtor(exception * _this)
 {
   TRACE("(%p)\n",_this);
 }
@@ -92,7 +92,7 @@ void __cdecl MSVCRT_exception_dtor(exception * _this)
 /******************************************************************
  *		exception_opequals (MSVCRT.@)
  */
-exception * __cdecl MSVCRT_exception_opequals(exception * _this, const exception * rhs)
+exception * MSVCRT_exception_opequals(exception * _this, const exception * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   memcpy (_this, rhs, sizeof (*_this));
@@ -103,20 +103,20 @@ exception * __cdecl MSVCRT_exception_opequals(exception * _this, const exception
 /******************************************************************
  *		exception__unknown_E (MSVCRT.@)
  */
-void * __cdecl MSVCRT_exception__unknown_E(exception * _this, unsigned int arg1)
+void * MSVCRT_exception__unknown_E(exception * _this, unsigned int arg1)
 {
   TRACE("(%p %d)\n",_this,arg1);
-  MSVCRT__purecall();
+  _purecall();
   return NULL;
 }
 
 /******************************************************************
  *		exception__unknown_G (MSVCRT.@)
  */
-void * __cdecl MSVCRT_exception__unknown_G(exception * _this, unsigned int arg1)
+void * MSVCRT_exception__unknown_G(exception * _this, unsigned int arg1)
 {
   TRACE("(%p %d)\n",_this,arg1);
-  MSVCRT__purecall();
+  _purecall();
   return NULL;
 }
 
@@ -133,7 +133,7 @@ const char * __stdcall MSVCRT_exception_what(exception * _this)
 /******************************************************************
  *		bad_typeid_copy_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * rhs)
+void MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   MSVCRT_exception_copy_ctor(&_this->base,&rhs->base);
@@ -142,7 +142,7 @@ void __cdecl MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * 
 /******************************************************************
  *		bad_typeid_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
+void MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
 {
   TRACE("(%p %s)\n",_this,name);
   MSVCRT_exception_ctor(&_this->base, &name);
@@ -152,7 +152,7 @@ void __cdecl MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
 /******************************************************************
  *		bad_typeid_dtor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_typeid_dtor(bad_typeid * _this)
+void MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 {
   TRACE("(%p)\n",_this);
   MSVCRT_exception_dtor(&_this->base);
@@ -161,7 +161,7 @@ void __cdecl MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 /******************************************************************
  *		bad_typeid_opequals (MSVCRT.@)
  */
-bad_typeid * __cdecl MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_typeid * rhs)
+bad_typeid * MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_typeid * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   MSVCRT_exception_copy_ctor(&_this->base,&rhs->base);
@@ -171,7 +171,7 @@ bad_typeid * __cdecl MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_ty
 /******************************************************************
  *		__non_rtti_object_copy_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
+void MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
                                                 const __non_rtti_object * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
@@ -181,7 +181,7 @@ void __cdecl MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
 /******************************************************************
  *		__non_rtti_object_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
+void MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
                                            const char * name)
 {
   TRACE("(%p %s)\n",_this,name);
@@ -192,7 +192,7 @@ void __cdecl MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
 /******************************************************************
  *		__non_rtti_object_dtor (MSVCRT.@)
  */
-void __cdecl MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
+void MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 {
   TRACE("(%p)\n",_this);
   MSVCRT_bad_typeid_dtor(&_this->base);
@@ -201,7 +201,7 @@ void __cdecl MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 /******************************************************************
  *		__non_rtti_object_opequals (MSVCRT.@)
  */
-__non_rtti_object * __cdecl MSVCRT___non_rtti_object_opequals(__non_rtti_object * _this,
+__non_rtti_object * MSVCRT___non_rtti_object_opequals(__non_rtti_object * _this,
                                                               const __non_rtti_object *rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
@@ -213,27 +213,27 @@ __non_rtti_object * __cdecl MSVCRT___non_rtti_object_opequals(__non_rtti_object 
 /******************************************************************
  *		__non_rtti_object__unknown_E (MSVCRT.@)
  */
-void * __cdecl MSVCRT___non_rtti_object__unknown_E(__non_rtti_object * _this, unsigned int arg1)
+void * MSVCRT___non_rtti_object__unknown_E(__non_rtti_object * _this, unsigned int arg1)
 {
   TRACE("(%p %d)\n",_this,arg1);
-  MSVCRT__purecall();
+  _purecall();
   return NULL;
 }
 
 /******************************************************************
  *		__non_rtti_object__unknown_G (MSVCRT.@)
  */
-void * __cdecl MSVCRT___non_rtti_object__unknown_G(__non_rtti_object * _this, unsigned int arg1)
+void * MSVCRT___non_rtti_object__unknown_G(__non_rtti_object * _this, unsigned int arg1)
 {
   TRACE("(%p %d)\n",_this,arg1);
-  MSVCRT__purecall();
+  _purecall();
   return NULL;
 }
 
 /******************************************************************
  *		bad_cast_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
+void MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 {
   TRACE("(%p %s)\n",_this,*name);
   MSVCRT_exception_ctor(&_this->base, name);
@@ -243,7 +243,7 @@ void __cdecl MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 /******************************************************************
  *		bad_cast_copy_ctor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
+void MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   MSVCRT_exception_copy_ctor(&_this->base,&rhs->base);
@@ -252,7 +252,7 @@ void __cdecl MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
 /******************************************************************
  *		bad_cast_dtor (MSVCRT.@)
  */
-void __cdecl MSVCRT_bad_cast_dtor(bad_cast * _this)
+void MSVCRT_bad_cast_dtor(bad_cast * _this)
 {
   TRACE("(%p)\n",_this);
   MSVCRT_exception_dtor(&_this->base);
@@ -261,7 +261,7 @@ void __cdecl MSVCRT_bad_cast_dtor(bad_cast * _this)
 /******************************************************************
  *		bad_cast_opequals (MSVCRT.@)
  */
-bad_cast * __cdecl MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast * rhs)
+bad_cast * MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast * rhs)
 {
   TRACE("(%p %p)\n",_this,rhs);
   MSVCRT_exception_copy_ctor(&_this->base,&rhs->base);
@@ -289,7 +289,7 @@ int __stdcall MSVCRT_type_info_opnot_equals(type_info * _this, const type_info *
 /******************************************************************
  *		type_info_dtor (MSVCRT.@)
  */
-void __cdecl MSVCRT_type_info_dtor(type_info * _this)
+void MSVCRT_type_info_dtor(type_info * _this)
 {
   TRACE("(%p)\n",_this);
   if (_this->data)
@@ -318,14 +318,14 @@ const char * __stdcall MSVCRT_type_info_raw_name(type_info * _this)
 /* INTERNAL: Set up vtables
  * FIXME:should be static, cope with versions?
  */
-void MSVCRT_init_vtables(void)
+void msvcrt_init_vtables(void)
 {
   exception_vtable[0] = MSVCRT_exception_dtor;
   exception_vtable[1] = (void*)MSVCRT_exception_what;
 
   bad_typeid_vtable[0] = MSVCRT_bad_typeid_dtor;
   bad_typeid_vtable[1] = exception_vtable[1];
-  bad_typeid_vtable[2] = MSVCRT__purecall; /* FIXME */
+  bad_typeid_vtable[2] = _purecall; /* FIXME */
 
   __non_rtti_object_vtable[0] = MSVCRT___non_rtti_object_dtor;
   __non_rtti_object_vtable[1] = bad_typeid_vtable[1];
@@ -333,7 +333,7 @@ void MSVCRT_init_vtables(void)
 
   bad_cast_vtable[0] = MSVCRT_bad_cast_dtor;
   bad_cast_vtable[1] = exception_vtable[1];
-  bad_cast_vtable[2] = MSVCRT__purecall; /* FIXME */
+  bad_cast_vtable[2] = _purecall; /* FIXME */
 
   type_info_vtable[0] = MSVCRT_type_info_dtor;
 

@@ -73,7 +73,7 @@ void MSVCRT__set_errno(int err)
 /*********************************************************************
  *		_errno (MSVCRT.@)
  */
-int *__cdecl MSVCRT__errno(void)
+int* MSVCRT__errno(void)
 {
   return GET_THREAD_VAR_PTR(errno);
 }
@@ -81,7 +81,7 @@ int *__cdecl MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-int *__cdecl MSVCRT___doserrno(void)
+int* __doserrno(void)
 {
   return GET_THREAD_VAR_PTR(doserrno);
 }
@@ -91,7 +91,7 @@ char *strerror(int);
 /*********************************************************************
  *		strerror (MSVCRT.@)
  */
-char * __cdecl MSVCRT_strerror (int err)
+char* MSVCRT_strerror(int err)
 {
   return strerror(err); /* FIXME */
 }
@@ -101,19 +101,19 @@ char * __cdecl MSVCRT_strerror (int err)
  */
 extern int sprintf(char *str, const char *format, ...);
 
-const char *__cdecl MSVCRT__strerror (const char *err)
+const char* _strerror(const char* err)
 {
   static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
   sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(GET_THREAD_VAR(errno)));
   return strerrbuff;
 }
 
-int __cdecl MSVCRT__cprintf( const char * format, ... );
+int _cprintf( const char * format, ... );
 
 /*********************************************************************
  *		perror (MSVCRT.@)
  */
-void __cdecl MSVCRT_perror (const char *str)
+void MSVCRT_perror(const char *str)
 {
-  MSVCRT__cprintf("%s: %s\n",str,MSVCRT_strerror(GET_THREAD_VAR(errno)));
+  _cprintf("%s: %s\n",str,MSVCRT_strerror(GET_THREAD_VAR(errno)));
 }

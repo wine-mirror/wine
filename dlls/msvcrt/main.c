@@ -17,23 +17,23 @@ CRITICAL_SECTION MSVCRT_exit_cs;
 CRITICAL_SECTION MSVCRT_console_cs;
 CRITICAL_SECTION MSVCRT_locale_cs;
 
-static inline BOOL MSVCRT_init_tls(void);
-static inline BOOL MSVCRT_free_tls(void);
-static inline void MSVCRT_init_critical_sections(void);
-static inline void MSVCRT_free_critical_sections(void);
+static inline BOOL msvcrt_init_tls(void);
+static inline BOOL msvcrt_free_tls(void);
+static inline void msvcrt_init_critical_sections(void);
+static inline void msvcrt_free_critical_sections(void);
 #ifdef __GNUC__
-const char *MSVCRT_get_reason(DWORD reason) __attribute__((unused));
+const char *msvcrt_get_reason(DWORD reason) __attribute__((unused));
 #else
-const char *MSVCRT_get_reason(DWORD reason);
+const char *msvcrt_get_reason(DWORD reason);
 #endif
 
-void MSVCRT_init_io(void);
-void MSVCRT_init_console(void);
-void MSVCRT_free_console(void);
-void MSVCRT_init_args(void);
-void MSVCRT_free_args(void);
-void MSVCRT_init_vtables(void);
-char *__cdecl MSVCRT_setlocale(int category, const char *locale);
+void msvcrt_init_io(void);
+void msvcrt_init_console(void);
+void msvcrt_free_console(void);
+void msvcrt_init_args(void);
+void msvcrt_free_args(void);
+void msvcrt_init_vtables(void);
+char* MSVCRT_setlocale(int category, const char* locale);
 
 
 /*********************************************************************
@@ -44,20 +44,20 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   MSVCRT_thread_data *tls;
 
   TRACE("(0x%08x, %s, %p) pid(%ld), tid(%ld), tls(%ld)\n",
-        hinstDLL, MSVCRT_get_reason(fdwReason), lpvReserved,
+        hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         (long)GetCurrentProcessId(), (long)GetCurrentThreadId(),
         (long)MSVCRT_tls_index);
 
   switch (fdwReason)
   {
   case DLL_PROCESS_ATTACH:
-    if (!MSVCRT_init_tls())
+    if (!msvcrt_init_tls())
       return FALSE;
-    MSVCRT_init_vtables();
-    MSVCRT_init_critical_sections();
-    MSVCRT_init_io();
-    MSVCRT_init_console();
-    MSVCRT_init_args();
+    msvcrt_init_vtables();
+    msvcrt_init_critical_sections();
+    msvcrt_init_io();
+    msvcrt_init_console();
+    msvcrt_init_args();
     MSVCRT_setlocale(0, "C");
     TRACE("finished process init\n");
     /* FALL THROUGH for Initial TLS allocation!! */
@@ -74,11 +74,11 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     TRACE("finished thread init\n");
     break;
   case DLL_PROCESS_DETACH:
-    MSVCRT_free_critical_sections();
-    MSVCRT__fcloseall();
-    MSVCRT_free_console();
-    MSVCRT_free_args();
-    if (!MSVCRT_free_tls())
+    msvcrt_free_critical_sections();
+    _fcloseall();
+    msvcrt_free_console();
+    msvcrt_free_args();
+    if (!msvcrt_free_tls())
       return FALSE;
     TRACE("finished process free\n");
     break;
@@ -98,7 +98,7 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   return TRUE;
 }
 
-static inline BOOL MSVCRT_init_tls(void)
+static inline BOOL msvcrt_init_tls(void)
 {
   MSVCRT_tls_index = TlsAlloc();
 
@@ -110,7 +110,7 @@ static inline BOOL MSVCRT_init_tls(void)
   return TRUE;
 }
 
-static inline BOOL MSVCRT_free_tls(void)
+static inline BOOL msvcrt_free_tls(void)
 {
   if (!TlsFree(MSVCRT_tls_index))
   {
@@ -120,7 +120,7 @@ static inline BOOL MSVCRT_free_tls(void)
   return TRUE;
 }
 
-static inline void MSVCRT_init_critical_sections(void)
+static inline void msvcrt_init_critical_sections(void)
 {
   InitializeCriticalSectionAndSpinCount(&MSVCRT_heap_cs, 4000);
   InitializeCriticalSection(&MSVCRT_file_cs);
@@ -129,7 +129,7 @@ static inline void MSVCRT_init_critical_sections(void)
   InitializeCriticalSection(&MSVCRT_locale_cs);
 }
 
-static inline void MSVCRT_free_critical_sections(void)
+static inline void msvcrt_free_critical_sections(void)
 {
   DeleteCriticalSection(&MSVCRT_locale_cs);
   DeleteCriticalSection(&MSVCRT_console_cs);
@@ -138,7 +138,7 @@ static inline void MSVCRT_free_critical_sections(void)
   DeleteCriticalSection(&MSVCRT_heap_cs);
 }
 
-const char *MSVCRT_get_reason(DWORD reason)
+const char* msvcrt_get_reason(DWORD reason)
 {
   switch (reason)
   {

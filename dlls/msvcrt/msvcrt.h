@@ -34,13 +34,13 @@ typedef struct __MSVCRT_thread_data
   ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x = y
 
 void  MSVCRT__set_errno(int);
-int   __cdecl MSVCRT__set_new_mode(int mode);
-int   __cdecl MSVCRT__fcloseall(void);
-void *__cdecl MSVCRT_malloc(unsigned int);
-void *__cdecl MSVCRT_calloc(unsigned int, unsigned int);
-void  __cdecl MSVCRT_free(void *);
-int   __cdecl MSVCRT__cputs(const char *);
-int   __cdecl MSVCRT__cprintf( const char *, ... );
-char *__cdecl MSVCRT__strdup(const char *);
+int   MSVCRT__set_new_mode(int mode);
+int   _fcloseall(void);
+void* MSVCRT_malloc(unsigned int);
+void* MSVCRT_calloc(unsigned int, unsigned int);
+void  MSVCRT_free(void *);
+int   _cputs(const char *);
+int   _cprintf( const char *, ... );
+char* _strdup(const char *);
 
 #endif /* __WINE_MSVCRT_H */

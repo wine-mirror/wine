@@ -254,7 +254,7 @@ static LCID MSVCRT_locale_to_LCID(locale_search_t* locale)
 extern int snprintf(char *, int, const char *, ...);
 
 /* INTERNAL: Set ctype behaviour for a codepage */
-static void MSVCRT_set_ctype(unsigned int codepage, LCID lcid)
+static void msvcrt_set_ctype(unsigned int codepage, LCID lcid)
 {
   CPINFO cp;
 
@@ -297,7 +297,7 @@ static void MSVCRT_set_ctype(unsigned int codepage, LCID lcid)
 /*********************************************************************
  *		setlocale (MSVCRT.@)
  */
-char *__cdecl MSVCRT_setlocale(int category, const char *locale)
+char* MSVCRT_setlocale(int category, const char* locale)
 {
   LCID lcid = 0;
   locale_search_t lc;
@@ -443,7 +443,7 @@ char *__cdecl MSVCRT_setlocale(int category, const char *locale)
   case MSVCRT_LC_COLLATE:
     if (!lc_all) break;
   case MSVCRT_LC_CTYPE:
-    MSVCRT_set_ctype(atoi(lc.found_codepage),lcid);
+    msvcrt_set_ctype(atoi(lc.found_codepage),lcid);
     if (!lc_all) break;
   case MSVCRT_LC_MONETARY:
     if (!lc_all) break;
@@ -459,7 +459,7 @@ char *__cdecl MSVCRT_setlocale(int category, const char *locale)
 /*********************************************************************
  *		_Getdays (MSVCRT.@)
  */
-const char *__cdecl MSVCRT__Getdays(void)
+const char* _Getdays(void)
 {
   static const char *MSVCRT_days = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:"
                             "Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
@@ -471,7 +471,7 @@ const char *__cdecl MSVCRT__Getdays(void)
 /*********************************************************************
  *		_Getmonths (MSVCRT.@)
  */
-const char *__cdecl MSVCRT__Getmonths(void)
+const char* _Getmonths(void)
 {
   static const char *MSVCRT_months = ":Jan:January:Feb:February:Mar:March:Apr:"
                 "April:May:May:Jun:June:Jul:July:Aug:August:Sep:September:Oct:"
@@ -484,7 +484,7 @@ const char *__cdecl MSVCRT__Getmonths(void)
 /*********************************************************************
  *		_Getnames (MSVCRT.@)
  */
-const char *__cdecl MSVCRT__Getnames(void)
+const char* _Getnames(void)
 {
   /* FIXME: */
   TRACE("(void) stub");
@@ -494,7 +494,7 @@ const char *__cdecl MSVCRT__Getnames(void)
 /*********************************************************************
  *		_Strftime (MSVCRT.@)
  */
-const char *__cdecl MSVCRT__Strftime(char *out, unsigned int len, const char *fmt,
+const char* _Strftime(char *out, unsigned int len, const char *fmt,
                                      const void *tm, void *foo)
 {
   /* FIXME: */
@@ -507,7 +507,7 @@ const char *__cdecl MSVCRT__Strftime(char *out, unsigned int len, const char *fm
 /*********************************************************************
  *		_setmbcp (MSVCRT.@)
  */
-void __cdecl MSVCRT__setmbcp(int cp)
+void _setmbcp(int cp)
 {
   LOCK_LOCALE;
   if (MSVCRT_current_lc_all_cp != cp)
@@ -521,7 +521,7 @@ void __cdecl MSVCRT__setmbcp(int cp)
 /*********************************************************************
  *		_getmbcp (MSVCRT.@)
  */
-int __cdecl MSVCRT__getmbcp(void)
+int _getmbcp(void)
 {
   return MSVCRT_current_lc_all_cp;
 }

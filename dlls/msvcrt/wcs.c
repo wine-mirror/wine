@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: MSVCRT_malloc() based wstrndup */
-LPWSTR MSVCRT__wstrndup(LPCWSTR buf, unsigned int size)
+LPWSTR msvcrt_wstrndup(LPCWSTR buf, unsigned int size)
 {
   WCHAR* ret;
   unsigned int len = strlenW(buf), max_len;
@@ -33,7 +33,7 @@ LPWSTR MSVCRT__wstrndup(LPCWSTR buf, unsigned int size)
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)
  */
-LPWSTR __cdecl MSVCRT__wcsdup( LPCWSTR str )
+LPWSTR _wcsdup( LPCWSTR str )
 {
   LPWSTR ret = NULL;
   if (str)
@@ -48,7 +48,7 @@ LPWSTR __cdecl MSVCRT__wcsdup( LPCWSTR str )
 /*********************************************************************
  *		_wcsicoll (MSVCRT.@)
  */
-INT __cdecl MSVCRT__wcsicoll( LPCWSTR str1, LPCWSTR str2 )
+INT _wcsicoll( LPCWSTR str1, LPCWSTR str2 )
 {
   /* FIXME: handle collates */
   return strcmpiW( str1, str2 );
@@ -57,7 +57,7 @@ INT __cdecl MSVCRT__wcsicoll( LPCWSTR str1, LPCWSTR str2 )
 /*********************************************************************
  *		_wcsnset (MSVCRT.@)
  */
-LPWSTR __cdecl MSVCRT__wcsnset( LPWSTR str, WCHAR c, INT n )
+LPWSTR _wcsnset( LPWSTR str, WCHAR c, INT n )
 {
   LPWSTR ret = str;
   while ((n-- > 0) && *str) *str++ = c;
@@ -67,7 +67,7 @@ LPWSTR __cdecl MSVCRT__wcsnset( LPWSTR str, WCHAR c, INT n )
 /*********************************************************************
  *		_wcsrev (MSVCRT.@)
  */
-LPWSTR __cdecl MSVCRT__wcsrev( LPWSTR str )
+LPWSTR _wcsrev( LPWSTR str )
 {
   LPWSTR ret = str;
   LPWSTR end = str + strlenW(str) - 1;
@@ -83,7 +83,7 @@ LPWSTR __cdecl MSVCRT__wcsrev( LPWSTR str )
 /*********************************************************************
  *		_wcsset (MSVCRT.@)
  */
-LPWSTR __cdecl MSVCRT__wcsset( LPWSTR str, WCHAR c )
+LPWSTR _wcsset( LPWSTR str, WCHAR c )
 {
   LPWSTR ret = str;
   while (*str) *str++ = c;
@@ -93,7 +93,7 @@ LPWSTR __cdecl MSVCRT__wcsset( LPWSTR str, WCHAR c )
 /*********************************************************************
  *		_vsnwprintf (MSVCRT.@)
  */
-int __cdecl MSVCRT__vsnwprintf(WCHAR *str, unsigned int len,
+int _vsnwprintf(WCHAR *str, unsigned int len,
                               const WCHAR *format, va_list valist)
 {
 /* If you fix a bug in this function, fix it in ntdll/wcstring.c also! */
@@ -219,15 +219,15 @@ int __cdecl MSVCRT__vsnwprintf(WCHAR *str, unsigned int len,
 /*********************************************************************
  *		vswprintf (MSVCRT.@)
  */
-int __cdecl MSVCRT_vswprintf( LPWSTR str, LPCWSTR format, va_list args )
+int MSVCRT_vswprintf( LPWSTR str, LPCWSTR format, va_list args )
 {
-  return MSVCRT__vsnwprintf( str, INT_MAX, format, args );
+  return _vsnwprintf( str, INT_MAX, format, args );
 }
 
 /*********************************************************************
  *		wcscoll (MSVCRT.@)
  */
-DWORD __cdecl MSVCRT_wcscoll( LPCWSTR str1, LPCWSTR str2 )
+DWORD MSVCRT_wcscoll( LPCWSTR str1, LPCWSTR str2 )
 {
   /* FIXME: handle collates */
   return strcmpW( str1, str2 );
@@ -236,7 +236,7 @@ DWORD __cdecl MSVCRT_wcscoll( LPCWSTR str1, LPCWSTR str2 )
 /*********************************************************************
  *		wcspbrk (MSVCRT.@)
  */
-LPWSTR __cdecl MSVCRT_wcspbrk( LPCWSTR str, LPCWSTR accept )
+LPWSTR MSVCRT_wcspbrk( LPCWSTR str, LPCWSTR accept )
 {
   LPCWSTR p;
   while (*str)
@@ -250,7 +250,7 @@ LPWSTR __cdecl MSVCRT_wcspbrk( LPCWSTR str, LPCWSTR accept )
 /*********************************************************************
  *		wctomb (MSVCRT.@)
  */
-INT __cdecl MSVCRT_wctomb( char *dst, WCHAR ch )
+INT MSVCRT_wctomb( char *dst, WCHAR ch )
 {
   return WideCharToMultiByte( CP_ACP, 0, &ch, 1, dst, 6, NULL, NULL );
 }
@@ -258,7 +258,7 @@ INT __cdecl MSVCRT_wctomb( char *dst, WCHAR ch )
 /*********************************************************************
  *		iswalnum (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswalnum( WCHAR wc )
+INT MSVCRT_iswalnum( WCHAR wc )
 {
   return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
@@ -266,7 +266,7 @@ INT __cdecl MSVCRT_iswalnum( WCHAR wc )
 /*********************************************************************
  *		iswalpha (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswalpha( WCHAR wc )
+INT MSVCRT_iswalpha( WCHAR wc )
 {
   return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
 }
@@ -274,7 +274,7 @@ INT __cdecl MSVCRT_iswalpha( WCHAR wc )
 /*********************************************************************
  *		iswcntrl (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswcntrl( WCHAR wc )
+INT MSVCRT_iswcntrl( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_CNTRL;
 }
@@ -282,7 +282,7 @@ INT __cdecl MSVCRT_iswcntrl( WCHAR wc )
 /*********************************************************************
  *		iswdigit (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswdigit( WCHAR wc )
+INT MSVCRT_iswdigit( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_DIGIT;
 }
@@ -290,7 +290,7 @@ INT __cdecl MSVCRT_iswdigit( WCHAR wc )
 /*********************************************************************
  *		iswgraph (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswgraph( WCHAR wc )
+INT MSVCRT_iswgraph( WCHAR wc )
 {
   return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
@@ -298,7 +298,7 @@ INT __cdecl MSVCRT_iswgraph( WCHAR wc )
 /*********************************************************************
  *		iswlower (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswlower( WCHAR wc )
+INT MSVCRT_iswlower( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_LOWER;
 }
@@ -306,7 +306,7 @@ INT __cdecl MSVCRT_iswlower( WCHAR wc )
 /*********************************************************************
  *		iswprint (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswprint( WCHAR wc )
+INT MSVCRT_iswprint( WCHAR wc )
 {
   return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
@@ -314,7 +314,7 @@ INT __cdecl MSVCRT_iswprint( WCHAR wc )
 /*********************************************************************
  *		iswpunct (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswpunct( WCHAR wc )
+INT MSVCRT_iswpunct( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_PUNCT;
 }
@@ -322,7 +322,7 @@ INT __cdecl MSVCRT_iswpunct( WCHAR wc )
 /*********************************************************************
  *		iswspace (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswspace( WCHAR wc )
+INT MSVCRT_iswspace( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_SPACE;
 }
@@ -330,7 +330,7 @@ INT __cdecl MSVCRT_iswspace( WCHAR wc )
 /*********************************************************************
  *		iswupper (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswupper( WCHAR wc )
+INT MSVCRT_iswupper( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_UPPER;
 }
@@ -338,19 +338,19 @@ INT __cdecl MSVCRT_iswupper( WCHAR wc )
 /*********************************************************************
  *		iswxdigit (MSVCRT.@)
  */
-INT __cdecl MSVCRT_iswxdigit( WCHAR wc )
+INT MSVCRT_iswxdigit( WCHAR wc )
 {
   return get_char_typeW(wc) & C1_XDIGIT;
 }
 
-extern char *__cdecl _itoa( long , char *, int);
-extern char *__cdecl _ultoa( long , char *, int);
-extern char *__cdecl _ltoa( long , char *, int);
+extern char *_itoa( long , char *, int);
+extern char *_ultoa( long , char *, int);
+extern char *_ltoa( long , char *, int);
 
 /*********************************************************************
  *		_itow (MSVCRT.@)
  */
-WCHAR* __cdecl MSVCRT__itow(int value,WCHAR* out,int base)
+WCHAR* _itow(int value,WCHAR* out,int base)
 {
   char buf[64];
   _itoa(value, buf, base);
@@ -361,7 +361,7 @@ WCHAR* __cdecl MSVCRT__itow(int value,WCHAR* out,int base)
 /*********************************************************************
  *		_ltow (MSVCRT.@)
  */
-WCHAR* __cdecl MSVCRT__ltow(long value,WCHAR* out,int base)
+WCHAR* _ltow(long value,WCHAR* out,int base)
 {
   char buf[128];
   _ltoa(value, buf, base);
@@ -372,7 +372,7 @@ WCHAR* __cdecl MSVCRT__ltow(long value,WCHAR* out,int base)
 /*********************************************************************
  *		_ultow (MSVCRT.@)
  */
-WCHAR* __cdecl MSVCRT__ultow(unsigned long value,WCHAR* out,int base)
+WCHAR* _ultow(unsigned long value,WCHAR* out,int base)
 {
   char buf[128];
   _ultoa(value, buf, base);

@@ -12,7 +12,7 @@
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* INTERNAL: MSVCRT_malloc() based strndup */
-char * MSVCRT__strndup(const char * buf, unsigned int size)
+char* msvcrt_strndup(const char* buf, unsigned int size)
 {
   char* ret;
   unsigned int len = strlen(buf), max_len;
@@ -31,7 +31,7 @@ char * MSVCRT__strndup(const char * buf, unsigned int size)
 /*********************************************************************
  *		_strdec (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strdec(const char * str1, const char * str2)
+char* _strdec(const char* str1, const char* str2)
 {
   /* Hmm. While the docs suggest that the following should work... */
   /*  return (str2<=str1?0:str2-1); */
@@ -43,7 +43,7 @@ char * __cdecl MSVCRT__strdec(const char * str1, const char * str2)
 /*********************************************************************
  *		_strdup (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strdup(const char * str)
+char* _strdup(const char* str)
 {
     char * ret = MSVCRT_malloc(strlen(str)+1);
     if (ret) strcpy( ret, str );
@@ -53,7 +53,7 @@ char * __cdecl MSVCRT__strdup(const char * str)
 /*********************************************************************
  *		_strinc (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strinc(const char * str)
+char* _strinc(const char* str)
 {
   return (char*)str+1;
 }
@@ -61,7 +61,7 @@ char * __cdecl MSVCRT__strinc(const char * str)
 /*********************************************************************
  *		_strnextc (MSVCRT.@)
  */
-unsigned int  __cdecl MSVCRT__strnextc(const char * str)
+unsigned int _strnextc(const char* str)
 {
   return (unsigned int)*str;
 }
@@ -71,7 +71,7 @@ unsigned int  __cdecl MSVCRT__strnextc(const char * str)
  *
  * Return a pointer to the 'n'th character in a string
  */
-char * __cdecl MSVCRT__strninc(char * str, unsigned int n)
+char* _strninc(char* str, unsigned int n)
 {
   return str + n;
 }
@@ -79,7 +79,7 @@ char * __cdecl MSVCRT__strninc(char * str, unsigned int n)
 /*********************************************************************
  *		_strnset (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strnset(char * str, int value, unsigned int len)
+char* _strnset(char* str, int value, unsigned int len)
 {
   if (len > 0 && str)
     while (*str && len--)
@@ -90,7 +90,7 @@ char * __cdecl MSVCRT__strnset(char * str, int value, unsigned int len)
 /*********************************************************************
  *		_strrev (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strrev (char * str)
+char* _strrev(char* str)
 {
   char * p1;
   char * p2;
@@ -109,7 +109,7 @@ char * __cdecl MSVCRT__strrev (char * str)
 /*********************************************************************
  *		_strset (MSVCRT.@)
  */
-char *  __cdecl MSVCRT__strset (char * str, int value)
+char* _strset(char* str, int value)
 {
   char *ptr = str;
   while (*ptr)
@@ -121,7 +121,7 @@ char *  __cdecl MSVCRT__strset (char * str, int value)
 /*********************************************************************
  *		_strncnt (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__strncnt(char * str, unsigned int max)
+unsigned int _strncnt(char* str, unsigned int max)
 {
   unsigned int len = strlen(str);
   return (len > max? max : len);
@@ -130,7 +130,7 @@ unsigned int __cdecl MSVCRT__strncnt(char * str, unsigned int max)
 /*********************************************************************
  *		_strspnp (MSVCRT.@)
  */
-char * __cdecl MSVCRT__strspnp(char * str1, char * str2)
+char* _strspnp(char* str1, char* str2)
 {
   str1 += strspn(str1,str2);
   return *str1? str1 : 0;
@@ -139,7 +139,7 @@ char * __cdecl MSVCRT__strspnp(char * str1, char * str2)
 /*********************************************************************
  *		_swab (MSVCRT.@)
  */
-void __cdecl MSVCRT__swab(char * src, char * dst, int len)
+void _swab(char* src, char* dst, int len)
 {
   if (len > 1)
   {
