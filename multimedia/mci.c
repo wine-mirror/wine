@@ -17,6 +17,7 @@
 #include "selectors.h"
 #include "debug.h"
 #include "digitalv.h"
+#include "wine/winbase16.h"
 
 struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
@@ -1042,6 +1043,7 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	    if (LOWORD((DWORD)lpParms->lpstrDeviceType) != MCI_DEVTYPE_CD_AUDIO) {
 		FIXME(mci, "MCI_OPEN_TYPE_ID is no longer properly supported\n");
 	    }
+	    uDevType = LOWORD((DWORD)lpParms->lpstrDeviceType);
 	} else {
 	    if (lpParms->lpstrDeviceType == NULL) 
 		return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1096,6 +1098,7 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     dwRet = MCI_SendCommand(wDevID, MCI_OPEN_DRIVER, dwParam, (DWORD)lpParms);
     MCI_GetDrv(wDevID)->lpfnYieldProc = 0;
     MCI_GetDrv(wDevID)->dwYieldData = 0;
+    MCI_GetDrv(wDevID)->hCreatorTask = GetCurrentTask();
     
     if (dwRet == 0) {
 	/* only handled devices fall through */

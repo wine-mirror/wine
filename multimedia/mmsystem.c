@@ -1491,7 +1491,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 	break;
     }
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, TRUE);
-    TRACE(mci, "=> %08ld\n", dwRet);
+    TRACE(mci, "=> %08lx\n", dwRet);
     return dwRet;
 }
 
@@ -1739,8 +1739,7 @@ YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
  */
 HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
 {
-    FIXME(mci, "(%u) stub\n", uDeviceID);
-    return 0;
+    return mciGetCreatorTask(uDeviceID);
 }
 
 /**************************************************************************
@@ -1748,8 +1747,15 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
  */
 HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 {
-    FIXME(mci, "(%u) stub\n", uDeviceID);
-    return 0;
+    HTASK	ret;
+
+    TRACE(mci, "(%u)\n", uDeviceID);
+
+    ret = (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) ?
+	0 : MCI_GetDrv(uDeviceID)->hCreatorTask;
+
+    TRACE(mci, "=> %04x\n", ret);
+    return ret;
 }
 
 /**************************************************************************
@@ -1762,7 +1768,7 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
     TRACE(mmsys,"(%04x)\n", uDeviceID);
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
 	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || MCI_GetDrv(uDeviceID)->bIs32) {
-	OldYield16();
+	UserYield16();
     } else {
 	ret = MCI_GetDrv(uDeviceID)->lpfnYieldProc(uDeviceID, MCI_GetDrv(uDeviceID)->dwYieldData);
     }
@@ -1780,7 +1786,7 @@ UINT WINAPI mciDriverYield(UINT uDeviceID)
     TRACE(mmsys,"(%04x)\n", uDeviceID);
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
 	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || !MCI_GetDrv(uDeviceID)->bIs32) {
-	OldYield16();
+	UserYield16();
     } else {
 	ret = MCI_GetDrv(uDeviceID)->lpfnYieldProc(uDeviceID, MCI_GetDrv(uDeviceID)->dwYieldData);
     }
@@ -4356,19 +4362,19 @@ BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 handle)
  */
 HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPmt)
 {
-#if 1
-    DWORD showCmd = 0x40002;
-    LPSTR cmdline;
-    WORD sel1, sel2;
-    LOADPARAMS16 *lp;
-    HINSTANCE16 ret, handle;
+    DWORD 		showCmd = 0x40002;
+    LPSTR 		cmdline;
+    WORD 		sel1, sel2;
+    LOADPARAMS16*	lp;
+    HINSTANCE16 	ret;
+    HINSTANCE16		handle;
     
     TRACE(mmsys, "(%08lx,%p,%08lx);\n", lphnd, hMmTask, dwPmt);
     cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
     cmdline[0] = 0x0d;
-    (DWORD)cmdline[1] = (DWORD)lphnd;
-    (DWORD)cmdline[5] = dwPmt;
-    (DWORD)cmdline[9] = 0;
+    *(LPDWORD)(cmdline + 1) = (DWORD)lphnd;
+    *(LPDWORD)(cmdline + 5) = dwPmt;
+    *(LPDWORD)(cmdline + 9) = 0;
     
     sel1 = SELECTOR_AllocBlock(cmdline, 0x0d, SEGMENT_DATA, FALSE, FALSE);
     sel2 = SELECTOR_AllocBlock(&showCmd, sizeof(showCmd),
@@ -4380,16 +4386,11 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
     lp->reserved = 0;
     
-    ret = LoadModule16("c:\\windows\\system\\mmtask.tsk", lp);
-    TRACE(mmsys, "MMtask's handle = 0x%04x\n", ret);
-    if (ret < 32) {
-	if (ret)
-	    ret = 1;
-	else
-	    ret = 2;
+    handle = LoadModule16("c:\\windows\\system\\mmtask.tsk", lp);
+    if (handle < 32) {
+	ret = (handle) ? 1 : 2;
 	handle = 0;
     } else {
-	handle = ret;
 	ret = 0;
     }
     if (hMmTask)
@@ -4400,15 +4401,9 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     
     HeapFree(GetProcessHeap(), 0, lp);
     HeapFree(GetProcessHeap(), 0, cmdline);
-    
-    TRACE(mmsys, "=> 0x%04x/%d %04x\n", handle, ret, *(LPWORD)PTR_SEG_TO_LIN(lphnd));
+
+    TRACE(mmsys, "=> 0x%04x/%d\n", handle, ret);
     return ret;
-#else
-    TRACE(mmsys, "(%p,%p,%08lx);\n", lphnd, hMmTask, x2);
-    if (hMmTask)
-	*hMmTask = 0xfade;
-    return 0;
-#endif
 }
 
 /**************************************************************************
@@ -4455,4 +4450,15 @@ BOOL16	WINAPI	mmShowMMCPLPropertySheet16(WORD w1, WORD w2, WORD w3, WORD w4, WOR
 {
     FIXME(mmsys, "%04x %04x %04x %04x %04x %04x %04x\n", w1, w2, w3, w4, w5, w6, w7);
     return TRUE;
+}
+
+/**************************************************************************
+ * 			StackEnter & StackLeave		[MMSYSTEM.32][MMSYSTEM.33]
+ */
+void	WINAPI	StackEnterLeave16(void)
+{
+#ifdef __i386__
+    /* mmsystem.dll from Win 95 does only this: so does Wine */
+    __asm__("stc");
+#endif
 }
