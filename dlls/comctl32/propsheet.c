@@ -46,10 +46,11 @@ typedef struct tagPropPageInfo
 
 typedef struct tagPropSheetInfo
 {
+  HWND hwnd;
+  PROPSHEETHEADERA ppshheader;
   LPSTR strPropertiesFor;
   int nPages;
   int active_page;
-  LPPROPSHEETHEADERA ppshheader;
   BOOL isModeless;
   BOOL hasHelp;
   BOOL hasApply;
@@ -143,6 +144,7 @@ DEFAULT_DEBUG_CHANNEL(propsheet)
 static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
                                        PropSheetInfo * psInfo)
 {
+  DWORD dwSize = min(lppsh->dwSize,sizeof(PROPSHEETHEADERA));
   DWORD dwFlags = lppsh->dwFlags;
 
   psInfo->hasHelp = dwFlags & PSH_HASHELP;
@@ -150,11 +152,10 @@ static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
   psInfo->useCallback = dwFlags & PSH_USECALLBACK;
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
-  psInfo->ppshheader = COMCTL32_Alloc(sizeof(PROPSHEETHEADERA));
-  *psInfo->ppshheader = *lppsh;
+  memcpy(&psInfo->ppshheader,lppsh,dwSize);
 
   if (HIWORD(lppsh->pszCaption))
-     psInfo->ppshheader->pszCaption = HEAP_strdupA( GetProcessHeap(),
+     psInfo->ppshheader.pszCaption = HEAP_strdupA( GetProcessHeap(),
                                                  0, lppsh->pszCaption );
 
   psInfo->nPages = lppsh->nPages;
@@ -395,7 +396,7 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   DWORD resSize;
   WORD resID = IDD_PROPSHEET;
 
-  if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
+  if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
     resID = IDD_WIZARD;
 
   if(!(hRes = FindResourceA(COMCTL32_hModule,
@@ -419,16 +420,16 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   memcpy(temp, template, resSize);
 
   if (psInfo->useCallback)
-    (*(psInfo->ppshheader->pfnCallback))(0, PSCB_PRECREATE, (LPARAM)temp);
+    (*(psInfo->ppshheader.pfnCallback))(0, PSCB_PRECREATE, (LPARAM)temp);
 
-  ret = CreateDialogIndirectParamA(psInfo->ppshheader->hInstance,
+  ret = CreateDialogIndirectParamA(psInfo->ppshheader.hInstance,
                                      (LPDLGTEMPLATEA) temp,
-                                     psInfo->ppshheader->hwndParent,
+                                     psInfo->ppshheader.hwndParent,
                                      (DLGPROC) PROPSHEET_DialogProc,
                                      (LPARAM)psInfo);
 
-  if (!(psInfo->ppshheader->dwFlags & PSH_MODELESS))
-     ret = PROPSHEET_DoDialogBox((HWND)ret, psInfo->ppshheader->hwndParent);
+  if (!(psInfo->ppshheader.dwFlags & PSH_MODELESS))
+     ret = PROPSHEET_DoDialogBox((HWND)ret, psInfo->ppshheader.hwndParent);
  
   COMCTL32_Free(temp);
 
@@ -1052,7 +1053,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   pageWidth = rc.right - rc.left;
   pageHeight = rc.bottom - rc.top;
 
-  if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
+  if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
     padding = PROPSHEET_GetPaddingInfoWizard(hwndParent);
   else
   {
@@ -1114,7 +1115,7 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
 
   ShowWindow(psInfo->proppage[index].hwndPage, SW_SHOW);
 
-  if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
+  if (!(psInfo->ppshheader.dwFlags & PSH_WIZARD))
   {
      HWND hwndTabCtrl;
 
@@ -1563,7 +1564,7 @@ static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText)
   char 				szTitle[256];
 
   if (HIWORD(lpszText) == 0) {
-    if (!LoadStringA(psInfo->ppshheader->hInstance, 
+    if (!LoadStringA(psInfo->ppshheader.hInstance, 
                      LOWORD(lpszText), szTitle, sizeof(szTitle)-1))
       return;
     lpszText = szTitle;
@@ -1869,10 +1870,8 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
                                                        PropSheetInfoStr);
 
   TRACE("\n");
-  if (HIWORD(psInfo->ppshheader->pszCaption))
-      HeapFree(GetProcessHeap(), 0, (LPVOID)psInfo->ppshheader->pszCaption);
-
-  COMCTL32_Free((LPVOID)psInfo->ppshheader);
+  if (HIWORD(psInfo->ppshheader.pszCaption))
+      HeapFree(GetProcessHeap(), 0, (LPVOID)psInfo->ppshheader.pszCaption);
 
   for (i = 0; i < psInfo->nPages; i++)
   {
@@ -1912,12 +1911,12 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
   psInfo->proppage = (PropPageInfo*) COMCTL32_Alloc(sizeof(PropPageInfo) *
                                                     lppsh->nPages);
-  pByte = (BYTE*) psInfo->ppshheader->u3.ppsp;
+  pByte = (BYTE*) psInfo->ppshheader.u3.ppsp;
 
   for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
     if (!(lppsh->dwFlags & PSH_PROPSHEETPAGE))
-      psInfo->proppage[n].hpage = psInfo->ppshheader->u3.phpage[i];
+      psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
     else
     {
        psInfo->proppage[n].hpage = CreatePropertySheetPageA((LPCPROPSHEETPAGEA)pByte);
@@ -2079,29 +2078,38 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       SetPropA(hwnd, PropSheetInfoStr, (HANDLE)psInfo);
 
       /*
+       * psInfo->hwnd is not being used by WINE code - it exists 
+       * for compatibility with "real" Windoze. The same about 
+       * SetWindowLong - WINE is only using the PropSheetInfoStr
+       * property.
+       */
+      psInfo->hwnd = hwnd;
+      SetWindowLongA(hwnd,DWL_USER,(LONG)psInfo);
+
+      /*
        * Small icon in the title bar.
        */
-      if ((psInfo->ppshheader->dwFlags & PSH_USEICONID) ||
-          (psInfo->ppshheader->dwFlags & PSH_USEHICON))
+      if ((psInfo->ppshheader.dwFlags & PSH_USEICONID) ||
+          (psInfo->ppshheader.dwFlags & PSH_USEHICON))
       {
         HICON hIcon;
         int icon_cx = GetSystemMetrics(SM_CXSMICON);
         int icon_cy = GetSystemMetrics(SM_CYSMICON);
 
-        if (psInfo->ppshheader->dwFlags & PSH_USEICONID)
-          hIcon = LoadImageA(psInfo->ppshheader->hInstance,
-                             psInfo->ppshheader->u1.pszIcon,
+        if (psInfo->ppshheader.dwFlags & PSH_USEICONID)
+          hIcon = LoadImageA(psInfo->ppshheader.hInstance,
+                             psInfo->ppshheader.u1.pszIcon,
                              IMAGE_ICON,
                              icon_cx, icon_cy,
                              LR_DEFAULTCOLOR);
         else
-          hIcon = psInfo->ppshheader->u1.hIcon;
+          hIcon = psInfo->ppshheader.u1.hIcon;
 
         SendMessageA(hwnd, WM_SETICON, 0, hIcon);
       }
       
-      if (psInfo->ppshheader->dwFlags & PSH_USEHICON)
-        SendMessageA(hwnd, WM_SETICON, 0, psInfo->ppshheader->u1.hIcon);
+      if (psInfo->ppshheader.dwFlags & PSH_USEHICON)
+        SendMessageA(hwnd, WM_SETICON, 0, psInfo->ppshheader.u1.hIcon);
 
       psInfo->strPropertiesFor = strCaption;
 
@@ -2109,7 +2117,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       PROPSHEET_CreateTabControl(hwnd, psInfo);
 
-      if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
+      if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
       {
         if (PROPSHEET_IsTooSmallWizard(hwnd, psInfo))
         {
@@ -2127,7 +2135,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       if (psInfo->useCallback) 
-             (*(psInfo->ppshheader->pfnCallback))(hwnd, 
+             (*(psInfo->ppshheader.pfnCallback))(hwnd, 
 					      PSCB_INITIALIZED, (LPARAM)0); 
 
       idx = psInfo->active_page;
@@ -2136,22 +2144,22 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  
       PROPSHEET_SetCurSel(hwnd, idx, psInfo->proppage[idx].hpage);
 
-      if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
+      if (!(psInfo->ppshheader.dwFlags & PSH_WIZARD))
         SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
 
-      if (!HIWORD(psInfo->ppshheader->pszCaption) &&
-              psInfo->ppshheader->hInstance)
+      if (!HIWORD(psInfo->ppshheader.pszCaption) &&
+              psInfo->ppshheader.hInstance)
       {
          char szText[256];
 
-         if (LoadStringA(psInfo->ppshheader->hInstance, 
-                 (UINT)psInfo->ppshheader->pszCaption, szText, 255))
-            PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader->dwFlags, szText);
+         if (LoadStringA(psInfo->ppshheader.hInstance, 
+                 (UINT)psInfo->ppshheader.pszCaption, szText, 255))
+            PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader.dwFlags, szText);
       }
       else
       {
-         PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader->dwFlags,
-                         psInfo->ppshheader->pszCaption);
+         PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader.dwFlags,
+                         psInfo->ppshheader.pszCaption);
       }
 
       return TRUE;
