@@ -180,7 +180,7 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(
         return ERROR_INVALID_HANDLE;
 
     spec.ulKind = PRSPEC_PROPID;
-    spec.DUMMYUNIONNAME.propid = uiProperty;
+    spec.u.propid = uiProperty;
 
     r = IPropertyStorage_ReadMultiple( suminfo->propstg, 1, &spec, &var);
     if( FAILED(r) )
@@ -193,18 +193,18 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(
     {
     case VT_I4:
         if( piValue )
-            *piValue = var.DUMMYUNIONNAME.lVal;
+            *piValue = var.u.lVal;
         break;
     case VT_LPSTR:
         if( pcchValueBuf && szValueBuf )
         {
-            lstrcpynA(szValueBuf, var.DUMMYUNIONNAME.pszVal, *pcchValueBuf );
-            *pcchValueBuf = lstrlenA( var.DUMMYUNIONNAME.pszVal );
+            lstrcpynA(szValueBuf, var.u.pszVal, *pcchValueBuf );
+            *pcchValueBuf = lstrlenA( var.u.pszVal );
         }
         break;
     case VT_FILETIME:
         if( pftValue )
-            memcpy(pftValue, &var.DUMMYUNIONNAME.filetime, sizeof (FILETIME) );
+            memcpy(pftValue, &var.u.filetime, sizeof (FILETIME) );
         break;
     case VT_EMPTY:
         break;
