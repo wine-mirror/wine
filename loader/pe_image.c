@@ -311,24 +311,24 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
 		    TRACE("--- Ordinal %s,%d\n", name, ordinal);
-		    thunk_list->u1.Function=MODULE_GetProcAddress(
+		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
                         wmImp->module, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, ordinal);
-                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
+                        thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {		/* import by name */
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
-		    thunk_list->u1.Function=MODULE_GetProcAddress(
+		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
 				name,pe_name->Hint,pe_name->Name);
-                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
+                        thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		}
 		import_list++;
@@ -343,25 +343,25 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
 		    TRACE("--- Ordinal %s.%d\n",name,ordinal);
-		    thunk_list->u1.Function=MODULE_GetProcAddress(
+		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
                         wmImp->module, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name,ordinal);
-                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
+                        thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {
 		    pe_name=(PIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
-		    thunk_list->u1.Function=MODULE_GetProcAddress(
+		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
 				name, pe_name->Hint, pe_name->Name);
-                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
+                        thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		}
 		thunk_list++;

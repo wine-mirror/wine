@@ -1958,7 +1958,7 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 typedef struct _IMAGE_THUNK_DATA {
 	union {
 		LPBYTE    ForwarderString;
-		FARPROC Function;
+		PDWORD    Function;
 		DWORD     Ordinal;
 		PIMAGE_IMPORT_BY_NAME	AddressOfData;
 	} u1;
