@@ -724,7 +724,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
   WIN_ReleaseWndPtr(pWnd);
 
   if (buttonNum >= NB_BUTTONS) return;
-  
+
   /*
    * Get the compatible keystate
    */
@@ -1857,7 +1857,7 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
 {
   WND *pWnd = WIN_FindWndPtr(hWnd);
-  if (pWnd->flags & WIN_MANAGED)
+  if (pWnd && (pWnd->flags & WIN_MANAGED))
   {
       EndMenu();
       if( pWnd->dwStyle & WS_VISIBLE )
