@@ -174,6 +174,11 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 
     if (!(flags & MAP_FIXED))
     {
+#ifdef __FreeBSD__
+        /* Even FreeBSD 5.3 does not properly support NULL here. */
+        if( start == NULL ) start = (void *)0x110000;
+#endif
+
 #ifdef MAP_TRYFIXED
         /* If available, this will attempt a fixed mapping in-kernel */
         flags |= MAP_TRYFIXED;

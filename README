@@ -44,10 +44,8 @@ Linux info:
   it's best to have a current kernel such as 2.4.x.
 
 FreeBSD info:
-  Wine should build on FreeBSD 4.x and FreeBSD 5.x before 5.3, but will
-  generally not work on these systems due to issues with threading and
-  mmap().  In fact, even on FreeBSD 5.3 you will need the kernel patch
-  posted at <http://www.freebsd.org/cgi/query-pr.cgi?pr=73092>.
+  Wine should build on FreeBSD 4.x and FreeBSD 5.x, but versions before
+  FreeBSD 5.3 will generally not work properly.
  
   More information can be found in the FreeBSD ports tree at
   <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
