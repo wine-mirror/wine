@@ -316,7 +316,6 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 	newdc->hClipRgn = 0;
 
     if(dc->gdiFont) {
-        WineEngAddRefFont(dc->gdiFont);
 	newdc->gdiFont = dc->gdiFont;
     } else
         newdc->gdiFont = 0;
@@ -775,7 +774,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc->hGCClipRgn) DeleteObject( dc->hGCClipRgn );
-    if (dc->gdiFont) WineEngDecRefFont( dc->gdiFont );
     PATH_DestroyGdiPath(&dc->path);
 
     GDI_FreeObject( hdc, dc );

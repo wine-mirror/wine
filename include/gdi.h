@@ -521,4 +521,6 @@ extern void CLIPPING_UpdateGCRegion( DC * dc );
 /* objects/enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
 
+#define WINE_GGO_GRAY16_BITMAP 0x7f
+
 #endif  /* __WINE_GDI_H */

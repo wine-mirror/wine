@@ -419,6 +419,10 @@ else
                          freetype/ttnameid.h \
                          freetype/ftoutln.h \
                          freetype/internal/sfnt.h)
+	AC_TRY_CPP([#include <ft2build.h>
+                    #include <freetype/fttrigon.h>],
+                    AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
+          [Define if you have the <freetype/fttrigon.h> header file.]))
 	CPPFLAGS="$ac_save_CPPFLAGS"
 	wine_cv_msg_freetype=no
     fi

@@ -1648,7 +1648,33 @@ BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
                                   LPABC abc )
 {
-    return GetCharABCWidthsW( hdc, firstChar, lastChar, abc );
+    INT i, wlen, count = (INT)(lastChar - firstChar + 1);
+    LPSTR str;
+    LPWSTR wstr;
+    BOOL ret = TRUE;
+
+    if(count <= 0) return FALSE;
+    
+    str = HeapAlloc(GetProcessHeap(), 0, count);
+    for(i = 0; i < count; i++)
+	str[i] = (BYTE)(firstChar + i);
+
+    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+
+    for(i = 0; i < wlen; i++)
+    {
+	if(!GetCharABCWidthsW(hdc, wstr[i], wstr[i], abc))
+	{
+	    ret = FALSE;
+	    break;
+	}
+	abc++;
+    }
+
+    HeapFree(GetProcessHeap(), 0, str);
+    HeapFree(GetProcessHeap(), 0, wstr);
+
+    return ret;
 }
 
 
@@ -1671,20 +1697,22 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
 BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
+    DC *dc = DC_GetDCPtr(hdc);
     int		i;
-    LPINT	widths = HeapAlloc(GetProcessHeap(),0,(lastChar-firstChar+1)*sizeof(INT));
+    GLYPHMETRICS gm;
+    BOOL ret = FALSE;
 
-    FIXME("(%04x,%04x,%04x,%p), returns slightly bogus values.\n", hdc, firstChar, lastChar, abc);
-
-    GetCharWidth32A(hdc,firstChar,lastChar,widths);
-
-    for (i=firstChar;i<=lastChar;i++) {
-	abc[i-firstChar].abcA = 0;	/* left distance */
-	abc[i-firstChar].abcB = widths[i-firstChar];/* width */
-	abc[i-firstChar].abcC = 0;	/* right distance */
+    if(dc->gdiFont) {
+        for (i=firstChar;i<=lastChar;i++) {
+	    GetGlyphOutlineW(hdc, i, GGO_METRICS, &gm, 0, NULL, NULL);
+	    abc[i-firstChar].abcA = gm.gmptGlyphOrigin.x;
+	    abc[i-firstChar].abcB = gm.gmBlackBoxX;
+	    abc[i-firstChar].abcC = gm.gmCellIncX - gm.gmptGlyphOrigin.x - gm.gmBlackBoxX;
+	}
+	ret = TRUE;
     }
-    HeapFree(GetProcessHeap(),0,widths);
-    return TRUE;
+    GDI_ReleaseObj(hdc);
+    return ret;
 }
 
 
@@ -1708,8 +1736,20 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer,
-			    lpmat2);
+    LPWSTR p = NULL;
+    DWORD ret;
+    UINT c;
+
+    if(!(fuFormat & GGO_GLYPH_INDEX)) {
+        p = FONT_mbtowc(hdc, (char*)&uChar, 1, NULL, NULL);
+	c = p[0];
+    } else
+        c = uChar;
+    ret = GetGlyphOutlineW(hdc, c, fuFormat, lpgm, cbBuffer, lpBuffer,
+			   lpmat2);
+    if(p)
+        HeapFree(GetProcessHeap(), 0, p);
+    return ret;
 }
 
 /***********************************************************************

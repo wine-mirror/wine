@@ -475,6 +475,9 @@
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
 
+/* Define if you have the <freetype/fttrigon.h> header file. */
+#undef HAVE_FREETYPE_FTTRIGON_H
+
 /* Define if we can use ppdev.h for parallel port access */
 #undef HAVE_PPDEV
 

@@ -450,6 +450,17 @@ void GDI_CheckNotLock(void)
 
 
 /***********************************************************************
+ *           FONT_DeleteObject
+ *
+ */
+static BOOL FONT_DeleteObject(HGDIOBJ hfont, FONTOBJ *fontobj)
+{
+    WineEngDestroyFontInstance( hfont );
+    return GDI_FreeObject( hfont, fontobj );
+}
+
+
+/***********************************************************************
  *           DeleteObject    (GDI.69)
  *           SysDeleteObject (GDI.605)
  */
@@ -495,7 +506,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     {
       case PEN_MAGIC:     return GDI_FreeObject( obj, header );
       case BRUSH_MAGIC:   return BRUSH_DeleteObject( obj, (BRUSHOBJ*)header );
-      case FONT_MAGIC:    return GDI_FreeObject( obj, header );
+      case FONT_MAGIC:    return FONT_DeleteObject( obj, (FONTOBJ*)header );
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
@@ -752,19 +763,15 @@ static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
 {
     HGDIOBJ ret = FALSE;
 
-    if(dc->gdiFont) {
-        WineEngDecRefFont(dc->gdiFont);
-	dc->gdiFont = 0;
+    if(dc->hFont != hFont || dc->gdiFont == NULL) {
+	if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
+	    dc->gdiFont = WineEngCreateFontInstance(hFont);
     }
-
-    if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
-        dc->gdiFont = WineEngCreateFontInstance(hFont);
 
     if(dc->funcs->pSelectObject)
         ret = dc->funcs->pSelectObject(dc, hFont);
 
     if(ret && dc->gdiFont) {
-        WineEngDecRefFont(dc->gdiFont);
 	dc->gdiFont = 0;
     }
 
