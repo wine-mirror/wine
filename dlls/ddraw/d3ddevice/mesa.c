@@ -2190,22 +2190,49 @@ GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CO
 
     TRACE("(%p)->(%ld,%p)\n", This, dwIndex, pPlaneEquation);
 
-    if (dwIndex>=This->max_clipping_planes) {
+    if (dwIndex >= This->max_clipping_planes) {
 	return DDERR_INVALIDPARAMS;
     }
 
     TRACE(" clip plane %ld : %f %f %f %f\n", dwIndex, pPlaneEquation[0], pPlaneEquation[1], pPlaneEquation[2], pPlaneEquation[3] );
 
-    memcpy( This->clipping_planes[dwIndex].plane, pPlaneEquation, sizeof(D3DVALUE[4]));
+    memcpy(This->clipping_planes[dwIndex].plane, pPlaneEquation, sizeof(D3DVALUE[4]));
     plane[0] = pPlaneEquation[0];
     plane[1] = pPlaneEquation[1];
     plane[2] = pPlaneEquation[2];
     plane[3] = pPlaneEquation[3];
 
     /* XXX: is here also code needed to handle the transformation of the world? */
-    glClipPlane( GL_CLIP_PLANE0+dwIndex, (const GLdouble*)(&plane) );
+    glClipPlane( GL_CLIP_PLANE0 + dwIndex, (const GLdouble*) (&plane) );
 
     return D3D_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
+				     LPD3DVIEWPORT7 lpData)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" viewport is : \n");
+	TRACE("    - dwX = %ld   dwY = %ld\n",
+	      lpData->dwX, lpData->dwY);
+	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+	      lpData->dwWidth, lpData->dwHeight);
+	TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
+	      lpData->dvMinZ, lpData->dvMaxZ);
+    }
+    This->active_viewport = *lpData;
+
+    /* Set the viewport */
+    glDepthRange(lpData->dvMinZ, lpData->dvMaxZ);
+    glViewport(lpData->dwX,
+	       This->surface->surface_desc.dwHeight - (lpData->dwHeight + lpData->dwY),
+	       lpData->dwWidth, lpData->dwHeight);
+    
+    return DD_OK;
 }
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
@@ -2230,7 +2257,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(Clear) Main_IDirect3DDeviceImpl_7_Clear,
     XCAST(SetTransform) Main_IDirect3DDeviceImpl_7_3T_2T_SetTransform,
     XCAST(GetTransform) Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform,
-    XCAST(SetViewport) Main_IDirect3DDeviceImpl_7_SetViewport,
+    XCAST(SetViewport) GL_IDirect3DDeviceImpl_7_SetViewport,
     XCAST(MultiplyTransform) Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform,
     XCAST(GetViewport) Main_IDirect3DDeviceImpl_7_GetViewport,
     XCAST(SetMaterial) GL_IDirect3DDeviceImpl_7_SetMaterial,
@@ -2430,6 +2457,8 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     GLbitfield bitfield = 0;
     GLint old_stencil_clear_value;
     GLfloat old_color_clear_value[4];
+    D3DRECT rect;
+    int i;
     
     TRACE("(%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     if (TRACE_ON(ddraw)) {
@@ -2442,10 +2471,16 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
 	}
     }
 
-    if (dwCount > 1) {
-        WARN("  Warning, this function only for now clears the whole screen...\n");
+    if (dwCount == 0) {
+        /* Not sure if this is really needed... */
+        dwCount = 1;
+	rect.u1.x1 = 0;
+	rect.u2.y1 = 0;
+	rect.u3.x2 = This->surface->surface_desc.dwWidth;
+	rect.u4.y2 = This->surface->surface_desc.dwHeight;
+	lpRects = &rect;
     }
-
+    
     /* Clears the screen */
     ENTER_GL();
     if (dwFlags & D3DCLEAR_ZBUFFER) {
@@ -2471,8 +2506,14 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
 		     ((dwColor >> 24) & 0xFF) / 255.0);
 	TRACE(" color value (ARGB) : %08lx\n", dwColor);
     }
-    
-    glClear(bitfield);
+
+    glEnable(GL_SCISSOR_TEST); 
+    for (i = 0; i < dwCount; i++) {
+        glScissor(lpRects[i].u1.x1, This->surface->surface_desc.dwHeight - lpRects[i].u4.y2,
+		  lpRects[i].u3.x2 - lpRects[i].u1.x1, lpRects[i].u4.y2 - lpRects[i].u2.y1);
+        glClear(bitfield);
+    }
+    glDisable(GL_SCISSOR_TEST); 
     
     if (dwFlags & D3DCLEAR_ZBUFFER) {
         glDepthMask(ztest);
@@ -2504,7 +2545,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
         /* This is easy to handle for the D3D Device... */
         DWORD color = lpbltfx->u5.dwFillColor;
         TRACE(" executing D3D Device override.\n");
-	d3ddevice_clear(This->d3ddevice, 0, NULL, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+	d3ddevice_clear(This->d3ddevice, 1, rdst, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
 	return DD_OK;
     }
     return DDERR_INVALIDPARAMS;

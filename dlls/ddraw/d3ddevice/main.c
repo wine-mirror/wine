@@ -1087,25 +1087,8 @@ Main_IDirect3DDeviceImpl_3_2T_SetCurrentViewport(LPDIRECT3DDEVICE3 iface,
 
     /* Activate this viewport */
     This->current_viewport->active_device = This;
-    This->current_viewport->activate(This->current_viewport);    
+    This->current_viewport->activate(This->current_viewport);
     
-    /* And copy the values in the structure used by the device */
-    if (This->current_viewport->use_vp2) {
-        This->active_viewport.dwX = This->current_viewport->viewports.vp2.dwX;
-	This->active_viewport.dwY = This->current_viewport->viewports.vp2.dwY;
-	This->active_viewport.dwHeight = This->current_viewport->viewports.vp2.dwHeight;
-	This->active_viewport.dwWidth = This->current_viewport->viewports.vp2.dwWidth;
-	This->active_viewport.dvMinZ = This->current_viewport->viewports.vp2.dvMinZ;
-	This->active_viewport.dvMaxZ = This->current_viewport->viewports.vp2.dvMaxZ;
-    } else {
-        This->active_viewport.dwX = This->current_viewport->viewports.vp1.dwX;
-	This->active_viewport.dwY = This->current_viewport->viewports.vp1.dwY;
-	This->active_viewport.dwHeight = This->current_viewport->viewports.vp1.dwHeight;
-	This->active_viewport.dwWidth = This->current_viewport->viewports.vp1.dwWidth;
-	This->active_viewport.dvMinZ = This->current_viewport->viewports.vp1.dvMinZ;
-	This->active_viewport.dvMaxZ = This->current_viewport->viewports.vp1.dvMaxZ;
-    }
-
     return DD_OK;
 }
 

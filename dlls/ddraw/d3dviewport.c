@@ -34,7 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static void activate(IDirect3DViewportImpl* This) {
     IDirect3DLightImpl* light;
-
+    D3DVIEWPORT7 vp;
+    
     /* Activate all the lights associated with this context */
     light = This->lights;
 
@@ -42,6 +43,26 @@ static void activate(IDirect3DViewportImpl* This) {
         light->activate(light);
 	light = light->next;
     }
+
+    /* And copy the values in the structure used by the device */
+    if (This->use_vp2) {
+        vp.dwX = This->viewports.vp2.dwX;
+	vp.dwY = This->viewports.vp2.dwY;
+	vp.dwHeight = This->viewports.vp2.dwHeight;
+	vp.dwWidth = This->viewports.vp2.dwWidth;
+	vp.dvMinZ = This->viewports.vp2.dvMinZ;
+	vp.dvMaxZ = This->viewports.vp2.dvMaxZ;
+    } else {
+        vp.dwX = This->viewports.vp1.dwX;
+	vp.dwY = This->viewports.vp1.dwY;
+	vp.dwHeight = This->viewports.vp1.dwHeight;
+	vp.dwWidth = This->viewports.vp1.dwWidth;
+	vp.dvMinZ = This->viewports.vp1.dvMinZ;
+	vp.dvMaxZ = This->viewports.vp1.dvMaxZ;
+    }
+    
+    /* And also set the viewport */
+    IDirect3DDevice7_SetViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice7), &vp);
 }
 
 
