@@ -177,11 +177,85 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
+ *
+ * CHANGED
+ * James Sutherland (JamesSutherland@gmx.de)
+ * Added global variables console_ignore_ctrl_c and handlers[]
+ * Does not yet do any error checking, or set LastError if failed.
+ * This doesn't yet matter, since these handlers are not yet called...!
  */
+static unsigned int console_ignore_ctrl_c = 0;
+static HANDLER_ROUTINE *handlers[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 BOOL32 WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL32 add )
 {
-    FIXME(console, "(%p,%i): stub\n",func,add);
-    return TRUE;
+  unsigned int alloc_loop = sizeof(handlers)/sizeof(HANDLER_ROUTINE *);
+  unsigned int done = 0;
+  FIXME(console, "(%p,%i) - no error checking or testing yet\n", func, add);
+  if (!func)
+    {
+      console_ignore_ctrl_c = add;
+      return TRUE;
+    }
+  if (add)
+      {
+	for (;alloc_loop--;)
+	  if (!handlers[alloc_loop] && !done)
+	    {
+	      handlers[alloc_loop] = func;
+	      done++;
+	    }
+	if (!done)
+	   FIXME(console, "Out of space on CtrlHandler table\n");
+	return(done);
+      }
+    else
+      {
+	for (;alloc_loop--;)
+	  if (handlers[alloc_loop] == func && !done)
+	    {
+	      handlers[alloc_loop] = 0;
+	      done++;
+	    }
+	if (!done)
+	   WARN(console, "Attempt to remove non-installed CtrlHandler %p\n");
+	return (done);
+      }
+    return (done);
+}
+
+
+/******************************************************************************
+ * GenerateConsoleCtrlEvent [KERNEL32.275] Simulate a CTRL-C or CTRL-BREAK
+ *
+ * PARAMS
+ *    dwCtrlEvent        [I] Type of event
+ *    dwProcessGroupID   [I] Process group ID to send event to
+ *
+ * NOTES
+ *    Doesn't yet work...!
+ *
+ * RETURNS
+ *    Success: True
+ *    Failure: False (and *should* [but doesn't] set LastError)
+ */
+BOOL32 WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
+					DWORD dwProcessGroupID )
+{
+  if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
+    {
+      ERR( console, "invalid event %d for PGID %d\n", 
+	   (unsigned short)dwCtrlEvent, dwProcessGroupID );
+      return FALSE;
+    }
+  if (dwProcessGroupID == GetCurrentProcessId() )
+    {
+      FIXME( console, "Attempt to send event %d to self - stub\n",
+	     (unsigned short)dwCtrlEvent );
+      return FALSE;
+    }
+  FIXME( console,"event %d to external PGID %d - not implemented yet\n",
+	 (unsigned short)dwCtrlEvent, dwProcessGroupID );
+  return FALSE;
 }
 
 

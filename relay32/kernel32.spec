@@ -290,7 +290,7 @@ init	MAIN_KernelInit
 271 stdcall FreeLibrary(long) FreeLibrary32
 273 stdcall FreeResource(long) FreeResource32
 274 stdcall FreeSLCallback(long) FreeSLCallback
-275 stub GenerateConsoleCtrlEvent
+275 stdcall GenerateConsoleCtrlEvent(long long) GenerateConsoleCtrlEvent
 276 stdcall GetACP() GetACP
 277 stdcall GetAtomNameA(long ptr long) GetAtomName32A
 278 stdcall GetAtomNameW(long ptr long) GetAtomName32W
@@ -392,7 +392,7 @@ init	MAIN_KernelInit
 374 stdcall GetProcessFlags(long) GetProcessFlags
 375 stdcall GetProcessHeap() GetProcessHeap
 376 stdcall GetProcessHeaps(long ptr) GetProcessHeaps
-377 stub GetProcessShutdownParameters
+377 stdcall GetProcessShutdownParameters(ptr ptr) GetProcessShutdownParameters
 378 stdcall GetProcessTimes(long ptr ptr ptr ptr) GetProcessTimes
 379 stdcall GetProcessVersion(long) GetProcessVersion
 380 stdcall GetProcessWorkingSetSize(long ptr ptr) GetProcessWorkingSetSize

@@ -717,13 +717,43 @@ BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
 
 /***********************************************************************
  *           SetProcessShutdownParameters    (KERNEL32)
+ *
+ * CHANGED - James Sutherland (JamesSutherland@gmx.de)
+ * Now tracks changes made (but does not act on these changes)
+ * NOTE: the definition for SHUTDOWN_NORETRY was done on guesswork.
+ * It really shouldn't be here, but I'll move it when it's been checked!
  */
+#define SHUTDOWN_NORETRY 1
+extern unsigned int shutdown_noretry = 0;
+extern unsigned int shutdown_priority = 0x280L;
 BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
 {
-    FIXME(process,"(%ld,0x%08lx): stub\n",level,flags);
+    if (flags & SHUTDOWN_NORETRY)
+      shutdown_noretry = 1;
+    else
+      shutdown_noretry = 0;
+    if (level > 0x100L && level < 0x3FFL)
+      shutdown_priority = level;
+    else
+      {
+	ERR(process,"invalid priority level 0x%08lx\n", level);
+	return FALSE;
+      }
     return TRUE;
 }
 
+
+/***********************************************************************
+ * GetProcessShutdownParameters                 (KERNEL32)
+ *
+ */
+BOOL32 WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
+					    LPDWORD lpdwFlags )
+{
+  (*lpdwLevel) = shutdown_priority;
+  (*lpdwFlags) = (shutdown_noretry * SHUTDOWN_NORETRY);
+  return TRUE;
+}
 /***********************************************************************
  *           SetProcessPriorityBoost    (KERNEL32)
  */
