@@ -53,120 +53,6 @@ TCHAR szChildClass[MAX_LOADSTRING];
 
 /*******************************************************************************
  *
- *   FUNCTION: DynamicBind( void )
- *
- *   PURPOSE: Binds all functions dependent on user32.dll
- */
-static BOOL DynamicBind( void )
-{
-    HMODULE dll;
-
-#define d(x)                                                             \
-    p##x = (typeof (x) ) GetProcAddress( dll, #x );                      \
-    if( ! p##x )                                                         \
-    {                                                                    \
-        fprintf(stderr,"failed to bind function at line %d\n",__LINE__); \
-        return FALSE;                                                    \
-    }                                                                    \
-
-
-    dll = LoadLibrary("user32");
-    if( !dll )
-        return FALSE;
-
-    d(BeginDeferWindowPos)
-    d(BeginPaint)
-    d(CallWindowProcA)
-    d(CheckMenuItem)
-    d(CloseClipboard)
-    d(CreateWindowExA)
-    d(DefWindowProcA)
-    d(DeferWindowPos)
-    d(DestroyMenu)
-    d(DestroyWindow)
-    d(DialogBoxParamA)
-    d(DispatchMessageA)
-    d(EmptyClipboard)
-    d(EndDeferWindowPos)
-    d(EndDialog)
-    d(EndPaint)
-    d(FillRect)
-    d(GetCapture)
-    d(GetClientRect)
-    d(GetCursorPos)
-    d(GetDC)
-    d(GetDlgItem)
-    d(GetMenu)
-    d(GetMessageA)
-    d(GetSubMenu)
-    d(GetSystemMetrics)
-    d(GetWindowTextA)
-    d(GetWindowTextLengthA)
-    d(InvertRect)
-    d(IsWindowVisible)
-    d(LoadAcceleratorsA)
-    d(LoadBitmapA)
-    d(LoadCursorA)
-    d(LoadIconA)
-    d(LoadImageA)
-    d(LoadMenuA)
-    d(LoadStringA)
-    d(MessageBeep)
-    d(MessageBoxA)
-    d(MoveWindow)
-    d(OpenClipboard)
-    d(PostQuitMessage)
-    d(RegisterClassExA)
-    d(RegisterClipboardFormatA)
-    d(ReleaseCapture)
-    d(ReleaseDC)
-    d(ScreenToClient)
-    d(SendMessageA)
-    d(SetCapture)
-    d(SetCursor)
-    d(SetDlgItemTextA)
-    d(SetFocus)
-    d(SetWindowLongA)
-    d(SetWindowTextA)
-    d(ShowWindow)
-    d(TranslateAcceleratorA)
-    d(TranslateMessage)
-    d(UpdateWindow)
-    d(WinHelpA)
-    d(wsprintfA)
-
-    dll = LoadLibrary("gdi32");
-    if( !dll )
-        return FALSE;
-
-    d(DeleteDC)
-    d(DeleteObject)
-    d(GetStockObject)
-
-    dll = LoadLibrary("comctl32");
-    if( !dll )
-        return FALSE;
-
-    d(CreateStatusWindowA)
-    d(ImageList_Add)
-    d(ImageList_Create)
-    d(ImageList_GetImageCount)
-    d(InitCommonControls)
-
-    dll = LoadLibrary("comdlg32");
-    if( !dll )
-        return FALSE;
-
-    d(CommDlgExtendedError)
-    d(GetOpenFileNameA)
-    d(GetSaveFileNameA)
-    d(PrintDlgA)
-
-    return TRUE;
-}
-
-/*******************************************************************************
- *
  *
  *   FUNCTION: InitInstance(HANDLE, int)
  *
@@ -278,10 +164,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
  */
 
     if (ProcessCmdLine(lpCmdLine)) {
-        return 0;
-    }
-
-    if (!DynamicBind()) {
         return 0;
     }
 
