@@ -213,7 +213,6 @@ void THREAD_Init(void)
         assert( initial_teb.teb_sel );
         initial_teb.Peb = (PEB *)&current_process;  /* FIXME */
         SYSDEPS_SetCurThread( &initial_teb );
-        SYSDEPS_InitErrno();
     }
 }
 

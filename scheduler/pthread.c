@@ -21,10 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-struct _pthread_cleanup_buffer;
-
 #include "config.h"
 #include "wine/port.h"
+
+#ifndef HAVE_NPTL
+
+struct _pthread_cleanup_buffer;
 
 #define _GNU_SOURCE /* we may need to override some GNU extensions */
 
@@ -36,10 +38,77 @@ struct _pthread_cleanup_buffer;
 # include <unistd.h>
 #endif
 #include <string.h>
+#include <sys/types.h>
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_RESOLV_H
+# include <resolv.h>
+#endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
 
 #include "winbase.h"
 #include "thread.h"
 #include "winternl.h"
+
+/* default errno before threading is initialized */
+static int *default_errno_location(void)
+{
+    static int static_errno;
+    return &static_errno;
+}
+
+/* default h_errno before threading is initialized */
+static int *default_h_errno_location(void)
+{
+    static int static_h_errno;
+    return &static_h_errno;
+}
+
+/* errno once threading is working */
+static int *thread_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_errno;
+}
+
+/* h_errno once threading is working */
+static int *thread_h_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_h_errno;
+}
+
+static int* (*errno_location_ptr)(void) = default_errno_location;
+static int* (*h_errno_location_ptr)(void) = default_h_errno_location;
+
+/***********************************************************************
+ *           __errno_location/__error/__errno/___errno/__thr_errno
+ *
+ * Get the per-thread errno location.
+ */
+int *__errno_location(void) { return errno_location_ptr(); }  /* Linux */
+int *__error(void)          { return errno_location_ptr(); }  /* FreeBSD */
+int *__errno(void)          { return errno_location_ptr(); }  /* NetBSD */
+int *___errno(void)         { return errno_location_ptr(); }  /* Solaris */
+int *__thr_errno(void)      { return errno_location_ptr(); }  /* UnixWare */
+
+/***********************************************************************
+ *           __h_errno_location
+ *
+ * Get the per-thread h_errno location.
+ */
+int *__h_errno_location(void)
+{
+    return h_errno_location_ptr();
+}
+
 
 /* Currently this probably works only for glibc2,
  * which checks for the presence of double-underscore-prepended
@@ -47,7 +116,7 @@ struct _pthread_cleanup_buffer;
  * If they are not available, the libc defaults to
  * non-threadsafe operation (not good). */
 
-#if (defined(__GLIBC__) || defined(__FreeBSD__)) && !defined(HAVE_NPTL)
+#if defined(__GLIBC__) || defined(__FreeBSD__)
 
 #ifndef __USE_UNIX98
 #define __USE_UNIX98
@@ -65,6 +134,8 @@ struct _pthread_cleanup_buffer;
  asm(".globl " PSTR(alias) "\n" \
      "\t.set " PSTR(alias) "," PSTR(orig))
 
+/* thread descriptor */
+
 #define FIRST_KEY 0
 #define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
 #define MAX_TSD  16
@@ -73,12 +144,25 @@ struct fork_block;
 
 struct pthread_descr_struct
 {
-    char        dummy[256];
-    const void *key_data[MAX_KEYS];  /* for normal pthread keys */
-    const void *tsd_data[MAX_TSD];   /* for libc internal tsd variables */
+    char               dummy[2048];
+    struct __res_state res_state;
+    const void        *key_data[MAX_KEYS];  /* for normal pthread keys */
+    const void        *tsd_data[MAX_TSD];   /* for libc internal tsd variables */
 };
 
 typedef struct pthread_descr_struct *pthread_descr;
+
+static struct pthread_descr_struct initial_descr;
+
+pthread_descr __pthread_thread_self(void)
+{
+    struct pthread_descr_struct *descr = NtCurrentTeb()->pthread_data;
+    if (!descr) return &initial_descr;
+    return descr;
+}
+strong_alias(__pthread_thread_self, pthread_thread_self);
+
+/* pthread functions redirection */
 
 struct pthread_functions
 {
@@ -127,7 +211,6 @@ struct pthread_functions
 };
 
 static struct pthread_functions wine_pthread_functions;
-static struct pthread_descr_struct initial_descr;
 static int init_done;
 
 static pid_t (*libc_fork)(void);
@@ -143,6 +226,36 @@ void PTHREAD_init_done(void)
     if (!libc_sigaction) libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
 }
 
+struct __res_state *__res_state(void)
+{
+    pthread_descr descr = __pthread_thread_self();
+    return &descr->res_state;
+}
+
+static inline void writejump( const char *symbol, void *dest )
+{
+#if defined(__GLIBC__) && defined(__i386__)
+    unsigned char *addr = dlsym( RTLD_NEXT, symbol );
+
+    if (!addr) return;
+
+    /* write a relative jump at the function address */
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC|PROT_WRITE);
+    addr[0] = 0xe9;
+    *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
+
+# ifdef HAVE_VALGRIND_MEMCHECK_H
+    VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
+# endif
+#endif  /* __GLIBC__ && __i386__ */
+}
+
+/***********************************************************************
+ *           PTHREAD_init_thread
+ *
+ * Initialization for a newly created thread.
+ */
 void PTHREAD_init_thread(void)
 {
     static int first = 1;
@@ -151,9 +264,14 @@ void PTHREAD_init_thread(void)
     {
         first = 0;
         NtCurrentTeb()->pthread_data = &initial_descr;
+        errno_location_ptr = thread_errno_location;
+        h_errno_location_ptr = thread_h_errno_location;
         libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
         libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
         if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &wine_pthread_functions );
+        writejump( "__errno_location", thread_errno_location );
+        writejump( "__h_errno_location", thread_h_errno_location );
+        writejump( "__res_state", __res_state );
     }
     else
     {
@@ -199,14 +317,6 @@ typedef struct _wine_cleanup {
 void __pthread_initialize(void)
 {
 }
-
-pthread_descr __pthread_thread_self(void)
-{
-    struct pthread_descr_struct *descr = NtCurrentTeb()->pthread_data;
-    if (!descr) return &initial_descr;
-    return descr;
-}
-strong_alias(__pthread_thread_self, pthread_thread_self);
 
 struct pthread_thread_init {
 	 void* (*start_routine)(void*);
@@ -556,7 +666,6 @@ static void ** __attribute__((const)) pthread_internal_tsd_address( int key )
     return (void **)&descr->tsd_data[key];
 }
 
-
 /***** "EXCEPTION" FRAMES *****/
 /* not implemented right now */
 
@@ -850,10 +959,12 @@ static struct pthread_functions wine_pthread_functions =
     NULL                           /* ptr_pthread_raise */
 };
 
-#else /* __GLIBC__ || __FREEBSD__ */
+#endif /* __GLIBC__ || __FREEBSD__ */
+
+#else  /* HAVE_NPTL */
 
 void PTHREAD_init_done(void)
 {
 }
 
-#endif /* __GLIBC__ || __FREEBSD__ */
+#endif  /* HAVE_NPTL */

@@ -44,9 +44,6 @@
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-#include <valgrind/memcheck.h>
-#endif
 
 #ifdef HAVE_NPTL
 #include <pthread.h>
@@ -370,100 +367,6 @@ int SYSDEPS_GetUnixTid(void)
     return -1;
 #endif
 }
-
-
-#ifndef HAVE_NPTL
-
-/* default errno before threading is initialized */
-static int *default_errno_location(void)
-{
-    static int static_errno;
-    return &static_errno;
-}
-
-/* default h_errno before threading is initialized */
-static int *default_h_errno_location(void)
-{
-    static int static_h_errno;
-    return &static_h_errno;
-}
-
-/* errno once threading is working */
-static int *thread_errno_location(void)
-{
-    return &NtCurrentTeb()->thread_errno;
-}
-
-/* h_errno once threading is working */
-static int *thread_h_errno_location(void)
-{
-    return &NtCurrentTeb()->thread_h_errno;
-}
-
-static int* (*errno_location_ptr)(void) = default_errno_location;
-static int* (*h_errno_location_ptr)(void) = default_h_errno_location;
-
-/***********************************************************************
- *           __errno_location/__error/__errno/___errno/__thr_errno
- *
- * Get the per-thread errno location.
- */
-int *__errno_location(void) { return errno_location_ptr(); }  /* Linux */
-int *__error(void)          { return errno_location_ptr(); }  /* FreeBSD */
-int *__errno(void)          { return errno_location_ptr(); }  /* NetBSD */
-int *___errno(void)         { return errno_location_ptr(); }  /* Solaris */
-int *__thr_errno(void)      { return errno_location_ptr(); }  /* UnixWare */
-
-/***********************************************************************
- *           __h_errno_location
- *
- * Get the per-thread h_errno location.
- */
-int *__h_errno_location(void)
-{
-    return h_errno_location_ptr();
-}
-
-#endif  /* HAVE_NPTL */
-
-
-#if defined(__linux__) && defined(__i386__)
-static inline void writejump( const char *symbol, void *dest )
-{
-    unsigned char *addr = wine_dlsym( RTLD_NEXT, symbol, NULL, 0 );
-
-    if (!addr) return;
-
-    /* write a relative jump at the function address */
-    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC|PROT_WRITE);
-    addr[0] = 0xe9;
-    *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
-    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
-
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-    VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
-#endif
-}
-#endif
-
-/***********************************************************************
- *           SYSDEPS_InitErrno
- *
- * Initialize errno handling.
- */
-void SYSDEPS_InitErrno(void)
-{
-#ifndef HAVE_NPTL
-    errno_location_ptr = thread_errno_location;
-    h_errno_location_ptr = thread_h_errno_location;
-
-# if defined(__linux__) && defined(__i386__)
-    writejump( "__errno_location", thread_errno_location );
-    writejump( "__h_errno_location", thread_h_errno_location );
-# endif
-#endif  /* HAVE_NPTL */
-}
-
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
