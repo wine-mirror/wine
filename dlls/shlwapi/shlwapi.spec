@@ -680,8 +680,8 @@ init SHLWAPI_LibMain
 @ stdcall UrlUnescapeW(wstr ptr ptr long) UrlUnescapeW
 @ varargs wnsprintfA(ptr long str) wnsprintfA
 @ varargs wnsprintfW(ptr long wstr) wnsprintfW
-@ forward wvnsprintfA user32.wvsnprintfA
-@ forward wvnsprintfW user32.wvsnprintfW
+@ stdcall wvnsprintfA(ptr long str ptr) wvnsprintfA
+@ stdcall wvnsprintfW(ptr long wstr ptr) wvnsprintfW
 
 
 # exported in later versions

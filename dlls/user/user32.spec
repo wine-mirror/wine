@@ -671,9 +671,3 @@ init	UserClientDllInitialize
 @ stdcall SendDriverMessage16(long long long long) SendDriverMessage16
 @ stdcall SetWindowsHookEx16(long long long long) SetWindowsHookEx16
 @ stdcall UserYield16() UserYield16
-
-################################################################
-# Wine extensions: extra useful functions not exported under Windows
-#
-@ stdcall wvsnprintfA(ptr long str ptr) wvsnprintfA
-@ stdcall wvsnprintfW(ptr long wstr ptr) wvsnprintfW

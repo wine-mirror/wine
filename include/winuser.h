@@ -4241,12 +4241,6 @@ WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 HRESULT     WINAPI PrivateExtractIconsA(LPCSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
 HRESULT     WINAPI PrivateExtractIconsW(LPCWSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
 
-/* Extra functions that don't exist in the Windows API */
-
-INT         WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
-INT         WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
-#define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
-
 #ifdef __cplusplus
 }
 #endif

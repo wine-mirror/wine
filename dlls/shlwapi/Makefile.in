@@ -17,7 +17,8 @@ C_SRCS = \
 	regstream.c \
 	shlwapi_main.c \
 	string.c \
-	url.c
+	url.c \
+	wsprintf.c
 
 EXTRASUBDIRS = tests
 

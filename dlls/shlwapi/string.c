@@ -634,31 +634,3 @@ BOOL WINAPI StrTrimA(LPSTR pszSource, LPCSTR pszTrimChars)
     TRACE("<- '%s'\n", pszSource);
     return trimmed;
 }
-
-/*************************************************************************
- *      wnsprintfA	[SHLWAPI.@]
- */
-int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
-{
-    va_list valist;
-    INT res;
-
-    va_start( valist, lpFmt );
-    res = wvsnprintfA( lpOut, cchLimitIn, lpFmt, valist );
-    va_end( valist );
-    return res;
-}
-
-/*************************************************************************
- *      wnsprintfW	[SHLWAPI.@]
- */
-int WINAPIV wnsprintfW(LPWSTR lpOut, int cchLimitIn, LPCWSTR lpFmt, ...)
-{
-    va_list valist;
-    INT res;
-
-    va_start( valist, lpFmt );
-    res = wvsnprintfW( lpOut, cchLimitIn, lpFmt, valist );
-    va_end( valist );
-    return res;
-}
