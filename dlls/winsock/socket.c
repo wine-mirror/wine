@@ -163,7 +163,7 @@ static INT         _ws_sock_ops[] =
 static int           _px_sock_ops[] =
        { SO_DEBUG, SO_REUSEADDR, SO_KEEPALIVE, SO_DONTROUTE, SO_BROADCAST,
          SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
-	 SO_LINGER,
+	 WS_SO_DONTLINGER,  /* no unix equivalent */
 #ifdef SO_RCVTIMEO
 	 SO_RCVTIMEO,
 #endif
@@ -1642,6 +1642,7 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 	int fd = _get_sock_fd(s);
         int woptval;
 
+        convert_sockopt(&level, &optname);
         if(optname == WS_SO_DONTLINGER) {
             linger.l_onoff	= *((int*)optval) ? 0: 1;
             linger.l_linger	= 0;
@@ -1649,7 +1650,6 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
             optval = (char*)&linger;
             optlen = sizeof(struct linger);
         }else{
-            convert_sockopt(&level, &optname);
             if (optname == SO_LINGER && optval) {
 		/* yes, uses unsigned short in both win16/win32 */
 		linger.l_onoff	= ((UINT16*)optval)[0];
