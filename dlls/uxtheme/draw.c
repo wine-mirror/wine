@@ -37,12 +37,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
 /***********************************************************************
+ * Defines and global variables
+ */
+
+DWORD dwDialogTextureFlags;
+
+/***********************************************************************/
+
+/***********************************************************************
  *      EnableThemeDialogTexture                            (UXTHEME.@)
  */
 HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
 {
-    FIXME("%p 0x%08lx: stub\n", hwnd, dwFlags);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    TRACE("(%p,0x%08lx\n", hwnd, dwFlags);
+    dwDialogTextureFlags = dwFlags;
+    return S_OK;
  }
 
 /***********************************************************************
@@ -50,8 +59,8 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
  */
 BOOL WINAPI IsThemeDialogTextureEnabled(void)
 {
-    FIXME("stub\n");
-    return FALSE;
+    TRACE("\n");
+    return (dwDialogTextureFlags & ETDT_ENABLE) && !(dwDialogTextureFlags & ETDT_DISABLE);
 }
 
 /***********************************************************************
@@ -59,9 +68,31 @@ BOOL WINAPI IsThemeDialogTextureEnabled(void)
  */
 HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
 {
-    FIXME("stub\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    RECT rt;
+    POINT org;
+    HWND hParent;
+    TRACE("(%p,%p,%p)\n", hwnd, hdc, prc);
+    hParent = GetParent(hwnd);
+    if(!hParent)
+        hParent = hwnd;
+    if(prc) {
+        CopyRect(&rt, prc);
+        MapWindowPoints(hwnd, NULL, (LPPOINT)&rt, 2);
+    }
+    else {
+        GetClientRect(hParent, &rt);
+        MapWindowPoints(hParent, NULL, (LPPOINT)&rt, 2);
+    }
+
+    SetViewportOrgEx(hdc, rt.left, rt.top, &org);
+
+    SendMessageW(hParent, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    SendMessageW(hParent, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
+
+    SetViewportOrgEx(hdc, org.x, org.y, NULL);
+    return S_OK;
 }
+
 
 /***********************************************************************
  *      DrawThemeBackground                                 (UXTHEME.@)
@@ -70,10 +101,14 @@ HRESULT WINAPI DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
                                    int iStateId, const RECT *pRect,
                                    const RECT *pClipRect)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
-    if(!hTheme)
-        return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DTBGOPTS opts;
+    opts.dwSize = sizeof(DTBGOPTS);
+    opts.dwFlags = 0;
+    if(pClipRect) {
+        opts.dwFlags |= DTBG_CLIPRECT;
+        CopyRect(&opts.rcClip, pClipRect);
+    }
+    return DrawThemeBackgroundEx(hTheme, hdc, iPartId, iStateId, pRect, &opts);
 }
 
 /***********************************************************************
@@ -229,6 +264,8 @@ HRESULT WINAPI GetThemeTextMetrics(HTHEME hTheme, HDC hdc, int iPartId,
 BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME hTheme, int iPartId,
                                                   int iStateId)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
-    return FALSE;
+    BOOL transparent = FALSE;
+    TRACE("(%d,%d)\n", iPartId, iStateId);
+    GetThemeBool(hTheme, iPartId, iStateId, TMT_TRANSPARENT, &transparent);
+    return transparent;
 }
