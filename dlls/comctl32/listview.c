@@ -211,7 +211,6 @@ typedef struct tagLISTVIEW_INFO
 				* LISTVIEW_UpdateSize. This rectangle offset
 				* by the LISTVIEW_GetOrigin value is in
 				* client coordinates   */
-  RECT rcView;                 /* This rectangle contains all items */ 
   SIZE iconSize;
   SIZE iconSpacing;
   SIZE iconStateSize;
@@ -319,17 +318,13 @@ typedef struct tagLISTVIEW_INFO
   TRACE("hwndSelf=%08x, clrBk=0x%06lx, clrText=0x%06lx, clrTextBk=0x%06lx, ItemHeight=%d, ItemWidth=%d, Style=0x%08lx\n", \
         iP->hwndSelf, iP->clrBk, iP->clrText, iP->clrTextBk, \
         iP->nItemHeight, iP->nItemWidth, infoPtr->dwStyle); \
-  TRACE("hwndSelf=%08x, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx, Focus=%s\n", \
+  TRACE("hwndSelf=%08x, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx, Focus=%d\n", \
         iP->hwndSelf, iP->himlNormal, iP->himlSmall, iP->himlState, \
-        iP->nFocusedItem, iP->nHotItem, iP->dwLvExStyle, \
-        (iP->bFocus) ? "true" : "false"); \
+        iP->nFocusedItem, iP->nHotItem, iP->dwLvExStyle, iP->bFocus ); \
   TRACE("hwndSelf=%08x, ntmH=%d, icSz.cx=%ld, icSz.cy=%ld, icSp.cx=%ld, icSp.cy=%ld, notifyFmt=%d\n", \
         iP->hwndSelf, iP->ntmHeight, iP->iconSize.cx, iP->iconSize.cy, \
         iP->iconSpacing.cx, iP->iconSpacing.cy, iP->notifyFormat); \
-  TRACE("hwndSelf=%08x, rcList=(%d,%d)-(%d,%d), rcView=(%d,%d)-(%d,%d)\n", \
-        iP->hwndSelf, \
-	iP->rcList.left, iP->rcList.top, iP->rcList.right, iP->rcList.bottom, \
-	iP->rcView.left, iP->rcView.top, iP->rcView.right, iP->rcView.bottom); \
+  TRACE("hwndSelf=%08x, rcList=%s\n", iP->hwndSelf, debugrect(&iP->rcList)); \
 } while(0)
 
 
@@ -338,7 +333,6 @@ typedef struct tagLISTVIEW_INFO
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
 static void LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
-static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
@@ -351,7 +345,6 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *, INT, POINT);
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *);
 static void LISTVIEW_SetSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *);
-static void LISTVIEW_UnsupportedStyles(LONG);
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *, INT, BOOL);
 static LRESULT LISTVIEW_Command(LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
@@ -1581,33 +1574,6 @@ static void LISTVIEW_InvalidateSelectedItems(LISTVIEW_INFO *infoPtr)
 
 	    
 /***
- * DESCRIPTION:
- * Prints a message for unsupported window styles.
- * A kind of TODO list for window styles.
- *
- * PARAMETER(S):
- * [I] lStyle : window style
- *
- * RETURN:
- * None
- */
-static void LISTVIEW_UnsupportedStyles(LONG lStyle)
-{
-  if ((LVS_TYPESTYLEMASK & lStyle) == LVS_NOSCROLL)
-    FIXME("  LVS_NOSCROLL\n");
-
-  if (lStyle & LVS_NOLABELWRAP)
-    FIXME("  LVS_NOLABELWRAP\n");
-
-  if (lStyle & LVS_SORTASCENDING)
-    FIXME("  LVS_SORTASCENDING\n");
-
-  if (lStyle & LVS_SORTDESCENDING)
-    FIXME("  LVS_SORTDESCENDING\n");
-}
-
-
-/***
  * DESCRIPTION:            [INTERNAL]
  * Computes an item's (left,top) corner, relative to rcView.
  * That is, the position has NOT been made relative to the Origin.
@@ -1949,7 +1915,6 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
   UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
   POINT ptItem;
-  RECT rcView;
   INT i, off_x=0, off_y=0;
 
   if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
@@ -1963,7 +1928,6 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
     }
     ptItem.x = off_x;
     ptItem.y = off_y;
-    ZeroMemory(&rcView, sizeof(RECT));
     TRACE("Icon  off.x=%d, off.y=%d, left=%d, right=%d\n",
 	  off_x, off_y,
 	  infoPtr->rcList.left, infoPtr->rcList.right);
@@ -1980,11 +1944,7 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
 
         LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.x += infoPtr->nItemWidth;
-        rcView.right = max(rcView.right, ptItem.x);
       }
-
-      rcView.right -= off_x;
-      rcView.bottom = (ptItem.y-off_y) + infoPtr->nItemHeight;
     }
     else
     {
@@ -1993,12 +1953,7 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
         LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.y += infoPtr->nItemHeight;
       }
-
-      rcView.right = infoPtr->nItemWidth;
-      rcView.bottom = ptItem.y-off_y;
     }
-
-    infoPtr->rcView = rcView;
   }
 }
 
@@ -2017,7 +1972,6 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
   UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
   POINT ptItem;
-  RECT rcView;
   INT i, off_x=0, off_y=0;
 
   if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
@@ -2031,7 +1985,6 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
     }
     ptItem.x = off_x;
     ptItem.y = off_y;
-    ZeroMemory(&rcView, sizeof(RECT));
     TRACE("Icon  off.x=%d, off.y=%d\n", off_x, off_y);
 
     if (nListHeight > infoPtr->nItemHeight)
@@ -2046,10 +1999,7 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
 
         LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.y += infoPtr->nItemHeight;
-        rcView.bottom = max(rcView.bottom, ptItem.y);
       }
-
-      rcView.right = ptItem.x + infoPtr->nItemWidth;
     }
     else
     {
@@ -2058,15 +2008,61 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
         LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.x += infoPtr->nItemWidth;
       }
-
-      rcView.bottom = infoPtr->nItemHeight;
-      rcView.right = ptItem.x;
     }
-
-    infoPtr->rcView = rcView;
   }
 }
 
+
+/***
+ * DESCRIPTION:
+ * Retrieves the bounding rectangle of all the items, not offset by Origin.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [O] lprcView : bounding rectangle
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static void LISTVIEW_GetAreaRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
+{
+    INT i, x, y;
+
+    SetRectEmpty(lprcView);
+
+    switch (infoPtr->dwStyle & LVS_TYPEMASK)
+    {
+    case LVS_ICON:
+    case LVS_SMALLICON:
+	for (i = 0; i < infoPtr->nItemCount; i++)
+	{
+	    x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, i);
+	    y = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, i);
+	    lprcView->right = max(lprcView->right, x);
+	    lprcView->bottom = max(lprcView->bottom, y);
+	}
+	if (infoPtr->nItemCount > 0)
+	{
+	    lprcView->right += infoPtr->nItemWidth;
+	    lprcView->bottom += infoPtr->nItemHeight;
+	}
+	break;
+
+    case LVS_LIST:
+	y = LISTVIEW_GetCountPerColumn(infoPtr);
+	x = infoPtr->nItemCount / y;
+	if (infoPtr->nItemCount % y) x++;
+	lprcView->right = x * infoPtr->nItemWidth;
+	lprcView->bottom = y * infoPtr->nItemHeight;
+	break;
+	
+    case LVS_REPORT:	    
+    	lprcView->right = infoPtr->nItemWidth;
+	lprcView->bottom = infoPtr->nItemCount * infoPtr->nItemHeight;
+	break;
+    }
+}
 
 /***
  * DESCRIPTION:
@@ -2087,10 +2083,9 @@ static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
     TRACE("(lprcView=%p)\n", lprcView);
 
     if (!lprcView) return FALSE;
-  
+ 
     LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
-   
-    *lprcView = infoPtr->rcView;
+    LISTVIEW_GetAreaRect(infoPtr, lprcView); 
     OffsetRect(lprcView, ptOrigin.x, ptOrigin.y); 
 
     TRACE("lprcView=%s\n", debugrect(lprcView));
@@ -2736,26 +2731,24 @@ static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT directi
  */
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
-  INT nFirst = min(infoPtr->nSelectionMark, nItem);
-  INT nLast = max(infoPtr->nSelectionMark, nItem);
-  INT i;
-  LVITEMW item;
+    INT nFirst = min(infoPtr->nSelectionMark, nItem);
+    INT nLast = max(infoPtr->nSelectionMark, nItem);
+    INT i;
+    LVITEMW item;
 
-  if (nFirst == -1)
-    nFirst = nItem;
+    if (nFirst == -1) nFirst = nItem;
 
-  item.state = LVIS_SELECTED;
-  item.stateMask = LVIS_SELECTED;
+    item.state = LVIS_SELECTED;
+    item.stateMask = LVIS_SELECTED;
 
-  /* FIXME: this is not correct LVS_OWNERDATA
-   * See docu for LVN_ITEMCHANGED. Is there something similar for
-   * RemoveGroupSelection (is there such a thing?)?
-   */
-  for (i = nFirst; i <= nLast; i++)
-    LISTVIEW_SetItemState(infoPtr,i,&item);
-
-  LISTVIEW_SetItemFocus(infoPtr, nItem);
-  infoPtr->nSelectionMark = nItem;
+    /* FIXME: this is not correct LVS_OWNERDATA
+     * setting the item states individually will generate
+     * a LVN_ITEMCHANGED notification for each one. Instead,
+     * we have to send a LVN_ODSTATECHANGED notification.
+     * See MSDN documentation for LVN_ITEMCHANGED.
+     */
+    for (i = nFirst; i <= nLast; i++)
+	LISTVIEW_SetItemState(infoPtr,i,&item);
 }
 
 
@@ -4378,6 +4371,7 @@ static INT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	(uView == LVS_ICON || uView ==LVS_SMALLICON))
     {
 	POINT Origin;
+	RECT rcArea;
 	
 	FIXME("LVFI_NEARESTXY is slow.\n");
         LISTVIEW_GetOrigin(infoPtr, &Origin);
@@ -4390,9 +4384,13 @@ static INT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	case VK_RIGHT: Destination.x += infoPtr->nItemWidth; break;
 	case VK_LEFT:  Destination.x -= infoPtr->nItemWidth; break;
 	case VK_HOME:  Destination.x = Destination.y = 0; break;
-	case VK_END:   Destination.x = infoPtr->rcView.right; Destination.y = infoPtr->rcView.bottom; break;
 	case VK_NEXT:  Destination.y += infoPtr->rcList.bottom - infoPtr->rcList.top; break;
 	case VK_PRIOR: Destination.y -= infoPtr->rcList.bottom - infoPtr->rcList.top; break;
+	case VK_END:
+	    LISTVIEW_GetAreaRect(infoPtr, &rcArea);
+	    Destination.x = rcArea.right; 
+	    Destination.y = rcArea.bottom; 
+	    break;
 	default: ERR("Unknown vkDirection=%d\n", lpFindInfo->vkDirection);
 	}
 	bNearest = TRUE;
@@ -4474,15 +4472,15 @@ again:
 static INT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
                               LPLVFINDINFOA lpFindInfo)
 {
-  BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
-  LVFINDINFOW fiw;
-  INT res;
+    BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
+    LVFINDINFOW fiw;
+    INT res;
 
-  memcpy(&fiw, lpFindInfo, sizeof(fiw));
-  if (hasText) fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
-  res = LISTVIEW_FindItemW(infoPtr, nStart, &fiw);
-  if (hasText) textfreeT((LPWSTR)fiw.psz, FALSE);
-  return res;
+    memcpy(&fiw, lpFindInfo, sizeof(fiw));
+    if (hasText) fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
+    res = LISTVIEW_FindItemW(infoPtr, nStart, &fiw);
+    if (hasText) textfreeT((LPWSTR)fiw.psz, FALSE);
+    return res;
 }
 
 /***
@@ -4624,29 +4622,18 @@ static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
  */
 static INT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  INT nItemCount = 0;
-
-  if (uView == LVS_LIST)
-  {
-    if (infoPtr->rcList.right > infoPtr->nItemWidth)
+    switch (infoPtr->dwStyle & LVS_TYPEMASK)
     {
-      nItemCount = LISTVIEW_GetCountPerRow(infoPtr) *
-                   LISTVIEW_GetCountPerColumn(infoPtr);
+    case LVS_ICON:
+    case LVS_SMALLICON:
+	return infoPtr->nItemCount;
+    case LVS_REPORT:
+	return LISTVIEW_GetCountPerColumn(infoPtr);
+    case LVS_LIST:
+	return LISTVIEW_GetCountPerRow(infoPtr) * LISTVIEW_GetCountPerColumn(infoPtr);
     }
-  }
-  else if (uView == LVS_REPORT)
-  {
-    nItemCount = LISTVIEW_GetCountPerColumn(infoPtr);
-  }
-  else
-  {
-    nItemCount = infoPtr->nItemCount;
-  }
-
-  return nItemCount;
+    assert(FALSE);
 }
-
 
 /***
  * DESCRIPTION:
@@ -6945,9 +6932,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->iconStateSize.cx = GetSystemMetrics(SM_CXSMICON);
   infoPtr->iconStateSize.cy = GetSystemMetrics(SM_CYSMICON);
 
-  /* display unsupported listview window styles */
-  LISTVIEW_UnsupportedStyles(lpcs->style);
-
   /* allocate memory for the data structure */
   infoPtr->hdpaItems = DPA_Create(10);
   infoPtr->hdpaPosX  = DPA_Create(10);
@@ -7465,7 +7449,11 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
       if ((wKey & MK_CONTROL) && (wKey & MK_SHIFT))
       {
         if (bGroupSelect)
+	{
           LISTVIEW_AddGroupSelection(infoPtr, nItem);
+    	  LISTVIEW_SetItemFocus(infoPtr, nItem);
+          infoPtr->nSelectionMark = nItem;
+	}
         else
 	{
           LVITEMW item;
@@ -8134,9 +8122,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
     /* invalidate client area + erase background */
     LISTVIEW_InvalidateList(infoPtr);
-
-    /* print the list of unsupported window styles */
-    LISTVIEW_UnsupportedStyles(lpss->styleNew);
 
     return 0;
 }
