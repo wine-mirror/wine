@@ -85,6 +85,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_ExtDeviceMode,          /* pExtDeviceMode */
     WIN16DRV_ExtEscape,              /* pExtEscape */
     NULL,                            /* pExtFloodFill */
+    NULL,                            /* pExtSelectClipRgn */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
     NULL,                            /* pFillPath */
     NULL,                            /* pFillRgn */
@@ -129,7 +130,6 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_SelectBitmap,           /* pSelectBitmap */
     WIN16DRV_SelectBrush,            /* pSelectBrush */
     NULL,                            /* pSelectClipPath */
-    NULL,                            /* pSelectClipRgn */
     WIN16DRV_SelectFont,             /* pSelectFont */
     NULL,                            /* pSelectPalette */
     WIN16DRV_SelectPen,              /* pSelectPen */

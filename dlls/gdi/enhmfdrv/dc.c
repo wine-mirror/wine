@@ -128,6 +128,28 @@ INT EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
+INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
+{
+    EMREXTSELECTCLIPRGN *emr;
+    DWORD size, rgnsize;
+    BOOL ret;
+
+    rgnsize = GetRegionData( hrgn, 0, NULL );
+    size = rgnsize + sizeof(*emr) - 1;
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
+
+    GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+
+    emr->emr.iType = EMR_EXTSELECTCLIPRGN;
+    emr->emr.nSize = size;
+    emr->cbRgnData = rgnsize;
+    emr->iMode     = mode;
+
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    HeapFree( GetProcessHeap(), 0, emr );
+    return ret ? SIMPLEREGION : ERROR;
+}
+
 DWORD EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
 {
     EMRSETMAPPERFLAGS emr;

@@ -89,6 +89,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(ExtDeviceMode);
     GET_FUNC(ExtEscape);
     GET_FUNC(ExtFloodFill);
+    GET_FUNC(ExtSelectClipRgn);
     GET_FUNC(ExtTextOut);
     GET_FUNC(FillPath);
     GET_FUNC(FillRgn);
@@ -133,7 +134,6 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(SelectBitmap);
     GET_FUNC(SelectBrush);
     GET_FUNC(SelectClipPath);
-    GET_FUNC(SelectClipRgn);
     GET_FUNC(SelectFont);
     GET_FUNC(SelectPalette);
     GET_FUNC(SelectPen);

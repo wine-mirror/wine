@@ -167,6 +167,7 @@ typedef struct tagDC_FUNCS
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
     INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
     BOOL     (*pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
+    INT      (*pExtSelectClipRgn)(PHYSDEV,HRGN,INT);
     BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
     BOOL     (*pFillPath)(PHYSDEV);
     BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
@@ -211,7 +212,6 @@ typedef struct tagDC_FUNCS
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
-    INT      (*pSelectClipRgn)(PHYSDEV,HRGN);
     HFONT    (*pSelectFont)(PHYSDEV,HFONT);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (*pSelectPen)(PHYSDEV,HPEN);

@@ -58,6 +58,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pExtDeviceMode */
     MFDRV_ExtEscape,                 /* pExtEscape */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
+    MFDRV_ExtSelectClipRgn,          /* pExtSelectClipRgn */
     MFDRV_ExtTextOut,                /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */
     MFDRV_FillRgn,                   /* pFillRgn */
@@ -102,7 +103,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SelectBitmap,              /* pSelectBitmap */
     MFDRV_SelectBrush,               /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
-    NULL,                            /* pSelectClipRgn */
     MFDRV_SelectFont,                /* pSelectFont */
     NULL,                            /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */

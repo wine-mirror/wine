@@ -372,6 +372,25 @@ MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 
 
 /**********************************************************************
+ *          MFDRV_ExtSelectClipRgn
+ */
+INT MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
+{
+    INT16 iRgn;
+
+    if (mode != RGN_COPY)
+    {
+        FIXME( "mode %d not supported\n", mode );
+        return ERROR;
+    }
+    iRgn = MFDRV_CreateRegion( dev, hrgn );
+    if(iRgn == -1)
+        return ERROR;
+    return MFDRV_MetaParam1( dev, META_SELECTCLIPREGION, iRgn ) ? SIMPLEREGION : ERROR;
+}
+
+
+/**********************************************************************
  *          MFDRV_SetBkColor
  */
 COLORREF

@@ -72,8 +72,8 @@ extern INT MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT
                                   bottom );
 extern INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                             INT cbOutput, LPVOID out_data );
-extern BOOL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y,
-                                COLORREF color, UINT fillType );
+extern BOOL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType );
+extern INT  MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode );
 extern BOOL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
                               UINT flags, const RECT *lprect, LPCWSTR str,
                               UINT count, const INT *lpDx );

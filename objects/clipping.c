@@ -91,6 +91,13 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 
     TRACE("%04x %04x %d\n", hdc, hrgn, fnMode );
 
+    if (dc->funcs->pExtSelectClipRgn)
+    {
+        retval = dc->funcs->pExtSelectClipRgn( dc->physDev, hrgn, fnMode );
+        GDI_ReleaseObj( hdc );
+        return retval;
+    }
+
     if (!hrgn)
     {
         if (fnMode == RGN_COPY)

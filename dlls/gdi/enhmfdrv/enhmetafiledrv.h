@@ -58,10 +58,9 @@ extern BOOL     EMFDRV_CloseFigure( PHYSDEV dev );
 extern BOOL     EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top,
                                 INT right, INT bottom );
 extern BOOL     EMFDRV_EndPath( PHYSDEV dev );
-extern INT      EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right,
-                                        INT bottom );
-extern BOOL     EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y,
-                                     COLORREF color, UINT fillType );
+extern INT      EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom );
+extern BOOL     EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType );
+extern INT      EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode );
 extern BOOL     EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
                                    UINT flags, const RECT *lprect, LPCSTR str,
                                    UINT count, const INT *lpDx );
