@@ -19,7 +19,7 @@
 #ifndef __WINE_DXDIAG_H
 #define __WINE_DXDIAG_H
 
-#include <objbase.h>
+#include <ole2.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,13 +67,13 @@ typedef struct IDxDiagContainer     IDxDiagContainer,  *LPDXDIAGCONTAINER,  *PDX
 /*****************************************************************************
  * IDxDiagProvider interface
  */
-#define ICOM_INTERFACE IDxDiagProvider
+#define INTERFACE IDxDiagProvider
 #define IDxDiagProvider_METHODS \
     IUnknown_METHODS \
-    STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) \
-    STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance)
+    STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) PURE;  \
+    STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance) PURE; 
 ICOM_DEFINE(IDxDiagProvider,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
@@ -81,37 +81,41 @@ ICOM_DEFINE(IDxDiagProvider,IUnknown)
 #define	IDxDiagProvider_AddRef(p)                            (p)->lpVtbl->AddRef(p)
 #define	IDxDiagProvider_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IDxDiagProvider methods ***/
-#define IDxDiagProvider_Initialize(p,a,b)                       (p)->lpVtbl->Initialize(p,a,b)
-#define IDxDiagProvider_GetRootContainer(p,a)                   (p)->lpVtbl->GetRootContainer(p,a)
+#define IDxDiagProvider_Initialize(p,a,b)                    (p)->lpVtbl->Initialize(p,a,b)
+#define IDxDiagProvider_GetRootContainer(p,a)                (p)->lpVtbl->GetRootContainer(p,a)
 #endif
 
 /*****************************************************************************
  * IDxDiagContainer interface
  */
-#define ICOM_INTERFACE IDxDiagContainer
+#ifdef __WINESRC__
+#undef GetProp
+#endif
+
+#define INTERFACE IDxDiagContainer
 #define IDxDiagContainer_METHODS \
     IUnknown_METHODS \
-    STDMETHOD(GetNumberOfChildContainers)(THIS_  DWORD* pdwCount) \
-    STDMETHOD(EnumChildContainerNames)(THIS_ DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) \
-    STDMETHOD(GetChildContainer)(THIS_ LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) \
-    STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) \
-    STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) \
-    STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp)
+    STDMETHOD(GetNumberOfChildContainers)(THIS_  DWORD* pdwCount) PURE; \
+    STDMETHOD(EnumChildContainerNames)(THIS_ DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) PURE; \
+    STDMETHOD(GetChildContainer)(THIS_ LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) PURE; \
+    STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) PURE; \
+    STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) PURE; \
+    STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp) PURE; 
 ICOM_DEFINE(IDxDiagContainer,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define	IDxDiagContainer_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
-#define	IDxDiagContainer_AddRef(p)                            (p)->lpVtbl->AddRef(p)
-#define	IDxDiagContainer_Release(p)                           (p)->lpVtbl->Release(p)
+#define	IDxDiagContainer_QueryInterface(p,a,b)               (p)->lpVtbl->QueryInterface(p,a,b)
+#define	IDxDiagContainer_AddRef(p)                           (p)->lpVtbl->AddRef(p)
+#define	IDxDiagContainer_Release(p)                          (p)->lpVtbl->Release(p)
 /*** IDxDiagContainer methods ***/
-#define IDxDiagContainer_GetNumberOfChildContainers(p,a)      (p)->lpVtbl->GetNumberOfChildContainers(p,a)
-#define IDxDiagContainer_EnumChildContainerNames(p,a,b,c)     (p)->lpVtbl->EnumChildContainerNames(p,a,b,c)
-#define IDxDiagContainer_GetChildContainer(p,a,b)             (p)->lpVtbl->GetChildContainer(p,a,b)
-#define IDxDiagContainer_GetNumberOfProps(p,a)                (p)->lpVtbl->GetNumberOfProps(p,a)
-#define IDxDiagContainer_EnumProps(p,a,b)                     (p)->lpVtbl->EnumProps(p,a,b,c)
-#define IDxDiagContainer_GetProp(p,a,b)                       (p)->lpVtbl->GetProp(p,a,b)
+#define IDxDiagContainer_GetNumberOfChildContainers(p,a)     (p)->lpVtbl->GetNumberOfChildContainers(p,a)
+#define IDxDiagContainer_EnumChildContainerNames(p,a,b,c)    (p)->lpVtbl->EnumChildContainerNames(p,a,b,c)
+#define IDxDiagContainer_GetChildContainer(p,a,b)            (p)->lpVtbl->GetChildContainer(p,a,b)
+#define IDxDiagContainer_GetNumberOfProps(p,a)               (p)->lpVtbl->GetNumberOfProps(p,a)
+#define IDxDiagContainer_EnumProps(p,a,b)                    (p)->lpVtbl->EnumProps(p,a,b,c)
+#define IDxDiagContainer_GetProp(p,a,b)                      (p)->lpVtbl->GetProp(p,a,b)
 #endif
 
 #ifdef __cplusplus
