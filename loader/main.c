@@ -282,7 +282,7 @@ HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] )
     if (!MAIN_KernelInit(0, 0, NULL)) return 0;
 
     /* Create and switch to initial task */
-    if (!(wm = ELF_CreateDummyModule( argv[0], argv[0], PROCESS_Current() )))
+    if (!(wm = ELF_CreateDummyModule( argv[0], argv[0] )))
         return 0;
     PROCESS_Current()->exe_modref = wm;
 

@@ -36,17 +36,18 @@ extern BOOL32 THREAD_InitDone;
  *		MODULE32_LookupHMODULE
  * looks for the referenced HMODULE in the current process
  */
-WINE_MODREF*
-MODULE32_LookupHMODULE(PDB32 *process,HMODULE32 hmod) {
+WINE_MODREF *MODULE32_LookupHMODULE( HMODULE32 hmod )
+{
     WINE_MODREF	*wm;
 
     if (!hmod) 
-    	return process->exe_modref;
+    	return PROCESS_Current()->exe_modref;
+
     if (!HIWORD(hmod)) {
     	ERR(module,"tried to lookup 0x%04x in win32 module handler!\n",hmod);
 	return NULL;
     }
-    for (wm = process->modref_list;wm;wm=wm->next)
+    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next )
 	if (wm->module == hmod)
 	    return wm;
     return NULL;
@@ -70,14 +71,14 @@ MODULE32_LookupHMODULE(PDB32 *process,HMODULE32 hmod) {
  *  from itself, but also via LoadLibrary from one of the called initialization
  *  routines.)
  */
-static void MODULE_DoInitializeDLLs( PDB32 *process, WINE_MODREF *wm,
+static void MODULE_DoInitializeDLLs( WINE_MODREF *wm,
                                      DWORD type, LPVOID lpReserved )
 {
     int i;
 
     assert( wm && !wm->initDone );
-    TRACE( module, "(%p,%08x,%ld,%p) - START\n", 
-           process, wm->module, type, lpReserved );
+    TRACE( module, "(%08x,%ld,%p) - START\n", 
+           wm->module, type, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
     wm->initDone = TRUE;
@@ -85,8 +86,7 @@ static void MODULE_DoInitializeDLLs( PDB32 *process, WINE_MODREF *wm,
     /* Recursively initialize all child DLLs */
     for ( i = 0; i < wm->nDeps; i++ )
         if ( wm->deps[i] && !wm->deps[i]->initDone )
-            MODULE_DoInitializeDLLs( process, 
-                                     wm->deps[i], type, lpReserved );
+            MODULE_DoInitializeDLLs( wm->deps[i], type, lpReserved );
 
     /* Now we can call the initialization routine */
     switch ( wm->type )
@@ -103,24 +103,23 @@ static void MODULE_DoInitializeDLLs( PDB32 *process, WINE_MODREF *wm,
         break;
     }
 
-    TRACE( module, "(%p,%08x,%ld,%p) - END\n", 
-           process, wm->module, type, lpReserved );
+    TRACE( module, "(%08x,%ld,%p) - END\n", 
+           wm->module, type, lpReserved );
 }
 
-void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
-                            DWORD type, LPVOID lpReserved )
+void MODULE_InitializeDLLs( HMODULE32 root, DWORD type, LPVOID lpReserved )
 {
     BOOL32 inProgress = FALSE;
     WINE_MODREF *wm;
 
     /* Grab the process critical section to protect the recursion flags */
     /* FIXME: This is probably overkill! */
-    EnterCriticalSection( &process->crit_section );
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
 
-    TRACE( module, "(%p,%08x,%ld,%p) - START\n", process, root, type, lpReserved );
+    TRACE( module, "(%08x,%ld,%p) - START\n", root, type, lpReserved );
 
     /* First, check whether initialization is currently in progress */
-    for ( wm = process->modref_list; wm; wm = wm->next )
+    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
         if ( wm->initDone )
         {
             inProgress = TRUE;
@@ -136,9 +135,9 @@ void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
          */
         if ( root )
         {
-            wm = MODULE32_LookupHMODULE( process, root );
+            wm = MODULE32_LookupHMODULE( root );
             if ( wm && !wm->initDone )
-                MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+                MODULE_DoInitializeDLLs( wm, type, lpReserved );
         }
         else
             FIXME(module, "Invalid recursion!\n");
@@ -149,26 +148,26 @@ void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
         if ( !root )
         {
             /* If called for main EXE, initialize all DLLs */
-            for ( wm = process->modref_list; wm; wm = wm->next )
+            for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
                 if ( !wm->initDone )
-                    MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+                    MODULE_DoInitializeDLLs( wm, type, lpReserved );
         }
         else
         {
             /* If called for a specific DLL, initialize only it and its children */
-            wm = MODULE32_LookupHMODULE( process, root );
-            if (wm) MODULE_DoInitializeDLLs( process, wm, type, lpReserved );
+            wm = MODULE32_LookupHMODULE( root );
+            if (wm) MODULE_DoInitializeDLLs( wm, type, lpReserved );
         }
 
         /* We're finished, so we reset all recursion flags */
-        for ( wm = process->modref_list; wm; wm = wm->next )
+        for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
             wm->initDone = FALSE;
     }
 
-    TRACE( module, "(%p,%08x,%ld,%p) - END\n", process, root, type, lpReserved );
+    TRACE( module, "(%08x,%ld,%p) - END\n", root, type, lpReserved );
 
     /* Release critical section */
-    LeaveCriticalSection( &process->crit_section );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 }
 
 
@@ -339,26 +338,23 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
  * 	0 if not
  */
 HMODULE32 MODULE_FindModule32(
-	PDB32* process,	/* [in] process in which to find the library */
 	LPCSTR path	/* [in] pathname of module/library to be found */
 ) {
     LPSTR	filename;
     LPSTR	dotptr;
     WINE_MODREF	*wm;
 
-    if (!process)
-    	return 0;
     if (!(filename = strrchr( path, '\\' )))
-    	filename = HEAP_strdupA(process->heap,0,path);
+    	filename = HEAP_strdupA( GetProcessHeap(), 0, path );
     else 
-    	filename = HEAP_strdupA(process->heap,0,filename+1);
+    	filename = HEAP_strdupA( GetProcessHeap(), 0, filename+1 );
     dotptr=strrchr(filename,'.');
 
-    for (wm=process->modref_list;wm;wm=wm->next) {
+    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
     	LPSTR	xmodname,xdotptr;
 
 	assert (wm->modname);
-	xmodname = HEAP_strdupA(process->heap,0,wm->modname);
+	xmodname = HEAP_strdupA( GetProcessHeap(), 0, wm->modname );
 	xdotptr=strrchr(xmodname,'.');
 	if (	(xdotptr && !dotptr) ||
 		(!xdotptr && dotptr)
@@ -367,16 +363,16 @@ HMODULE32 MODULE_FindModule32(
 	    if (xdotptr) *xdotptr	= '\0';
 	}
 	if (!strcasecmp( filename, xmodname)) {
-	    HeapFree(process->heap,0,filename);
-	    HeapFree(process->heap,0,xmodname);
+	    HeapFree( GetProcessHeap(), 0, filename );
+	    HeapFree( GetProcessHeap(), 0, xmodname );
 	    return wm->module;
 	}
 	if (dotptr) *dotptr='.';
 	/* FIXME: add paths, shortname */
-	HeapFree(process->heap,0,xmodname);
+	HeapFree( GetProcessHeap(), 0, xmodname );
     }
     /* if that fails, try looking for the filename... */
-    for (wm=process->modref_list;wm;wm=wm->next) {
+    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
     	LPSTR	xlname,xdotptr;
 
 	assert (wm->longname);
@@ -385,7 +381,7 @@ HMODULE32 MODULE_FindModule32(
 	    xlname = wm->longname;
 	else
 	    xlname++;
-	xlname = HEAP_strdupA(process->heap,0,xlname);
+	xlname = HEAP_strdupA( GetProcessHeap(), 0, xlname );
 	xdotptr=strrchr(xlname,'.');
 	if (	(xdotptr && !dotptr) ||
 		(!xdotptr && dotptr)
@@ -394,15 +390,15 @@ HMODULE32 MODULE_FindModule32(
 	    if (xdotptr) *xdotptr	= '\0';
 	}
 	if (!strcasecmp( filename, xlname)) {
-	    HeapFree(process->heap,0,filename);
-	    HeapFree(process->heap,0,xlname);
+	    HeapFree( GetProcessHeap(), 0, filename );
+	    HeapFree( GetProcessHeap(), 0, xlname );
 	    return wm->module;
 	}
 	if (dotptr) *dotptr='.';
 	/* FIXME: add paths, shortname */
-	HeapFree(process->heap,0,xlname);
+	HeapFree( GetProcessHeap(), 0, xlname );
     }
-    HeapFree(process->heap,0,filename);
+    HeapFree( GetProcessHeap(), 0, filename );
     return 0;
 }
 
@@ -748,7 +744,7 @@ HMODULE32 WINAPI GetModuleHandle32A(LPCSTR module)
     if (module == NULL)
     	return PROCESS_Current()->exe_modref->module;
     else
-	return MODULE_FindModule32(PROCESS_Current(),module);
+	return MODULE_FindModule32( module );
 }
 
 HMODULE32 WINAPI GetModuleHandle32W(LPCWSTR module)
@@ -769,7 +765,7 @@ DWORD WINAPI GetModuleFileName32A(
 	LPSTR lpFileName,	/* [out] filenamebuffer */
         DWORD size		/* [in] size of filenamebuffer */
 ) {                   
-    WINE_MODREF *wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
 
     if (!wm) /* can happen on start up or the like */
     	return 0;
@@ -815,7 +811,7 @@ HMODULE32 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
 HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 {
     HMODULE32 hmod;
-    hmod = MODULE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
+    hmod = MODULE_LoadLibraryEx32A( libname, hfile, flags );
 
     /* at least call not the dllmain...*/
     if ( DONT_RESOLVE_DLL_REFERENCES==flags || LOAD_LIBRARY_AS_DATAFILE==flags )
@@ -825,20 +821,19 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 
     /* initialize DLL just loaded */
     if ( hmod >= 32 )       
-        MODULE_InitializeDLLs( PROCESS_Current(), hmod, 
-                               DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, (LPVOID)-1 );
 
     return hmod;
 }
 
-HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWORD flags)
+HMODULE32 MODULE_LoadLibraryEx32A( LPCSTR libname, HFILE32 hfile, DWORD flags )
 {
     HMODULE32 hmod;
     
-    hmod = ELF_LoadLibraryEx32A(libname,process,hfile,flags);
+    hmod = ELF_LoadLibraryEx32A( libname, hfile, flags );
     if (hmod) return hmod;
 
-    hmod = PE_LoadLibraryEx32A(libname,process,hfile,flags);
+    hmod = PE_LoadLibraryEx32A( libname, hfile, flags );
     return hmod;
 }
 
@@ -1130,7 +1125,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
  */
 FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress32( PROCESS_Current(), hModule, function, TRUE );
+    return MODULE_GetProcAddress32( hModule, function, TRUE );
 }
 
 /***********************************************************************
@@ -1138,19 +1133,18 @@ FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
  */
 FARPROC32 WINAPI WIN16_GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress32( PROCESS_Current(), hModule, function, FALSE );
+    return MODULE_GetProcAddress32( hModule, function, FALSE );
 }
 
 /***********************************************************************
  *           MODULE_GetProcAddress32   		(internal)
  */
 FARPROC32 MODULE_GetProcAddress32( 
-	PDB32 *process,		/* [in] process context */
 	HMODULE32 hModule, 	/* [in] current module handle */
 	LPCSTR function,	/* [in] function to be looked up */
 	BOOL32 snoop )
 {
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE(process,hModule);
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
     if (HIWORD(function))
 	TRACE(win32,"(%08lx,%s)\n",(DWORD)hModule,function);
@@ -1161,9 +1155,9 @@ FARPROC32 MODULE_GetProcAddress32(
     switch (wm->type)
     {
     case MODULE32_PE:
-     	return PE_FindExportedFunction( process, wm, function, snoop );
+     	return PE_FindExportedFunction( wm, function, snoop );
     case MODULE32_ELF:
-    	return ELF_FindExportedFunction( process, wm, function);
+    	return ELF_FindExportedFunction( wm, function);
     default:
     	ERR(module,"wine_modref type %d not handled.\n",wm->type);
     	return (FARPROC32)0;
@@ -1181,7 +1175,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
      * but we could get HMODULE16 or the like (think builtin modules)
      */
 
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE( PROCESS_Current(), hModule );
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
     if (!wm || (wm->type != MODULE32_PE)) return (PIMAGE_NT_HEADERS)0;
     return PE_HEADER(wm->module);
 }

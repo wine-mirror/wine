@@ -143,15 +143,15 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
 /* module.c */
-extern FARPROC32 MODULE_GetProcAddress32( struct _PDB32*pdb,HMODULE32 hModule,LPCSTR function,BOOL32 snoop );
-extern WINE_MODREF *MODULE32_LookupHMODULE( struct _PDB32 *process, HMODULE32 hModule );
-extern void MODULE_InitializeDLLs( struct _PDB32 *process, HMODULE32 root, DWORD type, LPVOID lpReserved );
-extern HMODULE32 MODULE_FindModule32( struct _PDB32 *process, LPCSTR path );
+extern FARPROC32 MODULE_GetProcAddress32( HMODULE32 hModule, LPCSTR function, BOOL32 snoop );
+extern WINE_MODREF *MODULE32_LookupHMODULE( HMODULE32 hModule );
+extern void MODULE_InitializeDLLs( HMODULE32 root, DWORD type, LPVOID lpReserved );
+extern HMODULE32 MODULE_FindModule32( LPCSTR path );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler( SEGPTR address );
-HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,struct _PDB32*process,HFILE32 hfile,DWORD flags);
+HMODULE32 MODULE_LoadLibraryEx32A( LPCSTR libname, HFILE32 hfile, DWORD flags );
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );

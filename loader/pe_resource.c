@@ -32,9 +32,8 @@
 static PE_MODREF*
 HMODULE32toPE_MODREF(HMODULE32 hmod) {
 	WINE_MODREF	*wm;
-	PDB32		*pdb = PROCESS_Current();
 
-	wm = MODULE32_LookupHMODULE( pdb, hmod );
+	wm = MODULE32_LookupHMODULE( hmod );
 	if (!wm || wm->type!=MODULE32_PE)
 		return NULL;
 	return &(wm->binfmt.pe);

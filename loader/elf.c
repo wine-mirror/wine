@@ -25,8 +25,7 @@
 #include "module.h"
 #include "debug.h"
 
-WINE_MODREF *
-ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname, PDB32 *process )
+WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
 	PIMAGE_DOS_HEADER	dh;
 	PIMAGE_NT_HEADERS	nth;
@@ -34,17 +33,20 @@ ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname, PDB32 *process )
 	WINE_MODREF *wm;
 	HMODULE32 hmod;
 
-	wm=(WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(*wm));
+	wm=(WINE_MODREF*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm) );
 	wm->type = MODULE32_ELF;
 
 	/* FIXME: hmm, order? */
-	wm->next = process->modref_list;
-	process->modref_list = wm;
+	wm->next = PROCESS_Current()->modref_list;
+	PROCESS_Current()->modref_list = wm;
 
-	wm->modname = HEAP_strdupA(process->heap,0,modname);
-	wm->longname = HEAP_strdupA(process->heap,0,libname);
+	wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
+	wm->longname = HEAP_strdupA( GetProcessHeap(), 0, libname );
 
-	hmod = (HMODULE32)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(IMAGE_DOS_HEADER)+sizeof(IMAGE_NT_HEADERS)+sizeof(IMAGE_SECTION_HEADER)+100);
+	hmod = (HMODULE32)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                     sizeof(IMAGE_DOS_HEADER) + 
+                                     sizeof(IMAGE_NT_HEADERS) +
+                                     sizeof(IMAGE_SECTION_HEADER) + 100 );
 	dh = (PIMAGE_DOS_HEADER)hmod;
 	dh->e_magic = IMAGE_DOS_SIGNATURE;
 	dh->e_lfanew = sizeof(IMAGE_DOS_HEADER);
@@ -94,13 +96,14 @@ ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname, PDB32 *process )
 
 #include <dlfcn.h>
 
-HMODULE32
-ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
+HMODULE32 ELF_LoadLibraryEx32A( LPCSTR libname, HANDLE32 hf, DWORD flags )
+{
 	WINE_MODREF	*wm;
 	char		*modname,*s,*t,*x;
 	LPVOID		*dlhandle;
 
-	t = HeapAlloc(process->heap,HEAP_ZERO_MEMORY,strlen(libname)+strlen("lib.so")+1);
+	t = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                       strlen(libname) + strlen("lib.so") + 1 );
 	*t = '\0';
 	/* copy path to tempvar ... */
 	s=strrchr(libname,'/');
@@ -130,19 +133,19 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 	/* ... and open it */
 	dlhandle = dlopen(t,RTLD_NOW);
 	if (!dlhandle) {
-		HeapFree(process->heap,0,t);
+		HeapFree( GetProcessHeap(), 0, t );
 		return 0;
 	}
 
-	wm = ELF_CreateDummyModule( t, modname, process );
+	wm = ELF_CreateDummyModule( t, modname );
 	wm->binfmt.elf.dlhandle = dlhandle;
 
 	SNOOP_RegisterDLL(wm->module,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
 	return wm->module;
 }
 
-FARPROC32
-ELF_FindExportedFunction( PDB32 *process,WINE_MODREF *wm, LPCSTR funcName) {
+FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
+{
 	LPVOID			fun;
 	int			i,nrofargs = 0;
 	ELF_STDCALL_STUB	*stub;
@@ -163,14 +166,14 @@ ELF_FindExportedFunction( PDB32 *process,WINE_MODREF *wm, LPCSTR funcName) {
 		 * with nrofargs bytes that are popped at the end
 		 */
 		if (strchr(funcName,'@')) {
-			LPSTR	t,fn = HEAP_strdupA(process->heap,0,funcName);
+			LPSTR	t,fn = HEAP_strdupA( GetProcessHeap(), 0, funcName );
 
 			t = strchr(fn,'@');
 			*t = '\0';
 			nrofargs = 0;
 			sscanf(t+1,"%d",&nrofargs);
 			fun = dlsym(wm->binfmt.elf.dlhandle,fn);
-			HeapFree(process->heap,0,fn);
+			HeapFree( GetProcessHeap(), 0, fn );
 		}
 	}
 	/* We sometimes have Win32 dlls implemented using stdcall but UNIX 
@@ -242,12 +245,12 @@ ELF_FindExportedFunction( PDB32 *process,WINE_MODREF *wm, LPCSTR funcName) {
 }
 #else
 
-HMODULE32
-ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
+HMODULE32 ELF_LoadLibraryEx32A( LPCSTR libname, HANDLE32 hf, DWORD flags)
+{
 	return 0;
 }
-FARPROC32
-ELF_FindExportedFunction( PDB32 *process,WINE_MODREF *wm, LPCSTR funcName) {
+FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
+{
 	return (FARPROC32)0;
 }
 

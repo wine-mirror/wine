@@ -176,7 +176,7 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
 HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
                                   LPCWSTR name, WORD lang )
 {
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
     HRSRC32	hrsrc;
 
     TRACE(resource, "module=%08x(%s) type=%s name=%s\n",
@@ -249,7 +249,7 @@ HGLOBAL32 WINAPI LoadResource32(
 	HINSTANCE32 hModule,	/* [in] module handle */
 	HRSRC32 hRsrc )		/* [in] resource handle */
 {
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
     TRACE(resource, "module=%04x res=%04x\n",
 		     hModule, hRsrc );
@@ -372,7 +372,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
  */
 DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
     TRACE(resource, "module=%08x res=%08x\n", hModule, hRsrc );
     if (!wm) return 0;

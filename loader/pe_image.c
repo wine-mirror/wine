@@ -31,9 +31,6 @@
  *   and 'blocksize' file-aligned (offsets). Since we have 512/1024/2048 (CDROM)
  *   and other byte blocksizes, we can't do this. However, this could be less
  *   difficult to support... (See mm/filemap.c).
- * - All those function map things into a new addresspace. From the wrong
- *   process and the wrong thread. So calling other API functions will mess 
- *   things up badly sometimes.
  */
 
 #include <errno.h>
@@ -119,7 +116,6 @@ void dump_exports( HMODULE32 hModule )
  *	- use ordinal-pe_export->Base as offset into the functionlist
  */
 FARPROC32 PE_FindExportedFunction( 
-	PDB32 *process,		/* [in] process context */
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
         BOOL32 snoop )
@@ -207,14 +203,14 @@ FARPROC32 PE_FindExportedFunction(
 		assert(end-forward<256);
 		strncpy(module, forward, (end - forward));
 		module[end-forward] = 0;
-                hMod = MODULE_FindModule32(process,module);
+                hMod = MODULE_FindModule32( module );
 		assert(hMod);
-		return MODULE_GetProcAddress32( process, hMod, end + 1, snoop );
+		return MODULE_GetProcAddress32( hMod, end + 1, snoop );
 	}
 	return NULL;
 }
 
-DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
+DWORD fixup_imports( WINE_MODREF *wm )
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     WINE_MODREF			*xwm;
@@ -252,7 +248,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
     /* Allocate module dependency list */
     wm->nDeps = i;
-    wm->deps  = HeapAlloc(process->heap, 0, i*sizeof(WINE_MODREF *));
+    wm->deps  = HeapAlloc( GetProcessHeap(), 0, i*sizeof(WINE_MODREF *) );
 
     /* load the imported modules. They are automatically 
      * added to the modref list of the process.
@@ -268,7 +264,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		break;
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	hImpModule = MODULE_LoadLibraryEx32A( name, process, 0, 0 );
+	hImpModule = MODULE_LoadLibraryEx32A( name, 0, 0 );
 	if (!hImpModule) {
 	    char *p,buffer[2000];
 	    
@@ -277,13 +273,13 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    hImpModule = MODULE_LoadLibraryEx32A( buffer, process, 0, 0 );
+	    hImpModule = MODULE_LoadLibraryEx32A( buffer, 0, 0 );
 	}
 	if (!hImpModule) {
 	    ERR (module, "Module %s not found\n", name);
 	    return 1;
 	}
-        xwm = MODULE32_LookupHMODULE(process, hImpModule);
+        xwm = MODULE32_LookupHMODULE( hImpModule );
         assert( xwm );
         wm->deps[i++] = xwm;
 
@@ -300,7 +296,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
 		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, (LPCSTR)ordinal, TRUE
+                        hImpModule, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -311,7 +307,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, pe_name->Name, TRUE
+                        hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
@@ -332,7 +328,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
 		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, (LPCSTR) ordinal, TRUE
+                        hImpModule, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -344,7 +340,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, pe_name->Name, TRUE
+                        hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -456,7 +452,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
+HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
 {
     HMODULE32	hModule;
     HFILE32	hFile;
@@ -658,9 +654,12 @@ error:
  * Note: hModule must point to a correctly allocated PE image,
  *       with base relocations applied; the 16-bit dummy module
  *       associated to hModule must already exist.
+ *
+ * Note: This routine must always be called in the context of the
+ *       process that is to own the module to be created.
  */
-static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule, 
-                                     OFSTRUCT *ofs, DWORD flags, BOOL32 builtin )
+WINE_MODREF *PE_CreateModule( HMODULE32 hModule, 
+                              OFSTRUCT *ofs, DWORD flags, BOOL32 builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);
@@ -728,7 +727,8 @@ static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule,
 
     /* Allocate and fill WINE_MODREF */
 
-    wm = (WINE_MODREF *)HeapAlloc( process->heap, HEAP_ZERO_MEMORY, sizeof(*wm) );
+    wm = (WINE_MODREF *)HeapAlloc( GetProcessHeap(), 
+                                   HEAP_ZERO_MEMORY, sizeof(*wm) );
     wm->module = hModule;
 
     wm->type = MODULE32_PE;
@@ -747,24 +747,24 @@ static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule,
         while ((s=strchr(modname,'\\')))
             modname = s+1;
     }
-    wm->modname = HEAP_strdupA( process->heap, 0, modname );
+    wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
 
     result = GetLongPathName32A( ofs->szPathName, NULL, 0 );
-    wm->longname = (char *)HeapAlloc( process->heap, 0, result+1 );
+    wm->longname = (char *)HeapAlloc( GetProcessHeap(), 0, result+1 );
     GetLongPathName32A( ofs->szPathName, wm->longname, result+1 );
 
-    wm->shortname = HEAP_strdupA( process->heap, 0, ofs->szPathName );
+    wm->shortname = HEAP_strdupA( GetProcessHeap(), 0, ofs->szPathName );
 
     /* Link MODREF into process list */
 
-    wm->next = process->modref_list;
-    process->modref_list = wm;
+    wm->next = PROCESS_Current()->modref_list;
+    PROCESS_Current()->modref_list = wm;
 
     if ( !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) )
     {
-        if ( process->exe_modref )
+        if ( PROCESS_Current()->exe_modref )
             FIXME( win32, "overwriting old exe_modref... arrgh\n" );
-        process->exe_modref = wm;
+        PROCESS_Current()->exe_modref = wm;
     }
 
     /* Dump Exports */
@@ -774,11 +774,11 @@ static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule,
 
     /* Fixup Imports */
 
-    if ( pe_import && fixup_imports( process, wm ) ) 
+    if ( pe_import && fixup_imports( wm ) ) 
     {
         /* remove entry from modref chain */
         WINE_MODREF **xwm;
-        for ( xwm = &process->modref_list; *xwm; xwm = &(*xwm)->next )
+        for ( xwm = &PROCESS_Current()->modref_list; *xwm; xwm = &(*xwm)->next )
             if ( *xwm == wm )
             {
                 *xwm = wm->next;
@@ -801,7 +801,7 @@ static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule,
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
  */
-HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
+HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, 
                                HFILE32 hFile, DWORD flags)
 {
     LPCSTR	modName = NULL;
@@ -813,7 +813,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
     BOOL32	builtin;
 
     /* Check for already loaded module */
-    if ((hModule32 = MODULE_FindModule32( process, name ))) 
+    if ((hModule32 = MODULE_FindModule32( name ))) 
         return hModule32;
 
     /* try to load builtin, enabled modules first */
@@ -839,7 +839,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
     pModule->module32 = hModule32;
 
     /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( process, hModule32, &ofs, flags, builtin )) )
+    if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, builtin )) )
     {
         ERR(win32,"can't load %s\n",ofs.szPathName);
         FreeLibrary16( hModule16 );
@@ -868,8 +868,6 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     NE_MODULE *pModule;
     OFSTRUCT ofs;
     PDB32 *process;
-    TDB *pTask;
-    WINE_MODREF	*wm;
 
     /* Load file */
     if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) < 32)
@@ -890,16 +888,8 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     process = PROCESS_Create( pModule, cmd_line, env,
                               hInstance, 0, inherit, startup, info );
 
-    /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( process, hModule32, &ofs, 0, FALSE )) )
-    {
-     	/* FIXME: should destroy the task created and free referenced stuff */
-        return 0;
-    }
-
-    /* FIXME: Yuck. Is there no other good place to do that? */
-    pTask = (TDB *)GlobalLock16( process->task );
-    PE_InitTls( pTask->thdb );
+    /* Note: PE_CreateModule and the remaining process initialization will
+             be done in the context of the new process, in TASK_CallToStart */
 
     return hInstance;
 }

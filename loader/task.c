@@ -242,16 +242,27 @@ static void TASK_CallToStart(void)
     {
         /* FIXME: all this is an ugly hack */
 
+        OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
         LPTHREAD_START_ROUTINE entry = (LPTHREAD_START_ROUTINE)
                 RVA_PTR(pModule->module32, OptionalHeader.AddressOfEntryPoint);
         
+        /* Create 32-bit MODREF */
+        if ( !PE_CreateModule( pModule->module32, ofs, 0, FALSE ) )
+        {
+            ERR( task, "Could not initialize process\n" );
+            ExitProcess( 1 );
+        }
+
+        /* Initialize Thread-Local Storage */
+        PE_InitTls( pTask->thdb );
+
 	if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		AllocConsole();
 
         if (pModule->heap_size)
             LocalInit( pTask->hInstance, 0, pModule->heap_size );
 
-        MODULE_InitializeDLLs( PROCESS_Current(), 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         TRACE(relay, "(entryproc=%p)\n", entry );
 
 #if 1
