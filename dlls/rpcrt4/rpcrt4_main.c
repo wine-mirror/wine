@@ -510,7 +510,7 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWS
 /***********************************************************************
  *		RpcBindingFree (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcBindingFree(/*RPC_BINDING_HANDLE* */ void * Binding)
+RPC_STATUS WINAPI RpcBindingFree(RPC_BINDING_HANDLE* Binding)
 {
   FIXME("(%p): stub\n", Binding);
   return RPC_S_OK;
@@ -544,6 +544,9 @@ HRESULT WINAPI NdrDllCanUnloadNow(CStdPSFactoryBuffer *pPSFactoryBuffer)
     return FALSE;
 }
 
+/***********************************************************************
+ *		NdrDllGetClassObject (RPCRT4.@)
+ */
 HRESULT WINAPI NdrDllGetClassObject(
     REFCLSID rclsid, REFIID riid , LPVOID *ppv, 
     const ProxyFileInfo **   pProxyFileList,

@@ -70,12 +70,18 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
     return ret;
 }
 
+/***********************************************************************
+ *              GetComputerNameExA         (KERNEL32.@)
+ */
 BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD size)
 {
     FIXME("(%d, %p, %p) semi-stub!\n", type, name, size);
     return GetComputerNameA(name, size);
 }
 
+/***********************************************************************
+ *              GetComputerNameExW         (KERNEL32.@)
+ */
 BOOL WINAPI GetComputerNameExW(COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD size)
 {
     FIXME("(%d, %p, %p) semi-stub!\n", type, name, size);

@@ -78,7 +78,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingCopy( RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingFree( RPC_BINDING_HANDLE Binding );
+  RpcBindingFree( RPC_BINDING_HANDLE* Binding );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );

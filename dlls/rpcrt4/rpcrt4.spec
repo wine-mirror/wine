@@ -24,7 +24,7 @@ debug_channels (ole)
 @ stub MqRegisterQueue # win9x
 
 @ stdcall NdrDllCanUnloadNow(ptr) NdrDllCanUnloadNow
-@ stdcall NdrDllGetClassObject() NdrDllGetClassObject
+@ stdcall NdrDllGetClassObject(ptr ptr ptr ptr ptr ptr) NdrDllGetClassObject
 @ stdcall NdrDllRegisterProxy(long ptr ptr) NdrDllRegisterProxy
 @ stub NdrDllUnregisterProxy
 
