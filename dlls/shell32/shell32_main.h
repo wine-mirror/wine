@@ -29,8 +29,12 @@ extern LPVOID	(CALLBACK* pDPA_GetPtr) (const HDPA, INT32);
 extern BOOL32	(CALLBACK* pDPA_Destroy) (const HDPA); 
 extern INT32	(CALLBACK *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
+/* Iconcache */
 extern BOOL32	WINAPI SIC_Initialize(void);
 extern HICON32	WINAPI SIC_GetIcon (LPSTR sSourceFile, DWORD dwSourceIndex, BOOL32 bSmallIcon );
+
+/* Classes Root */
+extern BOOL32 WINAPI HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD len);
 
 /* FIXME should be moved to a header file. IsEqualGUID 
 is declared but not exported in compobj.c !!!*/

@@ -139,12 +139,12 @@ static ULONG WINAPI IExtractIcon_Release(LPEXTRACTICON this)
 *  IExtractIcon_GetIconLocation
 */
 static HRESULT WINAPI IExtractIcon_GetIconLocation(LPEXTRACTICON this, UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags)
-{	FIXME (shell,"(%p) (flags=%u file=%s max=%u %p %p) semi-stub\n", this, uFlags, szIconFile, cchMax, piIndex, pwFlags);
+{	WARN (shell,"(%p) (flags=%u file=%s max=%u %p %p) semi-stub\n", this, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
 	*piIndex = (int) SHMapPIDLToSystemImageListIndex(0, this->pidl,0);
 	*pwFlags = GIL_NOTFILENAME;
 
-	FIXME (shell,"-- %x\n",*piIndex);
+	WARN (shell,"-- %x\n",*piIndex);
 
 	return NOERROR;
 }

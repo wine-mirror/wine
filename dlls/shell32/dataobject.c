@@ -297,7 +297,7 @@ static HRESULT WINAPI IDataObject_GetData (LPDATAOBJECT this, LPFORMATETC32 pfor
 	HGLOBAL32 hmem;
 	
 	GetClipboardFormatName32A (pformatetcIn->cfFormat, temp, 256);
-	FIXME (shell, "(%p)->(%p %p format=%s)\n", this, pformatetcIn, pmedium, temp);
+	WARN (shell, "(%p)->(%p %p format=%s)semi-stub\n", this, pformatetcIn, pmedium, temp);
 
 	if (!DATAOBJECT_InitShellIDList())	/* is the clipformat registred? */
         { return(E_UNEXPECTED);

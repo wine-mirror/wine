@@ -247,9 +247,10 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS;
 	switch (this->FolderSettings.ViewMode)
 	{ case FVM_ICON:	dwStyle |= LVS_ICON;		break;
+	  case FVM_DETAILS: 	dwStyle |= LVS_REPORT;		break;
 	  case FVM_SMALLICON: 	dwStyle |= LVS_SMALLICON;	break;
 	  case FVM_LIST: 	dwStyle |= LVS_LIST;		break;
-	  case FVM_DETAILS: 	dwStyle |= LVS_REPORT;		break;
+	  default:		dwStyle |= LVS_LIST;		break;
 	}
 	if (this->FolderSettings.fFlags && FWF_AUTOARRANGE)	dwStyle |= LVS_AUTOARRANGE;
 	/*if (this->FolderSettings.fFlags && FWF_DESKTOP); used from explorer*/
@@ -277,10 +278,10 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 * NOTES
 *  internal
 */
-int  nColumn1=100; /* width of column */
-int  nColumn2=100;
-int  nColumn3=100;
-int  nColumn4=100;
+int  nColumn1=120; /* width of column */
+int  nColumn2=50;
+int  nColumn3=170;
+int  nColumn4=60;
 
 BOOL32 ShellView_InitList(LPSHELLVIEW this)
 {	LVCOLUMN32A lvColumn;
@@ -834,69 +835,64 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	  { TRACE(shell,"-- pContextMenu\n");
 	    hMenu = CreatePopupMenu32();
 
-            /* See if we are in Explore or Open mode. If the browser's tree
-	     is present, then we are in Explore mode.*/
+	    if( hMenu )
+	    { /* See if we are in Explore or Open mode. If the browser's tree
+	         is present, then we are in Explore mode.*/
         
-	    fExplore = FALSE;
-	    if(SUCCEEDED(IShellBrowser_GetControlWindow(this->pShellBrowser,FCW_TREE, &hwndTree)) && hwndTree)
-	    { TRACE(shell,"-- fExplore\n");
-	      fExplore = TRUE;
-	    }
+	      if(SUCCEEDED(IShellBrowser_GetControlWindow(this->pShellBrowser,FCW_TREE, &hwndTree)) && hwndTree)
+	      { TRACE(shell,"-- explore mode\n");
+	        fExplore = TRUE;
+	      }
 
-	    if(hMenu && SUCCEEDED(pContextMenu->lpvtbl->fnQueryContextMenu( pContextMenu,
-									    hMenu,
-									    0,
-									    MENU_OFFSET,
-									    MENU_MAX,
-									    CMF_NORMAL | (this->uSelected != 1 ? 0 : CMF_CANRENAME) | (fExplore ? CMF_EXPLORE : 0))))
-	    { if(fDefault)
-	      { TRACE(shell,"-- fDefault\n");
-	        uCommand = 0;
-            
-	        ZeroMemory(&mii, sizeof(mii));
-	        mii.cbSize = sizeof(mii);
-	        mii.fMask = MIIM_STATE | MIIM_ID;
+	      wFlags = CMF_NORMAL | (this->uSelected != 1 ? 0 : CMF_CANRENAME) | (fExplore ? CMF_EXPLORE : 0);
 
-	        nMenuIndex = 0;
+	      if (SUCCEEDED(pContextMenu->lpvtbl->fnQueryContextMenu( pContextMenu, hMenu, 0, MENU_OFFSET, MENU_MAX, wFlags )))
+	      { if( fDefault )
+	        { TRACE(shell,"-- get menu default command\n");
 
-	        /*find the default item in the menu*/
-	        while(GetMenuItemInfo32A(hMenu, nMenuIndex, TRUE, &mii))
-	        { if(mii.fState & MFS_DEFAULT)
-	          { uCommand = mii.wID;
-	            break;
+	          uCommand = 0;
+	          nMenuIndex = 0;
+       	          ZeroMemory(&mii, sizeof(mii));
+	          mii.cbSize = sizeof(mii);
+	          mii.fMask = MIIM_STATE | MIIM_ID;
+
+	          while(GetMenuItemInfo32A(hMenu, nMenuIndex, TRUE, &mii))	/*find the default item in the menu*/
+	          { if(mii.fState & MFS_DEFAULT)
+	            { uCommand = mii.wID;
+	              break;
+	            }
+	            nMenuIndex++;
 	          }
-	          nMenuIndex++;
 	        }
-	      }
-	      else
-	      { TRACE(shell,"-- ! fDefault\n");
-	        uCommand = TrackPopupMenu32( hMenu,TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,this->hWnd,NULL);
-	      }
+	        else
+	        { TRACE(shell,"-- track popup\n");
+	          uCommand = TrackPopupMenu32( hMenu,TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,this->hWnd,NULL);
+	        }
          
-	      if(uCommand > 0)
-	      { TRACE(shell,"-- uCommand=%u\n", uCommand);
-	        if (((uCommand-MENU_OFFSET) == IDM_EXPLORE) || ((uCommand-MENU_OFFSET)  == IDM_OPEN))
-		{ if (IsInCommDlg(this))			/* are we part of a commctrl? */
-		  { TRACE(shell,"-- fnOnDefaultCommand\n");
-		    OnDefaultCommand(this);
+	        if(uCommand > 0)
+	        { TRACE(shell,"-- uCommand=%u\n", uCommand);
+	          if (((uCommand-MENU_OFFSET) == IDM_EXPLORE) || ((uCommand-MENU_OFFSET)  == IDM_OPEN))
+		  { if (IsInCommDlg(this))			/* are we part of a commctrl? */
+		    { TRACE(shell,"-- dlg: OnDefaultCommand\n");
+		      OnDefaultCommand(this);
+		    }
+		    else					/* we are acting with a full featured IShellBrowser */
+		    { TRACE(shell,"-- explorer: BrowseObject pidl =%p\n", this->aSelectedItems[0]);
+		      wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
+		      IShellBrowser_BrowseObject(this->pShellBrowser, this->aSelectedItems[0], wFlags);
+		    }
 		  }
-		  else					/* we are acting with a full featured IShellBrowser */
-		  { TRACE(shell,"-- fnBrowseObject pidl =%p\n", this->aSelectedItems[0]);
-		    wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
-		    IShellBrowser_BrowseObject(this->pShellBrowser, 
-								this->aSelectedItems[0], 
-								wFlags);
+		  else
+		  { TRACE(shell,"-- invoke command\n", this->aSelectedItems[0]);
+		    ZeroMemory(&cmi, sizeof(cmi));
+	            cmi.cbSize = sizeof(cmi);
+	            cmi.hwnd = this->hWndParent;
+	            cmi.lpVerb = (LPCSTR)MAKEINTRESOURCE32A(uCommand - MENU_OFFSET);
+		    pContextMenu->lpvtbl->fnInvokeCommand(pContextMenu, &cmi);
 		  }
-		}
-		else
-		{ ZeroMemory(&cmi, sizeof(cmi));
-	          cmi.cbSize = sizeof(cmi);
-	          cmi.hwnd = this->hWndParent;
-	          cmi.lpVerb = (LPCSTR)MAKEINTRESOURCE32A(uCommand - MENU_OFFSET);
-			pContextMenu->lpvtbl->fnInvokeCommand(pContextMenu, &cmi);
-		}
+	        }
+	        DestroyMenu32(hMenu);
 	      }
-	      DestroyMenu32(hMenu);
 	    }
 	    pContextMenu->lpvtbl->fnRelease(pContextMenu);
 	  }
@@ -996,6 +992,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 
 	  case LVN_ITEMACTIVATE:
 	    TRACE(shell,"-- LVN_ITEMACTIVATE %p\n",this);
+	    OnStateChange(this, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
 	    ShellView_DoContextMenu(this, 0, 0, TRUE);
 	    break;
    
@@ -1018,7 +1015,14 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 		      _ILGetFileSize (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
 		      break;
 		    case 2:
-		      strncpy (lpdi->item.pszText, "File", lpdi->item.cchTextMax);
+		      {	char sTemp[64];
+		        if (!( _ILGetExtension (pidl, sTemp, 64)
+			       && HCR_MapTypeToValue(sTemp, sTemp, 64)
+			       && HCR_MapTypeToValue(sTemp, lpdi->item.pszText, lpdi->item.cchTextMax )))
+			{ strncpy (lpdi->item.pszText, sTemp, lpdi->item.cchTextMax);
+			  strncat (lpdi->item.pszText, "-file", lpdi->item.cchTextMax);
+			}       
+		      }
 		      break;
 		    case 3:  
 		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
@@ -1028,7 +1032,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	        else  /*its a folder*/
 	        { switch (lpdi->item.iSubItem)
 		  { case 1:
-		      sprintf(lpdi->item.pszText, "fixme");
+		      strcpy(lpdi->item.pszText, "");
 		      break;
 	            case 2:
 		      strncpy (lpdi->item.pszText, "Folder", lpdi->item.cchTextMax);
@@ -1038,6 +1042,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 		      break;
 		  }
 	        }
+	        TRACE(shell,"-- text=%s\n",lpdi->item.pszText);		
 	      }
 	    }
 	    else	   /*the item text is being requested*/
@@ -1053,8 +1058,8 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 		  else
 		  { FIXME(shell,"type wrong\n");
 		  }
-	          TRACE(shell,"-- text=%s\n",lpdi->item.pszText);
 	        }
+	        TRACE(shell,"-- text=%s\n",lpdi->item.pszText);
 	      }
 
 	      if(lpdi->item.mask & LVIF_IMAGE) 		/*is the image being requested?*/
@@ -1412,8 +1417,6 @@ static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW this, IShellView *
 	IShellBrowser_AddRef(this->pShellBrowser);
 	IShellBrowser_GetWindow(this->pShellBrowser, &(this->hWndParent));
 
-/*	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON, 0xa004, TRUE, &dwResult);
-*/
 	/* try to get the ICommDlgBrowserInterface */
 	this->pCommDlgBrowser=NULL;
 	if ( SUCCEEDED (IShellBrowser_QueryInterface( this->pShellBrowser,
@@ -1499,7 +1502,11 @@ static HRESULT WINAPI IShellView_GetItemObject(LPSHELLVIEW this, UINT32 uItem, R
 	{ pObj =(LPUNKNOWN)IContextMenu_Constructor(this->pSFParent,this->aSelectedItems,this->uSelected);	
 	}
 	else if (IsEqualIID(riid, &IID_IDataObject))
-	{ pObj =(LPUNKNOWN)IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
+	{ ShellView_GetSelections(this);
+	  pObj =(LPUNKNOWN)IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
+	  SHFree(this->aSelectedItems);
+	  this->aSelectedItems=NULL;
+	  this->uSelected=0;
 	}
 
 	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);

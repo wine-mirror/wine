@@ -614,7 +614,7 @@ DWORD WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
 DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z)
 {	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
 
- 	FIXME(shell,"(SF=%p,pidl=%p,%08lx):stub.\n",sh,pidl,z);
+ 	WARN(shell,"(SF=%p,pidl=%p,%08lx):stub.\n",sh,pidl,z);
 
 	if (_ILIsMyComputer(pidltemp))
 	{ return 20;

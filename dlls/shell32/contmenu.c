@@ -160,9 +160,10 @@ static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32
 	TRACE(shell,"(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",this, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
 	if(!(CMF_DEFAULTONLY & uFlags))
-	{ if(!this->bAllValues)
-	  { fExplore = uFlags & CMF_EXPLORE;
-	    if(fExplore)
+	{ if(!this->bAllValues)	
+	  { /* folder menu */
+	    fExplore = uFlags & CMF_EXPLORE;
+	    if(fExplore) 
 	    { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED|MFS_DEFAULT);
 	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED);
 	    }
@@ -171,6 +172,13 @@ static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32
 	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED);
             }
 
+            if(uFlags & CMF_CANRENAME)
+            { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, TEXT("&Rename"), (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	    }
+	  }
+	  else	/* file menu */
+	  { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED|MFS_DEFAULT);
             if(uFlags & CMF_CANRENAME)
             { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
 	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, TEXT("&Rename"), (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
