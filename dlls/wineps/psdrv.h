@@ -93,7 +93,7 @@ typedef struct _tagFONTFAMILY {
 } FONTFAMILY;
 
 extern FONTFAMILY   *PSDRV_AFMFontList;
-extern AFM  	    *const PSDRV_BuiltinAFMs[];     /* last element is NULL */
+extern const AFM    *const PSDRV_BuiltinAFMs[];     /* last element is NULL */
 
 typedef struct _tagFONTNAME {
     char		*Name;

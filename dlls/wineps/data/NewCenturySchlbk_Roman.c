@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_NewCenturySchlbk_Roman[228] = 
+static const AFMMETRICS met_NewCenturySchlbk_Roman[228] = 
 {
     {
 	 32, 0x0020,  278, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_NewCenturySchlbk_Roman[228] =
  *  Font metrics
  */
 
-AFM PSDRV_NewCenturySchlbk_Roman =
+const AFM PSDRV_NewCenturySchlbk_Roman =
 {
     "NewCenturySchlbk-Roman",			/* FontName */
     "New Century Schoolbook Roman",		/* FullName */

@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Helvetica_Narrow_BoldOblique[228] = 
+static const AFMMETRICS met_Helvetica_Narrow_BoldOblique[228] = 
 {
     {
 	 32, 0x0020,  228, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Helvetica_Narrow_BoldOblique[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Helvetica_Narrow_BoldOblique =
+const AFM PSDRV_Helvetica_Narrow_BoldOblique =
 {
     "Helvetica-Narrow-BoldOblique",		/* FontName */
     "Helvetica Narrow Bold Oblique",		/* FullName */

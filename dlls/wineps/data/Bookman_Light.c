@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Bookman_Light[228] = 
+static const AFMMETRICS met_Bookman_Light[228] = 
 {
     {
 	 32, 0x0020,  320, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Bookman_Light[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Bookman_Light =
+const AFM PSDRV_Bookman_Light =
 {
     "Bookman-Light",				/* FontName */
     "ITC Bookman Light",			/* FullName */

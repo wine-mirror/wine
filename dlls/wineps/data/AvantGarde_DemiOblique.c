@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_AvantGarde_DemiOblique[228] = 
+static const AFMMETRICS met_AvantGarde_DemiOblique[228] = 
 {
     {
 	 32, 0x0020,  280, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_AvantGarde_DemiOblique[228] =
  *  Font metrics
  */
 
-AFM PSDRV_AvantGarde_DemiOblique =
+const AFM PSDRV_AvantGarde_DemiOblique =
 {
     "AvantGarde-DemiOblique",			/* FontName */
     "ITC Avant Garde Gothic Demi Oblique",	/* FullName */

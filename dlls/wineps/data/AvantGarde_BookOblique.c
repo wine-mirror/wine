@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_AvantGarde_BookOblique[228] = 
+static const AFMMETRICS met_AvantGarde_BookOblique[228] = 
 {
     {
 	 32, 0x0020,  277, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_AvantGarde_BookOblique[228] =
  *  Font metrics
  */
 
-AFM PSDRV_AvantGarde_BookOblique =
+const AFM PSDRV_AvantGarde_BookOblique =
 {
     "AvantGarde-BookOblique",			/* FontName */
     "ITC Avant Garde Gothic Book Oblique",	/* FullName */

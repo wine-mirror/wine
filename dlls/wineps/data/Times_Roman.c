@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Times_Roman[228] = 
+static const AFMMETRICS met_Times_Roman[228] = 
 {
     {
 	 32, 0x0020,  250, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Times_Roman[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Times_Roman =
+const AFM PSDRV_Times_Roman =
 {
     "Times-Roman",				/* FontName */
     "Times Roman",				/* FullName */

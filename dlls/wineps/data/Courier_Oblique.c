@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Courier_Oblique[243] = 
+static const AFMMETRICS met_Courier_Oblique[243] = 
 {
     {
 	 32, 0x0020,  600, PSDRV_AGLGlyphNames + 1169,
@@ -1004,7 +1004,7 @@ static AFMMETRICS met_Courier_Oblique[243] =
  *  Font metrics
  */
 
-AFM PSDRV_Courier_Oblique =
+const AFM PSDRV_Courier_Oblique =
 {
     "Courier-Oblique",				/* FontName */
     "Courier Oblique",				/* FullName */

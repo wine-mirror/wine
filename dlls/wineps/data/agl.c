@@ -25,7 +25,7 @@
  *  Built-in font metrics
  */
 
-AFM *const PSDRV_BuiltinAFMs[] =
+const AFM *const PSDRV_BuiltinAFMs[] =
 {
     &PSDRV_AvantGarde_Demi,
     &PSDRV_AvantGarde_DemiOblique,

@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Symbol[188] = 
+static const AFMMETRICS met_Symbol[188] = 
 {
     {
 	 32, 0xf020,  250, PSDRV_AGLGlyphNames + 1169,
@@ -784,7 +784,7 @@ static AFMMETRICS met_Symbol[188] =
  *  Font metrics
  */
 
-AFM PSDRV_Symbol =
+const AFM PSDRV_Symbol =
 {
     "Symbol",					/* FontName */
     "Symbol",					/* FullName */

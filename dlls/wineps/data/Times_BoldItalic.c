@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Times_BoldItalic[228] = 
+static const AFMMETRICS met_Times_BoldItalic[228] = 
 {
     {
 	 32, 0x0020,  250, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Times_BoldItalic[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Times_BoldItalic =
+const AFM PSDRV_Times_BoldItalic =
 {
     "Times-BoldItalic",				/* FontName */
     "Times Bold Italic",			/* FullName */

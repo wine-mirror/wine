@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Bookman_Demi[228] = 
+static const AFMMETRICS met_Bookman_Demi[228] = 
 {
     {
 	 32, 0x0020,  340, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Bookman_Demi[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Bookman_Demi =
+const AFM PSDRV_Bookman_Demi =
 {
     "Bookman-Demi",				/* FontName */
     "ITC Bookman Demi",				/* FullName */

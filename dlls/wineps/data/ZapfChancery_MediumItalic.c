@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_ZapfChancery_MediumItalic[228] = 
+static const AFMMETRICS met_ZapfChancery_MediumItalic[228] = 
 {
     {
 	 32, 0x0020,  220, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_ZapfChancery_MediumItalic[228] =
  *  Font metrics
  */
 
-AFM PSDRV_ZapfChancery_MediumItalic =
+const AFM PSDRV_ZapfChancery_MediumItalic =
 {
     "ZapfChancery-MediumItalic",		/* FontName */
     "ITC Zapf Chancery Medium Italic",		/* FullName */

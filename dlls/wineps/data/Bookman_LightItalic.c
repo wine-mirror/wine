@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Bookman_LightItalic[228] = 
+static const AFMMETRICS met_Bookman_LightItalic[228] = 
 {
     {
 	 32, 0x0020,  300, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Bookman_LightItalic[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Bookman_LightItalic =
+const AFM PSDRV_Bookman_LightItalic =
 {
     "Bookman-LightItalic",			/* FontName */
     "ITC Bookman Light Italic",			/* FullName */

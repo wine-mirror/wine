@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Helvetica[228] = 
+static const AFMMETRICS met_Helvetica[228] = 
 {
     {
 	 32, 0x0020,  278, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Helvetica[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Helvetica =
+const AFM PSDRV_Helvetica =
 {
     "Helvetica",				/* FontName */
     "Helvetica",				/* FullName */

@@ -164,7 +164,7 @@ static void read_afms(FILE *f_c, FILE *f_h)
     	    " *  Built-in font metrics\n"
 	    " */\n"
 	    "\n"
-	    "AFM *const PSDRV_BuiltinAFMs[] =\n"
+	    "const AFM *const PSDRV_BuiltinAFMs[] =\n"
 	    "{\n", f_c);
 		
     
@@ -209,7 +209,7 @@ static void read_afms(FILE *f_c, FILE *f_h)
 	    if (font_family[i] == '-')
 	    	font_family[i] = '_';
 		
-	fprintf(f_h, "extern AFM PSDRV_%s;\n", font_family);
+	fprintf(f_h, "extern const AFM PSDRV_%s;\n", font_family);
 	fprintf(f_c, "    &PSDRV_%s,\n", font_family);
 	
 	while (1)

@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_NewCenturySchlbk_BoldItalic[228] = 
+static const AFMMETRICS met_NewCenturySchlbk_BoldItalic[228] = 
 {
     {
 	 32, 0x0020,  287, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_NewCenturySchlbk_BoldItalic[228] =
  *  Font metrics
  */
 
-AFM PSDRV_NewCenturySchlbk_BoldItalic =
+const AFM PSDRV_NewCenturySchlbk_BoldItalic =
 {
     "NewCenturySchlbk-BoldItalic",		/* FontName */
     "New Century Schoolbook Bold Italic",	/* FullName */

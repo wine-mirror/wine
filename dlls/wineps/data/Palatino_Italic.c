@@ -23,7 +23,7 @@
  *  Glyph metrics
  */
 
-static AFMMETRICS met_Palatino_Italic[228] = 
+static const AFMMETRICS met_Palatino_Italic[228] = 
 {
     {
 	 32, 0x0020,  250, PSDRV_AGLGlyphNames + 1169,
@@ -944,7 +944,7 @@ static AFMMETRICS met_Palatino_Italic[228] =
  *  Font metrics
  */
 
-AFM PSDRV_Palatino_Italic =
+const AFM PSDRV_Palatino_Italic =
 {
     "Palatino-Italic",				/* FontName */
     "Palatino Italic",				/* FullName */
