@@ -1,7 +1,5 @@
 /*
- * Resources for MSI
- *
- * Copyright 2005 Mike McCormack
+ * Copyright 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +16,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+100 DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 220, 62
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "De Mozilla ActiveX control wordt gedownload"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "Progress1",1000,"msctls_progress32",WS_BORDER|PBS_SMOOTH,10,10,200,12
+ LTEXT "", 104, 10, 30, 200, 10, SS_CENTER
+ PUSHBUTTON "Annuleren", IDCANCEL, 85, 44, 50, 15, WS_GROUP | WS_TABSTOP
+}
 
-#include "version.rc"
-
-#include "msi_De.rc"
-#include "msi_En.rc"
-#include "msi_Es.rc"
-#include "msi_Fr.rc"
-#include "msi_Nl.rc"
-#include "msi_Pt.rc"
+STRINGTABLE
+BEGIN
+ 1001	"Deze applicatie heeft een ActiveX browserobject nodig\n" \
+        "maar de Mozilla ActiveX control is niet geïnstalleerd." \
+        "Wilt u deze downloaden en installeren?"
+END

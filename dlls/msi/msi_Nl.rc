@@ -1,7 +1,7 @@
 /*
- * Resources for MSI
+ * Durch resources for MSI
  *
- * Copyright 2005 Mike McCormack
+ * Copyright 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "msi_De.rc"
-#include "msi_En.rc"
-#include "msi_Es.rc"
-#include "msi_Fr.rc"
-#include "msi_Nl.rc"
-#include "msi_Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+	5 "Pad %s niet gevonden"
+	9 "Plaats disk %s"
+	10 "Ongeldige parameters"
+	11 "Voer de map in die %s bevat"
+	12 "De installatiebron van het feature ontbreekt"
+	13 "De netwerkschijf met het feature ontbreekt"
+	14 "Feature van:"
+	15 "Kies de map die %s bevat"
+}
