@@ -43,7 +43,7 @@ BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
 }
 
 /**************************************************************************
- *              SetFileAttributes16	(KERNEL.421)
+ *              SetFileAttributes	(KERNEL.421)
  */
 BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 {

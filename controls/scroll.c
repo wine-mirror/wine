@@ -1304,7 +1304,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
 
 /*************************************************************************
- *           SetScrollInfo16   (USER.475)
+ *           SetScrollInfo   (USER.475)
  */
 INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
                               BOOL16 bRedraw )
@@ -1489,7 +1489,7 @@ done:
 
 
 /*************************************************************************
- *           GetScrollInfo16   (USER.476)
+ *           GetScrollInfo   (USER.476)
  */
 BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 {
@@ -1530,7 +1530,7 @@ BOOL WINAPI GetScrollInfo(
 
 
 /*************************************************************************
- *           SetScrollPos16   (USER.62)
+ *           SetScrollPos   (USER.62)
  */
 INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
                              BOOL16 bRedraw )
@@ -1571,7 +1571,7 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */ )
 
 
 /*************************************************************************
- *           GetScrollPos16   (USER.63)
+ *           GetScrollPos   (USER.63)
  */
 INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
 {
@@ -1602,7 +1602,7 @@ INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
 
 
 /*************************************************************************
- *           SetScrollRange16   (USER.64)
+ *           SetScrollRange   (USER.64)
  */
 void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
                               INT16 MinVal, INT16 MaxVal, BOOL16 bRedraw )
@@ -1671,7 +1671,7 @@ INT SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
 
 
 /*************************************************************************
- *           GetScrollRange16   (USER.65)
+ *           GetScrollRange   (USER.65)
  */
 BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
                                 LPINT16 lpMin, LPINT16 lpMax)
@@ -1785,7 +1785,7 @@ END:
 
 
 /*************************************************************************
- *           ShowScrollBar16   (USER.267)
+ *           ShowScrollBar   (USER.267)
  */
 void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 {
@@ -1811,7 +1811,7 @@ BOOL fShow /* [in] TRUE = show, FALSE = hide  */)
 
 
 /*************************************************************************
- *           EnableScrollBar16   (USER.482)
+ *           EnableScrollBar   (USER.482)
  */
 BOOL16 WINAPI EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 {

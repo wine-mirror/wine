@@ -394,8 +394,8 @@ rsrc	version16.res
 481 pascal16 _LeaveWin16Lock() _LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
 483 pascal MapProcessHandle(long) MapProcessHandle
-484 pascal SetProcessDWORD(long s_word long) SetProcessDword
-485 pascal GetProcessDWORD(long s_word) GetProcessDword
+484 pascal SetProcessDword(long s_word long) SetProcessDword
+485 pascal GetProcessDword(long s_word) GetProcessDword
 486 pascal FreeLibrary32(long) FreeLibrary
 487 pascal GetModuleFileName32(long str word) GetModuleFileNameA
 488 pascal GetModuleHandle32(str) GetModuleHandleA

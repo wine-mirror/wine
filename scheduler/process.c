@@ -905,7 +905,7 @@ void WINAPI ExitProcess( DWORD status )
 }
 
 /***********************************************************************
- *           ExitProcess16   (KERNEL.466)
+ *           ExitProcess   (KERNEL.466)
  */
 void WINAPI ExitProcess16( WORD status )
 {
@@ -926,7 +926,8 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 
 
 /***********************************************************************
- *           GetProcessDword    (KERNEL32.18) (KERNEL.485)
+ *           GetProcessDword    (KERNEL.485)
+ *           GetProcessDword    (KERNEL32.18)
  * 'Of course you cannot directly access Windows internal structures'
  */
 DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )

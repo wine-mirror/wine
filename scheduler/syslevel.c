@@ -29,7 +29,7 @@ VOID WINAPI GetpWin16Lock(SYSLEVEL **lock)
 }
 
 /************************************************************************
- *           GetpWin16Lock16    (KERNEL.449)
+ *           GetpWin16Lock    (KERNEL.449)
  */
 SEGPTR WINAPI GetpWin16Lock16(void)
 {

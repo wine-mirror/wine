@@ -562,7 +562,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
 
 
 /**********************************************************************
- *          DrawEdge16   (USER.659)
+ *          DrawEdge   (USER.659)
  */
 BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 {
@@ -1327,7 +1327,7 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
 
 
 /**********************************************************************
- *          DrawFrameControl16  (USER.656)
+ *          DrawFrameControl  (USER.656)
  */
 BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
                                   UINT16 uState )

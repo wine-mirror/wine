@@ -2212,7 +2212,7 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
 }
 
 /***********************************************************************
- *		CalcChildScroll16 (USER.462)
+ *		CalcChildScroll (USER.462)
  */
 void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
 {

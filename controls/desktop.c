@@ -234,7 +234,7 @@ BOOL WINAPI PaintDesktop(HDC hdc)
 }
 
 /***********************************************************************
- *           SetDeskPattern   (USER.279)
+ *           OldSetDeskPattern   (USER.279)
  */
 BOOL16 WINAPI SetDeskPattern(void)
 {
@@ -245,7 +245,7 @@ BOOL16 WINAPI SetDeskPattern(void)
 
 
 /***********************************************************************
- *           SetDeskWallPaper16   (USER.285)
+ *           SetDeskWallPaper   (USER.285)
  */
 BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 {

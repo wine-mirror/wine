@@ -7,14 +7,14 @@ owner	w32skrnl
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
 5 pascal ContinueDebugEvent(long long long) ContinueDebugEvent
-6 pascal READPROCESSMEMORY(long ptr ptr long ptr) ReadProcessMemory
+6 pascal ReadProcessMemory(long ptr ptr long ptr) ReadProcessMemory
 7 stub WRITEPROCESSMEMORY
 8 stub GETTHREADCONTEXT
 9 stub SETTHREADCONTEXT
 10 pascal GETLASTERROR() GetLastError
-11 pascal CLOSEHANDLE(long) CloseHandle
+11 pascal CloseHandle(long) CloseHandle
 12 stub ALLOCCLBKTO32BDLL
-13 pascal GETEXITCODETHREAD(long ptr) GetExitCodeThread
+13 pascal GetExitCodeThread(long ptr) GetExitCodeThread
 14 stub GETEXITCODEPROCESS
 15 stub OPENPROCESS
 16 stub OPENTHREAD
