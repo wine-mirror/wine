@@ -325,7 +325,7 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
             DWORD sign = 0xdeadbeef;
             RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase, (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
             RegSetValueExW(key, szType, 0, REG_DWORD, (LPBYTE)&type, sizeof(type));
-            RegSetValueExW(key, szSignature, 0, REG_DWORD, (LPBYTE)&sign, sizeof(sign));
+            RegSetValueExW(key, szSignature, 0, REG_BINARY, (LPBYTE)&sign, sizeof(sign));
         }
         RegCloseKey(key);
     }
