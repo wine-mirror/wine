@@ -11,10 +11,10 @@
 #include "debugtools.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "file.h"
 #include "server.h"
 #include "ntddk.h"
-#include "crtdll.h"
 #include "ntdll_misc.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -64,19 +64,19 @@ static BOOLEAN _NtKeyToWinKey(
 	  *KeyHandle = ObjectAttributes->RootDirectory;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKLM)))
-	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HKLM,len)))
+	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKLM,len)))
 	{  *KeyHandle = HKEY_LOCAL_MACHINE;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKU)))
-	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HKU,len)))
+	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKU,len)))
 	{  *KeyHandle = HKEY_USERS;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCR)))
-	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HCR,len)))
+	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCR,len)))
 	{  *KeyHandle = HKEY_CLASSES_ROOT;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCC)))
-	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HCC,len)))
+	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCC,len)))
 	{  *KeyHandle = HKEY_CURRENT_CONFIG;
 	}
 	else

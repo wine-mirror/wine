@@ -10,16 +10,16 @@
 #include "winnls.h"
 #include "winversion.h"
 #include "winreg.h"
-#include "crtdll.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "windef.h"
 #include "options.h"
 #include "wine/undocshell.h"
+#include "wine/unicode.h"
 #include "shlwapi.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 /*
 	Combining and Constructing paths
@@ -128,28 +128,28 @@ LPWSTR WINAPI PathCombineW(
 	
 	if (!lpszFile || !lpszFile[0] || (lpszFile[0]==(WCHAR)'.' && !lpszFile[1]) ) 
 	{
-	  CRTDLL_wcscpy(szDest,lpszDir);
+          strcpyW(szDest,lpszDir);
 	  return szDest;
 	}
 
 	/*  if lpszFile is a complete path don't care about lpszDir */
 	if (PathGetDriveNumberW(lpszFile) != -1)
 	{
-	  CRTDLL_wcscpy(szDest,lpszFile);
+            strcpyW(szDest,lpszFile);
 	}
 	else if (lpszFile[0] == (WCHAR)'\\' )
 	{
-	  CRTDLL_wcscpy(sTemp,lpszDir);
+	  strcpyW(sTemp,lpszDir);
 	  PathStripToRootW(sTemp);
-	  CRTDLL_wcscat(sTemp,lpszFile);
-	  CRTDLL_wcscpy(szDest,sTemp);
+	  strcatW(sTemp,lpszFile);
+	  strcpyW(szDest,sTemp);
 	}
 	else
 	{
-	  CRTDLL_wcscpy(sTemp,lpszDir);
+	  strcpyW(sTemp,lpszDir);
 	  PathAddBackslashW(sTemp);
-	  CRTDLL_wcscat(sTemp,lpszFile);
-	  CRTDLL_wcscpy(szDest,sTemp);
+	  strcatW(sTemp,lpszFile);
+	  strcpyW(szDest,sTemp);
 	}
 	return szDest;
 }
@@ -196,7 +196,7 @@ LPWSTR WINAPI PathAddBackslashW(LPWSTR lpszPath)
 	int len;
 	TRACE("%p->%s\n",lpszPath,debugstr_w(lpszPath));
 
-	len = CRTDLL_wcslen(lpszPath);
+	len = strlenW(lpszPath);
 	if (len && lpszPath[len-1]!=(WCHAR)'\\') 
 	{
 	  lpszPath[len]  = (WCHAR)'\\';
@@ -468,12 +468,12 @@ int WINAPI PathGetDriveNumberA(LPCSTR lpszPath)
  */
 int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath)
 {
-	int chr = CRTDLL_towlower(lpszPath[0]);
+	int chr = tolowerW(lpszPath[0]);
 	
 	TRACE ("%s\n",debugstr_w(lpszPath));
 
 	if (!lpszPath || lpszPath[1]!=':' || chr < 'a' || chr > 'z') return -1;
-	return tolower(lpszPath[0]) - 'a' ;
+	return tolowerW(lpszPath[0]) - 'a' ;
 }
 
 /*************************************************************************
@@ -854,10 +854,10 @@ LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str)
 
 	while (*x==' ') x++;
 	if (x!=str)
-	  CRTDLL_wcscpy(str,x);
+	  strcpyW(str,x);
 	if (!*str)
 	  return str;
-	x=str+CRTDLL_wcslen(str)-1;
+	x=str+strlenW(str)-1;
 	while (*x==' ')
 	  x--;
 	if (*x==' ')
@@ -931,7 +931,7 @@ VOID WINAPI PathUnquoteSpacesA(LPSTR str)
  */
 VOID WINAPI PathUnquoteSpacesW(LPWSTR str) 
 {
-	DWORD len = CRTDLL_wcslen(str);
+	DWORD len = strlenW(str);
 
 	TRACE("%s\n",debugstr_w(str));
 
@@ -940,7 +940,7 @@ VOID WINAPI PathUnquoteSpacesW(LPWSTR str)
 	if (str[len-1]!='"')
 	  return;
 	str[len-1]='\0';
-	CRTDLL_wcscpy(str,str+1);
+	strcpyW(str,str+1);
 	return;
 }
 
@@ -977,7 +977,7 @@ int WINAPI PathParseIconLocationA(LPSTR lpszPath)
  */
 int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
 {
-	LPWSTR lpstrComma = CRTDLL_wcschr(lpszPath, ',');
+	LPWSTR lpstrComma = strchrW(lpszPath, ',');
 	
 	FIXME("%s stub\n", debugstr_w(lpszPath));
 
@@ -1170,7 +1170,7 @@ BOOL WINAPI PathIsExeW (LPCWSTR lpszPath)
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
 	for(i=0; lpszExtensions[i]; i++)
-	  if (!CRTDLL__wcsicmp(lpszExtension,lpszExtensions[i])) return TRUE;
+	  if (!strcmpiW(lpszExtension,lpszExtensions[i])) return TRUE;
 	  
 	return FALSE;
 }
@@ -1313,7 +1313,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
 	    } while (*name++);
 	    return 0;
 	  }
-	  if (CRTDLL_towupper(*mask)!=CRTDLL_towupper(*name) && *mask!='?') return 0;
+	  if (toupperW(*mask)!=toupperW(*name) && *mask!='?') return 0;
 	  name++;
 	  mask++;
 	}
@@ -1428,7 +1428,7 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
 	if (PathIsRelativeW(lpszPath1) || PathIsRelativeW(lpszPath2)) return FALSE;
 
 	/* usual path */
-	if ( CRTDLL_towupper(lpszPath1[0])==CRTDLL_towupper(lpszPath2[0]) &&
+	if ( toupperW(lpszPath1[0])==toupperW(lpszPath2[0]) &&
 	     lpszPath1[1]==':' && lpszPath2[1]==':' &&
 	     lpszPath1[2]=='\\' && lpszPath2[2]=='\\')
 	  return TRUE;
@@ -1503,14 +1503,14 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 	if(!lpstrPath) return FALSE;
 
 	/* get protocol        */
-	lpstrRes = CRTDLL_wcschr(lpstrPath,':');
+	lpstrRes = strchrW(lpstrPath,':');
 	if(!lpstrRes) return FALSE;
 	iSize = lpstrRes - lpstrPath;
 
 	while(SupportedProtocol[i])
 	{
-	  if (iSize == CRTDLL_wcslen(SupportedProtocol[i]))
-	    if(!CRTDLL__wcsnicmp(lpstrPath, SupportedProtocol[i], iSize));
+	  if (iSize == strlenW(SupportedProtocol[i]))
+	    if(!strncmpiW(lpstrPath, SupportedProtocol[i], iSize));
 	      return TRUE;
 	  i++;
 	}

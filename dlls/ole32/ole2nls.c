@@ -20,7 +20,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "crtdll.h"
 #include "main.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

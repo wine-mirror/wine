@@ -13,7 +13,6 @@
 #include "winnls.h"
 #include "winversion.h"
 #include "heap.h"
-#include "crtdll.h"
 
 #include "shellapi.h"
 #include "shlobj.h"

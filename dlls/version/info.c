@@ -12,9 +12,9 @@
 #include "winreg.h"
 #include "winver.h"
 #include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "heap.h"
-#include "crtdll.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
@@ -404,7 +404,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 
     while ( (DWORD)child < (DWORD)info + info->wLength )
     {
-        if ( !CRTDLL__wcsnicmp( child->szKey, szKey, cbKey ) )
+        if ( !strncmpiW( child->szKey, szKey, cbKey ) )
             return child;
 
         child = VersionInfo32_Next( child );

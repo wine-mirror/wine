@@ -20,12 +20,12 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "objbase.h"
 #include "commctrl.h"
-#include "crtdll.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(commctrl)
+DEFAULT_DEBUG_CHANNEL(commctrl);
 
 
 extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
@@ -2128,7 +2128,7 @@ INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
  *
  */
 LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
-  return CRTDLL_wcschr(lpStart, wMatch);
+  return strchrW(lpStart, wMatch);
 }
 
 /**************************************************************************
@@ -2152,7 +2152,7 @@ INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
  *
  */
 INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
-  return CRTDLL_wcsncmp(lpStr1, lpStr2, nChar);
+  return strncmpW(lpStr1, lpStr2, nChar);
 }
 
 /**************************************************************************
@@ -2193,7 +2193,7 @@ LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
  *
  */
 LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
-  return CRTDLL_wcsstr(lpFirst, lpSrch);
+  return strstrW(lpFirst, lpSrch);
 }
 
 /**************************************************************************
@@ -2209,7 +2209,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 /* while(*lpLoop) { if lpLoop++; } */
 
   for(; (*lpLoop != 0); lpLoop++)
-    if( CRTDLL_wcschr(lpSet, *(WORD*)lpLoop))
+    if( strchrW(lpSet, *(WORD*)lpLoop))
       return (INT)(lpLoop-lpStr);
   
   return (INT)(lpLoop-lpStr);

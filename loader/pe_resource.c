@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"
 #include "pe_image.h"
@@ -22,7 +23,6 @@
 #include "process.h"
 #include "stackframe.h"
 #include "neexe.h"
-#include "crtdll.h"
 #include "debugtools.h"
 
 /**********************************************************************
@@ -72,7 +72,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 			entryTable[entrynum].u1.s.NameOffset);
 		if(namelen != str->Length)
 			continue;
-		if(CRTDLL__wcsnicmp(name,str->NameString,str->Length)==0)
+		if(strncmpiW(name,str->NameString,str->Length)==0)
 			return (PIMAGE_RESOURCE_DIRECTORY) (
 				root +
 				entryTable[entrynum].u2.s.OffsetToDirectory);

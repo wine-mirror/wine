@@ -38,6 +38,7 @@
 #include "crtdll.h"
 #include "wine/obj_oleview.h"
 #include "wine/obj_cache.h"
+#include "wine/unicode.h"
 #include "ole2.h"
 #include "debugtools.h"
 
@@ -680,8 +681,8 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
 
     return (elem->type == STGTY_STREAM)
 	&& (elem->cbSize.s.LowPart >= sizeof(PresentationDataHeader))
-	&& (CRTDLL_wcslen(name) == 11)
-	&& (CRTDLL_wcsncmp(name, OlePres, 8) == 0)
+	&& (strlenW(name) == 11)
+	&& (strncmpW(name, OlePres, 8) == 0)
 	&& CRTDLL_iswdigit(name[8])
 	&& CRTDLL_iswdigit(name[9])
 	&& CRTDLL_iswdigit(name[10]);

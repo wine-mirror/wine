@@ -14,6 +14,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 #include "heap.h"
 #include "options.h"
 #include "winver.h"
@@ -21,7 +22,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "crtdll.h"
 #include "main.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -2939,8 +2939,7 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 	l1 = (l1==-1)?lstrlenW(s1):l1;
 	l2 = (l2==-1)?lstrlenW(s2):l2;
 	len = l1<l2 ? l1:l2;
-	ret = (fdwStyle & NORM_IGNORECASE) ?
-		CRTDLL__wcsnicmp(s1,s2,len) : CRTDLL_wcsncmp(s1,s2,len);
+	ret = (fdwStyle & NORM_IGNORECASE) ? strncmpiW(s1,s2,len) : strncmpW(s1,s2,len);
 	/* not equal, return 1 or 3 */
 	if(ret!=0) return ret+2;
 	/* same len, return 2 */

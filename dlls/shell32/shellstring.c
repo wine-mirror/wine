@@ -7,11 +7,11 @@
 #include "winerror.h"
 #include "debugtools.h"
 #include "winversion.h"
-#include "crtdll.h"
 #include "heap.h"
 
 #include "shellapi.h"
 #include "wine/undocshell.h"
+#include "wine/unicode.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -137,7 +137,7 @@ LPSTR WINAPI StrChrA (LPCSTR str, INT c)
 LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
 {
 	TRACE("%s 0x%04x\n",debugstr_w(str),x);
-	return CRTDLL_wcschr(str, x);
+	return strchrW(str, x);
 }
 
 /*************************************************************************
@@ -155,7 +155,7 @@ INT WINAPI StrCmpNA ( LPCSTR str1, LPCSTR str2, INT len)
 INT WINAPI StrCmpNW ( LPCWSTR wstr1, LPCWSTR wstr2, INT len)
 {
 	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return CRTDLL_wcsncmp(wstr1, wstr2, len);
+	return strncmpW(wstr1, wstr2, len);
 }
 
 /*************************************************************************
@@ -173,7 +173,7 @@ int WINAPI StrCmpNIA ( LPCSTR str1, LPCSTR str2, int len)
 int WINAPI StrCmpNIW ( LPCWSTR wstr1, LPCWSTR wstr2, int len)
 {
 	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return CRTDLL__wcsnicmp(wstr1, wstr2, len);
+	return strncmpiW(wstr1, wstr2, len);
 }
 
 /*************************************************************************
@@ -229,7 +229,7 @@ LPWSTR WINAPI StrStrIW(LPCWSTR lpFirst, LPCWSTR lpSrch)
     while (*lpFirst)
     {
         LPCWSTR p1 = lpFirst, p2 = lpSrch;
-        while (*p1 && *p2 && CRTDLL_towupper(*p1) == CRTDLL_towupper(*p2)) { p1++; p2++; }
+        while (*p1 && *p2 && toupperW(*p1) == toupperW(*p2)) { p1++; p2++; }
         if (!*p2) return (LPWSTR)lpFirst;
         lpFirst++;
     }
