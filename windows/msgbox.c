@@ -2,6 +2,7 @@
  * Message boxes
  *
  * Copyright 1995 Bernd Schmidt
+ * Copyright 2004 Ivan Leo Puoti, Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +39,30 @@ WINE_DECLARE_DEBUG_CHANNEL(msgbox);
 #define MSGBOX_IDICON 1088
 #define MSGBOX_IDTEXT 100
 #define IDS_ERROR     2
+
+struct ThreadWindows
+{
+    UINT numHandles;
+    UINT numAllocs;
+    HWND *handles;
+};
+
+BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
+{
+    struct ThreadWindows *threadWindows = (struct ThreadWindows *)lParam;
+
+    if (!EnableWindow(hwnd, FALSE))
+    {
+        if(threadWindows->numHandles >= threadWindows->numAllocs)
+        {
+            threadWindows->handles = HeapReAlloc(GetProcessHeap(), 0, threadWindows->handles,
+                                                 (threadWindows->numAllocs*2)*sizeof(HWND));
+            threadWindows->numAllocs *= 2;
+        }
+        threadWindows->handles[threadWindows->numHandles++]=hwnd;
+    }
+   return TRUE;
+}
 
 static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 {
@@ -248,19 +273,9 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	}
     }
 
-    /* handle modal MessageBoxes */
-    if (lpmb->dwStyle & MB_SYSTEMMODAL)
-        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-    
-    if (lpmb->dwStyle & MB_TASKMODAL)
-    {
-	FIXME("task modal msgbox ! Not modal yet.\n");
-	/* Probably do EnumTaskWindows etc. here and work
-	 * your way up to the top - I'm lazy (HWND_TOP) */
-	SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	/* MB_TASKMODAL seems to imply a ShowWindow */
-	ShowWindow(hwnd, SW_SHOW);
-    }
+    /*handle modal message boxes*/
+    if (((lpmb->dwStyle & MB_TASKMODAL) && (lpmb->hwndOwner==NULL)) || (lpmb->dwStyle & MB_SYSTEMMODAL))
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
     return hFont;
 }
@@ -443,6 +458,9 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
     LPVOID tmplate;
     HRSRC hRes;
+    int ret;
+    UINT i;
+    struct ThreadWindows threadWindows;
     static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
 
     if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG,
@@ -451,6 +469,22 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     if (!(tmplate = (LPVOID)LoadResource(user32_module, hRes)))
         return 0;
 
-    return DialogBoxIndirectParamW(msgbox->hInstance, tmplate, msgbox->hwndOwner,
-                                   MSGBOX_DlgProc, (LPARAM)msgbox);
+    if ((msgbox->dwStyle & MB_TASKMODAL) && (msgbox->hwndOwner==NULL))
+    {
+        threadWindows.numHandles = 0;
+        threadWindows.numAllocs = 10;
+        threadWindows.handles = HeapAlloc(GetProcessHeap(), 0, 10*sizeof(HWND));
+        EnumThreadWindows(GetCurrentThreadId(), MSGBOX_EnumProc, (LPARAM)&threadWindows);
+    }
+
+    ret=DialogBoxIndirectParamW(msgbox->hInstance, tmplate,
+                                msgbox->hwndOwner, MSGBOX_DlgProc, (LPARAM)msgbox);
+
+    if ((msgbox->dwStyle & MB_TASKMODAL) && (msgbox->hwndOwner==NULL))
+    {
+        for (i = 0; i < threadWindows.numHandles; i++)
+            EnableWindow(threadWindows.handles[i], TRUE);
+        HeapFree(GetProcessHeap(), 0, threadWindows.handles);
+    }
+    return ret;
 }
