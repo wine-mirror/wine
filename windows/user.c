@@ -356,7 +356,7 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 }
 
 /***********************************************************************
- *		ChangeDisplaySettings16 (USER.620)
+ *		ChangeDisplaySettings (USER.620)
  */
 LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
 {
@@ -449,7 +449,7 @@ BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
 }
 
 /***********************************************************************
- *		EnumDisplaySettings16 (USER.621)
+ *		EnumDisplaySettings (USER.621)
  */
 BOOL16 WINAPI EnumDisplaySettings16(
 	LPCSTR name,		/* [in] huh? */

@@ -2065,7 +2065,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
 }
 
 /***********************************************************************
- *		MsgWaitForMultipleObjects16 (USER.640)
+ *		MsgWaitForMultipleObjects (USER.640)
  */
 DWORD WINAPI MsgWaitForMultipleObjects16( DWORD nCount, HANDLE *pHandles,
                                           BOOL fWaitAll, DWORD dwMilliseconds,

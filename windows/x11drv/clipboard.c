@@ -777,7 +777,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 }
 
 /**************************************************************************
- *		X11DRV_ReleaseClipboard (X11DRV.@)
+ *		ReleaseClipboard (X11DRV.@)
  *  Voluntarily release all currently owned X selections
  */
 void X11DRV_ReleaseClipboard(void)
@@ -828,7 +828,7 @@ void X11DRV_ReleaseClipboard(void)
 }
 
 /**************************************************************************
- *		X11DRV_AcquireClipboard (X11DRV.@)
+ *		AcquireClipboard (X11DRV.@)
  */
 void X11DRV_AcquireClipboard(void)
 {
@@ -878,7 +878,7 @@ void X11DRV_AcquireClipboard(void)
 }
 
 /**************************************************************************
- *		X11DRV_IsClipboardFormatAvailable (X11DRV.@)
+ *		IsClipboardFormatAvailable (X11DRV.@)
  *
  * Checks if the specified format is available in the current selection
  * Only invoked when WINE is not the selection owner
@@ -935,7 +935,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 }
 
 /**************************************************************************
- *		X11DRV_RegisterClipboardFormat (X11DRV.@)
+ *		RegisterClipboardFormat (X11DRV.@)
  *
  * Registers a custom X clipboard format
  * Returns: TRUE - success,  FALSE - failure
@@ -961,7 +961,7 @@ BOOL X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
 }
 
 /**************************************************************************
- *		X11DRV_IsSelectionOwner (X11DRV.@)
+ *		IsSelectionOwner (X11DRV.@)
  *
  * Returns: TRUE - We(WINE) own the selection, FALSE - Selection not owned by us
  */
@@ -971,7 +971,7 @@ BOOL X11DRV_IsSelectionOwner(void)
 }
 
 /**************************************************************************
- *		X11DRV_SetClipboardData (X11DRV.@)
+ *		SetClipboardData (X11DRV.@)
  *
  * We don't need to do anything special here since the clipboard code
  * maintains the cache. 
@@ -984,7 +984,7 @@ void X11DRV_SetClipboardData(UINT wFormat)
 }
 
 /**************************************************************************
- *		X11DRV_GetClipboardData (X11DRV.@)
+ *		GetClipboardData (X11DRV.@)
  *
  * This method is invoked only when we DO NOT own the X selection
  *
@@ -1062,7 +1062,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
 }
 
 /**************************************************************************
- *		X11DRV_ResetSelectionOwner (X11DRV.@)
+ *		ResetSelectionOwner (X11DRV.@)
  *
  * Called from DestroyWindow() to prevent X selection from being lost when
  * a top level window is destroyed, by switching ownership to another top
