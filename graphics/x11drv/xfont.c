@@ -554,11 +554,13 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    {
    case 0: /* Bitmap */
        break;
-   case 2: /* Scalable bitmap */
    case 4: /* Scalable */
        fi->fi_flags |= FI_SCALABLE;
        break;
-
+   case 2:
+       /* #$%^!!! X11R6 mutant garbage (scalable bitmap) */
+       TRACE("Skipping scalable bitmap '%s'\n", fullname);
+       return FALSE;
    default:
        WARN("Font '%s' has weird scalability\n", fullname);
        return FALSE;
