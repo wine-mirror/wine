@@ -3,9 +3,9 @@ type win32
 
 import ntdll.dll
 
-debug_channels()
+debug_channels (avicap32)
 
-@ stub capCreateCaptureWindowA
-@ stub capCreateCaptureWindowW
-@ stub capGetDriverDescriptionA
-@ stub capGetDriverDescriptionW
+@ stdcall capCreateCaptureWindowA(str long long long long long long long) capCreateCaptureWindowA
+@ stdcall capCreateCaptureWindowW(wstr long long long long long long long) capCreateCaptureWindowW
+@ stdcall capGetDriverDescriptionA(long ptr long ptr long) capGetDriverDescriptionA
+@ stdcall capGetDriverDescriptionW(long ptr long ptr long) capGetDriverDescriptionW
