@@ -84,6 +84,7 @@ C_SRCS = \
 	om.c \
 	path.c \
 	reg.c \
+	resource.c \
 	rtl.c \
 	rtlbitmap.c \
 	rtlstr.c \

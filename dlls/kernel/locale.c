@@ -1002,6 +1002,9 @@ void LOCALE_Init(void)
     UINT ansi = 1252, oem = 437, mac = 10000;
     LCID lcid = init_default_lcid();
 
+    NtSetDefaultLocale( FALSE, lcid );
+    NtSetDefaultLocale( TRUE, lcid );
+
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&ansi, sizeof(ansi)/sizeof(WCHAR) );
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,

@@ -33,12 +33,12 @@
 @ stub KiUserApcDispatcher
 @ stub KiUserCallbackDispatcher
 @ stub KiUserExceptionDispatcher
-@ stub LdrAccessResource
+@ stdcall LdrAccessResource(long ptr ptr ptr)
 @ stdcall LdrDisableThreadCalloutsForDll(long)
 @ stub LdrEnumResources
 @ stdcall LdrFindEntryForAddress(ptr ptr)
-@ stub LdrFindResourceDirectory_U
-@ stub LdrFindResource_U
+@ stdcall LdrFindResourceDirectory_U(long ptr long ptr)
+@ stdcall LdrFindResource_U(long ptr long ptr)
 @ stdcall LdrGetDllHandle(long long ptr ptr)
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
 @ stub LdrInitializeThunk
@@ -152,7 +152,7 @@
 @ stdcall NtProtectVirtualMemory(long ptr ptr long ptr)
 @ stdcall NtPulseEvent(long ptr)
 @ stub NtQueryAttributesFile
-@ stub NtQueryDefaultLocale
+@ stdcall NtQueryDefaultLocale(long ptr)
 @ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long long long long long long long)
 @ stub NtQueryEaFile
@@ -207,7 +207,7 @@
 @ stub NtSecureConnectPort
 @ stdcall NtSetContextThread(long ptr)
 @ stub NtSetDefaultHardErrorPort
-@ stub NtSetDefaultLocale
+@ stdcall NtSetDefaultLocale(long long)
 @ stub NtSetEaFile
 @ stdcall NtSetEvent(long long)
 @ stub NtSetHighEventPair
@@ -384,7 +384,7 @@
 @ stdcall RtlFindLeastSignificantBit(long long)
 @ stdcall RtlFindLongestRunClear(ptr long)
 @ stdcall RtlFindLongestRunSet(ptr long)
-@ stub RtlFindMessage
+@ stdcall RtlFindMessage(long long long long ptr)
 @ stdcall RtlFindMostSignificantBit(long long)
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr)
 @ stdcall RtlFindNextForwardRunSet(ptr long ptr)
@@ -679,7 +679,7 @@
 @ stdcall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
 @ stdcall ZwPulseEvent(long ptr) NtPulseEvent
 @ stub ZwQueryAttributesFile
-@ stub ZwQueryDefaultLocale
+@ stdcall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
 @ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
@@ -731,7 +731,7 @@
 @ stdcall ZwSaveKey(long long) NtSaveKey
 @ stdcall ZwSetContextThread(long ptr) NtSetContextThread
 @ stub ZwSetDefaultHardErrorPort
-@ stub ZwSetDefaultLocale
+@ stdcall ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stub ZwSetEaFile
 @ stdcall ZwSetEvent(long long) NtSetEvent
 @ stub ZwSetHighEventPair
