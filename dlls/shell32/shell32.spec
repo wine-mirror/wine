@@ -281,8 +281,8 @@
  641 stdcall NTSHChangeNotifyDeregister (long)
 
  643 stub SHChangeNotifyReceive@16
- 644 stub SHChangeNotification_Lock@16
- 645 stub SHChangeNotification_Unlock@4
+ 644 stdcall SHChangeNotification_Lock(long long ptr ptr)
+ 645 stdcall SHChangeNotification_Unlock(long)
  646 stub SHChangeRegistrationReceive@8
  647 stub ReceiveAddToRecentDocs@8
  648 stub SHWaitOp_Operate@8
