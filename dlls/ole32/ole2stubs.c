@@ -262,3 +262,30 @@ BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
   FIXME("%s\n", debugstr_guid(clsid));
   return FALSE;
 }
+
+/***********************************************************************
+ *           DllGetClassObject                          [OLE2.4]
+ */
+HRESULT WINAPI DllGetClassObject16(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+{
+  FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+  return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           OleSetClipboard                            [OLE2.49]
+ */
+HRESULT WINAPI OleSetClipboard16(IDataObject* pDataObj)
+{
+  FIXME("(%p): stub\n", pDataObj);
+  return S_OK;
+}
+
+/***********************************************************************
+ *           OleGetClipboard                            [OLE2.50]
+ */
+HRESULT WINAPI OleGetClipboard16(IDataObject** ppDataObj)
+{
+  FIXME("(%p): stub\n", ppDataObj);
+  return E_NOTIMPL;
+}

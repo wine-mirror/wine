@@ -1,7 +1,7 @@
 1 pascal OleBuildVersion() OleBuildVersion
 2 pascal OleInitialize(ptr) OleInitialize
 3 pascal OleUninitialize() OleUninitialize
-4 stub DLLGETCLASSOBJECT
+4 pascal DllGetClassObject(ptr ptr ptr) DllGetClassObject16
 #5 WEP
 6 stub OLEQUERYLINKFROMDATA
 7 stub OLEQUERYCREATEFROMDATA
@@ -46,8 +46,8 @@
 46 stub MONIKERRELATIVEPATHTO
 47 stub MONIKERCOMMONPREFIXWITH
 48 stub ISACCELERATOR
-49 stub OLESETCLIPBOARD
-50 stub OLEGETCLIPBOARD
+49 pascal OleSetClipboard(ptr) OleSetClipboard16
+50 pascal OleGetClipboard(ptr) OleGetClipboard16
 51 stub OLEDUPLICATEDATA
 52 stub OLEGETICONOFFILE
 53 stub OLEGETICONOFCLASS
