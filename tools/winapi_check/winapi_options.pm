@@ -65,7 +65,7 @@ my %options = (
     "declared" => { default => 1, parent => "global", description => "declared checking" }, 
     "implemented" => { default => 1, parent => "global", description => "implemented checking" },
     "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
-    "include" => { default => 0, parent => "global", description => "include checking" }
+    "include" => { default => 1, parent => "global", description => "include checking" }
 );
 
 my %short_options = (

@@ -10,9 +10,11 @@ sub new {
 
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
+    my $progress_count = \${$self->{PROGRESS_COUNT}};
 
     $$progress = "";
     $$last_progress = "";
+    $progress_count = 0;
 
     return $self;
 }
@@ -22,8 +24,11 @@ sub show_progress {
     my $self = shift;
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
+    my $progress_count = \${$self->{PROGRESS_COUNT}};
 
-    if($$progress) {
+    $$progress_count++;
+
+    if($$progress_count > 0 && $$progress) {
 	print STDERR $$progress;
 	$$last_progress = $$progress;
     }
@@ -33,6 +38,9 @@ sub hide_progress  {
     my $self = shift;
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
+    my $progress_count = \${$self->{PROGRESS_COUNT}};
+
+    $$progress_count--;
 
     if($$last_progress) {
 	my $message;
@@ -50,18 +58,20 @@ sub update_progress {
     my $last_progress = \${$self->{LAST_PROGRESS}};
     
     my $prefix = "";
-    for (1..length($$last_progress)) {
-	$prefix .= "";
-    }
-
     my $suffix = "";
-    my $diff = length($$last_progress)-length($$progress);
-    if($diff > 0) {
-	for (1..$diff) {
-	    $suffix .= " ";
+    if($$last_progress) {
+	for (1..length($$last_progress)) {
+	    $prefix .= "";
 	}
-	for (1..$diff) {
-	    $suffix .= "";
+	
+	my $diff = length($$last_progress)-length($$progress);
+	if($diff > 0) {
+	    for (1..$diff) {
+		$suffix .= " ";
+	    }
+	    for (1..$diff) {
+		$suffix .= "";
+	    }
 	}
     }
     print STDERR $prefix . $$progress . $suffix;
@@ -79,10 +89,10 @@ sub progress {
 
 sub write {
     my $self = shift;
-    my $last_progress = \${$self->{LAST_PROGRESS}};
 
     my $message = shift;
-     
+
+
     $self->hide_progress;
     print STDERR $message;
     $self->show_progress;

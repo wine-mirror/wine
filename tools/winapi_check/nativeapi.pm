@@ -19,6 +19,10 @@ sub new {
     my $configure_in_file = shift;
     my $config_h_in_file = shift;
 
+    $api_file =~ s/^\.\///;
+    $configure_in_file =~ s/^\.\///;
+    $config_h_in_file =~ s/^\.\///;
+
     $$output->progress("$api_file");
 
     open(IN, "< $api_file");

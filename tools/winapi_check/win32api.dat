@@ -465,6 +465,8 @@ LPPROCESS_HEAP_ENTRY *
 LPPROCESS_INFORMATION
 LPPROGRESS_ROUTINE
 LPRASCONNA
+LPRASDIALPARAMS
+LPRASENTRYNAME
 LPRASTERIZER_STATUS
 LPRECT
 LPRGNDATA
@@ -675,6 +677,7 @@ short *
 struct _TEB *
 struct ThunkDataCommon *
 struct find_t *
+struct netent *
 struct sockaddr *
 struct stat *
 struct timeval *

@@ -78,15 +78,34 @@ my %includes;
     } split(/\n/, `find . -name \\*.h`);
     
     foreach my $file (@files) {
+	my $file_dir = $file;
+	if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
+	    $file_dir = ".";
+	}
+   
 	$includes{$file} = { name => $file };
+
 	open(IN, "< $file");
 	while(<IN>) {
 	    if(/^\s*\#\s*include\s*\"(.*?)\"/) {
-		$includes{$file}{includes}{"include/$1"}++;
+		my $header = $1;
+		if(-e "$file_dir/$header") {
+		    $includes{$file}{includes}{"$file_dir/$header"}++;
+		} elsif(-e "include/$header") {
+		    $includes{$file}{includes}{"include/$header"}++;
+		} else {
+		    $output->write("$file: #include \"$header\" is not a local include\n");
+		}
 	    }
 	}
 	close(IN);
     }
+
+    my @files2 = ("acconfig.h", "poppack.h", "pshpack1.h", "pshpack2.h", "pshpack4.h", "pshpack8.h");
+
+    foreach my $file2 (@files2) {
+	$includes{"include/$file2"}{used}++;
+    }    
 }
 
 my $progress_output;
@@ -245,7 +264,7 @@ foreach my $file ($options->files) {
     my $conditional = 0;
     my $found_include = sub {
 	local $_ = shift;
-	if(/^\"config.h\"/) {
+	if(/^\"(config\.h|native\.h)\"/) {
 	    $config++;
 	}
     };
