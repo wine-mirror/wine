@@ -94,7 +94,6 @@ struct wine_pthread_thread_info
     int            pid;         /* Unix process id */
     int            tid;         /* Unix thread id */
     void         (*entry)( struct wine_pthread_thread_info *info );  /* thread entry point */
-    void         (*cleanup)( struct wine_pthread_thread_info *info );  /* thread cleanup function */
     int            exit_status; /* thread exit status when calling wine_pthread_exit_thread */
 };
 

@@ -189,7 +189,6 @@ static void cleanup_thread( void *ptr )
 {
     /* copy the info structure since it is on the stack we will free */
     struct wine_pthread_thread_info info = *(struct wine_pthread_thread_info *)ptr;
-    if (info.cleanup) info.cleanup( &info );
     wine_ldt_free_fs( info.teb_sel );
     munmap( info.stack_base, info.stack_size );
     munmap( info.teb_base, info.teb_size );

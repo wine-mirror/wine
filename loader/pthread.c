@@ -162,7 +162,6 @@ void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
     if ((free_info = interlocked_xchg_ptr( (void **)&previous_info, cleanup_info )) != NULL)
     {
         pthread_join( free_info->self, &ptr );
-        if (free_info->thread_info.cleanup) free_info->thread_info.cleanup( &free_info->thread_info );
         wine_ldt_free_fs( free_info->thread_info.teb_sel );
         munmap( free_info->thread_info.teb_base, free_info->thread_info.teb_size );
     }
