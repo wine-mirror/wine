@@ -932,6 +932,19 @@ void	DEBUG_Run(const char* args)
     }
 }
 
+static BOOL WINAPI DEBUG_CtrlCHandler(DWORD dwCtrlType)
+{
+    if (dwCtrlType == CTRL_C_EVENT)
+    {
+        DEBUG_Printf(DBG_CHN_MESG, "Ctrl-C: stopping debuggee\n");
+        /* FIXME: since we likely have a single process, signal the first process
+         * in list
+         */
+        return DEBUG_ProcessList && DebugBreakProcess(DEBUG_ProcessList->handle);
+    }
+    return FALSE;
+}
+
 static void DEBUG_InitConsole(void)
 {
     COORD	c;
@@ -962,6 +975,9 @@ static void DEBUG_InitConsole(void)
     /* put the line editing mode with the nice emacs features (FIXME: could be triggered by a IVAR) */
     if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | WINE_ENABLE_LINE_INPUT_EMACS);
+
+    /* set our control-C handler */
+    SetConsoleCtrlHandler(DEBUG_CtrlCHandler, TRUE);
 }
 
 int main(int argc, char** argv)
