@@ -769,7 +769,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
         /* FIXME: copy the valid bits */
 
-        if (data->whole_window)
+        if (data->whole_window && !(swp_flags & SWP_WINE_NOHOSTMOVE))
         {
             if ((old_style & WS_VISIBLE) && !(new_style & WS_VISIBLE))
             {
@@ -791,7 +791,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
         X11DRV_sync_window_position( display, data, swp_flags, rectClient, &new_whole_rect );
 
-        if (data->whole_window)
+        if (data->whole_window && !(swp_flags & SWP_WINE_NOHOSTMOVE))
         {
             if (!(old_style & WS_VISIBLE) && (new_style & WS_VISIBLE))
             {
