@@ -55,6 +55,8 @@ static BOOL SwappedButtons;
 
 BYTE InputKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
+BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
+                         or a WM_KEYUP message */
 
 /* Storage for the USER-maintained mouse positions */
 static DWORD PosX, PosY;
@@ -152,14 +154,21 @@ static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
                                 /* it's '1' under windows, when a dialog box appears
                                  * and you press one of the underlined keys - DF*/
 
+    /* note that there is a test for all this */
     if (ki->dwFlags & KEYEVENTF_KEYUP )
     {
-        BOOL sysKey = (InputKeyStateTable[VK_MENU] & 0x80) &&
-                      !(InputKeyStateTable[VK_CONTROL] & 0x80);
+        message = WM_KEYUP;
+        if( (InputKeyStateTable[VK_MENU] & 0x80) && (
+                 (ki->wVk == VK_MENU) || (ki->wVk == VK_CONTROL) ||
+                 !(InputKeyStateTable[VK_CONTROL] & 0x80))) {
+            if(  TrackSysKey == VK_MENU || /* <ALT>-down/<ALT>-up sequence */
+                    (ki->wVk != VK_MENU)) /* <ALT>-down...<something else>-up */
+                message = WM_SYSKEYUP;
+                TrackSysKey = 0; 
+        }
         InputKeyStateTable[ki->wVk] &= ~0x80;
         keylp.lp1.previous = 1;
         keylp.lp1.transition = 1;
-        message = sysKey ? WM_SYSKEYUP : WM_KEYUP;
     }
     else
     {
@@ -169,8 +178,12 @@ static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
         InputKeyStateTable[ki->wVk] |= 0x80;
         AsyncKeyStateTable[ki->wVk] |= 0x80;
 
-        message = (InputKeyStateTable[VK_MENU] & 0x80) && !(InputKeyStateTable[VK_CONTROL] & 0x80)
-              ? WM_SYSKEYDOWN : WM_KEYDOWN;
+        message = WM_KEYDOWN;
+        if( (InputKeyStateTable[VK_MENU] & 0x80) &&
+                !(InputKeyStateTable[VK_CONTROL] & 0x80)) {
+            message = WM_SYSKEYDOWN;
+            TrackSysKey = ki->wVk;
+        }
     }
 
     keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
