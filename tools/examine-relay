@@ -44,7 +44,8 @@ while (<IN>) {
 
 #	print "have call func=$func <$_>\n";
 	if (/ ret=(........)$/ ||
-	    / ret=(....:....) (ds=....)$/) {
+	    / ret=(....:....) (ds=....)$/ ||
+	    / ret=(........) fs=....$/) {
 	    my $retaddr = $1;
 	    my $segreg = $2;
 
@@ -56,7 +57,7 @@ while (<IN>) {
 	    # Assume a line got cut by a line feed in a string.
 	    $_ .= scalar (<IN>);
 	    if (!$newlineerror) {
-		print "Err[$tid] string probably cut by newline.\n";
+		print "Err[$tid] string probably cut by newline at line $. .\n";
 		$newlineerror = 1;
 	    }	    
 	    # print "[$_]";
@@ -66,6 +67,7 @@ while (<IN>) {
 
     if (/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........)$/ ||
 	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(....:....) (ds=....)$/ ||
+	 /^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........) fs=....$/ ||
         /^([0-9a-f]+):RET  ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\(.*\) .* ret=(........)$/) {
 	my $tid = $1;
 	my $func = $2;
