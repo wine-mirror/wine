@@ -45,6 +45,7 @@ my %options_long = (
 
     "spec-files" => { default => 0, parent => "global", description => "spec files extraction" },
     "stub-statistics" => { default => 1, parent => "global", description => "stub statistics" },
+    "pseudo-stub-statistics" => { default => 1, parent => "global", description => "pseudo stub statistics" },
     "winetest" => { default => 1, parent => "global", description => "winetest extraction" },
 );
 

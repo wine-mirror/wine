@@ -74,12 +74,13 @@ sub new {
 
     $self->parse_api_file("$$name.api");
 
-    foreach my $forward_name (sort(keys(%$function_forward))) {
-	$$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
-	(my $from_module, my $to_module, my $external_name) = ($1, $2, $3);
-	my $internal_name = $$function_internal_name{$external_name};
-	if(defined($internal_name)) {
-	    $$function_module{$internal_name} .= " & $from_module";
+    foreach my $module (sort(keys(%$function_forward))) {
+	foreach my $external_name (sort(keys(%{$$function_forward{$module}}))) {
+	    (my $forward_module, my $forward_external_name) = @{$$function_forward{$module}{$external_name}};
+	    my $forward_internal_name = $$function_internal_name{$forward_external_name};
+	    if(defined($forward_internal_name)) {
+		$$function_module{$forward_internal_name} .= " & $module";
+	    }
 	}
     }
 
@@ -212,12 +213,12 @@ sub parse_spec_file {
     my $function_external_calling_convention = \%{$self->{FUNCTION_EXTERNAL_CALLING_CONVENTION}};
     my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
-    my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_forward = \%{$self->{FUNCTION_FORWARD}};
     my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
     my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
     my $modules = \%{$self->{MODULES}};
     my $module_files = \%{$self->{MODULE_FILES}};
+    my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
     my $file = shift;
     $file =~ s%^\./%%;
@@ -229,6 +230,7 @@ sub parse_spec_file {
 
     $module = $file;
     $module =~ s/^.*?([^\/]*)\.spec$/$1/;
+
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";
@@ -265,6 +267,11 @@ sub parse_spec_file {
 		$arguments .= "ptr";
 	    }
 
+            if($external_name ne "@") {
+                $$module_external_calling_convention{$module}{$external_name} = $calling_convention;
+            } else {
+                $$module_external_calling_convention{$module}{"\@$ordinal"} = $calling_convention;
+            }
 	    if(!$$function_internal_name{$external_name}) {
 		$$function_internal_name{$external_name} = $internal_name;
 	    } else {
@@ -338,7 +345,11 @@ sub parse_spec_file {
 
 	    my $internal_name = $external_name;
 
-	    $$function_stub{$module}{$external_name} = 1;
+            if ($external_name ne "@") {
+                $$module_external_calling_convention{$module}{$external_name} = "stub";
+            } else {
+                $$module_external_calling_convention{$module}{"\@$ordinal"} = "stub";
+            }
 	    if(!$$function_internal_name{$external_name}) {
 		$$function_internal_name{$external_name} = $internal_name;
 	    } else {
@@ -376,8 +387,24 @@ sub parse_spec_file {
 	    my $forward_module = lc($3);
 	    my $forward_name = $4;
 
-	    $$function_forward{$external_name} = "$module:$forward_module.$forward_name";
-	} elsif(/^(\d+|@)\s+(equate|extern|variable)/) {
+            if ($external_name ne "@") {
+                $$module_external_calling_convention{$module}{$external_name} = "forward";
+            } else {
+                $$module_external_calling_convention{$module}{"\@$ordinal"} = "forward";
+            }
+	    $$function_forward{$module}{$external_name} = [$forward_module, $forward_name];
+	} elsif(/^(\d+|@)\s+extern\s+(\S+)\s+(\S+)$/) {
+	    $ordinal = $1;
+
+	    my $external_name = $2;
+	    my $internal_name = $3;
+
+            if ($external_name ne "@") {
+                $$module_external_calling_convention{$module}{$external_name} = "extern";
+            } else {
+                $$module_external_calling_convention{$module}{"\@$ordinal"} = "extern";
+            }
+	} elsif(/^(\d+|@)\s+(equate|variable)/) {
 	    # ignore
 	} else {
 	    my $next_line = <IN>;
@@ -638,20 +665,20 @@ sub all_internal_functions_in_module {
 
 sub all_external_functions {
     my $self = shift;
-    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+    my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
 
-    return sort(keys(%$function_internal_name));
+    return sort(keys(%$function_external_name));
 }
 
 sub all_external_functions_in_module {
     my $self = shift;
-    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+    my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
     my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
 
     my $module = shift;
 
     my @names;
-    foreach my $name (keys(%$function_internal_name)) {
+    foreach my $name (keys(%$function_external_name)) {
 	if($$function_external_module{$name} eq $module) {
 	    push @names, $name;
 	}
@@ -660,26 +687,35 @@ sub all_external_functions_in_module {
     return sort(@names);
 }
 
-sub all_functions_stub {
+sub all_functions_in_module {
     my $self = shift;
-    my $function_stub = \%{$self->{FUNCTION_STUB}};
-    my $modules = \%{$self->{MODULES}};
-
-    my @stubs = ();
-    foreach my $module (keys(%$modules)) {
-	push @stubs, keys(%{$$function_stub{$module}});
-    }
-    return sort(@stubs);
-}
-
-sub all_functions_stub_in_module {
-    my $self = shift;
-    my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
     my $module = shift;
 
-    return sort(keys(%{$$function_stub{$module}}));
+    return sort(keys(%{$$module_external_calling_convention{$module}}));
 }
+
+sub all_broken_forwards {
+    my $self = shift;
+    my $function_forward = \%{$self->{FUNCTION_FORWARD}};
+
+    my @broken_forwards = ();
+    foreach my $module (sort(keys(%$function_forward))) {
+	foreach my $external_name (sort(keys(%{$$function_forward{$module}}))) {
+	    (my $forward_module, my $forward_external_name) = @{$$function_forward{$module}{$external_name}};
+
+	    my $forward_external_calling_convention =
+		$self->function_external_calling_convention_in_module($forward_module, $forward_external_name);
+
+	    if(!defined($forward_external_calling_convention)) {
+		push @broken_forwards, [$module, $external_name, $forward_module, $forward_external_name];
+	    }
+	}
+    }
+    return @broken_forwards;
+}
+
 
 sub function_internal_ordinal {
     my $self = shift;
@@ -717,6 +753,16 @@ sub function_external_calling_convention {
     return $$function_external_calling_convention{$name};
 }
 
+sub function_external_calling_convention_in_module {
+    my $self = shift;
+    my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
+
+    my $module = shift;
+    my $name = shift;
+
+    return $$module_external_calling_convention{$module}{$name};
+}
+
 sub function_internal_name {
     my $self = shift;
     my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
@@ -733,6 +779,23 @@ sub function_external_name {
     my $name = shift;
 
     return $$function_external_name{$name};
+}
+
+sub function_forward_final_destination {
+    my $self = shift;
+
+    my $function_forward = \%{$self->{FUNCTION_FORWARD}};
+
+    my $module = shift;
+    my $name = shift;
+
+    my $forward_module = $module;
+    my $forward_name = $name;
+    while(defined(my $forward = $$function_forward{$forward_module}{$forward_name})) {
+	($forward_module, $forward_name) = @$forward;
+    }
+
+    return ($forward_module, $forward_name);
 }
 
 sub is_function {
@@ -807,14 +870,14 @@ sub function_external_module {
 
 sub is_function_stub {
     my $self = shift;
-    my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
     my $modules = \%{$self->{MODULES}};
 
     my $module = shift;
     my $name = shift;
 
     foreach my $module (keys(%$modules)) {
-	if($$function_stub{$module}{$name}) {
+	if($$module_external_calling_convention{$module}{$name} eq "stub") {
 	    return 1;
 	}
     }
@@ -824,12 +887,15 @@ sub is_function_stub {
 
 sub is_function_stub_in_module {
     my $self = shift;
-    my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
     my $module = shift;
     my $name = shift;
 
-    return $$function_stub{$module}{$name};
+    if(!defined($$module_external_calling_convention{$module}{$name})) {
+	return 0;
+    }
+    return $$module_external_calling_convention{$module}{$name} eq "stub";
 }
 
 ########################################################################
