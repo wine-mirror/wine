@@ -1,7 +1,7 @@
 name	shell32
 type	win32
 init	Shell32LibMain
-rsrc	shell32
+rsrc	shres
 
 import	user32.dll
 import	comctl32.dll

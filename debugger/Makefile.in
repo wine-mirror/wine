@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winedbg
-WRCEXTRA  = -A -p $*
 
 C_SRCS = \
 	break.c \

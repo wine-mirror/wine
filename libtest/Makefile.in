@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
-WRCEXTRA  = -s -p $*
 
 SPEC_SRCS = \
 	expand.spec \

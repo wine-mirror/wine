@@ -4,7 +4,6 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resources
-WRCEXTRA  = -s -puser32
 
 RC_SRCS = \
 	user32.rc

@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = riched32
 SOVERSION = 1.0
-WRCEXTRA  = -s -p$(MODULE)
 
 SPEC_SRCS = riched32.spec
 

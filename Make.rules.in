@@ -57,7 +57,7 @@ WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
-WRCFLAGS  = -c
+WRCFLAGS  = -c -s -p $*
 DLLDIR    = $(TOPOBJDIR)/dlls
 @SET_MAKE@
 
