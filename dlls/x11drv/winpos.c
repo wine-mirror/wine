@@ -169,6 +169,206 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
 
 
 /***********************************************************************
+ *		get_covered_region
+ *
+ * Compute the portion of 'rgn' that is covered by non-clipped siblings.
+ * This is the area that is covered from X point of view, but may still need
+ * to be exposed.
+ * 'rgn' must be relative to the client area of the parent of 'win'.
+ */
+static int get_covered_region( WND *win, HRGN rgn )
+{
+    HRGN tmp;
+    int ret;
+    WND *ptr = win;
+    int xoffset = 0, yoffset = 0;
+
+    tmp = CreateRectRgn( 0, 0, 0, 0 );
+    CombineRgn( tmp, rgn, 0, RGN_COPY );
+
+    /* to make things easier we actually build the uncovered
+     * area by removing all siblings and then we subtract that
+     * from the total region to get the covered area */
+    for (;;)
+    {
+        if (!(ptr->dwStyle & WS_CLIPSIBLINGS))
+        {
+            if (clip_children( ptr->parent, ptr, tmp, FALSE ) == NULLREGION) break;
+        }
+        if (!(ptr = ptr->parent)) break;
+        OffsetRgn( tmp, ptr->rectClient.left, ptr->rectClient.top );
+        xoffset += ptr->rectClient.left;
+        yoffset += ptr->rectClient.top;
+    }
+    /* make it relative to the target window again */
+    OffsetRgn( tmp, -xoffset, -yoffset );
+
+    /* now subtract the computed region from the original one */
+    ret = CombineRgn( rgn, rgn, tmp, RGN_DIFF );
+    DeleteObject( tmp );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		expose_window
+ *
+ * Expose a region of a given window.
+ */
+static void expose_window( WND *win, RECT *rect, HRGN rgn, int flags )
+{
+    WND *ptr, *top;
+    int xoffset = 0, yoffset = 0;
+
+    /* find the top most parent that doesn't clip children or siblings and
+     * invalidate the area on its parent, including all children */
+    top = NULL;
+    for (ptr = win; ptr && ptr->parent; ptr = ptr->parent)
+    {
+        if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
+        if (!(ptr->parent->dwStyle & WS_CLIPCHILDREN)) top = ptr;
+    }
+
+    if (top)
+    {
+        if (top->parent && top->parent->hwndSelf != GetDesktopWindow()) top = top->parent;
+        flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
+        flags |= RDW_ALLCHILDREN;
+    }
+    else top = win;
+
+    /* make coords relative to top */
+    for (ptr = win; ptr != top; ptr = ptr->parent)
+    {
+        xoffset += ptr->rectClient.left;
+        yoffset += ptr->rectClient.top;
+    }
+
+    if (rect)
+    {
+        OffsetRect( rect, xoffset, yoffset );
+        RedrawWindow( top->hwndSelf, rect, 0, flags );
+    }
+    else
+    {
+        OffsetRgn( rgn, xoffset, yoffset );
+        RedrawWindow( top->hwndSelf, NULL, rgn, flags );
+    }
+}
+
+
+/***********************************************************************
+ *		expose_covered_parent_area
+ *
+ * Expose the parent area that has been uncovered by moving/hiding a
+ * given window, but that is still covered by other siblings (the area
+ * not covered by siblings will be exposed automatically by X).
+ */
+static void expose_covered_parent_area( WND *win, const RECT *old_rect )
+{
+    int ret = SIMPLEREGION;
+    HRGN hrgn = CreateRectRgnIndirect( old_rect );
+
+    if (win->dwStyle & WS_VISIBLE)
+    {
+        HRGN tmp = CreateRectRgnIndirect( &win->rectWindow );
+        ret = CombineRgn( hrgn, hrgn, tmp, RGN_DIFF );
+        DeleteObject( tmp );
+    }
+
+    if (ret != NULLREGION)
+    {
+        if (get_covered_region( win, hrgn ) != NULLREGION)
+            expose_window( win->parent, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+    }
+    DeleteObject( hrgn );
+}
+
+
+/***********************************************************************
+ *		expose_covered_window_area
+ *
+ * Expose the area of a window that is covered by other siblings.
+ */
+static void expose_covered_window_area( WND *win, const RECT *old_client_rect, BOOL frame )
+{
+    HRGN hrgn;
+    int ret = SIMPLEREGION;
+
+    if (frame)
+        hrgn = CreateRectRgn( win->rectWindow.left - win->rectClient.left,
+                              win->rectWindow.top - win->rectClient.top,
+                              win->rectWindow.right - win->rectWindow.left,
+                              win->rectWindow.bottom - win->rectWindow.top );
+    else
+        hrgn = CreateRectRgn( 0, 0,
+                              win->rectClient.right - win->rectClient.left,
+                              win->rectClient.bottom - win->rectClient.top );
+
+    /* if the client rect didn't move we don't need to repaint it all */
+    if (old_client_rect->left == win->rectClient.left &&
+        old_client_rect->top == win->rectClient.top)
+    {
+        RECT rc;
+
+        if (IntersectRect( &rc, old_client_rect, &win->rectClient ))
+        {
+            HRGN tmp;
+            /* subtract the unchanged client area from the region to expose */
+            OffsetRect( &rc, -win->rectClient.left, -win->rectClient.top );
+            if ((tmp = CreateRectRgnIndirect( &rc )))
+            {
+                ret = CombineRgn( hrgn, hrgn, tmp, RGN_DIFF );
+                DeleteObject( tmp );
+            }
+        }
+    }
+
+    if (ret != NULLREGION)
+    {
+        if (get_covered_region( win, hrgn ) != NULLREGION)
+            expose_window( win, NULL, hrgn,
+                           RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+    }
+
+    DeleteObject( hrgn );
+}
+
+
+/***********************************************************************
+ *           X11DRV_Expose
+ */
+void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
+{
+    RECT rect;
+    struct x11drv_win_data *data;
+    int flags = RDW_INVALIDATE | RDW_ERASE;
+    WND *win;
+
+    TRACE( "win %x (%lx) %d,%d %dx%d\n",
+           hwnd, event->window, event->x, event->y, event->width, event->height );
+
+    rect.left   = event->x;
+    rect.top    = event->y;
+    rect.right  = rect.left + event->width;
+    rect.bottom = rect.top + event->height;
+
+    if (!(win = WIN_FindWndPtr(hwnd))) return;
+    data = win->pDriverData;
+
+    if (event->window != data->client_window)  /* whole window or icon window */
+    {
+        flags |= RDW_FRAME;
+        /* make position relative to client area instead of window */
+        OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
+    }
+
+    expose_window( win, &rect, 0, flags );
+    WIN_ReleaseWndPtr( win );
+}
+
+
+/***********************************************************************
  *		X11DRV_GetDC (X11DRV.@)
  *
  * Set the drawable, origin and dimensions for the DC associated to
@@ -572,6 +772,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         {
             /* if we moved the client area, repaint the whole non-client window */
             XClearArea( display, get_whole_window(wndPtr), 0, 0, 0, 0, True );
+            winpos->flags |= SWP_FRAMECHANGED;
         }
         if (winpos->flags & SWP_SHOWWINDOW)
         {
@@ -592,6 +793,14 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         XFlush( display );  /* FIXME: should not be necessary */
         wine_tsx11_unlock();
     }
+
+    /* manually expose the areas that X won't expose because they are still covered by something */
+
+    if (!(winpos->flags & SWP_SHOWWINDOW))
+        expose_covered_parent_area( wndPtr, &oldWindowRect );
+
+    if (wndPtr->dwStyle & WS_VISIBLE)
+        expose_covered_window_area( wndPtr, &oldClientRect, winpos->flags & SWP_FRAMECHANGED );
 
     WIN_ReleaseWndPtr(wndPtr);
 

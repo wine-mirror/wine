@@ -96,13 +96,13 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event );
 static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event );
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event );
-static void EVENT_Expose( HWND hWnd, XExposeEvent *event );
 static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
 static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 static void EVENT_MappingNotify( XMappingEvent *event );
 
+extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
 extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
 extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
 extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
@@ -319,7 +319,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     case Expose:
-      EVENT_Expose( hWnd, &event->xexpose );
+      X11DRV_Expose( hWnd, &event->xexpose );
       break;
 
     case ConfigureNotify:
@@ -385,50 +385,6 @@ WORD X11DRV_EVENT_XStateToKeyState( int state )
   if (state & ShiftMask)   kstate |= MK_SHIFT;
   if (state & ControlMask) kstate |= MK_CONTROL;
   return kstate;
-}
-
-
-/***********************************************************************
- *           EVENT_Expose
- */
-static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
-{
-    RECT rect;
-    struct x11drv_win_data *data;
-    int flags = RDW_INVALIDATE | RDW_ERASE;
-    WND *win;
-
-    TRACE( "win %x (%lx) %d,%d %dx%d\n",
-           hwnd, event->window, event->x, event->y, event->width, event->height );
-
-    rect.left   = event->x;
-    rect.top    = event->y;
-    rect.right  = rect.left + event->width;
-    rect.bottom = rect.top + event->height;
-
-    if (!(win = WIN_FindWndPtr(hwnd))) return;
-    data = win->pDriverData;
-
-    if (event->window != data->client_window)  /* whole window or icon window */
-    {
-        flags |= RDW_FRAME;
-        /* make position relative to client area instead of window */
-        OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
-    }
-
-    /* find the top level parent that doesn't clip children and invalidate the area */
-    /* on the parent (which will invalidate all the children too) */
-    while (win->parent && win->parent->hwndSelf != GetDesktopWindow() &&
-           !(win->parent->dwStyle & WS_CLIPCHILDREN))
-    {
-        OffsetRect( &rect, win->rectClient.left, win->rectClient.top );
-        WIN_UpdateWndPtr( &win, win->parent );
-        flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
-        flags |= RDW_ALLCHILDREN;  /* force invalidating all children of siblings */
-    }
-    hwnd = win->hwndSelf;
-    WIN_ReleaseWndPtr(win);
-    RedrawWindow( hwnd, &rect, 0, flags );
 }
 
 
