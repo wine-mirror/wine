@@ -73,11 +73,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(listview);
 
-typedef struct tagCOLUMNCACHE
+typedef struct tagCOLUMN_INFO
 {
-  RECT rc;
-  UINT align;
-} COLUMNCACHE, *LPCOLUMNCACHE;
+  RECT rcHeader;	/* tracks the header's rectangle */
+  UINT align;		/* one of DT_{LEFT,CENTER,RIGHT} */
+  BOOL hasImage;        /* on/off switch for column images */
+} COLUMN_INFO;
 
 typedef struct tagITEMHDR
 {
@@ -107,7 +108,7 @@ typedef struct tagRANGE
 
 typedef struct tagRANGES
 {
-    HDPA hdpa;
+  HDPA hdpa;
 } *RANGES;
 
 typedef struct tagITERATOR
@@ -136,7 +137,6 @@ typedef struct tagLISTVIEW_INFO
   INT nItemWidth;
   RANGES selectionRanges;
   INT nSelectionMark;
-  BOOL bRemovingAllSelections;
   INT nHotItem;
   SHORT notifyFormat;
   RECT rcList;                 /* This rectangle is really the window
@@ -163,10 +163,11 @@ typedef struct tagLISTVIEW_INFO
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
-  INT nItemCount;
-  HDPA hdpaItems;
+  INT nItemCount;		/* the number of items in the list */
+  HDPA hdpaItems;               /* array ITEM_INFO pointers */
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
+  HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
@@ -1071,7 +1072,7 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
     RECT rcBox; \
     if (LISTVIEW_GetOrigin(infoPtr, &Origin) && \
 	LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position) && \
-        Header_GetItemRect(infoPtr->hwndHeader, nSubItem, &rcBox)) { \
+	LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox)) { \
 	OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y); \
 	LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
     }\
@@ -1080,6 +1081,17 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 #define LISTVIEW_InvalidateList(infoPtr)\
     LISTVIEW_InvalidateRect(infoPtr, NULL)
 
+
+static inline BOOL LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
+{
+    COLUMN_INFO *columnInfo;
+    
+    columnInfo = (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
+    if (!columnInfo) return FALSE;
+    *lprc = columnInfo->rcHeader;
+    return TRUE;
+}
+	
 static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 {
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
@@ -1636,7 +1648,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     /************************************************************/
     if (lpLVItem->iSubItem)
     {
-        if (!Header_GetItemRect(infoPtr->hwndHeader, lpLVItem->iSubItem, &Box)) return FALSE;
+        if (!LISTVIEW_GetHeaderRect(infoPtr, lpLVItem->iSubItem, &Box)) return FALSE;
     }
     else
     {
@@ -1728,7 +1740,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	Label.right = Box.right;
 	if (uView == LVS_REPORT)
 	{
-	    if (lpLVItem->iSubItem == 0 && !Header_GetItemRect(infoPtr->hwndHeader, 0, &Label)) return FALSE;
+	    if (lpLVItem->iSubItem == 0 && !LISTVIEW_GetHeaderRect(infoPtr, 0, &Label)) return FALSE;
 	    Label.right -= REPORT_MARGINX;
 	}
 
@@ -2069,13 +2081,11 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr, INT nItem)
 	nItemWidth = infoPtr->iconSpacing.cx;
     else if (uView == LVS_REPORT)
     {
-	INT nHeaderItemCount;
 	RECT rcHeaderItem;
 	
 	/* calculate width of header */
-	nHeaderItemCount = Header_GetItemCount(infoPtr->hwndHeader);
-	for (i = 0; i < nHeaderItemCount; i++)
-	    if (Header_GetItemRect(infoPtr->hwndHeader, i, &rcHeaderItem))
+	for (i = 0; i < infoPtr->hdpaColumns->nItemCount; i++)
+	    if (LISTVIEW_GetHeaderRect(infoPtr, i, &rcHeaderItem))
 		nItemWidth += (rcHeaderItem.right - rcHeaderItem.left);
     }
     else
@@ -3027,8 +3037,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, B
     if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
     
     /* set subitem only if column is present */
-    if (Header_GetItemCount(infoPtr->hwndHeader) <= lpLVItem->iSubItem) 
-	return FALSE;
+    if (lpLVItem->iSubItem >= infoPtr->hdpaColumns->nItemCount) return FALSE;
    
     /* First do some sanity checks */
     if (lpLVItem->mask & ~(LVIF_TEXT | LVIF_IMAGE)) return FALSE;
@@ -3431,9 +3440,8 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
  */
 static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-    INT rgntype, nColumnCount, nFirstCol, nLastCol, nCol;
-    RECT rcClip;
-    COLUMNCACHE *lpCols;
+    INT rgntype, nFirstCol, nLastCol, nCol;
+    RECT rcClip, rcItem;
     POINT Origin, Position;
     ITERATOR i;
 
@@ -3443,25 +3451,16 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     rgntype = GetClipBox(hdc, &rcClip);
     if (rgntype == NULLREGION) return;
     
-    /* cache column info */
-    nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
-    lpCols = COMCTL32_Alloc(nColumnCount * sizeof(COLUMNCACHE));
-    if (!lpCols) return;
-    for (nCol = 0; nCol < nColumnCount; nCol++) 
-    {
-    	Header_GetItemRect(infoPtr->hwndHeader, nCol, &lpCols[nCol].rc);
-	TRACE("lpCols[%d].rc=%s\n", nCol, debugrect(&lpCols[nCol].rc));
-    }
-    
     /* Get scroll info once before loop */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
-    /* we now narrow the columns as well */
-    nLastCol = nColumnCount - 1;
-    for(nFirstCol = 0; nFirstCol < nColumnCount; nFirstCol++)
-	if (lpCols[nFirstCol].rc.right + Origin.x >= rcClip.left) break;
-    for(nLastCol = nColumnCount - 1; nLastCol >= 0; nLastCol--)
-	if (lpCols[nLastCol].rc.left + Origin.x < rcClip.right) break;
+    /* narrow down the columns we need to paint */
+    for(nFirstCol = 0; nFirstCol < infoPtr->hdpaColumns->nItemCount; nFirstCol++)
+	if (LISTVIEW_GetHeaderRect(infoPtr, nFirstCol, &rcItem) &&
+	    rcItem.right + Origin.x >= rcClip.left) break;
+    for(nLastCol = infoPtr->hdpaColumns->nItemCount - 1; nLastCol >= 0; nLastCol--)
+	if (LISTVIEW_GetHeaderRect(infoPtr, nLastCol, &rcItem) &&
+	    rcItem.left + Origin.x < rcClip.right) break;
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
@@ -3479,13 +3478,11 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    Position.x += Origin.x;
 	    Position.y += Origin.y;
 
-	    if (rgntype == COMPLEXREGION)
+	    if (rgntype == COMPLEXREGION && LISTVIEW_GetHeaderRect(infoPtr, nCol, &rcItem))
 	    {
-	        RECT rcItem;
-	        rcItem.left = Position.x + lpCols[nCol].rc.left;
-	        rcItem.right = rcItem.left + (lpCols[nCol].rc.right - lpCols[nCol].rc.left);
-	        rcItem.top = Position.y;
-	        rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+		rcItem.top = 0;
+	        rcItem.bottom = infoPtr->nItemHeight;
+		OffsetRect(&rcItem, Position.x, Position.y);
 		if (!RectVisible(hdc, &rcItem)) continue;
 	    }
 
@@ -3493,9 +3490,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	}
     }
     iterator_destroy(&i);
-
-    /* cleanup the mess */
-    COMCTL32_Free(lpCols);
 }
 
 /***
@@ -3835,6 +3829,57 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
 /***
  * DESCRIPTION:
+ * Scrolls, and updates the columns, when a column is changing width.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nColumn : column to scroll
+ * [I] dx : amount of scroll, in pixels
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
+{
+    COLUMN_INFO *lpColumnInfo;
+    RECT rcOld, rcCol;
+    INT nCol;
+    
+    if ((lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn)))
+	rcCol = lpColumnInfo->rcHeader;
+    
+    /* ajust the other columns */
+    for (nCol = nColumn; (lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nCol)); nCol++)
+    {
+        lpColumnInfo->rcHeader.left += dx;
+        lpColumnInfo->rcHeader.right += dx;
+    }
+
+    /* do not update screen if not in report mode */
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return TRUE;
+    
+    /* if we have a focus, must first erase the focus rect */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
+    
+    /* Need to reset the item width when inserting a new column */
+    infoPtr->nItemWidth += dx;
+
+    LISTVIEW_UpdateScroll(infoPtr);
+
+    /* scroll to cover the deleted column, and invalidate for redraw */
+    rcOld = infoPtr->rcList;
+    rcOld.left = rcCol.left;
+    ScrollWindowEx(infoPtr->hwndSelf, dx, 0, &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
+    
+    /* we can restore focus now */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
+
+    return TRUE;
+}
+
+/***
+ * DESCRIPTION:
  * Removes a column from the listview control.
  *
  * PARAMETER(S):
@@ -3847,21 +3892,20 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
  */
 static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    RECT rcCol, rcOld;
+    RECT rcCol;
     
     TRACE("nColumn=%d\n", nColumn);
 
     if (nColumn <= 0) return FALSE;
 
-    if (uView == LVS_REPORT)
-    {
-        if (!Header_GetItemRect(infoPtr->hwndHeader, nColumn, &rcCol))
-	    return FALSE;
+    if (!LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol))
+	return FALSE;
     
-    	if (!Header_DeleteItem(infoPtr->hwndHeader, nColumn))
-	    return FALSE;
-    }
+    if (!Header_DeleteItem(infoPtr->hwndHeader, nColumn))
+	return FALSE;
+
+    COMCTL32_Free(DPA_GetPtr(infoPtr->hdpaColumns, nColumn));
+    DPA_DeletePtr(infoPtr->hdpaColumns, nColumn);
   
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {
@@ -3906,26 +3950,8 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	}
     }
 
-    /* we need to worry about display issues in report mode only */
-    if (uView != LVS_REPORT) return TRUE;
-
-    /* if we have a focus, must first erase the focus rect */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
-    
-    /* Need to reset the item width when deleting a column */
-    infoPtr->nItemWidth -= rcCol.right - rcCol.left;
-
-    /* update scrollbar(s) */
-    LISTVIEW_UpdateScroll(infoPtr);
-
-    /* scroll to cover the deleted column, and invalidate for redraw */
-    rcOld = infoPtr->rcList;
-    rcOld.left = rcCol.left;
-    ScrollWindowEx(infoPtr->hwndSelf, -(rcCol.right - rcCol.left), 0,
-		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
-
-    /* we can restore focus now */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
+    /* update the other column info */
+    LISTVIEW_ScrollColumns(infoPtr, nColumn, -(rcCol.right - rcCol.left));
 
     return TRUE;
 }
@@ -4520,7 +4546,7 @@ static LRESULT LISTVIEW_GetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
 static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
     INT nColumnWidth = 0;
-    HDITEMW hdi;
+    RECT rcHeader;
 
     TRACE("nColumn=%d\n", nColumn);
 
@@ -4531,9 +4557,8 @@ static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 	nColumnWidth = infoPtr->nItemWidth;
 	break;
     case LVS_REPORT:
-	hdi.mask = HDI_WIDTH;
-	if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi))
-	    nColumnWidth = hdi.cxy;
+	if (LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcHeader))
+	    nColumnWidth = rcHeader.right - rcHeader.left;
 	break;
     }
 
@@ -5545,9 +5570,10 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     TRACE("lpht->flags=0x%x\n", lpht->flags); 
     if (uView == LVS_REPORT && lpht->iItem != -1 && subitem)
     {
-  	INT j, nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
+  	INT j;
+
         rcBounds.right = rcBounds.left;
-        for (j = 0; j < nColumnCount; j++)
+        for (j = 0; j < infoPtr->hdpaColumns->nItemCount; j++)
         {
 	    rcBounds.left = rcBounds.right;
 	    rcBounds.right += LISTVIEW_GetColumnWidth(infoPtr, j);
@@ -5584,7 +5610,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
                                       LPLVCOLUMNW lpColumn, BOOL isW)
 {
-    RECT rcOld, rcCol;
+    COLUMN_INFO *lpColumnInfo = NULL;
+    RECT rcCol;
     INT nNewColumn;
     HDITEMW hdi;
 
@@ -5614,9 +5641,6 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
             hdi.fmt |= HDF_IMAGE;
             hdi.iImage = I_IMAGECALLBACK;
         }
-
-        if (lpColumn->fmt & LVCFMT_IMAGE)
-	   ; /* FIXME: enable images for *(sub)items* this column */
     }
 
     if (lpColumn->mask & LVCF_WIDTH)
@@ -5625,17 +5649,12 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
         if(lpColumn->cx == LVSCW_AUTOSIZE_USEHEADER)
         {
             /* make it fill the remainder of the controls width */
-            HDITEMW hdit;
             RECT rcHeader;
             INT item_index;
 
-            /* get the width of every item except the current one */
-            hdit.mask = HDI_WIDTH;
-            hdi.cxy = 0;
-
             for(item_index = 0; item_index < (nColumn - 1); item_index++)
-            	if (Header_GetItemW(infoPtr->hwndHeader, item_index, (LPARAM)(&hdit)))
-		    hdi.cxy += hdit.cxy;
+            	if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
+		    hdi.cxy += rcHeader.right - rcHeader.left;
 
             /* retrieve the layout of the header */
             GetClientRect(infoPtr->hwndSelf, &rcHeader);
@@ -5672,7 +5691,25 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 		              isW ? HDM_INSERTITEMW : HDM_INSERTITEMA,
                               (WPARAM)nColumn, (LPARAM)&hdi);
     if (nNewColumn == -1) return -1;
-    if (!Header_GetItemRect(infoPtr->hwndHeader, nNewColumn, &rcCol)) return -1;
+   
+    /* create our own column info */ 
+    if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
+    if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
+    if (!Header_GetItemRect(infoPtr->hwndHeader, nNewColumn, &rcCol)) goto fail;    
+    lpColumnInfo->rcHeader = rcCol;
+    if (lpColumn->mask & LVCF_FMT)
+    {
+        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT) lpColumnInfo->align = DT_LEFT;
+        else if (lpColumn->fmt & LVCFMT_RIGHT) lpColumnInfo->align = DT_RIGHT;
+        else if (lpColumn->fmt & LVCFMT_CENTER) lpColumnInfo->align = DT_CENTER;
+	
+        if (lpColumn->fmt & LVCFMT_IMAGE) lpColumnInfo->hasImage = TRUE;
+    } 
+    else
+    {
+	lpColumnInfo->align = DT_LEFT;
+	lpColumnInfo->hasImage = (nColumn == 0);
+    }
    
     /* now we have to actually adjust the data */
     if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)
@@ -5685,14 +5722,14 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	if (nNewColumn == 0)
 	{
 	    lpNewItems = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM *) * infoPtr->nItemCount);
-	    if (!lpNewItems) return -1;
+	    if (!lpNewItems) goto fail;
 	    for (i = 0; i < infoPtr->nItemCount; i++)
 		if (!(lpNewItems[i] = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM)))) break;
 	    if (i != infoPtr->nItemCount)
 	    {
 		for(; i >=0; i--) COMCTL32_Free(lpNewItems[i]);
 		COMCTL32_Free(lpNewItems);
-		return -1;
+		goto fail;
 	    }
 	}
 	
@@ -5724,27 +5761,19 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	COMCTL32_Free(lpNewItems);
     }
 
-    /* we don't have to worry abiut display issues in non-report mode */
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return nNewColumn;
-
-    /* if we have a focus, must first erase the focus rect */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
+    /* make space for the new column */
+    LISTVIEW_ScrollColumns(infoPtr, nNewColumn + 1, rcCol.right - rcCol.left);
     
-    /* Need to reset the item width when inserting a new column */
-    infoPtr->nItemWidth += rcCol.right - rcCol.left;
-
-    LISTVIEW_UpdateScroll(infoPtr);
-
-    /* scroll to cover the deleted column, and invalidate for redraw */
-    rcOld = infoPtr->rcList;
-    rcOld.left = rcCol.left;
-    ScrollWindowEx(infoPtr->hwndSelf, rcCol.right - rcCol.left, 0,
-		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
-    
-    /* we can restore focus now */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
-
     return nNewColumn;
+
+fail:
+    if (nNewColumn != -1) SendMessageW(infoPtr->hwndHeader, HDM_DELETEITEM, nNewColumn, 0);
+    if (lpColumnInfo)
+    {
+	DPA_DeletePtr(infoPtr->hdpaColumns, nNewColumn);
+	COMCTL32_Free(lpColumnInfo);
+    }
+    return -1;
 }
 
 /* LISTVIEW_InsertCompare:  callback routine for comparing pszText members of the LV_ITEMS
@@ -6020,8 +6049,7 @@ static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
   BOOL bResult = FALSE;
   HDITEMW hdi, hdiget;
 
-  if ((lpColumn != NULL) && (nColumn >= 0) &&
-      (nColumn < Header_GetItemCount(infoPtr->hwndHeader)))
+  if ((lpColumn != NULL) && (nColumn >= 0) && (nColumn < infoPtr->hdpaColumns->nItemCount))
   {
     /* initialize memory */
     ZeroMemory(&hdi, sizeof(hdi));
@@ -6207,17 +6235,16 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
     } /* autosize based on listview header width */
     else if(cx == LVSCW_AUTOSIZE_USEHEADER)
     {
-      header_item_count = Header_GetItemCount(infoPtr->hwndHeader);
+      header_item_count = infoPtr->hdpaColumns->nItemCount;
 
       /* if iCol is the last column make it fill the remainder of the controls width */
       if(iCol == (header_item_count - 1)) {
-        /* get the width of every item except the current one */
-        hdi.mask = HDI_WIDTH;
         cx = 0;
 
-        for(item_index = 0; item_index < (header_item_count - 1); item_index++) {
-          Header_GetItemW(infoPtr->hwndHeader, item_index, (LPARAM)(&hdi));
-          cx+=hdi.cxy;
+        for(item_index = 0; item_index < (header_item_count - 1); item_index++) 
+	{
+	  if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
+	    cx += rcHeader.right - rcHeader.left;
         }
 
         /* retrieve the layout of the header */
@@ -6940,11 +6967,12 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
     lpcs->hInstance, NULL);
 
   /* set header unicode format */
-  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT,(WPARAM)TRUE,(LPARAM)NULL);
+  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, (LPARAM)NULL);
 
   /* set header font */
-  SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont,
-               (LPARAM)TRUE);
+  SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);
+
+  infoPtr->hdpaColumns = DPA_Create(10);
 
   if (uView == LVS_ICON)
   {
@@ -7644,42 +7672,52 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnmh)
 {
-  TRACE("(nCtrlId=%d, lpnmh=%p)\n", nCtrlId, lpnmh);
+    UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
+    
+    TRACE("(nCtrlId=%d, lpnmh=%p)\n", nCtrlId, lpnmh);
 
-  if (lpnmh->hwndFrom == infoPtr->hwndHeader)
-  {
     /* handle notification from header control */
-    if (lpnmh->code == HDN_ENDTRACKW)
+    if (lpnmh->hwndFrom == infoPtr->hwndHeader)
     {
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-    }
-    else if(lpnmh->code ==  HDN_ITEMCLICKW || lpnmh->code ==  HDN_ITEMCLICKA)
-    {
-        /* Handle sorting by Header Column */
-        NMLISTVIEW nmlv;
+	LPNMHEADERW lphnm = (LPNMHEADERW)lpnmh;
+	
+	if (lpnmh->code == HDN_TRACKW || lpnmh->code == HDN_TRACKA)
+	{
+	    COLUMN_INFO *lpColumnInfo;
+	    RECT rcCol;
+	    INT dx;
 
-        ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-        nmlv.iItem = -1;
-        nmlv.iSubItem = ((LPNMHEADERW)lpnmh)->iItem;
-        notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
-    }
-    else if(lpnmh->code == NM_RELEASEDCAPTURE)
-    {
-      /* Idealy this should be done in HDN_ENDTRACKA
-       * but since SetItemBounds in Header.c is called after
-       * the notification is sent, it is neccessary to handle the
-       * update of the scroll bar here (Header.c works fine as it is,
-       * no need to disturb it)
-       */
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      LISTVIEW_UpdateScroll(infoPtr);
-      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
+	    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, lphnm->iItem))) return 0;
+	    if (!(lphnm->pitem->mask & HDI_WIDTH)) return 0;
+	    
+	    /* determine how much we change since the last know position */
+	    dx = lphnm->pitem->cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
+	    
+	    /* ajust the column being tracked */
+	    lpColumnInfo->rcHeader.right += dx;
+	    
+	    /* compute the rectangle for the tracked column */
+	    rcCol.left = lpColumnInfo->rcHeader.left;
+	    rcCol.top = infoPtr->rcList.top;
+	    rcCol.right = lpColumnInfo->rcHeader.right;
+	    rcCol.bottom = infoPtr->rcList.bottom;
+	   
+	    LISTVIEW_ScrollColumns(infoPtr, lphnm->iItem + 1, dx);
+	    if (uView == LVS_REPORT) LISTVIEW_InvalidateRect(infoPtr, &rcCol);
+	}
+	else if(lpnmh->code ==  HDN_ITEMCLICKW || lpnmh->code ==  HDN_ITEMCLICKA)
+	{
+            /* Handle sorting by Header Column */
+            NMLISTVIEW nmlv;
+
+            ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+            nmlv.iItem = -1;
+            nmlv.iSubItem = lphnm->iItem;
+            notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
+        }
     }
 
-  }
-
-  return 0;
+    return 0;
 }
 
 /***
