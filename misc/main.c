@@ -95,7 +95,8 @@ struct options Options =
     FALSE,          /* Managed windows */
     FALSE,          /* Perfect graphics */
     FALSE,          /* No DGA */
-    NULL            /* Alternate config file name */
+    NULL,           /* Alternate config file name */
+    NULL	    /* Console driver list */
 };
 
 
@@ -120,7 +121,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
     { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"}
+    { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
+    { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -132,6 +134,7 @@ static XrmOptionDescRec optionsTable[] =
   "Options:\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -config name    Specify config file to use\n" \
+  "    -console driver Select which driver(s) to use for the console\n" \
   "    -debug          Enter debugger before starting application\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -depth n        Change the depth to use for multiple-depth screens\n" \
@@ -877,6 +880,12 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
          Options.configFileName = xstrdup((char *)value.addr);
       if (MAIN_GetResource( db, ".nodga", &value))
 	 Options.noDGA = TRUE;
+      if (MAIN_GetResource( db, ".console", &value))
+         Options.consoleDrivers = xstrdup((char *)value.addr);
+      else
+         Options.consoleDrivers = CONSOLE_DEFAULT_DRIVER;
+
+      CONSOLE_Init(Options.consoleDrivers);
 }
 
 

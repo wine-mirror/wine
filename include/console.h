@@ -11,6 +11,8 @@
 
 #include "config.h"
 
+#define CONSOLE_DEFAULT_DRIVER "tty"
+
 typedef struct CONSOLE_DRIVER
 {
    void (*init)();
@@ -24,6 +26,10 @@ typedef struct CONSOLE_DRIVER
    /* Keyboard Functions */
    int (*checkForKeystroke)(char *, char *);
    void (*getKeystroke)(char *, char *);
+
+   /* Windowing Functions */
+   void (*resizeScreen)(int, int);
+   void (*notifyResizeScreen)(int, int); /* May be rethought later... */
 
    /* Accellerator Functions (Screen) */
    void (*clearWindow)(char, char, char, char, int, int);
@@ -46,7 +52,7 @@ typedef struct CONSOLE_DRIVER
 CONSOLE_device driver; /* Global driver struct */
 
 /* Generic defines */
-void CONSOLE_Init();
+void CONSOLE_Init(char *drivers);
 void CONSOLE_Close();
 void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute);
 void CONSOLE_MoveCursor(char row, char col);
@@ -62,6 +68,8 @@ void CONSOLE_SetRefresh(int);
 int  CONSOLE_GetRefresh();
 void CONSOLE_ClearScreen();
 char CONSOLE_GetCharacter();
+void CONSOLE_ResizeScreen();
+void CONSOLE_NotifyResizeScreen(); 
 
 /* Generic Defines */
 void GENERIC_Start();
