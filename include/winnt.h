@@ -24,6 +24,7 @@
 #define HEAP_CREATE_ENABLE_TRACING      0x00020000
 #define HEAP_WINE_SEGPTR                0x01000000  /* Not a Win32 flag */
 #define HEAP_WINE_CODESEG               0x02000000  /* Not a Win32 flag */
+#define HEAP_WINE_CODE16SEG             0x04000000  /* Not a Win32 flag */
 
 /* Processor feature flags.  */
 #define PF_FLOATING_POINT_PRECISION_ERRATA	0

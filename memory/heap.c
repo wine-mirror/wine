@@ -453,8 +453,9 @@ static BOOL32 HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     if (flags & HEAP_WINE_SEGPTR)
     {
         selector = SELECTOR_AllocBlock( address, totalSize,
-                     (flags & HEAP_WINE_CODESEG) ? SEGMENT_CODE : SEGMENT_DATA,
-                     (flags & HEAP_WINE_CODESEG) != 0, FALSE );
+                           (flags & (HEAP_WINE_CODESEG|HEAP_WINE_CODE16SEG))
+                            ? SEGMENT_CODE : SEGMENT_DATA,
+                           (flags & HEAP_WINE_CODESEG) != 0, FALSE );
         if (!selector)
         {
             WARN(heap, "Could not allocate selector\n" );
