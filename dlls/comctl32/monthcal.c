@@ -974,8 +974,8 @@ MONTHCAL_SetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->monthRange = infoPtr->maxDate.wMonth - infoPtr->minDate.wMonth;
 
   if(infoPtr->monthRange!=prev) {
-	COMCTL32_ReAlloc(infoPtr->monthdayState,
-		infoPtr->monthRange * sizeof(MONTHDAYSTATE));
+	infoPtr->monthdayState = COMCTL32_ReAlloc(infoPtr->monthdayState,
+                                                  infoPtr->monthRange * sizeof(MONTHDAYSTATE));
   }
 
   return 1;
@@ -1919,6 +1919,8 @@ MONTHCAL_Destroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
   MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(hwnd);
 
   /* free month calendar info data */
+  if(infoPtr->monthdayState)
+      COMCTL32_Free(infoPtr->monthdayState);
   COMCTL32_Free(infoPtr);
   SetWindowLongA(hwnd, 0, 0);
   return 0;
