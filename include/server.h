@@ -48,6 +48,7 @@ struct new_process_request
 {
     int          inherit;      /* inherit flag */
     int          inherit_all;  /* inherit all handles from parent */
+    int          create_flags; /* creation flags */
     int          start_flags;  /* flags from startup info */
     int          hstdin;       /* handle for stdin */
     int          hstdout;      /* handle for stdout */
@@ -732,6 +733,119 @@ struct next_process_reply
 };
 
 
+/* Wait for a debug event */
+struct wait_debug_event_request
+{
+    int          timeout;      /* timeout in ms */
+};
+struct wait_debug_event_reply
+{
+    int          code;         /* event code */
+    void*        pid;          /* process id */
+    void*        tid;          /* thread id */
+    /* followed by the event data (see below) */
+};
+
+
+/* Send a debug event */
+struct send_debug_event_request
+{
+    int          code;         /* event code */
+    /* followed by the event data (see below) */
+};
+struct send_debug_event_reply
+{
+    int          status;       /* event continuation status */
+};
+
+
+/* definitions of the event data depending on the event code */
+struct debug_event_exception
+{
+    int        code;           /* exception code */
+    int        flags;          /* exception flags */
+    void      *record;         /* exception record ptr */
+    void      *addr;           /* exception address */
+    int        nb_params;      /* exceptions parameters */
+    int        params[15];
+    int        first_chance;   /* first chance to handle it? */
+};
+struct debug_event_create_thread
+{
+    int         handle;     /* handle to the new thread */
+    void       *teb;        /* thread teb (in debugged process address space) */
+    void       *start;      /* thread startup routine */
+};
+struct debug_event_create_process
+{
+    int         file;       /* handle to the process exe file */
+    int         process;    /* handle to the new process */
+    int         thread;     /* handle to the new thread */
+    void       *base;       /* base of executable image */
+    int         dbg_offset; /* offset of debug info in file */
+    int         dbg_size;   /* size of debug info */
+    void       *teb;        /* thread teb (in debugged process address space) */
+    void       *start;      /* thread startup routine */
+    void       *name;       /* image name (optional) */
+    int         unicode;    /* is it Unicode? */
+};
+struct debug_event_exit
+{
+    int         exit_code;  /* thread or process exit code */
+};
+struct debug_event_load_dll
+{
+    int         handle;     /* file handle for the dll */
+    void       *base;       /* base address of the dll */
+    int         dbg_offset; /* offset of debug info in file */
+    int         dbg_size;   /* size of debug info */
+    void       *name;       /* image name (optional) */
+    int         unicode;    /* is it Unicode? */
+};
+struct debug_event_unload_dll
+{
+    void       *base;       /* base address of the dll */
+};
+struct debug_event_output_string
+{
+    void       *string;     /* string to display (in debugged process address space) */
+    int         unicode;    /* is it Unicode? */
+    int         length;     /* string length */
+};
+struct debug_event_rip_info
+{
+    int         error;      /* ??? */
+    int         type;       /* ??? */
+};
+union debug_event_data
+{
+    struct debug_event_exception      exception;
+    struct debug_event_create_thread  create_thread;
+    struct debug_event_create_process create_process;
+    struct debug_event_exit           exit;
+    struct debug_event_load_dll       load_dll;
+    struct debug_event_unload_dll     unload_dll;
+    struct debug_event_output_string  output_string;
+    struct debug_event_rip_info       rip_info;
+};
+
+
+/* Continue a debug event */
+struct continue_debug_event_request
+{
+    void*        pid;          /* process id to continue */
+    void*        tid;          /* thread id to continue */
+    int          status;       /* continuation status */
+};
+
+
+/* Start debugging an existing process */
+struct debug_process_request
+{
+    void*        pid;          /* id of the process to debug */
+};
+
+
 /* requests definitions */
 #include "server/request.h"
 
@@ -740,14 +854,13 @@ struct next_process_reply
 #ifndef __WINE_SERVER__
 
 /* client communication functions */
+extern void CLIENT_ProtocolError( const char *err, ... );
 extern void CLIENT_SendRequest( enum request req, int pass_fd,
                                 int n, ... /* arg_1, len_1, etc. */ );
 extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
                                       int n, ... /* arg_1, len_1, etc. */ );
 extern unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd );
 extern int CLIENT_InitServer(void);
-
-struct _THDB;
 extern int CLIENT_SetDebug( int level );
 extern int CLIENT_DebuggerRequest( int op );
 extern int CLIENT_InitThread(void);

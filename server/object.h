@@ -153,6 +153,11 @@ extern void file_set_error(void);
 
 extern int create_console( int fd, struct object *obj[2] );
 
+/* debugger functions */
+
+extern int debugger_attach( struct process *process, struct thread *debugger );
+extern void debug_exit_thread( struct thread *thread, int exit_code );
+
 extern int debug_level;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

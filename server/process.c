@@ -109,11 +109,20 @@ static struct process *create_process( struct new_process_request *req )
         return NULL;
     }
     init_process( process );
-    if (parent->console_in) process->console_in = grab_object( parent->console_in );
-    if (parent->console_out) process->console_out = grab_object( parent->console_out );
 
     if (!(process->info = mem_alloc( sizeof(*process->info) ))) goto error;
     memcpy( process->info, req, sizeof(*req) );
+
+    /* set the process console */
+    if (req->create_flags & CREATE_NEW_CONSOLE)
+    {
+        if (!alloc_console( process )) goto error;
+    }
+    else if (!(req->create_flags & DETACHED_PROCESS))
+    {
+        if (parent->console_in) process->console_in = grab_object( parent->console_in );
+        if (parent->console_out) process->console_out = grab_object( parent->console_out );
+    }
 
     if (!req->inherit_all && !(req->start_flags & STARTF_USESTDHANDLES))
     {
@@ -124,6 +133,12 @@ static struct process *create_process( struct new_process_request *req )
         process->info->hstderr = duplicate_handle( parent, req->hstderr, process,
                                                    0, TRUE, DUPLICATE_SAME_ACCESS );
     }
+
+    /* attach to the debugger if requested */
+    if (req->create_flags & DEBUG_PROCESS)
+        debugger_attach( process, current );
+    else if (parent->debugger && !(req->create_flags & DEBUG_ONLY_THIS_PROCESS))
+        debugger_attach( process, parent->debugger );
 
     process->next = first_process;
     first_process->prev = process;

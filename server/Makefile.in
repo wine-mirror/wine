@@ -8,6 +8,7 @@ MODULE    = server
 C_SRCS = \
 	change.c \
 	console.c \
+	debugger.c \
 	device.c \
 	event.c \
 	file.c \

@@ -10,6 +10,7 @@ static int dump_new_process_request( struct new_process_request *req, int len )
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
+    fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " start_flags=%d,", req->start_flags );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
@@ -682,6 +683,46 @@ static int dump_next_process_reply( struct next_process_reply *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_wait_debug_event_request( struct wait_debug_event_request *req, int len )
+{
+    fprintf( stderr, " timeout=%d", req->timeout );
+    return (int)sizeof(*req);
+}
+
+static int dump_wait_debug_event_reply( struct wait_debug_event_reply *req, int len )
+{
+    fprintf( stderr, " code=%d,", req->code );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p", req->tid );
+    return (int)sizeof(*req);
+}
+
+static int dump_send_debug_event_request( struct send_debug_event_request *req, int len )
+{
+    fprintf( stderr, " code=%d", req->code );
+    return (int)sizeof(*req);
+}
+
+static int dump_send_debug_event_reply( struct send_debug_event_reply *req, int len )
+{
+    fprintf( stderr, " status=%d", req->status );
+    return (int)sizeof(*req);
+}
+
+static int dump_continue_debug_event_request( struct continue_debug_event_request *req, int len )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " status=%d", req->status );
+    return (int)sizeof(*req);
+}
+
+static int dump_debug_process_request( struct debug_process_request *req, int len )
+{
+    fprintf( stderr, " pid=%p", req->pid );
+    return (int)sizeof(*req);
+}
+
 struct dumper
 {
     int (*dump_req)( void *data, int len );
@@ -806,6 +847,14 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_create_snapshot_reply },
     { (int(*)(void *,int))dump_next_process_request,
       (void(*)())dump_next_process_reply },
+    { (int(*)(void *,int))dump_wait_debug_event_request,
+      (void(*)())dump_wait_debug_event_reply },
+    { (int(*)(void *,int))dump_send_debug_event_request,
+      (void(*)())dump_send_debug_event_reply },
+    { (int(*)(void *,int))dump_continue_debug_event_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_debug_process_request,
+      (void(*)())0 },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -868,6 +917,10 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "create_device",
     "create_snapshot",
     "next_process",
+    "wait_debug_event",
+    "send_debug_event",
+    "continue_debug_event",
+    "debug_process",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

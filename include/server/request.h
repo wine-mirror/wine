@@ -63,6 +63,10 @@ enum request
     REQ_CREATE_DEVICE,
     REQ_CREATE_SNAPSHOT,
     REQ_NEXT_PROCESS,
+    REQ_WAIT_DEBUG_EVENT,
+    REQ_SEND_DEBUG_EVENT,
+    REQ_CONTINUE_DEBUG_EVENT,
+    REQ_DEBUG_PROCESS,
     REQ_NB_REQUESTS
 };
 
@@ -126,6 +130,10 @@ DECL_HANDLER(get_mapping_info);
 DECL_HANDLER(create_device);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
+DECL_HANDLER(wait_debug_event);
+DECL_HANDLER(send_debug_event);
+DECL_HANDLER(continue_debug_event);
+DECL_HANDLER(debug_process);
 
 static const struct handler {
     void       (*handler)();
@@ -189,6 +197,10 @@ static const struct handler {
     { (void(*)())req_create_device, sizeof(struct create_device_request) },
     { (void(*)())req_create_snapshot, sizeof(struct create_snapshot_request) },
     { (void(*)())req_next_process, sizeof(struct next_process_request) },
+    { (void(*)())req_wait_debug_event, sizeof(struct wait_debug_event_request) },
+    { (void(*)())req_send_debug_event, sizeof(struct send_debug_event_request) },
+    { (void(*)())req_continue_debug_event, sizeof(struct continue_debug_event_request) },
+    { (void(*)())req_debug_process, sizeof(struct debug_process_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

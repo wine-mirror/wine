@@ -87,6 +87,7 @@ static void init_thread( struct thread *thread, int fd )
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;
     thread->debug_first = NULL;
+    thread->debug_event = NULL;
     thread->wait        = NULL;
     thread->apc         = NULL;
     thread->apc_count   = 0;
@@ -157,6 +158,7 @@ static void destroy_thread( struct object *obj )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
+    assert( !thread->debug_ctx );  /* cannot still be debugging something */
     release_object( thread->process );
     if (thread->next) thread->next->prev = thread->prev;
     if (thread->prev) thread->prev->next = thread->next;
@@ -522,6 +524,7 @@ void thread_killed( struct thread *thread, int exit_code )
     thread->state = TERMINATED;
     thread->exit_code = exit_code;
     if (thread->wait) end_wait( thread );
+    debug_exit_thread( thread, exit_code );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
