@@ -1501,7 +1501,7 @@ static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey,
 	curdata += 0x20;
 
 #define XREAD(whereto,len) \
-	if ((curdata + len) <end) {\
+	if ((curdata + len) <= end) {\
 		memcpy(whereto,curdata,len);\
 		curdata+=len;\
 		bytesread+=len;\
