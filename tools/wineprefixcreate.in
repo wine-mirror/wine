@@ -107,6 +107,10 @@ CROOT="$WINEPREFIX/dosdevices/c:"
 # Create the directory tree
 
 for i in \
+    "$CROOT/My Documents" \
+    "$CROOT/My Documents/My Music" \
+    "$CROOT/My Documents/My Pictures" \
+    "$CROOT/My Documents/My Video" \
     "$CROOT/Program Files" \
     "$CROOT/Program Files/Common Files" \
     "$CROOT/windows" \
@@ -116,6 +120,7 @@ for i in \
     "$CROOT/windows/profiles" \
     "$CROOT/windows/profiles/Administrator" \
     "$CROOT/windows/Start Menu" \
+    "$CROOT/windows/Application Data" \
     "$CROOT/windows/Start Menu/Programs" \
     "$CROOT/windows/Start Menu/Programs/Startup" \
     "$CROOT/windows/system" \
