@@ -20,18 +20,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
   WCMD_ATTRIB, "Aide d' ATTRIB\n"
   WCMD_CALL,
 "CALL <fichierbatch> sert à appeler un fichier batch \n\
-depuis un autre fichier batch. Quand le fichier batch sort, le controle revient\n\
+depuis un autre fichier batch. Quand le fichier batch sort, le contrôle revient\n\
 au fichier qui l'a appelé. La commande CALL doit être suivie des paramètres\n\
 de la procédure appelée.\n\
 \n\
-Les changements de répertoire courant, de variables d'environment etc faits\n\
+Les changements de répertoire courant, de variables d'environment etc. faits\n\
 dans une procédure appelée sont transmis à l'appelant.\n"
 
   WCMD_CD,     "Change le répertoire courant par défaut\n"
@@ -52,7 +52,7 @@ dans une procédure appelée sont transmis à l'appelant.\n"
 ECHO ON provoque l'affichage de toutes les commandes sur la console\n\
 avant leur exécution.\n\
 \n\
-ECHO OFF annule l'effet de tout precédent ECHO ON (ECHO est OFF par\n\
+ECHO OFF annule l'effet de tout précédent ECHO ON (ECHO est OFF par\n\
 défaut). On peut empêcher l'affichage de ECHO OFF en le faisant\n\
 précéder d'un signe @.\n"
 
@@ -70,9 +70,9 @@ n'existe pas dans wcmd.\n"
 "La commande GOTO transfère l'exécution à un autre label dans un \n\
 fichier batch.\n\
 \n\
-Le label cible de GOTO peut etre long de 255 caractères\n\
-mais ne peut inclure d'espaces (this is different to other operating\n\
-systems). Si deux ou plusieurs labels identiques sont dans le meme fichier \n\
+Le label cible de GOTO peut être long de 255 caractères\n\
+mais ne peut inclure d'espaces (ceci est différent d'autres systèmes\n\
+d'exploitation). Si deux ou plusieurs labels identiques sont dans le même fichier \n\
 seul le premier sera exécuté. Essayer de sauter à un label non-existant\n\
 termine l'exécution du fichier batch .\n\
 \n\
@@ -84,22 +84,22 @@ GOTO n'a pas d'effet si utilisé interactivement.\n"
 "IF est utilisé pour exécuter une commande de façon conditionnelle.\n\
 \n\
 Syntaxe:	IF [NOT] EXIST nomfichier commande\n\
-	IF [NOT] chaîne1==chaîne2 commande\n\
-	IF [NOT] ERRORLEVEL nombre commande\n\
+		IF [NOT] chaîne1==chaîne2 commande\n\
+		IF [NOT] ERRORLEVEL nombre commande\n\
 \n\
-Dans la deuxieme forme de la commande, chaîne1 et chaîne2 doivent être \n\
-entre guillemets. La comparaison est insensible à la casse.\n"
+Dans la deuxième forme de la commande, chaîne1 et chaîne2 doivent être \n\
+entre guillemets doubles. La comparaison est insensible à la casse.\n"
 
-  WCMD_LABEL,  "LABEL sert à régler le nom de volume d'un disque.  \n\
+  WCMD_LABEL,  "LABEL sert à modifier le nom de volume d'un disque.  \n\
 \n\
 Syntaxe: LABEL [lecteur:]\n\
-La commnande le nouveau nom de volume pour le lecteur donné.\n\
+La commnande demandera le nouveau nom de volume pour le lecteur donné.\n\
 Vous pouvez afficher le nom de volume avec la commande VOL.\n"
 
   WCMD_MD,     "Crée  le répertoire donné en paramètre.\n"
   WCMD_MKDIR,  "Crée  le répertoire donné en paramètre.\n"
   WCMD_MOVE,
-"MOVE déplace un fichier,un groupe de fichiers ou un répertoire\n\
+"MOVE déplace un fichier, un groupe de fichiers ou un répertoire\n\
 à un autre endroit. Si l'objet déplacé est un répertoire alors\n\
 tous les fichiers et sous-répertoires de l'objet sont également déplacés.\n\
 MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS différents.\n"
@@ -115,15 +115,15 @@ par exemple :\n\
 
   WCMD_PAUSE,
 "PAUSE affiche un message sur l'écran : 'Pressez Entrée pour continuer'\n\
-et attend que l'utilisateur presse la touche Entrée. PAUSE est surout utilisé dans\n\
+et attend que l'utilisateur presse la touche Entrée. PAUSE est surtout utilisé dans\n\
 les fichiers batchs pour permettre à l'utilisateur de lire la sortie de\n\
-la dernière commande avant qu'elle ne descende l'écran\n"
+la dernière commande avant qu'elle ne disparaisse de l'écran.\n"
 
   WCMD_PROMPT,
 "PROMPT règle l'invite de commande.\n\
 \n\
-La chaine suivant la commande PROMPT (and the space immediately after)\n\
-apprait au début de la ligne quand wcmd attend une entrée texte.\n\
+La chaîne suivant la commande PROMPT (and the space immediately after)\n\
+apparaît au début de la ligne quand wcmd attend une entrée texte.\n\
 \n\
 Les chaînes de caractères suivantes ont une signification spéciale :\n\
 \n\
@@ -132,9 +132,10 @@ $d    Date courante       $e    Escape              $g    Signe >\n\
 $l    Signe <             $n    Lecteur courant     $p    Répertoire courant\n\
 $q    Signe =             $t    Heure courante      $v    Version de wcmd\n\
 \n\
-Notez qu' entrer la commande PROMPT sans texte d'invite remet \n\
-prompt à la valeur par défaut, qui est la lettre du lecteur courant suivie de\n\
-son répertoire courant et d'un signe plus-grand-que. (>) \n\
+Notez qu'entrer la commande PROMPT sans texte d'invite remet l'invite\n\
+à la valeur par défaut, qui est la lettre du lecteur courant suivie de\n\
+son répertoire courant et d'un signe plus-grand-que (>).\n\
+(Tel que la commande PROMPT $p$g).\n\
 \n\
 L'invite peut aussi être modifiée en changeant la variable d'environment PROMPT,\n\
 donc la commande 'SET PROMPT=texte' a le même effet que 'PROMPT texte'\n"
@@ -157,8 +158,8 @@ Pour créer et modifier une variable d'environnement la syntaxe est:\n\
 \n\
       SET <variable>=<valeur>\n\
 \n\
-où <variable> et <valeur> sont des chaines de caractères. Il est à noter que <variable>\n\
-ne peut contenir d'espace.\n\
+où <variable> et <valeur> sont des chaînes de caractères. Il est à noter que <variable>\n\
+ne peut contenir d'espace, et qu'il ne doit pas y en avoir non plus autour du signe d'égalité.\n\
 \n\
 Sous Wine, l'environment du système hôte est\n\
 inclus dans l'environnment Win32, il y aura par conséquent généralement\n\
@@ -167,7 +168,7 @@ n'est pas possible de modifier l'environnement du système d'exploitation dans wc
 
   WCMD_SHIFT,
 "SHIFT est utilisé dans un fichier batch pour enlever un paramètre de la\n\
-que de la liste, ainsi le paramétre 1 devient paramètre 1 et ainsi de suite. Il est sans effet\n\
+liste, ainsi le paramètre 2 devient paramètre 1 et ainsi de suite. Il est sans effet\n\
 s'il est appelé depuis la ligne de commande.\n"
 
   WCMD_TIME,   "Aide de TIME\n"
@@ -210,10 +211,10 @@ DIR\t\tListe le contenu d'un répertoire\n\
 ECHO\t\tAffiche du texte sur la console\n\
 HELP\t\tAffiche de brefs détails sur l'utilisation d'une commande\n\
 MD (MKDIR)\tCrée un répertoire\n\
-MOVE\t\tDéplace un fichier,un groupe de fichiers ou un répertoire\n\
+MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n\
 PATH\t\tRègle ou affiche le chemin de recherche\n\
 PROMPT\t\tChange l'invite de commande\n\
-REN (RENAME)\tRenomme un fichier,un groupe de fichiers ou un répertoire\n\
+REN (RENAME)\tRenomme un fichier, un groupe de fichiers ou un répertoire\n\
 RD (RMDIR)\tEfface un répertoire\n\
 SET\t\tRègle ou affiche les variables d'environment\n\
 TIME\t\tRègle ou affiche l'heure système courante\n\
@@ -222,5 +223,5 @@ TYPE\t\tAffiche le contenu d'un fichier texte\n\
 VER\t\tAffiche la version de wcmd actuellement en mémoire.\n\
 VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
 EXIT\t\tQuitte WCMD\n\n\
-Entrer HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
+Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 }

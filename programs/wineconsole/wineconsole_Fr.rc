@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 BEGIN
@@ -32,7 +32,7 @@ IDS_SEARCH,		"C&hercher"
 IDS_FNT_DISPLAY,	"Chaque caractère a %ld points en largeur et %ld points en hauteur"
 IDS_FNT_PREVIEW_1,	"Ceci est un test"
 IDS_FNT_PREVIEW_2,	"éèàôë"
-IDS_DLG_TIT_DEFAULT,    "Configuration par défault"
+IDS_DLG_TIT_DEFAULT,    "Configuration par défaut"
 IDS_DLG_TIT_CURRENT,    "Configuration courante"
 IDS_DLG_TIT_ERROR,	"Erreur de configuration"
 IDS_DLG_ERR_SBWINSIZE,	"La taille du tampon écran doit être plus grande que celle de la fenêtre"
@@ -52,7 +52,7 @@ FONT 8, "Helv"
 	LTEXT "Popup menu", -1, 79, 23, 50, 10
 	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
 	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
-	LTEXT "Edition rapide", -1, 79, 43, 50, 10
+	LTEXT "Édition rapide", -1, 79, 43, 50, 10
 	AUTOCHECKBOX "&activer", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
 	GROUPBOX "Historique des commandes", -1, 10, 57, 190, 35, BS_GROUPBOX
@@ -102,7 +102,7 @@ FONT 8, "Helv"
 	GROUPBOX "Fin du programme", -1, 115, 11, 80, 42, BS_GROUPBOX
 	AUTOCHECKBOX "&Fermer la console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
-	GROUPBOX "Edition", -1, 115, 55, 80, 42
+	GROUPBOX "Édition", -1, 115, 55, 80, 42
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 }
 

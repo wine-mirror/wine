@@ -1,0 +1,64 @@
+/*
+ * Start
+ * French Language Support
+ *
+ * Copyright 2003 Dan Kegel
+ * Copyright 2003 Vincent Béron
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+STRING_USAGE,                                   "Lance un programme, ou ouvre un document dans le programme normalement utilisé avec cette extension. \n\
+Usage: \n\
+start [options] fichier_programme [...] \n\
+start [options] fichier_document \n\
+ \n\
+Options: \n\
+/M[inimized] Lance le programme minimisé. \n\
+/MAX[imized] Lance le programme maximisé. \n\
+/R[estored]  Lance le programme normalement (ni minimisé ni maximisé). \n\
+/W[ait]      Attend que le programme lancé se termine, et termine ensuite avec son code de sortie. \n\
+/L           Montre la licence d'utilisation. \n\
+ \n\
+start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
+Start est fourni sans AUCUNE GARANTIE; pour les détails lancez avec l'option /L. \n\
+Ceci est un logiciel libre, et vous êtes invité à le redistribuer\n\
+sous certaines condition; lancez 'start /L' pour les détails. \n\
+"
+
+STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
+This program is free software; you can redistribute it and/or \n\
+modify it under the terms of the GNU Lesser Public License \n\
+as published by the Free Software Foundation; either version 2.1 \n\
+of the License, or (at your option) any later version. \n\
+ \n\
+This program is distributed in the hope that it will be useful, \n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
+GNU Lesser Public License for more details. \n\
+ \n\
+You should have received a copy of the GNU Lesser Public License \n\
+along with this program; if not, write to the Free Software \n\
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
+ \n\
+See the COPYING.LIB file for license information. \n\
+"
+
+STRING_EXECFAIL "Le programme n'a pas pu être lancé, ou il n'y a pas de programme associé avec le fichier spécifié.\nShellExecuteEx a échoué"
+}
