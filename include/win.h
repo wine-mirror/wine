@@ -49,6 +49,7 @@ typedef enum
 #define RDW_EX_DELETEHRGN	0x0002
 #define RDW_EX_XYWINDOW		0x0004
 #define RDW_EX_TOPFRAME		0x0010
+#define RDW_EX_DELAY_NCPAINT    0x0020
 
 struct tagCLASS;
 struct tagDCE;
@@ -163,6 +164,8 @@ typedef struct
 #define UNC_ENTIRE		0x0002
 #define UNC_REGION		0x0004
 #define UNC_UPDATE		0x0008
+#define UNC_DELAY_NCPAINT       0x0010
+#define UNC_IN_BEGINPAINT       0x0020
 
   /* Window functions */
 extern void   WIN_Init( void );

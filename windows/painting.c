@@ -28,6 +28,84 @@ DECLARE_DEBUG_CHANNEL(win)
 
 
 /***********************************************************************
+ *           WIN_HaveToDelayNCPAINT
+ *
+ * Currently, in the Wine painting mechanism, the WM_NCPAINT message
+ * is generated as soon as a region intersecting the non-client area 
+ * of a window is invalidated.
+ *
+ * This technique will work fine for all windows whose parents
+ * have the WS_CLIPCHILDREN style. When the parents have that style,
+ * they are not going to override the contents of their children.
+ * However, when the parent doesn't have that style, Windows relies
+ * on a "painter's algorithm" to display the contents of the windows.
+ * That is, windows are painted from back to front. This includes the
+ * non-client area.
+ *
+ * This method looks at the current state of a window to determine
+ * if the sending of the WM_NCPAINT message should be delayed until 
+ * the BeginPaint call.
+ *
+ * PARAMS:
+ *   wndPtr   - A Locked window pointer to the window we're
+ *              examining.
+ *   uncFlags - This is the flag passed to the WIN_UpdateNCRgn
+ *              function. This is a shortcut for the cases when
+ *              we already know when to avoid scanning all the
+ *              parents of a window. If you already know that this
+ *              window's NCPAINT should be delayed, set the 
+ *              UNC_DELAY_NCPAINT flag for this parameter. 
+ *
+ *              This shortcut behavior is implemented in the
+ *              RDW_Paint() method.
+ * 
+ */
+static BOOL WIN_HaveToDelayNCPAINT(
+  WND* wndPtr, 
+  UINT uncFlags)
+{
+  WND* parentWnd = NULL;
+
+  /*
+   * Test the shortcut first. (duh)
+   */
+  if (uncFlags & UNC_DELAY_NCPAINT)
+    return TRUE;
+
+  /*
+   * The UNC_IN_BEGINPAINT flag is set in the BeginPaint
+   * method only. This is another shortcut to avoid going
+   * up the parent's chain of the window to finally
+   * figure-out that none of them has an invalid region.
+   */
+  if (uncFlags & UNC_IN_BEGINPAINT)
+    return FALSE;
+
+  /*
+   * Scan all the parents of this window to find a window
+   * that doesn't have the WS_CLIPCHILDREN style and that
+   * has an invalid region. 
+   */
+  parentWnd = WIN_LockWndPtr(wndPtr->parent);
+
+  while (parentWnd!=NULL)
+  {
+    if ( ((parentWnd->dwStyle & WS_CLIPCHILDREN) == 0) &&
+	 (parentWnd->hrgnUpdate != 0) )
+    {
+      WIN_ReleaseWndPtr(parentWnd);
+      return TRUE;
+    }
+
+    WIN_UpdateWndPtr(&parentWnd, parentWnd->parent);    
+  }
+
+  WIN_ReleaseWndPtr(parentWnd);
+
+  return FALSE;
+}
+
+/***********************************************************************
  *           WIN_UpdateNCRgn
  *
  *  Things to do:
@@ -72,7 +150,11 @@ HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 	uncFlags |= UNC_ENTIRE; 
     }
 
-    if( wnd->flags & WIN_NEEDS_NCPAINT )
+    /*
+     * If the window's non-client area needs to be painted, 
+     */
+    if ( ( wnd->flags & WIN_NEEDS_NCPAINT ) &&
+	 !WIN_HaveToDelayNCPAINT(wnd, uncFlags) )
     {
 	    RECT r2, r3;
 
@@ -184,7 +266,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
     /* send WM_NCPAINT and make sure hrgnUpdate is a valid rgn handle */
-    WIN_UpdateNCRgn( wndPtr, 0, UNC_UPDATE );
+    WIN_UpdateNCRgn( wndPtr, 0, UNC_UPDATE | UNC_IN_BEGINPAINT);
 
     /*
      * Make sure the window is still a window. All window locks are suspended
@@ -626,6 +708,13 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
     TRACE_(win)("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", hWnd, wndPtr->hrgnUpdate, hrgn, flags );
 
+    /*
+     * Check if this window should delay it's processing of WM_NCPAINT.
+     * See WIN_HaveToDelayNCPAINT for a description of the mechanism
+     */
+    if ((ex & RDW_EX_DELAY_NCPAINT) || WIN_HaveToDelayNCPAINT(wndPtr, 0) )
+	ex |= RDW_EX_DELAY_NCPAINT;
+
     if (flags & RDW_UPDATENOW)
     {
         if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
@@ -634,8 +723,14 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     else if ((flags & RDW_ERASENOW) || (ex & RDW_EX_TOPFRAME))
     {
 	UINT dcx = DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT | DCX_CACHE;
-	HRGN hrgnRet = WIN_UpdateNCRgn( wndPtr, hrgn, UNC_REGION | UNC_CHECK | 
-			    ((ex & RDW_EX_TOPFRAME) ? UNC_ENTIRE : 0) ); 
+	HRGN hrgnRet;
+
+	hrgnRet = WIN_UpdateNCRgn(wndPtr, 
+				  hrgn, 
+				  UNC_REGION | UNC_CHECK | 
+				  ((ex & RDW_EX_TOPFRAME) ? UNC_ENTIRE : 0) |
+				  ((ex & RDW_EX_DELAY_NCPAINT) ? UNC_DELAY_NCPAINT : 0) ); 
+
         if( hrgnRet )
 	{
 	    if( hrgnRet > 1 ) hrgn = hrgnRet; else hrgnRet = 0; /* entire client */
@@ -678,7 +773,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 		if (!IsWindow(wndPtr->hwndSelf)) continue;
 		    if ( (wndPtr->dwStyle & WS_VISIBLE) &&
 			 (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT)) )
-			hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
+		        hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
 	    }
             WIN_ReleaseWndPtr(wndPtr);
 	    WIN_ReleaseWinArray(list);
