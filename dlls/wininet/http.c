@@ -243,22 +243,24 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     if (0)
     {
         WORKREQUEST workRequest;
+        struct WORKREQ_HTTPOPENREQUESTA *req;
 
 	workRequest.asyncall = HTTPOPENREQUESTA;
-	workRequest.HFTPSESSION = (DWORD)hHttpSession;
-	workRequest.LPSZVERB = (DWORD)HTTP_strdup(lpszVerb);
-	workRequest.LPSZOBJECTNAME = (DWORD)HTTP_strdup(lpszObjectName);
+	workRequest.handle = hHttpSession;
+        req = &workRequest.u.HttpOpenRequestA;
+	req->lpszVerb = HTTP_strdup(lpszVerb);
+	req->lpszObjectName = HTTP_strdup(lpszObjectName);
         if (lpszVersion)
-            workRequest.LPSZVERSION = (DWORD)HTTP_strdup(lpszVersion);
+            req->lpszVersion = HTTP_strdup(lpszVersion);
         else
-            workRequest.LPSZVERSION = 0;
+            req->lpszVersion = 0;
         if (lpszReferrer)
-            workRequest.LPSZREFERRER = (DWORD)HTTP_strdup(lpszReferrer);
+            req->lpszReferrer = HTTP_strdup(lpszReferrer);
         else
-            workRequest.LPSZREFERRER = 0;
-	workRequest.LPSZACCEPTTYPES = (DWORD)lpszAcceptTypes;
-	workRequest.DWFLAGS = dwFlags;
-	workRequest.DWCONTEXT = dwContext;
+            req->lpszReferrer = 0;
+	req->lpszAcceptTypes = lpszAcceptTypes;
+	req->dwFlags = dwFlags;
+	req->dwContext = dwContext;
 
         INTERNET_AsyncCall(&workRequest);
         TRACE ("returning NULL\n");
@@ -972,16 +974,18 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
+        struct WORKREQ_HTTPSENDREQUESTA *req;
 
         workRequest.asyncall = HTTPSENDREQUESTA;
-        workRequest.HFTPSESSION = (DWORD)hHttpRequest;
+        workRequest.handle = hHttpRequest;
+        req = &workRequest.u.HttpSendRequestA;
         if (lpszHeaders)
-            workRequest.LPSZHEADER = (DWORD)HTTP_strdup(lpszHeaders);
+            req->lpszHeader = HTTP_strdup(lpszHeaders);
         else
-            workRequest.LPSZHEADER = 0;
-        workRequest.DWHEADERLENGTH = dwHeaderLength;
-        workRequest.LPOPTIONAL = (DWORD)lpOptional;
-        workRequest.DWOPTIONALLENGTH = dwOptionalLength;
+            req->lpszHeader = 0;
+        req->dwHeaderLength = dwHeaderLength;
+        req->lpOptional = lpOptional;
+        req->dwOptionalLength = dwOptionalLength;
 
         INTERNET_AsyncCall(&workRequest);
         /*

@@ -202,15 +202,16 @@ VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
         if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
         {
             WORKREQUEST workRequest;
+            struct WORKREQ_SENDCALLBACK *req;
 
             workRequest.asyncall = SENDCALLBACK;
-
-            workRequest.param1 = (DWORD)hIC;
-            workRequest.param2 = (DWORD)hHttpSession;
-            workRequest.param3 = dwContext;
-            workRequest.param4 = dwInternetStatus;
-            workRequest.param5 = (DWORD)lpvStatusInfo;
-            workRequest.param6 = dwStatusInfoLength;
+            workRequest.handle = hIC;
+            req = &workRequest.u.SendCallback;
+            req->hHttpSession = hHttpSession;
+            req->dwContext = dwContext;
+            req->dwInternetStatus = dwInternetStatus;
+            req->lpvStatusInfo = lpvStatusInfo;
+            req->dwStatusInfoLength = dwStatusInfoLength;
 
             INTERNET_AsyncCall(&workRequest);
         }

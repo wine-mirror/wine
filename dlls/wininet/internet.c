@@ -593,10 +593,12 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
+        struct WORKREQ_INTERNETFINDNEXTA *req;
 
         workRequest.asyncall = INTERNETFINDNEXTA;
-	workRequest.HFTPSESSION = (DWORD)hFind;
-	workRequest.LPFINDFILEDATA = (DWORD)lpvFindData;
+	workRequest.handle = hFind;
+        req = &workRequest.u.InternetFindNextA;
+	req->lpFindFileData = lpvFindData;
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -2146,120 +2148,159 @@ VOID INTERNET_ExecuteWork()
 
     TRACE("\n");
 
-    if (INTERNET_GetWorkRequest(&workRequest))
+    if (!INTERNET_GetWorkRequest(&workRequest))
+        return;
+    TRACE("Got work %d\n", workRequest.asyncall);
+    switch (workRequest.asyncall)
     {
-	TRACE("Got work %d\n", workRequest.asyncall);
-	switch (workRequest.asyncall)
-	{
-            case FTPPUTFILEA:
-		FTP_FtpPutFileA((HINTERNET)workRequest.HFTPSESSION, (LPCSTR)workRequest.LPSZLOCALFILE,
-                    (LPCSTR)workRequest.LPSZNEWREMOTEFILE, workRequest.DWFLAGS, workRequest.DWCONTEXT);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZLOCALFILE);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZNEWREMOTEFILE);
-		break;
+    case FTPPUTFILEA:
+        {
+        struct WORKREQ_FTPPUTFILEA *req = &workRequest.u.FtpPutFileA;
 
-            case FTPSETCURRENTDIRECTORYA:
-		FTP_FtpSetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZDIRECTORY);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDIRECTORY);
-		break;
+	FTP_FtpPutFileA(workRequest.handle, req->lpszLocalFile,
+                   req->lpszNewRemoteFile, req->dwFlags, req->dwContext);
 
-            case FTPCREATEDIRECTORYA:
-		FTP_FtpCreateDirectoryA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZDIRECTORY);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDIRECTORY);
-		break;
+	HeapFree(GetProcessHeap(), 0, req->lpszLocalFile);
+	HeapFree(GetProcessHeap(), 0, req->lpszNewRemoteFile);
+        }
+	break;
 
-            case FTPFINDFIRSTFILEA:
-                FTP_FtpFindFirstFileA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZSEARCHFILE,
-	           (LPWIN32_FIND_DATAA)workRequest.LPFINDFILEDATA, workRequest.DWFLAGS,
-		   workRequest.DWCONTEXT);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZSEARCHFILE);
-		break;
+    case FTPSETCURRENTDIRECTORYA:
+        {
+        struct WORKREQ_FTPSETCURRENTDIRECTORYA *req;
 
-            case FTPGETCURRENTDIRECTORYA:
-                FTP_FtpGetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION,
-			(LPSTR)workRequest.LPSZDIRECTORY, (LPDWORD)workRequest.LPDWDIRECTORY);
-		break;
+        req = &workRequest.u.FtpSetCurrentDirectoryA;
+	FTP_FtpSetCurrentDirectoryA(workRequest.handle, req->lpszDirectory);
+	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
+        }
+	break;
 
-            case FTPOPENFILEA:
-                 FTP_FtpOpenFileA((HINTERNET)workRequest.HFTPSESSION,
-                    (LPCSTR)workRequest.LPSZFILENAME,
-                    workRequest.FDWACCESS,
-                    workRequest.DWFLAGS,
-                    workRequest.DWCONTEXT);
-                 HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZFILENAME);
-                 break;
+    case FTPCREATEDIRECTORYA:
+        {
+        struct WORKREQ_FTPCREATEDIRECTORYA *req;
 
-            case FTPGETFILEA:
-                FTP_FtpGetFileA((HINTERNET)workRequest.HFTPSESSION,
-                    (LPCSTR)workRequest.LPSZREMOTEFILE,
-                    (LPCSTR)workRequest.LPSZNEWFILE,
-                    (BOOL)workRequest.FFAILIFEXISTS,
-                    workRequest.DWLOCALFLAGSATTRIBUTE,
-                    workRequest.DWFLAGS,
-                    workRequest.DWCONTEXT);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZREMOTEFILE);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZNEWFILE);
-		break;
+        req = &workRequest.u.FtpCreateDirectoryA;
+	FTP_FtpCreateDirectoryA(workRequest.handle, req->lpszDirectory);
+	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
+        }
+	break;
 
-            case FTPDELETEFILEA:
-                FTP_FtpDeleteFileA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZFILENAME);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZFILENAME);
-		break;
+    case FTPFINDFIRSTFILEA:
+        {
+        struct WORKREQ_FTPFINDFIRSTFILEA *req;
 
-            case FTPREMOVEDIRECTORYA:
-                FTP_FtpRemoveDirectoryA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZDIRECTORY);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDIRECTORY);
-		break;
+        req = &workRequest.u.FtpFindFirstFileA;
+        FTP_FtpFindFirstFileA(workRequest.handle, req->lpszSearchFile,
+           req->lpFindFileData, req->dwFlags, req->dwContext);
+	HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
+        }
+	break;
 
-            case FTPRENAMEFILEA:
-                FTP_FtpRenameFileA((HINTERNET)workRequest.HFTPSESSION,
-			(LPCSTR)workRequest.LPSZSRCFILE,
-			(LPCSTR)workRequest.LPSZDESTFILE);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZSRCFILE);
-		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDESTFILE);
-		break;
+    case FTPGETCURRENTDIRECTORYA:
+        {
+        struct WORKREQ_FTPGETCURRENTDIRECTORYA *req;
 
-            case INTERNETFINDNEXTA:
-		INTERNET_FindNextFileA((HINTERNET)workRequest.HFTPSESSION,
-                    (LPWIN32_FIND_DATAA)workRequest.LPFINDFILEDATA);
-		break;
+        req = &workRequest.u.FtpGetCurrentDirectoryA;
+        FTP_FtpGetCurrentDirectoryA(workRequest.handle,
+		req->lpszDirectory, req->lpdwDirectory);
+        }
+	break;
 
-            case HTTPSENDREQUESTA:
-               HTTP_HttpSendRequestA((HINTERNET)workRequest.HFTPSESSION,
-                       (LPCSTR)workRequest.LPSZHEADER,
-                       workRequest.DWHEADERLENGTH,
-                       (LPVOID)workRequest.LPOPTIONAL,
-                       workRequest.DWOPTIONALLENGTH);
-               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZHEADER);
-               break;
+    case FTPOPENFILEA:
+        {
+        struct WORKREQ_FTPOPENFILEA *req = &workRequest.u.FtpOpenFileA;
 
-            case HTTPOPENREQUESTA:
-               HTTP_HttpOpenRequestA((HINTERNET)workRequest.HFTPSESSION,
-                       (LPCSTR)workRequest.LPSZVERB,
-                       (LPCSTR)workRequest.LPSZOBJECTNAME,
-                       (LPCSTR)workRequest.LPSZVERSION,
-                       (LPCSTR)workRequest.LPSZREFERRER,
-                       (LPCSTR*)workRequest.LPSZACCEPTTYPES,
-                       workRequest.DWFLAGS,
-                       workRequest.DWCONTEXT);
-               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZVERB);
-               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZOBJECTNAME);
-               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZVERSION);
-               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZREFERRER);
-                break;
+        FTP_FtpOpenFileA(workRequest.handle, req->lpszFilename,
+            req->dwAccess, req->dwFlags, req->dwContext);
+        HeapFree(GetProcessHeap(), 0, req->lpszFilename);
+        }
+        break;
 
-            case SENDCALLBACK:
-               SendAsyncCallbackInt((LPWININETAPPINFOA)workRequest.param1,
-                       (HINTERNET)workRequest.param2, workRequest.param3,
-                        workRequest.param4, (LPVOID)workRequest.param5,
-                        workRequest.param6);
-               break;
-	}
+    case FTPGETFILEA:
+        {
+        struct WORKREQ_FTPGETFILEA *req = &workRequest.u.FtpGetFileA;
+
+        FTP_FtpGetFileA(workRequest.handle, req->lpszRemoteFile,
+                 req->lpszNewFile, req->fFailIfExists,
+                 req->dwLocalFlagsAttribute, req->dwFlags, req->dwContext);
+	HeapFree(GetProcessHeap(), 0, req->lpszRemoteFile);
+	HeapFree(GetProcessHeap(), 0, req->lpszNewFile);
+        }
+	break;
+
+    case FTPDELETEFILEA:
+        {
+        struct WORKREQ_FTPDELETEFILEA *req = &workRequest.u.FtpDeleteFileA;
+
+        FTP_FtpDeleteFileA(workRequest.handle, req->lpszFilename);
+	HeapFree(GetProcessHeap(), 0, req->lpszFilename);
+        }
+	break;
+
+    case FTPREMOVEDIRECTORYA:
+        {
+        struct WORKREQ_FTPREMOVEDIRECTORYA *req;
+
+        req = &workRequest.u.FtpRemoveDirectoryA;
+        FTP_FtpRemoveDirectoryA(workRequest.handle, req->lpszDirectory);
+	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
+        }
+	break;
+
+    case FTPRENAMEFILEA:
+        {
+        struct WORKREQ_FTPRENAMEFILEA *req = &workRequest.u.FtpRenameFileA;
+
+        FTP_FtpRenameFileA(workRequest.handle, req->lpszSrcFile, req->lpszDestFile);
+	HeapFree(GetProcessHeap(), 0, req->lpszSrcFile);
+	HeapFree(GetProcessHeap(), 0, req->lpszDestFile);
+        }
+	break;
+
+    case INTERNETFINDNEXTA:
+        {
+        struct WORKREQ_INTERNETFINDNEXTA *req;
+
+        req = &workRequest.u.InternetFindNextA;
+	INTERNET_FindNextFileA(workRequest.handle, req->lpFindFileData);
+        }
+	break;
+
+    case HTTPSENDREQUESTA:
+        {
+        struct WORKREQ_HTTPSENDREQUESTA *req = &workRequest.u.HttpSendRequestA;
+
+        HTTP_HttpSendRequestA(workRequest.handle, req->lpszHeader,
+                req->dwHeaderLength, req->lpOptional, req->dwOptionalLength);
+
+        HeapFree(GetProcessHeap(), 0, req->lpszHeader);
+        }
+        break;
+
+    case HTTPOPENREQUESTA:
+        {
+        struct WORKREQ_HTTPOPENREQUESTA *req = &workRequest.u.HttpOpenRequestA;
+
+        HTTP_HttpOpenRequestA(workRequest.handle, req->lpszVerb,
+            req->lpszObjectName, req->lpszVersion, req->lpszReferrer,
+            req->lpszAcceptTypes, req->dwFlags, req->dwContext);
+
+        HeapFree(GetProcessHeap(), 0, req->lpszVerb);
+        HeapFree(GetProcessHeap(), 0, req->lpszObjectName);
+        HeapFree(GetProcessHeap(), 0, req->lpszVersion);
+        HeapFree(GetProcessHeap(), 0, req->lpszReferrer);
+        }
+        break;
+
+    case SENDCALLBACK:
+        {
+        struct WORKREQ_SENDCALLBACK *req = &workRequest.u.SendCallback;
+
+        SendAsyncCallbackInt(workRequest.handle, req->hHttpSession,
+                req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
+                req->dwStatusInfoLength);
+        }
+        break;
     }
 }
 

@@ -177,50 +177,126 @@ typedef enum
     SENDCALLBACK,
 } ASYNC_FUNC;
 
+struct WORKREQ_FTPPUTFILEA
+{
+    LPSTR lpszLocalFile;
+    LPSTR lpszNewRemoteFile;
+    DWORD  dwFlags;
+    DWORD  dwContext;
+};
+
+struct WORKREQ_FTPSETCURRENTDIRECTORYA
+{
+    LPSTR lpszDirectory;
+};
+
+struct WORKREQ_FTPCREATEDIRECTORYA
+{
+    LPSTR lpszDirectory;
+};
+
+struct WORKREQ_FTPFINDFIRSTFILEA
+{
+    LPSTR lpszSearchFile;
+    LPWIN32_FIND_DATAA lpFindFileData;
+    DWORD  dwFlags;
+    DWORD  dwContext;
+};
+
+struct WORKREQ_FTPGETCURRENTDIRECTORYA
+{
+    LPSTR lpszDirectory;
+    DWORD *lpdwDirectory;
+};
+
+struct WORKREQ_FTPOPENFILEA
+{
+    LPSTR lpszFilename;
+    DWORD  dwAccess;
+    DWORD  dwFlags;
+    DWORD  dwContext;
+};
+
+struct WORKREQ_FTPGETFILEA
+{
+    LPSTR lpszRemoteFile;
+    LPSTR lpszNewFile;
+    BOOL   fFailIfExists;
+    DWORD  dwLocalFlagsAttribute;
+    DWORD  dwFlags;
+    DWORD  dwContext;
+};
+
+struct WORKREQ_FTPDELETEFILEA
+{
+    LPSTR lpszFilename;
+};
+
+struct WORKREQ_FTPREMOVEDIRECTORYA
+{
+    LPSTR lpszDirectory;
+};
+
+struct WORKREQ_FTPRENAMEFILEA
+{
+    LPSTR lpszSrcFile;
+    LPSTR lpszDestFile;
+};
+
+struct WORKREQ_INTERNETFINDNEXTA
+{
+    LPWIN32_FIND_DATAA lpFindFileData;
+};
+
+struct WORKREQ_HTTPOPENREQUESTA
+{
+    LPSTR lpszVerb;
+    LPSTR lpszObjectName;
+    LPSTR lpszVersion;
+    LPSTR lpszReferrer;
+    LPCSTR *lpszAcceptTypes;
+    DWORD  dwFlags;
+    DWORD  dwContext;
+};
+
+struct WORKREQ_HTTPSENDREQUESTA
+{
+    LPSTR lpszHeader;
+    DWORD  dwHeaderLength;
+    LPVOID lpOptional;
+    DWORD  dwOptionalLength;
+};
+
+struct WORKREQ_SENDCALLBACK
+{
+    HINTERNET hHttpSession;
+    DWORD     dwContext;
+    DWORD     dwInternetStatus;
+    LPVOID    lpvStatusInfo;
+    DWORD     dwStatusInfoLength;
+};
+
 typedef struct WORKREQ
 {
     ASYNC_FUNC asyncall;
-    DWORD param1;
-#define HFTPSESSION       param1
+    HINTERNET handle;
 
-    DWORD param2;
-#define LPSZLOCALFILE     param2
-#define LPSZREMOTEFILE    param2
-#define LPSZFILENAME      param2
-#define LPSZSRCFILE       param2
-#define LPSZDIRECTORY     param2
-#define LPSZSEARCHFILE    param2
-#define LPSZHEADER        param2
-#define LPSZVERB          param2
-
-    DWORD param3;
-#define LPSZNEWREMOTEFILE param3
-#define LPSZNEWFILE       param3
-#define LPFINDFILEDATA    param3
-#define LPDWDIRECTORY     param3
-#define FDWACCESS         param3
-#define LPSZDESTFILE      param3
-#define DWHEADERLENGTH    param3
-#define LPSZOBJECTNAME    param3
-
-    DWORD param4;
-#define DWFLAGS           param4
-#define LPOPTIONAL        param4
-
-    DWORD param5;
-#define DWCONTEXT         param5
-#define DWOPTIONALLENGTH  param5
-
-    DWORD param6;
-#define FFAILIFEXISTS     param6
-#define LPSZVERSION       param6
-
-    DWORD param7;
-#define DWLOCALFLAGSATTRIBUTE param7
-#define LPSZREFERRER          param7
-
-    DWORD param8;
-#define LPSZACCEPTTYPES       param8
+    union {
+        struct WORKREQ_FTPPUTFILEA              FtpPutFileA;
+        struct WORKREQ_FTPSETCURRENTDIRECTORYA  FtpSetCurrentDirectoryA;
+        struct WORKREQ_FTPCREATEDIRECTORYA      FtpCreateDirectoryA;
+        struct WORKREQ_FTPFINDFIRSTFILEA        FtpFindFirstFileA;
+        struct WORKREQ_FTPGETCURRENTDIRECTORYA  FtpGetCurrentDirectoryA;
+        struct WORKREQ_FTPOPENFILEA             FtpOpenFileA;
+        struct WORKREQ_FTPGETFILEA              FtpGetFileA;
+        struct WORKREQ_FTPDELETEFILEA           FtpDeleteFileA;
+        struct WORKREQ_FTPREMOVEDIRECTORYA      FtpRemoveDirectoryA;
+        struct WORKREQ_FTPRENAMEFILEA           FtpRenameFileA;
+        struct WORKREQ_INTERNETFINDNEXTA        InternetFindNextA;
+        struct WORKREQ_HTTPOPENREQUESTA         HttpOpenRequestA;
+        struct WORKREQ_HTTPSENDREQUESTA         HttpSendRequestA;
+        struct WORKREQ_SENDCALLBACK             SendCallback;
+    } u;
 
     struct WORKREQ *next;
     struct WORKREQ *prev;
