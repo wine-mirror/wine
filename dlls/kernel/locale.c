@@ -61,6 +61,7 @@ static const struct charset_entry
     UINT        codepage;
 } charset_names[] =
 {
+    { "BIG5", 950 },
     { "CP1250", 1250 },
     { "CP1251", 1251 },
     { "CP1252", 1252 },
@@ -71,6 +72,7 @@ static const struct charset_entry
     { "CP1257", 1257 },
     { "CP1258", 1258 },
     { "EUCJP", 20932 },
+    { "GB2312", 936 },
     { "IBM037", 37 },
     { "IBM1026", 1026 },
     { "IBM424", 424 },
