@@ -1253,7 +1253,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			es->line_count--;
 		}
 	}
-	else
+	else if (delta != 0)
 	{
 		while (current_line)
 		{
