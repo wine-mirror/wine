@@ -28,6 +28,7 @@
 #include <ctype.h>
 
 #include "windef.h"
+#include "objbase.h"
 #include "oleauto.h"
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
@@ -71,11 +72,7 @@ HRESULT WINAPI DispInvoke(
      */
     FIXME("Coercion of arguments not implemented\n");
 
-    hr = ICOM_CALL7(Invoke,
-                    ptinfo,
-                    _this,
-                    dispidMember,
-                    wFlags,
+    ITypeInfo_Invoke(ptinfo, _this, dispidMember, wFlags,
                     pparams, pvarResult, pexcepinfo, puArgErr);
 
     return (hr);
@@ -103,11 +100,7 @@ HRESULT WINAPI DispGetIDsOfNames(
 {
     HRESULT hr = E_FAIL;
 
-    hr = ICOM_CALL3(GetIDsOfNames,
-                    ptinfo,
-                    rgszNames,
-                    cNames,
-                    rgdispid);
+    ITypeInfo_GetIDsOfNames(ptinfo, rgszNames, cNames, rgdispid);
     return (hr);
 }
 

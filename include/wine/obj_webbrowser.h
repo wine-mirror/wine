@@ -92,7 +92,7 @@ typedef enum RefreshConstants
 	ICOM_METHOD1(HRESULT,get_LocationURL, BSTR*,LocationURL) \
 	ICOM_METHOD1(HRESULT,get_Busy, VARIANT*,pBool)
 #define IWebBrowser_IMETHODS \
-	IDispatch_METHODS \
+	IDispatch_IMETHODS \
 	IWebBrowser_METHODS
 ICOM_DEFINE(IWebBrowser,IDispatch)
 #undef ICOM_INTERFACE
@@ -156,7 +156,7 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
     ICOM_METHOD1(HRESULT,get_FullScreen,VARIANT_BOOL*,pbFullScreen) \
     ICOM_METHOD1(HRESULT,put_FullScreen,VARIANT_BOOL,bFullScreen)
 #define IWebBrowserApp_IMETHODS \
-    IDispatch_METHODS \
+    IDispatch_IMETHODS \
     IWebBrowser_METHODS \
     IWebBrowserApp_METHODS
 ICOM_DEFINE(IWebBrowserApp,IWebBrowser)

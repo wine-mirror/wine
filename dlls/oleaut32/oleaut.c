@@ -37,6 +37,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
+extern const GUID CLSID_PSOAInterface;
+
 /******************************************************************************
  *             SysStringLen  [OLEAUT32.7]
  *

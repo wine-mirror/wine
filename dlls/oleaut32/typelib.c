@@ -76,6 +76,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
 
+/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
+const GUID CLSID_PSOAInterface = { 0x00020424, 0, 0, { 0xC0, 0, 0, 0, 0, 0, 0, 0x46 } };
+
 /****************************************************************************
  *              FromLExxx
  *
@@ -4761,37 +4764,34 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
  * Releases a TYPEATTR previously returned by GetTypeAttr.
  *
  */
-static HRESULT WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
+static void WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
         TYPEATTR* pTypeAttr)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
-    return S_OK;
 }
 
 /* ITypeInfo::ReleaseFuncDesc
  *
  * Releases a FUNCDESC previously returned by GetFuncDesc. *
  */
-static HRESULT WINAPI ITypeInfo_fnReleaseFuncDesc(
+static void WINAPI ITypeInfo_fnReleaseFuncDesc(
 	ITypeInfo2 *iface,
         FUNCDESC *pFuncDesc)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
     TRACE("(%p)->(%p)\n", This, pFuncDesc);
-    return S_OK;
 }
 
 /* ITypeInfo::ReleaseVarDesc
  *
  * Releases a VARDESC previously returned by GetVarDesc.
  */
-static HRESULT WINAPI ITypeInfo_fnReleaseVarDesc( ITypeInfo2 *iface,
+static void WINAPI ITypeInfo_fnReleaseVarDesc( ITypeInfo2 *iface,
         VARDESC *pVarDesc)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
     TRACE("(%p)->(%p)\n", This, pVarDesc);
-    return S_OK;
 }
 
 /* ITypeInfo2::GetTypeKind
@@ -4815,13 +4815,12 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeKind( ITypeInfo2 * iface,
  * attribute).
  *
  */
-static HRESULT WINAPI ITypeInfo2_fnGetTypeFlags( ITypeInfo2 * iface,
-    UINT *pTypeFlags)
+static HRESULT WINAPI ITypeInfo2_fnGetTypeFlags( ITypeInfo2 *iface, ULONG *pTypeFlags)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
     *pTypeFlags=This->TypeAttr.wTypeFlags;
-    TRACE("(%p) flags 0x%04x\n", This,*pTypeFlags);
-     return S_OK;
+    TRACE("(%p) flags 0x%lx\n", This,*pTypeFlags);
+    return S_OK;
 }
 
 /* ITypeInfo2::GetFuncIndexOfMemId
