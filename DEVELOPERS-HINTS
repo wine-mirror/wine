@@ -120,6 +120,7 @@ DLLs (under dlls/):
 	uxtheme/		- Theme library
 	vdhcp.vxd/		- VDHCP VxD implementation
 	version/		- File installation library
+	vmm.vxd/		- VMM VxD implementation
 	vnb.vxd/		- VNB VxD implementation
 	vnetbios.vxd/		- VNETBIOS VxD implementation
 	vtdapi.vxd/		- VTDAPI VxD implementation
