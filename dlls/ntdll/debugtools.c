@@ -209,9 +209,16 @@ int wine_dbg_vprintf( const char *format, va_list args )
                          format, args );
 
     /* make sure we didn't exceed the buffer length
-     * the two asserts are due to glibc changes in vsnprintfs return value */
-    assert( ret != -1 );
-    assert( ret < sizeof(info->output) - (info->out_pos - info->output) );
+     * the two checks are due to glibc changes in vsnprintfs return value
+     * the buffer size can be exceeded in case of a missing \n in
+     * debug output */
+    if ((ret == -1) || (ret >= sizeof(info->output) - (info->out_pos - info->output)))
+    {
+       fprintf( stderr, "wine_dbg_vprintf: debugstr buffer overflow (contents: '%s')\n",
+                info->output);
+       info->out_pos = info->output;
+       abort();
+    }
 
     p = strrchr( info->out_pos, '\n' );
     if (!p) info->out_pos += ret;
