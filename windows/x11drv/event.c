@@ -513,14 +513,14 @@ static Window __get_common_ancestor( Window A, Window B,
   
     Window      root, *childrenB;
     unsigned    totalB;
-  
-    do
+
+    while( A != B && A && B )
     {
       TSXQueryTree( display, A, &root, &A, children, total );
       TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
       if( childrenB ) TSXFree( childrenB );
       if( *children ) TSXFree( *children ), *children = NULL;
-    } while( A != B && A && B );
+    }
 
     if( A && B )
     {
