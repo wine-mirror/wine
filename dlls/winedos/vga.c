@@ -38,9 +38,39 @@ static DDSURFACEDESC sdesc;
 static LONG vga_refresh;
 static HANDLE poll_timer;
 
-static int vga_width;
-static int vga_height;
-static int vga_depth;
+/*
+ * VGA controller memory is emulated using linear framebuffer.
+ * This frambuffer also acts as an interface
+ * between VGA controller emulation and DirectDraw.
+ *
+ * vga_fb_width: Display width in pixels. Can be modified when
+ *               display mode is changed.
+ * vga_fb_height: Display height in pixels. Can be modified when
+ *                display mode is changed.
+ * vga_fb_depth: Number of bits used to store single pixel color information.
+ *               Each pixel uses (vga_fb_depth+7)/8 bytes because
+ *               1-16 color modes are mapped to 256 color mode.
+ *               Can be modified when display mode is changed.
+ * vga_fb_pitch: How many bytes to add to pointer in order to move 
+ *               from one row to another. This is fixed in VGA modes,
+ *               but can be modified in SVGA modes.
+ * vga_fb_offset: Offset added to framebuffer start address in order
+ *                to find the display origin. Programs use this to do
+ *                double buffering and to scroll display. The value can
+ *                be modified in VGA and SVGA modes.
+ * vga_fb_size: How many bytes are allocated to framebuffer.
+ *              VGA framebuffers are always larger than display size and
+ *              SVGA framebuffers may also be.
+ * vga_fb_data: Pointer to framebuffer start.
+ */
+static int   vga_fb_width;
+static int   vga_fb_height;
+static int   vga_fb_depth;
+static int   vga_fb_pitch;
+static int   vga_fb_offset;
+static int   vga_fb_size = 0;
+static void *vga_fb_data = 0;
+
 static BYTE vga_text_attr;
 static char *textbuf_old = NULL;
 
@@ -343,10 +373,24 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
     ModeSet par;
+    int     newSize;
 
-    vga_width = Xres;
-    vga_height = Yres;
-    vga_depth = Depth;
+    vga_fb_width = Xres;
+    vga_fb_height = Yres;
+    vga_fb_depth = Depth;
+    vga_fb_offset = 0;
+    vga_fb_pitch = Xres * ((Depth + 7) / 8);
+
+    newSize = Xres * Yres * ((Depth + 7) / 8);
+    if(newSize < 256 * 1024)
+      newSize = 256 * 1024;
+
+    if(vga_fb_size < newSize) {
+      if(vga_fb_data)
+        HeapFree(GetProcessHeap(), 0, vga_fb_data);
+      vga_fb_data = HeapAlloc(GetProcessHeap(), 0, newSize);
+      vga_fb_size = newSize;
+    }
 
     if(Xres >= 640 || Yres >= 480) {
       par.Xres = Xres;
@@ -710,6 +754,24 @@ void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 
 
 /*** CONTROL ***/
+ 
+/*
+ * Copy part of VGA framebuffer to VGA window.
+ */
+static void VGA_CopyFrameToWindow(void)
+{
+  //FIXME: add implementation
+}
+
+/*
+ * Copy contents of VGA window to VGA framebuffer.
+ */
+static void VGA_CopyWindowToFrame(void)
+{
+  //FIXME: fix implementation
+  char *dat = DOSMEM_MapDosToLinear(0xa0000);
+  memmove(vga_fb_data, dat, 65536);
+}
 
 /* FIXME: optimize by doing this only if the data has actually changed
  *        (in a way similar to DIBSection, perhaps) */
@@ -717,50 +779,32 @@ static void VGA_Poll_Graphics(void)
 {
   unsigned int Pitch, Height, Width, X, Y;
   char *surf;
-  char *dat = DOSMEM_MapDosToLinear(0xa0000);
+  char *dat = vga_fb_data + vga_fb_offset;
+  int   bpp = (vga_fb_depth + 7) / 8; 
 
   surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
   if (!surf) return;
 
-  if(vga_width == 320 && vga_depth <= 4)
-    for (Y=0; Y<vga_height; Y++,surf+=Pitch*2,dat+=vga_width/8) {
-      for(X=0; X<vga_width; X+=8) {
-       int offset = X/8;
-       int Z;
-       for(Z=0; Z<8; Z++) {
-         int b0 =  (dat[offset] >> Z) & 0x1;
-         int index = 7-Z;
-         surf[(X+index)*2] = b0;
-         surf[(X+index)*2+1] = b0;
-         surf[(X+index)*2+Pitch] = b0;
-         surf[(X+index)*2+Pitch+1] = b0;
-       }
-      }
-    }
+  /*
+   * Synchronize framebuffer contents.
+   */
+  VGA_CopyWindowToFrame();
 
-  if(vga_width == 320 && vga_depth == 8)
-    for (Y=0; Y<vga_height; Y++,surf+=Pitch*2,dat+=vga_width) {
-      for(X=0; X<vga_width; X++) {
-       int b0 = dat[X];
-       surf[X*2] = b0;
-       surf[X*2+1] = b0;
-       surf[X*2+Pitch] = b0;
-       surf[X*2+Pitch+1] = b0;
+  /*
+   * Double VGA framebuffer (320x200 -> 640x400), if needed.
+   */
+  if(Height >= 2 * vga_fb_height && Width >= 2 * vga_fb_width && bpp == 1)
+    for (Y=0; Y<vga_fb_height; Y++,surf+=Pitch*2,dat+=vga_fb_pitch)
+      for (X=0; X<vga_fb_width; X++) {
+       BYTE value = dat[X];
+       surf[X*2] = value;
+       surf[X*2+1] = value;
+       surf[X*2+Pitch] = value;
+       surf[X*2+Pitch+1] = value;
       }
-    }
-
-  if(vga_depth <= 4)
-    for (Y=0; Y<vga_height; Y++,surf+=Pitch,dat+=vga_width/8) {
-      for(X=0; X<vga_width; X+=8) {
-       int offset = X/8;
-       int Z;
-       for(Z=0; Z<8; Z++) {
-         int b0 =  (dat[offset] >> Z) & 0x1;
-         int index = 7-Z;
-         surf[X+index] = b0;
-       }
-      }
-    }
+  else
+    for (Y=0; Y<vga_fb_height; Y++,surf+=Pitch,dat+=vga_fb_pitch)
+      memcpy(surf, dat, vga_fb_width * bpp);
 
   VGA_Unlock();
 }
