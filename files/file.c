@@ -1938,6 +1938,17 @@ DWORD WINAPI GetFileType( HANDLE hFile )
 }
 
 
+/* check if a file name is for an executable file (.exe or .com) */
+inline static BOOL is_executable( const char *name )
+{
+    int len = strlen(name);
+
+    if (len < 4) return FALSE;
+    return (!strcasecmp( name + len - 4, ".exe" ) ||
+            !strcasecmp( name + len - 4, ".com" ));
+}
+
+
 /**************************************************************************
  *           MoveFileExA   (KERNEL32.@)
  */
@@ -1992,6 +2003,19 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
             FILE_SetDosError();
             return FALSE;
 	}
+        if (is_executable( full_name1.long_name ) != is_executable( full_name2.long_name ))
+        {
+            struct stat fstat;
+            if (stat( full_name2.long_name, &fstat ) != -1)
+            {
+                if (is_executable( full_name2.long_name ))
+                    /* set executable bit where read bit is set */
+                    fstat.st_mode |= (fstat.st_mode & 0444) >> 2;
+                else
+                    fstat.st_mode &= ~0111;
+                chmod( full_name2.long_name, fstat.st_mode );
+            }
+        }
         return TRUE;
     }
     else /* fn2 == NULL means delete source */
@@ -2045,41 +2069,34 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     DOS_FULL_NAME full_name1, full_name2;
     struct stat fstat;
 
-
     TRACE("(%s,%s)\n", fn1, fn2 );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (DOSFS_GetFullName( fn2, TRUE, &full_name2 ))  {
-      /* The new name must not already exist */ 
+      /* The new name must not already exist */
       SetLastError(ERROR_ALREADY_EXISTS);
       return FALSE;
     }
     if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
 
     if (full_name1.drive == full_name2.drive) /* move */
-    if (rename( full_name1.long_name, full_name2.long_name ) == -1)
+        return MoveFileExA( fn1, fn2, MOVEFILE_COPY_ALLOWED );
+
+    /* copy */
+    if (stat( full_name1.long_name, &fstat ))
     {
+        WARN("Invalid source file %s\n",
+             full_name1.long_name);
         FILE_SetDosError();
         return FALSE;
     }
-      else return TRUE;
-    else /*copy */ {
-      if (stat(  full_name1.long_name, &fstat ))
-	{
-	  WARN("Invalid source file %s\n",
-			full_name1.long_name);
-	  FILE_SetDosError();
-	  return FALSE;
-	}
-      if (S_ISDIR(fstat.st_mode)) {
-	/* No Move for directories across file systems */
-	/* FIXME: Use right error code */
-	SetLastError( ERROR_GEN_FAILURE );
-	return FALSE;
-      }
-      else
-	return CopyFileA(fn1, fn2, TRUE); /*fail, if exist */ 
+    if (S_ISDIR(fstat.st_mode)) {
+        /* No Move for directories across file systems */
+        /* FIXME: Use right error code */
+        SetLastError( ERROR_GEN_FAILURE );
+        return FALSE;
     }
+    return CopyFileA(fn1, fn2, TRUE); /*fail, if exist */
 }
 
 

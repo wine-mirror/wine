@@ -126,6 +126,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     struct stat st;
     char *name;
     int fd = -1;
+    mode_t mode;
 
     if (!(name = mem_alloc( len + 1 ))) return NULL;
     memcpy( name, nameptr, len );
@@ -151,10 +152,14 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     case GENERIC_WRITE: flags |= O_WRONLY; break;
     case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
     }
+    mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
+
+    if (len >= 4 &&
+        (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
+        mode |= 0111;
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    if ((fd = open( name, flags | O_NONBLOCK | O_LARGEFILE,
-                    (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
+    if ((fd = open( name, flags | O_NONBLOCK | O_LARGEFILE, mode )) == -1 )
         goto file_error;
     /* refuse to open a directory */
     if (fstat( fd, &st ) == -1) goto file_error;
