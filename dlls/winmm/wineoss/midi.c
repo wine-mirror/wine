@@ -221,8 +221,8 @@ static	BOOL OSS_MidiInit(void)
 	TRACE("name='%s', techn=%d voices=%d notes=%d support=%ld\n", 
 	      tmplpCaps->szPname, tmplpCaps->wTechnology,
 	      tmplpCaps->wVoices, tmplpCaps->wNotes, tmplpCaps->dwSupport);
-	TRACE("OSS info: synth subtype=%d capa=%Xh\n", 
-	      sinfo.synth_subtype, sinfo.capabilities);
+	TRACE("OSS info: synth subtype=%d capa=%lx\n", 
+	      sinfo.synth_subtype, (long)sinfo.capabilities);
     }
     
     /* find how many MIDI devices are there in the system */
@@ -308,8 +308,8 @@ static	BOOL OSS_MidiInit(void)
 	TRACE("name='%s' techn=%d voices=%d notes=%d support=%ld\n",
 	      tmplpOutCaps->szPname, tmplpOutCaps->wTechnology, tmplpOutCaps->wVoices,
 	      tmplpOutCaps->wNotes, tmplpOutCaps->dwSupport);
-	TRACE("OSS info: midi dev-type=%d, capa=%d\n", 
-	      minfo.dev_type, minfo.capabilities);
+	TRACE("OSS info: midi dev-type=%d, capa=%lx\n", 
+	      minfo.dev_type, (long)minfo.capabilities);
     }
     
     /* windows does not seem to differentiate Synth from MIDI devices */
