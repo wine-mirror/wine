@@ -25,8 +25,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
     LRESULT result;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    if (hwnd != HWND_BROADCAST &&
-        GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
+    if (hwnd != HWND_BROADCAST && WIN_IsCurrentThread(hwnd))
     {
         /* call 16-bit window proc directly */
         WNDPROC16 winproc;

@@ -19,13 +19,9 @@ static struct user_handle *freelist;
 static int nb_handles;
 static int allocated_handles;
 
-#define FIRST_HANDLE 32  /* handle value for first table entry */
-#define LAST_HANDLE  (65536 - 16)
-#define MAX_HANDLES  (LAST_HANDLE - FIRST_HANDLE)
-
 static struct user_handle *handle_to_entry( user_handle_t handle )
 {
-    int index = (handle & 0xffff) - FIRST_HANDLE;
+    int index = (handle & 0xffff) - FIRST_USER_HANDLE;
     if (index < 0 || index >= nb_handles) return NULL;
     if (!handles[index].type) return NULL;
     if ((handle >> 16) && (handle >> 16 != handles[index].generation)) return NULL;
@@ -35,7 +31,7 @@ static struct user_handle *handle_to_entry( user_handle_t handle )
 inline static user_handle_t entry_to_handle( struct user_handle *ptr )
 {
     int index = ptr - handles;
-    return (index + FIRST_HANDLE) + (ptr->generation << 16);
+    return (index + FIRST_USER_HANDLE) + (ptr->generation << 16);
 }
 
 inline static struct user_handle *alloc_user_entry(void)
@@ -53,7 +49,7 @@ inline static struct user_handle *alloc_user_entry(void)
         struct user_handle *new_handles;
         /* grow array by 50% (but at minimum 32 entries) */
         int growth = max( 32, allocated_handles / 2 );
-        int new_size = min( allocated_handles + growth, MAX_HANDLES );
+        int new_size = min( allocated_handles + growth, LAST_USER_HANDLE-FIRST_USER_HANDLE+1 );
         if (new_size <= allocated_handles) return NULL;
         if (!(new_handles = realloc( handles, new_size * sizeof(*handles) )))
             return NULL;

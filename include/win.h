@@ -86,6 +86,8 @@ extern WND*   WIN_LockWndPtr(WND *wndPtr);
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
 extern HWND WIN_Handle32( HWND16 hwnd16 );
+extern BOOL WIN_IsCurrentProcess( HWND hwnd );
+extern BOOL WIN_IsCurrentThread( HWND hwnd );
 extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
 extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );

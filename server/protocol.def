@@ -42,6 +42,10 @@ struct request_max_size
 typedef int handle_t;
 typedef unsigned int user_handle_t;
 
+#define FIRST_USER_HANDLE 0x0020  /* first possible value for low word of user handle */
+#define LAST_USER_HANDLE  0xffef  /* last possible value for low word of user handle */
+
+
 /* definitions of the event data depending on the event code */
 struct debug_event_exception
 {
@@ -1443,7 +1447,7 @@ enum message_type
     user_handle_t  parent;        /* parent window */
 @REPLY
     int            count;         /* total count of children */
-    VARARG(parents,user_handles); /* children handles */
+    VARARG(children,user_handles); /* children handles */
 @END
 
 

@@ -375,8 +375,8 @@ hittest:
         if (!hwnd_ret) hwnd_ret = hwndScope;
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
-        if (GetWindowThreadProcessId( hwnd_ret, NULL ) == GetCurrentThreadId())
-	{
+        if (WIN_IsCurrentThread( hwnd_ret ))
+        {
             INT res = SendMessageA( hwnd_ret, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
             if (res != HTTRANSPARENT)
             {
@@ -620,47 +620,44 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
 
-    if (!wndPtr || (wndPtr->dwStyle & (WS_DISABLED | WS_CHILD)))
-    {
-        prev = 0;
-        goto end;
-    }
+    if (!wndPtr) return 0;
+
+    if (wndPtr->dwStyle & (WS_DISABLED | WS_CHILD)) goto error;
 
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN("\tCurrent message queue not found. Exiting!\n" );
-        goto CLEANUP;
+        goto error;
     }
-    
+
     /* Retrieve the message queue associated with this window */
     pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
     if ( !pMsgQ )
     {
         WARN("\tWindow message queue not found. Exiting!\n" );
-        goto CLEANUP;
+        goto error;
     }
 
     /* Make sure that the window is associated with the calling threads
      * message queue. It must share the same perQ data.
      */
-    
     if ( pCurMsgQ->pQData != pMsgQ->pQData )
-        goto CLEANUP;
-    
+    {
+        QUEUE_Unlock( pMsgQ );
+        goto error;
+    }
+
     /* Save current active window */
     prev = PERQDATA_GetActiveWnd( pMsgQ->pQData );
-    
-    WINPOS_SetActiveWindow( hwnd, 0, 0 );
-
-CLEANUP:
-    /* Unlock the queues before returning */
-    if ( pMsgQ )
-        QUEUE_Unlock( pMsgQ );
-    
-end:
+    QUEUE_Unlock( pMsgQ );
     WIN_ReleaseWndPtr(wndPtr);
+    WINPOS_SetActiveWindow( hwnd, 0, 0 );
     return prev;
+
+ error:
+    WIN_ReleaseWndPtr(wndPtr);
+    return 0;
 }
 
 
@@ -1399,7 +1396,6 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 {
     WND *wndPtr;
-    BOOL retvalue;
     HWND hwndActive = 0;
 
     /* Get current active window from the active queue */
@@ -1425,23 +1421,11 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
         WIN_ReleaseWndPtr(wndPtr);
         return SendMessageA(hWnd, WM_CHILDACTIVATE, 0, 0L);
     }
-
-    if( hWnd == hwndActive )
-    {
-        retvalue = FALSE;
-        goto end;
-    }
-
-    if( !WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE) )
-    {
-        retvalue = FALSE;
-        goto end;
-    }
-
-    retvalue = TRUE;
-end:
     WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+
+    if( hWnd == hwndActive ) return FALSE;
+
+    return WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE);
 }
 
 

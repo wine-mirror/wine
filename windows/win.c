@@ -4,6 +4,7 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
@@ -29,6 +30,9 @@
 DEFAULT_DEBUG_CHANNEL(win);
 DECLARE_DEBUG_CHANNEL(msg);
 
+#define BAD_WND_PTR      ((WND *)1)  /* returned by get_wnd_ptr on bad window handles */
+#define NB_USER_HANDLES  (LAST_USER_HANDLE - FIRST_USER_HANDLE + 1)
+
 /**********************************************************************/
 
 /* Desktop window */
@@ -37,7 +41,7 @@ static WND *pWndDesktop = NULL;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
-static void *user_handles[65536];
+static void *user_handles[NB_USER_HANDLES];
 
 /* thread safeness */
 extern SYSLEVEL USER_SysLevel;  /* FIXME */
@@ -79,6 +83,7 @@ static WND *create_window_handle( HWND parent, HWND owner, INT size )
 {
     BOOL res;
     user_handle_t handle = 0;
+    WORD index;
     WND *win = HeapAlloc( GetProcessHeap(), 0, size );
 
     if (!win) return NULL;
@@ -99,7 +104,9 @@ static WND *create_window_handle( HWND parent, HWND owner, INT size )
         HeapFree( GetProcessHeap(), 0, win );
         return NULL;
     }
-    user_handles[LOWORD(handle)] = win;
+    index = LOWORD(handle) - FIRST_USER_HANDLE;
+    assert( index < NB_USER_HANDLES );
+    user_handles[index] = win;
     win->hwndSelf = handle;
     win->dwMagic = WND_MAGIC;
     win->irefCount = 1;
@@ -115,15 +122,17 @@ static WND *create_window_handle( HWND parent, HWND owner, INT size )
 static WND *free_window_handle( HWND hwnd )
 {
     WND *ptr;
+    WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
 
+    if (index >= NB_USER_HANDLES) return NULL;
     USER_Lock();
-    if ((ptr = user_handles[LOWORD(hwnd)]))
+    if ((ptr = user_handles[index]))
     {
         SERVER_START_REQ( destroy_window )
         {
             req->handle = hwnd;
             if (!SERVER_CALL_ERR())
-                user_handles[LOWORD(hwnd)] = NULL;
+                user_handles[index] = NULL;
             else
                 ptr = NULL;
         }
@@ -138,23 +147,60 @@ static WND *free_window_handle( HWND hwnd )
 /***********************************************************************
  *           get_wnd_ptr
  *
- * Return a pointer to the WND structure if local to the process.
- * If ret value is non-NULL, the user lock is held.
+ * Return a pointer to the WND structure if local to the process,
+ * or BAD_WND_PTR is handle is local but not valid.
+ * If ret value is a valid pointer, the user lock is held.
  */
 static WND *get_wnd_ptr( HWND hwnd )
 {
     WND * ptr;
+    WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
 
-    if (!hwnd) return NULL;
+    if (index >= NB_USER_HANDLES) return BAD_WND_PTR;
 
     USER_Lock();
-    if ((ptr = user_handles[LOWORD(hwnd)]))
+    if ((ptr = user_handles[index]))
     {
         if (ptr->dwMagic == WND_MAGIC && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
             return ptr;
+        ptr = BAD_WND_PTR;
     }
     USER_Unlock();
-    return NULL;
+    return ptr;
+}
+
+
+/***********************************************************************
+ *           WIN_IsCurrentProcess
+ *
+ * Check whether a given window belongs to the current process.
+ */
+BOOL WIN_IsCurrentProcess( HWND hwnd )
+{
+    WND *ptr;
+
+    if (!(ptr = get_wnd_ptr( hwnd )) || ptr == BAD_WND_PTR) return FALSE;
+    USER_Unlock();
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           WIN_IsCurrentThread
+ *
+ * Check whether a given window belongs to the current thread.
+ */
+BOOL WIN_IsCurrentThread( HWND hwnd )
+{
+    WND *ptr;
+    BOOL ret = FALSE;
+
+    if ((ptr = get_wnd_ptr( hwnd )) && ptr != BAD_WND_PTR)
+    {
+        ret = (ptr->tid == GetCurrentThreadId());
+        USER_Unlock();
+    }
+    return ret;
 }
 
 
@@ -174,8 +220,11 @@ HWND WIN_Handle32( HWND16 hwnd16 )
 
     if ((ptr = get_wnd_ptr( hwnd )))
     {
-        hwnd = ptr->hwndSelf;
-        USER_Unlock();
+        if (ptr != BAD_WND_PTR)
+        {
+            hwnd = ptr->hwndSelf;
+            USER_Unlock();
+        }
     }
     else  /* may belong to another process */
     {
@@ -203,13 +252,14 @@ WND * WIN_FindWndPtr( HWND hwnd )
 
     if ((ptr = get_wnd_ptr( hwnd )))
     {
-        /* increment destruction monitoring */
-        ptr->irefCount++;
-        return ptr;
+        if (ptr != BAD_WND_PTR)
+        {
+            /* increment destruction monitoring */
+            ptr->irefCount++;
+            return ptr;
+        }
     }
-
-    /* check other processes */
-    if (IsWindow( hwnd ))
+    else if (IsWindow( hwnd )) /* check other processes */
     {
         ERR( "window %04x belongs to other process\n", hwnd );
         /* DbgBreakPoint(); */
@@ -379,7 +429,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     {
         if (!(pWnd->dwStyle & WS_VISIBLE)) continue;
         if ((pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
-            GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
+            WIN_IsCurrentThread( pWnd->hwndSelf ))
             break;
         if (pWnd->child )
         {
@@ -403,7 +453,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     {
         if (!(pWnd->dwExStyle & WS_EX_TRANSPARENT) &&
             (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
-            GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
+            WIN_IsCurrentThread( pWnd->hwndSelf ))
         {
             hwndRet = pWnd->hwndSelf;
             WIN_ReleaseWndPtr(pWnd);
@@ -502,7 +552,7 @@ void WIN_DestroyThreadWindows( HWND hwnd )
     for (i = 0; list[i]; i++)
     {
         if (!IsWindow( list[i] )) continue;
-        if (GetWindowThreadProcessId( list[i], NULL ) == GetCurrentThreadId())
+        if (WIN_IsCurrentThread( list[i] ))
             DestroyWindow( list[i] );
         else
             WIN_DestroyThreadWindows( list[i] );
@@ -1951,14 +2001,12 @@ BOOL WINAPI IsWindow( HWND hwnd )
     WND *ptr;
     BOOL ret;
 
-    USER_Lock();
-    if ((ptr = user_handles[LOWORD(hwnd)]))
+    if ((ptr = get_wnd_ptr( hwnd )))
     {
-        ret = ((ptr->dwMagic == WND_MAGIC) && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf));
+        if (ptr == BAD_WND_PTR) return FALSE;
         USER_Unlock();
-        return ret;
+        return TRUE;
     }
-    USER_Unlock();
 
     /* check other processes */
     SERVER_START_REQ( get_window_info )
@@ -1979,20 +2027,18 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     WND *ptr;
     DWORD tid = 0;
 
-    USER_Lock();
-    if ((ptr = user_handles[LOWORD(hwnd)]))
+    if ((ptr = get_wnd_ptr( hwnd )))
     {
-        if ((ptr->dwMagic == WND_MAGIC) && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
+        if (ptr != BAD_WND_PTR)
         {
             /* got a valid window */
             tid = ptr->tid;
             if (process) *process = GetCurrentProcessId();
+            USER_Unlock();
         }
         else SetLastError( ERROR_INVALID_WINDOW_HANDLE);
-        USER_Unlock();
         return tid;
     }
-    USER_Unlock();
 
     /* check other processes */
     SERVER_START_REQ( get_window_info )

@@ -506,7 +506,7 @@ BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd
 
     /* check destination thread and filters */
     if (!check_message_filter( msg, hwnd_filter, first, last ) ||
-        GetWindowThreadProcessId( msg->hwnd, NULL ) != GetCurrentThreadId())
+        !WIN_IsCurrentThread( msg->hwnd ))
     {
         /* queue it for later, or for another thread */
         queue_hardware_message( msg, extra_info, MSG_HARDWARE_COOKED );

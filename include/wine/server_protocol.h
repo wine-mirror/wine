@@ -40,6 +40,10 @@ struct request_max_size
 typedef int handle_t;
 typedef unsigned int user_handle_t;
 
+#define FIRST_USER_HANDLE 0x0020
+#define LAST_USER_HANDLE  0xffef
+
+
 
 struct debug_event_exception
 {
@@ -1617,7 +1621,7 @@ struct get_window_children_request
     struct request_header __header;
     user_handle_t  parent;
     int            count;
-    /* VARARG(parents,user_handles); */
+    /* VARARG(children,user_handles); */
 };
 
 

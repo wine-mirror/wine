@@ -104,7 +104,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     TIMER * pTimer;
     HWINDOWPROC winproc = 0;
 
-    if (hwnd && GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
+    if (hwnd && !WIN_IsCurrentThread( hwnd ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;

@@ -1722,7 +1722,7 @@ static void dump_get_window_children_request( const struct get_window_children_r
 static void dump_get_window_children_reply( const struct get_window_children_request *req )
 {
     fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " parents=" );
+    fprintf( stderr, " children=" );
     cur_pos += dump_varargs_user_handles( req );
 }
 
