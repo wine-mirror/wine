@@ -8,7 +8,7 @@ VPATH     = @srcdir@
 # special configure-dependent targets
 
 GLU32FILES = glu32
-OPENGLFILES = opengl32
+OPENGLFILES = d3d8 opengl32
 XFILES = ddraw x11drv
 EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @XFILES@
 
@@ -23,7 +23,6 @@ BASEDIRS = \
 	commdlg \
 	crtdll \
 	crypt32 \
-	d3d8 \
 	dciman32 \
 	devenum \
 	dinput \
@@ -110,6 +109,7 @@ BASEDIRS = \
 
 SUBDIRS = \
 	$(BASEDIRS) \
+	d3d8 \
 	ddraw \
 	glu32 \
 	opengl32 \
@@ -137,7 +137,6 @@ all: \
 	compobj.dll$(DLLEXT) \
 	crtdll.dll$(DLLEXT) \
 	crypt32.dll$(DLLEXT) \
-	d3d8.dll$(DLLEXT) \
 	dciman32.dll$(DLLEXT) \
 	ddeml.dll$(DLLEXT) \
 	devenum.dll$(DLLEXT) \

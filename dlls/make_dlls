@@ -35,6 +35,7 @@ my %special_dlls =
   "ddraw"    => "XFILES",
   "glu32"    => "GLU32FILES",
   "opengl32" => "OPENGLFILES",
+  "d3d8"     => "OPENGLFILES",
   "x11drv"   => "XFILES"
 );
 
