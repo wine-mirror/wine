@@ -236,7 +236,7 @@ static LRESULT	EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT x, I
 static LRESULT	EDIT_WM_LButtonUp(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
 static LRESULT	EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
 static LRESULT	EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCTA cs);
-static void	EDIT_WM_Paint(WND *wnd, EDITSTATE *es);
+static void	EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam);
 static void	EDIT_WM_Paste(WND *wnd, EDITSTATE *es);
 static void	EDIT_WM_SetFocus(WND *wnd, EDITSTATE *es, HWND window_losing_focus);
 static void	EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw);
@@ -821,7 +821,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 
 	case WM_PAINT:
 		DPRINTF_EDIT_MSG32("WM_PAINT");
-		EDIT_WM_Paint(wnd, es);
+	        EDIT_WM_Paint(wnd, es, wParam);
 		break;
 
 	case WM_PASTE:
@@ -3649,7 +3649,7 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCTA cs)
  *	WM_PAINT
  *
  */
-static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
+static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 {
 	PAINTSTRUCT ps;
 	INT i;
@@ -3665,7 +3665,10 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 	if (es->flags & EF_UPDATE)
 		EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
 
-	dc = BeginPaint(wnd->hwndSelf, &ps);
+        if (!wParam)
+            dc = BeginPaint(wnd->hwndSelf, &ps);
+        else
+            dc = (HDC) wParam;
 	if(es->style & WS_BORDER) {
 		GetClientRect(wnd->hwndSelf, &rc);
 		if(es->style & ES_MULTILINE) {
@@ -3708,7 +3711,8 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 	if (es->flags & EF_FOCUSED)
 		EDIT_SetCaretPos(wnd, es, es->selection_end,
 				 es->flags & EF_AFTER_WRAP);
-	EndPaint(wnd->hwndSelf, &ps);
+        if (!wParam)
+            EndPaint(wnd->hwndSelf, &ps);
 	if ((es->style & WS_VSCROLL) && !(es->flags & EF_VSCROLL_TRACK)) {
 		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
 		SCROLLINFO si;
