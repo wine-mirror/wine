@@ -36,6 +36,7 @@
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
@@ -807,46 +808,121 @@ LPITEMIDLIST WINAPI ILCreateFromPathAW (LPCVOID path)
 	return ILCreateFromPathA (path);
 }
 /*************************************************************************
- *  SHSimpleIDListFromPath [SHELL32.162]
+ * _ILParsePathW             [internal]
+ *
+ * Creates an ItemIDList from a path and returns it.
+ *
+ * PARAMS
+ *  path         [I]   path to parse and convert into an ItemIDList
+ *  lpFindFile   [I]   pointer to buffer to initialize the FileSystem
+ *                     Bind Data object with
+ *  bBindCtx     [I]   indicates to create a BindContext and assign a
+ *                     FileSystem Bind Data object
+ *  ppidl        [O]   the newly create ItemIDList
+ *  prgfInOut    [I/O] requested attributes on input and actual
+ *                     attributes on return
+ *
+ * RETURNS
+ *  NO_ERROR on success or an OLE error code
+ *
+ * NOTES
+ *  If either lpFindFile is non-NULL or bBindCtx is TRUE, this function
+ *  creates a BindContext object and assigns a FileSystem Bind Data object
+ *  to it, passing the BindContext to IShellFolder_ParseDisplayName. Each
+ *  IShellFolder uses that FileSystem Bind Data object of the BindContext
+ *  to pass data about the current path element to the next object. This
+ *  is used to avoid having to verify the current path element on disk, so
+ *  that creating an ItemIDList from a non existing path still can work.
  */
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPCSTR lpszPath)
+static HRESULT WINAPI _ILParsePathW(LPCWSTR path, LPWIN32_FIND_DATAW lpFindFile,
+                             BOOL bBindCtx, LPITEMIDLIST *ppidl, LPDWORD prgfInOut)
 {
-	LPITEMIDLIST	pidl=NULL;
-	HANDLE	hFile;
-	WIN32_FIND_DATAA	stffile;
+	LPSHELLFOLDER pSF = NULL;
+	LPBC pBC = NULL;
+	HRESULT ret;
 
-	TRACE("path=%s\n", lpszPath);
+	TRACE("%s %p %d (%p)->%p (%p)->0x%lx\n", debugstr_w(path), lpFindFile, bBindCtx,
+	                                         ppidl, ppidl ? *ppidl : NULL,
+	                                         prgfInOut, prgfInOut ? *prgfInOut : 0);
 
-	if (!lpszPath) return NULL;
-
-	hFile = FindFirstFileA(lpszPath, &stffile);
-
-	if ( hFile != INVALID_HANDLE_VALUE )
+	ret = SHGetDesktopFolder(&pSF);
+	if (FAILED(ret))
 	{
-	  if (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-	  {
-	    pidl = _ILCreateFolder (&stffile);
-	  }
-	  else
-	  {
-	    pidl = _ILCreateValue (&stffile);
-	  }
-	  FindClose (hFile);
+	  return ret;
 	}
+
+	if (lpFindFile || bBindCtx)
+	  ret = IFileSystemBindData_Constructor(lpFindFile, &pBC);
+
+	if (SUCCEEDED(ret))
+	{
+	  ret = IShellFolder_ParseDisplayName(pSF, 0, pBC, (LPOLESTR)path, NULL, ppidl, prgfInOut);
+	}
+
+	if (pBC)
+	{
+	  IBindCtx_Release(pBC);
+	  pBC = NULL;
+	}
+
+	IShellFolder_Release(pSF);
+
+	if (!SUCCEEDED(ret) && ppidl)
+	  *ppidl = NULL;
+
+	TRACE("%s %p 0x%lx\n", debugstr_w(path), ppidl ? *ppidl : NULL, prgfInOut ? *prgfInOut : 0);
+
+	return ret;
+}
+
+/*************************************************************************
+ * SHSimpleIDListFromPath    [SHELL32.162]
+ *
+ * Creates a simple ItemIDList from a path and returns it. This function
+ * does not fail on non-existing paths.
+ *
+ * PARAMS
+ *  path         [I]   path to parse and convert into an ItemIDList
+ *
+ * RETURNS
+ *  the newly created simple ItemIDList
+ *
+ * NOTES
+ *  Simple in the name does not mean a relative ItemIDList but rather a
+ *  fully qualified list, where only the file name is filled in and the
+ *  directory flag for those ItemID elements this is known about, eg.
+ *  it is not the last element in the ItemIDList or the actual directory
+ *  exists on disk.
+ *  exported by ordinal.
+ */
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathA(LPCSTR lpszPath)
+{
+	LPITEMIDLIST pidl = NULL;
+	UNICODE_STRING wPath;
+
+	TRACE("%s\n", debugstr_a(lpszPath));
+
+	RtlCreateUnicodeStringFromAsciiz(&wPath, lpszPath);
+
+	_ILParsePathW(wPath.Buffer, NULL, TRUE, &pidl, NULL);
+	RtlFreeUnicodeString(&wPath);
+
+	TRACE("%s %p\n", debugstr_a(lpszPath), pidl);
 	return pidl;
 }
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPCWSTR lpszPath)
+
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathW(LPCWSTR lpszPath)
 {
-	char	lpszTemp[MAX_PATH];
-	TRACE("path=%s\n",debugstr_w(lpszPath));
+	LPITEMIDLIST pidl = NULL;
 
-        if (!WideCharToMultiByte( CP_ACP, 0, lpszPath, -1, lpszTemp, sizeof(lpszTemp), NULL, NULL ))
-            lpszTemp[sizeof(lpszTemp)-1] = 0;
+	TRACE("%s\n", debugstr_w(lpszPath));
 
-	return SHSimpleIDListFromPathA (lpszTemp);
+	_ILParsePathW(lpszPath, NULL, TRUE, &pidl, NULL);
+	TRACE("%s %p\n", debugstr_w(lpszPath), pidl);
+	return pidl;
 }
 
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPCVOID lpszPath)
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW(LPCVOID lpszPath)
 {
 	if ( SHELL_OsIsUnicode())
 	  return SHSimpleIDListFromPathW (lpszPath);
@@ -958,7 +1034,7 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	    {
 	       WIN32_FIND_DATAA * pfd = dest;
 
-	       if ( len < sizeof (WIN32_FIND_DATAA)) return E_INVALIDARG;
+	       if (len < (int)sizeof(WIN32_FIND_DATAA)) return E_INVALIDARG;
 
 	       ZeroMemory(pfd, sizeof (WIN32_FIND_DATAA));
 	       _ILGetFileDateTime( pidl, &(pfd->ftLastWriteTime));
@@ -998,7 +1074,7 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	    {
 	       WIN32_FIND_DATAW * pfd = dest;
 
-	       if ( len < sizeof (WIN32_FIND_DATAW)) return E_INVALIDARG;
+	       if (len < (int)sizeof(WIN32_FIND_DATAW)) return E_INVALIDARG;
 
 	       ZeroMemory(pfd, sizeof (WIN32_FIND_DATAA));
 	       _ILGetFileDateTime( pidl, &(pfd->ftLastWriteTime));
@@ -1090,6 +1166,18 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 }
 
 /*************************************************************************
+ * SHGetPathFromIDList		[SHELL32.@][NT 4.0: SHELL32.219]
+ */
+BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
+{
+	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
+
+	if (SHELL_OsIsUnicode())
+	  return SHGetPathFromIDListW(pidl,pszPath);
+	return SHGetPathFromIDListA(pidl,pszPath);
+}
+
+/*************************************************************************
  *	SHBindToParent		[shell version 5.0]
  */
 HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCITEMIDLIST *ppidlLast)
@@ -1134,18 +1222,6 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
 
 	TRACE_(shell)("-- psf=%p pidl=%p ret=0x%08lx\n", *ppv, (ppidlLast)?*ppidlLast:NULL, hr);
 	return hr;
-}
-
-/*************************************************************************
- * SHGetPathFromIDList		[SHELL32.@][NT 4.0: SHELL32.219]
- */
-BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
-{
-	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
-
-	if (SHELL_OsIsUnicode())
-	  return SHGetPathFromIDListW(pidl,pszPath);
-	return SHGetPathFromIDListA(pidl,pszPath);
 }
 
 /**************************************************************************

@@ -64,7 +64,7 @@ static struct ICOM_VTABLE(IFileSystemBindData) sbvt =
 
 static WCHAR wFileSystemBindData[] = {'F','i','l','e',' ','S','y','s','t','e','m',' ','B','i','n','d','D','a','t','a',0};
 
-HRESULT WINAPI FileSystemBindData_Constructor(const WIN32_FIND_DATAW *pfd, LPBC *ppV)
+HRESULT WINAPI IFileSystemBindData_Constructor(const WIN32_FIND_DATAW *pfd, LPBC *ppV)
 {
 	IFileSystemBindDataImpl *sb;
 	HRESULT ret = E_OUTOFMEMORY;

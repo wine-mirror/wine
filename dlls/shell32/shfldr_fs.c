@@ -298,7 +298,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 *
 * PARAMS
 *  hwndOwner       [in]  Parent window for any message's
-*  pbc             [in]  Reserved
+*  pbc             [in]  optional FileSystemBindData context
 *  lpszDisplayName [in]  Unicode displayname.
 *  pchEaten        [out] (unicode) characters processed
 *  ppidl           [out] complex pidl to item
@@ -402,16 +402,16 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner, DWORD dwFlags
 *		IShellFolder_fnBindToObject
 * PARAMETERS
 *  LPCITEMIDLIST pidl,       //[in ] relative pidl to open
-*  LPBC          pbc,        //[in ] reserved
+*  LPBC          pbc,        //[in ] optional FileSystemBindData context
 *  REFIID        riid,       //[in ] Initial Interface
 *  LPVOID*       ppvObject   //[out] Interface*
 */
 static HRESULT WINAPI
-IShellFolder_fnBindToObject (IShellFolder2 * iface, LPCITEMIDLIST pidl, LPBC pbcReserved, REFIID riid, LPVOID * ppvOut)
+IShellFolder_fnBindToObject (IShellFolder2 * iface, LPCITEMIDLIST pidl, LPBC pbc, REFIID riid, LPVOID * ppvOut)
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
 
-    TRACE ("(%p)->(pidl=%p,%p,%s,%p)\n", This, pidl, pbcReserved, shdebugstr_guid (riid), ppvOut);
+    TRACE ("(%p)->(pidl=%p,%p,%s,%p)\n", This, pidl, pbc, shdebugstr_guid (riid), ppvOut);
 
     return SHELL32_BindToChild (This->pidlRoot, This->sPathTarget, pidl, riid, ppvOut);
 }
