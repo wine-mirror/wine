@@ -1,6 +1,6 @@
 /*	User-based primary surface driver
  *
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* if you use OWN_WINDOW, don't use SYNC_UPDATE, or you may get trouble */
 /* #define SYNC_UPDATE */
-#define OWN_WINDOW 
+#define OWN_WINDOW
 
 #ifdef OWN_WINDOW
 static void User_create_own_window(IDirectDrawSurfaceImpl* This);
@@ -32,6 +32,8 @@ static DWORD CALLBACK User_update_thread(LPVOID);
 #endif
 static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc);
 static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc);
+
+static HWND get_display_window(IDirectDrawSurfaceImpl* This, LPPOINT pt);
 
 static ICOM_VTABLE(IDirectDrawSurface7) User_IDirectDrawSurface7_VTable;
 
@@ -65,18 +67,36 @@ User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
     This->set_palette    = User_DirectDrawSurface_set_palette;
     This->update_palette = User_DirectDrawSurface_update_palette;
 
+    This->get_gamma_ramp = User_DirectDrawSurface_get_gamma_ramp;
+    This->set_gamma_ramp = User_DirectDrawSurface_set_gamma_ramp;
+
     This->get_display_window = User_DirectDrawSurface_get_display_window;
 
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
+#ifdef OWN_WINDOW
+	DirectDrawSurface_RegisterClass();
+#endif
 #ifndef SYNC_UPDATE
 	priv->user.update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
 	priv->user.update_thread = CreateThread(NULL, 0, User_update_thread, This, 0, NULL);
+#ifdef OWN_WINDOW
+	if (This->ddraw_owner->cooperative_level & DDSCL_FULLSCREEN) {
+	    /* wait for window creation (or update thread destruction) */
+	    while (WaitForMultipleObjects(1, &priv->user.update_thread, FALSE, 10) == WAIT_TIMEOUT)
+		if (This->more.lpDDRAWReserved) break;
+	    if (!This->more.lpDDRAWReserved) {
+		ERR("window creation failed\n");
+	    }
+	}
+#endif
 #else
 #ifdef OWN_WINDOW
 	User_create_own_window(This);
 #endif
 #endif
+	if (!This->more.lpDDRAWReserved)
+	    This->more.lpDDRAWReserved = (LPVOID)pDD->window;
     }
 
     return DIB_DirectDrawSurface_alloc_dc(This, &priv->user.cached_dc);
@@ -141,6 +161,10 @@ void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
 #ifdef OWN_WINDOW
 	User_destroy_own_window(This);
 #endif
+#endif
+	This->more.lpDDRAWReserved = 0;
+#ifdef OWN_WINDOW
+	DirectDrawSurface_UnregisterClass();
 #endif
     }
     DIB_DirectDrawSurface_free_dc(This, priv->user.cached_dc);
@@ -248,6 +272,44 @@ HRESULT User_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,
     return S_OK;
 }
 
+HRESULT User_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp)
+{
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+	POINT offset;
+	HWND hDisplayWnd;
+	HDC hDisplayDC;
+	HRESULT hr;
+	hDisplayWnd = get_display_window(This, &offset);
+	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS);
+	hr = GetDeviceGammaRamp(hDisplayDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
+	ReleaseDC(hDisplayWnd, hDisplayDC);
+	return hr;
+    }
+    return Main_DirectDrawSurface_get_gamma_ramp(This, dwFlags, lpGammaRamp);
+}
+
+HRESULT User_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp)
+{
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+	POINT offset;
+	HWND hDisplayWnd;
+	HDC hDisplayDC;
+	HRESULT hr;
+	hDisplayWnd = get_display_window(This, &offset);
+	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS);
+	hr = SetDeviceGammaRamp(hDisplayDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
+	ReleaseDC(hDisplayWnd, hDisplayDC);
+	return hr;
+    }
+    return Main_DirectDrawSurface_set_gamma_ramp(This, dwFlags, lpGammaRamp);
+}
+
 /* Returns the window that hosts the display.
  * *pt is set to the upper left position of the window relative to the
  * upper left corner of the surface. */
@@ -259,9 +321,11 @@ static HWND get_display_window(IDirectDrawSurfaceImpl* This, LPPOINT pt)
     {
 #ifdef OWN_WINDOW
 	USER_PRIV_VAR(priv, This);
+#if 1
 	SetWindowPos(priv->user.window, HWND_TOP, 0, 0, 0, 0,
 		     SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOMOVE|
 		     SWP_NOREDRAW|SWP_NOSENDCHANGING|SWP_NOSIZE);
+#endif
 	return priv->user.window;
 #else
 	return This->ddraw_owner->window;
@@ -310,8 +374,9 @@ static void User_create_own_window(IDirectDrawSurfaceImpl* This)
 
     if (This->ddraw_owner->cooperative_level & DDSCL_FULLSCREEN)
     {
-	DirectDrawSurface_RegisterClass();
-	priv->user.window = CreateWindowExA(WS_EX_TOPMOST,
+	priv->user.window = CreateWindowExA(WS_EX_TOPMOST |
+					    WS_EX_LAYERED |
+					    WS_EX_TRANSPARENT,
 					    "WINE_DDRAW", "DirectDraw",
 					    WS_POPUP,
 					    0, 0,
@@ -319,6 +384,7 @@ static void User_create_own_window(IDirectDrawSurfaceImpl* This)
 					    This->surface_desc.dwHeight,
 					    GetDesktopWindow(),
 					    0, 0, This);
+	This->more.lpDDRAWReserved = (LPVOID)priv->user.window;
 	SetWindowPos(priv->user.window, HWND_TOP, 0, 0, 0, 0,
 		     SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOMOVE|
 		     SWP_NOREDRAW|SWP_NOSENDCHANGING|SWP_NOSIZE|SWP_SHOWWINDOW);
@@ -335,8 +401,8 @@ static void User_destroy_own_window(IDirectDrawSurfaceImpl* This)
 	SetWindowPos(priv->user.window, 0, 0, 0, 0, 0,
 		     SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOMOVE|SWP_NOZORDER|
 		     SWP_NOREDRAW|SWP_NOSENDCHANGING|SWP_NOSIZE|SWP_HIDEWINDOW);
+	This->more.lpDDRAWReserved = NULL;
 	DestroyWindow(priv->user.window);
-	DirectDrawSurface_UnregisterClass();
 	priv->user.window = 0;
     }
 }

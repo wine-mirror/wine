@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef DDRAW_DSURFACE_USER_H_INCLUDED
 #define DDRAW_DSURFACE_USER_H_INCLUDED
@@ -56,5 +56,12 @@ HWND User_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
 HRESULT User_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);
 HRESULT User_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,
 					  HDC hDC);
+
+HRESULT User_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
+HRESULT User_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
 
 #endif
