@@ -118,6 +118,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "winsock2.h"
 #include "mswsock.h"
 #include "ws2tcpip.h"
@@ -1665,20 +1666,39 @@ u_short WINAPI WS_htons(u_short hostshort)
 
 /***********************************************************************
  *		WSAHtonl		(WS2_32.46)
+ *  From MSDN decription of error codes, this function should also
+ *  check if WinSock has been initialized and the socket is a valid
+ *  socket. But why? This function only translates a host byte order
+ *  u_long into a network byte order u_long...
  */
 int WINAPI WSAHtonl(SOCKET s, u_long hostlong, u_long *lpnetlong)
 {
-    FIXME("stub.\n");
-    return INVALID_SOCKET;
+    if (lpnetlong)
+    {
+        *lpnetlong = htonl(hostlong);
+        return 0;
+    }
+    WSASetLastError(WSAEFAULT);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
  *		WSAHtons		(WS2_32.47)
+ *  From MSDN decription of error codes, this function should also
+ *  check if WinSock has been initialized and the socket is a valid
+ *  socket. But why? This function only translates a host byte order
+ *  u_short into a network byte order u_short...
  */
 int WINAPI WSAHtons(SOCKET s, u_short hostshort, u_short *lpnetshort)
 {
-    FIXME("stub.\n");
-    return INVALID_SOCKET;
+
+    if (lpnetshort)
+    {
+        *lpnetshort = htons(hostshort);
+        return 0;
+    }
+    WSASetLastError(WSAEFAULT);
+    return SOCKET_ERROR;
 }
 
 
@@ -3564,12 +3584,133 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
  */
 INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                                INT AddressFamily,
-                               LPWSAPROTOCOL_INFOA lpProtocolInfo, 
+                               LPWSAPROTOCOL_INFOA lpProtocolInfo,
                                LPSOCKADDR lpAddress,
                                LPINT lpAddressLength)
 {
-    FIXME("(%s, %x, %p, %p, %p) Stub!\n", AddressString, AddressFamily, lpProtocolInfo, lpAddress, lpAddressLength);
-    return 0;
+    INT res=0;
+    LONG inetaddr;
+    LPSTR workBuffer=NULL,ptrPort;
+
+    if (AddressString)
+    {
+        workBuffer = HeapAlloc( GetProcessHeap(), 0, strlen(AddressString)+1 );
+        if (workBuffer)
+        {
+            strcpy(workBuffer,AddressString);
+            switch (AddressFamily)
+            {
+            case AF_INET:
+                /* caller wants to know the size of the socket buffer */
+                if (*lpAddressLength < sizeof(SOCKADDR_IN))
+                {
+                    *lpAddressLength = sizeof(SOCKADDR_IN);
+                    res = WSAEFAULT;
+                }
+                else
+                {
+                    /* caller wants to translate an AdressString into a SOCKADDR */
+                    if (lpAddress)
+                    {
+                        memset(lpAddress,0,sizeof(SOCKADDR_IN));
+                        ((LPSOCKADDR_IN)lpAddress)->sin_family = AF_INET;
+                        ptrPort = strchr(workBuffer,':');
+                        if (ptrPort)
+                        {
+                            ((LPSOCKADDR_IN)lpAddress)->sin_port = (u_short)atoi(ptrPort+1);
+                            *ptrPort = '\0';
+                        }
+                        else
+                            ((LPSOCKADDR_IN)lpAddress)->sin_port = 0;
+                        inetaddr = inet_addr(workBuffer);
+                        if (inetaddr != INADDR_NONE)
+                        {
+                            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr;
+                            res = 0;
+                        }
+                        else
+                            res = WSAEINVAL;
+                    }
+                }
+                if (lpProtocolInfo)
+                    FIXME("(%s, %x, %p, %p, %p) - ProtocolInfo not implemented!\n",
+                        AddressString, AddressFamily,
+                        lpProtocolInfo, lpAddress, lpAddressLength);
+
+                break;
+            default:
+                FIXME("(%s, %x, %p, %p, %p) - AddressFamiliy not implemented!\n",
+                    AddressString, AddressFamily,
+                    lpProtocolInfo, lpAddress, lpAddressLength);
+            }
+            HeapFree( GetProcessHeap(), 0, workBuffer );
+        }
+        else
+            res = WSA_NOT_ENOUGH_MEMORY;
+    }
+    else
+        res = WSAEINVAL;
+
+    if (!res) return 0;
+    WSASetLastError(res);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSAStringToAddressW                      (WS2_32.81)
+ *
+ * Does anybody know if this functions allows to use hebrew/arabic/chinese... digits?
+ * If this should be the case, it would be required to map these digits
+ * to Unicode digits (0-9) using FoldString first.
+ */
+INT WINAPI WSAStringToAddressW(LPWSTR AddressString,
+                               INT AddressFamily,
+                               LPWSAPROTOCOL_INFOW lpProtocolInfo,
+                               LPSOCKADDR lpAddress,
+                               LPINT lpAddressLength)
+{
+    INT sBuffer,res=0;
+    LPSTR workBuffer=NULL;
+    WSAPROTOCOL_INFOA infoA;
+    LPWSAPROTOCOL_INFOA lpProtoInfoA = NULL;
+
+    /* if ProtocolInfo is available - convert to ANSI variant */
+    if (lpProtocolInfo)
+    {
+        lpProtoInfoA = &infoA;
+        memcpy( lpProtoInfoA, lpProtocolInfo, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
+
+        if (!WideCharToMultiByte( CP_ACP, 0, lpProtocolInfo->szProtocol, -1,
+                                  lpProtoInfoA->szProtocol, WSAPROTOCOL_LEN+1, NULL, NULL ))
+        {
+            WSASetLastError( WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+    }
+
+    if (AddressString)
+    {
+        /* Translate AddressString to ANSI code page - assumes that only
+           standard digits 0-9 are used with this API call */
+        sBuffer = WideCharToMultiByte( CP_ACP, 0, AddressString, -1, NULL, 0, NULL, NULL );
+        workBuffer = HeapAlloc( GetProcessHeap(), 0, sBuffer );
+
+        if (workBuffer)
+        {
+            WideCharToMultiByte( CP_ACP, 0, AddressString, -1, workBuffer, sBuffer, NULL, NULL );
+            res = WSAStringToAddressA(workBuffer,AddressFamily,lpProtoInfoA,
+                                      lpAddress,lpAddressLength);
+            HeapFree( GetProcessHeap(), 0, workBuffer );
+            return res;
+        }
+        else
+            res = WSA_NOT_ENOUGH_MEMORY;
+    }
+    else
+        res = WSAEINVAL;
+
+    WSASetLastError(res);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
