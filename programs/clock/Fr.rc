@@ -23,18 +23,18 @@ MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
  POPUP "&Propriétés" {
   MENUITEM "Ana&logue", 0x100
-  MENUITEM "Digi&tale", 0x101
+  MENUITEM "&Numérique", 0x101
   MENUITEM SEPARATOR
-  MENUITEM "&Fonte...", 0x103
+  MENUITEM "&Police...", 0x103
   MENUITEM SEPARATOR
-  MENUITEM "&Sans barre de titre", 0x105
+  MENUITEM "Sans &barre de titre", 0x105
   MENUITEM SEPARATOR
   MENUITEM "&Secondes", 0x107
   MENUITEM "&Date", 0x108
  }
  POPUP "Inf&o..." {
   MENUITEM "&Licence", 0x109
-  MENUITEM "&AUCUNE GARANTIE", 0x10A
+  MENUITEM "AUCUNE &GARANTIE", 0x10A
   MENUITEM "&A propos de Horloge", 0x10B
  }
 }

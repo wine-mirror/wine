@@ -53,5 +53,5 @@ BEGIN
 	IDS_SHV_COLUMN4		"Modified"
 	IDS_SHV_COLUMN5		"Attributes"
 	IDS_SHV_COLUMN6		"Size"
-	IDS_SHV_COLUMN7		"Size avaiable"
+	IDS_SHV_COLUMN7		"Size available"
 END

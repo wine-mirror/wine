@@ -119,8 +119,8 @@ Voulez vous créer un nouveau fichier ?"
 STRING_NOTSAVED,                                "Le fichier '%s'\na été modifié\n\n \
 Voulez vous enregistrer vos modifications ?"
 STRING_NOTFOUND,                                "'%s' non trouvé."
-STRING_OUT_OF_MEMORY,                   "Pas assez de mémoire pour finir cette tâche.  \
-task. \n Fermez une ou plusier applications pour libérer\n\
+STRING_OUT_OF_MEMORY,                   "Pas assez de mémoire pour finir cette \
+tâche. \n Fermez une ou plusier applications pour libérer\n\
 de la mémoire."
 
 }

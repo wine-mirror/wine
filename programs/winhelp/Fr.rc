@@ -51,20 +51,19 @@ MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 }
 
 /* Strings */
-
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
 STID_WINE_HELP, 	"Aide de WINE"
 STID_WHERROR, 		"ERREUR"
 STID_WARNING,  		"ATTENTION"
 STID_INFO,  		"Information"
-STID_NOT_IMPLEMENTED, 	"Non implementé"
+STID_NOT_IMPLEMENTED, 	"Non implémenté"
 STID_HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide `%s'"
 STID_CONTENTS, 		"&Index"
 STID_SEARCH, 		"&Rechercher"
 STID_BACK, 		"&Précédent"
 STID_HISTORY, 		"&Historique"
-STID_TOPICS,		"&Topics"
+STID_TOPICS,		"&Sujets"
 STID_ALL_FILES, 	"Tout fichier (*.*)"
 STID_HELP_FILES_HLP, 	"Fichiers d'aide (*.hlp)"
 }
