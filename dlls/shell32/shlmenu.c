@@ -20,9 +20,9 @@ BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu);
 BOOL WINAPI FileMenu_AppendItemA(HMENU hMenu, LPCSTR lpText, UINT uID, int icon, HMENU hMenuPopup, int nItemHeight);
 
 typedef struct
-{	BOOL		bInitialized;
-	BOOL		bIsMagic;
-
+{
+	BOOL		bInitialized;
+	BOOL		bFixedItems;
 	/* create */
 	COLORREF	crBorderColor;
 	int		nBorderWidth;
@@ -127,13 +127,16 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 	if (menudata->bInitialized)
 	  return 0;
 	
-	uID = menudata->uID;
 	pidl = ((pAlternatePidl) ? pAlternatePidl : menudata->pidl);
+	if (!pidl)
+	  return 0;
+
+	uID = menudata->uID;
 	uFlags = menudata->uFlags;
 	uEnumFlags = menudata->uEnumFlags;
 	lpfnCallback = menudata->lpfnCallback;
-
 	menudata->bInitialized = FALSE;
+
 	SetMenuInfo(hmenu, &MenuInfo);
 	
 	if (SUCCEEDED (SHGetDesktopFolder(&lpsf)))
@@ -209,6 +212,9 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 /*************************************************************************
  * FileMenu_Create				[SHELL32.114]
  *
+ * NOTES
+ *  for non-root menus values are
+ *  (ffffffff,00000000,00000000,00000000,00000000) 
  */
 HMENU WINAPI FileMenu_Create (
 	COLORREF crBorderColor,
@@ -226,7 +232,6 @@ HMENU WINAPI FileMenu_Create (
 	crBorderColor, nBorderWidth, hBorderBmp, nSelHeight, uFlags, hMenu);
 
 	menudata = (LPFMINFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FMINFO));
-	menudata->bIsMagic = TRUE;
 	menudata->crBorderColor = crBorderColor;
 	menudata->nBorderWidth = nBorderWidth;
 	menudata->hBorderBmp = hBorderBmp;
@@ -277,7 +282,10 @@ BOOL WINAPI FileMenu_AppendItemA(
 {
 	LPSTR lpszText = (LPSTR)lpText;
 	MENUITEMINFOA	mii;
-	LPFMITEM myItem;
+	LPFMITEM	myItem;
+	LPFMINFO	menudata;
+	MENUINFO        MenuInfo;
+
 
 	TRACE("0x%08x %s 0x%08x 0x%08x 0x%08x 0x%08x\n",
 	hMenu, (lpszText!=FM_SEPARATOR) ? lpText: NULL,
@@ -317,6 +325,18 @@ BOOL WINAPI FileMenu_AppendItemA(
 	mii.wID = uID;
 
 	InsertMenuItemA (hMenu, (UINT)-1, TRUE, &mii);
+
+	/* set bFixedItems to true */
+	MenuInfo.cbSize = sizeof(MENUINFO);
+	MenuInfo.fMask = MIM_MENUDATA;
+
+	if (! GetMenuInfo(hMenu, &MenuInfo))
+	  return FALSE;
+
+	menudata = (LPFMINFO)MenuInfo.dwMenuData;
+	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	menudata->bFixedItems = TRUE;
+	SetMenuInfo(hMenu, &MenuInfo);
 
 	return TRUE;
 
@@ -371,6 +391,7 @@ int WINAPI FileMenu_InsertUsingPidl (
 /*************************************************************************
  * FileMenu_ReplaceUsingPidl			[SHELL32.113]
  *
+ * FIXME: the static items are deleted but wont be refreshed
  */
 int WINAPI FileMenu_ReplaceUsingPidl(
 	HMENU	hmenu,
@@ -509,7 +530,7 @@ LRESULT WINAPI FileMenu_MeasureItem(
 
 	/* add the menubitmap */
 	menuinfo = FM_GetMenuInfo(pMyItem->hMenu);
-	if (menuinfo->bIsMagic)
+	if (menuinfo->nBorderWidth)
 	  lpmis->itemWidth += menuinfo->nBorderWidth;
 	
 	TRACE("-- 0x%04x 0x%04x\n", lpmis->itemWidth, lpmis->itemHeight);
@@ -547,7 +568,7 @@ LRESULT WINAPI FileMenu_DrawItem(
 
 	/* add the menubitmap */
 	menuinfo = FM_GetMenuInfo(pMyItem->hMenu);
-	if (menuinfo->bIsMagic)
+	if (menuinfo->nBorderWidth)
 	  TextRect.left += menuinfo->nBorderWidth;
 	
 	BorderRect.right = menuinfo->nBorderWidth;
