@@ -362,7 +362,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    /* FIXME: NUMDBGV should be made variable */
    DBG_VALUE 	value[NUMDBGV];
    DBG_VALUE	vtmp;
-   int		num, i;
+   int		num, i, local = -1;
 
    num = DEBUG_GSV_Helper(name, lineno, value, NUMDBGV, bp_flag);
    if (!num && (name[0] != '_'))
@@ -379,6 +379,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    if (DEBUG_GetStackSymbolValue(name, &vtmp) && num < NUMDBGV) 
    {
       value[num] = vtmp;
+      local = num;
       num++;
    }
 
@@ -396,8 +397,19 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
       DEBUG_Printf(DBG_CHN_MESG, "Many symbols with name '%s', choose the one you want (<cr> to abort):\n", name);
       for (i = 0; i < num; i++) {
 	 DEBUG_Printf(DBG_CHN_MESG, "[%d]: ", i + 1);
-	 DEBUG_PrintAddress( &value[i].addr, DEBUG_GetSelectorType(value[i].addr.seg), TRUE);
-	 DEBUG_Printf(DBG_CHN_MESG, "\n");
+         if (i == local) {
+             struct name_hash*func;
+             unsigned int     ebp;
+             unsigned int     eip;
+
+             if (DEBUG_GetCurrentFrame(&func, &eip, &ebp))
+                 DEBUG_Printf(DBG_CHN_MESG, "local variable of %s in %s\n", func->name, func->sourcefile);
+             else
+                 DEBUG_Printf(DBG_CHN_MESG, "local variable\n");
+         } else {
+             DEBUG_PrintAddress( &value[i].addr, DEBUG_GetSelectorType(value[i].addr.seg), TRUE);
+             DEBUG_Printf(DBG_CHN_MESG, "\n");
+         }
       }
       do {
 	  i = 0;
