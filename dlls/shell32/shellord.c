@@ -930,6 +930,11 @@ HRESULT WINAPI IsUserAdmin(void)
  * NOTES
  *  the pidl is for STRRET OFFSET
  */
+HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD len)
+{
+	return StrRetToStrNA(dest, len, src, pidl);
+}
+
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
 	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
@@ -958,6 +963,11 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST
 	    return(FALSE);
 	}
 	return S_OK;
+}
+
+HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len)
+{
+	return StrRetToStrNW(dest, len, src, pidl);
 }
 
 HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)

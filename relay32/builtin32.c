@@ -82,6 +82,7 @@ extern const BUILTIN32_DESCRIPTOR OLESVR32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR PSAPI_Descriptor;
 extern const BUILTIN32_DESCRIPTOR RASAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR SHELL32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR SHLWAPI_Descriptor;
 extern const BUILTIN32_DESCRIPTOR TAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR USER32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR VERSION_Descriptor;
@@ -134,6 +135,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &PSAPI_Descriptor,    0, 0, NULL },
     { &RASAPI32_Descriptor, 0, 0, NULL },
     { &SHELL32_Descriptor,  BI32_DANGER, 0, &shell32_ResourceDescriptor },
+    { &SHLWAPI_Descriptor,  0, 0, NULL },
     { &TAPI32_Descriptor,   0, 0, NULL },
     { &USER32_Descriptor,   0, 0, &user32_ResourceDescriptor },
     { &VERSION_Descriptor,  0, 0, NULL },

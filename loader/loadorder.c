@@ -39,6 +39,7 @@ static struct tagDllOverride {
 	{"comdlg32,commdlg",		"elfdll,builtin,native"},
 	{"version,ver",			"elfdll,builtin,native"},
 	{"shell32,shell",		"builtin,native"},
+	{"shlwapi",			"native,builtin"},
 	{"lz32,lzexpand",		"builtin,native"},
 	{"commctrl,comctl32",		"builtin,native"},
 	{"wsock32,winsock",		"builtin"},

@@ -6,7 +6,10 @@ VPATH     = @srcdir@
 MODULE    = shell32
 WRCEXTRA  = -s -p$(MODULE)
 
-SPEC_SRCS = shell32.spec shell.spec
+SPEC_SRCS = \
+	shell.spec \
+	shell32.spec \
+	shlwapi.spec
 
 C_SRCS = \
 	brsfolder.c \

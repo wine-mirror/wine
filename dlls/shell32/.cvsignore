@@ -1,4 +1,5 @@
 Makefile
-shell32.spec.c
 shell.spec.c
+shell32.spec.c
+shlwapi.spec.c
 shres.s
