@@ -2313,14 +2313,14 @@ static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) 
 			    lpdsf->s.surface_desc.dwHeight);
     
   if (img == NULL) {
-    ERR(ddraw, "Error creating XShm image. Reverting to standard X images !\n");
+    MSG("Couldn't create XShm image (due to X11 remote display or failure).\nReverting to standard X images !\n");
     this->e.xlib.xshm_active = 0;
       return NULL;
   }
 
     lpdsf->t.xlib.shminfo.shmid = shmget( IPC_PRIVATE, img->bytes_per_line * img->height, IPC_CREAT|0777 );
     if (lpdsf->t.xlib.shminfo.shmid < 0) {
-    ERR(ddraw, "Error creating shared memory segment. Reverting to standard X images !\n");
+    MSG("Couldn't create shared memory segment (due to X11 remote display or failure).\nReverting to standard X images !\n");
     this->e.xlib.xshm_active = 0;
       TSXDestroyImage(img);
       return NULL;
@@ -2329,7 +2329,7 @@ static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) 
     lpdsf->t.xlib.shminfo.shmaddr = img->data = (char*)shmat(lpdsf->t.xlib.shminfo.shmid, 0, 0);
       
     if (img->data == (char *) -1) {
-    ERR(ddraw, "Error attaching shared memory segment. Reverting to standard X images !\n");
+    MSG("Couldn't attach shared memory segment (due to X11 remote display or failure).\nReverting to standard X images !\n");
     this->e.xlib.xshm_active = 0;
       TSXDestroyImage(img);
       shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
@@ -2360,7 +2360,7 @@ static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) 
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
     XSetErrorHandler(WineXHandler);
 
-    ERR(ddraw, "Error attaching shared memory segment to X server. Reverting to standard X images !\n");
+    MSG("Couldn't attach shared memory segment to X server (due to X11 remote display or failure).\nReverting to standard X images !\n");
     this->e.xlib.xshm_active = 0;
     
     /* Leave the critical section */
