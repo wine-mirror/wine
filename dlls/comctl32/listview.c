@@ -28,6 +28,7 @@
  *   -- Drawing optimizations.
  *   -- Hot item handling.
  *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
+ *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs)
  *
  * Notifications:
  *   LISTVIEW_Notify : most notifications from children (editbox and header)
@@ -667,69 +668,27 @@ static inline void notify_odcachehint(LISTVIEW_INFO *infoPtr, RANGE range)
     notify_hdr(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
 }
 
-static BOOL notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, HDC hdc, RECT rc)
+static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, LPRECT rcBounds, LVITEMW *lpLVItem)
 {
-    NMLVCUSTOMDRAW nmlvcd;
-
-    TRACE("(dwDrawStage=%lx, hdc=%x, rc=?)\n", dwDrawStage, hdc);
-
-    nmlvcd.nmcd.dwDrawStage = dwDrawStage;
-    nmlvcd.nmcd.hdc         = hdc;
-    nmlvcd.nmcd.rc          = rc;
-    nmlvcd.nmcd.dwItemSpec  = 0;
-    nmlvcd.nmcd.uItemState  = 0;
-    nmlvcd.nmcd.lItemlParam = 0;
-    nmlvcd.clrText          = infoPtr->clrText;
-    nmlvcd.clrTextBk        = infoPtr->clrBk;
-
-    return (BOOL)notify_hdr(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
+    ZeroMemory(lpnmlvcd, sizeof(NMLVCUSTOMDRAW));
+    lpnmlvcd->nmcd.hdc         = hdc;
+    lpnmlvcd->nmcd.rc          = *rcBounds;
+    if (lpLVItem)
+    {
+	lpnmlvcd->nmcd.dwItemSpec  = lpLVItem->iItem;
+        if (lpLVItem->state & LVIS_SELECTED) lpnmlvcd->nmcd.uItemState |= CDIS_SELECTED;
+	if (lpLVItem->state & LVIS_FOCUSED) lpnmlvcd->nmcd.uItemState |= CDIS_FOCUS;
+	if (lpLVItem->iItem == infoPtr->nHotItem) lpnmlvcd->nmcd.uItemState |= CDIS_HOT;
+	lpnmlvcd->nmcd.lItemlParam = lpLVItem->lParam;
+    }
+    lpnmlvcd->clrText          = infoPtr->clrText;
+    lpnmlvcd->clrTextBk        = infoPtr->clrBk;
 }
 
-/* FIXME: we should inline this where it's called somehow
- * I think we need to pass in the structure
- */
-static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, UINT iSubItem, UINT uItemDrawState)
+static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, NMLVCUSTOMDRAW *lpnmlvcd)
 {
-    NMLVCUSTOMDRAW nmlvcd;
-    UINT uItemState;
-    RECT itemRect;
-    LVITEMW item;
-    BOOL bReturn;
-
-    item.iItem = iItem;
-    item.iSubItem = 0;
-    item.mask = LVIF_PARAM;
-    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
-
-    uItemState = 0;
-
-    if (LISTVIEW_GetItemState(infoPtr, iItem, LVIS_SELECTED)) uItemState |= CDIS_SELECTED;
-    if (LISTVIEW_GetItemState(infoPtr, iItem, LVIS_FOCUSED)) uItemState |= CDIS_FOCUS;
-    if (iItem == infoPtr->nHotItem)       uItemState |= CDIS_HOT;
-
-    itemRect.left = LVIR_BOUNDS;
-    LISTVIEW_GetItemRect(infoPtr, iItem, &itemRect);
-
-    nmlvcd.nmcd.dwDrawStage = CDDS_ITEM | uItemDrawState;
-    nmlvcd.nmcd.hdc         = hdc;
-    nmlvcd.nmcd.rc          = itemRect;
-    nmlvcd.nmcd.dwItemSpec  = iItem;
-    nmlvcd.nmcd.uItemState  = uItemState;
-    nmlvcd.nmcd.lItemlParam = item.lParam;
-    nmlvcd.clrText          = infoPtr->clrText;
-    nmlvcd.clrTextBk        = infoPtr->clrBk;
-    nmlvcd.iSubItem         = iSubItem;
-
-    TRACE("drawstage=%lx hdc=%x item=%lx, itemstate=%x, lItemlParam=%lx\n",
-          nmlvcd.nmcd.dwDrawStage, nmlvcd.nmcd.hdc, nmlvcd.nmcd.dwItemSpec,
-          nmlvcd.nmcd.uItemState, nmlvcd.nmcd.lItemlParam);
-
-    bReturn = notify_hdr(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
-
-    infoPtr->clrText = nmlvcd.clrText;
-    infoPtr->clrBk   = nmlvcd.clrTextBk;
-    
-    return bReturn;
+    lpnmlvcd->nmcd.dwDrawStage = dwDrawStage;
+    return notify_hdr(infoPtr, NM_CUSTOMDRAW, &lpnmlvcd->nmcd.hdr);
 }
 
 /******** Item iterator functions **********************************/
@@ -3070,15 +3029,18 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
  * [I] INT : item index
  * [I] INT : subitem index
  * [I] RECT * : clipping rectangle
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
  *   Success: TRUE
  *   Failure: FALSE
  */
 static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, 
-		                 INT nSubItem, RECT rcItem, UINT align)
+		                 INT nSubItem, RECT rcItem, UINT align, DWORD cdmode)
 {
-    WCHAR szDispText[DISP_TEXT_SIZE];
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    DWORD cditemmode = CDRF_DODEFAULT;
+    NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
 
     TRACE("(hdc=%x, nItem=%d, nSubItem=%d, rcItem=%s)\n", 
@@ -3090,14 +3052,23 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
     lvItem.iSubItem = nSubItem;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
-    *lvItem.pszText = '\0';
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-    
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcItem, &lvItem);
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
+    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
+
+    /* FIXME: set the text attr in here, they may change! */
 
     if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
     
     DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | align);
+
+postpaint:
+    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
 
     return TRUE;
 }
@@ -3112,16 +3083,19 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
  * [I] hdc : device context handle
  * [I] nItem : item index
  * [I] rcItem : item rectangle
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
- *   TRUE: if item is focused
- *   FALSE: otherwise
+ *   Success: TRUE
+ *   Failure: FALSE
  */
-static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem)
+static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem, DWORD cdmode)
 {
-    WCHAR szDispText[DISP_TEXT_SIZE];
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    DWORD cditemmode = CDRF_DODEFAULT;
     INT nLabelWidth, imagePadding = 0;
     RECT* lprcFocus, rcOrig = rcItem;
+    NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
     TEXTATTR ta;
 
@@ -3134,13 +3108,17 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     lvItem.iSubItem = 0;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
-    *lvItem.pszText = '\0';
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
     if (lprcFocus) SetRectEmpty(lprcFocus);
+
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcItem, &lvItem);
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
+    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
     /* do indent */  
     rcItem.left += infoPtr->iconSize.cx * lvItem.iIndent;
@@ -3174,8 +3152,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     }
 
     /* Don't bother painting item being edited */
-    if (infoPtr->bEditing && lprcFocus) 
-    	return FALSE;
+    if (infoPtr->bEditing && lprcFocus) goto postpaint;
 
     select_text_attr(infoPtr, hdc, lvItem.state & LVIS_SELECTED, &ta);
 
@@ -3192,9 +3169,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
 	    ExtTextOutW(hdc, rcItem.left, rcItem.top, ETO_OPAQUE, &rcItem, 0, 0, 0);
         DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | DT_CENTER);
     }
-
     set_text_attr(hdc, &ta);
-    return lprcFocus != NULL;
+
+postpaint:
+    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
+    return TRUE;
 }
 
 /***
@@ -3205,16 +3185,18 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
- *   TRUE: if item is focused
- *   FALSE: otherwise
+ *   Success: TRUE
+ *   Failure: FALSE
  */
-static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD cdmode)
+static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD cdmode)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
-    RECT rcIcon, rcLabel, *lprcFocus;
+    RECT rcBounds, rcIcon, rcLabel, *lprcFocus;
+    NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
     UINT uFormat;
     TEXTATTR ta;
@@ -3228,18 +3210,23 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
     lvItem.iSubItem = 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
   
-    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, &rcIcon, &rcLabel)) return;
+    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, &rcBounds, &rcIcon, &rcLabel)) return FALSE;
 
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBounds, &lvItem);
     if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdrawitem (infoPtr, hdc, nItem, 0, CDDS_ITEMPREPAINT);
+        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
+    /* FIXME: pass the mnlvcd to select text attr */
+    infoPtr->clrText = nmlvcd.clrText;
+    infoPtr->clrBk   = nmlvcd.clrTextBk;
+    
     /* Set the item to the boundary box for now */
     TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
 
@@ -3294,7 +3281,9 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
 
 postpaint:    
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdrawitem(infoPtr, hdc, nItem, 0, CDDS_ITEMPOSTPAINT);
+        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
+
+    return TRUE;
 }
 
 /***
@@ -3380,7 +3369,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     INT nColumnCount, nFirstCol, nLastCol;
     RECT rcItem, rcClip, rcFullSelect;
     BOOL bFullSelected, isFocused;
-    DWORD cditemmode = CDRF_DODEFAULT;
     TEXTATTR tmpTa, oldTa;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
@@ -3448,15 +3436,17 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     {
 	nDrawPosY = i.nItem * infoPtr->nItemHeight;
 
+    	isFocused = FALSE;	    
 	/* compute the full select rectangle, if needed */
 	if (bFullSelected)
 	{
 	    item.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
-	    item.stateMask = LVIS_SELECTED;
+	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 	    item.iItem = i.nItem;
 	    item.iSubItem = 0;
   	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
-	     
+	    
+	    isFocused = item.state & LVIS_FOCUSED;
 	    rcFullSelect.left = lpCols[0].rc.left + REPORT_MARGINX +
 	    			infoPtr->iconSize.cx * item.iIndent +
 				(infoPtr->himlSmall ? infoPtr->iconSize.cx : 0);
@@ -3472,7 +3462,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
 	    
 	/* iterate through the invalidated columns */
-    	isFocused = FALSE;	    
 	for (j = nFirstCol; j <= nLastCol; j++)
 	{
 	    rcItem = lpCols[j].rc;
@@ -3486,17 +3475,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 
 	    if (rgntype == COMPLEXREGION && !RectVisible(hdc, &rcItem)) continue;
 
-	    if (cdmode & CDRF_NOTIFYITEMDRAW)
-		cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, j, CDDS_ITEMPREPAINT);
-	    if (cditemmode & CDRF_SKIPDEFAULT) continue;
-
 	    if (j == 0)
-		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem);
+		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem, cdmode);
 	    else
-		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align);
-
-	    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-		notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
+		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align, cdmode);
 	}
 
 	/* Adjust focus if we have it, and we are in full select */
@@ -3523,7 +3505,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
  */
 static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-    DWORD cditemmode = CDRF_DODEFAULT;
     POINT Origin, Position;
     RECT rcItem;
     ITERATOR i;
@@ -3536,10 +3517,6 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     
     while(iterator_next(&i))
     {
-        if (cdmode & CDRF_NOTIFYITEMDRAW)
-            cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, 0, CDDS_ITEMPREPAINT);
-        if (cditemmode & CDRF_SKIPDEFAULT) continue;
-
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
 	rcItem.left = Position.x;
 	rcItem.top = Position.y;
@@ -3547,11 +3524,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	OffsetRect(&rcItem, Origin.x, Origin.y);
 
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem);
-
-        if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-            notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
-
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem, cdmode);
     }
     iterator_destroy(&i);
 }
@@ -3610,24 +3583,26 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     UINT uView = LISTVIEW_GetType(infoPtr);
+    NMLVCUSTOMDRAW nmlvcd;
     HFONT hOldFont;
     DWORD cdmode;
     RECT rcClient;
 
     LISTVIEW_DUMP(infoPtr);
   
-    GetClientRect(infoPtr->hwndSelf, &rcClient);
-  
-    cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, hdc, rcClient);
-    if (cdmode == CDRF_SKIPDEFAULT) return;
-
     infoPtr->bIsDrawing = TRUE;
+
+    GetClientRect(infoPtr->hwndSelf, &rcClient);
+ 
+    /* select font */
+    hOldFont = SelectObject(hdc, infoPtr->hFont);
+
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, NULL);
+    cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
+    if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
 
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
-
-    /* select font */
-    hOldFont = SelectObject(hdc, infoPtr->hFont);
 
     if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
 	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
@@ -3642,12 +3617,12 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     if (infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
 	DrawFocusRect(hdc, &infoPtr->rcFocus);
 
-    /* unselect objects */
-    SelectObject(hdc, hOldFont);
-
 enddraw:
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
-	notify_customdraw(infoPtr, CDDS_POSTPAINT, hdc, rcClient);
+	notify_customdraw(infoPtr, CDDS_POSTPAINT, &nmlvcd);
+
+    /* unselect objects */
+    SelectObject(hdc, hOldFont);
 
     infoPtr->bIsDrawing = FALSE;
 }
