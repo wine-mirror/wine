@@ -28,6 +28,40 @@ DEFAULT_DEBUG_CHANNEL(text);
 /*********************************************************************
  *
  *            DrawText functions
+ *
+ * Design issues
+ *   How many buffers to use
+ *     While processing in DrawText there are potentially three different forms
+ *     of the text that need to be held.  How are they best held?
+ *     1. The original text is needed, of course, to see what to display.
+ *     2. The text that will be returned to the user if the DT_MODIFYSTRING is
+ *        in effect.
+ *     3. The buffered text that is about to be displayed e.g. the current line.
+ *        Typically this will exclude the ampersands used for prefixing etc.
+ *
+ *     Complications.
+ *     a. If the buffered text to be displayed includes the ampersands then
+ *        we will need special measurement and draw functions that will ignore
+ *        the ampersands (e.g. by copying to a buffer without the prefix and
+ *        then using the normal forms).  This may involve less space but may 
+ *        require more processing.  e.g. since a line containing tabs may
+ *        contain several underlined characters either we need to carry around
+ *        a list of prefix locations or we may need to locate them several
+ *        times.
+ *     b. If we actually directly modify the "original text" as we go then we
+ *        will need some special "caching" to handle the fact that when we 
+ *        ellipsify the text the ellipsis may modify the next line of text,
+ *        which we have not yet processed.  (e.g. ellipsification of a W at the
+ *        end of a line will overwrite the W, the \n and the first character of
+ *        the next line, and a \0 will overwrite the second.  Try it!!)
+ *
+ *     Option 1.  Three separate storages. (To be implemented)
+ *       If DT_MODIFYSTRING is in effect then allocate an extra buffer to hold
+ *       the edited string in some form, either as the string itself or as some
+ *       sort of "edit list" to be applied just before returning.
+ *       Use a buffer that holds the ellipsified current line sans ampersands
+ *       and accept the need occasionally to recalculate the prefixes (if
+ *       DT_EXPANDTABS and not DT_NOPREFIX and not DT_HIDEPREFIX)
  */
 
 #define TAB     9
@@ -51,6 +85,56 @@ static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
 
+/*********************************************************************
+ *                      TEXT_Reprefix
+ *
+ *  Reanalyse the text to find the prefixed character.  This is called when
+ *  wordbreaking or ellipsification has shortened the string such that the
+ *  previously noted prefixed character is no longer visible.
+ *
+ * Parameters
+ *   str        [in] The original string segment (including all characters)
+ *   n1         [in] The number of characters visible before the path ellipsis
+ *   n2         [in] The number of characters replaced by the path ellipsis
+ *   ne         [in] The number of characters in the path ellipsis, ignored if
+ *              n2 is zero
+ *   n3         [in] The number of characters visible after the path ellipsis
+ *
+ * Return Values
+ *   The prefix offset within the new string segment (the one that contains the
+ *   ellipses and does not contain the prefix characters) (-1 if none)
+ *
+ * Remarks
+ *   We know that n1+n2+n3 must be strictly less than the length of the segment
+ *   (because otherwise there would be no need to call this function)
+ */
+
+static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
+                          unsigned int ne, unsigned int n3)
+{
+    int result = -1;
+    unsigned int i = 0;
+    unsigned int n = n1 + n2 + n3;
+    if (!n2) ne = 0;
+    while (i < n)
+    {
+        if (i == n1)
+        {
+            /* Reached the path ellipsis; jump over it */
+            str += n2;
+            i += n2;
+            if (!n3) break; /* Nothing after the path ellipsis */
+        }
+        if (*str++ == PREFIX)
+        {
+            result = (i < n1) ? i : i - n2 + ne;
+            str++;
+        }
+        else;
+        i++;
+    }
+    return result;
+}
 
 /*********************************************************************
  *  Return next line of text from a string.
@@ -329,6 +413,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	        int totalLen = i_count >= 0 ? i_count : strlenW(str);
 	            int fnameLen = totalLen;
                 int old_prefix_offset = prefix_offset;
+                int len_before_ellipsis;
+                int len_after_ellipsis;
 
 	            /* allow room for '...' */
 	            count = min(totalLen+3, countof(line)-3);
@@ -386,17 +472,21 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
 	            if (fnameLen < len-3) /* some of the path will fit */
 	            {
+                        len_before_ellipsis = len-3-fnameLen;
+                        len_after_ellipsis = fnameLen;
 	                /* put the ELLIPSIS between the path and filename */
-	                strncpyW(swapStr, &line[fnameLen+3], len-3-fnameLen);
-	                swapStr[len-3-fnameLen] = '\0';
+	                strncpyW(swapStr, &line[fnameLen+3], len_before_ellipsis);
+	                swapStr[len_before_ellipsis] = '\0';
 	                strcatW(swapStr, ELLIPSISW);
 	                strncpyW(swapStr+strlenW(swapStr), &line[3], fnameLen);
 	            }
 	            else
 	            {
 	                /* move the ELLIPSIS to the end */
-	                strncpyW(swapStr, &line[3], len-3);
-	                swapStr[len-3] = '\0';
+                        len_before_ellipsis = len-3;
+                        len_after_ellipsis = 0;
+	                strncpyW(swapStr, &line[3], len_before_ellipsis);
+	                swapStr[len_before_ellipsis] = '\0';
 	                strcpyW(swapStr+strlenW(swapStr), ELLIPSISW);
 	            }
 
@@ -404,12 +494,9 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	            line[len] = '\0';
 	            strPtr = NULL;
 
-               /* Note that really we ought to refigure the location of
-                * the underline for the prefix; it might be currently set for
-                * something we have just ellipsified out.
-                * NB We had better do it before modifying the string and
-                * loosing the ampersands
-                */
+               if (prefix_offset >= 0 &&
+                   prefix_offset >= len_before_ellipsis)
+                   prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, strlenW(str)-3-len_before_ellipsis-len_after_ellipsis, 3, len_after_ellipsis);
 
                if (flags & DT_MODIFYSTRING)
                     strcpyW(str, swapStr);
