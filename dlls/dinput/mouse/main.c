@@ -144,7 +144,7 @@ static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 *
 static IDirectInputDevice2A* current_lock = NULL;
 
 
-static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPCDIDEVICEINSTANCEA lpddi)
+static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_MOUSE)) {
     TRACE("Enumerating the mouse device\n");

@@ -36,7 +36,7 @@ struct IDirectInputAImpl
 /* Function called by all devices that Wine supports */
 typedef struct dinput_device {
   INT pref;
-  BOOL (*enum_device)(DWORD dwDevType, DWORD dwFlags, LPCDIDEVICEINSTANCEA lpddi);
+  BOOL (*enum_device)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi);
   HRESULT (*create_device)(IDirectInputAImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev);
 } dinput_device;
 

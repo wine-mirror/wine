@@ -134,7 +134,7 @@ static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a9644
   {0x8c, 0x73, 0x71, 0xdf, 0x54, 0xa9, 0x64, 0x41}
 };
 
-static BOOL keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPCDIDEVICEINSTANCEA lpddi)
+static BOOL keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
     TRACE("Enumerating the Keyboard device\n");
