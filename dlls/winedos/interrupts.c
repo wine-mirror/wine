@@ -36,6 +36,8 @@
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
+
 
 static FARPROC16     DOSVM_Vectors16[256];
 static FARPROC48     DOSVM_Vectors48[256];
@@ -68,6 +70,14 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 60 */ 0,                  0,                  0,                  0,
   /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler
 };
+
+
+/*
+ * Sizes of real mode and protected mode interrupt stubs.
+ */
+#define DOSVM_STUB_RM   4
+#define DOSVM_STUB_PM16 5
+#define DOSVM_STUB_PM48 6
 
 
 /**********************************************************************
@@ -173,6 +183,19 @@ static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
  */
 void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
 {
+    if (TRACE_ON(relay)) 
+    {
+        DPRINTF( "Call DOS int 0x%02x ret=%04lx:%08lx\n",
+                 intnum, context->SegCs, context->Eip );
+        DPRINTF( "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
+                 context->Eax, context->Ebx, context->Ecx, context->Edx );
+        DPRINTF( "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n",
+                 context->Esi, context->Edi, context->Ebp, context->Esp );
+        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+                 context->SegDs, context->SegEs,
+                 context->SegFs, context->SegGs, context->EFlags );
+    }
+
     if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
     {
         DOSVM_BuildCallFrame( context, 
@@ -188,6 +211,13 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (context->SegCs == DOSVM_dpmi_segments->int48_sel)
     {
+        if (intnum != context->Eip / DOSVM_STUB_PM48)
+            WARN( "interrupt stub has been modified "
+                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  intnum, context->Eip/DOSVM_STUB_PM48 );
+
+        TRACE( "builtin interrupt %02x has been branched to\n", intnum );
+
         if (intnum == 0x25 || intnum == 0x26)
             DOSVM_PushFlags( context, TRUE, TRUE );
 
@@ -197,6 +227,13 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
     {
+        if (intnum != context->Eip / DOSVM_STUB_PM16)
+            WARN( "interrupt stub has been modified "
+                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  intnum, context->Eip/DOSVM_STUB_PM16 );
+
+        TRACE( "builtin interrupt %02x has been branched to\n", intnum );
+
         if (intnum == 0x25 || intnum == 0x26)
             DOSVM_PushFlags( context, FALSE, TRUE );
 
@@ -227,18 +264,26 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         
         if (addr.selector == DOSVM_dpmi_segments->int48_sel)
         {
+            TRACE( "builtin interrupt %02lx has been invoked "
+                   "(through vector %02x)\n", 
+                   addr.offset / DOSVM_STUB_PM48, intnum );
+
             if (intnum == 0x25 || intnum == 0x26)
                 DOSVM_PushFlags( context, TRUE, FALSE );
 
-             DOSVM_BuildCallFrame( context, 
-                                   DOSVM_IntProcRelay,
-                                   DOSVM_GetBuiltinHandler(intnum) );
+            DOSVM_BuildCallFrame( context,
+                                  DOSVM_IntProcRelay,
+                                  DOSVM_GetBuiltinHandler(
+                                      addr.offset/DOSVM_STUB_PM48 ) );
         }
         else
         {
             DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
                                               context->SegSs, 
                                               context->Esp);
+            
+            TRACE( "invoking hooked interrupt %02x at %04x:%08lx\n",
+                   intnum, addr.selector, addr.offset );
             
             /* Push the flags and return address on the stack */
             *(--stack) = context->EFlags;
@@ -257,12 +302,17 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
 
         if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
         {
+            TRACE( "builtin interrupt %02x has been invoked "
+                   "(through vector %02x)\n", 
+                   OFFSETOF(addr)/DOSVM_STUB_PM16, intnum );
+
             if (intnum == 0x25 || intnum == 0x26)
                 DOSVM_PushFlags( context, FALSE, FALSE );
-
+            
             DOSVM_BuildCallFrame( context, 
                                   DOSVM_IntProcRelay,
-                                  DOSVM_GetBuiltinHandler(intnum) );
+                                  DOSVM_GetBuiltinHandler(
+                                      OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
         }
         else
         {
@@ -270,6 +320,9 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
                                              context->SegSs, 
                                              context->Esp);
             
+            TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
+                   intnum, SELECTOROF(addr), OFFSETOF(addr) );
+
             /* Push the flags and return address on the stack */
             *(--stack) = LOWORD(context->EFlags);
             *(--stack) = context->SegCs;
@@ -277,7 +330,7 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
             ADD_LOWORD( context->Esp, -6 );
 
             /* Jump to the interrupt handler */
-            context->SegCs  = HIWORD(addr);
+            context->SegCs =  HIWORD(addr);
             context->Eip = LOWORD(addr);
         }
     }
@@ -298,6 +351,19 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
  */
 BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum ) 
 {
+    if (TRACE_ON(relay)) 
+    {
+        DPRINTF( "Call DOS int 0x%02x ret=%04lx:%08lx\n",
+                 intnum, context->SegCs, context->Eip );
+        DPRINTF( "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
+                 context->Eax, context->Ebx, context->Ecx, context->Edx );
+        DPRINTF( "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n",
+                 context->Esi, context->Edi, context->Ebp, context->Esp );
+        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+                 context->SegDs, context->SegEs,
+                 context->SegFs, context->SegGs, context->EFlags );
+    }
+
     /* check for our real-mode hooks */
     if (intnum == 0x31)
     {
@@ -312,9 +378,10 @@ BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
     /* check if the call is from our fake BIOS interrupt stubs */
     if (context->SegCs==0xf000)
     {
-        if (intnum != (context->Eip/4))
-            TRACE( "something fishy going on here (interrupt stub is %02lx)\n", 
-                   context->Eip/4 );
+        if (intnum != context->Eip / DOSVM_STUB_RM)
+            WARN( "interrupt stub has been modified "
+                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  intnum, context->Eip/DOSVM_STUB_RM );
 
         TRACE( "builtin interrupt %02x has been branched to\n", intnum );
         
@@ -345,9 +412,10 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
      if (SELECTOROF(handler) == 0xf000) 
      {
          /* if so, call it directly */
-         TRACE( "builtin interrupt %02x has been invoked (through vector %02x)\n", 
-                OFFSETOF(handler)/4, intnum );
-         DOSVM_CallBuiltinHandler( context, OFFSETOF(handler)/4 );
+         TRACE( "builtin interrupt %02x has been invoked "
+                "(through vector %02x)\n", 
+                OFFSETOF(handler)/DOSVM_STUB_RM, intnum );
+         DOSVM_CallBuiltinHandler( context, OFFSETOF(handler)/DOSVM_STUB_RM );
      }
      else 
      {
@@ -355,8 +423,8 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
          WORD* stack = PTR_REAL_TO_LIN( context->SegSs, context->Esp );
          WORD  flag  = LOWORD( context->EFlags );
 
-         TRACE_(int)( "invoking hooked interrupt %02x at %04x:%04x\n", 
-                      intnum, SELECTOROF(handler), OFFSETOF(handler) );
+         TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
+                intnum, SELECTOROF(handler), OFFSETOF(handler) );
 
          /* Copy virtual interrupt flag to pushed interrupt flag. */
          if (context->EFlags & VIF_MASK)
@@ -387,6 +455,7 @@ FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
   return ((FARPROC16*)0)[intnum];
 }
 
+
 /**********************************************************************
  *          DOSVM_SetRMHandler
  *
@@ -410,7 +479,7 @@ FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
     if (!DOSVM_Vectors16[intnum])
     {
         FARPROC16 proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
-                                                5 * intnum );
+                                                DOSVM_STUB_PM16 * intnum );
         DOSVM_Vectors16[intnum] = proc;
     }
     return DOSVM_Vectors16[intnum];
@@ -429,6 +498,7 @@ void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler )
   DOSVM_Vectors16[intnum] = handler;
 }
 
+
 /**********************************************************************
  *         DOSVM_GetPMHandler48
  *
@@ -440,10 +510,11 @@ FARPROC48 DOSVM_GetPMHandler48( BYTE intnum )
   if (!DOSVM_Vectors48[intnum].selector)
   {
     DOSVM_Vectors48[intnum].selector = DOSVM_dpmi_segments->int48_sel;
-    DOSVM_Vectors48[intnum].offset = 6 * intnum;
+    DOSVM_Vectors48[intnum].offset = DOSVM_STUB_PM48 * intnum;
   }
   return DOSVM_Vectors48[intnum];
 }
+
 
 /**********************************************************************
  *         DOSVM_SetPMHandler48
