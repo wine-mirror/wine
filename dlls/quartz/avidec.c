@@ -410,19 +410,21 @@ static HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LP
 static ULONG WINAPI AVIDec_AddRef(IBaseFilter * iface)
 {
     AVIDecImpl *This = (AVIDecImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
 
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 static ULONG WINAPI AVIDec_Release(IBaseFilter * iface)
 {
     AVIDecImpl *This = (AVIDecImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
 
-    if (!InterlockedDecrement(&This->refCount))
+    if (!refCount)
     {
         ULONG i;
 
@@ -449,7 +451,7 @@ static ULONG WINAPI AVIDec_Release(IBaseFilter * iface)
         return 0;
     }
     else
-        return This->refCount;
+        return refCount;
 }
 
 /** IPersist methods **/

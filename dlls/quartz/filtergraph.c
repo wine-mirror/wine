@@ -227,22 +227,23 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
 	return E_NOINTERFACE;
     }
 
-    This->ref++;
+    InterlockedIncrement(&This->ref);
     return S_OK;
 }
 
 static ULONG Filtergraph_AddRef(IFilterGraphImpl *This) {
-    TRACE("(%p)->(): new ref = %ld\n", This, This->ref + 1);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %ld\n", This, ref);
     
-    return ++This->ref;
+    return ref;
 }
 
 static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
-    static ULONG ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
     
-    TRACE("(%p)->(): new ref = %ld\n", This, This->ref - 1);
+    TRACE("(%p)->(): new ref = %ld\n", This, ref);
     
-    ref = --This->ref;
     if (ref == 0) {
 	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);

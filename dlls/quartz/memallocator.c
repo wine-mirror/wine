@@ -139,19 +139,21 @@ static HRESULT WINAPI BaseMemAllocator_QueryInterface(IMemAllocator * iface, REF
 static ULONG WINAPI BaseMemAllocator_AddRef(IMemAllocator * iface)
 {
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() AddRef from %ld\n", iface, This->ref);
+    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
 {
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() Release from %ld\n", iface, This->ref);
+    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
 
-    if (!InterlockedDecrement(&This->ref))
+    if (!ref)
     {
         CloseHandle(This->hSemWaiting);
         if (This->bCommitted)
@@ -160,7 +162,7 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
         CoTaskMemFree(This);
         return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLOCATOR_PROPERTIES *pRequest, ALLOCATOR_PROPERTIES *pActual)
@@ -471,24 +473,26 @@ static HRESULT WINAPI StdMediaSample2_QueryInterface(IMediaSample2 * iface, REFI
 static ULONG WINAPI StdMediaSample2_AddRef(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() AddRef from %ld\n", iface, This->ref);
+    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() Release from %ld\n", iface, This->ref);
+    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
 
-    if (!InterlockedDecrement(&This->ref))
+    if (!ref)
     {
         IMemAllocator_ReleaseBuffer(This->pParent, (IMediaSample *)iface);
         return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI StdMediaSample2_GetPointer(IMediaSample2 * iface, BYTE ** ppBuffer)

@@ -210,24 +210,26 @@ static HRESULT WINAPI FilterMapper2_QueryInterface(IFilterMapper2 * iface, REFII
 static ULONG WINAPI FilterMapper2_AddRef(IFilterMapper2 * iface)
 {
     FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p)->()\n", iface);
 
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 static ULONG WINAPI FilterMapper2_Release(IFilterMapper2 * iface)
 {
     FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p)->()\n", iface);
 
-    if (InterlockedDecrement(&This->refCount) == 0)
+    if (refCount == 0)
     {
         CoTaskMemFree(This);
         return 0;
     }
-    return This->refCount;
+    return refCount;
 }
 
 /*** IFilterMapper2 methods ***/

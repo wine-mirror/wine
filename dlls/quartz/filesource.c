@@ -357,19 +357,21 @@ static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID rii
 static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
     
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
     
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
     
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
     
-    if (!InterlockedDecrement(&This->refCount))
+    if (!refCount)
     {
         if (This->pOutputPin)
             IPin_Release(This->pOutputPin);
@@ -379,7 +381,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
         return 0;
     }
     else
-        return This->refCount;
+        return refCount;
 }
 
 /** IPersist methods **/
@@ -736,10 +738,11 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID rii
 static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
 {
     FileAsyncReader *This = (FileAsyncReader *)iface;
+    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
     TRACE("()\n");
     
-    if (!InterlockedDecrement(&This->pin.pin.refCount))
+    if (!refCount)
     {
         DATAREQUEST * pCurrent;
         DATAREQUEST * pNext;
@@ -753,7 +756,7 @@ static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
         CoTaskMemFree(This);
         return 0;
     }
-    return This->pin.pin.refCount;
+    return refCount;
 }
 
 static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)

@@ -115,24 +115,26 @@ static HRESULT WINAPI IEnumRegFiltersImpl_QueryInterface(IEnumRegFilters * iface
 static ULONG WINAPI IEnumRegFiltersImpl_AddRef(IEnumRegFilters * iface)
 {
     IEnumRegFiltersImpl *This = (IEnumRegFiltersImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p)\n", iface);
 
-    return ++This->refCount;
+    return refCount;
 }
 
 static ULONG WINAPI IEnumRegFiltersImpl_Release(IEnumRegFilters * iface)
 {
     IEnumRegFiltersImpl *This = (IEnumRegFiltersImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p)\n", iface);
 
-    if (!--This->refCount)
+    if (!refCount)
     {
         CoTaskMemFree(This);
         return 0;
     } else
-        return This->refCount;
+        return refCount;
 }
 
 static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cFilters, REGFILTER ** ppRegFilter, ULONG * pcFetched)

@@ -211,19 +211,21 @@ static HRESULT WINAPI AVISplitter_QueryInterface(IBaseFilter * iface, REFIID rii
 static ULONG WINAPI AVISplitter_AddRef(IBaseFilter * iface)
 {
     AVISplitter *This = (AVISplitter *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
 
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
 {
     AVISplitter *This = (AVISplitter *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
     
-    if (!InterlockedDecrement(&This->refCount))
+    if (!refCount)
     {
         ULONG i;
 
@@ -243,7 +245,7 @@ static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
         return 0;
     }
     else
-        return This->refCount;
+        return refCount;
 }
 
 /** IPersist methods **/
@@ -1116,10 +1118,11 @@ HRESULT WINAPI AVISplitter_OutputPin_QueryInterface(IPin * iface, REFIID riid, L
 static ULONG WINAPI AVISplitter_OutputPin_Release(IPin * iface)
 {
     AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
+    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
     TRACE("()\n");
     
-    if (!InterlockedDecrement(&This->pin.pin.refCount))
+    if (!refCount)
     {
         DeleteMediaType(This->pmt);
         CoTaskMemFree(This->pmt);
@@ -1127,7 +1130,7 @@ static ULONG WINAPI AVISplitter_OutputPin_Release(IPin * iface)
         CoTaskMemFree(This);
         return 0;
     }
-    return This->pin.pin.refCount;
+    return refCount;
 }
 
 static HRESULT WINAPI AVISplitter_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)

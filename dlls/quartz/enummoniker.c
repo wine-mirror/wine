@@ -120,17 +120,18 @@ static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface)
 static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("\n");
 
-    if (!InterlockedDecrement(&This->ref))
+    if (!ref)
     {
         CoTaskMemFree(This->ppMoniker);
         This->ppMoniker = NULL;
         CoTaskMemFree(This);
         return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMoniker ** rgelt, ULONG * pceltFetched)

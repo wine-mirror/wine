@@ -404,19 +404,21 @@ static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID r
 static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
 
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
 
-    if (!InterlockedDecrement(&This->refCount))
+    if (!refCount)
     {
         DeleteCriticalSection(&This->csFilter);
         IReferenceClock_Release(This->pClock);
@@ -432,7 +434,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
         return 0;
     }
     else
-        return This->refCount;
+        return refCount;
 }
 
 /** IPersist methods **/

@@ -226,10 +226,11 @@ HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *pro
 ULONG WINAPI IPinImpl_AddRef(IPin * iface)
 {
     IPinImpl *This = (IPinImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
     
-    TRACE("(%p)->() AddRef from %ld\n", iface, This->refCount);
+    TRACE("(%p)->() AddRef from %ld\n", iface, refCount - 1);
     
-    return InterlockedIncrement(&This->refCount);
+    return refCount;
 }
 
 HRESULT WINAPI IPinImpl_Disconnect(IPin * iface)
@@ -403,10 +404,11 @@ HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 ULONG WINAPI InputPin_Release(IPin * iface)
 {
     InputPin *This = (InputPin *)iface;
+    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
     
-    TRACE("(%p)->() Release from %ld\n", iface, This->pin.refCount);
+    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
     
-    if (!InterlockedDecrement(&This->pin.refCount))
+    if (!refCount)
     {
         DeleteMediaType(&This->pin.mtCurrent);
         if (This->pAllocator)
@@ -415,7 +417,7 @@ ULONG WINAPI InputPin_Release(IPin * iface)
         return 0;
     }
     else
-        return This->pin.refCount;
+        return refCount;
 }
 
 HRESULT WINAPI InputPin_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt)
@@ -661,16 +663,17 @@ HRESULT WINAPI OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 ULONG WINAPI OutputPin_Release(IPin * iface)
 {
     OutputPin *This = (OutputPin *)iface;
+    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
     
     TRACE("(%p/%p)->()\n", This, iface);
     
-    if (!InterlockedDecrement(&This->pin.refCount))
+    if (!refCount)
     {
         DeleteMediaType(&This->pin.mtCurrent);
         CoTaskMemFree(This);
         return 0;
     }
-    return This->pin.refCount;
+    return refCount;
 }
 
 HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
@@ -1114,10 +1117,11 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 ULONG WINAPI PullPin_Release(IPin * iface)
 {
     PullPin *This = (PullPin *)iface;
+    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    if (!InterlockedDecrement(&This->pin.refCount))
+    if (!refCount)
     {
         if (This->hThread)
             PullPin_StopProcessing(This);
@@ -1127,7 +1131,7 @@ ULONG WINAPI PullPin_Release(IPin * iface)
         CoTaskMemFree(This);
         return 0;
     }
-    return This->pin.refCount;
+    return refCount;
 }
 
 static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)

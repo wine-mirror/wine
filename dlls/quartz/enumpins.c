@@ -75,25 +75,27 @@ static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID rii
 static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 {
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("()\n");
 
-    return ++This->refCount;
+    return refCount;
 }
 
 static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 {
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("()\n");
     
-    if (!--This->refCount)
+    if (!refCount)
     {
         CoTaskMemFree(This);
         return 0;
     }
     else
-        return This->refCount;
+        return refCount;
 }
 
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
