@@ -1760,7 +1760,7 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
  */
 INT WINAPI AddFontResourceA( LPCSTR str )
 {
-    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+    FIXME("(%s): stub! Read the Wine User Guide on how to install "
             "this font manually.\n", debugres_a(str));
     return 1;
 }
@@ -1771,7 +1771,7 @@ INT WINAPI AddFontResourceA( LPCSTR str )
  */
 INT WINAPI AddFontResourceW( LPCWSTR str )
 {
-    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+    FIXME("(%s): stub! Read the Wine User Guide on how to install "
             "this font manually.\n", debugres_w(str));
     return 1;
 }
@@ -1781,7 +1781,7 @@ INT WINAPI AddFontResourceW( LPCWSTR str )
  */
 BOOL16 WINAPI RemoveFontResource16( LPCSTR str )
 {
-    FIXME("(%s): stub\n",	debugres_a(str));
+    FIXME("(%s): stub\n", debugres_a(str));
     return TRUE;
 }
 

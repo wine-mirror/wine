@@ -107,6 +107,8 @@ EXAMPLES:
 	Here is an example of how I tracked down a bug in Wine.  The program
 is something that just maps and dumps the contents of a Win32 executable.
 It was dying for some reason.
+Note that this example is rather old and does not necessarily use current
+syntax !
 
 Start the first time through.
 

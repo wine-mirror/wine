@@ -28,82 +28,9 @@ Using Windows ME or Win2000 components with Wine is more problematic than
 using none at all or the ones from older Windows versions.
 A large percentage of the API has been implemented,
 although there are still several major pieces of work left to do.
-.SH REQUIREMENTS
-.B wine
-requires kernel-level threads to run. Currently, only Linux version 2.0
-or later, FreeBSD-current or FreeBSD 3.0 or later, and Solaris x86
-version 2.5 or later are supported. Other operating systems which support
-kernel threads may be supported in the future.
-.PP
-Although Linux version 2.0 will mostly work, certain features (specifically
-LDT sharing) required for properly supporting Win32 threads were not
-implemented until kernel version 2.2. If you get consistent thread-related
-crashes, you may want to upgrade to 2.2. Also, some bugs were fixed and
-additional features were added late in the Linux 2.0.x series, so if you have
-a very old Linux kernel, you may want to upgrade to at least the latest 2.0.x
-release.
-.PP
-If you have FreeBSD, make sure you have the USER_LDT,
-SYSVSHM, SYSVSEM, and SYSVMSG options turned on in your kernel. If you
-are building 
-.B wine 
-on Solaris, you will most likely need to build wine with the GNU toolchain 
-(gcc, gas, etc.)
-.PP
-.B X
-must be installed.  To use 
-.B wine's 
-support for multithreaded applications, your X libraries must be reentrant.  
-If you have libc6 (glibc2), or you 
-compiled the X libraries yourself, they were probably compiled with the 
-reentrant option enabled.  
-.PP
-.B libXpm
-must be installed.  If you're using Red Hat, make sure the following
-packages are installed: XFree86-devel, xpm, and xpm-devel. If you're
-using Debian, the packages you need are xpm4g and xpm4g-dev. If you 
-have some other distribution, please send a list of packages required
-to the address listed in the 
-.B
-BUGS
-section to get it included in this man page.
-.PP
-.B gcc
-2.7.2 or later is required to build
-.B wine.
-Versions earlier than 2.7.2.3 may have problems when certain files are
-compiled with optimization, often due to problems with header file
-management.
-.B
-pgcc
-currently doesn't work with 
-.B wine.  
-The cause of this problem is unknown. 
-.PP
-.B flex
-version 2.5 or later and 
-.B yacc
-are required.  Bison can be used in replace of yacc. If you have Redhat
-or Debian, make sure the bison and flex packages are installed.
-.SH INSTALLATION
-To install 
-.B wine,
-run either "tools/wineinstall" (recommended), or do it the hard way:
-run "./configure" in the top-level directory of the source, which will 
-detect your specific setup and create the Makefiles.  You can run 
-"./configure --help" to see the available configuration options.  Then do 
-"make depend && make" to build the
-.B wine
-executable, and then "make install" to install it. By default,
-.B wine
-is installed in the /usr/local/ hierarchy (current configuration has it in
-the @prefix@ hierarchy); you can specify a different path with
-the --prefix or --sysconfdir options when running
-.B configure.
-.PP
-For more information, see the 
-.I README
-file contained in the source distribution.
+.SH REQUIREMENTS AND INSTALLATION
+Read the README file in the Wine source distribution to know what Wine
+requires and how it is installed from source.
 .SH OPTIONS
 .TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
