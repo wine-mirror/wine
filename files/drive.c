@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -146,6 +147,7 @@ int DRIVE_Init(void)
 {
     int i, len, count = 0;
     char name[] = "Drive A";
+    char drive_env[] = "=A:";
     char path[MAX_PATHNAME_LEN];
     char buffer[80];
     struct stat drive_stat_buffer;
@@ -257,6 +259,14 @@ int DRIVE_Init(void)
         }
     }
 
+    /* get current working directory info for all drives */
+    for (i = 0; i < MAX_DOS_DRIVES; i++, drive_env[1]++)
+    {
+        if (!GetEnvironmentVariableA(drive_env, path, sizeof(path))) continue;
+        /* sanity check */
+        if (toupper(path[0]) != drive_env[1] || path[1] != ':') continue;
+        DRIVE_Chdir( i, path + 2 );
+    }
     return 1;
 }
 
@@ -919,6 +929,34 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
     if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
     return ret;
 }
+
+
+/***********************************************************************
+ *           DRIVE_BuildEnv
+ *
+ * Build the environment array containing the drives current directories.
+ * Resulting pointer must be freed with HeapFree.
+ */
+char *DRIVE_BuildEnv(void)
+{
+    int i, length = 0;
+    const char *cwd[MAX_DOS_DRIVES];
+    char *env, *p;
+
+    for (i = 0; i < MAX_DOS_DRIVES; i++)
+    {
+        if ((cwd[i] = DRIVE_GetDosCwd(i)) && cwd[i][0]) length += strlen(cwd[i]) + 8;
+    }
+    if (!(env = HeapAlloc( GetProcessHeap(), 0, length+1 ))) return NULL;
+    for (i = 0, p = env; i < MAX_DOS_DRIVES; i++)
+    {
+        if (cwd[i] && cwd[i][0])
+            p += sprintf( p, "=%c:=%c:\\%s", 'A'+i, 'A'+i, cwd[i] ) + 1;
+    }
+    *p = 0;
+    return env;
+}
+
 
 /***********************************************************************
  *           GetDiskFreeSpace16   (KERNEL.422)

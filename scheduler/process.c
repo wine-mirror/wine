@@ -15,6 +15,7 @@
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "process.h"
+#include "drive.h"
 #include "main.h"
 #include "module.h"
 #include "neexe.h"
@@ -577,20 +578,24 @@ static char **build_argv( char *cmdline, int reserved )
  *
  * Build the environment of a new child process.
  */
-static char **build_envp( const char *env )
+static char **build_envp( const char *env, const char *extra_env )
 {
     const char *p;
     char **envp;
-    int count;
+    int count = 0;
 
-    for (p = env, count = 0; *p; count++) p += strlen(p) + 1;
+    if (extra_env) for (p = extra_env; *p; count++) p += strlen(p) + 1;
+    for (p = env; *p; count++) p += strlen(p) + 1;
     count += 3;
+
     if ((envp = malloc( count * sizeof(*envp) )))
     {
         extern char **environ;
         char **envptr = envp;
         char **unixptr = environ;
-        /* first put PATH, HOME and WINEPREFIX from the unix env */
+        /* first the extra strings */
+        if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = (char *)p;
+        /* then put PATH, HOME and WINEPREFIX from the unix env */
         for (unixptr = environ; unixptr && *unixptr; unixptr++)
             if (!memcmp( *unixptr, "PATH=", 5 ) ||
                 !memcmp( *unixptr, "HOME=", 5 ) ||
@@ -665,6 +670,13 @@ static int fork_and_exec( const char *filename, char *cmdline,
 {
     int fd[2];
     int pid, err;
+    char *extra_env = NULL;
+
+    if (!env)
+    {
+        env = GetEnvironmentStringsA();
+        extra_env = DRIVE_BuildEnv();
+    }
 
     if (pipe(fd) == -1)
     {
@@ -675,10 +687,10 @@ static int fork_and_exec( const char *filename, char *cmdline,
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmdline, filename ? 0 : 2 );
-        char **envp = build_envp( env );
+        char **envp = build_envp( env, extra_env );
         close( fd[0] );
 
-	if (newdir) chdir(newdir);
+        if (newdir) chdir(newdir);
 
         if (argv && envp)
         {
@@ -701,6 +713,7 @@ static int fork_and_exec( const char *filename, char *cmdline,
     }
     if (pid == -1) FILE_SetDosError();
     close( fd[0] );
+    if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
     return pid;
 }
 
@@ -784,7 +797,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     /* fork and execute */
 
-    pid = fork_and_exec( unixfilename, cmd_line, env ? env : GetEnvironmentStringsA(), unixdir );
+    pid = fork_and_exec( unixfilename, cmd_line, env, unixdir );
 
     SERVER_START_REQ
     {
