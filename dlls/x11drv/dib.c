@@ -4289,6 +4289,7 @@ INT X11DRV_DIB_Coerce(BITMAPOBJ *bmp, INT req, BOOL lossy)
 
         case DIB_Status_GdiMod:
 	  TRACE("GdiMod requested in status GdiMod\n" );
+	  dib->p_status = DIB_Status_GdiMod;
 	  break;
 
         case DIB_Status_InSync:
