@@ -1253,3 +1253,11 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
 {	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
 	return 0;
 }
+/*************************************************************************
+ * Control_FillCache_RunDLL [SHELL32.8]
+ *
+ */
+HRESULT WINAPI Control_FillCache_RunDLL(DWORD u, DWORD v, DWORD w, DWORD x)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
+	return 0;
+}
