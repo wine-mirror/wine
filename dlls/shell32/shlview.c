@@ -1932,11 +1932,20 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	OLECMD * prgCmds,
 	OLECMDTEXT* pCmdText)
 {
-	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
+    int i;
+    _ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
-	FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n",
+    FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n",
               This, pguidCmdGroup, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
-	return E_NOTIMPL;
+
+    if (!prgCmds)
+        return E_POINTER;
+    for (i = 0; i < cCmds; i++)
+    {
+        FIXME("\tprgCmds[%d].cmdID = %ld\n", i, prgCmds[i].cmdID);
+        prgCmds[i].cmdf = 0;
+    }
+    return OLECMDERR_E_UNKNOWNGROUP;
 }
 
 /**********************************************************
@@ -1956,7 +1965,17 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 
 	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08lx Opt:0x%08lx %p %p)\n",
               This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, pvaIn, pvaOut);
-	return E_NOTIMPL;
+
+	if (IsEqualIID(pguidCmdGroup, &CGID_Explorer) &&
+	   (nCmdID == 0x29) &&
+	   (nCmdexecopt == 4) && pvaOut)
+	   return S_OK;
+	if (IsEqualIID(pguidCmdGroup, &CGID_ShellDocView) &&
+	   (nCmdID == 9) &&
+	   (nCmdexecopt == 0))
+	   return 1;
+
+	return OLECMDERR_E_UNKNOWNGROUP;
 }
 
 static ICOM_VTABLE(IOleCommandTarget) ctvt =
