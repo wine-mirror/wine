@@ -135,6 +135,7 @@
 
 @ stdcall AddAtomA(str)
 @ stdcall AddAtomW(wstr)
+@ stdcall AddVectoredExceptionHandler(long ptr) ntdll.RtlAddVectoredExceptionHandler
 @ stdcall AllocConsole()
 @ stub AllocLSCallback
 @ stdcall AllocSLCallback(ptr ptr)
@@ -690,6 +691,7 @@
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr)
 @ stdcall RemoveDirectoryA(str)
 @ stdcall RemoveDirectoryW(wstr)
+@ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
 @ stub RequestDeviceWakeup
 @ stdcall RequestWakeupLatency(long)
 @ stdcall ResetEvent(long)

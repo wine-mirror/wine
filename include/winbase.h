@@ -1089,9 +1089,8 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
 BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
 #define GetBinaryType WINELIB_NAME_AW(GetBinaryType)
 
-/* Declarations for functions that exist only in Win32 */
-
 BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
+PVOID       WINAPI AddVectoredExceptionHandler(ULONG,PVECTORED_EXCEPTION_HANDLER);
 BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
 BOOL        WINAPI AccessCheck(PSECURITY_DESCRIPTOR,HANDLE,DWORD,PGENERIC_MAPPING,PPRIVILEGE_SET,LPDWORD,LPDWORD,LPBOOL);
 BOOL        WINAPI AdjustTokenPrivileges(HANDLE,BOOL,LPVOID,DWORD,LPVOID,LPDWORD);
@@ -1409,6 +1408,7 @@ HANDLE      WINAPI RegisterEventSourceW(LPCWSTR,LPCWSTR);
 #define     RegisterEventSource WINELIB_NAME_AW(RegisterEventSource)
 BOOL        WINAPI ReleaseMutex(HANDLE);
 BOOL        WINAPI ReleaseSemaphore(HANDLE,LONG,LPLONG);
+ULONG       WINAPI RemoveVectoredExceptionHandler(PVOID);
 BOOL        WINAPI ReportEventA(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCSTR *,LPVOID);
 BOOL        WINAPI ReportEventW(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCWSTR *,LPVOID);
 BOOL        WINAPI RequestWakeupLatency(LATENCY_TIME latency);

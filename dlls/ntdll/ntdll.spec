@@ -276,6 +276,7 @@
 @ stub RtlAddActionToRXact
 @ stub RtlAddAttributeActionToRXact
 @ stub RtlAddAuditAccessAce
+@ stdcall RtlAddVectoredExceptionHandler(long ptr)
 @ stdcall RtlAdjustPrivilege(long long long long)
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)
 @ stdcall RtlAllocateHeap(long long long)
@@ -505,6 +506,7 @@
 @ stdcall RtlReleasePebLock()
 @ stdcall RtlReleaseResource(ptr)
 @ stub RtlRemoteCall
+@ stdcall RtlRemoveVectoredExceptionHandler(ptr)
 @ stub RtlResetRtlTranslations
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString

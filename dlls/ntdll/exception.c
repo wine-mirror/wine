@@ -33,6 +33,7 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "wine/server.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "excpt.h"
 
@@ -44,6 +45,23 @@ typedef struct
     EXCEPTION_REGISTRATION_RECORD frame;
     EXCEPTION_REGISTRATION_RECORD *prevFrame;
 } EXC_NESTED_FRAME;
+
+typedef struct
+{
+    struct list                 entry;
+    PVECTORED_EXCEPTION_HANDLER func;
+} VECTORED_HANDLER;
+
+static struct list vectored_handlers = LIST_INIT(vectored_handlers);
+
+static CRITICAL_SECTION vectored_handlers_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &vectored_handlers_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": vectored_handlers_section") }
+};
+static CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #ifdef __i386__
 # define GET_IP(context) ((LPVOID)(context)->Eip)
@@ -159,6 +177,32 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
 }
 
 
+/**********************************************************************
+ *           call_vectored_handlers
+ *
+ * Call the vectored handlers chain.
+ */
+static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    struct list *ptr;
+    LONG ret = EXCEPTION_CONTINUE_SEARCH;
+    EXCEPTION_POINTERS except_ptrs;
+
+    except_ptrs.ExceptionRecord = rec;
+    except_ptrs.ContextRecord = context;
+
+    RtlEnterCriticalSection( &vectored_handlers_section );
+    LIST_FOR_EACH( ptr, &vectored_handlers )
+    {
+        VECTORED_HANDLER *handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
+        ret = handler->func( &except_ptrs );
+        if (ret == EXCEPTION_CONTINUE_EXECUTION) break;
+    }
+    RtlLeaveCriticalSection( &vectored_handlers_section );
+    return ret;
+}
+
+
 /*******************************************************************
  *         EXC_DefaultHandling
  *
@@ -198,6 +242,8 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
     SIGNAL_Unblock(); /* we may be in a signal handler, and exception handlers may jump out */
+
+    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) return;
 
     frame = NtCurrentTeb()->Tib.ExceptionList;
     nested_frame = NULL;
@@ -355,6 +401,48 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
     ExceptionRec.ExceptionRecord  = NULL;
     ExceptionRec.NumberParameters = 0;
     RtlRaiseException( &ExceptionRec );
+}
+
+
+/*******************************************************************
+ *         RtlAddVectoredExceptionHandler   (NTDLL.@)
+ */
+PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
+{
+    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
+    if (handler)
+    {
+        handler->func = func;
+        RtlEnterCriticalSection( &vectored_handlers_section );
+        if (first) list_add_head( &vectored_handlers, &handler->entry );
+        else list_add_tail( &vectored_handlers, &handler->entry );
+        RtlLeaveCriticalSection( &vectored_handlers_section );
+    }
+    return handler;
+}
+
+
+/*******************************************************************
+ *         RtlRemoveVectoredExceptionHandler   (NTDLL.@)
+ */
+ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
+{
+    struct list *ptr;
+    ULONG ret = FALSE;
+
+    RtlEnterCriticalSection( &vectored_handlers_section );
+    LIST_FOR_EACH( ptr, &vectored_handlers )
+    {
+        if (ptr == &((VECTORED_HANDLER *)handler)->entry)
+        {
+            list_remove( ptr );
+            ret = TRUE;
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &vectored_handlers_section );
+    if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
+    return ret;
 }
 
 
