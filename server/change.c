@@ -72,11 +72,11 @@ DECL_HANDLER(create_change_notification)
 {
     struct change *change;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((change = create_change_notification( req->subtree, req->filter )))
     {
-        req->handle = alloc_handle( current->process, change,
-                                    STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        reply->handle = alloc_handle( current->process, change,
+                                      STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
         release_object( change );
     }
 }

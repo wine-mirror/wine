@@ -352,7 +352,8 @@ void CALLBACK VGA_Poll( ULONG_PTR arg )
                   ch[X].Attributes = *dat++;
               }
               dest.Left=0; dest.Right=Width+1;
-              WriteConsoleOutputA(con, ch, siz, off, &dest);
+              FIXME("output commented out for now, should be moved to winedos.dll\n");
+              /*WriteConsoleOutputA(con, ch, siz, off, &dest);*/
           }
         }
         vga_refresh=1;

@@ -16,10 +16,12 @@
     "unsigned int"  => "%08x",
     "void*"         => "%p",
     "time_t"        => "%ld",
+    "size_t"        => "%d",
     "handle_t"      => "%d",
     "atom_t"        => "%04x",
     "user_handle_t" => "%08x",
     "rectangle_t"   => "&dump_rectangle",
+    "char_info_t"   => "&dump_char_info",
 );
 
 my @requests = ();
@@ -44,16 +46,24 @@ print SERVER_PROT "#define __WINE_WINE_SERVER_PROTOCOL_H\n";
 
 &PARSE_REQUESTS;
 
-### Build the request list
+### Build the request list and structures
 
 print SERVER_PROT "\n\nenum request\n{\n";
 foreach $req (@requests) { print SERVER_PROT "    REQ_$req,\n"; }
 print SERVER_PROT "    REQ_NB_REQUESTS\n};\n\n";
+
 print SERVER_PROT "union generic_request\n{\n";
 print SERVER_PROT "    struct request_max_size max_size;\n";
-print SERVER_PROT "    struct request_header header;\n";
-foreach $req (@requests) { print SERVER_PROT "    struct ${req}_request $req;\n"; }
+print SERVER_PROT "    struct request_header request_header;\n";
+foreach $req (@requests) { print SERVER_PROT "    struct ${req}_request ${req}_request;\n"; }
+print SERVER_PROT "};\n";
+
+print SERVER_PROT "union generic_reply\n{\n";
+print SERVER_PROT "    struct request_max_size max_size;\n";
+print SERVER_PROT "    struct reply_header reply_header;\n";
+foreach $req (@requests) { print SERVER_PROT "    struct ${req}_reply ${req}_reply;\n"; }
 print SERVER_PROT "};\n\n";
+
 printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol + 1;
 print SERVER_PROT "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
 close SERVER_PROT;
@@ -89,7 +99,7 @@ my @request_lines = ();
 
 foreach $req (@requests) { push @request_lines, "DECL_HANDLER($req);\n"; }
 push @request_lines, "\n#ifdef WANT_REQUEST_HANDLERS\n\n";
-push @request_lines, "typedef void (*req_handler)( void *req );\n";
+push @request_lines, "typedef void (*req_handler)( const void *req, void *reply );\n";
 push @request_lines, "static const req_handler req_handlers[REQ_NB_REQUESTS] =\n{\n";
 foreach $req (@requests)
 {
@@ -145,6 +155,9 @@ sub PARSE_REQUESTS
         if (/^\@REPLY/)
         {
             die "Misplaced \@REPLY" unless $state == 2;
+            print SERVER_PROT "};\n";
+            print SERVER_PROT "struct ${name}_reply\n{\n";
+            print SERVER_PROT "    struct reply_header __header;\n";
             $state++;
             next;
         }
@@ -153,6 +166,13 @@ sub PARSE_REQUESTS
         {
             die "Misplaced \@END" unless ($state == 2 || $state == 3);
             print SERVER_PROT "};\n";
+
+            if ($state == 2)  # build dummy reply struct
+            {
+                print SERVER_PROT "struct ${name}_reply\n{\n";
+                print SERVER_PROT "    struct reply_header __header;\n";
+                print SERVER_PROT "};\n";
+            }
 
             # got a complete request
             push @requests, $name;
@@ -175,17 +195,23 @@ sub PARSE_REQUESTS
                 next;
             }
 
-            if (/^\s*VARARG\((\w+),(\w+)\)/)
+            if (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
             {
                 $var = $1;
-                $type = "&dump_varargs_" . $2;
+                $type = "dump_varargs_" . $2 . "( min(cur_size,req->" . $3 . ") )";
                 s!(VARARG\(.*\)\s*;)!/* $1 */!;
             }
-            elsif (/^\s*(\w+\**(\s+\w+\**)*)\s+(\w+)(\[[1]\])?;/)
+            elsif (/^\s*VARARG\((\w+),(\w+)\)/)
             {
-                $type = $1 . ($4 || "");
+                $var = $1;
+                $type = "dump_varargs_" . $2 . "( cur_size )";
+                s!(VARARG\(.*\)\s*;)!/* $1 */!;
+            }
+            elsif (/^\s*(\w+\**(\s+\w+\**)*)\s+(\w+);/)
+            {
+                $type = $1;
                 $var = $3;
-                die "Unrecognized type $type" unless (defined($formats{$type}) || $4);
+                die "Unrecognized type $type" unless defined($formats{$type});
             }
             else
             {
@@ -207,7 +233,7 @@ sub DO_DUMP_FUNC
 {
     my $name = shift;
     my $req = shift;
-    push @trace_lines, "static void dump_${name}_$req( const struct ${name}_request *req )\n{\n";
+    push @trace_lines, "static void dump_${name}_$req( const struct ${name}_$req *req )\n{\n";
     while ($#_ >= 0)
     {
 	my $type = shift;
@@ -218,8 +244,7 @@ sub DO_DUMP_FUNC
             {
                 my $func = $1;
                 push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                if ($type =~ /[1]/) { push @trace_lines, "    $func( req, req->$var );\n"; }
-                else { push @trace_lines, "    $func( req, &req->$var );\n"; }
+                push @trace_lines, "    $func( &req->$var );\n";
                 push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
             }
             else
@@ -232,18 +257,10 @@ sub DO_DUMP_FUNC
 	}
 	else  # must be some varargs format
 	{
-            if ($type =~ /^&(.*)/)
-            {
-                my $func = $1;
-                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                push @trace_lines, "    cur_pos += $func( req );\n";
-                push @trace_lines, "    fputc( ',', stderr );\n" if ($#_ > 0);
-            }
-            else
-            {
-                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                push @trace_lines, "    dump_varargs_${name}_${req}( req );\n";
-            }
+            my $func = $type;
+            push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+            push @trace_lines, "    $func;\n";
+            push @trace_lines, "    fputc( ',', stderr );\n" if ($#_ > 0);
         }
     }
     push @trace_lines, "}\n\n";

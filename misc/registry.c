@@ -1004,7 +1004,7 @@ static void _set_registry_levels(int level,int saving,int period)
 	req->current = level;
 	req->saving  = saving;
         req->period  = period;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }
@@ -1013,19 +1013,15 @@ static void _set_registry_levels(int level,int saving,int period)
 static void _save_at_exit(HKEY hkey,LPCSTR path)
 {
     LPCSTR confdir = get_config_dir();
-    size_t len = strlen(confdir) + strlen(path) + 2;
 
-    if (len > REQUEST_MAX_VAR_SIZE) {
-        ERR( "config dir '%s' too long\n", confdir );
-        return;
-    }
-    SERVER_START_VAR_REQ( save_registry_atexit, len )
+    SERVER_START_REQ( save_registry_atexit )
     {
-        sprintf( server_data_ptr(req), "%s/%s", confdir, path );
         req->hkey = hkey;
-        SERVER_CALL();
+        wine_server_add_data( req, confdir, strlen(confdir) );
+        wine_server_add_data( req, path, strlen(path)+1 );
+        wine_server_call( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
 }
 
 /* configure save files and start the periodic saving timer [Internal] */
@@ -1042,9 +1038,9 @@ static void _init_registry_saving( HKEY hkey_users_default )
 
     if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistryFiles",1))
     {
-        _save_at_exit(HKEY_CURRENT_USER,SAVE_LOCAL_REGBRANCH_CURRENT_USER );
-        _save_at_exit(HKEY_LOCAL_MACHINE,SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
-        _save_at_exit(hkey_users_default,SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
+        _save_at_exit(HKEY_CURRENT_USER,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
+        _save_at_exit(HKEY_LOCAL_MACHINE,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
+        _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
     }
 
 }
@@ -1190,7 +1186,7 @@ static void load_wine_registry(HKEY hkey,LPCSTR fn)
                 {
                     req->hkey    = hkey;
                     req->file    = file;
-                    SERVER_CALL();
+                    wine_server_call( req );
                 }
                 SERVER_END_REQ;
                 CloseHandle( file );

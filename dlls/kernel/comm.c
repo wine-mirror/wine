@@ -379,7 +379,7 @@ static BOOL COMM_SetCommError(HANDLE handle, DWORD error)
         req->handle = handle;
         req->flags = SERIALINFO_SET_ERROR;
         req->commerror = error;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -395,8 +395,8 @@ static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
     SERVER_START_REQ( get_serial_info )
     {
         req->handle = handle;
-        ret = !SERVER_CALL_ERR();
-        *lperror = req->commerror;
+        ret = !wine_server_call_err( req );
+        *lperror = reply->commerror;
     }
     SERVER_END_REQ;
 
@@ -748,9 +748,9 @@ BOOL WINAPI GetCommMask(
     SERVER_START_REQ( get_serial_info )
     {
         req->handle = handle;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            if (evtmask) *evtmask = req->eventmask;
+            if (evtmask) *evtmask = reply->eventmask;
         }
     }
     SERVER_END_REQ;
@@ -781,7 +781,7 @@ BOOL WINAPI SetCommMask(
         req->handle    = handle;
         req->flags     = SERIALINFO_SET_MASK;
         req->eventmask = evtmask;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1347,13 +1347,13 @@ BOOL WINAPI GetCommTimeouts(
     SERVER_START_REQ( get_serial_info )
     {
         req->handle = hComm;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            lptimeouts->ReadIntervalTimeout         = req->readinterval;
-            lptimeouts->ReadTotalTimeoutMultiplier  = req->readmult;
-            lptimeouts->ReadTotalTimeoutConstant    = req->readconst;
-            lptimeouts->WriteTotalTimeoutMultiplier = req->writemult;
-            lptimeouts->WriteTotalTimeoutConstant   = req->writeconst;
+            lptimeouts->ReadIntervalTimeout         = reply->readinterval;
+            lptimeouts->ReadTotalTimeoutMultiplier  = reply->readmult;
+            lptimeouts->ReadTotalTimeoutConstant    = reply->readconst;
+            lptimeouts->WriteTotalTimeoutMultiplier = reply->writemult;
+            lptimeouts->WriteTotalTimeoutConstant   = reply->writeconst;
         }
     }
     SERVER_END_REQ;
@@ -1401,7 +1401,7 @@ BOOL WINAPI SetCommTimeouts(
         req->readconst    = lptimeouts->ReadTotalTimeoutConstant ;
         req->writemult    = lptimeouts->WriteTotalTimeoutMultiplier ;
         req->writeconst   = lptimeouts->WriteTotalTimeoutConstant ;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
@@ -1562,7 +1562,7 @@ static BOOL COMM_WaitCommEvent(
         req->count = 0;
         req->type = ASYNC_TYPE_WAIT;
 
-        ret=SERVER_CALL_ERR();
+        ret=wine_server_call_err( req );
     }
     SERVER_END_REQ;
 

@@ -222,8 +222,8 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
     SERVER_START_REQ( close_handle )
     {
         req->handle = Handle;
-        ret = SERVER_CALL();
-        if (!ret && req->fd != -1) close( req->fd );
+        ret = wine_server_call( req );
+        if (!ret && reply->fd != -1) close( reply->fd );
     }
     SERVER_END_REQ;
     return ret;

@@ -115,29 +115,28 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
     int ret;
     HANDLE handle = 0;
 
-    SERVER_START_VAR_REQ( queue_exception_event, sizeof(*rec)+sizeof(*context) )
+    SERVER_START_REQ( queue_exception_event )
     {
-        CONTEXT *context_ptr = server_data_ptr(req);
-        EXCEPTION_RECORD *rec_ptr = (EXCEPTION_RECORD *)(context_ptr + 1);
         req->first   = first_chance;
-        *rec_ptr     = *rec;
-        *context_ptr = *context;
-        if (!SERVER_CALL()) handle = req->handle;
+        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_add_data( req, rec, sizeof(*rec) );
+        if (!wine_server_call( req )) handle = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if (!handle) return 0;  /* no debugger present or other error */
 
     /* No need to wait on the handle since the process gets suspended
      * once the event is passed to the debugger, so when we get back
      * here the event has been continued already.
      */
-    SERVER_START_VAR_REQ( get_exception_status, sizeof(*context) )
+    SERVER_START_REQ( get_exception_status )
     {
         req->handle = handle;
-        if (!SERVER_CALL()) *context = *(CONTEXT *)server_data_ptr(req);
-        ret = req->status;
+        wine_server_set_reply( req, context, sizeof(*context) );
+        wine_server_call( req );
+        ret = reply->status;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     NtClose( handle );
     return ret;
 }

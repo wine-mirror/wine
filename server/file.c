@@ -49,7 +49,7 @@ static void file_dump( struct object *obj, int verbose );
 static int file_get_poll_events( struct object *obj );
 static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
-static int file_get_info( struct object *obj, struct get_file_info_request *req );
+static int file_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void file_destroy( struct object *obj );
 
 static const struct object_ops file_ops =
@@ -271,13 +271,13 @@ static int file_flush( struct object *obj )
     return ret;
 }
 
-static int file_get_info( struct object *obj, struct get_file_info_request *req )
+static int file_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
     struct stat st;
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (req)
+    if (reply)
     {
         if (fstat( file->obj.fd, &st ) == -1)
         {
@@ -285,27 +285,27 @@ static int file_get_info( struct object *obj, struct get_file_info_request *req 
             return FD_TYPE_INVALID;
         }
         if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-            S_ISSOCK(st.st_mode) || isatty(file->obj.fd)) req->type = FILE_TYPE_CHAR;
-        else req->type = FILE_TYPE_DISK;
-        if (S_ISDIR(st.st_mode)) req->attr = FILE_ATTRIBUTE_DIRECTORY;
-        else req->attr = FILE_ATTRIBUTE_ARCHIVE;
-        if (!(st.st_mode & S_IWUSR)) req->attr |= FILE_ATTRIBUTE_READONLY;
-        req->access_time = st.st_atime;
-        req->write_time  = st.st_mtime;
+            S_ISSOCK(st.st_mode) || isatty(file->obj.fd)) reply->type = FILE_TYPE_CHAR;
+        else reply->type = FILE_TYPE_DISK;
+        if (S_ISDIR(st.st_mode)) reply->attr = FILE_ATTRIBUTE_DIRECTORY;
+        else reply->attr = FILE_ATTRIBUTE_ARCHIVE;
+        if (!(st.st_mode & S_IWUSR)) reply->attr |= FILE_ATTRIBUTE_READONLY;
+        reply->access_time = st.st_atime;
+        reply->write_time  = st.st_mtime;
         if (S_ISDIR(st.st_mode))
         {
-            req->size_high = 0;
-            req->size_low  = 0;
+            reply->size_high = 0;
+            reply->size_low  = 0;
         }
         else
         {
-            req->size_high = st.st_size >> 32;
-            req->size_low  = st.st_size & 0xffffffff;
+            reply->size_high = st.st_size >> 32;
+            reply->size_low  = st.st_size & 0xffffffff;
         }
-        req->links       = st.st_nlink;
-        req->index_high  = st.st_dev;
-        req->index_low   = st.st_ino;
-        req->serial      = 0; /* FIXME */
+        reply->links       = st.st_nlink;
+        reply->index_high  = st.st_dev;
+        reply->index_low   = st.st_ino;
+        reply->serial      = 0; /* FIXME */
     }
     return FD_TYPE_DEFAULT;
 }
@@ -470,11 +470,11 @@ DECL_HANDLER(create_file)
 {
     struct file *file;
 
-    req->handle = 0;
-    if ((file = create_file( get_req_data(req), get_req_data_size(req), req->access,
+    reply->handle = 0;
+    if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
                              req->sharing, req->create, req->attrs, req->drive_type )))
     {
-        req->handle = alloc_handle( current->process, file, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
     }
 }
@@ -485,7 +485,7 @@ DECL_HANDLER(alloc_file_handle)
     struct file *file;
     int fd;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((fd = thread_get_inflight_fd( current, req->fd )) == -1)
     {
         set_error( STATUS_INVALID_HANDLE );
@@ -494,7 +494,7 @@ DECL_HANDLER(alloc_file_handle)
     if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                     0, DRIVE_UNKNOWN )))
     {
-        req->handle = alloc_handle( current->process, file, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
     }
 }
@@ -504,18 +504,18 @@ DECL_HANDLER(get_handle_fd)
 {
     struct object *obj;
 
-    req->fd = -1;
-    req->type = FD_TYPE_INVALID;
+    reply->fd = -1;
+    reply->type = FD_TYPE_INVALID;
     if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
     {
         int fd = get_handle_fd( current->process, req->handle, req->access );
-        if (fd != -1) req->fd = fd;
+        if (fd != -1) reply->fd = fd;
         else if (!get_error())
         {
             if ((fd = obj->ops->get_fd( obj )) != -1)
                 send_client_fd( current->process, fd, req->handle );
         }
-        req->type = obj->ops->get_file_info( obj, NULL );
+        reply->type = obj->ops->get_file_info( obj, NULL );
         release_object( obj );
     }
 }
@@ -526,8 +526,8 @@ DECL_HANDLER(set_file_pointer)
     int high = req->high;
     int low  = req->low;
     set_file_pointer( req->handle, &low, &high, req->whence );
-    req->new_low  = low;
-    req->new_high = high;
+    reply->new_low  = low;
+    reply->new_high = high;
 }
 
 /* truncate (or extend) a file */
@@ -561,7 +561,7 @@ DECL_HANDLER(get_file_info)
 
     if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
     {
-        obj->ops->get_file_info( obj, req );
+        obj->ops->get_file_info( obj, reply );
         release_object( obj );
     }
 }

@@ -215,23 +215,6 @@ inline static void destroy_properties( struct window *win )
     free( win->properties );
 }
 
-/* enum all properties into the data array */
-static int enum_properties( struct window *win, property_data_t *data, int max )
-{
-    int i, count;
-
-    for (i = count = 0; i < win->prop_inuse && count < max; i++)
-    {
-        if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        data->atom   = win->properties[i].atom;
-        data->string = (win->properties[i].type == PROP_TYPE_STRING);
-        data->handle = win->properties[i].handle;
-        data++;
-        count++;
-    }
-    return count;
-}
-
 /* destroy a window */
 static void destroy_window( struct window *win )
 {
@@ -376,7 +359,7 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 /* create a window */
 DECL_HANDLER(create_window)
 {
-    req->handle = 0;
+    reply->handle = 0;
     if (!req->parent)  /* return desktop window */
     {
         if (!top_window)
@@ -384,7 +367,7 @@ DECL_HANDLER(create_window)
             if (!(top_window = create_window( NULL, NULL, req->atom ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
         }
-        req->handle = top_window->handle;
+        reply->handle = top_window->handle;
     }
     else
     {
@@ -400,7 +383,7 @@ DECL_HANDLER(create_window)
             return;
         }
         if (!(win = create_window( parent, owner, req->atom ))) return;
-        req->handle = win->handle;
+        reply->handle = win->handle;
     }
 }
 
@@ -418,7 +401,7 @@ DECL_HANDLER(link_window)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    req->full_parent = parent ? parent->handle : 0;
+    reply->full_parent = parent ? parent->handle : 0;
     if (parent && req->previous)
     {
         if (req->previous == (user_handle_t)1)  /* special case: HWND_BOTTOM */
@@ -467,7 +450,7 @@ DECL_HANDLER(set_window_owner)
         return;
     }
     win->owner = owner;
-    req->full_owner = owner->handle;
+    reply->full_owner = owner->handle;
 }
 
 
@@ -476,16 +459,16 @@ DECL_HANDLER(get_window_info)
 {
     struct window *win = get_window( req->handle );
 
-    req->full_handle = 0;
-    req->tid = req->pid = 0;
+    reply->full_handle = 0;
+    reply->tid = reply->pid = 0;
     if (win)
     {
-        req->full_handle = win->handle;
+        reply->full_handle = win->handle;
         if (win->thread)
         {
-            req->tid  = get_thread_id( win->thread );
-            req->pid  = get_process_id( win->thread->process );
-            req->atom = win->atom;
+            reply->tid  = get_thread_id( win->thread );
+            reply->pid  = get_process_id( win->thread->process );
+            reply->atom = win->atom;
         }
     }
 }
@@ -496,11 +479,11 @@ DECL_HANDLER(set_window_info)
 {
     struct window *win = get_window( req->handle );
     if (!win) return;
-    req->old_style     = win->style;
-    req->old_ex_style  = win->ex_style;
-    req->old_id        = win->id;
-    req->old_instance  = win->instance;
-    req->old_user_data = win->user_data;
+    reply->old_style     = win->style;
+    reply->old_ex_style  = win->ex_style;
+    reply->old_id        = win->id;
+    reply->old_instance  = win->instance;
+    reply->old_user_data = win->user_data;
     if (req->flags & SET_WIN_STYLE) win->style = req->style;
     if (req->flags & SET_WIN_EXSTYLE) win->ex_style = req->ex_style;
     if (req->flags & SET_WIN_ID) win->id = req->id;
@@ -514,16 +497,15 @@ DECL_HANDLER(get_window_parents)
 {
     struct window *ptr, *win = get_window( req->handle );
     int total = 0;
+    user_handle_t *data;
     size_t len;
 
     if (win) for (ptr = win->parent; ptr; ptr = ptr->parent) total++;
 
-    req->count = total;
-    len = min( get_req_data_size(req), total * sizeof(user_handle_t) );
-    set_req_data_size( req, len );
-    if (len)
+    reply->count = total;
+    len = min( get_reply_max_size(), total * sizeof(user_handle_t) );
+    if (len && ((data = set_reply_data_size( len ))))
     {
-        user_handle_t *data = get_req_data(req);
         for (ptr = win->parent; ptr && len; ptr = ptr->parent, len -= sizeof(*data))
             *data++ = ptr->handle;
     }
@@ -535,6 +517,7 @@ DECL_HANDLER(get_window_children)
 {
     struct window *ptr, *parent = get_window( req->parent );
     int total = 0;
+    user_handle_t *data;
     size_t len;
 
     if (parent)
@@ -545,12 +528,10 @@ DECL_HANDLER(get_window_children)
             total++;
         }
 
-    req->count = total;
-    len = min( get_req_data_size(req), total * sizeof(user_handle_t) );
-    set_req_data_size( req, len );
-    if (len)
+    reply->count = total;
+    len = min( get_reply_max_size(), total * sizeof(user_handle_t) );
+    if (len && ((data = set_reply_data_size( len ))))
     {
-        user_handle_t *data = get_req_data(req);
         for (ptr = parent->first_child; ptr && len; ptr = ptr->next, len -= sizeof(*data))
         {
             if (req->atom && ptr->atom != req->atom) continue;
@@ -571,24 +552,24 @@ DECL_HANDLER(get_window_tree)
     if (win->parent)
     {
         struct window *parent = win->parent;
-        req->parent        = parent->handle;
-        req->owner         = win->owner ? win->owner->handle : 0;
-        req->next_sibling  = win->next ? win->next->handle : 0;
-        req->prev_sibling  = win->prev ? win->prev->handle : 0;
-        req->first_sibling = parent->first_child ? parent->first_child->handle : 0;
-        req->last_sibling  = parent->last_child ? parent->last_child->handle : 0;
+        reply->parent        = parent->handle;
+        reply->owner         = win->owner ? win->owner->handle : 0;
+        reply->next_sibling  = win->next ? win->next->handle : 0;
+        reply->prev_sibling  = win->prev ? win->prev->handle : 0;
+        reply->first_sibling = parent->first_child ? parent->first_child->handle : 0;
+        reply->last_sibling  = parent->last_child ? parent->last_child->handle : 0;
     }
     else
     {
-        req->parent        = 0;
-        req->owner         = 0;
-        req->next_sibling  = 0;
-        req->prev_sibling  = 0;
-        req->first_sibling = 0;
-        req->last_sibling  = 0;
+        reply->parent        = 0;
+        reply->owner         = 0;
+        reply->next_sibling  = 0;
+        reply->prev_sibling  = 0;
+        reply->first_sibling = 0;
+        reply->last_sibling  = 0;
     }
-    req->first_child = win->first_child ? win->first_child->handle : 0;
-    req->last_child  = win->last_child ? win->last_child->handle : 0;
+    reply->first_child = win->first_child ? win->first_child->handle : 0;
+    reply->last_child  = win->last_child ? win->last_child->handle : 0;
 }
 
 
@@ -612,8 +593,8 @@ DECL_HANDLER(get_window_rectangles)
 
     if (win)
     {
-        req->window = win->window_rect;
-        req->client = win->client_rect;
+        reply->window = win->window_rect;
+        reply->client = win->client_rect;
     }
 }
 
@@ -622,15 +603,13 @@ DECL_HANDLER(get_window_rectangles)
 DECL_HANDLER(get_window_text)
 {
     struct window *win = get_window( req->handle );
-    size_t len = 0;
 
     if (win && win->text)
     {
-        len = strlenW( win->text ) * sizeof(WCHAR);
-        if (len > get_req_data_size(req)) len = get_req_data_size(req);
-        memcpy( get_req_data(req), win->text, len );
+        size_t len = strlenW( win->text ) * sizeof(WCHAR);
+        if (len > get_reply_max_size()) len = get_reply_max_size();
+        set_reply_data( win->text, len );
     }
-    set_req_data_size( req, len );
 }
 
 
@@ -642,11 +621,11 @@ DECL_HANDLER(set_window_text)
     if (win)
     {
         WCHAR *text = NULL;
-        size_t len = get_req_data_size(req) / sizeof(WCHAR);
+        size_t len = get_req_data_size() / sizeof(WCHAR);
         if (len)
         {
             if (!(text = mem_alloc( (len+1) * sizeof(WCHAR) ))) return;
-            memcpy( text, get_req_data(req), len * sizeof(WCHAR) );
+            memcpy( text, get_req_data(), len * sizeof(WCHAR) );
             text[len] = 0;
         }
         if (win->text) free( win->text );
@@ -674,14 +653,14 @@ DECL_HANDLER(get_windows_offset)
 {
     struct window *win;
 
-    req->x = req->y = 0;
+    reply->x = reply->y = 0;
     if (req->from)
     {
         if (!(win = get_window( req->from ))) return;
         while (win)
         {
-            req->x += win->client_rect.left;
-            req->y += win->client_rect.top;
+            reply->x += win->client_rect.left;
+            reply->y += win->client_rect.top;
             win = win->parent;
         }
     }
@@ -690,8 +669,8 @@ DECL_HANDLER(get_windows_offset)
         if (!(win = get_window( req->to ))) return;
         while (win)
         {
-            req->x -= win->client_rect.left;
-            req->y -= win->client_rect.top;
+            reply->x -= win->client_rect.left;
+            reply->y -= win->client_rect.top;
             win = win->parent;
         }
     }
@@ -712,8 +691,8 @@ DECL_HANDLER(set_window_property)
 DECL_HANDLER(remove_window_property)
 {
     struct window *win = get_window( req->window );
-    req->handle = 0;
-    if (win) req->handle = remove_property( win, req->atom );
+    reply->handle = 0;
+    if (win) reply->handle = remove_property( win, req->atom );
 }
 
 
@@ -721,18 +700,35 @@ DECL_HANDLER(remove_window_property)
 DECL_HANDLER(get_window_property)
 {
     struct window *win = get_window( req->window );
-    req->handle = 0;
-    if (win) req->handle = get_property( win, req->atom );
+    reply->handle = 0;
+    if (win) reply->handle = get_property( win, req->atom );
 }
 
 
 /* get the list of properties of a window */
 DECL_HANDLER(get_window_properties)
 {
-    int count = 0;
-    property_data_t *data = get_req_data(req);
+    property_data_t *data;
+    int i, count, max = get_reply_max_size() / sizeof(*data);
     struct window *win = get_window( req->window );
 
-    if (win) count = enum_properties( win, data, get_req_data_size(req) / sizeof(*data) );
-    set_req_data_size( req, count * sizeof(*data) );
+    reply->total = 0;
+    if (!win) return;
+
+    for (i = count = 0; i < win->prop_inuse; i++)
+        if (win->properties[i].type != PROP_TYPE_FREE) count++;
+    reply->total = count;
+
+    if (count > max) count = max;
+    if (!count || !(data = set_reply_data_size( count * sizeof(*data) ))) return;
+
+    for (i = 0; i < win->prop_inuse && count; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE) continue;
+        data->atom   = win->properties[i].atom;
+        data->string = (win->properties[i].type == PROP_TYPE_STRING);
+        data->handle = win->properties[i].handle;
+        data++;
+        count--;
+    }
 }

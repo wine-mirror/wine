@@ -144,7 +144,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = thread->unix_pid;
     if (flags & CONTEXT_FULL)
@@ -195,7 +195,6 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
         if (ptrace( PTRACE_SETFPREGS, pid, 0, &context->FloatSave ) == -1) goto error;
-        context->FloatSave.Cr0NpxState = 0;  /* FIXME */
     }
     return;
  error:
@@ -256,7 +255,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = thread->unix_pid;
     if (flags & CONTEXT_FULL)
@@ -303,7 +302,6 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
         if (ptrace( PTRACE_SETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
-        context->FloatSave.Cr0NpxState = 0;  /* FIXME */
     }
     return;
  error:
@@ -365,7 +363,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = thread->unix_pid;
     if (flags & CONTEXT_FULL)
@@ -412,7 +410,6 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
         if (ptrace( PTRACE_SETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
-        context->FloatSave.Cr0NpxState = 0;  /* FIXME */
     }
     return;
  error:
@@ -425,7 +422,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, CONTEXT *from, int flags )
+static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
 {
     if (flags & CONTEXT_CONTROL)
     {
@@ -486,27 +483,34 @@ int get_thread_single_step( struct thread *thread )
 DECL_HANDLER(get_thread_context)
 {
     struct thread *thread;
+    void *data;
     int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
 
-    if (get_req_data_size(req) < sizeof(CONTEXT))
+    if (get_reply_max_size() < sizeof(CONTEXT))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
+    if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
+
+    if ((data = set_reply_data_size( sizeof(CONTEXT) )))
     {
+        /* copy incoming context into reply */
+        memset( data, 0, sizeof(CONTEXT) );
+        memcpy( data, get_req_data(), min( get_req_data_size(), sizeof(CONTEXT) ));
+
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( get_req_data(req), thread->context, flags );
+            copy_context( data, thread->context, flags );
             flags &= CONTEXT_DEBUG_REGISTERS;
         }
         if (flags && suspend_for_ptrace( thread ))
         {
-            get_thread_context( thread, flags, get_req_data(req) );
+            get_thread_context( thread, flags, data );
             resume_thread( thread );
         }
-        release_object( thread );
     }
+    release_object( thread );
 }
 
 
@@ -516,7 +520,7 @@ DECL_HANDLER(set_thread_context)
     struct thread *thread;
     int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
 
-    if (get_req_data_size(req) < sizeof(CONTEXT))
+    if (get_req_data_size() < sizeof(CONTEXT))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -525,12 +529,12 @@ DECL_HANDLER(set_thread_context)
     {
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( thread->context, get_req_data(req), flags );
+            copy_context( thread->context, get_req_data(), flags );
             flags &= CONTEXT_DEBUG_REGISTERS;
         }
         if (flags && suspend_for_ptrace( thread ))
         {
-            set_thread_context( thread, flags, get_req_data(req) );
+            set_thread_context( thread, flags, get_req_data() );
             resume_thread( thread );
         }
         release_object( thread );

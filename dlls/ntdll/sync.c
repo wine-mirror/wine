@@ -36,16 +36,16 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     if ((MaximumCount <= 0) || (InitialCount > MaximumCount))
         return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_VAR_REQ( create_semaphore, len )
+    SERVER_START_REQ( create_semaphore )
     {
         req->initial = InitialCount;
         req->max     = MaximumCount;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
-        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = SERVER_CALL();
-        *SemaphoreHandle = req->handle;
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *SemaphoreHandle = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -59,15 +59,15 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_VAR_REQ( open_semaphore, len )
+    SERVER_START_REQ( open_semaphore )
     {
         req->access  = access;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
-        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = SERVER_CALL();
-        *SemaphoreHandle = req->handle;
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *SemaphoreHandle = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -96,9 +96,9 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous 
     {
         req->handle = handle;
         req->count  = count;
-        if (!(ret = SERVER_CALL()))
+        if (!(ret = wine_server_call( req )))
         {
-            if (previous) *previous = req->prev_count;
+            if (previous) *previous = reply->prev_count;
         }
     }
     SERVER_END_REQ;
@@ -123,16 +123,16 @@ NTSTATUS WINAPI NtCreateEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_VAR_REQ( create_event, len )
+    SERVER_START_REQ( create_event )
     {
         req->manual_reset = ManualReset;
         req->initial_state = InitialState;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
-        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = SERVER_CALL();
-        *EventHandle = req->handle;
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *EventHandle = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -148,15 +148,15 @@ NTSTATUS WINAPI NtOpenEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_VAR_REQ( open_event, len )
+    SERVER_START_REQ( open_event )
     {
         req->access  = DesiredAccess;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
-        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = SERVER_CALL();
-        *EventHandle = req->handle;
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *EventHandle = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -175,7 +175,7 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
     {
         req->handle = handle;
         req->op     = SET_EVENT;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -195,7 +195,7 @@ NTSTATUS WINAPI NtResetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
     {
         req->handle = handle;
         req->op     = RESET_EVENT;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -226,7 +226,7 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
     {
         req->handle = handle;
         req->op     = PULSE_EVENT;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
     return ret;

@@ -51,7 +51,7 @@ TEB *THREAD_IdToTEB( DWORD id )
     {
         req->handle = 0;
         req->tid_in = (void *)id;
-        if (!SERVER_CALL()) ret = req->teb;
+        if (!wine_server_call( req )) ret = reply->teb;
     }
     SERVER_END_REQ;
 
@@ -112,7 +112,6 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
     close( teb->wait_fd[1] );
     if (teb->stack_sel) FreeSelector16( teb->stack_sel );
     FreeSelector16( teb->teb_sel );
-    if (teb->buffer) munmap( (void *)teb->buffer, teb->buffer_size );
     if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
 }
@@ -298,10 +297,10 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
         req->suspend    = ((flags & CREATE_SUSPENDED) != 0);
         req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->request_fd = request_pipe[0];
-        if (!SERVER_CALL_ERR())
+        if (!wine_server_call_err( req ))
         {
-            handle = req->handle;
-            tid = req->tid;
+            handle = reply->handle;
+            tid = reply->tid;
         }
         close( request_pipe[0] );
     }
@@ -370,8 +369,8 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         /* send the exit code to the server */
         req->handle    = GetCurrentThread();
         req->exit_code = code;
-        SERVER_CALL();
-        last = req->last;
+        wine_server_call( req );
+        last = reply->last;
     }
     SERVER_END_REQ;
 
@@ -400,14 +399,14 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
                               const CONTEXT *context ) /* [in] Address of context structure */
 {
     BOOL ret;
-    SERVER_START_VAR_REQ( set_thread_context, sizeof(*context) )
+    SERVER_START_REQ( set_thread_context )
     {
         req->handle = handle;
         req->flags = context->ContextFlags;
-        memcpy( server_data_ptr(req), context, sizeof(*context) );
-        ret = !SERVER_CALL_ERR();
+        wine_server_add_data( req, context, sizeof(*context) );
+        ret = !wine_server_call_err( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -423,15 +422,15 @@ BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with 
                               CONTEXT *context ) /* [out] Address of context structure */
 {
     BOOL ret;
-    SERVER_START_VAR_REQ( get_thread_context, sizeof(*context) )
+    SERVER_START_REQ( get_thread_context )
     {
         req->handle = handle;
         req->flags = context->ContextFlags;
-        memcpy( server_data_ptr(req), context, sizeof(*context) );
-        if ((ret = !SERVER_CALL_ERR()))
-            memcpy( context, server_data_ptr(req), sizeof(*context) );
+        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_set_reply( req, context, sizeof(*context) );
+        ret = !wine_server_call_err( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -451,7 +450,7 @@ INT WINAPI GetThreadPriority(
     {
         req->handle = hthread;
         req->tid_in = 0;
-        if (!SERVER_CALL_ERR()) ret = req->priority;
+        if (!wine_server_call_err( req )) ret = reply->priority;
     }
     SERVER_END_REQ;
     return ret;
@@ -475,7 +474,7 @@ BOOL WINAPI SetThreadPriority(
         req->handle   = hthread;
         req->priority = priority;
         req->mask     = SET_THREAD_INFO_PRIORITY;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -529,7 +528,7 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
         req->handle   = hThread;
         req->affinity = dwThreadAffinityMask;
         req->mask     = SET_THREAD_INFO_AFFINITY;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
         /* FIXME: should return previous value */
     }
     SERVER_END_REQ;
@@ -571,8 +570,8 @@ BOOL WINAPI GetExitCodeThread(
     {
         req->handle = hthread;
         req->tid_in = 0;
-        ret = !SERVER_CALL_ERR();
-        if (ret && exitcode) *exitcode = req->exit_code;
+        ret = !wine_server_call_err( req );
+        if (ret && exitcode) *exitcode = reply->exit_code;
     }
     SERVER_END_REQ;
     return ret;
@@ -597,7 +596,7 @@ DWORD WINAPI ResumeThread(
     SERVER_START_REQ( resume_thread )
     {
         req->handle = hthread;
-        if (!SERVER_CALL_ERR()) ret = req->count;
+        if (!wine_server_call_err( req )) ret = reply->count;
     }
     SERVER_END_REQ;
     return ret;
@@ -618,7 +617,7 @@ DWORD WINAPI SuspendThread(
     SERVER_START_REQ( suspend_thread )
     {
         req->handle = hthread;
-        if (!SERVER_CALL_ERR()) ret = req->count;
+        if (!wine_server_call_err( req )) ret = reply->count;
     }
     SERVER_END_REQ;
     return ret;
@@ -637,7 +636,7 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
         req->user   = 1;
         req->func   = func;
         req->param  = (void *)data;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;

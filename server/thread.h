@@ -42,35 +42,40 @@ struct inflight_fd
 
 struct thread
 {
-    struct object       obj;       /* object header */
-    struct thread      *next;      /* system-wide thread list */
-    struct thread      *prev;
-    struct thread      *proc_next; /* per-process thread list */
-    struct thread      *proc_prev;
-    struct process     *process;
-    struct mutex       *mutex;       /* list of currently owned mutexes */
-    struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
-    struct debug_event *debug_event; /* debug event being sent to debugger */
-    struct msg_queue   *queue;       /* message queue */
-    struct startup_info*info;        /* startup info for child process */
-    struct thread_wait *wait;        /* current wait condition if sleeping */
-    struct apc_queue    system_apc;  /* queue of system async procedure calls */
-    struct apc_queue    user_apc;    /* queue of user async procedure calls */
-    struct inflight_fd  inflight[MAX_INFLIGHT_FDS];  /* fds currently in flight */
-    unsigned int        error;       /* current error code */
-    struct object      *request_fd;  /* fd for receiving client requests */
-    int                 reply_fd;    /* fd to send a reply to a client */
-    int                 wait_fd;     /* fd to use to wake a sleeping client */
-    enum run_state      state;     /* running state */
-    int                 attached;  /* is thread attached with ptrace? */
-    int                 exit_code; /* thread exit code */
-    int                 unix_pid;  /* Unix pid of client */
-    CONTEXT            *context;   /* current context if in an exception handler */
-    void               *teb;       /* TEB address (in client address space) */
-    int                 priority;  /* priority level */
-    int                 affinity;  /* affinity mask */
-    int                 suspend;   /* suspend count */
-    void               *buffer;    /* buffer for communication with the client */
+    struct object          obj;           /* object header */
+    struct thread         *next;          /* system-wide thread list */
+    struct thread         *prev;
+    struct thread         *proc_next;     /* per-process thread list */
+    struct thread         *proc_prev;
+    struct process        *process;
+    struct mutex          *mutex;         /* list of currently owned mutexes */
+    struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
+    struct debug_event    *debug_event;   /* debug event being sent to debugger */
+    struct msg_queue      *queue;         /* message queue */
+    struct startup_info   *info;          /* startup info for child process */
+    struct thread_wait    *wait;          /* current wait condition if sleeping */
+    struct apc_queue       system_apc;    /* queue of system async procedure calls */
+    struct apc_queue       user_apc;      /* queue of user async procedure calls */
+    struct inflight_fd     inflight[MAX_INFLIGHT_FDS];  /* fds currently in flight */
+    unsigned int           error;         /* current error code */
+    union generic_request  req;           /* current request */
+    void                  *req_data;      /* variable-size data for request */
+    unsigned int           req_toread;    /* amount of data still to read in request */
+    void                  *reply_data;    /* variable-size data for reply */
+    unsigned int           reply_size;    /* size of reply data */
+    unsigned int           reply_towrite; /* amount of data still to write in reply */
+    int                    request_fd;    /* fd for receiving client requests */
+    int                    reply_fd;      /* fd to send a reply to a client */
+    int                    wait_fd;       /* fd to use to wake a sleeping client */
+    enum run_state         state;         /* running state */
+    int                    attached;      /* is thread attached with ptrace? */
+    int                    exit_code;     /* thread exit code */
+    int                    unix_pid;      /* Unix pid of client */
+    CONTEXT               *context;       /* current context if in an exception handler */
+    void                  *teb;           /* TEB address (in client address space) */
+    int                    priority;      /* priority level */
+    int                    affinity;      /* affinity mask */
+    int                    suspend;       /* suspend count */
 };
 
 struct thread_snapshot

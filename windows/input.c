@@ -110,7 +110,7 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
         req->time   = time;
         req->info   = extraInfo;
         req->timeout = 0;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }

@@ -330,9 +330,28 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
 }
 
 /* receive a message, removing it from the sent queue */
-static void receive_message( struct msg_queue *queue, struct message *msg )
+static void receive_message( struct msg_queue *queue, struct message *msg,
+                             struct get_message_reply *reply )
 {
     struct message_result *result = msg->result;
+
+    reply->total = msg->data_size;
+    if (msg->data_size > get_reply_max_size())
+    {
+        set_error( STATUS_BUFFER_OVERFLOW );
+        return;
+    }
+    reply->type   = msg->type;
+    reply->win    = msg->win;
+    reply->msg    = msg->msg;
+    reply->wparam = msg->wparam;
+    reply->lparam = msg->lparam;
+    reply->x      = msg->x;
+    reply->y      = msg->y;
+    reply->time   = msg->time;
+    reply->info   = msg->info;
+
+    if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
 
     unlink_message( &queue->msg_list[SEND_MESSAGE], msg );
     /* put the result on the receiver result stack */
@@ -341,14 +360,13 @@ static void receive_message( struct msg_queue *queue, struct message *msg )
         result->recv_next  = queue->recv_result;
         queue->recv_result = result;
     }
-    if (msg->data) free( msg->data );
     free( msg );
     if (!queue->msg_list[SEND_MESSAGE].first) clear_queue_bits( queue, QS_SENDMESSAGE );
 }
 
 /* set the result of the current received message */
 static void reply_message( struct msg_queue *queue, unsigned int result,
-                           unsigned int error, int remove, void *data, size_t len )
+                           unsigned int error, int remove, const void *data, size_t len )
 {
     struct message_result *res = queue->recv_result;
 
@@ -656,8 +674,8 @@ DECL_HANDLER(get_msg_queue)
 {
     struct msg_queue *queue = get_current_queue();
 
-    req->handle = 0;
-    if (queue) req->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
+    reply->handle = 0;
+    if (queue) reply->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
 }
 
 
@@ -670,8 +688,8 @@ DECL_HANDLER(set_queue_mask)
     {
         queue->wake_mask    = req->wake_mask;
         queue->changed_mask = req->changed_mask;
-        req->wake_bits      = queue->wake_bits;
-        req->changed_bits   = queue->changed_bits;
+        reply->wake_bits    = queue->wake_bits;
+        reply->changed_bits = queue->changed_bits;
         if (is_signaled( queue ))
         {
             /* if skip wait is set, do what would have been done in the subsequent wait */
@@ -688,11 +706,11 @@ DECL_HANDLER(get_queue_status)
     struct msg_queue *queue = current->queue;
     if (queue)
     {
-        req->wake_bits    = queue->wake_bits;
-        req->changed_bits = queue->changed_bits;
+        reply->wake_bits    = queue->wake_bits;
+        reply->changed_bits = queue->changed_bits;
         if (req->clear) queue->changed_bits = 0;
     }
-    else req->wake_bits = req->changed_bits = 0;
+    else reply->wake_bits = reply->changed_bits = 0;
 }
 
 
@@ -731,8 +749,8 @@ DECL_HANDLER(send_message)
         switch(msg->type)
         {
        case MSG_OTHER_PROCESS:
-            msg->data_size = get_req_data_size(req);
-            if (msg->data_size && !(msg->data = memdup( get_req_data(req), msg->data_size )))
+            msg->data_size = get_req_data_size();
+            if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
             {
                 free( msg );
                 break;
@@ -779,31 +797,26 @@ DECL_HANDLER(send_message)
     release_object( thread );
 }
 
-/* store a message contents into the request buffer; helper for get_message */
-inline static void put_req_message( struct get_message_request *req, const struct message *msg )
-{
-    int len = min( get_req_data_size(req), msg->data_size );
-
-    req->type   = msg->type;
-    req->win    = msg->win;
-    req->msg    = msg->msg;
-    req->wparam = msg->wparam;
-    req->lparam = msg->lparam;
-    req->x      = msg->x;
-    req->y      = msg->y;
-    req->time   = msg->time;
-    req->info   = msg->info;
-    if (len) memcpy( get_req_data(req), msg->data, len );
-    set_req_data_size( req, len );
-}
-
 /* return a message to the application, removing it from the queue if needed */
-static void return_message_to_app( struct msg_queue *queue, struct get_message_request *req,
+static void return_message_to_app( struct msg_queue *queue, int flags,
+                                   struct get_message_reply *reply,
                                    struct message *msg, enum message_kind kind )
 {
-    put_req_message( req, msg );
+    assert( !msg->data_size );  /* posted messages can't have data */
+
+    reply->type   = msg->type;
+    reply->win    = msg->win;
+    reply->msg    = msg->msg;
+    reply->wparam = msg->wparam;
+    reply->lparam = msg->lparam;
+    reply->x      = msg->x;
+    reply->y      = msg->y;
+    reply->time   = msg->time;
+    reply->info   = msg->info;
+    reply->total  = 0;
+
     /* raw messages always get removed */
-    if ((msg->type == MSG_HARDWARE_RAW) || (req->flags & GET_MSG_REMOVE))
+    if ((msg->type == MSG_HARDWARE_RAW) || (flags & GET_MSG_REMOVE))
     {
         queue->last_msg = NULL;
         remove_queue_message( queue, msg, kind );
@@ -843,20 +856,14 @@ DECL_HANDLER(get_message)
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
 
-    if (!queue)
-    {
-        set_req_data_size( req, 0 );
-        return;
-    }
+    if (!queue) return;
 
     /* first check for sent messages */
     if ((msg = queue->msg_list[SEND_MESSAGE].first))
     {
-        put_req_message( req, msg );
-        receive_message( queue, msg );
+        receive_message( queue, msg, reply );
         return;
     }
-    set_req_data_size( req, 0 ); /* only sent messages can have data */
     if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
     /* if requested, remove the last returned but not yet removed message */
@@ -871,7 +878,7 @@ DECL_HANDLER(get_message)
     if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], get_win,
                                       req->get_first, req->get_last )))
     {
-        return_message_to_app( queue, req, msg, POST_MESSAGE );
+        return_message_to_app( queue, req->flags, reply, msg, POST_MESSAGE );
         return;
     }
 
@@ -879,30 +886,30 @@ DECL_HANDLER(get_message)
     if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], get_win,
                                       req->get_first, req->get_last )))
     {
-        return_message_to_app( queue, req, msg, COOKED_HW_MESSAGE );
+        return_message_to_app( queue, req->flags, reply, msg, COOKED_HW_MESSAGE );
         return;
     }
 
     /* then check for any raw hardware message */
     if ((msg = queue->msg_list[RAW_HW_MESSAGE].first))
     {
-        return_message_to_app( queue, req, msg, RAW_HW_MESSAGE );
+        return_message_to_app( queue, req->flags, reply, msg, RAW_HW_MESSAGE );
         return;
     }
 
     /* now check for WM_PAINT */
     if (queue->paint_count &&
         (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last) &&
-        (req->win = find_window_to_repaint( get_win, current )))
+        (reply->win = find_window_to_repaint( get_win, current )))
     {
-        req->type   = MSG_POSTED;
-        req->msg    = WM_PAINT;
-        req->wparam = 0;
-        req->lparam = 0;
-        req->x      = 0;
-        req->y      = 0;
-        req->time   = get_tick_count();
-        req->info   = 0;
+        reply->type   = MSG_POSTED;
+        reply->msg    = WM_PAINT;
+        reply->wparam = 0;
+        reply->lparam = 0;
+        reply->x      = 0;
+        reply->y      = 0;
+        reply->time   = get_tick_count();
+        reply->info   = 0;
         return;
     }
 
@@ -910,15 +917,15 @@ DECL_HANDLER(get_message)
     if ((timer = find_expired_timer( queue, get_win, req->get_first,
                                      req->get_last, (req->flags & GET_MSG_REMOVE) )))
     {
-        req->type   = MSG_POSTED;
-        req->win    = timer->win;
-        req->msg    = timer->msg;
-        req->wparam = timer->id;
-        req->lparam = timer->lparam;
-        req->x      = 0;
-        req->y      = 0;
-        req->time   = get_tick_count();
-        req->info   = 0;
+        reply->type   = MSG_POSTED;
+        reply->win    = timer->win;
+        reply->msg    = timer->msg;
+        reply->wparam = timer->id;
+        reply->lparam = timer->lparam;
+        reply->x      = 0;
+        reply->y      = 0;
+        reply->time   = get_tick_count();
+        reply->info   = 0;
         return;
     }
 
@@ -932,7 +939,7 @@ DECL_HANDLER(reply_message)
 {
     if (current->queue && current->queue->recv_result)
         reply_message( current->queue, req->result, 0, req->remove,
-                       get_req_data(req), get_req_data_size(req) );
+                       get_req_data(), get_req_data_size() );
     else
         set_error( STATUS_ACCESS_DENIED );
 }
@@ -942,26 +949,24 @@ DECL_HANDLER(reply_message)
 DECL_HANDLER(get_message_reply)
 {
     struct msg_queue *queue = current->queue;
-    size_t data_len = 0;
 
     if (queue)
     {
         struct message_result *result = queue->send_result;
 
         set_error( STATUS_PENDING );
-        req->result = 0;
+        reply->result = 0;
 
         if (result && (result->replied || req->cancel))
         {
             if (result->replied)
             {
-                req->result = result->result;
+                reply->result = result->result;
                 set_error( result->error );
                 if (result->data)
                 {
-                    data_len = min( result->data_size, get_req_data_size(req) );
-                    memcpy( get_req_data(req), result->data, data_len );
-                    free( result->data );
+                    size_t data_len = min( result->data_size, get_reply_max_size() );
+                    set_reply_data_ptr( result->data, data_len );
                     result->data = NULL;
                     result->data_size = 0;
                 }
@@ -974,7 +979,6 @@ DECL_HANDLER(get_message_reply)
         }
     }
     else set_error( STATUS_ACCESS_DENIED );
-    set_req_data_size( req, data_len );
 }
 
 

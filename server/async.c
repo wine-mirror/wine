@@ -28,7 +28,7 @@ DECL_HANDLER(create_async)
     /* FIXME: check if this object is allowed to do overlapped I/O */
 
     /* FIXME: this should be a function pointer */
-    req->timeout = get_serial_async_timeout(obj,req->type,req->count);
+    reply->timeout = get_serial_async_timeout(obj,req->type,req->count);
 
     release_object(obj);
 }

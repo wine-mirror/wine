@@ -47,7 +47,7 @@ struct object_ops
     /* flush the object buffers */
     int  (*flush)(struct object *);
     /* get file information */
-    int  (*get_file_info)(struct object *,struct get_file_info_request *);
+    int  (*get_file_info)(struct object *,struct get_file_info_reply *);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -89,7 +89,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_get_fd( struct object *obj );
 extern int no_flush( struct object *obj );
-extern int no_get_file_info( struct object *obj, struct get_file_info_request *info );
+extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
 extern void no_destroy( struct object *obj );
 extern int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry );
@@ -103,7 +103,7 @@ extern void dump_objects(void);
 
 extern int add_select_user( struct object *obj );
 extern void remove_select_user( struct object *obj );
-extern void change_select_fd( struct object *obj, int fd );
+extern void change_select_fd( struct object *obj, int fd, int events );
 extern void set_select_events( struct object *obj, int events );
 extern int check_select_events( int fd, int events );
 extern void select_loop(void);

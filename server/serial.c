@@ -37,7 +37,7 @@
 
 static void serial_dump( struct object *obj, int verbose );
 static int serial_get_fd( struct object *obj );
-static int serial_get_info( struct object *obj, struct get_file_info_request *req );
+static int serial_get_info( struct object *obj, struct get_file_info_reply *reply );
 static int serial_get_poll_events( struct object *obj );
 
 struct serial
@@ -165,23 +165,23 @@ static int serial_get_fd( struct object *obj )
     return serial->obj.fd;
 }
 
-static int serial_get_info( struct object *obj, struct get_file_info_request *req )
+static int serial_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
     struct serial *serial = (struct serial *) obj;
     assert( obj->ops == &serial_ops );
 
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_CHAR;
-        req->attr        = 0;
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_CHAR;
+        reply->attr        = 0;
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
 
     if(serial->attrib & FILE_FLAG_OVERLAPPED)
@@ -215,10 +215,10 @@ DECL_HANDLER(create_serial)
 {
     struct serial *serial;
 
-    req->handle = 0;
-    if ((serial = create_serial( get_req_data(req), get_req_data_size(req), req->access, req->attributes )))
+    reply->handle = 0;
+    if ((serial = create_serial( get_req_data(), get_req_data_size(), req->access, req->attributes )))
     {
-        req->handle = alloc_handle( current->process, serial, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, serial, req->access, req->inherit );
         release_object( serial );
     }
 }
@@ -230,17 +230,17 @@ DECL_HANDLER(get_serial_info)
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
         /* timeouts */
-        req->readinterval = serial->readinterval;
-        req->readconst    = serial->readconst;
-        req->readmult     = serial->readmult;
-        req->writeconst   = serial->writeconst;
-        req->writemult    = serial->writemult;
+        reply->readinterval = serial->readinterval;
+        reply->readconst    = serial->readconst;
+        reply->readmult     = serial->readmult;
+        reply->writeconst   = serial->writeconst;
+        reply->writemult    = serial->writemult;
 
         /* event mask */
-        req->eventmask    = serial->eventmask;
+        reply->eventmask    = serial->eventmask;
 
         /* comm port error status */
-        req->commerror    = serial->commerror;
+        reply->commerror    = serial->commerror;
 
         release_object( serial );
     }

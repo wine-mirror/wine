@@ -97,13 +97,13 @@ void remove_select_user( struct object *obj )
     active_users--;
 }
 
-/* change the fd of an object (the old fd is closed) */
-void change_select_fd( struct object *obj, int fd )
+/* change the fd and events of an object */
+void change_select_fd( struct object *obj, int fd, int events )
 {
     int user = obj->select;
     assert( poll_users[user] == obj );
     pollfd[user].fd = fd;
-    close( obj->fd );
+    pollfd[user].events = events;
     obj->fd = fd;
 }
 

@@ -18,24 +18,16 @@
  */
 HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateWaitableTimerW( sa, manual, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_timer, len * sizeof(WCHAR) )
-    {
-        req->manual  = manual;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return CreateWaitableTimerW( sa, manual, buffer );
 }
 
 
@@ -51,16 +43,16 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_timer, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_timer )
     {
         req->manual  = manual;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -70,23 +62,16 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
  */
 HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenWaitableTimerW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_timer, len * sizeof(WCHAR) )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return OpenWaitableTimerW( access, inherit, buffer );
 }
 
 
@@ -102,15 +87,15 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_timer, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_timer )
     {
         req->access  = access;
         req->inherit = inherit;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -150,7 +135,7 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         req->callback = callback;
         req->arg      = arg;
         if (resume) SetLastError( ERROR_NOT_SUPPORTED ); /* set error but can still succeed */
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -166,7 +151,7 @@ BOOL WINAPI CancelWaitableTimer( HANDLE handle )
     SERVER_START_REQ( cancel_timer )
     {
         req->handle = handle;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;

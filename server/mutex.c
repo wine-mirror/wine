@@ -140,10 +140,10 @@ DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
 
-    req->handle = 0;
-    if ((mutex = create_mutex( get_req_data(req), get_req_data_size(req), req->owned )))
+    reply->handle = 0;
+    if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->owned )))
     {
-        req->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );
         release_object( mutex );
     }
 }
@@ -151,8 +151,8 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    req->handle = open_object( get_req_data(req), get_req_data_size(req),
-                               &mutex_ops, req->access, req->inherit );
+    reply->handle = open_object( get_req_data(), get_req_data_size(),
+                                 &mutex_ops, req->access, req->inherit );
 }
 
 /* release a mutex */

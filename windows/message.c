@@ -109,7 +109,7 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
         req->time   = msg->time;
         req->info   = extra_info;
         req->timeout = 0;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }
@@ -707,7 +707,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
         req->wake_mask    = (flags & MWMO_INPUTAVAILABLE) ? mask : 0;
         req->changed_mask = mask;
         req->skip_wait    = 0;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 
@@ -751,7 +751,7 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
     {
         req->handle = hProcess;
         req->timeout = dwTimeOut;
-        if (!(ret = SERVER_CALL_ERR())) idle_event = req->event;
+        if (!(ret = wine_server_call_err( req ))) idle_event = reply->event;
     }
     SERVER_END_REQ;
     if (ret) return WAIT_FAILED;  /* error */

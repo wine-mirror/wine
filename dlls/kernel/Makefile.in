@@ -9,6 +9,7 @@ IMPORTS   = ntdll
 
 C_SRCS = \
 	comm.c \
+	console.c \
 	debugger.c \
 	format_msg.c \
 	kernel_main.c \

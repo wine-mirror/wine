@@ -94,7 +94,7 @@ static struct snapshot *create_snapshot( void *pid, int flags )
 }
 
 /* get the next process in the snapshot */
-static int snapshot_next_process( struct snapshot *snapshot, struct next_process_request *req )
+static int snapshot_next_process( struct snapshot *snapshot, struct next_process_reply *reply )
 {
     struct process_snapshot *ptr;
 
@@ -103,22 +103,21 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
         set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
         return 0;
     }
-    if (req->reset) snapshot->process_pos = 0;
-    else if (snapshot->process_pos >= snapshot->process_count)
+    if (snapshot->process_pos >= snapshot->process_count)
     {
         set_error( STATUS_NO_MORE_FILES );
         return 0;
     }
     ptr = &snapshot->processes[snapshot->process_pos++];
-    req->count    = ptr->count;
-    req->pid      = get_process_id( ptr->process );
-    req->threads  = ptr->threads;
-    req->priority = ptr->priority;
+    reply->count    = ptr->count;
+    reply->pid      = get_process_id( ptr->process );
+    reply->threads  = ptr->threads;
+    reply->priority = ptr->priority;
     return 1;
 }
 
 /* get the next thread in the snapshot */
-static int snapshot_next_thread( struct snapshot *snapshot, struct next_thread_request *req )
+static int snapshot_next_thread( struct snapshot *snapshot, struct next_thread_reply *reply )
 {
     struct thread_snapshot *ptr;
 
@@ -127,23 +126,22 @@ static int snapshot_next_thread( struct snapshot *snapshot, struct next_thread_r
         set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
         return 0;
     }
-    if (req->reset) snapshot->thread_pos = 0;
-    else if (snapshot->thread_pos >= snapshot->thread_count)
+    if (snapshot->thread_pos >= snapshot->thread_count)
     {
         set_error( STATUS_NO_MORE_FILES );
         return 0;
     }
     ptr = &snapshot->threads[snapshot->thread_pos++];
-    req->count     = ptr->count;
-    req->pid       = get_process_id( ptr->thread->process );
-    req->tid       = get_thread_id( ptr->thread );
-    req->base_pri  = ptr->priority;
-    req->delta_pri = 0;  /* FIXME */
+    reply->count     = ptr->count;
+    reply->pid       = get_process_id( ptr->thread->process );
+    reply->tid       = get_thread_id( ptr->thread );
+    reply->base_pri  = ptr->priority;
+    reply->delta_pri = 0;  /* FIXME */
     return 1;
 }
 
 /* get the next module in the snapshot */
-static int snapshot_next_module( struct snapshot *snapshot, struct next_module_request *req )
+static int snapshot_next_module( struct snapshot *snapshot, struct next_module_reply *reply )
 {
     struct module_snapshot *ptr;
 
@@ -152,15 +150,14 @@ static int snapshot_next_module( struct snapshot *snapshot, struct next_module_r
         set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
         return 0;
     }
-    if (req->reset) snapshot->module_pos = 0;
-    else if (snapshot->module_pos >= snapshot->module_count)
+    if (snapshot->module_pos >= snapshot->module_count)
     {
         set_error( STATUS_NO_MORE_FILES );
         return 0;
     }
     ptr = &snapshot->modules[snapshot->module_pos++];
-    req->pid  = get_process_id( snapshot->process );
-    req->base = ptr->base;
+    reply->pid  = get_process_id( snapshot->process );
+    reply->base = ptr->base;
     return 1;
 }
 
@@ -198,10 +195,10 @@ DECL_HANDLER(create_snapshot)
 {
     struct snapshot *snapshot;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((snapshot = create_snapshot( req->pid, req->flags )))
     {
-        req->handle = alloc_handle( current->process, snapshot, 0, req->inherit );
+        reply->handle = alloc_handle( current->process, snapshot, 0, req->inherit );
         release_object( snapshot );
     }
 }
@@ -214,7 +211,8 @@ DECL_HANDLER(next_process)
     if ((snapshot = (struct snapshot *)get_handle_obj( current->process, req->handle,
                                                        0, &snapshot_ops )))
     {
-        snapshot_next_process( snapshot, req );
+        if (req->reset) snapshot->process_pos = 0;
+        snapshot_next_process( snapshot, reply );
         release_object( snapshot );
     }
 }
@@ -227,7 +225,8 @@ DECL_HANDLER(next_thread)
     if ((snapshot = (struct snapshot *)get_handle_obj( current->process, req->handle,
                                                        0, &snapshot_ops )))
     {
-        snapshot_next_thread( snapshot, req );
+        if (req->reset) snapshot->thread_pos = 0;
+        snapshot_next_thread( snapshot, reply );
         release_object( snapshot );
     }
 }
@@ -240,7 +239,8 @@ DECL_HANDLER(next_module)
     if ((snapshot = (struct snapshot *)get_handle_obj( current->process, req->handle,
                                                        0, &snapshot_ops )))
     {
-        snapshot_next_module( snapshot, req );
+        if (req->reset) snapshot->module_pos = 0;
+        snapshot_next_module( snapshot, reply );
         release_object( snapshot );
     }
 }

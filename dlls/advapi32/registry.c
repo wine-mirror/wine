@@ -1220,14 +1220,14 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
         goto done;
     }
 
-    SERVER_START_VAR_REQ( load_registry, len )
+    SERVER_START_REQ( load_registry )
     {
         req->hkey  = hkey;
         req->file  = file;
-        memcpy( server_data_ptr(req), subkey, len );
-        ret = RtlNtStatusToDosError( SERVER_CALL() );
+        wine_server_add_data( req, subkey, len );
+        ret = RtlNtStatusToDosError( wine_server_call(req) );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     CloseHandle( file );
 
  done:
@@ -1241,6 +1241,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
+    WCHAR buffer[MAX_PATH];
     HANDLE file;
     DWORD ret, len, err = GetLastError();
 
@@ -1249,8 +1250,8 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
     if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
 
-    len = MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey), NULL, 0 ) * sizeof(WCHAR);
-    if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
+    if (!(len = MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey), buffer, MAX_PATH )))
+        return ERROR_INVALID_PARAMETER;
 
     if ((file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
@@ -1259,15 +1260,14 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
         goto done;
     }
 
-    SERVER_START_VAR_REQ( load_registry, len )
+    SERVER_START_REQ( load_registry )
     {
         req->hkey  = hkey;
         req->file  = file;
-        MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey),
-                             server_data_ptr(req), len/sizeof(WCHAR) );
-        ret = RtlNtStatusToDosError( SERVER_CALL() );
+        wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
+        ret = RtlNtStatusToDosError( wine_server_call(req) );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     CloseHandle( file );
 
  done:
@@ -1315,7 +1315,7 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
     {
         req->hkey = hkey;
         req->file = handle;
-        ret = RtlNtStatusToDosError( SERVER_CALL() );
+        ret = RtlNtStatusToDosError( wine_server_call( req ) );
     }
     SERVER_END_REQ;
 

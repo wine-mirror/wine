@@ -123,11 +123,11 @@ DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
 
-    req->handle = 0;
-    if ((sem = create_semaphore( get_req_data(req), get_req_data_size(req),
+    reply->handle = 0;
+    if ((sem = create_semaphore( get_req_data(), get_req_data_size(),
                                  req->initial, req->max )))
     {
-        req->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
         release_object( sem );
     }
 }
@@ -135,12 +135,12 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    req->handle = open_object( get_req_data(req), get_req_data_size(req),
-                               &semaphore_ops, req->access, req->inherit );
+    reply->handle = open_object( get_req_data(), get_req_data_size(),
+                                 &semaphore_ops, req->access, req->inherit );
 }
 
 /* release a semaphore */
 DECL_HANDLER(release_semaphore)
 {
-    req->prev_count = release_semaphore( req->handle, req->count );
+    reply->prev_count = release_semaphore( req->handle, req->count );
 }

@@ -7,6 +7,8 @@
 #ifndef __WINE_SERVER_CONSOLE_H
 #define __WINE_SERVER_CONSOLE_H
 
+#include "wincon.h"
+
 struct screen_buffer;
 struct console_input_events;
 
@@ -18,7 +20,7 @@ struct console_input
     int                          mode;          /* input mode */
     struct screen_buffer        *active;        /* active screen buffer */
     int                          recnum;        /* number of input records */
-    void                        *records;       /* input records */
+    INPUT_RECORD                *records;       /* input records */
     struct console_input_events *evt;           /* synchronization event with renderer */
     WCHAR                       *title;         /* console title */
     WCHAR                      **history;       /* lines history */

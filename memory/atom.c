@@ -409,7 +409,7 @@ BOOL WINAPI InitAtomTable( DWORD entries )
     SERVER_START_REQ( init_atom_table )
     {
         req->entries = entries;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -421,19 +421,21 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), NULL, 0 );
-        if (len > MAX_ATOM_LEN)
+        WCHAR buffer[MAX_ATOM_LEN];
+
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
+        if (!len)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_VAR_REQ( add_atom, len * sizeof(WCHAR) )
+        SERVER_START_REQ( add_atom )
         {
-            MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
+            wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom;
+            if (!wine_server_call_err(req)) atom = reply->atom;
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -482,13 +484,13 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_VAR_REQ( add_atom, len * sizeof(WCHAR) )
+        SERVER_START_REQ( add_atom )
         {
-            memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom;
+            wine_server_add_data( req, str, len * sizeof(WCHAR) );
+            if (!wine_server_call_err(req)) atom = reply->atom;
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -523,7 +525,7 @@ static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
         {
             req->atom = atom;
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = 0;
+            if (!wine_server_call_err( req )) atom = 0;
         }
         SERVER_END_REQ;
     }
@@ -566,19 +568,21 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), NULL, 0 );
-        if (len > MAX_ATOM_LEN)
+        WCHAR buffer[MAX_ATOM_LEN];
+
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
+        if (!len)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_VAR_REQ( find_atom, len * sizeof(WCHAR) )
+        SERVER_START_REQ( find_atom )
         {
-            MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom;
+            wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
+            if (!wine_server_call_err(req)) atom = reply->atom;
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -626,13 +630,13 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_VAR_REQ( find_atom, len * sizeof(WCHAR) )
+        SERVER_START_REQ( find_atom )
         {
-            memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
+            wine_server_add_data( req, str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom;
+            if (!wine_server_call_err( req )) atom = reply->atom;
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -679,21 +683,24 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
     }
     else
     {
+        WCHAR full_name[MAX_ATOM_LEN];
+
         len = 0;
-        SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
+        SERVER_START_REQ( get_atom_name )
         {
             req->atom = atom;
             req->local = local;
-            if (!SERVER_CALL_ERR())
+            wine_server_set_reply( req, full_name, sizeof(full_name) );
+            if (!wine_server_call_err( req ))
             {
-                len = WideCharToMultiByte( CP_ACP, 0, server_data_ptr(req),
-                                           server_data_size(req) / sizeof(WCHAR),
+                len = WideCharToMultiByte( CP_ACP, 0, full_name,
+                                           wine_server_reply_size(reply) / sizeof(WCHAR),
                                            buffer, count - 1, NULL, NULL );
                 if (!len) len = count; /* overflow */
                 else buffer[len] = 0;
             }
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
 
     if (len && count <= len)
@@ -765,20 +772,23 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
     }
     else
     {
+        WCHAR full_name[MAX_ATOM_LEN];
+
         len = 0;
-        SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
+        SERVER_START_REQ( get_atom_name )
         {
             req->atom = atom;
             req->local = local;
-            if (!SERVER_CALL_ERR())
+            wine_server_set_reply( req, full_name, sizeof(full_name) );
+            if (!wine_server_call_err( req ))
             {
-                len = server_data_size(req) / sizeof(WCHAR);
+                len = wine_server_reply_size(reply) / sizeof(WCHAR);
                 if (count > len) count = len + 1;
-                memcpy( buffer, server_data_ptr(req), (count-1) * sizeof(WCHAR) );
+                memcpy( buffer, full_name, (count-1) * sizeof(WCHAR) );
                 buffer[count-1] = 0;
             }
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
         if (!len) return 0;
     }
     if (count <= len)

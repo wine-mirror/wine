@@ -1360,50 +1360,16 @@ HANDLE WINAPI CreateFileMappingA(
                 DWORD size_low,  /* [in] Low-order 32 bits of object size */
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
-    HANDLE ret;
-    BYTE vprot;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    WCHAR buffer[MAX_PATH];
 
-    /* Check parameters */
+    if (!name) return CreateFileMappingW( hFile, sa, protect, size_high, size_low, NULL );
 
-    TRACE("(%x,%p,%08lx,%08lx%08lx,%s)\n",
-          hFile, sa, protect, size_high, size_low, debugstr_a(name) );
-
-    if (len > MAX_PATH)
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    vprot = VIRTUAL_GetProt( protect );
-    if (protect & SEC_RESERVE)
-    {
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
-        }
-    }
-    else vprot |= VPROT_COMMITTED;
-    if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
-    if (protect & SEC_IMAGE) vprot |= VPROT_IMAGE;
-
-    /* Create the server object */
-
-    if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
-    SERVER_START_VAR_REQ( create_mapping, len * sizeof(WCHAR) )
-    {
-        req->file_handle = hFile;
-        req->size_high   = size_high;
-        req->size_low    = size_low;
-        req->protect     = vprot;
-        req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return CreateFileMappingW( hFile, sa, protect, size_high, size_low, buffer );
 }
 
 
@@ -1446,19 +1412,19 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     /* Create the server object */
 
     if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
-    SERVER_START_VAR_REQ( create_mapping, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_mapping )
     {
         req->file_handle = hFile;
         req->size_high   = size_high;
         req->size_low    = size_low;
         req->protect     = vprot;
         req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -1476,23 +1442,16 @@ HANDLE WINAPI OpenFileMappingA(
                 BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len > MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenFileMappingW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_mapping, len * sizeof(WCHAR) )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return OpenFileMappingW( access, inherit, buffer );
 }
 
 
@@ -1504,20 +1463,20 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {
     HANDLE ret;
     DWORD len = name ? strlenW(name) : 0;
-    if (len > MAX_PATH)
+    if (len >= MAX_PATH)
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_mapping, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_mapping )
     {
         req->access  = access;
         req->inherit = inherit;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -1580,16 +1539,16 @@ LPVOID WINAPI MapViewOfFileEx(
     SERVER_START_REQ( get_mapping_info )
     {
         req->handle = handle;
-        res = SERVER_CALL_ERR();
-        prot        = req->protect;
-        base        = req->base;
-        size_low    = req->size_low;
-        size_high   = req->size_high;
-        header_size = req->header_size;
-        shared_file = req->shared_file;
-        shared_size = req->shared_size;
-        removable   = (req->drive_type == DRIVE_REMOVABLE ||
-                       req->drive_type == DRIVE_CDROM);
+        res = wine_server_call_err( req );
+        prot        = reply->protect;
+        base        = reply->base;
+        size_low    = reply->size_low;
+        size_high   = reply->size_high;
+        header_size = reply->header_size;
+        shared_file = reply->shared_file;
+        shared_size = reply->shared_size;
+        removable   = (reply->drive_type == DRIVE_REMOVABLE ||
+                       reply->drive_type == DRIVE_CDROM);
     }
     SERVER_END_REQ;
     if (res) goto error;

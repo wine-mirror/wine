@@ -193,8 +193,8 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
         req->access  = access;
         req->inherit = inherit;
         req->fd      = fd;
-        SERVER_CALL();
-        ret = req->handle;
+        wine_server_call( req );
+        ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -217,11 +217,11 @@ int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
         {
             req->handle = handle;
             req->access = access;
-            if (!(ret = SERVER_CALL_ERR()))
+            if (!(ret = wine_server_call_err( req )))
             {
-                fd = req->fd;
+                fd = reply->fd;
             }
-	    if (type) *type = req->type;
+            if (type) *type = reply->type;
         }
         SERVER_END_REQ;
         if (ret) return -1;
@@ -267,8 +267,8 @@ static HANDLE FILE_OpenConsole( BOOL output, DWORD access, DWORD sharing, LPSECU
 	req->share   = sharing;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -286,52 +286,44 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         DWORD attributes, HANDLE template, BOOL fail_read_only,
                         UINT drive_type )
 {
-    DWORD err;
+    unsigned int err;
     HANDLE ret;
-    size_t len = strlen(filename);
 
-    if (len > REQUEST_MAX_VAR_SIZE)
+    for (;;)
     {
-        FIXME("filename '%s' too long\n", filename );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
- restart:
-    SERVER_START_VAR_REQ( create_file, len )
-    {
-        req->access     = access;
-        req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        req->sharing    = sharing;
-        req->create     = creation;
-        req->attrs      = attributes;
-        req->drive_type = drive_type;
-        memcpy( server_data_ptr(req), filename, len );
-        SetLastError(0);
-        err = SERVER_CALL();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-
-    /* If write access failed, retry without GENERIC_WRITE */
-
-    if (!ret && !fail_read_only && (access & GENERIC_WRITE))
-    {
-	if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
+        SERVER_START_REQ( create_file )
         {
-	    TRACE("Write access failed for file '%s', trying without "
-		  "write access\n", filename);
-            access &= ~GENERIC_WRITE;
-            goto restart;
+            req->access     = access;
+            req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+            req->sharing    = sharing;
+            req->create     = creation;
+            req->attrs      = attributes;
+            req->drive_type = drive_type;
+            wine_server_add_data( req, filename, strlen(filename) );
+            SetLastError(0);
+            err = wine_server_call( req );
+            ret = reply->handle;
         }
+        SERVER_END_REQ;
+
+        /* If write access failed, retry without GENERIC_WRITE */
+
+        if (!ret && !fail_read_only && (access & GENERIC_WRITE))
+        {
+            if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
+            {
+                TRACE("Write access failed for file '%s', trying without "
+                      "write access\n", filename);
+                access &= ~GENERIC_WRITE;
+                continue;
+            }
+        }
+
+        if (err) SetLastError( RtlNtStatusToDosError(err) );
+
+        if (!ret) WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
+        return ret;
     }
-
-    if (err) SetLastError( RtlNtStatusToDosError(err) );
-
-    if (!ret)
-        WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
-
-    return ret;
 }
 
 
@@ -350,8 +342,8 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->id      = client_id;
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -359,26 +351,24 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
 
 static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
 {
+    WCHAR buffer[MAX_PATH];
     HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    DWORD len = 0;
 
-    TRACE("name %s access %lx\n",name,access);
-
-    if (len >= MAX_PATH)
+    if (name && !(len = MultiByteToWideChar( CP_ACP, 0, name, strlen(name), buffer, MAX_PATH )))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_named_pipe, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_named_pipe )
     {
         req->access = access;
-
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     TRACE("Returned %d\n",ret);
     return ret;
 }
@@ -610,32 +600,31 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
     SERVER_START_REQ( get_file_info )
     {
         req->handle = hFile;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-	    /* FIXME: which file types are supported ?
-	     * Serial ports (FILE_TYPE_CHAR) are not,
-	     * and MSDN also says that pipes are not supported.
-	     * FILE_TYPE_REMOTE seems to be supported according to
-	     * MSDN q234741.txt */
-	    if ((req->type == FILE_TYPE_DISK)
-	    ||  (req->type == FILE_TYPE_REMOTE))
-	    {
-                RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
-                RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
-                RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
-                info->dwFileAttributes     = req->attr;
-                info->dwVolumeSerialNumber = req->serial;
-                info->nFileSizeHigh        = req->size_high;
-                info->nFileSizeLow         = req->size_low;
-                info->nNumberOfLinks       = req->links;
-                info->nFileIndexHigh       = req->index_high;
-                info->nFileIndexLow        = req->index_low;
-	    }
-	    else
-	    {
-		SetLastError(ERROR_NOT_SUPPORTED);
-		ret = 0;
-	    }
+            /* FIXME: which file types are supported ?
+             * Serial ports (FILE_TYPE_CHAR) are not,
+             * and MSDN also says that pipes are not supported.
+             * FILE_TYPE_REMOTE seems to be supported according to
+             * MSDN q234741.txt */
+            if ((reply->type == FILE_TYPE_DISK) ||  (reply->type == FILE_TYPE_REMOTE))
+            {
+                RtlSecondsSince1970ToTime( reply->write_time, &info->ftCreationTime );
+                RtlSecondsSince1970ToTime( reply->write_time, &info->ftLastWriteTime );
+                RtlSecondsSince1970ToTime( reply->access_time, &info->ftLastAccessTime );
+                info->dwFileAttributes     = reply->attr;
+                info->dwVolumeSerialNumber = reply->serial;
+                info->nFileSizeHigh        = reply->size_high;
+                info->nFileSizeLow         = reply->size_low;
+                info->nNumberOfLinks       = reply->links;
+                info->nFileIndexHigh       = reply->index_high;
+                info->nFileIndexLow        = reply->index_low;
+            }
+            else
+            {
+                SetLastError(ERROR_NOT_SUPPORTED);
+                ret = 0;
+            }
         }
     }
     SERVER_END_REQ;
@@ -1354,9 +1343,9 @@ static BOOL FILE_GetTimeout(HANDLE hFile, DWORD txcount, DWORD type, int *timeou
         req->count = txcount;
         req->type = type;
         req->file_handle = hFile;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
         if(timeout)
-            *timeout = req->timeout;
+            *timeout = reply->timeout;
     }
     SERVER_END_REQ;
     return !ret;
@@ -1785,10 +1774,10 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
         /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
         req->whence = method;
         SetLastError( 0 );
-        if (!SERVER_CALL_ERR())
+        if (!wine_server_call_err( req ))
         {
-            ret = req->new_low;
-            if (highword) *highword = req->new_high;
+            ret = reply->new_low;
+            if (highword) *highword = reply->new_high;
         }
     }
     SERVER_END_REQ;
@@ -1940,7 +1929,7 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
     SERVER_START_REQ( flush_file )
     {
         req->handle = hFile;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1956,7 +1945,7 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
     SERVER_START_REQ( truncate_file )
     {
         req->handle = hFile;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -2029,7 +2018,7 @@ DWORD WINAPI GetFileType( HANDLE hFile )
     SERVER_START_REQ( get_file_info )
     {
         req->handle = hFile;
-        if (!SERVER_CALL_ERR()) ret = req->type;
+        if (!wine_server_call_err( req )) ret = reply->type;
     }
     SERVER_END_REQ;
     return ret;
@@ -2350,7 +2339,7 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
             RtlTimeToSecondsSince1970( lpLastWriteTime, (DWORD *)&req->write_time );
         else
             req->write_time = 0; /* FIXME */
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -2371,7 +2360,7 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
         req->offset_high = dwFileOffsetHigh;
         req->count_low   = nNumberOfBytesToLockLow;
         req->count_high  = nNumberOfBytesToLockHigh;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -2422,7 +2411,7 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetH
         req->offset_high = dwFileOffsetHigh;
         req->count_low   = nNumberOfBytesToUnlockLow;
         req->count_high  = nNumberOfBytesToUnlockHigh;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;

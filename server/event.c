@@ -115,11 +115,11 @@ DECL_HANDLER(create_event)
 {
     struct event *event;
 
-    req->handle = 0;
-    if ((event = create_event( get_req_data(req), get_req_data_size(req),
+    reply->handle = 0;
+    if ((event = create_event( get_req_data(), get_req_data_size(),
                                req->manual_reset, req->initial_state )))
     {
-        req->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
         release_object( event );
     }
 }
@@ -127,8 +127,8 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    req->handle = open_object( get_req_data(req), get_req_data_size(req),
-                               &event_ops, req->access, req->inherit );
+    reply->handle = open_object( get_req_data(), get_req_data_size(),
+                                 &event_ops, req->access, req->inherit );
 }
 
 /* do an event operation */

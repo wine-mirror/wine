@@ -7,6 +7,8 @@
 #ifndef __WINE_SERVER_REQUEST_H
 #define __WINE_SERVER_REQUEST_H
 
+#include <assert.h>
+
 #include "thread.h"
 #include "wine/server_protocol.h"
 
@@ -14,7 +16,8 @@
 #define MAX_REQUEST_LENGTH  8192
 
 /* request handler definition */
-#define DECL_HANDLER(name) void req_##name( struct name##_request *req )
+#define DECL_HANDLER(name) \
+    void req_##name( const struct name##_request *req, struct name##_reply *reply )
 
 /* request functions */
 
@@ -33,35 +36,53 @@ extern void fatal_perror( const char *err, ... );
 #endif
 
 extern const char *get_config_dir(void);
+extern void *set_reply_data_size( size_t size );
 extern int receive_fd( struct process *process );
 extern int send_client_fd( struct process *process, int fd, handle_t handle );
 extern void read_request( struct thread *thread );
-extern void send_reply( struct thread *thread, union generic_request *request );
+extern void write_reply( struct thread *thread );
 extern unsigned int get_tick_count(void);
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
 
-extern void trace_request( struct thread *thread, const union generic_request *request );
-extern void trace_reply( struct thread *thread, const union generic_request *request );
+extern void trace_request(void);
+extern void trace_reply( enum request req, const union generic_reply *reply );
 
 /* get the request vararg data */
-inline static void *get_req_data( const void *req )
+inline static const void *get_req_data(void)
 {
-    return (char *)current->buffer + ((struct request_header *)req)->var_offset;
+    return current->req_data;
 }
 
 /* get the request vararg size */
-inline static size_t get_req_data_size( const void *req )
+inline static size_t get_req_data_size(void)
 {
-    return ((struct request_header *)req)->var_size;
+    return current->req.request_header.request_size;
 }
 
-/* set the request vararg size */
-inline static void set_req_data_size( const void *req, size_t size )
+/* get the reply maximum vararg size */
+inline static size_t get_reply_max_size(void)
 {
-    ((struct request_header *)req)->var_size = size;
+    return current->req.request_header.reply_size;
 }
+
+/* allocate and fill the reply data */
+inline static void *set_reply_data( const void *data, size_t size )
+{
+    void *ret = set_reply_data_size( size );
+    if (ret) memcpy( ret, data, size );
+    return ret;
+}
+
+/* set the reply data pointer directly (will be freed by request code) */
+inline static void set_reply_data_ptr( void *data, size_t size )
+{
+    assert( size <= get_reply_max_size() );
+    current->reply_size = size;
+    current->reply_data = data;
+}
+
 
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
@@ -73,7 +94,6 @@ DECL_HANDLER(boot_done);
 DECL_HANDLER(init_process);
 DECL_HANDLER(init_process_done);
 DECL_HANDLER(init_thread);
-DECL_HANDLER(set_thread_buffer);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
 DECL_HANDLER(get_process_info);
@@ -132,6 +152,7 @@ DECL_HANDLER(get_console_output_info);
 DECL_HANDLER(write_console_input);
 DECL_HANDLER(read_console_input);
 DECL_HANDLER(write_console_output);
+DECL_HANDLER(fill_console_output);
 DECL_HANDLER(read_console_output);
 DECL_HANDLER(move_console_output);
 DECL_HANDLER(create_change_notification);
@@ -217,7 +238,7 @@ DECL_HANDLER(get_window_properties);
 
 #ifdef WANT_REQUEST_HANDLERS
 
-typedef void (*req_handler)( void *req );
+typedef void (*req_handler)( const void *req, void *reply );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
 {
     (req_handler)req_new_process,
@@ -227,7 +248,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_init_process,
     (req_handler)req_init_process_done,
     (req_handler)req_init_thread,
-    (req_handler)req_set_thread_buffer,
     (req_handler)req_terminate_process,
     (req_handler)req_terminate_thread,
     (req_handler)req_get_process_info,
@@ -286,6 +306,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_write_console_input,
     (req_handler)req_read_console_input,
     (req_handler)req_write_console_output,
+    (req_handler)req_fill_console_output,
     (req_handler)req_read_console_output,
     (req_handler)req_move_console_output,
     (req_handler)req_create_change_notification,

@@ -90,9 +90,7 @@ typedef struct _TEB
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
     DWORD        cleanup;        /* --3 1fc Cleanup service handle */
-    void        *buffer;         /* --3 200 Buffer shared with server */
-    unsigned int buffer_pos;     /* --3 204 Buffer current position */
-    unsigned int buffer_size;    /* --3 208 Buffer size */
+    DWORD        unused[3];      /* --3 200 Was server buffer */
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */

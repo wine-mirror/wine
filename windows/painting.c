@@ -54,7 +54,7 @@ static void add_paint_count( HWND hwnd, int incr )
     {
         req->handle = hwnd;
         req->incr   = incr;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }

@@ -206,8 +206,8 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         req->flags   = flags & ~TH32CS_INHERIT;
         req->inherit = (flags & TH32CS_INHERIT) != 0;
         req->pid     = (void *)process;
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
     SERVER_END_REQ;
     if (!ret) ret = INVALID_HANDLE_VALUE;
@@ -234,13 +234,13 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
     {
         req->handle = handle;
         req->reset = first;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            lpte->cntUsage           = req->count;
-            lpte->th32ThreadID       = (DWORD)req->tid;
-            lpte->th32OwnerProcessID = (DWORD)req->pid;
-            lpte->tpBasePri          = req->base_pri;
-            lpte->tpDeltaPri         = req->delta_pri;
+            lpte->cntUsage           = reply->count;
+            lpte->th32ThreadID       = (DWORD)reply->tid;
+            lpte->th32OwnerProcessID = (DWORD)reply->pid;
+            lpte->tpBasePri          = reply->base_pri;
+            lpte->tpDeltaPri         = reply->delta_pri;
             lpte->dwFlags            = 0;  /* SDK: "reserved; do not use" */
         }
     }
@@ -287,15 +287,15 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
     {
         req->handle = handle;
         req->reset = first;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            lppe->cntUsage            = req->count;
-            lppe->th32ProcessID       = (DWORD)req->pid;
+            lppe->cntUsage            = reply->count;
+            lppe->th32ProcessID       = (DWORD)reply->pid;
             lppe->th32DefaultHeapID   = 0;  /* FIXME */
             lppe->th32ModuleID        = 0;  /* FIXME */
-            lppe->cntThreads          = req->threads;
+            lppe->cntThreads          = reply->threads;
             lppe->th32ParentProcessID = 0;  /* FIXME */
-            lppe->pcPriClassBase      = req->priority;
+            lppe->pcPriClassBase      = reply->priority;
             lppe->dwFlags             = -1; /* FIXME */
             lppe->szExeFile[0]        = 0;  /* FIXME */
         }
@@ -345,15 +345,15 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
     {
         req->handle = handle;
         req->reset = first;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
             lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
-            lpme->th32ProcessID  = (DWORD)req->pid;
+            lpme->th32ProcessID  = (DWORD)reply->pid;
             lpme->GlblcntUsage   = 0; /* FIXME */
-            lpme->ProccntUsage   = 0; /* FIXME */ 
-            lpme->modBaseAddr    = req->base;
+            lpme->ProccntUsage   = 0; /* FIXME */
+            lpme->modBaseAddr    = reply->base;
             lpme->modBaseSize    = 0; /* FIXME */
-            lpme->hModule        = (DWORD)req->base;
+            lpme->hModule        = (DWORD)reply->base;
             lpme->szModule[0]    = 0;  /* FIXME */
             lpme->szExePath[0]   = 0;  /* FIXME */
         }

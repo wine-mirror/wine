@@ -34,7 +34,7 @@ struct mapping
 };
 
 static int mapping_get_fd( struct object *obj );
-static int mapping_get_info( struct object *obj, struct get_file_info_request *req );
+static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
 
@@ -263,11 +263,11 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         }
         if (!size_high && !size_low)
         {
-            struct get_file_info_request req;
+            struct get_file_info_reply reply;
             struct object *obj = (struct object *)mapping->file;
-            obj->ops->get_file_info( obj, &req );
-            size_high = req.size_high;
-            size_low  = ROUND_SIZE( 0, req.size_low );
+            obj->ops->get_file_info( obj, &reply );
+            size_high = reply.size_high;
+            size_low  = ROUND_SIZE( 0, reply.size_low );
         }
         else if (!grow_file( mapping->file, size_high, size_low )) goto error;
     }
@@ -311,14 +311,14 @@ static int mapping_get_fd( struct object *obj )
     return get_mmap_fd( mapping->file );
 }
 
-static int mapping_get_info( struct object *obj, struct get_file_info_request *req )
+static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
     struct mapping *mapping = (struct mapping *)obj;
     struct object *file = (struct object *)mapping->file;
 
     assert( obj->ops == &mapping_ops );
     assert( file );
-    return file->ops->get_file_info( file, req );
+    return file->ops->get_file_info( file, reply );
 }
 
 static void mapping_destroy( struct object *obj )
@@ -346,14 +346,14 @@ DECL_HANDLER(create_mapping)
 {
     struct object *obj;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((obj = create_mapping( req->size_high, req->size_low,
                                req->protect, req->file_handle,
-                               get_req_data(req), get_req_data_size(req) )))
+                               get_req_data(), get_req_data_size() )))
     {
         int access = FILE_MAP_ALL_ACCESS;
         if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
-        req->handle = alloc_handle( current->process, obj, access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, access, req->inherit );
         release_object( obj );
     }
 }
@@ -361,8 +361,8 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    req->handle = open_object( get_req_data(req), get_req_data_size(req),
-                               &mapping_ops, req->access, req->inherit );
+    reply->handle = open_object( get_req_data(), get_req_data_size(),
+                                 &mapping_ops, req->access, req->inherit );
 }
 
 /* get a mapping information */
@@ -373,17 +373,17 @@ DECL_HANDLER(get_mapping_info)
     if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
                                                      0, &mapping_ops )))
     {
-        req->size_high   = mapping->size_high;
-        req->size_low    = mapping->size_low;
-        req->protect     = mapping->protect;
-        req->header_size = mapping->header_size;
-        req->base        = mapping->base;
-        req->shared_file = 0;
-        req->shared_size = mapping->shared_size;
-        req->drive_type  = get_file_drive_type( mapping->file );
+        reply->size_high   = mapping->size_high;
+        reply->size_low    = mapping->size_low;
+        reply->protect     = mapping->protect;
+        reply->header_size = mapping->header_size;
+        reply->base        = mapping->base;
+        reply->shared_file = 0;
+        reply->shared_size = mapping->shared_size;
+        reply->drive_type  = get_file_drive_type( mapping->file );
         if (mapping->shared_file)
-            req->shared_file = alloc_handle( current->process, mapping->shared_file,
-                                             GENERIC_READ|GENERIC_WRITE, 0 );
+            reply->shared_file = alloc_handle( current->process, mapping->shared_file,
+                                               GENERIC_READ|GENERIC_WRITE, 0 );
         release_object( mapping );
     }
 }

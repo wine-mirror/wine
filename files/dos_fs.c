@@ -690,11 +690,11 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
     SERVER_START_REQ( get_file_info )
     {
         req->handle = hFile;
-        if (!SERVER_CALL() && (req->type == FILE_TYPE_UNKNOWN))
+        if (!wine_server_call( req ) && (reply->type == FILE_TYPE_UNKNOWN))
         {
-            if ((req->attr >= 0) &&
-                (req->attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
-                ret = &DOSFS_Devices[req->attr];
+            if ((reply->attr >= 0) &&
+                (reply->attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
+                ret = &DOSFS_Devices[reply->attr];
         }
     }
     SERVER_END_REQ;
@@ -709,7 +709,6 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, 
 {
     HANDLE ret;
     char devname[40];
-    size_t len;
 
     TRACE_(file)("%s %lx %lx\n", name, access, attributes);
 
@@ -719,19 +718,18 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, 
 
     TRACE("opening %s as %s\n", devname, name);
 
-    len = strlen(devname);
-    SERVER_START_VAR_REQ( create_serial, len )
+    SERVER_START_REQ( create_serial )
     {
         req->access  = access;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->attributes = attributes;
         req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
-        memcpy( server_data_ptr(req), devname, len );
+        wine_server_add_data( req, devname, strlen(devname) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
 
     if(!ret)
         ERR("Couldn't open device '%s' ! (check permissions)\n",devname);

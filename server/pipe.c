@@ -37,7 +37,7 @@ struct pipe
 static void pipe_dump( struct object *obj, int verbose );
 static int pipe_get_poll_events( struct object *obj );
 static int pipe_get_fd( struct object *obj );
-static int pipe_get_info( struct object *obj, struct get_file_info_request *req );
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void pipe_destroy( struct object *obj );
 
 static const struct object_ops pipe_ops =
@@ -124,20 +124,20 @@ static int pipe_get_fd( struct object *obj )
     return pipe->obj.fd;
 }
 
-static int pipe_get_info( struct object *obj, struct get_file_info_request *req )
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_PIPE;
-        req->attr        = 0;
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_PIPE;
+        reply->attr        = 0;
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
     return FD_TYPE_DEFAULT;
 }
@@ -171,6 +171,6 @@ DECL_HANDLER(create_pipe)
         release_object( obj[0] );
         release_object( obj[1] );
     }
-    req->handle_read  = hread;
-    req->handle_write = hwrite;
+    reply->handle_read  = hread;
+    reply->handle_write = hwrite;
 }

@@ -142,31 +142,105 @@ void fatal_perror( const char *err, ... )
     exit(1);
 }
 
-/* call a request handler */
-static inline void call_req_handler( struct thread *thread, union generic_request *request )
+/* allocate the reply data */
+void *set_reply_data_size( size_t size )
 {
-    enum request req = request->header.req;
+    assert( size <= get_reply_max_size() );
+    if (size && !(current->reply_data = mem_alloc( size ))) size = 0;
+    current->reply_size = size;
+    return current->reply_data;
+}
 
-    current = thread;
-    clear_error();
+/* write the remaining part of the reply */
+void write_reply( struct thread *thread )
+{
+    int ret;
 
-    if (debug_level) trace_request( thread, request );
-
-    if (request->header.var_size)
+    if ((ret = write( thread->reply_fd,
+                      (char *)thread->reply_data + thread->reply_size - thread->reply_towrite,
+                      thread->reply_towrite )) >= 0)
     {
-        if ((unsigned int)request->header.var_offset +
-                          request->header.var_size > MAX_REQUEST_LENGTH)
+        if (!(thread->reply_towrite -= ret))
         {
-            fatal_protocol_error( current, "bad request offset/size %d/%d\n",
-                                  request->header.var_offset, request->header.var_size );
+            free( thread->reply_data );
+            thread->reply_data = NULL;
+            /* sent everything, can go back to waiting for requests */
+            change_select_fd( &thread->obj, thread->request_fd, POLLIN );
+        }
+        return;
+    }
+    if (errno == EPIPE)
+        kill_thread( thread, 0 );  /* normal death */
+    else if (errno != EWOULDBLOCK && errno != EAGAIN)
+        fatal_protocol_perror( thread, "reply write" );
+}
+
+/* send a reply to the current thread */
+static void send_reply( union generic_reply *reply )
+{
+    int ret;
+
+    if (!current->reply_size)
+    {
+        if ((ret = write( current->reply_fd, reply, sizeof(*reply) )) != sizeof(*reply)) goto error;
+    }
+    else
+    {
+        struct iovec vec[2];
+
+        vec[0].iov_base = reply;
+        vec[0].iov_len  = sizeof(*reply);
+        vec[1].iov_base = current->reply_data;
+        vec[1].iov_len  = current->reply_size;
+
+        if ((ret = writev( current->reply_fd, vec, 2 )) < sizeof(*reply)) goto error;
+
+        if ((current->reply_towrite = current->reply_size - (ret - sizeof(*reply))))
+        {
+            /* couldn't write it all, wait for POLLOUT */
+            change_select_fd( &current->obj, current->reply_fd, POLLOUT );
             return;
         }
     }
+    if (current->reply_data)
+    {
+        free( current->reply_data );
+        current->reply_data = NULL;
+    }
+    return;
+
+ error:
+    if (ret >= 0)
+        fatal_protocol_error( current, "partial write %d\n", ret );
+    else if (errno == EPIPE)
+        kill_thread( current, 0 );  /* normal death */
+    else
+        fatal_protocol_perror( current, "reply write" );
+}
+
+/* call a request handler */
+static void call_req_handler( struct thread *thread )
+{
+    union generic_reply reply;
+    enum request req = thread->req.request_header.req;
+
+    current = thread;
+    current->reply_size = 0;
+    clear_error();
+    memset( &reply, 0, sizeof(reply) );
+
+    if (debug_level) trace_request();
 
     if (req < REQ_NB_REQUESTS)
     {
-        req_handlers[req]( request );
-        if (current) send_reply( current, request );
+        req_handlers[req]( &current->req, &reply );
+        if (current)
+        {
+            reply.reply_header.error = current->error;
+            reply.reply_header.reply_size = current->reply_size;
+            if (debug_level) trace_reply( req, &reply );
+            send_reply( &reply );
+        }
         current = NULL;
         return;
     }
@@ -176,40 +250,45 @@ static inline void call_req_handler( struct thread *thread, union generic_reques
 /* read a request from a thread */
 void read_request( struct thread *thread )
 {
-    union generic_request req;
     int ret;
 
-    if ((ret = read( thread->obj.fd, &req, sizeof(req) )) == sizeof(req))
+    if (!thread->req_toread)  /* no pending request */
     {
-        call_req_handler( thread, &req );
-        return;
+        if ((ret = read( thread->obj.fd, &thread->req,
+                         sizeof(thread->req) )) != sizeof(thread->req)) goto error;
+        if (!(thread->req_toread = thread->req.request_header.request_size))
+        {
+            /* no data, handle request at once */
+            call_req_handler( thread );
+            return;
+        }
+        if (!(thread->req_data = malloc( thread->req_toread )))
+            fatal_protocol_error( thread, "no memory for %d bytes request\n", thread->req_toread );
     }
+
+    /* read the variable sized data */
+    for (;;)
+    {
+        ret = read( thread->obj.fd, ((char *)thread->req_data +
+                                     thread->req.request_header.request_size - thread->req_toread),
+                    thread->req_toread );
+        if (ret <= 0) break;
+        if (!(thread->req_toread -= ret))
+        {
+            call_req_handler( thread );
+            free( thread->req_data );
+            thread->req_data = NULL;
+            return;
+        }
+    }
+
+error:
     if (!ret)  /* closed pipe */
         kill_thread( thread, 0 );
     else if (ret > 0)
         fatal_protocol_error( thread, "partial read %d\n", ret );
     else if (errno != EWOULDBLOCK && errno != EAGAIN)
         fatal_protocol_perror( thread, "read" );
-}
-
-/* send a reply to a thread */
-void send_reply( struct thread *thread, union generic_request *request )
-{
-    int ret;
-
-    if (debug_level) trace_reply( thread, request );
-
-    request->header.error = thread->error;
-
-    if ((ret = write( thread->reply_fd, request, sizeof(*request) )) != sizeof(*request))
-    {
-        if (ret >= 0)
-            fatal_protocol_error( thread, "partial write %d\n", ret );
-        else if (errno == EPIPE)
-            kill_thread( thread, 0 );  /* normal death */
-        else
-            fatal_protocol_perror( thread, "reply write" );
-    }
 }
 
 /* receive a file descriptor on the process socket */
@@ -439,6 +518,7 @@ void open_master_socket(void)
 
     /* make sure no request is larger than the maximum size */
     assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
+    assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
 
     create_server_dir();
     if ((fd = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );

@@ -348,8 +348,8 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     {
         SERVER_START_REQ( get_msg_queue )
         {
-            SERVER_CALL_ERR();
-            handle = req->handle;
+            wine_server_call_err( req );
+            handle = reply->handle;
         }
         SERVER_END_REQ;
         if (!handle)
@@ -483,8 +483,8 @@ DWORD WINAPI GetQueueStatus( UINT flags )
     SERVER_START_REQ( get_queue_status )
     {
         req->clear = 1;
-        SERVER_CALL();
-        ret = MAKELONG( req->changed_bits & flags, req->wake_bits & flags );
+        wine_server_call( req );
+        ret = MAKELONG( reply->changed_bits & flags, reply->wake_bits & flags );
     }
     SERVER_END_REQ;
     return ret;
@@ -501,8 +501,8 @@ BOOL WINAPI GetInputState(void)
     SERVER_START_REQ( get_queue_status )
     {
         req->clear = 0;
-        SERVER_CALL();
-        ret = req->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
+        wine_server_call( req );
+        ret = reply->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
     }
     SERVER_END_REQ;
     return ret;

@@ -154,7 +154,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
         req->id     = id;
         req->rate   = max( timeout, SYS_TIMER_RATE );
         req->lparam = (unsigned int)winproc;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 
@@ -191,7 +191,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
         req->win = hwnd;
         req->msg = sys ? WM_SYSTIMER : WM_TIMER;
         req->id  = id;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 

@@ -13,10 +13,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "winnt.h"
-#include "winbase.h"
-#include "wincon.h"
-
 #include "handle.h"
 #include "process.h"
 #include "request.h"
@@ -29,7 +25,7 @@ static void console_input_destroy( struct object *obj );
 static int console_input_signaled( struct object *obj, struct thread *thread );
 
 /* common routine */
-static int console_get_file_info( struct object *obj, struct get_file_info_request *req );
+static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply );
 
 static const struct object_ops console_input_ops =
 {
@@ -78,19 +74,21 @@ static const struct object_ops console_input_events_ops =
 struct screen_buffer
 {
     struct object         obj;           /* object header */
-    int                   mode;          /* output mode */
-    struct console_input *input;         /* associated console input */
     struct screen_buffer *next;          /* linked list of all screen buffers */
-    short int             cursor_size;   /* size of cursor (percentage filled) */
-    short int             cursor_visible;/* cursor visibility flag */
-    COORD                 cursor;        /* position of cursor */
-    short int             width;         /* size (w-h) of the screen buffer */
-    short int             height;
-    short int             max_width;     /* size (w-h) of the window given font size */
-    short int             max_height;
-    unsigned             *data;          /* the data for each cell - a width x height matrix */
+    struct screen_buffer *prev;
+    struct console_input *input;         /* associated console input */
+    int                   mode;          /* output mode */
+    int                   cursor_size;   /* size of cursor (percentage filled) */
+    int                   cursor_visible;/* cursor visibility flag */
+    int                   cursor_x;      /* position of cursor */
+    int                   cursor_y;      /* position of cursor */
+    int                   width;         /* size (w-h) of the screen buffer */
+    int                   height;
+    int                   max_width;     /* size (w-h) of the window given font size */
+    int                   max_height;
+    char_info_t          *data;          /* the data for each cell - a width x height matrix */
     unsigned short        attr;          /* default attribute for screen buffer */
-    SMALL_RECT            win;           /* current visible window on the screen buffer *
+    rectangle_t           win;           /* current visible window on the screen buffer *
 					  * as seen in wineconsole */
 };
 
@@ -115,6 +113,8 @@ static const struct object_ops screen_buffer_ops =
 
 static struct screen_buffer *screen_buffer_list;
 
+static const char_info_t empty_char_info = { ' ', 0x00f0 };  /* white on black space */
+
 /* dumps the renderer events of a console */
 static void console_input_events_dump( struct object *obj, int verbose )
 {
@@ -132,20 +132,18 @@ static void console_input_events_destroy( struct object *obj )
     free( evts->events );
 }
 
-/* the rendere events list is signaled when it's not empty */
-static int  console_input_events_signaled( struct object *obj, struct thread *thread )
+/* the renderer events list is signaled when it's not empty */
+static int console_input_events_signaled( struct object *obj, struct thread *thread )
 {
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );
-    return evts->num_used ? 1 : 0;
+    return (evts->num_used != 0);
 }
 
 /* add an event to the console's renderer events list */
 static void console_input_events_append( struct console_input_events* evts, 
 					 struct console_renderer_event* evt)
 {
-    if (!evt) return;
-
     /* to be done even when the renderer generates the events ? */
     if (evts->num_used == evts->num_alloc)
     {
@@ -158,25 +156,18 @@ static void console_input_events_append( struct console_input_events* evts,
 }
 
 /* retrieves events from the console's renderer events list */
-static size_t  console_input_events_get( struct console_input_events* evts, 
-					 struct console_renderer_event* evt, size_t num )
+static void console_input_events_get( struct console_input_events* evts )
 {
-    if (num % sizeof(*evt) != 0)
-    {
-	set_error( STATUS_INVALID_PARAMETER );
-	return 0;
-    }
-    num /= sizeof(*evt);
-    if (num > evts->num_used)
-	num = evts->num_used;
-    memcpy( evt, evts->events, num * sizeof(*evt) );
+    size_t num = get_reply_max_size() / sizeof(evts->events[0]);
+
+    if (num > evts->num_used) num = evts->num_used;
+    set_reply_data( evts->events, num * sizeof(evts->events[0]) );
     if (num < evts->num_used)
     {
-	memmove( &evts->events[0], &evts->events[num], 
-		 (evts->num_used - num) * sizeof(*evt) );
+        memmove( &evts->events[0], &evts->events[num],
+                 (evts->num_used - num) * sizeof(evts->events[0]) );
     }
     evts->num_used -= num;
-    return num * sizeof(struct console_renderer_event);
 }
 
 static struct console_input_events *create_console_input_events(void)
@@ -216,7 +207,7 @@ static struct object *create_console_input( struct process* renderer )
     return &console_input->obj;
 }
 
-static struct object *create_console_output( struct console_input *console_input )
+static struct screen_buffer *create_console_output( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer;
     struct console_renderer_event evt;
@@ -231,22 +222,30 @@ static struct object *create_console_output( struct console_input *console_input
     screen_buffer->height         = 150;
     screen_buffer->max_width      = 80;
     screen_buffer->max_height     = 25;
-    screen_buffer->data           = malloc( 4 * screen_buffer->width * screen_buffer->height );
-    /* fill the buffer with white on black spaces */
-    for (i = 0; i < screen_buffer->width * screen_buffer->height; i++)
-    {
-	screen_buffer->data[i] = 0x00F00020;
-    }
-    screen_buffer->cursor.X	  = 0;
-    screen_buffer->cursor.Y	  = 0;
+    screen_buffer->cursor_x       = 0;
+    screen_buffer->cursor_y       = 0;
     screen_buffer->attr           = 0xF0;
-    screen_buffer->win.Left       = 0;
-    screen_buffer->win.Right      = screen_buffer->max_width - 1;
-    screen_buffer->win.Top        = 0;
-    screen_buffer->win.Bottom     = screen_buffer->max_height - 1;
+    screen_buffer->win.left       = 0;
+    screen_buffer->win.right      = screen_buffer->max_width - 1;
+    screen_buffer->win.top        = 0;
+    screen_buffer->win.bottom     = screen_buffer->max_height - 1;
 
-    screen_buffer->next = screen_buffer_list;
+    if ((screen_buffer->next = screen_buffer_list)) screen_buffer->next->prev = screen_buffer;
+    screen_buffer->prev = NULL;
     screen_buffer_list = screen_buffer;
+
+    if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
+                                        sizeof(*screen_buffer->data) )))
+    {
+        release_object( screen_buffer );
+        return NULL;
+    }
+    /* clear the first row */
+    for (i = 0; i < screen_buffer->width; i++) screen_buffer->data[i] = empty_char_info;
+    /* and copy it to all other rows */
+    for (i = 1; i < screen_buffer->height; i++)
+        memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
+                screen_buffer->width * sizeof(char_info_t) );
 
     if (!console_input->active)
     {
@@ -262,10 +261,10 @@ static struct object *create_console_output( struct console_input *console_input
 	console_input_events_append( console_input->evt, &evt );
 
 	evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
-	evt.u.display.left   = screen_buffer->win.Left;
-	evt.u.display.top    = screen_buffer->win.Top;
-	evt.u.display.width  = screen_buffer->win.Right - screen_buffer->win.Left + 1;
-	evt.u.display.height = screen_buffer->win.Bottom - screen_buffer->win.Top + 1;
+	evt.u.display.left   = screen_buffer->win.left;
+	evt.u.display.top    = screen_buffer->win.top;
+	evt.u.display.width  = screen_buffer->win.right - screen_buffer->win.left + 1;
+	evt.u.display.height = screen_buffer->win.bottom - screen_buffer->win.top + 1;
 	console_input_events_append( console_input->evt, &evt );
 
 	evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
@@ -279,12 +278,11 @@ static struct object *create_console_output( struct console_input *console_input
 	console_input_events_append( console_input->evt, &evt );
 
 	evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
-	evt.u.cursor_pos.x = screen_buffer->cursor.X;
-	evt.u.cursor_pos.y = screen_buffer->cursor.Y;
+	evt.u.cursor_pos.x = screen_buffer->cursor_x;
+	evt.u.cursor_pos.y = screen_buffer->cursor_y;
 	console_input_events_append( console_input->evt, &evt );
     }
-
-    return &screen_buffer->obj;
+    return screen_buffer;
 }
 
 /* free the console for this process */
@@ -411,11 +409,12 @@ static int set_console_mode( handle_t handle, int mode )
 }
 
 /* add input events to a console input queue */
-static int write_console_input( struct console_input* console, int count, INPUT_RECORD *records )
+static int write_console_input( struct console_input* console, int count,
+                                const INPUT_RECORD *records )
 {
     INPUT_RECORD *new_rec;
 
-    assert(count);
+    if (!count) return 0;
     if (!(new_rec = realloc( console->records,
                              (console->recnum + count) * sizeof(INPUT_RECORD) )))
     {
@@ -433,7 +432,7 @@ static int write_console_input( struct console_input* console, int count, INPUT_
 }
 
 /* retrieve a pointer to the console input records */
-static int read_console_input( handle_t handle, int count, INPUT_RECORD *rec, int flush )
+static int read_console_input( handle_t handle, int count, int flush )
 {
     struct console_input *console;
 
@@ -450,13 +449,13 @@ static int read_console_input( handle_t handle, int count, INPUT_RECORD *rec, in
     else
     {
         if (count > console->recnum) count = console->recnum;
-        memcpy( rec, console->records, count * sizeof(INPUT_RECORD) );
+        set_reply_data( console->records, count * sizeof(INPUT_RECORD) );
     }
     if (flush)
     {
         int i;
         for (i = count; i < console->recnum; i++)
-            ((INPUT_RECORD*)console->records)[i-count] = ((INPUT_RECORD*)console->records)[i];
+            console->records[i-count] = console->records[i];
         if ((console->recnum -= count) > 0)
         {
             INPUT_RECORD *new_rec = realloc( console->records,
@@ -474,7 +473,7 @@ static int read_console_input( handle_t handle, int count, INPUT_RECORD *rec, in
 }
 
 /* set misc console input information */
-static int set_console_input_info( struct set_console_input_info_request *req, 
+static int set_console_input_info( const struct set_console_input_info_request *req,
 				   const WCHAR *title, size_t len )
 {
     struct console_input *console;
@@ -557,9 +556,61 @@ static int set_console_input_info( struct set_console_input_info_request *req,
     return 0;
 }
 
+/* resize a screen buffer */
+static int change_screen_buffer_size( struct screen_buffer *screen_buffer,
+                                      int new_width, int new_height )
+{
+    int i, old_width, old_height, copy_width, copy_height;
+    char_info_t *new_data;
+
+    if (!(new_data = malloc( new_width * new_height * sizeof(*new_data) )))
+    {
+        set_error( STATUS_NO_MEMORY );
+        return 0;
+    }
+    old_width = screen_buffer->width;
+    old_height = screen_buffer->height;
+    copy_width = min( old_width, new_width );
+    copy_height = min( old_height, new_height );
+
+    /* copy all the rows */
+    for (i = 0; i < copy_height; i++)
+    {
+        memcpy( &new_data[i * new_width], &screen_buffer->data[i * old_width],
+                copy_width * sizeof(char_info_t) );
+    }
+
+    /* clear the end of each row */
+    if (new_width > old_width)
+    {
+        /* fill first row */
+        for (i = old_width; i < new_width; i++) new_data[i] = empty_char_info;
+        /* and blast it to the other rows */
+        for (i = 1; i < copy_height; i++)
+            memcpy( &new_data[i * new_width + old_width], &new_data[old_width],
+                    (new_width - old_width) * sizeof(char_info_t) );
+    }
+
+    /* clear remaining rows */
+    if (new_height > old_height)
+    {
+        /* fill first row */
+        for (i = 0; i < new_width; i++) new_data[old_height * new_width + i] = empty_char_info;
+        /* and blast it to the other rows */
+        for (i = old_height+1; i < new_height; i++)
+            memcpy( &new_data[i * new_width], &new_data[old_height * new_width],
+                    new_width * sizeof(char_info_t) );
+    }
+    free( screen_buffer->data );
+    screen_buffer->data = new_data;
+    screen_buffer->width = new_width;
+    screen_buffer->height = new_height;
+    return 1;
+}
+
 /* set misc screen buffer information */
-static int set_console_output_info( struct screen_buffer *screen_buffer, 
-				    struct set_console_output_info_request *req )
+static int set_console_output_info( struct screen_buffer *screen_buffer,
+                                    const struct set_console_output_info_request *req )
 {
     struct console_renderer_event evt;
 
@@ -589,10 +640,10 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 	    set_error( STATUS_INVALID_PARAMETER );
 	    return 0;
 	}
-	if (screen_buffer->cursor.X != req->cursor_x || screen_buffer->cursor.Y != req->cursor_y)
+	if (screen_buffer->cursor_x != req->cursor_x || screen_buffer->cursor_y != req->cursor_y)
 	{
-	    screen_buffer->cursor.X       = req->cursor_x;
-	    screen_buffer->cursor.Y       = req->cursor_y;
+	    screen_buffer->cursor_x       = req->cursor_x;
+	    screen_buffer->cursor_y       = req->cursor_y;
 	    evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
 	    evt.u.cursor_pos.x = req->cursor_x;
 	    evt.u.cursor_pos.y = req->cursor_y;
@@ -601,26 +652,9 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_SIZE)
     {
-	int		i, j;
-	/* FIXME: there are also some basic minimum and max size to deal with */
-	unsigned*	new_data = mem_alloc( 4 * req->width * req->height );
+        /* FIXME: there are also some basic minimum and max size to deal with */
+        if (!change_screen_buffer_size( screen_buffer, req->width, req->height )) return 0;
 
-	if (!new_data) return 0;
-
-	/* fill the buffer with either the old buffer content or white on black spaces */
-	for (j = 0; j < req->height; j++)
-	{
-	    for (i = 0; i < req->width; i++)
-	    {
-		new_data[j * req->width + i] = 
-		    (i < screen_buffer->width && j < screen_buffer->height) ?
-		    screen_buffer->data[j * screen_buffer->width + i] : 0x00F00020;
-	    }	
-	}
-	free( screen_buffer->data );
-	screen_buffer->data = new_data;
-	screen_buffer->width = req->width;
-	screen_buffer->height = req->height;
 	evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
 	evt.u.resize.width  = req->width;
 	evt.u.resize.height = req->height;
@@ -650,13 +684,13 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 	    set_error( STATUS_INVALID_PARAMETER );
 	    return 0;
 	}
-	if (screen_buffer->win.Left != req->win_left || screen_buffer->win.Top != req->win_top ||
-	    screen_buffer->win.Right != req->win_right || screen_buffer->win.Bottom != req->win_bottom)
+	if (screen_buffer->win.left != req->win_left || screen_buffer->win.top != req->win_top ||
+	    screen_buffer->win.right != req->win_right || screen_buffer->win.bottom != req->win_bottom)
 	{
-	    screen_buffer->win.Left   = req->win_left;
-	    screen_buffer->win.Top    = req->win_top;
-	    screen_buffer->win.Right  = req->win_right;
-	    screen_buffer->win.Bottom = req->win_bottom;
+	    screen_buffer->win.left   = req->win_left;
+	    screen_buffer->win.top    = req->win_top;
+	    screen_buffer->win.right  = req->win_right;
+	    screen_buffer->win.bottom = req->win_bottom;
 	    evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
 	    evt.u.display.left   = req->win_left;
 	    evt.u.display.top    = req->win_top;
@@ -725,18 +759,16 @@ static void console_input_append_hist( struct console_input* console, const WCHA
 }
 
 /* returns a line from the cachde */
-static int console_input_get_hist( struct console_input* console, WCHAR* buf, size_t len, int index )
+static size_t console_input_get_hist( struct console_input *console, int index )
 {
-    int	ret;
+    size_t ret = 0;
 
-    /* FIXME: don't use len yet */
-    if (!console || index >= console->history_index)
+    if (index >= console->history_index) set_error( STATUS_INVALID_PARAMETER );
+    else
     {
-	set_error( STATUS_INVALID_PARAMETER );
-	return 0;
+        ret = strlenW( console->history[index] ) * sizeof(WCHAR);
+        set_reply_data( console->history[index], min( ret, get_reply_max_size() ));
     }
-    ret = strlenW(console->history[index]);
-    memcpy( buf, console->history[index], ret * sizeof(WCHAR) ); /* FIXME should use len */
     return ret;
 }
 
@@ -749,20 +781,20 @@ static void console_input_dump( struct object *obj, int verbose )
 	     console->active, console->evt );
 }
 
-static int console_get_file_info( struct object *obj, struct get_file_info_request *req )
+static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply )
 {
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_CHAR;
-        req->attr        = 0;
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_CHAR;
+        reply->attr        = 0;
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
     return FD_TYPE_CONSOLE;
 }
@@ -803,113 +835,193 @@ static void screen_buffer_dump( struct object *obj, int verbose )
 
 static void screen_buffer_destroy( struct object *obj )
 {
-    struct screen_buffer*	screen_buffer = (struct screen_buffer *)obj;
-    struct screen_buffer**	psb;
+    struct screen_buffer *screen_buffer = (struct screen_buffer *)obj;
 
     assert( obj->ops == &screen_buffer_ops );
 
-    for (psb = &screen_buffer_list; *psb; *psb = (*psb)->next)
-    {
-	if (*psb == screen_buffer)
-	{
-	    *psb = screen_buffer->next;
-	    break;
-	}
-    }	
+    if (screen_buffer->next) screen_buffer->next->prev = screen_buffer->prev;
+    if (screen_buffer->prev) screen_buffer->prev->next = screen_buffer->next;
+    else screen_buffer_list = screen_buffer->next;
+
     if (screen_buffer->input && screen_buffer->input->active == screen_buffer)
     {
 	struct screen_buffer*	sb;
 	for (sb = screen_buffer_list; sb && sb->input != screen_buffer->input; sb = sb->next);
 	screen_buffer->input->active = sb;
     }
+    if (screen_buffer->data) free( screen_buffer->data );
 }
 
 /* write data into a screen buffer */
-static int write_console_output( struct screen_buffer *screen_buffer, size_t size, 
-				 const unsigned char* data, int mode, short int x, short int y )
+static int write_console_output( struct screen_buffer *screen_buffer, size_t size,
+                                 const void* data, enum char_info_mode mode,
+                                 int x, int y, int wrap )
 {
-    int 			uniform = mode & WRITE_CONSOLE_MODE_UNIFORM;
-    unsigned		       *ptr;
-    unsigned			i, inc;
-    int				len;
+    int i;
+    char_info_t *end, *dest = screen_buffer->data + y * screen_buffer->width + x;
 
-    mode &= ~WRITE_CONSOLE_MODE_UNIFORM;
+    if (y >= screen_buffer->height) return 0;
 
-    if (mode < 0 || mode > 3)
+    if (wrap)
+        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
+    else
+        end = screen_buffer->data + (y+1) * screen_buffer->width;
+
+    switch(mode)
     {
-	set_error(STATUS_INVALID_PARAMETER);
-	return 0;
+    case CHAR_INFO_MODE_TEXT:
+        {
+            const WCHAR *ptr = data;
+            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) dest->ch = ptr[i];
+        }
+        break;
+    case CHAR_INFO_MODE_ATTR:
+        {
+            const unsigned short *ptr = data;
+            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) dest->attr = ptr[i];
+        }
+        break;
+    case CHAR_INFO_MODE_TEXTATTR:
+        {
+            const char_info_t *ptr = data;
+            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) *dest = ptr[i];
+        }
+        break;
+    case CHAR_INFO_MODE_TEXTSTDATTR:
+        {
+            const WCHAR *ptr = data;
+            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++)
+            {
+                dest->ch   = ptr[i];
+                dest->attr = screen_buffer->attr;
+            }
+        }
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
     }
 
-    /* set destination pointer and increment */
-    ptr = screen_buffer->data + (y * screen_buffer->width + x);
-    if (mode == WRITE_CONSOLE_MODE_ATTR) ptr = (unsigned*)((char*)ptr + 2);
-    inc = (mode == WRITE_CONSOLE_MODE_TEXTATTR) ? 4 : 2;
-    len = size / inc;
-
-    /* crop if needed */
-    if (x + len > screen_buffer->width) len = screen_buffer->width - x;
-
-    for (i = 0; i < len; i++)
+    if (i && screen_buffer == screen_buffer->input->active)
     {
-	if (mode == WRITE_CONSOLE_MODE_TEXTSTDATTR)
-	{
-	    memcpy( (char*)ptr + 2, &screen_buffer->attr, 2 );
-	}	
-	memcpy( ptr++, data, inc );
-	if (!uniform) data += inc;
+        struct console_renderer_event evt;
+        evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        evt.u.update.top    = y;
+        evt.u.update.bottom = (y * screen_buffer->width + x + i - 1) / screen_buffer->width;
+        console_input_events_append( screen_buffer->input->evt, &evt );
+    }
+    return i;
+}
+
+/* fill a screen buffer with uniform data */
+static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t data,
+                                enum char_info_mode mode, int x, int y, int count, int wrap )
+{
+    int i;
+    char_info_t *end, *dest = screen_buffer->data + y * screen_buffer->width + x;
+
+    if (y >= screen_buffer->height) return 0;
+
+    if (wrap)
+        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
+    else
+        end = screen_buffer->data + (y+1) * screen_buffer->width;
+
+    if (count > end - dest) count = end - dest;
+
+    switch(mode)
+    {
+    case CHAR_INFO_MODE_TEXT:
+        for (i = 0; i < count; i++) dest[i].ch = data.ch;
+        break;
+    case CHAR_INFO_MODE_ATTR:
+        for (i = 0; i < count; i++) dest[i].attr = data.attr;
+        break;
+    case CHAR_INFO_MODE_TEXTATTR:
+        for (i = 0; i < count; i++) dest[i] = data;
+        break;
+    case CHAR_INFO_MODE_TEXTSTDATTR:
+        for (i = 0; i < count; i++)
+        {
+            dest[i].ch   = data.ch;
+            dest[i].attr = screen_buffer->attr;
+        }
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
     }
 
-    if (len && screen_buffer == screen_buffer->input->active)
+    if (count && screen_buffer == screen_buffer->input->active)
     {
-	int	y2;
-	struct console_renderer_event evt;
-
-	y2 = (y * screen_buffer->width + x + len - 1) / screen_buffer->width;
-
-	evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
-	evt.u.update.top    = y;
-	evt.u.update.bottom = y2;
-	console_input_events_append( screen_buffer->input->evt, &evt );
+        struct console_renderer_event evt;
+        evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        evt.u.update.top    = y;
+        evt.u.update.bottom = (y * screen_buffer->width + x + count - 1) / screen_buffer->width;
+        console_input_events_append( screen_buffer->input->evt, &evt );
     }
-    return len;
+    return i;
 }
 
 /* read data from a screen buffer */
-static int read_console_output( struct screen_buffer *screen_buffer, size_t size, void* data, 
-				short int x, short int y, short int w, short int h, 
-				short int* eff_w, short int* eff_h )
+static void read_console_output( struct screen_buffer *screen_buffer, int x, int y,
+                                 enum char_info_mode mode, int wrap )
 {
-    int	j;
+    int i;
+    char_info_t *end, *src = screen_buffer->data + y * screen_buffer->width + x;
 
-    if (size < w * h * 4 || x >= screen_buffer->width || y >= screen_buffer->height)
-    {	
-	set_error(STATUS_INVALID_PARAMETER);
-	return 0;
-    }
+    if (y >= screen_buffer->height) return;
 
-    *eff_w = w;
-    *eff_h = h;
-    if (x + w > screen_buffer->width)  *eff_w = screen_buffer->width  - x;
-    if (y + h > screen_buffer->height) *eff_h = screen_buffer->height - y;
+    if (wrap)
+        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
+    else
+        end = screen_buffer->data + (y+1) * screen_buffer->width;
 
-    for (j = 0; j < *eff_h; j++)
+    switch(mode)
     {
-	memcpy( (char*)data + 4 * j * w, &screen_buffer->data[(y + j) * screen_buffer->width + x],
-	        *eff_w * 4 );
+    case CHAR_INFO_MODE_TEXT:
+        {
+            WCHAR *data;
+            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
+            if ((data = set_reply_data_size( count * sizeof(*data) )))
+            {
+                for (i = 0; i < count; i++) data[i] = src[i].ch;
+            }
+        }
+        break;
+    case CHAR_INFO_MODE_ATTR:
+        {
+            unsigned short *data;
+            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
+            if ((data = set_reply_data_size( count * sizeof(*data) )))
+            {
+                for (i = 0; i < count; i++) data[i] = src[i].attr;
+            }
+        }
+        break;
+    case CHAR_INFO_MODE_TEXTATTR:
+        {
+            char_info_t *data;
+            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
+            if ((data = set_reply_data_size( count * sizeof(*data) )))
+            {
+                for (i = 0; i < count; i++) data[i] = src[i];
+            }
+        }
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        break;
     }
-
-    return *eff_w * *eff_h;
 }
 
 /* scroll parts of a screen buffer */
-static void scroll_console_output( handle_t handle, short int xsrc, short int ysrc, 
-				   short int xdst, short int ydst, short int w, short int h )
+static void scroll_console_output( handle_t handle, int xsrc, int ysrc, int xdst, int ydst,
+                                   int w, int h )
 {
     struct screen_buffer *screen_buffer;
     int				j;
-    unsigned*			psrc;
-    unsigned*			pdst;
+    char_info_t *psrc, *pdst;
     struct console_renderer_event evt;
 
     if (!(screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, handle,
@@ -934,7 +1046,7 @@ static void scroll_console_output( handle_t handle, short int xsrc, short int ys
 
 	for (j = h; j > 0; j--)
 	{
-	    memcpy(pdst, psrc, w * 4);
+	    memcpy(pdst, psrc, w * sizeof(*pdst) );
 	    pdst -= screen_buffer->width;
 	    psrc -= screen_buffer->width;
 	}
@@ -949,7 +1061,7 @@ static void scroll_console_output( handle_t handle, short int xsrc, short int ys
 	    /* we use memmove here because when psrc and pdst are the same, 
 	     * copies are done on the same row, so the dst and src blocks
 	     * can overlap */
-	    memmove( pdst, psrc, w * 4 );
+	    memmove( pdst, psrc, w * sizeof(*pdst) );
 	    pdst += screen_buffer->width;
 	    psrc += screen_buffer->width;
 	}
@@ -976,35 +1088,35 @@ DECL_HANDLER(alloc_console)
     process = (req->pid) ? get_process_from_id( req->pid ) :
               (struct process *)grab_object( renderer->parent );
 
-    req->handle_in = 0;
-    req->event = 0;
+    reply->handle_in = 0;
+    reply->event = 0;
     if (!process) return;
     if (process != renderer && process->console)
-    {	
-	set_error( STATUS_ACCESS_DENIED );
-	goto the_end;
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        goto the_end;
     }
 
     if ((console = (struct console_input*)create_console_input( renderer )))
     {
-	if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
-	{
-	    if ((evt = alloc_handle( renderer, console->evt, 
-				     SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, FALSE )))
-	    {
-		if (process != renderer)
-		{
-		    process->console = (struct console_input*)grab_object( console );
-		    console->num_proc++;
-		}
-		req->handle_in = in;
-		req->event = evt;
-		release_object( console );
-		goto the_end;
-	    }
-	    close_handle( renderer, in, NULL );
-	}
-	free_console( process );
+        if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
+        {
+            if ((evt = alloc_handle( renderer, console->evt,
+                                     SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, FALSE )))
+            {
+                if (process != renderer)
+                {
+                    process->console = (struct console_input*)grab_object( console );
+                    console->num_proc++;
+                }
+                reply->handle_in = in;
+                reply->event = evt;
+                release_object( console );
+                goto the_end;
+            }
+            close_handle( renderer, in, NULL );
+        }
+        free_console( process );
     }
  the_end:
     release_object( process );
@@ -1019,14 +1131,12 @@ DECL_HANDLER(free_console)
 /* let the renderer peek the events it's waiting on */
 DECL_HANDLER(get_console_renderer_events)
 {
-    struct console_input_events*	evt;
-    size_t len = 0;
+    struct console_input_events *evt;
 
     evt = (struct console_input_events *)get_handle_obj( current->process, req->handle,
-							 GENERIC_WRITE, &console_input_events_ops );
+                                                         GENERIC_WRITE, &console_input_events_ops );
     if (!evt) return;
-    len = console_input_events_get( evt, get_req_data(req), get_req_data_size(req) );
-    set_req_data_size( req, len );
+    console_input_events_get( evt );
     release_object( evt );
 }
 
@@ -1035,70 +1145,66 @@ DECL_HANDLER(open_console)
 {
     struct object      *obj = NULL;
 
-    req->handle = 0;
+    reply->handle = 0;
     switch (req->from)
     {
-    case 0: 
-	if (current->process->console && current->process->console->renderer)
-	    obj = grab_object( (struct object*)current->process->console );
-	break;
-    case 1: 
-	 if (current->process->console && current->process->console->renderer && 
-	     current->process->console->active)
-	     obj = grab_object( (struct object*)current->process->console->active );
-	break;
+    case 0:
+        if (current->process->console && current->process->console->renderer)
+            obj = grab_object( (struct object*)current->process->console );
+        break;
+    case 1:
+         if (current->process->console && current->process->console->renderer &&
+             current->process->console->active)
+             obj = grab_object( (struct object*)current->process->console->active );
+        break;
     default:
-	if ((obj = get_handle_obj( current->process, (handle_t)req->from,
-				   GENERIC_READ|GENERIC_WRITE, &console_input_ops )))
-	{
-	    struct console_input* console = (struct console_input*)obj;
-	    obj = (console->active) ? grab_object( console->active ) : NULL;
-	    release_object( console );
-	}
-	break;
+        if ((obj = get_handle_obj( current->process, (handle_t)req->from,
+                                   GENERIC_READ|GENERIC_WRITE, &console_input_ops )))
+        {
+            struct console_input* console = (struct console_input*)obj;
+            obj = (console->active) ? grab_object( console->active ) : NULL;
+            release_object( console );
+        }
+        break;
     }
 
     /* FIXME: req->share is not used (as in screen buffer creation)  */
     if (obj)
     {
-	req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
-	release_object( obj );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        release_object( obj );
     }
-    if (!req->handle && !get_error()) set_error( STATUS_ACCESS_DENIED );
+    else if (!get_error()) set_error( STATUS_ACCESS_DENIED );
 }
 
 /* set info about a console input */
 DECL_HANDLER(set_console_input_info)
 {
-    set_console_input_info( req, get_req_data(req), get_req_data_size(req) );
+    set_console_input_info( req, get_req_data(), get_req_data_size() );
 }
 
 /* get info about a console (output only) */
 DECL_HANDLER(get_console_input_info)
 {
-    struct console_input *console = 0;
+    struct console_input *console;
 
-    set_req_data_size( req, 0 );
     if (!(console = console_input_get( req->handle, GENERIC_READ ))) return;
-
     if (console->title)
     {
-	size_t len = strlenW( console->title ) * sizeof(WCHAR);
-	if (len > get_req_data_size(req)) len = get_req_data_size(req);
-	memcpy( get_req_data(req), console->title, len );
-	set_req_data_size( req, len );
+        size_t len = strlenW( console->title ) * sizeof(WCHAR);
+        if (len > get_reply_max_size()) len = get_reply_max_size();
+        set_reply_data( console->title, len );
     }
-    req->history_mode  = console->history_mode;
-    req->history_size  = console->history_size;
-    req->history_index = console->history_index;
-
+    reply->history_mode  = console->history_mode;
+    reply->history_size  = console->history_size;
+    reply->history_index = console->history_index;
     release_object( console );
 }
 
 /* get a console mode (input or output) */
 DECL_HANDLER(get_console_mode)
 {
-    req->mode = get_console_mode( req->handle );
+    reply->mode = get_console_mode( req->handle );
 }
 
 /* set a console mode (input or output) */
@@ -1112,47 +1218,39 @@ DECL_HANDLER(write_console_input)
 {
     struct console_input *console;
 
-    req->written = 0;
+    reply->written = 0;
     if (!(console = (struct console_input *)get_handle_obj( current->process, req->handle,
                                                             GENERIC_WRITE, &console_input_ops )))
         return;
-
-    req->written = write_console_input( console, get_req_data_size(req) / sizeof(INPUT_RECORD),
-                                        get_req_data(req) );
+    reply->written = write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD),
+                                          get_req_data() );
     release_object( console );
 }
 
 /* fetch input records from a console input queue */
 DECL_HANDLER(read_console_input)
 {
-    size_t size = get_req_data_size(req) / sizeof(INPUT_RECORD);
-    int res = read_console_input( req->handle, size, get_req_data(req), req->flush );
-    /* if size was 0 we didn't fetch anything */
-    if (size) set_req_data_size( req, res * sizeof(INPUT_RECORD) );
-    req->read = res;
+    int count = get_reply_max_size() / sizeof(INPUT_RECORD);
+    reply->read = read_console_input( req->handle, count, req->flush );
 }
 
 /* appends a string to console's history */
 DECL_HANDLER(append_console_input_history)
 {
-    struct console_input*	console;
+    struct console_input *console;
 
     if (!(console = console_input_get( req->handle, GENERIC_WRITE ))) return;
-    console_input_append_hist( console, get_req_data(req), 
-			       get_req_data_size(req) / sizeof(WCHAR) );
+    console_input_append_hist( console, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
     release_object( console );
 }
 
 /* appends a string to console's history */
 DECL_HANDLER(get_console_input_history)
 {
-    struct console_input*	console;
-    int len;
+    struct console_input *console;
 
     if (!(console = console_input_get( req->handle, GENERIC_WRITE ))) return;
-
-    len = console_input_get_hist( console, get_req_data(req), 0 /* FIXME */, req->index );
-    set_req_data_size( req, len * sizeof(WCHAR));
+    reply->total = console_input_get_hist( console, req->index );
     release_object( console );
 }
 
@@ -1164,14 +1262,14 @@ DECL_HANDLER(create_console_output)
 
     if (!(console = console_input_get( req->handle_in, GENERIC_WRITE))) return;
 
-    screen_buffer = (struct screen_buffer*)create_console_output( console );
+    screen_buffer = create_console_output( console );
     if (screen_buffer)
     {
-	/* FIXME: should store sharing and test it when opening the CONOUT$ device 
-	 * see file.c on how this could be done
-	 */
-	req->handle_out = alloc_handle( current->process, screen_buffer, req->access, req->inherit );
-	release_object( screen_buffer );
+        /* FIXME: should store sharing and test it when opening the CONOUT$ device 
+         * see file.c on how this could be done */
+        reply->handle_out = alloc_handle( current->process, screen_buffer,
+                                          req->access, req->inherit );
+        release_object( screen_buffer );
     }
     release_object( console );
 }
@@ -1179,79 +1277,84 @@ DECL_HANDLER(create_console_output)
 /* set info about a console screen buffer */
 DECL_HANDLER(set_console_output_info)
 {
-    struct screen_buffer       *screen_buffer;
+    struct screen_buffer *screen_buffer;
 
-    if (!(screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-								 GENERIC_WRITE, &screen_buffer_ops )))
-	return;
-
-    set_console_output_info( screen_buffer, req );
-    release_object( screen_buffer );
+    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
+                                                                GENERIC_WRITE, &screen_buffer_ops)))
+    {
+        set_console_output_info( screen_buffer, req );
+        release_object( screen_buffer );
+    }
 }
 
 /* get info about a console screen buffer */
 DECL_HANDLER(get_console_output_info)
 {
     struct screen_buffer *screen_buffer;
-    size_t len = 0;
 
     if ((screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
-								 GENERIC_READ, &screen_buffer_ops )))
+                                                                 GENERIC_READ, &screen_buffer_ops)))
     {
-        req->cursor_size    = screen_buffer->cursor_size;
-        req->cursor_visible = screen_buffer->cursor_visible;
-	req->cursor_x       = screen_buffer->cursor.X;
-	req->cursor_y       = screen_buffer->cursor.Y;
-	req->width          = screen_buffer->width;
-	req->height         = screen_buffer->height;
-	req->attr           = screen_buffer->attr;
-	req->win_left       = screen_buffer->win.Left;
-	req->win_top        = screen_buffer->win.Top;
-	req->win_right      = screen_buffer->win.Right;
-	req->win_bottom     = screen_buffer->win.Bottom;
-	req->max_width      = screen_buffer->max_width;
-	req->max_height     = screen_buffer->max_height;
-
+        reply->cursor_size    = screen_buffer->cursor_size;
+        reply->cursor_visible = screen_buffer->cursor_visible;
+        reply->cursor_x       = screen_buffer->cursor_x;
+        reply->cursor_y       = screen_buffer->cursor_y;
+        reply->width          = screen_buffer->width;
+        reply->height         = screen_buffer->height;
+        reply->attr           = screen_buffer->attr;
+        reply->win_left       = screen_buffer->win.left;
+        reply->win_top        = screen_buffer->win.top;
+        reply->win_right      = screen_buffer->win.right;
+        reply->win_bottom     = screen_buffer->win.bottom;
+        reply->max_width      = screen_buffer->max_width;
+        reply->max_height     = screen_buffer->max_height;
         release_object( screen_buffer );
     }
-    set_req_data_size( req, len );
 }
 
 /* read data (chars & attrs) from a screen buffer */
 DECL_HANDLER(read_console_output)
 {
-    struct screen_buffer       *screen_buffer;
-    size_t 			size = get_req_data_size(req);
-    int				res;
+    struct screen_buffer *screen_buffer;
 
-    if (!(screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-								 GENERIC_READ, &screen_buffer_ops )))
-	return;
-
-    res = read_console_output( screen_buffer, size, get_req_data(req), 
-			       req->x, req->y, req->w, req->h, &req->eff_w, &req->eff_h);
-    /* if size was 0 we didn't fetch anything */
-    if (size) set_req_data_size( req, res * 4 );
-    release_object( screen_buffer );
+    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
+                                                                GENERIC_READ, &screen_buffer_ops )))
+    {
+        read_console_output( screen_buffer, req->x, req->y, req->mode, req->wrap );
+        reply->width  = screen_buffer->width;
+        reply->height = screen_buffer->height;
+        release_object( screen_buffer );
+    }
 }
 
 /* write data (char and/or attrs) to a screen buffer */
 DECL_HANDLER(write_console_output)
 {
-    struct screen_buffer       *screen_buffer;
-    size_t 			size = get_req_data_size(req);
-    int				res;
+    struct screen_buffer *screen_buffer;
 
-    if (!(screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-								 GENERIC_WRITE, &screen_buffer_ops )))
-	return;
+    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
+                                                                GENERIC_WRITE, &screen_buffer_ops)))
+    {
+        reply->written = write_console_output( screen_buffer, get_req_data_size(), get_req_data(),
+                                               req->mode, req->x, req->y, req->wrap );
+        reply->width  = screen_buffer->width;
+        reply->height = screen_buffer->height;
+        release_object( screen_buffer );
+    }
+}
 
-    res = write_console_output( screen_buffer, size, get_req_data(req), req->mode, req->x, req->y );
+/* fill a screen buffer with constant data (chars and/or attributes) */
+DECL_HANDLER(fill_console_output)
+{
+    struct screen_buffer *screen_buffer;
 
-    /* if size was 0 we didn't fetch anything */
-    if (size) set_req_data_size( req, res );
-    req->written = res;
-    release_object( screen_buffer );
+    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
+                                                                GENERIC_WRITE, &screen_buffer_ops)))
+    {
+        reply->written = fill_console_output( screen_buffer, req->data, req->mode,
+                                              req->x, req->y, req->count, req->wrap );
+        release_object( screen_buffer );
+    }
 }
 
 /* move a rect of data in a screen buffer */

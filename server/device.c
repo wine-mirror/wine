@@ -29,7 +29,7 @@ struct device
 };
 
 static void device_dump( struct object *obj, int verbose );
-static int device_get_info( struct object *obj, struct get_file_info_request *req );
+static int device_get_info( struct object *obj, struct get_file_info_reply *reply );
 
 static const struct object_ops device_ops =
 {
@@ -64,23 +64,23 @@ static void device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device id=%08x\n", dev->id );
 }
 
-static int device_get_info( struct object *obj, struct get_file_info_request *req )
+static int device_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
     struct device *dev = (struct device *)obj;
     assert( obj->ops == &device_ops );
 
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_UNKNOWN;
-        req->attr        = dev->id;  /* hack! */
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_UNKNOWN;
+        reply->attr        = dev->id;  /* hack! */
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
     return FD_TYPE_DEFAULT;
 }
@@ -90,10 +90,10 @@ DECL_HANDLER(create_device)
 {
     struct device *dev;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((dev = create_device( req->id )))
     {
-        req->handle = alloc_handle( current->process, dev, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, dev, req->access, req->inherit );
         release_object( dev );
     }
 }

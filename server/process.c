@@ -98,7 +98,7 @@ static const struct object_ops startup_info_ops =
 
 /* set the console and stdio handles for a newly created process */
 static int set_process_console( struct process *process, struct process *parent,
-                                struct startup_info *info, struct init_process_request *req )
+                                struct startup_info *info, struct init_process_reply *reply )
 {
     if (process->create_flags & CREATE_NEW_CONSOLE)
     {
@@ -120,35 +120,35 @@ static int set_process_console( struct process *process, struct process *parent,
         if (!info->inherit_all && !(info->start_flags & STARTF_USESTDHANDLES))
         {
             /* duplicate the handle from the parent into this process */
-            req->hstdin  = duplicate_handle( parent, info->hstdin, process,
-                                             0, TRUE, DUPLICATE_SAME_ACCESS );
-            req->hstdout = duplicate_handle( parent, info->hstdout, process,
-                                             0, TRUE, DUPLICATE_SAME_ACCESS );
-            req->hstderr = duplicate_handle( parent, info->hstderr, process,
-                                             0, TRUE, DUPLICATE_SAME_ACCESS );
+            reply->hstdin  = duplicate_handle( parent, info->hstdin, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
+            reply->hstdout = duplicate_handle( parent, info->hstdout, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
+            reply->hstderr = duplicate_handle( parent, info->hstderr, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
         }
         else
         {
-            req->hstdin  = info->hstdin;
-            req->hstdout = info->hstdout;
-            req->hstderr = info->hstderr;
+            reply->hstdin  = info->hstdin;
+            reply->hstdout = info->hstdout;
+            reply->hstderr = info->hstderr;
         }
     }
     else
     {
         if (process->console)
         {
-            req->hstdin  = alloc_handle( process, process->console,
-                                         GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-            req->hstdout = alloc_handle( process, process->console->active,
-                                         GENERIC_READ | GENERIC_WRITE, 1 );
-            req->hstderr = alloc_handle( process, process->console->active,
-                                         GENERIC_READ | GENERIC_WRITE, 1 );
+            reply->hstdin  = alloc_handle( process, process->console,
+                                           GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+            reply->hstdout = alloc_handle( process, process->console->active,
+                                           GENERIC_READ | GENERIC_WRITE, 1 );
+            reply->hstderr = alloc_handle( process, process->console->active,
+                                           GENERIC_READ | GENERIC_WRITE, 1 );
         }
         else
         {
             /* no parent, let the caller decide what to do */
-            req->hstdin = req->hstdout = req->hstderr = 0;
+            reply->hstdin = reply->hstdout = reply->hstderr = 0;
         }
     }
     /* some handles above may have been invalid; this is not an error */
@@ -216,7 +216,7 @@ struct thread *create_process( int fd )
 }
 
 /* initialize the current process and fill in the request */
-static void init_process( int ppid, struct init_process_request *req )
+static void init_process( int ppid, struct init_process_reply *reply )
 {
     struct process *process = current->process;
     struct thread *parent_thread = get_thread_from_pid( ppid );
@@ -251,16 +251,16 @@ static void init_process( int ppid, struct init_process_request *req )
     if (!process->handles) return;
 
     /* retrieve the main exe file */
-    req->exe_file = 0;
+    reply->exe_file = 0;
     if (parent && info->exe_file)
     {
         process->exe.file = (struct file *)grab_object( info->exe_file );
-        if (!(req->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
+        if (!(reply->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
             return;
     }
 
     /* set the process console */
-    if (!set_process_console( process, parent, info, req )) return;
+    if (!set_process_console( process, parent, info, reply )) return;
 
     if (parent)
     {
@@ -277,23 +277,21 @@ static void init_process( int ppid, struct init_process_request *req )
     if (info)
     {
         size_t size = strlen(info->filename);
-        if (size > get_req_data_size(req)) size = get_req_data_size(req);
-        req->start_flags = info->start_flags;
-        req->cmd_show    = info->cmd_show;
-        memcpy( get_req_data(req), info->filename, size );
-        set_req_data_size( req, size );
+        if (size > get_reply_max_size()) size = get_reply_max_size();
+        reply->start_flags = info->start_flags;
+        reply->cmd_show    = info->cmd_show;
+        set_reply_data( info->filename, size );
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
         wake_up( &info->obj, 0 );
     }
     else
     {
-        req->start_flags  = STARTF_USESTDHANDLES;
-        req->cmd_show     = 0;
-        set_req_data_size( req, 0 );
+        reply->start_flags  = STARTF_USESTDHANDLES;
+        reply->cmd_show     = 0;
     }
-    req->create_flags = process->create_flags;
-    req->server_start = server_start_ticks;
+    reply->create_flags = process->create_flags;
+    reply->server_start = server_start_ticks;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -577,19 +575,19 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
 
 
 /* get all information about a process */
-static void get_process_info( struct process *process, struct get_process_info_request *req )
+static void get_process_info( struct process *process, struct get_process_info_reply *reply )
 {
-    req->pid              = process;
-    req->debugged         = (process->debugger != 0);
-    req->exit_code        = process->exit_code;
-    req->priority         = process->priority;
-    req->process_affinity = process->affinity;
-    req->system_affinity  = 1;
+    reply->pid              = process;
+    reply->debugged         = (process->debugger != 0);
+    reply->exit_code        = process->exit_code;
+    reply->priority         = process->priority;
+    reply->process_affinity = process->affinity;
+    reply->system_affinity  = 1;
 }
 
 /* set all information about a process */
 static void set_process_info( struct process *process,
-                              struct set_process_info_request *req )
+                              const struct set_process_info_request *req )
 {
     if (req->mask & SET_PROCESS_INFO_PRIORITY)
         process->priority = req->priority;
@@ -601,62 +599,56 @@ static void set_process_info( struct process *process,
 }
 
 /* read data from a process memory space */
-/* len is the total size (in ints), max is the size we can actually store in the output buffer */
-/* we read the total size in all cases to check for permissions */
-static void read_process_memory( struct process *process, const int *addr,
-                                 size_t len, size_t max, int *dest )
+/* len is the total size (in ints) */
+static int read_process_memory( struct process *process, const int *addr, size_t len, int *dest )
 {
     struct thread *thread = process->thread_list;
 
-    if ((unsigned int)addr % sizeof(int))  /* address must be aligned */
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
+    assert( !((unsigned int)addr % sizeof(int)) );  /* address must be aligned */
+
     if (!thread)  /* process is dead */
     {
         set_error( STATUS_ACCESS_DENIED );
-        return;
+        return 0;
     }
     if (suspend_for_ptrace( thread ))
     {
-        while (len > 0 && max)
+        while (len > 0)
         {
-            if (read_thread_int( thread, addr++, dest++ ) == -1) goto done;
-            max--;
+            if (read_thread_int( thread, addr++, dest++ ) == -1) break;
             len--;
         }
-        /* check the rest for read permission */
-        if (len > 0)
-        {
-            int dummy, page = get_page_size() / sizeof(int);
-            while (len >= page)
-            {
-                addr += page;
-                len -= page;
-                if (read_thread_int( thread, addr - 1, &dummy ) == -1) goto done;
-            }
-            if (len && (read_thread_int( thread, addr + len - 1, &dummy ) == -1)) goto done;
-        }
-    done:
         resume_thread( thread );
     }
+    return !len;
+}
+
+/* make sure we can write to the whole address range */
+/* len is the total size (in ints) */
+static int check_process_write_access( struct thread *thread, int *addr, size_t len )
+{
+    int page = get_page_size() / sizeof(int);
+
+    for (;;)
+    {
+        if (write_thread_int( thread, addr, 0, 0 ) == -1) return 0;
+        if (len <= page) break;
+        addr += page;
+        len -= page;
+    }
+    return (write_thread_int( thread, addr + len - 1, 0, 0 ) != -1);
 }
 
 /* write data to a process memory space */
 /* len is the total size (in ints), max is the size we can actually read from the input buffer */
 /* we check the total size for write permissions */
 static void write_process_memory( struct process *process, int *addr, size_t len,
-                                  size_t max, unsigned int first_mask,
-                                  unsigned int last_mask, const int *src )
+                                  unsigned int first_mask, unsigned int last_mask, const int *src )
 {
     struct thread *thread = process->thread_list;
 
-    if (!len || ((unsigned int)addr % sizeof(int)))  /* address must be aligned */
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
+    assert( !((unsigned int)addr % sizeof(int) ));  /* address must be aligned */
+
     if (!thread)  /* process is dead */
     {
         set_error( STATUS_ACCESS_DENIED );
@@ -664,39 +656,28 @@ static void write_process_memory( struct process *process, int *addr, size_t len
     }
     if (suspend_for_ptrace( thread ))
     {
+        if (!check_process_write_access( thread, addr, len ))
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            return;
+        }
         /* first word is special */
         if (len > 1)
         {
             if (write_thread_int( thread, addr++, *src++, first_mask ) == -1) goto done;
             len--;
-            max--;
         }
         else last_mask &= first_mask;
 
-        while (len > 1 && max)
+        while (len > 1)
         {
             if (write_thread_int( thread, addr++, *src++, ~0 ) == -1) goto done;
-            max--;
             len--;
         }
 
-        if (max)
-        {
-            /* last word is special too */
-            if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
-        }
-        else
-        {
-            /* check the rest for write permission */
-            int page = get_page_size() / sizeof(int);
-            while (len >= page)
-            {
-                addr += page;
-                len -= page;
-                if (write_thread_int( thread, addr - 1, 0, 0 ) == -1) goto done;
-            }
-            if (len && (write_thread_int( thread, addr + len - 1, 0, 0 ) == -1)) goto done;
-        }
+        /* last word is special too */
+        if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
+
     done:
         resume_thread( thread );
     }
@@ -747,7 +728,7 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
-    size_t len = get_req_data_size( req );
+    size_t len = get_req_data_size();
     struct startup_info *info;
 
     if (current->info)
@@ -777,10 +758,10 @@ DECL_HANDLER(new_process)
 
     if (!(info->filename = mem_alloc( len + 1 ))) goto done;
 
-    memcpy( info->filename, get_req_data(req), len );
+    memcpy( info->filename, get_req_data(), len );
     info->filename[len] = 0;
     current->info = info;
-    req->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
+    reply->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
 
  done:
     release_object( info );
@@ -791,28 +772,28 @@ DECL_HANDLER(get_new_process_info)
 {
     struct startup_info *info;
 
-    req->event = 0;
+    reply->event = 0;
 
     if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
                                                        0, &startup_info_ops )))
     {
-        req->pid = get_process_id( info->process );
-        req->tid = get_thread_id( info->thread );
-        req->phandle = alloc_handle( current->process, info->process,
-                                     PROCESS_ALL_ACCESS, req->pinherit );
-        req->thandle = alloc_handle( current->process, info->thread,
-                                     THREAD_ALL_ACCESS, req->tinherit );
+        reply->pid = get_process_id( info->process );
+        reply->tid = get_thread_id( info->thread );
+        reply->phandle = alloc_handle( current->process, info->process,
+                                       PROCESS_ALL_ACCESS, req->pinherit );
+        reply->thandle = alloc_handle( current->process, info->thread,
+                                       THREAD_ALL_ACCESS, req->tinherit );
         if (info->process->init_event)
-            req->event = alloc_handle( current->process, info->process->init_event,
+            reply->event = alloc_handle( current->process, info->process->init_event,
                                        EVENT_ALL_ACCESS, 0 );
         release_object( info );
     }
     else
     {
-        req->pid     = 0;
-        req->tid     = 0;
-        req->phandle = 0;
-        req->thandle = 0;
+        reply->pid     = 0;
+        reply->tid     = 0;
+        reply->phandle = 0;
+        reply->thandle = 0;
     }
 }
 
@@ -825,7 +806,7 @@ DECL_HANDLER(init_process)
         return;
     }
     current->process->ldt_copy  = req->ldt_copy;
-    init_process( req->ppid, req );
+    init_process( req->ppid, reply );
 }
 
 /* signal the end of the process initialization */
@@ -852,17 +833,17 @@ DECL_HANDLER(init_process_done)
     process->init_event = NULL;
     if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
-    req->debugged = (current->process->debugger != 0);
+    reply->debugged = (current->process->debugger != 0);
 }
 
 /* open a handle to a process */
 DECL_HANDLER(open_process)
 {
     struct process *process = get_process_from_id( req->pid );
-    req->handle = 0;
+    reply->handle = 0;
     if (process)
     {
-        req->handle = alloc_handle( current->process, process, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, process, req->access, req->inherit );
         release_object( process );
     }
 }
@@ -874,7 +855,7 @@ DECL_HANDLER(terminate_process)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_TERMINATE )))
     {
-        req->self = (current->process == process);
+        reply->self = (current->process == process);
         kill_process( process, current, req->exit_code );
         release_object( process );
     }
@@ -887,7 +868,7 @@ DECL_HANDLER(get_process_info)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        get_process_info( process, req );
+        get_process_info( process, reply );
         release_object( process );
     }
 }
@@ -908,13 +889,28 @@ DECL_HANDLER(set_process_info)
 DECL_HANDLER(read_process_memory)
 {
     struct process *process;
+    size_t len = get_reply_max_size();
 
-    if ((process = get_process_from_handle( req->handle, PROCESS_VM_READ )))
+    if (!(process = get_process_from_handle( req->handle, PROCESS_VM_READ ))) return;
+
+    if (len)
     {
-        size_t maxlen = get_req_data_size(req) / sizeof(int);
-        read_process_memory( process, req->addr, req->len, maxlen, get_req_data(req) );
-        release_object( process );
+        unsigned int start_offset = (unsigned int)req->addr % sizeof(int);
+        unsigned int nb_ints = (len + start_offset + sizeof(int) - 1) / sizeof(int);
+        const int *start = (int *)((char *)req->addr - start_offset);
+        int *buffer = mem_alloc( nb_ints * sizeof(int) );
+        if (buffer)
+        {
+            if (read_process_memory( process, start, nb_ints, buffer ))
+            {
+                /* move start of requested data to start of buffer */
+                if (start_offset) memmove( buffer, (char *)buffer + start_offset, len );
+                set_reply_data_ptr( buffer, len );
+            }
+            else len = 0;
+        }
     }
+    release_object( process );
 }
 
 /* write data to a process address space */
@@ -924,9 +920,14 @@ DECL_HANDLER(write_process_memory)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
-        size_t maxlen = get_req_data_size(req) / sizeof(int);
-        write_process_memory( process, req->addr, req->len, maxlen,
-                              req->first_mask, req->last_mask, get_req_data(req) );
+        size_t len = get_req_data_size();
+        if ((len % sizeof(int)) || ((unsigned int)req->addr % sizeof(int)))
+            set_error( STATUS_INVALID_PARAMETER );
+        else
+        {
+            if (len) write_process_memory( process, req->addr, len / sizeof(int),
+                                           req->first_mask, req->last_mask, get_req_data() );
+        }
         release_object( process );
     }
 }
@@ -964,12 +965,12 @@ DECL_HANDLER(wait_input_idle)
 {
     struct process *process;
 
-    req->event = 0;
+    reply->event = 0;
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
         if (process->idle_event && process != current->process && process->queue != current->queue)
-            req->event = alloc_handle( current->process, process->idle_event,
-                                       EVENT_ALL_ACCESS, 0 );
+            reply->event = alloc_handle( current->process, process->idle_event,
+                                         EVENT_ALL_ACCESS, 0 );
         release_object( process );
     }
 }

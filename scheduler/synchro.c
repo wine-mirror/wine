@@ -226,17 +226,17 @@ static void call_apcs( BOOL alertable )
     for (;;)
     {
         int type = APC_NONE;
-        SERVER_START_VAR_REQ( get_apc, sizeof(args) )
+        SERVER_START_REQ( get_apc )
         {
             req->alertable = alertable;
-            if (!SERVER_CALL())
+            wine_server_set_reply( req, args, sizeof(args) );
+            if (!wine_server_call( req ))
             {
-                type = req->type;
-                proc = req->func;
-                memcpy( args, server_data_ptr(req), server_data_size(req) );
+                type = reply->type;
+                proc = reply->func;
             }
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
 
         switch(type)
         {
@@ -315,7 +315,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,
                                        BOOL alertable )
 {
-    int i, ret, cookie;
+    int ret, cookie;
     struct timeval tv;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
@@ -329,23 +329,21 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
     for (;;)
     {
-        SERVER_START_VAR_REQ( select, count * sizeof(int) )
+        SERVER_START_REQ( select )
         {
-            int *data = server_data_ptr( req );
-
             req->flags   = SELECT_INTERRUPTIBLE;
             req->cookie  = &cookie;
             req->sec     = tv.tv_sec;
             req->usec    = tv.tv_usec;
-            for (i = 0; i < count; i++) data[i] = handles[i];
+            wine_server_add_data( req, handles, count * sizeof(HANDLE) );
 
             if (wait_all) req->flags |= SELECT_ALL;
             if (alertable) req->flags |= SELECT_ALERTABLE;
             if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
 
-            ret = SERVER_CALL();
+            ret = wine_server_call( req );
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
         if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
         if (ret != STATUS_USER_APC) break;
         call_apcs( alertable );

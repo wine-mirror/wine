@@ -189,12 +189,12 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
         SERVER_START_REQ( get_window_rectangles )
         {
             req->handle = hwnd;
-            if ((ret = !SERVER_CALL_ERR()))
+            if ((ret = !wine_server_call_err( req )))
             {
-                rect->left   = req->window.left;
-                rect->top    = req->window.top;
-                rect->right  = req->window.right;
-                rect->bottom = req->window.bottom;
+                rect->left   = reply->window.left;
+                rect->top    = reply->window.top;
+                rect->right  = reply->window.right;
+                rect->bottom = reply->window.bottom;
             }
         }
         SERVER_END_REQ;
@@ -309,10 +309,10 @@ BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
         SERVER_START_REQ( get_window_rectangles )
         {
             req->handle = hwnd;
-            if ((ret = !SERVER_CALL_ERR()))
+            if ((ret = !wine_server_call_err( req )))
             {
-                rect->right  = req->client.right - req->client.left;
-                rect->bottom = req->client.bottom - req->client.top;
+                rect->right  = reply->client.right - reply->client.left;
+                rect->bottom = reply->client.bottom - reply->client.top;
             }
         }
         SERVER_END_REQ;
@@ -600,10 +600,10 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     {
         req->from = hwndFrom;
         req->to   = hwndTo;
-        if (!SERVER_CALL())
+        if (!wine_server_call( req ))
         {
-            offset->x = req->x;
-            offset->y = req->y;
+            offset->x = reply->x;
+            offset->y = reply->y;
         }
     }
     SERVER_END_REQ;

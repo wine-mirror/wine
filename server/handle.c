@@ -355,7 +355,6 @@ struct object *get_handle_obj( struct process *process, handle_t handle,
         if (!(entry = get_handle( process, handle ))) return NULL;
         if ((entry->access & access) != access)
         {
-            fprintf( stderr, "handle %d access %08x denied (%08x)\n", handle, access, entry->access );
             set_error( STATUS_ACCESS_DENIED );
             return NULL;
         }
@@ -377,7 +376,6 @@ int get_handle_fd( struct process *process, handle_t handle, unsigned int access
     if (!(entry = get_handle( process, handle ))) return -1;
     if ((entry->access & access) != access)
     {
-        fprintf( stderr, "handle %d access %08x denied (%08x)\n", handle, access, entry->access );
         set_error( STATUS_ACCESS_DENIED );
         return -1;
     }
@@ -459,7 +457,7 @@ handle_t open_object( const WCHAR *name, size_t len, const struct object_ops *op
 /* close a handle */
 DECL_HANDLER(close_handle)
 {
-    close_handle( current->process, req->handle, &req->fd );
+    close_handle( current->process, req->handle, &reply->fd );
 }
 
 /* set a handle information */
@@ -468,8 +466,9 @@ DECL_HANDLER(set_handle_info)
     int fd = req->fd;
 
     if (handle_is_global(req->handle)) fd = -1;  /* no fd cache for global handles */
-    req->old_flags = set_handle_info( current->process, req->handle, req->mask, req->flags, &fd );
-    req->cur_fd = fd;
+    reply->old_flags = set_handle_info( current->process, req->handle,
+                                        req->mask, req->flags, &fd );
+    reply->cur_fd = fd;
 }
 
 /* duplicate a handle */
@@ -477,25 +476,25 @@ DECL_HANDLER(dup_handle)
 {
     struct process *src, *dst;
 
-    req->handle = 0;
-    req->fd = -1;
+    reply->handle = 0;
+    reply->fd = -1;
     if ((src = get_process_from_handle( req->src_process, PROCESS_DUP_HANDLE )))
     {
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
         {
-            req->handle = duplicate_handle( src, req->src_handle, NULL,
-                                            req->access, req->inherit, req->options );
+            reply->handle = duplicate_handle( src, req->src_handle, NULL,
+                                              req->access, req->inherit, req->options );
         }
         else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
-            req->handle = duplicate_handle( src, req->src_handle, dst,
-                                            req->access, req->inherit, req->options );
+            reply->handle = duplicate_handle( src, req->src_handle, dst,
+                                              req->access, req->inherit, req->options );
             release_object( dst );
         }
         /* close the handle no matter what happened */
         if (req->options & DUP_HANDLE_CLOSE_SOURCE)
         {
-            if (src == current->process) close_handle( src, req->src_handle, &req->fd );
+            if (src == current->process) close_handle( src, req->src_handle, &reply->fd );
             else close_handle( src, req->src_handle, NULL );
         }
         release_object( src );

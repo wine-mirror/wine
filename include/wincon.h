@@ -177,10 +177,8 @@ HANDLE WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess, DWORD dwShareMod
                                          LPVOID lpScreenBufferData);
 BOOL WINAPI   FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD wAttribute, DWORD nLength,
                                           COORD dwCoord, LPDWORD lpNumAttrsWritten);
-BOOL WINAPI   FillConsoleOutputCharacterA( HANDLE hConsoleOutput, BYTE cCharacter, DWORD nLength,
-                                           COORD dwCoord, LPDWORD lpNumCharsWritten);
-BOOL WINAPI   FillConsoleOutputCharacterW( HANDLE hConsoleOutput, WCHAR cCharacter, DWORD nLength,
-                                           COORD dwCoord, LPDWORD lpNumCharsWritten);
+BOOL WINAPI   FillConsoleOutputCharacterA(HANDLE,CHAR,DWORD,COORD,LPDWORD);
+BOOL WINAPI   FillConsoleOutputCharacterW(HANDLE,WCHAR,DWORD,COORD,LPDWORD);
 #define       FillConsoleOutputCharacter WINELIB_NAME_AW(FillConsoleOutputCharacter)
 BOOL WINAPI   FlushConsoleInputBuffer( HANDLE handle);
 BOOL WINAPI   FreeConsole(VOID);
@@ -242,13 +240,11 @@ BOOL WINAPI   SetConsoleWindowInfo( HANDLE hcon, BOOL bAbsolute, LPSMALL_RECT wi
 BOOL WINAPI   WriteConsoleA(HANDLE,CONST VOID *,DWORD,LPDWORD,LPVOID);
 BOOL WINAPI   WriteConsoleW(HANDLE, CONST VOID *lpBuffer, DWORD,LPDWORD,LPVOID);
 #define       WriteConsole WINELIB_NAME_AW(WriteConsole)
-BOOL WINAPI   WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer, DWORD, LPDWORD );
-BOOL WINAPI   WriteConsoleInputW( HANDLE handle, INPUT_RECORD *buffer, DWORD, LPDWORD );
+BOOL WINAPI   WriteConsoleInputA(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
+BOOL WINAPI   WriteConsoleInputW(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
 #define       WriteConsoleInput WINELIB_NAME_AW(WriteConsoleInput)
-BOOL WINAPI   WriteConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-                                   COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
-BOOL WINAPI   WriteConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-                                   COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
+BOOL WINAPI   WriteConsoleOutputA(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
+BOOL WINAPI   WriteConsoleOutputW(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
 #define       WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
 BOOL WINAPI   WriteConsoleOutputAttribute(HANDLE,CONST WORD *,DWORD,COORD,LPDWORD);
 BOOL WINAPI   WriteConsoleOutputCharacterA(HANDLE,LPCSTR,DWORD,COORD,LPDWORD);

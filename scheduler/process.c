@@ -92,7 +92,9 @@ PDB current_process;
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
-static char **main_exe_argv;
+static int app_argc;   /* argc/argv seen by the application */
+static char **app_argv;
+static WCHAR **app_wargv;
 static char main_exe_name[MAX_PATH];
 static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
@@ -229,7 +231,7 @@ static BOOL process_init( char *argv[] )
 
     /* store the program name */
     argv0 = argv[0];
-    main_exe_argv = argv;
+    app_argv = argv;
 
     /* Fill the initial process structure */
     current_process.exit_code       = STILL_ACTIVE;
@@ -243,26 +245,26 @@ static BOOL process_init( char *argv[] )
     CLIENT_InitServer();
 
     /* Retrieve startup info from the server */
-    SERVER_START_VAR_REQ( init_process, sizeof(main_exe_name)-1 )
+    SERVER_START_REQ( init_process )
     {
         req->ldt_copy  = &wine_ldt_copy;
         req->ppid      = getppid();
-        if ((ret = !SERVER_CALL_ERR()))
+        wine_server_set_reply( req, main_exe_name, sizeof(main_exe_name)-1 );
+        if ((ret = !wine_server_call_err( req )))
         {
-            size_t len = server_data_size( req );
-            memcpy( main_exe_name, server_data_ptr(req), len );
+            size_t len = wine_server_reply_size( reply );
             main_exe_name[len] = 0;
-            main_exe_file = req->exe_file;
-            create_flags  = req->create_flags;
-            current_startupinfo.dwFlags     = req->start_flags;
-            server_startticks               = req->server_start;
-            current_startupinfo.wShowWindow = req->cmd_show;
-            current_startupinfo.hStdInput   = req->hstdin;
-            current_startupinfo.hStdOutput  = req->hstdout;
-            current_startupinfo.hStdError   = req->hstderr;
+            main_exe_file = reply->exe_file;
+            create_flags  = reply->create_flags;
+            current_startupinfo.dwFlags     = reply->start_flags;
+            server_startticks               = reply->server_start;
+            current_startupinfo.wShowWindow = reply->cmd_show;
+            current_startupinfo.hStdInput   = reply->hstdin;
+            current_startupinfo.hStdOutput  = reply->hstdout;
+            current_startupinfo.hStdError   = reply->hstderr;
         }
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if (!ret) return FALSE;
 
     /* Create the process heap */
@@ -295,6 +297,8 @@ static BOOL process_init( char *argv[] )
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( argv );
+    app_argc = 0;
+    while (argv[app_argc]) app_argc++;
 
     ret = MAIN_MainInit();
 
@@ -345,8 +349,8 @@ static void start_process(void)
         req->name     = &main_exe_name_ptr;
         req->exe_file = main_file;
         req->gui      = !console_app;
-        SERVER_CALL();
-        debugged = req->debugged;
+        wine_server_call( req );
+        debugged = reply->debugged;
     }
     SERVER_END_REQ;
 
@@ -464,19 +468,20 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
 
-    if (open_winelib_app( argv )) goto found; /* try to open argv[0] as a winelib app */
+    if (open_winelib_app( app_argv )) goto found; /* try to open argv[0] as a winelib app */
 
-    main_exe_argv = ++argv;  /* remove argv[0] (wine itself) */
+    app_argv++;  /* remove argv[0] (wine itself) */
+    app_argc--;
 
     if (!main_exe_name[0])
     {
-        if (!argv[0]) OPTIONS_Usage();
+        if (!app_argv[0]) OPTIONS_Usage();
 
         /* open the exe file */
-        if (!SearchPathA( NULL, argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL ) &&
-            !SearchPathA( NULL, argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL ))
+        if (!SearchPathA( NULL, app_argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL) &&
+            !SearchPathA( NULL, app_argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL))
         {
-            MESSAGE( "%s: cannot find '%s'\n", argv0, argv[0] );
+            MESSAGE( "%s: cannot find '%s'\n", argv0, app_argv[0] );
             goto error;
         }
     }
@@ -510,7 +515,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  found:
     /* build command line */
-    if (!ENV_BuildCommandLine( main_exe_argv )) goto error;
+    if (!ENV_BuildCommandLine( app_argv )) goto error;
 
     /* create 32-bit module for main exe */
     if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
@@ -524,6 +529,52 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  error:
     ExitProcess( GetLastError() );
+}
+
+
+/***********************************************************************
+ *              __wine_get_main_args (NTDLL.@)
+ *
+ * Return the argc/argv that the application should see.
+ * Used by the startup code generated in the .spec.c file.
+ */
+int __wine_get_main_args( char ***argv )
+{
+    *argv = app_argv;
+    return app_argc;
+}
+
+
+/***********************************************************************
+ *              __wine_get_wmain_args (NTDLL.@)
+ *
+ * Same as __wine_get_main_args but for Unicode.
+ */
+int __wine_get_wmain_args( WCHAR ***argv )
+{
+    if (!app_wargv)
+    {
+        int i;
+        WCHAR *p;
+        DWORD total = 0;
+
+        for (i = 0; i < app_argc; i++)
+            total += MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, NULL, 0 );
+
+        app_wargv = HeapAlloc( GetProcessHeap(), 0,
+                                    total * sizeof(WCHAR) + (app_argc + 1) * sizeof(*app_wargv) );
+        p = (WCHAR *)(app_wargv + app_argc + 1);
+        for (i = 0; i < app_argc; i++)
+        {
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, p, total );
+            app_wargv[i] = p;
+            p += len;
+            total -= len;
+        }
+        app_wargv[app_argc] = NULL;
+    }
+    *argv = app_wargv;
+    return app_argc;
 }
 
 
@@ -820,8 +871,10 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     /* create the process on the server side */
 
-    SERVER_START_VAR_REQ( new_process, MAX_PATH )
+    SERVER_START_REQ( new_process )
     {
+        char buf[MAX_PATH];
+
         req->inherit_all  = inherit;
         req->create_flags = flags;
         req->start_flags  = startup->dwFlags;
@@ -845,17 +898,19 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             unixfilename = filename;
             if (DOSFS_GetFullName( filename, TRUE, &full_name ))
                 unixfilename = full_name.long_name;
-            lstrcpynA( server_data_ptr(req), unixfilename, MAX_PATH );
+            wine_server_add_data( req, unixfilename, strlen(unixfilename) );
         }
         else  /* new wine process */
         {
-            if (!GetLongPathNameA( filename, server_data_ptr(req), MAX_PATH ))
-                lstrcpynA( server_data_ptr(req), filename, MAX_PATH );
+            if (GetLongPathNameA( filename, buf, MAX_PATH ))
+                wine_server_add_data( req, buf, strlen(buf) );
+            else
+                wine_server_add_data( req, filename, strlen(filename) );
         }
-        ret = !SERVER_CALL_ERR();
-        process_info = req->info;
+        ret = !wine_server_call_err( req );
+        process_info = reply->info;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if (!ret) return FALSE;
 
     /* fork and execute */
@@ -876,13 +931,13 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             req->info     = process_info;
             req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
             req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
-            if ((ret = !SERVER_CALL_ERR()))
+            if ((ret = !wine_server_call_err( req )))
             {
-                info->dwProcessId = (DWORD)req->pid;
-                info->dwThreadId  = (DWORD)req->tid;
-                info->hProcess    = req->phandle;
-                info->hThread     = req->thandle;
-                load_done_evt     = req->event;
+                info->dwProcessId = (DWORD)reply->pid;
+                info->dwThreadId  = (DWORD)reply->tid;
+                info->hProcess    = reply->phandle;
+                info->hThread     = reply->thandle;
+                load_done_evt     = reply->event;
             }
         }
         SERVER_END_REQ;
@@ -924,7 +979,7 @@ void WINAPI ExitProcess( DWORD status )
         /* send the exit code to the server */
         req->handle    = GetCurrentProcess();
         req->exit_code = status;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
     exit( status );
@@ -1084,7 +1139,7 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
         req->pid     = (void *)id;
         req->access  = access;
         req->inherit = inherit;
-        if (!SERVER_CALL_ERR()) ret = req->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -1099,7 +1154,7 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
     SERVER_START_REQ( get_process_info )
     {
         req->handle = handle;
-        if (!SERVER_CALL_ERR()) ret = (DWORD)req->pid;
+        if (!wine_server_call_err( req )) ret = (DWORD)reply->pid;
     }
     SERVER_END_REQ;
     return ret;
@@ -1116,7 +1171,7 @@ BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
         req->handle   = hprocess;
         req->priority = priorityclass;
         req->mask     = SET_PROCESS_INFO_PRIORITY;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1132,7 +1187,7 @@ DWORD WINAPI GetPriorityClass(HANDLE hprocess)
     SERVER_START_REQ( get_process_info )
     {
         req->handle = hprocess;
-        if (!SERVER_CALL_ERR()) ret = req->priority;
+        if (!wine_server_call_err( req )) ret = reply->priority;
     }
     SERVER_END_REQ;
     return ret;
@@ -1150,7 +1205,7 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
         req->handle   = hProcess;
         req->affinity = affmask;
         req->mask     = SET_PROCESS_INFO_AFFINITY;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1167,10 +1222,10 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
     SERVER_START_REQ( get_process_info )
     {
         req->handle = hProcess;
-        if (!SERVER_CALL_ERR())
+        if (!wine_server_call_err( req ))
         {
-            if (lpProcessAffinityMask) *lpProcessAffinityMask = req->process_affinity;
-            if (lpSystemAffinityMask) *lpSystemAffinityMask = req->system_affinity;
+            if (lpProcessAffinityMask) *lpProcessAffinityMask = reply->process_affinity;
+            if (lpSystemAffinityMask) *lpSystemAffinityMask = reply->system_affinity;
             ret = TRUE;
         }
     }
@@ -1289,62 +1344,36 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
                                LPDWORD bytes_read )
 {
-    unsigned int offset = (unsigned int)addr % sizeof(int);
-    unsigned int pos = 0, len, max;
-    int res;
+    DWORD res;
 
-    if (bytes_read) *bytes_read = size;
-
-    /* first time, read total length to check for permissions */
-    len = (size + offset + sizeof(int) - 1) / sizeof(int);
-    max = min( REQUEST_MAX_VAR_SIZE, len * sizeof(int) );
-
-    for (;;)
+    SERVER_START_REQ( read_process_memory )
     {
-        SERVER_START_VAR_REQ( read_process_memory, max )
-        {
-            req->handle = process;
-            req->addr   = (char *)addr + pos - offset;
-            req->len    = len;
-            if (!(res = SERVER_CALL_ERR()))
-            {
-                size_t result = server_data_size( req );
-                if (result > size + offset) result = size + offset;
-                memcpy( (char *)buffer + pos, server_data_ptr(req) + offset, result - offset );
-                size -= result - offset;
-                pos += result - offset;
-            }
-        }
-        SERVER_END_VAR_REQ;
-        if (res)
-        {
-            if (bytes_read) *bytes_read = 0;
-            return FALSE;
-        }
-        if (!size) return TRUE;
-        max = min( REQUEST_MAX_VAR_SIZE, size );
-        len = (max + sizeof(int) - 1) / sizeof(int);
-        offset = 0;
+        req->handle = process;
+        req->addr   = (void *)addr;
+        wine_server_set_reply( req, buffer, size );
+        if ((res = wine_server_call_err( req ))) size = 0;
     }
+    SERVER_END_REQ;
+    if (bytes_read) *bytes_read = size;
+    return !res;
 }
 
 
 /***********************************************************************
  *           WriteProcessMemory    		(KERNEL32.@)
  */
-BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWORD size,
+BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, DWORD size,
                                 LPDWORD bytes_written )
 {
-    unsigned int first_offset, last_offset;
-    unsigned int pos = 0, len, max, first_mask, last_mask;
-    int res;
+    static const int zero;
+    unsigned int first_offset, last_offset, first_mask, last_mask;
+    DWORD res;
 
     if (!size)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (bytes_written) *bytes_written = size;
 
     /* compute the mask for the first int */
     first_mask = ~0;
@@ -1356,44 +1385,26 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWOR
     last_mask = 0;
     memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
 
-    /* for the first request, use the total length */
-    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
-    max = min( REQUEST_MAX_VAR_SIZE, len * sizeof(int) );
-
-    for (;;)
+    SERVER_START_REQ( write_process_memory )
     {
-        SERVER_START_VAR_REQ( write_process_memory, max )
-        {
-            req->handle = process;
-            req->addr = (char *)addr - first_offset + pos;
-            req->len = len;
-            req->first_mask = (!pos) ? first_mask : ~0;
-            if (size + first_offset <= max)  /* last round */
-            {
-                req->last_mask = last_mask;
-                max = size + first_offset;
-            }
-            else req->last_mask = ~0;
+        req->handle     = process;
+        req->addr       = (char *)addr - first_offset;
+        req->first_mask = first_mask;
+        req->last_mask  = last_mask;
+        if (first_offset) wine_server_add_data( req, &zero, first_offset );
+        wine_server_add_data( req, buffer, size );
+        if (last_offset) wine_server_add_data( req, &zero, sizeof(int) - last_offset );
 
-            memcpy( (char *)server_data_ptr(req) + first_offset, (char *)buffer + pos,
-                    max - first_offset );
-            if (!(res = SERVER_CALL_ERR()))
-            {
-                pos += max - first_offset;
-                size -= max - first_offset;
-            }
-        }
-        SERVER_END_VAR_REQ;
-        if (res)
-        {
-            if (bytes_written) *bytes_written = 0;
-            return FALSE;
-        }
-        if (!size) return TRUE;
-        first_offset = 0;
-        len = min( size + sizeof(int) - 1, REQUEST_MAX_VAR_SIZE ) / sizeof(int);
-        max = len * sizeof(int);
+        if ((res = wine_server_call_err( req ))) size = 0;
     }
+    SERVER_END_REQ;
+    if (bytes_written) *bytes_written = size;
+    {
+        char dummy[32];
+        DWORD read;
+        ReadProcessMemory( process, addr, dummy, sizeof(dummy), &read );
+    }
+    return !res;
 }
 
 
@@ -1427,8 +1438,8 @@ BOOL WINAPI GetExitCodeProcess(
     SERVER_START_REQ( get_process_info )
     {
         req->handle = hProcess;
-        ret = !SERVER_CALL_ERR();
-        if (ret && lpExitCode) *lpExitCode = req->exit_code;
+        ret = !wine_server_call_err( req );
+        if (ret && lpExitCode) *lpExitCode = reply->exit_code;
     }
     SERVER_END_REQ;
     return ret;

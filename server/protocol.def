@@ -16,17 +16,15 @@
 
 struct request_header
 {
-    int            req;          /* request code */
-    unsigned short var_offset;   /* offset of the variable part of the request */
-    unsigned short var_size;     /* size of the variable part of the request */
-    unsigned int   error;        /* error result */
+    int          req;          /* request code */
+    size_t       request_size; /* request variable part size */
+    size_t       reply_size;   /* reply variable part maximum size */
 };
 
 struct reply_header
 {
-    unsigned int   error;        /* error result */
-    unsigned short var_offset;   /* offset of the variable part of the request */
-    unsigned short var_size;     /* size of the variable part of the request */
+    unsigned int error;        /* error result */
+    size_t       reply_size;   /* reply variable part size */
 };
 
 /* placeholder structure for the maximum allowed request size */
@@ -150,6 +148,13 @@ typedef struct
     int  bottom;
 } rectangle_t;
 
+/* structure for console char/attribute info */
+typedef struct
+{
+    WCHAR          ch;
+    unsigned short attr;
+} char_info_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -241,15 +246,6 @@ typedef struct
     void*        tid;          /* thread id of the new thread */
     int          boot;         /* is this the boot thread? */
     int          version;      /* protocol version */
-@END
-
-
-/* Set the shared buffer for a thread */
-@REQ(set_thread_buffer)
-    int          fd;           /* fd to mmap as shared buffer */
-@REPLY
-    unsigned int offset;       /* offset of buffer in file */
-    unsigned int size;         /* size of buffer */
 @END
 
 
@@ -819,6 +815,7 @@ struct console_renderer_event
     handle_t     handle;        /* handle to console input, or 0 for process' console */
     int          index;         /* index to get line from */
 @REPLY
+    int          total;         /* total length of line in Unicode chars */
     VARARG(line,unicode_str);   /* line to add */
 @END
 
@@ -900,32 +897,50 @@ struct console_renderer_event
 
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)
-    handle_t     handle;        /* handle to the console input */
-    int          mode;          /* 0 for text, 1, for attributes, 2 for both */
-                                /* bit3 (4) set if uniform pattern in data */
-    short int    x;             /* position where to start writing */
-    short int    y;
+    handle_t     handle;        /* handle to the console output */
+    int          x;             /* position where to start writing */
+    int          y;
+    int          mode;          /* char info (see below) */
+    int          wrap;          /* wrap around at end of line? */
     VARARG(data,bytes);         /* info to write */
 @REPLY
-    int          written;       /* number of bytes actually written */
+    int          written;       /* number of char infos actually written */
+    int          width;         /* width of screen buffer */
+    int          height;        /* height of screen buffer */
 @END
-#define WRITE_CONSOLE_MODE_TEXT         0x00
-#define WRITE_CONSOLE_MODE_ATTR         0x01
-#define WRITE_CONSOLE_MODE_TEXTATTR     0x02
-#define WRITE_CONSOLE_MODE_TEXTSTDATTR  0x03
-#define WRITE_CONSOLE_MODE_UNIFORM      0x04
+enum char_info_mode
+{
+    CHAR_INFO_MODE_TEXT,        /* characters only */
+    CHAR_INFO_MODE_ATTR,        /* attributes only */
+    CHAR_INFO_MODE_TEXTATTR,    /* both characters and attributes */
+    CHAR_INFO_MODE_TEXTSTDATTR  /* characters but use standard attributes */
+};
 
 
-/* read data (chars and/or attrubutes) from a screen buffer */
-@REQ(read_console_output)
-    handle_t     handle;        /* handle to the console input */
-    short int    x;             /* position (x,y) where to start reading from */
-    short int    y;
-    short int    w;             /* size of area to read from (width x height) */
-    short int    h;
+/* fill a screen buffer with constant data (chars and/or attributes) */
+@REQ(fill_console_output)
+    handle_t     handle;        /* handle to the console output */
+    int          x;             /* position where to start writing */
+    int          y;
+    int          mode;          /* char info mode */
+    int          count;         /* number to write */
+    int          wrap;          /* wrap around at end of line? */
+    char_info_t  data;          /* data to write */
 @REPLY
-    short int    eff_w;         /* effective width read */
-    short int    eff_h;         /* effective height read */
+    int          written;       /* number of char infos actually written */
+@END
+
+
+/* read data (chars and/or attributes) from a screen buffer */
+@REQ(read_console_output)
+    handle_t     handle;        /* handle to the console output */
+    int          x;             /* position (x,y) where to start reading */
+    int          y;
+    int          mode;          /* char info mode */
+    int          wrap;          /* wrap around at end of line? */
+@REPLY
+    int          width;         /* width of screen buffer */
+    int          height;        /* height of screen buffer */
     VARARG(data,bytes);
 @END
 
@@ -1074,8 +1089,8 @@ struct console_renderer_event
 
 /* Retrieve the status of an exception event */
 @REQ(get_exception_status)
-@REPLY
     handle_t         handle;   /* handle to the queued event */
+@REPLY
     int              status;   /* event continuation status */
     VARARG(context,context);   /* modified thread context */
 @END
@@ -1106,8 +1121,7 @@ struct console_renderer_event
 /* Read data from a process address space */
 @REQ(read_process_memory)
     handle_t     handle;       /* process handle */
-    void*        addr;         /* addr to read from (must be int-aligned) */
-    int          len;          /* number of ints to read */
+    void*        addr;         /* addr to read from */
 @REPLY
     VARARG(data,bytes);        /* result data */
 @END
@@ -1117,10 +1131,9 @@ struct console_renderer_event
 @REQ(write_process_memory)
     handle_t     handle;       /* process handle */
     void*        addr;         /* addr to write to (must be int-aligned) */
-    int          len;          /* number of ints to write */
     unsigned int first_mask;   /* mask for first word */
     unsigned int last_mask;    /* mask for last word */
-    VARARG(data,bytes);        /* result data */
+    VARARG(data,bytes);        /* data to write */
 @END
 
 
@@ -1130,8 +1143,9 @@ struct console_renderer_event
     unsigned int access;       /* desired access rights */
     unsigned int options;      /* creation options */
     time_t       modif;        /* last modification time */
-    VARARG(name,unicode_len_str);  /* key name */
-    VARARG(class,unicode_str);     /* class name */
+    size_t       namelen;      /* length of key name in bytes */
+    VARARG(name,unicode_str,namelen);  /* key name */
+    VARARG(class,unicode_str);         /* class name */
 @REPLY
     handle_t     hkey;         /* handle to the created key */
     int          created;      /* has it been newly created? */
@@ -1157,7 +1171,7 @@ struct console_renderer_event
 @REQ(enum_key)
     handle_t     hkey;         /* handle to registry key */
     int          index;        /* index of subkey (or -1 for current key) */
-    int          full;         /* return the full info? */
+    int          info_class;   /* requested information class */
 @REPLY
     int          subkeys;      /* number of subkeys */
     int          max_subkey;   /* longest subkey name */
@@ -1166,8 +1180,10 @@ struct console_renderer_event
     int          max_value;    /* longest value name */
     int          max_data;     /* longest value data */
     time_t       modif;        /* last modification time */
-    VARARG(name,unicode_len_str);  /* key name */
-    VARARG(class,unicode_str);     /* class name */
+    size_t       total;        /* total length needed for full name and class */
+    size_t       namelen;      /* length of key name in bytes */
+    VARARG(name,unicode_str,namelen);  /* key name */
+    VARARG(class,unicode_str);         /* class name */
 @END
 
 
@@ -1175,21 +1191,19 @@ struct console_renderer_event
 @REQ(set_key_value)
     handle_t     hkey;         /* handle to registry key */
     int          type;         /* value type */
-    unsigned int total;        /* total value len */
-    unsigned int offset;       /* offset for setting data */
-    VARARG(name,unicode_len_str);  /* value name */
-    VARARG(data,bytes);        /* value data */
+    size_t       namelen;      /* length of value name in bytes */
+    VARARG(name,unicode_str,namelen);  /* value name */
+    VARARG(data,bytes);                /* value data */
 @END
 
 
 /* Retrieve the value of a registry key */
 @REQ(get_key_value)
     handle_t     hkey;         /* handle to registry key */
-    unsigned int offset;       /* offset for getting data */
-    VARARG(name,unicode_len_str);  /* value name */
+    VARARG(name,unicode_str);  /* value name */
 @REPLY
     int          type;         /* value type */
-    int          len;          /* value data len */
+    size_t       total;        /* total length needed for data */
     VARARG(data,bytes);        /* value data */
 @END
 
@@ -1198,12 +1212,13 @@ struct console_renderer_event
 @REQ(enum_key_value)
     handle_t     hkey;         /* handle to registry key */
     int          index;        /* value index */
-    unsigned int offset;       /* offset for getting data */
+    int          info_class;   /* requested information class */
 @REPLY
     int          type;         /* value type */
-    int          len;          /* value data len */
-    VARARG(name,unicode_len_str);  /* value name */
-    VARARG(data,bytes);        /* value data */
+    size_t       total;        /* total length needed for full name and data */
+    size_t       namelen;      /* length of value name in bytes */
+    VARARG(name,unicode_str,namelen);  /* value name */
+    VARARG(data,bytes);                /* value data */
 @END
 
 
@@ -1429,6 +1444,7 @@ enum message_type
     int             y;         /* y position */
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info */
+    size_t          total;     /* total size of extra data */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 #define GET_MSG_REMOVE      1  /* remove the message */
@@ -1765,5 +1781,6 @@ enum message_type
 @REQ(get_window_properties)
     user_handle_t  window;        /* handle to the window */
 @REPLY
+    int            total;         /* total number of properties */
     VARARG(props,properties);     /* list of properties */
 @END

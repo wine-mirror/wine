@@ -24,24 +24,30 @@
  */
 static property_data_t *get_properties( HWND hwnd, int *count )
 {
-    property_data_t *ret = NULL;
+    property_data_t *data;
+    int total = 32;
 
-    SERVER_START_VAR_REQ( get_window_properties, REQUEST_MAX_VAR_SIZE )
+    while (total)
     {
-        req->window = hwnd;
-        if (!SERVER_CALL())
+        int res = 0;
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*data) ))) break;
+        *count = 0;
+        SERVER_START_REQ( get_window_properties )
         {
-            size_t size = server_data_size(req);
-            if (size)
-            {
-                property_data_t *data = server_data_ptr(req);
-                if ((ret = HeapAlloc( GetProcessHeap(), 0, size ))) memcpy( ret, data, size );
-                *count = size / sizeof(*data);
-            }
+            req->window = hwnd;
+            wine_server_add_data( req, data, total * sizeof(*data) );
+            if (!wine_server_call( req )) res = reply->total;
         }
+        SERVER_END_REQ;
+        if (res && res <= total)
+        {
+            *count = res;
+            return data;
+        }
+        HeapFree( GetProcessHeap(), 0, data );
+        total = res;  /* restart with larger buffer */
     }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return NULL;
 }
 
 
@@ -102,7 +108,7 @@ HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
     {
         req->window = hwnd;
         req->atom = atom;
-        if (!SERVER_CALL_ERR()) ret = req->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -124,7 +130,7 @@ HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
     {
         req->window = hwnd;
         req->atom = atom;
-        if (!SERVER_CALL_ERR()) ret = req->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -148,7 +154,7 @@ BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
         req->atom   = atom;
         req->string = (HIWORD(str) != 0);
         req->handle = handle;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -174,7 +180,7 @@ BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
         req->atom   = atom;
         req->string = (HIWORD(str) != 0);
         req->handle = handle;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -217,7 +223,7 @@ HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
     {
         req->window = hwnd;
         req->atom   = atom;
-        if (!SERVER_CALL_ERR()) ret = req->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
 

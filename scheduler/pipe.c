@@ -20,10 +20,10 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     SERVER_START_REQ( create_pipe )
     {
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            *hReadPipe  = req->handle_read;
-            *hWritePipe = req->handle_write;
+            *hReadPipe  = reply->handle_read;
+            *hWritePipe = reply->handle_write;
         }
     }
     SERVER_END_REQ;

@@ -263,7 +263,7 @@ int no_flush( struct object *obj )
     return 0;
 }
 
-int no_get_file_info( struct object *obj, struct get_file_info_request *info )
+int no_get_file_info( struct object *obj, struct get_file_info_reply *info )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return FD_TYPE_INVALID;

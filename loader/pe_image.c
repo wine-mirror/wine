@@ -681,7 +681,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
             req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
             req->dbg_size   = nt->FileHeader.NumberOfSymbols;
             req->name       = &wm->filename;
-            SERVER_CALL();
+            wine_server_call( req );
         }
         SERVER_END_REQ;
     }

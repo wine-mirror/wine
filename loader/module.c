@@ -1693,7 +1693,7 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
         SERVER_START_REQ( unload_dll )
         {
             req->base = (void *)wm->module;
-            SERVER_CALL();
+            wine_server_call( req );
         }
         SERVER_END_REQ;
         MODULE_FlushModrefs();

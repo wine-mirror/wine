@@ -86,7 +86,7 @@ static const struct object_ops named_pipe_ops =
 static void pipe_user_dump( struct object *obj, int verbose );
 static void pipe_user_destroy( struct object *obj);
 static int pipe_user_get_fd( struct object *obj );
-static int pipe_user_get_info( struct object *obj, struct get_file_info_request *req );
+static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply );
 
 static const struct object_ops pipe_user_ops =
 {
@@ -180,20 +180,20 @@ static int pipe_user_get_fd( struct object *obj )
     return user->obj.fd;
 }
 
-static int pipe_user_get_info( struct object *obj, struct get_file_info_request *req )
+static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_PIPE;
-        req->attr        = 0;
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_PIPE;
+        reply->attr        = 0;
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
     return FD_TYPE_DEFAULT;
 }
@@ -265,8 +265,8 @@ DECL_HANDLER(create_named_pipe)
     struct named_pipe *pipe;
     struct pipe_user *user;
 
-    req->handle = 0;
-    pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
+    reply->handle = 0;
+    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
     if(!pipe)
         return;
 
@@ -284,7 +284,7 @@ DECL_HANDLER(create_named_pipe)
     if(user)
     {
         user->state = ps_idle_server;
-        req->handle = alloc_handle( current->process, user, GENERIC_READ|GENERIC_WRITE, 0 );
+        reply->handle = alloc_handle( current->process, user, GENERIC_READ|GENERIC_WRITE, 0 );
         release_object( user );
     }
 
@@ -295,8 +295,8 @@ DECL_HANDLER(open_named_pipe)
 {
     struct named_pipe *pipe;
 
-    req->handle = 0;
-    pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
+    reply->handle = 0;
+    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
     if(!pipe)
         return;
 
@@ -320,7 +320,7 @@ DECL_HANDLER(open_named_pipe)
                     partner->other = user;
                     user->state = ps_connected_client;
                     user->other = partner;
-                    req->handle = alloc_handle( current->process, user, req->access, 0 );
+                    reply->handle = alloc_handle( current->process, user, req->access, 0 );
                     release_object(user);
                 }
                 else
@@ -378,7 +378,7 @@ DECL_HANDLER(wait_named_pipe)
 {
     struct named_pipe *pipe;
 
-    pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
+    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
     if( pipe )
     {
         /* only wait if the pipe already exists */
@@ -448,10 +448,10 @@ DECL_HANDLER(get_named_pipe_info)
     if(!user)
         return;
 
-    req->flags        = user->pipe->pipemode;
-    req->maxinstances = user->pipe->maxinstances;
-    req->insize       = user->pipe->insize;
-    req->outsize      = user->pipe->outsize;
+    reply->flags        = user->pipe->pipemode;
+    reply->maxinstances = user->pipe->maxinstances;
+    reply->insize       = user->pipe->insize;
+    reply->outsize      = user->pipe->outsize;
 
     release_object(user);
 }

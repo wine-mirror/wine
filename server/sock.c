@@ -59,7 +59,7 @@ static int sock_signaled( struct object *obj, struct thread *thread );
 static int sock_get_poll_events( struct object *obj );
 static void sock_poll_event( struct object *obj, int event );
 static int sock_get_fd( struct object *obj );
-static int sock_get_info( struct object *obj, struct get_file_info_request *req );
+static int sock_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void sock_destroy( struct object *obj );
 static int sock_get_error( int err );
 static void sock_set_error(void);
@@ -272,20 +272,20 @@ static int sock_get_fd( struct object *obj )
     return sock->obj.fd;
 }
 
-static int sock_get_info( struct object *obj, struct get_file_info_request *req )
+static int sock_get_info( struct object *obj, struct get_file_info_reply *reply )
 {
-    if (req)
+    if (reply)
     {
-        req->type        = FILE_TYPE_PIPE;
-        req->attr        = 0;
-        req->access_time = 0;
-        req->write_time  = 0;
-        req->size_high   = 0;
-        req->size_low    = 0;
-        req->links       = 0;
-        req->index_high  = 0;
-        req->index_low   = 0;
-        req->serial      = 0;
+        reply->type        = FILE_TYPE_PIPE;
+        reply->attr        = 0;
+        reply->access_time = 0;
+        reply->write_time  = 0;
+        reply->size_high   = 0;
+        reply->size_low    = 0;
+        reply->links       = 0;
+        reply->index_high  = 0;
+        reply->index_low   = 0;
+        reply->serial      = 0;
     }
     return FD_TYPE_DEFAULT;
 }
@@ -461,10 +461,10 @@ DECL_HANDLER(create_socket)
 {
     struct object *obj;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((obj = create_socket( req->family, req->type, req->protocol )) != NULL)
     {
-        req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
 }
@@ -474,10 +474,10 @@ DECL_HANDLER(accept_socket)
 {
     struct object *obj;
 
-    req->handle = 0;
+    reply->handle = 0;
     if ((obj = accept_socket( req->lhandle )) != NULL)
     {
-        req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
 }
@@ -525,34 +525,31 @@ DECL_HANDLER(set_socket_event)
 DECL_HANDLER(get_socket_event)
 {
     struct sock *sock;
-    size_t size;
 
     sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
     if (!sock)
     {
-	req->mask  = 0;
-	req->pmask = 0;
-	req->state = 0;
-	set_error(WSAENOTSOCK);
-	return;
+        reply->mask  = 0;
+        reply->pmask = 0;
+        reply->state = 0;
+        set_error( WSAENOTSOCK );
+        return;
     }
-    req->mask    = sock->mask;
-    req->pmask   = sock->pmask;
-    req->state   = sock->state;
-    size = min( get_req_data_size(req), sizeof(sock->errors) );
-    memcpy( get_req_data(req), sock->errors, size );
-    set_req_data_size( req, size );
+    reply->mask  = sock->mask;
+    reply->pmask = sock->pmask;
+    reply->state = sock->state;
+    set_reply_data( sock->errors, min( get_reply_max_size(), sizeof(sock->errors) ));
 
     if (req->service)
     {
-        if (req->s_event)
+        handle_t s_event = req->s_event;
+        if (s_event)
         {
             struct event *sevent = get_event_obj(current->process, req->s_event, 0);
-            if (sevent == sock->event)
-                req->s_event = 0;
+            if (sevent == sock->event) s_event = 0;
             release_object( sevent );
         }
-        if (!req->s_event)
+        if (!s_event)
         {
             if (req->c_event)
             {

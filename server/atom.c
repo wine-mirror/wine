@@ -65,10 +65,13 @@ static const struct object_ops atom_table_ops =
 static struct atom_table *global_table;
 
 
-/* copy an atom name to a temporary area */
-static const WCHAR *copy_name( const WCHAR *str, size_t len )
+/* copy an atom name from the request to a temporary area */
+static const WCHAR *copy_request_name(void)
 {
     static WCHAR buffer[MAX_ATOM_LEN+1];
+
+    const WCHAR *str = get_req_data();
+    size_t len = get_req_data_size();
 
     if (len > MAX_ATOM_LEN*sizeof(WCHAR))
     {
@@ -267,27 +270,6 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str )
     return 0;
 }
 
-/* get an atom name and refcount*/
-static size_t get_atom_name( struct atom_table *table, atom_t atom,
-                             WCHAR *str, size_t maxsize, int *count )
-{
-    size_t len = 0;
-    struct atom_entry *entry = get_atom_entry( table, atom );
-    *count = -1;
-    if (entry)
-    {
-        *count = entry->count;
-        len = strlenW( entry->str ) * sizeof(WCHAR);
-        if (len <= maxsize) memcpy( str, entry->str, len );
-        else
-        {
-            set_error( STATUS_BUFFER_OVERFLOW );
-            len = 0;
-        }
-    }
-    return len;
-}
-
 /* increment the ref count of a global atom; used for window properties */
 int grab_global_atom( atom_t atom )
 {
@@ -310,8 +292,8 @@ DECL_HANDLER(add_atom)
     if (!*table_ptr) *table_ptr = create_table(0);
     if (*table_ptr)
     {
-        const WCHAR *name = copy_name( get_req_data(req), get_req_data_size(req) );
-        if (name) req->atom = add_atom( *table_ptr, name );
+        const WCHAR *name = copy_request_name();
+        if (name) reply->atom = add_atom( *table_ptr, name );
     }
 }
 
@@ -324,18 +306,26 @@ DECL_HANDLER(delete_atom)
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
-    const WCHAR *name = copy_name( get_req_data(req), get_req_data_size(req) );
+    const WCHAR *name = copy_request_name();
     if (name)
-        req->atom = find_atom( req->local ? current->process->atom_table : global_table, name );
+        reply->atom = find_atom( req->local ? current->process->atom_table : global_table, name );
 }
 
 /* get global atom name */
 DECL_HANDLER(get_atom_name)
 {
-    WCHAR *name = get_req_data(req);
-    size_t size = get_atom_name( req->local ? current->process->atom_table : global_table,
-                                 req->atom, name, get_req_data_size(req), &req->count );
-    set_req_data_size( req, size );
+    struct atom_entry *entry;
+    size_t len = 0;
+
+    reply->count = -1;
+    if ((entry = get_atom_entry( req->local ? current->process->atom_table : global_table,
+                                 req->atom )))
+    {
+        reply->count = entry->count;
+        len = strlenW( entry->str ) * sizeof(WCHAR);
+        if (len <= get_reply_max_size()) set_reply_data( entry->str, len );
+        else set_error( STATUS_BUFFER_OVERFLOW );
+    }
 }
 
 /* init the process atom table */

@@ -174,10 +174,10 @@ DECL_HANDLER(create_timer)
 {
     struct timer *timer;
 
-    req->handle = 0;
-    if ((timer = create_timer( get_req_data(req), get_req_data_size(req), req->manual )))
+    reply->handle = 0;
+    if ((timer = create_timer( get_req_data(), get_req_data_size(), req->manual )))
     {
-        req->handle = alloc_handle( current->process, timer, TIMER_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, timer, TIMER_ALL_ACCESS, req->inherit );
         release_object( timer );
     }
 }
@@ -185,8 +185,8 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    req->handle = open_object( get_req_data(req), get_req_data_size(req),
-                               &timer_ops, req->access, req->inherit );
+    reply->handle = open_object( get_req_data(), get_req_data_size(),
+                                 &timer_ops, req->access, req->inherit );
 }
 
 /* set a waitable timer */

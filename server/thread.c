@@ -14,9 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -104,7 +101,10 @@ inline static void init_thread_structure( struct thread *thread )
     thread->user_apc.head   = NULL;
     thread->user_apc.tail   = NULL;
     thread->error           = 0;
-    thread->request_fd      = NULL;
+    thread->req_data        = NULL;
+    thread->req_toread      = 0;
+    thread->reply_data      = NULL;
+    thread->reply_towrite   = 0;
     thread->reply_fd        = -1;
     thread->wait_fd         = -1;
     thread->state           = RUNNING;
@@ -115,7 +115,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;
     thread->suspend         = 0;
-    thread->buffer          = (void *)-1;
 
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
         thread->inflight[i].server = thread->inflight[i].client = -1;
@@ -131,6 +130,7 @@ struct thread *create_thread( int fd, struct process *process )
     init_thread_structure( thread );
 
     thread->process = (struct process *)grab_object( process );
+    thread->request_fd = fd;
     if (!current) current = thread;
 
     if (!booting_thread)  /* first thread ever */
@@ -142,7 +142,6 @@ struct thread *create_thread( int fd, struct process *process )
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
 
-    fcntl( fd, F_SETFL, O_NONBLOCK );
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
     return thread;
@@ -156,6 +155,7 @@ static void thread_poll_event( struct object *obj, int event )
 
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
     else if (event & POLLIN) read_request( thread );
+    else if (event & POLLOUT) write_reply( thread );
 }
 
 /* cleanup everything that is no longer needed by a dead thread */
@@ -166,10 +166,11 @@ static void cleanup_thread( struct thread *thread )
     struct thread_apc *apc;
 
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
-    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    if (thread->req_data) free( thread->req_data );
+    if (thread->reply_data) free( thread->reply_data );
+    if (thread->request_fd != -1) close( thread->request_fd );
     if (thread->reply_fd != -1) close( thread->reply_fd );
     if (thread->wait_fd != -1) close( thread->wait_fd );
-    if (thread->request_fd) release_object( thread->request_fd );
     if (thread->queue)
     {
         if (thread->process->queue == thread->queue)
@@ -189,10 +190,11 @@ static void cleanup_thread( struct thread *thread )
             thread->inflight[i].client = thread->inflight[i].server = -1;
         }
     }
-    thread->buffer = (void *)-1;
+    thread->req_data = NULL;
+    thread->reply_data = NULL;
+    thread->request_fd = -1;
     thread->reply_fd = -1;
     thread->wait_fd = -1;
-    thread->request_fd = NULL;
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -255,7 +257,7 @@ struct thread *get_thread_from_pid( int pid )
 
 /* set all information about a thread */
 static void set_thread_info( struct thread *thread,
-                             struct set_thread_info_request *req )
+                             const struct set_thread_info_request *req )
 {
     if (req->mask & SET_THREAD_INFO_PRIORITY)
         thread->priority = req->priority;
@@ -467,7 +469,8 @@ static void thread_timeout( void *ptr )
 }
 
 /* select on a list of handles */
-static void select_on( int count, void *cookie, handle_t *handles, int flags, int sec, int usec )
+static void select_on( int count, void *cookie, const handle_t *handles,
+                       int flags, int sec, int usec )
 {
     int ret, i;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
@@ -700,6 +703,8 @@ void kill_thread( struct thread *thread, int violent_death )
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
     detach_thread( thread, violent_death ? SIGTERM : 0 );
+    if (thread->request_fd == thread->obj.fd) thread->request_fd = -1;
+    if (thread->reply_fd == thread->obj.fd) thread->reply_fd = -1;
     remove_select_user( &thread->obj );
     cleanup_thread( thread );
     release_object( thread );
@@ -746,8 +751,9 @@ DECL_HANDLER(new_thread)
     struct thread *thread;
     int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
-    if (request_fd == -1)
+    if (request_fd == -1 || fcntl( request_fd, F_SETFL, O_NONBLOCK ) == -1)
     {
+        if (request_fd != -1) close( request_fd );
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
@@ -755,9 +761,9 @@ DECL_HANDLER(new_thread)
     if ((thread = create_thread( request_fd, current->process )))
     {
         if (req->suspend) thread->suspend++;
-        req->tid = thread;
-        if ((req->handle = alloc_handle( current->process, thread,
-                                         THREAD_ALL_ACCESS, req->inherit )))
+        reply->tid = thread;
+        if ((reply->handle = alloc_handle( current->process, thread,
+                                           THREAD_ALL_ACCESS, req->inherit )))
         {
             /* thread object will be released when the thread gets killed */
             return;
@@ -778,7 +784,7 @@ DECL_HANDLER(init_thread)
         fatal_protocol_error( current, "init_thread: already running\n" );
         goto error;
     }
-    if (reply_fd == -1)
+    if (reply_fd == -1 || fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1)
     {
         fatal_protocol_error( current, "bad reply fd\n" );
         goto error;
@@ -798,10 +804,10 @@ DECL_HANDLER(init_thread)
     if (current->process->running_threads > 1)
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
 
-    req->pid     = get_process_id( current->process );
-    req->tid     = get_thread_id( current );
-    req->boot    = (current == booting_thread);
-    req->version = SERVER_PROTOCOL_VERSION;
+    reply->pid     = get_process_id( current->process );
+    reply->tid     = get_thread_id( current );
+    reply->boot    = (current == booting_thread);
+    reply->version = SERVER_PROTOCOL_VERSION;
     return;
 
  error:
@@ -809,52 +815,21 @@ DECL_HANDLER(init_thread)
     if (wait_fd != -1) close( wait_fd );
 }
 
-/* set the shared buffer for a thread */
-DECL_HANDLER(set_thread_buffer)
-{
-    const unsigned int size = MAX_REQUEST_LENGTH;
-    const unsigned int offset = 0;
-    int fd = thread_get_inflight_fd( current, req->fd );
-
-    req->size = size;
-    req->offset = offset;
-
-    if (fd != -1)
-    {
-        static const char zero;
-
-        /* grow the file to the requested size */
-        if (lseek( fd, size - 1, SEEK_SET ) != -1 && write( fd, &zero, 1 ) == 1)
-        {
-            void *buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset );
-            if (buffer == (void *)-1) file_set_error();
-            else
-            {
-                if (current->buffer != (void *)-1) munmap( current->buffer, size );
-                current->buffer = buffer;
-            }
-        }
-        else file_set_error();
-        close( fd );
-    }
-    else set_error( STATUS_INVALID_HANDLE );
-}
-
 /* terminate a thread */
 DECL_HANDLER(terminate_thread)
 {
     struct thread *thread;
 
-    req->self = 0;
-    req->last = 0;
+    reply->self = 0;
+    reply->last = 0;
     if ((thread = get_thread_from_handle( req->handle, THREAD_TERMINATE )))
     {
         thread->exit_code = req->exit_code;
         if (thread != current) kill_thread( thread, 1 );
         else
         {
-            req->self = 1;
-            req->last = (thread->process->running_threads == 1);
+            reply->self = 1;
+            reply->last = (thread->process->running_threads == 1);
         }
         release_object( thread );
     }
@@ -871,10 +846,10 @@ DECL_HANDLER(get_thread_info)
 
     if (thread)
     {
-        req->tid       = get_thread_id( thread );
-        req->teb       = thread->teb;
-        req->exit_code = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
-        req->priority  = thread->priority;
+        reply->tid       = get_thread_id( thread );
+        reply->teb       = thread->teb;
+        reply->exit_code = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
+        reply->priority  = thread->priority;
         release_object( thread );
     }
 }
@@ -898,7 +873,7 @@ DECL_HANDLER(suspend_thread)
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        req->count = suspend_thread( thread, 1 );
+        reply->count = suspend_thread( thread, 1 );
         release_object( thread );
     }
 }
@@ -910,7 +885,7 @@ DECL_HANDLER(resume_thread)
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        req->count = resume_thread( thread );
+        reply->count = resume_thread( thread );
         release_object( thread );
     }
 }
@@ -918,8 +893,8 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    int count = get_req_data_size(req) / sizeof(int);
-    select_on( count, req->cookie, get_req_data(req), req->flags, req->sec, req->usec );
+    int count = get_req_data_size() / sizeof(int);
+    select_on( count, req->cookie, get_req_data(), req->flags, req->sec, req->usec );
 }
 
 /* queue an APC for a thread */
@@ -944,9 +919,8 @@ DECL_HANDLER(get_apc)
         if (!(apc = thread_dequeue_apc( current, !req->alertable )))
         {
             /* no more APCs */
-            req->func    = NULL;
-            req->type    = APC_NONE;
-            set_req_data_size( req, 0 );
+            reply->func = NULL;
+            reply->type = APC_NONE;
             return;
         }
         /* Optimization: ignore APCs that have a NULL func; they are only used
@@ -956,11 +930,10 @@ DECL_HANDLER(get_apc)
         free( apc );
     }
     size = apc->nb_args * sizeof(apc->args[0]);
-    if (size > get_req_data_size(req)) size = get_req_data_size(req);
-    req->func = apc->func;
-    req->type = apc->type;
-    memcpy( get_req_data(req), apc->args, size );
-    set_req_data_size( req, size );
+    if (size > get_reply_max_size()) size = get_reply_max_size();
+    reply->func = apc->func;
+    reply->type = apc->type;
+    set_reply_data( apc->args, size );
     free( apc );
 }
 
@@ -970,7 +943,7 @@ DECL_HANDLER(get_selector_entry)
     struct thread *thread;
     if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
     {
-        get_selector_entry( thread, req->entry, &req->base, &req->limit, &req->flags );
+        get_selector_entry( thread, req->entry, &reply->base, &reply->limit, &reply->flags );
         release_object( thread );
     }
 }

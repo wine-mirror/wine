@@ -339,12 +339,12 @@ static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
     SERVER_START_REQ( get_file_info )
     {
         req->handle = handle;
-        if (!SERVER_CALL() &&
-            (req->type == FILE_TYPE_UNKNOWN) &&
-            (req->attr & 0x10000))
+        if (!wine_server_call( req ) &&
+            (reply->type == FILE_TYPE_UNKNOWN) &&
+            (reply->attr & 0x10000))
         {
             for (info = VxDList; info->name; info++)
-                if (info->id == LOWORD(req->attr)) break;
+                if (info->id == LOWORD(reply->attr)) break;
         }
     }
     SERVER_END_REQ;

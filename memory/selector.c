@@ -594,18 +594,18 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
     {
         req->handle = hthread;
         req->entry = sel >> __AHSHIFT;
-        if ((ret = !SERVER_CALL_ERR()))
+        if ((ret = !wine_server_call_err( req )))
         {
-            if (!(req->flags & WINE_LDT_FLAGS_ALLOCATED))
+            if (!(reply->flags & WINE_LDT_FLAGS_ALLOCATED))
             {
                 SetLastError( ERROR_MR_MID_NOT_FOUND );  /* sic */
                 ret = FALSE;
             }
             else
             {
-                wine_ldt_set_base( ldtent, (void *)req->base );
-                wine_ldt_set_limit( ldtent, req->limit );
-                wine_ldt_set_flags( ldtent, req->flags );
+                wine_ldt_set_base( ldtent, (void *)reply->base );
+                wine_ldt_set_limit( ldtent, reply->limit );
+                wine_ldt_set_flags( ldtent, reply->flags );
             }
         }
     }

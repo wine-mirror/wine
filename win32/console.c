@@ -47,7 +47,7 @@ BOOL WINAPI FreeConsole(VOID)
 
     SERVER_START_REQ(free_console)
     {
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -172,7 +172,7 @@ BOOL WINAPI AllocConsole(void)
     HANDLE 		handle_in = INVALID_HANDLE_VALUE;
     HANDLE		handle_out = INVALID_HANDLE_VALUE;
     HANDLE 		handle_err = INVALID_HANDLE_VALUE;
-    STARTUPINFOA	si;
+    STARTUPINFOW si;
 
     TRACE("()\n");
 
@@ -206,7 +206,7 @@ BOOL WINAPI AllocConsole(void)
     SetStdHandle(STD_OUTPUT_HANDLE, handle_out);
     SetStdHandle(STD_ERROR_HANDLE,  handle_err);
 
-    GetStartupInfoA(&si);
+    GetStartupInfoW(&si);
     if (si.dwFlags & STARTF_USESIZE)
     {
 	COORD	c;
@@ -217,7 +217,7 @@ BOOL WINAPI AllocConsole(void)
     if (si.dwFlags & STARTF_USEFILLATTRIBUTE)
 	SetConsoleTextAttribute(handle_out, si.dwFillAttribute);
     if (si.lpTitle)
-	SetConsoleTitleA(si.lpTitle);
+	SetConsoleTitleW(si.lpTitle);
 
     SetLastError(ERROR_SUCCESS);
 
@@ -245,19 +245,14 @@ static BOOL read_console_input(HANDLE handle, LPINPUT_RECORD buffer, DWORD count
     unsigned	read = 0;
     DWORD	mode;
 
-    count = min(count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD));
-    
-    SERVER_START_VAR_REQ(read_console_input, count*sizeof(INPUT_RECORD))
+    SERVER_START_REQ( read_console_input )
     {
         req->handle = handle;
         req->flush = flush;
-        if ((ret = !SERVER_CALL_ERR()))
-        {
-            if (count) memcpy(buffer, server_data_ptr(req), server_data_size(req));
-            read = req->read;
-        }
+        wine_server_set_reply( req, buffer, count * sizeof(INPUT_RECORD) );
+        if ((ret = !wine_server_call_err( req ))) read = reply->read;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if (count && flush && GetConsoleMode(handle, &mode) && (mode & ENABLE_PROCESSED_INPUT))
     {
 	int	i;
@@ -356,33 +351,6 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 }
 
 
-/******************************************************************************
- * ReadConsoleInputA [KERNEL32.@]  Reads data from a console
- *
- * PARAMS
- *    hConsoleInput        [I] Handle to console input buffer
- *    lpBuffer             [O] Address of buffer for read data
- *    nLength              [I] Number of records to read
- *    lpNumberOfEventsRead [O] Address of number of records read
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
-                              DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-    DWORD	nread;
-    
-    if (!ReadConsoleInputW(hConsoleInput, lpBuffer, nLength, &nread))
-	return FALSE;
-    
-    /* FIXME for now, the low part of unicode would do as ASCII */
-    if (lpNumberOfEventsRead) *lpNumberOfEventsRead = nread;
-    return TRUE;
-}
-
-
 /***********************************************************************
  *            ReadConsoleInputW   (KERNEL32.@)
  */
@@ -412,52 +380,73 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
 }
 
 
-/***********************************************************************
- *            FlushConsoleInputBuffer   (KERNEL32.@)
- */
-BOOL WINAPI FlushConsoleInputBuffer(HANDLE handle)
-{
-    return read_console_input(handle, NULL, 0, NULL, TRUE);
-}
-
-
-/***********************************************************************
- *            PeekConsoleInputA   (KERNEL32.@)
+/******************************************************************************
+ * WriteConsoleOutputCharacterW [KERNEL32.@]  Copies character to consecutive
+ * 					      cells in the console screen buffer
  *
- * Gets 'count' first events (or less) from input queue.
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    str               [I] Pointer to buffer with chars to write
+ *    length            [I] Number of cells to write to
+ *    coord             [I] Coords of first cell
+ *    lpNumCharsWritten [O] Pointer to number of cells written
  *
- * Does not need a complex console.
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ * 
  */
-BOOL WINAPI PeekConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD pirBuffer, 
-			      DWORD cInRecords, LPDWORD lpcRead)
+BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DWORD length,
+                                          COORD coord, LPDWORD lpNumCharsWritten )
 {
-    /* FIXME: Hmm. Fix this if we get UNICODE input. */
-    return PeekConsoleInputW(hConsoleInput, pirBuffer, cInRecords, lpcRead);
-}
+    BOOL ret;
 
+    TRACE("(%d,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
+          debugstr_wn(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
-/***********************************************************************
- *            PeekConsoleInputW   (KERNEL32.@)
- */
-BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD pirBuffer, 
-			      DWORD cInRecords, LPDWORD lpcRead)
-{
-    if (!cInRecords)
+    SERVER_START_REQ( write_console_output )
     {
-        if (lpcRead) *lpcRead = 0;
-        return TRUE;
+        req->handle = hConsoleOutput;
+        req->x      = coord.X;
+        req->y      = coord.Y;
+        req->mode   = CHAR_INFO_MODE_TEXT;
+        req->wrap   = TRUE;
+        wine_server_add_data( req, str, length * sizeof(WCHAR) );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (lpNumCharsWritten) *lpNumCharsWritten = reply->written;
+        }
     }
-    return read_console_input(hConsoleInput, pirBuffer, cInRecords, lpcRead, FALSE);
+    SERVER_END_REQ;
+    return ret;
 }
 
 
-/***********************************************************************
- *            GetNumberOfConsoleInputEvents   (KERNEL32.@)
+/******************************************************************************
+ * SetConsoleTitleW [KERNEL32.@]  Sets title bar string for console
+ *
+ * PARAMS
+ *    title [I] Address of new title
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon, LPDWORD nrofevents)
+BOOL WINAPI SetConsoleTitleW(LPCWSTR title)
 {
-    return read_console_input(hcon, NULL, 0, nrofevents, FALSE);
+    BOOL ret;
+
+    SERVER_START_REQ( set_console_input_info )
+    {
+        req->handle = 0;
+        req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
+        wine_server_add_data( req, title, strlenW(title) * sizeof(WCHAR) );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
+
 
 /***********************************************************************
  *            GetNumberOfConsoleMouseButtons   (KERNEL32.@)
@@ -468,70 +457,6 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
     *nrofbuttons = 2;
     return TRUE;
 }
-
-/******************************************************************************
- * WriteConsoleInputA [KERNEL32.@]  Write data to a console input buffer
- *
- */
-BOOL WINAPI WriteConsoleInputA(HANDLE handle, INPUT_RECORD *buffer,
-			       DWORD count, LPDWORD written)
-{
-    BOOL ret = TRUE;
-
-    if (written) *written = 0;
-    /* FIXME should zero out the non ASCII part for key events */
-
-    while (count && ret)
-    {
-        DWORD len = min(count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD));
-        SERVER_START_VAR_REQ(write_console_input, len * sizeof(INPUT_RECORD))
-	{
-	    req->handle = handle;
-	    memcpy(server_data_ptr(req), buffer, len * sizeof(INPUT_RECORD));
-	    if ((ret = !SERVER_CALL_ERR()))
-	    {
-		if (written) *written += req->written;
-		count -= len;
-		buffer += len;
-	    }
-	}
-        SERVER_END_VAR_REQ;
-    }
-    return ret;
-}
-
-/******************************************************************************
- * WriteConsoleInputW [KERNEL32.@]  Write data to a console input buffer
- *
- */
-BOOL WINAPI WriteConsoleInputW(HANDLE handle, INPUT_RECORD *buffer,
-			       DWORD count, LPDWORD written)
-{
-    BOOL ret = TRUE;
-    
-    TRACE("(%d,%p,%ld,%p)\n", handle, buffer, count, written);
-    
-    if (written) *written = 0;
-    while (count && ret)
-    {
-        DWORD len = min(count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD));
-        SERVER_START_VAR_REQ(write_console_input, len * sizeof(INPUT_RECORD))
-        {
-            req->handle = handle;
-            memcpy(server_data_ptr(req), buffer, len * sizeof(INPUT_RECORD));
-            if ((ret = !SERVER_CALL_ERR()))
-            {
-                if (written) *written += req->written;
-                count -= len;
-                buffer += len;
-            }
-        }
-        SERVER_END_VAR_REQ;
-    }
-
-    return ret;
-}
-
 
 /******************************************************************************
  *  SetConsoleInputExeNameW	 [KERNEL32.@]
@@ -661,8 +586,6 @@ static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
 BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
 				     DWORD dwProcessGroupID)
 {
-    BOOL	dbgOn = FALSE;
-
     if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
     {
 	ERR("invalid event %ld for PGID %ld\n", dwCtrlEvent, dwProcessGroupID);
@@ -681,45 +604,27 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
 	if (dwCtrlEvent == CTRL_C_EVENT && console_ignore_ctrl_c)
 	    return TRUE;
 
-	/* if the program is debugged, then generate an exception to the debugger first */
-	SERVER_START_REQ( get_process_info )
-	{
-	    req->handle = GetCurrentProcess();
-	    if (!SERVER_CALL_ERR()) dbgOn = req->debugged;
-	}
-	SERVER_END_REQ;
-
-	if (dbgOn && (dwCtrlEvent == CTRL_C_EVENT || dwCtrlEvent == CTRL_BREAK_EVENT))
-	{
-	    /* the debugger is running... so try to pass the exception to it
-	     * if it continues, there's nothing more to do
-	     * otherwise, we need to send the ctrl-event to the handlers
-	     */
-	    BOOL	seen;
-	    __TRY
-	    {
-		seen = TRUE;
-		RaiseException((dwCtrlEvent == CTRL_C_EVENT) ? DBG_CONTROL_C : DBG_CONTROL_BREAK, 0, 0, NULL);
-	    }
-	    __EXCEPT(CONSOLE_CtrlEventHandler)
-	    {
-		/* the debugger didn't continue... so, pass to ctrl handlers */
-		seen = FALSE;
-	    }
-	    __ENDTRY;
-	    if (seen) return TRUE;
-	}
-
-	/* proceed with installed handlers */
-	for (i = 0; i < sizeof(handlers)/sizeof(handlers[0]); i++)
-	{
-	    if (handlers[i] && (handlers[i])(dwCtrlEvent)) break;
-	}
-	
-	return TRUE;
+        /* try to pass the exception to the debugger
+         * if it continues, there's nothing more to do
+         * otherwise, we need to send the ctrl-event to the handlers
+         */
+        __TRY
+        {
+            RaiseException( (dwCtrlEvent == CTRL_C_EVENT) ? DBG_CONTROL_C : DBG_CONTROL_BREAK,
+                            0, 0, NULL);
+        }
+        __EXCEPT(CONSOLE_CtrlEventHandler)
+        {
+            /* the debugger didn't continue... so, pass to ctrl handlers */
+            for (i = 0; i < sizeof(handlers)/sizeof(handlers[0]); i++)
+            {
+                if (handlers[i] && (handlers[i])(dwCtrlEvent)) break;
+            }
+        }
+        __ENDTRY;
+        return TRUE;
     }
-    FIXME("event %ld to external PGID %ld - not implemented yet\n", 
-	  dwCtrlEvent, dwProcessGroupID);
+    FIXME("event %ld to external PGID %ld - not implemented yet\n", dwCtrlEvent, dwProcessGroupID);
     return FALSE;
 }
 
@@ -762,8 +667,7 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
 	req->access    = dwDesiredAccess;
 	req->share     = dwShareMode;
 	req->inherit   = (sa && sa->bInheritHandle);
-	if (!SERVER_CALL_ERR())
-	    ret = req->handle_out;
+	if (!wine_server_call_err( req )) ret = reply->handle_out;
     }
     SERVER_END_REQ;
     
@@ -780,21 +684,21 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, LPCONSOLE_SCREEN_B
 
     SERVER_START_REQ(get_console_output_info)
     {
-	req->handle = (handle_t)hConsoleOutput;
-	if ((ret = !SERVER_CALL_ERR()))
-	{
-	    csbi->dwSize.X              = req->width;
-	    csbi->dwSize.Y              = req->height;
-	    csbi->dwCursorPosition.X    = req->cursor_x;
-	    csbi->dwCursorPosition.Y    = req->cursor_y;
-	    csbi->wAttributes           = req->attr;
-	    csbi->srWindow.Left	        = req->win_left;
-	    csbi->srWindow.Right        = req->win_right;
-	    csbi->srWindow.Top	        = req->win_top;
-	    csbi->srWindow.Bottom       = req->win_bottom;
-	    csbi->dwMaximumWindowSize.X = req->max_width;
-	    csbi->dwMaximumWindowSize.Y = req->max_height;
-	}
+        req->handle = hConsoleOutput;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            csbi->dwSize.X              = reply->width;
+            csbi->dwSize.Y              = reply->height;
+            csbi->dwCursorPosition.X    = reply->cursor_x;
+            csbi->dwCursorPosition.Y    = reply->cursor_y;
+            csbi->wAttributes           = reply->attr;
+            csbi->srWindow.Left         = reply->win_left;
+            csbi->srWindow.Right        = reply->win_right;
+            csbi->srWindow.Top          = reply->win_top;
+            csbi->srWindow.Bottom       = reply->win_bottom;
+            csbi->dwMaximumWindowSize.X = reply->max_width;
+            csbi->dwMaximumWindowSize.Y = reply->max_height;
+        }
     }
     SERVER_END_REQ;
 
@@ -811,113 +715,19 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, LPCONSOLE_SCREEN_B
  */
 BOOL WINAPI SetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 {
-    BOOL	ret;
-    
+    BOOL ret;
+
     TRACE("(%x)\n", hConsoleOutput);
-    
-    SERVER_START_VAR_REQ(set_console_input_info, 0)
+
+    SERVER_START_REQ( set_console_input_info )
     {
-	req->handle    = 0;
-	req->mask      = SET_CONSOLE_INPUT_INFO_ACTIVE_SB;
-	req->active_sb = hConsoleOutput;
-	
-	ret = !SERVER_CALL_ERR();
+        req->handle    = 0;
+        req->mask      = SET_CONSOLE_INPUT_INFO_ACTIVE_SB;
+        req->active_sb = hConsoleOutput;
+        ret = !wine_server_call_err( req );
     }
-    SERVER_END_VAR_REQ;
-    
+    SERVER_END_REQ;
     return ret;
-}
-
-
-/***********************************************************************
- *            GetLargestConsoleWindowSize   (KERNEL32.@)
- *
- * NOTE
- *	This should return a COORD, but calling convention for returning
- *      structures is different between Windows and gcc on i386.
- *
- * VERSION: [i386]
- */
-#ifdef __i386__
-#undef GetLargestConsoleWindowSize
-DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
-{
-    COORD c;
-    c.X = 80;
-    c.Y = 24;
-    return *(DWORD *)&c;
-}
-#endif /* defined(__i386__) */
-
-
-/***********************************************************************
- *            GetLargestConsoleWindowSize   (KERNEL32.@)
- *
- * NOTE
- *	This should return a COORD, but calling convention for returning
- *      structures is different between Windows and gcc on i386.
- *
- * VERSION: [!i386]
- */
-#ifndef __i386__
-COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
-{
-    COORD c;
-    c.X = 80;
-    c.Y = 24;
-    return c;
-}
-#endif /* defined(__i386__) */
-
-
-/******************************************************************************
- * GetConsoleCP [KERNEL32.@]  Returns the OEM code page for the console
- *
- * RETURNS
- *    Code page code
- */
-UINT WINAPI GetConsoleCP(VOID)
-{
-    return GetACP();
-}
-
-
-/******************************************************************************
- *  SetConsoleCP	 [KERNEL32.@]
- * 
- * BUGS
- *   Unimplemented
- */
-BOOL WINAPI SetConsoleCP(UINT cp)
-{
-    FIXME("(%d): stub\n", cp);
-    
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *            GetConsoleOutputCP   (KERNEL32.@)
- */
-UINT WINAPI GetConsoleOutputCP(VOID)
-{
-    return GetConsoleCP();
-}
-
-/******************************************************************************
- * SetConsoleOutputCP [KERNEL32.@]  Set the output codepage used by the console
- *
- * PARAMS
- *    cp [I] code page to set
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI SetConsoleOutputCP(UINT cp)
-{
-    FIXME("stub\n");
-    return TRUE;
 }
 
 
@@ -931,8 +741,8 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
     SERVER_START_REQ(get_console_mode)
     {
 	req->handle = hcon;
-	ret = !SERVER_CALL_ERR();
-	if (ret && mode) *mode = req->mode;
+	ret = !wine_server_call_err( req );
+	if (ret && mode) *mode = reply->mode;
     }
     SERVER_END_REQ;
     return ret;
@@ -960,7 +770,7 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
     {
 	req->handle = hcon;
 	req->mode = mode;
-	ret = !SERVER_CALL_ERR();
+	ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     /* FIXME: when resetting a console input to editline mode, I think we should
@@ -970,142 +780,30 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
 }
 
 
-/***********************************************************************
- *            SetConsoleTitleA   (KERNEL32.@)
- *
- * Sets the console title.
- *
- * We do not necessarily need to create a complex console for that,
- * but should remember the title and set it on creation of the latter.
- * (not fixed at this time).
- */
-BOOL WINAPI SetConsoleTitleA(LPCSTR title)
-{
-    LPWSTR	titleW = NULL;
-    BOOL	ret;
-    DWORD	len;
-    
-    len = MultiByteToWideChar(CP_ACP, 0, title, -1, NULL, 0);
-    titleW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (!titleW) return FALSE;
-    
-    MultiByteToWideChar(CP_ACP, 0, title, -1, titleW, len);
-    ret = SetConsoleTitleW(titleW);
-    
-    HeapFree(GetProcessHeap(), 0, titleW);
-    return ret;
-}
-
-
-/******************************************************************************
- * SetConsoleTitleW [KERNEL32.@]  Sets title bar string for console
- *
- * PARAMS
- *    title [I] Address of new title
- *
- * NOTES
- *    This should not be calling the A version
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI SetConsoleTitleW(LPCWSTR title)
-{
-    size_t	len = strlenW(title) * sizeof(WCHAR);
-    BOOL 	ret;
-
-    len = min(len, REQUEST_MAX_VAR_SIZE);
-    SERVER_START_VAR_REQ(set_console_input_info, len)
-    {
-	req->handle = 0;
-        req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-        memcpy(server_data_ptr(req), title, len);
-        ret = !SERVER_CALL_ERR();
-    }
-    SERVER_END_VAR_REQ;
-
-    return ret;
-}
-
-/***********************************************************************
- *            GetConsoleTitleA   (KERNEL32.@)
- */
-DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
-{
-    WCHAR*	ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * size);
-    DWORD	ret;
-
-    if (!ptr) return 0;
-    
-    ret = GetConsoleTitleW(ptr, size);
-    if (ret) WideCharToMultiByte(CP_ACP, 0, ptr, ret + 1, title, size, NULL, NULL);
-
-    return ret;
-}
-
-
-/******************************************************************************
- * GetConsoleTitleW [KERNEL32.@]  Retrieves title string for console
- *
- * PARAMS
- *    title [O] Address of buffer for title
- *    size  [I] Size of buffer
- *
- * RETURNS
- *    Success: Length of string copied
- *    Failure: 0
- */
-DWORD WINAPI GetConsoleTitleW(LPWSTR title, DWORD size)
-{
-    DWORD ret = 0;
-
-    SERVER_START_VAR_REQ(get_console_input_info, REQUEST_MAX_VAR_SIZE)
-    {
-	req->handle = 0;
-        if (!SERVER_CALL_ERR())
-        {
-            ret = server_data_size(req) / sizeof(WCHAR);
-            size = min(size - 1, ret);
-            memcpy(title, server_data_ptr(req), size * sizeof(WCHAR));
-            title[size] = 0;
-        }
-    }
-    SERVER_END_VAR_REQ;
-
-    return ret;
-}
-
 /******************************************************************
  *		write_char
  *
  * WriteConsoleOutput helper: hides server call semantics
  */
-static	int	write_char(HANDLE hCon, LPCVOID lpBuffer, int nc, COORD* pos)
+static int write_char(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
 {
-    BOOL	ret;
-    int		written = -1;
+    int written = -1;
 
     if (!nc) return 0;
 
-    assert(nc * sizeof(WCHAR) <= REQUEST_MAX_VAR_SIZE);
-
-    SERVER_START_VAR_REQ(write_console_output, nc * sizeof(WCHAR))
+    SERVER_START_REQ( write_console_output )
     {
-	req->handle = hCon;
-	req->x      = pos->X;
-	req->y      = pos->Y;
-	req->mode   = WRITE_CONSOLE_MODE_TEXTSTDATTR;
-	memcpy(server_data_ptr(req), lpBuffer, nc * sizeof(WCHAR));
-	if ((ret = !SERVER_CALL_ERR()))
-	{
-	    written = req->written;
-	}
+        req->handle = hCon;
+        req->x      = pos->X;
+        req->y      = pos->Y;
+        req->mode   = CHAR_INFO_MODE_TEXTSTDATTR;
+        req->wrap   = FALSE;
+        wine_server_add_data( req, lpBuffer, nc * sizeof(WCHAR) );
+        if (!wine_server_call_err( req )) written = reply->written;
     }
-    SERVER_END_VAR_REQ;
-    
-    if (written > 0) pos->X += written;
+    SERVER_END_REQ;
 
+    if (written > 0) pos->X += written;
     return written;
 }
 
@@ -1292,85 +990,6 @@ BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     return ret;
 }
 
-/***********************************************************************
- *            WriteConsoleOutputA   (KERNEL32.@)
- */
-BOOL WINAPI WriteConsoleOutputA(HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-				COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion)
-{
-    CHAR_INFO	*ciw;
-    int		i;
-    BOOL	ret;
-    
-    ciw = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR_INFO) * dwBufferSize.X * dwBufferSize.Y);
-    if (!ciw) return FALSE;
-    
-    for (i = 0; i < dwBufferSize.X * dwBufferSize.Y; i++)
-    {
-	ciw[i].Attributes = lpBuffer[i].Attributes;
-	MultiByteToWideChar(CP_ACP, 0, &lpBuffer[i].Char.AsciiChar, 1, &ciw[i].Char.UnicodeChar, 1);
-    }
-    ret = WriteConsoleOutputW(hConsoleOutput, ciw, dwBufferSize, dwBufferCoord, lpWriteRegion);
-    HeapFree(GetProcessHeap(), 0, ciw);
-    
-    return ret;
-}
-
-/***********************************************************************
- *            WriteConsoleOutputW   (KERNEL32.@)
- */
-BOOL WINAPI WriteConsoleOutputW(HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-				COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion)
-{
-    short int	w, h;
-    unsigned	y;
-    DWORD	ret = TRUE;
-    DWORD	actual_width;
-    
-    TRACE("(%x,%p,(%d,%d),(%d,%d),(%d,%dx%d,%d)\n", 
-	  hConsoleOutput, lpBuffer, dwBufferSize.X, dwBufferSize.Y, dwBufferCoord.X, dwBufferCoord.Y,
-	  lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
-    
-    w = min(lpWriteRegion->Right - lpWriteRegion->Left + 1, dwBufferSize.X - dwBufferCoord.X);
-    h = min(lpWriteRegion->Bottom - lpWriteRegion->Top + 1, dwBufferSize.Y - dwBufferCoord.Y);
-    
-    if (w <= 0 || h <= 0)
-    {
-	memset(lpWriteRegion, 0, sizeof(SMALL_RECT));
-	return FALSE;
-    }
-    
-    /* this isn't supported for now, even if hConsoleOutput's row size fits in a single
-     * server's request... it would request cropping on client side
-     */
-    if (w * sizeof(CHAR_INFO) > REQUEST_MAX_VAR_SIZE)
-    {
-	FIXME("This isn't supported yet, too wide CHAR_INFO array (%d)\n", w);
-	memset(lpWriteRegion, 0, sizeof(SMALL_RECT));
-	return FALSE;
-    }
-
-    actual_width = w;
-    for (y = 0; ret && y < h; y++)
-    {
-	SERVER_START_VAR_REQ(write_console_output, w * sizeof(CHAR_INFO))
-	{
-	    req->handle = hConsoleOutput;
-	    req->mode = WRITE_CONSOLE_MODE_TEXTATTR;
-	    req->x = lpWriteRegion->Left;
-	    req->y = lpWriteRegion->Top + y;
-	    memcpy(server_data_ptr(req), &lpBuffer[(y + dwBufferCoord.Y) * dwBufferSize.X + dwBufferCoord.X], w * sizeof(CHAR_INFO));
-	    if ((ret = !SERVER_CALL()))
-		actual_width = min(actual_width, req->written);
-	}
-	SERVER_END_VAR_REQ;
-    }
-    lpWriteRegion->Bottom = lpWriteRegion->Top + h;
-    lpWriteRegion->Right = lpWriteRegion->Left + actual_width;
-
-    return ret;
-}
-
 /******************************************************************************
  * SetConsoleCursorPosition [KERNEL32.@]
  * Sets the cursor position in console
@@ -1396,7 +1015,7 @@ BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
         req->cursor_x       = pos.X;
         req->cursor_y       = pos.Y;
         req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -1453,11 +1072,11 @@ BOOL WINAPI GetConsoleCursorInfo(HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo)
     SERVER_START_REQ(get_console_output_info)
     {
         req->handle = hcon;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
         if (ret && cinfo)
         {
-            cinfo->dwSize = req->cursor_size;
-            cinfo->bVisible = req->cursor_visible;
+            cinfo->dwSize = reply->cursor_size;
+            cinfo->bVisible = reply->cursor_visible;
         }
     }
     SERVER_END_REQ;
@@ -1485,7 +1104,7 @@ BOOL WINAPI SetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
         req->cursor_size    = cinfo->dwSize;
         req->cursor_visible = cinfo->bVisible;
         req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1526,7 +1145,7 @@ BOOL WINAPI SetConsoleWindowInfo(HANDLE hCon, BOOL bAbsolute, LPSMALL_RECT windo
 	req->win_right      = p.Right;
 	req->win_bottom     = p.Bottom;
         req->mask           = SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -1550,10 +1169,10 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttr)
 
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle         = hConsoleOutput;
-        req->attr	    = wAttr;
-        req->mask           = SET_CONSOLE_OUTPUT_INFO_ATTR;
-        ret = !SERVER_CALL_ERR();
+        req->handle = hConsoleOutput;
+        req->attr   = wAttr;
+        req->mask   = SET_CONSOLE_OUTPUT_INFO_ATTR;
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -1575,157 +1194,18 @@ BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 {
     BOOL ret;
 
-    /* FIXME: most code relies on the fact we can transfer a complete row at a time...
-     * so check if it's possible...
-     */
-    if (dwSize.X > REQUEST_MAX_VAR_SIZE / 4)
-    {
-	FIXME("too wide width not supported\n");
-	SetLastError(STATUS_INVALID_PARAMETER);
-	return FALSE;
-    }
-
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle	= hConsoleOutput;
-        req->width	= dwSize.X;
-        req->height	= dwSize.Y;
-	req->mask       = SET_CONSOLE_OUTPUT_INFO_SIZE;
-        ret = !SERVER_CALL_ERR();
+        req->handle = hConsoleOutput;
+        req->width  = dwSize.X;
+        req->height = dwSize.Y;
+        req->mask   = SET_CONSOLE_OUTPUT_INFO_SIZE;
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
 }
 
-
-/******************************************************************************
- * FillConsoleOutputCharacterA [KERNEL32.@]
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    cCharacter        [I] Character to write
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI FillConsoleOutputCharacterA(HANDLE hConsoleOutput, BYTE cCharacter,
-					DWORD nLength, COORD dwCoord, LPDWORD lpNumCharsWritten)
-{
-    WCHAR	wch;
-
-    MultiByteToWideChar(CP_ACP, 0, &cCharacter, 1, &wch, 1);
-
-    return FillConsoleOutputCharacterW(hConsoleOutput, wch, nLength, dwCoord, lpNumCharsWritten);
-}
-
-
-/******************************************************************************
- * FillConsoleOutputCharacterW [KERNEL32.@]  Writes characters to console
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    cCharacter        [I] Character to write
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI FillConsoleOutputCharacterW(HANDLE hConsoleOutput, WCHAR cCharacter,
-					DWORD nLength, COORD dwCoord, LPDWORD lpNumCharsWritten)
-{
-    CONSOLE_SCREEN_BUFFER_INFO	csbi;
-    int				written;
-    DWORD			initLen = nLength;
-
-    TRACE("(%d,%s,%ld,(%dx%d),%p)\n", 
-	  hConsoleOutput, debugstr_wn(&cCharacter, 1), nLength, 
-	  dwCoord.X, dwCoord.Y, lpNumCharsWritten);
-
-    if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
-	return FALSE;
-
-    while (nLength)
-    {
-	SERVER_START_VAR_REQ(write_console_output, 
-			     min(csbi.dwSize.X - dwCoord.X, nLength) * sizeof(WCHAR))
-	{
-	    req->handle = hConsoleOutput;
-	    req->x      = dwCoord.X;
-	    req->y      = dwCoord.Y;
-	    req->mode   = WRITE_CONSOLE_MODE_TEXTSTDATTR|WRITE_CONSOLE_MODE_UNIFORM;
-	    memcpy(server_data_ptr(req), &cCharacter, sizeof(WCHAR));
-	    written = SERVER_CALL_ERR() ? 0 : req->written;
-	}
-	SERVER_END_VAR_REQ;
-
-	if (!written) break;
-	nLength -= written;
-	dwCoord.X = 0;
-	if (++dwCoord.Y == csbi.dwSize.Y) break;
-    }
-    
-    if (lpNumCharsWritten) *lpNumCharsWritten = initLen - nLength;
-    return initLen != nLength;
-}
-
-
-/******************************************************************************
- * FillConsoleOutputAttribute [KERNEL32.@]  Sets attributes for console
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    wAttribute        [I] Color attribute to write
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumAttrsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI FillConsoleOutputAttribute(HANDLE hConsoleOutput, WORD wAttribute, 
-				       DWORD nLength, COORD dwCoord, LPDWORD lpNumAttrsWritten)
-{
-    CONSOLE_SCREEN_BUFFER_INFO	csbi;
-    int				written;
-    DWORD			initLen = nLength;
-    
-    TRACE("(%d,%d,%ld,(%dx%d),%p)\n", 
-	  hConsoleOutput, wAttribute, nLength, dwCoord.X, dwCoord.Y, lpNumAttrsWritten);
-    
-    if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
-	return FALSE;
-
-    while (nLength)
-    {
-	SERVER_START_VAR_REQ(write_console_output, 
-			     min(csbi.dwSize.X - dwCoord.X, nLength) * sizeof(WCHAR))
-	{
-	    req->handle = hConsoleOutput;
-	    req->x      = dwCoord.X;
-	    req->y      = dwCoord.Y;
-	    req->mode   = WRITE_CONSOLE_MODE_ATTR|WRITE_CONSOLE_MODE_UNIFORM;
-	    memcpy(server_data_ptr(req), &wAttribute, sizeof(WORD));
-	    written = SERVER_CALL_ERR() ? 0 : req->written;
-	}
-	SERVER_END_VAR_REQ;
-
-	if (!written) break;
-	nLength -= written;
-	dwCoord.X = 0;
-	if (++dwCoord.Y == csbi.dwSize.Y) break;
-    }
-
-    if (lpNumAttrsWritten) *lpNumAttrsWritten = initLen - nLength;
-    return initLen != nLength;
-}
 
 /******************************************************************************
  * ScrollConsoleScreenBufferA [KERNEL32.@]
@@ -1752,16 +1232,19 @@ BOOL WINAPI ScrollConsoleScreenBufferA(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
  */
 static void fill_line_uniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill)
 {
-    SERVER_START_VAR_REQ(write_console_output, len * sizeof(CHAR_INFO))
+    SERVER_START_REQ( fill_console_output )
     {
-	req->handle = hConsoleOutput;
-	req->x      = i;
-	req->y      = j;
-	req->mode   = WRITE_CONSOLE_MODE_TEXTATTR|WRITE_CONSOLE_MODE_UNIFORM;
-	memcpy(server_data_ptr(req), lpFill, sizeof(CHAR_INFO));
-	SERVER_CALL_ERR();
+        req->handle    = hConsoleOutput;
+        req->mode      = CHAR_INFO_MODE_TEXTATTR;
+        req->x         = i;
+        req->y         = j;
+        req->count     = len;
+        req->wrap      = FALSE;
+        req->data.ch   = lpFill->Char.UnicodeChar;
+        req->data.attr = lpFill->Attributes;
+        wine_server_call_err( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
 }
 
 /******************************************************************************
@@ -1836,7 +1319,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 	req->y_dst = dst.Top;
 	req->w = dst.Right - dst.Left + 1;
 	req->h = dst.Bottom - dst.Top + 1;
-	ret = !SERVER_CALL_ERR();
+	ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -1874,350 +1357,6 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     return TRUE;
 }
 
-/******************************************************************************
- * ReadConsoleOutputCharacterA [KERNEL32.@]
- * 
- */
-BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, LPSTR lpstr, DWORD toRead, 
-					COORD coord, LPDWORD lpdword)
-{
-    DWORD	read;
-    LPWSTR	wptr = HeapAlloc(GetProcessHeap(), 0, toRead * sizeof(WCHAR));
-    BOOL	ret;
-
-    if (lpdword) *lpdword = 0;
-    if (!wptr) return FALSE;
-
-    ret = ReadConsoleOutputCharacterW(hConsoleOutput, wptr, toRead, coord, &read);
-
-    read = WideCharToMultiByte(CP_ACP, 0, wptr, read, lpstr, toRead, NULL, NULL);
-    if (lpdword) *lpdword = read;
-
-    HeapFree(GetProcessHeap(), 0, wptr);
-
-    return ret;
-}
-
-/******************************************************************************
- * ReadConsoleOutputCharacterW [KERNEL32.@]
- * 
- */
-BOOL WINAPI ReadConsoleOutputCharacterW(HANDLE hConsoleOutput, LPWSTR lpstr, DWORD toRead, 
-					COORD coord, LPDWORD lpdword)
-{
-    DWORD	read = 0;
-    DWORD	ret = TRUE;
-    int		i;
-    DWORD*	ptr;
-
-    TRACE("(%d,%p,%ld,%dx%d,%p)\n", hConsoleOutput, lpstr, toRead, coord.X, coord.Y, lpdword);
-
-    while (ret && (read < toRead))
-    {
-	SERVER_START_VAR_REQ(read_console_output, REQUEST_MAX_VAR_SIZE)
-	{
-	    req->handle       = (handle_t)hConsoleOutput;
-	    req->x            = coord.X;
-	    req->y            = coord.Y;
-	    req->w            = REQUEST_MAX_VAR_SIZE / 4;
-	    req->h            = 1;
-	    if ((ret = !SERVER_CALL_ERR()))
-	    {
-		ptr = server_data_ptr(req);
-		
-		for (i = 0; i < req->eff_w && read < toRead; i++)
-		{
-		    lpstr[read++] = LOWORD(ptr[i]);
-		}
-		coord.X = 0;	coord.Y++;
-	    }
-	}
-	SERVER_END_VAR_REQ;
-    }
-    if (lpdword) *lpdword = read;
-    
-    TRACE("=> %lu %s\n", read, debugstr_wn(lpstr, read));
-    
-    return ret;
-}
-
-
-/******************************************************************************
- *  ReadConsoleOutputA [KERNEL32.@]
- * 
- */
-BOOL WINAPI ReadConsoleOutputA(HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-			       COORD dwBufferCoord, LPSMALL_RECT lpReadRegion)
-{
-    BOOL	ret;
-    int		x, y;
-    int		pos;
-    
-    ret = ReadConsoleOutputW(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-    if (!ret) return FALSE;
-    for (y = 0; y <= lpReadRegion->Bottom - lpReadRegion->Top; y++)
-    {
-	for (x = 0; x <= lpReadRegion->Right - lpReadRegion->Left; x++)
-	{
-	    pos = (dwBufferCoord.Y + y) * dwBufferSize.X + dwBufferCoord.X + x;
-	    WideCharToMultiByte(CP_ACP, 0, &lpBuffer[pos].Char.UnicodeChar, 1, 
-				&lpBuffer[pos].Char.AsciiChar, 1, NULL, NULL);
-	}
-    }
-    return TRUE;
-}
-
-/******************************************************************************
- *  ReadConsoleOutputW [KERNEL32.@]
- * 
- */
-BOOL WINAPI ReadConsoleOutputW(HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-			       COORD dwBufferCoord, LPSMALL_RECT lpReadRegion)
-{
-    int		w, h;
-    int		actual_width;
-    int		y;
-    BOOL	ret = TRUE;
-    
-    w = min(lpReadRegion->Right - lpReadRegion->Left + 1, dwBufferSize.X - dwBufferCoord.X);
-    h = min(lpReadRegion->Bottom - lpReadRegion->Top + 1, dwBufferSize.Y - dwBufferCoord.Y);
-    
-    if (w <= 0 || h <= 0) goto got_err;
-
-    /* this isn't supported for now, even if hConsoleOutput's row size fits in a single
-     * server's request... it would request cropping on client side
-     */
-    if (w * sizeof(CHAR_INFO) > REQUEST_MAX_VAR_SIZE)
-    {
-	FIXME("This isn't supported yet, too wide CHAR_INFO array (%d)\n", w);
-	goto got_err;
-    }
-
-    actual_width = w;
-    for (y = 0; ret && y < h; y++)
-    {
-	SERVER_START_VAR_REQ(read_console_output, w * sizeof(CHAR_INFO))
-	{
-	    req->handle = hConsoleOutput;
-	    req->x = lpReadRegion->Left;
-	    req->y = lpReadRegion->Top;
-	    req->w = w;
-	    req->h = 1;
-	    if ((ret = !SERVER_CALL()))
-	    {
-		actual_width = min(actual_width, req->eff_w);
-		memcpy(&lpBuffer[(y + dwBufferCoord.Y) * dwBufferSize.X + dwBufferCoord.X], 
-		       server_data_ptr(req), 
-		       req->eff_w * sizeof(CHAR_INFO));
-	    }
-	}
-	SERVER_END_VAR_REQ;
-    }
-    if (!ret) goto got_err;
-    
-    lpReadRegion->Bottom = lpReadRegion->Top + y;
-    lpReadRegion->Right = lpReadRegion->Left + actual_width;
-    
-    return ret;
- got_err:
-    memset(lpReadRegion, 0, sizeof(SMALL_RECT));
-    return FALSE;
-}
-
-/******************************************************************************
- *  ReadConsoleOutputAttribute [KERNEL32.@]
- * 
- */
-BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute, DWORD nLength,
-				       COORD coord, LPDWORD lpNumberOfAttrsRead)
-{
-    DWORD	read = 0;
-    DWORD	ret = TRUE;
-    int		i;
-    DWORD*	ptr;
-    
-    TRACE("(%d,%p,%ld,%dx%d,%p)\n", 
-	  hConsoleOutput, lpAttribute, nLength, coord.X, coord.Y, lpNumberOfAttrsRead);
-    
-    while (ret && (read < nLength))
-    {
-	SERVER_START_VAR_REQ(read_console_output, REQUEST_MAX_VAR_SIZE)
-	{
-	    req->handle       = (handle_t)hConsoleOutput;
-	    req->x            = coord.X;
-	    req->y            = coord.Y;
-	    req->w            = REQUEST_MAX_VAR_SIZE / 4;
-	    req->h            = 1;
-	    if (SERVER_CALL_ERR()) 
-	    {
-		ret = FALSE;
-	    }
-	    else
-	    {
-		ptr = server_data_ptr(req);
-		
-		for (i = 0; i < req->eff_w && read < nLength; i++)
-		{
-		    lpAttribute[read++] = HIWORD(ptr[i]);
-		}
-		coord.X = 0;	coord.Y++;
-	    }
-	}
-	SERVER_END_VAR_REQ;
-    }
-    if (lpNumberOfAttrsRead) *lpNumberOfAttrsRead = read;
-    
-    return ret;
-}
-
-/******************************************************************************
- * WriteConsoleOutputAttribute [KERNEL32.@]  Sets attributes for some cells in
- * 					     the console screen buffer
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    lpAttribute       [I] Pointer to buffer with write attributes
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumAttrsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- * 
- */
-BOOL WINAPI WriteConsoleOutputAttribute(HANDLE hConsoleOutput, CONST WORD *lpAttribute, 
-					DWORD nLength, COORD dwCoord, LPDWORD lpNumAttrsWritten)
-{
-    int		written = 0;
-    int		len;
-    BOOL	ret = TRUE;
-    DWORD	init_len = nLength;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    
-    TRACE("(%d,%p,%ld,%dx%d,%p)\n", hConsoleOutput,
-          lpAttribute,nLength,dwCoord.X,dwCoord.Y,lpNumAttrsWritten);
-    
-    if (!GetConsoleScreenBufferInfo(hConsoleOutput, & csbi))
-	return FALSE;
-    
-    while (ret && nLength)
-    {	
-	len = min(nLength * sizeof(WORD), REQUEST_MAX_VAR_SIZE);
-	SERVER_START_VAR_REQ(write_console_output, len)
-	{
-	    req->handle = hConsoleOutput;
-	    req->x      = dwCoord.X;
-	    req->y      = dwCoord.Y;
-	    req->mode   = WRITE_CONSOLE_MODE_ATTR;
-	    memcpy(server_data_ptr(req), &lpAttribute[written],  len);
-	    written = (SERVER_CALL_ERR()) ? 0 : req->written;
-	}
-	SERVER_END_VAR_REQ;
-
-	if (!written) break;
-	nLength -= written;
-	dwCoord.X = 0;
-	if (++dwCoord.Y == csbi.dwSize.Y) break;
-    }
-
-    if (lpNumAttrsWritten) *lpNumAttrsWritten = init_len - nLength;
-    return nLength != init_len;
-}
-
-/******************************************************************************
- * WriteConsoleOutputCharacterA [KERNEL32.@]  Copies character to consecutive
- * 					      cells in the console screen buffer
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    lpCharacter       [I] Pointer to buffer with chars to write
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
- */
-BOOL WINAPI WriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, 
-					 COORD dwCoord, LPDWORD lpNumCharsWritten)
-{
-    BOOL	ret;
-    LPWSTR	xstring;
-    DWORD 	n;
-    
-    TRACE("(%d,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
-          debugstr_an(lpCharacter, nLength), nLength, dwCoord.X, dwCoord.Y, lpNumCharsWritten);
-    
-    n = MultiByteToWideChar(CP_ACP, 0, lpCharacter, nLength, NULL, 0);
-    
-    if (lpNumCharsWritten) *lpNumCharsWritten = 0;
-    xstring = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
-    if (!xstring) return FALSE;
-    
-    MultiByteToWideChar(CP_ACP, 0, lpCharacter, nLength, xstring, n);
-    
-    ret = WriteConsoleOutputCharacterW(hConsoleOutput, xstring, n, dwCoord, lpNumCharsWritten);
-    
-    HeapFree(GetProcessHeap(), 0, xstring);
-    
-    return ret;
-}
-
-/******************************************************************************
- * WriteConsoleOutputCharacterW [KERNEL32.@]  Copies character to consecutive
- * 					      cells in the console screen buffer
- *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    lpCharacter       [I] Pointer to buffer with chars to write
- *    nLength           [I] Number of cells to write to
- *    dwCoord           [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- * 
- */
-BOOL WINAPI WriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, 
-					 COORD dwCoord, LPDWORD lpNumCharsWritten)
-{
-    int		written = 0;
-    int		len;
-    DWORD	init_len = nLength;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    
-    TRACE("(%d,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
-          debugstr_wn(lpCharacter, nLength), nLength, dwCoord.X, dwCoord.Y, lpNumCharsWritten);
-    
-    if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
-	return FALSE;
-    
-    while (nLength)
-    {	
-	len = min(nLength * sizeof(WCHAR), REQUEST_MAX_VAR_SIZE);
-	SERVER_START_VAR_REQ(write_console_output, len)
-	{
-	    req->handle = hConsoleOutput;
-	    req->x      = dwCoord.X;
-	    req->y      = dwCoord.Y;
-	    req->mode   = WRITE_CONSOLE_MODE_TEXT;
-	    memcpy(server_data_ptr(req), &lpCharacter[written], len);
-	    written = (SERVER_CALL_ERR()) ? 0 : req->written;
-	}
-	SERVER_END_VAR_REQ;
-
-	if (!written) break;
-	nLength -= written;
-	dwCoord.X += written;
-	if (dwCoord.X >= csbi.dwSize.X)
-	{
-	    dwCoord.X = 0;
-	    if (++dwCoord.Y == csbi.dwSize.Y) break;
-	}
-    }
-
-    if (lpNumCharsWritten) *lpNumCharsWritten = init_len - nLength;
-    return nLength != init_len;
-}
 
 /* ====================================================================
  *
@@ -2232,26 +1371,25 @@ BOOL WINAPI WriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharac
  *	SetConsoleCommandHistoryMode
  *	SetConsoleNumberOfCommands[AW]
  */
-int	CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len)
+int CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len)
 {
-    int		len = 0;
+    int len = 0;
 
-    SERVER_START_VAR_REQ(get_console_input_history, REQUEST_MAX_VAR_SIZE)
+    SERVER_START_REQ( get_console_input_history )
     {
-	req->handle = 0;
-	req->index = idx;
-	if (!SERVER_CALL_ERR())
-	{
-	    len = server_data_size(req) / sizeof(WCHAR) + 1;
-	    if (buf)
-	    {
-		len = min(len, buf_len);
-		memcpy(buf, server_data_ptr(req), len * sizeof(WCHAR));
-		buf[len - 1] = 0;
-	    }
-	}
-    }		
-    SERVER_END_VAR_REQ;
+        req->handle = 0;
+        req->index = idx;
+        if (buf && buf_len > sizeof(WCHAR))
+        {
+            wine_server_set_reply( req, buf, buf_len - sizeof(WCHAR) );
+        }
+        if (!wine_server_call_err( req ))
+        {
+            if (buf) buf[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
+            len = reply->total / sizeof(WCHAR) + 1;
+        }
+    }
+    SERVER_END_REQ;
     return len;
 }
 
@@ -2265,17 +1403,15 @@ BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
     size_t	len = strlenW(ptr);
     BOOL	ret;
 
-    while (len && (ptr[len - 1] == '\n' || ptr[len - 1] == '\r'))
-	len--;
+    while (len && (ptr[len - 1] == '\n' || ptr[len - 1] == '\r')) len--;
 
-    len *= sizeof(WCHAR);
-    SERVER_START_VAR_REQ(append_console_input_history, len)
+    SERVER_START_REQ( append_console_input_history )
     {
-	req->handle = 0;
-	memcpy(server_data_ptr(req), ptr, len);
-	ret = !SERVER_CALL_ERR();
+        req->handle = 0;
+        wine_server_add_data( req, ptr, len * sizeof(WCHAR) );
+        ret = !wine_server_call_err( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -2289,8 +1425,8 @@ unsigned CONSOLE_GetNumHistoryEntries(void)
     unsigned ret = 0;
     SERVER_START_REQ(get_console_input_info)
     {
-	req->handle = 0;
-	if (!SERVER_CALL_ERR()) ret = req->history_index;
+        req->handle = 0;
+        if (!wine_server_call_err( req )) ret = reply->history_index;
     }
     SERVER_END_REQ;
     return ret;

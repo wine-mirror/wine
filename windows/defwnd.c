@@ -75,18 +75,16 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
     if ((textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
-        size_t len = min( REQUEST_MAX_VAR_SIZE, (count-1) * sizeof(WCHAR) );
-
         if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
         wndPtr->text = textW;
         MultiByteToWideChar( CP_ACP, 0, text, -1, textW, count );
-        SERVER_START_VAR_REQ( set_window_text, len )
+        SERVER_START_REQ( set_window_text )
         {
             req->handle = hwnd;
-            memcpy( server_data_ptr(req), textW, len );
-            SERVER_CALL();
+            wine_server_add_data( req, textW, (count-1) * sizeof(WCHAR) );
+            wine_server_call( req );
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     else
         ERR("Not enough memory for window text\n");
@@ -113,16 +111,14 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
-        size_t len = min( REQUEST_MAX_VAR_SIZE, (count-1) * sizeof(WCHAR) );
-
         strcpyW( wndPtr->text, text );
-        SERVER_START_VAR_REQ( set_window_text, len )
+        SERVER_START_REQ( set_window_text )
         {
             req->handle = hwnd;
-            memcpy( server_data_ptr(req), wndPtr->text, len );
-            SERVER_CALL();
+            wine_server_add_data( req, wndPtr->text, (count-1) * sizeof(WCHAR) );
+            wine_server_call( req );
         }
-        SERVER_END_VAR_REQ;
+        SERVER_END_REQ;
     }
     else
         ERR("Not enough memory for window text\n");

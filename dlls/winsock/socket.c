@@ -233,7 +233,7 @@ static void _enable_event(SOCKET s, unsigned int event,
         req->mask   = event;
         req->sstate = sstate;
         req->cstate = cstate;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }
@@ -247,8 +247,8 @@ static int _is_blocking(SOCKET s)
         req->service = FALSE;
         req->s_event = 0;
         req->c_event = 0;
-        SERVER_CALL();
-        ret = (req->state & FD_WINE_NONBLOCKING) == 0;
+        wine_server_call( req );
+        ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
     }
     SERVER_END_REQ;
     return ret;
@@ -263,8 +263,8 @@ static unsigned int _get_sock_mask(SOCKET s)
         req->service = FALSE;
         req->s_event = 0;
         req->c_event = 0;
-        SERVER_CALL();
-        ret = req->mask;
+        wine_server_call( req );
+        ret = reply->mask;
     }
     SERVER_END_REQ;
     return ret;
@@ -279,18 +279,19 @@ static void _sync_sock_state(SOCKET s)
 
 static int _get_sock_error(SOCKET s, unsigned int bit)
 {
-    int ret;
-    SERVER_START_VAR_REQ( get_socket_event, FD_MAX_EVENTS*sizeof(int) )
+    int events[FD_MAX_EVENTS];
+
+    SERVER_START_REQ( get_socket_event )
     {
         req->handle  = s;
         req->service = FALSE;
         req->s_event = 0;
         req->c_event = 0;
-        SERVER_CALL();
-        ret = *((int *)server_data_ptr(req) + bit);
+        wine_server_set_reply( req, events, sizeof(events) );
+        wine_server_call( req );
     }
-    SERVER_END_VAR_REQ;
-    return ret;
+    SERVER_END_REQ;
+    return events[bit];
 }
 
 static void WINSOCK_DeleteIData(void)
@@ -900,8 +901,8 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
             req->lhandle = s;
             req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->inherit = TRUE;
-            set_error( SERVER_CALL() );
-            as = (SOCKET)req->handle;
+            set_error( wine_server_call( req ) );
+            as = (SOCKET)reply->handle;
         }
         SERVER_END_REQ;
 	if (as)
@@ -2318,8 +2319,8 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
         req->protocol = protocol;
         req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
         req->inherit  = TRUE;
-        set_error( SERVER_CALL() );
-        ret = (SOCKET)req->handle;
+        set_error( wine_server_call( req ) );
+        ret = (SOCKET)reply->handle;
     }
     SERVER_END_REQ;
     if (ret)
@@ -2718,19 +2719,16 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 
     TRACE("%08x, hEvent %08x, lpEvent %08x\n", s, hEvent, (unsigned)lpEvent );
 
-    SERVER_START_VAR_REQ( get_socket_event, sizeof(lpEvent->iErrorCode) )
+    SERVER_START_REQ( get_socket_event )
     {
         req->handle  = s;
         req->service = TRUE;
         req->s_event = 0;
         req->c_event = hEvent;
-        if (!(ret = SERVER_CALL()))
-        {
-            lpEvent->lNetworkEvents = req->pmask & req->mask;
-            memcpy(lpEvent->iErrorCode, server_data_ptr(req), server_data_size(req) );
-        }
+        wine_server_set_reply( req, lpEvent->iErrorCode, sizeof(lpEvent->iErrorCode) );
+        if (!(ret = wine_server_call(req))) lpEvent->lNetworkEvents = reply->pmask & reply->mask;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if (!ret) return 0;
     SetLastError(WSAEINVAL);
     return SOCKET_ERROR;
@@ -2750,7 +2748,7 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
         req->handle = s;
         req->mask   = lEvent;
         req->event  = hEvent;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
     if (!ret) return 0;
@@ -2769,17 +2767,17 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 
     TRACE("socket %08x, event %08x\n", info->sock, info->event);
     SetLastError(0);
-    SERVER_START_VAR_REQ( get_socket_event, sizeof(errors) )
+    SERVER_START_REQ( get_socket_event )
     {
         req->handle  = info->sock;
         req->service = TRUE;
         req->s_event = info->event; /* <== avoid race conditions */
         req->c_event = info->event;
-        set_error( SERVER_CALL() );
-        pmask = req->pmask;
-        memcpy( errors, server_data_ptr(req), server_data_size(req) );
+        wine_server_set_reply( req, errors, sizeof(errors) );
+        set_error( wine_server_call(req) );
+        pmask = reply->pmask;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     if ( (GetLastError() == WSAENOTSOCK) || (GetLastError() == WSAEINVAL) )
     {
 	/* orphaned event (socket closed or something) */

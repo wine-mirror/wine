@@ -114,68 +114,59 @@ void server_protocol_perror( const char *err )
 
 
 /***********************************************************************
- *           __wine_server_exception_handler (NTDLL.@)
- */
-DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                       CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
-{
-    struct __server_exception_frame *server_frame = (struct __server_exception_frame *)frame;
-    if ((record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        NtCurrentTeb()->buffer_pos = server_frame->buffer_pos;
-    return ExceptionContinueSearch;
-}
-
-
-/***********************************************************************
- *           wine_server_alloc_req (NTDLL.@)
- */
-void wine_server_alloc_req( union generic_request *req, size_t size )
-{
-    unsigned int pos = NtCurrentTeb()->buffer_pos;
-
-    assert( size <= REQUEST_MAX_VAR_SIZE );
-
-    if (pos + size > NtCurrentTeb()->buffer_size)
-        server_protocol_error( "buffer overflow %d bytes\n",
-                               pos + size - NtCurrentTeb()->buffer_pos );
-
-    NtCurrentTeb()->buffer_pos = pos + size;
-    req->header.var_offset = pos;
-    req->header.var_size = size;
-}
-
-
-/***********************************************************************
  *           send_request
  *
  * Send a request to the server.
  */
-static void send_request( union generic_request *request )
+static void send_request( const struct __server_request_info *req )
 {
-    int ret;
+    int i, ret;
 
-    if ((ret = write( NtCurrentTeb()->request_fd, request, sizeof(*request) )) == sizeof(*request))
-        return;
+    if (!req->u.req.request_header.request_size)
+    {
+        if ((ret = write( NtCurrentTeb()->request_fd, &req->u.req,
+                          sizeof(req->u.req) )) == sizeof(req->u.req)) return;
+
+    }
+    else
+    {
+        struct iovec vec[__SERVER_MAX_DATA+1];
+
+        vec[0].iov_base = (void *)&req->u.req;
+        vec[0].iov_len = sizeof(req->u.req);
+        for (i = 0; i < req->data_count; i++)
+        {
+            vec[i+1].iov_base = (void *)req->data[i].ptr;
+            vec[i+1].iov_len = req->data[i].size;
+        }
+        if ((ret = writev( NtCurrentTeb()->request_fd, vec, i+1 )) ==
+            req->u.req.request_header.request_size + sizeof(req->u.req)) return;
+    }
+
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
     if (errno == EPIPE) SYSDEPS_ExitThread(0);
     server_protocol_perror( "sendmsg" );
 }
 
+
 /***********************************************************************
- *           wait_reply
+ *           read_reply_data
  *
- * Wait for a reply from the server.
+ * Read data from the reply buffer; helper for wait_reply.
  */
-static void wait_reply( union generic_request *req )
+static void read_reply_data( void *buffer, size_t size )
 {
     int ret;
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->reply_fd, req, sizeof(*req) )) == sizeof(*req))
-            return;
+        if ((ret = read( NtCurrentTeb()->reply_fd, buffer, size )) > 0)
+        {
+            if (!(size -= ret)) return;
+            buffer = (char *)buffer + ret;
+            continue;
+        }
         if (!ret) break;
-        if (ret > 0) server_protocol_error( "partial read %d\n", ret );
         if (errno == EINTR) continue;
         if (errno == EPIPE) break;
         server_protocol_perror("read");
@@ -186,20 +177,34 @@ static void wait_reply( union generic_request *req )
 
 
 /***********************************************************************
+ *           wait_reply
+ *
+ * Wait for a reply from the server.
+ */
+inline static void wait_reply( struct __server_request_info *req )
+{
+    read_reply_data( &req->u.reply, sizeof(req->u.reply) );
+    if (req->u.reply.reply_header.reply_size)
+        read_reply_data( req->reply_data, req->u.reply.reply_header.reply_size );
+}
+
+
+/***********************************************************************
  *           wine_server_call (NTDLL.@)
  *
  * Perform a server call.
  */
-unsigned int wine_server_call( union generic_request *req, size_t size )
+unsigned int wine_server_call( void *req_ptr )
 {
+    struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
 
-    memset( (char *)req + size, 0, sizeof(*req) - size );
+    memset( (char *)&req->u.req + req->size, 0, sizeof(req->u.req) - req->size );
     sigprocmask( SIG_BLOCK, &block_set, &old_set );
     send_request( req );
     wait_reply( req );
     sigprocmask( SIG_SETMASK, &old_set, NULL );
-    return req->header.error;
+    return req->u.reply.reply_header.error;
 }
 
 
@@ -331,13 +336,13 @@ int wine_server_recv_fd( handle_t handle )
         req->flags  = 0;
         req->mask   = 0;
         req->fd     = fd;
-        if (!SERVER_CALL())
+        if (!wine_server_call( req ))
         {
-            if (req->cur_fd != fd)
+            if (reply->cur_fd != fd)
             {
                 /* someone was here before us */
                 close( fd );
-                fd = req->cur_fd;
+                fd = reply->cur_fd;
             }
         }
         else
@@ -597,47 +602,6 @@ void CLIENT_InitServer(void)
 
 
 /***********************************************************************
- *           set_request_buffer
- */
-inline static void set_request_buffer(void)
-{
-    char *name;
-    int fd, ret;
-    unsigned int offset, size;
-
-    /* create a temporary file */
-    do
-    {
-        if (!(name = tmpnam(NULL))) server_protocol_perror( "tmpnam" );
-        fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
-    } while ((fd == -1) && (errno == EEXIST));
-
-    if (fd == -1) server_protocol_perror( "create" );
-    unlink( name );
-
-    wine_server_send_fd( fd );
-
-    SERVER_START_REQ( set_thread_buffer )
-    {
-        req->fd = fd;
-        ret = SERVER_CALL();
-        offset = req->offset;
-        size = req->size;
-    }
-    SERVER_END_REQ;
-    if (ret) server_protocol_error( "set_thread_buffer failed with status %x\n", ret );
-
-    if ((NtCurrentTeb()->buffer = mmap( 0, size, PROT_READ | PROT_WRITE,
-                                        MAP_SHARED, fd, offset )) == (void*)-1)
-        server_protocol_perror( "mmap" );
-
-    close( fd );
-    NtCurrentTeb()->buffer_pos  = 0;
-    NtCurrentTeb()->buffer_size = size;
-}
-
-
-/***********************************************************************
  *           CLIENT_InitThread
  *
  * Send an init thread request. Return 0 if OK.
@@ -670,11 +634,11 @@ void CLIENT_InitThread(void)
         req->entry       = teb->entry_point;
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = teb->wait_fd[1];
-        ret = SERVER_CALL();
-        teb->pid = req->pid;
-        teb->tid = req->tid;
-        version  = req->version;
-        if (req->boot) boot_thread_id = teb->tid;
+        ret = wine_server_call( req );
+        teb->pid = reply->pid;
+        teb->tid = reply->tid;
+        version  = reply->version;
+        if (reply->boot) boot_thread_id = teb->tid;
         else if (boot_thread_id == teb->tid) boot_thread_id = 0;
         close( reply_pipe[1] );
     }
@@ -688,7 +652,6 @@ void CLIENT_InitThread(void)
                                "Or maybe the wrong wineserver is still running?\n",
                                version, SERVER_PROTOCOL_VERSION,
                                (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
-    set_request_buffer();
 }
 
 
@@ -702,7 +665,7 @@ void CLIENT_BootDone( int debug_level )
     SERVER_START_REQ( boot_done )
     {
         req->debug_level = debug_level;
-        SERVER_CALL();
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }

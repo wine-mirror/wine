@@ -30,25 +30,16 @@ DEFAULT_DEBUG_CHANNEL(win32);
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateEventW( sa, manual_reset, initial_state, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_event, len * sizeof(WCHAR) )
-    {
-        req->manual_reset = manual_reset;
-        req->initial_state = initial_state;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return CreateEventW( sa, manual_reset, initial_state, buffer );
 }
 
 
@@ -74,17 +65,17 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         SetLastError( ERROR_INVALID_PARAMETER);
         return 0;
     }
-    SERVER_START_VAR_REQ( create_event, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_event )
     {
         req->manual_reset = manual_reset;
         req->initial_state = initial_state;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -103,23 +94,16 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenEventW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_event, len * sizeof(WCHAR) )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return OpenEventW( access, inherit, buffer );
 }
 
 
@@ -135,15 +119,15 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_event, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_event )
     {
         req->access  = access;
         req->inherit = inherit;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -160,7 +144,7 @@ static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
     {
         req->handle = handle;
         req->op     = op;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -248,24 +232,16 @@ VOID WINAPI VWin32_EventSet(HANDLE event)
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateMutexW( sa, owner, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_mutex, len * sizeof(WCHAR) )
-    {
-        req->owned   = owner;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return CreateMutexW( sa, owner, buffer );
 }
 
 
@@ -281,23 +257,18 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_mutex, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_mutex )
     {
         req->owned   = owner;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
-
-
-/*
- * Mutexes
- */
 
 
 /***********************************************************************
@@ -305,23 +276,16 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenMutexW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_mutex, len * sizeof(WCHAR) )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return OpenMutexW( access, inherit, buffer );
 }
 
 
@@ -337,15 +301,15 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_mutex, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_mutex )
     {
         req->access  = access;
         req->inherit = inherit;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -359,7 +323,7 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
     SERVER_START_REQ( release_mutex )
     {
         req->handle = handle;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -376,34 +340,16 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
  */
 HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    WCHAR buffer[MAX_PATH];
 
-    /* Check parameters */
+    if (!name) return CreateSemaphoreW( sa, initial, max, NULL );
 
-    if ((max <= 0) || (initial < 0) || (initial > max))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (len >= MAX_PATH)
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-
-    SERVER_START_VAR_REQ( create_semaphore, len * sizeof(WCHAR) )
-    {
-        req->initial = (unsigned int)initial;
-        req->max     = (unsigned int)max;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return CreateSemaphoreW( sa, initial, max, buffer );
 }
 
 
@@ -429,17 +375,17 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
         return 0;
     }
 
-    SERVER_START_VAR_REQ( create_semaphore, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_semaphore )
     {
         req->initial = (unsigned int)initial;
         req->max     = (unsigned int)max;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -449,23 +395,16 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
  */
 HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    if (len >= MAX_PATH)
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenSemaphoreW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_semaphore, len * sizeof(WCHAR) )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return OpenSemaphoreW( access, inherit, buffer );
 }
 
 
@@ -481,15 +420,15 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( open_semaphore, len * sizeof(WCHAR) )
+    SERVER_START_REQ( open_semaphore )
     {
         req->access  = access;
         req->inherit = inherit;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -518,35 +457,18 @@ HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
                                 DWORD nOutBufferSize, DWORD nInBufferSize,
                                 DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
 {
-    HANDLE ret;
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    WCHAR buffer[MAX_PATH];
 
-    TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p): stub\n",
-          debugstr_a(name), dwOpenMode, dwPipeMode, nMaxInstances,
-          nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
+    if (!name) return CreateNamedPipeW( NULL, dwOpenMode, dwPipeMode, nMaxInstances,
+                                        nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
 
-    if (len >= MAX_PATH)
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_named_pipe, len * sizeof(WCHAR) )
-    {
-        req->openmode = dwOpenMode;
-        req->pipemode = dwPipeMode;
-        req->maxinstances = nMaxInstances;
-        req->outsize = nOutBufferSize;
-        req->insize = nInBufferSize;
-        req->timeout = nDefaultTimeOut;
-
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
-    }
-    SERVER_END_VAR_REQ;
-    TRACE("Returned %d\n",ret);
-    return ret;
+    return CreateNamedPipeW( buffer, dwOpenMode, dwPipeMode, nMaxInstances,
+                             nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
 }
 
 
@@ -570,7 +492,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_VAR_REQ( create_named_pipe, len * sizeof(WCHAR) )
+    SERVER_START_REQ( create_named_pipe )
     {
         req->openmode = dwOpenMode;
         req->pipemode = dwPipeMode;
@@ -578,13 +500,12 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         req->outsize = nOutBufferSize;
         req->insize = nInBufferSize;
         req->timeout = nDefaultTimeOut;
-
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        SERVER_CALL_ERR();
-        ret = req->handle;
+        wine_server_call_err( req );
+        ret = reply->handle;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -613,98 +534,39 @@ static void SYNC_CompletePipeOverlapped (LPOVERLAPPED overlapped, DWORD result)
     SetEvent(overlapped->hEvent);
 }
 
-/***********************************************************************
- *           WaitNamedPipeA   (KERNEL32.@)
- */
-static BOOL SYNC_WaitNamedPipeA (LPCSTR name, DWORD nTimeOut, LPOVERLAPPED overlapped)
-{
-    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    BOOL ret;
-
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return FALSE;
-    }
-
-    SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
-    {
-        req->timeout = nTimeOut;
-        req->overlapped = overlapped;
-        req->func = SYNC_CompletePipeOverlapped;
-        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        ret = !SERVER_CALL_ERR();
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
 
 /***********************************************************************
  *           WaitNamedPipeA   (KERNEL32.@)
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
 {
-    BOOL ret;
-    OVERLAPPED ov;
+    WCHAR buffer[MAX_PATH];
 
-    TRACE("%s 0x%08lx\n",debugstr_a(name),nTimeOut);
+    if (!name) return WaitNamedPipeW( NULL, nTimeOut );
 
-    memset(&ov,0,sizeof ov);
-    ov.hEvent = CreateEventA( NULL, 0, 0, NULL );
-    if (!ov.hEvent)
-        return FALSE;
-
-    /* expect to fail with STATUS_PENDING */
-    ret = SYNC_WaitNamedPipeA(name, nTimeOut, &ov);
-    if(ret)
-    {
-        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
-        {
-            SetLastError(ov.Internal);
-            ret = (ov.Internal==STATUS_SUCCESS);
-        }
-    }
-
-    CloseHandle(ov.hEvent);
-    return ret;
-}
-
-
-/***********************************************************************
- *           WaitNamedPipeW   (KERNEL32.@)
- */
-static BOOL SYNC_WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut, LPOVERLAPPED overlapped)
-{
-    DWORD len = name ? strlenW(name) : 0;
-    BOOL ret;
-
-    if (len >= MAX_PATH)
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return FALSE;
+        return 0;
     }
-
-    SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
-    {
-        req->timeout = nTimeOut;
-        req->overlapped = overlapped;
-        req->func = SYNC_CompletePipeOverlapped;
-        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        ret = !SERVER_CALL_ERR();
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    return WaitNamedPipeW( buffer, nTimeOut );
 }
+
 
 /***********************************************************************
  *           WaitNamedPipeW   (KERNEL32.@)
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 {
+    DWORD len = name ? strlenW(name) : 0;
     BOOL ret;
     OVERLAPPED ov;
+
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return FALSE;
+    }
 
     TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
 
@@ -713,7 +575,16 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     if (!ov.hEvent)
         return FALSE;
 
-    ret = SYNC_WaitNamedPipeW(name, nTimeOut, &ov);
+    SERVER_START_REQ( wait_named_pipe )
+    {
+        req->timeout = nTimeOut;
+        req->overlapped = &ov;
+        req->func = SYNC_CompletePipeOverlapped;
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
     if(ret)
     {
         if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
@@ -722,9 +593,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
             ret = (ov.Internal==STATUS_SUCCESS);
         }
     }
-
     CloseHandle(ov.hEvent);
-
     return ret;
 }
 
@@ -746,7 +615,7 @@ static BOOL SYNC_ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
         req->handle = hPipe;
         req->overlapped = overlapped;
         req->func = SYNC_CompletePipeOverlapped;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -798,7 +667,7 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
     SERVER_START_REQ( disconnect_named_pipe )
     {
         req->handle = hPipe;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -835,15 +704,11 @@ BOOL WINAPI GetNamedPipeInfo(
     SERVER_START_REQ( get_named_pipe_info )
     {
         req->handle = hNamedPipe;
-        ret = !SERVER_CALL_ERR();
-        if(lpFlags)
-            *lpFlags = req->flags;
-        if(lpOutputBufferSize)
-            *lpOutputBufferSize = req->outsize;
-        if(lpInputBufferSize)
-            *lpInputBufferSize = req->outsize;
-        if(lpMaxInstances)
-            *lpMaxInstances = req->maxinstances;
+        ret = !wine_server_call_err( req );
+        if(lpFlags) *lpFlags = reply->flags;
+        if(lpOutputBufferSize) *lpOutputBufferSize = reply->outsize;
+        if(lpInputBufferSize) *lpInputBufferSize = reply->outsize;
+        if(lpMaxInstances) *lpMaxInstances = reply->maxinstances;
     }
     SERVER_END_REQ;
 

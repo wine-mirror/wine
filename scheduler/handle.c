@@ -46,8 +46,8 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
         req->flags  = 0;
         req->mask   = 0;
         req->fd     = -1;
-        ret = !SERVER_CALL_ERR();
-        if (ret && flags) *flags = req->old_flags;
+        ret = !wine_server_call_err( req );
+        if (ret && flags) *flags = reply->old_flags;
     }
     SERVER_END_REQ;
     return ret;
@@ -66,7 +66,7 @@ BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
         req->flags  = flags;
         req->mask   = mask;
         req->fd     = -1;
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -90,11 +90,11 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
         req->inherit     = inherit;
         req->options     = options;
 
-        ret = !SERVER_CALL_ERR();
+        ret = !wine_server_call_err( req );
         if (ret)
         {
-            if (dest) *dest = req->handle;
-            if (req->fd != -1) close( req->fd );
+            if (dest) *dest = reply->handle;
+            if (reply->fd != -1) close( reply->fd );
         }
     }
     SERVER_END_REQ;

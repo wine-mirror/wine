@@ -36,7 +36,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
     {
         req->subtree = bWatchSubtree;
         req->filter  = dwNotifyFilter;
-        if (!SERVER_CALL_ERR()) ret = req->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
     return ret;

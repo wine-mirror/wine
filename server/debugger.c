@@ -353,7 +353,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 
 /* alloc a debug event for a debugger */
 static struct debug_event *alloc_debug_event( struct thread *thread, int code,
-                                              void *arg, CONTEXT *context )
+                                              void *arg, const CONTEXT *context )
 {
     struct thread *debugger = thread->process->debugger;
     struct debug_event *event;
@@ -498,25 +498,23 @@ DECL_HANDLER(wait_debug_event)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    req->wait = 0;
+    reply->wait = 0;
     if ((event = find_event_to_send( debug_ctx )))
     {
-        size_t size = get_req_data_size(req);
+        size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
         event->sender->debug_event = event;
-        req->pid = event->sender->process;
-        req->tid = event->sender;
+        reply->pid = event->sender->process;
+        reply->tid = event->sender;
         if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
-        memcpy( get_req_data(req), &event->data, size );
-        set_req_data_size( req, size );
+        set_reply_data( &event->data, size );
     }
     else  /* no event ready */
     {
-        req->pid  = 0;
-        req->tid  = 0;
-        set_req_data_size( req, 0 );
+        reply->pid  = 0;
+        reply->tid  = 0;
         if (req->get_handle)
-            req->wait = alloc_handle( current->process, debug_ctx, SYNCHRONIZE, FALSE );
+            reply->wait = alloc_handle( current->process, debug_ctx, SYNCHRONIZE, FALSE );
     }
 }
 
@@ -562,15 +560,15 @@ DECL_HANDLER(debug_process)
 /* queue an exception event */
 DECL_HANDLER(queue_exception_event)
 {
-    req->handle = 0;
+    reply->handle = 0;
     if (current->process->debugger)
     {
         struct debug_event_exception data;
         struct debug_event *event;
-        CONTEXT *context = get_req_data( req );
+        const CONTEXT *context = get_req_data();
         EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)(context + 1);
 
-        if (get_req_data_size( req ) < sizeof(*rec) + sizeof(*context))
+        if (get_req_data_size() < sizeof(*rec) + sizeof(*context))
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
@@ -579,7 +577,7 @@ DECL_HANDLER(queue_exception_event)
         data.first  = req->first;
         if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data, context )))
         {
-            if ((req->handle = alloc_handle( current->process, event, SYNCHRONIZE, FALSE )))
+            if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, FALSE )))
             {
                 link_event( event );
                 suspend_process( current->process );
@@ -593,26 +591,24 @@ DECL_HANDLER(queue_exception_event)
 DECL_HANDLER(get_exception_status)
 {
     struct debug_event *event;
-    size_t size = 0;
 
-    req->status = 0;
+    reply->status = 0;
     if ((event = (struct debug_event *)get_handle_obj( current->process, req->handle,
                                                        0, &debug_event_ops )))
     {
         if (event->state == EVENT_CONTINUED)
         {
-            req->status = event->status;
+            reply->status = event->status;
             if (current->context == &event->context)
             {
-                size = min( sizeof(CONTEXT), get_req_data_size(req) );
-                memcpy( get_req_data(req), &event->context, size );
+                size_t size = min( sizeof(CONTEXT), get_reply_max_size() );
+                set_reply_data( &event->context, size );
                 current->context = NULL;
             }
         }
         else set_error( STATUS_PENDING );
         release_object( event );
     }
-    set_req_data_size( req, size );
 }
 
 /* send an output string to the debugger */

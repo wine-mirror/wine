@@ -29,7 +29,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnt.h" /* registry definitions */
-
+#include "ntddk.h"
 
 /* a registry key */
 struct key
@@ -285,7 +285,7 @@ static void key_destroy( struct object *obj )
     }
 }
 
-/* duplicate a key path from the request buffer */
+/* duplicate a key path */
 /* returns a pointer to a static buffer, so only useable once per request */
 static WCHAR *copy_path( const WCHAR *path, size_t len, int skip_root )
 {
@@ -303,17 +303,17 @@ static WCHAR *copy_path( const WCHAR *path, size_t len, int skip_root )
     return buffer;
 }
 
-/* copy a path from the request buffer, in cases where the length is stored in front of the path */
-static WCHAR *copy_req_path( void *req, size_t *len, int skip_root )
+/* copy a path from the request buffer */
+static WCHAR *copy_req_path( size_t len, int skip_root )
 {
-    const WCHAR *name_ptr = get_req_data(req);
-    if ((*len = sizeof(WCHAR) + *name_ptr++) > get_req_data_size(req))
+    const WCHAR *name_ptr = get_req_data();
+    if (len > get_req_data_size())
     {
         fatal_protocol_error( current, "copy_req_path: invalid length %d/%d\n",
-                              *len, get_req_data_size(req) );
+                              len, get_req_data_size() );
         return NULL;
     }
-    return copy_path( name_ptr, *len - sizeof(WCHAR), skip_root );
+    return copy_path( name_ptr, len, skip_root );
 }
 
 /* return the next token in a given path */
@@ -564,26 +564,39 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
 }
 
 /* query information about a key or a subkey */
-static size_t enum_key( struct key *key, int index, struct enum_key_request *req )
+static void enum_key( struct key *key, int index, int info_class, struct enum_key_reply *reply )
 {
     int i;
     size_t len, namelen, classlen;
     int max_subkey = 0, max_class = 0;
     int max_value = 0, max_data = 0;
-    WCHAR *data = get_req_data(req);
+    WCHAR *data;
 
     if (index != -1)  /* -1 means use the specified key directly */
     {
         if ((index < 0) || (index > key->last_subkey))
         {
             set_error( STATUS_NO_MORE_ENTRIES );
-            return 0;
+            return;
         }
         key = key->subkeys[index];
     }
 
-    if (req->full)
+    namelen = strlenW(key->name) * sizeof(WCHAR);
+    classlen = key->class ? strlenW(key->class) * sizeof(WCHAR) : 0;
+
+    switch(info_class)
     {
+    case KeyBasicInformation:
+        classlen = 0; /* only return the name */
+        /* fall through */
+    case KeyNodeInformation:
+        reply->max_subkey = 0;
+        reply->max_class  = 0;
+        reply->max_value  = 0;
+        reply->max_data   = 0;
+        break;
+    case KeyFullInformation:
         for (i = 0; i <= key->last_subkey; i++)
         {
             struct key *subkey = key->subkeys[i];
@@ -600,43 +613,37 @@ static size_t enum_key( struct key *key, int index, struct enum_key_request *req
             len = key->values[i].len;
             if (len > max_data) max_data = len;
         }
-        req->max_subkey = max_subkey;
-        req->max_class  = max_class;
-        req->max_value  = max_value;
-        req->max_data   = max_data;
+        reply->max_subkey = max_subkey;
+        reply->max_class  = max_class;
+        reply->max_value  = max_value;
+        reply->max_data   = max_data;
+        namelen = 0;  /* only return the class */
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
     }
-    else
+    reply->subkeys = key->last_subkey + 1;
+    reply->values  = key->last_value + 1;
+    reply->modif   = key->modif;
+    reply->total   = namelen + classlen;
+
+    len = min( reply->total, get_reply_max_size() );
+    if (len && (data = set_reply_data_size( len )))
     {
-        req->max_subkey = 0;
-        req->max_class  = 0;
-        req->max_value  = 0;
-        req->max_data   = 0;
+        if (len > namelen)
+        {
+            reply->namelen = namelen;
+            memcpy( data, key->name, namelen );
+            memcpy( (char *)data + namelen, key->class, len - namelen );
+        }
+        else
+        {
+            reply->namelen = len;
+            memcpy( data, key->name, len );
+        }
     }
-    req->subkeys = key->last_subkey + 1;
-    req->values  = key->last_value + 1;
-    req->modif   = key->modif;
-
-    namelen = strlenW(key->name) * sizeof(WCHAR);
-    classlen = key->class ? strlenW(key->class) * sizeof(WCHAR) : 0;
-
-    len = namelen + classlen + sizeof(WCHAR);
-    if (len > get_req_data_size(req))
-    {
-        len = get_req_data_size(req);
-        if (len < sizeof(WCHAR)) return 0;
-    }
-
-    *data++ = namelen;
-    len -= sizeof(WCHAR);
-    if (len > namelen)
-    {
-        memcpy( data, key->name, namelen );
-        memcpy( (char *)data + namelen, key->class, min(classlen,len-namelen) );
-    }
-    else memcpy( data, key->name, len );
-
     if (debug_level > 1) dump_operation( key, NULL, "Enum" );
-    return len + sizeof(WCHAR);
 }
 
 /* delete a key and its values */
@@ -743,43 +750,13 @@ static struct key_value *insert_value( struct key *key, const WCHAR *name )
 }
 
 /* set a key value */
-static void set_value( struct key *key, WCHAR *name, int type, unsigned int total_len,
-                       unsigned int offset, unsigned int data_len, const void *data )
+static void set_value( struct key *key, WCHAR *name, int type, const void *data, size_t len )
 {
     struct key_value *value;
     void *ptr = NULL;
 
-    if (data_len + offset > total_len)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (offset)  /* adding data to an existing value */
-    {
-        int index;
-        if (!(value = find_value( key, name, &index )))
-        {
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-            return;
-        }
-        if (value->len != total_len)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            return;
-        }
-        memcpy( (char *)value->data + offset, data, data_len );
-        if (debug_level > 1) dump_operation( key, value, "Set" );
-        return;
-    }
-
     /* first copy the data */
-    if (total_len)
-    {
-        if (!(ptr = mem_alloc( total_len ))) return;
-        memcpy( ptr, data, data_len );
-        if (data_len < total_len) memset( (char *)ptr + data_len, 0, total_len - data_len );
-    }
+    if (len && !(ptr = memdup( data, len ))) return;
 
     if (!(value = insert_value( key, name )))
     {
@@ -788,30 +765,23 @@ static void set_value( struct key *key, WCHAR *name, int type, unsigned int tota
     }
     if (value->data) free( value->data ); /* already existing, free previous data */
     value->type  = type;
-    value->len   = total_len;
+    value->len   = len;
     value->data  = ptr;
     touch_key( key );
     if (debug_level > 1) dump_operation( key, value, "Set" );
 }
 
 /* get a key value */
-static size_t get_value( struct key *key, const WCHAR *name, unsigned int offset,
-                         unsigned int maxlen, int *type, int *len, void *data )
+static void get_value( struct key *key, const WCHAR *name, int *type, int *len )
 {
     struct key_value *value;
     int index;
-    size_t ret = 0;
 
     if ((value = find_value( key, name, &index )))
     {
         *type = value->type;
         *len  = value->len;
-        if (value->data && offset < value->len)
-        {
-            if (maxlen > value->len - offset) maxlen = value->len - offset;
-            memcpy( data, (char *)value->data + offset, maxlen );
-            ret = maxlen;
-        }
+        if (value->data) set_reply_data( value->data, min( value->len, get_reply_max_size() ));
         if (debug_level > 1) dump_operation( key, value, "Get" );
     }
     else
@@ -819,54 +789,57 @@ static size_t get_value( struct key *key, const WCHAR *name, unsigned int offset
         *type = -1;
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
-    return ret;
 }
 
 /* enumerate a key value */
-static size_t enum_value( struct key *key, int i, unsigned int offset,
-                          unsigned int maxlen, int *type, int *len, void *data )
+static void enum_value( struct key *key, int i, int info_class, struct enum_key_value_reply *reply )
 {
     struct key_value *value;
-    size_t ret = 0;
 
     if (i < 0 || i > key->last_value) set_error( STATUS_NO_MORE_ENTRIES );
     else
     {
-        WCHAR *name_ptr = data;
+        void *data;
+        size_t namelen, maxlen;
+
         value = &key->values[i];
-        *type = value->type;
-        *len  = value->len;
+        reply->type = value->type;
+        namelen = strlenW( value->name ) * sizeof(WCHAR);
 
-        if (maxlen >= sizeof(WCHAR))
+        switch(info_class)
         {
-            size_t name_len = 0;
+        case KeyValueBasicInformation:
+            reply->total = namelen;
+            break;
+        case KeyValueFullInformation:
+            reply->total = namelen + value->len;
+            break;
+        case KeyValuePartialInformation:
+            reply->total = value->len;
+            namelen = 0;
+            break;
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
 
-            /* copy the name only the first time (offset==0),
-             * otherwise store an empty name in the buffer
-             */
-            maxlen -= sizeof(WCHAR);
-            ret += sizeof(WCHAR);
-            if (!offset)
+        maxlen = min( reply->total, get_reply_max_size() );
+        if (maxlen && ((data = set_reply_data_size( maxlen ))))
+        {
+            if (maxlen > namelen)
             {
-                name_len = strlenW( value->name ) * sizeof(WCHAR);
-                if (name_len > maxlen) name_len = maxlen;
+                reply->namelen = namelen;
+                memcpy( data, value->name, namelen );
+                memcpy( (char *)data + namelen, value->data, maxlen - namelen );
             }
-            *name_ptr++ = name_len;
-            memcpy( name_ptr, value->name, name_len );
-            maxlen -= name_len;
-            ret += name_len;
-            data = (char *)name_ptr + name_len;
-
-            if (value->data && offset < value->len)
+            else
             {
-                if (maxlen > value->len - offset) maxlen = value->len - offset;
-                memcpy( data, (char *)value->data + offset, maxlen );
-                ret += maxlen;
+                reply->namelen = maxlen;
+                memcpy( data, value->name, maxlen );
             }
         }
         if (debug_level > 1) dump_operation( key, value, "Enum" );
     }
-    return ret;
 }
 
 /* delete a value */
@@ -1585,31 +1558,30 @@ DECL_HANDLER(create_key)
     struct key *key = NULL, *parent;
     unsigned int access = req->access;
     WCHAR *name, *class;
-    size_t len;
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
-    req->hkey = 0;
-    if (!(name = copy_req_path( req, &len, !req->parent ))) return;
+    reply->hkey = 0;
+    if (!(name = copy_req_path( req->namelen, !req->parent ))) return;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        if (len == get_req_data_size(req))  /* no class specified */
+        if (req->namelen == get_req_data_size())  /* no class specified */
         {
-            key = create_key( parent, name, NULL, req->options, req->modif, &req->created );
+            key = create_key( parent, name, NULL, req->options, req->modif, &reply->created );
         }
         else
         {
-            const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data(req) + len);
+            const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data() + req->namelen);
 
-            if ((class = req_strdupW( req, class_ptr, get_req_data_size(req) - len )))
+            if ((class = req_strdupW( req, class_ptr, get_req_data_size() - req->namelen )))
             {
                 key = create_key( parent, name, class, req->options,
-                                  req->modif, &req->created );
+                                  req->modif, &reply->created );
                 free( class );
             }
         }
         if (key)
         {
-            req->hkey = alloc_handle( current->process, key, access, 0 );
+            reply->hkey = alloc_handle( current->process, key, access, 0 );
             release_object( key );
         }
         release_object( parent );
@@ -1623,13 +1595,13 @@ DECL_HANDLER(open_key)
     unsigned int access = req->access;
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
-    req->hkey = 0;
+    reply->hkey = 0;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        WCHAR *name = copy_path( get_req_data(req), get_req_data_size(req), !req->parent );
+        WCHAR *name = copy_path( get_req_data(), get_req_data_size(), !req->parent );
         if (name && (key = open_key( parent, name )))
         {
-            req->hkey = alloc_handle( current->process, key, access, 0 );
+            reply->hkey = alloc_handle( current->process, key, access, 0 );
             release_object( key );
         }
         release_object( parent );
@@ -1652,15 +1624,13 @@ DECL_HANDLER(delete_key)
 DECL_HANDLER(enum_key)
 {
     struct key *key;
-    size_t len = 0;
 
     if ((key = get_hkey_obj( req->hkey,
                              req->index == -1 ? KEY_QUERY_VALUE : KEY_ENUMERATE_SUB_KEYS )))
     {
-        len = enum_key( key, req->index, req );
+        enum_key( key, req->index, req->info_class, reply );
         release_object( key );
     }
-    set_req_data_size( req, len );
 }
 
 /* set a value of a registry key */
@@ -1668,15 +1638,14 @@ DECL_HANDLER(set_key_value)
 {
     struct key *key;
     WCHAR *name;
-    size_t len;
 
-    if (!(name = copy_req_path( req, &len, 0 ))) return;
+    if (!(name = copy_req_path( req->namelen, 0 ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        size_t datalen = get_req_data_size(req) - len;
-        const char *data = (char *)get_req_data(req) + len;
+        size_t datalen = get_req_data_size() - req->namelen;
+        const char *data = (char *)get_req_data() + req->namelen;
 
-        set_value( key, name, req->type, req->total, req->offset, datalen, data );
+        set_value( key, name, req->type, data, datalen );
         release_object( key );
     }
 }
@@ -1686,33 +1655,26 @@ DECL_HANDLER(get_key_value)
 {
     struct key *key;
     WCHAR *name;
-    size_t len = 0, tmp;
 
-    req->len = 0;
-    if (!(name = copy_req_path( req, &tmp, 0 ))) return;
+    reply->total = 0;
+    if (!(name = copy_path( get_req_data(), get_req_data_size(), 0 ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        len = get_value( key, name, req->offset, get_req_data_size(req),
-                         &req->type, &req->len, get_req_data(req) );
+        get_value( key, name, &reply->type, &reply->total );
         release_object( key );
     }
-    set_req_data_size( req, len );
 }
 
 /* enumerate the value of a registry key */
 DECL_HANDLER(enum_key_value)
 {
     struct key *key;
-    size_t len = 0;
 
-    req->len = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        len = enum_value( key, req->index, req->offset, get_req_data_size(req),
-                          &req->type, &req->len, get_req_data(req) );
+        enum_value( key, req->index, req->info_class, reply );
         release_object( key );
     }
-    set_req_data_size( req, len );
 }
 
 /* delete a value of a registry key */
@@ -1723,7 +1685,7 @@ DECL_HANDLER(delete_key_value)
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        if ((name = req_strdupW( req, get_req_data(req), get_req_data_size(req) )))
+        if ((name = req_strdupW( req, get_req_data(), get_req_data_size() )))
         {
             delete_value( key, name );
             free( name );
@@ -1786,7 +1748,7 @@ DECL_HANDLER(save_registry_atexit)
 
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
     {
-        register_branch_for_saving( key, get_req_data(req), get_req_data_size(req) );
+        register_branch_for_saving( key, get_req_data(), get_req_data_size() );
         release_object( key );
     }
 }

@@ -35,39 +35,29 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
                              PULONG dispos )
 {
     NTSTATUS ret;
-    DWORD len = attr->ObjectName->Length;
 
     TRACE( "(0x%x,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
 
-    if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
-    len += sizeof(WCHAR);  /* for storing name length */
-    if (class)
-    {
-        len += class->Length;
-        if (len > REQUEST_MAX_VAR_SIZE) return STATUS_BUFFER_OVERFLOW;
-    }
+    if (attr->ObjectName->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
     if (!retkey) return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_VAR_REQ( create_key, len )
+    SERVER_START_REQ( create_key )
     {
-        WCHAR *data = server_data_ptr(req);
-
         req->parent  = attr->RootDirectory;
         req->access  = access;
         req->options = options;
         req->modif   = 0;
-
-        *data++ = attr->ObjectName->Length;
-        memcpy( data, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        if (class) memcpy( (char *)data + attr->ObjectName->Length, class->Buffer, class->Length );
-        if (!(ret = SERVER_CALL()))
+        req->namelen = attr->ObjectName->Length;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        if (class) wine_server_add_data( req, class->Buffer, class->Length );
+        if (!(ret = wine_server_call( req )))
         {
-            *retkey = req->hkey;
-            if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+            *retkey = reply->hkey;
+            if (dispos) *dispos = reply->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
         }
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
@@ -92,15 +82,15 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
     if (!retkey) return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_VAR_REQ( open_key, len )
+    SERVER_START_REQ( open_key )
     {
         req->parent = attr->RootDirectory;
         req->access = access;
-        memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = SERVER_CALL();
-        *retkey = req->hkey;
+        wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *retkey = reply->hkey;
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
@@ -119,7 +109,7 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
     SERVER_START_REQ( delete_key )
     {
         req->hkey = hkey;
-        ret = SERVER_CALL();
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -137,102 +127,101 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
     TRACE( "(0x%x,%s)\n", hkey, debugstr_us(name) );
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-    SERVER_START_VAR_REQ( delete_key_value, name->Length )
+    SERVER_START_REQ( delete_key_value )
     {
         req->hkey = hkey;
-        memcpy( server_data_ptr(req), name->Buffer, name->Length );
-        ret = SERVER_CALL();
+        wine_server_add_data( req, name->Buffer, name->Length );
+        ret = wine_server_call( req );
     }
-    SERVER_END_VAR_REQ;
+    SERVER_END_REQ;
     return ret;
 }
 
 
 /******************************************************************************
- *     fill_key_info
+ *     enumerate_key
  *
- * Helper function for NtQueryKey and NtEnumerateKey
+ * Implementation of NtQueryKey and NtEnumerateKey
  */
-static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWORD length,
-                               DWORD *result_len, const struct enum_key_request *req )
-{
-    WCHAR *name_ptr = server_data_ptr(req);
-    int name_size = *name_ptr++;
-    WCHAR *class_ptr = (WCHAR *)((char *)name_ptr + name_size);
-    int class_size = server_data_size(req) - sizeof(WCHAR) - name_size;
-    int fixed_size;
-    LARGE_INTEGER modif;
+static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS info_class,
+                               void *info, DWORD length, DWORD *result_len )
 
-    RtlSecondsSince1970ToTime( req->modif, (FILETIME *)&modif );
+{
+    NTSTATUS ret;
+    void *data_ptr;
+    size_t fixed_size;
 
     switch(info_class)
     {
-    case KeyBasicInformation:
-        {
-            KEY_BASIC_INFORMATION keyinfo;
-            fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
-            keyinfo.LastWriteTime = modif;
-            keyinfo.TitleIndex = 0;
-            keyinfo.NameLength = name_size;
-            memcpy( info, &keyinfo, min( length, fixed_size ) );
-            class_size = 0;
-        }
-        break;
-    case KeyFullInformation:
-        {
-            KEY_FULL_INFORMATION keyinfo;
-            fixed_size = (char *)keyinfo.Class - (char *)&keyinfo;
-            keyinfo.LastWriteTime = modif;
-            keyinfo.TitleIndex = 0;
-            keyinfo.ClassLength = class_size;
-            keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size : -1;
-            keyinfo.SubKeys = req->subkeys;
-            keyinfo.MaxNameLen = req->max_subkey;
-            keyinfo.MaxClassLen = req->max_class;
-            keyinfo.Values = req->values;
-            keyinfo.MaxValueNameLen = req->max_value;
-            keyinfo.MaxValueDataLen = req->max_data;
-            memcpy( info, &keyinfo, min( length, fixed_size ) );
-            name_size = 0;
-        }
-        break;
-    case KeyNodeInformation:
-        {
-            KEY_NODE_INFORMATION keyinfo;
-            fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
-            keyinfo.LastWriteTime = modif;
-            keyinfo.TitleIndex = 0;
-            keyinfo.ClassLength = class_size;
-            keyinfo.ClassOffset = fixed_size + name_size;
-            if (!keyinfo.ClassLength || keyinfo.ClassOffset > length) keyinfo.ClassOffset = -1;
-            keyinfo.NameLength = name_size;
-            memcpy( info, &keyinfo, min( length, fixed_size ) );
-        }
-        break;
+    case KeyBasicInformation: data_ptr = ((KEY_BASIC_INFORMATION *)info)->Name; break;
+    case KeyFullInformation:  data_ptr = ((KEY_FULL_INFORMATION *)info)->Class; break;
+    case KeyNodeInformation:  data_ptr = ((KEY_NODE_INFORMATION *)info)->Name;  break;
     default:
-        FIXME("Information class not implemented\n");
+        FIXME( "Information class %d not implemented\n", info_class );
         return STATUS_INVALID_PARAMETER;
     }
+    fixed_size = (char *)data_ptr - (char *)info;
 
-    *result_len = fixed_size + name_size + class_size;
-    if (length <= fixed_size) return STATUS_BUFFER_OVERFLOW;
-    length -= fixed_size;
-
-    /* copy the name */
-    if (name_size)
+    SERVER_START_REQ( enum_key )
     {
-        memcpy( (char *)info + fixed_size, name_ptr, min(length,name_size) );
-        if (length < name_size) return STATUS_BUFFER_OVERFLOW;
-        length -= name_size;
-    }
+        req->hkey       = handle;
+        req->index      = index;
+        req->info_class = info_class;
+        if (length > fixed_size) wine_server_set_reply( req, data_ptr, length - fixed_size );
+        if (!(ret = wine_server_call( req )))
+        {
+            LARGE_INTEGER modif;
 
-    /* copy the class */
-    if (class_size)
-    {
-        memcpy( (char *)info + fixed_size + name_size, class_ptr, min(length,class_size) );
-        if (length < class_size) return STATUS_BUFFER_OVERFLOW;
+            RtlSecondsSince1970ToTime( reply->modif, (FILETIME *)&modif );
+
+            switch(info_class)
+            {
+            case KeyBasicInformation:
+                {
+                    KEY_BASIC_INFORMATION keyinfo;
+                    fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
+                    keyinfo.LastWriteTime = modif;
+                    keyinfo.TitleIndex = 0;
+                    keyinfo.NameLength = reply->namelen;
+                    memcpy( info, &keyinfo, min( length, fixed_size ) );
+                }
+                break;
+            case KeyFullInformation:
+                {
+                    KEY_FULL_INFORMATION keyinfo;
+                    fixed_size = (char *)keyinfo.Class - (char *)&keyinfo;
+                    keyinfo.LastWriteTime = modif;
+                    keyinfo.TitleIndex = 0;
+                    keyinfo.ClassLength = wine_server_reply_size(reply);
+                    keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size : -1;
+                    keyinfo.SubKeys = reply->subkeys;
+                    keyinfo.MaxNameLen = reply->max_subkey;
+                    keyinfo.MaxClassLen = reply->max_class;
+                    keyinfo.Values = reply->values;
+                    keyinfo.MaxValueNameLen = reply->max_value;
+                    keyinfo.MaxValueDataLen = reply->max_data;
+                    memcpy( info, &keyinfo, min( length, fixed_size ) );
+                }
+                break;
+            case KeyNodeInformation:
+                {
+                    KEY_NODE_INFORMATION keyinfo;
+                    fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
+                    keyinfo.LastWriteTime = modif;
+                    keyinfo.TitleIndex = 0;
+                    keyinfo.ClassLength = max( 0, wine_server_reply_size(reply) - reply->namelen );
+                    keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size + reply->namelen : -1;
+                    keyinfo.NameLength = reply->namelen;
+                    memcpy( info, &keyinfo, min( length, fixed_size ) );
+                }
+                break;
+            }
+            *result_len = fixed_size + reply->total;
+            if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
+        }
     }
-    return STATUS_SUCCESS;
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -247,23 +236,9 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
 NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLASS info_class,
                                 void *info, DWORD length, DWORD *result_len )
 {
-    NTSTATUS ret;
-
     /* -1 means query key, so avoid it here */
     if (index == (ULONG)-1) return STATUS_NO_MORE_ENTRIES;
-
-    SERVER_START_VAR_REQ( enum_key, REQUEST_MAX_VAR_SIZE )
-    {
-        req->hkey  = handle;
-        req->index = index;
-        req->full  = (info_class == KeyFullInformation);
-        if (!(ret = SERVER_CALL()))
-        {
-            ret = fill_key_info( info_class, info, length, result_len, req );
-        }
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return enumerate_key( handle, index, info_class, info, length, result_len );
 }
 
 
@@ -274,20 +249,7 @@ NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLAS
 NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
                             void *info, DWORD length, DWORD *result_len )
 {
-    NTSTATUS ret;
-
-    SERVER_START_VAR_REQ( enum_key, REQUEST_MAX_VAR_SIZE )
-    {
-        req->hkey  = handle;
-        req->index = -1;
-        req->full  = (info_class == KeyFullInformation);
-        if (!(ret = SERVER_CALL()))
-        {
-            ret = fill_key_info( info_class, info, length, result_len, req );
-        }
-    }
-    SERVER_END_VAR_REQ;
-    return ret;
+    return enumerate_key( handle, -1, info_class, info, length, result_len );
 }
 
 
@@ -344,98 +306,39 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
                                      void *info, DWORD length, DWORD *result_len )
 {
     NTSTATUS ret;
-    UCHAR *data_ptr;
-    WCHAR *name_ptr;
-    int fixed_size = 0, name_len = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
+    void *ptr;
+    size_t fixed_size;
 
     TRACE( "(0x%x,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
 
     /* compute the length we want to retrieve */
     switch(info_class)
     {
-    case KeyValueBasicInformation:
-        name_ptr = ((KEY_VALUE_BASIC_INFORMATION *)info)->Name;
-        data_ptr = NULL;
-        fixed_size = (char *)name_ptr - (char *)info;
-        break;
-    case KeyValueFullInformation:
-        name_ptr = ((KEY_VALUE_FULL_INFORMATION *)info)->Name;
-        data_ptr = (UCHAR *)name_ptr;
-        fixed_size = (char *)name_ptr - (char *)info;
-        break;
-    case KeyValuePartialInformation:
-        name_ptr = NULL;
-        data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
-        fixed_size = (char *)data_ptr - (char *)info;
-        break;
+    case KeyValueBasicInformation:   ptr = ((KEY_VALUE_BASIC_INFORMATION *)info)->Name; break;
+    case KeyValueFullInformation:    ptr = ((KEY_VALUE_FULL_INFORMATION *)info)->Name; break;
+    case KeyValuePartialInformation: ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data; break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );
         return STATUS_INVALID_PARAMETER;
     }
-    if (length > fixed_size) data_len = length - fixed_size;
+    fixed_size = (char *)ptr - (char *)info;
 
-    do
+    SERVER_START_REQ( enum_key_value )
     {
-        size_t reqlen = data_len + sizeof(WCHAR);
-        if (name_ptr && !offset) reqlen += MAX_PATH*sizeof(WCHAR);
-        reqlen = min( reqlen, REQUEST_MAX_VAR_SIZE );
-
-        SERVER_START_VAR_REQ( enum_key_value, reqlen )
+        req->hkey       = handle;
+        req->index      = index;
+        req->info_class = info_class;
+        if (length > fixed_size) wine_server_set_reply( req, ptr, length - fixed_size );
+        if (!(ret = wine_server_call( req )))
         {
-            req->hkey = handle;
-            req->index = index;
-            req->offset = offset;
-
-            if (!(ret = SERVER_CALL()))
-            {
-                size_t size = server_data_size(req) - sizeof(WCHAR);
-                WCHAR *name = server_data_ptr(req);
-                if (!offset)  /* name is only present on the first request */
-                {
-                    name_len = *name++;
-                    size -= name_len;
-                    if (name_ptr)
-                    {
-                        if (name_len > data_len)  /* overflow */
-                        {
-                            memcpy( name_ptr, name, data_len );
-                            data_len = 0;
-                            ret = STATUS_BUFFER_OVERFLOW;
-                        }
-                        else
-                        {
-                            memcpy( name_ptr, name, name_len );
-                            data_len -= name_len;
-                            if (data_ptr) data_ptr += name_len;
-                        }
-                    }
-                    name += name_len / sizeof(WCHAR);
-                }
-                else name++;  /* skip 0 length */
-
-                if (data_ptr)
-                {
-                    size = min( size, data_len );
-                    memcpy( data_ptr + offset, name, size );
-                    offset += size;
-                    data_len -= size;
-                }
-                type = req->type;
-                total_len = req->len;
-            }
+            copy_key_value_info( info_class, info, length, reply->type, reply->namelen,
+                                 wine_server_reply_size(reply) - reply->namelen );
+            *result_len = fixed_size + reply->total;
+            if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
         }
-        SERVER_END_VAR_REQ;
-        if (ret) return ret;
-    } while (data_len && data_ptr && offset < total_len);
-
-    *result_len = total_len + fixed_size + (name_ptr ? name_len : 0);
-
-    if (data_ptr && offset < total_len) ret = STATUS_BUFFER_OVERFLOW;
-    if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
-
-    copy_key_value_info( info_class, info, length, type, name_len, total_len );
+    }
+    SERVER_END_REQ;
     return ret;
-
 }
 
 
@@ -452,7 +355,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 {
     NTSTATUS ret;
     UCHAR *data_ptr;
-    int fixed_size = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
+    int fixed_size = 0;
 
     TRACE( "(0x%x,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
 
@@ -477,45 +380,21 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
         FIXME( "Information class %d not implemented\n", info_class );
         return STATUS_INVALID_PARAMETER;
     }
-    if (data_ptr && length > fixed_size) data_len = length - fixed_size;
 
-    do
+    SERVER_START_REQ( get_key_value )
     {
-        size_t reqlen = min( data_len, REQUEST_MAX_VAR_SIZE );
-        reqlen = max( reqlen, name->Length + sizeof(WCHAR) );
-
-        SERVER_START_VAR_REQ( get_key_value, reqlen )
+        req->hkey = handle;
+        wine_server_add_data( req, name->Buffer, name->Length );
+        if (length > fixed_size) wine_server_set_reply( req, data_ptr, length - fixed_size );
+        if (!(ret = wine_server_call( req )))
         {
-            WCHAR *nameptr = server_data_ptr(req);
-
-            req->hkey = handle;
-            req->offset = offset;
-            *nameptr++ = name->Length;
-            memcpy( nameptr, name->Buffer, name->Length );
-
-            if (!(ret = SERVER_CALL()))
-            {
-                size_t size = min( server_data_size(req), data_len );
-                type = req->type;
-                total_len = req->len;
-                if (size)
-                {
-                    memcpy( data_ptr + offset, server_data_ptr(req), size );
-                    offset += size;
-                    data_len -= size;
-                }
-            }
+            copy_key_value_info( info_class, info, length, reply->type,
+                                 0, wine_server_reply_size(reply) );
+            *result_len = fixed_size + reply->total;
+            if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
         }
-        SERVER_END_VAR_REQ;
-        if (ret) return ret;
-    } while (data_len && offset < total_len);
-
-    *result_len = total_len + fixed_size;
-
-    if (offset < total_len) ret = STATUS_BUFFER_OVERFLOW;
-    if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
-
-    copy_key_value_info( info_class, info, length, type, 0, total_len );
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -651,36 +530,21 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
                                ULONG type, const void *data, ULONG count )
 {
     NTSTATUS ret;
-    ULONG namelen, pos;
 
     TRACE( "(0x%x,%s,%ld,%p,%ld)\n", hkey, debugstr_us(name), type, data, count );
 
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-    namelen = name->Length + sizeof(WCHAR);  /* for storing length */
-    pos = 0;
-
-    do
+    SERVER_START_REQ( set_key_value )
     {
-        ULONG len = count - pos;
-        if (len > REQUEST_MAX_VAR_SIZE - namelen) len = REQUEST_MAX_VAR_SIZE - namelen;
-
-        SERVER_START_VAR_REQ( set_key_value, namelen + len )
-        {
-            WCHAR *name_ptr = server_data_ptr(req);
-
-            req->hkey   = hkey;
-            req->type   = type;
-            req->total  = count;
-            req->offset = pos;
-            *name_ptr++ = name->Length;
-            memcpy( name_ptr, name->Buffer, name->Length );
-            memcpy( (char *)name_ptr + name->Length, (char *)data + pos, len );
-            pos += len;
-            ret = SERVER_CALL();
-        }
-        SERVER_END_VAR_REQ;
-    } while (!ret && pos < count);
+        req->hkey    = hkey;
+        req->type    = type;
+        req->namelen = name->Length;
+        wine_server_add_data( req, name->Buffer, name->Length );
+        wine_server_add_data( req, data, count );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
     return ret;
 }
 

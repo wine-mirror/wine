@@ -200,26 +200,6 @@ inline static int is_unicode_message( UINT message )
 
 #undef SET
 
-/* compute the total size of the packed data */
-inline static size_t get_data_total_size( const struct packed_message *data )
-{
-    int i;
-    size_t total = 0;
-    for (i = 0; i < data->count; i++) total += data->size[i];
-    return total;
-}
-
-/* copy all the data of a packed message into a single dest buffer */
-inline static void copy_all_data( void *dest, const struct packed_message *data )
-{
-    int i;
-    for (i = 0; i < data->count; i++)
-    {
-        memcpy( dest, data->data[i], data->size[i] );
-        dest = (char *)dest + data->size[i];
-    }
-}
-
 /* add a data field to a packed message */
 inline static void push_data( struct packed_message *data, const void *ptr, size_t size )
 {
@@ -1032,7 +1012,7 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
 static void reply_message( struct received_message_info *info, LRESULT result, BOOL remove )
 {
     struct packed_message data;
-    int replied = info->flags & ISMEX_REPLIED;
+    int i, replied = info->flags & ISMEX_REPLIED;
 
     if (info->flags & ISMEX_NOTIFY) return;  /* notify messages don't get replies */
     if (!remove && replied) return;  /* replied already */
@@ -1044,34 +1024,14 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
     {
         pack_reply( info->msg.hwnd, info->msg.message, info->msg.wParam,
                     info->msg.lParam, result, &data );
-        if (data.count)
-        {
-            size_t total = get_data_total_size( &data );
-
-            if (total > REQUEST_MAX_VAR_SIZE)
-            {
-                FIXME( "inter-process msg data size %d not supported yet, expect trouble\n",
-                       total );
-                total = REQUEST_MAX_VAR_SIZE;
-            }
-
-            SERVER_START_VAR_REQ( reply_message, total )
-            {
-                req->result = result;
-                req->remove = remove;
-                copy_all_data( server_data_ptr(req), &data );
-                SERVER_CALL();
-            }
-            SERVER_END_VAR_REQ;
-            return;
-        }
     }
 
     SERVER_START_REQ( reply_message )
     {
         req->result = result;
         req->remove = remove;
-        SERVER_CALL();
+        for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }
@@ -1170,7 +1130,6 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
  */
 BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 {
-    BOOL ret;
     LRESULT result;
     ULONG_PTR extra_info = 0;
     MESSAGEQUEUE *queue = QUEUE_Current();
@@ -1180,41 +1139,44 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 
     for (;;)
     {
+        NTSTATUS res;
         void *buffer = NULL;
-        size_t size = 0;
+        size_t size = 0, buffer_size = 0;
 
-        SERVER_START_VAR_REQ( get_message, REQUEST_MAX_VAR_SIZE )
+        do  /* loop while buffer is too small */
         {
-            req->flags     = flags;
-            req->get_win   = hwnd;
-            req->get_first = first;
-            req->get_last  = last;
-            if ((ret = !SERVER_CALL()))
+            if (buffer_size && !(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size )))
+                return FALSE;
+            SERVER_START_REQ( get_message )
             {
-                info.type        = req->type;
-                info.msg.hwnd    = req->win;
-                info.msg.message = req->msg;
-                info.msg.wParam  = req->wparam;
-                info.msg.lParam  = req->lparam;
-                info.msg.time    = req->time;
-                info.msg.pt.x    = req->x;
-                info.msg.pt.y    = req->y;
-                extra_info       = req->info;
-
-                if ((size = server_data_size(req)))
+                req->flags     = flags;
+                req->get_win   = hwnd;
+                req->get_first = first;
+                req->get_last  = last;
+                if (buffer_size) wine_server_set_reply( req, buffer, buffer_size );
+                if (!(res = wine_server_call( req )))
                 {
-                    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
-                    {
-                        ERR("out of memory for message data\n");
-                        ret = FALSE;
-                    }
-                    else memcpy( buffer, server_data_ptr(req), size );
+                    size = wine_server_reply_size( reply );
+                    info.type        = reply->type;
+                    info.msg.hwnd    = reply->win;
+                    info.msg.message = reply->msg;
+                    info.msg.wParam  = reply->wparam;
+                    info.msg.lParam  = reply->lparam;
+                    info.msg.time    = reply->time;
+                    info.msg.pt.x    = reply->x;
+                    info.msg.pt.y    = reply->y;
+                    extra_info       = reply->info;
+                }
+                else
+                {
+                    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+                    buffer_size = reply->total;
                 }
             }
-        }
-        SERVER_END_VAR_REQ;
+            SERVER_END_REQ;
+        } while (res == STATUS_BUFFER_OVERFLOW);
 
-        if (!ret) return FALSE;  /* no message available */
+        if (res) return FALSE;
 
         TRACE( "got type %d msg %x hwnd %x wp %x lp %lx\n",
                info.type, info.msg.message, info.msg.hwnd, info.msg.wParam, info.msg.lParam );
@@ -1241,26 +1203,27 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                      info.msg.wParam, info.msg.lParam, size );
                 /* ignore it */
                 reply_message( &info, 0, TRUE );
-                continue;
+                goto next;
             }
             break;
         case MSG_HARDWARE_RAW:
             if (!MSG_process_raw_hardware_message( &info.msg, extra_info,
                                                    hwnd, first, last, flags & GET_MSG_REMOVE ))
-                continue;
+                goto next;
             /* fall through */
         case MSG_HARDWARE_COOKED:
             if (!MSG_process_cooked_hardware_message( &info.msg, extra_info,
                                                       flags & GET_MSG_REMOVE ))
             {
                 flags |= GET_MSG_REMOVE_LAST;
-                continue;
+                goto next;
             }
             queue->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
             /* fall through */
         case MSG_POSTED:
             queue->GetMessageExtraInfoVal = extra_info;
             *msg = info.msg;
+            if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
             return TRUE;
         }
 
@@ -1271,7 +1234,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                                    info.msg.lParam, (info.type != MSG_ASCII) );
         reply_message( &info, result, TRUE );
         queue->receive_info = old_info;
-
+    next:
         if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
     }
 }
@@ -1298,10 +1261,10 @@ static void wait_message_reply( UINT flags )
             req->wake_mask    = (flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE;
             req->changed_mask = QS_SMRESULT | req->wake_mask;
             req->skip_wait    = 1;
-            if (!SERVER_CALL())
+            if (!wine_server_call( req ))
             {
-                wake_bits    = req->wake_bits;
-                changed_bits = req->changed_bits;
+                wake_bits    = reply->wake_bits;
+                changed_bits = reply->changed_bits;
             }
         }
         SERVER_END_REQ;
@@ -1338,8 +1301,9 @@ static void wait_message_reply( UINT flags )
 static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info *info,
                                   size_t *reply_size )
 {
+    struct packed_message data;
     unsigned int res;
-    int timeout = -1;
+    int i, timeout = -1;
 
     if (info->type != MSG_NOTIFY &&
         info->type != MSG_CALLBACK &&
@@ -1347,47 +1311,17 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
         info->timeout != INFINITE)
         timeout = info->timeout;
 
+    data.count = 0;
     if (info->type == MSG_OTHER_PROCESS)
     {
-        struct packed_message data;
         *reply_size = pack_message( info->hwnd, info->msg, info->wparam, info->lparam, &data );
-
         if (data.count == -1)
         {
             WARN( "cannot pack message %x\n", info->msg );
             return FALSE;
         }
-
-        if (data.size[0]) /* need to send extra data along with the message */
-        {
-            size_t total = get_data_total_size( &data );
-
-            if (total > REQUEST_MAX_VAR_SIZE)
-            {
-                FIXME( "inter-process msg data size %d not supported yet, expect trouble\n",
-                       total );
-                total = REQUEST_MAX_VAR_SIZE;
-            }
-
-            SERVER_START_VAR_REQ( send_message, total )
-            {
-                req->id      = (void *)dest_tid;
-                req->type    = MSG_OTHER_PROCESS;
-                req->win     = info->hwnd;
-                req->msg     = info->msg;
-                req->wparam  = info->wparam;
-                req->lparam  = info->lparam;
-                req->time    = GetCurrentTime();
-                req->timeout = timeout;
-                copy_all_data( server_data_ptr(req), &data );
-                res = SERVER_CALL();
-            }
-            SERVER_END_VAR_REQ;
-            goto done;
-        }
     }
 
-    /* no extra data, or not inter-process message */
     SERVER_START_REQ( send_message )
     {
         req->id      = (void *)dest_tid;
@@ -1398,19 +1332,17 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
         req->lparam  = info->lparam;
         req->time    = GetCurrentTime();
         req->timeout = timeout;
-        res = SERVER_CALL();
+        for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
+        if ((res = wine_server_call( req )))
+        {
+            if (res == STATUS_INVALID_PARAMETER)
+                /* FIXME: find a STATUS_ value for this one */
+                SetLastError( ERROR_INVALID_THREAD_ID );
+            else
+                SetLastError( RtlNtStatusToDosError(res) );
+        }
     }
     SERVER_END_REQ;
-
- done:
-    if (res)
-    {
-        if (res == STATUS_INVALID_PARAMETER)
-            /* FIXME: find a STATUS_ value for this one */
-            SetLastError( ERROR_INVALID_THREAD_ID );
-        else
-            SetLastError( RtlNtStatusToDosError(res) );
-    }
     return !res;
 }
 
@@ -1424,35 +1356,28 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
                                size_t reply_size, LRESULT *result )
 {
     NTSTATUS status;
+    void *reply_data = NULL;
 
     if (reply_size)
     {
-        if (reply_size > REQUEST_MAX_VAR_SIZE)
+        if (!(reply_data = HeapAlloc( GetProcessHeap(), 0, reply_size )))
         {
-            WARN( "reply_size %d too large, reply may be truncated\n", reply_size );
-            reply_size = REQUEST_MAX_VAR_SIZE;
+            WARN( "no memory for reply %d bytes, will be truncated\n", reply_size );
+            reply_size = 0;
         }
-        SERVER_START_VAR_REQ( get_message_reply, reply_size )
-        {
-            req->cancel = 1;
-            if (!(status = SERVER_CALL()))
-            {
-                *result = req->result;
-                unpack_reply( info->hwnd, info->msg, info->wparam, info->lparam,
-                              server_data_ptr(req), server_data_size(req) );
-            }
-        }
-        SERVER_END_VAR_REQ;
     }
-    else
+    SERVER_START_REQ( get_message_reply )
     {
-        SERVER_START_REQ( get_message_reply )
-        {
-            req->cancel = 1;
-            if (!(status = SERVER_CALL())) *result = req->result;
-        }
-        SERVER_END_REQ;
+        req->cancel = 1;
+        if (reply_size) wine_server_set_reply( req, reply_data, reply_size );
+        if (!(status = wine_server_call( req ))) *result = reply->result;
+        reply_size = wine_server_reply_size( reply );
     }
+    SERVER_END_REQ;
+    if (!status && reply_size)
+        unpack_reply( info->hwnd, info->msg, info->wparam, info->lparam, reply_data, reply_size );
+
+    if (reply_data) HeapFree( GetProcessHeap(), 0, reply_data );
 
     TRACE( "hwnd %x msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
@@ -1955,10 +1880,10 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
             req->wake_mask    = QS_SENDMESSAGE;
             req->changed_mask = mask;
             req->skip_wait    = 1;
-            if (!SERVER_CALL())
+            if (!wine_server_call( req ))
             {
-                wake_bits    = req->wake_bits;
-                changed_bits = req->changed_bits;
+                wake_bits    = reply->wake_bits;
+                changed_bits = reply->changed_bits;
             }
         }
         SERVER_END_REQ;

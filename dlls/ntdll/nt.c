@@ -82,8 +82,8 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
     {
         req->handle    = handle;
         req->exit_code = exit_code;
-        ret = SERVER_CALL();
-        self = !ret && req->self;
+        ret = wine_server_call( req );
+        self = !ret && reply->self;
     }
     SERVER_END_REQ;
     if (self) exit( exit_code );
@@ -159,9 +159,9 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
     {
         req->handle    = handle;
         req->exit_code = exit_code;
-        ret = SERVER_CALL();
-        self = !ret && req->self;
-        last = req->last;
+        ret = wine_server_call( req );
+        self = !ret && reply->self;
+        last = reply->last;
     }
     SERVER_END_REQ;
 
