@@ -96,7 +96,7 @@
 
 #include "utils.h"
 
-static const char *app_loader_template =
+static const char* app_loader_template =
     "#!/bin/sh\n"
     "\n"
     "appname=\"%s\"\n"
@@ -148,7 +148,7 @@ static const char *app_loader_template =
 ;
 
 static int keep_generated = 0;
-static strarray *tmp_files;
+static strarray* tmp_files;
 
 struct options 
 {
@@ -160,10 +160,11 @@ struct options
     int noshortwchar;
     int gui_app;
     int compile_only;
+    const char* prefix;
     const char* output_name;
     strarray* lib_dirs;
-    strarray *linker_args;
-    strarray *compiler_args;
+    strarray* linker_args;
+    strarray* compiler_args;
     strarray* winebuild_args;
     strarray* files;
 };
@@ -180,7 +181,7 @@ static void clean_temp_files()
 
 char* get_temp_file(const char* prefix, const char* suffix)
 {
-    char *tmp = strmake("%s-XXXXXX%s", prefix, suffix);
+    char* tmp = strmake("%s-XXXXXX%s", prefix, suffix);
     int fd = mkstemps( tmp, strlen(suffix) );
     if (fd == -1)
     {
@@ -219,7 +220,7 @@ static const strarray* get_translator(struct options* opts)
 
 static void compile(struct options* opts)
 {
-    strarray *comp_args = strarray_alloc();
+    strarray* comp_args = strarray_alloc();
     int j, gcc_defs = 0;
 
     switch(opts->processor)
@@ -314,7 +315,7 @@ static void compile(struct options* opts)
     for ( j = 0; j < opts->files->size; j++ )
 	strarray_add(comp_args, opts->files->base[j]);
 
-    spawn(comp_args);
+    spawn(opts->prefix, comp_args);
 }
 
 static const char* compile_to_object(struct options* opts, const char* file)
@@ -345,7 +346,7 @@ static void build(struct options* opts)
     strarray *spec_args, *comp_args, *link_args;
     char *spec_c_name, *spec_o_name, *base_file, *base_name;
     const char* output_name;
-    const char *winebuild = getenv("WINEBUILD");
+    const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
     int j;
 
@@ -487,7 +488,7 @@ static void build(struct options* opts)
 	}
     }
 
-    spawn(spec_args);
+    spawn(opts->prefix, spec_args);
 
     /* compile the .spec.c file into a .spec.o file */
     comp_args = strarray_alloc();
@@ -499,7 +500,7 @@ static void build(struct options* opts)
     strarray_add(comp_args, "-c");
     strarray_add(comp_args, spec_c_name);
 
-    spawn(comp_args);
+    spawn(opts->prefix, comp_args);
     
     /* link everything together now */
     link_args = strarray_alloc();
@@ -539,7 +540,7 @@ static void build(struct options* opts)
 	strarray_add(link_args, "-lc");
     }
 
-    spawn(link_args);
+    spawn(opts->prefix, link_args);
 
     /* create the loader script */
     if (generate_app_loader)
@@ -549,7 +550,7 @@ static void build(struct options* opts)
 
 static void forward(int argc, char **argv, struct options* opts)
 {
-    strarray *args = strarray_alloc();
+    strarray* args = strarray_alloc();
     int j;
 
     strarray_addall(args, get_translator(opts));
@@ -557,7 +558,7 @@ static void forward(int argc, char **argv, struct options* opts)
     for( j = 1; j < argc; j++ ) 
 	strarray_add(args, argv[j]);
 
-    spawn(args);
+    spawn(opts->prefix, args);
 }
 
 /*
@@ -637,6 +638,7 @@ int main(int argc, char **argv)
     int raw_compiler_arg, raw_linker_arg;
     const char* option_arg;
     struct options opts;
+    char* str;
 
     /* setup tmp file removal at exit */
     tmp_files = strarray_alloc();
@@ -730,6 +732,11 @@ int main(int argc, char **argv)
 	    /* do a bit of semantic analysis */
             switch (argv[i][1]) 
 	    {
+		case 'B':
+		    str = strdup(option_arg);
+		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
+		    opts.prefix = str;
+		    break;
                 case 'c':        /* compile or assemble */
 		    if (argv[i][2] == 0) opts.compile_only = 1;
 		    /* fall through */

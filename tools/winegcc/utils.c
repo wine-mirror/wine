@@ -273,11 +273,26 @@ file_type get_lib_type(strarray* path, const char* library, char** file)
     return file_na;
 }
 
-void spawn(const strarray* args)
+void spawn(const char* prefix, const strarray* args)
 {
     int i, status;
     strarray* arr = strarray_dup(args);
-    const char **argv = arr->base;
+    const char** argv = arr->base;
+    char* prog = 0;
+
+    if (prefix)
+    {
+        const char* p;
+	struct stat st;
+
+	if (!(p = strrchr(argv[0], '/'))) p = argv[0];
+	prog = strmake("%s/%s", prefix, p);
+	if (stat(prog, &st) == 0)
+	{
+	    if ((st.st_mode & S_IFREG) && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
+		argv[0] = prog;
+	}
+    }
 
     strarray_add(arr, NULL);
     if (verbose)
@@ -293,5 +308,6 @@ void spawn(const strarray* args)
 	exit(3);
     }
 
+    free(prog);
     strarray_free(arr);
 }
