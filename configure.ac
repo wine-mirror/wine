@@ -1459,6 +1459,7 @@ dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
 dlls/ctl3d/Makefile
+dlls/wined3d/Makefile
 dlls/d3d8/Makefile
 dlls/d3d9/Makefile
 dlls/d3dim/Makefile

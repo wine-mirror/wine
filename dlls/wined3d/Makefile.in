@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wined3d.dll
+IMPORTS   = user32 gdi32 kernel32
+EXTRAINCL = @X_CFLAGS@
+EXTRALIBS = $(LIBUUID) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+
+C_SRCS = \
+	vertexshader.c \
+	wined3d_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

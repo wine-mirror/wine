@@ -8,7 +8,7 @@ VPATH     = @srcdir@
 # special configure-dependent targets
 
 GLU32FILES = glu32
-OPENGLFILES = d3d8 d3d9 d3dx8 opengl32
+OPENGLFILES = d3d8 d3d9 d3dx8 opengl32 wined3d
 XFILES = ddraw x11drv
 EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @XFILES@
 
@@ -139,6 +139,7 @@ SUBDIRS = \
 	ddraw \
 	glu32 \
 	opengl32 \
+	wined3d \
 	x11drv
 
 BUILDSUBDIRS = $(BASEDIRS) $(EXTRADIRS)
@@ -645,6 +646,9 @@ winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv$(DLLEXT) $@
 
+wined3d.dll$(DLLEXT): wined3d/wined3d.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) wined3d/wined3d.dll$(DLLEXT) $@
+
 winedos.dll$(DLLEXT) wprocs.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
@@ -790,6 +794,7 @@ IMPORT_LIBS = \
 	libuxtheme \
 	libversion \
 	libw32skrnl \
+	libwined3d \
 	libwinedos \
 	libwineps \
 	libwininet \
@@ -1254,6 +1259,11 @@ libw32skrnl.def: win32s/w32skrnl.spec.def
 libw32skrnl.a: win32s/w32skrnl.spec.def
 	$(DLLTOOL) -k -l $@ -d win32s/w32skrnl.spec.def
 
+libwined3d.def: wined3d/wined3d.spec.def
+	$(RM) $@ && $(LN_S) wined3d/wined3d.spec.def $@
+libwined3d.a: wined3d/wined3d.spec.def
+	$(DLLTOOL) -k -l $@ -d wined3d/wined3d.spec.def
+
 libwinedos.def: winedos/winedos.spec.def
 	$(RM) $@ && $(LN_S) winedos/winedos.spec.def $@
 libwinedos.a: winedos/winedos.spec.def
@@ -1409,6 +1419,7 @@ user/user32.spec.def: $(WINEBUILD)
 uxtheme/uxtheme.spec.def: $(WINEBUILD)
 version/version.spec.def: $(WINEBUILD)
 win32s/w32skrnl.spec.def: $(WINEBUILD)
+wined3d/wined3d.spec.def: $(WINEBUILD)
 winedos/winedos.spec.def: $(WINEBUILD)
 wineps/wineps.spec.def: $(WINEBUILD)
 wininet/wininet.spec.def: $(WINEBUILD)
@@ -1534,6 +1545,7 @@ win32s/w32skrnl.dll$(DLLEXT): win32s
 winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
 winmm/wineaudioio/wineaudioio.drv$(DLLEXT): winmm/wineaudioio
+wined3d/wined3d.dll$(DLLEXT): wined3d
 winedos/winedos.dll$(DLLEXT): winedos
 winmm/winejack/winejack.drv$(DLLEXT): winmm/winejack
 msacm/winemp3/winemp3.acm$(DLLEXT): msacm/winemp3

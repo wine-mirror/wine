@@ -37,6 +37,7 @@ my %special_dlls =
   "d3d8"     => "OPENGLFILES",
   "d3d9"     => "OPENGLFILES",
   "d3dx8"    => "OPENGLFILES",
+  "wined3d"  => "OPENGLFILES",
   "x11drv"   => "XFILES"
 );
 
