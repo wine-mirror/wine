@@ -12,7 +12,7 @@
 #include "wine/keyboard16.h"
 #include "winerror.h"
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(string)
@@ -87,7 +87,7 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
  */
 LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
-    TRACE(string,"Append %s to %s\n",
+    TRACE("Append %s to %s\n",
 		   debugstr_a (src), debugstr_a (dst));
     /* Windows does not check for NULL pointers here, so we don't either */
     strcat( dst, src );
@@ -101,7 +101,7 @@ LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
-    TRACE(string,"Append L%s to L%s\n",
+    TRACE("Append L%s to L%s\n",
 		   debugstr_w (src), debugstr_w (dst));
     /* Windows does not check for NULL pointers here, so we don't either */
     while (*p) p++;
@@ -126,7 +126,7 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcatnA( LPSTR dst, LPCSTR src, INT n )
 {
     register LPSTR p = dst;
-    TRACE(string,"strcatn add %d chars from %s to %s\n",
+    TRACE("strcatn add %d chars from %s to %s\n",
 		   n, debugstr_an (src, n), debugstr_a (dst));
     while (*p) p++;
     if ((n -= (INT)(p - dst)) <= 0) return dst;
@@ -141,7 +141,7 @@ LPSTR WINAPI lstrcatnA( LPSTR dst, LPCSTR src, INT n )
 LPWSTR WINAPI lstrcatnW( LPWSTR dst, LPCWSTR src, INT n )
 {
     register LPWSTR p = dst;
-    TRACE(string,"strcatn add %d chars from L%s to L%s\n",
+    TRACE("strcatn add %d chars from L%s to L%s\n",
 		   n, debugstr_wn (src, n), debugstr_w (dst));
     while (*p) p++;
     if ((n -= (INT)(p - dst)) <= 0) return dst;
@@ -175,7 +175,7 @@ INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
  */
 INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
 {
-    TRACE(string,"L%s and L%s\n",
+    TRACE("L%s and L%s\n",
 		   debugstr_w (str1), debugstr_w (str2));
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
@@ -199,7 +199,7 @@ INT16 WINAPI lstrcmpi16( LPCSTR str1, LPCSTR str2 )
  *           lstrcmpi32A   (KERNEL32.605)
  */
 INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
-{    TRACE(string,"strcmpi %s and %s\n",
+{    TRACE("strcmpi %s and %s\n",
 		   debugstr_a (str1), debugstr_a (str2));
     return CompareStringA(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
 }
@@ -214,7 +214,7 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 
 #if 0
     /* Too much!  (From registry loading.)  */
-    TRACE(string,"strcmpi L%s and L%s\n",
+    TRACE("strcmpi L%s and L%s\n",
 		   debugstr_w (str1), debugstr_w (str2));
 #endif
     if (!str1 || !str2) {
@@ -250,7 +250,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
-    TRACE(string,"strcpy %s\n", debugstr_a (src));
+    TRACE("strcpy %s\n", debugstr_a (src));
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -271,7 +271,7 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
-    TRACE(string,"strcpy L%s\n", debugstr_w (src));
+    TRACE("strcpy L%s\n", debugstr_w (src));
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -303,7 +303,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR p = dst;
-    TRACE(string,"strcpyn %s for %d chars\n",
+    TRACE("strcpyn %s for %d chars\n",
 		   debugstr_an (src,n), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
@@ -327,7 +327,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR p = dst;
-    TRACE(string,"strcpyn L%s for %d chars\n",
+    TRACE("strcpyn L%s for %d chars\n",
 		   debugstr_wn (src,n), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
@@ -361,7 +361,7 @@ INT WINAPI lstrlenA( LPCSTR str )
      * in lstrlen() ... we check only for NULL pointer reference.
      * - Marcus Meissner
      */
-    TRACE(string,"strlen %s\n", debugstr_a (str));
+    TRACE("strlen %s\n", debugstr_a (str));
     if (!str) return 0;
     return (INT)strlen(str);
 }
@@ -373,7 +373,7 @@ INT WINAPI lstrlenA( LPCSTR str )
 INT WINAPI lstrlenW( LPCWSTR str )
 {
     INT len = 0;
-    TRACE(string,"strlen L%s\n", debugstr_w (str));
+    TRACE("strlen L%s\n", debugstr_w (str));
     if (!str) return 0;
     while (*str++) len++;
     return len;
@@ -385,7 +385,7 @@ INT WINAPI lstrlenW( LPCWSTR str )
  */
 INT WINAPI lstrncmpA( LPCSTR str1, LPCSTR str2, INT n )
 {
-    TRACE(string,"strncmp %s and %s for %d chars\n",
+    TRACE("strncmp %s and %s for %d chars\n",
 		   debugstr_an (str1, n), debugstr_an (str2, n), n);
     return (INT)strncmp( str1, str2, n );
 }
@@ -396,7 +396,7 @@ INT WINAPI lstrncmpA( LPCSTR str1, LPCSTR str2, INT n )
  */
 INT WINAPI lstrncmpW( LPCWSTR str1, LPCWSTR str2, INT n )
 {
-    TRACE(string,"strncmp L%s and L%s for %d chars\n",
+    TRACE("strncmp L%s and L%s for %d chars\n",
 		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -411,7 +411,7 @@ INT WINAPI lstrncmpiA( LPCSTR str1, LPCSTR str2, INT n )
 {
     INT res;
 
-    TRACE(string,"strncmpi %s and %s for %d chars\n",
+    TRACE("strncmpi %s and %s for %d chars\n",
 		   debugstr_an (str1, n), debugstr_an (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1)
@@ -428,7 +428,7 @@ INT WINAPI lstrncmpiW( LPCWSTR str1, LPCWSTR str2, INT n )
 {
     INT res;
 
-    TRACE(string,"strncmpi L%s and L%s for %d chars\n",
+    TRACE("strncmpi L%s and L%s for %d chars\n",
 		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1)
@@ -448,7 +448,7 @@ LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )
 {
     register LPWSTR p = dst;
 
-    TRACE(string,"%s\n",src);
+    TRACE("%s\n",src);
 
     while ((*p++ = (WCHAR)(unsigned char)*src++));
     return dst;
@@ -462,7 +462,7 @@ LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
 {
     register LPSTR p = dst;
 
-    TRACE(string,"L%s\n",debugstr_w(src));
+    TRACE("L%s\n",debugstr_w(src));
 
     while ((*p++ = (CHAR)*src++));
     return dst;
@@ -478,7 +478,7 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT n )
 {
     LPWSTR p = dst;
 
-    TRACE(string,"%s %i\n",src, n);
+    TRACE("%s %i\n",src, n);
 
     while ((n-- > 1) && *src) *p++ = (WCHAR)(unsigned char)*src++;
     if (n >= 0) *p = 0;
@@ -495,7 +495,7 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
 {
     LPSTR p = dst;
 
-    TRACE(string,"L%s %i\n",debugstr_w(src), n);
+    TRACE("L%s %i\n",debugstr_w(src), n);
 
     while ((n-- > 1) && *src) *p++ = (CHAR)*src++;
     if (n >= 0) *p = 0;
@@ -508,7 +508,7 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
 INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )
 {
     if ( codepage != -1 )
-        FIXME( string, "codepage %d not supported\n", codepage );
+        FIXME("codepage %d not supported\n", codepage );
 
     lstrcpyWtoA( dst, src );
 
@@ -597,9 +597,9 @@ BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     if (!s || !d) return TRUE;
-    TRACE(string,"CharToOem %s\n", debugstr_a (s));
+    TRACE("CharToOem %s\n", debugstr_a (s));
     while ((*d++ = ANSI_TO_OEM(*s++)));
-    TRACE(string,"       to %s\n", debugstr_a (oldd));
+    TRACE("       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -631,9 +631,9 @@ BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     if (!s || !d) return TRUE;
-    TRACE(string,"CharToOem L%s\n", debugstr_w (s));
+    TRACE("CharToOem L%s\n", debugstr_w (s));
     while ((*d++ = ANSI_TO_OEM(*s++)));
-    TRACE(string,"       to %s\n", debugstr_a (oldd));
+    TRACE("       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -644,9 +644,9 @@ BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 {
     LPSTR oldd = d;
-    TRACE(string,"OemToChar %s\n", debugstr_a (s));
+    TRACE("OemToChar %s\n", debugstr_a (s));
     while ((*d++ = OEM_TO_ANSI(*s++)));
-    TRACE(string,"       to %s\n", debugstr_a (oldd));
+    TRACE("       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -656,7 +656,7 @@ BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
  */
 BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
-    TRACE(string,"OemToCharBuff %s\n", debugstr_an (s, len));
+    TRACE("OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = OEM_TO_ANSI(*s++);
     return TRUE;
 }
@@ -667,7 +667,7 @@ BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 {
-    TRACE(string,"OemToCharBuff %s\n", debugstr_an (s, len));
+    TRACE("OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = (WCHAR)OEM_TO_ANSI(*s++);
     return TRUE;
 }
@@ -695,7 +695,7 @@ INT WINAPI WideCharToLocal(
 		LPWSTR pWide, 
 		INT dwChars)
 { *pLocal = 0;
-  TRACE(string,"(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
+  TRACE("(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
   WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
   return strlen(pLocal);
 }
@@ -711,7 +711,7 @@ INT WINAPI LocalToWideChar(
 		LPSTR pLocal, 
 		INT dwChars)
 { *pWide = 0;
-  TRACE(string,"(%p, %s, %i)\n",pWide,	pLocal, dwChars);
+  TRACE("(%p, %s, %i)\n",pWide,	pLocal, dwChars);
 	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
   return lstrlenW(pWide);
 }
@@ -730,7 +730,7 @@ LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 {
   LPCSTR lpGotIt = NULL;
 
-  TRACE(string,"(%s, %s)\n", lpStart, lpEnd);
+  TRACE("(%s, %s)\n", lpStart, lpEnd);
 
   if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
 
@@ -754,7 +754,7 @@ LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
 {
   LPCWSTR lpGotIt = NULL;
 
-  TRACE(string,"(%p, %p, %c)\n", lpStart,      lpEnd, wMatch);
+  TRACE("(%p, %p, %c)\n", lpStart,      lpEnd, wMatch);
   if (!lpEnd) lpEnd = lpStart + lstrlenW(lpStart);
 
   for(; lpStart < lpEnd; lpStart = CharNextW(lpStart)) 
@@ -775,7 +775,7 @@ LPWSTR WINAPI strstrw( LPCWSTR lpFirst, LPCWSTR lpSrch) {
   UINT uSrchLen  = (UINT)lstrlenW(lpSrch);
   WORD wMatchBeg   = *(WORD*)lpSrch;
 
-  TRACE(string,"(%p, %p)\n", lpFirst,  lpSrch);
+  TRACE("(%p, %p)\n", lpFirst,  lpSrch);
 
   for(; 
     ((lpFirst=CRTDLL_wcschr(lpFirst, wMatchBeg))!=0) && 

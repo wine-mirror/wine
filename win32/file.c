@@ -20,7 +20,7 @@
 #include "device.h"
 #include "process.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(file)
 
@@ -42,7 +42,7 @@ BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 
-    FIXME(file, "file %d to buf %p num %ld %p func %p stub\n",
+    FIXME("file %d to buf %p num %ld %p func %p stub\n",
 	  hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
@@ -68,11 +68,11 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
         return FALSE;
 
-    TRACE(file,"(%s,%lx)\n",lpFileName,attributes);
+    TRACE("(%s,%lx)\n",lpFileName,attributes);
     if (attributes & FILE_ATTRIBUTE_NORMAL) {
       attributes &= ~FILE_ATTRIBUTE_NORMAL;
       if (attributes)
-        FIXME(file,"(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
+        FIXME("(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
 	      lpFileName,attributes);
     }
     if(stat(full_name.long_name,&buf)==-1)
@@ -93,17 +93,17 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     if (attributes & FILE_ATTRIBUTE_DIRECTORY)
     {
         if (!S_ISDIR(buf.st_mode))
-            FIXME(file,"SetFileAttributes expected the file '%s' to be a directory",
+            FIXME("SetFileAttributes expected the file '%s' to be a directory",
                   lpFileName);
 	attributes &= ~FILE_ATTRIBUTE_DIRECTORY;
     }
     attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
-        FIXME(file,"(%s):%lx attribute(s) not implemented.\n",
+        FIXME("(%s):%lx attribute(s) not implemented.\n",
 	      lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
-        MSG("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions !\n", full_name.long_name);
+        MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions !\n", full_name.long_name);
         SetLastError(ErrnoToLastError(errno));
         return FALSE;
     }
@@ -150,7 +150,7 @@ VOID WINAPI SetFileApisToANSI(void)
  */
 BOOL WINAPI AreFileApisANSI(void)
 {
-    FIXME(file,"(void): stub\n");
+    FIXME("(void): stub\n");
     return TRUE;
 }
 

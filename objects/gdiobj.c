@@ -21,7 +21,7 @@
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "gdi.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
@@ -368,7 +368,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         return TRUE;
     if (!(header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj ))) return FALSE;
 
-    TRACE(gdi, "%04x\n", obj );
+    TRACE("%04x\n", obj );
 
       /* Delete object */
 
@@ -382,10 +382,10 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
       case DC_MAGIC:      return DeleteDC(obj);
       case 0 :
-        WARN(gdi, "Already deleted\n");
+        WARN("Already deleted\n");
         break;
       default:
-        WARN(gdi, "Unknown magic number (%d)\n",header->wMagic);
+        WARN("Unknown magic number (%d)\n",header->wMagic);
     }
     return FALSE;
 }
@@ -406,7 +406,7 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
-    TRACE(gdi, "returning %d\n",
+    TRACE("returning %d\n",
                 FIRST_STOCK_HANDLE + obj );
     return (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
 }
@@ -419,7 +419,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
     INT16 result = 0;
-    TRACE(gdi, "%04x %d %p\n", handle, count, buffer );
+    TRACE("%04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -458,7 +458,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
     INT result = 0;
-    TRACE(gdi, "%08x %d %p\n", handle, count, buffer );
+    TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -485,7 +485,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	  break;
       default:
-          FIXME(gdi, "Magic %04x not implemented\n",
+          FIXME("Magic %04x not implemented\n",
                    ptr->wMagic );
           break;
     }
@@ -499,7 +499,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
     INT result = 0;
-    TRACE(gdi, "%08x %d %p\n", handle, count, buffer );
+    TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -526,7 +526,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	  break;
       default:
-          FIXME(gdi, "Magic %04x not implemented\n",
+          FIXME("Magic %04x not implemented\n",
                    ptr->wMagic );
           break;
     }
@@ -541,7 +541,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 {
     GDIOBJHDR * ptr = NULL;
     INT result = 0;
-    TRACE(gdi, "%08x\n", handle );
+    TRACE("%08x\n", handle );
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
@@ -588,7 +588,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 	  result = OBJ_ENHMETADC;
 	  break;
       default:
-	  FIXME(gdi, "Magic %04x not implemented\n",
+	  FIXME("Magic %04x not implemented\n",
 			   ptr->wMagic );
 	  break;
     }
@@ -613,7 +613,7 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
     case OBJ_BITMAP:	return dc->w.hBitmap;
     default:
     	/* the SDK only mentions those above */
-    	WARN(gdi,"(%08x,%d): unknown type.\n",hdc,type);
+    	WARN("(%08x,%d): unknown type.\n",hdc,type);
 	return 0;
     }
 }
@@ -635,7 +635,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pSelectObject) return 0;
-    TRACE(gdi, "hdc=%04x %04x\n", hdc, handle );
+    TRACE("hdc=%04x %04x\n", hdc, handle );
     return dc->funcs->pSelectObject( dc, handle );
 }
 
@@ -660,7 +660,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj );
     if (!header) return FALSE;
 
-    TRACE(gdi, "%04x\n", obj );
+    TRACE("%04x\n", obj );
 
       /* Unrealize object */
 
@@ -701,7 +701,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
     LOGPEN16 *pen;
     LOGBRUSH16 *brush = NULL;
 
-    TRACE(gdi, "%04x %d %08lx %08lx\n",
+    TRACE("%04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -715,7 +715,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
             retval = lpEnumFunc( SEGPTR_GET(pen), lParam );
-            TRACE(gdi, "solid pen %08lx, ret=%d\n",
+            TRACE("solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -731,7 +731,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            TRACE(gdi, "solid brush %08lx, ret=%d\n",
+            TRACE("solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -743,7 +743,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            TRACE(gdi, "hatched brush %d, ret=%d\n",
+            TRACE("hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }
@@ -751,7 +751,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
         break;
 
     default:
-        WARN(gdi, "(%d): Invalid type\n", nObjType );
+        WARN("(%d): Invalid type\n", nObjType );
         break;
     }
     return retval;
@@ -780,7 +780,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
     LOGPEN pen;
     LOGBRUSH brush;
 
-    TRACE(gdi, "%04x %d %08lx %08lx\n",
+    TRACE("%04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -793,7 +793,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
             pen.lopnWidth.y = 0;
             pen.lopnColor   = solid_colors[i];
             retval = lpEnumFunc( &pen, lParam );
-            TRACE(gdi, "solid pen %08lx, ret=%d\n",
+            TRACE("solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -807,7 +807,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
             brush.lbColor = solid_colors[i];
             brush.lbHatch = 0;
             retval = lpEnumFunc( &brush, lParam );
-            TRACE(gdi, "solid brush %08lx, ret=%d\n",
+            TRACE("solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -819,7 +819,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
             brush.lbColor = RGB(0,0,0);
             brush.lbHatch = i;
             retval = lpEnumFunc( &brush, lParam );
-            TRACE(gdi, "hatched brush %d, ret=%d\n",
+            TRACE("hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }
@@ -827,7 +827,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
 
     default:
         /* FIXME: implement Win32 types */
-        WARN( gdi, "(%d): Invalid type\n", nObjType );
+        WARN("(%d): Invalid type\n", nObjType );
         break;
     }
     return retval;
@@ -964,7 +964,7 @@ DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
     case 0x0103:  /* LocalHeap */
         return GDI_HeapSel;
     default:
-        WARN(gdi, "(wReqType=%04x): Unknown\n", wReqType);
+        WARN("(wReqType=%04x): Unknown\n", wReqType);
         return (DWORD)-1;
     }
 }
@@ -1030,7 +1030,7 @@ INT WINAPI MulDiv(
  */
 BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 {
-        FIXME(gdi, "GetColorAdjustment, stub\n");
+        FIXME("GetColorAdjustment, stub\n");
         return 0;
 }
 
@@ -1041,7 +1041,7 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
  */
 BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
 {
-        FIXME(gdi, "GetMiterLimit, stub\n");
+        FIXME("GetMiterLimit, stub\n");
         return 0;
 }
 
@@ -1052,7 +1052,7 @@ BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
  */
 BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
 {
-        FIXME(gdi, "SetMiterLimit, stub\n");
+        FIXME("SetMiterLimit, stub\n");
         return 0;
 }
 
@@ -1063,7 +1063,7 @@ BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
  */
 BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
 {
-        FIXME(gdi, "GdiComment, stub\n");
+        FIXME("GdiComment, stub\n");
         return 0;
 }
 /*******************************************************************
@@ -1073,7 +1073,7 @@ BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
  */
 BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
 {
-        FIXME(gdi, "SetColorAdjustment, stub\n");
+        FIXME("SetColorAdjustment, stub\n");
         return 0;
 }
  

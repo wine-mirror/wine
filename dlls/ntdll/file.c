@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+#include "debugtools.h"
 
 #include "ntddk.h"
 
@@ -25,7 +25,7 @@ NTSTATUS WINAPI NtOpenFile(
 	ULONG ShareAccess,
 	ULONG OpenOptions)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx) stub\n",
 	FileHandle, DesiredAccess, ObjectAttributes, 
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	IoStatusBlock, ShareAccess, OpenOptions);
@@ -64,7 +64,7 @@ NTSTATUS WINAPI NtCreateFile(
 	PVOID EaBuffer,
 	ULONG EaLength)  
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s),%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
 	FileHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	IoStatusBlock,AllocateSize,FileAttributes,
@@ -98,7 +98,7 @@ NTSTATUS WINAPI NtReadFile (
 	PLARGE_INTEGER ByteOffset,
 	PULONG Key)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
 	FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
 	return 0;
 }
@@ -118,7 +118,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(
 	OUT PVOID OutputBuffer,
 	IN ULONG OutputBufferSize)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
 	DeviceHandle, Event, UserApcRoutine, UserApcContext,
 	IoStatusBlock, IoControlCode, InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 	return 0;
@@ -139,7 +139,7 @@ NTSTATUS WINAPI NtFsControlFile(
 	OUT PVOID OutputBuffer,
 	IN ULONG OutputBufferSize)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
 	DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
 	InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
 	return 0;
@@ -154,7 +154,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	PVOID VolumeInformation,
 	ULONG Length) 
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx) stub\n",
+	FIXME("(0x%08x,%p,%p,0x%08lx) stub\n",
 	FileHandle,VolumeInformationClass,VolumeInformation,Length);
 	return 0;
 }
@@ -169,7 +169,7 @@ NTSTATUS WINAPI NtQueryInformationFile(
 	ULONG Length,
 	FILE_INFORMATION_CLASS FileInformationClass)
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,0x%08x),stub!\n",
+	FIXME("(0x%08x,%p,%p,0x%08lx,0x%08x),stub!\n",
 	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
@@ -184,7 +184,7 @@ NTSTATUS WINAPI NtSetInformationFile(
 	ULONG Length,
 	FILE_INFORMATION_CLASS FileInformationClass)
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,0x%08x)\n",
+	FIXME("(0x%08x,%p,%p,0x%08lx,0x%08x)\n",
 	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
@@ -206,7 +206,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 	IN PUNICODE_STRING FileName OPTIONAL,
 	IN BOOLEAN RestartScan)
 {
-	FIXME (ntdll,"(0x%08x 0x%08x %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
+	FIXME("(0x%08x 0x%08x %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
 	FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation,
 	Length, FileInformationClass, ReturnSingleEntry, 
 	debugstr_w(FileName->Buffer),RestartScan);

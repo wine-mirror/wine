@@ -11,7 +11,7 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "process.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(selector)
 
@@ -59,7 +59,7 @@ WORD WINAPI AllocSelector16( WORD sel )
 
     count = sel ? ((GET_SEL_LIMIT(sel) >> 16) + 1) : 1;
     newsel = AllocSelectorArray16( count );
-    TRACE(selector, "(%04x): returning %04x\n",
+    TRACE("(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     if (!sel) return newsel;  /* nothing to copy */
@@ -166,7 +166,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     WORD i, nextsel;
     ldt_entry entry;
 
-    TRACE(selector, "(%04x,%d)\n", sel, count );
+    TRACE("(%04x,%d)\n", sel, count );
     sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
     nextsel = sel + (count << __AHSHIFT);
 
@@ -178,7 +178,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
         GET_FS(fs);
         if ((fs >= sel) && (fs < nextsel))
         {
-            WARN(selector, "Freeing %%fs selector (%04x), not good.\n", fs );
+            WARN("Freeing %%fs selector (%04x), not good.\n", fs );
             SET_FS( 0 );
         }
         GET_GS(gs);
@@ -262,7 +262,7 @@ WORD WINAPI AllocCStoDSAlias16( WORD sel )
     ldt_entry entry;
 
     newsel = AllocSelectorArray16( 1 );
-    TRACE(selector, "(%04x): returning %04x\n",
+    TRACE("(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
@@ -281,7 +281,7 @@ WORD WINAPI AllocDStoCSAlias16( WORD sel )
     ldt_entry entry;
 
     newsel = AllocSelectorArray16( 1 );
-    TRACE(selector, "(%04x): returning %04x\n",
+    TRACE("(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );

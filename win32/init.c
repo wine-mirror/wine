@@ -12,7 +12,7 @@
 #include "wine/winestring.h"
 #include "heap.h"
 #include "task.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "process.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
@@ -28,7 +28,7 @@ VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
   startup = ((LPSTARTUPINFOA )PROCESS_Current()->env_db->startup_info);
   memcpy ( lpStartupInfo, startup, sizeof (STARTUPINFOA) );
 
-  TRACE ( win32, "size: %ld\n"
+  TRACE("size: %ld\n"
 	  "\tlpReserverd: %s, lpDesktop: %s, lpTitle: %s\n"
 	  "\tdwX: %ld, dwY: %ld, dwXSize: %ld, dwYSize: %ld\n"
 	  "\tdwFlags: %lx, wShowWindow: %x\n", lpStartupInfo->cb, 

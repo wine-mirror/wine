@@ -8,7 +8,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -188,10 +188,10 @@ INT WINAPI WideCharToMultiByte(UINT page, DWORD flags, LPCWSTR src,
     }
     
     if (page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
-	FIXME(win32,"Conversion in CP %d not supported\n",page);
+	FIXME("Conversion in CP %d not supported\n",page);
 #if 0
     if (flags)
-	FIXME(win32,"flags %lx not supported\n",flags);
+	FIXME("flags %lx not supported\n",flags);
 #endif
     if(used)
 	*used=0;
@@ -280,7 +280,7 @@ BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
  */
 BOOL WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA lpfnCodePageEnum,DWORD flags)
 {
-	TRACE(win32,"(%p,%08lx)\n",lpfnCodePageEnum,flags);
+	TRACE("(%p,%08lx)\n",lpfnCodePageEnum,flags);
 	lpfnCodePageEnum("437");
 	return TRUE;
 }
@@ -292,7 +292,7 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum,
                                       DWORD flags)
 {
     WCHAR	*cp;
-    TRACE(win32,"(%p,%08lx)\n",lpfnCodePageEnum,flags );
+    TRACE("(%p,%08lx)\n",lpfnCodePageEnum,flags );
 
     cp = HEAP_strdupAtoW( GetProcessHeap(), 0, "437" );
     lpfnCodePageEnum(cp);

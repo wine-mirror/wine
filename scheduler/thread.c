@@ -22,7 +22,7 @@
 #include "server.h"
 #include "services.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "queue.h"
 #include "hook.h"
 
@@ -109,7 +109,7 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
     if (stack_size<1024*1024)
     	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
-    	WARN(thread,"Thread stack size is %ld MB.\n",stack_size/1024/1024);
+    	WARN("Thread stack size is %ld MB.\n",stack_size/1024/1024);
     thdb->stack_base = VirtualAlloc(NULL,
                                     stack_size + (alloc_stack16 ? 0x10000 : 0),
                                     MEM_COMMIT, PAGE_EXECUTE_READWRITE );
@@ -158,7 +158,7 @@ void CALLBACK THREAD_FreeTHDB( ULONG_PTR arg )
     THDB *thdb = (THDB *)arg;
     THDB **pptr = &THREAD_First;
 
-    TRACE( thread, "(%p) called\n", thdb );
+    TRACE("(%p) called\n", thdb );
     SERVICE_Delete( thdb->cleanup );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0, 0 );
@@ -198,7 +198,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
     if (!(initial_thdb.teb_sel = SELECTOR_AllocBlock( &initial_thdb.teb, 0x1000,
                                                       SEGMENT_DATA, TRUE, FALSE )))
     {
-        MSG("Could not allocate fs register for initial thread\n" );
+        MESSAGE("Could not allocate fs register for initial thread\n" );
         return NULL;
     }
     SET_CUR_THREAD( &initial_thdb );
@@ -372,7 +372,7 @@ DWORD WINAPI GetLastError(void)
 {
     THDB *thread = THREAD_Current();
     DWORD ret = thread->last_error;
-    TRACE(thread,"0x%lx\n",ret);
+    TRACE("0x%lx\n",ret);
     return ret;
 }
 
@@ -389,7 +389,7 @@ void WINAPI SetLastError(
     THDB *thread = THREAD_Current();
     /* This one must work before we have a thread (FIXME) */
 
-    TRACE(thread,"%p error=0x%lx\n",thread,error);
+    TRACE("%p error=0x%lx\n",thread,error);
 
     if (thread)
       thread->last_error = error;
@@ -406,7 +406,7 @@ void WINAPI SetLastErrorEx(
     DWORD error, /* [in] Per-thread error code */
     DWORD type)  /* [in] Error type */
 {
-    TRACE(thread, "(0x%08lx, 0x%08lx)\n", error,type);
+    TRACE("(0x%08lx, 0x%08lx)\n", error,type);
     switch(type) {
         case 0:
             break;
@@ -415,7 +415,7 @@ void WINAPI SetLastErrorEx(
         case SLE_WARNING:
             /* Fall through for now */
         default:
-            FIXME(thread, "(error=%08lx, type=%08lx): Unhandled type\n", error,type);
+            FIXME("(error=%08lx, type=%08lx): Unhandled type\n", error,type);
             break;
     }
     SetLastError( error );
@@ -546,7 +546,7 @@ BOOL WINAPI SetThreadContext(
     HANDLE handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
-    FIXME( thread, "not implemented\n" );
+    FIXME("not implemented\n" );
     return TRUE;
 }
 
@@ -563,7 +563,7 @@ BOOL WINAPI GetThreadContext(
 {
     WORD cs, ds;
 
-    FIXME( thread, "returning dummy info\n" );
+    FIXME("returning dummy info\n" );
 
     /* make up some plausible values for segment registers */
     GET_CS(cs);
@@ -746,7 +746,7 @@ BOOL WINAPI GetThreadTimes(
     LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
     LPFILETIME usertime)     /* [out] Time thread spent in user mode */
 {
-    FIXME(thread,"(0x%08x): stub\n",thread);
+    FIXME("(0x%08x): stub\n",thread);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -841,7 +841,7 @@ CLEANUP:
  */
 VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
 {
-    FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
+    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
 }
 
 /**********************************************************************
@@ -849,7 +849,7 @@ VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
  */
 VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 {
-    FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
+    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
 }
 
 /**********************************************************************

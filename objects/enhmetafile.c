@@ -11,7 +11,7 @@
 #include "wine/winestring.h"
 #include "winerror.h"
 #include "enhmetafile.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile)
@@ -59,7 +59,7 @@ static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
 {
     ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
 							   ENHMETAFILE_MAGIC );
-    TRACE(enhmetafile, "hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
+    TRACE("hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
     return metaObj->emh;
 }
 
@@ -86,7 +86,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HFILE hFile )
     emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
 
     if (emh->iType != EMR_HEADER || emh->dSignature != ENHMETA_SIGNATURE) {
-        WARN(enhmetafile, "Invalid emf header type 0x%08lx sig 0x%08lx.\n",
+        WARN("Invalid emf header type 0x%08lx sig 0x%08lx.\n",
 	     emh->iType, emh->dSignature);
 	UnmapViewOfFile( emh );
 	CloseHandle( hMapping );
@@ -110,7 +110,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 
     hFile = CreateFileA(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE) {
-        WARN(enhmetafile,"could not open %s\n", lpszMetaFile);
+        WARN("could not open %s\n", lpszMetaFile);
 	return 0;
     }
     hmf = EMF_GetEnhMetaFile( hFile );
@@ -130,7 +130,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
 
     hFile = CreateFileW(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE) {
-        WARN(enhmetafile,"could not open %s\n", debugstr_w(lpszMetaFile));
+        WARN("could not open %s\n", debugstr_w(lpszMetaFile));
 	return 0;
     }
     hmf = EMF_GetEnhMetaFile( hFile );
@@ -268,14 +268,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
      ) 
 {
   int type;
-  TRACE(enhmetafile, 
+  TRACE(
 	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n", 
 	  hdc, handletable, mr, handles);
   if (!mr) return FALSE;
 
   type = mr->iType;
 
-  TRACE(enhmetafile, " type=%d\n", type);
+  TRACE(" type=%d\n", type);
   switch(type) 
     {
     case EMR_HEADER:
@@ -402,7 +402,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	DWORD obj = mr->dParm[0];
 	DWORD style = mr->dParm[1], brush = mr->dParm[2];
 	LOGBRUSH *b = (LOGBRUSH *) &mr->dParm[3];
-	FIXME(enhmetafile, "Some ExtCreatePen args not handled\n");
+	FIXME("Some ExtCreatePen args not handled\n");
 	(handletable->objectHandle)[obj] = 
 	  ExtCreatePen(style, brush, b, 0, NULL);
 	break;
@@ -451,7 +451,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	/* 0-3 : a bounding rectangle? */
 	INT count = mr->dParm[4];
-	FIXME(enhmetafile, "Some Polygon16 args not handled\n");
+	FIXME("Some Polygon16 args not handled\n");
 	Polygon16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
@@ -459,7 +459,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	/* 0-3 : a bounding rectangle? */
 	INT count = mr->dParm[4];
-	FIXME(enhmetafile, "Some Polyline16 args not handled\n");
+	FIXME("Some Polyline16 args not handled\n");
 	Polyline16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
@@ -506,14 +506,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* 10-16: ??? */
 	LPWSTR str = (LPWSTR)& mr->dParm[17];
 	/* trailing info: dx array? */
-	FIXME(enhmetafile, "Many ExtTextOut args not handled\n");
+	FIXME("Many ExtTextOut args not handled\n");
 	ExtTextOutW(hdc, x, y, flags, /* lpRect */ NULL, 
 		      str, count, /* lpDx */ NULL); 
 	break;
       }
 
     default:
-      FIXME(enhmetafile, "type %d is unimplemented\n", type);
+      FIXME("type %d is unimplemented\n", type);
       /*  SetLastError(E_NOTIMPL); */
       break;
     }
@@ -598,10 +598,10 @@ BOOL WINAPI PlayEnhMetaFile(
 	xform.eM22 = yscale;
         xform.eDx = lpRect->left;
 	xform.eDy = lpRect->top; 
-	FIXME(enhmetafile, "play into rect doesn't work\n");
+	FIXME("play into rect doesn't work\n");
 	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
 	if (!SetWorldTransform(hdc, &xform)) {
-	    WARN(enhmetafile, "World transform failed!\n");
+	    WARN("World transform failed!\n");
 	}
     }
 
@@ -682,7 +682,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST METAFILEPICT *lpmfp
 					   ) 
 {
-     FIXME(enhmetafile,"Stub\n");
+     FIXME("Stub\n");
      return 0;
 }
 

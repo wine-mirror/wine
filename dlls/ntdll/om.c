@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+#include "debugtools.h"
 
 #include "ntddk.h"
 
@@ -27,7 +27,7 @@ NTSTATUS WINAPI NtQueryObject(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p): stub\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p): stub\n",
 	ObjectHandle, ObjectInformationClass, ObjectInformation, Length, ResultLength);
 	return 0;
 }
@@ -37,7 +37,7 @@ NTSTATUS WINAPI NtQueryObject(
  */
 NTSTATUS WINAPI NtQuerySecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
 	return 0;
 }
 /******************************************************************************
@@ -52,7 +52,7 @@ NTSTATUS WINAPI NtDuplicateObject(
 	IN BOOLEAN InheritHandle,
 	ULONG Options)
 {
-	FIXME(ntdll,"(0x%08x,%p,0x%08x,%p,0x%08lx,0x%08x,0x%08lx) stub!\n",
+	FIXME("(0x%08x,%p,0x%08x,%p,0x%08lx,0x%08x,0x%08lx) stub!\n",
 	SourceProcessHandle,SourceHandle,TargetProcessHandle,TargetHandle,
 	DesiredAccess,InheritHandle,Options);
 	*TargetHandle = 0;
@@ -68,7 +68,7 @@ NTSTATUS WINAPI NtDuplicateObject(
 NTSTATUS WINAPI NtClose(
 	HANDLE Handle) 
 {
-	FIXME(ntdll,"(0x%08x),stub!\n",Handle);
+	FIXME("(0x%08x),stub!\n",Handle);
 	return 1;
 }
 
@@ -80,7 +80,7 @@ NTSTATUS WINAPI NtWaitForSingleObject(
 	IN BOOLEAN Alertable,
 	IN PLARGE_INTEGER Time)
 {
-	FIXME(ntdll,"(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
+	FIXME("(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
 	return 0;
 }
 
@@ -102,7 +102,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-    FIXME(ntdll,"(%p,0x%08lx,%p(%s)): stub\n", 
+    FIXME("(%p,0x%08lx,%p(%s)): stub\n", 
     DirectoryHandle, DesiredAccess, ObjectAttributes,
     ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
     return 0;
@@ -116,7 +116,7 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes) 
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	FIXME("(%p,0x%08lx,%p(%s)),stub!\n",
 	DirectoryHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
 	return 0;
@@ -144,7 +144,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject(
 	IN OUT PULONG ObjectIndex,
 	OUT PULONG DataWritten OPTIONAL)
 {
-	FIXME(ntdll,"(0x%08x,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
+	FIXME("(0x%08x,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
 		DirObjHandle, DirObjInformation, BufferLength, GetNextIndex,
 		IgnoreInputIndex, ObjectIndex, DataWritten);
     return 0xc0000000; /* We don't have any. Whatever. (Yet.) */
@@ -162,7 +162,7 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 	IN ACCESS_MASK DesiredAccess,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s)) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s)) stub\n",
 	LinkHandle, DesiredAccess, ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
 	return 0;
@@ -177,7 +177,7 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
 	IN PUNICODE_STRING Name)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s), %p) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s), %p) stub\n",
 	SymbolicLinkHandle, DesiredAccess, ObjectAttributes, 
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	debugstr_w(Name->Buffer));
@@ -192,7 +192,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 	IN OUT PUNICODE_STRING LinkTarget,
 	OUT PULONG ReturnedLength OPTIONAL)
 {
-	FIXME(ntdll,"(0x%08x,%p,%p) stub\n",
+	FIXME("(0x%08x,%p,%p) stub\n",
 	LinkHandle, debugstr_w(LinkTarget->Buffer), ReturnedLength);
 
 	return 0;

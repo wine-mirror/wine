@@ -17,7 +17,7 @@
 #include "heap.h"
 #include "winnls.h"
 #include "debugstr.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -38,7 +38,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll)
 BOOLEAN WINAPI RtlAllocateAndInitializeSid (PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 	DWORD nSubAuthorityCount,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8,DWORD x9,DWORD x10, PSID pSid) 
 {
-	FIXME(ntdll,"(%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p),stub!\n",
+	FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p),stub!\n",
 		pIdentifierAuthority,nSubAuthorityCount,x3,x4,x5,x6,x7,x8,x9,x10,pSid);
 	return 0;
 }
@@ -48,7 +48,7 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (PSID_IDENTIFIER_AUTHORITY pIdentifie
  */
 DWORD WINAPI RtlEqualSid(DWORD x1,DWORD x2) 
 {	
-	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n", x1,x2);
+	FIXME("(0x%08lx,0x%08lx),stub!\n", x1,x2);
 	return TRUE;
 }
 
@@ -57,7 +57,7 @@ DWORD WINAPI RtlEqualSid(DWORD x1,DWORD x2)
  */
 DWORD WINAPI RtlFreeSid(DWORD x1) 
 {
-	FIXME(ntdll,"(0x%08lx),stub!\n", x1);
+	FIXME("(0x%08lx),stub!\n", x1);
 	return TRUE;
 }
 
@@ -74,7 +74,7 @@ DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
  */
 DWORD WINAPI RtlLengthSid(PSID sid)
 {
-	TRACE(ntdll,"sid=%p\n",sid);
+	TRACE("sid=%p\n",sid);
 	if (!sid)
 	  return FALSE; 
 	return sizeof(DWORD)*sid->SubAuthorityCount+sizeof(SID);
@@ -197,7 +197,7 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	OUT PACL *pDacl,
 	OUT PBOOLEAN lpbDaclDefaulted)
 {
-	TRACE(ntdll,"(%p,%p,%p,%p)\n",
+	TRACE("(%p,%p,%p,%p)\n",
 	pSecurityDescriptor, lpbDaclPresent, *pDacl, lpbDaclDefaulted);
 
 	if (pSecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
@@ -258,7 +258,7 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 	OUT PACL *pSacl,
 	OUT PBOOLEAN lpbSaclDefaulted)
 {
-	TRACE(ntdll,"(%p,%p,%p,%p)\n",
+	TRACE("(%p,%p,%p,%p)\n",
 	pSecurityDescriptor, lpbSaclPresent, *pSacl, lpbSaclDefaulted);
 
 	if (pSecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
@@ -473,7 +473,7 @@ NTSTATUS WINAPI RtlAddAce(
  */
 DWORD WINAPI RtlAddAccessAllowedAce(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 
@@ -482,7 +482,7 @@ DWORD WINAPI RtlAddAccessAllowedAce(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
  */
 DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce ) 
 {
-	FIXME(ntdll,"(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
+	FIXME("(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
 	return 0;
 }
 
@@ -495,7 +495,7 @@ DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
  */
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 

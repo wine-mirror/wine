@@ -85,7 +85,7 @@ SOFTWARE.
 #include <string.h>
 #include "region.h"
 #include "winuser.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "dc.h"
 
@@ -112,11 +112,11 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 {
     RECT *pRect, *pRectEnd = pReg->rects + pReg->numRects;
 
-    TRACE(region, "Region %p: %d,%d - %d,%d %d rects\n", pReg,
+    TRACE("Region %p: %d,%d - %d,%d %d rects\n", pReg,
 	    pReg->extents.left, pReg->extents.top,
 	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
     for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
-        TRACE(region, "\t%d,%d - %d,%d\n", pRect->left, pRect->top,
+        TRACE("\t%d,%d - %d,%d\n", pRect->left, pRect->top,
 		       pRect->right, pRect->bottom);
     return;
 }
@@ -180,7 +180,7 @@ static void REGION_DestroyWineRegion( WINEREGION* pReg )
  */
 BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj )
 {
-    TRACE(region, " %04x\n", hrgn );
+    TRACE(" %04x\n", hrgn );
 
     REGION_DestroyWineRegion( obj->rgn );
     return GDI_FreeObject( hrgn );
@@ -207,7 +207,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 	int nbox = obj->rgn->numRects;
 	RECT *pbox = obj->rgn->rects;
 	
-	TRACE(region, " %04x %d,%d\n", hrgn, x, y );
+	TRACE(" %04x %d,%d\n", hrgn, x, y );
 	if(nbox) {
 	    while(nbox--) {
 	        pbox->left += x;
@@ -249,7 +249,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
     if (obj)
     {
 	INT ret;
-	TRACE(region, " %04x\n", hrgn );
+	TRACE(" %04x\n", hrgn );
 	rect->left = obj->rgn->extents.left;
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
@@ -273,7 +273,7 @@ HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
 
     if (!(hrgn = (HRGN16)REGION_CreateRegion(RGN_DEFAULT_RECTS)))
 	return 0;
-    TRACE(region, "\n");
+    TRACE("\n");
     SetRectRgn16(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -290,7 +290,7 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 
     if (!(hrgn = REGION_CreateRegion(RGN_DEFAULT_RECTS)))
 	return 0;
-    TRACE(region, "\n");
+    TRACE("\n");
     SetRectRgn(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -338,7 +338,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 {
     RGNOBJ * obj;
 
-    TRACE(region, " %04x %d,%d-%d,%d\n", 
+    TRACE(" %04x %d,%d-%d,%d\n", 
 		   hrgn, left, top, right, bottom );
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
@@ -412,7 +412,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
     if (!(hrgn = REGION_CreateRegion(d))) return 0;
     obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
-    TRACE(region,"(%d,%d-%d,%d %dx%d): ret=%04x\n",
+    TRACE("(%d,%d-%d,%d %dx%d): ret=%04x\n",
 	       left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
       /* Check parameters */
@@ -543,7 +543,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     DWORD size;
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     
-    TRACE(region, " %04x count = %ld, rgndata = %p\n",
+    TRACE(" %04x count = %ld, rgndata = %p\n",
 		   hrgn, count, rgndata);
 
     if(!obj) return 0;
@@ -587,17 +587,17 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 {
     HRGN hrgn;
 
-    TRACE(region, " %p %ld %p = ", lpXform, dwCount, rgndata );
+    TRACE(" %p %ld %p = ", lpXform, dwCount, rgndata );
 
     if( lpXform )
-        WARN(region, "(Xform not implemented - ignored) ");
+        WARN("(Xform not implemented - ignored) ");
     
     if( rgndata->rdh.iType != RDH_RECTANGLES )
     {
 	/* FIXME: We can use CreatePolyPolygonRgn() here
 	 *        for trapezoidal data */
 
-        WARN(region, "(Unsupported region data) ");
+        WARN("(Unsupported region data) ");
 	goto fail;
     }
 
@@ -611,11 +611,11 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 	    REGION_UnionRectWithRegion( pCurRect, obj->rgn );
 	GDI_HEAP_UNLOCK( hrgn );
 
-	TRACE(region,"%04x\n", hrgn );
+	TRACE("%04x\n", hrgn );
 	return hrgn;
     }
 fail:
-    WARN(region, "Failed\n");
+    WARN("Failed\n");
     return 0;
 }
 
@@ -832,7 +832,7 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
     DC * dc = DC_GetDCPtr( hdc );
     RECT tmpRect;
 
-    TRACE(region, " hdc=%04x dest=%04x src=%04x\n",
+    TRACE(" hdc=%04x dest=%04x src=%04x\n",
 		    hdc, hDest, hSrc) ;
     
     if (dc->w.MapMode == MM_TEXT) /* Requires only a translation */
@@ -887,7 +887,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
     RGNOBJ *destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC);
     INT result = ERROR;
 
-    TRACE(region, " %04x,%04x -> %04x mode=%x\n", 
+    TRACE(" %04x,%04x -> %04x mode=%x\n", 
 		 hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
@@ -895,7 +895,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 
 	if (src1Obj)
 	{
-	    TRACE(region, "dump:\n");
+	    TRACE("dump:\n");
 	    if(TRACE_ON(region)) 
 	      REGION_DumpRegion(src1Obj->rgn);
 	    if (mode == RGN_COPY)
@@ -909,7 +909,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 
 		if (src2Obj)
 		{
-		    TRACE(region, "dump:\n");
+		    TRACE("dump:\n");
 		    if(TRACE_ON(region)) 
 		      REGION_DumpRegion(src2Obj->rgn);
 		    switch (mode)
@@ -933,7 +933,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	    }
 	    GDI_HEAP_UNLOCK( hSrc1 );
 	}
-	TRACE(region, "dump:\n");
+	TRACE("dump:\n");
 	if(TRACE_ON(region)) 
 	  REGION_DumpRegion(destObj->rgn);
 
@@ -1988,7 +1988,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
             tmpSLLBlock = HeapAlloc( SystemHeap, 0, sizeof(ScanLineListBlock));
 	    if(!tmpSLLBlock)
 	    {
-	        WARN(region, "Can't alloc SLLB\n");
+	        WARN("Can't alloc SLLB\n");
 		return;
 	    }
             (*SLLBlock)->next = tmpSLLBlock;
@@ -2436,7 +2436,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                 if (iPts == NUMPTSTOBUFFER) {
                     tmpPtBlock = HeapAlloc( SystemHeap, 0, sizeof(POINTBLOCK));
 		    if(!tmpPtBlock) {
-		        WARN(region, "Can't alloc tPB\n");
+		        WARN("Can't alloc tPB\n");
 			return 0;
 		    }
                     curPtBlock->next = tmpPtBlock;
@@ -2487,7 +2487,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                         tmpPtBlock = HeapAlloc( SystemHeap, 0,
 					       sizeof(POINTBLOCK) );
 			if(!tmpPtBlock) {
-			    WARN(region, "Can't alloc tPB\n");
+			    WARN("Can't alloc tPB\n");
 			    return 0;
 			}
                         curPtBlock->next = tmpPtBlock;
@@ -2577,7 +2577,7 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
  */
 HRGN WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
 {
-    FIXME (region, "(0x%08lx 0x%08lx 0x%08lx): empty stub!\n",
+    FIXME("(0x%08lx 0x%08lx 0x%08lx): empty stub!\n",
 	   dwArg1, dwArg2, dwArg3);
 
     return 0;
@@ -2637,7 +2637,7 @@ empty:
 		return FALSE;
 	}
 
-	TRACE(region,"cropped to empty!\n");
+	TRACE("cropped to empty!\n");
 	EMPTY_REGION(rgnDst);
     }
     else /* region box and clipping rect appear to intersect */
@@ -2669,7 +2669,7 @@ empty:
 	if( TRACE_ON(region) )
 	{
 	    REGION_DumpRegion( rgnSrc );
-	    TRACE(region,"\tclipa = %i, clipb = %i\n", clipa, clipb );
+	    TRACE("\tclipa = %i, clipb = %i\n", clipa, clipb );
 	}
 
 	for( i = clipa, j = 0; i < clipb ; i++ )
@@ -2719,7 +2719,7 @@ empty:
 
 	if( TRACE_ON(region) )
 	{
-	    TRACE(region,"result:\n");
+	    TRACE("result:\n");
 	    REGION_DumpRegion( rgnDst );
 	}
     }
@@ -2793,10 +2793,10 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 	    if( !lpPt ) lpPt = &pt;
 
 	    if( lpRect )
-	        TRACE(region, "src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
+	        TRACE("src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
 			   lpRect->left, lpRect->top, lpRect->right, lpRect->bottom, lpPt->x, lpPt->y );
 	    else
-		TRACE(region, "src %p -> dst %p by (%li,%li)\n", objSrc->rgn, rgnDst, lpPt->x, lpPt->y ); 
+		TRACE("src %p -> dst %p by (%li,%li)\n", objSrc->rgn, rgnDst, lpPt->x, lpPt->y ); 
 
 	    if( REGION_CropAndOffsetRegion( lpPt, lpRect, objSrc->rgn, rgnDst ) == FALSE )
 	    {

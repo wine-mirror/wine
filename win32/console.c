@@ -43,7 +43,7 @@
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "server/request.h"
 #include "server.h"
@@ -188,7 +188,7 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 		case 24:/*F12 */scancode = 0x00da;break;
 		/* FIXME: Shift-Fx */
 		default:
-			FIXME(console,"parse ESC[%d~\n",subid);
+			FIXME("parse ESC[%d~\n",subid);
 			break;
 		}
 		break;
@@ -282,7 +282,7 @@ BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
 {
   unsigned int alloc_loop = sizeof(handlers)/sizeof(HANDLER_ROUTINE *);
   unsigned int done = 0;
-  FIXME(console, "(%p,%i) - no error checking or testing yet\n", func, add);
+  FIXME("(%p,%i) - no error checking or testing yet\n", func, add);
   if (!func)
     {
       console_ignore_ctrl_c = add;
@@ -297,7 +297,7 @@ BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
 	      done++;
 	    }
 	if (!done)
-	   FIXME(console, "Out of space on CtrlHandler table\n");
+	   FIXME("Out of space on CtrlHandler table\n");
 	return(done);
       }
     else
@@ -309,7 +309,7 @@ BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
 	      done++;
 	    }
 	if (!done)
-	   WARN(console, "Attempt to remove non-installed CtrlHandler %p\n",
+	   WARN("Attempt to remove non-installed CtrlHandler %p\n",
 		func);
 	return (done);
       }
@@ -336,17 +336,17 @@ BOOL WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
 {
   if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
     {
-      ERR( console, "invalid event %d for PGID %ld\n", 
+      ERR("invalid event %d for PGID %ld\n", 
 	   (unsigned short)dwCtrlEvent, dwProcessGroupID );
       return FALSE;
     }
   if (dwProcessGroupID == GetCurrentProcessId() )
     {
-      FIXME( console, "Attempt to send event %d to self - stub\n",
+      FIXME("Attempt to send event %d to self - stub\n",
 	     (unsigned short)dwCtrlEvent );
       return FALSE;
     }
-  FIXME( console,"event %d to external PGID %ld - not implemented yet\n",
+  FIXME("event %d to external PGID %ld - not implemented yet\n",
 	 (unsigned short)dwCtrlEvent, dwProcessGroupID );
   return FALSE;
 }
@@ -373,7 +373,7 @@ HANDLE WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
                 DWORD dwShareMode, LPSECURITY_ATTRIBUTES sa,
                 DWORD dwFlags, LPVOID lpScreenBufferData )
 {
-    FIXME(console, "(%ld,%ld,%p,%ld,%p): stub\n",dwDesiredAccess,
+    FIXME("(%ld,%ld,%p,%ld,%p): stub\n",dwDesiredAccess,
           dwShareMode, sa, dwFlags, lpScreenBufferData);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
@@ -411,7 +411,7 @@ BOOL WINAPI GetConsoleScreenBufferInfo( HANDLE hConsoleOutput,
 BOOL WINAPI SetConsoleActiveScreenBuffer(
     HANDLE hConsoleOutput) /* [in] Handle to console screen buffer */
 {
-    FIXME(console, "(%x): stub\n", hConsoleOutput);
+    FIXME("(%x): stub\n", hConsoleOutput);
     return FALSE;
 }
 
@@ -483,7 +483,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
         if (!CONSOLE_GetInfo( handle, &info )) return FALSE;
         if (info.pid) return TRUE; /* already complex */
 
-	MSG("Console: Making console complex (creating an xterm)...\n");
+	MESSAGE("Console: Making console complex (creating an xterm)...\n");
 
 	if (tcgetattr(0, &term) < 0) {
 		/* ignore failure, or we can't run from a script */
@@ -500,7 +500,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 		 *  xterm: unable to open font "vga", trying "fixed".... 
 		 */
 		execlp("xterm", "xterm", buf, "-fn","vga",NULL);
-		ERR(console, "error creating AllocConsole xterm\n");
+		ERR("error creating AllocConsole xterm\n");
 		exit(1);
 	}
 
@@ -518,7 +518,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 			usleep(100);
 		}
 		if (i > 10000) {
-			ERR(console, "can't read xterm WID\n");
+			ERR("can't read xterm WID\n");
 			kill(xpid, SIGKILL);
 			return FALSE;
 		}
@@ -550,7 +550,7 @@ BOOL WINAPI AllocConsole(VOID)
 	HANDLE hIn, hOut, hErr;
 	DWORD	ret;
 
-	TRACE(console,"()\n");
+	TRACE("()\n");
         CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 1, &req, sizeof(req) );
 	ret = CLIENT_WaitReply( NULL, NULL, 0 );
         if (ret != ERROR_SUCCESS) {
@@ -559,7 +559,7 @@ BOOL WINAPI AllocConsole(VOID)
 		 * and our handles are wrong? puzzling -MM 990330
 		 */
 		if (ret!=ERROR_ACCESS_DENIED) {
-			ERR(console," failed to allocate console: %ld\n",ret);
+			ERR(" failed to allocate console: %ld\n",ret);
 			return FALSE;
 		}
 	}
@@ -572,7 +572,7 @@ BOOL WINAPI AllocConsole(VOID)
         if (ret != ERROR_SUCCESS)
         {
             /* FIXME: free console */
-	    ERR(console," open console error %ld\n",ret);
+	    ERR(" open console error %ld\n",ret);
             return FALSE;
         }
         hIn = reply.handle;
@@ -757,7 +757,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
     buffer = HeapAlloc(GetProcessHeap(),0,100);;
     curbufsize = 100;
 
-    TRACE(console,"wr: top = %d, bottom=%d, left=%d,right=%d\n",
+    TRACE("wr: top = %d, bottom=%d, left=%d,right=%d\n",
     	lpWriteRegion->Top,
     	lpWriteRegion->Bottom,
     	lpWriteRegion->Left,
@@ -825,7 +825,7 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
     struct read_console_input_request req;
     INPUT_RECORD	ir;
 
-    TRACE(console,"(%d,%p,%ld,%p,%p)\n",
+    TRACE("(%d,%p,%ld,%p,%p)\n",
 	    hConsoleInput,lpBuffer,nNumberOfCharsToRead,
 	    lpNumberOfCharsRead,lpReserved
     );
@@ -1092,7 +1092,7 @@ BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
     if (pos.y)
     	CONSOLE_make_complex(hcon);
 
-    TRACE(console, "%d (%dx%d)\n", hcon, pos.x , pos.y );
+    TRACE("%d (%dx%d)\n", hcon, pos.x , pos.y );
     /* x are columns, y rows */
     if (pos.y) 
     	/* full screen cursor absolute positioning */
@@ -1120,7 +1120,7 @@ BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
  */
 BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 {
-    FIXME(console,"(%p): stub\n", nrofbuttons);
+    FIXME("(%p): stub\n", nrofbuttons);
     *nrofbuttons = 2;
     return TRUE;
 }
@@ -1191,7 +1191,7 @@ BOOL WINAPI SetConsoleWindowInfo(
     BOOL bAbsolute,    /* [in] Coordinate type flag */
     LPSMALL_RECT window) /* [in] Address of new window rectangle */
 {
-    FIXME(console, "(%x,%d,%p): stub\n", hcon, bAbsolute, window);
+    FIXME("(%x,%d,%p): stub\n", hcon, bAbsolute, window);
     return TRUE;
 }
 
@@ -1215,7 +1215,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput,WORD wAttr)
     DWORD xlen;
     char buffer[20];
 
-    TRACE(console,"(%d,%d)\n",hConsoleOutput,wAttr);
+    TRACE("(%d,%d)\n",hConsoleOutput,wAttr);
     sprintf(buffer,"%c[0;%s3%d;4%dm",
 	27,
 	(wAttr & FOREGROUND_INTENSITY)?"1;":"",
@@ -1241,7 +1241,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput,WORD wAttr)
 BOOL WINAPI SetConsoleScreenBufferSize( HANDLE hConsoleOutput, 
                                           COORD dwSize )
 {
-    FIXME(console, "(%d,%dx%d): stub\n",hConsoleOutput,dwSize.x,dwSize.y);
+    FIXME("(%d,%dx%d): stub\n",hConsoleOutput,dwSize.x,dwSize.y);
     return TRUE;
 }
 
@@ -1330,7 +1330,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput,
               WORD wAttribute, DWORD nLength, COORD dwCoord, 
               LPDWORD lpNumAttrsWritten)
 {
-    FIXME(console, "(%d,%d,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+    FIXME("(%d,%d,%ld,%dx%d,%p): stub\n", hConsoleOutput,
           wAttribute,nLength,dwCoord.x,dwCoord.y,lpNumAttrsWritten);
     *lpNumAttrsWritten = nLength;
     return TRUE;
@@ -1345,7 +1345,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput,
 BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, 
 	      LPSTR lpstr, DWORD dword, COORD coord, LPDWORD lpdword)
 {
-    FIXME(console, "(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
 	  dword,coord.x,coord.y,lpdword);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
@@ -1362,7 +1362,7 @@ BOOL WINAPI ScrollConsoleScreenBuffer( HANDLE hConsoleOutput,
 	      LPSMALL_RECT lpScrollRect, LPSMALL_RECT lpClipRect,
               COORD dwDestOrigin, LPCHAR_INFO lpFill)
 {
-    FIXME(console, "(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
+    FIXME("(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
 	  lpClipRect,dwDestOrigin.x,dwDestOrigin.y,lpFill);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;

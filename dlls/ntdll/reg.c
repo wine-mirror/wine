@@ -2,7 +2,7 @@
  *	registry functions
  */
 
-#include "debug.h"
+#include "debugtools.h"
 #include "winreg.h"
 
 #include "ntddk.h"
@@ -23,7 +23,7 @@ NTSTATUS WINAPI NtCreateKey(
 	ULONG CreateOptions,
 	PULONG Disposition)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p (%s),0x%08lx, %p(%s),0x%08lx,%p),stub!\n",
+	FIXME("(%p,0x%08lx,%p (%s),0x%08lx, %p(%s),0x%08lx,%p),stub!\n",
 	KeyHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
 	TitleIndex, Class, debugstr_w(Class->Buffer), CreateOptions, Disposition);
 	return 0;
@@ -35,7 +35,7 @@ NTSTATUS WINAPI NtCreateKey(
  */
 NTSTATUS NtDeleteKey(HANDLE KeyHandle)
 {
-	FIXME(ntdll,"(0x%08x) stub!\n",
+	FIXME("(0x%08x) stub!\n",
 	KeyHandle);
 	return 1;
 }
@@ -48,7 +48,7 @@ NTSTATUS WINAPI NtDeleteValueKey(
 	IN HANDLE KeyHandle,
 	IN PUNICODE_STRING ValueName)
 {
-	FIXME(ntdll,"(0x%08x,%p(%s)) stub!\n",
+	FIXME("(0x%08x,%p(%s)) stub!\n",
 	KeyHandle, ValueName,debugstr_w(ValueName->Buffer));
 	return 1;
 
@@ -65,7 +65,7 @@ NTSTATUS WINAPI NtEnumerateKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub\n",
 	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 	return 1;
 }
@@ -82,7 +82,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub!\n",
 	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 	return 1;
 }
@@ -93,7 +93,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
  */
 NTSTATUS NtFlushKey(HANDLE KeyHandle)
 {
-	FIXME(ntdll,"(0x%08x) stub!\n",
+	FIXME("(0x%08x) stub!\n",
 	KeyHandle);
 	return 1;
 }
@@ -106,7 +106,7 @@ NTSTATUS WINAPI NtLoadKey(
 	PHANDLE KeyHandle,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME(ntdll,"(%p,%p (%s)),stub!\n",
+	FIXME("(%p,%p (%s)),stub!\n",
 	KeyHandle, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 
@@ -128,7 +128,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 	IN ULONG Length,
 	IN BOOLEAN WatchSubtree)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
 	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
 	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
 	return 0;
@@ -147,7 +147,7 @@ NTSTATUS WINAPI NtOpenKey(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes) 
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p (%s)),stub!\n",
+	FIXME("(%p,0x%08lx,%p (%s)),stub!\n",
 	KeyHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 }
@@ -163,7 +163,7 @@ NTSTATUS WINAPI NtQueryKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p) stub\n",
 	KeyHandle, KeyInformationClass, KeyInformation, Length, ResultLength);
 	return 0;
 }
@@ -181,7 +181,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 	ULONG Length,
 	PULONG  ReturnLength)
 {
-	FIXME(ntdll,"(0x%08x,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%08x,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
 	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
 	Length,ReturnLength);
 	return 0;
@@ -199,7 +199,7 @@ NTSTATUS WINAPI NtQueryValueKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,%p,0x%08x,%p,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,%p,0x%08x,%p,0x%08lx,%p) stub\n",
 	KeyHandle, ValueName, KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
 	return 0;
 }
@@ -213,7 +213,7 @@ NTSTATUS WINAPI NtReplaceKey(
 	IN HANDLE Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
-	FIXME(ntdll,"(%p(%s),0x%08x,%p (%s)),stub!\n",
+	FIXME("(%p(%s),0x%08x,%p (%s)),stub!\n",
 	ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),Key,
 	ReplacedObjectAttributes,debugstr_w(ReplacedObjectAttributes->ObjectName->Buffer));
 	return 0;
@@ -228,7 +228,7 @@ NTSTATUS WINAPI NtRestoreKey(
 	HANDLE FileHandle,
 	ULONG RestoreFlags)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,0x%08lx) stub\n",
+	FIXME("(0x%08x,0x%08x,0x%08lx) stub\n",
 	KeyHandle, FileHandle, RestoreFlags);
 	return 0;
 
@@ -241,7 +241,7 @@ NTSTATUS WINAPI NtSaveKey(
 	IN HANDLE KeyHandle,
 	IN HANDLE FileHandle)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x) stub\n",
+	FIXME("(0x%08x,0x%08x) stub\n",
 	KeyHandle, FileHandle);
 	return 0;
 }
@@ -255,7 +255,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx) stub\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx) stub\n",
 	KeyHandle, KeyInformationClass, KeyInformation, KeyInformationLength);
 	return 0;
 }
@@ -271,7 +271,7 @@ NTSTATUS WINAPI NtSetValueKey(
 	PVOID Data,
 	ULONG DataSize)
 {
-	FIXME(ntdll,"(0x%08x,%p(%s), 0x%08lx, 0x%08lx, %p, 0x%08lx) stub!\n",
+	FIXME("(0x%08x,%p(%s), 0x%08lx, 0x%08lx, %p, 0x%08lx) stub!\n",
 	KeyHandle, ValueName,debugstr_w(ValueName->Buffer), TitleIndex, Type, Data, DataSize);
 	return 1;
 
@@ -284,7 +284,7 @@ NTSTATUS WINAPI NtSetValueKey(
 NTSTATUS WINAPI NtUnloadKey(
 	IN HANDLE KeyHandle)
 {
-	FIXME(ntdll,"(0x%08x) stub\n",
+	FIXME("(0x%08x) stub\n",
 	KeyHandle);
 	return 0;
 }

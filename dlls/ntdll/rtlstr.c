@@ -15,7 +15,7 @@
 #include "wine/winestring.h"
 #include "heap.h"
 #include "winnls.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "ntddk.h"
 
@@ -138,7 +138,7 @@ VOID WINAPI RtlInitString(PSTRING target,LPCSTR source)
  */
 VOID WINAPI RtlInitUnicodeString(PUNICODE_STRING target,LPCWSTR source)
 {
-	TRACE(ntdll,"%p %p(%s)\n", target, source, debugstr_w(source));
+	TRACE("%p %p(%s)\n", target, source, debugstr_w(source));
 	
 	target->Length = target->MaximumLength = 0;
 	target->Buffer = (LPWSTR)source;
@@ -220,7 +220,7 @@ WINAPI RtlUnicodeStringToAnsiString(PANSI_STRING oem,PUNICODE_STRING uni,BOOLEAN
  *                 RtlEqualUnicodeString		[NTDLL]
  */
 DWORD WINAPI RtlEqualUnicodeString(PUNICODE_STRING s1,PUNICODE_STRING s2,DWORD x) {
-	FIXME(ntdll,"(%s,%s,%ld),stub!\n",debugstr_w(s1->Buffer),debugstr_w(s2->Buffer),x);
+	FIXME("(%s,%s,%ld),stub!\n",debugstr_w(s1->Buffer),debugstr_w(s2->Buffer),x);
 	return 0;
 	if (s1->Length != s2->Length)
 		return 1;
@@ -318,7 +318,7 @@ out:
 NTSTATUS WINAPI RtlCompareUnicodeString(
 	PUNICODE_STRING String1, PUNICODE_STRING String2, BOOLEAN CaseInSensitive) 
 {
-	FIXME(ntdll,"(%s,%s,0x%08x),stub!\n",debugstr_w(String1->Buffer),debugstr_w(String1->Buffer),CaseInSensitive);
+	FIXME("(%s,%s,0x%08x),stub!\n",debugstr_w(String1->Buffer),debugstr_w(String1->Buffer),CaseInSensitive);
 	return 0;
 }
 

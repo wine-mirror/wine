@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "file.h"
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -148,7 +148,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
   LPSYSTEMTIME lpUniversalTime,
   LPSYSTEMTIME lpLocalTime) {
 
-  FIXME(win32, ":stub\n"); 
+  FIXME(":stub\n"); 
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
        return FALSE;
 }

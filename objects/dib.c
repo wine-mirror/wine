@@ -9,7 +9,7 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "dc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "monitor.h"
 #include "palette.h"
 
@@ -35,7 +35,7 @@ int DIB_GetDIBWidthBytes( int width, int depth )
 	case 24: words = (width * 3 + 3)/4; break;
 
 	default:
-            WARN(bitmap, "(%d): Unsupported depth\n", depth );
+            WARN("(%d): Unsupported depth\n", depth );
 	/* fall through */
 	case 32:
 	        words = width;
@@ -107,7 +107,7 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
         *compr  = 0;
         return 0;
     }
-    WARN(bitmap, "(%ld): wrong size for header\n", header->biSize );
+    WARN("(%ld): wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -253,7 +253,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 					     ySrc, startscan, lines, bits,
 					     info, coloruse );
     else {
-        FIXME(bitmap, "unimplemented on hdc %08x\n", hdc);
+        FIXME("unimplemented on hdc %08x\n", hdc);
 	ret = 0;
     }
 
@@ -565,7 +565,7 @@ INT WINAPI GetDIBits(
 	}
     }
 
-    TRACE(bitmap, "biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
+    TRACE("biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
 	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight);
 
@@ -640,7 +640,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
         }
         else
         {
-            WARN(bitmap, "(%ld): wrong size for data\n",
+            WARN("(%ld): wrong size for data\n",
                      data->bmiHeader.biSize );
             return 0;
         }
@@ -736,7 +736,7 @@ void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
   if (bmi->bmiHeader.biSize == sizeof(BITMAPINFOHEADER)) incr = 4;
   else if (bmi->bmiHeader.biSize == sizeof(BITMAPCOREHEADER)) incr = 3;
   else {
-    WARN(bitmap, "Wrong bitmap header size!\n");
+    WARN("Wrong bitmap header size!\n");
     return;
   }
   colors = bmi->bmiHeader.biClrUsed;
@@ -752,11 +752,11 @@ void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
       case 4: pix = pix >> 4; break;
       case 8: break;
       default: 
-        WARN(bitmap, "(%d): Unsupported depth\n", bmi->bmiHeader.biBitCount); 
+        WARN("(%d): Unsupported depth\n", bmi->bmiHeader.biBitCount); 
 	return;
     }
     if (pix >= colors) {
-      WARN(bitmap, "pixel has color index greater than biClrUsed!\n");
+      WARN("pixel has color index greater than biClrUsed!\n");
       return;
     }
     if (loadflags & LR_LOADMAP3DCOLORS) c_W = c_F;

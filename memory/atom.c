@@ -21,7 +21,7 @@
 #include "ldt.h"
 #include "stackframe.h"
 #include "user.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #ifdef CONFIG_IPC
 #include "dde_atom.h"
@@ -164,7 +164,7 @@ static WORD ATOM_Hash(
 ) {
     WORD i, hash = 0;
 
-    TRACE(atom,"%x, %s, %x\n", entries, str, len);
+    TRACE("%x, %s, %x\n", entries, str, len);
     
     for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
     return hash % entries;
@@ -181,7 +181,7 @@ static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid) {
 		return FALSE;
 	*atomid=strtol(atomstr+1,&xend,10);
 	if (*xend) {
-		FIXME(atom,"found atom named '%s'\n",atomstr);
+		FIXME("found atom named '%s'\n",atomstr);
 		return FALSE;
 	}
 	return TRUE;
@@ -211,7 +211,7 @@ static ATOM ATOM_AddAtom(
     int len, ae_len;
     WORD	iatom;
 
-    TRACE(atom,"0x%x, %s\n", selector, str);
+    TRACE("0x%x, %s\n", selector, str);
     
     if (ATOM_IsIntAtom(str,&iatom))
     	return iatom;
@@ -226,7 +226,7 @@ static ATOM ATOM_AddAtom(
 	    (!lstrncmpiA( entryPtr->str, str, len )))
 	{
 	    entryPtr->refCount++;
-        TRACE(atom,"-- existing 0x%x\n", entry);
+        TRACE("-- existing 0x%x\n", entry);
 	    return HANDLETOATOM( entry );
 	}
 	entry = entryPtr->next;
@@ -243,7 +243,7 @@ static ATOM ATOM_AddAtom(
     entryPtr->length = len;
     strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1); /* always use strncpy ('\0's padding) */
     table->entries[hash] = entry;
-    TRACE(atom,"-- new 0x%x\n", entry);
+    TRACE("-- new 0x%x\n", entry);
     return HANDLETOATOM( entry );
 }
 
@@ -263,7 +263,7 @@ static ATOM ATOM_DeleteAtom(
     HANDLE16 entry, *prevEntry;
     WORD hash;
 
-    TRACE(atom,"0x%x, 0x%x\n", selector, atom);
+    TRACE("0x%x, 0x%x\n", selector, atom);
     
     if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
 
@@ -306,7 +306,7 @@ static ATOM ATOM_FindAtom(
     HANDLE16 entry;
     int len;
 
-    TRACE(atom,"%x, %s\n", selector, str);
+    TRACE("%x, %s\n", selector, str);
     if (ATOM_IsIntAtom(str,&iatom))
     	return iatom;
     if ((len = strlen( str )) > 255) len = 255;
@@ -318,12 +318,12 @@ static ATOM ATOM_FindAtom(
 	ATOMENTRY * entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
 	    (!lstrncmpiA( entryPtr->str, str, len )))
-    {    TRACE(atom,"-- found %x\n", entry);
+    {    TRACE("-- found %x\n", entry);
 	    return HANDLETOATOM( entry );
     }
 	entry = entryPtr->next;
     }
-    TRACE(atom,"-- not found\n");
+    TRACE("-- not found\n");
     return 0;
 }
 
@@ -347,7 +347,7 @@ static UINT ATOM_GetAtomName(
     UINT len;
     char text[8];
     
-    TRACE(atom,"%x, %x\n", selector, atom);
+    TRACE("%x, %x\n", selector, atom);
     
     if (!count) return 0;
     if (atom < MIN_STR_ATOM)

@@ -6,7 +6,7 @@
  */
 
 #include "color.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "palette.h"
 #include "windef.h"
 
@@ -165,7 +165,7 @@ COLORREF COLOR_LookupNearestColor( PALETTEENTRY* palPalEntry, int size, COLORREF
   {
     if( (i = color & 0x0000ffff) >= size ) 
       {
-	WARN(palette, "RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
+	WARN("RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
 	color = *(COLORREF*)palPalEntry;
       }
     else color = *(COLORREF*)(palPalEntry + i);

@@ -8,7 +8,7 @@
 #include "winbase.h"
 #include "brush.h"
 #include "bitmap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -26,7 +26,7 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     GDI_HEAP_UNLOCK( hbrush );
-    TRACE(gdi, "%04x\n", hbrush);
+    TRACE("%04x\n", hbrush);
     return hbrush;
 }
 
@@ -44,7 +44,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     GDI_HEAP_UNLOCK( hbrush );
-    TRACE(gdi, "%08x\n", hbrush);
+    TRACE("%08x\n", hbrush);
     return hbrush;
 }
 
@@ -56,7 +56,7 @@ HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE(gdi, "%d %06lx\n", style, color );
+    TRACE("%d %06lx\n", style, color );
 
     logbrush.lbStyle = BS_HATCHED;
     logbrush.lbColor = color;
@@ -74,7 +74,7 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE(gdi, "%d %06lx\n", style, color );
+    TRACE("%d %06lx\n", style, color );
 
     logbrush.lbStyle = BS_HATCHED;
     logbrush.lbColor = color;
@@ -100,7 +100,7 @@ HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
-    TRACE(gdi, "%04x\n", hbitmap );
+    TRACE("%04x\n", hbitmap );
 
     logbrush.lbHatch = (INT)BITMAP_CopyBitmap( hbitmap );
     if(!logbrush.lbHatch)
@@ -119,7 +119,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     BITMAPINFO *info, *newInfo;
     INT size;
 
-    TRACE(gdi, "%04x\n", hbitmap );
+    TRACE("%04x\n", hbitmap );
 
     logbrush.lbStyle = BS_DIBPATTERN;
     logbrush.lbColor = coloruse;
@@ -173,7 +173,7 @@ HBRUSH WINAPI CreateDIBPatternBrush(
     BITMAPINFO *info, *newInfo;
     INT size;
     
-    TRACE(gdi, "%04x\n", hbitmap );
+    TRACE("%04x\n", hbitmap );
 
     logbrush.lbStyle = BS_DIBPATTERN;
     logbrush.lbColor = coloruse;
@@ -226,7 +226,7 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
     BITMAPINFO  *newInfo;
     INT size;
     
-    TRACE(gdi, "%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
+    TRACE("%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
 
     logbrush.lbStyle = BS_DIBPATTERN;
@@ -262,7 +262,7 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE(gdi, "%06lx\n", color );
+    TRACE("%06lx\n", color );
 
     logbrush.lbStyle = BS_SOLID;
     logbrush.lbColor = color;
@@ -279,7 +279,7 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE(gdi, "%06lx\n", color );
+    TRACE("%06lx\n", color );
 
     logbrush.lbStyle = BS_SOLID;
     logbrush.lbColor = color;
@@ -388,7 +388,7 @@ INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
  */
 BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 {
-     FIXME(gdi, "(hBrush %04x, newColor %04x): stub!\n", hBrush, (int)newColor);
+     FIXME("(hBrush %04x, newColor %04x): stub!\n", hBrush, (int)newColor);
 
      return(FALSE);
 }

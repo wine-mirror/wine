@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -56,7 +56,7 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
     {
 	EnterCriticalSection( &rwl->rtlCS );
 	if( rwl->iNumberActive || rwl->uExclusiveWaiters || rwl->uSharedWaiters )
-	    MSG("Deleting active MRSW lock (%p), expect failure\n", rwl );
+	    MESSAGE("Deleting active MRSW lock (%p), expect failure\n", rwl );
 	rwl->hOwningThreadId = 0;
 	rwl->uExclusiveWaiters = rwl->uSharedWaiters = 0;
 	rwl->iNumberActive = 0;
@@ -203,10 +203,10 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 {
     if( rwl )
     {
-	MSG("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",  
+	MESSAGE("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",  
 		rwl, rwl->iNumberActive, rwl->uSharedWaiters, rwl->uExclusiveWaiters );
 	if( rwl->iNumberActive )
-	    MSG("\towner thread = %08x\n", rwl->hOwningThreadId );
+	    MESSAGE("\towner thread = %08x\n", rwl->hOwningThreadId );
     }
 }
 
@@ -225,7 +225,7 @@ HANDLE WINAPI RtlCreateHeap(
 	PVOID Unknown,
 	PRTL_HEAP_DEFINITION Definition)
 {
-	FIXME (ntdll,"(0x%08lx, %p, 0x%08lx, 0x%08lx, %p, %p) semi-stub\n",
+	FIXME("(0x%08lx, %p, 0x%08lx, 0x%08lx, %p, %p) semi-stub\n",
 	Flags, BaseAddress, SizeToReserve, SizeToCommit, Unknown, Definition);
 	
 	return HeapCreate ( Flags, SizeToCommit, SizeToReserve);
@@ -239,7 +239,7 @@ PVOID WINAPI RtlAllocateHeap(
 	ULONG Flags,
 	ULONG Size)
 {
-	FIXME(ntdll,"(0x%08x, 0x%08lx, 0x%08lx) semi stub\n",
+	FIXME("(0x%08x, 0x%08lx, 0x%08lx) semi stub\n",
 	Heap, Flags, Size);
 	return HeapAlloc(Heap, Flags, Size);
 }
@@ -252,7 +252,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 	ULONG Flags,
 	PVOID Address)
 {
-	FIXME(ntdll,"(0x%08x, 0x%08lx, %p) semi stub\n",
+	FIXME("(0x%08x, 0x%08lx, %p) semi stub\n",
 	Heap, Flags, Address);
 	return HeapFree(Heap, Flags, Address);
 }
@@ -265,7 +265,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 BOOLEAN WINAPI RtlDestroyHeap(
 	HANDLE Heap)
 {
-	FIXME(ntdll,"(0x%08x) semi stub\n", Heap);
+	FIXME("(0x%08x) semi stub\n", Heap);
 	return HeapDestroy(Heap);
 }
 	
@@ -280,7 +280,7 @@ void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
 	char buf[512];
 
 	wvsprintfA(buf,fmt,&args);
-	MSG("DbgPrint says: %s",buf);
+	MESSAGE("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
 }
 
@@ -288,7 +288,7 @@ void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
  *  RtlAcquirePebLock		[NTDLL] 
  */
 VOID WINAPI RtlAcquirePebLock(void) {
-	FIXME(ntdll,"()\n");
+	FIXME("()\n");
 	/* enter critical section ? */
 }
 
@@ -296,7 +296,7 @@ VOID WINAPI RtlAcquirePebLock(void) {
  *  RtlReleasePebLock		[NTDLL] 
  */
 VOID WINAPI RtlReleasePebLock(void) {
-	FIXME(ntdll,"()\n");
+	FIXME("()\n");
 	/* leave critical section ? */
 }
 
@@ -304,14 +304,14 @@ VOID WINAPI RtlReleasePebLock(void) {
  *  RtlIntegerToChar	[NTDLL] 
  */
 DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 /******************************************************************************
  *  RtlSetEnvironmentVariable		[NTDLL] 
  */
 DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
-	FIXME(ntdll,"(0x%08lx,%s,%s),stub!\n",x1,debugstr_w(key->Buffer),debugstr_w(val->Buffer));
+	FIXME("(0x%08lx,%s,%s),stub!\n",x1,debugstr_w(key->Buffer),debugstr_w(val->Buffer));
 	return 0;
 }
 
@@ -319,7 +319,7 @@ DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STR
  *  RtlNewSecurityObject		[NTDLL] 
  */
 DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
 	return 0;
 }
 
@@ -327,7 +327,7 @@ DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,D
  *  RtlDeleteSecurityObject		[NTDLL] 
  */
 DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
+	FIXME("(0x%08lx),stub!\n",x1);
 	return 0;
 }
 
@@ -336,7 +336,7 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
  */
 LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 {
-    FIXME(ntdll,"(%p), stub\n",x);
+    FIXME("(%p), stub\n",x);
     return x;
 }
 
@@ -345,7 +345,7 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
  */
 DWORD WINAPI RtlNtStatusToDosError(DWORD error)
 {
-	FIXME(ntdll, "(%lx): map STATUS_ to ERROR_\n",error);
+	FIXME("(%lx): map STATUS_ to ERROR_\n",error);
 	switch (error)
 	{ case STATUS_SUCCESS:			return ERROR_SUCCESS;
 	  case STATUS_INVALID_PARAMETER:	return ERROR_BAD_ARGUMENTS;
@@ -355,7 +355,7 @@ DWORD WINAPI RtlNtStatusToDosError(DWORD error)
 /*	  case STATUS_UNKNOWN_REVISION:
 	  case STATUS_BUFFER_OVERFLOW:*/
 	}
-	FIXME(ntdll, "unknown status (%lx)\n",error);
+	FIXME("unknown status (%lx)\n",error);
 	return ERROR_SUCCESS;
 }
 
@@ -364,7 +364,7 @@ DWORD WINAPI RtlNtStatusToDosError(DWORD error)
  */
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
 {
-    FIXME(ntdll, "(%p): stub\n", type);
+    FIXME("(%p): stub\n", type);
     *type=3; /* dunno. 1 for client, 3 for server? */
     return 1;
 }
@@ -398,7 +398,7 @@ INT WINAPI RtlExtendedLargeIntegerDivide(
 		*rest = x1 % divisor;
 	return x1/divisor;
 #else
-	FIXME(ntdll,"((%d<<32)+%d,%d,%p), implement this using normal integer arithmetic!\n",dividend.HighPart,dividend.LowPart,divisor,rest);
+	FIXME("((%d<<32)+%d,%d,%p), implement this using normal integer arithmetic!\n",dividend.HighPart,dividend.LowPart,divisor,rest);
 	return 0;
 #endif
 }
@@ -415,7 +415,7 @@ long long WINAPI RtlExtendedIntegerMultiply(
 #if SIZEOF_LONG_LONG==8
 	return (*(long long*)&factor1) * factor2;
 #else
-	FIXME(ntdll,"((%d<<32)+%d,%ld), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
+	FIXME("((%d<<32)+%d,%ld), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
 	return 0;
 #endif
 }
@@ -425,7 +425,7 @@ long long WINAPI RtlExtendedIntegerMultiply(
  */
 DWORD WINAPI RtlFormatCurrentUserKeyPath(DWORD x)
 {
-    FIXME(ntdll,"(0x%08lx): stub\n",x);
+    FIXME("(0x%08lx): stub\n",x);
     return 1;
 }
 
@@ -454,7 +454,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 {
 	LPSTR	fromA = HEAP_strdupWtoA(GetProcessHeap(),0,from);
 
-	FIXME(ntdll,"(%s,%p,%08lx,%08lx)\n",fromA,us,x2,x3);
+	FIXME("(%s,%p,%08lx,%08lx)\n",fromA,us,x2,x3);
 	if (us)
 		RtlInitUnicodeString(us,HEAP_strdupW(GetProcessHeap(),0,from));
 	return TRUE;
@@ -464,7 +464,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
  *  RtlCreateEnvironment		[NTDLL] 
  */
 DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 0;
 }
 
@@ -473,7 +473,7 @@ DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
  *  RtlDestroyEnvironment		[NTDLL] 
  */
 DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x);
+	FIXME("(0x%08lx),stub!\n",x);
 	return 0;
 }
 
@@ -481,6 +481,6 @@ DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
  *  RtlQueryEnvironmentVariable_U		[NTDLL] 
  */
 DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
-	FIXME(ntdll,"(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
+	FIXME("(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
 	return 0;
 }

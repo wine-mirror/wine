@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include "pen.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -19,7 +19,7 @@ HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
     LOGPEN logpen;
 
-    TRACE(gdi, "%d %d %06lx\n", style, width, color );
+    TRACE("%d %d %06lx\n", style, width, color );
 
     logpen.lopnStyle = style; 
     logpen.lopnWidth.x = width;
@@ -37,7 +37,7 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
     LOGPEN logpen;
 
-    TRACE(gdi, "%d %d %06lx\n", style, width, color );
+    TRACE("%d %d %06lx\n", style, width, color );
 
     logpen.lopnStyle = style; 
     logpen.lopnWidth.x = width;
@@ -100,10 +100,10 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     LOGPEN logpen;
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
-	FIXME(gdi, "PS_USERSTYLE not handled\n");
+	FIXME("PS_USERSTYLE not handled\n");
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
 	if (brush->lbHatch)
-	    FIXME(gdi, "Hatches not implemented\n");
+	    FIXME("Hatches not implemented\n");
 
     logpen.lopnStyle = style & ~PS_TYPE_MASK;
     logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ldt)
 
@@ -148,7 +148,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 {
     int ret = 0;
 
-    TRACE(ldt, "entry=%04x base=%08lx limit=%05lx %s %d-bit "
+    TRACE("entry=%04x base=%08lx limit=%05lx %s %d-bit "
 		 "flags=%c%c%c\n", entry, content->base, content->limit,
 		 content->limit_in_pages ? "pages" : "bytes",
 		 content->seg_32bit ? 32 : 16,
@@ -183,7 +183,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         {
             if (ldt_info.base_addr >= 0xc0000000)
             {
-                WARN(ldt, "Invalid base addr %08lx\n",
+                WARN("Invalid base addr %08lx\n",
                          ldt_info.base_addr );
                 return -1;
             }
@@ -213,7 +213,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         if (ret < 0)
         {
             perror("i386_set_ldt");
-            MSG("Did you reconfigure the kernel with \"options USER_LDT\"?\n");
+            MESSAGE("Did you reconfigure the kernel with \"options USER_LDT\"?\n");
     	    exit(1);
         }
     }
@@ -287,7 +287,7 @@ void LDT_Print( int start, int length )
             flags[1] = (ldt_flags_copy[i] & LDT_FLAGS_READONLY) ? '-' : 'w';
             flags[2] = '-';
         }
-        MSG("%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
+        MESSAGE("%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
             i, ENTRY_TO_SELECTOR(i), ldt_copy[i].base, ldt_copy[i].limit,
             ldt_flags_copy[i] & LDT_FLAGS_32BIT ? 32 : 16,
             flags[0], flags[1], flags[2] );

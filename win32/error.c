@@ -5,8 +5,8 @@
  */
 
 #include <errno.h>
+#include "windef.h"
 #include "winerror.h"
-#include "debug.h"
 
 /* The errno_xlat_table contains the errno-to-Win32 error
  * mapping.  Since this is a single table, it can't easily

@@ -9,7 +9,7 @@
 #include "winbase.h"
 #include "server.h"
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -105,7 +105,7 @@ HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
  *           SetHandleContext    		(KERNEL32)
  */
 BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
-    FIXME(win32,"(%d,%ld), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd,context);
+    FIXME("(%d,%ld), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd,context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -114,7 +114,7 @@ BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
  *           GetHandleContext    		(KERNEL32)
  */
 DWORD WINAPI GetHandleContext(HANDLE hnd) {
-    FIXME(win32,"(%d), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd);
+    FIXME("(%d), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -123,7 +123,7 @@ DWORD WINAPI GetHandleContext(HANDLE hnd) {
  *           CreateSocketHandle    		(KERNEL32)
  */
 HANDLE WINAPI CreateSocketHandle(void) {
-    FIXME(win32,"(), stub. The external WSOCK32 will not work with WINE, do not use it.\n");
+    FIXME("(), stub. The external WSOCK32 will not work with WINE, do not use it.\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }

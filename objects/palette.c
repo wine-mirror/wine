@@ -17,7 +17,7 @@
 #include "color.h"
 #include "palette.h"
 #include "xmalloc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(palette)
 
@@ -110,7 +110,7 @@ HPALETTE WINAPI CreatePalette(
     int size;
     
     if (!palette) return 0;
-    TRACE(palette,"entries=%i\n", palette->palNumEntries);
+    TRACE("entries=%i\n", palette->palNumEntries);
 
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
@@ -124,7 +124,7 @@ HPALETTE WINAPI CreatePalette(
     palettePtr->mapping = NULL;
     GDI_HEAP_UNLOCK( hpalette );
 
-    TRACE(palette,"   returning %04x\n", hpalette);
+    TRACE("   returning %04x\n", hpalette);
     return hpalette;
 }
 
@@ -215,7 +215,7 @@ UINT WINAPI GetPaletteEntries(
     PALETTEOBJ * palPtr;
     INT numEntries;
 
-    TRACE(palette,"hpal = %04x, count=%i\n", hpalette, count );
+    TRACE("hpal = %04x, count=%i\n", hpalette, count );
         
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
@@ -267,7 +267,7 @@ UINT WINAPI SetPaletteEntries(
     PALETTEOBJ * palPtr;
     INT numEntries;
 
-    TRACE(palette,"hpal=%04x,start=%i,count=%i\n",hpalette,start,count );
+    TRACE("hpal=%04x,start=%i,count=%i\n",hpalette,start,count );
 
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
@@ -315,7 +315,7 @@ BOOL WINAPI ResizePalette(
     int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
     int*	 mapping = NULL;
 
-    TRACE(palette,"hpal = %04x, prev = %i, new = %i\n",
+    TRACE("hpal = %04x, prev = %i, new = %i\n",
 		    hPal, palPtr ? palPtr->logpalette.palNumEntries : -1,
                     cEntries );
     if( !palPtr ) return FALSE;
@@ -375,7 +375,7 @@ BOOL WINAPI AnimatePalette(
     UINT NumEntries,            /* [in] Count of entries in palette */
     const PALETTEENTRY* PaletteColors) /* [in] Pointer to first replacement */
 {
-    TRACE(palette, "%04x (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
+    TRACE("%04x (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
 
     if( hPal != STOCK_DEFAULT_PALETTE ) 
     {
@@ -419,7 +419,7 @@ UINT WINAPI SetSystemPaletteUse(
     UINT use) /* [in] Palette-usage flag */
 {
     UINT old = SystemPaletteUse;
-    FIXME(palette,"(%04x,%04x): stub\n", hdc, use );
+    FIXME("(%04x,%04x): stub\n", hdc, use );
     SystemPaletteUse = use;
     return old;
 }
@@ -473,7 +473,7 @@ UINT WINAPI GetSystemPaletteEntries(
     UINT i;
     DC *dc;
 
-    TRACE(palette, "hdc=%04x,start=%i,count=%i\n", hdc,start,count);
+    TRACE("hdc=%04x,start=%i,count=%i\n", hdc,start,count);
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     if (!entries) return dc->w.devCaps->sizePalette;
@@ -488,7 +488,7 @@ UINT WINAPI GetSystemPaletteEntries(
     {
 	*(COLORREF*)(entries + i) = COLOR_GetSystemPaletteEntry( start + i );
 
-        TRACE(palette,"\tidx(%02x) -> RGB(%08lx)\n",
+        TRACE("\tidx(%02x) -> RGB(%08lx)\n",
                          start + i, *(COLORREF*)(entries + i) );
     }
     GDI_HEAP_UNLOCK( hdc );
@@ -527,7 +527,7 @@ UINT WINAPI GetNearestPaletteIndex(
 				       palObj->logpalette.palNumEntries,
 				       NULL, color, FALSE );
 
-    TRACE(palette,"(%04x,%06lx): returning %d\n", hpalette, color, index );
+    TRACE("(%04x,%06lx): returning %d\n", hpalette, color, index );
     GDI_HEAP_UNLOCK( hpalette );
     return index;
 }
@@ -572,7 +572,7 @@ COLORREF WINAPI GetNearestColor(
       GDI_HEAP_UNLOCK( dc->w.hPalette );
     }
 
-    TRACE(palette,"(%06lx): returning %06lx\n", color, nearest );
+    TRACE("(%06lx): returning %06lx\n", color, nearest );
     GDI_HEAP_UNLOCK( hdc );    
     return nearest;
 }
@@ -623,7 +623,7 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
     HPALETTE16 prev;
     DC *dc;
 
-    TRACE(palette, "%04x %04x\n", hdc, hpal );
+    TRACE("%04x %04x\n", hdc, hpal );
     
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -653,7 +653,7 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 	if (!dc) return 0;
     }
 
-    TRACE(palette, "%04x...\n", hdc );
+    TRACE("%04x...\n", hdc );
     
     if( dc &&  dc->w.hPalette != hLastRealizedPalette )
     {
@@ -663,7 +663,7 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
         palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
 
 	if (!palPtr) {
-		FIXME(palette,"invalid selected palette %04x\n",dc->w.hPalette);
+		FIXME("invalid selected palette %04x\n",dc->w.hPalette);
 		return 0;
 	}
         
@@ -674,11 +674,11 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 	GDI_HEAP_UNLOCK( dc->w.hPalette );
 	hLastRealizedPalette = dc->w.hPalette;
     }
-    else TRACE(palette, "  skipping (hLastRealizedPalette = %04x)\n",
+    else TRACE("  skipping (hLastRealizedPalette = %04x)\n",
 			 hLastRealizedPalette);
     GDI_HEAP_UNLOCK( hdc );
 
-    TRACE(palette, "   realized %i colors.\n", realized );
+    TRACE("   realized %i colors.\n", realized );
     return (UINT16)realized;
 }
 
@@ -691,7 +691,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
     DC          *dc;
     PALETTEOBJ*  palPtr;
 
-    TRACE(palette,"%04x\n", hdc );
+    TRACE("%04x\n", hdc );
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -757,10 +757,10 @@ HPALETTE WINAPI SelectPalette(
     WORD	wBkgPalette = 1;
     PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
-    TRACE(palette,"dc=%04x,pal=%04x,force=%i\n", hDC, hPal, bForceBackground);
+    TRACE("dc=%04x,pal=%04x,force=%i\n", hDC, hPal, bForceBackground);
     if( !lpt ) return 0;
 
-    TRACE(palette," entries = %d\n", lpt->logpalette.palNumEntries);
+    TRACE(" entries = %d\n", lpt->logpalette.palNumEntries);
     GDI_HEAP_UNLOCK( hPal );
 
     if( hPal != STOCK_DEFAULT_PALETTE )
@@ -865,6 +865,6 @@ BOOL WINAPI UpdateColors(
  */
 VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 {
-    FIXME(palette,"(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
+    FIXME("(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
 
 }

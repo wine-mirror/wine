@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include "debugstr.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "ntddk.h"
 
@@ -26,7 +26,7 @@ NTSTATUS WINAPI NtCreateSemaphore(
 	IN ULONG InitialCount,
 	IN ULONG MaximumCount) 
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),0x%08lx,0x%08lx) stub!\n",
+	FIXME("(%p,0x%08lx,%p(%s),0x%08lx,0x%08lx) stub!\n",
 	SemaphoreHandle, DesiredAccess, ObjectAttributes, 
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	InitialCount, MaximumCount);
@@ -41,7 +41,7 @@ NTSTATUS WINAPI NtOpenSemaphore(
 	IN ACCESS_MASK DesiredAcces,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,%p(%s)) stub!\n",
+	FIXME("(0x%08x,0x%08lx,%p(%s)) stub!\n",
 	SemaphoreHandle, DesiredAcces, ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
 	return 0;
@@ -57,7 +57,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
 	ULONG Length,
 	PULONG ReturnLength) 
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
 	return 0;
 }
@@ -69,7 +69,7 @@ NTSTATUS WINAPI NtReleaseSemaphore(
 	IN ULONG ReleaseCount,
 	IN PULONG PreviousCount)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,%p,) stub!\n",
+	FIXME("(0x%08x,0x%08lx,%p,) stub!\n",
 	SemaphoreHandle, ReleaseCount, PreviousCount);
 	return 0;
 }
@@ -88,7 +88,7 @@ NTSTATUS WINAPI NtCreateEvent(
 	IN BOOLEAN ManualReset,
 	IN BOOLEAN InitialState)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%08x,%08x): empty stub\n",
+	FIXME("(%p,0x%08lx,%p(%s),%08x,%08x): empty stub\n",
 	EventHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	ManualReset,InitialState);
@@ -103,7 +103,7 @@ NTSTATUS WINAPI NtOpenEvent(
 	IN ACCESS_MASK DesiredAccess,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	FIXME("(%p,0x%08lx,%p(%s)),stub!\n",
 	EventHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
 	return 0;
@@ -116,7 +116,7 @@ NTSTATUS WINAPI NtSetEvent(
 	IN HANDLE EventHandle,
 	PULONG NumberOfThreadsReleased)
 {
-	FIXME(ntdll,"(0x%08x,%p)\n",
+	FIXME("(0x%08x,%p)\n",
 	EventHandle, NumberOfThreadsReleased);
 	return 0;
 }

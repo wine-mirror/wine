@@ -11,7 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include "debugstr.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "ntddk.h"
 
@@ -33,7 +33,7 @@ NTSTATUS WINAPI NtCreateTimer(
 	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
 	IN TIMER_TYPE TimerType)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),0x%08x) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s),0x%08x) stub\n",
 	TimerHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	TimerType);
@@ -51,7 +51,7 @@ NTSTATUS WINAPI NtSetTimer(
 	IN ULONG Period OPTIONAL,
 	OUT PBOOLEAN PreviousState OPTIONAL)
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
 	TimerHandle,DueTime,TimerApcRoutine,TimerContext,WakeTimer,Period,PreviousState);
 	return 0;
 }
@@ -61,7 +61,7 @@ NTSTATUS WINAPI NtSetTimer(
  */
 NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
 	return 1;
 }
 
@@ -79,7 +79,7 @@ NTSTATUS WINAPI NtTerminateProcess(
 	HANDLE ProcessHandle,
 	LONG ExitStatus)
 {
-	TRACE(ntdll, "0x%08x 0x%08lx\n", ProcessHandle, ExitStatus );
+	TRACE("0x%08x 0x%08lx\n", ProcessHandle, ExitStatus );
 
 	/* win32 (0x7fffffff) to nt (-1) */
 	if ( NtCurrentProcess() == ProcessHandle )
@@ -99,7 +99,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 	IN ULONG ProcessInformationLength,
 	OUT PULONG ReturnLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
 	ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength,ReturnLength);
 	return 0;
 }
@@ -113,7 +113,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
 	IN PVOID ProcessInformation,
 	IN ULONG ProcessInformationLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx) stub\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx) stub\n",
 	ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength);
 	return 0;
 }
@@ -129,7 +129,7 @@ NTSTATUS WINAPI NtResumeThread(
 	IN HANDLE ThreadHandle,
 	IN PULONG SuspendCount) 
 {
-	FIXME(ntdll,"(0x%08x,%p),stub!\n",
+	FIXME("(0x%08x,%p),stub!\n",
 	ThreadHandle,SuspendCount);
 	return 0;
 }
@@ -158,7 +158,7 @@ NTSTATUS WINAPI NtQueryInformationThread(
 	IN ULONG ThreadInformationLength,
 	OUT PULONG ReturnLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
 		ThreadHandle, ThreadInformationClass, ThreadInformation,
 		ThreadInformationLength, ReturnLength);
 	return 0;
@@ -173,7 +173,7 @@ NTSTATUS WINAPI NtSetInformationThread(
 	PVOID ThreadInformation,
 	ULONG ThreadInformationLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx),stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx),stub!\n",
 	ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 	return 0;
 }
@@ -193,7 +193,7 @@ NTSTATUS WINAPI NtDuplicateToken(
         IN TOKEN_TYPE TokenType,
         OUT PHANDLE NewToken)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
+	FIXME("(0x%08x,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
 	ExistingToken, DesiredAccess, ObjectAttributes, ImpersonationLevel,
 	TokenType, NewToken);
 	return 0;
@@ -207,7 +207,7 @@ NTSTATUS WINAPI NtOpenProcessToken(
 	DWORD DesiredAccess, 
 	HANDLE *TokenHandle) 
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,%p): stub\n",
+	FIXME("(0x%08x,0x%08lx,%p): stub\n",
 	ProcessHandle,DesiredAccess, TokenHandle);
 	*TokenHandle = 0xcafe;
 	return 0;
@@ -222,7 +222,7 @@ NTSTATUS WINAPI NtOpenThreadToken(
 	BOOLEAN OpenAsSelf,
 	HANDLE *TokenHandle) 
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,0x%08x,%p): stub\n",
+	FIXME("(0x%08x,0x%08lx,0x%08x,%p): stub\n",
 	ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
 	*TokenHandle = 0xcafe;
 	return 0;
@@ -241,7 +241,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 	OUT PTOKEN_PRIVILEGES PreviousState,
 	OUT PDWORD ReturnLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
 	TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
 	return 0;
 }
@@ -257,7 +257,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 	DWORD tokeninfolength,
 	LPDWORD retlen ) 
 {
-	FIXME(ntdll,"(%08x,%ld,%p,%ld,%p): stub\n",
+	FIXME("(%08x,%ld,%p,%ld,%p): stub\n",
 	      token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 
 	switch (tokeninfoclass)
@@ -295,7 +295,7 @@ NTSTATUS WINAPI NtCreateSection(
 	IN ULONG AllocationAttributes,
 	IN HANDLE FileHandle OPTIONAL)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx,0x%08x) stub\n",
+	FIXME("(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx,0x%08x) stub\n",
 	SectionHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	MaximumSize,SectionPageProtection,AllocationAttributes,FileHandle);
@@ -310,7 +310,7 @@ NTSTATUS WINAPI NtOpenSection(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	FIXME("(%p,0x%08lx,%p(%s)),stub!\n",
 	SectionHandle,DesiredAccess,ObjectAttributes,
 	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
 	return 0;
@@ -326,7 +326,7 @@ NTSTATUS WINAPI NtQuerySection(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
 	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
 	return 0;
 }
@@ -362,7 +362,7 @@ NTSTATUS WINAPI NtMapViewOfSection(
 	ULONG AllocationType,
 	ULONG Protect)
 {
-	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,0x%08lx,%p,%p,0x%08x,0x%08lx,0x%08lx) stub\n",
+	FIXME("(0x%08x,0x%08x,%p,0x%08lx,0x%08lx,%p,%p,0x%08x,0x%08lx,0x%08lx) stub\n",
 	SectionHandle,ProcessHandle,BaseAddress,ZeroBits,CommitSize,SectionOffset,
 	ViewSize,InheritDisposition,AllocationType,Protect);
 	return 0;
@@ -377,7 +377,7 @@ NTSTATUS WINAPI NtMapViewOfSection(
  */
 NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
 	return 0;
 }
 
@@ -386,7 +386,7 @@ NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
  */
 NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
 {
-	FIXME(ntdll,"(0x%08lx,%s,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
+	FIXME("(0x%08lx,%s,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
 	x1,debugstr_w(uni->Buffer),x3,x4,x5,x6,x7,x8);
 	return 0;
 }
@@ -396,7 +396,7 @@ NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWO
  */
 NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 0;
 }
 
@@ -405,7 +405,7 @@ NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2)
  */
 NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
 	return 0;
 }
 
@@ -414,7 +414,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5
  */
 NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1) 
 {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
+	FIXME("(0x%08lx),stub!\n",x1);
 	return 0;
 }
 
@@ -423,7 +423,7 @@ NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1)
  */
 NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1) 
 {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
+	FIXME("(0x%08lx),stub!\n",x1);
 	return 0;
 }
 
@@ -432,7 +432,7 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1)
  */
 NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
 	return 0;
 }
 
@@ -441,7 +441,7 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3)
  */
 NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 
@@ -453,7 +453,7 @@ NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
  *  NtSetIntervalProfile	[NTDLL] 
  */
 NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 0;
 }
 
@@ -464,7 +464,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 	IN PLARGE_INTEGER Counter,
 	IN PLARGE_INTEGER Frequency) 
 {
-	FIXME(ntdll,"(%p, 0%p) stub\n",
+	FIXME("(%p, 0%p) stub\n",
 	Counter, Frequency);
 	return 0;
 }
@@ -474,7 +474,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
  */
 NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
 {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8);
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8);
 	return 0;
 }
 
@@ -501,7 +501,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME(ntdll,"(0x%08x,%p,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
 	SystemInformationClass,SystemInformation,Length,ResultLength);
 	ZeroMemory (SystemInformation, Length);
 	return 0;
@@ -517,7 +517,7 @@ NTSTATUS WINAPI NtCreatePagingFile(
 	IN ULONG MaxiumSize,
 	OUT PULONG ActualSize)
 {
-	FIXME(ntdll,"(%p(%s),0x%08lx,0x%08lx,%p),stub!\n",
+	FIXME("(%p(%s),0x%08lx,0x%08lx,%p),stub!\n",
 	PageFileName->Buffer, debugstr_w(PageFileName->Buffer),MiniumSize,MaxiumSize,ActualSize);
 	return 0;
 }
@@ -530,7 +530,7 @@ NTSTATUS WINAPI NtCreatePagingFile(
 NTSTATUS WINAPI NtDisplayString (
 	PUNICODE_STRING string)
 {
-	TRACE(ntdll,"%p(%s)\n",string->Buffer, debugstr_w(string->Buffer));
+	TRACE("%p(%s)\n",string->Buffer, debugstr_w(string->Buffer));
 	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), string->Buffer, string->Length, 0, 0);
 	return 0;
 }

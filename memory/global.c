@@ -19,7 +19,7 @@
 #include "dde_mem.h"
 #include "stackframe.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(global)
@@ -84,11 +84,11 @@ void debug_handles(void)
     for (i = globalArenaSize-1 ; i>=0 ; i--) {
 	if (pGlobalArena[i].size!=0 && (pGlobalArena[i].handle & 0x8000)){
 	    printed=1;
-	    DUMP("0x%08x, ",pGlobalArena[i].handle);
+	    DPRINTF("0x%08x, ",pGlobalArena[i].handle);
 	}
     }
     if (printed)
-	DUMP("\n");
+	DPRINTF("\n");
 }
 
 
@@ -213,7 +213,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     HGLOBAL16 handle;
     SHMDATA shmdata;
 
-    TRACE(global, "%ld flags=%04x\n", size, flags );
+    TRACE("%ld flags=%04x\n", size, flags );
 
     /* If size is 0, create a discarded block */
 
@@ -331,20 +331,20 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel16( handle );
 
-    TRACE(global, "%04x %ld flags=%04x\n",
+    TRACE("%04x %ld flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
     
 #ifdef CONFIG_IPC
     if (flags & GMEM_DDESHARE || is_dde_handle(handle))
     {
-	FIXME(global, "shared memory reallocating unimplemented\n"); 
+	FIXME("shared memory reallocating unimplemented\n"); 
 	return 0;
     }
 #endif  /* CONFIG_IPC */
 
     if (!VALID_HANDLE(handle)) {
-    	WARN(global, "Invalid handle 0x%04x!\n", handle);
+    	WARN("Invalid handle 0x%04x!\n", handle);
     	return 0;
     }
     pArena = GET_ARENA_PTR( handle );
@@ -387,7 +387,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
-    TRACE(global,"oldsize %08lx\n",oldsize);
+    TRACE("oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     if (((char *)ptr >= DOSMEM_MemoryBase(0)) &&
@@ -449,12 +449,12 @@ HGLOBAL16 WINAPI GlobalFree16(
     void *ptr;
 
     if (!VALID_HANDLE(handle)) {
-    	WARN(global,"Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
+    	WARN("Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
     	return 0;
     }
     ptr = (void *)GET_ARENA_PTR(handle)->base;
 
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
@@ -471,7 +471,7 @@ HGLOBAL16 WINAPI GlobalFree16(
  */
 SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 {
-    TRACE(global, "(%04x) -> %08lx\n",
+    TRACE("(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel16(handle)) );
     if (handle)
     {
@@ -483,7 +483,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 #endif  /* CONFIG_IPC */
 
 	if (!VALID_HANDLE(handle)) {
-	    WARN(global,"Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
+	    WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
 	    return (SEGPTR)0;
 	}
 	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
@@ -532,10 +532,10 @@ BOOL16 WINAPI GlobalUnlock16(
 ) {
     GLOBALARENA *pArena = GET_ARENA_PTR(handle);
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
 	return 0;
     }
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (pArena->lockCount) pArena->lockCount--;
     return pArena->lockCount;
 }
@@ -558,7 +558,7 @@ void WINAPI GlobalChangeLockCount16( CONTEXT *context )
     else if ( delta == -1 )
         GlobalUnlock16( handle );
     else
-        ERR( global, "(%04X, %d): strange delta value\n", handle, delta );
+        ERR("(%04X, %d): strange delta value\n", handle, delta );
 }
 
 /***********************************************************************
@@ -570,7 +570,7 @@ void WINAPI GlobalChangeLockCount16( CONTEXT *context )
 DWORD WINAPI GlobalSize16(
              HGLOBAL16 handle /* [in] Handle of global memory object */
 ) {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!handle) return 0;
     if (!VALID_HANDLE(handle))
 	return 0;
@@ -590,9 +590,9 @@ DWORD WINAPI GlobalSize16(
 DWORD WINAPI GlobalHandle16(
              WORD sel /* [in] Address of global memory block */
 ) {
-    TRACE(global, "%04x\n", sel );
+    TRACE("%04x\n", sel );
     if (!VALID_HANDLE(sel)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
+	WARN("Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
 	return 0;
     }
     return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel16(sel) );
@@ -627,9 +627,9 @@ UINT16 WINAPI GlobalFlags16(
 ) {
     GLOBALARENA *pArena;
 
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
 	return 0;
     }
     pArena = GET_ARENA_PTR(handle);
@@ -644,10 +644,10 @@ UINT16 WINAPI GlobalFlags16(
  */
 HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to LockSegment16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to LockSegment16!\n",handle);
 	return 0;
     }
     GET_ARENA_PTR(handle)->lockCount++;
@@ -660,10 +660,10 @@ HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
  */
 void WINAPI UnlockSegment16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->lockCount--;
@@ -720,7 +720,7 @@ BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
  */
 LONG WINAPI SetSwapAreaSize16( WORD size )
 {
-    FIXME(global, "(%d) - stub!\n", size );
+    FIXME("(%d) - stub!\n", size );
     return MAKELONG( size, 0xffff );
 }
 
@@ -730,7 +730,7 @@ LONG WINAPI SetSwapAreaSize16( WORD size )
  */
 HGLOBAL16 WINAPI GlobalLRUOldest16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
@@ -741,7 +741,7 @@ HGLOBAL16 WINAPI GlobalLRUOldest16( HGLOBAL16 handle )
  */
 HGLOBAL16 WINAPI GlobalLRUNewest16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
@@ -808,9 +808,9 @@ WORD WINAPI GlobalDOSFree16(
  */
 WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalPageLock!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalPageLock!\n",handle);
 	return 0;
     }
     return ++(GET_ARENA_PTR(handle)->pageLockCount);
@@ -822,9 +822,9 @@ WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
  */
 WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalPageUnlock!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalPageUnlock!\n",handle);
 	return 0;
     }
     return --(GET_ARENA_PTR(handle)->pageLockCount);
@@ -836,9 +836,9 @@ WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
  */
 WORD WINAPI GlobalFix16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
 	return 0;
     }
     GET_ARENA_PTR(handle)->lockCount++;
@@ -852,9 +852,9 @@ WORD WINAPI GlobalFix16( HGLOBAL16 handle )
  */
 void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 {
-    TRACE(global, "%04x\n", handle );
+    TRACE("%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->lockCount--;
@@ -867,7 +867,7 @@ void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 void WINAPI FarSetOwner16( HGLOBAL16 handle, HANDLE16 hOwner )
 {
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
+	WARN("Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->hOwner = hOwner;
@@ -880,7 +880,7 @@ void WINAPI FarSetOwner16( HGLOBAL16 handle, HANDLE16 hOwner )
 HANDLE16 WINAPI FarGetOwner16( HGLOBAL16 handle )
 {
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
+	WARN("Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
 	return 0;
     }
     return GET_ARENA_PTR(handle)->hOwner;
@@ -897,12 +897,12 @@ WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
     if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);
 #endif
     if (!VALID_HANDLE(handle)) {
-	WARN(global,"Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
+	WARN("Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
 	return 0;
     }
     if (!(handle & 7))
     {
-        WARN(global, "Program attempted invalid selector conversion\n" );
+        WARN("Program attempted invalid selector conversion\n" );
         return handle - 1;
     }
     return handle | 7;
@@ -1141,7 +1141,7 @@ LPVOID WINAPI GlobalLock(
    }
    else
    {
-      WARN(global, "invalid handle\n");
+      WARN("invalid handle\n");
       palloc=(LPVOID) NULL;
    }
    /* HeapUnlock(GetProcessHeap()); */;
@@ -1176,7 +1176,7 @@ BOOL WINAPI GlobalUnlock(
    }
    else
    {
-      WARN(global, "invalid handle\n");
+      WARN("invalid handle\n");
       locked=FALSE;
    }
    /* HeapUnlock(GetProcessHeap()); */
@@ -1244,7 +1244,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	  */
          if (hmem == 0)
          {
-	     ERR(global, "GlobalReAlloc32 with null handle!\n");
+	     ERR("GlobalReAlloc32 with null handle!\n");
              SetLastError( ERROR_NOACCESS );
     	     return 0;
          }
@@ -1280,7 +1280,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	 /* reallocate a moveable block */
 	 pintern=HANDLE_TO_INTERN(hmem);
 	 if(pintern->LockCount>1) {
-	    ERR(global,"handle 0x%08lx is still locked, cannot realloc!\n",(DWORD)hmem);
+	    ERR("handle 0x%08lx is still locked, cannot realloc!\n",(DWORD)hmem);
 	    SetLastError(ERROR_INVALID_HANDLE);
 	 } else if(size!=0)
 	 {
@@ -1382,7 +1382,7 @@ DWORD WINAPI GlobalSize(
       }
       else
       {
-	 WARN(global, "invalid handle\n");
+	 WARN("invalid handle\n");
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */
@@ -1462,7 +1462,7 @@ UINT WINAPI GlobalFlags(
       }
       else
       {
-	 WARN(global,"Invalid handle: %04x", hmem);
+	 WARN("Invalid handle: %04x", hmem);
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */

@@ -15,7 +15,7 @@
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "font.h"
 #include "winerror.h"
 #include "wine/winuser16.h"
@@ -226,7 +226,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     }
     newdc = (DC *) GDI_HEAP_LOCK( handle );
 
-    TRACE(dc, "(%04x): returning %04x\n", hdc, handle );
+    TRACE("(%04x): returning %04x\n", hdc, handle );
 
     newdc->w.flags            = dc->w.flags | DC_SAVED;
     newdc->w.devCaps          = dc->w.devCaps;
@@ -317,7 +317,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
       GDI_HEAP_UNLOCK( hdcs );
       return;
     }
-    TRACE(dc, "%04x %04x\n", hdc, hdcs );
+    TRACE("%04x %04x\n", hdc, hdcs );
 
     dc->w.flags            = dcs->w.flags & ~DC_SAVED;
     dc->w.devCaps          = dcs->w.devCaps;
@@ -436,7 +436,7 @@ INT WINAPI SaveDC( HDC hdc )
     
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
-    TRACE(dc, "(%04x): returning %d\n", hdc, dc->saveLevel+1 );
+    TRACE("(%04x): returning %d\n", hdc, dc->saveLevel+1 );
     ret = ++dc->saveLevel;
     GDI_HEAP_UNLOCK( hdcs );
     GDI_HEAP_UNLOCK( hdc );
@@ -461,7 +461,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     DC * dc, * dcs;
     BOOL success;
 
-    TRACE(dc, "%04x %d\n", hdc, level );
+    TRACE("%04x %d\n", hdc, level );
     dc = DC_GetDCPtr( hdc );
     if(!dc) return FALSE;
     if(dc->funcs->pRestoreDC)
@@ -518,13 +518,13 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (!(dc = DC_AllocDC( funcs ))) return 0;
     dc->w.flags = 0;
 
-    TRACE(dc, "(driver=%s, device=%s, output=%s): returning %04x\n",
+    TRACE("(driver=%s, device=%s, output=%s): returning %04x\n",
                debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
     {
-        WARN(dc, "creation aborted by device\n" );
+        WARN("creation aborted by device\n" );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -620,7 +620,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     if (!(dc = DC_AllocDC( funcs ))) return 0;
 
-    TRACE(dc, "(%04x): returning %04x\n",
+    TRACE("(%04x): returning %04x\n",
                hdc, dc->hSelf );
 
       /* Create default bitmap */
@@ -637,7 +637,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
-        WARN(dc, "creation aborted by device\n");
+        WARN("creation aborted by device\n");
         DeleteObject( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
@@ -666,7 +666,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-    TRACE(dc, "%04x\n", hdc );
+    TRACE("%04x\n", hdc );
 
     /* Call hook procedure to check whether is it OK to delete this DC */
     if (    dc->hookProc && !(dc->w.flags & (DC_SAVED | DC_MEMORY))
@@ -710,7 +710,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
  */
 HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 {
-    FIXME(dc, "stub\n" );
+    FIXME("stub\n" );
     return hdc;
 }
 
@@ -720,7 +720,7 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
  */
 HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
-    FIXME(dc, "stub\n" );
+    FIXME("stub\n" );
     return hdc;
 }
 
@@ -730,7 +730,7 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
  */
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
-    FIXME(dc, "stub\n" );
+    FIXME("stub\n" );
     return hdc;
 }
 
@@ -784,7 +784,7 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
       return 0;
     }
     
-    TRACE(dc, "(%04x,%d): returning %d\n",
+    TRACE("(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
     ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
     GDI_HEAP_UNLOCK( hdc );
@@ -1194,7 +1194,7 @@ BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
 
-    TRACE(dc, "hookProc %08x, default is %08x\n",
+    TRACE("hookProc %08x, default is %08x\n",
                 (UINT)hookProc, (UINT)DCHook16 );
 
     if (!dc) return FALSE;
@@ -1232,7 +1232,7 @@ WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
         /* "Undocumented Windows" info is slightly confusing.
          */
 
-        TRACE(dc,"hDC %04x, flags %04x\n",hDC,flags);
+        TRACE("hDC %04x, flags %04x\n",hDC,flags);
 
         if( flags & DCHF_INVALIDATEVISRGN )
             dc->w.flags |= DC_DIRTY;
@@ -1279,7 +1279,7 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
-    FIXME(dc, "(): stub\n");
+    FIXME("(): stub\n");
     return DCB_RESET;   /* bounding rectangle always empty */
 }
  
@@ -1289,7 +1289,7 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 {
     if ( (flags & DCB_ACCUMULATE) || (flags & DCB_ENABLE) )
-        FIXME( dc, "(%04x, %p, %04x): stub\n", hdc, rect, flags );
+        FIXME("(%04x, %p, %04x): stub\n", hdc, rect, flags );
 
     return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
 }
@@ -1299,7 +1299,7 @@ UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
  */
 UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
-    FIXME(dc, "(): stub\n");
+    FIXME("(): stub\n");
     return DCB_DISABLE;   /* bounding rectangle always empty */
 }
 
@@ -1312,7 +1312,7 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
  */
 void WINAPI Death16(HDC16 hDC)
 {
-    MSG("Death(%04x) called. Application enters text mode...\n", hDC);
+    MESSAGE("Death(%04x) called. Application enters text mode...\n", hDC);
 }
 
 /***********************************************************************
@@ -1323,5 +1323,5 @@ void WINAPI Death16(HDC16 hDC)
 void WINAPI Resurrection16(HDC16 hDC,
                            WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6)
 {
-    MSG("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);
+    MESSAGE("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);
 }

@@ -21,7 +21,7 @@
 #include "xmalloc.h"
 #include "global.h"
 #include "server.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(virtual)
 
@@ -118,18 +118,18 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     UINT addr = view->base;
     BYTE prot = view->prot[0];
 
-    DUMP( "View: %08x - %08x%s",
+    DPRINTF( "View: %08x - %08x%s",
 	  view->base, view->base + view->size - 1,
 	  (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
     if (view->mapping)
-        DUMP( " %d @ %08x\n", view->mapping, view->offset );
+        DPRINTF( " %d @ %08x\n", view->mapping, view->offset );
     else
-        DUMP( " (anonymous)\n");
+        DPRINTF( " (anonymous)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        DUMP( "      %08x - %08x %s\n",
+        DPRINTF( "      %08x - %08x %s\n",
 	      addr, addr + (count << page_shift) - 1,
 	      VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
@@ -137,7 +137,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
         count = 0;
     }
     if (count)
-        DUMP( "      %08x - %08x %s\n",
+        DPRINTF( "      %08x - %08x %s\n",
 	      addr, addr + (count << page_shift) - 1,
 	      VIRTUAL_GetProtStr(prot) );
 }
@@ -149,7 +149,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 void VIRTUAL_Dump(void)
 {
     FILE_VIEW *view = VIRTUAL_FirstView;
-    DUMP( "\nDump of all virtual memory views:\n\n" );
+    DPRINTF( "\nDump of all virtual memory views:\n\n" );
     while (view)
     {
         VIRTUAL_DumpView( view );
@@ -365,7 +365,7 @@ static BOOL VIRTUAL_SetProt(
               UINT size,     /* [in] Size in bytes */
               BYTE vprot       /* [in] Protections to use */
 ) {
-    TRACE(virtual, "%08x-%08x %s\n",
+    TRACE("%08x-%08x %s\n",
                      base, base + size - 1, VIRTUAL_GetProtStr( vprot ) );
 
     if (mprotect( (void *)base, size, VIRTUAL_GetUnixProt(vprot) ))
@@ -533,7 +533,7 @@ LPVOID WINAPI VirtualAlloc(
     UINT base, ptr, view_size;
     BYTE vprot;
 
-    TRACE(virtual, "%08x %08lx %lx %08lx\n",
+    TRACE("%08x %08lx %lx %08lx\n",
                      (UINT)addr, size, type, protect );
 
     /* Round parameters to a page boundary */
@@ -566,7 +566,7 @@ LPVOID WINAPI VirtualAlloc(
     	/* FIXME: MEM_TOP_DOWN allocates the largest possible address.
 	 *  	  Is there _ANY_ way to do it with UNIX mmap()?
 	 */
-    	WARN(virtual,"MEM_TOP_DOWN ignored\n");
+    	WARN("MEM_TOP_DOWN ignored\n");
     	type &= ~MEM_TOP_DOWN;
     }
     /* Compute the protection flags */
@@ -655,7 +655,7 @@ BOOL WINAPI VirtualFree(
     FILE_VIEW *view;
     UINT base;
 
-    TRACE(virtual, "%08x %08lx %lx\n",
+    TRACE("%08x %08lx %lx\n",
                      (UINT)addr, size, type );
 
     /* Fix the parameters */
@@ -752,7 +752,7 @@ BOOL WINAPI VirtualProtect(
     UINT base, i;
     BYTE vprot, *p;
 
-    TRACE(virtual, "%08x %08lx %08lx\n",
+    TRACE("%08x %08lx %08lx\n",
                      (UINT)addr, size, new_prot );
 
     /* Fix the parameters */
@@ -803,7 +803,7 @@ BOOL WINAPI VirtualProtectEx(
 {
     if (PROCESS_IsCurrent( handle ))
         return VirtualProtect( addr, size, new_prot, old_prot );
-    ERR(virtual,"Unsupported on other process\n");
+    ERR("Unsupported on other process\n");
     return FALSE;
 }
 
@@ -892,7 +892,7 @@ DWORD WINAPI VirtualQueryEx(
 {
     if (PROCESS_IsCurrent( handle ))
         return VirtualQuery( addr, info, len );
-    ERR(virtual,"Unsupported on other process\n");
+    ERR("Unsupported on other process\n");
     return 0;
 }
 
@@ -1057,7 +1057,7 @@ HANDLE WINAPI CreateFileMappingA(
 
     /* Check parameters */
 
-    TRACE(virtual,"(%x,%p,%08lx,%08lx%08lx,%s)\n",
+    TRACE("(%x,%p,%08lx,%08lx%08lx,%s)\n",
           hFile, sa, protect, size_high, size_low, debugstr_a(name) );
 
     vprot = VIRTUAL_GetProt( protect );
@@ -1202,7 +1202,7 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
 
     if (info.size_high || offset_high)
-        ERR(virtual, "Offsets larger than 4Gb not supported\n");
+        ERR("Offsets larger than 4Gb not supported\n");
 
     if ((offset_low >= info.size_low) ||
         (count > info.size_low - offset_low))
@@ -1237,7 +1237,7 @@ LPVOID WINAPI MapViewOfFileEx(
 
     /* Map the file */
 
-    TRACE(virtual, "handle=%x size=%x offset=%lx\n",
+    TRACE("handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
     ptr = (UINT)FILE_dommap( unix_handle,
@@ -1289,7 +1289,7 @@ BOOL WINAPI FlushViewOfFile(
     FILE_VIEW *view;
     UINT addr = ROUND_ADDR( base );
 
-    TRACE(virtual, "FlushViewOfFile at %p for %ld bytes\n",
+    TRACE("FlushViewOfFile at %p for %ld bytes\n",
                      base, cbFlush );
 
     if (!(view = VIRTUAL_FindView( addr )))

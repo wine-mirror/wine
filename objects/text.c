@@ -11,7 +11,7 @@
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "cache.h"
 #include "debugstr.h"
 
@@ -202,7 +202,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     int width = rect->right - rect->left;
     int max_width = 0;
 
-    TRACE(text,"%s, %d , [(%d,%d),(%d,%d)]\n",
+    TRACE("%s, %d , [(%d,%d),(%d,%d)]\n",
 	  debugstr_an (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
     
@@ -325,9 +325,9 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
 INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
-    TRACE(text,"(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
+    TRACE("(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
     if(dtp) {
-        FIXME(text,"Ignores params:%d,%d,%d,%d,%d\n",dtp->cbSize,
+        FIXME("Ignores params:%d,%d,%d,%d,%d\n",dtp->cbSize,
                    dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin,
                    dtp->uiLengthDrawn);
     }
@@ -340,8 +340,8 @@ INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
 INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
-    TRACE(text,"(%d,%p,%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
-    FIXME(text,"ignores extended functionality\n");
+    TRACE("(%d,%p,%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
+    FIXME("ignores extended functionality\n");
     return DrawTextW(hdc,str,count,rect,flags);
 }
 
@@ -641,7 +641,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
                              INT16 count, INT16 cTabStops,
                              const INT16 *lpTabPos, INT16 nTabOrg )
 {
-    TRACE(text, "%04x %d,%d '%.*s' %d\n",
+    TRACE("%04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                lpTabPos, NULL, nTabOrg, TRUE );
@@ -655,7 +655,7 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr,
                               INT count, INT cTabStops,
                               const INT *lpTabPos, INT nTabOrg )
 {
-    TRACE(text, "%04x %d,%d '%.*s' %d\n",
+    TRACE("%04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                NULL, lpTabPos, nTabOrg, TRUE );
@@ -685,7 +685,7 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str,
 DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count, 
                                     INT16 cTabStops, const INT16 *lpTabPos )
 {
-    TRACE(text, "%04x '%.*s' %d\n",
+    TRACE("%04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                lpTabPos, NULL, 0, FALSE );
@@ -698,7 +698,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count, 
                                      INT cTabStops, const INT *lpTabPos )
 {
-    TRACE(text, "%04x '%.*s' %d\n",
+    TRACE("%04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                NULL, lpTabPos, 0, FALSE );

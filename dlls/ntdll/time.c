@@ -10,7 +10,7 @@
 
 #include <string.h>
 #include "ntddk.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "file.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll)
@@ -174,7 +174,7 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 	IN  PLARGE_INTEGER SystemTime,
 	OUT PLARGE_INTEGER LocalTime)
 {
-	FIXME(ntdll,"(%p, %p),stub!\n",SystemTime,LocalTime);
+	FIXME("(%p, %p),stub!\n",SystemTime,LocalTime);
 
 	memcpy (LocalTime, SystemTime, sizeof (PLARGE_INTEGER));
 }
@@ -209,5 +209,5 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
 	PLARGE_INTEGER liTime,
 	PTIME_FIELDS TimeFields)
 {
-	FIXME(ntdll,"(%p,%p): stub\n",liTime,TimeFields);
+	FIXME("(%p,%p): stub\n",liTime,TimeFields);
 }

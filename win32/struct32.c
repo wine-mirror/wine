@@ -6,7 +6,6 @@
 
 #include "struct32.h"
 #include "winerror.h"
-#include "debug.h"
 
 void STRUCT32_MSG16to32(const MSG16 *msg16,MSG *msg32)
 {

@@ -38,7 +38,7 @@
 #include "bitmap.h"
 #include "heap.h"
 #include "toolhelp.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "global.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
@@ -201,7 +201,7 @@ static METAHEADER *MF_ReadMetaFile(HFILE hfile)
     }
 
     if (mh->mtType != METAFILE_MEMORY) {
-        WARN(metafile, "Disk metafile had mtType = %04x\n", mh->mtType);
+        WARN("Disk metafile had mtType = %04x\n", mh->mtType);
 	mh->mtType = METAFILE_MEMORY;
     }
     return mh;
@@ -215,7 +215,7 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
     METAHEADER *mh;
     HFILE hFile;
  
-    TRACE(metafile,"%s\n", lpFilename);
+    TRACE("%s\n", lpFilename);
 
     if(!lpFilename)
         return 0;
@@ -240,7 +240,7 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
     METAHEADER *mh;
     HFILE hFile;
  
-    TRACE(metafile,"%s\n", lpFilename);
+    TRACE("%s\n", lpFilename);
 
     if(!lpFilename)
         return 0;
@@ -265,7 +265,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
     METAHEADER *mh;
     HFILE hFile;
  
-    TRACE(metafile,"%s\n", debugstr_w(lpFilename));
+    TRACE("%s\n", debugstr_w(lpFilename));
 
     if(!lpFilename)
         return 0;
@@ -293,14 +293,14 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
     METAHEADER *mh2;
 
     if(mh->mtType != METAFILE_DISK) {
-        ERR(metafile, "Not a disk based metafile\n");
+        ERR("Not a disk based metafile\n");
 	return NULL;
     }
     mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
 
     if((hfile = CreateFileA(mhd->filename, GENERIC_READ, 0, NULL,
 			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR) {
-        WARN(metafile, "Can't open file of disk based metafile\n");
+        WARN("Can't open file of disk based metafile\n");
         return NULL;
     }
     mh2 = MF_ReadMetaFile(hfile);
@@ -337,7 +337,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     METAHEADER *mh2 = NULL;
     HFILE hFile;
 
-    TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
+    TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
     if(!mh) return 0;
     
@@ -387,7 +387,7 @@ HMETAFILE WINAPI CopyMetaFileA(
     METAHEADER *mh2 = NULL;
     HFILE hFile;
 
-    TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
+    TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
     if(!mh) return 0;
     
@@ -452,7 +452,7 @@ BOOL16 WINAPI IsValidMetaFile16(HMETAFILE16 hmf)
 		    res=TRUE;
 	MF_ReleaseMetaHeader16(hmf);
     }
-    TRACE(metafile,"IsValidMetaFile %x => %d\n",hmf,res);
+    TRACE("IsValidMetaFile %x => %d\n",hmf,res);
     return res;         
 }
 
@@ -498,10 +498,10 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     while (offset < mh->mtSize * 2)
     {
         mr = (METARECORD *)((char *)mh + offset);
-	TRACE(metafile,"offset=%04x,size=%08lx\n",
+	TRACE("offset=%04x,size=%08lx\n",
             offset, mr->rdSize);
 	if (!mr->rdSize) {
-            TRACE(metafile,
+            TRACE(
 		  "Entry got size 0 at offset %d, total mf length is %ld\n",
 		  offset,mh->mtSize*2);
 		break; /* would loop endlessly otherwise */
@@ -578,7 +578,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     DC *dc;
     BOOL16 result = TRUE, loaded = FALSE;
 
-    TRACE(metafile,"(%04x, %04x, %08lx, %08lx)\n",
+    TRACE("(%04x, %04x, %08lx, %08lx)\n",
 		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
 
 
@@ -670,7 +670,7 @@ BOOL WINAPI EnumMetaFile(
     HBRUSH hBrush;
     HFONT hFont;
 
-    TRACE(metafile,"(%08x,%08x,%p,%p)\n",
+    TRACE("(%08x,%08x,%p,%p)\n",
 		     hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
     if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
@@ -696,7 +696,7 @@ BOOL WINAPI EnumMetaFile(
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-	TRACE(metafile, "Calling EnumFunc with record type %x\n",
+	TRACE("Calling EnumFunc with record type %x\n",
 	      mr->rdFunction);
         if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, (LONG)lpData ))
 	{
@@ -753,7 +753,7 @@ void WINAPI PlayMetaFileRecord16(
     char *ptr;
     BITMAPINFOHEADER *infohdr;
 
-    TRACE(metafile,"(%04x %08lx %08lx %04x) function %04x\n",
+    TRACE("(%04x %08lx %08lx %04x) function %04x\n",
 		 hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
     
     switch (mr->rdFunction)
@@ -965,7 +965,7 @@ void WINAPI PlayMetaFileRecord16(
 	    break;
 
 	default:
-	    ERR(metafile, "META_CREATEPATTERNBRUSH: Unknown pattern type %d\n",
+	    ERR("META_CREATEPATTERNBRUSH: Unknown pattern type %d\n",
 		mr->rdParm[0]);
 	    break;
 	}
@@ -1009,7 +1009,7 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_ESCAPE:
-	FIXME(metafile, "META_ESCAPE unimplemented.\n");
+	FIXME("META_ESCAPE unimplemented.\n");
         break;
 
     case META_EXTTEXTOUT:
@@ -1109,7 +1109,7 @@ void WINAPI PlayMetaFileRecord16(
 	/*  *(mr->rdParm) may be BS_PATTERN or BS_DIBPATTERN:
 	    but there's no difference */
 
-        TRACE(metafile,"%d\n",*(mr->rdParm));
+        TRACE("%d\n",*(mr->rdParm));
 	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
 	hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
 	ptr = GlobalLock16(hndl);
@@ -1172,7 +1172,7 @@ void WINAPI PlayMetaFileRecord16(
       }
 
 #define META_UNIMP(x) case x: \
-FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n"); \
+FIXME("PlayMetaFileRecord:record type "#x" not implemented.\n"); \
 break;
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_ANIMATEPALETTE)
@@ -1190,7 +1190,7 @@ break;
 #undef META_UNIMP
 
     default:
-	WARN(metafile, "PlayMetaFileRecord: Unknown record type %x\n",
+	WARN("PlayMetaFileRecord: Unknown record type %x\n",
 	                                      mr->rdFunction);
     }
 }
@@ -1204,7 +1204,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable,
     HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
 					     handles*sizeof(HANDLETABLE16));
     int i = 0;
-    TRACE(metafile, "(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
+    TRACE("(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
 	  handles); 
     for (i=0; i<handles; i++)  
         ht->objectHandle[i] =  handletable->objectHandle[i];
@@ -1226,7 +1226,7 @@ HGLOBAL16 WINAPI GetMetaFileBits16(
 				 HMETAFILE16 hmf /* metafile handle */
 				 )
 {
-    TRACE(metafile,"hMem out: %04x\n", hmf);
+    TRACE("hMem out: %04x\n", hmf);
     return hmf;
 }
 
@@ -1243,7 +1243,7 @@ HMETAFILE16 WINAPI SetMetaFileBits16(
 			/* handle to a memory region holding a metafile */
 )
 {
-    TRACE(metafile,"hmf out: %04x\n", hMem);
+    TRACE("hmf out: %04x\n", hMem);
 
     return hMem;
 }
@@ -1298,14 +1298,14 @@ UINT WINAPI GetMetaFileBitsEx(
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;
 
-    TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
+    TRACE("(%08x,%d,%p)\n", hmf, nSize, buf);
     if (!mh) return 0;  /* FIXME: error code */
     if(mh->mtType == METAFILE_DISK)
-        FIXME(metafile, "Disk-based metafile?\n");
+        FIXME("Disk-based metafile?\n");
     mfSize = mh->mtSize * 2;
     if (!buf) {
         MF_ReleaseMetaHeader(hmf);
-	TRACE(metafile,"returning size %d\n", mfSize);
+	TRACE("returning size %d\n", mfSize);
 	return mfSize;
     }
     if(mfSize > nSize) mfSize = nSize;
@@ -1321,7 +1321,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
                                 UINT cbBuffer, LPBYTE lpbBuffer,
                                 INT fnMapMode, HDC hdcRef)
 {
-    FIXME(metafile, "(%d,%d,%p,%d,%d): stub\n",
+    FIXME("(%d,%d,%p,%d,%d): stub\n",
 	  hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
     return 0;
 }
@@ -1368,20 +1368,20 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
     for(band  = 0, start = &(mr->rdParm[11]); band < mr->rdParm[5];
  					        band++, start = end + 1) {
         if(*start / 2 != (*start + 1) / 2) {
- 	    WARN(metafile, "Delimiter not even.\n");
+ 	    WARN("Delimiter not even.\n");
 	    DeleteObject( hrgn2 );
  	    return FALSE;
         }
 
 	end = start + *start + 3;
 	if(end > (WORD *)mr + mr->rdSize) {
-	    WARN(metafile, "End points outside record.\n");
+	    WARN("End points outside record.\n");
 	    DeleteObject( hrgn2 );
 	    return FALSE;
         }
 
 	if(*start != *end) {
-	    WARN(metafile, "Mismatched delimiters.\n");
+	    WARN("Mismatched delimiters.\n");
 	    DeleteObject( hrgn2 );
 	    return FALSE;
 	}
@@ -1427,8 +1427,8 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
         if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
 	    dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
 	else {
-	    TRACE(metafile,"%s  len: %ld\n",  sot, mr->rdSize);
-	    WARN(metafile,
+	    TRACE("%s  len: %ld\n",  sot, mr->rdSize);
+	    WARN(
 	     "Please report: ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
 		 len, s1, mr->rdSize, mr->rdParm[3]);
 	    dxx = NULL; /* should't happen -- but if, we continue with NULL */
@@ -1441,6 +1441,6 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
 		       sot,			       /* string */
                        s1, dxx);                   /* length, dx array */
     if (dxx)                      
-        TRACE(metafile,"%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dxx[0]);
+        TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dxx[0]);
     return TRUE;
 }

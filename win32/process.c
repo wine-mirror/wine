@@ -16,7 +16,7 @@
 #include "file.h"
 #include "task.h"
 #include "toolhelp.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -25,7 +25,7 @@ DEFAULT_DEBUG_CHANNEL(win32)
  *  ContinueDebugEvent [KERNEL32.146]
  */
 BOOL WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
-    FIXME(win32,"(0x%lx,%ld,%ld): stub\n",pid,tid,contstatus);
+    FIXME("(0x%lx,%ld,%ld): stub\n",pid,tid,contstatus);
 	return TRUE;
 }
 

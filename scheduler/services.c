@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include "services.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(timer)
 
@@ -159,13 +159,13 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 
         /* Wait until some condition satisfied */
 
-        TRACE( timer, "Waiting for %d objects with timeout %ld\n", 
+        TRACE("Waiting for %d objects with timeout %ld\n", 
                       count, timeout );
 
         retval = WaitForMultipleObjectsEx( count, handles, 
                                            FALSE, timeout, TRUE );
 
-        TRACE( timer, "Wait returned: %ld\n", retval );
+        TRACE("Wait returned: %ld\n", retval );
     }
 
     return 0L;

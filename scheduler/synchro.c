@@ -16,7 +16,6 @@
 #include "message.h"
 #include "x11drv.h"
 #include "server.h"
-#include "debug.h"
 
 
 /***********************************************************************

@@ -10,7 +10,7 @@
 #include "syslevel.h"
 #include "heap.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -62,7 +62,7 @@ VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
     MakeCriticalSectionGlobal( &lock->crst );
     lock->level = level;
 
-    TRACE( win32, "(%p, %d): handle is %d\n", 
+    TRACE("(%p, %d): handle is %d\n", 
                   lock, level, lock->crst.LockSemaphore );
 }
 
@@ -74,14 +74,14 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     THDB *thdb = THREAD_Current();
     int i;
 
-    TRACE( win32, "(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
                   lock, lock->level, thdb->server_tid, thdb->teb_sel, getpid(),
                   thdb->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
         if ( thdb->sys_count[i] > 0 )
         {
-            ERR( win32, "(%p, level %d): Holding %p, level %d. Expect deadlock!\n", 
+            ERR("(%p, level %d): Holding %p, level %d. Expect deadlock!\n", 
                         lock, lock->level, thdb->sys_mutex[i], i );
         }
 
@@ -90,7 +90,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     thdb->sys_count[lock->level]++;
     thdb->sys_mutex[lock->level] = lock;
 
-    TRACE( win32, "(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
                   lock, lock->level, thdb->server_tid, thdb->teb_sel, getpid(), 
                   thdb->sys_count[lock->level] );
 
@@ -105,13 +105,13 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
     THDB *thdb = THREAD_Current();
 
-    TRACE( win32, "(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
                   lock, lock->level, thdb->server_tid, thdb->teb_sel, getpid(),
                   thdb->sys_count[lock->level] );
 
     if ( thdb->sys_count[lock->level] <= 0 || thdb->sys_mutex[lock->level] != lock )
     {
-        ERR( win32, "(%p, level %d): Invalid state: count %ld mutex %p.\n",
+        ERR("(%p, level %d): Invalid state: count %ld mutex %p.\n",
                     lock, lock->level, thdb->sys_count[lock->level], 
                     thdb->sys_mutex[lock->level] );
     }
@@ -123,7 +123,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 
     LeaveCriticalSection( &lock->crst );
 
-    TRACE( win32, "(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
+    TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
                   lock, lock->level, thdb->server_tid, thdb->teb_sel, getpid(), 
                   thdb->sys_count[lock->level] );
 }
@@ -152,7 +152,7 @@ DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
  */
 VOID WINAPI _CheckNotSysLevel(SYSLEVEL *lock)
 {
-    FIXME(win32, "(%p)\n", lock);
+    FIXME("(%p)\n", lock);
 }
 
 
@@ -210,7 +210,7 @@ VOID SYSLEVEL_ReleaseWin16Lock(VOID)
     ReleaseThunkLock(&count);
 
     if (count > 0xffff)
-        ERR(win32, "Win16Mutex recursion count too large!\n");
+        ERR("Win16Mutex recursion count too large!\n");
 
     CURRENT_STACK16->mutex_count = (WORD)count;
 }
@@ -223,7 +223,7 @@ VOID SYSLEVEL_RestoreWin16Lock(VOID)
     DWORD count = CURRENT_STACK16->mutex_count;
 
     if (!count)
-        ERR(win32, "Win16Mutex recursion count is zero!\n");
+        ERR("Win16Mutex recursion count is zero!\n");
 
     RestoreThunkLock(count);
 }
@@ -239,7 +239,7 @@ VOID SYSLEVEL_CheckNotLevel( INT level )
     for ( i = 3; i >= level; i-- )
         if ( thdb->sys_count[i] > 0 )
         {
-            ERR( win32, "(%d): Holding lock of level %d!\n", 
+            ERR("(%d): Holding lock of level %d!\n", 
                        level, i );
 
             kill( getpid(), SIGHUP );

@@ -28,7 +28,7 @@ static int *ph_errno = &h_errno;
 #include "thread.h"
 #include "server.h"
 #include "winbase.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thread)
 
@@ -166,7 +166,7 @@ int SYSDEPS_SpawnThread( THDB *thread )
 
 #endif /* NO_REENTRANT_LIBC */
 
-    FIXME(thread, "CreateThread: stub\n" );
+    FIXME("CreateThread: stub\n" );
     return 0;
 }
 
