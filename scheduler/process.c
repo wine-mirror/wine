@@ -23,7 +23,7 @@
 #include "task.h"
 #include "server.h"
 #include "callback.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(process)
 DECLARE_DEBUG_CHANNEL(relay)
@@ -322,6 +322,7 @@ static BOOL PROCESS_CreateEnvDB(void)
     CLIENT_SendRequest( REQ_INIT_PROCESS, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
 
+#if 0
     /* Allocate the env DB */
 
     if (!(env_db = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
@@ -333,6 +334,9 @@ static BOOL PROCESS_CreateEnvDB(void)
     if (!(startup = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
     pdb->env_db->startup_info = startup;
+#else
+    startup = pdb->env_db->startup_info;
+#endif
     startup->dwFlags = reply.start_flags;
     pdb->env_db->hStdin  = startup->hStdInput  = reply.hstdin;
     pdb->env_db->hStdout = startup->hStdOutput = reply.hstdout;
@@ -448,7 +452,6 @@ BOOL PROCESS_Init(void)
  */
 void PROCESS_Start(void)
 {
-    DWORD size, commit;
     UINT cmdShow = 0;
     LPTHREAD_START_ROUTINE entry;
     THDB *thdb = THREAD_Current();
@@ -456,6 +459,10 @@ void PROCESS_Start(void)
     TDB *pTask = (TDB *)GlobalLock16( pdb->task );
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
+    IMAGE_OPTIONAL_HEADER *header = &PE_HEADER(pModule->module32)->OptionalHeader;
+
+    /* Setup process flags */
+    if (header->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) pdb->flags |= PDB32_CONSOLE_PROC;
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
 
@@ -466,15 +473,16 @@ void PROCESS_Start(void)
 #if 0
     /* Create the heap */
 
-    size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
-    commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
-    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, header->SizeOfHeapReserve,
+                                  header->SizeOfHeapCommit ))) goto error;
     pdb->heap_list = pdb->heap;
+#endif
 
     /* Create the environment db */
 
     if (!PROCESS_CreateEnvDB()) goto error;
 
+#if 0
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
     if (!TASK_Create( thdb, pModule, 0, 0, cmdShow )) goto error;
@@ -505,15 +513,15 @@ void PROCESS_Start(void)
 
     /* Now call the entry point */
 
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
-    MODULE_DllProcessAttach( PROCESS_Current()->exe_modref, (LPVOID)1 );
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    EnterCriticalSection( &pdb->crit_section );
+    MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
+    LeaveCriticalSection( &pdb->crit_section );
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
 
     entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
                                             OptionalHeader.AddressOfEntryPoint);
-    TRACE(relay, "(entryproc=%p)\n", entry );
+    TRACE_(relay)("(entryproc=%p)\n", entry );
     ExitProcess( entry(NULL) );
 
  error:
@@ -568,79 +576,82 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     info->hProcess    = reply.handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
 
-    /* Setup process flags */
-
-    if ( !pModule->module32 )
-        pdb->flags |= PDB32_WIN16_PROC;
-
-    else if ( PE_HEADER(pModule->module32)->OptionalHeader.Subsystem
-              == IMAGE_SUBSYSTEM_WINDOWS_CUI )
-        pdb->flags |= PDB32_CONSOLE_PROC;
-
-    /* Create the heap */
-
     if (pModule->module32)
     {
+        /* Create the heap */
 	size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
 	commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
+        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+        pdb->heap_list = pdb->heap;
+
+        /* Inherit the env DB from the parent */
+        if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
+
+        /* Call USER signal proc */
+        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
+
+        /* Create the main thread */
+        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+        if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
+            goto error;
+        info->hThread     = server_thandle;
+        info->dwThreadId  = (DWORD)thdb->server_tid;
+        thdb->startup     = PROCESS_Start;
+
+        /* Create a Win16 task for this process */
+        if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
+        if (!TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow )) goto error;
+
+        /* Start the task */
+        TASK_StartTask( pdb->task );
+        SYSDEPS_SpawnThread( thdb );
     }
-    else
+    else  /* Create a 16-bit process */
     {
+        /* Setup process flags */
+        pdb->flags |= PDB32_WIN16_PROC;
+
+        /* Create the heap */
 	size = 0x10000;
 	commit = 0;
+        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+        pdb->heap_list = pdb->heap;
+
+        /* Inherit the env DB from the parent */
+        if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
+
+        /* Call USER signal proc */
+        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
+
+        /* Create the main thread */
+        if (!(thdb = THREAD_Create( pdb, 0L, 0, hInstance == 0, tsa, &server_thandle ))) 
+            goto error;
+        info->hThread     = server_thandle;
+        info->dwThreadId  = (DWORD)thdb->server_tid;
+        thdb->startup     = PROCESS_Start;
+
+        /* Duplicate the standard handles */
+        if ((!(pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)) && !inherit)
+        {
+            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdin,
+                             info->hProcess, &pdb->env_db->hStdin, 0, TRUE, DUPLICATE_SAME_ACCESS );
+            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdout,
+                             info->hProcess, &pdb->env_db->hStdout, 0, TRUE, DUPLICATE_SAME_ACCESS );
+            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStderr,
+                             info->hProcess, &pdb->env_db->hStderr, 0, TRUE, DUPLICATE_SAME_ACCESS );
+        }
+
+        /* Create a Win16 task for this process */
+        if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
+        if (!TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow )) goto error;
+
+        /* Map system DLLs into this process (from initial process) */
+        /* FIXME: this is a hack */
+        pdb->modref_list = PROCESS_Initial()->modref_list;
+
+        /* Start the task */
+        TASK_StartTask( pdb->task );
     }
-    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
-    pdb->heap_list = pdb->heap;
-
-    /* Inherit the env DB from the parent */
-
-    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
-
-    /* Call USER signal proc */
-
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
-
-    /* Create the main thread */
-
-    if (pModule->module32)
-        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
-    else
-        size = 0;
-    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
-        goto error;
-    info->hThread     = server_thandle;
-    info->dwThreadId  = (DWORD)thdb->server_tid;
-    thdb->startup     = PROCESS_Start;
-
-    /* Duplicate the standard handles */
-
-    if ((!(pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)) && !inherit)
-    {
-        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdin,
-                         info->hProcess, &pdb->env_db->hStdin, 0, TRUE, DUPLICATE_SAME_ACCESS );
-        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdout,
-                         info->hProcess, &pdb->env_db->hStdout, 0, TRUE, DUPLICATE_SAME_ACCESS );
-        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStderr,
-                         info->hProcess, &pdb->env_db->hStderr, 0, TRUE, DUPLICATE_SAME_ACCESS );
-    }
-
-    /* Create a Win16 task for this process */
-
-    if (startup->dwFlags & STARTF_USESHOWWINDOW)
-        cmdShow = startup->wShowWindow;
-
-    if ( !TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow) )
-        goto error;
-
-
-    /* Map system DLLs into this process (from initial process) */
-    /* FIXME: this is a hack */
-    pdb->modref_list = PROCESS_Initial()->modref_list;
-    
-
-    /* Start the task */
-
-    TASK_StartTask( pdb->task );
 
     return pdb;
 
@@ -692,7 +703,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     TDB *pTask;
     DWORD x, y;
 
-    TRACE( win32, "(%ld, %d)\n", dwProcessID, offset );
+    TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
     if ( !process ) return 0;
 
     switch ( offset ) 
@@ -755,7 +766,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return process->process_dword;
 
     default:
-        ERR( win32, "Unknown offset %d\n", offset );
+        ERR_(win32)("Unknown offset %d\n", offset );
         return 0;
     }
 }
@@ -768,7 +779,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 {
     PDB *process = PROCESS_IdToPDB( dwProcessID );
 
-    TRACE( win32, "(%ld, %d)\n", dwProcessID, offset );
+    TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
     if ( !process ) return;
 
     switch ( offset ) 
@@ -787,7 +798,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
     case GPD_STARTF_FLAGS:
     case GPD_PARENT:
     case GPD_FLAGS:
-        ERR( win32, "Not allowed to modify offset %d\n", offset );
+        ERR_(win32)("Not allowed to modify offset %d\n", offset );
         break;
 
     case GPD_USERDATA:
@@ -795,7 +806,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
         break;
 
     default:
-        ERR( win32, "Unknown offset %d\n", offset );
+        ERR_(win32)("Unknown offset %d\n", offset );
         break;
     }
 }
@@ -986,7 +997,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
                                        DWORD maxset)
 {
-    FIXME(process,"(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    FIXME_(process)("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
     if(( minset == -1) && (maxset == -1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
@@ -1000,7 +1011,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
                                        LPDWORD maxset)
 {
-	FIXME(process,"(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
+	FIXME_(process)("(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
 	if (minset) *minset = 32*1024*1024;
 	if (maxset) *maxset = 32*1024*1024;
@@ -1028,7 +1039,7 @@ BOOL WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
       shutdown_priority = level;
     else
       {
-	ERR(process,"invalid priority level 0x%08lx\n", level);
+	ERR_(process)("invalid priority level 0x%08lx\n", level);
 	return FALSE;
       }
     return TRUE;
@@ -1051,7 +1062,7 @@ BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
  */
 BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 {
-    FIXME(process,"(%d,%d): stub\n",hprocess,disableboost);
+    FIXME_(process)("(%d,%d): stub\n",hprocess,disableboost);
     /* Say we can do it. I doubt the program will notice that we don't. */
     return TRUE;
 }
@@ -1120,7 +1131,7 @@ BOOL WINAPI GetExitCodeProcess(
  * GetProcessHeaps [KERNEL32.376]
  */
 DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE *heaps) {
-	FIXME(win32,"(%ld,%p), incomplete implementation.\n",nrofheaps,heaps);
+	FIXME_(win32)("(%ld,%p), incomplete implementation.\n",nrofheaps,heaps);
 
 	if (nrofheaps) {
 		heaps[0] = GetProcessHeap();
