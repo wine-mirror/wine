@@ -19,6 +19,7 @@ DEFAULT_DEBUG_CHANNEL(int);
 static struct
 {
   DWORD x, y, but;
+  WORD lbcount, rbcount, rlastx, rlasty, llastx, llasty;
   FARPROC16 callback;
   WORD callmask;
 } mouse_info;
@@ -51,6 +52,22 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     break;
   case 0x04:
     FIXME("Position mouse cursor\n");
+    break;
+  case 0x05:
+    TRACE("Return Mouse button press Information for %s mouse button\n",
+          BX_reg(context) ? "right" : "left");
+    if (BX_reg(context)) {
+      BX_reg(context) = mouse_info.rbcount;
+      mouse_info.rbcount = 0;
+      CX_reg(context) = mouse_info.rlastx;
+      DX_reg(context) = mouse_info.rlasty;
+    } else {
+      BX_reg(context) = mouse_info.lbcount;
+      mouse_info.lbcount = 0;
+      CX_reg(context) = mouse_info.llastx;
+      DX_reg(context) = mouse_info.llasty;
+    }
+    AX_reg(context) = mouse_info.but;
     break;
   case 0x07:
     FIXME("Define horizontal mouse cursor range\n");
@@ -106,7 +123,8 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 
   if (!VGA_GetMode(&Height,&Width,NULL)) {
     /* may need to do some coordinate scaling */
-    SX = 640/Width;
+    if (Width) 
+      SX = 640/Width;
     if (!SX) SX=1;
   }
   mouse_info.x = LOWORD(lParam) * SX;
@@ -119,6 +137,9 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
   case WM_LBUTTONDBLCLK:
     mouse_info.but |= 0x01;
     mask |= 0x02;
+    mouse_info.llastx = mouse_info.x;
+    mouse_info.llasty = mouse_info.y;
+    mouse_info.lbcount++;
     break;
   case WM_LBUTTONUP:
     mouse_info.but &= ~0x01;
@@ -128,6 +149,9 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
   case WM_RBUTTONDBLCLK:
     mouse_info.but |= 0x02;
     mask |= 0x08;
+    mouse_info.rlastx = mouse_info.x;
+    mouse_info.rlasty = mouse_info.y;
+    mouse_info.rbcount++;
     break;
   case WM_RBUTTONUP:
     mouse_info.but &= ~0x02;
