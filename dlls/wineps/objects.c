@@ -6,10 +6,6 @@
  */
 
 #include "psdrv.h"
-#include "font.h"
-#include "pen.h"
-#include "brush.h"
-#include "bitmap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -17,8 +13,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_BITMAP_SelectObject
  */
-static HBITMAP16 PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
-                                            BITMAPOBJ * bmp )
+static HBITMAP PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
 {
     FIXME("stub\n");
     return 0;
@@ -30,33 +25,32 @@ static HBITMAP16 PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
  */
 HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
-    GDIOBJHDR * ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     HGDIOBJ ret = 0;
 
-    if (!ptr) return 0;
     TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
-    
-    switch(GDIMAGIC(ptr->wMagic))
+
+    switch(GetObjectType( handle ))
     {
-      case PEN_MAGIC:
-	  ret = PSDRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
+    case OBJ_PEN:
+	  ret = PSDRV_PEN_SelectObject( dc, handle );
 	  break;
-      case BRUSH_MAGIC:
-	  ret = PSDRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
+    case OBJ_BRUSH:
+	  ret = PSDRV_BRUSH_SelectObject( dc, handle );
 	  break;
-      case BITMAP_MAGIC:
-	  ret = PSDRV_BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
+    case OBJ_BITMAP:
+	  ret = PSDRV_BITMAP_SelectObject( dc, handle );
 	  break;
-      case FONT_MAGIC:
-	  ret = PSDRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
+    case OBJ_FONT:
+	  ret = PSDRV_FONT_SelectObject( dc, handle );
 	  break;
-      case REGION_MAGIC:
+    case OBJ_REGION:
 	  ret = (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
 	  break;
+    case 0:  /* invalid handle */
+        break;
       default:
-	  ERR("Unknown object magic %04x\n", GDIMAGIC(ptr->wMagic));
+	  ERR("Unknown object type %ld\n", GetObjectType(handle) );
 	  break;
     }
-    GDI_ReleaseObj( handle );
     return ret;
 }

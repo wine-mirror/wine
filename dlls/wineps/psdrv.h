@@ -8,9 +8,7 @@
  */
 #include "windef.h"
 #include "wingdi.h"
-#include "font.h"
-#include "pen.h"
-#include "brush.h"
+#include "gdi.h"
 #include "wine/wingdi16.h"
 #include "winspool.h"
 
@@ -293,10 +291,9 @@ extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);
-extern HFONT16 PSDRV_FONT_SelectObject( DC *dc, HFONT16 hfont, FONTOBJ *font);
-extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
-extern HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
-					  BRUSHOBJ * brush );
+extern HFONT PSDRV_FONT_SelectObject( DC *dc, HFONT hfont );
+extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen );
+extern HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush );
 
 extern BOOL PSDRV_Brush(DC *dc, BOOL EO);
 extern BOOL PSDRV_SetFont( DC *dc );

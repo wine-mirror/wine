@@ -236,6 +236,10 @@ extern DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 					 LPCSTR lpszPort, WORD fwCapability,
 					 LPSTR lpszOutput, LPDEVMODEA lpdm);
 
+extern HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush );
+extern HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont );
+extern HPEN WIN16DRV_PEN_SelectObject( DC * dc, HPEN hpen );
+
 /*
  * Wine 16bit driver global variables
  */

@@ -6,9 +6,7 @@
  */
 
 #include "psdrv.h"
-#include "brush.h"
 #include "debugtools.h"
-#include "gdi.h"
 #include "winbase.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -16,35 +14,36 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_BRUSH_SelectObject
  */
-HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
+HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 {
+    LOGBRUSH logbrush;
     HBRUSH prevbrush = dc->hBrush;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
     TRACE("hbrush = %08x\n", hbrush);
     dc->hBrush = hbrush;
 
-    switch(brush->logbrush.lbStyle) {
+    switch(logbrush.lbStyle) {
 
     case BS_SOLID:
-        PSDRV_CreateColor(physDev, &physDev->brush.color, 
-			  brush->logbrush.lbColor);
+        PSDRV_CreateColor(physDev, &physDev->brush.color, logbrush.lbColor);
 	break;
 
     case BS_NULL:
         break;
 
     case BS_HATCHED:
-        PSDRV_CreateColor(physDev, &physDev->brush.color, 
-			  brush->logbrush.lbColor);
+        PSDRV_CreateColor(physDev, &physDev->brush.color, logbrush.lbColor);
         break;
 
     case BS_PATTERN:
-        FIXME("Unsupported brush style %d\n", brush->logbrush.lbStyle);
+        FIXME("Unsupported brush style %d\n", logbrush.lbStyle);
 	break;
 
     default:
-        FIXME("Unrecognized brush style %d\n", brush->logbrush.lbStyle);
+        FIXME("Unrecognized brush style %d\n", logbrush.lbStyle);
 	break;
     }
 
@@ -60,16 +59,17 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
  */
 static BOOL PSDRV_SetBrush(DC *dc)
 {
+    LOGBRUSH logbrush;
     BOOL ret = TRUE;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->hBrush, BRUSH_MAGIC );
 
-    if(!brush) {
+    if (!GetObjectA( dc->hBrush, sizeof(logbrush), &logbrush ))
+    {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
     }
-    
-    switch (brush->logbrush.lbStyle) {
+
+    switch (logbrush.lbStyle) {
     case BS_SOLID:
     case BS_HATCHED:
         PSDRV_WriteSetColor(dc, &physDev->brush.color);
@@ -84,7 +84,6 @@ static BOOL PSDRV_SetBrush(DC *dc)
 
     }
     physDev->brush.set = TRUE;
-    GDI_ReleaseObj( dc->hBrush );
     return TRUE;
 }
 
@@ -123,16 +122,17 @@ static BOOL PSDRV_Clip(DC *dc, BOOL EO)
  */
 BOOL PSDRV_Brush(DC *dc, BOOL EO)
 {
+    LOGBRUSH logbrush;
     BOOL ret = TRUE;
-    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->hBrush, BRUSH_MAGIC );
     PSDRV_PDEVICE *physDev = dc->physDev;
 
-    if(!brush) {
+    if (!GetObjectA( dc->hBrush, sizeof(logbrush), &logbrush ))
+    {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
     }
 
-    switch (brush->logbrush.lbStyle) {
+    switch (logbrush.lbStyle) {
     case BS_SOLID:
         PSDRV_SetBrush(dc);
 	PSDRV_WriteGSave(dc);
@@ -143,7 +143,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
     case BS_HATCHED:
         PSDRV_SetBrush(dc);
 
-	switch(brush->logbrush.lbHatch) {
+	switch(logbrush.lbHatch) {
 	case HS_VERTICAL:
 	case HS_CROSS:
 	    PSDRV_WriteGSave(dc);
@@ -151,7 +151,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	    PSDRV_WriteHatch(dc);
 	    PSDRV_WriteStroke(dc);
 	    PSDRV_WriteGRestore(dc);
-	    if(brush->logbrush.lbHatch == HS_VERTICAL)
+	    if(logbrush.lbHatch == HS_VERTICAL)
 	        break;
 	    /* else fallthrough for HS_CROSS */
 
@@ -172,7 +172,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	    PSDRV_WriteHatch(dc);
 	    PSDRV_WriteStroke(dc);
 	    PSDRV_WriteGRestore(dc);
-	    if(brush->logbrush.lbHatch == HS_FDIAGONAL)
+	    if(logbrush.lbHatch == HS_FDIAGONAL)
 	        break;
 	    /* else fallthrough for HS_DIAGCROSS */
 	    
@@ -199,12 +199,11 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
         {
 	    BITMAP bm;
 	    BYTE *bits;
-	    GetObjectA(brush->logbrush.lbHatch, sizeof(BITMAP), &bm);
+	    GetObjectA(logbrush.lbHatch, sizeof(BITMAP), &bm);
 	    TRACE("BS_PATTERN %dx%d %d bpp\n", bm.bmWidth, bm.bmHeight,
 		  bm.bmBitsPixel);
 	    bits = HeapAlloc(PSDRV_Heap, 0, bm.bmWidthBytes * bm.bmHeight);
-	    GetBitmapBits(brush->logbrush.lbHatch,
-			  bm.bmWidthBytes * bm.bmHeight, bits);
+	    GetBitmapBits(logbrush.lbHatch, bm.bmWidthBytes * bm.bmHeight, bits);
 
 	    if(physDev->pi->ppd->LanguageLevel > 1) {
 	        PSDRV_WriteGSave(dc);
@@ -223,8 +222,6 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
         ret = FALSE;
 	break;
     }
-
-    GDI_ReleaseObj( dc->hBrush );
     return ret;
 }
 

@@ -9,7 +9,6 @@
 #include "winspool.h"
 #include "psdrv.h"
 #include "debugtools.h"
-#include "gdi.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -18,34 +17,34 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_FONT_SelectObject
  */
-HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
-				 FONTOBJ *font )
+HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
 {
+    LOGFONTW lf;
     HFONT16 prevfont = dc->hFont;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    LOGFONTW *lf = &(font->logfont);
     BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
     AFM *afm;
     FONTFAMILY *family;
     char FaceName[LF_FACESIZE];
 
+    if (!GetObjectW( hfont, sizeof(lf), &lf )) return 0;
 
     TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
-	  debugstr_w(lf->lfFaceName), lf->lfHeight, lf->lfItalic,
-	  lf->lfWeight);
+	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
+	  lf.lfWeight);
 
     dc->hFont = hfont;
 
-    if(lf->lfItalic)
+    if(lf.lfItalic)
         it = TRUE;
-    if(lf->lfWeight > 550)
+    if(lf.lfWeight > 550)
         bd = TRUE;
-    WideCharToMultiByte(CP_ACP, 0, lf->lfFaceName, -1,
+    WideCharToMultiByte(CP_ACP, 0, lf.lfFaceName, -1,
 			FaceName, sizeof(FaceName), NULL, NULL);
     
     if(FaceName[0] == '\0') {
-        switch(lf->lfPitchAndFamily & 0xf0) {
+        switch(lf.lfPitchAndFamily & 0xf0) {
 	case FF_DONTCARE:
 	    break;
 	case FF_ROMAN:
@@ -65,7 +64,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     }
 
     if(FaceName[0] == '\0') {
-        switch(lf->lfPitchAndFamily & 0x0f) {
+        switch(lf.lfPitchAndFamily & 0x0f) {
 	case VARIABLE_PITCH:
 	    strcpy(FaceName, "Times");
 	    break;
@@ -138,7 +137,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     afm = afmle->afm;
 
     physDev->font.afm = afm;
-    physDev->font.tm.tmHeight = INTERNAL_YWSTODS(dc, lf->lfHeight);
+    physDev->font.tm.tmHeight = INTERNAL_YWSTODS(dc, lf.lfHeight);
     if(physDev->font.tm.tmHeight < 0) {
         physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
 				       (afm->Ascender - afm->Descender);
@@ -147,7 +146,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     physDev->font.size = physDev->font.tm.tmHeight * 1000.0 /
 				(afm->FullAscender - afm->Descender);
     physDev->font.scale = physDev->font.size / 1000.0;
-    physDev->font.escapement = lf->lfEscapement;
+    physDev->font.escapement = lf.lfEscapement;
     physDev->font.tm.tmAscent = afm->FullAscender * physDev->font.scale;
     physDev->font.tm.tmDescent = -afm->Descender * physDev->font.scale;
     physDev->font.tm.tmInternalLeading = (afm->FullAscender - afm->Ascender)
@@ -160,8 +159,8 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
                                            physDev->font.scale;
     physDev->font.tm.tmWeight = afm->Weight;
     physDev->font.tm.tmItalic = afm->ItalicAngle != 0.0;
-    physDev->font.tm.tmUnderlined = lf->lfUnderline;
-    physDev->font.tm.tmStruckOut = lf->lfStrikeOut;
+    physDev->font.tm.tmUnderlined = lf.lfUnderline;
+    physDev->font.tm.tmStruckOut = lf.lfStrikeOut;
     physDev->font.tm.tmFirstChar = 32;
     physDev->font.tm.tmLastChar = 251;
     physDev->font.tm.tmDefaultChar = 128;

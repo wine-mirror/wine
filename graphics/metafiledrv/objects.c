@@ -9,21 +9,18 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "brush.h"
 #include "font.h"
 #include "metafiledrv.h"
-#include "pen.h"
 #include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile);
-DECLARE_DEBUG_CHANNEL(gdi);
+
 
 /***********************************************************************
  *           MFDRV_BITMAP_SelectObject
  */
-static HBITMAP16 MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
-                                            BITMAPOBJ * bmp )
+static HBITMAP MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
 {
     return 0;
 }
@@ -38,19 +35,21 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
     INT16 index = -1;
     DWORD size;
     METARECORD *mr;
-    BRUSHOBJ *brushObj = (BRUSHOBJ *)GDI_GetObjPtr( hBrush, BRUSH_MAGIC );
-    if(!brushObj) return -1;
-    
-    switch(brushObj->logbrush.lbStyle) {
+    LOGBRUSH logbrush;
+
+    if (!GetObjectA( hBrush, sizeof(logbrush), &logbrush )) return -1;
+
+    switch(logbrush.lbStyle)
+    {
     case BS_SOLID:
     case BS_NULL:
     case BS_HATCHED:
         {
 	    LOGBRUSH16 lb16;
 
-	    lb16.lbStyle = brushObj->logbrush.lbStyle;
-	    lb16.lbColor = brushObj->logbrush.lbColor;
-	    lb16.lbHatch = brushObj->logbrush.lbHatch;
+	    lb16.lbStyle = logbrush.lbStyle;
+	    lb16.lbColor = logbrush.lbColor;
+	    lb16.lbHatch = logbrush.lbHatch;
 	    size = sizeof(METARECORD) + sizeof(LOGBRUSH16) - 2;
 	    mr = HeapAlloc( GetProcessHeap(), 0, size );
 	    mr->rdSize = size / 2;
@@ -65,7 +64,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    BITMAPINFO *info;
 	    DWORD bmSize;
 
-	    GetObjectA(brushObj->logbrush.lbHatch, sizeof(bm), &bm);
+	    GetObjectA(logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
 	        FIXME("Trying to store a colour pattern brush\n");
 		goto done;
@@ -91,7 +90,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    info->bmiHeader.biBitCount = 1;
 	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
 
-	    GetDIBits(dc->hSelf, brushObj->logbrush.lbHatch, 0, bm.bmHeight,
+	    GetDIBits(dc->hSelf, logbrush.lbHatch, 0, bm.bmHeight,
 		      bits, info, DIB_RGB_COLORS);
 	    *(DWORD *)info->bmiColors = 0;
 	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
@@ -103,27 +102,26 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	      BITMAPINFO *info;
 	      DWORD bmSize, biSize;
 
-	      info = GlobalLock16((HGLOBAL16)brushObj->logbrush.lbHatch);
+	      info = GlobalLock16((HGLOBAL16)logbrush.lbHatch);
 	      if (info->bmiHeader.biCompression)
 		  bmSize = info->bmiHeader.biSizeImage;
 	      else
 		  bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
 						info->bmiHeader.biHeight,
 						info->bmiHeader.biBitCount);
-	      biSize = DIB_BitmapInfoSize(info,
-					  LOWORD(brushObj->logbrush.lbColor)); 
+	      biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush.lbColor));
 	      size = sizeof(METARECORD) + biSize + bmSize + 2;
 	      mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	      if(!mr) goto done;
 	      mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	      mr->rdSize = size / 2;
-	      *(mr->rdParm) = brushObj->logbrush.lbStyle;
-	      *(mr->rdParm + 1) = LOWORD(brushObj->logbrush.lbColor);
+	      *(mr->rdParm) = logbrush.lbStyle;
+	      *(mr->rdParm + 1) = LOWORD(logbrush.lbColor);
 	      memcpy(mr->rdParm + 2, info, biSize + bmSize);
 	      break;
 	}
 	default:
-	    FIXME("Unkonwn brush style %x\n", brushObj->logbrush.lbStyle);
+	    FIXME("Unkonwn brush style %x\n", logbrush.lbStyle);
 	    return -1;
     }
     index = MFDRV_AddHandleDC( dc );
@@ -131,7 +129,6 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
         index = -1;
     HeapFree(GetProcessHeap(), 0, mr);
 done:
-    GDI_ReleaseObj( hBrush );
     return index;
 }
 
@@ -139,8 +136,7 @@ done:
 /***********************************************************************
  *           MFDRV_BRUSH_SelectObject
  */
-static HBRUSH MFDRV_BRUSH_SelectObject( DC *dc, HBRUSH hbrush,
-					BRUSHOBJ * brush )
+static HBRUSH MFDRV_BRUSH_SelectObject( DC *dc, HBRUSH hbrush )
 {
     INT16 index;
     METARECORD mr;
@@ -181,12 +177,12 @@ static BOOL MFDRV_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
 /***********************************************************************
  *           MFDRV_FONT_SelectObject
  */
-static HFONT16 MFDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
-                                        FONTOBJ * font )
+static HFONT MFDRV_FONT_SelectObject( DC * dc, HFONT hfont )
 {
     HFONT16 prevHandle = dc->hFont;
     LOGFONT16 lf16;
-    FONT_LogFontWTo16(&(font->logfont), &lf16);
+
+    if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return 0;
     if (MFDRV_CreateFontIndirect(dc, hfont, &lf16))
         return prevHandle;
     return 0;
@@ -218,18 +214,13 @@ static BOOL MFDRV_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 /***********************************************************************
  *           MFDRV_PEN_SelectObject
  */
-static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
+static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen )
 {
     LOGPEN16 logpen;
     HPEN prevHandle = dc->hPen;
 
-    logpen.lopnStyle = pen->logpen.lopnStyle;
-    logpen.lopnWidth.x = pen->logpen.lopnWidth.x;
-    logpen.lopnWidth.y = pen->logpen.lopnWidth.y;
-    logpen.lopnColor = pen->logpen.lopnColor;
-
+    if (!GetObject16( hpen, sizeof(logpen), &logpen )) return 0;
     if (MFDRV_CreatePenIndirect( dc, hpen, &logpen )) return prevHandle;
-
     return 0;
 }
 
@@ -239,32 +230,15 @@ static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
  */
 HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
-    GDIOBJHDR * ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ ret = 0;
+    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
 
-    if (!ptr) return 0;
-    TRACE_(gdi)("hdc=%04x %04x\n", dc->hSelf, handle );
-    
-    switch(GDIMAGIC(ptr->wMagic))
+    switch(GetObjectType( handle ))
     {
-      case PEN_MAGIC:
-	  ret = MFDRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
-	  break;
-      case BRUSH_MAGIC:
-	  ret = MFDRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
-	  break;
-      case BITMAP_MAGIC:
-	  ret = MFDRV_BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
-	  break;
-      case FONT_MAGIC:
-	  ret = MFDRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
-	  break;
-      case REGION_MAGIC:
-	  ret = (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
-	  break;
+    case OBJ_PEN:    return MFDRV_PEN_SelectObject( dc, handle );
+    case OBJ_BRUSH:  return MFDRV_BRUSH_SelectObject( dc, handle );
+    case OBJ_BITMAP: return MFDRV_BITMAP_SelectObject( dc, handle );
+    case OBJ_FONT:   return MFDRV_FONT_SelectObject( dc, handle );
+    case OBJ_REGION: return (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
     }
-    GDI_ReleaseObj( handle );
-    return ret;
+    return 0;
 }
-
-

@@ -72,17 +72,18 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics )
     return TRUE;
 }
 
-HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
+HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     HPEN prevHandle = dc->hFont;
     int	nSize;
 
+    if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf )) return 0;
+
     dc->hFont = hfont;
 
-    TRACE("WIN16DRV_FONT_SelectObject %s h=%ld\n",
-	  debugstr_w(font->logfont.lfFaceName), font->logfont.lfHeight);
-
+    TRACE("WIN16DRV_FONT_SelectObject %s h=%d\n",
+          debugstr_a(physDev->lf.lfFaceName), physDev->lf.lfHeight);
 
     if( physDev->FontInfo )
     {
@@ -92,7 +93,6 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 				      physDev->FontInfo, 0);
     }
 
-    FONT_LogFontWTo16(&font->logfont, &physDev->lf);
     nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_FONT,
                                   &physDev->lf, 0, 0); 
 

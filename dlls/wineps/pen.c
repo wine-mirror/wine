@@ -5,7 +5,6 @@
  *
  */
 
-#include "pen.h"
 #include "psdrv.h"
 #include "debugtools.h"
 
@@ -20,20 +19,24 @@ static char PEN_alternate[]  = "1";
 /***********************************************************************
  *           PSDRV_PEN_SelectObject
  */
-extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
+HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen )
 {
+    LOGPEN logpen;
     HPEN prevpen = dc->hPen;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    TRACE("hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
+    if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
+
+    TRACE("hpen = %08x colour = %08lx\n", hpen, logpen.lopnColor);
+
     dc->hPen = hpen;
 
-    physDev->pen.width = INTERNAL_XWSTODS(dc, pen->logpen.lopnWidth.x);
+    physDev->pen.width = INTERNAL_XWSTODS(dc, logpen.lopnWidth.x);
     if(physDev->pen.width < 0)
         physDev->pen.width = -physDev->pen.width;
 
-    PSDRV_CreateColor(physDev, &physDev->pen.color, pen->logpen.lopnColor);
-    physDev->pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
+    PSDRV_CreateColor(physDev, &physDev->pen.color, logpen.lopnColor);
+    physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
  
     switch(physDev->pen.style) {
     case PS_DASH:

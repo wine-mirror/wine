@@ -5,26 +5,22 @@
  */
 
 #include <stdlib.h>
-#include "brush.h"
 #include "win16drv.h"
 #include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
 
-HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
-                                      BRUSHOBJ * brush )
+HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     HBRUSH16	 prevHandle = dc->hBrush;
     int		 nSize;
-    LOGBRUSH16 	 lBrush16;
+    LOGBRUSH16 lBrush16;
+
+    if (!GetObject16( hbrush, sizeof(lBrush16), &lBrush16 )) return 0;
+
     dc->hBrush = hbrush;
-    lBrush16.lbStyle = brush->logbrush.lbStyle;
-    lBrush16.lbColor = brush->logbrush.lbColor;
-    lBrush16.lbHatch = brush->logbrush.lbHatch;
-
-
     if ( physDev->BrushInfo )
     {
         TRACE("UnRealizing BrushInfo\n");

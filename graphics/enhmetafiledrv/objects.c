@@ -9,10 +9,7 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "brush.h"
-#include "font.h"
 #include "enhmetafiledrv.h"
-#include "pen.h"
 #include "debugtools.h"
 #include "heap.h"
 
@@ -33,9 +30,11 @@ static HBITMAP EMFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
 DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 {
     DWORD index = 0;
-    BRUSHOBJ *brushObj = (BRUSHOBJ *)GDI_GetObjPtr( hBrush, BRUSH_MAGIC );
+    LOGBRUSH logbrush;
 
-    switch (brushObj->logbrush.lbStyle) {
+    if (!GetObjectA( hBrush, sizeof(logbrush), &logbrush )) return 0;
+
+    switch (logbrush.lbStyle) {
     case BS_SOLID:
     case BS_HATCHED:
     case BS_NULL:
@@ -44,7 +43,7 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
 	emr.emr.nSize = sizeof(emr);
 	emr.ihBrush = index = EMFDRV_AddHandleDC( dc );
-	emr.lb = brushObj->logbrush;
+	emr.lb = logbrush;
 
 	if(!EMFDRV_WriteRecord( dc, &emr.emr ))
 	    index = 0;
@@ -54,7 +53,7 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
       {
 	EMRCREATEDIBPATTERNBRUSHPT *emr;
 	DWORD bmSize, biSize, size;
-	BITMAPINFO *info = GlobalLock16(brushObj->logbrush.lbHatch);
+	BITMAPINFO *info = GlobalLock16(logbrush.lbHatch);
 
 	if (info->bmiHeader.biCompression)
             bmSize = info->bmiHeader.biSizeImage;
@@ -62,14 +61,14 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	    bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
 					  info->bmiHeader.biHeight,
 					  info->bmiHeader.biBitCount);
-	biSize = DIB_BitmapInfoSize(info, LOWORD(brushObj->logbrush.lbColor)); 
+	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush.lbColor));
 	size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize;
 	emr = HeapAlloc( GetProcessHeap(), 0, size );
 	if(!emr) break;
 	emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
 	emr->emr.nSize = size;
 	emr->ihBrush = index = EMFDRV_AddHandleDC( dc );
-	emr->iUsage = LOWORD(brushObj->logbrush.lbColor);
+	emr->iUsage = LOWORD(logbrush.lbColor);
 	emr->offBmi = sizeof(EMRCREATEDIBPATTERNBRUSHPT);
 	emr->cbBmi = biSize;
 	emr->offBits = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize;
@@ -79,19 +78,18 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	if(!EMFDRV_WriteRecord( dc, &emr->emr ))
 	    index = 0;
 	HeapFree( GetProcessHeap(), 0, emr );
-	GlobalUnlock16(brushObj->logbrush.lbHatch);
+	GlobalUnlock16(logbrush.lbHatch);
       }
       break;
 
     case BS_PATTERN:
         FIXME("Unsupported style %x\n",
-	      brushObj->logbrush.lbStyle);
+	      logbrush.lbStyle);
         break;
     default:
-        FIXME("Unknown style %x\n", brushObj->logbrush.lbStyle);
+        FIXME("Unknown style %x\n", logbrush.lbStyle);
 	break;
     }
-    GDI_ReleaseObj( hBrush );
     return index;
 }
 
@@ -141,13 +139,14 @@ static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
 static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
 {
     DWORD index = 0;
-    FONTOBJ *fontObj = (FONTOBJ *)GDI_GetObjPtr( hFont, FONT_MAGIC );
     EMREXTCREATEFONTINDIRECTW emr;
     int i;
+
+    if (!GetObjectW( hFont, sizeof(emr.elfw.elfLogFont), &emr.elfw.elfLogFont )) return 0;
+
     emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
     emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
     emr.ihFont = index = EMFDRV_AddHandleDC( dc );
-    memcpy( &(emr.elfw.elfLogFont), &(fontObj->logfont), sizeof(LOGFONTW) );
     emr.elfw.elfFullName[0] = '\0';
     emr.elfw.elfStyle[0]    = '\0';
     emr.elfw.elfVersion     = 0;
@@ -170,7 +169,6 @@ static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
 
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         index = 0;
-    GDI_ReleaseObj( hFont );
     return index;
 }
 
@@ -223,17 +221,16 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
 static HPEN EMFDRV_CreatePenIndirect(DC *dc, HPEN hPen )
 {
     EMRCREATEPEN emr;
-    PENOBJ *penObj = (PENOBJ *)GDI_GetObjPtr( hPen, PEN_MAGIC );
     DWORD index = 0;
+
+    if (!GetObjectA( hPen, sizeof(emr.lopn), &emr.lopn )) return 0;
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);
     emr.ihPen = index = EMFDRV_AddHandleDC( dc );
-    emr.lopn = penObj->logpen;
 
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         index = 0;
-    GDI_ReleaseObj( hPen );
     return index;
 }
 

@@ -5,10 +5,7 @@
  */
 
 #include "bitmap.h"
-#include "brush.h"
-#include "font.h"
 #include "gdi.h"
-#include "pen.h"
 #include "ttydrv.h"
 #include "debugtools.h"
 
@@ -23,11 +20,11 @@ extern BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap);
 /***********************************************************************
  *		TTYDRV_DC_BRUSH_SelectObject
  */
-static HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush, BRUSHOBJ *brush)
+static HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush)
 {
   HBRUSH hPreviousBrush;
 
-  TRACE("(%p, 0x%04x, %p)\n", dc, hbrush, brush);
+  TRACE("(%p, 0x%04x)\n", dc, hbrush);
 
   hPreviousBrush = dc->hBrush;
   dc->hBrush = hbrush;
@@ -38,11 +35,11 @@ static HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush, BRUSHOBJ *brus
 /***********************************************************************
  *		TTYDRV_DC_FONT_SelectObject
  */
-static HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont, FONTOBJ *font)
+static HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont)
 {
   HFONT hPreviousFont;
 
-  TRACE("(%p, 0x%04x, %p)\n", dc, hfont, font);
+  TRACE("(%p, 0x%04x)\n", dc, hfont);
 
   hPreviousFont = dc->hFont;
   dc->hFont = hfont;
@@ -53,11 +50,11 @@ static HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont, FONTOBJ *font)
 /***********************************************************************
  *		TTYDRV_DC_PEN_SelectObject
  */
-static HPEN TTYDRV_DC_PEN_SelectObject(DC *dc, HBRUSH hpen, PENOBJ *pen)
+static HPEN TTYDRV_DC_PEN_SelectObject(DC *dc, HBRUSH hpen)
 {
   HPEN hPreviousPen;
 
-  TRACE("(%p, 0x%04x, %p)\n", dc, hpen, pen);
+  TRACE("(%p, 0x%04x)\n", dc, hpen);
 
   hPreviousPen = dc->hPen;
   dc->hPen = hpen;
@@ -81,13 +78,13 @@ HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
       result = TTYDRV_DC_BITMAP_SelectObject(dc, handle, (BITMAPOBJ *) ptr);
       break;
     case BRUSH_MAGIC:
-      result = TTYDRV_DC_BRUSH_SelectObject(dc, handle, (BRUSHOBJ *) ptr);
+      result = TTYDRV_DC_BRUSH_SelectObject(dc, handle);
       break;
     case FONT_MAGIC:
-      result = TTYDRV_DC_FONT_SelectObject(dc, handle, (FONTOBJ *) ptr);	  
+      result = TTYDRV_DC_FONT_SelectObject(dc, handle);
       break;
     case PEN_MAGIC:
-      result = TTYDRV_DC_PEN_SelectObject(dc, handle, (PENOBJ *) ptr);
+      result = TTYDRV_DC_PEN_SelectObject(dc, handle);
       break;
     case REGION_MAGIC:
       /* FIXME: Shouldn't be handled here */
