@@ -1075,9 +1075,12 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 #define LISTVIEW_InvalidateSubItem(infoPtr, nItem, nSubItem) do { \
     POINT Origin, Position; \
     RECT rcBox; \
+    assert ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT); \
     LISTVIEW_GetOrigin(infoPtr, &Origin); \
     LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position); \
     LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox); \
+    rcBox.top = 0; \
+    rcBox.bottom = infoPtr->nItemHeight; \
     OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y); \
     LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
 } while (0)
