@@ -2,6 +2,7 @@
  * Q&D Uninstaller (main.c)
  *
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
+ * Copyright 2004 Hannu Valtonen <Hannu.Valtonen@hut.fi>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -318,11 +319,12 @@ void UninstallProgram(void)
 
 LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    HFONT static_font, listbox_font;
     HDC hdc;
     PAINTSTRUCT ps;
     TEXTMETRIC tm;
     int cxChar, cyChar, i, y, bx, maxx, maxy, wx, wy;
-    static HWND hwndList = 0, hwndEdit = 0;
+    static HWND hwndList = 0, static_text = 0;
     DWORD style;
     RECT rect;
 
@@ -331,6 +333,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	hdc = GetDC(hWnd);
 	GetTextMetrics(hdc, &tm);
+	static_font = CreateFont(tm.tmHeight + tm.tmExternalLeading, 0, 0, 0, 600, FALSE, 0, 0, 0, 0, 0, 0, 0, "Times New Roman");
+	listbox_font = CreateFont(tm.tmHeight + tm.tmExternalLeading, 0, 0, 0, 0, TRUE, 0, 0, 0, 0, 0, 0, 0, "Times New Roman");
 	cxChar = tm.tmAveCharWidth;
 	cyChar = tm.tmHeight + tm.tmExternalLeading;
 	ReleaseDC(hWnd, hdc);
@@ -339,14 +343,15 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #ifdef USE_MULTIPLESEL
 	style |= LBS_MULTIPLESEL;
 #endif
-	bx = maxx = cxChar * 5;
+	bx = maxx = cxChar * 3;
 	y = maxy = cyChar * 1;
-	CreateWindow("static", program_description,
+	static_text = CreateWindow("static", program_description,
 		WS_CHILD|WS_VISIBLE|SS_LEFT,
 		maxx, maxy,
 		cxChar * sizeof(program_description), cyChar * 1,
 		hWnd, (HMENU)1,
 		((LPCREATESTRUCT)lParam)->hInstance, NULL);
+	SendMessage(static_text, WM_SETFONT, (WPARAM)static_font, MAKELPARAM(FALSE, 0));
 	maxy += cyChar * 2; /*static text + distance */
 	hwndList = CreateWindow("listbox", NULL,
 		style,
@@ -354,6 +359,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		cxChar * 50 + GetSystemMetrics(SM_CXVSCROLL), cyChar * 10,
 		hWnd, (HMENU) 1,
 		(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
+	SendMessage(hwndList, WM_SETFONT, (WPARAM)listbox_font, MAKELPARAM(FALSE, 0));
 	GetWindowRect(hwndList, &rect);
 	maxx += (rect.right - rect.left)*1.1;	
 	maxy += (rect.bottom - rect.top)*1.1;
@@ -372,20 +378,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		    PostQuitMessage(0);
 	    y += 2*cyChar;
 	}
-	maxx += wx + cxChar * 5;
-	CreateWindow("static", "Command line to be executed:",
-		WS_CHILD|WS_VISIBLE|SS_LEFT,
-		bx, maxy,
-		cxChar * 50, cyChar,
-		hWnd, (HMENU)1,
-		((LPCREATESTRUCT)lParam)->hInstance, NULL);
-	maxy += cyChar;
-	hwndEdit = CreateWindow("edit", NULL,
-		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_LEFT|ES_MULTILINE|ES_READONLY,
-		bx, maxy, maxx-(2*bx), (cyChar*2)+4,
-		hWnd, (HMENU)1,
-		((LPCREATESTRUCT)lParam)->hInstance, NULL);
-	maxy += (cyChar*2)+4 + cyChar * 3; /* edit ctrl + bottom border */
+	maxx += wx + cxChar * 4;
+	maxy += cyChar * 2; /* window border */
 	SetWindowPos(	hWnd, 0,
 			0, 0, maxx, maxy,
 			SWP_NOMOVE);
@@ -443,7 +437,6 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		entries[sel].active ^= 1; /* toggle */
 		WINE_TRACE("toggling %d %s\n", entries[sel].active,
 			    wine_dbgstr_w(entries[oldsel].descr));
-		SendMessage(hwndEdit, WM_SETTEXT, 0, (LPARAM)entries[sel].command);
 		oldsel = sel;
 	    }
 	}
