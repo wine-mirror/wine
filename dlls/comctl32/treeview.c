@@ -1860,8 +1860,10 @@ static LRESULT
 TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 {
     TREEVIEW_ITEM *wineItem;
+    TREEVIEW_ITEM originalItem;
 
     wineItem = tvItem->hItem;
+
     TRACE("item %d,mask %x\n", TREEVIEW_GetItemIndex(infoPtr, wineItem),
 	  tvItem->mask);
 
@@ -1870,6 +1872,9 @@ TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 
     if (!TREEVIEW_DoSetItem(infoPtr, wineItem, tvItem))
 	return FALSE;
+
+    /* store the orignal item values */
+    originalItem = *wineItem;
 
     /* If the text or TVIS_BOLD was changed, and it is visible, recalculate. */
     if ((tvItem->mask & TVIF_TEXT
@@ -1885,18 +1890,22 @@ TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 	/* The refresh updates everything, but we can't wait until then. */
 	TREEVIEW_ComputeItemInternalMetrics(infoPtr, wineItem);
 
-	if (tvItem->mask & TVIF_INTEGRAL)
-	{
-	    TREEVIEW_RecalculateVisibleOrder(infoPtr, wineItem);
-	    TREEVIEW_UpdateScrollBars(infoPtr);
+        /* if any of the items values changed, redraw the item */
+        if(memcmp(&originalItem, wineItem, sizeof(TREEVIEW_ITEM)))
+        {
+            if (tvItem->mask & TVIF_INTEGRAL)
+	    {
+	        TREEVIEW_RecalculateVisibleOrder(infoPtr, wineItem);
+	        TREEVIEW_UpdateScrollBars(infoPtr);
 
-	    TREEVIEW_QueueRefresh(infoPtr);
-	}
-	else
-	{
-	    TREEVIEW_UpdateScrollBars(infoPtr);
-	    TREEVIEW_QueueItemRefresh(infoPtr, wineItem);
-	}
+	        TREEVIEW_QueueRefresh(infoPtr);
+	    }
+	    else
+	    {
+	        TREEVIEW_UpdateScrollBars(infoPtr);
+	        TREEVIEW_QueueItemRefresh(infoPtr, wineItem);
+	    }
+        }
     }
 
     return TRUE;
@@ -3717,23 +3726,22 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
              */
             TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVIF_HANDLE | TVIF_PARAM,
                                 0, ht.hItem, 0);
+
             /*
              * Close the previous selection all the way to the root
              * as long as the new selection is not a child
              */
-
             if((infoPtr->selectedItem)
                 && (infoPtr->selectedItem != ht.hItem))
             {
                 BOOL closeit = TRUE;
                 SelItem = ht.hItem;
 
-                while(closeit && SelItem)
+                /* determine of the hitItem is a child of the currently selected item */
+                while(closeit && SelItem && TREEVIEW_ValidItem(infoPtr, SelItem) && (SelItem != infoPtr->root))
                 {
                     closeit = (SelItem != infoPtr->selectedItem);
-
-                    if(TREEVIEW_ValidItem(infoPtr, SelItem->parent))
-                        SelItem = SelItem->parent;
+                    SelItem = SelItem->parent;
                 }
 
                 if(closeit)
@@ -3741,12 +3749,10 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
                     if(TREEVIEW_ValidItem(infoPtr, infoPtr->selectedItem))
                         SelItem = infoPtr->selectedItem;
 
-                    while((SelItem) && (SelItem != ht.hItem))
+                    while(SelItem && (SelItem != ht.hItem) && TREEVIEW_ValidItem(infoPtr, SelItem) && (SelItem != infoPtr->root))
                     {
-                        TREEVIEW_Expand(infoPtr, SelItem, (WPARAM)TVE_COLLAPSE,
-                                FALSE);
-                        if(TREEVIEW_ValidItem(infoPtr, SelItem->parent))
-                            SelItem = SelItem->parent;
+                        TREEVIEW_Collapse(infoPtr, SelItem, FALSE, FALSE);
+                        SelItem = SelItem->parent;
                     }
                 }
             }
@@ -3756,8 +3762,9 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
              */
             TREEVIEW_Expand(infoPtr, ht.hItem, TVE_TOGGLE, FALSE);
         }
-        else
-            TREEVIEW_DoSelectItem(infoPtr, TVGN_CARET, ht.hItem, TVC_BYMOUSE);
+
+        /* Select the current item */
+        TREEVIEW_DoSelectItem(infoPtr, TVGN_CARET, ht.hItem, TVC_BYMOUSE);
     }
     else if (ht.flags & TVHT_ONITEMSTATEICON)
     {
@@ -3849,7 +3856,7 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     hOldFont = SelectObject(hdc, infoPtr->hFont);
     GetTextExtentPoint32A(hdc, dragItem->pszText, lstrlenA(dragItem->pszText),
 			  &size);
-    TRACE("%d %d %s %d\n", size.cx, size.cy, dragItem->pszText,
+    TRACE("%ld %ld %s %d\n", size.cx, size.cy, dragItem->pszText,
 	  lstrlenA(dragItem->pszText));
     hbmp = CreateCompatibleBitmap(htopdc, size.cx, size.cy);
     hOldbmp = SelectObject(hdc, hbmp);
@@ -3999,7 +4006,13 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
     if (!ISVISIBLE(item))
     {
 	/* Expand parents as necessary. */
-	HTREEITEM parent = item->parent;
+	HTREEITEM parent;
+
+        /* see if we are trying to ensure that root is vislble */
+        if((item != infoPtr->root) && TREEVIEW_ValidItem(infoPtr, item))
+          parent = item->parent;
+        else
+          parent = item; /* this item is the topmost item */
 
 	while (parent != infoPtr->root)
 	{
