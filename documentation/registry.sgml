@@ -257,6 +257,15 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
 
       <variablelist>
         <varlistentry>
+	  <term>GlobalRegistryDir</term>
+	  <listitem>
+	    <para>
+	      Optional.  Sets the path to look for the Global
+	      Registry.
+	    </para>
+	  </listitem>
+	</varlistentry>
+        <varlistentry>
           <term>LoadGlobalRegistryFiles</term>
           <listitem>
             <para>

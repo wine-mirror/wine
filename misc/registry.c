@@ -64,9 +64,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-/* FIXME: following defines should be configured global */
-#define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  ETCDIR"/wine.userreg"
-#define SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE ETCDIR"/wine.systemreg"
+#define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  "/wine.userreg"
+#define SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE "/wine.systemreg"
 
 /* relative in ~user/.wine/ : */
 #define SAVE_LOCAL_REGBRANCH_CURRENT_USER  "user.reg"
@@ -1651,13 +1650,32 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
 /* load global registry files (stored in /etc/wine) [Internal] */
 static void _load_global_registry( HKEY hkey_local_machine, HKEY hkey_users )
 {
+    WCHAR Wglobalregistrydir[MAX_PATHNAME_LEN];
+    char globalregistrydir[MAX_PATHNAME_LEN];
+    char configfile[MAX_PATHNAME_LEN];
+    static const WCHAR registryW[] = {'r','e','g','i','s','t','r','y',0};
+    static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
+    static const WCHAR empty_strW[] = { 0 };
+
     TRACE("(void)\n");
 
+    /* Override ETCDIR? */
+    PROFILE_GetWineIniString( registryW, GlobalRegistryDirW, empty_strW , Wglobalregistrydir, MAX_PATHNAME_LEN);
+    WideCharToMultiByte(CP_ACP, 0, Wglobalregistrydir, -1, globalregistrydir, MAX_PATHNAME_LEN, NULL, NULL);
+
+    if (globalregistrydir[0] != '/') strcpy(globalregistrydir, ETCDIR);
+
+    TRACE("GlobalRegistryDir is '%s'.\n", globalregistrydir);
+
     /* Load the global HKU hive directly from sysconfdir */
-    load_wine_registry( hkey_users, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT );
+    strcpy(configfile, globalregistrydir);
+    strcat(configfile, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT);
+    load_wine_registry( hkey_users, configfile );
 
     /* Load the global machine defaults directly from sysconfdir */
-    load_wine_registry( hkey_local_machine, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE );
+    strcpy(configfile, globalregistrydir);
+    strcat(configfile, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE);
+    load_wine_registry( hkey_local_machine, configfile );
 }
 
 /* load home registry files (stored in ~/.wine) [Internal] */
