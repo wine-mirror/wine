@@ -1585,15 +1585,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE( "GET DOS VERSION - %s requested\n",
                (AL_reg(context) == 0x00) ? "OEM number" : "version flag" );
 
-        SET_AL( context, HIBYTE(HIWORD(GetVersion16())) ); /* major version */
-        SET_AH( context, LOBYTE(HIWORD(GetVersion16())) ); /* minor version */
-
         if (AL_reg(context) == 0x00)
             SET_BH( context, 0xff ); /* OEM number => undefined */
         else
             SET_BH( context, 0x08 ); /* version flag => DOS is in ROM */
 
-        SET_BL( context, 0x12 );     /* 0x123456 is Wine's serial # */
+        SET_AL( context, HIBYTE(HIWORD(GetVersion16())) ); /* major version */
+        SET_AH( context, LOBYTE(HIWORD(GetVersion16())) ); /* minor version */
+
+        SET_BL( context, 0x12 );     /* 0x123456 is 24-bit Wine's serial # */
         SET_CX( context, 0x3456 );
         break;
 

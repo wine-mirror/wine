@@ -607,8 +607,8 @@ INT10_HEAP *INT10_GetHeap( void )
         int  i;
 
         heap_pointer = DOSVM_AllocDataUMB( sizeof(INT10_HEAP), 
-                                           0,
-                                           &segment );
+                                           &segment,
+                                           0 );
 
         for (i = 0; i < 7; i++)
             heap_pointer->StaticModeSupport[i] = 0xff; /* FIXME */
