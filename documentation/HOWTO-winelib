@@ -19,15 +19,9 @@ Table of Contents
 
    I. Introduction: Wine vs. WineLib
 
-  II. Legal Issues
-
- III. How Much Work?
-
   IV. File Format Conversion
 
    V. Compiling A Simple Win32 Program 
-
-  VI. Compiling A Win32 Program With Resources
 
  VII. DLLs
     A. Windows executable and Windows DLL.
@@ -38,18 +32,6 @@ Table of Contents
 VIII. How to use MFC
     A. Using a native MFC DLL
     B. Compiling MFC
-
-VIII. Trademarks
-Windows 3.x, Windows 95, Windows 98, Windows NT are trademarks of
-Microsoft Corporation. 
-
-Unix is a trademark of ???? FIXME: who has the trademark this week?
-
-CrypKey is a trademark of Kenonic Controls Ltd.
-
-FIXME: Codewright copyright ???
-
-All other trademarks are the property of their respective owners.
 
 =====================================================================
 
@@ -160,96 +142,7 @@ are used in several places in Wine and WineLib to provide glue between
 windows code and code for non-windows compilers. WineLib provides a
 tool called winebuild in the tools/winebuild directory that converts a
 spec file into a C file that can be compiled and linked with the
-windows source files. If you examine hello2.spec, you will see the
-following:
-
-name	hello2
-mode	guiexe
-type	win32
-
-import	user32.dll
-import	kernel32.dll
-import	ntdll.dll
-
-Information on the complete format of the spec file can be found in
-<wine>/tools/winebuild/README. Name is the name of the
-application. Mode is the type of "glue" that winebuild needs to
-create. Possible modes are 'dll' for a library, 'cuiexe' for a console
-application, and 'guiexe' for a regular graphical application. Type is
-the type of API, either win32 or win16. Win16 is supported only in
-Wine, not WineLib, so you should use win32. Import is a dll that must
-be loaded for the program to execute.
-
-During compilation of the hello2 executable, the following command is
-executed. 
-
-LD_LIBRARY_PATH="..:$LD_LIBRARY_PATH" \
-    ../tools/winebuild/winebuild -fPIC -L ../dlls -sym hello2.o \
-    -o hello2.spec.c -spec hello2.spec
-
-The program winebuild will generate the output file hello2.spec.c (option
--o hello2.spec.c) from the spec file hello2.spec (option -spec
-hello2.spec). The option -fPIC specifies that winebuild should generate
-position independent code and is only necessary for building shared
-library files (.so files). It is not needed when building the main
-executable spec file, but since there is no assembly code generated
-for the main executable, it doesn't make any difference anyway. [5]
-
-The winebuild program is used in several places in Wine as well as
-WineLib; however, only the -spec option will be used in WineLib. The
-output file hello2.spec.c contains the glue code to initialize WineLib
-and call WinMain().
-
-In order to run hello2, we will compile the code into a shared library
-(hello2.so) and create a symbolic link (hello2) with the wine
-executable with the following steps.
-
-gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -fPIC -DSTRICT \
-    -D_REENTRANT -I/usr/X11R6/include -o hello2.o hello2.c
-
-to compile the windows program itself and 
-
-gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -fPIC -DSTRICT \
-    -D_REENTRANT -I/usr/X11R6/include -o hello2.spec.o hello2.spec.c
-
-to compile the spec file and the glue code. Finally,
-
-gcc -shared  -Wl,-rpath,/usr/local/lib -Wl,-Bsymbolic -o hello2.so \
-    hello2.o hello2.spec.o -L.. -lwine -lncurses -lm  -lutil -ldl
-
-links the compiled files into a shared library.
-
-FIXME: -D_REENTRANT why?
-FIXME: explain compiler options
-FIXME: explain linker options
-
-All of the steps are automated with the makefile, so "make hello2.so"
-will execute all of the steps for you.  A final step is "make hello2",
-which creates a symbolic link from hello2 to the wine executable. Now,
-when "./hello2" is run, the wine executable sees it was called by the
-name "hello2" and loads the shared library "hello2.so" and executes
-the program.
-
-THE INFO BELOW IS OUT OF DATE (28-Dec-2000)
-
-Thus, you now have the basics of compiling a simple windows
-program. There are two more things to learn for compiling more complex
-windows programs: windows resources and DLL dependencies. Window
-resources are described in the next section. DLL dependencies are
-handled by linker magic with windows compilers. Thus, in WineLib, you
-will need to provide information about which DLLs your program
-depends. This information is given in the spec file. For example, if
-our hello2 program had a .wav file that it played, it would need the
-multi-media DLL winmm. Our spec file would then be
-
-name	hello2
-mode	guiexe
-type	win32
-init	WinMain
-import  winmm
-
-If you need to list multiple DLLs, then the import specification can
-appear multiple times, one line per imported DLL.
+windows source files. ...
 
 VII. DLLs
 
@@ -461,75 +354,6 @@ VIII. How to use MFC
 
 FIXME: to be continued.
 
-=====================================================================
-References
-
-Until this HOWTO is complete, I will document who gives me what
-information. 
-
-Reference [1] 
-From: Patrik Stridvall <ps@leissner.se>
-To: "'wilbur.dale@lumin.nl'" <wilbur.dale@lumin.nl>,
-Date:   Mon, 5 Jun 2000 14:25:22 +0200 
-
-First of all WineLib suppport for Win16 has been discontinued
-for quite some time, because:
-
-1. It is difficult for us to support and it is impossible
-   to do so perfectly without special compiler support,
-   because of memory layout issues. For example Win16 int
-   is 16-bit and data is aligned 16-bit.
-2. It is in almost all cases easier to port a
-   Win16 application to Win32.
-
-A minor detail, I personally would prefer that Wine and WineLib
-was always used in the uppercase W and uppercase L variant,
-instead of, as in your document, sometime one variant, sometimes
-another.
-
-Reference [2] 
-
-The exact options for controlling error messages mentioned in the
-reference are apparently incorrect, but may have been correct for some
-earlier version of Wine.
-
-From: michael cardenas <mbc@deneba.com>
-To: wilbur.dale@lumin.nl
-Date:   Mon, 5 Jun 2000 13:19:34 -0400
-
-a few things you should mention...
-
-- you can compile resources as a dll under windows and then load the dll
-with wine. That's what we do for canvas. This is probably not ideal, but
-most of my problems porting were in the code. We very seldomly have to
-change the resources for the porting process. But wrc does work for most
-cases...
-
-- the error messages can be turned off or turned up with options to
-configure like --enable-trace-msgs=wireoff or --enable-trace-msgs=wireon .
-Take a look at configure.
-
-- you probably want to compile your WineLib with --disable-debugger, at
-least for the release version of your app.
-
-Reference [3] 
-http://fgouget.free.fr/wine/winelib-en.shtml
-
-Reference [4]
-Date: Wed, 21 Jun 2000 10:34:10 +0200
-From: Rob Carriere <rob.carriere@lumin.nl>
-To: Wilbur N Dale <wilbur.dale@lumin.nl>
-Subject: WineLib-HOWTO comments
-
-Hello Wilbur,
-
-Some picking of nits.  It reads right well.
-
-Some of Windows xyz are registered trade marks, other are vanilla:
-Microsoft: Registered
-Windows NT: Registered
-Windows (95,98): plain
-
 A Windows compiler does NOT generate a fake main.  Instead, the
 executable file format provides for 2 (NE) or 3 (PE) entry points.
 One of these is your program, the other(s) are normally filled with
@@ -545,86 +369,6 @@ though, because some of the fun things that can happen with multiple
 run time libs and DLLs occur at this level.
 
 Line 86: I only need to know how compile MFC if I use it... :-)
-
-
-Best regards,
- Rob                          mailto:rob.carriere@lumin.nl
-
-Reference [5]
-To: wilbur.dale@lumin.nl
-Subject: Re: tool/build questions
-From: Alexandre Julliard <julliard@winehq.com>
-Date:   13 Jun 2000 20:06:23 -0700
-
-"Wilbur N. Dale" <wilbur.dale@lumin.nl> writes:
-
-> 2. tools/build for WineLib users -- is there ever a need to not specify -pic?
-
--pic is only necessary for building .so files, so it's not needed when
-building the main executable spec file (but since there is no assembly
-code generated for the main exe it doesn't make any difference anyway).
-
--- 
-Alexandre Julliard
-julliard@winehq.com
-
-Reference [6]
-Wine Weekly News #51 (2000 Week 28)
-
-Events, progress, and happenings in the Wine community for 
-July 10, 2000. 
-
-Uwe Bonnes and Ove Kaven also reminded of some tools to generate under
-   Linux some Windows executables:
-     * Cygwin/Mingw: as native Linux apps
-     * LCC-Win32: run with the help of Wine
-     * Borland C++ 5.5: command line version available for free (after
-       registering to Borland users' database)
-       
-=====================================================================
-
-The information included here is from various Wine-devel posting and
-private e-mails. I am including them so that any one starting on MFC
-will have some documentation. Glean what you can and good luck.
-
-Before I write more detailed info on compiling MFC I have three
-questions. The info I have mentions three problems:
-
-    1. Wine header files---what is the status of this? Do changes need
-    to be made in the headers and if so, do I submit the changes back
-    into Wine cvs? Do the changes need #ifdef for C vs. C++
-    compilation? 
-
-    Francois Gouget <fgouget@psn.net> has been doing a lot of work in
-    this area. It should be a lot easier to compile using C++ now and to
-    compile MFC.
-
-    2. DOS format files <CR/LF> and no case distinction in
-    filenames. Do the extensions Corel made to gcc 2.95 handle this?
-    If so, how?
-
-    3. Microsoft extensions to the C++ syntax. Do the extensions Corel
-    made to gcc 2.95 handle this? If so, how?
-
-If you have info that needs to be added, send me email at
-<wilbur.dale@lumin.nl> and I will add it.
-
-=====================================================================
-
-THANKS
-
-Most of the information in this file came from postings on
-<Wine-devel@Winehq.com> and from private e-mails. The following people
-contributed information for this document and I thank them for their
-time and effort in answering my questions. I also want to thank them
-for encouraging me to attack the MFC problem. 
-
-CONTRIBUTERS:
-
-    Damyan Ognyanoff <Damyan@rocketmail.com>
-    Gavriel State <gav@magmacom.com>
-    Ian Schmidt <ischmidt@cfl.rr.com>
-    Jeremy White <jwhite@codeweavers.com>
 
 
 From: Damyan Ognyanoff <Damyan@rocketmail.com>
