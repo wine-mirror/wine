@@ -329,6 +329,13 @@ int is_child_window( user_handle_t parent, user_handle_t child )
     return 0;
 }
 
+/* return the thread owning a window */
+struct thread *get_window_thread( user_handle_t handle )
+{
+    struct window *win = get_user_object( handle, USER_WINDOW );
+    if (!win || !win->thread) return NULL;
+    return (struct thread *)grab_object( win->thread );
+}
 
 /* find a child of the specified window that needs repainting */
 static struct window *find_child_to_repaint( struct window *parent, struct thread *thread )

@@ -907,9 +907,11 @@ struct accept_socket_reply
 struct set_socket_event_request
 {
     struct request_header __header;
-    handle_t     handle;
-    unsigned int mask;
-    handle_t     event;
+    handle_t      handle;
+    unsigned int  mask;
+    handle_t      event;
+    user_handle_t window;
+    unsigned int  msg;
 };
 struct set_socket_event_reply
 {
@@ -923,7 +925,6 @@ struct get_socket_event_request
     struct request_header __header;
     handle_t     handle;
     int          service;
-    handle_t     s_event;
     handle_t     c_event;
 };
 struct get_socket_event_reply
@@ -3127,6 +3128,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 74
+#define SERVER_PROTOCOL_VERSION 75
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

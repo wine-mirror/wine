@@ -104,9 +104,7 @@
 #include "wsipx.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
-#include "services.h"
 #include "wine/server.h"
-#include "file.h"
 #include "wine/debug.h"
 
 
@@ -140,13 +138,9 @@ typedef struct          /* WSAAsyncSelect() control struct */
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
 
-#define WS_ACCEPT_QUEUE 6
-
 #define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs 
                                                 that lists the network devices.
                                                 Do we need an #ifdef LINUX for this? */
-
-static volatile HANDLE accept_old[WS_ACCEPT_QUEUE], accept_new[WS_ACCEPT_QUEUE];
 
 static void *he_buffer;          /* typecast for Win16/32 ws_hostent */
 static SEGPTR he_buffer_seg;
@@ -224,23 +218,6 @@ static int _px_tcp_ops[] = {
  */
 static int opentype = 0;
 
-/* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which we post
- * messages if there are multiple events.  Used in WINSOCK_DoAsyncEvent.  The
- * problem is if there is both a FD_CONNECT event and, say, an FD_READ event
- * available on the same socket, we want to notify the app of the connect event
- * first.  Otherwise it may discard the read event because it thinks it hasn't
- * connected yet.
- */
-static const int event_bitorder[FD_MAX_EVENTS] = {
-    FD_CONNECT_BIT,
-    FD_ACCEPT_BIT,
-    FD_OOB_BIT,
-    FD_WRITE_BIT,
-    FD_READ_BIT,
-    FD_CLOSE_BIT,
-    6, 7, 8, 9  /* leftovers */
-};
-
 /* set last error code from NT status without mapping WSA errors */
 inline static unsigned int set_error( unsigned int err )
 {
@@ -255,12 +232,12 @@ inline static unsigned int set_error( unsigned int err )
 
 static char* check_buffer(int size);
 
-static int _get_sock_fd(SOCKET s)
+inline static int _get_sock_fd(SOCKET s)
 {
-    int fd = FILE_GetUnixHandle( s, GENERIC_READ );
-    if (fd == -1)
-        FIXME("handle %d is not a socket (GLE %ld)\n",s,GetLastError());
-    return fd;    
+    int fd;
+
+    if (set_error( wine_server_handle_to_fd( s, GENERIC_READ, &fd, NULL, NULL ) )) return -1;
+    return fd;
 }
 
 static void _enable_event(SOCKET s, unsigned int event,
@@ -284,7 +261,6 @@ static int _is_blocking(SOCKET s)
     {
         req->handle  = s;
         req->service = FALSE;
-        req->s_event = 0;
         req->c_event = 0;
         wine_server_call( req );
         ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
@@ -300,7 +276,6 @@ static unsigned int _get_sock_mask(SOCKET s)
     {
         req->handle  = s;
         req->service = FALSE;
-        req->s_event = 0;
         req->c_event = 0;
         wine_server_call( req );
         ret = reply->mask;
@@ -324,7 +299,6 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
     {
         req->handle  = s;
         req->service = FALSE;
-        req->s_event = 0;
         req->c_event = 0;
         wine_server_set_reply( req, events, sizeof(events) );
         wine_server_call( req );
@@ -790,20 +764,6 @@ static struct ws_protoent* check_buffer_pe(int size)
 #define SUPPORTED_PF(pf) ((pf)==WS_AF_INET)
 #endif
 
-static void ws2_async_accept(SOCKET s, SOCKET as)
-{
-    int q;
-    /* queue socket for WSAAsyncSelect */
-    for (q=0; q<WS_ACCEPT_QUEUE; q++)
-	if (InterlockedCompareExchange((LONG *)&accept_old[q], s, 0) == 0)
-	    break;
-    if (q<WS_ACCEPT_QUEUE)
-	accept_new[q] = as;
-    else
-	ERR("accept queue too small\n");
-    /* now signal our AsyncSelect handler */
-    _enable_event(s, FD_WINE_SERVEVENT, 0, 0);
-}
 
 /**********************************************************************/
 
@@ -965,10 +925,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         SERVER_END_REQ;
 	if (as)
 	{
-	    unsigned omask = _get_sock_mask( s );
 	    WS_getpeername(as, addr, addrlen32);
-	    if (omask & FD_WINE_SERVEVENT)
-		ws2_async_accept(s, as);
 	    return as;
 	}
     }
@@ -2727,7 +2684,6 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
     {
         req->handle  = s;
         req->service = TRUE;
-        req->s_event = 0;
         req->c_event = hEvent;
         wine_server_set_reply( req, lpEvent->iErrorCode, sizeof(lpEvent->iErrorCode) );
         if (!(ret = wine_server_call(req))) lpEvent->lNetworkEvents = reply->pmask & reply->mask;
@@ -2752,6 +2708,8 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
         req->handle = s;
         req->mask   = lEvent;
         req->event  = hEvent;
+        req->window = 0;
+        req->msg    = 0;
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2761,117 +2719,27 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 }
 
 /***********************************************************************
- *      WINSOCK_DoAsyncSelect
- */
-VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
-{
-    ws_select_info *info = (ws_select_info*)ptr;
-    unsigned int i, j, pmask, orphan = FALSE;
-    int errors[FD_MAX_EVENTS];
-
-    TRACE("socket %08x, event %08x\n", info->sock, info->event);
-    SetLastError(0);
-    SERVER_START_REQ( get_socket_event )
-    {
-        req->handle  = info->sock;
-        req->service = TRUE;
-        req->s_event = info->event; /* <== avoid race conditions */
-        req->c_event = info->event;
-        wine_server_set_reply( req, errors, sizeof(errors) );
-        set_error( wine_server_call(req) );
-        pmask = reply->pmask;
-    }
-    SERVER_END_REQ;
-    if ( (GetLastError() == WSAENOTSOCK) || (GetLastError() == WSAEINVAL) )
-    {
-	/* orphaned event (socket closed or something) */
-	pmask = FD_WINE_SERVEVENT;
-	orphan = TRUE;
-    }
-
-    /* check for accepted sockets that needs to inherit WSAAsyncSelect */
-    if (pmask & FD_WINE_SERVEVENT) {
-	int q;
-	for (q=0; q<WS_ACCEPT_QUEUE; q++)
-	    if (accept_old[q] == info->sock) {
-		/* there's only one service thread per process, no lock necessary */
-		HANDLE as = accept_new[q];
-		if (as) {
-		    accept_new[q] = 0;
-		    accept_old[q] = 0;
-		    WSAAsyncSelect(as, info->hWnd, info->uMsg, info->lEvent);
-		}
-	    }
-	pmask &= ~FD_WINE_SERVEVENT;
-    }
-    /* dispatch network events, but use the order in the event_bitorder
-     * array.
-     */
-    for (i=0; i<FD_MAX_EVENTS; i++) {
-        j = event_bitorder[i];
-        if (pmask & (1<<j)) {
-            TRACE("post: event bit %d, error %d\n", j, errors[j]);
-            PostMessageA(info->hWnd, info->uMsg, info->sock,
-                         WSAMAKESELECTREPLY(1<<j, errors[j]));
-        }
-    }
-    /* cleanup */
-    if (orphan)
-    {
-	TRACE("orphaned event, self-destructing\n");
-	/* SERVICE_Delete closes the event object */
-	SERVICE_Delete( info->service );
-	WS_FREE(info);
-    }
-}
-
-/***********************************************************************
  *      WSAAsyncSelect			(WS2_32.101)
  */
 INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
-    int fd = _get_sock_fd(s);
+    int ret;
 
-    TRACE("%04x, hWnd %04x, uMsg %08x, event %08x\n",
-          (SOCKET16)s, (HWND16)hWnd, uMsg, (unsigned)lEvent );
-    if (fd != -1)
+    TRACE("%x, hWnd %x, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
+
+    SERVER_START_REQ( set_socket_event )
     {
-        close(fd);
-	if( lEvent )
-	{
-	    ws_select_info *info = (ws_select_info*)WS_ALLOC(sizeof(ws_select_info));
-	    if( info )
-	    {
-		HANDLE hObj = CreateEventA( NULL, TRUE, FALSE, NULL );
-		INT err;
-		
-		info->sock   = s;
-		info->event  = hObj;
-		info->hWnd   = hWnd;
-		info->uMsg   = uMsg;
-		info->lEvent = lEvent;
-		info->service = SERVICE_AddObject( hObj, WINSOCK_DoAsyncEvent, (ULONG_PTR)info );
-
-		err = WSAEventSelect( s, hObj, lEvent | FD_WINE_SERVEVENT );
-		if (err) {
-		    /* SERVICE_Delete closes the event object */
-		    SERVICE_Delete( info->service );
-		    WS_FREE(info);
-		    return err;
-		}
-
-		return 0; /* success */
-	    }
-	    else SetLastError(WSAENOBUFS);
-	} 
-	else
-	{
-	    WSAEventSelect(s, 0, 0);
-	    return 0;
-	}
-    } 
-    else SetLastError(WSAEINVAL);
-    return SOCKET_ERROR; 
+        req->handle = s;
+        req->mask   = lEvent;
+        req->event  = 0;
+        req->window = hWnd;
+        req->msg    = uMsg;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (!ret) return 0;
+    SetLastError(WSAEINVAL);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************

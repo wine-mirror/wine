@@ -733,7 +733,6 @@ typedef struct WS(WSAData)
 #define FD_WINE_NONBLOCKING        0x20000000
 #define FD_WINE_CONNECTED          0x40000000
 #define FD_WINE_RAW                0x80000000
-#define FD_WINE_SERVEVENT          0x01000000
 #define FD_WINE_INTERNAL           0xFFFF0000
 #endif
 

@@ -45,11 +45,14 @@ extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
+extern void post_message( user_handle_t win, unsigned int message,
+                          unsigned int wparam, unsigned int lparam );
 
 /* window functions */
 
 extern void destroy_thread_windows( struct thread *thread );
 extern int is_child_window( user_handle_t parent, user_handle_t child );
+extern struct thread *get_window_thread( user_handle_t handle );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 
 #endif  /* __WINE_SERVER_USER_H */

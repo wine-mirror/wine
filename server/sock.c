@@ -50,6 +50,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "user.h"
 #include "async.h"
 
 /* To avoid conflicts with the Unix socket headers. Plus we only need a few
@@ -67,6 +68,9 @@ struct sock
     unsigned int        pmask;       /* pending events */
     unsigned int        flags;       /* socket flags */
     struct event       *event;       /* event object */
+    user_handle_t       window;      /* window to send the message to */
+    unsigned int        message;     /* message to send */
+    unsigned int        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
     struct async_queue  read_q;      /* Queue for asynchronous reads */
     struct async_queue  write_q;     /* Queue for asynchronous writes */
@@ -99,10 +103,29 @@ static const struct object_ops sock_ops =
     sock_destroy                  /* destroy */
 };
 
+
+/* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which
+ * we post messages if there are multiple events.  Used to send
+ * messages.  The problem is if there is both a FD_CONNECT event and,
+ * say, an FD_READ event available on the same socket, we want to
+ * notify the app of the connect event first.  Otherwise it may
+ * discard the read event because it thinks it hasn't connected yet.
+ */
+static const int event_bitorder[FD_MAX_EVENTS] =
+{
+    FD_CONNECT_BIT,
+    FD_ACCEPT_BIT,
+    FD_OOB_BIT,
+    FD_WRITE_BIT,
+    FD_READ_BIT,
+    FD_CLOSE_BIT,
+    6, 7, 8, 9  /* leftovers */
+};
+
+
 static void sock_reselect( struct sock *sock )
 {
     int ev = sock_get_poll_events( &sock->obj );
-    struct pollfd pfd;
 
     if (debug_level)
         fprintf(stderr,"sock_reselect(%d): new mask %x\n", sock->obj.fd, ev);
@@ -115,14 +138,36 @@ static void sock_reselect( struct sock *sock )
     }
     /* update condition mask */
     set_select_events( &sock->obj, ev );
+}
 
-    /* check whether condition is satisfied already */
-    pfd.fd = sock->obj.fd;
-    pfd.events = ev;
-    pfd.revents = 0;
-    poll( &pfd, 1, 0 );
-    if (pfd.revents)
-        sock_poll_event( &sock->obj, pfd.revents);
+/* wake anybody waiting on the socket event or send the associated message */
+static void sock_wake_up( struct sock *sock )
+{
+    unsigned int events = sock->pmask & sock->mask;
+    int i;
+
+    if (!events) return;
+
+    if (sock->event)
+    {
+        if (debug_level) fprintf(stderr, "signalling events %x ptr %p\n", events, sock->event );
+        set_event( sock->event );
+    }
+    if (sock->window)
+    {
+        if (debug_level) fprintf(stderr, "signalling events %x win %x\n", events, sock->window );
+        for (i = 0; i < FD_MAX_EVENTS; i++)
+        {
+            int event = event_bitorder[i];
+            if (sock->pmask & (1 << event))
+            {
+                unsigned int lparam = (1 << event) | (sock->errors[event] << 16);
+                post_message( sock->window, sock->message, sock->wparam, lparam );
+            }
+        }
+        sock->pmask = 0;
+        sock_reselect( sock );
+    }
 }
 
 inline static int sock_error(int s)
@@ -137,7 +182,7 @@ inline static int sock_error(int s)
 static void sock_poll_event( struct object *obj, int event )
 {
     struct sock *sock = (struct sock *)obj;
-    unsigned int emask;
+
     assert( sock->obj.ops == &sock_ops );
     if (debug_level)
         fprintf(stderr, "socket %d select event: %x\n", sock->obj.fd, event);
@@ -233,14 +278,9 @@ static void sock_poll_event( struct object *obj, int event )
         set_select_events( &sock->obj, -1 );
     else
         sock_reselect( sock );
+
     /* wake up anyone waiting for whatever just happened */
-    emask = sock->pmask & sock->mask;
-    if (debug_level && emask)
-        fprintf(stderr, "socket %d pending events: %x\n", sock->obj.fd, emask);
-    if (emask && sock->event) {
-        if (debug_level) fprintf(stderr, "signalling event ptr %p\n", sock->event);
-        set_event(sock->event);
-    }
+    if (sock->pmask & sock->mask) sock_wake_up( sock );
 
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
@@ -326,17 +366,7 @@ static void sock_destroy( struct object *obj )
         destroy_async_queue ( &sock->read_q );
         destroy_async_queue ( &sock->write_q );
     }
-
-    if (sock->event)
-    {
-        /* if the service thread was waiting for the event object,
-         * we should now signal it, to let the service thread
-         * object detect that it is now orphaned... */
-        if (sock->mask & FD_WINE_SERVEVENT)
-            set_event( sock->event );
-        /* we're through with it */
-        release_object( sock->event );
-    }
+    if (sock->event) release_object( sock->event );
 }
 
 /* create a new and unconnected socket */
@@ -356,11 +386,14 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     if (!(sock = alloc_object( &sock_ops, -1 ))) return NULL;
     sock->obj.fd = sockfd;
     sock->state = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
-    sock->mask  = 0;
-    sock->hmask = 0;
-    sock->pmask = 0;
-    sock->flags = flags;
-    sock->event = NULL;
+    sock->mask    = 0;
+    sock->hmask   = 0;
+    sock->pmask   = 0;
+    sock->flags   = flags;
+    sock->event   = NULL;
+    sock->window  = 0;
+    sock->message = 0;
+    sock->wparam  = 0;
     sock_reselect( sock );
     clear_error();
     if (sock->flags & WSA_FLAG_OVERLAPPED)
@@ -372,7 +405,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
 }
 
 /* accept a socket (creates a new fd) */
-static struct object *accept_socket( handle_t handle )
+static struct sock *accept_socket( handle_t handle )
 {
     struct sock *acceptsock;
     struct sock *sock;
@@ -407,12 +440,14 @@ static struct object *accept_socket( handle_t handle )
     acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
     if (sock->state & FD_WINE_NONBLOCKING)
         acceptsock->state |= FD_WINE_NONBLOCKING;
-    acceptsock->mask   = sock->mask;
-    acceptsock->hmask  = 0;
-    acceptsock->pmask  = 0;
-    acceptsock->event  = NULL;
-    if (sock->event && !(sock->mask & FD_WINE_SERVEVENT))
-        acceptsock->event = (struct event *)grab_object( sock->event );
+    acceptsock->mask    = sock->mask;
+    acceptsock->hmask   = 0;
+    acceptsock->pmask   = 0;
+    acceptsock->event   = NULL;
+    acceptsock->window  = sock->window;
+    acceptsock->message = sock->message;
+    acceptsock->wparam  = 0;
+    if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
     acceptsock->flags = sock->flags;
     if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
     {
@@ -420,13 +455,12 @@ static struct object *accept_socket( handle_t handle )
 	init_async_queue ( &acceptsock->write_q );
     }
 
-    sock_reselect( acceptsock );
     clear_error();
     sock->pmask &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
     sock_reselect( sock );
     release_object( sock );
-    return &acceptsock->obj;
+    return acceptsock;
 }
 
 /* set the last error depending on errno */
@@ -515,13 +549,15 @@ DECL_HANDLER(create_socket)
 /* accept a socket */
 DECL_HANDLER(accept_socket)
 {
-    struct object *obj;
+    struct sock *sock;
 
     reply->handle = 0;
-    if ((obj = accept_socket( req->lhandle )) != NULL)
+    if ((sock = accept_socket( req->lhandle )) != NULL)
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
-        release_object( obj );
+        reply->handle = alloc_handle( current->process, &sock->obj, req->access, req->inherit );
+        sock->wparam = reply->handle;  /* wparam for message is the socket handle */
+        sock_reselect( sock );
+        release_object( &sock->obj );
     }
 }
 
@@ -529,16 +565,19 @@ DECL_HANDLER(accept_socket)
 DECL_HANDLER(set_socket_event)
 {
     struct sock *sock;
-    struct event *oevent;
-    unsigned int omask;
+    struct event *old_event;
 
-    sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
-    if (!sock)
-	return;
-    oevent = sock->event;
-    omask  = sock->mask;
+    if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
+                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &sock_ops)))
+        return;
+    old_event = sock->event;
     sock->mask    = req->mask;
-    sock->event   = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE );
+    sock->event   = NULL;
+    sock->window  = req->window;
+    sock->message = req->msg;
+    sock->wparam  = req->handle;  /* wparam is the socket handle */
+    if (req->event) sock->event = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE );
+
     if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
     sock_reselect( sock );
     if (sock->mask)
@@ -548,19 +587,9 @@ DECL_HANDLER(set_socket_event)
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
        before a WSAEventSelect() was done on it. 
        (when dealing with Asynchronous socket)  */
-    if (sock->pmask & sock->mask)
-        set_event(sock->event);
-    
-    if (oevent)
-    {
-        if ((oevent != sock->event) && (omask & FD_WINE_SERVEVENT))
-            /* if the service thread was waiting for the old event object,
-             * we should now signal it, to let the service thread
-             * object detect that it is now orphaned... */
-            set_event( oevent );
-        /* we're through with it */
-        release_object( oevent );
-    }
+    if (sock->pmask & sock->mask) sock_wake_up( sock );
+
+    if (old_event) release_object( old_event ); /* we're through with it */
     release_object( &sock->obj );
 }
 
@@ -585,25 +614,18 @@ DECL_HANDLER(get_socket_event)
 
     if (req->service)
     {
-        handle_t s_event = req->s_event;
-        if (s_event)
+        if (req->c_event)
         {
-            struct event *sevent = get_event_obj(current->process, req->s_event, 0);
-            if (sevent == sock->event) s_event = 0;
-            release_object( sevent );
-        }
-        if (!s_event)
-        {
-            if (req->c_event)
+            struct event *cevent = get_event_obj( current->process, req->c_event,
+                                                  EVENT_MODIFY_STATE );
+            if (cevent)
             {
-                struct event *cevent = get_event_obj(current->process, req->c_event, EVENT_MODIFY_STATE);
                 reset_event( cevent );
                 release_object( cevent );
             }
-            sock->pmask = 0;
-            sock_reselect( sock );
         }
-        else set_error(WSAEINVAL);
+        sock->pmask = 0;
+        sock_reselect( sock );
     }
     release_object( &sock->obj );
 }
@@ -613,24 +635,14 @@ DECL_HANDLER(enable_socket_event)
 {
     struct sock *sock;
 
-    sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
-    if (!sock)
-    	return;
+    if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
+                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &sock_ops)))
+        return;
+
     sock->pmask &= ~req->mask; /* is this safe? */
     sock->hmask &= ~req->mask;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
     sock_reselect( sock );
-
-    /* service trigger */
-    if (req->mask & FD_WINE_SERVEVENT)
-    {
-        sock->pmask |= FD_WINE_SERVEVENT;
-        if (sock->event) {
-            if (debug_level) fprintf(stderr, "signalling service event ptr %p\n", sock->event);
-            set_event(sock->event);
-        }
-    }
-
     release_object( &sock->obj );
 }

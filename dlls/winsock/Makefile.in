@@ -5,7 +5,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ws2_32.dll
 ALTNAMES  = winsock.dll
-IMPORTS   = user32.dll kernel32.dll ntdll.dll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	async.c \

@@ -684,6 +684,37 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
     }
 }
 
+/* post a message to a window; used by socket handling */
+void post_message( user_handle_t win, unsigned int message,
+                   unsigned int wparam, unsigned int lparam )
+{
+    struct message *msg;
+    struct thread *thread = get_window_thread( win );
+
+    if (!thread) return;
+
+    if (thread->queue && (msg = mem_alloc( sizeof(*msg) )))
+    {
+        msg->type      = MSG_POSTED;
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = message;
+        msg->wparam    = wparam;
+        msg->lparam    = lparam;
+        msg->time      = get_tick_count();
+        msg->x         = 0;
+        msg->y         = 0;
+        msg->info      = 0;
+        msg->result    = NULL;
+        msg->data      = NULL;
+        msg->data_size = 0;
+
+        append_message( &thread->queue->msg_list[POST_MESSAGE], msg );
+        set_queue_bits( thread->queue, QS_POSTMESSAGE );
+    }
+    release_object( thread );
+}
+
+
 /* get the message queue of the current thread */
 DECL_HANDLER(get_msg_queue)
 {

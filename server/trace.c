@@ -856,14 +856,15 @@ static void dump_set_socket_event_request( const struct set_socket_event_request
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " mask=%08x,", req->mask );
-    fprintf( stderr, " event=%d", req->event );
+    fprintf( stderr, " event=%d,", req->event );
+    fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " msg=%08x", req->msg );
 }
 
 static void dump_get_socket_event_request( const struct get_socket_event_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " service=%d,", req->service );
-    fprintf( stderr, " s_event=%d,", req->s_event );
     fprintf( stderr, " c_event=%d", req->c_event );
 }
 

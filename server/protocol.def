@@ -677,9 +677,11 @@ enum fd_type
 
 /* Set socket event parameters */
 @REQ(set_socket_event)
-    handle_t     handle;        /* handle to the socket */
-    unsigned int mask;          /* event mask */
-    handle_t     event;         /* event object */
+    handle_t      handle;        /* handle to the socket */
+    unsigned int  mask;          /* event mask */
+    handle_t      event;         /* event object */
+    user_handle_t window;        /* window to send the message to */
+    unsigned int  msg;           /* message to send */
 @END
 
 
@@ -687,7 +689,6 @@ enum fd_type
 @REQ(get_socket_event)
     handle_t     handle;        /* handle to the socket */
     int          service;       /* clear pending? */
-    handle_t     s_event;       /* "expected" event object */
     handle_t     c_event;       /* event to clear */
 @REPLY
     unsigned int mask;          /* event mask */
