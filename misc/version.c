@@ -88,10 +88,22 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
     "nt40"
 };
 
+/* if one of the following dlls is importing ntdll the windows
+version autodetection switches wine to unicode (nt 3.51 or 4.0) */
+static char * special_dlls[] =
+{
+	"COMDLG32",
+	"COMCTL32",
+	"SHELL32",
+	"USER32",
+	"OLE32",
+	"RPCRT4",
+	NULL
+};
+
 /* the current version has not been autodetected but forced via cmdline */
 static BOOL versionForced = FALSE;
 static WINDOWS_VERSION defaultWinVersion = WIN31;
-
 
 /**********************************************************************
  *         VERSION_ParseWinVersion
@@ -132,107 +144,149 @@ void VERSION_ParseDosVersion( const char *arg )
         fprintf( stderr, "-dosver: Wrong version format. Use \"-dosver x.xx\"\n");
 }
 
-
-WINDOWS_VERSION VERSION_GetImageVersion(PDB *pdb)
-{
-    PIMAGE_NT_HEADERS peheader;
-
-	if (!pdb->exe_modref)
-	{
-		/* HACK: if we have loaded a PE image into this address space,
-		 * we are probably using thunks, so Win95 is our best bet
-		 */
-		if (pdb->modref_list)
-			return WIN95;
-		/* FIXME: hmm, do anything else ?
-		   TDB.version doesn't help here
-		   as it always holds version 3.10 */
-			return WIN31;
-	}
-	else
-	{
-		peheader = PE_HEADER(pdb->exe_modref->module);
-#define OPTHD peheader->OptionalHeader
-
-		TRACE("%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
-			  OPTHD.MajorLinkerVersion,
-			  OPTHD.MinorLinkerVersion,
-			  OPTHD.MajorOperatingSystemVersion,
-			  OPTHD.MinorOperatingSystemVersion,
-			  OPTHD.MajorImageVersion,
-			  OPTHD.MinorImageVersion,
-			  OPTHD.MajorSubsystemVersion,
-			  OPTHD.MinorSubsystemVersion);
-
-        switch (OPTHD.MajorSubsystemVersion)
-		{
-			case 4:
-				switch (OPTHD.MajorOperatingSystemVersion)
-				{
-					case 5:
-						return NT40; /* FIXME: this is NT 5, isn't it ? */
-					case 4:
-						if ((OPTHD.MajorImageVersion == 0) &&
-							(OPTHD.SectionAlignment == 4096))
-							return WIN95;
-						else
-							return NT40;
-					case 1:
-						return WIN95;
-					default:
-						return WIN95; /* FIXME ? */
-				}
-			case 3:
-				/* 3.1x versions */
-				if (OPTHD.MinorSubsystemVersion <= 11)
-				{
-					if (OPTHD.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-						return NT351; /* FIXME: NT 3.1 */
-					else
-						return WIN31;
-				}
-				else
-				{
-					/* NT 3.51 */
-					if (OPTHD.MinorSubsystemVersion == 50)
-						return NT351;
-					else
-					if (OPTHD.MinorSubsystemVersion == 51)
-						return NT351;
-				}
-			default:
-				if (OPTHD.MajorSubsystemVersion)
-				ERR("unknown subsystem version: %04x.%04x, please report.\n",
-					OPTHD.MajorSubsystemVersion,
-					OPTHD.MinorSubsystemVersion );
-				return defaultWinVersion;
-		}
-#undef OPTHD
-	}
-}
-
-
 /**********************************************************************
+ *	VERSION_GetSystemDLLVersion
  *
- * Check the version of COMDLG32, SHELL32, COMCTL32 and CTL3D32.
- * Not functional yet.
+ * This function tryes to figure out if a given (native) dll comes from
+ * win95/98 or winnt. Since all values in the OptionalHeader are not a 
+ * usable hint, we test if a dll imports the ntdll.
+ * This is at least working for all system-dlls like comctl32, comdlg32 and
+ * shell32.
+ * If you have a better idea to figure this out...
+ */
+DWORD VERSION_GetSystemDLLVersion (WINE_MODREF * wm)
+{
+	PE_MODREF * pem = &(wm->binfmt.pe);
+	
+	if (pem->pe_import)
+	{
+	  IMAGE_IMPORT_DESCRIPTOR * pe_imp;
+
+	  for ( pe_imp = pem->pe_import; pe_imp->Name; pe_imp++)
+	  {
+	    char * name = (char*)((unsigned int)wm->module+(unsigned int)(pe_imp->Name));
+	    TRACE("%s\n", name);
+	    
+	    if (!lstrncmpiA(name, "ntdll", 5))
+	    {
+	      if (3 == PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion)
+	        return NT351;
+	      else
+	        return NT40;
+	    }
+	  }
+	}
+	return WIN95;
+}
+/**********************************************************************
+ *	VERSION_GetLinkedDllVersion
+ *
+ * Some version data (not reliable!):
+ * linker/OS/image/subsys
+ *
+ * x.xx/1.00/0.00/3.10	Win32s		(any version ?)
+ * 2.39/1.00/0.00/3.10	Win32s		freecell.exe (any version)
+ * 2.50/1.00/4.00/4.00	Win32s 1.30	winhlp32.exe	
+ * 2.60/3.51/3.51/3.51	NT351SP5	system dlls 
+ * 2.60/3.51/3.51/4.00	NT351SP5	comctl32 dll
+ * 2.xx/1.00/0.00/4.00	Win95 		system files
+ * x.xx/4.00/0.00/4.00	Win95		most applications
+ * 3.10/4.00/0.00/4.00	Win98		notepad
+ * x.xx/5.00/5.00/4.00	Win98 		system dlls
+ * x.xx/4.00/4.00/4.00	NT 4 		most apps
+ * 5.12/5.00/5.00/4.00	NT4+IE5		comctl32.dll
+ * 5.12/5.00/5.00/4.00	Win98		calc
+ * x.xx/5.00/5.00/4.00	win95/win98/NT4	IE5 files
  */
 DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 {
 	WINE_MODREF *wm;
-    WORD VersionCounter[NB_WINDOWS_VERSIONS];
+	DWORD WinVersion = NB_WINDOWS_VERSIONS;
+	PIMAGE_OPTIONAL_HEADER ophd;
 
-    memset(VersionCounter, 0, sizeof(VersionCounter));
+	if (!pdb->exe_modref)
+	{
+	  /* winn311 progs only link to user32 */
+	  if (pdb->modref_list && pdb->modref_list->next)
+            return WIN95;
+	  return WIN31;
+	}
+	/* First check the native dlls provided. These have to be
+	from one windows version */
+	for ( wm = pdb->modref_list; wm; wm=wm->next )
+	{
+	  ophd = &(PE_HEADER(wm->module)->OptionalHeader);
 
-	VersionCounter[WIN95] = 1;
-	for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
-	    if (!(lstrncmpiA(wm->modname, "CTL3D32", 7)))
-			VersionCounter[WIN95]++;
+	  TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+	    wm->modname,
+	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
+	    ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
+	    ophd->MajorImageVersion, ophd->MinorImageVersion,
+	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
+
+	  /* test if it a external dll */
+	  if ( !(wm->flags & WINE_MODREF_INTERNAL) )
+	  {
+	    int i;
+	    for (i = 0; special_dlls[i]; i++)
+	    {
+	      /* test if it a special dll */
+	      if (!lstrncmpiA(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
+	      {
+	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm);
+	        if (WinVersion == NB_WINDOWS_VERSIONS) 
+	        {
+	          WinVersion = DllVersion;
+	        }
+	        else
+	        {
+	          if (WinVersion != DllVersion)
+	          {
+	            ERR("You mixed system dlls from different windows versions! Expect a chrash!\n");
+	            return WIN31; /* this may let the exe exiting */
+	          }
+	        }
+	        break;
+	      }
+	    }
+	  }
+	}
+	
+	if(WinVersion != NB_WINDOWS_VERSIONS) return WinVersion;
+	
+	/* we are using no external system dlls, look at the exe */
+	ophd = &(PE_HEADER(pdb->exe_modref->module)->OptionalHeader);
+	
+	TRACE("-%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+	    pdb->exe_modref->modname,
+	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
+	    ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
+	    ophd->MajorImageVersion, ophd->MinorImageVersion,
+	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
+
+	/* special nt 3.51 */
+	if (3 == ophd->MajorOperatingSystemVersion && 51 == ophd->MinorOperatingSystemVersion)
+	{
+	    return NT351;
 	}
 
-	return MAKELONG(WIN95, VersionCounter[WIN95]);
-}
+	/* the MajorSubsystemVersion is the only usable singn */
+	if (ophd->MajorSubsystemVersion < 4)
+	{
+	  if ( ophd->MajorOperatingSystemVersion == 1 
+	    && ophd->MinorOperatingSystemVersion == 0)
+	  {
+	    return WIN31; /* win32s */
+	  }
+	  
+	  if (ophd->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+	    return NT351; /* FIXME: NT 3.1, not tested */
+	  else
+	    return WIN95;
+	}	
 
+	return WIN95;
+}
 
 /**********************************************************************
  *         VERSION_GetVersion
@@ -246,42 +300,18 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
  * This can happen much easier than you might think, as this function
  * is called by EVERY GetVersion*() API !
  *
- * Some version data:
- * linker/OS/image/subsys	Name			Intended for
- *
- * 2.39/1.00/0.00/3.10		freecell.exe	Win32s (any version)
- * 2.55/1.00/0.00/4.00		acrord32.exe	Win32s, Win95 supported (?)
- * 
- * 2.50/1.00/4.00/4.00		winhlp32.exe	Win32s 1.30
- * 4.20/4.00/1.00/4.00		Asuslm.exe		Win95 (Aaargh !)
- * 5.12/4.00/1.07/4.00      clikfixi.exe    NT 4 (service pack files)
- * 3.10/4.00/4.00/4.00		PLUMBING.EXE	NT
- * ?.??/4.00/97.01/4.00		sse.exe			huh ?? (damn crackerz ;)
- * 5.12/5.00/5.00/4.00		comctl32.dll	NT4 / IE 5.0
- * 6.00/5.00/5.00/4.00						NT 4 driver update (strange numbers)
- * 
- * Common versions:
- * x.xx/1.00/0.00/3.10						Win32s (any version ?)
- * 2.xx/1.00/0.00/4.00						Win95 (Microsoft/system files) 
- * x.xx/4.00/0.00/4.00						Win95 (most applications !)
- * x.xx/4.00/4.00/4.00						NT 4 (most apps)
- * x.xx/5.00/5.00/4.00						NT 4 newer files / NT 5 ??
  */
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
-    PDB *pdb = PROCESS_Current();
-    DWORD DllVer;
+	PDB *pdb = PROCESS_Current();
+    
+	if (versionForced) /* user has overridden any sensible checks */
+	  return defaultWinVersion;
 
-    if (versionForced) /* user has overridden any sensible checks */
-        return defaultWinVersion;
-
-    if (pdb->winver == 0xffff) /* to be determined */
-        {
-		DllVer = 0/*VERSION_GetLinkedDllVersion(pdb)*/;
-		if (HIWORD(DllVer) > 1)
-			pdb->winver = LOWORD(DllVer);
-            else
-			pdb->winver = VERSION_GetImageVersion(pdb);
+	if (pdb->winver == 0xffff) /* to be determined */
+	{
+	  pdb->winver = VERSION_GetLinkedDllVersion(pdb);
+	  TRACE("Autodetected: %s\n", VERSION_GetVersionName());
         }
 
 	return pdb->winver;
@@ -340,8 +370,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
-                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFO16));
+        WARN("wrong OSVERSIONINFO size from app");
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
