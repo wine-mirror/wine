@@ -62,6 +62,8 @@ static struct ICOM_VTABLE(IPersistFile) pfvt;
 IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 {
 	IExtractIconWImpl* ei;
+	
+	TRACE("%p\n", pidl);
 
 	ei = (IExtractIconWImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconWImpl));
 	ei->ref=1;
@@ -285,8 +287,10 @@ static struct ICOM_VTABLE(IExtractIconW) eivt =
 IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 {
 	ICOM_THIS(IExtractIconWImpl, IExtractIconW_Constructor(pidl));
-
-	return (IExtractIconA *)This->lpvtblExtractIconA;
+	IExtractIconA *eia = (IExtractIconA *)&This->lpvtblExtractIconA;
+	
+	TRACE("(%p)->(%p)\n", This, eia);
+	return eia;
 }
 /**************************************************************************
  *  IExtractIconA_QueryInterface
