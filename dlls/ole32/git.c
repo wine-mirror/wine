@@ -26,6 +26,8 @@
 
 #include "config.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -98,6 +100,16 @@ static ICOM_VTABLE(IGlobalInterfaceTable) StdGlobalInterfaceTableImpl_Vtbl =
   StdGlobalInterfaceTable_GetInterfaceFromGlobal
 };
 
+static CRITICAL_SECTION git_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &git_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": global interface table") }
+};
+static CRITICAL_SECTION git_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
 /***
  * Let's go! Here is the constructor and destructor for the class.
  *
@@ -138,12 +150,18 @@ StdGITEntry* StdGlobalInterfaceTable_FindEntry(IGlobalInterfaceTable* iface, DWO
   StdGITEntry* e;
 
   TRACE("iface=%p, cookie=0x%x\n", iface, (UINT)cookie);
-  
+
+  EnterCriticalSection(&git_section);
   e = self->firstEntry;
   while (e != NULL) {
-    if (e->cookie == cookie) return e;
+    if (e->cookie == cookie) {
+      LeaveCriticalSection(&git_section);
+      return e;
+    }
     e = e->next;
   }
+  LeaveCriticalSection(&git_section);
+  
   TRACE("Entry not found\n");
   return NULL;
 }
@@ -175,14 +193,14 @@ HRESULT WINAPI StdGlobalInterfaceTable_QueryInterface(IGlobalInterfaceTable* ifa
 ULONG WINAPI StdGlobalInterfaceTable_AddRef(IGlobalInterfaceTable* iface) {
   StdGlobalInterfaceTableImpl* const self = (StdGlobalInterfaceTableImpl*) iface;
 
-  /* self->ref++; */
+  /* InterlockedIncrement(&self->ref); */
   return self->ref;
 }
 
 ULONG WINAPI StdGlobalInterfaceTable_Release(IGlobalInterfaceTable* iface) {
   StdGlobalInterfaceTableImpl* const self = (StdGlobalInterfaceTableImpl*) iface;
 
-  /* self->ref--; */
+  /* InterlockedDecrement(&self->ref); */
   if (self->ref == 0) {
     /* Hey ho, it's time to go, so long again 'till next weeks show! */
     StdGlobalInterfaceTable_Destroy(self);
@@ -212,6 +230,8 @@ HRESULT WINAPI StdGlobalInterfaceTable_RegisterInterfaceInGlobal(IGlobalInterfac
   if (hres) return hres;
   entry = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGITEntry));
   if (entry == NULL) return E_OUTOFMEMORY;
+
+  EnterCriticalSection(&git_section);
   
   entry->iid = *riid;
   entry->stream = stream;
@@ -227,7 +247,10 @@ HRESULT WINAPI StdGlobalInterfaceTable_RegisterInterfaceInGlobal(IGlobalInterfac
 
   /* and return the cookie */
   *pdwCookie = entry->cookie;
-  TRACE("Cookie is 0x%ld\n", entry->cookie);
+  
+  LeaveCriticalSection(&git_section);
+  
+  TRACE("Cookie is 0x%lx\n", entry->cookie);
   return S_OK;
 }
 
@@ -242,12 +265,18 @@ HRESULT WINAPI StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(IGlobalInterfac
     TRACE("Entry not found\n");
     return E_INVALIDARG; /* not found */
   }
-
+  
+  /* Free the stream */
+  IStream_Release(entry->stream);
+		    
   /* chop entry out of the list, and free the memory */
+  EnterCriticalSection(&git_section);
   if (entry->prev) entry->prev->next = entry->next;
   else self->firstEntry = entry->next;
   if (entry->next) entry->next->prev = entry->prev;
   else self->lastEntry = entry->prev;
+  LeaveCriticalSection(&git_section);
+
   HeapFree(GetProcessHeap(), 0, entry);
   return S_OK;
 }
@@ -255,11 +284,14 @@ HRESULT WINAPI StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(IGlobalInterfac
 HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTable* iface, DWORD dwCookie, REFIID riid, void **ppv) {
   StdGITEntry* entry;
   HRESULT hres;
-
-  TRACE("dwCookie=0x%lx, riid=%s\n", dwCookie, debugstr_guid(riid));
+  LARGE_INTEGER move;
+  LPUNKNOWN lpUnk;
+  
+  TRACE("dwCookie=0x%lx, riid=%s, ppv=%p\n", dwCookie, debugstr_guid(riid), ppv);
   
   entry = StdGlobalInterfaceTable_FindEntry(iface, dwCookie);
   if (entry == NULL) return E_INVALIDARG;
+
   if (!IsEqualIID(&entry->iid, riid)) {
     WARN("entry->iid (%s) != riid\n", debugstr_guid(&entry->iid));
     return E_INVALIDARG;
@@ -267,9 +299,21 @@ HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTa
   TRACE("entry=%p\n", entry);
   
   /* unmarshal the interface */
-  hres = CoGetInterfaceAndReleaseStream(entry->stream, riid, ppv);
-  if (hres) return hres;
+  hres = CoUnmarshalInterface(entry->stream, riid, ppv);
+  if (hres) {
+    WARN("Failed to unmarshal stream\n");
+    return hres;
+  }
   
+  /* rewind stream, in case it's used again */
+  move.s.LowPart = 0;
+  move.s.HighPart = 0;
+  IStream_Seek(entry->stream, move, STREAM_SEEK_SET, NULL);
+
+  /* addref it */
+  lpUnk = *ppv;
+  IUnknown_AddRef(lpUnk);
+  TRACE("ppv=%p\n", *ppv);
   return S_OK;
 }
 
