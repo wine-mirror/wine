@@ -1686,7 +1686,9 @@ HWND16 WINAPI GetDesktopWindow16(void)
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    return pWndDesktop->hwndSelf;
+    if (pWndDesktop) return pWndDesktop->hwndSelf;
+    ERR_(win)( "You need the -desktop option when running with native USER\n" );
+    ExitProcess(1);
 }
 
 
