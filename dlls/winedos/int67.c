@@ -75,6 +75,11 @@ struct {
     WORD  logical_page; /* logical page */
   } mapping[4];
 
+  struct {
+    UCHAR hindex;       /* handle number */
+    WORD  logical_page; /* logical page */
+  } mapping_save_area[EMS_MAX_HANDLES][4];
+
 } *EMS_record = 0;
 
 /**********************************************************************
@@ -147,13 +152,13 @@ static void EMS_access_name( CONTEXT86 *context )
 
   switch AL_reg(context) {
   case 0x00: /* get name */
-    ptr = MapSL(MAKESEGPTR(context->SegEs, DI_reg(context)));
+    ptr = PTR_REAL_TO_LIN(context->SegEs, DI_reg(context));
     memcpy(ptr, EMS_record->handle[hindex].name, 8);
     AH_reg(context) = 0;
     break;
 
   case 0x01: /* set name */
-    ptr = MapSL(MAKESEGPTR(context->SegDs, SI_reg(context)));
+    ptr = PTR_REAL_TO_LIN(context->SegDs, SI_reg(context));
     memcpy(EMS_record->handle[hindex].name, ptr, 8);
     AH_reg(context) = 0;
     break;
@@ -169,17 +174,18 @@ static void EMS_access_name( CONTEXT86 *context )
  *
  * Map logical page into physical page.
  */
-static void EMS_map( CONTEXT86 *context )
+static BYTE EMS_map( WORD physical_page, WORD new_hindex, WORD new_logical_page )
 {
-  int   physical_page = AL_reg(context);
-  int   new_hindex = DX_reg(context);
-  int   new_logical_page = BX_reg(context);
+  int   old_hindex;
+  int   old_logical_page;
+  void *physical_address;
 
-  int   old_hindex = EMS_record->mapping[physical_page].hindex;
-  int   old_logical_page = EMS_record->mapping[physical_page].logical_page;
+  if(physical_page > 3)
+    return 0x8b; /* status: invalid physical page */
 
-  void *physical_address = EMS_PAGE_ADDRESS(EMS_record->frame_address,
-                                            physical_page);
+  old_hindex = EMS_record->mapping[physical_page].hindex;
+  old_logical_page = EMS_record->mapping[physical_page].logical_page;
+  physical_address = EMS_PAGE_ADDRESS(EMS_record->frame_address, physical_page);
 
   /* unmap old page */
   if(old_hindex) {
@@ -192,6 +198,13 @@ static void EMS_map( CONTEXT86 *context )
   if(new_hindex && new_logical_page != 0xffff) {
     void *ptr = EMS_PAGE_ADDRESS(EMS_record->handle[new_hindex].address,
                                  new_logical_page);
+
+    if(new_hindex >= EMS_MAX_HANDLES || !EMS_record->handle[new_hindex].address)
+      return 0x83; /* status: invalid handle */
+
+    if(new_logical_page >= EMS_record->handle[new_hindex].pages)
+      return 0x8a; /* status: invalid logical page */
+
     memcpy(physical_address, ptr, EMS_PAGE_SIZE);
     EMS_record->mapping[physical_page].hindex = new_hindex;
     EMS_record->mapping[physical_page].logical_page = new_logical_page;
@@ -200,7 +213,35 @@ static void EMS_map( CONTEXT86 *context )
     EMS_record->mapping[physical_page].logical_page = 0;
   }
 
-  AH_reg(context) = 0; /* status: ok */
+  return 0; /* status: ok */
+}
+
+/**********************************************************************
+ *          EMS_map_multiple
+ *
+ * Map multiple logical pages into physical pages.
+ */
+static void EMS_map_multiple( CONTEXT86 *context )
+{
+  WORD *ptr = PTR_REAL_TO_LIN(context->SegDs, SI_reg(context));
+  BYTE  status = 0;
+  int   i;
+
+  for(i=0; i<CX_reg(context) && !status; i++, ptr += 2)
+    switch(AL_reg(context)) {
+    case 0x00:
+      status = EMS_map( ptr[1], 
+                       DX_reg(context), ptr[0] );
+      break;
+    case 0x01:
+      status = EMS_map( (ptr[1] - EMS_record->frame_selector) >> 10,
+                       DX_reg(context), ptr[0] );
+      break;
+    default:
+      status = 0x8f; /* status: undefined subfunction */    
+    }
+
+  AH_reg(context) = status;
 }
 
 /**********************************************************************
@@ -235,6 +276,48 @@ static void EMS_free( CONTEXT86 *context )
   EMS_record->handle[hindex].address = 0;
 
   AH_reg(context) = 0;    /* status: ok */
+}
+
+/**********************************************************************
+ *          EMS_save_context
+ *
+ * Save physical page mappings into handle specific save area.
+ */
+static void EMS_save_context( CONTEXT86 *context )
+{
+  WORD h = DX_reg(context);
+  int  i;
+
+  for(i=0; i<4; i++) {
+    EMS_record->mapping_save_area[h][i].hindex = EMS_record->mapping[i].hindex;
+    EMS_record->mapping_save_area[h][i].logical_page = EMS_record->mapping[i].logical_page;
+  }
+  
+  AX_reg(context) = 0; /* status: ok */
+}
+
+
+/**********************************************************************
+ *          EMS_restore_context
+ *
+ * Restore physical page mappings from handle specific save area.
+ */
+static void EMS_restore_context( CONTEXT86 *context )
+{
+  WORD handle = DX_reg(context);
+  int  i;
+
+  for(i=0; i<4; i++) {
+    int hindex       = EMS_record->mapping_save_area[handle][i].hindex;
+    int logical_page = EMS_record->mapping_save_area[handle][i].logical_page;
+
+    if(EMS_map( i, hindex, logical_page )) {
+      AX_reg(context) = 0x8e; /* status: restore of mapping context failed */
+      return;
+    }
+  }
+  
+  AX_reg(context) = 0; /* status: ok */  
 }
 
 /**********************************************************************
@@ -273,7 +356,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
 
   case 0x44: /* EMS - MAP MEMORY */
     EMS_init();
-    EMS_map(context);
+    AH_reg(context) = EMS_map( AL_reg(context), DX_reg(context), BX_reg(context) );
     break;
 
   case 0x45: /* EMS - RELEASE HANDLE AND MEMORY */
@@ -287,8 +370,13 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     break;
 
   case 0x47: /* EMS - SAVE MAPPING CONTEXT */
+    EMS_init(); 
+    EMS_save_context(context);
+    break;
+
   case 0x48: /* EMS - RESTORE MAPPING CONTEXT */
-    INT_BARF(context,0x67);
+    EMS_init();
+    EMS_restore_context(context);
     break;
 
   case 0x49: /* EMS - reserved - GET I/O PORT ADDRESSES */
@@ -305,7 +393,14 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
   case 0x4d: /* EMS - GET PAGES FOR ALL HANDLES */
   case 0x4e: /* EMS - GET OR SET PAGE MAP */
   case 0x4f: /* EMS 4.0 - GET/SET PARTIAL PAGE MAP */
+    INT_BARF(context,0x67);
+    break;
+
   case 0x50: /* EMS 4.0 - MAP/UNMAP MULTIPLE HANDLE PAGES */
+    EMS_init();
+    EMS_map_multiple(context);
+    break;
+
   case 0x51: /* EMS 4.0 - REALLOCATE PAGES */
   case 0x52: /* EMS 4.0 - GET/SET HANDLE ATTRIBUTES */
     INT_BARF(context,0x67);
@@ -321,7 +416,22 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
   case 0x56: /* EMS 4.0 - ALTER PAGE MAP AND CALL */
   case 0x57: /* EMS 4.0 - MOVE/EXCHANGE MEMORY REGION */
   case 0x58: /* EMS 4.0 - GET MAPPABLE PHYSICAL ADDRESS ARRAY */
+    INT_BARF(context,0x67);
+    break;
+
   case 0x59: /* EMS 4.0 - GET EXPANDED MEMORY HARDWARE INFORMATION */
+    if(AL_reg(context) == 0x01) {
+      EMS_init();
+      /* unallocated raw pages */
+      BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages; 
+      /* total number raw pages */
+      DX_reg(context) = EMS_MAX_PAGES;
+      /* status: ok */
+      AH_reg(context) = 0;
+    } else
+      INT_BARF(context,0x67);
+    break;
+
   case 0x5a: /* EMS 4.0 - ALLOCATE STANDARD/RAW PAGES */
   case 0x5b: /* EMS 4.0 - ALTERNATE MAP REGISTER SET */
   case 0x5c: /* EMS 4.0 - PREPARE EXPANDED MEMORY HARDWARE FOR WARM BOOT */
