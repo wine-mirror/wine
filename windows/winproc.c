@@ -1876,6 +1876,16 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
+    case SBM_SETRANGE:
+        *pmsg16 = SBM_SETRANGE16;
+        *plparam = MAKELPARAM(wParam32, *plparam);
+        *pwparam16 = 0;
+        return 0;
+
+    case SBM_GETRANGE:
+        *pmsg16 = SBM_GETRANGE16;
+        return 1;
+
     case BM_GETCHECK:
     case BM_SETCHECK:
     case BM_GETSTATE:
@@ -2385,6 +2395,11 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 {
     switch(msg)
     {
+    case SBM_GETRANGE:
+        *(LPINT)wParam = LOWORD(p16->lResult);
+        *(LPINT)lParam = HIWORD(p16->lResult);
+        break;
+
     case LB_ADDFILE:
     case LB_ADDSTRING:
     case LB_DIR:
@@ -2934,6 +2949,9 @@ LRESULT WINAPI __wine_call_wndproc_32A( HWND16 hwnd, UINT16 msg, WPARAM16 wParam
     WPARAM wParam32;
     HWND hwnd32 = WIN_Handle32( hwnd );
 
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+                 func, hwnd32, SPY_GetMsgName(msg, hwnd32), wParam, lParam);
+
     if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
     result = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
@@ -2951,6 +2969,9 @@ LRESULT WINAPI  __wine_call_wndproc_32W( HWND16 hwnd, UINT16 msg, WPARAM16 wPara
     UINT msg32;
     WPARAM wParam32;
     HWND hwnd32 = WIN_Handle32( hwnd );
+
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+                 func, hwnd32, SPY_GetMsgName(msg, hwnd32), wParam, lParam);
 
     if (WINPROC_MapMsg16To32W( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;

@@ -1378,8 +1378,12 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return 0;
 
     case SBM_GETRANGE16:
-        FIXME("don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n", wParam, lParam );
-        return 0;
+    {
+        INT min, max;
+
+        SCROLL_GetScrollRange(hwnd, SB_CTL, &min, &max);
+        return MAKELRESULT(min, max);
+    }
 
     case SBM_GETRANGE:
         return SCROLL_GetScrollRange(hwnd, SB_CTL, (LPINT)wParam, (LPINT)lParam);
