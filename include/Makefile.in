@@ -69,6 +69,7 @@ WINDOWS_INCLUDES = \
 	ddeml.h \
 	ddraw.h \
 	ddrawi.h \
+	devguid.h \
 	digitalv.h \
 	dinput.h \
 	dispdib.h \
