@@ -77,7 +77,7 @@ static const struct object_ops console_input_events_ops =
 struct screen_buffer
 {
     struct object         obj;           /* object header */
-    struct screen_buffer *next;          /* linked list of all screen buffers */
+    struct list           entry;         /* entry in list of all screen buffers */
     struct screen_buffer *prev;
     struct console_input *input;         /* associated console input */
     int                   mode;          /* output mode */
@@ -110,7 +110,7 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy             /* destroy */
 };
 
-static struct screen_buffer *screen_buffer_list;
+static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
 
 static const char_info_t empty_char_info = { ' ', 0x000f };  /* white on black space */
 
@@ -255,9 +255,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->win.top        = 0;
     screen_buffer->win.bottom     = screen_buffer->max_height - 1;
 
-    if ((screen_buffer->next = screen_buffer_list)) screen_buffer->next->prev = screen_buffer;
-    screen_buffer->prev = NULL;
-    screen_buffer_list = screen_buffer;
+    list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
     if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
                                         sizeof(*screen_buffer->data) )))
@@ -934,12 +932,12 @@ static void console_input_destroy( struct object *obj )
     if (console_in->title) free( console_in->title );
     if (console_in->records) free( console_in->records );
 
-    if (console_in->active)	release_object( console_in->active );
+    if (console_in->active) release_object( console_in->active );
     console_in->active = NULL;
 
-    for (curr = screen_buffer_list; curr; curr = curr->next)
+    LIST_FOR_EACH_ENTRY( curr, &screen_buffer_list, struct screen_buffer, entry )
     {
-	if (curr->input == console_in) curr->input = NULL;
+        if (curr->input == console_in) curr->input = NULL;
     }
 
     release_object( console_in->evt );
@@ -947,7 +945,7 @@ static void console_input_destroy( struct object *obj )
     release_object( console_in->event );
 
     for (i = 0; i < console_in->history_size; i++)
-	if (console_in->history[i]) free( console_in->history[i] );
+        if (console_in->history[i]) free( console_in->history[i] );
     if (console_in->history) free( console_in->history );
 }
 
@@ -965,15 +963,21 @@ static void screen_buffer_destroy( struct object *obj )
 
     assert( obj->ops == &screen_buffer_ops );
 
-    if (screen_buffer->next) screen_buffer->next->prev = screen_buffer->prev;
-    if (screen_buffer->prev) screen_buffer->prev->next = screen_buffer->next;
-    else screen_buffer_list = screen_buffer->next;
+    list_remove( &screen_buffer->entry );
 
     if (screen_buffer->input && screen_buffer->input->active == screen_buffer)
     {
-	struct screen_buffer*	sb;
-	for (sb = screen_buffer_list; sb && sb->input != screen_buffer->input; sb = sb->next);
-	screen_buffer->input->active = sb;
+        struct screen_buffer *sb;
+
+        screen_buffer->input->active = NULL;
+        LIST_FOR_EACH_ENTRY( sb, &screen_buffer_list, struct screen_buffer, entry )
+        {
+            if (sb->input == screen_buffer->input)
+            {
+                sb->input->active = sb;
+                break;
+            }
+        }
     }
     if (screen_buffer->data) free( screen_buffer->data );
 }
