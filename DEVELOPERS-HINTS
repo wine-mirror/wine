@@ -26,19 +26,30 @@ DLLs:
 		crypt32/	- Cryptography
 		ctl3d/          - 3D Effects for Common GUI Components
 		d3d8/		- Direct3D (3D graphics)
+		d3d9/		- Direct3D (3D graphics)
+		d3dim/		- Direct3D Immediate Mode
 		d3dx8/		- Direct3D (3D graphics)
 		dciman32/	- DCI Manager (graphics)
 		ddraw/		- DirectDraw (graphics)
-		devenum/	- Device enumeration
+		devenum/	- Device enumeration (part of DirectShow)
 		dinput/		- DirectInput (device input)
 		dinput8/	- DirectInput (device input)
+		dmband/		- DirectMusic
+		dmcompos/	- DirectMusic
+		dmime/		- DirectMusic
+		dmloader/	- DirectMusic
+		dmscript/	- DirectMusic
+		dmstyle/	- DirectMusic
+		dmsynth/	- DirectMusic
+		dmusic/		- DirectMusic
+		dmusic32/	- DirectMusic
 		dplay/		- DirectPlay (networking)
 		dplayx/		- DirectPlay (networking)
+		dpnhpast/	- DirectPlay NAT Helper
 		dsound/		- DirectSound (audio)
 		gdi/		- GDI (graphics)
 			enhmetafiledrv/	- Enhanced metafile driver
 			metafiledrv/	- Metafile driver
-			win16drv/	- Support for Win16 printer drivers
 		glu32/		- OpenGL Utility library (graphics)
 		icmp/		- ICMP protocol (networking)
 		imagehlp/	- PE (Portable Executable) Image Helper lib
@@ -52,11 +63,13 @@ DLLs:
 		msdmo/		- DirectX Media Objects
 		msimg32/	- Gradient and transparency (graphics)
 		msisys/		- System information
+		msi/		- Microsoft Installer
 		msnet32/	- Network interface
-		msrle32/	- Run length encoder
-		msvcrt/		- 16 bit C runtime library 
-		msvcrt20/	- 32 bit C runtime library
+		msvcrt/		- C runtime library 
+		msvcrt20/	- C runtime library version 2.0
+		msvcrtd/	- C runtime library debugging
 		msvideo/	- 16 bit video manager
+		mswsock/	- Misc networking
 		netapi32/	- Network interface
 		ntdll/		- NT implementation of kernel calls
 		odbc32/		- Open DataBase Connectivity driver manager
@@ -71,7 +84,7 @@ DLLs:
 		qcap/		- DirectShow runtime
 		quartz/		- DirectShow runtime
 		rasapi32/	- Remote Access Server interface
-		richedit/	- Rich text formatting
+		richedit/	- Rich text editing control
 		rpcrt4/		- Remote Procedure Call runtime
 		serialui/	- Serial port property pages
 		setupapi/	- Setup interface
@@ -85,12 +98,12 @@ DLLs:
 		ttydrv/		- TTY display driver (Wine specific)
 		twain/		- TWAIN Imaging device communications
 		url/		- Internet shortcut shell extension
-		urlmon/		- URL Moniker allows binding to a URL
+		urlmon/		- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
 		user/		- Window management, standard controls, etc.
 		version/	- File installation library
 		win32s/		- 32-bit function access for 16-bit systems
 		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
-		winedos/	- DOS features and BIOS calls (interrupts)
+		winedos/	- DOS features and BIOS calls (interrupts) (wine specific)
 		wineps/		- Postscript driver (Wine specific)
 		wininet/	- Internet extensions
 		winmm/		- Multimedia (16 & 32 bit)
@@ -146,7 +159,7 @@ Support programs, libraries, etc:
 
 	documentation/		- some documentation
 	include/		- Windows standard includes
-	library/		- the Wine portability library
+	libs/			- the Wine libraries
 	miscemu/		- the main Wine program
 	server/			- the Wine server
 	tools/			- relay code builder, resource compiler, etc.
@@ -507,6 +520,7 @@ MORE INFO
 
 1. There is a FREE online version of the MSDN library (including
    documentation for the Win32 API) on http://msdn.microsoft.com/
+   or http://www.msdn.com/
 
 2. Windows apilist:  http://www.mentalis.org/apilist/apilist.php
 
