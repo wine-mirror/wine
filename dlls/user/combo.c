@@ -33,7 +33,6 @@
  *   - CB_GETMINVISIBLE, CB_SETMINVISIBLE
  *   - CB_LIMITTEXT
  *   - CB_SETTOPINDEX
- *   - Fix roll up in Netscape 3.01.
  */
 
 #include <stdarg.h>
