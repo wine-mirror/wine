@@ -244,6 +244,7 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 extern INT X11DRV_CoerceDIBSection(struct tagDC *dc,INT,BOOL);
 extern INT X11DRV_LockDIBSection(struct tagDC *dc,INT,BOOL);
 extern void X11DRV_UnlockDIBSection(struct tagDC *dc,BOOL);
+extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
 extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
 extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 

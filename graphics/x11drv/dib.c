@@ -3495,11 +3495,9 @@ INT X11DRV_DIB_Coerce(BITMAPOBJ *bmp, INT req, BOOL lossy)
 
 	case DIB_Status_AuxMod:
 	  TRACE("AppMod requested in status AuxMod\n" );
+	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
 	  if (lossy) dib->status = DIB_Status_AppMod;
-	  else {
-	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-	    (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
-	  }
+	  else (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
 	  if (dib->status != DIB_Status_GdiMod)
 	    break;
 	  /* fall through if copy_aux() had to change to GdiMod state */
@@ -3508,7 +3506,8 @@ INT X11DRV_DIB_Coerce(BITMAPOBJ *bmp, INT req, BOOL lossy)
 	  TRACE("AppMod requested in status GdiMod\n" );
 	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
 	  if (!lossy) X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
-	  /* fall through */
+	  dib->status = DIB_Status_AppMod;
+	  break;
 
         case DIB_Status_InSync:
 	  TRACE("AppMod requested in status InSync\n" );
@@ -3549,6 +3548,7 @@ INT X11DRV_DIB_Lock(BITMAPOBJ *bmp, INT req, BOOL lossy)
   INT ret = DIB_Status_None;
 
   if (dib) {
+    TRACE("Locking %p from thread %08lx\n", bmp, GetCurrentThreadId());
     EnterCriticalSection(&(dib->lock));
     ret = dib->status;
     if (req != DIB_Status_None)
@@ -3641,23 +3641,22 @@ void X11DRV_DIB_Unlock(BITMAPOBJ *bmp, BOOL commit)
 	break;
     }
     LeaveCriticalSection(&(dib->lock));
+    TRACE("Unlocked %p\n", bmp);
   }
 }
 
 /***********************************************************************
- *           X11DRV_CoerceDIBSection
+ *           X11DRV_CoerceDIBSection2
  */
-INT X11DRV_CoerceDIBSection(DC *dc, INT req, BOOL lossy)
+INT X11DRV_CoerceDIBSection2(HBITMAP hBmp, INT req, BOOL lossy)
 {
   BITMAPOBJ *bmp;
   INT ret;
 
-  if (!dc) return DIB_Status_None;
-  if (!(dc->flags & DC_MEMORY)) return DIB_Status_None;
-
-  bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+  if (!bmp) return DIB_Status_None;
   ret = X11DRV_DIB_Coerce(bmp, req, lossy);
-  GDI_ReleaseObj( dc->hBitmap );
+  GDI_ReleaseObj( hBmp );
   return ret;
 }
 
@@ -3670,6 +3669,7 @@ INT X11DRV_LockDIBSection2(HBITMAP hBmp, INT req, BOOL lossy)
   INT ret;
 
   bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+  if (!bmp) return DIB_Status_None;
   ret = X11DRV_DIB_Lock(bmp, req, lossy);
   GDI_ReleaseObj( hBmp );
   return ret;
@@ -3683,8 +3683,18 @@ void X11DRV_UnlockDIBSection2(HBITMAP hBmp, BOOL commit)
   BITMAPOBJ *bmp;
 
   bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+  if (!bmp) return;
   X11DRV_DIB_Unlock(bmp, commit);
   GDI_ReleaseObj( hBmp );
+}
+
+/***********************************************************************
+ *           X11DRV_CoerceDIBSection
+ */
+INT X11DRV_CoerceDIBSection(DC *dc, INT req, BOOL lossy)
+{
+  if (!dc) return DIB_Status_None;
+  return X11DRV_CoerceDIBSection2( dc->hBitmap, req, lossy );
 }
 
 /***********************************************************************
