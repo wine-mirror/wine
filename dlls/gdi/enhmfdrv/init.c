@@ -136,11 +136,11 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
+    EMFDRV_StretchDIBits,            /* pStretchDIBits */
     EMFDRV_StrokeAndFillPath,        /* pStrokeAndFillPath */
     EMFDRV_StrokePath,               /* pStrokePath */
     NULL,                            /* pSwapBuffers */
-    EMFDRV_WidenPath                 /* pWiddenPath */
+    EMFDRV_WidenPath                 /* pWidenPath */
 };
 
 
