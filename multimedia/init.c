@@ -59,12 +59,12 @@ int unixToWindowsDeviceType(int type)
 #endif
 
 /**************************************************************************
- * 			MultimediaInit				[internal]
+ * 			MULTIMEDIA_MidiInit			[internal]
  *
  * Initializes the MIDI devices information variables
  *
  */
-BOOL32 MULTIMEDIA_Init(void)
+BOOL32 MULTIMEDIA_MidiInit(void)
 {
 #ifdef HAVE_OSS
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
@@ -90,7 +90,7 @@ BOOL32 MULTIMEDIA_Init(void)
 	close(fd);
 	return TRUE;
     }
-    
+
     if (numsynthdevs > MAX_MIDIOUTDRV) {
 	ERR(midi, "MAX_MIDIOUTDRV (%d) was enough for the number of devices (%d). "
 	    "Some FM devices will not be available.\n",MAX_MIDIOUTDRV,numsynthdevs);
@@ -246,4 +246,40 @@ BOOL32 MULTIMEDIA_Init(void)
 #endif /* HAVE_OSS */
     
     return TRUE;
+}
+
+extern	int	mciInstalledCount;
+extern	int	mciInstalledListLen;
+extern	LPSTR	lpmciInstallNames;
+
+BOOL32 MULTIMEDIA_MciInit(void)
+{
+    int		len;
+    LPSTR	ptr;
+    LPSTR	SysFile = "SYSTEM.INI";
+
+    mciInstalledCount = 0;
+    mciInstalledListLen = 0;
+    ptr = lpmciInstallNames = xmalloc(2048);
+    /* FIXME: should do also some registry diving here */
+    GetPrivateProfileString32A("mci", NULL, "", lpmciInstallNames, 2000, SysFile);
+    while (strlen(ptr) > 0) {
+	TRACE(mci, "---> '%s' \n", ptr);
+	len = strlen(ptr) + 1;
+	ptr += len;
+	mciInstalledListLen += len;
+	mciInstalledCount++;
+    }
+    return TRUE;
+}
+
+/**************************************************************************
+ * 			MULTIMEDIA_Init			[internal]
+ *
+ * Initializes the multimedia information variables
+ *
+ */
+BOOL32 MULTIMEDIA_Init(void)
+{
+    return MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit();
 }

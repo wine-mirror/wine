@@ -2766,27 +2766,27 @@ typedef struct {
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {
-	UINT16			wDelay;
-	UINT16			wResolution;
+	UINT16				wDelay;
+	UINT16				wResolution;
 	LPTIMECALLBACK16	lpFunction;
-	DWORD			dwUser;
-	UINT16			wFlags;
+	DWORD					dwUser;
+	UINT16				wFlags;
 } TIMEREVENT, *LPTIMEREVENT;
 
 typedef struct tMIXEROPENDESC
 {
 	HMIXEROBJ16	hmx;
-	DWORD		dwCallback;
-	DWORD		dwInstance;
+	DWORD			dwCallback;
+	DWORD			dwInstance;
 	UINT16		uDeviceID;
 } MIXEROPENDESC,*LPMIXEROPENDESC;
 
 typedef struct {
-	UINT16	wDeviceID;	/* device ID */
-	LPSTR	lpstrParams;	/* parameter string for entry in SYSTEM.INI */
+	UINT16	wDeviceID;		/* device ID */
+	LPSTR		lpstrParams;	/* parameter string for entry in SYSTEM.INI */
 	UINT16	wCustomCommandTable;	/* custom command table (0xFFFF if none)
-					 * filled in by the driver */
-	UINT16	wType;		/* driver type (filled in by the driver) */
+											 * filled in by the driver */
+	UINT16	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMS, *LPMCI_OPEN_DRIVER_PARMS;
 
 DWORD  WINAPI mciGetDriverData(UINT16 uDeviceID);
@@ -2811,14 +2811,6 @@ BOOL16 WINAPI DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 DWORD WINAPI auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 
-struct LINUX_MCIDRIVER {
-	HDRVR16			hdrv;
-	DRIVERPROC16		driverproc;
-	MCI_OPEN_DRIVER_PARMS	modp;
-	MCI_OPEN_PARMS16	mop;
-	DWORD			private;
-};
-
 #pragma pack(4)
 DWORD WINAPI mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
@@ -2831,5 +2823,22 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 #pragma pack(4)
+
+LONG WAVE_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
+LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
+LONG MIDI_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
+LONG MIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
+LONG CDAUDIO_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
+LONG CDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
+LONG ANIM_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
+LONG ANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2);
 
 #endif /* __WINE_MMSYSTEM_H */
