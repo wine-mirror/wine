@@ -1,24 +1,20 @@
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity debugger SYSTEM "debugger.sgml">
-<!entity documentation SYSTEM "documentation.sgml">
-<!entity patches SYSTEM "patches.sgml">
+<!entity debugging SYSTEM "debugging.sgml">
+<!entity otherdebug SYSTEM "winedev-otherdebug.sgml">
+<!entity codingpractice SYSTEM "winedev-coding.sgml">
 <!entity testing SYSTEM "testing.sgml">
-<!entity i18n SYSTEM "i18n.sgml">
+<!entity documentation SYSTEM "documentation.sgml">
 
 <!entity architecture SYSTEM "architecture.sgml">
-<!entity debugging SYSTEM "debugging.sgml">
+<!entity kernel SYSTEM "winedev-kernel.sgml">
+<!entity graphical SYSTEM "winedev-graphical.sgml">
+<!entity windowing SYSTEM "winedev-windowing.sgml">
 <!entity ole SYSTEM "ole.sgml">
 <!entity opengl SYSTEM "opengl.sgml">
 <!entity ddraw SYSTEM "ddraw.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
-<!entity threading SYSTEM "threading.sgml">
-<!entity address-space SYSTEM "address-space.sgml">
-
-<!entity implementation SYSTEM "implementation.sgml">
-<!entity porting SYSTEM "porting.sgml">
-<!entity consoles SYSTEM "consoles.sgml">
-<!entity cvs-regression SYSTEM "cvs-regression.sgml">
 
 ]>
 
@@ -114,31 +110,23 @@
     <title>Developing Wine</title>
 
     &debugger;
-    &documentation;
-    &patches;
+    &debugging;
+    &otherdebug;
+    &codingpractice;
     &testing;
-    &i18n;
+    &documentation;
   </part>
 
   <part id="part-two">
     <title>Wine Architecture</title>
 
     &architecture;
-    &debugging;
+    &kernel;
+    &graphical;
+    &windowing;
     &ole;
     &opengl;
     &ddraw;
     &multimedia;
-    &threading;
   </part>
-
-  <part id="part-three">
-    <title>Advanced Topics</title>
-    &implementation;
-    &porting;
-    &consoles;
-    &address-space;    
-    &cvs-regression;
-  </part>
-
 </book>

@@ -26,20 +26,20 @@ WINE_USER_SRCS = \
 WINE_DEVEL_SRCS = \
 	address-space.sgml \
 	architecture.sgml \
-	consoles.sgml \
-	cvs-regression.sgml \
 	ddraw.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	documentation.sgml \
-	i18n.sgml \
-	implementation.sgml \
 	multimedia.sgml \
 	ole.sgml \
 	opengl.sgml \
 	patches.sgml \
-	porting.sgml \
-	testing.sgml
+	testing.sgml \
+	winedev-coding.sgml \
+	winedev-graphical.sgml \
+	winedev-kernel.sgml \
+	winedev-otherdebug.sgml \
+	winedev-windowing.sgml
 
 WINELIB_USER_SRCS = \
 	winelib-bindlls.sgml \
