@@ -58,10 +58,9 @@ static const int fldrWidth = 20;
  * Do not Export to other applications or dlls
  */
 
-BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
-                                   LPARAM lParam);
-LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam);
+LPWSTR FILEDLG_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index);
 void FILEDLG_MapDrawItemStruct(LPDRAWITEMSTRUCT16 lpdis16, LPDRAWITEMSTRUCT lpdis);
+BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath);
 LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
        int savedlg, LPDRAWITEMSTRUCT lpdis);
 LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,

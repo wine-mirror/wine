@@ -257,15 +257,9 @@ static void FILEDLG_StripEditControl(HWND hwnd)
  *
  *      Call the appropriate hook
  */
-BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
+static BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
                                    LPARAM lParam)
 {
-    if (lfs->ofn16)
-    {
-        return (BOOL16) CallWindowProc16(
-          (WNDPROC16)lfs->ofn16->lpfnHook, HWND_16(lfs->hwnd),
-          (UINT16)wMsg, (WPARAM16)wParam, lParam);
-    }
     if (lfs->ofnA)
     {
         return (BOOL) CallWindowProcA(
@@ -286,7 +280,7 @@ BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
 /***********************************************************************
  * 				FILEDLG_ScanDir                 [internal]
  */
-static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
+BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
 {
     WCHAR		buffer[BUFFILE];
     HWND 		hdlg, hdlgDir;
@@ -338,7 +332,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
  * 				FILEDLG_GetFileType		[internal]
  */
 
-static LPWSTR FILEDLG_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
+LPWSTR FILEDLG_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
 {
   int n, i;
   i = 0;
@@ -482,7 +476,7 @@ static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
  *                              FILEDLG_WMInitDialog            [internal]
  */
 
-LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
   int i, n;
   WCHAR tmpstr[BUFFILE];
