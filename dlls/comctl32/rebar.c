@@ -2316,8 +2316,8 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case RB_GETBANDCOUNT:
 	    return REBAR_GetBandCount (hwnd);
 
-/*	case RB_GETBANDINFO32:  */ /* outdated, just for compatibility */
-
+	case RB_GETBANDINFO:	/* obsoleted after IE3, but we have to
+				   support it anyway. */
 	case RB_GETBANDINFOA:
 	    return REBAR_GetBandInfoA (hwnd, wParam, lParam);
 
