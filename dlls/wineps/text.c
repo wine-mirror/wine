@@ -100,10 +100,20 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     UINT align = GetTextAlign( physDev->hdc );
     INT char_extra;
     INT *deltas = NULL;
+    double cosEsc, sinEsc;
+    LOGFONTW lf;
 
     if (!count)
 	return TRUE;
 
+    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
+    if(lf.lfEscapement != 0) {
+        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
+        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
+    } else {
+        cosEsc = 1;
+        sinEsc = 0;
+    }
 
     if(physDev->font.fontloc == Download) {
         if(flags & ETO_GLYPH_INDEX)
@@ -176,19 +186,22 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
         if(align & TA_UPDATECP)
         {
             POINT pt;
-            pt.x = x + sz.cx;
-            pt.y = y;
+            pt.x = x + sz.cx * cosEsc;
+            pt.y = y - sz.cx * sinEsc;
             DPtoLP( physDev->hdc, &pt, 1 );
             dc->CursPosX = pt.x;
+            dc->CursPosY = pt.y;
 	}
 	break;
 
     case TA_CENTER:
-	x -= sz.cx/2;
+        x -= sz.cx * cosEsc / 2;
+        y += sz.cx * sinEsc / 2;
 	break;
 
     case TA_RIGHT:
-	x -= sz.cx;
+        x -= sz.cx * cosEsc;
+        y += sz.cx * sinEsc;
 	if(align & TA_UPDATECP)
         {
             POINT pt;
@@ -196,20 +209,23 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
             pt.y = y;
             DPtoLP( physDev->hdc, &pt, 1 );
             dc->CursPosX = pt.x;
+            dc->CursPosY = pt.y;
 	}
 	break;
     }
 
     switch(align & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
     case TA_TOP:
-        y += ascent;
+        y += ascent * cosEsc;
+        x += ascent * sinEsc;
 	break;
 
     case TA_BASELINE:
 	break;
 
     case TA_BOTTOM:
-        y -= descent;
+        y -= descent * cosEsc;
+        x -= descent * sinEsc;
 	break;
     }
 
