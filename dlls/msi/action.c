@@ -659,7 +659,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
         }
 
         check = PACKAGE_GetProperty(package, cszSourceDir);
-        if (check)
+        if (!check)
         {
             MSI_SetPropertyW(package, cszSourceDir, path);
             HeapFree(GetProcessHeap(), 0, check);
