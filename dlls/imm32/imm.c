@@ -258,12 +258,12 @@ LONG WINAPI ImmGetCompositionStringW(
   HIMC hIMC, DWORD dwIndex,
   LPVOID lpBuf, DWORD dwBufLen)
 {
-  OSVERSIONINFOA version;
+  OSVERSIONINFOW version;
   FIXME("(%p, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  GetVersionExA( &version );
+  GetVersionExW( &version );
   switch(version.dwPlatformId)
   {
   case VER_PLATFORM_WIN32_WINDOWS: return -1;
