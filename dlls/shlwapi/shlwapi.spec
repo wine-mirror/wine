@@ -39,7 +39,7 @@
 39  stdcall @(wstr long) user32.CharLowerBuffW
 40  stdcall @(wstr) user32.CharNextW
 41  stdcall @(wstr wstr) user32.CharPrevW
-42  stub @
+42  stdcall @(wstr) user32.CharToOemW
 43  stdcall @(wstr) user32.CharUpperW
 44  stdcall @(wstr long) user32.CharUpperBuffW
 45  stdcall @(long long wstr long wstr long) kernel32.CompareStringW
@@ -55,8 +55,8 @@
 55  stdcall @(long wstr wstr long long long long long long long long ptr) user32.CreateWindowExW
 56  stdcall @(long long long long) user32.DefWindowProcW
 57  stdcall @(wstr) kernel32.DeleteFileW
-58  stub @
-59  stub @
+58  stdcall @(long ptr long ptr long) user32.DialogBoxIndirectParamW
+59  stdcall @(long wstr long ptr long) user32.DialogBoxParamW
 60  stdcall @(ptr) user32.DispatchMessageW
 61  stdcall @(long wstr long ptr long) user32.DrawTextW
 62  stdcall @(long wstr ptr long) gdi32.EnumFontFamiliesW
@@ -136,7 +136,7 @@
 136 stdcall @(long long long long) user32.SendMessageW
 137 stdcall @(wstr) kernel32.SetCurrentDirectoryW
 138 stdcall @(long long wstr) SHLWAPI_138
-139 stub @
+139 stdcall @(long long long ptr) user32.SetMenuItemInfoW
 140 stdcall @(long wstr long) user32.SetPropW
 141 stdcall @(long long long) user32.SetWindowLongW
 142 stdcall @(long long long long) user32.SetWindowsHookExW
@@ -157,8 +157,8 @@
 157 stdcall @(str str) SHLWAPI_157
 158 stdcall @(wstr wstr) SHLWAPI_158
 159 stdcall @(long long wstr long wstr long) kernel32.CompareStringW
-160 stub @
-161 stub @
+160 stdcall -noname SHLWAPI_160(ptr long)
+161 stdcall -noname SHLWAPI_161(ptr long)
 162 stdcall @(str long) SHLWAPI_162
 163 stdcall @(ptr ptr long ptr ptr) SHLWAPI_163
 164 stdcall @(ptr ptr long long ptr ptr) SHLWAPI_164
@@ -170,13 +170,13 @@
 170 stdcall @(str) SHLWAPI_170
 171 stdcall @(ptr ptr) SHLWAPI_171
 172 stdcall @(ptr ptr) SHLWAPI_172
-173 stub @
+173 stdcall -noname SHLWAPI_173(ptr ptr)
 174 stdcall @(ptr ptr) SHLWAPI_174
 175 stdcall @(ptr ptr) SHLWAPI_175
 176 stdcall @(ptr ptr ptr ptr) SHLWAPI_176
-177 stub @
-178 stub @
-179 stub @
+177 stdcall -noname SHLWAPI_177(ptr wstr)
+178 stdcall -noname SHLWAPI_178(ptr long long long long)
+179 stdcall GetMenuPosFromID(ptr long)
 180 stdcall @(long) SHLWAPI_180
 181 stdcall @(long long long) SHLWAPI_181
 182 stdcall @(long long long) SHLWAPI_182
@@ -189,7 +189,7 @@
 189 stdcall @(ptr ptr) SHLWAPI_189
 190 stub @
 191 stub @
-192 stub @
+192 stdcall -noname SHLWAPI_192(ptr long)
 193 stdcall @() SHLWAPI_193
 194 stub @
 195 stub @
@@ -218,7 +218,7 @@
 218 stdcall @(long wstr ptr ptr) SHLWAPI_218
 219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
-221 stub @
+221 stdcall -noname SHLWAPI_221(ptr)
 222 stdcall -noname _SHGlobalCounterCreate(long)
 223 stdcall -noname _SHGlobalCounterGetValue(long)
 224 stdcall -noname _SHGlobalCounterIncrement(long)
@@ -235,8 +235,8 @@
 235 stub @
 236 stdcall @(ptr) SHLWAPI_236
 237 stdcall @(ptr) SHLWAPI_237
-238 stub @
-239 stdcall @(long str long) SHLWAPI_239
+238 stdcall -noname SHLWAPI_238(ptr ptr long)
+239 stdcall -noname SHLWAPI_239(ptr ptr long)
 240 stdcall @(long long long long) SHLWAPI_240
 241 stdcall @() SHLWAPI_241
 242 stub @
@@ -254,7 +254,7 @@
 254 stdcall AssocQueryKeyA(long long str ptr ptr)
 255 stdcall AssocQueryKeyW(long long wstr ptr ptr)
 256 stub @
-257 stub @
+257 stdcall -noname SHLWAPI_257(long ptr long long ptr long)
 258 stub @
 259 stub @
 260 stub @
@@ -276,15 +276,15 @@
 276 stdcall @() SHLWAPI_276
 277 stub @
 278 stdcall @(long long long long long long) SHLWAPI_278
-279 stub @
-280 stub @
+279 stdcall -noname SHLWAPI_279(ptr ptr ptr)
+280 stdcall -noname SHLWAPI_280(ptr wstr long)
 281 stdcall @(ptr ptr ptr ptr) SHLWAPI_281
 282 stdcall @(ptr ptr ptr ptr) SHLWAPI_282
 283 stub @
 284 stdcall @(ptr ptr ptr) SHLWAPI_284
-285 stub @
+285 stdcall -noname SHLWAPI_285(ptr long)
 286 stub @
-287 stdcall @(ptr ptr) SHLWAPI_287
+287 stdcall -noname SHLWAPI_287(ptr long)
 288 stub @
 289 stdcall @(wstr long long) SHLWAPI_289
 290 stub @
@@ -352,7 +352,7 @@
 352 stdcall @(ptr wstr ptr ptr) SHLWAPI_352
 353 stub @
 354 stub @
-355 stub @
+355 stdcall -noname SHLWAPI_355(ptr long)
 356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr)
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(wstr long long ptr ptr long) SHLWAPI_358
@@ -360,7 +360,7 @@
 360 stdcall @(wstr) kernel32.RemoveDirectoryW
 361 stdcall @(wstr ptr long) kernel32.GetShortPathNameW
 362 stdcall @(ptr ptr) advapi32.GetUserNameW
-363 stub @
+363 stdcall -noname SHLWAPI_363(ptr ptr ptr long)
 364 stdcall @(str str long) SHLWAPI_364
 365 stub @
 366 stdcall @(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueW
@@ -384,7 +384,7 @@
 384 stdcall AssocQueryStringW(long long ptr ptr wstr ptr)
 385 stdcall ChrCmpIA(long long)
 386 stdcall ChrCmpIW(long long)
-387 stub ColorAdjustLuma
+387 stdcall ColorAdjustLuma(long long long)
 388 stub @
 389 stdcall @(ptr) SHLWAPI_389
 390 stdcall @(long wstr) SHLWAPI_390
@@ -446,7 +446,6 @@
 446 stub @
 
 @ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
-@ stdcall GetMenuPosFromID(ptr long)
 @ stdcall HashData (ptr long ptr long)
 @ stub    IntlStrEqWorkerA
 @ stub    IntlStrEqWorkerW
