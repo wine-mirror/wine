@@ -168,7 +168,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 		_llseek32(hfSrc,0,SEEK_SET);
 		return ret?ret:hfSrc;
 	}
-	lzstates = HeapReAlloc( GetProcessHeap(), 0, lzstates,
+	lzstates = HeapReAlloc( SystemHeap, 0, lzstates,
                                 (++nroflzstates)*sizeof(struct lzstate) );
 	lzs		= lzstates+(nroflzstates-1);
 
@@ -618,7 +618,7 @@ void WINAPI LZClose32( HFILE32 fd )
 	memmove(lzstates+i,lzstates+i+1,
                 sizeof(struct lzstate)*(nroflzstates-i-1));
 	nroflzstates--;
-	lzstates = HeapReAlloc( GetProcessHeap(), 0, lzstates,
+	lzstates = HeapReAlloc( SystemHeap, 0, lzstates,
                                 sizeof(struct lzstate)*nroflzstates );
 }
 

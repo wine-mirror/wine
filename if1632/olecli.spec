@@ -40,9 +40,9 @@ type	win16
 38 stub OLECREATEFROMFILE
 39 stub OLECREATELINKFROMFILE
 40 stub OLERELEASE
-41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc
-42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc
-43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc
+41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc16
+42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc16
+43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc16
 44 stub OLEREVERTCLIENTDOC
 45 stub OLESAVEDCLIENTDOC
 46 stub OLERENAME

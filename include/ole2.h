@@ -7,6 +7,8 @@
 
 typedef LONG HRESULT;
 
+typedef LPVOID LPMESSAGEFILTER;
+
 #define S_OK	0
 #define S_FALSE	1
 

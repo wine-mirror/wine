@@ -16,6 +16,7 @@
 #include "neexe.h"
 #include "stackframe.h"
 #include "user.h"
+#include "process.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -101,6 +102,7 @@ extern const DLL_DESCRIPTOR DDEML_Descriptor;
 extern const DLL_DESCRIPTOR LZEXPAND_Descriptor;
 extern const DLL_DESCRIPTOR VER_Descriptor;
 extern const DLL_DESCRIPTOR W32SYS_Descriptor;
+extern const DLL_DESCRIPTOR WIN32S16_Descriptor;
 extern const DLL_DESCRIPTOR WING_Descriptor;
 extern const DLL_DESCRIPTOR WINASPI_Descriptor;
 
@@ -110,15 +112,18 @@ extern const DLL_DESCRIPTOR ADVAPI32_Descriptor;
 extern const DLL_DESCRIPTOR COMCTL32_Descriptor;
 extern const DLL_DESCRIPTOR COMDLG32_Descriptor;
 extern const DLL_DESCRIPTOR CRTDLL_Descriptor;
-extern const DLL_DESCRIPTOR OLE32_Descriptor;
 extern const DLL_DESCRIPTOR GDI32_Descriptor;
 extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
 extern const DLL_DESCRIPTOR LZ32_Descriptor;
 extern const DLL_DESCRIPTOR MPR_Descriptor;
 extern const DLL_DESCRIPTOR NTDLL_Descriptor;
+extern const DLL_DESCRIPTOR OLE32_Descriptor;
+extern const DLL_DESCRIPTOR OLECLI32_Descriptor;
+extern const DLL_DESCRIPTOR OLESVR32_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
 extern const DLL_DESCRIPTOR VERSION_Descriptor;
+extern const DLL_DESCRIPTOR W32SKRNL_Descriptor;
 extern const DLL_DESCRIPTOR WINMM_Descriptor;
 extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
 extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
@@ -156,6 +161,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &LZEXPAND_Descriptor, NULL, 0 },
     { &VER_Descriptor,      NULL, 0 },
     { &W32SYS_Descriptor,   NULL, 0 },
+    { &WIN32S16_Descriptor, NULL, 0 },
     { &WING_Descriptor,     NULL, 0 },
     { &WINASPI_Descriptor,  NULL, 0 },
     /* Win32 DLLs */
@@ -163,15 +169,18 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &COMCTL32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
     { &COMDLG32_Descriptor, NULL, DLL_FLAG_WIN32 },
     { &CRTDLL_Descriptor,   NULL, DLL_FLAG_WIN32 },
-    { &OLE32_Descriptor,    NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
     { &GDI32_Descriptor,    NULL, DLL_FLAG_WIN32 },
-    { &KERNEL32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_ALWAYS_USED },
+    { &KERNEL32_Descriptor, NULL, DLL_FLAG_WIN32 },
     { &LZ32_Descriptor,     NULL, DLL_FLAG_WIN32 },
-    { &MPR_Descriptor,      NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
+    { &MPR_Descriptor,      NULL, DLL_FLAG_WIN32 },
     { &NTDLL_Descriptor,    NULL, DLL_FLAG_WIN32 },
+    { &OLE32_Descriptor,    NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
+    { &OLECLI32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
+    { &OLESVR32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
     { &SHELL32_Descriptor,  NULL, DLL_FLAG_WIN32 },
     { &USER32_Descriptor,   NULL, DLL_FLAG_WIN32 },
     { &VERSION_Descriptor,  NULL, DLL_FLAG_WIN32 },
+    { &W32SKRNL_Descriptor, NULL, DLL_FLAG_WIN32 },
     { &WINMM_Descriptor,    NULL, DLL_FLAG_WIN32 },
     { &WINSPOOL_Descriptor, NULL, DLL_FLAG_WIN32 },
     { &WSOCK32_Descriptor,  NULL, DLL_FLAG_WIN32 },
@@ -181,46 +190,6 @@ static BUILTIN_DLL BuiltinDLLs[] =
 
   /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
 #define FIRST_INTERRUPT_ORDINAL 100
-
-/***********************************************************************
- *           BUILTIN_BuildDebugEntryPoints
- *
- * Build the table of relay-debugging entry points for a Win32 DLL.
- */
-static void BUILTIN_BuildDebugEntryPoints( BUILTIN_DLL *dll )
-{
-    int i;
-    DEBUG_ENTRY_POINT *entry;
-    extern void RELAY_CallFrom32();
-
-    assert( !dll->dbg_funcs );
-    assert( dll->flags & DLL_FLAG_WIN32 );
-    dll->dbg_funcs = HeapAlloc( SystemHeap, 0,
-                      dll->descr->win32.nb_funcs * sizeof(DEBUG_ENTRY_POINT) );
-    entry = dll->dbg_funcs;
-    for (i = 0; i < dll->descr->win32.nb_funcs; i++, entry++)
-    {
-        BYTE args = dll->descr->win32.args[i];
-        entry->call = 0xe8;  /* call */
-        switch(args)
-        {
-        case 0xfe:  /* register func */
-            entry->callfrom32 = (DWORD)dll->descr->win32.functions[i] -
-                                (DWORD)&entry->ret;
-            entry->ret        = 0x90;  /* nop */
-            entry->args       = 0;
-            break;
-        case 0xff:  /* stub */
-            entry->args = 0xffff;
-            break;
-        default:  /* normal function (stdcall or cdecl) */
-            entry->callfrom32 = (DWORD)RELAY_CallFrom32 - (DWORD)&entry->ret;
-            entry->ret        = (args & 0x80) ? 0xc3 : 0xc2; /* ret / ret $n */
-            entry->args       = (args & 0x7f) * sizeof(int);
-            break;
-        }
-    }
-}
 
 
 /***********************************************************************
@@ -279,20 +248,179 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
  * Load a built-in Win32 module. Helper function for BUILTIN_LoadModule
  * and BUILTIN_Init.
  */
-static HMODULE16 BUILTIN_DoLoadModule32( BUILTIN_DLL *table )
+static HMODULE32 BUILTIN_DoLoadModule32( BUILTIN_DLL *dll )
 {
+    extern void RELAY_CallFrom32();
+
     HMODULE16 hModule;
     NE_MODULE *pModule;
     OFSTRUCT ofs;
+    IMAGE_DATA_DIRECTORY *dir;
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_SECTION_HEADER *sec;
+    IMAGE_EXPORT_DIRECTORY *exp;
+    LPVOID *funcs;
+    LPSTR *names;
+    DEBUG_ENTRY_POINT *entry;
+    PE_MODREF *pem;
+    INT32 i, size;
+    BYTE *addr;
 
-    sprintf( ofs.szPathName, "%s.DLL", table->descr->name );
+    /* Allocate the module */
+
+    size = (sizeof(IMAGE_DOS_HEADER)
+            + sizeof(IMAGE_NT_HEADERS)
+            + 2 * sizeof(IMAGE_SECTION_HEADER)
+            + sizeof(IMAGE_EXPORT_DIRECTORY)
+            + dll->descr->win32.nb_funcs * sizeof(LPVOID)
+            + dll->descr->win32.nb_names * sizeof(LPSTR));
+    if (debugging_relay)
+        size += dll->descr->win32.nb_funcs * sizeof(DEBUG_ENTRY_POINT);
+    addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    if (!addr) return 0;
+    dos   = (IMAGE_DOS_HEADER *)addr;
+    nt    = (IMAGE_NT_HEADERS *)(dos + 1);
+    sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
+    exp   = (IMAGE_EXPORT_DIRECTORY *)(sec + 2);
+    funcs = (LPVOID *)(exp + 1);
+    names = (LPSTR *)(funcs + dll->descr->win32.nb_funcs);
+    entry = (DEBUG_ENTRY_POINT *)(names + dll->descr->win32.nb_names);
+
+    /* Build the DOS and NT headers */
+
+    dos->e_magic  = IMAGE_DOS_SIGNATURE;
+    dos->e_lfanew = sizeof(*dos);
+
+    nt->Signature                       = IMAGE_NT_SIGNATURE;
+    nt->FileHeader.Machine              = IMAGE_FILE_MACHINE_I386;
+    nt->FileHeader.NumberOfSections     = 2;  /* exports + code */
+    nt->FileHeader.SizeOfOptionalHeader = sizeof(nt->OptionalHeader);
+    nt->FileHeader.Characteristics      = IMAGE_FILE_DLL;
+
+    nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
+    nt->OptionalHeader.SizeOfCode                  = 0x1000;
+    nt->OptionalHeader.SizeOfInitializedData       = 0;
+    nt->OptionalHeader.SizeOfUninitializedData     = 0;
+    nt->OptionalHeader.ImageBase                   = (DWORD)addr;
+    nt->OptionalHeader.SectionAlignment            = 0x1000;
+    nt->OptionalHeader.FileAlignment               = 0x1000;
+    nt->OptionalHeader.MajorOperatingSystemVersion = 1;
+    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
+    nt->OptionalHeader.MajorSubsystemVersion       = 4;
+    nt->OptionalHeader.MinorSubsystemVersion       = 0;
+    nt->OptionalHeader.SizeOfImage                 = size;
+    nt->OptionalHeader.SizeOfHeaders               = (BYTE *)exp - addr;
+    nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+
+    /* Build the export directory */
+
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    dir->VirtualAddress = (BYTE *)exp - addr;
+    dir->Size = sizeof(*exp)
+                + dll->descr->win32.nb_funcs * sizeof(LPVOID)
+                + dll->descr->win32.nb_names * sizeof(LPSTR);
+
+    /* Build the exports section */
+
+    strcpy( sec->Name, ".edata" );
+    sec->Misc.VirtualSize = dir->Size;
+    sec->VirtualAddress   = (BYTE *)exp - addr;
+    sec->SizeOfRawData    = dir->Size;
+    sec->PointerToRawData = (BYTE *)exp - addr;
+    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
+                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
+                             IMAGE_SCN_MEM_WRITE);
+
+    /* Build the code section */
+
+    sec++;
+    strcpy( sec->Name, ".code" );
+    if (debugging_relay)
+        sec->SizeOfRawData = dll->descr->win32.nb_funcs * sizeof(DEBUG_ENTRY_POINT);
+    else
+        sec->SizeOfRawData = 1;
+    sec->Misc.VirtualSize = sec->SizeOfRawData;
+    sec->VirtualAddress   = (BYTE *)entry - addr;
+    sec->PointerToRawData = (BYTE *)entry - addr;
+    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
+                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
+
+    /* Build the exports section data */
+
+    exp->Name                  = (BYTE *)dll->descr->name - addr;  /*??*/
+    exp->Base                  = dll->descr->win32.base;
+    exp->NumberOfFunctions     = dll->descr->win32.nb_funcs;
+    exp->NumberOfNames         = dll->descr->win32.nb_names;
+    exp->AddressOfFunctions    = (LPDWORD *)((BYTE *)funcs - addr);
+    exp->AddressOfNames        = (LPDWORD *)((BYTE *)names - addr);
+    exp->AddressOfNameOrdinals = (LPWORD *)((BYTE *)dll->descr->win32.ordinals - addr);
+
+    /* Build the funcs table */
+
+    if (debugging_relay)
+    {
+        dll->dbg_funcs = entry;
+        for (i = 0; i < dll->descr->win32.nb_funcs; i++, funcs++, entry++)
+        {
+            BYTE args = dll->descr->win32.args[i];
+            entry->call = 0xe8;  /* call */
+            switch(args)
+            {
+            case 0xfe:  /* register func */
+                entry->callfrom32 = (DWORD)dll->descr->win32.functions[i] -
+                                    (DWORD)&entry->ret;
+                entry->ret        = 0x90;  /* nop */
+                entry->args       = 0;
+                *funcs = (LPVOID)((BYTE *)entry - addr);
+                break;
+            case 0xff:  /* stub or extern */
+                if (dll->descr->win32.functions[i])
+                    *funcs = (LPVOID)((BYTE *)dll->descr->win32.functions[i]
+                                              - addr);
+                break;
+            default:  /* normal function (stdcall or cdecl) */
+                entry->callfrom32 = (DWORD)RELAY_CallFrom32 -
+                                    (DWORD)&entry->ret;
+                entry->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
+                entry->args       = (args & 0x7f) * sizeof(int);
+                *funcs = (LPVOID)((BYTE *)entry - addr);
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < dll->descr->win32.nb_funcs; i++, funcs++)
+            if (dll->descr->win32.functions[i])
+                *funcs = (LPVOID)((BYTE *)dll->descr->win32.functions[i]
+                                           - addr);
+    }
+
+    /* Build the names table */
+
+    for (i = 0; i < exp->NumberOfNames; i++, names++)
+        if (dll->descr->win32.names[i])
+            *names = (LPSTR)((BYTE *)dll->descr->win32.names[i] - addr);
+
+    /* Create a modref */
+
+    pem = (PE_MODREF *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                  sizeof(*pem) );
+    pem->module = (HMODULE32)addr;
+    pem->pe_export = exp;
+    pem->next = pCurrentProcess->modref_list;
+    pCurrentProcess->modref_list = pem;
+
+    /* Create a Win16 dummy module */
+
+    sprintf( ofs.szPathName, "%s.DLL", dll->descr->name );
     hModule = MODULE_CreateDummyModule( &ofs );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
-    pModule->pe_module = (PE_MODULE *)table;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
-        NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
-    if (debugging_relay) BUILTIN_BuildDebugEntryPoints( table );
-    return hModule;
+                     NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
+    pModule->module32 = (HMODULE32)addr;
+    return pModule->module32;
 }
 
 
@@ -358,7 +486,7 @@ BOOL32 BUILTIN_Init(void)
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
+HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 {
     BUILTIN_DLL *table;
     char dllname[16], *p;
@@ -484,56 +612,14 @@ FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay, DWORD *typemask )
     /* Now find the function */
 
     ordinal = ((DWORD)relay-(DWORD)dll->dbg_funcs) / sizeof(DEBUG_ENTRY_POINT);
-    ordinal += descr->base;
     for (i = 0; i < descr->nb_names; i++)
         if (descr->ordinals[i] == ordinal) break;
     assert( i < descr->nb_names );
 
-    sprintf( buffer, "%s.%d: %s", descr->name, ordinal, descr->names[i] );
-    *typemask = descr->argtypes[ordinal - descr->base];
-    return (FARPROC32)descr->functions[ordinal - descr->base];
-}
-
-
-/***********************************************************************
- *           BUILTIN_GetProcAddress32
- *
- * Implementation of GetProcAddress() for built-in Win32 modules.
- * FIXME: this should be unified with the real GetProcAddress32().
- */
-FARPROC32 BUILTIN_GetProcAddress32( NE_MODULE *pModule, LPCSTR function )
-{
-    BUILTIN_DLL *dll = (BUILTIN_DLL *)pModule->pe_module;
-    const WIN32_DESCRIPTOR *info = &dll->descr->win32;
-    WORD ordinal = 0;
-
-    if (!dll) return NULL;
-
-    if (HIWORD(function))  /* Find function by name */
-    {
-        int i;
-
-        dprintf_module( stddeb, "Looking for function %s in %s\n",
-                        function, dll->descr->name );
-        for (i = 0; i < info->nb_names; i++)
-            if (!strcmp( function, info->names[i] ))
-            {
-                ordinal = info->ordinals[i];
-                break;
-            }
-        if (i >= info->nb_names) return NULL;  /* not found */
-    }
-    else  /* Find function by ordinal */
-    {
-        ordinal = LOWORD(function);
-        dprintf_module( stddeb, "Looking for ordinal %d in %s\n",
-                        ordinal, dll->descr->name );
-        if ((ordinal < info->base) || (ordinal >= info->base + info->nb_funcs))
-            return NULL;  /* not found */
-    }
-    if (dll->dbg_funcs && (dll->dbg_funcs[ordinal-info->base].args != 0xffff))
-        return (FARPROC32)&dll->dbg_funcs[ordinal - info->base];
-    return (FARPROC32)info->functions[ordinal - info->base];
+    sprintf( buffer, "%s.%d: %s", descr->name, ordinal + descr->base,
+             descr->names[i] );
+    *typemask = descr->argtypes[ordinal];
+    return (FARPROC32)descr->functions[ordinal];
 }
 
 

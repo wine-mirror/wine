@@ -87,8 +87,8 @@ type	win32
 0083 stub LogonUserW
 0084 stub LookupAccountNameA
 0085 stub LookupAccountNameW
-0086 stub LookupAccountSidA
-0087 stub LookupAccountSidW
+0086 stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSid32A
+0087 stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSid32W
 0088 stub LookupPrivilegeDisplayNameA
 0089 stub LookupPrivilegeDisplayNameW
 0090 stub LookupPrivilegeNameA

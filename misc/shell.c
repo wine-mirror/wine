@@ -1,6 +1,7 @@
 /*
  * 				Shell Library Functions
  */
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,8 +18,12 @@
 #include "win.h"
 #include "graphics.h"
 #include "cursoricon.h"
+#include "interfaces.h"
+#include "sysmetrics.h"
+#include "shlobj.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "debugstr.h"
 #include "winreg.h"
 
 static const char * const SHELL_People[] =
@@ -29,6 +34,7 @@ static const char * const SHELL_People[] =
     "Peter Bajusz",
     "Georg Beyerle",
     "Ross Biro",
+    "Martin Boehme",
     "Uwe Bonnes",
     "Erik Bos",
     "Fons Botman",
@@ -36,12 +42,14 @@ static const char * const SHELL_People[] =
     "Andrew Bulhak",
     "John Burton",
     "Niels de Carpentier",
+    "Gordon Chaffee",
     "Jimen Ching",
     "David A. Cuthbert",
     "Huw D. M. Davies",
     "Roman Dolejsi",
     "Frans van Dorsselaer",
     "Chris Faherty",
+    "Carsten Fallesen",
     "Paul Falstad",
     "David Faure",
     "Claus Fischer",
@@ -89,6 +97,7 @@ static const char * const SHELL_People[] =
     "Andreas Mohr",
     "Philippe De Muyter",
     "Itai Nahshon",
+    "Kristian Nielsen",
     "Henrik Olsen",
     "Michael Patra",
     "Dimitrie O. Paun",
@@ -132,12 +141,14 @@ static const char * const SHELL_People[] =
     "Eric Warnke",
     "Manfred Weichel",
     "Morten Welinder",
+    "Len White",
     "Lawson Whitney",
     "Jan Willamowius",
     "Carl Williams",
     "Karl Guenter Wuensch",
     "Eric Youngdale",
     "James Youngman",
+    "Nikita V. Youshchenko",
     "Mikolaj Zalewski",
     "John Zero",
     NULL
@@ -746,48 +757,52 @@ BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 
 /*************************************************************************
  *				SHELL_GetResourceTable
- *
- * FIXME: Implement GetPEResourceTable in w32sys.c and call it here.
  */
-static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
+static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 {
-  BYTE*              pTypeInfo = NULL;
   IMAGE_DOS_HEADER	mz_header;
-  IMAGE_OS2_HEADER	ne_header;
-  int		     size;
+  char			magic[4];
+  int			size;
   
+  *retptr = NULL;
   _llseek32( hFile, 0, SEEK_SET );
-  if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-      (mz_header.e_magic != IMAGE_DOS_SIGNATURE)) return (BYTE*)-1;
+  if (	(_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+  	(mz_header.e_magic != IMAGE_DOS_SIGNATURE)
+  )
+  	return 0;
 
   _llseek32( hFile, mz_header.e_lfanew, SEEK_SET );
-  if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
-      return NULL;
+  if (_lread32( hFile, magic, sizeof(magic) ) != sizeof(magic))
+	return 0;
+  _llseek32( hFile, mz_header.e_lfanew, SEEK_SET);
 
-  if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) 
-     { fprintf(stdnimp,"Win32s FIXME: file %s line %i\n", __FILE__, __LINE__ );
-       return NULL; }
+  if (*(DWORD*)magic  == IMAGE_NT_SIGNATURE)
+	return IMAGE_NT_SIGNATURE;
+  if (*(WORD*)magic == IMAGE_OS2_SIGNATURE) {
+  	IMAGE_OS2_HEADER	ne_header;
+  	LPBYTE			pTypeInfo = NULL;
 
-  if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return NULL;
+  	if (_lread32(hFile,&ne_header,sizeof(ne_header))!=sizeof(ne_header))
+		return 0;
 
-  size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+	if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return 0;
+	size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+	if( size > sizeof(NE_TYPEINFO) )
+	{
+	    pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
+	    if( pTypeInfo ) {
+		_llseek32(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
+		if( _lread32( hFile, (char*)pTypeInfo, size) != size ) { 
+		    HeapFree( GetProcessHeap(), 0, pTypeInfo); 
+		    pTypeInfo = NULL;
+		}
+	    }
+	}
+  	*retptr = pTypeInfo;
+  } else
+  	*retptr = (LPBYTE)-1;
+  return IMAGE_OS2_SIGNATURE; /* handles .ICO too */
 
-  if( size > sizeof(NE_TYPEINFO) )
-  {
-      pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
-      if( pTypeInfo ) 
-      {
-          _llseek32(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
-          if( _lread32( hFile, (char*)pTypeInfo, size) != size )
-          { 
-	      HeapFree( GetProcessHeap(), 0, pTypeInfo); 
-	      pTypeInfo = NULL;
-          }
-      }
-  }
-  /* no resources */
-
-  return pTypeInfo;
 }
 
 /*************************************************************************
@@ -886,11 +901,13 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 {
   HGLOBAL16 	hRet = 0;
   HGLOBAL16*	RetPtr = NULL;
-  BYTE*  	pData;
+  LPBYTE  	pData;
   OFSTRUCT 	ofs;
+  DWORD		sig;
   HFILE32 	hFile = OpenFile32( lpszExeFileName, &ofs, OF_READ );
+  UINT16	iconDirCount = 0,iconCount = 0;
   
-  dprintf_reg(stddeb, "InternalExtractIcon(%04x, file '%s', start from %d, extract %d\n", 
+  dprintf_reg(stddeb,"InternalExtractIcon(%04x,file %s,start %d,extract %d\n", 
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
   if( hFile == HFILE_ERROR32 || !n ) return 0;
@@ -898,13 +915,13 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
   hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
   RetPtr = (HICON16*)GlobalLock16(hRet);
 
- *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
+  *RetPtr = (n == 0xFFFF)? 0: 1;	/* error return values */
 
-  if( (pData = SHELL_GetResourceTable(hFile)) )
+  sig = SHELL_GetResourceTable(hFile,&pData);
+
+  if(sig == IMAGE_OS2_SIGNATURE)
   {
     HICON16	 hIcon = 0;
-    UINT16       iconDirCount = 0;
-    UINT16       iconCount = 0;
     NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
     NE_NAMEINFO* pIconStorage = NULL;
     NE_NAMEINFO* pIconDir = NULL;
@@ -980,30 +997,181 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
     if( lpiID ) HeapFree( GetProcessHeap(), 0, lpiID);
     else HeapFree( GetProcessHeap(), 0, pData);
   } 
- _lclose32( hFile );
- 
-  /* return array with icon handles */
+  if( sig == IMAGE_NT_SIGNATURE)
+  {
+  	LPBYTE			peimage,idata,igdata;
+	LPIMAGE_DOS_HEADER	dheader;
+	LPIMAGE_NT_HEADERS	pe_header;
+	LPIMAGE_SECTION_HEADER	pe_sections;
+	LPIMAGE_RESOURCE_DIRECTORY	rootresdir,iconresdir,icongroupresdir;
+	LPIMAGE_RESOURCE_DATA_ENTRY	idataent,igdataent;
+	HANDLE32		fmapping;
+	int			i,j;
+	LPIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
+	CURSORICONDIR		**cids;
+	
+	fmapping = CreateFileMapping32A(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
+	if (fmapping == 0) { /* FIXME, INVALID_HANDLE_VALUE? */
+		fprintf(stderr,"InternalExtractIcon:failed to create filemap.\n");
+		_lclose32( hFile);
+		return 0;
+	}
+	peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0);
+	if (!peimage) {
+		fprintf(stderr,"InternalExtractIcon:failed to mmap filemap.\n");
+		CloseHandle(fmapping);
+		_lclose32( hFile);
+		return 0;
+	}
+	dheader = (LPIMAGE_DOS_HEADER)peimage;
+	/* it is a pe header, SHELL_GetResourceTable checked that */
+	pe_header = (LPIMAGE_NT_HEADERS)(peimage+dheader->e_lfanew);
+	/* probably makes problems with short PE headers... but I haven't seen 
+	 * one yet... 
+	 */
+	pe_sections = (LPIMAGE_SECTION_HEADER)(((char*)pe_header)+sizeof(*pe_header));
+	rootresdir = NULL;
+	for (i=0;i<pe_header->FileHeader.NumberOfSections;i++) {
+		if (pe_sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+			continue;
+		/* FIXME: doesn't work when the resources are not in a seperate section */
+		if (pe_sections[i].VirtualAddress == pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress) {
+			rootresdir = (LPIMAGE_RESOURCE_DIRECTORY)((char*)peimage+pe_sections[i].PointerToRawData);
+			break;
+		}
+	}
 
+	if (!rootresdir) {
+		fprintf(stderr,"InternalExtractIcon: haven't found section for resource directory.\n");
+		UnmapViewOfFile(peimage);
+		CloseHandle(fmapping);
+		_lclose32( hFile);
+		return 0;
+	}
+	icongroupresdir = GetResDirEntryW(rootresdir,(LPWSTR)RT_GROUP_ICON,(DWORD)rootresdir);
+	if (!icongroupresdir) {
+		fprintf(stderr,"InternalExtractIcon: No Icongroupresourcedirectory!\n");
+		UnmapViewOfFile(peimage);
+		CloseHandle(fmapping);
+		_lclose32( hFile);
+		return 0;
+	}
+
+	iconDirCount = icongroupresdir->NumberOfNamedEntries+icongroupresdir->NumberOfIdEntries;
+	if( nIconIndex == (UINT16)-1 ) {
+		RetPtr[0] = iconDirCount;
+		UnmapViewOfFile(peimage);
+		CloseHandle(fmapping);
+		_lclose32( hFile);
+		return hRet;
+	}
+
+	if (nIconIndex >= iconDirCount) {
+		fprintf(stderr,"nIconIndex %d is larger than iconDirCount %d\n",
+			nIconIndex,iconDirCount
+		);
+		UnmapViewOfFile(peimage);
+		CloseHandle(fmapping);
+		_lclose32( hFile);
+		GlobalFree16(hRet);
+		return 0;
+	}
+	cids = (CURSORICONDIR**)HeapAlloc(GetProcessHeap(),0,n*sizeof(CURSORICONDIR*));
+		
+	/* caller just wanted the number of entries */
+
+	xresent = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);
+	/* assure we don't get too much ... */
+	if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
+
+	/* starting from specified index ... */
+	xresent = xresent+nIconIndex;
+
+	for (i=0;i<n;i++,xresent++) {
+		CURSORICONDIR	*cid;
+		LPIMAGE_RESOURCE_DIRECTORY	resdir;
+
+		/* go down this resource entry, name */
+		resdir = (LPIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
+		/* default language (0) */
+		resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir);
+		igdataent = (LPIMAGE_RESOURCE_DATA_ENTRY)resdir;
+
+		/* lookup address in mapped image for virtual address */
+		igdata = NULL;
+		for (j=0;j<pe_header->FileHeader.NumberOfSections;j++) {
+			if (igdataent->OffsetToData < pe_sections[j].VirtualAddress)
+				continue;
+			if (igdataent->OffsetToData+igdataent->Size > pe_sections[j].VirtualAddress+pe_sections[j].SizeOfRawData)
+				continue;
+			igdata = peimage+(igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
+		}
+		if (!igdata) {
+			fprintf(stderr,"InternalExtractIcon: no matching real address found for icongroup!\n");
+			UnmapViewOfFile(peimage);
+			CloseHandle(fmapping);
+			_lclose32( hFile);
+			return 0;
+		}
+		/* found */
+		cid = (CURSORICONDIR*)igdata;
+		cids[i] = cid;
+		fprintf(stderr,"cursoricondir %d: idType %d, idCount %d\n",
+			i,cid->idType,cid->idCount
+		);
+		RetPtr[i] = LookupIconIdFromDirectoryEx32(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+		fprintf(stderr,"-> best match is %08x\n",RetPtr[i]);
+	}
+	iconresdir=GetResDirEntryW(rootresdir,(LPWSTR)RT_ICON,(DWORD)rootresdir);
+	if (!iconresdir) {
+	    fprintf(stderr,"InternalExtractIcon: No Iconresourcedirectory!\n");
+	    UnmapViewOfFile(peimage);
+	    CloseHandle(fmapping);
+	    _lclose32( hFile);
+	    return 0;
+	}
+	for (i=0;i<n;i++) {
+	    LPIMAGE_RESOURCE_DIRECTORY	xresdir;
+
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir);
+	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir);
+
+	    idataent = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
+
+	    idata = NULL;
+	    /* map virtual to address in image */
+	    for (j=0;j<pe_header->FileHeader.NumberOfSections;j++) {
+		if (idataent->OffsetToData < pe_sections[j].VirtualAddress)
+		    continue;
+		if (idataent->OffsetToData+idataent->Size > pe_sections[j].VirtualAddress+pe_sections[j].SizeOfRawData)
+		    continue;
+		idata = peimage+(idataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
+	    }
+	    if (!idata) {
+		fprintf(stderr,"InternalExtractIcon: no matching real address found for icondata!\n");
+		RetPtr[i]=0;
+		continue;
+	    }
+	    RetPtr[i] = CreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+	}
+	UnmapViewOfFile(peimage);
+	CloseHandle(fmapping);
+	_lclose32( hFile);
+	return hRet;
+  }
+  _lclose32( hFile );
+  /* return array with icon handles */
   return hRet;
+
 }
 
 /*************************************************************************
  *             ExtractIcon16   (SHELL.34)
  */
 HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
-                              UINT16 nIconIndex )
+	UINT16 nIconIndex )
 {
-  HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
-
-  if( handle )
-    {
-      HICON16* ptr = (HICON16*)GlobalLock16(handle);
-      HICON16  hIcon = *ptr;
-
-      GlobalFree16(handle);
-      return hIcon;
-    }
-  return 0;
+    return ExtractIcon32A( hInstance, lpszExeFileName, nIconIndex );
 }
 
 
@@ -1011,10 +1179,32 @@ HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
  *             ExtractIcon32A   (SHELL32.133)
  */
 HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
-                               UINT32 nIconIndex )
+	UINT32 nIconIndex )
 {
-    /* FIXME */
-    return ExtractIcon16( hInstance, lpszExeFileName, nIconIndex );
+    HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
+
+    if( handle )
+    {
+	HICON16* ptr = (HICON16*)GlobalLock16(handle);
+	HICON16  hIcon = *ptr;
+
+	GlobalFree16(handle);
+	return hIcon;
+    }
+    return 0;
+}
+
+/*************************************************************************
+ *             ExtractIcon32W   (SHELL32.180)
+ */
+HICON32 WINAPI ExtractIcon32W( HINSTANCE32 hInstance, LPCWSTR lpszExeFileName,
+	UINT32 nIconIndex )
+{
+	LPSTR	exefn = HEAP_strdupWtoA(GetProcessHeap(),0,lpszExeFileName);
+	HICON32	ret = ExtractIcon32A(hInstance,exefn,nIconIndex);
+
+	HeapFree(GetProcessHeap(),0,exefn);
+	return ret;
 }
 
 
@@ -1024,37 +1214,37 @@ HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
-HICON16 WINAPI ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,
-                                     LPWORD lpiIcon)
+HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst,LPSTR lpIconPath,
+	LPWORD lpiIcon)
 {
     HICON16 hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
     if( hIcon < 2 )
-      {
+    {
 
 	if( hIcon == 1 ) /* no icons found in given file */
-	  {
+	{
 	    char  tempPath[0x80];
 	    UINT16  uRet = FindExecutable16(lpIconPath,NULL,tempPath);
 
 	    if( uRet > 32 && tempPath[0] )
-	      {
+	    {
 		strcpy(lpIconPath,tempPath);
-	        hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
+		hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
 		if( hIcon > 2 ) return hIcon;
-	      }
+	    }
 	    else hIcon = 0;
-	  }
-	
-	if( hIcon == 1 ) 
-	  *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
-	else
-	  *lpiIcon = 6;   /* generic icon - found nothing */
+	}
 
-        GetModuleFileName16(hInst, lpIconPath, 0x80);
+	if( hIcon == 1 ) 
+	    *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
+	else
+	    *lpiIcon = 6;   /* generic icon - found nothing */
+
+	GetModuleFileName16(hInst, lpIconPath, 0x80);
 	hIcon = LoadIcon16( hInst, MAKEINTRESOURCE(*lpiIcon));
-      }
+    }
 
     return hIcon;
 }
@@ -1066,30 +1256,30 @@ HICON16 WINAPI ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,
  */
 LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 {
-  UINT16 	l = strlen(entry); 
-  for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
-     {
-       if( lstrncmpi32A(lpEnv, entry, l) ) continue;
-       
-       if( !*(lpEnv+l) )
-         return (lpEnv + l); 		/* empty entry */
-       else if ( *(lpEnv+l)== '=' )
-	 return (lpEnv + l + 1);
-     }
-  return NULL;
+    UINT16 	l = strlen(entry); 
+    for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
+    {
+	if( lstrncmpi32A(lpEnv, entry, l) ) continue;
+
+	if( !*(lpEnv+l) )
+	    return (lpEnv + l); 		/* empty entry */
+	else if ( *(lpEnv+l)== '=' )
+	    return (lpEnv + l + 1);
+    }
+    return NULL;
 }
 
 SEGPTR WINAPI FindEnvironmentString(LPSTR str)
 {
- SEGPTR  spEnv = GetDOSEnvironment();
- LPSTR  lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
- 
- LPSTR  lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
+    SEGPTR  spEnv = GetDOSEnvironment();
+    LPSTR  lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
 
- if( lpString )		/*  offset should be small enough */
-     return spEnv + (lpString - lpEnv);
+    LPSTR  lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
 
- return (SEGPTR)NULL;
+    if( lpString )		/*  offset should be small enough */
+	return spEnv + (lpString - lpEnv);
+
+    return (SEGPTR)NULL;
 }
 
 /*************************************************************************
@@ -1250,6 +1440,30 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
+ *				SHAppBarMessage32	[SHELL32.207]
+ */
+UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
+{
+    fprintf(stdnimp,"SHAppBarMessage32(0x%08lx,%p)\n", msg, data);
+#if 0
+    switch (msg) {
+        case ABM_ACTIVATE:
+        case ABM_GETAUTOHIDEBAR:
+        case ABM_GETSTATE:
+        case ABM_GETTASKBARPOS:
+        case ABM_NEW:
+        case ABM_QUERYPOS:
+        case ABM_REMOVE:
+        case ABM_SETAUTOHIDEBAR:
+        case ABM_SETPOS:
+        case ABM_WINDOWPOSCHANGED:
+	    ;
+    }
+#endif
+    return 0;
+}
+
+/*************************************************************************
  *				CommandLineToArgvW	[SHELL32.7]
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
@@ -1329,9 +1543,7 @@ void WINAPI FreeIconList( DWORD dw )
  */
 
 /* This is the wrong place, but where is the right one?  */
-typedef UINT32 REFCLSID32;
-typedef UINT32 REFIID32;
-typedef UINT32 HRESULT32;
+#if 0
 #define E_OUTOFMEMORY 0x8007000EL
 
 HRESULT32 WINAPI SHELL32_DllGetClassObject (REFCLSID32 clsid,
@@ -1345,4 +1557,10 @@ HRESULT32 WINAPI SHELL32_DllGetClassObject (REFCLSID32 clsid,
 	   clsid, riid, ppv);
 
   return hres;
+}
+#endif
+
+DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder) {
+	*shellfolder = NULL;
+	return 0;
 }

@@ -794,6 +794,20 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
     return ret & MAKELONG( flags, flags );
 }
 
+/***********************************************************************
+ *           GetQueueStatus32   (USER32.283)
+ */
+DWORD WINAPI GetQueueStatus32( UINT32 flags )
+{
+    MESSAGEQUEUE *queue;
+    DWORD ret;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    ret = MAKELONG( queue->changeBits, queue->wakeBits );
+    queue->changeBits = 0;
+    return ret & MAKELONG( flags, flags );
+}
+
 
 /***********************************************************************
  *           GetInputState16   (USER.335)

@@ -975,6 +975,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
                 XPutPixel( image, x, y,
                            COLOR_PixelToPalette[XGetPixel( image, x, y )]);
         XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, width, height );
+	XDestroyImage( image );
     }
 }
 

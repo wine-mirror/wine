@@ -363,6 +363,9 @@ static void CBPaintButton(LPHEADCOMBO lphc, HDC16 hdc)
     UINT32 	x, y;
     BOOL32 	bBool;
 
+    if( lphc->wState & CBF_NOREDRAW )
+        return;
+
     hPrevBrush = (HBRUSH32)SelectObject32(hdc, sysColorObjects.hbrushBtnFace);
     CONV_RECT16TO32( &lphc->RectButton, &r );
 
@@ -400,6 +403,9 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC16 hdc)
 {
    INT32	id, size = 0;
    LPSTR	pText = NULL;
+
+   if( lphc->wState & CBF_NOREDRAW )
+        return;
 
    /* follow Windows combobox that sends a bunch of text 
     * inquiries to its listbox while processing WM_PAINT. */
@@ -508,7 +514,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC16 hParamDC)
   
   hDC = (hParamDC) ? hParamDC
 		   : BeginPaint16( lphc->self->hwndSelf, &ps);
-  if( hDC && !(lphc->self->flags & WIN_NO_REDRAW) )
+  if( hDC && !(lphc->wState & CBF_NOREDRAW) )
   {
       HBRUSH32	hPrevBrush, hBkgBrush;
 
@@ -673,11 +679,14 @@ static void CBDropDown( LPHEADCOMBO lphc )
 
    SetWindowPos32( lphc->hWndLBox, HWND_TOP, rect.left, rect.top, 
 		 rect.right - rect.left, rect.bottom - rect.top, 
-		 SWP_NOACTIVATE | SWP_NOSIZE );
-   if( pRect )
-       RedrawWindow16( lphc->self->hwndSelf, pRect, 0, RDW_INVALIDATE | 
+		 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREDRAW);
+   if( !(lphc->wState & CBF_NOREDRAW) )
+   {
+       if( pRect )
+           RedrawWindow16( lphc->self->hwndSelf, pRect, 0, RDW_INVALIDATE | 
 			   RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
-   ShowWindow32( lphc->hWndLBox, SW_SHOWNA );
+       ShowWindow32( lphc->hWndLBox, SW_SHOWNA );
+   }
 }
 
 /***********************************************************************
@@ -722,7 +731,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL32 ok, BOOL32 bButton )
 	       bButton = TRUE;
 	   }
 
-	   if( bButton )
+	   if( bButton && !(lphc->wState & CBF_NOREDRAW) )
 	       RedrawWindow16( hWnd, &rect, 0, RDW_INVALIDATE | 
 			       RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
 	   CB_NOTIFY( lphc, CBN_CLOSEUP );
@@ -1036,7 +1045,7 @@ static void CBResetPos( LPHEADCOMBO lphc, LPRECT16 lbRect, BOOL32 bRedraw )
                        lphc->RectEdit.bottom - lphc->RectEdit.top,
                        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
        lphc->wState &= ~CBF_NORESIZE;
-       if( bRedraw )
+       if( bRedraw && !(lphc->wState & CBF_NOREDRAW) )
            RedrawWindow32( lphc->self->hwndSelf, NULL, 0,
                            RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
    }
@@ -1336,6 +1345,11 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return TRUE;
 
 	case WM_SETREDRAW:
+		if( wParam )
+		    lphc->wState &= ~CBF_NOREDRAW;
+		else
+		    lphc->wState |= CBF_NOREDRAW;
+
 		if( lphc->wState & CBF_EDIT )
 		    SendMessage32A( lphc->hWndEdit, message, wParam, lParam );
 		SendMessage32A( lphc->hWndLBox, message, wParam, lParam );

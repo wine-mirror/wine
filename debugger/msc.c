@@ -509,8 +509,8 @@ struct deferred_debug_info
 	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
+        HMODULE32                         module;
 	LPIMAGE_DEBUG_DIRECTORY           dbgdir;
-	struct pe_data			* pe;
         LPIMAGE_SECTION_HEADER	          sectp;
 	int				  nsect;
 	short int			  dbg_index;			
@@ -881,8 +881,8 @@ DEBUG_InitCVDataTypes()
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
-                        const char *module_name, u_long v_addr, u_long size)
+DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
+                         u_long v_addr, u_long size)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
@@ -891,7 +891,7 @@ DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
   struct deferred_debug_info * deefer;
 
   orig_size = size;
-  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
+  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
   for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
@@ -904,7 +904,7 @@ DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
     }
 
   size = orig_size;
-  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
+  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
   for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
@@ -935,16 +935,16 @@ DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
 	   * it just points to itself, and we can ignore this.
 	   */
 	  if(    (dbgptr->Type == IMAGE_DEBUG_TYPE_MISC)
-	      && (pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) == 0 )
+	      && (PE_HEADER(hModule)->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) == 0 )
 	    {
 	      break;
 	    }
 
 	  deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
-	  deefer->pe = pe;
-
-	  deefer->dbg_info = NULL;
-	  deefer->dbg_size = 0;
+	  deefer->module    = hModule;
+	  deefer->load_addr = (char *)hModule;
+	  deefer->dbg_info  = NULL;
+	  deefer->dbg_size  = 0;
 
 	  /*
 	   * Read the important bits.  What we do after this depends
@@ -952,16 +952,15 @@ DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
 	   * to proceed if we know what we need to do next.
 	   */
 	  deefer->dbg_size = dbgptr->SizeOfData;
-	  deefer->dbg_info = (char *)(pe->mappeddll+dbgptr->PointerToRawData);
-	  deefer->load_addr = (char *) load_addr;
+	  deefer->dbg_info = (char *)(hModule + dbgptr->PointerToRawData);
 	  deefer->dbgdir = dbgptr;
 	  deefer->next = dbglist;
 	  deefer->loaded = FALSE;
 	  deefer->dbg_index = DEBUG_next_index;
 	  deefer->module_name = xstrdup(module_name);
 
-	  deefer->sectp = pe->pe_seg;
-	  deefer->nsect = pe->pe_header->FileHeader.NumberOfSections;
+	  deefer->sectp = PE_SECTIONS(hModule);
+	  deefer->nsect = PE_HEADER(hModule)->FileHeader.NumberOfSections;
 
 	  dbglist = deefer;
 	  break;
@@ -985,7 +984,7 @@ DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
   struct deferred_debug_info * deefer;
 
   deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
-  deefer->pe = NULL;
+  deefer->module = 0;
   
   /*
    * Read the important bits.  What we do after this depends
@@ -2401,19 +2400,9 @@ void DEBUG_InfoShare(void)
   fprintf(stderr,"Address\t\tModule\tName\n");
 
   for(deefer = dbglist; deefer; deefer = deefer->next)
-    {
-      if( deefer->pe == NULL )
-	{
-	  fprintf(stderr,"0x%8.8x\t(ELF)\t%s\n", 
-		  (unsigned int) deefer->load_addr,
-		  deefer->module_name);
-	}
-      else
-	{
-	  fprintf(stderr,"0x%8.8x\t(Win32)\t%s\n", 
-		  (unsigned int) deefer->load_addr,
-		  deefer->module_name);
-	}
-    }
+  {
+      fprintf(stderr,"0x%8.8x\t(%s)\t%s\n", (unsigned int) deefer->load_addr,
+              deefer->module ? "Win32" : "ELF", deefer->module_name);
+  }
 }
 

@@ -6,22 +6,12 @@
 #include "winnt.h"
 #include "peexe.h"
 
-/* This struct is used for loaded PE .dlls */
-struct pe_data {
-	LPIMAGE_NT_HEADERS	pe_header;
-	LPIMAGE_SECTION_HEADER	pe_seg;
-	HMODULE32		mappeddll;
-};
-
-typedef struct pe_data PE_MODULE;
-
 /* modreference used for attached processes
  * all section are calculated here, relocations etc.
  */
 struct pe_modref {
 	struct pe_modref		*next;
-	PE_MODULE			*pe_module;
-	unsigned long int		load_addr;
+        HMODULE32                       module;
 	LPIMAGE_IMPORT_DESCRIPTOR	pe_import;
 	LPIMAGE_EXPORT_DIRECTORY	pe_export;
 	LPIMAGE_RESOURCE_DIRECTORY	pe_resource;
@@ -35,7 +25,7 @@ struct pe_modref {
 typedef struct pe_modref PE_MODREF;
 
 extern int PE_unloadImage(HMODULE32 hModule);
-extern FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName);
+extern FARPROC32 PE_FindExportedFunction(HMODULE32 hModule, LPCSTR funcName);
 extern void my_wcstombs(char * result, u_short * source, int len);
 extern BOOL32 PE_EnumResourceTypes32A(HMODULE32,ENUMRESTYPEPROC32A,LONG);
 extern BOOL32 PE_EnumResourceTypes32W(HMODULE32,ENUMRESTYPEPROC32W,LONG);
@@ -50,5 +40,7 @@ extern HGLOBAL32 PE_LoadResource32(HINSTANCE32,HRSRC32);
 
 struct _PDB32; /* forward definition */
 extern void PE_InitializeDLLs(struct _PDB32*,DWORD,LPVOID);
+
+extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD);
 
 #endif /* __WINE_PE_IMAGE_H */

@@ -1,0 +1,21 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ole
+
+C_SRCS = \
+	compobj.c \
+	ole2.c \
+	ole2disp.c \
+	ole2nls.c \
+	olecli.c \
+	olesvr.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

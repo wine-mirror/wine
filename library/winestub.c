@@ -4,9 +4,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
-/* Stubs needed for linking with Winelib */
+/* Stub needed for linking with Winelib */
 /* FIXME: this should not be necessary */
-FARPROC32 BUILTIN_GetProcAddress32( void *mod, LPCSTR func ) { return 0; }
 HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force ) { return 0; }
 
 

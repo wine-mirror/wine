@@ -37,7 +37,7 @@ type	win32
  33 stub __threadhandle
  34 stub __threadid
  35 stub __toascii
- 36 stub _abnormal_termination
+ 36 cdecl _abnormal_termination() CRTDLL__abnormal_termination
  37 stub _access
  38 extern _acmdln_dll CRTDLL_acmdln_dll
  39 stub _aexit_rtn_dll
@@ -260,7 +260,7 @@ type	win32
 256 stub _read
 257 stub _rmdir
 258 stub _rmtmp
-259 stub _rotl
+259 cdecl _rotl (long long) CRTDLL__rotl
 260 stub _rotr
 261 stub _scalb
 262 stub _searchenv
@@ -280,7 +280,7 @@ type	win32
 276 stub _spawnve
 277 stub _spawnvp
 278 stub _spawnvpe
-279 stub _splitpath
+279 cdecl _splitpath (ptr ptr ptr ptr ptr) CRTDLL__splitpath
 280 cdecl _stat (ptr ptr) CRTDLL__stat
 281 stub _statusfp
 282 cdecl _strcmpi(ptr ptr) CRTDLL__strcmpi

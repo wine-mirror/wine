@@ -789,24 +789,23 @@ static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
  *
  * Load the entry points of a Win32 module into the hash table.
  */
-static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
+static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
 {
-#define RVA(x) (load_addr+(DWORD)(x))
+#define RVA(x) (hModule+(DWORD)(x))
 
     DBG_ADDR addr;
     char buffer[256];
     int i, j;
+    IMAGE_SECTION_HEADER *pe_seg;
     IMAGE_EXPORT_DIRECTORY *exports;
     IMAGE_DATA_DIRECTORY *debug_dir;
-    DWORD load_addr;
     WORD *ordinals;
     void **functions;
     const char **names;
 
     PE_MODREF *pem = pCurrentProcess->modref_list;
-    while (pem && (pem->pe_module != pe)) pem = pem->next;
+    while (pem && (pem->module != hModule)) pem = pem->next;
     if (!pem) return;
-    load_addr = pem->load_addr;
     exports = pem->pe_export;
 
     addr.seg = 0;
@@ -814,22 +813,24 @@ static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
 
     /* Add start of DLL */
 
-    addr.off = load_addr;
+    addr.off = hModule;
     DEBUG_AddSymbol( name, &addr, NULL, SYM_WIN32 | SYM_FUNC );
 
     /* Add entry point */
 
     sprintf( buffer, "%s.EntryPoint", name );
-    addr.off = RVA( pe->pe_header->OptionalHeader.AddressOfEntryPoint );
+    addr.off = (DWORD)RVA_PTR( hModule, OptionalHeader.AddressOfEntryPoint );
     DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
 
     /* Add start of sections */
 
-    for (i = 0; i < pe->pe_header->FileHeader.NumberOfSections; i++)
+    pe_seg = PE_SECTIONS(hModule);
+    for (i = 0; i < PE_HEADER(hModule)->FileHeader.NumberOfSections; i++)
     {
-        sprintf( buffer, "%s.%s", name, pe->pe_seg[i].Name );
-        addr.off = RVA( pe->pe_seg[i].VirtualAddress );
+        sprintf( buffer, "%s.%s", name, pe_seg->Name );
+        addr.off = RVA(pe_seg->VirtualAddress );
         DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+        pe_seg++;
     }
 
     /* Add exported functions */
@@ -859,9 +860,9 @@ static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
         DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
     }
 
-    debug_dir = &pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
+    debug_dir = &PE_HEADER(hModule)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
     if (debug_dir->Size)
-        DEBUG_RegisterDebugInfo( pe, load_addr, name,
+        DEBUG_RegisterDebugInfo( hModule, name,
                                  debug_dir->VirtualAddress, debug_dir->Size );
 #undef RVA
 }
@@ -884,10 +885,7 @@ void DEBUG_LoadEntryPoints(void)
         fprintf( stderr, " %s", entry.szModule );
 
         if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
-        {
-            if (pModule->flags & NE_FFLAGS_BUILTIN) continue;
-            DEBUG_LoadEntryPoints32( pModule->pe_module, entry.szModule );
-        }
+            DEBUG_LoadEntryPoints32( pModule->module32, entry.szModule );
         else  /* NE module */
             DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }

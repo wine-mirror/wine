@@ -1227,3 +1227,21 @@ INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
 	return 1;
 }
 
+
+/***********************************************************************
+ *           RegisterHotKey			(USER32.433)
+ */
+BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
+	fprintf(stderr,"RegisterHotKey(%08x,%d,%08x,%d), STUB!\n",
+		hwnd,id,modifiers,vk
+	);
+	return TRUE;
+}
+
+/***********************************************************************
+ *           UnregisterHotKey			(USER32.565)
+ */
+BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
+	fprintf(stderr,"UnregisterHotKey(%08x,%d),stub!\n",hwnd,id);
+	return TRUE;
+}

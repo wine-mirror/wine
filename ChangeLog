@@ -1,4 +1,135 @@
 ----------------------------------------------------------------------
+Sat Nov 29 12:35:26 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [if1632/builtin.c]
+	Build a complete PE header for builtin Win32 modules.
+
+	* [loader/pe_image.c] [loader/module.c]
+	HMODULE32 now points to the loading address of the module. There
+	is no longer a separate PE_MODULE structure.
+
+Fri Nov 28 11:21:47 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [ole/*][configure.in][Makefile.in][include/interfaces.h]
+	  [if1632/olesvr32.spec][if1632/olecli32.spec]
+	New directory, moved OLE stuff there.
+	new .spec files for olecli32,olesvr32, some stubs added.
+
+	* [misc/shell.c]
+	Added support for extracting icons from PE dlls.
+
+	* [misc/shellord.c][if1632/shell32.spec]
+	Added a huge heap of ordinal only exported shell functions
+	(will work only in Win95).
+
+	* [loader/task.c]
+	Hack to make MakeProcInstance16 work in all cases (mplayer.exe).
+
+	* [win32/string32.c][include/string32.h]
+	Obsolete, removed.
+
+	* [windows/keyboard.c]
+	Added *RegisterHotkey.
+
+	* [objects/font.c][objects/text.c]
+	Added GetFontLanguageInfo, GetTextCharsetInfo.
+
+Wed Nov 26 18:10:40 1997  Uwe Bonnes  <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [misc/network.c]
+	In WNetGetConnection16 return the Drive label and not the DOS-Cwd.
+	Makes Wordview 6 start on a network connected machine.
+
+	* [controls/status.c]
+	Catch a Null pointer in SW_SetText.
+
+	* [files/dos_fs.c]
+ 	Add NT5 functions GetLongPathName32.
+
+	* [files/file.c]
+	Make GetTempFileName16 accept drive 0 (Current Drive) too.
+	Handle more errors and be more verbose in FILE_SetDosError, fix
+	an error in DeleteFile32W
+
+	* [memory/virtual.c]
+	Implement FlushViewOfFile.
+
+	* [misc/crtdll]
+	Implement _rotl and splitpath and add a stub for 
+	_abnormal_termination.
+
+	* [misc/printdrv.c]
+	Stub for EnumPrinters32A.
+
+	* [win32/newfns]
+	Add Stub for QueryPerformanceFrequency, change return value
+	for QueryPerformanceCounter.
+ 	Add stub for DeviceIoControl.
+
+Tue Nov 25 15:55:01 1997 Martin Boehme <boehme@informatik.mu-luebeck.de>
+
+	* [controls/combo.c] [controls/edit.c] [windows/defwnd.c]
+	  [windows/winpos.c] [windows/win.c]
+	Removed WIN_NO_REDRAW flag.
+
+Tue Nov 25 13:20:35 1997  Douglas Ridgway <ridgway@taiga.v-wave.com>
+
+	* [graphics/x11drv/bitblt.c]
+	Fixed memory leak in BITBLT_GetDstArea.
+
+Sun Nov 23 14:05:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [files/directory.c]
+	Export windows system directory to environment.
+
+	* [if1632/Makefile.in] [if1632/builtin.c] [if1632/w32skrnl.spec]
+	  [if1632/win32s16.spec] [misc/w32scomb.c] [misc/w32skrnl.c]
+	Added Win32s DLLs W32SKRNL and WIN32S16.
+
+	* [if1632/kernel32.spec] [loader/module.c]
+	Added misc functions for Win32s.
+
+	* [if1632/kernel.spec] [loader/task.c]
+	Added DefineHandleTable().
+
+	* [scheduler/process.c]
+	Fixed SetEnvironmentVariable32A() to avoid heap corruption.
+
+Sat Nov 22 14:11:42 1997  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [windows/painting.c]
+	Fix leak in BeginPaint16() for CS_PARENTDC windows where the
+	update region was not properly released.
+
+Thu Nov 20 03:55:29 1997  Gordon Chaffee <chaffee@CS.Berkeley.EDU>
+
+	* [loader/pe_image.c]
+	Implemented forwarded DLL functions.
+
+	* [objects/dib.c]
+	Added support for 16- and 32-bit mode DIBs.
+	Support negative bitmap heights.
+
+	* [win32/process.c]
+	Added stub for CreateProcess32W.
+
+	* [win32/security.c] [include/ntdll.h]
+	Added stubs for LookupAccountSid32A/W.
+
+	* [scheduler/process.c]
+	Use the size specified in the PE header for the process heap.
+
+Mon Nov 17 00:53:35 1997  Len White <phreak@cgocable.net>
+
+	* [msdos/int3d.c]
+	New file. Stubs for int3d.
+
+Sun Nov 16 12:30:00 PST 1997  Jason Schonberg  <schon@mti.sgi.com>
+
+	* [include/aspi.h]
+	Changed comment style from C++ to C.
+
+----------------------------------------------------------------------
 Sun Nov 16 07:42:44 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
 
 	* [windows/dce.c] [windows/clipboard.c] [windows/nonclient.c]
@@ -78,7 +209,7 @@ Fri Nov  7 19:44:26 1997  Olaf Flebbe  <o.flebbe@science-computing.de>
 	* [loader/resource.c] [user32.spec]
 	Stubs for CopyAcceleratorTable, Destroy AcceleratorTable.
 
-Thu Nov  6 22:37:04 1997  Morten Welinder  <welinder@rentec.com>
+Thu Nov  6 22:37:04 1997  Morten Welinder  <terra@diku.dk>
 
 	* [files/drive.c]
 	(GetDiskFreeSpace32A): Cap at 2GB.

@@ -19,6 +19,7 @@ C_SRCS = \
 	int26.c \
 	int2a.c \
 	int2f.c \
+	int3d.c \
 	int4b.c \
 	int5c.c \
 	interrupts.c \

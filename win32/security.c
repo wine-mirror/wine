@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "windows.h"
+#include "winerror.h"
 #include "ntdll.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -199,3 +200,32 @@ BOOL32 WINAPI CopySid (DWORD nDestinationSidLength, LPSID pDestinationSid,
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           LookupAccountSidA   [ADVAPI32.86]
+ */
+BOOL32 WINAPI LookupAccountSid32A(LPCSTR system,PSID sid,
+				  LPCSTR account,LPDWORD accountSize,
+				  LPCSTR domain, LPDWORD domainSize,
+				  PSID_NAME_USE name_use)
+{
+	fprintf(stdnimp,"LookupAccountSid32A(%s,%p,%p,%p,%p,%p,%p),stub\n",
+		system,sid,account,accountSize,domain,domainSize,name_use);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *           LookupAccountSidW   [ADVAPI32.86]
+ */
+BOOL32 WINAPI LookupAccountSid32W(LPCWSTR system,PSID sid,
+				  LPCWSTR account,LPDWORD accountSize,
+				  LPCWSTR domain, LPDWORD domainSize,
+				  PSID_NAME_USE name_use)
+{
+	fprintf(stdnimp,"LookupAccountSid32W(%p,%p,%p,%p,%p,%p,%p),stub\n",
+		system,sid,account,accountSize,domain,domainSize,name_use);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+

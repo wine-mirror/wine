@@ -16,6 +16,7 @@
 #include "ldt.h"
 #include "thread.h"
 #include "winerror.h"
+#include "pe_image.h"
 
 PDB32 *pCurrentProcess = NULL;
 
@@ -306,7 +307,12 @@ error:
 PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
 {
     PDB32 *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB32) );
+    DWORD size, commit;
+    NE_MODULE *pModule;
+
     if (!pdb) return NULL;
+    if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return 0;
+
     pdb->header.type     = K32OBJ_PROCESS;
     pdb->header.refcount = 1;
     pdb->exit_code       = 0x103; /* STILL_ACTIVE */
@@ -318,8 +324,23 @@ PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
     pdb->heap_list       = pdb->heap;
+
     InitializeCriticalSection( &pdb->crit_section );
-    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) goto error;
+
+    /* Create the heap */
+
+    if (pModule->module32)
+    {
+	size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
+	commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
+    }
+    else
+    {
+	size = 0x10000;
+	commit = 0;
+    }
+    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         goto error;
     if (!(pdb->handle_table = PROCESS_AllocHandleTable( pdb ))) goto error;
@@ -378,6 +399,21 @@ HANDLE32 WINAPI GetCurrentProcess(void)
     return 0x7fffffff;
 }
 
+
+/*********************************************************************
+ *	OpenProcess				[KERNEL32.543]
+ *
+ */
+HANDLE32 WINAPI OpenProcess32(DWORD fdwAccess,BOOL32 bInherit,DWORD IDProcess)
+{
+	if (IDProcess != (DWORD)pCurrentProcess) {
+		fprintf(stderr,"OpenProcess32(%ld,%d,%ld)\n",fdwAccess,bInherit,IDProcess);
+		/* XXX: might not be the correct error value */
+		SetLastError( ERROR_INVALID_HANDLE );
+		return 0;
+	}
+	return GetCurrentProcess();
+}			      
 
 /***********************************************************************
  *           GetCurrentProcessId   (KERNEL32.199)
@@ -475,7 +511,13 @@ DWORD WINAPI GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
     }
     if (!*p) goto not_found;
     if (value) lstrcpyn32A( value, p + len + 1, size );
-    return strlen(p);
+    len = strlen(p);
+    /* According to the Win32 docs, if there is not enough room, return
+     * the size required to hold the string plus the terminating null
+     */
+    if (size <= len) len++;
+    return len;
+	
 not_found:
     return 0;  /* FIXME: SetLastError */
 }
@@ -527,13 +569,20 @@ BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
     len = value ? strlen(name) + strlen(value) + 2 : 0;
     if (!res) len -= strlen(p) + 1;  /* The name already exists */
     size = pCurrentProcess->env_db->env_size + len;
+    if (len < 0)
+    {
+        LPSTR next = p + strlen(p) + 1;
+        memmove( next + len, next,
+                 pCurrentProcess->env_db->env_size - (next - env) );
+    }
     if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, size )))
         return FALSE;
     p = new_env + (p - env);
+    if (len > 0)
+        memmove( p + len, p, pCurrentProcess->env_db->env_size - (p-new_env) );
 
     /* Set the new string */
 
-    memmove( p + len, p, pCurrentProcess->env_db->env_size - (p-new_env) );
     if (value)
     {
         strcpy( p, name );
@@ -597,8 +646,8 @@ DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
 				LPSTR	x = HeapAlloc(heap,0,end-s+1);
 				char	buf[2];
 
-				lstrcpyn32A(x,s+1,end-s-1);
-				x[end-s-1]=0;
+				lstrcpyn32A(x,s+1,end-s);
+				x[end-s]=0;
 
 				/* put expanded variable directly into 
 				 * destination string, so we don't have
@@ -606,7 +655,7 @@ DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
 				 */
 				ret = GetEnvironmentVariable32A(x,buf,2);
 				CHECK_FREE(ret+2);
-				ret = GetEnvironmentVariable32A(x,d,d-xdst);
+				ret = GetEnvironmentVariable32A(x,d,cursize-(d-xdst));
 				if (ret) {
 					d+=strlen(d);
 				} else {
@@ -823,6 +872,21 @@ DWORD WINAPI GetProcessVersion(DWORD processid)
 	if (!pTask)
 		return 0;
 	return (pTask->version&0xff) | (((pTask->version >>8) & 0xff)<<16);
+}
+
+/***********************************************************************
+ *           GetProcessFlags    (KERNEL32)
+ */
+DWORD WINAPI GetProcessFlags(DWORD processid)
+{
+	PDB32	*process;
+
+	if (!processid) {
+		process=pCurrentProcess;
+		/* check if valid process */
+	} else
+		process=(PDB32*)pCurrentProcess; /* decrypt too, if needed */
+	return process->flags;
 }
 
 /***********************************************************************

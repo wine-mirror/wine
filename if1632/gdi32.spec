@@ -173,7 +173,7 @@ type	win32
 166 stub GetCurrentObject
 167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
 168 stdcall GetDCOrgEx(long ptr) GetDCOrgEx
-169 stub GetDIBColorTable
+169 stdcall GetDIBColorTable(long long long ptr) GetDIBColorTable32
 170 stdcall GetDIBits(long long long long ptr ptr long) GetDIBits32
 171 stdcall GetDeviceCaps(long long) GetDeviceCaps32
 172 stub GetDeviceGammaRamp
@@ -186,7 +186,7 @@ type	win32
 179 stub GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
 181 stub GetFontData
-182 stub GetFontLanguageInfo
+182 stdcall GetFontLanguageInfo(long) GetFontLanguageInfo32
 183 stub GetFontResourceInfo
 184 stub GetFontResourceInfoW
 185 stub GetGlyphOutline
@@ -315,7 +315,7 @@ type	win32
 308 stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 309 stub SetColorAdjustment
 310 stub SetColorSpace
-311 stub SetDIBColorTable
+311 stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable32
 312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits32
 313 stdcall SetDIBitsToDevice(long long long long long long long long long
                                ptr ptr long) SetDIBitsToDevice32
@@ -389,7 +389,7 @@ type	win32
 378 stub GdiWinWatchGetClipList
 379 stub GdiWinWatchOpen
 380 stub GetGlyphOutlineWow
-381 stub GetTextCharsetInfo
+381 stdcall GetTextCharsetInfo(long ptr long) GetTextCharsetInfo
 382 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharSetInfo
 383 stub UpdateICMRegKeyA
 384 stub UpdateICMRegKeyW

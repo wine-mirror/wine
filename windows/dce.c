@@ -309,7 +309,7 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT32 *lprect )
 {
     *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
 
-    if ((wndPtr->dwStyle & WS_VISIBLE) && !(wndPtr->flags & WIN_NO_REDRAW))
+    if (wndPtr->dwStyle & WS_VISIBLE)
     {
 	INT32 xoffset = lprect->left;
 	INT32 yoffset = lprect->top;
@@ -318,8 +318,7 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT32 *lprect )
 	{
 	    wndPtr = wndPtr->parent;
 
-	    if ((wndPtr->flags & WIN_NO_REDRAW) ||
-		(wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
+	    if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
 		goto fail;
 
 	    xoffset += wndPtr->rectClient.left;

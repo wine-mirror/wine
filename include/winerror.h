@@ -38,5 +38,6 @@ extern int WIN32_LastError;
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
 #define ERROR_BAD_DEVICE            1200
+#define ERROR_NO_NETWORK            1222
 
 #endif  /* __WINE_WINERROR_H */

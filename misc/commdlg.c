@@ -124,6 +124,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
+    /* FIXME: doesn't handle win32 format correctly yet */
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpofn->hwndOwner,
                                         (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),

@@ -11,19 +11,6 @@ RCFLAGS   = -w32 -h
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va
 LICENSELANG = En
 
-# Installation infos
-
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA    = @INSTALL_DATA@
-prefix          = @prefix@
-exec_prefix     = @exec_prefix@
-bindir          = @bindir@
-libdir          = @libdir@
-sysconfdir      = @sysconfdir@
-mandir          = @mandir@/man1
-manext          = .1
-
 MOSTSRCS = \
 	dialog.c \
 	group.c \

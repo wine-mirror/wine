@@ -161,7 +161,7 @@ int DIR_Init(void)
     dprintf_dosfs( stddeb, "TempDir    = %s\nCwd        = %c:\\%s\n",
                    DIR_TempDosDir, 'A' + drive, DRIVE_GetDosCwd( drive ) );
 
-    /* Put the temp and Windows directories into the environment */
+    /* Put the temp and Windows and system directories into the environment */
 
     env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_TempDosDir) + 6 );
     strcpy( env_p, "TEMP=" );
@@ -170,6 +170,10 @@ int DIR_Init(void)
     env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_WindowsDosDir) + 8 );
     strcpy( env_p, "windir=" );
     strcpy( env_p + 7, DIR_WindowsDosDir );
+    putenv( env_p );
+    env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_SystemDosDir) + 11 );
+    strcpy( env_p, "winsysdir=" );
+    strcpy( env_p + 10, DIR_SystemDosDir );
     putenv( env_p );
 
     return 1;

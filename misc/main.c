@@ -118,7 +118,7 @@ static XrmOptionDescRec optionsTable[] =
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
 
 #define USAGE \
-  "Usage:  %s [options] program_name [arguments]\n" \
+  "Usage:  %s [options] \"program_name [arguments]\"\n" \
   "\n" \
   "Options:\n" \
   "    -backingstore   Turn on backing store\n" \
@@ -613,7 +613,7 @@ void WINAPI MessageBeep16( UINT16 i )
  */
 BOOL32 WINAPI MessageBeep32( UINT32 i )
 {
-    XBell( display, 100 );
+    XBell( display, 0 );
     return TRUE;
 }
 
@@ -624,7 +624,7 @@ BOOL32 WINAPI MessageBeep32( UINT32 i )
 BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
     /* dwFreq and dwDur are ignored by Win95 */
-    XBell(display, 100);
+    XBell(display, 0);
     return TRUE;
 }
 

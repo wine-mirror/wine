@@ -167,16 +167,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	}
 
     case WM_SETREDRAW:
-        if (!wParam)
-        {
-            ValidateRect32( wndPtr->hwndSelf, NULL );
-            wndPtr->flags |= WIN_NO_REDRAW;
-        }
+        if(wParam)
+            SetWindowPos32( wndPtr->hwndSelf, NULL, 0, 0, 0, 0,
+                SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                SWP_NOACTIVATE | SWP_NOREDRAW );
         else
-        {
-            wndPtr->flags &= ~WIN_NO_REDRAW;
-            ShowWindow32( wndPtr->hwndSelf, SW_SHOW );
-        }
+            SetWindowPos32( wndPtr->hwndSelf, NULL, 0, 0, 0, 0,
+                SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                SWP_NOACTIVATE | SWP_NOREDRAW );
         return 0;
 
     case WM_CLOSE:

@@ -50,6 +50,17 @@ typedef struct tagSHFILEINFO32W {
 
 DECL_WINELIB_TYPE_AW(SHFILEINFO);
 
+typedef struct _AppBarData {
+	DWORD	cbSize;
+	HWND32	hWnd;
+	UINT32	uCallbackMessage;
+	UINT32	uEdge;
+	RECT32	rc;
+	LPARAM	lParam;
+} APPBARDATA, *PAPPBARDATA;
+
+DECL_WINELIB_TYPE(APPBARDATA);
+
 #define SHGFI_ICON              0x000000100     /* get icon */
 #define SHGFI_DISPLAYNAME       0x000000200     /* get display name */
 #define SHGFI_TYPENAME          0x000000400     /* get type name */

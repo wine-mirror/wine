@@ -1658,3 +1658,16 @@ BOOL32 WINAPI InSendMessage32(void)
         return 0;
     return (BOOL32)queue->InSendMessageHandle;
 }
+
+/***********************************************************************
+ *           BroadcastSystemMessage    (USER32.12)
+ */
+LONG WINAPI BroadcastSystemMessage(
+	DWORD dwFlags,LPDWORD recipients,UINT32 uMessage,WPARAM32 wParam,
+	LPARAM lParam
+) {
+	fprintf(stdnimp,"BroadcastSystemMessage(%08lx,%08lx,%08x,%08x,%08lx),stub!\n",
+		dwFlags,*recipients,uMessage,wParam,lParam
+	);
+	return 0;
+}

@@ -20,7 +20,6 @@
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
-#include "string32.h"	
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -78,9 +77,25 @@ static KEYSTRUCT	*key_dyn_data=NULL;
 /* what valuetypes do we need to convert? */
 #define UNICONVMASK	((1<<REG_SZ)|(1<<REG_MULTI_SZ)|(1<<REG_EXPAND_SZ))
 
-#define strdupA2W(x)	STRING32_DupAnsiToUni(x)
-#define strdupW(x)	STRING32_strdupW(x)
-#define strchrW(a,c)	STRING32_lstrchrW(a,c)
+extern LPWSTR __cdecl CRTDLL_wcschr(LPWSTR a,WCHAR c);
+
+static LPWSTR strdupA2W(LPCSTR src)
+{
+	LPWSTR dest=xmalloc(2*strlen(src)+2);
+	lstrcpyAtoW(dest,src);
+	return dest;
+}
+
+static LPWSTR strdupW(LPCWSTR a) {
+	LPWSTR	b;
+	int	len;
+
+	len=sizeof(WCHAR)*(lstrlen32W(a)+1);
+	b=(LPWSTR)xmalloc(len);
+	memcpy(b,a,len);
+	return b;
+}
+
 
 static struct openhandle {
 	LPKEYSTRUCT	lpkey;
@@ -1454,7 +1469,7 @@ __w31_dumptree(	unsigned short idx,
 				idx=dir->sibling_idx;
 				continue;
 			}
-			name=STRING32_DupAnsiToUni(tail);
+			name=strdupA2W(tail);
 
 			xlpkey=_find_or_add_key(lpkey,name);
 
@@ -1464,7 +1479,7 @@ __w31_dumptree(	unsigned short idx,
 					val=(struct _w31_valent*)&tab[dir->value_idx];
 					memcpy(tail,&txt[val->string_off],val->length);
 					tail[val->length]='\0';
-					value=STRING32_DupAnsiToUni(tail);
+					value=strdupA2W(tail);
 					_find_or_add_value(xlpkey,NULL,REG_SZ,(LPBYTE)value,lstrlen32W(value)*2+2,lastmodified);
 				}
 			}

@@ -37,6 +37,7 @@ LIBSUBDIRS = \
 	msdos \
 	multimedia \
 	objects \
+	ole \
 	resources \
 	scheduler \
 	win32 \
@@ -79,6 +80,7 @@ LIBOBJS = \
 	msdos/msdos.o \
 	multimedia/multimedia.o \
 	objects/objects.o \
+	ole/ole.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
 	win32/win32.o \
@@ -98,18 +100,18 @@ install:: install_$(MAIN_TARGET)
 
 emu: wine
 
-lib: $(LIB_TARGET)
+lib: $(LIBSUBDIRS) $(LIB_TARGET)
 
-wine wine.sym: $(LIB_TARGET) $(EMUSUBDIRS) dummy
+wine wine.sym: $(LIBSUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
 	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
-libwine.a: $(LIBSUBDIRS) dummy
+libwine.a: $(LIBOBJS)
 	$(RM) $@
 	$(AR) $@ $(LIBOBJS)
 	$(RANLIB) $@
 
-libwine.so.1.0: $(LIBSUBDIRS) dummy
+libwine.so.1.0: $(LIBOBJS)
 	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
 install_emu: dummy

@@ -46,7 +46,7 @@ typedef struct
     WORD    min_swap_area;    /* 3c Min. swap area size */
     WORD    expected_version; /* 3e Expected Windows version */
     /* From here, these are extra fields not present in normal Windows */
-    PE_MODULE *pe_module;     /* 40 PE module handle for Win32 modules */
+    HMODULE32  module32;      /* 40 PE module handle for Win32 modules */
     HMODULE16  self;          /* 44 Handle for this module */
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
 } NE_MODULE;
@@ -107,8 +107,8 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
 #define NE_WIN32_MODULE(pModule) \
-    ((struct pe_data *)(((pModule)->flags & NE_FFLAGS_WIN32) ? \
-                    ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->pe_module : 0))
+    ((((pModule)->flags & NE_FFLAGS_WIN32) ? \
+                    ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->module32 : 0))
 
 /* module.c */
 extern NE_MODULE *MODULE_GetPtr( HMODULE32 hModule );
@@ -133,11 +133,10 @@ extern FARPROC16 WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
 
 /* builtin.c */
 extern BOOL32 BUILTIN_Init(void);
-extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force );
+extern HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force );
 extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
 extern FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay,
                                           DWORD *typemask );
-extern FARPROC32 BUILTIN_GetProcAddress32(NE_MODULE *pModule, LPCSTR function);
 extern BOOL32 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
 

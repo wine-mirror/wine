@@ -10,7 +10,6 @@ C_SRCS = \
 	callback.c \
 	comm.c \
 	commdlg.c \
-	compobj.c \
 	crtdll.c \
 	cpu.c \
 	ddeml.c \
@@ -22,15 +21,11 @@ C_SRCS = \
 	mpr.c \
 	network.c \
 	ntdll.c \
-	ole2.c \
-	ole2disp.c \
-	ole2nls.c \
-	olecli.c \
-	olesvr.c \
 	port.c \
 	printdrv.c \
 	registry.c \
 	shell.c \
+	shellord.c \
 	sound.c \
 	spy.c \
 	stress.c \
@@ -39,6 +34,8 @@ C_SRCS = \
 	tweak.c \
 	ver.c \
 	version.c \
+	w32scomb.c \
+	w32skrnl.c \
 	w32sys.c \
 	winsock.c \
 	winsock_dns.c \

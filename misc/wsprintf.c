@@ -149,6 +149,7 @@ static INT32 WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
     }
     if (*p == 'l') { res->flags |= WPRINTF_LONG; p++; }
     else if (*p == 'h') { res->flags |= WPRINTF_SHORT; p++; }
+    else if (*p == 'w') { res->flags |= WPRINTF_WIDE; p++; }
     switch((CHAR)*p)
     {
     case 'c':
@@ -162,10 +163,10 @@ static INT32 WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
         res->type = WPR_SIGNED;
         break;
     case 's':
-        res->type = (res->flags & WPRINTF_SHORT) ? WPR_STRING : WPR_WSTRING;
+        res->type = ((res->flags & WPRINTF_SHORT) && !(res->flags & WPRINTF_WIDE)) ? WPR_STRING : WPR_WSTRING;
         break;
     case 'S':
-        res->type = (res->flags & WPRINTF_LONG) ? WPR_WSTRING : WPR_STRING;
+        res->type = (res->flags & (WPRINTF_LONG|WPRINTF_WIDE)) ? WPR_WSTRING : WPR_STRING;
         break;
     case 'u':
         res->type = WPR_UNSIGNED;

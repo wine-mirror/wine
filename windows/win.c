@@ -239,7 +239,7 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
 
     for ( ; pWnd ; pWnd = pWnd->next )
     {
-        if (!(pWnd->dwStyle & WS_VISIBLE) || (pWnd->flags & WIN_NO_REDRAW))
+        if (!(pWnd->dwStyle & WS_VISIBLE))
         {
             dprintf_win( stddeb, "FindWinToRepaint: skipping window %04x\n",
                          pWnd->hwndSelf );
@@ -1783,14 +1783,23 @@ HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 
     WND *wndPtr = WIN_FindWndPtr( hwndChild );
     WND *pWndParent = WIN_FindWndPtr( hwndNewParent );
-    if (!wndPtr || !pWndParent || !(wndPtr->dwStyle & WS_CHILD)) return 0;
 
+    if (!wndPtr || !pWndParent) return 0;
     oldParent = wndPtr->parent->hwndSelf;
+
+    if (!(wndPtr->dwStyle & WS_CHILD)) {
+	if (wndPtr->window) {
+	    /* Toplevel window needs to be reparented.  Used by Tk 8.0 */
+	    XDestroyWindow( display, wndPtr->window );
+	    wndPtr->window = None;
+	}
+	wndPtr->dwStyle |= WS_CHILD;
+    }
 
     WIN_UnlinkWindow(hwndChild);
     if (hwndNewParent) wndPtr->parent = pWndParent;
     WIN_LinkWindow(hwndChild, HWND_BOTTOM);
-    
+
     if (IsWindowVisible32(hwndChild)) UpdateWindow32(hwndChild);
     
     return oldParent;

@@ -567,9 +567,9 @@ BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           SetSwapAreaSize   (KERNEL.106)
+ *           SetSwapAreaSize16   (KERNEL.106)
  */
-LONG WINAPI SetSwapAreaSize( WORD size )
+LONG WINAPI SetSwapAreaSize16( WORD size )
 {
     dprintf_global(stdnimp, "STUB: SetSwapAreaSize(%d)\n", size );
     return MAKELONG( size, 0xffff );

@@ -1973,6 +1973,15 @@ typedef struct
 DECL_WINELIB_TYPE(ACCEL);
 DECL_WINELIB_TYPE(LPACCEL);
 
+/* modifiers for RegisterHotKey */
+#define	MOD_ALT		0x0001
+#define	MOD_CONTROL	0x0002
+#define	MOD_SHIFT	0x0004
+#define	MOD_WIN		0x0008
+
+/* ids for RegisterHotKey */
+#define	IDHOT_SNAPWINDOW	(-1)    /* SHIFT-PRINTSCRN  */
+#define	IDHOT_SNAPDESKTOP	(-2)    /* PRINTSCRN        */
 
 /* Flags for DrawIconEx.  */
 #define DI_MASK                 1
@@ -5461,7 +5470,6 @@ VOID        WINAPI SetPriority(HTASK16,INT16);
 FARPROC16   WINAPI SetResourceHandler(HINSTANCE16,SEGPTR,FARPROC16);
 WORD        WINAPI SetSelectorBase(WORD,DWORD);
 WORD        WINAPI SetSelectorLimit(WORD,DWORD);
-LONG        WINAPI SetSwapAreaSize(WORD);
 HQUEUE16    WINAPI SetTaskQueue(HTASK16,HQUEUE16);
 FARPROC16   WINAPI SetTaskSignalProc(HTASK16,FARPROC16);
 DWORD       WINAPI SetViewportExt(HDC16,INT16,INT16);
@@ -5478,7 +5486,6 @@ BOOL16      WINAPI WaitEvent(HTASK16);
 INT16       WINAPI WriteComm(INT16,LPSTR,INT16);
 VOID        WINAPI WriteOutProfiles(VOID);
 VOID        WINAPI hmemcpy(LPVOID,LPCVOID,LONG);
-VOID        WINAPI Yield(void);
 
 
 /* Declarations for functions that exist only in Win32 */
@@ -6160,6 +6167,9 @@ LRESULT     WINAPI DefWindowProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT     WINAPI DefWindowProc32A(HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT     WINAPI DefWindowProc32W(HWND32,UINT32,WPARAM32,LPARAM);
 #define     DefWindowProc WINELIB_NAME_AW(DefWindowProc)
+BOOL16      WINAPI DefineHandleTable16(WORD);
+#define     DefineHandleTable32(w) ((w),TRUE)
+#define     DefineHandleTable WINELIB_NAME(DefineHandleTable)
 ATOM        WINAPI DeleteAtom16(ATOM);
 ATOM        WINAPI DeleteAtom32(ATOM);
 #define     DeleteAtom WINELIB_NAME(DeleteAtom)
@@ -6357,6 +6367,10 @@ HICON16     WINAPI ExtractIcon16(HINSTANCE16,LPCSTR,UINT16);
 HICON32     WINAPI ExtractIcon32A(HINSTANCE32,LPCSTR,UINT32);
 HICON32     WINAPI ExtractIcon32W(HINSTANCE32,LPCWSTR,UINT32);
 #define     ExtractIcon WINELIB_NAME_AW(ExtractIcon)
+HICON16     WINAPI ExtractAssociatedIcon16(HINSTANCE16,LPSTR,LPWORD);
+HICON32     WINAPI ExtractAssociatedIcon32A(HINSTANCE32,LPSTR,LPWORD);
+HICON32     WINAPI ExtractAssociatedIcon32W(HINSTANCE32,LPWSTR,LPWORD);
+#define     ExtractAssociatedIcon WINELIB_NAME_AW(ExtractAssociatedIcon)
 BOOL16      WINAPI ExtTextOut16(HDC16,INT16,INT16,UINT16,const RECT16*,
                                 LPCSTR,UINT16,const INT16*);
 BOOL32      WINAPI ExtTextOut32A(HDC32,INT32,INT32,UINT32,const RECT32*,
@@ -7173,6 +7187,12 @@ HGLOBAL16   WINAPI LockSegment16(HGLOBAL16);
 BOOL16      WINAPI LockWindowUpdate16(HWND16);
 BOOL32      WINAPI LockWindowUpdate32(HWND32);
 #define     LockWindowUpdate WINELIB_NAME(LockWindowUpdate)
+INT16       WINAPI LookupIconIdFromDirectory16(LPBYTE,BOOL16);
+INT32       WINAPI LookupIconIdFromDirectory32(LPBYTE,BOOL32);
+#define     LookupIconIdFromDirectory WINELIB_NAME(LookupIconIdFromDirectory)
+INT16       WINAPI LookupIconIdFromDirectoryEx16(LPBYTE,BOOL16,INT16,INT16,UINT16);
+INT32       WINAPI LookupIconIdFromDirectoryEx32(LPBYTE,BOOL32,INT32,INT32,UINT32);
+#define     LookupIconIdFromDirectoryEx WINELIB_NAME(LookupIconIdFromDirectoryEx)
 BOOL16      WINAPI LPtoDP16(HDC16,LPPOINT16,INT16);
 BOOL32      WINAPI LPtoDP32(HDC32,LPPOINT32,INT32);
 #define     LPtoDP WINELIB_NAME(LPtoDP)
@@ -7620,6 +7640,9 @@ DWORD       WINAPI SetSoundNoise32(DWORD,DWORD);
 INT16       WINAPI SetStretchBltMode16(HDC16,INT16);
 INT32       WINAPI SetStretchBltMode32(HDC32,INT32);
 #define     SetStretchBltMode WINELIB_NAME(SetStretchBltMode)
+LONG        WINAPI SetSwapAreaSize16(WORD);
+#define     SetSwapAreaSize32(w) (w)
+#define     SetSwapAreaSize WINELIB_NAME(SetSwapAreaSize)
 VOID        WINAPI SetSysColors16(INT16,const INT16*,const COLORREF*);
 BOOL32      WINAPI SetSysColors32(INT32,const INT32*,const COLORREF*);
 #define     SetSysColors WINELIB_NAME(SetSysColors)
@@ -7861,6 +7884,9 @@ BOOL16      WINAPI WriteProfileString16(LPCSTR,LPCSTR,LPCSTR);
 BOOL32      WINAPI WriteProfileString32A(LPCSTR,LPCSTR,LPCSTR);
 BOOL32      WINAPI WriteProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WriteProfileString WINELIB_NAME_AW(WriteProfileString)
+VOID        WINAPI Yield16(void);
+#define     Yield32()
+#define     Yield WINELIB_NAME(Yield)
 SEGPTR      WINAPI lstrcat16(SEGPTR,LPCSTR);
 LPSTR       WINAPI lstrcat32A(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcat32W(LPWSTR,LPCWSTR);

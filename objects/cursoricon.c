@@ -1258,9 +1258,10 @@ void WINAPI GetClipCursor32( RECT32 *rect )
  *
  * FIXME: exact parameter sizes
  */
-UINT16 WINAPI LookupIconIdFromDirectoryEx16( CURSORICONDIR *dir, BOOL16 bIcon,
+INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
 	     INT16 width, INT16 height, UINT16 cFlag )
 {
+    CURSORICONDIR	*dir = (CURSORICONDIR*)xdir;
     UINT16 retVal = 0;
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
@@ -1285,18 +1286,28 @@ UINT16 WINAPI LookupIconIdFromDirectoryEx16( CURSORICONDIR *dir, BOOL16 bIcon,
 /**********************************************************************
  *          LookupIconIdFromDirectoryEx32       (USER32.379)
  */
-INT32 WINAPI LookupIconIdFromDirectoryEx32( CURSORICONDIR *dir, BOOL32 bIcon,
+INT32 WINAPI LookupIconIdFromDirectoryEx32( LPBYTE dir, BOOL32 bIcon,
              INT32 width, INT32 height, UINT32 cFlag )
 {
     return LookupIconIdFromDirectoryEx16( dir, bIcon, width, height, cFlag );
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectory		(USER32.378)
+ *          LookupIconIdFromDirectory		(USER.???)
  */
-INT32 WINAPI LookupIconIdFromDirectory( CURSORICONDIR *dir, BOOL32 bIcon )
+INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 {
     return LookupIconIdFromDirectoryEx16( dir, bIcon, 
+	   bIcon ? SYSMETRICS_CXICON : SYSMETRICS_CXCURSOR,
+	   bIcon ? SYSMETRICS_CYICON : SYSMETRICS_CYCURSOR, bIcon ? 0 : LR_MONOCHROME );
+}
+
+/**********************************************************************
+ *          LookupIconIdFromDirectory		(USER32.378)
+ */
+INT32 WINAPI LookupIconIdFromDirectory32( LPBYTE dir, BOOL32 bIcon )
+{
+    return LookupIconIdFromDirectoryEx32( dir, bIcon, 
 	   bIcon ? SYSMETRICS_CXICON : SYSMETRICS_CXCURSOR,
 	   bIcon ? SYSMETRICS_CYICON : SYSMETRICS_CYCURSOR, bIcon ? 0 : LR_MONOCHROME );
 }
@@ -1306,10 +1317,10 @@ INT32 WINAPI LookupIconIdFromDirectory( CURSORICONDIR *dir, BOOL32 bIcon )
  */
 WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
 {
-    CURSORICONDIR *lpDir = (CURSORICONDIR *)GlobalLock16(hResource);
+    LPBYTE lpDir = (LPBYTE)GlobalLock16(hResource);
 
     dprintf_cursor( stddeb, "GetIconID: hRes=%04x, entries=%i\n",
-                    hResource, lpDir ? lpDir->idCount : 0);
+                    hResource, lpDir ? ((CURSORICONDIR*)lpDir)->idCount : 0);
 
     switch(resType)
     {

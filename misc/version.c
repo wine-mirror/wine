@@ -117,8 +117,14 @@ static VERSION VERSION_GetVersion(void)
     if (!pCurrentProcess) /* at startuptime probably */
         return defaultVersion;
     if (!pCurrentProcess->exe_modref)
+    {
+        /* HACK: if we have loaded a PE image into this address space,
+         * we are probably using thunks, so Win95 is our best bet
+         */
+        if (pCurrentProcess->modref_list) return WIN95;
         return WIN31; /* FIXME: hmm, look at DDB.version ? */
-    peheader = pCurrentProcess->exe_modref->pe_module->pe_header;
+    }
+    peheader = PE_HEADER(pCurrentProcess->exe_modref->module);
     if (peheader->OptionalHeader.MajorSubsystemVersion == 4)
         /* FIXME: NT4 has the same majorversion; add a check here for it. */
         return WIN95;

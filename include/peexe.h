@@ -145,6 +145,17 @@ typedef struct _IMAGE_NT_HEADERS {
 	IMAGE_OPTIONAL_HEADER	OptionalHeader;
 } IMAGE_NT_HEADERS,*LPIMAGE_NT_HEADERS;
 
+
+#define PE_HEADER(module) \
+    ((IMAGE_NT_HEADERS*)((LPBYTE)(module) + \
+                         (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
+
+#define PE_SECTIONS(module) \
+    ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
+                           PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
+
+#define RVA_PTR(module,field) ((LPBYTE)(module) + PE_HEADER(module)->field)
+
 /* Section header format */
 
 #define	IMAGE_SIZEOF_SHORT_NAME	8

@@ -160,7 +160,7 @@ type	win32
 169 stub CreateNamedPipeW
 170 stub CreatePipe
 171 stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) CreateProcess32A
-172 stub CreateProcessW
+172 stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) CreateProcess32W
 173 stub CreateRemoteThread
 174 stdcall CreateSemaphoreA(ptr long long str) CreateSemaphore32A
 175 stdcall CreateSemaphoreW(ptr long long wstr) CreateSemaphore32W
@@ -176,7 +176,7 @@ type	win32
 185 stdcall DeleteCriticalSection(ptr)	DeleteCriticalSection
 186 stdcall DeleteFileA(str) DeleteFile32A
 187 stdcall DeleteFileW(wstr) DeleteFile32W
-188 stub DeviceIoControl
+188 stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) DeviceIoControl
 189 stdcall DisableThreadLibraryCalls(long) DisableThreadLibraryCalls
 190 stub DisconnectNamedPipe
 191 stdcall DosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
@@ -250,7 +250,7 @@ type	win32
 259 stdcall FlushConsoleInputBuffer(long) FlushConsoleInputBuffer
 260 stdcall FlushFileBuffers(long) FlushFileBuffers
 261 stub FlushInstructionCache
-262 stub FlushViewOfFile
+262 stdcall FlushViewOfFile(ptr long) FlushViewOfFile
 263 stub FoldStringA
 264 stub FoldStringW
 265 stdcall FormatMessageA(long ptr long long ptr long ptr) FormatMessage32A
@@ -362,7 +362,7 @@ type	win32
 371 stub GetPrivateProfileStructW
 372 stdcall GetProcAddress(long str) GetProcAddress32
 373 stdcall GetProcessAffinityMask(long ptr ptr) GetProcessAffinityMask
-374 stub GetProcessFlags
+374 stdcall GetProcessFlags(long) GetProcessFlags
 375 stdcall GetProcessHeap() GetProcessHeap
 376 stub GetProcessHeaps
 377 stub GetProcessShutdownParameters
@@ -531,7 +531,7 @@ type	win32
 540 stdcall OpenFileMappingW(long long wstr) OpenFileMapping32W
 541 stdcall OpenMutexA(long long str) OpenMutex32A
 542 stdcall OpenMutexW(long long wstr) OpenMutex32W
-543 stub OpenProcess
+543 stdcall OpenProcess(long long long) OpenProcess32
 544 stub OpenProfileUserMapping
 545 stdcall OpenSemaphoreA(long long str) OpenSemaphore32A
 546 stdcall OpenSemaphoreW(long long wstr) OpenSemaphore32W
@@ -553,7 +553,7 @@ type	win32
 562 stub QueryNumberOfEventLogRecords
 563 stub QueryOldestEventLogRecord
 564 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
-565 stub QueryPerformanceFrequency
+565 stdcall QueryPerformanceFrequency(ptr) QueryPerformanceFrequency
 566 stub QueueUserAPC
 567 register RaiseException() EXC_RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
@@ -843,3 +843,56 @@ type	win32
 853 stub VirtualBufferExceptionHandler
 854 stub WriteConsoleInputVDMA
 855 stub WriteConsoleInputVDMW
+
+# NT 4.0 additions
+856 stub CancelIo
+857 stub CancelWaitableTimer
+858 stub CopyFileExA
+859 stub CopyFileExW
+860 stub CreateFiber
+861 stub CreateWaitableTimerA
+862 stub CreateWaitableTimerW
+863 stub DeleteFiber
+864 stub DuplicateConsoleHandle
+865 stub FindFirstFileExA
+866 stub FindFirstFileExW
+867 stub GetConsoleInputExeNameA
+868 stub GetConsoleInputExeNameW
+869 stub GetConsoleKeyboardLayoutNameA
+870 stub GetConsoleKeyboardLayoutNameW
+871 stub GetDiskFreeSpaceExA
+873 stub GetDiskFreeSpaceExW
+874 stub GetFileAttributesExA
+875 stub GetFileAttributesExW
+876 stub GetProcessPriorityBoost
+877 stub GetThreadPriorityBoost
+878 stub InterlockedCompareExchange
+879 stub InterlockedExchangeAdd
+880 stub IsProcessorFeaturePresent
+881 stub OpenWaitableTimerA
+882 stub OpenWaitableTimerW
+883 stub ReadConsoleInputExA
+884 stub ReadConsoleInputExW
+885 stub ReadDirectoryChangesW
+886 stub ReadFileScatter
+887 stub SetConsoleIcon
+888 stub SetConsoleInputExeNameA
+889 stub SetConsoleInputExeNameW
+890 stub SetProcessAffinityMask
+891 stub SetProcessPriorityBoost
+892 stub SetThreadIdealProcessor
+893 stub SetThreadPriorityBoost
+894 stub SetWaitableTimer
+895 stub SignalObjectAndWait
+896 stub SwitchToFiber
+897 stub SwitchToThread
+898 stub TryEnterCriticalSection
+899 stub VirtualAllocEx
+900 stub VirtualFreeEx
+901 stub WriteFileGather
+
+1346 stdcall PrivateLoadLibrary(str) PrivateLoadLibrary
+1545 stdcall PrivateFreeLibrary(long) PrivateFreeLibrary
+
+#1599 wrong ordinal (249 in Win32s's W32SCOMB.DLL) !
+1599 stdcall Get16DLLAddress(long str) Get16DLLAddress

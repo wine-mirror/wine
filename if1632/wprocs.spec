@@ -78,7 +78,7 @@ type	win16
 158 register INT_Int3aHandler(word) BUILTIN_DefaultIntHandler
 159 register INT_Int3bHandler(word) BUILTIN_DefaultIntHandler
 160 register INT_Int3cHandler(word) BUILTIN_DefaultIntHandler
-161 register INT_Int3dHandler(word) BUILTIN_DefaultIntHandler
+161 register INT_Int3dHandler(word) INT_Int3dHandler
 162 register INT_Int3eHandler(word) BUILTIN_DefaultIntHandler
 163 register INT_Int3fHandler(word) BUILTIN_DefaultIntHandler
 164 register INT_Int40Handler(word) BUILTIN_DefaultIntHandler

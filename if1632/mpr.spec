@@ -58,7 +58,7 @@ type win32
 0077 stub WNetGetNetworkInformationW
 0078 stub WNetGetProviderNameA
 0079 stub WNetGetProviderNameW
-0080 stub WNetGetResourceInformationA
+0080 stdcall WNetGetResourceInformationA(ptr ptr ptr ptr) WNetGetResourceInformation32A
 0081 stub WNetGetResourceInformationW
 0082 stub WNetGetResourceParentA
 0083 stub WNetGetResourceParentW
@@ -70,7 +70,7 @@ type win32
 0089 stub WNetLogoffW
 0090 stub WNetLogonA
 0091 stub WNetLogonW
-0092 stub WNetOpenEnumA
+0092 stdcall WNetOpenEnumA(long long ptr ptr) WNetOpenEnum32A
 0093 stub WNetOpenEnumW
 0094 stub WNetRemoveCachedPassword
 0095 stub WNetRestoreConnectionA

@@ -340,18 +340,17 @@ static void TASK_CallToStart(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     IF1632_Saved16_ss_sp = pTask->ss_sp;
+    SET_FS( pCurrentThread->teb_sel );
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         /* FIXME: all this is an ugly hack */
 
         extern void InitTask( CONTEXT *context );
 
-        FARPROC32 entry = (FARPROC32)(pCurrentProcess->exe_modref->load_addr + 
-                 pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
+        FARPROC32 entry = (FARPROC32)RVA_PTR( pCurrentProcess->exe_modref->module, OptionalHeader.AddressOfEntryPoint );
 
         InitTask( NULL );
         InitApp( pTask->hModule );
-        SET_FS( pCurrentThread->teb_sel );
         PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
         exit_code = entry();
@@ -526,7 +525,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 	    	pCurrentProcess->exe_modref->load_addr +
 		pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
      */
-        pTask->thdb = THREAD_Create( pdb32, 0, 0 );
+        pTask->thdb = THREAD_Create( pdb32,
+          PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve, 0 );
         /* FIXME: should not be done here */
         pCurrentThread = pTask->thdb;
         PE_InitTls( pdb32 );
@@ -1005,9 +1005,9 @@ void WINAPI UserYield(void)
 
 
 /***********************************************************************
- *           Yield  (KERNEL.29)
+ *           Yield16  (KERNEL.29)
  */
-void WINAPI Yield(void)
+void WINAPI Yield16(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pCurTask) pCurTask->hYieldTo = 0;
@@ -1021,16 +1021,24 @@ void WINAPI Yield(void)
  */
 FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
-    BYTE *thunk;
+    BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
     
     if (__winelib) return func; /* func can be called directly in Winelib */
     thunkaddr = TASK_AllocThunk( hCurrentTask );
     if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
+    lfunc = PTR_SEG_TO_LIN( func );
 
     dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
                   (DWORD)func, hInstance, (DWORD)thunkaddr );
+    if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) ||
+    	((lfunc[0]==0x1e) && (lfunc[1]==0x58))
+    ) {
+    	fprintf(stderr,"FIXME: MakeProcInstance16 thunk would be useless for %p, overwriting with nop;nop;\n", func );
+	lfunc[0]=0x90; /* nop */
+	lfunc[1]=0x90; /* nop */
+    }
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
     *thunk++ = (BYTE)(hInstance & 0xff);
@@ -1071,6 +1079,15 @@ HANDLE16 WINAPI GetCodeHandle( FARPROC16 proc )
         handle = GlobalHandle16( HIWORD(proc) );
 
     return handle;
+}
+
+
+/**********************************************************************
+ *          DefineHandleTable16    (KERNEL.94)
+ */
+BOOL16 WINAPI DefineHandleTable16( WORD wOffset )
+{
+    return TRUE;  /* FIXME */
 }
 
 

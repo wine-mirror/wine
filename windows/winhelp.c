@@ -37,7 +37,7 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
             if(WinExec32("winhelp.exe -x",SW_SHOWNORMAL)<=32)
 		return FALSE;
 	/* FIXME: Should be directed yield, to let winhelp open the window */
-	Yield();
+	Yield16();
 	if(!WM_WINHELP) {
 		WM_WINHELP=RegisterWindowMessage32A("WM_WINHELP");
 		if(!WM_WINHELP)

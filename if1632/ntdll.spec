@@ -951,3 +951,23 @@ type	win32
 948 stub wcstol
 949 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 950 stub wcstoul
+
+# NT 4 additions
+951 stub NtAddAtom
+952 stub NtDeleteAtom
+953 stub NtFindAtom
+954 stub NtQueryFullAttributesFile
+955 stub NtQueueApcThread
+956 stub NtReadFileScatter
+957 stub NtSignalAndWaitForSingleObject
+958 stub NtWriteFileGather
+959 stub NtYieldExecution
+960 stub RtlAddAtomToAtomTable
+961 stub RtlAllocateHandle
+962 stub RtlCreateAtomTable
+963 stub RtlDeleteAtomFromAtomTable
+964 stub RtlFreeHandle
+965 stub RtlInitializeHandleTable
+966 stub RtlIsValidHandle
+967 stub RtlLookupAtomInAtomTable
+968 stub RtlQueryAtomInAtomTable

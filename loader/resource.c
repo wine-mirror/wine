@@ -45,19 +45,27 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     NE_MODULE *pModule;
 
     hModule = MODULE_HANDLEtoHMODULE16( hModule ); 
-    dprintf_resource(stddeb, "FindResource16: module=%04x type=", hModule );
-    PrintId( type );
+    dprintf_resource(stddeb, "FindResource16: module=%04x", hModule );
 
     if (HIWORD(name))  /* Check for '#xxx' name */
     {
 	char *ptr = PTR_SEG_TO_LIN( name );
-	if (ptr[0] == '#') {
+	if (ptr[0] == '#')
 	    if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
-	}
     }
 
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
+
+    if (HIWORD(type))  /* Check for '#xxx' type */
+    {
+	char *ptr = PTR_SEG_TO_LIN( type );
+	if (ptr[0] == '#')
+	    if (!(type = (SEGPTR)atoi( ptr + 1 ))) return 0;
+    }
+
+    dprintf_resource( stddeb, " type=" );
+    PrintId( type );
     dprintf_resource( stddeb, "\n" );
 
     if ((pModule = MODULE_GetPtr( hModule )))
@@ -547,7 +555,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
  *	LoadString32W		(USER32.375)
  */
 INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
-                            LPWSTR buffer, int buflen )
+                            LPWSTR buffer, INT32 buflen )
 {
     HGLOBAL32 hmem;
     HRSRC32 hrsrc;
@@ -599,16 +607,20 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
  *	LoadString32A	(USER32.374)
  */
 INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
-                            LPSTR buffer,int buflen )
+                            LPSTR buffer, INT32 buflen )
 {
     INT32 retval;
     LPWSTR buffer2 = NULL;
-    if (buffer) buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
+    if (buffer && buflen)
+	buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
     retval = LoadString32W(instance,resource_id,buffer2,buflen);
 
     if (buffer2)
     {
-        lstrcpynWtoA( buffer, buffer2, buflen );
+	if (retval) {
+	    lstrcpynWtoA( buffer, buffer2, buflen );
+	    retval = lstrlen32A( buffer );
+	}
 	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
     return retval;
@@ -640,7 +652,7 @@ INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
  *	LoadMessage32A		(internal)
  */
 INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
-                      LPSTR buffer, int buflen )
+                      LPSTR buffer, INT32 buflen )
 {
     HGLOBAL32	hmem;
     HRSRC32	hrsrc;
@@ -708,15 +720,19 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
  *	LoadMessage32W	(internal)
  */
 INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
-                      LPWSTR buffer, int buflen )
+                      LPWSTR buffer, INT32 buflen )
 {
     INT32 retval;
     LPSTR buffer2 = NULL;
-    if (buffer) buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen );
+    if (buffer && buflen)
+	buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen );
     retval = LoadMessage32A(instance,id,lang,buffer2,buflen);
     if (buffer)
     {
-        lstrcpynAtoW( buffer, buffer2, buflen );
+	if (retval) {
+	    lstrcpynAtoW( buffer, buffer2, buflen );
+	    retval = lstrlen32W( buffer );
+	}
 	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
     return retval;

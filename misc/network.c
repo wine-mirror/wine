@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "windows.h"
+#include "winerror.h"
 #include "drive.h"
 
 #define WN_SUCCESS       			0x0000
@@ -29,8 +30,10 @@
 #define WN_ALREADY_CONNECTED		0x0034
 #define WN_DEVICE_ERROR     		0x0035
 #define WN_CONNECTION_CLOSED		0x0036
+#define WN_NO_NETWORK				ERROR_NO_NETWORK
 
-typedef LPSTR 	LPNETRESOURCE;
+
+typedef LPVOID	LPNETRESOURCE16;
 
 /**************************************************************************
  *              WNetErrorText       [USER.499]
@@ -170,8 +173,12 @@ int WINAPI WNetGetConnection16(LPSTR lpLocalName,
         case DRIVE_FIXED:
             return WN_NOT_CONNECTED;
         case DRIVE_REMOTE:
-            path = DRIVE_GetDosCwd(drive);
-            if (strlen(path) + 1 > *cbRemoteName) return WN_MORE_DATA;
+            path = DRIVE_GetLabel(drive);
+            if (strlen(path) + 1 > *cbRemoteName)
+            {
+                *cbRemoteName = strlen(path) + 1;
+                return WN_MORE_DATA;
+            }
             strcpy( lpRemoteName, path );
             *cbRemoteName = strlen(lpRemoteName) + 1;
             return WN_SUCCESS;
@@ -194,7 +201,7 @@ int WINAPI WNetGetCaps(WORD capability)
 int WINAPI WNetDeviceMode(HWND16 hWndOwner)
 {
 	printf("EMPTY STUB !!! WNetDeviceMode(%04x)\n",hWndOwner);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -204,7 +211,7 @@ int WINAPI WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
 {
 	printf("EMPTY STUB !!! WNetBrowseDialog(%04x,%x,'%s')\n",
 		hParent,nType,szPath);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -214,7 +221,7 @@ UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
 	printf("EMPTY STUB !!! WNetGetUser(%p, %p, %p);\n", 
 							lpLocalName, lpUserName, lpSize);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -225,7 +232,7 @@ UINT16 WINAPI WNetAddConnection(LPSTR lpNetPath, LPSTR lpPassWord,
 {
 	printf("EMPTY STUB !!! WNetAddConnection('%s', %p, '%s');\n",
 							lpNetPath, lpPassWord, lpLocalName);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 
@@ -236,7 +243,7 @@ UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
 {
     printf("EMPTY STUB !!! WNetCancelConnection('%s', %04X);\n",
            lpName, bForce);
-    return WN_NET_ERROR;
+    return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -245,7 +252,7 @@ UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
 int WINAPI WNetGetError(LPWORD nError)
 {
 	printf("EMPTY STUB !!! WNetGetError(%p)\n",nError);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -265,7 +272,7 @@ int WINAPI WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
 {
 	printf("EMPTY STUB !!! WNetRestoreConnection(%04x,'%s')\n",
 		hwndOwner,lpszDevice);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -275,7 +282,7 @@ int WINAPI WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 {
 	printf("EMPTY STUB !!! WNetWriteJob(%04x,%p,%p)\n",
 		hJob,lpData,lpcbData);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -294,7 +301,7 @@ int WINAPI WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
 {
 	printf("EMPTY STUB !!! WNetDisconnectDialog(%04x,%x)\n",
 		hwndOwner,iType);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -314,7 +321,7 @@ int WINAPI WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
 {
 	printf("EMPTY STUB !!! WNetViewQueueDialog(%04x,'%s')\n",
 		hwndOwner,lpszQueue);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -325,7 +332,7 @@ int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
 {
 	printf("EMPTY STUB !!! WNetPropertyDialog(%04x,%x,%x,'%s',%x)\n",
 		hwndParent,iButton,nPropSel,lpszName,nType);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -335,7 +342,7 @@ int WINAPI WNetGetDirectoryType(LPSTR lpName,void *lpType)
 {
 	printf("EMPTY STUB !!! WNetGetDirectoryType('%s',%p)\n",
 		lpName,lpType);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -345,7 +352,7 @@ int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 {
 	printf("EMPTY STUB !!! WNetDirectoryNotify(%04x,%p,%x)\n",
 		hwndOwner,lpDir,wOper);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -356,7 +363,7 @@ int WINAPI WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
 {
 	printf("EMPTY STUB !!! WNetGetPropertyText(%04x,%x,%x,'%s',%x)\n",
 		hwndParent,iButton,nPropSel,lpszName,nType);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -367,7 +374,7 @@ UINT16 WINAPI WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord,
 {
 	printf("EMPTY STUB !!! WNetAddConnection2('%s', %p, '%s', '%s');\n",
 					lpNetPath, lpPassWord, lpLocalName, lpUserName);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -376,7 +383,7 @@ UINT16 WINAPI WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord,
 UINT16 WINAPI WNetCloseEnum(HANDLE16 hEnum)
 {
 	printf("EMPTY STUB !!! WNetCloseEnum(%04x);\n", hEnum);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
@@ -387,26 +394,49 @@ UINT16 WINAPI WNetEnumResource(HANDLE16 hEnum, DWORD cRequ,
 {
 	printf("EMPTY STUB !!! WNetEnumResource(%04x, %08lX, %p, %p);\n", 
 							hEnum, cRequ, lpCount, lpBuf);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
 /**************************************************************************
  *				WNetOpenEnum		[USER.???]
  */
-UINT16 WINAPI WNetOpenEnum(DWORD dwScope, DWORD dwType, 
-                           LPNETRESOURCE lpNet, HANDLE16 *lphEnum)
+UINT16 WINAPI WNetOpenEnum16(DWORD dwScope, DWORD dwType, 
+                             LPNETRESOURCE16 lpNet, HANDLE16 *lphEnum)
 {
 	printf("EMPTY STUB !!! WNetOpenEnum(%08lX, %08lX, %p, %p);\n",
                dwScope, dwType, lpNet, lphEnum);
-	return WN_NET_ERROR;
+	return WN_NO_NETWORK;
 }
 
+/**************************************************************************
+ *				WNetOpenEnumA		[MPR.92]
+ */
+UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, 
+                              LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
+{
+	printf("EMPTY STUB !!! WNetOpenEnumA(%08lX, %08lX, %p, %p);\n",
+               dwScope, dwType, lpNet, lphEnum);
+	return WN_NO_NETWORK;
+}
 
-DWORD
+/**************************************************************************
+ *				WNetGetConnectionA	[MPR.92]
+ */
+DWORD WINAPI
 WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
 {
 	UINT16	x;
 	DWORD	ret = WNetGetConnection16(localname,remotename,&x);
 	*buflen = x;
 	return ret;
+}
+
+DWORD WINAPI 
+WNetGetResourceInformation32A(
+	LPNETRESOURCE32A netres,LPVOID buf,LPDWORD buflen,LPSTR systemstr
+) {
+	fprintf(stderr,"WNetGetResourceInformationA(%p,%p,%p,%p),stub!\n",
+		netres,buf,buflen,systemstr
+	);
+	return WN_NO_NETWORK;
 }

@@ -114,7 +114,7 @@ int main( int argc, char *argv[] )
 
     if (Options.debug) DEBUG_AddModuleBreakpoints();
 
-    Yield();  /* Start the first task */
+    Yield16();  /* Start the first task */
     fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );
     return 0;
 }

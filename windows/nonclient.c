@@ -161,6 +161,17 @@ static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
 }
 
 
+/***********************************************************************
+ *           DrawCaptionTempA    (USER32.)
+ */
+DWORD
+DrawCaptionTemp32A(HWND32 hwnd,HDC32 hdc,LPRECT32 rect,HFONT32 hfont,DWORD x1,LPCSTR str,DWORD x2) {
+	fprintf(stderr,"DrawCaptionTempA(%08x,%08x,%p,%08x,%08lx,\"%s\",%08lx),tub!\n",
+		hwnd,hdc,rect,hfont,x1,str,x2
+	);
+	return 0;
+}
+
 
 /***********************************************************************
  *           AdjustWindowRect16    (USER.102)

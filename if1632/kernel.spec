@@ -30,7 +30,7 @@ file	krnl386.exe
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll
 27  pascal16 GetModuleName(word ptr word) GetModuleName
 28  stub GlobalMasterHandle
-29  pascal16 Yield() Yield
+29  pascal16 Yield() Yield16
 30  pascal16 WaitEvent(word) WaitEvent
 31  pascal16 PostEvent(word) PostEvent
 32  pascal16 SetPriority(word s_word) SetPriority
@@ -91,7 +91,7 @@ file	krnl386.exe
 91  register InitTask() InitTask
 92  pascal   GetTempDrive(word) WIN16_GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
-94  stub DefineHandleTable
+94  pascal16 DefineHandleTable(word) DefineHandleTable16
 95  pascal16 LoadLibrary(str) LoadLibrary16
 96  pascal16 FreeLibrary(word) FreeLibrary16
 97  pascal16 GetTempFileName(word str word ptr) GetTempFileName16
@@ -103,7 +103,7 @@ file	krnl386.exe
 103 register NetBIOSCall() NetBIOSCall
 104 stub GetCodeInfo
 105 pascal16 GetExeVersion() GetExeVersion
-106 pascal SetSwapAreaSize(word) SetSwapAreaSize
+106 pascal SetSwapAreaSize(word) SetSwapAreaSize16
 107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
 109 register SwitchStackBack(word word word) SwitchStackBack
@@ -232,6 +232,7 @@ file	krnl386.exe
 233 stub RegUnloadKey
 234 stub RegSaveKey
 235 stub InvalidateNlsCache
+236 stub GetProductName
 237 stub KERNEL_237
 262 stub KERNEL_262
 263 stub KERNEL_263
@@ -280,6 +281,7 @@ file	krnl386.exe
 359 pascal KERNEL_359(long) _KERNEL_359
 360 stub OpenFileEx
 #361 PIGLET_361
+365 stub KERNEL_365
 403 pascal16 FarSetOwner(word word) FarSetOwner
 404 pascal16 FarGetOwner(word) FarGetOwner
 406 stub WritePrivateProfileStruct
@@ -312,6 +314,7 @@ file	krnl386.exe
 471 stub KERNEL_471
 472 register KERNEL_472() _KERNEL_472
 473 stub KERNEL_473
+475 stub KERNEL_475
 482 stub KERNEL_482
 485 stub KERNEL_485
 491 stub RegisterServiceProcess
@@ -327,11 +330,21 @@ file	krnl386.exe
 518 stub CallProcEx32W
 519 stub KERNEL_519
 522 stub KERNEL_522
+523 stub KERNEL_523
 525 stub KERNEL_525
+531 stub KERNEL_531
+532 stub KERNEL_532
+540 stub KERNEL_540
+541 stub KERNEL_541
+544 stub KERNEL_544
 600 stub KERNEL_600
 601 stub KERNEL_601
 604 stub KERNEL_604
 605 stub KERNEL_605
+606 stub KERNEL_606
+607 stub KERNEL_607
+608 stub KERNEL_608
+611 stub KERNEL_611
 612 stub KERNEL_612
 613 stub KERNEL_613
 614 stub KERNEL_614
@@ -339,6 +352,6 @@ file	krnl386.exe
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
 630 stub KERNEL_630
-631 pascal FUNC004(word word long) FUNC004	# shell hook
-651 stub KERNEL_651
+631 pascal FUNC004(word word long) FUNC004	#C16ThkSl01?
+651 stub KERNEL_651				#ThunkConnect16?
 700 pascal KERNEL_700() stub_KERNEL_700

@@ -636,7 +636,7 @@ DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
 }
 
 /***********************************************************************
- *           GetTextCharset    (USER32.226) (USER.612)
+ *           GetTextCharset    (GDI32.226) (GDI.612)
  */
 INT32 WINAPI GetTextCharset32(HDC32 hdc)
 {
@@ -647,4 +647,16 @@ INT32 WINAPI GetTextCharset32(HDC32 hdc)
 INT16 WINAPI GetTextCharset16(HDC16 hdc)
 {
     return GetTextCharset32(hdc);
+}
+
+/***********************************************************************
+ *           GetTextCharsetInfo    (GDI32.381)
+ */
+INT32 WINAPI GetTextCharsetInfo(HDC32 hdc,LPCHARSETINFO csi,DWORD flags)
+{
+    fprintf(stdnimp,"GetTextCharsetInfo(0x%x,%p,%08lx), stub!\n",hdc,csi,flags);
+    csi->ciCharset = DEFAULT_CHARSET;
+    csi->ciACP = GetACP();
+    /* ... fill fontstruct too ... */
+    return DEFAULT_CHARSET;
 }

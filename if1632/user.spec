@@ -52,7 +52,7 @@ file	user.exe
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
 50  pascal16 FindWindow(segstr str) FindWindow16
-#51 BEAR51
+51  stub BEAR51 # IsTwoByteCharPrefix
 52  pascal16 AnyPopup() AnyPopup16
 53  pascal16 DestroyWindow(word) DestroyWindow16
 54  pascal16 EnumWindows(segptr long) THUNK_EnumWindows16
@@ -87,6 +87,7 @@ file	user.exe
 83  pascal16 FrameRect(word ptr word) FrameRect16
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon16
 85  pascal16 DrawText(word str s_word ptr word) DrawText16
+86  stub BEAR86 # IconSize
 87  pascal16 DialogBox(word segstr word segptr) DialogBox16
 88  pascal16 EndDialog(word s_word) EndDialog16
 89  pascal16 CreateDialog(word segstr word segptr) CreateDialog16
@@ -217,7 +218,7 @@ file	user.exe
 213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
 214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
 215 pascal16 FlushComm(word word) FlushComm
-#216 USERSEEUSERDO
+216 stub USERSEEUSERDO
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
@@ -431,6 +432,7 @@ file	user.exe
 492 pascal16 USER_492() stub_USER_492
 496 pascal16 USER_496() stub_USER_496
 499 pascal16 WNetErrorText(word ptr word) WNetErrorText
+500 stub FARCALLNETDRIVER 			# Undocumented Windows
 501 pascal16 WNetOpenJob(ptr ptr word ptr)  WNetOpenJob
 502 pascal16 WNetCloseJob(word ptr ptr) WNetCloseJob
 503 pascal16 WNetAbortJob(ptr word) WNetAbortJob
@@ -534,3 +536,4 @@ file	user.exe
 920 pascal16 USER_920() stub_USER_920
 922 pascal16 USER_922() stub_USER_922
 923 pascal16 USER_923() stub_USER_923
+924 stub UsrMpr_ThunkData16

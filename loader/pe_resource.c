@@ -41,7 +41,7 @@ HMODULE32toPE_MODREF(HMODULE32 hmod) {
 	if (!hmod) return NULL;
 	if (!(pModule = MODULE_GetPtr( hmod ))) return 0;
 	pem = pdb->modref_list;
-	while (pem && pem->pe_module->mappeddll != hmod)
+	while (pem && pem->module != hmod)
 		pem=pem->next;
 	return pem;
 }
@@ -141,7 +141,7 @@ HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
     	return 0;
     if (!hRsrc)
    	 return 0;
-    return (HANDLE32) (pem->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    return (HANDLE32) (pem->module + ((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 
 

@@ -146,7 +146,8 @@ void FILE_SetDosError(void)
 {
     int save_errno = errno; /* errno gets overwritten by printf */
 
-    dprintf_file(stddeb, "FILE_SetDosError: errno = %d\n", errno );
+    dprintf_file(stddeb, "FILE_SetDosError: errno = %d %s\n", errno,
+		 sys_errlist[errno] );
     switch (save_errno)
     {
     case EAGAIN:
@@ -178,6 +179,12 @@ void FILE_SetDosError(void)
         break;
     case EEXIST:
         DOS_ERROR( ER_FileExists, EC_Exists, SA_Abort, EL_Disk );
+        break;
+    case EINVAL:
+        DOS_ERROR( ER_SeekError, EC_NotFound, SA_Ignore, EL_Disk );
+        break;
+    case ENOTEMPTY:
+        DOS_ERROR( ERROR_DIR_NOT_EMPTY, EC_Exists, SA_Ignore, EL_Disk );
         break;
     default:
         perror( "int21: unknown errno" );
@@ -522,6 +529,9 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
                                  LPSTR buffer )
 {
     char temppath[144];
+
+    if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
+        drive |= DRIVE_GetCurrentDrive();
 
     if ((drive & TF_FORCEDRIVE) &&
         !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
@@ -1185,7 +1195,7 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 BOOL32 WINAPI DeleteFile32W( LPCWSTR path )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL32 ret = RemoveDirectory32A( xpath );
+    BOOL32 ret = DeleteFile32A( xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }

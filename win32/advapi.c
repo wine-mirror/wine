@@ -76,6 +76,10 @@ BOOL32 WINAPI LookupPrivilegeValue32A(LPCSTR system,LPCSTR name,LPVOID bla)
 	);
 	return TRUE;
 }
+
+/***********************************************************************
+ *           AdjustTokenPrivileges   [ADVAPI32.10]
+ */
 BOOL32 WINAPI AdjustTokenPrivileges(HANDLE32 TokenHandle,BOOL32 DisableAllPrivileges,
 	LPVOID NewState,DWORD BufferLength,LPVOID PreviousState,
 	LPDWORD ReturnLength )

@@ -74,7 +74,7 @@ type	win32
 171 stub EnumPrintProcessorsW
 172 stub EnumPrinterDriversA
 173 stub EnumPrinterDriversW
-174 stub EnumPrintersA
+174 stdcall EnumPrintersA(long ptr long ptr long ptr ptr) EnumPrinters32A
 175 stub EnumPrintersW
 176 stub ExtDeviceMode
 177 stub FindClosePrinterChangeNotification

@@ -7,8 +7,9 @@
 
 #include "windows.h"
 
-typedef	LPVOID	LPUNKNOWN;
 typedef LPCSTR	OLE_LPCSTR;
+typedef LPSTR	LPOLESTR;
+typedef LPCSTR	LPCOLESTR;
 
 /* object types */
 #define OT_LINK		1

@@ -9,10 +9,6 @@ As of Nov 1997 -
 
 General:
 
- * We need to do InsertMenuItem32[AW] and then code most of the other
-   inserting function in terms of this.  Without this, we cannot support
-   all the new extended menus.  Not hard, but slightly big.
-
  * TrueType, .FON rasterizer.
 
  * No thread/process scheduling support in Win32 code. 
@@ -38,9 +34,11 @@ Miscellaneous:
 
  * Invisible controls in BCW dialogs.
 
- * MIRC is unable to show 'Options' dialog.
+ * mIRC 'commands' menu stays on top and will not refresh.
 
- * Tab switching in MIRC 'Setup' dialog leaks memory.
+ * mIRC is unable to show 'Options' dialog.
+
+ * Tab switching in mIRC 'Setup' dialog leaks memory.
 
  * nBytesWidth in CURSORICONINFO is bogus for some bpp
    (doesn't reflect the fact that bits are packed and 16-bit aligned).

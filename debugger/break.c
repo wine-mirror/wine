@@ -347,19 +347,18 @@ void DEBUG_AddModuleBreakpoints(void)
 
         if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
         {
-            PE_MODULE *pe = pModule->pe_module;
             PE_MODREF *pem;
             if (!pCurrentProcess) continue;
             pem = pCurrentProcess->modref_list;
             while (pem)
             {
-		if (pem->pe_module == pe) break;
+		if (pem->module == pModule->module32) break;
 		pem = pem->next;
             }
             if (!pem) continue;
             addr.seg = 0;
-            addr.off = pem->load_addr +
-                      (DWORD)pe->pe_header->OptionalHeader.AddressOfEntryPoint;
+            addr.off = (DWORD)RVA_PTR( pem->module,
+                                       OptionalHeader.AddressOfEntryPoint );
             fprintf( stderr, "Win32 task '%s': ", entry.szModule );
             DEBUG_AddBreakpoint( &addr );
         }

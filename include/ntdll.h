@@ -17,14 +17,14 @@ extern "C" {
 
 typedef struct {
 	BYTE	Value[6];
-} SID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
 
 typedef struct _SID {
 	BYTE	Revision;
 	BYTE	SubAuthorityCount;
 	SID_IDENTIFIER_AUTHORITY	IdentifierAuthority;
 	DWORD	SubAuthority[1];	/* more than one */
-} SID,*LPSID;
+} SID,*PSID,*LPSID;
 
 #define	SID_REVISION			(1)	/* Current revision */
 #define	SID_MAX_SUB_AUTHORITIES		(15)	/* current max subauths */
@@ -121,7 +121,18 @@ typedef struct {
 	LPSID	Group;
 	LPACL	Sacl;
 	LPACL	Dacl;
-} SECURITY_DESCRIPTOR,*LPSECURITY_DESCRIPTOR;
+} SECURITY_DESCRIPTOR,*PSECURITY_DESCRIPTOR,*LPSECURITY_DESCRIPTOR;
+
+typedef enum tagSID_NAME_USE {
+	SidTypeUser = 1,
+	SidTypeGroup,
+	SidTypeDomain,
+	SidTypeAlias,
+	SidTypeWellKnownGroup,
+	SidTypeDeletedAccount,
+	SidTypeInvalid,
+	SidTypeUnknown
+} SID_NAME_USE,*PSID_NAME_USE,*LPSID_NAME_USE;
 
 /* NT lowlevel Strings (handled by Rtl* functions in NTDLL)
  * If they are zero terminated, Length does not include the terminating 0.

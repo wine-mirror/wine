@@ -385,7 +385,7 @@ file	gdi.exe
 613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) THUNK_EnumFontFamiliesEx16
 614 stub AddLpkToGDI
 615 stub GetCharacterPlacement
-616 stub GetFontLanguageInfo
+616 pascal GetFontLanguageInfo(word) GetFontLanguageInfo16
 650 stub BuildInverseTableDIB
 701 stub GDITHKCONNECTIONDATALS
 702 stub FT_GDIFTHKTHKCONNECTIONDATA

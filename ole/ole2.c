@@ -46,3 +46,16 @@ HRESULT WINAPI OleFlushClipboard()
     return S_OK;
 }
 
+/***********************************************************************
+ *           CoRegisterMessageFilter   [OLE32.38]
+ */
+HRESULT CoRegisterMessageFilter(
+    LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
+    LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
+) {
+    dprintf_ole(stdnimp,"CoRegisterMessageFilter()\n");
+    if (lplpMessageFilter) {
+	*lplpMessageFilter = NULL;
+    }
+    return S_OK;
+}

@@ -89,3 +89,12 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
     return 1;
 }
 
+BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
+			       DWORD dwLevel, LPBYTE lpbPrinters,
+			       DWORD cbBuf, LPDWORD lpdwNeeded,
+			       LPDWORD lpdwReturned)
+{
+    fprintf(stderr,"EnumPrinters32A nearly empty stub\n");
+    *lpdwReturned=0;
+    return TRUE;
+}

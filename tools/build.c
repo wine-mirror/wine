@@ -68,7 +68,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "extern"        /* TYPE_EXTERN */
 };
 
-#define MAX_ORDINALS	1299
+#define MAX_ORDINALS	2048
 
   /* Callback function used for stub functions */
 #define STUB_CALLBACK \
@@ -826,7 +826,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pModule->nrname_handle = 0;
     pModule->min_swap_area = 0;
     pModule->expected_version = 0x030a;
-    pModule->pe_module = NULL;
+    pModule->module32 = 0;
     pModule->self = 0;
     pModule->self_loading_sel = 0;
 
@@ -1097,7 +1097,8 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         if (odp->type == TYPE_INVALID) continue;
         nb_names++;
         /* Some assemblers do not have .word */
-        fprintf( outfile, "\t.byte %d,%d\n", LOBYTE(i), HIBYTE(i) );
+        fprintf( outfile, "\t.byte %d,%d\n",
+                 LOBYTE(i - Base), HIBYTE(i - Base) );
     }
 
     /* Output the DLL names */

@@ -1081,6 +1081,28 @@ error:
 
 
 /***********************************************************************
+ *             FlushViewOfFile   (KERNEL32.262)
+ */
+BOOL32 WINAPI FlushViewOfFile( LPCVOID base, DWORD cbFlush )
+{
+    FILE_VIEW *view;
+    UINT32 addr = ROUND_ADDR( base );
+
+    dprintf_virtual( stddeb, "FlushViewOfFile at %p for %ld bytes\n",
+                     base, cbFlush );
+
+    if (!(view = VIRTUAL_FindView( addr )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!cbFlush) cbFlush = view->size;
+    if (!msync( addr, cbFlush, MS_SYNC )) return TRUE;
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
+
+}
+/***********************************************************************
  *             UnmapViewOfFile   (KERNEL32.540)
  */
 BOOL32 WINAPI UnmapViewOfFile( LPVOID addr )

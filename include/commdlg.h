@@ -11,20 +11,6 @@ extern "C" {
 
 #include "wintypes.h"		/* needed for CHOOSEFONT structure */
 
-#define RT_CURSOR           MAKEINTRESOURCE(1)
-#define RT_BITMAP           MAKEINTRESOURCE(2)
-#define RT_ICON             MAKEINTRESOURCE(3)
-#define RT_MENU             MAKEINTRESOURCE(4)
-#define RT_DIALOG           MAKEINTRESOURCE(5)
-#define RT_STRING           MAKEINTRESOURCE(6)
-#define RT_FONTDIR          MAKEINTRESOURCE(7)
-#define RT_FONT             MAKEINTRESOURCE(8)
-#define RT_ACCELERATOR      MAKEINTRESOURCE(9)
-#define RT_RCDATA           MAKEINTRESOURCE(10)
-
-#define RT_GROUP_CURSOR     MAKEINTRESOURCE(12)
-#define RT_GROUP_ICON       MAKEINTRESOURCE(14)
-
 #define OFN_READONLY                 0x00000001
 #define OFN_OVERWRITEPROMPT          0x00000002
 #define OFN_HIDEREADONLY             0x00000004

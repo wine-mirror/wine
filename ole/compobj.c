@@ -6,6 +6,7 @@
 
 /*	At the moment, these are only empty stubs.
  */
+#define INITGUID
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -15,6 +16,8 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "compobj.h"
+#include "interfaces.h"
+#include "shlobj.h"
 
 DWORD currentMalloc=0;
 
@@ -159,7 +162,7 @@ OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
   char *s;
   int	i;
 
-  sprintf(idstr, "{%08lx-%04x-%04x-%2x%2x-",
+  sprintf(idstr, "{%08lx-%04x-%04x-%02x%02x-",
 	  id->Data1, id->Data2, id->Data3,
 	  id->Data4[0], id->Data4[1]);
   s = &idstr[25];

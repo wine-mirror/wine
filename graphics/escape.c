@@ -92,6 +92,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
         LPSTR x=PTR_SEG_TO_LIN(segout);
         lstrcpy32A(lpvOutData,x);
         SEGPTR_FREE(x);
+	break;
     }
     case ENABLEPAIRKERNING: {
         LPINT16 enab = (LPINT16)PTR_SEG_TO_LIN(segout);
@@ -99,6 +100,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
         *(LPINT32)lpvOutData = *enab;
         SEGPTR_FREE(enab);
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	break;
     }
     case GETFACENAME: {
         LPSTR x = (LPSTR)PTR_SEG_TO_LIN(segout);

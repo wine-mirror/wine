@@ -31,7 +31,9 @@ DLLS = \
 	ole2prox.spec \
 	ole32.spec \
 	olecli.spec \
+	olecli32.spec \
 	olesvr.spec \
+	olesvr32.spec \
 	shell.spec \
 	shell32.spec \
 	sound.spec \
@@ -43,7 +45,9 @@ DLLS = \
 	user32.spec \
 	ver.spec \
 	version.spec \
+	w32skrnl.spec \
 	w32sys.spec \
+	win32s16.spec \
 	win87em.spec \
 	winaspi.spec \
 	wing.spec \

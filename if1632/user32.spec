@@ -12,7 +12,7 @@ type	win32
   9 stdcall BeginDeferWindowPos(long) BeginDeferWindowPos32
  10 stdcall BeginPaint(long ptr) BeginPaint32
  11 stdcall BringWindowToTop(long) BringWindowToTop32
- 12 stub BroadcastSystemMessage
+ 12 stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
  13 stub CalcChildScroll
  14 stub CallMsgFilter
  15 stdcall CallMsgFilterA(ptr long) CallMsgFilter32A
@@ -285,7 +285,7 @@ type	win32
 280 stub GetProcessWindowStation
 281 stdcall GetPropA(long ptr) GetProp32A
 282 stdcall GetPropW(long ptr) GetProp32W
-283 stub GetQueueStatus
+283 stdcall GetQueueStatus(long) GetQueueStatus32
 284 stdcall GetScrollInfo(long long ptr) GetScrollInfo32
 285 stdcall GetScrollPos(long long) GetScrollPos32
 286 stdcall GetScrollRange(long long ptr ptr) GetScrollRange32
@@ -381,7 +381,7 @@ type	win32
 376 stdcall LoadStringW(long long ptr long) LoadString32W
 377 stub LockWindowStation
 378 stdcall LockWindowUpdate(long) LockWindowUpdate32
-379 stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory
+379 stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory32
 380 stdcall LookupIconIdFromDirectoryEx(ptr long long long long) LookupIconIdFromDirectoryEx32
 381 stub MBToWCSEx
 382 stdcall MapDialogRect(long ptr) MapDialogRect32
@@ -435,7 +435,7 @@ type	win32
 430 stdcall RegisterClassW(ptr) RegisterClass32W
 431 stdcall RegisterClipboardFormatA(str) RegisterClipboardFormat32A
 432 stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormat32W
-433 stub RegisterHotKey
+433 stdcall RegisterHotKey(long long long long) RegisterHotKey
 434 stub RegisterLogonProcess
 435 stub RegisterSystemThread
 436 stub RegisterTasklist
@@ -506,7 +506,7 @@ type	win32
 501 stdcall SetScrollInfo(long long ptr long) SetScrollInfo32
 502 stdcall SetScrollPos(long long long long) SetScrollPos32
 503 stdcall SetScrollRange(long long long long long) SetScrollRange32
-504 stub SetShellWindow
+504 stdcall SetShellWindow(long) SetShellWindow32
 505 stdcall SetSysColors(long ptr ptr) SetSysColors32
 506 stub SetSysColorsTemp
 507 stub SetSystemCursor
@@ -567,7 +567,7 @@ type	win32
 562 stub UnpackDDElParam
 563 stdcall UnregisterClassA(str long) UnregisterClass32A
 564 stdcall UnregisterClassW(wstr long) UnregisterClass32W
-565 stub UnregisterHotKey
+565 stdcall UnregisterHotKey(long long) UnregisterHotKey
 566 stub UpdatePerUserSystemParameters
 567 stdcall UpdateWindow(long) UpdateWindow32
 568 stub UserClientDllInitialize
@@ -602,6 +602,10 @@ type	win32
 596 stub RegisterServicesProcess
 597 stub SetWindowRgn
 598 stub ToUnicodeEx
-599 stub DrawCaptionTempA
+599 stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTemp32A
 600 stub RegisterNetworkCapabilities
 601 stub WNDPROC_CALLBACK
+602 stub DrawCaptionTempW
+603 stub IsHungAppWindow
+604 stub ChangeDisplaySettingsA
+605 stub ChangeDisplaySettingsW

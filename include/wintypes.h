@@ -145,7 +145,7 @@ typedef void* SEGPTR;
 
 /* Handle types that exist both in Win16 and Win32. */
 
-#define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE32 a##32;
+#define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE32 a##32
 DECLARE_HANDLE(HACCEL);
 DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);

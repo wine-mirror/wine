@@ -798,6 +798,42 @@ DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
 
 
 /***********************************************************************
+ *           GetLongPathName32A   (KERNEL32.xxx)
+ */
+DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
+                                  DWORD longlen )
+{
+    DOS_FULL_NAME full_name;
+
+    /* FIXME: is it correct to always return a fully qualified short path? */
+    if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
+    lstrcpyn32A( longpath, full_name.long_name, longlen );
+    return strlen( full_name.long_name );
+}
+
+
+/***********************************************************************
+ *           GetLongPathName32W   (KERNEL32.269)
+ */
+DWORD WINAPI GetLongPathName32W( LPCWSTR shortpath, LPWSTR longpath,
+                                  DWORD longlen )
+{
+    DOS_FULL_NAME full_name;
+    DWORD ret = 0;
+    LPSTR shortpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, shortpath );
+
+    /* FIXME: is it correct to always return a fully qualified short path? */
+    if (DOSFS_GetFullName( shortpathA, TRUE, &full_name ))
+    {
+        ret = strlen( full_name.short_name );
+        lstrcpynAtoW( longpath, full_name.long_name, longlen );
+    }
+    HeapFree( GetProcessHeap(), 0, shortpathA );
+    return ret;
+}
+
+
+/***********************************************************************
  *           DOSFS_DoGetFullPathName
  *
  * Implementation of GetFullPathName32A/W.

@@ -146,9 +146,11 @@ miscemu/Makefile
 msdos/Makefile
 multimedia/Makefile
 objects/Makefile
+ole/Makefile
 programs/Makefile
 programs/progman/Makefile
 programs/winhelp/Makefile
+programs/winver/Makefile
 rc/Makefile
 resources/Makefile
 scheduler/Makefile

@@ -121,13 +121,19 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
      */
 
     if (wndPtr->class->style & CS_PARENTDC)
+    {
         /* Don't clip the output to the update region for CS_PARENTDC window */
+	if(hrgnUpdate > 1)
+	    DeleteObject32(hrgnUpdate);
         lps->hdc = GetDCEx16( hwnd, 0, DCX_WINDOWPAINT | DCX_USESTYLE |
                               (bIcon ? DCX_WINDOW : 0) );
+    }
     else
+    {
         lps->hdc = GetDCEx16(hwnd, hrgnUpdate, DCX_INTERSECTRGN |
                              DCX_WINDOWPAINT | DCX_USESTYLE |
                              (bIcon ? DCX_WINDOW : 0) );
+    }
 
     dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
 
@@ -283,8 +289,8 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 
     if (!hwnd) hwnd = GetDesktopWindow32();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!WIN_IsWindowDrawable( wndPtr, !(flags & RDW_FRAME) ) 
-	|| (wndPtr->flags & WIN_NO_REDRAW)) return TRUE;  /* No redraw needed */
+    if (!WIN_IsWindowDrawable( wndPtr, !(flags & RDW_FRAME) ) )
+        return TRUE;  /* No redraw needed */
 
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)

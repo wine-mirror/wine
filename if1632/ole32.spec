@@ -38,7 +38,7 @@ type	win32
  35 stub CoQueryReleaseObject
  36 stub CoRegisterClassObject
  37 stub CoRegisterMallocSpy
- 38 stub CoRegisterMessageFilter
+ 38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter
  39 stub CoReleaseMarshalData
  40 stub CoRevokeClassObject
  41 stub CoRevokeMallocSpy

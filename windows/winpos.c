@@ -669,6 +669,15 @@ HWND16 WINAPI GetShellWindow16(void)
     return GetShellWindow32();
 }
 
+/*******************************************************************
+ *         SetShellWindow32    (USER32.287)
+ */
+HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
+{
+    fprintf( stdnimp, "SetShellWindow(%08x): empty stub\n",hwndshell );
+    return 0;
+}
+
 
 /*******************************************************************
  *         GetShellWindow32    (USER32.287)
@@ -2054,19 +2063,13 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
     if(wndPtr->dwStyle & WS_VISIBLE)
-    {
-        if(!(wndPtr->flags & WIN_NO_REDRAW))
-            flags &= ~SWP_SHOWWINDOW;
-    }
+        flags &= ~SWP_SHOWWINDOW;
     else
     {
 	uFlags |= SMC_NOPARENTERASE; 
 	flags &= ~SWP_HIDEWINDOW;
 	if (!(flags & SWP_SHOWWINDOW)) flags |= SWP_NOREDRAW;
     }
-
-    if(flags & SWP_SHOWWINDOW)
-       wndPtr->flags&=~WIN_NO_REDRAW;
 
 /*     Check for windows that may not be resized 
        FIXME: this should be done only for Windows 3.0 programs 
@@ -2313,12 +2316,25 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	wndPtr->dwStyle |= WS_VISIBLE;
         if (wndPtr->window)
         {
+	    HWND32 focus, curr;
+
 	    if( uFlags & SMC_SETXPOS )
 	    {
               WINPOS_SetXWindowPos( &winpos );
               winpos.hwndInsertAfter = tempInsertAfter;
 	    }
             XMapWindow( display, wndPtr->window );
+
+	    /* If focus was set to an unmapped window, reset X focus now */
+	    focus = curr = GetFocus32();
+	    while (curr != NULL) {
+		if (curr == hwnd) {
+		    SetFocus32( NULL );
+		    SetFocus32( focus );
+		    break;
+		}
+		curr = GetParent32(curr);
+	    }
         }
         else
         {

@@ -1189,3 +1189,21 @@ BOOL32 WINAPI TranslateCharSetInfo(LPDWORD lpSrc,LPCHARSETINFO lpCs,DWORD dwFlag
     return TRUE;
 }
 
+
+/*************************************************************************
+ *             GetFontLanguageInfo   (GDI32.182)
+ */
+DWORD WINAPI GetFontLanguageInfo32(HDC32 hdc) {
+	/* return value 0 is correct for most cases anyway */
+	fprintf(stderr,"GetFontLanguageInfo:stub!\n");
+	return 0;
+}
+
+/*************************************************************************
+ *             GetFontLanguageInfo   (GDI.616)
+ */
+DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
+	/* return value 0 is correct for most cases anyway */
+	fprintf(stderr,"GetFontLanguageInfo:stub!\n");
+	return 0;
+}

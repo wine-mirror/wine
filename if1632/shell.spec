@@ -17,7 +17,7 @@ type	win16
  22 pascal16 ShellAbout(word ptr ptr word) ShellAbout16
  33 pascal16 AboutDlgProc(word word word long) AboutDlgProc16
  34 pascal16 ExtractIcon(word str s_word) ExtractIcon16
- 36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon
+ 36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon16
  37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst
  38 pascal   FindEnvironmentString(ptr) FindEnvironmentString
  39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon

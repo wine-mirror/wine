@@ -97,7 +97,7 @@ typedef struct
 #define WIN_NEEDS_NCPAINT      0x0004 /* WM_NCPAINT must be sent to window */
 #define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
 #define WIN_INTERNAL_PAINT     0x0010 /* Internal WM_PAINT message pending */
-#define WIN_NO_REDRAW          0x0020 /* WM_SETREDRAW called for this window */
+/* Used to have WIN_NO_REDRAW  0x0020 here */
 #define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */

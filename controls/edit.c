@@ -84,6 +84,8 @@ typedef struct
 	INT32 left_margin;		/* in pixels */
 	INT32 right_margin;		/* in pixels */
 	RECT32 format_rect;
+	INT32 region_posx;		/* Position of cursor relative to region: */
+	INT32 region_posy;		/* -1: to left, 0: within, 1: to right */
 	EDITWORDBREAKPROC16 word_break_proc16;
 	EDITWORDBREAKPROC32A word_break_proc32A;
 	INT32 line_count;		/* number of lines */
@@ -1016,6 +1018,7 @@ static INT32 EDIT_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y, LPBOOL3
 		INT32 line = (y - es->format_rect.top) / es->line_height + es->y_offset;
 		INT32 line_index = 0;
 		LINEDEF *line_def = es->first_line_def;
+		INT32 low, high;
 		while ((line > 0) && line_def->next) {
 			line_index += line_def->length;
 			line_def = line_def->next;
@@ -1035,11 +1038,16 @@ static INT32 EDIT_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y, LPBOOL3
 		dc = GetDC32(wnd->hwndSelf);
 		if (es->font)
 			old_font = SelectObject32(dc, es->font);
-		/* FIXME: inefficient algorithm */
-		for (index = line_index + 1 ; index < line_index + line_def->net_length ; index++)
-			if (LOWORD(GetTabbedTextExtent32A(dc, es->text + line_index,
-					index - line_index, es->tabs_count, es->tabs)) >= x)
-				break;
+                    low = line_index + 1;
+                    high = line_index + line_def->net_length + 1;
+                    while (low < high - 1)
+                    {
+                        INT32 mid = (low + high) / 2;
+			if (LOWORD(GetTabbedTextExtent32A(dc, es->text + line_index,mid - line_index, es->tabs_count, es->tabs)) > x) high = mid;
+                        else low = mid;
+                    }
+                    index = low;
+
 		if (after_wrap)
 			*after_wrap = ((index == line_index + line_def->net_length) &&
 							(line_def->ending == END_WRAP));
@@ -2257,14 +2265,12 @@ static BOOL32 EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT32 dx, INT32 dy)
 		nyoff = es->line_count - 1;
 	dy = (es->y_offset - nyoff) * es->line_height;
 	if (dx || dy) {
-		if (!(wnd->flags & WIN_NO_REDRAW)) {
-			RECT32 rc1;
-			RECT32 rc;
-			GetClientRect32(wnd->hwndSelf, &rc1);
-			IntersectRect32(&rc, &rc1, &es->format_rect);
-			ScrollWindowEx32(wnd->hwndSelf, -dx, dy,
-					NULL, &rc, (HRGN32)NULL, NULL, SW_INVALIDATE);
-		}
+		RECT32 rc1;
+		RECT32 rc;
+		GetClientRect32(wnd->hwndSelf, &rc1);
+		IntersectRect32(&rc, &rc1, &es->format_rect);
+		ScrollWindowEx32(wnd->hwndSelf, -dx, dy,
+				NULL, &rc, (HRGN32)NULL, NULL, SW_INVALIDATE);
 		es->y_offset = nyoff;
 		es->x_offset += dx;
 	}
@@ -2440,8 +2446,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL32 can_undo, LPCSTR 
 	EDIT_EM_ScrollCaret(wnd, es);
 
 	/* FIXME: really inefficient */
-	if (!(wnd->flags & WIN_NO_REDRAW))
-		InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
+	InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
 }
 
 
@@ -2525,8 +2530,7 @@ static void EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL32 hloc)
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
 	EDIT_BuildLineDefs_ML(wnd, es);
-	if (!(wnd->flags & WIN_NO_REDRAW))
-		InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
+	InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
@@ -2569,8 +2573,7 @@ static void EDIT_EM_SetHandle16(WND *wnd, EDITSTATE *es, HLOCAL16 hloc)
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
 	EDIT_BuildLineDefs_ML(wnd, es);
-	if (!(wnd->flags & WIN_NO_REDRAW))
-		InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
+	InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
@@ -2612,16 +2615,16 @@ static void EDIT_EM_SetMargins(WND *wnd, EDITSTATE *es, INT32 action, INT32 left
 			 *	FIXME: do some GetABCCharWidth, or so
 			 *		This is just preliminary
 			 */
-			es->left_margin = es->right_margin = es->char_width;
+			es->left_margin = es->right_margin = es->char_width/4;
 		} else
-			es->left_margin = es->right_margin = es->char_width;
-		return;
+			es->left_margin = es->right_margin = es->char_width/4;
 	} else {
 		if (action & EC_LEFTMARGIN)
 			es->left_margin = left;
 		if (action & EC_RIGHTMARGIN)
 			es->right_margin = right;
 	}
+	dprintf_edit(stddeb, "EDIT_EM_SetMargins: left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
 
 
@@ -2678,24 +2681,36 @@ static void EDIT_EM_SetSel(WND *wnd, EDITSTATE *es, UINT32 start, UINT32 end, BO
 		es->flags |= EF_AFTER_WRAP;
 	else
 		es->flags &= ~EF_AFTER_WRAP;
-	if (!(wnd->flags & WIN_NO_REDRAW)) {
-		if (es->flags & EF_FOCUSED) {
-			LRESULT pos = EDIT_EM_PosFromChar(wnd, es, end, after_wrap);
-			SetCaretPos32(SLOWORD(pos), SHIWORD(pos));
-		}
-		/* FIXME: little efficiency, could be better */
-		ORDER_UINT32(start, end);
-		ORDER_UINT32(start, old_start);
-		ORDER_UINT32(start, old_end);
-		ORDER_UINT32(end, old_start);
-		ORDER_UINT32(end, old_end);
-		ORDER_UINT32(old_start, old_end);
-		if (end != old_start) {
-			EDIT_InvalidateText(wnd, es, start, end);
-			EDIT_InvalidateText(wnd, es, old_start, old_end);
-		} else
-			EDIT_InvalidateText(wnd, es, start, old_end);
+	if (es->flags & EF_FOCUSED) {
+		LRESULT pos = EDIT_EM_PosFromChar(wnd, es, end, after_wrap);
+		SetCaretPos32(SLOWORD(pos), SHIWORD(pos));
 	}
+/* This is little  bit more efficient than before, not sure if it can be improved. FIXME? */
+        ORDER_UINT32(start, end);
+        ORDER_UINT32(end, old_end);
+        ORDER_UINT32(start, old_start);
+        ORDER_UINT32(old_start, old_end);
+	if (end != old_start)
+        {
+/*
+ * One can also do 
+ *          ORDER_UINT32(end, old_start);
+ *          EDIT_InvalidateText(wnd, es, start, end);
+ *          EDIT_InvalidateText(wnd, es, old_start, old_end);
+ * in place of the following if statement.                          
+ */
+            if (old_start > end )
+            {
+                EDIT_InvalidateText(wnd, es, start, end);
+                EDIT_InvalidateText(wnd, es, old_start, old_end);
+            }
+            else
+            {
+                EDIT_InvalidateText(wnd, es, start, old_start);
+                EDIT_InvalidateText(wnd, es, end, old_end);
+            }
+	}
+        else EDIT_InvalidateText(wnd, es, start, old_end);
 }
 
 
@@ -3479,6 +3494,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT32 x,
 	e = EDIT_CharFromPos(wnd, es, x, y, &after_wrap);
 	EDIT_EM_SetSel(wnd, es, (keys & MK_SHIFT) ? es->selection_start : e, e, after_wrap);
 	EDIT_EM_ScrollCaret(wnd, es);
+	es->region_posx = es->region_posx = 0;
 	SetTimer32(wnd->hwndSelf, 0, 100, NULL);
 	return 0;
 }
@@ -3508,6 +3524,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, DWORD keys, INT32 x, I
 {
 	INT32 e;
 	BOOL32 after_wrap;
+	INT32 prex, prey;
 
 	if (GetCapture32() != wnd->hwndSelf)
 		return 0;
@@ -3516,7 +3533,10 @@ static LRESULT EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, DWORD keys, INT32 x, I
 	 *	FIXME: gotta do some scrolling if outside client
 	 *		area.  Maybe reset the timer ?
 	 */
+	prex = x; prey = y;
 	EDIT_ConfinePoint(wnd, es, &x, &y);
+	es->region_posx = (prex < x) ? -1 : ((prex > x) ? 1 : 0);
+	es->region_posy = (prey < y) ? -1 : ((prey > y) ? 1 : 0);
 	e = EDIT_CharFromPos(wnd, es, x, y, &after_wrap);
 	EDIT_EM_SetSel(wnd, es, es->selection_start, e, after_wrap);
 	return 0;
@@ -3677,7 +3697,7 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT32 font, BOOL32 redraw
 		EDIT_EM_SetMargins(wnd, es, EC_USEFONTINFO, 0, 0);
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(wnd, es);
-	if (redraw && !(wnd->flags & WIN_NO_REDRAW))
+	if (redraw)
 		InvalidateRect32(wnd->hwndSelf, NULL, TRUE);
 	if (es->flags & EF_FOCUSED) {
 		LRESULT pos;
@@ -3701,6 +3721,7 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 	if (text) {
 		dprintf_edit(stddeb, "\t'%s'\n", text);
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, text);
+		es->x_offset = 0;
 	}
 	es->flags |= EF_MODIFIED;
 	es->flags |= EF_UPDATE;
@@ -3749,8 +3770,13 @@ static LRESULT EDIT_WM_SysKeyDown(WND *wnd, EDITSTATE *es, INT32 key, DWORD key_
  */
 static void EDIT_WM_Timer(WND *wnd, EDITSTATE *es, INT32 id, TIMERPROC32 timer_proc)
 {
+	if (es->region_posx < 0) {
+		EDIT_MoveBackward(wnd, es, TRUE);
+	} else if (es->region_posx > 0) {
+		EDIT_MoveForward(wnd, es, TRUE);
+	}
 /*
- *	FIXME: gotta do some scrolling here, like
+ *	FIXME: gotta do some vertical scrolling here, like
  *		EDIT_EM_LineScroll(wnd, 0, 1);
  */
 }

@@ -417,7 +417,7 @@ BOOL32 WINAPI CreateProcess32A(
 	DWORD creationflags,LPVOID env,LPCSTR curdir,
 	LPSTARTUPINFO32A startupinfo,LPPROCESS_INFORMATION processinfo
 ) {
-	fprintf(stderr,"CreateProcess(%s,%s,%p,%p,%d,%08lx,%p,%s,%p,%p)\n",
+	fprintf(stderr,"CreateProcessA(%s,%s,%p,%p,%d,%08lx,%p,%s,%p,%p), stub\n",
 		appname,cmdline,processattributes,threadattributes,
 		inherithandles,creationflags,env,curdir,startupinfo,processinfo
 	);
@@ -426,8 +426,22 @@ BOOL32 WINAPI CreateProcess32A(
 	return FALSE;
 }
 
+BOOL32 WINAPI CreateProcess32W(
+	LPCWSTR appname,LPWSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
+        LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
+	DWORD creationflags,LPVOID env,LPCWSTR curdir,
+	LPSTARTUPINFO32W startupinfo,LPPROCESS_INFORMATION processinfo)
+{
+    fprintf(stderr,"CreateProcessW(%p,%p,%p,%p,%d,%08lx,%p,%p,%p,%p) stub\n",
+            appname,cmdline,processattributes,threadattributes,
+            inherithandles,creationflags,env,curdir,startupinfo,processinfo );
+    /* make from lcc uses system as fallback if CreateProcess returns
+       FALSE, so return false */
+    return FALSE;
+}
+
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
-	fprintf(stderr,"ContinueDebugEvent(%ld,%ld,%ld), stub\n",pid,tid,contstatus);
+	fprintf(stderr,"ContinueDebugEvent(%ld,%ld,%ld) stub\n",pid,tid,contstatus);
 	return TRUE;
 }
 

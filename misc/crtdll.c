@@ -475,6 +475,16 @@ void __cdecl CRTDLL_exit(DWORD ret)
 
 
 /*********************************************************************
+ *                  _abnormal_termination          (CRTDLL.36 )
+ */
+INT32 __cdecl CRTDLL__abnormal_termination(void)
+{
+        dprintf_crtdll(stddeb,"CRTDLL__abnormal_termination\n");
+	return 0;
+}
+
+
+/*********************************************************************
  *                  fflush        (CRTDLL.365)
  */
 INT32 __cdecl CRTDLL_fflush(LPVOID stream)
@@ -582,6 +592,19 @@ INT32 __cdecl CRTDLL_getc( FILE *stream )
   return ret;
 }
 
+/*********************************************************************
+ *                  _rotl          (CRTDLL.259)
+ */
+UINT32 __cdecl CRTDLL__rotl(UINT32 x,INT32 shift)
+{
+   unsigned int ret = (x >> shift)|( x >>((sizeof(x))-shift));
+
+   dprintf_crtdll(stddeb,
+		  "CRTDLL_rotl got 0x%08x rot %d ret 0x%08x\n",
+		  x,shift,ret);
+   return ret;
+    
+}
 /*********************************************************************
  *                  _lrotl          (CRTDLL.176)
  */
@@ -1427,6 +1450,66 @@ LPSTR __cdecl CRTDLL__fullpath(LPSTR buf, LPCSTR name, INT32 size)
   lstrcpyn32A(buf,full_name.short_name,size);
   dprintf_crtdll(stderr,"CRTDLL_fullpath got %s\n",buf);
   return buf;
+}
+
+/*********************************************************************
+ *                  _splitpath           (CRTDLL.279)
+ */
+VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR filename, LPSTR extension )
+{
+  /* drive includes :
+     directory includes leading and trailing (forward and backward slashes)
+     filename without dot and slashes
+     extension with leading dot
+     */
+  char * drivechar,*dirchar,*namechar;
+
+  dprintf_crtdll(stddeb,"CRTDLL__splitpath got %s\n",path);
+
+  drivechar  = strchr(path,':');
+  dirchar    = strrchr(path,'/');
+  namechar   = strrchr(path,'\\');
+  dirchar = MAX(dirchar,namechar);
+  if (dirchar)
+    namechar   = strrchr(dirchar,'.');
+  else
+    namechar   = strrchr(path,'.');
+  
+  
+  if (drive) 
+    {
+      *drive = NULL;
+      if (drivechar) 
+	{
+	  strncat(drive,path,drivechar-path+1);
+	  path = drivechar+1;
+	}
+    }
+  if (directory) 
+    {
+      *directory = NULL;
+      if (dirchar)
+	{
+	  strncat(directory,path,dirchar-path+1);
+	  path = dirchar+1;
+	}
+    }
+  if (filename)
+    {
+      *filename = NULL;
+      if (namechar)
+	{
+	  strncat(filename,path,namechar-path);
+	  if (extension) 
+	    {
+	      *extension = NULL;
+	      strcat(extension,namechar);
+	    }
+	}
+    }
+
+  dprintf_crtdll(stddeb,"CRTDLL__splitpath found %s %s %s %s\n",drive,directory,filename,extension);
+  
 }
 
 /*********************************************************************
