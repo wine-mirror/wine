@@ -416,16 +416,18 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETWINDOWORGEX:
       {
-          /*
-           * FIXME: The call to SetWindowOrgEx prevents EMFs from being scrolled
-           *        by an application. This is very BAD!!!
-           */
-#if 0
-	PEMRSETWINDOWORGEX pSetWindowOrgEx = (PEMRSETWINDOWORGEX) mr;
-	SetWindowOrgEx(hdc, pSetWindowOrgEx->ptlOrigin.x,
-		       pSetWindowOrgEx->ptlOrigin.y, NULL);
-#endif
-	break;
+		XFORM xform;
+		PEMRSETWINDOWORGEX pSetWindowOrgEx = (PEMRSETWINDOWORGEX) mr;
+
+		xform.eM11 = 1;
+		xform.eM12 = 0;
+		xform.eM21 = 0;
+		xform.eM22 = 1;
+		xform.eDx = -pSetWindowOrgEx->ptlOrigin.x;
+		xform.eDy = -pSetWindowOrgEx->ptlOrigin.y;
+
+		ModifyWorldTransform(hdc, &xform, MWT_LEFTMULTIPLY);
+		break;
       }
     case EMR_SETWINDOWEXTEX:
       {
@@ -1181,7 +1183,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	PEMRBITBLT pBitBlt = (PEMRBITBLT)mr;
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
-	HBITMAP hBmp, hBmpOld;
+	HBITMAP hBmp = 0, hBmpOld = 0;
 	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pBitBlt->offBmiSrc);
 
 	SetWorldTransform(hdcSrc, &pBitBlt->xformSrc);
@@ -1194,9 +1196,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	SelectObject(hdcSrc, hBrushOld);
 	DeleteObject(hBrush);
 
-	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
-	hBmpOld = SelectObject(hdcSrc, hBmp);
+	if (pBitBlt->offBmiSrc > 0)
+	{
+		hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+					  (BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
+		hBmpOld = SelectObject(hdcSrc, hBmp);
+	}
+
 	BitBlt(hdc,
 	       pBitBlt->xDest,
 	       pBitBlt->yDest,
@@ -1206,8 +1212,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	       pBitBlt->xSrc,
 	       pBitBlt->ySrc,
 	       pBitBlt->dwRop);
-	SelectObject(hdcSrc, hBmpOld);
-	DeleteObject(hBmp);
+
+	if (pBitBlt->offBmiSrc > 0)
+	{
+		SelectObject(hdcSrc, hBmpOld);
+		DeleteObject(hBmp);
+	}
 	DeleteDC(hdcSrc);
 	break;
     }
@@ -1217,7 +1227,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	PEMRSTRETCHBLT pStretchBlt= (PEMRSTRETCHBLT)mr;
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
-	HBITMAP hBmp, hBmpOld;
+	HBITMAP hBmp = 0, hBmpOld = 0;
 	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pStretchBlt->offBmiSrc);
 
 	SetWorldTransform(hdcSrc, &pStretchBlt->xformSrc);
@@ -1230,9 +1240,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	SelectObject(hdcSrc, hBrushOld);
 	DeleteObject(hBrush);
 
-	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
-	hBmpOld = SelectObject(hdcSrc, hBmp);
+	if (pStretchBlt->offBmiSrc)
+	{
+		hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+					  (BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
+		hBmpOld = SelectObject(hdcSrc, hBmp);
+	}
+
 	StretchBlt(hdc,
 	       pStretchBlt->xDest,
 	       pStretchBlt->yDest,
@@ -1244,8 +1258,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	       pStretchBlt->cxSrc,
 	       pStretchBlt->cySrc,
 	       pStretchBlt->dwRop);
-	SelectObject(hdcSrc, hBmpOld);
-	DeleteObject(hBmp);
+
+
+	if (pStretchBlt->offBmiSrc)
+	{
+		SelectObject(hdcSrc, hBmpOld);
+		DeleteObject(hBmp);
+	}
+
 	DeleteDC(hdcSrc);
 	break;
     }
@@ -1486,9 +1506,39 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
     }
 
+    case EMR_SETTEXTJUSTIFICATION:
+    {
+	PEMRSETTEXTJUSTIFICATION pSetTextJust = (PEMRSETTEXTJUSTIFICATION)mr;
+	SetTextJustification(hdc, pSetTextJust->nBreakExtra, pSetTextJust->nBreakCount);
+	break;
+    }
+
+    case EMR_SETLAYOUT:
+    {
+	PEMRSETLAYOUT pSetLayout = (PEMRSETLAYOUT)mr;
+	SetLayout(hdc, pSetLayout->iMode);
+	break;
+    }
+
     case EMR_POLYDRAW16:
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
+	case EMR_DRAWESCAPE :
+	case EMR_EXTESCAPE:
+	case EMR_STARTDOC:
+	case EMR_SMALLTEXTOUT:
+	case EMR_FORCEUFIMAPPING:
+	case EMR_NAMEDESCAPE:
+	case EMR_COLORCORRECTPALETTE:
+	case EMR_SETICMPROFILEA:
+	case EMR_SETICMPROFILEW:
+	case EMR_ALPHABLEND:
+	case EMR_TRANSPARENTBLT:
+	case EMR_GRADIENTFILL:
+	case EMR_SETLINKEDUFI:
+	case EMR_COLORMATCHTOTARGETW:
+	case EMR_CREATECOLORSPACEW:
+
     default:
       /* From docs: If PlayEnhMetaFileRecord doesn't recognize a
                     record then ignore and return TRUE. */
