@@ -162,7 +162,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tOUT
 %token tPOINTERDEFAULT
 %token tPROPERTIES
-%token tPROPGET tPROPPUT
+%token tPROPGET tPROPPUT tPROPPUTREF
 %token tPUBLIC
 %token tREADONLY tREF
 %token tRESTRICTED
@@ -368,6 +368,7 @@ attribute:
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
 	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
+	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }

@@ -271,6 +271,7 @@ static struct keyword {
 	{"properties",			tPROPERTIES},
 	{"propget",			tPROPGET},
 	{"propput",			tPROPPUT},
+	{"propputref",			tPROPPUTREF},
 /* ... */
 	{"public",			tPUBLIC},
 /* ... */

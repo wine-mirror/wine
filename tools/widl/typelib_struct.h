@@ -182,6 +182,7 @@ typedef struct {
                         /* bits 8 - 11: CALLCONV */
                         /* bit  12: parameters have default values */
                         /* bit  13: oEntry is numeric */
+                        /* bits 16 - 31: index of next function with same id */
 #ifdef WORDS_BIGENDIAN
     INT16 nroargs;      /* nr of optional arguments */
     INT16 nrargs;       /* number of arguments (including optional ????) */
