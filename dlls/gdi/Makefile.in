@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi32.dll
 IMPORTS   = advapi32 kernel32 ntdll
-ALTNAMES  = gdi.exe dispdib.dll wing.dll
 EXTRAINCL = @FREETYPEINCL@
 EXTRALIBS = $(LIBUNICODE) @ICULIBS@
 

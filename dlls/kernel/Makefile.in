@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
 IMPORTS   = ntdll
-ALTNAMES  = krnl386.exe comm.drv stress.dll system.drv toolhelp.dll windebug.dll win87em.dll
 EXTRALIBS = $(LIBUNICODE)
 
 SPEC_SRCS16 = \

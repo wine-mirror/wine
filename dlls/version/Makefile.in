@@ -4,10 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = version.dll
 IMPORTS   = lz32 kernel32 ntdll
-ALTNAMES  = ver.dll
 EXTRALIBS = $(LIBUNICODE)
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	info.c \
@@ -16,6 +13,8 @@ C_SRCS = \
 
 C_SRCS16 = \
 	ver16.c
+
+SPEC_SRCS16 = ver.spec
 
 SUBDIRS = tests
 

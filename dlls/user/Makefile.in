@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32.dll
 IMPORTS   = gdi32 advapi32 kernel32 ntdll
-ALTNAMES  = user.exe ddeml.dll display.drv keyboard.drv mouse.drv
 EXTRALIBS = $(LIBUNICODE)
 
 SPEC_SRCS16 = \

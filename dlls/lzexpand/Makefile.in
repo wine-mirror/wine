@@ -4,13 +4,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lz32.dll
 IMPORTS   = kernel32
-ALTNAMES  = lzexpand.dll
 EXTRALIBS = $(LIBUNICODE)
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS   = lzexpand_main.c
 C_SRCS16 = lzexpand16.c
+SPEC_SRCS16 = lzexpand.spec
 
 @MAKE_DLL_RULES@
 

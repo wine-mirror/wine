@@ -4,14 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olesvr32.dll
 IMPORTS   = kernel32
-ALTNAMES  = olesvr.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	olesvr_main.c
 
+SPEC_SRCS16 = olesvr.spec
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

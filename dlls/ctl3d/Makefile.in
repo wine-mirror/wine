@@ -4,13 +4,14 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ctl3d32.dll
 IMPORTS   = user32 kernel32
-ALTNAMES  = ctl3d.dll ctl3dv2.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = ctl3d32.c
 
 C_SRCS16 = ctl3d.c
+
+SPEC_SRCS16 = \
+	ctl3d.spec \
+	ctl3dv2.spec
 
 @MAKE_DLL_RULES@
 

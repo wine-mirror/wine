@@ -4,11 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32.dll
 IMPORTS   = kernel32
-ALTNAMES  = rasapi16.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = rasapi.c
+
+SPEC_SRCS16 = rasapi16.spec
 
 @MAKE_DLL_RULES@
 

@@ -4,9 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wnaspi32.dll
 IMPORTS   = advapi32 kernel32
-ALTNAMES  = winaspi.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	aspi.c \
@@ -14,6 +11,8 @@ C_SRCS = \
 
 C_SRCS16 = \
 	winaspi16.c
+
+SPEC_SRCS16 = winaspi.spec
 
 @MAKE_DLL_RULES@
 

@@ -4,15 +4,14 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olecli32.dll
 IMPORTS   = ole32 gdi32 kernel32
-ALTNAMES  = olecli.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	olecli_main.c
 
 C_SRCS16 = \
 	olecli16.c
+
+SPEC_SRCS16 = olecli.spec
 
 @MAKE_DLL_RULES@
 

@@ -4,12 +4,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winnls32.dll
 IMPORTS   = kernel32
-ALTNAMES  = winnls.dll
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	winnls.c
+
+SPEC_SRCS16 = winnls.spec
 
 @MAKE_DLL_RULES@
 

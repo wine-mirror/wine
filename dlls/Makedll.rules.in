@@ -2,7 +2,6 @@
 #
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
-# ALTNAMES     : alternate names for this dll (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
 # SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
 # SUBSYSTEM    : (optional) subsystem (for native dlls)
@@ -73,12 +72,19 @@ doc-sgml: $(C_SRCS)
 
 # Rules for installation
 
-WIN16_INSTALL = $(ALTNAMES:%=_install_/%$(DLLEXT))
+EXE_SPECS16 = $(SPEC_SRCS16:.exe.spec=.exe)
+DRV_SPECS16 = $(EXE_SPECS16:.drv.spec=.drv)
+ALL_SPECS16 = $(DRV_SPECS16:.spec=.dll)
 
-.PHONY: install_lib $(WIN16_INSTALL)
+WIN16_INSTALL = $(ALL_SPECS16:%=_install_/%)
 
-$(ALTNAMES:%=_install_/%$(DLLEXT)): install_lib
-	cd $(dlldir) && $(RM) `basename $@` && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`
+.PHONY: install_lib $(ALL_SPECS16:%=_install_/%) $(ALL_SPECS16:%=_uninstall_/%)
+
+$(ALL_SPECS16:%=_install_/%): install_lib
+	cd $(dlldir) && $(RM) `basename $@`$(DLLEXT) && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`$(DLLEXT)
+
+$(ALL_SPECS16:%=_uninstall_/%): dummy
+	$(RM) $(dlldir)/`basename $@`$(DLLEXT)
 
 install_lib: $(MODULE)$(DLLEXT)
 	$(MKINSTALLDIRS) $(dlldir)
@@ -86,8 +92,8 @@ install_lib: $(MODULE)$(DLLEXT)
 
 install:: install_lib @WIN16_INSTALL@
 
-uninstall::
-	$(RM) $(dlldir)/$(MODULE)$(DLLEXT) $(ALTNAMES:%=$(dlldir)/%$(DLLEXT))
+uninstall:: $(ALL_SPECS16:%=_uninstall_/%)
+	$(RM) $(dlldir)/$(MODULE)$(DLLEXT)
 
 # Misc. rules
 

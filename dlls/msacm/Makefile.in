@@ -4,10 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.dll
 IMPORTS   = winmm user32 advapi32 kernel32
-ALTNAMES  = msacm.dll
 EXTRALIBS = $(LIBUNICODE)
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	driver.c \
@@ -20,6 +17,8 @@ C_SRCS = \
 
 C_SRCS16 = \
 	msacm_main.c
+
+SPEC_SRCS16 = msacm.spec
 
 RC_SRCS = msacm.rc
 

@@ -3,12 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = twain_32.dll
-ALTNAMES  = twain.dll
 IMPORTS   = user32 gdi32 kernel32 ntdll
 EXTRALIBS = @SANELIBS@
 EXTRAINCL = @SANEINCL@
-
-SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	capability.c \
@@ -20,6 +17,8 @@ C_SRCS = \
 
 C_SRCS16 = \
 	twain16_main.c
+
+SPEC_SRCS16 = twain.spec
 
 @MAKE_DLL_RULES@
 
