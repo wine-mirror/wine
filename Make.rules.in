@@ -64,6 +64,7 @@ C2MAN        = $(TOPSRCDIR)/tools/c2man.pl
 RUNTEST      = $(TOPSRCDIR)/tools/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
+MAKECTESTS   = $(TOOLSDIR)/tools/make_ctests
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
 BIN2RES      = $(TOOLSDIR)/tools/bin2res
 WMC          = $(TOOLSDIR)/tools/wmc/wmc

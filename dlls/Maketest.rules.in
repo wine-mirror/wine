@@ -46,8 +46,8 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 
 # Rules for building test list
 
-$(TESTLIST): Makefile.in $(TOPSRCDIR)/tools/make_ctests
-	$(TOPSRCDIR)/tools/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
+$(TESTLIST): Makefile.in $(MAKECTESTS)
+	$(MAKECTESTS) -o $@ $(CTESTS)
 
 depend: $(TESTLIST)
 

@@ -11,6 +11,7 @@ PROGRAMS = \
 	bin2res \
 	fnt2bdf \
 	fnt2fon \
+	make_ctests \
 	makedep \
 	sfnt2fnt \
 	wineprefixcreate
@@ -19,6 +20,7 @@ C_SRCS = \
 	bin2res.c \
 	fnt2bdf.c \
 	fnt2fon.c \
+	make_ctests.c \
 	makedep.c \
 	sfnt2fnt.c \
 
@@ -42,6 +44,9 @@ all: $(PROGRAMS) $(SUBDIRS)
 
 makedep: makedep.o
 	$(CC) $(CFLAGS) -o makedep makedep.o
+
+make_ctests: make_ctests.o
+	$(CC) $(CFLAGS) -o make_ctests make_ctests.o
 
 fnt2bdf: fnt2bdf.o
 	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o $(LIBPORT)
