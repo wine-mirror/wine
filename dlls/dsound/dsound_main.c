@@ -2047,6 +2047,11 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 			primarybuf->dsbd.dwFlags = dsbd->dwFlags;
 			return DS_OK;
 		} /* Else create primary buffer */
+	} else {
+		if (dsbd->dwBufferBytes < DSBSIZE_MIN || dsbd->dwBufferBytes > DSBSIZE_MAX) {
+			ERR("invalid sound buffer size %ld\n", dsbd->dwBufferBytes);
+			return DSERR_INVALIDPARAM; /* FIXME: which error? */
+		}
 	}
 
 	*ippdsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBufferImpl));
@@ -3214,6 +3219,10 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 				mixq++;
 		} else mixq = 0;
 		if (forced) mixq = DS_SND_QUEUE;
+
+                /* Make sure that we don't rewrite any fragments that have already been
+                   written and are waiting to be played */
+                mixq = (dsound->pwqueue > mixq) ? 0 : (mixq - dsound->pwqueue);
 
 		/* output it */
 		for (; mixq; mixq--) {

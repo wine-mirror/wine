@@ -130,6 +130,8 @@ typedef struct _DSCAPS
 #define DSBCAPS_GETCURRENTPOSITION2 0x00010000  /* More accurate play cursor under emulation*/
 #define DSBCAPS_MUTE3DATMAXDISTANCE 0x00020000
 
+#define DSBSIZE_MIN                 4
+#define DSBSIZE_MAX                 0xFFFFFFF
 #define DSBPAN_LEFT                 -10000
 #define DSBPAN_RIGHT                 10000
 #define DSBVOLUME_MAX                    0
