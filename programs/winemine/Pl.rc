@@ -43,7 +43,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM SEPARATOR
         MENUITEM "W&yjœcie\tAlt+X",   IDM_EXIT
     }
-    POPUP "&Pomoc" {
+    POPUP "&Info" {
         MENUITEM "&Najlepsze Wyniki", IDM_TIMES
         MENUITEM "&O Programie",      IDM_ABOUT
     }
