@@ -420,6 +420,8 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
 	}
+	pProv->pVTable->dwProvType = dwProvType;
+	pProv->pVTable->pszProvName = provname;
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
 	{
 		/* MSDN: When this flag is set, the value returned in phProv is undefined,
