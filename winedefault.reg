@@ -41,6 +41,14 @@
 "Favorites"="C:\WINDOWS\Favorites"
 
 #
+# Overwrite default load address of BDE 
+# (Borland database engine)
+#
+
+[HKEY_LOCAL_MACHINE\Software\Borland\Database Engine\Settings\SYSTEM\INIT]
+"SHAREDMEMLOCATION"="9000"
+
+#
 # General OLE/DCOM config
 #
 
