@@ -315,7 +315,7 @@
 320 stdcall -private DllRegisterServer() OLEAUT32_DllRegisterServer
 321 stdcall -private DllUnregisterServer() OLEAUT32_DllUnregisterServer
 322 stdcall GetRecordInfoFromGuids(ptr long long long ptr ptr)
-323 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
+323 stdcall GetRecordInfoFromTypeInfo(ptr ptr)
 325 stub SetVarConversionLocaleSetting
 326 stub GetVarConversionLocaleSetting
 327 stdcall SetOaNoCache()
