@@ -329,6 +329,16 @@ extern int X11DRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, 
 extern int X11DRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
 extern BOOL X11DRV_PALETTE_IsDark(int pixel);
 
+/* GDI escapes */
+
+#define X11DRV_ESCAPE 6789
+enum x11drv_escape_codes
+{
+    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
+    X11DRV_GET_FONT,      /* get current X font for a DC */
+};
+
 /**************************************************************************
  * X11 USER driver
  */

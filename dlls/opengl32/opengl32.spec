@@ -3,7 +3,7 @@ type win32
 init OpenGL32_Init
 
 import user32.dll
-import x11drv.dll
+import gdi32.dll
 import kernel32.dll
 import ntdll.dll
 

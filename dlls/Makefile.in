@@ -651,9 +651,8 @@ olepro32/olepro32.dll$(DLLEXT): dummy oleaut32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 olesvr/olesvr32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd olesvr && $(MAKE) olesvr32.dll$(DLLEXT)
 
-opengl32/opengl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) x11drv.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libx11drv.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) \
-  libntdll.dll.$(LIBEXT)
+opengl32/opengl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd opengl32 && $(MAKE) opengl32.dll$(DLLEXT)
 
 psapi/psapi.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
@@ -832,9 +831,6 @@ libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 
 libgdi32.dll.$(LIBEXT): gdi/gdi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll$(DLLEXT) $@
-
-libx11drv.dll.$(LIBEXT): x11drv/x11drv.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) x11drv/x11drv.dll$(DLLEXT) $@
 
 libuser32.dll.$(LIBEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@

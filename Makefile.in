@@ -40,7 +40,7 @@ LIBRARIES = \
 	unicode/libwine_unicode.$(LIBEXT)
 
 # Dlls that we need to link against (should go away)
-LINKABLE_DLLS = winspool.drv x11drv.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
+LINKABLE_DLLS = winspool.drv user32.dll gdi32.dll kernel32.dll ntdll.dll
 
 # Libraries symlinks to create at the top level
 LIBSYMLINKS = \
@@ -117,9 +117,6 @@ libwine_uuid.a: ole/libwine_uuid.a
 
 libwinspool.drv.$(LIBEXT): dlls/winspool.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) dlls/winspool.drv$(DLLEXT) $@
-
-libx11drv.dll.$(LIBEXT): dlls/x11drv.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) dlls/x11drv.dll$(DLLEXT) $@
 
 libuser32.dll.$(LIBEXT): dlls/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dlls/user32.dll$(DLLEXT) $@

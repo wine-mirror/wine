@@ -22,69 +22,103 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/exception.h"
-
-#include "wine/debug.h"
-#include "gdi.h"
 #include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "wine_gl.h"
 #include "x11drv.h"
-#include "x11font.h"
-#include "msvcrt/excpt.h"
 
 #include "wgl.h"
 #include "opengl_ext.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 static GLXContext default_cx = NULL;
+static Display *default_display;  /* display to use for default context */
 
 typedef struct wine_glcontext {
   HDC hdc;
+  Display *display;
   GLXContext ctx;
   XVisualInfo *vis;
   struct wine_glcontext *next;
   struct wine_glcontext *prev;
 } Wine_GLContext;
-static Wine_GLContext *context_array;
+static Wine_GLContext *context_list;
 
-static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx) {
-  Wine_GLContext *ret = context_array;
-  while (ret != NULL) if (ctx == ret->ctx) break; else ret = ret->next;
-  return ret;
+static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
+{
+    Wine_GLContext *ret;
+    for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
+    return ret;
 }
-  
-static inline void free_context(Wine_GLContext *context) {
+
+static inline void free_context(Wine_GLContext *context)
+{
   if (context->next != NULL) context->next->prev = context->prev;
   if (context->prev != NULL) context->prev->next = context->next;
-  else                       context_array = context->next;
+  else context_list = context->next;
 
   HeapFree(GetProcessHeap(), 0, context);
 }
 
-static inline Wine_GLContext *alloc_context(void) {
+static inline Wine_GLContext *alloc_context(void)
+{
   Wine_GLContext *ret;
 
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext));
-  ret->next = context_array;
-  if (context_array != NULL) context_array->prev = ret;
-  else                       context_array = ret;
-  
+  if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext))))
+  {
+      ret->next = context_list;
+      if (context_list) context_list->prev = ret;
+      context_list = ret;
+  }
   return ret;
 }
 
-
-static int XGLErrorFlag = 0;
-static int XGLErrorHandler(Display *dpy, XErrorEvent *event) {
-    XGLErrorFlag = 1;
-    return 0;
-}
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
+inline static BOOL is_valid_context( Wine_GLContext *ctx )
 {
-  return EXCEPTION_EXECUTE_HANDLER;
+    Wine_GLContext *ptr;
+    for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;
+    return (ptr != NULL);
 }
+
+/* retrieve the X display to use on a given DC */
+inline static Display *get_display( HDC hdc )
+{
+    Display *display;
+    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(display), (LPSTR)&display )) display = NULL;
+    return display;
+}
+
+
+/* retrieve the X drawable to use on a given DC */
+inline static Drawable get_drawable( HDC hdc )
+{
+    Drawable drawable;
+    enum x11drv_escape_codes escape = X11DRV_GET_DRAWABLE;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
+    return drawable;
+}
+
+
+/* retrieve the X drawable to use on a given DC */
+inline static Font get_font( HDC hdc )
+{
+    Font font;
+    enum x11drv_escape_codes escape = X11DRV_GET_FONT;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(font), (LPSTR)&font )) font = 0;
+    return font;
+}
+
 
 /***********************************************************************
  *		wglCreateContext (OPENGL32.@)
@@ -95,12 +129,14 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   Wine_GLContext *ret;
   int num;
   XVisualInfo template;
+  Display *display = get_display( hdc );
 
   TRACE("(%08x)\n", hdc);
 
   /* First, get the visual in use by the X11DRV */
+  if (!display) return 0;
   template.visualid = GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
-  vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+  vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
 
   if (vis == NULL) {
     ERR("NULL visual !!!\n");
@@ -113,6 +149,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   ret = alloc_context();
   LEAVE_GL();
   ret->hdc = hdc;
+  ret->display = display;
   ret->vis = vis;
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
@@ -143,34 +180,23 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
 /***********************************************************************
  *		wglDeleteContext (OPENGL32.@)
  */
-BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
-  int (*WineXHandler)(Display *, XErrorEvent *);
+BOOL WINAPI wglDeleteContext(HGLRC hglrc)
+{
   Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-  BOOL ret;
-  
+  BOOL ret = TRUE;
+
   TRACE("(%p)\n", hglrc);
   
   ENTER_GL();
-  /* A game (Half Life not to name it) deletes twice the same context. To prevent
-     crashes, run with our own error function enabled */
-  XSync(gdi_display, False);
-  XGLErrorFlag = 0;
-  WineXHandler = XSetErrorHandler(XGLErrorHandler);
-  __TRY {
-    glXDestroyContext(gdi_display, ctx->ctx);
-    XSync(gdi_display, False);
-    XFlush(gdi_display);
-
-    if (XGLErrorHandler == 0) free_context(ctx);
+  /* A game (Half Life not to name it) deletes twice the same context,
+   * so make sure it is valid first */
+  if (is_valid_context( ctx ))
+  {
+      if (ctx->ctx) glXDestroyContext(ctx->display, ctx->ctx);
+      free_context(ctx);
   }
-  __EXCEPT(page_fault) {
-    XGLErrorFlag = 1;
-  }
-  __ENDTRY
-
-  ret = TRUE;
-  XSetErrorHandler(WineXHandler);
-  if (XGLErrorFlag) {
+  else
+  {
     WARN("Error deleting context !\n");
     SetLastError(ERROR_INVALID_HANDLE);
     ret = FALSE;
@@ -331,39 +357,20 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 
   TRACE("(%08x,%p)\n", hdc, hglrc);
   
+  ENTER_GL();
   if (hglrc == NULL) {
-    ENTER_GL();
-    ret = glXMakeCurrent(gdi_display,
-			 None,
-			 NULL);
-    LEAVE_GL();
+      ret = glXMakeCurrent(default_display, None, NULL);
   } else {
-    DC * dc = DC_GetDCPtr( hdc );
-    
-    if (dc == NULL) {
-      ERR("Null DC !!!\n");
-      ret = FALSE;
-    } else {
-      X11DRV_PDEVICE *physDev;
       Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-      
-      physDev =(X11DRV_PDEVICE *)dc->physDev;
+      Drawable drawable = get_drawable( hdc );
 
       if (ctx->ctx == NULL) {
-	ENTER_GL();
-	ctx->ctx = glXCreateContext(gdi_display, ctx->vis, NULL, True);
-	LEAVE_GL();
+	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
 	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
       }
-      
-      ENTER_GL();
-      ret = glXMakeCurrent(gdi_display,
-			   physDev->drawable,
-			   ctx->ctx);
-      LEAVE_GL();
-      GDI_ReleaseObj( hdc );
-    }
+      ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
   }
+  LEAVE_GL();
   TRACE(" returning %s\n", (ret ? "True" : "False"));
   return ret;
 }
@@ -408,14 +415,14 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
   } else {
     if (org->ctx == NULL) {
       ENTER_GL();
-      org->ctx = glXCreateContext(gdi_display, org->vis, NULL, True);
+      org->ctx = glXCreateContext(org->display, org->vis, NULL, True);
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
     }
 
     ENTER_GL();
     /* Create the destination context with display lists shared */
-    dest->ctx = glXCreateContext(gdi_display, dest->vis, org->ctx, True);
+    dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, True);
     LEAVE_GL();
     TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
   }
@@ -439,11 +446,9 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 			       DWORD first,
 			       DWORD count,
-			       DWORD listBase) {
-  DC * dc = DC_GetDCPtr( hdc );
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-  fontObject* pfo = XFONT_GetFontObject( physDev->font );
-  Font fid = pfo->fs->fid;
+			       DWORD listBase)
+{
+  Font fid = get_font( hdc );
 
   TRACE("(%08x, %ld, %ld, %ld)\n", hdc, first, count, listBase);
 
@@ -451,7 +456,6 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
   /* I assume that the glyphs are at the same position for X and for Windows */
   glXUseXFont(fid, first, count, listBase);
   LEAVE_GL();
-  GDI_ReleaseObj( hdc );
   return TRUE;
 }
  
@@ -474,18 +478,29 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
 
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
-static void process_attach(void) {
+static BOOL process_attach(void)
+{
   XWindowAttributes win_attr;
   Visual *rootVisual;
   int num;
   XVisualInfo template;
+  HDC hdc;
   XVisualInfo *vis = NULL;
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
 
   if (!root)
   {
       ERR("X11DRV not loaded. Cannot create default context.\n");
-      return;
+      return FALSE;
+  }
+
+  hdc = GetDC(0);
+  default_display = get_display( hdc );
+  ReleaseDC( 0, hdc );
+  if (!default_display)
+  {
+      ERR("X11DRV not loaded. Cannot get display for screen DC.\n");
+      return FALSE;
   }
 
   ENTER_GL();
@@ -495,7 +510,7 @@ static void process_attach(void) {
      Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal 
      with mismatched visuals.  Note that the Root Window visual may not be double 
      buffered, so apps actually attempting to render this way may flicker */
-  if (XGetWindowAttributes( gdi_display, root, &win_attr ))
+  if (XGetWindowAttributes( default_display, root, &win_attr ))
   {
     rootVisual = win_attr.visual; 
   }
@@ -503,25 +518,25 @@ static void process_attach(void) {
   {
     /* Get the default visual, since we can't seem to get the attributes from the 
        Root Window.  Let's hope that the Root Window Visual matches the DefaultVisual */
-    rootVisual = DefaultVisual( gdi_display, DefaultScreen(gdi_display) );
+    rootVisual = DefaultVisual( default_display, DefaultScreen(default_display) );
   }
 
   template.visualid = XVisualIDFromVisual(rootVisual);
-  vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
-  if (vis != NULL)        default_cx = glXCreateContext(gdi_display, vis, 0, GL_TRUE);
-  if (default_cx != NULL) glXMakeCurrent(gdi_display, root, default_cx);
+  vis = XGetVisualInfo(default_display, VisualIDMask, &template, &num);
+  if (vis != NULL) default_cx = glXCreateContext(default_display, vis, 0, GL_TRUE);
+  if (default_cx != NULL) glXMakeCurrent(default_display, root, default_cx);
   XFree(vis);
   LEAVE_GL();
 
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
   }
-  
-  context_array = NULL;
+  return TRUE;
 }
 
-static void process_detach(void) {
-  glXDestroyContext(gdi_display, default_cx);
+static void process_detach(void)
+{
+  glXDestroyContext(default_display, default_cx);
 }
 
 /***********************************************************************
@@ -529,13 +544,13 @@ static void process_detach(void) {
  */
 BOOL WINAPI OpenGL32_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-  switch(reason) {
-  case DLL_PROCESS_ATTACH:
-    process_attach();
-    break;
-  case DLL_PROCESS_DETACH:
-    process_detach();
-    break;
-  }
-  return TRUE;
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        return process_attach();
+    case DLL_PROCESS_DETACH:
+        process_detach();
+        break;
+    }
+    return TRUE;
 }

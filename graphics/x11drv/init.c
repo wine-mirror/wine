@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 #include "winnt.h"
 #include "x11drv.h"
+#include "x11font.h"
 #include "ddrawi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -286,6 +287,8 @@ INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
 INT X11DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
                       INT out_count, LPVOID out_data )
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     switch(escape)
     {
     case QUERYESCSUPPORT:
@@ -295,6 +298,8 @@ INT X11DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
             {
             case DCICOMMAND:
                 return DD_HAL_VERSION;
+            case X11DRV_ESCAPE:
+                return TRUE;
             }
         }
         break;
@@ -305,6 +310,36 @@ INT X11DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
             const DCICMD *lpCmd = in_data;
             if (lpCmd->dwVersion != DD_VERSION) break;
             return X11DRV_DCICommand(in_count, lpCmd, out_data);
+        }
+        break;
+
+    case X11DRV_ESCAPE:
+        if (in_data && in_count >= sizeof(enum x11drv_escape_codes))
+        {
+            switch(*(enum x11drv_escape_codes *)in_data)
+            {
+            case X11DRV_GET_DISPLAY:
+                if (out_count >= sizeof(Display *))
+                {
+                    *(Display **)out_data = gdi_display;
+                    return TRUE;
+                }
+                break;
+            case X11DRV_GET_DRAWABLE:
+                if (out_count >= sizeof(Drawable))
+                {
+                    *(Drawable *)out_data = physDev->drawable;
+                    return TRUE;
+                }
+                break;
+            case X11DRV_GET_FONT:
+                if (out_count >= sizeof(Font))
+                {
+                    fontObject* pfo = XFONT_GetFontObject( physDev->font );
+                    *(Font *)out_data = pfo->fs->fid;
+                    return TRUE;
+                }
+            }
         }
         break;
     }

@@ -3,7 +3,10 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = opengl32.dll
-IMPORTS   = x11drv.dll kernel32.dll ntdll.dll
+EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	wgl.c \
