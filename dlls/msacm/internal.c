@@ -147,7 +147,7 @@ PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type)
 {
     PWINE_ACMOBJ	pao = (PWINE_ACMOBJ)hObj;
 
-    if (IsBadReadPtr(pao, sizeof(WINE_ACMOBJ)) ||
+    if (pao == NULL || IsBadReadPtr(pao, sizeof(WINE_ACMOBJ)) ||
 	((type != WINE_ACMOBJ_DONTCARE) && (type != pao->dwType)))
 	return NULL;
     return pao;
