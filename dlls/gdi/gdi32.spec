@@ -383,7 +383,7 @@
 @ stdcall SetTextJustification(long long long)
 @ stdcall SetViewportExtEx(long long long ptr)
 @ stdcall SetViewportOrgEx(long long long ptr)
-@ stub SetVirtualResolution
+@ stdcall SetVirtualResolution(long long long long long)
 @ stdcall SetWinMetaFileBits(long ptr long ptr)
 @ stdcall SetWindowExtEx(long long long ptr)
 @ stdcall SetWindowOrgEx(long long long ptr)

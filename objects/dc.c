@@ -1407,3 +1407,14 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return CLR_INVALID;
 }
+
+/***********************************************************************
+ *           SetVirtualResolution   (GDI32.@)
+ *
+ * Undocumented on msdn.  Called when powerpoint xp saves a file.
+ */
+DWORD WINAPI SetVirtualResolution(HDC hdc, DWORD dw2, DWORD dw3, DWORD dw4, DWORD dw5)
+{
+    FIXME("(%p %08lx %08lx %08lx %08lx): stub!\n", hdc, dw2, dw3, dw4, dw5);
+    return FALSE;
+}
