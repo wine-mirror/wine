@@ -184,12 +184,12 @@ wine wine.sym: $(LIB_TARGET) $(EMUOBJS) $(X11OBJS) $(LIBOBJS) dummy
 	nm -n wine | grep -v _compiled >wine.sym
 	@echo "Wine build complete."
 
-libwine.a: $(TOOLSUBDIRS) $(LIBOBJS) $(X11OBJS)
+libwine.a: $(LIBOBJS) $(X11OBJS)
 	$(RM) $@
 	$(AR) $@ $(LIBOBJS) $(X11OBJS)
 	$(RANLIB) $@
 
-libwine.so.1.0: $(TOOLSUBDIRS) $(LIBOBJS) $(X11OBJS)
+libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
 	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
 	ln -sf $@ libwine.so
 
@@ -212,7 +212,7 @@ install_lib: dummy
 uninstall_lib: dummy
 	cd $(libdir); $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
 
-$(X11OBJS) $(EMUOBJS) $(LIBOBJS): dummy
+$(X11OBJS) $(EMUOBJS) $(LIBOBJS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@`; $(SUBMAKE)
 
 $(BUILDSUBDIRS): dummy
