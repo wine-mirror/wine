@@ -49,6 +49,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
+#include "pshpack1.h"
+typedef struct _GPHANDLERDEF
+{
+    WORD selector;
+    WORD rangeStart;
+    WORD rangeEnd;
+    WORD handler;
+} GPHANDLERDEF;
+#include "poppack.h"
+
 /*
  * Segment table entry
  */
@@ -1427,6 +1437,96 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
 }
 
 
+/***********************************************************************
+ *           WinExec     (KERNEL.166)
+ */
+HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
+{
+    LPCSTR p, args = NULL;
+    LPCSTR name_beg, name_end;
+    LPSTR name, cmdline;
+    int arglen;
+    HINSTANCE16 ret;
+    char buffer[MAX_PATH];
+
+    if (*lpCmdLine == '"') /* has to be only one and only at beginning ! */
+    {
+        name_beg = lpCmdLine+1;
+        p = strchr ( lpCmdLine+1, '"' );
+        if (p)
+        {
+            name_end = p;
+            args = strchr ( p, ' ' );
+        }
+        else /* yes, even valid with trailing '"' missing */
+            name_end = lpCmdLine+strlen(lpCmdLine);
+    }
+    else
+    {
+        name_beg = lpCmdLine;
+        args = strchr( lpCmdLine, ' ' );
+        name_end = args ? args : lpCmdLine+strlen(lpCmdLine);
+    }
+
+    if ((name_beg == lpCmdLine) && (!args))
+    { /* just use the original cmdline string as file name */
+        name = (LPSTR)lpCmdLine;
+    }
+    else
+    {
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, name_end - name_beg + 1 )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        memcpy( name, name_beg, name_end - name_beg );
+        name[name_end - name_beg] = '\0';
+    }
+
+    if (args)
+    {
+        args++;
+        arglen = strlen(args);
+        cmdline = HeapAlloc( GetProcessHeap(), 0, 2 + arglen );
+        cmdline[0] = (BYTE)arglen;
+        strcpy( cmdline + 1, args );
+    }
+    else
+    {
+        cmdline = HeapAlloc( GetProcessHeap(), 0, 2 );
+        cmdline[0] = cmdline[1] = 0;
+    }
+
+    TRACE("name: '%s', cmdline: '%.*s'\n", name, cmdline[0], &cmdline[1]);
+
+    if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
+    {
+        LOADPARAMS16 params;
+        WORD showCmd[2];
+        showCmd[0] = 2;
+        showCmd[1] = nCmdShow;
+
+        params.hEnvironment = 0;
+        params.cmdLine = MapLS( cmdline );
+        params.showCmd = MapLS( showCmd );
+        params.reserved = 0;
+
+        ret = LoadModule16( buffer, &params );
+        UnMapLS( params.cmdLine );
+        UnMapLS( params.showCmd );
+    }
+    else ret = GetLastError();
+
+    HeapFree( GetProcessHeap(), 0, cmdline );
+    if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
+
+    if (ret == 21)  /* 32-bit module */
+    {
+        DWORD count;
+        ReleaseThunkLock( &count );
+        ret = LOWORD( WinExec( lpCmdLine, nCmdShow ) );
+        RestoreThunkLock( count );
+    }
+    return ret;
+}
+
 /**********************************************************************
  *	    GetModuleHandle    (KERNEL.47)
  *
@@ -1643,6 +1743,81 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
     return 0;
 }
 
+/***********************************************************************
+ *           GetProcAddress16   (KERNEL32.37)
+ * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
+ */
+FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
+{
+    if (!hModule) return 0;
+    if (HIWORD(hModule))
+    {
+        WARN("hModule is Win32 handle (%p)\n", hModule );
+        return 0;
+    }
+    return GetProcAddress16( LOWORD(hModule), name );
+}
+
+/***********************************************************************
+ *           GetProcAddress   (KERNEL.50)
+ */
+FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
+{
+    WORD ordinal;
+    FARPROC16 ret;
+
+    if (!hModule) hModule = GetCurrentTask();
+    hModule = GetExePtr( hModule );
+
+    if (HIWORD(name) != 0)
+    {
+        ordinal = NE_GetOrdinal( hModule, name );
+        TRACE("%04x '%s'\n", hModule, name );
+    }
+    else
+    {
+        ordinal = LOWORD(name);
+        TRACE("%04x %04x\n", hModule, ordinal );
+    }
+    if (!ordinal) return (FARPROC16)0;
+
+    ret = NE_GetEntryPoint( hModule, ordinal );
+
+    TRACE("returning %08x\n", (UINT)ret );
+    return ret;
+}
+
+
+/***************************************************************************
+ *              HasGPHandler                    (KERNEL.338)
+ */
+SEGPTR WINAPI HasGPHandler16( SEGPTR address )
+{
+    HMODULE16 hModule;
+    int gpOrdinal;
+    SEGPTR gpPtr;
+    GPHANDLERDEF *gpHandler;
+
+    if (    (hModule = FarGetOwner16( SELECTOROF(address) )) != 0
+         && (gpOrdinal = NE_GetOrdinal( hModule, "__GP" )) != 0
+         && (gpPtr = (SEGPTR)NE_GetEntryPointEx( hModule, gpOrdinal, FALSE )) != 0
+         && !IsBadReadPtr16( gpPtr, sizeof(GPHANDLERDEF) )
+         && (gpHandler = MapSL( gpPtr )) != NULL )
+    {
+        while (gpHandler->selector)
+        {
+            if (    SELECTOROF(address) == gpHandler->selector
+                 && OFFSETOF(address)   >= gpHandler->rangeStart
+                 && OFFSETOF(address)   <  gpHandler->rangeEnd  )
+                return MAKESEGPTR( gpHandler->selector, gpHandler->handler );
+            gpHandler++;
+        }
+    }
+
+    return 0;
+}
+
+
 /**********************************************************************
  *	    ModuleFirst    (TOOLHELP.59)
  */
@@ -1711,6 +1886,110 @@ BOOL16 WINAPI IsRomFile16( HFILE16 unused )
     return FALSE;
 }
 
+/***********************************************************************
+ *           create_dummy_module
+ *
+ * Create a dummy NE module for Win32 or Winelib.
+ */
+static HMODULE16 create_dummy_module( HMODULE module32 )
+{
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    char *pStr,*s;
+    unsigned int len;
+    const char* basename;
+    OFSTRUCT *ofs;
+    int of_size, size;
+    char filename[MAX_PATH];
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module32 );
+
+    if (!nt) return (HMODULE16)11;  /* invalid exe */
+
+    /* Extract base filename */
+    GetModuleFileNameA( module32, filename, sizeof(filename) );
+    basename = strrchr(filename, '\\');
+    if (!basename) basename = filename;
+    else basename++;
+    len = strlen(basename);
+    if ((s = strchr(basename, '.'))) len = s - basename;
+
+    /* Allocate module */
+    of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
+                    + strlen(filename) + 1;
+    size = sizeof(NE_MODULE) +
+                 /* loaded file info */
+                 ((of_size + 3) & ~3) +
+                 /* segment table: DS,CS */
+                 2 * sizeof(SEGTABLEENTRY) +
+                 /* name table */
+                 len + 2 +
+                 /* several empty tables */
+                 8;
+
+    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+    if (!hModule) return (HMODULE16)11;  /* invalid exe */
+
+    FarSetOwner16( hModule, hModule );
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
+
+    /* Set all used entries */
+    pModule->magic            = IMAGE_OS2_SIGNATURE;
+    pModule->count            = 1;
+    pModule->next             = 0;
+    pModule->flags            = NE_FFLAGS_WIN32;
+    pModule->dgroup           = 0;
+    pModule->ss               = 1;
+    pModule->cs               = 2;
+    pModule->heap_size        = 0;
+    pModule->stack_size       = 0;
+    pModule->seg_count        = 2;
+    pModule->modref_count     = 0;
+    pModule->nrname_size      = 0;
+    pModule->fileinfo         = sizeof(NE_MODULE);
+    pModule->os_flags         = NE_OSFLAGS_WINDOWS;
+    pModule->self             = hModule;
+    pModule->module32         = module32;
+
+    /* Set version and flags */
+    pModule->expected_version = ((nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 ) |
+                                (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
+        pModule->flags |= NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA;
+
+    /* Set loaded file information */
+    ofs = (OFSTRUCT *)(pModule + 1);
+    memset( ofs, 0, of_size );
+    ofs->cBytes = of_size < 256 ? of_size : 255;   /* FIXME */
+    strcpy( ofs->szPathName, filename );
+
+    pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + ((of_size + 3) & ~3));
+    pModule->seg_table = (int)pSegment - (int)pModule;
+    /* Data segment */
+    pSegment->size    = 0;
+    pSegment->flags   = NE_SEGFLAGS_DATA;
+    pSegment->minsize = 0x1000;
+    pSegment++;
+    /* Code segment */
+    pSegment->flags   = 0;
+    pSegment++;
+
+    /* Module name */
+    pStr = (char *)pSegment;
+    pModule->name_table = (int)pStr - (int)pModule;
+    assert(len<256);
+    *pStr = len;
+    lstrcpynA( pStr+1, basename, len+1 );
+    pStr += len+2;
+
+    /* All tables zero terminated */
+    pModule->res_table = pModule->import_table = pModule->entry_table = (int)pStr - (int)pModule;
+
+    NE_RegisterModule( pModule );
+    LoadLibraryA( filename );  /* increment the ref count of the 32-bit module */
+    return hModule;
+}
+
 /***************************************************************************
  *		MapHModuleLS			(KERNEL32.@)
  */
@@ -1729,7 +2008,7 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod)
 			return pModule->self;
 		pModule = (NE_MODULE*)GlobalLock16(pModule->next);
 	}
-        if ((ret = MODULE_CreateDummyModule( hmod )) < 32)
+        if ((ret = create_dummy_module( hmod )) < 32)
         {
             SetLastError(ret);
             ret = 0;
