@@ -42,7 +42,7 @@ DECLARE_DEBUG_CHANNEL(toolhelp);
 #define MIN_THUNKS  32
 
 
-static THHOOK DefaultThhook = { 0 };
+static THHOOK DefaultThhook;
 THHOOK *pThhook = &DefaultThhook;
 
 #define hCurrentTask (pThhook->CurTDB)

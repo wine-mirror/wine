@@ -196,13 +196,22 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmPelsWidth */	0,
 /* dmPelsHeight */	0,
 /* dmDisplayFlags */	0,
-/* dmDisplayFrequency */ 0
+/* dmDisplayFrequency */ 0,
+/* dmICMMethod */       0,
+/* dmICMIntent */       0,
+/* dmMediaType */       0,
+/* dmDitherType */      0,
+/* dmReserved1 */       0,
+/* dmReserved2 */       0,
+/* dmPanningWidth */    0,
+/* dmPanningHeight */   0
   },
   { /* dmDocPrivate */
-    0 /* dummy */
+    /* dummy */ 0
   },
   { /* dmDrvPrivate */
-/* ppdfilename */	"default.ppd"
+    /* ppdfilename */         "default.ppd", 
+    /* numInstalledOptions */ 0 
   }
 };
 

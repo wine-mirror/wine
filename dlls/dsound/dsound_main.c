@@ -1598,6 +1598,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	return DS_OK;
 }
 
+static HRESULT WINAPI IDirectSoundBufferImpl_Restore(
+	LPDIRECTSOUNDBUFFER iface
+) {
+	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	FIXME("(%p):stub\n",This);
+	return DS_OK;
+}
+
 static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 	LPDIRECTSOUNDBUFFER iface,LPDWORD freq
 ) {
@@ -1787,7 +1795,8 @@ static ICOM_VTABLE(IDirectSoundBuffer) dsbvt =
 	IDirectSoundBufferImpl_SetPan,
 	IDirectSoundBufferImpl_SetFrequency,
 	IDirectSoundBufferImpl_Stop,
-	IDirectSoundBufferImpl_Unlock
+	IDirectSoundBufferImpl_Unlock,
+	IDirectSoundBufferImpl_Restore
 };
 
 /*******************************************************************************

@@ -78,7 +78,7 @@ static struct master_socket *master_socket;  /* the master socket object */
 
 /* socket communication static structures */
 static struct iovec myiovec;
-static struct msghdr msghdr = { NULL, 0, &myiovec, 1, };
+static struct msghdr msghdr = { NULL, 0, &myiovec, 1, /* remaining fields depend on system */ };
 #ifndef HAVE_MSGHDR_ACCRIGHTS
 struct cmsg_fd
 {

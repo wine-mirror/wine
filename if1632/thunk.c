@@ -38,8 +38,26 @@ extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 
 static THUNK *firstThunk = NULL;
 
-CALLOUT_TABLE Callout = { 0 };
-
+CALLOUT_TABLE Callout = {
+    /* PeekMessageA */ NULL,
+    /* GetMessageA */ NULL,
+    /* SendMessageA */ NULL,
+    /* PostMessageA */ NULL,
+    /* PostAppMessage16 */ NULL,
+    /* TranslateMessage */ NULL,
+    /* DispatchMessageA */ NULL,
+    /* RedrawWindow */ NULL,
+    /* UserSignalProc */ NULL,
+    /* FinalUserInit16 */ NULL,
+    /* InitThreadInput16 */ NULL,
+    /* UserYield16) */ NULL,
+    /* DestroyIcon32 */ NULL,
+    /* WaitForInputIdle */ NULL,
+    /* MsgWaitForMultipleObjects */ NULL,
+    /* WindowFromDC */ NULL,
+    /* MessageBoxA */ NULL,
+    /* MessageBoxW */ NULL
+};
 
 /***********************************************************************
  *           THUNK_Alloc

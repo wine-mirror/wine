@@ -96,7 +96,7 @@ static const struct option option_table[] =
       "--version,-v     Display the Wine version" },
     { "winver",       0, 1, 1, VERSION_ParseWinVersion,
       "--winver         Version to imitate (one of win31,win95,nt351,nt40)" },
-    { NULL, }  /* terminator */
+    { NULL,           0, 0, 0, NULL, NULL }  /* terminator */
 };
 
 
