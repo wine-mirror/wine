@@ -1762,9 +1762,11 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     TRACE("(%s,%s)\n", fn1, fn2 );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
-    if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
+    if (DOSFS_GetFullName( fn2, TRUE, &full_name2 ))  {
       /* The new name must not already exist */ 
+      SetLastError(ERROR_ALREADY_EXISTS);
       return FALSE;
+    }
     if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
 
     if (full_name1.drive == full_name2.drive) /* move */
