@@ -775,3 +775,20 @@ int point_in_region( struct region *region, int x, int y )
     }
     return 0;
 }
+
+/* check if the given rectangle is (at least partially) inside the region */
+int rect_in_region( struct region *region, const rectangle_t *rect )
+{
+    const rectangle_t *ptr, *end;
+
+    for (ptr = region->rects, end = region->rects + region->num_rects; ptr < end; ptr++)
+    {
+        if (ptr->top > rect->bottom) return 0;
+        if (ptr->bottom <= rect->top) continue;
+        /* now we are in the correct band */
+        if (ptr->left > rect->right) return 0;
+        if (ptr->right <= rect->left) continue;
+        return 1;
+    }
+    return 0;
+}
