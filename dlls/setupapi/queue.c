@@ -31,7 +31,7 @@
 #include "setupapi.h"
 #include "wine/unicode.h"
 #include "setupapi_private.h"
-#include "ver.h"
+#include "winver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);

@@ -29,15 +29,15 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
-#include "winternl.h"
-#include "winerror.h"
-#include "wine/unicode.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
+#include "winternl.h"
+#include "winerror.h"
 #include "setupapi.h"
-#include "setupx16.h"
+
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);

@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "setupapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);

@@ -26,11 +26,14 @@
 #include <stdarg.h>
 #include "string.h"
 #include "stdlib.h"
+
+#include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "setupapi.h"
 #include "setupapi_private.h"
 #include "fdi.h"

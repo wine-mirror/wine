@@ -22,11 +22,13 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "setupapi.h"
+#include "wine/debug.h"
+
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
