@@ -19,6 +19,7 @@
  *
  */
 #include <windows.h>
+#include <errno.h>
 
 #include "winetest.h"
 
@@ -43,7 +44,8 @@ void xprintf (const char *fmt, ...)
     va_list ap;
 
     va_start (ap, fmt);
-    if (vprintf (fmt, ap) < 0) report (R_FATAL, "Can't write logs.");
+    if (vprintf (fmt, ap) < 0)
+        report (R_FATAL, "Can't write logs: %d", errno);
     va_end (ap);
 }
 

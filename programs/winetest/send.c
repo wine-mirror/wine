@@ -33,25 +33,29 @@ open_http (const char *server)
     report (R_STATUS, "Opening HTTP connection to %s", server);
     if (WSAStartup (MAKEWORD (2,2), &wsad)) return INVALID_SOCKET;
 
-    s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (s != INVALID_SOCKET) {
-        unsigned long addr = inet_addr(server);
-
-        sa.sin_family = AF_INET;
-        sa.sin_port = htons (80);
-        if (addr != INADDR_NONE)
-            sa.sin_addr.s_addr = addr;
-        else
-        {
-            struct hostent *host;
-
-            if ((host = gethostbyname(server)) != NULL)
-                addr = ((struct in_addr *)host->h_addr)->s_addr;
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons (80);
+    sa.sin_addr.s_addr = inet_addr (server);
+    if (sa.sin_addr.s_addr == INADDR_NONE) {
+        struct hostent *host = gethostbyname (server);
+        if (!host) {
+            report (R_ERROR, "Hostname lookup failed for %s", server);
+            goto failure;
         }
-        if (!connect (s, (struct sockaddr*)&sa,
-                      sizeof (struct sockaddr_in)))
-            return s;
+        sa.sin_addr.s_addr = ((struct in_addr *)host->h_addr)->s_addr;
     }
+    s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s == INVALID_SOCKET) {
+        report (R_ERROR, "Can't open network socket: %d",
+                WSAGetLastError ());
+        goto failure;
+    }
+    if (!connect (s, (struct sockaddr*)&sa, sizeof (struct sockaddr_in)))
+        return s;
+
+    report (R_ERROR, "Can't connect: %d", WSAGetLastError ());
+    closesocket (s);
+ failure:
     WSACleanup ();
     return INVALID_SOCKET;
 }
@@ -110,7 +114,7 @@ send_file (const char *name)
     /* RFC 2068 */
 #define SEP "-"
     const char head[] = "POST /submit HTTP/1.0\r\n"
-        "Host: afavant\r\n"
+        "Host: test.winehq.org\r\n"
         "User-Agent: Winetest Shell\r\n"
         "Content-Type: multipart/form-data; boundary=" SEP "\r\n"
         "Content-Length: %u\r\n\r\n";
@@ -123,12 +127,8 @@ send_file (const char *name)
         "--" SEP "--\r\n";
 
     buffer = xmalloc (BUFLEN + 1);
-    s = open_http ("www.winehq.org");
-    if (s == INVALID_SOCKET) {
-        report (R_WARNING, "Can't open network connection: %d",
-                WSAGetLastError ());
-        return 1;
-    }
+    s = open_http ("test.winehq.org");
+    if (s == INVALID_SOCKET) return 1;
 
     f = fopen (name, "rb");
     if (!f) {
