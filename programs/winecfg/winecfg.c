@@ -25,9 +25,7 @@
  *   - Implement autodetect for drive configuration
  *   - Figure out whether we need the virtual vs real drive selection stuff at the top of the property page
  *   - Implement explicit mode vs instant-apply mode
- *   - AppDefaults handling
  *   - DLL editing
- *   - Make a list of prefs that have been dropped from the UI/should be eliminated
  *   - Multimedia page
  *   - Settings migration code (from old configs)
  *   - Clean up resource.h, it's a bog

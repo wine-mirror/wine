@@ -51,9 +51,6 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-/*  CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
-                    LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
- */
     CONTROL         "Configuring global settings",IDC_EDITING_GLOBAL,
                     "Button",BS_AUTORADIOBUTTON,8,8,244,10 
     CONTROL         "Configuring application specific setttings",IDC_EDITING_APP,
@@ -63,10 +60,10 @@ BEGIN
     LTEXT           "Here you can override the default settings on a per-application basis:",
                     IDC_STATIC,8,35,244,20
 		    
-    LISTBOX         IDC_LIST_APPS,8,48,244,108,WS_TABSTOP | WS_VSCROLL		    
+    LISTBOX         IDC_LIST_APPS,8,48,244,176,WS_TABSTOP | WS_VSCROLL		    
 		    
-    PUSHBUTTON	    "Add new application...",IDC_ADD_APPDEFAULT,170,155,82,14
-    PUSHBUTTON	    "Remove",IDC_REMOVE_APPDEFAULT,130,155,37,14
+    PUSHBUTTON	    "Add new application...",IDC_ADD_APPDEFAULT,170,226,82,14
+    PUSHBUTTON	    "Remove",IDC_REMOVE_APPDEFAULT,130,226,37,14
 		    
 END
 
