@@ -2670,6 +2670,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     {
 	struct	linger linger;
         int woptval;
+        struct timeval tval;
 
 	/* Is a privileged and useless operation, so we don't. */
 	if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET)) {
@@ -2704,6 +2705,21 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 optval= (char*) &woptval;
                 optlen=sizeof(int);
             }
+	    if (level == SOL_SOCKET && optname == SO_RCVTIMEO && optlen < sizeof(struct timeval)) {
+	        if (optlen == sizeof(time_t)) {
+	            /* Apparently WinSock will accept a shortened struct timeval.
+		       FIXME: should we do the same for SO_SNDTIMEO? */
+	            WARN("Short struct timeval in SO_RCVTIMEO: assuming time_t\n");
+		    tval.tv_sec = *(time_t*)optval;
+		    tval.tv_usec = 0;
+	            optlen = sizeof(struct timeval);
+	            optval = (char*)&tval;
+		} else {
+		    WARN("SO_RCVTIMEO for %d bytes is too small: ignored\n", optlen);
+		    close(fd);
+		    return 0;
+		}
+	    }
 	}
         if(optname == SO_RCVBUF && *(int*)optval < 2048) {
             WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(int*)optval );
