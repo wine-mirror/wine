@@ -81,7 +81,24 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "_NET_WM_PID",
     "_NET_WM_PING",
     "_NET_WM_NAME",
+    "XdndAware",
+    "XdndEnter",
+    "XdndPosition",
+    "XdndStatus",
+    "XdndLeave",
+    "XdndFinished",
+    "XdndDrop",
+    "XdndActionCopy",
+    "XdndActionMove",
+    "XdndActionLink",
+    "XdndActionAsk",
+    "XdndActionPrivate",
+    "XdndSelection",
+    "XdndTarget",
+    "XdndTypeList",
     "image/gif",
+    "text/html",
+    "text/plain",
     "text/rtf",
     "text/richtext"
 };
@@ -356,6 +373,7 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     XWMHints* wm_hints;
     Atom protocols[3];
     MwmHints mwm_hints;
+    Atom dndVersion = 4;
     int i;
 
     wine_tsx11_lock();
@@ -427,6 +445,9 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
                      (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
+
+    XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
+                     XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
 
     wm_hints = XAllocWMHints();
     wine_tsx11_unlock();

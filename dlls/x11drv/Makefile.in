@@ -35,6 +35,7 @@ C_SRCS = \
 	winpos.c \
 	x11ddraw.c \
 	x11drv_main.c \
+	xdnd.c \
 	xrandr.c \
 	xrender.c \
 	xvidmode.c

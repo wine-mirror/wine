@@ -1227,7 +1227,8 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
         else if (event->data.l[0] == DndURL)
             EVENT_DropURLs(hWnd, event);
     }
-    else {
+    else if (!X11DRV_XDND_Event(hWnd, event))
+    {
 #if 0
       /* enable this if you want to see the message */
       unsigned char* p_data = NULL;

@@ -231,6 +231,8 @@ extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 extern void X11DRV_OpenGL_Init(Display *display);
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
 
+extern int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event);
+
 /* exported dib functions for now */
 
 /* Additional info for DIB section objects */
@@ -390,7 +392,24 @@ enum x11drv_atoms
     XATOM__NET_WM_PID,
     XATOM__NET_WM_PING,
     XATOM__NET_WM_NAME,
+    XATOM_XdndAware,
+    XATOM_XdndEnter,
+    XATOM_XdndPosition,
+    XATOM_XdndStatus,
+    XATOM_XdndLeave,
+    XATOM_XdndFinished,
+    XATOM_XdndDrop,
+    XATOM_XdndActionCopy,
+    XATOM_XdndActionMove,
+    XATOM_XdndActionLink,
+    XATOM_XdndActionAsk,
+    XATOM_XdndActionPrivate,
+    XATOM_XdndSelection,
+    XATOM_XdndTarget,
+    XATOM_XdndTypeList,
     XATOM_image_gif,
+    XATOM_text_html,
+    XATOM_text_plain,
     XATOM_text_rtf,
     XATOM_text_richtext,
     NB_XATOMS
