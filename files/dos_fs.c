@@ -94,24 +94,27 @@ typedef struct
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
+/* DOS device descriptor */
+typedef struct
+{
+    const WCHAR name[5];
+} DOS_DEVICE;
+
 static const DOS_DEVICE DOSFS_Devices[] =
 /* name, device flags (see Int 21/AX=0x4400) */
 {
-    { {'C','O','N',0}, 0xc0d3 },
-    { {'P','R','N',0}, 0xa0c0 },
-    { {'N','U','L',0}, 0x80c4 },
-    { {'A','U','X',0}, 0x80c0 },
-    { {'L','P','T','1',0}, 0xa0c0 },
-    { {'L','P','T','2',0}, 0xa0c0 },
-    { {'L','P','T','3',0}, 0xa0c0 },
-    { {'L','P','T','4',0}, 0xc0d3 },
-    { {'C','O','M','1',0}, 0x80c0 },
-    { {'C','O','M','2',0}, 0x80c0 },
-    { {'C','O','M','3',0}, 0x80c0 },
-    { {'C','O','M','4',0}, 0x80c0 },
-    { {'S','C','S','I','M','G','R','$',0}, 0xc0c0 },
-    { {'H','P','S','C','A','N',0}, 0xc0c0 },
-    { {'E','M','M','X','X','X','X','0',0}, 0x0000 }
+    { {'C','O','N',0} },
+    { {'P','R','N',0} },
+    { {'N','U','L',0} },
+    { {'A','U','X',0} },
+    { {'L','P','T','1',0} },
+    { {'L','P','T','2',0} },
+    { {'L','P','T','3',0} },
+    { {'L','P','T','4',0} },
+    { {'C','O','M','1',0} },
+    { {'C','O','M','2',0} },
+    { {'C','O','M','3',0} },
+    { {'C','O','M','4',0} }
 };
 
 static const WCHAR devW[] = {'\\','D','e','v','i','c','e','\\',0};
@@ -804,54 +807,6 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
 }
 
 
-/***********************************************************************
- *           DOSFS_GetDevice
- *
- * Check if a DOS file name represents a DOS device and return the device.
- */
-const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name )
-{
-    unsigned int i;
-    const WCHAR *p;
-
-    if (!name) return NULL; /* if wine_server_handle_to_fd was used */
-    if (name[0] && (name[1] == ':')) name += 2;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-    for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
-    {
-        const WCHAR *dev = DOSFS_Devices[i].name;
-        if (!strncmpiW( dev, name, strlenW(dev) ))
-        {
-            p = name + strlenW( dev );
-            if (!*p || (*p == '.') || (*p == ':')) return &DOSFS_Devices[i];
-        }
-    }
-    return NULL;
-}
-
-
-/***********************************************************************
- *           DOSFS_GetDeviceByHandle
- */
-const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile )
-{
-    const DOS_DEVICE *ret = NULL;
-    SERVER_START_REQ( get_device_id )
-    {
-        req->handle = hFile;
-        if (!wine_server_call( req ))
-        {
-            if ((reply->id >= 0) &&
-                (reply->id < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
-                ret = &DOSFS_Devices[reply->id];
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
 /**************************************************************************
  *         DOSFS_CreateCommPort
  */
@@ -941,9 +896,6 @@ HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURIT
             if (!*p || (*p == '.') || (*p == ':')) {
 		static const WCHAR nulW[] = {'N','U','L',0};
 		static const WCHAR conW[] = {'C','O','N',0};
-		static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
-		static const WCHAR hpscanW[] = {'H','P','S','C','A','N',0};
-		static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
 	    	/* got it */
 		if (!strcmpiW(DOSFS_Devices[i].name, nulW))
                     return FILE_CreateFile( "/dev/null", access,
@@ -968,12 +920,6 @@ HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURIT
 					      DUPLICATE_SAME_ACCESS ))
 			    handle = 0;
 			return handle;
-		}
-		if (!strcmpiW(DOSFS_Devices[i].name, scsimgrW) ||
-                    !strcmpiW(DOSFS_Devices[i].name, hpscanW) ||
-                    !strcmpiW(DOSFS_Devices[i].name, emmxxxx0W))
-                {
-                    return FILE_CreateDevice( i, access, sa );
 		}
 
                 if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access,attributes,sa)) )

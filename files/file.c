@@ -395,7 +395,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             ret = FILE_CreateDevice( (toupperW(filename[4]) - 'A') | 0x20000, access, sa );
             goto done;
         }
-        else if (!DOSFS_GetDevice( filename ))
+        else if (!RtlIsDosDeviceName_U( filename ))
         {
             ret = VXD_Open( filename+4, access, sa );
             goto done;
@@ -425,7 +425,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         goto done;
     }
 
-    if (DOSFS_GetDevice( filename ))
+    if (RtlIsDosDeviceName_U( filename ))
     {
         TRACE("opening device %s\n", debugstr_w(filename) );
 
@@ -1408,7 +1408,7 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
     }
-    if (DOSFS_GetDevice( path ))
+    if (RtlIsDosDeviceName_U( path ))
     {
         WARN("cannot remove DOS device %s!\n", debugstr_w(path));
         SetLastError( ERROR_FILE_NOT_FOUND );

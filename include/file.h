@@ -45,14 +45,6 @@ typedef struct
 
 #define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
-/* DOS device descriptor */
-typedef struct
-{
-    const WCHAR name[9];
-    int flags;
-    UINT codepage;
-} DOS_DEVICE;
-
 /* locale-independent case conversion */
 inline static char FILE_tolower( char c )
 {
@@ -89,8 +81,6 @@ extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
 
 /* files/dos_fs.c */
 extern BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer );
-extern const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name );
-extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile );
 extern HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
 extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
                                 INT long_len, LPWSTR short_buf, BOOL ignore_case );

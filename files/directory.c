@@ -531,7 +531,7 @@ BOOL WINAPI CreateDirectoryW( LPCWSTR path,
 
     TRACE_(file)("(%s,%p)\n", debugstr_w(path), lpsecattribs );
 
-    if (DOSFS_GetDevice( path ))
+    if (RtlIsDosDeviceName_U( path ))
     {
         TRACE_(file)("cannot use device %s!\n", debugstr_w(path));
         SetLastError( ERROR_ACCESS_DENIED );
@@ -630,7 +630,7 @@ BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
 
     TRACE_(file)("%s\n", debugstr_w(path));
 
-    if (DOSFS_GetDevice( path ))
+    if (RtlIsDosDeviceName_U( path ))
     {
         TRACE_(file)("cannot remove device %s!\n", debugstr_w(path));
         SetLastError( ERROR_FILE_NOT_FOUND );

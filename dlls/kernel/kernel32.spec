@@ -1152,7 +1152,6 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl DOSFS_GetDeviceByHandle(long)
 @ cdecl DOSMEM_AllocSelector(long)
 @ cdecl DOSMEM_Available()
 @ cdecl DOSMEM_FreeBlock(ptr)
