@@ -115,11 +115,22 @@ static void DEFDLG_RestoreFocus( HWND hwnd )
  */
 static HWND DEFDLG_FindDefButton( HWND hwndDlg )
 {
-    HWND hwndChild = GetWindow( hwndDlg, GW_CHILD );
+    HWND hwndChild, hwndTmp;
+
+    hwndChild = GetWindow( hwndDlg, GW_CHILD );
     while (hwndChild)
     {
         if (SendMessageW( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
             break;
+
+        /* Recurse into WS_EX_CONTROLPARENT controls */
+        if (GetWindowLongA( hwndChild, GWL_EXSTYLE ) & WS_EX_CONTROLPARENT)
+        {
+            LONG dsStyle = GetWindowLongA( hwndChild, GWL_STYLE );
+            if ((dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED) &&
+                (hwndTmp = DEFDLG_FindDefButton(hwndChild)) != NULL)
+           return hwndTmp;
+        }
         hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
     }
     return hwndChild;
