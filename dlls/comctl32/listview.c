@@ -1209,7 +1209,7 @@ static inline BOOL is_redrawing(LISTVIEW_INFO *infoPtr)
     return infoPtr->bRedraw && !infoPtr->bFirstPaint;
 }
 
-static inline void LISTVIEW_InvalidateRect(LISTVIEW_INFO *infoPtr, const RECT*rect)
+static inline void LISTVIEW_InvalidateRect(LISTVIEW_INFO *infoPtr, const RECT* rect)
 {
     if(!is_redrawing(infoPtr)) return; 
     TRACE(" invalidating rect=%s\n", debugrect(rect));
@@ -8031,6 +8031,11 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  */
 static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
 {
+    TRACE("infoPtr->bRedraw=%d, bRedraw=%d\n", infoPtr->bRedraw, bRedraw);
+
+    /* we can not use straight equality here because _any_ non-zero value is TRUE */
+    if ((infoPtr->bRedraw && bRedraw) || (!infoPtr->bRedraw && !bRedraw)) return 0;
+
     infoPtr->bRedraw = bRedraw;
 
     if(!bRedraw) return 0;
@@ -8038,6 +8043,10 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
     if (is_autoarrange(infoPtr))
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
     LISTVIEW_UpdateScroll(infoPtr);
+
+    /* despite what the WM_SETREDRAW docs says, apps expect us
+     * to invalidate the listview here... stupid! */
+    LISTVIEW_InvalidateList(infoPtr);
 
     return 0;
 }
