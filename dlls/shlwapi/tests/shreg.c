@@ -28,17 +28,22 @@
 #include "winuser.h"
 #include "shlwapi.h"
 
-static char * sTestpath1 = "%SYSTEMROOT%\\subdir1";
-static char * sTestpath2 = "%USERPROFILE%\\subdir1";
+static char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
+static char * sTestpath2 = "%FOO%\\subdir1";
 
 static char sExpTestpath1[MAX_PATH];
 static char sExpTestpath2[MAX_PATH];
+static unsigned sExpLen1;
+static unsigned sExpLen2;
 
 static char * sEmptyBuffer ="0123456789";
 
-static void create_test_entrys()
+static void create_test_entrys(void)
 {
 	HKEY hKey;
+
+        SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
+        SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
 	ok(!RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hKey), "RegCreateKeyA failed");
 
@@ -50,9 +55,11 @@ static void create_test_entrys()
 	   RegCloseKey(hKey);
 	}
 
-	ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
-	ExpandEnvironmentStringsA(sTestpath2, sExpTestpath2, sizeof(sExpTestpath2));
-	ok(strlen(sExpTestpath2) > 25, "%%USERPROFILE%% is set to a short value on this machine. we cant perform all tests.");
+	sExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
+	sExpLen2 = ExpandEnvironmentStringsA(sTestpath2, sExpTestpath2, sizeof(sExpTestpath2));
+
+        ok(sExpLen1 > 0, "Couldn't expand %s\n", sTestpath1);
+        ok(sExpLen2 > 0, "Couldn't expand %s\n", sTestpath2);
 }
 
 static void test_SHGetValue(void)
@@ -159,11 +166,11 @@ static void test_SHQUeryValueEx(void)
 	 * if the unexpanded string fits into the buffer it can get cut when expanded
 	 */
 	strcpy(buf, sEmptyBuffer);
-	dwSize = 24;
+	dwSize = sExpLen2 - 4;
 	dwType = -1;
 	ok( ERROR_MORE_DATA == SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize), "Expected ERROR_MORE_DATA");
-	ok( 0 == strncmp(sExpTestpath2, buf, 24-1), "(%s)", buf);
-	ok( 24-1 == strlen(buf), "(%s)", buf);
+	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "(%s)", buf);
+	ok( sExpLen2 - 4 - 1 == strlen(buf), "(%s)", buf);
 	ok( dwSize == nUsedBuffer2, "(%lu,%u)" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)" , dwType);
 
