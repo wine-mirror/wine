@@ -533,10 +533,7 @@ LPDOSTASK MZ_Current( void )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env,
-                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                       LPPROCESS_INFORMATION info )
+BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
 {
  WARN("DOS executables not supported on this architecture\n");
  SetLastError(ERROR_BAD_FORMAT);
