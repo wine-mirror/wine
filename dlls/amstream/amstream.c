@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
     IAMMultiMediaStream lpVtbl;
-    int ref;
+    ULONG ref;
 } IAMMultiMediaStreamImpl;
 
 static struct IAMMultiMediaStreamVtbl AM_Vtbl;
@@ -83,22 +83,21 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_AddRef(IAMMultiMediaStream* iface)
 {
   IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-  FIXME("(%p/%p)\n", iface, This); 
-
-  This->ref++;
-  return S_OK;
+  TRACE("(%p/%p)\n", iface, This);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
 {
   IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  FIXME("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p)\n", iface, This);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IMultiMediaStream methods ***/

@@ -56,14 +56,17 @@ static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
 static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
     ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (InterlockedIncrement(&This->ref) == 1) {
+    ref = InterlockedIncrement(&This->ref);
+    if (ref == 1) {
 	InterlockedIncrement(&dll_ref);
     }
-    return This->ref;
+    return ref;
 }
 
 /**********************************************************************
@@ -72,14 +75,17 @@ static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
 static ULONG WINAPI COMCAT_IClassFactory_Release(LPCLASSFACTORY iface)
 {
     ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (InterlockedDecrement(&This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
 	InterlockedDecrement(&dll_ref);
     }
-    return This->ref;
+    return ref;
 }
 
 /**********************************************************************

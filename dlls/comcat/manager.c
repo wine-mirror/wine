@@ -66,14 +66,17 @@ static HRESULT WINAPI COMCAT_IUnknown_QueryInterface(
 static ULONG WINAPI COMCAT_IUnknown_AddRef(LPUNKNOWN iface)
 {
     ICOM_THIS_MULTI(ComCatMgrImpl, unkVtbl, iface);
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (InterlockedIncrement(&This->ref) == 1) {
+    ref = InterlockedIncrement(&This->ref);
+    if (ref == 1) {
 	InterlockedIncrement(&dll_ref);
     }
-    return This->ref;
+    return ref;
 }
 
 /**********************************************************************
@@ -82,14 +85,17 @@ static ULONG WINAPI COMCAT_IUnknown_AddRef(LPUNKNOWN iface)
 static ULONG WINAPI COMCAT_IUnknown_Release(LPUNKNOWN iface)
 {
     ICOM_THIS_MULTI(ComCatMgrImpl, unkVtbl, iface);
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (InterlockedDecrement(&This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
 	InterlockedDecrement(&dll_ref);
     }
-    return This->ref;
+    return ref;
 }
 
 /**********************************************************************

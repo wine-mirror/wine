@@ -84,16 +84,17 @@ static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface)
 static ULONG WINAPI DEVENUM_IPropertyBag_Release(LPPROPERTYBAG iface)
 {
     RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    ULONG ref;
 
     TRACE("\n");
 
-    if (InterlockedDecrement(&This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
         RegCloseKey(This->hkey);
         CoTaskMemFree(This);
         DEVENUM_UnlockModule();
-        return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI DEVENUM_IPropertyBag_Read(

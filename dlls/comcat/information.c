@@ -307,11 +307,12 @@ typedef struct
 static ULONG WINAPI COMCAT_IEnumCATEGORYINFO_AddRef(LPENUMCATEGORYINFO iface)
 {
     IEnumCATEGORYINFOImpl *This = (IEnumCATEGORYINFOImpl *)iface;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_QueryInterface(
@@ -338,16 +339,19 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_QueryInterface(
 static ULONG WINAPI COMCAT_IEnumCATEGORYINFO_Release(LPENUMCATEGORYINFO iface)
 {
     IEnumCATEGORYINFOImpl *This = (IEnumCATEGORYINFOImpl *)iface;
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (--(This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
 	if (This->key) RegCloseKey(This->key);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Next(
@@ -613,7 +617,7 @@ static ULONG WINAPI COMCAT_CLSID_IEnumGUID_AddRef(LPENUMGUID iface)
 
     if (This == NULL) return E_POINTER;
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_QueryInterface(
@@ -640,17 +644,20 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_QueryInterface(
 static ULONG WINAPI COMCAT_CLSID_IEnumGUID_Release(LPENUMGUID iface)
 {
     CLSID_IEnumGUIDImpl *This = (CLSID_IEnumGUIDImpl *)iface;
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (--(This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
 	if (This->key) RegCloseKey(This->key);
 	HeapFree(GetProcessHeap(), 0, (LPVOID)This->categories);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Next(
@@ -805,7 +812,7 @@ static ULONG WINAPI COMCAT_CATID_IEnumGUID_AddRef(LPENUMGUID iface)
 
     if (This == NULL) return E_POINTER;
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static HRESULT WINAPI COMCAT_CATID_IEnumGUID_QueryInterface(
@@ -832,16 +839,19 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_QueryInterface(
 static ULONG WINAPI COMCAT_CATID_IEnumGUID_Release(LPENUMGUID iface)
 {
     CATID_IEnumGUIDImpl *This = (CATID_IEnumGUIDImpl *)iface;
+    ULONG ref;
+
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    if (--(This->ref) == 0) {
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
 	if (This->key) RegCloseKey(This->key);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Next(
