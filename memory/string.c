@@ -497,6 +497,19 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
     return dst;
 }
 
+/***********************************************************************
+ *           UnicodeToAnsi   (KERNEL.434)
+ */
+INT16 WINAPI UnicodeToAnsi( LPCWSTR src, LPSTR dst, INT16 codepage )
+{
+    if ( codepage != -1 )
+        FIXME( string, "codepage %d not supported\n", codepage );
+
+    lstrcpyWtoA( dst, src );
+
+    return (INT16)lstrlen32A( dst );
+}
+
 
 /***********************************************************************
  *           Copy   (GDI.250)

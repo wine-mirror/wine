@@ -338,7 +338,7 @@ file	krnl386.exe
 423 stub LogApiThk
 431 pascal16 IsPeFormat(str word) IsPeFormat
 432 stub FileTimeToLocalFileTime
-434 stub UnicodeToAnsi
+434 pascal16 UnicodeToAnsi(ptr ptr word) UnicodeToAnsi
 435 stub GetTaskFlags
 436 stub _ConfirmSysLevel
 437 stub _CheckNotSysLevel
