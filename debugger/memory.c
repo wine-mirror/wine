@@ -262,7 +262,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		if (count == 1) count = 256;
                 while (count--)
                 {
-		    if (!DEBUG_READ_MEM_VERBOSE(pnt, &wch, sizeof(wch)))
+		    if (!DEBUG_READ_MEM_VERBOSE(pnt, &wch, sizeof(wch)) || !wch)
 		       break;
                     pnt += sizeof(wch);
                     DEBUG_Printf(DBG_CHN_MESG, "%c", (char)wch);
@@ -276,7 +276,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		if (count == 1) count = 256;
                 while (count--)
                 {
-                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &ch, sizeof(ch)))
+                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &ch, sizeof(ch)) || !ch)
 		       break;
                     pnt++;
                     DEBUG_Output(DBG_CHN_MESG, &ch, 1);
