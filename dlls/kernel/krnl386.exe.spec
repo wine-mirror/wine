@@ -132,10 +132,8 @@ rsrc	version16.res
 125 pascal16 DisableKernel() KERNEL_nop
 126 stub MemoryFreed
 127 pascal16 GetPrivateProfileInt(str str s_word str) GetPrivateProfileInt16
-128 pascal16 GetPrivateProfileString(str str str ptr word str)
-             GetPrivateProfileString16
-129 pascal16 WritePrivateProfileString(str str str str)
-             WritePrivateProfileString16
+128 pascal16 GetPrivateProfileString(str str str ptr word str) GetPrivateProfileString16
+129 pascal16 WritePrivateProfileString(str str str str) WritePrivateProfileString16
 130 pascal FileCDR(ptr) FileCDR16
 131 pascal GetDOSEnvironment() GetDOSEnvironment16
 132 pascal GetWinFlags() GetWinFlags16

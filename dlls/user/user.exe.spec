@@ -40,8 +40,7 @@ rsrc	resources/version16.res
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength16
 39  pascal16 BeginPaint(word ptr) BeginPaint16
 40  pascal16 EndPaint(word ptr) EndPaint16
-41  pascal16 CreateWindow(str str long s_word s_word s_word s_word
-	                  word word word segptr) CreateWindow16
+41  pascal16 CreateWindow(str str long s_word s_word s_word s_word word word word segptr) CreateWindow16
 42  pascal16 ShowWindow(word word) ShowWindow16
 43  pascal16 CloseWindow(word) CloseWindow16
 44  pascal16 OpenIcon(word) OpenIcon16
@@ -196,8 +195,7 @@ rsrc	resources/version16.res
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable16
 194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox16
 195 pascal16 DlgDirListComboBox(word ptr word word word) DlgDirListComboBox16
-196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
-             TabbedTextOut16
+196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word) TabbedTextOut16
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent16
 198 pascal16 CascadeChildWindows(word word) CascadeChildWindows16
 199 pascal16 TileChildWindows(word word) TileChildWindows16
@@ -242,11 +240,9 @@ rsrc	resources/version16.res
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn16
 238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn16
 239 pascal16 DialogBoxParam(word str word segptr long) DialogBoxParam16
-240 pascal16 DialogBoxIndirectParam(word word word segptr long)
-             DialogBoxIndirectParam16
+240 pascal16 DialogBoxIndirectParam(word word word segptr long) DialogBoxIndirectParam16
 241 pascal16 CreateDialogParam(word str word segptr long) CreateDialogParam16
-242 pascal16 CreateDialogIndirectParam(word ptr word segptr long)
-             CreateDialogIndirectParam16
+242 pascal16 CreateDialogIndirectParam(word ptr word segptr long) CreateDialogIndirectParam16
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal16 EqualRect(ptr ptr) EqualRect16
 245 pascal16 EnableCommNotification(s_word word s_word s_word) EnableCommNotification16
@@ -264,8 +260,7 @@ rsrc	resources/version16.res
 257 pascal16 GetNextDriver(word long) GetNextDriver16
 258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints16
 259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos16
-260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word)
-             DeferWindowPos16
+260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word) DeferWindowPos16
 261 pascal16 EndDeferWindowPos(word) EndDeferWindowPos16
 262 pascal16 GetWindow(word word) GetWindow16
 263 pascal16 GetMenuItemCount(word) GetMenuItemCount16
@@ -384,8 +379,7 @@ rsrc	resources/version16.res
 404 pascal16 GetClassInfo(word segstr ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon16
-408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
-	     CreateCursorIconIndirect16
+408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr) CreateCursorIconIndirect16
 409 pascal16 InitThreadInput(word word) InitThreadInput16
 410 pascal16 InsertMenu(word word word word segptr) InsertMenu16
 411 pascal16 AppendMenu(word word word segptr) AppendMenu16
@@ -421,8 +415,7 @@ rsrc	resources/version16.res
 449 pascal16 DrawState(word word segptr long word s_word s_word s_word s_word word) DrawState16
 450 pascal16 CreateIconFromResourceEx(ptr long word long word word word) CreateIconFromResourceEx16
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel16
-452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word
-                            word word word segptr) CreateWindowEx16
+452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word word word word segptr) CreateWindowEx16
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx16
 455 pascal16 GetIconID(word long) GetIconID16
 456 pascal16 LoadIconHandler(word word) LoadIconHandler16

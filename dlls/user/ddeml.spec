@@ -7,8 +7,7 @@
 8 pascal16 DdeDisconnect(long) DdeDisconnect16
 9 pascal16  DdeQueryConvInfo (word long ptr) DdeQueryConvInfo16
 10 pascal DdeSetUserHandle(word long long) DdeSetUserHandle16
-11 pascal   DdeClientTransaction(ptr long long long s_word s_word long ptr)
-            DdeClientTransaction16
+11 pascal   DdeClientTransaction(ptr long long long s_word s_word long ptr) DdeClientTransaction16
 12 pascal DdeAbandonTransaction(long word long) DdeAbandonTransaction16
 13 pascal DdePostAdvise(long word word) DdePostAdvise16
 14 pascal DdeCreateDataHandle(long ptr long long word word word) DdeCreateDataHandle16
