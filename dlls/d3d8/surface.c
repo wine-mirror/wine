@@ -321,6 +321,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	vcheckGLcall("glIntegerv");
 	glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
 	vcheckGLcall("glIntegerv");
+        glPixelZoom(1.0, -1.0);
+        vcheckGLcall("glPixelZoom");
 
 	if (This == This->Device->backBuffer) {
 	  glDrawBuffer(GL_BACK);
@@ -361,6 +363,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	  FIXME("Unsupported Format %u in locking func\n", This->myDesc.Format);
 	}
 
+        glPixelZoom(1.0,1.0);
+        vcheckGLcall("glPixelZoom");
 	glDrawBuffer(prev_draw);
 	vcheckGLcall("glDrawBuffer");
 	glRasterPos3iv(&prev_rasterpos[0]);
