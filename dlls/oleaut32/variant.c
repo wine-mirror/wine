@@ -944,13 +944,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI1FromCy( ps->u.cyVal, &(pd->u.cVal) );
+			res = VarI1FromCy( ps->u.cyVal, &(pd->u.cVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.cVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarI1From32( ps->u.lVal, &(pd->u.cVal) );*/
+			/*res = VarI1FromDisp( ps->u.pdispVal, lcid, &(pd->u.cVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarI1FromDec32( ps->u.decVal, &(pd->u.cVal) );*/
+			/*res = VarI1FromDec( ps->u.decVal, &(pd->u.cVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -997,13 +997,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI2FromCy( ps->u.cyVal, &(pd->u.iVal) );
+			res = VarI2FromCy( ps->u.cyVal, &(pd->u.iVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.iVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarI2From32( ps->u.lVal, &(pd->u.iVal) );*/
+			/*res = VarI2FromDisp( ps->u.pdispVal, lcid, &(pd->u.iVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarI2FromDec32( ps->u.deiVal, &(pd->u.iVal) );*/
+			/*res = VarI2FromDec( ps->u.deiVal, &(pd->u.iVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1051,13 +1051,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI4FromCy( ps->u.cyVal, &(pd->u.lVal) );
+			res = VarI4FromCy( ps->u.cyVal, &(pd->u.lVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.lVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarI4From32( ps->u.lVal, &(pd->u.lVal) );*/
+			/*res = VarI4FromDisp( ps->u.pdispVal, lcid, &(pd->u.lVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarI4FromDec32( ps->u.deiVal, &(pd->u.lVal) );*/
+			/*res = VarI4FromDec( ps->u.deiVal, &(pd->u.lVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1104,13 +1104,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI1FromCy( ps->u.cyVal, &(pd->u.bVal) );
+			res = VarUI1FromCy( ps->u.cyVal, &(pd->u.bVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarUI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.bVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarUI1From32( ps->u.lVal, &(pd->u.bVal) );*/
+			/*res = VarUI1FromDisp( ps->u.pdispVal, lcid, &(pd->u.bVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarUI1FromDec32( ps->u.deiVal, &(pd->u.bVal) );*/
+			/*res = VarUI1FromDec( ps->u.deiVal, &(pd->u.bVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1157,13 +1157,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI2FromCy( ps->u.cyVal, &(pd->u.uiVal) );
+			res = VarUI2FromCy( ps->u.cyVal, &(pd->u.uiVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarUI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.uiVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarUI2From32( ps->u.lVal, &(pd->u.uiVal) );*/
+			/*res = VarUI2FromDisp( ps->u.pdispVal, lcid, &(pd->u.uiVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarUI2FromDec32( ps->u.deiVal, &(pd->u.uiVal) );*/
+			/*res = VarUI2FromDec( ps->u.deiVal, &(pd->u.uiVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1210,13 +1210,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI4FromCy( ps->u.cyVal, &(pd->u.ulVal) );
+			res = VarUI4FromCy( ps->u.cyVal, &(pd->u.ulVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarUI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.ulVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarUI4From32( ps->u.lVal, &(pd->u.ulVal) );*/
+			/*res = VarUI4FromDisp( ps->u.pdispVal, lcid, &(pd->u.ulVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarUI4FromDec32( ps->u.deiVal, &(pd->u.ulVal) );*/
+			/*res = VarUI4FromDec( ps->u.deiVal, &(pd->u.ulVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1263,13 +1263,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
 			break;
 		case( VT_CY ):
-	     res = VarR4FromCy( ps->u.cyVal, &(pd->u.fltVal) );
+			res = VarR4FromCy( ps->u.cyVal, &(pd->u.fltVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarR4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.fltVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarR4From32( ps->u.lVal, &(pd->u.fltVal) );*/
+			/*res = VarR4FromDisp( ps->u.pdispVal, lcid, &(pd->u.fltVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarR4FromDec32( ps->u.deiVal, &(pd->u.fltVal) );*/
+			/*res = VarR4FromDec( ps->u.deiVal, &(pd->u.fltVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1316,13 +1316,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR8FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
 			break;
 		case( VT_CY ):
-	     res = VarR8FromCy( ps->u.cyVal, &(pd->u.dblVal) );
+			res = VarR8FromCy( ps->u.cyVal, &(pd->u.dblVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarR8FromDisp32( ps->u.pdispVal, lcid, &(pd->u.dblVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarR8From32( ps->u.lVal, &(pd->u.dblVal) );*/
+			/*res = VarR8FromDisp( ps->u.pdispVal, lcid, &(pd->u.dblVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarR8FromDec32( ps->u.deiVal, &(pd->u.dblVal) );*/
+			/*res = VarR8FromDec( ps->u.deiVal, &(pd->u.dblVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1373,13 +1373,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarDateFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
 			break;
 		case( VT_CY ):
-	     res = VarDateFromCy( ps->u.cyVal, &(pd->u.date) );
+			res = VarDateFromCy( ps->u.cyVal, &(pd->u.date) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarDateFromDisp32( ps->u.pdispVal, lcid, &(pd->u.date) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarDateFrom32( ps->u.lVal, &(pd->u.date) );*/
+			/*res = VarDateFromDisp( ps->u.pdispVal, lcid, &(pd->u.date) );*/
 		case( VT_DECIMAL ):
-			/*res = VarDateFromDec32( ps->u.deiVal, &(pd->u.date) );*/
+			/*res = VarDateFromDec( ps->u.deiVal, &(pd->u.date) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1430,13 +1430,13 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarBoolFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
 			break;
 		case( VT_CY ):
-	     res = VarBoolFromCy( ps->u.cyVal, &(pd->u.boolVal) );
+			res = VarBoolFromCy( ps->u.cyVal, &(pd->u.boolVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarBoolFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarBoolFrom32( ps->u.lVal, &(pd->u.boolVal) );*/
+			/*res = VarBoolFromDisp( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarBoolFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
+			/*res = VarBoolFromDec( ps->u.deiVal, &(pd->u.boolVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1489,17 +1489,17 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_BOOL ):
 			res = VarBstrFromBool( ps->u.boolVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
-        case( VT_BSTR ):
-            res = VariantCopy( pd, ps );
-            break;
+		case( VT_BSTR ):
+			res = VariantCopy( pd, ps );
+			break;
 		case( VT_CY ):
-	     /*res = VarBstrFromCy32( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+			res = VarBstrFromCy( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			break;
 		case( VT_DISPATCH ):
-			/*res = VarBstrFromDisp32( ps->u.pdispVal, lcid, lcid, dwFlags, &(pd->u.bstrVal) );*/
-		case( VT_UNKNOWN ):
-			/*res = VarBstrFrom32( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+			/*res = VarBstrFromDisp( ps->u.pdispVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
 		case( VT_DECIMAL ):
-			/*res = VarBstrFromDec32( ps->u.deiVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+			/*res = VarBstrFromDec( ps->u.deiVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+		case( VT_UNKNOWN ):
 		default:
 			res = DISP_E_TYPEMISMATCH;
 			FIXME("Coercion from %d to %d\n", vtFrom, vt );
@@ -1550,13 +1550,14 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	     res = VariantCopy( pd, ps );
 	     break;
 	  case( VT_BSTR ):
-	     /*res = VarCyFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cyVal) );*/
+	     res = VarCyFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cyVal) );
+	     break;
 	  case( VT_DISPATCH ):
-	     /*res = VarCyFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
-	  case( VT_UNKNOWN ):
-	     /*res = VarCyFrom32( ps->u.lVal, &(pd->u.boolVal) );*/
+	     /*res = VarCyFromDisp( ps->u.pdispVal, lcid, &(pd->u.cyVal) );*/
 	  case( VT_DECIMAL ):
-	     /*res = VarCyFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
+	     /*res = VarCyFromDec( ps->u.deiVal, &(pd->u.cyVal) );*/
+	     break;
+	  case( VT_UNKNOWN ):
 	  default:
 	     res = DISP_E_TYPEMISMATCH;
 	     FIXME("Coercion from %d to %d\n", vtFrom, vt );
