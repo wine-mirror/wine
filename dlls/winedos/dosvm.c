@@ -628,25 +628,6 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 
 #endif
 
-static const INTPROC real_mode_handlers[] =
-{
-    /* 00 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 08 */ 0, DOSVM_Int09Handler, 0, 0, 0, 0, 0, 0,
-    /* 10 */ DOSVM_Int10Handler, INT_Int11Handler, INT_Int12Handler, INT_Int13Handler,
-             0, INT_Int15Handler, DOSVM_Int16Handler, DOSVM_Int17Handler,
-    /* 18 */ 0, 0, INT_Int1aHandler, 0, 0, 0, 0, 0,
-    /* 20 */ DOSVM_Int20Handler, DOSVM_Int21Handler, 0, 0, 0, INT_Int25Handler, 0, 0,
-    /* 28 */ 0, DOSVM_Int29Handler, INT_Int2aHandler, 0, 0, 0, 0, INT_Int2fHandler,
-    /* 30 */ 0, DOSVM_Int31Handler, 0, DOSVM_Int33Handler, INT_Int34Handler, INT_Int35Handler, INT_Int36Handler, INT_Int37Handler,
-    /* 38 */ INT_Int38Handler, INT_Int39Handler, INT_Int3aHandler, INT_Int3bHandler, INT_Int3cHandler, INT_Int3dHandler, INT_Int3eHandler, 0,
-    /* 40 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 48 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 50 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 58 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 60 */ 0, 0, 0, 0, 0, 0, 0, DOSVM_Int67Handler
-};
-
-
 /**********************************************************************
  *	    DOSVM_RealModeInterrupt
  *
@@ -654,16 +635,8 @@ static const INTPROC real_mode_handlers[] =
  */
 void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
 {
-    if (intnum < sizeof(real_mode_handlers)/sizeof(INTPROC) && real_mode_handlers[intnum])
-        (*real_mode_handlers[intnum])(context);
-    else
-    {
-        FIXME("Unknown Interrupt in DOS mode: 0x%x\n", intnum);
-        FIXME("    eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
-              context->Eax, context->Ebx, context->Ecx, context->Edx);
-        FIXME("    esi=%08lx edi=%08lx ds=%04lx es=%04lx\n",
-              context->Esi, context->Edi, context->SegDs, context->SegEs );
-    }
+    INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
+    proc(context);
 }
 
 

@@ -159,7 +159,7 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
   }
   else
   {
-    FARPROC16 addr = INT_GetPMHandler( intnum ); /* FIXME: DOSVM_GetPMHandler16 */
+    FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
     WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
     /* Push the flags and return address on the stack */
     *(--stack) = LOWORD(context->EFlags);
