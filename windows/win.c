@@ -1017,7 +1017,15 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     parent = GetDesktopWindow();
     owner = 0;
-    if (cs->hwndParent)
+
+    if (cs->hwndParent == HWND_MESSAGE)
+    {
+      /* native ole32.OleInitialize uses HWND_MESSAGE to create the
+       * message window (style: WS_POPUP|WS_DISABLED)
+       */
+      FIXME("Parent is HWND_MESSAGE\n");
+    }
+    else if (cs->hwndParent)
     {
 	/* Make sure parent is valid */
         if (!IsWindow( cs->hwndParent ))
