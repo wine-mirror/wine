@@ -36,8 +36,8 @@ typedef ITypeLib * LPTYPELIB;
  */
 typedef short VARIANT_BOOL;
 
-#define VARIANT_TRUE	 0xFFFF
-#define VARIANT_FALSE	 0x0000
+#define VARIANT_TRUE	 ((VARIANT_BOOL)0xFFFF)
+#define VARIANT_FALSE	 ((VARIANT_BOOL)0x0000)
 
 typedef LONG SCODE;
 

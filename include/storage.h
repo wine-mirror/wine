@@ -84,21 +84,21 @@ typedef struct {
  */
 #define ICOM_INTERFACE IStorage16
 ICOM_BEGIN(IStorage16,IUnknown)
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm);
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm);
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg);
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg);
-    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest);
-    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags);
-    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum);
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName);
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPCOLESTR16,pwcsNewName);
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime);
-    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid);
-    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask);
-    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag);
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm)
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm)
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg)
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg)
+    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest)
+    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags)
+    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags)
+    ICOM_METHOD (HRESULT,Revert)
+    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum)
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName)
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPCOLESTR16,pwcsNewName)
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime)
+    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid)
+    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask)
+    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
 ICOM_END(IStorage16)
 #undef ICOM_INTERFACE
 
@@ -131,21 +131,21 @@ ICOM_END(IStorage16)
  */
 #define ICOM_INTERFACE IStorage32
 ICOM_BEGIN(IStorage32,IUnknown)
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream32**,ppstm);
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR32,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream32**,ppstm);
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage32**,ppstg);
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR32,pwcsName, IStorage32*,pstgPriority, DWORD,grfMode, SNB32,snb16Exclude, DWORD,reserved, IStorage32**,ppstg);
-    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB32,snb16Exclude, IStorage32*,pstgDest);
-    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR32,pwcsName, IStorage32*,pstgDest, LPCOLESTR32,pwcsNewName, DWORD,grfFlags);
-    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum);
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR32,pwcsName);
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR32,pwcsOldName, LPCOLESTR32,pwcsNewName);
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR32,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime);
-    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid);
-    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask);
-    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag);
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream32**,ppstm)
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR32,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream32**,ppstm)
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage32**,ppstg)
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR32,pwcsName, IStorage32*,pstgPriority, DWORD,grfMode, SNB32,snb16Exclude, DWORD,reserved, IStorage32**,ppstg)
+    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB32,snb16Exclude, IStorage32*,pstgDest)
+    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR32,pwcsName, IStorage32*,pstgDest, LPCOLESTR32,pwcsNewName, DWORD,grfFlags)
+    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags)
+    ICOM_METHOD (HRESULT,Revert)
+    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum)
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR32,pwcsName)
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR32,pwcsOldName, LPCOLESTR32,pwcsNewName)
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR32,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime)
+    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid)
+    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask)
+    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
 ICOM_END(IStorage32)
 #undef ICOM_INTERFACE
 
@@ -178,17 +178,17 @@ ICOM_END(IStorage32)
  */
 #define ICOM_INTERFACE IStream16
 ICOM_BEGIN(IStream16,IUnknown)
-    ICOM_METHOD3(HRESULT,Read,        void*,pv, ULONG,cb, ULONG*,pcbRead);
-    ICOM_METHOD3(HRESULT,Write,       const void*,pv, ULONG,cb, ULONG*,pcbWritten);
-    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition); 
-    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize);
-    ICOM_METHOD4(HRESULT,CopyTo,      IStream16*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten);
-    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag);
-    ICOM_METHOD1(HRESULT,Clone,       IStream16**,ppstm);
+    ICOM_METHOD3(HRESULT,Read,        void*,pv, ULONG,cb, ULONG*,pcbRead)
+    ICOM_METHOD3(HRESULT,Write,       const void*,pv, ULONG,cb, ULONG*,pcbWritten)
+    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition)
+    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize)
+    ICOM_METHOD4(HRESULT,CopyTo,      IStream16*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten)
+    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags)
+    ICOM_METHOD (HRESULT,Revert)
+    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType)
+    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType)
+    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag)
+    ICOM_METHOD1(HRESULT,Clone,       IStream16**,ppstm)
 ICOM_END(IStream16)
 #undef ICOM_INTERFACE
 
@@ -217,17 +217,17 @@ ICOM_END(IStream16)
  */
 #define ICOM_INTERFACE IStream32
 ICOM_BEGIN(IStream32,IUnknown)
-    ICOM_METHOD3(HRESULT,Read,        void*,pv, ULONG,cb, ULONG*,pcbRead);
-    ICOM_METHOD3(HRESULT,Write,       const void*,pv, ULONG,cb, ULONG*,pcbWritten);
-    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition); 
-    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize);
-    ICOM_METHOD4(HRESULT,CopyTo,      IStream32*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten);
-    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag);
-    ICOM_METHOD1(HRESULT,Clone,       IStream32**,ppstm);
+    ICOM_METHOD3(HRESULT,Read,        void*,pv, ULONG,cb, ULONG*,pcbRead)
+    ICOM_METHOD3(HRESULT,Write,       const void*,pv, ULONG,cb, ULONG*,pcbWritten)
+    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition)
+    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize)
+    ICOM_METHOD4(HRESULT,CopyTo,      IStream32*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten)
+    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags)
+    ICOM_METHOD (HRESULT,Revert)
+    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType)
+    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType)
+    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag)
+    ICOM_METHOD1(HRESULT,Clone,       IStream32**,ppstm)
 ICOM_END(IStream32)
 #undef ICOM_INTERFACE
 

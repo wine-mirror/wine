@@ -14,7 +14,7 @@
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]
  */
-DWORD WINAPI OleBuildVersion()
+DWORD WINAPI OleBuildVersion(void)
 {
     TRACE(ole,"(void)\n");
     return (rmm<<16)+rup;
@@ -35,7 +35,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
  * NOTES
  *   Is DWORD really the correct return type for this function?
  */
-DWORD WINAPI CoGetCurrentProcess() {
+DWORD WINAPI CoGetCurrentProcess(void) {
 	return (DWORD)PROCESS_Current();
 }
 
@@ -50,7 +50,7 @@ void WINAPI OleUninitialize(void)
 /***********************************************************************
  *           OleFlushClipboard   [OLE2.76]
  */
-HRESULT WINAPI OleFlushClipboard()
+HRESULT WINAPI OleFlushClipboard(void)
 {
     return S_OK;
 }

@@ -350,8 +350,8 @@ typedef struct {
 				/* extra information (after cbSize) */
 } WAVEFORMATEX,*LPWAVEFORMATEX;
 
-UINT16 WINAPI waveOutGetNumDevs16();
-UINT32 WINAPI waveOutGetNumDevs32();
+UINT16 WINAPI waveOutGetNumDevs16(void);
+UINT32 WINAPI waveOutGetNumDevs32(void);
 #define waveOutGetNumDevs WINELIB_NAME(waveOutGetNumDevs)
 UINT16 WINAPI waveOutGetDevCaps16(UINT16,LPWAVEOUTCAPS16,UINT16);
 UINT32 WINAPI waveOutGetDevCaps32A(UINT32,LPWAVEOUTCAPS32A,UINT32);
@@ -416,8 +416,8 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16,UINT16,DWORD,DWORD);
 DWORD WINAPI waveOutMessage32(HWAVEOUT32,UINT32,DWORD,DWORD);
 #define waveOutMessage WINELIB_NAME(waveOutMessage)
 
-UINT16 WINAPI waveInGetNumDevs16();
-UINT32 WINAPI waveInGetNumDevs32();
+UINT16 WINAPI waveInGetNumDevs16(void);
+UINT32 WINAPI waveInGetNumDevs32(void);
 #define waveInGetNumDevs WINELIB_NAME(waveInGetNumDevs)
 UINT16 WINAPI waveInGetDevCaps16(UINT16,LPWAVEINCAPS16,UINT16);
 UINT32 WINAPI waveInGetDevCaps32A(UINT32,LPWAVEINCAPS32A,UINT32);
@@ -648,8 +648,8 @@ typedef struct {
 #define	MEVT_TEMPO	0x01
 #define	MEVT_VERSION	0x84
 
-UINT16 WINAPI midiOutGetNumDevs16();
-UINT32 WINAPI midiOutGetNumDevs32();
+UINT16 WINAPI midiOutGetNumDevs16(void);
+UINT32 WINAPI midiOutGetNumDevs32(void);
 #define midiOutGetNumDevs WINELIB_NAME(midiOutGetNumDevs)
 UINT16 WINAPI midiOutGetDevCaps16(UINT16,LPMIDIOUTCAPS16,UINT16);
 UINT32 WINAPI midiOutGetDevCaps32A(UINT32,LPMIDIOUTCAPS32A,UINT32);
@@ -807,8 +807,8 @@ typedef struct {
 #define AUXCAPS_VOLUME          0x0001  /* supports volume control */
 #define AUXCAPS_LRVOLUME        0x0002  /* separate left-right volume control */
 
-UINT16 WINAPI auxGetNumDevs16();
-UINT32 WINAPI auxGetNumDevs32();
+UINT16 WINAPI auxGetNumDevs16(void);
+UINT32 WINAPI auxGetNumDevs32(void);
 #define auxGetNumDevs WINELIB_NAME(auxGetNumDevs)
 UINT16 WINAPI auxGetDevCaps16 (UINT16,LPAUXCAPS16,UINT16);
 UINT32 WINAPI auxGetDevCaps32A(UINT32,LPAUXCAPS32A,UINT32);
@@ -856,7 +856,7 @@ DECL_WINELIB_TYPE(LPTIMECAPS)
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16,UINT16);
 MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32,UINT32);
 #define timeGetSystemTime WINELIB_NAME(timeGetSystemTime)
-DWORD WINAPI timeGetTime();	/* same for win32/win16 */
+DWORD WINAPI timeGetTime(void);	/* same for win32/win16 */
 MMRESULT16 WINAPI timeSetEvent16(UINT16,UINT16,LPTIMECALLBACK16,DWORD,UINT16);
 MMRESULT32 WINAPI timeSetEvent32(UINT32,UINT32,LPTIMECALLBACK32,DWORD,UINT32);
 #define timeSetEvent WINELIB_NAME(timeSetEvent)
@@ -1497,8 +1497,8 @@ typedef struct {
 #define	MIXER_SETCONTROLDETAILSF_CUSTOM		0x00000001L
 #define	MIXER_SETCONTROLDETAILSF_QUERYMASK	0x0000000FL
 
-UINT16 WINAPI mixerGetNumDevs16();
-UINT32 WINAPI mixerGetNumDevs32();
+UINT16 WINAPI mixerGetNumDevs16(void);
+UINT32 WINAPI mixerGetNumDevs32(void);
 #define mixerGetNumDevs WINELIB_NAME(mixerGetNumDevs)
 UINT16 WINAPI mixerOpen16(LPHMIXER16,UINT16,DWORD,DWORD,DWORD);
 UINT32 WINAPI mixerOpen32(LPHMIXER32,UINT32,DWORD,DWORD,DWORD);

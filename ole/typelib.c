@@ -108,7 +108,7 @@ HRESULT WINAPI LoadTypeLib16(
     OLECHAR32 *szFile, /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    FIXME(ole, "('%s',%p): stub\n",debugstr_a(szFile),pptLib);
+    FIXME(ole, "('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
     return E_FAIL;
 }
 
@@ -127,7 +127,7 @@ HRESULT WINAPI LoadTypeLib32(
     OLECHAR32 *szFile,   /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    FIXME(ole, "('%s',%p): stub\n",debugstr_a(szFile),pptLib);
+    FIXME(ole, "('%s',%p): stub\n",debugstr_w(szFile),pptLib);
     (long *)pptLib=0x123;
     return S_OK;           /* fixme: pretend everything is OK*/
 }
@@ -148,7 +148,7 @@ HRESULT WINAPI RegisterTypeLib32(
      ITypeLib * ptlib,      /*[in] Pointer to the library*/
      OLECHAR32 * szFullPath, /*[in] full Path of the library*/
      OLECHAR32 * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/
-{   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, szFullPath,szHelpDir);
+{   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, debugstr_w(szFullPath),debugstr_w(szHelpDir));
     return S_OK;	/* FIXME: pretend everything is OK */
 }
 
@@ -157,7 +157,7 @@ HRESULT WINAPI RegisterTypeLib32(
  * RETURNS
  *	path of typelib
  */
-DWORD WINAPI OABuildVersion()
+DWORD WINAPI OABuildVersion(void)
 {
 WINDOWS_VERSION ver = VERSION_GetVersion();
 

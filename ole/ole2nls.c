@@ -788,7 +788,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 	}
 
 	i=0;
-	while (languages[i].langid!=NULL)
+	while (languages[i].langid!=0)
         {
             LPWSTR cp;
 	    char   xbuffer[10];
@@ -830,7 +830,7 @@ BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
 		return TRUE;
 	}
 	i=0;
-	while (languages[i].langid!=NULL) {
+	while (languages[i].langid!=0) {
 		sprintf(buffer,"%08lx",(DWORD)languages[i].langid);
 		if (!lpfnLocaleEnum(buffer))
 			break;
@@ -2897,7 +2897,7 @@ INT32 WINAPI GetDateFormat32W(LCID locale,DWORD flags,
 			      LPCWSTR format,
 			      LPWSTR date, INT32 datelen)
 {
-   short datearr[] = {'1','9','9','4','-','1','-','1',0};
+   unsigned short datearr[] = {'1','9','9','4','-','1','-','1',0};
 
    FIXME(ole, "STUB (should call OLE_GetFormatW)\n");   
    lstrcpyn32W(date, datearr, datelen);

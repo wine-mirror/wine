@@ -309,7 +309,7 @@ typedef enum {
     D3DLIGHT_SPOT           = 2,
     D3DLIGHT_DIRECTIONAL    = 3,
     D3DLIGHT_PARALLELPOINT  = 4,
-    D3DLIGHT_FORCE_DWORD    = 0x7fffffff, /* force 32-bit size enum */
+    D3DLIGHT_FORCE_DWORD    = 0x7fffffff /* force 32-bit size enum */
 } D3DLIGHTTYPE;
 
 typedef struct _D3DCOLORVALUE {

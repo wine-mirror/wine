@@ -739,7 +739,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     HRESULT hres = E_UNEXPECTED;
 
     char dllName[MAX_PATH+1];
-    LONG dllNameLen = sizeof(dllName);
+    DWORD dllNameLen = sizeof(dllName);
     HINSTANCE32 hLibrary;
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, 
 			     REFIID iid, LPVOID *ppv);
@@ -962,7 +962,7 @@ VOID WINAPI CoTaskMemFree(
     HRESULT	ret = CoGetMalloc32(0,&lpmalloc);
 
     if (ret) return;
-    return lpmalloc->lpvtbl->fnFree(lpmalloc,ptr);
+    lpmalloc->lpvtbl->fnFree(lpmalloc,ptr);
 }
 
 /***********************************************************************
