@@ -19,106 +19,110 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#include <stdlib.h>
-#include "winternl.h"
 #include "miscemu.h"
 #include "wine/debug.h"
+#include "dosexe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-#define        BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
+#define BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
 
 
 /**********************************************************************
- *         INT1A_GetTicksSinceMidnight
+ *         DOSVM_Int1aHandler
  *
- * Return number of clock ticks since midnight.
- */
-DWORD INT1A_GetTicksSinceMidnight(void)
-{
-    LARGE_INTEGER time;
-    TIME_FIELDS tf;
-
-    NtQuerySystemTime( &time );
-    RtlSystemTimeToLocalTime( &time, &time );
-    RtlTimeToTimeFields( &time, &tf );
-    return ((tf.Hour * 3600 + tf.Minute * 60 + tf.Second) * 18206 / 1000 +
-            tf.Milliseconds * 1000 / 54927);
-}
-
-
-/**********************************************************************
- *         DOSVM_Int1aHandler (WINEDOS16.126)
- *
- * Handler for int 1ah
- *     0x00 - 0x07 - date and time
- *     0x?? - 0x?? - Microsoft Real Time Compression Interface
+ * Handler for int 1ah.
  */
 void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context )
 {
-    time_t ltime;
-    DWORD ticks;
-    struct tm *bdtime;
-
     switch(AH_reg(context))
     {
-       case 0x00:
-            ticks = INT1A_GetTicksSinceMidnight();
-            SET_CX( context, HIWORD(ticks) );
-            SET_DX( context, LOWORD(ticks) );
-            SET_AX( context, 0 );  /* No midnight rollover */
-            TRACE("int1a: AH=00 -- ticks=%ld\n", ticks);
-            break;
+    case 0x00: /* GET SYSTEM TIME */
+        {
+            BIOSDATA *data = BIOS_DATA;
+            SET_CX( context, HIWORD(data->Ticks) );
+            SET_DX( context, LOWORD(data->Ticks) );
+            SET_AL( context, 0 ); /* FIXME: midnight flag is unsupported */
+            TRACE( "GET SYSTEM TIME - ticks=%ld\n", data->Ticks );
+        }
+        break;
 
-       case 0x02:
-               ltime = time(NULL);
-               bdtime = localtime(&ltime);
+    case 0x01: /* SET SYSTEM TIME */
+        FIXME( "SET SYSTEM TIME - not allowed\n" );
+        break;
 
-               SET_CX( context, (BIN_TO_BCD(bdtime->tm_hour)<<8) |
-                                  BIN_TO_BCD(bdtime->tm_min) );
-               SET_DX( context, (BIN_TO_BCD(bdtime->tm_sec)<<8) );
+    case 0x02: /* GET REAL-TIME CLOCK TIME */
+        TRACE( "GET REAL-TIME CLOCK TIME\n" );
+        {
+            SYSTEMTIME systime;
+            GetLocalTime( &systime );
+            SET_CH( context, BIN_TO_BCD(systime.wHour) );
+            SET_CL( context, BIN_TO_BCD(systime.wMinute) );
+            SET_DH( context, BIN_TO_BCD(systime.wSecond) );
+            SET_DL( context, 0 ); /* FIXME: assume no daylight saving */
+            RESET_CFLAG(context);
+        }
+        break;
 
-       case 0x04:
-               ltime = time(NULL);
-               bdtime = localtime(&ltime);
-               SET_CX( context, (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
-                                  BIN_TO_BCD((bdtime->tm_year-1900)%100) );
-               SET_DX( context, (BIN_TO_BCD(bdtime->tm_mon)<<8) |
-                                  BIN_TO_BCD(bdtime->tm_mday) );
-               break;
+    case 0x03: /* SET REAL-TIME CLOCK TIME */
+        FIXME( "SET REAL-TIME CLOCK TIME - not allowed\n" );
+        break;
 
-               /* setting the time,date or RTC is not allow -EB */
-       case 0x01:
-               /* set system time */
-       case 0x03:
-               /* set RTC time */
-       case 0x05:
-               /* set RTC date */
-       case 0x06:
-               /* set ALARM */
-       case 0x07:
-               /* cancel ALARM */
-               break;
+    case 0x04: /* GET REAL-TIME CLOCK DATE */
+        TRACE( "GET REAL-TIME CLOCK DATE\n" );
+        {
+            SYSTEMTIME systime;
+            GetLocalTime( &systime );
+            SET_CH( context, BIN_TO_BCD(systime.wYear / 100) );
+            SET_CL( context, BIN_TO_BCD(systime.wYear % 100) );
+            SET_DH( context, BIN_TO_BCD(systime.wMonth) );
+            SET_DL( context, BIN_TO_BCD(systime.wDay) );
+            RESET_CFLAG(context);
+        }
+        break;
 
-        case 0xb0: /* Microsoft Real Time Compression */
-                switch AL_reg(context)
-                {
-                    case 0x01:
-                        /* not present */
-                        break;
-                    default:
-                        INT_BARF(context, 0x1a);
-                }
-                break;
+    case 0x05: /* SET REAL-TIME CLOCK DATE */
+        FIXME( "SET REAL-TIME CLOCK DATE - not allowed\n" );
+        break;
 
-       default:
-               INT_BARF( context, 0x1a );
+    case 0x06: /* SET ALARM */
+        FIXME( "SET ALARM - unimplemented\n" );
+        break;
+
+    case 0x07: /* CANCEL ALARM */
+        FIXME( "CANCEL ALARM - unimplemented\n" );
+        break;
+
+    case 0x08: /* SET RTC ACTIVATED POWER ON MODE */
+    case 0x09: /* READ RTC ALARM TIME AND STATUS */
+    case 0x0a: /* READ SYSTEM-TIMER DAY COUNTER */
+    case 0x0b: /* SET SYSTEM-TIMER DAY COUNTER */
+    case 0x0c: /* SET RTC DATE/TIME ACTIVATED POWER-ON MODE */
+    case 0x0d: /* RESET RTC DATE/TIME ACTIVATED POWER-ON MODE */
+    case 0x0e: /* GET RTC DATE/TIME ALARM AND STATUS */
+    case 0x0f: /* INITIALIZE REAL-TIME CLOCK */
+        INT_BARF( context, 0x1a );
+        break;
+
+    case 0xb0:
+        if (CX_reg(context) == 0x4d52 && 
+            DX_reg(context) == 0x4349 && 
+            AL_reg(context) == 0x01)
+        {
+            /*
+             * Microsoft Real-Time Compression Interface (MRCI).
+             * Ignoring this call indicates MRCI is not supported.
+             */
+            TRACE( "Microsoft Real-Time Compression Interface - not supported\n" );
+        }
+        else
+        {
+            INT_BARF(context, 0x1a);
+        }
+        break;
+
+    default:
+        INT_BARF( context, 0x1a );
     }
 }
