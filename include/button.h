@@ -26,6 +26,11 @@ typedef struct
 #define BUTTON_3STATE          0x02
 #define BUTTON_HIGHLIGHTED     0x04
 #define BUTTON_HASFOCUS        0x08
+#define BUTTON_NSTATES         0x0F
+  /* undocumented flags */
+#define BUTTON_BTNPRESSED      0x40
+#define BUTTON_UNKNOWN2        0x20
+#define BUTTON_UNKNOWN3        0x10
 
 #define BUTTON_STATE(hwnd)     ((WIN_FindWndPtr(hwnd))->wExtra[0])
 

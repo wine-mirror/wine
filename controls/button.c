@@ -137,27 +137,31 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         break;
 
     case WM_LBUTTONDBLCLK:
-	if(wndPtr->dwStyle & BS_NOTIFY || 
-		style==BS_RADIOBUTTON ||
-		style==BS_USERBUTTON ||
-		style==BS_OWNERDRAW){
-	    SendMessageA( GetParent(hWnd), WM_COMMAND,
-		    MAKEWPARAM( wndPtr->wIDmenu, BN_DOUBLECLICKED ), hWnd);
-	    break;
-	}
-	/* fall through */
+        if(wndPtr->dwStyle & BS_NOTIFY || 
+                style==BS_RADIOBUTTON ||
+                style==BS_USERBUTTON ||
+                style==BS_OWNERDRAW) {
+            SendMessageA( GetParent(hWnd), WM_COMMAND,
+                    MAKEWPARAM( wndPtr->wIDmenu, BN_DOUBLECLICKED ), hWnd);
+            break;
+        }
+        /* fall through */
     case WM_LBUTTONDOWN:
         SetCapture( hWnd );
         SetFocus( hWnd );
         SendMessageA( hWnd, BM_SETSTATE, TRUE, 0 );
+        infoPtr->state |= BUTTON_BTNPRESSED;
         break;
 
     case WM_LBUTTONUP:
-	/* FIXME: real windows uses extra flags in the status for this */
-        if (GetCapture() != hWnd) break;
-        ReleaseCapture();
-        if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
+        if (!(infoPtr->state & BUTTON_BTNPRESSED)) break;
+        infoPtr->state &= BUTTON_NSTATES;
+        if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) {
+            ReleaseCapture();
+            break;
+        }
         SendMessageA( hWnd, BM_SETSTATE, FALSE, 0 );
+        ReleaseCapture();
         GetClientRect( hWnd, &rect );
         if (PtInRect( &rect, pt ))
         {
@@ -178,6 +182,14 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
             }
             SendMessageA( GetParent(hWnd), WM_COMMAND,
                             MAKEWPARAM( wndPtr->wIDmenu, BN_CLICKED ), hWnd);
+        }
+        break;
+
+    case WM_CAPTURECHANGED:
+        if (infoPtr->state & BUTTON_BTNPRESSED) {
+            infoPtr->state &= BUTTON_NSTATES;
+            if (infoPtr->state & BUTTON_HIGHLIGHTED) 
+                SendMessageA( hWnd, BM_SETSTATE, FALSE, 0 );
         }
         break;
 
