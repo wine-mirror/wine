@@ -19,6 +19,7 @@
  */
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "windef.h"
