@@ -496,7 +496,6 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     WCHAR *p;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
     PLIST_ENTRY entry, mark;
-    BOOLEAN linked = FALSE;
     DWORD len;
 
     RtlUnicodeToMultiByteSize( &len, filename, (strlenW(filename) + 1) * sizeof(WCHAR) );
@@ -507,8 +506,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->deps     = NULL;
 
     wm->ldr.BaseAddress   = hModule;
-    wm->ldr.EntryPoint    = (nt->OptionalHeader.AddressOfEntryPoint) ?
-                            ((char *)hModule + nt->OptionalHeader.AddressOfEntryPoint) : 0;
+    wm->ldr.EntryPoint    = NULL;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
     wm->ldr.Flags         = 0;
     wm->ldr.LoadCount     = 0;
@@ -522,27 +520,15 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
-    /* this is a bit ugly, but we need to have app module first in LoadOrder
-     * list, But in wine, ntdll is loaded first, so by inserting DLLs at the tail
-     * and app module at the head we insure that order
-     */
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
-        /* is first loaded module a DLL or an exec ? */
-        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-        if (mark->Flink == mark ||
-            (CONTAINING_RECORD(mark->Flink, LDR_MODULE, InLoadOrderModuleList)->Flags & LDR_IMAGE_IS_DLL))
-        {
-            InsertHeadList(&NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList,
-                           &wm->ldr.InLoadOrderModuleList);
-            linked = TRUE;
-        }
+        wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
+        if (nt->OptionalHeader.AddressOfEntryPoint)
+            wm->ldr.EntryPoint = (char *)hModule + nt->OptionalHeader.AddressOfEntryPoint;
     }
-    else wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
 
-    if (!linked)
-        InsertTailList(&NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList,
-                       &wm->ldr.InLoadOrderModuleList);
+    InsertTailList(&NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList,
+                   &wm->ldr.InLoadOrderModuleList);
 
     /* insert module in MemoryList, sorted in increasing base addresses */
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
@@ -692,7 +678,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, reason );
-    if (!entry || !(wm->ldr.Flags & LDR_IMAGE_IS_DLL)) return TRUE;
+    if (!entry) return TRUE;
 
     if (TRACE_ON(relay))
     {
@@ -1078,8 +1064,10 @@ static void load_builtin_callback( void *module, const char *filename )
     {
         /* if we already have an executable, ignore this one */
         if (!NtCurrentTeb()->Peb->ImageBaseAddress)
+        {
             NtCurrentTeb()->Peb->ImageBaseAddress = module;
-        return; /* don't create the modref here, will be done later on */
+            return; /* don't create the modref here, will be done later on */
+        }
     }
 
     /* create the MODREF */
@@ -1772,6 +1760,43 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 
 
 /******************************************************************
+ *		init_system_dir
+ *
+ * System dir initialization once kernel32 has been loaded.
+ */
+static inline void init_system_dir(void)
+{
+    PLIST_ENTRY mark, entry;
+    LPWSTR buffer, p;
+
+    if (!MODULE_GetSystemDirectory( &system_dir ))
+    {
+        ERR( "Couldn't get system dir\n");
+        exit(1);
+    }
+
+    /* prepend the system dir to the name of the already created modules */
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
+
+        assert( mod->Flags & LDR_WINE_INTERNAL );
+
+        buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                  system_dir.Length + mod->FullDllName.Length + 2*sizeof(WCHAR) );
+        if (!buffer) continue;
+        strcpyW( buffer, system_dir.Buffer );
+        p = buffer + strlenW( buffer );
+        if (p > buffer && p[-1] != '\\') *p++ = '\\';
+        strcpyW( p, mod->FullDllName.Buffer );
+        RtlInitUnicodeString( &mod->FullDllName, buffer );
+        RtlInitUnicodeString( &mod->BaseDllName, p );
+    }
+}
+
+
+/******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
  * FIXME: the arguments are not correct, main_file and CreateFileW_ptr are Wine inventions.
@@ -1786,11 +1811,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
     pCreateFileW = CreateFileW_ptr;
-    if (!MODULE_GetSystemDirectory( &system_dir ))
-    {
-        ERR( "Couldn't get system dir\n");
-        exit(1);
-    }
+    init_system_dir();
 
     /* allocate the modref for the main exe */
     if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
@@ -1799,6 +1820,10 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
         goto error;
     }
     wm->ldr.LoadCount = -1;  /* can't unload main exe */
+
+    /* the main exe needs to be the first in the load order list */
+    RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
+    InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
 
     /* Install signal handlers; this cannot be done before, since we cannot
      * send exceptions to the debugger before the create process event that
@@ -1813,7 +1838,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     {
         req->module      = peb->ImageBaseAddress;
         req->module_size = wm->ldr.SizeOfImage;
-        req->entry       = wm->ldr.EntryPoint;
+        req->entry       = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
         /* API requires a double indirection */
         req->name        = &main_exe_name->Buffer;
         req->exe_file    = main_file;
