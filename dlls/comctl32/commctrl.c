@@ -17,6 +17,41 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ * 
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 21, 2002, by Christian Neumair.
+ *
+ * Unless otherwise noted, we belive this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ *
+ * TODO
+ *   -- implement GetMUILanguage + InitMUILanguage
+ *   -- LibMain => DLLMain ("DLLMain takes over the functionality of both the
+ *                           LibMain and the WEP function.", MSDN)
+ *   -- finish NOTES for MenuHelp, GetEffectiveClientRect and GetStatusTextW
+ *   -- FIXMEs + BUGS (search for them)
+ *
+ * Control Classes
+ *   -- ICC_ANIMATE_CLASS
+ *   -- ICC_BAR_CLASSES
+ *   -- ICC_COOL_CLASSES
+ *   -- ICC_DATE_CLASSES
+ *   -- ICC_HOTKEY_CLASS
+ *   -- ICC_INTERNET_CLASSES
+ *   -- ICC_LINK_CLASS (not yet implemented)
+ *   -- ICC_LISTVIEW_CLASSES
+ *   -- ICC_NATIVEFNTCTL_CLASS
+ *   -- ICC_PAGESCROLLER_CLASS
+ *   -- ICC_PROGRESS_CLASS
+ *   -- ICC_STANDARD_CLASSES (not yet implemented)
+ *   -- ICC_TAB_CLASSES
+ *   -- ICC_TREEVIEW_CLASSES
+ *   -- ICC_UPDOWN_CLASS
+ *   -- ICC_USEREX_CLASSES
+ *   -- ICC_WIN95_CLASSES
  */
 
 #include <string.h>
@@ -360,7 +395,7 @@ ShowHideMenuCtl (HWND hwnd, UINT uFlags, LPINT lpInfo)
  *     This is the correct documentation:
  *
  *     lpInfo
- *     (will be written...)
+ *     (will be written ...)
  */
 
 VOID WINAPI
@@ -606,6 +641,11 @@ InitCommonControls (void)
  * NOTES
  *     Only the additional common controls are registered by this function.
  *     The Win95 controls are registered at the DLL's initialization.
+ *
+ * FIXME
+ *     implement the following control classes:
+ *       ICC_LINK_CLASS
+ *       ICC_STANDARD_CLASSES
  */
 
 BOOL WINAPI
@@ -975,7 +1015,8 @@ _TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 /*************************************************************************
  * GetMUILanguage [COMCTL32.@]
  *
- * FIXME: What's this supposed to do?  Apparently some i18n thing.
+ * FIXME: "Returns the language currently in use by the common controls
+ * for a particular process." (MSDN)
  *
  */
 LANGID WINAPI GetMUILanguage (VOID)
@@ -987,7 +1028,8 @@ LANGID WINAPI GetMUILanguage (VOID)
 /*************************************************************************
  * InitMUILanguage [COMCTL32.@]
  *
- * FIXME: What's this supposed to do?  Apparently some i18n thing.
+ * FIXME: "Enables an application to specify a language to be used with
+ * the common controls that is different than the system language." (MSDN)
  *
  */
 
@@ -1014,9 +1056,10 @@ VOID WINAPI InitMUILanguage (LANGID uiLang)
  *
  * BUGS
  *     If an application manually subclasses a window after subclassing it with
- *      this API and then with this API again, then none of the previous 
- *      subclasses get called or the origional window procedure.
+ *     this API and then with this API again, then none of the previous 
+ *     subclasses get called or the origional window procedure.
  */
+
 BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
                         UINT_PTR uIDSubclass, DWORD_PTR dwRef)
 {
@@ -1110,6 +1153,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
  *     Success: non-sero
  *     Failure: zero
  */
+
 BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
                               UINT_PTR uID, DWORD_PTR *pdwRef)
 {
@@ -1148,6 +1192,7 @@ BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
  *     Success: non-zero
  *     Failure: zero
  */
+
 BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR uID)
 {
    LPSUBCLASS_INFO stack;
@@ -1212,6 +1257,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
  *     Success: non-zero
  *     Failure: zero
  */
+
 LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
    LPSUBCLASS_INFO stack;
@@ -1276,6 +1322,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
  *     Success: Handle of tool tip window.
  *     Failure: NULL
  */
+
 HWND
 COMCTL32_CreateToolTip(HWND hwndOwner)
 {
@@ -1318,6 +1365,7 @@ COMCTL32_CreateToolTip(HWND hwndOwner)
  * RETURNS
  *     none
  */
+
 VOID
 COMCTL32_RefreshSysColors(void)
 {
