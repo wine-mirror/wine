@@ -146,6 +146,34 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
 
 
 /***********************************************************************
+ *		Thread32First    (KERNEL32.686)
+ *
+ * Return info about the first thread in a toolhelp32 snapshot
+ */
+BOOL WINAPI Thread32First(HANDLE hSnapshot, LPTHREADENTRY lpte)
+{
+    if (!lpte)
+	return FALSE;
+
+    FIXME("(%d,%p),stub!\n",hSnapshot,lpte);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		Thread32Next   (KERNEL32.687)
+ *
+ * Return info about the "next" thread in a toolhelp32 snapshot
+ */
+BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY lpte)
+{
+    if (!lpte)
+	return FALSE;
+
+    FIXME("(%d,%p),stub!\n",hSnapshot,lpte);
+    return FALSE;
+}
+
+/***********************************************************************
  *		TOOLHELP_Process32Next
  *
  * Implementation of Process32First/Next

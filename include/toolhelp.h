@@ -398,7 +398,26 @@ typedef struct {
 #include "poppack.h"
 
 /*
- * Process Entry list as created by CreateToolHelp32Snapshot 
+ * Thread entry list as created by CreateToolHelp32Snapshot 
+ */
+
+typedef struct tagTHREADENTRY { 
+    DWORD dwSize; 
+    DWORD cntUsage; 
+    DWORD th32ThreadID; 
+    DWORD th32OwnerProcessID; 
+    DWORD tbBasePri; 
+    DWORD tbDeltaPri; 
+    DWORD dwFlags; 
+    DWORD th32AccessKey;
+    DWORD th32CurrentProcessID;
+} THREADENTRY, *PTHREADENTRY, *LPTHREADENTRY; 
+
+BOOL      WINAPI Thread32First(HANDLE,LPTHREADENTRY);
+BOOL      WINAPI Thread32Next(HANDLE,LPTHREADENTRY);
+
+/*
+ * Process entry list as created by CreateToolHelp32Snapshot 
  */
 
 typedef struct tagPROCESSENTRY { 
@@ -412,9 +431,7 @@ typedef struct tagPROCESSENTRY {
     LONG  pcPriClassBase; 
     DWORD dwFlags; 
     char szExeFile[MAX_PATH]; 
-} PROCESSENTRY; 
-typedef PROCESSENTRY *  PPROCESSENTRY; 
-typedef PROCESSENTRY *  LPPROCESSENTRY; 
+} PROCESSENTRY, *PPROCESSENTRY, *LPPROCESSENTRY; 
 
 BOOL      WINAPI Process32First(HANDLE,LPPROCESSENTRY);
 BOOL      WINAPI Process32Next(HANDLE,LPPROCESSENTRY);

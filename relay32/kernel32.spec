@@ -701,8 +701,8 @@ import  ntdll.dll
 683 stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr) SystemTimeToTzSpecificLocalTime
 684 stdcall TerminateProcess(long long) TerminateProcess
 685 stdcall TerminateThread(long long) TerminateThread
-686 stub Thread32First
-687 stub Thread32Next
+686 stdcall Thread32First(long ptr) Thread32First
+687 stdcall Thread32Next(long ptr) Thread32Next
 688 stdcall ThunkConnect32(ptr str str str ptr ptr) ThunkConnect32
 689 stdcall TlsAlloc() TlsAlloc
 690 stub TlsAllocInternal
