@@ -253,7 +253,7 @@ static BOOL LISTVIEW_SetItemFocus(HWND, INT);
 static BOOL LISTVIEW_SetItemPosition(HWND, INT, LONG, LONG);
 static VOID LISTVIEW_UpdateScroll(HWND);
 static VOID LISTVIEW_SetSelection(HWND, INT);
-static VOID LISTVIEW_UpdateSize(HWND);
+static BOOL LISTVIEW_UpdateSize(HWND);
 static BOOL LISTVIEW_SetSubItemT(HWND, LPLVITEMW, BOOL);
 static LRESULT LISTVIEW_SetViewRect(HWND, LPRECT);
 static BOOL LISTVIEW_ToggleSelection(HWND, INT);
@@ -852,7 +852,11 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
     scrollInfo.nMax = nNumOfItems / nCountPerColumn;
     if((nNumOfItems % nCountPerColumn) == 0)
     {
-      scrollInfo.nMax--;
+        scrollInfo.nMax--;
+    }
+    else
+    {
+        scrollInfo.nMax++;
     }
     scrollInfo.nPos = ListView_GetTopIndex(hwnd) / nCountPerColumn;
     scrollInfo.nPage = nCountPerRow;
@@ -7112,7 +7116,10 @@ static LRESULT LISTVIEW_SetColumnT(HWND hwnd, INT nColumn,
     }
 
     /* set header item attributes */
-    bResult = Header_SetItemW(infoPtr->hwndHeader, nColumn, &hdi);
+    if (isW)
+      bResult = Header_SetItemW(infoPtr->hwndHeader, nColumn, &hdi);
+    else
+      bResult = Header_SetItemA(infoPtr->hwndHeader, nColumn, &hdi);
   }
   
   return bResult;
@@ -7547,8 +7554,12 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 
       infoPtr->hdpaItems->nItemCount = nItems;
 
+      infoPtr->nItemWidth = max(LISTVIEW_GetItemWidth(hwnd),
+                                DEFAULT_COLUMN_WIDTH);
+
       LISTVIEW_UpdateSize(hwnd);
       LISTVIEW_UpdateScroll(hwnd);
+
       if (min(precount,infoPtr->hdpaItems->nItemCount)<topvisible) 
         InvalidateRect(hwnd, NULL, TRUE);
   }
@@ -8001,6 +8012,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
     WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS), 
     0, 0, 0, 0, hwnd, (HMENU)0, 
     lpcs->hInstance, NULL);
+
+  /* set header unicode format */
+  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT,(WPARAM)TRUE,(LPARAM)NULL);
 
   /* set header font */
   SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, 
@@ -9126,20 +9140,21 @@ static LRESULT LISTVIEW_Size(HWND hwnd, int Width, int Height)
 
   TRACE("(hwnd=%x, width=%d, height=%d)\n", hwnd, Width, Height);
 
-  LISTVIEW_UpdateSize(hwnd);
-
-  if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+  if (LISTVIEW_UpdateSize(hwnd))
   {
-    if (lStyle & LVS_ALIGNLEFT)
-      LISTVIEW_AlignLeft(hwnd);
-    else
-      LISTVIEW_AlignTop(hwnd);
-  }
+    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+    {
+        if (lStyle & LVS_ALIGNLEFT)
+            LISTVIEW_AlignLeft(hwnd);
+        else
+            LISTVIEW_AlignTop(hwnd);
+    }
 
-  LISTVIEW_UpdateScroll(hwnd);
+    LISTVIEW_UpdateScroll(hwnd);
   
-  /* invalidate client area + erase background */
-  InvalidateRect(hwnd, NULL, TRUE);
+    /* invalidate client area + erase background */
+    InvalidateRect(hwnd, NULL, TRUE);
+  }
 
   return 0;
 }
@@ -9152,18 +9167,21 @@ static LRESULT LISTVIEW_Size(HWND hwnd, int Width, int Height)
  * [I] HWND : window handle
  *
  * RETURN:
- * Zero
+ * Zero if no size change
+ * 1 of size changed
  */
-static VOID LISTVIEW_UpdateSize(HWND hwnd)
+static BOOL LISTVIEW_UpdateSize(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   RECT rcList;
+  RECT rcOld;
   
   TRACE("(hwnd=%x)\n", hwnd);
   
   GetClientRect(hwnd, &rcList);
+  CopyRect(&rcOld,&(infoPtr->rcList));
   infoPtr->rcList.left = 0;
   infoPtr->rcList.right = max(rcList.right - rcList.left, 1);
   infoPtr->rcList.top = 0;
@@ -9192,6 +9210,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
     if (!(LVS_NOCOLUMNHEADER & lStyle))
       infoPtr->rcList.top = max(wp.cy, 0);
   }
+  return (EqualRect(&rcOld,&(infoPtr->rcList)));
 }
 
 /***
@@ -9222,10 +9241,12 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
     if (uOldView == LVS_REPORT)
       ShowWindow(infoPtr->hwndHeader, SW_HIDE);
  
-    if ((lpss->styleOld & WS_HSCROLL) != 0)
+    if (((lpss->styleOld & WS_HSCROLL) != 0)&&
+        ((lpss->styleNew & WS_HSCROLL) == 0))
        ShowScrollBar(hwnd, SB_HORZ, FALSE);
  
-    if ((lpss->styleOld & WS_VSCROLL) != 0)
+    if (((lpss->styleOld & WS_VSCROLL) != 0)&&
+        ((lpss->styleNew & WS_VSCROLL) == 0))
        ShowScrollBar(hwnd, SB_VERT, FALSE);
  
     if (uNewView == LVS_ICON)
