@@ -27,6 +27,8 @@
 #include <signal.h>
 
 #include "winbase.h"
+#include "wincon.h"
+#include "ntddk.h"
 
 #include "wine/winbase16.h"
 #include "wine/library.h"
@@ -41,6 +43,8 @@ extern BOOL RELAY_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 extern  int CONSOLE_HandleCtrlC(unsigned);
+
+extern int main_create_flags;
 
 /***********************************************************************
  *           KERNEL process initialisation routine
@@ -105,6 +109,13 @@ static BOOL process_attach(void)
 
     /* finish the process initialisation, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
+
+    if (main_create_flags & CREATE_NEW_CONSOLE)
+    {
+        HMODULE mod = GetModuleHandleA(0);
+        if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+            AllocConsole();
+    }
 
     return TRUE;
 }

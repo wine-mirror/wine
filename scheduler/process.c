@@ -115,9 +115,9 @@ PDB current_process;
 static char main_exe_name[MAX_PATH];
 static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
-static int main_create_flags;
-
 static unsigned int server_startticks;
+
+int main_create_flags = 0;
 
 /* memory/environ.c */
 extern struct _ENVDB *ENV_InitStartupInfo( size_t info_size, char *main_exe_name,
@@ -469,11 +469,7 @@ static void start_process(void)
     entry = (LPTHREAD_START_ROUTINE)((char*)current_process.module +
                          PE_HEADER(current_process.module)->OptionalHeader.AddressOfEntryPoint);
     console_app = (PE_HEADER(current_process.module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
-    if (console_app)
-    {
-        current_process.flags |= PDB32_CONSOLE_PROC;
-        if (main_create_flags & CREATE_NEW_CONSOLE) AllocConsole();
-    }
+    if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
