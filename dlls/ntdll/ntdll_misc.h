@@ -30,6 +30,8 @@ extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
 extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
+extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
+                                                 const LARGE_INTEGER *timeout );
 
 /* module handling */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );

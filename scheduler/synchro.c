@@ -30,7 +30,7 @@
  */
 VOID WINAPI Sleep( DWORD timeout )
 {
-    WaitForMultipleObjectsEx( 0, NULL, FALSE, timeout, FALSE );
+    SleepEx( timeout, FALSE );
 }
 
 /******************************************************************************
@@ -38,9 +38,19 @@ VOID WINAPI Sleep( DWORD timeout )
  */
 DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 {
-    DWORD ret = WaitForMultipleObjectsEx( 0, NULL, FALSE, timeout, alertable );
-    if (ret != WAIT_IO_COMPLETION) ret = 0;
-    return ret;
+    NTSTATUS status;
+
+    if (timeout == INFINITE) status = NtDelayExecution( alertable, NULL );
+    else
+    {
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (ULONGLONG)10000;
+        time.QuadPart = -time.QuadPart;
+        status = NtDelayExecution( alertable, &time );
+    }
+    if (status != STATUS_USER_APC) status = STATUS_SUCCESS;
+    return status;
 }
 
 

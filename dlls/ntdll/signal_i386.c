@@ -53,7 +53,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "wine/library.h"
-
+#include "ntdll_misc.h"
 #include "selectors.h"
 
 /***********************************************************************
@@ -1111,7 +1111,7 @@ static HANDLER_DEF(usr1_handler)
     init_handler( HANDLER_CONTEXT );
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     timeout.QuadPart = 0;
-    NtWaitForMultipleObjects( 0, NULL, FALSE, FALSE, &timeout );
+    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout );
 }
 
 

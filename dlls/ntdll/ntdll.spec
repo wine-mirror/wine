@@ -95,7 +95,7 @@
 @ stdcall NtCreateTimer(ptr long ptr long)
 @ stub NtCreateToken
 @ stdcall NtCurrentTeb()
-@ stub NtDelayExecution
+@ stdcall NtDelayExecution(long ptr)
 @ stub NtDeleteFile
 @ stdcall NtDeleteKey(long)
 @ stdcall NtDeleteValueKey(long ptr)
@@ -627,7 +627,7 @@
 @ stub ZwCreateThread
 @ stdcall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 @ stub ZwCreateToken
-@ stub ZwDelayExecution
+@ stdcall ZwDelayExecution(long ptr) NtDelayExecution
 @ stub ZwDeleteFile
 @ stdcall ZwDeleteKey(long) NtDeleteKey
 @ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey

@@ -1059,7 +1059,7 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
             /* Unix lock conflict, sleep a bit and retry */
             time.QuadPart = 100 * (ULONGLONG)10000;
             time.QuadPart = -time.QuadPart;
-            NtWaitForMultipleObjects( 0, NULL, FALSE, FALSE, &time );
+            NtDelayExecution( FALSE, &time );
         }
     }
 }

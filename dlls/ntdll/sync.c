@@ -547,6 +547,39 @@ static void call_apcs( BOOL alertable )
     }
 }
 
+
+/***********************************************************************
+ *              NTDLL_wait_for_multiple_objects
+ *
+ * Implementation of NtWaitForMultipleObjects
+ */
+NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
+                                          const LARGE_INTEGER *timeout )
+{
+    NTSTATUS ret;
+    int cookie;
+
+    if (timeout) flags |= SELECT_TIMEOUT;
+    for (;;)
+    {
+        SERVER_START_REQ( select )
+        {
+            req->flags   = flags;
+            req->cookie  = &cookie;
+            NTDLL_get_server_timeout( &req->timeout, timeout );
+            wine_server_add_data( req, handles, count * sizeof(HANDLE) );
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
+        if (ret != STATUS_USER_APC) break;
+        call_apcs( (flags & SELECT_ALERTABLE) != 0 );
+        if (flags & SELECT_ALERTABLE) break;
+    }
+    return ret;
+}
+
+
 /* wait operations */
 
 /******************************************************************
@@ -554,41 +587,62 @@ static void call_apcs( BOOL alertable )
  */
 NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                           BOOLEAN wait_all, BOOLEAN alertable,
-                                          PLARGE_INTEGER timeout )
+                                          const LARGE_INTEGER *timeout )
 {
-    int ret, cookie;
+    UINT flags = SELECT_INTERRUPTIBLE;
 
-    if (count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
+    if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
 
-    for (;;)
-    {
-        SERVER_START_REQ( select )
-        {
-            req->flags   = SELECT_INTERRUPTIBLE;
-            req->cookie  = &cookie;
-            NTDLL_get_server_timeout( &req->timeout, timeout );
-            wine_server_add_data( req, handles, count * sizeof(HANDLE) );
-
-            if (wait_all) req->flags |= SELECT_ALL;
-            if (alertable) req->flags |= SELECT_ALERTABLE;
-            if (timeout) req->flags |= SELECT_TIMEOUT;
-
-            ret = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
-        if (ret != STATUS_USER_APC) break;
-        call_apcs( alertable );
-        if (alertable) break;
-    }
-    return ret;
+    if (wait_all) flags |= SELECT_ALL;
+    if (alertable) flags |= SELECT_ALERTABLE;
+    return NTDLL_wait_for_multiple_objects( count, handles, flags, timeout );
 }
 
 
 /******************************************************************
  *		NtWaitForSingleObject (NTDLL.@)
  */
-NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, PLARGE_INTEGER timeout )
+NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
     return NtWaitForMultipleObjects( 1, &handle, FALSE, alertable, timeout );
+}
+
+
+/******************************************************************
+ *		NtDelayExecution (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    /* if alertable or async I/O in progress, we need to query the server */
+    if (alertable || NtCurrentTeb()->pending_list)
+    {
+        UINT flags = SELECT_INTERRUPTIBLE;
+        if (alertable) flags |= SELECT_ALERTABLE;
+        return NTDLL_wait_for_multiple_objects( 0, NULL, flags, timeout );
+    }
+
+    if (!timeout)  /* sleep forever */
+    {
+        for (;;) select( 0, NULL, NULL, NULL, NULL );
+    }
+    else
+    {
+        abs_time_t when;
+
+        NTDLL_get_server_timeout( &when, timeout );
+        for (;;)
+        {
+            struct timeval tv;
+            gettimeofday( &tv, 0 );
+            tv.tv_sec = when.sec - tv.tv_sec;
+            if ((tv.tv_usec = when.usec - tv.tv_usec) < 0)
+            {
+                tv.tv_usec += 1000000;
+                tv.tv_sec--;
+            }
+            if (tv.tv_sec < 0) tv.tv_sec = tv.tv_usec = 0;
+            if (select( 0, NULL, NULL, NULL, &tv ) != -1) break;
+        }
+    }
+    return STATUS_SUCCESS;
 }
