@@ -27,6 +27,7 @@ DECLARE_DEBUG_CHANNEL(elfdll)
 
 /*------------------ HACKS -----------------*/
 extern DWORD fixup_imports(WINE_MODREF *wm);
+extern void dump_exports(HMODULE hModule);
 /*---------------- END HACKS ---------------*/
 
 char *extra_ld_library_path = NULL;	/* The extra search-path set in wine.conf */
@@ -254,13 +255,16 @@ static WINE_MODREF *ELFDLL_CreateModref(HMODULE hModule, LPCSTR path)
  */
 static HMODULE16 ELFDLL_CreateNEModule(NE_MODULE *ne_image, DWORD size)
 {
+	NE_MODULE *pModule;
 	HMODULE16 hModule = GLOBAL_CreateBlock(GMEM_MOVEABLE, ne_image, size, 0,
 						FALSE, FALSE, FALSE, NULL);
 	if(!hModule)
 		return (HMODULE16)0;
 
 	FarSetOwner16(hModule, hModule);
-	NE_RegisterModule(ne_image);
+	pModule = (NE_MODULE *)GlobalLock16(hModule);
+	pModule->self = hModule;
+	NE_RegisterModule(pModule);
 	return hModule;
 }
 
@@ -325,6 +329,8 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 		*err = ERROR_OUTOFMEMORY;
 		return NULL;
 	}
+
+	dump_exports(image->pe_module_start);
 
 	*err = 0;
 	return wm;
