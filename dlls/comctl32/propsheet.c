@@ -36,6 +36,8 @@
 /******************************************************************************
  * Data structures
  */
+#include "pshpack2.h"
+
 typedef struct
 {
   WORD dlgVer;
@@ -44,6 +46,18 @@ typedef struct
   DWORD exStyle;
   DWORD style;
 } MyDLGTEMPLATEEX;
+
+typedef struct
+{
+  DWORD helpid;
+  DWORD exStyle;
+  DWORD style;
+  short x;
+  short y;
+  short cy;
+  DWORD id;
+} MyDLGITEMTEMPLATEEX;
+#include "poppack.h"
 
 typedef struct tagPropPageInfo
 {
@@ -1159,6 +1173,129 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
 
   return TRUE;
 }
+/*
+ * Get the size of an in-memory Template
+ *
+ *( Based on the code of PROPSHEET_CollectPageInfo)
+ */
+
+static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
+
+{
+  const WORD*  p = (const WORD *)pTemplate;
+  BOOL  istemplateex = (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF);
+  WORD nrofitems;
+
+  if (istemplateex)
+  {
+    /* DIALOGEX template */
+
+    p++;       /* dlgVer    */
+    p++;       /* signature */
+    p += 2;    /* help ID   */
+    p += 2;    /* ext style */
+    p += 2;    /* style     */
+  }
+  else
+  {
+    /* DIALOG template */
+
+    p += 2;    /* style     */
+    p += 2;    /* ext style */
+  }
+
+  nrofitems =   (WORD)*p; p++;    /* nb items */
+  p++;    /*   x      */
+  p++;    /*   y      */
+  p++;    /*   width  */
+  p++;    /*   height */
+
+  /* menu */
+  switch ((WORD)*p)
+  {
+    case 0x0000:
+      p++;
+      break;
+    case 0xffff:
+      p += 2;
+      break;
+    default:
+      TRACE("menu %s\n",debugstr_w((LPCWSTR)p));
+      p += lstrlenW( (LPCWSTR)p ) + 1;
+      break;
+  }
+
+  /* class */
+  switch ((WORD)*p)
+  {
+    case 0x0000:
+      p++;
+      break;
+    case 0xffff:
+      p += 2;
+      break;
+    default:
+      TRACE("class %s\n",debugstr_w((LPCWSTR)p));
+      p += lstrlenW( (LPCWSTR)p ) + 1;
+      break;
+  }
+
+  /*title */
+  TRACE("title %s\n",debugstr_w((LPCWSTR)p));
+  p += lstrlenW((LPCWSTR)p) + 1;
+
+  /* font, if DS_FONT set */
+  if ((DS_SETFONT & ((istemplateex)?  ((MyDLGTEMPLATEEX*)pTemplate)->style :
+		     pTemplate->style)))
+    {
+      p+=(istemplateex)?3:1;
+      TRACE("font %s\n",debugstr_w((LPCWSTR)p));
+      p += lstrlenW( (LPCWSTR)p ) + 1; /* the font name*/
+    }
+
+  TRACE("%d items\n",nrofitems);
+  while (nrofitems > 0)
+    {
+      p = (WORD*)(((DWORD)p + 3) & ~3); /* DWORD align */
+      
+      p += (istemplateex ? sizeof(MyDLGITEMTEMPLATEEX) : sizeof(DLGITEMTEMPLATE))/sizeof(WORD);
+      
+      switch ((WORD)*p)
+	{
+	case 0x0000:
+	  p++;
+	  break;
+	case 0xffff:
+	  TRACE("class ordinal 0x%08lx\n",*(DWORD*)p);
+	  p += 2;
+	  break;
+	default:
+	  TRACE("class %s\n",debugstr_w((LPCWSTR)p));
+	  p += lstrlenW( (LPCWSTR)p ) + 1;
+	  break;
+	}
+      switch ((WORD)*p)
+	{
+	case 0x0000:
+	  p++;
+	  break;
+	case 0xffff:
+	  TRACE("text ordinal 0x%08lx\n",*(DWORD*)p);
+	  p += 2;
+	  break;
+	default:
+	  TRACE("text %s\n",debugstr_w((LPCWSTR)p));
+	  p += lstrlenW( (LPCWSTR)p ) + 1;
+	  break;
+	}
+      p += *p + 1;    /* Skip extra data */
+      --nrofitems;
+    }
+  
+  TRACE("%p %p size 0x%08x\n",p, (WORD*)pTemplate,sizeof(WORD)*(p - (WORD*)pTemplate));
+  return (p - (WORD*)pTemplate)*sizeof(WORD);
+  
+}
 
 /******************************************************************************
  *            PROPSHEET_CreatePage
@@ -1187,7 +1324,10 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   }
 
   if (ppshpage->dwFlags & PSP_DLGINDIRECT)
-    pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
+    {
+      pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
+      resSize = GetTemplateSize(pTemplate);
+    }
   else
   {
     HRSRC hResource;
@@ -1209,13 +1349,13 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     /*
      * Make a copy of the dialog template to make it writable
      */
-    temp = COMCTL32_Alloc(resSize);
-    if (!temp)
-      return FALSE;
-
-    memcpy(temp, pTemplate, resSize);
-    pTemplate = temp;
   }
+  temp = COMCTL32_Alloc(resSize);
+  if (!temp)
+    return FALSE;
+  
+  memcpy(temp, pTemplate, resSize);
+  pTemplate = temp;
 
   if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
   {
