@@ -32,7 +32,7 @@
 
 /* Keys used for testing */
 #define REG_TEST_KEY        "Software\\Wine\\Test"
-#define REG_CURRENT_VERSION "Software\\Microsoft\\Windows NT\\CurrentVersion"
+#define REG_CURRENT_VERSION "Software\\Microsoft\\Windows\\CurrentVersion"
 
 static HMODULE hshlwapi;
 typedef DWORD (WINAPI *SHCopyKeyA_func)(HKEY,LPCSTR,HKEY,DWORD);
@@ -255,16 +255,16 @@ static void test_SHCopyKey(void)
 	RegCloseKey(hKeySrc);
 	RegCloseKey(hKeyDst);
 
-	/* Check we copied the sub keys, i.e. AeDebug from the default wine registry */
+        /* Check we copied the sub keys, i.e. something that's on every windows system (including Wine) */
 	hKeyDst = NULL;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\AeDebug", &hKeyDst) || !hKeyDst)
+	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\Setup", &hKeyDst) || !hKeyDst)
 	{
 		ok(0, "didn't open copy\n");
 		return;
 	}
 
 	/* And the we copied the values too */
-	ok(!SHQueryValueExA(hKeyDst, "Debugger", NULL, NULL, NULL, NULL), "SHQueryValueExA failed\n");
+	ok(!SHQueryValueExA(hKeyDst, "BootDir", NULL, NULL, NULL, NULL), "SHQueryValueExA failed\n");
 
 	RegCloseKey(hKeyDst);
 }
