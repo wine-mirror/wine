@@ -163,7 +163,6 @@ WINDOWS_INCLUDES = \
 	mssip.h \
 	mswsock.h \
 	nb30.h \
-	netspi.h \
 	npapi.h \
 	nspapi.h \
 	ntddcdrm.h \

@@ -1,5 +1,8 @@
 /*
  * MPR - Network provider services
+ * Warning: this file apparently existed as part of the Win98 DDK.  Some of
+ * the declarations in it conflict with those in the Platform SDK's npapi.h,
+ * therefore this header was made private.  Don't try to include both headers.
  *
  * Copyright (C) 1999 Ulrich Weigand
  *
@@ -21,8 +24,8 @@
 #ifndef _NETSPI_H_
 #define _NETSPI_H_
 
-#include <windef.h>
-#include <winnetwk.h>
+#include "windef.h"
+#include "winnetwk.h"
 
 /*
  * Note: The Unicode variants of all these routines/structures
@@ -148,4 +151,3 @@ LPVOID WINAPI NPSNotifyGetContextA(NOTIFYCALLBACK);
 #define       NPSNotifyGetContext WINELIB_NAME_AW(NPSNotifyGetContext)
 
 #endif /* _NETSPI_H_ */
-
