@@ -301,7 +301,7 @@ import  ntdll.dll
 283 stub GetCommConfig
 284 stdcall GetCommMask(long ptr) GetCommMask
 285 stdcall GetCommModemStatus(long ptr) GetCommModemStatus
-286 stub GetCommProperties
+286 stdcall GetCommProperties(long ptr) GetCommProperties
 287 stdcall GetCommState(long ptr) GetCommState
 288 stdcall GetCommTimeouts(long ptr) GetCommTimeouts
 289 stdcall GetCommandLineA() GetCommandLineA
@@ -586,7 +586,6 @@ import  ntdll.dll
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsoleA
 569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
 570 stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInputW 
-570 stub ReadConsoleInputW
 571 stub ReadConsoleOutputA
 572 stub ReadConsoleOutputAttribute
 573 stdcall ReadConsoleOutputCharacterA(long ptr long long ptr) ReadConsoleOutputCharacterA
@@ -686,7 +685,7 @@ import  ntdll.dll
 667 stub SetTapeParameters
 668 stub SetTapePosition
 669 stdcall SetThreadAffinityMask(long long) SetThreadAffinityMask
-670 stub SetThreadContext
+670 stdcall SetThreadContext(long ptr) SetThreadContext
 671 stdcall SetThreadLocale(long) SetThreadLocale
 672 stdcall SetThreadPriority(long long) SetThreadPriority
 673 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation

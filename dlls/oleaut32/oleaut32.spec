@@ -127,7 +127,7 @@ type win32
 138 stdcall VarUI1FromBool(long ptr) VarUI1FromBool
 146 stub DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr long long long) VariantChangeTypeEx
-148 stub SafeArrayPtrOfIndex
+148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr) SafeArrayPtrOfIndex
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
 150 stdcall SysAllocStringByteLen(ptr long) SysAllocStringByteLen
 160 stub CreateTypeLib
@@ -157,7 +157,7 @@ type win32
 200 stub GetErrorInfo
 201 stub SetErrorInfo
 202 stub CreateErrorInfo
-205 stub VarI2FromI1
+205 stdcall VarI2FromI1(long ptr) VarI2FromI1
 206 stdcall VarI2FromUI2(long ptr) VarI2FromUI2
 207 stdcall VarI2FromUI4(long ptr) VarI2FromUI4
 208 stub VarI2FromDec
@@ -276,8 +276,8 @@ type win32
 398 stub UserMSG_free_inst
 399 stub UserMSG_free_local
 410 stub DllCanUnloadNow
-411 stub SafeArrayCreateVector
-412 stub SafeArrayCopyData
+411 stdcall SafeArrayCreateVector(long long long) SafeArrayCreateVector
+412 stdcall SafeArrayCopyData(ptr ptr) SafeArrayCopyData
 413 stub VectorFromBstr
 414 stub BstrFromVector
 415 stub OleIconToCursor

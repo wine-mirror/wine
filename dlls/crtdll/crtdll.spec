@@ -470,7 +470,7 @@ init    CRTDLL_Init
 465 cdecl strcoll(str str) strcoll
 466 cdecl strcpy(ptr str) strcpy
 467 cdecl strcspn(str str) strcspn
-468 stub strerror
+468 cdecl strerror(long) strerror
 469 cdecl strftime(ptr long str ptr) strftime
 470 cdecl strlen(str) strlen
 471 cdecl strncat(str str long) strncat

@@ -8,10 +8,10 @@ type	win32
   4 stub    AVIFileAddRef
   5 stub    AVIFileCreateStream
   6 stdcall AVIFileCreateStreamA(ptr ptr ptr) AVIFileCreateStreamA
-  7 stub    AVIFileCreateStreamW
+  7 stdcall AVIFileCreateStreamW(ptr ptr ptr) AVIFileCreateStreamW
   8 stub    AVIFileEndRecord
   9 stdcall AVIFileExit() AVIFileExit
- 10 stub    AVIFileGetStream
+ 10 stdcall AVIFileGetStream(ptr ptr long long) AVIFileGetStream
  11 stdcall AVIFileInfo (ptr ptr long) AVIFileInfoA # A in both Win95 and NT
  12 stdcall AVIFileInfoA(ptr ptr long) AVIFileInfoA
  13 stdcall AVIFileInfoW(ptr ptr long) AVIFileInfoW

@@ -78,7 +78,7 @@ init	Shell32LibMain
   70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
   72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexA # ASCII!!!
-  73 stub SHShellFolderView_Message
+  73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message 
   74 stub SHCreateStdEnumFmtEtc
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo

@@ -148,7 +148,7 @@ init	COMCTL32_LibMain
 358 stdcall StrChrW(wstr long) COMCTL32_StrChrW
 359 stdcall StrRChrW(wstr wstr long) COMCTL32_StrRChrW
 360 stdcall StrCmpNW(wstr wstr long) COMCTL32_StrCmpNW
-361 stub StrCmpNIW
+361 stdcall StrCmpNIW(wstr wstr long) COMCTL32_StrCmpNIW
 362 stdcall StrStrW(wstr wstr) COMCTL32_StrStrW
 363 stub StrStrIW
 364 stdcall StrSpnW(wstr wstr) COMCTL32_StrSpnW

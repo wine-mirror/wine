@@ -169,7 +169,7 @@ init	MAIN_UserInit
 165 stdcall DrawTextExA(long str long ptr long ptr) DrawTextExA
 166 stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextExW
 167 stdcall DrawTextW(long wstr long ptr long) DrawTextW
-168 stub EditWndProc
+168 stdcall EditWndProc(long long long long) EditWndProc
 169 stdcall EmptyClipboard() EmptyClipboard
 170 stdcall EnableMenuItem(long long long) EnableMenuItem
 171 stdcall EnableScrollBar(long long long) EnableScrollBar
@@ -388,7 +388,7 @@ init	MAIN_UserInit
 384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyEx32A
 385 stdcall MapVirtualKeyW(long long) MapVirtualKeyA
 386 stdcall MapWindowPoints(long long ptr long) MapWindowPoints
-387 stdcall MenuItemFromPoint() MenuItemFromPoint
+387 stdcall MenuItemFromPoint(long long long long) MenuItemFromPoint
 388 stub MenuWindowProcA
 389 stub MenuWindowProcW
 390 stdcall MessageBeep(long) MessageBeep
@@ -555,7 +555,7 @@ init	MAIN_UserInit
 551 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
 552 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
 553 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
-554 stub TranslateCharsetInfo
+554 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharsetInfo
 555 stdcall TranslateMDISysAccel(long ptr) TranslateMDISysAccel
 556 stdcall TranslateMessage(ptr) TranslateMessage
 557 stdcall UnhookWindowsHook(long ptr) UnhookWindowsHook

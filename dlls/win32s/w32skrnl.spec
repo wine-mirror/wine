@@ -17,7 +17,7 @@ type	win32
 14 stdcall _kGetWin32sDirectory@0() GetWin32sDirectory
 15 stub _sprintf
 16 stub _KIsDBCSLeadByte@4
-17 stub W32S_BackTo32
+17 forward W32S_BackTo32 KERNEL32.W32S_BackTo32
 18 stub _KGetDbgFlags32
 19 stub SelToFlat
 20 stub _FreeKernelHeap@4

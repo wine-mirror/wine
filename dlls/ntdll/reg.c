@@ -33,7 +33,7 @@ NTSTATUS WINAPI NtCreateKey(
  * NtDeleteKey [NTDLL]
  * ZwDeleteKey
  */
-NTSTATUS NtDeleteKey(HANDLE KeyHandle)
+NTSTATUS WINAPI NtDeleteKey(HANDLE KeyHandle)
 {
 	FIXME("(0x%08x) stub!\n",
 	KeyHandle);
@@ -91,7 +91,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
  *  NtFlushKey	[NTDLL] 
  *  ZwFlushKey
  */
-NTSTATUS NtFlushKey(HANDLE KeyHandle)
+NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
 {
 	FIXME("(0x%08x) stub!\n",
 	KeyHandle);

@@ -58,7 +58,7 @@ init	WINSPOOL_EntryPoint
 153 stub DeviceMode
 154 stub DocumentEvent
 155 stdcall DocumentPropertiesA(long long ptr ptr ptr long) DocumentPropertiesA
-156 stub DocumentPropertiesW
+156 stdcall DocumentPropertiesW(long long ptr ptr ptr long) DocumentPropertiesW
 157 stub EXTDEVICEMODE
 158 stub EndDocPrinter
 159 stub EndPagePrinter

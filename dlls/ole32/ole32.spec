@@ -82,7 +82,7 @@ type	win32
  79 stub IsValidPtrIn
  80 stub IsValidPtrOut
  81 stub MkParseDisplayName
- 82 stub MonikerCommonPrefixWith
+ 82 stdcall MonikerCommonPrefixWith(ptr ptr ptr) MonikerCommonPrefixWith
  83 stub MonikerRelativePathTo
  84 stdcall OleBuildVersion() OleBuildVersion
  85 stub OleConvertIStorageToOLESTREAM

@@ -215,19 +215,19 @@ type win32
 212	stub	PathIsPrefixW
 213	stdcall	PathIsRelativeA (ptr) PathIsRelativeA
 214	stdcall	PathIsRelativeW (ptr) PathIsRelativeW
-215	stub	PathIsRootA
-216	stub	PathIsRootW
+215	stdcall	PathIsRootA(str) PathIsRootA
+216	stdcall	PathIsRootW(wstr) PathIsRootW
 217	stub	PathIsSameRootA
 218	stub	PathIsSameRootW
 219	stub	PathIsSystemFolderA
 220	stub	PathIsSystemFolderW
-221	stub	PathIsUNCA
+221	stdcall	PathIsUNCA (ptr) PathIsUNCA
 222	stub	PathIsUNCServerA
 223	stub	PathIsUNCServerShareA
 224	stub	PathIsUNCServerShareW
 225	stub	PathIsUNCServerW
 226	stdcall	PathIsUNCW (ptr) PathIsUNCW
-227	stdcall	PathIsURLA (ptr) PathIsUNCA
+227	stub	PathIsURLA
 228	stub	PathIsURLW
 229	stub	PathMakePrettyA
 230	stub	PathMakePrettyW
@@ -245,8 +245,8 @@ type win32
 242	stub	PathRemoveArgsW
 243	stdcall	PathRemoveBackslashA (ptr) PathRemoveBackslashA
 244	stdcall	PathRemoveBackslashW (ptr) PathRemoveBackslashW
-245	stub	PathRemoveBlanksA
-246	stub	PathRemoveBlanksW
+245	stdcall	PathRemoveBlanksA(str) PathRemoveBlanksA
+246	stdcall	PathRemoveBlanksW(wstr) PathRemoveBlanksW
 247	stub	PathRemoveExtensionA
 248	stub	PathRemoveExtensionW
 249	stdcall	PathRemoveFileSpecA (str) PathRemoveFileSpecA
@@ -336,8 +336,8 @@ type win32
 333	stub	StrCpyW
 334	stub	StrDupA
 335	stub	StrDupW
-336	stub	StrFormatByteSizeA
-337	stub	StrFormatByteSizeW
+336	stdcall	StrFormatByteSizeA(long str long) StrFormatByteSizeA
+337	stdcall	StrFormatByteSizeW(long wstr long) StrFormatByteSizeW
 338	stub	StrFromTimeIntervalA
 339	stub	StrFromTimeIntervalW
 340	stub	StrIsIntlEqualA

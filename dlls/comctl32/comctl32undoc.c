@@ -1997,7 +1997,7 @@ INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
- * StrCmpNA [COMCTL32.352]
+ * StrCmpNIA [COMCTL32.353]
  *
  */
 INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
@@ -2010,6 +2010,15 @@ INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
  */
 INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
   return CRTDLL_wcsncmp(lpStr1, lpStr2, nChar);
+}
+
+/**************************************************************************
+ * StrCmpNIW [COMCTL32.361]
+ *
+ */
+INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
+  FIXME("(%s, %s, %i): stub\n", debugstr_w(lpStr1), debugstr_w(lpStr2), nChar);
+  return 0;
 }
 
 /**************************************************************************
