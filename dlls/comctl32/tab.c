@@ -1656,6 +1656,14 @@ static void TAB_Refresh (HWND hwnd, HDC hdc)
   SelectObject (hdc, hOldFont);
 }
 
+static DWORD
+TAB_GetRowCount (HWND hwnd )
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  
+  return infoPtr->uNumRows;
+}
+
 static LRESULT
 TAB_SetRedraw (HWND hwnd, WPARAM wParam)
 {
@@ -2361,8 +2369,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return 0;
       
     case TCM_GETROWCOUNT:
-      FIXME("Unimplemented msg TCM_GETROWCOUNT\n");
-      return 0;
+      return TAB_GetRowCount(hwnd);
 
     case TCM_GETUNICODEFORMAT:
       FIXME("Unimplemented msg TCM_GETUNICODEFORMAT\n");
