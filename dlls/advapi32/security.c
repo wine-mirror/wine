@@ -610,9 +610,6 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
  * LookupPrivilegeValueW			[ADVAPI32.@]
  * Retrieves LUID used on a system to represent the privilege name.
  *
- * NOTES
- *   lpLuid should be PLUID
- *
  * PARAMS
  *   lpSystemName [I] Address of string specifying the system
  *   lpName       [I] Address of string specifying the privilege
@@ -621,10 +618,12 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
  * RETURNS STD
  */
 BOOL WINAPI
-LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
+LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
 {
     FIXME("(%s,%s,%p): stub\n",debugstr_w(lpSystemName),
         debugstr_w(lpName), lpLuid);
+    lpLuid->LowPart = 0x12345678;
+    lpLuid->HighPart = 0x87654321;
     return TRUE;
 }
 
@@ -632,7 +631,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
  * LookupPrivilegeValueA			[ADVAPI32.@]
  */
 BOOL WINAPI
-LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
+LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
 {
     LPWSTR lpSystemNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpSystemName);
     LPWSTR lpNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpName);
