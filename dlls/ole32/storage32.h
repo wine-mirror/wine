@@ -42,6 +42,7 @@ static const ULONG OFFSET_SMALLBLOCKSIZEBITS = 0x00000020;
 static const ULONG OFFSET_BBDEPOTCOUNT	     = 0x0000002C;
 static const ULONG OFFSET_ROOTSTARTBLOCK     = 0x00000030;
 static const ULONG OFFSET_SBDEPOTSTART	     = 0x0000003C;
+static const ULONG OFFSET_SBDEPOTCOUNT       = 0x00000040;
 static const ULONG OFFSET_EXTBBDEPOTSTART    = 0x00000044;
 static const ULONG OFFSET_EXTBBDEPOTCOUNT    = 0x00000048;
 static const ULONG OFFSET_BBDEPOTSTART	     = 0x0000004C;
@@ -442,14 +443,15 @@ void StorageImpl_FreeBigBlock(
             StorageImpl* This,
 	    ULONG blockIndex);
 
-ULONG StorageImpl_GetNextBlockInChain(
+HRESULT StorageImpl_GetNextBlockInChain(
             StorageImpl* This,
-	    ULONG blockIndex);
+	    ULONG blockIndex,
+	    ULONG* nextBlockIndex);
 
 void StorageImpl_SetNextBlockInChain(
             StorageImpl* This,
 	    ULONG blockIndex,
-      ULONG nextBlock);
+	    ULONG nextBlock);
 
 HRESULT StorageImpl_LoadFileHeader(
 	    StorageImpl* This);
@@ -843,9 +845,10 @@ void SmallBlockChainStream_Destroy(
 ULONG SmallBlockChainStream_GetHeadOfChain(
 	       SmallBlockChainStream* This);
 
-ULONG SmallBlockChainStream_GetNextBlockInChain(
+HRESULT SmallBlockChainStream_GetNextBlockInChain(
 	       SmallBlockChainStream* This,
-	       ULONG                  blockIndex);
+	       ULONG                  blockIndex,
+	       ULONG*                 nextBlockIndex);
 
 void SmallBlockChainStream_SetNextBlockInChain(
          SmallBlockChainStream* This,
@@ -885,6 +888,3 @@ ULONG SmallBlockChainStream_GetCount(
 
 
 #endif /* __STORAGE32_H__ */
-
-
-
