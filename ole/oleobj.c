@@ -17,11 +17,6 @@
 #include "debug.h"
 
 
-#define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
-#define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
-#define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
-
-
 /**************************************************************************
  *  IOleAdviseHolder Implementation
  */
