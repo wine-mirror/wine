@@ -1,11 +1,6 @@
 /*
  * Interface to the ICMP functions.
  *
- * This header is not part of the standard headers, it is usually
- * delivered separately and this is why it is not directly in 'include'.
- *
- * Depends on ipexport.h (there is no include directive in the original)
- *
  * Copyright (C) 1999 Francois Gouget
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +21,6 @@
 #ifndef __WINE_ICMPAPI_H
 #define __WINE_ICMPAPI_H
 
-#include "wine/ipexport.h"
 #include "windef.h"
 
 HANDLE WINAPI IcmpCreateFile(

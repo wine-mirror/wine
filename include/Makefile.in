@@ -40,10 +40,12 @@ WINDOWS_INCLUDES = \
 	fci.h \
 	fdi.h \
 	guiddef.h \
+	icmpapi.h \
 	imagehlp.h \
 	imm.h \
 	initguid.h \
 	instance.h \
+	ipexport.h \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
@@ -184,8 +186,6 @@ MSVCRT_INCLUDES = \
 WINE_INCLUDES = \
 	debug.h \
 	exception.h \
-	icmpapi.h \
-	ipexport.h \
 	library.h \
 	obj_base.h \
 	obj_cache.h \

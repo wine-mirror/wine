@@ -68,8 +68,8 @@
 #endif
 
 #include "winerror.h"
-#include "wine/ipexport.h"
-#include "wine/icmpapi.h"
+#include "ipexport.h"
+#include "icmpapi.h"
 #include "wine/debug.h"
 
 /* Set up endiannes macros for the ip and ip_icmp BSD headers */
