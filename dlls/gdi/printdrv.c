@@ -436,19 +436,27 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     int fd=-1;
     char psCmd[1024];
     char *psCmdP = psCmd;
+    HKEY hkey;
 
     /* TTD convert the 'output device' into a spool file name */
 
     if (pszOutput == NULL || *pszOutput == '\0')
       return -1;
 
+    psCmd[0] = 0;
     if (!strncmp("LPR:",pszOutput,4))
-      sprintf(psCmd,"|lpr -P%s",pszOutput+4);
+    {
+        if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
+	{
+	    DWORD type, count = sizeof(psCmd);
+	    RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
+	    RegCloseKey(hkey);
+	}
+        if(psCmd[0] == 0)
+            sprintf(psCmd,"|lpr -P%s",pszOutput+4);
+    }
     else
     {
-	HKEY hkey;
-	/* default value */
-	psCmd[0] = 0;
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
 	{
 	    DWORD type, count = sizeof(psCmd);
@@ -465,15 +473,18 @@ static int CreateSpoolFile(LPCSTR pszOutput)
         while (*psCmdP && isspace(*psCmdP))
         {
             psCmdP++;
-        };
+        }
         if (!*psCmdP)
             return -1;
     }
+    TRACE("command: '%s'\n", psCmdP);
     if (*psCmdP == '|')
     {
         int fds[2];
-        if (pipe(fds))
+        if (pipe(fds)) {
+	    ERR("pipe() failed!\n"); 
             return -1;
+	}
         if (fork() == 0)
         {
             psCmdP++;
