@@ -461,6 +461,14 @@ DECL_HANDLER(set_socket_event)
     sock_reselect( sock );
     if (sock->mask)
         sock->state |= WS_FD_NONBLOCKING;
+
+    /* if a network event is pending, signal the event object 
+       it is possible that FD_CONNECT or FD_ACCEPT network events has happened
+       before a WSAEventSelect() was done on it. 
+       (when dealing with Asynchronous socket)  */
+    if (sock->pmask & sock->mask)
+        set_event(sock->event);
+    
     if (oevent)
     {
     	if ((oevent != sock->event) && (omask & WS_FD_SERVEVENT))
