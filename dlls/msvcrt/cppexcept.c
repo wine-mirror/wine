@@ -379,7 +379,7 @@ DEFINE_REGS_ENTRYPOINT( __CxxFrameHandler, MSVCRT__CxxFrameHandler, 16, 0 );
 /*********************************************************************
  *		_CxxThrowException (MSVCRT.@)
  */
-void _CxxThrowException( void *object, const cxx_exception_type *type )
+void _CxxThrowException( exception *object, const cxx_exception_type *type )
 {
     DWORD args[3];
 

@@ -2,7 +2,7 @@
  * msvcrt.dll C++ objects
  *
  * Copyright 2000 Jon Griffiths
- * Copyright 2003 Alexandre Julliard
+ * Copyright 2003, 2004 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,29 +37,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/*
- * exception object: base for exception, bad_cast, bad_typeid, __non_rtti_object
- */
-typedef struct
-{
-  void* pfn_vector_dtor;
-  void* pfn_what;
-} exception_vtable;
-
-typedef struct __exception
-{
-  const exception_vtable *vtable;
-  char *name;    /* Name of this exception, always a new copy for each object */
-  int   do_free; /* Whether to free 'name' in our dtor */
-} exception;
-
 typedef exception bad_cast;
 typedef exception bad_typeid;
 typedef exception __non_rtti_object;
 
 typedef struct _rtti_base_descriptor
 {
-  type_info *type_descriptor;
+  const type_info *type_descriptor;
   int num_base_classes;
   this_ptr_offsets offsets;    /* offsets for computing the this pointer */
   unsigned int attributes;
@@ -83,26 +67,41 @@ typedef struct _rtti_object_locator
   unsigned int signature;
   int base_class_offset;
   unsigned int flags;
-  type_info *type_descriptor;
+  const type_info *type_descriptor;
   const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
 
 
 #ifdef __i386__  /* thiscall functions are i386-specific */
 
+#define THISCALL(func) __thiscall_ ## func
+#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
 #define DEFINE_THISCALL_WRAPPER(func) \
-    extern void __thiscall_ ## func(); \
+    extern void THISCALL(func)(); \
     __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
                       "popl %eax\n\t" \
                       "pushl %ecx\n\t" \
                       "pushl %eax\n\t" \
                       "jmp " __ASM_NAME(#func) )
+#else /* __i386__ */
 
-const exception_vtable MSVCRT_exception_vtable;
-const exception_vtable MSVCRT_bad_typeid_vtable;
-const exception_vtable MSVCRT_bad_cast_vtable;
-const exception_vtable MSVCRT___non_rtti_object_vtable;
-static const exception_vtable MSVCRT_type_info_vtable;
+#define THISCALL(func) func
+#define THISCALL_NAME(func) __ASM_NAME(#func)
+#define DEFINE_THISCALL_WRAPPER(func) /* nothing */
+
+#endif /* __i386__ */
+
+extern const vtable_ptr MSVCRT_exception_vtable;
+extern const vtable_ptr MSVCRT_bad_typeid_vtable;
+extern const vtable_ptr MSVCRT_bad_cast_vtable;
+extern const vtable_ptr MSVCRT___non_rtti_object_vtable;
+extern const vtable_ptr MSVCRT_type_info_vtable;
+
+static inline const rtti_object_locator *get_obj_locator( void *cppobj )
+{
+    const vtable_ptr *vtable = get_vtable( cppobj );
+    return (const rtti_object_locator *)vtable[-1];
+}
 
 static void dump_obj_locator( const rtti_object_locator *ptr )
 {
@@ -126,6 +125,14 @@ static void dump_obj_locator( const rtti_object_locator *ptr )
                h->base_classes->bases[i]->type_descriptor,
                dbgstr_type_info(h->base_classes->bases[i]->type_descriptor) );
     }
+}
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 /* Internal common ctor for exception */
@@ -620,41 +627,36 @@ void * __stdcall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int fl
 
 /* vtables */
 
-const exception_vtable MSVCRT_exception_vtable =
-{
-    __thiscall_MSVCRT_exception_vector_dtor,
-    __thiscall_MSVCRT_what_exception
-};
+#define __ASM_VTABLE(name,funcs) \
+    __asm__(".align 4\n" \
+            "\t.long " __ASM_NAME(#name "_rtti") "\n" \
+            "\t.globl " __ASM_NAME("MSVCRT_" #name "_vtable") "\n" \
+            __ASM_NAME("MSVCRT_" #name "_vtable") ":\n" \
+            "\t.long " THISCALL_NAME(MSVCRT_ ## name ## _vector_dtor) "\n" \
+            funcs);
 
-const exception_vtable MSVCRT_bad_typeid_vtable =
-{
-    __thiscall_MSVCRT_bad_typeid_vector_dtor,
-    __thiscall_MSVCRT_what_exception
-};
+#define __ASM_EXCEPTION_VTABLE(name) \
+    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCRT_what_exception) );
 
-const exception_vtable MSVCRT_bad_cast_vtable =
-{
-    __thiscall_MSVCRT_bad_cast_vector_dtor,
-    __thiscall_MSVCRT_what_exception
-};
+#ifndef __GNUC__
+void __asm_dummy_vtables(void) {
+#endif
 
-const exception_vtable MSVCRT___non_rtti_object_vtable =
-{
-    __thiscall_MSVCRT___non_rtti_object_vector_dtor,
-    __thiscall_MSVCRT_what_exception
-};
+__ASM_VTABLE(type_info,"");
+__ASM_EXCEPTION_VTABLE(exception);
+__ASM_EXCEPTION_VTABLE(bad_typeid);
+__ASM_EXCEPTION_VTABLE(bad_cast);
+__ASM_EXCEPTION_VTABLE(__non_rtti_object);
 
-static const exception_vtable MSVCRT_type_info_vtable =
-{
-    __thiscall_MSVCRT_type_info_vector_dtor,
-    NULL
-};
+#ifndef __GNUC__
+}
+#endif
 
 /* Static RTTI for exported objects */
 
-static type_info exception_type_info =
+static const type_info exception_type_info =
 {
-  (void*)&MSVCRT_type_info_vtable,
+  &MSVCRT_type_info_vtable,
   NULL,
   ".?AVexception@@"
 };
@@ -684,7 +686,7 @@ static const rtti_object_hierarchy exception_type_hierarchy =
   &exception_rtti_base_array
 };
 
-static const rtti_object_locator exception_rtti =
+const rtti_object_locator exception_rtti =
 {
   0,
   0,
@@ -699,12 +701,12 @@ static const cxx_type_info exception_cxx_type_info =
   &exception_type_info,
   { 0, -1, 0 },
   sizeof(exception),
-  (cxx_copy_ctor)__thiscall_MSVCRT_exception_copy_ctor
+  (cxx_copy_ctor)THISCALL(MSVCRT_exception_copy_ctor)
 };
 
-static type_info bad_typeid_type_info =
+static const type_info bad_typeid_type_info =
 {
-  (void*)&MSVCRT_type_info_vtable,
+  &MSVCRT_type_info_vtable,
   NULL,
   ".?AVbad_typeid@@"
 };
@@ -734,7 +736,7 @@ static const rtti_object_hierarchy bad_typeid_type_hierarchy =
   &bad_typeid_rtti_base_array
 };
 
-static const rtti_object_locator bad_typeid_rtti =
+const rtti_object_locator bad_typeid_rtti =
 {
   0,
   0,
@@ -749,12 +751,12 @@ static const cxx_type_info bad_typeid_cxx_type_info =
   &bad_typeid_type_info,
   { 0, -1, 0 },
   sizeof(exception),
-  (cxx_copy_ctor)__thiscall_MSVCRT_bad_typeid_copy_ctor
+  (cxx_copy_ctor)THISCALL(MSVCRT_bad_typeid_copy_ctor)
 };
 
-static type_info bad_cast_type_info =
+static const type_info bad_cast_type_info =
 {
-  (void*)&MSVCRT_type_info_vtable,
+  &MSVCRT_type_info_vtable,
   NULL,
   ".?AVbad_cast@@"
 };
@@ -784,7 +786,7 @@ static const rtti_object_hierarchy bad_cast_type_hierarchy =
   &bad_cast_rtti_base_array
 };
 
-static const rtti_object_locator bad_cast_rtti =
+const rtti_object_locator bad_cast_rtti =
 {
   0,
   0,
@@ -799,12 +801,12 @@ static const cxx_type_info bad_cast_cxx_type_info =
   &bad_cast_type_info,
   { 0, -1, 0 },
   sizeof(exception),
-  (cxx_copy_ctor)__thiscall_MSVCRT_bad_cast_copy_ctor
+  (cxx_copy_ctor)THISCALL(MSVCRT_bad_cast_copy_ctor)
 };
 
-static type_info __non_rtti_object_type_info =
+static const type_info __non_rtti_object_type_info =
 {
-  (void*)&MSVCRT_type_info_vtable,
+  &MSVCRT_type_info_vtable,
   NULL,
   ".?AV__non_rtti_object@@"
 };
@@ -834,7 +836,7 @@ static const rtti_object_hierarchy __non_rtti_object_type_hierarchy =
   &__non_rtti_object_rtti_base_array
 };
 
-static const rtti_object_locator __non_rtti_object_rtti =
+const rtti_object_locator __non_rtti_object_rtti =
 {
   0,
   0,
@@ -849,12 +851,12 @@ static const cxx_type_info __non_rtti_object_cxx_type_info =
   &__non_rtti_object_type_info,
   { 0, -1, 0 },
   sizeof(exception),
-  (cxx_copy_ctor)__thiscall_MSVCRT___non_rtti_object_copy_ctor
+  (cxx_copy_ctor)THISCALL(MSVCRT___non_rtti_object_copy_ctor)
 };
 
-static type_info type_info_type_info =
+static const type_info type_info_type_info =
 {
-  (void*)&MSVCRT_type_info_vtable,
+  &MSVCRT_type_info_vtable,
   NULL,
   ".?AVtype_info@@"
 };
@@ -884,7 +886,7 @@ static const rtti_object_hierarchy type_info_type_hierarchy =
   &type_info_rtti_base_array
 };
 
-static const rtti_object_locator type_info_rtti =
+const rtti_object_locator type_info_rtti =
 {
   0,
   0,
@@ -909,7 +911,7 @@ static const cxx_type_info_table bad_cast_type_info_table =
 static const cxx_exception_type bad_cast_exception_type =
 {
   0,
-  (void*)__thiscall_MSVCRT_bad_cast_dtor,
+  (void*)THISCALL(MSVCRT_bad_cast_dtor),
   NULL,
   &bad_cast_type_info_table
 };
@@ -927,7 +929,7 @@ static const cxx_type_info_table bad_typeid_type_info_table =
 static const cxx_exception_type bad_typeid_exception_type =
 {
   0,
-  (void*)__thiscall_MSVCRT_bad_typeid_dtor,
+  (void*)THISCALL(MSVCRT_bad_typeid_dtor),
   NULL,
   &bad_cast_type_info_table
 };
@@ -935,12 +937,10 @@ static const cxx_exception_type bad_typeid_exception_type =
 static const cxx_exception_type __non_rtti_object_exception_type =
 {
   0,
-  (void*)__thiscall_MSVCRT___non_rtti_object_dtor,
+  (void*)THISCALL(MSVCRT___non_rtti_object_dtor),
   NULL,
   &bad_typeid_type_info_table
 };
-
-#endif  /* __i386__ */
 
 
 /******************************************************************
@@ -1025,52 +1025,6 @@ void MSVCRT_unexpected(void)
     MSVCRT_terminate();
 }
 
-/* Get type info from an object (internal) */
-static const rtti_object_locator* RTTI_GetObjectLocator(type_info *cppobj)
-{
-  const rtti_object_locator *obj_locator = NULL;
-
-#ifdef __i386__
-  const exception_vtable* vtable = (const exception_vtable*)cppobj->vtable;
-
-  /* Perhaps this is one of classes we export? */
-  if (vtable == &MSVCRT_exception_vtable)
-  {
-    TRACE("returning exception_rtti\n");
-    return &exception_rtti;
-  }
-  else if (vtable == &MSVCRT_bad_typeid_vtable)
-  {
-    TRACE("returning bad_typeid_rtti\n");
-    return &bad_typeid_rtti;
-  }
-  else if (vtable == &MSVCRT_bad_cast_vtable)
-  {
-    TRACE("returning bad_cast_rtti\n");
-    return &bad_cast_rtti;
-  }
-  else if (vtable == &MSVCRT___non_rtti_object_vtable)
-  {
-    TRACE("returning __non_rtti_object_rtti\n");
-    return &__non_rtti_object_rtti;
-  }
-  else if (vtable == &MSVCRT_type_info_vtable)
-  {
-    TRACE("returning type_info_rtti\n");
-    return &type_info_rtti;
-  }
-#endif
-
-  if (!IsBadReadPtr(cppobj, sizeof(void *)) &&
-      !IsBadReadPtr(cppobj->vtable - 1,sizeof(void *)) &&
-      !IsBadReadPtr((void*)cppobj->vtable[-1], sizeof(rtti_object_locator)))
-  {
-    obj_locator = (rtti_object_locator *)cppobj->vtable[-1];
-    TRACE("returning type_info from vtable (%p)\n", obj_locator);
-  }
-
-  return obj_locator;
-}
 
 /******************************************************************
  *		__RTtypeid (MSVCRT.@)
@@ -1090,39 +1044,32 @@ static const rtti_object_locator* RTTI_GetObjectLocator(type_info *cppobj)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-type_info* MSVCRT___RTtypeid(type_info *cppobj)
+const type_info* MSVCRT___RTtypeid(void *cppobj)
 {
-  const rtti_object_locator *obj_locator = RTTI_GetObjectLocator(cppobj);
+    const type_info *ret;
 
-#ifdef __i386__
-  if (!obj_locator)
-  {
-    static const char* szNullPtr = "Attempted a typeid of NULL pointer!";
-    static const char* szBadPtr = "Bad read pointer - no RTTI data!";
-    const cxx_exception_type *e_type;
-    exception e;
-
-    /* Throw a bad_typeid or __non_rtti_object exception */
     if (!cppobj)
     {
-      EXCEPTION_ctor(&e, &szNullPtr);
-      e.vtable = &MSVCRT_bad_typeid_vtable;
-      e_type = &bad_typeid_exception_type;
-    }
-    else
-    {
-      EXCEPTION_ctor(&e, &szBadPtr);
-      e.vtable = &MSVCRT___non_rtti_object_vtable;
-      e_type = &__non_rtti_object_exception_type;
+        bad_typeid e;
+        MSVCRT_bad_typeid_ctor( &e, "Attempted a typeid of NULL pointer!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
     }
 
-    _CxxThrowException(&e, e_type);
-    DebugBreak();
-  }
-  return obj_locator->type_descriptor;
-#else
-  return NULL;
-#endif
+    __TRY
+    {
+        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
+        ret = obj_locator->type_descriptor;
+    }
+    __EXCEPT(page_fault)
+    {
+        __non_rtti_object e;
+        MSVCRT___non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
+    }
+    __ENDTRY
+    return ret;
 }
 
 /******************************************************************
@@ -1147,70 +1094,67 @@ type_info* MSVCRT___RTtypeid(type_info *cppobj)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
+void* MSVCRT___RTDynamicCast(void *cppobj, int unknown,
                              type_info *src, type_info *dst,
                              int do_throw)
 {
-  const rtti_object_locator *obj_locator;
+    void *ret;
 
-  /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
-  TRACE("obj: %p unknown: %d src: %p %s dst: %p %s do_throw: %d)\n",
-        cppobj, unknown, src, dbgstr_type_info(src), dst, dbgstr_type_info(dst), do_throw);
-  if (!cppobj)
-    return 0;
-  obj_locator= RTTI_GetObjectLocator(cppobj);
-  if (unknown)
-    FIXME("Unknown parameter is non-zero: please report\n");
+    if (!cppobj) return NULL;
 
-  if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
+    TRACE("obj: %p unknown: %d src: %p %s dst: %p %s do_throw: %d)\n",
+          cppobj, unknown, src, dbgstr_type_info(src), dst, dbgstr_type_info(dst), do_throw);
 
-  /* To cast an object at runtime:
-   * 1.Find out the true type of the object from the typeinfo at vtable[-1]
-   * 2.Search for the destination type in the class hierarchy
-   * 3.If destination type is found, return base object address + dest offset
-   *   Otherwise, fail the cast
-   */
-  if (obj_locator)
-  {
-    int count = 0;
-    const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
-    const rtti_base_descriptor **base_desc = obj_bases->base_classes->bases;
-    int src_offset = obj_locator->base_class_offset, dst_offset = -1;
+    if (unknown) FIXME("Unknown parameter is non-zero: please report\n");
 
-    while (count < obj_bases->array_len)
+    /* To cast an object at runtime:
+     * 1.Find out the true type of the object from the typeinfo at vtable[-1]
+     * 2.Search for the destination type in the class hierarchy
+     * 3.If destination type is found, return base object address + dest offset
+     *   Otherwise, fail the cast
+     */
+    __TRY
     {
-      const type_info *typ = (*base_desc)->type_descriptor;
+        int i;
+        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
+        const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
+        const rtti_base_descriptor **base_desc = obj_bases->base_classes->bases;
 
-      if (!strcmp(typ->mangled, dst->mangled))
-      {
-          /* compute the correct this pointer for that base class */
-          void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
-          return get_this_pointer( &(*base_desc)->offsets, this_ptr );
-      }
-      base_desc++;
-      count++;
+        if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
+
+        ret = NULL;
+        for (i = 0; i < obj_bases->array_len; i++)
+        {
+            const type_info *typ = base_desc[i]->type_descriptor;
+
+            if (!strcmp(typ->mangled, dst->mangled))
+            {
+                /* compute the correct this pointer for that base class */
+                void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
+                ret = get_this_pointer( &base_desc[i]->offsets, this_ptr );
+                break;
+            }
+        }
+        /* VC++ sets do_throw to 1 when the result of a dynamic_cast is assigned
+         * to a reference, since references cannot be NULL.
+         */
+        if (!ret && do_throw)
+        {
+            const char *msg = "Bad dynamic_cast!";
+            bad_cast e;
+            MSVCRT_bad_cast_ctor( &e, &msg );
+            _CxxThrowException( &e, &bad_cast_exception_type );
+        }
     }
-    if (dst_offset >= 0)
-      return (void*)((unsigned long)cppobj - src_offset + dst_offset);
-  }
-
-#ifdef __i386__
-  /* VC++ sets do_throw to 1 when the result of a dynamic_cast is assigned
-   * to a reference, since references cannot be NULL.
-   */
-  if (do_throw)
-  {
-    static const char* exception_text = "Bad dynamic_cast!";
-    exception e;
-
-    /* Throw a bad_cast exception */
-    EXCEPTION_ctor(&e, &exception_text);
-    e.vtable = &MSVCRT_bad_cast_vtable;
-    _CxxThrowException(&e, &bad_cast_exception_type);
-    DebugBreak();
-  }
-#endif
-  return NULL;
+    __EXCEPT(page_fault)
+    {
+        __non_rtti_object e;
+        MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
+    }
+    __ENDTRY
+    return ret;
 }
 
 
@@ -1230,15 +1174,24 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-void* MSVCRT___RTCastToVoid(type_info *cppobj)
+void* MSVCRT___RTCastToVoid(void *cppobj)
 {
-  const rtti_object_locator *obj_locator = RTTI_GetObjectLocator(cppobj);
+    void *ret;
 
-  /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
-  TRACE("(%p)\n", cppobj);
+    if (!cppobj) return NULL;
 
-  /* Casts to void* simply cast to the base object */
-  if (obj_locator)
-    return (void*)((unsigned long)cppobj - obj_locator->base_class_offset);
-  return NULL;
+    __TRY
+    {
+        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
+        ret = (char *)cppobj - obj_locator->base_class_offset;
+    }
+    __EXCEPT(page_fault)
+    {
+        __non_rtti_object e;
+        MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
+    }
+    __ENDTRY
+    return ret;
 }

@@ -29,10 +29,18 @@ typedef void (*vtable_ptr)();
 /* type_info object, see cpp.c for inplementation */
 typedef struct __type_info
 {
-  vtable_ptr *vtable;
-  char *name;        /* Unmangled name, allocated lazily */
-  char  mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
+  const vtable_ptr *vtable;
+  char              *name;        /* Unmangled name, allocated lazily */
+  char               mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
 } type_info;
+
+/* exception object */
+typedef struct __exception
+{
+  const vtable_ptr *vtable;
+  char             *name;    /* Name of this exception, always a new copy for each object */
+  int               do_free; /* Whether to free 'name' in our dtor */
+} exception;
 
 /* the exception frame used by CxxFrameHandler */
 typedef struct __cxx_exception_frame
@@ -96,7 +104,7 @@ typedef struct
 typedef struct __cxx_type_info
 {
     UINT             flags;        /* flags (see CLASS_* flags below) */
-    type_info       *type_info;    /* C++ type info */
+    const type_info *type_info;    /* C++ type info */
     this_ptr_offsets offsets;      /* offsets for computing the this pointer */
     size_t           size;         /* object size */
     cxx_copy_ctor    copy_ctor;    /* copy constructor */
@@ -125,7 +133,13 @@ typedef struct __cxx_exception_type
     const cxx_type_info_table *type_info_table;  /* list of types for this exception object */
 } cxx_exception_type;
 
-void _CxxThrowException(void*,const cxx_exception_type*);
+void _CxxThrowException(exception*,const cxx_exception_type*);
+
+/* get the vtable pointer for a C++ object */
+static inline const vtable_ptr *get_vtable( void *obj )
+{
+    return *(const vtable_ptr **)obj;
+}
 
 static inline const char *dbgstr_type_info( const type_info *info )
 {
