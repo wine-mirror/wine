@@ -189,7 +189,7 @@ static BOOL WkstaEnumAdaptersCallback(UCHAR totalLANAs, UCHAR lanaIndex,
                 transport_addr = (LPWSTR)(*(enumData->pbuf) +
                  totalLANAs * (sizeof(WKSTA_TRANSPORT_INFO_0) +
                  MAX_TRANSPORT_NAME * sizeof(WCHAR)) +
-                 (enumData->n_read + MAX_TRANSPORT_ADDR) * sizeof(WCHAR));
+                 enumData->n_read * MAX_TRANSPORT_ADDR * sizeof(WCHAR));
 
                 ifRow.dwIndex = data->ifIndex;
                 GetIfEntry(&ifRow);
