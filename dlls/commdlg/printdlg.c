@@ -1638,7 +1638,7 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
          HANDLE hPrinter;
          WCHAR  PrinterName[256];
 
-         GetDlgItemTextW(hDlg, PrinterComboID, PrinterName, 255);
+         if (!GetDlgItemTextW(hDlg, PrinterComboID, PrinterName, 255)) break;
          if (!OpenPrinterW(PrinterName, &hPrinter, NULL)) {
 	     FIXME(" Call to OpenPrinter did not succeed!\n");
 	     break;
