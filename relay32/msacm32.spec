@@ -45,4 +45,4 @@ init MSACM32_LibMain
 41 stdcall acmStreamPrepareHeader(long ptr long) acmStreamPrepareHeader32
 42 stdcall acmStreamReset(long long) acmStreamReset32
 43 stdcall acmStreamSize(long long ptr long) acmStreamSize32
-43 stdcall acmStreamUnprepareHeader(long ptr long) acmStreamUnprepareHeader32
+44 stdcall acmStreamUnprepareHeader(long ptr long) acmStreamUnprepareHeader32
