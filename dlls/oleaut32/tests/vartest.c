@@ -81,6 +81,112 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
     return *str1 - *str2;
 }
 
+/* return the string text of a given variant type */
+char *vtstr(int x)
+{	
+	switch(x) {
+	case 0:
+		return "VT_EMPTY";
+	case 1:
+		return "VT_NULL";
+	case 2:
+		return "VT_I2";
+	case 3:
+		return "VT_I4";
+	case 4:
+		return "VT_R4";
+	case 5:
+		return "VT_R8";
+	case 6:
+		return "VT_CY";
+	case 7:
+		return "VT_DATE";
+	case 8:
+		return "VT_BSTR";
+	case 9:
+		return "VT_DISPATCH";
+	case 10:
+		return "VT_ERROR";
+	case 11:
+		return "VT_BOOL";
+	case 12:
+		return "VT_VARIANT";
+	case 13:
+		return "VT_UNKNOWN";
+	case 14:
+		return "VT_DECIMAL";
+	case 15:
+		return "notdefined";
+	case 16:
+		return "VT_I1";
+	case 17:
+		return "VT_UI1";
+	case 18:
+		return "VT_UI2";
+	case 19:
+		return "VT_UI4";
+	case 20:
+		return "VT_I8";
+	case 21:
+		return "VT_UI8";
+	case 22:
+		return "VT_INT";
+	case 23:
+		return "VT_UINT";
+	case 24:
+		return "VT_VOID";
+	case 25:
+		return "VT_HRESULT";
+	case 26:
+		return "VT_PTR";
+	case 27:
+		return "VT_SAFEARRAY";
+	case 28:
+		return "VT_CARRAY";
+	case 29:
+		return "VT_USERDEFINED";
+	case 30:
+		return "VT_LPSTR";
+	case 31:
+		return "VT_LPWSTR";
+	case 36:
+		return "VT_RECORD";
+	case 64:
+		return "VT_FILETIME";
+	case 65:
+		return "VT_BLOB";
+	case 66:
+		return "VT_STREAM";
+	case 67:
+		return "VT_STORAGE";
+	case 68:
+		return "VT_STREAMED_OBJECT";
+	case 69:
+		return "VT_STORED_OBJECT";
+	case 70:
+		return "VT_BLOB_OBJECT";
+	case 71:
+		return "VT_CF";
+	case 72:
+		return "VT_CLSID";
+	case 0xFFF:
+		return "VT_BSTR_BLOB/VT_ILLEGALMASKED/VT_TYPEMASK";
+	case 0x1000:
+		return "VT_VECTOR";
+	case 0x2000:
+		return "VT_ARRAY";
+	case 0x4000:
+		return "VT_BYREF";
+	case 0x8000:
+		return "VT_BYREF";
+	case 0xFFFF:
+		return "VT_ILLEGAL";
+
+	default:
+		return "defineme";
+	}  
+}
+
 static void test_VariantInit(void)
 {
   VARIANTARG v1, v2;
@@ -679,11 +785,8 @@ static void test_VarParseNumFromStr(void)
   CONVERT("0100", NUMPRS_HEX_OCT);
   EXPECT(1,NUMPRS_HEX_OCT,0,4,0,2);
   EXPECTRGB(0,1);
-  todo_wine
-  {
-    EXPECTRGB(1,0);
-    EXPECTRGB(2,0);
-  }
+  EXPECTRGB(1,0);
+  EXPECTRGB(2,0);
   EXPECTRGB(3,FAILDIG);
 
   /** NUMPRS_PARENS **/
@@ -1610,10 +1713,15 @@ static void test_VarNot(void)
     pdec->u1.s1.Mid32 = 0;
     pdec->u1.s1.Lo32 = 1;
     VARNOT(DECIMAL,*pdec,I4,0);
-    todo_wine {
+
     pcy->int64 = 10000;
     VARNOT(CY,*pcy,I4,-2);
-    }
+
+    pcy->int64 = 0;
+    VARNOT(CY,*pcy,I4,-1);
+
+    pcy->int64 = -1;
+    VARNOT(CY,*pcy,I4,-1);
 }
 static HRESULT (WINAPI *pVarSub)(LPVARIANT,LPVARIANT,LPVARIANT);
 
@@ -1634,6 +1742,459 @@ static void test_VarSub(void)
     ok(V_VT(&vc) == VT_R8,"VarSub of VT_DATE - VT_DATE returned vt 0x%x\n", V_VT(&vc));
     ok(((V_R8(&vc) >  99999.9) && (V_R8(&vc) < 100000.1)),"VarSub of VT_DATE - VT_DATE  should return 100000.0, but returned %g\n", V_R8(&vc));
     /* fprintf(stderr,"VarSub of 10000-20000 returned: %g\n", V_R8(&vc)); */
+}
+
+#define VARMOD(vt1,vt2,val1,val2,rvt,rval,hexpected) V_VT(&v1) = VT_##vt1; V_##vt1(&v1) = val1; \
+	V_VT(&v2) = VT_##vt2; V_##vt2(&v2) = val2;                  \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarMod(&v1,&v2,&vDst);			\
+        ok(hres == hexpected && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
+	   "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n", hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
+	   hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_##rvt(&vDst))
+
+#define VARMOD2(vt1,vt2,val1,val2,rvt,rval,hexpected) V_VT(&v1) = VT_##vt1; V_I4(&v1) = val1; \
+	V_VT(&v2) = VT_##vt2; V_I4(&v2) = val2;                                \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarMod(&v1,&v2,&vDst);                     \
+        ok(hres == hexpected && V_VT(&vDst) == VT_##rvt && V_I4(&vDst) == (rval), \
+	   "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n", hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
+	   hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_I4(&vDst))
+
+static HRESULT (WINAPI *pVarMod)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static void test_VarMod(void)
+{
+  VARIANT v1, v2, vDst;
+  HRESULT hres;
+  HRESULT hexpected = 0;
+  static const WCHAR szNum0[] = {'1','2','5','\0'};
+  static const WCHAR szNum1[] = {'1','0','\0'};
+  int l, r;
+  BOOL lFound, rFound;
+  BOOL lValid, rValid;
+  BSTR strNum0, strNum1;
+
+  CHECKPTR(VarMod);
+
+  VARMOD(I1,BOOL,100,10,I4,0,S_OK);
+  VARMOD(I1,I1,100,10,I4,0,S_OK);
+  VARMOD(I1,UI1,100,10,I4,0,S_OK);
+  VARMOD(I1,I2,100,10,I4,0,S_OK);
+  VARMOD(I1,UI2,100,10,I4,0,S_OK);
+  VARMOD(I1,I4,100,10,I4,0,S_OK);
+  VARMOD(I1,UI4,100,10,I4,0,S_OK);
+  VARMOD(I1,R4,100,10,I4,0,S_OK);
+  VARMOD(I1,R8,100,10,I4,0,S_OK);
+  VARMOD(I1,I8,100,10,I8,0,S_OK);
+
+  VARMOD(UI1,BOOL,100,10,I2,0,S_OK);
+  VARMOD(UI1,I1,100,10,I4,0,S_OK);
+  VARMOD(UI1,UI1,100,10,UI1,0,S_OK);
+  VARMOD(UI1,I2,100,10,I2,0,S_OK);
+  VARMOD(UI1,UI2,100,10,I4,0,S_OK);
+  VARMOD(UI1,I4,100,10,I4,0,S_OK);
+  VARMOD(UI1,UI4,100,10,I4,0,S_OK);
+  VARMOD(UI1,R4,100,10,I4,0,S_OK);
+  VARMOD(UI1,R8,100,10,I4,0,S_OK);
+  VARMOD(UI1,I8,100,10,I8,0,S_OK);
+
+  VARMOD(I2,BOOL,100,10,I2,0,S_OK);
+  VARMOD(I2,I1,100,10,I4,0,S_OK);
+  VARMOD(I2,UI1,100,10,I2,0,S_OK);
+  VARMOD(I2,I2,100,10,I2,0,S_OK);
+  VARMOD(I2,UI2,100,10,I4,0,S_OK);
+  VARMOD(I2,I4,100,10,I4,0,S_OK);
+  VARMOD(I2,UI4,100,10,I4,0,S_OK);
+  VARMOD(I2,R4,100,10,I4,0,S_OK);
+  VARMOD(I2,R8,100,10,I4,0,S_OK);
+  VARMOD(I2,I8,100,10,I8,0,S_OK);
+
+  VARMOD(I4,BOOL,100,10,I4,0,S_OK);
+  VARMOD(I4,I1,100,10,I4,0,S_OK);
+  VARMOD(I4,UI1,100,10,I4,0,S_OK);
+  VARMOD(I4,I2,100,10,I4,0,S_OK);
+  VARMOD(I4,UI2,100,10,I4,0,S_OK);
+  VARMOD(I4,I4,100,10,I4,0,S_OK);
+  VARMOD(I4,UI4,100,10,I4,0,S_OK);
+  VARMOD(I4,R4,100,10,I4,0,S_OK);
+  VARMOD(I4,R8,100,10,I4,0,S_OK);
+  VARMOD(I4,I8,100,10,I8,0,S_OK);
+
+  VARMOD(UI4,BOOL,100,10,I4,0,S_OK);
+  VARMOD(UI4,I1,100,10,I4,0,S_OK);
+  VARMOD(UI4,UI1,100,10,I4,0,S_OK);
+  VARMOD(UI4,I2,100,10,I4,0,S_OK);
+  VARMOD(UI4,UI2,100,10,I4,0,S_OK);
+  VARMOD(UI4,I4,100,10,I4,0,S_OK);
+  VARMOD(UI4,UI4,100,10,I4,0,S_OK);
+  VARMOD(UI4,R4,100,10,I4,0,S_OK);
+  VARMOD(UI4,R8,100,10,I4,0,S_OK);
+  VARMOD(UI4,I8,100,10,I8,0,S_OK);
+
+  VARMOD(R4,BOOL,100,10,I4,0,S_OK);
+  VARMOD(R4,I1,100,10,I4,0,S_OK);
+  VARMOD(R4,UI1,100,10,I4,0,S_OK);
+  VARMOD(R4,I2,100,10,I4,0,S_OK);
+  VARMOD(R4,UI2,100,10,I4,0,S_OK);
+  VARMOD(R4,I4,100,10,I4,0,S_OK);
+  VARMOD(R4,UI4,100,10,I4,0,S_OK);
+  VARMOD(R4,R4,100,10,I4,0,S_OK);
+  VARMOD(R4,R8,100,10,I4,0,S_OK);
+  VARMOD(R4,I8,100,10,I8,0,S_OK);
+
+  VARMOD(R8,BOOL,100,10,I4,0,S_OK);
+  VARMOD(R8,I1,100,10,I4,0,S_OK);
+  VARMOD(R8,UI1,100,10,I4,0,S_OK);
+  VARMOD(R8,I2,100,10,I4,0,S_OK);
+  VARMOD(R8,UI2,100,10,I4,0,S_OK);
+  VARMOD(R8,I4,100,10,I4,0,S_OK);
+  VARMOD(R8,UI4,100,10,I4,0,S_OK);
+  VARMOD(R8,R4,100,10,I4,0,S_OK);
+  VARMOD(R8,R8,100,10,I4,0,S_OK);
+  VARMOD(R8,I8,100,10,I8,0,S_OK);
+
+  VARMOD(I8,BOOL,100,10,I8,0,S_OK);
+  VARMOD(I8,I1,100,10,I8,0,S_OK);
+  VARMOD(I8,UI1,100,10,I8,0,S_OK);
+  VARMOD(I8,I2,100,10,I8,0,S_OK);
+  VARMOD(I8,UI2,100,10,I8,0,S_OK);
+  VARMOD(I8,I4,100,10,I8,0,S_OK);
+  VARMOD(I8,UI4,100,10,I8,0,S_OK);
+  VARMOD(I8,R4,100,10,I8,0,S_OK);
+  VARMOD(I8,R8,100,10,I8,0,S_OK);
+  VARMOD(I8,I8,100,10,I8,0,S_OK);
+
+  VARMOD(INT,INT,100,10,I4,0,S_OK);
+  VARMOD(INT,UINT,100,10,I4,0,S_OK);
+
+  VARMOD(BOOL,BOOL,100,10,I2,0,S_OK);
+  VARMOD(BOOL,I1,100,10,I4,0,S_OK);
+  VARMOD(BOOL,UI1,100,10,I2,0,S_OK);
+  VARMOD(BOOL,I2,100,10,I2,0,S_OK);
+  VARMOD(BOOL,UI2,100,10,I4,0,S_OK);
+  VARMOD(BOOL,I4,100,10,I4,0,S_OK);
+  VARMOD(BOOL,UI4,100,10,I4,0,S_OK);
+  VARMOD(BOOL,R4,100,10,I4,0,S_OK);
+  VARMOD(BOOL,R8,100,10,I4,0,S_OK);
+  VARMOD(BOOL,I8,100,10,I8,0,S_OK);
+  VARMOD(BOOL,DATE,100,10,I4,0,S_OK);
+  
+  VARMOD(DATE,BOOL,100,10,I4,0,S_OK);
+  VARMOD(DATE,I1,100,10,I4,0,S_OK);
+  VARMOD(DATE,UI1,100,10,I4,0,S_OK);
+  VARMOD(DATE,I2,100,10,I4,0,S_OK);
+  VARMOD(DATE,UI2,100,10,I4,0,S_OK);
+  VARMOD(DATE,I4,100,10,I4,0,S_OK);
+  VARMOD(DATE,UI4,100,10,I4,0,S_OK);
+  VARMOD(DATE,R4,100,10,I4,0,S_OK);
+  VARMOD(DATE,R8,100,10,I4,0,S_OK);
+  VARMOD(DATE,I8,100,10,I8,0,S_OK);
+  VARMOD(DATE,DATE,100,10,I4,0,S_OK);
+
+  strNum0 = SysAllocString(szNum0);
+  strNum1 = SysAllocString(szNum1);
+  VARMOD(BSTR,BSTR,strNum0,strNum1,I4,5,S_OK);
+  VARMOD(BSTR,I1,strNum0,10,I4,5,S_OK);
+  VARMOD(BSTR,I2,strNum0,10,I4,5,S_OK);
+  VARMOD(BSTR,I4,strNum0,10,I4,5,S_OK);
+  VARMOD(BSTR,R4,strNum0,10,I4,5,S_OK);
+  VARMOD(BSTR,R8,strNum0,10,I4,5,S_OK);
+  VARMOD(BSTR,I8,strNum0,10,I8,5,S_OK);
+  VARMOD(I4,BSTR,125,strNum1,I4,5,S_OK);
+
+  /* test all combinations of types */
+  for(l = 0; l < VT_BSTR_BLOB; l++)
+  {
+    for(r = 0; r < VT_BSTR_BLOB; r++)
+    {
+      if(l == VT_BSTR) continue;
+      if(l == VT_DISPATCH) continue;
+      if(r == VT_BSTR) continue;
+      if(r == VT_DISPATCH) continue;
+      
+      lFound = TRUE;
+      lValid = TRUE;
+      switch(l)
+	{
+	case VT_EMPTY:
+	case VT_NULL:
+	case VT_I1:
+	case VT_UI1:
+	case VT_I2:
+	case VT_UI2:
+	case VT_I4:
+	case VT_I8:
+	case VT_UI4:
+	case VT_UI8:
+	case VT_INT:
+	case VT_UINT:
+	case VT_R4:
+	case VT_R8:
+	case VT_BOOL:
+	case VT_DATE:
+	case VT_CY:
+	  hexpected = S_OK;
+	  break;
+	case VT_ERROR:
+	case VT_VARIANT:
+	case VT_UNKNOWN:
+	case VT_DECIMAL:
+	case VT_RECORD:
+	  lValid = FALSE;
+	  break;
+	default:
+	  lFound = FALSE;
+	  hexpected = DISP_E_BADVARTYPE;
+	  break;
+	}
+
+      rFound = TRUE;
+      rValid = TRUE;
+      switch(r)
+	{
+	case VT_EMPTY:
+	case VT_NULL:
+	case VT_I1:
+	case VT_UI1:
+	case VT_I2:
+	case VT_UI2:
+	case VT_I4:
+	case VT_I8:
+	case VT_UI4:
+	case VT_UI8:
+	case VT_INT:
+	case VT_UINT:
+	case VT_R4:
+	case VT_R8:
+	case VT_BOOL:
+	case VT_DATE:
+	case VT_CY:
+	  hexpected = S_OK;
+	  break;
+	case VT_ERROR:
+	case VT_VARIANT:
+	case VT_UNKNOWN:
+	case VT_DECIMAL:
+	case VT_RECORD:
+	  rValid = FALSE;
+	  break;
+	default:
+	  rFound = FALSE;
+	  break;
+	}
+
+      if(((l == VT_I8) && (r == VT_INT)) || ((l == VT_INT) && (r == VT_I8)))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_EMPTY) && (r == VT_NULL))
+      {
+	hexpected = S_OK;
+      } else if((l == VT_NULL) && (r == VT_EMPTY))
+      {
+	hexpected = S_OK;
+      } else if((l == VT_EMPTY) && (r == VT_CY))
+      {
+	hexpected = S_OK;
+      } else if((l == VT_EMPTY) && (r == VT_RECORD))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((r == VT_EMPTY) && lFound && lValid)
+      {
+	hexpected = DISP_E_DIVBYZERO;
+      } else if((l == VT_ERROR) || ((r == VT_ERROR) && lFound && lValid))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_NULL) && (r == VT_NULL))
+      {
+	hexpected = S_OK;
+      } else if((l == VT_VARIANT) || ((r == VT_VARIANT) && lFound && lValid))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_NULL) && (r == VT_RECORD))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_NULL) && (r == VT_DECIMAL))
+      {
+	hexpected = E_INVALIDARG;
+      } else if((l == VT_UNKNOWN) || ((r == VT_UNKNOWN) && lFound && lValid))
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_NULL) && rFound)
+      {
+	hexpected = S_OK;
+      } else if((l == VT_DECIMAL) || ((r == VT_DECIMAL) && lFound && lValid))
+      {
+	hexpected = E_INVALIDARG;
+      } else if(l == VT_RECORD)
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((r == VT_RECORD) && lValid && lFound)
+      {
+	hexpected = DISP_E_TYPEMISMATCH;
+      } else if((l == VT_EMPTY) && (r == VT_EMPTY))
+      {
+	hexpected = DISP_E_DIVBYZERO;
+      } else if((l == VT_CY) && !rFound)
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if(lFound && !rFound)
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if(!lFound && rFound)
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if((r == VT_NULL) && lFound && lValid)
+      {
+	hexpected = S_OK;
+      } else if((l == VT_NULL) || (r == VT_NULL))
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if((l == VT_VARIANT) || (r == VT_VARIANT))
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if(lFound && !rFound)
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      } else if(!lFound && !rFound)
+      {
+	hexpected = DISP_E_BADVARTYPE;
+      }
+      
+      V_VT(&v1) = l;
+      V_VT(&v2) = r;
+      
+      if(l == VT_CY)
+	V_CY(&v1).int64 = 1000000;
+      else if(l == VT_R4)
+	V_R4(&v1) = 100;
+      else if(l == VT_R8)
+	V_R8(&v1) = 100;
+      else if(l == VT_UI8)
+	V_UI8(&v1) = 100;
+      else if(l == VT_DATE)
+	V_DATE(&v1) = 1000;
+      else
+	V_I4(&v1) = 10000;
+
+      if(r == VT_CY)
+	V_CY(&v2).int64 = 10000;
+      else if(r == VT_R4)
+	V_R4(&v2) = 100;
+      else if(r == VT_R8)
+	V_R8(&v2) = 100;
+      else if(r == VT_UI8)
+	V_UI8(&v2) = 100;
+      else if(r == VT_DATE)
+	V_DATE(&v2) = 1000;
+      else
+	V_I4(&v2) = 10000;
+
+      hres = pVarMod(&v1,&v2,&vDst);
+      ok(hres == hexpected,
+	 "VarMod: expected 0x%lx, got 0x%lX for l type of %d, r type of %d,\n", hexpected, hres, l, r);
+    }
+  }
+
+
+  /****************************/
+  /* test some bad parameters */
+  VARMOD(I4,I4,-1,-1,I4,0,S_OK);
+
+  /* test modulus with zero */
+  VARMOD2(I4,I4,100,0,EMPTY,0,DISP_E_DIVBYZERO);
+
+  VARMOD(I4,I4,0,10,I4,0,S_OK); /* test 0 mod 10 */
+
+  /* right parameter is type empty */
+  VARMOD2(I4,EMPTY,100,10,EMPTY,0,DISP_E_DIVBYZERO);
+
+  /* left parameter is type empty */
+  VARMOD2(EMPTY,I4,100,10,I4,0,S_OK);
+
+  /* mod with a null left value */
+  VARMOD2(NULL,I4,125,10,NULL,0,S_OK);
+
+  /* mod with a null right value */
+  VARMOD2(I4,NULL,100,10,NULL,0,S_OK);
+
+  /* void left value */
+  VARMOD2(VOID,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+
+  /* void right value */
+  VARMOD2(I4,VOID,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+
+  /* null left value, void right value */
+  VARMOD2(NULL,VOID,100,10,EMPTY, 0, DISP_E_BADVARTYPE);
+
+  /* void left value, null right value */
+  VARMOD2(VOID,NULL,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+
+  /* some currencies */
+  V_VT(&v1) = VT_CY;
+  V_VT(&v2) = VT_CY;
+  V_CY(&v1).int64 = 100000;
+  V_CY(&v2).int64 = 100000;
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
+
+  V_VT(&v1) = VT_I4;
+  V_VT(&v2) = VT_CY;
+  V_I4(&v1) = 100;
+  V_CY(&v2).int64 = 100000;
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
+
+  VARMOD2(UINT,I4,100,10,I4,0,S_OK);
+
+  /* test that an error results in the type of the result changing but not its value */
+  V_VT(&v1) = VT_UNKNOWN;
+  V_VT(&v2) = VT_EMPTY;
+  V_I4(&v1) = 100;
+  V_CY(&v2).int64 = 100000;
+  V_VT(&vDst) = VT_I4;
+  V_I4(&vDst) = 1231;
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == DISP_E_TYPEMISMATCH && V_VT(&vDst) == VT_EMPTY && V_I4(&vDst) == 1231,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", DISP_E_TYPEMISMATCH, VT_EMPTY, 1231, hres, V_VT(&vDst), V_I4(&vDst));
+  
+
+  /* test some invalid types */
+  /*TODO: not testing VT_DISPATCH */
+  VARMOD2(I8,INT,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  VARMOD2(ERROR,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  VARMOD2(VARIANT,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  VARMOD2(UNKNOWN,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  VARMOD2(DECIMAL,I4,100,10,EMPTY,0,E_INVALIDARG);
+  VARMOD2(VOID,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(HRESULT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(PTR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(SAFEARRAY,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(CARRAY,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(USERDEFINED,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(LPSTR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(LPWSTR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(RECORD,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  VARMOD2(FILETIME,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(BLOB,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(STREAM,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(STORAGE,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(STREAMED_OBJECT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(STORED_OBJECT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(BLOB_OBJECT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(CF,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(CLSID,CLSID,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(VECTOR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(ARRAY,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+  VARMOD2(BYREF,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
+
+  /* test some more invalid types */
+  V_VT(&v1) = 456;
+  V_VT(&v2) = 234;
+  V_I4(&v1) = 100;
+  V_I4(&v2)=  10;
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == DISP_E_BADVARTYPE && V_VT(&vDst) == VT_EMPTY && V_I4(&vDst) == 0,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", DISP_E_BADVARTYPE, VT_EMPTY, 0, hres, V_VT(&vDst), V_I4(&vDst));
 }
 
 static HRESULT (WINAPI *pVarFix)(LPVARIANT,LPVARIANT);
@@ -2008,6 +2569,7 @@ START_TEST(vartest)
   test_VarAbs();
   test_VarNot();
   test_VarSub();
+  test_VarMod();
   test_VarFix();
   test_VarInt();
   test_VarNeg();
