@@ -413,6 +413,31 @@ static void USER_DoShutdown(void)
 }
  
 /***********************************************************************
+ *		USER_StartRebootProcess (Internal)
+ */
+static BOOL USER_StartRebootProcess(void)
+{
+    WCHAR winebootW[] = { 'w','i','n','e','b','o','o','t',0 };
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    BOOL r;
+
+    memset( &si, 0, sizeof si );
+    si.cb = sizeof si;
+
+    r = CreateProcessW( NULL, winebootW, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+    if (r)
+    {
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+    else
+        MESSAGE("wine: Failed to start wineboot\n");
+
+    return r;
+}
+
+/***********************************************************************
  *		ExitWindowsEx (USER32.@)
  */
 BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
@@ -446,7 +471,10 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
 
     /* USER_DoShutdown will kill all processes except the current process */
     USER_DoShutdown();
- 
+
+    if (flags & EWX_REBOOT)
+        USER_StartRebootProcess();
+
     if (result) ExitKernel16();
     return TRUE;
 }
