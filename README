@@ -158,9 +158,9 @@ CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/dev.html for more information.
 
 If you add something, or fix a bug, please send a patch ('diff -u'
-format preferred) to julliard@lrc.epfl.ch for inclusion in the next
+format preferred) to julliard@winehq.com for inclusion in the next
 release.
 
 --
 Alexandre Julliard
-julliard@lrc.epfl.ch
+julliard@winehq.com

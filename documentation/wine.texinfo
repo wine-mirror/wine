@@ -340,7 +340,7 @@ These persons also hold the copyright on Wine.
 
 The overall coordination is done by @*
 Alexandre Julliard @*
-@email{julliard@@lrc.epfl.ch}
+@email{julliard@@winehq.com}
 
 
 
@@ -1658,7 +1658,7 @@ Collect some of these changes, and create a patch. @xref{Creating
 patches}, for details.
 
 @item
-Mail the patch to Alexandre Julliard, @email{julliard@@lrc.epfl.ch}.
+Mail the patch to Alexandre Julliard, @email{julliard@@winehq.com}.
 
 @item
 Wait for the patch to appear in the official distribution.
@@ -1731,7 +1731,7 @@ Collect some of these changes, and create a patch. @xref{Creating
 patches}, for details.
 
 @item
-Mail the patch to Alexandre Julliard, @email{julliard@@lrc.epfl.ch}.
+Mail the patch to Alexandre Julliard, @email{julliard@@winehq.com}.
 
 @item
 Wait for the patch to appear in the official distribution.
