@@ -414,18 +414,6 @@ BOOL CopyKeyName(HWND hWnd, LPTSTR keyName)
     return result;
 }
 
-BOOL RefreshView(HWND hWnd)
-{
-    /* TODO:*/
-    MessageBeep(-1);
-    MessageBeep(MB_ICONASTERISK);
-    MessageBeep(MB_ICONEXCLAMATION);
-    MessageBeep(MB_ICONHAND);
-    MessageBeep(MB_ICONQUESTION);
-    MessageBeep(MB_OK);
-    return TRUE;
-}
-
 /*******************************************************************************
  *
  *  FUNCTION: _CmdWndProc(HWND, unsigned, WORD, LONG)
@@ -521,7 +509,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DestroyWindow(hWnd);
         break;
     case ID_VIEW_REFRESH:
-        RefreshView(hWnd);
+        RefreshTreeView(g_pChildWnd->hTreeWnd);
+        /*RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL); */
         break;
    /*case ID_OPTIONS_TOOLBAR:*/
    /*	toggle_child(hWnd, LOWORD(wParam), hToolBar);*/

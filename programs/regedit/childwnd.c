@@ -100,6 +100,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DestroyWindow(hWnd);
         break;
     case ID_VIEW_REFRESH:
+        WINE_TRACE("Is this ever called or is it just dead code?\n");
         /* TODO */
         break;
     case ID_SWITCH_PANELS:

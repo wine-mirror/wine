@@ -28,8 +28,11 @@
 #include <tchar.h>
 #include <process.h>
 #include <stdio.h>
+#include <wine/debug.h>
 
 #include "main.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 /* Global variables and constants  */
 /* Image_Open, Image_Closed, and Image_Root - integer variables for indexes of the images.  */
@@ -109,10 +112,17 @@ BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
     return TreeView_DeleteItem(hwndTV, hItem);
 }
 
+/* Add an entry to the tree. Only give hKey for root nodes (HKEY_ constants) */
 static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HKEY hKey, DWORD dwChildren)
 {
     TVITEM tvi;
     TVINSERTSTRUCT tvins;
+
+    if (hKey) {
+        if (RegQueryInfoKey(hKey, 0, 0, 0, &dwChildren, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+            dwChildren = 0;
+        }
+    }
 
     tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     tvi.pszText = label;
@@ -127,6 +137,133 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HK
     return TreeView_InsertItem(hwndTV, &tvins);
 }
 
+BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
+{
+    HKEY hRoot, hKey, hSubKey;
+    HTREEITEM childItem;
+    LPCTSTR KeyPath;
+    DWORD dwCount, dwIndex, dwMaxSubKeyLen;
+    LPSTR Name;
+    TVITEM tvItem;
+    
+    KeyPath = GetItemPath(hwndTV, hItem, &hRoot);
+
+    if (*KeyPath) {
+        if (RegOpenKeyEx(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+            WINE_TRACE("RegOpenKeyEx failed, \"%s\" was probably removed.\n", KeyPath);
+            return FALSE;
+        }
+    } else {
+        hKey = hRoot;
+    }
+
+    if (RegQueryInfoKey(hKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+        return FALSE;
+    }
+
+    /* Set the number of children again */
+    tvItem.mask = TVIF_CHILDREN;
+    tvItem.hItem = hItem;
+    tvItem.cChildren = dwCount;
+    if (!TreeView_SetItem(hwndTV, &tvItem)) {
+        return FALSE;
+    }
+
+    /* We don't have to bother with the rest if it's not expanded. */
+    if (TreeView_GetItemState(hwndTV, hItem, TVIS_EXPANDED) == 0) {
+        RegCloseKey(hKey);
+        return TRUE;
+    }
+
+    dwMaxSubKeyLen++; /* account for the \0 terminator */
+    if (!(Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(TCHAR)))) {
+        return FALSE;
+    }
+    tvItem.cchTextMax = dwMaxSubKeyLen;
+    if (!(tvItem.pszText = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(TCHAR)))) {
+        return FALSE;
+    }
+
+    /* Now go through all the children in the registry, and check if any have to be added. */
+    for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
+        DWORD cName = dwMaxSubKeyLen, dwSubCount;
+        BOOL found;
+
+        found = FALSE;
+        if (RegEnumKeyEx(hKey, dwIndex, Name, &cName, 0, 0, 0, NULL) != ERROR_SUCCESS) {
+            continue;
+        }
+
+        /* Find the number of children of the node. */
+        dwSubCount = 0;
+        if (RegOpenKeyEx(hKey, Name, 0, KEY_QUERY_VALUE, &hSubKey) == ERROR_SUCCESS) {
+            if (RegQueryInfoKey(hSubKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+                dwSubCount = 0;
+            }
+            RegCloseKey(hSubKey);
+        }
+
+        /* Check if the node is already in there. */
+        for (childItem = TreeView_GetChild(hwndTV, hItem); childItem;
+                childItem = TreeView_GetNextSibling(hwndTV, childItem)) {
+            tvItem.mask = TVIF_TEXT;
+            tvItem.hItem = childItem;
+            if (!TreeView_GetItem(hwndTV, &tvItem)) {
+                return FALSE;
+            }
+
+            if (!strcmp(tvItem.pszText, Name)) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (found == FALSE) {
+            WINE_TRACE("New subkey %s\n", Name);
+            AddEntryToTree(hwndTV, hItem, Name, NULL, dwSubCount);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, Name);
+    HeapFree(GetProcessHeap(), 0, tvItem.pszText);
+    RegCloseKey(hKey);
+
+    /* Now go through all the children in the tree, and check if any have to be removed. */
+    childItem = TreeView_GetChild(hwndTV, hItem);
+    while (childItem) {
+        HTREEITEM nextItem = TreeView_GetNextSibling(hwndTV, childItem);
+        if (RefreshTreeItem(hwndTV, childItem) == FALSE) {
+            TreeView_DeleteItem(hwndTV, childItem);
+        }
+        childItem = nextItem;
+    }
+
+    return TRUE;
+}
+
+BOOL RefreshTreeView(HWND hwndTV)
+{
+    HTREEITEM hItem;
+    HTREEITEM hSelectedItem;
+    HCURSOR hcursorOld;
+
+    WINE_TRACE("\n");
+    hSelectedItem = TreeView_GetSelection(hwndTV);
+    hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
+    SendMessage(hwndTV, WM_SETREDRAW, FALSE, 0);
+
+    hItem = TreeView_GetChild(hwndTV, TreeView_GetRoot(hwndTV));
+    while (hItem) {
+        RefreshTreeItem(hwndTV, hItem);
+        hItem = TreeView_GetNextSibling(hwndTV, hItem);
+    }
+
+    SendMessage(hwndTV, WM_SETREDRAW, TRUE, 0);
+    SetCursor(hcursorOld);
+    
+    /* We reselect the currently selected node, this will prompt a refresh of the listview. */
+    TreeView_SelectItem(hwndTV, hSelectedItem);
+    return TRUE;
+}
 
 HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name)
 {
@@ -278,17 +415,16 @@ BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
     if (!Name) goto done;
 
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
-	DWORD cName = dwMaxSubKeyLen, dwSubCount;
-        FILETIME LastWriteTime;
+        DWORD cName = dwMaxSubKeyLen, dwSubCount;
 
-        errCode = RegEnumKeyEx(hNewKey, dwIndex, Name, &cName, 0, 0, 0, &LastWriteTime);
-	if (errCode != ERROR_SUCCESS) continue;
-	errCode = RegOpenKeyEx(hNewKey, Name, 0, KEY_QUERY_VALUE, &hKey);
-	if (errCode == ERROR_SUCCESS) {
-	    errCode = RegQueryInfoKey(hKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0);
-	    RegCloseKey(hKey);
-	}
-	if (errCode != ERROR_SUCCESS) dwSubCount = 0;
+        errCode = RegEnumKeyEx(hNewKey, dwIndex, Name, &cName, 0, 0, 0, 0);
+        if (errCode != ERROR_SUCCESS) continue;
+        errCode = RegOpenKeyEx(hNewKey, Name, 0, KEY_QUERY_VALUE, &hKey);
+        if (errCode == ERROR_SUCCESS) {
+            errCode = RegQueryInfoKey(hKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0);
+            RegCloseKey(hKey);
+        }
+        if (errCode != ERROR_SUCCESS) dwSubCount = 0;
         AddEntryToTree(hwndTV, pnmtv->itemNew.hItem, Name, NULL, dwSubCount);
     }
     RegCloseKey(hNewKey);

@@ -374,6 +374,9 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
 	if (lRet != ERROR_SUCCESS) goto done;
     }
 
+    /* The following fails if the old name is the same as the new name. */
+    if (!strcmp(srcSubKey, newName)) goto done;
+
     lRet = RegCreateKey(parentKey, newName, &destKey);
     if (lRet != ERROR_SUCCESS) goto done;
 
