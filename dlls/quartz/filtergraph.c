@@ -26,6 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "dshow.h"
 #include "wine/debug.h"
 #include "strmif.h"

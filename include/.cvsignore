@@ -5,6 +5,7 @@ amvideo.h
 austream.h
 comcat.h
 config.h
+control.h
 ddstream.h
 dispex.h
 docobj.h

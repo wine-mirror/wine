@@ -10,6 +10,7 @@ IDL_SRCS = \
 	amvideo.idl \
 	austream.idl \
 	comcat.idl \
+	control.idl \
 	ddstream.idl \
 	dispex.idl \
 	docobj.idl \
@@ -52,7 +53,6 @@ WINDOWS_INCLUDES = \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
-	control.h \
 	cpl.h \
 	custcntl.h \
 	cvconst.h \
@@ -145,7 +145,6 @@ WINDOWS_INCLUDES = \
 	mciavi.h \
 	mcx.h \
 	mediaerr.h \
-	mediaobj.h \
 	minmax.h \
 	mmddk.h \
 	mmreg.h \
