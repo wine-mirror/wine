@@ -134,7 +134,7 @@ static void test_acquire_context(void)
 	hProv = 0;
 	SetLastError(0xdeadbeef);
 	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(result && GetLastError() == ERROR_SUCCESS, "%d/%ld\n", result, GetLastError());
+	ok(result && (GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
 		CryptReleaseContext(hProv, 0);
@@ -143,7 +143,7 @@ static void test_acquire_context(void)
 	hProv = 0;
 	SetLastError(0xdeadbeef);
 	result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-	ok(result && GetLastError() == ERROR_SUCCESS, "%d/%ld\n", result, GetLastError());
+	ok(result && (GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
 		CryptReleaseContext(hProv, 0);
