@@ -945,7 +945,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl -noimport strncat(str str long) strncat
 @ cdecl -noimport strncmp(str str long) strncmp
 @ cdecl -noimport strncpy(ptr str long) strncpy
-@ cdecl -noimport strpbrk(str str long) strpbrk
+@ cdecl -noimport strpbrk(str str) strpbrk
 @ cdecl -noimport strrchr(str long) strrchr
 @ cdecl -noimport strspn(str str) strspn
 @ cdecl -noimport strstr(str str) strstr
