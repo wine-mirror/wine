@@ -198,14 +198,6 @@ BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, DW
         case CALG_DES:
             des_setup(abKeyValue, 8, 0, &pKeyContext->des);
             break;
-
-        case CALG_RSA_SIGN:
-        case CALG_RSA_KEYX:
-            break;
-        
-        default:
-            SetLastError(NTE_BAD_ALGID);
-            return FALSE;
     }
 
     return TRUE;
