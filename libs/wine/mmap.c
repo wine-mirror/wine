@@ -202,6 +202,8 @@ static void reserve_area( void *addr, void *end )
     void *ptr;
     size_t size = (char *)end - (char *)addr;
 
+    if (!size) return;
+
     if ((ptr = wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE )) != (void *)-1)
     {
         if (ptr == addr)
