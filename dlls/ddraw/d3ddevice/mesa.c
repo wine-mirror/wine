@@ -588,88 +588,6 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
-GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
-                                            D3DTRANSFORMSTATETYPE dtstTransformStateType,
-                                            LPD3DMATRIX lpD3DMatrix)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
-
-    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dtstTransformStateType, lpD3DMatrix);
-
-    ENTER_GL();
-
-    /* Using a trial and failure approach, I found that the order of
-       Direct3D transformations that works best is :
-
-       ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
-
-       As OpenGL uses only two matrices, I combined PROJECTION and VIEW into
-       OpenGL's GL_PROJECTION matrix and the WORLD into GL_MODELVIEW.
-
-       If anyone has a good explanation of the three different matrices in
-       the SDK online documentation, feel free to point it to me. For example,
-       which matrices transform lights ? In OpenGL only the PROJECTION matrix
-       transform the lights, not the MODELVIEW. Using the matrix names, I
-       supposed that PROJECTION and VIEW (all 'camera' related names) do
-       transform lights, but WORLD do not. It may be wrong though... */
-
-    /* After reading through both OpenGL and Direct3D documentations, I
-       thought that D3D matrices were written in 'line major mode' transposed
-       from OpenGL's 'column major mode'. But I found out that a simple memcpy
-       works fine to transfer one matrix format to the other (it did not work
-       when transposing)....
-
-       So :
-         1) are the documentations wrong
-	 2) does the matrix work even if they are not read correctly
-	 3) is Mesa's implementation of OpenGL not compliant regarding Matrix
-            loading using glLoadMatrix ?
-
-       Anyway, I always use 'conv_mat' to transfer the matrices from one format
-       to the other so that if I ever find out that I need to transpose them, I
-       will able to do it quickly, only by changing the macro conv_mat. */
-
-    switch (dtstTransformStateType) {
-        case D3DTRANSFORMSTATE_WORLD: {
-	    TRACE(" D3DTRANSFORMSTATE_WORLD :\n");
-	    conv_mat(lpD3DMatrix, This->world_mat);
-	    if (glThis->last_vertices_transformed == FALSE) {
-	        glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf((float *) This->view_mat);
-		glMultMatrixf((float *) This->world_mat);
-	    }
-	} break;
-
-	case D3DTRANSFORMSTATE_VIEW: {
-	    TRACE(" D3DTRANSFORMSTATE_VIEW :\n");
-	    conv_mat(lpD3DMatrix, This->view_mat);
-	    if (glThis->last_vertices_transformed == FALSE) {
-	        glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf((float *) This->view_mat);
-		glMultMatrixf((float *) This->world_mat);
-	    }
-	} break;
-
-	case D3DTRANSFORMSTATE_PROJECTION: {
-	    TRACE(" D3DTRANSFORMSTATE_PROJECTION :\n");
-	    conv_mat(lpD3DMatrix, This->proj_mat);
-	    if (glThis->last_vertices_transformed == FALSE) {
-	        glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf((float *) This->proj_mat);
-	    }
-	} break;
-
-	default:
-	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
-	    break;
-    }
-    LEAVE_GL();
-
-    return DD_OK;
-}
-
 static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
 {
     switch (d3dpt) {
@@ -716,21 +634,22 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
   
     /* Puts GL in the correct lighting / transformation mode */
     if ((vertex_transformed == FALSE) && 
-	(glThis->last_vertices_transformed == TRUE)) {
+	(glThis->transform_state != GL_TRANSFORM_NORMAL)) {
         /* Need to put the correct transformation again if we go from Transformed
 	   vertices to non-transformed ones.
 	*/
-        glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf((float *) This->view_mat);
-	glMultMatrixf((float *) This->world_mat);
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf((float *) This->proj_mat);
+        This->set_matrices(This, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
+			   This->world_mat, This->view_mat, This->proj_mat);
+	glThis->transform_state = GL_TRANSFORM_NORMAL;
 
-	if (glThis->render_state.fog_on == TRUE) glEnable(GL_FOG);
+	if (glThis->render_state.fog_on == TRUE)
+	    glEnable(GL_FOG);
     } else if ((vertex_transformed == TRUE) &&
-	       (glThis->last_vertices_transformed == FALSE)) {
+	       (glThis->transform_state != GL_TRANSFORM_ORTHO)) {
         GLfloat height, width;
 	GLfloat trans_mat[16];
+	
+	glThis->transform_state = GL_TRANSFORM_ORTHO;
 	
 	width = glThis->parent.surface->surface_desc.dwWidth;
 	height = glThis->parent.surface->surface_desc.dwHeight;
@@ -770,9 +689,6 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 	    }
 	}
     }
-
-    /* And save the current state */
-    glThis->last_vertices_transformed = vertex_transformed;
 }
 
 
@@ -881,67 +797,6 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
     TRACE(" returning %p.\n", *lplpDirect3DExecuteBuffer);
     
     return ret_value;
-}
-
-DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements)
-{
-    DWORD size = 0;
-    DWORD elts = 0;
-    
-    if (d3dvtVertexType & D3DFVF_NORMAL) { size += 3 * sizeof(D3DVALUE); elts += 1; }
-    if (d3dvtVertexType & D3DFVF_DIFFUSE) { size += sizeof(DWORD); elts += 1; }
-    if (d3dvtVertexType & D3DFVF_SPECULAR) { size += sizeof(DWORD); elts += 1; }
-    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
-        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); elts += 1; break;
-        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); elts += 1; break;
-	default: TRACE(" matrix weighting not handled yet...\n");
-    }
-    size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
-    elts += (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-
-    if (elements) *elements = elts;
-
-    return size;
-}
-
-void dump_flexible_vertex(DWORD d3dvtVertexType)
-{
-    static const flag_info flags[] = {
-        FE(D3DFVF_NORMAL),
-	FE(D3DFVF_RESERVED1),
-	FE(D3DFVF_DIFFUSE),
-	FE(D3DFVF_SPECULAR)
-    };
-    int i;
-    
-    if (d3dvtVertexType & D3DFVF_RESERVED0) DPRINTF("D3DFVF_RESERVED0 ");
-    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
-#define GEN_CASE(a) case a: DPRINTF(#a " "); break
-        GEN_CASE(D3DFVF_XYZ);
-	GEN_CASE(D3DFVF_XYZRHW);
-	GEN_CASE(D3DFVF_XYZB1);
-	GEN_CASE(D3DFVF_XYZB2);
-	GEN_CASE(D3DFVF_XYZB3);
-	GEN_CASE(D3DFVF_XYZB4);
-	GEN_CASE(D3DFVF_XYZB5);
-    }
-    DDRAW_dump_flags_(d3dvtVertexType, flags, sizeof(flags)/sizeof(flags[0]), FALSE);
-    switch (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) {
-        GEN_CASE(D3DFVF_TEX0);
-	GEN_CASE(D3DFVF_TEX1);
-	GEN_CASE(D3DFVF_TEX2);
-	GEN_CASE(D3DFVF_TEX3);
-	GEN_CASE(D3DFVF_TEX4);
-	GEN_CASE(D3DFVF_TEX5);
-	GEN_CASE(D3DFVF_TEX6);
-	GEN_CASE(D3DFVF_TEX7);
-	GEN_CASE(D3DFVF_TEX8);
-    }
-#undef GEN_CASE
-    for (i = 0; i < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); i++) {
-        DPRINTF(" T%d-s%ld", i + 1, (((d3dvtVertexType >> (16 + (2 * i))) + 1) & 0x03) + 1);
-    }
-    DPRINTF("\n");
 }
 
 /* These are the various handler used in the generic path */
@@ -1745,7 +1600,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(SetRenderTarget) Main_IDirect3DDeviceImpl_7_3T_2T_SetRenderTarget,
     XCAST(GetRenderTarget) Main_IDirect3DDeviceImpl_7_3T_2T_GetRenderTarget,
     XCAST(Clear) Main_IDirect3DDeviceImpl_7_Clear,
-    XCAST(SetTransform) GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform,
+    XCAST(SetTransform) Main_IDirect3DDeviceImpl_7_3T_2T_SetTransform,
     XCAST(GetTransform) Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform,
     XCAST(SetViewport) Main_IDirect3DDeviceImpl_7_SetViewport,
     XCAST(MultiplyTransform) Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform,
@@ -2035,6 +1890,30 @@ d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
      return DDERR_INVALIDPARAMS;
 }
 
+void
+d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
+		       D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat)
+{
+    if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED)) != 0) {
+        glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf((float *) view_mat);
+	glMultMatrixf((float *) world_mat);
+    }
+    if ((matrices & PROJMAT_CHANGED) != 0) {
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf((float *) proj_mat);
+    }
+}
+
+void
+d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
+{
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    if (glThis->transform_state == GL_TRANSFORM_NORMAL) {
+        /* This will force an update of the transform state at the next drawing. */
+        glThis->transform_state = GL_TRANSFORM_NONE;
+    }
+}
 
 /* TODO for both these functions :
     - change / restore OpenGL parameters for pictures transfers in case they are ever modified
@@ -2152,6 +2031,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->surface = surface;
     object->set_context = set_context;
     object->clear = d3ddevice_clear;
+    object->set_matrices = d3ddevice_set_matrices;
+    object->matrices_updated = d3ddevice_matrices_updated;
 
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 

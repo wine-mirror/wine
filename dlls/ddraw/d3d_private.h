@@ -168,6 +168,10 @@ struct IDirect3DExecuteBufferImpl
 #define MAX_TEXTURES 8
 #define MAX_LIGHTS  16
 
+#define WORLDMAT_CHANGED (0x00000001 << 0)
+#define VIEWMAT_CHANGED  (0x00000001 << 1)
+#define PROJMAT_CHANGED  (0x00000001 << 2)
+
 struct IDirect3DDeviceImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DDevice7);
@@ -205,6 +209,9 @@ struct IDirect3DDeviceImpl
 		     DWORD dwColor,
 		     D3DVALUE dvZ,
 		     DWORD dwStencil);
+    void (*matrices_updated)(IDirect3DDeviceImpl *This, DWORD matrices);
+    void (*set_matrices)(IDirect3DDeviceImpl *This, DWORD matrices,
+			 D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat);
 };
 
 /*****************************************************************************
@@ -221,17 +228,15 @@ struct IDirect3DVertexBufferImpl
     DWORD vertex_buffer_size;
 };
 
-/* Various dump functions */
+/* Various dump and helper functions */
 extern const char *_get_renderstate(D3DRENDERSTATETYPE type);
 extern void dump_D3DMATERIAL7(LPD3DMATERIAL7 lpMat);
 extern void dump_D3DCOLORVALUE(D3DCOLORVALUE *lpCol);
 extern void dump_D3DLIGHT7(LPD3DLIGHT7 lpLight);
 extern void dump_DPFLAGS(DWORD dwFlags);
-
-#define dump_mat(mat) \
-    TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-    TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-    TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-    TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
+extern void dump_D3DMATRIX(D3DMATRIX *mat);
+extern void dump_D3DVECTOR(D3DVECTOR *lpVec);
+extern void dump_flexible_vertex(DWORD d3dvtVertexType);
+extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements);
 
 #endif /* __GRAPHICS_WINE_D3D_PRIVATE_H */

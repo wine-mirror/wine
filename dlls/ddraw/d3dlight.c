@@ -120,23 +120,21 @@ static void update(IDirect3DLightImpl* This) {
     ENTER_GL();
     switch (glThis->parent.light.dltType) {
         case D3DLIGHT_POINT:         /* 1 */
-            TRACE("Activating POINT\n");
+            FIXME("Activating POINT - not supported yet\n");
 	    break;
 
 	case D3DLIGHT_SPOT:          /* 2 */
-	    TRACE("Activating SPOT\n");
+	    FIXME("Activating SPOT - not supported yet\n");
 	    break;
 
 	case D3DLIGHT_DIRECTIONAL: {  /* 3 */
 	    float direction[4];
 
-	    TRACE("Activating DIRECTIONAL\n");
-	    TRACE("  direction : %f %f %f\n",
-		  glThis->parent.light.dvDirection.u1.x,
-		  glThis->parent.light.dvDirection.u2.y,
-		  glThis->parent.light.dvDirection.u3.z);
-	    _dump_colorvalue(" color    ", glThis->parent.light.dcvColor);
-	    
+	    if (TRACE_ON(ddraw)) {
+	        TRACE("Activating DIRECTIONAL\n");
+		DPRINTF(" - direction     : "); dump_D3DVECTOR(&(glThis->parent.light.dvDirection)); DPRINTF("\n");
+		DPRINTF(" - color         : "); dump_D3DCOLORVALUE(&(glThis->parent.light.dcvColor)); DPRINTF("\n");
+	    }
 	    glLightfv(glThis->light_num, GL_AMBIENT, (float *) zero_value);
 	    glLightfv(glThis->light_num, GL_DIFFUSE, (float *) &(glThis->parent.light.dcvColor));
 
@@ -149,7 +147,7 @@ static void update(IDirect3DLightImpl* This) {
 	} break;
 
 	case D3DLIGHT_PARALLELPOINT:  /* 4 */
-	    TRACE("Activating PARRALLEL-POINT\n");
+	    FIXME("Activating PARRALLEL-POINT - not supported yet\n");
 	    break;
 
 	default:

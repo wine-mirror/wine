@@ -244,9 +244,9 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 					     transformation phase */
 			glMatrixMode(GL_PROJECTION);
 			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			dump_mat(lpDevice->proj_mat);
+			dump_D3DMATRIX(lpDevice->proj_mat);
 			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			dump_mat(lpDevice->view_mat);
+			dump_D3DMATRIX(lpDevice->view_mat);
 
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0.0 at the front viewing volume and 1.0 at the back with Direct 3D and with
@@ -266,9 +266,9 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			glMatrixMode(GL_PROJECTION);
 			
 			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			dump_mat(lpDevice->proj_mat);
+			dump_D3DMATRIX(lpDevice->proj_mat);
 			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			dump_mat(lpDevice->view_mat);
+			dump_D3DMATRIX(lpDevice->view_mat);
 			
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0 at the front viewing volume and 1 at the back with Direct 3D and with
@@ -535,7 +535,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			D3DMATRIX *mat = lpDevice->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
-			dump_mat(mat);
+			dump_D3DMATRIX(mat);
 
 			This->vertex_type = D3DVT_VERTEX;
 			
@@ -564,7 +564,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			D3DMATRIX *mat = lpDevice->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
-			dump_mat(mat);
+			dump_D3DMATRIX(mat);
 			
 			This->vertex_type = D3DVT_LVERTEX;
 			

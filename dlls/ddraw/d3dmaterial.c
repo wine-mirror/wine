@@ -284,33 +284,33 @@ Thunk_IDirect3DMaterialImpl_1_GetMaterial(LPDIRECT3DMATERIAL iface,
  *				Matrial2 static functions
  */
 static void activate(IDirect3DMaterialImpl* This) {
-  TRACE("Activating material %p\n", This);
+    TRACE("Activating material %p\n", This);
 
-  ENTER_GL();
+    /* Set the current Material */
+    ENTER_GL();
+    glMaterialfv(GL_FRONT_AND_BACK,
+		 GL_DIFFUSE,
+		 (float *) &(This->mat.u.diffuse));
+    glMaterialfv(GL_FRONT_AND_BACK,
+		 GL_AMBIENT,
+		 (float *) &(This->mat.u1.ambient));
+    glMaterialfv(GL_FRONT_AND_BACK,
+		 GL_SPECULAR,
+		 (float *) &(This->mat.u2.specular));
+    glMaterialfv(GL_FRONT_AND_BACK,
+		 GL_EMISSION,
+		 (float *) &(This->mat.u3.emissive));
+    LEAVE_GL();
 
-  /* Set the current Material */
-  _dump_colorvalue("Diffuse", This->mat.u.diffuse);
-  glMaterialfv(GL_FRONT_AND_BACK,
-	       GL_DIFFUSE,
-	       (float *) &(This->mat.u.diffuse));
-  _dump_colorvalue("Ambient", This->mat.u1.ambient);
-  glMaterialfv(GL_FRONT_AND_BACK,
-	       GL_AMBIENT,
-	       (float *) &(This->mat.u1.ambient));
-  _dump_colorvalue("Specular", This->mat.u2.specular);
-  glMaterialfv(GL_FRONT_AND_BACK,
-	       GL_SPECULAR,
-	       (float *) &(This->mat.u2.specular));
-  _dump_colorvalue("Emissive", This->mat.u3.emissive);
-  glMaterialfv(GL_FRONT_AND_BACK,
-	       GL_EMISSION,
-	       (float *) &(This->mat.u3.emissive));
-
-  TRACE("Size  : %ld\n", This->mat.dwSize);
-  TRACE("Power : %f\n", This->mat.u4.power);
-
-  TRACE("Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
-  LEAVE_GL();
+  if (TRACE_ON(ddraw)) {
+      DPRINTF(" - size  : %ld\n", This->mat.dwSize);
+      DPRINTF(" - diffuse : "); dump_D3DCOLORVALUE(&(This->mat.u.diffuse)); DPRINTF("\n");
+      DPRINTF(" - ambient : "); dump_D3DCOLORVALUE(&(This->mat.u1.ambient)); DPRINTF("\n");
+      DPRINTF(" - specular: "); dump_D3DCOLORVALUE(&(This->mat.u2.specular)); DPRINTF("\n");
+      DPRINTF(" - emissive: "); dump_D3DCOLORVALUE(&(This->mat.u3.emissive)); DPRINTF("\n");
+      DPRINTF(" - power : %f\n", This->mat.u4.power);
+      DPRINTF(" - texture handle : %08lx\n", (DWORD)This->mat.hTexture);
+  }
 
   return ;
 }

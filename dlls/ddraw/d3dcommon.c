@@ -219,3 +219,74 @@ dump_DPFLAGS(DWORD dwFlags)
 
     DDRAW_dump_flags(dwFlags, flags, sizeof(flags)/sizeof(flags[0]));
 }
+
+void
+dump_D3DMATRIX(D3DMATRIX *mat)
+{
+    DPRINTF("  %f %f %f %f\n", mat->_11, mat->_12, mat->_13, mat->_14);
+    DPRINTF("  %f %f %f %f\n", mat->_21, mat->_22, mat->_23, mat->_24);
+    DPRINTF("  %f %f %f %f\n", mat->_31, mat->_32, mat->_33, mat->_34);
+    DPRINTF("  %f %f %f %f\n", mat->_41, mat->_42, mat->_43, mat->_44);
+}
+
+
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements)
+{
+    DWORD size = 0;
+    DWORD elts = 0;
+    
+    if (d3dvtVertexType & D3DFVF_NORMAL) { size += 3 * sizeof(D3DVALUE); elts += 1; }
+    if (d3dvtVertexType & D3DFVF_DIFFUSE) { size += sizeof(DWORD); elts += 1; }
+    if (d3dvtVertexType & D3DFVF_SPECULAR) { size += sizeof(DWORD); elts += 1; }
+    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
+        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); elts += 1; break;
+        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); elts += 1; break;
+	default: TRACE(" matrix weighting not handled yet...\n");
+    }
+    size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
+    elts += (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+
+    if (elements) *elements = elts;
+
+    return size;
+}
+
+void dump_flexible_vertex(DWORD d3dvtVertexType)
+{
+    static const flag_info flags[] = {
+        FE(D3DFVF_NORMAL),
+	FE(D3DFVF_RESERVED1),
+	FE(D3DFVF_DIFFUSE),
+	FE(D3DFVF_SPECULAR)
+    };
+    int i;
+    
+    if (d3dvtVertexType & D3DFVF_RESERVED0) DPRINTF("D3DFVF_RESERVED0 ");
+    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
+#define GEN_CASE(a) case a: DPRINTF(#a " "); break
+        GEN_CASE(D3DFVF_XYZ);
+	GEN_CASE(D3DFVF_XYZRHW);
+	GEN_CASE(D3DFVF_XYZB1);
+	GEN_CASE(D3DFVF_XYZB2);
+	GEN_CASE(D3DFVF_XYZB3);
+	GEN_CASE(D3DFVF_XYZB4);
+	GEN_CASE(D3DFVF_XYZB5);
+    }
+    DDRAW_dump_flags_(d3dvtVertexType, flags, sizeof(flags)/sizeof(flags[0]), FALSE);
+    switch (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) {
+        GEN_CASE(D3DFVF_TEX0);
+	GEN_CASE(D3DFVF_TEX1);
+	GEN_CASE(D3DFVF_TEX2);
+	GEN_CASE(D3DFVF_TEX3);
+	GEN_CASE(D3DFVF_TEX4);
+	GEN_CASE(D3DFVF_TEX5);
+	GEN_CASE(D3DFVF_TEX6);
+	GEN_CASE(D3DFVF_TEX7);
+	GEN_CASE(D3DFVF_TEX8);
+    }
+#undef GEN_CASE
+    for (i = 0; i < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); i++) {
+        DPRINTF(" T%d-s%ld", i + 1, (((d3dvtVertexType >> (16 + (2 * i))) + 1) & 0x03) + 1);
+    }
+    DPRINTF("\n");
+}

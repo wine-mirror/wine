@@ -206,7 +206,42 @@ Main_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
                                               LPD3DMATRIX lpD3DMatrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08x,%p): stub!\n", This, iface, dtstTransformStateType, lpD3DMatrix);
+    DWORD matrix_changed = 0x00000000;
+
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dtstTransformStateType, lpD3DMatrix);
+
+    switch (dtstTransformStateType) {
+        case D3DTRANSFORMSTATE_WORLD: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" D3DTRANSFORMSTATE_WORLD :\n"); dump_D3DMATRIX(lpD3DMatrix);
+	    }
+	    memcpy(This->world_mat, lpD3DMatrix, 16 * sizeof(float));
+	    matrix_changed = WORLDMAT_CHANGED;
+	} break;
+
+	case D3DTRANSFORMSTATE_VIEW: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" D3DTRANSFORMSTATE_VIEW :\n");  dump_D3DMATRIX(lpD3DMatrix);
+	    }
+	    memcpy(This->view_mat, lpD3DMatrix, 16 * sizeof(float));
+	    matrix_changed = VIEWMAT_CHANGED;
+	} break;
+
+	case D3DTRANSFORMSTATE_PROJECTION: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" D3DTRANSFORMSTATE_PROJECTION :\n");  dump_D3DMATRIX(lpD3DMatrix);
+	    }
+	    memcpy(This->proj_mat, lpD3DMatrix, 16 * sizeof(float));
+	    matrix_changed = PROJMAT_CHANGED;
+	} break;
+
+	default:
+	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
+	    break;
+    }
+
+    if (matrix_changed != 0x00000000) This->matrices_updated(This, matrix_changed);
+
     return DD_OK;
 }
 
@@ -220,21 +255,27 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 
     switch (dtstTransformStateType) {
         case D3DTRANSFORMSTATE_WORLD: {
-	    TRACE(" returning D3DTRANSFORMSTATE_WORLD :\n");
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" returning D3DTRANSFORMSTATE_WORLD :\n");
+		dump_D3DMATRIX(lpD3DMatrix);
+	    }
 	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
-	    dump_mat(lpD3DMatrix);
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
-	    TRACE(" returning D3DTRANSFORMSTATE_VIEW :\n");
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" returning D3DTRANSFORMSTATE_VIEW :\n");
+		dump_D3DMATRIX(lpD3DMatrix);
+	    }
 	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
-	    dump_mat(lpD3DMatrix);
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
-	    TRACE(" returning D3DTRANSFORMSTATE_PROJECTION :\n");
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" returning D3DTRANSFORMSTATE_PROJECTION :\n");
+		dump_D3DMATRIX(lpD3DMatrix);
+	    }
 	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
-	    dump_mat(lpD3DMatrix);
 	} break;
 
 	default:
@@ -1098,7 +1139,7 @@ Main_IDirect3DDeviceImpl_1_SetMatrix(LPDIRECT3DDEVICE iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, (DWORD) D3DMatHandle, lpD3DMatrix);
 
-    dump_mat(lpD3DMatrix);
+    dump_D3DMATRIX(lpD3DMatrix);
     *((D3DMATRIX *) D3DMatHandle) = *lpD3DMatrix;   
     
     return DD_OK;

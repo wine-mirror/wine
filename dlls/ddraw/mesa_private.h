@@ -114,6 +114,13 @@ typedef struct IDirect3DTextureGLImpl
     void (*set_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal);
 } IDirect3DTextureGLImpl;
 
+typedef enum {
+    GL_TRANSFORM_NONE = 0,
+    GL_TRANSFORM_ORTHO,
+    GL_TRANSFORM_NORMAL,
+    GL_TRANSFORM_VERTEXBUFFER
+} GL_TRANSFORM_STATE;
+
 typedef struct IDirect3DDeviceGLImpl
 {
     struct IDirect3DDeviceImpl parent;
@@ -124,7 +131,7 @@ typedef struct IDirect3DDeviceGLImpl
     RenderState render_state;
 
     /* The last type of vertex drawn */
-    BOOLEAN last_vertices_transformed;
+    GL_TRANSFORM_STATE transform_state;
 
     Display  *display;
     Drawable drawable;
@@ -144,48 +151,6 @@ extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, I
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
 extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
-
-/* Some helper functions.. Would need to put them in a better place */
-extern void dump_flexible_vertex(DWORD d3dvtVertexType);
-extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements);
-
-/* Matrix copy WITH transposition */
-#define conv_mat2(mat,gl_mat)			\
-{						\
-    TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-    TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-    TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-    TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
-    (gl_mat)->_11 = (mat)->_11;			\
-    (gl_mat)->_12 = (mat)->_21;			\
-    (gl_mat)->_13 = (mat)->_31;			\
-    (gl_mat)->_14 = (mat)->_41;			\
-    (gl_mat)->_21 = (mat)->_12;			\
-    (gl_mat)->_22 = (mat)->_22;			\
-    (gl_mat)->_23 = (mat)->_32;			\
-    (gl_mat)->_24 = (mat)->_42;			\
-    (gl_mat)->_31 = (mat)->_13;			\
-    (gl_mat)->_32 = (mat)->_23;			\
-    (gl_mat)->_33 = (mat)->_33;			\
-    (gl_mat)->_34 = (mat)->_43;			\
-    (gl_mat)->_41 = (mat)->_14;			\
-    (gl_mat)->_42 = (mat)->_24;			\
-    (gl_mat)->_43 = (mat)->_34;			\
-    (gl_mat)->_44 = (mat)->_44;			\
-};
-
-/* Matrix copy WITHOUT transposition */
-#define conv_mat(mat,gl_mat)			\
-{                                               \
-    TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-    TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-    TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-    TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
-    memcpy(gl_mat, (mat), 16 * sizeof(float));      \
-};
-
-#define _dump_colorvalue(s,v)                \
-    DPRINTF(" - " s); dump_D3DCOLORVALUE(&v); DPRINTF("\n");
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */
