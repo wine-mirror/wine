@@ -1074,12 +1074,6 @@ void WINAPI Yield16(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-        return;
-    }
-
     if (pCurTask) pCurTask->hYieldTo = 0;
     if (pCurTask && pCurTask->hQueue) Callout.UserYield16();
     else OldYield16();

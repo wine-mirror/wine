@@ -1487,25 +1487,28 @@ BOOL WINAPI GetInputState(void)
  */
 void WINAPI UserYield16(void)
 {
-    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
-
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-        QUEUE_Unlock( queue );
-        return;
-    }
+    MESSAGEQUEUE *queue;
 
     /* Handle sent messages */
+    queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() );
+
     while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
 
     QUEUE_Unlock( queue );
     
-    OldYield16();
+    /* Yield */
+    if ( THREAD_IsWin16( THREAD_Current() ) )
+        OldYield16();
+    else
+    {
+        SYSLEVEL_LeaveWin16Lock();
+        SYSLEVEL_EnterWin16Lock();
+    }
 
-    queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
+    /* Handle sent messages again */
+    queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() );
+
     while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
 
