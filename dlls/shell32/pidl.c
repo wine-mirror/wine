@@ -801,13 +801,13 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
  *  IDLList "Item ID List List"
  * 
  */
-static UINT32 IDLList_GetState(LPIDLLIST this);
-static LPITEMIDLIST IDLList_GetElement(LPIDLLIST this, UINT32 nIndex);
-static UINT32 IDLList_GetCount(LPIDLLIST this);
-static BOOL32 IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl);
-static BOOL32 IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl);
-static BOOL32 IDLList_InitList(LPIDLLIST this);
-static void IDLList_CleanList(LPIDLLIST this);
+static UINT32 WINAPI IDLList_GetState(LPIDLLIST this);
+static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT32 nIndex);
+static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this);
+static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl);
+static BOOL32 WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl);
+static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this);
+static void WINAPI IDLList_CleanList(LPIDLLIST this);
 
 static IDLList_VTable idllvt = 
 {	IDLList_GetState,
@@ -836,7 +836,7 @@ void IDLList_Destructor(LPIDLLIST this)
 	IDLList_CleanList(this);
 }
  
-static UINT32 IDLList_GetState(LPIDLLIST this)
+static UINT32 WINAPI IDLList_GetState(LPIDLLIST this)
 {	TRACE (shell,"(%p)->(uStep=%u dpa=%p)\n",this, this->uStep, this->dpa);
 
 	if (this->uStep == 0)
@@ -846,15 +846,15 @@ static UINT32 IDLList_GetState(LPIDLLIST this)
         }
         return(State_UnInit);
 }
-static LPITEMIDLIST IDLList_GetElement(LPIDLLIST this, UINT32 nIndex)
+static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT32 nIndex)
 {	TRACE (shell,"(%p)->(index=%u)\n",this, nIndex);
 	return((LPITEMIDLIST)DPA_GetPtr(this->dpa, nIndex));
 }
-static UINT32 IDLList_GetCount(LPIDLLIST this)
+static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this)
 {	TRACE (shell,"(%p)\n",this);
 	return(IDLList_GetState(this)==State_Init ? DPA_GetPtrCount(this->dpa) : 0);
 }
-static BOOL32 IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
+static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
 {	TRACE (shell,"(%p)->(pidl=%p)\n",this, pidl);
 	if (pidl)
         { if (IDLList_InitList(this) && DPA_InsertPtr(this->dpa, 0x7fff, (LPSTR)pidl)>=0)
@@ -864,7 +864,7 @@ static BOOL32 IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
         IDLList_CleanList(this);
         return(FALSE);
 }
-static BOOL32 IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl)
+static BOOL32 WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl)
 {	INT32 i;
 	TRACE (shell,"(%p)->(apidl=%p cidl=%u)\n",this, apidl, cidl);
 
@@ -874,7 +874,7 @@ static BOOL32 IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl)
         }
         return(TRUE);
 }
-static BOOL32 IDLList_InitList(LPIDLLIST this)
+static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this)
 {	TRACE (shell,"(%p)\n",this);
 	switch (IDLList_GetState(this))
         { case State_Init:
@@ -890,7 +890,7 @@ static BOOL32 IDLList_InitList(LPIDLLIST this)
 	    return(IDLList_InitList(this));
         }
 }
-static void IDLList_CleanList(LPIDLLIST this)
+static void WINAPI IDLList_CleanList(LPIDLLIST this)
 {	INT32 i;
 	TRACE (shell,"(%p)\n",this);
 
