@@ -126,14 +126,22 @@ typedef struct
 
 /* global functions */
 
+#ifndef __GNUC__
+#define __attribute__(X)
+#endif
+
 extern void *xmalloc (size_t size);
 extern void *xrealloc (void *ptr, size_t size);
 extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
-extern void fatal_error( const char *msg, ... );
-extern void fatal_perror( const char *msg, ... );
-extern void error( const char *msg, ... );
-extern void warning( const char *msg, ... );
+extern void fatal_error( const char *msg, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void fatal_perror( const char *msg, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void error( const char *msg, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void warning( const char *msg, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_standard_file_header( FILE *outfile );
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );

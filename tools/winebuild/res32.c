@@ -216,7 +216,7 @@ int load_res32_file( const char *name )
 
     if ((fd = open( name, O_RDONLY )) == -1) fatal_perror( "Cannot open %s", name );
     if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", name );
-    if (!st.st_size) fatal_error( "%s is an empty file\n" );
+    if (!st.st_size) fatal_error( "%s is an empty file\n", name );
 #ifdef	HAVE_MMAP
     if ((base = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
 #endif	/* HAVE_MMAP */
