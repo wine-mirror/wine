@@ -17,6 +17,7 @@
 #include "sysres_Fi.h"
 #include "sysres_Da.h"
 #include "sysres_Cz.h"
+#include "sysres_Eo.h"
 
 
 static const struct resource * const * SYSRES_Resources[] =
@@ -28,7 +29,8 @@ static const struct resource * const * SYSRES_Resources[] =
     sysres_Fr_Table,  /* LANG_Fr */
     sysres_Fi_Table,  /* LANG_Fi */
     sysres_Da_Table,  /* LANG_Da */
-    sysres_Cz_Table   /* LANG_Cz */
+    sysres_Cz_Table,  /* LANG_Cz */
+    sysres_Eo_Table   /* LANG_Eo */
 };
 
 

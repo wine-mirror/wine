@@ -70,6 +70,10 @@ enum SCROLL_HITTEST
     SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
 };
 
+ /* Thumb-tracking info */
+static HWND hwndTracking = 0;
+static int nBarTracking = 0;
+static UINT uTrackingPos = 0;
 
 /***********************************************************************
  *           SCROLL_LoadBitmaps
@@ -430,6 +434,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
     Rectangle( hdc, r.left, r.top, r.right, r.bottom );
     InflateRect( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
+    if ((hwndTracking == hwnd) && (nBarTracking == nBar))
+        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, uTrackingPos);
 }
 
 
@@ -607,9 +613,6 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                (FARPROC)0 );
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              (WPARAM)SB_LINEUP, (LPARAM)hwndCtl );
@@ -617,6 +620,9 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEUP, MAKELONG( 0, hwndCtl ));
 #endif
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
             }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
@@ -630,9 +636,6 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                (FARPROC)0 );
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              (WPARAM)SB_PAGEUP, (LPARAM)hwndCtl );
@@ -640,6 +643,9 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEUP, MAKELONG( 0, hwndCtl ));
 #endif
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
             }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
@@ -647,11 +653,18 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
 
     case SCROLL_THUMB:
         if (msg == WM_LBUTTONDOWN)
+        {
             SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
                                  trackThumbPos + lastMousePos - lastClickPos );
+            hwndTracking = hwnd;
+            nBarTracking = nBar;
+        }
         else if (msg == WM_LBUTTONUP)
+        {
+            hwndTracking = 0;
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
                                  infoPtr->flags, vertical, FALSE, FALSE );
+        }
         else  /* WM_MOUSEMOVE */
         {
             UINT pos, val;
@@ -662,11 +675,11 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
             {
                 SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
                                  trackThumbPos + lastMousePos - lastClickPos );
-                SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
-                                       trackThumbPos + pos - lastClickPos );
                 lastMousePos = pos;
                 val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
+                /* Save tracking info */
+                uTrackingPos = trackThumbPos + pos - lastClickPos;
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              MAKEWPARAM(SB_THUMBTRACK,val), (LPARAM)hwndCtl );
@@ -674,6 +687,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_THUMBTRACK, MAKELONG( val, hwndCtl ));
 #endif
+                SCROLL_DrawMovingThumb( hdc, &rect, vertical,
+                                        arrowSize, uTrackingPos );
             }
         }
         break;
@@ -686,9 +701,6 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                (FARPROC)0 );
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              (WPARAM)SB_PAGEDOWN, (LPARAM)hwndCtl );
@@ -696,6 +708,9 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEDOWN, MAKELONG( 0, hwndCtl ));
 #endif
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
             }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
@@ -708,9 +723,6 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                (FARPROC)0 );
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              (WPARAM)SB_LINEDOWN, (LPARAM)hwndCtl );
@@ -718,6 +730,9 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEDOWN, MAKELONG( 0, hwndCtl ));
 #endif
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
             }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );

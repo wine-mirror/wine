@@ -1,4 +1,114 @@
 ----------------------------------------------------------------------
+Sat Mar  2 18:19:06 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/scroll.c]
+	Fixed SCROLL_THUMB painting fixes from Alex Korobka to store the
+ 	current tracking window.
+
+	* [files/file.c]
+	Fixed two file descriptor leaks in FILE_OpenFile().
+
+	* [if1632/relay32.c] [loader/module.c] [loader/pe_image.c]
+	  [tools/build.c]
+	Replaced LOADEDFILEINFO structure by OFSTRUCT.
+
+	* [memory/atom.c]
+	Reload the pointer to the atom table in ATOM_GetTable() and
+ 	ATOM_AddAtom() in case the LOCAL_Alloc() calls caused the table to
+ 	move in linear memory.
+
+Fri Mar  1 11:57:13 1996  Frans van Dorsselaer <dorssel@rulhm1.leidenuniv.nl>
+
+	* [include/callback.h]
+	Added support for CallWordBreakProc().
+
+	* [controls/edit.c]
+	New caret handling (really efficient / fast).
+	Implemented EM_SETWORDBREAKPROC and EM_GETWORDBREAKPROC.
+	Fixed EM_SETFONT so it now also creates a proper new caret.
+
+Wed Feb 28 22:03:34 1996  Daniel Schepler  <daniel@frobnitz.wustl.edu>
+
+	* [controls/desktop.c] [misc/main.c] [windows/event.c] [windows/win.c]
+	Added WM_DELETE protocol to top-level windows.
+
+	* [controls/scroll.c]
+	Fixed a problem which caused slow scrolling to continue	uncontrollably.
+
+	* [misc/exec.c]
+	Implemented ExitWindows().
+
+	* [windows/win.c]
+	Set top-level owned windows to be transient.
+
+Wed Feb 28 19:13:22 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [programs/progman/*]
+	Added a program manager.
+
+Wed Feb 28 18:38:01 1996  Duncan C Thomson <duncan@spd.eee.strath.ac.uk>
+
+	* [resources/sysres_Eo.c]
+	Added support for Esperanto [Eo] language.
+
+Wed Feb 28 00:23:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [if1632/user32.spec]
+	Added EndDialog, GetDlgItem, GetDlgItemInt, SetDlgItemInt,
+
+	* [win32/init.c]
+	Added task.h to includes. GetModuleHandleA() - return hInstance
+	if called with NULL parameter. Freecell needs this. NOTE this
+	may indicate a problem with differentiation between hModule and
+	hInstance within Wine.
+
+	* [win32/resource.c]
+	FindResource32() and LoadResource32() - Removed #if 0's around
+	conversion from hInstance to hModule. See remarks above.
+
+	* [win32/string32.c]
+	WIN32_UniLen() - removed stray semicolon.
+
+Tue Feb 27 21:05:18 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
+	
+	* [windows/caret.c]
+	Set blink rate with call to GetProfileInt().
+
+	* [rc/winerc.c]
+	In new_style(), made initial flag settings WS_CHILD | WS_VISIBLE
+ 	instead of 0.  This seems to correspond to Borland's defaults, and
+ 	the flags can be unset by using the (rather obtuse) "| NOT WS_CHILD"
+	or "| NOT WS_VISIBLE" technique in the *.rc file.
+
+	* [win32/time.c]
+	In GetLocalTime() and GetSystemTime(), used tv_sec field of result
+ 	returned by gettimeofday() instead of making second call to
+ 	time().  This eliminates clock jitter if the seconds change
+ 	between the two calls (rare, but possible).
+
+	* [include/wintypes.h]
+	Added "#define _far" and "#define _pascal".
+
+	* [windows/win.c]
+	Added function GetDesktopHwnd().
+
+	* [include/xmalloc.h]
+	Removed the '#ifdef HAVE_STDLIB_H' structure, since it seemed to
+ 	have been removed from 'configure', and was causing redefinition
+ 	warnings.
+
+Tue Feb 27 19:31:11 1996  Albrecht Kleine <kleine@ak.sax.de>
+
+	* [windows/winpos.c] 
+	Added RDW_ALLCHILDREN flag in SetWindowPos (handling SWP_FRAMECHANGED)
+	to force a repaint when setting menu bars with different rows.
+
+Sun Feb 25 21:15:00 1996 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/syscolors.c] [controls/scroll.c]
+	Fixed DrawFocusRect pen and SCROLL_THUMB painting.
+
+----------------------------------------------------------------------
 Sat Feb 24 16:17:05 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [files/profile.c]

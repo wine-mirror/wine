@@ -1219,6 +1219,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     if ((flags & SWP_FRAMECHANGED) && !(flags & SWP_NOREDRAW))
         RedrawWindow( winpos.hwnd, NULL, 0,
+                      RDW_ALLCHILDREN | /*FIXME: this should not be necessary*/
                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
     if (!(flags & SWP_DEFERERASE))
         RedrawWindow( wndPtr->hwndParent, NULL, 0,

@@ -21,7 +21,7 @@ typedef struct
     WORD    entry_table;      /* Near ptr to entry table */
     HMODULE next;             /* Selector to next module */
     WORD    dgroup_entry;     /* Near ptr to segment entry for DGROUP */
-    WORD    fileinfo;         /* Near ptr to file info (LOADEDFILEINFO) */
+    WORD    fileinfo;         /* Near ptr to file info (OFSTRUCT) */
     WORD    flags;            /* Module flags */
     WORD    dgroup;           /* Logical segment for DGROUP */
     WORD    heap_size;        /* Initial heap size */
@@ -50,17 +50,6 @@ typedef struct
     WORD    expected_version; /* Expected Windows version */
     WORD    self_loading_sel; /* Selector used for self-loading apps. procs */
 } NE_MODULE;
-
-  /* Loaded file info */
-typedef struct
-{
-    BYTE  length;       /* Length of the structure, not counting this byte */
-    BYTE  fixed_media;  /* File is on removable media */
-    WORD  error;        /* Error code (?) */
-    WORD  date;         /* File date in MS-DOS format */
-    WORD  time;         /* File time in MS-DOS format */
-    char  filename[1];  /* File name */
-} LOADEDFILEINFO;
 
   /* In-memory segment table */
 typedef struct
@@ -104,6 +93,9 @@ typedef struct
 
 #define NE_MODULE_TABLE(pModule) \
     ((WORD *)((char *)(pModule) + (pModule)->modref_table))
+
+#define NE_MODULE_NAME(pModule) \
+    (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
 #ifndef WINELIB
 #pragma pack(4)

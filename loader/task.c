@@ -611,6 +611,8 @@ static void TASK_DeleteTask( HTASK hTask )
  */
 void TASK_KillCurrentTask( int exitCode )
 {
+    extern void EXEC_ExitWindows( int retCode );
+
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
     {
         /* If another task is already marked for destruction, */
@@ -621,7 +623,7 @@ void TASK_KillCurrentTask( int exitCode )
     if (nTaskCount <= 1)
     {
         dprintf_task( stddeb, "Killing the last task, exiting\n" );
-        ExitWindows( 0, 0 );
+        EXEC_ExitWindows( 0 );
     }
 
     /* Remove the task from the list to be sure we never switch back to it */

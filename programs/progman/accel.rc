@@ -1,0 +1,6 @@
+#include "progman.h"
+
+ACCEL ACCELERATORS
+{
+VK_RETURN, PM_EXECUTE, VIRTKEY, ALT
+}

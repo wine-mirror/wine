@@ -1,0 +1,93 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+/* Menu */
+
+#define MENU_Xx                      MENU_De
+
+#define MENU_FILE                    "&Datei"
+#define MENU_FILE_NEW                "&Neu..."
+#define MENU_FILE_OPEN               "Ö&ffnen\tEingabetaste"
+#define MENU_FILE_MOVE               "&Verschieben...\tF7"
+#define MENU_FILE_COPY               "&Kopieren...\tF8"
+#define MENU_FILE_DELETE             "&Löschen\tEntf"
+#define MENU_FILE_ATTRIBUTES         "&Eigenschaften...\tAlt+Eingabetaste"
+#define MENU_FILE_EXECUTE            "&Ausführen..."
+#define MENU_FILE_EXIT               "&Programm-Manager &beenden..."
+
+#define MENU_OPTIONS                 "&Optionen"
+#define MENU_OPTIONS_AUTO_ARRANGE    "&Automatisch anordnen"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Symbol nach Programmstart"
+#define MENU_OPTIONS_SAVE_SETTINGS   "&Einstellungen beim Beenden speichern"
+
+#define MENU_WINDOWS                 "&Fenster"
+#define MENU_WINDOWS_OVERLAP         "Über&lappend\tUmschalt+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Nebeneinander\tUmschalt+F4"
+#define MENU_WINDOWS_ARRANGE         "&Symbole anordnen"
+
+#define MENU_LANGUAGE                "&Sprache"
+
+#define MENU_HELP                    "&Hilfe"
+#define MENU_HELP_CONTENTS           "&Inhalt"
+#define MENU_HELP_SEARCH             "&Suchen..."
+#define MENU_HELP_HELP_ON_HELP       "&Hilfe benutzen"
+#define MENU_HELP_TUTORIAL           "&Lernprogramm"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Lizenz"
+#define MENU_INFO_NO_WARRANTY        "&KEINE GARANTIE"
+#define MENU_INFO_ABOUT_WINE         "&Über WINE"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "OK"
+#define DIALOG_CANCEL                "Abbrechen"
+#define DIALOG_BROWSE                "&Durchsuchen..."
+#define DIALOG_HELP                  "&Hilfe"
+
+#define DIALOG_NEW_Xx                DIALOG_NEW_De
+#define DIALOG_NEW_CAPTION           "Neues Programmobject"
+#define DIALOG_NEW_NEW               "Neu"
+#define DIALOG_NEW_GROUP             "Programmgrupp&e"
+#define DIALOG_NEW_PROGRAM           "&Programm"
+
+#define DIALOG_MOVE_Xx               DIALOG_MOVE_De
+#define DIALOG_MOVE_CAPTION          "Programm verschieben"
+#define DIALOG_MOVE_PROGRAM          "Verschiebe Programm:"
+#define DIALOG_MOVE_FROM_GROUP       "Von Programmgruppe:"
+#define DIALOG_MOVE_TO_GROUP         "&In Gruppe:"
+
+#define DIALOG_COPY_Xx               DIALOG_COPY_De
+#define DIALOG_COPY_CAPTION          "Programm kopieren"
+#define DIALOG_COPY_PROGRAM          "Kopiere Programm:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_Xx              DIALOG_GROUP_De
+#define DIALOG_GROUP_CAPTION         "Programmgruppeneigenschaften"
+#define DIALOG_GROUP_DESCRIPTION     "&Beschreibung:"
+#define DIALOG_GROUP_FILE            "&Gruppendatei:"
+
+#define DIALOG_PROGRAM_Xx            DIALOG_PROGRAM_De
+#define DIALOG_PROGRAM_CAPTION       "Programmeigenschaften"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "Befehls&zeile:"
+#define DIALOG_PROGRAM_DIRECTORY     "&Arbeitsverzeichnis:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Tastenkombination:"
+#define DIALOG_PROGRAM_SYMBOL        "Als Sy&mbol"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "Anderes &Symbol..."
+
+#define DIALOG_SYMBOL_Xx             DIALOG_SYMBOL_De
+#define DIALOG_SYMBOL_CAPTION        "Symbol auswählen"
+#define DIALOG_SYMBOL_FILE           "Datei&name:"
+#define DIALOG_SYMBOL_CURRENT        "&Aktuelles Symbol:"
+
+#define DIALOG_EXECUTE_Xx            DIALOG_EXECUTE_De
+#define DIALOG_EXECUTE_CAPTION       "Programm Ausführen"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+#include "Xx.rc"

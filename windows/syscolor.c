@@ -86,7 +86,7 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	break;
     case COLOR_WINDOWTEXT:
 	DeleteObject( sysColorObjects.hpenWindowText );
-	sysColorObjects.hpenWindowText = CreatePen( PS_SOLID, 1, color );
+	sysColorObjects.hpenWindowText = CreatePen( PS_DOT, 1, color );
 	break;
     case COLOR_CAPTIONTEXT:
 	break;

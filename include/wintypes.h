@@ -138,9 +138,11 @@ typedef FARPROC HOOKPROC;
 #define FALSE 0
 #define CW_USEDEFAULT ((INT)0x8000)
 #define FAR
+#define _far
 #define NEAR
 #define _near
 #define PASCAL
+#define _pascal
 #define VOID                void
 #define WINAPI              PASCAL
 #define CALLBACK            PASCAL

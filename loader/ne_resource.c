@@ -240,7 +240,6 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
 {
     NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
-    char *name;
     int fd;
 
     pModule = (NE_MODULE *)GlobalLock( hModule );
@@ -249,8 +248,7 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 #endif
 
-    name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    if ((fd = _lopen( name, OF_READ )) != -1)
+    if ((fd = _lopen( NE_MODULE_NAME(pModule), OF_READ )) != -1)
     {
         WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
         _llseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );

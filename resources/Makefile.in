@@ -2,7 +2,7 @@ TOPSRC = @top_srcdir@
 
 MODULE = resources
 
-LANGUAGES = En Es De No Fr Fi Da Cz
+LANGUAGES = En Es De No Fr Fi Da Cz Eo
 
 SYSRES_SRCS = $(LANGUAGES:%=sysres_%.c)
 

@@ -149,6 +149,10 @@ LRESULT DesktopWndProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
     case WM_ERASEBKGND:
 	if (rootWindow == DefaultRootWindow(display)) return 1;
 	return DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, infoPtr );
+
+    case WM_SYSCOMMAND:
+	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
+	ExitWindows( 0, 0 );
     }
     
     return 0;

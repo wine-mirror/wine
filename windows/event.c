@@ -145,6 +145,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( HWND hwnd, XSelectionEvent *event);
 static void EVENT_SelectionClear( HWND hwnd, XSelectionClearEvent *event);
+static void EVENT_ClientMessage( HWND hwnd, XClientMessageEvent *event );
 
 
 /***********************************************************************
@@ -218,6 +219,10 @@ void EVENT_ProcessEvent( XEvent *event )
 
     case SelectionClear:
 	EVENT_SelectionClear( hwnd, (XSelectionClearEvent*) event );
+	break;
+
+    case ClientMessage:
+	EVENT_ClientMessage( hwnd, (XClientMessageEvent *) event );
 	break;
 
     default:    
@@ -615,6 +620,30 @@ static void EVENT_SelectionClear(HWND hwnd, XSelectionClearEvent *event)
     if(event->selection!=XA_PRIMARY)return;
     CLIPBOARD_ReleaseSelection(hwnd); 
 }
+
+
+/**********************************************************************
+ *           EVENT_ClientMessage
+ */
+static void EVENT_ClientMessage (HWND hwnd, XClientMessageEvent *event )
+{
+    static Atom wmProtocols = None;
+    static Atom wmDeleteWindow = None;
+
+    if (wmProtocols == None)
+        wmProtocols = XInternAtom( display, "WM_PROTOCOLS", True );
+    if (wmDeleteWindow == None)
+        wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", True );
+
+    if ((event->format != 32) || (event->message_type != wmProtocols) ||
+        (((Atom) event->data.l[0]) != wmDeleteWindow))
+    {
+	dprintf_event( stddeb, "unrecognized ClientMessage\n" );
+	return;
+    }
+    SendMessage( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+}
+
 
 /**********************************************************************
  *		SetCapture 	(USER.18)

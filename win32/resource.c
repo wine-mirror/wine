@@ -97,9 +97,7 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
     DWORD root;
 	HANDLE32 result;
 
-#if 0
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-#endif
     dprintf_resource(stddeb, "FindResource: module=%08x type=", hModule );
     PrintId( type );
     dprintf_resource( stddeb, " name=" );
@@ -133,9 +131,7 @@ HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
 #ifndef WINELIB
     struct w_files *wptr = wine_files;
 
-#if 0
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-#endif
     dprintf_resource(stddeb, "LoadResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;

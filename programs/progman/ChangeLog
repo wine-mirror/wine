@@ -1,0 +1,6 @@
+Wed Feb 28 19:21:55 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [progman.h] [main.c] [group.c] [program.c] [dialog.c]
+	[grpfile.c] [string.c] [winexec.c] [license.h] [license.c] [Xx.rc]
+	[accel.rc] [En.rc] [Strings_En.c] [License_En.c] [De.rc]
+	[Strings_De.c] Original by Ulrich Schmid

@@ -92,6 +92,8 @@ static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL create )
     {
         if (!create) return NULL;
         if (!ATOM_InitTable( selector, DEFAULT_ATOMTABLE_SIZE )) return NULL;
+        /* Reload ptr in case it moved in linear memory */
+        ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
     }
     return (ATOMTABLE *)((char *)ptr + ptr->atomtable);
 }
@@ -156,6 +158,8 @@ static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
 
     entry = LOCAL_Alloc( selector, LMEM_FIXED, sizeof(ATOMENTRY)+len-1 );
     if (!entry) return 0;
+    /* Reload the table ptr in case it moved in linear memory */
+    table = ATOM_GetTable( selector, FALSE );
     entryPtr = ATOM_MakePtr( selector, entry );
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;

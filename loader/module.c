@@ -27,6 +27,8 @@
 #include "callback.h"
 #include "wine.h"
 
+extern HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
+
 static HMODULE hFirstModule = 0;
 static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
@@ -145,8 +147,7 @@ void MODULE_PrintModule( HMODULE hmodule )
 
       /* Dump the file info */
 
-    printf( "Filename: '%s'\n",
-         ((LOADEDFILEINFO *)((BYTE *)pModule + pModule->fileinfo))->filename );
+    printf( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
 
       /* Dump the segment table */
 
@@ -269,7 +270,7 @@ int MODULE_OpenFile( HMODULE hModule )
     if (hCachedModule == hModule) return cachedfd;
     close( cachedfd );
     hCachedModule = hModule;
-    name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
+    name = NE_MODULE_NAME( pModule );
     if (!(unixName = DOSFS_GetUnixFileName( name, TRUE )) ||
         (cachedfd = open( unixName, O_RDONLY )) == -1)
         fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module "NPFMT"\n",
@@ -444,7 +445,7 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
 
     size = sizeof(NE_MODULE) +
              /* loaded file info */
-           sizeof(LOADEDFILEINFO) + strlen(ofs->szPathName) +
+           sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1+
              /* segment table */
            ne_header.n_segment_tab * sizeof(SEGTABLEENTRY) +
              /* resource table */
@@ -488,13 +489,10 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
     /* Store the filename information */
 
     pModule->fileinfo = (int)pData - (int)pModule;
-    ((LOADEDFILEINFO*)pData)->length = sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName);
-    ((LOADEDFILEINFO*)pData)->fixed_media = TRUE;
-    ((LOADEDFILEINFO*)pData)->error = 0;
-    ((LOADEDFILEINFO*)pData)->date = 0;
-    ((LOADEDFILEINFO*)pData)->time = 0;
-    strcpy( ((LOADEDFILEINFO*)pData)->filename, ofs->szPathName );
-    pData += ((LOADEDFILEINFO*)pData)->length--;
+    size = sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
+    memcpy( pData, ofs, size );
+    ((OFSTRUCT *)pData)->cBytes = size - 1;
+    pData += size;
 
     /* Get the segment table */
 
@@ -845,7 +843,7 @@ HMODULE MODULE_FindModule( LPCSTR path )
     {
         NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
         if (!pModule) break;
-        modulepath = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
+        modulepath = NE_MODULE_NAME(pModule);
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
         else modulename++;
@@ -915,8 +913,6 @@ static void MODULE_FreeModule( HMODULE hModule )
     if (hCachedModule == hModule) hCachedModule = 0;
 }
 
-
-HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params);
 
 /**********************************************************************
  *	    LoadModule    (KERNEL.45)
@@ -1194,12 +1190,10 @@ int GetModuleUsage( HANDLE hModule )
 int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
 {
     NE_MODULE *pModule;
-    char *name;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
-    name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    lstrcpyn( lpFileName, name, nSize );
+    lstrcpyn( lpFileName, NE_MODULE_NAME(pModule), nSize );
     dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
     return strlen(lpFileName);
 }
@@ -1405,9 +1399,7 @@ BOOL ModuleNext( MODULEENTRY *lpme )
     lpme->szModule[MAX_MODULE_NAME] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
-    strncpy( lpme->szExePath,
-             ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename,
-             MAX_PATH );
+    strncpy( lpme->szExePath, NE_MODULE_NAME(pModule), MAX_PATH );
     lpme->szExePath[MAX_PATH] = '\0';
     lpme->wNext = pModule->next;
     return TRUE;

@@ -1,0 +1,41 @@
+TOPSRC   = @top_srcdir@
+MODULE   = none
+PROGRAMS = progman
+ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+
+LANGUAGES   = En De
+LICENSELANG = En
+
+MOSTOBJS = \
+	dialog.o \
+	group.o \
+	grpfile.o \
+	license.o \
+	main.o \
+	program.o \
+	winexec.o
+
+STRINGOBJS = \
+	accel.o \
+	string.o \
+	$(LANGUAGES:%=%.o) \
+	$(LICENSELANG:%=License_%.o) \
+	$(LANGUAGES:%=Strings_%.o) 
+
+C_SRCS = $(MOSTOBJS:.o=.c) $(STRINGOBJS:.o=.c)
+
+all: check_winerc $(PROGRAMS)
+
+@MAKE_RULES@
+
+# Some strings need addresses >= 0x10000
+progman: $(MOSTOBJS) $(STRINGOBJS)
+	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+
+clean::
+	$(RM) accel.c accel.h $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h) progman
+
+accel.c accel.h: $(WINERC) Xx.rc
+$(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
+
+### Dependencies:

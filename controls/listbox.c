@@ -2096,16 +2096,8 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
         if (!filespec[0]) strcpy( mask, "*.*" );
         else
         {
-            const char *ptr;
-            BYTE attr;
-            if (((ptr = DOSFS_GetUnixFileName( filespec, TRUE )) != NULL) &&
-                FILE_Stat( ptr, &attr, NULL, NULL, NULL ) &&
-                (attr & FA_DIRECTORY))
-            {
-                /* If the path exists and is a directory, chdir to it */
-                if (!DRIVE_Chdir( drive, filespec )) return FALSE;
-                strcpy( mask, "*.*" );
-            }
+            /* If the path exists and is a directory, chdir to it */
+            if (DRIVE_Chdir( drive, filespec )) strcpy( mask, "*.*" );
             else
             {
                 char *p, *p2;

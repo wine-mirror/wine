@@ -1,0 +1,14 @@
+SUBDIRS = progman
+
+all: $(SUBDIRS)
+
+$(SUBDIRS): dummy
+	@cd $@; $(MAKE)
+
+depend:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend); done
+
+clean:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean); done
+
+dummy:

@@ -181,7 +181,7 @@ base	1
 0170 stdcall EnableScrollBar(long long long)	EnableScrollBar
 0171 stdcall EnableWindow(long long)		EnableWindow
 0172 stub EndDeferWindowPos
-0173 stub EndDialog
+0173 stdcall EndDialog(long long) EndDialog
 0174 stub EndMenu
 0175 stdcall EndPaint(long ptr) USER32_EndPaint
 0176 stub EndTask
@@ -242,8 +242,8 @@ base	1
 0231 stub GetDesktopWindow
 0232 stub GetDialogBaseUnits
 0233 stub GetDlgCtrlID
-0234 stub GetDlgItem
-0235 stub GetDlgItemInt
+0234 stdcall GetDlgItem(long long) GetDlgItem
+0235 stdcall GetDlgItemInt(long long long long) GetDlgItemInt
 0236 stub GetDlgItemTextA
 0237 stub GetDlgItemTextW
 0238 stub GetDoubleClickTime
@@ -485,7 +485,7 @@ base	1
 0473 stub SetCursorPos
 0474 stub SetDebugErrorLevel
 0475 stub SetDeskWallpaper
-0476 stub SetDlgItemInt
+0476 stdcall SetDlgItemInt(long long long long) SetDlgItemInt
 0477 stub SetDlgItemTextA
 0478 stub SetDlgItemTextW
 0479 stub SetDoubleClickTime

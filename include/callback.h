@@ -32,6 +32,7 @@ extern WORD CallTo16_word_wlw  ( FARPROC, WORD, WORD, LONG, WORD );
 extern LONG CallTo16_long_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
 extern WORD CallTo16_word_llwl ( FARPROC, WORD, LONG, LONG, WORD, LONG );
 extern LONG CallTo16_long_wwwl ( FARPROC, WORD, WORD, WORD, WORD, LONG );
+extern WORD CallTo16_word_lwww ( FARPROC, WORD, LONG, WORD, WORD, WORD );
 extern WORD CallTo16_word_wllwl( FARPROC, WORD, WORD, LONG, LONG, WORD, LONG );
 extern WORD CallTo16_word_wwlll( FARPROC, WORD, WORD, WORD, LONG, LONG, LONG );
 
@@ -64,6 +65,8 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_word_wwlll( func, CURRENT_DS, id, msg, dwUser, dw1, dw2 )
 #define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
     CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
+#define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
+    CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
 
 #else  /* WINELIB */
 
@@ -93,6 +96,8 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     (*func)( id, msg, dwUser, dw1, dw2 )
 #define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
+#define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
+    (*func)( lpch, ichCurrent, cch, code )
 
 #endif  /* WINELIB */
 

@@ -23,9 +23,9 @@ VOID GetLocalTime(LPSYSTEMTIME systime)
     struct tm *local_tm;
     struct timeval tv;
 
-    time(&local_time);
-    local_tm = localtime(&local_time);
     gettimeofday(&tv, NULL);
+    local_time = tv.tv_sec;
+    local_tm = localtime(&local_time);
 
     systime->wYear = local_tm->tm_year + 1900;
     systime->wMonth = local_tm->tm_mon + 1;
@@ -46,9 +46,9 @@ VOID GetSystemTime(LPSYSTEMTIME systime)
     struct tm *local_tm;
     struct timeval tv;
 
-    time(&local_time);
-    local_tm = gmtime(&local_time);
     gettimeofday(&tv, NULL);
+    local_time = tv.tv_sec;
+    local_tm = gmtime(&local_time);
 
     systime->wYear = local_tm->tm_year + 1900;
     systime->wMonth = local_tm->tm_mon + 1;

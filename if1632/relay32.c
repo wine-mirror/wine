@@ -142,7 +142,7 @@ void RELAY32_MakeFakeModule(WIN32_builtin*dll)
 	struct w_files *wpnt;
 	int size;
 	HMODULE hModule;
-	LOADEDFILEINFO *pFileInfo;
+	OFSTRUCT *pFileInfo;
 	char *pStr;
 	wpnt=xmalloc(sizeof(struct w_files));
 	wpnt->hinstance=0;
@@ -151,7 +151,8 @@ void RELAY32_MakeFakeModule(WIN32_builtin*dll)
 	wpnt->mz_header=wpnt->pe=0;
 	size=sizeof(NE_MODULE) +
 		/* loaded file info */
-		sizeof(LOADEDFILEINFO) + strlen(dll->name) +
+		sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) +
+                strlen(dll->name) + 1 +
 		/* name table */
 		12 +
 		/* several empty tables */
@@ -177,10 +178,11 @@ void RELAY32_MakeFakeModule(WIN32_builtin*dll)
 	pModule->fileinfo=sizeof(NE_MODULE);
 	pModule->os_flags=NE_OSFLAGS_WINDOWS;
 	pModule->expected_version=0x30A;
-	pFileInfo=(LOADEDFILEINFO *)(pModule + 1);
-	pFileInfo->length = sizeof(LOADEDFILEINFO)+strlen(dll->name)-1;
-	strcpy(pFileInfo->filename,dll->name);
-	pStr = ((char*)pFileInfo+pFileInfo->length+1);
+	pFileInfo=(OFSTRUCT *)(pModule + 1);
+	pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
+                            + strlen(dll->name);
+	strcpy( pFileInfo->szPathName, dll->name );
+	pStr = ((char*)pFileInfo) + pFileInfo->cBytes + 1;
 	pModule->name_table=(int)pStr-(int)pModule;
 	*pStr=strlen(dll->name);
 	strcpy(pStr+1,dll->name);

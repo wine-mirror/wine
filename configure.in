@@ -97,6 +97,8 @@ misc/Makefile
 miscemu/Makefile
 multimedia/Makefile
 objects/Makefile
+programs/Makefile
+programs/progman/Makefile
 rc/Makefile
 resources/Makefile
 tools/Makefile

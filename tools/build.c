@@ -11,6 +11,7 @@
 #include "wine.h"
 #include "module.h"
 #include "neexe.h"
+#include "windows.h"
 
 /* ELF symbols do not have an underscore in front */
 #if defined (__ELF__) || defined (__svr4__)
@@ -560,13 +561,13 @@ static void BuildModule( int max_code_offset, int max_data_offset )
     char *buffer;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
-    LOADEDFILEINFO *pFileInfo;
+    OFSTRUCT *pFileInfo;
     BYTE *pstr, *bundle;
     WORD *pword;
 
     /*   Module layout:
      * NE_MODULE       Module
-     * LOADEDFILEINFO  File information
+     * OFSTRUCT        File information
      * SEGTABLEENTRY   Segment 1 (code)
      * SEGTABLEENTRY   Segment 2 (data)
      * WORD[2]         Resource table (empty)
@@ -606,15 +607,13 @@ static void BuildModule( int max_code_offset, int max_data_offset )
 
       /* File information */
 
-    pFileInfo = (LOADEDFILEINFO *)(pModule + 1);
+    pFileInfo = (OFSTRUCT *)(pModule + 1);
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
-    pFileInfo->length = sizeof(LOADEDFILEINFO) + strlen(UpperDLLName) + 3;
-    pFileInfo->fixed_media = 0;
-    pFileInfo->error = 0;
-    pFileInfo->date = 0;
-    pFileInfo->time = 0;
-    sprintf( pFileInfo->filename, "%s.DLL", UpperDLLName );
-    pstr = (char *)pFileInfo + pFileInfo->length + 1;
+    memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
+    pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
+                        + strlen(UpperDLLName) + 4;
+    sprintf( pFileInfo->szPathName, "%s.DLL", UpperDLLName );
+    pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
         
       /* Segment table */
 

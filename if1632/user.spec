@@ -280,7 +280,7 @@ id	2
 275 stub RepaintScreen
 276 stub LockMyTask
 277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID
-278 pascal16 GetDeskTopHwnd() GetDesktopWindow
+278 pascal16 GetDesktopHwnd() GetDesktopHwnd
 279 stub OldSetDeskPattern
 280 stub SetSystemMenu
 281 pascal16 GetSysColorBrush(word) GetSysColorBrush

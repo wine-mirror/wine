@@ -536,12 +536,11 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
 void InitTask(struct sigcontext_struct context);
 
-HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
+HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
 	struct w_files *wpnt;
-	int size;
+	int size, of_size;
 	NE_MODULE *pModule;
-	LOADEDFILEINFO *pFileInfo;
 	SEGTABLEENTRY *pSegment;
 	char *pStr;
 	DWORD cts;
@@ -561,15 +560,17 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	wpnt->mz_header=xmalloc(sizeof(struct mz_header_s));
 	read(fd,wpnt->mz_header,sizeof(struct mz_header_s));
 
-	size=sizeof(NE_MODULE) +
-		/* loaded file info */
-		sizeof(LOADEDFILEINFO) + strlen(ofs->szPathName) +
-		/* segment table: DS,CS */
-		2 * sizeof(SEGTABLEENTRY) +
-		/* name table */
-		9 +
-		/* several empty tables */
-		8;
+        of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
+                  + strlen(ofs->szPathName) + 1;
+	size = sizeof(NE_MODULE) +
+               /* loaded file info */
+               of_size +
+               /* segment table: DS,CS */
+               2 * sizeof(SEGTABLEENTRY) +
+               /* name table */
+               9 +
+               /* several empty tables */
+               8;
 
 	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
 	wpnt->hModule=hModule;
@@ -593,17 +594,16 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	pModule->seg_count=1;
 	pModule->modref_count=0;
 	pModule->nrname_size=0;
-	pModule->seg_table=sizeof(NE_MODULE)+
-			sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName);
+	pModule->seg_table=sizeof(NE_MODULE) + of_size;
 	pModule->fileinfo=sizeof(NE_MODULE);
 	pModule->os_flags=NE_OSFLAGS_WINDOWS;
 	pModule->expected_version=0x30A;
 
-	pFileInfo=(LOADEDFILEINFO *)(pModule + 1);
-	pFileInfo->length = sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName)-1;
-	strcpy(pFileInfo->filename,ofs->szPathName);
+        /* Set loaded file information */
+        memcpy( pModule + 1, ofs, of_size );
+        ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
 
-	pSegment=(SEGTABLEENTRY*)((char*)pFileInfo+pFileInfo->length+1);
+	pSegment=(SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
 	pModule->dgroup_entry=(int)pSegment-(int)pModule;
 	pSegment->size=0;
 	pSegment->flags=NE_SEGFLAGS_DATA;

@@ -212,7 +212,7 @@ rc_style *new_style()
 	/*initially, no bits have to be reset*/
 	ret->and=-1;
 	/*initially, no bits are set*/
-	ret->or=0;
+	ret->or=WS_CHILD | WS_VISIBLE;
 	return ret;
 }
 

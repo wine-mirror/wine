@@ -306,11 +306,12 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 {
     HANDLE class, hwnd;
     CLASS *classPtr;
-    WND *wndPtr;
+    WND *wndPtr, *parentWndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT createStruct;
     int wmcreate;
     XSetWindowAttributes win_attr;
+    Atom XA_WM_DELETE_WINDOW;
 
     /* FIXME: windowName and className should be SEGPTRs */
 
@@ -473,6 +474,15 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
                                         CWColormap | CWCursor | CWSaveUnder |
                                         CWBackingStore, &win_attr );
         XStoreName( display, wndPtr->window, PTR_SEG_TO_LIN(windowName) );
+	XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW",
+					   False );
+	XSetWMProtocols( display, wndPtr->window, &XA_WM_DELETE_WINDOW, 1 );
+	if (parent)  /* Get window owner */
+	{
+            Window win = WIN_GetXWindow( parent );
+            if (win) XSetTransientForHint( display, wndPtr->window, win );
+	}
+	    
         EVENT_RegisterWindow( wndPtr->window, hwnd );
     }
     
@@ -663,10 +673,21 @@ HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
  
  
 /**********************************************************************
- *           GetDesktopWindow        (USER.286)
- *	     GetDeskTopHwnd          (USER.278)
+ *           GetDesktopWindow   (USER.286)
  */
 HWND GetDesktopWindow(void)
+{
+    return hwndDesktop;
+}
+
+
+/**********************************************************************
+ *           GetDesktopHwnd   (USER.278)
+ *
+ * Exactly the same thing as GetDesktopWindow(), but not documented.
+ * Don't ask me why...
+ */
+HWND GetDesktopHwnd(void)
 {
     return hwndDesktop;
 }

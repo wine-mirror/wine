@@ -12,6 +12,7 @@
 #include "kernel32.h"
 #include "handle32.h"
 #include "pe_image.h"
+#include "task.h"
 #include "stddebug.h"
 #define DEBUG_WIN32
 #include "debug.h"
@@ -76,8 +77,13 @@ HMODULE WIN32_GetModuleHandle(char *module)
     HMODULE hModule;
 
     dprintf_win32(stddeb, "GetModuleHandle: %s\n", module ? module : "NULL");
-    if (module == NULL) hModule = GetExePtr( GetCurrentTask() );
-    else hModule = GetModuleHandle(module);
+/* Freecell uses the result of GetModuleHandleA(0) as the hInstance in
+all calls to e.g. CreateWindowEx. */
+    if (module == NULL) {
+	TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+	hModule = pTask->hInstance;
+    } else
+	hModule = GetModuleHandle(module);
     dprintf_win32(stddeb, "GetModuleHandle: returning %d\n", hModule );
     return hModule;
 }

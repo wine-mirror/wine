@@ -155,7 +155,6 @@ static void CARET_Initialize()
 /*****************************************************************
  *               CreateCaret          (USER.163)
  */
-
 BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
 {
     dprintf_caret(stddeb,"CreateCaret: hwnd="NPFMT"\n", hwnd);
@@ -186,7 +185,7 @@ BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
 	Caret.color = GetSysColor(COLOR_GRAYTEXT);
     else
 	Caret.color = GetSysColor(COLOR_WINDOW);
-    Caret.timeout = 750;
+    Caret.timeout = GetProfileInt( "windows", "CursorBlinkRate", 750 );
 
     CARET_Initialize();
 
@@ -220,6 +219,7 @@ BOOL DestroyCaret()
 void SetCaretPos(short x, short y)
 {
     if (!Caret.hwnd) return;
+    if ((x == Caret.x) && (y == Caret.y)) return;
 
     dprintf_caret(stddeb,"SetCaretPos: x=%d, y=%d\n", x, y);
 

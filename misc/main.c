@@ -56,6 +56,7 @@ static const char *langNames[] =
     "Fi",  /* LANG_Fi */
     "Da",  /* LANG_Da */
     "Cz",  /* LANG_Cz */
+    "Eo",  /* LANG_Eo */
     NULL
 };
 
@@ -138,7 +139,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -460,6 +461,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     XClassHint *class_hints;
     XSetWindowAttributes win_attr;
     XTextProperty window_name;
+    Atom XA_WM_DELETE_WINDOW;
 
     flags = XParseGeometry( Options.desktopGeometry,
 			    &desktopX, &desktopY, &width, &height );
@@ -505,6 +507,8 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     XStringListToTextProperty( &name, 1, &window_name );
     XSetWMProperties( display, rootWindow, &window_name, &window_name,
                       argv, argc, size_hints, wm_hints, class_hints );
+    XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW", False );
+    XSetWMProtocols( display, rootWindow, &XA_WM_DELETE_WINDOW, 1 );
     XFree( size_hints );
     XFree( wm_hints );
     XFree( class_hints );

@@ -14,11 +14,11 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "xmalloc.h"
 
-void *
-xmalloc (size_t size)
+void *xmalloc( int size )
 {
     void *res;
 
@@ -32,8 +32,7 @@ xmalloc (size_t size)
 }
 
 
-void *
-xrealloc (void *ptr, size_t size)
+void *xrealloc( void *ptr, int size )
 {
     void *res = realloc (ptr, size);
     if (res == NULL)

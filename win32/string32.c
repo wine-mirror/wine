@@ -17,7 +17,7 @@
 int STRING32_UniLen(LPWSTR s)
 {
 	int i;
-	for(i=0;*s;s++);
+	for(i=0;*s;s++)
 		i++;
 	return i;
 }

@@ -657,11 +657,6 @@ found:
     lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE ),
               sizeof(ofs->szPathName) );
 
-    if (mode & OF_PARSE) 
-    {
-          dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
-          return 0;
-    }
     if (mode & OF_DELETE)
     {
         if (unlink( unixName ) == -1) goto not_found;
@@ -690,13 +685,18 @@ found:
             if (memcmp( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) ))
             {
                 dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
+                close( handle );
                 return -1;
             }
         }
         memcpy( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) );
     }
 
-    if (mode & OF_EXIST) close( handle );
+    if (mode & OF_EXIST)
+    {
+        close( handle );
+        return 0;
+    }
     dprintf_file( stddeb, "FILE_Openfile: %s  return = %d\n", name,handle);
 
     return handle;
