@@ -907,12 +907,30 @@ void WINAPI PlayMetaFileRecord16(
 
      case META_DIBBITBLT:
         {
-         LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
-         LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
-         StretchDIBits16(hdc,mr->rdParm[7],mr->rdParm[6],mr->rdParm[5],
-                       mr->rdParm[4],mr->rdParm[3],mr->rdParm[2],
-                       mr->rdParm[5],mr->rdParm[4],bits,info,
-                       DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
+		/*In practice ive found that theres two layout for META_DIBBITBLT,
+		one (the first here) is the usual one when a src dc is actually passed
+		int, the second occurs when the src dc is passed in as NULL to
+		the creating BitBlt.
+		as the second case has no dib, a size check will suffice to distinguish.
+
+
+		Caolan.McNamara@ul.ie
+		*/
+		if (mr->rdSize > 12)
+                {
+                    LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
+                    LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
+                    StretchDIBits16(hdc,mr->rdParm[7],mr->rdParm[6],mr->rdParm[5],
+                                    mr->rdParm[4],mr->rdParm[3],mr->rdParm[2],
+                                    mr->rdParm[5],mr->rdParm[4],bits,info,
+                                    DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
+                }
+		else	/*equivalent to a PatBlt*/
+                {
+                    PatBlt16(hdc, mr->rdParm[8], mr->rdParm[7],
+                             mr->rdParm[6], mr->rdParm[5],
+                             MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
+                }
         }
         break;	
        
