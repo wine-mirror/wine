@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gdi.h"
-#include "callback.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -110,27 +109,6 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 }
 
 
-/***********************************************************************
- *           XPutImage_wrapper
- *
- * Wrapper to call XPutImage with CALL_LARGE_STACK.
- */
-
-struct XPutImage_descr
-{
-    BITMAPOBJ *bmp;
-    XImage    *image;
-    INT      width;
-    INT      height;
-};
-
-static int XPutImage_wrapper( const struct XPutImage_descr *descr )
-{
-    return XPutImage( display, (Pixmap)descr->bmp->physBitmap, BITMAP_GC(descr->bmp),
-                      descr->image, 0, 0, 0, 0, descr->width, descr->height );
-}
-
-
 /****************************************************************************
  *
  *	  X11DRV_CreateBitmap
@@ -190,19 +168,6 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 
 
 /***********************************************************************
- *           X11DRV_BITMAP_GetXImage
- *
- * Get an X image for a bitmap. For use with CALL_LARGE_STACK.
- */
-XImage *X11DRV_BITMAP_GetXImage( const BITMAPOBJ *bmp )
-{
-    return XGetImage( display, (Pixmap)bmp->physBitmap,
-		      0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-		      AllPlanes, ZPixmap );
-}
-
-
-/***********************************************************************
  *           X11DRV_GetBitmapBits
  * 
  * RETURNS
@@ -218,7 +183,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 
     TRACE("(bmp=%p, buffer=%p, count=0x%lx)\n", bmp, buffer, count);
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
 
     /* Hack: change the bitmap height temporarily to avoid */
     /*       getting unnecessary bitmap rows. */
@@ -226,8 +191,9 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
     old_height = bmp->bitmap.bmHeight;
     height = bmp->bitmap.bmHeight = count / bmp->bitmap.bmWidthBytes;
 
-    image = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
-
+    image = XGetImage( display, (Pixmap)bmp->physBitmap,
+                       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                       AllPlanes, ZPixmap );
     bmp->bitmap.bmHeight = old_height;
 
     /* copy XImage to 16 bit padded image buffer with real bitsperpixel */
@@ -322,8 +288,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
         FIXME("Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
     }
     XDestroyImage( image );
-    LeaveCriticalSection( &X11DRV_CritSection );
-
+    wine_tsx11_unlock();
     return count;
 }
 
@@ -338,7 +303,6 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
  */
 static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
 {
-    struct XPutImage_descr descr;
     LONG height;
     XImage *image;
     LPBYTE sbuf, startline;
@@ -348,14 +312,14 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     
     height = count / bmp->bitmap.bmWidthBytes;
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
     image = XCreateImage( display, X11DRV_GetVisual(), bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
                           bmp->bitmap.bmWidth, height, 32, 0 );
     if (!(image->data = (LPBYTE)malloc(image->bytes_per_line * height)))
     {
         WARN("No memory to create image data.\n");
         XDestroyImage( image );
-        LeaveCriticalSection( &X11DRV_CritSection );
+        wine_tsx11_unlock();
         return 0;
     }
     
@@ -440,16 +404,10 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
       FIXME("Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
 
     }
-
-    descr.bmp    = bmp;
-    descr.image  = image;
-    descr.width  = bmp->bitmap.bmWidth;
-    descr.height = height;
-
-    CALL_LARGE_STACK( XPutImage_wrapper, &descr );
+    XPutImage( display, (Pixmap)bmp->physBitmap, BITMAP_GC(bmp),
+               image, 0, 0, 0, 0, bmp->bitmap.bmWidth, height );
     XDestroyImage( image ); /* frees image->data too */
-    LeaveCriticalSection( &X11DRV_CritSection );
-    
+    wine_tsx11_unlock();
     return count;
 }
 

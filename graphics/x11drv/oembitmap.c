@@ -19,8 +19,12 @@ typedef unsigned long Pixel;
 #include <stdlib.h>
 #include <string.h>
 
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
+
 #include "bitmap.h"
-#include "callback.h"
 #include "color.h"
 #include "cursoricon.h"
 #include "debugtools.h"
@@ -352,30 +356,6 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
 }
 #endif /* defined(HAVE_LIBXXPM) */
 
-/***********************************************************************
- *           OBM_CreatePixmaps
- *
- * Create the 2 pixmaps from XPM data.
- *
- * The Xlib critical section must be entered before calling this function.
- */
-#ifdef HAVE_LIBXXPM
-
-typedef struct
-{
-    char         **data;
-    XpmAttributes *attrs;
-    Pixmap         pixmap;
-    Pixmap         pixmask;
-} OBM_PIXMAP_DESCR;
-
-static int OBM_CreatePixmaps( OBM_PIXMAP_DESCR *descr )
-{
-    return XpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), descr->data,
-                                    &descr->pixmap, &descr->pixmask, descr->attrs );
-}
-#endif /* defined(HAVE_LIBXXPM) */
-
 
 /***********************************************************************
  *           OBM_CreateBitmaps
@@ -386,50 +366,44 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color,
                                HBITMAP16 *bitmap, HBITMAP16 *mask, POINT *hotspot )
 {
 #ifdef HAVE_LIBXXPM
-    OBM_PIXMAP_DESCR descr;
+    XpmAttributes *attrs;
+    Pixmap pixmap, pixmask;
     int err;
 
-    descr.attrs = (XpmAttributes *)HeapAlloc( GetProcessHeap(), 0,
-		                              XpmAttributesSize() );
-    if (descr.attrs == NULL) return FALSE;
-    descr.attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
-    descr.attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
-    descr.attrs->depth        = color ? X11DRV_GetDepth() : 1;
-    descr.attrs->colorsymbols = (descr.attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
-    descr.attrs->numsymbols   = (descr.attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
+    attrs = (XpmAttributes *)HeapAlloc( GetProcessHeap(), 0, XpmAttributesSize() );
+    if (attrs == NULL) return FALSE;
+    attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
+    attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
+    attrs->depth        = color ? X11DRV_GetDepth() : 1;
+    attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
+    attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
 
-    descr.data = data;
-     
-    EnterCriticalSection( &X11DRV_CritSection );
-    err = CALL_LARGE_STACK( OBM_CreatePixmaps, &descr );
-    LeaveCriticalSection( &X11DRV_CritSection );
-
+    err = TSXpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), data,
+                                     &pixmap, &pixmask, attrs );
     if (err != XpmSuccess)
     {
-        HeapFree( GetProcessHeap(), 0, descr.attrs );
+        HeapFree( GetProcessHeap(), 0, attrs );
         return FALSE;
     }
 
     if (hotspot)
     {
-        hotspot->x = descr.attrs->x_hotspot;
-        hotspot->y = descr.attrs->y_hotspot;
+        hotspot->x = attrs->x_hotspot;
+        hotspot->y = attrs->y_hotspot;
     }
 
     if (bitmap)
-        *bitmap = OBM_MakeBitmap( descr.attrs->width, descr.attrs->height,
-                                  descr.attrs->depth, descr.pixmap );
+        *bitmap = OBM_MakeBitmap( attrs->width, attrs->height,
+                                  attrs->depth, pixmap );
         
     if (mask)
-        *mask = OBM_MakeBitmap( descr.attrs->width, descr.attrs->height,
-                                1, descr.pixmask );
+        *mask = OBM_MakeBitmap( attrs->width, attrs->height,
+                                1, pixmask );
 
-    HeapFree( GetProcessHeap(), 0, descr.attrs );
+    HeapFree( GetProcessHeap(), 0, attrs );
 
-    if (descr.pixmap && (!bitmap || !*bitmap)) 
-        TSXFreePixmap( display, descr.pixmap );
-    if (descr.pixmask && (!mask || !*mask)) 
-        TSXFreePixmap( display, descr.pixmask );
+    if (pixmap && (!bitmap || !*bitmap)) TSXFreePixmap( display, pixmap );
+    if (pixmask && (!mask || !*mask)) TSXFreePixmap( display, pixmask );
 
     if (bitmap && !*bitmap)
     {

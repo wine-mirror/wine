@@ -13,10 +13,6 @@
 #include "wine/winuser16.h"
 
 extern void SYSDEPS_SwitchToThreadStack( void (*func)(void) ) WINE_NORETURN;
-extern int SYSDEPS_CallOnLargeStack( int (*func)(void *), void *arg );
-
-#define CALL_LARGE_STACK( func, arg ) \
-        SYSDEPS_CallOnLargeStack( (int (*)(void *))(func), (void *)(arg) )
 
 typedef void (*RELAY)();
 extern FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay );

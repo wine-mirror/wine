@@ -30,7 +30,6 @@
 #include "x11font.h"
 #include "bitmap.h"
 #include "gdi.h"
-#include "callback.h"
 #include "metafile.h"
 #include "palette.h"
 #include "color.h"
@@ -124,7 +123,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
         {
             register int x, y;
             XImage *image;
-            EnterCriticalSection( &X11DRV_CritSection );
+            wine_tsx11_lock();
             pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(), 
 				    8, 8, X11DRV_GetDepth() );
             image = XGetImage( display, physDev->brush.pixmap, 0, 0, 8, 8,
@@ -135,7 +134,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
                                X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y)] );
             XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
             XDestroyImage( image );
-            LeaveCriticalSection( &X11DRV_CritSection );
+            wine_tsx11_unlock();
             val.tile = pixmap;
         }
         else val.tile = physDev->brush.pixmap;
@@ -880,7 +879,7 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
 
     x = dc->DCOrgX + XLPTODP( dc, x );
     y = dc->DCOrgY + YLPTODP( dc, y );
-    EnterCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
     if (dc->flags & DC_MEMORY)
     {
         image = XGetImage( display, physDev->drawable, x, y, 1, 1,
@@ -898,8 +897,7 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     }
     pixel = XGetPixel( image, 0, 0 );
     XDestroyImage( image );
-    LeaveCriticalSection( &X11DRV_CritSection );
-    
+    wine_tsx11_unlock();
     return X11DRV_PALETTE_ToLogical(pixel);
 }
 
@@ -1212,86 +1210,49 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
 
 
 /**********************************************************************
- *          X11DRV_DoFloodFill
- *
- * Main flood-fill routine.
- *
- * The Xlib critical section must be entered before calling this function.
- */
-
-struct FloodFill_params
-{
-    DC      *dc;
-    INT    x;
-    INT    y;
-    COLORREF color;
-    UINT   fillType;
-};
-
-static BOOL X11DRV_DoFloodFill( const struct FloodFill_params *params )
-{
-    XImage *image;
-    RECT rect;
-    DC *dc = params->dc;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-
-    if (GetRgnBox( dc->hGCClipRgn, &rect ) == ERROR) return FALSE;
-
-    if (!(image = XGetImage( display, physDev->drawable,
-                             rect.left,
-                             rect.top,
-                             rect.right - rect.left,
-                             rect.bottom - rect.top,
-                             AllPlanes, ZPixmap ))) return FALSE;
-
-    if (X11DRV_SetupGCForBrush( dc ))
-    {
-	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
- 
-          /* ROP mode is always GXcopy for flood-fill */
-        XSetFunction( display, physDev->gc, GXcopy );
-        X11DRV_InternalFloodFill(image, dc,
-                                 XLPTODP(dc,params->x) + dc->DCOrgX - rect.left,
-                                 YLPTODP(dc,params->y) + dc->DCOrgY - rect.top,
-                                 rect.left,
-                                 rect.top,
-                                 X11DRV_PALETTE_ToPhysical( dc, params->color ),
-                                 params->fillType );
-	
-    	/* Update the DIBSection of the dc's bitmap */
-    	X11DRV_UnlockDIBSection(dc, TRUE);
-    }
-
-    XDestroyImage( image );
-    return TRUE;
-}
-
-
-/**********************************************************************
  *          X11DRV_ExtFloodFill
  */
 BOOL
 X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
                      UINT fillType )
 {
-    BOOL result;
-    struct FloodFill_params params;
+    XImage *image;
+    RECT rect;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n",
-                      x, y, color, fillType );
-
-    params.dc = dc;
-    params.x = x;
-    params.y = y;
-    params.color = color;
-    params.fillType = fillType;
+    TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n", x, y, color, fillType );
 
     if (!PtVisible( dc->hSelf, x, y )) return FALSE;
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = CALL_LARGE_STACK( X11DRV_DoFloodFill, &params );
-    LeaveCriticalSection( &X11DRV_CritSection );
-    return result;
+    if (GetRgnBox( dc->hGCClipRgn, &rect ) == ERROR) return FALSE;
+
+    if (!(image = TSXGetImage( display, physDev->drawable,
+                               rect.left,
+                               rect.top,
+                               rect.right - rect.left,
+                               rect.bottom - rect.top,
+                               AllPlanes, ZPixmap ))) return FALSE;
+
+    wine_tsx11_lock();
+    if (X11DRV_SetupGCForBrush( dc ))
+    {
+	/* Update the pixmap from the DIB section */
+	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+
+          /* ROP mode is always GXcopy for flood-fill */
+        XSetFunction( display, physDev->gc, GXcopy );
+        X11DRV_InternalFloodFill(image, dc,
+                                 XLPTODP(dc,x) + dc->DCOrgX - rect.left,
+                                 YLPTODP(dc,y) + dc->DCOrgY - rect.top,
+                                 rect.left, rect.top,
+                                 X11DRV_PALETTE_ToPhysical( dc, color ),
+                                 fillType );
+        /* Update the DIBSection of the dc's bitmap */
+        X11DRV_UnlockDIBSection(dc, TRUE);
+    }
+
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    return TRUE;
 }
 
 /**********************************************************************

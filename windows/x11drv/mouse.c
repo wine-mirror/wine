@@ -8,11 +8,12 @@
 
 #include "ts_xlib.h"
 
-#include "callback.h"
+#include "windef.h"
+#include "wine/winuser16.h"
+
 #include "debugtools.h"
 #include "mouse.h"
 #include "win.h"
-#include "windef.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(cursor);
@@ -167,9 +168,9 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
     BOOL success;
 
-    EnterCriticalSection( &X11DRV_CritSection );
-    success = CALL_LARGE_STACK( X11DRV_MOUSE_DoSetCursor, lpCursor );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
+    success = X11DRV_MOUSE_DoSetCursor( lpCursor );
+    wine_tsx11_unlock();
     if ( !success ) return;
 
     if (X11DRV_GetXRootWindow() != DefaultRootWindow(display))

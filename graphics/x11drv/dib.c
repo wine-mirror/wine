@@ -25,7 +25,6 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "color.h"
-#include "callback.h"
 #include "selectors.h"
 #include "global.h"
 
@@ -36,6 +35,35 @@ static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
 
 static int XShmErrorFlag = 0;
+
+/* This structure holds the arguments for DIB_SetImageBits() */
+typedef struct
+{
+    struct tagDC   *dc;
+    LPCVOID         bits;
+    XImage         *image;
+    PALETTEENTRY   *palentry;
+    int             lines;
+    DWORD           infoWidth;
+    WORD            depth;
+    WORD            infoBpp;
+    WORD            compression;
+    RGBQUAD        *colorMap;
+    int             nColorMap;
+    Drawable        drawable;
+    GC              gc;
+    int             xSrc;
+    int             ySrc;
+    int             xDest;
+    int             yDest;
+    int             width;
+    int             height;
+    DWORD           rMask;
+    DWORD           gMask;
+    DWORD           bMask;
+    BOOL            useShm;
+    int             dibpitch;
+} X11DRV_DIB_IMAGEBITS_DESCR;
 
 /***********************************************************************
  *           X11DRV_DIB_Init
@@ -2608,13 +2636,13 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
  *
  * Transfer the bits to an X image.
  * Helper function for SetDIBits() and SetDIBitsToDevice().
- * The Xlib critical section must be entered before calling this function.
  */
-int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
+static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 {
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
     XImage *bmpImage;
 
+    wine_tsx11_lock();
     if (descr->image)
         bmpImage = descr->image;
     else {
@@ -2624,6 +2652,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         if(bmpImage->data == NULL) {
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
+            wine_tsx11_unlock();
             return lines;
         }
     }
@@ -2709,6 +2738,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 		   descr->width, descr->height );
 
     if (!descr->image) XDestroyImage( bmpImage );
+    wine_tsx11_unlock();
     return lines;
 }
 
@@ -2716,14 +2746,14 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
  *           X11DRV_DIB_GetImageBits
  *
  * Transfer the bits from an X image.
- * The Xlib critical section must be entered before calling this function.
  */
-int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
+static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 {
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
     XImage *bmpImage;
 
-    if (descr->image)
+    wine_tsx11_lock(); 
+   if (descr->image)
         bmpImage = descr->image;
     else {
         bmpImage = XCreateImage( display, X11DRV_GetVisual(), descr->depth, ZPixmap, 0, NULL,
@@ -2732,8 +2762,10 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         if(bmpImage->data == NULL) {
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
+            wine_tsx11_unlock();
             return lines;
-        }                                                                           }
+        }
+    }
 
     TRACE("XGetSubImage(%p,%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
      display, descr->drawable, descr->xSrc, descr->ySrc, descr->width,
@@ -2798,6 +2830,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     }
 
     if (!descr->image) XDestroyImage( bmpImage );
+    wine_tsx11_unlock();
     return lines;
 }
 
@@ -2886,9 +2919,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     descr.useShm    = FALSE;
     descr.dibpitch  = ((width * descr.infoBpp + 31) &~31) / 8;
 
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    result = X11DRV_DIB_SetImageBits( &descr );
 
     if (descr.infoBpp <= 8)
        HeapFree(GetProcessHeap(), 0, descr.colorMap);
@@ -2974,11 +3005,8 @@ INT X11DRV_DIB_SetDIBits(
   descr.height    = lines;
   descr.useShm    = FALSE;
   descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
-  
-  EnterCriticalSection( &X11DRV_CritSection );
-  result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
-  LeaveCriticalSection( &X11DRV_CritSection );
-  
+  result = X11DRV_DIB_SetImageBits( &descr );
+
   if (descr.colorMap) HeapFree(GetProcessHeap(), 0, descr.colorMap);
 
   return result;
@@ -3089,12 +3117,8 @@ INT X11DRV_DIB_GetDIBits(
   descr.dibpitch = dib ? (dib->dibSection.dsBm.bmWidthBytes)
 		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
-  EnterCriticalSection( &X11DRV_CritSection );
+  X11DRV_DIB_GetImageBits( &descr );
 
-  CALL_LARGE_STACK( X11DRV_DIB_GetImageBits, &descr );
-
-  LeaveCriticalSection( &X11DRV_CritSection );
-  
   if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
       info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
 					 info->bmiHeader.biWidth,
@@ -3201,16 +3225,12 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
   if (toDIB)
     {
       TRACE("Copying from Pixmap to DIB bits\n");
-      EnterCriticalSection( &X11DRV_CritSection );
-      CALL_LARGE_STACK( X11DRV_DIB_GetImageBits, &descr );
-      LeaveCriticalSection( &X11DRV_CritSection );
+      X11DRV_DIB_GetImageBits( &descr );
     }
   else
     {
       TRACE("Copying from DIB bits to Pixmap\n"); 
-      EnterCriticalSection( &X11DRV_CritSection );
-      CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
-      LeaveCriticalSection( &X11DRV_CritSection );
+      X11DRV_DIB_SetImageBits( &descr );
     }
 }
 
@@ -3699,7 +3719,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
     *image = TSXShmCreateImage(display, X11DRV_GetVisual(), bpp, ZPixmap, NULL, shminfo, width, height);
     if( *image != NULL ) 
     {
-        EnterCriticalSection( &X11DRV_CritSection );
+        wine_tsx11_lock();
         shminfo->shmid = shmget(IPC_PRIVATE, (*image)->bytes_per_line * height,
                                   IPC_CREAT|0700);
         if( shminfo->shmid != -1 )
@@ -3720,8 +3740,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
 			shmctl(shminfo->shmid, IPC_RMID, 0);
 
                         XSetErrorHandler(WineXHandler);
-                        LeaveCriticalSection( &X11DRV_CritSection );
-
+                        wine_tsx11_unlock();
                         return TRUE; /* Success! */
                     }    
                     /* An error occured */
@@ -3734,7 +3753,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
         }        
         XFlush(display);
         XDestroyImage(*image);
-        LeaveCriticalSection( &X11DRV_CritSection );
+        wine_tsx11_unlock();
     }
     return FALSE;
 }

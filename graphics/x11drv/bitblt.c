@@ -13,8 +13,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "bitmap.h"
-#include "callback.h"
 #include "color.h"
 #include "gdi.h"
 #include "metafile.h"
@@ -1421,34 +1423,6 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     return TRUE;
 }
 
-struct StretchBlt_params
-{
-    DC   *dcDst;
-    INT xDst;
-    INT yDst;
-    INT widthDst;
-    INT heightDst;
-    DC   *dcSrc;
-    INT xSrc;
-    INT ySrc;
-    INT widthSrc;
-    INT heightSrc;
-    DWORD rop;
-};
-
-/***********************************************************************
- *           BITBLT_DoStretchBlt
- *
- * Wrapper function for BITBLT_InternalStretchBlt
- * to use with CALL_LARGE_STACK.
- */
-static int BITBLT_DoStretchBlt( const struct StretchBlt_params *p )
-{
-    return (int)BITBLT_InternalStretchBlt( p->dcDst, p->xDst, p->yDst,
-                                           p->widthDst, p->heightDst,
-                                           p->dcSrc, p->xSrc, p->ySrc,
-                                           p->widthSrc, p->heightSrc, p->rop );
-}
 
 /***********************************************************************
  *           X11DRV_PatBlt
@@ -1456,25 +1430,12 @@ static int BITBLT_DoStretchBlt( const struct StretchBlt_params *p )
 BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
                       INT width, INT height, DWORD rop )
 {
-    struct StretchBlt_params params;
     BOOL result;
 
-    params.dcDst = dc;
-    params.xDst = left;
-    params.yDst = top;
-    params.widthDst = width;
-    params.heightDst = height;
-    params.dcSrc = NULL;
-    params.xSrc = 0;
-    params.ySrc = 0;
-    params.widthSrc = 0;
-    params.heightSrc = 0;
-    params.rop = rop;
-
     X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
+    result = BITBLT_InternalStretchBlt( dc, left, top, width, height, NULL, 0, 0, 0, 0, rop );
+    wine_tsx11_unlock();
     X11DRV_UnlockDIBSection( dc, TRUE );
     return result;
 }
@@ -1487,7 +1448,6 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
                       INT width, INT height, DC *dcSrc,
                       INT xSrc, INT ySrc, DWORD rop )
 {
-    struct StretchBlt_params params;
     BOOL result = FALSE;
     INT sSrc, sDst;
     RECT visRectDst, visRectSrc;
@@ -1515,7 +1475,7 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
                                       dcSrc, xSrc, ySrc, width, height,
                                       &visRectSrc, &visRectDst ))
         goto END;
-      
+
       xSrc = visRectSrc.left;
       ySrc = visRectSrc.top;
       xDst = visRectDst.left;
@@ -1533,24 +1493,13 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
       goto END;
     }
 
-    params.dcDst = dcDst;
-    params.xDst = xDst;
-    params.yDst = yDst;
-    params.widthDst = width;
-    params.heightDst = height;
-    params.dcSrc = dcSrc;
-    params.xSrc = xSrc;
-    params.ySrc = ySrc;
-    params.widthSrc = width;
-    params.heightSrc = height;
-    params.rop = rop;
-
     X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
     X11DRV_CoerceDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
+    result = BITBLT_InternalStretchBlt( dcDst, xDst, yDst, width, height,
+                                        dcSrc, xSrc, ySrc, width, height, rop );
+    wine_tsx11_unlock();
 
 END:
     X11DRV_UnlockDIBSection( dcSrc, FALSE );
@@ -1568,27 +1517,15 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
                           DC *dcSrc, INT xSrc, INT ySrc,
                           INT widthSrc, INT heightSrc, DWORD rop )
 {
-    struct StretchBlt_params params;
     BOOL result;
-
-    params.dcDst = dcDst;
-    params.xDst = xDst;
-    params.yDst = yDst;
-    params.widthDst = widthDst;
-    params.heightDst = heightDst;
-    params.dcSrc = dcSrc;
-    params.xSrc = xSrc;
-    params.ySrc = ySrc;
-    params.widthSrc = widthSrc;
-    params.heightSrc = heightSrc;
-    params.rop = rop;
 
     X11DRV_LockDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
     X11DRV_LockDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
-    LeaveCriticalSection( &X11DRV_CritSection );
+    wine_tsx11_lock();
+    result = BITBLT_InternalStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
+                                        dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
+    wine_tsx11_unlock();
 
     X11DRV_UnlockDIBSection( dcSrc, FALSE );
     X11DRV_UnlockDIBSection( dcDst, TRUE );

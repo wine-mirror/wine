@@ -240,36 +240,6 @@ typedef struct
 
 } X11DRV_DIBSECTION;
 
-/* This structure holds the arguments for DIB_SetImageBits() */
-typedef struct
-{
-    struct tagDC     *dc;
-    LPCVOID           bits;
-    XImage           *image;
-    PALETTEENTRY     *palentry;
-    int               lines;
-    DWORD             infoWidth;
-    WORD              depth;
-    WORD              infoBpp;
-    WORD              compression;
-    RGBQUAD          *colorMap;
-    int               nColorMap;
-    Drawable          drawable;
-    GC                gc;
-    int               xSrc;
-    int               ySrc;
-    int               xDest;
-    int               yDest;
-    int               width;
-    int               height;
-    DWORD             rMask;
-    DWORD             gMask;
-    DWORD             bMask;
-    BOOL        useShm;
-    int               dibpitch;
-
-} X11DRV_DIB_IMAGEBITS_DESCR;
-
 extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );

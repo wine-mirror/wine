@@ -22,7 +22,6 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 
-#include "callback.h"
 #include "debugtools.h"
 #include "gdi.h"
 #include "options.h"
@@ -257,11 +256,6 @@ static void create_desktop( const char *geometry )
     TSXMapWindow( display, root_window );
 }
 
-/* Created so that XOpenIM can be called using the 'large stack' */
-static void XOpenIM_large_stack(void)
-{
-  TSXOpenIM(display,NULL,NULL,NULL);
-}
 
 /***********************************************************************
  *           X11DRV process initialisation routine
@@ -315,7 +309,7 @@ static void process_attach(void)
      * them to work in Wine, even whith a libX11 including the dead key
      * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
      */
-    CALL_LARGE_STACK( XOpenIM_large_stack, NULL );
+    TSXOpenIM( display, NULL, NULL, NULL);
 
     if (Options.synchronous) XSetErrorHandler( error_handler );
 
