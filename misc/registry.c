@@ -25,21 +25,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <limits.h>
-#include <ctype.h>
 #include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #include <sys/types.h>
-#include <fcntl.h>
-#include <sys/fcntl.h>
 #include <sys/stat.h>
-#include <time.h>
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wine/winbase16.h"
+#include <fcntl.h>
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
@@ -47,1125 +36,177 @@
 #include "options.h"
 #include "winreg.h"
 #include "server.h"
-#include "services.h"
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+#include "winnt.h"
+
 
 DEFAULT_DEBUG_CHANNEL(reg);
 
-static void REGISTRY_Init(void);
-/* FIXME: following defines should be configured global ... */
-
-#define SAVE_USERS_DEFAULT          ETCDIR"/wine.userreg"
-#define SAVE_LOCAL_MACHINE_DEFAULT  ETCDIR"/wine.systemreg"
+/* FIXME: following defines should be configured global */
+#define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  ETCDIR"/wine.userreg"
+#define SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE ETCDIR"/wine.systemreg"
 
 /* relative in ~user/.wine/ : */
-#define SAVE_CURRENT_USER           "user.reg"
-#define SAVE_DEFAULT_USER           "userdef.reg"
-#define SAVE_LOCAL_USERS_DEFAULT    "wine.userreg"
-#define SAVE_LOCAL_MACHINE          "system.reg"
+#define SAVE_LOCAL_REGBRANCH_CURRENT_USER  "user.reg"
+#define SAVE_LOCAL_REGBRANCH_USER_DEFAULT  "userdef.reg"
+#define SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE "system.reg"
 
-
-static void *xmalloc( size_t size )
+/* _xmalloc [Internal] */
+static void *_xmalloc( size_t size )
 {
     void *res;
- 
+
     res = malloc (size ? size : 1);
     if (res == NULL) {
         WARN("Virtual memory exhausted.\n");
         exit (1);
     }
     return res;
-}                                                                              
-
-
-/******************************************************************************
- * REGISTRY_Init [Internal]
- * Registry initialisation, allocates some default keys. 
- */
-static void REGISTRY_Init(void) {
-	HKEY	hkey;
-	char	buf[200];
-
-	TRACE("(void)\n");
-
-	RegCreateKeyA(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
-	RegCloseKey(hkey);
-
-        /* This was an Open, but since it is called before the real registries
-           are loaded, it was changed to a Create - MTB 980507*/
-	RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System",&hkey);
-	RegSetValueExA(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
-	RegCloseKey(hkey);
-
-	/* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
-	 *						CurrentVersion
-	 *						CurrentBuildNumber
-	 *						CurrentType
-	 *					string	RegisteredOwner
-	 *					string	RegisteredOrganization
-	 *
-	 */
-	/* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
-	 * 					string	SysContact
-	 * 					string	SysLocation
-	 * 						SysServices
-	 */
-	if (-1!=gethostname(buf,200)) {
-		RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",&hkey);
-		RegSetValueExA(hkey,"ComputerName",0,REG_SZ,buf,strlen(buf)+1);
-		RegCloseKey(hkey);
-	}
 }
 
-
-/************************ LOAD Registry Function ****************************/
-
-
-
-/******************************************************************************
- * _find_or_add_key [Internal]
- */
-static inline HKEY _find_or_add_key( HKEY hkey, LPWSTR keyname )
-{
-    HKEY subkey;
-    if (RegCreateKeyW( hkey, keyname, &subkey ) != ERROR_SUCCESS) subkey = 0;
-    if (keyname) free( keyname );
-    return subkey;
-}
-
-/******************************************************************************
- * _find_or_add_value [Internal]
- */
-static void _find_or_add_value( HKEY hkey, LPWSTR name, DWORD type, LPBYTE data, DWORD len )
-{
-    RegSetValueExW( hkey, name, 0, type, data, len );
-    if (name) free( name );
-    if (data) free( data );
-}
-
-
-/******************************************************************************
- * _wine_read_line [Internal]
- *
- * reads a line including dynamically enlarging the readbuffer and throwing
- * away comments
- */
-static int _wine_read_line( FILE *F, char **buf, int *len )
-{
-	char	*s,*curread;
-	int	mylen,curoff;
-
-	curread	= *buf;
-	mylen	= *len;
-	**buf	= '\0';
-	while (1) {
-		while (1) {
-			s=fgets(curread,mylen,F);
-			if (s==NULL)
-				return 0; /* EOF */
-			if (NULL==(s=strchr(curread,'\n'))) {
-				/* buffer wasn't large enough */
-				curoff	= strlen(*buf);
-				curread	= realloc(*buf,*len*2);
-                                if(curread == NULL) {
-                                    WARN("Out of memory");
-                                    return 0;
-                                }
-                                *buf	= curread;
-				curread+= curoff;
-				mylen	= *len;	/* we filled up the buffer and 
-						 * got new '*len' bytes to fill
-						 */
-				*len	= *len * 2;
-			} else {
-				*s='\0';
-				break;
-			}
-		}
-		/* throw away comments */
-		if (**buf=='#' || **buf==';') {
-			curread	= *buf;
-			mylen	= *len;
-			continue;
-		}
-		if (s) 	/* got end of line */
-			break;
-	}
-	return 1;
-}
-
-
-/******************************************************************************
- * _wine_read_USTRING [Internal]
- *
- * converts a char* into a UNICODE string (up to a special char)
- * and returns the position exactly after that string
- */
-static char* _wine_read_USTRING( char *buf, LPWSTR *str )
-{
-	char	*s;
-	LPWSTR	ws;
-
-	/* read up to "=" or "\0" or "\n" */
-	s	= buf;
-	*str	= (LPWSTR)xmalloc(2*strlen(buf)+2);
-	ws	= *str;
-	while (*s && (*s!='\n') && (*s!='=')) {
-		if (*s!='\\')
-			*ws++=*((unsigned char*)s++);
-		else {
-			s++;
-			if (!*s) {
-				/* Dangling \ ... may only happen if a registry
-				 * write was short. FIXME: What to do?
-				 */
-				 break;
-			}
-			if (*s=='\\') {
-				*ws++='\\';
-				s++;
-				continue;
-			}
-			if (*s!='u') {
-				WARN("Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
-				*ws++='\\';
-				*ws++=*s++;
-			} else {
-				char	xbuf[5];
-				int	wc;
-
-				s++;
-				memcpy(xbuf,s,4);xbuf[4]='\0';
-				if (!sscanf(xbuf,"%x",&wc))
-					WARN("Strange escape sequence %s found in |%s|\n",xbuf,buf);
-				s+=4;
-				*ws++	=(unsigned short)wc;
-			}
-		}
-	}
-	*ws	= 0;
-	return s;
-}
-
-
-/******************************************************************************
- * _wine_loadsubkey [Internal]
- *
- * NOTES
- *    It seems like this is returning a boolean.  Should it?
- *
- * RETURNS
- *    Success: 1
- *    Failure: 0
- */
-static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buflen )
-{
-    	HKEY subkey;
-	int		i;
-	char		*s;
-	LPWSTR		name;
-
-    TRACE("(%p,%x,%d,%s,%d)\n", F, hkey, level, debugstr_a(*buf), *buflen);
-
-    /* Good.  We already got a line here ... so parse it */
-    subkey = 0;
-    while (1) {
-        i=0;s=*buf;
-        while (*s=='\t') {
-            s++;
-            i++;
-        }
-        if (i>level) {
-            if (!subkey) {
-                WARN("Got a subhierarchy without resp. key?\n");
-                return 0;
-            }
-	    if (!_wine_loadsubkey(F,subkey,level+1,buf,buflen))
-	       if (!_wine_read_line(F,buf,buflen))
-		  goto done;
-            continue;
-        }
-
-		/* let the caller handle this line */
-		if (i<level || **buf=='\0')
-			goto done;
-
-		/* it can be: a value or a keyname. Parse the name first */
-		s=_wine_read_USTRING(s,&name);
-
-		/* switch() default: hack to avoid gotos */
-		switch (0) {
-		default:
-			if (*s=='\0') {
-                                if (subkey) RegCloseKey( subkey );
-				subkey=_find_or_add_key(hkey,name);
-			} else {
-				LPBYTE		data;
-				int		len,lastmodified,type;
-
-				if (*s!='=') {
-					WARN("Unexpected character: %c\n",*s);
-					break;
-				}
-				s++;
-				if (2!=sscanf(s,"%d,%d,",&type,&lastmodified)) {
-					WARN("Haven't understood possible value in |%s|, skipping.\n",*buf);
-					break;
-				}
-				/* skip the 2 , */
-				s=strchr(s,',');s++;
-				s=strchr(s,',');
-				if (!s++) {
-					WARN("Haven't understood possible value in |%s|, skipping.\n",*buf);
-					break;
-				}
-				if (type == REG_SZ || type == REG_EXPAND_SZ) {
-					s=_wine_read_USTRING(s,(LPWSTR*)&data);
-                                        len = lstrlenW((LPWSTR)data)*2+2;
-				} else {
-					len=strlen(s)/2;
-					data = (LPBYTE)xmalloc(len+1);
-					for (i=0;i<len;i++) {
-						data[i]=0;
-						if (*s>='0' && *s<='9')
-							data[i]=(*s-'0')<<4;
-						if (*s>='a' && *s<='f')
-							data[i]=(*s-'a'+'\xa')<<4;
-						if (*s>='A' && *s<='F')
-							data[i]=(*s-'A'+'\xa')<<4;
-						s++;
-						if (*s>='0' && *s<='9')
-							data[i]|=*s-'0';
-						if (*s>='a' && *s<='f')
-							data[i]|=*s-'a'+'\xa';
-						if (*s>='A' && *s<='F')
-							data[i]|=*s-'A'+'\xa';
-						s++;
-					}
-				}
-				_find_or_add_value(hkey,name,type,data,len);
-			}
-		}
-		/* read the next line */
-		if (!_wine_read_line(F,buf,buflen))
-			goto done;
-    }
- done:
-    if (subkey) RegCloseKey( subkey );
-    return 1;
-}
-
-
-/******************************************************************************
- * _wine_loadsubreg [Internal]
- */
-static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
-{
-	int	ver;
-	char	*buf;
-	int	buflen;
-
-	buf=xmalloc(10);buflen=10;
-	if (!_wine_read_line(F,&buf,&buflen)) {
-		free(buf);
-		return 0;
-	}
-	if (!sscanf(buf,"WINE REGISTRY Version %d",&ver)) {
-		free(buf);
-		return 0;
-	}
-	if (ver!=1) {
-            if (ver == 2)  /* new version */
-            {
-                HANDLE file;
-                if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                      FILE_ATTRIBUTE_NORMAL, -1, TRUE )) != INVALID_HANDLE_VALUE)
-                {
-                    SERVER_START_REQ
-                    {
-                        struct load_registry_request *req = server_alloc_req( sizeof(*req), 0 );
-                        req->hkey    = hkey;
-                        req->file    = file;
-                        server_call( REQ_LOAD_REGISTRY );
-                    }
-                    SERVER_END_REQ;
-                    CloseHandle( file );
-                }
-                free( buf );
-                return 1;
-            }
-            else
-            {
-		TRACE("Old format (%d) registry found, ignoring it. (buf was %s).\n",ver,buf);
-		free(buf);
-		return 0;
-            }
-	}
-	if (!_wine_read_line(F,&buf,&buflen)) {
-		free(buf);
-		return 0;
-	}
-	if (!_wine_loadsubkey(F,hkey,0,&buf,&buflen)) {
-		free(buf);
-		return 0;
-	}
-	free(buf);
-	return 1;
-}
-
-
-/******************************************************************************
- * _wine_loadreg [Internal]
- */
-static int _wine_loadreg( HKEY hkey, char *fn )
-{
-    FILE *F;
-
-    TRACE("(%x,%s)\n",hkey,debugstr_a(fn));
-
-    F = fopen(fn,"rb");
-    if (F==NULL) {
-        WARN("Couldn't open %s for reading: %s\n",fn,strerror(errno) );
-        return -1;
-    }
-    _wine_loadsubreg(F,hkey,fn);
-    fclose(F);
-    return 0;
-}
-
-/* NT REGISTRY LOADER */
-
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-
-#ifndef MAP_FAILED
-#define MAP_FAILED ((LPVOID)-1)
-#endif
-
-#define  NT_REG_BLOCK_SIZE		0x1000
-
-#define NT_REG_HEADER_BLOCK_ID       0x66676572	/* regf */
-#define NT_REG_POOL_BLOCK_ID         0x6E696268	/* hbin */
-#define NT_REG_KEY_BLOCK_ID          0x6b6e /* nk */
-#define NT_REG_VALUE_BLOCK_ID        0x6b76 /* vk */
-
-/* subblocks of nk */
-#define NT_REG_HASH_BLOCK_ID         0x666c /* lf */
-#define NT_REG_NOHASH_BLOCK_ID       0x696c /* li */
-#define NT_REG_RI_BLOCK_ID	     0x6972 /* ri */
-
-#define NT_REG_KEY_BLOCK_TYPE        0x20
-#define NT_REG_ROOT_KEY_BLOCK_TYPE   0x2c
-
-typedef struct 
-{
-	DWORD	id;		/* 0x66676572 'regf'*/
-	DWORD	uk1;		/* 0x04 */
-	DWORD	uk2;		/* 0x08 */
-	FILETIME	DateModified;	/* 0x0c */
-	DWORD	uk3;		/* 0x14 */
-	DWORD	uk4;		/* 0x18 */
-	DWORD	uk5;		/* 0x1c */
-	DWORD	uk6;		/* 0x20 */
-	DWORD	RootKeyBlock;	/* 0x24 */
-	DWORD	BlockSize;	/* 0x28 */
-	DWORD   uk7[116];	
-	DWORD	Checksum; /* at offset 0x1FC */
-} nt_regf;
-
-typedef struct
-{
-	DWORD	blocksize;
-	BYTE	data[1];
-} nt_hbin_sub;
-
-typedef struct
-{
-	DWORD	id;		/* 0x6E696268 'hbin' */
-	DWORD	off_prev;
-	DWORD	off_next;
-	DWORD	uk1;
-	DWORD	uk2;		/* 0x10 */
-	DWORD	uk3;		/* 0x14 */
-	DWORD	uk4;		/* 0x18 */
-	DWORD	size;		/* 0x1C */
-	nt_hbin_sub	hbin_sub;	/* 0x20 */
-} nt_hbin;
-
-/*
- * the value_list consists of offsets to the values (vk)
- */
-typedef struct
-{
-	WORD	SubBlockId;		/* 0x00 0x6B6E */
-	WORD	Type;			/* 0x02 for the root-key: 0x2C, otherwise 0x20*/
-	FILETIME	writetime;	/* 0x04 */
-	DWORD	uk1;			/* 0x0C */
-	DWORD	parent_off;		/* 0x10 Offset of Owner/Parent key */
-	DWORD	nr_subkeys;		/* 0x14 number of sub-Keys */
-	DWORD	uk8;			/* 0x18 */
-	DWORD	lf_off;			/* 0x1C Offset of the sub-key lf-Records */
-	DWORD	uk2;			/* 0x20 */
-	DWORD	nr_values;		/* 0x24 number of values */
-	DWORD	valuelist_off;		/* 0x28 Offset of the Value-List */
-	DWORD	off_sk;			/* 0x2c Offset of the sk-Record */
-	DWORD	off_class;		/* 0x30 Offset of the Class-Name */
-	DWORD	uk3;			/* 0x34 */
-	DWORD	uk4;			/* 0x38 */
-	DWORD	uk5;			/* 0x3c */
-	DWORD	uk6;			/* 0x40 */
-	DWORD	uk7;			/* 0x44 */
-	WORD	name_len;		/* 0x48 name-length */
-	WORD	class_len;		/* 0x4a class-name length */
-	char	name[1];		/* 0x4c key-name */
-} nt_nk;
-
-typedef struct
-{
-	DWORD	off_nk;	/* 0x00 */
-	DWORD	name;	/* 0x04 */
-} hash_rec;
-
-typedef struct
-{
-	WORD	id;		/* 0x00 0x666c */
-	WORD	nr_keys;	/* 0x06 */
-	hash_rec	hash_rec[1];
-} nt_lf;
-
-/*
- list of subkeys without hash
-
- li --+-->nk
-      |
-      +-->nk
- */
-typedef struct
-{
-	WORD	id;		/* 0x00 0x696c */
-	WORD	nr_keys;
-	DWORD	off_nk[1];
-} nt_li;
-
-/*
- this is a intermediate node
-
- ri --+-->li--+-->nk
-      |       +
-      |       +-->nk
-      |
-      +-->li--+-->nk
-              +
-	      +-->nk
- */
-typedef struct
-{
-	WORD	id;		/* 0x00 0x6972 */
-	WORD	nr_li;		/* 0x02 number off offsets */
-	DWORD	off_li[1];	/* 0x04 points to li */
-} nt_ri;
-
-typedef struct
-{
-	WORD	id;		/* 0x00 'vk' */
-	WORD	nam_len;
-	DWORD	data_len;
-	DWORD	data_off;
-	DWORD	type;
-	WORD	flag;
-	WORD	uk1;
-	char	name[1];
-} nt_vk;
-
-LPSTR _strdupnA( LPCSTR str, int len )
+/* _strdupnA [Internal] */
+static LPSTR _strdupnA(LPCSTR str,size_t len)
 {
     LPSTR ret;
 
     if (!str) return NULL;
-    ret = xmalloc( len + 1 );
+    ret = _xmalloc( len + 1 );
     memcpy( ret, str, len );
     ret[len] = 0x00;
     return ret;
 }
 
-static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level);
-static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk);
-static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int level);
-
-
-/*
- * gets a value
- *
- * vk->flag:
- *  0 value is a default value
- *  1 the value has a name
- *
- * vk->data_len
- *  len of the whole data block
- *  - reg_sz (unicode)
- *    bytes including the terminating \0 = 2*(number_of_chars+1)
- *  - reg_dword, reg_binary:
- *    if highest bit of data_len is set data_off contains the value
- */
-static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk)
+/* convert ansi string to unicode [Internal] */
+static LPWSTR _strdupnAtoW(LPCSTR strA,size_t lenA)
 {
-	WCHAR name [256];
-	DWORD len, ret;
-	BYTE * pdata = (BYTE *)(base+vk->data_off+4); /* start of data */
+    LPWSTR ret;
+    size_t lenW;
 
-	if(vk->id != NT_REG_VALUE_BLOCK_ID) goto error;
+    if (!strA) return NULL;
+    lenW = MultiByteToWideChar(CP_ACP,0,strA,lenA,NULL,0);
+    ret = _xmalloc(lenW*sizeof(WCHAR)+sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP,0,strA,lenA,ret,lenW);
+    ret[lenW] = 0;
+    return ret;
+}
 
-        if (!(len = MultiByteToWideChar( CP_ACP, 0, vk->name, vk->nam_len, name, 256 )) && vk->nam_len)
+/* dump a Unicode string with proper escaping [Internal] */
+/* FIXME: this code duplicates server/unicode.c */
+static int _dump_strW(const WCHAR *str,size_t len,FILE *f,char escape[2])
+{
+    static const char escapes[32] = ".......abtnvfr.............e....";
+    char buffer[256];
+    LPSTR pos = buffer;
+    int count = 0;
+
+    for (; len; str++, len--)
+    {
+        if (pos > buffer + sizeof(buffer) - 8)
         {
-            ERR("name too large '%.*s' (%d)\n", vk->nam_len, vk->name, vk->nam_len );
-            return FALSE;
+            fwrite( buffer, pos - buffer, 1, f );
+            count += pos - buffer;
+            pos = buffer;
         }
-        name[len] = 0;
-
-	ret = RegSetValueExW( hkey, (vk->flag & 0x00000001) ? name : NULL, 0, vk->type,
-			(vk->data_len & 0x80000000) ? (LPBYTE)&(vk->data_off): pdata,
-			(vk->data_len & 0x7fffffff) );
-	if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
-	return TRUE;
-error:
-	ERR("unknown block found (0x%04x), please report!\n", vk->id);
-	return FALSE;
+        if (*str > 127)  /* hex escape */
+        {
+            if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
+                pos += sprintf( pos, "\\x%04x", *str );
+            else
+                pos += sprintf( pos, "\\x%x", *str );
+            continue;
+        }
+        if (*str < 32)  /* octal or C escape */
+        {
+            if (!*str && len == 1) continue;  /* do not output terminating NULL */
+            if (escapes[*str] != '.')
+                pos += sprintf( pos, "\\%c", escapes[*str] );
+            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
+                pos += sprintf( pos, "\\%03o", *str );
+            else
+                pos += sprintf( pos, "\\%o", *str );
+            continue;
+        }
+        if (*str == '\\' || *str == escape[0] || *str == escape[1]) *pos++ = '\\';
+        *pos++ = *str;
+    }
+    fwrite( buffer, pos - buffer, 1, f );
+    count += pos - buffer;
+    return count;
 }
 
-/*
- * get the subkeys
- *
- * this structure contains the hash of a keyname and points to all
- * subkeys
- *
- * exception: if the id is 'il' there are no hash values and every 
- * dword is a offset
- */
-static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int level)
+/* convert ansi string to unicode and dump with proper escaping [Internal] */
+static int _dump_strAtoW(LPCSTR strA,size_t len,FILE *f,char escape[2])
 {
-	int i;
+    WCHAR *strW;
+    int ret;
 
-	if (lf->id == NT_REG_HASH_BLOCK_ID)
-	{
-	  if (subkeys != lf->nr_keys) goto error1;
-
-	  for (i=0; i<lf->nr_keys; i++)
-	  {
-	    if (!_nt_parse_nk(hkey, base, (nt_nk*)(base+lf->hash_rec[i].off_nk+4), level)) goto error;
-	  }
-	}
-	else if (lf->id == NT_REG_NOHASH_BLOCK_ID)
-	{
-	  nt_li * li = (nt_li*)lf;
-	  if (subkeys != li->nr_keys) goto error1;
-
-	  for (i=0; i<li->nr_keys; i++)
-	  {
-	    if (!_nt_parse_nk(hkey, base, (nt_nk*)(base+li->off_nk[i]+4), level)) goto error;
-	  }
-	}
-	else if (lf->id == NT_REG_RI_BLOCK_ID) /* ri */
-	{
-	  nt_ri * ri = (nt_ri*)lf;
-	  int li_subkeys = 0;
-
-	  /* count all subkeys */
-	  for (i=0; i<ri->nr_li; i++)
-	  {
-	    nt_li * li = (nt_li*)(base+ri->off_li[i]+4);
-	    if(li->id != NT_REG_NOHASH_BLOCK_ID) goto error2;
-	    li_subkeys += li->nr_keys;
-	  }
-
-	  /* check number */
-	  if (subkeys != li_subkeys) goto error1;
-
-	  /* loop through the keys */
-	  for (i=0; i<ri->nr_li; i++)
-	  {
-	    nt_li * li = (nt_li*)(base+ri->off_li[i]+4);
-	    if (!_nt_parse_lf(hkey, base, li->nr_keys, (nt_lf*)li, level)) goto error;
-	  }
-	}
-	else 
-	{
-	  goto error2;
-	}
-	return TRUE;
-
-error2: ERR("unknown node id 0x%04x, please report!\n", lf->id);
-	return TRUE;
-	
-error1:	ERR("registry file corrupt! (inconsistent number of subkeys)\n");
-	return FALSE;
-
-error:	ERR("error reading lf block\n");
-	return FALSE;
+    if (strA == NULL) return 0;
+    strW = _strdupnAtoW(strA,len);
+    ret = _dump_strW(strW,len,f,escape);
+    free(strW);
+    return ret;
 }
 
-static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
+/* a key value */
+/* FIXME: this code duplicates server/registry.c */
+struct key_value {
+    WCHAR            *nameW;   /* value name */
+    int               type;    /* value type */
+    size_t            len;     /* value data length in bytes */
+    void             *data;    /* pointer to value data */
+};
+
+/* dump a value to a text file */
+/* FIXME: this code duplicates server/registry.c */
+static void _dump_value(struct key_value *value,FILE *f)
 {
-	char * name;
-	unsigned int n;
-	DWORD * vl;
-	HKEY subkey = hkey;
+    int i, count;
 
-	if(nk->SubBlockId != NT_REG_KEY_BLOCK_ID)
-	{
-	  ERR("unknown node id 0x%04x, please report!\n", nk->SubBlockId);
-	  goto error;
-	}
+    if (value->nameW[0]) {
+        fputc( '\"', f );
+        count = 1 + _dump_strW(value->nameW,strlenW(value->nameW),f,"\"\"");
+        count += fprintf( f, "\"=" );
+    }
+    else count = fprintf( f, "@=" );
 
-	if((nk->Type!=NT_REG_ROOT_KEY_BLOCK_TYPE) &&
-	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID))
-	{
-	  ERR("registry file corrupt!\n");
-	  goto error;
-	}
-
-	/* create the new key */
-	if(level <= 0)
-	{
-	  name = _strdupnA( nk->name, nk->name_len);
-	  if(RegCreateKeyA( hkey, name, &subkey )) { free(name); goto error; }
-	  free(name);
-	}
-
-	/* loop through the subkeys */
-	if (nk->nr_subkeys)
-	{
-	  nt_lf * lf = (nt_lf*)(base+nk->lf_off+4);
-	  if (!_nt_parse_lf(subkey, base, nk->nr_subkeys, lf, level-1)) goto error1;
-	}
-
-	/* loop trough the value list */
-	vl = (DWORD *)(base+nk->valuelist_off+4);
-	for (n=0; n<nk->nr_values; n++)
-	{
-	  nt_vk * vk = (nt_vk*)(base+vl[n]+4);
-	  if (!_nt_parse_vk(subkey, base, vk)) goto error1;
-	}
-
-	/* Don't close the subkey if it is the hkey that was passed
-	 * (i.e. Level was <= 0)
-	 */
-	if( subkey!=hkey ) RegCloseKey(subkey);
-	return TRUE;
-	
-error1:	RegCloseKey(subkey);
-error:	return FALSE;
+    switch(value->type) {
+        case REG_SZ:
+        case REG_EXPAND_SZ:
+        case REG_MULTI_SZ:
+            if (value->type != REG_SZ) fprintf( f, "str(%d):", value->type );
+            fputc( '\"', f );
+            if (value->data) _dump_strW(value->data,value->len/sizeof(WCHAR),f,"\"\"");
+            fputc( '\"', f );
+            break;
+        case REG_DWORD:
+            if (value->len == sizeof(DWORD)) {
+                DWORD dw;
+                memcpy( &dw, value->data, sizeof(DWORD) );
+                fprintf( f, "dword:%08lx", dw );
+                break;
+            }
+            /* else fall through */
+        default:
+            if (value->type == REG_BINARY) count += fprintf( f, "hex:" );
+            else count += fprintf( f, "hex(%x):", value->type );
+            for (i = 0; i < value->len; i++) {
+                count += fprintf( f, "%02x", *((unsigned char *)value->data + i) );
+                if (i < value->len-1) {
+                    fputc( ',', f );
+                    if (++count > 76) {
+                        fprintf( f, "\\\n  " );
+                        count = 2;
+                    }
+                }
+            }
+            break;
+    }
+    fputc( '\n', f );
 }
 
-/* end nt loader */
-
-/* windows 95 registry loader */
-
-/* SECTION 1: main header
- *
- * once at offset 0
- */
-#define	W95_REG_CREG_ID	0x47455243
-
-typedef struct 
-{
-	DWORD	id;		/* "CREG" = W95_REG_CREG_ID */
-	DWORD	version;	/* ???? 0x00010000 */
-	DWORD	rgdb_off;	/* 0x08 Offset of 1st RGDB-block */
-	DWORD	uk2;		/* 0x0c */
-	WORD	rgdb_num;	/* 0x10 # of RGDB-blocks */
-	WORD	uk3;
-	DWORD	uk[3];
-	/* rgkn */
-} _w95creg;
-
-/* SECTION 2: Directory information (tree structure)
- *
- * once on offset 0x20
- *
- * structure: [rgkn][dke]*	(repeat till last_dke is reached)
- */
-#define	W95_REG_RGKN_ID	0x4e4b4752
-
-typedef struct
-{
-	DWORD	id;		/*"RGKN" = W95_REG_RGKN_ID */
-	DWORD	size;		/* Size of the RGKN-block */
-	DWORD	root_off;	/* Rel. Offset of the root-record */
-	DWORD   last_dke;       /* Offset to last DKE ? */
-	DWORD	uk[4];
-} _w95rgkn;
-
-/* Disk Key Entry Structure
- *
- * the 1st entry in a "usual" registry file is a nul-entry with subkeys: the
- * hive itself. It looks the same like other keys. Even the ID-number can
- * be any value.
- *
- * The "hash"-value is a value representing the key's name. Windows will not
- * search for the name, but for a matching hash-value. if it finds one, it
- * will compare the actual string info, otherwise continue with the next key.
- * To calculate the hash initialize a D-Word with 0 and add all ASCII-values 
- * of the string which are smaller than 0x80 (128) to this D-Word.   
- *
- * If you want to modify key names, also modify the hash-values, since they
- * cannot be found again (although they would be displayed in REGEDIT)
- * End of list-pointers are filled with 0xFFFFFFFF
- *
- * Disk keys are layed out flat ... But, sometimes, nrLS and nrMS are both
- * 0xFFFF, which means skipping over nextkeyoffset bytes (including this
- * structure) and reading another RGDB_section.
- *
- * The last DKE (see field last_dke in _w95_rgkn) has only 3 DWORDs with
- * 0x80000000 (EOL indicator ?) as x1, the hash value and 0xFFFFFFFF as x3.
- * The remaining space between last_dke and the offset calculated from
- * rgkn->size seems to be free for use for more dke:s.
- * So it seems if more dke:s are added, they are added to that space and
- * last_dke is grown, and in case that "free" space is out, the space
- * gets grown and rgkn->size gets adjusted.
- *
- * there is a one to one relationship between dke and dkh
- */
- /* key struct, once per key */
-typedef struct
-{
-	DWORD	x1;		/* Free entry indicator(?) */
-	DWORD	hash;		/* sum of bytes of keyname */
-	DWORD	x3;		/* Root key indicator? usually 0xFFFFFFFF */
-	DWORD	prevlvl;	/* offset of previous key */
-	DWORD	nextsub;	/* offset of child key */
-	DWORD	next;		/* offset of sibling key */
-	WORD	nrLS;		/* id inside the rgdb block */
-	WORD	nrMS;		/* number of the rgdb block */
-} _w95dke;
-
-/* SECTION 3: key information, values and data
- *
- * structure:
- *  section:	[blocks]*		(repeat creg->rgdb_num times)
- *  blocks:	[rgdb] [subblocks]* 	(repeat till block size reached )
- *  subblocks:	[dkh] [dkv]*		(repeat dkh->values times )
- *
- * An interesting relationship exists in RGDB_section. The DWORD value
- * at offset 0x10 equals the one at offset 0x04 minus the one at offset 0x08.
- * I have no idea at the moment what this means.  (Kevin Cozens)
- */
-
-/* block header, once per block */
-#define W95_REG_RGDB_ID	0x42444752
-
-typedef struct
-{
-	DWORD	id;	/* 0x00 'RGDB' = W95_REG_RGDB_ID */
-	DWORD	size;	/* 0x04 */
-	DWORD	uk1;	/* 0x08 */
-	DWORD	uk2;	/* 0x0c */
-	DWORD	uk3;	/* 0x10 */
-	DWORD	uk4;	/* 0x14 */
-	DWORD	uk5;	/* 0x18 */
-	DWORD	uk6;	/* 0x1c */
-	/* dkh */
-} _w95rgdb;
-
-/* Disk Key Header structure (RGDB part), once per key */
-typedef	struct 
-{
-	DWORD	nextkeyoff; 	/* 0x00 offset to next dkh */
-	WORD	nrLS;		/* 0x04 id inside the rgdb block */
-	WORD	nrMS;		/* 0x06 number of the rgdb block */
-	DWORD	bytesused;	/* 0x08 */
-	WORD	keynamelen;	/* 0x0c len of name */
-	WORD	values;		/* 0x0e number of values */
-	DWORD	xx1;		/* 0x10 */
-	char	name[1];	/* 0x14 */
-	/* dkv */		/* 0x14 + keynamelen */
-} _w95dkh;
-
-/* Disk Key Value structure, once per value */
-typedef	struct
-{
-	DWORD	type;		/* 0x00 */
-	DWORD	x1;		/* 0x04 */
-	WORD	valnamelen;	/* 0x08 length of name, 0 is default key */
-	WORD	valdatalen;	/* 0x0A length of data */
-	char	name[1];	/* 0x0c */
-	/* raw data */		/* 0x0c + valnamelen */
-} _w95dkv;
-
-/******************************************************************************
- * _w95_lookup_dkh [Internal]
- *
- * seeks the dkh belonging to a dke
- */
-static _w95dkh * _w95_lookup_dkh (_w95creg *creg, int nrLS, int nrMS)
-{
-	_w95rgdb * rgdb;
-	_w95dkh * dkh;
-	int i;
-	
-	/* get the beginning of the rgdb datastore */
-	rgdb = (_w95rgdb*)((char*)creg+creg->rgdb_off);
-
-	/* check: requested block < last_block) */
-	if (creg->rgdb_num <= nrMS)				
-	{
-	  ERR("registry file corrupt! requested block no. beyond end.\n");
-	  goto error;
-	}
-	
-	/* find the right block */
-	for(i=0; i<nrMS ;i++)
-	{
-	  if(rgdb->id != W95_REG_RGDB_ID)			/* check the magic */
-	  {
-	    ERR("registry file corrupt! bad magic 0x%08lx\n", rgdb->id);
-	    goto error;
-	  }
-	  rgdb = (_w95rgdb*) ((char*)rgdb+rgdb->size);		/* find next block */
-	}
-
-	dkh = (_w95dkh*)(rgdb + 1);				/* first sub block within the rgdb */
-
-	do
-	{
-	  if(nrLS==dkh->nrLS ) return dkh;
-	  dkh = (_w95dkh*)((char*)dkh + dkh->nextkeyoff);	/* find next subblock */
-	} while ((char *)dkh < ((char*)rgdb+rgdb->size));
-
-error:	return NULL;
-}	
- 
-/******************************************************************************
- * _w95_parse_dkv [Internal]
- */
-static int _w95_parse_dkv (
-	HKEY hkey,
-	_w95dkh * dkh,
-	int nrLS,
-	int nrMS )
-{
-	_w95dkv * dkv;
-	int i;
-	DWORD ret;
-	char * name;
-			
-	/* first value block */
-	dkv = (_w95dkv*)((char*)dkh+dkh->keynamelen+0x14);
-
-	/* loop trought the values */
-	for (i=0; i< dkh->values; i++)
-	{
-	  name = _strdupnA(dkv->name, dkv->valnamelen);
-	  ret = RegSetValueExA(hkey, name, 0, dkv->type, &(dkv->name[dkv->valnamelen]),dkv->valdatalen); 
-	  if (ret) FIXME("RegSetValueEx returned: 0x%08lx\n", ret);
-	  free (name);
-
-	  /* next value */
-	  dkv = (_w95dkv*)((char*)dkv+dkv->valnamelen+dkv->valdatalen+0x0c);
-	}
-	return TRUE;
-}
-
-/******************************************************************************
- * _w95_parse_dke [Internal]
- */
-static int _w95_parse_dke( 
-	HKEY hkey,
-	_w95creg * creg,
-	_w95rgkn *rgkn,
-	_w95dke * dke,
-	int level )
-{
-	_w95dkh * dkh;
-	HKEY hsubkey = hkey;
-	char * name;
-	int ret = FALSE;
-
-	/* special root key */
-	if (dke->nrLS == 0xffff || dke->nrMS==0xffff)		/* eg. the root key has no name */
-	{
-	  /* parse the one subkey */
-	  if (dke->nextsub != 0xffffffff) 
-	  {
-    	    return _w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level);
-	  }
-	  /* has no sibling keys */
-	  goto error;
-	}
-
-	/* search subblock */
-	if (!(dkh = _w95_lookup_dkh(creg, dke->nrLS, dke->nrMS)))
-	{
-	  fprintf(stderr, "dke pointing to missing dkh !\n");
-	  goto error;
-	}
-
-	if ( level <= 0 )
-	{
-	  /* walk sibling keys */
-	  if (dke->next != 0xffffffff )
-	  {
-    	    if (!_w95_parse_dke(hkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next), level)) goto error;
-	  }
-
-	  /* create subkey and insert values */
-	  name = _strdupnA( dkh->name, dkh->keynamelen);
-	  if (RegCreateKeyA(hkey, name, &hsubkey)) { free(name); goto error; }
-	  free(name);
-	  if (!_w95_parse_dkv(hsubkey, dkh, dke->nrLS, dke->nrMS)) goto error1;
-	}  
-	
- 	/* next sub key */
-	if (dke->nextsub != 0xffffffff) 
-	{
-    	  if (!_w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level-1)) goto error1;
-	}
-
-	ret = TRUE;
-error1:	if (hsubkey != hkey) RegCloseKey(hsubkey);
-error:	return ret;
-}
-/* end windows 95 loader */
-
-/******************************************************************************
- *	NativeRegLoadKey [Internal]
- *
- * Loads a native registry file (win95/nt)
- * 	hkey	root key
- *	fn	filename
- *	level	number of levels to cut away (eg. ".Default" in user.dat)
- *
- * this function intentionally uses unix file functions to make it possible
- * to move it to a seperate registry helper programm
- */
-static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
-{
-	int fd = 0;
-	struct stat st;
-        DOS_FULL_NAME full_name;
-	int ret = FALSE;
-	void * base;
-	char *filetype = "unknown";
-			
-        if (!DOSFS_GetFullName( fn, 0, &full_name )) return FALSE;
-	
-	/* map the registry into the memory */
-	if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return FALSE;
-	if ((fstat(fd, &st) == -1)) goto error;
-	if (!st.st_size) goto error;
-	if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error;
-
-	switch (*(LPDWORD)base)
-	{
-	  /* windows 95 'CREG' */
-	  case W95_REG_CREG_ID:
-	    {
-	      _w95creg *creg;
-	      _w95rgkn *rgkn;
-	      _w95dke *dke, *root_dke;
-	      creg = base;
-	      filetype = "win95";
-	      TRACE("Loading %s registry '%s' '%s'\n", filetype, fn, full_name.long_name);
-
-	      /* load the header (rgkn) */
-	      rgkn = (_w95rgkn*)(creg + 1);
-	      if (rgkn->id != W95_REG_RGKN_ID) 
-	      {
-		ERR("second IFF header not RGKN, but %lx\n", rgkn->id);
-		goto error1;
-	      }
-	      if (rgkn->root_off != 0x20)
-	      {
-		ERR("rgkn->root_off not 0x20, please report !\n");
-		goto error1;
-	      }
-	      if (rgkn->last_dke > rgkn->size)
-	      {
-		ERR("registry file corrupt! last_dke > size!\n");
-		goto error1;
-	      }
-	      /* verify last dke */
-	      dke = (_w95dke*)((char*)rgkn + rgkn->last_dke);
-	      if (dke->x1 != 0x80000000)
-	      { /* wrong magic */
-		ERR("last dke invalid !\n");
-		goto error1;
-	      }
-	      if (rgkn->size > creg->rgdb_off)
-	      {
-		ERR("registry file corrupt! rgkn size > rgdb_off !\n");
-		goto error1;
-	      }
-	      root_dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
-	      if ( (root_dke->prevlvl != 0xffffffff)
-	        || (root_dke->next != 0xffffffff) )
-	      {
-		ERR("registry file corrupt! invalid root dke !\n");
-		goto error1;
-	      }
-
-	      ret = _w95_parse_dke(hkey, creg, rgkn, root_dke, level);
-	    }
-	    break;
-	  /* nt 'regf'*/
-	  case NT_REG_HEADER_BLOCK_ID:
-	    {
-	      nt_regf * regf;
-	      nt_hbin * hbin;
-	      nt_hbin_sub * hbin_sub;
-	      nt_nk* nk;
-
-	      filetype = "NT";
-	      TRACE("Loading %s registry '%s' '%s'\n", filetype, fn, full_name.long_name);
-
-	      /* start block */
-	      regf = base;
-
-	      /* hbin block */
-	      hbin = (nt_hbin*)((char*) base + 0x1000);
-	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
-	      {
-	        ERR( "hbin block invalid\n");
-	        goto error1;
-	      }
-
-	      /* hbin_sub block */
-	      hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
-	      if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k'))
-	      {
-	        ERR( "hbin_sub block invalid\n");
-	        goto error1;
-	      }
-
-	      /* nk block */
-	      nk = (nt_nk*)&(hbin_sub->data[0]);
-	      if (nk->Type != NT_REG_ROOT_KEY_BLOCK_TYPE)
-	      {
-	        ERR( "special nk block not found\n");
-	        goto error1;
-	      }
-
-	      ret = _nt_parse_nk (hkey, (char *) base + 0x1000, nk, level);
-	    }
-	    break;
-	  default:
-	    {
-	      ERR("unknown registry signature !\n");
-	      goto error1;
-	    }
-	}
-error1:	if(!ret)
-	{
-	  ERR("error loading %s registry file %s\n",
-						filetype, full_name.long_name);
-	  if (!strcmp(filetype, "win95"))
-	    ERR("Please report to a.mohr@mailto.de.\n");
-	  ERR("Make a backup of the file, run a good reg cleaner program and try again !\n");
-	}
-	munmap(base, st.st_size);
-error:	close(fd);
-	return ret;	
-}
-
+/******************************************************************/
 /* WINDOWS 31 REGISTRY LOADER, supplied by Tor Sjøwall, tor@sn.no */
 /*
     reghack - windows 3.11 registry data format demo program.
@@ -1206,178 +247,774 @@ error:	close(fd);
 
 /* reg.dat header format */
 struct _w31_header {
-	char		cookie[8];	/* 'SHCC3.10' */
-	unsigned long	taboff1;	/* offset of hash table (??) = 0x20 */
-	unsigned long	taboff2;	/* offset of index table (??) = 0x20 */
-	unsigned long	tabcnt;		/* number of entries in index table */
-	unsigned long	textoff;	/* offset of text part */
-	unsigned long	textsize;	/* byte size of text part */
-	unsigned short	hashsize;	/* hash size */
-	unsigned short	freeidx;	/* free index */
+    char		cookie[8];	/* 'SHCC3.10' */
+    unsigned long	taboff1;	/* offset of hash table (??) = 0x20 */
+    unsigned long	taboff2;	/* offset of index table (??) = 0x20 */
+    unsigned long	tabcnt;		/* number of entries in index table */
+    unsigned long	textoff;	/* offset of text part */
+    unsigned long	textsize;	/* byte size of text part */
+    unsigned short	hashsize;	/* hash size */
+    unsigned short	freeidx;	/* free index */
 };
 
 /* generic format of table entries */
 struct _w31_tabent {
-	unsigned short w0, w1, w2, w3;
+    unsigned short w0, w1, w2, w3;
 };
 
 /* directory tabent: */
 struct _w31_dirent {
-	unsigned short	sibling_idx;	/* table index of sibling dirent */
-	unsigned short	child_idx;	/* table index of child dirent */
-	unsigned short	key_idx;	/* table index of key keyent */
-	unsigned short	value_idx;	/* table index of value valent */
+    unsigned short	sibling_idx;	/* table index of sibling dirent */
+    unsigned short	child_idx;	/* table index of child dirent */
+    unsigned short	key_idx;	/* table index of key keyent */
+    unsigned short	value_idx;	/* table index of value valent */
 };
 
 /* key tabent: */
 struct _w31_keyent {
-	unsigned short	hash_idx;	/* hash chain index for string */
-	unsigned short	refcnt;		/* reference count */
-	unsigned short	length;		/* length of string */
-	unsigned short	string_off;	/* offset of string in text table */
+    unsigned short	hash_idx;	/* hash chain index for string */
+    unsigned short	refcnt;		/* reference count */
+    unsigned short	length;		/* length of string */
+    unsigned short	string_off;	/* offset of string in text table */
 };
 
 /* value tabent: */
 struct _w31_valent {
-	unsigned short	hash_idx;	/* hash chain index for string */
-	unsigned short	refcnt;		/* reference count */
-	unsigned short	length;		/* length of string */
-	unsigned short	string_off;	/* offset of string in text table */
+    unsigned short	hash_idx;	/* hash chain index for string */
+    unsigned short	refcnt;		/* reference count */
+    unsigned short	length;		/* length of string */
+    unsigned short	string_off;	/* offset of string in text table */
 };
 
-/* recursive helper function to display a directory tree */
-void
-__w31_dumptree(	unsigned short idx,
-		unsigned char *txt,
-		struct _w31_tabent *tab,
-		struct _w31_header *head,
-		HKEY hkey,
-		time_t		lastmodified,
-		int		level
-) {
-	struct _w31_dirent	*dir;
-	struct _w31_keyent	*key;
-	struct _w31_valent	*val;
-        HKEY subkey = 0;
-	static char		tail[400];
+/* recursive helper function to display a directory tree  [Internal] */
+void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab,struct _w31_header *head,HKEY hkey,time_t lastmodified, int level)
+{
+    struct _w31_dirent *dir;
+    struct _w31_keyent *key;
+    struct _w31_valent *val;
+    HKEY subkey = 0;
+    static char	tail[400];
 
-	while (idx!=0) {
-		dir=(struct _w31_dirent*)&tab[idx];
+    while (idx!=0) {
+        dir=(struct _w31_dirent*)&tab[idx];
 
-		if (dir->key_idx) {
-			key = (struct _w31_keyent*)&tab[dir->key_idx];
+        if (dir->key_idx) {
+            key = (struct _w31_keyent*)&tab[dir->key_idx];
 
-			memcpy(tail,&txt[key->string_off],key->length);
-			tail[key->length]='\0';
-			/* all toplevel entries AND the entries in the 
-			 * toplevel subdirectory belong to \SOFTWARE\Classes
-			 */
-			if (!level && !strcmp(tail,".classes")) {
-				__w31_dumptree(dir->child_idx,txt,tab,head,hkey,lastmodified,level+1);
-				idx=dir->sibling_idx;
-				continue;
-			}
-                        if (subkey) RegCloseKey( subkey );
-                        if (RegCreateKeyA( hkey, tail, &subkey ) != ERROR_SUCCESS) subkey = 0;
-			/* only add if leaf node or valued node */
-			if (dir->value_idx!=0||dir->child_idx==0) {
-				if (dir->value_idx) {
-					val=(struct _w31_valent*)&tab[dir->value_idx];
-					memcpy(tail,&txt[val->string_off],val->length);
-					tail[val->length]='\0';
-                                        RegSetValueA( subkey, NULL, REG_SZ, tail, 0 );
-				}
-			}
-		} else {
-			TRACE("strange: no directory key name, idx=%04x\n", idx);
-		}
-		__w31_dumptree(dir->child_idx,txt,tab,head,subkey,lastmodified,level+1);
-		idx=dir->sibling_idx;
-	}
-        if (subkey) RegCloseKey( subkey );
+            memcpy(tail,&txt[key->string_off],key->length);
+            tail[key->length]='\0';
+            /* all toplevel entries AND the entries in the 
+             * toplevel subdirectory belong to \SOFTWARE\Classes
+             */
+            if (!level && !strcmp(tail,".classes")) {
+                _w31_dumptree(dir->child_idx,txt,tab,head,hkey,lastmodified,level+1);
+                idx=dir->sibling_idx;
+                continue;
+            }
+            if (subkey) RegCloseKey( subkey );
+            if (RegCreateKeyA( hkey, tail, &subkey ) != ERROR_SUCCESS) subkey = 0;
+            /* only add if leaf node or valued node */
+            if (dir->value_idx!=0||dir->child_idx==0) {
+                if (dir->value_idx) {
+                    val=(struct _w31_valent*)&tab[dir->value_idx];
+                    memcpy(tail,&txt[val->string_off],val->length);
+                    tail[val->length]='\0';
+                    RegSetValueA( subkey, NULL, REG_SZ, tail, 0 );
+                }
+            }
+        } else TRACE("strange: no directory key name, idx=%04x\n", idx);
+        _w31_dumptree(dir->child_idx,txt,tab,head,subkey,lastmodified,level+1);
+        idx=dir->sibling_idx;
+    }
+    if (subkey) RegCloseKey( subkey );
 }
 
 
 /******************************************************************************
  * _w31_loadreg [Internal]
  */
-void _w31_loadreg(void) {
-	HFILE			hf;
-	struct _w31_header	head;
-	struct _w31_tabent	*tab;
-	unsigned char		*txt;
-	unsigned int		len;
-	OFSTRUCT		ofs;
-	BY_HANDLE_FILE_INFORMATION hfinfo;
-	time_t			lastmodified;
+void _w31_loadreg(void) 
+{
+    HFILE hf;
+    struct _w31_header	head;
+    struct _w31_tabent	*tab;
+    unsigned char		*txt;
+    unsigned int		len;
+    OFSTRUCT		ofs;
+    BY_HANDLE_FILE_INFORMATION hfinfo;
+    time_t			lastmodified;
 
-	TRACE("(void)\n");
+    TRACE("(void)\n");
 
-	hf = OpenFile("reg.dat",&ofs,OF_READ);
-	if (hf==HFILE_ERROR)
-		return;
+    hf = OpenFile("reg.dat",&ofs,OF_READ);
+    if (hf==HFILE_ERROR) return;
 
-	/* read & dump header */
-	if (sizeof(head)!=_lread(hf,&head,sizeof(head))) {
-		ERR("reg.dat is too short.\n");
-		_lclose(hf);
-		return;
-	}
-	if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
-		ERR("reg.dat has bad signature.\n");
-		_lclose(hf);
-		return;
-	}
+    /* read & dump header */
+    if (sizeof(head)!=_lread(hf,&head,sizeof(head))) {
+        ERR("reg.dat is too short.\n");
+        _lclose(hf);
+        return;
+    }
+    if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
+        ERR("reg.dat has bad signature.\n");
+        _lclose(hf);
+        return;
+    }
 
-	len = head.tabcnt * sizeof(struct _w31_tabent);
-	/* read and dump index table */
-	tab = xmalloc(len);
-	if (len!=_lread(hf,tab,len)) {
-		ERR("couldn't read %d bytes.\n",len); 
-		free(tab);
-		_lclose(hf);
-		return;
-	}
+    len = head.tabcnt * sizeof(struct _w31_tabent);
+    /* read and dump index table */
+    tab = _xmalloc(len);
+    if (len!=_lread(hf,tab,len)) {
+        ERR("couldn't read %d bytes.\n",len); 
+        free(tab);
+        _lclose(hf);
+        return;
+    }
 
-	/* read text */
-	txt = xmalloc(head.textsize);
-	if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
-		ERR("couldn't seek to textblock.\n"); 
-		free(tab);
-		free(txt);
-		_lclose(hf);
-		return;
-	}
-	if (head.textsize!=_lread(hf,txt,head.textsize)) {
-		ERR("textblock too short (%d instead of %ld).\n",len,head.textsize); 
-		free(tab);
-		free(txt);
-		_lclose(hf);
-		return;
-	}
+    /* read text */
+    txt = _xmalloc(head.textsize);
+    if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
+        ERR("couldn't seek to textblock.\n"); 
+        free(tab);
+        free(txt);
+        _lclose(hf);
+        return;
+    }
+    if (head.textsize!=_lread(hf,txt,head.textsize)) {
+        ERR("textblock too short (%d instead of %ld).\n",len,head.textsize); 
+        free(tab);
+        free(txt);
+        _lclose(hf);
+        return;
+    }
 
-	if (!GetFileInformationByHandle(hf,&hfinfo)) {
-		ERR("GetFileInformationByHandle failed?.\n"); 
-		free(tab);
-		free(txt);
-		_lclose(hf);
-		return;
-	}
-	lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
-	__w31_dumptree(tab[0].w1,txt,tab,&head,HKEY_CLASSES_ROOT,lastmodified,0);
-	free(tab);
-	free(txt);
-	_lclose(hf);
-	return;
+    if (!GetFileInformationByHandle(hf,&hfinfo)) {
+        ERR("GetFileInformationByHandle failed?.\n"); 
+        free(tab);
+        free(txt);
+        _lclose(hf);
+        return;
+    }
+    lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
+    _w31_dumptree(tab[0].w1,txt,tab,&head,HKEY_CLASSES_ROOT,lastmodified,0);
+    free(tab);
+    free(txt);
+    _lclose(hf);
+    return;
 }
 
+/***********************************************************************************/
+/*                        windows 95 registry loader                               */
+/***********************************************************************************/
 
-static void save_at_exit( HKEY hkey, const char *path )
+/* SECTION 1: main header
+ *
+ * once at offset 0
+ */
+#define	W95_REG_CREG_ID	0x47455243
+
+typedef struct {
+    DWORD	id;		/* "CREG" = W95_REG_CREG_ID */
+    DWORD	version;	/* ???? 0x00010000 */
+    DWORD	rgdb_off;	/* 0x08 Offset of 1st RGDB-block */
+    DWORD	uk2;		/* 0x0c */
+    WORD	rgdb_num;	/* 0x10 # of RGDB-blocks */
+    WORD	uk3;
+    DWORD	uk[3];
+    /* rgkn */
+} _w95creg;
+
+/* SECTION 2: Directory information (tree structure)
+ *
+ * once on offset 0x20
+ *
+ * structure: [rgkn][dke]*	(repeat till last_dke is reached)
+ */
+#define	W95_REG_RGKN_ID	0x4e4b4752
+
+typedef struct {
+    DWORD	id;		/*"RGKN" = W95_REG_RGKN_ID */
+    DWORD	size;		/* Size of the RGKN-block */
+    DWORD	root_off;	/* Rel. Offset of the root-record */
+    DWORD   last_dke;       /* Offset to last DKE ? */
+    DWORD	uk[4];
+} _w95rgkn;
+
+/* Disk Key Entry Structure
+ *
+ * the 1st entry in a "usual" registry file is a nul-entry with subkeys: the
+ * hive itself. It looks the same like other keys. Even the ID-number can
+ * be any value.
+ *
+ * The "hash"-value is a value representing the key's name. Windows will not
+ * search for the name, but for a matching hash-value. if it finds one, it
+ * will compare the actual string info, otherwise continue with the next key.
+ * To calculate the hash initialize a D-Word with 0 and add all ASCII-values 
+ * of the string which are smaller than 0x80 (128) to this D-Word.   
+ *
+ * If you want to modify key names, also modify the hash-values, since they
+ * cannot be found again (although they would be displayed in REGEDIT)
+ * End of list-pointers are filled with 0xFFFFFFFF
+ *
+ * Disk keys are layed out flat ... But, sometimes, nrLS and nrMS are both
+ * 0xFFFF, which means skipping over nextkeyoffset bytes (including this
+ * structure) and reading another RGDB_section.
+ *
+ * The last DKE (see field last_dke in _w95_rgkn) has only 3 DWORDs with
+ * 0x80000000 (EOL indicator ?) as x1, the hash value and 0xFFFFFFFF as x3.
+ * The remaining space between last_dke and the offset calculated from
+ * rgkn->size seems to be free for use for more dke:s.
+ * So it seems if more dke:s are added, they are added to that space and
+ * last_dke is grown, and in case that "free" space is out, the space
+ * gets grown and rgkn->size gets adjusted.
+ *
+ * there is a one to one relationship between dke and dkh
+ */
+ /* key struct, once per key */
+typedef struct {
+    DWORD	x1;		/* Free entry indicator(?) */
+    DWORD	hash;		/* sum of bytes of keyname */
+    DWORD	x3;		/* Root key indicator? usually 0xFFFFFFFF */
+    DWORD	prevlvl;	/* offset of previous key */
+    DWORD	nextsub;	/* offset of child key */
+    DWORD	next;		/* offset of sibling key */
+    WORD	nrLS;		/* id inside the rgdb block */
+    WORD	nrMS;		/* number of the rgdb block */
+} _w95dke;
+
+/* SECTION 3: key information, values and data
+ *
+ * structure:
+ *  section:	[blocks]*		(repeat creg->rgdb_num times)
+ *  blocks:	[rgdb] [subblocks]* 	(repeat till block size reached )
+ *  subblocks:	[dkh] [dkv]*		(repeat dkh->values times )
+ *
+ * An interesting relationship exists in RGDB_section. The DWORD value
+ * at offset 0x10 equals the one at offset 0x04 minus the one at offset 0x08.
+ * I have no idea at the moment what this means.  (Kevin Cozens)
+ */
+
+/* block header, once per block */
+#define W95_REG_RGDB_ID	0x42444752
+
+typedef struct {
+    DWORD	id;	/* 0x00 'RGDB' = W95_REG_RGDB_ID */
+    DWORD	size;	/* 0x04 */
+    DWORD	uk1;	/* 0x08 */
+    DWORD	uk2;	/* 0x0c */
+    DWORD	uk3;	/* 0x10 */
+    DWORD	uk4;	/* 0x14 */
+    DWORD	uk5;	/* 0x18 */
+    DWORD	uk6;	/* 0x1c */
+    /* dkh */
+} _w95rgdb;
+
+/* Disk Key Header structure (RGDB part), once per key */
+typedef	struct {
+    DWORD	nextkeyoff; 	/* 0x00 offset to next dkh */
+    WORD	nrLS;		/* 0x04 id inside the rgdb block */
+    WORD	nrMS;		/* 0x06 number of the rgdb block */
+    DWORD	bytesused;	/* 0x08 */
+    WORD	keynamelen;	/* 0x0c len of name */
+    WORD	values;		/* 0x0e number of values */
+    DWORD	xx1;		/* 0x10 */
+    char	name[1];	/* 0x14 */
+    /* dkv */		/* 0x14 + keynamelen */
+} _w95dkh;
+
+/* Disk Key Value structure, once per value */
+typedef	struct {
+    DWORD	type;		/* 0x00 */
+    DWORD	x1;		/* 0x04 */
+    WORD	valnamelen;	/* 0x08 length of name, 0 is default key */
+    WORD	valdatalen;	/* 0x0A length of data */
+    char	name[1];	/* 0x0c */
+    /* raw data */		/* 0x0c + valnamelen */
+} _w95dkv;
+
+/******************************************************************************
+ * _w95_lookup_dkh [Internal]
+ *
+ * seeks the dkh belonging to a dke
+ */
+static _w95dkh *_w95_lookup_dkh(_w95creg *creg,int nrLS,int nrMS)
 {
-    const char *confdir = get_config_dir();
-    size_t len = strlen(confdir) + strlen(path) + 2;
-    if (len > REQUEST_MAX_VAR_SIZE)
+    _w95rgdb * rgdb;
+    _w95dkh * dkh;
+    int i;
+
+    /* get the beginning of the rgdb datastore */
+    rgdb = (_w95rgdb*)((char*)creg+creg->rgdb_off);
+
+    /* check: requested block < last_block) */
+    if (creg->rgdb_num <= nrMS) {
+        ERR("registry file corrupt! requested block no. beyond end.\n");
+        goto error;
+    }
+
+    /* find the right block */
+    for(i=0; i<nrMS ;i++) {
+        if(rgdb->id != W95_REG_RGDB_ID) {  /* check the magic */
+            ERR("registry file corrupt! bad magic 0x%08lx\n", rgdb->id);
+            goto error;
+        }
+        rgdb = (_w95rgdb*) ((char*)rgdb+rgdb->size);		/* find next block */
+    }
+
+    dkh = (_w95dkh*)(rgdb + 1);				/* first sub block within the rgdb */
+
+    do {
+        if(nrLS==dkh->nrLS ) return dkh;
+        dkh = (_w95dkh*)((char*)dkh + dkh->nextkeyoff);	/* find next subblock */
+    } while ((char *)dkh < ((char*)rgdb+rgdb->size));
+
+error:
+    return NULL;
+}
+
+/******************************************************************************
+ * _w95_dump_dkv [Internal]
+ */
+static int _w95_dump_dkv(_w95dkh *dkh,int nrLS,int nrMS,FILE *f)
+{
+    _w95dkv * dkv;
+    int i;
+
+    /* first value block */
+    dkv = (_w95dkv*)((char*)dkh+dkh->keynamelen+0x14);
+
+    /* loop trought the values */
+    for (i=0; i< dkh->values; i++) {
+        struct key_value value;
+        WCHAR *pdata;
+
+        value.nameW = _strdupnAtoW(dkv->name,dkv->valnamelen);
+        value.type = dkv->type;
+        value.len = dkv->valdatalen;
+
+        value.data = &(dkv->name[dkv->valnamelen]);
+        pdata = NULL;
+        if ( (value.type==REG_SZ) || (value.type==REG_EXPAND_SZ) || (value.type==REG_MULTI_SZ) ) {
+            pdata = _strdupnAtoW(value.data,value.len);
+            value.len *= 2;
+        }
+        if (pdata != NULL) value.data = pdata;
+
+        _dump_value(&value,f);
+        free(value.nameW);
+        if (pdata != NULL) free(pdata);
+
+        /* next value */
+        dkv = (_w95dkv*)((char*)dkv+dkv->valnamelen+dkv->valdatalen+0x0c);
+    }
+    return TRUE;
+}
+
+/******************************************************************************
+ * _w95_dump_dke [Internal]
+ */
+static int _w95_dump_dke(LPSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
+{
+    _w95dkh * dkh;
+    LPSTR new_key_name = NULL;
+
+    /* special root key */
+    if (dke->nrLS == 0xffff || dke->nrMS==0xffff)		/* eg. the root key has no name */
     {
+        /* parse the one subkey */
+        if (dke->nextsub != 0xffffffff) return _w95_dump_dke(key_name, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub),f,level);
+        /* has no sibling keys */
+        return FALSE;
+    }
+
+    /* search subblock */
+    if (!(dkh = _w95_lookup_dkh(creg, dke->nrLS, dke->nrMS))) {
+        ERR("dke pointing to missing dkh !\n");
+        return FALSE;
+    }
+
+    if (level <= 0) {
+        /* create new subkey name */
+        new_key_name = _strdupnA(key_name,strlen(key_name)+dkh->keynamelen+1);
+        if (strcmp(new_key_name,"") != 0) strcat(new_key_name,"\\");
+        strncat(new_key_name,dkh->name,dkh->keynamelen);
+
+        /* walk sibling keys */
+        if (dke->next != 0xffffffff ) {
+            if (!_w95_dump_dke(key_name, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next),f,level)) {
+                free(new_key_name);
+                return FALSE;
+            }
+        }
+
+        /* write the key path (something like [Software\\Microsoft\\..]) only if: 
+           1) key has some values
+           2) key has no values and no subkeys
+        */
+        if (dkh->values > 0) {
+            /* there are some values */
+            fprintf(f,"\n[");
+            _dump_strAtoW(new_key_name,strlen(new_key_name),f,"[]");
+            fprintf(f,"]\n");
+            if (!_w95_dump_dkv(dkh, dke->nrLS, dke->nrMS,f)) {
+              free(new_key_name);
+              return FALSE;
+            }
+        }
+        if ((dke->nextsub == 0xffffffff) && (dkh->values == 0)) {
+            /* no subkeys and no values */
+            fprintf(f,"\n[");
+            _dump_strAtoW(new_key_name,strlen(new_key_name),f,"[]");
+            fprintf(f,"]\n");
+        }
+    } else new_key_name = _strdupnA(key_name,strlen(key_name));
+
+    /* next sub key */
+    if (dke->nextsub != 0xffffffff) {
+        if (!_w95_dump_dke(new_key_name, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub),f,level-1)) {
+          free(new_key_name);
+          return FALSE;
+        }
+    }
+
+    free(new_key_name);
+    return TRUE;
+}
+/* end windows 95 loader */
+
+/***********************************************************************************/
+/*                        windows NT registry loader                               */
+/***********************************************************************************/
+
+/* NT REGISTRY LOADER */
+
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((LPVOID)-1)
+#endif
+
+#define NT_REG_BLOCK_SIZE            0x1000
+
+#define NT_REG_HEADER_BLOCK_ID       0x66676572	/* regf */
+#define NT_REG_POOL_BLOCK_ID         0x6E696268	/* hbin */
+#define NT_REG_KEY_BLOCK_ID          0x6b6e /* nk */
+#define NT_REG_VALUE_BLOCK_ID        0x6b76 /* vk */
+
+/* subblocks of nk */
+#define NT_REG_HASH_BLOCK_ID         0x666c /* lf */
+#define NT_REG_NOHASH_BLOCK_ID       0x696c /* li */
+#define NT_REG_RI_BLOCK_ID	     0x6972 /* ri */
+
+#define NT_REG_KEY_BLOCK_TYPE        0x20
+#define NT_REG_ROOT_KEY_BLOCK_TYPE   0x2c
+
+typedef struct {
+    DWORD	id;		/* 0x66676572 'regf'*/
+    DWORD	uk1;		/* 0x04 */
+    DWORD	uk2;		/* 0x08 */
+    FILETIME	DateModified;	/* 0x0c */
+    DWORD	uk3;		/* 0x14 */
+    DWORD	uk4;		/* 0x18 */
+    DWORD	uk5;		/* 0x1c */
+    DWORD	uk6;		/* 0x20 */
+    DWORD	RootKeyBlock;	/* 0x24 */
+    DWORD	BlockSize;	/* 0x28 */
+    DWORD   uk7[116];	
+    DWORD	Checksum; /* at offset 0x1FC */
+} nt_regf;
+
+typedef struct {
+    DWORD	blocksize;
+    BYTE	data[1];
+} nt_hbin_sub;
+
+typedef struct {
+    DWORD	id;		/* 0x6E696268 'hbin' */
+    DWORD	off_prev;
+    DWORD	off_next;
+    DWORD	uk1;
+    DWORD	uk2;		/* 0x10 */
+    DWORD	uk3;		/* 0x14 */
+    DWORD	uk4;		/* 0x18 */
+    DWORD	size;		/* 0x1C */
+    nt_hbin_sub	hbin_sub;	/* 0x20 */
+} nt_hbin;
+
+/*
+ * the value_list consists of offsets to the values (vk)
+ */
+typedef struct {
+    WORD	SubBlockId;		/* 0x00 0x6B6E */
+    WORD	Type;			/* 0x02 for the root-key: 0x2C, otherwise 0x20*/
+    FILETIME	writetime;	/* 0x04 */
+    DWORD	uk1;			/* 0x0C */
+    DWORD	parent_off;		/* 0x10 Offset of Owner/Parent key */
+    DWORD	nr_subkeys;		/* 0x14 number of sub-Keys */
+    DWORD	uk8;			/* 0x18 */
+    DWORD	lf_off;			/* 0x1C Offset of the sub-key lf-Records */
+    DWORD	uk2;			/* 0x20 */
+    DWORD	nr_values;		/* 0x24 number of values */
+    DWORD	valuelist_off;		/* 0x28 Offset of the Value-List */
+    DWORD	off_sk;			/* 0x2c Offset of the sk-Record */
+    DWORD	off_class;		/* 0x30 Offset of the Class-Name */
+    DWORD	uk3;			/* 0x34 */
+    DWORD	uk4;			/* 0x38 */
+    DWORD	uk5;			/* 0x3c */
+    DWORD	uk6;			/* 0x40 */
+    DWORD	uk7;			/* 0x44 */
+    WORD	name_len;		/* 0x48 name-length */
+    WORD	class_len;		/* 0x4a class-name length */
+    char	name[1];		/* 0x4c key-name */
+} nt_nk;
+
+typedef struct {
+    DWORD	off_nk;	/* 0x00 */
+    DWORD	name;	/* 0x04 */
+} hash_rec;
+
+typedef struct {
+    WORD	id;		/* 0x00 0x666c */
+    WORD	nr_keys;	/* 0x06 */
+    hash_rec	hash_rec[1];
+} nt_lf;
+
+/*
+ list of subkeys without hash
+
+ li --+-->nk
+      |
+      +-->nk
+ */
+typedef struct {
+    WORD	id;		/* 0x00 0x696c */
+    WORD	nr_keys;
+    DWORD	off_nk[1];
+} nt_li;
+
+/*
+ this is a intermediate node
+
+ ri --+-->li--+-->nk
+      |       +
+      |       +-->nk
+      |
+      +-->li--+-->nk
+              +
+	      +-->nk
+ */
+typedef struct {
+    WORD	id;		/* 0x00 0x6972 */
+    WORD	nr_li;		/* 0x02 number off offsets */
+    DWORD	off_li[1];	/* 0x04 points to li */
+} nt_ri;
+
+typedef struct {
+    WORD	id;		/* 0x00 'vk' */
+    WORD	nam_len;
+    DWORD	data_len;
+    DWORD	data_off;
+    DWORD	type;
+    WORD	flag;
+    WORD	uk1;
+    char	name[1];
+} nt_vk;
+
+/*
+ * gets a value
+ *
+ * vk->flag:
+ *  0 value is a default value
+ *  1 the value has a name
+ *
+ * vk->data_len
+ *  len of the whole data block
+ *  - reg_sz (unicode)
+ *    bytes including the terminating \0 = 2*(number_of_chars+1)
+ *  - reg_dword, reg_binary:
+ *    if highest bit of data_len is set data_off contains the value
+ */
+static int _nt_dump_vk(LPSTR key_name, char *base, nt_vk *vk,FILE *f)
+{
+    BYTE *pdata = (BYTE *)(base+vk->data_off+4); /* start of data */
+    struct key_value value;
+
+    if (vk->id != NT_REG_VALUE_BLOCK_ID) {
+        ERR("unknown block found (0x%04x), please report!\n", vk->id);
+        return FALSE;
+    }
+
+    value.nameW = _strdupnAtoW(vk->name,vk->nam_len);
+    value.type = vk->type;
+    value.len = (vk->data_len & 0x7fffffff);
+    value.data = (vk->data_len & 0x80000000) ? (LPBYTE)&(vk->data_off): pdata;
+
+    _dump_value(&value,f);
+    free(value.nameW);
+
+    return TRUE;
+}
+
+/* it's called from _nt_dump_lf() */
+static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level);
+
+/*
+ * get the subkeys
+ *
+ * this structure contains the hash of a keyname and points to all
+ * subkeys
+ *
+ * exception: if the id is 'il' there are no hash values and every 
+ * dword is a offset
+ */
+static int _nt_dump_lf(LPSTR key_name, char *base, int subkeys, nt_lf *lf, FILE *f, int level)
+{
+    int i;
+    
+    if (lf->id == NT_REG_HASH_BLOCK_ID) {
+        if (subkeys != lf->nr_keys) goto error1;
+    
+        for (i=0; i<lf->nr_keys; i++) 
+            if (!_nt_dump_nk(key_name, base, (nt_nk*)(base+lf->hash_rec[i].off_nk+4), f, level)) goto error;
+    } else if (lf->id == NT_REG_NOHASH_BLOCK_ID) {
+        nt_li * li = (nt_li*)lf;
+        if (subkeys != li->nr_keys) goto error1;
+
+        for (i=0; i<li->nr_keys; i++)
+            if (!_nt_dump_nk(key_name, base, (nt_nk*)(base+li->off_nk[i]+4), f, level)) goto error;
+    } else if (lf->id == NT_REG_RI_BLOCK_ID) {  /* ri */
+        nt_ri * ri = (nt_ri*)lf;
+        int li_subkeys = 0;
+
+        /* count all subkeys */
+        for (i=0; i<ri->nr_li; i++) {
+            nt_li * li = (nt_li*)(base+ri->off_li[i]+4);
+            if(li->id != NT_REG_NOHASH_BLOCK_ID) goto error2;
+            li_subkeys += li->nr_keys;
+        }
+
+        /* check number */
+        if (subkeys != li_subkeys) goto error1;
+
+        /* loop through the keys */
+        for (i=0; i<ri->nr_li; i++) {
+            nt_li *li = (nt_li*)(base+ri->off_li[i]+4);
+            if (!_nt_dump_lf(key_name, base, li->nr_keys, (nt_lf*)li, f, level)) goto error;
+        }
+    } else goto error2;
+
+    return TRUE;
+
+error2:
+    ERR("unknown node id 0x%04x, please report!\n", lf->id);
+    return TRUE;
+
+error1:
+    ERR("registry file corrupt! (inconsistent number of subkeys)\n");
+    return FALSE;
+
+error:
+    ERR("error reading lf block\n");
+    return FALSE;
+}
+
+/* _nt_dump_nk [Internal] */
+static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
+{
+    unsigned int n;
+    DWORD *vl;
+    LPSTR new_key_name = NULL;
+
+
+    if (nk->SubBlockId != NT_REG_KEY_BLOCK_ID) {
+        ERR("unknown node id 0x%04x, please report!\n", nk->SubBlockId);
+        return FALSE;
+    }
+
+    if ((nk->Type!=NT_REG_ROOT_KEY_BLOCK_TYPE) && (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID)) {
+        ERR("registry file corrupt!\n");
+        return FALSE;
+    }
+
+    /* create the new key */
+    if (level <= 0) {
+        /* create new subkey name */
+        new_key_name = _strdupnA(key_name,strlen(key_name)+nk->name_len+1);
+        if (strcmp(new_key_name,"") != 0) strcat(new_key_name,"\\");
+        strncat(new_key_name,nk->name,nk->name_len);
+
+        /* write the key path (something like [Software\\Microsoft\\..]) only if: 
+           1) key has some values
+           2) key has no values and no subkeys
+        */
+        if (nk->nr_values > 0) {
+            /* there are some values */
+            fprintf(f,"\n[");
+            _dump_strAtoW(new_key_name,strlen(new_key_name),f,"[]");
+            fprintf(f,"]\n");
+        }
+        if ((nk->nr_subkeys == 0) && (nk->nr_values == 0)) {
+            /* no subkeys and no values */
+            fprintf(f,"\n[");
+            _dump_strAtoW(new_key_name,strlen(new_key_name),f,"[]");
+            fprintf(f,"]\n");
+        }
+
+        /* loop trough the value list */
+        vl = (DWORD *)(base+nk->valuelist_off+4);
+        for (n=0; n<nk->nr_values; n++) {
+            nt_vk * vk = (nt_vk*)(base+vl[n]+4);
+            if (!_nt_dump_vk(new_key_name, base, vk, f)) {
+                free(new_key_name);
+                return FALSE;
+            }
+        }
+    } else new_key_name = _strdupnA(key_name,strlen(key_name));
+
+    /* loop through the subkeys */
+    if (nk->nr_subkeys) {
+        nt_lf *lf = (nt_lf*)(base+nk->lf_off+4);
+        if (!_nt_dump_lf(new_key_name, base, nk->nr_subkeys, lf, f, level-1)) {
+            free(new_key_name);
+            return FALSE;
+        }
+    }
+
+    free(new_key_name);
+    return TRUE;
+}
+
+/* end nt loader */
+
+/**********************************************************************************
+ * _set_registry_levels [Internal]
+ *
+ * set level to 0 for loading system files
+ * set level to 1 for loading user files
+ */
+static void _set_registry_levels(int level,int saving,int period)
+{
+    SERVER_START_REQ
+    {
+        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
+
+	req->current = level;
+	req->saving  = saving;
+        req->period  = period;
+	server_call( REQ_SET_REGISTRY_LEVELS );
+    }
+    SERVER_END_REQ;
+}
+
+/* _save_at_exit [Internal] */
+static void _save_at_exit(HKEY hkey,LPCSTR path)
+{
+    LPCSTR confdir = get_config_dir();
+    size_t len = strlen(confdir) + strlen(path) + 2;
+
+    if (len > REQUEST_MAX_VAR_SIZE) {
         ERR( "config dir '%s' too long\n", confdir );
         return;
     }
@@ -1391,271 +1028,550 @@ static void save_at_exit( HKEY hkey, const char *path )
     SERVER_END_REQ;
 }
 
-/* configure save files and start the periodic saving timer */
-static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
+/* configure save files and start the periodic saving timer [Internal] */
+static void _init_registry_saving( HKEY hkey_users_default )
 {
-    int all = PROFILE_GetWineIniBool( "registry", "SaveOnlyUpdatedKeys", 1 );
-    int period = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 );
+    int all;
+    int period;
+
+    all  = PROFILE_GetWineIniBool("registry","SaveOnlyUpdatedKeys",1);
+    period = PROFILE_GetWineIniInt("registry","PeriodicSave",0);
 
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
-    SERVER_START_REQ
-    {
-        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->current = 1;
-        req->saving  = !all;
-        req->period  = period * 1000;
-        server_call( REQ_SET_REGISTRY_LEVELS );
-    }
-    SERVER_END_REQ;
+    _set_registry_levels(1,!all,period*1000);
 
     if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
     {
-        save_at_exit( HKEY_CURRENT_USER, SAVE_CURRENT_USER );
-        save_at_exit( HKEY_LOCAL_MACHINE, SAVE_LOCAL_MACHINE );
-        save_at_exit( hkey_users_default, SAVE_DEFAULT_USER );
+        _save_at_exit(HKEY_CURRENT_USER,SAVE_LOCAL_REGBRANCH_CURRENT_USER );
+        _save_at_exit(HKEY_LOCAL_MACHINE,SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
+        _save_at_exit(hkey_users_default,SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
     }
+
 }
 
-
-/**********************************************************************************
- * SetLoadLevel [Internal]
- *
- * set level to 0 for loading system files
- * set level to 1 for loading user files
+/******************************************************************************
+ * _allocate_default_keys [Internal]
+ * Registry initialisation, allocates some default keys. 
  */
-static void SetLoadLevel(int level)
-{
-    SERVER_START_REQ
-    {
-        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
+static void _allocate_default_keys(void) {
+	HKEY	hkey;
+	char	buf[200];
 
-	req->current = level;
-	req->saving  = 0;
-        req->period  = 0;
-	server_call( REQ_SET_REGISTRY_LEVELS );
-    }
-    SERVER_END_REQ;
+	TRACE("(void)\n");
+
+	RegCreateKeyA(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
+	RegCloseKey(hkey);
+
+        /* This was an Open, but since it is called before the real registries
+           are loaded, it was changed to a Create - MTB 980507*/
+	RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System",&hkey);
+	RegSetValueExA(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
+	RegCloseKey(hkey);
+
+	/* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
+	 *						CurrentVersion
+	 *						CurrentBuildNumber
+	 *						CurrentType
+	 *					string	RegisteredOwner
+	 *					string	RegisteredOrganization
+	 *
+	 */
+	/* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
+	 * 					string	SysContact
+	 * 					string	SysLocation
+	 * 						SysServices
+	 */
+	if (-1!=gethostname(buf,200)) {
+		RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",&hkey);
+		RegSetValueExA(hkey,"ComputerName",0,REG_SZ,buf,strlen(buf)+1);
+		RegCloseKey(hkey);
+	}
+
+        RegCreateKeyA(HKEY_USERS,".Default",&hkey);
+        RegCloseKey(hkey);
 }
 
-/**********************************************************************************
- * SHELL_LoadRegistry [Internal]
- */
 #define REG_DONTLOAD -1
-#define REG_WIN31  0
-#define REG_WIN95  1
-#define REG_WINNT  2
+#define REG_WIN31     0
+#define REG_WIN95     1
+#define REG_WINNT     2
 
-void SHELL_LoadRegistry( void )
+/* return the type of native registry [Internal] */
+static int _get_reg_type(void)
 {
-  HKEY	hkey;
-  char windir[MAX_PATHNAME_LEN];
-  char path[MAX_PATHNAME_LEN];
-  int  systemtype = REG_WIN31;
-  HKEY hkey_users_default;
+    char windir[MAX_PATHNAME_LEN];
+    char tmp[MAX_PATHNAME_LEN];
+    int ret = REG_WIN31;
 
-  TRACE("(void)\n");
+    GetWindowsDirectoryA(windir,MAX_PATHNAME_LEN);
 
-  if (!CLIENT_IsBootThread()) return;  /* already loaded */
-
-  REGISTRY_Init();
-  SetLoadLevel(0);
-
-  if (RegCreateKeyA(HKEY_USERS, ".Default", &hkey_users_default))
-	  hkey_users_default = 0;
-
-  GetWindowsDirectoryA( windir, MAX_PATHNAME_LEN );
-
-  if (PROFILE_GetWineIniBool( "Registry", "LoadWindowsRegistryFiles", 1))
-  {
     /* test %windir%/system32/config/system --> winnt */
-    strcpy(path, windir);
-    strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
-    if(GetFileAttributesA(path) != (DWORD)-1) 
-    {
-      systemtype = REG_WINNT;
+    strcpy(tmp, windir);
+    strncat(tmp, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(tmp) - 1);
+    if(GetFileAttributesA(tmp) != (DWORD)-1) {
+      ret = REG_WINNT;
     }
     else
     {
        /* test %windir%/system.dat --> win95 */
-      strcpy(path, windir);
-      strncat(path, "\\system.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-      if(GetFileAttributesA(path) != (DWORD)-1)
-      {
-        systemtype = REG_WIN95;
+      strcpy(tmp, windir);
+      strncat(tmp, "\\system.dat", MAX_PATHNAME_LEN - strlen(tmp) - 1);
+      if(GetFileAttributesA(tmp) != (DWORD)-1) {
+        ret = REG_WIN95;
       }
     }
 
-    if ((systemtype==REG_WINNT)
-      && (! PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN)))
-    {
+    if ((ret == REG_WINNT) && (!PROFILE_GetWineIniString( "Wine", "Profile", "", tmp, MAX_PATHNAME_LEN))) {
        MESSAGE("When you are running with a native NT directory specify\n");
        MESSAGE("'Profile=<profiledirectory>' or disable loading of Windows\n");
        MESSAGE("registry (LoadWindowsRegistryFiles=N)\n");
-       systemtype = REG_DONTLOAD;
+       ret = REG_DONTLOAD;
     }
-  }
-  else
-  {
-    /* only wine registry */
-    systemtype = REG_DONTLOAD;
-  }  
 
-  switch (systemtype)
-  {
-    case REG_WIN31:
-      _w31_loadreg();
-      break;
-
-    case REG_WIN95:  
-      /* Load windows 95 entries */
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, "C:\\system.1st", 0);
-
-      strcpy(path, windir);
-      strncat(path, "\\system.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
-
-      if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN))
-      {
-	/* user specific user.dat */
-	strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-        if (!NativeRegLoadKey( HKEY_CURRENT_USER, path, 1 ))
-	{
-	  MESSAGE("can't load win95 user-registry %s\n", path);
-	  MESSAGE("check wine.conf, section [Wine], value 'Profile'\n");
-	}
-	/* default user.dat */
-	if (hkey_users_default)
-	{
-          strcpy(path, windir);
-          strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-          NativeRegLoadKey(hkey_users_default, path, 1);
-	}
-      }
-      else
-      {
-        /* global user.dat */
-	strcpy(path, windir);
-        strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-        NativeRegLoadKey(HKEY_CURRENT_USER, path, 1);
-      }
-      break;
-
-    case REG_WINNT:  
-      /* default user.dat */
-      if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN))
-      {
-        strncat(path, "\\ntuser.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-        if(!NativeRegLoadKey( HKEY_CURRENT_USER, path, 1 ))
-        {
-           MESSAGE("can't load NT user-registry %s\n", path);
-	   MESSAGE("check wine.conf, section [Wine], value 'Profile'\n");
-        }
-      }
-
-      /* default user.dat */
-      if (hkey_users_default)
-      {
-        strcpy(path, windir);
-        strncat(path, "\\system32\\config\\default", MAX_PATHNAME_LEN - strlen(path) - 1);
-        NativeRegLoadKey(hkey_users_default, path, 1);
-      }
-
-      /*
-      * FIXME
-      *  map HLM\System\ControlSet001 to HLM\System\CurrentControlSet
-      */
-
-      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM", &hkey))
-      {
-	strcpy(path, windir);
-	strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
-	NativeRegLoadKey(hkey, path, 1);
-        RegCloseKey(hkey);
-      }
-
-      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE", &hkey))
-      {
-	strcpy(path, windir);
-	strncat(path, "\\system32\\config\\software", MAX_PATHNAME_LEN - strlen(path) - 1);
-	NativeRegLoadKey(hkey, path, 1);
-        RegCloseKey(hkey);
-      }
-
-      strcpy(path, windir);
-      strncat(path, "\\system32\\config\\sam", MAX_PATHNAME_LEN - strlen(path) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
-
-      strcpy(path, windir);
-      strncat(path, "\\system32\\config\\security", MAX_PATHNAME_LEN - strlen(path) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
-
-      /* this key is generated when the nt-core booted successfully */
-      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\Clone",&hkey))
-        RegCloseKey(hkey);
-      break;
-  } /* switch */
-  
-  if (PROFILE_GetWineIniBool ("registry","LoadGlobalRegistryFiles", 1))
-  {
-      /* 
-       * Load the global HKU hive directly from sysconfdir
-       */ 
-      _wine_loadreg( HKEY_USERS, SAVE_USERS_DEFAULT );
-
-      /* 
-       * Load the global machine defaults directly from sysconfdir
-       */
-      _wine_loadreg( HKEY_LOCAL_MACHINE, SAVE_LOCAL_MACHINE_DEFAULT );
-  }
-
-  SetLoadLevel(1);
-
-  /*
-   * Load the user saved registries 
-   */
-  if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 1))
-  {
-      const char *confdir = get_config_dir();
-      unsigned int len = strlen(confdir) + 20;
-      char *fn = path;
-
-      if (len > sizeof(path)) fn = HeapAlloc( GetProcessHeap(), 0, len );
-      /* 
-       * Load user's personal versions of global HKU/.Default keys
-       */
-      if (fn)
-      {
-          char *str;
-          strcpy( fn, confdir );
-          str = fn + strlen(fn);
-          *str++ = '/';
-
-          /* try to load HKU\.Default key only */
-          strcpy( str, SAVE_DEFAULT_USER );
-          if (_wine_loadreg( hkey_users_default, fn ))
-          {
-              /* if not found load old file containing both HKU\.Default and HKU\user */
-              strcpy( str, SAVE_LOCAL_USERS_DEFAULT );
-              _wine_loadreg( HKEY_USERS, fn ); 
-          }
-
-          strcpy( str, SAVE_CURRENT_USER );
-          _wine_loadreg( HKEY_CURRENT_USER, fn );
-
-          strcpy( str, SAVE_LOCAL_MACHINE );
-          _wine_loadreg( HKEY_LOCAL_MACHINE, fn );
-
-          if (fn != path) HeapFree( GetProcessHeap(), 0, fn );
-      }
-  }
-  SHELL_InitRegistrySaving( hkey_users_default );
-  RegCloseKey( hkey_users_default );
+    return ret;
 }
 
-/********************* API FUNCTIONS ***************************************/
+#define WINE_REG_VER_ERROR  -1
+#define WINE_REG_VER_1       0
+#define WINE_REG_VER_2       1
+#define WINE_REG_VER_OLD     2
+#define WINE_REG_VER_UNKNOWN 3
 
+/* return the version of wine registry file [Internal] */
+static int _get_wine_registry_file_format_version(LPCSTR fn)
+{
+    FILE *f;
+    char tmp[50];
+    int ver;
 
+    if ((f=fopen(fn,"rt")) == NULL) {
+        WARN("Couldn't open %s for reading: %s\n",fn,strerror(errno));
+        return WINE_REG_VER_ERROR;
+    }
 
+    if (fgets(tmp,50,f) == NULL) {
+        WARN("Error reading %s: %s\n",fn,strerror(errno));
+        fclose(f);
+        return WINE_REG_VER_ERROR;
+    }
+    fclose(f);
+
+    if (sscanf(tmp,"WINE REGISTRY Version %d",&ver) != 1) return WINE_REG_VER_UNKNOWN;
+    switch (ver) {
+        case 1:
+            return WINE_REG_VER_1;
+            break;
+        case 2:
+            return WINE_REG_VER_2;
+            break;
+        default:
+            return WINE_REG_VER_UNKNOWN;
+    }
+}
+
+/* load the registry file in wine format [Internal] */
+static void load_wine_registry(HKEY hkey,LPCSTR fn)
+{
+    int file_format;
+
+    file_format = _get_wine_registry_file_format_version(fn);
+    switch (file_format) {
+
+        case WINE_REG_VER_1:
+            WARN("Unable to load registry file %s: old format which is no longer supported.\n",fn);
+            break;
+
+        case WINE_REG_VER_2: {
+            HANDLE file;
+            if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                                              FILE_ATTRIBUTE_NORMAL, -1, TRUE )) != INVALID_HANDLE_VALUE)
+            {
+                SERVER_START_REQ
+                {
+                    struct load_registry_request *req = server_alloc_req( sizeof(*req), 0 );
+                    req->hkey    = hkey;
+                    req->file    = file;
+                    server_call( REQ_LOAD_REGISTRY );
+                }
+                SERVER_END_REQ;
+                CloseHandle( file );
+            }
+            break;
+        }
+
+        case WINE_REG_VER_UNKNOWN:
+            WARN("Unable to load registry file %s: unknown format.\n",fn);
+            break;
+
+        case WINE_REG_VER_ERROR:
+            break;
+    }
+}
+
+/* generate and return the name of the tmp file and associated stream [Internal] */
+static LPSTR _get_tmp_fn(FILE **f)
+{
+    LPSTR ret;
+    int tmp_fd,count;
+
+    ret = _xmalloc(50);
+    for (count = 0;;) {
+        sprintf(ret,"/tmp/reg%lx%04x.tmp",(long)getpid(),count++);
+        if ((tmp_fd = open(ret,O_CREAT | O_EXCL | O_WRONLY,0666)) != -1) break;
+        if (errno != EEXIST) {
+            ERR("Unexpected error while open() call: %s\n",strerror(errno));
+            free(ret);
+            *f = NULL;
+            return NULL;
+        }
+    }
+
+    if ((*f = fdopen(tmp_fd,"w")) == NULL) {
+        ERR("Unexpected error while fdopen() call: %s\n",strerror(errno));
+        close(tmp_fd);
+        free(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
+/* convert win95 native registry file to wine format [Internal] */
+static LPSTR _convert_win95_registry_to_wine_format(LPCSTR fn,int level)
+{
+    int fd;
+    FILE *f;
+    DOS_FULL_NAME full_name;
+    void *base;
+    LPSTR ret = NULL;
+    struct stat st;
+
+    _w95creg *creg;
+    _w95rgkn *rgkn;
+    _w95dke *dke, *root_dke;
+
+    if (!DOSFS_GetFullName( fn, 0, &full_name )) return NULL;
+
+    /* map the registry into the memory */
+    if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return NULL;
+    if ((fstat(fd, &st) == -1)) goto error1;
+    if (!st.st_size) goto error1;
+    if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error1;
+
+    /* control signature */
+    if (*(LPDWORD)base != W95_REG_CREG_ID) {
+        ERR("unable to load native win95 registry file %s: unknown signature.\n",fn);
+        goto error;
+    }
+
+    creg = base;
+    /* load the header (rgkn) */
+    rgkn = (_w95rgkn*)(creg + 1);
+    if (rgkn->id != W95_REG_RGKN_ID) {
+        ERR("second IFF header not RGKN, but %lx\n", rgkn->id);
+        goto error;
+    }
+    if (rgkn->root_off != 0x20) {
+        ERR("rgkn->root_off not 0x20, please report !\n");
+        goto error;
+    }
+    if (rgkn->last_dke > rgkn->size)
+    {
+      ERR("registry file corrupt! last_dke > size!\n");
+      goto error;
+    }
+    /* verify last dke */
+    dke = (_w95dke*)((char*)rgkn + rgkn->last_dke);
+    if (dke->x1 != 0x80000000)
+    { /* wrong magic */
+      ERR("last dke invalid !\n");
+      goto error;
+    }
+    if (rgkn->size > creg->rgdb_off)
+    {
+      ERR("registry file corrupt! rgkn size > rgdb_off !\n");
+      goto error;
+    }
+    root_dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
+    if ( (root_dke->prevlvl != 0xffffffff) || (root_dke->next != 0xffffffff) )
+    {
+        ERR("registry file corrupt! invalid root dke !\n");
+        goto error;
+    }
+
+    if ( (ret = _get_tmp_fn(&f)) == NULL) goto error;
+    fprintf(f,"WINE REGISTRY Version 2");
+    _w95_dump_dke("",creg,rgkn,root_dke,f,level);
+    fclose(f);
+
+error:
+    if(ret == NULL) {
+        ERR("Unable to load native win95 registry file %s.\n",fn);
+        ERR("Please report to a.mohr@mailto.de.\n");
+        ERR("Make a backup of the file, run a good reg cleaner program and try again!\n");
+    }
+
+    munmap(base, st.st_size);
+error1:
+    close(fd);
+    return ret;
+}
+
+/* convert winnt native registry file to wine format [Internal] */
+static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
+{
+    int fd;
+    FILE *f;
+    DOS_FULL_NAME full_name;
+    void *base;
+    LPSTR ret = NULL;
+    struct stat st;
+
+    nt_regf *regf;
+    nt_hbin *hbin;
+    nt_hbin_sub *hbin_sub;
+    nt_nk *nk;
+
+    if (!DOSFS_GetFullName( fn, 0, &full_name )) return NULL;
+
+    /* map the registry into the memory */
+    if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return NULL;
+    if ((fstat(fd, &st) == -1)) goto error1;
+    if (!st.st_size) goto error1;
+    if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error1;
+
+    /* control signature */
+    if (*(LPDWORD)base != NT_REG_HEADER_BLOCK_ID) {
+        ERR("unable to load native winnt registry file %s: unknown signature.\n",fn);
+        goto error;
+    }
+
+    /* start block */
+    regf = base;
+
+    /* hbin block */
+    hbin = (nt_hbin*)((char*) base + 0x1000);
+    if (hbin->id != NT_REG_POOL_BLOCK_ID) {
+      ERR( "hbin block invalid\n");
+      goto error;
+    }
+
+    /* hbin_sub block */
+    hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
+    if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k')) {
+      ERR( "hbin_sub block invalid\n");
+      goto error;
+    }
+
+    /* nk block */
+    nk = (nt_nk*)&(hbin_sub->data[0]);
+    if (nk->Type != NT_REG_ROOT_KEY_BLOCK_TYPE) {
+      ERR( "special nk block not found\n");
+      goto error;
+    }
+
+    if ( (ret = _get_tmp_fn(&f)) == NULL) goto error;
+    fprintf(f,"WINE REGISTRY Version 2");
+    _nt_dump_nk("",(char*)base+0x1000,nk,f,level);
+    fclose(f);
+
+error:
+    munmap(base,st.st_size);
+error1:
+    close(fd);
+    return ret;
+}
+
+/* convert native native registry to wine format and load it via server call [Internal] */
+static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,int level)
+{
+    LPSTR tmp = NULL;
+
+    switch (reg_type) {
+        case REG_WINNT:
+            /* FIXME: following function doesn't really convert yet */
+            tmp = _convert_winnt_registry_to_wine_format(fn,level);
+            break;
+        case REG_WIN95:
+            tmp = _convert_win95_registry_to_wine_format(fn,level);
+            break;
+        case REG_WIN31:
+            ERR("Don't know how to convert native 3.1 registry yet.\n");
+            break;
+        default:
+            ERR("Unknown registry format parameter (%d)\n",reg_type);
+            break;
+    }
+
+    if (tmp != NULL) {
+        load_wine_registry(hkey,tmp);
+        TRACE("File %s successfuly converted to %s and loaded to registry.\n",fn,tmp);
+        unlink(tmp);
+    }
+    else WARN("Unable to convert %s (not exist?)\n",fn);
+    free(tmp);
+}
+
+/* load all native windows registry files [Internal] */
+static void _load_windows_registry( HKEY hkey_users_default )
+{
+    int reg_type;
+    char windir[MAX_PATHNAME_LEN];
+    char path[MAX_PATHNAME_LEN];
+
+    GetWindowsDirectoryA(windir,MAX_PATHNAME_LEN);
+
+    reg_type = _get_reg_type();
+    switch (reg_type) {
+        case REG_WINNT: {
+            HKEY hkey;
+
+            /* user specific ntuser.dat */
+            if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN)) {
+                strcat(path,"\\ntuser.dat");
+                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WINNT,1);
+            }
+
+            /* default user.dat */
+            if (hkey_users_default) {
+                strcpy(path,windir);
+                strcat(path,"\\system32\\config\\default");
+                _convert_and_load_native_registry(path,hkey_users_default,REG_WINNT,1);
+            }
+
+            /*
+            * FIXME
+            *  map HLM\System\ControlSet001 to HLM\System\CurrentControlSet
+            */
+
+            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM", &hkey)) {
+	      strcpy(path,windir);
+	      strcat(path,"\\system32\\config\\system");
+              _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
+              RegCloseKey(hkey);
+            }
+
+            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE", &hkey)) {
+                strcpy(path,windir);
+                strcat(path,"\\system32\\config\\software");
+                _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
+                RegCloseKey(hkey);
+            }
+
+            strcpy(path,windir);
+            strcat(path,"\\system32\\config\\sam");
+            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
+
+            strcpy(path,windir);
+            strcat(path,"\\system32\\config\\security");
+            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
+
+            /* this key is generated when the nt-core booted successfully */
+            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\Clone",&hkey)) RegCloseKey(hkey);
+            break;
+        }
+
+        case REG_WIN95:
+            _convert_and_load_native_registry("c:\\system.1st",HKEY_LOCAL_MACHINE,REG_WIN95,0);
+
+            strcpy(path,windir);
+            strcat(path,"\\system.dat");
+            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WIN95,0);
+
+            if (PROFILE_GetWineIniString("Wine","Profile","",path,MAX_PATHNAME_LEN)) {
+	        /* user specific user.dat */
+	        strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
+
+	        /* default user.dat */
+	        if (hkey_users_default) {
+                    strcpy(path,windir);
+                    strcat(path,"\\user.dat");
+                    _convert_and_load_native_registry(path,hkey_users_default,REG_WIN95,1);
+                }
+            } else {
+                strcpy(path,windir);
+                strcat(path,"\\user.dat");
+                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
+            }
+            break;
+
+        case REG_WIN31:
+            /* FIXME: here we should convert to *.reg file supported by server and call REQ_LOAD_REGISTRY, see REG_WIN95 case */
+            _w31_loadreg();
+            break;
+
+        case REG_DONTLOAD:
+            TRACE("REG_DONTLOAD\n");
+            break;
+
+        default:
+            ERR("switch: no match (%d)\n",reg_type);
+            break;
+
+    }
+}
+
+/* load global registry files (stored in /etc/wine) [Internal] */
+static void _load_global_registry(void)
+{
+    TRACE("(void)\n");
+
+    /* Load the global HKU hive directly from sysconfdir */
+    load_wine_registry( HKEY_USERS, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT );
+
+    /* Load the global machine defaults directly from sysconfdir */
+    load_wine_registry( HKEY_LOCAL_MACHINE, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE );
+}
+
+/* load home registry files (stored in ~/.wine) [Internal] */
+static void _load_home_registry( HKEY hkey_users_default )
+{
+    LPCSTR confdir = get_config_dir();
+    LPSTR tmp = _xmalloc(strlen(confdir)+20);
+
+    strcpy(tmp,confdir);
+    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
+    load_wine_registry(hkey_users_default,tmp);
+
+    strcpy(tmp,confdir);
+    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER);
+    load_wine_registry(HKEY_CURRENT_USER,tmp);
+
+    strcpy(tmp,confdir);
+    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
+    load_wine_registry(HKEY_LOCAL_MACHINE,tmp);
+
+    free(tmp);
+}
+
+/* load all registry (native and global and home) */
+void SHELL_LoadRegistry( void )
+{
+    HKEY hkey_users_default;
+
+    TRACE("(void)\n");
+
+    if (!CLIENT_IsBootThread()) return;  /* already loaded */
+
+    if (!RegCreateKeyA(HKEY_USERS,".Default",&hkey_users_default)) hkey_users_default = 0;
+
+    _allocate_default_keys();
+    _set_registry_levels(0,0,0);
+    if (PROFILE_GetWineIniBool("Registry","LoadWindowsRegistryFiles",1))
+        _load_windows_registry( hkey_users_default );
+    if (PROFILE_GetWineIniBool("Registry","LoadGlobalRegistryFiles",1))
+        _load_global_registry();
+    _set_registry_levels(1,0,0);
+    if (PROFILE_GetWineIniBool("Registry","LoadHomeRegistryFiles",1))
+        _load_home_registry( hkey_users_default );
+    _init_registry_saving( hkey_users_default );
+    RegCloseKey(hkey_users_default);
+}
+
+/***************************************************************************/
+/*                          API FUNCTIONS                                  */
+/***************************************************************************/
 
 /******************************************************************************
  * RegFlushKey [KERNEL.227] [ADVAPI32.143]
