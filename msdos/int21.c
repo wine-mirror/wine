@@ -1441,41 +1441,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 			       CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi)));
         break;
 
-    case 0x57: /* FILE DATE AND TIME */
-        switch (AL_reg(context))
-        {
-        case 0x00:  /* Get */
-            {
-                FILETIME filetime;
-                TRACE("GET FILE DATE AND TIME for handle %d\n",
-		      BX_reg(context));
-                if (!GetFileTime( DosFileHandleToWin32Handle(BX_reg(context)), NULL, NULL, &filetime ))
-		     bSetDOSExtendedError = TRUE;
-                else
-                {
-                    WORD date, time;
-                    FileTimeToDosDateTime( &filetime, &date, &time );
-                    SET_DX( context, date );
-                    SET_CX( context, time );
-                }
-            }
-            break;
-
-        case 0x01:  /* Set */
-            {
-                FILETIME filetime;
-                TRACE("SET FILE DATE AND TIME for handle %d\n",
-		      BX_reg(context));
-                DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
-                                       &filetime );
-                bSetDOSExtendedError =
-			(!SetFileTime( DosFileHandleToWin32Handle(BX_reg(context)),
-                                      NULL, NULL, &filetime ));
-            }
-            break;
-        }
-        break;
-
     case 0x5a: /* CREATE TEMPORARY FILE */
         TRACE("CREATE TEMPORARY FILE\n");
         bSetDOSExtendedError = !INT21_CreateTempFile(context);
@@ -1488,13 +1453,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
                _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
                                CX_reg(context) ));
         bSetDOSExtendedError = (AX_reg(context) != 0);
-        break;
-
-    case 0x5d: /* NETWORK */
-        FIXME("Function 0x%04x not implemented.\n", AX_reg (context));
-	/* Fix the following while you're at it.  */
-        SetLastError( ER_NoNetwork );
-	bSetDOSExtendedError = TRUE;
         break;
 
     case 0x5e:

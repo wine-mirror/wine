@@ -83,6 +83,40 @@ typedef struct _INT21_HEAP {
 
 
 /***********************************************************************
+ *           INT21_ReadChar
+ *
+ * Reads a character from the standard input.
+ * Extended keycodes will be returned as two separate characters.
+ */
+static BOOL INT21_ReadChar( BYTE *input, BOOL peek )
+{
+    static BYTE pending_scan = 0;
+
+    if (pending_scan)
+    {
+        if (input)
+            *input = pending_scan;
+        if (!peek)
+            pending_scan = 0;
+        return TRUE;
+    }
+    else
+    {
+        BYTE ascii;
+        BYTE scan;
+        if (!DOSVM_Int16ReadChar( &ascii, &scan, peek ))
+            return FALSE;
+
+        if (input)
+            *input = ascii;
+        if (!peek && !ascii)
+            pending_scan = scan;
+        return TRUE;
+    }
+}
+
+
+/***********************************************************************
  *           INT21_GetSystemCountryCode
  *
  * Return DOS country code for default system locale.
@@ -370,6 +404,106 @@ static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_FileDateTime
+ *
+ * Handler for function 0x57.
+ */
+static BOOL INT21_FileDateTime( CONTEXT86 *context )
+{
+    HANDLE   handle = DosFileHandleToWin32Handle(BX_reg(context));
+    FILETIME filetime;
+    WORD     date, time;
+
+    switch (AL_reg(context)) {
+    case 0x00:  /* Get last-written stamp */
+        TRACE( "GET FILE LAST-WRITTEN DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            if (!GetFileTime( handle, NULL, NULL, &filetime ))
+                return FALSE;
+            FileTimeToDosDateTime( &filetime, &date, &time );
+            SET_DX( context, date );
+            SET_CX( context, time );
+            break;
+        }
+
+    case 0x01:  /* Set last-written stamp */
+        TRACE( "SET FILE LAST-WRITTEN DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            DosDateTimeToFileTime( DX_reg(context), 
+                                   CX_reg(context),
+                                   &filetime );
+            if (!SetFileTime( handle, NULL, NULL, &filetime ))
+                return FALSE;
+            break;
+        }
+
+    case 0x04:  /* Get last access stamp, DOS 7 */
+        TRACE( "GET FILE LAST ACCESS DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            if (!GetFileTime( handle, NULL, &filetime, NULL ))
+                return FALSE;
+            FileTimeToDosDateTime( &filetime, &date, &time );
+            SET_DX( context, date );
+            SET_CX( context, time );
+            break;
+        }
+
+    case 0x05:  /* Set last access stamp, DOS 7 */
+        TRACE( "SET FILE LAST ACCESS DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            DosDateTimeToFileTime( DX_reg(context), 
+                                   CX_reg(context),
+                                   &filetime );
+            if (!SetFileTime( handle, NULL, &filetime, NULL ))
+                return FALSE;
+            break;
+        }
+
+    case 0x06:  /* Get creation stamp, DOS 7 */
+        TRACE( "GET FILE CREATION DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            if (!GetFileTime( handle, &filetime, NULL, NULL ))
+                return FALSE;
+            FileTimeToDosDateTime( &filetime, &date, &time );
+            SET_DX( context, date );
+            SET_CX( context, time );
+            /*
+             * FIXME: SI has number of 10-millisecond units past time in CX.
+             */
+            SET_SI( context, 0 );
+            break;
+        }
+
+    case 0x07:  /* Set creation stamp, DOS 7 */
+        TRACE( "SET FILE CREATION DATE AND TIME, handle %d\n",
+               BX_reg(context) );
+        {
+            /*
+             * FIXME: SI has number of 10-millisecond units past time in CX.
+             */
+            DosDateTimeToFileTime( DX_reg(context), 
+                                   CX_reg(context),
+                                   &filetime );
+            if (!SetFileTime( handle, &filetime, NULL, NULL ))
+                return FALSE;
+            break;
+        }
+
+    default:
+        INT_BARF( context, 0x21 );
+        break;
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           INT21_GetPSP
  *
  * Handler for functions 0x51 and 0x62.
@@ -544,7 +678,7 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           DOSVM_Int21Handler (WINEDOS16.133)
+ *           DOSVM_Int21Handler
  *
  * Interrupt 0x21 handler.
  */
@@ -584,8 +718,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             BYTE ascii;
             TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-            DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+            INT21_ReadChar( &ascii, FALSE );
             SET_AL( context, ascii );
+            /*
+             * FIXME: What to echo when extended keycodes are read?
+             */
             DOSVM_PutChar(AL_reg(context));
         }
         break;
@@ -602,43 +739,41 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-        /* FIXME: Use DOSDEV_Peek/Read/Write(DOSDEV_Console(),...) !! */
-        if (DL_reg(context) == 0xff) {
-            static char scan = 0;
+        if (DL_reg(context) == 0xff) 
+        {
             TRACE("Direct Console Input\n");
-            if (scan) {
-                /* return pending scancode */
-                SET_AL( context, scan );
-                RESET_ZFLAG(context);
-                scan = 0;
-            } else {
+
+            if (INT21_ReadChar( NULL, TRUE ))
+            {
                 BYTE ascii;
-                if (DOSVM_Int16ReadChar(&ascii,&scan,TRUE)) {
-                    DOSVM_Int16ReadChar(&ascii,&scan,FALSE);
-                    /* return ASCII code */
-                    SET_AL( context, ascii );
-                    RESET_ZFLAG(context);
-                    /* return scan code on next call only if ascii==0 */
-                    if (ascii) scan = 0;
-                } else {
-                    /* nothing pending, clear everything */
-                    SET_AL( context, 0 );
-                    SET_ZFLAG(context);
-                    scan = 0; /* just in case */
-                }
+                INT21_ReadChar( &ascii, FALSE );
+                SET_AL( context, ascii );
+                RESET_ZFLAG( context );
             }
-        } else {
+            else
+            {
+                /* no character available */
+                SET_AL( context, 0 );
+                SET_ZFLAG( context );
+            }
+        } 
+        else 
+        {
             TRACE("Direct Console Output\n");
             DOSVM_PutChar(DL_reg(context));
+            /*
+             * At least DOS versions 2.1-7.0 return character 
+             * that was written in AL register.
+             */
+            SET_AL( context, DL_reg(context) );
         }
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
         {
             BYTE ascii;
-            /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
             TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-            DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+            INT21_ReadChar( &ascii, FALSE );
             SET_AL( context, ascii );
         }
         break;
@@ -646,9 +781,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
         {
             BYTE ascii;
-            /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
             TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-            DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+            INT21_ReadChar( &ascii, FALSE );
             SET_AL( context, ascii );
         }
         break;
@@ -664,11 +798,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x0b: /* GET STDIN STATUS */
         TRACE( "GET STDIN STATUS\n" );
         {
-            BIOSDATA *data = BIOS_DATA;
-            if(data->FirstKbdCharPtr == data->NextKbdCharPtr)
-                SET_AL( context, 0 );
+            if (INT21_ReadChar( NULL, TRUE ))
+                SET_AL( context, 0xff ); /* character available */
             else
-                SET_AL( context, 0xff );
+                SET_AL( context, 0 ); /* no character available */
         }
         break;
 
@@ -1080,8 +1213,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
-    case 0x57: /* FILE DATE AND TIME */
         INT_Int21Handler( context );
+        break;
+
+    case 0x57: /* FILE DATE AND TIME */
+        if (!INT21_FileDateTime( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x58: /* GET OR SET MEMORY ALLOCATION STRATEGY */
@@ -1111,7 +1248,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x5a: /* CREATE TEMPORARY FILE */
     case 0x5b: /* CREATE NEW FILE */ 
     case 0x5c: /* "FLOCK" - RECORD LOCKING */
+        INT_Int21Handler( context );
+        break;
+
     case 0x5d: /* NETWORK 5D */
+        FIXME( "Network function 5D not implemented.\n" );
+        SetLastError( ER_NoNetwork );
+        bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x5e: /* NETWORK 5E */
     case 0x5f: /* NETWORK 5F */
     case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
