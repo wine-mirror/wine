@@ -6200,7 +6200,6 @@ dlls/crtdll/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/dinput/Makefile
-dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/gdi/Makefile
@@ -6435,7 +6434,6 @@ dlls/crtdll/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/dinput/Makefile
-dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/gdi/Makefile

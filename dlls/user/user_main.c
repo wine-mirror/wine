@@ -9,7 +9,6 @@
 
 #include "dce.h"
 #include "dialog.h"
-#include "display.h"
 #include "global.h"
 #include "input.h"
 #include "keyboard.h"
@@ -85,7 +84,7 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     MOUSE_Enable( mouse_event );
 
     /* Start processing X events */
-    UserRepaintDisable16( FALSE );
+    USER_Driver->pUserRepaintDisable( FALSE );
 
     return TRUE;
 }

@@ -41,7 +41,6 @@
 #include "wine/obj_base.h"
 #include "debugtools.h"
 #include "dinput.h"
-#include "display.h"
 #include "input.h"
 #include "user.h"
 #include "message.h"
@@ -1432,7 +1431,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
       point.x = This->win_centerX;
       point.y = This->win_centerY;
       MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-      DISPLAY_MoveCursor(point.x, point.y);
+      USER_Driver->pMoveCursor( point.x, point.y );
       This->need_warp = WARP_STARTED;
     }
 
@@ -1494,7 +1493,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     point.x = This->win_centerX;
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    DISPLAY_MoveCursor(point.x, point.y);
+    USER_Driver->pMoveCursor( point.x, point.y );
 
     This->need_warp = WARP_STARTED;
   }
@@ -1561,7 +1560,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
 
-    DISPLAY_MoveCursor(point.x, point.y);
+    USER_Driver->pMoveCursor( point.x, point.y );
 
     This->need_warp = WARP_STARTED;
   }

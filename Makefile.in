@@ -30,7 +30,6 @@ LIBSUBDIRS = \
 	console \
 	dlls/advapi32 \
 	dlls/crtdll \
-	dlls/display \
 	dlls/kernel \
 	dlls/mouse \
 	dlls/ntdll \
@@ -98,7 +97,6 @@ LIBOBJS = \
 	console/console.o \
 	dlls/advapi32/advapi32.o \
 	dlls/crtdll/crtdll.o \
-	dlls/display/display.o \
 	dlls/mouse/mouse.o \
 	dlls/ntdll/ntdll.o \
 	files/files.o \

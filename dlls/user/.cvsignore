@@ -1,5 +1,6 @@
 *.spec.c
 *.spec.glue.s
 Makefile
+disp.s
 libuser32.so.1.0
 thunk.glue.c

@@ -19,7 +19,6 @@
 #include "bitmap.h"
 #include "color.h"
 #include "debugtools.h"
-#include "display.h"
 #include "dce.h"
 #include "options.h"
 #include "message.h"
@@ -31,7 +30,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
+DEFAULT_DEBUG_CHANNEL(win);
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \

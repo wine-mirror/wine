@@ -6,13 +6,20 @@
  */
 
 #include "debugtools.h"
-#include "display.h"
 #include "mouse.h"
 #include "windef.h"
 #include "user.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(cursor);
+
+#include "pshpack1.h"
+typedef struct tagCURSORINFO
+{
+    WORD wXMickeys;
+    WORD wYMickeys;
+} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
+#include "poppack.h"
 
 /***********************************************************************
  *           DISPLAY_Inquire			(DISPLAY.101)

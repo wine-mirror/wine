@@ -48,7 +48,6 @@
 #include "task.h"
 #include "user.h"
 #include "input.h"
-#include "display.h"
 #include "message.h"
 #include "winerror.h"
 
@@ -1391,7 +1390,7 @@ HCURSOR WINAPI SetCursor(
     /* Change the cursor shape only if it is visible */
     if (CURSOR_ShowCount >= 0)
     {
-        DISPLAY_SetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
+        USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
         GlobalUnlock16( hActiveCursor );
     }
     return hOldCursor;
@@ -1412,7 +1411,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
  */
 BOOL WINAPI SetCursorPos( INT x, INT y )
 {
-    DISPLAY_MoveCursor( x, y );
+    USER_Driver->pMoveCursor( x, y );
     return TRUE;
 }
 
@@ -1438,14 +1437,14 @@ INT WINAPI ShowCursor( BOOL bShow )
     {
         if (++CURSOR_ShowCount == 0)  /* Show it */
         {
-            DISPLAY_SetCursor((CURSORICONINFO*)GlobalLock16( hActiveCursor ));
+            USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
             GlobalUnlock16( hActiveCursor );
         }
     }
     else
     {
         if (--CURSOR_ShowCount == -1)  /* Hide it */
-            DISPLAY_SetCursor( NULL );
+            USER_Driver->pSetCursor( NULL );
     }
     return CURSOR_ShowCount;
 }
