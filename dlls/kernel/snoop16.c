@@ -294,7 +294,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	context->SegCs = HIWORD(fun->origfun);
 
 
-	DPRINTF("CALL %s.%ld: %s(",dll->name,ordinal,fun->name);
+	DPRINTF("%04lx:CALL %s.%ld: %s(",GetCurrentThreadId(), dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -326,7 +326,9 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	if (ret->args) {
 		int	i,max;
 
-		DPRINTF("RET  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
+		DPRINTF("%04lx:RET  %s.%ld: %s(",
+                        GetCurrentThreadId(),ret->dll->name,ret->ordinal,
+                        ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16)
 			max=16;
