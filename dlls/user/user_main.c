@@ -42,8 +42,9 @@ USER_DRIVER USER_Driver;
 WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
 
-extern HPALETTE (WINAPI *pfnGDISelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd );
-extern UINT (WINAPI *pfnGDIRealizePalette)(HDC hdc);
+static HPALETTE (WINAPI *pfnGDISelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd );
+static UINT (WINAPI *pfnGDIRealizePalette)( HDC hdc );
+static HPALETTE hPrimaryPalette;
 
 static HMODULE graphics_driver;
 static DWORD exiting_thread_id;
@@ -136,6 +137,50 @@ static BOOL load_driver(void)
 
 
 /***********************************************************************
+ *		UserSelectPalette (Not a Windows API)
+ */
+static HPALETTE WINAPI UserSelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground )
+{
+    WORD wBkgPalette = 1;
+
+    if (!bForceBackground && (hPal != GetStockObject(DEFAULT_PALETTE)))
+    {
+        HWND hwnd = WindowFromDC( hDC );
+        if (hwnd)
+        {
+            HWND hForeground = GetForegroundWindow();
+            /* set primary palette if it's related to current active */
+            if (hForeground == hwnd || IsChild(hForeground,hwnd))
+            {
+                wBkgPalette = 0;
+                hPrimaryPalette = hPal;
+            }
+        }
+    }
+    return pfnGDISelectPalette( hDC, hPal, wBkgPalette);
+}
+
+
+/***********************************************************************
+ *		UserRealizePalette (USER32.@)
+ */
+UINT WINAPI UserRealizePalette( HDC hDC )
+{
+    UINT realized = pfnGDIRealizePalette( hDC );
+
+    /* do not send anything if no colors were changed */
+    if (realized && GetCurrentObject( hDC, OBJ_PAL ) == hPrimaryPalette)
+    {
+        /* send palette change notification */
+        HWND hWnd = WindowFromDC( hDC );
+        if (hWnd) SendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0,
+                                       SMTO_ABORTIFHUNG, 2000, NULL );
+    }
+    return realized;
+}
+
+
+/***********************************************************************
  *           palette_init
  *
  * Patch the function pointers in GDI for SelectPalette and RealizePalette
@@ -150,7 +195,7 @@ static void palette_init(void)
         return;
     }
     if ((ptr = (void**)GetProcAddress( module, "pfnSelectPalette" )))
-        pfnGDISelectPalette = InterlockedExchangePointer( ptr, SelectPalette );
+        pfnGDISelectPalette = InterlockedExchangePointer( ptr, UserSelectPalette );
     else ERR( "cannot find pfnSelectPalette in GDI32\n" );
     if ((ptr = (void**)GetProcAddress( module, "pfnRealizePalette" )))
         pfnGDIRealizePalette = InterlockedExchangePointer( ptr, UserRealizePalette );

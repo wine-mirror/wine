@@ -156,8 +156,6 @@ extern INT SYSMETRICS_Set( INT index, INT value );
 extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
 extern INT SYSPARAMS_GetMouseButtonSwap( void );
 
-extern HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground );
-
 extern BOOL CLIPBOARD_ReleaseOwner(void);
 
 extern DWORD USER16_AlertableWait;
