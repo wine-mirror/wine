@@ -9,6 +9,7 @@
 #include "ole2.h"
 #include "process.h"
 #include "debug.h"
+#include "compobj.h"
 
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]
@@ -93,6 +94,15 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
 	return E_FAIL;
 }
 
+
+/***********************************************************************
+ *           GetRunningObjectTable32 (OLE2.73)
+ */
+HRESULT WINAPI GetRunningObjectTable32(DWORD reserved, LPVOID *pprot) {
+	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
+	return E_FAIL;
+}
+
 /***********************************************************************
  *           RegisterDragDrop16 (OLE2.35)
  */
@@ -132,6 +142,18 @@ HRESULT WINAPI RevokeDragDrop32(
 	HWND32 hwnd
 ) {
 	FIXME(ole,"(0x%04x),stub!\n",hwnd);
+	return S_OK;
+}
+
+/***********************************************************************
+ *           OleRegGetUserType (OLE32.122)
+ */
+HRESULT WINAPI OleRegGetUserType32( 
+	REFCLSID clsid, 
+	DWORD dwFormOfType,
+	LPOLESTR32* pszUserType)
+{
+	FIXME(ole,",stub!\n");
 	return S_OK;
 }
 

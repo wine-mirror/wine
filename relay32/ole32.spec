@@ -73,7 +73,7 @@ type	win32
  70 stub GetHGlobalFromILockBytes
  71 stub GetHGlobalFromStream
  72 stub GetHookInterface
- 73 stub GetRunningObjectTable
+ 73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable32
  74 stub IIDFromString
  75 stub IsAccelerator
  76 stub IsEqualGUID
@@ -122,7 +122,7 @@ type	win32
 119 stub OleRegEnumFormatEtc
 120 stub OleRegEnumVerbs
 121 stub OleRegGetMiscStatus
-122 stub OleRegGetUserType
+122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType32
 123 stub OleRun
 124 stub OleSave
 125 stub OleSaveToStream
