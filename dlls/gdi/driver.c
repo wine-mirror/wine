@@ -112,6 +112,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(InvertRgn);
     GET_FUNC(LineTo);
     GET_FUNC(MoveTo);
+    GET_FUNC(ModifyWorldTransform);
     GET_FUNC(OffsetClipRgn);
     GET_FUNC(OffsetViewportOrg);
     GET_FUNC(OffsetWindowOrg);
@@ -166,6 +167,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(SetViewportOrg);
     GET_FUNC(SetWindowExt);
     GET_FUNC(SetWindowOrg);
+    GET_FUNC(SetWorldTransform);
     GET_FUNC(StartDoc);
     GET_FUNC(StartPage);
     GET_FUNC(StretchBlt);

@@ -107,3 +107,26 @@ INT EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
+
+BOOL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
+{
+    EMRSETWORLDTRANSFORM emr;
+
+    emr.emr.iType = EMR_SETWORLDTRANSFORM;
+    emr.emr.nSize = sizeof(emr);
+    emr.xform = *xform;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}
+
+BOOL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
+{
+    EMRMODIFYWORLDTRANSFORM emr;
+
+    emr.emr.iType = EMR_MODIFYWORLDTRANSFORM;
+    emr.emr.nSize = sizeof(emr);
+    emr.xform = *xform;
+    emr.iMode = mode;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}

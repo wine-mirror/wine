@@ -80,6 +80,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
     MFDRV_InvertRgn,                 /* pInvertRgn */
     MFDRV_LineTo,                    /* pLineTo */
+    NULL,                            /* pModifyWorldTransform */
     MFDRV_MoveTo,                    /* pMoveTo */
     MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
@@ -135,6 +136,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetViewportOrg,            /* pSetViewportOrg */
     MFDRV_SetWindowExt,              /* pSetWindowExt */
     MFDRV_SetWindowOrg,              /* pSetWindowOrg */
+    NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     MFDRV_StretchBlt,                /* pStretchBlt */

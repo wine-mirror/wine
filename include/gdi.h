@@ -219,6 +219,7 @@ typedef struct tagDC_FUNCS
     INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
     BOOL     (*pLineTo)(PHYSDEV,INT,INT);
+    BOOL     (*pModifyWorldTransform)(PHYSDEV,const XFORM*,INT);
     BOOL     (*pMoveTo)(PHYSDEV,INT,INT);
     INT      (*pOffsetClipRgn)(PHYSDEV,INT,INT);
     INT      (*pOffsetViewportOrg)(PHYSDEV,INT,INT);
@@ -275,6 +276,7 @@ typedef struct tagDC_FUNCS
     INT      (*pSetViewportOrg)(PHYSDEV,INT,INT);
     INT      (*pSetWindowExt)(PHYSDEV,INT,INT);
     INT      (*pSetWindowOrg)(PHYSDEV,INT,INT);
+    BOOL     (*pSetWorldTransform)(PHYSDEV,const XFORM*);
     INT      (*pStartDoc)(PHYSDEV,const DOCINFOA*);
     INT      (*pStartPage)(PHYSDEV);
     BOOL     (*pStretchBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,INT,INT,DWORD);

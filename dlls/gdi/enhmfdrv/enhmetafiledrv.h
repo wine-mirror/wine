@@ -83,6 +83,7 @@ extern INT      EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT ri
                                           INT bottom );
 extern BOOL     EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn );
 extern BOOL     EMFDRV_LineTo( PHYSDEV dev, INT x, INT y );
+extern BOOL     EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode );
 extern BOOL     EMFDRV_MoveTo( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y );
@@ -134,6 +135,7 @@ extern INT      EMFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y );
+extern BOOL     EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform );
 extern BOOL     EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst,
                                    INT widthDst, INT heightDst,
                                    PHYSDEV devSrc, INT xSrc, INT ySrc,

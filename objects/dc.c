@@ -1014,6 +1014,12 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
     /* Check that graphics mode is GM_ADVANCED */
     if (dc->GraphicsMode!=GM_ADVANCED) goto done;
 
+    if (dc->funcs->pSetWorldTransform)
+    {
+        ret = dc->funcs->pSetWorldTransform(dc->physDev, xform);
+        if (!ret) goto done;
+    }
+
     dc->xformWorld2Wnd = *xform;
     DC_UpdateXforms( dc );
     ret = TRUE;
@@ -1057,6 +1063,12 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
 
     /* Check that graphics mode is GM_ADVANCED */
     if (dc->GraphicsMode!=GM_ADVANCED) goto done;
+
+    if (dc->funcs->pModifyWorldTransform)
+    {
+        ret = dc->funcs->pModifyWorldTransform(dc->physDev, xform, iMode);
+        if (!ret) goto done;
+    }
 
     switch (iMode)
     {
