@@ -574,7 +574,7 @@ static HRESULT WINAPI IDirectSoundImpl_GetSpeakerConfig(
     TRACE("(%p, %p)\n",This,lpdwSpeakerConfig);
 
     if (lpdwSpeakerConfig == NULL) {
-        WARN("invalid parameter\n");
+        WARN("invalid parameter: lpdwSpeakerConfig == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -918,12 +918,12 @@ HRESULT WINAPI IDirectSound_IUnknown_Create(
     TRACE("(%p,%p)\n",pds,ppunk);
 
     if (ppunk == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: ppunk == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (pds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: pds == NULL\n");
         *ppunk = NULL;
         return DSERR_INVALIDPARAM;
     }
@@ -1080,12 +1080,12 @@ HRESULT WINAPI IDirectSound_IDirectSound_Create(
     TRACE("(%p,%p)\n",pds,ppds);
 
     if (ppds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: ppds == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (pds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: pds == NULL\n");
         *ppds = NULL;
         return DSERR_INVALIDPARAM;
     }
@@ -1159,12 +1159,12 @@ HRESULT WINAPI IDirectSound8_IUnknown_Create(
     TRACE("(%p,%p)\n",pds,ppunk);
 
     if (ppunk == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: ppunk == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (pds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: pds == NULL\n");
         *ppunk = NULL;
         return DSERR_INVALIDPARAM;
     }
@@ -1321,12 +1321,12 @@ HRESULT WINAPI IDirectSound8_IDirectSound_Create(
     TRACE("(%p,%p)\n",pds,ppds);
 
     if (ppds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: ppds == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (pds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: pds == NULL\n");
         *ppds = NULL;
         return DSERR_INVALIDPARAM;
     }
@@ -1493,12 +1493,12 @@ HRESULT WINAPI IDirectSound8_IDirectSound8_Create(
     TRACE("(%p,%p)\n",pds,ppds);
 
     if (ppds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: ppds == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (pds == NULL) {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter: pds == NULL\n");
         *ppds = NULL;
         return DSERR_INVALIDPARAM;
     }
@@ -1568,7 +1568,8 @@ HRESULT WINAPI DirectSoundCreate(
             hr = IDirectSound_IDirectSound_Create((LPDIRECTSOUND8)dsound, ppDS);
             if (*ppDS)
                 IDirectSound_IDirectSound_AddRef(*ppDS);
-            return hr;
+            else
+                WARN("IDirectSound_IDirectSound_Create failed\n");
         } else {
             ERR("different dsound already opened (only support one sound card at a time now)\n");
             *ppDS = NULL;
@@ -1578,22 +1579,28 @@ HRESULT WINAPI DirectSoundCreate(
         LPDIRECTSOUND8 pDS;
         hr = IDirectSoundImpl_Create(&devGuid, &pDS);
         if (pDS) {
-            HRESULT hres;
-            dsound = (IDirectSoundImpl*)pDS;
-            hres = DSOUND_PrimaryCreate(dsound);
-            if (hres != DS_OK) {
+            hr = DSOUND_PrimaryCreate((IDirectSoundImpl*)pDS);
+            if (hr == DS_OK) {
+                hr = IDirectSound_IDirectSound_Create(pDS, ppDS);
+                if (*ppDS) {
+                    IDirectSound_IDirectSound_AddRef(*ppDS);
+
+                    dsound = (IDirectSoundImpl*)pDS;
+                    timeBeginPeriod(DS_TIME_RES);
+                    dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
+                                       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+                } else {
+                    WARN("IDirectSound_IDirectSound_Create failed\n");
+                    IDirectSound8_Release(pDS);
+                }
+            } else {
                 WARN("DSOUND_PrimaryCreate failed\n");
-                return hres;
+                IDirectSound8_Release(pDS);
             }
-            timeBeginPeriod(DS_TIME_RES);
-            dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-                               (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
-        }
-        hr = IDirectSound_IDirectSound_Create(pDS, ppDS);
-        if (*ppDS)
-            IDirectSound_IDirectSound_AddRef(*ppDS);
+        } else
+            WARN("IDirectSoundImpl_Create failed\n");
     }
-                                                                                                                                             
+
     return hr;
 }
 
@@ -1645,7 +1652,8 @@ HRESULT WINAPI DirectSoundCreate8(
             hr = IDirectSound8_IDirectSound8_Create((LPDIRECTSOUND8)dsound, ppDS);
             if (*ppDS)
                 IDirectSound8_IDirectSound8_AddRef(*ppDS);
-            return hr;
+            else
+                WARN("IDirectSound8_IDirectSound8_Create failed\n");
         } else {
             ERR("different dsound already opened (only support one sound card at a time now)\n");
             *ppDS = NULL;
@@ -1655,21 +1663,27 @@ HRESULT WINAPI DirectSoundCreate8(
         LPDIRECTSOUND8 pDS;
         hr = IDirectSoundImpl_Create(&devGuid, &pDS);
         if (pDS) {
-            HRESULT hres;
-            dsound = (IDirectSoundImpl*)pDS;
-            hres = DSOUND_PrimaryCreate(dsound);
-            if (hres != DS_OK) {
+            hr = DSOUND_PrimaryCreate((IDirectSoundImpl*)pDS);
+            if (hr == DS_OK) {
+                hr = IDirectSound8_IDirectSound8_Create(pDS, ppDS);
+                if (*ppDS) {
+                    IDirectSound8_IDirectSound8_AddRef(*ppDS);
+
+                    dsound = (IDirectSoundImpl*)pDS;
+                    timeBeginPeriod(DS_TIME_RES);
+                    dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
+                                       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+                } else {
+                    WARN("IDirectSound8_IDirectSound8_Create failed\n");
+                    IDirectSound8_Release(pDS);
+                }
+            } else {
                 WARN("DSOUND_PrimaryCreate failed\n");
-                return hres;
+                IDirectSound8_Release(pDS);
             }
-            timeBeginPeriod(DS_TIME_RES);
-            dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-                               (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
-        }
-        hr = IDirectSound8_IDirectSound8_Create(pDS, ppDS);
-        if (*ppDS)
-            IDirectSound8_IDirectSound8_AddRef(*ppDS);
+        } else
+            WARN("IDirectSoundImpl_Create failed\n");
     }
-                                                                                                                                             
+
     return hr;
 }
