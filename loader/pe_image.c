@@ -434,13 +434,13 @@ static void do_relocations(WINE_MODREF *wm)
 #endif
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
-				WARN(win32, "Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");
+				FIXME(win32, "Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");
 				break;
 			case IMAGE_REL_BASED_MIPS_JMPADDR:
-				WARN(win32, "Is this a MIPS machine ???\n");
+				FIXME(win32, "Is this a MIPS machine ???\n");
 				break;
 			default:
-				WARN(win32, "Unknown fixup type\n");
+				FIXME(win32, "Unknown fixup type\n");
 				break;
 			}
 		}
@@ -599,16 +599,6 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
         *(IMAGE_DOS_HEADER *)load_addr = *dos_header;
         *(IMAGE_NT_HEADERS *)(load_addr + dos_header->e_lfanew) = *nt_header;
 	memcpy(PE_SECTIONS(load_addr),PE_SECTIONS(hModule),sizeof(IMAGE_SECTION_HEADER)*nt_header->FileHeader.NumberOfSections);
-
-	/* FIXME: Some binaries seems to have an AOEP below the base of code
-	 * (win98 notepad.exe ?). Fix it up.
-	 */
-	if (nt_header->OptionalHeader.AddressOfEntryPoint<nt_header->OptionalHeader.BaseOfCode) {
-		FIXME(win32,"AddressOfEntryPoint (0x%08lx) is below BaseOfCode (0x%08lx). Setting to BaseOfCode (expect crash).\n",nt_header->OptionalHeader.AddressOfEntryPoint,nt_header->OptionalHeader.BaseOfCode);
-
-		/* Note use of the copied nt header, which is used later */
-		PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint=nt_header->OptionalHeader.BaseOfCode;
-	}
         pe_seg = PE_SECTIONS(hModule);
 	for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++, pe_seg++)
 	{
