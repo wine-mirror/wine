@@ -1542,6 +1542,7 @@ dlls/msi/Makefile
 dlls/msimg32/Makefile
 dlls/msisys/Makefile
 dlls/msnet32/Makefile
+dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvcrt/tests/Makefile
 dlls/msvcrt20/Makefile
@@ -1549,7 +1550,6 @@ dlls/msvcrt40/Makefile
 dlls/msvcrtd/Makefile
 dlls/msvidc32/Makefile
 dlls/msvideo/Makefile
-dlls/msvideo/msrle32/Makefile
 dlls/mswsock/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile

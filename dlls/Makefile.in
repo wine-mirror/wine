@@ -71,13 +71,13 @@ BASEDIRS = \
 	msimg32 \
 	msisys \
 	msnet32 \
+	msrle32 \
 	msvcrt \
 	msvcrt20 \
 	msvcrt40 \
 	msvcrtd \
 	msvidc32 \
 	msvideo \
-	msvideo/msrle32 \
 	mswsock \
 	netapi32 \
 	newdev \
@@ -593,8 +593,8 @@ msisys.ocx$(DLLEXT): msisys/msisys.ocx$(DLLEXT)
 msnet32.dll$(DLLEXT): msnet32/msnet32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msnet32/msnet32.dll$(DLLEXT) $@
 
-msrle32.dll$(DLLEXT): msvideo/msrle32/msrle32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) msvideo/msrle32/msrle32.dll$(DLLEXT) $@
+msrle32.dll$(DLLEXT): msrle32/msrle32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msrle32/msrle32.dll$(DLLEXT) $@
 
 msvcrt.dll$(DLLEXT): msvcrt/msvcrt.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt/msvcrt.dll$(DLLEXT) $@
@@ -1259,10 +1259,10 @@ libmsnet32.def: msnet32/msnet32.spec.def
 libmsnet32.a: msnet32/msnet32.spec.def
 	$(DLLTOOL) -k -l $@ -d msnet32/msnet32.spec.def
 
-libmsrle32.def: msvideo/msrle32/msrle32.spec.def
-	$(RM) $@ && $(LN_S) msvideo/msrle32/msrle32.spec.def $@
-libmsrle32.a: msvideo/msrle32/msrle32.spec.def
-	$(DLLTOOL) -k -l $@ -d msvideo/msrle32/msrle32.spec.def
+libmsrle32.def: msrle32/msrle32.spec.def
+	$(RM) $@ && $(LN_S) msrle32/msrle32.spec.def $@
+libmsrle32.a: msrle32/msrle32.spec.def
+	$(DLLTOOL) -k -l $@ -d msrle32/msrle32.spec.def
 
 libmsvcrt.def: msvcrt/msvcrt.spec.def
 	$(RM) $@ && $(LN_S) msvcrt/msvcrt.spec.def $@
@@ -1607,7 +1607,7 @@ mshtml/mshtml.spec.def: $(WINEBUILD)
 msi/msi.spec.def: $(WINEBUILD)
 msimg32/msimg32.spec.def: $(WINEBUILD)
 msnet32/msnet32.spec.def: $(WINEBUILD)
-msvideo/msrle32/msrle32.spec.def: $(WINEBUILD)
+msrle32/msrle32.spec.def: $(WINEBUILD)
 msvcrt/msvcrt.spec.def: $(WINEBUILD)
 msvcrt20/msvcrt20.spec.def: $(WINEBUILD)
 msvcrt40/msvcrt40.spec.def: $(WINEBUILD)
@@ -1740,7 +1740,7 @@ msi/msi.dll$(DLLEXT): msi
 msimg32/msimg32.dll$(DLLEXT): msimg32
 msisys/msisys.ocx$(DLLEXT): msisys
 msnet32/msnet32.dll$(DLLEXT): msnet32
-msvideo/msrle32/msrle32.dll$(DLLEXT): msvideo/msrle32
+msrle32/msrle32.dll$(DLLEXT): msrle32
 msvcrt/msvcrt.dll$(DLLEXT): msvcrt
 msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
 msvcrt40/msvcrt40.dll$(DLLEXT): msvcrt40
