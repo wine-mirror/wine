@@ -67,6 +67,14 @@ typedef struct tagMSIVIEWOPS
     UINT (*fetch_int)( struct tagMSIVIEW *, UINT row, UINT col, UINT *val );
 
     /*
+     * fetch_int - reads one integer from {row,col} in the table
+     *
+     *  This function is similar to fetch_int, except fetches a
+     *    stream instead of an integer.
+     */
+    UINT (*fetch_stream)( struct tagMSIVIEW *, UINT row, UINT col, IStream **stm );
+
+    /*
      * get_int - sets one integer at {row,col} in the table
      *
      *  Similar semantics to fetch_int

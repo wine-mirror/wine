@@ -224,6 +224,7 @@ MSIVIEWOPS create_ops =
     CREATE_fetch_int,
     NULL,
     NULL,
+    NULL,
     CREATE_execute,
     CREATE_close,
     CREATE_get_dimensions,

@@ -65,6 +65,23 @@ static UINT SELECT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     return sv->table->ops->fetch_int( sv->table, row, col, val );
 }
 
+static UINT SELECT_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStream **stm)
+{
+    MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
+
+    TRACE("%p %d %d %p\n", sv, row, col, stm );
+
+    if( !sv->table )
+         return ERROR_FUNCTION_FAILED;
+
+    if( (col==0) || (col>sv->num_cols) )
+         return ERROR_FUNCTION_FAILED;
+
+    col = sv->cols[ col - 1 ];
+
+    return sv->table->ops->fetch_stream( sv->table, row, col, stm );
+}
+
 static UINT SELECT_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
@@ -181,6 +198,7 @@ static UINT SELECT_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS select_ops =
 {
     SELECT_fetch_int,
+    SELECT_fetch_stream,
     SELECT_set_int,
     SELECT_insert_row,
     SELECT_execute,

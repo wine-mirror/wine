@@ -252,6 +252,7 @@ MSIVIEWOPS distinct_ops =
     DISTINCT_fetch_int,
     NULL,
     NULL,
+    NULL,
     DISTINCT_execute,
     DISTINCT_close,
     DISTINCT_get_dimensions,

@@ -190,6 +190,7 @@ MSIVIEWOPS insert_ops =
     INSERT_fetch_int,
     NULL,
     NULL,
+    NULL,
     INSERT_execute,
     INSERT_close,
     INSERT_get_dimensions,

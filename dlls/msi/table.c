@@ -34,6 +34,8 @@
 #include "msipriv.h"
 #include "winnls.h"
 
+#include "wine/unicode.h"
+
 #include "query.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -1090,6 +1092,64 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     return ERROR_SUCCESS;
 }
 
+/*
+ * We need a special case for streams, as we need to reference column with
+ * the name of the stream in the same table, and the table name
+ * which may not be available at higher levels of the query
+ */
+static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStream **stm )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    UINT ival = 0, refcol = 0, r;
+    LPWSTR sval;
+
+    if( !view->ops->fetch_int )
+        return ERROR_INVALID_PARAMETER;
+
+    /*
+     * The column marked with the type stream data seems to have a single number
+     * which references the column containing the name of the stream data
+     *
+     * Fetch the column to reference first.
+     */
+    r = view->ops->fetch_int( view, row, col, &ival );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    /* now get the column with the name of the stream */
+    r = view->ops->fetch_int( view, row, ival, &refcol );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    /* lookup the string value from the string table */
+    sval = MSI_makestring( tv->db, refcol );
+    if( !sval )
+        return ERROR_INVALID_PARAMETER;
+
+    if( ( strlenW( sval ) + strlenW( tv->name ) + 1 ) > MAX_STREAM_NAME )
+    {
+        ERR("Name of stream is too long %s.%s\n", 
+            debugstr_w( tv->name ), debugstr_w( sval ) );
+        r = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
+        WCHAR full_name[0x40];
+        static const WCHAR szDot[] = { '.', 0 };
+
+        strcpyW( full_name, tv->name );
+        strcatW( full_name, szDot );
+        strcatW( full_name, sval );
+
+        r = db_get_raw_stream( tv->db, full_name, stm );
+        if( r )
+            ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
+    }
+    HeapFree( GetProcessHeap(), 0, sval );
+
+    return r;
+}
+
 static UINT TABLE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
@@ -1268,6 +1328,7 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS table_ops =
 {
     TABLE_fetch_int,
+    TABLE_fetch_stream,
     TABLE_set_int,
     TABLE_insert_row,
     TABLE_execute,

@@ -79,7 +79,7 @@ typedef struct tagMSICOMPONENT
     BOOL FeatureState;
     BOOL Enabled;
     INT  Cost;
-}MSICOMPONENT;
+} MSICOMPONENT;
 
 typedef struct tagMSIFOLDER
 {
@@ -89,7 +89,7 @@ typedef struct tagMSIFOLDER
 
     WCHAR ResolvedTarget[MAX_PATH];
     WCHAR ResolvedSource[MAX_PATH];
-    WCHAR Property[MAX_PATH];   /* initialy set property */
+    WCHAR Property[MAX_PATH];   /* initially set property */
     INT   ParentIndex;
     INT   State;
         /* 0 = uninitialized */
@@ -821,7 +821,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
     ui_actionstart(hPackage, action);
     ui_progress(hPackage,2,1,0,0);
 
-    /* pre install, setup and configureation block */
+    /* pre install, setup and configuration block */
     if (strcmpW(action,szLaunchConditions)==0)
         rc = ACTION_LaunchConditions(hPackage);
     else if (strcmpW(action,szCostInitialize)==0)
@@ -854,7 +854,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_RegisterProgIdInfo(hPackage);
 
     /*
-     Current called during itunes but unimplemented and seem important
+     Called during itunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
      CreateShortcuts (would be nice to have soon)
@@ -931,7 +931,7 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
         case 1: /* DLL file stored in a Binary table stream */
             rc = HANDLE_CustomType1(hPackage,source,target,type);
             break;
-        case 2: /* Exe file stored in a Binary table strem */
+        case 2: /* EXE file stored in a Binary table strem */
             rc = HANDLE_CustomType2(hPackage,source,target,type);
             break;
         case 35: /* Directory set with formatted text. */
@@ -1431,7 +1431,7 @@ static void load_feature(MSIPACKAGE* package, MSIHANDLE row)
  * The native MSI does ALOT of modification to tables here. Mostly adding alot
  * of temporary columns to the Feature and Component tables. 
  *
- *    note: native msi also tracks the short filename. but i am only going to
+ *    note: native msi also tracks the short filename. but I am only going to
  *          track the long ones.  Also looking at this directory table
  *          it appears that the directory table does not get the parents
  *          resolved base on property only based on their entrys in the 

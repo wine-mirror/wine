@@ -182,6 +182,7 @@ static MSIVIEWOPS update_ops =
     UPDATE_fetch_int,
     NULL,
     NULL,
+    NULL,
     UPDATE_execute,
     UPDATE_close,
     UPDATE_get_dimensions,

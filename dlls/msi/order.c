@@ -255,6 +255,7 @@ MSIVIEWOPS order_ops =
     ORDER_fetch_int,
     NULL,
     NULL,
+    NULL,
     ORDER_execute,
     ORDER_close,
     ORDER_get_dimensions,

@@ -194,63 +194,49 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
             ERR("Error getting column type for %d\n", i );
             continue;
         }
-        ret = view->ops->fetch_int( view, query->row, i, &ival );
-        if( ret )
+        if( type != MSITYPE_BINARY)
         {
-            ERR("Error fetching data for %d\n", i );
-            continue;
-        }
-        if( ! (type & MSITYPE_VALID ) )
-            ERR("Invalid type!\n");
-
-        /* check if it's nul (0) - if so, don't set anything */
-        if( !ival )
-            continue;
-
-        if( type & MSITYPE_STRING )
-        {
-            LPWSTR sval;
-
-            if( type != MSITYPE_BINARY)
+            ret = view->ops->fetch_int( view, query->row, i, &ival );
+            if( ret )
             {
+                ERR("Error fetching data for %d\n", i );
+                continue;
+            }
+            if( ! (type & MSITYPE_VALID ) )
+                ERR("Invalid type!\n");
+
+            /* check if it's nul (0) - if so, don't set anything */
+            if( !ival )
+                continue;
+
+            if( type & MSITYPE_STRING )
+            {
+                LPWSTR sval;
+
                 sval = MSI_makestring( query->db, ival );
                 MsiRecordSetStringW( handle, i, sval );
                 HeapFree( GetProcessHeap(), 0, sval );
             }
             else
             {
-                UINT refcol = 0;
-                IStream *stm = NULL;
-                WCHAR full_name[0x40];
-                static const WCHAR szBinary[] = { 'B','i','n','a','r','y','.', 0};
-                const int maxlen = (sizeof full_name - sizeof szBinary)/sizeof(WCHAR);
-
-                ret = view->ops->fetch_int( view, query->row, ival, &refcol );
-                sval = MSI_makestring( query->db, refcol );
-
-                if( sval && ( strlenW( sval ) < maxlen ) )
-                {
-                    strcpyW( full_name, szBinary );
-                    strcatW( full_name, sval );
-
-                    db_get_raw_stream( query->db, full_name, &stm );
-                    if( stm )
-                    {
-                        MSI_RecordSetIStream( handle, i, stm );
-                        IStream_Release( stm );
-                    }
-                    else
-                        ERR("failed to get stream\n");
-                    HeapFree( GetProcessHeap(), 0, sval );
-                }
+                if( (type & MSI_DATASIZEMASK) == 2 )
+                    MsiRecordSetInteger( handle, i, ival - (1<<15) );
+                else
+                    MsiRecordSetInteger( handle, i, ival - (1<<31) );
             }
         }
         else
         {
-            if( (type & MSI_DATASIZEMASK) == 2 )
-                MsiRecordSetInteger( handle, i, ival - (1<<15) );
+            IStream *stm;
+
+            ret = view->ops->fetch_stream( view, query->row, i, &stm );
+            if( ( ret == ERROR_SUCCESS ) && stm )
+            {
+                MSI_RecordSetIStream( handle, i, stm );
+                IStream_Release( stm );
+            }
             else
-                MsiRecordSetInteger( handle, i, ival - (1<<31) );
+                ERR("failed to get stream\n");
         }
     }
     query->row ++;
