@@ -1098,7 +1098,7 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
 
     SERVER_START_REQ( send_message )
     {
-        req->id       = GetCurrentThreadId();
+        req->id       = (injected_flags & LLKHF_INJECTED) ? 0 : GetCurrentThreadId();
         req->type     = MSG_HARDWARE;
         req->flags    = 0;
         req->win      = 0;

@@ -149,7 +149,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     SERVER_START_REQ( send_message )
     {
-        req->id       = GetCurrentThreadId();
+        req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
         req->type     = MSG_HARDWARE;
         req->flags    = 0;
         req->win      = hwnd;
