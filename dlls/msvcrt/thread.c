@@ -9,27 +9,79 @@
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+/********************************************************************/
+
+typedef struct {
+  _beginthread_start_routine_t start_address;
+  void *arglist;
+} _beginthread_trampoline_t;
+
+/*********************************************************************
+ *		_beginthread_trampoline
+ */
+static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
+{
+  _beginthread_trampoline_t *trampoline = arg;
+  trampoline->start_address(trampoline->arglist);
+  return 0;
+}
+
+/*********************************************************************
+ *		_beginthread (MSVCRT.@)
+ */
+unsigned long _beginthread(
+  _beginthread_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
+  unsigned int stack_size, /* [in] Stack size for new thread or 0 */
+  void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
+{
+  _beginthread_trampoline_t trampoline;
+
+  TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
+
+  trampoline.start_address = start_address;
+  trampoline.arglist = arglist;
+
+  /* FIXME */
+  return CreateThread(NULL, stack_size, _beginthread_trampoline, &trampoline, 0, NULL);
+}
 
 /*********************************************************************
  *		_beginthreadex (MSVCRT.@)
  */
-unsigned long _beginthreadex(void* sec,
-                             unsigned int stack,
-                             unsigned __stdcall (*start)(void*),
-                             void* arg, unsigned int flag,
-                             unsigned int* addr)
+unsigned long _beginthreadex(
+  void *security,          /* [in] Security descriptor for new thread; must be NULL for Windows 9x applications */
+  unsigned int stack_size, /* [in] Stack size for new thread or 0 */
+  _beginthreadex_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
+  void *arglist,           /* [in] Argument list to be passed to new thread or NULL */
+  unsigned int initflag,   /* [in] Initial state of new thread (0 for running or CREATE_SUSPEND for suspended) */
+  unsigned int *thrdaddr)  /* [out] Points to a 32-bit variable that receives the thread identifier */
 {
-  TRACE("(%p,%d,%p,%p,%d,%p)\n",sec, stack,start, arg,flag,addr);
+  TRACE("(%p, %d, %p, %p, %d, %p)\n", security, stack_size, start_address, arglist, initflag, thrdaddr);
+
   /* FIXME */
-  return CreateThread( sec, stack, (LPTHREAD_START_ROUTINE)start, arg,flag,(LPDWORD)addr);
+  return CreateThread(security, stack_size, (LPTHREAD_START_ROUTINE) start_address,
+                      arglist, initflag, (LPDWORD) thrdaddr);
+}
+
+/*********************************************************************
+ *		_endthread (MSVCRT.@)
+ */
+void _endthread(void)
+{
+  TRACE("(void)\n");
+
+  /* FIXME */
+  ExitThread(0);
 }
 
 /*********************************************************************
  *		_endthreadex (MSVCRT.@)
  */
-void _endthreadex(unsigned int retval)
+void _endthreadex(
+  unsigned int retval) /* [in] Thread exit code */
 {
-  TRACE("(%d)\n",retval);
+  TRACE("(%d)\n", retval);
+
   /* FIXME */
   ExitThread(retval);
 }

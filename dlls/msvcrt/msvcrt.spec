@@ -173,7 +173,7 @@ debug_channels (msvcrt)
 @ stub _atoi64 #(str)
 @ stub _atoldbl 
 @ cdecl _beep(long long) _beep
-@ stub _beginthread #(ptr long ptr)
+@ cdecl _beginthread (ptr long ptr) _beginthread
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr) _beginthreadex
 @ cdecl _c_exit() MSVCRT__c_exit
 @ cdecl _cabs(long) _cabs
@@ -204,7 +204,7 @@ debug_channels (msvcrt)
 @ stub _dup #(long)
 @ stub _dup2 #(long long)
 @ cdecl _ecvt( double long ptr ptr) ecvt
-@ stub _endthread #()
+@ cdecl _endthread () _endthread
 @ cdecl _endthreadex(long) _endthreadex
 @ extern _environ MSVCRT__environ
 @ cdecl _eof(long) _eof
@@ -322,7 +322,7 @@ debug_channels (msvcrt)
 @ cdecl _j1(double) j1
 @ cdecl _jn(long double) jn
 @ cdecl _kbhit() _kbhit
-@ stub _lfind
+@ cdecl _lfind(ptr ptr ptr long ptr) _lfind
 @ cdecl _loaddll(str) _loaddll
 @ cdecl _local_unwind2(ptr long) _local_unwind2
 @ stub _lock
@@ -335,7 +335,7 @@ debug_channels (msvcrt)
 @ cdecl _lseek(long long long) _lseek
 @ stub _lseeki64 #(long long long)
 @ forward -noimport _ltoa ntdll._ltoa
-@ stub _ltow #(long)
+@ cdecl _ltow(long ptr long) _ltow
 @ cdecl _makepath(str str str str str) _makepath
 @ cdecl _matherr(ptr) _matherr
 @ cdecl _mbbtombc(long) _mbbtombc

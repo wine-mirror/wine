@@ -32,11 +32,14 @@
 extern "C" {
 #endif
 
-unsigned long _beginthread(void (*)(void*),unsigned,void*);
-unsigned long _beginthreadex(void*,unsigned,unsigned __stdcall (*)(void*),void*,unsigned, unsigned*);
+typedef void __cdecl (*_beginthread_start_routine_t)(void *);
+typedef unsigned int __stdcall (*_beginthreadex_start_routine_t)(void *);
+
+unsigned long _beginthread(_beginthread_start_routine_t,unsigned int,void*);
+unsigned long _beginthreadex(void*,unsigned int,_beginthreadex_start_routine_t,void*,unsigned int,unsigned int*);
 int         _cwait(int*,int,int);
 void        _endthread(void);
-void        _endthreadex(unsigned);
+void        _endthreadex(unsigned int);
 int         _execl(const char*,const char*,...);
 int         _execle(const char*,const char*,...);
 int         _execlp(const char*,const char*,...);
