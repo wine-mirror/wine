@@ -1121,6 +1121,11 @@ BOOL32 WINAPI ShowWindow32( HWND32 hwnd, INT32 cmd )
             if (!wasVisible) return FALSE;
 	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
+            if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32()))
+            {
+                /* Revert focus to parent */
+                SetFocus32( GetParent32(hwnd) );
+            }
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
@@ -2384,12 +2389,6 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	    uFlags |= SMC_NOPARENTERASE;
         }
 
-        if ((winpos.hwnd == GetFocus32()) ||
-            IsChild32( winpos.hwnd, GetFocus32()))
-        {
-            /* Revert focus to parent */
-            SetFocus32( GetParent32(winpos.hwnd) );
-        }
 	if (hwnd == CARET_GetHwnd()) DestroyCaret32();
 
 	if (winpos.hwnd == hwndActive)
