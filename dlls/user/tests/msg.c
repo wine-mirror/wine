@@ -3656,6 +3656,59 @@ static void test_message_conversion(void)
         "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
 }
 
+typedef struct _thread_info
+{
+    HWND hWnd;
+    HANDLE handles[2];
+    DWORD id;
+} thread_info;
+
+static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT id, DWORD dwTime)
+{
+}
+
+#define TIMER_ID  0x19
+
+static DWORD WINAPI timer_thread_proc(LPVOID x)
+{
+    thread_info *info = x;
+    DWORD r;
+
+    r = KillTimer(info->hWnd, 0x19);
+    ok(r,"KillTimer failed in thread\n");
+    r = SetTimer(info->hWnd,TIMER_ID,10000,tfunc);
+    ok(r,"SetTimer failed in thread\n");
+    ok(r==TIMER_ID,"SetTimer id different\n");
+    r = SetEvent(info->handles[0]);
+    ok(r,"SetEvent failed in thread\n");
+    return 0;
+}
+
+static void test_timers(void)
+{
+    thread_info info;
+    DWORD id;
+
+    info.hWnd = CreateWindow ("TestWindowClass", NULL,
+       WS_OVERLAPPEDWINDOW ,
+       CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+       NULL, NULL, 0);
+
+    info.id = SetTimer(info.hWnd,TIMER_ID,10000,tfunc);
+    ok(info.id, "SetTimer failed");
+    ok(info.id==TIMER_ID, "SetTimer timer ID different");
+    info.handles[0] = CreateEvent(NULL,0,0,NULL);
+    info.handles[1] = CreateThread(NULL,0,timer_thread_proc,&info,0,&id);
+
+    WaitForMultipleObjects(2, info.handles, FALSE, INFINITE);
+
+    WaitForSingleObject(info.handles[1], INFINITE);
+
+    ok( KillTimer(info.hWnd, TIMER_ID), "KillTimer failed\n");
+
+    ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
+}
+
 START_TEST(msg)
 {
     if (!RegisterWindowClasses()) assert(0);
@@ -3670,6 +3723,7 @@ START_TEST(msg)
     test_interthread_messages();
     test_message_conversion();
     test_accelerators();
+    test_timers();
 
     UnhookWindowsHookEx(hCBT_hook);
 }
