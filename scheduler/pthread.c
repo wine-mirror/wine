@@ -665,7 +665,7 @@ strong_alias(__pthread_rwlock_trywrlock, pthread_rwlock_trywrlock);
 
 int __pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
-    assert( funcs.ptr_pthread_rwlock_unlock );
+    if (!funcs.ptr_pthread_rwlock_unlock) return 0;
     return funcs.ptr_pthread_rwlock_unlock( rwlock );
 }
 strong_alias(__pthread_rwlock_unlock, pthread_rwlock_unlock);
