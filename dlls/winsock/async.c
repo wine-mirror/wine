@@ -17,8 +17,6 @@
  *	  (not sure why)
  *	- This implementation did ignore the "NOTE:" section above (since the
  *	  whole stuff did not work anyway to other changes).
- *	- (Rein Klazes) Some structures returned (eg servent) are NOT correct in 
- *	  win32. The packing should be at 4 byte bounds. Same problem in socket.c
  */
  
 #include "config.h"
@@ -81,7 +79,8 @@
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winsock.h"
+#include "winsock2.h"
+#include "wine/winsock16.h"
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
@@ -96,6 +95,23 @@ DEFAULT_DEBUG_CHANNEL(winsock)
  */
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);
+
+#define AQ_WIN16	0x00
+#define AQ_WIN32	0x04
+#define HB_WIN32(hb) (hb->flags & AQ_WIN32)
+#define AQ_NUMBER	0x00
+#define AQ_NAME		0x08
+#define AQ_COPYPTR1	0x10
+#define AQ_DUPLOWPTR1	0x20
+#define AQ_MASKPTR1	0x30
+#define AQ_COPYPTR2	0x40
+#define AQ_DUPLOWPTR2	0x80
+#define AQ_MASKPTR2	0xC0
+
+#define AQ_GETHOST	0
+#define AQ_GETPROTO	1
+#define AQ_GETSERV	2
+#define AQ_GETMASK	3
 
 /* ----------------------------------- helper functions - */
 
@@ -143,15 +159,22 @@ static int hostent_size(struct hostent* p_he)
 /* Copy hostent to p_to, fix up inside pointers using p_base (different for
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
  */
-static int WS_copy_he(struct ws_hostent *p_to,char *p_base,int t_size,struct hostent* p_he)
+static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, int flag)
 {
 	char* p_name,*p_aliases,*p_addr,*p;
-	int	size=hostent_size(p_he)+(sizeof(struct ws_hostent)-sizeof(struct hostent));
+	struct ws_hostent16 *p_to16 = (struct ws_hostent16*)p_to;
+	struct ws_hostent32 *p_to32 = (struct ws_hostent32*)p_to;
+	int	size = hostent_size(p_he) +
+		(
+		(flag & AQ_WIN16) ? sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32)
+		- sizeof(struct hostent)
+		);
 
 	if (t_size < size)
 		return -size;
-	p = (char*)p_to;
-	p += sizeof(struct ws_hostent);
+	p = p_to;
+	p += (flag & AQ_WIN16) ?
+		sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32);
 	p_name = p;
 	strcpy(p, p_he->h_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -159,11 +182,22 @@ static int WS_copy_he(struct ws_hostent *p_to,char *p_base,int t_size,struct hos
 	p_addr = p;
 	list_dup(p_he->h_addr_list, p, p_base + (p - (char*)p_to), p_he->h_length);
 
-	p_to->h_addrtype = (INT16)p_he->h_addrtype; 
-	p_to->h_length = (INT16)p_he->h_length;
-	p_to->h_name = (SEGPTR)(p_base + (p_name - (char*)p_to));
-	p_to->h_aliases = (SEGPTR)(p_base + (p_aliases - (char*)p_to));
-	p_to->h_addr_list = (SEGPTR)(p_base + (p_addr - (char*)p_to));
+	if (flag & AQ_WIN16)
+	{
+	    p_to16->h_addrtype = (INT16)p_he->h_addrtype; 
+	    p_to16->h_length = (INT16)p_he->h_length;
+	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
+	    p_to16->h_addr_list = (SEGPTR)(p_base + (p_addr - p_to));
+	}
+	else
+	{
+	    p_to32->h_addrtype = p_he->h_addrtype; 
+	    p_to32->h_length = p_he->h_length;
+	    p_to32->h_name = (p_base + (p_name - p_to));
+	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
+	    p_to32->h_addr_list = (char **)(p_base + (p_addr - p_to));
+	}
 
 	return size;
 }
@@ -183,24 +217,39 @@ static int protoent_size(struct protoent* p_pe)
 /* Copy protoent to p_to, fix up inside pointers using p_base (different for
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
  */
-static int WS_copy_pe(struct ws_protoent *p_to,char *p_base,int t_size,struct protoent* p_pe)
+static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, int flag)
 {
 	char* p_name,*p_aliases,*p;
-	int	size=protoent_size(p_pe)+(sizeof(struct ws_protoent)-sizeof(struct protoent));
+	struct ws_protoent16 *p_to16 = (struct ws_protoent16*)p_to;
+	struct ws_protoent32 *p_to32 = (struct ws_protoent32*)p_to;
+	int	size = protoent_size(p_pe) +
+		(
+		(flag & AQ_WIN16) ? sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32)
+		- sizeof(struct protoent)
+		);
 
 	if (t_size < size)
 		return -size;
-	p = (char*)p_to;
-	p += sizeof(struct ws_protoent);
+	p = p_to;
+	p += (flag & AQ_WIN16) ?
+		sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32);
 	p_name = p;
 	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
 	p_aliases = p;
 	list_dup(p_pe->p_aliases, p, p_base + (p - (char*)p_to), 0);
 
-	p_to->p_proto = (INT16)p_pe->p_proto;
-	p_to->p_name = (SEGPTR)(p_base) + (p_name - (char*)p_to);
-	p_to->p_aliases = (SEGPTR)((p_base) + (p_aliases - (char*)p_to)); 
-
+	if (flag & AQ_WIN16)
+	{
+	    p_to16->p_proto = (INT16)p_pe->p_proto;
+	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
+	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to)); 
+	}
+	else
+	{
+	    p_to32->p_proto = p_pe->p_proto;
+	    p_to32->p_name = (p_base) + (p_name - p_to);
+	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to)); 
+	}
 
 	return size;
 }
@@ -220,27 +269,45 @@ static int servent_size(struct servent* p_se)
 
 /* Copy servent to p_to, fix up inside pointers using p_base (different for
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
+ * Take care of different Win16/Win32 servent structs (packing !)
  */
-static int WS_copy_se(struct ws_servent *p_to,char *p_base,int t_size,struct servent* p_se)
+static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, int flag)
 {
 	char* p_name,*p_aliases,*p_proto,*p;
-	int	size = servent_size(p_se)+(sizeof(struct ws_servent)-sizeof(struct servent));
+	struct ws_servent16 *p_to16 = (struct ws_servent16*)p_to;
+	struct ws_servent32 *p_to32 = (struct ws_servent32*)p_to;
+	int	size = servent_size(p_se) +
+		(
+		(flag & AQ_WIN16) ? sizeof(struct ws_servent16) : sizeof(struct ws_servent32) 
+		- sizeof(struct servent)
+		);
 
-	if (t_size < size )
+	if (t_size < size)
 		return -size;
-	p = (char*)p_to;
-	p += sizeof(struct ws_servent);
+	p = p_to;
+	p += (flag & AQ_WIN16) ?
+		sizeof(struct ws_servent16) : sizeof(struct ws_servent32);
 	p_name = p;
 	strcpy(p, p_se->s_name); p += strlen(p) + 1;
 	p_proto = p;
 	strcpy(p, p_se->s_proto); p += strlen(p) + 1;
 	p_aliases = p;
-	list_dup(p_se->s_aliases, p, p_base + (p - (char*)p_to), 0);
+	list_dup(p_se->s_aliases, p, p_base + (p - p_to), 0);
 
-	p_to->s_port = (INT16)p_se->s_port;
-	p_to->s_name = (SEGPTR)(p_base + (p_name - (char*)p_to));
-	p_to->s_proto = (SEGPTR)(p_base + (p_proto - (char*)p_to));
-	p_to->s_aliases = (SEGPTR)(p_base + (p_aliases - (char*)p_to)); 
+	if (flag & AQ_WIN16)
+	{
+	    p_to16->s_port = (INT16)p_se->s_port;
+	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
+	    p_to16->s_aliases = (SEGPTR)(p_base + (p_aliases - p_to)); 
+	}
+	else
+	{
+	    p_to32->s_port = p_se->s_port;
+	    p_to32->s_name = (p_base + (p_name - p_to));
+	    p_to32->s_proto = (p_base + (p_proto - p_to));
+	    p_to32->s_aliases = (char **)(p_base + (p_aliases - p_to)); 
+	}
 
 	return size;
 }
@@ -271,22 +338,6 @@ typedef struct _async_query {
 
 	HANDLE16	async_handle;
 	int		flags;
-#define AQ_WIN16	0x00
-#define AQ_WIN32	0x04
-#define HB_WIN32(hb) (hb->flags & AQ_WIN32)
-#define AQ_NUMBER	0x00
-#define AQ_NAME		0x08
-#define AQ_COPYPTR1	0x10
-#define AQ_DUPLOWPTR1	0x20
-#define AQ_MASKPTR1	0x30
-#define AQ_COPYPTR2	0x40
-#define AQ_DUPLOWPTR2	0x80
-#define AQ_MASKPTR2	0xC0
-
-#define AQ_GETHOST	0
-#define AQ_GETPROTO	1
-#define AQ_GETSERV	2
-#define AQ_GETMASK	3
 	int		qt;
     char xbuf[1];
 } async_query;
@@ -310,14 +361,14 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 
 	switch (aq->flags & AQ_GETMASK) {
 	case AQ_GETHOST: {
-			struct hostent		*he;
-			struct ws_hostent	*wshe = (struct ws_hostent*)targetptr;
+			struct hostent *he;
+			char *copy_hostent = targetptr;
 
 			he = (aq->flags & AQ_NAME) ?
 				gethostbyname(aq->host_name):
 				gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type);
 			if (he) {
-				size = WS_copy_he(wshe,(char*)aq->sbuf,aq->sbuflen,he);
+				size = WS_copy_he(copy_hostent,(char*)aq->sbuf,aq->sbuflen,he,aq->flags);
 				if (size < 0) {
 					fail = WSAENOBUFS;
 					size = -size;
@@ -328,13 +379,13 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 		}
 		break;
 	case AQ_GETPROTO: {
-			struct	protoent	*pe;
-			struct ws_protoent	*wspe = (struct ws_protoent*)targetptr;
+			struct protoent *pe;
+			char *copy_protoent = targetptr;
 			pe = (aq->flags & AQ_NAME)?
 				getprotobyname(aq->proto_name) : 
 				getprotobynumber(aq->proto_number);
 			if (pe) {
-				size = WS_copy_pe(wspe,(char*)aq->sbuf,aq->sbuflen,pe);
+				size = WS_copy_pe(copy_protoent,(char*)aq->sbuf,aq->sbuflen,pe,aq->flags);
 				if (size < 0) {
 					fail = WSAENOBUFS;
 					size = -size;
@@ -351,13 +402,13 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 		}
 		break;
 	case AQ_GETSERV: {
-			struct	servent	*se;
-			struct ws_servent	*wsse = (struct ws_servent*)targetptr;
+			struct servent	*se;
+			char *copy_servent = targetptr;
 			se = (aq->flags & AQ_NAME)?
 				getservbyname(aq->serv_name,aq->serv_proto) : 
 				getservbyport(aq->serv_port,aq->serv_proto);
 			if (se) {
-				size = WS_copy_se(wsse,(char*)aq->sbuf,aq->sbuflen,se);
+				size = WS_copy_se(copy_servent,(char*)aq->sbuf,aq->sbuflen,se,aq->flags);
 				if (size < 0) {
 					fail = WSAENOBUFS;
 					size = -size;

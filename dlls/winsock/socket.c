@@ -8,6 +8,11 @@
  * they don't break something else like Netscape or telnet and ftp 
  * clients and servers (www.winsite.com got a lot of those).
  *
+ * NOTE 2: Many winsock structs such as servent, hostent, protoent, ...
+ * are used with 1-byte alignment for Win16 programs and 4-byte alignment
+ * for Win32 programs in winsock.h. winsock2.h uses forced 4-byte alignment.
+ * So we have non-forced (just as MSDN) ws_XXXXent (winsock.h), 4-byte forced
+ * ws_XXXXent32 (winsock2.h) and 1-byte forced ws_XXXXent16 (winsock16.h).
  */
  
 #include "config.h"
@@ -74,6 +79,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winsock2.h"
+#include "wine/winsock16.h"
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
@@ -135,11 +141,11 @@ typedef struct _WSINFO
   INT16			last_free;		/* entry in the socket table */
   UINT16		buflen;
   char*			buffer;			/* allocated from SEGPTR heap */
-  struct ws_hostent	*he;
+  void			*he;			/* typecast for Win16/32 ws_hostent */
   int			helen;
-  struct ws_servent	*se;
+  void			*se;			/* typecast for Win16/32 ws_servent */
   int			selen;
-  struct ws_protoent	*pe;
+  void			*pe;			/* typecast for Win16/32 ws_protoent */
   int			pelen;
   char*			dbuffer;		/* buffer for dummies (32 bytes) */
 
@@ -152,6 +158,10 @@ typedef struct _WSINFO
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
 int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
 int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
+
+typedef void	WIN_hostent;
+typedef void	WIN_protoent;
+typedef void	WIN_servent;
 
 int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
@@ -746,16 +756,16 @@ struct ws_hostent* _check_buffer_he(LPWSINFO pwsi, int size)
     if( pwsi->he && pwsi->helen >= size ) return pwsi->he;
     else SEGPTR_FREE(pwsi->he);
 
-    pwsi->he = (struct ws_hostent*)SEGPTR_ALLOC((pwsi->helen = size)); 
+    pwsi->he = SEGPTR_ALLOC((pwsi->helen = size)); 
     return pwsi->he;
 }
 
-struct ws_servent* _check_buffer_se(LPWSINFO pwsi, int size)
+void* _check_buffer_se(LPWSINFO pwsi, int size)
 {
     if( pwsi->se && pwsi->selen >= size ) return pwsi->se;
     else SEGPTR_FREE(pwsi->se);
 
-    pwsi->se = (struct ws_servent*)SEGPTR_ALLOC((pwsi->selen = size)); 
+    pwsi->se = SEGPTR_ALLOC((pwsi->selen = size)); 
     return pwsi->se;
 }
 
@@ -764,7 +774,7 @@ struct ws_protoent* _check_buffer_pe(LPWSINFO pwsi, int size)
     if( pwsi->pe && pwsi->pelen >= size ) return pwsi->pe;
     else SEGPTR_FREE(pwsi->pe);
 
-    pwsi->pe = (struct ws_protoent*)SEGPTR_ALLOC((pwsi->pelen = size)); 
+    pwsi->pe = SEGPTR_ALLOC((pwsi->pelen = size)); 
     return pwsi->pe;
 }
 
@@ -2236,7 +2246,7 @@ static char*	NULL_STRING = "NULL";
 /***********************************************************************
  *		gethostbyaddr()		(WINSOCK.51)(WSOCK32.51)
  */
-static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
+static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
 {
     LPWSINFO      	pwsi = WINSOCK_GetIData();
 
@@ -2245,7 +2255,7 @@ static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int typ
 	struct hostent*	host;
 	if( (host = gethostbyaddr(addr, len, type)) != NULL )
 	    if( WS_dup_he(pwsi, host, dup_flag) )
-		return (struct WIN_hostent*)(pwsi->he);
+		return (WIN_hostent*)(pwsi->he);
 	    else 
 		SetLastError(WSAENOBUFS);
 	else 
@@ -2256,14 +2266,14 @@ static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int typ
 
 SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 {
-    struct WIN_hostent* retval;
+    WIN_hostent* retval;
     TRACE("ptr %08x, len %d, type %d\n",
                             (unsigned) addr, len, type);
     retval = __ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR );
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
-struct WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
+WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
                                                 INT type)
 {
     TRACE("ptr %08x, len %d, type %d\n",
@@ -2274,7 +2284,7 @@ struct WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
 /***********************************************************************
  *		gethostbyname()		(WINSOCK.52)(WSOCK32.52)
  */
-static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
+static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 {
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
@@ -2283,7 +2293,7 @@ static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 	struct hostent*     host;
 	if( (host = gethostbyname(name)) != NULL )
 	     if( WS_dup_he(pwsi, host, dup_flag) )
-		 return (struct WIN_hostent*)(pwsi->he);
+		 return (WIN_hostent*)(pwsi->he);
 	     else SetLastError(WSAENOBUFS);
 	else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
@@ -2292,13 +2302,13 @@ static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 
 SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
 {
-    struct WIN_hostent* retval;
+    WIN_hostent* retval;
     TRACE("%s\n", (name)?name:NULL_STRING);
     retval = __ws_gethostbyname( name, WS_DUP_SEGPTR );
     return (retval)? SEGPTR_GET(retval) : ((SEGPTR)NULL) ;
 }
 
-struct WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
+WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
     return __ws_gethostbyname( name, WS_DUP_LINEAR );
@@ -2308,7 +2318,7 @@ struct WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
 /***********************************************************************
  *		getprotobyname()	(WINSOCK.53)(WSOCK32.53)
  */
-static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
+static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 {
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
@@ -2317,7 +2327,7 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 	struct protoent*     proto;
 	if( (proto = getprotobyname(name)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (struct WIN_protoent*)(pwsi->pe);
+		return (WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
         else {
             MESSAGE("protocol %s not found; You might want to add "
@@ -2330,13 +2340,13 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 
 SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
 {
-    struct WIN_protoent* retval;
+    WIN_protoent* retval;
     TRACE("%s\n", (name)?name:NULL_STRING);
     retval = __ws_getprotobyname(name, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
-struct WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
+WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
     return __ws_getprotobyname(name, WS_DUP_LINEAR);
@@ -2346,7 +2356,7 @@ struct WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
 /***********************************************************************
  *		getprotobynumber()	(WINSOCK.54)(WSOCK32.54)
  */
-static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
+static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 {
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
@@ -2355,7 +2365,7 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 	struct protoent*     proto;
 	if( (proto = getprotobynumber(number)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (struct WIN_protoent*)(pwsi->pe);
+		return (WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
         else {
             MESSAGE("protocol number %d not found; You might want to add "
@@ -2368,13 +2378,13 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 
 SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
 {
-    struct WIN_protoent* retval;
+    WIN_protoent* retval;
     TRACE("%i\n", number);
     retval = __ws_getprotobynumber(number, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
-struct WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
+WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
 {
     TRACE("%i\n", number);
     return __ws_getprotobynumber(number, WS_DUP_LINEAR);
@@ -2384,7 +2394,7 @@ struct WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
 /***********************************************************************
  *		getservbyname()		(WINSOCK.55)(WSOCK32.55)
  */
-struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
+static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
 {
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
@@ -2398,7 +2408,7 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 				 proto ? (pwsi->buffer + i) : NULL);
 	    if( serv != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (struct WIN_servent*)(pwsi->se);
+		    return (WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
 	    else {
                 MESSAGE("service %s protocol %s not found; You might want to add "
@@ -2414,14 +2424,14 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 
 SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 {
-    struct WIN_servent* retval;
+    WIN_servent* retval;
     TRACE("'%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
     retval = __ws_getservbyname(name, proto, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
-struct WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
+WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
 {
     TRACE("'%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
@@ -2432,7 +2442,7 @@ struct WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *p
 /***********************************************************************
  *		getservbyport()		(WINSOCK.56)(WSOCK32.56)
  */
-static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
+static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
 {
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
@@ -2442,7 +2452,7 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 	if (!proto || wsi_strtolo( pwsi, proto, NULL )) {
 	    if( (serv = getservbyport(port, (proto) ? pwsi->buffer : NULL)) != NULL ) {
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (struct WIN_servent*)(pwsi->se);
+		    return (WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
 	    }
 	    else {
@@ -2459,17 +2469,17 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 
 SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 {
-    struct WIN_servent* retval;
-    TRACE("%i, '%s'\n",
-                            (int)port, (proto)?proto:NULL_STRING);
+    WIN_servent* retval;
+    TRACE("%d (i.e. port %d), '%s'\n",
+                            (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
     retval = __ws_getservbyport(port, proto, WS_DUP_SEGPTR);
     return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
 }
 
-struct WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
+WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
 {
-    TRACE("%i, '%s'\n",
-                            (int)port, (proto)?proto:NULL_STRING);
+    TRACE("%d (i.e. port %d), '%s'\n",
+                            (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
     return __ws_getservbyport(port, proto, WS_DUP_LINEAR);
 }
 
@@ -2912,43 +2922,63 @@ static int hostent_size(struct hostent* p_he)
   return size;
 }
 
+/* duplicate hostent entry
+ * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
+ * Dito for protoent and servent.
+ */
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag)
 {
-   /* Convert hostent structure into ws_hostent so that the data fits 
-    * into pwsi->buffer. Internal pointers can be linear, SEGPTR, or 
-    * relative to pwsi->buffer depending on "flag" value. Returns size
-    * of the data copied (also in the pwsi->buflen).
-    */
+    /* Convert hostent structure into ws_hostent so that the data fits 
+     * into pwsi->buffer. Internal pointers can be linear, SEGPTR, or 
+     * relative to pwsi->buffer depending on "flag" value. Returns size
+     * of the data copied (also in the pwsi->buflen).
+     */
 
-   int size = hostent_size(p_he);
+    int size = hostent_size(p_he);
+    if( size )
+    {
+	char *p_name,*p_aliases,*p_addr,*p_base,*p;
+	char *p_to;
+	struct ws_hostent16 *p_to16;
+	struct ws_hostent32 *p_to32;
 
-   if( size )
-   {
-     struct ws_hostent* p_to;
-     char* p_name,*p_aliases,*p_addr,*p_base,*p;
+	_check_buffer_he(pwsi, size);
+	p_to = (char *)pwsi->he;
+	p_to16 = (struct ws_hostent16*)pwsi->he;
+	p_to32 = (struct ws_hostent32*)pwsi->he;
 
-     _check_buffer_he(pwsi, size);
-     p_to = (struct ws_hostent*)pwsi->he;
-     p = (char*)pwsi->he;
-     p_base = (flag & WS_DUP_OFFSET) ? NULL
-				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
-     p += sizeof(struct ws_hostent);
-     p_name = p;
-     strcpy(p, p_he->h_name); p += strlen(p) + 1;
-     p_aliases = p;
-     p += list_dup(p_he->h_aliases, p, p_base + (p - (char*)pwsi->he), 0);
-     p_addr = p;
-     list_dup(p_he->h_addr_list, p, p_base + (p - (char*)pwsi->he), p_he->h_length);
+	p = p_to;
+	p_base = (flag & WS_DUP_OFFSET) ? NULL
+	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p += (flag & WS_DUP_SEGPTR) ?
+	    sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32);
+	p_name = p;
+	strcpy(p, p_he->h_name); p += strlen(p) + 1;
+	p_aliases = p;
+	p += list_dup(p_he->h_aliases, p, p_base + (p - p_to), 0);
+	p_addr = p;
+	list_dup(p_he->h_addr_list, p, p_base + (p - p_to), p_he->h_length);
 
-     p_to->h_addrtype = (INT16)p_he->h_addrtype; 
-     p_to->h_length = (INT16)p_he->h_length;
-     p_to->h_name = (SEGPTR)(p_base + (p_name - (char*)pwsi->he));
-     p_to->h_aliases = (SEGPTR)(p_base + (p_aliases - (char*)pwsi->he));
-     p_to->h_addr_list = (SEGPTR)(p_base + (p_addr - (char*)pwsi->he));
-
-     size += (sizeof(struct ws_hostent) - sizeof(struct hostent));
-   }
-   return size;
+	if (flag & WS_DUP_SEGPTR) /* Win16 */
+	{
+	    p_to16->h_addrtype = (INT16)p_he->h_addrtype; 
+	    p_to16->h_length = (INT16)p_he->h_length;
+	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
+	    p_to16->h_addr_list = (SEGPTR)(p_base + (p_addr - p_to));
+	    size += (sizeof(struct ws_hostent16) - sizeof(struct hostent));
+	}
+	else /* Win32 */
+	{
+	    p_to32->h_addrtype = p_he->h_addrtype; 
+	    p_to32->h_length = p_he->h_length;
+	    p_to32->h_name = (p_base + (p_name - p_to));
+	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
+	    p_to32->h_addr_list = (char **)(p_base + (p_addr - p_to));
+	    size += (sizeof(struct ws_hostent32) - sizeof(struct hostent));
+	}
+    }
+    return size;
 }
 
 /* ----- protoent */
@@ -2965,30 +2995,44 @@ static int protoent_size(struct protoent* p_pe)
 
 int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag)
 {
-   int size = protoent_size(p_pe);
-   if( size )
-   {
-     struct ws_protoent* p_to;
-     char* p_name,*p_aliases,*p_base,*p;
+    int size = protoent_size(p_pe);
+    if( size )
+    {
+	char *p_to;
+	struct ws_protoent16 *p_to16;
+	struct ws_protoent32 *p_to32;
+	char *p_name,*p_aliases,*p_base,*p;
 
-     _check_buffer_pe(pwsi, size);
-     p_to = (struct ws_protoent*)pwsi->pe;
-     p = (char*)pwsi->pe; 
-     p_base = (flag & WS_DUP_OFFSET) ? NULL
-				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
-     p += sizeof(struct ws_protoent);
-     p_name = p;
-     strcpy(p, p_pe->p_name); p += strlen(p) + 1;
-     p_aliases = p;
-     list_dup(p_pe->p_aliases, p, p_base + (p - (char*)pwsi->pe), 0);
+	_check_buffer_pe(pwsi, size);
+	p_to = (char *)pwsi->pe;
+	p_to16 = (struct ws_protoent16*)pwsi->pe;
+	p_to32 = (struct ws_protoent32*)pwsi->pe;
+	p = p_to;
+	p_base = (flag & WS_DUP_OFFSET) ? NULL
+	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p += (flag & WS_DUP_SEGPTR) ?
+	    sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32);
+	p_name = p;
+	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
+	p_aliases = p;
+	list_dup(p_pe->p_aliases, p, p_base + (p - p_to), 0);
 
-     p_to->p_proto = (INT16)p_pe->p_proto;
-     p_to->p_name = (SEGPTR)(p_base) + (p_name - (char*)pwsi->pe);
-     p_to->p_aliases = (SEGPTR)((p_base) + (p_aliases - (char*)pwsi->pe)); 
-
-     size += (sizeof(struct ws_protoent) - sizeof(struct protoent));
-   }
-   return size;
+	if (flag & WS_DUP_SEGPTR) /* Win16 */
+	{
+	    p_to16->p_proto = (INT16)p_pe->p_proto;
+	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
+	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to)); 
+	    size += (sizeof(struct ws_protoent16) - sizeof(struct protoent));
+	}
+	else /* Win32 */
+	{
+	    p_to32->p_proto = p_pe->p_proto;
+	    p_to32->p_name = (p_base) + (p_name - p_to);
+	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to)); 
+	    size += (sizeof(struct ws_protoent32) - sizeof(struct protoent));
+	}
+    }
+    return size;
 }
 
 /* ----- servent */
@@ -3005,33 +3049,48 @@ static int servent_size(struct servent* p_se)
 
 int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
 {
-   int size = servent_size(p_se);
-   if( size )
-   {
-     struct ws_servent* p_to;
-     char* p_name,*p_aliases,*p_proto,*p_base,*p;
+    int size = servent_size(p_se);
+    if( size )
+    {
+	char *p_name,*p_aliases,*p_proto,*p_base,*p;
+	char *p_to;
+	struct ws_servent16 *p_to16;
+	struct ws_servent32 *p_to32;
 
-     _check_buffer_se(pwsi, size);
-     p_to = (struct ws_servent*)pwsi->se;
-     p = (char*)pwsi->se;
-     p_base = (flag & WS_DUP_OFFSET) ? NULL 
-				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
-     p += sizeof(struct ws_servent);
-     p_name = p;
-     strcpy(p, p_se->s_name); p += strlen(p) + 1;
-     p_proto = p;
-     strcpy(p, p_se->s_proto); p += strlen(p) + 1;
-     p_aliases = p;
-     list_dup(p_se->s_aliases, p, p_base + (p - (char*)pwsi->se), 0);
+	_check_buffer_se(pwsi, size);
+	p_to = (char *)pwsi->se;
+	p_to16 = (struct ws_servent16*)pwsi->se;
+	p_to32 = (struct ws_servent32*)pwsi->se;
+	p = p_to;
+	p_base = (flag & WS_DUP_OFFSET) ? NULL 
+	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p += (flag & WS_DUP_SEGPTR) ?
+	    sizeof(struct ws_servent16) : sizeof(struct ws_servent32);
+	p_name = p;
+	strcpy(p, p_se->s_name); p += strlen(p) + 1;
+	p_proto = p;
+	strcpy(p, p_se->s_proto); p += strlen(p) + 1;
+	p_aliases = p;
+	list_dup(p_se->s_aliases, p, p_base + (p - p_to), 0);
 
-     p_to->s_port = (INT16)p_se->s_port;
-     p_to->s_name = (SEGPTR)(p_base + (p_name - (char*)pwsi->se));
-     p_to->s_proto = (SEGPTR)(p_base + (p_proto - (char*)pwsi->se));
-     p_to->s_aliases = (SEGPTR)(p_base + (p_aliases - (char*)pwsi->se)); 
-
-     size += (sizeof(struct ws_servent) - sizeof(struct servent));
-   }
-   return size;
+	if (flag & WS_DUP_SEGPTR) /* Win16 */
+	{ 
+	    p_to16->s_port = (INT16)p_se->s_port;
+	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
+	    p_to16->s_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
+	    size += (sizeof(struct ws_servent16) - sizeof(struct servent));
+	}
+	else /* Win32 */
+	{
+	    p_to32->s_port = p_se->s_port;
+	    p_to32->s_name = (p_base + (p_name - p_to));
+	    p_to32->s_proto = (p_base + (p_proto - p_to));
+	    p_to32->s_aliases = (char **)(p_base + (p_aliases - p_to));
+	    size += (sizeof(struct ws_servent32) - sizeof(struct servent));
+	}
+    }
+    return size;
 }
 
 /* ----------------------------------- error handling */

@@ -10,6 +10,9 @@
 #include "winsock.h"
 #include "wtypes.h"
 
+/* proper 4-byte packing */
+#include "pshpack4.h"
+
 #define FD_MAX_EVENTS   10
 #define FD_READ_BIT	0
 #define FD_WRITE_BIT	1
@@ -57,6 +60,7 @@
 #ifdef s6_addr
 #undef s6_addr
 #endif
+
 struct ws_in_addr6
 {
    unsigned char s6_addr[16];   /* IPv6 address */
@@ -75,6 +79,40 @@ typedef union sockaddr_gen
    struct ws_sockaddr_in  AddressIn;
    struct ws_sockaddr_in6 AddressIn6;
 } sockaddr_gen;
+
+/* ws_hostent, ws_protoent, ws_servent, ws_netent are 4-byte aligned here ! */
+
+typedef struct ws_hostent32
+{
+        char    *h_name;        /* official name of host */
+        char    **h_aliases;    /* alias list */
+        short   h_addrtype;     /* host address type */
+        short   h_length;       /* length of address */
+        char    **h_addr_list;  /* list of addresses from name server */
+} _ws_hostent32;
+
+typedef struct ws_protoent32
+{
+        char    *p_name;        /* official protocol name */
+        char    **p_aliases;    /* alias list */
+        short   p_proto;        /* protocol # */
+} _ws_protoent32;
+
+typedef struct ws_servent32
+{
+        char    *s_name;        /* official service name */
+        char    **s_aliases;    /* alias list */
+        short   s_port;         /* port # */
+        char    *s_proto;       /* protocol to use */
+} _ws_servent32;
+
+typedef struct ws_netent32
+{
+        char    *n_name;        /* official name of net */
+        char    **n_aliases;    /* alias list */
+        short   n_addrtype;     /* net address type */
+        u_long  n_net;          /* network # */
+} _ws_netent32;
 
 /* Structure to keep interface specific information */
 typedef struct _INTERFACE_INFO
@@ -160,5 +198,7 @@ BOOL WINAPI WSACloseEvent(WSAEVENT event);
 SOCKET WINAPI WSASocketA(int af, int type, int protocol,
                          LPWSAPROTOCOL_INFOA lpProtocolInfo,
                          GROUP g, DWORD dwFlags);
+
+#include "poppack.h"
 
 #endif

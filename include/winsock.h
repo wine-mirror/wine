@@ -42,44 +42,46 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+/* no "forced" alignment of ws_XXXXent here ! */
+	
+typedef struct ws_hostent
+{
+        char    *h_name;        /* official name of host */
+        char    **h_aliases;    /* alias list */
+        short   h_addrtype;     /* host address type */
+        short   h_length;       /* length of address */
+        char    **h_addr_list;  /* list of addresses from name server */
+} _ws_hostent;
+
+typedef struct ws_protoent
+{
+        char    *p_name;        /* official protocol name */
+        char    **p_aliases;    /* alias list */
+        short   p_proto;        /* protocol # */
+} _ws_protoent;
+
+typedef struct ws_servent 
+{
+        char    *s_name;        /* official service name */
+        char    **s_aliases;    /* alias list */
+        short   s_port;         /* port # */
+        char    *s_proto;       /* protocol to use */
+} _ws_servent;
+
+typedef struct ws_netent
+{
+        char    *n_name;        /* official name of net */
+        char    **n_aliases;    /* alias list */
+        short   n_addrtype;     /* net address type */
+        u_long  n_net;          /* network # */
+} _ws_netent;
+
 #include "pshpack1.h"
 
 /* Win16 socket-related types */
 
 typedef UINT16		SOCKET16;
 typedef UINT		SOCKET;
-
-typedef struct ws_hostent
-{
-        SEGPTR  h_name;         /* official name of host */
-        SEGPTR  h_aliases;      /* alias list */
-        INT16   h_addrtype;     /* host address type */
-        INT16   h_length;       /* length of address */
-        SEGPTR  h_addr_list;    /* list of addresses from name server */
-} _ws_hostent;
-
-typedef struct ws_protoent
-{
-        SEGPTR  p_name;         /* official protocol name */
-        SEGPTR  p_aliases;      /* alias list */
-        INT16   p_proto;        /* protocol # */
-} _ws_protoent;
-
-typedef struct ws_servent 
-{
-        SEGPTR  s_name;         /* official service name */
-        SEGPTR  s_aliases;      /* alias list */
-        INT16   s_port;         /* port # */
-        SEGPTR  s_proto;        /* protocol to use */
-} _ws_servent;
-
-typedef struct ws_netent
-{
-        SEGPTR  n_name;         /* official name of net */
-        SEGPTR  n_aliases;      /* alias list */
-        INT16   n_addrtype;     /* net address type */
-        INT   n_net;          /* network # */
-} _ws_netent;
 
 typedef struct sockaddr		ws_sockaddr;
 
@@ -175,7 +177,7 @@ typedef struct WSAData {
 
 #include "poppack.h"
 
-/* ----------------------------------- no Win16 structure defs beyond this line! */
+/* ------ no Win16 structure defs (1-byte alignment) beyond this line! ------ */
 
 /*
  * This is used instead of -1, since the
