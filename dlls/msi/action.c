@@ -1892,7 +1892,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
          0};
     UINT rc;
     MSIQUERY * view;
-    LPWSTR targetdir, parent, srcdir;
+    LPWSTR ptargetdir, targetdir, parent, srcdir;
     MSIRECORD * row = 0;
     INT index = -1;
     DWORD i;
@@ -1943,7 +1943,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
         return -1;
     }
 
-    targetdir = load_dynamic_stringW(row,3);
+    ptargetdir = targetdir = load_dynamic_stringW(row,3);
 
     /* split src and target dir */
     if (strchrW(targetdir,':'))
@@ -1987,7 +1987,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
        package->folders[index].SourceDefault = dupstrW(srcdir);
     else if (targetdir)
         package->folders[index].SourceDefault = dupstrW(targetdir);
-    HeapFree(GetProcessHeap(), 0, targetdir);
+    HeapFree(GetProcessHeap(), 0, ptargetdir);
 
     parent = load_dynamic_stringW(row,2);
     if (parent) 
