@@ -130,7 +130,13 @@ typedef struct tagNMTOOLTIPSCREATED
 
 
 /* This is only for Winelib applications. DON't use it wine itself!!! */
-#define SNDMSG WINELIB_NAME_AW(SendMessage)
+#ifndef SNDMSG
+#ifdef __cplusplus
+#define SNDMSG ::SendMessage
+#else   /* __cplusplus */
+#define SNDMSG SendMessage
+#endif  /* __cplusplus */
+#endif  /* SNDMSG */
 
 
 
@@ -1113,7 +1119,7 @@ typedef struct tagNMTOOLBARA
     INT      cchText;
     LPSTR    pszText;
     RECT     rcButton; /* Version 5.80 */
-} NMTOOLBARA, *LPNMTOOLBARA;
+} NMTOOLBARA, *LPNMTOOLBARA, TBNOTIFYA, *LPTBNOTIFYA;
 
 typedef struct tagNMTOOLBARW
 {
@@ -1123,10 +1129,12 @@ typedef struct tagNMTOOLBARW
     INT      cchText;
     LPWSTR   pszText;
     RECT     rcButton; /* Version 5.80 */
-} NMTOOLBARW, *LPNMTOOLBARW;
+} NMTOOLBARW, *LPNMTOOLBARW, TBNOTIFYW, *LPTBNOTIFYW;
 
 #define NMTOOLBAR   WINELIB_NAME_AW(NMTOOLBAR)
 #define LPNMTOOLBAR WINELIB_NAME_AW(LPNMTOOLBAR)
+#define TBNOTIFY    WINELIB_NAME_AW(TBNOTIFY)
+#define LPTBNOTIFY  WINELIB_NAME_AW(LPTBNOTIFY)
 
 typedef struct
 {
@@ -1761,34 +1769,59 @@ typedef struct
 #define TVN_FIRST               (0U-400U)
 #define TVN_LAST                (0U-499U)
 
-#define TVN_SELCHANGING         (TVN_FIRST-1)
-#define TVN_SELCHANGED          (TVN_FIRST-2)
-#define TVN_GETDISPINFO         (TVN_FIRST-3)
-#define TVN_SETDISPINFO         (TVN_FIRST-4)
-#define TVN_ITEMEXPANDING       (TVN_FIRST-5)
-#define TVN_ITEMEXPANDED        (TVN_FIRST-6)
-#define TVN_BEGINDRAG           (TVN_FIRST-7)
-#define TVN_BEGINRDRAG          (TVN_FIRST-8)
-#define TVN_DELETEITEM          (TVN_FIRST-9)
-#define TVN_BEGINLABELEDIT      (TVN_FIRST-10)
-#define TVN_ENDLABELEDIT        (TVN_FIRST-11)
+#define TVN_SELCHANGINGA        (TVN_FIRST-1)
+#define TVN_SELCHANGINGW        (TVN_FIRST-50)
+#define TVN_SELCHANGING         WINELIB_NAME_AW(TVN_SELCHANGING)
+
+#define TVN_SELCHANGEDA         (TVN_FIRST-2)
+#define TVN_SELCHANGEDW         (TVN_FIRST-51)
+#define TVN_SELCHANGED          WINELIB_NAME_AW(TVN_SELCHANGED)
+
+#define TVN_GETDISPINFOA        (TVN_FIRST-3)
+#define TVN_GETDISPINFOW        (TVN_FIRST-52)
+#define TVN_GETDISPINFO         WINELIB_NAME_AW(TVN_GETDISPINFO)
+
+#define TVN_SETDISPINFOA        (TVN_FIRST-4)
+#define TVN_SETDISPINFOW        (TVN_FIRST-53)
+#define TVN_SETDISPINFO         WINELIB_NAME_AW(TVN_SETDISPINFO)
+
+#define TVN_ITEMEXPANDINGA      (TVN_FIRST-5)
+#define TVN_ITEMEXPANDINGW      (TVN_FIRST-54)
+#define TVN_ITEMEXPANDING       WINELIB_NAME_AW(TVN_ITEMEXPANDING)
+
+#define TVN_ITEMEXPANDEDA       (TVN_FIRST-6)
+#define TVN_ITEMEXPANDEDW       (TVN_FIRST-55)
+#define TVN_ITEMEXPANDED        WINELIB_NAME_AW(TVN_ITEMEXPANDED)
+
+#define TVN_BEGINDRAGA          (TVN_FIRST-7)
+#define TVN_BEGINDRAGW          (TVN_FIRST-56)
+#define TVN_BEGINDRAG           WINELIB_NAME_AW(TVN_BEGINDRAG)
+
+#define TVN_BEGINRDRAGA         (TVN_FIRST-8)
+#define TVN_BEGINRDRAGW         (TVN_FIRST-57)
+#define TVN_BEGINRDRAG          WINELIB_NAME_AW(TVN_BEGINRDRAG)
+
+#define TVN_DELETEITEMA         (TVN_FIRST-9)
+#define TVN_DELETEITEMW         (TVN_FIRST-58)
+#define TVN_DELETEITEM          WINELIB_NAME_AW(TVN_DELETEITEM)
+
+#define TVN_BEGINLABELEDITA     (TVN_FIRST-10)
+#define TVN_BEGINLABELEDITW     (TVN_FIRST-59)
+#define TVN_BEGINLABELEDIT      WINELIB_NAME_AW(TVN_BEGINLABELEDIT)
+
+#define TVN_ENDLABELEDITA       (TVN_FIRST-11)
+#define TVN_ENDLABELEDITW       (TVN_FIRST-60)
+#define TVN_ENDLABELEDIT        WINELIB_NAME_AW(TVN_ENDLABELEDIT)
+
 #define TVN_KEYDOWN             (TVN_FIRST-12)
+
 #define TVN_GETINFOTIPA         (TVN_FIRST-13)
 #define TVN_GETINFOTIPW         (TVN_FIRST-14)
+#define TVN_GETINFOTIP          WINELIB_NAME_AW(TVN_GETINFOTIP)
+
 #define TVN_SINGLEEXPAND        (TVN_FIRST-15)
 
 
-#define TVN_SELCHANGINGW        (TVN_FIRST-50)
-#define TVN_SELCHANGEDW         (TVN_FIRST-51)
-#define TVN_GETDISPINFOW        (TVN_FIRST-52)
-#define TVN_SETDISPINFOW        (TVN_FIRST-53)
-#define TVN_ITEMEXPANDINGW      (TVN_FIRST-54)
-#define TVN_ITEMEXPANDEDW       (TVN_FIRST-55)
-#define TVN_BEGINDRAGW          (TVN_FIRST-56)
-#define TVN_BEGINRDRAGW         (TVN_FIRST-57)
-#define TVN_DELETEITEMW         (TVN_FIRST-58)
-#define TVN_BEGINLABELEDITW     (TVN_FIRST-59)
-#define TVN_ENDLABELEDITW       (TVN_FIRST-60)
 
 
 
