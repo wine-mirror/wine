@@ -1455,8 +1455,14 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
         if(result<0)
         {
-            FILE_SetDosError();
-            return FALSE;
+            if( (errno!=EAGAIN) && (errno!=EINTR) &&
+                ((errno != EFAULT) || IsBadWritePtr( buffer, bytesToRead )) )
+            {
+                FILE_SetDosError();
+                return FALSE;
+            }
+            else
+                result = 0;
         }
         
         /* if we read enough to keep the app happy, then return now */
