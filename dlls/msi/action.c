@@ -4738,13 +4738,14 @@ next:
     HeapFree(GetProcessHeap(),0,buffer);
     FIXME("Need to write more keys to the user registry\n");
   
-    hDb= msiobj_findhandle( &package->db->hdr );
+    hDb= alloc_msihandle( &package->db->hdr );
     rc = MsiGetSummaryInformationW(hDb, NULL, 0, &hSumInfo); 
+    MsiCloseHandle(hDb);
     if (rc == ERROR_SUCCESS)
     {
         WCHAR guidbuffer[0x200];
         size = 0x200;
-        rc = MsiSummaryInfoGetPropertyW(hSumInfo, 8, NULL, NULL, NULL,
+        rc = MsiSummaryInfoGetPropertyW(hSumInfo, 9, NULL, NULL, NULL,
                                         guidbuffer, &size);
         if (rc == ERROR_SUCCESS)
         {
@@ -4753,10 +4754,9 @@ next:
             LPWSTR ptr = strchrW(guidbuffer,';');
             if (ptr) *ptr = 0;
             squash_guid(guidbuffer,squashed);
-            size = strlenW(guidbuffer)*sizeof(WCHAR);
-            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPSTR)guidbuffer,
+            size = strlenW(squashed)*sizeof(WCHAR);
+            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPSTR)squashed,
                            size);
-            
         }
         else
         {
