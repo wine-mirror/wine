@@ -580,14 +580,14 @@ VOID WINAPI LoadLocalFonts(VOID) {
 /***********************************************************************
  *           GetUserObjectInformation32A   (USER32.299)
  */
-BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
  *           GetUserObjectInformation32W   (USER32.300)
  */
-BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }

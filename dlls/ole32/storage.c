@@ -1669,7 +1669,7 @@ StgIsStorageFile(LPCOLESTR fn)
  * StgOpenStorage16 [STORAGE.3]
  */
 HRESULT WINAPI StgOpenStorage16(
-	const OLECHAR16 * pwcsName,IStorage16 *pstgPriority,DWORD grfMode,
+	LPCOLESTR16 pwcsName,IStorage16 *pstgPriority,DWORD grfMode,
 	SNB16 snbExclude,DWORD reserved, IStorage16 **ppstgOpen
 ) {
 	HFILE		hf;

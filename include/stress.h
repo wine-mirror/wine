@@ -14,9 +14,9 @@ extern "C" {
 BOOL16	WINAPI AllocGDIMem(UINT16);
 BOOL16	WINAPI AllocMem(DWORD);
 BOOL16	WINAPI AllocUserMem(UINT16);
-int	WINAPI AllocDiskSpace(long, UINT16);
-int	WINAPI AllocFileHandles(int);
-int	WINAPI GetFreeFileHandles(void);
+INT16	WINAPI AllocDiskSpace(LONG, UINT16);
+INT16	WINAPI AllocFileHandles(INT16);
+INT16	WINAPI GetFreeFileHandles(void);
 void	WINAPI FreeAllGDIMem(void);
 void	WINAPI FreeAllMem(void);
 void	WINAPI FreeAllUserMem(void);

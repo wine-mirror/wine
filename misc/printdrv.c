@@ -253,9 +253,6 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 /*
  * The following function should implement a queing system
  */
-#ifndef HPQ 
-#define HPQ WORD
-#endif
 struct hpq 
 {
     struct hpq 	*next;
@@ -269,7 +266,7 @@ static struct hpq *hpqueue;
  *           CreatePQ   (GDI.230)
  *
  */
-HPQ WINAPI CreatePQ16(int size) 
+HPQ16 WINAPI CreatePQ16(INT16 size) 
 {
 #if 0
     HGLOBAL16 hpq = 0;
@@ -286,7 +283,7 @@ HPQ WINAPI CreatePQ16(int size)
     *pPQ++ = 0;
     GlobalUnlock16(hpq);
 
-    return (HPQ)hpq;
+    return (HPQ16)hpq;
 #else
     FIXME("(%d): stub\n",size);
     return 1;
@@ -297,7 +294,7 @@ HPQ WINAPI CreatePQ16(int size)
  *           DeletePQ   (GDI.235)
  *
  */
-int WINAPI DeletePQ16(HPQ hPQ) 
+INT16 WINAPI DeletePQ16(HPQ16 hPQ) 
 {
     return GlobalFree16((HGLOBAL16)hPQ);
 }
@@ -306,7 +303,7 @@ int WINAPI DeletePQ16(HPQ hPQ)
  *           ExtractPQ   (GDI.232)
  *
  */
-int WINAPI ExtractPQ16(HPQ hPQ) 
+INT16 WINAPI ExtractPQ16(HPQ16 hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;
     int key = 0, tag = -1;
@@ -348,7 +345,7 @@ int WINAPI ExtractPQ16(HPQ hPQ)
  *           InsertPQ   (GDI.233)
  *
  */
-int WINAPI InsertPQ16(HPQ hPQ, int tag, int key) 
+INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key) 
 {
     struct hpq *queueItem = xmalloc(sizeof(struct hpq));
     queueItem->next = hpqueue;
@@ -364,7 +361,7 @@ int WINAPI InsertPQ16(HPQ hPQ, int tag, int key)
  *           MinPQ   (GDI.231)
  *
  */
-int WINAPI MinPQ16(HPQ hPQ) 
+INT16 WINAPI MinPQ16(HPQ16 hPQ) 
 {
     FIXME("(%x): stub\n", hPQ); 
     return 0;
@@ -374,7 +371,7 @@ int WINAPI MinPQ16(HPQ hPQ)
  *           SizePQ   (GDI.234)
  *
  */
-int WINAPI SizePQ16(HPQ hPQ, int sizechange) 
+INT16 WINAPI SizePQ16(HPQ16 hPQ, INT16 sizechange) 
 {  
     FIXME("(%x %d): stub\n", hPQ, sizechange); 
     return -1; 
@@ -491,9 +488,9 @@ static int FreePrintJob(HANDLE16 hJob)
  *           OpenJob   (GDI.240)
  *
  */
-HANDLE16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
+HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 {
-    HANDLE16 hHandle = (HANDLE16)SP_ERROR;
+    HPJOB16 hHandle = (HPJOB16)SP_ERROR;
     PPRINTJOB pPrintJob;
 
     TRACE("'%s' '%s' %04x\n", lpOutput, lpTitle, hDC);
@@ -530,7 +527,7 @@ HANDLE16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
  *           CloseJob   (GDI.243)
  *
  */
-int WINAPI CloseJob16(HANDLE16 hJob)
+INT16 WINAPI CloseJob16(HPJOB16 hJob)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -552,7 +549,7 @@ int WINAPI CloseJob16(HANDLE16 hJob)
  *           WriteSpool   (GDI.241)
  *
  */
-int WINAPI WriteSpool16(HANDLE16 hJob, LPSTR lpData, WORD cch)
+INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -582,7 +579,7 @@ int WINAPI WriteSpool16(HANDLE16 hJob, LPSTR lpData, WORD cch)
  *           WriteDialog   (GDI.242)
  *
  */
-int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
+INT16 WINAPI WriteDialog16(HPJOB16 hJob, LPSTR lpMsg, INT16 cchMsg)
 {
     int nRet = 0;
 
@@ -597,7 +594,7 @@ int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
  *           DeleteJob  (GDI.244)
  *
  */
-int WINAPI DeleteJob16(HANDLE16 hJob, WORD wNotUsed)
+INT16 WINAPI DeleteJob16(HPJOB16 hJob, INT16 nNotUsed)
 {
     int nRet;
 
@@ -617,7 +614,7 @@ int WINAPI DeleteJob16(HANDLE16 hJob, WORD wNotUsed)
  *           StartSpoolPage   (GDI.246)
  *
  */
-int WINAPI StartSpoolPage16(HANDLE16 hJob)
+INT16 WINAPI StartSpoolPage16(HPJOB16 hJob)
 {
     FIXME("StartSpoolPage GDI.246 unimplemented\n");
     return 1;
@@ -629,7 +626,7 @@ int WINAPI StartSpoolPage16(HANDLE16 hJob)
  *           EndSpoolPage   (GDI.247)
  *
  */
-int WINAPI EndSpoolPage16(HANDLE16 hJob)
+INT16 WINAPI EndSpoolPage16(HPJOB16 hJob)
 {
     FIXME("EndSpoolPage GDI.247 unimplemented\n");
     return 1;

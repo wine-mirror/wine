@@ -5,7 +5,7 @@
 DEFAULT_DEBUG_CHANNEL(stress)
 
 
-int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
+INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 {
 	FIXME("(%d, %ld) - stub\n", 
 		       uDrive, lLeft);
@@ -13,7 +13,7 @@ int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
 	return 1;
 }
 
-int WINAPI AllocFileHandles(int Left)
+INT16 WINAPI AllocFileHandles(INT16 Left)
 {
 	TRACE("(%d) - stub\n", Left);
 
@@ -64,7 +64,7 @@ void WINAPI GetFreeAllUserMem(void)
        TRACE("GetFreeAllUserMem\n");
 }
 
-int WINAPI GetFreeFileHandles(void)
+INT16 WINAPI GetFreeFileHandles(void)
 {
 	TRACE("GetFreeFileHandles\n");
 

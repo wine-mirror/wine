@@ -5,6 +5,7 @@
  */
 
 #include "ole2.h"
+#include "winuser.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -59,7 +60,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
  *             OleTranslateAccelerator [OLE32.130]
  */
 HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
-                   LPOLEINPLACEFRAMEINFO lpFrameInfo, struct tagMSG* lpmsg)
+                   LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg)
 {
     FIXME("(%p,%p,%p),stub!\n", lpFrame, lpFrameInfo, lpmsg);
     return S_OK;
@@ -78,7 +79,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 /******************************************************************************
  *              IsAccelerator        [OLE32.75]
  */
-BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, struct tagMSG* lpMsg, WORD* lpwCmd)
+BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)
 {
   FIXME("(%x,%i,%p,%p), stub!\n", hAccel, cAccelEntries, lpMsg, lpwCmd);
   return TRUE;

@@ -135,7 +135,7 @@ QueryPathOfRegTypeLib(
  *    Failure: Status
  */
 HRESULT WINAPI LoadTypeLib16(
-    OLECHAR *szFile, /* [in] Name of file to load from */
+    LPOLESTR szFile, /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME_(ole)("('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);

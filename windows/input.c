@@ -460,7 +460,7 @@ INT16 WINAPI GetKeyState16(INT16 vkey)
  * keyboard-input message.  This function retrieves the state of the key
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
-INT16 WINAPI GetKeyState(INT vkey)
+SHORT WINAPI GetKeyState(INT vkey)
 {
     INT retval;
 
@@ -1017,7 +1017,7 @@ INT WINAPI ToUnicode(
   UINT wScanCode,
   PBYTE  lpKeyState,
   LPWSTR pwszBuff,
-  int    cchBuff,
+  INT    cchBuff,
   UINT wFlags) {
 
        FIXME_(keyboard)(": stub\n");
