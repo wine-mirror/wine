@@ -13829,6 +13829,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -13863,6 +13864,7 @@ for ac_header in \
 	regex.h \
 	sched.h \
 	scsi/sg.h \
+	scsi/scsi_ioctl.h \
 	socket.h \
 	stdint.h \
 	strings.h \
