@@ -43,6 +43,16 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 }
 
 /***********************************************************************
+ *		CryptCATAdminReleaseContext (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
+{
+    FIXME("%p %lx\n", hCatAdmin, dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
