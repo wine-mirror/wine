@@ -12,6 +12,9 @@
 
 #include "ole2.h"
 
+/* undef GetTimeFormat - FIXME? */
+#undef GetTimeFormat
+
 /* FIXME - far from complete. */
 
 /* forward decls. */
@@ -562,6 +565,96 @@ ICOM_DEFINE(IFilterGraph,IUnknown)
 
 /**************************************************************************
  *
+ * IGraphBuilder interface
+ *
+ */
+
+#define ICOM_INTERFACE IGraphBuilder
+#define IGraphBuilder_METHODS \
+    ICOM_METHOD2(HRESULT,Connect,IPin*,a1,IPin*,a2) \
+    ICOM_METHOD1(HRESULT,Render,IPin*,a1) \
+    ICOM_METHOD2(HRESULT,RenderFile,LPCWSTR,a1,LPCWSTR,a2) \
+    ICOM_METHOD3(HRESULT,AddSourceFilter,LPCWSTR,a1,LPCWSTR,a2,IBaseFilter**,a3) \
+    ICOM_METHOD1(HRESULT,SetLogFile,DWORD_PTR,a1) \
+    ICOM_METHOD (HRESULT,Abort) \
+    ICOM_METHOD (HRESULT,ShouldOperationContinue)
+
+#define IGraphBuilder_IMETHODS \
+    IFilterGraph_IMETHODS \
+    IGraphBuilder_METHODS
+
+ICOM_DEFINE(IGraphBuilder,IFilterGraph)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IGraphBuilder_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IGraphBuilder_AddRef(p) ICOM_CALL (AddRef,p)
+#define IGraphBuilder_Release(p) ICOM_CALL (Release,p)
+    /*** IFilterGraph methods ***/
+#define IGraphBuilder_AddFilter(p,a1,a2) ICOM_CALL2(AddFilter,p,a1,a2)
+#define IGraphBuilder_RemoveFilter(p,a1) ICOM_CALL1(RemoveFilter,p,a1)
+#define IGraphBuilder_EnumFilters(p,a1) ICOM_CALL1(EnumFilters,p,a1)
+#define IGraphBuilder_FindFilterByName(p,a1,a2) ICOM_CALL2(FindFilterByName,p,a1,a2)
+#define IGraphBuilder_ConnectDirect(p,a1,a2,a3) ICOM_CALL3(ConnectDirect,p,a1,a2,a3)
+#define IGraphBuilder_Reconnect(p,a1) ICOM_CALL1(Reconnect,p,a1)
+#define IGraphBuilder_Disconnect(p,a1) ICOM_CALL1(Disconnect,p,a1)
+#define IGraphBuilder_SetDefaultSyncSource(p,a1) ICOM_CALL1(SetDefaultSyncSource,p,a1)
+    /*** IGraphBuilder methods ***/
+#define IGraphBuilder_Connect(p,a1,a2) ICOM_CALL2(Connect,p,a1,a2)
+#define IGraphBuilder_Render(p,a1) ICOM_CALL1(Render,p,a1)
+#define IGraphBuilder_RenderFile(p,a1,a2) ICOM_CALL2(RenderFile,p,a1,a2)
+#define IGraphBuilder_AddSourceFilter(p,a1,a2,a3) ICOM_CALL3(AddSourceFilter,p,a1,a2,a3)
+#define IGraphBuilder_SetLogFile(p,a1) ICOM_CALL1(SetLogFile,p,a1)
+#define IGraphBuilder_Abort(p) ICOM_CALL (Abort,p)
+#define IGraphBuilder_ShouldOperationContinue(p) ICOM_CALL (ShouldOperationContinue,p)
+
+/**************************************************************************
+ *
+ * IFilterGraph2 interface
+ *
+ */
+
+#define ICOM_INTERFACE IFilterGraph2
+#define IFilterGraph2_METHODS \
+    ICOM_METHOD4(HRESULT,AddSourceFilterForMoniker,IMoniker*,a1,IBindCtx*,a2,LPCWSTR,a3,IBaseFilter**,a4) \
+    ICOM_METHOD2(HRESULT,ReconnectEx,IPin*,a1,const AM_MEDIA_TYPE*,a2) \
+    ICOM_METHOD3(HRESULT,RenderEx,IPin*,a1,DWORD,a2,DWORD*,a3)
+
+#define IFilterGraph2_IMETHODS \
+    IGraphBuilder_IMETHODS \
+    IFilterGraph2_METHODS
+
+ICOM_DEFINE(IFilterGraph2,IGraphBuilder)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFilterGraph2_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFilterGraph2_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFilterGraph2_Release(p) ICOM_CALL (Release,p)
+    /*** IFilterGraph methods ***/
+#define IFilterGraph2_AddFilter(p,a1,a2) ICOM_CALL2(AddFilter,p,a1,a2)
+#define IFilterGraph2_RemoveFilter(p,a1) ICOM_CALL1(RemoveFilter,p,a1)
+#define IFilterGraph2_EnumFilters(p,a1) ICOM_CALL1(EnumFilters,p,a1)
+#define IFilterGraph2_FindFilterByName(p,a1,a2) ICOM_CALL2(FindFilterByName,p,a1,a2)
+#define IFilterGraph2_ConnectDirect(p,a1,a2,a3) ICOM_CALL3(ConnectDirect,p,a1,a2,a3)
+#define IFilterGraph2_Reconnect(p,a1) ICOM_CALL1(Reconnect,p,a1)
+#define IFilterGraph2_Disconnect(p,a1) ICOM_CALL1(Disconnect,p,a1)
+#define IFilterGraph2_SetDefaultSyncSource(p,a1) ICOM_CALL1(SetDefaultSyncSource,p,a1)
+    /*** IGraphBuilder methods ***/
+#define IFilterGraph2_Connect(p,a1,a2) ICOM_CALL2(Connect,p,a1,a2)
+#define IFilterGraph2_Render(p,a1) ICOM_CALL1(Render,p,a1)
+#define IFilterGraph2_RenderFile(p,a1,a2) ICOM_CALL2(RenderFile,p,a1,a2)
+#define IFilterGraph2_AddSourceFilter(p,a1,a2,a3) ICOM_CALL3(AddSourceFilter,p,a1,a2,a3)
+#define IFilterGraph2_SetLogFile(p,a1) ICOM_CALL1(SetLogFile,p,a1)
+#define IFilterGraph2_Abort(p) ICOM_CALL (Abort,p)
+#define IFilterGraph2_ShouldOperationContinue(p) ICOM_CALL (ShouldOperationContinue,p)
+    /*** IFilterGraph2 methods ***/
+#define IFilterGraph2_AddSourceFilterForMoniker(p,a1,a2,a3,a4) ICOM_CALL4(AddSourceFilterForMoniker,p,a1,a2,a3,a4)
+#define IFilterGraph2_ReconnectEx(p,a1,a2) ICOM_CALL2(ReconnectEx,p,a1,a2)
+#define IFilterGraph2_RenderEx(p,a1,a2,a3) ICOM_CALL3(RenderEx,p,a1,a2,a3)
+
+/**************************************************************************
+ *
  * IMediaSample interface
  *
  */
@@ -656,6 +749,62 @@ ICOM_DEFINE(IMediaSample2,IMediaSample)
     /*** IMediaSample2 methods ***/
 #define IMediaSample2_GetProperties(p,a1,a2) ICOM_CALL2(GetProperties,p,a1,a2)
 #define IMediaSample2_SetProperties(p,a1,a2) ICOM_CALL2(SetProperties,p,a1,a2)
+
+/**************************************************************************
+ *
+ * IMediaSeeking interface
+ *
+ */
+
+#define ICOM_INTERFACE IMediaSeeking
+#define IMediaSeeking_METHODS \
+    ICOM_METHOD1(HRESULT,GetCapabilities,DWORD*,a1) \
+    ICOM_METHOD1(HRESULT,CheckCapabilities,DWORD*,a1) \
+    ICOM_METHOD1(HRESULT,IsFormatSupported,const GUID*,a1) \
+    ICOM_METHOD1(HRESULT,QueryPreferredFormat,GUID*,a1) \
+    ICOM_METHOD1(HRESULT,GetTimeFormat,GUID*,a1) \
+    ICOM_METHOD1(HRESULT,IsUsingTimeFormat,const GUID*,a1) \
+    ICOM_METHOD1(HRESULT,SetTimeFormat,const GUID*,a1) \
+    ICOM_METHOD1(HRESULT,GetDuration,LONGLONG*,a1) \
+    ICOM_METHOD1(HRESULT,GetStopPosition,LONGLONG*,a1) \
+    ICOM_METHOD1(HRESULT,GetCurrentPosition,LONGLONG*,a1) \
+    ICOM_METHOD4(HRESULT,ConvertTimeFormat,LONGLONG*,a1,const GUID*,a2,LONGLONG,a3,const GUID*,a4) \
+    ICOM_METHOD4(HRESULT,SetPositions,LONGLONG*,a1,DWORD,a2,LONGLONG*,a3,DWORD,a4) \
+    ICOM_METHOD2(HRESULT,GetPositions,LONGLONG*,a1,LONGLONG*,a2) \
+    ICOM_METHOD2(HRESULT,GetAvailable,LONGLONG*,a1,LONGLONG*,a2) \
+    ICOM_METHOD1(HRESULT,SetRate,double,a1) \
+    ICOM_METHOD1(HRESULT,GetRate,double*,a1) \
+    ICOM_METHOD1(HRESULT,GetPreroll,LONGLONG*,a1)
+
+#define IMediaSeeking_IMETHODS \
+    IUnknown_IMETHODS \
+    IMediaSeeking_METHODS
+
+ICOM_DEFINE(IMediaSeeking,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IMediaSeeking_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IMediaSeeking_AddRef(p) ICOM_CALL (AddRef,p)
+#define IMediaSeeking_Release(p) ICOM_CALL (Release,p)
+    /*** IMediaSeeking methods ***/
+#define IMediaSeeking_GetCapabilities(p,a1) ICOM_CALL1(GetCapabilities,p,a1)
+#define IMediaSeeking_CheckCapabilities(p,a1) ICOM_CALL1(CheckCapabilities,p,a1)
+#define IMediaSeeking_IsFormatSupported(p,a1) ICOM_CALL1(IsFormatSupported,p,a1)
+#define IMediaSeeking_QueryPreferredFormat(p,a1) ICOM_CALL1(QueryPreferredFormat,p,a1)
+#define IMediaSeeking_GetTimeFormat(p,a1) ICOM_CALL1(GetTimeFormat,p,a1)
+#define IMediaSeeking_IsUsingTimeFormat(p,a1) ICOM_CALL1(IsUsingTimeFormat,p,a1)
+#define IMediaSeeking_SetTimeFormat(p,a1) ICOM_CALL1(SetTimeFormat,p,a1)
+#define IMediaSeeking_GetDuration(p,a1) ICOM_CALL1(GetDuration,p,a1)
+#define IMediaSeeking_GetStopPosition(p,a1) ICOM_CALL1(GetStopPosition,p,a1)
+#define IMediaSeeking_GetCurrentPosition(p,a1) ICOM_CALL1(GetCurrentPosition,p,a1)
+#define IMediaSeeking_ConvertTimeFormat(p,a1,a2,a3,a4) ICOM_CALL4(ConvertTimeFormat,p,a1,a2,a3,a4)
+#define IMediaSeeking_SetPositions(p,a1,a2,a3,a4) ICOM_CALL4(SetPositions,p,a1,a2,a3,a4)
+#define IMediaSeeking_GetPositions(p,a1,a2) ICOM_CALL2(GetPositions,p,a1,a2)
+#define IMediaSeeking_GetAvailable(p,a1,a2) ICOM_CALL2(GetAvailable,p,a1,a2)
+#define IMediaSeeking_SetRate(p,a1) ICOM_CALL1(SetRate,p,a1)
+#define IMediaSeeking_GetRate(p,a1) ICOM_CALL1(GetRate,p,a1)
+#define IMediaSeeking_GetPreroll(p,a1) ICOM_CALL1(GetPreroll,p,a1)
 
 /**************************************************************************
  *
