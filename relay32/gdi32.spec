@@ -223,7 +223,7 @@ init    MAIN_GdiInit
 318 stub GetKerningPairs
 319 stdcall GetKerningPairsA(long long ptr) GetKerningPairsA
 320 stdcall GetKerningPairsW(long long ptr) GetKerningPairsW
-321 stub GetLayout
+321 stdcall GetLayout(long) GetLayout
 322 stub GetLogColorSpaceA
 323 stub GetLogColorSpaceW
 324 stdcall GetMapMode(long) GetMapMode
@@ -352,7 +352,7 @@ init    MAIN_GdiInit
 447 stdcall SetICMMode(long long) SetICMMode
 448 stub SetICMProfileA
 449 stub SetICMProfileW
-450 stub SetLayout
+450 stdcall SetLayout(long long) SetLayout
 451 stub SetMagicColors
 452 stdcall SetMapMode(long long) SetMapMode
 453 stdcall SetMapperFlags(long long) SetMapperFlags

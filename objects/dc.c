@@ -1357,3 +1357,31 @@ void WINAPI Resurrection16(HDC16 hDC,
 {
     MESSAGE("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);
 }
+
+/***********************************************************************
+ *           GetLayout    (GDI32.321)
+ *
+ * Gets left->right or right->left text layout flags of a dc.
+ * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
+ *
+ */
+DWORD WINAPI GetLayout(HDC hdc)
+{
+    FIXME("(%08x): stub\n", hdc);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
+ *           SetLayout    (GDI32.450)
+ *
+ * Sets left->right or right->left text layout flags of a dc.
+ * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
+ *
+ */
+DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
+{
+    FIXME("(%08x,%08lx): stub\n", hdc, layout);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}

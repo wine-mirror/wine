@@ -3188,6 +3188,7 @@ INT       WINAPI GetGraphicsMode(HDC);
 DWORD     WINAPI GetKerningPairsA(HDC,DWORD,LPKERNINGPAIR);
 DWORD     WINAPI GetKerningPairsW(HDC,DWORD,LPKERNINGPAIR);
 #define     GetKerningPairs WINELIB_NAME_AW(GetKerningPairs)
+DWORD       WINAPI GetLayout(HDC);
 INT       WINAPI GetMapMode(HDC);
 HMETAFILE WINAPI GetMetaFileA(LPCSTR);
 HMETAFILE WINAPI GetMetaFileW(LPCWSTR);
@@ -3312,6 +3313,7 @@ INT       WINAPI SetDIBitsToDevice(HDC,INT,INT,DWORD,DWORD,INT,
                          INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
 HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT,const BYTE *);
 INT       WINAPI SetGraphicsMode(HDC,INT);
+DWORD       WINAPI SetLayout(HDC,DWORD);
 INT       WINAPI SetMapMode(HDC,INT);
 DWORD     WINAPI SetMapperFlags(HDC,DWORD);
 HMETAFILE WINAPI SetMetaFileBitsEx(UINT,const BYTE*);
