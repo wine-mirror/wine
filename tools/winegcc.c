@@ -27,7 +27,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
