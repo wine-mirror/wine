@@ -226,8 +226,8 @@ debug_channels (shell)
 214 stub @
 215 stdcall @(long long long) SHLWAPI_215
 216 stub @
-217 stdcall @(wstr str ptr) SHLWAPI_217
-218 stdcall @(long wstr str ptr) SHLWAPI_218
+217 stdcall @(wstr ptr ptr) SHLWAPI_217
+218 stdcall @(long wstr ptr ptr) SHLWAPI_218
 219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
 221 stub @

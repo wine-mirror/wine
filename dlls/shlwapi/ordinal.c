@@ -443,6 +443,8 @@ INT WINAPI SHLWAPI_218(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
 /*************************************************************************
  *      @	[SHLWAPI.217]
  *
+ * Hmm, some program used lpnMultiCharCount == 0x3 (and lpSrcStr was "C")
+ * --> Crash. Something wrong here.
  */
 INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, LPINT lpnMultiCharCount)
 {
