@@ -2144,9 +2144,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
 HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
                              INT16 desiredx, INT16 desiredy, UINT16 loadflags)
 {
-    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
-    return LoadImageA( hinst, nameStr, type, 
-                       desiredx, desiredy, loadflags );
+    return LoadImageA( hinst, name, type, desiredx, desiredy, loadflags );
 }
 
 /**********************************************************************

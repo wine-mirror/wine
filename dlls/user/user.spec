@@ -372,7 +372,7 @@ owner	user32
 383 stub GetWindowContextHelpID
 384 pascal16 SetMenuContextHelpId(word word) SetMenuContextHelpId16
 385 pascal16 GetMenuContextHelpId(word) GetMenuContextHelpId16
-389 pascal   LoadImage(word segstr word word word word) LoadImage16
+389 pascal   LoadImage(word str word word word word) LoadImage16
 390 pascal16 CopyImage(word word word word word) CopyImage16
 391 pascal16 SignalProc32(long long long word) UserSignalProc
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16

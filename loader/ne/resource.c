@@ -305,9 +305,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE("module=%04x name=%s type=%s\n", 
-           pModule->self, debugres_a(PTR_SEG_TO_LIN(name)),
-           debugres_a(PTR_SEG_TO_LIN(type)) );
+    TRACE("module=%04x name=%s type=%s\n", pModule->self, debugres_a(name), debugres_a(type) );
 
     if (HIWORD(name))  /* Check for '#xxx' name */
     {
