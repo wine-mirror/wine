@@ -765,8 +765,19 @@ static void do_trap( CONTEXT *context, int trap_code )
     switch(trap_code)
     {
     case T_TRCTRAP:  /* Single-step exception */
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-        context->EFlags &= ~0x100;  /* clear single-step flag */
+        if (context->EFlags & 0x100)
+        {
+            rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+            context->EFlags &= ~0x100;  /* clear single-step flag */
+        }
+        else
+        {
+            /* likely we get this because of a kill(SIGTRAP) on ourself, 
+             * so send a bp exception instead of a single step exception
+             */
+            TRACE("Spurious single step trap => breakpoint simulation\n");
+            rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        }
         break;
     case T_BPTFLT:   /* Breakpoint exception */
         rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
