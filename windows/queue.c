@@ -973,7 +973,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL QUEUE_AddMsg( HQUEUE16 hQueue, MSG *msg, DWORD extraInfo )
+BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG *msg, DWORD extraInfo )
 {
     MESSAGEQUEUE *msgQueue;
     QMSG         *qmsg;
@@ -991,6 +991,7 @@ BOOL QUEUE_AddMsg( HQUEUE16 hQueue, MSG *msg, DWORD extraInfo )
     EnterCriticalSection( &msgQueue->cSection );
 
       /* Store message */
+    qmsg->type = type;
     qmsg->msg = *msg;
     qmsg->extraInfo = extraInfo;
 
@@ -1228,6 +1229,7 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
     msg->pt.x    = xPos;
     msg->pt.y    = yPos;
     qmsg->extraInfo = extraInfo;
+    qmsg->type      = QMSG_HARDWARE;
 
     LeaveCriticalSection( &sysMsgQueue->cSection );
 

@@ -15,12 +15,18 @@
   /* Message as stored in the queue (contains the extraInfo field) */
 typedef struct tagQMSG
 {
+    int   type;
     MSG   msg;
-    DWORD   extraInfo;  /* Only in 3.1 */
+    DWORD extraInfo;  /* Only in 3.1 */
     
     struct tagQMSG *nextMsg;
     struct tagQMSG *prevMsg;
 } QMSG;
+
+#define QMSG_WIN16    0
+#define QMSG_WIN32A   1
+#define QMSG_WIN32W   2
+#define QMSG_HARDWARE 3
 
 
 typedef struct tagSMSG
@@ -160,7 +166,7 @@ extern void QUEUE_DecTimerCount( HQUEUE16 hQueue );
 extern BOOL QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
-extern BOOL QUEUE_AddMsg( HQUEUE16 hQueue, MSG * msg, DWORD extraInfo );
+extern BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG * msg, DWORD extraInfo );
 extern QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
                           int first, int last );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg );

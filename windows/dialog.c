@@ -945,7 +945,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     {
         EnableWindow( owner, FALSE );
         ShowWindow( hwnd, SW_SHOW );
-        while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, 
+        while (MSG_InternalGetMessage(QMSG_WIN32A, &msg, hwnd, owner, MSGF_DIALOGBOX, 
                                       PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG), NULL ))
         {
             if (!IsDialogMessageA( hwnd, &msg))

@@ -986,10 +986,115 @@ ReplyMessageEnd:
 }
 
 /***********************************************************************
+ *           MSG_ConvertMsg
+ */
+static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    switch ( MAKELONG( srcType, dstType ) )
+    {
+    case MAKELONG( QMSG_WIN16,  QMSG_WIN16 ):
+    case MAKELONG( QMSG_WIN32A, QMSG_WIN32A ):
+    case MAKELONG( QMSG_WIN32W, QMSG_WIN32W ):
+        return TRUE;
+
+    case MAKELONG( QMSG_WIN16, QMSG_WIN32A ):
+        switch ( WINPROC_MapMsg16To32A( msg->message, msg->wParam,
+                                       &msg->message, &msg->wParam, &msg->lParam ) )
+        {
+        case 0:
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg16To32A( msg->hwnd, msg->message, msg->wParam, msg->lParam, 0 );
+        default:
+            return FALSE;
+        }
+
+    case MAKELONG( QMSG_WIN16, QMSG_WIN32W ):
+        switch ( WINPROC_MapMsg16To32W( msg->hwnd, msg->message, msg->wParam,
+                                       &msg->message, &msg->wParam, &msg->lParam ) )
+        {
+        case 0:
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg16To32W( msg->hwnd, msg->message, msg->wParam, msg->lParam, 0 );
+        default:
+            return FALSE;
+        }
+
+    case MAKELONG( QMSG_WIN32A, QMSG_WIN16 ):
+        mp16.lParam = msg->lParam;
+        switch ( WINPROC_MapMsg32ATo16( msg->hwnd, msg->message, msg->wParam,
+                                        &msg16, &mp16.wParam, &mp16.lParam ) )
+        {
+        case 0:
+            msg->message = msg16; 
+            msg->wParam  = mp16.wParam;
+            msg->lParam  = mp16.lParam;
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg32ATo16( msg->hwnd, msg->message, msg->wParam, msg->lParam, &mp16 );
+        default:
+            return FALSE;
+        }
+
+    case MAKELONG( QMSG_WIN32W, QMSG_WIN16 ):
+        mp16.lParam = msg->lParam;
+        switch ( WINPROC_MapMsg32WTo16( msg->hwnd, msg->message, msg->wParam,
+                                        &msg16, &mp16.wParam, &mp16.lParam ) )
+        {
+        case 0:
+            msg->message = msg16; 
+            msg->wParam  = mp16.wParam;
+            msg->lParam  = mp16.lParam;
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg32WTo16( msg->hwnd, msg->message, msg->wParam, msg->lParam, &mp16 );
+        default:
+            return FALSE;
+        }
+
+    case MAKELONG( QMSG_WIN32A, QMSG_WIN32W ):
+        switch ( WINPROC_MapMsg32ATo32W( msg->hwnd, msg->message, msg->wParam, &msg->lParam ) )
+        {
+        case 0:
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg32ATo32W( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+        default:
+            return FALSE;
+        }
+
+    case MAKELONG( QMSG_WIN32W, QMSG_WIN32A ):
+        switch ( WINPROC_MapMsg32WTo32A( msg->hwnd, msg->message, msg->wParam, &msg->lParam ) )
+        {
+        case 0:
+            return TRUE;
+        case 1:
+            /* Pointer messages were mapped --> need to free allocated memory and fail */
+            WINPROC_UnmapMsg32WTo32A( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+        default:
+            return FALSE;
+        }
+
+    default:    
+        FIXME( "Invalid message type(s): %d / %d\n", srcType, dstType );
+        return FALSE;
+    }
+}
+
+/***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
-                               WORD flags, BOOL peek )
+static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd, 
+                             DWORD first, DWORD last, WORD flags, BOOL peek )
 {
     int mask;
     MESSAGEQUEUE *msgQueue;
@@ -1050,11 +1155,20 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
     
         /* Now find a normal message */
 
+  retry:
         if (((msgQueue->wakeBits & mask) & QS_POSTMESSAGE) &&
             ((qmsg = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != 0))
         {
-            *msg = qmsg->msg;
-            
+            /* Try to convert message to requested type */
+            MSG tmpMsg = qmsg->msg;
+            if ( !MSG_ConvertMsg( &tmpMsg, qmsg->type, type ) )
+            {
+                ERR( "Message of wrong type contains pointer parameters. Skipped!\n ");
+                QUEUE_RemoveMsg( msgQueue, qmsg );
+                goto retry;
+            }
+
+            *msg = tmpMsg;
             msgQueue->GetMessageTimeVal      = msg->time;
             CONV_POINT32TO16(&msg->pt, &pt16);
             msgQueue->GetMessagePosVal       = *(DWORD *)&pt16;
@@ -1181,14 +1295,14 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
-                               WPARAM code, WORD flags, BOOL sendIdle, BOOL* idleSent ) 
+BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
+                             WPARAM code, WORD flags, BOOL sendIdle, BOOL* idleSent ) 
 {
     for (;;)
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
+	    if (!MSG_PeekMessage( type, msg, 0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
@@ -1199,11 +1313,11 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
 		    if (idleSent!=NULL)
 		      *idleSent=TRUE;
 		}
-		MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
+		MSG_PeekMessage( type, msg, 0, 0, 0, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
+	    MSG_PeekMessage( type, msg, 0, 0, 0, flags, FALSE );
 
         /* Call message filters */
 
@@ -1225,7 +1339,7 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
                     /* Message filtered -> remove it from the queue */
                     /* if it's still there. */
                     if (!(flags & PM_REMOVE))
-                        MSG_PeekMessage( msg, 0, 0, 0, PM_REMOVE, TRUE );
+                        MSG_PeekMessage( type, msg, 0, 0, 0, PM_REMOVE, TRUE );
                     continue;
                 }
             }
@@ -1237,56 +1351,47 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
 
 
 /***********************************************************************
- *           PeekMessage16   (USER.109)
+ *         PeekMessage32_16   (USER.819)
  */
-BOOL16 WINAPI PeekMessage16( LPMSG16 lpmsg, HWND16 hwnd, UINT16 first,
-                             UINT16 last, UINT16 flags )
+BOOL16 WINAPI PeekMessage32_16( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
+                                UINT16 first, UINT16 last, UINT16 flags, 
+                                BOOL16 wHaveParamHigh )
 {
-    MSG msg32;
-    BOOL16 ret;
-    ret = PeekMessageA(&msg32, hwnd, first, last, flags);
-    STRUCT32_MSG32to16(&msg32, lpmsg);
+    BOOL ret;
+    MSG msg;
+
+    ret = MSG_PeekMessage( QMSG_WIN16, &msg, hwnd, first, last, flags, TRUE );
+
+    lpmsg16_32->msg.hwnd    = msg.hwnd;
+    lpmsg16_32->msg.message = msg.message;
+    lpmsg16_32->msg.wParam  = LOWORD(msg.wParam);
+    lpmsg16_32->msg.lParam  = msg.lParam;
+    lpmsg16_32->msg.time    = msg.time;
+    lpmsg16_32->msg.pt.x    = (INT16)msg.pt.x;
+    lpmsg16_32->msg.pt.y    = (INT16)msg.pt.y;
+
+    if ( wHaveParamHigh )
+        lpmsg16_32->wParamHigh = HIWORD(msg.wParam);
+
     return ret;
 }
 
 /***********************************************************************
- *         WIN16_PeekMessage32   (USER.819)
+ *           PeekMessage16   (USER.109)
  */
-BOOL16 WINAPI PeekMessage32_16( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
-               UINT16 first, UINT16 last, UINT16 flags, BOOL16 wHaveParamHigh )
+BOOL16 WINAPI PeekMessage16( LPMSG16 lpmsg, HWND16 hwnd, 
+                             UINT16 first, UINT16 last, UINT16 flags )
 {
-    if (wHaveParamHigh == FALSE)
-    {
-        lpmsg16_32->wParamHigh = 0;
-        return PeekMessage16(&(lpmsg16_32->msg), hwnd, first, last, flags);
-    }
-    else
-    {
-        MSG msg32;
-        BOOL16 ret;
-
-        ret = (BOOL16)PeekMessageA(&msg32, (HWND)hwnd,
-                                   (UINT)first, (UINT)last, (UINT)flags);
-        lpmsg16_32->msg.hwnd    = msg32.hwnd;
-        lpmsg16_32->msg.message = msg32.message;
-        lpmsg16_32->msg.wParam  = LOWORD(msg32.wParam);
-        lpmsg16_32->msg.lParam  = msg32.lParam;
-        lpmsg16_32->msg.time    = msg32.time;
-        lpmsg16_32->msg.pt.x    = (INT16)msg32.pt.x;
-        lpmsg16_32->msg.pt.y    = (INT16)msg32.pt.y;
-        lpmsg16_32->wParamHigh  = HIWORD(msg32.wParam);
-        return ret;
-    }
+    return PeekMessage32_16( (LPMSG16_32)lpmsg, hwnd, first, last, flags, FALSE );
 }
-
 
 /***********************************************************************
  *         PeekMessageA
  */
 BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
-                              UINT min,UINT max,UINT wRemoveMsg)
+                          UINT min, UINT max, UINT wRemoveMsg)
 {
-    return MSG_PeekMessage( lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+    return MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
 }
 
 /***********************************************************************
@@ -1324,10 +1429,37 @@ BOOL WINAPI PeekMessageW(
   UINT wRemoveMsg /* removal flags */ 
 ) 
 {
-	BOOL bRet = PeekMessageA(lpmsg,hwnd,min,max,wRemoveMsg);
-	if (bRet)
-	    FIXME_(sendmsg)("(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
-	return bRet;
+    return MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+}
+
+
+/***********************************************************************
+ *          GetMessage32_16   (USER.820)
+ */
+BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
+                               UINT16 last, BOOL16 wHaveParamHigh )
+{
+    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
+    MSG msg;
+
+    MSG_PeekMessage( QMSG_WIN16, &msg, hWnd, first, last, PM_REMOVE, FALSE );
+
+    lpmsg16_32->msg.hwnd    = msg.hwnd;
+    lpmsg16_32->msg.message = msg.message;
+    lpmsg16_32->msg.wParam  = LOWORD(msg.wParam);
+    lpmsg16_32->msg.lParam  = msg.lParam;
+    lpmsg16_32->msg.time    = msg.time;
+    lpmsg16_32->msg.pt.x    = (INT16)msg.pt.x;
+    lpmsg16_32->msg.pt.y    = (INT16)msg.pt.y;
+
+    if ( wHaveParamHigh )
+        lpmsg16_32->wParamHigh = HIWORD(msg.wParam);
+
+    TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n",
+           lpmsg16_32->msg.message, hWnd, first, last );
+
+    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg16_32 );
+    return lpmsg16_32->msg.message != WM_QUIT;
 }
 
 /***********************************************************************
@@ -1335,66 +1467,21 @@ BOOL WINAPI PeekMessageW(
  */
 BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 {
-    BOOL ret;
-    MSG16 *lpmsg = (MSG16 *)PTR_SEG_TO_LIN(msg);
-    MSG msg32;
-        
-    ret = GetMessageA( &msg32, hwnd, first, last );
-
-    STRUCT32_MSG32to16( &msg32, lpmsg );
-
-    TRACE("message %04x, hwnd %04x, filter(%04x - %04x)\n",
-          lpmsg->message, hwnd, first, last );
-
-    return ret;
+    return GetMessage32_16( msg, hwnd, first, last, FALSE );
 }
 
 /***********************************************************************
- *          WIN16_GetMessage32   (USER.820)
+ *          GetMessageA   (USER32.270)
  */
-BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
-                     UINT16 last, BOOL16 wHaveParamHigh )
+BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
 {
-    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
-
-    if (wHaveParamHigh == FALSE) /* normal GetMessage16 call */
-    {
-
-        lpmsg16_32->wParamHigh = 0; /* you never know... */
-        /* WARNING: msg16_32->msg has to be the first variable in the struct */ 
-        return GetMessage16(msg16_32, hWnd, first, last);
-    }
-    else
-    {
-        MSG msg32;
-        BOOL16 ret;
-
-        ret = (BOOL16)GetMessageA(&msg32, hWnd, first, last);
-        lpmsg16_32->msg.hwnd	= msg32.hwnd;
-        lpmsg16_32->msg.message	= msg32.message;
-        lpmsg16_32->msg.wParam	= LOWORD(msg32.wParam);
-        lpmsg16_32->msg.lParam	= msg32.lParam;
-        lpmsg16_32->msg.time	= msg32.time;
-        lpmsg16_32->msg.pt.x	= (INT16)msg32.pt.x;
-        lpmsg16_32->msg.pt.y	= (INT16)msg32.pt.y;
-        lpmsg16_32->wParamHigh	= HIWORD(msg32.wParam);
-        return ret;
-    }
-}
-
-/***********************************************************************
- *          GetMessage32A   (USER32.270)
- */
-BOOL WINAPI GetMessageA(MSG* lpmsg,HWND hwnd,UINT min,UINT max)
-{
-    MSG_PeekMessage( lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
+    MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
     
-    TRACE("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
-          hwnd, min, max );
+    TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n", 
+           lpmsg->message, hwnd, min, max );
     
     HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
-
-    return (lpmsg->message != WM_QUIT);
+    return lpmsg->message != WM_QUIT;
 }
 
 /***********************************************************************
@@ -1431,34 +1518,24 @@ BOOL WINAPI GetMessageW(
   UINT max    /* maximum message to receive */
 ) 
 {
-    BOOL bRet = GetMessageA(lpmsg, hwnd, min, max);
-    if (bRet)
-        FIXME_(sendmsg)("(%s) unicode<->ascii\n",
-                        SPY_GetMsgName(lpmsg->message));
-    return bRet;
-
+    MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
+    
+    TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n", 
+           lpmsg->message, hwnd, min, max );
+    
+    HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
+    return lpmsg->message != WM_QUIT;
 }
 
-
 /***********************************************************************
- *           PostMessage16   (USER.110)
+ *           MSG_PostToQueue
  */
-BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
-                             LPARAM lParam )
+static BOOL MSG_PostToQueue( HQUEUE16 hQueue, int type, HWND hwnd, 
+                             UINT message, WPARAM wParam, LPARAM lParam )
 {
-    return (BOOL16) PostMessageA( hwnd, message, wParam, lParam );
-}
+    MSG msg;
 
-
-/***********************************************************************
- *           PostMessage32A   (USER32.419)
- */
-BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
-                              LPARAM lParam )
-{
-    MSG       msg;
-    WND 	*wndPtr;
-    BOOL      retvalue;
+    if ( !hQueue ) return FALSE;
 
     msg.hwnd    = hwnd;
     msg.message = message;
@@ -1467,6 +1544,18 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
     msg.time    = GetTickCount();
     msg.pt.x    = 0;
     msg.pt.y    = 0;
+
+    return QUEUE_AddMsg( hQueue, type, &msg, 0 );
+}
+
+/***********************************************************************
+ *           MSG_PostMessage
+ */
+static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message, 
+                             WPARAM wParam, LPARAM lParam )
+{
+    HQUEUE16 hQueue;
+    WND *wndPtr;
 
     if (hwnd == HWND_BROADCAST)
     {
@@ -1479,7 +1568,8 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
             {
                 TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                       wndPtr->hwndSelf, message, wParam, lParam);
-                PostMessageA( wndPtr->hwndSelf, message, wParam, lParam );
+                MSG_PostToQueue( wndPtr->hmemTaskQ, type, 
+                                 wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
         WIN_ReleaseDesktop();
@@ -1488,49 +1578,69 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
     }
 
     wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr || !wndPtr->hmemTaskQ)
-    {
-        retvalue = FALSE;
-        goto END;
-    }
-
-    retvalue = QUEUE_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
-END:
+    hQueue = wndPtr? wndPtr->hmemTaskQ : 0;
     WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
-}
 
+    return MSG_PostToQueue( hQueue, type, hwnd, message, wParam, lParam );
+}
 
 /***********************************************************************
- *           PostMessage32W   (USER32.420)
+ *           PostMessage16   (USER.110)
  */
-BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
-                              LPARAM lParam )
+BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
+                             LPARAM lParam )
 {
-  FIXME_(sendmsg)("(%s) unicode<->ascii\n", SPY_GetMsgName(message));
-  return PostMessageA( hwnd, message, wParam, lParam );
+    return (BOOL16) MSG_PostMessage( QMSG_WIN16, hwnd, message, wParam, lParam );
 }
 
+/***********************************************************************
+ *           PostMessageA   (USER32.419)
+ */
+BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
+                          LPARAM lParam )
+{
+    return MSG_PostMessage( QMSG_WIN32A, hwnd, message, wParam, lParam );
+}
+
+/***********************************************************************
+ *           PostMessageW   (USER32.420)
+ */
+BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
+                          LPARAM lParam )
+{
+    return MSG_PostMessage( QMSG_WIN32W, hwnd, message, wParam, lParam );
+}
 
 /***********************************************************************
  *           PostAppMessage16   (USER.116)
  */
-BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
-                                LPARAM lParam )
+BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, 
+                                WPARAM16 wParam, LPARAM lParam )
 {
-    MSG msg;
-
-    if (GetTaskQueue16(hTask) == 0) return FALSE;
-    msg.hwnd    = 0;
-    msg.message = message;
-    msg.wParam  = wParam;
-    msg.lParam  = lParam;
-    msg.time    = GetTickCount();
-    msg.pt.x    = 0;
-    msg.pt.y    = 0;
-
-    return QUEUE_AddMsg( GetTaskQueue16(hTask), &msg, 0 );
+    return MSG_PostToQueue( GetTaskQueue16(hTask), QMSG_WIN16, 
+                            0, message, wParam, lParam );
 }
+
+/**********************************************************************
+ *           PostThreadMessageA    (USER32.422)
+ */
+BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
+                                WPARAM wParam, LPARAM lParam )
+{
+    return MSG_PostToQueue( GetThreadQueue16(idThread), QMSG_WIN32A, 
+                            0, message, wParam, lParam );
+}
+
+/**********************************************************************
+ *           PostThreadMessageW    (USER32.423)
+ */
+BOOL WINAPI PostThreadMessageW( DWORD idThread, UINT message,
+                                 WPARAM wParam, LPARAM lParam )
+{
+    return MSG_PostToQueue( GetThreadQueue16(idThread), QMSG_WIN32W, 
+                            0, message, wParam, lParam );
+}
+
 
 /************************************************************************
  *	     MSG_CallWndProcHook32
@@ -1681,50 +1791,6 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     return res;
 }
 
-
-
-/**********************************************************************
- *           PostThreadMessage32A    (USER32.422)
- *
- * BUGS
- *
- *  Thread-local message queues are not supported.
- * 
- */
-BOOL WINAPI PostThreadMessageA(DWORD idThread , UINT message,
-                                   WPARAM wParam, LPARAM lParam )
-{
-    MSG msg;
-    HQUEUE16 hQueue;
-
-    if ((hQueue = GetThreadQueue16(idThread)) == 0)
-        return FALSE;
-    
-    msg.hwnd    = 0;
-    msg.message = message;
-    msg.wParam  = wParam;
-    msg.lParam  = lParam;
-    msg.time    = GetTickCount();
-    msg.pt.x    = 0;
-    msg.pt.y    = 0;
-
-    return QUEUE_AddMsg( hQueue, &msg, 0 );
-}
-
-/**********************************************************************
- *           PostThreadMessage32W    (USER32.423)
- *
- * BUGS
- *
- *  Thread-local message queues are not supported.
- * 
- */
-BOOL WINAPI PostThreadMessageW(DWORD idThread , UINT message,
-                                   WPARAM wParam, LPARAM lParam )
-{
-   FIXME_(sendmsg)("(%s) unicode<->ascii\n",SPY_GetMsgName(message));
-   return PostThreadMessageA(idThread, message, wParam, lParam);
-}
 
 /***********************************************************************
  *           SendMessage32A   (USER32.454)

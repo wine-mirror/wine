@@ -13,9 +13,9 @@
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 /* message.c */
-extern BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd,
-                                      HWND hwndOwner, WPARAM code,
-                                      WORD flags, BOOL sendIdle, BOOL* idleSent );
+extern BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd,
+                                    HWND hwndOwner, WPARAM code,
+                                    WORD flags, BOOL sendIdle, BOOL* idleSent );
 
 /* timer.c */
 extern BOOL TIMER_Init( void );
