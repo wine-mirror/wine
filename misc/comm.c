@@ -1719,6 +1719,17 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
     }
     close(fd);
     *evtmask = eventmask;
+    TRACE("%s%s%s%s%s%s%s%s%s\n",
+	  (eventmask&EV_BREAK)?"EV_BREAK":"",
+	  (eventmask&EV_CTS)?"EV_CTS":"",
+	  (eventmask&EV_DSR)?"EV_DSR":"",
+	  (eventmask&EV_ERR)?"EV_ERR":"",
+	  (eventmask&EV_RING)?"EV_RING":"",
+	  (eventmask&EV_RLSD)?"EV_RLSD":"",
+	  (eventmask&EV_RXCHAR)?"EV_RXCHAR":"",
+	  (eventmask&EV_RXFLAG)?"EV_RXFLAG":"",
+	  (eventmask&EV_TXEMPTY)?"EV_TXEMPTY":"");
+	  
     return TRUE;
 }
 
@@ -1730,6 +1741,17 @@ BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
     int fd;
 
     TRACE("handle %d, mask %lx\n", handle, evtmask);
+    TRACE("%s%s%s%s%s%s%s%s%s\n",
+	  (evtmask&EV_BREAK)?"EV_BREAK":"",
+	  (evtmask&EV_CTS)?"EV_CTS":"",
+	  (evtmask&EV_DSR)?"EV_DSR":"",
+	  (evtmask&EV_ERR)?"EV_ERR":"",
+	  (evtmask&EV_RING)?"EV_RING":"",
+	  (evtmask&EV_RLSD)?"EV_RLSD":"",
+	  (evtmask&EV_RXCHAR)?"EV_RXCHAR":"",
+	  (evtmask&EV_RXFLAG)?"EV_RXFLAG":"",
+	  (evtmask&EV_TXEMPTY)?"EV_TXEMPTY":"");
+	  
     if(0>(fd=COMM_GetWriteFd(handle))) {
         return FALSE;
     }
@@ -1747,12 +1769,24 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
      int fd;
 
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
+     TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
+	   lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
+	   (lpdcb->StopBits == ONESTOPBIT)?1:
+	   (lpdcb->StopBits == TWOSTOPBITS)?2:0);
+     TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
+	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 
      if ((fd = COMM_GetWriteFd(handle)) < 0) return FALSE;
 
-     if (tcgetattr(fd,&port) == -1) {
+     if ((tcgetattr(fd,&port)) == -1) {
+         int save_error = errno;
          commerror = WinError();
          close( fd );
+#ifdef HAVE_STRERROR
+         ERR("tcgetattr error '%s'\n", strerror(save_error));
+#else
+         ERR("tcgetattr error %d\n", save_error);
+#endif
          return FALSE;
      }
 
@@ -1817,9 +1851,30 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 		case CBR_38400:
 			port.c_cflag |= B38400;
 			break;		
-		default:
+#ifdef B57600
+		case 57600:
+			port.c_cflag |= B57600;
+			break;		
+#endif
+#ifdef B115200
+		case 115200:
+			port.c_cflag |= B115200;
+			break;		
+#endif
+#ifdef B230400
+		case 230400:
+			port.c_cflag |= B230400;
+			break;		
+#endif
+#ifdef B460800
+		case 460600:
+			port.c_cflag |= B460800;
+			break;		
+#endif
+       	        default:
 			commerror = IE_BAUDRATE;
-                        close( fd );
+			close( fd );
+			ERR("baudrate %ld\n",lpdcb->BaudRate);
 			return FALSE;
 	}
 #elif !defined(__EMX__)
@@ -1863,11 +1918,11 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
                 default:
                         commerror = IE_BAUDRATE;
                         close( fd );
+			ERR("baudrate %d \n",lpdcb->BaudRate);
                         return FALSE;
         }
         port.c_ispeed = port.c_ospeed;
 #endif
-    	TRACE("bytesize %d\n",lpdcb->ByteSize);
 	port.c_cflag &= ~CSIZE;
 	switch (lpdcb->ByteSize) {
 		case 5:
@@ -1885,10 +1940,10 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 		default:
 			commerror = IE_BYTESIZE;
                         close( fd );
+			ERR("ByteSize\n");
 			return FALSE;
 	}
 
-    	TRACE("fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
             port.c_iflag |= INPCK;
@@ -1906,11 +1961,11 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
                 default:
                         commerror = IE_BYTESIZE;
                         close( fd );
+			ERR("Parity\n");
                         return FALSE;
         }
 	
 
-    	TRACE("stopbits %d\n",lpdcb->StopBits);
 	switch (lpdcb->StopBits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
@@ -1921,16 +1976,24 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 		default:
 			commerror = IE_BYTESIZE;
                         close( fd );
+			ERR("StopBits\n");
 			return FALSE;
 	}
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
 		lpdcb->fDtrControl == DTR_CONTROL_ENABLE||
 		lpdcb->fRtsControl == RTS_CONTROL_ENABLE
-	)
-		port.c_cflag |= CRTSCTS;
+	) 
+	  {
+	    port.c_cflag |= CRTSCTS;
+	    TRACE("CRTSCTS\n");
+	  }
+	
 	if (lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
-		port.c_cflag &= ~CRTSCTS;
+	  {
+	    port.c_cflag &= ~CRTSCTS;
+	    TRACE("~CRTSCTS\n");
+	  }
 
 #endif	
 	if (lpdcb->fInX)
@@ -1942,9 +2005,15 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 	else
 		port.c_iflag &= ~IXOFF;
 
-	if (tcsetattr(fd,TCSADRAIN,&port)==-1) {
+	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
+	        int save_error=errno;
 		commerror = WinError();	
                 close( fd );
+#ifdef HAVE_STRERROR
+                ERR("tcgetattr error '%s'\n", strerror(save_error));
+#else
+                ERR("tcgetattr error %d\n", save_error);
+#endif
 		return FALSE;
 	} else {
 		commerror = 0;
@@ -1960,14 +2029,22 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 {
      struct termios port;
-     int fd;
+     int fd,speed;
 
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
 
-     if ((fd = COMM_GetReadFd(handle)) < 0) return FALSE;
-
+     if ((fd = COMM_GetReadFd(handle)) < 0) 
+       {
+	 ERR("can't get COMM_GetReadFd\n");
+	 return FALSE;
+       }
      if (tcgetattr(fd, &port) == -1) {
-        TRACE("tcgetattr(%d, ...) returned -1",fd);
+                int save_error=errno;
+#ifdef HAVE_STRERROR
+                ERR("tcgetattr error '%s'\n", strerror(save_error));
+#else
+                ERR("tcgetattr error %d\n", save_error);
+#endif
 		commerror = WinError();	
                 close( fd );
 		return FALSE;
@@ -1975,10 +2052,11 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
      close( fd );
 #ifndef __EMX__
 #ifdef CBAUD
-        switch (port.c_cflag & CBAUD) {
+     speed= (port.c_cflag & CBAUD);
 #else
-        switch (port.c_ospeed) {
+     speed= (cfgetospeed(&port));
 #endif
+     switch (speed) {
 		case B110:
 			lpdcb->BaudRate = 110;
 			break;
@@ -2006,6 +2084,28 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 		case B38400:
 			lpdcb->BaudRate = 38400;
 			break;
+#ifdef B57600
+		case B57600:
+			lpdcb->BaudRate = 57600;
+			break;		
+#endif
+#ifdef B115200
+		case B115200:
+			lpdcb->BaudRate = 115200;
+			break;		
+#endif
+#ifdef B230400
+                case B230400:
+			lpdcb->BaudRate = 230400;
+			break;		
+#endif
+#ifdef B460800
+                case B460800:
+			lpdcb->BaudRate = 460800;
+			break;		
+#endif
+	        default:
+		        ERR("unknown speed %x \n",speed);
 	}
 #endif
 	switch (port.c_cflag & CSIZE) {
@@ -2021,6 +2121,8 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 		case CS8:
 			lpdcb->ByteSize = 8;
 			break;
+	        default:
+		        ERR("unknown size %x \n",port.c_cflag & CSIZE);
 	}	
 	
         if(port.c_iflag & INPCK)
@@ -2078,8 +2180,25 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 
 	commerror = 0;
 
-     TRACE("OK\n");
+        TRACE("OK\n");
  
+	TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
+	      lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
+	      (lpdcb->StopBits == ONESTOPBIT)?1:
+	      (lpdcb->StopBits == TWOSTOPBITS)?2:0);
+	TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
+	      (lpdcb->fOutX)?"IXOFF":"~IXOFF");
+#ifdef CRTSCTS
+	if (	lpdcb->fOutxCtsFlow 			||
+		lpdcb->fDtrControl == DTR_CONTROL_ENABLE||
+		lpdcb->fRtsControl == RTS_CONTROL_ENABLE
+		) 
+	  TRACE("CRTSCTS\n");
+	
+	if (lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
+	  TRACE("~CRTSCTS\n");
+	
+#endif	
 	return TRUE;
 }
 
@@ -2122,6 +2241,15 @@ BOOL WINAPI GetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts)
  */
 BOOL WINAPI SetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts) {
 	FIXME("(%x,%p):stub.\n",cid,lptimeouts);
+	TRACE("ReadIntervalTimeout %ld\n",lptimeouts->ReadIntervalTimeout);
+	TRACE("ReadTotalTimeoutMultiplier %ld\n",
+	      lptimeouts->ReadTotalTimeoutMultiplier);
+	TRACE("ReadTotalTimeoutConstant %ld\n",
+	      lptimeouts->ReadTotalTimeoutConstant);
+	TRACE("WriteTotalTimeoutMultiplier %ld\n",
+	      lptimeouts->WriteTotalTimeoutMultiplier);
+	TRACE("WriteTotalTimeoutConstant %ld\n",
+	      lptimeouts->WriteTotalTimeoutConstant);
 	return TRUE;
 }
 
