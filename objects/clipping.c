@@ -70,6 +70,7 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
     INT retval;
+    RECT rect;
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
@@ -88,7 +89,6 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         {
             if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
             dc->hClipRgn = 0;
-            retval = SIMPLEREGION; /* Clip region == whole DC */
         }
         else
         {
@@ -107,14 +107,15 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         }
 
         if(fnMode == RGN_COPY)
-            retval = CombineRgn( dc->hClipRgn, hrgn, 0, fnMode );
+            CombineRgn( dc->hClipRgn, hrgn, 0, fnMode );
         else
-            retval = CombineRgn( dc->hClipRgn, dc->hClipRgn, hrgn, fnMode);
+            CombineRgn( dc->hClipRgn, dc->hClipRgn, hrgn, fnMode);
     }
 
     CLIPPING_UpdateGCRegion( dc );
     GDI_ReleaseObj( hdc );
-    return retval;
+
+    return GetClipBox(hdc, &rect);
 }
 
 /***********************************************************************
