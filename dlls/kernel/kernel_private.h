@@ -53,17 +53,8 @@ extern BOOL WOWTHUNK_Init(void);
 
 extern VOID SYSLEVEL_CheckNotLevel( INT level );
 
-typedef struct
-{
-    void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
-    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
-
-    /* I/O functions */
-    DWORD (WINAPI *inport)( int port, int size );
-    void (WINAPI *outport)( int port, int size, DWORD val );
-} DOSVM_TABLE;
-
-extern DOSVM_TABLE Dosvm;
+extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
+extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );
 
 /* this structure is always located at offset 0 of the DGROUP segment */
 #include "pshpack1.h"

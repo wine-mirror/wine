@@ -25,7 +25,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/smb.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
-	$(TOPOBJDIR)/msdos/dpmi.c \
 	atom.c \
 	change.c \
 	comm.c \
@@ -99,7 +98,6 @@ SUBDIRS      = tests
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \
 	$(TOPOBJDIR)/misc \
-	$(TOPOBJDIR)/msdos \
 	messages \
 	nls
 

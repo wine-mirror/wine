@@ -104,12 +104,6 @@ extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
 extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
-/* memory/instr.c */
-extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
-
-/* msdos/dpmi.c */
-extern BOOL DPMI_LoadDosSystem(void);
-
 #define PTR_REAL_TO_LIN(seg,off) \
    ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 

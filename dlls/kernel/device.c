@@ -42,7 +42,6 @@
 #include "winioctl.h"
 #include "winnt.h"
 #include "msdos.h"
-#include "miscemu.h"
 #include "kernel_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -509,15 +508,9 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 		win32apieq_2_CONTEXT(pIn,&cxt);
 
 		if(dwIoControlCode==IFS_IOCTL_21)
-		{
-                    if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
-                        Dosvm.CallBuiltinHandler( &cxt, 0x21 );
-               } 
-                else 
-                {
-                    if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
-                        Dosvm.CallBuiltinHandler( &cxt, 0x2f );
-		}
+                    INSTR_CallBuiltinHandler( &cxt, 0x21 );
+                else
+                    INSTR_CallBuiltinHandler( &cxt, 0x2f );
 
 		CONTEXT_2_win32apieq(&cxt,pOut);
 
@@ -676,9 +669,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
             break;
         }
 
-        if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
-            Dosvm.CallBuiltinHandler( &cxt, intnum );
-
+        INSTR_CallBuiltinHandler( &cxt, intnum );
         CONTEXT_2_DIOCRegs( &cxt, pOut );
     }
     break;

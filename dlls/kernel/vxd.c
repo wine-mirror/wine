@@ -1087,8 +1087,7 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 
 	SET_AX( context, callnum );
         SET_CX( context, parm );
-        if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
-            Dosvm.CallBuiltinHandler( context, 0x31 );
+        INSTR_CallBuiltinHandler( context, 0x31 );
 
 	return LOWORD(context->Eax);
     }

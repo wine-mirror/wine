@@ -37,8 +37,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(io);
 
-#ifdef __i386__
-
 /* macros to set parts of a DWORD */
 #define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
 #define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
@@ -64,6 +62,33 @@ inline static void *get_stack( CONTEXT86 *context )
 {
     if (ISV86(context)) return PTR_REAL_TO_LIN( context->SegSs, context->Esp );
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
+}
+
+
+static void (WINAPI *DOS_EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+static void (WINAPI *DOS_CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
+static DWORD (WINAPI *DOS_inport)( int port, int size );
+static void (WINAPI *DOS_outport)( int port, int size, DWORD val );
+
+
+static void init_winedos(void)
+{
+    static HMODULE module;
+
+    if (module) return;
+    module = LoadLibraryA( "winedos.dll" );
+    if (!module)
+    {
+        ERR("could not load winedos.dll, DOS subsystem unavailable\n");
+        module = (HMODULE)1;  /* don't try again */
+        return;
+    }
+#define GET_ADDR(func)  DOS_##func = (void *)GetProcAddress(module, #func);
+    GET_ADDR(inport);
+    GET_ADDR(outport);
+    GET_ADDR(EmulateInterruptPM);
+    GET_ADDR(CallBuiltinHandler);
+#undef GET_ADDR
 }
 
 
@@ -339,7 +364,8 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 {
     DWORD res = ~0U;
 
-    if (Dosvm.inport || DPMI_LoadDosSystem()) res = Dosvm.inport( port, size );
+    if (!DOS_inport) init_winedos();
+    if (DOS_inport) res = DOS_inport( port, size );
 
     if (TRACE_ON(io))
     {
@@ -370,7 +396,8 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
  */
 static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 {
-    if (Dosvm.outport || DPMI_LoadDosSystem()) Dosvm.outport( port, size, val );
+    if (!DOS_outport) init_winedos();
+    if (DOS_outport) DOS_outport( port, size, val );
 
     if (TRACE_ON(io))
     {
@@ -689,14 +716,11 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 
         case 0xcd: /* int <XX> */
             if (IS_SELECTOR_SYSTEM(context->SegCs)) break;  /* don't emulate it in 32-bit code */
-            if (!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
-            {
-                ERR("could not initialize interrupt handling\n");
-            }
-            else
+            if (!DOS_EmulateInterruptPM) init_winedos();
+            if (DOS_EmulateInterruptPM)
             {
                 context->Eip += prefixlen + 2;
-                Dosvm.EmulateInterruptPM( context, instr[1] );
+                DOS_EmulateInterruptPM( context, instr[1] );
                 return ExceptionContinueExecution;
             }
             break;  /* Unable to emulate it */
@@ -786,4 +810,40 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
     return ExceptionContinueSearch;  /* Unable to emulate it */
 }
 
-#endif  /* __i386__ */
+
+/***********************************************************************
+ *           INSTR_CallBuiltinHandler
+ */
+void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )
+{
+    if (!DOS_CallBuiltinHandler) init_winedos();
+    if (DOS_CallBuiltinHandler) DOS_CallBuiltinHandler( context, intnum );
+}
+
+
+/***********************************************************************
+ *           DOS3Call         (KERNEL.102)
+ */
+void WINAPI DOS3Call( CONTEXT86 *context )
+{
+    INSTR_CallBuiltinHandler( context, 0x21 );
+}
+
+
+/***********************************************************************
+ *           NetBIOSCall      (KERNEL.103)
+ */
+void WINAPI NetBIOSCall16( CONTEXT86 *context )
+{
+    INSTR_CallBuiltinHandler( context, 0x5c );
+}
+
+
+/***********************************************************************
+ *		GetSetKernelDOSProc (KERNEL.311)
+ */
+FARPROC16 WINAPI GetSetKernelDOSProc16( FARPROC16 DosProc )
+{
+    FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);
+    return NULL;
+}
