@@ -5084,7 +5084,8 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     {
 	SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, isubitem);
         pItemHdr = lpSubItem ? &lpSubItem->hdr : &callbackHdr;
-        if( !lpSubItem) {
+        if (!lpSubItem)
+        {
             WARN(" iSubItem invalid (%08x), ignored.\n", isubitem);
             isubitem = 0;
         }
@@ -5121,7 +5122,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (dispInfo.item.mask != 0)
     {
 	dispInfo.item.iItem = lpLVItem->iItem;
-	dispInfo.item.iSubItem = isubitem;
+	dispInfo.item.iSubItem = lpLVItem->iSubItem; /* yes: the original subitem */
 	dispInfo.item.lParam = lpItem->lParam;
 	notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	TRACE("   getdispinfo(2):item=%s\n", debuglvitem_t(&dispInfo.item, isW));
