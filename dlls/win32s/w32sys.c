@@ -8,6 +8,10 @@
 #include "windef.h"
 #include "w32sys.h"
 
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(dll)
+
 /***********************************************************************
  *           GetWin32sInfo   (W32SYS.12)
  * RETURNS
@@ -41,5 +45,10 @@ WORD WINAPI GetW32SysVersion16(void)
 WORD WINAPI GetPEResourceTable16(
 	HFILE16 hf		/* [in] filedescriptor to opened executeable */
 ) {
+	return 0;
+}
+
+DWORD WINAPI LoadPeResource16(WORD x,SEGPTR y) {
+	FIXME("(0x%04x,0x%08lx),stub!\n",x,y);
 	return 0;
 }

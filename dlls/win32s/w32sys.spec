@@ -11,5 +11,5 @@ type	win16
 8 stub EXECPEEX
 9 stub ITSME
 10 stub W32SERROR
-11 stub EXP1
+11 pascal LoadPeResource(word ptr) LoadPeResource16
 12 pascal16 GetWin32sInfo(ptr) GetWin32sInfo16
