@@ -226,7 +226,7 @@ test_ro_int24:
 fail_int24:
   FIXME(file,"generate INT24 missing\n");
   /* Is this the right error? */
-  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+  SetLastError( ERROR_ACCESS_DENIED );
   return TRUE;
   
 test_ro_err05:
@@ -235,7 +235,7 @@ test_ro_err05:
   /* fall through */
 fail_error05:
   TRACE(file,"Access Denied, oldmode 0x%02x mode 0x%02x\n",oldmode,mode);
-  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+  SetLastError( ERROR_ACCESS_DENIED );
   return TRUE;
 }
 #endif
@@ -254,45 +254,45 @@ void FILE_SetDosError(void)
     switch (save_errno)
     {
     case EAGAIN:
-        DOS_ERROR( ER_ShareViolation, EC_Temporary, SA_Retry, EL_Disk );
+        SetLastError( ERROR_SHARING_VIOLATION );
         break;
     case EBADF:
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         break;
     case ENOSPC:
-        DOS_ERROR( ER_DiskFull, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_HANDLE_DISK_FULL );
         break;
     case EACCES:
     case EPERM:
     case EROFS:
-        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+        SetLastError( ERROR_ACCESS_DENIED );
         break;
     case EBUSY:
-        DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Abort, EL_Disk );
+        SetLastError( ERROR_LOCK_VIOLATION );
         break;
     case ENOENT:
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         break;
     case EISDIR:
-        DOS_ERROR( ER_CanNotMakeDir, EC_AccessDenied, SA_Abort, EL_Unknown );
+        SetLastError( ERROR_CANNOT_MAKE );
         break;
     case ENFILE:
     case EMFILE:
-        DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Unknown );
+        SetLastError( ERROR_NO_MORE_FILES );
         break;
     case EEXIST:
-        DOS_ERROR( ER_FileExists, EC_Exists, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_EXISTS );
         break;
     case EINVAL:
     case ESPIPE:
-        DOS_ERROR( ER_SeekError, EC_NotFound, SA_Ignore, EL_Disk );
+        SetLastError( ERROR_SEEK );
         break;
     case ENOTEMPTY:
-        DOS_ERROR( ERROR_DIR_NOT_EMPTY, EC_Exists, SA_Ignore, EL_Disk );
+        SetLastError( ERROR_DIR_NOT_EMPTY );
         break;
     default:
         perror( "int21: unknown errno" );
-        DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort, EL_Unknown );
+        SetLastError( ERROR_GEN_FAILURE );
         break;
     }
     errno = save_errno;
@@ -329,8 +329,8 @@ HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
 
     if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
     {
-        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
         CLIENT_CloseHandle( reply.handle );
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         return (HFILE32)NULL;
     }
     file->header.type = K32OBJ_FILE;
@@ -507,7 +507,7 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
 
 	/* Do not silence this please. It is a critical error. -MM */
         ERR(file, "Couldn't open device '%s'!\n",filename);
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return HFILE_ERROR32;
     }
 
@@ -766,7 +766,7 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
                 CloseHandle( handle );
                 break;
             }
-            if (DOS_ExtendedError != ER_FileExists)
+            if (GetLastError() != ERROR_FILE_EXISTS)
                 break;  /* No need to go on */
             num++;
             sprintf( p, "%04x.tmp", num );
@@ -932,7 +932,7 @@ found:
             CloseHandle( hFileRet );
             WARN(file, "(%s): OF_VERIFY failed\n", name );
             /* FIXME: what error here? */
-            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            SetLastError( ERROR_FILE_NOT_FOUND );
             goto error;
         }
     }
@@ -940,17 +940,27 @@ found:
 
 success:  /* We get here if the open was successful */
     TRACE(file, "(%s): OK, return = %d\n", name, hFileRet );
-    if (mode & OF_EXIST) /* Return the handle, but close it first */
-        CloseHandle( hFileRet );
+    if (win32)
+    {
+        if (mode & OF_EXIST) /* Return the handle, but close it first */
+            CloseHandle( hFileRet );
+    }
+    else
+    {
+        hFileRet = FILE_AllocDosHandle( hFileRet );
+        if (hFileRet == HFILE_ERROR16) goto error;
+        if (mode & OF_EXIST) /* Return the handle, but close it first */
+            _lclose16( hFileRet );
+    }
     return hFileRet;
 
 not_found:  /* We get here if the file does not exist */
     WARN(file, "'%s' not found\n", name );
-    DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+    SetLastError( ERROR_FILE_NOT_FOUND );
     /* fall through */
 
 error:  /* We get here if there was an error opening the file */
-    ofs->nErrCode = DOS_ExtendedError;
+    ofs->nErrCode = GetLastError();
     WARN(file, "(%s): return = HFILE_ERROR error= %d\n", 
 		  name,ofs->nErrCode );
     return HFILE_ERROR32;
@@ -962,8 +972,7 @@ error:  /* We get here if there was an error opening the file */
  */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
-    TRACE(file,"OpenFile16(%s,%i)\n", name, mode);
-    return FILE_AllocDosHandle( FILE_DoOpenFile( name, ofs, mode, FALSE ) );
+    return FILE_DoOpenFile( name, ofs, mode, FALSE );
 }
 
 
@@ -1025,8 +1034,8 @@ HFILE16 FILE_AllocDosHandle( HANDLE32 handle )
             return i;
         }
 error:
-    DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
     CloseHandle( handle );
+    SetLastError( ERROR_TOO_MANY_OPEN_FILES );
     return INVALID_HANDLE_VALUE16;
 }
 
@@ -1041,7 +1050,7 @@ HANDLE32 FILE_GetHandle32( HFILE16 hfile )
     HANDLE32 *table = PROCESS_Current()->dos_handles;
     if ((hfile >= DOS_TABLE_SIZE) || !table || !table[hfile])
     {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return INVALID_HANDLE_VALUE32;
     }
     return table[hfile];
@@ -1061,13 +1070,13 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
     if ((hFile1 >= DOS_TABLE_SIZE) || (hFile2 >= DOS_TABLE_SIZE) ||
         !table || !table[hFile1])
     {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
     if (hFile2 < 5)
     {
         FIXME( file, "stdio handle closed, need proper conversion\n" );
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
     if (!DuplicateHandle( GetCurrentProcess(), table[hFile1],
@@ -1090,12 +1099,12 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
     if (hFile < 5)
     {
         FIXME( file, "stdio handle closed, need proper conversion\n" );
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
     if ((hFile >= DOS_TABLE_SIZE) || !table || !table[hFile])
     {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
     TRACE( file, "%d (handle32=%d)\n", hFile, table[hFile] );
@@ -1443,7 +1452,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
         HGLOBAL16 newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
         if (!newhandle)
         {
-            DOS_ERROR( ER_OutOfMemory, EC_OutOfResource, SA_Abort, EL_Memory );
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return pdb->nbFiles;
         }
         newfiles = (BYTE *)GlobalLock16( newhandle );
@@ -1528,7 +1537,7 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
     if (DOSFS_GetDevice( path ))
     {
         WARN(file, "cannot remove DOS device '%s'!\n", path);
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
 
@@ -1682,7 +1691,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	/* use copy, if allowed */
 	if (!(flag & MOVEFILE_COPY_ALLOWED)) {
 	  /* FIXME: Use right error code */
-	  DOS_ERROR( ER_FileExists, EC_Exists, SA_Abort, EL_Disk );
+	  SetLastError( ERROR_FILE_EXISTS );
 	  return FALSE;
 	}
 	else mode =1;
@@ -1691,7 +1700,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	/* target exists, check if we may overwrite */
 	if (!(flag & MOVEFILE_REPLACE_EXISTING)) {
 	  /* FIXME: Use right error code */
-	  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+	  SetLastError( ERROR_ACCESS_DENIED );
 	  return FALSE;
 	}
     }
@@ -1699,8 +1708,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
       if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
 	if (flag & MOVEFILE_COPY_ALLOWED) {  
 	  WARN(file, "Illegal flag\n");
-	  DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort,
-		     EL_Unknown );
+	  SetLastError( ERROR_GEN_FAILURE );
 	  return FALSE;
 	}
 	/* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
@@ -1791,8 +1799,7 @@ BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
       if (S_ISDIR(fstat.st_mode)) {
 	/* No Move for directories across file systems */
 	/* FIXME: Use right error code */
-	DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort,
-		   EL_Unknown );
+	SetLastError( ERROR_GEN_FAILURE );
 	return FALSE;
       }
       else
@@ -2126,7 +2133,7 @@ BOOL32 WINAPI LockFile(
 
   /* shadow locks internally */
   if (!DOS_AddLock(file, &f)) {
-    DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Ignore, EL_Disk );
+    SetLastError( ERROR_LOCK_VIOLATION );
     return FALSE;
   }
 
@@ -2134,7 +2141,7 @@ BOOL32 WINAPI LockFile(
 #ifdef USE_UNIX_LOCKS
   if (fcntl(file->unix_handle, F_SETLK, &f) == -1) {
     if (errno == EACCES || errno == EAGAIN) {
-      DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Ignore, EL_Disk );
+      SetLastError( ERROR_LOCK_VIOLATION );
     }
     else {
       FILE_SetDosError();

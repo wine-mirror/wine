@@ -113,15 +113,6 @@ extern struct DosDeviceStruct LPT[MAX_PORTS];
 #define FA_ARCHIVE   0x20        /* Archive */
 #define FA_UNUSED    0x40        /* Unused */
 
-
-extern WORD DOS_ExtendedError;
-extern BYTE DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus;
-
-#define DOS_ERROR(err,class,action,locus) \
-    ( SetLastError(err), \
-      DOS_ErrorClass = (class), DOS_ErrorAction = (action), \
-      DOS_ErrorLocus = (locus), DOS_ExtendedError = (err) )
-
 /* Error codes */
 
 #define ER_NoError           0x00

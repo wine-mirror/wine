@@ -294,7 +294,7 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
     if (DOSFS_GetDevice( path ))
     {
         TRACE(file, "cannot use device '%s'!\n",path);
-        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+        SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
     if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
@@ -362,7 +362,7 @@ BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
     if (DOSFS_GetDevice( path ))
     {
         TRACE(file, "cannot remove device '%s'!\n", path);
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
     if (!DOSFS_GetFullName( path, TRUE, &full_name )) return FALSE;
@@ -401,7 +401,7 @@ static BOOL32 DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
     if ((p_s >= full_name->short_name + sizeof(full_name->short_name) - 14) ||
         (p_l >= full_name->long_name + sizeof(full_name->long_name) - 1))
     {
-        DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
     if (!DOSFS_FindUnixName( dir->long_name, name, p_l,

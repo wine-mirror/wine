@@ -34,6 +34,7 @@
 
 #include "windows.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -267,7 +268,7 @@ int DRIVE_SetCurrentDrive( int drive )
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if (!DRIVE_IsValid( drive ))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
     TRACE(dosfs, "%c:\n", 'A' + drive );
@@ -460,7 +461,7 @@ int DRIVE_Chdir( int drive, const char *path )
     if (!FILE_Stat( full_name.long_name, &info )) return 0;
     if (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
     unix_cwd = full_name.long_name + strlen( DOSDrives[drive].root );
@@ -493,7 +494,7 @@ int DRIVE_Disable( int drive  )
 {
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES) || !DOSDrives[drive].root)
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
     DOSDrives[drive].flags |= DRIVE_DISABLED;
@@ -508,7 +509,7 @@ int DRIVE_Enable( int drive  )
 {
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES) || !DOSDrives[drive].root)
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
     DOSDrives[drive].flags &= ~DRIVE_DISABLED;
@@ -533,7 +534,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
         !old->root ||
 	(new_drive < 0) || (new_drive >= MAX_DOS_DRIVES))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
 
@@ -644,7 +645,7 @@ static int DRIVE_GetFreeSpace( int drive, LPULARGE_INTEGER size,
 
     if (!DRIVE_IsValid(drive))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
 

@@ -72,12 +72,6 @@ static const DOS_DEVICE DOSFS_Devices[] =
 #define GET_DRIVE(path) \
     (((path)[1] == ':') ? toupper((path)[0]) - 'A' : DOSFS_CurDrive)
 
-    /* DOS extended error status */
-WORD DOS_ExtendedError;
-BYTE DOS_ErrorClass;
-BYTE DOS_ErrorAction;
-BYTE DOS_ErrorLocus;
-
 /* Directory info for DOSFS_ReadDir */
 typedef struct
 {
@@ -319,7 +313,7 @@ static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
     DOS_DIR *dir = HeapAlloc( SystemHeap, 0, sizeof(*dir) );
     if (!dir)
     {
-        DOS_ERROR( ER_OutOfMemory, EC_OutOfResource, SA_Abort, EL_Memory );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
 
@@ -716,7 +710,7 @@ static int DOSFS_GetPathDrive( const char **name )
 
     if (!DRIVE_IsValid(drive))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return -1;
     }
     return drive;
@@ -800,7 +794,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
         if ((p_s >= full->short_name + sizeof(full->short_name) - 14) ||
             (p_l >= full->long_name + sizeof(full->long_name) - 1))
         {
-            DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            SetLastError( ERROR_PATH_NOT_FOUND );
             return FALSE;
         }
 
@@ -841,12 +835,12 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     {
         if (check_last)
         {
-            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            SetLastError( ERROR_FILE_NOT_FOUND );
             return FALSE;
         }
         if (*name)  /* Not last */
         {
-            DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            SetLastError( ERROR_PATH_NOT_FOUND );
             return FALSE;
         }
     }
@@ -1052,7 +1046,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
             }
         }
         if ( *endchar )
-        {   DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        {   SetLastError( ERROR_PATH_NOT_FOUND );
             return 0;
         }
         while (!IS_END_OF_NAME(*name) && (!*endchar) )
@@ -1330,7 +1324,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
     if (!FindNextFile16( handle, data ))
     {
         FindClose16( handle );
-        DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_NO_MORE_FILES );
         return INVALID_HANDLE_VALUE16;
     }
     return handle;
@@ -1381,13 +1375,13 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
 
     if (!(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
     {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     GlobalUnlock16( handle );
     if (!info->path || !info->dir)
     {
-        DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_NO_MORE_FILES );
         return FALSE;
     }
     if (!DOSFS_FindNextEx( info, data ))
@@ -1395,7 +1389,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
         DOSFS_CloseDir( info->dir ); info->dir = NULL;
         HeapFree( SystemHeap, 0, info->path );
         info->path = info->long_mask = NULL;
-        DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_NO_MORE_FILES );
         return FALSE;
     }
     return TRUE;
@@ -1440,7 +1434,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
     if ((handle == INVALID_HANDLE_VALUE16) ||
         !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
     {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (info->dir) DOSFS_CloseDir( info->dir );

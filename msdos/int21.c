@@ -17,6 +17,7 @@
 #include <utime.h>
 #include <ctype.h>
 #include "windows.h"
+#include "winerror.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -178,7 +179,7 @@ static void GetDrivePB( CONTEXT *context, int drive )
 {
         if(!DRIVE_IsValid(drive))
         {
-            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+            SetLastError( ERROR_INVALID_DRIVE );
             AX_reg(context) = 0x00ff;
         }
         else if (heap || INT21_CreateHeap())
@@ -253,7 +254,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 
 	if (!DRIVE_IsValid(drive))
         {
-            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            SetLastError( ERROR_FILE_NOT_FOUND );
             return TRUE;
 	}
 
@@ -432,83 +433,7 @@ static void OpenExistingFile( CONTEXT *context )
                                AL_reg(context) );
     if (AX_reg(context) == (WORD)HFILE_ERROR16)
     {
-        AX_reg(context) = DOS_ExtendedError;
-        SET_CFLAG(context);
-    }
-#if 0
-    {
-        int handle;
-        int mode;
-        int lock;
-
-        switch (AX_reg(context) & 0x0070)
-	{
-	  case 0x00:    /* compatability mode */
-	  case 0x40:    /* DENYNONE */
-            lock = -1;
-	    break;
-
-	  case 0x30:    /* DENYREAD */
-	    TRACE(int21, "(%s): DENYREAD changed to DENYALL\n",
-			 (char *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)));
-	  case 0x10:    /* DENYALL */  
-	    lock = LOCK_EX;
-	    break;
-
-	  case 0x20:    /* DENYWRITE */
-	    lock = LOCK_SH;
-	    break;
-
-	  default:
-	    lock = -1;
-        }
-
-	if (lock != -1)
-        {
-
-	  int result,retries=sharing_retries;
-	  {
-#if defined(__svr4__) || defined(_SCO_DS)
-              ERR(int21, "Should call flock and needs porting to lockf\n");
-              result = 0;
-              retries = 0;
-#else
-	    result = flock(handle, lock | LOCK_NB);
-#endif
-	    if ( retries && (!result) )
-	    {
-              int i;
-              for(i=0;i<32768*((int)sharing_pause);i++)
-		  result++;                          /* stop the optimizer */
-              for(i=0;i<32768*((int)sharing_pause);i++)
-		  result--;
-	    }
-          }
-	  while( (!result) && (!(retries--)) );
-
-	  if(result)  
-	  {
-	    errno_to_doserr();
-	    AX_reg(context) = DOS_ExtendedError;
-	    close(handle);
-	    SET_CFLAG(context);
-	    return;
-	  }
-
-        }
-
-	Error (0,0,0);
-	AX_reg(context) = handle;
-	RESET_CFLAG(context);
-    }
-#endif
-}
-
-static void CloseFile( CONTEXT *context )
-{
-    if ((AX_reg(context) = _lclose16( BX_reg(context) )) != 0)
-    {
-        AX_reg(context) = DOS_ExtendedError;
+        AX_reg(context) = GetLastError();
         SET_CFLAG(context);
     }
 }
@@ -532,8 +457,7 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 
       if ((action & 0x07) == 0)
       {
-	  BX_reg(context) = AX_reg(context);
-	  CloseFile(context);
+	  _lclose16( AX_reg(context) );
 	  AX_reg(context) = 0x0050;	/*File exists*/
 	  SET_CFLAG(context);
 	  WARN(int21, "extended open/create: failed because file exists \n");
@@ -543,21 +467,15 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 	/* Truncate it, but first check if opened for write */
 	if ((BL_reg(context) & 0x0007)== 0) 
 	{
-		  BX_reg(context) = AX_reg(context);
-		  CloseFile(context);
-		  WARN(int21, "extended open/create: failed, trunc on ro file\n");
-		  AX_reg(context) = 0x000C;	/*Access code invalid*/
-		  SET_CFLAG(context);
+            _lclose16( AX_reg(context) );
+            WARN(int21, "extended open/create: failed, trunc on ro file\n");
+            AX_reg(context) = 0x000C;	/*Access code invalid*/
+            SET_CFLAG(context);
 	}
 	else
 	{
-		/* Shuffle arguments to call CloseFile while
-		 * preserving BX and DX */
-
 		TRACE(int21, "extended open/create: Closing before truncate\n");
-		BX_reg(context) = AX_reg(context);
-		CloseFile(context);
-		if (EFL_reg(context) & 0x0001) 
+                if (_lclose16( AX_reg(context) ))
 		{
 		   WARN(int21, "extended open/create: close before trunc failed\n");
 		   AX_reg(context) = 0x0019;	/*Seek Error*/
@@ -641,7 +559,7 @@ static int INT21_FindFirst( CONTEXT *context )
     dta->unixPath = NULL;
     if (!DOSFS_GetFullName( path, FALSE, &full_name ))
     {
-        AX_reg(context) = DOS_ExtendedError;
+        AX_reg(context) = GetLastError();
         SET_CFLAG(context);
         return 0;
     }
@@ -656,8 +574,8 @@ static int INT21_FindFirst( CONTEXT *context )
     {
         HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-        AX_reg(context) = ER_FileNotFound;
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        AX_reg(context) = ERROR_FILE_NOT_FOUND;
         SET_CFLAG(context);
         return 0;
     }
@@ -727,7 +645,7 @@ static BOOL32 INT21_CreateTempFile( CONTEXT *context )
             TRACE(int21, "created %s\n", name );
             return TRUE;
         }
-        if (DOS_ExtendedError != ER_FileExists) return FALSE;
+        if (GetLastError() != ERROR_FILE_EXISTS) return FALSE;
     }
 }
 
@@ -739,7 +657,7 @@ static BOOL32 INT21_GetCurrentDirectory( CONTEXT *context )
 
     if (!DRIVE_IsValid(drive))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return FALSE;
     }
     lstrcpyn32A( ptr, DRIVE_GetDosCwd(drive), 64 );
@@ -770,7 +688,7 @@ static int INT21_GetDiskSerialNumber( CONTEXT *context )
 	
     if (!DRIVE_IsValid(drive))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
     
@@ -789,7 +707,7 @@ static int INT21_SetDiskSerialNumber( CONTEXT *context )
 
     if (!DRIVE_IsValid(drive))
     {
-        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
 
@@ -919,7 +837,7 @@ static void fLock( CONTEXT * context )
           if (!LockFile(FILE_GetHandle32(BX_reg(context)),
                         MAKELONG(DX_reg(context),CX_reg(context)), 0,
                         MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
-	    AX_reg(context) = DOS_ExtendedError;
+	    AX_reg(context) = GetLastError();
 	    SET_CFLAG(context);
 	  }
           break;
@@ -932,7 +850,7 @@ static void fLock( CONTEXT * context )
           if (!UnlockFile(FILE_GetHandle32(BX_reg(context)),
                           MAKELONG(DX_reg(context),CX_reg(context)), 0,
                           MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
-	    AX_reg(context) = DOS_ExtendedError;
+	    AX_reg(context) = GetLastError();
 	    SET_CFLAG(context);
 	  }
 	  return;
@@ -954,7 +872,7 @@ INT21_networkfunc (CONTEXT *context)
 	  if (gethostname (dst, 15))
 	  {
 	       WARN(int21,"failed!\n");
-	       DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+	       SetLastError( ER_NoNetwork );
 	       return TRUE;
 	  } else {
 	       int len = strlen (dst);
@@ -969,7 +887,7 @@ INT21_networkfunc (CONTEXT *context)
      }
 
      default:
-	  DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+	  SetLastError( ER_NoNetwork );
 	  return TRUE;
      }
 }
@@ -1060,6 +978,120 @@ Output of DOS 6.22:
 	return seg_LOL+(WORD)&((DOS_LISTOFLISTS*)0)->ptr_first_DPB;
 }
 
+
+/***********************************************************************
+ *           INT21_GetExtendedError
+ */
+static void INT21_GetExtendedError( CONTEXT *context )
+{
+    BYTE class, action, locus;
+    WORD error = GetLastError();
+
+    switch(error)
+    {
+    case ERROR_SUCCESS:
+        class = action = locus = 0;
+        break;
+    case ERROR_DIR_NOT_EMPTY:
+        class  = EC_Exists;
+        action = SA_Ignore;
+        locus  = EL_Disk;
+        break;
+    case ERROR_ACCESS_DENIED:
+        class  = EC_AccessDenied;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_CANNOT_MAKE:
+        class  = EC_AccessDenied;
+        action = SA_Abort;
+        locus  = EL_Unknown;
+        break;
+    case ERROR_HANDLE_DISK_FULL:
+        class  = EC_MediaError;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_FILE_EXISTS:
+        class  = EC_Exists;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_FILE_NOT_FOUND:
+        class  = EC_NotFound;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ER_GeneralFailure:
+        class  = EC_SystemFailure;
+        action = SA_Abort;
+        locus  = EL_Unknown;
+        break;
+    case ERROR_INVALID_DRIVE:
+        class  = EC_MediaError;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_INVALID_HANDLE:
+        class  = EC_ProgramError;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_LOCK_VIOLATION:
+        class  = EC_AccessDenied;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_NO_MORE_FILES:
+        class  = EC_MediaError;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ER_NoNetwork:
+        class  = EC_NotFound;
+        action = SA_Abort;
+        locus  = EL_Network;
+        break;
+    case ERROR_NOT_ENOUGH_MEMORY:
+        class  = EC_OutOfResource;
+        action = SA_Abort;
+        locus  = EL_Memory;
+        break;
+    case ERROR_PATH_NOT_FOUND:
+        class  = EC_NotFound;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    case ERROR_SEEK:
+        class  = EC_NotFound;
+        action = SA_Ignore;
+        locus  = EL_Disk;
+        break;
+    case ERROR_SHARING_VIOLATION:
+        class  = EC_Temporary;
+        action = SA_Retry;
+        locus  = EL_Disk;
+        break;
+    case ERROR_TOO_MANY_OPEN_FILES:
+        class  = EC_ProgramError;
+        action = SA_Abort;
+        locus  = EL_Disk;
+        break;
+    default:
+        FIXME( int21, "Unknown error %d\n", error );
+        class  = EC_SystemFailure;
+        action = SA_Abort;
+        locus  = EL_Unknown;
+        break;
+    }
+    TRACE( int21, "GET EXTENDED ERROR code 0x%02x class 0x%02x action 0x%02x locus %02x\n",
+           error, class, action, locus );
+    AX_reg(context) = error;
+    BH_reg(context) = class;
+    BL_reg(context) = action;
+    CH_reg(context) = locus;
+}
+
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)
  */
@@ -1078,12 +1110,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     if (AH_reg(context) == 0x59)  /* Get extended error info */
     {
-        TRACE(int21, "GET EXTENDED ERROR code 0x%02x class 0x%02x action 0x%02x locus %02x\n",
-	      DOS_ExtendedError, DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus);
-        AX_reg(context) = DOS_ExtendedError;
-        BH_reg(context) = DOS_ErrorClass;
-        BL_reg(context) = DOS_ErrorAction;
-        CH_reg(context) = DOS_ErrorLocus;
+        INT21_GetExtendedError( context );
         return;
     }
 
@@ -1096,7 +1123,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     if (AH_reg(context)>=0x2f) {
         /* extended error is used by (at least) functions 0x2f to 0x62 */
-        DOS_ERROR( 0, 0, 0, 0 );
+        SetLastError(0);
     }
     RESET_CFLAG(context);  /* Not sure if this is a good idea */
 
@@ -1593,8 +1620,8 @@ void WINAPI DOS3Call( CONTEXT *context )
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
             case DRIVE_CANNOTDETERMINE:
-                DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
-                AX_reg(context) = ER_InvalidDrive;
+                SetLastError( ERROR_INVALID_DRIVE );
+                AX_reg(context) = ERROR_INVALID_DRIVE;
                 SET_CFLAG(context);
                 break;
             case DRIVE_REMOVABLE:
@@ -1612,8 +1639,8 @@ void WINAPI DOS3Call( CONTEXT *context )
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
             case DRIVE_CANNOTDETERMINE:
-                DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
-                AX_reg(context) = ER_InvalidDrive;
+                SetLastError( ERROR_INVALID_DRIVE );
+                AX_reg(context) = ERROR_INVALID_DRIVE;
                 SET_CFLAG(context);
                 break;
             case DRIVE_REMOTE:
@@ -1802,8 +1829,8 @@ void WINAPI DOS3Call( CONTEXT *context )
         TRACE(int21,"FINDNEXT\n");
         if (!INT21_FindNext(context))
         {
-            DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Disk );
-            AX_reg(context) = ER_NoMoreFiles;
+            SetLastError( ERROR_NO_MORE_FILES );
+            AX_reg(context) = ERROR_NO_MORE_FILES;
             SET_CFLAG(context);
         }
         else AX_reg(context) = 0;  /* OK */
@@ -1908,7 +1935,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x5d: /* NETWORK */
         FIXME(int21,"Function 0x%04x not implemented.\n", AX_reg (context));
 	/* Fix the following while you're at it.  */
-        DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+        SetLastError( ER_NoNetwork );
 	bSetDOSExtendedError = TRUE;
         break;
 
@@ -1923,7 +1950,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             TRACE(int21,"ENABLE DRIVE %c:\n",(DL_reg(context)+'A'));
             if (!DRIVE_Enable( DL_reg(context) ))
             {
-                DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+                SetLastError( ERROR_INVALID_DRIVE );
 		bSetDOSExtendedError = TRUE;
             }
             break;
@@ -1932,7 +1959,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             TRACE(int21,"DISABLE DRIVE %c:\n",(DL_reg(context)+'A'));
             if (!DRIVE_Disable( DL_reg(context) ))
             {
-                DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+                SetLastError( ERROR_INVALID_DRIVE );
 		bSetDOSExtendedError = TRUE;
             } 
             break;
@@ -1940,7 +1967,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         default:
             /* network software not installed */
             TRACE(int21,"NETWORK function AX=%04x not implemented\n",AX_reg(context));
-            DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+            SetLastError( ER_NoNetwork );
 	    bSetDOSExtendedError = TRUE;
             break;
         }
@@ -2020,7 +2047,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x67: /* SET HANDLE COUNT */
         TRACE(int21,"SET HANDLE COUNT to %d\n",BX_reg(context) );
         SetHandleCount16( BX_reg(context) );
-        if (DOS_ExtendedError) bSetDOSExtendedError = TRUE;
+        if (GetLastError()) bSetDOSExtendedError = TRUE;
         break;
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
@@ -2183,7 +2210,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 					))
 	    ) {
 		SET_CFLAG(context);
-		AL_reg(context) = DOS_ExtendedError;
+		AL_reg(context) = GetLastError();
 	    }
 	    break;
         case 0x41:  /* Delete file */
@@ -2194,7 +2221,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 					EDX_reg(context))
 	    )) {
 		SET_CFLAG(context);
-		AL_reg(context) = DOS_ExtendedError;
+		AL_reg(context) = GetLastError();
 	    }
 	    break;
         case 0x56:  /* Move (rename) file */
@@ -2232,13 +2259,12 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     if( bSetDOSExtendedError )		/* set general error condition */
     {   
-	AX_reg(context) = DOS_ExtendedError;
+	AX_reg(context) = GetLastError();
 	SET_CFLAG(context);
     }
 
     if ((EFL_reg(context) & 0x0001))
-      TRACE(int21, "failed, errorcode 0x%02x class 0x%02x action 0x%02x locus %02x\n",
-	  DOS_ExtendedError, DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus);
+        TRACE(int21, "failed, error 0x%04lx\n", GetLastError() );
  
     TRACE(int21, "returning: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
