@@ -31,7 +31,6 @@ C_SRCS = \
 	dpalette/main.c \
 	dsurface/dga2.c \
 	dsurface/dib.c \
-	dsurface/dibtexture.c \
 	dsurface/fakezbuffer.c \
 	dsurface/gamma.c \
 	dsurface/main.c \
