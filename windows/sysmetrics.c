@@ -163,9 +163,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXHSCROLL] = SYSMETRICS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CYHSCROLL]);
     sysMetrics[SM_DEBUG] = 0;
 
-    /* FIXME: The following should look for the registry key to see if the
-       buttons should be swapped. */
     sysMetrics[SM_SWAPBUTTON] = 0;
+    sysMetrics[SM_SWAPBUTTON] = SYSPARAMS_GetMouseButtonSwap();
 
     sysMetrics[SM_RESERVED1] = 0;
     sysMetrics[SM_RESERVED2] = 0;

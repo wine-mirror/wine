@@ -11,6 +11,7 @@ extern void SYSMETRICS_Init(void);  /* sysmetrics.c */
 extern INT SYSMETRICS_Set( INT index, INT value );  /* sysmetrics.c */
 extern void SYSCOLOR_Init(void);  /* syscolor.c */
 extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
+extern INT SYSPARAMS_GetMouseButtonSwap( void );
 
 /* Wine extensions */
 #define SM_WINE_BPP (SM_CMETRICS+1)  /* screen bpp */

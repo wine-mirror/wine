@@ -39,8 +39,12 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETDOUBLECLKWIDTH_IDX               11
 #define SPI_SETDOUBLECLKHEIGHT_IDX              12
 #define SPI_SETDOUBLECLICKTIME_IDX              13
-#define SPI_SETSHOWSOUNDS_IDX                   14
-#define SPI_SETSCREENSAVERRUNNING_IDX           15
+#define SPI_SETMOUSEBUTTONSWAP_IDX              14
+#define SPI_SETFASTTASKSWITCH_IDX               15
+#define SPI_SETDRAGFULLWINDOWS_IDX              16
+#define SPI_SETWORKAREA_IDX                     17
+#define SPI_SETSHOWSOUNDS_IDX                   18
+#define SPI_SETSCREENSAVERRUNNING_IDX           19
 #define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
 /**
@@ -80,6 +84,14 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETDOUBLECLKHEIGHT_VALNAME          "DoubleClickHeight"
 #define SPI_SETDOUBLECLICKTIME_REGKEY           "Control Panel\\Mouse"
 #define SPI_SETDOUBLECLICKTIME_VALNAME          "DoubleClickSpeed"
+#define SPI_SETMOUSEBUTTONSWAP_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETMOUSEBUTTONSWAP_VALNAME          "SwapMouseButtons"
+#define SPI_SETFASTTASKSWITCH_REGKEY            "Control Panel\\Desktop"
+#define SPI_SETFASTTASKSWITCH_VALNAME           "CoolSwitch"
+#define SPI_SETDRAGFULLWINDOWS_REGKEY           "Control Panel\\Desktop"
+#define SPI_SETDRAGFULLWINDOWS_VALNAME          "DragFullWindows"
+#define SPI_SETWORKAREA_REGKEY                  "Control Panel\\Desktop"
+#define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
 #define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
 #define SPI_SETSCREENSAVERRUNNING_REGKEY        "Control Panel\\Desktop"
@@ -105,6 +117,9 @@ static int grid_granularity = 0;
 static int keyboard_delay = 1;
 static BOOL icon_title_wrap = TRUE;
 static int double_click_time = 500;
+static BOOL fast_task_switch = TRUE;
+static BOOL drag_full_windows = FALSE;
+static RECT work_area;
 static BOOL screensaver_running = FALSE;
 
 /***********************************************************************
@@ -244,6 +259,7 @@ void SYSPARAMS_Reset( UINT uiAction )
     WINE_IGNORE_SPI(SPI_SETSCREENSAVEACTIVE);
     WINE_RELOAD_SPI(SPI_SETDOUBLECLKWIDTH);
     WINE_RELOAD_SPI(SPI_SETDOUBLECLKHEIGHT);
+    WINE_RELOAD_SPI(SPI_SETMOUSEBUTTONSWAP);
     WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
     WINE_RELOAD_SPI(SPI_SETMENUDROPALIGNMENT);
 
@@ -261,6 +277,9 @@ void SYSPARAMS_Reset( UINT uiAction )
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
             WINE_INVALIDATE_SPI(SPI_SETICONTITLEWRAP);
             WINE_INVALIDATE_SPI(SPI_SETDOUBLECLICKTIME);
+            WINE_INVALIDATE_SPI(SPI_SETFASTTASKSWITCH);
+            WINE_INVALIDATE_SPI(SPI_SETDRAGFULLWINDOWS);
+            WINE_INVALIDATE_SPI(SPI_SETWORKAREA);
             WINE_INVALIDATE_SPI(SPI_SETSCREENSAVERRUNNING);
             default:
                 FIXME( "Unknown action reset: %u\n", uiAction );
@@ -416,6 +435,30 @@ void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
     *height = GetSystemMetrics( SM_CYDOUBLECLK );
 }
 
+
+/***********************************************************************
+ *           SYSPARAMS_GetMouseButtonSwap
+ *
+ * There is no SPI_GETMOUSEBUTTONSWAP so we export this function instead.
+ */
+INT SYSPARAMS_GetMouseButtonSwap( void )
+{
+        int spi_idx = SPI_SETMOUSEBUTTONSWAP_IDX;
+
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_SETMOUSEBUTTONSWAP_REGKEY,
+                                SPI_SETMOUSEBUTTONSWAP_VALNAME, buf ))
+            {
+                SYSMETRICS_Set( SM_SWAPBUTTON, atoi( buf ) );
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        return GetSystemMetrics( SM_SWAPBUTTON );
+}
 
 /***********************************************************************
  *		SystemParametersInfoA (USER32.@)
@@ -986,38 +1029,91 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
 
-    
-    WINE_SPI_FIXME(SPI_SETMOUSEBUTTONSWAP);	/*     33 */
+    case SPI_SETMOUSEBUTTONSWAP:                /*     33 */
+    {
+        char buf[5];
+        spi_idx = SPI_SETMOUSEBUTTONSWAP_IDX;
+
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETMOUSEBUTTONSWAP_REGKEY,
+                            SPI_SETMOUSEBUTTONSWAP_VALNAME,
+                            buf, fWinIni ))
+        {
+            SYSMETRICS_Set( SM_SWAPBUTTON, uiParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
 
     case SPI_GETFASTTASKSWITCH:			/*     35 */
-	if (GetProfileIntA( "windows", "CoolSwitch", 1 ) == 1)
-	    *(BOOL *)pvParam = TRUE;
-	else
-	    *(BOOL *)pvParam = FALSE;
-	break;
-    WINE_SPI_WARN(SPI_SETFASTTASKSWITCH);	/*     36 */
+        spi_idx = SPI_SETFASTTASKSWITCH_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
 
-    WINE_SPI_WARN(SPI_SETDRAGFULLWINDOWS);	/*     37  WINVER >= 0x0400 */
-    case SPI_GETDRAGFULLWINDOWS:		/*     38  WINVER >= 0x0400 */
+            if (SYSPARAMS_Load( SPI_SETFASTTASKSWITCH_REGKEY,
+                                SPI_SETFASTTASKSWITCH_VALNAME, buf ))
+                fast_task_switch  = atoi(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = fast_task_switch;
+        break;
+
+    case SPI_SETFASTTASKSWITCH:                 /*     36 */
     {
-	HKEY hKey;
-	char buffer[20];
-	DWORD dwBufferSize = sizeof(buffer);
+        char buf[5];
 
-	*(BOOL *)pvParam = FALSE;
-	if (RegOpenKeyExA( HKEY_CURRENT_USER,
-			   "Control Panel\\desktop",
-			   0, KEY_QUERY_VALUE, &hKey ) == ERROR_SUCCESS)
-	{
-	    if (RegQueryValueExA( hKey, "DragFullWindows", NULL,
-				  0, buffer, &dwBufferSize ) == ERROR_SUCCESS)
-		*(BOOL *)pvParam = atoi( buffer ) != 0;
-	    
-	    RegCloseKey( hKey );
-	}
-	break;
+        spi_idx = SPI_SETFASTTASKSWITCH_IDX;
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETFASTTASKSWITCH_REGKEY,
+                            SPI_SETFASTTASKSWITCH_VALNAME,
+                            buf, fWinIni ))
+        {
+            fast_task_switch = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
     }
+    
+    case SPI_SETDRAGFULLWINDOWS:                /*     37  WINVER >= 0x0400 */
+    {
+        char buf[5];
+
+        spi_idx = SPI_SETDRAGFULLWINDOWS_IDX;
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETDRAGFULLWINDOWS_REGKEY,
+                            SPI_SETDRAGFULLWINDOWS_VALNAME,
+                            buf, fWinIni ))
+        {
+            drag_full_windows = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_GETDRAGFULLWINDOWS:                /*     38  WINVER >= 0x0400 */
+        spi_idx = SPI_SETDRAGFULLWINDOWS_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_SETDRAGFULLWINDOWS_REGKEY,
+                                SPI_SETDRAGFULLWINDOWS_VALNAME, buf ))
+                drag_full_windows  = atoi(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = drag_full_windows;
+        break;
 
     case SPI_GETNONCLIENTMETRICS: 		/*     41  WINVER >= 0x400 */
     {
@@ -1111,13 +1207,52 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
     WINE_SPI_FIXME(SPI_SETICONMETRICS);		/*     46  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_SETWORKAREA);		/*     47  WINVER >= 0x400 */
-    case SPI_GETWORKAREA:			/*     48  WINVER >= 0x400 */
-	SetRect( (RECT *)pvParam, 0, 0,
-		 GetSystemMetrics( SM_CXSCREEN ),
-		 GetSystemMetrics( SM_CYSCREEN ) );
-	break;
-    
+    case SPI_SETWORKAREA:                       /*     47  WINVER >= 0x400 */
+    {
+        char buf[20];
+        RECT *pr = (RECT *) pvParam;
+
+        spi_idx = SPI_SETWORKAREA_IDX;
+        sprintf(buf, "%d %d %d %d",
+                pr->left, pr->top,
+                pr->right, pr->bottom );
+
+        if (SYSPARAMS_Save( SPI_SETWORKAREA_REGKEY,
+                            SPI_SETWORKAREA_VALNAME,
+                            buf, fWinIni ))
+        {
+            CopyRect( &work_area, (RECT *)pvParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_GETWORKAREA:                       /*     48  WINVER >= 0x400 */
+      spi_idx = SPI_SETWORKAREA_IDX;
+      if (!spi_loaded[spi_idx])
+      {
+          char buf[20];
+
+          SetRect( &work_area, 0, 0,
+                   GetSystemMetrics( SM_CXSCREEN ),
+                   GetSystemMetrics( SM_CYSCREEN ) );
+          
+          if (SYSPARAMS_Load( SPI_SETWORKAREA_REGKEY,
+                              SPI_SETWORKAREA_VALNAME,
+                              buf ))
+          {
+              sscanf( buf, "%d %d %d %d",
+                      &work_area.left, &work_area.top,
+                      &work_area.right, &work_area.bottom );
+          }
+          spi_loaded[spi_idx] = TRUE;
+      }
+      CopyRect( (RECT *)pvParam, &work_area );
+
+      break;
+
     WINE_SPI_FIXME(SPI_SETPENWINDOWS);		/*     49  WINVER >= 0x400 */
 
     WINE_SPI_FIXME(SPI_GETFILTERKEYS);		/*     50 */
