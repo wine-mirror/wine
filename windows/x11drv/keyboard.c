@@ -159,6 +159,15 @@ static const char main_key_FI[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Russian keyboard layout (contributed by Pavel Roskin) */
+static const char main_key_RU[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oOÝý","pPÚú","[{Èè","]}ßÿ",
+ "aAÆæ","sSÙù","dD×÷","fFÁá","gGÐð","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|",
+ "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -174,6 +183,7 @@ static struct {
  {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN),1252,863,&main_key_CF},
  {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT), 1252, 860, &main_key_PT},
  {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),    1252, 850, &main_key_FI},
+ {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),    1251, 866, &main_key_RU},
 
  {0} /* sentinel */
 };
