@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_D3DX8_PRIVATE_H
-#define __WINE_D3DX8_PRIVATE_H
+#ifndef __WINE_D3D8_PRIVATE_H
+#define __WINE_D3D8_PRIVATE_H
 
 #ifndef __WINE_CONFIG_H
 # error You must include config.h to use this header
@@ -49,8 +49,14 @@ extern void (*wine_tsx11_lock_ptr)(void);
 extern void (*wine_tsx11_unlock_ptr)(void);
 
 /* As GLX relies on X, this is needed */
+extern int num_lock;
+#if 0
+#define ENTER_GL() ++num_lock; TRACE("inc lock to: %d\n", num_lock); wine_tsx11_lock_ptr()
+#define LEAVE_GL() if (num_lock > 2) TRACE("fucking locks: %d\n", num_lock); --num_lock; wine_tsx11_unlock_ptr()
+#else
 #define ENTER_GL() wine_tsx11_lock_ptr()
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
+#endif
 
 #include "d3d8.h"
 
@@ -185,31 +191,6 @@ typedef struct PSHADEROUTPUTDATA8 {
 
 #include "d3dcore_gl.h"
 
-#define USE_GL_FUNC(type, pfn) type pfn;
-typedef struct _GL_Info {
-  /** 
-   * CAPS Constants 
-   */
-  UINT   max_lights;
-  UINT   max_textures;
-  UINT   max_clipplanes;
-
-  GL_PSVersion ps_arb_version;
-  GL_PSVersion ps_nv_version;
-
-  GL_VSVersion vs_arb_version;
-  GL_VSVersion vs_nv_version;
-  GL_VSVersion vs_ati_version;
-  
-  BOOL supported[30];
-
-  /** OpenGL EXT and ARB functions ptr */
-  GL_EXT_FUNCS_GEN;
-  /** OpenGL GLX functions ptr */
-  GLX_EXT_FUNCS_GEN;
-  /**/
-} GL_Info;
-#undef USE_GL_FUNC
 
 #define GL_LIMITS(ExtName)            (This->direct3d8->gl_info.max_##ExtName)
 #define GL_SUPPORT(ExtName)           (TRUE == This->direct3d8->gl_info.supported[ExtName])
@@ -252,7 +233,6 @@ typedef struct _GL_Info {
  * Predeclare the interface implementation structures
  */
 extern ICOM_VTABLE(IDirect3D8) Direct3D8_Vtbl;
-extern ICOM_VTABLE(IDirect3D8) mesa_d3d8vt;
 
 /*****************************************************************************
  * IDirect3D implementation structure

@@ -29,6 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 

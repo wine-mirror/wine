@@ -33,8 +33,10 @@
 #endif
 #undef  XMD_H
 
+#undef  APIENTRY
+#define APIENTRY
 
-/*******
+/**********************************
  * OpenGL Extensions (EXT and ARB)
  *  defines and functions pointer
  */
@@ -143,14 +145,14 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GL
 #endif
 
 
-/*******
+/*********************************
  * OpenGL GLX Extensions
  *  defines and functions pointer
  */
 
 
 
-/*******
+/*********************************
  * OpenGL GLX Official Version
  *  defines and functions pointer
  */
@@ -176,7 +178,7 @@ typedef void          (APIENTRY * PGLXFNGLXSELECTEVENTPROC) (Display *dpy, GLXDr
 typedef void          (APIENTRY * PGLXFNGLXGETSELECTEDEVENTPROC) (Display *dpy, GLXDrawable draw, unsigned long *event_mask);
 
 
-/*******
+/********************************************
  * OpenGL Supported Extensions (ARB and EXT)
  */
 
@@ -280,11 +282,10 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
                     const void *idxData,
                     int   minIndex);
 
-/* Structures required to draw primitives */
 
-
-
-
+/*****************************************
+ * Structures required to draw primitives 
+ */
 
 typedef struct Direct3DStridedData {
     BYTE     *lpData;        /* Pointer to start of data               */
@@ -307,5 +308,32 @@ typedef struct Direct3DVertexStridedData {
         Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
     } DUMMYUNIONNAME;
 } Direct3DVertexStridedData;
+
+#define USE_GL_FUNC(type, pfn) type pfn;
+typedef struct _GL_Info {
+  /** 
+   * CAPS Constants 
+   */
+  UINT   max_lights;
+  UINT   max_textures;
+  UINT   max_clipplanes;
+
+  GL_PSVersion ps_arb_version;
+  GL_PSVersion ps_nv_version;
+
+  GL_VSVersion vs_arb_version;
+  GL_VSVersion vs_nv_version;
+  GL_VSVersion vs_ati_version;
+  
+  BOOL supported[30];
+
+  /** OpenGL EXT and ARB functions ptr */
+  GL_EXT_FUNCS_GEN;
+  /** OpenGL GLX functions ptr */
+  GLX_EXT_FUNCS_GEN;
+  /**/
+} GL_Info;
+#undef USE_GL_FUNC
+
 
 #endif  /* __WINE_D3DCORE_GL_H */

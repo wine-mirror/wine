@@ -1295,7 +1295,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         drawStridedSoftwareVS(iface, &dataLocations, PrimitiveType, NumPrimitives, 
                         idxData, idxSize, minIndex, StartIdx);            
 
-    } else if (/*TRUE ||*/
+    } else if (TRUE ||
 	       (dataLocations.u.s.pSize.lpData        != NULL) || 
                (dataLocations.u.s.diffuse.lpData      != NULL) || 
                (dataLocations.u.s.blendWeights.lpData != NULL)) {
