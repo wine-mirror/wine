@@ -50,7 +50,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "ole2.h"
-#include "class.h"
 #include "debugtools.h"
 
 
@@ -697,15 +696,10 @@ static HWND OLEClipbrd_CreateWindow()
 {
   HWND hwnd = 0;
   WNDCLASSEXA wcex;
-  ATOM atom;
 
   /* 
    * Register the clipboard window class if necessary 
    */
-
-  if ( !( atom = GlobalFindAtomA(OLEClipbrd_WNDCLASS) ) ||
-        !( CLASS_FindClassByAtom(atom, 0) ) )
-  {
     ZeroMemory( &wcex, sizeof(WNDCLASSEXA));
 
     wcex.cbSize         = sizeof(WNDCLASSEXA);
@@ -718,7 +712,6 @@ static HWND OLEClipbrd_CreateWindow()
     wcex.lpszClassName  = OLEClipbrd_WNDCLASS;
 
     RegisterClassExA(&wcex);
-  }
 
   /*
    * Create a hidden window to receive OLE clipboard messages 
