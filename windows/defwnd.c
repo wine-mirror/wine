@@ -225,9 +225,16 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	return (LOWORD(lParam) == HTCAPTION) ? MA_NOACTIVATE : MA_ACTIVATE;
 
     case WM_ACTIVATE:
-	if (LOWORD(wParam) != WA_INACTIVE) 
+	/* The default action in Windows is to set the keyboard focus to
+	 * the window, if it's being activated and not minimized */
+	if (LOWORD(wParam) != WA_INACTIVE) {
+		/* I don't know who put this SetWindowPos here, it does not
+		 * seem very logical to have it here... (FIXME?) */
 		SetWindowPos32(wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0,
 			 SWP_NOMOVE | SWP_NOSIZE);
+		if (!(wndPtr->dwStyle & WS_MINIMIZE))
+			SetFocus32(wndPtr->hwndSelf);
+	}
 	break;
 
     case WM_ERASEBKGND:
