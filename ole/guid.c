@@ -18,5 +18,7 @@
 #include "dsound.h"
 #include "dplay.h"
 #include "vfw.h"
+#include "shlguid.h"
+#include "shlobj.h"
 
 #endif

@@ -15,10 +15,12 @@
 #include "commctrl.h"
 #include "spy.h"
 
+#include "shlobj.h"
 #include "wine/obj_base.h"
+#include "wine/obj_enumidlist.h"
+#include "wine/obj_shellfolder.h"
 #include "shell.h"
 #include "pidl.h"
-#include "shlobj.h"
 #include "shell32_main.h"
 #include "shlguid.h"
 
@@ -33,7 +35,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hPar
 static void InitializeTreeView(HWND hwndParent)
 {
 	HIMAGELIST	hImageList;
-	LPSHELLFOLDER	lpsf;
+	IShellFolder *	lpsf;
 	HRESULT	hr;
 
 	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
@@ -45,7 +47,7 @@ static void InitializeTreeView(HWND hwndParent)
 	{ TreeView_SetImageList(hwndTreeView, hImageList, 0);
 	}
 
-	hr=SHGetDesktopFolder(&lpsf);
+	hr = SHGetDesktopFolder(&lpsf);
 
 	if (SUCCEEDED(hr) && hwndTreeView)
 	{ TreeView_DeleteAllItems(hwndTreeView);
@@ -53,7 +55,7 @@ static void InitializeTreeView(HWND hwndParent)
 	}
 	
 	if (SUCCEEDED(hr))
-	{ lpsf->lpvtbl->fnRelease(lpsf);
+	{ IShellFolder_Release(lpsf);
 	}
 }
 
@@ -85,7 +87,7 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR l
 	STRRET str;
 
 	TRACE(shell,"%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
-	if (SUCCEEDED(lpsf->lpvtbl->fnGetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
+	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
 	{ bSuccess = StrRetToStrN (lpFriendlyName, MAX_PATH, &str, lpi);
 	}
 	else
@@ -95,12 +97,12 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR l
 	return bSuccess;
 }
 
-static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent)
+static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent)
 {
-	TVITEMA 			tvi;
-	TVINSERTSTRUCTA 	tvins;
-	HTREEITEM       hPrev = 0;
-	LPENUMIDLIST    lpe=0;
+	TVITEMA 	tvi;
+	TVINSERTSTRUCTA	tvins;
+	HTREEITEM	hPrev = 0;
+	LPENUMIDLIST	lpe=0;
 	LPITEMIDLIST	pidlTemp=0;
 	LPTV_ITEMDATA	lptvid=0;
 	ULONG		ulFetched;
@@ -113,12 +115,12 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	SetCapture(GetParent(hwndTreeView));
 	SetCursor(LoadCursorA(0, IDC_WAITA));
 
-	hr=lpsf->lpvtbl->fnEnumObjects(lpsf,hwnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,&lpe);
+	hr=IShellFolder_EnumObjects(lpsf,hwnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,&lpe);
 
         if (SUCCEEDED(hr))
         { while (NOERROR == lpe->lpvtbl->fnNext(lpe,1,&pidlTemp,&ulFetched))
           { ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
-            lpsf->lpvtbl->fnGetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
+            IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
             if (ulAttrs & (SFGAO_HASSUBFOLDER | SFGAO_FOLDER))
             { if (ulAttrs & SFGAO_FOLDER)
               { tvi.mask  = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
@@ -138,7 +140,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	        tvi.cchTextMax = MAX_PATH;
 	        tvi.lParam = (LPARAM)lptvid;
 
-	        lpsf->lpvtbl->fnAddRef(lpsf);
+	        IShellFolder_AddRef(lpsf);
 	        lptvid->lpsfParent = lpsf;
 	        lptvid->lpi	= ILClone(pidlTemp);
 	        lptvid->lpifq	= ILCombine(pidl, pidlTemp);
@@ -161,15 +163,17 @@ Done:
 	ReleaseCapture();
 	SetCursor(LoadCursorA(0, IDC_ARROWA));
 
-	if (lpe)  lpe->lpvtbl->fnRelease(lpe);
-	if (pidlTemp )           SHFree(pidlTemp);
+	if (lpe)
+	  lpe->lpvtbl->fnRelease(lpe);
+	if (pidlTemp )
+	  SHFree(pidlTemp);
 }
 
 static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 {	
 	NMTREEVIEWA	*pnmtv   = (NMTREEVIEWA *)lpnmh;
 	LPTV_ITEMDATA	lptvid;  //Long pointer to TreeView item data
-	LPSHELLFOLDER	lpsf2=0;
+	IShellFolder *	lpsf2=0;
 	
 
 	TRACE(shell,"%x %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
@@ -180,7 +184,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	    { case TVN_DELETEITEM:
 	        { FIXME(shell,"TVN_DELETEITEM\n");
 		  lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
-	          lptvid->lpsfParent->lpvtbl->fnRelease(lptvid->lpsfParent);
+	          IShellFolder_Release(lptvid->lpsfParent);
 	          SHFree(lptvid->lpi);  
 	          SHFree(lptvid->lpifq);  
 	          SHFree(lptvid);  
@@ -193,7 +197,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	            break;
 		
 	          lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
-	          if (SUCCEEDED(lptvid->lpsfParent->lpvtbl->fnBindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
+	          if (SUCCEEDED(IShellFolder_BindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
 	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem );
 	          }
 	          TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);

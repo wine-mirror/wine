@@ -266,8 +266,8 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(IContextMenu *iface, LPCMINVO
                 break;
 	    }
       
-	    pidlTemp = ILCombine(This->pSFParent->mpidl, This->aPidls[i]);
-	    pidlFQ = ILCombine(This->pSFParent->pMyPidl, pidlTemp);
+	    pidlTemp = ILCombine(((IGenericSFImpl*)(This->pSFParent))->mpidl, This->aPidls[i]);
+	    pidlFQ = ILCombine(((IGenericSFImpl*)(This->pSFParent))->pMyPidl, pidlTemp);
 	    SHFree(pidlTemp);
       
 	    ZeroMemory(&sei, sizeof(sei));

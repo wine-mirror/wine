@@ -74,7 +74,6 @@ HANDLE	WINAPI SHFreeShared(HANDLE hmem, DWORD procID);
 /****************************************************************************
  * Class constructors
  */
-#ifdef __WINE__
 extern LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT cidl);
 extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
 
@@ -83,12 +82,23 @@ extern LPCLASSFACTORY IShellLinkW_CF_Constructor(void);
 
 extern LPCLASSFACTORY	IClassFactory_Constructor(void);
 extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT);
-extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
 extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
 extern LPSHELLLINK	IShellLink_Constructor(void);
 extern LPSHELLLINKW	IShellLinkW_Constructor(void);
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
-#endif
+
+/* elements of this structure are accessed directly from within shell32 */
+typedef struct 
+{
+	ICOM_VTABLE(IShellFolder)*	lpvtbl;
+	DWORD				ref;
+	ICOM_VTABLE(IPersistFolder)*	lpvtblPersistFolder;
+
+	LPSTR				sMyPath;
+	LPITEMIDLIST			pMyPidl;
+	LPITEMIDLIST			mpidl;
+} IGenericSFImpl;
+extern LPSHELLFOLDER	IShellFolder_Constructor(IGenericSFImpl*,LPITEMIDLIST);
 
 #endif

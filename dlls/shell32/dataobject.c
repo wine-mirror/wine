@@ -177,6 +177,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMAT
 /***********************************************************************
 *   IDataObject implementation
 */
+
 typedef struct
 {
     /* IUnknown fields */
@@ -229,7 +230,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMID
 	dto->ref=1;
 	dto->lpvtbl=&dtovt;
 	dto->psf=psf;
-	dto->pidl=ILClone(psf->pMyPidl); /* FIXME:add a reference and don't copy*/
+	dto->pidl=ILClone(((IGenericSFImpl*)psf)->pMyPidl); /* FIXME:add a reference and don't copy*/
 
 	/* fill the ItemID List List */
 	dto->lpill = IDLList_Constructor (8);
@@ -326,7 +327,7 @@ static BOOL32 DATAOBJECT_InitFileGroupDesc(void)
         { return(TRUE);
         }
 
-        cfFileGroupDesc = RegisterClipboardFormat32A(CFSTR_FILEDESCRIPTORA);
+        cfFileGroupDesc = RegisterClipboardFormatA(CFSTR_FILEDESCRIPTORA);
         return(cfFileGroupDesc != 0);
 }
 */
@@ -342,7 +343,7 @@ static BOOL32 DATAOBJECT_InitFileContents(void)
         { return(TRUE);
         }
 
-        cfFileContents = RegisterClipboardFormat32A(CFSTR_FILECONTENTS);
+        cfFileContents = RegisterClipboardFormatA(CFSTR_FILECONTENTS);
         return(cfFileContents != 0);
 }
 */

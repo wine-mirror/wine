@@ -5,6 +5,7 @@
 #include "winbase.h"	/* WIN32_FIND_* */
 #include "wine/obj_base.h"
 #include "wine/obj_shelllink.h"
+#include "wine/obj_shellfolder.h"
 #include "ole2.h"
 #include "shell.h"
 #include "commctrl.h"
@@ -26,36 +27,12 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID,REFIID,LPVOID*);
 /* foreward declaration of the objects*/
 typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
 typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
-typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
-typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
 typedef struct tagSHELLVIEW	*LPSHELLVIEW,	IShellView;
 typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
 typedef struct tagSHELLICON	*LPSHELLICON,	IShellIcon;
 typedef struct tagDOCKINGWINDOWFRAME	*LPDOCKINGWINDOWFRAME,	IDockingWindowFrame;
 typedef struct tagCOMMDLGBROWSER	*LPCOMMDLGBROWSER,	ICommDlgBrowser;
  
-/****************************************************************************
-*  STRRET
-*/
-#define	STRRET_WSTR	0x0000
-#define	STRRET_OFFSETA	0x0001
-#define	STRRET_CSTRA	0x0002
-#define STRRET_ASTR	0X0003
-#define STRRET_OFFSETW	0X0004
-#define STRRET_CSTRW	0X0005
-
-
-typedef struct _STRRET
-{ UINT uType;		/* STRRET_xxx */
-  union
-  { LPWSTR	pOleStr;	/* OLESTR that will be freed */
-    LPSTR	pStr;
-    UINT	uOffset;	/* OffsetINT32o SHITEMID (ANSI) */
-    char	cStr[MAX_PATH];	/* Buffer to fill in */
-    WCHAR	cStrW[MAX_PATH];
-  }u;
-} STRRET,*LPSTRRET;
-
 
 /*****************************************************************************
  * IContextMenu interface
@@ -270,46 +247,6 @@ struct tagSHELLEXTINIT
 
 #undef THIS
 
-/*****************************************************************************
- * IEnumIDList interface
- */
-#define THIS LPENUMIDLIST me
-
-typedef struct tagENUMLIST
-{ struct tagENUMLIST	*pNext;
-  LPITEMIDLIST pidl;
-} ENUMLIST, *LPENUMLIST;
-
-typedef struct IEnumIDList_VTable 
-{    /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* *** IEnumIDList methods *** */
-    STDMETHOD(Next)  (THIS_ ULONG celt,
-                      LPITEMIDLIST *rgelt,
-                      ULONG *pceltFetched) PURE;
-    STDMETHOD(Skip)  (THIS_ ULONG celt) PURE;
-    STDMETHOD(Reset) (THIS) PURE;
-    STDMETHOD(Clone) (THIS_ IEnumIDList **ppenum) PURE;
-		/* *** private methods *** */
-    STDMETHOD_(BOOL,CreateEnumList)(THIS_ LPCSTR, DWORD) PURE;
-    STDMETHOD_(BOOL,AddToEnumList)(THIS_ LPITEMIDLIST) PURE;
-    STDMETHOD_(BOOL,DeleteList)(THIS) PURE;
-
-		
-} IEnumIDList_VTable,*LPENUMIDLIST_VTABLE;
-
-struct tagENUMIDLIST
-{ LPENUMIDLIST_VTABLE	lpvtbl;
-  DWORD		 ref;
-  LPENUMLIST mpFirst;
-  LPENUMLIST mpLast;
-  LPENUMLIST mpCurrent;
-};
-
-#undef THIS
 /*-------------------------------------------------------------------------- */
 /* */
 /* FOLDERSETTINGS */
@@ -357,86 +294,6 @@ typedef struct
 
 typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
 
-/************************************************************************
- * IShellFolder interface
- */
-
-#define THIS LPSHELLFOLDER me
-
-/* IShellFolder::GetDisplayNameOf/SetNameOf uFlags */
-typedef enum
-{ SHGDN_NORMAL            = 0,        /* default (display purpose) */
-  SHGDN_INFOLDER          = 1,        /* displayed under a folder (relative)*/
-  SHGDN_FORPARSING        = 0x8000    /* for ParseDisplayName or path */
-} SHGNO;
-
-/* IShellFolder::EnumObjects */
-typedef enum tagSHCONTF
-{ SHCONTF_FOLDERS         = 32,       /* for shell browser */
-  SHCONTF_NONFOLDERS      = 64,       /* for default view */
-  SHCONTF_INCLUDEHIDDEN   = 128       /* for hidden/system objects */
-} SHCONTF;
-
-/* IShellFolder::GetAttributesOf flags */
-#define SFGAO_CANCOPY           DROPEFFECT_COPY /* Objects can be copied */
-#define SFGAO_CANMOVE           DROPEFFECT_MOVE /* Objects can be moved */
-#define SFGAO_CANLINK           DROPEFFECT_LINK /* Objects can be linked */
-#define SFGAO_CANRENAME         0x00000010L     /* Objects can be renamed */
-#define SFGAO_CANDELETE         0x00000020L     /* Objects can be deleted */
-#define SFGAO_HASPROPSHEET      0x00000040L     /* Objects have property sheets */
-#define SFGAO_DROPTARGET        0x00000100L     /* Objects are drop target */
-#define SFGAO_CAPABILITYMASK    0x00000177L
-#define SFGAO_LINK              0x00010000L     /* Shortcut (link) */
-#define SFGAO_SHARE             0x00020000L     /* shared */
-#define SFGAO_READONLY          0x00040000L     /* read-only */
-#define SFGAO_GHOSTED           0x00080000L     /* ghosted icon */
-#define SFGAO_DISPLAYATTRMASK   0x000F0000L
-#define SFGAO_FILESYSANCESTOR   0x10000000L     /* It contains file system folder */
-#define SFGAO_FOLDER            0x20000000L     /* It's a folder. */
-#define SFGAO_FILESYSTEM        0x40000000L     /* is a file system thing (file/folder/root) */
-#define SFGAO_HASSUBFOLDER      0x80000000L     /* Expandable in the map pane */
-#define SFGAO_CONTENTSMASK      0x80000000L
-#define SFGAO_VALIDATE          0x01000000L     /* invalidate cached information */
-#define SFGAO_REMOVABLE        0x02000000L      /* is this removeable media? */
-
-typedef struct IShellFolder_VTable {
-    /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* *** IShellFolder methods *** */
-    STDMETHOD(ParseDisplayName) (THIS_ HWND hwndOwner,LPBC pbcReserved, LPOLESTR lpszDisplayName,ULONG * pchEaten, LPITEMIDLIST * ppidl, ULONG *pdwAttributes) PURE;
-    STDMETHOD(EnumObjects)( THIS_ HWND hwndOwner, DWORD grfFlags, LPENUMIDLIST * ppenumIDList) PURE;
-    STDMETHOD(BindToObject)(THIS_ LPCITEMIDLIST pidl, LPBC pbcReserved,REFIID riid, LPVOID * ppvOut) PURE;
-    STDMETHOD(BindToStorage)(THIS_ LPCITEMIDLIST pidl, LPBC pbcReserved,REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD(CompareIDs)(THIS_ LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) PURE;
-    STDMETHOD(CreateViewObject)(THIS_ HWND hwndOwner, REFIID riid, LPVOID * ppvOut) PURE;
-    STDMETHOD(GetAttributesOf)(THIS_ UINT cidl, LPCITEMIDLIST * apidl,ULONG * rgfInOut) PURE;
-    STDMETHOD(GetUIObjectOf)(THIS_ HWND hwndOwner, UINT cidl, LPCITEMIDLIST * apidl,REFIID riid, UINT * prgfInOut, LPVOID * ppvOut) PURE;
-    STDMETHOD(GetDisplayNameOf)(THIS_ LPCITEMIDLIST pidl, DWORD uFlags, LPSTRRET lpName) PURE;
-    STDMETHOD(SetNameOf)(THIS_ HWND hwndOwner, LPCITEMIDLIST pidl,LPCOLESTR lpszName, DWORD uFlags,LPITEMIDLIST * ppidlOut) PURE;
-
-	/* utility functions */
-   STDMETHOD_(BOOL,GetFolderPath)(THIS_ LPSTR, DWORD);
-   
-} *LPSHELLFOLDER_VTABLE,IShellFolder_VTable;
-
-struct tagSHELLFOLDER {
-	LPSHELLFOLDER_VTABLE	lpvtbl;
-	DWORD			ref;
-	LPSTR			sMyPath;
-	LPITEMIDLIST		pMyPidl;
-	LPITEMIDLIST		mpidl;
-};
-
-extern LPSHELLFOLDER pdesktopfolder;
-
-/************************
-* Shellfolder API
-*/
-DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *);
-#undef THIS
 
 /************************************************************************
 * IShellBrowser interface
