@@ -711,7 +711,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     if ((wndPtr->rectWindow.left == winpos->x) && (wndPtr->rectWindow.top == winpos->y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
-    else if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
+    if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
     {
         if (!(winpos->flags & SWP_NOACTIVATE)) /* Bring to the top when activating */
         {
