@@ -22,12 +22,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "winbase.h"
-#include "windef.h"
-#include "winver.h"
-#include "vfw.h"
-#include "vfw16.h"
 #include "msvideo_private.h"
+#include "winver.h"
+#include "vfw16.h"
 #include "stackframe.h"
 #include "wine/debug.h"
 
@@ -106,7 +103,7 @@ BOOL16 VFWAPI DrawDibSetPalette16(HDRAWDIB16 hdd, HPALETTE16 hpal)
 UINT16 VFWAPI DrawDibRealize16(HDRAWDIB16 hdd, HDC16 hdc,
 			       BOOL16 fBackground)
 {
-    return (UINT16) DrawDibRealize(HDRAWDIB_32(hdd), HDC_32(hdc), fBackground);
+    return (UINT16)DrawDibRealize(HDRAWDIB_32(hdd), HDC_32(hdc), fBackground);
 }
 
 /*************************************************************************
@@ -685,7 +682,7 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
     WINE_HIC*   whic;
     LRESULT     ret = 0;
 
-    whic = GlobalLock16(HIC_16(hic));
+    whic = MSVIDEO_GetHicPtr(hic);
     if (whic)
     {
         switch (msg)
@@ -703,9 +700,8 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
             UnMapLS(lp2);
             break;
         }
-        GlobalUnlock16(HIC_16(hic));
     }
-    else ret = MMSYSERR_ERROR;
+    else ret = ICERR_BADHANDLE;
     return ret;
 }
 
@@ -717,7 +713,7 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
     HIC         hic32;
 
     hic32 = MSVIDEO_OpenFunction(fccType, fccHandler, wMode, 
-                                 (DRIVERPROC)IC_Callback3216, (DRIVERPROC16)lpfnHandler);
+                                 (DRIVERPROC)IC_Callback3216, (DWORD)lpfnHandler);
     return HIC_16(hic32);
 }
 
@@ -726,10 +722,10 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
  */
 LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) 
 {
-    LRESULT     ret = MMSYSERR_ERROR;
+    LRESULT     ret = ICERR_BADHANDLE;
     WINE_HIC*   whic;
 
-    whic = GlobalLock16(hic);
+    whic = MSVIDEO_GetHicPtr(HIC_32(hic));
     if (whic)
     {
         /* we've got a 16 bit driver proc... call it directly */
@@ -747,7 +743,6 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
             if (data16)
                 MSVIDEO_UnmapMsg16To32(msg, data16, &lParam1, &lParam2);
         }
-        GlobalUnlock16(hic);
     }
     return ret;
 }
@@ -841,7 +836,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 static  LRESULT CALLBACK IC_CallTo16(HDRVR hdrv, HIC hic, UINT msg, LPARAM lp1, LPARAM lp2)
 {
 #if 0
-    WINE_HIC*   whic = GlobalLock16(HIC_16(hic));
+    WINE_HIC*   whic = IC_GetPtr(hic);
     LRESULT     ret = 0;
     
     

@@ -19,24 +19,31 @@
 #ifndef __WINE_MSVIDEO_PRIVATE_H
 #define __WINE_MSVIDEO_PRIVATE_H
 
+#include "winbase.h"
+#include "windef.h"
+#include "vfw.h"
+
 /* HIC struct (same layout as Win95 one) */
 typedef struct tagWINE_HIC {
-	DWORD		magic;		/* 00: 'Smag' */
-	HANDLE		curthread;	/* 04: */
-	DWORD		type;		/* 08: */
-	DWORD		handler;	/* 0C: */
-	HDRVR		hdrv;		/* 10: */
-	DWORD		private;	/* 14:(handled by SendDriverMessage)*/
-	DRIVERPROC	driverproc;	/* 18:(handled by SendDriverMessage)*/
-	DWORD		x1;		/* 1c: name? */
-	WORD		x2;		/* 20: */
-	DWORD		x3;		/* 22: */
+    DWORD		magic;		/* 00: 'Smag' */
+    HANDLE		curthread;	/* 04: */
+    DWORD		type;		/* 08: */
+    DWORD		handler;	/* 0C: */
+    HDRVR		hdrv;		/* 10: */
+    DWORD		private;	/* 14:(handled by SendDriverMessage)*/
+    DRIVERPROC  	driverproc;	/* 18:(handled by SendDriverMessage)*/
+    DWORD		x1;		/* 1c: name? */
+    WORD		x2;		/* 20: */
+    DWORD		x3;		/* 22: */
 					/* 26: */
-        DRIVERPROC16    driverproc16;   /* Wine specific flags */
+    DWORD               driverproc16;   /* Wine specific flags */
+    HIC                 hic;
+    struct tagWINE_HIC* next;
 } WINE_HIC;
 
-HIC     MSVIDEO_OpenFunction(DWORD, DWORD, UINT, DRIVERPROC, DRIVERPROC16);
-LRESULT MSVIDEO_SendMessage(HIC, UINT, DWORD, DWORD);
+HIC             MSVIDEO_OpenFunction(DWORD, DWORD, UINT, DRIVERPROC, DWORD);
+LRESULT         MSVIDEO_SendMessage(HIC, UINT, DWORD, DWORD);
+WINE_HIC*       MSVIDEO_GetHicPtr(HIC);
 
 extern LRESULT  (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM);
 
