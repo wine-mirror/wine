@@ -600,6 +600,15 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
         *(IMAGE_NT_HEADERS *)(load_addr + dos_header->e_lfanew) = *nt_header;
 	memcpy(PE_SECTIONS(load_addr),PE_SECTIONS(hModule),sizeof(IMAGE_SECTION_HEADER)*nt_header->FileHeader.NumberOfSections);
 
+	/* FIXME: Some binaries seems to have an AOEP below the base of code
+	 * (win98 notepad.exe ?). Fix it up.
+	 */
+	if (nt_header->OptionalHeader.AddressOfEntryPoint<nt_header->OptionalHeader.BaseOfCode) {
+		FIXME(win32,"AddressOfEntryPoint (0x%08lx) is below BaseOfCode (0x%08lx). Setting to BaseOfCode (expect crash).\n",nt_header->OptionalHeader.AddressOfEntryPoint,nt_header->OptionalHeader.BaseOfCode);
+
+		/* Note use of the copied nt header, which is used later */
+		PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint=nt_header->OptionalHeader.BaseOfCode;
+	}
         pe_seg = PE_SECTIONS(hModule);
 	for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++, pe_seg++)
 	{
