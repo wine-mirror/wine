@@ -252,7 +252,7 @@ static int _DayLightCompareDate(
           t <<= 32;
           t += (UINT)tmp_ft.dwLowDateTime;
 
-          /* substract one day */
+          /* subtract one day */
           one_day = 24*60*60;
           one_day *= 10000000;
           t -= one_day;
@@ -275,7 +275,7 @@ static int _DayLightCompareDate(
        }
        else
        {
-          /* calulcate the matching day of the week in the given week */
+          /* calculate the matching day of the week in the given week */
           int dif = compareDate->wDayOfWeek - tmp.wDayOfWeek;
           if (dif < 0)
              dif += 7;
@@ -483,7 +483,7 @@ VOID WINAPI GetSystemTimeAsFileTime(
  *      Differences to UnixTimeToFileTime:
  *          1) Divided by CLK_TCK
  *          2) Time is relative. There is no 'starting date', so there is
- *             no need in offset correction, like in UnixTimeToFileTime
+ *             no need for offset correction, like in UnixTimeToFileTime
  */
 static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 {
