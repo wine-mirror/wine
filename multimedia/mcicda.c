@@ -8,19 +8,18 @@
 
 #include "winuser.h"
 #include "driver.h"
-#include "multimedia.h"
+#include "mmddk.h"
 #include "cdrom.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(cdaudio)
 
 typedef struct {
-    UINT16		wDevID;
+    UINT		wDevID;
     int     		nUseCount;          /* Incremented for each shared open */
-    BOOL16  		fShareable;         /* TRUE if first open was shareable */
+    BOOL  		fShareable;         /* TRUE if first open was shareable */
     WORD    		wNotifyDeviceID;    /* MCI device ID with a pending notification */
-    HANDLE16 		hCallback;          /* Callback handle for pending notification */
-    MCI_OPEN_PARMS16 	openParms;
+    HANDLE 		hCallback;          /* Callback handle for pending notification */
     DWORD		dwTimeFormat;
     WINE_CDAUDIO	wcda;
     int			mciMode;
@@ -62,7 +61,7 @@ static	DWORD	CDAUDIO_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				CDAUDIO_mciGetOpenDrv		[internal]	
  */
-static WINE_MCICDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
+static WINE_MCICDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT wDevID)
 {
     WINE_MCICDAUDIO*	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     
@@ -115,7 +114,7 @@ static	int	CDAUDIO_mciGetError(WINE_MCICDAUDIO* wmcda)
 static DWORD CDAUDIO_CalcFrame(WINE_MCICDAUDIO* wmcda, DWORD dwTime)
 {
     DWORD	dwFrame = 0;
-    UINT16	wTrack;
+    UINT	wTrack;
     
     TRACE("(%p, %08lX, %lu);\n", wmcda, wmcda->dwTimeFormat, dwTime);
     
@@ -155,10 +154,10 @@ static DWORD CDAUDIO_CalcFrame(WINE_MCICDAUDIO* wmcda, DWORD dwTime)
 static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame, LPDWORD lpRet)
 {
     DWORD	dwTime = 0;
-    UINT16	wTrack;
-    UINT16	wMinutes;
-    UINT16	wSeconds;
-    UINT16	wFrames;
+    UINT	wTrack;
+    UINT	wMinutes;
+    UINT	wSeconds;
+    UINT	wFrames;
     
     TRACE("(%p, %08lX, %lu);\n", wmcda, wmcda->dwTimeFormat, dwFrame);
     
@@ -197,13 +196,13 @@ static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame, LPDWORD lpR
     return dwTime;
 }
 
-static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms);
-static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
+static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms);
+static DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
 /**************************************************************************
  * 				CDAUDIO_mciOpen			[internal]
  */
-static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
+static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
     WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
@@ -233,13 +232,6 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpO
 	/*		return MCIERR_NO_ELEMENT_ALLOWED; */
     }
 
-    wmcda->openParms.dwCallback = lpOpenParms->dwCallback;
-    wmcda->openParms.wDeviceID  = (WORD)lpOpenParms->wDeviceID;
-    wmcda->openParms.wReserved0 = 0; /*????*/
-    wmcda->openParms.lpstrDeviceType = lpOpenParms->lpstrDeviceType;
-    wmcda->openParms.lpstrElementName = lpOpenParms->lpstrElementName;
-    wmcda->openParms.lpstrAlias = lpOpenParms->lpstrAlias;
-
     wmcda->wNotifyDeviceID = dwDeviceID;
     if (CDAUDIO_Open(&wmcda->wcda) == -1) {
 	--wmcda->nUseCount;
@@ -260,7 +252,7 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpO
 /**************************************************************************
  * 				CDAUDIO_mciClose		[internal]
  */
-static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
 
@@ -281,7 +273,7 @@ static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS 
 /**************************************************************************
  * 				CDAUDIO_mciGetDevCaps		[internal]
  */
-static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
+static DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 				   LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     DWORD	ret = 0;
@@ -345,7 +337,7 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 /**************************************************************************
  * 				CDAUDIO_mciInfo			[internal]
  */
-static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
+static DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     LPSTR		str = 0;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -372,7 +364,7 @@ static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lp
 /**************************************************************************
  * 				CDAUDIO_mciStatus		[internal]
  */
-static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
+static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     DWORD	        ret = 0;
@@ -384,8 +376,8 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
 
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+			wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     if (dwFlags & MCI_STATUS_ITEM) {
 	switch (lpParms->dwItem) {
@@ -490,7 +482,7 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
 /**************************************************************************
  * 				CDAUDIO_mciPlay			[internal]
  */
-static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     int 		start, end;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -530,7 +522,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 	if (dwFlags & MCI_NOTIFY) {
 	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	    /*
-	      mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
+	      mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 	      wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	    */
 	}
@@ -541,7 +533,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 /**************************************************************************
  * 				CDAUDIO_mciStop			[internal]
  */
-static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
@@ -555,8 +547,8 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
     wmcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+			wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
 }
@@ -564,7 +556,7 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 /**************************************************************************
  * 				CDAUDIO_mciPause		[internal]
  */
-static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
@@ -577,8 +569,8 @@ static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS 
     wmcda->mciMode = MCI_MODE_PAUSE;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
         TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
+			wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
 }
@@ -586,7 +578,7 @@ static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS 
 /**************************************************************************
  * 				CDAUDIO_mciResume		[internal]
  */
-static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
@@ -599,7 +591,7 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
     wmcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -608,7 +600,7 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
 /**************************************************************************
  * 				CDAUDIO_mciSeek			[internal]
  */
-static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
     DWORD		at;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -641,7 +633,7 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
     }
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -650,7 +642,7 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
 /**************************************************************************
  * 				CDAUDIO_mciSetDoor		[internal]
  */
-static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
+static DWORD	CDAUDIO_mciSetDoor(UINT wDevID, int open)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
@@ -667,7 +659,7 @@ static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
 /**************************************************************************
  * 				CDAUDIO_mciSet			[internal]
  */
-static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
+static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
@@ -708,7 +700,7 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 	      lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -735,7 +727,7 @@ LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_OPEN_DRIVER:	return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
     case MCI_CLOSE_DRIVER:	return CDAUDIO_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return CDAUDIO_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return CDAUDIO_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
+    case MCI_INFO:		return CDAUDIO_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMSA)dwParam2);
     case MCI_STATUS:		return CDAUDIO_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
     case MCI_SET:		return CDAUDIO_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
     case MCI_PLAY:		return CDAUDIO_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);

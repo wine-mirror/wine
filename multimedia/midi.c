@@ -17,7 +17,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "winuser.h"
-#include "multimedia.h"
+#include "mmddk.h"
+#include "oss.h"
 #include "driver.h"
 #include "debugtools.h"
 #include "heap.h"
@@ -26,6 +27,8 @@
 DEFAULT_DEBUG_CHANNEL(midi)
 
 #ifdef HAVE_OSS_MIDI
+
+#define MIDI_SEQ "/dev/sequencer"
 
 typedef struct {
     int			state;
@@ -128,13 +131,13 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
 #endif
 
 /**************************************************************************
- * 			MULTIMEDIA_MidiInit			[internal]
+ * 			OSS_MidiInit				[internal]
  *
  * Initializes the MIDI devices information variables
  *
  */
 /* FIXME: this function shall be moved to the OSS drivers DLL entry point */
-BOOL MULTIMEDIA_MidiInit(void)
+BOOL OSS_MidiInit(void)
 {
 #ifdef HAVE_OSS_MIDI
     int 		i, status, numsynthdevs = 255, nummididevs = 255;

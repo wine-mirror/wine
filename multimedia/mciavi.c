@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include "winuser.h"
-#include "multimedia.h"
+#include "mmddk.h"
 #include "user.h"
 #include "driver.h"
 #include "digitalv.h"

@@ -21,7 +21,8 @@
 #include <sys/ioctl.h>
 #include "wine/winuser16.h"
 #include "driver.h"
-#include "multimedia.h"
+#include "mmddk.h"
+#include "oss.h"
 #include "heap.h"
 #include "ldt.h"
 #include "debugtools.h"
@@ -1377,7 +1378,6 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_GETPOS:		return widGetPosition(wDevID, (LPMMTIME16)dwParam1, dwParam2);
     case WIDM_RESET:		return widReset(wDevID);
     case WIDM_START:		return widStart(wDevID);
-    case WIDM_PAUSE:		return widStop(wDevID);
     case WIDM_STOP:		return widStop(wDevID);
     default:
 	FIXME("unknown message %u!\n", wMsg);

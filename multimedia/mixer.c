@@ -15,7 +15,8 @@
 #include "windef.h"
 #include "user.h"
 #include "driver.h"
-#include "multimedia.h"
+#include "mmddk.h"
+#include "oss.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmaux)

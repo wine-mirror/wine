@@ -14,8 +14,9 @@
 #include "driver.h"
 #include "ldt.h"
 #include "module.h"
-#include "debugtools.h"
 #include "mmsystem.h"
+#include "mmddk.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver)
 

@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include "winbase.h"
 #include "callback.h"
-#include "multimedia.h"
+#include "winemm.h"
 #include "services.h"
 #include "syslevel.h"
 #include "debugtools.h"
@@ -28,9 +28,8 @@ DEFAULT_DEBUG_CHANNEL(mmtime)
 
 static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer, DWORD dwCurrent)
 {
-    TRACE("before CallBack (%lu)!\n", dwCurrent);
-    TRACE("lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
-	  lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
+    TRACE("before CallBack (%lu) => lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+	  dwCurrent, lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
 	
     /* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
      * 		during interrupt time,  is allowed to execute very limited number of API calls (like
@@ -89,11 +88,11 @@ static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
     EnterCriticalSection(&iData->cs);
     for (lpTimer = iData->lpTimerList; lpTimer != NULL; ) {
 	lpNextTimer = lpTimer->lpNext;
-	if (lpTimer->wCurTime < MMSYSTIME_MININTERVAL) {
+	if (lpTimer->uCurTime < MMSYSTIME_MININTERVAL) {
 	    /* since lpTimer->wDelay is >= MININTERVAL, wCurTime value
 	     * shall be correct (>= 0)
 	     */
-	    lpTimer->wCurTime += lpTimer->wDelay - MMSYSTIME_MININTERVAL;
+	    lpTimer->uCurTime += lpTimer->wDelay - MMSYSTIME_MININTERVAL;
 	    if (lpTimer->lpFunc) {
 		if (idx == iData->nSizeLpTimers) {
 		    iData->lpTimers = (LPWINE_TIMERENTRY)
@@ -103,17 +102,18 @@ static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
 		}
 		iData->lpTimers[idx++] = *lpTimer;
 	    }
-	    if (lpTimer->wFlags & TIME_ONESHOT)
+	    /* TIME_ONESHOT is defined as 0 */
+	    if (!(lpTimer->wFlags & TIME_PERIODIC))
 		timeKillEvent(lpTimer->wTimerID);
 	} else {
-	    lpTimer->wCurTime -= MMSYSTIME_MININTERVAL;
+	    lpTimer->uCurTime -= MMSYSTIME_MININTERVAL;
 	}
 	lpTimer = lpNextTimer;
     }
     LeaveCriticalSection(&iData->cs);
 
     while (idx > 0) {
-	TIME_TriggerCallBack(iData->lpTimers + --idx, iData->mmSysTimeMS);
+	TIME_TriggerCallBack(&iData->lpTimers[--idx], iData->mmSysTimeMS);
     }
 }
 
@@ -213,14 +213,12 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     if (!iData)
 	return 0;
 
-    lpNewTimer->wCurTime = wDelay;
+    lpNewTimer->uCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = lpFunc;
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
-
-    TRACE("lpFunc=0x%08lx !\n", (DWORD)lpFunc);
 
     EnterCriticalSection(&iData->cs);
 
@@ -233,6 +231,8 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     lpNewTimer->wTimerID = wNewID + 1;
 
     LeaveCriticalSection(&iData->cs);
+
+    TRACE("=> %u\n", wNewID + 1);
 
     return wNewID + 1;
 }
@@ -272,19 +272,25 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     MMRESULT		ret = MMSYSERR_INVALPARAM;
 
+    TRACE("(%u)\n", wID);
     EnterCriticalSection(&iData->cs);
     /* remove WINE_TIMERENTRY from list */
-    for (lpTimer = &iData->lpTimerList; *lpTimer; lpTimer = &((*lpTimer)->lpNext)) {
+    for (lpTimer = &iData->lpTimerList; *lpTimer; lpTimer = &(*lpTimer)->lpNext) {
 	if (wID == (*lpTimer)->wTimerID) {
-	    *lpTimer = (*lpTimer)->lpNext;
 	    break;
 	}
     }
     LeaveCriticalSection(&iData->cs);
     
     if (*lpTimer) {
-	HeapFree(GetProcessHeap(), 0, *lpTimer);
+	LPWINE_TIMERENTRY	lpTemp = *lpTimer;
+
+	/* unlink timer of id 'wID' */
+	*lpTimer = (*lpTimer)->lpNext;
+	HeapFree(GetProcessHeap(), 0, lpTemp);
 	ret = TIMERR_NOERROR;
+    } else {
+	WARN("wID=%u is not a valid timer ID\n", wID);
     }
 
     return ret;

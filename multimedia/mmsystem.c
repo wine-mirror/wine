@@ -25,7 +25,7 @@
 #include "heap.h"
 #include "user.h"
 #include "driver.h"
-#include "multimedia.h"
+#include "winemm.h"
 #include "syslevel.h"
 #include "callback.h"
 #include "selectors.h"
@@ -70,7 +70,8 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 	if (!bInitDone) { /* to be done only once */
-	    if (!MULTIMEDIA_MidiInit() || !MULTIMEDIA_MciInit()) {
+	    /* FIXME: OSS_MidiInit() shall be moved to OSS low level driver */
+	    if (!OSS_MidiInit() || !MULTIMEDIA_MciInit()) {
 		return FALSE;
 	    }
 	    bInitDone = TRUE;	
@@ -1733,7 +1734,7 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
 
     /*    TRACE("(%04x)\n", uDeviceID); */
 
-    if (!(wmd = MCI_GetDriver(uDeviceID)) || wmd->lpfnYieldProc || wmd->bIs32) {
+    if (!(wmd = MCI_GetDriver(uDeviceID)) || !wmd->lpfnYieldProc || wmd->bIs32) {
 	UserYield16();
     } else {
 	ret = wmd->lpfnYieldProc(uDeviceID, wmd->dwYieldData);
@@ -1752,7 +1753,7 @@ UINT WINAPI mciDriverYield(UINT uDeviceID)
 
     TRACE("(%04x)\n", uDeviceID);
 
-    if (!(wmd = MCI_GetDriver(uDeviceID)) || wmd->lpfnYieldProc || wmd->bIs32) {
+    if (!(wmd = MCI_GetDriver(uDeviceID)) || !wmd->lpfnYieldProc || !wmd->bIs32) {
 	UserYield16();
     } else {
 	ret = wmd->lpfnYieldProc(uDeviceID, wmd->dwYieldData);
@@ -3990,7 +3991,6 @@ DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
     case WODM_PAUSE:
     case WODM_PREPARE:
     case WODM_UNPREPARE:
-    case WODM_STOP:
     case WODM_CLOSE:
 	/* no argument conversion needed */
 	break;
@@ -4027,7 +4027,6 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
     case WODM_SETPLAYBACKRATE:
     case WODM_RESET:
     case WODM_PAUSE:
-    case WODM_STOP:
     case WODM_CLOSE:
 	/* no argument conversion needed */
 	break;
@@ -4153,7 +4152,7 @@ UINT16 WINAPI waveInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
  * 				waveInOpen			[WINMM.154]
  */
 UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
-		       const LPWAVEFORMAT lpFormat, DWORD dwCallback,
+		       const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
 		       DWORD dwInstance, DWORD dwFlags)
 {
     HWAVEIN16	hwin16;
@@ -4167,7 +4166,7 @@ UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
  * 				waveInOpen			[MMSYSTEM.504]
  */
 UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
-                           const LPWAVEFORMAT lpFormat, DWORD dwCallback,
+                           const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
                            DWORD dwInstance, DWORD dwFlags)
 {
     HWAVEIN16		hWaveIn;
@@ -4190,7 +4189,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_NOMEM;
     lpDesc->hWave = hWaveIn;
-    lpDesc->lpFormat = lpFormat;
+    lpDesc->lpFormat = (LPWAVEFORMAT)lpFormat;
     lpDesc->dwCallBack = dwCallback;
     lpDesc->dwInstance = dwInstance;
     while (uDeviceID < MAXWAVEDRIVERS) {
@@ -4514,7 +4513,6 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
     case WIDM_PREPARE:
     case WIDM_UNPREPARE:
     case WIDM_ADDBUFFER:
-    case WIDM_PAUSE:
 	/* no argument conversion needed */
 	break;
     case WIDM_GETDEVCAPS:
@@ -4549,7 +4547,6 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
     case WIDM_STOP:
     case WIDM_RESET:
     case WIDM_START:
-    case WIDM_PAUSE:
 	/* no argument conversion needed */
 	break;
     case WIDM_GETDEVCAPS:
