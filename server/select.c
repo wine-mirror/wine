@@ -25,8 +25,8 @@ struct timeout_user
     void                 *private;    /* callback private data */
 };
 
-static struct select_user *users[FD_SETSIZE]; /* users array */
-static fd_set read_set, write_set;          /* current select sets */
+static struct select_user *users[FD_SETSIZE];  /* users array */
+static fd_set read_set, write_set, except_set; /* current select sets */
 static int nb_users;                        /* current number of users */
 static int max_fd;                          /* max fd in use */
 static struct timeout_user *timeout_head;   /* sorted timeouts list head */
@@ -50,6 +50,7 @@ void unregister_select_user( struct select_user *user )
 
     FD_CLR( user->fd, &read_set );
     FD_CLR( user->fd, &write_set );
+    FD_CLR( user->fd, &except_set );
     users[user->fd] = NULL;
     if (max_fd == user->fd) while (max_fd && !users[max_fd]) max_fd--;
     nb_users--;
@@ -63,19 +64,23 @@ void set_select_events( struct select_user *user, int events )
     else FD_CLR( user->fd, &read_set );
     if (events & WRITE_EVENT) FD_SET( user->fd, &write_set );
     else FD_CLR( user->fd, &write_set );
+    if (events & EXCEPT_EVENT) FD_SET( user->fd, &except_set );
+    else FD_CLR( user->fd, &except_set );
 }
 
 /* check if events are pending */
 int check_select_events( struct select_user *user, int events )
 {
-    fd_set read_fds, write_fds;
+    fd_set read_fds, write_fds, except_fds;
     struct timeval tv = { 0, 0 };
 
     FD_ZERO( &read_fds );
     FD_ZERO( &write_fds );
+    FD_ZERO( &except_fds );
     if (events & READ_EVENT) FD_SET( user->fd, &read_fds );
     if (events & WRITE_EVENT) FD_SET( user->fd, &write_fds );
-    return select( user->fd + 1, &read_fds, &write_fds, NULL, &tv ) > 0;
+    if (events & EXCEPT_EVENT) FD_SET( user->fd, &except_fds );
+    return select( user->fd + 1, &read_fds, &write_fds, &except_fds, &tv ) > 0;
 }
 
 /* add a timeout user */
@@ -173,7 +178,7 @@ void select_loop(void)
 
     while (nb_users)
     {
-        fd_set read = read_set, write = write_set;
+        fd_set read = read_set, write = write_set, except = except_set;
         if (timeout_head)
         {
             struct timeval tv, now;
@@ -197,7 +202,7 @@ void select_loop(void)
                                                   (FD_ISSET( i, &write_set ) ? 'w' : '-') );
             printf( " timeout %d.%06d\n", tv.tv_sec, tv.tv_usec );
 #endif
-            ret = select( max_fd + 1, &read, &write, NULL, &tv );
+            ret = select( max_fd + 1, &read, &write, &except, &tv );
         }
         else  /* no timeout */
         {
@@ -207,7 +212,7 @@ void select_loop(void)
                                                   (FD_ISSET( i, &write_set ) ? 'w' : '-') );
             printf( " no timeout\n" );
 #endif
-            ret = select( max_fd + 1, &read, &write, NULL, NULL );
+            ret = select( max_fd + 1, &read, &write, &except, NULL );
         }
 
         if (!ret) continue;
@@ -226,8 +231,9 @@ void select_loop(void)
         for (i = 0; i <= max_fd; i++)
         {
             int event = 0;
-            if (FD_ISSET( i, &write )) event |= WRITE_EVENT;
-            if (FD_ISSET( i, &read ))  event |= READ_EVENT;
+            if (FD_ISSET( i, &except )) event |= EXCEPT_EVENT;
+            if (FD_ISSET( i, &write ))  event |= WRITE_EVENT;
+            if (FD_ISSET( i, &read ))   event |= READ_EVENT;
 
             /* Note: users[i] might be NULL here, because an event routine
                called in an earlier pass of this loop might have removed 
