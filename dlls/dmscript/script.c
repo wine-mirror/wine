@@ -177,6 +177,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScript (LPCGUID lpcGUID, LPDIRECTMUSICSCR
 {
 	IDirectMusicScriptImpl* dmscript;
 	
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMScript, pUnkOuter);
 	if (IsEqualIID (lpcGUID, &IID_IDirectMusicScript)) {
 		dmscript = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptImpl));
 		if (NULL == dmscript) {
@@ -349,7 +350,8 @@ ULONG WINAPI IDirectMusicScriptObjectStream_Release (LPPERSISTSTREAM iface)
 /* IDirectMusicScriptObjectStream IPersist part: */
 HRESULT WINAPI IDirectMusicScriptObjectStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID)
 {
-	return E_NOTIMPL;
+        *pClassID = CLSID_DirectMusicScript;
+	return S_OK;
 }
 
 /* IDirectMusicScriptObjectStream IPersistStream part: */

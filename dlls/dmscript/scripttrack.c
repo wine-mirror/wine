@@ -301,7 +301,8 @@ ULONG WINAPI IDirectMusicScriptTrackStream_Release (LPPERSISTSTREAM iface)
 /* IDirectMusicScriptTrackStream IPersist part: */
 HRESULT WINAPI IDirectMusicScriptTrackStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID)
 {
-	return E_NOTIMPL;
+        *pClassID = CLSID_DirectMusicScriptTrack;
+	return S_OK;
 }
 
 /* IDirectMusicScriptTrackStream IPersistStream part: */

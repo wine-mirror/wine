@@ -43,6 +43,7 @@ typedef struct _DMUS_PRIVATE_CACHE_ENTRY {
 	struct list entry; /* for listing elements */
 	GUID guidObject;
 	WCHAR wzFileName[MAX_PATH];
+        WCHAR wzName[256];
     IDirectMusicObject* pObject;
 } DMUS_PRIVATE_CACHE_ENTRY, *LPDMUS_PRIVATE_CACHE_ENTRY;
 
