@@ -630,12 +630,285 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
  * converts csidl to path
  */
  
-static char * szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
-static char * szSHUserFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+static const char * const szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+static const char * const szSHUserFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+static const char * const szSetup = "Software\\Microsoft\\Windows\\CurrentVersion\\Setup";
+static const char * const szCurrentVersion = "Software\\Microsoft\\Windows\\CurrentVersion";
 #if 0
-static char * szEnvUserProfile = "%USERPROFILE%";
-static char * szEnvSystemRoot = "%SYSTEMROOT%";
+static const char * const szEnvUserProfile = "%USERPROFILE%";
+static const char * const szEnvSystemRoot = "%SYSTEMROOT%";
 #endif
+
+typedef struct
+{
+    DWORD dwFlags;
+    HKEY hRootKey;
+    LPCSTR szValueName;
+    LPCSTR szDefaultPath; /* fallback string; sub dir of windows directory */
+} CSIDL_DATA;
+
+#define CSIDL_MYFLAG_SHFOLDER	1
+#define CSIDL_MYFLAG_SETUP	2
+#define CSIDL_MYFLAG_CURRVER	4
+#define CSIDL_MYFLAG_RELATIVE	8
+
+#define HKLM HKEY_LOCAL_MACHINE
+#define HKCU HKEY_CURRENT_USER
+static const CSIDL_DATA CSIDL_Data[] =
+{
+    { /* CSIDL_DESKTOP */
+	9, HKCU,
+	"Desktop",
+	"Desktop"
+    },
+    { /* CSIDL_INTERNET (??) */
+	0, 1, /* FIXME */
+	NULL,
+	NULL,
+    },
+    { /* CSIDL_PROGRAMS */
+	9, HKCU,
+	"Programs",
+	"Start Menu\\Programs"
+    },
+    { /* CSIDL_CONTROLS (.CPL files) */
+	10, HKLM,
+	"SysDir",
+	"SYSTEM"
+    },
+    { /* CSIDL_PRINTERS */
+	10, HKLM,
+	"SysDir",
+	"SYSTEM"
+    },
+    { /* CSIDL_PERSONAL */
+	1, HKCU,
+	"Personal",
+	"My Documents"
+    },
+    { /* CSIDL_FAVORITES */
+	9, HKCU,
+	"Favorites",
+	"Favorites"
+    },
+    { /* CSIDL_STARTUP */
+	9, HKCU,
+	"StartUp",
+	"Start Menu\\Programs\\StartUp"
+    },
+    { /* CSIDL_RECENT */
+	9, HKCU,
+	"Recent",
+	"Recent"
+    },
+    { /* CSIDL_SENDTO */
+	9, HKCU,
+	"SendTo",
+	"SendTo"
+    },
+    { /* CSIDL_BITBUCKET (??) */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_STARTMENU */
+	9, HKCU,
+	"Start Menu",
+	"Start Menu"
+    },
+    { /* not known */
+	0, 0,
+	NULL,
+	NULL,
+    },
+    { /* not known */
+	0, 0,
+	NULL,
+	NULL,
+    },
+    { /* not known */
+	0, 0,
+	NULL,
+	NULL,
+    },
+    { /* not known */
+	0, 0,
+	NULL,
+	NULL,
+    },
+    { /* CSIDL_DESKTOPDIRECTORY */
+	9, HKCU,
+	"Desktop",
+	"Desktop"
+    },
+    { /* CSIDL_DRIVES */
+	0, 1, /* FIXME */
+	NULL,
+	"My Computer"
+    },
+    { /* CSIDL_NETWORK */
+	0, 1, /* FIXME */
+	NULL,
+	"Network Neighborhood"
+    },
+    { /* CSIDL_NETHOOD */
+	9, HKCU,
+	"NetHood",
+	"NetHood"
+    },
+    { /* CSIDL_FONTS */
+	9, HKCU,
+	"Fonts",
+	"Fonts"
+    },
+    { /* CSIDL_TEMPLATES */
+	9, HKCU,
+	"Templates",
+	"ShellNew"
+    },
+    { /* CSIDL_COMMON_STARTMENU */
+	9, HKLM,
+	"Common Start Menu",
+	"Start Menu"
+    },
+    { /* CSIDL_COMMON_PROGRAMS */
+	9, HKLM,
+	"Common Programs",
+	""
+    },
+    { /* CSIDL_COMMON_STARTUP */
+	9, HKLM,
+	"Common StartUp",
+	"All Users\\Start Menu\\Programs\\StartUp"
+    },
+    { /* CSIDL_COMMON_DESKTOPDIRECTORY */
+	9, HKLM,
+	"Common Desktop",
+	"Desktop"
+    },
+    { /* CSIDL_APPDATA */
+	9, HKCU,
+	"AppData",
+	"Application Data"
+    },
+    { /* CSIDL_PRINTHOOD */
+	9, HKCU,
+	"PrintHood",
+	"PrintHood"
+    },
+    { /* not known */
+	0, 0,
+	NULL,
+	NULL,
+    },
+    { /* CSIDL_ALTSTARTUP */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_COMMON_ALTSTARTUP */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_COMMON_FAVORITES */
+	9, HKCU,
+	"Favorites",
+	"Favorites"
+    },
+    { /* CSIDL_INTERNET_CACHE */
+	9, HKCU,
+	"Cache",
+	"Temporary Internet Files"
+    },
+    { /* CSIDL_COOKIES */
+	9, HKCU,
+	"Cookies",
+	"Cookies"
+    },
+    { /* CSIDL_HISTORY */
+	9, HKCU,
+	"History",
+	"History"
+    },
+    { /* CSIDL_COMMON_APPDATA */
+	9, HKLM,
+	"Common AppData",
+	"All Users\\Application Data"
+    },
+    { /* CSIDL_WINDOWS */
+	2, HKLM,
+	"WinDir",
+	"Windows"
+    },
+    { /* CSIDL_SYSTEM */
+	10, HKLM,
+	"SysDir",
+	"SYSTEM"
+    },
+    { /* CSIDL_PROGRAM_FILES */
+	4, HKLM,
+	"ProgramFilesDir",
+	"Program Files"
+    },
+    { /* CSIDL_MYPICTURES */
+	1, HKCU,
+	"My Pictures",
+	"My Documents\\My Pictures"
+    },
+    { /* CSIDL_PROFILE */
+	10, HKLM,
+	"WinDir", /* correct ? */
+	""
+    },
+    { /* CSIDL_SYSTEMX86 */
+	10, HKLM,
+ 	"SysDir",
+	"SYSTEM"
+    },
+    { /* CSIDL_PROGRAM_FILESX86 */
+	4, HKLM,
+	"ProgramFilesDir",
+	"Program Files"
+    },
+    { /* CSIDL_PROGRAM_FILES_COMMON */
+	4, HKLM,
+	"CommonFilesDir", 
+	"Program Files\\Common Files" /* ? */
+    },
+    { /* CSIDL_PROGRAM_FILES_COMMONX86 */
+	4, HKLM,
+	"CommonFilesDir",
+	"Program Files\\Common Files" /* ? */
+    },
+    { /* CSIDL_COMMON_TEMPLATES */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_COMMON_DOCUMENTS */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_COMMON_ADMINTOOLS */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    },
+    { /* CSIDL_ADMINTOOLS */
+	9, HKCU,
+	"Administrative Tools",
+	"Start Menu\\Programs\\Administrative Tools"
+    },
+    { /* CSIDL_CONNECTIONS */
+	0, 1, /* FIXME */
+	NULL,
+	NULL
+    }
+};
+#undef HKCU
+#undef HKLM
 
 BOOL WINAPI SHGetSpecialFolderPathA (
 	HWND hwndOwner,
@@ -645,155 +918,81 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 {
 	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH];
 	HKEY	hRootKey, hKey;
-	BOOL	bRelative = TRUE;
+	DWORD	dwFlags;
 	DWORD	dwType, dwDisp, dwPathLen = MAX_PATH;
+	DWORD	folder = csidl & CSIDL_FOLDER_MASK;
 
 	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
-	/* build default values */
-	switch(csidl)
+	if ((folder > CSIDL_CONNECTIONS) || (CSIDL_Data[folder].hRootKey == 0))
 	{
-	  case CSIDL_APPDATA:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy (szValueName, "AppData");
-	    strcpy (szDefaultPath, "AppData");
-	    break;
-
-	  case CSIDL_COOKIES:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy (szValueName, "Cookies");
-	    strcpy(szDefaultPath, "Cookies");
-	    break;
-
-	  case CSIDL_DESKTOPDIRECTORY:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Desktop");
-	    strcpy(szDefaultPath, "Desktop");
-	    break;
-
-	  case CSIDL_COMMON_DESKTOPDIRECTORY:
-	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common Desktop");
-	    strcpy(szDefaultPath, "Desktop");
-	    break;
-
-	  case CSIDL_FAVORITES:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Favorites");
-	    strcpy(szDefaultPath, "Favorites");
-	    break;
-
-	  case CSIDL_FONTS:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Fonts");
-	    strcpy(szDefaultPath, "Fonts");
-	    break;
-
-	  case CSIDL_HISTORY:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "History");
-	    strcpy(szDefaultPath, "History");
-	    break;
-
-	  case CSIDL_NETHOOD:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "NetHood");
-	    strcpy(szDefaultPath, "NetHood");
-	    break;
-
-	  case CSIDL_INTERNET_CACHE:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Cache");
-	    strcpy(szDefaultPath, "Temporary Internet Files");
-	    break;
-
-	  case CSIDL_PERSONAL:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Personal");
-	    strcpy(szDefaultPath, "My Own Files");
-	    bRelative = FALSE;
-	    break;
-
-	  case CSIDL_PRINTHOOD:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "PrintHood");
-	    strcpy(szDefaultPath, "PrintHood");
-	    break;
-
-	  case CSIDL_PROGRAMS:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Programs");
-	    strcpy(szDefaultPath, "Start Menu\\Programs");
-	    break;
-
-	  case CSIDL_COMMON_PROGRAMS:
-	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common Programs");
-	    strcpy(szDefaultPath, "");
-	    break;
-
-	  case CSIDL_RECENT:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Recent");
-	    strcpy(szDefaultPath, "Recent");
-	    break;
-
-	  case CSIDL_SENDTO:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "SendTo");
-	    strcpy(szDefaultPath, "SendTo");
-	    break;
-
-	  case CSIDL_STARTMENU:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Start Menu");
-	    strcpy(szDefaultPath, "Start Menu");
-	    break;
-
-	  case CSIDL_COMMON_STARTMENU:
-	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common Start Menu");
-	    strcpy(szDefaultPath, "Start Menu");
-	    break;
-
-	  case CSIDL_STARTUP:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "StartUp");
-	    strcpy(szDefaultPath, "Start Menu\\Programs\\StartUp");
-	    break;
-
-	  case CSIDL_COMMON_STARTUP:
-	    hRootKey = HKEY_LOCAL_MACHINE;
-	    strcpy(szValueName, "Common StartUp");
-	    strcpy(szDefaultPath, "Start Menu\\Programs\\StartUp");
-	    break;
-
-	  case CSIDL_TEMPLATES:
-	    hRootKey = HKEY_CURRENT_USER;
-	    strcpy(szValueName, "Templates");
-	    strcpy(szDefaultPath, "ShellNew");
-	    break;
-
-	  default:
 	    ERR("folder unknown or not allowed\n");
 	    return FALSE;
 	}
-
-	/* user shell folders */
-	if (RegCreateKeyExA(hRootKey,szSHUserFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
-
-	if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	if (CSIDL_Data[folder].hRootKey == 1)
 	{
-	  RegCloseKey(hKey);
+	    FIXME("folder unknown, please add.\n");
+	    return FALSE;
+	}
 
-	  /* shell folders */
-	  if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+	dwFlags = CSIDL_Data[folder].dwFlags;
+	hRootKey = CSIDL_Data[folder].hRootKey;
+	strcpy(szValueName, CSIDL_Data[folder].szValueName);
+	strcpy(szDefaultPath, CSIDL_Data[folder].szDefaultPath);
 
-	  if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	if (dwFlags & CSIDL_MYFLAG_SHFOLDER)
+	{
+	  /*   user shell folders */
+	  if   (RegCreateKeyExA(hRootKey,szSHUserFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+
+	  if   (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
 	  {
+	    RegCloseKey(hKey);
 
+	    /* shell folders */
+	    if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+
+	    if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	    {
+
+	      /* value not existing */
+	      if (dwFlags & CSIDL_MYFLAG_RELATIVE)
+	      {
+	        GetWindowsDirectoryA(szPath, MAX_PATH);
+	        PathAddBackslashA(szPath);
+	        strcat(szPath, szDefaultPath);
+	      }
+	      else
+	      {
+	        strcpy(szPath, "C:\\");	/* FIXME ??? */
+	        strcat(szPath, szDefaultPath);
+	      }
+	      RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
+	    }
+	  }
+	  RegCloseKey(hKey);
+        }
+	else
+	{
+	  LPCSTR pRegPath;
+
+	  if (dwFlags & CSIDL_MYFLAG_SETUP)
+	    pRegPath = szSetup;
+	  else
+	  if (dwFlags & CSIDL_MYFLAG_CURRVER)
+	    pRegPath = szCurrentVersion;
+	  else
+	  {
+	    ERR("folder settings broken, please correct !\n");
+	    return FALSE;
+	  }
+
+	  if   (RegCreateKeyExA(hRootKey,pRegPath,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+
+	  if   (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	  {
 	    /* value not existing */
-	    if (bRelative)
+	    if (dwFlags & CSIDL_MYFLAG_RELATIVE)
 	    {
 	      GetWindowsDirectoryA(szPath, MAX_PATH);
 	      PathAddBackslashA(szPath);
@@ -801,13 +1000,13 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	    }
 	    else
 	    {
-	      strcpy(szPath, "C:\\");	/* fixme ??? */
+	      strcpy(szPath, "C:\\");	/* FIXME ??? */
 	      strcat(szPath, szDefaultPath);
 	    }
 	    RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
 	  }
+	  RegCloseKey(hKey);
 	}
-	RegCloseKey(hKey);
 
 	/* expand paths like %USERPROFILE% */
 	if (dwType == REG_EXPAND_SZ)
@@ -816,12 +1015,12 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	  strcpy(szPath, szDefaultPath);
 	}
 
-	/* if we don't care about existing directorys we are ready */
+	/* if we don't care about existing directories we are ready */
 	if(csidl & CSIDL_FLAG_DONT_VERIFY) return TRUE;
 
 	if (PathFileExistsA(szPath)) return TRUE;
 
-	/* not existing but we not allowed to create it */
+	/* not existing but we are not allowed to create it */
 	if (!bCreate) return FALSE;
 	
 	if (!CreateDirectoryA(szPath,NULL))
