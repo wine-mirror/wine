@@ -318,45 +318,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetTransform(LPDIRECT3DDEVICE9 iface, D3DT
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_MultiplyTransform(LPDIRECT3DDEVICE9 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
-    D3DMATRIX *mat = NULL;
-    D3DMATRIX temp;
-
-    /* Note: Using UpdateStateBlock means it would be recorded in a state block change,
-        but works regardless of recording being on. 
-        If this is found to be wrong, change to StateBlock.                             */
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : For state %u\n", This, State);
-
-    if (State < HIGHEST_TRANSFORMSTATE) {
-        mat = &This->UpdateStateBlock->transforms[State];
-    } else {
-        FIXME("Unhandled transform state!!\n");
-    }
-
-    /* Copied from ddraw code:  */
-    temp.u.s._11 = (mat->u.s._11 * pMatrix->u.s._11) + (mat->u.s._21 * pMatrix->u.s._12) + (mat->u.s._31 * pMatrix->u.s._13) + (mat->u.s._41 * pMatrix->u.s._14);
-    temp.u.s._21 = (mat->u.s._11 * pMatrix->u.s._21) + (mat->u.s._21 * pMatrix->u.s._22) + (mat->u.s._31 * pMatrix->u.s._23) + (mat->u.s._41 * pMatrix->u.s._24);
-    temp.u.s._31 = (mat->u.s._11 * pMatrix->u.s._31) + (mat->u.s._21 * pMatrix->u.s._32) + (mat->u.s._31 * pMatrix->u.s._33) + (mat->u.s._41 * pMatrix->u.s._34);
-    temp.u.s._41 = (mat->u.s._11 * pMatrix->u.s._41) + (mat->u.s._21 * pMatrix->u.s._42) + (mat->u.s._31 * pMatrix->u.s._43) + (mat->u.s._41 * pMatrix->u.s._44);
-
-    temp.u.s._12 = (mat->u.s._12 * pMatrix->u.s._11) + (mat->u.s._22 * pMatrix->u.s._12) + (mat->u.s._32 * pMatrix->u.s._13) + (mat->u.s._42 * pMatrix->u.s._14);
-    temp.u.s._22 = (mat->u.s._12 * pMatrix->u.s._21) + (mat->u.s._22 * pMatrix->u.s._22) + (mat->u.s._32 * pMatrix->u.s._23) + (mat->u.s._42 * pMatrix->u.s._24);
-    temp.u.s._32 = (mat->u.s._12 * pMatrix->u.s._31) + (mat->u.s._22 * pMatrix->u.s._32) + (mat->u.s._32 * pMatrix->u.s._33) + (mat->u.s._42 * pMatrix->u.s._34);
-    temp.u.s._42 = (mat->u.s._12 * pMatrix->u.s._41) + (mat->u.s._22 * pMatrix->u.s._42) + (mat->u.s._32 * pMatrix->u.s._43) + (mat->u.s._42 * pMatrix->u.s._44);
-
-    temp.u.s._13 = (mat->u.s._13 * pMatrix->u.s._11) + (mat->u.s._23 * pMatrix->u.s._12) + (mat->u.s._33 * pMatrix->u.s._13) + (mat->u.s._43 * pMatrix->u.s._14);
-    temp.u.s._23 = (mat->u.s._13 * pMatrix->u.s._21) + (mat->u.s._23 * pMatrix->u.s._22) + (mat->u.s._33 * pMatrix->u.s._23) + (mat->u.s._43 * pMatrix->u.s._24);
-    temp.u.s._33 = (mat->u.s._13 * pMatrix->u.s._31) + (mat->u.s._23 * pMatrix->u.s._32) + (mat->u.s._33 * pMatrix->u.s._33) + (mat->u.s._43 * pMatrix->u.s._34);
-    temp.u.s._43 = (mat->u.s._13 * pMatrix->u.s._41) + (mat->u.s._23 * pMatrix->u.s._42) + (mat->u.s._33 * pMatrix->u.s._43) + (mat->u.s._43 * pMatrix->u.s._44);
-
-    temp.u.s._14 = (mat->u.s._14 * pMatrix->u.s._11) + (mat->u.s._24 * pMatrix->u.s._12) + (mat->u.s._34 * pMatrix->u.s._13) + (mat->u.s._44 * pMatrix->u.s._14);
-    temp.u.s._24 = (mat->u.s._14 * pMatrix->u.s._21) + (mat->u.s._24 * pMatrix->u.s._22) + (mat->u.s._34 * pMatrix->u.s._23) + (mat->u.s._44 * pMatrix->u.s._24);
-    temp.u.s._34 = (mat->u.s._14 * pMatrix->u.s._31) + (mat->u.s._24 * pMatrix->u.s._32) + (mat->u.s._34 * pMatrix->u.s._33) + (mat->u.s._44 * pMatrix->u.s._34);
-    temp.u.s._44 = (mat->u.s._14 * pMatrix->u.s._41) + (mat->u.s._24 * pMatrix->u.s._42) + (mat->u.s._34 * pMatrix->u.s._43) + (mat->u.s._44 * pMatrix->u.s._44);
-
-    /* Apply change via set transform - will reapply to eg. lights this way */
-    IDirect3DDevice9Impl_SetTransform(iface, State, &temp);
-    return D3D_OK;
+    return IWineD3DDevice_MultiplyTransform(This->WineD3DDevice, State, pMatrix);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetViewport(LPDIRECT3DDEVICE9 iface, CONST D3DVIEWPORT9* pViewport) {
@@ -374,55 +337,42 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetViewport(LPDIRECT3DDEVICE9 iface, D3DVI
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetMaterial(LPDIRECT3DDEVICE9 iface, CONST D3DMATERIAL9* pMaterial) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetMaterial(This->WineD3DDevice, (WINED3DMATERIAL *)pMaterial);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetMaterial(LPDIRECT3DDEVICE9 iface, D3DMATERIAL9* pMaterial) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    memcpy(pMaterial, &This->UpdateStateBlock->material, sizeof (D3DMATERIAL9));
-    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g, pMaterial->Diffuse.b, pMaterial->Diffuse.a);
-    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g, pMaterial->Ambient.b, pMaterial->Ambient.a);
-    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g, pMaterial->Specular.b, pMaterial->Specular.a);
-    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g, pMaterial->Emissive.b, pMaterial->Emissive.a);
-    TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
-    return D3D_OK;
+    return IWineD3DDevice_GetMaterial(This->WineD3DDevice, (WINED3DMATERIAL *)pMaterial);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetLight(LPDIRECT3DDEVICE9 iface, DWORD Index, CONST D3DLIGHT9* pLight) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetLight(This->WineD3DDevice, Index, (WINED3DLIGHT *)pLight);
 }
 
-HRESULT  WINAPI  IDirect3DDevice9Impl_GetLight(LPDIRECT3DDEVICE9 iface, DWORD Index,D3DLIGHT9* pLight) {
+HRESULT  WINAPI  IDirect3DDevice9Impl_GetLight(LPDIRECT3DDEVICE9 iface, DWORD Index, D3DLIGHT9* pLight) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_GetLight(This->WineD3DDevice, Index, (WINED3DLIGHT *)pLight);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_LightEnable(LPDIRECT3DDEVICE9 iface, DWORD Index, BOOL Enable) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetLightEnable(This->WineD3DDevice, Index, Enable);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetLightEnable(LPDIRECT3DDEVICE9 iface, DWORD Index, BOOL* pEnable) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_GetLightEnable(This->WineD3DDevice, Index, pEnable);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetClipPlane(LPDIRECT3DDEVICE9 iface, DWORD Index, CONST float* pPlane) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetClipPlane(This->WineD3DDevice, Index, pPlane);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetClipPlane(LPDIRECT3DDEVICE9 iface, DWORD Index, float* pPlane) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_GetClipPlane(This->WineD3DDevice, Index, pPlane);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderState(LPDIRECT3DDEVICE9 iface, D3DRENDERSTATETYPE State, DWORD Value) {
@@ -440,14 +390,12 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderState(LPDIRECT3DDEVICE9 iface, D3
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetClipStatus(LPDIRECT3DDEVICE9 iface, CONST D3DCLIPSTATUS9* pClipStatus) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetClipStatus(This->WineD3DDevice, (WINED3DCLIPSTATUS *)pClipStatus);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetClipStatus(LPDIRECT3DDEVICE9 iface, D3DCLIPSTATUS9* pClipStatus) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_GetClipStatus(This->WineD3DDevice, (WINED3DCLIPSTATUS *)pClipStatus);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9 iface, DWORD Stage, IDirect3DBaseTexture9** ppTexture) {

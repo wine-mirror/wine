@@ -24,6 +24,7 @@
 #define __WINE_WINED3D_PRIVATE_H
 
 #include <stdarg.h>
+#include <math.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define COBJMACROS
@@ -77,6 +78,7 @@ extern int num_lock;
                          /* Highest value in D3DTRANSFORMSTATETYPE */
 #define WINED3D_VSHADER_MAX_CONSTANTS  96   
                          /* Maximum number of constants provided to the shaders */
+#define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
 #define checkGLcall(A) \
 { \
@@ -108,9 +110,41 @@ do {                                                                            
             checkGLcall("glActiveTextureARB");
 #endif
 
+/* Macro to dump out the current state of the light chain */
+#define DUMP_LIGHT_CHAIN()                    \
+{                                             \
+  PLIGHTINFOEL *el = This->stateBlock->lights;\
+  while (el) {                                \
+    TRACE("Light %p (glIndex %ld, d3dIndex %ld, enabled %d)\n", el, el->glIndex, el->OriginalIndex, el->lightEnabled);\
+    el = el->next;                            \
+  }                                           \
+}
+
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 
 extern const float identity[16];
+
+/*****************************************************************************
+ * Internal representation of a light
+ */
+typedef struct PLIGHTINFOEL PLIGHTINFOEL;
+struct PLIGHTINFOEL {
+    WINED3DLIGHT OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
+    DWORD        OriginalIndex;
+    LONG         glIndex;
+    BOOL         lightEnabled;
+    BOOL         changed;
+    BOOL         enabledChanged;
+
+    /* Converted parms to speed up swapping lights */
+    float                         lightPosn[4];
+    float                         lightDirn[4];
+    float                         exponent;
+    float                         cutoff;
+
+    PLIGHTINFOEL *next;
+    PLIGHTINFOEL *prev;
+};
 
 /*****************************************************************************
  * IWineD3D implementation structure
@@ -242,9 +276,11 @@ extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 /*   Note: Very long winded but gl Lists are not flexible enough */
 /*   to resolve everything we need, so doing it manually for now */
 typedef struct SAVEDSTATES {
+        BOOL                      material;
         BOOL                      fvf;
         BOOL                      stream_source[MAX_STREAMS];
         BOOL                      transform[HIGHEST_TRANSFORMSTATE];
+        BOOL                      clipplane[MAX_CLIPPLANES];
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -272,6 +308,16 @@ struct IWineD3DStateBlockImpl
 
     /* Transform */
     D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
+
+    /* Lights */
+    PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
+    
+    /* Clipping */
+    double                    clipplane[MAX_CLIPPLANES][4];
+    WINED3DCLIPSTATUS         clip_status;
+
+    /* Material */
+    WINED3DMATERIAL           material;
 
 };
 

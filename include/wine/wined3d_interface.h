@@ -39,7 +39,6 @@
 /*****************************************************************************
  * WineD3D Structures to be used when d3d8 and d3d9 are incompatible
  */
-
 typedef struct _WINED3DADAPTER_IDENTIFIER {
     char           *Driver;
     char           *Description;
@@ -69,6 +68,17 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     UINT                *FullScreen_RefreshRateInHz;
     UINT                *PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
+
+/* The following have differing names, but actually are the same layout */
+#if defined( __WINE_D3D8_H )
+ #define WINED3DLIGHT           D3DLIGHT8
+ #define WINED3DCLIPSTATUS      D3DCLIPSTATUS8
+ #define WINED3DMATERIAL        D3DMATERIAL8
+#else
+ #define WINED3DLIGHT           D3DLIGHT9
+ #define WINED3DCLIPSTATUS      D3DCLIPSTATUS9
+ #define WINED3DMATERIAL        D3DMATERIAL9
+#endif
 
 typedef struct IWineD3D               IWineD3D;
 typedef struct IWineD3DDevice         IWineD3DDevice;
@@ -154,6 +164,17 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
     STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
+    STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
+    STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
+    STDMETHOD(GetLightEnable)(THIS_ DWORD  Index,BOOL * pEnable) PURE;
+    STDMETHOD(SetClipPlane)(THIS_ DWORD  Index,CONST float * pPlane) PURE;
+    STDMETHOD(GetClipPlane)(THIS_ DWORD  Index,float * pPlane) PURE;
+    STDMETHOD(SetClipStatus)(THIS_ CONST WINED3DCLIPSTATUS * pClipStatus) PURE;
+    STDMETHOD(GetClipStatus)(THIS_ WINED3DCLIPSTATUS * pClipStatus) PURE;
+    STDMETHOD(SetMaterial)(THIS_ CONST WINED3DMATERIAL * pMaterial) PURE;
+    STDMETHOD(GetMaterial)(THIS_ WINED3DMATERIAL *pMaterial) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
 };
 #undef INTERFACE
@@ -174,6 +195,17 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetStreamSource(p,a,b,c,d)               (p)->lpVtbl->GetStreamSource(p,a,b,c,d)
 #define IWineD3DDevice_SetTransform(p,a,b)                      (p)->lpVtbl->SetTransform(p,a,b)
 #define IWineD3DDevice_GetTransform(p,a,b)                      (p)->lpVtbl->GetTransform(p,a,b)
+#define IWineD3DDevice_MultiplyTransform(p,a,b)                 (p)->lpVtbl->MultiplyTransform(p,a,b)
+#define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)
+#define IWineD3DDevice_GetLight(p,a,b)                          (p)->lpVtbl->GetLight(p,a,b)
+#define IWineD3DDevice_SetLightEnable(p,a,b)                    (p)->lpVtbl->SetLightEnable(p,a,b)
+#define IWineD3DDevice_GetLightEnable(p,a,b)                    (p)->lpVtbl->GetLightEnable(p,a,b)
+#define IWineD3DDevice_SetClipPlane(p,a,b)                      (p)->lpVtbl->SetClipPlane(p,a,b)
+#define IWineD3DDevice_GetClipPlane(p,a,b)                      (p)->lpVtbl->GetClipPlane(p,a,b)
+#define IWineD3DDevice_SetClipStatus(p,a)                       (p)->lpVtbl->SetClipStatus(p,a)
+#define IWineD3DDevice_GetClipStatus(p,a)                       (p)->lpVtbl->GetClipStatus(p,a)
+#define IWineD3DDevice_SetMaterial(p,a)                         (p)->lpVtbl->SetMaterial(p,a)
+#define IWineD3DDevice_GetMaterial(p,a)                         (p)->lpVtbl->GetMaterial(p,a)
 #define IWineD3DDevice_BeginScene(p)                            (p)->lpVtbl->BeginScene(p)
 #endif
 

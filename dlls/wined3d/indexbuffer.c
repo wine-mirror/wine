@@ -24,6 +24,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
 
 /* *******************************************
    IWineD3DIndexBuffer IUnknown parts follow
@@ -52,7 +53,7 @@ ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) {
         IWineD3DDevice_Release(This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx VB */
+        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }
