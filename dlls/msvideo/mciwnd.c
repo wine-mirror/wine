@@ -417,16 +417,15 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
     TRACE("%p %04x %08x %08lx\n", hWnd, wMsg, wParam, lParam);
 
     mwi = (MCIWndInfo*)GetWindowLongW(hWnd, 0);
-    if (!mwi)
-    {
-        if (wMsg == WM_CREATE)
-            return MCIWND_Create(hWnd, (CREATESTRUCTW *)lParam);
-
+    if (!mwi && wMsg != WM_CREATE)
         return DefWindowProcW(hWnd, wMsg, wParam, lParam);
-    }
 
     switch (wMsg)
     {
+    case WM_CREATE:
+        MCIWND_Create(hWnd, (CREATESTRUCTW *)lParam);
+        break;
+
     case WM_DESTROY:
         if (mwi->uTimer)
             KillTimer(hWnd, mwi->uTimer);
@@ -439,7 +438,7 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
         DestroyWindow(GetDlgItem(hWnd, CTL_MENU));
         DestroyWindow(GetDlgItem(hWnd, CTL_PLAYSTOP));
         DestroyWindow(GetDlgItem(hWnd, CTL_TRACKBAR));
-        return 0;
+        break;
 
     case WM_PAINT:
         {
@@ -468,14 +467,12 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
         return 0;
 
     case WM_SIZE:
-        {
-            SetWindowPos(GetDlgItem(hWnd, CTL_PLAYSTOP), 0, 0, HIWORD(lParam) - 32, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
-            SetWindowPos(GetDlgItem(hWnd, CTL_MENU), 0, 32, HIWORD(lParam) - 32, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
-            SetWindowPos(GetDlgItem(hWnd, CTL_TRACKBAR), 0, 64, HIWORD(lParam) - 32, LOWORD(lParam) - 64, 32, SWP_NOACTIVATE);
+        SetWindowPos(GetDlgItem(hWnd, CTL_PLAYSTOP), 0, 0, HIWORD(lParam) - 32, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(GetDlgItem(hWnd, CTL_MENU), 0, 32, HIWORD(lParam) - 32, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(GetDlgItem(hWnd, CTL_TRACKBAR), 0, 64, HIWORD(lParam) - 32, LOWORD(lParam) - 64, 32, SWP_NOACTIVATE);
 
-            MCIWND_notify_size(mwi);
-            return 0;
-        }
+        MCIWND_notify_size(mwi);
+        break;
 
     case MM_MCINOTIFY:
         MCIWND_notify_mode(mwi);
