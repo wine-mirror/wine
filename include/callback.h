@@ -22,6 +22,10 @@ extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );
 typedef void (*RELAY)();
 extern FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay );
 extern void THUNK_Free( FARPROC thunk );
+extern BOOL THUNK_Init(void);
+extern void THUNK_InitCallout(void);
+
+extern void CALL32_Init( void *func, void *target, void *stack ) WINE_NORETURN;
 
 typedef struct
 {

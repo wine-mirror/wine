@@ -13,7 +13,7 @@ SPEC_SRCS = \
 	aviinfo.spec \
 	aviplay.spec
 
-all: check_wrc check_winestub $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 

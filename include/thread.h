@@ -122,6 +122,7 @@ typedef struct _TEB
 extern TEB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
 extern TEB *THREAD_Create( struct _PDB *pdb, void *pid, void *tid, int fd,
                            DWORD stack_size, BOOL alloc_stack16 );
+extern TEB *THREAD_InitStack( TEB *teb, struct _PDB *pdb, DWORD stack_size, BOOL alloc_stack16 );
 extern BOOL THREAD_IsWin16( TEB *thdb );
 extern TEB *THREAD_IdToTEB( DWORD id );
 

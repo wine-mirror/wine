@@ -11,7 +11,7 @@ C_SRCS = winver.c
 
 SPEC_SRCS = winver.spec
 
-all: check_winestub $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 

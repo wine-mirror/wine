@@ -13,7 +13,7 @@ C_SRCS = \
 SPEC_SRCS = \
 	regapi.spec
 
-all: check_winestub $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 

@@ -385,15 +385,13 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     else BUILTIN32_WarnSecondInstance( builtin_dlls[i]->name );
 
     /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( dllname, 0 )) < 32)
+    if ((hModule16 = MODULE_CreateDummyModule( dllname, dll_modules[i] )) < 32)
     {
         SetLastError( (DWORD)hModule16 );
         return NULL;	/* FIXME: Should unload the builtin module */
     }
-
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
-    pModule->module32 = dll_modules[i];
 
     /* Create 32-bit MODREF */
     if ( !(wm = PE_CreateModule( pModule->module32, dllname, flags, TRUE )) )
@@ -419,7 +417,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 /***********************************************************************
  *           BUILTIN32_LoadExeModule
  */
-HMODULE16 BUILTIN32_LoadExeModule( void )
+HMODULE BUILTIN32_LoadExeModule( LPCSTR *filename )
 {
     HMODULE16 hModule16;
     NE_MODULE *pModule;
@@ -449,14 +447,8 @@ HMODULE16 BUILTIN32_LoadExeModule( void )
         if ( !(dll_modules[exe] = BUILTIN32_DoLoadImage( builtin_dlls[exe] )) )
             return 0;
 
-    /* Create 16-bit dummy module */
-    hModule16 = MODULE_CreateDummyModule( builtin_dlls[exe]->filename, 0 );
-    if ( hModule16 < 32 ) return 0;
-    pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
-    pModule->module32 = dll_modules[exe];
-
-    return hModule16;
+    *filename = builtin_dlls[exe]->filename;
+    return dll_modules[exe];
 }
 
 

@@ -7,11 +7,13 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "process.h"
+#include "main.h"
 #include "module.h"
 #include "neexe.h"
 #include "file.h"
@@ -28,13 +30,15 @@
 #include "callback.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(process)
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(process);
+DECLARE_DEBUG_CHANNEL(relay);
+DECLARE_DEBUG_CHANNEL(win32);
 
 
 /* The initial process PDB */
 static PDB initial_pdb;
+static ENVDB initial_envdb;
+static STARTUPINFOA initial_startup;
 
 static PDB *PROCESS_First = &initial_pdb;
 
@@ -297,6 +301,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
  */
 BOOL PROCESS_Init( BOOL win32 )
 {
+    struct init_process_request *req;
     TEB *teb;
     int server_fd;
 
@@ -308,11 +313,13 @@ BOOL PROCESS_Init( BOOL win32 )
     initial_pdb.threads         = 1;
     initial_pdb.running_threads = 1;
     initial_pdb.ring0_threads   = 1;
+    initial_pdb.env_db          = &initial_envdb;
     initial_pdb.group           = &initial_pdb;
     initial_pdb.priority        = 8;  /* Normal */
     initial_pdb.flags           = win32? 0 : PDB32_WIN16_PROC;
     initial_pdb.winver          = 0xffff; /* to be determined */
     initial_pdb.main_queue      = INVALID_HANDLE_VALUE16;
+    initial_envdb.startup_info  = &initial_startup;
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
@@ -338,16 +345,205 @@ BOOL PROCESS_Init( BOOL win32 )
     /* Initialize signal handling */
     if (!SIGNAL_Init()) return FALSE;
 
-    /* Create the environment DB of the first process */
-    if (!PROCESS_CreateEnvDB()) return FALSE;
+    /* Retrieve startup info from the server */
+    req = get_req_buffer();
+    req->ldt_copy  = ldt_copy;
+    req->ldt_flags = ldt_flags_copy;
+    if (server_call( REQ_INIT_PROCESS )) return FALSE;
+    initial_pdb.exe_file        = req->exe_file;
+    initial_startup.dwFlags     = req->start_flags;
+    initial_startup.wShowWindow = req->cmd_show;
+    initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
+    initial_envdb.hStdout  = initial_startup.hStdOutput = req->hstdout;
+    initial_envdb.hStderr  = initial_startup.hStdError  = req->hstderr;
+    initial_envdb.cmd_line = "";
+
+    /* Copy the parent environment */
+    if (!ENV_InheritEnvironment( NULL )) return FALSE;
 
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
-    /* Initialize the first process critical section */
+    /* Initialize the critical sections */
     InitializeCriticalSection( &initial_pdb.crit_section );
+    InitializeCriticalSection( &initial_envdb.section );
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           start_process
+ *
+ * Startup routine of a new Win32 process. Runs on the new process stack.
+ */
+static void start_process(void)
+{
+    struct init_process_done_request *req = get_req_buffer();
+    int debugged;
+    HMODULE16 hModule16;
+    UINT cmdShow = SW_SHOWNORMAL;
+    LPTHREAD_START_ROUTINE entry;
+    PDB *pdb = PROCESS_Current();
+    HMODULE main_module = pdb->exe_modref->module;
+
+    /* Increment EXE refcount */
+    pdb->exe_modref->refCount++;
+
+    /* Retrieve entry point address */
+    entry = (LPTHREAD_START_ROUTINE)RVA_PTR( main_module, OptionalHeader.AddressOfEntryPoint );
+
+    /* Create 16-bit dummy module */
+    if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, main_module )) < 32)
+        ExitProcess( hModule16 );
+
+    if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
+        cmdShow = pdb->env_db->startup_info->wShowWindow;
+    if (!TASK_Create( (NE_MODULE *)GlobalLock16( hModule16 ), cmdShow )) goto error;
+
+    /* Signal the parent process to continue */
+    req->module = (void *)main_module;
+    req->entry  = entry;
+    server_call( REQ_INIT_PROCESS_DONE );
+    debugged = req->debugged;
+
+    if (pdb->flags & PDB32_CONSOLE_PROC) AllocConsole();
+
+    /* Load system DLLs into the initial process (and initialize them) */
+    if (!LoadLibraryA( "KERNEL32" )) goto error;
+    if (!LoadLibraryA( "x11drv" )) goto error;
+
+    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
+        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
+        goto error;
+
+    /* Get pointers to USER routines called by KERNEL */
+    THUNK_InitCallout();
+
+    /* Call FinalUserInit routine */
+    Callout.FinalUserInit16();
+
+    /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
+     *       context of the parent process.  Actually, the USER signal proc
+     *       doesn't really care about that, but it *does* require that the
+     *       startup parameters are correctly set up, so that GetProcessDword
+     *       works.  Furthermore, before calling the USER signal proc the 
+     *       16-bit stack must be set up, which it is only after TASK_Create
+     *       in the case of a 16-bit process. Thus, we send the signal here.
+     */
+
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
+
+    EnterCriticalSection( &pdb->crit_section );
+    PE_InitTls();
+    MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
+    LeaveCriticalSection( &pdb->crit_section );
+
+    /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
+    if (pdb->flags & PDB32_CONSOLE_PROC)
+        PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+
+    TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
+    if (debugged) DbgBreakPoint();
+    /* FIXME: should use _PEB as parameter for NT 3.5 programs !
+     * Dunno about other OSs */
+    ExitProcess( entry(NULL) );
+
+ error:
+    ExitProcess( GetLastError() );
+}
+
+
+/***********************************************************************
+ *           PROCESS_Init32
+ *
+ * Initialisation of a new Win32 process.
+ */
+void PROCESS_Init32( HFILE hFile, LPCSTR filename, LPCSTR cmd_line )
+{
+    WORD version;
+    HMODULE main_module;
+    PDB *pdb = PROCESS_Current();
+
+    pdb->env_db->cmd_line = HEAP_strdupA( GetProcessHeap(), 0, cmd_line );
+
+    /* load main module */
+    if ((main_module = PE_LoadImage( hFile, filename, &version )) < 32)
+        ExitProcess( main_module );
+#if 0
+    if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
+    {
+        SetLastError( 20 );  /* FIXME: not the right error code */
+        goto error;
+    }
+#endif
+
+    /* Create 32-bit MODREF */
+    if (!PE_CreateModule( main_module, filename, 0, FALSE )) goto error;
+
+    /* allocate main thread stack */
+    if (!THREAD_InitStack( NtCurrentTeb(), pdb,
+                           PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
+        goto error;
+
+    SIGNAL_Init();  /* reinitialize signal stack */
+
+    /* switch to the new stack */
+    CALL32_Init( &IF1632_CallLargeStack, start_process, NtCurrentTeb()->stack_top );
+ error:
+    ExitProcess( GetLastError() );
+}
+
+
+/***********************************************************************
+ *           PROCESS_InitWinelib
+ *
+ * Initialisation of a new Winelib process.
+ */
+void PROCESS_InitWinelib( int argc, char *argv[] )
+{
+    PDB *pdb;
+    HMODULE main_module;
+    LPCSTR filename;
+    LPSTR cmdline, p;
+    int i, len = 0;
+
+    if (!MAIN_MainInit( argc, argv, TRUE )) exit(1);
+    pdb = PROCESS_Current();
+
+    /* build command-line */
+    for (i = 0; Options.argv[i]; i++) len += strlen(Options.argv[i]) + 1;
+    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, len ))) goto error;
+    for (p = cmdline, i = 0; Options.argv[i]; i++)
+    {
+        strcpy( p, Options.argv[i] );
+        p += strlen(p);
+        *p++ = ' ';
+    }
+    if (p > cmdline) p--;
+    *p = 0;
+    pdb->env_db->cmd_line = cmdline;
+
+    /* create 32-bit module for main exe */
+    if ((main_module = BUILTIN32_LoadExeModule( &filename )) < 32 ) goto error;
+
+    /* Create 32-bit MODREF */
+    if (!PE_CreateModule( main_module, filename, 0, FALSE )) goto error;
+
+    /* allocate main thread stack */
+    if (!THREAD_InitStack( NtCurrentTeb(), pdb,
+                           PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
+        goto error;
+
+    SIGNAL_Init();  /* reinitialize signal stack */
+
+    /* switch to the new stack */
+    CALL32_Init( &IF1632_CallLargeStack, start_process, NtCurrentTeb()->stack_top );
+ error:
+    ExitProcess( GetLastError() );
 }
 
 

@@ -184,7 +184,7 @@ extern void MODULE_DllThreadDetach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
-extern HMODULE MODULE_CreateDummyModule( LPCSTR filename, WORD version );
+extern HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
@@ -234,7 +234,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 
 /* relay32/builtin.c */
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
-extern HMODULE16 BUILTIN32_LoadExeModule(void);
+extern HMODULE BUILTIN32_LoadExeModule( LPCSTR *filename );
 extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 
 #endif  /* __WINE_MODULE_H */

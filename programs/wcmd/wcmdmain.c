@@ -14,22 +14,12 @@
 
 #include "wcmd.h"
 
-#ifdef WINELIB
-/* external declaration here because we don't want to depend on Wine headers */
-#ifdef __cplusplus
-extern "C" HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
-#else
-extern HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
-#endif
-#endif /* WINELIB */
-
 char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
 		"TIME", "TYPE", "VERIFY", "VER", "VOL", "EXIT"};
 
-HINSTANCE hinst;
 int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
@@ -44,18 +34,12 @@ BATCH_CONTEXT *context = NULL;
  */
 
 
-int main (int argc, char *argv[]) {
+int wine_main (int argc, char *argv[]) {
 
 char string[1024], args[MAX_PATH], param[MAX_PATH];
 int status, i;
 DWORD count;
 HANDLE h;
-
-#ifdef WINELIB
-  if (!(hinst = MAIN_WinelibInit( &argc, argv ))) return 0;
-#else
-  hinst = 0;
-#endif
 
   args[0] = param[0] = '\0';
   if (argc > 1) {

@@ -11,7 +11,7 @@ C_SRCS = control.c
 
 SPEC_SRCS = control.spec
 
-all: check_winestub $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 

@@ -19,7 +19,7 @@ SPEC_SRCS = winemine.spec
 
 RC_SRCS = rsrc.rc
 
-all: check_wrc check_winestub $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 

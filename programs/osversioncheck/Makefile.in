@@ -15,9 +15,6 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-#this line is needed to prevent winestub.o being linked
-WINESTUB = 
-
 osversioncheck: $(OBJS)
 	$(CC) -o osversioncheck $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 

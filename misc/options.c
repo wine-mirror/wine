@@ -22,6 +22,11 @@ struct option
     const char *usage;
 };
 
+/* Most Windows C/C++ compilers use something like this to */
+/* access argc and argv globally: */
+int _ARGC;
+char **_ARGV;
+
 static void do_config( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
@@ -184,4 +189,6 @@ void OPTIONS_ParseOptions( int argc, char *argv[] )
     }
     Options.argc = argc;
     Options.argv = argv;
+    _ARGC = argc;
+    _ARGV = argv;
 }

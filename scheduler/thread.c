@@ -119,7 +119,7 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
  *
  * Allocate the stack of a thread.
  */
-static TEB *THREAD_InitStack( TEB *teb, PDB *pdb, DWORD stack_size, BOOL alloc_stack16 )
+TEB *THREAD_InitStack( TEB *teb, PDB *pdb, DWORD stack_size, BOOL alloc_stack16 )
 {
     DWORD old_prot, total_size;
     DWORD page_size = VIRTUAL_GetPageSize();

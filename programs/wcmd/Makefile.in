@@ -24,9 +24,6 @@ all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 
-#this line is needed to prevent winestub.o being linked
-WINESTUB = 
-
 wcmd: $(OBJS)
 	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 

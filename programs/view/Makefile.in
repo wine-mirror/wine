@@ -19,7 +19,7 @@ SPEC_SRCS = \
 RC_SRCS = \
 	viewrc.rc
 
-all: check_wrc check_winestub $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 

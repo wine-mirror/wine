@@ -11,7 +11,7 @@ C_SRCS = regtest.c
 
 SPEC_SRCS = regtest.spec
 
-all: check_winestub $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 

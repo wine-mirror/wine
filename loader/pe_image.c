@@ -892,7 +892,6 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
         struct load_dll_request *req = get_req_buffer();
 	HMODULE		hModule32;
 	HMODULE16	hModule16;
-	NE_MODULE	*pModule;
 	WINE_MODREF	*wm;
 	char        	filename[256];
 	HANDLE		hFile;
@@ -916,15 +915,12 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	}
 
 	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( filename, version )) < 32)
+	if ((hModule16 = MODULE_CreateDummyModule( filename, hModule32 )) < 32)
 	{
                 CloseHandle( hFile );
 		SetLastError( (DWORD)hModule16 );	/* This should give the correct error */
 		return NULL;
 	}
-	pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-	pModule->flags    = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32;
-	pModule->module32 = hModule32;
 
 	/* Create 32-bit MODREF */
 	if ( !(wm = PE_CreateModule( hModule32, filename, flags, FALSE )) )
@@ -994,14 +990,12 @@ BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
 #endif
 
     /* Create 16-bit dummy module */
-    if ( (hModule16 = MODULE_CreateDummyModule( filename, version )) < 32 ) 
+    if ( (hModule16 = MODULE_CreateDummyModule( filename, hModule32 )) < 32 ) 
     {
         SetLastError( hModule16 );
         return FALSE;
     }
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-    pModule->flags    = NE_FFLAGS_WIN32;
-    pModule->module32 = hModule32;
 
     /* Create new process */
     if ( !PROCESS_Create( pModule, hFile, cmd_line, env,

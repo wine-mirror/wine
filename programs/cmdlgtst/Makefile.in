@@ -17,7 +17,7 @@ SPEC_SRCS = \
 RC_SRCS = \
 	cmdlgr.rc
 
-all: check_wrc check_winestub $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 

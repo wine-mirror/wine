@@ -733,6 +733,8 @@ static void ParseTopLevel(void)
                 fatal_error( "init cannot be used for Win16 spec files\n" );
             if (!DLLInitFunc[0])
                 fatal_error( "Expected function name after init\n" );
+            if (!strcmp(DLLInitFunc, "main"))
+                fatal_error( "The init function cannot be named 'main'\n" );
         }
         else if (strcmp(token, "import") == 0)
         {
@@ -1033,6 +1035,7 @@ static int BuildSpec32File( FILE *outfile )
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
     int nr_exports;
+    const char *init_func;
 
     AssignOrdinals();
     nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
@@ -1040,8 +1043,7 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
     fprintf( outfile, "#include \"builtin32.h\"\n\n" );
-    fprintf( outfile, "extern const BUILTIN32_DESCRIPTOR %s_Descriptor;\n",
-             DLLName );
+    fprintf( outfile, "static const BUILTIN32_DESCRIPTOR descriptor;\n" );
 
     /* Output the DLL functions prototypes */
 
@@ -1065,8 +1067,8 @@ static int BuildSpec32File( FILE *outfile )
             have_regs = TRUE;
             break;
         case TYPE_STUB:
-            fprintf( outfile, "static void __stub_%d() { BUILTIN32_Unimplemented(&%s_Descriptor,%d); }\n",
-                     odp->ordinal, DLLName, odp->ordinal );
+            fprintf( outfile, "static void __stub_%d() { BUILTIN32_Unimplemented(&descriptor,%d); }\n",
+                     odp->ordinal, odp->ordinal );
             break;
         default:
             fprintf(stderr,"build: function type %d not available for Win32\n",
@@ -1074,10 +1076,6 @@ static int BuildSpec32File( FILE *outfile )
             return -1;
         }
     }
-
-    /* Output LibMain function */
-    if (DLLInitFunc[0]) fprintf( outfile, "extern void %s();\n", DLLInitFunc );
-
 
     /* Output code for all register functions */
 
@@ -1230,12 +1228,65 @@ static int BuildSpec32File( FILE *outfile )
         fprintf( outfile, "\n};\n\n" );
     }
 
+    /* Output LibMain function */
+
+    init_func = DLLInitFunc[0] ? DLLInitFunc : NULL;
+    switch(SpecMode)
+    {
+    case SPEC_MODE_DLL:
+        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        break;
+    case SPEC_MODE_GUIEXE:
+        if (!init_func) init_func = "WinMain";
+        fprintf( outfile,
+                 "\n#include <winbase.h>\n"
+                 "static void exe_main(void)\n"
+                 "{\n"
+                 "    extern int PASCAL %s(HINSTANCE,HINSTANCE,LPCSTR,INT);\n"
+                 "    STARTUPINFOA info;\n"
+                 "    const char *cmdline = GetCommandLineA();\n"
+                 "    while (*cmdline && *cmdline != ' ') cmdline++;\n"
+                 "    if (*cmdline) cmdline++;\n"
+                 "    GetStartupInfoA( &info );\n"
+                 "    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;\n"
+                 "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
+                 "}\n\n", init_func, init_func );
+        fprintf( outfile,
+                 "int main( int argc, char *argv[] )\n"
+                 "{\n"
+                 "    extern void PROCESS_InitWinelib( int, char ** );\n"
+                 "    PROCESS_InitWinelib( argc, argv );\n"
+                 "    return 1;\n"
+                 "}\n\n" );
+        init_func = "exe_main";
+        break;
+    case SPEC_MODE_CUIEXE:
+        if (!init_func) init_func = "wine_main";
+        fprintf( outfile,
+                 "\n#include <winbase.h>\n"
+                 "static void exe_main(void)\n"
+                 "{\n"
+                 "    extern int %s( int argc, char *argv[] );\n"
+                 "    extern int _ARGC;\n"
+                 "    extern char *_ARGV[];\n"
+                 "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
+                 "}\n\n", init_func, init_func );
+        fprintf( outfile,
+                 "int main( int argc, char *argv[] )\n"
+                 "{\n"
+                 "    extern void PROCESS_InitWinelib( int, char ** );\n"
+                 "    PROCESS_InitWinelib( argc, argv );\n"
+                 "    return 1;\n"
+                 "}\n\n" );
+        init_func = "exe_main";
+        break;
+    }
+
     /* Output the DLL descriptor */
 
     if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
 
-    fprintf( outfile, "const BUILTIN32_DESCRIPTOR %s_Descriptor =\n{\n",
-             DLLName );
+    fprintf( outfile, "static const BUILTIN32_DESCRIPTOR descriptor =\n{\n" );
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLFileName );
     fprintf( outfile, "    %d,\n", nr_exports? Base : 0 );
@@ -1249,7 +1300,7 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    %s,\n", nr_exports ? "FuncArgs" : "0" );
     fprintf( outfile, "    %s,\n", nr_exports ? "ArgTypes" : "0" );
     fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
-    fprintf( outfile, "    %s,\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
+    fprintf( outfile, "    %s,\n", init_func ? init_func : "0" );
     fprintf( outfile, "    %d,\n", SpecMode == SPEC_MODE_DLL ? IMAGE_FILE_DLL : 0 );
     fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
@@ -1265,8 +1316,8 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void %s_init(void) { BUILTIN32_RegisterDLL( &%s_Descriptor ); }\n",
-             DLLName, DLLName );
+    fprintf( outfile, "static void %s_init(void) { BUILTIN32_RegisterDLL( &descriptor ); }\n",
+             DLLName );
 
     return 0;
 }
@@ -1508,7 +1559,7 @@ static int BuildSpec16File( FILE *outfile )
 
     if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
 
-    fprintf( outfile, "\nconst BUILTIN16_DESCRIPTOR %s_Descriptor = \n{\n", DLLName );
+    fprintf( outfile, "\nstatic const BUILTIN16_DESCRIPTOR descriptor = \n{\n" );
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
@@ -1528,8 +1579,8 @@ static int BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void %s_init(void) { BUILTIN_RegisterDLL( &%s_Descriptor ); }\n",
-             DLLName, DLLName );
+    fprintf( outfile, "static void %s_init(void) { BUILTIN_RegisterDLL( &descriptor ); }\n",
+             DLLName );
 
     return 0;
 }

@@ -55,7 +55,7 @@
 #include "server.h"
 #include "loadorder.h"
 
-DEFAULT_DEBUG_CHANNEL(server)
+DEFAULT_DEBUG_CHANNEL(server);
 
 /***********************************************************************
  *           Main initialisation routine
@@ -92,20 +92,7 @@ BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
     /* Initialize module loadorder */
     if (!MODULE_InitLoadOrder()) return FALSE;
 
-    /* Initialize DOS memory */
-    if (!DOSMEM_Init(0)) return FALSE;
-
-    /* Initialize communications */
-    COMM_Init();
-
-    /* Initialize IO-port permissions */
-    IO_port_init();
-
-    /* Read DOS config.sys */
-    if (!DOSCONF_ReadConfig()) return FALSE;
-
     /* Initialize KERNEL */
-    if (!LoadLibrary16( "KRNL386.EXE" )) return FALSE;
     if (!LoadLibraryA( "KERNEL32" )) return FALSE;
 
     if (!LoadLibraryA( "x11drv" )) return FALSE;
@@ -126,6 +113,11 @@ BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
 
     if ( initDone ) return TRUE;
     initDone = TRUE;
+
+    /* Initialize DOS memory */
+    if (!DOSMEM_Init(0)) return FALSE;
+
+    if (!LoadLibrary16( "KRNL386.EXE" )) return FALSE;
 
     /* Initialize special KERNEL entry points */
     hModule = GetModuleHandle16( "KERNEL" );
@@ -164,53 +156,18 @@ BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
     /* Initialize relay code */
     if (!RELAY_Init()) return FALSE;
 
+    /* Initialize communications */
+    COMM_Init();
+
+    /* Initialize IO-port permissions */
+    IO_port_init();
+
+    /* Read DOS config.sys */
+    if (!DOSCONF_ReadConfig()) return FALSE;
+
     return TRUE;
 }
 
-
-/***********************************************************************
- *           Winelib initialisation routine
- */
-HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
-{
-    NE_MODULE *pModule;
-    HMODULE16 hModule;
-    PDB	      *curr;
-
-    /* Main initialization */
-    if (!MAIN_MainInit( *argc, argv, TRUE )) return 0;
-    *argc = Options.argc;
-
-    /* Load WineLib EXE module */
-    if ( (hModule = BUILTIN32_LoadExeModule()) < 32 ) return 0;
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
-
-    /* Create initial task */
-    if (!TASK_Create( pModule, FALSE )) return 0;
-
-    /* Create 32-bit MODREF */
-    if ( !PE_CreateModule( pModule->module32, NE_MODULE_NAME(pModule), 0, FALSE ) )
-        return 0;
-
-    /* Increment EXE refcount */
-    curr = PROCESS_Current();
-    assert( curr->exe_modref );
-    curr->exe_modref->refCount++;
-
-    /* Load system DLLs into the initial process (and initialize them) */
-    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
-        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
-        ExitProcess( 1 );
-
-    /* attach the imported DLLs */
-    if ( !MODULE_DllProcessAttach( curr->exe_modref, NULL ) )
-       ExitProcess( 1 );
-
-    /* Get pointers to USER routines called by KERNEL */
-    THUNK_InitCallout();
-
-    return pModule->module32;
-}
 
 /***********************************************************************
  *           ExitKernel16 (KERNEL.2)

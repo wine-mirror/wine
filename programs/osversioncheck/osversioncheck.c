@@ -11,13 +11,6 @@
 #include <winbase.h>
 #include <stdio.h>
 
-#ifdef WINELIB
-/* External declaration here because we don't want to depend on Wine's
-   internal headers. */
-extern HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
-#endif /* WINELIB */
-
-
 void
 show_last_error(void)
 {
@@ -47,15 +40,10 @@ show_last_error(void)
 }
 
 int
-main(int argc, char ** argv)
+wine_main(int argc, char ** argv)
 {
   BOOL result;
   OSVERSIONINFO oiv;
-  HINSTANCE hinst;
-
-#ifdef WINELIB
-  if (!(hinst = MAIN_WinelibInit(&argc, argv))) return 0;
-#endif /* WINELIB */
 
   /* FIXME: GetVersionEx() is a Win32 API call, so there should be a
      preliminary check to see if we're running bare-bones Windows3.xx

@@ -22,7 +22,7 @@ SPEC_SRCS = \
 RC_SRCS = \
 	hello3res.rc
 
-all: check_wrc check_winestub $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 
