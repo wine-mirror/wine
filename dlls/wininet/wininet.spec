@@ -106,7 +106,7 @@ init    WININET_LibMain
 @ stdcall InternetFindNextFileA(ptr ptr) InternetFindNextFileA 
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL
-@ stub InternetGetConnectedState
+@ stdcall InternetGetConnectedState(ptr long) InternetGetConnectedState
 @ stub InternetGetCookieA
 @ stub InternetGetCookieW
 @ stdcall InternetGetLastResponseInfoA(ptr str ptr) InternetGetLastResponseInfoA

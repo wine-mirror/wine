@@ -195,6 +195,24 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
 
 
 /***********************************************************************
+ *           InternetGetConnectedState (WININET.103)
+ *
+ * Return connected state
+ *
+ * RETURNS
+ *    TRUE if connected
+ *    if lpdwStatus is not null, return the status (off line, 
+ *    modem, lan...) in it.
+ *    FALSE if not connected
+ */
+BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
+{
+    FIXME("Stub\n");
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           InternetConnectA (WININET.93)
  *
  * Open a ftp, gopher or http session
@@ -921,7 +939,7 @@ BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
 
 
 /***********************************************************************
- *           INTERNET_GetWokkRequest (internal)
+ *           INTERNET_GetWorkRequest (internal)
  *
  * Retrieves work request from queue
  *
