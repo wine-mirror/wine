@@ -286,54 +286,87 @@ NTSTATUS WINAPI NtQueryInformationToken(
 	DWORD tokeninfolength,
 	LPDWORD retlen ) 
 {
-	FIXME("(%08x,%ld,%p,%ld,%p): stub\n",
-	      token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
+    unsigned int len = 0;
 
-	switch (tokeninfoclass)
-	{ case TokenGroups:	/* 2 */
-		*retlen = sizeof (TOKEN_GROUPS);
-		break;
-	  case TokenUser:	/* 1 */
-		{
-		  int len = sizeof (TOKEN_USER)+ sizeof(SID);
-		  *retlen = len;
-		  if ( len <= tokeninfolength)
-		  if( tokeninfo )
-		  {
-		    TOKEN_USER * tuser = tokeninfo;
-		    PSID sid = (PSID) &((LPBYTE)tokeninfo)[sizeof(TOKEN_USER)];
-		    SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-		    RtlInitializeSid(sid, &localSidAuthority, 1);
-		    *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
-		    tuser->User.Sid = sid;
-		  }
-		}
-		break;
-	  case TokenPrivileges:
-		*retlen = sizeof (TOKEN_PRIVILEGES);
-		break;
-	  case TokenOwner:
-		*retlen = sizeof (TOKEN_OWNER);
-		break;
-	  case TokenPrimaryGroup:
-		*retlen = sizeof (TOKEN_PRIMARY_GROUP);
-		break;
-	  case TokenDefaultDacl:
-		*retlen = sizeof (TOKEN_DEFAULT_DACL);
-		break;
-	  case TokenSource:
-		*retlen = sizeof (TOKEN_SOURCE);
-		break;
-	  case TokenType:
-		*retlen = sizeof (TOKEN_TYPE);
-		break;
+    FIXME("(%08x,%ld,%p,%ld,%p): stub\n",
+          token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
+
+    switch (tokeninfoclass)
+    {
+    case TokenUser:
+        len = sizeof(TOKEN_USER) + sizeof(SID);
+        break;
+    case TokenGroups:
+        len = sizeof(TOKEN_GROUPS);
+        break;
+    case TokenPrivileges:
+        len = sizeof(TOKEN_PRIVILEGES);
+        break;
+    case TokenOwner:
+        len = sizeof(TOKEN_OWNER);
+        break;
+    case TokenPrimaryGroup:
+        len = sizeof(TOKEN_PRIMARY_GROUP);
+        break;
+    case TokenDefaultDacl:
+        len = sizeof(TOKEN_DEFAULT_DACL);
+        break;
+    case TokenSource:
+        len = sizeof(TOKEN_SOURCE);
+        break;
+    case TokenType:
+        len = sizeof (TOKEN_TYPE);
+        break;
 #if 0
-	  case TokenImpersonationLevel:
-	  case TokenStatistics:
+    case TokenImpersonationLevel:
+    case TokenStatistics:
 #endif /* 0 */
-	}
+    }
 
-	return 0;
+    /* FIXME: what if retlen == NULL ? */
+    *retlen = len;
+
+    if (tokeninfolength < len)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    switch (tokeninfoclass)
+    {
+    case TokenUser:
+        if( tokeninfo )
+        {
+            TOKEN_USER * tuser = tokeninfo;
+            PSID sid = (PSID) (tuser + 1);
+            SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+            RtlInitializeSid(sid, &localSidAuthority, 1);
+            *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
+            tuser->User.Sid = sid;
+        }
+        break;
+    case TokenGroups:
+        if (tokeninfo)
+        {
+            TOKEN_GROUPS *tgroups = tokeninfo;
+            SID_IDENTIFIER_AUTHORITY sid = {SECURITY_NT_AUTHORITY};
+
+            /* we need to show admin privileges ! */
+            tgroups->GroupCount = 1;
+            RtlAllocateAndInitializeSid( &sid,
+                                         2,
+                                         SECURITY_BUILTIN_DOMAIN_RID,
+                                         DOMAIN_ALIAS_RID_ADMINS,
+                                         0, 0, 0, 0, 0, 0,
+                                         &(tgroups->Groups->Sid));
+        }
+        break;
+    case TokenPrivileges:
+        if (tokeninfo)
+        {
+            TOKEN_PRIVILEGES *tpriv = tokeninfo;
+            tpriv->PrivilegeCount = 1;
+        }
+        break;
+    }
+    return 0;
 }
 
 /*
