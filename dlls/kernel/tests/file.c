@@ -914,6 +914,66 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
+static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
+{
+    if (!access1 || !access2) return 1;
+    if ((access1 & GENERIC_READ) && !(sharing2 & FILE_SHARE_READ)) return 0;
+    if ((access1 & GENERIC_WRITE) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
+    if ((access2 & GENERIC_READ) && !(sharing1 & FILE_SHARE_READ)) return 0;
+    if ((access2 & GENERIC_WRITE) && !(sharing1 & FILE_SHARE_WRITE)) return 0;
+    return 1;
+}
+
+static void test_file_sharing(void)
+{
+    static const DWORD access_modes[4] = { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ|GENERIC_WRITE };
+    static const DWORD sharing_modes[4] = { 0, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE };
+    int a1, s1, a2, s2;
+
+    for (a1 = 0; a1 < 4; a1++)
+    {
+        for (s1 = 0; s1 < 4; s1++)
+        {
+            HANDLE h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
+                                    NULL, CREATE_ALWAYS, 0, 0 );
+            if (h == INVALID_HANDLE_VALUE)
+            {
+                ok(0,"couldn't create file \"%s\" (err=%ld)\n",filename,GetLastError());
+                return;
+            }
+            for (a2 = 0; a2 < 4; a2++)
+            {
+                for (s2 = 0; s2 < 4; s2++)
+                {
+                    HANDLE h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
+                                          NULL, CREATE_ALWAYS, 0, 0 );
+                    if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
+                                               access_modes[a2], sharing_modes[s2] ))
+                    {
+                        ok( h2 != INVALID_HANDLE_VALUE,
+                            "open failed for modes %lx/%lx/%lx/%lx err %ld\n",
+                            access_modes[a1], sharing_modes[s1],
+                            access_modes[a2], sharing_modes[s2], GetLastError() );
+                    }
+                    else
+                    {
+                        ok( h2 == INVALID_HANDLE_VALUE,
+                            "open succeeded for modes %lx/%lx/%lx/%lx\n",
+                            access_modes[a1], sharing_modes[s1],
+                            access_modes[a2], sharing_modes[s2] );
+                        if (h2 == INVALID_HANDLE_VALUE)
+                            ok( GetLastError() == ERROR_SHARING_VIOLATION,
+                                "wrong error code %ld\n", GetLastError() );
+                    }
+                    if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
+                }
+            }
+            CloseHandle( h );
+        }
+    }
+    DeleteFileA( filename );
+}
+
 static void test_FindFirstFileA()
 {
     HANDLE handle;
@@ -1000,6 +1060,7 @@ START_TEST(file)
     test_FindFirstFileA();
     test_FindNextFileA();
     test_LockFile();
+    test_file_sharing();
     test_offset_in_overlapped_structure();
     test_MapFile();
 }

@@ -66,6 +66,8 @@ struct fd
     struct closed_fd    *closed;      /* structure to store the unix fd at destroy time */
     struct object       *user;        /* object using this file descriptor */
     struct list          locks;       /* list of locks on this fd */
+    unsigned int         access;      /* file access (GENERIC_READ/WRITE) */
+    unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
     int                  fs_locks;    /* can we use filesystem locks for this fd? */
     int                  poll_index;  /* index of fd in poll array */
@@ -817,6 +819,8 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
     fd->user       = user;
     fd->inode      = NULL;
     fd->closed     = NULL;
+    fd->access     = 0;
+    fd->sharing    = 0;
     fd->unix_fd    = -1;
     fd->fs_locks   = 1;
     fd->poll_index = -1;
@@ -831,10 +835,41 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
     return fd;
 }
 
+/* check if the desired access is possible without violating */
+/* the sharing mode of other opens of the same file */
+static int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing )
+{
+    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    unsigned int existing_access = 0;
+    struct list *ptr;
+
+    /* if access mode is 0, sharing mode is ignored */
+    if (!access) sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
+    fd->access = access;
+    fd->sharing = sharing;
+
+    LIST_FOR_EACH( ptr, &fd->inode->open )
+    {
+        struct fd *fd_ptr = LIST_ENTRY( ptr, struct fd, inode_entry );
+        if (fd_ptr != fd)
+        {
+            existing_sharing &= fd_ptr->sharing;
+            existing_access  |= fd_ptr->access;
+        }
+    }
+
+    if ((access & GENERIC_READ) && !(existing_sharing & FILE_SHARE_READ)) return 0;
+    if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
+    if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) return 0;
+    if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
+    return 1;
+}
+
 /* open() wrapper using a struct fd */
 /* the fd must have been created with alloc_fd */
 /* on error the fd object is released */
-struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode )
+struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
+                    unsigned int access, unsigned int sharing )
 {
     struct stat st;
     struct closed_fd *closed_fd;
@@ -873,6 +908,12 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode )
         fd->inode = inode;
         fd->closed = closed_fd;
         list_add_head( &inode->open, &fd->inode_entry );
+        if (!check_sharing( fd, access, sharing ))
+        {
+            release_object( fd );
+            set_error( STATUS_SHARING_VIOLATION );
+            return NULL;
+        }
     }
     else
     {
@@ -906,6 +947,12 @@ void *get_fd_user( struct fd *fd )
 int get_unix_fd( struct fd *fd )
 {
     return fd->unix_fd;
+}
+
+/* check if two file descriptors point to the same file */
+int is_same_file_fd( struct fd *fd1, struct fd *fd2 )
+{
+    return fd1->inode == fd2->inode;
 }
 
 /* callback for event happening in the main poll() loop */

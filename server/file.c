@@ -56,19 +56,13 @@ struct file
 {
     struct object       obj;        /* object header */
     struct fd          *fd;         /* file descriptor for this file */
-    struct file        *next;       /* next file in hashing list */
     char               *name;       /* file name */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
-    unsigned int        sharing;    /* file sharing mode */
     int                 removable;  /* is file on removable media? */
     struct async_queue  read_q;
     struct async_queue  write_q;
 };
-
-#define NAME_HASH_SIZE 37
-
-static struct file *file_hash[NAME_HASH_SIZE];
 
 static void file_dump( struct object *obj, int verbose );
 static struct fd *file_get_fd( struct object *obj );
@@ -106,38 +100,6 @@ static inline int is_overlapped( const struct file *file )
     return !(file->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 }
 
-static int get_name_hash( const char *name )
-{
-    int hash = 0;
-    while (*name) hash ^= (unsigned char)*name++;
-    return hash % NAME_HASH_SIZE;
-}
-
-/* check if the desired access is possible without violating */
-/* the sharing mode of other opens of the same file */
-static int check_sharing( const char *name, int hash, unsigned int access,
-                          unsigned int sharing )
-{
-    struct file *file;
-    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    unsigned int existing_access = 0;
-
-    for (file = file_hash[hash]; file; file = file->next)
-    {
-        if (strcmp( file->name, name )) continue;
-        existing_sharing &= file->sharing;
-        existing_access |= file->access;
-    }
-    if ((access & GENERIC_READ) && !(existing_sharing & FILE_SHARE_READ)) goto error;
-    if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) goto error;
-    if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) goto error;
-    if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) goto error;
-    return 1;
- error:
-    set_error( STATUS_SHARING_VIOLATION );
-    return 0;
-}
-
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
 static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
@@ -147,10 +109,8 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     if ((file = alloc_object( &file_ops )))
     {
         file->name       = NULL;
-        file->next       = NULL;
         file->access     = access;
         file->options    = FILE_SYNCHRONOUS_IO_NONALERT;
-        file->sharing    = sharing;
         file->removable  = 0;
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj )))
         {
@@ -167,17 +127,13 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
                                    unsigned int attrs, int removable )
 {
     struct file *file;
-    int hash, flags;
+    int flags;
     char *name;
     mode_t mode;
 
     if (!(name = mem_alloc( len + 1 ))) return NULL;
     memcpy( name, nameptr, len );
     name[len] = 0;
-
-    /* check sharing mode */
-    hash = get_name_hash( name );
-    if (!check_sharing( name, hash, access, sharing )) goto error;
 
     switch(create)
     {
@@ -206,11 +162,8 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     file->access     = access;
     file->options    = options;
-    file->sharing    = sharing;
     file->removable  = removable;
     file->name       = name;
-    file->next       = file_hash[hash];
-    file_hash[hash]  = file;
     if (is_overlapped( file ))
     {
         init_async_queue (&file->read_q);
@@ -219,7 +172,8 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
-        !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE, &mode )))
+        !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE,
+                              &mode, access, sharing)))
     {
         release_object( file );
         return NULL;
@@ -249,7 +203,7 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 /* check if two file objects point to the same file */
 int is_same_file( struct file *file1, struct file *file2 )
 {
-    return !strcmp( file1->name, file2->name );
+    return is_same_file_fd( file1->fd, file2->fd );
 }
 
 /* check if the file is on removable media */
@@ -434,11 +388,6 @@ static void file_destroy( struct object *obj )
 
     if (file->name)
     {
-        /* remove it from the hashing list */
-        struct file **pptr = &file_hash[get_name_hash( file->name )];
-        while (*pptr && *pptr != file) pptr = &(*pptr)->next;
-        assert( *pptr );
-        *pptr = (*pptr)->next;
         if (file->options & FILE_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
     }
