@@ -339,14 +339,14 @@ HRESULT WINAPI LoadTypeLibEx(
         switch(regkind)
         {
             case REGKIND_DEFAULT:
-                /* FIXME: is this correct? */
-                if (!szFile || !szFile[0] ||
-		   (szFile[0] != '\\' && szFile[0] != '/' && szFile[1] != ':'))
-                    break;
+                /* don't register typelibs supplied with full path. Experimentation confirms the following */
+                if ((!szFile) ||
+                    ((szFile[0] == '\\') && (szFile[1] == '\\')) ||
+                    (szFile[0] && (szFile[1] == ':'))) break;
                 /* else fall-through */
+
             case REGKIND_REGISTER:
-                /* FIXME: Help path? */
-                if (!SUCCEEDED(res = RegisterTypeLib(*pptLib, (LPOLESTR)szFile, NULL)))
+                if (!SUCCEEDED(res = RegisterTypeLib(*pptLib, (LPOLESTR)szPath, NULL)))
                 {
                     IUnknown_Release(*pptLib);
                     *pptLib = 0;
@@ -408,9 +408,11 @@ HRESULT WINAPI RegisterTypeLib(
     OLECHAR guid[80];
     LPSTR guidA;
     CHAR keyName[120];
+    CHAR tmp[MAX_PATH];
     HKEY key, subKey;
     UINT types, tidx;
     TYPEKIND kind;
+    DWORD disposition;
     static const char *PSOA = "{00020424-0000-0000-C000-000000000046}";
 
     if (ptlib == NULL || szFullPath == NULL)
@@ -431,10 +433,11 @@ HRESULT WINAPI RegisterTypeLib(
     {
         LPOLESTR doc;
 
+        /* Set the human-readable name of the typelib */
         if (SUCCEEDED(ITypeLib_GetDocumentation(ptlib, -1, NULL, &doc, NULL, NULL)))
         {
             if (RegSetValueExW(key, NULL, 0, REG_SZ,
-                (BYTE *)doc, lstrlenW(doc) * sizeof(OLECHAR)) != ERROR_SUCCESS)
+                (BYTE *)doc, (lstrlenW(doc)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS)
                 res = E_FAIL;
 
             SysFreeString(doc);
@@ -442,12 +445,29 @@ HRESULT WINAPI RegisterTypeLib(
         else
             res = E_FAIL;
 
-        /* FIXME: This *seems* to be 0 always, not sure though */
-        if (res == S_OK && RegCreateKeyExA(key, "0\\win32", 0, NULL, 0,
+        /* Make up the name of the typelib path subkey */
+        sprintf(tmp, "%lu\\", attr->lcid);
+        switch(attr->syskind) {
+        case SYS_WIN16:
+            strcat(tmp, "win16");
+            break;
+
+        case SYS_WIN32:
+            strcat(tmp, "win32");
+            break;
+
+        default:
+            TRACE("Typelib is for unsupported syskind %i\n", attr->syskind);
+            res = E_FAIL;
+            break;
+        }
+
+        /* Create the typelib path subkey */
+        if (res == S_OK && RegCreateKeyExA(key, tmp, 0, NULL, 0,
             KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
         {
             if (RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                (BYTE *)szFullPath, lstrlenW(szFullPath) * sizeof(OLECHAR)) != ERROR_SUCCESS)
+                (BYTE *)szFullPath, (lstrlenW(szFullPath)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS)
                 res = E_FAIL;
 
             RegCloseKey(subKey);
@@ -455,6 +475,7 @@ HRESULT WINAPI RegisterTypeLib(
         else
             res = E_FAIL;
 
+        /* Create the flags subkey */
         if (res == S_OK && RegCreateKeyExA(key, "FLAGS", 0, NULL, 0,
             KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
         {
@@ -464,7 +485,47 @@ HRESULT WINAPI RegisterTypeLib(
             if (RegSetValueExA(subKey, NULL, 0, REG_SZ,
                 buf, lstrlenA(buf) + 1) != ERROR_SUCCESS)
                 res = E_FAIL;
+
+            RegCloseKey(subKey);
         }
+        else
+            res = E_FAIL;
+
+        /* create the helpdir subkey */
+        if (res == S_OK && RegCreateKeyExA(key, "HELPDIR", 0, NULL, 0,
+            KEY_WRITE, NULL, &subKey, &disposition) == ERROR_SUCCESS)
+        {
+            BOOL freeHelpDir = FALSE;
+            OLECHAR* pIndexStr;
+
+            /* if we created a new key, and helpDir was null, set the helpdir
+               to the directory which contains the typelib. However,
+               if we just opened an existing key, we leave the helpdir alone */
+            if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
+                szHelpDir = SysAllocString(szFullPath);
+                pIndexStr = strrchrW(szHelpDir, '\\');
+                if (pIndexStr) {
+                    *pIndexStr = 0;
+                }
+                freeHelpDir = TRUE;
+            }
+
+            /* if we have an szHelpDir, set it! */
+            if (szHelpDir != NULL) {
+                if (RegSetValueExW(subKey, NULL, 0, REG_SZ,
+                    (BYTE *)szHelpDir, (lstrlenW(szHelpDir)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS) {
+                    res = E_FAIL;
+                }
+            }
+
+            /* tidy up */
+            if (freeHelpDir) SysFreeString(szHelpDir);
+            RegCloseKey(subKey);
+
+        } else {
+            res = E_FAIL;
+        }
+
         RegCloseKey(key);
     }
     else
@@ -476,32 +537,34 @@ HRESULT WINAPI RegisterTypeLib(
 	if (SUCCEEDED(ITypeLib_GetTypeInfoType(ptlib, tidx, &kind))) {
 	    LPOLESTR name = NULL;
 	    ITypeInfo *tinfo = NULL;
-	    BOOL stop = FALSE;
+
 	    ITypeLib_GetDocumentation(ptlib, tidx, &name, NULL, NULL, NULL);
+
 	    switch (kind) {
 	    case TKIND_INTERFACE:
 		TRACE_(typelib)("%d: interface %s\n", tidx, debugstr_w(name));
 		ITypeLib_GetTypeInfo(ptlib, tidx, &tinfo);
 		break;
+
 	    case TKIND_DISPATCH:
 		TRACE_(typelib)("%d: dispinterface %s\n", tidx, debugstr_w(name));
-		/* ITypeLib_GetTypeInfo(ptlib, tidx, &tinfo); */
+                ITypeLib_GetTypeInfo(ptlib, tidx, &tinfo);
 		break;
-	    case TKIND_COCLASS:
-		TRACE_(typelib)("%d: coclass %s\n", tidx, debugstr_w(name));
-		/* coclasses should probably not be registered? */
-		break;
+
 	    default:
 		TRACE_(typelib)("%d: %s\n", tidx, debugstr_w(name));
 		break;
 	    }
+
 	    if (tinfo) {
 		TYPEATTR *tattr = NULL;
 		ITypeInfo_GetTypeAttr(tinfo, &tattr);
+
 		if (tattr) {
 		    TRACE_(typelib)("guid=%s, flags=%04x (",
 				    debugstr_guid(&tattr->guid),
 				    tattr->wTypeFlags);
+
 		    if (TRACE_ON(typelib)) {
 #define XX(x) if (TYPEFLAG_##x & tattr->wTypeFlags) MESSAGE(#x"|");
 			XX(FAPPOBJECT);
@@ -522,6 +585,7 @@ HRESULT WINAPI RegisterTypeLib(
 #undef XX
 			MESSAGE("\n");
 		    }
+
 		    /*
 		     * FIXME: The 1 is just here until we implement rpcrt4
 		     *        stub/proxy handling. Until then it helps IShield
@@ -529,6 +593,10 @@ HRESULT WINAPI RegisterTypeLib(
 		     */
 		    if (1 || (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION))
 		    {
+                        if (!(tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) {
+                            FIXME("Registering non-oleautomation interface!\n");
+                        }
+
 			/* register interface<->typelib coupling */
 			StringFromGUID2(&tattr->guid, guid, 80);
 			guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
@@ -547,6 +615,7 @@ HRESULT WINAPI RegisterTypeLib(
 					       PSOA, strlen(PSOA));
 				RegCloseKey(subKey);
 			    }
+
 			    if (RegCreateKeyExA(key, "ProxyStubClsid32", 0, NULL, 0,
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
 				RegSetValueExA(subKey, NULL, 0, REG_SZ,
@@ -566,15 +635,18 @@ HRESULT WINAPI RegisterTypeLib(
 					       ver, lstrlenA(ver));
 				RegCloseKey(subKey);
 			    }
+
 			    RegCloseKey(key);
 			}
 		    }
+
 		    ITypeInfo_ReleaseTypeAttr(tinfo, tattr);
 		}
+
 		ITypeInfo_Release(tinfo);
 	    }
+
 	    SysFreeString(name);
-	    if (stop) break;
 	}
     }
 
@@ -600,8 +672,153 @@ HRESULT WINAPI UnRegisterTypeLib(
 	LCID lcid,	/* [in] locale id */
 	SYSKIND syskind)
 {
+    BSTR tlibPath = NULL;
+    DWORD tmpLength;
+    CHAR keyName[MAX_PATH];
+    CHAR* syskindName;
+    CHAR subKeyName[MAX_PATH];
+    LPSTR guidA;
+    int result = S_OK;
+    DWORD i = 0;
+    OLECHAR guid[80];
+    BOOL deleteOtherStuff;
+    HKEY key = NULL;
+    HKEY subKey = NULL;
+    TYPEATTR* typeAttr = NULL;
+    TYPEKIND kind;
+    ITypeInfo* typeInfo = NULL;
+    ITypeLib* typeLib = NULL;
+    int numTypes;
+
     TRACE("(IID: %s): stub\n",debugstr_guid(libid));
-    return S_OK;	/* FIXME: pretend everything is OK */
+
+    /* Create the path to the key */
+    StringFromGUID2(libid, guid, 80);
+    guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
+    snprintf(keyName, sizeof(keyName), "TypeLib\\%s\\%x.%x",
+        guidA, wVerMajor, wVerMinor);
+    HeapFree(GetProcessHeap(), 0, guidA);
+
+    /* Work out the syskind name */
+    switch(syskind) {
+    case SYS_WIN16:
+        syskindName = "win16";
+        break;
+
+    case SYS_WIN32:
+        syskindName = "win32";
+        break;
+
+    default:
+        TRACE("Unsupported syskind %i\n", syskind);
+        result = E_INVALIDARG;
+        goto end;
+    }
+
+    /* get the path to the typelib on disk */
+    if (QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid, &tlibPath) != S_OK) {
+        result = E_INVALIDARG;
+        goto end;
+    }
+
+    /* Try and open the key to the type library. */
+    if (RegOpenKeyExA(HKEY_CLASSES_ROOT, keyName, 0, KEY_READ | KEY_WRITE, &key) != S_OK) {
+        result = E_INVALIDARG;
+        goto end;
+    }
+
+    /* Try and load the type library */
+    if (LoadTypeLibEx(tlibPath, REGKIND_NONE, &typeLib)) {
+        result = TYPE_E_INVALIDSTATE;
+        goto end;
+    }
+
+    /* remove any types registered with this typelib */
+    numTypes = ITypeLib_GetTypeInfoCount(typeLib);
+    for (i=0; i<numTypes; i++) {
+        /* get the kind of type */
+        if (ITypeLib_GetTypeInfoType(typeLib, i, &kind) != S_OK) {
+            goto enddeleteloop;
+        }
+
+        /* skip non-interfaces, and get type info for the type */
+        if ((kind != TKIND_INTERFACE) && (kind != TKIND_DISPATCH)) {
+            goto enddeleteloop;
+        }
+        if (ITypeLib_GetTypeInfo(typeLib, i, &typeInfo) != S_OK) {
+            goto enddeleteloop;
+        }
+        if (ITypeInfo_GetTypeAttr(typeInfo, &typeAttr) != S_OK) {
+            goto enddeleteloop;
+        }
+
+        /* the path to the type */
+        StringFromGUID2(&typeAttr->guid, guid, 80);
+        guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
+        snprintf(subKeyName, sizeof(subKeyName), "Interface\\%s", guidA);
+        HeapFree(GetProcessHeap(), 0, guidA);
+
+        /* Delete its bits */
+        if (RegOpenKeyExA(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != S_OK) {
+            goto enddeleteloop;
+        }
+        RegDeleteKeyA(subKey, "ProxyStubClsid");
+        RegDeleteKeyA(subKey, "ProxyStubClsid32");
+        RegDeleteKeyA(subKey, "TypeLib");
+        RegCloseKey(subKey);
+        subKey = NULL;
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, subKeyName);
+
+enddeleteloop:
+        if (typeAttr) ITypeInfo_ReleaseTypeAttr(typeInfo, typeAttr);
+        typeAttr = NULL;
+        if (typeInfo) ITypeInfo_Release(typeInfo);
+        typeInfo = NULL;
+    }
+
+    /* Now, delete the type library path subkey */
+    sprintf(subKeyName, "%lu\\%s", lcid, syskindName);
+    RegDeleteKeyA(key, subKeyName);
+    sprintf(subKeyName, "%lu", lcid);
+    RegDeleteKeyA(key, subKeyName);
+
+    /* check if there is anything besides the FLAGS/HELPDIR keys.
+       If there is, we don't delete them */
+    tmpLength = sizeof(subKeyName);
+    deleteOtherStuff = TRUE;
+    i = 0;
+    while(RegEnumKeyExA(key, i++, subKeyName, &tmpLength, NULL, NULL, NULL, NULL) == S_OK) {
+        tmpLength = sizeof(subKeyName);
+
+        /* if its not FLAGS or HELPDIR, then we must keep the rest of the key */
+        if (!strcmp(subKeyName, "FLAGS")) continue;
+        if (!strcmp(subKeyName, "HELPDIR")) continue;
+        deleteOtherStuff = FALSE;
+        break;
+    }
+
+    /* only delete the other parts of the key if we're absolutely sure */
+    if (deleteOtherStuff) {
+        RegDeleteKeyA(key, "FLAGS");
+        RegDeleteKeyA(key, "HELPDIR");
+        RegCloseKey(key);
+        key = NULL;
+
+        StringFromGUID2(libid, guid, 80);
+        guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
+        sprintf(keyName, "TypeLib\\%s\\%x.%x", guidA, wVerMajor, wVerMinor);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, keyName);
+        sprintf(keyName, "TypeLib\\%s", guidA);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, keyName);
+        HeapFree(GetProcessHeap(), 0, guidA);
+    }
+
+end:
+    if (tlibPath) SysFreeString(tlibPath);
+    if (typeLib) ITypeLib_Release(typeLib);
+    if (subKey) RegCloseKey(subKey);
+    if (key) RegCloseKey(key);
+    return result;
 }
 
 /*======================= ITypeLib implementation =======================*/
