@@ -2087,7 +2087,8 @@ TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
 	TREEVIEW_ComputeItemInternalMetrics(infoPtr, wineItem);
 
         /* if any of the items values changed, redraw the item */
-        if(memcmp(&originalItem, wineItem, sizeof(TREEVIEW_ITEM)))
+        if(memcmp(&originalItem, wineItem, sizeof(TREEVIEW_ITEM)) ||
+           (tvItem->stateMask & TVIS_BOLD))
         {
             if (tvItem->mask & TVIF_INTEGRAL)
 	    {
