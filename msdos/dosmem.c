@@ -18,7 +18,7 @@
 #include "task.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(dosmem)
+DEFAULT_DEBUG_CHANNEL(dosmem)
 DECLARE_DEBUG_CHANNEL(selector)
 
 HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
@@ -422,7 +422,7 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
                                       PAGE_EXECUTE_READWRITE );
         if (!DOSMEM_dosmem)
         {
-            WARN_(dosmem)("Could not allocate DOS memory.\n" );
+            WARN("Could not allocate DOS memory.\n" );
             return FALSE;
         }
         DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,
@@ -489,7 +489,7 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* pseg)
 #ifdef __DOSMEM_DEBUG__
        if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
        {
-	    WARN_(dosmem)("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
+	    WARN("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
 	    return NULL;
        }
        prev = dm;
@@ -671,7 +671,7 @@ UINT DOSMEM_Available(HMODULE16 hModule)
 #ifdef __DOSMEM_DEBUG__
        if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
        {
-	    WARN_(dosmem)("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
+	    WARN("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
 	    return NULL;
        }
        prev = dm;
@@ -733,8 +733,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    LPVOID       lin;
 
    lin=DOSMEM_MemoryBase(0)+(x&0xffff)+(((x&0xffff0000)>>16)*16);
-   TRACE_(selector)("(0x%08lx) returns 0x%p.\n",
-                    x,lin );
+   TRACE_(selector)("(0x%08lx) returns 0x%p.\n", x, lin );
    return lin;
 }
 
@@ -752,9 +751,7 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 		GMEM_FIXED,DOSMEM_dosmem+realsel*16,0x10000,
 		hModule,FALSE,FALSE,FALSE,NULL
 	);
-	TRACE_(selector)("(0x%04x) returns 0x%04x.\n",
-		realsel,sel
-	);
+	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
 	return sel;
 }
 

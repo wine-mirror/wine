@@ -27,7 +27,7 @@
 #include "callback.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(process)
+DEFAULT_DEBUG_CHANNEL(process)
 DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(win32)
 
@@ -604,7 +604,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     switch ( WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) )
     {
     default: 
-        ERR_(process)( "WaitForMultipleObjects failed\n" );
+        ERR( "WaitForMultipleObjects failed\n" );
         break;
 
     case 0:
@@ -994,7 +994,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
                                        DWORD maxset)
 {
-    FIXME_(process)("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    FIXME("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
     if(( minset == -1) && (maxset == -1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
@@ -1008,7 +1008,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
                                        LPDWORD maxset)
 {
-	FIXME_(process)("(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
+	FIXME("(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
 	if (minset) *minset = 32*1024*1024;
 	if (maxset) *maxset = 32*1024*1024;
@@ -1036,7 +1036,7 @@ BOOL WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
       shutdown_priority = level;
     else
       {
-	ERR_(process)("invalid priority level 0x%08lx\n", level);
+	ERR("invalid priority level 0x%08lx\n", level);
 	return FALSE;
       }
     return TRUE;
@@ -1059,7 +1059,7 @@ BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
  */
 BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 {
-    FIXME_(process)("(%d,%d): stub\n",hprocess,disableboost);
+    FIXME("(%d,%d): stub\n",hprocess,disableboost);
     /* Say we can do it. I doubt the program will notice that we don't. */
     return TRUE;
 }

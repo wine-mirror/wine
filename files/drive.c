@@ -45,7 +45,7 @@
 #include "task.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(dosfs)
+DEFAULT_DEBUG_CHANNEL(dosfs)
 DECLARE_DEBUG_CHANNEL(file)
 
 typedef struct
@@ -204,12 +204,13 @@ int DRIVE_Init(void)
                 DRIVE_CurDrive = i;
 
             count++;
-            TRACE_(dosfs)("%s: path=%s type=%s label='%s' serial=%08lx flags=%08x dev=%x ino=%x\n",
-                           name, path, DRIVE_Types[drive->type],
-                           drive->label, drive->serial, drive->flags,
-                           (int)drive->dev, (int)drive->ino );
+            TRACE("%s: path=%s type=%s label='%s' serial=%08lx "
+                  "flags=%08x dev=%x ino=%x\n",
+                  name, path, DRIVE_Types[drive->type],
+                  drive->label, drive->serial, drive->flags,
+                  (int)drive->dev, (int)drive->ino );
         }
-        else WARN_(dosfs)("%s: not defined\n", name );
+        else WARN("%s: not defined\n", name );
     }
 
     if (!count) 
@@ -276,7 +277,7 @@ int DRIVE_SetCurrentDrive( int drive )
         SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
-    TRACE_(dosfs)("%c:\n", 'A' + drive );
+    TRACE("%c:\n", 'A' + drive );
     DRIVE_CurDrive = drive;
     if (pTask) pTask->curdrive = drive | 0x80;
     return 1;
@@ -336,9 +337,8 @@ int DRIVE_FindDriveRoot( const char **path )
     *next = 0;
 
     if (rootdrive != -1)
-        TRACE_(dosfs)("%s -> drive %c:, root='%s', name='%s'\n",
-                       buffer, 'A' + rootdrive,
-                       DOSDrives[rootdrive].root, *path );
+        TRACE("%s -> drive %c:, root='%s', name='%s'\n",
+              buffer, 'A' + rootdrive, DOSDrives[rootdrive].root, *path );
     return rootdrive;
 }
 
@@ -459,7 +459,7 @@ int DRIVE_Chdir( int drive, const char *path )
 
     strcpy( buffer, "A:" );
     buffer[0] += drive;
-    TRACE_(dosfs)("(%c:,%s)\n", buffer[0], path );
+    TRACE("(%c:,%s)\n", buffer[0], path );
     lstrcpynA( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
@@ -472,7 +472,7 @@ int DRIVE_Chdir( int drive, const char *path )
     unix_cwd = full_name.long_name + strlen( DOSDrives[drive].root );
     while (*unix_cwd == '/') unix_cwd++;
 
-    TRACE_(dosfs)("(%c:): unix_cwd=%s dos_cwd=%s\n",
+    TRACE("(%c:): unix_cwd=%s dos_cwd=%s\n",
                    'A' + drive, unix_cwd, full_name.short_name + 3 );
 
     HeapFree( SystemHeap, 0, DOSDrives[drive].dos_cwd );
@@ -545,10 +545,8 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 
     if ( new->root )
     {
-        TRACE_(dosfs)("Can\'t map drive %c to drive %c - "
-	                        "drive %c already exists\n",
-			'A' + existing_drive, 'A' + new_drive,
-			'A' + new_drive );
+        TRACE("Can\'t map drive %c to drive %c - drive %c already exists\n",
+              'A' + existing_drive, 'A' + new_drive, 'A' + new_drive );
 	/* it is already mapped there, so return success */
 	if (!strcmp(old->root,new->root))
 	    return 1;
@@ -565,8 +563,8 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     new->dev = old->dev;
     new->ino = old->ino;
 
-    TRACE_(dosfs)("Drive %c is now equal to drive %c\n",
-                    'A' + new_drive, 'A' + existing_drive );
+    TRACE("Drive %c is now equal to drive %c\n",
+          'A' + new_drive, 'A' + existing_drive );
 
     return 1;
 }
@@ -662,7 +660,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 #endif
     {
         FILE_SetDosError();
-        WARN_(dosfs)("cannot do statfs(%s)\n", DOSDrives[drive].root);
+        WARN("cannot do statfs(%s)\n", DOSDrives[drive].root);
         return 0;
     }
 
@@ -855,10 +853,10 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
     {
         if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
         {
-            FIXME_(dosfs)("there are valid root names which are not supported yet\n");
+            FIXME("there are valid root names which are not supported yet\n");
 	    /* ..like UNC names, for instance. */
 
-            WARN_(dosfs)("invalid root '%s'\n", root );
+            WARN("invalid root '%s'\n", root );
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';
@@ -893,7 +891,7 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 	    if (GetVersionExA(&ovi))
 	    {
 	      if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT && ovi.dwMajorVersion > 4)
-                  FIXME_(dosfs)("no per-user quota support yet\n");
+                  FIXME("no per-user quota support yet\n");
 	    }
 	}
 
@@ -936,7 +934,7 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 UINT16 WINAPI GetDriveType16(
 	UINT16 drive	/* [in] number (NOT letter) of drive */
 ) {
-    TRACE_(dosfs)("(%c:)\n", 'A' + drive );
+    TRACE("(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
@@ -981,14 +979,14 @@ UINT16 WINAPI GetDriveType16(
 UINT WINAPI GetDriveTypeA(LPCSTR root /* String describing drive */)
 {
     int drive;
-    TRACE_(dosfs)("(%s)\n", debugstr_a(root));
+    TRACE("(%s)\n", debugstr_a(root));
 
     if (NULL == root) drive = DRIVE_GetCurrentDrive();
     else
     {
         if ((root[1]) && (root[1] != ':'))
 	{
-	    WARN_(dosfs)("invalid root '%s'\n", debugstr_a(root));
+	    WARN("invalid root '%s'\n", debugstr_a(root));
 	    return DRIVE_DOESNOTEXIST;
 	}
 	drive = toupper(root[0]) - 'A';
@@ -1198,7 +1196,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
     {
         if ((root[1]) && (root[1] != ':'))
         {
-            WARN_(dosfs)("invalid root '%s'\n",root);
+            WARN("invalid root '%s'\n",root);
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';
@@ -1271,7 +1269,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
  */
 BOOL WINAPI SetVolumeLabelA(LPCSTR rootpath,LPCSTR volname)
 {
-	FIXME_(dosfs)("(%s,%s),stub!\n",rootpath,volname);
+	FIXME("(%s,%s),stub!\n",rootpath,volname);
 	return TRUE;
 }
 

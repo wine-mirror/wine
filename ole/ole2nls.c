@@ -19,8 +19,8 @@
 #include "crtdll.h"
 #include "main.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
 DECLARE_DEBUG_CHANNEL(file)
-DECLARE_DEBUG_CHANNEL(ole)
 DECLARE_DEBUG_CHANNEL(string)
 DECLARE_DEBUG_CHANNEL(win32)
 
@@ -690,7 +690,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	int	found,i;
 	int	lang=0;
 
-  TRACE_(ole)("(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
+  TRACE("(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
 
   if (len && (! buf) ) {
     SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -722,7 +722,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 		i++;
 	}
 	if (!retString) {
-      FIXME_(ole)("Unkown LC type %lX\n",LCType);
+      FIXME("Unkown LC type %lX\n",LCType);
 		return 0;
 	}
 
@@ -752,7 +752,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
     }
 
     if(!found) {
-      ERR_(ole)("'%s' not supported for your language (%04X).\n",
+      ERR("'%s' not supported for your language (%04X).\n",
 			retString,(WORD)lcid);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;			
@@ -800,7 +800,7 @@ INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
  */
 BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
-    FIXME_(ole)("(%ld,%ld,%s): stub\n",lcid,lctype,data);
+    FIXME("(%ld,%ld,%s): stub\n",lcid,lctype,data);
     return TRUE;
 }
 
@@ -1479,7 +1479,7 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 	  return TRUE;
 
 	default:
-	  ERR_(ole)("Unknown dwInfoType:%ld\n",dwInfoType);
+	  ERR("Unknown dwInfoType:%ld\n",dwInfoType);
 	  return FALSE;
 	}
 }
@@ -1512,10 +1512,10 @@ BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
 	
 	switch (dwInfoType) {
 	case CT_CTYPE2:
-		FIXME_(ole)("CT_CTYPE2 not supported.\n");
+		FIXME("CT_CTYPE2 not supported.\n");
 		return FALSE;
 	case CT_CTYPE3:
-		FIXME_(ole)("CT_CTYPE3 not supported.\n");
+		FIXME("CT_CTYPE3 not supported.\n");
 		return FALSE;
 	default:break;
 	}
@@ -2091,7 +2091,7 @@ INT WINAPI LCMapStringA(
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
-    ERR_(ole)("(src=%s,dest=%s): Invalid NULL string\n", srcstr, dststr);
+    ERR("(src=%s,dest=%s): Invalid NULL string\n", srcstr, dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -2329,7 +2329,7 @@ INT WINAPI LCMapStringW(
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
-    ERR_(ole)("(src=%p,dst=%p): Invalid NULL string\n", srcstr, dststr);
+    ERR("(src=%p,dst=%p): Invalid NULL string\n", srcstr, dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -2406,18 +2406,18 @@ UINT WINAPI CompareStringA(
   int len1,len2;
   int result;
   LPSTR sk1,sk2;
-  TRACE_(ole)("%s and %s\n",
+  TRACE("%s and %s\n",
 	debugstr_a (s1), debugstr_a (s2));
 
   if ( (s1==NULL) || (s2==NULL) )
   {    
-    ERR_(ole)("(s1=%s,s2=%s): Invalid NULL string\n", s1, s2);
+    ERR("(s1=%s,s2=%s): Invalid NULL string\n", s1, s2);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
 
   if(fdwStyle & NORM_IGNORESYMBOLS)
-    FIXME_(ole)("IGNORESYMBOLS not supported\n");
+    FIXME("IGNORESYMBOLS not supported\n");
   	
   mapstring_flags = LCMAP_SORTKEY | fdwStyle ;
   len1 = LCMapStringA(lcid,mapstring_flags,s1,l1,NULL,0);
@@ -2431,7 +2431,7 @@ UINT WINAPI CompareStringA(
   if ( (!LCMapStringA(lcid,mapstring_flags,s1,l1,sk1,len1))
 	 || (!LCMapStringA(lcid,mapstring_flags,s2,l2,sk2,len2)) )
   {
-    ERR_(ole)("Bug in LCmapString32A.\n");
+    ERR("Bug in LCmapString32A.\n");
     result = 0;
   }
   else
@@ -2462,9 +2462,9 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
-		FIXME_(ole)("IGNORENONSPACE not supprted\n");
+		FIXME("IGNORENONSPACE not supprted\n");
 	if(fdwStyle & NORM_IGNORESYMBOLS)
-		FIXME_(ole)("IGNORESYMBOLS not supported\n");
+		FIXME("IGNORESYMBOLS not supported\n");
 
 	/* Is strcmp defaulting to string sort or to word sort?? */
 	/* FIXME: Handle NORM_STRINGSORT */
@@ -2486,7 +2486,7 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
  */
 BOOL16 WINAPI RegisterNLSInfoChanged16(LPVOID/*FIXME*/ lpNewNLSInfo)
 {
-	FIXME_(ole)("Fully implemented, but doesn't effect anything.\n");
+	FIXME("Fully implemented, but doesn't effect anything.\n");
 
 	if (!lpNewNLSInfo)
 	{
@@ -2560,13 +2560,13 @@ static INT OLE_GetFormatA(LCID locale,
    const char ** dgfmt = _dgfmt - 1; 
 
    /* report, for debugging */
-   TRACE_(ole)("(0x%lx,0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
+   TRACE("(0x%lx,0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
    	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 _format, _format, date, datelen);
   
    if(datelen == 0) {
-     FIXME_(ole)("datelen = 0, returning 255\n");
+     FIXME("datelen = 0, returning 255\n");
      return 255;
    }
 
@@ -2652,17 +2652,17 @@ static INT OLE_GetFormatA(LCID locale,
 		      sprintf(buf, "%d", xtime->wYear);
 	       } else if (count == 3) {
 		  strcpy(buf, "yyy");
-		  WARN_(ole)("unknown format, c=%c, n=%d\n",  type, count);
+		  WARN("unknown format, c=%c, n=%d\n",  type, count);
 		 } else {
 		  sprintf(buf, dgfmt[count], xtime->wYear % 100);
 	       }
 	    } else if (type == 'g') {
 	       if        (count == 2) {
-		  FIXME_(ole)("LOCALE_ICALENDARTYPE unimp.\n");
+		  FIXME("LOCALE_ICALENDARTYPE unimp.\n");
 		  strcpy(buf, "AD");
 	    } else {
 		  strcpy(buf, "g");
-		  WARN_(ole)("unknown format, c=%c, n=%d\n", type, count);
+		  WARN("unknown format, c=%c, n=%d\n", type, count);
 	       }
 	    } else if (type == 'h') {
 	       /* gives us hours 1:00 -- 12:00 */
@@ -2701,7 +2701,7 @@ static INT OLE_GetFormatA(LCID locale,
 	       strncat(date, buf, datelen - outpos);
 		 date[datelen - 1] = '\0';
 		 SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	       WARN_(ole)("insufficient buffer\n");
+	       WARN("insufficient buffer\n");
 		 return 0;
 	    }
 
@@ -2745,7 +2745,7 @@ static INT OLE_GetFormatA(LCID locale,
    if (outpos > datelen-1) outpos = datelen-1;
    date[outpos] = '\0';
    
-   TRACE_(ole)("OLE_GetFormatA returns string '%s', len %d\n",
+   TRACE("OLE_GetFormatA returns string '%s', len %d\n",
 	       date, outpos);
    return outpos;
 }
@@ -2773,14 +2773,14 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    argarr[2] = arg2;
 
    /* make a debug report */
-   TRACE_(ole)("args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
+   TRACE("args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
    	      "%p with max len %d\n",
 	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 debugstr_w(format), format, output, outlen);
    
    if(outlen == 0) {
-     FIXME_(ole)("outlen = 0, returning 255\n");
+     FIXME("outlen = 0, returning 255\n");
      return 255;
    }
 
@@ -2861,7 +2861,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	    }
 	 } else if (type == 'g') {
 	    if        (count == 2) {
-	       FIXME_(ole)("LOCALE_ICALENDARTYPE unimplemented\n");
+	       FIXME("LOCALE_ICALENDARTYPE unimplemented\n");
 	       lstrcpynAtoW(buf, "AD", 5);
 	    } else {
 	       /* Win API sez we copy it verbatim */
@@ -2940,7 +2940,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 
    if (Overflow) {
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-      WARN_(ole)(" buffer overflow\n");
+      WARN(" buffer overflow\n");
    };
 
    /* final string terminator and sanity check */
@@ -2948,7 +2948,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    if (outpos > outlen-1) outpos = outlen-1;
    output[outpos] = '0';
 
-   TRACE_(ole)(" returning %s\n", debugstr_w(output));
+   TRACE(" returning %s\n", debugstr_w(output));
 	
    return (!Overflow) ? outlen : 0;
    
@@ -2989,7 +2989,7 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
   LCID thislocale;
   INT ret;
 
-  TRACE_(ole)("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
 	      locale,flags,xtime,format,date,datelen);
   
   if (!locale) {
@@ -3026,7 +3026,7 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 		       date, datelen);
   
 
-   TRACE_(ole)(
+   TRACE(
 	       "GetDateFormat32A() returning %d, with data=%s\n",
 	       ret, date);
   return ret;
@@ -3047,7 +3047,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 {
    unsigned short datearr[] = {'1','9','9','4','-','1','-','1',0};
 
-   FIXME_(ole)("STUB (should call OLE_GetFormatW)\n");   
+   FIXME("STUB (should call OLE_GetFormatW)\n");   
    lstrcpynW(date, datearr, datelen);
    return (  datelen < 9) ? datelen : 9;
    
@@ -3060,7 +3060,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 BOOL WINAPI EnumDateFormatsA(
   DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
 {
-  FIXME_(ole)("Only US English supported\n");
+  FIXME("Only US English supported\n");
 
   if(!lpDateFmtEnumProc)
     {
@@ -3085,7 +3085,7 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dd MMMM, yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME_(ole)("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
@@ -3097,7 +3097,7 @@ BOOL WINAPI EnumDateFormatsA(
 BOOL WINAPI EnumDateFormatsW(
   DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  FIXME_(ole)("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
+  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -3108,7 +3108,7 @@ BOOL WINAPI EnumDateFormatsW(
 BOOL WINAPI EnumTimeFormatsA(
   TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  FIXME_(ole)("Only US English supported\n");
+  FIXME("Only US English supported\n");
 
   if(!lpTimeFmtEnumProc)
     {
@@ -3118,7 +3118,7 @@ BOOL WINAPI EnumTimeFormatsA(
 
   if(dwFlags)
     {
-      FIXME_(ole)("Unknown time format (%ld)\n", dwFlags); 
+      FIXME("Unknown time format (%ld)\n", dwFlags); 
     }
   
   if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
@@ -3135,7 +3135,7 @@ BOOL WINAPI EnumTimeFormatsA(
 BOOL WINAPI EnumTimeFormatsW(
   TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  FIXME_(ole)("(%p,%ld,%ld): stub\n", lpTimeFmtEnumProc, Locale, dwFlags);
+  FIXME("(%p,%ld,%ld): stub\n", lpTimeFmtEnumProc, Locale, dwFlags);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -3217,12 +3217,12 @@ GetTimeFormatA(LCID locale,        /* in  */
   DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */
   INT ret;
     
-  TRACE_(ole)("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
+  TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
 
   thislocale = OLE2NLS_CheckLocale ( locale );
 
   if ( flags & (TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT ))
-  { FIXME_(ole)("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
+  { FIXME("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
   }
   
   flags &= (TIME_NOSECONDS | TIME_NOMINUTESORSECONDS); /* mask for OLE_GetFormatA*/
@@ -3270,13 +3270,13 @@ GetTimeFormatW(LCID locale,        /* in  */
 	DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */
 	INT ret;
 	    
-	TRACE_(ole)("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,
+	TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,
 	xtime,debugstr_w(format),timestr,timelen);
 
 	thislocale = OLE2NLS_CheckLocale ( locale );
 
 	if ( flags & (TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT ))
-	{ FIXME_(ole)("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
+	{ FIXME("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
 	}
   
 	flags &= (TIME_NOSECONDS | TIME_NOMINUTESORSECONDS); /* mask for OLE_GetFormatA*/
@@ -3311,6 +3311,6 @@ GetTimeFormatW(LCID locale,        /* in  */
 BOOL WINAPI EnumCalendarInfoA(
 	CALINFO_ENUMPROCA calinfoproc,LCID locale,CALID calendar,CALTYPE caltype
 ) {
-	FIXME_(ole)("(%p,0x%04lx,0x%08lx,0x%08lx),stub!\n",calinfoproc,locale,calendar,caltype);
+	FIXME("(%p,0x%04lx,0x%08lx,0x%08lx),stub!\n",calinfoproc,locale,calendar,caltype);
 	return FALSE;
 }

@@ -7,7 +7,7 @@
 #include "dc.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(bitblt)
+DEFAULT_DEBUG_CHANNEL(bitblt)
 DECLARE_DEBUG_CHANNEL(bitmap)
 DECLARE_DEBUG_CHANNEL(gdi)
 
@@ -21,8 +21,7 @@ BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
 
-    TRACE_(bitblt)("%04x %d,%d %dx%d %06lx\n",
-                    hdc, left, top, width, height, rop );
+    TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
     return dc->funcs->pPatBlt( dc, left, top, width, height, rop );
 }
 
@@ -36,8 +35,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
 
-    TRACE_(bitblt)("%04x %d,%d %dx%d %06lx\n",
-                    hdc, left, top, width, height, rop );
+    TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
     return dc->funcs->pPatBlt( dc, left, top, width, height, rop );
 }
 
@@ -55,9 +53,9 @@ BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
     if (!dcDst->funcs->pBitBlt) return FALSE;
     dcSrc = DC_GetDCPtr( hdcSrc );
 
-    TRACE_(bitblt)("hdcSrc=%04x %d,%d %d bpp -> hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
-		 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
-		 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
+    TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
+          hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
+          hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
     return dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
                                   dcSrc, xSrc, ySrc, rop );
 }
@@ -76,9 +74,9 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
     if (!dcDst->funcs->pBitBlt) return FALSE;
     dcSrc = DC_GetDCPtr( hdcSrc );
 
-    TRACE_(bitblt)("hdcSrc=%04x %d,%d %d bpp -> hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
-		 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
-		 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
+    TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
+          hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
+          hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
     return dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
                                   dcSrc, xSrc, ySrc, rop );
 }
@@ -98,10 +96,10 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
     if (!dcDst->funcs->pStretchBlt) return FALSE;
     dcSrc = DC_GetDCPtr( hdcSrc );
 
-    TRACE_(bitblt)("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
-		 hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-		 dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
-		 widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
+    TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+          hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
+          dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
+          widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
     return dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       rop );
@@ -122,10 +120,10 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
     if (!dcDst->funcs->pStretchBlt) return FALSE;
     dcSrc = DC_GetDCPtr( hdcSrc );
 
-    TRACE_(bitblt)("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
-		 hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-		 dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
-		 widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
+    TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+          hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
+          dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
+          widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
     return dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       rop );

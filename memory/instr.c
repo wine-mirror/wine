@@ -13,7 +13,7 @@
 #include "selectors.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int)
 DECLARE_DEBUG_CHANNEL(io)
 
 #ifdef __i386__
@@ -75,7 +75,7 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
         return TRUE;
     }
     if (!IS_SELECTOR_SYSTEM(*sel) && !IS_SELECTOR_FREE(*sel))
-        ERR_(int)("Got protection fault on valid selector, maybe your kernel is too old?\n" );
+        ERR("Got protection fault on valid selector, maybe your kernel is too old?\n" );
     return FALSE;  /* Can't replace selector, crashdump */
 }
 
@@ -672,7 +672,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
         case 0xcd: /* int <XX> */
             if (long_op)
             {
-                ERR_(int)("int xx from 32-bit code is not supported.\n");
+                ERR("int xx from 32-bit code is not supported.\n");
                 break;  /* Unable to emulate it */
             }
             else

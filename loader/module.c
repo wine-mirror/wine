@@ -32,7 +32,7 @@
 #include "loadorder.h"
 #include "elfdll.h"
 
-DECLARE_DEBUG_CHANNEL(module)
+DEFAULT_DEBUG_CHANNEL(module)
 DECLARE_DEBUG_CHANNEL(win32)
 
 /*************************************************************************
@@ -77,7 +77,7 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
     	return PROCESS_Current()->exe_modref;
 
     if (!HIWORD(hmod)) {
-    	ERR_(module)("tried to lookup 0x%04x in win32 module handler!\n",hmod);
+    	ERR("tried to lookup 0x%04x in win32 module handler!\n",hmod);
 	return NULL;
     }
     for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next )
@@ -105,8 +105,8 @@ static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         return TRUE;
 
 
-    TRACE_(module)("(%s,%s,%p) - CALL\n", 
-           wm->modname, typeName[type], lpReserved );
+    TRACE("(%s,%s,%p) - CALL\n", 
+          wm->modname, typeName[type], lpReserved );
 
     /* Call the initialization routine */
     switch ( wm->type )
@@ -120,13 +120,13 @@ static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         break;
 
     default:
-        ERR_(module)("wine_modref type %d not handled.\n", wm->type );
+        ERR("wine_modref type %d not handled.\n", wm->type );
         retv = FALSE;
         break;
     }
 
-    TRACE_(module)("(%s,%s,%p) - RETURN %d\n", 
-           wm->modname, typeName[type], lpReserved, retv );
+    TRACE("(%s,%s,%p) - RETURN %d\n", 
+          wm->modname, typeName[type], lpReserved, retv );
 
     return retv;
 }
@@ -174,8 +174,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
          || ( wm->flags & WINE_MODREF_PROCESS_ATTACHED ) )
         return retv;
 
-    TRACE_(module)("(%s,%p) - START\n", 
-           wm->modname, lpReserved );
+    TRACE("(%s,%p) - START\n", wm->modname, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
     wm->flags |= WINE_MODREF_MARKER;
@@ -207,8 +206,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     /* Remove recursion flag */
     wm->flags &= ~WINE_MODREF_MARKER;
 
-    TRACE_(module)("(%s,%p) - END\n", 
-           wm->modname, lpReserved );
+    TRACE("(%s,%p) - END\n", wm->modname, lpReserved );
 
     return retv;
 }
@@ -832,7 +830,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         hInstance = GetLastError();
         if ( hInstance < 32 ) return hInstance;
 
-        FIXME_(module)("Strange error set by CreateProcess: %d\n", hInstance );
+        FIXME("Strange error set by CreateProcess: %d\n", hInstance );
         return 11;
     }
     
@@ -911,8 +909,7 @@ static int get_makename_token(LPCSTR *from, LPSTR *to )
 
     **to = 0;   /* terminate output string */
 
-    TRACE_(module)("returning token len=%d, string=%s\n",
-              len, to_old);
+    TRACE("returning token len=%d, string=%s\n", len, to_old);
 
     return len;     
 }
@@ -951,7 +948,7 @@ static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
           found = FALSE;
           break;
 	}
-        TRACE_(module)("checking if file exists '%s'\n", name);
+        TRACE("checking if file exists '%s'\n", name);
         retlen = SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, &lastpart);
         if ( retlen && (retlen < sizeof(buffer)) )  break;
     } while (1);
@@ -962,15 +959,15 @@ static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
           strcpy( name, buffer );
        } else {
           /* not enough space to return full path string */
-          FIXME_(module)("internal string not long enough, need %d\n",
+          FIXME("internal string not long enough, need %d\n",
              strlen(buffer) );
         }
     }
 
     /* all done, indicate end of module name and then trace and exit */
     if (after) *after = from;
-    TRACE_(module)("%i, selected file name '%s'\n    and cmdline as %s\n",
-            found, name, debugstr_a(from));
+    TRACE("%i, selected file name '%s'\n    and cmdline as %s\n",
+          found, name, debugstr_a(from));
     return found;
     }
 
@@ -1027,11 +1024,11 @@ static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
     } while (1);
 
     if (!SearchPathA( NULL, buffer, ".exe", namelen, name, NULL )) {
-        TRACE_(module)("file not found '%s'\n", buffer );
+        TRACE("file not found '%s'\n", buffer );
         return FALSE;
     }
 
-    TRACE_(module)("selected as file name '%s'\n", name );
+    TRACE("selected as file name '%s'\n", name );
     return TRUE;
 }
 
@@ -1095,58 +1092,58 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     /* Warn if unsupported features are used */
 
     if (dwCreationFlags & DETACHED_PROCESS)
-        FIXME_(module)("(%s,...): DETACHED_PROCESS ignored\n", name);
+        FIXME("(%s,...): DETACHED_PROCESS ignored\n", name);
     if (dwCreationFlags & CREATE_NEW_CONSOLE)
-        FIXME_(module)("(%s,...): CREATE_NEW_CONSOLE ignored\n", name);
+        FIXME("(%s,...): CREATE_NEW_CONSOLE ignored\n", name);
     if (dwCreationFlags & NORMAL_PRIORITY_CLASS)
-        FIXME_(module)("(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
+        FIXME("(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
     if (dwCreationFlags & IDLE_PRIORITY_CLASS)
-        FIXME_(module)("(%s,...): IDLE_PRIORITY_CLASS ignored\n", name);
+        FIXME("(%s,...): IDLE_PRIORITY_CLASS ignored\n", name);
     if (dwCreationFlags & HIGH_PRIORITY_CLASS)
-        FIXME_(module)("(%s,...): HIGH_PRIORITY_CLASS ignored\n", name);
+        FIXME("(%s,...): HIGH_PRIORITY_CLASS ignored\n", name);
     if (dwCreationFlags & REALTIME_PRIORITY_CLASS)
-        FIXME_(module)("(%s,...): REALTIME_PRIORITY_CLASS ignored\n", name);
+        FIXME("(%s,...): REALTIME_PRIORITY_CLASS ignored\n", name);
     if (dwCreationFlags & CREATE_NEW_PROCESS_GROUP)
-        FIXME_(module)("(%s,...): CREATE_NEW_PROCESS_GROUP ignored\n", name);
+        FIXME("(%s,...): CREATE_NEW_PROCESS_GROUP ignored\n", name);
     if (dwCreationFlags & CREATE_UNICODE_ENVIRONMENT)
-        FIXME_(module)("(%s,...): CREATE_UNICODE_ENVIRONMENT ignored\n", name);
+        FIXME("(%s,...): CREATE_UNICODE_ENVIRONMENT ignored\n", name);
     if (dwCreationFlags & CREATE_SEPARATE_WOW_VDM)
-        FIXME_(module)("(%s,...): CREATE_SEPARATE_WOW_VDM ignored\n", name);
+        FIXME("(%s,...): CREATE_SEPARATE_WOW_VDM ignored\n", name);
     if (dwCreationFlags & CREATE_SHARED_WOW_VDM)
-        FIXME_(module)("(%s,...): CREATE_SHARED_WOW_VDM ignored\n", name);
+        FIXME("(%s,...): CREATE_SHARED_WOW_VDM ignored\n", name);
     if (dwCreationFlags & CREATE_DEFAULT_ERROR_MODE)
-        FIXME_(module)("(%s,...): CREATE_DEFAULT_ERROR_MODE ignored\n", name);
+        FIXME("(%s,...): CREATE_DEFAULT_ERROR_MODE ignored\n", name);
     if (dwCreationFlags & CREATE_NO_WINDOW)
-        FIXME_(module)("(%s,...): CREATE_NO_WINDOW ignored\n", name);
+        FIXME("(%s,...): CREATE_NO_WINDOW ignored\n", name);
     if (dwCreationFlags & PROFILE_USER)
-        FIXME_(module)("(%s,...): PROFILE_USER ignored\n", name);
+        FIXME("(%s,...): PROFILE_USER ignored\n", name);
     if (dwCreationFlags & PROFILE_KERNEL)
-        FIXME_(module)("(%s,...): PROFILE_KERNEL ignored\n", name);
+        FIXME("(%s,...): PROFILE_KERNEL ignored\n", name);
     if (dwCreationFlags & PROFILE_SERVER)
-        FIXME_(module)("(%s,...): PROFILE_SERVER ignored\n", name);
+        FIXME("(%s,...): PROFILE_SERVER ignored\n", name);
     if (lpCurrentDirectory)
-        FIXME_(module)("(%s,...): lpCurrentDirectory %s ignored\n", 
+        FIXME("(%s,...): lpCurrentDirectory %s ignored\n", 
                       name, lpCurrentDirectory);
     if (lpStartupInfo->lpDesktop)
-        FIXME_(module)("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
+        FIXME("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
                       name, lpStartupInfo->lpDesktop);
     if (lpStartupInfo->lpTitle)
-        FIXME_(module)("(%s,...): lpStartupInfo->lpTitle %s ignored\n", 
+        FIXME("(%s,...): lpStartupInfo->lpTitle %s ignored\n", 
                       name, lpStartupInfo->lpTitle);
     if (lpStartupInfo->dwFlags & STARTF_USECOUNTCHARS)
-        FIXME_(module)("(%s,...): STARTF_USECOUNTCHARS (%ld,%ld) ignored\n", 
+        FIXME("(%s,...): STARTF_USECOUNTCHARS (%ld,%ld) ignored\n", 
                       name, lpStartupInfo->dwXCountChars, lpStartupInfo->dwYCountChars);
     if (lpStartupInfo->dwFlags & STARTF_USEFILLATTRIBUTE)
-        FIXME_(module)("(%s,...): STARTF_USEFILLATTRIBUTE %lx ignored\n", 
+        FIXME("(%s,...): STARTF_USEFILLATTRIBUTE %lx ignored\n", 
                       name, lpStartupInfo->dwFillAttribute);
     if (lpStartupInfo->dwFlags & STARTF_RUNFULLSCREEN)
-        FIXME_(module)("(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
+        FIXME("(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_FORCEONFEEDBACK)
-        FIXME_(module)("(%s,...): STARTF_FORCEONFEEDBACK ignored\n", name);
+        FIXME("(%s,...): STARTF_FORCEONFEEDBACK ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_FORCEOFFFEEDBACK)
-        FIXME_(module)("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
+        FIXME("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
-        FIXME_(module)("(%s,...): STARTF_USEHOTKEY ignored\n", name);
+        FIXME("(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
 
     /* Load file and create process */
@@ -1209,7 +1206,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         case SCS_PIF_BINARY:
         case SCS_POSIX_BINARY:
         case SCS_OS216_BINARY:
-            FIXME_(module)("Unsupported executable type: %ld\n", type );
+            FIXME("Unsupported executable type: %ld\n", type );
             /* fall through */
     
         default:
@@ -1309,7 +1306,7 @@ DWORD WINAPI GetModuleFileNameA(
     else
       lstrcpynA( lpFileName, wm->short_filename, size );
        
-    TRACE_(module)("%s\n", lpFileName );
+    TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
  
@@ -1388,7 +1385,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	{
 		if(!(pwm->flags & WINE_MODREF_MARKER))
 			pwm->refCount++;
-		TRACE_(module)("Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
+		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
 		LeaveCriticalSection(&PROCESS_Current()->crit_section);
 		return pwm;
 	}
@@ -1400,27 +1397,27 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		switch(plo->loadorder[i])
 		{
 		case MODULE_LOADORDER_DLL:
-			TRACE_(module)("Trying native dll '%s'\n", libname);
+			TRACE("Trying native dll '%s'\n", libname);
 			pwm = PE_LoadLibraryExA(libname, flags, &err);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
-			TRACE_(module)("Trying elfdll '%s'\n", libname);
+			TRACE("Trying elfdll '%s'\n", libname);
 			pwm = ELFDLL_LoadLibraryExA(libname, flags, &err);
 			break;
 
 		case MODULE_LOADORDER_SO:
-			TRACE_(module)("Trying so-library '%s'\n", libname);
+			TRACE("Trying so-library '%s'\n", libname);
 			pwm = ELF_LoadLibraryExA(libname, flags, &err);
 			break;
 
 		case MODULE_LOADORDER_BI:
-			TRACE_(module)("Trying built-in '%s'\n", libname);
+			TRACE("Trying built-in '%s'\n", libname);
 			pwm = BUILTIN32_LoadLibraryExA(libname, flags, &err);
 			break;
 
 		default:
-			ERR_(module)("Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
+			ERR("Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
 		/* Fall through */
 
 		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
@@ -1431,7 +1428,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		if(pwm)
 		{
 			/* Initialize DLL just loaded */
-			TRACE_(module)("Loaded module '%s' at 0x%08x, \n", libname, pwm->module);
+			TRACE("Loaded module '%s' at 0x%08x, \n", libname, pwm->module);
 
 			/* Set the refCount here so that an attach failure will */
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
@@ -1446,7 +1443,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			break;
 	}
 
-	WARN_(module)("Failed to load module '%s'; error=0x%08lx, \n", libname, err);
+	WARN("Failed to load module '%s'; error=0x%08lx, \n", libname, err);
 	SetLastError(err);
 	LeaveCriticalSection(&PROCESS_Current()->crit_section);
 	return NULL;
@@ -1532,7 +1529,7 @@ static void MODULE_FlushModrefs(void)
 		case MODULE32_BI:	BUILTIN32_UnloadLibrary(wm);	break;
 
 		default:
-			ERR_(module)("Invalid or unhandled MODREF type %d encountered (wm=%p)\n", wm->type, wm);
+			ERR("Invalid or unhandled MODREF type %d encountered (wm=%p)\n", wm->type, wm);
 		}
 	}
 }
@@ -1576,7 +1573,7 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
         return;
 
     --wm->refCount;
-    TRACE_(module)("(%s) refCount: %d\n", wm->modname, wm->refCount );
+    TRACE("(%s) refCount: %d\n", wm->modname, wm->refCount );
 
     if ( wm->refCount == 0 )
     {
@@ -1597,7 +1594,7 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
  */
 BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
 {
-    TRACE_(module)("(%s) - START\n", wm->modname );
+    TRACE("(%s) - START\n", wm->modname );
 
     /* Recursively decrement reference counts */
     MODULE_DecRefCount( wm );
@@ -1612,7 +1609,7 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
 
     MODULE_FlushModrefs();
 
-    TRACE_(module)("(%s) - END\n", wm->modname );
+    TRACE("(%s) - END\n", wm->modname );
 
     return TRUE;
 }
@@ -1660,27 +1657,25 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
     FARPROC16	ret;
 
     if (!hModule) {
-    	WARN_(module)("hModule may not be 0!\n");
+    	WARN("hModule may not be 0!\n");
 	return (FARPROC16)0;
     }
     if (HIWORD(hModule))
     {
-    	WARN_(module)("hModule is Win32 handle (%08x)\n", hModule );
+    	WARN("hModule is Win32 handle (%08x)\n", hModule );
 	return (FARPROC16)0;
     }
     hModule = GetExePtr( hModule );
     if (HIWORD(name)) {
         ordinal = NE_GetOrdinal( hModule, name );
-        TRACE_(module)("%04x '%s'\n",
-                        hModule, name );
+        TRACE("%04x '%s'\n", hModule, name );
     } else {
         ordinal = LOWORD(name);
-        TRACE_(module)("%04x %04x\n",
-                        hModule, ordinal );
+        TRACE("%04x %04x\n", hModule, ordinal );
     }
     if (!ordinal) return (FARPROC16)0;
     ret = NE_GetEntryPoint( hModule, ordinal );
-    TRACE_(module)("returning %08x\n",(UINT)ret);
+    TRACE("returning %08x\n",(UINT)ret);
     return ret;
 }
 
@@ -1698,20 +1693,18 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
     if (HIWORD(name) != 0)
     {
         ordinal = NE_GetOrdinal( hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
-        TRACE_(module)("%04x '%s'\n",
-                        hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
+        TRACE("%04x '%s'\n", hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
     }
     else
     {
         ordinal = LOWORD(name);
-        TRACE_(module)("%04x %04x\n",
-                        hModule, ordinal );
+        TRACE("%04x %04x\n", hModule, ordinal );
     }
     if (!ordinal) return (FARPROC16)0;
 
     ret = NE_GetEntryPoint( hModule, ordinal );
 
-    TRACE_(module)("returning %08x\n", (UINT)ret );
+    TRACE("returning %08x\n", (UINT)ret );
     return ret;
 }
 
@@ -1762,7 +1755,7 @@ FARPROC MODULE_GetProcAddress(
 	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
 	return retproc;
     default:
-    	ERR_(module)("wine_modref type %d not handled.\n",wm->type);
+    	ERR("wine_modref type %d not handled.\n",wm->type);
     	SetLastError(ERROR_INVALID_HANDLE);
     	return (FARPROC)0;
     }

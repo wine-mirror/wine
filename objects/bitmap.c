@@ -19,7 +19,7 @@
 #include "monitor.h"
 #include "wine/winuser16.h"
 
-DECLARE_DEBUG_CHANNEL(bitmap)
+DEFAULT_DEBUG_CHANNEL(bitmap)
 DECLARE_DEBUG_CHANNEL(resource)
 
 BITMAP_DRIVER *BITMAP_Driver = NULL;
@@ -54,7 +54,7 @@ INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 	return 2 * ((bmWidth+3) >> 2);
 
     default:
-	WARN_(bitmap)("Unknown depth %d, please report.\n", bpp );
+	WARN("Unknown depth %d, please report.\n", bpp );
     }
     return -1;
 }
@@ -115,7 +115,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
       /* Check parameters */
     if (!height || !width) return 0;
     if (planes != 1) {
-        FIXME_(bitmap)("planes = %d\n", planes);
+        FIXME("planes = %d\n", planes);
 	return 0;
     }
     if (height < 0) height = -height;
@@ -125,7 +125,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
     if (!hbitmap) return 0;
 
-    TRACE_(bitmap)("%dx%d, %d colors returning %08x\n", width, height,
+    TRACE("%dx%d, %d colors returning %08x\n", width, height,
 	  1 << (planes*bpp), hbitmap);
 
     bmp = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
@@ -177,10 +177,10 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
     HBITMAP hbmpRet = 0;
     DC *dc;
 
-    TRACE_(bitmap)("(%04x,%d,%d) = \n", hdc, width, height );
+    TRACE("(%04x,%d,%d) = \n", hdc, width, height );
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if ((width >= 0x10000) || (height >= 0x10000)) {
-	FIXME_(bitmap)("got bad width %d or height %d, please look for reason\n",
+	FIXME("got bad width %d or height %d, please look for reason\n",
 	      width, height );
     } else {
         /* MS doc says if width or height is 0, return 1-by-1 pixel, monochrome bitmap */
@@ -191,7 +191,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 	if(dc->funcs->pCreateBitmap)
 	    dc->funcs->pCreateBitmap( hbmpRet );
     }
-    TRACE_(bitmap)("\t\t%04x\n", hbmpRet);
+    TRACE("\t\t%04x\n", hbmpRet);
     GDI_HEAP_UNLOCK(hdc);
     return hbmpRet;
 }
@@ -253,7 +253,7 @@ LONG WINAPI GetBitmapBits(
 	return bmp->bitmap.bmWidthBytes * bmp->bitmap.bmHeight;
 
     if (count < 0) {
-	WARN_(bitmap)("(%ld): Negative number of bytes passed???\n", count );
+	WARN("(%ld): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -263,31 +263,31 @@ LONG WINAPI GetBitmapBits(
     count = height * bmp->bitmap.bmWidthBytes;
     if (count == 0)
       {
-	WARN_(bitmap)("Less then one entire line requested\n");
+	WARN("Less then one entire line requested\n");
 	GDI_HEAP_UNLOCK( hbitmap );
 	return 0;
       }
 
 
-    TRACE_(bitmap)("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
-	    hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	    1 << bmp->bitmap.bmBitsPixel, height );
+    TRACE("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+          1 << bmp->bitmap.bmBitsPixel, height );
 
     if(bmp->DDBitmap) { 
 
-        TRACE_(bitmap)("Calling device specific BitmapBits\n");
+        TRACE("Calling device specific BitmapBits\n");
 	if(bmp->DDBitmap->funcs->pBitmapBits)
 	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, bits, count,
 						    DDB_GET);
 	else {
-	    ERR_(bitmap)("BitmapBits == NULL??\n");
+	    ERR("BitmapBits == NULL??\n");
 	    ret = 0;
 	}	
 
     } else {
 
         if(!bmp->bitmap.bmBits) {
-	    WARN_(bitmap)("Bitmap is empty\n");
+	    WARN("Bitmap is empty\n");
 	    ret = 0;
 	} else {
 	    memcpy(bits, bmp->bitmap.bmBits, count);
@@ -329,7 +329,7 @@ LONG WINAPI SetBitmapBits(
 	return 0;
 
     if (count < 0) {
-	WARN_(bitmap)("(%ld): Negative number of bytes passed???\n", count );
+	WARN("(%ld): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -338,18 +338,18 @@ LONG WINAPI SetBitmapBits(
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     count = height * bmp->bitmap.bmWidthBytes;
 
-    TRACE_(bitmap)("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
-	    hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	    1 << bmp->bitmap.bmBitsPixel, height );
+    TRACE("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+          1 << bmp->bitmap.bmBitsPixel, height );
 
     if(bmp->DDBitmap) {
 
-        TRACE_(bitmap)("Calling device specific BitmapBits\n");
+        TRACE("Calling device specific BitmapBits\n");
 	if(bmp->DDBitmap->funcs->pBitmapBits)
 	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, (void *) bits,
 						    count, DDB_SET);
 	else {
-	    ERR_(bitmap)("BitmapBits == NULL??\n");
+	    ERR("BitmapBits == NULL??\n");
 	    ret = 0;
 	}
 	
@@ -358,7 +358,7 @@ LONG WINAPI SetBitmapBits(
         if(!bmp->bitmap.bmBits) /* Alloc enough for entire bitmap */
 	    bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0, count );
 	if(!bmp->bitmap.bmBits) {
-	    WARN_(bitmap)("Unable to allocate bit buffer\n");
+	    WARN("Unable to allocate bit buffer\n");
 	    ret = 0;
 	} else {
 	    memcpy(bmp->bitmap.bmBits, bits, count);
@@ -684,7 +684,7 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
         }
         else
         {
-	    FIXME_(bitmap)("not implemented for DIBs: count %d\n", count);
+	    FIXME("not implemented for DIBs: count %d\n", count);
 	    return 0;
         }
     }

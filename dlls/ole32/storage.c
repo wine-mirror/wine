@@ -23,7 +23,7 @@
 #include "ldt.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole)
 DECLARE_DEBUG_CHANNEL(relay)
 
 struct storage_header {
@@ -89,12 +89,12 @@ static BOOL
 STORAGE_get_big_block(HFILE hf,int n,BYTE *block) {
 	assert(n>=-1);
 	if (-1==_llseek(hf,(n+1)*BIGSIZE,SEEK_SET)) {
-		WARN_(ole)(" seek failed (%ld)\n",GetLastError());
+		WARN(" seek failed (%ld)\n",GetLastError());
 		return FALSE;
 	}
 	assert((n+1)*BIGSIZE==_llseek(hf,0,SEEK_CUR));
 	if (BIGSIZE!=_lread(hf,block,BIGSIZE)) {
-		WARN_(ole)("(block size %d): read didn't read (%ld)\n",n,GetLastError());
+		WARN("(block size %d): read didn't read (%ld)\n",n,GetLastError());
 		assert(0);
 		return FALSE;
 	}
@@ -108,12 +108,12 @@ static BOOL
 STORAGE_put_big_block(HFILE hf,int n,BYTE *block) {
 	assert(n>=-1);
 	if (-1==_llseek(hf,(n+1)*BIGSIZE,SEEK_SET)) {
-		WARN_(ole)(" seek failed (%ld)\n",GetLastError());
+		WARN(" seek failed (%ld)\n",GetLastError());
 		return FALSE;
 	}
 	assert((n+1)*BIGSIZE==_llseek(hf,0,SEEK_CUR));
 	if (BIGSIZE!=_lwrite(hf,block,BIGSIZE)) {
-		WARN_(ole)(" write failed (%ld)\n",GetLastError());
+		WARN(" write failed (%ld)\n",GetLastError());
 		return FALSE;
 	}
 	return TRUE;
@@ -793,7 +793,7 @@ HRESULT WINAPI IStream16_fnRead(
 			int	cc;
 
 			if (!STORAGE_get_small_block(This->hf,blocknr,block)) {
-			   WARN_(ole)("small block read failed!!!\n");
+			   WARN("small block read failed!!!\n");
 				return E_FAIL;
 			}
 			cc = cb; 
@@ -813,7 +813,7 @@ HRESULT WINAPI IStream16_fnRead(
 			int	cc;
 
 			if (!STORAGE_get_big_block(This->hf,blocknr,block)) {
-				WARN_(ole)("big block read failed!!!\n");
+				WARN("big block read failed!!!\n");
 				return E_FAIL;
 			}
 			cc = cb; 
@@ -1267,7 +1267,7 @@ HRESULT WINAPI IStorage16_fnStat(
         LPSTORAGE16 iface,STATSTG16 *pstatstg, DWORD grfStatFlag
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
-	TRACE_(ole)("(%p)->(%p,0x%08lx)\n",
+	TRACE("(%p)->(%p,0x%08lx)\n",
 		This,pstatstg,grfStatFlag
 	);
 	pstatstg->pwcsName=(LPOLESTR16)SEGPTR_GET(SEGPTR_STRDUP_WtoA(This->stde.pps_rawname));
@@ -1291,7 +1291,7 @@ HRESULT WINAPI IStorage16_fnCommit(
         LPSTORAGE16 iface,DWORD commitflags
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
-	FIXME_(ole)("(%p)->(0x%08lx),STUB!\n",
+	FIXME("(%p)->(0x%08lx),STUB!\n",
 		This,commitflags
 	);
 	return S_OK;
@@ -1308,7 +1308,7 @@ HRESULT WINAPI IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID
 		WINE_StringFromCLSID(rgiidExclude,xguid);
 	else
 		strcpy(xguid,"<no guid>");
-	FIXME_(ole)("IStorage16(%p)->(0x%08lx,%s,%p,%p),stub!\n",
+	FIXME("IStorage16(%p)->(0x%08lx,%s,%p,%p),stub!\n",
 		This,ciidExclude,xguid,SNB16Exclude,pstgDest
 	);
 	return S_OK;
@@ -1330,11 +1330,11 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 
 	READ_HEADER;
 
-	TRACE_(ole)("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
 		This,pwcsName,grfMode,dwStgFormat,reserved2,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
-		FIXME_(ole)("We do not support transacted Compound Storage. Using direct mode.\n");
+		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
 	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstg);
 	lpstg->hf		= This->hf;
@@ -1347,7 +1347,7 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 		stde.pps_dir = ppsent;
 		x = This->ppsent;
 	} else {
-		FIXME_(ole)(" use prev chain too ?\n");
+		FIXME(" use prev chain too ?\n");
 		x=stde.pps_dir;
 		if (1!=STORAGE_get_pps_entry(lpstg->hf,x,&stde))
 			return E_FAIL;
@@ -1386,11 +1386,11 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
 
-	TRACE_(ole)("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
 		This,pwcsName,grfMode,reserved1,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
-		FIXME_(ole)("We do not support transacted Compound Storage. Using direct mode.\n");
+		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
 	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
@@ -1443,7 +1443,7 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 		This,pwcsName,pstgPrio,grfMode,snbExclude,reserved,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
-		FIXME_(ole)("We do not support transacted Compound Storage. Using direct mode.\n");
+		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
 	lpstg = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstg);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
@@ -1478,7 +1478,7 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 		This,pwcsName,reserved1,grfMode,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
-		FIXME_(ole)("We do not support transacted Compound Storage. Using direct mode.\n");
+		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
 	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
@@ -1580,13 +1580,13 @@ HRESULT WINAPI StgCreateDocFile16(
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
-	TRACE_(ole)("(%s,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%s,0x%08lx,0x%08lx,%p)\n",
 		pwcsName,grfMode,reserved,ppstgOpen
 	);
 	_create_istorage16(ppstgOpen);
 	hf = CreateFileA(pwcsName,GENERIC_READ|GENERIC_WRITE,0,NULL,CREATE_NEW,0,0);
 	if (hf==INVALID_HANDLE_VALUE) {
-		WARN_(ole)("couldn't open file for storage:%ld\n",GetLastError());
+		WARN("couldn't open file for storage:%ld\n",GetLastError());
 		return E_FAIL;
 	}
 	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);
@@ -1622,31 +1622,31 @@ HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 	OFSTRUCT	ofs;
 	BYTE		magic[24];
 
-	TRACE_(ole)("(\'%s\')\n",fn);
+	TRACE("(\'%s\')\n",fn);
 	hf = OpenFile(fn,&ofs,OF_SHARE_DENY_NONE);
 	if (hf==HFILE_ERROR)
 		return STG_E_FILENOTFOUND;
 	if (24!=_lread(hf,magic,24)) {
-		WARN_(ole)(" too short\n");
+		WARN(" too short\n");
 		_lclose(hf);
 		return S_FALSE;
 	}
 	if (!memcmp(magic,STORAGE_magic,8)) {
-		WARN_(ole)(" -> YES\n");
+		WARN(" -> YES\n");
 		_lclose(hf);
 		return S_OK;
 	}
 	if (!memcmp(magic,STORAGE_notmagic,8)) {
-		WARN_(ole)(" -> NO\n");
+		WARN(" -> NO\n");
 		_lclose(hf);
 		return S_FALSE;
 	}
 	if (!memcmp(magic,STORAGE_oldmagic,8)) {
-		WARN_(ole)(" -> old format\n");
+		WARN(" -> old format\n");
 		_lclose(hf);
 		return STG_E_OLDFORMAT;
 	}
-	WARN_(ole)(" -> Invalid header.\n");
+	WARN(" -> Invalid header.\n");
 	_lclose(hf);
 	return STG_E_INVALIDHEADER;
 }
@@ -1677,13 +1677,13 @@ HRESULT WINAPI StgOpenStorage16(
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
-	TRACE_(ole)("(%s,%p,0x%08lx,%p,%ld,%p)\n",
-		pwcsName,pstgPriority,grfMode,snbExclude,reserved,ppstgOpen
+	TRACE("(%s,%p,0x%08lx,%p,%ld,%p)\n",
+              pwcsName,pstgPriority,grfMode,snbExclude,reserved,ppstgOpen
 	);
 	_create_istorage16(ppstgOpen);
 	hf = CreateFileA(pwcsName,GENERIC_READ,0,NULL,0,0,0);
 	if (hf==INVALID_HANDLE_VALUE) {
-		WARN_(ole)("Couldn't open file for storage\n");
+		WARN("Couldn't open file for storage\n");
 		return E_FAIL;
 	}
 	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);

@@ -112,7 +112,7 @@ static void REGISTRY_Init(void) {
 	HKEY	hkey;
 	char	buf[200];
 
-	TRACE_(reg)("(void)\n");
+	TRACE("(void)\n");
 
 	RegCreateKeyA(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
 	RegCloseKey(hkey);
@@ -231,7 +231,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
 
     /* FIXME: does this check apply to all keys written below ? */
     if (!(home = getenv( "HOME" )))
-        ERR_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
+        ERR("Failed to get homedirectory of UID %ld.\n",(long) getuid());
 
     /* HKEY_LOCAL_MACHINE contains the HKEY_CLASSES_ROOT branch */
     if (hkey == HKEY_CLASSES_ROOT) hkey = HKEY_LOCAL_MACHINE;
@@ -295,7 +295,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
         }
         break;
     default:
-        ERR_(reg)("unknown/invalid key handle !\n");
+        ERR("unknown/invalid key handle !\n");
         break;
     }
 }
@@ -311,7 +311,7 @@ void SHELL_SaveRegistry( void )
     HKEY   hkey;
     int    all;
 
-    TRACE_(reg)("(void)\n");
+    TRACE("(void)\n");
 
     all=0;
     if (RegOpenKeyA(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)!=ERROR_SUCCESS) 
@@ -458,7 +458,7 @@ static char* _wine_read_USTRING( char *buf, LPWSTR *str )
 				continue;
 			}
 			if (*s!='u') {
-				WARN_(reg)("Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
+				WARN("Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
 				*ws++='\\';
 				*ws++=*s++;
 			} else {
@@ -468,7 +468,7 @@ static char* _wine_read_USTRING( char *buf, LPWSTR *str )
 				s++;
 				memcpy(xbuf,s,4);xbuf[4]='\0';
 				if (!sscanf(xbuf,"%x",&wc))
-					WARN_(reg)("Strange escape sequence %s found in |%s|\n",xbuf,buf);
+					WARN("Strange escape sequence %s found in |%s|\n",xbuf,buf);
 				s+=4;
 				*ws++	=(unsigned short)wc;
 			}
@@ -496,7 +496,7 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
 	char		*s;
 	LPWSTR		name;
 
-    TRACE_(reg)("(%p,%x,%d,%s,%d)\n", F, hkey, level, debugstr_a(*buf), *buflen);
+    TRACE("(%p,%x,%d,%s,%d)\n", F, hkey, level, debugstr_a(*buf), *buflen);
 
     /* Good.  We already got a line here ... so parse it */
     subkey = 0;
@@ -508,7 +508,7 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
         }
         if (i>level) {
             if (!subkey) {
-                WARN_(reg)("Got a subhierarchy without resp. key?\n");
+                WARN("Got a subhierarchy without resp. key?\n");
                 return 0;
             }
 	    if (!_wine_loadsubkey(F,subkey,level+1,buf,buflen))
@@ -535,19 +535,19 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
 				int		len,lastmodified,type;
 
 				if (*s!='=') {
-					WARN_(reg)("Unexpected character: %c\n",*s);
+					WARN("Unexpected character: %c\n",*s);
 					break;
 				}
 				s++;
 				if (2!=sscanf(s,"%d,%d,",&type,&lastmodified)) {
-					WARN_(reg)("Haven't understood possible value in |%s|, skipping.\n",*buf);
+					WARN("Haven't understood possible value in |%s|, skipping.\n",*buf);
 					break;
 				}
 				/* skip the 2 , */
 				s=strchr(s,',');s++;
 				s=strchr(s,',');
 				if (!s++) {
-					WARN_(reg)("Haven't understood possible value in |%s|, skipping.\n",*buf);
+					WARN("Haven't understood possible value in |%s|, skipping.\n",*buf);
 					break;
 				}
 				if (type == REG_SZ || type == REG_EXPAND_SZ) {
@@ -624,7 +624,7 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
             }
             else
             {
-		TRACE_(reg)("Old format (%d) registry found, ignoring it. (buf was %s).\n",ver,buf);
+		TRACE("Old format (%d) registry found, ignoring it. (buf was %s).\n",ver,buf);
 		free(buf);
 		return 0;
             }
@@ -649,11 +649,11 @@ static void _wine_loadreg( HKEY hkey, char *fn )
 {
     FILE *F;
 
-    TRACE_(reg)("(%x,%s)\n",hkey,debugstr_a(fn));
+    TRACE("(%x,%s)\n",hkey,debugstr_a(fn));
 
     F = fopen(fn,"rb");
     if (F==NULL) {
-        WARN_(reg)("Couldn't open %s for reading: %s\n",fn,strerror(errno) );
+        WARN("Couldn't open %s for reading: %s\n",fn,strerror(errno) );
         return;
     }
     _wine_loadsubreg(F,hkey,fn);
@@ -709,7 +709,7 @@ static void _copy_registry( HKEY from, HKEY to )
         name_len = sizeof(name);
         if (RegEnumValueW( from, index++, name, &name_len,
                            NULL, &type, data, &len ) != ERROR_SUCCESS) break;
-        RegSetValueExW( to, name, 0, type, (LPCWSTR)data, len );
+        RegSetValueExW( to, name, 0, type, data, len );
     }
 
     /* copy subkeys */
@@ -1017,7 +1017,7 @@ static void _w95_loadreg( char* fn, HKEY hkey )
 	OFSTRUCT	ofs;
 	BY_HANDLE_FILE_INFORMATION hfdinfo;
 
-	TRACE_(reg)("Loading Win95 registry database '%s'\n",fn);
+	TRACE("Loading Win95 registry database '%s'\n",fn);
 	hfd=OpenFile(fn,&ofs,OF_READ);
 	if (hfd==HFILE_ERROR)
 		return;
@@ -1025,7 +1025,7 @@ static void _w95_loadreg( char* fn, HKEY hkey )
 	if (4!=_lread(hfd,magic,4))
 		return;
 	if (strcmp(magic,"CREG")) {
-		WARN_(reg)("%s is not a w95 registry.\n",fn);
+		WARN("%s is not a w95 registry.\n",fn);
 		return;
 	}
 	if (4!=_lread(hfd,&version,4))
@@ -1037,7 +1037,7 @@ static void _w95_loadreg( char* fn, HKEY hkey )
 	if (4!=_lread(hfd,magic,4))
 		return;
 	if (strcmp(magic,"RGKN")) {
-		WARN_(reg)("second IFF header not RGKN, but %s\n", magic);
+		WARN("second IFF header not RGKN, but %s\n", magic);
 		return;
 	}
 
@@ -1199,7 +1199,7 @@ __w31_dumptree(	unsigned short idx,
 				}
 			}
 		} else {
-			TRACE_(reg)("strange: no directory key name, idx=%04x\n", idx);
+			TRACE("strange: no directory key name, idx=%04x\n", idx);
 		}
 		__w31_dumptree(dir->child_idx,txt,tab,head,subkey,lastmodified,level+1);
 		idx=dir->sibling_idx;
@@ -1221,7 +1221,7 @@ void _w31_loadreg(void) {
 	BY_HANDLE_FILE_INFORMATION hfinfo;
 	time_t			lastmodified;
 
-	TRACE_(reg)("(void)\n");
+	TRACE("(void)\n");
 
 	hf = OpenFile("reg.dat",&ofs,OF_READ);
 	if (hf==HFILE_ERROR)
@@ -1229,12 +1229,12 @@ void _w31_loadreg(void) {
 
 	/* read & dump header */
 	if (sizeof(head)!=_lread(hf,&head,sizeof(head))) {
-		ERR_(reg)("reg.dat is too short.\n");
+		ERR("reg.dat is too short.\n");
 		_lclose(hf);
 		return;
 	}
 	if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
-		ERR_(reg)("reg.dat has bad signature.\n");
+		ERR("reg.dat has bad signature.\n");
 		_lclose(hf);
 		return;
 	}
@@ -1243,7 +1243,7 @@ void _w31_loadreg(void) {
 	/* read and dump index table */
 	tab = xmalloc(len);
 	if (len!=_lread(hf,tab,len)) {
-		ERR_(reg)("couldn't read %d bytes.\n",len); 
+		ERR("couldn't read %d bytes.\n",len); 
 		free(tab);
 		_lclose(hf);
 		return;
@@ -1252,14 +1252,14 @@ void _w31_loadreg(void) {
 	/* read text */
 	txt = xmalloc(head.textsize);
 	if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
-		ERR_(reg)("couldn't seek to textblock.\n"); 
+		ERR("couldn't seek to textblock.\n"); 
 		free(tab);
 		free(txt);
 		_lclose(hf);
 		return;
 	}
 	if (head.textsize!=_lread(hf,txt,head.textsize)) {
-		ERR_(reg)("textblock too short (%d instead of %ld).\n",len,head.textsize); 
+		ERR("textblock too short (%d instead of %ld).\n",len,head.textsize); 
 		free(tab);
 		free(txt);
 		_lclose(hf);
@@ -1267,7 +1267,7 @@ void _w31_loadreg(void) {
 	}
 
 	if (!GetFileInformationByHandle(hf,&hfinfo)) {
-		ERR_(reg)("GetFileInformationByHandle failed?.\n"); 
+		ERR("GetFileInformationByHandle failed?.\n"); 
 		free(tab);
 		free(txt);
 		_lclose(hf);
@@ -1292,7 +1292,7 @@ void SHELL_LoadRegistry( void )
   char	      *fn, *home;
   HKEY		    hkey;
 
-  TRACE_(reg)("(void)\n");
+  TRACE("(void)\n");
 
   REGISTRY_Init();
 
@@ -1335,7 +1335,7 @@ void SHELL_LoadRegistry( void )
    * Load the user saved registries 
    */
   if (!(home = getenv( "HOME" )))
-      WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
+      WARN("Failed to get homedirectory of UID %ld.\n",(long) getuid());
   else if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 1))
   {
       /* 
@@ -1407,7 +1407,7 @@ void SHELL_LoadRegistry( void )
    * in order to copy HKU\.Default\* onto HKEY_CURRENT_USER 
    */
   if (RegCreateKeyA(HKEY_USERS,".Default",&hkey) != ERROR_SUCCESS)
-      WARN_(reg)("Could not create global user default key\n");
+      WARN("Could not create global user default key\n");
   else
     _copy_registry( hkey, HKEY_CURRENT_USER );
   RegCloseKey(hkey);
@@ -1502,14 +1502,14 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey, 
                                    LPHKEY phkResult )
 {
-    TRACE_(reg)("(%s,%x,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
+    TRACE("(%s,%x,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
 
     if (!lpMachineName || !*lpMachineName) {
         /* Use the local machine name */
         return RegOpenKey16( hKey, "", phkResult );
     }
 
-    FIXME_(reg)("Cannot connect to %s\n",debugstr_w(lpMachineName));
+    FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
     return ERROR_BAD_NETPATH;
 }
 
@@ -1546,7 +1546,7 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey,
                                PSECURITY_DESCRIPTOR pSecurityDescriptor,
                                LPDWORD lpcbSecurityDescriptor )
 {
-    TRACE_(reg)("(%x,%ld,%p,%ld)\n",hkey,SecurityInformation,pSecurityDescriptor,
+    TRACE("(%x,%ld,%p,%ld)\n",hkey,SecurityInformation,pSecurityDescriptor,
           lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
 
     /* FIXME: Check for valid SecurityInformation values */
@@ -1554,7 +1554,7 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey,
     if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR))
         return ERROR_INSUFFICIENT_BUFFER;
 
-    FIXME_(reg)("(%x,%ld,%p,%ld): stub\n",hkey,SecurityInformation,
+    FIXME("(%x,%ld,%p,%ld): stub\n",hkey,SecurityInformation,
           pSecurityDescriptor,lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
 
     return ERROR_SUCCESS;
@@ -1575,7 +1575,7 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
                                      DWORD fdwNotifyFilter, HANDLE hEvent,
                                      BOOL fAsync )
 {
-    FIXME_(reg)("(%x,%i,%ld,%x,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
+    FIXME("(%x,%i,%ld,%x,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
           hEvent,fAsync);
     return ERROR_SUCCESS;
 }
@@ -1590,7 +1590,7 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
  */
 LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 {
-    FIXME_(reg)("(%x,%s): stub\n",hkey, debugstr_w(lpSubKey));
+    FIXME("(%x,%s): stub\n",hkey, debugstr_w(lpSubKey));
     return ERROR_SUCCESS;
 }
 
@@ -1619,7 +1619,7 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
                                PSECURITY_DESCRIPTOR pSecurityDesc )
 {
-    TRACE_(reg)("(%x,%ld,%p)\n",hkey,SecurityInfo,pSecurityDesc);
+    TRACE("(%x,%ld,%p)\n",hkey,SecurityInfo,pSecurityDesc);
 
     /* It seems to perform this check before the hkey check */
     if ((SecurityInfo & OWNER_SECURITY_INFORMATION) ||
@@ -1633,7 +1633,7 @@ LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
     if (!pSecurityDesc)
         return ERROR_INVALID_PARAMETER;
 
-    FIXME_(reg)(":(%x,%ld,%p): stub\n",hkey,SecurityInfo,pSecurityDesc);
+    FIXME(":(%x,%ld,%p): stub\n",hkey,SecurityInfo,pSecurityDesc);
 
     return ERROR_SUCCESS;
 }
@@ -1649,13 +1649,13 @@ LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
  */
 LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 {
-    TRACE_(reg)("(%x,%s,%ld)\n",hkey,debugstr_w(lpFile),dwFlags);
+    TRACE("(%x,%s,%ld)\n",hkey,debugstr_w(lpFile),dwFlags);
 
     /* It seems to do this check before the hkey check */
     if (!lpFile || !*lpFile)
         return ERROR_INVALID_PARAMETER;
 
-    FIXME_(reg)("(%x,%s,%ld): stub\n",hkey,debugstr_w(lpFile),dwFlags);
+    FIXME("(%x,%s,%ld): stub\n",hkey,debugstr_w(lpFile),dwFlags);
 
     /* Check for file existence */
 
@@ -1688,7 +1688,7 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
                               LPCWSTR lpOldFile )
 {
-    FIXME_(reg)("(%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), 
+    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), 
           debugstr_w(lpNewFile),debugstr_w(lpOldFile));
     return ERROR_SUCCESS;
 }

@@ -22,7 +22,7 @@
 #include "keyboard.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(thunk)
+DEFAULT_DEBUG_CHANNEL(thunk)
 
 
 /* List of the 16-bit callback functions. This list is used  */
@@ -150,8 +150,8 @@ FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
     {
         FARPROC proc = (FARPROC)((ENTRYPOINT16 *)PTR_SEG_TO_LIN( func ))->target;
 
-        TRACE_(thunk)( "(%04x:%04x, %p) -> built-in API %p\n",
-                       SELECTOROF( func ), OFFSETOF( func ), relay, proc );
+        TRACE( "(%04x:%04x, %p) -> built-in API %p\n",
+               SELECTOROF( func ), OFFSETOF( func ), relay, proc );
         return proc;
     }
 
@@ -170,8 +170,8 @@ FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
         firstThunk = thunk;
     }
 
-    TRACE_(thunk)( "(%04x:%04x, %p) -> allocated thunk %p\n",
-                   SELECTOROF( func ), OFFSETOF( func ), relay, thunk );
+    TRACE( "(%04x:%04x, %p) -> allocated thunk %p\n",
+           SELECTOROF( func ), OFFSETOF( func ), relay, thunk );
     return (FARPROC)thunk;
 }
 
@@ -196,7 +196,7 @@ void THUNK_Free( FARPROC thunk )
             return;
         }
     }
-    ERR_(thunk)("invalid thunk addr %p\n", thunk );
+    ERR("invalid thunk addr %p\n", thunk );
     return;
 }
 
@@ -428,20 +428,20 @@ UINT WINAPI ThunkConnect16(
     {
         directionSL = TRUE;
 
-        TRACE_(thunk)("SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
-                     module16, (DWORD)TD, module32, thunkfun32, dwReason);
+        TRACE("SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
+              module16, (DWORD)TD, module32, thunkfun32, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE_(thunk)("LS01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
-                     module16, (DWORD)TD, module32, thunkfun32, dwReason);
+        TRACE("LS01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
+              module16, (DWORD)TD, module32, thunkfun32, dwReason);
     }
     else
     {
-        ERR_(thunk)("Invalid magic %c%c%c%c\n",
-                   TD->magic[0], TD->magic[1], TD->magic[2], TD->magic[3]);
+        ERR("Invalid magic %c%c%c%c\n",
+            TD->magic[0], TD->magic[1], TD->magic[2], TD->magic[3]);
         return 0;
     }
 
@@ -477,7 +477,7 @@ UINT WINAPI ThunkConnect16(
 
                 if (SL->flags2 & 0x80000000)
                 {
-                    TRACE_(thunk)("Preloading 32-bit library\n");
+                    TRACE("Preloading 32-bit library\n");
                     LoadLibraryA(module32);
                 }
             }
@@ -561,11 +561,11 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
 
         if (!td)
         {
-            ERR_(thunk)("ThunkConnect16 was not called!\n");
+            ERR("ThunkConnect16 was not called!\n");
             return;
         }
 
-        TRACE_(thunk)("Creating stub for ThunkDataSL %08lx\n", (DWORD)td);
+        TRACE("Creating stub for ThunkDataSL %08lx\n", (DWORD)td);
 
 
         /* We produce the following code:
@@ -605,8 +605,8 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         DWORD targetNr = CX_reg(context) / 4;
         struct SLTargetDB *tdb;
 
-        TRACE_(thunk)("Process %08lx calling target %ld of ThunkDataSL %08lx\n",
-                     (DWORD)PROCESS_Current(), targetNr, (DWORD)td);
+        TRACE("Process %08lx calling target %ld of ThunkDataSL %08lx\n",
+              (DWORD)PROCESS_Current(), targetNr, (DWORD)td);
 
         for (tdb = td->targetDB; tdb; tdb = tdb->next)
             if (tdb->process == PROCESS_Current())
@@ -614,7 +614,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
 
         if (!tdb)
         {
-            TRACE_(thunk)("Loading 32-bit library %s\n", td->pszDll32);
+            TRACE("Loading 32-bit library %s\n", td->pszDll32);
             LoadLibraryA(td->pszDll32);
 
             for (tdb = td->targetDB; tdb; tdb = tdb->next)
@@ -626,7 +626,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         {
             EDX_reg(context) = tdb->targetTable[targetNr];
 
-            TRACE_(thunk)("Call target is %08lx\n", EDX_reg(context));
+            TRACE("Call target is %08lx\n", EDX_reg(context));
         }
         else
         {
@@ -637,8 +637,8 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
             CS_reg(context)  = stack[3];
             ESP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
 
-            ERR_(thunk)("Process %08lx did not ThunkConnect32 %s to %s\n",
-                       (DWORD)PROCESS_Current(), td->pszDll32, td->pszDll16);
+            ERR("Process %08lx did not ThunkConnect32 %s to %s\n",
+                (DWORD)PROCESS_Current(), td->pszDll32, td->pszDll16);
         }
     }
 }

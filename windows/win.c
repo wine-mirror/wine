@@ -34,8 +34,8 @@
 #include "stackframe.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
 DECLARE_DEBUG_CHANNEL(msg)
-DECLARE_DEBUG_CHANNEL(win)
 
 /**********************************************************************/
 
@@ -128,7 +128,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     if (ptr->dwMagic != WND_MAGIC) goto error;
     if (ptr->hwndSelf != hwnd)
     {
-        ERR_(win)("Can't happen: hwnd %04x self pointer is %04x\n",hwnd, ptr->hwndSelf );
+        ERR("Can't happen: hwnd %04x self pointer is %04x\n",hwnd, ptr->hwndSelf );
         goto error;
     }
     /* returns a locked pointer */
@@ -186,7 +186,7 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
      else if(wndPtr->irefCount < 0)
      {
          /* This else if is useful to monitor the WIN_ReleaseWndPtr function */
-         ERR_(win)("forgot a Lock on %p somewhere\n",wndPtr);
+         ERR("forgot a Lock on %p somewhere\n",wndPtr);
      }
      /*unlock all WND structures for thread safeness*/
      WIN_UnlockWnds();
@@ -220,14 +220,14 @@ void WIN_DumpWindow( HWND hwnd )
 
     if (!(ptr = WIN_FindWndPtr( hwnd )))
     {
-        WARN_(win)("%04x is not a window handle\n", hwnd );
+        WARN("%04x is not a window handle\n", hwnd );
         return;
     }
 
     if (!GetClassNameA( hwnd, className, sizeof(className ) ))
         strcpy( className, "#NULL#" );
 
-    TRACE_(win)("Window %04x (%p):\n", hwnd, ptr );
+    TRACE("Window %04x (%p):\n", hwnd, ptr );
     DPRINTF( "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x dce=%p  idmenu=%08x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
@@ -269,7 +269,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
 
     if (!ptr)
     {
-        WARN_(win)("Invalid window handle %04x\n", hwnd );
+        WARN("Invalid window handle %04x\n", hwnd );
         return;
     }
 
@@ -387,7 +387,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
     {
         if (!(pWnd->dwStyle & WS_VISIBLE))
         {
-            TRACE_(win)("skipping window %04x\n",
+            TRACE("skipping window %04x\n",
                          pWnd->hwndSelf );
         }
         else if ((pWnd->hmemTaskQ == hQueue) &&
@@ -421,7 +421,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
         hwndRet = pWnd->hwndSelf;
     WIN_ReleaseWndPtr(pWnd);
     }
-    TRACE_(win)("found %04x\n",hwndRet);
+    TRACE("found %04x\n",hwndRet);
     return hwndRet;
 }
 
@@ -437,7 +437,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     HWND hwnd = wndPtr->hwndSelf;
     WND *pWnd;
 
-    TRACE_(win)("%04x\n", wndPtr->hwndSelf );
+    TRACE("%04x\n", wndPtr->hwndSelf );
 
     /* free child windows */
     WIN_LockWndPtr(wndPtr->child);
@@ -587,7 +587,7 @@ BOOL WIN_CreateDesktopWindow(void)
     HWND hwndDesktop;
     DESKTOP *pDesktop;
 
-    TRACE_(win)("Creating desktop window\n");
+    TRACE("Creating desktop window\n");
 
 
     if (!ICONTITLE_Init() ||
@@ -665,7 +665,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
     char buffer[256];
 
-    TRACE_(win)("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
+    TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
           unicode ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
           unicode ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
@@ -678,11 +678,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	/* Make sure parent is valid */
         if (!IsWindow( cs->hwndParent ))
         {
-            WARN_(win)("Bad parent %04x\n", cs->hwndParent );
+            WARN("Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
     } else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP)) {
-        WARN_(win)("No parent for child window\n" );
+        WARN("No parent for child window\n" );
         return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
     }
 
@@ -690,7 +690,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (!(classPtr = CLASS_FindClassByAtom( classAtom, win32?cs->hInstance:GetExePtr(cs->hInstance) )))
     {
         GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
-        WARN_(win)("Bad class '%s'\n", buffer );
+        WARN("Bad class '%s'\n", buffer );
         return 0;
     }
 
@@ -765,7 +765,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + classPtr->cbWndExtra
                                   - sizeof(wndPtr->wExtra) )))
     {
-	TRACE_(win)("out of memory\n" );
+	TRACE("out of memory\n" );
 	return 0;
     }
 
@@ -839,7 +839,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                       : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc);
         if (ret)
 	{
-	    TRACE_(win)("CBT-hook returned 0\n");
+	    TRACE("CBT-hook returned 0\n");
 	    wndPtr->pDriver->pFinalize(wndPtr);
 	    USER_HEAP_FREE( hwnd );
             retvalue =  0;
@@ -958,7 +958,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                 /* send it anyway */
 	        if (((wndPtr->rectClient.right-wndPtr->rectClient.left) <0)
 		    ||((wndPtr->rectClient.bottom-wndPtr->rectClient.top)<0))
-		  WARN_(win)("sending bogus WM_SIZE message 0x%08lx\n",
+		  WARN("sending bogus WM_SIZE message 0x%08lx\n",
 			MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
 				 wndPtr->rectClient.bottom-wndPtr->rectClient.top));
                 SendMessageA( hwnd, WM_SIZE, SIZE_RESTORED,
@@ -1004,7 +1004,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
                 HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
 
-            TRACE_(win)("created window %04x\n", hwnd);
+            TRACE("created window %04x\n", hwnd);
             retvalue = hwnd;
             goto end;
         }
@@ -1013,7 +1013,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Abort window creation */
 
-    WARN_(win)("aborted by WM_xxCREATE!\n");
+    WARN("aborted by WM_xxCREATE!\n");
     WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
     retvalue = 0;
 end:
@@ -1149,11 +1149,11 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     	if (HIWORD(className))
         {
             LPSTR cn = HEAP_strdupWtoA( GetProcessHeap(), 0, className );
-            WARN_(win)("Bad class name '%s'\n",cn);
+            WARN("Bad class name '%s'\n",cn);
             HeapFree( GetProcessHeap(), 0, cn );
 	}
         else
-            WARN_(win)("Bad class name %p\n", className );
+            WARN("Bad class name %p\n", className );
         return 0;
     }
 
@@ -1276,7 +1276,7 @@ static void WIN_SendDestroyMsg( WND* pWnd )
       WIN_CheckFocus(pWnd);	
     }
     else
-      WARN_(win)("\tdestroyed itself while in WM_DESTROY!\n");
+      WARN("\tdestroyed itself while in WM_DESTROY!\n");
 }
 
 
@@ -1297,7 +1297,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     WND * wndPtr;
     BOOL retvalue;
 
-    TRACE_(win)("(%04x)\n", hwnd);
+    TRACE("(%04x)\n", hwnd);
     
       /* Initialization */
 
@@ -1571,7 +1571,7 @@ HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child,
 {
     ATOM atom = 0;
 
-    TRACE_(win)("%04x %04x '%s' '%s'\n", parent,
+    TRACE("%04x %04x '%s' '%s'\n", parent,
 		child, HIWORD(className)?(char *)PTR_SEG_TO_LIN(className):"",
 		title ? title : "");
 
@@ -1687,7 +1687,7 @@ HWND16 WINAPI GetDesktopWindow16(void)
 HWND WINAPI GetDesktopWindow(void)
 {
     if (pWndDesktop) return pWndDesktop->hwndSelf;
-    ERR_(win)( "You need the -desktop option when running with native USER\n" );
+    ERR( "You need the -desktop option when running with native USER\n" );
     ExitProcess(1);
     return 0;
 }
@@ -1722,7 +1722,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     WND *wndPtr;
     BOOL retvalue;
 
-    TRACE_(win)("EnableWindow32: ( %x, %d )\n", hwnd, enable);
+    TRACE("EnableWindow32: ( %x, %d )\n", hwnd, enable);
    
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (enable && (wndPtr->dwStyle & WS_DISABLED))
@@ -1827,7 +1827,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
     {
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
             retvalue = 0;
             goto end;
         }
@@ -1838,7 +1838,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
     {
     case GWW_ID:         
     	if (HIWORD(wndPtr->wIDmenu))
-    		WARN_(win)("GWW_ID: discards high bits of 0x%08x!\n",
+    		WARN("GWW_ID: discards high bits of 0x%08x!\n",
                     wndPtr->wIDmenu);
         retvalue = (WORD)wndPtr->wIDmenu;
         goto end;
@@ -1847,12 +1847,12 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
         goto end;
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
-    		WARN_(win)("GWW_HINSTANCE: discards high bits of 0x%08x!\n",
+    		WARN("GWW_HINSTANCE: discards high bits of 0x%08x!\n",
                     wndPtr->hInstance);
         retvalue = (WORD)wndPtr->hInstance;
         goto end;
     default:
-        WARN_(win)("Invalid offset %d\n", offset );
+        WARN("Invalid offset %d\n", offset );
         retvalue = 0;
         goto end;
     }
@@ -1882,7 +1882,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     {
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
             retval = 0;
             goto end;
         }
@@ -1895,7 +1895,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
         case GWW_HWNDPARENT: retval = SetParent( hwnd, newval );
                              goto end;
 	default:
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
             retval = 0;
             goto end;
     }
@@ -1921,7 +1921,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     {
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
             retvalue = 0;
             goto end;
         }
@@ -1952,7 +1952,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         case GWL_HINSTANCE:  retvalue = wndPtr->hInstance;
                              goto end;
         default:
-            WARN_(win)("Unknown offset %d\n", offset );
+            WARN("Unknown offset %d\n", offset );
     }
     retvalue = 0;
 end:
@@ -1979,7 +1979,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     STYLESTRUCT style;
     
-    TRACE_(win)("%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
+    TRACE("%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
 
     if (!wndPtr)
     {
@@ -1992,7 +1992,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     {
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
 
             /* Is this the right error? */
             SetLastError( ERROR_OUTOFMEMORY );
@@ -2051,7 +2051,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 goto end;
 
 	default:
-            WARN_(win)("Invalid offset %d\n", offset );
+            WARN("Invalid offset %d\n", offset );
 
             /* Don't think this is right error but it should do */
             SetLastError( ERROR_OUTOFMEMORY );
@@ -2219,7 +2219,7 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
  */
 INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
 {
-    FIXME_(win)("(0x%08x,%p,0x%x),stub!\n",hwnd,lpString,nMaxCount);
+    FIXME("(0x%08x,%p,0x%x),stub!\n",hwnd,lpString,nMaxCount);
     return GetWindowTextW(hwnd,lpString,nMaxCount);
 }
 
@@ -2982,7 +2982,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    TRACE_(win)("%04x\n", hWnd);
+    TRACE("%04x\n", hWnd);
 
     if (!wndPtr) return FALSE;
 
@@ -3027,7 +3027,7 @@ HWND16 WINAPI SetSysModalWindow16( HWND16 hWnd )
 {
     HWND hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
-    FIXME_(win)("EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
+    FIXME("EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
     return hWndOldModal;
 }
 

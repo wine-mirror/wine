@@ -27,8 +27,8 @@
 #include "debugtools.h"
 #include "callback.h"
 
-DECLARE_DEBUG_CHANNEL(heap)
 DEFAULT_DEBUG_CHANNEL(local)
+DECLARE_DEBUG_CHANNEL(heap)
 
 typedef struct
 {

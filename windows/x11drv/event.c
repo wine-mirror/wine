@@ -38,7 +38,7 @@
 #include "windef.h"
 #include "x11drv.h"
 
-DECLARE_DEBUG_CHANNEL(event)
+DEFAULT_DEBUG_CHANNEL(event)
 DECLARE_DEBUG_CHANNEL(win)
   
 /* X context to associate a hwnd to an X window */
@@ -163,7 +163,7 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 {
     XEvent event;
   
-    TRACE_(event)( "called (thread %lx).\n", GetCurrentThreadId() );
+    TRACE( "called (thread %lx).\n", GetCurrentThreadId() );
 
     EnterCriticalSection( &X11DRV_CritSection );
     while ( XPending( display ) )
@@ -205,12 +205,12 @@ static void EVENT_ProcessEvent( XEvent *event )
 {
   HWND hWnd;
 
-  TRACE_(event)( "called.\n" );
+  TRACE( "called.\n" );
 
   switch (event->type)
   {
     case SelectionNotify: /* all of these should be caught by XCheckTypedWindowEvent() */
-	 FIXME_(event)("Got SelectionNotify - must not happen!\n");
+	 FIXME("Got SelectionNotify - must not happen!\n");
 	 /* fall through */
 
       /* We get all these because of StructureNotifyMask.
@@ -250,11 +250,11 @@ static void EVENT_ProcessEvent( XEvent *event )
 
   if ( !hWnd && event->xany.window != X11DRV_GetXRootWindow()
              && event->type != PropertyNotify )
-      ERR_(event)("Got event %s for unknown Window %08lx\n",
-           event_names[event->type], event->xany.window );
+      ERR("Got event %s for unknown Window %08lx\n",
+          event_names[event->type], event->xany.window );
   else
-      TRACE_(event)("Got event %s for hwnd %04x\n",
-	     event_names[event->type], hWnd );
+      TRACE("Got event %s for hwnd %04x\n",
+            event_names[event->type], hWnd );
 
   switch(event->type)
     {
@@ -389,11 +389,11 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     default:    
-      WARN_(event)("Unprocessed event %s for hwnd %04x\n",
+      WARN("Unprocessed event %s for hwnd %04x\n",
 	   event_names[event->type], hWnd );
       break;
     }
-    TRACE_(event)( "returns.\n" );
+    TRACE( "returns.\n" );
 }
 
 /***********************************************************************
@@ -450,7 +450,7 @@ static Window __get_top_decoration( Window w, Window ancestor )
       TSXQueryTree( display, w, &root, &parent, &children, &total );
       if( children ) TSXFree( children );
     } while( parent && parent != ancestor );
-  TRACE_(event)("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
+  TRACE("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
   return ( parent ) ? w : 0 ;
 }
 
@@ -886,7 +886,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
     BOOL bHavePixmap;
     int xRc;
 
-    TRACE_(event)("Request for %s\n", TSXGetAtomName(display, target));
+    TRACE("Request for %s\n", TSXGetAtomName(display, target));
     
     /*
      * Count the number of items we wish to expose as selection targets.
@@ -940,7 +940,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
         if (targets[i])
         {
           char *itemFmtName = TSXGetAtomName(display, targets[i]);
-          TRACE_(event)("\tAtom# %d:  Type %s\n", i, itemFmtName);
+          TRACE("\tAtom# %d:  Type %s\n", i, itemFmtName);
           TSXFree(itemFmtName);
         }
     }
@@ -948,14 +948,14 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
 #endif
     
     /* Update the X property */
-    TRACE_(event)("\tUpdating property %s...", TSXGetAtomName(display, rprop));
+    TRACE("\tUpdating property %s...", TSXGetAtomName(display, rprop));
 
     /* We may want to consider setting the type to xaTargets instead,
      * in case some apps expect this instead of XA_ATOM */
     xRc = TSXChangeProperty(display, requestor, rprop,
                             XA_ATOM, 32, PropModeReplace,
                             (unsigned char *)targets, cTargets);
-    TRACE_(event)("(Rc=%d)\n", xRc);
+    TRACE("(Rc=%d)\n", xRc);
     
     HeapFree( GetProcessHeap(), 0, targets );
 
@@ -981,7 +981,7 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
      * windows clipboard format ID.
      */
     itemFmtName = TSXGetAtomName(display, target);
-    TRACE_(event)("Request for %s (wFormat=%x %s)\n",
+    TRACE("Request for %s (wFormat=%x %s)\n",
                   itemFmtName, CF_TEXT, CLIPBOARD_GetFormatName(CF_TEXT));
     TSXFree(itemFmtName);
 
@@ -1007,11 +1007,11 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
     lpstr[j]='\0';
     
     /* Update the X property */
-    TRACE_(event)("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
+    TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
     xRc = TSXChangeProperty(display, requestor, rprop,
                             XA_STRING, 8, PropModeReplace,
                             lpstr, j);
-    TRACE_(event)("(Rc=%d)\n", xRc);
+    TRACE("(Rc=%d)\n", xRc);
 
     GlobalUnlock16(hText);
     HeapFree( GetProcessHeap(), 0, lpstr );
@@ -1042,14 +1042,14 @@ static Atom EVENT_SelectionRequest_PIXMAP( Window requestor, Atom target, Atom r
      */
     itemFmtName = TSXGetAtomName(display, target);
     wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
-    TRACE_(event)("Request for %s (wFormat=%x %s)\n",
+    TRACE("Request for %s (wFormat=%x %s)\n",
                   itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
     TSXFree(itemFmtName);
     
     hClipData = GetClipboardData(wFormat);
     if ( !hClipData )
     {
-        TRACE_(event)("Could not retrieve a Pixmap compatible format from clipboard!\n");
+        TRACE("Could not retrieve a Pixmap compatible format from clipboard!\n");
         rprop = None; /* Fail the request */
         goto END;
     }
@@ -1075,22 +1075,21 @@ static Atom EVENT_SelectionRequest_PIXMAP( Window requestor, Atom target, Atom r
     }
     else
     {
-        FIXME_(event)("%s to PIXMAP conversion not yet implemented!\n",
+        FIXME("%s to PIXMAP conversion not yet implemented!\n",
                       CLIPBOARD_GetFormatName(wFormat));
         rprop = None;
         goto END;
     }
 
-    TRACE_(event)("\tUpdating property %s on Window %ld with %s %ld...\n",
-                  TSXGetAtomName(display, rprop), (long)requestor,
-                  TSXGetAtomName(display, target),
-                  pixmap);
+    TRACE("\tUpdating property %s on Window %ld with %s %ld...\n",
+          TSXGetAtomName(display, rprop), (long)requestor,
+          TSXGetAtomName(display, target), pixmap);
 
     /* Store the Pixmap handle in the property */
     xRc = TSXChangeProperty(display, requestor, rprop, target, 
                             32, PropModeReplace,
                             (unsigned char *)&pixmap, 1);
-    TRACE_(event)("(Rc=%d)\n", xRc);
+    TRACE("(Rc=%d)\n", xRc);
 
     /* Enable the code below if you want to handle destroying Pixmap resources
      * in response to property notify events. Clients like XPaint don't
@@ -1102,8 +1101,8 @@ static Atom EVENT_SelectionRequest_PIXMAP( Window requestor, Atom target, Atom r
      * pixmap when the client deletes the property atom.
      */
     xRc = TSXGetWindowAttributes(display, requestor, &win_attr_src);
-    TRACE_(event)("Turning on PropertyChangeEvent notifications from window %ld\n",
-                 (long)requestor);
+    TRACE("Turning on PropertyChangeEvent notifications from window %ld\n",
+          (long)requestor);
     win_attr.event_mask = win_attr_src.your_event_mask | PropertyChangeMask;
     TSXChangeWindowAttributes(display, requestor, CWEventMask, &win_attr);
 
@@ -1139,8 +1138,8 @@ static Atom EVENT_SelectionRequest_WCF( Window requestor, Atom target, Atom rpro
      */
     itemFmtName = TSXGetAtomName(display, target);
     wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
-    TRACE_(event)("Request for %s (wFormat=%x %s)\n",
-                  itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
+    TRACE("Request for %s (wFormat=%x %s)\n",
+          itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
     TSXFree(itemFmtName);
     
     hClipData = GetClipboardData16(wFormat);
@@ -1149,19 +1148,19 @@ static Atom EVENT_SelectionRequest_WCF( Window requestor, Atom target, Atom rpro
     {
         cBytes = GlobalSize16(hClipData);
         
-        TRACE_(event)("\tUpdating property %s, %d bytes...\n",
-                      TSXGetAtomName(display, rprop), cBytes);
+        TRACE("\tUpdating property %s, %d bytes...\n",
+              TSXGetAtomName(display, rprop), cBytes);
         
         xRc = TSXChangeProperty(display, requestor, rprop,
                                 target, 8, PropModeReplace,
                                 (unsigned char *)lpClipData, cBytes);
-        TRACE_(event)("(Rc=%d)\n", xRc);
+        TRACE("(Rc=%d)\n", xRc);
         
         GlobalUnlock16(hClipData);
     }
     else
     {
-        TRACE_(event)("\tCould not retrieve native format!\n");
+        TRACE("\tCould not retrieve native format!\n");
         rprop = None; /* Fail the request */
     }
     
@@ -1204,13 +1203,14 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
      * (target,property) atom pairs.
      */
     if(TSXGetWindowProperty(display, pevent->requestor, rprop,
-                            0, 0x3FFF, False, AnyPropertyType, &atype, &aformat,
-                            &cTargetPropList, &remain, (unsigned char**)&targetPropList) != Success)
-        TRACE_(event)("\tCouldn't read MULTIPLE property\n");
+                            0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
+                            &cTargetPropList, &remain,
+                            (unsigned char**)&targetPropList) != Success)
+        TRACE("\tCouldn't read MULTIPLE property\n");
     else
     {
-       TRACE_(event)("\tType %s,Format %d,nItems %ld, Remain %ld\n",
-                     TSXGetAtomName(display,atype),aformat,cTargetPropList,remain);
+       TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
+             TSXGetAtomName(display, atype), aformat, cTargetPropList, remain);
 
        /*
         * Make sure we got what we expect.
@@ -1233,14 +1233,15 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
               char *propName = TSXGetAtomName(display, targetPropList[i+1]);
               XSelectionRequestEvent event;
 
-              TRACE_(event)("MULTIPLE(%d): Target='%s' Prop='%s'\n", i/2, targetName, propName);
+              TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
+                    i/2, targetName, propName);
               TSXFree(targetName);
               TSXFree(propName);
               
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
               {
-                  TRACE_(event)("\tMULTIPLE(%d): Skipping target with empty property!", i);
+                  TRACE("\tMULTIPLE(%d): Skipping target with empty property!", i);
                   continue;
               }
               
@@ -1341,7 +1342,7 @@ END:
   if(couldOpen) CloseClipboard();
   
   if( rprop == None) 
-      TRACE_(event)("\tRequest ignored\n");
+      TRACE("\tRequest ignored\n");
 
   /* reply to sender 
    * SelectionNotify should be sent only at the end of a MULTIPLE request
@@ -1355,7 +1356,7 @@ END:
     result.property = rprop;
     result.target = event->target;
     result.time = event->time;
-    TRACE_(event)("Sending SelectionNotify event...\n");
+    TRACE("Sending SelectionNotify event...\n");
     TSXSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
   }
 }
@@ -1379,14 +1380,14 @@ static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 static void EVENT_PropertyNotify( XPropertyEvent *event )
 {
   /* Check if we have any resources to free */
-  TRACE_(event)("Received PropertyNotify event: ");
+  TRACE("Received PropertyNotify event: ");
 
   switch(event->state)
   {
     case PropertyDelete:
     {
-      TRACE_(event)("\tPropertyDelete for atom %s on window %ld\n",
-                    TSXGetAtomName(event->display, event->atom), (long)event->window);
+      TRACE("\tPropertyDelete for atom %s on window %ld\n",
+            TSXGetAtomName(event->display, event->atom), (long)event->window);
       
       if (X11DRV_CLIPBOARD_IsSelectionowner())
           X11DRV_CLIPBOARD_FreeResources( event->atom );
@@ -1395,8 +1396,8 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
 
     case PropertyNewValue:
     {
-      TRACE_(event)("\tPropertyNewValue for atom %s on window %ld\n\n",
-                    TSXGetAtomName(event->display, event->atom), (long)event->window);
+      TRACE("\tPropertyNewValue for atom %s on window %ld\n\n",
+            TSXGetAtomName(event->display, event->atom), (long)event->window);
       break;
     }
     
@@ -1571,8 +1572,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 			AnyPropertyType, &u.atom_aux, &u.i,
 			&data_length, &aux_long, &p_data);
   if (aux_long)
-    WARN_(event)("property too large, truncated!\n");
-  TRACE_(event)("urls=%s\n", p_data);
+    WARN("property too large, truncated!\n");
+  TRACE("urls=%s\n", p_data);
 
   if( !aux_long && p_data) {	/* don't bother if > 64K */
     /* calculate length */
@@ -1645,13 +1646,13 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	  if (strncmp(p,"file:",5) == 0 ) {
 	    INT len = GetShortPathNameA( p+5, p_drop, 65535 );
 	    if (len) {
-	      TRACE_(event)("drop file %s as %s\n", p+5, p_drop);
+	      TRACE("drop file %s as %s\n", p+5, p_drop);
 	      p_drop += len+1;
 	    } else {
-	      WARN_(event)("can't convert file %s to dos name \n", p+5);
+	      WARN("can't convert file %s to dos name \n", p+5);
 	    }
 	  } else {
-	    WARN_(event)("unknown mime type %s\n", p);
+	    WARN("unknown mime type %s\n", p);
 	  }
 	  if (next) { 
 	    *next = '\n'; 
@@ -1720,12 +1721,12 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 			    dndSelection, 0, 65535, FALSE,
 			    AnyPropertyType, &u.atom, &u.i,
 			    &u.l, &u.l, &p_data);
-      TRACE_(event)("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
+      TRACE("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
 	    event->message_type, event->data.l[0], event->data.l[1], 
 	    event->data.l[2], event->data.l[3], event->data.l[4],
 	    p_data);
 #endif
-      TRACE_(event)("unrecognized ClientMessage\n" );
+      TRACE("unrecognized ClientMessage\n" );
     }
   }
 }
@@ -1842,22 +1843,22 @@ static HANDLE shm_event = 0, shm_read = 0;
 
 static void EVENT_ShmCompletion( XShmCompletionEvent *event )
 {
-  TRACE_(event)("Got ShmCompletion for drawable %ld (time %ld)\n", event->drawable, GetTickCount() );
+  TRACE("Got ShmCompletion for drawable %ld (time %ld)\n", event->drawable, GetTickCount() );
   if (event->drawable == shm_draw) {
     HANDLE event = shm_event;
     shm_draw = 0;
     SetEvent(event);
-    TRACE_(event)("Event object triggered\n" );
-  } else ERR_(event)("Got ShmCompletion for unknown drawable %ld\n", event->drawable );
+    TRACE("Event object triggered\n" );
+  } else ERR("Got ShmCompletion for unknown drawable %ld\n", event->drawable );
 }
 
 int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
 {
   if (shm_draw) {
-    ERR_(event)("Multiple ShmCompletion requests not implemented\n");
+    ERR("Multiple ShmCompletion requests not implemented\n");
     return 0;
   }
-  TRACE_(event)("Preparing ShmCompletion (%d) wait for drawable %ld (time %ld)\n", ShmCompletionType, dw, GetTickCount() );
+  TRACE("Preparing ShmCompletion (%d) wait for drawable %ld (time %ld)\n", ShmCompletionType, dw, GetTickCount() );
   shm_draw = dw;
   if (!shm_event)
     /* use manual reset just in case */
@@ -1870,7 +1871,7 @@ int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
 void X11DRV_EVENT_WaitShmCompletion( int compl )
 {
   if (!compl) return;
-  TRACE_(event)("Waiting for ShmCompletion (%d) (thread %lx) (time %ld)\n", ShmCompletionType, GetCurrentThreadId(), GetTickCount() );
+  TRACE("Waiting for ShmCompletion (%d) (thread %lx) (time %ld)\n", ShmCompletionType, GetCurrentThreadId(), GetTickCount() );
   /* already triggered? */
   if ( WaitForSingleObject( compl, 0 ) != WAIT_OBJECT_0 ) {
     /* nope, may need to poll X event queue, in case the service thread is blocked */
@@ -1887,7 +1888,7 @@ void X11DRV_EVENT_WaitShmCompletion( int compl )
     } while ( WaitForMultipleObjects(2, hnd, FALSE, INFINITE) > WAIT_OBJECT_0 );
   }
   ResetEvent(compl); /* manual reset */
-  TRACE_(event)("Wait complete (time %ld)\n", GetTickCount() );
+  TRACE("Wait complete (time %ld)\n", GetTickCount() );
 }
 
 #endif /* defined(HAVE_LIBXXSHM) */

@@ -30,7 +30,7 @@
 #include "options.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(dosfs)
+DEFAULT_DEBUG_CHANNEL(dosfs)
 DECLARE_DEBUG_CHANNEL(file)
 
 static DOS_FULL_NAME DIR_Windows;
@@ -125,14 +125,14 @@ int DIR_Init(void)
     SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
     SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
 
-    TRACE_(dosfs)("WindowsDir = %s (%s)\n",
+    TRACE("WindowsDir = %s (%s)\n",
           DIR_Windows.short_name, DIR_Windows.long_name );
-    TRACE_(dosfs)("SystemDir  = %s (%s)\n",
+    TRACE("SystemDir  = %s (%s)\n",
           DIR_System.short_name, DIR_System.long_name );
-    TRACE_(dosfs)("TempDir    = %s (%s)\n",
+    TRACE("TempDir    = %s (%s)\n",
           tmp_dir.short_name, tmp_dir.long_name );
-    TRACE_(dosfs)("Path       = %s\n", path );
-    TRACE_(dosfs)("Cwd        = %c:\\%s\n",
+    TRACE("Path       = %s\n", path );
+    TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, DRIVE_GetDosCwd( drive ) );
 
     return 1;
@@ -650,7 +650,7 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     }
-    TRACE_(dosfs)("Returning %d\n", strlen(res) + 3 );
+    TRACE("Returning %d\n", strlen(res) + 3 );
     return strlen(res) + 3;
 }
 

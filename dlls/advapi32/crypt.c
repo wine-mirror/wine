@@ -26,7 +26,7 @@ BOOL WINAPI
 CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 		      LPCSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
 {
-    FIXME_(advapi)("(%p, %s, %s, %ld, %08lx): stub!\n", phProv, pszContainer,
+    FIXME("(%p, %s, %s, %ld, %08lx): stub!\n", phProv, pszContainer,
 	  pszProvider, dwProvType, dwFlags);
     return FALSE;
 }
@@ -37,8 +37,7 @@ CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 BOOL WINAPI
 CryptSetKeyParam( HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {
-    FIXME_(advapi)("(%lx, %lx, %p, %lx): stub!\n",
-	hKey, dwParam, pbData, dwFlags);
+    FIXME("(%lx, %lx, %p, %lx): stub!\n", hKey, dwParam, pbData, dwFlags);
     return FALSE;
 }
 

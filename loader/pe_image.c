@@ -62,12 +62,12 @@
 #include "snoop.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
 DECLARE_DEBUG_CHANNEL(delayhlp)
 DECLARE_DEBUG_CHANNEL(fixup)
 DECLARE_DEBUG_CHANNEL(module)
 DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(segment)
-DECLARE_DEBUG_CHANNEL(win32)
 
 
 /* convert PE image VirtualAddress to Real Address */
@@ -91,15 +91,15 @@ void dump_exports( HMODULE hModule )
   IMAGE_EXPORT_DIRECTORY *pe_exports = (IMAGE_EXPORT_DIRECTORY*)RVA(rva_start);
 
   Module = (char*)RVA(pe_exports->Name);
-  TRACE_(win32)("*******EXPORT DATA*******\n");
-  TRACE_(win32)("Module name is %s, %ld functions, %ld names\n", 
-	       Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
+  TRACE("*******EXPORT DATA*******\n");
+  TRACE("Module name is %s, %ld functions, %ld names\n", 
+        Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
   ordinal=(u_short*) RVA(pe_exports->AddressOfNameOrdinals);
   functions=function=(u_long*) RVA(pe_exports->AddressOfFunctions);
   name=(u_char**) RVA(pe_exports->AddressOfNames);
 
-  TRACE_(win32)(" Ord    RVA     Addr   Name\n" );
+  TRACE(" Ord    RVA     Addr   Name\n" );
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
@@ -144,15 +144,15 @@ FARPROC PE_FindExportedFunction(
 	char				* forward;
 
 	if (HIWORD(funcName))
-		TRACE_(win32)("(%s)\n",funcName);
+		TRACE("(%s)\n",funcName);
 	else
-		TRACE_(win32)("(%d)\n",(int)funcName);
+		TRACE("(%d)\n",(int)funcName);
 	if (!exports) {
 		/* Not a fatal problem, some apps do
 		 * GetProcAddress(0,"RegisterPenApp") which triggers this
 		 * case.
 		 */
-		WARN_(win32)("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,pem);
+		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,pem);
 		return NULL;
 	}
 	ordinal	= (u_short*)  RVA(exports->AddressOfNameOrdinals);
@@ -183,8 +183,7 @@ FARPROC PE_FindExportedFunction(
 	} else 	{
 		int i;
 		if (LOWORD(funcName)-exports->Base > exports->NumberOfFunctions) {
-			TRACE_(win32)("	ordinal %d out of range!\n",
-                                      LOWORD(funcName));
+			TRACE("	ordinal %d out of range!\n", LOWORD(funcName));
 			return NULL;
 		}
 		addr = function[(int)funcName-exports->Base];
@@ -218,7 +217,7 @@ FARPROC PE_FindExportedFunction(
 		module[end-forward] = 0;
                 if (!(wm = MODULE_FindModule( module )))
                 {
-                    ERR_(win32)("module not found for forward '%s'\n", forward );
+                    ERR("module not found for forward '%s'\n", forward );
                     return NULL;
                 }
 		return MODULE_GetProcAddress( wm->module, end + 1, snoop );
@@ -242,7 +241,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
         modname = "<unknown>";
 
     /* OK, now dump the import list */
-    TRACE_(win32)("Dumping imports list\n");
+    TRACE("Dumping imports list\n");
 
     /* first, count the number of imported non-internal modules */
     pe_imp = pem->pe_import;
@@ -288,7 +287,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 	/* FIXME: forwarder entries ... */
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
-	    TRACE_(win32)("Microsoft style imports used\n");
+	    TRACE("Microsoft style imports used\n");
 	    import_list =(PIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
 	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 
@@ -296,23 +295,23 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-		    TRACE_(win32)("--- Ordinal %s,%d\n", name, ordinal);
+		    TRACE("--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         wmImp->module, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR_(win32)("No implementation for %s.%d, setting to 0xdeadbeef\n",
+			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, ordinal);
                         thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		} else {		/* import by name */
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
-		    TRACE_(win32)("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
+		    TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR_(win32)("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
+			ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
 				name,pe_name->Hint,pe_name->Name);
                         thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
@@ -321,31 +320,31 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		thunk_list++;
 	    }
 	} else {	/* Borland style */
-	    TRACE_(win32)("Borland style imports used\n");
+	    TRACE("Borland style imports used\n");
 	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 	    while (thunk_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
-		    TRACE_(win32)("--- Ordinal %s.%d\n",name,ordinal);
+		    TRACE("--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         wmImp->module, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR_(win32)("No implementation for %s.%d, setting to 0xdeadbeef\n",
+			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name,ordinal);
                         thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		} else {
 		    pe_name=(PIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
-		    TRACE_(win32)("--- %s %s.%d\n",
+		    TRACE("--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-		    	ERR_(win32)("No implementation for %s.%d, setting to 0xdeadbeef\n",
+		    	ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, pe_name->Hint);
                         thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
@@ -362,11 +361,11 @@ static int calc_vma_size( HMODULE hModule )
     int i,vma_size = 0;
     IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(hModule);
 
-    TRACE_(win32)("Dump of segment table\n");
-    TRACE_(win32)("   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
+    TRACE("Dump of segment table\n");
+    TRACE("   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
     for (i = 0; i< PE_HEADER(hModule)->FileHeader.NumberOfSections; i++)
     {
-        TRACE_(win32)("%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
+        TRACE("%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
                       pe_seg->Name, 
                       pe_seg->Misc.VirtualSize,
                       pe_seg->VirtualAddress,
@@ -420,13 +419,13 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
 				/* FIXME: if this is an exported address, fire up enhanced logic */
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
-				FIXME_(win32)("Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");
+				FIXME("Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");
 				break;
 			case IMAGE_REL_BASED_MIPS_JMPADDR:
-				FIXME_(win32)("Is this a MIPS machine ???\n");
+				FIXME("Is this a MIPS machine ???\n");
 				break;
 			default:
-				FIXME_(win32)("Unknown fixup type\n");
+				FIXME("Unknown fixup type\n");
 				break;
 			}
 		}
@@ -469,14 +468,14 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
                                     0, 0, NULL );
     if (!mapping)
     {
-        WARN_(win32)("CreateFileMapping error %ld\n", GetLastError() );
+        WARN("CreateFileMapping error %ld\n", GetLastError() );
         return 0;
     }
     hModule = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( mapping );
     if (!hModule)
     {
-        WARN_(win32)("MapViewOfFile error %ld\n", GetLastError() );
+        WARN("MapViewOfFile error %ld\n", GetLastError() );
         return 0;
     }
     nt = PE_HEADER( hModule );
@@ -484,7 +483,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Check signature */
     if ( nt->Signature != IMAGE_NT_SIGNATURE )
     {
-        WARN_(win32)("image doesn't have PE signature, but 0x%08lx\n",
+        WARN("image doesn't have PE signature, but 0x%08lx\n",
                     nt->Signature );
         goto error;
     }
@@ -526,7 +525,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Check file size */
     if ( file_size && file_size < rawsize )
     {
-        ERR_(win32)("PE module is too small (header: %d, filesize: %d), "
+        ERR("PE module is too small (header: %d, filesize: %d), "
                     "probably truncated download?\n", 
                     rawsize, file_size );
         goto error;
@@ -535,7 +534,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Check entrypoint address */
     aoep = nt->OptionalHeader.AddressOfEntryPoint;
     if (aoep && (aoep < lowest_va))
-        FIXME_(win32)("WARNING: '%s' has an invalid entrypoint (0x%08lx) "
+        FIXME("WARNING: '%s' has an invalid entrypoint (0x%08lx) "
                       "below the first virtual address (0x%08x) "
                       "(possible Virus Infection or broken binary)!\n",
                        filename, aoep, lowest_va );
@@ -585,7 +584,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
             reloc = dir->VirtualAddress;
         else 
         {
-            FIXME_(win32)(
+            FIXME(
                    "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
                    filename,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
@@ -598,7 +597,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
          *        Some DLLs really check the MSB of the module handle :-/
          */
         if ( nt->OptionalHeader.ImageBase & 0x80000000 )
-            ERR_(win32)( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
+            ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
         load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
 					 MEM_RESERVE | MEM_COMMIT,
@@ -610,8 +609,8 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
 	}
     }
 
-    TRACE_(win32)("Load addr is %lx (base %lx), range %x\n",
-                  load_addr, nt->OptionalHeader.ImageBase, vma_size );
+    TRACE("Load addr is %lx (base %lx), range %x\n",
+          load_addr, nt->OptionalHeader.ImageBase, vma_size );
     TRACE_(segment)("Loading %s at %lx, range %x\n",
                     filename, load_addr, vma_size );
 
@@ -706,38 +705,38 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
         pe_resource = (PIMAGE_RESOURCE_DIRECTORY)RVA(dir->VirtualAddress);
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXCEPTION;
-    if (dir->Size) FIXME_(win32)("Exception directory ignored\n" );
+    if (dir->Size) FIXME("Exception directory ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_SECURITY;
-    if (dir->Size) FIXME_(win32)("Security directory ignored\n" );
+    if (dir->Size) FIXME("Security directory ignored\n" );
 
     /* IMAGE_DIRECTORY_ENTRY_BASERELOC handled in PE_LoadImage */
     /* IMAGE_DIRECTORY_ENTRY_DEBUG handled by debugger */
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_DEBUG;
-    if (dir->Size) TRACE_(win32)("Debug directory ignored\n" );
+    if (dir->Size) TRACE("Debug directory ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_COPYRIGHT;
-    if (dir->Size) FIXME_(win32)("Copyright string ignored\n" );
+    if (dir->Size) FIXME("Copyright string ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_GLOBALPTR;
-    if (dir->Size) FIXME_(win32)("Global Pointer (MIPS) ignored\n" );
+    if (dir->Size) FIXME("Global Pointer (MIPS) ignored\n" );
 
     /* IMAGE_DIRECTORY_ENTRY_TLS handled in PE_TlsInit */
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG;
-    if (dir->Size) FIXME_(win32)("Load Configuration directory ignored\n" );
+    if (dir->Size) FIXME("Load Configuration directory ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT;
-    if (dir->Size) TRACE_(win32)("Bound Import directory ignored\n" );
+    if (dir->Size) TRACE("Bound Import directory ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_IAT;
-    if (dir->Size) TRACE_(win32)("Import Address Table directory ignored\n" );
+    if (dir->Size) TRACE("Import Address Table directory ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT;
     if (dir->Size)
     {
-		TRACE_(win32)("Delayed import, stub calls LoadLibrary\n" );
+		TRACE("Delayed import, stub calls LoadLibrary\n" );
 		/*
 		 * Nothing to do here.
 		 */
@@ -762,10 +761,10 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 	}
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR;
-    if (dir->Size) FIXME_(win32)("Unknown directory 14 ignored\n" );
+    if (dir->Size) FIXME("Unknown directory 14 ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+15;
-    if (dir->Size) FIXME_(win32)("Unknown directory 15 ignored\n" );
+    if (dir->Size) FIXME("Unknown directory 15 ignored\n" );
 
 
     /* Allocate and fill WINE_MODREF */
@@ -812,7 +811,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     {
         if ( PROCESS_Current()->exe_modref )
-            FIXME_(win32)( "Trying to load second .EXE file: %s\n", filename );
+            FIXME( "Trying to load second .EXE file: %s\n", filename );
         else
             PROCESS_Current()->exe_modref = wm;
     }
@@ -910,7 +909,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	/* Create 32-bit MODREF */
 	if ( !(wm = PE_CreateModule( hModule32, filename, flags, FALSE )) )
 	{
-		ERR_(win32)( "can't load %s\n", filename );
+		ERR( "can't load %s\n", filename );
 		FreeLibrary16( hModule16 );
 		*err = ERROR_OUTOFMEMORY;
 		return NULL;
@@ -989,7 +988,7 @@ BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
  */
 int PE_UnloadImage( HMODULE hModule )
 {
-	FIXME_(win32)("stub.\n");
+	FIXME("stub.\n");
 	/* free resources, image, unmap */
 	return 1;
 }
@@ -1075,7 +1074,7 @@ void PE_InitTls( void )
 
 		     cbs = _fixup_address(&(peh->OptionalHeader),delta,pdir->AddressOfCallBacks);
 		     if (*cbs)
-		       FIXME_(win32)("TLS Callbacks aren't going to be called\n");
+		       FIXME("TLS Callbacks aren't going to be called\n");
 		}
 
 		TlsSetValue( pem->tlsindex, mem );

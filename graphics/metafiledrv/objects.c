@@ -16,8 +16,8 @@
 #include "debugtools.h"
 #include "heap.h"
 
+DEFAULT_DEBUG_CHANNEL(metafile)
 DECLARE_DEBUG_CHANNEL(gdi)
-DECLARE_DEBUG_CHANNEL(metafile)
 
 /***********************************************************************
  *           MFDRV_BITMAP_SelectObject
@@ -67,7 +67,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 
 	    GetObjectA(brushObj->logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
-	        FIXME_(metafile)("Trying to store a colour pattern brush\n");
+	        FIXME("Trying to store a colour pattern brush\n");
 		return FALSE;
 	    }
 
@@ -123,8 +123,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	      break;
 	}
 	default:
-	    FIXME_(metafile)("Unkonwn brush style %x\n", 
-		  brushObj->logbrush.lbStyle);
+	    FIXME("Unkonwn brush style %x\n", brushObj->logbrush.lbStyle);
 	    return -1;
     }
     index = MFDRV_AddHandleDC( dc );

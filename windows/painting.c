@@ -14,8 +14,8 @@
 #include "wine/winuser16.h"
 #include "cache.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
 DECLARE_DEBUG_CHANNEL(nonclient)
-DECLARE_DEBUG_CHANNEL(win)
 
 /* client rect in window coordinates */
 
@@ -294,7 +294,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     HideCaret( hwnd );
 
-    TRACE_(win)("hrgnUpdate = %04x, \n", hrgnUpdate);
+    TRACE("hrgnUpdate = %04x, \n", hrgnUpdate);
 
     if (GetClassWord16(wndPtr->hwndSelf, GCW_STYLE) & CS_PARENTDC)
     {
@@ -314,11 +314,11 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 	/* ReleaseDC() in EndPaint() will delete the region */
     }
 
-    TRACE_(win)("hdc = %04x\n", lps->hdc);
+    TRACE("hdc = %04x\n", lps->hdc);
 
     if (!lps->hdc)
     {
-        WARN_(win)("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        WARN("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
         WIN_ReleaseWndPtr(wndPtr);
         return 0;
     }
@@ -336,7 +336,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     IntersectRect16(&lps->rcPaint, &clientRect, &clipRect);
 
-    TRACE_(win)("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
+    TRACE("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
 
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
@@ -546,7 +546,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     r.right = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     r.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    TRACE_(win)("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", wndPtr->hwndSelf, wndPtr->hrgnUpdate, hRgn, flags );
+    TRACE("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", wndPtr->hwndSelf, wndPtr->hrgnUpdate, hRgn, flags );
 
     if( flags & RDW_INVALIDATE )
     {
@@ -735,7 +735,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
       /* Erase/update the window itself ... */
 
-    TRACE_(win)("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", hWnd, wndPtr->hrgnUpdate, hrgn, flags );
+    TRACE("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", hWnd, wndPtr->hrgnUpdate, hrgn, flags );
 
     /*
      * Check if this window should delay it's processing of WM_NCPAINT.
@@ -840,7 +840,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	if( hrgnUpdate )
 	{
 	    GetRgnBox( hrgnUpdate, &r );
-            TRACE_(win)( "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x, exflags=%04x\n", 
+            TRACE( "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x, exflags=%04x\n", 
 	          hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags, ex);
 	}
 	else
@@ -849,7 +849,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 		r = *rectUpdate;
 	    else
 		SetRectEmpty( &r );
-	    TRACE_(win)( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x, exflags=%04x\n",
+	    TRACE( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x, exflags=%04x\n",
 			hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left, 
 			r.top, r.right, r.bottom, hrgnUpdate, flags, ex );
 	}

@@ -20,7 +20,7 @@
 #include "flatsb.h" 
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(commctrl)
+DEFAULT_DEBUG_CHANNEL(commctrl)
 
 
 #define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
@@ -29,42 +29,42 @@ DECLARE_DEBUG_CHANNEL(commctrl)
 BOOL WINAPI 
 FlatSB_EnableScrollBar(HWND hwnd, INT dummy, UINT dummy2)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_ShowScrollBar(HWND hwnd, INT code, BOOL flag)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollRange(HWND hwnd, INT code, LPINT min, LPINT max)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_GetScrollPos(HWND hwnd, INT code)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
@@ -72,41 +72,41 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 INT WINAPI 
 FlatSB_SetScrollPos(HWND hwnd, INT code, INT pos, BOOL fRedraw)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_SetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info, BOOL fRedraw)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 
 BOOL WINAPI InitializeFlatSB(HWND hwnd)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
 HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 {
-    FIXME_(commctrl)("stub\n");
+    FIXME("stub\n");
     return 0;
 }
 
@@ -142,8 +142,8 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR_(commctrl)("unknown msg %04x wp=%08x lp=%08lx\n",
-		     uMsg, wParam, lParam);
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
+                    uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;

@@ -170,7 +170,7 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 {
 	HRESULT	hres = S_OK;
 	LPCLASSFACTORY lpclf;
-	TRACE_(shell)("%p->(%p)\n",psf,*psf);
+	TRACE("%p->(%p)\n",psf,*psf);
 
 	*psf=NULL;
 
@@ -191,7 +191,7 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 	  *psf = pdesktopfolder;
 	}
 
-	TRACE_(shell)("-- %p->(%p)\n",psf, *psf);
+	TRACE("-- %p->(%p)\n",psf, *psf);
 	return hres;
 }
 

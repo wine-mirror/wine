@@ -2221,7 +2221,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 
 BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 
-   FIXME_(commctrl)("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+   FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 
    return TRUE;
 }
@@ -2235,7 +2235,7 @@ BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 
 BOOL WINAPI comctl32_411( HWND hw, DWORD b, DWORD c) {
 
-   FIXME_(commctrl)("(%x, %lx, %lx): stub!\n", hw, b, c);
+   FIXME("(%x, %lx, %lx): stub!\n", hw, b, c);
 
    return TRUE;
 }
@@ -2249,7 +2249,7 @@ BOOL WINAPI comctl32_411( HWND hw, DWORD b, DWORD c) {
 
 BOOL WINAPI comctl32_412( HWND hwnd, DWORD b, DWORD c)
 {
-    FIXME_(commctrl)("(%x, %lx, %lx): stub!\n", hwnd, b, c);
+    FIXME("(%x, %lx, %lx): stub!\n", hwnd, b, c);
 
     if (IsWindow (hwnd) == FALSE)
 	return FALSE;
@@ -2270,7 +2270,7 @@ BOOL WINAPI comctl32_412( HWND hwnd, DWORD b, DWORD c)
 
 BOOL WINAPI comctl32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
-   FIXME_(commctrl)("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+   FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 
    return TRUE;
 }
@@ -2284,7 +2284,7 @@ BOOL WINAPI comctl32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
 BOOL WINAPI InitMUILanguage( LANGID uiLang) {
 
-   FIXME_(commctrl)("(%04x): stub!\n", uiLang);
+   FIXME("(%04x): stub!\n", uiLang);
 
    return TRUE;
 }

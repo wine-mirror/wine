@@ -33,8 +33,8 @@
 #include "debugstr.h"
 #include "winnls.h"
 
+DEFAULT_DEBUG_CHANNEL(resource)
 DECLARE_DEBUG_CHANNEL(accel)
-DECLARE_DEBUG_CHANNEL(resource)
 
 extern WORD WINE_LanguageId;
 
@@ -68,7 +68,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
         if ( !(map = (HRSRC_MAP *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                              sizeof(HRSRC_MAP) ) ) )
         {
-            ERR_(resource)("Cannot allocate HRSRC map\n" );
+            ERR("Cannot allocate HRSRC map\n" );
             return 0;
         }
         pModule->hRsrcMap = (LPVOID)map;
@@ -87,7 +87,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
                                                     (map->nAlloc + HRSRC_MAP_BLOCKSIZE) 
                                                     * sizeof(HRSRC_ELEM) ) ))
         {
-            ERR_(resource)("Cannot grow HRSRC map\n" );
+            ERR("Cannot grow HRSRC map\n" );
             return 0;
         }
         map->elem = newElem;
@@ -139,13 +139,14 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE_(resource)("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
-           hModule, pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
-           (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
-           (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
-           lang,
-           bUnicode? "W"  : "A",
-           bRet16?   "NE" : "PE" );
+    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
+          hModule,
+          pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
+          (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
+          (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
+          lang,
+          bUnicode? "W"  : "A",
+          bRet16?   "NE" : "PE" );
 
     if ( !pModule ) return 0;
 
@@ -174,7 +175,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
             break;
 	
         default:
-            ERR_(resource)("unknown module type %d\n", wm->type );
+            ERR("unknown module type %d\n", wm->type );
             break;
         }
 
@@ -230,8 +231,8 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE_(resource)("(%08x %s, %08x, %s)\n",
-           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
+    TRACE("(%08x %s, %08x, %s)\n",
+          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
 
@@ -253,7 +254,7 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             break;
 
         default:
-            ERR_(resource)("unknown module type %d\n", wm->type );
+            ERR("unknown module type %d\n", wm->type );
             break;
         }
     }
@@ -281,8 +282,8 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE_(resource)("(%08x %s, %08x, %s)\n",
-           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
+    TRACE("(%08x %s, %08x, %s)\n",
+          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return HFILE_ERROR;
 
@@ -294,7 +295,7 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
 #endif
 
-        FIXME_(resource)("32-bit modules not yet supported.\n" );
+        FIXME("32-bit modules not yet supported.\n" );
         hFile = HFILE_ERROR;
 
         /* If we need to return a 16-bit file handle, convert it */
@@ -329,8 +330,8 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE_(resource)("(%08x %s, %08x, %s)\n",
-           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
+    TRACE("(%08x %s, %08x, %s)\n",
+          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
 
@@ -352,7 +353,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             break;
 
         default:
-            ERR_(resource)("unknown module type %d\n", wm->type );
+            ERR("unknown module type %d\n", wm->type );
             break;
         }
 
@@ -388,14 +389,14 @@ static LPVOID RES_LockResource( HGLOBAL handle, BOOL bRet16 )
 {
     LPVOID bits = NULL;
 
-    TRACE_(resource)("(%08x, %s)\n", handle, bRet16? "NE" : "PE" );
+    TRACE("(%08x, %s)\n", handle, bRet16? "NE" : "PE" );
 
     if ( HIWORD( handle ) )
     {
         /* 32-bit memory handle */
 
         if ( bRet16 )
-            FIXME_(resource)("can't return SEGPTR to 32-bit resource %08x.\n", handle );
+            FIXME("can't return SEGPTR to 32-bit resource %08x.\n", handle );
         else
             bits = (LPVOID)handle;
     }
@@ -422,7 +423,7 @@ static BOOL RES_FreeResource( HGLOBAL handle )
 {
     HGLOBAL retv = handle;
 
-    TRACE_(resource)("(%08x)\n", handle );
+    TRACE("(%08x)\n", handle );
 
     if ( HIWORD( handle ) )
     {
@@ -862,8 +863,8 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     int string_num;
     int i;
 
-    TRACE_(resource)("inst=%04x id=%04x buff=%08x len=%d\n",
-                     instance, resource_id, (int) buffer, buflen);
+    TRACE("inst=%04x id=%04x buff=%08x len=%d\n",
+          instance, resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING16 );
     if (!hrsrc) return 0;
@@ -875,7 +876,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    TRACE_(resource)("strlen = %d\n", (int)*p );
+    TRACE("strlen = %d\n", (int)*p );
     
     if (buffer == NULL) return *p;
     i = MIN(buflen - 1, *p);
@@ -887,11 +888,11 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 	    buffer[0] = '\0';
 	    return 0;
 	}
-	WARN_(resource)("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
     }
     FreeResource16( hmem );
 
-    TRACE_(resource)("'%s' loaded !\n", buffer);
+    TRACE("'%s' loaded !\n", buffer);
     return i;
 }
 
@@ -909,8 +910,8 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT)(-((INT)resource_id));
-    TRACE_(resource)("instance = %04x, id = %04x, buffer = %08x, "
-	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
+    TRACE("instance = %04x, id = %04x, buffer = %08x, "
+          "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out 
      * 20 - 31. */
@@ -925,7 +926,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    TRACE_(resource)("strlen = %d\n", (int)*p );
+    TRACE("strlen = %d\n", (int)*p );
     
     if (buffer == NULL) return *p;
     i = MIN(buflen - 1, *p);
@@ -938,11 +939,11 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 	    return 0;
 	}
 #if 0
-	WARN_(resource)("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
 #endif
     }
 
-    TRACE_(resource)("%s loaded !\n", debugstr_w(buffer));
+    TRACE("%s loaded !\n", debugstr_w(buffer));
     return i;
 }
 
@@ -1006,7 +1007,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     PMESSAGE_RESOURCE_ENTRY	mre;
     int		i,slen;
 
-    TRACE_(resource)("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
+    TRACE("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
     hrsrc = FindResourceExW(instance,RT_MESSAGELISTW,(LPWSTR)1,lang);
@@ -1033,7 +1034,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     	mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mre)+(mre->Length));
     }
     slen=mre->Length;
-    TRACE_(resource)("	- strlen=%d\n",slen);
+    TRACE("	- strlen=%d\n",slen);
     i = MIN(buflen - 1, slen);
     if (buffer == NULL)
 	return slen;
@@ -1047,7 +1048,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
 	}
     }
     if (buffer)
-	    TRACE_(resource)("'%s' copied !\n", buffer);
+	    TRACE("'%s' copied !\n", buffer);
     return i;
 }
 

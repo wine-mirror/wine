@@ -32,7 +32,7 @@
 #include "global.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 
-DECLARE_DEBUG_CHANNEL(bitmap)
+DEFAULT_DEBUG_CHANNEL(bitmap)
 DECLARE_DEBUG_CHANNEL(x11drv)
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
@@ -76,7 +76,7 @@ int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 	 if( bitmapDepthTable[i] == depth )
 	     return (4 * ((width * ximageDepthTable[i] + 31)/32));
     
-    WARN_(bitmap)("(%d): Unsupported depth\n", depth );
+    WARN("(%d): Unsupported depth\n", depth );
     return (4 * width);
 }
 
@@ -108,7 +108,7 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
 
     if (colors > 256)
     {
-        ERR_(bitmap)("called with >256 colors!\n");
+        ERR("called with >256 colors!\n");
         return NULL;
     }
 
@@ -169,7 +169,7 @@ int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys )
         if (physMap[color] == phys)
             return color;
 
-    WARN_(bitmap)("Strange color %08x\n", phys);
+    WARN("Strange color %08x\n", phys);
     return 0;
 }
 
@@ -494,9 +494,9 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
       {
 	unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
 
-	FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 1 bit DIB\n",
-                         bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-                        (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+	FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 1 bit DIB\n",
+              bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
+              (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
       
 	for( h = lines - 1; h >= 0; h-- ) {
 	  for( x = 0; x < dstwidth; x++ ) {
@@ -775,9 +775,9 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 
     default: /* ? bit bmp -> 4 bit DIB */
     notsupported:
-      FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 4 bit DIB\n",
-                         bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-                        (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+      FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 4 bit DIB\n",
+            bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
+            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
       for (h = lines-1; h >= 0; h--) {
 	for (x = 0; x < dstwidth/2; x++) {
 	  *bits++ = (X11DRV_DIB_MapColor((int *)colors, 16, 
@@ -1126,9 +1126,9 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 
     default: /* ? bit bmp -> 8 bit DIB */
     notsupported:
-      FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 8 bit DIB\n",
-                         bmpImage->depth, (int)bmpImage->red_mask, 
-                        (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+      FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 8 bit DIB\n",
+            bmpImage->depth, (int)bmpImage->red_mask, 
+            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
     updatesection:
       for (h = lines - 1; h >= 0; h--) {
 	for (x = 0; x < dstwidth; x++, bits++) {
@@ -1266,8 +1266,8 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 			  line 	-= (*pIn++);
 			  if (line == 0)
 			    {
-			      TRACE_(bitmap)("Delta to last line of bitmap "
-					   "(wrongly?) causes loop exit\n");
+			      TRACE("Delta to last line of bitmap "
+                                    "(wrongly?) causes loop exit\n");
 			    }
 			  break;
 		      }
@@ -1311,11 +1311,8 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
      */
     if ( (*(pIn-2) != 0/*escape*/) || (*(pIn-1)!= RleEnd) )
       {
-	TRACE_(bitmap)("End-of-bitmap "
-		       "without (strictly) proper escape code.  Last two "
-		       "bytes were: %02X %02X.\n",
-		       (int)*(pIn-2),
-		       (int)*(pIn-1));		 
+	TRACE("End-of-bitmap without (strictly) proper escape code.  Last two "
+              "bytes were: %02X %02X.\n", (int)*(pIn-2),(int)*(pIn-1));
       }
 }  
 
@@ -1462,8 +1459,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
             break;
 
         default:
-            FIXME_(bitmap)("16 bit DIB %d bit bitmap\n",
-                           bmpImage->bits_per_pixel);
+            FIXME("16 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
         break;
 
     }
@@ -1655,9 +1651,9 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 	      BYTE r,g, b;
 	      LPWORD ptr = (LPWORD)dstbits;
 
-	      FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 16 bit DIB\n",
-			     bmpImage->depth, (int)bmpImage->red_mask, 
-			     (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+	      FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 16 bit DIB\n",
+                    bmpImage->depth, (int)bmpImage->red_mask, 
+                    (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
 	      for (h = lines - 1; h >= 0; h--)
 		{
 		  for (x = 0; x < dstwidth; x++, ptr++)
@@ -1886,9 +1882,9 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 
         default:
         notsupported:
-            FIXME_(bitmap)("from 24 bit DIB to %d bit bitmap with mask R,G,B %x,%x,%x\n",
-                            bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-                            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+            FIXME("from 24 bit DIB to %d bit bitmap with mask R,G,B %x,%x,%x\n",
+                  bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
+                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
             break;
     }
 }
@@ -2112,9 +2108,9 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 	    {
 	      LPBYTE bits = dstbits;
 
-            FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 24 bit DIB\n",
-			     bmpImage->depth, (int)bmpImage->red_mask, 
-                            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+            FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 24 bit DIB\n",
+                  bmpImage->depth, (int)bmpImage->red_mask, 
+                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
 	      for (h = lines - 1; h >= 0; h--)
 		{
 		  for (x = 0; x < dstwidth; x++, bits += 3)
@@ -2262,8 +2258,7 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 
        default:
        notsupported:
-            FIXME_(bitmap)("32 bit DIB %d bit bitmap\n",
-                            bmpImage->bits_per_pixel);
+            FIXME("32 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
             break;
     }
 
@@ -2442,9 +2437,9 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
         default:
         notsupported:
-	    FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 32 bit DIB\n",
-			   bmpImage->depth, (int)bmpImage->red_mask, 
-			   (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+	    FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 32 bit DIB\n",
+                  bmpImage->depth, (int)bmpImage->red_mask, 
+                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
 	    for (h = lines - 1; h >= 0; h--)
 	      {
 		for (x = 0; x < dstwidth; x++, bits += 4)
@@ -2544,7 +2539,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                                    bmpImage);
 	break;
     default:
-        WARN_(bitmap)("(%d): Invalid depth\n", descr->infoBpp );
+        WARN("(%d): Invalid depth\n", descr->infoBpp );
         break;
     }
 
@@ -2601,7 +2596,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 
     case 4:
        if (descr->compression)
-	   FIXME_(bitmap)("Compression not yet supported!\n");
+	   FIXME("Compression not yet supported!\n");
        else
 	   X11DRV_DIB_GetImageBits_4( descr->lines,(LPVOID)descr->bits, 
 				      descr->infoWidth, descr->width, 
@@ -2611,7 +2606,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 
     case 8:
        if (descr->compression)
-	   FIXME_(bitmap)("Compression not yet supported!\n");
+	   FIXME("Compression not yet supported!\n");
        else
 	   X11DRV_DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits,
 				      descr->infoWidth, descr->width,
@@ -2638,7 +2633,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
        break;
 
     default:
-        WARN_(bitmap)("(%d): Invalid depth\n", descr->infoBpp );
+        WARN("(%d): Invalid depth\n", descr->infoBpp );
         break;
     }
 
@@ -2843,10 +2838,10 @@ INT X11DRV_DIB_GetDIBits(
   X11DRV_PHYSBITMAP *pbitmap;
   PALETTEOBJ * palette;
   
-  TRACE_(bitmap)("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
+  TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
 	lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	(int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
-	startscan );
+        startscan );
 
   if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
       return 0;
@@ -2939,8 +2934,7 @@ static void X11DRV_DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
     DWORD old_prot;
 
     VirtualProtect(dib->dsBm.bmBits, totalSize, new_prot, &old_prot);
-    TRACE_(bitmap)("Changed protection from %ld to %ld\n", 
-                  old_prot, new_prot);
+    TRACE("Changed protection from %ld to %ld\n", old_prot, new_prot);
 }
 
 /***********************************************************************
@@ -2998,14 +2992,14 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
 
   if (toDIB)
     {
-      TRACE_(bitmap)("Copying from Pixmap to DIB bits\n");
+      TRACE("Copying from Pixmap to DIB bits\n");
       EnterCriticalSection( &X11DRV_CritSection );
       CALL_LARGE_STACK( X11DRV_DIB_GetImageBits, &descr );
       LeaveCriticalSection( &X11DRV_CritSection );
     }
   else
     {
-      TRACE_(bitmap)("Copying from DIB bits to Pixmap\n"); 
+      TRACE("Copying from DIB bits to Pixmap\n"); 
       EnterCriticalSection( &X11DRV_CritSection );
       CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
       LeaveCriticalSection( &X11DRV_CritSection );
@@ -3027,7 +3021,7 @@ static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
     switch (((X11DRV_DIBSECTION *) bmp->dib)->status)
       {
       case X11DRV_DIB_GdiMod:
-	TRACE_(bitmap)("called in status DIB_GdiMod\n" );
+	TRACE("called in status DIB_GdiMod\n" );
 	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
 	X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
 	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
@@ -3036,20 +3030,18 @@ static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
 	break;
 	
       case X11DRV_DIB_InSync:
-	TRACE_(bitmap)("called in status X11DRV_DIB_InSync\n" );
+	TRACE("called in status X11DRV_DIB_InSync\n" );
 	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
 	((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_AppMod;
 	handled = TRUE;
 	break;
 	
       case X11DRV_DIB_AppMod:
-	FIXME_(bitmap)("called in status X11DRV_DIB_AppMod: "
-	       "this can't happen!\n" );
+	FIXME("called in status X11DRV_DIB_AppMod: this can't happen!\n" );
 	break;
 	
       case X11DRV_DIB_NoHandler:
-	FIXME_(bitmap)("called in status DIB_NoHandler: "
-	       "this can't happen!\n" );
+	FIXME("called in status DIB_NoHandler: this can't happen!\n" );
 	break;
       }
   
@@ -3090,17 +3082,17 @@ void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
 	  break;
 	  
         case X11DRV_DIB_GdiMod:
-	  TRACE_(bitmap)("fromDIB called in status X11DRV_DIB_GdiMod\n" );
+	  TRACE("fromDIB called in status X11DRV_DIB_GdiMod\n" );
 	  /* nothing to do */
 	  break;
 	  
         case X11DRV_DIB_InSync:
-	  TRACE_(bitmap)("fromDIB called in status X11DRV_DIB_InSync\n" );
+	  TRACE("fromDIB called in status X11DRV_DIB_InSync\n" );
 	  /* nothing to do */
 	  break;
 	  
         case X11DRV_DIB_AppMod:
-	  TRACE_(bitmap)("fromDIB called in status X11DRV_DIB_AppMod\n" );
+	  TRACE("fromDIB called in status X11DRV_DIB_AppMod\n" );
 	  X11DRV_DIB_DoUpdateDIBSection( bmp, FALSE );
 	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
 	  ((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_InSync;
@@ -3119,19 +3111,19 @@ void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
 	  break;
 	  
         case X11DRV_DIB_GdiMod:
-	  TRACE_(bitmap)("  toDIB called in status X11DRV_DIB_GdiMod\n" );
+	  TRACE("  toDIB called in status X11DRV_DIB_GdiMod\n" );
 	  /* nothing to do */
 	  break;
 	  
         case X11DRV_DIB_InSync:
-	  TRACE_(bitmap)("  toDIB called in status X11DRV_DIB_InSync\n" );
+	  TRACE("  toDIB called in status X11DRV_DIB_InSync\n" );
 	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
 	  ((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_GdiMod;
 	  break;
 	  
         case X11DRV_DIB_AppMod:
-	  FIXME_(bitmap)("  toDIB called in status X11DRV_DIB_AppMod: "
-		 "this can't happen!\n" );
+	  FIXME("  toDIB called in status X11DRV_DIB_AppMod: "
+                "this can't happen!\n" );
 	  break;
         }
     }
@@ -3165,7 +3157,7 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 		SELECTOR_AllocBlock( dib->dsBm.bmBits, size, 
 				     SEGMENT_DATA, FALSE, FALSE );
 	    }
-	  TRACE_(bitmap)("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
+	  TRACE("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
 			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
 			 PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
 	}
@@ -3262,7 +3254,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   INT effHeight, totalSize;
   BITMAP bm;
   
-  TRACE_(bitmap)("format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
+  TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
 	bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
 	bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
   
@@ -3367,7 +3359,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Clean up in case of errors */
   if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
-      TRACE_(bitmap)("got an error res=%08x, bmp=%p, dib=%p, bm.bmBits=%p\n",
+      TRACE("got an error res=%08x, bmp=%p, dib=%p, bm.bmBits=%p\n",
 	    res, bmp, dib, bm.bmBits);
       if (bm.bmBits)
         {
@@ -3447,7 +3439,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
     hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(pixmap);
     if (!hBmp)
     {
-        TRACE_(bitmap)("\tCould not create bitmap header for Pixmap\n");
+        TRACE("\tCould not create bitmap header for Pixmap\n");
         goto END;
     }
 
@@ -3476,7 +3468,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
     DeleteObject(hBmp);  
     
 END:
-    TRACE_(bitmap)("\tReturning packed DIB %x\n", hPackedDIB);
+    TRACE("\tReturning packed DIB %x\n", hPackedDIB);
     return hPackedDIB;
 }
 
@@ -3514,7 +3506,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 
     GlobalUnlock(hPackedDIB);
 
-    TRACE_(bitmap)("CreateDIBitmap returned %x\n", hBmp);
+    TRACE("CreateDIBitmap returned %x\n", hBmp);
 
     /* Retrieve the internal Pixmap from the DDB */
      
@@ -3524,7 +3516,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     {
         pixmap = ((X11DRV_PHYSBITMAP *)(pBmp->DDBitmap->physBitmap))->pixmap;
         if (!pixmap)
-            TRACE_(bitmap)("NULL Pixmap in DDBitmap->physBitmap!\n");
+            TRACE("NULL Pixmap in DDBitmap->physBitmap!\n");
         
         /* Manually free the BITMAPOBJ internals so that we can steal its pixmap */
         HeapFree( GetProcessHeap(), 0, pBmp->DDBitmap->physBitmap );
@@ -3535,7 +3527,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     /* Delete the DDB we created earlier now that we have stolen its pixmap */
     DeleteObject(hBmp);
     
-    TRACE_(bitmap)("\tReturning Pixmap %ld\n", pixmap);
+    TRACE("\tReturning Pixmap %ld\n", pixmap);
     return pixmap;
 }
 

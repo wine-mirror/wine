@@ -11,7 +11,7 @@
 #include "server.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(debugstr)
+DEFAULT_DEBUG_CHANNEL(debugstr)
 
 /**********************************************************************
  *           DEBUG_SendEvent
@@ -258,7 +258,7 @@ void WINAPI OutputDebugStringA( LPCSTR str )
         DEBUG_SendEvent( OUTPUT_DEBUG_STRING_EVENT, &event, sizeof(event) );
     }
 
-    TRACE_(debugstr)("%s\n", str);
+    TRACE("%s\n", str);
 }
 
 
@@ -276,7 +276,7 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
         DEBUG_SendEvent( OUTPUT_DEBUG_STRING_EVENT, &event, sizeof(event) );
     }
 
-    TRACE_(debugstr)("%s\n", debugstr_w(str));
+    TRACE("%s\n", debugstr_w(str));
 }
 
 

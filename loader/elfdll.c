@@ -20,7 +20,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 
-DECLARE_DEBUG_CHANNEL(elfdll)
+DEFAULT_DEBUG_CHANNEL(elfdll)
 
 #if defined(HAVE_DL_API)
 #include <dlfcn.h>
@@ -84,7 +84,7 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 
 		if(len + namelen + 1 >= sizeof(buffer))
 		{
-			ERR_(elfdll)("Buffer overflow! Check EXTRA_LD_LIBRARY_PATH or increase buffer size.\n");
+			ERR("Buffer overflow! Check EXTRA_LD_LIBRARY_PATH or increase buffer size.\n");
 			return NULL;
 		}
 
@@ -97,7 +97,7 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 		else
 			strcpy(buffer + len, libname);
 
-		TRACE_(elfdll)("Trying dlopen('%s', %d)\n", buffer, flags);
+		TRACE("Trying dlopen('%s', %d)\n", buffer, flags);
 
 		handle = dlopen(buffer, flags);
 		if(handle)
@@ -216,7 +216,7 @@ static WINE_MODREF *ELFDLL_CreateModref(HMODULE hModule, LPCSTR path)
 
 	{
 		if ( PROCESS_Current()->exe_modref )
-			FIXME_(elfdll)( "Trying to load second .EXE file: %s\n", path );
+			FIXME( "Trying to load second .EXE file: %s\n", path );
 		else
 			PROCESS_Current()->exe_modref = wm;
 	}
@@ -301,7 +301,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	dlhandle = ELFDLL_dlopen(soname, RTLD_LAZY);
 	if(!dlhandle)
 	{
-		WARN_(elfdll)("Could not load %s (%s)\n", soname, dlerror());
+		WARN("Could not load %s (%s)\n", soname, dlerror());
 		*err = ERROR_FILE_NOT_FOUND;
 		return NULL;
 	}
@@ -312,7 +312,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	image = (struct elfdll_image *)dlsym(dlhandle, soname);
 	if(!image) 
 	{
-		ERR_(elfdll)("Could not get elfdll image descriptor %s (%s)\n", soname, dlerror());
+		ERR("Could not get elfdll image descriptor %s (%s)\n", soname, dlerror());
 		dlclose(dlhandle);
 		*err = ERROR_BAD_FORMAT;
 		return NULL;
@@ -322,7 +322,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	hmod16 = ELFDLL_CreateNEModule(image->ne_module_start, image->ne_module_size);
 	if(!hmod16)
 	{
-		ERR_(elfdll)("Could not create win16 dummy module for %s\n", path);
+		ERR("Could not create win16 dummy module for %s\n", path);
 		dlclose(dlhandle);
 		*err = ERROR_OUTOFMEMORY;
 		return NULL;
@@ -333,7 +333,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	wm = ELFDLL_CreateModref(image->pe_module_start, path);
 	if(!wm)
 	{
-		ERR_(elfdll)("Could not create WINE_MODREF for %s\n", path);
+		ERR("Could not create WINE_MODREF for %s\n", path);
 		GLOBAL_FreeBlock((HGLOBAL16)hmod16);
 		dlclose(dlhandle);
 		*err = ERROR_OUTOFMEMORY;

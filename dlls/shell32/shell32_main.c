@@ -28,8 +28,8 @@
 #include "wine/undocshell.h"
 #include "shpolicy.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
 DECLARE_DEBUG_CHANNEL(exec)
-DECLARE_DEBUG_CHANNEL(shell)
 
 #define MORE_DEBUG 1
 /*************************************************************************
@@ -38,7 +38,7 @@ DECLARE_DEBUG_CHANNEL(shell)
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 {	LPWSTR  *argv,s,t;
 	int	i;
-	TRACE_(shell)("\n");
+	TRACE("\n");
 
 	/* to get writeable copy */
 	cmdline = HEAP_strdupW( GetProcessHeap(), 0, cmdline);
@@ -91,7 +91,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 
 void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 {
-    FIXME_(shell)("(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
+    FIXME("(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
           debugstr_a(cmd), arg4);
 }
 
@@ -111,7 +111,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	LPITEMIDLIST	pidlLast, pidl = NULL;
 	HRESULT hr = S_OK;
 
-	TRACE_(shell)("(%s,0x%lx,%p,0x%x,0x%x)\n", 
+	TRACE("(%s,0x%lx,%p,0x%x,0x%x)\n", 
 	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, sizeofpsfi, flags);
 
 #ifdef MORE_DEBUG
@@ -127,7 +127,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  pidl = (LPCITEMIDLIST) path;
 	  if (!pidl )
 	  {
-	    ERR_(shell)("pidl is null!\n");
+	    ERR("pidl is null!\n");
 	    return FALSE;
 	  }
 	}
@@ -176,16 +176,16 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	/* ### icons ###*/
 	if (flags & SHGFI_LINKOVERLAY)
-	  FIXME_(shell)("set icon to link, stub\n");
+	  FIXME("set icon to link, stub\n");
 
 	if (flags & SHGFI_OPENICON)
-	  FIXME_(shell)("set to open icon, stub\n");
+	  FIXME("set to open icon, stub\n");
 
 	if (flags & SHGFI_SELECTED)
-	  FIXME_(shell)("set icon to selected, stub\n");
+	  FIXME("set icon to selected, stub\n");
 
 	if (flags & SHGFI_SHELLICONSIZE)
-	  FIXME_(shell)("set icon to shell size, stub\n");
+	  FIXME("set icon to shell size, stub\n");
 
 	/* get the iconlocation */
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICONLOCATION ))
@@ -254,10 +254,10 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 
 	if (flags & SHGFI_EXETYPE)
-	  FIXME_(shell)("type of executable, stub\n");
+	  FIXME("type of executable, stub\n");
 
 	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
-	  FIXME_(shell)("unknown attribute!\n");
+	  FIXME("unknown attribute!\n");
 
 	if (psfParent)
 	  IShellFolder_Release(psfParent);
@@ -266,7 +266,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  ret = FALSE;
 
 #ifdef MORE_DEBUG
-	TRACE_(shell) ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s\n", 
+	TRACE ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s\n", 
 		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName);
 #endif
 	return ret;
@@ -279,7 +279,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                               SHFILEINFOW *psfi, UINT sizeofpsfi,
                               UINT flags )
-{	FIXME_(shell)("(%s,0x%lx,%p,0x%x,0x%x)\n",
+{	FIXME("(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      debugstr_w(path),dwFileAttributes,psfi,sizeofpsfi,flags);
 	return 0;
 }
@@ -290,7 +290,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	UINT nIconIndex )
 {   HGLOBAL16 handle = InternalExtractIcon16(hInstance,lpszExeFileName,nIconIndex, 1);
-    TRACE_(shell)("\n");
+    TRACE("\n");
     if( handle )
     {
 	HICON16* ptr = (HICON16*)GlobalLock16(handle);
@@ -309,7 +309,7 @@ HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 	UINT nIconIndex )
 { LPSTR  exefn;
   HICON  ret;
-  TRACE_(shell)("\n");
+  TRACE("\n");
 
   exefn = HEAP_strdupWtoA(GetProcessHeap(),0,lpszExeFileName);
   ret = ExtractIconA(hInstance,exefn,nIconIndex);
@@ -326,7 +326,7 @@ HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
 { HINSTANCE retval=31;    /* default - 'No association was found' */
     char old_dir[1024];
 
-  TRACE_(shell)("File %s, Dir %s\n", 
+  TRACE("File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
 		 (lpDirectory != NULL?lpDirectory:"-"));
 
@@ -345,7 +345,7 @@ HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
 
     retval = SHELL_FindExecutable( lpFile, "open", lpResult );
 
-  TRACE_(shell)("returning %s\n", lpResult);
+  TRACE("returning %s\n", lpResult);
   if (lpDirectory)
     SetCurrentDirectoryA( old_dir );
     return retval;
@@ -357,7 +357,7 @@ HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory,
                                      LPWSTR lpResult)
 {
-  FIXME_(shell)("(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
+  FIXME("(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
   return 31;    /* default - 'No association was found' */
 }
 
@@ -392,7 +392,7 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 {
-	FIXME_(shell)("(0x%08lx,%p hwnd=0x%08x): stub\n", msg, data, data->hWnd);
+	FIXME("(0x%08lx,%p hwnd=0x%08x): stub\n", msg, data, data->hWnd);
 
 	switch (msg)
 	{ case ABM_GETSTATE:
@@ -435,7 +435,7 @@ DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
  */
 
 DWORD WINAPI SHLoadInProc (DWORD dwArg1)
-{ FIXME_(shell)("(%lx) empty stub!\n", dwArg1);
+{ FIXME("(%lx) empty stub!\n", dwArg1);
     return 0;
 }
 
@@ -445,7 +445,7 @@ DWORD WINAPI SHLoadInProc (DWORD dwArg1)
 HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
                                     LPCSTR lpFile, LPCSTR lpParameters,
                                     LPCSTR lpDirectory, INT iShowCmd )
-{   TRACE_(shell)("\n");
+{   TRACE("\n");
     return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
                            lpDirectory, iShowCmd );
 }
@@ -465,7 +465,7 @@ ShellExecuteW(
        LPCWSTR lpDirectory, 
        INT nShowCmd) {
 
-       FIXME_(shell)(": stub\n");
+       FIXME(": stub\n");
        return 0;
 }
 
@@ -477,7 +477,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 {   HWND hWndCtl;
     char Template[512], AppTitle[512];
 
-    TRACE_(shell)("\n");
+    TRACE("\n");
 
     switch(msg)
     { case WM_INITDIALOG:
@@ -612,7 +612,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 {   ABOUT_INFO info;
     HRSRC hRes;
     LPVOID template;
-    TRACE_(shell)("\n");
+    TRACE("\n");
 
     if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
         return FALSE;
@@ -638,7 +638,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     HRSRC hRes;
     LPVOID template;
 
-    TRACE_(shell)("\n");
+    TRACE("\n");
     
     if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
         return FALSE;
@@ -663,7 +663,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  *	Any ideas on how this is to be implimented?
  */
 BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   FIXME_(shell)("Taskbar Notification Area functionality not implemented !\n");
+{   FIXME("Taskbar Notification Area functionality not implemented !\n");
     return TRUE; /* pretend success */
 }
 
@@ -674,7 +674,7 @@ BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
  *	Any ideas on how this is to be implimented?
  */
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   FIXME_(shell)("Taskbar Notification Area functionality not implemented !\n");
+{   FIXME("Taskbar Notification Area functionality not implemented !\n");
     return TRUE; /* pretend success */
 }
 
@@ -682,7 +682,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
  * FreeIconList
  */
 void WINAPI FreeIconList( DWORD dw )
-{ FIXME_(shell)("(%lx): stub\n",dw);
+{ FIXME("(%lx): stub\n",dw);
 }
 
 /***********************************************************************
@@ -704,7 +704,7 @@ void WINAPI FreeIconList( DWORD dw )
 HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
 	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
-	{ WARN_(shell)("wrong DLLVERSIONINFO size from app");
+	{ WARN("wrong DLLVERSIONINFO size from app");
 	  return E_INVALIDARG;
 	}
 
@@ -713,7 +713,7 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 	pdvi->dwBuildNumber = 3110;
 	pdvi->dwPlatformID = 1;
 
-	TRACE_(shell)("%lu.%lu.%lu.%lu\n",
+	TRACE("%lu.%lu.%lu.%lu\n",
 	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
 	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
 
@@ -775,7 +775,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
 	HMODULE	hUser32;
 
-	TRACE_(shell)("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
 	switch (fdwReason)
 	{
@@ -783,7 +783,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    shell32_RefCount++;
 	    if (shell32_hInstance)
 	    {
-	      ERR_(shell)("shell32.dll instantiated twice in one address space!\n"); 
+	      ERR("shell32.dll instantiated twice in one address space!\n"); 
 	    }
 	    else
 	    {
@@ -799,7 +799,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    if (!hComctl32 || !hUser32 || !hOle32)
 	    {
-	      ERR_(shell)("P A N I C SHELL32 loading failed\n");
+	      ERR("P A N I C SHELL32 loading failed\n");
 	      return FALSE;
 	    }
 
@@ -867,14 +867,14 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
 	      {
-	        WARN_(shell)("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
+	        WARN("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
 	      }
 	    }
 
 	    FreeLibrary(hOle32);
 	    FreeLibrary(hComctl32);
 
-	    TRACE_(shell)("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
+	    TRACE("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
 	    break;
 	}
 	return TRUE;
@@ -891,7 +891,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
-   FIXME_(shell)("(%s, %s): stub!\n", bInstall ? "TRUE":"FALSE", debugstr_w(cmdline));
+   FIXME("(%s, %s): stub!\n", bInstall ? "TRUE":"FALSE", debugstr_w(cmdline));
 
    return S_OK;		/* indicate success */
 }
