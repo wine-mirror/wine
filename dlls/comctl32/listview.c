@@ -2498,6 +2498,9 @@ static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
   {
     bResult = LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
 
+    /* Need to reset the item width when deleting a column */
+    infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
+
     /* reset scroll parameters */
     if (uView == LVS_REPORT)
     {
@@ -4707,6 +4710,9 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
     /* insert item in header control */
     nNewColumn = SendMessageA(infoPtr->hwndHeader, HDM_INSERTITEMA,
                              (WPARAM)nColumn, (LPARAM)&hdi);
+    
+    /* Need to reset the item width when inserting a new column */
+    infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
 
     LISTVIEW_UpdateScroll(hwnd);
     InvalidateRect(hwnd, NULL, FALSE);
