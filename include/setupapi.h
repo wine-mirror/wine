@@ -531,6 +531,9 @@ void     WINAPI SetupTermDefaultQueueCallback( PVOID );
 UINT     WINAPI SetupDefaultQueueCallbackA( PVOID, UINT, UINT_PTR, UINT_PTR );
 UINT     WINAPI SetupDefaultQueueCallbackW( PVOID, UINT, UINT_PTR, UINT_PTR );
 #define         SetupDefaultQueueCallback WINELIB_NAME_AW(SetupDefaultQueueCallback)
+HDEVINFO WINAPI SetupDiGetClassDevsA(CONST GUID *,LPCSTR,HWND,DWORD);
+HDEVINFO WINAPI SetupDiGetClassDevsW(CONST GUID *,LPCWSTR,HWND,DWORD);
+#define         SetupDiGetClassDevs WINELIB_NAME_AW(SetupDiGetClassDevs)
 BOOL     WINAPI SetupInstallFilesFromInfSectionA( HINF, HINF, HSPFILEQ, PCSTR, PCSTR, UINT );
 BOOL     WINAPI SetupInstallFilesFromInfSectionW( HINF, HINF, HSPFILEQ, PCWSTR, PCWSTR, UINT );
 #define         SetupInstallFilesFromInfSection WINELIB_NAME_AW(SetupInstallFilesFromInfSection)

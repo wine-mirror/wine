@@ -103,7 +103,7 @@
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
 @ stdcall SetupDiGetClassDevsA(ptr ptr long long) SetupDiGetClassDevsA
-@ stub SetupDiGetClassDevsW
+@ stdcall SetupDiGetClassDevsW(ptr ptr long long) SetupDiGetClassDevsW
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
 @ stub SetupDiGetClassInstallParamsA
