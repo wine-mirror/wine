@@ -174,13 +174,14 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 
     switch (uMsg)
     {
-    case WM_NCCREATE:
+    case WM_NCCREATE: {
+        CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
+
 	if ((TWEAK_WineLook > WIN31_LOOK) && (wndPtr->dwStyle & SS_SUNKEN))
 	    wndPtr->dwExStyle |= WS_EX_STATICEDGE;
 
         if (style == SS_ICON)
         {
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
             if (cs->lpszName)
                 STATIC_SetIcon( wndPtr,
                                 STATIC_LoadIcon( wndPtr, cs->lpszName ));
@@ -188,7 +189,6 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
         }
 	if (style == SS_BITMAP)
 	{
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
             if (cs->lpszName)
                 STATIC_SetBitmap( wndPtr,
                                 STATIC_LoadBitmap( wndPtr, cs->lpszName ));
@@ -196,8 +196,14 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 			wndPtr->dwStyle);
             return 1;
 	}
+	if (!HIWORD(cs->lpszName)) {
+		FIXME(static,"windowName is 0x%04x, not doing DefWindowProc\n",
+		    LOWORD(cs->lpszName)
+		);
+		return 1;
+	}
         return DefWindowProc32A( hWnd, uMsg, wParam, lParam );
-
+    }
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
         {
