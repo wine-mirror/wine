@@ -1866,7 +1866,12 @@ HRESULT Storage32Impl_Construct(
    */
   This->bigBlockSize   = DEF_BIG_BLOCK_SIZE;
   This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
-  This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile, This->bigBlockSize);
+  This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile,
+                                                openFlags,
+                                                This->bigBlockSize);
+
+  if (This->bigBlockFile == 0)
+    return E_FAIL;
  
   if (openFlags & STGM_CREATE)
   {

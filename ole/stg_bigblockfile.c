@@ -86,6 +86,8 @@ static BigBlock* BIGBLOCKFILE_AddBigBlock(LPBIGBLOCKFILE This,
 					  ULONG          index);
 static BigBlock* BIGBLOCKFILE_CreateBlock(ULONG index);
 
+static DWORD BIGBLOCKFILE_GetProtectMode(DWORD openFlags);
+
 /******************************************************************************
  *      BIGBLOCKFILE_Construct
  *
@@ -95,6 +97,7 @@ static BigBlock* BIGBLOCKFILE_CreateBlock(ULONG index);
  */
 BigBlockFile * BIGBLOCKFILE_Construct(
   HANDLE32 hFile, 
+    DWORD    openFlags,
   ULONG    blocksize)
 {
   LPBIGBLOCKFILE This;
@@ -112,11 +115,13 @@ BigBlockFile * BIGBLOCKFILE_Construct(
     return NULL;
   }
 
+  This->flProtect = BIGBLOCKFILE_GetProtectMode(openFlags);
+
   /* create the file mapping object
    */
   This->hfilemap = CreateFileMapping32A(This->hfile,
 					NULL,
-					PAGE_READWRITE, 
+					This->flProtect, 
 					0, 0,
 					NULL);
   
@@ -327,7 +332,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
    */
   This->hfilemap = CreateFileMapping32A(This->hfile,
 					NULL,
-					PAGE_READWRITE, 
+					This->flProtect,
 					0, 0, 
 					NULL);
 
@@ -826,3 +831,26 @@ static void BIGBLOCKFILE_FreeAllMappedPages(
   }
 }
 
+/****************************************************************************
+ *      BIGBLOCKFILE_GetProtectMode
+ *
+ * This function will return a protection mode flag for a file-mapping object
+ * from the open flags of a file.
+ */
+static DWORD BIGBLOCKFILE_GetProtectMode(DWORD openFlags)
+{
+  DWORD flProtect        = PAGE_READONLY;
+  BOOL32 bSTGM_WRITE     = ((openFlags & STGM_WRITE) == STGM_WRITE);
+  BOOL32 bSTGM_READWRITE = ((openFlags & STGM_READWRITE) == STGM_READWRITE);
+  BOOL32 bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
+
+  if (bSTGM_READ)
+    flProtect = PAGE_READONLY;
+
+  if ((bSTGM_WRITE) || (bSTGM_READWRITE))
+    flProtect = PAGE_READWRITE;
+
+  return flProtect;
+}
+
+ 

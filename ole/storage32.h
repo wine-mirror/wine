@@ -138,6 +138,7 @@ struct BigBlockFile
   ULONG blocksize;
   HANDLE32 hfile;
   HANDLE32 hfilemap;
+  DWORD flProtect;
   MappedPage *headmap_ro;
   MappedPage *headmap_w;
   BigBlock *headblock;
@@ -147,7 +148,9 @@ struct BigBlockFile
  * Declaration of the functions used to manipulate the BigBlockFile
  * data structure.
  */
-BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE32 hFile, ULONG blocksize);
+BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE32 hFile,
+                                      DWORD openFlags,
+                                      ULONG blocksize);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
 void*          BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index);
 void*          BIGBLOCKFILE_GetROBigBlock(LPBIGBLOCKFILE This, ULONG index);
