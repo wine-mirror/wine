@@ -572,7 +572,8 @@ LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 
       /* add EOL -- end of line */
       lpbiOut->biSizeImage += 2;
-      *((LPWORD)lpOut)++ = 0;
+      *(LPWORD)lpOut = 0;
+      lpOut += sizeof(WORD);
       assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
     }
   } else {
@@ -631,7 +632,8 @@ LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 	    }
 	    /* add EOL -- end of line */
 	    lpbiOut->biSizeImage += 2;
-	    *((LPWORD)lpOut)++ = 0;
+	    *((LPWORD)lpOut) = 0;
+	    lpOut += sizeof(WORD);
 	  }
 
 	  /* FIXME: if (jumpy == 0 && could encode all) then jump too expensive */
@@ -669,14 +671,16 @@ LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 
 	/* add EOL -- end of line */
 	lpbiOut->biSizeImage += 2;
-	*((LPWORD)lpOut)++ = 0;
+	*((LPWORD)lpOut) = 0;
+        lpOut += sizeof(WORD);
 	assert(lpOut == lpOutStart + lpbiOut->biSizeImage);
       }
     }
 
     /* add EOL -- will be changed to EOI */
     lpbiOut->biSizeImage += 2;
-    *((LPWORD)lpOut)++ = 0;
+    *((LPWORD)lpOut) = 0;
+    lpOut += sizeof(WORD);
   }
 
   /* change EOL to EOI -- end of image */
@@ -720,7 +724,8 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 
       /* add EOL -- end of line */
       lpbiOut->biSizeImage += 2;
-      *((LPWORD)lpOut)++ = 0;
+      *((LPWORD)lpOut) = 0;
+      lpOut += sizeof(WORD);
       assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
     }
   } else {
@@ -765,7 +770,8 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 
 	    /* add EOL -- end of line */
 	    lpbiOut->biSizeImage += 2;
-	    *((LPWORD)lpOut)++ = 0;
+	    *((LPWORD)lpOut) = 0;
+	    lpOut += sizeof(WORD);
 	    assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
 	  }
 
@@ -803,14 +809,16 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
       if (jumpy == 0) {
 	/* add EOL -- end of line */
 	lpbiOut->biSizeImage += 2;
-	*((LPWORD)lpOut)++ = 0;
+	*((LPWORD)lpOut) = 0;
+	lpOut += sizeof(WORD);
 	assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
       }
     }
 
     /* add EOL -- will be changed to EOI */
     lpbiOut->biSizeImage += 2;
-    *((LPWORD)lpOut)++ = 0;
+    *((LPWORD)lpOut) = 0;
+    lpOut += sizeof(WORD);
   }
 
   /* change EOL to EOI -- end of image */
