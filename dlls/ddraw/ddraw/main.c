@@ -470,14 +470,20 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
     TRACE("Requested Caps: 0x%lx\n", pDDSD->ddsCaps.dwCaps);
 
-    if (pUnkOuter != NULL)
+    if (pUnkOuter != NULL) {
+	FIXME("outer != NULL?\n");
 	return CLASS_E_NOAGGREGATION; /* unchecked */
+    }
 
-    if (!(pDDSD->dwFlags & DDSD_CAPS))
-	return DDERR_INVALIDPARAMS; /* unchecked */
+    if (!(pDDSD->dwFlags & DDSD_CAPS)) {
+	/* DVIDEO.DLL does forget the DDSD_CAPS flag ... *sigh* */
+    	pDDSD->dwFlags |= DDSD_CAPS;
+    }
 
-    if (ppSurf == NULL)
+    if (ppSurf == NULL) {
+	FIXME("You want to get back a surface? Don't give NULL ptrs!\n");
 	return E_POINTER; /* unchecked */
+    }
 
     if (pDDSD->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
@@ -511,7 +517,10 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
 	hr = create_offscreen(This, pDDSD, ppSurf, pUnkOuter);
     }
 
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr)) {
+	FIXME("failed surface creation with code 0x%08lx\n",hr);
+	return hr;
+    }
 
     return DD_OK;
 }
