@@ -173,6 +173,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
     else /* use StretchBlt */
     {
         HBITMAP hBitmap, hOldBitmap;
+        HPALETTE hpal = NULL;
 	HDC hdcMem;
 
         GDI_ReleaseObj( hdc );
@@ -180,6 +181,11 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth,
                                          info->bmiHeader.biHeight);
         hOldBitmap = SelectObject( hdcMem, hBitmap );
+        if(wUsage == DIB_PAL_COLORS)
+        {
+            hpal = GetCurrentObject(hdc, OBJ_PAL);
+            hpal = SelectPalette(hdcMem, hpal, FALSE);
+        }
 
 	if (info->bmiHeader.biCompression == BI_RLE4 ||
 	    info->bmiHeader.biCompression == BI_RLE8) {
@@ -213,6 +219,8 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
 		    hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
 		    widthSrc, heightSrc, dwRop );
+        if(hpal)
+            SelectPalette(hdcMem, hpal, FALSE);
 	SelectObject( hdcMem, hOldBitmap );
 	DeleteDC( hdcMem );
 	DeleteObject( hBitmap );
