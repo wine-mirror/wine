@@ -145,6 +145,9 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/prope
 static VOID set_installer_properties(MSIHANDLE hPackage)
 {
     WCHAR pth[MAX_PATH];
+    OSVERSIONINFOA OSVersion;
+    DWORD verval;
+    CHAR verstr[10];
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -204,12 +207,6 @@ VirtualMemory
 PhysicalMemory
 Intel
 ShellAdvSupport
-ServicePackLevel
-WindowsBuild
-Version9x
-Version95
-VersionNT
-AdminUser
 DefaultUIFont
 VersionMsi
 VersionDatabase
@@ -268,6 +265,29 @@ Privilaged
 
     GetTempPathW(MAX_PATH,pth);
     MsiSetPropertyW(hPackage, TF, pth);
+
+    /* in a wine enviroment the user is always admin and privlaged */
+    MsiSetPropertyA(hPackage,"AdminUser","1");
+    MsiSetPropertyA(hPackage,"Privileged","1");
+
+    /* set the os things */
+    OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    GetVersionExA(&OSVersion);
+    verval = OSVersion.dwMinorVersion+OSVersion.dwMajorVersion*100;
+    sprintf(verstr,"%li",verval);
+    switch (OSVersion.dwPlatformId)
+    {
+        case VER_PLATFORM_WIN32_WINDOWS:    
+            MsiSetPropertyA(hPackage,"Version9X",verstr);
+            break;
+        case VER_PLATFORM_WIN32_NT:
+            MsiSetPropertyA(hPackage,"VersionNT",verstr);
+            break;
+    }
+    sprintf(verstr,"%li",OSVersion.dwBuildNumber);
+    MsiSetPropertyA(hPackage,"WindowsBuild",verstr);
+    /* just fudge this */
+    MsiSetPropertyA(hPackage,"ServicePackLevel","6");
 }
 
 
@@ -377,6 +397,9 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
         log_type |= INSTALLLOGMODE_ACTIONSTART;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA)
         log_type |= INSTALLLOGMODE_ACTIONDATA;
+    /* just a guess */
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
+        log_type |= 0x800;
 
     message = HeapAlloc(GetProcessHeap(),0,1);
     message[0]=0;
@@ -396,7 +419,7 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
 
         if (msg_field > 1)
         {
-            sprintf(number,"%i: ",i);
+            sprintf(number," %i: ",i);
             strcat(message,number);
         }
         strcat(message,tmp);

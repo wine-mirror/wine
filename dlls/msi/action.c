@@ -76,6 +76,7 @@ typedef struct tagMSICOMPONENT
     WCHAR KeyPath[96];
 
     INSTALLSTATE State;
+    BOOL FeatureState;
     BOOL Enabled;
     INT  Cost;
 }MSICOMPONENT;
@@ -136,6 +137,8 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage);
 static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage);
 static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage);
 static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action);
+static UINT ACTION_InstallInitialize(MSIHANDLE hPackage);
+static UINT ACTION_InstallValidate(MSIHANDLE hPackage);
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -205,6 +208,22 @@ inline static int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
     return rc;
 }
 
+inline static int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
+{
+    INT rc = -1;
+    INT i;
+
+    for (i = 0; i < package->loaded_features; i++)
+    {
+        if (strcmpW(Feature,package->features[i].Feature)==0)
+        {
+            rc = i;
+            break;
+        }
+    }
+    return rc;
+}
+
 static UINT track_tempfile(MSIHANDLE hPackage, LPCWSTR name, LPCWSTR path)
 {
     MSIPACKAGE *package;
@@ -252,6 +271,19 @@ void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
             DeleteFileW(package->files[i].TargetPath);
 
     }
+}
+
+static void progress_message(MSIHANDLE hPackage, int a, int b, int c, int d )
+{
+    MSIHANDLE row;
+
+    row = MsiCreateRecord(4);
+    MsiRecordSetInteger(row,1,a);
+    MsiRecordSetInteger(row,2,b);
+    MsiRecordSetInteger(row,3,c);
+    MsiRecordSetInteger(row,4,d);
+    MsiProcessMessage(hPackage, INSTALLMESSAGE_PROGRESS, row);
+    MsiCloseHandle(row);
 }
 
 /****************************************************
@@ -576,15 +608,27 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
     const static WCHAR szFileCost[] = 
         {'F','i','l','e','C','o','s','t',0};
+    const static WCHAR szInstallInitialize[] = 
+{'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
+    const static WCHAR szInstallValidate[] = 
+{'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
+    progress_message(hPackage,2,25,0,0);
 
+    /* pre install, setup and configureation block */
     if (strcmpW(action,szCostInitialize)==0)
         return ACTION_CostInitialize(hPackage);
     if (strcmpW(action,szFileCost)==0)
         return ACTION_FileCost(hPackage);
     if (strcmpW(action,szCostFinalize)==0)
         return ACTION_CostFinalize(hPackage);
+    if (strcmpW(action,szInstallValidate)==0)
+        return ACTION_InstallValidate(hPackage);
+
+    /* install block */
+    if (strcmpW(action,szInstallInitialize)==0)
+        return ACTION_InstallInitialize(hPackage);
     if (strcmpW(action,szCreateFolders)==0)
         return ACTION_CreateFolders(hPackage);
     if (strcmpW(action,szInstallFiles)==0)
@@ -593,6 +637,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         return ACTION_DuplicateFiles(hPackage);
     if (strcmpW(action,szWriteRegistryValues)==0)
         return ACTION_WriteRegistryValues(hPackage);
+
     /*
      Current called during itunes but unimplemented
 
@@ -602,14 +647,11 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
      CostInitialize
      MigrateFeatureStates
      ResolveSource  (sets SourceDir)
-     FileCost
      ValidateProductID (sets ProductID)
      IsolateComponents (Empty)
      SetODBCFolders 
      MigrateFeatureStates
-     InstallValidate 
      RemoveExistingProducts
-     InstallInitialize
      AllocateRegistrySpace
      ProcessComponents
      UnpublishComponents
@@ -1092,6 +1134,7 @@ static int load_component(MSIPACKAGE* package, MSIHANDLE row)
 
     package->components[index].State = INSTALLSTATE_UNKNOWN;
     package->components[index].Enabled = TRUE;
+    package->components[index].FeatureState= FALSE;
 
     return index;
 }
@@ -1518,19 +1561,6 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
 
     TRACE("Working to resolve %s\n",debugstr_w(name));
 
-    for (i = 0; i < package->loaded_folders; i++)
-    {
-        if (strcmpW(package->folders[i].Directory,name)==0)
-            break;
-    }
-
-    if (i >= package->loaded_folders)
-        return ERROR_FUNCTION_FAILED;
-
-
-    if (folder)
-        *folder = &(package->folders[i]);
-
     if (!path)
         return rc;
 
@@ -1548,6 +1578,8 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
                 if (set_prop)
                     MsiSetPropertyW(hPackage,cszTargetDir,path);
             }
+            if (folder)
+                *folder = &(package->folders[0]);
             return rc;
         }
         else
@@ -1568,9 +1600,23 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
                     }
                 }
             }
+            if (folder)
+                *folder = &(package->folders[0]);
             return rc;
         }
     }
+
+    for (i = 0; i < package->loaded_folders; i++)
+    {
+        if (strcmpW(package->folders[i].Directory,name)==0)
+            break;
+    }
+
+    if (i >= package->loaded_folders)
+        return ERROR_FUNCTION_FAILED;
+
+    if (folder)
+        *folder = &(package->folders[i]);
 
     if (!source && package->folders[i].ResolvedTarget[0])
     {
@@ -1624,11 +1670,11 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
  * The costing needs to be implemented at some point but for now I am going
  * to focus on the directory building
  *
-  *
  */
 static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
 {
     static const CHAR *ExecSeqQuery = "select * from Directory";
+    static const CHAR *ConditionQuery = "select * from Condition";
     UINT rc;
     MSIHANDLE view;
     MSIPACKAGE *package;
@@ -1637,6 +1683,7 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     TRACE("Building Directory properties\n");
 
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+
     rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
 
     if (rc != ERROR_SUCCESS)
@@ -1742,8 +1789,77 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
         } 
     }
 
-    MsiSetPropertyA(hPackage,"CostingComplete","1");
+    TRACE("Evaluating Condition Table\n");
 
+    rc = MsiDatabaseOpenViewA(package->db, ConditionQuery, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+    
+    while (1)
+    {
+        WCHAR Feature[0x100];
+        WCHAR Condition[0x100];
+        MSIHANDLE row = 0;
+        DWORD sz;
+        int feature_index;
+
+        rc = MsiViewFetch(view,&row);
+
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        sz = 0x100;
+        MsiRecordGetStringW(row,1,Feature,&sz);
+        sz = 0x100;
+        MsiRecordGetStringW(row,3,Condition,&sz);
+
+        feature_index = get_loaded_feature(package,Feature);
+        if (feature_index < 0)
+            ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
+        else
+        {
+            if (MsiEvaluateConditionW(hPackage,Condition) == MSICONDITION_TRUE)
+            {
+                int level = MsiRecordGetInteger(row,2);
+                TRACE("Reseting feature %s to level %i\n",debugstr_w(Feature),
+                       level);
+                package->features[feature_index].Level = level;
+            }
+        }
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    TRACE("Enabling or Disabling Components\n");
+    for (i = 0; i < package->loaded_components; i++)
+    {
+        if (package->components[i].Condition[0])
+        {
+            if (MsiEvaluateConditionW(hPackage,
+                package->components[i].Condition) == MSICONDITION_FALSE)
+            {
+                TRACE("Disabling component %s\n",
+                      debugstr_w(package->components[i].Component));
+                package->components[i].Enabled = FALSE;
+            }
+        }
+    }
+
+    MsiSetPropertyA(hPackage,"CostingComplete","1");
     return ERROR_SUCCESS;
 }
 
@@ -2003,14 +2119,6 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
     INT index;
     MSIPACKAGE *package;
 
-    /* REALLY what we want to do is go through all the enabled
-     * features and check all the components of that feature and
-     * make sure that component is not already install and blah
-     * blah blah... I will do it that way some day.. really
-     * but for sheer gratification I am going to just brute force
-     * install all the files
-     */
-
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
 
     if (!package)
@@ -2022,6 +2130,17 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
         MSIFILE *file;
         
         file = &package->files[index];
+
+        if (file->Temporary)
+            continue;
+
+        if (!package->components[file->ComponentIndex].Enabled ||
+            !package->components[file->ComponentIndex].FeatureState)
+        {
+            TRACE("File %s is not scheduled for install\n",
+                   debugstr_w(file->File));
+            continue;
+        }
 
         if ((file->State == 1) || (file->State == 2))
         {
@@ -2048,6 +2167,7 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
             TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
                   debugstr_w(file->TargetPath));
 
+            progress_message(hPackage,2,1,0,0);
             rc = !MoveFileW(file->SourcePath,file->TargetPath);
             if (rc)
                 ERR("Unable to move file\n");
@@ -2066,7 +2186,6 @@ inline static UINT get_file_target(MSIHANDLE hPackage, LPCWSTR file_key,
     INT index;
 
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
-
     if (!package)
         return ERROR_INVALID_HANDLE;
 
@@ -2074,8 +2193,13 @@ inline static UINT get_file_target(MSIHANDLE hPackage, LPCWSTR file_key,
     {
         if (strcmpW(file_key,package->files[index].File)==0)
         {
-            strcmpW(file_source,package->files[index].TargetPath);
-            return ERROR_SUCCESS;
+            if (package->files[index].State >= 3)
+            {
+                strcmpW(file_source,package->files[index].TargetPath);
+                return ERROR_SUCCESS;
+            }
+            else
+                return ERROR_FILE_NOT_FOUND;
         }
     }
 
@@ -2088,16 +2212,13 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
     MSIHANDLE view;
     MSIHANDLE row = 0;
     static const CHAR *ExecSeqQuery = "select * from DuplicateFile";
-    MSIHANDLE db;
+    MSIPACKAGE* package;
 
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
 
-    /*
-     * Yes we should only do this for components that are installed
-     * but again I need to do that went I track components.
-     */
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
+    rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
 
     if (rc != ERROR_SUCCESS)
         return rc;
@@ -2116,6 +2237,8 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
         WCHAR file_source[MAX_PATH];
         WCHAR dest_name[0x100];
         WCHAR dest_path[MAX_PATH];
+        WCHAR component[0x100];
+        INT component_index;
 
         DWORD sz=0x100;
 
@@ -2124,6 +2247,24 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
         {
             rc = ERROR_SUCCESS;
             break;
+        }
+
+        sz=0x100;
+        rc = MsiRecordGetStringW(row,2,component,&sz);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Unable to get component\n");
+            MsiCloseHandle(row);
+            break;
+        }
+
+        component_index = get_loaded_component(package,component);
+        if (!package->components[component_index].Enabled ||
+            !package->components[component_index].FeatureState)
+        {
+            TRACE("Skipping copy due to disabled component\n");
+            MsiCloseHandle(row);
+            continue;
         }
 
         sz=0x100;
@@ -2283,14 +2424,13 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
     MSIHANDLE view;
     MSIHANDLE row = 0;
     static const CHAR *ExecSeqQuery = "select * from Registry";
-    MSIHANDLE db;
+    MSIPACKAGE *package;
 
-    /* Again here we want to key off of the components being installed...
-     * oh well
-     */
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
 
     if (rc != ERROR_SUCCESS)
         return rc;
@@ -2311,6 +2451,8 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
         DWORD type,size;
+        WCHAR component[0x100];
+        INT component_index;
 
         INT   root;
         DWORD sz=0x100;
@@ -2320,6 +2462,18 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         {
             rc = ERROR_SUCCESS;
             break;
+        }
+
+        sz= 0x100;
+        MsiRecordGetStringW(row,6,component,&sz);
+        component_index = get_loaded_component(package,component);
+
+        if (!package->components[component_index].Enabled ||
+            !package->components[component_index].FeatureState)
+        {
+            TRACE("Skipping write due to disabled component\n");
+            MsiCloseHandle(row);
+            continue;
         }
 
         /* null values have special meanings during uninstalls and such */
@@ -2380,6 +2534,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
             RegSetValueExW(hkey, name, 0, type, value_data, size);
             HeapFree(GetProcessHeap(),0,value_data);
         }
+        progress_message(hPackage,2,1,0,0);
 
         MsiCloseHandle(row);
     }
@@ -2467,6 +2622,123 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     HeapFree(GetProcessHeap(),0,mark);
     return size;
 }
+
+static UINT ACTION_InstallInitialize(MSIHANDLE hPackage)
+{
+    CHAR level[10000];
+    INT install_level;
+    DWORD sz;
+    MSIPACKAGE *package; 
+    INT i,j;
+    /* I do not know if this is where it should happen.. but */
+
+    TRACE("Checking Install Level\n");
+    FIXME("The Attributes of the feature OVERRIDE THIS... unimplemented\n");
+    FIXME("As does the ALLLOCAL and such propertys\n");
+
+    sz = 10000;
+    if (MsiGetPropertyA(hPackage,"INSTALLLEVEL",level,&sz)==ERROR_SUCCESS)
+        install_level = atoi(level);
+    else
+        install_level = 1;
+   
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    /*
+     * components FeatureState defaults to FALSE. the idea is we want to 
+     * enable the component is ANY feature that uses it is enabled to install
+     */
+    for(i = 0; i < package->loaded_features; i++)
+    {
+        BOOL feature_state= ((package->features[i].Level > 0) &&
+                             (package->features[i].Level <= install_level));
+        TRACE("Feature %s has a state of %i\n",
+               debugstr_w(package->features[i].Feature), feature_state);
+        for( j = 0; j < package->features[i].ComponentCount; j++)
+        {
+            package->components[package->features[i].Components[j]].FeatureState
+            |= feature_state;
+        }
+    } 
+    /* 
+     * so basically we ONLY want to install a component if its Enabled AND
+     * FeatureState are both TRUE 
+     */
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_InstallValidate(MSIHANDLE hPackage)
+{
+    DWORD progress = 0;
+    static const CHAR q1[]="SELECT * FROM Registry";
+    static const CHAR q2[]=
+"select Action from InstallExecuteSequence where Sequence > 0 order by Sequence";
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    MSIHANDLE db;
+    BOOL flipit= FALSE;
+    MSIPACKAGE* package;
+
+    TRACE(" InstallValidate \n");
+
+    db = MsiGetActiveDatabase(hPackage);
+    rc = MsiDatabaseOpenViewA(db, q2, &view);
+    rc = MsiViewExecute(view, 0);
+
+    while (1)
+    {
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        if (!flipit)
+        {
+            CHAR buf[0x100];
+            DWORD sz=0x100;
+            MsiRecordGetStringA(row,1,buf,&sz);
+            if (strcmp(buf,"InstallValidate")==0)
+                flipit=TRUE;
+        }
+        else
+            progress +=25;
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    rc = MsiDatabaseOpenViewA(db, q1, &view);
+    rc = MsiViewExecute(view, 0);
+    while (1)
+    {
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        progress +=1;
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    MsiCloseHandle(db);
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    progress_message(hPackage,0,progress+package->loaded_files,0,0);
+
+    return ERROR_SUCCESS;
+}
+
+
+
+
 
 /* Msi functions that seem approperate here */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
