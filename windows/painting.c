@@ -647,8 +647,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
     if (flags & RDW_UPDATENOW)
     {
-        if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
-            SendMessageW( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
+        if (wndPtr->hrgnUpdate) SendMessageW( hWnd, WM_PAINT, 0, 0 );
     }
     else if (flags & RDW_ERASENOW)
     {
@@ -674,8 +673,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 		    dcx &= ~DCX_INTERSECTRGN;
 		if (( hDC = GetDCEx( hWnd, hrgnRet, dcx )) )
 		{
-		    if (SendMessageW( hWnd, (bIcon) ? WM_ICONERASEBKGND : WM_ERASEBKGND,
-                                      (WPARAM)hDC, 0 ))
+		    if (SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM)hDC, 0 ))
                         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
 		    ReleaseDC( hWnd, hDC );
 		}

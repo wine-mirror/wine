@@ -250,8 +250,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     WIN_ReleasePtr( wndPtr );
 
     if (lps->fErase)
-        lps->fErase = !SendMessageA( hwnd, bIcon ? WM_ICONERASEBKGND : WM_ERASEBKGND,
-                                     (WPARAM)lps->hdc, 0 );
+        lps->fErase = !SendMessageA( hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
 
     TRACE("hdc = %p box = (%ld,%ld - %ld,%ld), fErase = %d\n",
           lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom,

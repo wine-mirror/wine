@@ -2453,6 +2453,17 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam = (LPARAM)next->hmenuIn;
             return 1;
         }
+    case WM_PAINT:
+        if (IsIconic( hwnd ) && GetClassLongW( hwnd, GCL_HICON ))
+        {
+            *pmsg16 = WM_PAINTICON;
+            *pwparam16 = 1;
+        }
+        return 0;
+    case WM_ERASEBKGND:
+        if (IsIconic( hwnd ) && GetClassLongW( hwnd, GCL_HICON ))
+            *pmsg16 = WM_ICONERASEBKGND;
+        return 0;
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %04x needs translation\n", msg32 );

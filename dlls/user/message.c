@@ -2278,17 +2278,8 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 
     WIN_RestoreWndsLock( locks );
 
-    /* need to fill the window handle for WM_PAINT message */
-    if (msg.message == WM_PAINT)
-    {
-        if (IsIconic( msg.hwnd ) && GetClassLongW( msg.hwnd, GCL_HICON ))
-        {
-            msg.message = WM_PAINTICON;
-            msg.wParam = 1;
-        }
-        /* clear internal paint flag */
+    if (msg.message == WM_PAINT)  /* clear internal paint flag */
         RedrawWindow( msg.hwnd, NULL, 0, RDW_NOINTERNALPAINT | RDW_NOCHILDREN );
-    }
 
     if ((queue = QUEUE_Current()))
     {
