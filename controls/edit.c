@@ -35,6 +35,7 @@ DECLARE_DEBUG_CHANNEL(relay);
 					   FIXME: BTW, new specs say 65535 (do you dare ???) */
 #define BUFLIMIT_SINGLE		32766	/* maximum buffer size (not including '\0') */
 #define GROWLENGTH		32	/* buffers granularity in bytes: must be power of 2 */
+#define ROUND_TO_GROW(size)	(((size) + (GROWLENGTH - 1)) & ~(GROWLENGTH - 1))
 #define HSCROLL_FRACTION	3	/* scroll window by 1/3 width */
 
 /*
@@ -1513,7 +1514,7 @@ static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 		TRACE("%d bytes translated to %d WCHARs\n", countA, countW_new);
 		if(countW_new > es->buffer_size + 1)
 		{
-		    UINT alloc_size = (countW_new * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+		    UINT alloc_size = ROUND_TO_GROW(countW_new * sizeof(WCHAR));
 		    TRACE("Resizing 32-bit UNICODE buffer from %d+1 to %d WCHARs\n", es->buffer_size, countW_new);
 		    hloc32W_new = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
 		    if(hloc32W_new)
@@ -1678,7 +1679,7 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 
 	if (es->hloc32W) {
-	    UINT alloc_size = ((size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	    UINT alloc_size = ROUND_TO_GROW((size + 1) * sizeof(WCHAR));
 	    if ((hNew32W = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT))) {
 		TRACE("Old 32 bit handle %08x, new handle %08x\n", es->hloc32W, hNew32W);
 		es->hloc32W = hNew32W;
@@ -1715,7 +1716,7 @@ static BOOL EDIT_MakeUndoFit(EDITSTATE *es, UINT size)
 
 	TRACE("trying to ReAlloc to %d+1\n", size);
 
-	alloc_size = ((size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	alloc_size = ROUND_TO_GROW((size + 1) * sizeof(WCHAR));
 	if ((es->undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, alloc_size))) {
 		es->undo_buffer_size = alloc_size/sizeof(WCHAR);
 		return TRUE;
@@ -2173,7 +2174,7 @@ static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force)
 		    if(countA_new > countA)
 		    {
 			HLOCAL hloc32A_new;
-			UINT alloc_size = (countA_new + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+			UINT alloc_size = ROUND_TO_GROW(countA_new);
 			TRACE("Resizing 32-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
 			hloc32A_new = LocalReAlloc(es->hloc32A, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
 			if(hloc32A_new)
@@ -2196,7 +2197,7 @@ static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force)
 		    if(countA_new > countA)
 		    {
 			HLOCAL16 hloc16_new;
-			UINT alloc_size = (countA_new + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+			UINT alloc_size = ROUND_TO_GROW(countA_new);
 			TRACE("Resizing 16-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
 			hloc16_new = LOCAL_ReAlloc(wnd->hInstance, es->hloc16, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
 			if(hloc16_new)
@@ -2406,12 +2407,13 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 	    if(!es->hloc32A)
 	    {
 		CHAR *textA;
-		INT countA;
+		UINT countA, alloc_size;
 		TRACE("Allocating 32-bit ANSI alias buffer\n");
 		countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
-		if(!(es->hloc32A = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, countA)))
+		alloc_size = ROUND_TO_GROW(countA);
+		if(!(es->hloc32A = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size)))
 		{
-		    ERR("Could not allocate %d bytes for 32-bit ANSI alias buffer\n", countA);
+		    ERR("Could not allocate %d bytes for 32-bit ANSI alias buffer\n", alloc_size);
 		    return 0;
 		}
 		textA = LocalLock(es->hloc32A);
@@ -2444,7 +2446,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 {
 	CHAR *textA;
-	INT countA;
+	UINT countA, alloc_size;
 
 	if (!(es->style & ES_MULTILINE))
 		return 0;
@@ -2462,9 +2464,10 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 	}
 
 	countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
+	alloc_size = ROUND_TO_GROW(countA);
 
 	TRACE("Allocating 16-bit ANSI alias buffer\n");
-	if (!(es->hloc16 = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE | LMEM_ZEROINIT, countA))) {
+	if (!(es->hloc16 = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
 		ERR("could not allocate new 16 bit buffer\n");
 		return 0;
 	}
@@ -4272,7 +4275,7 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 		es->style |= ES_AUTOHSCROLL;
 	}
 
-	alloc_size = ((es->buffer_size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	alloc_size = ROUND_TO_GROW((es->buffer_size + 1) * sizeof(WCHAR));
 	if(!(es->hloc32W = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size)))
 	    return FALSE;
 	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
