@@ -52,9 +52,9 @@
 #endif
 #include "wine/debug.h"
 
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
-
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
+
+#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
 
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
