@@ -22,10 +22,35 @@
 #include "winproc.h"
 #include "cderr.h"
 #include "winspool.h"
+#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
 #include "cdlg.h"
+
+
+/* This PRINTDLGA internal structure stores
+ * pointers to several throughout useful structures.
+ * 
+ */
+typedef struct  
+{
+  LPPRINTER_INFO_2A lpPrinterInfo;
+  UINT              CurrentPrinter;  /* used as lpPrinterInfo[CurrentPrinter] */
+  UINT              DefaultPrinter;  /* used as lpPrinterInfo[DefaultPrinter] */
+  DWORD             NrOfPrinterInfoEntries;
+  LPPRINTDLGA       lpPrintDlg;
+  UINT              HelpMessageID;
+  HICON             hCollateIcon;
+  HICON             hNoCollateIcon;
+} PRINT_PTRA;
+
+
+/* prototypes */
+static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
+						  PRINT_PTRA* PrintStructures);
+
+
 
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
@@ -75,20 +100,6 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 }
 
 
-/* This PRINTDLGA internal structure stores
- * pointers to several throughout useful structures.
- * 
- */
-typedef struct  
-{
-  LPPRINTER_INFO_2A lpPrinterInfo;
-  DWORD             NrOfPrinterInfoEntries;
-  LPPRINTDLGA       lpPrintDlg;
-  UINT              HelpMessageID;
-  HICON             hCollateIcon;
-  HICON             hNoCollateIcon;
-} PRINT_PTRA;
-
 /***********************************************************************
  *           PrintDlgA   (COMDLG32.17)
  *
@@ -104,8 +115,6 @@ typedef struct
  *  zero    if the user cancelled the window or an error occurred
  *
  * BUGS
- *  The function is a stub only, returning TRUE to allow more programs
- *  to function.
  *  The Collate Icons do not display, even though they are in the code.
  */
 BOOL WINAPI PrintDlgA(
@@ -121,8 +130,8 @@ BOOL WINAPI PrintDlgA(
  * step 4: implement all other specs
  * step 5: allow customisation of the dialog box
  *
- * current implementation is in step 2, nearly going to 3.
-     */ 
+ * current implementation is in step 3.
+ */ 
 
     HWND      hwndDialog;
     BOOL      bRet = FALSE;
@@ -156,7 +165,7 @@ BOOL WINAPI PrintDlgA(
                                 LoadIconA(COMDLG32_hInstance, "PD32_NOCOLLATE");
     if (PrintStructures.hCollateIcon==0 || PrintStructures.hNoCollateIcon==0)
     {
-    puts("Error: no icon?");
+    ERR("no icon in resourcefile???");
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
@@ -177,23 +186,6 @@ BOOL WINAPI PrintDlgA(
     else
     	PrintStructures.HelpMessageID=0;
 	
-	/*
-	 * if lppd->Flags PD_RETURNDEFAULT is specified, the PrintDlg function
-	 * does not display the dialog box, but returns with valid entries
-	 * for hDevMode and hDevNames .
-	 * 
-	 * Currently the flag is recognised, but we return empty hDevMode and
-	 * and hDevNames. This will be fixed when I am in step 3.
-	 */
-	if (lppd->Flags & PD_RETURNDEFAULT)
-	   {
-	    WARN(": PrintDlg was requested to return printer info only."
-					  "\n The return value currently does NOT provide these.\n");
-		COMDLG32_SetCommDlgExtendedError(PDERR_NODEVICES); 
-        								/* return TRUE, thus never checked! */
-	    return(TRUE);
-	   }
-	   
 	if (lppd->Flags & PD_PRINTSETUP)
 		{
 		 FIXME(": PrintDlg was requested to display PrintSetup box.\n");
@@ -216,10 +208,16 @@ BOOL WINAPI PrintDlgA(
 
     /* Find the default printer.
      * If not: display a warning message (unless PD_NOWARNING specified)
+     * and return PDERR_NODEFAULTPRN
      */
+    /* FIXME: not implemented yet!!! */
+    PrintStructures.CurrentPrinter=0; 
+    PrintStructures.DefaultPrinter=0; 
+     
     /* FIXME: Currently Unimplemented */
     if (lppd->Flags & PD_NOWARNING)	
 	   {
+	    COMDLG32_SetCommDlgExtendedError(PDERR_INITFAILURE); 
 	    WARN(": PD_NOWARNING Flag is not yet implemented.\n");
 	   }
     	
@@ -232,16 +230,39 @@ BOOL WINAPI PrintDlgA(
 			  PD_ENABLESETUPTEMPLATE|PD_ENABLESETUPTEMPLATEHANDLE)) 
     	FIXME(": unimplemented flag (ignored)\n");     
 	
-		
+    /*
+     * if lppd->Flags PD_RETURNDEFAULT is specified, the PrintDlg function
+     * does not display the dialog box, but returns with valid entries
+     * for hDevMode and hDevNames .
+     *
+     * According to MSDN, it is required that hDevMode and hDevNames equal
+     * zero if this flag is set.
+     */
+    if (lppd->Flags & PD_RETURNDEFAULT)
+       {
+	TRACE(" PD_RETURNDEFAULT: was requested to return printer info only.\n");
+        if (lppd->hDevMode!=0 || lppd->hDevNames !=0)
+            {
+     	     COMDLG32_SetCommDlgExtendedError(PDERR_INITFAILURE); 
+             return(FALSE);
+            }
+        return(PRINTDLG_ValidateAndDuplicateSettings(0, &PrintStructures));
+       }
+	
+    /* and create & process the dialog 
+     */	
     hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
             (DLGPROC16)PrintDlgProcA, (LPARAM)&PrintStructures, WIN_PROC_32A );
     if (hwndDialog) 
         bRet = DIALOG_DoDialogBox(hwndDialog, lppd->hwndOwner);  
-        
+     
+    /* free memory & resources
+     */   
     free(PrintStructures.lpPrinterInfo);
     DeleteObject(PrintStructures.hCollateIcon);
     DeleteObject(PrintStructures.hNoCollateIcon);
-        
+
+  TRACE(" exit! (%d)", bRet);        
   return bRet;            
 }
 
@@ -262,21 +283,12 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
  */
 static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
 {
-	char   PrinterName[256];
     char   StatusMsg[256];
     char   ResourceString[256];
     int    i;
-    LPPRINTER_INFO_2A lpPi = NULL;
-	GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
-             
-    /* look the selected PrinterName up in our array Printer_Info2As*/
-    for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
-    	{
-         lpPi = &PrintStructures->lpPrinterInfo[i];
-         if (strcmp(lpPi->pPrinterName, PrinterName)==0)
-         break;
-        }
-        
+    LPPRINTER_INFO_2A lpPi = &(PrintStructures->lpPrinterInfo
+                                             [PrintStructures->CurrentPrinter]);
+                                             
     /* Status Message */
     StatusMsg[0]='\0';
     for (i=0; i< 25; i++)
@@ -310,9 +322,10 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructur
 static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 				     PRINT_PTRA* PrintStructures)
 {
- int         i;
- LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
- LPPRINTER_INFO_2A lppi = PrintStructures->lpPrinterInfo;
+ int               i;
+ LPPRINTDLGA       lppd     = PrintStructures->lpPrintDlg;
+ LPPRINTER_INFO_2A lppi     = PrintStructures->lpPrinterInfo;
+ PDEVMODEA	   pDevMode = lppi[PrintStructures->CurrentPrinter].pDevMode; 
  
 	SetWindowLongA(hDlg, DWL_USER, lParam); 
 	TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
@@ -325,12 +338,18 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 */	}
 
 /* Fill Combobox according to info from PRINTER_INFO2A
- * structure inside PrintStructures and generate an
+ * structure inside PrintStructures,
+ * select the default printer and generate an
  * update-message to have the rest of the dialog box updated.
  */ 
     for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
 	   SendDlgItemMessageA(hDlg, cmb4, CB_ADDSTRING, 0,
-                        (LPARAM)lppi[i].pPrinterName );  
+                        (LPARAM)lppi[i].pPrinterName );
+    i=SendDlgItemMessageA(hDlg, cmb4, CB_SELECTSTRING, 
+        (WPARAM) -1,
+        (LPARAM) lppi[PrintStructures->CurrentPrinter].pPrinterName);
+    SendDlgItemMessageA(hDlg, cmb4, CB_SETCURSEL, 
+        (WPARAM)i, (LPARAM)0);
     PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
 
 /* Flag processing to set the according buttons on/off and
@@ -381,9 +400,8 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
      char        result[64];
      LoadStringA(COMDLG32_hInstance, PD32_PRINT_ALL_X_PAGES, 
                 resourcestr, 49);
-     sprintf(result,resourcestr,lppd->nMaxPage-lppd->nMinPage);                
-     SendDlgItemMessageA(hDlg, rad1, WM_SETTEXT, 0, 
-                        (LPARAM) result);
+     sprintf(result,resourcestr,lppd->nMaxPage - lppd->nMinPage + 1);
+     SendDlgItemMessageA(hDlg, rad1, WM_SETTEXT, 0, (LPARAM) result);
     }
         
     /* Collate pages 
@@ -402,29 +420,120 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
                                     (LPARAM)PrintStructures->hNoCollateIcon);
    	    CheckDlgButton(hDlg, chx2, 0);
        }
+       
+    if (lppd->Flags & PD_USEDEVMODECOPIESANDCOLLATE ||
+        lppd->Flags & PD_USEDEVMODECOPIES)
+	{
+	 /* if printer doesn't support it: no Collate */
+	 if (!(pDevMode->dmFields & DM_COLLATE))
+	    {
+		EnableWindow(GetDlgItem(hDlg, chx2), FALSE);    
+		EnableWindow(GetDlgItem(hDlg, ico3), FALSE);    
+	    }
+	}
         
+    /* nCopies */
+    if (lppd->hDevMode == 0)
+    	{
+         SetDlgItemInt(hDlg, edt3, lppd->nCopies, FALSE);
+	}
+    else
+        {
+         SetDlgItemInt(hDlg, edt1, pDevMode->dmCopies, FALSE);
+	}
+    if (lppd->Flags & PD_USEDEVMODECOPIESANDCOLLATE ||
+        lppd->Flags & PD_USEDEVMODECOPIES)
+	{
+	 /* if printer doesn't support it: no nCopies */
+	 if (!(pDevMode->dmFields & DM_COPIES))
+	    {
+		EnableWindow(GetDlgItem(hDlg, edt3), FALSE);    
+		EnableWindow(GetDlgItem(hDlg, stc5), FALSE);    
+	    }
+	}
+
     /* print to file */
    	CheckDlgButton(hDlg, chx1, (lppd->Flags & PD_PRINTTOFILE) ? 1 : 0);
     if (lppd->Flags & PD_DISABLEPRINTTOFILE)
 		EnableWindow(GetDlgItem(hDlg, chx1), FALSE);    
     if (lppd->Flags & PD_HIDEPRINTTOFILE)
 		ShowWindow(GetDlgItem(hDlg, chx1), SW_HIDE);
-    
+
     /* help button */
 	if ((lppd->Flags & PD_SHOWHELP)==0)
     	{	/* hide if PD_SHOWHELP not specified */
 		 ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);         
         }
 
+  GlobalUnlock(lppd->hDevMode);
   return TRUE;
 }
 
 
+
+/***********************************************************************
+ *             PRINTDLG_CreateDevNames          [internal]
+ *
+ *
+ *   creates a DevNames structure.
+ * RETURNS
+ *   HGLOBAL to DevNames memory object on success or
+ *   zero on faillure
+ */
+HGLOBAL PRINTDLG_CreateDevNames(
+                    char* DeviceDriverName, 
+                    char* DeviceName, 
+                    char* OutputPort, 
+                    WORD  Flags)
+{
+    long size;
+    HGLOBAL hDevNames;
+    void*   pDevNamesSpace;
+    void*   pTempPtr;
+    LPDEVNAMES lpDevNames;
+    
+    size = strlen(DeviceDriverName) +1
+            + strlen(DeviceName) + 1
+            + strlen(OutputPort) + 1
+            + sizeof(DEVNAMES);
+            
+    hDevNames = GlobalAlloc(GMEM_MOVEABLE, size*sizeof(char));
+    if (hDevNames != 0)
+    {
+        pDevNamesSpace = GlobalLock(hDevNames);
+        lpDevNames = (LPDEVNAMES) pDevNamesSpace;
+        
+        pTempPtr = pDevNamesSpace + sizeof(DEVNAMES);
+        strcpy(pTempPtr, DeviceDriverName);
+        lpDevNames->wDriverOffset = pTempPtr - pDevNamesSpace;
+        
+        pTempPtr += strlen(DeviceDriverName) + 1;
+        strcpy(pTempPtr, DeviceName);
+        lpDevNames->wDeviceOffset = pTempPtr - pDevNamesSpace;
+        
+        pTempPtr += strlen(DeviceName) + 1;
+        strcpy(pTempPtr, OutputPort);
+        lpDevNames->wOutputOffset = pTempPtr - pDevNamesSpace;
+        
+        lpDevNames->wDefault = Flags;
+        
+        GlobalUnlock(hDevNames);
+    }
+    return(hDevNames);
+}
+            
+    
+           
+    
 /***********************************************************************
  *             PRINTDLG_ValidateAndDuplicateSettings          [internal]
  *
  *
  *   updates the PrintDlg structure for returnvalues.
+ *   (yep, the name was chosen a bit stupid...)
+ *
+ *   if hDlg equals zero, only hDevModes and hDevNames are adapted.
+ *      
  * RETURNS
  *   FALSE if user is not allowed to close (i.e. wrong nTo or nFrom values)
  *   TRUE  if succesful.
@@ -432,8 +541,13 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
 						  PRINT_PTRA* PrintStructures)
 {
- LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+ LPPRINTER_INFO_2A lpPi = &(PrintStructures->lpPrinterInfo
+                                             [PrintStructures->CurrentPrinter]);
+ LPPRINTDLGA       lppd = PrintStructures->lpPrintDlg;
+ PDEVMODEA         pDevMode;
  
+ if (hDlg!=0)
+ {
     /* check whether nFromPage and nToPage are within range defined by
      * nMinPage and nMaxPage
      */
@@ -460,16 +574,92 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
         lppd->nToPage   = nToPage;
     }
      
+    
     if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED)
        {
         lppd->Flags |= PD_PRINTTOFILE;
-        /* FIXME: insert code to set "FILE:" in DEVNAMES structure */
+        lpPi->pPortName = "FILE:";
        }
-       
+
     if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
        {
         FIXME("Collate lppd not yet implemented as output\n");
        }
+ } /* end-of-if(hDlg!=0) */
+
+    /* 
+     * create or modify hDevMode 
+     */     
+    if (lppd->hDevMode == 0)
+       {
+        TRACE(" No hDevMode yet... Need to create my own\n");
+        /* FIXME: possible memory leak? Memory never freed again! */
+        lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE, lpPi->pDevMode->dmSize);
+        pDevMode    = GlobalLock(lppd->hDevMode);
+        memcpy(pDevMode, lpPi->pDevMode, lpPi->pDevMode->dmSize);
+       }
+    else
+       {
+        FIXME(" already hDevMode... must adjust it... Not implemented yet\n");
+        pDevMode    = GlobalLock(lppd->hDevMode);
+       }
+              
+    /* If hDevNames already exists, trash it.
+     * But create a new one anyway
+     */
+    if (lppd->hDevNames != 0)
+       {
+        if ( (GlobalFlags(lppd->hDevNames)&0xFF) != 0)
+	    ERR(" Tried to free hDevNames, but your application still has a"
+	    	" lock on hDevNames. Possible program crash...");
+        GlobalFree(lppd->hDevNames);
+       }
+    /* FIXME: The first entry  of DevNames is fixed to "winspool", 
+     * because I don't know of any printerdriver which doesn't return 
+     * winspool there. But I guess they do exist... 
+     */
+    lppd->hDevNames = PRINTDLG_CreateDevNames("winspool",
+                      lpPi->pDriverName, lpPi->pPortName, 
+		      (PrintStructures->DefaultPrinter ==
+		                PrintStructures->CurrentPrinter)?1:0);
+
+    /* set PD_Collate and nCopies */
+    if (lppd->Flags & PD_USEDEVMODECOPIESANDCOLLATE ||
+        lppd->Flags & PD_USEDEVMODECOPIES)
+        {
+	 /* if one of the above flags was set, the application doesn't
+	   * (want to) support multiple copies or collate...
+	   */
+	 lppd->Flags &= ~PD_COLLATE;
+	 lppd->nCopies = 1;
+	  /* if the printer driver supports it... store info there
+	   * otherwise no collate & multiple copies !
+	   */
+         if (pDevMode->dmFields & DM_COLLATE)
+	   {
+	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+	    	pDevMode->dmCollate = 1;	 
+	    else
+	    	pDevMode->dmCollate = 0;
+	   }
+         if (pDevMode->dmFields & DM_COPIES)
+	    {
+	     WORD nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	     pDevMode->dmCopies = nCopies; 	 
+	    }
+	}
+    else
+        {
+	 /* set Collate & nCopies according to dialog */
+         if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+	    lppd->Flags |= PD_COLLATE;
+	 else
+	    lppd->Flags &= ~PD_COLLATE;
+	 lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	}
+
+
+    GlobalUnlock(lppd->hDevMode);
 
  return(TRUE);   
 }
@@ -482,6 +672,9 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 			LPARAM lParam, PRINT_PTRA* PrintStructures)
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+    LPPRINTER_INFO_2A lppi = &(PrintStructures->lpPrinterInfo
+                                        [PrintStructures->CurrentPrinter]);
+    
 
     switch (LOWORD(wParam)) 
     {
@@ -536,12 +729,54 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
         }
      case cmb4:                         /* Printer combobox */
         if (HIWORD(wParam)==CBN_SELCHANGE)
-			PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+           {
+            int i;
+        	char   PrinterName[256];
+
+            /* look the newly selected Printer up in 
+             * our array Printer_Info2As
+             */
+        	GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
+            for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
+           	   {
+                if (strcmp(PrintStructures->lpPrinterInfo[i].pPrinterName, 
+                           PrinterName)==0)
+                     break;
+               }
+            PrintStructures->CurrentPrinter = i;   
+	    PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+	    lppi = &(PrintStructures->lpPrinterInfo
+                                       [PrintStructures->CurrentPrinter]);
+            if (lppd->Flags & PD_USEDEVMODECOPIESANDCOLLATE ||
+                lppd->Flags & PD_USEDEVMODECOPIES)
+        	{
+	         /* if printer doesn't support it: no nCopies */
+	 	 if (!(lppi->pDevMode->dmFields & DM_COPIES))
+		    {
+			EnableWindow(GetDlgItem(hDlg, edt3), FALSE);    
+			EnableWindow(GetDlgItem(hDlg, stc5), FALSE);    
+		    }
+		 else
+		    {
+			EnableWindow(GetDlgItem(hDlg, edt3), TRUE);    
+			EnableWindow(GetDlgItem(hDlg, stc5), TRUE);    
+		    }
+	         /* if printer doesn't support it: no Collate */
+	 	 if (!(lppi->pDevMode->dmFields & DM_COPIES))
+		    {
+			EnableWindow(GetDlgItem(hDlg, ico3), FALSE);    
+			EnableWindow(GetDlgItem(hDlg, chx2), FALSE);    
+		    }
+		 else
+		    {
+			EnableWindow(GetDlgItem(hDlg, ico3), TRUE);
+			EnableWindow(GetDlgItem(hDlg, chx2), TRUE);
+		    }
+		}
+
+           }
         break;
-/*     default:
-        printf("wParam: 0x%x  ",wParam);
-        break;
-*/    }
+    }
     return FALSE;
 }    
 
@@ -569,8 +804,6 @@ LRESULT WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
       TRACE("PRINTDLG_WMInitDialog returned FALSE\n");
       return FALSE;
     }  
-    MessageBoxA(hDlg,"Warning: this dialog has no functionality yet!", 
-    			NULL, MB_OK);
   }
   switch (uMsg)
   {
