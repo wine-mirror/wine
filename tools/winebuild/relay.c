@@ -486,15 +486,15 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tpushl 16(%%ebp)\n" ); /* handler */
-    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STRUCTOFFSET(TEB,except) );
-    fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(%d)\n", STRUCTOFFSET(TEB,except) );
+    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
     fprintf( outfile, "\tcall .L%s\n", name );
 
     /* Remove exception frame */
-    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STRUCTOFFSET(TEB,except) );
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
     fprintf( outfile, "\taddl $4, %%esp\n" );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 

@@ -141,7 +141,7 @@ void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 
   /* Register a handler in case of a nested exception */
   reg.Handler = (PEXCEPTION_HANDLER)MSVCRT_nested_handler;
-  reg.Prev = NtCurrentTeb()->except;
+  reg.Prev = NtCurrentTeb()->Tib.ExceptionList;
   __wine_push_frame(&reg);
 
   while (frame->trylevel != TRYLEVEL_END && frame->trylevel != trylevel)
@@ -285,7 +285,7 @@ void _MSVCRT__setjmp(_JUMP_BUFFER *jmp, CONTEXT86* context)
     jmp->Esi = context->Esi;
     jmp->Esp = context->Esp;
     jmp->Eip = context->Eip;
-    jmp->Registration = (unsigned long)NtCurrentTeb()->except;
+    jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == TRYLEVEL_END)
         jmp->TryLevel = TRYLEVEL_END;
     else
@@ -308,7 +308,7 @@ void _MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
     jmp->Eip = context->Eip;
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
-    jmp->Registration = (unsigned long)NtCurrentTeb()->except;
+    jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == TRYLEVEL_END)
     {
         jmp->TryLevel = TRYLEVEL_END;
@@ -339,7 +339,7 @@ void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
 
     TRACE("(%p,%d)\n", jmp, retval);
 
-    cur_frame=(unsigned long)NtCurrentTeb()->except;
+    cur_frame=(unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     TRACE("cur_frame=%lx\n",cur_frame);
 
     if (cur_frame != jmp->Registration)

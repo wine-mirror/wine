@@ -58,15 +58,15 @@ extern struct _PDB current_process;
  */
 static BOOL THREAD_InitTEB( TEB *teb )
 {
-    teb->except    = (void *)~0UL;
-    teb->self      = teb;
+    teb->Tib.ExceptionList = (void *)~0UL;
+    teb->Tib.StackBase     = (void *)~0UL;
+    teb->Tib.Self          = &teb->Tib;
     teb->tibflags  = TEBF_WIN32;
     teb->exit_code = STILL_ACTIVE;
     teb->request_fd = -1;
     teb->reply_fd   = -1;
     teb->wait_fd[0] = -1;
     teb->wait_fd[1] = -1;
-    teb->stack_top  = (void *)~0UL;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
     teb->teb_sel = wine_ldt_alloc_fs();
@@ -111,7 +111,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
         if (teb)
             stack_size = 1024 * 1024;  /* no parent */
         else
-            stack_size = ((char *)NtCurrentTeb()->stack_top - (char *)NtCurrentTeb()->DeallocationStack
+            stack_size = ((char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->DeallocationStack
                           - SIGNAL_STACK_SIZE - 3 * page_size);
     }
 
@@ -146,10 +146,10 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
         }
     }
 
-    teb->stack_low         = base;
     teb->DeallocationStack = base;
     teb->signal_stack      = (char *)base + page_size;
-    teb->stack_top         = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
+    teb->Tib.StackBase     = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
+    teb->Tib.StackLimit    = base;  /* note: limit is lower than base since the stack grows down */
 
     /* Setup guard pages */
 
@@ -172,7 +172,7 @@ void THREAD_Init(void)
 {
     static struct debug_info info;  /* debug info for initial thread */
 
-    if (!initial_teb.self)  /* do it only once */
+    if (!initial_teb.Tib.Self)  /* do it only once */
     {
         THREAD_InitTEB( &initial_teb );
         assert( initial_teb.teb_sel );

@@ -150,16 +150,17 @@ int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
     pthread_attr_t attr;
 
     pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
+    pthread_attr_setstack( &attr, teb->DeallocationStack,
+                           (char *)teb->Tib.StackBase - (char *)teb->DeallocationStack );
     if (pthread_create( &id, &attr, (void * (*)(void *))func, teb )) return -1;
     return 0;
 #elif defined(HAVE_CLONE)
-    if (clone( (int (*)(void *))func, teb->stack_top,
+    if (clone( (int (*)(void *))func, teb->Tib.StackBase,
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;
     return 0;
 #elif defined(HAVE_RFORK)
-    void **sp = (void **)teb->stack_top;
+    void **sp = (void **)teb->Tib.StackBase;
     *--sp = teb;
     *--sp = 0;
     *--sp = func;
@@ -180,7 +181,7 @@ int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
 #elif defined(HAVE__LWP_CREATE)
     ucontext_t context;
     _lwp_makecontext( &context, (void(*)(void *))func, teb,
-                      NULL, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
+                      NULL, teb->DeallocationStack, (char *)teb->Tib.StackBase - (char *)teb->DeallocationStack );
     if ( _lwp_create( &context, 0, NULL ) )
         return -1;
     return 0;
@@ -203,7 +204,7 @@ void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *
 __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
                    "movl 4(%esp),%ecx\n\t"  /* func */
                    "movl 8(%esp),%edx\n\t"  /* arg */
-                   ".byte 0x64\n\tmovl 0x04,%esp\n\t"  /* teb->stack_top */
+                   ".byte 0x64\n\tmovl 0x04,%esp\n\t"  /* teb->Tib.StackBase */
                    "pushl %edx\n\t"
                    "xorl %ebp,%ebp\n\t"
                    "call *%ecx\n\t"
@@ -225,7 +226,7 @@ __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
                    "mov %o0, %l0\n\t" /* store first argument */
                    "call " __ASM_NAME("NtCurrentTeb") ", 0\n\t"
                    "mov %o1, %l1\n\t" /* delay slot: store second argument */
-                   "ld [%o0+4], %sp\n\t" /* teb->stack_top */
+                   "ld [%o0+4], %sp\n\t" /* teb->Tib.StackBase */
                    "call %l0, 0\n\t" /* call func */
                    "mov %l1, %o0\n\t" /* delay slot:  arg for func */
                    "ta 0x01\n\t"); /* breakpoint - we never get here */
@@ -233,7 +234,7 @@ __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
 /* Darwin SYSDEPS_SwitchToThreadStack
  Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
 __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "stw r1, 0x4(r13)\n\t" /* teb->stack_top */
+                   "stw r1, 0x4(r13)\n\t" /* teb->Tib.StackBase */
                    "mr r12,r3\n\t"
                    "mtctr r12\n\t" /* func->ctr */
                    "mr r3,r4\n\t" /* args->function param 1 (r3) */
@@ -243,7 +244,7 @@ __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
 /* Linux SYSDEPS_SwitchToThreadStack
  Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
 __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "stw 1, 0x4(13)\n\t" /* teb->stack_top */
+                   "stw 1, 0x4(13)\n\t" /* teb->Tib.StackBase */
                    "mr 12,3\n\t"
                    "mtctr 12\n\t" /* func->ctr */
                    "mr 3,4\n\t" /* args->function param 1 (r3) */
@@ -277,11 +278,11 @@ void SYSDEPS_ExitThread( int status )
         void *ptr;
 
         TRACE("freeing prev teb %p stack %p fs %04x\n",
-              free_teb, free_teb->stack_base, free_teb->teb_sel );
+              free_teb, free_teb->DeallocationStack, free_teb->teb_sel );
 
         pthread_join( (pthread_t)free_teb->pthread_data, &ptr );
         wine_ldt_free_fs( free_teb->teb_sel );
-        ptr = free_teb->stack_base;
+        ptr = free_teb->DeallocationStack;
         NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
     }
     SIGNAL_Block();
@@ -290,10 +291,10 @@ void SYSDEPS_ExitThread( int status )
     struct thread_cleanup_info info;
     MEMORY_BASIC_INFORMATION meminfo;
 
-    NtQueryVirtualMemory( GetCurrentProcess(), teb->stack_top, MemoryBasicInformation,
+    NtQueryVirtualMemory( GetCurrentProcess(), teb->Tib.StackBase, MemoryBasicInformation,
                           &meminfo, sizeof(meminfo), NULL );
     info.stack_base = meminfo.AllocationBase;
-    info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
+    info.stack_size = meminfo.RegionSize + ((char *)teb->Tib.StackBase - (char *)meminfo.AllocationBase);
     info.status     = status;
 
     SIGNAL_Block();
@@ -304,8 +305,8 @@ void SYSDEPS_ExitThread( int status )
     close( teb->reply_fd );
     close( teb->request_fd );
     SIGNAL_Reset();
-    teb->stack_low = get_temp_stack();
-    teb->stack_top = (char *) teb->stack_low + TEMP_STACK_SIZE;
+    teb->Tib.StackLimit = get_temp_stack();
+    teb->Tib.StackBase = (char *)teb->Tib.StackLimit + TEMP_STACK_SIZE;
     SYSDEPS_SwitchToThreadStack( cleanup_thread, &info );
 #endif
 }

@@ -23,6 +23,7 @@
 
 #include <setjmp.h>
 
+#define NONAMELESSUNION
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/exception.h"
@@ -30,14 +31,14 @@
 
 struct fiber_data
 {
-    LPVOID                param;       /* 00 fiber param */
-    void                 *except;      /* 04 saved exception handlers list */
-    void                 *stack_top;   /* 08 top of fiber stack */
-    void                 *stack_low;   /* 0c fiber stack low-water mark */
-    void                 *stack_base;  /* 10 base of the fiber stack */
-    jmp_buf               jmpbuf;      /* 14 setjmp buffer (on Windows: CONTEXT) */
-    DWORD                 flags;       /*    fiber flags */
-    LPFIBER_START_ROUTINE start;       /*    start routine */
+    LPVOID                param;             /* 00 fiber param */
+    void                 *except;            /* 04 saved exception handlers list */
+    void                 *stack_base;        /* 08 top of fiber stack */
+    void                 *stack_limit;       /* 0c fiber stack low-water mark */
+    void                 *stack_allocation;  /* 10 base of the fiber stack allocation */
+    jmp_buf               jmpbuf;            /* 14 setjmp buffer (on Windows: CONTEXT) */
+    DWORD                 flags;             /*    fiber flags */
+    LPFIBER_START_ROUTINE start;             /*    start routine */
 };
 
 
@@ -86,17 +87,17 @@ LPVOID WINAPI CreateFiberEx( SIZE_T stack_commit, SIZE_T stack_reserve, DWORD fl
 
     /* FIXME: should use the thread stack allocation routines here */
     if (!stack_reserve) stack_reserve = 1024*1024;
-    if(!(fiber->stack_base = VirtualAlloc( 0, stack_reserve, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
+    if(!(fiber->stack_allocation = VirtualAlloc( 0, stack_reserve, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
     {
         HeapFree( GetProcessHeap(), 0, fiber );
         return NULL;
     }
-    fiber->stack_top  = (char *)fiber->stack_base + stack_reserve;
-    fiber->stack_low  = fiber->stack_base;
-    fiber->param      = param;
-    fiber->except     = (void *)-1;
-    fiber->start      = start;
-    fiber->flags      = flags;
+    fiber->stack_base  = (char *)fiber->stack_allocation + stack_reserve;
+    fiber->stack_limit = fiber->stack_allocation;
+    fiber->param       = param;
+    fiber->except      = (void *)-1;
+    fiber->start       = start;
+    fiber->flags       = flags;
     return fiber;
 }
 
@@ -109,12 +110,12 @@ void WINAPI DeleteFiber( LPVOID fiber_ptr )
     struct fiber_data *fiber = fiber_ptr;
 
     if (!fiber) return;
-    if (fiber == NtCurrentTeb()->fiber)
+    if (fiber == NtCurrentTeb()->Tib.u.FiberData)
     {
         HeapFree( GetProcessHeap(), 0, fiber );
         ExitThread(1);
     }
-    VirtualFree( fiber->stack_base, 0, MEM_RELEASE );
+    VirtualFree( fiber->stack_allocation, 0, MEM_RELEASE );
     HeapFree( GetProcessHeap(), 0, fiber );
 }
 
@@ -140,14 +141,14 @@ LPVOID WINAPI ConvertThreadToFiberEx( LPVOID param, DWORD flags )
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    fiber->param      = param;
-    fiber->except     = NtCurrentTeb()->except;
-    fiber->stack_top  = NtCurrentTeb()->stack_top;
-    fiber->stack_low  = NtCurrentTeb()->stack_low;
-    fiber->stack_base = NtCurrentTeb()->DeallocationStack;
-    fiber->start      = NULL;
-    fiber->flags      = flags;
-    NtCurrentTeb()->fiber = fiber;
+    fiber->param            = param;
+    fiber->except           = NtCurrentTeb()->Tib.ExceptionList;
+    fiber->stack_base       = NtCurrentTeb()->Tib.StackBase;
+    fiber->stack_limit      = NtCurrentTeb()->Tib.StackLimit;
+    fiber->stack_allocation = NtCurrentTeb()->DeallocationStack;
+    fiber->start            = NULL;
+    fiber->flags            = flags;
+    NtCurrentTeb()->Tib.u.FiberData = fiber;
     return fiber;
 }
 
@@ -157,11 +158,11 @@ LPVOID WINAPI ConvertThreadToFiberEx( LPVOID param, DWORD flags )
  */
 BOOL WINAPI ConvertFiberToThread(void)
 {
-    struct fiber_data *fiber = NtCurrentTeb()->fiber;
+    struct fiber_data *fiber = NtCurrentTeb()->Tib.u.FiberData;
 
     if (fiber)
     {
-        NtCurrentTeb()->fiber = NULL;
+        NtCurrentTeb()->Tib.u.FiberData = NULL;
         HeapFree( GetProcessHeap(), 0, fiber );
     }
     return TRUE;
@@ -174,20 +175,20 @@ BOOL WINAPI ConvertFiberToThread(void)
 void WINAPI SwitchToFiber( LPVOID fiber )
 {
     struct fiber_data *new_fiber = fiber;
-    struct fiber_data *current_fiber = NtCurrentTeb()->fiber;
+    struct fiber_data *current_fiber = NtCurrentTeb()->Tib.u.FiberData;
 
-    current_fiber->except    = NtCurrentTeb()->except;
-    current_fiber->stack_low = NtCurrentTeb()->stack_low;
-    /* stack_base and stack_top never change */
+    current_fiber->except      = NtCurrentTeb()->Tib.ExceptionList;
+    current_fiber->stack_limit = NtCurrentTeb()->Tib.StackLimit;
+    /* stack_allocation and stack_base never change */
 
     /* FIXME: should save floating point context if requested in fiber->flags */
     if (!setjmp( current_fiber->jmpbuf ))
     {
-        NtCurrentTeb()->fiber             = new_fiber;
-        NtCurrentTeb()->except            = new_fiber->except;
-        NtCurrentTeb()->stack_top         = new_fiber->stack_top;
-        NtCurrentTeb()->stack_low         = new_fiber->stack_low;
-        NtCurrentTeb()->DeallocationStack = new_fiber->stack_base;
+        NtCurrentTeb()->Tib.u.FiberData   = new_fiber;
+        NtCurrentTeb()->Tib.ExceptionList = new_fiber->except;
+        NtCurrentTeb()->Tib.StackBase     = new_fiber->stack_base;
+        NtCurrentTeb()->Tib.StackLimit    = new_fiber->stack_limit;
+        NtCurrentTeb()->DeallocationStack = new_fiber->stack_allocation;
         if (new_fiber->start)  /* first time */
             SYSDEPS_SwitchToThreadStack( start_fiber, new_fiber );
         else

@@ -193,13 +193,13 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     SIGNAL_Unblock(); /* we may be in a signal handler, and exception handlers may jump out */
 
-    frame = NtCurrentTeb()->except;
+    frame = NtCurrentTeb()->Tib.ExceptionList;
     nested_frame = NULL;
     while (frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL)
     {
         /* Check frame address */
-        if (((void*)frame < NtCurrentTeb()->stack_low) ||
-            ((void*)(frame+1) > NtCurrentTeb()->stack_top) ||
+        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
+            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
             (int)frame & 3)
         {
             rec->ExceptionFlags |= EH_STACK_INVALID;
@@ -277,7 +277,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unus
     TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
 
     /* get chain of exception frames */
-    frame = NtCurrentTeb()->except;
+    frame = NtCurrentTeb()->Tib.ExceptionList;
     while ((frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL) && (frame != pEndFrame))
     {
         /* Check frame address */
@@ -289,8 +289,8 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unus
             newrec.NumberParameters = 0;
             RtlRaiseException( &newrec );  /* never returns */
         }
-        if (((void*)frame < NtCurrentTeb()->stack_low) ||
-            ((void*)(frame+1) > NtCurrentTeb()->stack_top) ||
+        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
+            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
             (int)frame & 3)
         {
             newrec.ExceptionCode    = STATUS_BAD_STACK;

@@ -53,16 +53,7 @@ struct debug_info
 */
 typedef struct _TEB
 {
-/* start of NT_TIB */
-    EXCEPTION_REGISTRATION_RECORD *except; /* 12- 00 Head of exception handling chain */
-    void        *stack_top;      /* 12-  04 Top of thread stack */
-    void        *stack_low;      /* 12-  08 Stack low-water mark */
-    HTASK16      htask16;        /* 1--  0c Win16 task handle */
-    WORD         stack_sel;      /* 1--  0e 16-bit stack selector */
-    struct fiber_data *fiber;    /* -2-  10 Current fiber data (Win95: selector manager list) */
-    DWORD        user_ptr;       /* 12n  14 User pointer */
-/* end of NT_TIB */
-    struct _TEB *self;           /* 12-  18 Pointer to this structure */
+    NT_TIB       Tib;            /* 12-  00 Thread information block */
     WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
     WORD         mutex_count;    /* 1-n  1e Win16 mutex count */
     CLIENT_ID    ClientId;       /* -2-  20 Process and thread id (win95: debug context) */
@@ -92,8 +83,8 @@ typedef struct _TEB
     WORD         current_ss;     /* 1-n  7c Another 16-bit stack selector */
     WORD         pad2;           /* --n  7e */
     void        *ss_table;       /* --n  80 Pointer to info about 16-bit stack */
-    WORD         thunk_ss;       /* --n  84 Yet another 16-bit stack selector */
-    WORD         pad3;           /* --n  86 */
+    WORD         stack_sel;      /* --3  84 16-bit stack selector */
+    HTASK16      htask16;        /* --3  86 Win16 task handle */
     DWORD        pad4[15];       /* --n  88 */
     ULONG        CurrentLocale;  /* -2-  C4 */
     DWORD        pad5[48];       /* --n  C8 */
