@@ -140,9 +140,11 @@ $(TOOLSDIR)/libs/libwpp.a $(TOOLSDIR)/libs/libwine_port.a:
 
 checklink:: $(TESTSUBDIRS:%=%/__checklink__)
 
-check test:: wine $(TESTSUBDIRS:%=%/__test__)
+check test:: $(TESTSUBDIRS:%=%/__test__)
+$(TESTSUBDIRS:%=%/__test__): wine
 
-crosstest:: tools $(TESTSUBDIRS:%=%/__crosstest__)
+crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
+$(TESTSUBDIRS:%=%/__crosstest__): tools include
 
 # Misc rules
 
