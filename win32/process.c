@@ -32,7 +32,7 @@ DEFAULT_DEBUG_CHANNEL(win32)
  *             no need in offset correction, like in UnixTimeToFileTime
  *      FIXME: This function should be moved to a more appropriate .c file
  *      FIXME: On floating point operations, it is assumed that
- *             floating values are truncated on convertion to integer.
+ *             floating values are truncated on conversion to integer.
  */
 void Process_ClockTimeToFileTime( clock_t unix_time, LPFILETIME filetime )
 {

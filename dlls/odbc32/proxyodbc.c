@@ -118,7 +118,7 @@ static DM_FUNC  template_func[] =
 
 static PROXYHANDLE gProxyHandle = {NULL, FALSE, FALSE, FALSE, ERROR_LIBRARY_NOT_FOUND}; 
 
-SQLRETURNTYPE  SQLDummyFunc()
+SQLRETURN SQLDummyFunc()
 {
     TRACE("SQLDummyFunc: \n");
     return SQL_SUCCESS;

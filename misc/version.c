@@ -242,7 +242,7 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	          WinVersion = DllVersion;
 	        else {
 	          if (WinVersion != DllVersion) {
-	            ERR("You mixed system dlls from different windows versions! Expect a chrash!\n");
+	            ERR("You mixed system dlls from different windows versions! Expect a crash!\n");
 	            return WIN31; /* this may let the exe exiting */
 	          }
 	        }

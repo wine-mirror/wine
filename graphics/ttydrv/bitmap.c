@@ -131,15 +131,15 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
   TRACE("(%p, 0x%04x, %p)\n", dc, hbitmap, bitmap);
 
   if(!(dc->w.flags & DC_MEMORY)) 
-    return NULL;
+    return 0;
 
   /* Assure that the bitmap device dependent */
   if(!bitmap->DDBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
-    return NULL;
+    return 0;
 
   if(bitmap->DDBitmap->funcs != dc->funcs) {
     ERR("Trying to select a non-TTY DDB into a TTY DC\n");
-    return NULL;
+    return 0;
   }
 
   dc->w.totalExtent.left   = 0;
@@ -155,7 +155,7 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
     HRGN hrgn;
 
     if(!(hrgn = CreateRectRgn(0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight)))
-      return NULL;
+      return 0;
 
     dc->w.hVisRgn = hrgn;
   }

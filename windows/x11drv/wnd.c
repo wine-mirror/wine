@@ -690,7 +690,7 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
 void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    INT dcOrgXCopy, dcOrgYCopy;
+    INT dcOrgXCopy = 0, dcOrgYCopy = 0;
     BOOL offsetClipRgn = FALSE;
 
     if (!wndPtr)  /* Get a DC for the whole screen */

@@ -2,7 +2,7 @@
  * HGLOBAL Stream implementation
  *
  * This file contains the implementation of the stream interface
- * for streams contained suported by an HGLOBAL pointer.
+ * for streams contained supported by an HGLOBAL pointer.
  *
  * Copyright 1999 Francis Beaudet
  */

@@ -541,7 +541,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
 
-/*  probably not really capable of handling mutliple processes, but should handle
+/*  probably not really capable of handling multiple processes, but should handle
  *	multiple instances within one process */
 
     SECURITY_ATTRIBUTES *s_att= NULL;

@@ -142,7 +142,7 @@ ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
 
     if (This->ref==0){
 
-        /* release all registred objects */
+        /* release all registered objects */
         BindCtxImpl_ReleaseBoundObjects((IBindCtx*)This);
 
         BindCtxImpl_Destroy(This);
