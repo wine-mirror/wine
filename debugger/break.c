@@ -799,7 +799,7 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
        syminfo = DEBUG_PrintAddress( addr, addr_mode, TRUE );
 
        DEBUG_Printf(DBG_CHN_MESG, " values: old=%lu new=%lu\n",
-	       oldval, breakpoints[wpnum].u.w.oldval);
+                    oldval, breakpoints[wpnum].u.w.oldval);
        if (syminfo.list.sourcefile != NULL)
 	  DEBUG_List(&syminfo.list, NULL, 0);
        return FALSE;
@@ -844,12 +844,20 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
     }
 
 #ifdef __i386__
-    /* If there's no breakpoint and we are not single-stepping, then we     */
-    /* must have encountered an int3 in the Windows program; let's skip it. */
+    /* If there's no breakpoint and we are not single-stepping, then
+     * either we must have encountered an int3 in the Windows program
+     * or someone is trying to stop us
+     * If the later, (no int3 opcode at current address) then stop, 
+     * otherwise, let's skip it. 
+     */
     if ((bpnum == -1) && code == EXCEPTION_BREAKPOINT)
     {
+        unsigned char   c;
+
+        if (!DEBUG_READ_MEM(&addr, &c, 1)) c = 0xCC;
         DEBUG_context.Eip++;
 	addr->off++;
+        if (c != 0xCC) return FALSE;
     }
 #endif
 
