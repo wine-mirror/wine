@@ -382,7 +382,7 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
 void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
 void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
 void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq);
-void DSOUND_PerformMix(void);
+void DSOUND_PerformMix(IDirectSoundImpl *dsound);
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 

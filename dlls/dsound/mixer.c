@@ -147,8 +147,8 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE
         INT fl,fr;
 
         if (dsb->wfx.wBitsPerSample == 8)  {
-                if (dsound->wfx.wBitsPerSample == 8 &&
-                    dsound->wfx.nChannels == dsb->wfx.nChannels) {
+                if (dsb->dsound->wfx.wBitsPerSample == 8 &&
+                    dsb->dsound->wfx.nChannels == dsb->wfx.nChannels) {
                         /* avoid needless 8->16->8 conversion */
                         *obuf=*ibuf;
                         if (dsb->wfx.nChannels==2)
@@ -162,25 +162,25 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE
                 fr = (dsb->wfx.nChannels==2 ? *(((INT16 *)ibuf) + 1)  : fl);
         }
 
-        if (dsound->wfx.nChannels == 2) {
-                if (dsound->wfx.wBitsPerSample == 8) {
+        if (dsb->dsound->wfx.nChannels == 2) {
+                if (dsb->dsound->wfx.wBitsPerSample == 8) {
                         *obuf = cvtS16toU8(fl);
                         *(obuf + 1) = cvtS16toU8(fr);
                         return;
                 }
-                if (dsound->wfx.wBitsPerSample == 16) {
+                if (dsb->dsound->wfx.wBitsPerSample == 16) {
                         *((INT16 *)obuf) = fl;
                         *(((INT16 *)obuf) + 1) = fr;
                         return;
                 }
         }
-        if (dsound->wfx.nChannels == 1) {
+        if (dsb->dsound->wfx.nChannels == 1) {
                 fl = (fl + fr) >> 1;
-                if (dsound->wfx.wBitsPerSample == 8) {
+                if (dsb->dsound->wfx.wBitsPerSample == 8) {
                         *obuf = cvtS16toU8(fl);
                         return;
                 }
-                if (dsound->wfx.wBitsPerSample == 16) {
+                if (dsb->dsound->wfx.wBitsPerSample == 16) {
                         *((INT16 *)obuf) = fl;
                         return;
                 }
@@ -726,7 +726,7 @@ post_mix:
 	return slen;
 }
 
-static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BOOL recover)
+static DWORD DSOUND_MixToPrimary(IDirectSoundImpl *dsound, DWORD playpos, DWORD writepos, DWORD mixlen, BOOL recover)
 {
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
@@ -767,7 +767,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BO
 	return maxlen;
 }
 
-static void DSOUND_MixReset(DWORD writepos)
+static void DSOUND_MixReset(IDirectSoundImpl *dsound, DWORD writepos)
 {
 	INT			i;
 	IDirectSoundBufferImpl	*dsb;
@@ -817,7 +817,7 @@ static void DSOUND_CheckReset(IDirectSoundImpl *dsound, DWORD writepos)
 {
 	TRACE("(%p,%ld)\n",dsound,writepos);
 	if (dsound->need_remix) {
-		DSOUND_MixReset(writepos);
+		DSOUND_MixReset(dsound, writepos);
 		dsound->need_remix = FALSE;
 		/* maximize Half-Life performance */
 		dsound->prebuf = ds_snd_queue_min;
@@ -848,7 +848,7 @@ void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq)
 
 /* #define SYNC_CALLBACK */
 
-void DSOUND_PerformMix(void)
+void DSOUND_PerformMix(IDirectSoundImpl *dsound)
 {
 	int nfiller;
 	BOOL forced;
@@ -974,7 +974,7 @@ void DSOUND_PerformMix(void)
 		}
 
 		/* do the mixing */
-		frag = DSOUND_MixToPrimary(playpos, writepos, maxq, paused);
+		frag = DSOUND_MixToPrimary(dsound, playpos, writepos, maxq, paused);
 		if (forced) frag = maxq - inq;
 		dsound->mixpos += frag;
 		while (dsound->mixpos >= dsound->buflen)
@@ -1019,23 +1019,24 @@ void DSOUND_PerformMix(void)
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
+        IDirectSoundImpl* This = (IDirectSoundImpl*)dwUser;
 	TRACE("(%d,%d,0x%lx,0x%lx,0x%lx)\n",timerID,msg,dwUser,dw1,dw2);
         TRACE("entering at %ld\n", GetTickCount());
 
-	if (!dsound) {
+	if (dsound != This) {
 		ERR("dsound died without killing us?\n");
 		timeKillEvent(timerID);
 		timeEndPeriod(DS_TIME_RES);
 		return;
 	}
 
-	RtlAcquireResourceShared(&(dsound->lock), TRUE);
+	RtlAcquireResourceShared(&(This->lock), TRUE);
 
-	if (dsound->ref) {
-		DSOUND_PerformMix();
+	if (This->ref) {
+		DSOUND_PerformMix(This);
 	}
 
-	RtlReleaseResource(&(dsound->lock));
+	RtlReleaseResource(&(This->lock));
 
 	TRACE("completed processing at %ld\n", GetTickCount());
 }
@@ -1059,11 +1060,11 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 		EnterCriticalSection(&(This->mixlock));
 #endif
 		/* retrieve current values */
-		fraglen = dsound->fraglen;
-		buflen = dsound->buflen;
-		pwplay = dsound->pwplay;
+		fraglen = This->fraglen;
+		buflen = This->buflen;
+		pwplay = This->pwplay;
 		playpos = pwplay * fraglen;
-		mixpos = dsound->mixpos;
+		mixpos = This->mixpos;
 		/* check remaining mixed data */
 		inq = ((mixpos < playpos) ? buflen : 0) + mixpos - playpos;
 		mixq = inq / fraglen;
@@ -1073,8 +1074,8 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 		pwplay++;
 		if (pwplay >= DS_HEL_FRAGS) pwplay = 0;
 		/* write new values */
-		dsound->pwplay = pwplay;
-		dsound->pwqueue--;
+		This->pwplay = pwplay;
+		This->pwqueue--;
 		/* queue new buffer if we have data for it */
 		if (inq>1) DSOUND_WaveQueue(This, inq-1);
 #ifdef SYNC_CALLBACK
