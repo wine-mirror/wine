@@ -302,7 +302,10 @@ void SB_ioport_out( WORD port, BYTE val )
                 DSP_OutBuffer[OutSize++] = ~val;
                 break;
             case 0xE1: /* SB */
-                FIXME("DSP Version - Not Implemented\n");
+               TRACE("DSP Version\n");
+               OutSize=2;
+               DSP_OutBuffer[0]=0; /* returns version 1.0 */
+               DSP_OutBuffer[1]=1;
                 break;
             case 0xF2: /* SB */
                 TRACE("IRQ Request (8-bit)\n");
