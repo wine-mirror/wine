@@ -34,6 +34,11 @@
 #include "winnt.h"
 #include "wine/library.h"
 
+/* argc/argv for the Windows application */
+int __wine_main_argc = 0;
+char **__wine_main_argv = NULL;
+WCHAR **__wine_main_wargv = NULL;
+
 #define MAX_DLLS 100
 
 static struct

@@ -27,7 +27,7 @@
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
-
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -158,9 +158,6 @@ static WCHAR *wstrdupa(const char *str)
   return wstr;
 }
 
-extern int __wine_get_main_args(char*** argv);
-extern int __wine_get_wmain_args(WCHAR*** argv);
-
 /* INTERNAL: Since we can't rely on Winelib startup code calling w/getmainargs,
  * we initialise data values during DLL loading. When called by a native
  * program we simply return the data we've already initialised. This also means
@@ -175,8 +172,9 @@ void msvcrt_init_args(void)
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
   MSVCRT__wcmdln = wstrdupa(MSVCRT__acmdln);
-  MSVCRT___argc = __wine_get_main_args(&MSVCRT___argv);
-  __wine_get_wmain_args(&MSVCRT___wargv);
+  MSVCRT___argc = __wine_main_argc;
+  MSVCRT___argv = __wine_main_argv;
+  MSVCRT___wargv = __wine_main_wargv;
 
   TRACE("got '%s', wide = %s argc=%d\n", MSVCRT__acmdln,
         debugstr_w(MSVCRT__wcmdln),MSVCRT___argc);

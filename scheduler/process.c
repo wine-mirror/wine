@@ -109,9 +109,6 @@ PDB current_process;
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
-static int app_argc;   /* argc/argv seen by the application */
-static char **app_argv;
-static WCHAR **app_wargv;
 static char main_exe_name[MAX_PATH];
 static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
@@ -252,7 +249,6 @@ static BOOL process_init( char *argv[] )
 
     /* store the program name */
     argv0 = argv[0];
-    app_argv = argv;
 
     /* Fill the initial process structure */
     current_process.exit_code       = STILL_ACTIVE;
@@ -320,8 +316,6 @@ static BOOL process_init( char *argv[] )
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( !info ? argv : NULL );
-    app_argc = 0;
-    while (argv[app_argc]) app_argc++;
 
     ret = MAIN_MainInit();
 
@@ -489,20 +483,19 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
 
-    if (open_winelib_app( app_argv )) goto found; /* try to open argv[0] as a winelib app */
+    if (open_winelib_app( argv )) goto found; /* try to open argv[0] as a winelib app */
 
-    app_argv++;  /* remove argv[0] (wine itself) */
-    app_argc--;
+    argv++;  /* remove argv[0] (wine itself) */
 
     if (!main_exe_name[0])
     {
-        if (!app_argv[0]) OPTIONS_Usage();
+        if (!argv[0]) OPTIONS_Usage();
 
         /* open the exe file */
-        if (!SearchPathA( NULL, app_argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL) &&
-            !SearchPathA( NULL, app_argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL))
+        if (!SearchPathA( NULL, argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL) &&
+            !SearchPathA( NULL, argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL))
         {
-            MESSAGE( "%s: cannot find '%s'\n", argv0, app_argv[0] );
+            MESSAGE( "%s: cannot find '%s'\n", argv0, argv[0] );
             goto error;
         }
     }
@@ -536,7 +529,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  found:
     /* build command line */
-    if (!ENV_BuildCommandLine( app_argv )) goto error;
+    if (!ENV_BuildCommandLine( argv )) goto error;
 
     /* create 32-bit module for main exe */
     if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
@@ -550,52 +543,6 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  error:
     ExitProcess( GetLastError() );
-}
-
-
-/***********************************************************************
- *              __wine_get_main_args (NTDLL.@)
- *
- * Return the argc/argv that the application should see.
- * Used by the startup code generated in the .spec.c file.
- */
-int __wine_get_main_args( char ***argv )
-{
-    *argv = app_argv;
-    return app_argc;
-}
-
-
-/***********************************************************************
- *              __wine_get_wmain_args (NTDLL.@)
- *
- * Same as __wine_get_main_args but for Unicode.
- */
-int __wine_get_wmain_args( WCHAR ***argv )
-{
-    if (!app_wargv)
-    {
-        int i;
-        WCHAR *p;
-        DWORD total = 0;
-
-        for (i = 0; i < app_argc; i++)
-            total += MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, NULL, 0 );
-
-        app_wargv = HeapAlloc( GetProcessHeap(), 0,
-                                    total * sizeof(WCHAR) + (app_argc + 1) * sizeof(*app_wargv) );
-        p = (WCHAR *)(app_wargv + app_argc + 1);
-        for (i = 0; i < app_argc; i++)
-        {
-            DWORD len = MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, p, total );
-            app_wargv[i] = p;
-            p += len;
-            total -= len;
-        }
-        app_wargv[app_argc] = NULL;
-    }
-    *argv = app_wargv;
-    return app_argc;
 }
 
 

@@ -1029,10 +1029,6 @@ name	ntdll
 @ varargs wine_dbg_printf(str) wine_dbg_printf
 @ varargs wine_dbg_log(long str str str) wine_dbg_log
 
-# Command-line
-@ cdecl __wine_get_main_args(ptr) __wine_get_main_args
-@ cdecl __wine_get_wmain_args(ptr) __wine_get_wmain_args
-
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call
 @ cdecl wine_server_handle_to_fd(long long ptr ptr ptr) wine_server_handle_to_fd

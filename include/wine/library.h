@@ -37,6 +37,10 @@ extern void *wine_dll_load_main_exe( const char *name, int search_path,
                                      char *error, int errorsize );
 extern void wine_dll_unload( void *handle );
 
+extern int __wine_main_argc;
+extern char **__wine_main_argv;
+extern WCHAR **__wine_main_wargv;
+
 /* debugging */
 
 extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );

@@ -29,6 +29,7 @@
 
 #include "wine/winbase16.h"
 #include "wine/server.h"
+#include "wine/library.h"
 #include "heap.h"
 #include "ntddk.h"
 #include "selectors.h"
@@ -278,6 +279,40 @@ ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
 }
 
 
+
+/***********************************************************************
+ *              set_library_argv
+ *
+ * Set the Wine library argc/argv global variables.
+ */
+static void set_library_argv( char **argv )
+{
+    int argc;
+    WCHAR *p;
+    WCHAR **wargv;
+    DWORD total = 0;
+
+    for (argc = 0; argv[argc]; argc++)
+        total += MultiByteToWideChar( CP_ACP, 0, argv[argc], -1, NULL, 0 );
+
+    wargv = HeapAlloc( GetProcessHeap(), 0,
+                       total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
+    p = (WCHAR *)(wargv + argc + 1);
+    for (argc = 0; argv[argc]; argc++)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, argv[argc], -1, p, total );
+        wargv[argc] = p;
+        p += len;
+        total -= len;
+    }
+    wargv[argc] = NULL;
+
+    __wine_main_argc  = argc;
+    __wine_main_argv  = argv;
+    __wine_main_wargv = wargv;
+}
+
+
 /***********************************************************************
  *           ENV_BuildCommandLine
  *
@@ -304,6 +339,8 @@ BOOL ENV_BuildCommandLine( char **argv )
 {
     int len;
     char *p, **arg;
+
+    set_library_argv( argv );
 
     if (current_envdb.cmd_line) goto done;  /* already got it from the server */
 
