@@ -222,7 +222,7 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
 {
     struct named_pipe *pipe;
 
-    if ((pipe = create_named_object( &named_pipe_ops, name, len )))
+    if ((pipe = create_named_object( sync_namespace, &named_pipe_ops, name, len )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {

@@ -72,7 +72,7 @@ static struct timer *create_timer( const WCHAR *name, size_t len, int manual )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( &timer_ops, name, len )))
+    if ((timer = create_named_object( sync_namespace, &timer_ops, name, len )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -211,7 +211,7 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    reply->handle = open_object( get_req_data(), get_req_data_size(),
+    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
                                  &timer_ops, req->access, req->inherit );
 }
 

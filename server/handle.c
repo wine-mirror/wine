@@ -154,7 +154,7 @@ static void handle_table_destroy( struct object *obj )
 }
 
 /* allocate a new handle table */
-struct object *alloc_handle_table( struct process *process, int count )
+struct handle_table *alloc_handle_table( struct process *process, int count )
 {
     struct handle_table *table;
 
@@ -165,7 +165,7 @@ struct object *alloc_handle_table( struct process *process, int count )
     table->count   = count;
     table->last    = -1;
     table->free    = 0;
-    if ((table->entries = mem_alloc( count * sizeof(*table->entries) ))) return &table->obj;
+    if ((table->entries = mem_alloc( count * sizeof(*table->entries) ))) return table;
     release_object( table );
     return NULL;
 }
@@ -213,7 +213,7 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 /* return the handle, or 0 on error */
 obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
 {
-    struct handle_table *table = (struct handle_table *)process->handles;
+    struct handle_table *table = process->handles;
 
     assert( table );
     assert( !(access & RESERVED_ALL) );
@@ -236,7 +236,7 @@ static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
 /* return a handle entry, or NULL if the handle is invalid */
 static struct handle_entry *get_handle( struct process *process, obj_handle_t handle )
 {
-    struct handle_table *table = (struct handle_table *)process->handles;
+    struct handle_table *table = process->handles;
     struct handle_entry *entry;
     int index;
 
@@ -281,9 +281,9 @@ static void shrink_handle_table( struct handle_table *table )
 
 /* copy the handle table of the parent process */
 /* return 1 if OK, 0 on error */
-struct object *copy_handle_table( struct process *process, struct process *parent )
+struct handle_table *copy_handle_table( struct process *process, struct process *parent )
 {
-    struct handle_table *parent_table = (struct handle_table *)parent->handles;
+    struct handle_table *parent_table = parent->handles;
     struct handle_table *table;
     int i;
 
@@ -307,7 +307,7 @@ struct object *copy_handle_table( struct process *process, struct process *paren
     }
     /* attempt to shrink the table */
     shrink_handle_table( table );
-    return &table->obj;
+    return table;
 }
 
 /* close a handle and decrement the refcount of the associated object */
@@ -329,7 +329,7 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
     if (fd) *fd = entry->fd;
     else if (entry->fd != -1) return 1;  /* silently ignore close attempt if we cannot close the fd */
     entry->fd = -1;
-    table = handle_is_global(handle) ? global_table : (struct handle_table *)process->handles;
+    table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
     release_object( obj );
@@ -400,10 +400,28 @@ int get_handle_fd( struct process *process, obj_handle_t handle, unsigned int ac
     return entry->fd;
 }
 
+/* find the first inherited handle of the given type */
+/* this is needed for window stations and desktops (don't ask...) */
+obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops )
+{
+    struct handle_table *table = process->handles;
+    struct handle_entry *ptr;
+    int i;
+
+    if (!table) return 0;
+
+    for (i = 0, ptr = table->entries; i <= table->last; i++, ptr++)
+    {
+        if (!ptr->ptr) continue;
+        if (ptr->ptr->ops != ops) continue;
+        if (ptr->access & RESERVED_INHERIT) return index_to_handle(i);
+    }
+    return 0;
+}
+
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
-static int set_handle_info( struct process *process, obj_handle_t handle,
-                            int mask, int flags, int *fd )
+int set_handle_info( struct process *process, obj_handle_t handle, int mask, int flags, int *fd )
 {
     struct handle_entry *entry;
     unsigned int old_access;
@@ -454,11 +472,11 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
 }
 
 /* open a new handle to an existing object */
-obj_handle_t open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
-                      unsigned int access, int inherit )
+obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+                          const struct object_ops *ops, unsigned int access, int inherit )
 {
     obj_handle_t handle = 0;
-    struct object *obj = find_object( name, len );
+    struct object *obj = find_object( namespace, name, len );
     if (obj)
     {
         if (ops && obj->ops != ops)

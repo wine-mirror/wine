@@ -25,6 +25,7 @@
 
 struct msg_queue;
 struct atom_table;
+struct handle_table;
 struct startup_info;
 
 /* process startup state */
@@ -54,7 +55,7 @@ struct process
     struct process      *parent;          /* parent process */
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
-    struct object       *handles;         /* handle entries */
+    struct handle_table *handles;         /* handle entries */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */
     struct timeval       start_time;      /* absolute time at process start */

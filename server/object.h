@@ -24,11 +24,13 @@
 #include <sys/poll.h>
 #include <sys/time.h>
 #include "wine/server_protocol.h"
+#include "list.h"
 
 #define DEBUG_OBJECTS
 
 /* kernel objects */
 
+struct namespace;
 struct object;
 struct object_name;
 struct thread;
@@ -79,8 +81,7 @@ struct object
     struct wait_queue_entry  *tail;
     struct object_name       *name;
 #ifdef DEBUG_OBJECTS
-    struct object            *prev;
-    struct object            *next;
+    struct list               obj_list;
 #endif
 };
 
@@ -96,12 +97,14 @@ extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops, int fd );
 extern void dump_object_name( struct object *obj );
-extern void *create_named_object( const struct object_ops *ops, const WCHAR *name, size_t len );
+extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
+                                  const WCHAR *name, size_t len );
+extern struct namespace *create_namespace( unsigned int hash_size, int case_sensitive );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
-extern struct object *find_object( const WCHAR *name, size_t len );
+extern struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_get_fd( struct object *obj );
@@ -208,5 +211,8 @@ extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
 extern unsigned int server_start_ticks;
+
+/* name space for synchronization objects */
+extern struct namespace *sync_namespace;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

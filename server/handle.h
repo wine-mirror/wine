@@ -27,6 +27,7 @@
 
 struct process;
 struct object_ops;
+struct namespace;
 
 /* handle functions */
 
@@ -38,12 +39,14 @@ extern int close_handle( struct process *process, obj_handle_t handle, int *fd )
 extern struct object *get_handle_obj( struct process *process, obj_handle_t handle,
                                       unsigned int access, const struct object_ops *ops );
 extern int get_handle_fd( struct process *process, obj_handle_t handle, unsigned int access );
+extern int set_handle_info( struct process *process, obj_handle_t handle, int mask, int flags, int *fd );
 extern obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
                                   unsigned int access, int inherit, int options );
-extern obj_handle_t open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
-                             unsigned int access, int inherit );
-extern struct object *alloc_handle_table( struct process *process, int count );
-extern struct object *copy_handle_table( struct process *process, struct process *parent );
+extern obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+                                 const struct object_ops *ops, unsigned int access, int inherit );
+extern obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops );
+extern struct handle_table *alloc_handle_table( struct process *process, int count );
+extern struct handle_table *copy_handle_table( struct process *process, struct process *parent );
 extern void close_global_handles(void);
 
 #endif  /* __WINE_SERVER_HANDLE_H */

@@ -65,7 +65,7 @@ struct event *create_event( const WCHAR *name, size_t len,
 {
     struct event *event;
 
-    if ((event = create_named_object( &event_ops, name, len )))
+    if ((event = create_named_object( sync_namespace, &event_ops, name, len )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -145,7 +145,7 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    reply->handle = open_object( get_req_data(), get_req_data_size(),
+    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
                                  &event_ops, req->access, req->inherit );
 }
 

@@ -68,7 +68,7 @@ static struct mutex *create_mutex( const WCHAR *name, size_t len, int owned )
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object( &mutex_ops, name, len )))
+    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, len )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -169,7 +169,7 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    reply->handle = open_object( get_req_data(), get_req_data_size(),
+    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
                                  &mutex_ops, req->access, req->inherit );
 }
 

@@ -263,7 +263,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
 
     if (!page_mask) init_page_size();
 
-    if (!(mapping = create_named_object( &mapping_ops, name, len )))
+    if (!(mapping = create_named_object( sync_namespace, &mapping_ops, name, len )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_COLLISION)
         return &mapping->obj;  /* Nothing else to do */
@@ -383,7 +383,7 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    reply->handle = open_object( get_req_data(), get_req_data_size(),
+    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
                                  &mapping_ops, req->access, req->inherit );
 }
 

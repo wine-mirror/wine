@@ -70,7 +70,7 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( &semaphore_ops, name, len )))
+    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, len )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -153,7 +153,7 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    reply->handle = open_object( get_req_data(), get_req_data_size(),
+    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
                                  &semaphore_ops, req->access, req->inherit );
 }
 
