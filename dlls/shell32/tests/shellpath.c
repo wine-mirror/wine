@@ -69,14 +69,14 @@ struct shellExpectedValues {
 };
 
 static HMODULE hShell32;
-static HRESULT WINAPI (*pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
-static HRESULT WINAPI (*pSHGetFolderLocation)(HWND, int, HANDLE, DWORD,
+static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
+static HRESULT (WINAPI *pSHGetFolderLocation)(HWND, int, HANDLE, DWORD,
  LPITEMIDLIST *);
-static BOOL    WINAPI (*pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
-static HRESULT WINAPI (*pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
-static LPITEMIDLIST WINAPI (*pILFindLastID)(LPCITEMIDLIST);
-static int WINAPI (*pSHFileOperationA)(LPSHFILEOPSTRUCTA);
-static HRESULT WINAPI (*pSHGetMalloc)(LPMALLOC *);
+static BOOL    (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
+static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
+static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
+static int (WINAPI *pSHFileOperationA)(LPSHFILEOPSTRUCTA);
+static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
 static const struct shellExpectedValues requiredShellValues[] = {
@@ -154,7 +154,7 @@ static void loadShell32(void)
     hShell32 = LoadLibraryA("shell32");
     if (hShell32)
     {
-        HRESULT WINAPI (*pDllGetVersion)(DLLVERSIONINFO *);
+        HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
 
         pSHGetFolderPathA = (void *)GetProcAddress(hShell32,
          "SHGetFolderPathA");
@@ -191,6 +191,10 @@ static void loadShell32(void)
         }
     }
 }
+
+#ifndef CSIDL_PROFILES
+#define CSIDL_PROFILES		0x003e
+#endif
 
 /* A couple utility printing functions */
 static const char *getFolderName(int folder)
@@ -260,7 +264,7 @@ static const char *getFolderName(int folder)
     CSIDL_TO_STR(CSIDL_COMPUTERSNEARME);
 #undef CSIDL_TO_STR
     default:
-        snprintf(unknown, sizeof(unknown), "unknown (0x%04x)", folder);
+        wnsprintfA(unknown, sizeof(unknown), "unknown (0x%04x)", folder);
         return unknown;
     }
 }
@@ -271,7 +275,7 @@ static const char *printGUID(const GUID *guid)
 
     if (!guid) return NULL;
 
-    snprintf(guidSTR, sizeof(guidSTR),
+    wnsprintfA(guidSTR, sizeof(guidSTR),
      "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
      guid->Data1, guid->Data2, guid->Data3,
      guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
@@ -522,7 +526,7 @@ static void matchSpecialFolderPathToEnv(int folder, const char *envVar)
     {
         char *envVal = getenv(envVar);
 
-        ok(!envVal || !strcasecmp(envVal, path),
+        ok(!envVal || !lstrcmpiA(envVal, path),
          "%%%s%% does not match SHGetSpecialFolderPath:\n"
          "%%%s%% is %s\nSHGetSpecialFolderPath returns %s\n",
          envVar, envVar, envVal, path);
@@ -645,7 +649,7 @@ static void testWinDir(void)
         PathRemoveBackslashA(windowsShellPath);
         GetWindowsDirectoryA(windowsDir, sizeof(windowsDir));
         PathRemoveBackslashA(windowsDir);
-        ok(!strcasecmp(windowsDir, windowsShellPath),
+        ok(!lstrcmpiA(windowsDir, windowsShellPath),
          "GetWindowsDirectory does not match SHGetSpecialFolderPath:\n"
          "GetWindowsDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
          windowsDir, windowsShellPath);
@@ -667,7 +671,7 @@ static void testSystemDir(void)
     if (pSHGetSpecialFolderPathA(NULL, systemShellPath, CSIDL_SYSTEM, FALSE))
     {
         PathRemoveBackslashA(systemShellPath);
-        ok(!strcasecmp(systemDir, systemShellPath),
+        ok(!lstrcmpiA(systemDir, systemShellPath),
          "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
          "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
          systemDir, systemShellPath);
@@ -678,7 +682,7 @@ static void testSystemDir(void)
     if (pSHGetSpecialFolderPathA(NULL, systemShellPath, CSIDL_SYSTEMX86, FALSE))
     {
         PathRemoveBackslashA(systemShellPath);
-        ok(!strcasecmp(systemDir, systemShellPath),
+        ok(!lstrcmpiA(systemDir, systemShellPath),
          "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
          "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
          systemDir, systemShellPath);
@@ -824,7 +828,7 @@ static void testNonExistentPath(void)
                 PROCESS_INFORMATION info;
                 HRESULT hr;
 
-                snprintf(buffer, sizeof(buffer), "%s tests/shellpath.c 1",
+                wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 1",
                  selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
@@ -847,7 +851,7 @@ static void testNonExistentPath(void)
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
 
-                snprintf(buffer, sizeof(buffer), "%s tests/shellpath.c 2",
+                wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 2",
                  selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
