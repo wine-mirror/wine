@@ -345,10 +345,12 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlag
 	
 	TRACE("('%s', %p, %08lX, %d);\n", szFileName, refmminfo, dwOpenFlags, b32bit?32:16);
 	
-	if (dwOpenFlags & MMIO_PARSE) {
+	if (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)) {
 		char	buffer[MAX_PATH];
 		
 		if (GetFullPathNameA(szFileName, sizeof(buffer), buffer, NULL) >= sizeof(buffer))
+			return (HMMIO16)FALSE;
+		if ((dwOpenFlags&MMIO_EXIST)&&(GetFileAttributesA(buffer)==-1))
 			return (HMMIO16)FALSE;
 		strcpy(szFileName, buffer);
 		return (HMMIO16)TRUE;
