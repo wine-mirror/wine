@@ -123,7 +123,7 @@ owner	setupapi
 170  stub     SUSETMEM
 171  stub     WriteDMFBootData #(word ptr word)
 200  pascal   VcpOpen(ptr str) VcpOpen16
-201  pascal   VcpClose(word word word) VcpClose16
+201  pascal   VcpClose(word str) VcpClose16
 202  stub     vcpDefCallbackProc #(ptr word word long long)
 203  stub     vcpEnumFiles #(ptr long)
 204  stub     VcpQueueRename #(str str str str word word long)
