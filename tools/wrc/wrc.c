@@ -59,6 +59,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -71,7 +72,7 @@
 #include "../wpp/wpp.h"
 
 static char usage[] =
-	"Usage: wrc [options...] [infile[.rc|.res]]\n"
+	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
 	"   -A          Auto register resources (only with gcc 2.7 and better)\n"
 	"   -b          Create an assembly array from a binary .res file\n"
@@ -89,9 +90,11 @@ static char usage[] =
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -e          Disable recognition of win32 keywords in 16bit compile\n"
 	"   -E          Preprocess only\n"
+	"   -F target	Ignored for compatibility with windres\n"
 	"   -g          Add symbols to the global c namespace\n"
 	"   -h          Also generate a .h file\n"
 	"   -H file     Same as -h but written to file\n"
+	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -L          Leave case of embedded filenames as is\n"
@@ -99,6 +102,7 @@ static char usage[] =
 	"   -n          Do not generate .s file\n"
 	"   -N          Do not preprocess input\n"
 	"   -o file     Output to file (default is infile.[res|s|h]\n"
+	"   -O format	The output format to generate. format may be `res' only.\n"
 	"   -p prefix   Give a prefix for the generated names\n"
 	"   -r          Create binary .res file (compile only)\n"
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
@@ -107,6 +111,17 @@ static char usage[] =
 	"   -V          Print version end exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
 	"   -W          Enable pedantic warnings\n"
+	"The following long options are supported:\n"
+	"   --input		Synonym for -i.\n"
+	"   --output		Synonym for -o.\n"
+	"   --target		Synonym for -F.\n"
+	"   --format		Synonym for -O.\n"
+	"   --include-dir	Synonym for -I.\n"
+	"   --define		Synonym for -D.\n"
+	"   --language		Synonym for -l.\n"
+	"   --preprocessor	Specify the preprocessor to use, including arguments.\n"
+	"   --help		Prints a usage summary.\n"
+	"   --version		Prints the version number for wrc.\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -269,11 +284,25 @@ int getopt (int argc, char *const *argv, const char *optstring);
 static void rm_tempfile(void);
 static void segvhandler(int sig);
 
+static struct option long_options[] = {
+	{ "input", 1, 0, 'i' },
+	{ "output", 1, 0, 'o' },
+	{ "target", 1, 0, 'F' },
+	{ "format", 1, 0, 'O' },
+	{ "include-dir", 1, 0, 'I' },
+	{ "define", 1, 0, 'D' },
+	{ "language", 1, 0, 'l' },
+	{ "preprocessor", 1, 0, 1 },
+	{ "help", 0, 0, 2 },
+	{ "version", 0, 0, 3 },
+	{ 0, 0, 0, 0 }
+};
+
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
 	extern int   optind;
-	int optc;
+	int optc, opti = 0;
 	int lose = 0;
 	int ret;
 	int a;
@@ -298,10 +327,19 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEghH:I:l:LmnNo:p:rstTVw:W")) != EOF)
+	while((optc = getopt_long(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:l:LmnNo:O:p:rstTVw:W", long_options, &opti)) != EOF)
 	{
 		switch(optc)
 		{
+		case 1:
+			fprintf(stderr, "--preprocessor option not yet supported, ignored.\n");
+			break;
+		case 2:
+			fprintf(stderr, usage);
+			return 0;
+		case 3:
+			fprintf(stderr, version_string);
+			return 0;
 		case 'a':
 			alignment = atoi(optarg);
 			break;
@@ -349,6 +387,9 @@ int main(int argc,char *argv[])
 		case 'E':
 			preprocess_only = 1;
 			break;
+		case 'F':
+			/* ignored for compatibility with windres */
+			break;
 		case 'g':
 			global = 1;
 			break;
@@ -357,6 +398,10 @@ int main(int argc,char *argv[])
 			/* Fall through */
 		case 'h':
 			create_header = 1;
+			break;
+		case 'i':
+			if (!input_name) input_name = strdup(optarg);
+			else error("Too many input files.\n");
 			break;
 		case 'I':
 			wpp_add_include_path(optarg);
@@ -383,7 +428,12 @@ int main(int argc,char *argv[])
 			no_preprocess = 1;
 			break;
 		case 'o':
-			output_name = strdup(optarg);
+			if (!output_name) output_name = strdup(optarg);
+			else error("Too many output files.\n");
+			break;
+		case 'O':
+			if (strcmp(optarg, "res"))
+				error("Output format %s not supported.", optarg);
 			break;
 		case 'p':
 			prefix = xstrdup(optarg);
@@ -427,6 +477,30 @@ int main(int argc,char *argv[])
 		fprintf(stderr, usage);
 		return 1;
 	}
+
+	/* Check for input file on command-line */
+	if(optind < argc)
+	{
+		if (!input_name) input_name = argv[optind++];
+		else error("Too many input files.\n");
+	}
+
+	/* Check for output file on command-line */
+	if(optind < argc)
+	{
+		if (!output_name) output_name = argv[optind++];
+		else error("Too many output files.\n");
+	}
+
+	/* Try to guess the output format based on output name */
+	if (output_name)
+	{
+		char *dotstr = strrchr(output_name, '.');
+		if (dotstr && (strcmp(dotstr+1, "res") == 0 ||
+			       strcmp(dotstr+1, "o") == 0))
+			create_res = 1;
+	}
+
 
 	/* Check the command line options for invalid combinations */
 	if(win32)
@@ -589,12 +663,6 @@ int main(int argc,char *argv[])
 	/* Check if the user set a language, else set default */
 	if(!currentlanguage)
 		currentlanguage = new_language(0, 0);
-
-	/* Check for input file on command-line */
-	if(optind < argc)
-	{
-		input_name = argv[optind];
-	}
 
 	if(binary && !input_name)
 	{
