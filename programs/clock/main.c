@@ -91,11 +91,12 @@ int CLOCK_MenuCommand (WPARAM wParam)
 VOID MAIN_FileChooseFont(VOID) {
 
   CHOOSEFONT font;
-  
+  LOGFONT	 lf;
+
         font.lStructSize     = sizeof(font);
         font.hwndOwner       = Globals.hMainWnd;
         font.hDC             = NULL;
-        font.lpLogFont       = 0;
+        font.lpLogFont       = &lf;
         font.iPointSize      = 0;
         font.Flags           = 0;
         font.rgbColors       = 0;
@@ -110,7 +111,7 @@ VOID MAIN_FileChooseFont(VOID) {
 
         if (ChooseFont(&font)) {
             /* do nothing yet */
-        };
+        }
 
 }
 
