@@ -549,6 +549,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     rect.left = rect.top = 0;
     rect.right = MulDiv(template.cx, dlgInfo->xBaseUnit, 4);
     rect.bottom =  MulDiv(template.cy, dlgInfo->yBaseUnit, 8);
+    if (template.style & WS_CHILD)
+        template.style &= ~(WS_CAPTION|WS_SYSMENU);
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
     AdjustWindowRectEx( &rect, template.style, (dlgInfo->hMenu != 0), template.exStyle );
