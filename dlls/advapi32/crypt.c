@@ -31,6 +31,9 @@ CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
     return FALSE;
 }
 
+/******************************************************************************
+ * CryptSetKeyParam
+ */
 BOOL WINAPI
 CryptSetKeyParam( HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {

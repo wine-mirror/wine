@@ -1937,6 +1937,9 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     return TRUE; 
 }
 
+/***********************************************************************
+ *           DefineDosDeviceA       (KERNEL32.182)
+ */
 BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 	FIXME_(dosfs)("(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

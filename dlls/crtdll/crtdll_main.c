@@ -249,10 +249,14 @@ DWORD __cdecl CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 	return 0;
 }
 
+/*********************************************************************
+ *                  _fsopen     (CRTDLL.110)
+ */
 CRTDLL_FILE * __cdecl CRTDLL__fsopen(LPCSTR x, LPCSTR y, INT z) {
 	FIXME("(%s,%s,%d),stub!\n",x,y,z);
 	return NULL;
 }
+
 /*********************************************************************
  *                  _fdopen     (CRTDLL.91)
  */
@@ -581,7 +585,7 @@ time_t __cdecl CRTDLL_time(time_t *timeptr)
 }
 
 /*********************************************************************
- *                            (CRTDLL.350)
+ *                  clock         (CRTDLL.350)
  */
 clock_t __cdecl CRTDLL_clock(void)
 {
@@ -1812,7 +1816,7 @@ INT __cdecl CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base) {
 	return ret;
 }
 /*********************************************************************
- *                  strdate           (CRTDLL.283)
+ *                  _strdate          (CRTDLL.283)
  */
 LPSTR __cdecl CRTDLL__strdate (LPSTR date)
 {	FIXME("%p stub\n", date);
@@ -1820,7 +1824,7 @@ LPSTR __cdecl CRTDLL__strdate (LPSTR date)
 }
 
 /*********************************************************************
- *                  strtime           (CRTDLL.299)
+ *                  _strtime          (CRTDLL.299)
  */
 LPSTR __cdecl CRTDLL__strtime (LPSTR date)
 {	FIXME("%p stub\n", date);
