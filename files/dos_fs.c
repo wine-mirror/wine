@@ -240,7 +240,12 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
         }
     }
     buffer[11] = '\0';
-    return TRUE;
+
+    /* at most 3 character of the extension are processed
+     * is something behind this ? 
+     */
+    if (*p == '*') p++; /* skip wildcard */
+    return IS_END_OF_NAME(*p);
 }
 
 
