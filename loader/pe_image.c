@@ -109,7 +109,7 @@ void dump_exports( HMODULE hModule )
  * If it is an ordinal:
  *	- use ordinal-pe_export->Base as offset into the function list
  */
-static FARPROC PE_FindExportedFunction(
+FARPROC PE_FindExportedFunction(
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
         int hint,
@@ -531,8 +531,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     }
     else if ( flags & DONT_RESOLVE_DLL_REFERENCES )
         wm->ldr.Flags |= LDR_DONT_RESOLVE_REFS;
-
-    wm->find_export = PE_FindExportedFunction;
 
     /* Dump Exports */
 

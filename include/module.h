@@ -133,8 +133,6 @@ typedef struct _wine_modref
 	HMODULE16            hDummyMod; /* Win16 dummy module */
 	void                *dlhandle;  /* handle returned by dlopen() */
         LDR_MODULE           ldr;
-	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func,
-                                           int hint, BOOL snoop );
 
 	int			nDeps;
 	struct _wine_modref	**deps;

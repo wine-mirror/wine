@@ -497,7 +497,7 @@ FARPROC MODULE_GetProcAddress(
     RtlEnterCriticalSection( &loader_section );
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
-        retproc = wm->find_export( wm, function, hint, snoop );
+        retproc = PE_FindExportedFunction( wm, function, hint, snoop );
     }
     RtlLeaveCriticalSection( &loader_section );
     return retproc;
