@@ -34,8 +34,15 @@ static int string_compare( const void *ptr1, const void *ptr2 )
 static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
 {
     static char buffer[256];
-    if (odp->name[0]) sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLName, odp->name );
-    else sprintf( buffer, "__wine_%s_%s_%d", prefix, DLLName, odp->ordinal );
+    if (odp->name[0])
+    {
+        char *p;
+        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLName, odp->name );
+        /* make sure name is a legal C identifier */
+        for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
+        if (!*p) return buffer;
+    }
+    sprintf( buffer, "__wine_%s_%s_%d", prefix, DLLName, odp->ordinal );
     return buffer;
 }
 
