@@ -1088,12 +1088,13 @@ static void test_verify_signature() {
 void test_schannel_provider()
 {
     HCRYPTPROV hProv;
-    HCRYPTKEY hRSAKey, hMasterSecret, hServerWriteKey;
-    HCRYPTHASH hMasterHash, hTLS1PRF;
+    HCRYPTKEY hRSAKey, hMasterSecret, hServerWriteKey, hServerWriteMACKey;
+    HCRYPTHASH hMasterHash, hTLS1PRF, hHMAC;
     BOOL result;
     DWORD dwLen;
     SCHANNEL_ALG saSChannelAlg;
     CRYPT_DATA_BLOB data_blob;
+    HMAC_INFO hmacInfo = { CALG_MD5, NULL, 0, NULL, 0 };
     BYTE abPlainPrivateKey[596] = {
         0x07, 0x02, 0x00, 0x00, 0x00, 0xa4, 0x00, 0x00,
         0x52, 0x53, 0x41, 0x32, 0x00, 0x04, 0x00, 0x00,
@@ -1196,6 +1197,7 @@ void test_schannel_provider()
     BYTE abHashedHandshakes[37] = "123456789012345678901234567890123456";
     BYTE abClientFinished[16] = "client finished";
     BYTE abData[16] = "Wine rocks!";
+    BYTE abMD5Hash[16];
     static const BYTE abEncryptedData[16] = {
         0x13, 0xd2, 0xdd, 0xeb, 0x6c, 0x3f, 0xbe, 0xb2,
         0x04, 0x86, 0xb5, 0xe5, 0x08, 0xe5, 0xf3, 0x0d    
@@ -1204,7 +1206,11 @@ void test_schannel_provider()
         0xa8, 0xb2, 0xa6, 0xef, 0x83, 0x4e, 0x74, 0xb1,
         0xf3, 0xb1, 0x51, 0x5a, 0x1a, 0x2b, 0x11, 0x31
     };
-
+    static const BYTE abMD5[16] = {
+        0xe1, 0x65, 0x3f, 0xdb, 0xbb, 0x3d, 0x99, 0x3c,
+        0x3d, 0xca, 0x6a, 0x6f, 0xfa, 0x15, 0x4e, 0xaa
+    };
+    
     result = CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT);
     ok (result, "%08lx\n", GetLastError());
     if (!result) return;
@@ -1294,8 +1300,32 @@ void test_schannel_provider()
     ok (result && (dwLen==(DWORD)sizeof(abData)) && !memcmp(abData, abPRF, sizeof(abData)), 
         "%08lx\n", GetLastError());
 
+    /* Third test case. Derive the server write mac key. Derive an HMAC object from this one.
+     * Hash some data with the HMAC. Compare results. */
+    result = CryptDeriveKey(hProv, CALG_SCHANNEL_MAC_KEY, hMasterHash, CRYPT_SERVER, &hServerWriteMACKey);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+    
+    result = CryptCreateHash(hProv, CALG_HMAC, hServerWriteMACKey, 0, &hHMAC);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    result = CryptSetHashParam(hHMAC, HP_HMAC_INFO, (PBYTE)&hmacInfo, 0);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    result = CryptHashData(hHMAC, abData, (DWORD)sizeof(abData), 0);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    dwLen = (DWORD)sizeof(abMD5Hash);
+    result = CryptGetHashParam(hHMAC, HP_HASHVAL, abMD5Hash, &dwLen, 0);
+    ok (result && (dwLen == 16) && !memcmp(abMD5Hash, abMD5, 16), "%08lx\n", GetLastError());
+
+    CryptDestroyHash(hHMAC);
     CryptDestroyHash(hTLS1PRF);
     CryptDestroyHash(hMasterHash);
+    CryptDestroyKey(hServerWriteMACKey);
     CryptDestroyKey(hServerWriteKey);
     CryptDestroyKey(hRSAKey);
     CryptDestroyKey(hMasterSecret);
