@@ -18,6 +18,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "syscolor.h"
 
+extern const int DC_XROPfunction[];
+
 extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 
 static inline swap_int(int *a, int *b)
@@ -473,6 +475,10 @@ COLORREF GetPixel( HDC hdc, short x, short y )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
+#ifdef SOLITAIRE_SPEED_HACK
+    return 0;
+#endif
+
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     if ((x < 0) || (y < 0)) return 0;
@@ -552,6 +558,20 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 
 
 /***********************************************************************
+ *           InvertRgn    (GDI.42)
+ */
+BOOL InvertRgn( HDC hdc, HRGN hrgn )
+{
+    HBRUSH prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
+    WORD prevROP = SetROP2( hdc, R2_NOT );
+    BOOL retval = PaintRgn( hdc, hrgn );
+    SelectObject( hdc, prevBrush );
+    SetROP2( hdc, prevROP );
+    return retval;
+}
+
+
+/***********************************************************************
  *           DrawFocusRect    (USER.466)
  */
 void DrawFocusRect( HDC hdc, LPRECT rc )
@@ -579,6 +599,44 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
     SetBkMode(hdc, oldBkMode);
     SetROP2(hdc, oldDrawMode);
     SelectObject(hdc, (HANDLE)hOldPen);
+}
+
+
+/**********************************************************************
+ *          GRAPH_DrawBitmap
+ *
+ * Short-cut function to blit a bitmap into a device.
+ * Faster than CreateCompatibleDC() + SelectBitmap() + BitBlt() + DeleteDC().
+ */
+BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
+		       int xsrc, int ysrc, int width, int height, int rop )
+{
+    XGCValues val;
+    BITMAPOBJ *bmp;
+    DC *dc;
+    
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
+    if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+	return FALSE;
+    val.function   = DC_XROPfunction[(rop >> 16) & 0x0f];
+    val.foreground = dc->w.textPixel;
+    val.background = dc->w.backgroundPixel;
+    XChangeGC(display, dc->u.x.gc, GCFunction|GCForeground|GCBackground, &val);
+    if (bmp->bitmap.bmBitsPixel == 1)
+    {
+	XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+		    xsrc, ysrc, width, height,
+		    dc->w.DCOrgX + xdest, dc->w.DCOrgY + ydest, 1 );
+	return TRUE;
+    }
+    else if (bmp->bitmap.bmBitsPixel == dc->w.bitsPerPixel)
+    {
+	XCopyArea( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+		   xsrc, ysrc, width, height,
+		   dc->w.DCOrgX + xdest, dc->w.DCOrgY + ydest );
+	return TRUE;
+    }
+    else return FALSE;
 }
 
 

@@ -8,11 +8,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "win.h"
 #include "desktop.h"
 #include "prototypes.h"
 
+extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
+			      int xsrc, int ysrc, int width, int height,
+			      int rop );                     /* graphics.c */
 
 /***********************************************************************
  *           DESKTOP_LoadBitmap
@@ -85,17 +89,15 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
     if (infoPtr->hbitmapWallPaper)
     {
 	int x, y;
-	HDC hdcmem;
 
-	hdcmem = CreateCompatibleDC( hdc );
-	SelectObject( hdcmem, infoPtr->hbitmapWallPaper );
 	if (infoPtr->fTileWallPaper)
 	{
 	    for (y = 0; y < rect.bottom; y += infoPtr->bitmapSize.cy)
 		for (x = 0; x < rect.right; x += infoPtr->bitmapSize.cx)
-		    BitBlt( hdc, x, y,
-			    infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
-			    hdcmem, 0, 0, SRCCOPY );
+		    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper,
+				      x, y, 0, 0, 
+				      infoPtr->bitmapSize.cx,
+				      infoPtr->bitmapSize.cy, SRCCOPY );
 	}
 	else
 	{
@@ -103,10 +105,10 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 	    y = (rect.top + rect.bottom - infoPtr->bitmapSize.cy) / 2;
 	    if (x < 0) x = 0;
 	    if (y < 0) y = 0;
-	    BitBlt( hdc, x, y, infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
-		    hdcmem, 0, 0, SRCCOPY );
+	    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper, x, y, 0, 0, 
+			      infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy,
+			      SRCCOPY );
 	}
-	DeleteDC( hdcmem );
     }
 
     return 1;

@@ -252,13 +252,6 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
 
-    if (IsIconic(hwnd) && wndPtr->hIcon)
-    {
-        SendMessage(hwnd, WM_PAINTICON, 0, 0);
-       return;
-    }  
-
-
       /* Make position relative to client area instead of window */
     rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
     rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);

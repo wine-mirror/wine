@@ -251,8 +251,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
-    XSetWindowAttributes win_attr, icon_attr;
-    int iconWidth, iconHeight;
+    XSetWindowAttributes win_attr;
 
 #ifdef DEBUG_WIN
     printf( "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
@@ -373,11 +372,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	  /* Only select focus events on top-level override-redirect windows */
 	if (win_attr.override_redirect) win_attr.event_mask |= FocusChangeMask;
     }
-    if (Options.nobackingstore)
-       win_attr.backing_store = NotUseful;
-    else
-       win_attr.backing_store = Always;
-
+    win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
     win_attr.save_under = ((classPtr->wc.style & CS_SAVEBITS) != 0);
 
     WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
@@ -392,7 +387,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	height = maxSize.y;
 	wndPtr->rectWindow.bottom = y + height;
       }
-    
+
     wndPtr->window = XCreateWindow( display, parentPtr->window,
 		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
 		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,
@@ -403,41 +398,21 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     XStoreName( display, wndPtr->window, windowName );
 
 
-    /* create icon window */
-
-    icon_attr.override_redirect = rootWindow==DefaultRootWindow(display);
-    icon_attr.background_pixel = WhitePixelOfScreen(screen);
-    icon_attr.event_mask = ExposureMask | KeyPressMask |
-                            ButtonPressMask | ButtonReleaseMask;
-
+    /* 
+     * store icon handle, icon handle is kept in class.  If we
+     * have an icon, make the icon size the size of the icon,
+     * if we don't have an icon, just give it 64x64
+     */
     wndPtr->hIcon = classPtr->wc.hIcon;
     if (wndPtr->hIcon != (HICON)NULL) {
       ICONALLOC   *lpico;
       lpico = (ICONALLOC *)GlobalLock(wndPtr->hIcon);
-      printf("icon is %d x %d\n", 
-              (int)lpico->descriptor.Width,
-              (int)lpico->descriptor.Height);
-      iconWidth = (int)lpico->descriptor.Width;
-      iconHeight = (int)lpico->descriptor.Height;
+      wndPtr->iconWidth = (int)lpico->descriptor.Width;
+      wndPtr->iconHeight = (int)lpico->descriptor.Height;
     } else {
-      printf("icon was NULL\n");
-      iconWidth = 64;
-      iconHeight = 64;
+      wndPtr->iconWidth = 64;
+      wndPtr->iconHeight = 64;
     }
-
-    wndPtr->icon = XCreateWindow(display, parentPtr->window,
-                    10, 10, 100, iconHeight+20, 
-                    0, CopyFromParent,
-                    InputOutput, CopyFromParent,
-                    CWBorderPixel | CWEventMask | CWOverrideRedirect, 
-                    &icon_attr);
-   
-    if (style & WS_MINIMIZE) 
-    {
-      style &= ~WS_MINIMIZE;
-    }
- 
-
 
 #ifdef DEBUG_MENU
     printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
@@ -505,11 +480,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     else CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ));
 
     EVENT_RegisterWindow( wndPtr->window, hwnd );
-    EVENT_RegisterWindow( wndPtr->icon, hwnd );
 
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     
     if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+/*    if (style & WS_MINIMIZE) ShowWindow( hwnd, SW_MINIMIZE ); */
+
 #ifdef DEBUG_WIN
     printf( "CreateWindowEx: return %04X \n", hwnd);
 #endif
@@ -804,6 +780,27 @@ HWND GetParent(HWND hwnd)
     if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) return 0;
     return wndPtr->hwndParent;
 }
+
+/*****************************************************************
+ *         SetParent              (USER.233)
+ */
+HWND SetParent(HWND hwndChild, HWND hwndNewParent)
+{
+    HWND temp;
+
+    WND *wndPtr = WIN_FindWndPtr(hwndChild);
+    if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) return 0;
+
+    temp = wndPtr->hwndParent;
+
+    if (hwndNewParent)
+      wndPtr->hwndParent = hwndNewParent;
+    else
+      wndPtr->hwndParent = GetDesktopWindow();
+
+    return temp;
+}
+
 
 
 /*******************************************************************

@@ -156,19 +156,23 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
      * to get one.  In this case, we'll also have to copy the data
      * to protect it.
      */
-    if (s_old->shm_key == 0)
+    if (s_old->shm_key == -1)
     {
-	s_old->shm_key = shmget(IPC_PRIVATE, s_old->length, 0600);
-	if (s_old->shm_key == 0)
+	s_old->shm_key = shmget(IPC_PRIVATE, s_old->length, IPC_CREAT);
+	if (s_old->shm_key == -1)
 	{
-	    if (s_new)
+	    if (s_new) {
 		memset(s_new, 0, sizeof(*s_new));
+		s_new->shm_key = -1;
+	    }
 	    return -1;
 	}
-	if (shmat(s_old->shm_key, base_addr, 0) == NULL)
+	if (shmat(s_old->shm_key, base_addr, 0) == (char *) -1)
 	{
-	    if (s_new)
+	    if (s_new) {
 		memset(s_new, 0, sizeof(*s_new));
+		s_new->shm_key = -1;
+	    }
 	    shmctl(s_old->shm_key, IPC_RMID, NULL);
 	    return -1;
 	}
@@ -183,10 +187,12 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
      */
     else
     {
-	if (shmat(s_old->shm_key, base_addr, 0) == NULL)
+	if (shmat(s_old->shm_key, base_addr, 0) == (char *) -1)
 	{
-	    if (s_new)
+	    if (s_new) {
 		memset(s_new, 0, sizeof(*s_new));
+		s_new->shm_key = -1;
+	    }
 	    return -1;
 	}
     }
@@ -257,6 +263,9 @@ WORD AllocSelector(WORD old_selector)
     else
     {
 	memset(s_new, 0, sizeof(*s_new));
+#ifdef HAVE_IPC
+	s_new->shm_key = -1;
+#endif
 	SelectorMap[i_new] = i_new;
     }
 
@@ -401,6 +410,19 @@ WORD AllocDStoCSAlias(WORD ds_selector)
 }
 
 /**********************************************************************
+ *					CleanupSelectors
+ */
+
+void CleanupSelectors(void)
+{
+    int sel_idx;
+
+    for (sel_idx = FIRST_SELECTOR; sel_idx < MAX_SELECTORS; sel_idx++)
+	if (SelectorMap[sel_idx])
+	    FreeSelector((sel_idx << 3) | 7);
+}
+
+/**********************************************************************
  *					FreeSelector
  */
 WORD FreeSelector(WORD sel)
@@ -417,10 +439,11 @@ WORD FreeSelector(WORD sel)
 	return 0;
     
     s = &Segments[sel_idx];
-    if (s->shm_key == 0)
+    if (s->shm_key == -1)
     {
 	munmap(s->base_addr, ((s->length + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
 	memset(s, 0, sizeof(*s));
+	s->shm_key = -1;
 	SelectorMap[sel_idx] = 0;
     }
     else
@@ -436,6 +459,7 @@ WORD FreeSelector(WORD sel)
 	    shmctl(s->shm_key, IPC_RMID, NULL);
 	    
 	memset(s, 0, sizeof(*s));
+	s->shm_key = -1;
 	SelectorMap[sel_idx] = 0;
     }
     
@@ -521,12 +545,17 @@ CreateNewSegments(int code_flag, int read_only, int length, int n_segments)
 				     MAP_FIXED | MAP_PRIVATE | MAP_ANON, 
 				     -1, 0);
 #endif
-
+#ifdef HAVE_IPC
+	s->shm_key = -1;
+#endif
 	if (set_ldt_entry(i, (unsigned long) s->base_addr, 
 			  (s->length - 1) & 0xffff, 0, 
 			  contents, read_only, 0) < 0)
 	{
 	    memset(s, 0, sizeof(*s));
+#ifdef HAVE_IPC
+	    s->shm_key = -1;
+#endif
 	    return NULL;
 	}
 
@@ -982,6 +1011,9 @@ CreateSelectors(struct  w_files * wpnt)
 	    myerror("CreateSelectors: GlobalAlloc() failed");
 
 	s->base_addr = (void *) ((LONG) s->selector << 16);
+#ifdef HAVE_IPC
+	s->shm_key = -1;
+#endif
 	if (!(s->flags & NE_SEGFLAGS_DATA))
 	    PrestoChangoSelector(s->selector, s->selector);
 	else

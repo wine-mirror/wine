@@ -44,6 +44,7 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     strcpy( textPtr, text );
 }
 
+#include <assert.h>
 
 /***********************************************************************
  *           DefWindowProc   (USER.107)
@@ -75,12 +76,9 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_NCCALCSIZE:
 	return NC_HandleNCCalcSize( hwnd, (NCCALCSIZE_PARAMS *)lParam );
 
+    case WM_PAINTICON: 
     case WM_NCPAINT:
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
-
-    case WM_PAINTICON:
-        printf("going to call NC_HandleNCPaintIcon\n");
-        return NC_HandleNCPaintIcon( hwnd );
 
 
     case WM_NCHITTEST:
@@ -89,6 +87,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_NCLBUTTONDOWN:
 	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 
+    case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 

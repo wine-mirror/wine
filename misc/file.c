@@ -173,7 +173,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 	ofs->nErrCode = ExtendedError;
         return -1;
       }
-      handle = open (ofs->szPathName, (wStyle & 0x0003) | O_CREAT, 0x666);
+      handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0x666);
       if (handle == -1)
       {
 	errno_to_doserr();

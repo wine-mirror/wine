@@ -52,7 +52,7 @@ struct options Options =
     NULL,           /* programName */
     FALSE,          /* usePrivateMap */
     FALSE,          /* synchronous */
-    FALSE,          /* no backing store */
+    FALSE,          /* backing store */
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE
 };
@@ -60,6 +60,7 @@ struct options Options =
 
 static XrmOptionDescRec optionsTable[] =
 {
+    { "-backingstore",  ".backingstore",    XrmoptionNoArg,  (caddr_t)"on" },
     { "-desktop",       ".desktop",         XrmoptionSepArg, (caddr_t)NULL },
     { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
     { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
@@ -67,7 +68,6 @@ static XrmOptionDescRec optionsTable[] =
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
-    { "-nobackingstore",".nobackingstore",  XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-relaydbg",      ".relaydbg",        XrmoptionNoArg,  (caddr_t)"on" }
@@ -87,7 +87,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
-  "    -nobackingstore Turn off backing store\n" \
+  "    -backingstore   Turn on backing store\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
   "    -relaydbg       Display call relay information\n"
 
@@ -242,8 +242,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.usePrivateMap = TRUE;
     if (MAIN_GetResource( db, ".synchronous", &value ))
 	Options.synchronous = TRUE;
-    if (MAIN_GetResource( db, ".nobackingstore", &value ))
-	Options.nobackingstore = TRUE;	
+    if (MAIN_GetResource( db, ".backingstore", &value ))
+	Options.backingstore = TRUE;	
     if (MAIN_GetResource( db, ".relaydbg", &value ))
 	Options.relay_debug = TRUE;
     if (MAIN_GetResource( db, ".debug", &value ))
@@ -350,6 +350,7 @@ static void called_at_exit(void)
     sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
+    CleanupSelectors();
 }
 
 /***********************************************************************

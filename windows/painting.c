@@ -98,6 +98,14 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
+    /* 
+     *	I can't help but feel that this belongs somewhere upstream...
+     *
+     *  Don't redraw the window if it is iconified and we have an
+     *  icon to draw for it
+     */
+    if (IsIconic(hwnd) && wndPtr->hIcon) return FALSE;
+
     GetClientRect( hwnd, &rectClient );
     rectWindow = wndPtr->rectWindow;
     OffsetRect(&rectWindow, -wndPtr->rectClient.left, -wndPtr->rectClient.top);

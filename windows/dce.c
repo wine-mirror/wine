@@ -183,25 +183,6 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    dc->w.DCSizeX = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
 	    dc->w.DCSizeY = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 	}
-	else if (IsIconic(hwnd))                /* if we have an icon */
-        {
-            /* more things are hardcoded here than should be,
-             * I assume the icon windows is 100 pixels 1/2 of which is 50
-             * this just sets up the dc so it knows about the size of
-             * the icon area
-             */
-            dc->u.x.drawable = wndPtr->icon;
-            if (wndPtr->hIcon != (HICON)NULL) {
-                lpico = (ICONALLOC *)GlobalLock(wndPtr->hIcon);
-                dc->w.DCSizeX = /* (int)lpico->descriptor.Width */ 100;
-                dc->w.DCSizeY = (int)lpico->descriptor.Height + 20;
-            } else {
-                dc->w.DCOrgX = /* 64 */ 100;            /* assume max size */
-                dc->w.DCOrgY = 64 + 20;
-            }
-            dc->w.DCOrgX  = 0;
-            dc->w.DCOrgY  = 0;
-        }
 	else
 	{
 	    dc->w.DCOrgX  = wndPtr->rectClient.left - wndPtr->rectWindow.left;
@@ -223,11 +204,12 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
     {
 	HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	if (hrgn && !IsIconic(hwnd))
+	if (hrgn)
 	{
 	    if (CombineRgn( hrgn, InquireVisRgn(hdc), hrgnClip,
-			    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF ))
+			    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF )) {
 		SelectVisRgn( hdc, hrgn );
+	    }
 	    DeleteObject( hrgn );
 	}
     }

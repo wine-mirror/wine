@@ -8,6 +8,7 @@
 #define GDI_H
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "windows.h"
 #include "segmem.h"
@@ -32,6 +33,7 @@ typedef struct tagREGION
     WORD        type;
     RECT        box;
     Pixmap      pixmap;
+    Region      xrgn;
 } REGION;
 
 typedef struct tagGDIOBJHDR

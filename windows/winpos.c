@@ -10,8 +10,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "win.h"
 #include "message.h"
+#include <assert.h>
 
 static HWND hwndActive = 0;  /* Currently active window */
+
+/* #define DEBUG_WIN /**/
 
 
 /***********************************************************************
@@ -220,6 +223,45 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 }
 
 
+/*
+ * hwnd is the handle to the first child window to hide
+ */
+static void WINPOS_hideChildren(HWND hwnd)
+{
+    WND *wndPtr;
+
+    while (hwnd) {
+	ShowWindow(hwnd, SW_HIDE);
+	wndPtr = WIN_FindWndPtr(hwnd);
+	assert(wndPtr);
+	WINPOS_hideChildren(wndPtr->hwndChild); 
+	hwnd = wndPtr->hwndNext;
+    }
+}
+
+
+static void WINPOS_ChildrenComeOutToPlay(HWND hwnd)
+{
+    WND *wndPtr;
+    
+    while (hwnd) {
+	/*
+	 * we shouldn't really be calling SW_SHOWNOACTIVATE
+	 * here because we wake up all windows, even the ones
+	 * the user has decided to iconify or hide
+	 *
+	 * have to use SHOWNOACTIVATE instead of SHOWNORMAL
+	 * since we are traversing the window tree and don't
+	 * want windows linked/unlined under us
+	 */
+	ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+	wndPtr = WIN_FindWndPtr(hwnd);
+	assert(wndPtr);
+	WINPOS_ChildrenComeOutToPlay(wndPtr->hwndChild); 
+	hwnd = wndPtr->hwndNext;
+    }
+}
+
 /***********************************************************************
  *           ShowWindow   (USER.42)
  */
@@ -227,41 +269,72 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 {    
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     BOOL wasVisible;
+    BOOL wasIconic;
     int swpflags = 0;
+
+    if (!wndPtr) return FALSE;
 
 #ifdef DEBUG_WIN
     printf("ShowWindow: hwnd=%04X, cmd=%d\n", hwnd, cmd);
 #endif
-    
-    if (!wndPtr) return FALSE;
+
+    /*
+     *  wasVisible is true if user has not made window invisible 
+     *  wasIconic is true if the window is not iconified
+     */
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
+
     switch(cmd)
     {
         case SW_HIDE:
-	    if (!wasVisible) return FALSE;  /* Nothing to do */
+	    /*
+	     *  if the window wasn't visible to begin with -- just return
+	     */
+	    if (!wasVisible) 
+		return FALSE;  /* Nothing to do */
 	    swpflags |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
+
 	case SW_SHOWMINNOACTIVE:
 	case SW_SHOWMINIMIZED:
-	case SW_SHOWMAXIMIZED:
-	case SW_MINIMIZE:
+	case SW_MINIMIZE: 
 	    wndPtr->dwStyle |= WS_MINIMIZE;
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
+
+	    /*
+	     *	tell children that they are getting hidden
+	     */
+	    WINPOS_hideChildren(wndPtr->hwndChild);
+
+	    /* store the size and position of the window, so we can
+	     *	deiconify it to the same size and position	
+	     */
+            wndPtr->rectNormal = wndPtr->rectWindow; 
+            wndPtr->ptIconPos.x = wndPtr->rectWindow.left;
+            wndPtr->ptIconPos.y = wndPtr->rectWindow.top;
+	    /* move the window to icon size and position and
+	     * tell it that it is going to have to be painted
+	     */
+            MoveWindow(hwnd, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
+                        wndPtr->iconWidth, wndPtr->iconHeight, FALSE);
+            SendMessage(hwnd, WM_PAINTICON, 0, 0);
 	    break;
 
+
 	case SW_SHOWNA:
-	case SW_MAXIMIZE:
+	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE: */
 	case SW_SHOW:
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
 	    break;
 
-	case SW_NORMAL:
-	case SW_SHOWNORMAL:
+
+	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_SHOWNOACTIVATE:
 	case SW_RESTORE:
+	    wasIconic = IsIconic(hwnd);
 	    wndPtr->dwStyle &= ~WS_MINIMIZE;
 	    wndPtr->dwStyle &= ~WS_MAXIMIZE;
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
@@ -270,8 +343,17 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 		swpflags |= SWP_NOZORDER;
 		if (GetActiveWindow()) swpflags |= SWP_NOACTIVATE;
 	    }
+	    if (wasIconic) {
+		MoveWindow(hwnd, wndPtr->rectNormal.left, 
+			   wndPtr->rectNormal.top,
+			   wndPtr->rectNormal.right - wndPtr->rectNormal.left, 
+			   wndPtr->rectNormal.bottom - wndPtr->rectNormal.top, 
+			   FALSE);
+	    }
+	    WINPOS_ChildrenComeOutToPlay(wndPtr->hwndChild);
 	    break;
     }
+
     SendMessage( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
     SetWindowPos( hwnd, 0, 0, 0, 0, 0, swpflags );
 
@@ -288,6 +370,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	SendMessage( hwnd, WM_MOVE, 0,
 		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
     }
+
     return wasVisible;
 }
 

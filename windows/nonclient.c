@@ -30,12 +30,15 @@ extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
+extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
+			      int xsrc, int ysrc, int width, int height,
+			      int rop );                     /* graphics.c */
 extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
 				   int orgX, int orgY );         /* menu.c */
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
 extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
 extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-			      HMENU hmenu, BOOL suppress_draw ); /* menu.c */
+			      HWND hwnd, BOOL suppress_draw ); /* menu.c */
 
 
   /* Some useful macros */
@@ -126,6 +129,12 @@ LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params )
 
     if (!wndPtr) return 0;
 
+    /*
+     * we don't want to change the size if hwnd is an icon since
+     * there are no window manager handles on an icon
+     */
+    if(IsIconic(hwnd)) return 0;
+
     NC_AdjustRect( &tmpRect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle );
     params->rgrc[0].left   -= tmpRect.left;
     params->rgrc[0].top    -= tmpRect.top;
@@ -174,22 +183,34 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
 
 
 /***********************************************************************
- *           NC_InternalNCHitTest
+ *           NC_HandleNCHitTest
  *
- * Perform the hit test calculation, but whithout testing the capture
- * window.
+ * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-static LONG NC_InternalNCHitTest( HWND hwnd, POINT pt )
+LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 {
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
+#ifdef DEBUG_NONCLIENT
+    printf( "NC_HandleNCHitTest: hwnd=%x pt=%d,%d\n", hwnd, pt.x, pt.y );
+#endif
+
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
-      /* Check borders */
+    /*
+     * if this is a iconic window, we don't care were the hit
+     * occured, only that it did occur, just return HTCAPTION 
+     * so the caller knows the icon did get hit
+     */
+    if (IsIconic(hwnd))
+    {
+        return HTCAPTION;       /* change this to something meaningful? */
+    }
 
+      /* Check borders */
     if (HAS_THICKFRAME( wndPtr->dwStyle ))
     {
 	InflateRect( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
@@ -302,39 +323,18 @@ static LONG NC_InternalNCHitTest( HWND hwnd, POINT pt )
 
 
 /***********************************************************************
- *           NC_HandleNCHitTest
- *
- * Handle a WM_NCHITTEST message. Called from DefWindowProc().
- */
-LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
-{
-#ifdef DEBUG_NONCLIENT
-    printf( "NC_HandleNCHitTest: hwnd=%x pt=%d,%d\n", hwnd, pt.x, pt.y );
-#endif
-    if (hwnd == GetCapture()) return HTCLIENT;
-    return NC_InternalNCHitTest( hwnd, pt );
-}
-
-
-/***********************************************************************
  *           NC_DrawSysButton
  */
 void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    HDC hdcMem = CreateCompatibleDC( hdc );
-    if (hdcMem)
-    {
-	NC_GetInsideRect( hwnd, &rect );
-	if (wndPtr->dwStyle & WS_CHILD)
-		SelectObject( hdcMem, hbitmapMDIClose );
-	else
-		SelectObject( hdcMem, hbitmapClose );
-	BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE,
-	       SYSMETRICS_CYSIZE, hdcMem, 1, 1, down ? NOTSRCCOPY : SRCCOPY );
-	DeleteDC( hdcMem );
-    }
+    NC_GetInsideRect( hwnd, &rect );
+    GRAPH_DrawBitmap( hdc, (wndPtr->dwStyle & WS_CHILD) ?
+		      hbitmapMDIClose : hbitmapClose,
+		      rect.left, rect.top,
+		      1, 1, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+		      down ? NOTSRCCOPY : SRCCOPY );
 }
 
 
@@ -344,17 +344,12 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
-    HDC hdcMem = CreateCompatibleDC( hdc );
-    if (hdcMem)
-    {
-	NC_GetInsideRect( hwnd, &rect );
-	if (IsZoomed(hwnd))
-	    SelectObject( hdcMem, down ? hbitmapRestoreD : hbitmapRestore );
-	else SelectObject( hdcMem, down ? hbitmapMaximizeD : hbitmapMaximize );
-	BitBlt( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
-	      SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, hdcMem, 0, 0, SRCCOPY);
-	DeleteDC( hdcMem );
-    }
+    NC_GetInsideRect( hwnd, &rect );
+    GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
+			    (down ? hbitmapRestoreD : hbitmapRestore) :
+			    (down ? hbitmapMaximizeD : hbitmapMaximize)),
+		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
+		     0, 0, SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, SRCCOPY );
 }
 
 
@@ -365,18 +360,11 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    HDC hdcMem = CreateCompatibleDC( hdc );
-    if (hdcMem)
-    {
-	NC_GetInsideRect( hwnd, &rect );
-	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-	    rect.right -= SYSMETRICS_CXSIZE + 1;	
-	if (down) SelectObject( hdcMem, hbitmapMinimizeD );
-	else SelectObject( hdcMem, hbitmapMinimize );
-	BitBlt( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
-	      SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, hdcMem, 0, 0, SRCCOPY);
-	DeleteDC( hdcMem );
-    }
+    NC_GetInsideRect( hwnd, &rect );
+    if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
+    GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
+		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
+		     0, 0, SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, SRCCOPY );
 }
 
 
@@ -583,6 +571,27 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 	OffsetRgn( hrgn, xoffset, yoffset );  /* Restore region */
     }
     if (!hdc) return;
+
+
+    /*
+     * If this is an icon, we don't want to do any more nonclient painting
+     * of the window manager.
+     * If there is a class icon to draw, draw it
+     */
+    if (IsIconic(hwnd))
+    {
+        if (wndPtr->hIcon)  
+        {
+            SendMessage(hwnd, WM_ICONERASEBKGND, hdc, 0);
+            Rectangle(hdc, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+                     wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
+            DrawIcon(hdc, 0, 0, wndPtr->hIcon);
+        }
+      ReleaseDC(hwnd, hdc);
+	
+      return;
+    }
+
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
@@ -628,8 +637,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     {
 	RECT r = rect;
 	r.bottom = rect.top + SYSMETRICS_CYMENU;  /* default height */
-	rect.top += MENU_DrawMenuBar( hdc, &r, (HMENU)wndPtr->wIDmenu,
-				      suppress_menupaint );
+	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
 
     if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
@@ -662,46 +670,6 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     }    
 
     ReleaseDC( hwnd, hdc );
-}
-
-
-NC_DoNCPaintIcon(HWND hwnd)
-{
-      WND *wndPtr = WIN_FindWndPtr(hwnd);
-      PAINTSTRUCT ps;
-      HDC hdc;
-      int ret;
-      DC *dc;
-      GC testgc;
-      int s;
-      char buffer[256];
-
-      printf("painting icon\n");
-      if (wndPtr == NULL) {
-              printf("argh, can't find an icon to draw\n");
-              return;
-      }
-      hdc = BeginPaint(hwnd, &ps);
-
-      ret = DrawIcon(hdc, 100/2 - 16, 0, wndPtr->hIcon);
-      printf("ret is %d\n", ret);
-
-      if (s=GetWindowText(hwnd, buffer, 256))
-      {
-          /*SetBkColor(hdc, TRANSPARENT); */
-          TextOut(hdc, 0, 32, buffer, s);
-      }
-      EndPaint(hwnd, &ps);
-
-      printf("done painting icon\n");
-      
-}
-
-
-LONG NC_HandleNCPaintIcon( HWND hwnd )
-{
-    NC_DoNCPaintIcon(hwnd);
-    return 0;
 }
 
 
@@ -761,8 +729,8 @@ LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
 		CURSOR_SetWinCursor( hwnd, classPtr->wc.hCursor );
 		return TRUE;
 	    }
+	    else return FALSE;
 	}
-	break;
 
     case HTLEFT:
     case HTRIGHT:
@@ -830,7 +798,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WORD wParam, POINT *capturePoint )
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
-		hittest = NC_InternalNCHitTest( hwnd, msg.pt );
+		hittest = NC_HandleNCHitTest( hwnd, msg.pt );
 		pt = msg.pt;
 		if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
 		    hittest = 0;
@@ -890,7 +858,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     POINT minTrack, maxTrack, capturePoint = pt;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (IsZoomed(hwnd) || IsIconic(hwnd) || !IsWindowVisible(hwnd)) return;
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
     hittest = wParam & 0x0f;
     thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
 
@@ -1053,7 +1021,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 	BOOL oldstate = pressed;
 	MSG_GetHardwareMessage( &msg );
 
-	pressed = (NC_InternalNCHitTest( hwnd, msg.pt ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	{
 	    if (wParam == HTMINBUTTON) NC_DrawMinButton( hwnd, hdc, pressed );
@@ -1103,7 +1071,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
     do
     {
 	MSG_GetHardwareMessage( &msg );
-	ScreenToClient( msg.hwnd, &msg.pt );
+	ScreenToClient( hwnd, &msg.pt );
 	switch(msg.message)
 	{
 	case WM_LBUTTONUP:
@@ -1210,6 +1178,16 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
  */
 LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam )
 {
+    /*
+     * if this is an icon, send a restore since we are handling
+     * a double click
+     */
+    if (IsIconic(hwnd))
+    {
+      SendMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, lParam);
+      return 0;
+    } 
+
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
@@ -1247,8 +1225,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_MINIMIZE:
-	ICON_Iconify( hwnd );
-	/*ShowWindow( hwnd, SW_MINIMIZE );*/
+	ShowWindow( hwnd, SW_MINIMIZE ); 
 	break;
 
     case SC_MAXIMIZE:
@@ -1256,7 +1233,6 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_RESTORE:
-	ICON_Deiconify(hwnd);
 	ShowWindow( hwnd, SW_RESTORE );
 	break;
 

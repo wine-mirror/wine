@@ -12,7 +12,7 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 #include "win.h"
 #include "user.h"
 
-LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
+extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
 static LONG PaintTextfn(HWND hwnd);
 static LONG PaintRectfn(HWND hwnd);
@@ -67,6 +67,27 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    InvalidateRect(hWnd, NULL, FALSE);
 	    break;
 
+	case WM_NCCREATE:
+	    if (style == SS_ICON)
+	    {
+		  /* Note: we use wndPtr->hText to store the icon handle */
+		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
+		if (createStruct->lpszName)
+		    wndPtr->hText = LoadIcon( createStruct->hInstance,
+					      createStruct->lpszName );
+		return 1;
+	    }
+	    else return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+	case WM_NCDESTROY:
+	    if (style == SS_ICON)
+	    {
+		if (wndPtr->hText) DestroyIcon( wndPtr->hText );
+		wndPtr->hText = 0;
+		return 0;
+	    }
+	    else return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
 	case WM_CREATE:
 	    if (style < 0L || style >= (LONG)DIM(staticfn)) {
 		lResult = -1L;
@@ -100,27 +121,26 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    break;
 
 	case WM_SETTEXT:
-	    if (wndPtr->hText)
-		USER_HEAP_FREE(wndPtr->hText);
-
-	    wndPtr->hText = USER_HEAP_ALLOC(GMEM_MOVEABLE, 
-					    strlen((LPSTR)lParam) + 1);
-	    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
-	    strcpy(textPtr, (LPSTR)lParam);
-	    InvalidateRect(hWnd, NULL, TRUE);
+	    if (style == SS_ICON) break;
+	    DEFWND_SetText( hWnd, (LPSTR)lParam );
+	    InvalidateRect( hWnd, NULL, FALSE );
+	    UpdateWindow( hWnd );
 	    break;
 
-	case WM_KEYDOWN:
-	case WM_KEYUP:
-	case WM_CHAR:
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
-	case WM_MBUTTONDOWN:
-	case WM_MBUTTONUP:
-	case WM_RBUTTONDOWN:
-	case WM_RBUTTONUP:
-	case WM_MOUSEMOVE:
-	    return(SendMessage(wndPtr->hwndParent, uMsg, wParam, lParam));
+	case WM_NCHITTEST:
+	    return HTTRANSPARENT;
+
+	case STM_GETICON:
+	    if (style != SS_ICON) return 0;
+	    return (HICON)wndPtr->hText;
+
+	case STM_SETICON:
+	    if (style != SS_ICON) return 0;
+	    if (wndPtr->hText) DestroyIcon( wndPtr->hText );
+	    wndPtr->hText = wParam;
+	    InvalidateRect( hWnd, NULL, TRUE );
+	    UpdateWindow( hWnd );
+	    return 0;
 
 	default:
 		lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -280,30 +300,11 @@ static LONG PaintIconfn(HWND hwnd)
     PAINTSTRUCT ps;
     RECT 	rc;
     HDC 	hdc;
-    LPSTR	textPtr;
-    HICON	hIcon;
 
     wndPtr = WIN_FindWndPtr(hwnd);
     hdc = BeginPaint(hwnd, &ps);
     GetClientRect(hwnd, &rc);
     FillRect(hdc, &rc, GetStockObject(WHITE_BRUSH));
-    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
-    printf("SS_ICON : textPtr='%8x' / left=%d top=%d right=%d bottom=%d \n", 
-    		textPtr, rc.left, rc.top, rc.right, rc.bottom);
-/*
-    SetWindowPos(hwnd, (HWND)NULL, 0, 0, 32, 32,
-		SWP_NOZORDER | SWP_NOMOVE);
-    GetClientRect(hwnd, &rc);
-    printf("SS_ICON : textPtr='%s' / left=%d top=%d right=%d bottom=%d \n", 
-    		textPtr, rc.left, rc.top, rc.right, rc.bottom);
-*/
-    hIcon = LoadIcon(wndPtr->hInstance, textPtr);
-    DrawIcon(hdc, rc.left, rc.top, hIcon);
+    if (wndPtr->hText) DrawIcon(hdc, rc.left, rc.top, wndPtr->hText );
     EndPaint(hwnd, &ps);
 }
-
-
-
-
-
-

@@ -1,15 +1,14 @@
 /*
  * GDI region objects
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+
 #include "gdi.h"
 
   /* GC used for region operations */
@@ -26,11 +25,11 @@ BOOL REGION_Init()
     tmpPixmap = XCreatePixmap( display, rootWindow, 1, 1, 1 );
     if (tmpPixmap)
     {
-	regionGC = XCreateGC( XT_display, tmpPixmap, 0, NULL );
-	XFreePixmap( XT_display, tmpPixmap );
+	regionGC = XCreateGC( display, tmpPixmap, 0, NULL );
+	XFreePixmap( display, tmpPixmap );
 	if (!regionGC) return FALSE;
-	XSetForeground( XT_display, regionGC, 1 );
-	XSetGraphicsExposures( XT_display, regionGC, False );
+	XSetForeground( display, regionGC, 1 );
+	XSetGraphicsExposures( display, regionGC, False );
 	return TRUE;
     }
     else return FALSE;
@@ -38,12 +37,34 @@ BOOL REGION_Init()
 
 
 /***********************************************************************
+ *           REGION_MakePixmap
+ *
+ * Make a pixmap of an X region.
+ */
+static BOOL REGION_MakePixmap( REGION *region )
+{
+    int width = region->box.right - region->box.left;
+    int height = region->box.bottom - region->box.top;
+
+    if (!region->xrgn) return TRUE;  /* Null region */
+    region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1 );
+    if (!region->pixmap) return FALSE;
+    XSetRegion( display, regionGC, region->xrgn );
+    XSetClipOrigin( display, regionGC, region->box.left, region->box.top );
+    XSetFunction( display, regionGC, GXcopy );
+    XFillRectangle( display, region->pixmap, regionGC, 0, 0, width, height );
+    XSetClipMask( display, regionGC, None );  /* Clear clip region */
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           REGION_SetRect
  *
- * Set the bounding box of the region and create the pixmap.
+ * Set the bounding box of the region and create the pixmap (or the X rgn).
  * The hrgn must be valid.
  */
-static BOOL REGION_SetRect( HRGN hrgn, LPRECT rect )
+static BOOL REGION_SetRect( HRGN hrgn, LPRECT rect, BOOL createXrgn )
 {
     int width, height;
 
@@ -60,21 +81,33 @@ static BOOL REGION_SetRect( HRGN hrgn, LPRECT rect )
 	region->box.top    = 0;
 	region->box.bottom = 0;
 	region->pixmap     = 0;
+	region->xrgn       = 0;
 	return TRUE;
     }
-    region->type = SIMPLEREGION;
-    region->box  = *rect;
-    
-      /* Create pixmap */
+    region->type   = SIMPLEREGION;
+    region->box    = *rect;
+    region->xrgn   = 0;
+    region->pixmap = 0;
 
-    region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1 );
-    if (!region->pixmap) return FALSE;
+    if (createXrgn)  /* Create and set the X region */
+    {
+	Region tmprgn;
+	XRectangle xrect = { region->box.left, region->box.top, width, height};
 
-      /* Fill pixmap */
-
-    XSetFunction( XT_display, regionGC, GXclear );
-    XFillRectangle( XT_display, region->pixmap, regionGC,
-		    0, 0, width, height );
+	if (!(tmprgn = XCreateRegion())) return FALSE;
+	if ((region->xrgn = XCreateRegion()))
+	    XUnionRectWithRegion( &xrect, tmprgn, region->xrgn );
+	XDestroyRegion( tmprgn );
+	if (!region->xrgn) return FALSE;
+    }
+    else  /* Create the pixmap */
+    {
+	region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1);
+	if (!region->pixmap) return FALSE;
+	  /* Fill the pixmap */
+	XSetFunction( display, regionGC, GXclear );
+	XFillRectangle(display, region->pixmap, regionGC, 0, 0, width, height);
+    }
     return TRUE;
 }
 
@@ -84,7 +117,8 @@ static BOOL REGION_SetRect( HRGN hrgn, LPRECT rect )
  */
 BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj )
 {
-    if (obj->region.pixmap) XFreePixmap( XT_display, obj->region.pixmap );
+    if (obj->region.pixmap) XFreePixmap( display, obj->region.pixmap );
+    if (obj->region.xrgn) XDestroyRegion( obj->region.xrgn );
     return GDI_FreeObject( hrgn );
 }
 
@@ -100,6 +134,7 @@ int OffsetRgn( HRGN hrgn, short x, short y )
     printf( "OffsetRgn: %d %d,%d\n", hrgn, x, y );
 #endif
     OffsetRect( &obj->region.box, x, y );
+    if (obj->region.xrgn) XOffsetRegion( obj->region.xrgn, x, y );
     return obj->region.type;
 }
 
@@ -134,7 +169,6 @@ HRGN CreateRectRgn( short left, short top, short right, short bottom )
  */
 HRGN CreateRectRgnIndirect( LPRECT rect )
 {
-    RGNOBJ * rgnObj;
     HRGN hrgn;
 
 #ifdef DEBUG_REGION
@@ -145,24 +179,11 @@ HRGN CreateRectRgnIndirect( LPRECT rect )
       /* Create region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    if (!REGION_SetRect( hrgn, rect ))
+    if (!REGION_SetRect( hrgn, rect, TRUE ))
     {
 	GDI_FreeObject( hrgn );
 	return 0;
     }
-    rgnObj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
-
-      /* Fill pixmap */
-    
-    if (rgnObj->region.type != NULLREGION)
-    {
-	int width  = rgnObj->region.box.right - rgnObj->region.box.left;
-	int height = rgnObj->region.box.bottom - rgnObj->region.box.top;
-	XSetFunction( XT_display, regionGC, GXcopy );
-	XFillRectangle( XT_display, rgnObj->region.pixmap, regionGC,
-		        0, 0, width, height );
-    }
-    
     return hrgn;
 }
 
@@ -185,7 +206,7 @@ HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
       /* Create region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    if (!REGION_SetRect( hrgn, &rect ))
+    if (!REGION_SetRect( hrgn, &rect, FALSE ))
     {
 	GDI_FreeObject( hrgn );
 	return 0;
@@ -198,23 +219,23 @@ HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
     {
 	int width  = rgnObj->region.box.right - rgnObj->region.box.left;
 	int height = rgnObj->region.box.bottom - rgnObj->region.box.top;
-	XSetFunction( XT_display, regionGC, GXcopy );
-	XFillRectangle( XT_display, rgnObj->region.pixmap, regionGC,
+	XSetFunction( display, regionGC, GXcopy );
+	XFillRectangle( display, rgnObj->region.pixmap, regionGC,
 		        0, ellipse_height / 2,
 		        width, height - ellipse_height );
-	XFillRectangle( XT_display, rgnObj->region.pixmap, regionGC,
+	XFillRectangle( display, rgnObj->region.pixmap, regionGC,
 		        ellipse_width / 2, 0,
 		        width - ellipse_width, height );
-	XFillArc( XT_display, rgnObj->region.pixmap, regionGC,
+	XFillArc( display, rgnObj->region.pixmap, regionGC,
 		  0, 0,
 		  ellipse_width, ellipse_height, 0, 360*64 );
-	XFillArc( XT_display, rgnObj->region.pixmap, regionGC,
+	XFillArc( display, rgnObj->region.pixmap, regionGC,
 		  width - ellipse_width, 0,
 		  ellipse_width, ellipse_height, 0, 360*64 );
-	XFillArc( XT_display, rgnObj->region.pixmap, regionGC,
+	XFillArc( display, rgnObj->region.pixmap, regionGC,
 		  0, height - ellipse_height,
 		  ellipse_width, ellipse_height, 0, 360*64 );
-	XFillArc( XT_display, rgnObj->region.pixmap, regionGC,
+	XFillArc( display, rgnObj->region.pixmap, regionGC,
 		  width - ellipse_width, height - ellipse_height,
 		  ellipse_width, ellipse_height, 0, 360*64 );
     }
@@ -238,21 +259,9 @@ void SetRectRgn( HRGN hrgn, short left, short top, short right, short bottom )
       /* Free previous pixmap */
 
     if (!(rgnObj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return;
-    if (rgnObj->region.pixmap) 
-	XFreePixmap( XT_display, rgnObj->region.pixmap );
-
-    if (!REGION_SetRect( hrgn, &rect )) return;
-
-      /* Fill pixmap */
-    
-    if (rgnObj->region.type != NULLREGION)
-    {
-	int width  = rgnObj->region.box.right - rgnObj->region.box.left;
-	int height = rgnObj->region.box.bottom - rgnObj->region.box.top;
-	XSetFunction( XT_display, regionGC, GXcopy );
-	XFillRectangle( XT_display, rgnObj->region.pixmap, regionGC,
-		        0, 0, width, height );
-    }
+    if (rgnObj->region.pixmap) XFreePixmap( display, rgnObj->region.pixmap );
+    if (rgnObj->region.xrgn) XDestroyRegion( rgnObj->region.xrgn );
+    REGION_SetRect( hrgn, &rect, TRUE );
 }
 
 
@@ -282,7 +291,7 @@ HRGN CreateEllipticRgnIndirect( LPRECT rect )
       /* Create region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    if (!REGION_SetRect( hrgn, rect ))
+    if (!REGION_SetRect( hrgn, rect, FALSE ))
     {
 	GDI_FreeObject( hrgn );
 	return 0;
@@ -295,8 +304,8 @@ HRGN CreateEllipticRgnIndirect( LPRECT rect )
     {
 	int width  = rgnObj->region.box.right - rgnObj->region.box.left;
 	int height = rgnObj->region.box.bottom - rgnObj->region.box.top;
-	XSetFunction( XT_display, regionGC, GXcopy );
-	XFillArc( XT_display, rgnObj->region.pixmap, regionGC,
+	XSetFunction( display, regionGC, GXcopy );
+	XFillArc( display, rgnObj->region.pixmap, regionGC,
 		  0, 0, width, height, 0, 360*64 );
     }
     
@@ -321,70 +330,67 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
 {
     RGNOBJ * rgnObj;
     HRGN hrgn;
-    RECT box;
-    int i, j, totalPoints;
-    POINT * pt;
-    XPoint * xpoints;
-    
-    if (!nbpolygons) return 0;
+    int i, j, maxPoints;
+    XPoint *xpoints, *pt;
+    XRectangle rect;
+    Region xrgn;
+
 #ifdef DEBUG_REGION
     printf( "CreatePolyPolygonRgn: %d polygons\n", nbpolygons );
 #endif
-    
-      /* Find bounding box */
 
-    box.top   = box.left   = 32767;
-    box.right = box.bottom = 0;
-    for (i = totalPoints = 0, pt = points; i < nbpolygons; i++)
+      /* Allocate points array */
+
+    if (!nbpolygons) return 0;
+    for (i = maxPoints = 0; i < nbpolygons; i++)
+	if (maxPoints < count[i]) maxPoints = count[i];
+    if (!maxPoints) return 0;
+    if (!(xpoints = (XPoint *) malloc( sizeof(XPoint) * maxPoints )))
+	return 0;
+
+      /* Allocate region */
+
+    if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
     {
-	totalPoints += count[i];
-	for (j = 0; j < count[i]; j++, pt++)
-	{
-	    if (pt->x < box.left) box.left = pt->x;
-	    if (pt->x > box.right) box.right = pt->x;
-	    if (pt->y < box.top) box.top = pt->y;
-	    if (pt->y > box.bottom) box.bottom = pt->y;
-	}
-    }        
-    if (!totalPoints) return 0;
-    
-      /* Build points array */
-
-    xpoints = (XPoint *) malloc( sizeof(XPoint) * totalPoints );
-    if (!xpoints) return 0;
-    for (i = 0, pt = points; i < totalPoints; i++, pt++)
-    {
-	xpoints[i].x = pt->x - box.left;
-	xpoints[i].y = pt->y - box.top;
-    }
-
-      /* Create region */
-
-    if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )) ||
-	!REGION_SetRect( hrgn, &box ))
-    {
-	if (hrgn) GDI_FreeObject( hrgn );
 	free( xpoints );
 	return 0;
     }
     rgnObj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
+    rgnObj->region.type   = SIMPLEREGION;
+    rgnObj->region.pixmap = 0;
 
-      /* Fill pixmap */
+      /* Create X region */
 
-    if (rgnObj->region.type != NULLREGION)
+    for (i = 0; i < nbpolygons; i++, count++)
     {
-	XSetFunction( XT_display, regionGC, GXcopy );
-	if (mode == WINDING) XSetFillRule( XT_display, regionGC, WindingRule );
-	else XSetFillRule( XT_display, regionGC, EvenOddRule );
-	for (i = j = 0; i < nbpolygons; i++)
+	for (j = *count, pt = xpoints; j > 0; j--, points++, pt++)
 	{
-	    XFillPolygon( XT_display, rgnObj->region.pixmap, regionGC,
-			  &xpoints[j], count[i], Complex, CoordModeOrigin );
-	    j += count[i];
+	    pt->x = points->x;
+	    pt->y = points->y;
 	}
+	xrgn = XPolygonRegion( xpoints, *count,
+			       (mode == WINDING) ? WindingRule : EvenOddRule );
+	if (!xrgn) break;
+	if (i > 0)
+	{
+	    Region tmprgn = XCreateRegion();
+	    if (mode == WINDING) XUnionRegion(xrgn,rgnObj->region.xrgn,tmprgn);
+	    else XXorRegion( xrgn, rgnObj->region.xrgn, tmprgn );
+	    XDestroyRegion( rgnObj->region.xrgn );
+	    rgnObj->region.xrgn = tmprgn;
+	}
+	else rgnObj->region.xrgn = xrgn;
     }
-    
+
     free( xpoints );
+    if (!xrgn)
+    {
+	GDI_FreeObject( hrgn );
+	return 0;
+    }
+    XClipBox( rgnObj->region.xrgn, &rect );
+    SetRect( &rgnObj->region.box, rect.x, rect.y,
+	     rect.x + rect.width, rect.y + rect.height);
     return hrgn;
 }
 
@@ -394,19 +400,25 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
  */
 BOOL PtInRegion( HRGN hrgn, short x, short y )
 {
-    XImage * image;
     BOOL res;
     RGNOBJ * obj;
     POINT pt = { x, y };
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
     if (!PtInRect( &obj->region.box, pt )) return FALSE;
-    image = XGetImage( XT_display, obj->region.pixmap,
-		       x - obj->region.box.left, y - obj->region.box.top,
-		       1, 1, AllPlanes, ZPixmap );
-    if (!image) return FALSE;
-    res = (XGetPixel( image, 0, 0 ) != 0);
-    XDestroyImage( image );
+    if (obj->region.xrgn)
+    {
+	return XPointInRegion( obj->region.xrgn, x, y );
+    }
+    else
+    {
+	XImage *image = XGetImage( display, obj->region.pixmap,
+			    x - obj->region.box.left, y - obj->region.box.top,
+			    1, 1, AllPlanes, ZPixmap );
+	if (!image) return FALSE;
+	res = (XGetPixel( image, 0, 0 ) != 0);
+	XDestroyImage( image );
+    }
     return res;
 }
 
@@ -422,24 +434,33 @@ BOOL RectInRegion( HRGN hrgn, LPRECT rect )
     int x, y;
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!IntersectRect( &intersect, &obj->region.box, rect )) return FALSE;
+    if (obj->region.xrgn)
+    {
+	return (XRectInRegion( obj->region.xrgn, rect->left, rect->top,
+			       rect->right-rect->left,
+			       rect->bottom-rect->top ) != RectangleOut);
+    }
+    else
+    {
+	if (!IntersectRect( &intersect, &obj->region.box, rect )) return FALSE;
     
-    image = XGetImage( XT_display, obj->region.pixmap,
-		       intersect.left - obj->region.box.left,
-		       intersect.top - obj->region.box.top,
-		       intersect.right - intersect.left,
-		       intersect.bottom - intersect.top,
-		       AllPlanes, ZPixmap );
-    if (!image) return FALSE;
-    for (y = 0; y < image->height; y++)
-	for (x = 0; x < image->width; x++)
-	    if (XGetPixel( image, x, y ) != 0)
-	    {
-		XDestroyImage( image );
-		return TRUE;
-	    }
+	image = XGetImage( display, obj->region.pixmap,
+			   intersect.left - obj->region.box.left,
+			   intersect.top - obj->region.box.top,
+			   intersect.right - intersect.left,
+			   intersect.bottom - intersect.top,
+			   AllPlanes, ZPixmap );
+	if (!image) return FALSE;
+	for (y = 0; y < image->height; y++)
+	    for (x = 0; x < image->width; x++)
+		if (XGetPixel( image, x, y ) != 0)
+		{
+		    XDestroyImage( image );
+		    return TRUE;
+		}
     
-    XDestroyImage( image );
+	XDestroyImage( image );
+    }
     return FALSE;
 }
 
@@ -451,6 +472,7 @@ BOOL EqualRgn( HRGN rgn1, HRGN rgn2 )
 {
     RGNOBJ *obj1, *obj2;
     XImage *image1, *image2;
+    Pixmap pixmap1, pixmap2;
     int width, height, x, y;
 
       /* Compare bounding boxes */
@@ -461,19 +483,27 @@ BOOL EqualRgn( HRGN rgn1, HRGN rgn2 )
 	return (obj2->region.type == NULLREGION);
     else if (obj2->region.type == NULLREGION) return FALSE;
     if (!EqualRect( &obj1->region.box, &obj2->region.box )) return FALSE;
-
+    if (obj1->region.xrgn && obj2->region.xrgn)
+    {
+	return XEqualRegion( obj1->region.xrgn, obj2->region.xrgn );
+    }
+    
       /* Get pixmap contents */
 
+    if (!(pixmap1 = obj1->region.pixmap) &&
+	!REGION_MakePixmap( &obj1->region )) return FALSE;
+    if (!(pixmap2 = obj2->region.pixmap) &&
+	!REGION_MakePixmap( &obj2->region )) return FALSE;
     width  = obj1->region.box.right - obj1->region.box.left;
     height = obj1->region.box.bottom - obj1->region.box.top;
-    image1 = XGetImage( XT_display, obj1->region.pixmap,
+    image1 = XGetImage( display, obj1->region.pixmap,
+			0, 0, width, height, AllPlanes, ZPixmap );
+    image2 = XGetImage( display, obj2->region.pixmap,
 		        0, 0, width, height, AllPlanes, ZPixmap );
-    if (!image1) return FALSE;
-    image2 = XGetImage( XT_display, obj2->region.pixmap,
-		        0, 0, width, height, AllPlanes, ZPixmap );
-    if (!image2)
+    if (!image1 || !image2)
     {
-	XDestroyImage( image1 );
+	if (image1) XDestroyImage( image1 );
+	if (image2) XDestroyImage( image2 );
 	return FALSE;
     }
     
@@ -503,7 +533,7 @@ void REGION_CopyIntersection( REGION * dest, REGION * src )
 {
     RECT inter;
     if (!IntersectRect( &inter, &dest->box, &src->box )) return;
-    XCopyArea( XT_display, src->pixmap, dest->pixmap, regionGC,
+    XCopyArea( display, src->pixmap, dest->pixmap, regionGC,
 	       inter.left - src->box.left, inter.top - src->box.top,
 	       inter.right - inter.left, inter.bottom - inter.top,
 	       inter.left - dest->box.left, inter.top - dest->box.top );
@@ -532,6 +562,68 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	if (!(src2Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc2, REGION_MAGIC )))
 	    return ERROR;
     region = &destObj->region;
+
+    if (src1Obj->region.xrgn && ((mode == RGN_COPY) || src2Obj->region.xrgn))
+    {
+	/* Perform the operation with X regions */
+
+	if (region->pixmap) XFreePixmap( display, region->pixmap );
+	region->pixmap = 0;
+	if (!region->xrgn) region->xrgn = XCreateRegion();
+	switch(mode)
+	{
+	case RGN_AND:
+	    XIntersectRegion( src1Obj->region.xrgn, src2Obj->region.xrgn,
+			      region->xrgn );
+	    break;
+	case RGN_OR:
+	    XUnionRegion( src1Obj->region.xrgn, src2Obj->region.xrgn,
+			  region->xrgn );
+	    break;
+	case RGN_XOR:
+	    XXorRegion( src1Obj->region.xrgn, src2Obj->region.xrgn,
+			region->xrgn );
+	    break;
+	case RGN_DIFF:
+	    XSubtractRegion( src1Obj->region.xrgn, src2Obj->region.xrgn,
+			     region->xrgn );
+	    break;
+	case RGN_COPY:
+	    {
+		Region tmprgn = XCreateRegion();
+		XUnionRegion( tmprgn, src1Obj->region.xrgn, region->xrgn );
+		XDestroyRegion( tmprgn );
+	    }
+	    break;
+	default:
+	    return ERROR;
+	}
+	if (XEmptyRegion(region->xrgn))
+	{
+	    region->type = NULLREGION;
+	    region->xrgn = 0;
+	    return NULLREGION;
+	}
+	else
+	{
+	    XRectangle rect;
+	    XClipBox( region->xrgn, &rect );
+	    region->type       = COMPLEXREGION;
+	    region->box.left   = rect.x;
+	    region->box.top    = rect.y;
+	    region->box.right  = rect.x + rect.width;
+	    region->box.bottom = rect.y + rect.height;
+	    return COMPLEXREGION;
+	}
+    }
+    else  /* Create pixmaps if needed */
+    {
+	if (!src1Obj->region.pixmap)
+	    if (!REGION_MakePixmap( &src1Obj->region )) return ERROR;
+	if ((mode != RGN_COPY) && !src2Obj->region.pixmap)
+	    if (!REGION_MakePixmap( &src2Obj->region )) return ERROR;
+    }
+    
 
     switch(mode)
     {
@@ -564,11 +656,13 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	return ERROR;
     }
 
-    if (region->pixmap) XFreePixmap( XT_display, region->pixmap );    
+    if (region->pixmap) XFreePixmap( display, region->pixmap );
+    if (region->xrgn) XDestroyRegion( region->xrgn );
     if (!res)
     {
 	region->type   = NULLREGION;
 	region->pixmap = 0;
+	region->xrgn   = 0;
 	return NULLREGION;
     }
     
@@ -587,39 +681,40 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	exit(1);
     }
     region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1 );
+    region->xrgn   = 0;
 
     switch(mode)
     {
       case RGN_AND:
-	  XSetFunction( XT_display, regionGC, GXcopy );
+	  XSetFunction( display, regionGC, GXcopy );
 	  REGION_CopyIntersection( region, &src1Obj->region );
-	  XSetFunction( XT_display, regionGC, GXand );
+	  XSetFunction( display, regionGC, GXand );
 	  REGION_CopyIntersection( region, &src2Obj->region );
 	  break;
 
       case RGN_OR:
       case RGN_XOR:
-	  XSetFunction( XT_display, regionGC, GXclear );
-	  XFillRectangle( XT_display, region->pixmap, regionGC,
+	  XSetFunction( display, regionGC, GXclear );
+	  XFillRectangle( display, region->pixmap, regionGC,
 			  0, 0, width, height );
-	  XSetFunction( XT_display, regionGC, (mode == RGN_OR) ? GXor : GXxor);
+	  XSetFunction( display, regionGC, (mode == RGN_OR) ? GXor : GXxor);
 	  REGION_CopyIntersection( region, &src1Obj->region );
 	  REGION_CopyIntersection( region, &src2Obj->region );
 	  break;
 	  
       case RGN_DIFF:
-	  XSetFunction( XT_display, regionGC, GXclear );
-	  XFillRectangle( XT_display, region->pixmap, regionGC,
+	  XSetFunction( display, regionGC, GXclear );
+	  XFillRectangle( display, region->pixmap, regionGC,
 			  0, 0, width, height );
-	  XSetFunction( XT_display, regionGC, GXcopy );
+	  XSetFunction( display, regionGC, GXcopy );
 	  REGION_CopyIntersection( region, &src1Obj->region );
-	  XSetFunction( XT_display, regionGC, GXandInverted );
+	  XSetFunction( display, regionGC, GXandInverted );
 	  REGION_CopyIntersection( region, &src2Obj->region );
 	  break;
 	  
       case RGN_COPY:
-	  XSetFunction( XT_display, regionGC, GXcopy );
-	  XCopyArea( XT_display, src1Obj->region.pixmap, region->pixmap,
+	  XSetFunction( display, regionGC, GXcopy );
+	  XCopyArea( display, src1Obj->region.pixmap, region->pixmap,
 		     regionGC, 0, 0, width, height, 0, 0 );
 	  break;
     }

@@ -21,7 +21,12 @@ void CLIPPING_SetDeviceClipping( DC * dc )
     if (dc->w.hGCClipRgn)
     {
 	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
-	if (obj->region.pixmap)
+	if (obj->region.xrgn)
+	{
+	    XSetRegion( display, dc->u.x.gc, obj->region.xrgn );
+	    XSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+	}
+	else if (obj->region.pixmap)
 	{
 	    XSetClipMask( display, dc->u.x.gc, obj->region.pixmap );
 	    XSetClipOrigin( display, dc->u.x.gc,

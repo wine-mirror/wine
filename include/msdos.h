@@ -14,6 +14,18 @@ struct dosdirent {
 	long filetime;
 };
 
+struct fcb {
+        BYTE drive;
+	char name[8];
+	char extension[3];
+	BYTE dummy1[4];
+	int filesize;
+	WORD date_write;
+	WORD time_write;
+	struct dosdirent *directory;
+	BYTE dummy2[9];
+};
+
 #define DOSVERSION 0x0330;
 #define MAX_DOS_DRIVES	26
 

@@ -134,7 +134,25 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
 
     if (!timeout) return 0;
     if (!hwnd && !proc) return 0;
-    
+
+      /* Check if there's already a timer with the same hwnd and id */
+
+    if (hwnd)
+    {
+	for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
+	    if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
+		(pTimer->timeout != 0))
+	    {
+		  /* Got one: set new values and return */
+		pTimer->timeout = timeout;
+		pTimer->expires = GetTickCount() + timeout;
+		pTimer->proc    = proc;
+		TIMER_RemoveTimer( pTimer );
+		TIMER_InsertTimer( pTimer );
+		return id;
+	    }
+    }
+
       /* Find a free timer */
     
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)

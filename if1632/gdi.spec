@@ -54,7 +54,7 @@ length	490
 39  pascal RestoreDC(word s_word) RestoreDC(1 2)
 40  pascal FillRgn(word word word) FillRgn(1 2 3)
 #41  pascal FrameRgn
-#42  pascal InvertRgn
+42  pascal InvertRgn(word word) InvertRgn(1 2)
 43  pascal PaintRgn(word word) PaintRgn(1 2)
 44  pascal SelectClipRgn(word word) SelectClipRgn(1 2)
 45  pascal SelectObject(word word) SelectObject(1 2)

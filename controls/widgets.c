@@ -40,7 +40,7 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
       0, 0, 0, 0, NULL, POPUPMENU_CLASS_NAME },
     { CS_GLOBALCLASS, (LONG(*)())DesktopWndProc, 0, sizeof(DESKTOPINFO),
       0, 0, 0, 0, NULL, DESKTOP_CLASS_NAME },
-    { CS_GLOBALCLASS, (LONG(*)())DefDlgProc, 0, DLGWINDOWEXTRA,
+    { CS_GLOBALCLASS | CS_SAVEBITS, (LONG(*)())DefDlgProc, 0, DLGWINDOWEXTRA,
       0, 0, 0, 0, NULL, DIALOG_CLASS_NAME },
     { CS_GLOBALCLASS, (LONG(*)())MDIClientWndProc, 0, sizeof(MDICLIENTINFO),
       0, 0, 0, STOCK_LTGRAY_BRUSH, NULL, "MDICLIENT" }
@@ -58,9 +58,12 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
 BOOL WIDGETS_Init(void)
 {
     int i;
-    for (i = 0; i < NB_BUILTIN_CLASSES; i++)
+    WNDCLASS *class = WIDGETS_BuiltinClasses;
+
+    for (i = 0; i < NB_BUILTIN_CLASSES; i++, class++)
     {
-	if (!RegisterClass(&WIDGETS_BuiltinClasses[i])) return FALSE;
+	class->hCursor = LoadCursor( 0, IDC_ARROW );
+	if (!RegisterClass( class )) return FALSE;
     }
     return TRUE;
 }

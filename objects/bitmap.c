@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "bitmap.h"
 
   /* Include OEM bitmaps */
+#include "bitmaps/check_boxes"
 #include "bitmaps/check_mark"
 #include "bitmaps/menu_arrow"
 
@@ -64,7 +65,7 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
     extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
 
-    image = XCreateImage( XT_display, DefaultVisualOfScreen(screen),
+    image = XCreateImage( display, DefaultVisualOfScreen(screen),
 			  bmp->bmBitsPixel, ZPixmap, 0, bmpData,
 			  bmp->bmWidth, bmp->bmHeight, 16, bmp->bmWidthBytes );
     if (!image) return 0;
@@ -94,6 +95,12 @@ HBITMAP BITMAP_LoadOEMBitmap( WORD id )
 	data   = menu_arrow_bits;
 	break;
 
+    case OBM_CHECKBOXES:
+	width  = check_boxes_width;
+	height = check_boxes_height;
+	data   = check_boxes_bits;
+	break;
+	
     case OBM_CHECK:
 	width  = check_mark_width;
 	height = check_mark_height;

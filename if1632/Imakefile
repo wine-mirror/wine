@@ -72,5 +72,5 @@ includes::
 install::
 
 clean::
-	$(RM) dll* dtb* pop.h
+	$(RM) dll* dtb* pop.h call.s
 	touch pop.h

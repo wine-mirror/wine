@@ -11,14 +11,14 @@
 
 typedef struct tagMENUITEM
 {
-    WORD	item_flags;
-    WORD	item_id;
-    RECT	rect;
-    WORD	sel_key;
-    HBITMAP	hCheckBit;
-    HBITMAP	hUnCheckBit;
+    WORD	item_flags;    /* Item flags */
+    WORD	item_id;       /* Item or popup id */
+    RECT	rect;          /* Item area (relative to menu window) */
+    WORD        xTab;          /* X position of text after Tab */
+    HBITMAP	hCheckBit;     /* Bitmap for checked item */
+    HBITMAP	hUnCheckBit;   /* Bitmap for unchecked item */
+    HANDLE      hText;	       /* Handle to item string or bitmap */
     char	*item_text;
-	HANDLE	hText;	
 } MENUITEM, *LPMENUITEM;
 
 

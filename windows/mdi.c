@@ -16,7 +16,7 @@
 #define DEBUG_MDI /* */
 
 extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-			      HMENU hmenu, BOOL suppress_draw );  /* menu.c */
+			      HWND hwnd, BOOL suppress_draw );  /* menu.c */
 
 /**********************************************************************
  *					MDIRecreateMenuList
@@ -310,6 +310,7 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
     
     ci->flagChildMaximized = FALSE;
 
+    ShowWindow(child, SW_RESTORE);		/* display the window */
     SendMessage(GetParent(parent), WM_NCPAINT, 1, 0);
     MDIBringChildToTop(parent, child, FALSE, FALSE);
 
@@ -571,7 +572,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	rect.right -= SYSMETRICS_CXSIZE;
 	rect.bottom = rect.top + SYSMETRICS_CYMENU;
 
-	MENU_DrawMenuBar(hdc, &rect, wndPtr->wIDmenu, FALSE);
+	MENU_DrawMenuBar(hdc, &rect, hwndFrame, FALSE);
 	
 	DeleteDC(hdcMem);
 	ReleaseDC(hwndFrame, hdc);
@@ -751,8 +752,6 @@ DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	    return SendMessage(GetParent(hwnd), WM_MDIMAXIMIZE, hwnd, 0);
 
 	  case SC_RESTORE:
-	    if (IsIconic(hwnd))
-	        ICON_Deiconify(hwnd);
 	    return SendMessage(GetParent(hwnd), WM_MDIRESTORE, hwnd, 0);
 	}
 	break;

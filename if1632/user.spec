@@ -241,7 +241,7 @@ length	540
 #231 GETSYSTEMDEBUGSTATE
 232 pascal SetWindowPos(word word word word word word word) 
            SetWindowPos(1 2 3 4 5 6 7)
-#233 SETPARENT
+233 pascal SetParent(word word) SetParent(1 2)
 234 pascal UnhookWindowsHook(s_word ptr) UnhookWindowsHook(1 2)
 235 pascal DefHookProc(s_word word long ptr) DefHookProc(1 2 3 4)
 236 pascal GetCapture() GetCapture()

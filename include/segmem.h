@@ -55,7 +55,7 @@ typedef struct segment_descriptor_s
     unsigned short owner;	/* Handle of owner program		*/
     unsigned char  type;	/* DATA or CODE				*/
 #ifdef HAVE_IPC
-    key_t	   shm_key;	/* Shared memory key or IPC_PRIVATE     */
+    key_t	   shm_key;	/* Shared memory key or -1              */
 #endif
 } SEGDESC;
 

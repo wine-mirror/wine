@@ -841,30 +841,69 @@ static void DumpFCB(BYTE *fcb)
 static void FindFirstFCB(struct sigcontext_struct *context)
 {
 	BYTE *fcb = pointer(DS, DX);
+	struct fcb *standard_fcb;
+	struct fcb *output_fcb;
 	int drive;
+	char path[12];
 
 	DumpFCB( fcb );
-
-	if (*fcb)
-		drive = *fcb - 1;
+	
+	if ((*fcb) == 0xff)
+	  {
+	    standard_fcb = fcb + 7;
+	    output_fcb = dta + 7;
+	    *dta = 0xff;
+	  }
 	else
-		drive = DOS_GetDefaultDrive();
+	  {
+	    standard_fcb = fcb;
+	    output_fcb = dta;
+	  }
 
-	if (*(fcb - 7) == 0xff) {
-		if (*(fcb - 1) == FA_DIREC) {
-			/* return volume label */
+	if (standard_fcb->drive)
+	  {
+	    drive = standard_fcb->drive - 1;
+	    if (!DOS_ValidDrive(drive))
+	      {
+		Error (InvalidDrive, EC_MediaError, EL_Disk);
+		AL = 0xff;
+		return;
+	      }
+	  }
+	else
+	  drive = DOS_GetDefaultDrive();
 
-			memset(dta, ' ', 11);
-			if (DOS_GetVolumeLabel(drive) != NULL) 
-				strncpy(dta, DOS_GetVolumeLabel(drive), 8);
-			*(dta + 0x0b) = FA_DIREC;
+	output_fcb->drive = drive;
 
-			AL;
-			return;
-		}
-	}
-	IntBarf(0x21, context);
+	if (*(fcb) == 0xff) 
+	  {
+	    if (*(fcb+6) & FA_LABEL)      /* return volume label */
+	      {
+		*(dta+6) = FA_LABEL;
+		memset(&output_fcb->name, ' ', 11);
+		if (DOS_GetVolumeLabel(drive) != NULL) 
+		  {
+		    strncpy(&output_fcb->name, DOS_GetVolumeLabel(drive), 11);
+		    AL = 0x00;
+		    return;
+		  }
+	      }
+	  }
+
+	strncpy(&(output_fcb->name),&(standard_fcb->name),11);
+	if (*fcb == 0xff)
+	  *(dta+6) = ( *(fcb+6) & (!FA_DIREC));
+
+	sprintf(path,"%c:*.*",drive+'A');
+	if ((output_fcb->directory = DOS_opendir(path))==NULL)
+	  {
+	    Error (PathNotFound, EC_MediaError, EL_Disk);
+	    AL = 0xff;
+	    return;
+	  }
+	
 }
+
 
 static void DeleteFileFCB(struct sigcontext_struct *context)
 {

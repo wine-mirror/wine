@@ -78,12 +78,14 @@ static DLGCONTROLHEADER * DIALOG_GetControl( DLGCONTROLHEADER * ptr,
 	*class = p;
 	p += strlen(p) + 1;
     }
-/* FIXME: how can I determine if the resource id is an integer or a string ? */
-    if (*p == 0xff) { 
-/*	*(DWORD*)text = (*p << 8) | *p;*/
-	*(DWORD*)text = 0xebeb;
+    if (*p == 0xff)
+    {
+	  /* Integer id, not documented (?). Only works for SS_ICON controls */
+	*text = (char *)MAKEINTRESOURCE( p[1] + 256*p[2] );
 	p += 4;
-    } else {
+    }
+    else
+    {
 	*text = p;
 	p += strlen(p) + 2;
     }
@@ -263,8 +265,10 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
       /* Create dialog main window */
 
     rect.left = rect.top = 0;
-    rect.right = template.header->cx * xUnit / 4;
-    rect.bottom = template.header->cy * yUnit / 8;
+    if (!(template.header->style & DS_ABSALIGN))
+	ClientToScreen( owner, (POINT *)&rect );
+    rect.right = rect.left + template.header->cx * xUnit / 4;
+    rect.bottom = rect.top + template.header->cy * yUnit / 8;
     if (template.header->style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
     AdjustWindowRectEx( &rect, template.header->style, hMenu, exStyle );
 
@@ -300,11 +304,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 
 #ifdef DEBUG_DIALOG
 	printf( "   %s ", class);
-	if ((DWORD*)text < 0x10000)
-		printf("'%4X'", (DWORD*)text);
-	else
-		printf("'%s'", text);
-	
+	if ((int)text & 0xffff0000) printf("'%s'", text);
+	else printf("%4X", (int)text & 0xffff);
 	printf(" %d, %d, %d, %d, %d, %08x\n", header->id, header->x, header->y, 
 		header->cx, header->cy, header->style );
 #endif
@@ -329,11 +330,6 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 			   hwnd, header->id, HIWORD((LONG)dlgHeapBase), NULL );
 	}
 	else {
-	    if ((strcmp(class, "STATIC") == 0) & 
-		((header->style & SS_ICON) == SS_ICON)) {
-		header->cx = 32;
-		header->cy = 32;
-	    }
 	    header->style |= WS_CHILD;
 	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
 			   class, text, header->style,

@@ -198,6 +198,7 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
  * Return value indicates whether the translated message must be passed
  * to the user.
  * Actions performed:
+ * - Find the window for this message.
  * - Translate button-down messages in double-clicks.
  * - Send the WM_NCHITTEST message to find where the cursor is.
  * - Activate the window if needed.
@@ -208,6 +209,7 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
     BOOL eatMsg = FALSE;
+    LONG hittest_result;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
@@ -216,10 +218,29 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 		       (msg->message == WM_RBUTTONDOWN) ||
 		       (msg->message == WM_MBUTTONDOWN));
 
+      /* Find the window */
+
+    if (GetCapture())
+    {
+	msg->hwnd = GetCapture();
+	msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
+	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
+	return TRUE;  /* No need to further process the message */
+    }
+    else msg->hwnd = WindowFromPoint( msg->pt );
+
       /* Send the WM_NCHITTEST message */
 
-    LONG hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
-				       MAKELONG( msg->pt.x, msg->pt.y ) );
+    hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
+				  MAKELONG( msg->pt.x, msg->pt.y ) );
+    while ((hittest_result == HTTRANSPARENT) && (msg->hwnd))
+    {
+	msg->hwnd = GetParent(msg->hwnd);
+	if (!msg->hwnd)
+	    hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
+					  MAKELONG( msg->pt.x, msg->pt.y ) );
+    }
+    if (!msg->hwnd) msg->hwnd = GetDesktopWindow();
 
       /* Send the WM_PARENTNOTIFY message */
 
@@ -301,6 +322,29 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
     
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           MSG_TranslateKeyboardMsg
+ *
+ * Translate an keyboard hardware event into a real message.
+ * Return value indicates whether the translated message must be passed
+ * to the user.
+ */
+static BOOL MSG_TranslateKeyboardMsg( MSG *msg )
+{
+      /* Should check Ctrl-Esc and PrintScreen here */
+
+    msg->hwnd = GetFocus();
+    if (!msg->hwnd)
+    {
+	  /* Send the message to the active window instead,  */
+	  /* translating messages to their WM_SYS equivalent */
+	msg->hwnd = GetActiveWindow();
+	msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
+    }
     return TRUE;
 }
 
@@ -391,30 +435,6 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
     msg.pt.x    = xPos & 0xffff;
     msg.pt.y    = yPos & 0xffff;
 
-      /* Determine the hwnd for this message */
-      /* Maybe this should be done in GetMessage() */
-
-    if (msg.hwnd = ICON_findIconFromPoint(msg.pt)) {
-       SendMessage( msg.hwnd, WM_SYSCOMMAND, SC_RESTORE, *(LONG*)&msg.pt );
-       return;
-    }
-
-
-    if ((message >= WM_MOUSEFIRST) && (message <= WM_MOUSELAST))
-    {
-	  /* Mouse event */
-	if (GetCapture()) msg.hwnd = GetCapture();
-	else msg.hwnd = WindowFromPoint( msg.pt );
-    }
-    else if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST))
-    {
-	  /* Keyboard event */
-	msg.hwnd = GetFocus();
-	if (!msg.hwnd && ((message==WM_KEYDOWN) || (message==WM_SYSKEYDOWN)))
-	    MessageBeep(0);  /* Beep on key press if no focus */
-    }
-    if (!msg.hwnd) return;  /* No window for this message */
-
       /* Merge with previous event if possible */
 
     if (sysMsgQueue->msgCount && (message == WM_MOUSEMOVE))
@@ -438,6 +458,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
  * Like GetMessage(), but only return mouse and keyboard events.
  * Used internally for window moving and resizing. Mouse messages
  * are not translated.
+ * Warning: msg->hwnd is always 0.
  */
 BOOL MSG_GetHardwareMessage( LPMSG msg )
 {
@@ -560,6 +581,9 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
     int pos, mask;
     LONG nextExp;  /* Next timer expiration time */
     XEvent event;
+    fd_set read_set;
+    struct timeval timeout;
+    int fd = ConnectionNumber(display);
 
     if (first || last)
     {
@@ -572,25 +596,9 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
     }
     else mask = QS_MOUSE | QS_KEY | QS_POSTMESSAGE | QS_TIMER | QS_PAINT;
 
-    while (XPending( display ))
-    {
-	XNextEvent( display, &event );
-	EVENT_ProcessEvent( &event );
-    }    
-
     while(1)
     {    
-	  /* First handle a WM_QUIT message */
-	if (msgQueue->wPostQMsg)
-	{
-	    msg->hwnd    = hwnd;
-	    msg->message = WM_QUIT;
-	    msg->wParam  = msgQueue->wExitCode;
-	    msg->lParam  = 0;
-	    break;
-	}
-
-	  /* Then handle a message put by SendMessage() */
+	  /* First handle a message put by SendMessage() */
 	if (msgQueue->status & QS_SENDMESSAGE)
 	{
 	    if (!hwnd || (msgQueue->hWnd == hwnd))
@@ -623,7 +631,7 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	}
 
 	  /* Now find a hardware event */
-	pos = MSG_FindMsg( sysMsgQueue, hwnd, first, last );
+	pos = MSG_FindMsg( sysMsgQueue, 0, first, last );
 	if (pos != -1)
 	{
 	    QMSG *qmsg = &sysMsgQueue->messages[pos];
@@ -639,7 +647,24 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 		    MSG_RemoveMsg( sysMsgQueue, pos );
 		    continue;
 		}
+	    else if ((msg->message >= WM_KEYFIRST) &&
+		     (msg->message <= WM_KEYLAST))
+		if (!MSG_TranslateKeyboardMsg( msg )) 
+		{
+		    MSG_RemoveMsg( sysMsgQueue, pos );
+		    continue;
+		}
 	    if (flags & PM_REMOVE) MSG_RemoveMsg( sysMsgQueue, pos );
+	    break;
+	}
+
+	  /* Now handle a WM_QUIT message */
+	if (msgQueue->wPostQMsg)
+	{
+	    msg->hwnd    = hwnd;
+	    msg->message = WM_QUIT;
+	    msg->wParam  = msgQueue->wExitCode;
+	    msg->lParam  = 0;
 	    break;
 	}
 
@@ -662,21 +687,27 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	else nextExp = -1;  /* No timeout needed */
 
 	  /* Wait until something happens */
-	if (peek) return FALSE;
-	if (!XPending( display ) && (nextExp != -1))
+	FD_ZERO( &read_set );
+	FD_SET( fd, &read_set );
+	if (peek)
 	{
-	    fd_set read_set;
-	    struct timeval timeout;
-	    int fd = ConnectionNumber(display);
-	    FD_ZERO( &read_set );
-	    FD_SET( fd, &read_set );
+	    timeout.tv_sec = 0;
+	    timeout.tv_usec = 0;
+	    if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
+		return FALSE;  /* No data waiting to be read */
+	}
+	else if (!XPending( display ) && (nextExp != -1))
+	{
 	    timeout.tv_sec = nextExp / 1000;
 	    timeout.tv_usec = (nextExp % 1000) * 1000;
 	    if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
 		continue;  /* On timeout or error, restart from the start */
 	}
-	XNextEvent( display, &event );
-	EVENT_ProcessEvent( &event );
+	while (XPending( display ))
+	{
+	    XNextEvent( display, &event );
+	    EVENT_ProcessEvent( &event );
+	}
     }
 
       /* We got a message */
@@ -825,11 +856,10 @@ void WaitMessage( void )
             (appMsgQueue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
             (appMsgQueue->msgCount) || (sysMsgQueue->msgCount) )
             break;
+	nextExp = -1;
         if ((appMsgQueue->status & QS_TIMER) && 
             TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
             break;
-        else
-            nextExp=-1;
 
         if (!XPending( display ) && (nextExp != -1))
         {

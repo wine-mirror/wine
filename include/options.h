@@ -13,8 +13,8 @@ struct options
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
     int    usePrivateMap;
-    int    synchronous;
-    int    nobackingstore;
+    int    synchronous;     /* X synchronous mode */
+    int    backingstore;    /* Use backing store */
     short  cmdShow;
     int    relay_debug;
     int    debug;

@@ -1,4 +1,140 @@
 ----------------------------------------------------------------------
+Thu Aug 25 15:24:36 EDT 1994            <jrichard@cs.uml.edu>
+
+        * [include/win.h]
+        Removed seperate X window for icon, added icon width,height.
+
+	* [include/windows.h]
+	Commented out the old SW_xxx emum and added defines since
+	they aren't enumerated.
+
+	* [windows/dce.c]
+        Removed some older IsIconic checks from GetDCEx(), functionality
+        is now in nonclient and generic wine window handling code.
+        Lots of thanks to Alexandre Julliard all the hints and
+        help...
+
+        * [windows/defwnd.c]
+        Removed call to NC_HandleNCPaintIcon() under case WM_PAINTICON,
+        WM_PAINTICON now calls NC_HandleNCPaint.  
+
+        * [windows/event.c]
+        Removed IsIconic checks.
+
+        * [windows/icon.c]
+        Removed everything in this file for now... could be used later.
+        Icon functionality is now handled by the generic wine windows
+        handling functions.
+        
+        * [windows/mdi.c]
+        Added a ShowWindow in MDIRestoreChild().  MDI child windows now
+        show up when deiconified.  Removed IsIconic checks.
+
+        * [windows/message.c]
+        Removed old icon routines from hardware_event().
+
+        * [windows/nonclient.c]
+        Changed NC_HandleNCCalcSize() so it doesn't change the size
+        of an icon window.  Made NC_InternalNCHitTest() on an Iconic
+        window always return HTCAPTION.  Made NC_HandleNCLButtonDblClk()
+        on an Iconic window always send a SC_RESTORE message.
+
+        * [windows/painting.c]
+        Changed RedrawWindow() so it doesn't redraw an iconic window
+        unless it has to (no icon for this class).
+        
+        * [windows/win.c]
+        Removed creation of seperate icon window from CreateWindowEx().
+        
+        * [windows/winpos.c]
+        Added saving and restoring of window rectangle during
+        iconification/deiconification to ShowWindow().  Added
+	functions to recursively hide and show children... called
+	by ShowWindow during iconification/deiconification.
+
+Sat, 27 Aug 1994 18:47:34 +0100 (MET DST)  micky@marie.physik.tu-berlin.de (Michael Patra)
+
+        * [windows/message.c]
+        WaitMessage(): Fixed handling of wm_timer-messages
+
+        * [miscemu/int21.c]
+        FindNextFCB(): Rewritten to support other functions than just
+        returning the volume label
+
+	* [misc/file.c]
+	OpenFile(): Fix in handling of OF_CREATE
+
+Wed Aug 24 19:40:42 PDT 1994  Andrew Lagodzinski  (andrew@netcom.com)
+
+	* [if1632/user.spec]
+	Added SetParent.
+
+	* [windows/win.c]
+	Added SetParent.
+
+Fri Aug 19 16:37:00 1994  Thomas Sandford <t.d.g.sandford@bradford.ac.uk>
+
+	* [loader/selector.c]
+	Many changes throughout file to correct handling of shared memory
+	function return codes. FreeBSD and SunOS shm functions return
+	-1 not 0 on error. If Linux is different, these changes
+	will have to be backed out.
+	CleanupSelectors(): this is a new (internal) call to free
+	up all selectors (and shm handles/memory) for use on exit.
+
+	* [include/segmem.h]
+	Change comment to reflect new use of shm_key
+
+	* [misc/main.c]
+	called_at_exit(): add call to CleanupSelectors()
+
+Mon Aug 22 18:19:25 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/button.c]
+	Use OBM_CHECKBOXES to draw check boxes with correct colors.
+	Fixed bug with WM_SETTEXT handling.
+	A few drawing optimisations.
+
+	* [controls/menu.c]
+	Implemented correct \t and \a handling in menu items.
+	Implemented help items (flush right) on menu bar.
+	Added WM_ENTERMENULOOP and WM_EXITMENULOOP messages.
+
+	* [controls/static.c]
+	Fixed SS_ICON controls and implemented STM_SETICON message
+	handling.
+
+	* [controls/widget.c]
+	Set cursor to IDC_ARROW for built-in classes.
+
+	* [include/options.h] [misc/main.c]
+	Backing store is now off by default.
+
+	* [objects/region.c]
+	Use X regions for rectangle and polygon regions: *major* speed
+	improvement.
+
+	* [windows/dialog.c]
+	Fixed the fix for integer ids in controls. SS_ICON controls in
+	dialogs should work now.
+	Implemented DS_ABSALIGN style.
+
+	* [windows/graphics.c]
+	Implemented InvertRgn().
+	New internal function GRAPH_DrawBitmap() to draw bitmaps faster
+	than with CreateCompatibleDC() + BitBlt().
+
+	* [windows/message.c]
+	Determining the window for a mouse message is now done at
+	GetMessage() time.
+	Modified PeekMessage() handling to avoid needlessly flushing the
+	output queue.
+
+	* [windows/timer.c]
+	Check for restart of a timer (SetTimer call with the same hwnd and
+	id than an existing timer).
+
+----------------------------------------------------------------------
 Tue Aug  9 23:58:29 MET DST 1994	<erik@hacktic.nl>
 
 	* [misc/file.c]
