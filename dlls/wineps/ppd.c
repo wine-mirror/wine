@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <locale.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -710,8 +711,10 @@ PPD *PSDRV_ParsePPD(char *fname)
 #define PIA page->ImageableArea
 	    if(!PIA) {
  	        PIA = HeapAlloc( PSDRV_Heap, 0, sizeof(*PIA) );
+                push_lc_numeric("C");
 		sscanf(tuple.value, "%f%f%f%f", &PIA->llx, &PIA->lly,
 						&PIA->urx, &PIA->ury);
+                pop_lc_numeric();
 	    }
 #undef PIA
 	}
@@ -733,7 +736,9 @@ PPD *PSDRV_ParsePPD(char *fname)
 #define PD page->PaperDimension
 	    if(!PD) {
  	        PD = HeapAlloc( PSDRV_Heap, 0, sizeof(*PD) );
+                push_lc_numeric("C");
 		sscanf(tuple.value, "%f%f", &PD->x, &PD->y);
+                pop_lc_numeric();
 	    }
 #undef PD
 	}
