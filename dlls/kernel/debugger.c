@@ -37,13 +37,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(debugstr);
  *  Waits for a debugging event to occur in a process being debugged before
  *  filling out the debug event structure.
  *
+ * PARAMS
+ *  event   [O] Address of structure for event information.
+ *  timeout [I] Number of milliseconds to wait for event.
+ *
  * RETURNS
  *
  *  Returns true if a debug event occurred and false if the call timed out.
  */
 BOOL WINAPI WaitForDebugEvent(
-    LPDEBUG_EVENT event,   /* [out] Address of structure for event information. */
-    DWORD         timeout) /* [in] Number of milliseconds to wait for event. */
+    LPDEBUG_EVENT event,
+    DWORD         timeout)
 {
     BOOL ret;
     DWORD res;
@@ -137,15 +141,20 @@ BOOL WINAPI WaitForDebugEvent(
  *
  *  Enables a thread that previously produced a debug event to continue.
  *
+ * PARAMS
+ *  pid    [I] The id of the process to continue.
+ *  tid    [I] The id of the thread to continue.
+ *  status [I] The rule to apply to unhandled exeptions.
+ *
  * RETURNS
  *
  *  True if the debugger is listed as the processes owner and the process
  *  and thread are valid.
  */
 BOOL WINAPI ContinueDebugEvent(
-    DWORD pid,    /* [in] The id of the process to continue. */
-    DWORD tid,    /* [in] The id of the thread to continue. */
-    DWORD status) /* [in] The rule to apply to unhandled exeptions. */
+    DWORD pid,
+    DWORD tid,
+    DWORD status)
 {
     BOOL ret;
     SERVER_START_REQ( continue_debug_event )
@@ -165,12 +174,14 @@ BOOL WINAPI ContinueDebugEvent(
  *
  *  Attempts to attach the debugger to a process.
  *
+ * PARAMS
+ *  pid [I] The process to be debugged.
+ *
  * RETURNS
  *
  *  True if the debugger was attached to process.
  */
-BOOL WINAPI DebugActiveProcess(
-    DWORD pid) /* [in] The process to be debugged. */
+BOOL WINAPI DebugActiveProcess( DWORD pid )
 {
     BOOL ret;
     SERVER_START_REQ( debug_process )
@@ -188,12 +199,14 @@ BOOL WINAPI DebugActiveProcess(
  *
  *  Attempts to detach the debugger from a process.
  *
+ * PARAMS
+ *  pid [I] The process to be detached.
+ *
  * RETURNS
  *
  *  True if the debugger was detached from the process.
  */
-BOOL WINAPI DebugActiveProcessStop(
-    DWORD pid) /* [in] The process to be detached. */
+BOOL WINAPI DebugActiveProcessStop( DWORD pid )
 {
     BOOL ret;
     SERVER_START_REQ( debug_process )
@@ -212,9 +225,15 @@ BOOL WINAPI DebugActiveProcessStop(
  *
  *  Output by an application of an ascii string to a debugger (if attached)
  *  and program log.
+ *
+ * PARAMS
+ *  str [I] The message to be logged and given to the debugger.
+ *
+ * RETURNS
+ *
+ *  Nothing.
  */
-void WINAPI OutputDebugStringA(
-    LPCSTR str) /* [in] The message to be logged and given to the debugger. */
+void WINAPI OutputDebugStringA( LPCSTR str )
 {
     SERVER_START_REQ( output_debug_string )
     {
@@ -233,9 +252,15 @@ void WINAPI OutputDebugStringA(
  *
  *  Output by an application of a unicode string to a debugger (if attached)
  *  and program log.
+ *
+ * PARAMS
+ *  str [I] The message to be logged and given to the debugger.
+ *
+ * RETURNS
+ *
+ *  Nothing.
  */
-void WINAPI OutputDebugStringW(
-    LPCWSTR str) /* [in] The message to be logged and given to the debugger. */
+void WINAPI OutputDebugStringW( LPCWSTR str )
 {
     SERVER_START_REQ( output_debug_string )
     {
@@ -254,9 +279,13 @@ void WINAPI OutputDebugStringW(
  *
  *  Output by a 16 bit application of an ascii string to a debugger (if attached)
  *  and program log.
+ *
+ * PARAMS
+ *  str [I] The message to be logged and given to the debugger.
+ *
+ * RETURNS
  */
-void WINAPI OutputDebugString16(
-    LPCSTR str) /* [in] The message to be logged and given to the debugger. */
+void WINAPI OutputDebugString16( LPCSTR str )
 {
     OutputDebugStringA( str );
 }
@@ -267,6 +296,10 @@ void WINAPI OutputDebugString16(
  *
  *  Raises an exception so that a debugger (if attached)
  *  can take some action.
+ *
+ * PARAMS
+ *
+ * RETURNS
  */
 void WINAPI DebugBreak(void)
 {
@@ -278,6 +311,13 @@ void WINAPI DebugBreak(void)
  *
  *  Raises an exception so that a debugger (if attached)
  *  can take some action. Same as DebugBreak, but applies to any process.
+ *
+ * PARAMS
+ *  hProc [I] Process to break into.
+ *
+ * RETURNS
+ *
+ *  True if successful.
  */
 BOOL WINAPI DebugBreakProcess(HANDLE hProc)
 {
@@ -303,6 +343,10 @@ BOOL WINAPI DebugBreakProcess(HANDLE hProc)
  *  Raises an expection in a 16 bit application so that a debugger (if attached)
  *  can take some action.
  *
+ * PARAMS
+ *
+ * RETURNS
+ *
  * BUGS
  *
  *  Only 386 compatible processors implemented.
@@ -327,6 +371,8 @@ void WINAPI DebugBreak16(
  *           IsDebuggerPresent   (KERNEL32.@)
  *
  *  Allows a process to determine if there is a debugger attached.
+ *
+ * PARAMS
  *
  * RETURNS
  *
@@ -360,7 +406,13 @@ void WINAPIV _DebugOutput( WORD flags, LPCSTR spec, VA_LIST16 valist )
  *           DebugSetProcessKillOnExit                    (KERNEL32.@)
  *
  * Let a debugger decide whether a debuggee will be killed upon debugger
- * termination
+ * termination.
+ *
+ * PARAMS
+ *  kill [I] If set to true then kill the process on exit.
+ *
+ * RETURNS
+ *  True if successful, false otherwise.
  */
 BOOL WINAPI DebugSetProcessKillOnExit(BOOL kill)
 {
