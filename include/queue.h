@@ -29,22 +29,6 @@
 
 #define WH_NB_HOOKS (WH_MAXHOOK-WH_MINHOOK+1)
 
-/* Per-queue data for the message queue
- * Note that we currently only store the current values for
- * Active, Capture and Focus windows currently.
- * It might be necessary to store a pointer to the system message queue
- * as well since windows 9x maintains per thread system message queues
- */
-typedef struct tagPERQUEUEDATA
-{
-  HWND    hWndFocus;              /* Focus window */
-  HWND    hWndActive;             /* Active window */
-  HWND    hWndCapture;            /* Capture window */
-  INT16     nCaptureHT;             /* Capture info (hit-test) */
-  ULONG     ulRefCount;             /* Reference count */
-  CRITICAL_SECTION cSection;        /* Critical section for thread safe access */
-} PERQUEUEDATA;
-
 struct received_message_info;
 
 /* Message queue */
@@ -68,22 +52,11 @@ typedef struct tagMESSAGEQUEUE
 
   HANDLE16  hCurHook;               /* Current hook */
   HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
-
-  PERQUEUEDATA *pQData;             /* pointer to (shared) PERQUEUEDATA structure */
-
 } MESSAGEQUEUE;
 
 
 #define QUEUE_MAGIC            0xD46E80AF
 #define MAX_SENDMSG_RECURSION  64
-
-/* Per queue data management methods */
-HWND PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
-HWND PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND hWndFocus );
-HWND PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData );
-HWND PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND hWndActive );
-HWND PERQDATA_GetCaptureWnd( INT *hittest );
-HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest );
 
 /* Message queue management methods */
 extern MESSAGEQUEUE *QUEUE_Current(void);
