@@ -284,7 +284,6 @@ static const struct tagTZ_INFO TZ_INFO[] =
 #define TICKS_1601_TO_1980 (SECS_1601_TO_1980 * TICKSPERSEC)
 
 
-static const int YearLengths[2] = {DAYSPERNORMALYEAR, DAYSPERLEAPYEAR};
 static const int MonthLengths[2][MONSPERYEAR] =
 {
 	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -421,7 +420,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PTIME_FIELDS tfTimeFields,
 	PLARGE_INTEGER Time)
 {
-	int CurYear, CurMonth;
+	int CurYear, CurMonth, DeltaYear;
 	LONGLONG rcTime;
 	TIME_FIELDS TimeFields = *tfTimeFields;
 
@@ -445,9 +444,18 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	}
 
 	/* FIXME: handle calendar corrections here */
-	for (CurYear = EPOCHYEAR; CurYear < TimeFields.Year; CurYear++)
-	{ rcTime += YearLengths[IsLeapYear(CurYear)];
-	}
+        CurYear = TimeFields.Year - EPOCHYEAR;
+        DeltaYear = CurYear / 400;
+        CurYear -= DeltaYear * 400;
+        rcTime += DeltaYear * DAYSPERQUADRICENTENNIUM;
+        DeltaYear = CurYear / 100;
+        CurYear -= DeltaYear * 100;
+        rcTime += DeltaYear * DAYSPERNORMALCENTURY;
+        DeltaYear = CurYear / 4;
+        CurYear -= DeltaYear * 4;
+        rcTime += DeltaYear * DAYSPERNORMALQUADRENNIUM;
+        rcTime += CurYear * DAYSPERNORMALYEAR;
+
 	for (CurMonth = 1; CurMonth < TimeFields.Month; CurMonth++)
 	{ rcTime += MonthLengths[IsLeapYear(CurYear)][CurMonth - 1];
 	}
@@ -460,7 +468,6 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 
 	return TRUE;
 }
-/************ end of code by Rex Jolliff (rex@lvcablemodem.com) ***************/
 
 /******************************************************************************
  *        RtlLocalTimeToSystemTime [NTDLL.@]
