@@ -184,8 +184,7 @@ typedef BOOL16 (CALLBACK *ACMFORMATTAGENUMCB16)(
  * Functions - Win16
  */
 
-DWORD WINAPI acmGetVersion16(
-);
+DWORD WINAPI acmGetVersion16(void);
 MMRESULT16 WINAPI acmMetrics16(
   HACMOBJ16 hao, UINT16 uMetric, LPVOID pMetric
 );

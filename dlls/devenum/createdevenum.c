@@ -44,7 +44,7 @@ static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                    'd','e','v','e','n','u','m','\\',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
-static HRESULT DEVENUM_CreateSpecialCategories();
+static HRESULT DEVENUM_CreateSpecialCategories(void);
 
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_QueryInterface (also IUnknown)

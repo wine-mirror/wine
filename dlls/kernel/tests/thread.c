@@ -155,7 +155,7 @@ DWORD WINAPI threadFunc5(LPVOID p)
 #endif
 
 /* Check basic funcationality of CreateThread and Tls* functions */
-VOID test_CreateThread_basic()
+VOID test_CreateThread_basic(void)
 {
    HANDLE thread[NUM_THREADS],event[NUM_THREADS];
    DWORD threadid[NUM_THREADS],curthreadId;
@@ -217,7 +217,7 @@ VOID test_CreateThread_basic()
 }
 
 /* Check that using the CREATE_SUSPENDED flag works */
-VOID test_CreateThread_suspended()
+VOID test_CreateThread_suspended(void)
 {
   HANDLE thread;
   DWORD threadId;
@@ -246,7 +246,7 @@ VOID test_CreateThread_suspended()
 }
 
 /* Check that SuspendThread and ResumeThread work */
-VOID test_SuspendThread()
+VOID test_SuspendThread(void)
 {
   HANDLE thread,access_thread;
   DWORD threadId,exitCode,error;
@@ -303,12 +303,10 @@ VOID test_SuspendThread()
 
 /* Check that TerminateThread works properly
 */
-VOID test_TerminateThread()
+VOID test_TerminateThread(void)
 {
   HANDLE thread,access_thread,event;
   DWORD threadId,exitCode;
-  int i,error;
-  i=0; error=0;
   event=CreateEventA(NULL,TRUE,FALSE,NULL);
   thread = CreateThread(NULL,0,threadFunc4,
                         (LPVOID)event, 0,&threadId);
@@ -344,7 +342,7 @@ VOID test_TerminateThread()
 /* Check if CreateThread obeys the specified stack size.  This code does
    not work properly, and is currently disabled
 */
-VOID test_CreateThread_stack()
+VOID test_CreateThread_stack(void)
 {
 #if CHECK_STACK
 /* The only way I know of to test the stack size is to use alloca
@@ -371,7 +369,7 @@ VOID test_CreateThread_stack()
 }
 
 /* Check whether setting/retrieving thread priorities works */
-VOID test_thread_priority()
+VOID test_thread_priority(void)
 {
    HANDLE curthread,access_thread;
    DWORD curthreadId,exitCode;
@@ -457,7 +455,7 @@ VOID test_thread_priority()
 }
 
 /* check the GetThreadTimes function */
-VOID test_GetThreadTimes()
+VOID test_GetThreadTimes(void)
 {
      HANDLE thread,access_thread=NULL;
      FILETIME creationTime,exitTime,kernelTime,userTime;
@@ -508,7 +506,7 @@ VOID test_GetThreadTimes()
 /* Check the processor affinity functions */
 /* NOTE: These functions should also be checked that they obey access control
 */
-VOID test_thread_processor()
+VOID test_thread_processor(void)
 {
    HANDLE curthread,curproc;
    DWORD processMask,systemMask;

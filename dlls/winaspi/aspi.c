@@ -65,11 +65,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
 /* Internal function prototypes */
 static void
-SCSI_GetProcinfo();
+SCSI_GetProcinfo(void);
 
 #ifdef linux
 static void
-SCSI_MapHCtoController();
+SCSI_MapHCtoController(void);
 #endif
 
 static void set_last_error(void)

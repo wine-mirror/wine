@@ -88,7 +88,7 @@ static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
 BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
               LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
-static VOID INTERNET_ExecuteWork();
+static VOID INTERNET_ExecuteWork(void);
 
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
 static DWORD dwNumThreads;
@@ -102,8 +102,8 @@ static LPWORKREQUEST lpHeadWorkQueue;
 static LPWORKREQUEST lpWorkQueueTail;
 static HMODULE WININET_hModule;
 
-extern void URLCacheContainers_CreateDefaults();
-extern void URLCacheContainers_DeleteAll();
+extern void URLCacheContainers_CreateDefaults(void);
+extern void URLCacheContainers_DeleteAll(void);
 
 #define HANDLE_CHUNK_SIZE 0x10
 

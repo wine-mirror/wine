@@ -989,7 +989,7 @@ typedef struct tagITypeInfoImpl
 static struct ITypeInfo2Vtbl tinfvt;
 static struct ITypeCompVtbl  tcompvt;
 
-static ITypeInfo2 * WINAPI ITypeInfo_Constructor();
+static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void);
 
 typedef struct tagTLBContext
 {

@@ -81,7 +81,7 @@ typedef struct
     HKEY hkey;
 } MediaCatMoniker;
 
-MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct();
+MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void);
 HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker);
 HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     ICreateDevEnum * iface,

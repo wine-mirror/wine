@@ -29,17 +29,17 @@
 
 struct _EXCEPTION_POINTERS;
 
-typedef void (*terminate_handler)();
-typedef void (*terminate_function)();
-typedef void (*unexpected_handler)();
-typedef void (*unexpected_function)();
+typedef void (*terminate_handler)(void);
+typedef void (*terminate_function)(void);
+typedef void (*unexpected_handler)(void);
+typedef void (*unexpected_function)(void);
 typedef void (*_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 
 terminate_function set_terminate(terminate_function func);
 unexpected_function set_unexpected(unexpected_function func);
 _se_translator_function _set_se_translator(_se_translator_function func);
 
-void        terminate();
-void        unexpected();
+void        terminate(void);
+void        unexpected(void);
 
 #endif /* __WINE_EH_H */

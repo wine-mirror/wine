@@ -81,7 +81,7 @@ static const BYTE bitmap_bits[48*48/8] =
   ROW48(0,0,0,0,0,0,0,0,0,0,0,0)
 };
 
-static HIMAGELIST createImageList(cx, cy)
+static HIMAGELIST createImageList(int cx, int cy)
 {
     /* Create an ImageList and put an image into it */
     HIMAGELIST himl = ImageList_Create(cx, cy, ILC_COLOR, 1, 1);

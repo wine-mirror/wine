@@ -412,9 +412,9 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa);
 
 void INTERNET_SetLastError(DWORD dwError);
-DWORD INTERNET_GetLastError();
+DWORD INTERNET_GetLastError(void);
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
-LPSTR INTERNET_GetResponseBuffer();
+LPSTR INTERNET_GetResponseBuffer(void);
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 
 BOOLAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,

@@ -39,7 +39,7 @@ void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
 void VGA_SetWindowStart(int start);
-int  VGA_GetWindowStart();
+int  VGA_GetWindowStart(void);
 void VGA_ShowMouse(BOOL show);
 
 /* text mode */

@@ -109,7 +109,7 @@ typedef struct tagAPARTMENT {
 
 extern APARTMENT MTA, *apts;
 
-extern void* StdGlobalInterfaceTable_Construct();
+extern void* StdGlobalInterfaceTable_Construct(void);
 extern void  StdGlobalInterfaceTable_Destroy(void* self);
 extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
 
@@ -148,19 +148,19 @@ MARSHAL_Compare_Mids_NoInterface(wine_marshal_id *mid1, wine_marshal_id *mid2) {
 
 HRESULT MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub);
 void    MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid);
-HRESULT MARSHAL_Disconnect_Proxies();
+HRESULT MARSHAL_Disconnect_Proxies(void);
 
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
-void start_listener_thread();
+void start_listener_thread(void);
 
 extern HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
 
 /* This function initialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_Initialize();
+HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
 
 /* This function uninitialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize();
+HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
 
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);

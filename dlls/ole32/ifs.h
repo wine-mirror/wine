@@ -54,7 +54,7 @@ DECLARE_INTERFACE_(IMalloc16,IUnknown)
 
 /**********************************************************************/
 
-extern LPMALLOC16 IMalloc16_Constructor();
+extern LPMALLOC16 IMalloc16_Constructor(void);
 
 /**********************************************************************/
 

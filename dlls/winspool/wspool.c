@@ -43,7 +43,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
   switch (reason)
   {
     case DLL_PROCESS_ATTACH: {
-      extern void WINSPOOL_LoadSystemPrinters();
+      extern void WINSPOOL_LoadSystemPrinters(void);
 
       DisableThreadLibraryCalls(hInstance);
       WINSPOOL_LoadSystemPrinters();

@@ -64,8 +64,8 @@ typedef LPCSTR LPCOLESTR16;
 HINSTANCE       COMPOBJ_hInstance32 = 0;
 
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
-static void COM_RevokeAllClasses();
-static void COM_ExternalLockFreeList();
+static void COM_RevokeAllClasses(void);
+static void COM_ExternalLockFreeList(void);
 
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 

@@ -55,8 +55,8 @@ typedef unsigned int size_t;
 extern "C" {
 #endif
 
-unsigned long               __threadid();
-unsigned long               __threadhandle();
+unsigned long               __threadid(void);
+unsigned long               __threadhandle(void);
 #define _threadid          (__threadid())
 
 #ifdef __cplusplus

@@ -67,7 +67,7 @@ typedef BOOL (CALLBACK*ParseThemeIniFileProc)(DWORD dwType, LPWSTR pszParam1,
                                               DWORD dwParam, LPVOID lpData);
 
 /* Declarations for undocumented functions for use internally */
-DWORD WINAPI QueryThemeServices();
+DWORD WINAPI QueryThemeServices(void);
 HRESULT WINAPI OpenThemeFile(LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
                              LPCWSTR pszSizeName, HTHEMEFILE *hThemeFile,
                              DWORD unknown);

@@ -66,7 +66,7 @@ HRESULT WINAPI GetCurrentThemeName(LPWSTR,int,LPWSTR,int,LPWSTR,int);
 #define STAP_ALLOW_CONTROLS     (1<<1)
 #define STAP_ALLOW_WEBCONTENT   (1<<2)
 
-DWORD WINAPI GetThemeAppProperties();
+DWORD WINAPI GetThemeAppProperties(void);
 HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME,HDC,int,int,
                                              const RECT*,RECT*);
 HRESULT WINAPI GetThemeBackgroundExtent(HTHEME,HDC,int,int,const RECT*,RECT*);
@@ -162,10 +162,10 @@ HTHEME WINAPI GetWindowTheme(HWND);
 
 HRESULT WINAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*,
                                       HRGN,POINT,WORD*);
-BOOL WINAPI IsAppThemed();
-BOOL WINAPI IsThemeActive();
+BOOL WINAPI IsAppThemed(void);
+BOOL WINAPI IsThemeActive(void);
 BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME,int,int);
-BOOL WINAPI IsThemeDialogTextureEnabled();
+BOOL WINAPI IsThemeDialogTextureEnabled(void);
 BOOL WINAPI IsThemePartDefined(HTHEME,int,int);
 HTHEME WINAPI OpenThemeData(HWND,LPCWSTR);
 void WINAPI SetThemeAppProperties(DWORD);

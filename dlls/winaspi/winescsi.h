@@ -58,10 +58,10 @@ struct sg_header
 
 /* Function prototypes from dlls/wnaspi32/aspi.c */
 void
-SCSI_Init();
+SCSI_Init(void);
 
 int
-ASPI_GetNumControllers();
+ASPI_GetNumControllers(void);
 
 int
 SCSI_OpenDevice( int h, int c, int t, int d );

@@ -254,7 +254,7 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf, DWORD* p
  * Non Unicode
  */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
-UINT WINAPI MsiCloseAllHandles();
+UINT WINAPI MsiCloseAllHandles(void);
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL, HWND*);
 
 #ifdef __cplusplus

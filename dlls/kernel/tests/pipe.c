@@ -54,7 +54,7 @@
 
 static HANDLE alarm_event;
 
-static void test_CreateNamedPipe(pipemode)
+static void test_CreateNamedPipe(int pipemode)
 {
     HANDLE hnp;
     HANDLE hFile;

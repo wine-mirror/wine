@@ -146,8 +146,8 @@ int WINAPI wine_gluBuild2DMipmaps(int arg0,int arg1,int arg2,int arg3,int arg4,i
 /***********************************************************************
  *		gluNewQuadric (GLU32.@)
  */
-extern int gluNewQuadric();
-int WINAPI wine_gluNewQuadric() {
+extern int gluNewQuadric(void);
+int WINAPI wine_gluNewQuadric(void) {
 	return gluNewQuadric();
 }
 
@@ -234,8 +234,8 @@ int WINAPI wine_gluPartialDisk(void *arg0,double arg1,double arg2,int arg3,int a
 /***********************************************************************
  *		gluNewNurbsRenderer (GLU32.@)
  */
-extern int gluNewNurbsRenderer();
-int WINAPI wine_gluNewNurbsRenderer() {
+extern int gluNewNurbsRenderer(void);
+int WINAPI wine_gluNewNurbsRenderer(void) {
 	return gluNewNurbsRenderer();
 }
 

@@ -129,8 +129,8 @@ static void OLEUTL_ReadRegistryDWORDValue(HKEY regKey, DWORD* pdwValue);
 /******************************************************************************
  * These are the prototypes of the utility methods used to manage a shared menu
  */
-static void OLEMenu_Initialize();
-static void OLEMenu_UnInitialize();
+static void OLEMenu_Initialize(void);
+static void OLEMenu_UnInitialize(void);
 BOOL OLEMenu_InstallHooks( DWORD tid );
 BOOL OLEMenu_UnInstallHooks( DWORD tid );
 OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid );
@@ -142,14 +142,14 @@ LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam);
 /******************************************************************************
  * These are the prototypes of the OLE Clipboard initialization methods (in clipboard.c)
  */
-void OLEClipbrd_UnInitialize();
-void OLEClipbrd_Initialize();
+void OLEClipbrd_UnInitialize(void);
+void OLEClipbrd_Initialize(void);
 
 /******************************************************************************
  * These are the prototypes of the utility methods used for OLE Drag n Drop
  */
-static void            OLEDD_Initialize();
-static void            OLEDD_UnInitialize();
+static void            OLEDD_Initialize(void);
+static void            OLEDD_UnInitialize(void);
 static void            OLEDD_InsertDropTarget(
 			 DropTargetNode* nodeToAdd);
 static DropTargetNode* OLEDD_ExtractDropTarget(
@@ -169,7 +169,7 @@ static void OLEDD_TrackStateChange(
                          TrackerWindowInfo* trackerInfo,
 			 POINT            mousePos,
 			 DWORD              keyState);
-static DWORD OLEDD_GetButtonState();
+static DWORD OLEDD_GetButtonState(void);
 
 
 /******************************************************************************

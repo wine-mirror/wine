@@ -52,7 +52,7 @@ static const unsigned int formats[][4]={
 
 
 extern char* wave_generate_la(WAVEFORMATEX*,double,DWORD*);
-extern HWND get_hwnd();
+extern HWND get_hwnd(void);
 extern void init_format(WAVEFORMATEX*,int,int,int,int);
 extern void test_buffer(LPDIRECTSOUND,LPDIRECTSOUNDBUFFER,
                         BOOL,BOOL,LONG,BOOL,LONG,BOOL,double,BOOL,

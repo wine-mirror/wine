@@ -468,7 +468,7 @@ BOOL   WINAPI ImmAssociateContextEx(HWND, HIMC, DWORD);
 BOOL   WINAPI ImmConfigureIMEA(HKL, HWND, DWORD, LPVOID);
 BOOL   WINAPI ImmConfigureIMEW(HKL, HWND, DWORD, LPVOID);
 #define  ImmConfigureIME WINELIB_NAME_AW(ImmConfigureIME)
-HIMC   WINAPI ImmCreateContext();
+HIMC   WINAPI ImmCreateContext(void);
 BOOL   WINAPI ImmDestroyContext(HIMC hIMC);
 BOOL   WINAPI ImmDisableIME(DWORD idThread);
 UINT   WINAPI ImmEnumRegisterWordA(HKL, REGISTERWORDENUMPROCA, LPCSTR, DWORD, LPCSTR, LPVOID);

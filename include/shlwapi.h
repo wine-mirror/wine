@@ -946,7 +946,7 @@ HRESULT WINAPI SHAutoComplete(HWND,DWORD);
 /* Threads */
 HRESULT WINAPI SHGetThreadRef(IUnknown**);
 HRESULT WINAPI SHSetThreadRef(IUnknown*);
-HRESULT WINAPI SHReleaseThreadRef();
+HRESULT WINAPI SHReleaseThreadRef(void);
 
 /* SHCreateThread flags */
 #define CTF_INSIST          0x01 /* Always call */

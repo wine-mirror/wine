@@ -78,10 +78,10 @@ typedef unsigned int size_t;
 extern "C" {
 #endif
 
-extern unsigned int*         __p__osver();
-extern unsigned int*         __p__winver();
-extern unsigned int*         __p__winmajor();
-extern unsigned int*         __p__winminor();
+extern unsigned int*         __p__osver(void);
+extern unsigned int*         __p__winver(void);
+extern unsigned int*         __p__winmajor(void);
+extern unsigned int*         __p__winminor(void);
 #define _osver             (*__p__osver())
 #define _winver            (*__p__winver())
 #define _winmajor          (*__p__winmajor())
@@ -145,7 +145,7 @@ char*       _ui64toa(unsigned __int64,char*,int);
 char*       _ultoa(unsigned long,char*,int);
 
 void        _exit(int);
-void        abort();
+void        abort(void);
 int         abs(int);
 int         atexit(void (*)(void));
 double      atof(const char*);
