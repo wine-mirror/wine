@@ -4447,6 +4447,12 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
 	case 9:
 		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
 		break;
+	case 10:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+		break;
+	case 11:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
+		break;
 	default:
 		FIXME("unsupported number of arguments %d in stdcall\n",nrargs);
 		res = -1;
