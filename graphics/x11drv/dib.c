@@ -357,20 +357,20 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 	if (length) {	/* encoded */
 	    c = *bits++;
 	    while (length--) {
-	        XPutPixel(bmpImage, x++, lines, colors[c >>4]);
 		if(x >= width) {
 		    x = 0;
 		    if(--lines < 0)
 		        return;
 		}
+	        XPutPixel(bmpImage, x++, lines, colors[c >>4]);
 		if (length) {
 		    length--;
-		    XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 		    if(x >= width) {
 		        x = 0;
 			if(--lines < 0)
 			    return;
 		    }
+		    XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 		}
 	    }
 	} else {
@@ -396,20 +396,20 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 	    default: /* absolute */
 	        while (length--) {
 		    c = *bits++;
-		    XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
 		    if(x >= width) {
 		        x = 0;
 			if(--lines < 0)
 			    return;
 		    }
+		    XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
 		    if (length) {
 		        length--;
-			XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 			if(x >= width) {
 			    x = 0;
 			    if(--lines < 0)
 			        return;
 			}
+			XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
 		    }
 		}
 		if ((bits - begin) & 1)
