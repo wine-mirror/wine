@@ -1439,7 +1439,7 @@ int _setmode(int fd,int mode)
   if ((mode & _O_TEXT) == _O_TEXT)
       MSVCRT_fdesc[fd].xflag |= WX_TEXT;
   else
-      MSVCRT_fdesc[fd].xflag &= WX_TEXT;
+      MSVCRT_fdesc[fd].xflag &= ~WX_TEXT;
   return ret;
 }
 
