@@ -1080,94 +1080,6 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW(LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * SHGetSpecialFolderLocation		[SHELL32.@]
- *
- * gets the folder locations from the registry and creates a pidl
- * creates missing reg keys and directories
- *
- * PARAMS
- *   hwndOwner [I]
- *   nFolder   [I] CSIDL_xxxxx
- *   ppidl     [O] PIDL of a special folder
- *
- * NOTES
- *   In NT5, SHGetSpecialFolderLocation needs the <winntdir>/Recent
- *   directory. If the directory is missing it returns a x80070002.
- */
-HRESULT WINAPI SHGetSpecialFolderLocation(
-	HWND hwndOwner,
-	INT nFolder,
-	LPITEMIDLIST * ppidl)
-{
-	CHAR		szPath[MAX_PATH];
-	HRESULT		hr = E_INVALIDARG;
-
-	TRACE_(shell)("(%p,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
-
-	if (ppidl)
-	{
-	  *ppidl = NULL;
-	  switch (nFolder)
-	  {
-	    case CSIDL_DESKTOP:
-	      *ppidl = _ILCreateDesktop();
-	      break;
-
-	    case CSIDL_DRIVES:
-	      *ppidl = _ILCreateMyComputer();
-	      break;
-
-	    case CSIDL_NETWORK:
-	      *ppidl = _ILCreateNetwork ();
-	      break;
-
-	    case CSIDL_CONTROLS:
-	      *ppidl = _ILCreateControl ();
-	      break;
-
-	    case CSIDL_PRINTERS:
-	      *ppidl = _ILCreatePrinter ();
-	      break;
-
-	    case CSIDL_BITBUCKET:
-	      *ppidl = _ILCreateBitBucket ();
-	      break;
-
-	    default:
-	      if (SHGetSpecialFolderPathA(hwndOwner, szPath, nFolder, TRUE))
-	      {
-		DWORD attributes=0;
-		TRACE_(shell)("Value=%s\n",szPath);
-		hr = SHILCreateFromPathA(szPath, ppidl, &attributes);
-	      }
-	  }
-	  if(*ppidl) hr = NOERROR;
-	}
-
-	TRACE_(shell)("-- (new pidl %p)\n",*ppidl);
-	return hr;
-}
-
-/*************************************************************************
- * SHGetFolderLocation [SHELL32.@]
- *
- * NOTES
- *  the pidl can be a simple one. since we can't get the path out of the pidl
- *  we have to take all data from the pidl
- */
-HRESULT WINAPI SHGetFolderLocation(
-	HWND hwnd,
-	int csidl,
-	HANDLE hToken,
-	DWORD dwFlags,
-	LPITEMIDLIST *ppidl)
-{
-	FIXME("%p 0x%08x %p 0x%08lx %p\n",
-	 hwnd, csidl, hToken, dwFlags, ppidl);
-	return SHGetSpecialFolderLocation(hwnd, csidl, ppidl);
-}
-
-/*************************************************************************
  * SHGetDataFromIDListA [SHELL32.247]
  *
  * NOTES
@@ -1517,12 +1429,6 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
  *	### 1. section creating pidls ###
  *
  *************************************************************************
- *  _ILCreateDesktop()
- *  _ILCreateIExplore()
- *  _ILCreateMyComputer()
- *  _ILCreateDrive()
- *  _ILCreateFolder()
- *  _ILCreateValue()
  */
 LPITEMIDLIST _ILCreateDesktop()
 {	TRACE("()\n");
@@ -1539,16 +1445,42 @@ LPITEMIDLIST _ILCreateIExplore()
 	return _ILCreateGuid(PT_GUID, &CLSID_Internet);
 }
 
-LPITEMIDLIST _ILCreateControl()
-{	TRACE("()\n");
-    /* FIXME: needs to be child of MyComputer */
-	return _ILCreateGuid(PT_SHELLEXT, &CLSID_ControlPanel);
+LPITEMIDLIST _ILCreateControlPanel()
+{
+    LPITEMIDLIST parent = _ILCreateGuid(PT_GUID, &CLSID_MyComputer), ret = NULL;
+
+    TRACE("()\n");
+    if (parent)
+    {
+        LPITEMIDLIST cpl = _ILCreateGuid(PT_GUID, &CLSID_ControlPanel);
+
+        if (cpl)
+        {
+            ret = ILCombine(parent, cpl);
+            SHFree(cpl);
+        }
+        SHFree(parent);
+    }
+    return ret;
 }
 
-LPITEMIDLIST _ILCreatePrinter()
-{	TRACE("()\n");
-    /* FIXME: needs to be child of MyComputer */
-	return _ILCreateGuid(PT_SHELLEXT, &CLSID_Printers);
+LPITEMIDLIST _ILCreatePrinters()
+{
+    LPITEMIDLIST parent = _ILCreateGuid(PT_GUID, &CLSID_MyComputer), ret = NULL;
+
+    TRACE("()\n");
+    if (parent)
+    {
+        LPITEMIDLIST printers = _ILCreateGuid(PT_GUID, &CLSID_ControlPanel);
+
+        if (printers)
+        {
+            ret = ILCombine(parent, printers);
+            SHFree(printers);
+        }
+        SHFree(parent);
+    }
+    return ret;
 }
 
 LPITEMIDLIST _ILCreateNetwork()
@@ -1561,11 +1493,6 @@ LPITEMIDLIST _ILCreateBitBucket()
 	return _ILCreateGuid(PT_GUID, &CLSID_RecycleBin);
 }
 
-/**************************************************************************
- *  _ILCreateGuid()
- *  Creates a new PIDL with type type (which can be one of PT_SHELLEXT or
- *  PT_GUID) with the given GUID data.
- */
 LPITEMIDLIST _ILCreateGuid(PIDLTYPE type, REFIID guid)
 {
     LPITEMIDLIST pidlOut;
@@ -1621,10 +1548,6 @@ LPITEMIDLIST _ILCreateWithTypeAndSize(PIDLTYPE type, UINT size)
     return pidlOut;
 }
 
-/**************************************************************************
- *  _ILCreateFromFindDataA()
- *  Creates a new PIDL from stffile
- */
 LPITEMIDLIST _ILCreateFromFindDataA(WIN32_FIND_DATAA * stffile )
 {
     char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */

@@ -77,10 +77,10 @@
 *
 * (1) dummy byte is used, attributes are empty
 * (2) IID_MyComputer = 20D04FE0L-3AEA-1069-A2D8-08002B30309D
-* (3) two strings	"workgroup" "microsoft network"
-* (4) one string	"\\sirius"
-* (5) one string	"whole network"
-* (6) one string	"\\sirius\c"
+* (3) two strings	"workgroup" "Microsoft Network"
+* (4) two strings	"\\sirius" "Microsoft Network"
+* (5) one string	"Entire Network"
+* (6) two strings	"\\sirius\c" "Microsoft Network"
 * (7) contains string   "mk:@MSITStore:C:\path\file.chm::/path/filename.htm"
 *		GUID	871C5380-42A0-1069-A2EA-08002B30309D
 */
@@ -136,7 +136,7 @@ typedef struct tagPIDLDATA
 	    WORD uFileTime;		/*08*/
 	    WORD uFileAttribs;		/*10*/
 	    CHAR szNames[1];		/*12*/
-	    /* Here are comming two strings. The first is the long name.
+	    /* Here are coming two strings. The first is the long name.
 	    The second the dos name when needed or just 0x00 */
 	  } file, folder, generic;
 	  struct
@@ -204,8 +204,8 @@ LPITEMIDLIST	_ILCreateFromPathA	(LPCSTR szPath);
 /* Other helpers */
 LPITEMIDLIST	_ILCreateMyComputer	(void);
 LPITEMIDLIST	_ILCreateIExplore	(void);
-LPITEMIDLIST	_ILCreateControl	(void);
-LPITEMIDLIST	_ILCreatePrinter	(void);
+LPITEMIDLIST	_ILCreateControlPanel	(void);
+LPITEMIDLIST	_ILCreatePrinters	(void);
 LPITEMIDLIST	_ILCreateNetwork	(void);
 LPITEMIDLIST	_ILCreateBitBucket	(void);
 LPITEMIDLIST	_ILCreateDrive		(LPCSTR);
