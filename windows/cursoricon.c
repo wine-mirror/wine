@@ -2109,13 +2109,15 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
     HGLOBAL hFix;
     int size;
 
-    if (!(loadflags & LR_LOADFROMFILE)) {
-      if (!instance)  /* OEM bitmap */
+    if (!(loadflags & LR_LOADFROMFILE))
+    {
+      if (!instance)
       {
-	  if (HIWORD((int)name)) return 0;
-          return USER_Driver.pLoadOEMResource( LOWORD((int)name), OEM_BITMAP );
+          /* OEM bitmap: try to load the resource from user32.dll */
+          if (HIWORD(name)) return 0;
+          if ((hbitmap = USER_Driver.pLoadOEMResource( LOWORD(name), OEM_BITMAP ))) return hbitmap;
+          if (!(instance = GetModuleHandleA("user32.dll"))) return 0;
       }
-
       if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;
       if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 

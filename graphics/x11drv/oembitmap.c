@@ -32,50 +32,21 @@ typedef unsigned long Pixel;
 #include "x11drv.h"
 
   /* Include OEM pixmaps */
-#include "bitmaps/obm_lfarrowi"
-#include "bitmaps/obm_rgarrowi"
-#include "bitmaps/obm_dnarrowi"
-#include "bitmaps/obm_uparrowi"
-#include "bitmaps/obm_combo"
-#include "bitmaps/obm_mnarrow"
-#include "bitmaps/obm_lfarrowd"
-#include "bitmaps/obm_rgarrowd"
-#include "bitmaps/obm_dnarrowd"
-#include "bitmaps/obm_uparrowd"
-#include "bitmaps/obm_restored"
-#include "bitmaps/obm_restore"
-#include "bitmaps/obm_lfarrow"
-#include "bitmaps/obm_rgarrow"
-#include "bitmaps/obm_dnarrow"
-#include "bitmaps/obm_uparrow"
-#include "bitmaps/obm_old_restore"
-#include "bitmaps/obm_old_zoom"
-#include "bitmaps/obm_old_reduce"
-#include "bitmaps/obm_btncorners"
-#include "bitmaps/obm_checkboxes"
-#include "bitmaps/obm_check"
-#include "bitmaps/obm_btsize"
-#include "bitmaps/obm_old_lfarrow"
-#include "bitmaps/obm_old_rgarrow"
-#include "bitmaps/obm_old_dnarrow"
-#include "bitmaps/obm_old_uparrow"
-#include "bitmaps/obm_size"
-#include "bitmaps/obm_old_close"
-#include "bitmaps/obm_trtype"
-
-#include "bitmaps/obm_zoomd"
-#include "bitmaps/obm_reduced"
-#include "bitmaps/obm_zoom"
-#include "bitmaps/obm_reduce"
 #include "bitmaps/obm_close"
-#include "bitmaps/obm_zoomd_95"
-#include "bitmaps/obm_reduced_95"
-#include "bitmaps/obm_zoom_95"
-#include "bitmaps/obm_reduce_95"
 #include "bitmaps/obm_close_95"
 #include "bitmaps/obm_closed_95"
+#include "bitmaps/obm_reduce"
+#include "bitmaps/obm_reduce_95"
+#include "bitmaps/obm_reduced"
+#include "bitmaps/obm_reduced_95"
+#include "bitmaps/obm_restore"
 #include "bitmaps/obm_restore_95"
+#include "bitmaps/obm_restored"
 #include "bitmaps/obm_restored_95"
+#include "bitmaps/obm_zoom"
+#include "bitmaps/obm_zoom_95"
+#include "bitmaps/obm_zoomd"
+#include "bitmaps/obm_zoomd_95"
 
 DECLARE_DEBUG_CHANNEL(bitmap);
 DECLARE_DEBUG_CHANNEL(cursor);
@@ -91,42 +62,42 @@ static struct
     BOOL color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
     { obm_closed_95,TRUE},      /* OBM_CLOSED */
-    { obm_trtype, TRUE },       /* OBM_TRTYPE */
+    { NULL, FALSE },            /* OBM_TRTYPE */
     { NULL, FALSE },            /* unused */
-    { obm_lfarrowi, TRUE },     /* OBM_LFARROWI */
-    { obm_rgarrowi, TRUE },     /* OBM_RGARROWI */
-    { obm_dnarrowi, TRUE },     /* OBM_DNARROWI */
-    { obm_uparrowi, TRUE },     /* OBM_UPARROWI */
-    { obm_combo, FALSE },       /* OBM_COMBO */
-    { obm_mnarrow, FALSE },     /* OBM_MNARROW */
-    { obm_lfarrowd, TRUE },     /* OBM_LFARROWD */
-    { obm_rgarrowd, TRUE },     /* OBM_RGARROWD */
-    { obm_dnarrowd, TRUE },     /* OBM_DNARROWD */
-    { obm_uparrowd, TRUE },     /* OBM_UPARROWD */
+    { NULL, FALSE },            /* OBM_LFARROWI */
+    { NULL, FALSE },            /* OBM_RGARROWI */
+    { NULL, FALSE },            /* OBM_DNARROWI */
+    { NULL, FALSE },            /* OBM_UPARROWI */
+    { NULL, FALSE },            /* OBM_COMBO */
+    { NULL, FALSE },            /* OBM_MNARROW */
+    { NULL, FALSE },            /* OBM_LFARROWD */
+    { NULL, FALSE },            /* OBM_RGARROWD */
+    { NULL, FALSE },            /* OBM_DNARROWD */
+    { NULL, FALSE },            /* OBM_UPARROWD */
     { obm_restored, TRUE },     /* OBM_RESTORED */
     { obm_zoomd, TRUE },        /* OBM_ZOOMD */
     { obm_reduced, TRUE },      /* OBM_REDUCED */
     { obm_restore, TRUE },      /* OBM_RESTORE */
     { obm_zoom, TRUE },         /* OBM_ZOOM */
     { obm_reduce, TRUE },       /* OBM_REDUCE */
-    { obm_lfarrow, TRUE },      /* OBM_LFARROW */
-    { obm_rgarrow, TRUE },      /* OBM_RGARROW */
-    { obm_dnarrow, TRUE },      /* OBM_DNARROW */
-    { obm_uparrow, TRUE },      /* OBM_UPARROW */
+    { NULL, FALSE },            /* OBM_LFARROW */
+    { NULL, FALSE },            /* OBM_RGARROW */
+    { NULL, FALSE },            /* OBM_DNARROW */
+    { NULL, FALSE },            /* OBM_UPARROW */
     { obm_close, TRUE },        /* OBM_CLOSE */
-    { obm_old_restore, FALSE }, /* OBM_OLD_RESTORE */
-    { obm_old_zoom, FALSE },    /* OBM_OLD_ZOOM */
-    { obm_old_reduce, FALSE },  /* OBM_OLD_REDUCE */
-    { obm_btncorners, FALSE },  /* OBM_BTNCORNERS */
-    { obm_checkboxes, FALSE },  /* OBM_CHECKBOXES */
-    { obm_check, FALSE },       /* OBM_CHECK */
-    { obm_btsize, FALSE },      /* OBM_BTSIZE */
-    { obm_old_lfarrow, FALSE }, /* OBM_OLD_LFARROW */
-    { obm_old_rgarrow, FALSE }, /* OBM_OLD_RGARROW */
-    { obm_old_dnarrow, FALSE }, /* OBM_OLD_DNARROW */
-    { obm_old_uparrow, FALSE }, /* OBM_OLD_UPARROW */
-    { obm_size, FALSE },        /* OBM_SIZE */
-    { obm_old_close, FALSE },   /* OBM_OLD_CLOSE */
+    { NULL, FALSE },            /* OBM_OLD_RESTORE */
+    { NULL, FALSE },            /* OBM_OLD_ZOOM */
+    { NULL, FALSE },            /* OBM_OLD_REDUCE */
+    { NULL, FALSE },            /* OBM_BTNCORNERS */
+    { NULL, FALSE },            /* OBM_CHECKBOXES */
+    { NULL, FALSE },            /* OBM_CHECK */
+    { NULL, FALSE },            /* OBM_BTSIZE */
+    { NULL, FALSE },            /* OBM_OLD_LFARROW */
+    { NULL, FALSE },            /* OBM_OLD_RGARROW */
+    { NULL, FALSE },            /* OBM_OLD_DNARROW */
+    { NULL, FALSE },            /* OBM_OLD_UPARROW */
+    { NULL, FALSE },            /* OBM_SIZE */
+    { NULL, FALSE },            /* OBM_OLD_CLOSE */
 };
 
 
