@@ -957,12 +957,26 @@ static BOOL DeviceIo_VNB(DWORD dwIoControlCode,
                         if (NO_ERROR == error)
                         {
                             info->nodeType = (WORD)fixedInfo->NodeType;
-                            info->scopeLen = max(strlen(fixedInfo->ScopeId) + 1,
-                             sizeof(info->scope) - 1);
-                            memcpy(info->scope, fixedInfo->ScopeId,
+                            info->scopeLen = min(strlen(fixedInfo->ScopeId) + 1,
+                             sizeof(info->scope) - 2);
+                            memcpy(info->scope + 1, fixedInfo->ScopeId,
                              info->scopeLen);
-                            info->scope[info->scopeLen] = '\0';
-                            /* FIXME: gotta L2-encode the scope ID */
+                            info->scope[info->scopeLen + 1] = '\0';
+                            {
+                                /* convert into L2-encoded version */
+                                char *ptr, *lenPtr;
+
+                                for (ptr = info->scope + 1; *ptr &&
+                                 ptr - info->scope < sizeof(info->scope); )
+                                {
+                                    for (lenPtr = ptr - 1, *lenPtr = 0;
+                                     *ptr && *ptr != '.' &&
+                                     ptr - info->scope < sizeof(info->scope);
+                                     ptr++)
+                                        *lenPtr += 1;
+                                    ptr++;
+                                }
+                            }
                             /* could set DNS servers here too, but since
                              * ipconfig.exe and winipcfg.exe read these from the
                              * registry, there's no point */
