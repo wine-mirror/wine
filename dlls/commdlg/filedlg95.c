@@ -1030,6 +1030,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   };
   TBADDBITMAP tba[2];
   RECT rectTB;
+  RECT rectlook;
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
   tba[0].hInst = HINST_COMMCTRL;
@@ -1055,9 +1056,17 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   fodInfos->DlgInfos.hwndFileTypeCB = GetDlgItem(hwnd,IDC_FILETYPE);
   fodInfos->DlgInfos.hwndLookInCB = GetDlgItem(hwnd,IDC_LOOKIN);
 
+  GetWindowRect( fodInfos->DlgInfos.hwndLookInCB,&rectlook);
+  MapWindowPoints( 0, hwnd,(LPPOINT)&rectlook,2);
+
   /* construct the toolbar */
   GetWindowRect(GetDlgItem(hwnd,IDC_TOOLBARSTATIC),&rectTB);
   MapWindowPoints( 0, hwnd,(LPPOINT)&rectTB,2);
+
+  rectTB.right = rectlook.right + rectTB.right - rectTB.left;
+  rectTB.bottom = rectlook.top - 1 + rectTB.bottom - rectTB.top;
+  rectTB.left = rectlook.right;
+  rectTB.top = rectlook.top-1;
 
   fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
         WS_CHILD | WS_GROUP | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
