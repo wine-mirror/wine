@@ -288,6 +288,8 @@ static void ListView_UpdateLargeItemLabelRect (HWND hwnd, const LISTVIEW_INFO* i
 static LRESULT LISTVIEW_GetColumnT(HWND, INT, LPLVCOLUMNW, BOOL);
 static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos, HWND hScrollWnd);
 static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos, HWND hScrollWnd);
+static INT LISTVIEW_GetTopIndex(HWND hwnd);
+static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
@@ -553,6 +555,9 @@ static void LISTVIEW_DumpListview(LISTVIEW_INFO *iP, INT line)
   TRACE("listview %08x at line %d, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx\n",
         iP->hwndSelf, line, iP->himlNormal, iP->himlSmall, iP->himlState,
         iP->nFocusedItem, iP->nHotItem, iP->dwExStyle);
+  TRACE("listview %08x at line %d, ntmH=%d, icSz.cx=%ld, icSz.cy=%ld, icSp.cx=%ld, icSp.cy=%ld\n",
+        iP->hwndSelf, line, iP->ntmHeight, iP->iconSize.cx, iP->iconSize.cy,
+        iP->iconSpacing.cx, iP->iconSpacing.cy);
 }
 
 static BOOL
@@ -2123,16 +2128,16 @@ static BOOL LISTVIEW_SetItemFocus(HWND hwnd, INT nItem)
       infoPtr->nFocusedItem = -1;
       ZeroMemory(&lvItem, sizeof(lvItem));
       lvItem.stateMask = LVIS_FOCUSED;
-      ListView_SetItemState(hwnd, oldFocus, &lvItem);
+      LISTVIEW_SetItemState(hwnd, oldFocus, &lvItem);
 
     }
 
     lvItem.state =  LVIS_FOCUSED;
     lvItem.stateMask = LVIS_FOCUSED;
-    ListView_SetItemState(hwnd, nItem, &lvItem);
+    LISTVIEW_SetItemState(hwnd, nItem, &lvItem);
 
     infoPtr->nFocusedItem = nItem;
-    ListView_EnsureVisible(hwnd, nItem, FALSE);
+    LISTVIEW_EnsureVisible(hwnd, nItem, FALSE);
   }
 
   return bResult;
@@ -2156,13 +2161,13 @@ static VOID LISTVIEW_SetSelection(HWND hwnd, INT nItem)
 
   ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.stateMask = LVIS_FOCUSED;
-  ListView_SetItemState(hwnd, infoPtr->nFocusedItem, &lvItem);
+  LISTVIEW_SetItemState(hwnd, infoPtr->nFocusedItem, &lvItem);
 
   LISTVIEW_RemoveAllSelections(hwnd);
 
   lvItem.state =   LVIS_FOCUSED|LVIS_SELECTED;
   lvItem.stateMask = LVIS_FOCUSED|LVIS_SELECTED;
-  ListView_SetItemState(hwnd, nItem, &lvItem);
+  LISTVIEW_SetItemState(hwnd, nItem, &lvItem);
 
   infoPtr->nFocusedItem = nItem;
   infoPtr->nSelectionMark = nItem;
@@ -2312,7 +2317,7 @@ static LRESULT LISTVIEW_MouseSelection(HWND hwnd, POINT pt)
   LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
 
-  topindex = ListView_GetTopIndex(hwnd);
+  topindex = LISTVIEW_GetTopIndex(hwnd);
   if (uView == LVS_REPORT)
   {
     bottomindex = topindex + LISTVIEW_GetCountPerColumn(hwnd) + 1;
@@ -3287,7 +3292,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     nMixMode = SetROP2(hdc, R2_COPYPEN);
   }
 
-  nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText);
+  nLabelWidth = LISTVIEW_GetStringWidthT(hwnd, lvItem.pszText, TRUE);
   if (rcItem.left + nLabelWidth < rcItem.right)
   {
     if (!FullSelect)
@@ -5772,7 +5777,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
       switch(lprc->left)
       {
       case LVIR_ICON:
-	if (!ListView_GetItemPosition(hwnd, nItem, &ptItem)) break;
+	if (!LISTVIEW_GetItemPosition(hwnd, nItem, &ptItem)) break;
         if (uView == LVS_ICON)
         {
           if (infoPtr->himlNormal != NULL)
@@ -5826,7 +5831,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         break;
 
       case LVIR_LABEL:
-	if (!ListView_GetItemPosition(hwnd, nItem, &ptItem)) break;
+	if (!LISTVIEW_GetItemPosition(hwnd, nItem, &ptItem)) break;
         if (uView == LVS_ICON)
         {
           if (infoPtr->himlNormal != NULL)
@@ -6024,7 +6029,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         break;
 
       case LVIR_SELECTBOUNDS:
-        if (!ListView_GetItemPosition(hwnd, nItem, &ptItem)) break;
+        if (!LISTVIEW_GetItemPosition(hwnd, nItem, &ptItem)) break;
         if (uView == LVS_ICON)
         {
           if (infoPtr->himlNormal != NULL)
@@ -6174,7 +6179,7 @@ static INT LISTVIEW_GetLabelWidth(HWND hwnd, INT nItem)
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   if (LISTVIEW_GetItemW(hwnd, &lvItem, TRUE))
-    nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText);
+    nLabelWidth = LISTVIEW_GetStringWidthT(hwnd, lvItem.pszText, TRUE);
 
   return nLabelWidth;
 }
@@ -6466,6 +6471,9 @@ static LRESULT LISTVIEW_GetOrigin(HWND hwnd, LPPOINT lpptOrigin)
     }
 
     bResult = TRUE;
+
+    TRACE("(hwnd=%x, pt=(%ld,%ld))\n", hwnd, lpptOrigin->x, lpptOrigin->y);
+
   }
 
   return bResult;
@@ -6607,7 +6615,7 @@ static INT LISTVIEW_SuperHitTestItem(HWND hwnd, LPLV_INTHIT lpInt, BOOL subitem)
 
   TRACE("(hwnd=%x, x=%ld, y=%ld)\n", hwnd, lpInt->ht.pt.x, lpInt->ht.pt.y);
 
-  topindex = ListView_GetTopIndex(hwnd);
+  topindex = LISTVIEW_GetTopIndex(hwnd);
   if (uView == LVS_REPORT)
   {
     bottomindex = topindex + LISTVIEW_GetCountPerColumn(hwnd) + 1;
@@ -7674,15 +7682,18 @@ static LRESULT LISTVIEW_SetIconSpacing(HWND hwnd, DWORD spacing)
   else
   {  /* if 0 then compute height */
     if (uView == LVS_ICON)
-       infoPtr->iconSpacing.cy = infoPtr->iconSize.cy + infoPtr->ntmHeight
+       infoPtr->iconSpacing.cy = infoPtr->iconSize.cy + 2 * infoPtr->ntmHeight
                                   + ICON_BOTTOM_PADDING + ICON_TOP_PADDING + LABEL_VERT_OFFSET;
         /* FIXME.  I don't think so; I think it is based on twice the ntmHeight */
     else /* FIXME: unknown computation for non LVS_ICON - this is a guess */
        infoPtr->iconSpacing.cy = LISTVIEW_GetItemHeight(hwnd);
   }
 
-  TRACE("old=(%d,%d), new=(%ld,%ld)\n", LOWORD(oldspacing), HIWORD(oldspacing),
-        infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
+  TRACE("old=(%d,%d), new=(%ld,%ld), iconSize=(%ld,%ld), ntmH=%d\n",
+	LOWORD(oldspacing), HIWORD(oldspacing),
+        infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy,
+	infoPtr->iconSize.cx, infoPtr->iconSize.cy,
+	infoPtr->ntmHeight);
 
   /* these depend on the iconSpacing */
   infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
@@ -7720,6 +7731,8 @@ static HIMAGELIST LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
     {
         INT cx, cy;
         ImageList_GetIconSize(himl, &cx, &cy);
+	TRACE("icon old size=(%ld,%ld), new size=(%d,%d)\n",
+	      infoPtr->iconSize.cx, infoPtr->iconSize.cy, cx, cy);
         infoPtr->iconSize.cx = cx;
         infoPtr->iconSize.cy = cy;
         LISTVIEW_SetIconSpacing(hwnd,0);
@@ -7943,10 +7956,10 @@ static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMW lpLVItem)
   {
     /* apply to all items */
     for (lvItem.iItem = 0; lvItem.iItem < GETITEMCOUNT(infoPtr); lvItem.iItem++)
-      if (!ListView_SetItemW(hwnd, &lvItem)) bResult = FALSE;
+      if (!LISTVIEW_SetItemT(hwnd, &lvItem, TRUE)) bResult = FALSE;
   }
   else
-    bResult = ListView_SetItemW(hwnd, &lvItem);
+    bResult = LISTVIEW_SetItemT(hwnd, &lvItem, TRUE);
 
   return bResult;
 }
@@ -8915,7 +8928,7 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
   {
     if (lStyle & LVS_SINGLESEL)
     {
-      if ((ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED)
+      if ((LISTVIEW_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED)
           && infoPtr->nEditLabelItem == -1)
           infoPtr->nEditLabelItem = nItem;
       else
@@ -8941,7 +8954,7 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
       else
       {
 	BOOL was_selected =
-	    (ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED);
+	    (LISTVIEW_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED);
 
 	/* set selection (clears other pre-existing selections) */
         LISTVIEW_SetSelection(hwnd, nItem);
@@ -9600,9 +9613,28 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
 
     if (uNewView == LVS_ICON)
     {
-      /* FIXME: should get icon size from imagelist - mjm */
+      INT oldcx, oldcy;
+
+      /* First readjust the iconSize and if necessary the iconSpacing */
+      oldcx = infoPtr->iconSize.cx;
+      oldcy = infoPtr->iconSize.cy;
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYICON);
+      if (infoPtr->himlNormal != NULL)
+      {
+	  INT cx, cy;
+	  ImageList_GetIconSize(infoPtr->himlNormal, &cx, &cy);
+	  infoPtr->iconSize.cx = cx;
+	  infoPtr->iconSize.cy = cy;
+      }
+      if ((infoPtr->iconSize.cx != oldcx) || (infoPtr->iconSize.cy != oldcy))
+      {
+	  TRACE("icon old size=(%d,%d), new size=(%ld,%ld)\n",
+		oldcx, oldcy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
+	  LISTVIEW_SetIconSpacing(hwnd,0);
+      }
+
+      /* Now update the full item width and height */
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
       if (lpss->styleNew & LVS_ALIGNLEFT)
