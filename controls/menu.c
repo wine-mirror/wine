@@ -3016,8 +3016,20 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
     SendMessageA( hWnd, WM_SETCURSOR, hWnd, HTCAPTION );
 
     if (!(wFlags & TPM_NONOTIFY))
+    {
+       POPUPMENU *menu;
        SendMessageA( hWnd, WM_INITMENU, hMenu, 0 );
-
+       if ((menu = MENU_GetMenu( hMenu )) && (!menu->Height))
+       { /* app changed/recreated menu bar entries in WM_INITMENU
+            Recalculate menu sizes else clicks will not work */
+           RECT r;
+           HDC hdc = GetDCEx( hWnd, 0, DCX_CACHE | DCX_WINDOW );
+           SelectObject( hdc, hMenuFont);
+           GetClientRect(hWnd, &r); /* probably too simple */
+           MENU_MenuBarCalcSize( hdc, &r, menu, hWnd );
+           ReleaseDC(hWnd, hdc);
+       }
+    }
     return TRUE;
 }
 /***********************************************************************
