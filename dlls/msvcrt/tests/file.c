@@ -316,7 +316,41 @@ static void test_tmpnam( void )
   ok(res[strlen(res)-1] != '.', "second call - last character is a dot\n");
 }
 
+static void test_chsize( void )
+{
+    int fd;
+    long cur, pos, count;
+    char temptext[] = "012345678";
+    char *tempfile = _tempnam( ".", "tst" );
+    
+    ok( tempfile != NULL, "Couldn't create test file: %s\n", tempfile );
 
+    fd = _open( tempfile, _O_CREAT|_O_TRUNC|_O_RDWR, _S_IREAD|_S_IWRITE );
+    ok( fd > 0, "Couldn't open test file\n" );
+
+    count = _write( fd, temptext, sizeof(temptext) );
+    ok( count > 0, "Couldn't write to test file\n" );
+
+    /* get current file pointer */
+    cur = _lseek( fd, 0, SEEK_CUR );
+
+    /* make the file smaller */
+    ok( _chsize( fd, sizeof(temptext) / 2 ) == 0, "_chsize() failed\n" );
+
+    pos = _lseek( fd, 0, SEEK_CUR );
+    ok( cur == pos, "File pointer changed from: %ld to: %ld\n", cur, pos );
+    ok( _filelength( fd ) == sizeof(temptext) / 2, "Wrong file size\n" );
+
+    /* enlarge the file */
+    ok( _chsize( fd, sizeof(temptext) * 2 ) == 0, "_chsize() failed\n" ); 
+
+    pos = _lseek( fd, 0, SEEK_CUR );
+    ok( cur == pos, "File pointer changed from: %ld to: %ld\n", cur, pos );
+    ok( _filelength( fd ) == sizeof(temptext) * 2, "Wrong file size\n" );
+
+    _close( fd );
+    _unlink( tempfile );
+}
 
 START_TEST(file)
 {
@@ -338,4 +372,5 @@ START_TEST(file)
     test_file_write_read();
     test_file_inherit(arg_v[0]);
     test_tmpnam();
+    test_chsize();
 }

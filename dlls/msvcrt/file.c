@@ -525,15 +525,6 @@ int _wchmod(const MSVCRT_wchar_t *path, int flags)
 }
 
 /*********************************************************************
- *		_chsize (MSVCRT.@)
- */
-int _chsize(int fd, long size)
-{
-    FIXME("(fd=%d, size=%ld): stub\n", fd, size);
-    return -1;
-}
-
-/*********************************************************************
  *		_unlink (MSVCRT.@)
  */
 int _unlink(const char *path)
@@ -907,6 +898,42 @@ int MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
   return (_lseek(file->_file,offset,whence) == -1)?-1:0;
+}
+
+/*********************************************************************
+ *		_chsize (MSVCRT.@)
+ */
+int _chsize(int fd, long size)
+{
+    LONG cur, pos;
+    HANDLE handle;
+    BOOL ret = FALSE;
+
+    TRACE("(fd=%d, size=%ld)\n", fd, size);
+
+    LOCK_FILES();
+
+    handle = msvcrt_fdtoh(fd);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        /* save the current file pointer */
+        cur = _lseek(fd, 0, SEEK_CUR);
+        if (cur >= 0)
+        {
+            pos = _lseek(fd, size, SEEK_SET);
+            if (pos >= 0)
+            {
+                ret = SetEndOfFile(handle);
+                if (!ret) msvcrt_set_errno(GetLastError());
+            }
+
+            /* restore the file pointer */
+            _lseek(fd, cur, SEEK_SET);
+        }
+    }
+
+    UNLOCK_FILES();
+    return ret ? 0 : -1;
 }
 
 /*********************************************************************
