@@ -540,41 +540,46 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
 
 /*************************************************************************
  * ExtractIconA				[SHELL32.@]
- *
- * FIXME
- *  if the filename is not a file return 1
  */
-HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
-	UINT nIconIndex )
-{   HGLOBAL16 handle = InternalExtractIcon16(HINSTANCE_16(hInstance),lpszExeFileName,nIconIndex, 1);
-    TRACE("\n");
-    if( handle )
-    {
-	HICON16* ptr = (HICON16*)GlobalLock16(handle);
-	HICON16  hIcon = *ptr;
+HICON WINAPI ExtractIconA(HINSTANCE hInstance, LPCSTR lpszFile, UINT nIconIndex)
+{   
+  HICON ret;
+  INT len = MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, NULL, 0);
+  LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
-	GlobalFree16(handle);
-	return HICON_32(hIcon);
-    }
-    return 0;
+  TRACE("%p %s %d\n", hInstance, lpszFile, nIconIndex);
+
+  MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, lpwstrFile, len);
+  ret = ExtractIconW(hInstance, lpwstrFile, nIconIndex);
+  HeapFree(GetProcessHeap(), 0, lpwstrFile);
+  return ret;
 }
 
 /*************************************************************************
  * ExtractIconW				[SHELL32.@]
- *
- * FIXME: if the filename is not a file return 1
  */
-HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
-	UINT nIconIndex )
-{ LPSTR  exefn;
-  HICON  ret;
-  TRACE("\n");
+HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex)
+{
+	HICON  hIcon = NULL;
+	UINT ret;
+	UINT cx = GetSystemMetrics(SM_CXICON), cy = GetSystemMetrics(SM_CYICON);
 
-  exefn = HEAP_strdupWtoA(GetProcessHeap(),0,lpszExeFileName);
-  ret = ExtractIconA(hInstance,exefn,nIconIndex);
+	TRACE("%p %s %d\n", hInstance, debugstr_w(lpszFile), nIconIndex);
 
-	HeapFree(GetProcessHeap(),0,exefn);
-	return ret;
+	if (nIconIndex == -1) {
+	  ret = PrivateExtractIconsW(lpszFile, 0, cx, cy, NULL, NULL, 0, LR_DEFAULTCOLOR);
+	  if (ret != 0xFFFFFFFF && ret)
+	    return (HICON)ret;
+	  return NULL;
+	}
+	else
+	  ret = PrivateExtractIconsW(lpszFile, nIconIndex, cx, cy, &hIcon, NULL, 1, LR_DEFAULTCOLOR);
+
+	if (ret == 0xFFFFFFFF)
+	  return (HICON)1;
+	else if (ret > 0 && hIcon)
+	  return hIcon;
+	return NULL;
 }
 
 typedef struct
