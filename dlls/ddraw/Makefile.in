@@ -5,7 +5,9 @@ VPATH     = @srcdir@
 MODULE    = ddraw.dll
 IMPORTS   = user32 gdi32 kernel32
 EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
-LDIMPORTS = user32.dll gdi32.dll kernel32.dll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 OPENGLFILES = \
 	d3dcommon.c \

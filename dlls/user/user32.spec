@@ -558,7 +558,6 @@ init	UserClientDllInitialize
 @ stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
 @ stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
 @ stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
-@ stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharsetInfo
 @ stdcall TranslateMDISysAccel(long ptr) TranslateMDISysAccel
 @ stdcall TranslateMessage(ptr) TranslateMessage
 @ stdcall UnhookWindowsHook(long ptr) UnhookWindowsHook
@@ -667,12 +666,51 @@ init	UserClientDllInitialize
 @ stdcall CallWindowProc16(long long long long long) CallWindowProc16
 @ stdcall CloseDriver16(long long long) CloseDriver16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
-@ stdcall DestroyIcon32(long long) DestroyIcon32
 @ stdcall DefDriverProc16(long long long long long) DefDriverProc16
+@ stdcall DestroyIcon32(long long) DestroyIcon32
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
 @ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16
+@ stdcall InitThreadInput16(long long) InitThreadInput16
 @ stdcall OpenDriver16(str str long) OpenDriver16
 @ stdcall PostAppMessage16(long long long long) PostAppMessage16
 @ stdcall SendDriverMessage16(long long long long) SendDriverMessage16
 @ stdcall SetWindowsHookEx16(long long long long) SetWindowsHookEx16
 @ stdcall UserYield16() UserYield16
+
+################################################################
+# Wine dll separation hacks, these will go away, don't use them
+#
+@ cdecl CARET_GetHwnd() CARET_GetHwnd
+@ cdecl CARET_GetRect(ptr) CARET_GetRect
+@ cdecl CLIPBOARD_DeleteRecord(ptr long) CLIPBOARD_DeleteRecord
+@ cdecl CLIPBOARD_EmptyCache(long) CLIPBOARD_EmptyCache
+@ cdecl CLIPBOARD_GetFormatName(long ptr long) CLIPBOARD_GetFormatName
+@ cdecl CLIPBOARD_IsPresent(long) CLIPBOARD_IsPresent
+@ cdecl CLIPBOARD_LookupFormat(long) CLIPBOARD_LookupFormat
+@ cdecl CLIPBOARD_ReleaseOwner() CLIPBOARD_ReleaseOwner
+@ cdecl DCE_InvalidateDCE(long ptr) DCE_InvalidateDCE
+@ cdecl DRAG_QueryUpdate(long long long) DRAG_QueryUpdate
+@ cdecl HOOK_CallHooksA(long long long long) HOOK_CallHooksA
+@ cdecl HOOK_CallHooksW(long long long long) HOOK_CallHooksW
+@ cdecl HOOK_IsHooked(long) HOOK_IsHooked
+@ cdecl NC_GetInsideRect(long ptr) NC_GetInsideRect
+@ cdecl NC_HandleNCHitTest(long long long) NC_HandleNCHitTest
+@ cdecl NC_HandleSetCursor(long long long) NC_HandleSetCursor
+@ cdecl USER_Unlock() USER_Unlock
+@ cdecl WINPOS_ActivateOtherWindow(long) WINPOS_ActivateOtherWindow
+@ cdecl WINPOS_GetMinMaxInfo(long ptr ptr ptr ptr) WINPOS_GetMinMaxInfo
+@ cdecl WINPOS_ShowIconTitle(long long) WINPOS_ShowIconTitle
+@ cdecl WIN_FindWndPtr(long) WIN_FindWndPtr
+@ cdecl WIN_GetPtr(long) WIN_GetPtr
+@ cdecl WIN_Handle32(long) WIN_Handle32
+@ cdecl WIN_IsWindowDrawable(long long) WIN_IsWindowDrawable
+@ cdecl WIN_LinkWindow(long long long) WIN_LinkWindow
+@ cdecl WIN_ListChildren(long) WIN_ListChildren
+@ cdecl WIN_ListParents(long) WIN_ListParents
+@ cdecl WIN_ReleaseWndPtr(ptr) WIN_ReleaseWndPtr
+@ cdecl WIN_RestoreWndsLock(long) WIN_RestoreWndsLock
+@ cdecl WIN_SetExStyle(long long) WIN_SetExStyle
+@ cdecl WIN_SetRectangles(long ptr ptr) WIN_SetRectangles
+@ cdecl WIN_SetStyle(long long) WIN_SetStyle
+@ cdecl WIN_SuspendWndsLock() WIN_SuspendWndsLock
+@ cdecl WIN_UnlinkWindow(long) WIN_UnlinkWindow

@@ -973,21 +973,42 @@ init	MAIN_KernelInit
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
+@ stdcall AllocSelectorArray16(long) AllocSelectorArray16
 @ stdcall ConvertDialog32To16(ptr long ptr) ConvertDialog32To16
+@ stdcall DOS3Call(ptr) DOS3Call
+@ stdcall ExitKernel16() ExitKernel16
+@ stdcall FarGetOwner16(long) FarGetOwner16
+@ stdcall FarSetOwner16(long long) FarSetOwner16
 @ stdcall FindResource16(long str str) FindResource16
 @ stdcall FreeResource16(long) FreeResource16
+@ stdcall FreeSelector16(long) FreeSelector16
 @ stdcall GetCurrentTask() GetCurrentTask
 @ stdcall GetDOSEnvironment16() GetDOSEnvironment16
+@ stdcall GetExePtr(long) GetExePtr
+@ stdcall GetExpWinVer16(long) GetExpWinVer16
 @ stdcall GetModuleFileName16(long ptr long) GetModuleFileName16
 @ stdcall GetModuleHandle16(str) GetModuleHandle16
+@ stdcall GetModuleName16(long ptr long) GetModuleName16
+@ stdcall GetModuleUsage16(long) GetModuleUsage16
+@ stdcall GetSelectorLimit16(long) GetSelectorLimit16
+@ stdcall GetThreadQueue16(long) GetThreadQueue16
+@ stdcall GlobalDOSAlloc16(long) GlobalDOSAlloc16
+@ stdcall GlobalFlags16(long) GlobalFlags16
+@ stdcall GlobalReAlloc16(long long long) GlobalReAlloc16
+@ stdcall IsBadReadPtr16(long long) IsBadReadPtr16
 @ stdcall IsTask16(long) IsTask16
 @ stdcall LoadModule16(str long) LoadModule16
 @ stdcall LoadResource16(long long) LoadResource16
+@ stdcall LocalAlloc16(long long) LocalAlloc16
+@ stdcall LocalInit16(long long long) LocalInit16
+@ stdcall LocalLock16(long) LocalLock16
+@ stdcall LocalUnlock16(long) LocalUnlock16
 @ stdcall LockResource16(long) LockResource16
+@ stdcall SetSelectorBase(long long) SetSelectorBase
+@ stdcall SetSelectorLimit16(long long) SetSelectorLimit16
+@ stdcall SetThreadQueue16(long long) SetThreadQueue16
 @ stdcall SizeofResource16(long long) SizeofResource16
 @ stdcall WinExec16(str long) WinExec16
-@ stdcall GlobalFlags16(long) GlobalFlags16
-@ stdcall GlobalReAlloc16(long long long) GlobalReAlloc16
 
 ################################################################
 # Wine internal extensions
@@ -1008,3 +1029,49 @@ init	MAIN_KernelInit
 
 # Unix files
 @ stdcall wine_get_unix_file_name(str ptr long) wine_get_unix_file_name
+
+################################################################
+# Wine dll separation hacks, these will go away, don't use them
+#
+@ cdecl DOSFS_GetDeviceByHandle(long) DOSFS_GetDeviceByHandle
+@ cdecl DOSMEM_Available() DOSMEM_Available
+@ cdecl DOSMEM_FreeBlock(ptr) DOSMEM_FreeBlock
+@ cdecl DOSMEM_GetBlock(long ptr) DOSMEM_GetBlock
+@ cdecl DOSMEM_GetDPMISegments() DOSMEM_GetDPMISegments
+@ cdecl DOSMEM_Init(long) DOSMEM_Init
+@ cdecl INT_GetPMHandler(long) INT_GetPMHandler
+@ stdcall INT_Int11Handler(ptr) INT_Int11Handler
+@ stdcall INT_Int12Handler(ptr) INT_Int12Handler
+@ stdcall INT_Int13Handler(ptr) INT_Int13Handler
+@ stdcall INT_Int15Handler(ptr) INT_Int15Handler
+@ stdcall INT_Int1aHandler(ptr) INT_Int1aHandler
+@ stdcall INT_Int25Handler(ptr) INT_Int25Handler
+@ stdcall INT_Int2aHandler(ptr) INT_Int2aHandler
+@ stdcall INT_Int2fHandler(ptr) INT_Int2fHandler
+@ stdcall INT_Int31Handler(ptr) INT_Int31Handler
+@ stdcall INT_Int34Handler(ptr) INT_Int34Handler
+@ stdcall INT_Int35Handler(ptr) INT_Int35Handler
+@ stdcall INT_Int36Handler(ptr) INT_Int36Handler
+@ stdcall INT_Int37Handler(ptr) INT_Int37Handler
+@ stdcall INT_Int38Handler(ptr) INT_Int38Handler
+@ stdcall INT_Int39Handler(ptr) INT_Int39Handler
+@ stdcall INT_Int3aHandler(ptr) INT_Int3aHandler
+@ stdcall INT_Int3bHandler(ptr) INT_Int3bHandler
+@ stdcall INT_Int3cHandler(ptr) INT_Int3cHandler
+@ stdcall INT_Int3dHandler(ptr) INT_Int3dHandler
+@ stdcall INT_Int3eHandler(ptr) INT_Int3eHandler
+@ cdecl INT_SetPMHandler(long long) INT_SetPMHandler
+@ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
+@ cdecl LOCAL_Compact(long long long) LOCAL_Compact
+@ cdecl LOCAL_CountFree(long) LOCAL_CountFree
+@ cdecl LOCAL_Free(long long) LOCAL_Free
+@ cdecl LOCAL_HeapSize(long) LOCAL_HeapSize
+@ cdecl LOCAL_Lock(long long) LOCAL_Lock
+@ cdecl LOCAL_ReAlloc(long long long long) LOCAL_ReAlloc
+@ cdecl LOCAL_Size(long long) LOCAL_Size
+@ cdecl LOCAL_Unlock(long long) LOCAL_Unlock
+@ cdecl NE_DefResourceHandler(long long long) NE_DefResourceHandler
+@ cdecl SELECTOR_AllocBlock(ptr long long) SELECTOR_AllocBlock
+@ cdecl TASK_GetPtr(long) TASK_GetPtr
+@ cdecl THREAD_IdToTEB(long) THREAD_IdToTEB
+@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr) VIRTUAL_SetFaultHandler

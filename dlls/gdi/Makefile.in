@@ -6,8 +6,11 @@ VPATH     = @srcdir@
 MODULE    = gdi32.dll
 IMPORTS   = advapi32 kernel32
 ALTNAMES  = gdi.exe dispdib.dll wing.dll
-LDIMPORTS = kernel32.dll ntdll.dll
 EXTRAINCL = @FREETYPEINCL@
+EXTRALIBS = $(LIBUNICODE)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	$(TOPOBJDIR)/graphics/bitblt.c \

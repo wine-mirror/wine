@@ -419,8 +419,34 @@ init    MAIN_GdiInit
 @ stdcall CloseJob16(long) CloseJob16
 @ stdcall CloseMetaFile16(long) CloseMetaFile16
 @ stdcall CreateMetaFile16(str) CreateMetaFile16
+@ stdcall DeleteMetaFile16(long) DeleteMetaFile16
 @ stdcall DrvGetPrinterData16(str str ptr ptr long ptr) DrvGetPrinterData16
 @ stdcall DrvSetPrinterData16(str str long ptr long) DrvSetPrinterData16
+@ stdcall ExcludeVisRect16(long long long long long) ExcludeVisRect16
+@ stdcall GDIRealizePalette16(long) GDIRealizePalette16
+@ stdcall GDISelectPalette16(long long long) GDISelectPalette16
+@ stdcall GetDCState16(long) GetDCState16
+@ stdcall InquireVisRgn16(long) InquireVisRgn16
+@ stdcall IntersectVisRect16(long long long long long) IntersectVisRect16
+@ stdcall IsDCCurrentPalette16(long) IsDCCurrentPalette16
 @ stdcall OpenJob16(str str long) OpenJob16
+@ stdcall RestoreVisRgn16(long) RestoreVisRgn16
+@ stdcall SaveVisRgn16(long) SaveVisRgn16
+@ stdcall SelectVisRgn16(long long) SelectVisRgn16
 @ stdcall SetDCHook(long ptr long) SetDCHook
+@ stdcall SetDCOrg16(long long long) SetDCOrg16
+@ stdcall SetDCState16(long long) SetDCState16
+@ stdcall SetHookFlags16(long long) SetHookFlags16
 @ stdcall WriteSpool16(long ptr long) WriteSpool16
+
+################################################################
+# Wine dll separation hacks, these will go away, don't use them
+#
+@ cdecl DC_GetDCPtr(long) DC_GetDCPtr
+@ cdecl DIB_BitmapInfoSize(ptr long) DIB_BitmapInfoSize
+@ cdecl DIB_CreateDIBFromBitmap(long long) DIB_CreateDIBFromBitmap
+@ cdecl DIB_CreateDIBSection(long ptr long ptr long long long) DIB_CreateDIBSection
+@ cdecl DIB_GetDIBImageBytes(long long long) DIB_GetDIBImageBytes
+@ cdecl DIB_GetDIBWidthBytes(long long) DIB_GetDIBWidthBytes
+@ cdecl GDI_GetObjPtr(long long) GDI_GetObjPtr
+@ cdecl GDI_ReleaseObj(long) GDI_ReleaseObj

@@ -771,8 +771,7 @@ crtdll:   msvcrt.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 crypt32:  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 d3d8:     kernel32.dll$(DLLEXT)
 dciman32: kernel32.dll$(DLLEXT)
-ddraw:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) \
-          libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
+ddraw:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 devenum:  kernel32.dll$(DLLEXT)
 dinput8:  dinput.dll$(DLLEXT)
 dinput:   user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
@@ -780,7 +779,7 @@ dplay:    dplayx.dll$(DLLEXT)
 dplayx:   winmm.dll$(DLLEXT) ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
           kernel32.dll$(DLLEXT)
 dsound:   winmm.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-gdi:      advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+gdi:      advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 glu32:    kernel32.dll$(DLLEXT)
 icmp:     kernel32.dll$(DLLEXT)
 imagehlp: kernel32.dll$(DLLEXT)
@@ -831,17 +830,15 @@ shlwapi:  ole32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll
 snmpapi:  kernel32.dll$(DLLEXT)
 sti:      kernel32.dll$(DLLEXT)
 tapi32:   kernel32.dll$(DLLEXT)
-ttydrv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) \
-          libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
+ttydrv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 twain:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 url:      kernel32.dll$(DLLEXT)
 urlmon:   ole32.dll$(DLLEXT) wininet.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-user:     gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT) \
-          libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+user:     gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 version:  lz32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 win32s:   kernel32.dll$(DLLEXT)
 winaspi:  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winedos:  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
+winedos:  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 wineps:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) \
           kernel32.dll$(DLLEXT)
 wininet:  shlwapi.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
@@ -867,23 +864,14 @@ wintrust: kernel32.dll$(DLLEXT)
 wow32:    kernel32.dll$(DLLEXT)
 wsock32:  ws2_32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 x11drv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-          libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
+          ntdll.dll$(DLLEXT)
 
 # Special targets for dlls that we need to link to
 
-LINKABLE_DLLS = ntdll.dll gdi32.dll user32.dll kernel32.dll
+LINKABLE_DLLS = ntdll.dll
 
 libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
-
-libgdi32.dll.$(LIBEXT): gdi/gdi32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) gdi/gdi32.dll$(DLLEXT) $@
-
-libuser32.dll.$(LIBEXT): user/user32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
-
-libkernel32.dll.$(LIBEXT): kernel/kernel32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 
 uninstall::
 	$(RM) $(LINKABLE_DLLS:%=$(libdir)/lib%.$(LIBEXT))
@@ -893,14 +881,8 @@ install::
 	cd $(libdir) && if [ "$(dlldir)" = "$(libdir)/wine" ]; \
 	then \
 	  $(LN_S) wine/ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT); \
-	  $(LN_S) wine/gdi32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT); \
-	  $(LN_S) wine/user32.dll$(DLLEXT) libuser32.dll.$(LIBEXT); \
-	  $(LN_S) wine/kernel32.dll$(DLLEXT) libkernel32.dll.$(LIBEXT); \
 	else \
 	  $(LN_S) $(dlldir)/ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT); \
-	  $(LN_S) $(dlldir)/gdi32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT); \
-	  $(LN_S) $(dlldir)/user32.dll$(DLLEXT) libuser32.dll.$(LIBEXT); \
-	  $(LN_S) $(dlldir)/kernel32.dll$(DLLEXT) libkernel32.dll.$(LIBEXT); \
 	fi
 
 # Misc rules

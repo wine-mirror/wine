@@ -1028,6 +1028,7 @@
 
 # Relays
 @ cdecl -norelay -i386 __wine_call_from_32_regs() __wine_call_from_32_regs
+@ cdecl -i386 __wine_enter_vm86(ptr) __wine_enter_vm86
 
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call

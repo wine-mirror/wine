@@ -4,9 +4,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = x11drv.dll
-IMPORTS   = user32 gdi32 advapi32 kernel32
+IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
-LDIMPORTS = user32.dll gdi32.dll kernel32.dll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	$(TOPOBJDIR)/graphics/x11drv/bitblt.c \
