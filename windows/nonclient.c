@@ -2101,7 +2101,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
     if (GetCapture() != hwnd) SetCapture( hwnd );    
 
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
     {
           /* Retrieve a default cache DC (without using the window style) */
         hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
@@ -2235,7 +2235,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	if(!DragFullWindows)
         NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
         ReleaseDC( wndPtr->parent->hwndSelf, hdc );
     else
         ReleaseDC( 0, hdc );
@@ -2693,7 +2693,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 
     TRACE("Handling WM_SYSCOMMAND %x %ld,%ld\n", wParam, pt.x, pt.y );
 
-    if ((wndPtr->dwStyle & WS_CHILD) && (uCommand != SC_KEYMENU))
+    if (wndPtr->parent && (uCommand != SC_KEYMENU))
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
     switch (uCommand)

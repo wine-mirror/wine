@@ -246,7 +246,7 @@ void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect )
     if (!wndPtr) return;
     
     CONV_RECT32TO16( &wndPtr->rectWindow, rect );
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (wndPtr->parent)
 	MapWindowPoints16( wndPtr->parent->hwndSelf, 0, (POINT16 *)rect, 2 );
     WIN_ReleaseWndPtr(wndPtr);
 }
@@ -261,7 +261,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (!wndPtr) return FALSE;
     
     *rect = wndPtr->rectWindow;
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (wndPtr->parent)
 	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
     WIN_ReleaseWndPtr(wndPtr);
     return TRUE;

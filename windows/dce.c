@@ -560,7 +560,7 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                  * WS_CLIPSIBLINGS style
 		 */
 
-		while (wndPtr->dwStyle & WS_CHILD)
+		while (wndPtr->parent)
 		{
 		    WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
 		    xoffset -= wndPtr->rectClient.left;

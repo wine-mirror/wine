@@ -1329,11 +1329,11 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     {
 	if (h == hwnd)
 	{
-	    SetFocus(GetWindowLongA(hwnd,GWL_HWNDPARENT));
+	    SetFocus(GetParent(h));
 	    bFocusSet = TRUE;
 	    break;
 	}
-	h = GetWindowLongA(h,GWL_HWNDPARENT);
+	h = GetParent(h);
     }
     /* If the focus is on the window we will destroy and it has no parent,
      * set the focus to 0.
@@ -2031,9 +2031,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		goto end;
 	case GWL_STYLE:
 	       	style.styleOld = wndPtr->dwStyle;
-		newval &= ~(WS_CHILD);	/* this bit can't be changed this way */
-		style.styleNew = newval | (style.styleOld & (WS_CHILD));
-
+		style.styleNew = newval;
 		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
 		wndPtr->dwStyle = style.styleNew;
@@ -2454,9 +2452,10 @@ BOOL16 WINAPI IsChild16( HWND16 parent, HWND16 child )
 BOOL WINAPI IsChild( HWND parent, HWND child )
 {
     WND * wndPtr = WIN_FindWndPtr( child );
-    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
+    while (wndPtr && wndPtr->parent)
     {
         WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
+        if (wndPtr->hwndSelf == GetDesktopWindow()) break;
         if (wndPtr->hwndSelf == parent)
         {
             WIN_ReleaseWndPtr(wndPtr);
@@ -2484,7 +2483,7 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
 {
     BOOL retval;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
+    while (wndPtr && wndPtr->parent)
     {
         if (!(wndPtr->dwStyle & WS_VISIBLE))
     {
@@ -2496,7 +2495,6 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
     retval = (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
     WIN_ReleaseWndPtr(wndPtr);
     return retval;
-    
 }
 
 
@@ -3159,7 +3157,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
  if( !(ptrQueryWnd->dwStyle & WS_MINIMIZE) ) 
    {
      tempRect = ptrQueryWnd->rectClient;
-     if(ptrQueryWnd->dwStyle & WS_CHILD)
+     if(ptrQueryWnd->parent)
         MapWindowPoints( ptrQueryWnd->parent->hwndSelf, 0,
                            (LPPOINT)&tempRect, 2 );
 

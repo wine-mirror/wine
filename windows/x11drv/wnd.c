@@ -851,7 +851,8 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
 void X11DRV_WND_PreSizeMove(WND *wndPtr)
 {
   /* Grab the server only when moving top-level windows without desktop */
-  if (!(wndPtr->dwStyle & WS_CHILD) && (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
+  if ((X11DRV_GetXRootWindow() == DefaultRootWindow(display)) &&
+      (wndPtr->parent->hwndSelf == GetDesktopWindow()))
     TSXGrabServer( display );
 }
 
@@ -860,8 +861,8 @@ void X11DRV_WND_PreSizeMove(WND *wndPtr)
  */
 void X11DRV_WND_PostSizeMove(WND *wndPtr)
 {
-  if (!(wndPtr->dwStyle & WS_CHILD) && 
-      (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
+  if ((X11DRV_GetXRootWindow() == DefaultRootWindow(display)) &&
+      (wndPtr->parent->hwndSelf == GetDesktopWindow()))
     TSXUngrabServer( display );
 }
 

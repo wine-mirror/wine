@@ -1994,7 +1994,7 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
             goto END;
         }
         /* Make sure hwndCtrl is a top-level child */
-        while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
+        while (pWndCtrl->parent && (pWndCtrl->parent != pWndDlg))
             WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->parent);
         if (pWndCtrl->parent != pWndDlg)
         {
