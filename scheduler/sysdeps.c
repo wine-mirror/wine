@@ -43,6 +43,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/exception.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
@@ -84,7 +85,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
 {
 #if defined(__i386__)
     /* On the i386, the current thread is in the %fs register */
-    __set_fs( teb->teb_sel );
+    wine_set_fs( teb->teb_sel );
 #elif defined(HAVE__LWP_CREATE)
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );

@@ -50,6 +50,7 @@
 
 #include "ntddk.h"
 #include "winnt.h"
+#include "wine/library.h"
 
 #include "selectors.h"
 
@@ -491,7 +492,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #ifdef FS_sig
     fs = FS_sig(sigcontext);
 #else
-    fs = __get_fs();
+    fs = wine_get_fs();
 #endif
     context->SegFs = fs;
 
@@ -507,7 +508,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
         fs = *(unsigned int *)ESP_sig(sigcontext);
         if (EAX_sig(sigcontext) == VM86_EAX) {
             struct vm86plus_struct *vm86;
-            __set_fs(fs);
+            wine_set_fs(fs);
             /* retrieve pointer to vm86plus struct that was stored in vm86_enter
              * (but we could also get if from teb->vm86_ptr) */
             vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
@@ -518,7 +519,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     }
 #endif  /* __HAVE_VM86 */
 
-    __set_fs(fs);
+    wine_set_fs(fs);
 
     context->Eax    = EAX_sig(sigcontext);
     context->Ebx    = EBX_sig(sigcontext);
@@ -537,7 +538,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #ifdef GS_sig
     context->SegGs  = LOWORD(GS_sig(sigcontext));
 #else
-    context->SegGs  = __get_gs();
+    context->SegGs  = wine_get_gs();
 #endif
 }
 
@@ -580,12 +581,12 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 #ifdef FS_sig
     FS_sig(sigcontext)  = context->SegFs;
 #else
-    __set_fs( context->SegFs );
+    wine_set_fs( context->SegFs );
 #endif
 #ifdef GS_sig
     GS_sig(sigcontext)  = context->SegGs;
 #else
-    __set_gs( context->SegGs );
+    wine_set_gs( context->SegGs );
 #endif
 }
 

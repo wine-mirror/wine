@@ -23,6 +23,7 @@
 #include "ntddk.h"
 #include "syslevel.h"
 #include "stackframe.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
@@ -99,7 +100,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
                   teb->sys_count[lock->level] );
 
     if (lock == &Win16Mutex)
-        SYSLEVEL_Win16CurrentTeb = __get_fs();
+        SYSLEVEL_Win16CurrentTeb = wine_get_fs();
 }
 
 /************************************************************************

@@ -110,4 +110,39 @@ inline static unsigned char wine_ldt_get_flags( const LDT_ENTRY *ent )
     return ret;
 }
 
+/* segment register access */
+
+#ifdef __i386__
+# ifdef __GNUC__
+#  define __DEFINE_GET_SEG(seg) \
+    extern inline unsigned short wine_get_##seg(void) \
+    { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
+#  define __DEFINE_SET_SEG(seg) \
+    extern inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
+# elif defined(_MSC_VER)
+#  define __DEFINE_GET_SEG(seg) \
+    extern inline unsigned short wine_get_##seg(void) \
+    { unsigned short res; __asm { mov res, seg } return res; }
+#  define __DEFINE_SET_SEG(seg) \
+    extern inline void wine_set_##seg(unsigned short val) { __asm { mov seg, val } }
+# else  /* __GNUC__ || _MSC_VER */
+#  define __DEFINE_GET_SEG(seg) extern unsigned short wine_get_##seg(void);
+#  define __DEFINE_SET_SEG(seg) extern void wine_set_##seg(unsigned int);
+# endif /* __GNUC__ || _MSC_VER */
+#else  /* __i386__ */
+# define __DEFINE_GET_SEG(seg) inline static unsigned short wine_get_##seg(void) { return 0; }
+# define __DEFINE_SET_SEG(seg) inline static void wine_set_##seg(int val) { /* nothing */ }
+#endif  /* __i386__ */
+
+__DEFINE_GET_SEG(cs)
+__DEFINE_GET_SEG(ds)
+__DEFINE_GET_SEG(es)
+__DEFINE_GET_SEG(fs)
+__DEFINE_GET_SEG(gs)
+__DEFINE_GET_SEG(ss)
+__DEFINE_SET_SEG(fs)
+__DEFINE_SET_SEG(gs)
+#undef __DEFINE_GET_SEG
+#undef __DEFINE_SET_SEG
+
 #endif  /* __WINE_WINE_LIBRARY_H */

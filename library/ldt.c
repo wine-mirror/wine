@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -186,3 +187,21 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
     }
     return ret;
 }
+
+
+/***********************************************************************
+ *           selector access functions
+ */
+#ifdef __i386__
+# ifndef _MSC_VER
+/* Nothing needs to be done for MS C, it will do with inline versions from the winnt.h */
+__ASM_GLOBAL_FUNC( wine_get_cs, "movw %cs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_get_ds, "movw %ds,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_get_es, "movw %es,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_get_fs, "movw %fs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_get_gs, "movw %gs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_get_ss, "movw %ss,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( wine_set_fs, "movl 4(%esp),%eax\n\tmovw %ax,%fs\n\tret" )
+__ASM_GLOBAL_FUNC( wine_set_gs, "movl 4(%esp),%eax\n\tmovw %ax,%gs\n\tret" )
+# endif /* defined(_MSC_VER) */
+#endif /* defined(__i386__) */

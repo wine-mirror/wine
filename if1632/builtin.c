@@ -30,6 +30,7 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 #include "toolhelp.h"
 
@@ -58,10 +59,10 @@ inline static void patch_code_segment( void *code_segment )
 {
 #ifdef __i386__
     CALLFROM16 *call = code_segment;
-    if (call->flatcs == __get_cs()) return;  /* nothing to patch */
+    if (call->flatcs == wine_get_cs()) return;  /* nothing to patch */
     while (call->pushl == 0x68)
     {
-        call->flatcs = __get_cs();
+        call->flatcs = wine_get_cs();
         call++;
     }
 #endif

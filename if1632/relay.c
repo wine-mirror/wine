@@ -29,6 +29,7 @@
 #include "selectors.h"
 #include "builtin16.h"
 #include "syslevel.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -59,7 +60,7 @@ BOOL RELAY_Init(void)
 
       /* Patch the return addresses for CallTo16 routines */
 
-    CallTo16_DataSelector = __get_ds();
+    CallTo16_DataSelector = wine_get_ds();
     CallTo16_RetAddr = 
         MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClient_RetAddr = 

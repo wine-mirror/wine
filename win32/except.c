@@ -43,6 +43,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/exception.h"
+#include "wine/library.h"
 #include "thread.h"
 #include "stackframe.h"
 #include "wine/server.h"
@@ -148,7 +149,7 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
     if ((len<0) || (len>=size))
         return -1;
 #ifdef __i386__
-    if (ptr->ContextRecord->SegCs != __get_cs())
+    if (ptr->ContextRecord->SegCs != wine_get_cs())
         len2 = snprintf(buffer+len, size-len,
                         " at address 0x%04lx:0x%08lx.\nDo you wish to debug it ?",
                         ptr->ContextRecord->SegCs,

@@ -30,6 +30,7 @@
 #include "wine/winbase16.h"
 
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "flatthunk.h"
 #include "heap.h"
 #include "module.h"
@@ -1049,7 +1050,7 @@ FreeSLCallback(
  */
 void WINAPI GetTEBSelectorFS16(void) 
 {
-    CURRENT_STACK16->fs = __get_fs();
+    CURRENT_STACK16->fs = wine_get_fs();
 }
 
 /**********************************************************************
@@ -1295,8 +1296,8 @@ UINT WINAPI ThunkConnect16(
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
     LPBYTE stub = MapSL(context->Eax), x = stub;
-    WORD cs = __get_cs();
-    WORD ds = __get_ds();
+    WORD cs = wine_get_cs();
+    WORD ds = wine_get_ds();
 
     /* We produce the following code:
      *
@@ -1347,7 +1348,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         struct ThunkDataSL *td = SL16->fpData;
 
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), (LPCSTR)631);
-        WORD cs = __get_cs();
+        WORD cs = wine_get_cs();
 
         if (!td)
         {
@@ -1913,7 +1914,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name)
     *thunk++ = 0xea;
     *(FARPROC *)thunk = GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");
     thunk += sizeof(FARPROC16);
-    *(WORD *)thunk = __get_cs();
+    *(WORD *)thunk = wine_get_cs();
 
     return MAKESEGPTR( code_sel32, (char *)thunk - (char *)ThunkletHeap );
 }

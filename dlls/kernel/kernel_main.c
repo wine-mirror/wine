@@ -28,6 +28,7 @@
 #include "winbase.h"
 
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "file.h"
 #include "global.h"
 #include "miscemu.h"
@@ -66,8 +67,8 @@ static BOOL process_attach(void)
     NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
 
     /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
-    NE_SetEntryPoint( hModule, 454, __get_cs() );
-    NE_SetEntryPoint( hModule, 455, __get_ds() );
+    NE_SetEntryPoint( hModule, 454, wine_get_cs() );
+    NE_SetEntryPoint( hModule, 455, wine_get_ds() );
 
     /* Initialize KERNEL.THHOOK */
     TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));

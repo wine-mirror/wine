@@ -119,12 +119,12 @@ WORD WINAPI FreeSelector16( WORD sel )
 
 #ifdef __i386__
     /* Check if we are freeing current %fs or %gs selector */
-    if (!((__get_fs() ^ sel) & ~7))
+    if (!((wine_get_fs() ^ sel) & ~7))
     {
-        WARN("Freeing %%fs selector (%04x), not good.\n", __get_fs() );
-        __set_fs( 0 );
+        WARN("Freeing %%fs selector (%04x), not good.\n", wine_get_fs() );
+        wine_set_fs( 0 );
     }
-    if (!((__get_gs() ^ sel) & ~7)) __set_gs( 0 );
+    if (!((wine_get_gs() ^ sel) & ~7)) wine_set_gs( 0 );
 #endif  /* __i386__ */
 
     wine_ldt_set_entry( sel, &null_entry );
@@ -140,11 +140,11 @@ WORD WINAPI FreeSelector16( WORD sel )
  */
 void SELECTOR_FreeFs(void)
 {
-    WORD fs = __get_fs();
+    WORD fs = wine_get_fs();
     if (fs)
     {
         wine_ldt_copy.flags[fs >> __AHSHIFT] &= ~WINE_LDT_FLAGS_ALLOCATED;
-        __set_fs(0);
+        wine_set_fs(0);
         wine_ldt_set_entry( fs, &null_entry );
     }
 }
@@ -688,9 +688,9 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
         ldtent->HighWord.Bits.Default_Big = 1;
         ldtent->HighWord.Bits.Type        = 0x12;
         /* it has to be one of the system GDT selectors */
-        if (sel == (__get_ds() & ~3)) return TRUE;
-        if (sel == (__get_ss() & ~3)) return TRUE;
-        if (sel == (__get_cs() & ~3))
+        if (sel == (wine_get_ds() & ~3)) return TRUE;
+        if (sel == (wine_get_ss() & ~3)) return TRUE;
+        if (sel == (wine_get_cs() & ~3))
         {
             ldtent->HighWord.Bits.Type |= 8;  /* code segment */
             return TRUE;
@@ -936,28 +936,3 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
         GlobalFree(buffer[0]);
     }
 }
-
-#ifdef __i386__
-#ifdef _MSC_VER
-/* Nothing needs to be done. MS C make do with inline versions from the winnt.h */
-#else /* defined(_MSC_VER) */
-
-#define __DEFINE_GET_SEG(seg) \
-    __ASM_GLOBAL_FUNC( __get_##seg, "movw %" #seg ",%ax\n\tret" )
-#define __DEFINE_SET_SEG(seg) \
-    __ASM_GLOBAL_FUNC( __set_##seg, "movl 4(%esp),%eax\n\tmovw %ax,%" #seg "\n\tret" )
-
-__DEFINE_GET_SEG(cs)
-__DEFINE_GET_SEG(ds)
-__DEFINE_GET_SEG(es)
-__DEFINE_GET_SEG(fs)
-__DEFINE_GET_SEG(gs)
-__DEFINE_GET_SEG(ss)
-__DEFINE_SET_SEG(fs)
-__DEFINE_SET_SEG(gs)
-
-#undef __DEFINE_GET_SEG
-#undef __DEFINE_SET_SEG
-
-#endif /* defined(_MSC_VER) */
-#endif /* defined(__i386__) */
