@@ -73,6 +73,7 @@ C_SRCS = \
 	collation.c \
 	compose.c \
 	cptable.c \
+	fold.c \
 	mbtowc.c \
 	sortkey.c \
 	string.c \

@@ -16,6 +16,7 @@ EXPORTS
     wine_cp_get_table
     wine_cp_mbstowcs
     wine_cp_wcstombs
+    wine_fold_string
     wine_get_sortkey
     wine_utf8_mbstowcs
     wine_utf8_wcstombs
