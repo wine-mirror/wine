@@ -21,6 +21,8 @@
 #include "shellapi.h"
 #include "pidl.h"
 #include "shell32_main.h"
+#include "wine/undocshell.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
@@ -210,7 +212,7 @@ static BYTE * ICO_GetIconDirectory( HFILE hFile, LPicoICONDIR* lplpiID, ULONG *u
  * returns
  *  failure:0; success: icon handle or nr of icons (nIconIndex-1)
  */
-HICON WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nIconIndex, UINT n, UINT cxDesired, UINT cyDesired )
+HICON WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, INT nIconIndex, UINT n, UINT cxDesired, UINT cyDesired )
 {	HGLOBAL		hRet = 0;
 	LPBYTE		pData;
 	OFSTRUCT	ofs;
@@ -358,8 +360,34 @@ HICON WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nIco
 	    goto end_3;		/* success */
 	  }
 
+  /* (nIconIndex < 0): extract the icon by resource id */
+	  if( nIconIndex < 0 )
+	  {
+	    int n = 0;
+	    int iId = abs(nIconIndex);
+	    PIMAGE_RESOURCE_DIRECTORY_ENTRY xprdeTmp = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);
+
+	    while(n<iconDirCount && xprdeTmp)
+	    {              
+              if(xprdeTmp->u1.Id ==  iId)
+              {
+                  nIconIndex = n;
+                  break;
+              }
+              n++;
+              xprdeTmp++;                  
+	    }
+	    if (nIconIndex < 0)
+	    {
+	      WARN("resource id %d not found\n", iId);
+	      goto end_3;		/* failure */
+	    }
+	  }
+
+  /* check nIconIndex to be in range */
 	  if (nIconIndex >= iconDirCount) 
-	  { WARN("nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
+	  {
+	    WARN("nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
 	    goto end_3;		/* failure */
 	  }
 
@@ -484,7 +512,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
-	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(), 0, PathFindFilenameA(sSourceFile));
+	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(), 0, PathFindFileNameA(sSourceFile));
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
 	EnterCriticalSection(&SHELL32_SicCS);
@@ -549,7 +577,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 		
 	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
-	sice.sSourceFile = PathFindFilenameA(sSourceFile);
+	sice.sSourceFile = PathFindFileNameA(sSourceFile);
 	sice.dwSourceIndex = dwSourceIndex;
 	
 	EnterCriticalSection(&SHELL32_SicCS);
@@ -741,7 +769,10 @@ BOOL PidlToSicIndex (
  *	pIndex	[OUT][OPTIONAL]	SIC index for big icon
  *
  */
-UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl, UINT * pIndex)
+int WINAPI SHMapPIDLToSystemImageListIndex(
+	LPSHELLFOLDER sh,
+	LPCITEMIDLIST pidl,
+	UINT * pIndex)
 {
 	UINT	Index;
 
