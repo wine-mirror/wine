@@ -1615,7 +1615,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     TRACE("owner=0x%04x menu=0x%04x index=0x%04x select=0x%04x\n", hwndOwner, hmenu, wIndex, sendMenuSelect);
 
     lppop = MENU_GetMenu( hmenu );
-    if ((!lppop) || (!lppop->nItems)) return;
+    if ((!lppop) || (!lppop->nItems) || (!lppop->hWnd)) return;
 
     if (lppop->FocusedItem == wIndex) return;
     if (lppop->wFlags & MF_POPUP) hdc = GetDC( lppop->hWnd );
@@ -3791,7 +3791,10 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
         lppop->wMagic = 0;  /* Mark it as destroyed */
 
         if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
+        {
             DestroyWindow( lppop->hWnd );
+            lppop->hWnd = 0;
+        }
 
         if (lppop->items) /* recursively destroy submenus */
         {
