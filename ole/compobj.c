@@ -4,6 +4,7 @@
  *	Copyright 1995	Martin von Loewis
  *	Copyright 1998	Justin Bradford
  *      Copyright 1999  Francis Beaudet
+ *  Copyright 1999  Sylvain St-Germain
  */
 
 #include "config.h"
@@ -43,6 +44,70 @@
 #include "winreg.h"
 
 #include "objbase.h"
+
+/****************************************************************************
+ *  COM External Lock structures and methods declaration
+ *
+ *  This api provides a linked list to managed external references to 
+ *  COM objects.  
+ *
+ *  The public interface consists of three calls: 
+ *      COM_ExternalLockAddRef
+ *      COM_ExternalLockRelease
+ *      COM_ExternalLockFreeList
+ */
+
+#define EL_END_OF_LIST 0
+#define EL_NOT_FOUND   0
+
+/*
+ * Declaration of the static structure that manage the 
+ * external lock to COM  objects.
+ */
+typedef struct COM_ExternalLock     COM_ExternalLock;
+typedef struct COM_ExternalLockList COM_ExternalLockList;
+
+struct COM_ExternalLock
+{
+  IUnknown         *pUnk;     /* IUnknown referenced */
+  ULONG            uRefCount; /* external lock counter to IUnknown object*/
+  COM_ExternalLock *next;     /* Pointer to next element in list */
+};
+
+struct COM_ExternalLockList
+{
+  COM_ExternalLock *head;     /* head of list */
+};
+
+/*
+ * Declaration and initialization of the static structure that manages
+ * the external lock to COM objects.
+ */
+static COM_ExternalLockList elList = { EL_END_OF_LIST };
+
+/*
+ * Public Interface to the external lock list   
+ */
+static void COM_ExternalLockFreeList();
+static void COM_ExternalLockAddRef(IUnknown *pUnk);
+static void COM_ExternalLockRelease(IUnknown *pUnk, BOOL32 bRelAll);
+void COM_ExternalLockDump(); /* testing purposes, not static to avoid warning */
+
+/*
+ * Private methods used to managed the linked list   
+ */
+static BOOL32 COM_ExternalLockInsert(
+  IUnknown *pUnk);
+
+static void COM_ExternalLockDelete(
+  COM_ExternalLock *element);
+
+static COM_ExternalLock* COM_ExternalLockFind(
+  IUnknown *pUnk);
+
+static COM_ExternalLock* COM_ExternalLockLocate(
+  COM_ExternalLock *element,
+  IUnknown         *pUnk);
 
 /****************************************************************************
  * This section defines variables internal to the COM module.
@@ -260,6 +325,11 @@ void WINAPI CoUninitialize32(void)
      * This will free the loaded COM Dlls.
      */
     CoFreeAllLibraries();
+
+    /*
+     * This will free list of external references to COM objects.
+     */
+    COM_ExternalLockFreeList();
 }
 }
 
@@ -1420,9 +1490,26 @@ HRESULT WINAPI CoLockObjectExternal16(
 HRESULT WINAPI CoLockObjectExternal32(
     LPUNKNOWN pUnk,		/* [in] object to be locked */
     BOOL32 fLock,		/* [in] do lock */
-    BOOL32 fLastUnlockReleases	/* [in] ? */
-) {
-    FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
+    BOOL32 fLastUnlockReleases) /* [in] unlock all */
+{
+
+  if (fLock) 
+  {
+    /* 
+     * Increment the external lock coutner, COM_ExternalLockAddRef also
+     * increment the object's internal lock counter.
+     */
+    COM_ExternalLockAddRef( pUnk); 
+  }
+  else
+  {
+    /* 
+     * Decrement the external lock coutner, COM_ExternalLockRelease also
+     * decrement the object's internal lock counter.
+     */
+    COM_ExternalLockRelease( pUnk, fLastUnlockReleases);
+  }
+
     return S_OK;
 }
 
@@ -1460,3 +1547,192 @@ static void COM_RevokeAllClasses()
   }
 }
 
+/****************************************************************************
+ *  COM External Lock methods implementation
+ */
+
+/****************************************************************************
+ * Public - Method that increments the count for a IUnknown* in the linked 
+ * list.  The item is inserted if not already in the list.
+ */
+static void COM_ExternalLockAddRef(
+  IUnknown *pUnk)
+{
+  COM_ExternalLock *externalLock = COM_ExternalLockFind(pUnk);
+
+  if ( externalLock == EL_NOT_FOUND )
+    COM_ExternalLockInsert(pUnk);
+  else
+  {
+    externalLock->uRefCount++;  /* add an external lock     */
+    IUnknown_AddRef(pUnk);      /* add a local lock as well */
+  }
+}
+
+/****************************************************************************
+ * Public - Method that decrements the count for a IUnknown* in the linked 
+ * list.  The item is removed from the list if its count end up at zero or if
+ * bRelAll is TRUE.
+ */
+static void COM_ExternalLockRelease(
+  IUnknown *pUnk,
+  BOOL32   bRelAll)
+{
+  COM_ExternalLock *externalLock = COM_ExternalLockFind(pUnk);
+
+  if ( externalLock != EL_NOT_FOUND )
+  {
+    do
+    {
+      externalLock->uRefCount--;  /* release external locks      */
+      IUnknown_Release(pUnk);     /* release local locks as well */
+
+      if ( bRelAll == FALSE ) 
+        break;  /* perform single release */
+
+    } while ( externalLock->uRefCount > 0 );  
+
+    if ( externalLock->uRefCount == 0 )  /* get rid of the list entry */
+      COM_ExternalLockDelete(externalLock);
+  }
+}
+/****************************************************************************
+ * Public - Method that frees the content of the list.
+ */
+static void COM_ExternalLockFreeList()
+{
+  COM_ExternalLock *head;
+
+  do 
+  {
+    head = elList.head;               /* grab it be the head             */
+    COM_ExternalLockDelete(head);     /* get rid of the head stuff       */
+
+    head = elList.head;               /* get the new head...             */ 
+
+  } while ( head != EL_END_OF_LIST ); /* repeat as long as we have heads */
+}
+
+/****************************************************************************
+ * Public - Method that dump the content of the list.
+ */
+void COM_ExternalLockDump()
+{
+  COM_ExternalLock *current = elList.head;
+
+  printf("\nExternal lock list contains:\n");
+
+  while ( current != EL_END_OF_LIST )
+  {
+    printf( "\t%p with %lu references count.\n", 
+      current->pUnk, 
+      current->uRefCount);
+ 
+    /* Skip to the next item */ 
+    current = current->next;
+  } 
+
+}
+
+/****************************************************************************
+ * Internal - Find a IUnknown* in the linked list
+ */
+static COM_ExternalLock* COM_ExternalLockFind(
+  IUnknown *pUnk)
+{
+  return COM_ExternalLockLocate(elList.head, pUnk);
+}
+
+/****************************************************************************
+ * Internal - Recursivity agent for IUnknownExternalLockList_Find
+ */
+static COM_ExternalLock* COM_ExternalLockLocate(
+  COM_ExternalLock *element,
+  IUnknown         *pUnk)
+{
+  if ( element == EL_END_OF_LIST )  
+    return EL_NOT_FOUND;
+
+  else if ( element->pUnk == pUnk )    /* We found it */
+    return element;
+
+  else                                 /* Not the right guy, keep on looking */ 
+    return COM_ExternalLockLocate( element->next, pUnk);
+}
+
+/****************************************************************************
+ * Internal - Insert a new IUnknown* to the linked list
+ */
+static BOOL32 COM_ExternalLockInsert(
+  IUnknown *pUnk)
+{
+  COM_ExternalLock *newLock      = NULL;
+  COM_ExternalLock *previousHead = NULL;
+
+  /*
+   * Allocate space for the new storage object
+   */
+  newLock = HeapAlloc(GetProcessHeap(), 0, sizeof(COM_ExternalLock));
+
+  if (newLock!=NULL)
+  {
+    if ( elList.head == EL_END_OF_LIST ) 
+    {
+      elList.head = newLock;    /* The list is empty */
+    }
+    else 
+    {
+      /* 
+       * insert does it at the head
+       */
+      previousHead  = elList.head;
+      elList.head = newLock;
+    }
+
+    /*
+     * Set new list item data member 
+     */
+    newLock->pUnk      = pUnk;
+    newLock->uRefCount = 1;
+    newLock->next      = previousHead;
+    
+    return TRUE;
+  }
+  else
+    return FALSE;
+}
+
+/****************************************************************************
+ * Internal - Method that removes an item from the linked list.
+ */
+static void COM_ExternalLockDelete(
+  COM_ExternalLock *itemList)
+{
+  COM_ExternalLock *current = elList.head;
+
+  if ( current == itemList )
+  {
+    /* 
+     * this section handles the deletion of the first node 
+     */
+    elList.head = itemList->next;
+    HeapFree( GetProcessHeap(), 0, itemList);  
+  }
+  else
+  {
+    do 
+    {
+      if ( current->next == itemList )   /* We found the item to free  */
+      {
+        current->next = itemList->next;  /* readjust the list pointers */
+  
+        HeapFree( GetProcessHeap(), 0, itemList);  
+        break; 
+      }
+ 
+      /* Skip to the next item */ 
+      current = current->next;
+  
+    } while ( current != EL_END_OF_LIST );
+  }
+}
