@@ -2283,6 +2283,12 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     {
 	if (msg->lParam)
         {
+            /* before calling window proc, verify it the timer is still valid,
+               there's a slim chance the application kill the timer between
+               getMessage and DisaptachMessage API calls */
+            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+                return 0; /* invalid winproc */
+
 	    return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }
@@ -2359,6 +2365,13 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
 	if (msg->lParam)
         {
 /*            HOOK_CallHooks32A( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+
+            /* before calling window proc, verify it the timer is still valid,
+               there's a slim chance the application kill the timer between
+               getMessage and DisaptachMessage API calls */
+            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+                return 0; /* invalid winproc */
+
 	    return CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }
@@ -2434,6 +2447,13 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
 	if (msg->lParam)
         {
 /*            HOOK_CallHooks32W( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+
+            /* before calling window proc, verify it the timer is still valid,
+               there's a slim chance the application kill the timer between
+               getMessage and DisaptachMessage API calls */
+            if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
+                return 0; /* invalid winproc */
+
 	    return CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }

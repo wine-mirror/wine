@@ -317,6 +317,30 @@ UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
 
 
 /***********************************************************************
+ *           TIMER_IsTimerValid
+ */
+BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc )
+{
+    int i;
+    TIMER *pTimer;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection( &csTimer );
+    
+    for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
+        if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
+            (pTimer->proc == hProc))
+        {
+            ret = TRUE;
+            break;
+        }
+
+   LeaveCriticalSection( &csTimer );
+   return ret;
+}
+
+
+/***********************************************************************
  *           SetSystemTimer16   (USER.11)
  */
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,

@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "wine/windef16.h"
+#include "winproc.h"
 
 struct tagMSG;
 
@@ -22,6 +23,7 @@ extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
+extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc );
 
 /* event.c */
 extern void EVENT_Synchronize( void );
