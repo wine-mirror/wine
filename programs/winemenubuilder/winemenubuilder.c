@@ -221,11 +221,11 @@ static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCSTR lpszType, LPSTR lps
 
     if (!sEnumRes->nIndex--)
     {
-      *sEnumRes->pResInfo = FindResourceA(hModule, lpszName, (LPSTR)RT_GROUP_ICON);
-      return FALSE;
+        *sEnumRes->pResInfo = FindResourceA(hModule, lpszName, (LPSTR)RT_GROUP_ICON);
+        return FALSE;
     }
     else
-      return TRUE;
+        return TRUE;
 }
 
 static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szXPMFileName)
@@ -241,16 +241,18 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
     int nMaxBits = 0;
     int i;
 
-    if (!(hModule = LoadLibraryExA(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE)))
+    hModule = LoadLibraryExA(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
+    if (!hModule)
     {
         WINE_ERR("LoadLibraryExA (%s) failed, error %ld\n", szFileName, GetLastError());
-        goto error1;
+        return FALSE;
     }
 
     if (nIndex < 0)
     {
         hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(-nIndex), (LPSTR)RT_GROUP_ICON);
-        WINE_ERR("FindResourceA (%s) called, return %p, error %ld\n", szFileName, hResInfo, GetLastError());
+        WINE_TRACE("FindResourceA (%s) called, return %p, error %ld\n",
+                   szFileName, hResInfo, GetLastError());
     }
     else
     {
@@ -325,12 +327,11 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
     FreeResource(hResData);
  error2:
     FreeLibrary(hModule);
- error1:
     return FALSE;
 }
 
 /* get the Unix file name for a given path, allocating the string */
-inline static char *get_unix_file_name( const char *dos )
+inline static char *get_unix_file_name( LPCSTR dos )
 {
     WCHAR dosW[MAX_PATH];
 
@@ -453,25 +454,30 @@ static char *extract_icon( const char *path, int index)
     if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
     {
         DWORD size = 0;
-        if (RegQueryValueExA(hkey, "IconsDir", 0, NULL, NULL, &size)==0) {
+
+        if (RegQueryValueExA(hkey, "IconsDir", 0, NULL, NULL, &size)==0)
+        {
             iconsdir = HeapAlloc(GetProcessHeap(), 0, size);
             RegQueryValueExA(hkey, "IconsDir", 0, NULL, iconsdir, &size);
 
-            s=get_unix_file_name(iconsdir);
-            if (s) {
+            s = get_unix_file_name(iconsdir);
+            if (s)
+            {
                 HeapFree(GetProcessHeap(), 0, iconsdir);
                 iconsdir=s;
             }
-        } else {
-		char	path[MAX_PATH];
+        }
+        else
+        {
+            char path[MAX_PATH];
 
-		if (GetTempPath(sizeof(path),path)) {
-		    s=get_unix_file_name(path);
-		    if (s) {
-			iconsdir=s;
-		    }
-		}
-	}
+            if (GetTempPath(sizeof(path),path))
+            {
+                s = get_unix_file_name(path);
+                if (s)
+                    iconsdir = s;
+            }
+        }
         RegCloseKey( hkey );
     }
     if (iconsdir==NULL || *iconsdir=='\0')
@@ -571,13 +577,14 @@ static BOOL DeferToRunOnce(LPWSTR link)
 }
 
 /* This escapes \ in filenames */
-static LPSTR
-escape(LPCSTR arg) {
-    LPSTR      narg, x;
+static LPSTR escape(LPCSTR arg)
+{
+    LPSTR narg, x;
 
     narg = HeapAlloc(GetProcessHeap(),0,2*strlen(arg)+2);
     x = narg;
-    while (*arg) {
+    while (*arg)
+    {
         *x++ = *arg;
         if (*arg == '\\')
             *x++='\\'; /* escape \ */
@@ -709,10 +716,10 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
 {
     char *link_name, *p, *icon_name = NULL, *work_dir = NULL;
     char *escaped_path = NULL, *escaped_args = NULL;
-    CHAR szDescription[MAX_PATH], szPath[MAX_PATH], szWorkDir[MAX_PATH];
-    CHAR szArgs[MAX_PATH], szIconPath[MAX_PATH];
+    CHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
+    CHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH];
     int iIconId = 0, r;
-    DWORD ofs=0, csidl= -1;
+    DWORD csidl = -1, ofs = 0;
 
     if ( !link )
     {
@@ -731,25 +738,24 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
         return TRUE;
     }
 
-    szWorkDir[0]=0;
-    IShellLinkA_GetWorkingDirectory( sl, szWorkDir, sizeof(szWorkDir));
+    szWorkDir[0] = 0;
+    IShellLinkA_GetWorkingDirectory( sl, szWorkDir, MAX_PATH );
     WINE_TRACE("workdir    : %s\n", szWorkDir);
 
     szDescription[0] = 0;
-    IShellLinkA_GetDescription( sl, szDescription, sizeof(szDescription));
+    IShellLinkA_GetDescription( sl, szDescription, INFOTIPSIZE );
     WINE_TRACE("description: %s\n", szDescription);
 
     szPath[0] = 0;
-    IShellLinkA_GetPath( sl, szPath, sizeof(szPath), NULL, SLGP_RAWPATH );
+    IShellLinkA_GetPath( sl, szPath, MAX_PATH, NULL, SLGP_RAWPATH );
     WINE_TRACE("path       : %s\n", szPath);
 
     szArgs[0] = 0;
-    IShellLinkA_GetArguments( sl, szArgs, sizeof(szArgs) );
+    IShellLinkA_GetArguments( sl, szArgs, INFOTIPSIZE );
     WINE_TRACE("args       : %s\n", szArgs);
 
     szIconPath[0] = 0;
-    IShellLinkA_GetIconLocation( sl, szIconPath,
-                        sizeof(szIconPath), &iIconId );
+    IShellLinkA_GetIconLocation( sl, szIconPath, MAX_PATH, &iIconId );
     WINE_TRACE("icon file  : %s\n", szIconPath );
 
     if( !szPath[0] )
@@ -834,6 +840,8 @@ static BOOL Process_Link( LPWSTR linkname, BOOL bAgain )
     WCHAR fullname[MAX_PATH];
     DWORD len;
 
+    WINE_TRACE("%s, again %d\n", wine_dbgstr_w(linkname), bAgain);
+
     if( !linkname[0] )
     {
         WINE_ERR("link name missing\n");
@@ -855,7 +863,7 @@ static BOOL Process_Link( LPWSTR linkname, BOOL bAgain )
     }
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                      &IID_IShellLink, (LPVOID *) &sl );
+                          &IID_IShellLink, (LPVOID *) &sl );
     if( FAILED( r ) )
     {
         WINE_ERR("No IID_IShellLink\n");
@@ -872,7 +880,7 @@ static BOOL Process_Link( LPWSTR linkname, BOOL bAgain )
     r = IPersistFile_Load( pf, fullname, STGM_READ );
     if( SUCCEEDED( r ) )
     {
-        /* If we something fails (eg. Couldn't extract icon)
+        /* If something fails (eg. Couldn't extract icon)
          * defer this menu entry to reboot via runonce
          */
         if( ! InvokeShellLinker( sl, fullname ) && bAgain )
@@ -940,7 +948,10 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     /* running multiple instances of wineshelllink
        at the same time may be dangerous */
     if( WAIT_OBJECT_0 != WaitForSingleObject( hsem, INFINITE ) )
+    {
+        CloseHandle(hsem);
         return FALSE;
+    }
 
     for( p = cmdline; p && *p; )
     {
