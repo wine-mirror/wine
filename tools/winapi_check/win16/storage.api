@@ -1,17 +1,24 @@
+%long
+
+ULONG
+
+%longlong
+
+LARGE_INTEGER
+
 %ptr
 
 LPSTORAGE16
+LPVOID *
 IID *
 IStorage16 *
 IStorage16 **
 IStream16 *
 IStream16 **
+REFIID
 SNB16
 STATSTG16 *
 ULARGE_INTEGER *
-
-%longlong
-
-LARGE_INTEGER
+ULONG *
 
 

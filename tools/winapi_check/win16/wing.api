@@ -1,6 +1,7 @@
 %ptr
 
 BITMAPINFO *
+RGBQUAD *
 
 %word
 

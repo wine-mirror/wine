@@ -1,6 +1,5 @@
 %long # --forbidden
 
-HKEY
 HMODULE
 
 %ptr
@@ -31,6 +30,10 @@ ATOM
 HLOCAL16
 HQUEUE16
 HRSRC16
+
+%word # --forbidden
+
+HKEY
 
 %wstr # --forbidden
 

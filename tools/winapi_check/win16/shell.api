@@ -1,7 +1,3 @@
-%long # --forbidden
-
-HKEY
-
 %ptr
 
 HICON16 *
@@ -13,3 +9,7 @@ LPHKEY
 %word
 
 HDROP16
+
+%word # --forbidden
+
+HKEY

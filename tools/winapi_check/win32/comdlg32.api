@@ -2,6 +2,10 @@
 
 HWND
 
+%long # --forbidden
+
+short
+
 %ptr
 
 LPCHOOSECOLORA

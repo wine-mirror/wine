@@ -5,6 +5,7 @@ LPBSTR16
 INTERFACEDATA *
 ITypeInfo **
 IUnknown *
+REFCLSID
 
 %segstr
 

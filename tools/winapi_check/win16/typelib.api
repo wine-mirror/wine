@@ -1,6 +1,7 @@
 %ptr
 
 LPBSTR16
+REFGUID
 
 %str # --forbidden
 

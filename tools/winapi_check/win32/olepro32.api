@@ -1,0 +1,9 @@
+%long
+
+HWND
+
+%ptr
+
+LPOCPFIPARAMS
+LPPICTDESC
+LPSTREAM

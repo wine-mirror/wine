@@ -4,6 +4,7 @@ u_long
 %ptr
 
 LPWSADATA
+ULONG *
 struct sockaddr *
 struct timeval *
 ws_fd_set16 *

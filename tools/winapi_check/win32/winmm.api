@@ -12,6 +12,10 @@ HWAVEIN
 HWAVEOUT
 HWND
 
+%long # --forbidden
+
+UINT16
+
 %ptr
 
 HMIDIIN *
