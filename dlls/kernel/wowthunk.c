@@ -32,11 +32,11 @@
 #include "excpt.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "syslevel.h"
 #include "file.h"
 #include "task.h"
 #include "miscemu.h"
 #include "stackframe.h"
+#include "kernel_private.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

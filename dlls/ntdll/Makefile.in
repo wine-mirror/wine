@@ -37,8 +37,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
-	$(TOPOBJDIR)/scheduler/synchro.c \
-	$(TOPOBJDIR)/scheduler/syslevel.c \
 	$(TOPOBJDIR)/scheduler/thread.c \
 	$(TOPOBJDIR)/win32/device.c \
 	$(TOPOBJDIR)/win32/newfns.c \

@@ -33,7 +33,7 @@
 #include "stackframe.h"
 #include "selectors.h"
 #include "builtin16.h"
-#include "syslevel.h"
+#include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 

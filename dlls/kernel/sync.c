@@ -43,6 +43,7 @@
 
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "kernel_private.h"
 #include "file.h"
 
 #include "wine/debug.h"
@@ -55,6 +56,165 @@ inline static int is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+
+/***********************************************************************
+ *              Sleep  (KERNEL32.@)
+ */
+VOID WINAPI Sleep( DWORD timeout )
+{
+    SleepEx( timeout, FALSE );
+}
+
+/******************************************************************************
+ *              SleepEx   (KERNEL32.@)
+ */
+DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
+{
+    NTSTATUS status;
+
+    if (timeout == INFINITE) status = NtDelayExecution( alertable, NULL );
+    else
+    {
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (ULONGLONG)10000;
+        time.QuadPart = -time.QuadPart;
+        status = NtDelayExecution( alertable, &time );
+    }
+    if (status != STATUS_USER_APC) status = STATUS_SUCCESS;
+    return status;
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObject   (KERNEL32.@)
+ */
+DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )
+{
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObjectEx   (KERNEL32.@)
+ */
+DWORD WINAPI WaitForSingleObjectEx( HANDLE handle, DWORD timeout,
+                                    BOOL alertable )
+{
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjects   (KERNEL32.@)
+ */
+DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE *handles,
+                                     BOOL wait_all, DWORD timeout )
+{
+    return WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjectsEx   (KERNEL32.@)
+ */
+DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                       BOOL wait_all, DWORD timeout,
+                                       BOOL alertable )
+{
+    NTSTATUS status;
+    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
+    int i;
+
+    if (count >= MAXIMUM_WAIT_OBJECTS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return WAIT_FAILED;
+    }
+    for (i = 0; i < count; i++)
+    {
+        if ((handles[i] == (HANDLE)STD_INPUT_HANDLE) ||
+            (handles[i] == (HANDLE)STD_OUTPUT_HANDLE) ||
+            (handles[i] == (HANDLE)STD_ERROR_HANDLE))
+            hloc[i] = GetStdHandle( (DWORD)handles[i] );
+        else
+            hloc[i] = handles[i];
+
+        /* yes, even screen buffer console handles are waitable, and are
+         * handled as a handle to the console itself !!
+         */
+        if (is_console_handle(hloc[i]))
+        {
+            if (!VerifyConsoleIoHandle(hloc[i]))
+            {
+                return FALSE;
+            }
+            hloc[i] = GetConsoleInputWaitHandle();
+        }
+    }
+
+    if (timeout == INFINITE)
+    {
+        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, NULL );
+    }
+    else
+    {
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (ULONGLONG)10000;
+        time.QuadPart = -time.QuadPart;
+        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, &time );
+    }
+
+    if (HIWORD(status))  /* is it an error code? */
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObject   (KERNEL.460)
+ */
+DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForSingleObject( handle, timeout );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
+
+/***********************************************************************
+ *           WaitForMultipleObjects   (KERNEL.461)
+ */
+DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
+                                       BOOL wait_all, DWORD timeout )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
+
+/***********************************************************************
+ *           WaitForMultipleObjectsEx   (KERNEL.495)
+ */
+DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
+                                         BOOL wait_all, DWORD timeout, BOOL alertable )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, alertable );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
 
 /***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.@)

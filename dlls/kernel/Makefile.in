@@ -52,6 +52,7 @@ C_SRCS = \
 	stress.c \
 	string.c \
 	sync.c \
+	syslevel.c \
 	system.c \
 	tape.c \
 	task.c \

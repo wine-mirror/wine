@@ -51,4 +51,6 @@ void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing );
 
 extern BOOL WOWTHUNK_Init(void);
 
+extern VOID SYSLEVEL_CheckNotLevel( INT level );
+
 #endif

@@ -45,11 +45,11 @@
 #include "winternl.h"
 #include "selectors.h"
 #include "wine/server.h"
-#include "syslevel.h"
 #include "stackframe.h"
 #include "task.h"
 #include "thread.h"
 #include "toolhelp.h"
+#include "kernel_private.h"
 
 #include "wine/debug.h"
 

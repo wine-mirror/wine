@@ -407,7 +407,6 @@ typedef struct
 
 #include "wine/exception.h"
 #include "global.h"
-#include "syslevel.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
@@ -417,6 +416,9 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 static wine_signal_handler handlers[256];
 
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+
+/* Global variable to save current TEB while in 16-bit code (FIXME) */
+WORD SYSLEVEL_Win16CurrentTeb = 0;
 
 /***********************************************************************
  *           dispatch_signal

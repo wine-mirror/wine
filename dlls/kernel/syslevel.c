@@ -30,8 +30,8 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
-#include "syslevel.h"
 #include "thread.h"
+#include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -47,7 +47,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static SYSLEVEL Win16Mutex = { { &critsect_debug, -1, 0, 0, 0, 0 }, 1 };
 
 /* Global variable to save current TEB while in 16-bit code */
-WORD SYSLEVEL_Win16CurrentTeb = 0;
+extern WORD SYSLEVEL_Win16CurrentTeb;
 
 
 /************************************************************************
@@ -113,8 +113,9 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TRACE("(%p, level %d): thread %lx count after  %ld\n",
           lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 
-    if (lock == &Win16Mutex)
-        SYSLEVEL_Win16CurrentTeb = wine_get_fs();
+#ifdef __i386__
+    if (lock == &Win16Mutex) SYSLEVEL_Win16CurrentTeb = wine_get_fs();
+#endif
 }
 
 /************************************************************************
