@@ -161,7 +161,6 @@ struct options
     int gui_app;
     int compile_only;
     const char* output_name;
-    strarray* lib_names;
     strarray* lib_dirs;
     strarray *linker_args;
     strarray *compiler_args;
@@ -332,22 +331,24 @@ static const char* compile_to_object(struct options* opts, const char* file)
 static void build(struct options* opts)
 {
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib" };
-    strarray *so_libs, *arh_libs, *dll_libs, *lib_paths, *lib_dirs;
-    strarray *res_files, *obj_files, *spec_args, *comp_args, *link_args;
+    strarray *lib_dirs, *files;
+    strarray *spec_args, *comp_args, *link_args;
     char *spec_c_name, *spec_o_name, *base_file, *base_name;
     const char* output_name;
     const char *winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
     int j;
 
-    if (!winebuild) winebuild = "winebuild";
+    /* NOTE: for the files array we'll use the following convention:
+     *    -axxx:  xxx is an archive (.a)
+     *    -dxxx:  xxx is a DLL (.def)
+     *    -lxxx:  xxx is an unsorted library
+     *    -oxxx:  xxx is an object (.o)
+     *    -rxxx:  xxx is a resource (.res)
+     *    -sxxx:  xxx is a shared lib (.so)
+     */
 
-    so_libs = strarray_alloc();
-    arh_libs = strarray_alloc();
-    dll_libs = strarray_alloc();
-    obj_files = strarray_alloc();
-    res_files = strarray_alloc();
-    lib_paths = strarray_alloc();
+    if (!winebuild) winebuild = "winebuild";
 
     output_name = opts->output_name ? opts->output_name : "a.out";
 
@@ -373,72 +374,72 @@ static void build(struct options* opts)
     for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]);j++ )
 	strarray_add(lib_dirs, stdlibpath[j]);
 
-    for ( j = 0; j < lib_dirs->size; j++ )
-	strarray_add(lib_paths, strmake("-L%s", lib_dirs->base[j]));
-
-    /* prepare the libraries */    
-    for ( j = 0; j < opts->lib_names->size; j++ )
+    /* mark the files with their appropriate type */
+    files = strarray_alloc();
+    for ( j = 0; j < opts->files->size; j++ )
     {
-	const char* name = opts->lib_names->base[j];
-	char* fullname;
-	switch(get_lib_type(lib_dirs, name, &fullname))
+	const char* file = opts->files->base[j];
+	if (file[0] != '-')
 	{
-	    case file_arh:
-		strarray_add(arh_libs, strdup(fullname));
-		break;
-	    case file_dll:
-		strarray_add(dll_libs, strmake("-l%s", name));
-		break;
-	    case file_so:
-		strarray_add(so_libs, strmake("-l%s", name));
-		break;
-	    default:
-		fprintf(stderr, "Can't find library '%s', ignoring\n", name);
+	    switch(get_file_type(file))
+	    {
+		case file_rc:
+		    /* FIXME: invoke wrc to build it */
+		    error("Can't compile .rc file at the moment: %s", file);
+	            break;
+	    	case file_res:
+		    strarray_add(files, strmake("-r%s", file));
+		    break;
+		case file_obj:
+		    strarray_add(files, strmake("-o%s", file));
+		    break;
+	    	case file_na:
+		    error("File does not exist: %s", file);
+		    break;
+	        default:
+		    file = compile_to_object(opts, file);
+		    strarray_add(files, strmake("-o%s", file));
+		    break;
+	    }
 	}
-	free(fullname);
+	else if (file[1] == 'l')
+	{
+	    char* fullname = 0;
+	    switch(get_lib_type(lib_dirs, file + 2, &fullname))
+	    {
+	    	case file_arh:
+		    strarray_add(files, strmake("-a%s", fullname));
+		    break;
+	        case file_dll:
+		    strarray_add(files, strmake("-d%s", file + 2));
+		    break;
+	        case file_so:
+		    strarray_add(files, strmake("-s%s", file + 2));
+		    break;
+	        default:
+		    fprintf(stderr, "Can't find library '%s', ignoring\n", file);
+	    }
+	    free(fullname);
+	}
     }
 
+    /* add the default libraries, if needed */
     if (!opts->nostdlib) 
     {
-        if (opts->use_msvcrt) strarray_add(dll_libs, "-lmsvcrt");
+        if (opts->use_msvcrt) strarray_add(files, "-dmsvcrt");
     }
 
     if (!opts->nodefaultlibs) 
     {
         if (opts->gui_app) 
 	{
-            strarray_add(dll_libs, "-lshell32");
-	    strarray_add(dll_libs, "-lcomdlg32");
-	    strarray_add(dll_libs, "-lgdi32");
+            strarray_add(files, "-dshell32");
+	    strarray_add(files, "-dcomdlg32");
+	    strarray_add(files, "-dgdi32");
 	}
-        strarray_add(dll_libs, "-ladvapi32");
-        strarray_add(dll_libs, "-luser32");
-        strarray_add(dll_libs, "-lkernel32");
-    }
-
-    /* sort object file */
-    for ( j = 0; j < opts->files->size; j++ )
-    {
-	const char* file = opts->files->base[j];
-	switch(get_file_type(file))
-	{
-	    case file_rc:
-		/* FIXME: invoke wrc to build it */
-	        break;
-	    case file_res:
-		strarray_add(res_files, file);
-		break;
-	    case file_obj:
-		strarray_add(obj_files, file);
-		break;
-	    case file_na:
-		error("File does not exist: %s", file);
-		break;
-	    default:
-		file = compile_to_object(opts, file);
-		strarray_add(obj_files, file);
-		break;
-	}
+        strarray_add(files, "-dadvapi32");
+        strarray_add(files, "-duser32");
+        strarray_add(files, "-dkernel32");
     }
 
     /* run winebuild to generate the .spec.c file */
@@ -451,23 +452,29 @@ static void build(struct options* opts)
     strarray_add(spec_args, strmake("%s.exe", base_name));
     strarray_add(spec_args, opts->gui_app ? "-mgui" : "-mcui");
 
-    for ( j = 0; j < lib_paths->size; j++ )
-	strarray_add(spec_args, lib_paths->base[j]);
+    for ( j = 0; j < lib_dirs->size; j++ )
+	strarray_add(spec_args, strmake("-L%s", lib_dirs->base[j]));
 
     for ( j = 0 ; j < opts->winebuild_args->size ; j++ )
         strarray_add(spec_args, opts->winebuild_args->base[j]);
 
-    for ( j = 0; j < dll_libs->size; j++ )
-	strarray_add(spec_args, dll_libs->base[j]);
-
-    for ( j = 0; j < res_files->size; j++ )
-	strarray_add(spec_args, res_files->base[j]);
-
-    for ( j = 0; j < obj_files->size; j++ )
-	strarray_add(spec_args, obj_files->base[j]);
-
-    for ( j = 0; j < arh_libs->size; j++)
-	strarray_add(spec_args, arh_libs->base[j]);
+    for ( j = 0; j < files->size; j++ )
+    {
+	const char* name = files->base[j] + 2;
+	switch(files->base[j][1])
+	{
+	    case 'd':
+		strarray_add(spec_args, strmake("-l%s", name));
+		break;
+	    case 'r':
+		strarray_add(spec_args, files->base[j]);
+		break;
+	    case 'a':
+	    case 'o':
+		strarray_add(spec_args, name);
+		break;
+	}
+    }
 
     spawn(spec_args);
 
@@ -494,23 +501,32 @@ static void build(struct options* opts)
     for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
         strarray_add(link_args, opts->linker_args->base[j]);
 
-    for ( j = 0; j < lib_paths->size; j++ )
-	strarray_add(link_args, lib_paths->base[j]);
+    for ( j = 0; j < lib_dirs->size; j++ )
+	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
     strarray_add(link_args, spec_o_name);
 
-    for ( j = 0; j < obj_files->size; j++ )
-	strarray_add(link_args, obj_files->base[j]);
+    for ( j = 0; j < files->size; j++ )
+    {
+	const char* name = files->base[j] + 2;
+	switch(files->base[j][1])
+	{
+	    case 's':
+		strarray_add(link_args, strmake("-l%s", name));
+		break;
+	    case 'a':
+	    case 'o':
+		strarray_add(link_args, name);
+		break;
+	}
+    }
 
-    for ( j = 0; j < arh_libs->size; j++ )
-	strarray_add(link_args, arh_libs->base[j]);
-
-    for ( j = 0; j < so_libs->size; j++ )
-	strarray_add(link_args, so_libs->base[j]);
-
-    strarray_add(link_args, "-lwine");
-    strarray_add(link_args, "-lm");
-    strarray_add(link_args, "-lc");
+    if (!opts->nostdlib) 
+    {
+	strarray_add(link_args, "-lwine");
+	strarray_add(link_args, "-lm");
+	strarray_add(link_args, "-lc");
+    }
 
     spawn(link_args);
 
@@ -617,7 +633,6 @@ int main(int argc, char **argv)
     
     /* initialize options */
     memset(&opts, 0, sizeof(opts));
-    opts.lib_names = strarray_alloc();
     opts.lib_dirs = strarray_alloc();
     opts.files = strarray_alloc();
     opts.linker_args = strarray_alloc();
@@ -716,7 +731,7 @@ int main(int argc, char **argv)
                         opts.noshortwchar = 1;
 		    break;
 		case 'l':
-		    strarray_add(opts.lib_names, option_arg);
+		    strarray_add(opts.files, strmake("-l%s", option_arg));
 		    break;
 		case 'L':
 		    strarray_add(opts.lib_dirs, option_arg);
