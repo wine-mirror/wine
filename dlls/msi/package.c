@@ -338,7 +338,7 @@ Privileged
     SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
     ptr = strchrW(pth,'\\');
     if (ptr)
-	*ptr = 0;
+	*(ptr+1) = 0;
     MSI_SetPropertyW(package, WV, pth);
     
     GetTempPathW(MAX_PATH,pth);
@@ -778,7 +778,7 @@ UINT MSI_GetPropertyW(MSIPACKAGE *package, LPCWSTR szName,
         TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
             debugstr_w(szName));
     else if (rc == ERROR_MORE_DATA)
-        TRACE("need %i sized buffer for %s\n", *pchValueBuf,
+        TRACE("need %li sized buffer for %s\n", *pchValueBuf,
             debugstr_w(szName));
     else
     {
