@@ -1164,6 +1164,12 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
                                      lpBuffer, *lpdwBufferLength, NULL, NULL );
         *lpdwBufferLength = len * sizeof(WCHAR);
     }
+    else
+        /* since the strings being returned from HttpQueryInfoW should be
+         * only ASCII characters, it is reasonable to assume that all of
+         * the Unicode characters can be reduced to a single byte */
+        *lpdwBufferLength = len / sizeof(WCHAR);
+    
     HeapFree(GetProcessHeap(), 0, bufferW );
 
     return result;
