@@ -29,7 +29,7 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 		MENUITEM "C&oller", WM_PASTE
 		MENUITEM "E&ffacer", WM_CLEAR
 		MENUITEM SEPARATOR
-		MENUITEM "Tout &selectionner", EM_SETSEL32
+		MENUITEM "Tout &sélectionner", EM_SETSEL32
 	END
 }
 
@@ -185,7 +185,7 @@ CAPTION "Couleurs"
 FONT 8, "Helv"
 {
  LTEXT "Couleurs de &base:",   1088, 4,    4,  140, 10
- LTEXT "&Couleurs personnalisés:",  1089, 4,   106, 140, 10
+ LTEXT "&Couleurs personnalisées:",  1089, 4,   106, 140, 10
  LTEXT "Couleur |  &Uni",  1090, 150, 151,  48, 10
  LTEXT   "&Rouge:", 726 /*1094*/,249,126,24,10
  EDITTEXT 706, 275,124,18,12, WS_BORDER | WS_GROUP | WS_TABSTOP
@@ -208,7 +208,7 @@ FONT 8, "Helv"
  PUSHBUTTON "Annuler", 2, 52, 166, 44, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Aide", 1038,100,166, 44, 14
  PUSHBUTTON "A&jouter couleur personnalisées", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP 
- PUSHBUTTON "&Definir couleurs personnalisées >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Définir couleurs personnalisées >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&i",713,300,200,4,14   /* just a dummy:  'i' is  like  &i in "sol&id" */
 }
 
