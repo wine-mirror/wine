@@ -84,7 +84,7 @@ StgStreamImpl* StgStreamImpl_Construct(
     newStream->ownerProperty = ownerProperty;
     
     /*
-     * Start the stream at the begining.
+     * Start the stream at the beginning.
      */
     newStream->currentPosition.s.HighPart = 0;
     newStream->currentPosition.s.LowPart = 0;

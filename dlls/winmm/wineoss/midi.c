@@ -1425,7 +1425,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	if (lpData[0] != 0xF0) {
 	    /* Send end of System Exclusive */
 	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 0xF0);
-	    WARN("Adding missing 0xF0 marker at the begining of "
+	    WARN("Adding missing 0xF0 marker at the beginning of "
 		 "system exclusive byte stream\n");
 	}
 	for (count = 0; count < lpMidiHdr->dwBytesRecorded; count++) {

@@ -554,7 +554,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
  *
  * Can only start one service at a time.
  *
- * Has no concept of priviledge.
+ * Has no concept of privilege.
  *
  * RETURNS STD
  *

@@ -321,15 +321,23 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
                                     IStream* pStm,/* pointer to the stream where the object is to be saved */
                                     BOOL fClearDirty)/* Specifies whether to clear the dirty flag */
 {
-    /* this function saves data of this object. In the begining I thougth that I have just to write
-     * the filePath string on Stream. But, when I tested this function whith windows programs samples !
-     * I noted that it was not the case. So I analysed data written by this function on Windows system and 
-     * what did this function do exactly ! but I have no idear a bout its logic !
-     * I guessed data who must be written on stream wich is:
-     * 1) WORD constant:zero 2) length of the path string ("\0" included) 3) path string type A
-     * 4) DWORD constant : 0xDEADFFFF 5) ten WORD constant: zero  6) DWORD: double-length of the the path
-     * string type W ("\0" not included) 7) WORD constant: 0x3 8) filePath unicode string.
-     *  if the length(filePath) > 8 or.length(filePath) == 8 stop at step 5)
+    /* this function saves data of this object. In the beginning I thougth 
+     * that I have just to write the filePath string on Stream. But, when I 
+     * tested this function whith windows programs samples, I noticed that it 
+     * was not the case. So I analysed data written by this function on 
+     * Windows and what this did function exactly ! But I have no idea about 
+     * its logic !
+     * I guessed data which must be written on stream is:
+     * 1) WORD constant:zero
+     * 2) length of the path string ("\0" included)
+     * 3) path string type A
+     * 4) DWORD constant : 0xDEADFFFF
+     * 5) ten WORD constant: zero
+     * 6) DWORD: double-length of the the path string type W ("\0" not 
+     *    included)
+     * 7) WORD constant: 0x3
+     * 8) filePath unicode string.
+     *    if the length(filePath) > 8 or length(filePath) == 8 stop at step 5)
      */
 
     ICOM_THIS(FileMonikerImpl,iface);        

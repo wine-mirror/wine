@@ -43,7 +43,7 @@ NTSTATUS WINAPI NtQueryObject(
  *
  * NOTES
  *  only the lowest 4 bit of SecurityObjectInformationClass are used
- *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system priviledges) 
+ *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system privileges) 
  *
  * FIXME: we are constructing a fake sid 
  *  (Administrators:Full, System:Full, Everyone:Read)

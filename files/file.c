@@ -1207,8 +1207,8 @@ HFILE WINAPI _lclose( HFILE hFile )
  *   TRUE on success
  *   FALSE on failure
  *
- *  If successful (and relevant) lpTransfered will hold the number of
- *   bytes transfered during the async operation.
+ *  If successful (and relevant) lpTransferred will hold the number of
+ *   bytes transferred during the async operation.
  *
  * BUGS
  *
@@ -1219,7 +1219,7 @@ HFILE WINAPI _lclose( HFILE hFile )
 BOOL WINAPI GetOverlappedResult(
     HANDLE hFile,              /* [in] handle of file to check on */
     LPOVERLAPPED lpOverlapped, /* [in/out] pointer to overlapped  */
-    LPDWORD lpTransferred,     /* [in/out] number of bytes transfered  */
+    LPDWORD lpTransferred,     /* [in/out] number of bytes transferred  */
     BOOL bWait                 /* [in] wait for the transfer to complete ? */
 ) {
     DWORD r;

@@ -1429,7 +1429,7 @@ LPSTR INTERNET_GetResponseBuffer()
  * Parse next line in directory string listing
  *
  * RETURNS
- *   Pointer to begining of next line
+ *   Pointer to beginning of next line
  *   NULL on failure
  *
  */

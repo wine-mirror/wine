@@ -1736,7 +1736,7 @@ lend:
 /***********************************************************************
  *           FTP_SendType (internal)
  *
- * Tell server type of data being transfered
+ * Tell server type of data being transferred
  *
  * RETURNS
  *   TRUE on success

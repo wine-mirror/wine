@@ -744,7 +744,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
     
 	
-    /* go back to begining of chunk plus the requested position */
+    /* go back to beginning of chunk plus the requested position */
     /* FIXME: I'm not sure this is correct, notably because some data linked to 
      * the decompression state machine will not be correcly initialized.
      * try it this way (other way would be to decompress from 0 up to dwPosition
@@ -975,7 +975,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     wmw->dwPosition = WAVE_ALIGN_ON_BLOCK(wmw, wmw->dwPosition);
     wmw->ckWaveData.cksize = WAVE_ALIGN_ON_BLOCK(wmw, wmw->ckWaveData.cksize);
 
-    /* go back to begining of chunk plus the requested position */
+    /* go back to beginning of chunk plus the requested position */
     /* FIXME: I'm not sure this is correct, notably because some data linked to 
      * the decompression state machine will not be correcly initialized.
      * try it this way (other way would be to decompress from 0 up to dwPosition
