@@ -1972,10 +1972,16 @@ static LPCSTR MENUEX_ParseResource( LPCSTR res, HMENU hMenu)
 	    if (!(res = MENUEX_ParseResource(res, mii.hSubMenu))) {
 		DestroyMenu(mii.hSubMenu);
                 return NULL;
-        }
+	    }
 	    mii.fMask |= MIIM_SUBMENU;
 	    mii.fType |= MF_POPUP;
         }
+	else if(!*mii.dwTypeData && !(mii.fType & MF_SEPARATOR))
+	{
+	    WARN("Converting NULL menu item %04x, type %04x to SEPARATOR\n",
+		mii.wID, mii.fType);
+	    mii.fType |= MF_SEPARATOR;
+	}
 	InsertMenuItemW(hMenu, -1, MF_BYPOSITION, &mii);
     } while (!(resinfo & MF_END));
     return res;
