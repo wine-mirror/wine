@@ -1117,17 +1117,17 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
 static void queue_hardware_message( struct msg_queue *queue, struct message *msg )
 {
     user_handle_t win;
-    struct thread *thread;
-    struct thread_input *input;
+    struct thread *thread = NULL;
+    struct thread_input *input = queue ? queue->input : foreground_input;
     unsigned int msg_code;
 
-    win = find_hardware_message_window( queue ? queue->input : foreground_input, msg, &msg_code );
-    if (!win || !(thread = get_window_thread(win)))
+    win = find_hardware_message_window( input, msg, &msg_code );
+    if (win && !(thread = get_window_thread(win)))
     {
         free( msg );
         return;
     }
-    input = thread->queue->input;
+    if (thread) input = thread->queue->input;
 
     if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free( msg );
     else
@@ -1135,7 +1135,7 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
         list_add_tail( &input->msg_list, &msg->entry );
         set_queue_bits( thread->queue, get_hardware_msg_bit(msg) );
     }
-    release_object( thread );
+    if (thread) release_object( thread );
 }
 
 /* find a hardware message for the given queue */
