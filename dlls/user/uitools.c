@@ -119,7 +119,7 @@ static const signed char LTRBInnerFlat[] = {
 };
 
 /* last COLOR id */
-#define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
+#define COLOR_MAX   COLOR_MENUBAR
 
 
 /*********************************************************************
@@ -697,7 +697,7 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
         }
         else
         {
-            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags & DFCS_FLAT) | ((uFlags & DFCS_TRANSPARENT) ? 0 : BF_MIDDLE) | BF_RECT);
+            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags & DFCS_FLAT) | ((uFlags & DFCS_TRANSPARENT) ? 0 : BF_MIDDLE) | BF_RECT | BF_SOFT);
         }
     }
 
