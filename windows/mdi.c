@@ -640,7 +640,8 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
     UINT32	total;
   
     if (ci->hwndChildMaximized)
-        ShowWindow16( ci->hwndChildMaximized, SW_NORMAL);
+        SendMessage32A( clientWnd->hwndSelf, WM_MDIRESTORE,
+                        (WPARAM32)ci->hwndChildMaximized, 0);
 
     if (ci->nActiveChildren == 0) return 0;
 
@@ -686,7 +687,8 @@ static void MDITile( WND* wndClient, MDICLIENTINFO *ci, WPARAM32 wParam )
     UINT32	total = 0;
 
     if (ci->hwndChildMaximized)
-	ShowWindow32(ci->hwndChildMaximized, SW_NORMAL);
+        SendMessage32A( wndClient->hwndSelf, WM_MDIRESTORE,
+                        (WPARAM32)ci->hwndChildMaximized, 0);
 
     if (ci->nActiveChildren == 0) return;
 
@@ -1011,7 +1013,7 @@ LRESULT WINAPI MDIClientWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 	break;
 	
       case WM_MDIRESTORE:
-	ShowWindow32( (HWND32)wParam, SW_NORMAL);
+        SendMessage32A( (HWND32)wParam, WM_SYSCOMMAND, SC_RESTORE, 0);
 	return 0;
 
       case WM_MDISETMENU:
