@@ -18,14 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "wine/test.h"
 #include <stdlib.h>
+#include "wine/test.h"
 
-static void test_realloc( void )
+START_TEST(heap)
 {
-    void *mem = NULL;
+    void *mem;
 
-    mem = realloc(mem, 10);
+    mem = malloc(0);
+    ok(mem != NULL, "memory not allocated for size 0\n");
+
+    mem = realloc(NULL, 10);
     ok(mem != NULL, "memory not allocated\n");
     
     mem = realloc(mem, 20);
@@ -33,9 +36,7 @@ static void test_realloc( void )
  
     mem = realloc(mem, 0);
     ok(mem == NULL, "memory not freed\n");
-}
-
-START_TEST(heap)
-{
-    test_realloc();
+    
+    mem = realloc(NULL, 0);
+    ok(mem != NULL, "memory not (re)allocated for size 0\n");
 }
