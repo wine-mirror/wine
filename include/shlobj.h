@@ -816,31 +816,25 @@ typedef struct _SHChangeNotifyEntry
 
 void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
 
-/*
- * IShellChangeNotify
- */
-typedef struct IShellChangeNotify IShellChangeNotify, *LPSHELLCHANGENOTIFY;
-
-#define INTERFACE IShellChangeNotify
-DECLARE_INTERFACE_(IShellChangeNotify,IUnknown)
+typedef struct tagDATABLOCKHEADER
 {
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IShellChangeNotify methods ***/
-    STDMETHOD(OnChange)(THIS_ LONG lEvent, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) PURE;
-};
-#undef INTERFACE
+    DWORD cbSize;
+    DWORD dwSignature;
+} DATABLOCK_HEADER, *LPDATABLOCK_HEADER, *LPDBLIST;
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
-/*** IUnknown methods ***/
-#define IShellChangeNotify_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
-#define IShellChangeNotify_AddRef(p)                  (p)->lpVtbl->AddRef(p)
-#define IShellChangeNotify_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IShellChangeNotify methods ***/
-#define IShellChangeNotify_OnChange(p,a,b,c)         (p)->lpVtbl->OnChange(p,a,b,c)
-#endif
+typedef struct {
+    DATABLOCK_HEADER dbh;
+    CHAR szDarwinID[MAX_PATH];
+    WCHAR szwDarwinID[MAX_PATH];
+} EXP_DARWIN_LINK, *LPEXP_DARWIN_LINK;
+
+#define EXP_SZ_LINK_SIG         0xa0000001
+#define NT_CONSOLE_PROPS_SIG    0xa0000002
+#define NT_FE_CONSOLE_PROPS_SIG 0xa0000004
+#define EXP_SPECIAL_FOLDER_SIG  0xa0000005
+#define EXP_DARWIN_ID_SIG       0xa0000006
+#define EXP_LOGO3_ID_SIG        0xa0000007
+#define EXP_SZ_ICON_SIG         0xa0000007
 
 typedef struct _SHChangeDWORDAsIDList {
     USHORT   cb;
@@ -1088,70 +1082,6 @@ BOOL         WINAPI DAD_DragMove(POINT);
 BOOL         WINAPI DAD_DragLeave(void);
 BOOL         WINAPI DAD_AutoScroll(HWND,AUTO_SCROLL_DATA*,LPPOINT);
 HRESULT      WINAPI SHDoDragDrop(HWND,IDataObject*,IDropSource*,DWORD,LPDWORD);
-
-/*****************************************************************************
- * IFileSystemBindData interface
- */
-#ifndef __IFileSystemBindData_FWD_DEFINED__
-#define __IFileSystemBindData_FWD_DEFINED__
-typedef struct IFileSystemBindData IFileSystemBindData;
-#endif
-
-#ifndef __IFileSystemBindData_INTERFACE_DEFINED__
-#define __IFileSystemBindData_INTERFACE_DEFINED__
-
-DEFINE_GUID(IID_IFileSystemBindData, 0x01e18d10, 0x4d8b, 0x11d2, 0x85,0x5d, 0x00,0x60,0x08,0x05,0x93,0x67);
-#if defined(__cplusplus) && !defined(CINTERFACE)
-struct IFileSystemBindData : public IUnknown
-{
-    virtual HRESULT STDMETHODCALLTYPE SetFindData(
-        const WIN32_FIND_DATAW* pfd) = 0;
-
-    virtual HRESULT STDMETHODCALLTYPE GetFindData(
-        WIN32_FIND_DATAW* pfd) = 0;
-
-};
-#else
-typedef struct IFileSystemBindDataVtbl IFileSystemBindDataVtbl;
-struct IFileSystemBindData {
-    const IFileSystemBindDataVtbl* lpVtbl;
-};
-struct IFileSystemBindDataVtbl {
-
-    /*** IUnknown methods ***/
-    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
-        IFileSystemBindData* This,
-        REFIID riid,
-        void** ppvObject);
-
-    ULONG (STDMETHODCALLTYPE *AddRef)(
-        IFileSystemBindData* This);
-
-    ULONG (STDMETHODCALLTYPE *Release)(
-        IFileSystemBindData* This);
-
-    /*** IFileSystemBindData methods ***/
-    HRESULT (STDMETHODCALLTYPE *SetFindData)(
-        IFileSystemBindData* This,
-        const WIN32_FIND_DATAW* pfd);
-
-    HRESULT (STDMETHODCALLTYPE *GetFindData)(
-        IFileSystemBindData* This,
-        WIN32_FIND_DATAW* pfd);
-
-};
-
-/*** IUnknown methods ***/
-#define IFileSystemBindData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IFileSystemBindData_AddRef(p) (p)->lpVtbl->AddRef(p)
-#define IFileSystemBindData_Release(p) (p)->lpVtbl->Release(p)
-/*** IFileSystemBindData methods ***/
-#define IFileSystemBindData_GetFindData(p,a) (p)->lpVtbl->GetFindData(p,a)
-#define IFileSystemBindData_SetFindData(p,a) (p)->lpVtbl->SetFindData(p,a)
-
-#endif
-
-#endif  /* __IFileSystemBindData_INTERFACE_DEFINED__ */
 
 LPITEMIDLIST WINAPI ILAppendID(LPITEMIDLIST,LPCSHITEMID,BOOL);
 LPITEMIDLIST WINAPI ILClone(LPCITEMIDLIST);

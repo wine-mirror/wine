@@ -1105,3 +1105,190 @@ interface IShellExecuteHookW : IUnknown
     HRESULT Execute(
 		[in, out] struct _SHELLEXECUTEINFOW* pei);
 }
+
+/*****************************************************************************
+ * IShellLinkDataList interface
+ */
+[
+    object,
+    uuid(45e2b4ae-b1c3-11d0-b92f-00a0c90312e1),
+    pointer_default(unique)
+]
+interface IShellLinkDataList : IUnknown
+{
+    HRESULT AddDataBlock(
+                [in] void *pDataBlock);
+    HRESULT CopyDataBlock(
+                [in] DWORD dwSig,
+                [out] void **ppDataBlock);
+    HRESULT RemoveDataBlock(
+                [in] DWORD dwSig);
+    HRESULT GetFlags(
+                [out] DWORD *pdwFlags);
+    HRESULT SetFlags(
+                [in] DWORD dwFlags);
+}
+
+
+/*****************************************************************************
+ * IResolveShellLink interface
+ */
+[
+    object,
+    uuid(5cd52983-9449-11d2-963a-00c04f79adf0),
+    pointer_default(unique)
+]
+interface IResolveShellLink : IUnknown
+{
+    HRESULT ResolveShellLink(
+                [in] IUnknown *punk,
+                [in] HWND hwnd,
+                [in] DWORD fFlags);
+}
+
+
+/*****************************************************************************
+ * IURLSearchHook interface
+ */
+[
+    object,
+    uuid(ac60f6a0-0fd9-11d0-99cb-00c04fd64497),
+    pointer_default(unique)
+]
+interface IURLSearchHook : IUnknown
+{
+    HRESULT Translate(
+                [in, out] LPWSTR lpwszSearchURL,
+                [in] DWORD cchBufferSize);
+}
+
+
+/*****************************************************************************
+ * ISearchContext interface
+ */
+[
+    object,
+    uuid(09f656a2-41af-480c-88f7-16cc0d164615),
+    pointer_default(unique)
+]
+interface ISearchContext : IUnknown
+{
+    HRESULT GetSearchUrl(
+                [in] BSTR *pbstrSearchUrl);
+    HRESULT GetSearchText(
+                [in] BSTR *pbstrSearchText);
+    HRESULT GetSearchStyle(
+                [in] BSTR *pdwSearchStyle);
+}
+
+
+/*****************************************************************************
+ * IURLSearchHook2 interface
+ */
+[
+    object,
+    uuid(5ee44da4-6d32-46e3-86bc-07540dedd0e0),
+    pointer_default(unique)
+]
+interface IURLSearchHook2 : IURLSearchHook
+{
+    HRESULT TranslateWithSearchContext(
+                [in, out] LPWSTR lpwszSearchURL,
+                [in] DWORD cchBufferSize,
+                [in] ISearchContext *pSearchContext);
+}
+
+
+cpp_quote("#define INewShortcutHook WINELIB_NAME_AW(INewShortcutHook)")
+
+/*****************************************************************************
+ * INewShortcutHookA interface
+ */
+[
+    object,
+    uuid(000214e1-0000-0000-c000-000000000046),
+    pointer_default(unique)
+]
+interface INewShortcutHookA : IUnknown
+{
+    HRESULT SetReferent(
+                [in] LPCSTR pcszReferent,
+                [in] HWND hwnd);
+    HRESULT GetReferent(
+                [out] LPCSTR pcszReferent,
+                [in] int cchReferent);
+    HRESULT SetFolder(
+                [in] LPCSTR pcszReferent);
+    HRESULT GetFolder(
+                [out] LPSTR pcszReferent,
+                [in] int cchFolder);
+    HRESULT GetName(
+                [out] LPSTR pszName,
+                [in] int cchName);
+    HRESULT GetExtension(
+                [out] LPSTR pszExtension,
+                [in] int cchExtension);
+} 
+
+
+/*****************************************************************************
+ * INewShortcutHookW interface
+ */
+[
+    object,
+    uuid(000214f7-0000-0000-c000-000000000046),
+    pointer_default(unique)
+]
+interface INewShortcutHookW : IUnknown
+{
+    HRESULT SetReferent(
+                [in] LPCWSTR pcszReferent,
+                [in] HWND hwnd);
+    HRESULT GetReferent(
+                [out] LPCWSTR pcszReferent,
+                [in] int cchReferent);
+    HRESULT SetFolder(
+                [in] LPCWSTR pcszReferent);
+    HRESULT GetFolder(
+                [out] LPWSTR pcszReferent,
+                [in] int cchFolder);
+    HRESULT GetName(
+                [out] LPWSTR pszName,
+                [in] int cchName);
+    HRESULT GetExtension(
+                [out] LPWSTR pszExtension,
+                [in] int cchExtension);
+} 
+
+
+/*****************************************************************************
+ * IShellChangeNotify interface
+ */
+[
+    object,
+    uuid(d82be2b1-5764-11d0-a96e-00c04fd705a2),
+    pointer_default(unique)
+]
+interface IShellChangeNotify : IUnknown
+{
+    HRESULT OnChange(
+                [in] LONG lEvent,
+                [in] LPCITEMIDLIST pidl1,
+                [in] LPCITEMIDLIST pidl2);
+}
+
+/*****************************************************************************
+ * IFileSystemBindData interface
+ */
+[
+    object,
+    uuid(01e18d10-4d8b-11d2-855d-006008059367),
+    pointer_default(unique)
+]
+interface IFileSystemBindData : IUnknown
+{
+    HRESULT SetFindData(
+                [in] const WIN32_FIND_DATAW *pfd);
+    HRESULT GetFindData(
+                [out] WIN32_FIND_DATAW *pfd);
+}
