@@ -2,13 +2,13 @@
 @ stdcall AddAtomW(wstr)
 @ stdcall AddFontResourceW(wstr)
 @ stdcall AddJobW(long long ptr long ptr)
-@ stub AddMonitorW
-@ stub AddPortW
-@ stub AddPrintProcessorW
-@ stub AddPrintProvidorW
+@ stdcall AddMonitorW(wstr long ptr)
+@ stdcall AddPortW(wstr long wstr)
+@ stdcall AddPrintProcessorW(wstr wstr wstr wstr)
+@ stdcall AddPrintProvidorW(wstr long ptr)
 @ stdcall AddPrinterDriverW(wstr long ptr)
 @ stdcall AddPrinterW(wstr long ptr)
-@ stub AdvancedDocumentPropertiesW
+@ stdcall AdvancedDocumentPropertiesW(long long wstr ptr ptr)
 @ stdcall AppendMenuW(long long long ptr)
 @ stdcall BeginUpdateResourceA(str long)
 @ stdcall BeginUpdateResourceW(wstr long)
@@ -34,7 +34,7 @@
 @ stdcall ChooseFontW(ptr)
 @ stdcall CommConfigDialogW(wstr long ptr)
 @ stdcall CompareStringW(long long wstr long wstr long)
-@ stub ConfigurePortW
+@ stdcall ConfigurePortW(wstr long wstr)
 @ stdcall CopyAcceleratorTableW(long ptr long)
 @ stdcall CopyEnhMetaFileW(long wstr)
 @ stdcall CopyFileExW (wstr wstr ptr ptr ptr long)
@@ -84,11 +84,11 @@
 @ stdcall DefMDIChildProcW(long long long long)
 @ stdcall DefWindowProcW(long long long long)
 @ stdcall DeleteFileW(wstr)
-@ stub DeleteMonitorW
-@ stub DeletePortW
-@ stub DeletePrintProcessorW
-@ stub DeletePrintProvidorW
-@ stub DeletePrinterDriverW
+@ stdcall DeleteMonitorW(wstr wstr wstr)
+@ stdcall DeletePortW(wstr long wstr)
+@ stdcall DeletePrintProcessorW(wstr wstr wstr)
+@ stdcall DeletePrintProvidorW(wstr wstr wstr)
+@ stdcall DeletePrinterDriverW(wstr wstr wstr)
 @ stdcall DeviceCapabilitiesW(wstr wstr long wstr ptr)
 @ stdcall DialogBoxIndirectParamW(long ptr long ptr long)
 @ stdcall DialogBoxParamW(long wstr long ptr long)
@@ -108,7 +108,7 @@
 @ stdcall EnumCalendarInfoExW(ptr long long long)
 @ stdcall EnumCalendarInfoW(ptr long long long)
 @ stdcall EnumClipboardFormats(long)
-@ stub EnumDateFormatsExW
+@ stdcall EnumDateFormatsExW(ptr long long)
 @ stdcall EnumDateFormatsW(ptr long long)
 @ stdcall EnumDisplayDevicesW(ptr long ptr long)
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long)
@@ -118,8 +118,8 @@
 @ stdcall EnumFontsW(long wstr ptr long)
 @ stdcall EnumICMProfilesW(long ptr long)
 @ stdcall EnumMonitorsW(wstr long ptr long long long)
-@ stub EnumPortsW
-@ stub EnumPrintProcessorDatatypesW
+@ stdcall EnumPortsW(wstr long ptr long ptr ptr)
+@ stdcall EnumPrintProcessorDatatypesW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintProcessorsW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintersW(long ptr long ptr long ptr ptr)
@@ -150,7 +150,7 @@
 @ stdcall FormatMessageW(long ptr long long ptr long ptr)
 @ stdcall FreeContextBuffer(ptr)
 @ stdcall FreeEnvironmentStringsW(ptr)
-@ stub GetAltTabInfoW
+@ stdcall GetAltTabInfoW(long long ptr ptr long)
 @ stdcall GetAtomNameW(long ptr long)
 @ stdcall GetCPInfo(long ptr)
 @ stdcall GetCPInfoExW(long long ptr)
@@ -189,13 +189,13 @@
 @ stdcall GetFileVersionInfoW(wstr long long ptr)
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
 @ stdcall GetGlyphOutlineW(long long long ptr long ptr ptr)
-@ stub GetICMProfileW
-@ stub GetJobW
+@ stdcall GetICMProfileW(long ptr wstr)
+@ stdcall GetJobW(long long ptr long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
 @ stdcall GetKeyNameTextW(long ptr long)
 @ stdcall GetKeyboardLayoutNameW(ptr)
 @ stdcall GetLocaleInfoW(long long ptr long)
-@ stub GetLogColorSpaceW
+@ stdcall GetLogColorSpaceW(long ptr long)
 @ stdcall GetLogicalDriveStringsW(long ptr)
 @ stdcall GetLongPathNameW (wstr long long)
 @ stdcall GetMenuItemInfoW(long long long ptr)
@@ -211,7 +211,7 @@
 @ stdcall GetOpenFileNamePreviewW(ptr)
 @ stdcall GetOpenFileNameW(ptr)
 @ stdcall GetOutlineTextMetricsW(long long ptr)
-@ stub GetPrintProcessorDirectoryW
+@ stdcall GetPrintProcessorDirectoryW(wstr wstr long ptr long ptr)
 @ stdcall GetPrinterDataW(long wstr ptr ptr long ptr)
 @ stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr)
 @ stdcall GetPrinterDriverW(long str long ptr long ptr)
@@ -329,25 +329,25 @@
 @ stdcall QueryCredentialsAttributesW(ptr long ptr)
 @ stdcall QueryDosDeviceW(wstr ptr long)
 @ stdcall QuerySecurityPackageInfoW(wstr ptr)
-@ stub RasConnectionNotificationW
-@ stub RasCreatePhonebookEntryW
+@ stdcall RasConnectionNotificationW(long long long)
+@ stdcall RasCreatePhonebookEntryW(long wstr)
 @ stdcall RasDeleteEntryW(wstr wstr)
-@ stub RasDeleteSubEntryW
-@ stub RasDialW
-@ stub RasEditPhonebookEntryW
+@ stdcall RasDeleteSubEntryW(wstr wstr long)
+@ stdcall RasDialW(ptr wstr ptr long ptr ptr)
+@ stdcall RasEditPhonebookEntryW(long wstr wstr)
 @ stdcall RasEnumConnectionsW(ptr ptr ptr)
 @ stdcall RasEnumDevicesW(ptr ptr ptr)
 @ stdcall RasEnumEntriesW(str str ptr ptr ptr)
-@ stub RasGetConnectStatusW
-@ stub RasGetEntryDialParamsW
-@ stub RasGetEntryPropertiesW
-@ stub RasGetErrorStringW
-@ stub RasGetProjectionInfoW
-@ stub RasHangUpW
-@ stub RasRenameEntryW
-@ stub RasSetEntryDialParamsW
+@ stdcall RasGetConnectStatusW(long ptr)
+@ stdcall RasGetEntryDialParamsW(wstr ptr ptr)
+@ stdcall RasGetEntryPropertiesW(wstr wstr ptr ptr ptr ptr)
+@ stdcall RasGetErrorStringW(long ptr long)
+@ stdcall RasGetProjectionInfoW(long long ptr ptr)
+@ stdcall RasHangUpW(long)
+@ stdcall RasRenameEntryW(wstr wstr wstr)
+@ stdcall RasSetEntryDialParamsW(wstr ptr long)
 @ stdcall RasSetEntryPropertiesW(wstr wstr ptr long ptr long)
-@ stub RasSetSubEntryPropertiesW
+@ stdcall RasSetSubEntryPropertiesW(wstr wstr long ptr long ptr long)
 @ stdcall RasValidateEntryNameW(wstr wstr)
 @ stdcall ReadConsoleInputW(long ptr long ptr)
 @ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr)
@@ -389,7 +389,7 @@
 @ stdcall SHChangeNotify (long long ptr ptr)
 @ stdcall SHFileOperationW(ptr)
 @ stdcall SHGetFileInfoW(ptr long ptr long long)
-@ stub SHGetNewLinkInfoW
+@ stdcall SHGetNewLinkInfoW(wstr wstr ptr long long)
 @ stdcall SHGetPathFromIDListW(ptr ptr)
 @ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
@@ -407,7 +407,7 @@
 @ stdcall SetDlgItemTextW(long long wstr)
 @ stdcall SetEnvironmentVariableW(wstr wstr)
 @ stdcall SetFileAttributesW(wstr long)
-@ stub SetICMProfileW
+@ stdcall SetICMProfileW(long wstr)
 @ stdcall SetJobW(long long long ptr long)
 @ stdcall SetLocaleInfoW(long long wstr)
 @ stdcall SetMenuItemInfoW(long long long ptr)
@@ -432,7 +432,7 @@
 @ stdcall TextOutW(long long long wstr long)
 @ stdcall TranslateAcceleratorW(long long ptr)
 @ stdcall UnregisterClassW(wstr long)
-@ stub UpdateICMRegKeyW
+@ stdcall UpdateICMRegKeyW(long wstr wstr long)
 @ stdcall UpdateResourceA(long str str long ptr long)
 @ stdcall UpdateResourceW(long wstr wstr long ptr long)
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr)
