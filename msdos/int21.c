@@ -297,7 +297,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 				WORD cyl    = *(WORD *)dataptr+3;
 				WORD sect   = *(WORD *)dataptr+5;
 				WORD nrsect = *(WORD *)dataptr+7;
-				BYTE *data  = (BYTE **)dataptr+9;
+				BYTE *data  =  (BYTE *)dataptr+9;
 				int (*raw_func)(BYTE, DWORD, DWORD, BYTE *, BOOL32);
 
 				raw_func = (CL_reg(context) == 0x41) ?

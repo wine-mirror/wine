@@ -844,7 +844,7 @@ NTSTATUS WINAPI RtlInitializeResource(DWORD x1) {
  *	RtlCompareUnicodeString	[NTDLL] 
  */
 NTSTATUS WINAPI RtlCompareUnicodeString(LPUNICODE_STRING x1,LPUNICODE_STRING x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",debugstr_w(x1->Buffer),debugstr_w(x2->Buffer),x3);
+	FIXME(ntdll,"(%s,%s,0x%08lx),stub!\n",debugstr_w(x1->Buffer),debugstr_w(x2->Buffer),x3);
 	return 0;
 }
 

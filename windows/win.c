@@ -825,7 +825,7 @@ HWND32 WINAPI CreateWindowEx32A( DWORD exStyle, LPCSTR className,
     CREATESTRUCT32A cs;
 
     if(exStyle & WS_EX_MDICHILD)
-        return MDI_CreateMDIWindow32A(className, windowName, style, x, y, width, height, parent, instance, data);
+        return MDI_CreateMDIWindow32A(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
     /* Find the class atom */
 
     if (!(classAtom = GlobalFindAtom32A( className )))
@@ -867,7 +867,7 @@ HWND32 WINAPI CreateWindowEx32W( DWORD exStyle, LPCWSTR className,
     CREATESTRUCT32W cs;
 
     if(exStyle & WS_EX_MDICHILD)
-        return MDI_CreateMDIWindow32W(className, windowName, style, x, y, width, height, parent, instance, data);
+        return MDI_CreateMDIWindow32W(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
 
     /* Find the class atom */
 

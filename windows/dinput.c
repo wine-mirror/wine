@@ -676,7 +676,7 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
   
   /* Get the mouse position */
   EVENT_QueryPointer(&rx, &ry, &state);
-  TRACE(dinput,"(X:%d - Y:%d)\n", rx, ry);
+  TRACE(dinput,"(X:%ld - Y:%ld)\n", rx, ry);
 
   /* Fill the mouse state structure */
   if (mthis->absolute) {

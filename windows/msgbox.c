@@ -224,7 +224,7 @@ INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
     mbox.dwStyle  = type;
     return DialogBoxIndirectParam32A( WIN_GetWindowInstance(hWnd),
                                       SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
-                                      hWnd, MSGBOX_DlgProc, (LPARAM)&mbox );
+                                      hWnd, (DLGPROC32)MSGBOX_DlgProc, (LPARAM)&mbox );
 }
 
 
@@ -290,7 +290,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 
     return DialogBoxIndirectParam32A( msgbox32.hInstance,
                                       SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
-                                      msgbox32.hwndOwner, MSGBOX_DlgProc,
+                                      msgbox32.hwndOwner, (DLGPROC32)MSGBOX_DlgProc,
                                       (LPARAM)&msgbox32 );
 }
 
@@ -302,7 +302,7 @@ INT32 WINAPI MessageBoxIndirect32A( LPMSGBOXPARAMS32A msgbox )
     WARN(dialog,"Messagebox\n");
     return DialogBoxIndirectParam32A( msgbox->hInstance,
    				      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
-                                      msgbox->hwndOwner, MSGBOX_DlgProc,
+                                      msgbox->hwndOwner, (DLGPROC32)MSGBOX_DlgProc,
 				      (LPARAM)msgbox );
 }
 

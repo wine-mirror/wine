@@ -675,7 +675,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
       /* Initialise dialog extra data */
 
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType, WIN_PROC_WINDOW );
+    WINPROC_SetProc( &dlgInfo->dlgProc, (WNDPROC16)dlgProc, procType, WIN_PROC_WINDOW );
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;

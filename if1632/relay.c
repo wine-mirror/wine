@@ -63,9 +63,8 @@ BOOL32 RELAY_Init(void)
 }
 
 
-    /* from relay32/relay386.c */
-    extern debug_relay_includelist;
-    extern debug_relay_excludelist;
+/* from relay32/relay386.c */
+extern char **debug_relay_excludelist,**debug_relay_includelist;
 
 /***********************************************************************
  *           RELAY_DebugCallFrom16

@@ -962,8 +962,8 @@ BOOL32	(WINAPI* pDPA_Destroy) (const HDPA);
 INT32	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
 /* user32 */
-HICON32* (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
-HICON32* (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
+HICON32 (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
+HICON32 (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
 
 static BOOL32		bShell32IsInitialized = 0;
 static HINSTANCE32	hComctl32;
@@ -989,28 +989,28 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID fImpL
 	    { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
 	      hUser32 = GetModuleHandle32A("USER32");
 	      if (hComctl32 && hUser32)
-	      { pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
+	      { pDLLInitComctl=(void*)GetProcAddress32(hComctl32,"InitCommonControlsEx");
 	        if (pDLLInitComctl)
 	        { pDLLInitComctl(NULL);
 	        }
-	        pImageList_Create=GetProcAddress32(hComctl32,"ImageList_Create");
-	        pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");
-	        pImageList_ReplaceIcon=GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
-	        pImageList_GetIcon=GetProcAddress32(hComctl32,"ImageList_GetIcon");
-	        pImageList_GetImageCount=GetProcAddress32(hComctl32,"ImageList_GetImageCount");
+	        pImageList_Create=(void*)GetProcAddress32(hComctl32,"ImageList_Create");
+	        pImageList_AddIcon=(void*)GetProcAddress32(hComctl32,"ImageList_AddIcon");
+	        pImageList_ReplaceIcon=(void*)GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
+	        pImageList_GetIcon=(void*)GetProcAddress32(hComctl32,"ImageList_GetIcon");
+	        pImageList_GetImageCount=(void*)GetProcAddress32(hComctl32,"ImageList_GetImageCount");
 
 	        /* imports by ordinal, pray that it works*/
-	        pCOMCTL32_Alloc=GetProcAddress32(hComctl32, (LPCSTR)71L);
-	        pCOMCTL32_Free=GetProcAddress32(hComctl32, (LPCSTR)73L);
-	        pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
-	        pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
-	        pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
-	        pDPA_InsertPtr=GetProcAddress32(hComctl32, (LPCSTR)334L);
-	        pDPA_Sort=GetProcAddress32(hComctl32, (LPCSTR)338L);
-	        pDPA_Search=GetProcAddress32(hComctl32, (LPCSTR)339L);
+	        pCOMCTL32_Alloc=(void*)GetProcAddress32(hComctl32, (LPCSTR)71L);
+	        pCOMCTL32_Free=(void*)GetProcAddress32(hComctl32, (LPCSTR)73L);
+	        pDPA_Create=(void*)GetProcAddress32(hComctl32, (LPCSTR)328L);
+	        pDPA_Destroy=(void*)GetProcAddress32(hComctl32, (LPCSTR)329L);
+	        pDPA_GetPtr=(void*)GetProcAddress32(hComctl32, (LPCSTR)332L);
+	        pDPA_InsertPtr=(void*)GetProcAddress32(hComctl32, (LPCSTR)334L);
+	        pDPA_Sort=(void*)GetProcAddress32(hComctl32, (LPCSTR)338L);
+	        pDPA_Search=(void*)GetProcAddress32(hComctl32, (LPCSTR)339L);
 	        /* user32 */
-	        pLookupIconIdFromDirectoryEx32=GetProcAddress32(hUser32,"LookupIconIdFromDirectoryEx");
-	        pCreateIconFromResourceEx32=GetProcAddress32(hUser32,"CreateIconFromResourceEx");
+	        pLookupIconIdFromDirectoryEx32=(void*)GetProcAddress32(hUser32,"LookupIconIdFromDirectoryEx");
+	        pCreateIconFromResourceEx32=(void*)GetProcAddress32(hUser32,"CreateIconFromResourceEx");
 	      }
 	      else
 	      { ERR(shell,"P A N I C SHELL32 loading failed\n");

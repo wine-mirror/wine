@@ -35,11 +35,13 @@ INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A lppsh)
 
 	if (lppsh->dwFlags & PSH_MODELESS) {
         hwnd = CreateDialogParam32A ( lppsh->hInstance, WC_PROPSHEET32A,
-                    lppsh->hwndParent, PROPSHEET_WindowProc, (LPARAM) lppsh );
+                    lppsh->hwndParent, (DLGPROC32)PROPSHEET_WindowProc,
+		    (LPARAM) lppsh );
 		ShowWindow32 (hwnd, TRUE);
 	} else {
 		hwnd =  DialogBoxParam32A ( lppsh->hInstance, WC_PROPSHEET32A,
-                    lppsh->hwndParent, PROPSHEET_WindowProc, (LPARAM) lppsh );
+                    lppsh->hwndParent, (DLGPROC32)PROPSHEET_WindowProc,
+		    (LPARAM) lppsh );
 	}
     return hwnd;
 }
@@ -83,8 +85,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W lpPropSheet
  */
 BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage)
 {
-    FIXME(propsheet, "(0x%x): stub\n", hPropPage);
-
+    FIXME(propsheet, "(0x%08lx): stub\n", (DWORD)hPropPage);
     return FALSE;
 }
 

@@ -139,4 +139,12 @@ typedef struct tagINPUT_RECORD
 #define MENU_EVENT			0x08
 #define FOCUS_EVENT 			0x10
 
+BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
+BOOL32 WINAPI WriteConsoleOutput32W( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
+#define WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
+
+#ifdef __WINE__
+extern HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES sa );
+#endif
+
 #endif  /* __WINE_WINCON_H */

@@ -553,14 +553,13 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND32 hWndChild )
     /* set appearance */
     if( clientInfo->hwndChildMaximized )
     {
-      if( clientInfo->hwndChildMaximized != hWndChild )
-        if( hWndChild )
-	{
+      if( clientInfo->hwndChildMaximized != hWndChild ) {
+        if( hWndChild ) {
 		  clientInfo->hwndActiveChild = hWndChild;
 		  ShowWindow32( hWndChild, SW_SHOWMAXIMIZED);
-	}
-	else
+	} else
 		ShowWindow32( clientInfo->hwndActiveChild, SW_SHOWNORMAL );
+      }
     }
 
     clientInfo->hwndActiveChild = hWndChild;
@@ -1064,7 +1063,7 @@ LRESULT WINAPI MDIClientWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
         return 0;
 
       case WM_SIZE:
-        if( ci->hwndChildMaximized )
+        if( IsWindow32(ci->hwndChildMaximized) )
 	{
 	    WND*	child = WIN_FindWndPtr(ci->hwndChildMaximized);
 	    RECT32	rect  = { 0, 0, LOWORD(lParam), HIWORD(lParam) };

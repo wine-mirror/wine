@@ -369,12 +369,8 @@ HDC32 WINAPI CreateEnhMetaFile32A(
     return dc->hSelf;
 #endif
 
-    FIXME(metafile,
-         "(0x%lx,%s,%p,%s): stub\n",
-         hdc,
-         filename,
-         rect,
-         description);
+    FIXME(metafile, "(0x%lx,%s,%p,%s): stub\n",
+         (DWORD)hdc, filename, rect, description);
 
     return 0;
 }

@@ -33,8 +33,8 @@ extern LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT32);
 extern BOOL32	(WINAPI* pDPA_Destroy) (const HDPA); 
 extern INT32	(WINAPI* pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
-extern HICON32* (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
-extern HICON32* (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
+extern HICON32 (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
+extern HICON32 (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
 
 /* undocumented WINAPI functions not globaly exported */
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
@@ -50,7 +50,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 /* Iconcache */
 #define INVALID_INDEX -1
 BOOL32 SIC_Initialize(void);
-INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex );
+/*INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex );*/
 
 /* Classes Root */
 BOOL32 HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len);

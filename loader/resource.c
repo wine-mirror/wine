@@ -426,7 +426,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
 {
     HRSRC32 hRsrc;
-    HACCEL32 hMem,hRetval;
+    HACCEL32 hMem,hRetval=0;
     DWORD size;
 
     if (HIWORD(lpTableName))
@@ -439,9 +439,7 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     if (!(hRsrc = FindResource32W( instance, lpTableName, RT_ACCELERATOR32W )))
     {
       WARN(accel, "couldn't find accelerator table resource\n");
-      hRetval = 0;
-    }
-    else {
+    } else {
       hMem = LoadResource32( instance, hRsrc );
       size = SizeofResource32( instance, hRsrc );
       if(size>=sizeof(PE_ACCEL))

@@ -665,7 +665,7 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix,UINT16 uDeviceID,DWORD dwCallback,
     HMIXER16		hmix;
     LPMIXEROPENDESC	lpmod;
     BOOL32		mapperflag = (uDeviceID==0);
-    DWORD		dwRet;
+    DWORD		dwRet=0;
     
     TRACE(mmsys,"(%p,%d,%08lx,%08lx,%08lx)\n",
 	  lphmix,uDeviceID,dwCallback,dwInstance,fdwOpen);

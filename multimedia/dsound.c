@@ -1957,11 +1957,12 @@ static int DSOUND_WriteAudio(char *buf, int len)
 
 	while (left < len) {
 		result = write(audiofd, buf + left, len - left);
-		if (result == -1)
+		if (result == -1) {
 			if (errno == EINTR)
 				continue;
 			else
 				return result;
+		}
 		left += result;
 	}
 	return 0;

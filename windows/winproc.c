@@ -211,7 +211,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                            (void(*)())WINPROC_CallProc16To32A :
                                            (void(*)())WINPROC_CallProc16To32W;
             proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:relay */
-            proc->thunk.t_from16.relay       = Callbacks->CallFrom16WndProc;
+            proc->thunk.t_from16.relay       = (void*)Callbacks->CallFrom16WndProc;
             GET_CS(proc->thunk.t_from16.cs);
             proc->jmp.jmp  = 0xe9;
             /* Fixup relative jump */

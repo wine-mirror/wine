@@ -479,7 +479,7 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 	HFILE32	oldsrc = src;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	INT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
+	UINT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
 
 	TRACE(file,"(%d,%d)\n",src,dest);
 	if (!IS_LZ_HANDLE(src)) {
@@ -492,9 +492,9 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 
 	/* not compressed? just copy */
         if (!IS_LZ_HANDLE(src))
-		xread=(INT32(*)(HFILE32,LPVOID,UINT32))_lread32;
-	else
-		xread=LZRead32;
+		xread=_lread32;
+	else	/* Note: Ignore warning, just mismatched INT/UINT */
+		xread=LZRead32; 
 	len=0;
 	while (1) {
 		ret=xread(src,buf,BUFLEN);

@@ -771,7 +771,7 @@ UINT32 WINAPI GetTextCharsetInfo(
         charSet = lf.lfCharSet;
 
     if (fs != NULL) {
-      if (!TranslateCharsetInfo(charSet, &csinfo, TCI_SRCCHARSET))
+      if (!TranslateCharsetInfo((LPDWORD)charSet, &csinfo, TCI_SRCCHARSET))
            return  (DEFAULT_CHARSET);
       memcpy(fs, &csinfo.fs, sizeof(FONTSIGNATURE));
     }
