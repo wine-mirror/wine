@@ -164,10 +164,12 @@ NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL32 menu, DWORD exStyle)
         }
 
         if ((style & WS_CAPTION) == WS_CAPTION)
+        {
 	    if (exStyle & WS_EX_TOOLWINDOW)
 		rect->top -= SYSMETRICS_CYSMCAPTION;
 	    else
 		rect->top -= SYSMETRICS_CYCAPTION;
+        }
     }
 
     if (menu)

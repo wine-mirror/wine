@@ -1435,10 +1435,12 @@ HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
     /* Determine new heap size */
 
     if ( segment )
+    {
         if ( (segSize = GetSelectorLimit( segment )) == 0 )
             return 0;
         else
             segSize++;
+    }
 
     if ( heapSize == -1L )
         heapSize = 1024L*1024L;   /* FIXME */

@@ -453,11 +453,13 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    else h = (fo->fi->lfd_height * height) / fo->fi->df.dfPixHeight;
 
    if( XTextCaps & TC_SF_X_YINDEP ) 
+   {
 	if( fo->lf.lfWidth && !(fo->fo_flags & FO_SYNTH_WIDTH) )
 	    point = (fo->fi->lfd_decipoints * fo->lf.lfWidth) / fo->fi->df.dfAvgWidth;
 	else 
 	if( fo->fi->fi_flags & FI_SCALABLE ) /* adjust h/w ratio */
 	    point = h * 72 * 10 / fo->fi->lfd_resolution;
+   }
 
    /* handle rotated fonts */
    if (fo->lf.lfEscapement) {
@@ -2242,10 +2244,12 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     else
 	for( ; pfr ; pfr = pfr->next )
           if(pfr->fi)
+          {
 	    if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
 		       XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
 		 bRet = b;
 	    else break;
+          }
 
     return bRet;
 }

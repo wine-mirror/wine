@@ -83,7 +83,8 @@ void joySendMessages(void)
         struct js_status js;
 
 	if (joy_nr_open)
-	for (joy=0; joy < MAXJOYDRIVERS; joy++) 
+        {
+            for (joy=0; joy < MAXJOYDRIVERS; joy++) 
 		if (joy_dev[joy] >= 0) {
 			if (count_use[joy] > 250) {
 				joyCloseDriver(joy);
@@ -92,6 +93,7 @@ void joySendMessages(void)
 			count_use[joy]++;
 		} else
 			return;
+        }
         if (joyCaptured == FALSE) return;
 
 	TRACE(mmsys, " --\n");

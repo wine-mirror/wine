@@ -2188,11 +2188,13 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	 }
        }
     else if (!(wndPtr->window))
+    {
          /* FIXME: the following optimization is no good for "X-ed" windows */
        if (hwndInsertAfter == HWND_TOP)
 	   flags |= ( wndPtr->parent->child == wndPtr)? SWP_NOZORDER: 0;
        else /* HWND_BOTTOM */
 	   flags |= ( wndPtr->next )? 0: SWP_NOZORDER;
+    }
 
       /* Fill the WINDOWPOS structure */
 
@@ -2320,6 +2322,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         wndPtr->rectClient = newClientRect;
 
 	if( !(flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW)) )
+        {
 	  if( (oldClientRect.left - oldWindowRect.left !=
 	       newClientRect.left - newWindowRect.left) ||
 	      (oldClientRect.top - oldWindowRect.top !=
@@ -2362,6 +2365,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 		if( !wErase ) /* just update the nonclient area */
 		    wndPtr->flags |= WIN_NEEDS_NCPAINT; 
 	      }
+        }
 	uFlags |= SMC_NOPARENTERASE; /* X windows do not have eraseable parents */
     }
     else /* not an X window */

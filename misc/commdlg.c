@@ -425,11 +425,13 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
                       (LPARAM)SEGPTR_GET(str));
 
 	if (savedlg)       /* use _gray_ text in FileSaveDlg */
+        {
 	  if (!lpdis->itemState)
 	    SetTextColor32(lpdis->hDC,GetSysColor32(COLOR_GRAYTEXT) );
 	  else  
 	    SetTextColor32(lpdis->hDC,GetSysColor32(COLOR_WINDOWTEXT) );
 	    /* inversion of gray would be bad readable */	  	  
+        }
 
 	TextOut16(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                   str, strlen(str));

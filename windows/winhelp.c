@@ -53,10 +53,12 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 
 	hDest = FindWindow32A( "MS_WINHELP", NULL );
 	if(!hDest)
+        {
 		if(wCommand == HELP_QUIT)
 			return TRUE;
 		else
 			return FALSE;
+        }
 	switch(wCommand)
 	{
 		case HELP_CONTEXT:

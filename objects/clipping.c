@@ -491,6 +491,7 @@ INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if( dc && hRgn )
+    {
       if( dc->w.hClipRgn )
       { 
 	/* this assumes that dc->w.hClipRgn is in coordinates
@@ -503,6 +504,7 @@ INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
         }
       }
       else return 0;
+    }
     return -1;
 }
 

@@ -472,10 +472,12 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 		(void)0;
 
 	      if (repX)
+              {
 		if (long_addr)
 		  ECX_sig(context) = 0;
 		else
 		  CX_sig(context) = 0;
+              }
 
 	      while (count-- > 0)
 		{

@@ -230,10 +230,12 @@ void WINAPI PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
                        HBRUSH16 hbrush, const RECT16 *rect)
 {
     if( hbrush <= CTLCOLOR_MAX ) 
+    {
 	if( hwndParent )
 	    hbrush = PAINT_GetControlBrush( hwndParent, hwnd, hdc, (UINT16)hbrush );
 	else 
 	    return;
+    }
     if( hbrush ) 
 	FillRect16( hdc, rect, hbrush );
 }

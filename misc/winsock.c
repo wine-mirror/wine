@@ -500,9 +500,11 @@ void WINAPI WSASetLastError16(INT16 iError)
 int _check_ws(LPWSINFO pwsi, ws_socket* pws)
 {
     if( pwsi )
+    {
 	if( pwsi->flags & WSI_BLOCKINGCALL ) pwsi->err = WSAEINPROGRESS;
 	else if( WSI_CHECK_RANGE(pwsi, pws) ) return 1;
 		 else pwsi->err = WSAENOTSOCK;
+    }
     return 0;
 }
 
@@ -611,8 +613,11 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 #endif
 
     if ( _check_ws(pwsi, pws) )
+    {
       if ( namelen >= sizeof(*name) ) 
+      {
 	if ( ((struct ws_sockaddr_in *)name)->sin_family == AF_INET )
+        {
 	  if ( bind(pws->fd, name, namelen) < 0 ) 
 	  {
 	     int	loc_errno = errno;
@@ -626,8 +631,11 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 	     }
 	  }
 	  else return 0; /* success */
+        }
 	else pwsi->err = WSAEAFNOSUPPORT;
+      }
       else pwsi->err = WSAEFAULT;
+    }
     return SOCKET_ERROR;
 }
 

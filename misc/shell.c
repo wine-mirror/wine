@@ -667,6 +667,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
     /* load resources and create icons */
 
     if( (pIconStorage && pIconDir) || lpiID )
+    {
       if( nIconIndex == (UINT16)-1 ) RetPtr[0] = iconDirCount;
       else if( nIconIndex < iconDirCount )
       {
@@ -705,6 +706,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		  RetPtr[icon-nIconIndex] = 0;
 	  }
       }
+    }
     if( lpiID ) HeapFree( GetProcessHeap(), 0, lpiID);
     else HeapFree( GetProcessHeap(), 0, pData);
   } 

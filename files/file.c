@@ -1811,6 +1811,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
       if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
       /* Source name and target path are valid */
       if ( full_name1.drive != full_name2.drive)
+      {
 	/* use copy, if allowed */
 	if (!(flag & MOVEFILE_COPY_ALLOWED)) {
 	  /* FIXME: Use right error code */
@@ -1818,6 +1819,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	  return FALSE;
 	}
 	else mode =1;
+      }
       if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
 	/* target exists, check if we may overwrite */
 	if (!(flag & MOVEFILE_REPLACE_EXISTING)) {

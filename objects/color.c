@@ -795,12 +795,14 @@ COLORREF COLOR_LookupNearestColor( PALETTEENTRY* palPalEntry, int size, COLORREF
 	     (palPalEntry + COLOR_PaletteLookupPixel(palPalEntry,size,NULL,color,FALSE));
 
   else if( spec_type == 1 ) /* PALETTEINDEX */
+  {
     if( (i = color & 0x0000ffff) >= size ) 
       {
 	WARN(palette, "RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
 	color = *(COLORREF*)palPalEntry;
       }
     else color = *(COLORREF*)(palPalEntry + i);
+  }
 
   color &= 0x00ffffff;
   return (0x00ffffff & *(COLORREF*)

@@ -1228,10 +1228,12 @@ DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	/* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
 	audio = open (SOUND_DEV, O_WRONLY, 0);
 	if (audio == -1)
+        {
 	    if (errno == EBUSY)
 		return 1;
 	    else
 		return 0;
+        }
 	close (audio);
 	return 1;
     case WODM_GETPITCH:
@@ -1685,10 +1687,12 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	/* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
 	audio = open (SOUND_DEV, O_RDONLY, 0);
 	if (audio == -1)
+        {
 	    if (errno == EBUSY)
 		return 1;
 	    else
 		return 0;
+        }
 	close (audio);
 	return 1;
     case WIDM_GETPOS:

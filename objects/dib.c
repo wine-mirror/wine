@@ -2090,10 +2090,12 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
 	if (bm.bmBits)
+        {
             if (section)
                 UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
             else
                 VirtualFree(bm.bmBits, MEM_RELEASE, 0L), bm.bmBits = NULL;
+        }
 
         if (dib->image) XDestroyImage(dib->image), dib->image = NULL;
 	if (colorMap) HeapFree(GetProcessHeap(), 0, colorMap), colorMap = NULL;
@@ -2125,10 +2127,12 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
         DIBSECTIONOBJ *dib = bmp->dib;
 
         if (dib->dibSection.dsBm.bmBits)
+        {
             if (dib->dibSection.dshSection)
                 UnmapViewOfFile(dib->dibSection.dsBm.bmBits);
             else
                 VirtualFree(dib->dibSection.dsBm.bmBits, MEM_RELEASE, 0L);
+        }
 
         if (dib->image) 
             XDestroyImage( dib->image );

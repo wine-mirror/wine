@@ -791,10 +791,12 @@ L\"			{
 <<EOF>>			{
 				YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
 				if(!pop_buffer())
+                                {
 					if(YY_START == pp_strips || YY_START == pp_stripp || YY_START == pp_stripp_final)
 						yyerror("Unexpected end of file during c-junk scanning (started at %d)", cjunk_tagline);
 					else
 						yyterminate();
+                                }
 				yy_delete_buffer(b);
 			}
 %%

@@ -552,6 +552,7 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND32 hWndChild )
 
     /* set appearance */
     if( clientInfo->hwndChildMaximized )
+    {
       if( clientInfo->hwndChildMaximized != hWndChild )
         if( hWndChild )
 	{
@@ -560,6 +561,7 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND32 hWndChild )
 	}
 	else
 		ShowWindow32( clientInfo->hwndActiveChild, SW_SHOWNORMAL );
+    }
 
     clientInfo->hwndActiveChild = hWndChild;
 

@@ -465,6 +465,7 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
 		);
 	}
     if (loadflags & LR_DEFAULTSIZE)
+    {
       if (type == IMAGE_ICON) {
         if (!desiredx) desiredx = SYSMETRICS_CXICON;
 	if (!desiredy) desiredy = SYSMETRICS_CYICON;
@@ -472,6 +473,7 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
         if (!desiredx) desiredx = SYSMETRICS_CXCURSOR;
 	if (!desiredy) desiredy = SYSMETRICS_CYCURSOR;
       }
+    }
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
         case IMAGE_BITMAP:

@@ -1774,15 +1774,19 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 
     /* Calculate the size of the destination image.  */
     if (cxWidth == 0)
+    {
       if (flags & DI_DEFAULTSIZE)
 	cxWidth = GetSystemMetrics32 (SM_CXICON);
       else
 	cxWidth = ptr->nWidth;
+    }
     if (cyWidth == 0)
+    {
       if (flags & DI_DEFAULTSIZE)
         cyWidth = GetSystemMetrics32 (SM_CYICON);
       else
 	cyWidth = ptr->nHeight;
+    }
 
     if (!(DoOffscreen = (hbr >= STOCK_WHITE_BRUSH) && (hbr <= 
       STOCK_HOLLOW_BRUSH)))
@@ -1828,20 +1832,24 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 	{
 	    HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
 	    if (flags & DI_MASK)
+            {
 	      if (DoOffscreen) 
 		StretchBlt32 (hDC_off, 0, 0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
 	      else 
 	        StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
+            }
 	    SelectObject32( hMemDC, hXorBits );
 	    if (flags & DI_IMAGE)
+            {
 	      if (DoOffscreen) 
 		StretchBlt32 (hDC_off, 0, 0, cxWidth, cyWidth,
 			  hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
 	      else
 		StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+            }
 	    SelectObject32( hMemDC, hBitTemp );
 	    result = TRUE;
 	}

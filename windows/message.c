@@ -504,6 +504,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
 
 	   case SYSQ_MSG_SKIP:
                 if (HOOK_IsHooked( WH_CBT ))
+                {
                    if( kbd_msg )
 		       HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED, 
 						 msg->wParam, msg->lParam );
@@ -521,6 +522,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                            SEGPTR_FREE(hook);
                        }
                    }
+                }
 
 		if (remove)
 		    QUEUE_RemoveMsg( sysMsgQueue, pos );

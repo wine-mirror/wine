@@ -537,6 +537,7 @@ HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
 static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 {
   if( lpFormat->wDataPresent && !lpFormat->hData16 && !lpFormat->hData32 )
+  {
     if( IsWindow32(hWndClipOwner) )
       SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
 		    (WPARAM16)lpFormat->wFormatID,0L);
@@ -547,6 +548,7 @@ static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
       hWndClipOwner = 0; lpFormat->wDataPresent = 0;
       return FALSE;
     }
+  }
   return (lpFormat->hData16 || lpFormat->hData32) ? TRUE : FALSE;
 }
 
@@ -812,10 +814,12 @@ UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
 	 && !selectionAcquired) CLIPBOARD_RequestXSelection();
 
     if (wFormat == 0)
+    {
 	if (lpFormat->wDataPresent || ClipFormats[CF_OEMTEXT-1].wDataPresent) 
 	    return lpFormat->wFormatID;
 	else 
 	    wFormat = lpFormat->wFormatID; /* and CF_TEXT is not available */
+    }
 
     /* walk up to the specified format record */
 
@@ -1183,6 +1187,7 @@ void CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
 	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionPrevWindow );
 
     if( selectionAcquired )
+    {
 	if( w == selectionWindow || selectionPrevWindow == None)
 	{
 	    /* alright, we really lost it */
@@ -1198,6 +1203,7 @@ void CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
 	    if( w == None )
 		TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
 	}
+    }
 
     selectionPrevWindow = None;
 }

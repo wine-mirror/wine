@@ -224,7 +224,8 @@ void dump_raw_data(raw_data_t *d)
 
 	for(n = 0; n < d->size; n++)
 	{
-		if((n % 16) == 0)
+		if((n % 16) == 0) 
+                {
 			if(n)
 			{
 				printf("- ");
@@ -234,6 +235,7 @@ void dump_raw_data(raw_data_t *d)
 			}
 			else
 				printf("%08x: ", n);
+                }
 		printf("%02x ", d->data[n] & 0xff);
 	}
 	printf("- ");
